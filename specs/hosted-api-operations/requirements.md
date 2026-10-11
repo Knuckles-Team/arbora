@@ -124,7 +124,7 @@ The following rows retain their original IDs, requirements and verification crit
 | ID | Requirement | Verification |
 |---|---|---|
 
-## Requirements from the spec audit
+## Policy, security-evaluation, projection and retrieval operations
 
 | ID | Requirement | Verification |
 |---|---|---|
