@@ -69,3 +69,13 @@ On any build/validation/publish failure, retain the last-known-good active gener
 ## Development environment
 
 A contributor starts with this repository and its declared lockfiles, installs local dependencies, runs generated-contract checks and fixture tests, and starts a local MCP server with fake engine/child adapters and bundled policy. The test suite must not require private DNS, secrets, an existing tenant, or a live production service. Mark unavailable optional integration tests separately and use a provisionable container/local fixture for CI. Release acceptance adds a disposable two-replica graph-os setup and synthetic connector; its setup commands and manifests belong in this repository.
+
+## GRAPHOS-FLEET-R034 skill and workflow admission
+
+Data flow: POST route (graph_os/api/http/routes.py:127) → `invoke` (graph_os/api/invoke/pipeline.py:810) → skill audit and workflow admission → `_confirmation_gate` → effect.
+
+Types: `SkillAuditReport`, `WorkflowAdmissionRecord`. The policies attach before the confirmation gate. Failure behavior: a typed refusal naming the missing field or exceeded limit; nothing runs.
+
+Reused: the `invoke` pipeline and the `OpError` path. New: both policies and models; the call site does not exist yet.
+
+Decision: admit at the single pipeline boundary. Rejected alternative: audit at skill install only, which misses skills already present.

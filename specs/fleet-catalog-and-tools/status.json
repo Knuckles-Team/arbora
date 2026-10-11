@@ -69,7 +69,14 @@
     "GRAPHOS-FLEET-R032",
     "GRAPHOS-FLEET-R033",
     "GRAPHOS-FLEET-R033.1",
-    "GRAPHOS-FLEET-R033.2"
+    "GRAPHOS-FLEET-R033.2",
+    "GRAPHOS-FLEET-R034",
+    "GRAPHOS-FLEET-R034.1",
+    "GRAPHOS-FLEET-R034.2",
+    "GRAPHOS-FLEET-R034.3",
+    "GRAPHOS-FLEET-R034.4",
+    "GRAPHOS-FLEET-R034.5",
+    "GRAPHOS-FLEET-R034.6"
   ],
   "requirements": [
     {
@@ -784,6 +791,63 @@
     {
       "id": "GRAPHOS-FLEET-R033.2",
       "title": "Add refusal tests for the `servers` reader",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R034",
+      "title": "Skills and AI workflows are admitted before they run (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-FLEET-R034.1",
+        "GRAPHOS-FLEET-R034.2",
+        "GRAPHOS-FLEET-R034.3",
+        "GRAPHOS-FLEET-R034.4",
+        "GRAPHOS-FLEET-R034.5",
+        "GRAPHOS-FLEET-R034.6"
+      ]
+    },
+    {
+      "id": "GRAPHOS-FLEET-R034.1",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R034.2",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R034.3",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R034.4",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R034.5",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R034.6",
+      "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
