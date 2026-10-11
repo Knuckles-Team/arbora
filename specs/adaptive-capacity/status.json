@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "spec_id": "GRAPHOS-CAPACITY-001",
+  "spec_id": "GRAPHOS-CAPACITY",
   "owner_repo": "graph-os",
   "delivery_state": "VERIFIED",
   "requirement_ids": [
