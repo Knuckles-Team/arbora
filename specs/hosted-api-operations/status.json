@@ -110,7 +110,30 @@
     "GRAPHOS-OPS-R040.9",
     "GRAPHOS-OPS-R040.10",
     "GRAPHOS-OPS-R041",
-    "GRAPHOS-OPS-R041.1"
+    "GRAPHOS-OPS-R041.1",
+    "GRAPHOS-GWC-R001",
+    "GRAPHOS-GWC-R001.1",
+    "GRAPHOS-GWC-R001.2",
+    "GRAPHOS-GWC-R001.3",
+    "GRAPHOS-GWC-R001.4",
+    "GRAPHOS-GWC-R002",
+    "GRAPHOS-GWC-R002.1",
+    "GRAPHOS-GWC-R002.2",
+    "GRAPHOS-GWC-R002.3",
+    "GRAPHOS-GWC-R002.4",
+    "GRAPHOS-GWC-R002.5",
+    "GRAPHOS-GWC-R002.6",
+    "GRAPHOS-GWC-R002.7",
+    "GRAPHOS-GWC-R002.8",
+    "GRAPHOS-GWC-R003",
+    "GRAPHOS-GWC-R003.1",
+    "GRAPHOS-GWC-R001.5",
+    "GRAPHOS-GWC-R001.6",
+    "GRAPHOS-GWC-R001.7",
+    "GRAPHOS-GWC-R001.8",
+    "GRAPHOS-GWC-R001.9",
+    "GRAPHOS-GWC-R002.9",
+    "GRAPHOS-GWC-R002.10"
   ],
   "requirements": [
     {
@@ -1169,14 +1192,14 @@
     },
     {
       "id": "GRAPHOS-OPS-R040.8",
-      "title": "Wire one function: pass the exported `kg_source_resolver` (row R002.1) as the artifacts register function's resolver argument in graph_os/gateway/artifacts_api.py; no graph-os re-derivation code. Without it the default preserve-prior-data resolver is used",
+      "title": "Wire one function: pass the exported `kg_source_resolver` (row GRAPHOS-OPS-R040.1) as the artifacts register function's resolver argument in graph_os/gateway/artifacts_api.py; no graph-os re-derivation code. Without it the default preserve-prior-data resolver is used",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-OPS-R040.9",
-      "title": "Cross-repo prerequisite (owner: agent-utilities): add the proposed `AU-BOUNDARY-R013.<n>` row of plan.md D4 to specs/au-boundary-deconstruction/requirements.md; it is the concrete form of R002.1",
+      "title": "Cross-repo prerequisite (owner: agent-utilities): add the proposed `AU-BOUNDARY-R013.<n>` row of plan.md D4 to specs/au-boundary-deconstruction/requirements.md; it is the concrete form of GRAPHOS-OPS-R040.1",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1204,6 +1227,190 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-GWC-R001",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R039`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R039`"
+    },
+    {
+      "id": "GRAPHOS-GWC-R001.1",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R039.1`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R039.1`"
+    },
+    {
+      "id": "GRAPHOS-GWC-R001.2",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R039.2`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R039.2`"
+    },
+    {
+      "id": "GRAPHOS-GWC-R001.3",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R039.3`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R039.3`"
+    },
+    {
+      "id": "GRAPHOS-GWC-R001.4",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R039.4`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R039.4`"
+    },
+    {
+      "id": "GRAPHOS-GWC-R002",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R040`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R040`"
+    },
+    {
+      "id": "GRAPHOS-GWC-R002.1",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R040.1`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R040.1`"
+    },
+    {
+      "id": "GRAPHOS-GWC-R002.2",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R040.2`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R040.2`"
+    },
+    {
+      "id": "GRAPHOS-GWC-R002.3",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R040.3`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R040.3`"
+    },
+    {
+      "id": "GRAPHOS-GWC-R002.4",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R040.4`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R040.4`"
+    },
+    {
+      "id": "GRAPHOS-GWC-R002.5",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R040.5`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R040.5`"
+    },
+    {
+      "id": "GRAPHOS-GWC-R002.6",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R040.6`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R040.6`"
+    },
+    {
+      "id": "GRAPHOS-GWC-R002.7",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R040.7`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R040.7`"
+    },
+    {
+      "id": "GRAPHOS-GWC-R002.8",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R040.8`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R040.8`"
+    },
+    {
+      "id": "GRAPHOS-GWC-R003",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R041`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R041`"
+    },
+    {
+      "id": "GRAPHOS-GWC-R003.1",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R041.1`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R041.1`"
+    },
+    {
+      "id": "GRAPHOS-GWC-R001.5",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R039.5`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R039.5`"
+    },
+    {
+      "id": "GRAPHOS-GWC-R001.6",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R039.6`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R039.6`"
+    },
+    {
+      "id": "GRAPHOS-GWC-R001.7",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R039.7`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R039.7`"
+    },
+    {
+      "id": "GRAPHOS-GWC-R001.8",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R039.8`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R039.8`"
+    },
+    {
+      "id": "GRAPHOS-GWC-R001.9",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R039.9`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R039.9`"
+    },
+    {
+      "id": "GRAPHOS-GWC-R002.9",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R040.9`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R040.9`"
+    },
+    {
+      "id": "GRAPHOS-GWC-R002.10",
+      "title": "RETIRED: replaced by `GRAPHOS-OPS-R040.10`",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "replaced by `GRAPHOS-OPS-R040.10`"
     }
   ]
 }
