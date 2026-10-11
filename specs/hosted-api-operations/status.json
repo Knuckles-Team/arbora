@@ -117,7 +117,35 @@
     "GRAPHOS-OPS-R040.9",
     "GRAPHOS-OPS-R040.10",
     "GRAPHOS-OPS-R041",
-    "GRAPHOS-OPS-R041.1"
+    "GRAPHOS-OPS-R041.1",
+    "GRAPHOS-OPS-R050",
+    "GRAPHOS-OPS-R050.1",
+    "GRAPHOS-OPS-R050.2",
+    "GRAPHOS-OPS-R050.3",
+    "GRAPHOS-OPS-R050.4",
+    "GRAPHOS-OPS-R050.5",
+    "GRAPHOS-OPS-R050.6",
+    "GRAPHOS-OPS-R051",
+    "GRAPHOS-OPS-R051.1",
+    "GRAPHOS-OPS-R051.2",
+    "GRAPHOS-OPS-R051.3",
+    "GRAPHOS-OPS-R051.4",
+    "GRAPHOS-OPS-R051.5",
+    "GRAPHOS-OPS-R051.6",
+    "GRAPHOS-OPS-R052",
+    "GRAPHOS-OPS-R052.1",
+    "GRAPHOS-OPS-R052.2",
+    "GRAPHOS-OPS-R052.3",
+    "GRAPHOS-OPS-R052.4",
+    "GRAPHOS-OPS-R052.5",
+    "GRAPHOS-OPS-R052.6",
+    "GRAPHOS-OPS-R053",
+    "GRAPHOS-OPS-R053.1",
+    "GRAPHOS-OPS-R053.2",
+    "GRAPHOS-OPS-R053.3",
+    "GRAPHOS-OPS-R053.4",
+    "GRAPHOS-OPS-R053.5",
+    "GRAPHOS-OPS-R053.6"
   ],
   "requirements": [
     {
@@ -1266,6 +1294,234 @@
     {
       "id": "GRAPHOS-OPS-R041.1",
       "title": "Add one test in tests/gateway/test_registry.py asserting genius_agent is absent from the widget registry and no fixed-value widget is registered",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R050",
+      "title": "Policy lifecycle operations that guard plans",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-OPS-R050.1",
+        "GRAPHOS-OPS-R050.2",
+        "GRAPHOS-OPS-R050.3",
+        "GRAPHOS-OPS-R050.4",
+        "GRAPHOS-OPS-R050.5",
+        "GRAPHOS-OPS-R050.6"
+      ]
+    },
+    {
+      "id": "GRAPHOS-OPS-R050.1",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R050.2",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R050.3",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R050.4",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R050.5",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R050.6",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R051",
+      "title": "Scoped security-evaluation operation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-OPS-R051.1",
+        "GRAPHOS-OPS-R051.2",
+        "GRAPHOS-OPS-R051.3",
+        "GRAPHOS-OPS-R051.4",
+        "GRAPHOS-OPS-R051.5",
+        "GRAPHOS-OPS-R051.6"
+      ]
+    },
+    {
+      "id": "GRAPHOS-OPS-R051.1",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R051.2",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R051.3",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R051.4",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R051.5",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R051.6",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R052",
+      "title": "Authorization-segmented virtual schema projections",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-OPS-R052.1",
+        "GRAPHOS-OPS-R052.2",
+        "GRAPHOS-OPS-R052.3",
+        "GRAPHOS-OPS-R052.4",
+        "GRAPHOS-OPS-R052.5",
+        "GRAPHOS-OPS-R052.6"
+      ]
+    },
+    {
+      "id": "GRAPHOS-OPS-R052.1",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R052.2",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R052.3",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R052.4",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R052.5",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R052.6",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R053",
+      "title": "Bounded interaction space",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-OPS-R053.1",
+        "GRAPHOS-OPS-R053.2",
+        "GRAPHOS-OPS-R053.3",
+        "GRAPHOS-OPS-R053.4",
+        "GRAPHOS-OPS-R053.5",
+        "GRAPHOS-OPS-R053.6"
+      ]
+    },
+    {
+      "id": "GRAPHOS-OPS-R053.1",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R053.2",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R053.3",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R053.4",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R053.5",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R053.6",
+      "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

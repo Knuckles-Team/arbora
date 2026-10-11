@@ -2,14 +2,21 @@
   "schema_version": 2,
   "spec_id": "GRAPHOS-DATA-MARKET",
   "owner_repo": "graph-os",
-  "delivery_state": "LANDED",
+  "delivery_state": "SPECIFIED",
   "requirement_ids": [
     "GRAPHOS-DATA-MARKET-R001",
     "GRAPHOS-DATA-MARKET-R002",
     "GRAPHOS-DATA-MARKET-R003",
     "GRAPHOS-DATA-MARKET-R004",
     "GRAPHOS-DATA-MARKET-R005",
-    "GRAPHOS-DATA-MARKET-R006"
+    "GRAPHOS-DATA-MARKET-R006",
+    "GRAPHOS-DATA-MARKET-R007",
+    "GRAPHOS-DATA-MARKET-R007.1",
+    "GRAPHOS-DATA-MARKET-R007.2",
+    "GRAPHOS-DATA-MARKET-R007.3",
+    "GRAPHOS-DATA-MARKET-R007.4",
+    "GRAPHOS-DATA-MARKET-R007.5",
+    "GRAPHOS-DATA-MARKET-R007.6"
   ],
   "requirements": [
     {
@@ -69,6 +76,63 @@
         "35385208a619",
         "e61c0e3df8b7"
       ],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DATA-MARKET-R007",
+      "title": "Confirmed order and position changes",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-DATA-MARKET-R007.1",
+        "GRAPHOS-DATA-MARKET-R007.2",
+        "GRAPHOS-DATA-MARKET-R007.3",
+        "GRAPHOS-DATA-MARKET-R007.4",
+        "GRAPHOS-DATA-MARKET-R007.5",
+        "GRAPHOS-DATA-MARKET-R007.6"
+      ]
+    },
+    {
+      "id": "GRAPHOS-DATA-MARKET-R007.1",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DATA-MARKET-R007.2",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DATA-MARKET-R007.3",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DATA-MARKET-R007.4",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DATA-MARKET-R007.5",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DATA-MARKET-R007.6",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": []
     }
   ]

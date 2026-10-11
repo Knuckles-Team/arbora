@@ -95,3 +95,31 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
 - [ ] **GRAPHOS-OPS-R040.9:** Cross-repo prerequisite (owner: agent-utilities): add the proposed `AU-BOUNDARY-R013
 - [ ] **GRAPHOS-OPS-R040.10:** Add one test in tests/gateway/test_artifacts_route_mount
 - [ ] **GRAPHOS-OPS-R041:** Genius Agent widget dropped
+- [ ] **GRAPHOS-OPS-R050:** Policy lifecycle operations that guard plans.
+- [ ] **GRAPHOS-OPS-R050.1:** Model.
+- [ ] **GRAPHOS-OPS-R050.2:** Behavior.
+- [ ] **GRAPHOS-OPS-R050.3:** Wiring.
+- [ ] **GRAPHOS-OPS-R050.4:** Refusal.
+- [ ] **GRAPHOS-OPS-R050.5:** Evidence.
+- [ ] **GRAPHOS-OPS-R050.6:** Hot-path proof.
+- [ ] **GRAPHOS-OPS-R051:** Scoped security-evaluation operation.
+- [ ] **GRAPHOS-OPS-R051.1:** Model.
+- [ ] **GRAPHOS-OPS-R051.2:** Behavior.
+- [ ] **GRAPHOS-OPS-R051.3:** Wiring.
+- [ ] **GRAPHOS-OPS-R051.4:** Refusal.
+- [ ] **GRAPHOS-OPS-R051.5:** Evidence.
+- [ ] **GRAPHOS-OPS-R051.6:** Hot-path proof.
+- [ ] **GRAPHOS-OPS-R052:** Authorization-segmented virtual schema projections.
+- [ ] **GRAPHOS-OPS-R052.1:** Model.
+- [ ] **GRAPHOS-OPS-R052.2:** Behavior.
+- [ ] **GRAPHOS-OPS-R052.3:** Wiring.
+- [ ] **GRAPHOS-OPS-R052.4:** Refusal.
+- [ ] **GRAPHOS-OPS-R052.5:** Evidence.
+- [ ] **GRAPHOS-OPS-R052.6:** Hot-path proof.
+- [ ] **GRAPHOS-OPS-R053:** Bounded interaction space.
+- [ ] **GRAPHOS-OPS-R053.1:** Model.
+- [ ] **GRAPHOS-OPS-R053.2:** Behavior.
+- [ ] **GRAPHOS-OPS-R053.3:** Wiring.
+- [ ] **GRAPHOS-OPS-R053.4:** Refusal.
+- [ ] **GRAPHOS-OPS-R053.5:** Evidence.
+- [ ] **GRAPHOS-OPS-R053.6:** Hot-path proof.

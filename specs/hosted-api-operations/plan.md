@@ -159,3 +159,49 @@ Reused: `build_read_op`, `bound_service`, `Params`, the closed error enum, and t
 - Depends on the AU-HARNESS row that writes those fields at run end.
 - Depends on the AU evaluation row that stores measured outcomes as engine facts.
 - Unblocks the client rows that show cost, context use, and termination reason.
+
+## Policy lifecycle operations that guard plans (GRAPHOS-OPS-R050)
+
+Data flow: `policy.create` over POST /ops -> `_base_authority` (graph_os/api/invoke/pipeline.py:208) -> `_policy` (:198) -> `PolicyAuthority.authorize` (graph_os/control_plane/policy/repository.py:179) -> audit record.
+
+Types: `PolicyEntity`, `ConstitutionSource`, `PolicyChange`. Failure: `POLICY_DENIED` or `POLICY_UNAVAILABLE`, never a partial change.
+
+Existing code: graph_os/control_plane/policy/repository.py:100, :117, :129, :179; graph_os/control_plane/policy/models.py:203; graph_os/api/ops/policy.py:36; graph_os/api/invoke/pipeline.py:198, :208, :218. Reachable today: no. `PolicyAuthority` has no production constructor.
+
+Decision: GraphOS serves the operation and admits plans, and the engine decides violation. Rejected: a policy evaluator inside GraphOS, which duplicates engine decisions. Cross-repository: EG-DECISION-ENGINE-R001 decision contract, AU-SEC-R001 policy semantics.
+
+## Scoped security-evaluation operation (GRAPHOS-OPS-R051)
+
+Data flow: `security.evaluate` over POST /ops -> `_effect` (graph_os/api/invoke/pipeline.py:218) -> scope test -> run loop (AU-SEC-R001) -> audit record.
+
+Types: `EvaluationGoal`, `EvaluationCatalog`, `EvaluationScope`, `Finding`. Failure: `SUBJECT_ACCESS_DENIED` before any attack runs.
+
+Existing code: graph_os/security/security_policy_middleware.py:52; graph_os/api/ops/registry_factory.py. Reachable today: no. Search terms used: red team, attack, scorer, jailbreak, target scope.
+
+Decision: the run loop composes and scores, and GraphOS admits by scope. Rejected: attack composition inside GraphOS. Cross-repository: AU-SEC-R001.
+
+References:
+- arXiv:2605.04019 — Dheekonda et al., "Redefining AI Red Teaming in the Agentic Era: From Weeks to Hours" (2026)
+
+## Authorization-segmented virtual schema projections (GRAPHOS-OPS-R052)
+
+Data flow: `query.projections` over POST /ops -> `build_operation_runtime` (graph_os/api/invoke/bootstrap.py:167) -> `scope_covers` -> audit record.
+
+Types: `SchemaProjection`. Failure: `SUBJECT_ACCESS_DENIED` or `UNAVAILABLE`.
+
+Existing code: graph_os/api/ops/_common.py:106; graph_os/api/http/openapi.py:1; graph_os/control_plane/agents/repository.py:81. Reachable today: no for projections. Search terms used: virtual schema, schema_context, projection, authorization boundary.
+
+Decision: GraphOS filters by the caller's verified grants over engine labels. Rejected: GraphOS-side boundary inference. Cross-repository: EG-IDENTITY-R001, EG-FEDERATED-QUERY-R001; GRAPHOS-DATA-MARKET-R005 owns schema_context.
+
+## Bounded interaction space (GRAPHOS-OPS-R053)
+
+Data flow: `retrieval.space` over POST /ops -> the governed retriever entry (graph_os/control_plane/retrieval/service.py:61) -> `union_top_k` -> audit record.
+
+Types: `InteractionSpace`, `CorpusBoundary`, `QueryDirectory`. Failure: `LOAD_CAP_EXCEEDED`, `INVALID_ARGUMENT`, `UNAVAILABLE`.
+
+Existing code: graph_os/api/ops/retrieval.py:60, :77; graph_os/control_plane/retrieval/service.py:37, :61. Reachable today: no for the governed retriever; yes for `retrieval.search`. Search terms used: bm25, top_k, interaction space, working dir, corpus.
+
+Decision: the engine ranks and GraphOS bounds the space. Rejected: returning ranked snippets only. Cross-repository: EG-FEDERATED-QUERY-R001, AU-RETRIEVAL-R001.
+
+References:
+- arXiv:2606.06880 — Zhuang, Ni, Fun, Lin, Ma, "Towards Retrieving Interaction Spaces for Agentic Search" (2026)
