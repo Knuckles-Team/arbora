@@ -56,7 +56,7 @@ OIDC validates discovery metadata, issuer/audience/signature, `state`/`nonce`, P
 
 ## Decisions, failure modes, and observability
 
-One engine-backed authority eliminates local/engine disagreement. Unavailable engine or secrets store means login/identity mutation fail closed. Bad signing key, unknown `kid`, wrong tenant/audience, stale epoch, revoked credential, denied scope, and unavailable external IdP produce distinct internal reason codes but safe public messages. Emit metrics for issuance, login failures, mode transitions, denied access and adapter availability without subject, token, password or raw IP labels. Audit all privileged identity/access changes and sampled denials through engine authority. No readiness gate needs an existing external provider; optional live-provider qualification is a separate deployment exercise.
+One engine-backed authority eliminates local/engine disagreement. Unavailable engine or secrets store means login/identity mutation fail closed. Bad signing key, unknown `kid`, wrong tenant/audience, stale epoch, revoked credential, denied scope, and unavailable external IdP produce distinct internal reason codes but safe public messages. Emit metrics for issuance, login failures, mode transitions, denied access and adapter availability. Those metrics carry no subject, token, password or raw IP labels. Audit all privileged identity/access changes and sampled denials through engine authority. No readiness gate needs an existing external provider; optional live-provider qualification is a separate deployment exercise.
 
 ## Implementation order
 
