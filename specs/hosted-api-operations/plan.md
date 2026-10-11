@@ -4,7 +4,7 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing [spe
 
 ## Existing wiring to reuse
 
-`graph_os.mcp_server.runtime` owns the served FastMCP loop, verified session scope, 320-second bounded dispatch, and `runtime.graph_client(tenant)`. `graph_os.gateway.graph_api.register_graph_routes` composes the REST host. `graph_os.fleet.multiplexer` owns per-session loading, forwarding, notifications, and child lifecycle. `graph_os.a2a` already has authenticated unary task methods. `graph_os.webui_host.mcp_delegation` must use the same public invocation boundary. These are migration seams, not new parallel servers. Engine state belongs to `epistemic-graph`. Agent decisions and work items belong to `agent-utilities`. Connector effects belong to the SDK and fleet. GraphOS authenticates, composes, supervises, routes and projects.
+`graph_os.mcp_server.runtime` owns the served FastMCP loop, verified session scope, 320-second bounded dispatch, and `runtime.graph_client(tenant)`. `graph_os.gateway.graph_api.register_graph_routes` composes the REST host. `graph_os.fleet.multiplexer` owns per-session loading, forwarding, notifications, and child lifecycle. `graph_os.a2a` already has authenticated unary task methods. `graph_os.webui_host.mcp_delegation` must use the same public invocation boundary. These are migration seams, not new parallel servers. Engine state belongs to `epistemic-graph`. Decisions, context, traces and durable WorkItems belong to `epistemic-graph`. `agent-utilities` is the agent harness that applies engine decisions. Connector ingestion belongs to `agent-connector-sdk` (SDK-CONNECTOR-CONTROL-R005). Connector effects belong to the SDK and fleet. GraphOS authenticates, composes, supervises, routes and projects.
 
 ## Component and data flow
 
@@ -28,7 +28,7 @@ The invocation order is: resolve and allowed surface. Strict params including au
 
 `POST /api/v1/ops/{op_id}` accepts the operation's JSON schema; `Idempotency-Key` is required for non-natural write ops. `GET /api/v1/registry` is caller-filtered and returns a digest ETag. `GET /api/v1/ops` and OpenAPI expose only public schema metadata; sensitive discovery is filtered per caller. Resource routes, including identity and fleet catalog paths, are generated from `HttpShape` and use the same handler. `Graphos-Plan-Ref` resumes a plan. HTTP preview returns 428 with `CONFIRMATION_REQUIRED` or `STEP_UP_REQUIRED`. MCP returns the same envelope in tool result. `meta.registry_digest` and `meta.api_version` are mandatory.
 
-The resident MCP surface contains the ten names in HO-04. `find` accepts `op` or natural-language `intent`; exact operation IDs and typed params are required before effect. Verb ceilings are enforced (`ask/find/why` read, `write` write, `act` operational effects, `manage` admin). Discovery returns authorized schema descriptors. A bounded cache and tenant/policy-partitioned outcome ranking may improve suggestions but must never turn fuzzy text into an unconfirmed mutation. Fleet `find_tools` pages one catalog; `load_tools` mounts a child tool as `<server>__<tool>`, a prompt/resource/skill in its native MCP form, or returns an SDK item pointer. Native child forwarding calls `invoke("fleet.call", ...)`; no transport calls bypass it. The child call uses the caller's delegated credential or a declared service-execution rule with the same deputy checks. `ToolAnnotations` classify read/destructive effects; unannotated means write; a reviewed manifest can tighten to admin.
+The current MCP surface is GRAPHOS-FLEET-R029: six intent tools plus two Apps launchers. `find` accepts `op` or natural-language `intent`; exact operation IDs and typed params are required before effect. Verb ceilings are enforced (`ask/find/why` read, `write` write, `act` operational effects, `manage` admin). Discovery returns authorized schema descriptors. A bounded cache and tenant/policy-partitioned outcome ranking may improve suggestions but must never turn fuzzy text into an unconfirmed mutation. Fleet discovery and status use `find`, invocation uses `act`, and mounts/releases use `manage` (GRAPHOS-FLEET-R029). Reuse GRAPHOS-FLEET-R011/R013 registry/discovery machinery and GRAPHOS-OPS-R007/R011/R012; add only missing operation wiring and no duplicate registry or disclosure rollup. Native child forwarding calls `invoke("fleet.call", ...)`; no transport calls bypass it. The child call uses the caller's delegated credential or a declared service-execution rule with the same deputy checks. `ToolAnnotations` classify read/destructive effects; unannotated means write; a reviewed manifest can tighten to admin.
 
 Scopes are exact. `mcp:discover` and `mcp:delegate` do not imply each other; `mcp:admin` is not a super-scope. `finance:read`, `fleet:read/control`, `loops:read/control`, `ops:read/admin` and every operation scope must exist in the public engine registry. `EUNOMIA_TYPE=off` still enforces scopes; enabled PDP failure returns `POLICY_UNAVAILABLE`. Decisions cache at most 30 seconds by principal, revision, item, action; admin/destructive are uncached. A revision invalidates loaded visibility and sends list-change notifications. The enabled/disabled mode behavior is testable with an in-process fixture PDP.
 
@@ -177,30 +177,30 @@ Cross-repository: engine memory-write refusal, owner prefix `EG`, contract name 
 - no-arXiv: AI Agent Traps (Franklin et al., SSRN 6372438, 2026).
 ## Policy lifecycle operations that guard plans (GRAPHOS-OPS-R050)
 
-Data flow: `policy.create` over POST /ops -> `_base_authority` (graph_os/api/invoke/pipeline.py:208) -> `_policy` (:198) -> `PolicyAuthority.authorize` (graph_os/control_plane/policy/repository.py:179) -> audit record.
+Data flow: `policy.create` over POST /api/v1/ops/{op_id} -> `_base_authority` (graph_os/api/invoke/pipeline.py:208) -> `_policy` (:198) -> `PolicyAuthority.authorize` (graph_os/control_plane/policy/repository.py:179) -> audit record.
 
 Types: `PolicyEntity`, `ConstitutionSource`, `PolicyChange`. Failure: `POLICY_DENIED` or `POLICY_UNAVAILABLE`, never a partial change.
 
 Existing code: graph_os/control_plane/policy/repository.py:100, :117, :129, :179; graph_os/control_plane/policy/models.py:203; graph_os/api/ops/policy.py:36; graph_os/api/invoke/pipeline.py:198, :208, :218. Reachable today: no. `PolicyAuthority` has no production constructor.
 
-Decision: GraphOS serves the operation and admits plans, and the engine decides violation. Rejected: a policy evaluator inside GraphOS, which duplicates engine decisions. Cross-repository: EG-DECISION-ENGINE-R001 decision contract, AU-SEC-R001 policy semantics.
+Decision: GraphOS serves the operation and admits plans, and the engine decides violation. Rejected: a policy evaluator inside GraphOS, which duplicates engine decisions. Cross-repository: EG-DECISION-ENGINE-R001 owns policy decisions; GraphOS owns authenticated operation admission and transport. Clause interpretation requires a published engine producer contract, not an AU policy evaluator.
 
 ## Scoped security-evaluation operation (GRAPHOS-OPS-R051)
 
-Data flow: `security.evaluate` over POST /ops -> `_effect` (graph_os/api/invoke/pipeline.py:218) -> scope test -> run loop (AU-SEC-R001) -> audit record.
+Data flow: `security.evaluate` over POST /api/v1/ops/{op_id} -> `_effect` (graph_os/api/invoke/pipeline.py:218) -> verified target authorization -> new public EG selection/verdict adapters (EG-DECISION-ENGINE-R001/R138) -> AU harness executes admitted probes -> engine verdict -> audit record. Runtime limits and trace commits use EG-DECISION-ENGINE-R133; Decide itself remains read-only.
 
 Types: `EvaluationGoal`, `EvaluationCatalog`, `EvaluationScope`, `Finding`. Failure: `SUBJECT_ACCESS_DENIED` before any attack runs.
 
 Existing code: graph_os/security/security_policy_middleware.py:52; graph_os/api/ops/registry_factory.py. Reachable today: no. Search terms used: red team, attack, scorer, jailbreak, target scope.
 
-Decision: the run loop composes and scores, and GraphOS admits by scope. Rejected: attack composition inside GraphOS. Cross-repository: AU-SEC-R001.
+Decision: EG owns catalog facts, selection and probe verdicts (EG-DECISION-ENGINE-R001/R138); AU executes the selected probes; GraphOS admits by scope and serves the result. Reuse this R051 consumer instead of adding another security-evaluation rollup. Missing engine ports remain unavailable.
 
 References:
 - arXiv:2605.04019 — Dheekonda et al., "Redefining AI Red Teaming in the Agentic Era: From Weeks to Hours" (2026)
 
 ## Authorization-segmented virtual schema projections (GRAPHOS-OPS-R052)
 
-Data flow: `query.projections` over POST /ops -> `build_operation_runtime` (graph_os/api/invoke/bootstrap.py:167) -> `scope_covers` -> audit record.
+Data flow: `query.projections` over POST /api/v1/ops/{op_id} -> `build_operation_runtime` (graph_os/api/invoke/bootstrap.py:167) -> `scope_covers` -> audit record.
 
 Types: `SchemaProjection`. Failure: `SUBJECT_ACCESS_DENIED` or `UNAVAILABLE`.
 
@@ -210,13 +210,15 @@ Decision: GraphOS filters by the caller's verified grants over engine labels. Re
 
 ## Bounded interaction space (GRAPHOS-OPS-R053)
 
-Data flow: `retrieval.space` over POST /ops -> the governed retriever entry (graph_os/control_plane/retrieval/service.py:61) -> `union_top_k` -> audit record.
+Data flow: `retrieval.space` over POST /api/v1/ops/{op_id} -> the governed retriever entry (graph_os/control_plane/retrieval/service.py:61) -> `union_top_k` -> audit record.
 
 Types: `InteractionSpace`, `CorpusBoundary`, `QueryDirectory`. Failure: `LOAD_CAP_EXCEEDED`, `INVALID_ARGUMENT`, `UNAVAILABLE`.
 
 Existing code: graph_os/api/ops/retrieval.py:60, :77; graph_os/control_plane/retrieval/service.py:37, :61. Reachable today: no for the governed retriever; yes for `retrieval.search`. Search terms used: bm25, top_k, interaction space, working dir, corpus.
 
-Decision: the engine ranks and GraphOS bounds the space. Rejected: returning ranked snippets only. Cross-repository: EG-FEDERATED-QUERY-R001, AU-RETRIEVAL-R001.
+Decision: the engine ranks and GraphOS bounds the space. Rejected: returning ranked snippets only. Cross-repository: EG-FEDERATED-QUERY-R001 supplies query results, EG-DECISION-ENGINE-R029 chooses retrieval plans, EG-DECISION-ENGINE-R137 supplies context limits, and SDK-CONNECTOR-CONTROL-R005 supplies connector ingestion. AU executes engine-directed exploration.
 
 References:
 - arXiv:2606.06880 — Zhuang, Ni, Fun, Lin, Ma, "Towards Retrieving Interaction Spaces for Agentic Search" (2026)
+
+Research citations above describe inspiration only. The engine and transport contracts, verified authority boundaries and served acceptance requirements define the architecture.

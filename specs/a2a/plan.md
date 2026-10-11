@@ -108,7 +108,6 @@ flowchart LR
 ### Quality and environment
 
 Use `uv sync --extra test`, focused `uv run pytest tests/a2a/test_admission.py`, Ruff, mypy, and the repository's configured pre-commit hooks. No new broker, task store, or duplicate admission authority is introduced. CI fixtures require no external secrets or private network for the model and refusal tests landed in this PR.
-<<<<<<< HEAD
 
 
 ## A2A harness-configuration admission
@@ -170,5 +169,44 @@ The card must not advertise a harness capability before `GRAPHOS-A2A-R017.6` pas
 ### Open facts the code did not show
 
 The source of `priority` and the field names inside the `resolve_capability` result are not visible. `GRAPHOS-A2A-R017.3` and `R016.5` set them as explicit rows.
-=======
->>>>>>> origin/spec-three-states
+
+## A2A tool-action admission (GRAPHOS-A2A-R005.3 to R005.8)
+
+Consumers: AU-SEC-R012. Moves from agent-utilities: `agent_utilities/security/tool_guard.py:383`.
+
+Existing code: `graph_os/a2a/application.py:140` (fail-closed confirm stub), `graph_os/a2a/models.py:104` (`A2APlanConfirmParams`), `graph_os/api/invoke/pipeline.py:641` (`_confirmation_gate`). `graph_os/access/service.py:54` is operator-console elevation and is not an A2A approval port. Reachable today: no. The stub is reachable and always refuses; no admission function exists. Search terms: `admission`, `approval`, `untrusted`, `taint`, `pending_call`.
+
+Data flow: `POST /a2a` `graphos.plan/confirm` → `_invoke_method` (`application.py:157`) → async confirmation_kind dispatcher → shared invoke with Surface.A2A and verified signed authority → `ToolActionAdmitter.admit` (new) → one engine verdict → audit reservation (`GRAPHOS-A2A-R007`) → `ToolActionApproval` in the response → harness applies it.
+
+Types: `ToolActionAdmissionRequest` (`pending_call_id`, `params_digest`, `trust_mark_ref`, `action_class`), `ToolActionApproval` (`verdict`, `approval_ref`, `decision_ref`), `ToolActionRefusal` (closed reasons).
+
+Failure: any refusal denies. Approval stays refused until full GRAPHOS-A2A-R005.2 and the GRAPHOS-A2A-R006.2 verified-caller bridge (including R006.2.1) are proven end to end. A grant store alone cannot enable it; require input-required emission, signature verification and replay, changed-params, different-human, expiry and revocation refusals.
+
+Reuse: the method table and params model. New: the admitter and its models.
+
+Decision: graph-os checks, records and serves; the engine decides, because a second policy table drifts from the engine. Rejected: keeping the content-trust decision in the harness, which the door cannot audit.
+
+Cross-repository: `EG-DECISION-ENGINE` (verdict on a tool action after untrusted content); `AU-SEC-R012` (applies the approval).
+
+## A2A held-item admission (GRAPHOS-A2A-R006.3 to R006.8)
+
+Consumers: AU-CONTROL-R040, AU-HARNESS-R023. Moves from agent-utilities: `agent_utilities/knowledge_graph/enrichment/writeback/approval.py:47`.
+
+Existing code: `graph_os/a2a/application.py:140`, `graph_os/a2a/models.py:104`, `graph_os/access/service.py:54`, `agent_utilities/knowledge_graph/enrichment/writeback/approval.py:170` (`approve_proposal`, called from `agent_utilities/mcp/tools/ontology_tools.py:335`). Reachable today: no for graph-os; yes for the harness-side function. Search terms: `admit`, `proposal`, `verdict`, `approve_proposal`, `stored program`.
+
+Data flow: `POST /a2a` `graphos.plan/confirm` → `_invoke_method` (`application.py:157`) → shared invoke with verified caller and Surface.A2A → `HeldItemAdmitter.admit` (new) → dedicated engine held-item verdict port (new).
+A program also passes a verification record check. A dedicated engine held-item admission port records the verdict through shared invoke with the verified caller and Surface.A2A, retaining signed human approval, grant/plan fences, scope/policy checks and audit reservation. This port and adapter are new; `approve_elevation` accepts ElevationApproval and hardcodes OPERATOR_CONSOLE, so it cannot authorize held items. Missing ports or full signed-chain/verified-caller prerequisites keep the stub refused. The harness then applies the `HeldItemVerdict` or leaves the item held.
+
+Types: `HeldItemAdmissionRequest`, `HeldItemVerdict`, closed refusal reasons. One closed confirmation_kind union distinguishes tool_action from held_item; reject missing, unknown or mixed variants. Replace the synchronous confirm stub with one async dispatcher into shared invoke, authority and audit. Engine policy supplies all verification/retirement thresholds; missing evidence refuses without local defaults. A registry operation that serves this outside A2A belongs to the hosted-api-operations spec and is not written here.
+
+Failure: a refusal leaves the item held. No local record exists.
+
+Decision: one admitter for both held kinds, because both wait on the same confirm door. Rejected: a separate program-admission method, which duplicates the door.
+
+Cross-repository: `EG-` rows for the held proposal, the verification record, the replay count and the retirement count; `AU-CONTROL-R040` and `AU-HARNESS-R023` apply the verdict.
+
+### References
+
+- arXiv:2606.17929 — Li, "PreAct: Computer-Using Agents that Get Faster on Repeated Tasks" (2026)
+
+Research citations above describe inspiration only. The engine and transport contracts, verified authority boundaries and served acceptance requirements define the architecture.

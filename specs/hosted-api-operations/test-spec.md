@@ -42,3 +42,5 @@ Run `uv run pytest tests/api tests/fleet tests/mcp_server tests/gateway`, `uv ru
 - GRAPHOS-OPS-R051: the hot-path proof test passes and the typed refusal leaves no effect.
 - GRAPHOS-OPS-R052: the hot-path proof test passes and the typed refusal leaves no effect.
 - GRAPHOS-OPS-R053: the hot-path proof test passes and the typed refusal leaves no effect.
+
+R050/R051/R053 served fixtures cross shared invoke into public EG producer ports, checking engine verdict provenance and typed unavailability when a producer is absent. R051 uses EG-DECISION-ENGINE-R138 for scorer/verdict decisions and R133 for quotas/trace commits; AU only executes probes. R053 uses engine retrieval/context decisions and SDK source ingestion. Discovery fixtures use FLEET-R029 find/act/manage over R011/R013 registry machinery, with no retired fleet meta-tools or duplicate registry.
