@@ -108,7 +108,6 @@ flowchart LR
 ### Quality and environment
 
 Use `uv sync --extra test`, focused `uv run pytest tests/a2a/test_admission.py`, Ruff, mypy, and the repository's configured pre-commit hooks. No new broker, task store, or duplicate admission authority is introduced. CI fixtures require no external secrets or private network for the model and refusal tests landed in this PR.
-<<<<<<< HEAD
 
 
 ## A2A harness-configuration admission
@@ -170,8 +169,6 @@ The card must not advertise a harness capability before `GRAPHOS-A2A-R017.6` pas
 ### Open facts the code did not show
 
 The source of `priority` and the field names inside the `resolve_capability` result are not visible. `GRAPHOS-A2A-R017.3` and `R016.5` set them as explicit rows.
-=======
->>>>>>> origin/spec-three-states
 
 ## A2A tool-action admission (GRAPHOS-A2A-R005.3 to R005.8)
 
