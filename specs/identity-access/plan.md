@@ -56,7 +56,7 @@ OIDC validates discovery metadata, issuer/audience/signature, `state`/`nonce`, P
 
 ## Decisions, failure modes, and observability
 
-One engine-backed authority eliminates local/engine disagreement. Unavailable engine or secrets store means login/identity mutation fail closed. Bad signing key, unknown `kid`, wrong tenant/audience, stale epoch, revoked credential, denied scope, and unavailable external IdP produce distinct internal reason codes but safe public messages. Emit metrics for issuance, login failures, mode transitions, denied access and adapter availability without subject, token, password or raw IP labels. Audit all privileged identity/access changes and sampled denials through engine authority. No readiness gate needs an existing external provider; optional live-provider qualification is a separate deployment exercise.
+One engine-backed authority eliminates local/engine disagreement. Unavailable engine or secrets store means login/identity mutation fail closed. Bad signing key, unknown `kid`, wrong tenant/audience, stale epoch, revoked credential, denied scope, and unavailable external IdP produce distinct internal reason codes but safe public messages. Emit metrics for issuance, login failures, mode transitions, denied access and adapter availability. Those metrics carry no subject, token, password or raw IP labels. Audit all privileged identity/access changes and sampled denials through engine authority. No readiness gate needs an existing external provider; optional live-provider qualification is a separate deployment exercise.
 
 ## Implementation order
 
@@ -129,3 +129,10 @@ are then checked synchronously before return. A refusal removes the private
 binding immediately, before the request context exits. The qualified EG
 adapter must uphold its live-resolution consistency contract; this ordering is
 not a distributed transaction or a substitute for final engine authorization.
+
+## GRAPHOS-IDENTITY-R026 client attribution and segmentation
+
+Data flow: verified token → client session record → run record and audit event → caller-scoped listing.
+Attach point: graph_os/api/invoke/audit.py for the audit event; the session-open site is located by the first child.
+Reused: the verified principal from `GRAPHOS-IDENTITY-R017.1`. Segmenting stored memories is an engine row.
+Decision: attribute by verified principal only. Rejected alternative: a client-supplied client id, which a caller can forge.

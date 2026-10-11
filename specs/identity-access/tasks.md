@@ -96,3 +96,11 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [x] **GRAPHOS-IDENTITY-R007.1:** Typed admin-console tab model with refusal tests
 - [ ] **GRAPHOS-IDENTITY-R007.2:** Mapping dry-run preview and mode-transition wizard
 - [ ] **GRAPHOS-IDENTITY-R025:** Register identity ops once the engine contract lists `identity:admin`.
+- [ ] **GRAPHOS-IDENTITY-R026:** Hosted sessions are attributed to a client and segmented by principal (rollup).
+- [ ] **GRAPHOS-IDENTITY-R026.1:** Client session record.
+- [ ] **GRAPHOS-IDENTITY-R026.2:** Record at session open.
+- [ ] **GRAPHOS-IDENTITY-R026.3:** Runs carry the session id.
+- [ ] **GRAPHOS-IDENTITY-R026.4:** Audit event per run.
+- [ ] **GRAPHOS-IDENTITY-R026.5:** Caller-scoped client listing.
+- [ ] **GRAPHOS-IDENTITY-R026.6:** User and service account parity.
+- [ ] **GRAPHOS-IDENTITY-R026.7:** Cross-client denial is uniform.

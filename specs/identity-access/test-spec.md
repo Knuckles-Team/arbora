@@ -56,3 +56,10 @@ during token verification in both initial binding and pre-invocation checks.
 All must refuse with no invocation or retained binding. A separate case changes
 caller policy during the final session resolution and requires refusal before
 evidence return. These preserve the earlier cookie and effective-route probes.
+| GRAPHOS-IDENTITY-R026.1 | tests/identity/test_client_session.py | Client session record. |
+| GRAPHOS-IDENTITY-R026.2 | tests/identity/test_client_session_open.py | Record at session open. |
+| GRAPHOS-IDENTITY-R026.3 | tests/identity/test_run_attribution.py | Runs carry the session id. |
+| GRAPHOS-IDENTITY-R026.4 | tests/identity/test_run_audit.py | Audit event per run. |
+| GRAPHOS-IDENTITY-R026.5 | tests/identity/test_list_clients.py | Caller-scoped client listing. |
+| GRAPHOS-IDENTITY-R026.6 | tests/identity/test_principal_parity.py | User and service account parity. |
+| GRAPHOS-IDENTITY-R026.7 | tests/identity/test_cross_client_denial.py | Cross-client denial is uniform. |
