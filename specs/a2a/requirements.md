@@ -41,7 +41,9 @@
 
 ## Retired requirement lineage
 
-The following rows retain their original IDs, requirements and verification criteria. Each row is retired because its replacement is owned by this spec. Retirement does not establish acceptance of the replacement.
+The A2A-002 admission rows moved to R016 through R021 during consolidation.
+The table preserves their original acceptance criteria and records each replacement.
+Retirement does not prove that an admission capability works.
 
 | ID | Requirement | Verification |
 |---|---|---|
