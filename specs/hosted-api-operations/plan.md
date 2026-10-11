@@ -179,7 +179,7 @@ Old statement: the gateway carry-over was a separate spec `GRAPHOS-GWC`. New sta
 | `GRAPHOS-GWC-R002.5` | `GRAPHOS-OPS-R040.5` |
 | `GRAPHOS-GWC-R002.6` | `GRAPHOS-OPS-R040.6` |
 | `GRAPHOS-GWC-R002.7` | `GRAPHOS-OPS-R040.7` |
-| `GRAPHOS-GRAPHOS-OPS-R040.8` | `GRAPHOS-OPS-R040.8` |
+| `GRAPHOS-GWC-R002.8` | `GRAPHOS-OPS-R040.8` |
 | `GRAPHOS-GWC-R002.9` | `GRAPHOS-OPS-R040.9` |
 | `GRAPHOS-GWC-R003` | `GRAPHOS-OPS-R041` |
 | `GRAPHOS-GWC-R003.1` | `GRAPHOS-OPS-R041.1` |
@@ -191,3 +191,7 @@ Old statement: the gateway carry-over was a separate spec `GRAPHOS-GWC`. New sta
 | `T-006` | `HO-T19` |
 | `T-007` | `HO-T20` |
 | `T-008` | `HO-T21` |
+
+### 2026-10-11 Preserve moved requirement lineage
+
+The 23 unique `GRAPHOS-GWC` rows from `gateway-carryover/requirements.md` at `44c7318f84b461817b9f0de05e7d4be0388ceb62` remain in this spec as `RETIRED` rows. Each row retains its original requirement and verification text and names its replacement. The ID map above records the move; it does not replace the required tombstones or establish delivery of an active row.

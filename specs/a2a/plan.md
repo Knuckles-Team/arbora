@@ -135,3 +135,7 @@ Three A2A specs merged into one; duplicate spec ID removed. Row ID map (old dire
 | `graphos-a2a-002` | `GRAPHOS-A2A-002-R004` | `GRAPHOS-A2A-R019` |
 | `graphos-a2a-002` | `GRAPHOS-A2A-002-R005` | `GRAPHOS-A2A-R020` |
 | `graphos-a2a-002` | `GRAPHOS-A2A-002-R006` | `GRAPHOS-A2A-R021` |
+
+### 2026-10-11 Preserve moved requirement lineage
+
+The 7 unique `GRAPHOS-A2A-002` rows from `graphos-a2a-002/requirements.md` at `44c7318f84b461817b9f0de05e7d4be0388ceb62` remain in this spec as `RETIRED` rows. Each row retains its original requirement and verification text and names its replacement. The ID map above records the move; it does not replace the required tombstones or establish delivery of an active row.
