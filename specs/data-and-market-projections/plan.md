@@ -138,3 +138,13 @@ pytest, and the repository's release workflow. Any scanner finding requires a
 real fix or a documented existing baseline comparison; do not suppress it to
 manufacture a green gate. Record exact commands, revisions, and results in the
 spec evidence before marking `ACCEPTED`.
+
+## Confirmed order and position changes (GRAPHOS-DATA-MARKET-R007)
+
+Data flow: paper order operation over POST /ops -> `_effect` (graph_os/api/invoke/pipeline.py:218) -> `bind_plan` (:230) -> confirmation -> signature verification (EG-FINANCE-PRIMITIVES-R001) -> provider -> audit record.
+
+Types: `OrderChange`, `PositionChange`, `WalletOperation`. Failure: `CONFIRMATION_REQUIRED` or `POLICY_DENIED` with zero provider calls.
+
+Existing code: graph_os/finance/markets.py:34, :90; graph_os/api/invoke/pipeline.py:218, :230. Reachable today: no order operation exists. Search terms used: paper order, submit order, wallet, signature, confirm.
+
+Decision: reuse the plan and confirm pipeline. Rejected: a finance-only confirmation path. Cross-repository: EG-FINANCE-PRIMITIVES-R001.

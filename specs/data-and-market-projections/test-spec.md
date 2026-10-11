@@ -58,3 +58,7 @@ small, versioned, and synthetic.
 
 Mark delivery `LANDED` only from a merged default-branch revision. Mark
 acceptance `ACCEPTED` only after all applicable rows pass on that revision.
+
+## Spec-audit rollup tests
+
+- GRAPHOS-DATA-MARKET-R007: the hot-path proof test passes and the typed refusal leaves no effect.
