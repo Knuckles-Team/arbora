@@ -25,7 +25,7 @@ An operation request uses the hosted registry and `invoke` pipeline, not an A2A-
 
 When the orchestrator pauses on a pending effect, GraphOS issues a durable plan lease bound to `(task_id, parent_work_item_id, child_work_item_id, pending_call_id, op_id, params_digest, principal, tenant, policy_revision, registry_digest, expiry)`. It sends an `input-required` event with a safe preview. The client obtains a fresh authenticated human signature/grant through the public identity contract; the service never stores the bearer itself. On `graphos.plan/confirm`, GraphOS verifies the original human and each bound identity, asks the engine to atomically consume the human grant and plan fence, then dispatches through the common invocation pipeline. If any authority changes, return a stable refusal and preserve zero effect. A console-only admin effect instead returns a URL and is confirmed only on the console surface.
 
-Pre-effect audit reservation and post-effect outcome linking use the shared hosted-operation service. A two-person approval must prove two distinct qualified humans using the same durable relation; no service or delegated agent can synthesize either participant. All claims are rechecked at resume time. A canceled task cannot be confirmed; a committed effect is not treated as reversible by task cancellation.
+Pre-effect audit reservation and post-effect outcome linking use the shared hosted-operation service. A two-person approval must prove two distinct qualified humans using the same durable relation. No service or delegated agent can synthesize either participant. All claims are rechecked at resume time. A canceled task cannot be confirmed. A committed effect is not treated as reversible by task cancellation.
 
 ### Implementation sequence
 
@@ -68,11 +68,11 @@ flowchart LR
 3. Implement `message/stream` against the AU WorkItem event port (`AU-CONTROL-001`); on a gap, return the existing typed `UNAVAILABLE`.
 4. Implement `tasks/get` history read-through to EG's durable kernel (`EG-DURABLE-KERNEL`); on an absent/unreachable authority, return the new `A2ATransitionHistoryUnavailable` (A2A-H04).
 5. Implement push-notification delivery over EG's durable outbox (`EG-DURABLE-KERNEL-R001`) with dead-letter reporting.
-6. Wire real authorities into composition only after each path is proven; run the full test-spec and flip the relevant capability field to a live `true` at that revision, never earlier.
+6. Wire real authorities into composition only after each path is proven. Run the full test-spec and flip the relevant capability field to a live `true` at that revision, never earlier.
 
 ### Quality and environment
 
-Use `uv sync --extra test`, focused `uv run pytest tests/a2a`, Ruff, mypy, repository pre-commit hooks. Keep one Agent Card capability seam (`from_wired_authorities`); no second ad hoc truthiness check elsewhere in the codebase. CI fixtures for steps 3–5 start an ephemeral local AU/EG fixture; this PR's `R001.1` slice needs no live stack since the model is pure.
+Use `uv sync --extra test`, focused `uv run pytest tests/a2a`, Ruff, mypy, repository pre-commit hooks. Keep one Agent Card capability seam (`from_wired_authorities`). No second ad hoc truthiness check elsewhere in the codebase. CI fixtures for steps 3–5 start an ephemeral local AU/EG fixture. This PR's `R001.1` slice needs no live stack since the model is pure.
 
 ## A2A context-budget tool-subset admission
 Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing [spec](spec.md).
@@ -99,7 +99,7 @@ flowchart LR
 
 ### Implementation sequence
 
-1. **This PR (`GRAPHOS-A2A-R016.1`):** add the typed `ToolSubsetAdmissionRequest`/`ToolSubsetAdmissionDecision` models and the `admit_tool_subset` function returning today's exact fail-closed result; add the refusal unit test; open the spec and the AU owner row (`AU-CONTROL-R035`) this door depends on.
+1. **This PR (`GRAPHOS-A2A-R016.1`):** add the typed `ToolSubsetAdmissionRequest`/`ToolSubsetAdmissionDecision` models and the `admit_tool_subset` function returning today's exact fail-closed result. Add the refusal unit test. Open the spec and the AU owner row (`AU-CONTROL-R035`) this door depends on.
 2. Once epistemic-graph publishes a non-stub `AgentAssemble` client, inject it into `admit_tool_subset` and add the `ENVELOPE_LACKS_ALLOWED_TOOL_SUBSET` refusal path for the still-missing AU field.
 3. Once agent-utilities lands `AU-CONTROL-R035` (the signed envelope's allowed-tool-subset field) and publishes the updated generated client, wire the admitted path: EG answer in, signed envelope out, with signature verification before any dispatch treats the subset as enforced.
 4. Replace `OrchestratorA2ARouter`'s and `WorkItemA2AAuthority`'s inline `A2AAssemblyUnavailable` raises with a call to `admit_tool_subset`, so there is exactly one admission authority.
@@ -138,4 +138,4 @@ Three A2A specs merged into one; duplicate spec ID removed. Row ID map (old dire
 
 ### 2026-10-11 Preserve moved requirement lineage
 
-The 7 unique `GRAPHOS-A2A-002` rows from `graphos-a2a-002/requirements.md` at `44c7318f84b461817b9f0de05e7d4be0388ceb62` remain in this spec as `RETIRED` rows. Each row retains its original requirement and verification text and names its replacement. The ID map above records the move; it does not replace the required tombstones or establish delivery of an active row.
+The 7 unique `GRAPHOS-A2A-002` rows from `graphos-a2a-002/requirements.md` at `44c7318f84b461817b9f0de05e7d4be0388ceb62` remain in this spec as `RETIRED` rows. Each row retains its original requirement and verification text and names its replacement. The ID map above records the move. It does not replace the required tombstones or establish delivery of an active row.

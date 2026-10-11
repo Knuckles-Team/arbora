@@ -22,9 +22,9 @@ An external contributor can clone only GraphOS, install published dependencies, 
 ## Acceptance examples
 
 - A fresh clone on a supported Python version runs `uv sync --extra test`, unit/contract checks, package build and wheel-import smoke with no sibling checkout.
-- The disposable profile reaches readiness and serves one authorized read, one denied read and one idempotent governed action; resulting receipts name release and contract digests.
+- The disposable profile reaches readiness and serves one authorized read, one denied read and one idempotent governed action. Resulting receipts name release and contract digests.
 - A missing secret, unrecognized profile key, non-writable runtime path, unpinned production image, absent engine contract, unsafe identity mode or failed functional check stops apply before claiming success.
 - Recovery from failed startup and rollback to a prior pinned release preserve durable state and report the exact reason. No action log includes a token or private endpoint.
-- Every required gate has a portable CI execution path; external-integration probes remain available in a separate opt-in workflow with recorded environment identity.
+- Every required gate has a portable CI execution path. External-integration probes remain available in a separate opt-in workflow with recorded environment identity.
 
 Requirement IDs are defined in [requirements.md](requirements.md); delivery state per ID is in `status.json`.

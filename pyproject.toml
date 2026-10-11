@@ -197,4 +197,5 @@ mcp_server = true
 served_paths = ["graph_os/mcp_server", "graph_os/gateway"]
 
 [tool.pipelines_hooks.ste]
-exempt = ["specs/*", "specs/**/*"]
+paths = ["README.md", "AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md", "CHANGELOG.md", "docs", "specs"]
+exempt = ["specs/_template/*"]

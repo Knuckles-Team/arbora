@@ -11,8 +11,8 @@ Status: SPECIFIED. Governing [spec](spec.md). Evidence remains PENDING.
 | T-RL-05 | RL-03 | Integration | Disposable target with matching predecessor digests and probes | Each dependent starts only after predecessor readiness and function pass. |
 | T-RL-06 | RL-03 | Negative | Stale image, incompatible API, failing function or timeout | Dependent not started; exact stage failure receipt. |
 | T-RL-07 | RL-04 | Served | Installed wheel, engine binary, local identity fixture, MCP/REST | Local canary and separate authenticated/denied served receipts tied to candidate. |
-| T-RL-08 | RL-05 | Fault injection | Later stage fails after prior stage passes | Scheduling stops; reversible previous digest restored and reprobed, or recovery pending. |
-| T-RL-09 | RL-06 | CI and release | Clean checkout fixture and hosted release job | PR job needs no private service; release job attaches digest, integration and consumer evidence. |
+| T-RL-08 | RL-05 | Fault injection | Later stage fails after prior stage passes | Scheduling stops. Reversible previous digest restored and reprobed, or recovery pending. |
+| T-RL-09 | RL-06 | CI and release | Clean checkout fixture and hosted release job | PR job needs no private service. Release job attaches digest, integration and consumer evidence. |
 | T-RL-10 | RL-07 | Contract | Candidate with fixture secret references and tokens | Receipt has digests, stage order, time and public evidence URL, with no credential or private endpoint. |
 
 ## Verification record

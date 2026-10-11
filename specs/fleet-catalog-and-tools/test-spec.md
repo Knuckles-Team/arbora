@@ -6,21 +6,21 @@ Every assertion is run against an exact commit and reports a pass/fail result. F
 
 | Area | Positive case | Negative case and required outcome |
 |---|---|---|
-| Registry | Every packaged wire-callable engine method has one op or a reviewed exclusion; digest repeatable across two builds | Missing method, stale exclusion, schema or generated artifact drift fails a local gate |
-| Resident MCP | Exactly six verbs and four fleet tools appear at boot with correct schemas; FastMCP 4 protocol clients call them | Missing registration fails startup; retired granular/harvest tool cannot reappear |
+| Registry | Every packaged wire-callable engine method has one op or a reviewed exclusion. Digest repeatable across two builds | Missing method, stale exclusion, schema or generated artifact drift fails a local gate |
+| Resident MCP | Exactly six verbs and four fleet tools appear at boot with correct schemas. FastMCP 4 protocol clients call them | Missing registration fails startup. Retired granular/harvest tool cannot reappear |
 | Discovery | Authorized tool, prompt, resource/template, skill, and connector item appear with correct body/schema and same result set across MCP/HTTP/A2A | Unauthorized, stale, duplicate, malformed, or digest-mismatched item is absent or rejects refresh; no partial catalog |
 | Resolver | First example for each op ranks it top three; tenant and policy partition feedback | Cross-tenant reward/cache leak rejected; fuzzy match cannot execute a write |
-| Load and lifecycle | Native schema matches child, session isolation, list-change and fallback work; one-hour idle expiration and cap behavior | 65th load without explicit eviction returns `LOAD_CAP_EXCEEDED`; unknown native name denies; evicted or expired name cannot call |
-| Scopes and policy | Exact `mcp:discover`/`mcp:delegate` plus item scopes allow matching caller; local principal has explicit scopes | `admin`/`kg:admin` alone, unscoped stdio, missing child scope, PDP denial or outage all deny; policy off stays scope filtered |
-| Revocation | A loaded call passes, then scope/policy revision changes; next call rechecks and notification is queued | Revoked native forwarder, `fleet.call`, HTTP, and A2A must all deny with the same category; no stale-cache grace |
-| Effects | READ executes; WRITE requires appropriate plan/idempotency; destructive requires confirmation; admin requires console step-up | Caller-supplied actor/tenant rejected; service child without domain scope/subject read rejected; replay key conflict rejected |
+| Load and lifecycle | Native schema matches child, session isolation, list-change and fallback work. One-hour idle expiration and cap behavior | 65th load without explicit eviction returns `LOAD_CAP_EXCEEDED`. Unknown native name denies. Evicted or expired name cannot call |
+| Scopes and policy | Exact `mcp:discover`/`mcp:delegate` plus item scopes allow matching caller. Local principal has explicit scopes | `admin`/`kg:admin` alone, unscoped stdio, missing child scope, PDP denial or outage all deny. Policy off stays scope filtered |
+| Revocation | A loaded call passes, then scope/policy revision changes. Next call rechecks and notification is queued | Revoked native forwarder, `fleet.call`, HTTP, and A2A must all deny with the same category. No stale-cache grace |
+| Effects | READ executes. WRITE requires appropriate plan/idempotency. Destructive requires confirmation. Admin requires console step-up | Caller-supplied actor/tenant rejected. Service child without domain scope/subject read rejected. Replay key conflict rejected |
 | Child identity | Distinct package, transport, and runtime MCP names resolve to verified runtime name | Duplicate runtime names and ambiguous aliases reject candidate; static service token cannot be used as caller token |
 | Connector pins | Real `tools/list` schema fingerprint matches certified manifest and pack annotations | Empty placeholder schema, changed schema, or missing effect annotation cannot be certified or silently treated as READ |
 | Reload | Candidate validates, publishes one generation atomically, sends ordered deltas, re-ingests changed bodies once | Malformed/duplicate/stale/deleted/digest-mismatch candidate retains last-known-good; in-flight drain timeout bounded; no mixed replica generation |
-| Assembly/admission | Real generated model's complete `agents` list survives parsing; capacity acquired all-or-nothing and released on stop | Dict fakes, partial capacity lease, second re-decision, dropped agent, or leaked lease fail |
-| Catalog admission | The reader skips a bare registration; joined servers serve; status lists the skipped name | Receipt, revision, pin, content and page faults still abort the read |
-| Fleet onboarding | The pass registers, attests and imports each configured server; the CLI reports each server | The pass reports a failing server, a registry outage or a missing credential; other servers and boot continue |
-| Lease renewal | A lease that lapses within six hours renews under a new window key; self-served leases renew | The pass leaves a fresh lease alone; a refused catalog refresh keeps the prior catalog |
+| Assembly/admission | Real generated model's complete `agents` list survives parsing. Capacity acquired all-or-nothing and released on stop | Dict fakes, partial capacity lease, second re-decision, dropped agent, or leaked lease fail |
+| Catalog admission | The reader skips a bare registration. Joined servers serve. Status lists the skipped name | Receipt, revision, pin, content and page faults still abort the read |
+| Fleet onboarding | The pass registers, attests and imports each configured server. The CLI reports each server | The pass reports a failing server, a registry outage or a missing credential. Other servers and boot continue |
+| Lease renewal | A lease that lapses within six hours renews under a new window key. Self-served leases renew | The pass leaves a fresh lease alone. A refused catalog refresh keeps the prior catalog |
 | Feeds | Tenant-bound telemetry/security/CI metadata enters catalog and audit through typed ops | Raw secret values, unsanitized identity/IP, cross-tenant events and live trading without write-back authorization reject |
 
 ## Authority parity oracle

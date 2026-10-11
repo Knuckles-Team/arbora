@@ -41,7 +41,7 @@ traversal. GraphOS can only project these fields, never derive an unsupported
 match. Capability discovery occurs at startup or first request. A missing or
 incompatible version yields `UNAVAILABLE`; malformed input yields
 `INVALID_ARGUMENT`; denied or hidden objects yield `NOT_FOUND` without leaking
-existence; engine timeout yields retryable `UNAVAILABLE`. Structured errors
+existence. Engine timeout yields retryable `UNAVAILABLE`. Structured errors
 carry a correlation ID and no secret source DSN.
 
 ## Application admission

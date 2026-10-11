@@ -7,7 +7,7 @@
 - [ ] Add positive and negative first-boot/rollback tests using provisioned CI resources and reference-only credentials.
 - [ ] Audit hook installation and required CI gates; make all ordinary PR gates reproducible in a cloud checkout.
 - [ ] Publish usage to the GraphOS GitHub Pages site and link the contribution guide to this spec and a verified setup command.
-- [ ] Record exact commit, package hashes, CI runs, profile digests and redacted functional receipts; then promote individual deliverables to Verified/Released/Accepted.
+- [ ] Record exact commit, package hashes, CI runs, profile digests and redacted functional receipts. Then promote individual deliverables to Verified/Released/Accepted.
 
 **Current evidence gap:** The existing source and test names establish implementation progress. They do not establish a public clean-install, profile matrix or first-boot acceptance receipt for this complete contract.
 

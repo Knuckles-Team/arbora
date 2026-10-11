@@ -5,10 +5,10 @@
 | Existing seam | Role in this design | Change boundary |
 |---|---|---|
 | `graph_os/fleet/catalog_reader.py` and `epistemic_adapter.py` | Typed fleet catalog reads and generated engine adapter | Extend one canonical item projection; preserve strict integrity failures |
-| `graph_os/fleet/multiplexer.py` | Child transport, session visibility, mounts, meta-tool registration | Make it a transport/session component; route authority and effects through `invoke`; remove default-open branches |
+| `graph_os/fleet/multiplexer.py` | Child transport, session visibility, mounts, meta-tool registration | Make it a transport/session component. Route authority and effects through `invoke`. Remove default-open branches |
 | `graph_os/fleet/session_notifications.py` | Per-session list-change queue | Notify on load, unload, revocation, and generation change |
 | `graph_os/fleet/child_resilience.py` | Child health and reconnect | Include generation and health in status without granting authority |
-| `graph_os/mcp_server/{runtime,server,catalog_composition,composition}.py` | Served FastMCP instance and startup composition | Install the ten registry projections on the same event loop; fail startup on incomplete attachment |
+| `graph_os/mcp_server/{runtime,server,catalog_composition,composition}.py` | Served FastMCP instance and startup composition | Install the ten registry projections on the same event loop. Fail startup on incomplete attachment |
 | `graph_os/webui_host/mcp_delegation.py` | Host-to-MCP bridge | Route calls through the same registry/policy boundary |
 | `graph_os/deployment/doctor.py` | Local environment and policy diagnostics | Report policy off, unavailable, invalid config, and catalog digest mismatch |
 
@@ -27,7 +27,7 @@ verified principal + policy revision
 
 Use frozen typed models for `OpSpec`, `CatalogItem`, `CatalogGeneration`, `ReloadReceipt`, `SessionLoad`, and `OpError`. `OpSpec` includes ID, verb, summary/examples, params/result schema, binding, caller and executor scopes, subject, effect, principal rule, confirmation, surfaces, idempotency, stability, and audit class. Canonicalize sorted IDs and normalized schemas, then SHA-256 the serialized form. Version and digest must appear in MCP instructions, HTTP registry response, and A2A card. A curated alias suppresses the generated engine op so one engine method has one public identity.
 
-The catalog join uses the verified **runtime MCP server name** from the child session, plus its tenant and source identity. Package ID and transport key remain separate metadata. Reject duplicate runtime names or an ambiguous alias. A connector schema pin is the canonical digest of its real `tools/list` schema; a failed or empty probe cannot silently certify it. Validate body digests for skills, prompts, resources, and templates before a candidate generation is eligible.
+The catalog join uses the verified **runtime MCP server name** from the child session, plus its tenant and source identity. Package ID and transport key remain separate metadata. Reject duplicate runtime names or an ambiguous alias. A connector schema pin is the canonical digest of its real `tools/list` schema. A failed or empty probe cannot silently certify it. Validate body digests for skills, prompts, resources, and templates before a candidate generation is eligible.
 
 ## Request and authority flow
 

@@ -16,7 +16,7 @@ small, versioned, and synthetic.
 | AD-02 | integration | Local Postgres and MariaDB fixture each pass catalog, mapping, conformance, parity and activation with explicit approval. |
 | AD-03 | negative | Unapproved mapping, broad grant, missing conformance or missing rollback proof blocks approval and causes no attach call. |
 | AD-04 | failure | Inject failure at each attach/verify/activate transition; routing restores old path and connector stays active. Unknown detach effect remains reconcilable. |
-| AD-05 | durability | Duplicate idempotency key and restart/replay produce one admission record and one attach effect; concurrent admissions for the same app serialize. |
+| AD-05 | durability | Duplicate idempotency key and restart/replay produce one admission record and one attach effect. Concurrent admissions for the same app serialize. |
 | AD-06 | security | Tenant B cannot inspect, approve, or roll back tenant A's admission; no source calls on denial. |
 | FI-01 | contract | Market response contains exact decimal strings, source, as-of, currency/unit, session, and staleness; bounded range/rows/time. |
 | FI-02 | security | `finance:read` denial and missing tenant/account binding cause zero provider calls for market/position reads. Two tenants never share account responses. |
@@ -25,9 +25,9 @@ small, versioned, and synthetic.
 | FI-05 | explanation | All numerical claims cite input IDs; absent facts are labelled unknown; output cannot authorize order. |
 | FI-06 | event | Duplicate/out-of-order finance events and process restart yield one user-visible delivery per subscriber/channel, durable cursor and retry receipt. |
 | FI-07 | safety | Alerts and DCA-due messages cannot invoke paper or live order endpoints; hostile event payload is rejected. |
-| FI-08 | paper | Without `finance:paper-trade`, tenant-bound account and lease, paper submit returns typed failure before any provider effect; repeated valid key yields one receipt. |
+| FI-08 | paper | Without `finance:paper-trade`, tenant-bound account and lease, paper submit returns typed failure before any provider effect. Repeated valid key yields one receipt. |
 | FI-09 | isolation | Concurrent A/B market reads, schedules, and alerts preserve tenant scoping and data minimization. |
-| FI-10 | DCA recurrence and execution | Duplicate due events, DST ambiguity and worker restart create one proposal per plan revision/occurrence. Paused or revoked plans create no effect. Paper mode uses a paper grant/lease; live mode without a human-approved exact preview and connector lease creates no provider call. Changed quote, amount, account, mode or policy invalidates the prior approval. An uncertain connector outcome enters reconciliation and is not blindly resent. |
+| FI-10 | DCA recurrence and execution | Duplicate due events, DST ambiguity and worker restart create one proposal per plan revision/occurrence. Paused or revoked plans create no effect. Paper mode uses a paper grant/lease. Live mode without a human-approved exact preview and connector lease creates no provider call. Changed quote, amount, account, mode or policy invalidates the prior approval. An uncertain connector outcome enters reconciliation and is not blindly resent. |
 
 ## Fresh checkout execution
 

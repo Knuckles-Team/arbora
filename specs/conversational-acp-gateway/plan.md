@@ -4,7 +4,7 @@ Status: BUILDING. Governing [spec](spec.md).
 
 ## Existing system and reuse
 
-GraphOS already has one principal/tenant/scope resolution path consumed by REST and MCP ([GRAPHOS-IDENTITY-001](../identity-access/spec.md)); ACP admission must call that same path rather than re-implement verification. `graph_os.identity` is the existing owner of session and principal types; `graph_os.gateway` is the existing owner of serving composition. No ACP session store exists yet; `R001.1` adds the smallest typed model and admission check, not a transport.
+GraphOS already has one principal/tenant/scope resolution path consumed by REST and MCP ([GRAPHOS-IDENTITY-001](../identity-access/spec.md)). ACP admission must call that same path rather than re-implement verification. `graph_os.identity` is the existing owner of session and principal types. `graph_os.gateway` is the existing owner of serving composition. No ACP session store exists yet; `R001.1` adds the smallest typed model and admission check, not a transport.
 
 ## Admission and binding
 
@@ -20,7 +20,7 @@ The admission check and the per-message check both consult the same adapter-avai
 
 ## Live integration path
 
-`R001.1` ships the typed model and admission check with no transport wiring; a later child slice wires it behind the actual ACP endpoint once agent-utilities' adapter is reachable. Existing identity resolution and status/doctor reporting are the integration points; no new identity issuer or session cookie is introduced.
+`R001.1` ships the typed model and admission check with no transport wiring. A later child slice wires it behind the actual ACP endpoint once agent-utilities' adapter is reachable. Existing identity resolution and status/doctor reporting are the integration points. No new identity issuer or session cookie is introduced.
 
 ## Quality and release gates
 

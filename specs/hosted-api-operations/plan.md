@@ -22,7 +22,7 @@ flowchart LR
 
 Use immutable `OpSpec` data grouped by domain. An engine binding is generated from the versioned packaged method schema; a composite binding names a typed GraphOS service function. A curated alias suppresses the corresponding generated `eg.*` op so each wire method has exactly one owner. `Registry.digest` hashes canonical sorted schema and policy metadata. Route/verb factories create a single HTTP and MCP wrapper per operation family, never duplicated per-domain authorization.
 
-The invocation order is: resolve and allowed surface; strict params including authority-field rejection; authenticate; principal kind; exact caller scopes; Eunomia decision; caller-side subject access for service execution; effect preview/confirmation; durable audit reservation for governed effect; execute under caller claims or allowlisted service identity; record outcome; map to one envelope. The service executor stamps the verified caller as record owner, refuses caller-supplied owner, and rechecks authorization before deferred work. A post-effect audit failure returns an indeterminate receipt and reconciliation handle.
+The invocation order is: resolve and allowed surface. Strict params including authority-field rejection. Authenticate. Principal kind. Exact caller scopes. Eunomia decision. Caller-side subject access for service execution. Effect preview/confirmation. Durable audit reservation for governed effect. Execute under caller claims or allowlisted service identity. Record outcome. Map to one envelope. The service executor stamps the verified caller as record owner, refuses caller-supplied owner, and rechecks authorization before deferred work. A post-effect audit failure returns an indeterminate receipt and reconciliation handle.
 
 ## Wire contracts
 
@@ -36,7 +36,7 @@ Error source is `engine`, `fleet`, or `graphos`. Engine error codes pass through
 
 ## Migration and implementation order
 
-1. Pin a public engine wheel that ships method/error/scope schemas; add registry data and direct bindings; check exact coverage and exclusions.
+1. Pin a public engine wheel that ships method/error/scope schemas. Add registry data and direct bindings. Check exact coverage and exclusions.
 2. Add invocation, policy, error, audit-reservation, and plan-lease services with fixture-backed tests. Reuse verified-session middleware and current server/client composition.
 3. Add MCP verbs, multi-kind fleet adapters, HTTP factory and generated clients. Build one end-to-end vertical slice before expanding domain op tables.
 4. Add each domain family by moving handlers out of existing registrars. For missing upstream methods, make a typed unavailable op and defer advertisement until a released contract exists.
@@ -61,12 +61,12 @@ Deleted dashboard router (prefix `/api/dashboard`, read capability on every rout
 - GET `/widgets`: widget types available. GET `/discover`: layout auto-discovered from the MCP config.
 - GET `/health`: always 200 with the shared truthful health report, `Cache-Control: no-store`.
 - GET `/daemon/status`, GET `/daemon/shards`, POST `/daemon/start`: consolidated background daemon state, engine shard topology and reachability, ensure daemon running.
-- POST `/hydrate/{source}`, POST `/hydrate`, GET `/hydration-status`: trigger hydration for one or all sources, and read source status; 422 on a malformed source, 500 when no active engine, sanitized error payloads.
+- POST `/hydrate/{source}`, POST `/hydrate`, GET `/hydration-status`: trigger hydration for one or all sources, and read source status. 422 on a malformed source, 500 when no active engine, sanitized error payloads.
 
 Deleted Live Artifacts router (no router-level auth in the old module):
-- POST `/api/artifacts`: create from name, template, data, source query, source node ids and model; provenance records model, query and evidence ids; bounded-JSON violation returns 400; response is artifact id and rendered output.
+- POST `/api/artifacts`: create from name, template, data, source query, source node ids and model. Provenance records model, query and evidence ids. Bounded-JSON violation returns 400. Response is artifact id and rendered output.
 - GET `/api/artifacts/{artifact_id}`: full artifact, 404 when absent.
-- POST `/api/artifacts/{artifact_id}/refresh`: with inline `data` the body becomes the new derivation; otherwise a registered source resolver re-derives from the graph (the default resolver preserved prior data). Returns ok, reason and rendered output; 404 when absent; a failed refresh preserves the prior render.
+- POST `/api/artifacts/{artifact_id}/refresh`: with inline `data` the body becomes the new derivation. Otherwise a registered source resolver re-derives from the graph (the default resolver preserved prior data). Returns ok, reason and rendered output. 404 when absent. A failed refresh preserves the prior render.
 - Stores: the shared Live Artifact store and refresh service, a module singleton. Caller: `server/app.py` mount only; the KG source installer was deleted with the router.
 
 Deleted Genius Agent widget: dashboard tile (type genius_agent, env prefix GENIUS_AGENT, observability category) with fields agents, skills, mcp_tools and status. Its fetch returned hardcoded numbers and never contacted anything.
@@ -105,13 +105,13 @@ Compared `git show 0eb67c99c^:agent_utilities/gateway/api.py` (328 lines) with `
 | GET /data/{service_id} | read | none / `WidgetData` | 403; 404 on bad id or "not found" error | CONFIRMED-equal |
 | GET /full | read | none / `DashboardResponse` | 403 | CONFIRMED-equal |
 | GET /data-subset | read | repeated `widget_id` / `dict[str, WidgetData]`; default `[]` became `None` and `set(widget_id or ())`, same empty result | 403 | CONFIRMED-equal |
-| GET /widgets | read | none / `list[WidgetListItem]` | 403 | DIFFERS: same shape, but the registry module map lives in `graph_os/gateway/registry.py`; the set of widget types is not compared in any test (row R001.8) |
+| GET /widgets | read | none / `list[WidgetListItem]` | 403 | DIFFERS: same shape, but the registry module map lives in `graph_os/gateway/registry.py`. The set of widget types is not compared in any test (row R001.8) |
 | GET /health | none | none / health report | none (always 200) | CONFIRMED-equal |
 | GET /discover | read | none / `DashboardLayout` | 403 | CONFIRMED-equal |
 | GET /daemon/status | read | none / daemon status dict | 403 | DIFFERS: now `graph_os.gateway.daemon.daemon_status`; the module was refactored and its key set is not pinned (row R001.5) |
 | GET /daemon/shards | read | none / shard topology dict | 403 | DIFFERS: same wire; still imports `agent_utilities.knowledge_graph.core.shard_topology`, an internal module (row R001.6) |
 | POST /daemon/start | write | none / daemon status dict | 403 | DIFFERS: same as /daemon/status (row R001.5) |
-| POST /hydrate/{source} | write | none / hydration result dict | 403, 422 bad source, 500 no engine, 400 `ValueError`, 500 sanitized | DIFFERS: refusal codes equal; engine and hydration come from AU internal modules (row R001.7) |
+| POST /hydrate/{source} | write | none / hydration result dict | 403, 422 bad source, 500 no engine, 400 `ValueError`, 500 sanitized | DIFFERS: refusal codes equal. Engine and hydration come from AU internal modules (row R001.7) |
 | POST /hydrate | write | none / hydration result dict | 403, 500 no engine, 500 sanitized | DIFFERS: same (row R001.7) |
 | GET /hydration-status | read | none / status dict | 403 | DIFFERS: same (row R001.7) |
 
@@ -131,7 +131,7 @@ Proposed agent-utilities row (orchestrator adds it; new file `agent_utilities/ap
 
 > `AU-BOUNDARY-R013.<n>` **Export the Live Artifact store, models and refresh service.** Re-export `LiveArtifact`, `Provenance`, `BoundedJSONError`, `validate_bounded_json`, `LiveArtifactStore`, `get_live_artifact_store`, `RefreshService`, `RefreshResult`, `DataSource` and `kg_source_resolver` from `agent_utilities.knowledge_graph.live_artifacts` through `agent_utilities.api.live_artifacts`; delete the dead `install_kg_artifact_source`. Verification: an agent-utilities test imports each name from `agent_utilities.api` and the layout fence still passes.
 
-Because the AU resolver already re-runs `source_query`, GRAPHOS-OPS-R040.8 wires `kg_source_resolver` instead of re-implementing it (no parallel function). The bounded-JSON limits (depth 8, 100 keys, 500 items, 16 KiB string, 256 KiB total) stay in the AU validator; the graph-os request model does not copy them.
+Because the AU resolver already re-runs `source_query`, GRAPHOS-OPS-R040.8 wires `kg_source_resolver` instead of re-implementing it (no parallel function). The bounded-JSON limits (depth 8, 100 keys, 500 items, 16 KiB string, 256 KiB total) stay in the AU validator. The graph-os request model does not copy them.
 
 ## Audit record
 
@@ -156,7 +156,7 @@ Dashboard route parity audit (method: compare the deleted router with the served
 
 ### 2026-10-11 Fold of GRAPHOS-GWC into GRAPHOS-OPS
 
-Old statement: the gateway carry-over was a separate spec `GRAPHOS-GWC`. New statement: its three rollups are `GRAPHOS-OPS-R039` (dashboard route parity), `GRAPHOS-OPS-R040` (Live Artifacts routes and their authentication) and `GRAPHOS-OPS-R041` (Genius Agent widget dropped); the host HTTP surface is owned here. Evidence: rows moved unchanged in text; no row was LANDED or VERIFIED.
+Old statement: the gateway carry-over was a separate spec `GRAPHOS-GWC`. New statement: its three rollups are `GRAPHOS-OPS-R039` (dashboard route parity), `GRAPHOS-OPS-R040` (Live Artifacts routes and their authentication) and `GRAPHOS-OPS-R041` (Genius Agent widget dropped). The host HTTP surface is owned here. Evidence: rows moved unchanged in text. No row was LANDED or VERIFIED.
 
 | Old ID | New ID |
 |---|---|
@@ -194,4 +194,4 @@ Old statement: the gateway carry-over was a separate spec `GRAPHOS-GWC`. New sta
 
 ### 2026-10-11 Preserve moved requirement lineage
 
-The 23 unique `GRAPHOS-GWC` rows from `gateway-carryover/requirements.md` at `44c7318f84b461817b9f0de05e7d4be0388ceb62` remain in this spec as `RETIRED` rows. Each row retains its original requirement and verification text and names its replacement. The ID map above records the move; it does not replace the required tombstones or establish delivery of an active row.
+The 23 unique `GRAPHOS-GWC` rows from `gateway-carryover/requirements.md` at `44c7318f84b461817b9f0de05e7d4be0388ceb62` remain in this spec as `RETIRED` rows. Each row retains its original requirement and verification text and names its replacement. The ID map above records the move. It does not replace the required tombstones or establish delivery of an active row.

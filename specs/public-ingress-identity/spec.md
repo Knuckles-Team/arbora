@@ -25,7 +25,7 @@ GraphOS owns the deployment profile validation, rendered application settings, g
 
 Profile inputs are generic: `public_origin=https://graph.example.test`, `ingress_host=graph.example.test`, `tls_certificate_ref`, `idp_issuer`, `oidc_client_id`, `oidc_client_secret_ref`, `callback_uri=https://graph.example.test/auth/callback`, `trusted_proxy_cidrs` or a named proxy identity, and `legacy_redirect` with explicit expiry if used. These names define required semantics; `plan.md` determines how they map onto the existing closed profile schema. Secret values never enter a profile, resource annotation, log, or receipt.
 
-Out of scope: provisioning a specific DNS provider, certificate authority, OIDC tenant, or secret backend; building another identity issuer; universal access to private services. The implementation must reuse `graph_os.deployment.genesis_environments`, `config_generator`, `doctor`, and `graph_os.gateway.graph_api` rather than introducing a parallel admission service.
+Out of scope: provisioning a specific DNS provider, certificate authority, OIDC tenant, or secret backend. Building another identity issuer. Universal access to private services. The implementation must reuse `graph_os.deployment.genesis_environments`, `config_generator`, `doctor`, and `graph_os.gateway.graph_api` rather than introducing a parallel admission service.
 
 ## Success criteria and traceability
 
