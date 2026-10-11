@@ -28,7 +28,7 @@ The invocation order is: resolve and allowed surface. Strict params including au
 
 `POST /api/v1/ops/{op_id}` accepts the operation's JSON schema; `Idempotency-Key` is required for non-natural write ops. `GET /api/v1/registry` is caller-filtered and returns a digest ETag. `GET /api/v1/ops` and OpenAPI expose only public schema metadata; sensitive discovery is filtered per caller. Resource routes, including identity and fleet catalog paths, are generated from `HttpShape` and use the same handler. `Graphos-Plan-Ref` resumes a plan. HTTP preview returns 428 with `CONFIRMATION_REQUIRED` or `STEP_UP_REQUIRED`. MCP returns the same envelope in tool result. `meta.registry_digest` and `meta.api_version` are mandatory.
 
-The current MCP surface is GRAPHOS-FLEET-R029: six intent tools plus two Apps launchers. `find` accepts `op` or natural-language `intent`; exact operation IDs and typed params are required before effect. Verb ceilings are enforced (`ask/find/why` read, `write` write, `act` operational effects, `manage` admin). Discovery returns authorized schema descriptors. A bounded cache and tenant/policy-partitioned outcome ranking may improve suggestions but must never turn fuzzy text into an unconfirmed mutation. Fleet discovery and status use `find`, invocation uses `act`, and mounts/releases use `manage` (GRAPHOS-FLEET-R029). Reuse GRAPHOS-FLEET-R011/R013 registry/discovery machinery and GRAPHOS-OPS-R007/R011/R012; add only missing operation wiring and no duplicate registry or disclosure rollup. Native child forwarding calls `invoke("fleet.call", ...)`; no transport calls bypass it. The child call uses the caller's delegated credential or a declared service-execution rule with the same deputy checks. `ToolAnnotations` classify read/destructive effects; unannotated means write; a reviewed manifest can tighten to admin.
+The current MCP surface is GRAPHOS-FLEET-R029: six intent tools plus two Apps launchers. `find` accepts `op` or natural-language `intent`; exact operation IDs and typed params are required before effect. Verb ceilings are enforced (`ask/find/why` read, `write` write, `act` operational effects, `manage` admin). Discovery returns authorized schema descriptors. A bounded cache and tenant/policy-partitioned outcome ranking may improve suggestions. They must never turn fuzzy text into an unconfirmed mutation. Fleet discovery and status use `find`, invocation uses `act`, and mounts/releases use `manage` (GRAPHOS-FLEET-R029). Reuse GRAPHOS-FLEET-R011/R013 registry/discovery machinery and GRAPHOS-OPS-R007/R011/R012; add only missing operation wiring and no duplicate registry or disclosure rollup. Native child forwarding calls `invoke("fleet.call", ...)`; no transport calls bypass it. The child call uses the caller's delegated credential or a declared service-execution rule with the same deputy checks. `ToolAnnotations` classify read/destructive effects; unannotated means write; a reviewed manifest can tighten to admin.
 
 Scopes are exact. `mcp:discover` and `mcp:delegate` do not imply each other; `mcp:admin` is not a super-scope. `finance:read`, `fleet:read/control`, `loops:read/control`, `ops:read/admin` and every operation scope must exist in the public engine registry. `EUNOMIA_TYPE=off` still enforces scopes; enabled PDP failure returns `POLICY_UNAVAILABLE`. Decisions cache at most 30 seconds by principal, revision, item, action; admin/destructive are uncached. A revision invalidates loaded visibility and sends list-change notifications. The enabled/disabled mode behavior is testable with an in-process fixture PDP.
 
@@ -40,7 +40,7 @@ Error source is `engine`, `fleet`, or `graphos`. Engine error codes pass through
 2. Add invocation, policy, error, audit-reservation, and plan-lease services with fixture-backed tests. Reuse verified-session middleware and current server/client composition.
 3. Add MCP verbs, multi-kind fleet adapters, HTTP factory and generated clients. Build one end-to-end vertical slice before expanding domain op tables.
 4. Add each domain family by moving handlers out of existing registrars. For missing upstream methods, make a typed unavailable op and defer advertisement until a released contract exists.
-5. In one integration change, mount the ten resident tools and `/api/v1`, route loaded forwarders through `invoke`, migrate consumers, delete duplicate registrars/routes and stale instructions. Keep one owner loop and one multiplexer instance.
+5. In one integration change, mount the ten resident tools and `/api/v1`. Route loaded forwarders through `invoke` and migrate consumers. Delete duplicate registrars/routes and stale instructions in that same change. Keep one owner loop and one multiplexer instance.
 6. Run [test-spec.md](test-spec.md), publish exact revision evidence, then mark individual capabilities `ACCEPTED`.
 
 The retirement inventory is a checked artifact produced from the existing host registration table and the new registry. Each prior tool/route is labeled `mapped` with its new op ID or `dropped` with a reason and consumer search result. The cutover check enumerates FastMCP tools, Starlette routes and A2A methods at runtime and rejects undeclared extras. It also scans source for ad hoc `mcp.tool`, route registration, and child transport dispatch outside the approved factories. A transition is atomic for supported callers: generated client release, server mount, caller migration and old endpoint removal are reviewed together; no permanent fallback dispatcher remains. External clients receive v1 contract and migration note before stable path removal.
@@ -68,7 +68,7 @@ Deleted Live Artifacts router (no router-level auth in the old module):
 - POST `/api/artifacts/{artifact_id}/refresh`: with inline `data` the body becomes the new derivation. Otherwise a registered source resolver re-derives from the graph (the default resolver preserved prior data). Returns ok, reason and rendered output. 404 when absent. A failed refresh preserves the prior render.
 - Stores: the shared Live Artifact store and refresh service, a module singleton. Caller: `server/app.py` mount only; the KG source installer was deleted with the router.
 
-Deleted Genius Agent widget: dashboard tile (type genius_agent, env prefix GENIUS_AGENT, observability category) with fields agents, skills, mcp_tools and status. Its data call returned hardcoded numbers and never contacted anything.
+Deleted Genius Agent widget: dashboard tile with type genius_agent, env prefix GENIUS_AGENT and observability category. Its fields were agents, skills, mcp_tools and status. Its data call returned hardcoded numbers and never contacted anything.
 
 ### Design in this repository
 
@@ -80,7 +80,7 @@ Deleted Genius Agent widget: dashboard tile (type genius_agent, env prefix GENIU
 ### Wiring
 
 - Dashboard: the register function in the dashboard router module mounts routes and the websocket; already called by the host.
-- Artifacts: a new register function is called from the same host composition point that mounts the graph and usage routes. Authentication: reuse the dashboard capability dependencies unchanged (decision D3 below: gateway:read for GET, gateway:write for POST, plus the gateway:admin and admin supersets). These are identity capabilities, not engine registry scopes. The old router had no router-level check, so this is an intentional tightening, called out in the parity table.
+- Artifacts: the host composition point already mounts graph and usage routes. It calls a new register function for artifacts. Authentication: reuse the dashboard capability dependencies unchanged, as decision D3 states below. Use gateway:read for GET and gateway:write for POST, plus the gateway:admin and admin supersets. These are identity capabilities, not engine registry scopes. The old router had no router-level check, so this is an intentional tightening, called out in the parity table.
 - Config: the artifact store location follows the agent-utilities store default; no new env key.
 
 Out of scope:
@@ -187,7 +187,7 @@ Decision: GraphOS serves the operation and admits plans, and the engine decides 
 
 ## Scoped security-evaluation operation (GRAPHOS-OPS-R051)
 
-Data flow: `security.evaluate` over POST /api/v1/ops/{op_id} -> `_effect` (graph_os/api/invoke/pipeline.py:218) -> verified target authorization -> new public EG selection/verdict adapters (EG-DECISION-ENGINE-R001/R138) -> AU harness executes admitted probes -> engine verdict -> audit record. Runtime limits and trace commits use EG-DECISION-ENGINE-R133; Decide itself remains read-only.
+Data flow starts with `security.evaluate` over POST /api/v1/ops/{op_id}. `_effect` (graph_os/api/invoke/pipeline.py:218) checks verified target authorization before calling new public EG selection/verdict adapters (EG-DECISION-ENGINE-R001/R138). The AU harness executes admitted probes. The engine returns the verdict, which is recorded in the audit record. Runtime limits and trace commits use EG-DECISION-ENGINE-R133; Decide itself remains read-only.
 
 Types: `EvaluationGoal`, `EvaluationCatalog`, `EvaluationScope`, `Finding`. Failure: `SUBJECT_ACCESS_DENIED` before any attack runs.
 
@@ -208,7 +208,7 @@ Existing code: graph_os/api/ops/_common.py:106; graph_os/api/http/openapi.py:1; 
 
 Decision: GraphOS filters by the caller's verified grants over engine labels. Rejected: GraphOS-side boundary inference. Cross-repository: EG-IDENTITY-R001, EG-FEDERATED-QUERY-R001; GRAPHOS-DATA-MARKET-R005 owns schema_context.
 
-Caller-visible responses, counts, refusal details, traces and audit views reveal no uncovered projection, including indirectly through a withheld count. Such counts may exist only in a separately authorized operator audit that the denied caller cannot read. Served acceptance holds visible projections fixed while varying hidden projections, checks unchanged caller-visible fields, refuses the denied caller's operator-audit read without count leakage, and verifies the separately authorized operator can inspect the count.
+Caller-visible responses, counts, refusal details, traces and audit views reveal no uncovered projection, including indirectly through a withheld count. Such counts may exist only in a separately authorized operator audit that the denied caller cannot read. Served acceptance holds visible projections fixed while varying hidden projections. It checks that caller-visible fields stay unchanged. The denied caller's operator-audit read must refuse without count leakage. The separately authorized operator must be permitted to inspect the count.
 
 ## Bounded interaction space (GRAPHOS-OPS-R053)
 
