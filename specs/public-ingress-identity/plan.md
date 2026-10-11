@@ -1,7 +1,5 @@
 # GRAPHOS-INGRESS — Design and implementation plan
 
-Governing [spec](spec.md).
-
 ## Existing system and reuse
 
 `graph_os.deployment.genesis_environments.EnvironmentProfile` already has closed `network`, `identity`, `secrets`, `configuration`, `validation`, and `release` sections. `network.ingress_host`, `identity.idp`, `identity.client_secret_ref`, and `secrets.required` are existing entry fields. `graph_os.deployment.config_generator` resolves runtime configuration; `doctor._execution_security_listener` already rejects a non-loopback REST listener without JWKS and exact Host allowlist. `graph_os.gateway.graph_api` installs `ActorIdentityMiddleware` for the served REST path. `graph_os.mcp_server.server` owns the MCP transport path. Extend these components and their existing tests; the remaining gap is an explicit public origin/proxy/callback contract and an integrated served cutover proof.

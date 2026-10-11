@@ -1,7 +1,5 @@
 # GRAPHOS-ACP — Test specification
 
-Governing [spec](spec.md). All evidence is PENDING; publishing this test contract is not a test pass.
-
 | Test ID | Requirement | Level | Fixture and input | Expected observation |
 |---|---|---|---|---|
 | T-ACP-01 | ACP-01 | Unit | No principal, adapter available | Typed unauthenticated refusal; no session object returned. |

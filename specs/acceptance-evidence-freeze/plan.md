@@ -1,7 +1,5 @@
 # GRAPHOS-ACCEPTANCE — Design and implementation plan
 
-Governing spec: [spec.md](spec.md).
-
 ## Existing system and reuse
 
 `scripts/check_public_specs.py` already defines `EVIDENCE_KINDS`, `DELIVERY_STATES`, and `ACCEPTANCE_STATES`, and its `_receipt_errors`/`_requirement_entry_errors` functions already refuse a `status.json` that claims `ACCEPTED` or `LANDED` without a matching `merged_head` receipt. This spec does not duplicate that schema. It adds a narrower, standalone **readiness** checker that answers a different question than the existing validator: not "is this `status.json` well-formed," but "which `LANDED` rows, across one or more specs, are not yet evidenced enough for an auditor to accept them." The existing validator is a structural gate; this checker is an audit worklist generator, reusable by a human auditor before they touch `acceptance_state` at all.
