@@ -61,5 +61,17 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing spec
 | A2A-ADM-T20 | GRAPHOS-A2A-R020.2 | Run `tests/a2a/test_admission.py::test_unavailable_stale_or_partial_harness_answer_refuses`; it must pass and bind to this row. |
 | A2A-ADM-T21 | GRAPHOS-A2A-R019.1 | Run `tests/a2a/test_admission.py::test_provenance_names_harness_decision_record`; it must pass and bind to this row. |
 | A2A-ADM-T22 | GRAPHOS-A2A-R014.1 | Run `tests/a2a/test_agent_card.py::test_card_has_no_harness_field_before_admission_e2e`; it must pass and bind to this row. |
+| A2A-HOLD-T01 | GRAPHOS-A2A-R005.3 | Run `tests/a2a/test_tool_action_admission.py::test_models_are_closed_and_frozen`; it must pass and bind to this row. |
+| A2A-HOLD-T02 | GRAPHOS-A2A-R005.4 | Run `tests/a2a/test_tool_action_admission.py::test_admit_returns_engine_verdict_unchanged`; it must pass and bind to this row. |
+| A2A-HOLD-T03 | GRAPHOS-A2A-R005.5 | Run `tests/a2a/test_tool_action_admission.py::test_confirm_dispatch_reaches_admitter`; it must pass and bind to this row. |
+| A2A-HOLD-T04 | GRAPHOS-A2A-R005.6 | Run `tests/a2a/test_tool_action_admission.py::test_each_refusal_reason_denies`; it must pass and bind to this row. |
+| A2A-HOLD-T05 | GRAPHOS-A2A-R005.7 | Run `tests/a2a/test_tool_action_admission.py::test_audit_entry_names_decision_without_values`; it must pass and bind to this row. |
+| A2A-HOLD-T06 | GRAPHOS-A2A-R005.8 | Run `tests/a2a/test_tool_action_admission_e2e.py::test_confirm_returns_engine_verdict_and_audit`; it must pass and bind to this row. |
+| A2A-HOLD-T07 | GRAPHOS-A2A-R006.3 | Run `tests/a2a/test_held_item_admission.py::test_models_are_closed_and_frozen`; it must pass and bind to this row. |
+| A2A-HOLD-T08 | GRAPHOS-A2A-R006.4 | Run `tests/a2a/test_held_item_admission.py::test_program_needs_distinct_verifier_and_required_passes`; it must pass and bind to this row. |
+| A2A-HOLD-T09 | GRAPHOS-A2A-R006.5 | Run `tests/a2a/test_held_item_admission.py::test_confirm_dispatch_reaches_held_item_admitter`; it must pass and bind to this row. |
+| A2A-HOLD-T10 | GRAPHOS-A2A-R006.6 | Run `tests/a2a/test_held_item_admission.py::test_each_refusal_leaves_item_held`; it must pass and bind to this row. |
+| A2A-HOLD-T11 | GRAPHOS-A2A-R006.7 | Run `tests/a2a/test_held_item_admission.py::test_audit_entry_names_verdict_and_item`; it must pass and bind to this row. |
+| A2A-HOLD-T12 | GRAPHOS-A2A-R006.8 | Run `tests/a2a/test_held_item_admission_e2e.py::test_confirm_admits_or_rejects_held_item`; it must pass and bind to this row. |
 
 Run `uv run pytest tests/a2a/test_admission.py`, `uv run ruff check graph_os/a2a/admission.py tests/a2a/test_admission.py`, `uv run ruff format --check graph_os/a2a/admission.py tests/a2a/test_admission.py`, and `uv run mypy graph_os/a2a/admission.py`. A2A-ADM-T03 and A2A-ADM-T04 remain open until the EG and AU dependencies (`EG-DECISION-ENGINE-R036`, `AU-CONTROL-R035`) are callable; this PR lands A2A-ADM-T01, A2A-ADM-T02, and A2A-ADM-T06 only. Capture exact commit, command, and result before changing delivery to `ACCEPTED`.

@@ -100,3 +100,15 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
 - [ ] **GRAPHOS-A2A-R020.2:** Unavailable, stale, or partial answers refuse. Touches the file named in the requirement row.
 - [ ] **GRAPHOS-A2A-R019.1:** Provenance names the harness decision. Touches the file named in the requirement row.
 - [ ] **GRAPHOS-A2A-R014.1:** Card advertises no harness capability before it works. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R005.3:** Model. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R005.4:** Behavior. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R005.5:** Wiring. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R005.6:** Refusal. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R005.7:** Evidence. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R005.8:** Hot-path proof. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R006.3:** Model. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R006.4:** Behavior. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R006.5:** Wiring. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R006.6:** Refusal. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R006.7:** Evidence. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R006.8:** Hot-path proof. Touches the file named in the requirement row.
