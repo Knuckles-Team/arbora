@@ -4,7 +4,7 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing [spe
 
 ## Existing wiring to reuse
 
-`graph_os.mcp_server.runtime` owns the served FastMCP loop, verified session scope, 320-second bounded dispatch, and `runtime.graph_client(tenant)`; `graph_os.gateway.graph_api.register_graph_routes` composes the REST host; `graph_os.fleet.multiplexer` owns per-session loading, forwarding, notifications, and child lifecycle. `graph_os.a2a` already has authenticated unary task methods. `graph_os.webui_host.mcp_delegation` must use the same public invocation boundary. These are migration seams, not new parallel servers. Engine state belongs to `epistemic-graph`; agent decisions/work items to `agent-utilities`; connector effects to the SDK/fleet; GraphOS authenticates, composes, supervises, routes and projects.
+`graph_os.mcp_server.runtime` owns the served FastMCP loop, verified session scope, 320-second bounded dispatch, and `runtime.graph_client(tenant)`. `graph_os.gateway.graph_api.register_graph_routes` composes the REST host. `graph_os.fleet.multiplexer` owns per-session loading, forwarding, notifications, and child lifecycle. `graph_os.a2a` already has authenticated unary task methods. `graph_os.webui_host.mcp_delegation` must use the same public invocation boundary. These are migration seams, not new parallel servers. Engine state belongs to `epistemic-graph`. Agent decisions and work items belong to `agent-utilities`. Connector effects belong to the SDK and fleet. GraphOS authenticates, composes, supervises, routes and projects.
 
 ## Component and data flow
 
@@ -159,3 +159,19 @@ Reused: `build_read_op`, `bound_service`, `Params`, the closed error enum, and t
 - Depends on the AU-HARNESS row that writes those fields at run end.
 - Depends on the AU evaluation row that stores measured outcomes as engine facts.
 - Unblocks the client rows that show cost, context use, and termination reason.
+
+## GRAPHOS-OPS-R042 content screening and redaction
+
+Data flow: POST route (graph_os/api/http/routes.py:127) → `invoke` (graph_os/api/invoke/pipeline.py:810) → screen → effect → redactor → response and trace.
+
+Types: `ContentScreenVerdict`, `ScreenFinding` (class, span, rule id), `ContentOrigin`. The screen attaches in `invoke` after argument validation and before the effect; the redactor attaches after the effect. Failure behavior: quarantine returns a typed refusal, and a redactor error withholds the response.
+
+Reused: the body bound at graph_os/api/http/routes.py:42 and the `OpError` refusal path. New: the screen, the redactor and the origin tag.
+
+Decision: one screen inside the single pipeline boundary. Rejected alternative: per-route filters, which a new route may skip.
+
+Cross-repository: engine memory-write refusal, owner prefix `EG`, contract name memory write origin.
+
+### References
+
+- no-arXiv: AI Agent Traps (Franklin et al., SSRN 6372438, 2026).
