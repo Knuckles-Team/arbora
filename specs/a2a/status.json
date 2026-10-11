@@ -32,13 +32,29 @@
     "GRAPHOS-A2A-R012.3",
     "GRAPHOS-A2A-R013",
     "GRAPHOS-A2A-R014",
+    "GRAPHOS-A2A-R014.1",
     "GRAPHOS-A2A-R015",
     "GRAPHOS-A2A-R016",
     "GRAPHOS-A2A-R016.1",
+    "GRAPHOS-A2A-R016.2",
+    "GRAPHOS-A2A-R016.3",
+    "GRAPHOS-A2A-R016.4",
+    "GRAPHOS-A2A-R016.5",
     "GRAPHOS-A2A-R017",
+    "GRAPHOS-A2A-R017.1",
+    "GRAPHOS-A2A-R017.2",
+    "GRAPHOS-A2A-R017.3",
+    "GRAPHOS-A2A-R017.4",
+    "GRAPHOS-A2A-R017.5",
+    "GRAPHOS-A2A-R017.6",
     "GRAPHOS-A2A-R018",
+    "GRAPHOS-A2A-R018.1",
+    "GRAPHOS-A2A-R018.2",
     "GRAPHOS-A2A-R019",
+    "GRAPHOS-A2A-R019.1",
     "GRAPHOS-A2A-R020",
+    "GRAPHOS-A2A-R020.1",
+    "GRAPHOS-A2A-R020.2",
     "GRAPHOS-A2A-R021"
   ],
   "requirements": [
@@ -349,6 +365,16 @@
       "title": "No capability advertised before GRAPHOS-A2A lands",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-A2A-R014.1"
+      ]
+    },
+    {
+      "id": "GRAPHOS-A2A-R014.1",
+      "title": "Card advertises no harness capability before it works",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": []
     },
     {
@@ -361,7 +387,7 @@
     {
       "id": "GRAPHOS-A2A-R016",
       "title": "Typed admission request/decision model",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "35257e780f7c"
       ],
@@ -369,7 +395,11 @@
         "tests/a2a/test_admission.py:15"
       ],
       "rollup_of": [
-        "GRAPHOS-A2A-R016.1"
+        "GRAPHOS-A2A-R016.1",
+        "GRAPHOS-A2A-R016.2",
+        "GRAPHOS-A2A-R016.3",
+        "GRAPHOS-A2A-R016.4",
+        "GRAPHOS-A2A-R016.5"
       ]
     },
     {
@@ -384,8 +414,86 @@
       ]
     },
     {
+      "id": "GRAPHOS-A2A-R016.2",
+      "title": "Admission request carries model profile and task class",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-A2A-R016.3",
+      "title": "Admission decision carries the committed harness answer",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-A2A-R016.4",
+      "title": "Refusal enum gains the harness reasons",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-A2A-R016.5",
+      "title": "Routing decision carries model profile and task class",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
       "id": "GRAPHOS-A2A-R017",
       "title": "Context-budget-bound subset sourced from EG assembly",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-A2A-R017.1",
+        "GRAPHOS-A2A-R017.2",
+        "GRAPHOS-A2A-R017.3",
+        "GRAPHOS-A2A-R017.4",
+        "GRAPHOS-A2A-R017.5",
+        "GRAPHOS-A2A-R017.6"
+      ]
+    },
+    {
+      "id": "GRAPHOS-A2A-R017.1",
+      "title": "Engine decision port for HarnessConfig",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-A2A-R017.2",
+      "title": "Admission is async and calls the decider once",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-A2A-R017.3",
+      "title": "Priority comes from the principal class",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-A2A-R017.4",
+      "title": "Missing budget refuses",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-A2A-R017.5",
+      "title": "Wire admission into the send path",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-A2A-R017.6",
+      "title": "End-to-end admitted task",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -395,29 +503,75 @@
       "title": "Cryptographic enforcement via the signed AU envelope",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-A2A-R018.1",
+        "GRAPHOS-A2A-R018.2"
+      ]
+    },
+    {
+      "id": "GRAPHOS-A2A-R018.1",
+      "title": "Envelope carries harness_config",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-A2A-R018.2",
+      "title": "Envelope without the field refuses",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-A2A-R019",
       "title": "Typed refusal reason and provenance on every decision",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "35257e780f7c"
       ],
       "verified_by": [
         "tests/a2a/test_admission.py:34"
+      ],
+      "rollup_of": [
+        "GRAPHOS-A2A-R019.1"
       ]
+    },
+    {
+      "id": "GRAPHOS-A2A-R019.1",
+      "title": "Provenance names the harness decision",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     },
     {
       "id": "GRAPHOS-A2A-R020",
       "title": "No advisory, cached, or partial substitute",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "35257e780f7c"
       ],
       "verified_by": [
         "tests/a2a/test_admission.py:53"
+      ],
+      "rollup_of": [
+        "GRAPHOS-A2A-R020.1",
+        "GRAPHOS-A2A-R020.2"
       ]
+    },
+    {
+      "id": "GRAPHOS-A2A-R020.1",
+      "title": "Abstention refuses and records the named default",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-A2A-R020.2",
+      "title": "Unavailable, stale, or partial answers refuse",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     },
     {
       "id": "GRAPHOS-A2A-R021",

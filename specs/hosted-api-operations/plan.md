@@ -129,3 +129,34 @@ Proposed agent-utilities row (orchestrator adds it; new file `agent_utilities/ap
 
 Because the AU resolver already re-runs `source_query`, GRAPHOS-OPS-R040.8 wires `kg_source_resolver` instead of re-implementing it (no parallel function). The bounded-JSON limits (depth 8, 100 keys, 500 items, 16 KiB string, 256 KiB total) stay in the AU validator. The graph-os request model does not copy them.
 
+
+## Run read operations
+
+### Data flow
+
+`runs.metrics` or `runs.get` call → invoke pipeline (`GRAPHOS-OPS-R009`) → `handle_runs_metrics` or `handle_runs_get` (`graph_os/api/ops/runs.py`) → `RunTraceReader` port → engine adapter → engine run-trace read → typed outcome → response envelope.
+
+### Declaration to response, traced on an existing operation
+
+`retrieval.search` shows the pattern. `operations()` calls `build_read_op` with params, result, handler path, and scope (`graph_os/api/ops/retrieval.py:112-123`). The handler resolves its port with `bound_service` (`retrieval.py:81`) and returns `{"value": ...}`. An uncomposed port fails closed with `UNAVAILABLE`. `registry_factory.py` lists the module. The `runs` module copies this shape.
+
+### Types and scopes
+
+`RunMetricsOutcome` returns, per model profile and task class, `success_rate`, `cost_per_task_usd`, `overflow_rate`, and `run_count`. `RunSummary` returns `termination_reason`, `peak_context_tokens`, `context_budget_tokens`, and the applied `harness_config`. Names follow the run-trace vocabulary in the EG run-trace row. Scopes: `telemetry:read` for `runs.metrics` (`telemetry.py:55`) and `kg:read` for `runs.get` (`agents.py:131`). No scope class in `graph_os/api/registry/scopes.py` is added, because every scope already exists.
+
+### What exists and what is new
+
+Reused: `build_read_op`, `bound_service`, `Params`, the closed error enum, and the registry generator. New: the `runs` module, the `RunTraceReader` port, and the engine adapter. No engine client method for run traces appears in `graph_os` today. The adapter row `GRAPHOS-OPS-R021.4.2` depends on the engine exposing a wire-callable read method.
+
+### Decisions
+
+- The engine computes success rate, cost, and overflow rate. Rejected: aggregation in graph-os. It would create a second metrics store and a second definition of success.
+- `runs.get` reads the stored trace. Rejected: reconstructing the configuration from the A2A task. Only the written trace proves what the run applied.
+- A run in another tenant reads as absent, so existence does not leak.
+
+### Cross-repository dependencies
+
+- Depends on the EG run-trace vocabulary row for `terminationReason`, `peakContextTokens`, `contextBudgetTokens`, and `harness_config`.
+- Depends on the AU-HARNESS row that writes those fields at run end.
+- Depends on the AU evaluation row that stores measured outcomes as engine facts.
+- Unblocks the client rows that show cost, context use, and termination reason.

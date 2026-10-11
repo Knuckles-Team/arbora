@@ -25,6 +25,12 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing [spe
 | HO-T19 | GRAPHOS-OPS-R040 | Refresh with inline data, with resolver, and with a failing resolver. New render; resolver render; prior render preserved with ok false |
 | HO-T20 | GRAPHOS-OPS-R040 | Mount on the host app; read-only caller POSTs. Routes present; 403 on POST |
 | HO-T21 | GRAPHOS-OPS-R041 | Discover registry widgets. genius_agent absent |
+| HO-T22 | GRAPHOS-OPS-R021.4.1 | Run `tests/api/test_runs_ops.py::test_run_trace_reader_is_runtime_checkable_protocol`; it must pass and bind to this row. |
+| HO-T23 | GRAPHOS-OPS-R021.4.2 | Run `tests/api/test_runs_ops.py::test_adapter_calls_engine_wire_method`; it must pass and bind to this row. |
+| HO-T24 | GRAPHOS-OPS-R021.4.3 | Run `tests/api/test_runs_ops.py::test_run_metrics_models_reject_unknown_fields`; it must pass and bind to this row. |
+| HO-T25 | GRAPHOS-OPS-R021.4.4 | Run `tests/api/test_runs_ops.py::test_runs_metrics_passes_engine_values_through`; it must pass and bind to this row. |
+| HO-T26 | GRAPHOS-OPS-R021.4.5 | Run `tests/api/test_runs_ops.py::test_runs_get_returns_termination_context_and_applied_config`; it must pass and bind to this row. |
+| HO-T27 | GRAPHOS-OPS-R021.4.6 | Run `tests/api/test_runs_ops.py::test_runs_ops_registered_with_existing_scopes`; it must pass and bind to this row. |
 
 ## Drift and scanner acceptance
 
