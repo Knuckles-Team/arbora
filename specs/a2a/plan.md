@@ -19,7 +19,7 @@ flowchart LR
   E --> A[durable audit reservation and outcome]
 ```
 
-`task_id` is an opaque projection of the durable parent WorkItem, and child dispatch IDs are stored in a typed parent-child relation. `tasks/get/list` read that authority, not an A2A-local cache. `message/stream` emits ordered WorkItem events with a resume cursor; `tasks/resubscribe` resumes after the last acknowledged event and deduplicates on event ID. If the upstream contract cannot represent the relation or input-required state, the GraphOS method reports typed `UNAVAILABLE` until the published package provides it.
+`task_id` is an opaque projection of the durable parent WorkItem, and child dispatch IDs are stored in a typed parent-child relation. `tasks/get/list` read that authority, not an A2A-local cache. `message/stream` emits ordered WorkItem events with a resume cursor; `tasks/resubscribe` resumes after the last acknowledged event and deduplicates on event ID. The upstream contract may lack the relation or the input-required state. The GraphOS method then reports typed `UNAVAILABLE` until the published package provides it.
 
 An operation request uses the hosted registry and `invoke` pipeline, not an A2A-specific authorization implementation. The verified A2A adapter supplies actor, tenant, effective scopes, auth mode, policy revision and session provenance. The response carries the hosted API envelope within JSON-RPC `result`; JSON-RPC transport errors remain protocol errors. This preserves the engine/fleet's source error code and a privacy-safe message.
 
@@ -108,34 +108,67 @@ flowchart LR
 ### Quality and environment
 
 Use `uv sync --extra test`, focused `uv run pytest tests/a2a/test_admission.py`, Ruff, mypy, and the repository's configured pre-commit hooks. No new broker, task store, or duplicate admission authority is introduced. CI fixtures require no external secrets or private network for the model and refusal tests landed in this PR.
+<<<<<<< HEAD
 
-## Amendments
 
-### 2026-10-11
+## A2A harness-configuration admission
 
-Three A2A specs merged into one; duplicate spec ID removed. Row ID map (old directory, old ID, new ID):
+### Data flow
 
-| Old spec | Old ID | New ID |
-|---|---|---|
-| `a2a-capability-and-history-projection` | `GRAPHOS-A2A-R001` | `GRAPHOS-A2A-R009` |
-| `a2a-capability-and-history-projection` | `GRAPHOS-A2A-R001.1` | `GRAPHOS-A2A-R009.1` |
-| `a2a-capability-and-history-projection` | `GRAPHOS-A2A-R002` | `GRAPHOS-A2A-R010` |
-| `a2a-capability-and-history-projection` | `GRAPHOS-A2A-R003` | `GRAPHOS-A2A-R011` |
-| `a2a-capability-and-history-projection` | `GRAPHOS-A2A-R004` | `GRAPHOS-A2A-R012` |
-| `a2a-capability-and-history-projection` | `GRAPHOS-A2A-R004.1` | `GRAPHOS-A2A-R012.1` |
-| `a2a-capability-and-history-projection` | `GRAPHOS-A2A-R004.2` | `GRAPHOS-A2A-R012.2` |
-| `a2a-capability-and-history-projection` | `GRAPHOS-A2A-R004.3` | `GRAPHOS-A2A-R012.3` |
-| `a2a-capability-and-history-projection` | `GRAPHOS-A2A-R005` | `GRAPHOS-A2A-R013` |
-| `a2a-capability-and-history-projection` | `GRAPHOS-A2A-R006` | `GRAPHOS-A2A-R014` |
-| `a2a-capability-and-history-projection` | `GRAPHOS-A2A-R007` | `GRAPHOS-A2A-R015` |
-| `graphos-a2a-002` | `GRAPHOS-A2A-002-R001` | `GRAPHOS-A2A-R016` |
-| `graphos-a2a-002` | `GRAPHOS-A2A-002-R001.1` | `GRAPHOS-A2A-R016.1` |
-| `graphos-a2a-002` | `GRAPHOS-A2A-002-R002` | `GRAPHOS-A2A-R017` |
-| `graphos-a2a-002` | `GRAPHOS-A2A-002-R003` | `GRAPHOS-A2A-R018` |
-| `graphos-a2a-002` | `GRAPHOS-A2A-002-R004` | `GRAPHOS-A2A-R019` |
-| `graphos-a2a-002` | `GRAPHOS-A2A-002-R005` | `GRAPHOS-A2A-R020` |
-| `graphos-a2a-002` | `GRAPHOS-A2A-002-R006` | `GRAPHOS-A2A-R021` |
+`POST /a2a` `message/send` (`graph_os/a2a/application.py:264,166`) → `_send_message` (`application.py:100`) → `A2AService.send_message` (`graph_os/a2a/service.py:40`) → `router.route` (`graph_os/a2a/routing.py:71`) → `admit_tool_subset` (`graph_os/a2a/admission.py:50`) → `HarnessConfigDecider` → engine `Decide(HarnessConfig)` → `WorkItemA2AAuthority._enqueue` (`graph_os/a2a/authority.py:256`) → signed `AgentTurnEnvelope` with `harness_config`.
 
-### 2026-10-11 Preserve moved requirement lineage
+### What the code does today
 
-The 7 unique `GRAPHOS-A2A-002` rows from `graphos-a2a-002/requirements.md` at `44c7318f84b461817b9f0de05e7d4be0388ceb62` remain in this spec as `RETIRED` rows. Each row retains its original requirement and verification text and names its replacement. The ID map above records the move. It does not replace the required tombstones or establish delivery of an active row.
+`admit_tool_subset` is synchronous and unused in production. It ignores its request and returns `EG_ASSEMBLE_UNAVAILABLE` (`graph_os/a2a/admission.py:61`). The live refusals are inline: `routing.py:74` refuses any non-null budget, and `authority.py:268,299` refuse any non-empty tool subset. No engine decision client for `HarnessConfig` exists in `graph_os`. The envelope built at `authority.py:~277` carries no `harness_config`.
+
+### Types and fields
+
+- `ToolSubsetAdmissionRequest` gains `model_profile_ref`, `task_class`, and `priority` (`GRAPHOS-A2A-R016.2`, `R017.3`). The existing `context_budget` stays.
+- `ToolSubsetAdmissionDecision` gains `harness_config` and `context_budget_tokens` (`GRAPHOS-A2A-R016.3`).
+- `HarnessConfigAnswer` mirrors the engine contract: `context_policy` with `soft_threshold`, `hard_threshold`, and `recent_window_fraction`; `plan_scaffold`; `action_space` with the allowed tool subset; premises; resolution kind; typed abstention.
+- New refusals: `HARNESS_CONFIG_UNAVAILABLE`, `HARNESS_CONFIG_ABSTAINED`, `ENVELOPE_LACKS_HARNESS_CONFIG`, `CONTEXT_BUDGET_MISSING` (`GRAPHOS-A2A-R016.4`).
+
+### Attach point
+
+The admission call attaches in `A2AService.send_message` between `router.route` and `authority.dispatch` (`service.py:40-43`). `A2ARouteDecision` supplies the model profile and task class (`GRAPHOS-A2A-R016.5`). The caller supplies neither, because a caller must not choose its own model or task class. The `resolve_capability` result at `routing.py:61` may not carry these fields today. The code does not show it. `GRAPHOS-A2A-R016.5` raises `A2AAssemblyUnavailable` when they are absent.
+
+### One engine round trip
+
+The `HarnessConfigAnswer` already carries the tool subset, because the engine decision reuses its tool-subset selection (the EG-DECISION-ENGINE row for the `HarnessConfig` question). Admission therefore makes one call and takes the subset from `action_space`. It makes no separate `AgentAssemble` call (`GRAPHOS-A2A-R017.2`). If the engine instead returns the two answers separately, `GRAPHOS-A2A-R017` still governs the subset source and the decider port gains one more call.
+
+### Failure and refusal behaviour
+
+- Engine unreachable, answer stale, or answer missing a threshold under a summarizing policy: refuse `HARNESS_CONFIG_UNAVAILABLE` (`R020.2`).
+- Typed abstention: refuse `HARNESS_CONFIG_ABSTAINED`. The decision records the abstention's named default in `provenance` and never applies it (`R020.1`).
+- Budget null or below 1: refuse `CONTEXT_BUDGET_MISSING` before any engine call (`R017.4`).
+- Envelope model without `harness_config`: refuse `ENVELOPE_LACKS_HARNESS_CONFIG` (`R018.2`).
+- Provenance names the engine decision record on every decision (`R019.1`).
+
+### Reuse and new
+
+Reused: `_WireModel` and `A2AContextBudget` (`graph_os/a2a/models.py`), the decision and request types (`admission.py:34,41`), the refusal enumeration, `A2AAssemblyUnavailable` mapping to JSON-RPC `-32003` and HTTP 503 (`application.py:186`). New: the `HarnessConfigAnswer` mirror, the `HarnessConfigDecider` port and its engine adapter, the async admission call, the wiring in `service.py`, and the envelope pass-through. The adapter binds at the composition root (`graph_os/a2a/composition.py`).
+
+### Decisions
+
+- Abstention refuses. Admitting with the conservative default applies a substitute the engine did not commit. `GRAPHOS-A2A-R020` forbids an advisory, cached, or partial substitute. A default that graph-os applies is a substitute. The run loop must not depend on a value graph-os chose. The named default stays visible in `provenance` for the operator.
+- Rejected: a default threshold table in graph-os. The engine owns policy, and a second table drifts from it.
+- Rejected: two engine calls (assembly, then harness). They can disagree and double latency.
+- Rejected: caller-supplied model profile or task class. A caller picks the cheapest configuration.
+
+### Cross-repository dependencies
+
+- Depends on the EG-DECISION-ENGINE row for the `HarnessConfig` question and `HarnessConfigAnswer`.
+- Depends on the EG-TYPED-PACKS rows for `contextWindowTokens`, `shellProficiency`, `stoppingBehaviour`, and `shellCentric`.
+- Depends on the AU-CONTROL row for the signed envelope `harness_config` field next to `AU-CONTROL-R035`.
+- Unblocks the AU-HARNESS row where the run loop reads its configuration only from the envelope.
+- Unblocks the client rows that show the applied harness configuration.
+
+### Agent Card
+
+The card must not advertise a harness capability before `GRAPHOS-A2A-R017.6` passes. `GRAPHOS-A2A-R014` already fixes streaming, push, and history fields false. `GRAPHOS-A2A-R014.1` adds the same rule for any harness field. No such field exists today (`graph_os/a2a/models.py:167`).
+
+### Open facts the code did not show
+
+The source of `priority` and the field names inside the `resolve_capability` result are not visible. `GRAPHOS-A2A-R017.3` and `R016.5` set them as explicit rows.
+=======
+>>>>>>> origin/spec-three-states

@@ -1,7 +1,5 @@
 # GRAPHOS-INGRESS — Test specification
 
-Status: SPECIFIED. Governing [spec](spec.md). All evidence is PENDING; publishing this test contract is not a test pass.
-
 | Test ID | Requirement | Level | Fixture and input | Expected observation |
 |---|---|---|---|---|
 | T-IN-01 | IN-01 | Unit | Complete generic HTTPS profile, local OIDC metadata, reference-only secrets | Deterministic redacted render with exact host, callback and profile digest. |

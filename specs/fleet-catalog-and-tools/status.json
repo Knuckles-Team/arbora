@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "spec_id": "GRAPHOS-FLEET-001",
+  "spec_id": "GRAPHOS-FLEET",
   "owner_repo": "graph-os",
   "delivery_state": "SPECIFIED",
   "requirement_ids": [

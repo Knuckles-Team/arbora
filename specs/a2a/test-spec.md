@@ -45,5 +45,21 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing spec
 | A2A-ADM-T04 | GRAPHOS-A2A-R018 (open) | Once wired: given a committed EG answer but an envelope lacking the allowed-tool-subset field, refuse with `ENVELOPE_LACKS_ALLOWED_TOOL_SUBSET`. Given both, admit with `admitted_tools` equal to the EG answer's subset and `provenance` naming the EG decision record and the signed envelope. |
 | A2A-ADM-T05 | GRAPHOS-A2A-R020 | A scripted partial or stale upstream answer (fewer tools than the agent graph requires, or an expired decision record) refuses. It never reduces to a smaller admitted subset. |
 | A2A-ADM-T06 | GRAPHOS-A2A-R021 | `uv run pytest tests/a2a/test_admission.py` passes from a fresh public clone with no external network, private sibling checkout, or live identity provider. |
+| A2A-ADM-T07 | GRAPHOS-A2A-R016.2 | Run `tests/a2a/test_admission.py::test_request_requires_model_profile_and_task_class`; it must pass and bind to this row. |
+| A2A-ADM-T08 | GRAPHOS-A2A-R016.3 | Run `tests/a2a/test_admission.py::test_admitted_decision_carries_harness_config_and_budget`; it must pass and bind to this row. |
+| A2A-ADM-T09 | GRAPHOS-A2A-R016.4 | Run `tests/a2a/test_admission.py::test_refusal_reasons_are_closed_set`; it must pass and bind to this row. |
+| A2A-ADM-T10 | GRAPHOS-A2A-R016.5 | Run `tests/a2a/test_routing.py::test_route_decision_carries_model_profile_and_task_class`; it must pass and bind to this row. |
+| A2A-ADM-T11 | GRAPHOS-A2A-R017.1 | Run `tests/a2a/test_admission.py::test_decider_port_returns_typed_answer`; it must pass and bind to this row. |
+| A2A-ADM-T12 | GRAPHOS-A2A-R017.2 | Run `tests/a2a/test_admission.py::test_admission_makes_one_engine_call`; it must pass and bind to this row. |
+| A2A-ADM-T13 | GRAPHOS-A2A-R017.3 | Run `tests/a2a/test_admission.py::test_priority_is_set_from_principal_class`; it must pass and bind to this row. |
+| A2A-ADM-T14 | GRAPHOS-A2A-R017.4 | Run `tests/a2a/test_admission.py::test_missing_budget_refuses_before_engine_call`; it must pass and bind to this row. |
+| A2A-ADM-T15 | GRAPHOS-A2A-R017.5 | Run `tests/a2a/test_service_admission.py::test_send_message_refuses_without_admission`; it must pass and bind to this row. |
+| A2A-ADM-T16 | GRAPHOS-A2A-R017.6 | Run `tests/a2a/test_admission_e2e.py::test_message_send_enqueues_envelope_with_harness_config`; it must pass and bind to this row. |
+| A2A-ADM-T17 | GRAPHOS-A2A-R018.1 | Run `tests/a2a/test_authority_envelope.py::test_enqueue_passes_harness_config`; it must pass and bind to this row. |
+| A2A-ADM-T18 | GRAPHOS-A2A-R018.2 | Run `tests/a2a/test_admission.py::test_envelope_lacking_harness_config_refuses`; it must pass and bind to this row. |
+| A2A-ADM-T19 | GRAPHOS-A2A-R020.1 | Run `tests/a2a/test_admission.py::test_abstention_refuses_and_does_not_apply_default`; it must pass and bind to this row. |
+| A2A-ADM-T20 | GRAPHOS-A2A-R020.2 | Run `tests/a2a/test_admission.py::test_unavailable_stale_or_partial_harness_answer_refuses`; it must pass and bind to this row. |
+| A2A-ADM-T21 | GRAPHOS-A2A-R019.1 | Run `tests/a2a/test_admission.py::test_provenance_names_harness_decision_record`; it must pass and bind to this row. |
+| A2A-ADM-T22 | GRAPHOS-A2A-R014.1 | Run `tests/a2a/test_agent_card.py::test_card_has_no_harness_field_before_admission_e2e`; it must pass and bind to this row. |
 
 Run `uv run pytest tests/a2a/test_admission.py`, `uv run ruff check graph_os/a2a/admission.py tests/a2a/test_admission.py`, `uv run ruff format --check graph_os/a2a/admission.py tests/a2a/test_admission.py`, and `uv run mypy graph_os/a2a/admission.py`. A2A-ADM-T03 and A2A-ADM-T04 remain open until the EG and AU dependencies (`EG-DECISION-ENGINE-R036`, `AU-CONTROL-R035`) are callable; this PR lands A2A-ADM-T01, A2A-ADM-T02, and A2A-ADM-T06 only. Capture exact commit, command, and result before changing delivery to `ACCEPTED`.

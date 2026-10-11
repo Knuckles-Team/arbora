@@ -1,7 +1,5 @@
 # GRAPHOS-ACCEPTANCE — Test specification
 
-Status: SPECIFIED. Governing spec: [spec.md](spec.md).
-
 | Test ID | Requirement | Level | Setup and input | Expected observation | Evidence |
 |---|---|---|---|---|---|
 | T-001 | FR-1, FR-2 | Unit | A fixture `status.json` with one requirement carrying `merged_head`, `test`, and `consumer` evidence all at the same commit. | `gaps_for_status` returns an empty list for that requirement. | PENDING |

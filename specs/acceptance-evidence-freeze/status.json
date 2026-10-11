@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "spec_id": "GRAPHOS-ACCEPTANCE-001",
+  "spec_id": "GRAPHOS-ACCEPTANCE",
   "owner_repo": "graph-os",
   "delivery_state": "LANDED",
   "requirement_ids": [

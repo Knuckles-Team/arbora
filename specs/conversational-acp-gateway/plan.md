@@ -1,7 +1,5 @@
 # GRAPHOS-ACP — Design and implementation plan
 
-Status: BUILDING. Governing [spec](spec.md).
-
 ## Existing system and reuse
 
 GraphOS already has one principal/tenant/scope resolution path consumed by REST and MCP ([GRAPHOS-IDENTITY-001](../identity-access/spec.md)). ACP admission must call that same path rather than re-implement verification. `graph_os.identity` is the existing owner of session and principal types. `graph_os.gateway` is the existing owner of serving composition. No ACP session store exists yet; `R001.1` adds the smallest typed model and admission check, not a transport.

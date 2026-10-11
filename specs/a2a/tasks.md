@@ -84,3 +84,19 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
 - [ ] **Prerequisite (owner repo: epistemic-graph):** `AgentAssemble` must stop returning unavailable before `admit_tool_subset` can derive a real subset (`GRAPHOS-A2A-R017`).
 - [ ] **Prerequisite (owner repo: agent-utilities, opened as `AU-CONTROL-R035`):** the signed `AgentTurnEnvelope` must carry and let a harness enforce an allowed-tool-subset field before an admitted decision can be cryptographically carried (`GRAPHOS-A2A-R018`).
 - [ ] Once both prerequisites land: wire `admit_tool_subset` to the real EG assembly client and the signed envelope, add the admitted-path and partial/stale-refusal tests in [test-spec.md](test-spec.md), and replace `OrchestratorA2ARouter`'s and `WorkItemA2AAuthority`'s inline `A2AAssemblyUnavailable` raises with a call to this one admission authority.
+- [ ] **GRAPHOS-A2A-R016.2:** Admission request carries model profile and task class. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R016.3:** Admission decision carries the committed harness answer. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R016.4:** Refusal enum gains the harness reasons. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R016.5:** Routing decision carries model profile and task class. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R017.1:** Engine decision port for HarnessConfig. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R017.2:** Admission is async and calls the decider once. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R017.3:** Priority comes from the principal class. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R017.4:** Missing budget refuses. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R017.5:** Wire admission into the send path. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R017.6:** End-to-end admitted task. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R018.1:** Envelope carries harness_config. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R018.2:** Envelope without the field refuses. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R020.1:** Abstention refuses and records the named default. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R020.2:** Unavailable, stale, or partial answers refuse. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R019.1:** Provenance names the harness decision. Touches the file named in the requirement row.
+- [ ] **GRAPHOS-A2A-R014.1:** Card advertises no harness capability before it works. Touches the file named in the requirement row.

@@ -1,6 +1,6 @@
 # GRAPHOS-RELEASE — Implementation tasks
 
-Status: SPECIFIED. Governing [spec](spec.md) and [plan](plan.md).
+Governing [spec](spec.md) and [plan](plan.md).
 
 - [x] Inventory existing release profile, doctor certification, canary, production operations and self-deploy interfaces. Agree on candidate schema with pipeline and repository-manager owners. `graph_os.deployment.release_candidate` reuses `genesis_environments.load_environment_profile` for the profile binding rather than adding a second parser.
 - [x] Add one validated candidate manifest reader and deterministic dependency graph to the existing deployment path; reject untrusted, mutable, cyclic and incompatible candidates. Landed as `graph_os.deployment.release_candidate` (`Candidate`/`Artifact`/`Stage`/`Profile` typed models, `read_candidate`, `_dependency_graph`, `_order`) with `tests/deployment/test_release_candidate.py` (32 cases): deterministic topological order with a stable component-ID tie-break (`test_deterministic_optional_order`), cycle refusal (`test_cycle_and_compatibility`, `candidate_cycle`), missing/disabled-predecessor refusal (`test_missing_or_disabled_predecessor`), and closed-schema/duplicate/digest-tag/signature refusals. No rollout execution and no rollback yet — `plan_candidate` only plans (`executed: False`); see the next two tasks.

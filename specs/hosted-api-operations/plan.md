@@ -49,10 +49,9 @@ The retirement inventory is a checked artifact produced from the existing host r
 
 `uv sync --extra test`, `uv run pytest tests/api tests/fleet`, `uv run ruff check .`, `uv run ruff format --check .`, and `uv run mypy graph_os` must run with public pinned wheels and fixture identities. CI may provision an ephemeral local engine/agent stack for served tests; no check requires a private host or credential. Existing repository hooks provide CCCC, KISS, jscpd and Dupehound scanning; the scoped implementation must satisfy configured thresholds (including zero new clone pairs), not lower or suppress them. Keep registry domain tables small, use a step table rather than nested branching, one endpoint factory per surface, and generated declarative types rather than repeated function bodies. Delete old implementation in the cutover so scanners and reviewers see one authority.
 
-## Gateway carry-over: dashboard, Live Artifacts, widget (folded from GRAPHOS-GWC, 2026-10-11)
+## Gateway carry-over: dashboard, Live Artifacts, widget
 
 Cross-repo IDs: AU-BOUNDARY-R001.2, AU-BOUNDARY-R001.3, AU-BOUNDARY-R001.7 (agent-utilities deletions); GRAPHOS-HOST-R005. Provenance: agent-utilities commits 0eb67c99c (dashboard router), 902f906ca (Live Artifacts router), 7717d2e62 (genius_agent widget).
-
 
 Deleted dashboard router (prefix `/api/dashboard`, read capability on every route except `/health`; write capability on mutations; capabilities gateway:read, gateway:write, gateway:admin, admin; API-key callers unrestricted):
 - GET `/layout` and PUT `/layout`: read and persist the dashboard layout (shared YAML, reads always go back to disk).
@@ -84,14 +83,11 @@ Deleted Genius Agent widget: dashboard tile (type genius_agent, env prefix GENIU
 - Artifacts: a new register function is called from the same host composition point that mounts the graph and usage routes. Authentication: reuse the dashboard capability dependencies unchanged (decision D3 below: gateway:read for GET, gateway:write for POST, plus the gateway:admin and admin supersets). These are identity capabilities, not engine registry scopes. The old router had no router-level check, so this is an intentional tightening, called out in the parity table.
 - Config: the artifact store location follows the agent-utilities store default; no new env key.
 
-
 Out of scope:
 
 Moving the Live Artifact store or refresh service out of agent-utilities, new dashboard widgets, any change to the layout file format, and the MCP tool surface for artifacts (the research-artifact tool is unrelated).
 
-
 ### Caveat resolutions (design, 2026-10-10)
-
 
 #### D2 Dashboard route parity (CONFIRMED by reading both files)
 
@@ -121,7 +117,7 @@ No route is MISSING. The capability resolver itself still imports `agent_utiliti
 
 Evidence: `graph_os/api/registry/scopes.py` exports `FinanceScope`, `FleetScope`, `LoopsScope`, `OpsScope`; `graph_os/api/policy/domain_scopes.py` lists `fleet:events` and `webui:{admin,maintainer,reader,user}`. The pinned engine `contract/scopes.json` (175 rows, the file `eg_binding._load_scopes` reads and `tests/api/test_registry_factory.py` checks for "unregistered EG scope") has no `gateway:*` row. So `gateway:read` and `gateway:write` are NOT registry scopes. They are identity capabilities that the dashboard resolves from the identity group capability map (`_dashboard_capabilities`). The earlier text calling them "already in the engine contract" was wrong and is corrected above.
 
-Decision: the artifact routes use the same dependencies as the dashboard routes (`_require_dashboard_read` for GET, `_require_dashboard_write` for POST, reused from `dashboard_api.py`, not copied), so behaviour matches sibling routes and no engine change is needed. Gateway scopes do NOT need adding to the engine: `EG-IDENTITY-R007` (which registers `identity:admin`, `loops:read`, `loops:control`) is unrelated, and `loops:*` are likewise absent from the pinned `scopes.json` today, which is that row's concern, not this one. I could not locate the R007 row text in the epistemic-graph specs checkout on this host, so its exact wording is unverified here. Alternative rejected: map to registry scopes `webui:reader`/`webui:user`; those are the WebUI role namespace and would create a second authorization model for one gateway.
+Decision: the artifact routes use the same dependencies as the dashboard routes (`_require_dashboard_read` for GET, `_require_dashboard_write` for POST, reused from `dashboard_api.py`, not copied), so behaviour matches sibling routes and no engine change is needed. Gateway scopes do NOT need adding to the engine: `EG-IDENTITY-R007` (which registers `identity:admin`, `loops:read`, `loops:control`) is unrelated, and `loops:*` are likewise absent from the pinned `scopes.json` today, which is that row's concern, not this one. Alternative rejected: map to registry scopes `webui:reader`/`webui:user`; those are the WebUI role namespace. That mapping creates a second authorization model for one gateway.
 
 #### D4 Agent-utilities export for artifacts (CONFIRMED; proposed AU row)
 
@@ -133,65 +129,33 @@ Proposed agent-utilities row (orchestrator adds it; new file `agent_utilities/ap
 
 Because the AU resolver already re-runs `source_query`, GRAPHOS-OPS-R040.8 wires `kg_source_resolver` instead of re-implementing it (no parallel function). The bounded-JSON limits (depth 8, 100 keys, 500 items, 16 KiB string, 256 KiB total) stay in the AU validator. The graph-os request model does not copy them.
 
-## Audit record
+## Run read operations
 
-Dashboard route parity audit (method: compare the deleted router with the served one, route by route; result below; see D2 above for the per-route table).
+### Data flow
 
-| Old entry point | New entry point | Status | Reason |
-|---|---|---|---|
-| GET /api/dashboard/layout, PUT /layout | dashboard router same paths | exists | verify with a test |
-| GET /data, /data/{service_id}, /full, /data-subset | dashboard router same paths | exists | verify with a test |
-| GET /widgets, /discover, /health | dashboard router same paths | exists | verify with a test |
-| GET /daemon/status, /daemon/shards, POST /daemon/start | dashboard router same paths | exists | verify with a test |
-| POST /hydrate/{source}, POST /hydrate, GET /hydration-status | dashboard router same paths | exists | verify with a test |
-| websocket /ws/dashboard (consumer of the subset fetch) | dashboard websocket | exists | verify with a test |
-| fetch_dashboard_subset (Python helper) | aggregator fetch via /data-subset | exists | helper removed upstream with its test |
-| POST /api/artifacts | artifacts router | to build | no equivalent found in graph-os |
-| GET /api/artifacts/{id} | artifacts router | to build | no equivalent found |
-| POST /api/artifacts/{id}/refresh | artifacts router | to build | no equivalent found |
-| register_artifact_source | resolver port argument | to build | replaces a module global |
-| genius_agent widget | none | intentionally dropped | constant fabricated data; fleet and catalog surfaces report real counts |
+`runs.metrics` or `runs.get` call → invoke pipeline (`GRAPHOS-OPS-R009`) → `handle_runs_metrics` or `handle_runs_get` (`graph_os/api/ops/runs.py`) → `RunTraceReader` port → engine adapter → engine run-trace read → typed outcome → response envelope.
 
-## Amendments
+### Declaration to response, traced on an existing operation
 
-### 2026-10-11 Fold of GRAPHOS-GWC into GRAPHOS-OPS
+`retrieval.search` shows the pattern. `operations()` calls `build_read_op` with params, result, handler path, and scope (`graph_os/api/ops/retrieval.py:112-123`). The handler resolves its port with `bound_service` (`retrieval.py:81`) and returns `{"value": ...}`. An uncomposed port fails closed with `UNAVAILABLE`. `registry_factory.py` lists the module. The `runs` module copies this shape.
 
-Old statement: the gateway carry-over was a separate spec `GRAPHOS-GWC`. New statement: its three rollups are `GRAPHOS-OPS-R039` (dashboard route parity), `GRAPHOS-OPS-R040` (Live Artifacts routes and their authentication) and `GRAPHOS-OPS-R041` (Genius Agent widget dropped). The host HTTP surface is owned here. Evidence: rows moved unchanged in text. No row was LANDED or VERIFIED.
+### Types and scopes
 
-| Old ID | New ID |
-|---|---|
-| `GRAPHOS-GWC-R001` | `GRAPHOS-OPS-R039` |
-| `GRAPHOS-GWC-R001.1` | `GRAPHOS-OPS-R039.1` |
-| `GRAPHOS-GWC-R001.2` | `GRAPHOS-OPS-R039.2` |
-| `GRAPHOS-GWC-R001.3` | `GRAPHOS-OPS-R039.3` |
-| `GRAPHOS-GWC-R001.4` | `GRAPHOS-OPS-R039.4` |
-| `GRAPHOS-GWC-R001.5` | `GRAPHOS-OPS-R039.5` |
-| `GRAPHOS-GWC-R001.6` | `GRAPHOS-OPS-R039.6` |
-| `GRAPHOS-GWC-R001.7` | `GRAPHOS-OPS-R039.7` |
-| `GRAPHOS-GWC-R001.8` | `GRAPHOS-OPS-R039.8` |
-| `GRAPHOS-GWC-R001.9` | `GRAPHOS-OPS-R039.9` |
-| `GRAPHOS-GWC-R002` | `GRAPHOS-OPS-R040` |
-| `GRAPHOS-GWC-R002.1` | `GRAPHOS-OPS-R040.1` |
-| `GRAPHOS-GWC-R002.10` | `GRAPHOS-OPS-R040.10` |
-| `GRAPHOS-GWC-R002.2` | `GRAPHOS-OPS-R040.2` |
-| `GRAPHOS-GWC-R002.3` | `GRAPHOS-OPS-R040.3` |
-| `GRAPHOS-GWC-R002.4` | `GRAPHOS-OPS-R040.4` |
-| `GRAPHOS-GWC-R002.5` | `GRAPHOS-OPS-R040.5` |
-| `GRAPHOS-GWC-R002.6` | `GRAPHOS-OPS-R040.6` |
-| `GRAPHOS-GWC-R002.7` | `GRAPHOS-OPS-R040.7` |
-| `GRAPHOS-GWC-R002.8` | `GRAPHOS-OPS-R040.8` |
-| `GRAPHOS-GWC-R002.9` | `GRAPHOS-OPS-R040.9` |
-| `GRAPHOS-GWC-R003` | `GRAPHOS-OPS-R041` |
-| `GRAPHOS-GWC-R003.1` | `GRAPHOS-OPS-R041.1` |
-| `T-001` | `HO-T14` |
-| `T-002` | `HO-T15` |
-| `T-003` | `HO-T16` |
-| `T-004` | `HO-T17` |
-| `T-005` | `HO-T18` |
-| `T-006` | `HO-T19` |
-| `T-007` | `HO-T20` |
-| `T-008` | `HO-T21` |
+`RunMetricsOutcome` returns, per model profile and task class, `success_rate`, `cost_per_task_usd`, `overflow_rate`, and `run_count`. `RunSummary` returns `termination_reason`, `peak_context_tokens`, `context_budget_tokens`, and the applied `harness_config`. Names follow the run-trace vocabulary in the EG run-trace row. Scopes: `telemetry:read` for `runs.metrics` (`telemetry.py:55`) and `kg:read` for `runs.get` (`agents.py:131`). No scope class in `graph_os/api/registry/scopes.py` is added, because every scope already exists.
 
-### 2026-10-11 Preserve moved requirement lineage
+### What exists and what is new
 
-The 23 unique `GRAPHOS-GWC` rows from `gateway-carryover/requirements.md` at `44c7318f84b461817b9f0de05e7d4be0388ceb62` remain in this spec as `RETIRED` rows. Each row retains its original requirement and verification text and names its replacement. The ID map above records the move. It does not replace the required tombstones or establish delivery of an active row.
+Reused: `build_read_op`, `bound_service`, `Params`, the closed error enum, and the registry generator. New: the `runs` module, the `RunTraceReader` port, and the engine adapter. No engine client method for run traces appears in `graph_os` today. The adapter row `GRAPHOS-OPS-R021.4.2` depends on the engine exposing a wire-callable read method.
+
+### Decisions
+
+- The engine computes success rate, cost, and overflow rate. Rejected: aggregation in graph-os. It creates a second metrics store and a second definition of success.
+- `runs.get` reads the stored trace. Rejected: reconstructing the configuration from the A2A task. Only the written trace proves what the run applied.
+- A run in another tenant reads as absent, so existence does not leak.
+
+### Cross-repository dependencies
+
+- Depends on the EG run-trace vocabulary row for `terminationReason`, `peakContextTokens`, `contextBudgetTokens`, and `harness_config`.
+- Depends on the AU-HARNESS row that writes those fields at run end.
+- Depends on the AU evaluation row that stores measured outcomes as engine facts.
+- Unblocks the client rows that show cost, context use, and termination reason.

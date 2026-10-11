@@ -1,6 +1,6 @@
 # GRAPHOS-ACCEPTANCE — Implementation tasks
 
-Status: SPECIFIED. Governing spec: [spec.md](spec.md). Design: [plan.md](plan.md).
+Governing spec: [spec.md](spec.md). Design: [plan.md](plan.md).
 
 - [x] Inventory `scripts/check_public_specs.py`'s existing evidence schema and structural validation to avoid duplicating its authority.
 - [x] `GRAPHOS-ACCEPTANCE-R001.1`: implement the typed `EvidenceRecord`/`RequirementGap` model and `gaps_for_status`/`load_status` functions plus the standalone CLI entry point in `scripts/check_acceptance_evidence.py`.

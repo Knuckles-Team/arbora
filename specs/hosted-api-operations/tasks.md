@@ -16,6 +16,13 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
 - [ ] **GRAPHOS-OPS-R021.2.1:** `retrieval.search` op
 - [ ] **GRAPHOS-OPS-R021.2.2:** `retrieval.freshness` op
 - [ ] **GRAPHOS-OPS-R021.3:** Policy and swarm read operations — policy slice of `GRAPHOS-OPS-R021`.
+- [ ] **GRAPHOS-OPS-R021.4:** Run read operations — runs slice.
+- [ ] **GRAPHOS-OPS-R021.4.1:** `RunTraceReader` port.
+- [ ] **GRAPHOS-OPS-R021.4.2:** Engine adapter for run traces.
+- [ ] **GRAPHOS-OPS-R021.4.3:** `runs.metrics` models.
+- [ ] **GRAPHOS-OPS-R021.4.4:** `runs.metrics` operation.
+- [ ] **GRAPHOS-OPS-R021.4.5:** `runs.get` operation.
+- [ ] **GRAPHOS-OPS-R021.4.6:** Registration and generated artifacts.
 - [ ] **GRAPHOS-OPS-R022.1:** Work-item and offer operations — work slice of `GRAPHOS-OPS-R022`.
 - [ ] **GRAPHOS-OPS-R022.2:** Evolution loop, schedule, and proposal operations — evolution slice of `GRAPHOS-OPS-R022`.
 - [ ] **GRAPHOS-OPS-R024.1:** Telemetry operations — telemetry slice of `GRAPHOS-OPS-R024`.

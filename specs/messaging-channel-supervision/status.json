@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "spec_id": "GRAPHOS-MESSAGING-001",
+  "spec_id": "GRAPHOS-MESSAGING",
   "owner_repo": "graph-os",
   "delivery_state": "SPECIFIED",
   "requirement_ids": [
