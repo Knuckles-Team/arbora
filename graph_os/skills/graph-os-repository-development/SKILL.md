@@ -100,7 +100,7 @@ passes a gate that did not run.
 
 This repository runs its own gates and tests on ordinary hosted CI and
 developer hardware; it does not need the heavy per-worktree `epistemic-graph`
-Rust build host (R820) that an EG lane requires — never submit a graph-os-only
+Rust build host that an EG lane requires — never submit a graph-os-only
 change to that build queue.
 
 The package publishes these operator commands:
