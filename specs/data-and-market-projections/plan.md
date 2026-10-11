@@ -138,3 +138,13 @@ pytest, and the repository's release workflow. Any scanner finding requires a
 real fix or a documented existing baseline comparison; do not suppress it to
 manufacture a green gate. Record exact commands, revisions, and results in the
 spec evidence before marking `ACCEPTED`.
+
+## Confirmed order and position changes (GRAPHOS-DATA-MARKET-R007)
+
+Data flow starts with the paper order operation over POST /api/v1/ops/{op_id}. `_effect` (graph_os/api/invoke/pipeline.py:218) calls `bind_plan` (:230). Confirmation precedes the published signature-verification port, then the provider and audit record. The signature-verification port is not established; fail closed until it exists.
+
+Types: `OrderChange`, `PositionChange`, `WalletOperation`. Failure: `CONFIRMATION_REQUIRED` or `POLICY_DENIED` with zero provider calls.
+
+Existing code: graph_os/finance/markets.py:34, :90; graph_os/api/invoke/pipeline.py:218, :230. Reachable today: no order operation exists. Search terms used: paper order, submit order, wallet, signature, confirm.
+
+Decision: reuse the plan and confirm pipeline. Rejected: a finance-only confirmation path. Cross-repository: SDK-GOVERNED-WRITEBACK-R001 owns source-effect authorization. Wallet signature verification needs a published producer contract before this operation can be activated.

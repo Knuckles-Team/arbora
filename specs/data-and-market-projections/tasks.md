@@ -26,3 +26,10 @@ Before proposing a PR, compare changed modules against existing implementations
 for CCCC complexity, jscpd syntax duplication, dupehound semantic duplication,
 and KISS simplicity. Follow the repository's normal gate; do not substitute
 private live services for local fixtures or silently downgrade a failing test.
+- [ ] **GRAPHOS-DATA-MARKET-R007:** Confirmed order and position changes.
+- [ ] **GRAPHOS-DATA-MARKET-R007.1:** Model.
+- [ ] **GRAPHOS-DATA-MARKET-R007.2:** Behavior.
+- [ ] **GRAPHOS-DATA-MARKET-R007.3:** Wiring.
+- [ ] **GRAPHOS-DATA-MARKET-R007.4:** Refusal.
+- [ ] **GRAPHOS-DATA-MARKET-R007.5:** Evidence.
+- [ ] **GRAPHOS-DATA-MARKET-R007.6:** Hot-path proof.
