@@ -390,3 +390,12 @@ def test_scanner_cache_identity_fails_closed_without_a_compiler(
     assert _scanner_cache_identity(
         {**scanner_identity_environment, "FAIL_TOOL": tool}
     ) == (23, "")
+
+
+def test_only_superseded_pull_request_runs_are_cancelled() -> None:
+    concurrency = _workflow()["concurrency"]
+    assert concurrency["group"] == "release-${{ github.workflow }}-${{ github.ref }}"
+    assert (
+        concurrency["cancel-in-progress"]
+        == "${{ github.event_name == 'pull_request' }}"
+    )

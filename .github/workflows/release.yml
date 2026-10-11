@@ -35,7 +35,8 @@ on:
 
 concurrency:
   group: release-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+  # Replace obsolete PR work; preserve main/tag runs that warm caches and publish.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
