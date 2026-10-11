@@ -105,3 +105,8 @@ current specification status, delivery timelines, velocity and burndown, and
 open pull request and issue snapshots. It refreshes with each main-branch push.
 Unknown completion dates and unavailable history are labeled explicitly;
 individual requirements and pull requests do not count as completed specifications.
+
+## Planned run observation
+
+[GRAPHOS-OPS-R021.4](https://github.com/Knuckles-Team/graph-os/tree/main/specs/hosted-api-operations) defines planned run reads and served acceptance.
+The specification does not establish runtime availability.

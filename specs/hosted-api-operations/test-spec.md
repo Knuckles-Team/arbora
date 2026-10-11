@@ -44,3 +44,17 @@ Run `uv run pytest tests/api tests/fleet tests/mcp_server tests/gateway`, `uv ru
 - GRAPHOS-OPS-R053: the hot-path proof test passes and the typed refusal leaves no effect.
 
 R050/R051/R053 served fixtures cross shared invoke into public EG producer ports. They check engine verdict provenance and typed unavailability when a producer is absent. R051 uses EG-DECISION-ENGINE-R138 for scorer/verdict decisions and R133 for quotas/trace commits; AU only runs probes. R053 uses engine retrieval/context decisions and SDK source ingestion. Discovery fixtures use FLEET-R029 find/act/manage over R011/R013 registry machinery, with no retired fleet meta-tools or duplicate registry.
+
+## Planned served acceptance for run reads
+
+All paths below are planned tests, not execution receipts. Each test must bind its exact requirement ID.
+The fixture must enter REST and MCP, traverse authorization and registration, and reach an engine-backed reader.
+
+| Requirement | Planned test path | Positive served requirement | Negative served requirement |
+|---|---|---|---|
+| GRAPHOS-OPS-R021.4.1 | `tests/api/test_runs_served.py::test_reader_binding` | Both operations reach the bound reader with caller authority. | Missing binding returns `UNAVAILABLE` with no engine call. |
+| GRAPHOS-OPS-R021.4.2 | `tests/api/test_runs_served.py::test_validated_trace_readback` | An ingested trace and decision edge survive engine readback. | Invalid ingestion stores nothing; another tenant cannot reveal the trace. |
+| GRAPHOS-OPS-R021.4.3 | `tests/api/test_runs_served.py::test_metrics_grouping_and_abstention` | Mixed solved and failed traces preserve engine cost and grouping. | Zero solved traces abstain; malformed numeric values refuse. |
+| GRAPHOS-OPS-R021.4.4 | `tests/api/test_runs_served.py::test_metrics_authority` | Authorized filters reach the engine unchanged. | Denied scope makes no engine call; no local aggregate replaces failure. |
+| GRAPHOS-OPS-R021.4.5 | `tests/api/test_runs_served.py::test_summary_and_plan_projection` | Fields map exactly; an authorized fresh plan preserves order and revision. | Missing plan export stays unavailable; wrong-run, expired and regressing snapshots reveal no items. |
+| GRAPHOS-OPS-R021.4.6 | `tests/api/test_runs_served.py::test_registered_rest_mcp_parity` | Generated clients invoke both registered transports with equal results. | Absent operation and malformed envelopes refuse without dispatch. |
