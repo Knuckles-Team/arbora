@@ -1,6 +1,6 @@
 # GRAPHOS-ACCEPTANCE — Design and implementation plan
 
-Status: SPECIFIED. Governing spec: [spec.md](spec.md).
+Governing spec: [spec.md](spec.md).
 
 ## Existing system and reuse
 

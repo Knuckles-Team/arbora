@@ -1,6 +1,6 @@
 # GRAPHOS-INGRESS — Implementation tasks
 
-Status: SPECIFIED. Governing [spec](spec.md) and [plan](plan.md).
+Governing [spec](spec.md) and [plan](plan.md).
 
 `GRAPHOS-INGRESS-R001` is sliced per the rapid-delivery contract (size score
 above 6, more than 2 code roots): `GRAPHOS-INGRESS-R001.1` (this slice) is the

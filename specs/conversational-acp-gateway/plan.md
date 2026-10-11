@@ -1,6 +1,6 @@
 # GRAPHOS-ACP — Design and implementation plan
 
-Status: BUILDING. Governing [spec](spec.md).
+Governing [spec](spec.md).
 
 ## Existing system and reuse
 

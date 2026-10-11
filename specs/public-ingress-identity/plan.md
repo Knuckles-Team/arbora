@@ -1,6 +1,6 @@
 # GRAPHOS-INGRESS — Design and implementation plan
 
-Status: SPECIFIED. Governing [spec](spec.md).
+Governing [spec](spec.md).
 
 ## Existing system and reuse
 

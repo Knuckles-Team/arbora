@@ -1,6 +1,6 @@
 # GRAPHOS-ACCEPTANCE — Test specification
 
-Status: SPECIFIED. Governing spec: [spec.md](spec.md).
+Governing spec: [spec.md](spec.md).
 
 | Test ID | Requirement | Level | Setup and input | Expected observation | Evidence |
 |---|---|---|---|---|---|

@@ -1,6 +1,6 @@
 # GRAPHOS-ACP — Test specification
 
-Status: BUILDING. Governing [spec](spec.md). All evidence is PENDING; publishing this test contract is not a test pass.
+Governing [spec](spec.md). All evidence is PENDING; publishing this test contract is not a test pass.
 
 | Test ID | Requirement | Level | Fixture and input | Expected observation |
 |---|---|---|---|---|

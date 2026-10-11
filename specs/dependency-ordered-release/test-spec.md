@@ -1,6 +1,6 @@
 # GRAPHOS-RELEASE — Test specification
 
-Status: SPECIFIED. Governing [spec](spec.md). Evidence remains PENDING.
+Governing [spec](spec.md). Evidence remains PENDING.
 
 | Test ID | Requirement | Level | Fixture and input | Expected observation |
 |---|---|---|---|---|
