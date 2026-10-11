@@ -208,8 +208,6 @@ Existing code: graph_os/api/ops/_common.py:106; graph_os/api/http/openapi.py:1; 
 
 Decision: GraphOS filters by the caller's verified grants over engine labels. Rejected: GraphOS-side boundary inference. Cross-repository: EG-IDENTITY-R001, EG-FEDERATED-QUERY-R001; GRAPHOS-DATA-MARKET-R005 owns schema_context.
 
-Caller-visible responses, counts, refusal details, traces and audit views reveal no uncovered projection, including indirectly through a withheld count. Such counts may exist only in a separately authorized operator audit that the denied caller cannot read. Served acceptance holds visible projections fixed while varying hidden projections, checks unchanged caller-visible fields, refuses the denied caller's operator-audit read without count leakage, and verifies the separately authorized operator can inspect the count.
-
 ## Bounded interaction space (GRAPHOS-OPS-R053)
 
 Data flow: `retrieval.space` over POST /api/v1/ops/{op_id} -> the governed retriever entry (graph_os/control_plane/retrieval/service.py:61) -> `union_top_k` -> audit record.
