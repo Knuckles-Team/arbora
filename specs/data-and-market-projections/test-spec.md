@@ -62,3 +62,15 @@ acceptance `ACCEPTED` only after all applicable rows pass on that revision.
 ## Spec-audit rollup tests
 
 - GRAPHOS-DATA-MARKET-R007: the hot-path proof test passes and the typed refusal leaves no effect.
+
+
+## Wallet producer and consumer acceptance
+
+`tests/integration/test_order_confirmation.py::test_wallet_proof_confirmation_and_replay` binds GRAPHOS-DATA-MARKET-R007.1 through R007.6.
+Start GraphOS, the actual SDK verifier and a synthetic connector with a running durable graph authority.
+Enter both REST and MCP with the same authenticated caller and approved plan; observe exactly one controlled provider mutation.
+Repeat with missing confirmation, invalid signature, changed payload, wrong account/network/tenant, expired proof and revoked key; observe zero mutations.
+Remove each trust, verifier or durable-binding dependency and assert typed UNAVAILABLE before provider mutation.
+Submit concurrent duplicates, then restart and replay; read the original receipt and assert no second effect.
+Assert equivalent transport errors and matching audit, proof, confirmation and effect references without raw signatures or secrets.
+These are planned served acceptance cases, not runtime evidence supplied by this specification change.

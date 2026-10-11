@@ -141,10 +141,23 @@ spec evidence before marking `ACCEPTED`.
 
 ## Confirmed order and position changes (GRAPHOS-DATA-MARKET-R007)
 
-Data flow starts with the paper order operation over POST /api/v1/ops/{op_id}. `_effect` (graph_os/api/invoke/pipeline.py:218) calls `bind_plan` (:230). Confirmation precedes the published signature-verification port, then the provider and audit record. The signature-verification port is not established; fail closed until it exists.
+Data flow: authenticated REST/MCP call -> plan confirmation -> admitted connector -> SDK proof verification and governed apply -> durable effect receipt.
+Existing code: `_effect` at graph_os/api/invoke/pipeline.py:218 binds the plan at line 230.
+The shared invocation path reserves durable audit and effect identity before dispatch.
+Reachable today: no order or wallet operation exists. Signature verification and its trust resolver are new SDK producer wiring.
 
-Types: `OrderChange`, `PositionChange`, `WalletOperation`. Failure: `CONFIRMATION_REQUIRED` or `POLICY_DENIED` with zero provider calls.
+Producer: SDK-GOVERNED-WRITEBACK-R001.1 through R001.6 owns WalletProofRequest, WalletProofResult, canonical payload and supported verifier profiles.
+GraphOS imports the published contract and consumes its authenticated result unchanged; it contains no crypto verifier or key registry.
+Use EG's authorization decision and the existing account entitlement and effect reservation authorities.
+Confirmation binds the plan digest; proof binds that same plan, caller, account, network, change-set digest and effect key.
+Any missing producer, incompatible schema or unavailable durable proof binding keeps the operation UNAVAILABLE.
+No backtest digest, signature-shaped string or client-submitted verified flag substitutes for proof.
 
-Existing code: graph_os/finance/markets.py:34, :90; graph_os/api/invoke/pipeline.py:218, :230. Reachable today: no order operation exists. Search terms used: paper order, submit order, wallet, signature, confirm.
+The SDK requires trusted key/account binding, bounded validity and replay protection through existing durable effect identity.
+Pass proof through the admitted connector operation; source credentials and native transaction handling remain with that connector.
+Keep paper and live scopes distinct. Never relabel a live request as paper to avoid a proof or authorization requirement.
+Replays resolve the same bound durable receipt; uncertain effects enter existing reconciliation, not a new order.
+The producer's explicit dependency gaps remain runtime blockers even after these definitions are published.
 
-Decision: reuse the plan and confirm pipeline. Rejected: a finance-only confirmation path. Cross-repository: SDK-GOVERNED-WRITEBACK-R001 owns source-effect authorization. Wallet signature verification needs a published producer contract before this operation can be activated.
+Decision: reuse the shared plan/confirm and governed effect path. Reject a finance-only approval path or local replay store.
+Cross-repository rows: SDK-GOVERNED-WRITEBACK-R001.1 through R001.6 and R004; GRAPHOS-DATA-MARKET-R003; GRAPHOS-OPS-R017.2.
