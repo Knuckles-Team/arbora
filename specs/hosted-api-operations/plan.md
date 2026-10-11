@@ -117,7 +117,7 @@ No route is MISSING. The capability resolver itself still imports `agent_utiliti
 
 Evidence: `graph_os/api/registry/scopes.py` exports `FinanceScope`, `FleetScope`, `LoopsScope`, `OpsScope`; `graph_os/api/policy/domain_scopes.py` lists `fleet:events` and `webui:{admin,maintainer,reader,user}`. The pinned engine `contract/scopes.json` (175 rows, the file `eg_binding._load_scopes` reads and `tests/api/test_registry_factory.py` checks for "unregistered EG scope") has no `gateway:*` row. So `gateway:read` and `gateway:write` are NOT registry scopes. They are identity capabilities that the dashboard resolves from the identity group capability map (`_dashboard_capabilities`). The earlier text calling them "already in the engine contract" was wrong and is corrected above.
 
-Decision: the artifact routes use the same dependencies as the dashboard routes (`_require_dashboard_read` for GET, `_require_dashboard_write` for POST, reused from `dashboard_api.py`, not copied), so behaviour matches sibling routes and no engine change is needed. Gateway scopes do NOT need adding to the engine: `EG-IDENTITY-R007` (which registers `identity:admin`, `loops:read`, `loops:control`) is unrelated, and `loops:*` are likewise absent from the pinned `scopes.json` today, which is that row's concern, not this one. I could not locate the R007 row text in the epistemic-graph specs checkout on this host, so its exact wording is unverified here. Alternative rejected: map to registry scopes `webui:reader`/`webui:user`; those are the WebUI role namespace and would create a second authorization model for one gateway.
+Decision: the artifact routes use the same dependencies as the dashboard routes (`_require_dashboard_read` for GET, `_require_dashboard_write` for POST, reused from `dashboard_api.py`, not copied), so behaviour matches sibling routes and no engine change is needed. Gateway scopes do NOT need adding to the engine: `EG-IDENTITY-R007` (which registers `identity:admin`, `loops:read`, `loops:control`) is unrelated, and `loops:*` are likewise absent from the pinned `scopes.json` today, which is that row's concern, not this one. Alternative rejected: map to registry scopes `webui:reader`/`webui:user`; those are the WebUI role namespace. That mapping creates a second authorization model for one gateway.
 
 #### D4 Agent-utilities export for artifacts (CONFIRMED; proposed AU row)
 
@@ -128,7 +128,6 @@ Proposed agent-utilities row (orchestrator adds it; new file `agent_utilities/ap
 > `AU-BOUNDARY-R013.<n>` **Export the Live Artifact store, models and refresh service.** Re-export `LiveArtifact`, `Provenance`, `BoundedJSONError`, `validate_bounded_json`, `LiveArtifactStore`, `get_live_artifact_store`, `RefreshService`, `RefreshResult`, `DataSource` and `kg_source_resolver` from `agent_utilities.knowledge_graph.live_artifacts` through `agent_utilities.api.live_artifacts`; delete the dead `install_kg_artifact_source`. Verification: an agent-utilities test imports each name from `agent_utilities.api` and the layout fence still passes.
 
 Because the AU resolver already re-runs `source_query`, GRAPHOS-OPS-R040.8 wires `kg_source_resolver` instead of re-implementing it (no parallel function). The bounded-JSON limits (depth 8, 100 keys, 500 items, 16 KiB string, 256 KiB total) stay in the AU validator. The graph-os request model does not copy them.
-
 
 ## Run read operations
 
@@ -150,7 +149,7 @@ Reused: `build_read_op`, `bound_service`, `Params`, the closed error enum, and t
 
 ### Decisions
 
-- The engine computes success rate, cost, and overflow rate. Rejected: aggregation in graph-os. It would create a second metrics store and a second definition of success.
+- The engine computes success rate, cost, and overflow rate. Rejected: aggregation in graph-os. It creates a second metrics store and a second definition of success.
 - `runs.get` reads the stored trace. Rejected: reconstructing the configuration from the A2A task. Only the written trace proves what the run applied.
 - A run in another tenant reads as absent, so existence does not leak.
 

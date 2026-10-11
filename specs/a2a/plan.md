@@ -19,7 +19,7 @@ flowchart LR
   E --> A[durable audit reservation and outcome]
 ```
 
-`task_id` is an opaque projection of the durable parent WorkItem, and child dispatch IDs are stored in a typed parent-child relation. `tasks/get/list` read that authority, not an A2A-local cache. `message/stream` emits ordered WorkItem events with a resume cursor; `tasks/resubscribe` resumes after the last acknowledged event and deduplicates on event ID. If the upstream contract cannot represent the relation or input-required state, the GraphOS method reports typed `UNAVAILABLE` until the published package provides it.
+`task_id` is an opaque projection of the durable parent WorkItem, and child dispatch IDs are stored in a typed parent-child relation. `tasks/get/list` read that authority, not an A2A-local cache. `message/stream` emits ordered WorkItem events with a resume cursor; `tasks/resubscribe` resumes after the last acknowledged event and deduplicates on event ID. The upstream contract may lack the relation or the input-required state. The GraphOS method then reports typed `UNAVAILABLE` until the published package provides it.
 
 An operation request uses the hosted registry and `invoke` pipeline, not an A2A-specific authorization implementation. The verified A2A adapter supplies actor, tenant, effective scopes, auth mode, policy revision and session provenance. The response carries the hosted API envelope within JSON-RPC `result`; JSON-RPC transport errors remain protocol errors. This preserves the engine/fleet's source error code and a privacy-safe message.
 
@@ -108,6 +108,7 @@ flowchart LR
 ### Quality and environment
 
 Use `uv sync --extra test`, focused `uv run pytest tests/a2a/test_admission.py`, Ruff, mypy, and the repository's configured pre-commit hooks. No new broker, task store, or duplicate admission authority is introduced. CI fixtures require no external secrets or private network for the model and refusal tests landed in this PR.
+<<<<<<< HEAD
 
 
 ## A2A harness-configuration admission
@@ -169,3 +170,5 @@ The card must not advertise a harness capability before `GRAPHOS-A2A-R017.6` pas
 ### Open facts the code did not show
 
 The source of `priority` and the field names inside the `resolve_capability` result are not visible. `GRAPHOS-A2A-R017.3` and `R016.5` set them as explicit rows.
+=======
+>>>>>>> origin/spec-three-states
