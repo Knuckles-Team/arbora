@@ -39,14 +39,7 @@
     "GRAPHOS-A2A-R018",
     "GRAPHOS-A2A-R019",
     "GRAPHOS-A2A-R020",
-    "GRAPHOS-A2A-R021",
-    "GRAPHOS-A2A-002-R001",
-    "GRAPHOS-A2A-002-R001.1",
-    "GRAPHOS-A2A-002-R002",
-    "GRAPHOS-A2A-002-R003",
-    "GRAPHOS-A2A-002-R004",
-    "GRAPHOS-A2A-002-R005",
-    "GRAPHOS-A2A-002-R006"
+    "GRAPHOS-A2A-R021"
   ],
   "requirements": [
     {
@@ -432,66 +425,6 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
-    },
-    {
-      "id": "GRAPHOS-A2A-002-R001",
-      "title": "RETIRED: replaced by `GRAPHOS-A2A-R016`",
-      "delivery_state": "RETIRED",
-      "landed_in": [],
-      "verified_by": [],
-      "retired_reason": "replaced by `GRAPHOS-A2A-R016`"
-    },
-    {
-      "id": "GRAPHOS-A2A-002-R001.1",
-      "title": "RETIRED: replaced by `GRAPHOS-A2A-R016.1`",
-      "delivery_state": "RETIRED",
-      "landed_in": [
-        "40698cfd6196"
-      ],
-      "verified_by": [],
-      "retired_reason": "replaced by `GRAPHOS-A2A-R016.1`"
-    },
-    {
-      "id": "GRAPHOS-A2A-002-R002",
-      "title": "RETIRED: replaced by `GRAPHOS-A2A-R017`",
-      "delivery_state": "RETIRED",
-      "landed_in": [],
-      "verified_by": [],
-      "retired_reason": "replaced by `GRAPHOS-A2A-R017`"
-    },
-    {
-      "id": "GRAPHOS-A2A-002-R003",
-      "title": "RETIRED: replaced by `GRAPHOS-A2A-R018`",
-      "delivery_state": "RETIRED",
-      "landed_in": [],
-      "verified_by": [],
-      "retired_reason": "replaced by `GRAPHOS-A2A-R018`"
-    },
-    {
-      "id": "GRAPHOS-A2A-002-R004",
-      "title": "RETIRED: replaced by `GRAPHOS-A2A-R019`",
-      "delivery_state": "RETIRED",
-      "landed_in": [],
-      "verified_by": [],
-      "retired_reason": "replaced by `GRAPHOS-A2A-R019`"
-    },
-    {
-      "id": "GRAPHOS-A2A-002-R005",
-      "title": "RETIRED: replaced by `GRAPHOS-A2A-R020`",
-      "delivery_state": "RETIRED",
-      "landed_in": [
-        "63762147f0bc"
-      ],
-      "verified_by": [],
-      "retired_reason": "replaced by `GRAPHOS-A2A-R020`"
-    },
-    {
-      "id": "GRAPHOS-A2A-002-R006",
-      "title": "RETIRED: replaced by `GRAPHOS-A2A-R021`",
-      "delivery_state": "RETIRED",
-      "landed_in": [],
-      "verified_by": [],
-      "retired_reason": "replaced by `GRAPHOS-A2A-R021`"
     }
   ]
 }

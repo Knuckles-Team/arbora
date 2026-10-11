@@ -109,33 +109,3 @@ flowchart LR
 
 Use `uv sync --extra test`, focused `uv run pytest tests/a2a/test_admission.py`, Ruff, mypy, and the repository's configured pre-commit hooks. No new broker, task store, or duplicate admission authority is introduced. CI fixtures require no external secrets or private network for the model and refusal tests landed in this PR.
 
-## Amendments
-
-### 2026-10-11
-
-Three A2A specs merged into one; duplicate spec ID removed. Row ID map (old directory, old ID, new ID):
-
-| Old spec | Old ID | New ID |
-|---|---|---|
-| `a2a-capability-and-history-projection` | `GRAPHOS-A2A-R001` | `GRAPHOS-A2A-R009` |
-| `a2a-capability-and-history-projection` | `GRAPHOS-A2A-R001.1` | `GRAPHOS-A2A-R009.1` |
-| `a2a-capability-and-history-projection` | `GRAPHOS-A2A-R002` | `GRAPHOS-A2A-R010` |
-| `a2a-capability-and-history-projection` | `GRAPHOS-A2A-R003` | `GRAPHOS-A2A-R011` |
-| `a2a-capability-and-history-projection` | `GRAPHOS-A2A-R004` | `GRAPHOS-A2A-R012` |
-| `a2a-capability-and-history-projection` | `GRAPHOS-A2A-R004.1` | `GRAPHOS-A2A-R012.1` |
-| `a2a-capability-and-history-projection` | `GRAPHOS-A2A-R004.2` | `GRAPHOS-A2A-R012.2` |
-| `a2a-capability-and-history-projection` | `GRAPHOS-A2A-R004.3` | `GRAPHOS-A2A-R012.3` |
-| `a2a-capability-and-history-projection` | `GRAPHOS-A2A-R005` | `GRAPHOS-A2A-R013` |
-| `a2a-capability-and-history-projection` | `GRAPHOS-A2A-R006` | `GRAPHOS-A2A-R014` |
-| `a2a-capability-and-history-projection` | `GRAPHOS-A2A-R007` | `GRAPHOS-A2A-R015` |
-| `graphos-a2a-002` | `GRAPHOS-A2A-002-R001` | `GRAPHOS-A2A-R016` |
-| `graphos-a2a-002` | `GRAPHOS-A2A-002-R001.1` | `GRAPHOS-A2A-R016.1` |
-| `graphos-a2a-002` | `GRAPHOS-A2A-002-R002` | `GRAPHOS-A2A-R017` |
-| `graphos-a2a-002` | `GRAPHOS-A2A-002-R003` | `GRAPHOS-A2A-R018` |
-| `graphos-a2a-002` | `GRAPHOS-A2A-002-R004` | `GRAPHOS-A2A-R019` |
-| `graphos-a2a-002` | `GRAPHOS-A2A-002-R005` | `GRAPHOS-A2A-R020` |
-| `graphos-a2a-002` | `GRAPHOS-A2A-002-R006` | `GRAPHOS-A2A-R021` |
-
-### 2026-10-11 Preserve moved requirement lineage
-
-The 7 unique `GRAPHOS-A2A-002` rows from `graphos-a2a-002/requirements.md` at `44c7318f84b461817b9f0de05e7d4be0388ceb62` remain in this spec as `RETIRED` rows. Each row retains its original requirement and verification text and names its replacement. The ID map above records the move. It does not replace the required tombstones or establish delivery of an active row.

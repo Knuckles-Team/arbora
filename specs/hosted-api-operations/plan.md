@@ -49,7 +49,7 @@ The retirement inventory is a checked artifact produced from the existing host r
 
 `uv sync --extra test`, `uv run pytest tests/api tests/fleet`, `uv run ruff check .`, `uv run ruff format --check .`, and `uv run mypy graph_os` must run with public pinned wheels and fixture identities. CI may provision an ephemeral local engine/agent stack for served tests; no check requires a private host or credential. Existing repository hooks provide CCCC, KISS, jscpd and Dupehound scanning; the scoped implementation must satisfy configured thresholds (including zero new clone pairs), not lower or suppress them. Keep registry domain tables small, use a step table rather than nested branching, one endpoint factory per surface, and generated declarative types rather than repeated function bodies. Delete old implementation in the cutover so scanners and reviewers see one authority.
 
-## Gateway carry-over: dashboard, Live Artifacts, widget (folded from GRAPHOS-GWC, 2026-10-11)
+## Gateway carry-over: dashboard, Live Artifacts, widget
 
 Cross-repo IDs: AU-BOUNDARY-R001.2, AU-BOUNDARY-R001.3, AU-BOUNDARY-R001.7 (agent-utilities deletions); GRAPHOS-HOST-R005. Provenance: agent-utilities commits 0eb67c99c (dashboard router), 902f906ca (Live Artifacts router), 7717d2e62 (genius_agent widget).
 
@@ -129,65 +129,3 @@ Proposed agent-utilities row (orchestrator adds it; new file `agent_utilities/ap
 
 Because the AU resolver already re-runs `source_query`, GRAPHOS-OPS-R040.8 wires `kg_source_resolver` instead of re-implementing it (no parallel function). The bounded-JSON limits (depth 8, 100 keys, 500 items, 16 KiB string, 256 KiB total) stay in the AU validator. The graph-os request model does not copy them.
 
-## Audit record
-
-Dashboard route parity audit (method: compare the deleted router with the served one, route by route; result below; see D2 above for the per-route table).
-
-| Old entry point | New entry point | Status | Reason |
-|---|---|---|---|
-| GET /api/dashboard/layout, PUT /layout | dashboard router same paths | exists | verify with a test |
-| GET /data, /data/{service_id}, /full, /data-subset | dashboard router same paths | exists | verify with a test |
-| GET /widgets, /discover, /health | dashboard router same paths | exists | verify with a test |
-| GET /daemon/status, /daemon/shards, POST /daemon/start | dashboard router same paths | exists | verify with a test |
-| POST /hydrate/{source}, POST /hydrate, GET /hydration-status | dashboard router same paths | exists | verify with a test |
-| websocket /ws/dashboard (consumer of the subset fetch) | dashboard websocket | exists | verify with a test |
-| fetch_dashboard_subset (Python helper) | aggregator fetch via /data-subset | exists | helper removed upstream with its test |
-| POST /api/artifacts | artifacts router | to build | no equivalent found in graph-os |
-| GET /api/artifacts/{id} | artifacts router | to build | no equivalent found |
-| POST /api/artifacts/{id}/refresh | artifacts router | to build | no equivalent found |
-| register_artifact_source | resolver port argument | to build | replaces a module global |
-| genius_agent widget | none | intentionally dropped | constant fabricated data; fleet and catalog surfaces report real counts |
-
-## Amendments
-
-### 2026-10-11 Fold of GRAPHOS-GWC into GRAPHOS-OPS
-
-Old statement: the gateway carry-over was a separate spec `GRAPHOS-GWC`. New statement: its three rollups are `GRAPHOS-OPS-R039` (dashboard route parity), `GRAPHOS-OPS-R040` (Live Artifacts routes and their authentication) and `GRAPHOS-OPS-R041` (Genius Agent widget dropped). The host HTTP surface is owned here. Evidence: rows moved unchanged in text. No row was LANDED or VERIFIED.
-
-| Old ID | New ID |
-|---|---|
-| `GRAPHOS-GWC-R001` | `GRAPHOS-OPS-R039` |
-| `GRAPHOS-GWC-R001.1` | `GRAPHOS-OPS-R039.1` |
-| `GRAPHOS-GWC-R001.2` | `GRAPHOS-OPS-R039.2` |
-| `GRAPHOS-GWC-R001.3` | `GRAPHOS-OPS-R039.3` |
-| `GRAPHOS-GWC-R001.4` | `GRAPHOS-OPS-R039.4` |
-| `GRAPHOS-GWC-R001.5` | `GRAPHOS-OPS-R039.5` |
-| `GRAPHOS-GWC-R001.6` | `GRAPHOS-OPS-R039.6` |
-| `GRAPHOS-GWC-R001.7` | `GRAPHOS-OPS-R039.7` |
-| `GRAPHOS-GWC-R001.8` | `GRAPHOS-OPS-R039.8` |
-| `GRAPHOS-GWC-R001.9` | `GRAPHOS-OPS-R039.9` |
-| `GRAPHOS-GWC-R002` | `GRAPHOS-OPS-R040` |
-| `GRAPHOS-GWC-R002.1` | `GRAPHOS-OPS-R040.1` |
-| `GRAPHOS-GWC-R002.10` | `GRAPHOS-OPS-R040.10` |
-| `GRAPHOS-GWC-R002.2` | `GRAPHOS-OPS-R040.2` |
-| `GRAPHOS-GWC-R002.3` | `GRAPHOS-OPS-R040.3` |
-| `GRAPHOS-GWC-R002.4` | `GRAPHOS-OPS-R040.4` |
-| `GRAPHOS-GWC-R002.5` | `GRAPHOS-OPS-R040.5` |
-| `GRAPHOS-GWC-R002.6` | `GRAPHOS-OPS-R040.6` |
-| `GRAPHOS-GWC-R002.7` | `GRAPHOS-OPS-R040.7` |
-| `GRAPHOS-GWC-R002.8` | `GRAPHOS-OPS-R040.8` |
-| `GRAPHOS-GWC-R002.9` | `GRAPHOS-OPS-R040.9` |
-| `GRAPHOS-GWC-R003` | `GRAPHOS-OPS-R041` |
-| `GRAPHOS-GWC-R003.1` | `GRAPHOS-OPS-R041.1` |
-| `T-001` | `HO-T14` |
-| `T-002` | `HO-T15` |
-| `T-003` | `HO-T16` |
-| `T-004` | `HO-T17` |
-| `T-005` | `HO-T18` |
-| `T-006` | `HO-T19` |
-| `T-007` | `HO-T20` |
-| `T-008` | `HO-T21` |
-
-### 2026-10-11 Preserve moved requirement lineage
-
-The 23 unique `GRAPHOS-GWC` rows from `gateway-carryover/requirements.md` at `44c7318f84b461817b9f0de05e7d4be0388ceb62` remain in this spec as `RETIRED` rows. Each row retains its original requirement and verification text and names its replacement. The ID map above records the move. It does not replace the required tombstones or establish delivery of an active row.
