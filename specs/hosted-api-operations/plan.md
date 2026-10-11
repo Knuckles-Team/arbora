@@ -162,13 +162,13 @@ Reused: `build_read_op`, `bound_service`, `Params`, the closed error enum, and t
 
 ## GRAPHOS-OPS-R042 content screening and redaction
 
-Data flow: POST route (graph_os/api/http/routes.py:127) → `invoke` (graph_os/api/invoke/pipeline.py:810) → screen open-web content → effect → output redactor → response and trace.
+Data flow: POST route (graph_os/api/http/routes.py:127) → `invoke` (graph_os/api/invoke/pipeline.py:810) → screen → effect → redactor → response and trace.
 
 Types: `ContentScreenVerdict`, `ScreenFinding` (class, span, rule id), `ContentOrigin`. The screen attaches in `invoke` after argument validation and before the effect; the redactor attaches after the effect. Failure behavior: quarantine returns a typed refusal, and a redactor error withholds the response.
 
 Reused: the body bound at graph_os/api/http/routes.py:42 and the `OpError` refusal path. New: the screen, the redactor and the origin tag.
 
-Decision: one screen inside the single pipeline boundary. Rejected alternative: per-route filters, which a new route could skip.
+Decision: one screen inside the single pipeline boundary. Rejected alternative: per-route filters, which a new route may skip.
 
 Cross-repository: engine memory-write refusal, owner prefix `EG`, contract name memory write origin.
 

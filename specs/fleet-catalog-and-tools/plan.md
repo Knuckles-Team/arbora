@@ -37,7 +37,7 @@ The catalog join uses the verified **runtime MCP server name** from the child se
 4. Evaluate narrowing-only Eunomia at discovery, load, and every call. Enabled and unreachable yields `POLICY_UNAVAILABLE`; disabled still runs scope and principal filtering.
 5. For service-executed work, check the caller's subject-read authority before entering the service identity; verify the service grant allowlist. For caller-executed work, use the verified caller context directly.
 6. Apply READ/WRITE/DESTRUCTIVE/ADMIN effect rules and preview/plan/console confirmation. Require idempotency keys for side effects that can retry.
-7. Dispatch with the existing timeout and interactive priority, append a minimal audit event, and map errors without changing engine error codes.
+7. Dispatch with the existing timeout and interactive priority. Append a minimal audit event. Map errors without changing engine error codes.
 
 Discovery omits denied items. A privileged policy-debug response may identify the denying layer only with exact `mcp:admin` and an explicit request. Loaded native forwarders re-evaluate all checks on **each call**, even if a prior load succeeded. A scope or policy revision change removes visibility and queues notifications; a stale native call returns a stable denial.
 
