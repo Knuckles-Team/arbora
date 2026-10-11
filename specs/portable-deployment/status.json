@@ -42,7 +42,14 @@
     "GRAPHOS-DEPLOY-R017.13",
     "GRAPHOS-DEPLOY-R017.14",
     "GRAPHOS-DEPLOY-R017.15",
-    "GRAPHOS-DEPLOY-R017.16"
+    "GRAPHOS-DEPLOY-R017.16",
+    "GRAPHOS-DEPLOY-R018",
+    "GRAPHOS-DEPLOY-R018.1",
+    "GRAPHOS-DEPLOY-R018.2",
+    "GRAPHOS-DEPLOY-R018.3",
+    "GRAPHOS-DEPLOY-R018.4",
+    "GRAPHOS-DEPLOY-R018.5",
+    "GRAPHOS-DEPLOY-R018.6"
   ],
   "requirements": [
     {
@@ -431,6 +438,63 @@
     {
       "id": "GRAPHOS-DEPLOY-R017.16",
       "title": "Environment policy drives the check",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R018",
+      "title": "Small deployment shares one engine per host",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-DEPLOY-R018.1",
+        "GRAPHOS-DEPLOY-R018.2",
+        "GRAPHOS-DEPLOY-R018.3",
+        "GRAPHOS-DEPLOY-R018.4",
+        "GRAPHOS-DEPLOY-R018.5",
+        "GRAPHOS-DEPLOY-R018.6"
+      ]
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R018.1",
+      "title": "Engine endpoint type",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R018.2",
+      "title": "Probe before start",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R018.3",
+      "title": "Start only when absent",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R018.4",
+      "title": "Second process attaches",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R018.5",
+      "title": "Owner stands down the engine",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R018.6",
+      "title": "Remote engine skips local start",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

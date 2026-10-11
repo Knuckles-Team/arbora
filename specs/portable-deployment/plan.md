@@ -112,3 +112,10 @@ Dashboard parity, artifact authentication and the agent-utilities export are res
 Evidence: all three profiles under `deploy/environments/` set `target.orchestrator: kubernetes` (`dev.yaml` line 25, `test.yaml` 26, `prod.yaml` 32), `genesis_environments.py` validates the orchestrator against `genesis.yaml` `run_plan.orchestrators`, and the production profile is Helm. The only systemd material in the repository is guidance: `graph_os/skills/graphos-genesis/references/bare-metal.md` and a Quadlet note in `compose-and-podman.md`; neither is a rendered artifact under `deploy/`. Decision: keep systemd unsupported as a placement artifact. A new artifact would need its own renderer or hand-kept unit file, a drift gate and a first-boot test with no profile that uses it, which is the parallel functionality the lane rules forbid. The reference stays operator guidance. Reopen condition: an `environments/*.yaml` profile with a non-kubernetes bare-metal orchestrator appears. Alternative: add `deploy/systemd/graph-os.service` with a unit-lint test; rejected for lack of a consumer.
 
 R017.6 therefore refuses `systemd` with a typed `unsupported_target` carrying the pointer to the bare-metal reference, and R017.15 tests that.
+
+## GRAPHOS-DEPLOY-R018 small deployment shares one engine
+
+Data flow: server start → `detect_composition` probe → `start_composed_services` starts or attaches → shared engine.
+Attach point: graph_os/mcp_server/composition.py:43 (`detect_composition`) and :230 (`start_composed_services`).
+Reused: the existing composition detection and the in-process path of `GRAPHOS-DEPLOY-R017.7`. The single-binary engine build is an engine row.
+Decision: probe the endpoint, then start. Rejected alternative: a lock file per host, which goes stale after a crash.

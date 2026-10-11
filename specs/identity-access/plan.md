@@ -129,3 +129,10 @@ are then checked synchronously before return. A refusal removes the private
 binding immediately, before the request context exits. The qualified EG
 adapter must uphold its live-resolution consistency contract; this ordering is
 not a distributed transaction or a substitute for final engine authorization.
+
+## GRAPHOS-IDENTITY-R026 client attribution and segmentation
+
+Data flow: verified token → client session record → run record and audit event → caller-scoped listing.
+Attach point: graph_os/api/invoke/audit.py for the audit event; the session-open site is located by the first child.
+Reused: the verified principal from `GRAPHOS-IDENTITY-R017.1`. Segmenting stored memories is an engine row.
+Decision: attribute by verified principal only. Rejected alternative: a client-supplied client id, which a caller can forge.

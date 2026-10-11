@@ -192,3 +192,10 @@ Order: R017.1 (placement), R017.2 to R017.5 (assembly, view, confirm, refusal), 
 - [ ] **GRAPHOS-DEPLOY-R017.14:** Helm pinned and default renders.
 - [ ] **GRAPHOS-DEPLOY-R017.15:** systemd stays refused.
 - [ ] **GRAPHOS-DEPLOY-R017.16:** Environment policy drives the check.
+- [ ] **GRAPHOS-DEPLOY-R018:** Small deployment shares one engine per host (rollup).
+- [ ] **GRAPHOS-DEPLOY-R018.1:** Engine endpoint type.
+- [ ] **GRAPHOS-DEPLOY-R018.2:** Probe before start.
+- [ ] **GRAPHOS-DEPLOY-R018.3:** Start only when absent.
+- [ ] **GRAPHOS-DEPLOY-R018.4:** Second process attaches.
+- [ ] **GRAPHOS-DEPLOY-R018.5:** Owner stands down the engine.
+- [ ] **GRAPHOS-DEPLOY-R018.6:** Remote engine skips local start.

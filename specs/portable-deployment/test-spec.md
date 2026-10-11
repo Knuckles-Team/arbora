@@ -43,3 +43,9 @@ Repository scanner checks include CCCC, jscpd, dupehound and KISS alongside Pyth
 | Existing artifacts | compose, helm, swarm resolve to files under `deploy/`, digest-pinned; systemd refused as unsupported. |
 | In-process | Live start calls `start_composed_services`. |
 | Command | `setup-config deploy` prints the engine's decision and graph and imports no planning code. |
+| GRAPHOS-DEPLOY-R018.1 | tests/deployment/test_engine_endpoint.py | Engine endpoint type. |
+| GRAPHOS-DEPLOY-R018.2 | tests/deployment/test_engine_probe.py | Probe before start. |
+| GRAPHOS-DEPLOY-R018.3 | tests/deployment/test_engine_owner.py | Start only when absent. |
+| GRAPHOS-DEPLOY-R018.4 | tests/deployment/test_engine_attach.py | Second process attaches. |
+| GRAPHOS-DEPLOY-R018.5 | tests/deployment/test_engine_standdown.py | Owner stands down the engine. |
+| GRAPHOS-DEPLOY-R018.6 | tests/deployment/test_remote_engine.py | Remote engine skips local start. |

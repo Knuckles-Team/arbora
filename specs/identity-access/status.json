@@ -68,7 +68,15 @@
     "GRAPHOS-IDENTITY-R022",
     "GRAPHOS-IDENTITY-R023",
     "GRAPHOS-IDENTITY-R024",
-    "GRAPHOS-IDENTITY-R025"
+    "GRAPHOS-IDENTITY-R025",
+    "GRAPHOS-IDENTITY-R026",
+    "GRAPHOS-IDENTITY-R026.1",
+    "GRAPHOS-IDENTITY-R026.2",
+    "GRAPHOS-IDENTITY-R026.3",
+    "GRAPHOS-IDENTITY-R026.4",
+    "GRAPHOS-IDENTITY-R026.5",
+    "GRAPHOS-IDENTITY-R026.6",
+    "GRAPHOS-IDENTITY-R026.7"
   ],
   "requirements": [
     {
@@ -803,6 +811,71 @@
     {
       "id": "GRAPHOS-IDENTITY-R025",
       "title": "Register identity ops once the engine contract lists `identity:admin`",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R026",
+      "title": "Hosted sessions are attributed to a client and segmented by principal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-IDENTITY-R026.1",
+        "GRAPHOS-IDENTITY-R026.2",
+        "GRAPHOS-IDENTITY-R026.3",
+        "GRAPHOS-IDENTITY-R026.4",
+        "GRAPHOS-IDENTITY-R026.5",
+        "GRAPHOS-IDENTITY-R026.6",
+        "GRAPHOS-IDENTITY-R026.7"
+      ]
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R026.1",
+      "title": "Client session record",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R026.2",
+      "title": "Record at session open",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R026.3",
+      "title": "Runs carry the session id",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R026.4",
+      "title": "Audit event per run",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R026.5",
+      "title": "Caller-scoped client listing",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R026.6",
+      "title": "User and service account parity",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R026.7",
+      "title": "Cross-client denial is uniform",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
