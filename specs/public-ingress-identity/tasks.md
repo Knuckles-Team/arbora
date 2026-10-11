@@ -15,7 +15,7 @@ profile/gateway/MCP identity path and the cutover/rollback behavior.
   `tests/deployment/test_public_ingress_identity.py`. Standalone: not yet wired
   into `EnvironmentProfile`, the gateway, or MCP identity admission.
 - [ ] Inventory current profile, config generator, doctor, gateway, MCP and identity routes; record exact reusable interfaces and any missing fields.
-- [ ] Extend the single closed profile and render path with canonical origin, TLS reference, exact callback and trusted proxy contract; add migration validation if keys change.
+- [ ] Extend the single closed profile and render path with canonical origin, TLS reference, exact callback and trusted proxy contract. Add migration validation if keys change.
 - [ ] Wire ingress settings to the existing GraphOS gateway and MCP identity admission; keep application and engine authorization unchanged.
 - [ ] Implement explicit time-bounded safe redirect policy and rollback input; remove any superseded host-specific shortcuts.
 - [ ] Build local TLS proxy and mock OIDC fixtures; prove all T-IN positive and negative cases, including no downstream effect on denial.

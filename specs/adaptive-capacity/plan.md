@@ -2,9 +2,9 @@
 
 ## Existing wiring and ownership
 
-GraphOS already has fleet dispatch and admission in `graph_os.fleet` and hosted control-plane modules under `graph_os.control_plane`; extend the dispatch admission point and the single hosted operation registry. The durable graph-engine `CapacityCell` and `CapacityLease` are external public contracts. GraphOS owns only runtime throttling state, policy, measurements and receipts. Do not clone the engine capacity model or add a second fleet call path.
+GraphOS already has fleet dispatch and admission in `graph_os.fleet` and hosted control-plane modules under `graph_os.control_plane`. Extend the dispatch admission point and the single hosted operation registry. The durable graph-engine `CapacityCell` and `CapacityLease` are external public contracts. GraphOS owns only runtime throttling state, policy, measurements and receipts. Do not clone the engine capacity model or add a second fleet call path.
 
-Create cohesive `graph_os.fleet.error_budget`, `throttle_controller` and `throttle_limiter` modules only if the current fleet package lacks an equivalent owner. Define typed `OutcomeSample`, `BudgetWindow`, `ThrottleDecision` and `ThrottleStatus` DTOs. The controller is pure over a window and prior state; the limiter is the sole mutable admission point. Bind those through a `throttle_service` adapter to `capacity.throttle.status` and `capacity.throttle.set_mode` operations. The exact engine method name and schema must be pinned to its published contract before an implementation advertises the feature; until then discovery reports unavailable.
+Create cohesive `graph_os.fleet.error_budget`, `throttle_controller` and `throttle_limiter` modules only if the current fleet package lacks an equivalent owner. Define typed `OutcomeSample`, `BudgetWindow`, `ThrottleDecision` and `ThrottleStatus` DTOs. The controller is pure over a window and prior state. The limiter is the sole mutable admission point. Bind those through a `throttle_service` adapter to `capacity.throttle.status` and `capacity.throttle.set_mode` operations. The exact engine method name and schema must be pinned to its published contract before an implementation advertises the feature. Until then discovery reports unavailable.
 
 ## Decision rule
 

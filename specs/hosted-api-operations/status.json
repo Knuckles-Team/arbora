@@ -1199,7 +1199,7 @@
     },
     {
       "id": "GRAPHOS-OPS-R040.9",
-      "title": "Cross-repo prerequisite (owner: agent-utilities): add the proposed `AU-BOUNDARY-R013.<n>` row of plan.md D4 to specs/au-boundary-deconstruction/requirements.md; it is the concrete form of GRAPHOS-OPS-R040.1",
+      "title": "Cross-repo prerequisite (owner: agent-utilities): add the proposed `AU-BOUNDARY-R013.<n>` row of plan.md D4 to specs/au-boundary-deconstruction/requirements.md. It is the concrete form of GRAPHOS-OPS-R040.1",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

@@ -71,7 +71,7 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED** except `GRAPHOS
   - [ ] `GRAPHOS-A2A-R012.2`: add the `A2ATransitionHistoryUnavailable` error type to `graph_os/a2a/authority.py`.
   - [ ] `GRAPHOS-A2A-R012.3`: wire `tasks/get`'s refusal (`A2A-HT06`); blocked on `GRAPHOS-A2A` (`GRAPHOS-A2A-R014`).
 - [ ] Implement push-notification delivery over epistemic-graph's durable outbox with dead-letter reporting (`GRAPHOS-A2A-R013`).
-- [ ] Wire real authorities into composition only after each path is proven; run all test-spec rows; record exact revision evidence before flipping any capability field `true` and marking its requirement accepted (`GRAPHOS-A2A-R015`).
+- [ ] Wire real authorities into composition only after each path is proven. Run all test-spec rows. Record exact revision evidence before flipping any capability field `true` and marking its requirement accepted (`GRAPHOS-A2A-R015`).
 
 ## A2A context-budget tool-subset admission
 Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](plan.md) and [tests](test-spec.md).

@@ -22,7 +22,7 @@ GraphOS owns authentication ceremonies, local issuer, session and API compositio
 
 1. **Bootstrap safely (P0).** A fresh tiny install on loopback can act as `usr:bootstrap` via a real signed engine session. A production profile requires local setup unless an explicit exposure acknowledgment is supplied. A network or DNS-rebinding attempt without that acknowledgment fails before a token is minted.
 2. **Move between modes without losing ownership (P0).** An administrator can claim, link, and transition among `none`, `local`, and `external`. Principal IDs, owned objects, roles, and grants survive a reversible round trip. Every transition rotates credentials and revokes prior browser sessions as specified below.
-3. **Administer identities and access (P0).** A fresh-MFA console administrator can manage users, sessions, keys, roles, groups, providers, and policies; review audit events; request/approve/deny/revoke elevation; and explain effective access. A delegated agent, stale MFA session, or service token cannot perform a console-only mutation.
+3. **Administer identities and access (P0).** A fresh-MFA console administrator can manage users, sessions, keys, roles, groups, providers, and policies. Review audit events. Request/approve/deny/revoke elevation. And explain effective access. A delegated agent, stale MFA session, or service token cannot perform a console-only mutation.
 4. **Use local or external login (P1).** Local password, TOTP, WebAuthn, recovery code, OIDC, LDAP, SCIM, and SAML flows produce the same stable principal and narrowed effective scopes. A revoked session, key, or group membership loses access on the next relevant check.
 5. **Develop in isolation (P0).** A contributor runs contract tests with a local engine fixture and mock IdP/LDAP/SMTP adapters. No public PR gate needs a pre-existing host service, private realm, inventory, or secret.
 
@@ -30,7 +30,7 @@ GraphOS owns authentication ceremonies, local issuer, session and API compositio
 
 | ID | Requirement and independently observable result | Source IDs |
 |---|---|---|
-| IA-01 | Read durable `auth.mode ∈ {none,local,external}` from the engine singleton; use configuration only to seed first boot; mode transitions use an epoch compare-and-swap and typed conflict. | GRAPHOS-IDENTITY-R003, GRAPHOS-IDENTITY-R004, GRAPHOS-IDENTITY-R013 |
+| IA-01 | Read durable `auth.mode ∈ {none,local,external}` from the engine singleton. Use configuration only to seed first boot. Mode transitions use an epoch compare-and-swap and typed conflict. | GRAPHOS-IDENTITY-R003, GRAPHOS-IDENTITY-R004, GRAPHOS-IDENTITY-R013 |
 | IA-02 | Resolve one opaque, stable principal ID before minting a short-lived RS256 local-issuer token. `sub` equals that ID. Publish discovery and JWKS; store the signing key through a secret reference; rotate with bounded overlap. Never forward an upstream human token as the engine principal token. | GRAPHOS-IDENTITY-R003 |
 | IA-03 | In `none`, resolve `usr:bootstrap` through the normal RBAC/scope path, refuse non-loopback binds without an exact explicit acknowledgment, validate Host and same-origin Origin for cookie mutations, and emit an unsecured mode notice in session/status/MCP initialize/doctor. | GRAPHOS-IDENTITY-R004 |
 | IA-04 | Implement local registration policy, login/logout, password change and reset, opaque server-side session, CSRF token, session fixation rotation, throttling and uniform public errors. Session revocation takes effect by the next request. | GRAPHOS-IDENTITY-R005 |
