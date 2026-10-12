@@ -49,24 +49,24 @@ The proposed installer and terminal journeys have not been run.
 
 <!-- spec-definition-patch:batch-20261012-scope -->
 - `GRAPHOS-HOST-R023.3`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-HOST-R29`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-HOST-R029`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-HOST-R008.6`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-HOST-R026.6`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-HOST-R30`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-HOST-R030`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-HOST-R022.1`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-HOST-R31`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-HOST-R031`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-HOST-R010.8`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-HOST-R032`: Owner scope and complete acceptance are defined in requirements.md.
 <!-- /spec-definition-patch -->
 
 <!-- spec-definition-patch:dispatch-20261012-host-composition-boundary-spec -->
 - `GRAPHOS-HOST-R023.3`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-HOST-R29`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-HOST-R029`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-HOST-R008.6`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-HOST-R026.6`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-HOST-R30`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-HOST-R030`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-HOST-R022.1`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-HOST-R31`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-HOST-R031`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-HOST-R010.8`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-HOST-R032`: Owner scope and complete acceptance are defined in requirements.md.
 <!-- /spec-definition-patch -->

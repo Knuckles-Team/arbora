@@ -128,5 +128,5 @@ Requirement IDs are defined in [requirements.md](requirements.md); delivery stat
 
 <!-- spec-definition-patch:batch-20261012-scope -->
 - `GRAPHOS-A2A-R001.2`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-A2A-R22`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-A2A-R022`: Owner scope and complete acceptance are defined in requirements.md.
 <!-- /spec-definition-patch -->

@@ -76,20 +76,20 @@ The GraphOS contribution includes a machine-readable former-tool inventory: each
 Requirement IDs are defined in [requirements.md](requirements.md); delivery state per ID is in `status.json`.
 
 <!-- spec-definition-patch:batch-20261012-scope -->
-- `GRAPHOS-OPS-R54`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R054`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R024.1.1`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R014.1`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R022.3`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R55`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R055`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R022.4`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R053.7`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R56`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R056`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R021.2.1.1`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R57`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R057`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R050.2.1`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R009.1`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R053.8`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R58`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R058`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R059`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R060`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R061`: Owner scope and complete acceptance are defined in requirements.md.
@@ -101,20 +101,20 @@ Requirement IDs are defined in [requirements.md](requirements.md); delivery stat
 <!-- /spec-definition-patch -->
 
 <!-- spec-definition-patch:dispatch-20261012-hosted-api-operations-spec -->
-- `GRAPHOS-OPS-R54`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R054`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R024.1.1`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R014.1`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R022.3`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R55`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R055`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R022.4`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R053.7`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R56`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R056`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R021.2.1.1`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R57`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R057`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R050.2.1`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R009.1`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R053.8`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R58`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R058`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R059`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R060`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R061`: Owner scope and complete acceptance are defined in requirements.md.

@@ -72,24 +72,24 @@ The proposed served scenarios have not been run and establish no runtime deliver
 
 <!-- spec-definition-patch:batch-20261012-tests -->
 - `GRAPHOS-HOST-R023.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R29`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R029`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-HOST-R008.6`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-HOST-R026.6`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R30`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R030`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-HOST-R022.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R31`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R031`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-HOST-R010.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-HOST-R032`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 <!-- /spec-definition-patch -->
 
 <!-- spec-definition-patch:dispatch-20261012-host-composition-boundary-test-spec -->
 - `GRAPHOS-HOST-R023.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R29`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R029`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-HOST-R008.6`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-HOST-R026.6`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R30`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R030`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-HOST-R022.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R31`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R031`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-HOST-R010.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-HOST-R032`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 <!-- /spec-definition-patch -->

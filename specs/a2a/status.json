@@ -69,7 +69,7 @@
     "GRAPHOS-A2A-R020.2",
     "GRAPHOS-A2A-R021",
     "GRAPHOS-A2A-R001.2",
-    "GRAPHOS-A2A-R22"
+    "GRAPHOS-A2A-R022"
   ],
   "requirements": [
     {
@@ -699,7 +699,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-A2A-R22",
+      "id": "GRAPHOS-A2A-R022",
       "title": "AU:111 GraphOS definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],

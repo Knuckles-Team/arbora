@@ -136,20 +136,20 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **GRAPHOS-OPS-R024.4.6:** Registration and served proof; implement the planned served positive and negative acceptance.
 
 <!-- spec-definition-patch:batch-20261012-tasks -->
-- [ ] `GRAPHOS-OPS-R54`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R054`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R024.1.1`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R014.1`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R022.3`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R55`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R055`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R022.4`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R053.7`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R56`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R056`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R021.2.1.1`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R57`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R057`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R050.2.1`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R009.1`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R053.8`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R58`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R058`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R059`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R060`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R061`: Deliver every requirement in requirements.md.
@@ -161,20 +161,20 @@ See [design](plan.md) and [tests](test-spec.md).
 <!-- /spec-definition-patch -->
 
 <!-- spec-definition-patch:dispatch-20261012-hosted-api-operations-tasks -->
-- [ ] `GRAPHOS-OPS-R54`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R054`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R024.1.1`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R014.1`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R022.3`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R55`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R055`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R022.4`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R053.7`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R56`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R056`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R021.2.1.1`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R57`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R057`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R050.2.1`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R009.1`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R053.8`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R58`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R058`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R059`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R060`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R061`: Deliver every requirement in requirements.md.

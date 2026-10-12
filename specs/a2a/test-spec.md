@@ -82,5 +82,5 @@ The served confirm fixture rejects missing, unknown and mixed confirmation_kind 
 
 <!-- spec-definition-patch:batch-20261012-tests -->
 - `GRAPHOS-A2A-R001.2`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-A2A-R22`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-A2A-R022`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 <!-- /spec-definition-patch -->

@@ -159,20 +159,20 @@
     "GRAPHOS-OPS-R053.4",
     "GRAPHOS-OPS-R053.5",
     "GRAPHOS-OPS-R053.6",
-    "GRAPHOS-OPS-R54",
+    "GRAPHOS-OPS-R054",
     "GRAPHOS-OPS-R024.1.1",
     "GRAPHOS-OPS-R014.1",
     "GRAPHOS-OPS-R022.3",
-    "GRAPHOS-OPS-R55",
+    "GRAPHOS-OPS-R055",
     "GRAPHOS-OPS-R022.4",
     "GRAPHOS-OPS-R053.7",
-    "GRAPHOS-OPS-R56",
+    "GRAPHOS-OPS-R056",
     "GRAPHOS-OPS-R021.2.1.1",
-    "GRAPHOS-OPS-R57",
+    "GRAPHOS-OPS-R057",
     "GRAPHOS-OPS-R050.2.1",
     "GRAPHOS-OPS-R009.1",
     "GRAPHOS-OPS-R053.8",
-    "GRAPHOS-OPS-R58",
+    "GRAPHOS-OPS-R058",
     "GRAPHOS-OPS-R059",
     "GRAPHOS-OPS-R060",
     "GRAPHOS-OPS-R061",
@@ -1688,7 +1688,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-OPS-R54",
+      "id": "GRAPHOS-OPS-R054",
       "title": "AU:61 GraphOS definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
@@ -1716,7 +1716,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-OPS-R55",
+      "id": "GRAPHOS-OPS-R055",
       "title": "AU:50 GraphOS definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
@@ -1737,7 +1737,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-OPS-R56",
+      "id": "GRAPHOS-OPS-R056",
       "title": "AU:83 GraphOS definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
@@ -1751,7 +1751,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-OPS-R57",
+      "id": "GRAPHOS-OPS-R057",
       "title": "AU:121 GraphOS definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
@@ -1779,7 +1779,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-OPS-R58",
+      "id": "GRAPHOS-OPS-R058",
       "title": "WEBUI:8 GraphOS definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],

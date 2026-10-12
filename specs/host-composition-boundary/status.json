@@ -157,12 +157,12 @@
     "GRAPHOS-HOST-R023.1",
     "GRAPHOS-HOST-R023.2",
     "GRAPHOS-HOST-R023.3",
-    "GRAPHOS-HOST-R29",
+    "GRAPHOS-HOST-R029",
     "GRAPHOS-HOST-R008.6",
     "GRAPHOS-HOST-R026.6",
-    "GRAPHOS-HOST-R30",
+    "GRAPHOS-HOST-R030",
     "GRAPHOS-HOST-R022.1",
-    "GRAPHOS-HOST-R31",
+    "GRAPHOS-HOST-R031",
     "GRAPHOS-HOST-R010.8",
     "GRAPHOS-HOST-R032"
   ],
@@ -1485,7 +1485,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R29",
+      "id": "GRAPHOS-HOST-R029",
       "title": "AU:36 GraphOS definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
@@ -1506,7 +1506,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R30",
+      "id": "GRAPHOS-HOST-R030",
       "title": "AU:35 GraphOS definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
@@ -1520,7 +1520,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R31",
+      "id": "GRAPHOS-HOST-R031",
       "title": "AU:107 GraphOS definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],

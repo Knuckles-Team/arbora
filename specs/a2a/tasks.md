@@ -115,5 +115,5 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
 
 <!-- spec-definition-patch:batch-20261012-tasks -->
 - [ ] `GRAPHOS-A2A-R001.2`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-A2A-R22`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-A2A-R022`: Deliver every requirement in requirements.md.
 <!-- /spec-definition-patch -->
