@@ -12,11 +12,36 @@ import platform
 import shutil
 import sys
 import sysconfig
+import tomllib
 from pathlib import Path
 
 
 def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def cargo_configuration(cwd: Path, cargo_home: Path) -> list[tuple[str, str, str]]:
+    """Bind Cargo's ancestor search; reject includes before any cache restore."""
+    directories = [directory / ".cargo" for directory in (cwd, *cwd.parents)]
+    directories.append(cargo_home)
+    records = []
+    for directory in directories:
+        for name in ("config", "config.toml"):
+            path = directory / name
+            if path.exists() or path.is_symlink():
+                data = path.read_bytes()
+                if "include" in tomllib.loads(data.decode("utf-8")):
+                    raise ValueError(
+                        "Cargo config includes require explicit cache support"
+                    )
+                records.append(
+                    (
+                        str(path.absolute()),
+                        str(path.resolve()),
+                        hashlib.sha256(data).hexdigest(),
+                    )
+                )
+    return records
 
 
 def input_digests(source: Path, manifest_list: Path) -> list[str]:
@@ -41,12 +66,6 @@ def input_digests(source: Path, manifest_list: Path) -> list[str]:
             "rust-toolchain.toml",
         }
     )
-    cargo_home = Path(os.environ.get("CARGO_HOME", Path.home() / ".cargo"))
-    inputs.extend(
-        path
-        for path in (cargo_home / "config", cargo_home / "config.toml")
-        if path.is_file()
-    )
     pyo3_config = os.environ.get("PYO3_CONFIG_FILE")
     if pyo3_config:
         inputs.append(Path(pyo3_config))
@@ -58,6 +77,11 @@ def cache_key(source: Path, manifest_list: Path) -> str:
     identity = {
         "source": os.environ["NUMERIC_SOURCE_SHA"],
         "inputs": input_digests(source, manifest_list),
+        "cargo_cwd": str(Path.cwd().resolve()),
+        "cargo_configuration": cargo_configuration(
+            Path.cwd().resolve(),
+            Path(os.environ.get("CARGO_HOME", Path.home() / ".cargo")).resolve(),
+        ),
         "recipe": "build_numeric_kernel.py:release:features=python",
         "tools": os.environ["NUMERIC_TOOLS_ID"],
         "python": [

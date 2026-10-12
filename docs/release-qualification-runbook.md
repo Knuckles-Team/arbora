@@ -54,6 +54,11 @@ uv build --wheel --out-dir dist
 The release gates cache the final numeric extension with
 `scripts/numeric_artifact_cache.py`. Its exact key binds the EG revision, manifests, locks, and build recipe.
 It also binds Rust, maturin, Python ABI, platform, and build flags. There are no fallback keys.
+The key includes both Cargo config filenames at the build working directory,
+every ancestor, and `CARGO_HOME`. File locations and contents both affect it.
+Cargo include directives stop identity generation before cache restore.
+They require explicit support before this cache path accepts them.
+
 Every hit must pass the receipt digest, artifact path, kernel marker, and
 numeric smoke check under the locked Python interpreter. A rejected hit
 rebuilds; a failed build or smoke check stops the job before cache save.

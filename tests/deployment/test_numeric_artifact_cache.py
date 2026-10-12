@@ -237,3 +237,84 @@ def test_identity_drift_changes_key(tmp_path, monkeypatch, field) -> None:
     else:
         monkeypatch.setenv(field, "changed")
     assert cache.cache_key(tmp_path, manifest_list) != before
+
+
+@pytest.fixture
+def cargo_tree(tmp_path, monkeypatch):
+    cwd = tmp_path / "ancestor/parent/graphos"
+    cwd.mkdir(parents=True)
+    home = tmp_path / "cargo-home"
+    home.mkdir()
+    manifest_list = tmp_path / "inputs"
+    manifest_list.write_text("")
+    monkeypatch.chdir(cwd)
+    monkeypatch.setenv("CARGO_HOME", str(home))
+    monkeypatch.setenv("NUMERIC_SOURCE_SHA", "a" * 40)
+    monkeypatch.setenv("NUMERIC_TOOLS_ID", "toolchain-v1")
+    return cwd, home, manifest_list
+
+
+@pytest.mark.parametrize("location", ["cwd", "parent", "ancestor", "home"])
+@pytest.mark.parametrize("filename", ["config", "config.toml"])
+@pytest.mark.parametrize(
+    "setting",
+    [
+        '[build]\nrustflags=["-Copt-level=1"]\n',
+        "[profile.release]\nopt-level=1\n",
+        '[build]\ntarget="x86_64-unknown-linux-gnu"\n',
+    ],
+)
+def test_cargo_config_creation_mutation_and_removal_change_key(
+    cargo_tree, location, filename, setting
+) -> None:
+    cwd, home, inputs = cargo_tree
+    directory = {
+        "cwd": cwd / ".cargo",
+        "parent": cwd.parent / ".cargo",
+        "ancestor": cwd.parent.parent / ".cargo",
+        "home": home,
+    }[location]
+    directory.mkdir(exist_ok=True)
+    config = directory / filename
+    absent = cache.cache_key(cwd, inputs)
+    config.write_text(setting)
+    created = cache.cache_key(cwd, inputs)
+    assert created != absent
+    config.write_text(setting.replace("1", "2").replace("x86_64", "aarch64"))
+    assert cache.cache_key(cwd, inputs) != created
+    config.unlink()
+    assert cache.cache_key(cwd, inputs) == absent
+
+
+@pytest.mark.parametrize("location", ["cwd", "parent", "home"])
+@pytest.mark.parametrize("filename", ["config", "config.toml"])
+def test_cargo_include_refuses_key_before_restore(
+    cargo_tree, location, filename
+) -> None:
+    cwd, home, inputs = cargo_tree
+    directory = {"cwd": cwd / ".cargo", "parent": cwd.parent / ".cargo", "home": home}[
+        location
+    ]
+    directory.mkdir(exist_ok=True)
+    (directory / filename).write_text('include = ["flags.toml"]\n')
+    (directory / "flags.toml").write_text('[build]\nrustflags=["-Copt-level=1"]\n')
+    with pytest.raises(ValueError, match="includes require explicit cache support"):
+        cache.cache_key(cwd, inputs)
+
+
+def test_identical_config_relocation_changes_key(cargo_tree) -> None:
+    cwd, home, inputs = cargo_tree
+    directory = cwd / ".cargo"
+    directory.mkdir()
+    config = directory / "config"
+    config.write_text('[build]\nrustflags=["--cfg=fixture"]\n')
+    before = cache.cache_key(cwd, inputs)
+    config.rename(home / "config")
+    assert cache.cache_key(cwd, inputs) != before
+
+
+def test_cargo_config_broken_symlink_refuses_key(cargo_tree) -> None:
+    cwd, home, inputs = cargo_tree
+    (home / "config.toml").symlink_to(home / "missing")
+    with pytest.raises(FileNotFoundError):
+        cache.cache_key(cwd, inputs)

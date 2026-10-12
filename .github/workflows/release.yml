@@ -209,6 +209,7 @@ jobs:
 
       - name: Resolve exact numeric artifact identity
         id: numeric-identity
+        working-directory: ${{ github.workspace }}
         run: |
           set -euo pipefail
           eg_source="$GITHUB_WORKSPACE/.uv-workspace-siblings/agent-utilities/.uv-workspace-siblings/epistemic-graph"
@@ -239,6 +240,7 @@ jobs:
           key: ${{ steps.numeric-identity.outputs.key }}
 
       - name: Validate numeric extension or rebuild
+        working-directory: ${{ github.workspace }}
         env:
           NUMERIC_CACHE_KEY: ${{ steps.numeric-identity.outputs.key }}
         run: |

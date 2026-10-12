@@ -417,6 +417,11 @@ def test_numeric_artifact_cache_is_exact_and_always_validated() -> None:
     assert "restore-keys" not in restore["with"]
     assert restore["with"] == save["with"]
     assert "if" not in validate
+    assert (
+        identity["working-directory"]
+        == validate["working-directory"]
+        == "${{ github.workspace }}"
+    )
     assert "success()" in save["if"]
     assert _step_index(steps, "uv sync --frozen") < steps.index(identity)
     assert (
