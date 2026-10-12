@@ -63,14 +63,9 @@ broker, or notification channel.
 
 ### Finance projection and scheduling (GRAPHOS-DATA-MARKET-R001 / GRAPHOS-DATA-MARKET-R002 / GRAPHOS-DATA-MARKET-R003 / GRAPHOS-DATA-MARKET-R006)
 
-- **FR-07:** GraphOS exposes tenant-scoped market reads through one application
-  service shared by REST and MCP. Each price, trend, portfolio, and positions
-  field includes source identity, as-of time, currency or unit, and staleness;
-  bounded server-side pagination and decimation occur after authoritative
-  calculations. Reads require `finance:read`. Missing tenant/account binding
-  fails closed before touching a process-global provider account.
-- **FR-08:** Backfill, scan, DCA-due, and flip-explainer jobs use the existing
-  scheduler and agent workflow contract. A schedule records tenant, owner,
+- **FR-07:** GraphOS exposes tenant-scoped market reads through one application service shared by REST and MCP. Each price, trend, portfolio, and position field includes source identity, as-of time, currency or unit, session, freshness, and provenance. GraphOS performs bounded server-side pagination and decimation after authoritative calculations. Reads require `finance:read`. Missing tenant/account binding fails closed before touching a process-global provider account. The nine list/search/get contracts in R003.1–R003.6 use closed, versioned projections and preserve source metadata without host synthesis.
+- **FR-08:** Use the existing scheduler and agent workflow contract for backfill,
+  scan, DCA-due, and flip-explainer jobs. A schedule records tenant, owner,
   authorized action, timezone, trigger, idempotency key, and last run. DST and
   replay cannot produce duplicate effects. A model explanation cites the exact
   calculation inputs and is informational only.
@@ -144,3 +139,27 @@ Neither a valid signature nor confirmation alone authorizes a source effect. Una
 Confirmation binds the complete immutable `{"intent": WalletBusinessIntent}` projection defined in plan.md.
 Proof and confirmation metadata use the separate, currently missing WalletExecutionEnvelope transport extension.
 No proof or derived plan digest enters the confirmed business parameters. All new wiring remains SPECIFIED.
+
+<!-- spec-definition-patch:eg66-reads -->
+## Structured marketplace reads (GRAPHOS-DATA-MARKET-R003.1–R003.6)
+
+R003 defines nine read-only bindings: `markets.list/search/get`,
+`events.list/search/get`, and `orders.list/search/get`. List/search use a
+page sizes from 1 to 100 and opaque cursors. Search accepts bounded query text
+and documented filters. Get selects one resource by stable ID. Use the shared server-side finance service. Use the existing R010 response
+envelope. Plan.md defines the versioned projections.
+
+Every read requires `finance:read` and verified tenant/account binding before
+provider dispatch. Identity comes from authenticated authority, never caller
+parameters. Missing/mismatched binding returns the parent's typed unavailable
+response; scope denial uses the existing R010 refusal mapping. Refusals make
+zero provider calls, and missing/inaccessible IDs are nonrevealing. This
+extends GRAPHOS-OPS-R017.1; GRAPHOS-OPS-R017.2 keeps subject ownership for
+position and paper-trading actions.
+
+Reads cannot submit orders, reserve effect leases, or invoke paper-trade
+methods. Paper submission remains governed by parent R003: separate
+`finance:paper-trade`, tenant-bound account, durable lease, idempotency
+receipt, and GRAPHOS-OPS-R017.2 subject ownership. This is a definition only;
+it records no implementation or served acceptance evidence.
+<!-- /spec-definition-patch -->
