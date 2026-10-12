@@ -1,6 +1,8 @@
 # Hosted API and intent operations — tasks
 
-Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](plan.md) and [tests](test-spec.md).
+## Delivery tasks
+
+See [design](plan.md) and [tests](test-spec.md).
 
 - [ ] Validate public engine package contracts and exact method/error/scope coverage; identify one existing GraphOS entrypoint per domain.
 - [ ] Implement immutable operation registry, digest, bindings, exclusions, and deterministic generation.

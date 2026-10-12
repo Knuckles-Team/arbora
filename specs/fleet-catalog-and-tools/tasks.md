@@ -45,8 +45,8 @@ Check a task only after its linked code and tests land. A checked source task is
 - [x] T09.1 — Capacity-acquisition primitive (acquire/release, one re-decision) in `graph_os/control_plane/runs/admission.py`. Cover GRAPHOS-FLEET-R009.1.
 - [ ] T09.2 — Wire `graph_os/a2a/routing.py`/`composition.py` evaluate/commit/publish through the GRAPHOS-FLEET-R009.1 primitive. Cover GRAPHOS-FLEET-R009.2.
 - [ ] T10 — Run clean-checkout format/lint/types/tests, generated artifact and public-surface checks, CCCC, KISS, jscpd, dupehound, authority parity, and local served protocol matrix. Cover GRAPHOS-FLEET-R016, GRAPHOS-FLEET-R017.
-- [ ] T11 — Land reviewed code and record merge commits per slice in `spec.md`; do not mark ACCEPTED on source evidence alone.
-- [ ] T12 — Run the disposable two-replica reload and fault probe against the landed revision. Attach generation, receipt, trace, timing, and policy evidence. Then mark only passing slices ACCEPTED.
+- [ ] T11 — Land reviewed code and record merge commits per slice in `spec.md`; source evidence alone does not establish completed acceptance.
+- [ ] T12 — Run the disposable two-replica reload and fault probe against the landed revision. Attach generation, receipt, trace, timing, and policy evidence. Record completed acceptance only for passing slices.
 - [ ] T13 — Add or verify a check script that scans every fleet connector count-pin site (compatibility matrix, bundle-catalog schema, check scripts, `ontology.lock`, federated IRI, `genesis.yaml`) and fails when any site disagrees with the live connector count. Cover GRAPHOS-FLEET-R023, not covered by T01–T12.
 - [x] T14 (GRAPHOS-FLEET-R024): Take over fleet reconciliation, autoscaling, scaling authority and deploy watch from the agent runtime as typed GraphOS operations with parity and authorization tests. Split into T14.1–T14.3 below; GRAPHOS-FLEET-R024 is now a rollup over GRAPHOS-FLEET-R024.1–R024.3.
   - [x] GRAPHOS-FLEET-R023.1 (child, producer): `graph_os/fleet/connector_count_pins.py` + `scripts/check_connector_count_pins.py` + `tests/test_check_connector_count_pins.py`. Real sites (compatibility matrix, bundle-catalog schema, `ontology.lock`, federated IRI) remain cross-repo/AU-owned follow-up.
@@ -107,12 +107,12 @@ before it can be fixed.
 
 ## Spec-sweep audit notes (2026-10-08, this lane)
 
-- GRAPHOS-FLEET-R026/R027/R028/R029/R030 are confirmed `LANDED` on `origin/main` as of `7e3628a`: `graph_os/fleet/onboarding.py` matches their descriptions line for line, `tests/fleet/test_fleet_onboarding.py` + `tests/fleet/test_fleet_access_contracts.py` + `tests/test_fleet_catalog_reader.py` + `tests/mcp_server/test_graph_tool_surface.py` all pass (33 tests) through the shared venv against this worktree's checkout. Nothing further to do here.
-- GRAPHOS-FLEET-R029's own spec text says it "supersedes the four resident tools in GRAPHOS-FLEET-R018 and GRAPHOS-FLEET-R020." Now that R029 is landed (PR #51 deleted the `SessionVisibilityMiddleware` class and the five fleet meta-tools), R018 and R020 should be marked superseded, not left `BUILDING`/`SPECIFIED` with their old "replace the live multiplexer's own registered meta-tools" language — that replacement already happened via a different mechanism (`agent_utilities.mcp.graphos_surface`), not via R018's own `graph_os/fleet/catalog_composition.py`/`multiplexer_ops.py` module, which still has no non-test caller.
+- GRAPHOS-FLEET-R026/R027/R028/R029/R030 have source on `origin/main` as of `7e3628a`: `graph_os/fleet/onboarding.py` matches their descriptions line for line, `tests/fleet/test_fleet_onboarding.py` + `tests/fleet/test_fleet_access_contracts.py` + `tests/test_fleet_catalog_reader.py` + `tests/mcp_server/test_graph_tool_surface.py` all pass (33 tests) through the shared venv. The run used this worktree's checkout. Nothing further to do here.
+- GRAPHOS-FLEET-R029's own spec text says it "supersedes the four resident tools in GRAPHOS-FLEET-R018 and GRAPHOS-FLEET-R020." PR #51 deleted the `SessionVisibilityMiddleware` class and the five fleet meta-tools. Review R018 and R020's old "replace the live multiplexer's own registered meta-tools" language. The replacement uses `agent_utilities.mcp.graphos_surface`. R018's `graph_os/fleet/catalog_composition.py`/`multiplexer_ops.py` module still has no non-test caller.
 - Flag for re-audit: `status.json` currently marks GRAPHOS-FLEET-R012/R013/R015 `LANDED`, but `MCPProjection` (`graph_os/api/mcp/verbs.py`) is constructed only in `tests/api/test_mcp_verbs.py` — grep for a non-test importer finds none. The six-verb surface that actually ships is the separate `agent_utilities.mcp.graphos_surface` path from PR #51, not this `graph_os/api/mcp/` package. Per the "landed means reachable" rule, this looks like a promotion based on merged-commit evidence alone, not reachability; the orchestrator should re-check before trusting these three as done, or confirm `graph_os/api/mcp/` is deliberately superseded like R018/R020.
-- Remaining `BUILDING` items (R003, R011, R016, R017, R022) each need either composition into the served app's boot sequence (`graph_os/mcp_server/server.py`'s bootstrap block, explicitly out of scope for this lane) or a real design reconciliation, not a cherry-pick: their recorded branch commits (`9a9b3f5c8e`, `3f5f354a36`, `fb06321fe1`, `1f3b30ff69`) all conflict against current `main`, and R022's conflict is a genuine behavioral regression — the branch commit raises `FleetCatalogIntegrityError` on an unadmitted server, while main's current (landed, R026) behavior is to skip and warn so boot never fails. Porting it as-is would reintroduce a boot-failure mode R026 just removed. None of these were touched this lane.
+- Remaining items (R003, R011, R016, R017, R022) need composition into the served app's boot sequence or a design reconciliation. The `graph_os/mcp_server/server.py` bootstrap block handles that composition, outside this lane's scope. Their recorded branch commits (`9a9b3f5c8e`, `3f5f354a36`, `fb06321fe1`, `1f3b30ff69`) conflict against current `main`. R022's conflict represents a behavioral regression. Its branch raises `FleetCatalogIntegrityError` on an unadmitted server. Main's R026 behavior skips that server and warns, so boot never fails. Porting that branch unchanged would restore the boot-failure mode R026 removed. This lane did not change those items.
 
-Checked the remaining `SPECIFIED` requirements (R004, R005, R006, R008, R009)
+Checked the remaining requirements (R004, R005, R006, R008, R009)
 for existing partial code to extend instead of a fresh guess: none has one.
 R004's capability/digest/modality/cost/latency fields do not exist anywhere
 in `graph_os/fleet/catalog_items.py`; R006's skill/prompt harvest removal
@@ -142,7 +142,7 @@ beyond an unrelated audit-chain capacity check. None of these is a safe
 
 ## Certified fleet execution definitions
 
-All tasks below remain unimplemented; runtime acceptance is NOT RUN.
+All tasks below remain unimplemented. The runtime integration tests have not run.
 
 - [ ] **GRAPHOS-FLEET-R034.7:** Model: implement the requirement and bind its served acceptance test.
 - [ ] **GRAPHOS-FLEET-R034.8:** Behavior: implement the requirement and bind its served acceptance test.

@@ -209,13 +209,13 @@ Missing wiring includes the scoped vault broker, SDK challenge-result adapter, q
 The protocol-grant binding requires a qualified EG contract; existing graph access checks alone do not prove that producer capability.
 No second token store, local grant authority, OAuth manager or access-decision engine is introduced.
 SDK-CONNECTOR-CONTROL-R035/R046 must preserve challenge bindings, typed bounded errors and broker-owned persistence before these host flows become available.
-All new children remain SPECIFIED. No runtime security or access configuration changes are authorized by this definition batch.
+No runtime security or access configuration changes are authorized by this definition batch.
 No arXiv derivation is claimed; the inputs describe protocol and ownership requirements.
 
 
 ## Connector-bound grants and provider token profiles
 
-This shared contract refines GRAPHOS-IDENTITY-R023 and SDK-CONNECTOR-CONTROL-R035/R046; its implementation remains SPECIFIED.
+This shared contract refines GRAPHOS-IDENTITY-R023 and SDK-CONNECTOR-CONTROL-R035/R046. Implementation still needs the required runtime wiring.
 The exact credential-use tuple includes tenant, owner principal, requesting principal/client, connector, provider, audience, scopes, resource and operation.
 The host derives connector from authenticated admission and the certified target connector registration, with its immutable registry revision.
 A caller's connector ID is only a requested target; it cannot populate the trusted binding or current grant.

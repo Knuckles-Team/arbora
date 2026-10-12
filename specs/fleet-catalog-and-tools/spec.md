@@ -4,23 +4,16 @@
 
 **Owner:** graph-os
 
-**State:** READY FOR IMPLEMENTATION — architecture and acceptance specified; no claim that the full surface is deployed or accepted.
+This specification defines architecture and acceptance; it does not establish deployment or completed acceptance.
 **Scope IDs:** GRAPHOS-FLEET-R001, GRAPHOS-FLEET-R002, GRAPHOS-FLEET-R003, GRAPHOS-FLEET-R004, GRAPHOS-FLEET-R005, GRAPHOS-FLEET-R006, GRAPHOS-FLEET-R007, GRAPHOS-FLEET-R008, GRAPHOS-FLEET-R009, GRAPHOS-FLEET-R010, GRAPHOS-FLEET-R011, GRAPHOS-FLEET-R012, GRAPHOS-FLEET-R013, GRAPHOS-FLEET-R014, GRAPHOS-FLEET-R015, GRAPHOS-FLEET-R016, GRAPHOS-FLEET-R017, GRAPHOS-FLEET-R018, GRAPHOS-FLEET-R019, GRAPHOS-FLEET-R020, GRAPHOS-FLEET-R021, GRAPHOS-FLEET-R022, PA-12, GRAPHOS-FLEET-R026, GRAPHOS-FLEET-R027, GRAPHOS-FLEET-R028, GRAPHOS-FLEET-R030.
 
-## Outcome and state legend
+## Outcome
 
 An authenticated caller can discover only usable graph-os operations and fleet items, load a bounded subset as native MCP tools, execute every action through the same typed authority and audit path, and refresh the catalog without a partial generation becoming visible. An external contributor can build and test this from a clean checkout using fixtures and local processes; a live shared environment is an optional release proof, not a prerequisite for source contribution.
 
-| State | Meaning | Required evidence |
-|---|---|---|
-| DRAFT | Requirements or design unresolved | Named open decision |
-| READY FOR IMPLEMENTATION | Complete user, architecture, interface, and test contract | This four-file spec reviewed |
-| BUILDING | Code or tests in progress | Linked branch or PR |
-| SOURCE LANDED | Reviewed code on the repository default branch | Merge commit and local/CI gates |
-| ACCEPTED | All listed functional and release proofs pass against the landed revision | Evidence with revision, environment, and result |
-| BLOCKED | A named dependency prevents the next acceptance step | Dependency, owner, and retry condition |
-
-Status is per deliverable; a source commit, a green unit test, or a prior status label never implies ACCEPTED. Update the evidence table in this spec at each transition.
+A source commit, a green unit test, or a prior label does not establish completed acceptance.
+Record evidence for each deliverable in the evidence table below.
+Record unresolved design decisions and any dependency, owner, and retry condition that prevents the next acceptance step.
 
 ## Functional contract
 
@@ -53,17 +46,17 @@ The engine owns its durable records and method contract. The connector SDK owns 
 
 ## Acceptance and evidence
 
-Acceptance requires every functional rule above, the positive/negative matrix in [test-spec.md](test-spec.md), a clean checkout run, generated artifact parity, no new duplication, and a served multi-session/multi-replica proof for reload and authority. Proof records must name the exact commit, command, fixture or endpoint, result, timestamp, and any environment limitation. Release-only probes may run after source lands; leave state at SOURCE LANDED until they pass. The HTML spec report may render this table directly; Markdown remains authoritative.
+Acceptance requires every functional rule above, the positive/negative matrix in [test-spec.md](test-spec.md), a clean checkout run, generated artifact parity, no new duplication, and a served multi-session/multi-replica proof for reload and authority. Proof records must name the exact commit, command, fixture or endpoint, result, timestamp, and any environment limitation. Release-only probes may run after source lands. Acceptance still requires those probes to pass. The HTML spec report may render this table directly; Markdown remains authoritative.
 
-| Slice | State | Evidence |
-|---|---|---|
-| Registry and generated binding | READY FOR IMPLEMENTATION | Pending exact revision and gate results |
-| Intent and discovery | READY FOR IMPLEMENTATION | Pending exact revision and gate results |
-| Connector and fleet item inputs | READY FOR IMPLEMENTATION | Pending exact revision and gate results |
-| Fleet invocation and safety | READY FOR IMPLEMENTATION | Pending exact revision and gate results |
-| Orchestration correctness | READY FOR IMPLEMENTATION | Pending exact revision and gate results |
-| Reload and acceptance | READY FOR IMPLEMENTATION | Pending exact revision and gate results |
-| Fleet onboarding | BUILDING | Branch `feat/fleet-onboarding`; `tests/fleet/test_fleet_onboarding.py`, `tests/test_fleet_catalog_reader.py` |
+| Slice | Evidence |
+|---|---|
+| Registry and generated binding | Pending exact revision and gate results |
+| Intent and discovery | Pending exact revision and gate results |
+| Connector and fleet item inputs | Pending exact revision and gate results |
+| Fleet invocation and safety | Pending exact revision and gate results |
+| Orchestration correctness | Pending exact revision and gate results |
+| Reload and acceptance | Pending exact revision and gate results |
+| Fleet onboarding | Branch `feat/fleet-onboarding`; `tests/fleet/test_fleet_onboarding.py`, `tests/test_fleet_catalog_reader.py` |
 
 ## Fixed design decisions
 
@@ -80,5 +73,5 @@ R034 adds dependency-ordered certification and full workflow tool admission.
 R024 adds typed provisioning and measured capacity with EG result aggregation.
 R002 adds versioned nested definition admission; R027 joins discovery, distribution, provisioning and ingested skill consumption.
 R019, R021 and R005 consume these contracts through their existing authority and work-item paths.
-All new definitions are SPECIFIED. Served acceptance remains NOT RUN.
+The served integration tests for these definitions have not been executed.
 The design and producer dependencies are in [plan.md](plan.md); required positive and negative cases are in [test-spec.md](test-spec.md).
