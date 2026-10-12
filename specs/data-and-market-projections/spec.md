@@ -133,3 +133,14 @@ broker, or notification channel.
   verified before that operation can change from `UNAVAILABLE` to enabled.
 
 Requirement IDs are defined in [requirements.md](requirements.md); delivery state per ID is in `status.json`.
+
+
+## Wallet verification boundary
+
+GRAPHOS-DATA-MARKET-R007 consumes SDK-GOVERNED-WRITEBACK-R001.1 through R001.6 for wallet signature verification.
+EG owns authorization decisions. GraphOS authenticates, serves explicit confirmation and enforces the matching producer result.
+Neither a valid signature nor confirmation alone authorizes a source effect. Unavailable trust or durable proof binding refuses.
+
+Confirmation binds the complete immutable `{"intent": WalletBusinessIntent}` projection defined in plan.md.
+Proof and confirmation metadata use the separate, currently missing WalletExecutionEnvelope transport extension.
+No proof or derived plan digest enters the confirmed business parameters. All new wiring remains SPECIFIED.
