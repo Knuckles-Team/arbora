@@ -229,3 +229,144 @@ R027.1 through R027.6 add integrated provisioning acceptance alongside that orig
 The parent requirement text and original acceptance remain unchanged.
 All new residual children require full acceptance and bound evidence.
 The coverage matrix in test-spec.md maps every original clause to its residual child and reusable test seam.
+
+
+## Repository source-effect composition (R003.4 through R003.10)
+
+### Producer and original acceptance
+
+Consume the [SDK governed write-back definition](https://github.com/Knuckles-Team/agent-connector-sdk/tree/0c6c53dd63fe2a8f9b2ac3568b6d0e8f2c602734/specs/SDK-GOVERNED-WRITEBACK).
+SDK-GOVERNED-WRITEBACK-R004.1 through R004.4 retain generic approval, replay, audit reservation and business-rule API obligations.
+SDK R004.5 through R004.12 define RepositorySourceEffectIntent, RepositorySourceEffectRequest, RepositorySourceEffectReceipt and the real producer journey.
+Reuse their schemas and digest functions when exported; do not copy the SDK implementation or change its approved field projection.
+Missing exported contracts or an admitted runtime producer prevents activation, despite the merged definition.
+
+Preserve every original R003 requirement and acceptance cell, plus all prior landing and test receipts.
+R003.4 explicitly retains typed registry exposure, preview gating and correct writable-fleet behavior across restart and fault.
+It includes every admitted writable profile. Repository acceptance alone cannot close that residual.
+A fault must leave complete protocol state, including truthful uncertainty where an external effect is possible.
+It must not fabricate rollback or erase a known effect to claim no partial protocol state.
+
+### Existing seams and actual gaps
+
+| Source seam | Current evidence | Required connection |
+|---|---|---|
+| `graph_os/api/ops/write_back.py:50 preview_write_back` | Pure preview; no provider mutation | Reuse its original contract and add the repository profile |
+| `graph_os/api/ops/write_back_models.py:99 commit_write_back` | Compares keys and returns applied=True; no provider call or durable readback | It cannot supply production effect evidence |
+| `graph_os/api/ops/registry_factory.py:16 get_registry` | Does not compose the write_back module | Register the existing preview/commit IDs with typed models and real bindings |
+| `graph_os/api/http/routes.py:113 endpoint` | Calls invoke at line 127; separates plan and idempotency headers | Serve the same repository projection as MCP |
+| `graph_os/api/mcp/verbs.py:259 _invoke_and_render` | Passes parameters and separate plan/key arguments to shared invoke | Use the existing intent surface, not another native tool |
+| `graph_os/api/invoke/pipeline.py:810 invoke` | Validates, authorizes, confirms, reserves and dispatches | Compose the qualified connector and durable replay boundary |
+| `graph_os/api/invoke/plan.py:50 bind_plan` | Binds operation, parameter digest, caller, tenant, policy and registry | Bind the commit operation and complete repository parameters |
+
+The named acceptance tests do not exist at the inspected main revision.
+They are `tests/api/test_write_back_ops.py` and `tests/fleet/test_write_back_restart.py`.
+Their existing requirement rows remain obligations. Helper tests and historical receipts do not establish their served acceptance.
+No current production repository tool ID or qualified write-back binding is asserted here.
+Implementation evidence must name the admitted connector operation, schema revision and actual production composition before activation.
+
+### Closed repository profile
+
+For this profile, the existing operations remain `fleet.write_back.preview` and `fleet.write_back.commit`.
+Keep original generic request/result variants and their acceptance; do not reinterpret arbitrary generic change dictionaries as repository authority.
+Add the proposed GraphOS wrapper `RepositoryWriteBackParams` with exactly these members:
+
+| Member | Meaning |
+|---|---|
+| profile | Literal `repository_source_effect_v1` |
+| request | Complete SDK RepositorySourceEffectRequest, with its generated change_set and exact intent |
+| connector_binding_digest | Digest identifying the trusted admitted connector binding used by this request |
+
+Call this complete object P. Both operations use the same P without field removal, normalization or executor-added business defaults.
+Use existing `params_digest(P)` for the GraphOS parameter binding. Preserve the SDK's separate canonical change-set and patch digest functions.
+Require `request.intent == durable.desired_patch["repository_effect"]` with the SDK's sole-field patch, scope and provenance constraints.
+Compare the submitted change_set against the authoritative generated record. Embedded actor and approval fields are claims to validate, never grants.
+Compare tenant and actor with the verified caller and existing delegated authority. No caller-selected endpoint, credential or executor is admitted.
+Require the request's connector, source instance, repository, target, path, base, payload, mode and adapter contract to match trusted bindings.
+Extra fields, invalid profiles and mismatched digests refuse before dispatch.
+
+The connector_binding_digest identifies existing trusted configuration and admitted catalog metadata, not a new configuration or permission store.
+Compute it with params_digest over a closed object containing exactly these keys:
+
+- schema_version (integer 1), connector_id, source_instance_id and repository_id;
+- operation_id, input_schema_digest, output_schema_digest and adapter_contract_digest;
+- configuration_revision and executor;
+- caller_scopes, executor_scopes and subject.
+
+Identity, revision and digest values are nonempty strings from trusted admitted metadata. Executor uses the existing registered enum value.
+Both scope fields are sorted unique string arrays from the existing operation authority, never user-selected grants.
+Subject is the registered subject projection with exactly source and path; path is null only when the registered mapping permits.
+configuration_revision identifies the exact trusted source configuration, including allowed repository targets and paths.
+A material scope or routing change must change that revision before this binding is usable.
+If the configured authority cannot supply a stable revision, admission remains unavailable; GraphOS cannot invent allowed paths.
+Never include credentials or credential values. Tests must pin the exact closed projection and canonical ordering.
+Read that binding from existing trusted configuration, compare its digest and revalidate its revision before a new effect.
+A client presenting the digest cannot grant permission. Any material change requires a new preview and confirmation.
+
+`RepositoryWriteBackPreview` contains profile, request_digest, change_set_digest, idempotency_key and observation.
+The profile is unchanged; request_digest equals params_digest(P); observation is the SDK DryRunObservation from the actual admitted connector.
+The other fields equal the canonical SDK request. The preview reports exact target, path, base, byte digests, sizes and mode.
+It performs no provider mutation and asserts no approval or applied effect.
+
+`RepositoryWriteBackResult` contains profile, request_digest, receipt and receipt_digest.
+Receipt is the unmodified SDK RepositorySourceEffectReceipt; receipt_digest uses the SDK receipt algorithm.
+Validate its complete identity, change-set, approval, audit, base, actual revision and readback bindings against the approved request.
+Its actual revision and readback facts must come from SDK producer evidence, never a GraphOS echo or helper flag.
+A successful result requires the SDK durable attempt and readback contract. Return existing OpError envelopes for refusal or uncertainty.
+These GraphOS wrapper names are proposed contracts, not claims of existing exports.
+
+### Shared invocation, trusted routing and confirmation
+
+Reference [GRAPHOS-OPS-R009](../hosted-api-operations/requirements.md) for the existing pipeline; do not edit that owner or duplicate its authority.
+Both registered operations use the same trusted binding and existing executor/fleet gateway composition.
+Use the admitted operation's published exact scopes, principal rules and subject mapping; invent no new scope or broad-admin substitute.
+Preserve surface checks, current caller validation, narrowing policy and subject-read checks before service execution.
+Preserve console step-up and fresh authentication wherever existing effect/principal rules require them.
+Keep every SDK call inside the admitted connector boundary. GraphOS never writes repository files or calls a provider API directly.
+A raw child-tool bypass, missing service binding or unsupported producer returns a typed refusal with no provider mutation.
+
+HTTP sends P as the complete JSON body to the existing generic operation route.
+Use `Idempotency-Key` for the canonical SDK effect key and `GraphOS-Plan-Ref` for an existing confirmation reference.
+MCP sends the same P through the existing intent operation, with separate idempotency_key and plan_ref parameters.
+No new HTTP envelope or resident MCP tool is required. Both surfaces must reject conflicting body/header/argument bindings.
+The SDK effect key remains request.change_set.idempotency_key; require the caller's outer key to match it.
+The shared pipeline may use a plan-prefixed internal dispatch key. Never overwrite the SDK effect key with that internal key.
+
+A successful `fleet.write_back.preview` invokes SDK dry_run against the durable change set and immutable base.
+The producer's approval must bind the exact canonical change set; a host preview cannot create that approval.
+Preparation of `fleet.write_back.commit` without plan_ref invokes the existing confirmation path for the same P.
+The resulting lease binds the COMMIT operation ID. A lease for the preview operation must never authorize commit.
+Commit preparation performs SDK dry_run again for identical P before issuing its lease.
+Validate the exact preview and trusted connector association through the existing composition before a new effect.
+A helper's matching key alone does not prove preview, approval or current scope.
+
+After explicit confirmation and required step-up, submit the identical P with the commit lease and original SDK effect key.
+Validate SDK approval, contract pin, expiry and exact request bindings; preserve both GraphOS and SDK audit reservations before mutation.
+Do not modify P to insert confirmation metadata, regenerate the SDK effect key or replace recorded approval with a plan reference.
+The provider must enforce the SDK conditional base and file-state constraints at effect time.
+A new base, path, payload, mode, actor, policy, registry or trusted binding requires fresh preparation and applicable approval.
+
+The existing pipeline refuses confirmed effects without qualified external replay support in its services composition.
+Compose the existing qualified coordinator with SDK durable recovery; adding the operation name to a set is not qualification.
+Evidence must show the coordinator handles plan consumption, SDK effect identity, durable completion and uncertain outcomes together.
+Until that binding exists, preserve the current unavailable refusal. Do not add a GraphOS approval, confirmation or effect database.
+
+### Receipt, restart and refusal boundaries
+
+SDK R004.8 supplies provider conditional mutation. R004.9 and R004.10 supply durable receipt and independent immutable-revision readback.
+R004.11 and the generic R004.2 supply reconciliation and identical durable replay; R004.12 supplies the served producer path.
+GraphOS projects this evidence and keeps its own existing audit references joined to the request and producer receipt digests.
+No additional provider mutation or ingestion hydration may substitute for missing receipt evidence.
+A mismatch after a possible effect returns an indeterminate outcome and retains known references. It never claims zero effects or rollback.
+
+On duplicate submission, revalidate current caller authority before returning the original proven receipt.
+On restart, recover the original request/effect association through the existing durable authorities before attempting any provider mutation.
+A consumed lease proves neither success nor no-effect. A timeout or missing durable append cannot justify repeating the SDK apply call.
+Require causal provider reconciliation through SDK. Identical current bytes from another writer do not prove this request caused an effect.
+Only authoritative no-effect allows another conditional attempt, with current authorization and the still-approved base and payload.
+Changed intent requires a new preview and approval; unresolved outcomes remain unavailable for reapply.
+
+Test every requirement through the real HTTP and MCP composition with durable graph and connector processes.
+Record exact producer/consumer revisions, admitted operation and schema, request/receipt digests, actual revision and independent read observations.
+Exclude credentials and raw payloads from public evidence. No arXiv derivation or runtime completion is claimed.
+EG consumer reference changes wait for this producer definition to merge. AU model dispatch remains a separate dependency.

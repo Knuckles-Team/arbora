@@ -179,3 +179,15 @@ Historical parent evidence does not bind these new child IDs. Preserve the compl
 - [ ] **GRAPHOS-FLEET-R019.2:** Original policy contract; bind and verify the complete acceptance cases.
 - [ ] **GRAPHOS-FLEET-R021.2:** Original fleet authority contract; bind and verify the complete acceptance cases.
 - [ ] **GRAPHOS-FLEET-R027.7:** Original fleet onboarding contract; bind and verify the complete acceptance cases.
+
+## Repository source-effect composition units
+
+- [ ] **GRAPHOS-FLEET-R003.4:** Implement original writable-fleet acceptance residual and bind the served acceptance defined in test-spec.md.
+- [ ] **GRAPHOS-FLEET-R003.5:** Implement complete repository request binding and bind the served acceptance defined in test-spec.md.
+- [ ] **GRAPHOS-FLEET-R003.6:** Implement trusted composition through shared invoke and bind the served acceptance defined in test-spec.md.
+- [ ] **GRAPHOS-FLEET-R003.7:** Implement preview and approval bind the commit operation and bind the served acceptance defined in test-spec.md.
+- [ ] **GRAPHOS-FLEET-R003.8:** Implement served effect and independent readback evidence and bind the served acceptance defined in test-spec.md.
+- [ ] **GRAPHOS-FLEET-R003.9:** Implement zero-effect refusal parity and bind the served acceptance defined in test-spec.md.
+- [ ] **GRAPHOS-FLEET-R003.10:** Implement durable replay across host and connector restart and bind the served acceptance defined in test-spec.md.
+
+Preserve all existing R003 tasks and receipts. These added runtime cases have not run for this definition change.
