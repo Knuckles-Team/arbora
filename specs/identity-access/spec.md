@@ -1,16 +1,10 @@
 # GRAPHOS-IDENTITY — ACCESS — identity, authorization, and access operations
 
-## State legend
+## Evidence requirements
 
-| State | Meaning |
-|---|---|
-| PROPOSED | Intent needs a design or product decision. |
-| READY FOR IMPLEMENTATION | Requirements, owner boundary, contract and tests are specified; work may start. |
-| BUILDING | An implementation branch exists; no mainline claim follows. |
-| LANDED | The exact implementation commit is on this repository's default branch. |
-| ACCEPTED | Required contract, security, end-to-end and quality evidence is recorded for the landed commit. |
-
-The state applies to this whole GraphOS capability. Existing source is **not** proof of LANDED or ACCEPTED here. `evidence.md` records exact commits, jobs, and remaining gaps. Spec publication itself earns no delivery credit.
+An implementation branch does not prove default-branch delivery or completed acceptance.
+Record exact commits, jobs, and remaining gaps in `evidence.md`.
+Spec publication itself earns no delivery credit.
 
 ## Outcome and scope
 
@@ -59,7 +53,7 @@ GraphOS does not store durable identity tables, evaluate final graph RBAC, own s
 
 ## Completion rule
 
-Mark LANDED only with an exact default-branch commit containing all GraphOS behavior in scope. Mark ACCEPTED only when the contract, negative security, browser/MCP/CLI, three-mode oracle, quality, and release tests in `test-spec.md` pass on that commit and the evidence is recorded. A partial implementation must retain an explicit gap and cannot advertise its operation as complete.
+Completion requires an exact default-branch commit containing all GraphOS behavior in scope. The contract, negative security, browser/MCP/CLI, three-mode oracle, quality, and release tests must pass on that commit. Record the evidence required by `test-spec.md`. A partial implementation must retain an explicit gap and cannot advertise its operation as complete.
 
 Requirement IDs are defined in [requirements.md](requirements.md); delivery state per ID is in `status.json`.
 
@@ -116,4 +110,4 @@ R023.1 through R023.6 require explicit cross-client credential grants, inline PK
 R017.3 through R017.8 require stateless bearer validation with a signed tenant claim and independent current EG authorization.
 R019.1 through R019.6 require exact default-deny resource grants at web, SSH, RDP and database protocol boundaries.
 Existing OIDC mapping remains under R009. Host co-location grants no credential or resource access.
-Missing broker, SDK transport and EG/protocol enforcement wiring keeps these capabilities unavailable and their new requirements SPECIFIED.
+Missing broker, SDK transport and EG/protocol enforcement wiring keeps these capabilities unavailable.

@@ -64,7 +64,7 @@ On any build/validation/publish failure, retain the last-known-good active gener
 4. Add strict policy modes, exact fleet scopes, session cap/expiry, native forwarders, notifications, and revocation handling.
 5. Add candidate generation and reload state machine, durable delta receipts, replay, and multi-replica convergence checks.
 6. Re-certify connectors against actual served schemas and wire pack annotations and write-back effect classes. Include feed sanitation, run admission and assembly model parsing.
-7. Run the gate matrix and publish exact evidence; only then move each slice through SOURCE LANDED to ACCEPTED.
+7. Run the gate matrix and publish exact evidence for each slice's source commit and completed acceptance.
 
 ## Development environment
 
@@ -83,7 +83,7 @@ Decision: admit at the single pipeline boundary. Rejected alternative: audit at 
 ## Certified execution, provisioning and schema admission
 
 These extensions define missing host contracts. Reachable today: no complete integrated path.
-All new rows remain SPECIFIED. Existing helper coverage does not establish served acceptance.
+Existing helper coverage does not establish served acceptance.
 GraphOS owns admission, lifecycle and transport composition. EG owns decisions, skill identity, prompt semantics and aggregation.
 AU executes approved model work. SDK owns tool schemas, connector transport and provisioner effects.
 No host policy may widen an EG grant. Generated workflow text never grants authority.
@@ -227,5 +227,5 @@ R021.1 adds workflow binding without replacing those obligations.
 R027 retains configured-server onboarding, idempotency, failure isolation, CLI and boot behavior in R027.7.
 R027.1 through R027.6 add integrated provisioning acceptance alongside that original contract.
 The parent requirement text and original acceptance remain unchanged.
-All new residual children are SPECIFIED until their full acceptance and bound evidence satisfy the existing status generator.
+All new residual children require full acceptance and bound evidence.
 The coverage matrix in test-spec.md maps every original clause to its residual child and reusable test seam.

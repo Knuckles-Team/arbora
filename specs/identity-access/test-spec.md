@@ -1,6 +1,6 @@
 # Test contract — GRAPHOS-IDENTITY-ACCESS
 
-Delivery state: READY FOR IMPLEMENTATION. Test result: **NOT RUN for this spec**. No pass is inferred from prior source snapshots.
+These integration tests have not run for this spec. No pass is inferred from prior source snapshots.
 
 ## Portable fixture
 
@@ -90,7 +90,7 @@ Bind R019.1 through R019.6 in `tests/identity/test_resource_protocol_access.py.`
    Receipts must join caller/client/tenant, operation, grant and vault references without claiming runtime delivery from a planned test.
 
 The four protocol fixtures must each use their real adapter boundary; a shared permission-helper test proves none of them alone.
-Absent adapters or qualified EG producer fields remain explicit acceptance blockers. Runtime acceptance is NOT RUN for this specification change.
+Absent adapters or qualified EG producer fields remain explicit acceptance blockers. These integration tests have not run for this specification change.
 
 
 ### Served connector and token-profile acceptance
@@ -107,4 +107,4 @@ For introspection-required opaque tokens, active and correctly bound evidence su
 An opaque token without provider expiry may use only the explicit bounded host lease. Assert evidence distinguishes the two validity sources.
 Forged profile selection, wrong connector, cross-tenant binding, excess scopes and unapproved resource audience all refuse with zero resumed effects.
 The outbound opaque profile must not admit an unsigned GraphOS API bearer or remove its required tenant claim.
-Inspect responses and logs for token/code leakage. These acceptance cases remain NOT RUN until the required runtime wiring exists.
+Inspect responses and logs for token/code leakage. These acceptance cases have not run. They require the runtime wiring.
