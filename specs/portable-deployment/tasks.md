@@ -221,3 +221,10 @@ Order: R017.1 (placement), R017.2 to R017.5 (assembly, view, confirm, refusal), 
 - [ ] Define and prove preserve reuse through engine attachment (`GRAPHOS-DEPLOY-R018.7`) through the owning production entrypoint.
 
 - [ ] Define and prove keep reused resources alive across host shutdown (`GRAPHOS-DEPLOY-R018.8`) through the owning production entrypoint.
+
+<!-- spec-definition-patch:batch-20261012-tasks -->
+- [ ] `GRAPHOS-DEPLOY-R009.2`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-DEPLOY-R009.3`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-DEPLOY-R013.7`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-DEPLOY-R010.4`: Deliver every requirement in requirements.md.
+<!-- /spec-definition-patch -->

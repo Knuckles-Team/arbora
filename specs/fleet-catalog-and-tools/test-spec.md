@@ -186,3 +186,11 @@ After authoritative no-effect, only a still-authorized conditional retry may pro
 A consumed lease, a missing receipt, or another writer's identical bytes must never trigger blind reapply.
 Audit and receipt failures after mutation preserve uncertainty and known references rather than claiming rollback.
 Record request, plan, audit and SDK receipt associations with actual provider-call counters and fresh durable reads.
+
+<!-- spec-definition-patch:batch-20261012-tests -->
+- `GRAPHOS-FLEET-R024.10`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-FLEET-R024.11`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-FLEET-R002.9`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-FLEET-R034.13`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-FLEET-R034.14`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+<!-- /spec-definition-patch -->

@@ -69,3 +69,27 @@ For both MCP transports, initialize a real client, compare all eight tools and i
 Keep original R023 fallback, ranking and fleet-call tests in addition to this transport check.
 Unified terminal rendering requires the real terminal-client consumer; controlled adapters prove only the GraphOS handoff.
 The proposed served scenarios have not been run and establish no runtime delivery by themselves.
+
+<!-- spec-definition-patch:batch-20261012-tests -->
+- `GRAPHOS-HOST-R023.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R29`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R008.6`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R026.6`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R30`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R022.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R31`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R010.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R032`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+<!-- /spec-definition-patch -->
+
+<!-- spec-definition-patch:dispatch-20261012-host-composition-boundary-test-spec -->
+- `GRAPHOS-HOST-R023.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R29`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R008.6`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R026.6`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R30`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R022.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R31`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R010.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R032`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+<!-- /spec-definition-patch -->

@@ -9,3 +9,7 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **BUILDING**. See [design](plan.
 - [ ] Add the backoff-sequence and healthy-reset tests against the live router (`GRAPHOS-MESSAGING-R003`).
 - [ ] Add the static import-boundary check (`GRAPHOS-MESSAGING-R006`, `MSG-T08`).
 - [ ] Run the full test-spec, record exact default-branch evidence, then mark `GRAPHOS-MESSAGING-R001` (parent) accepted.
+
+<!-- spec-definition-patch:batch-20261012-tasks -->
+- [ ] `GRAPHOS-MESSAGING-R005.1`: Deliver every requirement in requirements.md.
+<!-- /spec-definition-patch -->

@@ -14,3 +14,10 @@ From a clean clone run `uv sync --extra test`, `uv run pytest`, `uv run ruff che
 | Non-admin mode change, stale policy, unavailable audit reservation | No mode change or effect; same refusal on MCP and HTTP. |
 
 Property tests should generate outcome sequences and assert `floor <= effective <= engine_headroom` and that automatic transitions never widen beyond an external ceiling. Run CCCC, KISS, jscpd and dupehound gates from the repository's pinned pipeline when source changes. Fix new findings without suppression or copied controller logic. Record exact command, commit, CI URL, fixture seed and redacted served receipt in `tasks.md`.
+
+<!-- spec-definition-patch:batch-20261012-tests -->
+- `GRAPHOS-CAPACITY-R001.2`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-CAPACITY-R003`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-CAPACITY-R004`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-CAPACITY-R001.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+<!-- /spec-definition-patch -->

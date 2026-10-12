@@ -28,3 +28,7 @@ stateDiagram-v2
 ## Quality and environment
 
 Use `uv sync --extra test`, focused `uv run pytest tests/messaging` (new `tests/messaging/test_supervision.py`), Ruff, and mypy on the changed file. No fixture engine, network, or sibling checkout is required — the state model has no I/O.
+
+<!-- spec-definition-patch:batch-20261012-plan -->
+- `GRAPHOS-MESSAGING-R005.1`: Plan the owner work and dependencies defined in requirements.md.
+<!-- /spec-definition-patch -->

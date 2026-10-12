@@ -79,3 +79,8 @@ Run `uv run pytest tests/a2a/test_admission.py`, `uv run ruff check graph_os/a2a
 Approval acceptance prerequisites: GRAPHOS-A2A-R005.6 requires full R005.2 and the R006.2/R006.2.1 verified-caller bridge. The served tool-action fixture must refuse before these prerequisites exist. It must prove input-required/signature binding. It must cover replay, changed-params, different-human, expired and revoked-grant cases. R006.5/R006.8 must exercise a dedicated engine held-item port through shared invoke with Surface.A2A. Preserve all fences and assert zero calls to operator-console elevation.
 
 The served confirm fixture rejects missing, unknown and mixed confirmation_kind variants. It routes tool_action and held_item through the same async invoke/authority/audit path. It refuses missing engine policy evidence without a local threshold fallback.
+
+<!-- spec-definition-patch:batch-20261012-tests -->
+- `GRAPHOS-A2A-R001.2`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-A2A-R22`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+<!-- /spec-definition-patch -->

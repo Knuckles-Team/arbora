@@ -155,7 +155,16 @@
     "GRAPHOS-HOST-R006.1",
     "GRAPHOS-HOST-R006.2",
     "GRAPHOS-HOST-R023.1",
-    "GRAPHOS-HOST-R023.2"
+    "GRAPHOS-HOST-R023.2",
+    "GRAPHOS-HOST-R023.3",
+    "GRAPHOS-HOST-R29",
+    "GRAPHOS-HOST-R008.6",
+    "GRAPHOS-HOST-R026.6",
+    "GRAPHOS-HOST-R30",
+    "GRAPHOS-HOST-R022.1",
+    "GRAPHOS-HOST-R31",
+    "GRAPHOS-HOST-R010.8",
+    "GRAPHOS-HOST-R032"
   ],
   "requirements": [
     {
@@ -1020,7 +1029,8 @@
         "GRAPHOS-HOST-R008.2",
         "GRAPHOS-HOST-R008.3",
         "GRAPHOS-HOST-R008.4",
-        "GRAPHOS-HOST-R008.5"
+        "GRAPHOS-HOST-R008.5",
+        "GRAPHOS-HOST-R008.6"
       ]
     },
     {
@@ -1059,7 +1069,8 @@
         "GRAPHOS-HOST-R010.4",
         "GRAPHOS-HOST-R010.5",
         "GRAPHOS-HOST-R010.6",
-        "GRAPHOS-HOST-R010.7"
+        "GRAPHOS-HOST-R010.7",
+        "GRAPHOS-HOST-R010.8"
       ]
     },
     {
@@ -1178,12 +1189,15 @@
     {
       "id": "GRAPHOS-HOST-R022",
       "title": "Serving start binds the task planner's capability-search, guardrail and workflow lookups",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "af5f5c292007",
         "e67f069a9ed4"
       ],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-HOST-R022.1"
+      ]
     },
     {
       "id": "GRAPHOS-HOST-R023",
@@ -1195,7 +1209,8 @@
       "verified_by": [],
       "rollup_of": [
         "GRAPHOS-HOST-R023.1",
-        "GRAPHOS-HOST-R023.2"
+        "GRAPHOS-HOST-R023.2",
+        "GRAPHOS-HOST-R023.3"
       ]
     },
     {
@@ -1229,7 +1244,8 @@
         "GRAPHOS-HOST-R026.2",
         "GRAPHOS-HOST-R026.3",
         "GRAPHOS-HOST-R026.4",
-        "GRAPHOS-HOST-R026.5"
+        "GRAPHOS-HOST-R026.5",
+        "GRAPHOS-HOST-R026.6"
       ]
     },
     {
@@ -1457,6 +1473,69 @@
     {
       "id": "GRAPHOS-HOST-R023.2",
       "title": "Prove transport parity on the served surface",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R023.3",
+      "title": "AU:20 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R29",
+      "title": "AU:36 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.6",
+      "title": "AU:96 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R026.6",
+      "title": "AU:112 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R30",
+      "title": "AU:35 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R022.1",
+      "title": "AU:97 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R31",
+      "title": "AU:107 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R010.8",
+      "title": "GRAPHOS:9 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R032",
+      "title": "Remote workbench compatibility manifest and admission",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

@@ -43,3 +43,7 @@ Superseded row: `GRAPHOS-HOST-R011` ([host-composition-boundary/requirements.md]
 5. Quality gates in [test-spec.md](test-spec.md) pass at the exact default-branch revision with no duplicate state authority.
 
 Requirement IDs are defined in [requirements.md](requirements.md); delivery state per ID is in `status.json`.
+
+<!-- spec-definition-patch:batch-20261012-scope -->
+- `GRAPHOS-MESSAGING-R005.1`: Owner scope and complete acceptance are defined in requirements.md.
+<!-- /spec-definition-patch -->

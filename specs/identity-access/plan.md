@@ -252,3 +252,7 @@ The broker stores profile revision, validation method, binding digest and proven
 Opaque exchange metadata and host lease bounds remain distinct from signed JWT claims in evidence and logs.
 Map profile errors to `invalid_token_profile` or `token_validation_failed`; required introspection failures use `introspection_unavailable` or `token_inactive`.
 These shared typed refusals stop persistence readiness and operation continuation; no token, code or raw introspection body enters public output.
+
+<!-- spec-definition-patch:batch-20261012-plan -->
+- `GRAPHOS-IDENTITY-R026.8`: Plan the owner work and dependencies defined in requirements.md.
+<!-- /spec-definition-patch -->

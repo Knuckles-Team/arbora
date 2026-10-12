@@ -94,7 +94,8 @@
     "GRAPHOS-IDENTITY-R026.4",
     "GRAPHOS-IDENTITY-R026.5",
     "GRAPHOS-IDENTITY-R026.6",
-    "GRAPHOS-IDENTITY-R026.7"
+    "GRAPHOS-IDENTITY-R026.7",
+    "GRAPHOS-IDENTITY-R026.8"
   ],
   "requirements": [
     {
@@ -994,7 +995,8 @@
         "GRAPHOS-IDENTITY-R026.4",
         "GRAPHOS-IDENTITY-R026.5",
         "GRAPHOS-IDENTITY-R026.6",
-        "GRAPHOS-IDENTITY-R026.7"
+        "GRAPHOS-IDENTITY-R026.7",
+        "GRAPHOS-IDENTITY-R026.8"
       ]
     },
     {
@@ -1042,6 +1044,13 @@
     {
       "id": "GRAPHOS-IDENTITY-R026.7",
       "title": "Cross-client denial is uniform",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R026.8",
+      "title": "GRAPHOS:16 GraphOS definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

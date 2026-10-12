@@ -210,3 +210,8 @@ Cross-repository: `EG-` rows for the held proposal, the verification record, the
 - arXiv:2606.17929 — Li, "PreAct: Computer-Using Agents that Get Faster on Repeated Tasks" (2026)
 
 Research citations above describe inspiration only. The engine and transport contracts, verified authority boundaries and served acceptance requirements define the architecture.
+
+<!-- spec-definition-patch:batch-20261012-plan -->
+- `GRAPHOS-A2A-R001.2`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-A2A-R22`: Plan the owner work and dependencies defined in requirements.md.
+<!-- /spec-definition-patch -->

@@ -19,3 +19,10 @@ Decision receipts include budget/configuration digest, premise revision, prior s
 3. Insert one limiter in the fleet dispatch path; wire observe-only first and prove no behavior change.
 4. Add authorized status/mode operations, audit receipts and policy revision invalidation.
 5. Enable enforce mode per child behind explicit configuration, run served fault injection and record acceptance evidence.
+
+<!-- spec-definition-patch:batch-20261012-plan -->
+- `GRAPHOS-CAPACITY-R001.2`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-CAPACITY-R003`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-CAPACITY-R004`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-CAPACITY-R001.3`: Plan the owner work and dependencies defined in requirements.md.
+<!-- /spec-definition-patch -->

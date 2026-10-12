@@ -138,3 +138,27 @@ Keep one public GraphOS entrypoint, one registry and one multiplexer. Do not res
 Use typed arguments for transport, bind address, port and security; compare normalized served catalogs under one registry generation.
 R006.1 retains all original module ownership; R023.1 retains every tool, ranking, fallback and invocation-policy clause.
 The new transport acceptance must use real wire clients, including unauthorized calls and stdout-purity probes.
+
+<!-- spec-definition-patch:batch-20261012-plan -->
+- `GRAPHOS-HOST-R023.3`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R29`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R008.6`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R026.6`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R30`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R022.1`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R31`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R010.8`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R032`: Plan the owner work and dependencies defined in requirements.md.
+<!-- /spec-definition-patch -->
+
+<!-- spec-definition-patch:dispatch-20261012-host-composition-boundary-plan -->
+- `GRAPHOS-HOST-R023.3`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R29`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R008.6`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R026.6`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R30`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R022.1`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R31`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R010.8`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R032`: Plan the owner work and dependencies defined in requirements.md.
+<!-- /spec-definition-patch -->

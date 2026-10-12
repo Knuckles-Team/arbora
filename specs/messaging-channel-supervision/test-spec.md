@@ -14,3 +14,7 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **BUILDING**. Governing [spec](s
 | MSG-T08 | GRAPHOS-MESSAGING-R006 | A static import check over `graph_os/messaging/{router,registry,service}.py` confirms no agent-utilities import outside `agent_utilities.messaging.{base,models}` and `agent_utilities.core.config`. |
 
 This change lands `MSG-T01` and `MSG-T02` only, in `tests/messaging/test_supervision.py`. Run `uv run pytest tests/messaging/test_supervision.py -q`, `uv run ruff check graph_os/messaging/supervision.py tests/messaging/test_supervision.py`, and `uv run mypy graph_os/messaging/supervision.py`. `MSG-T03`–`MSG-T08` remain open under their `SPECIFIED` requirements and are not claimed delivered by this change.
+
+<!-- spec-definition-patch:batch-20261012-tests -->
+- `GRAPHOS-MESSAGING-R005.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+<!-- /spec-definition-patch -->

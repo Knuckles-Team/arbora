@@ -370,3 +370,11 @@ Test every requirement through the real HTTP and MCP composition with durable gr
 Record exact producer/consumer revisions, admitted operation and schema, request/receipt digests, actual revision and independent read observations.
 Exclude credentials and raw payloads from public evidence. No arXiv derivation or runtime completion is claimed.
 EG consumer reference changes wait for this producer definition to merge. AU model dispatch remains a separate dependency.
+
+<!-- spec-definition-patch:batch-20261012-plan -->
+- `GRAPHOS-FLEET-R024.10`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-FLEET-R024.11`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-FLEET-R002.9`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-FLEET-R034.13`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-FLEET-R034.14`: Plan the owner work and dependencies defined in requirements.md.
+<!-- /spec-definition-patch -->

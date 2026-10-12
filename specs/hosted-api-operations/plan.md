@@ -375,3 +375,53 @@ This GraphOS change does not edit or deliver WebUI requirements.
 
 Producer order is R085 implementation and generated contracts, GraphOS port and serving, host materializer, then WebUI consumption.
 Missing producer implementation must remain unavailable. Definitions and planned tests must never count as served receipts.
+
+<!-- spec-definition-patch:batch-20261012-plan -->
+- `GRAPHOS-OPS-R54`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R024.1.1`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R014.1`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R022.3`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R55`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R022.4`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R053.7`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R56`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R021.2.1.1`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R57`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R050.2.1`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R009.1`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R053.8`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R58`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R059`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R060`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R061`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R062`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R063`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R064`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R065`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R066`: Plan the owner work and dependencies defined in requirements.md.
+<!-- /spec-definition-patch -->
+
+<!-- spec-definition-patch:dispatch-20261012-hosted-api-operations-plan -->
+- `GRAPHOS-OPS-R54`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R024.1.1`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R014.1`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R022.3`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R55`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R022.4`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R053.7`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R56`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R021.2.1.1`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R57`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R050.2.1`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R009.1`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R053.8`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R58`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R059`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R060`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R061`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R062`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R063`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R064`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R065`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R066`: Plan the owner work and dependencies defined in requirements.md.
+<!-- /spec-definition-patch -->

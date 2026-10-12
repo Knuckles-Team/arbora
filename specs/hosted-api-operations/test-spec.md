@@ -75,3 +75,53 @@ These paths are planned acceptance, not passing test receipts.
 | GRAPHOS-OPS-R024.4.4 | `tests/api/test_memory_files_served.py::test_materialization_ack_checks_generation` | A fresh acknowledgment permits EG in_sync only after successful materialization. | Observe a new edit without changing the head, then deliver an older acknowledgment; it must refuse. |
 | GRAPHOS-OPS-R024.4.5 | `tests/api/test_memory_files_served.py::test_authority_and_replay_are_non_disclosing` | Authorized same-body replay returns one durable receipt and performs no duplicate effects. | Denied existing, absent and creation requests match; changed-body replay and revoked replay disclose no head. |
 | GRAPHOS-OPS-R024.4.6 | `tests/api/test_memory_files_served.py::test_complete_served_memory_file_journey` | Real host, GraphOS and durable engine complete listing, conflict, resolution and acknowledgment. | Reject browser acknowledgment, symlink escape and unavailable producer; no mocked transport or persistence. |
+
+<!-- spec-definition-patch:batch-20261012-tests -->
+- `GRAPHOS-OPS-R54`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R024.1.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R014.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R022.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R55`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R022.4`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R053.7`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R56`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R021.2.1.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R57`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R050.2.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R009.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R053.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R58`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R059`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R060`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R061`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R062`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R063`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R064`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R065`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R066`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+<!-- /spec-definition-patch -->
+
+<!-- spec-definition-patch:dispatch-20261012-hosted-api-operations-test-spec -->
+- `GRAPHOS-OPS-R54`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R024.1.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R014.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R022.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R55`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R022.4`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R053.7`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R56`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R021.2.1.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R57`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R050.2.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R009.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R053.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R58`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R059`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R060`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R061`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R062`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R063`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R064`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R065`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R066`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+<!-- /spec-definition-patch -->

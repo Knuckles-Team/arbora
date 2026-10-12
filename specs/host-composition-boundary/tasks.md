@@ -112,3 +112,27 @@ Status vocabulary is defined in [spec.md](spec.md). Check a task only after its 
 - [ ] Define and prove preserve the entire intent surface (`GRAPHOS-HOST-R023.1`) through the owning production entrypoint.
 
 - [ ] Define and prove prove transport parity on the served surface (`GRAPHOS-HOST-R023.2`) through the owning production entrypoint.
+
+<!-- spec-definition-patch:batch-20261012-tasks -->
+- [ ] `GRAPHOS-HOST-R023.3`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R29`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R008.6`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R026.6`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R30`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R022.1`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R31`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R010.8`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R032`: Deliver every requirement in requirements.md.
+<!-- /spec-definition-patch -->
+
+<!-- spec-definition-patch:dispatch-20261012-host-composition-boundary-tasks -->
+- [ ] `GRAPHOS-HOST-R023.3`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R29`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R008.6`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R026.6`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R30`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R022.1`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R31`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R010.8`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R032`: Deliver every requirement in requirements.md.
+<!-- /spec-definition-patch -->

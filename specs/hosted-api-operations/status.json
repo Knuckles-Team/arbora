@@ -158,7 +158,29 @@
     "GRAPHOS-OPS-R053.3",
     "GRAPHOS-OPS-R053.4",
     "GRAPHOS-OPS-R053.5",
-    "GRAPHOS-OPS-R053.6"
+    "GRAPHOS-OPS-R053.6",
+    "GRAPHOS-OPS-R54",
+    "GRAPHOS-OPS-R024.1.1",
+    "GRAPHOS-OPS-R014.1",
+    "GRAPHOS-OPS-R022.3",
+    "GRAPHOS-OPS-R55",
+    "GRAPHOS-OPS-R022.4",
+    "GRAPHOS-OPS-R053.7",
+    "GRAPHOS-OPS-R56",
+    "GRAPHOS-OPS-R021.2.1.1",
+    "GRAPHOS-OPS-R57",
+    "GRAPHOS-OPS-R050.2.1",
+    "GRAPHOS-OPS-R009.1",
+    "GRAPHOS-OPS-R053.8",
+    "GRAPHOS-OPS-R58",
+    "GRAPHOS-OPS-R059",
+    "GRAPHOS-OPS-R060",
+    "GRAPHOS-OPS-R061",
+    "GRAPHOS-OPS-R062",
+    "GRAPHOS-OPS-R063",
+    "GRAPHOS-OPS-R064",
+    "GRAPHOS-OPS-R065",
+    "GRAPHOS-OPS-R066"
   ],
   "requirements": [
     {
@@ -258,7 +280,7 @@
     {
       "id": "GRAPHOS-OPS-R009",
       "title": "Single invoke pipeline for authority, effect, and audit",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "97061e59c412",
         "deb2b45bf83d"
@@ -268,6 +290,9 @@
         "tests/api/test_invoke_governance.py:193",
         "tests/api/test_invoke_governance.py:250",
         "tests/api/test_invoke_governance.py:87"
+      ],
+      "rollup_of": [
+        "GRAPHOS-OPS-R009.1"
       ]
     },
     {
@@ -326,7 +351,10 @@
       "title": "Identity self-service and admin operations",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-OPS-R014.1"
+      ]
     },
     {
       "id": "GRAPHOS-OPS-R015",
@@ -577,7 +605,7 @@
     {
       "id": "GRAPHOS-OPS-R021.2",
       "title": "Retrieval, context, and freshness read operations — retrieval slice",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "e78a5e5b701e"
       ],
@@ -590,13 +618,16 @@
     {
       "id": "GRAPHOS-OPS-R021.2.1",
       "title": "`retrieval.search` op",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "e78a5e5b701e"
       ],
       "verified_by": [
         "tests/api/test_retrieval_ops.py:43",
         "tests/api/test_retrieval_ops.py:58"
+      ],
+      "rollup_of": [
+        "GRAPHOS-OPS-R021.2.1.1"
       ]
     },
     {
@@ -685,7 +716,9 @@
       "verified_by": [],
       "rollup_of": [
         "GRAPHOS-OPS-R022.1",
-        "GRAPHOS-OPS-R022.2"
+        "GRAPHOS-OPS-R022.2",
+        "GRAPHOS-OPS-R022.3",
+        "GRAPHOS-OPS-R022.4"
       ]
     },
     {
@@ -772,11 +805,14 @@
     {
       "id": "GRAPHOS-OPS-R024.1",
       "title": "Telemetry operations — telemetry slice",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "4b69b27f1d76"
       ],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-OPS-R024.1.1"
+      ]
     },
     {
       "id": "GRAPHOS-OPS-R024.2",
@@ -1445,7 +1481,10 @@
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-OPS-R050.2.1"
+      ]
     },
     {
       "id": "GRAPHOS-OPS-R050.3",
@@ -1601,7 +1640,9 @@
         "GRAPHOS-OPS-R053.3",
         "GRAPHOS-OPS-R053.4",
         "GRAPHOS-OPS-R053.5",
-        "GRAPHOS-OPS-R053.6"
+        "GRAPHOS-OPS-R053.6",
+        "GRAPHOS-OPS-R053.7",
+        "GRAPHOS-OPS-R053.8"
       ]
     },
     {
@@ -1642,6 +1683,160 @@
     {
       "id": "GRAPHOS-OPS-R053.6",
       "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R54",
+      "title": "AU:61 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R024.1.1",
+      "title": "AU:62 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R014.1",
+      "title": "AU:95 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R022.3",
+      "title": "AU:41 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R55",
+      "title": "AU:50 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R022.4",
+      "title": "AU:53 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R053.7",
+      "title": "AU:71 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R56",
+      "title": "AU:83 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R021.2.1.1",
+      "title": "AU:93 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R57",
+      "title": "AU:121 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R050.2.1",
+      "title": "EG:61 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R009.1",
+      "title": "GRAPHOS:17 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R053.8",
+      "title": "GRAPHOS:25 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R58",
+      "title": "WEBUI:8 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R059",
+      "title": "Proposal outcome projection",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R060",
+      "title": "Supported-harness discovery and session projections",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R061",
+      "title": "Indexed usage projection",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R062",
+      "title": "Authenticated graph-change feed and recovery",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R063",
+      "title": "Retrieval evaluation, comparison, and context reads",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R064",
+      "title": "Viewport bins and selection",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R065",
+      "title": "Live meeting transcript and summary provider operations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R066",
+      "title": "Bounded bookmark search, relationships, and export",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

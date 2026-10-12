@@ -189,3 +189,10 @@ Extract examples from the skill, README and documentation and validate against t
 Reject stale flags and omitted consumed names; examples use placeholders, never live secrets or operator endpoints.
 Keep unavailable adapters explicit and refuse their example operation. Do not imply successful deployment from rendered files.
 R010.1 preserves the original development-skill topics and AGENTS navigation acceptance.
+
+<!-- spec-definition-patch:batch-20261012-plan -->
+- `GRAPHOS-DEPLOY-R009.2`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-DEPLOY-R009.3`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-DEPLOY-R013.7`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-DEPLOY-R010.4`: Plan the owner work and dependencies defined in requirements.md.
+<!-- /spec-definition-patch -->
