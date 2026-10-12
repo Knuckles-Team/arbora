@@ -8,9 +8,8 @@ is qualified only once every check it names passes on the revision being
 released.
 
 A failing stage stops qualification of this release candidate at that
-stage. Record the exact revision, command, and result for each stage you
-run; do not mark a later stage qualified from an earlier, different
-revision.
+stage. Record the exact revision, command, and result for each stage.
+Do not qualify a later stage from an earlier revision.
 
 ## 1. Graph engine (`epistemic-graph`)
 
@@ -51,6 +50,19 @@ uvx pre-commit run --hook-stage pre-push --all-files
 uv run --no-sync pytest tests/deployment
 uv build --wheel --out-dir dist
 ```
+
+The release gates cache the final numeric extension with
+`scripts/numeric_artifact_cache.py`. Its exact key binds the EG revision, manifests, locks, and build recipe.
+It also binds Rust, maturin, Python ABI, platform, and build flags. There are no fallback keys.
+Every hit must pass the receipt digest, artifact path, kernel marker, and
+numeric smoke check under the locked Python interpreter. A rejected hit
+rebuilds; a failed build or smoke check stops the job before cache save.
+Actions cache cannot replace an existing entry for the same key.
+Remove an invalid entry. A later build seeds it after the smoke check.
+
+The Rust intermediate cache remains available for misses. A final-artifact
+hit can avoid compilation, but cold and warm native timings still need
+hosted evidence. No type, test, or scanner gate is bypassed by a hit.
 
 Install the built wheel into a fresh environment and certify it is the
 one that will be promoted:

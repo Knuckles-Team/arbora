@@ -187,11 +187,14 @@ def test_every_manual_hook_ci_names_is_defined() -> None:
 
 def test_epistemic_graph_is_overlaid_from_the_pinned_source() -> None:
     steps = _gate_steps()
-    command = steps[_step_index(steps, "uv sync --frozen --extra test")]["run"]
+    command = steps[_step_index(steps, "helper=scripts/numeric_artifact_cache.py")][
+        "run"
+    ]
+    sync = steps[_step_index(steps, "uv sync --frozen")]["run"]
 
-    assert "--no-install-package epistemic-graph" in command
+    assert "--no-install-package epistemic-graph" in sync
     assert "PYTHONPATH=$eg_source" in command
-    assert 'python "$eg_source/scripts/build_numeric_kernel.py"' in command
+    assert "helper=scripts/numeric_artifact_cache.py" in command
     assert "epistemic_graph.__file__" in command
 
 
@@ -210,7 +213,9 @@ def test_kernel_build_cache_covers_the_target_dir_cargo_uses() -> None:
     assert workspace == kernel_checkout["with"]["path"]
     # build_numeric_kernel.py always builds into <checkout>/target-isolated.
     assert target == "target-isolated"
-    assert steps.index(cache) < _step_index(steps, "build_numeric_kernel.py")
+    assert steps.index(cache) < _step_index(
+        steps, "helper=scripts/numeric_artifact_cache.py"
+    )
     env = _workflow()["jobs"]["gates"]["env"]
     assert env["CARGO_BUILD_JOBS"] == "4"
     assert env["CARGO_PROFILE_RELEASE_DEBUG"] == "0"
@@ -399,3 +404,34 @@ def test_only_superseded_pull_request_runs_are_cancelled() -> None:
         concurrency["cancel-in-progress"]
         == "${{ github.event_name == 'pull_request' }}"
     )
+
+
+def test_numeric_artifact_cache_is_exact_and_always_validated() -> None:
+    steps = _gate_steps()
+    restore = next(step for step in steps if step.get("id") == "numeric-cache")
+    save = next(
+        step for step in steps if step.get("name") == "Save verified numeric extension"
+    )
+    identity = steps[_step_index(steps, "numeric_artifact_cache.py key")]
+    validate = steps[_step_index(steps, "helper=scripts/numeric_artifact_cache.py")]
+    assert "restore-keys" not in restore["with"]
+    assert restore["with"] == save["with"]
+    assert "if" not in validate
+    assert "success()" in save["if"]
+    assert _step_index(steps, "uv sync --frozen") < steps.index(identity)
+    assert (
+        steps.index(identity)
+        < steps.index(restore)
+        < steps.index(validate)
+        < steps.index(save)
+    )
+    assert '"$PYO3_PYTHON" scripts/numeric_artifact_cache.py' in identity["run"]
+    assert '"$PYO3_PYTHON" -I "$helper" probe' in validate["run"]
+    assert (
+        '"$PYO3_PYTHON" "$eg_source/scripts/build_numeric_kernel.py"' in validate["run"]
+    )
+    assert validate["run"].index('probe "$eg_source"') < validate["run"].index(
+        'record "$eg_source"'
+    )
+    assert re.search(r"maturin==\d+\.\d+\.\d+", identity["run"])
+    assert "maturin>=" not in identity["run"]
