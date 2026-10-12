@@ -94,7 +94,7 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
 - [ ] **GRAPHOS-OPS-R040.1:** Cross-repo prerequisite
 - [ ] **GRAPHOS-OPS-R040.9:** Cross-repo prerequisite (owner: agent-utilities): add the proposed `AU-BOUNDARY-R013
 - [ ] **GRAPHOS-OPS-R040.10:** Add one test in tests/gateway/test_artifacts_route_mount
-- [ ] **GRAPHOS-OPS-R041:** Genius Agent widget dropped
+- [ ] **GRAPHOS-OPS-R041:** Agent summary widget dropped
 - [ ] **GRAPHOS-OPS-R050:** Policy lifecycle operations that guard plans.
 - [ ] **GRAPHOS-OPS-R050.1:** Model.
 - [ ] **GRAPHOS-OPS-R050.2:** Behavior.

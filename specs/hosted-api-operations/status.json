@@ -1346,7 +1346,7 @@
     },
     {
       "id": "GRAPHOS-OPS-R041",
-      "title": "Genius Agent widget dropped (replaces AU-BOUNDARY-R001.7, commit 7717d2e62)",
+      "title": "Agent summary widget dropped (replaces AU-BOUNDARY-R001.7, commit 7717d2e62)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
