@@ -97,4 +97,21 @@ Start from an immutable durable change set produced by `GovernedWriteBack.dry_ru
 7. Race two identical envelopes, restart and replay; read the same durable receipt without another effect.
    Missing envelope wiring, unavailable authority and uncertain completion refuse or reconcile without another submission.
 
-These are required future served tests using the existing named acceptance cases; runtime acceptance remains NOT RUN.
+These are required future served tests using the existing named acceptance cases. No runtime acceptance result is available.
+
+<!-- spec-definition-patch:eg66-reads -->
+## Structured marketplace reads (GRAPHOS-DATA-MARKET-R003.1–R003.6)
+
+These are required future tests; no runtime result is claimed. The tests run
+through the real mounted GraphOS surfaces with an instrumented local provider.
+
+- **FI-11 — registration and request schema:** `tests/mcp_server/test_data_market_reads_served.py::test_all_nine_operations_have_closed_v1_schemas` checks all nine operation IDs and closed request schemas. It pins resource filters and limit bounds. It covers the 512-byte cursor cap, ID grammar, and the 1–200-byte NFC query cap. It checks search fields and fixed ordering. It rejects extra keys before provider calls.
+- **FI-12 — projection and metadata:** `tests/mcp_server/test_data_market_reads_served.py::test_v1_projections_preserve_metadata_and_paginate_deterministically` pins exact page/get/item keys and nullability. It checks decimal strings and UTC timestamps. It checks source/session/currency/unit/freshness/provenance and cursor continuation. It rejects provider-only keys. GraphOS preserves unknown metadata as explicit null or unknown where allowed. GraphOS never synthesizes these values.
+- **FI-13 — authority refusal:** `tests/mcp_server/test_data_market_reads_served.py::test_denials_and_malformed_requests_precede_provider_calls` tests tenant A/B and missing or mismatched accounts on the real routes. REST calls `POST /api/v1/ops/markets.list`. MCP sends JSON-RPC `tools/call` to `POST /mcp` with `name: ask` and `arguments.op: markets.list`. Denials use R010, make zero provider calls, and reveal no cross-tenant records.
+- **FI-14 — route parity:** `tests/mcp_server/test_data_market_reads_served.py::test_rest_post_and_mcp_tools_call_share_the_finance_port` exercises both registered entrypoints. Equivalent requests use one `finance_read_port`. Results and refusals normalize identically and retain audit correlation.
+- **FI-15 — effect isolation:** `tests/mcp_server/test_data_market_reads_served.py::test_read_operations_never_reserve_or_submit_effects` spies on paper submission and effect reservations. Reads carry only `Effect.READ` and reach neither path.
+- **FI-16 — paper submission preservation:** `tests/mcp_server/test_data_market_reads_served.py::test_paper_submit_keeps_separate_authority_and_receipt` retains parent R003 and FI-08 prerequisites: `finance:paper-trade`, verified account, lease, and idempotency. Denials cause no effect. A repeated valid key yields one receipt. Preserve R017.2 ownership.
+- **FI-17 — unavailable dependency:** `tests/mcp_server/test_data_market_reads_served.py::test_missing_scope_or_provider_is_unavailable` verifies that a missing `finance:read` scope, `finance_read_port`, or resource capability returns typed unavailable before dispatch. The operation never fabricates an empty result.
+
+The route contract is the generic v1 `POST /api/v1/ops/{op_id}` registered by `create_api_application`, and the `/mcp` streamable-HTTP JSON-RPC `tools/call` path invoking `ask` with an operation ID and params. Both require explicit composition and contract admission. The current process has not activated those finance bindings; these tests remain future acceptance.
+<!-- /spec-definition-patch -->
