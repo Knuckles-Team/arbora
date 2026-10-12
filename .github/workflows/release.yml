@@ -43,13 +43,7 @@ permissions:
 
 jobs:
   gates:
-    # 20, not 10, for pull_request: the epistemic-graph numeric-kernel build
-    # (Swatinem/rust-cache below) has never completed once yet, so there is
-    # no warm cache to restore -- a cold Cargo compile of that workspace
-    # measured >10 real minutes and was killed mid-build by the timeout
-    # before it could ever save a cache entry, so every PR run stayed cold
-    # forever. 20 minutes buys the one build that seeds the cache; every
-    # run after that restores it and finishes in the original fast window.
+    # Cold native builds can exceed 17 minutes; cache hits still run all gates.
     timeout-minutes: ${{ github.event_name == 'pull_request' && 45 || 60 }}
     name: gates
     # Homelab self-hosted runner for same-repo push/PR traffic (the org
@@ -211,13 +205,69 @@ jobs:
       - name: Sync test environment
         run: |
           set -euo pipefail
-          eg_source="$GITHUB_WORKSPACE/.uv-workspace-siblings/agent-utilities/.uv-workspace-siblings/epistemic-graph"
-          python -m pip install 'maturin>=1,<2'
-          python "$eg_source/scripts/build_numeric_kernel.py"
-          echo "PYTHONPATH=$eg_source${PYTHONPATH:+:$PYTHONPATH}" >> "$GITHUB_ENV"
           uv sync --frozen --extra test --extra webui --no-install-package epistemic-graph
+
+      - name: Resolve exact numeric artifact identity
+        id: numeric-identity
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          eg_source="$GITHUB_WORKSPACE/.uv-workspace-siblings/agent-utilities/.uv-workspace-siblings/epistemic-graph"
+          uv venv --python "$GITHUB_WORKSPACE/.venv/bin/python" "$RUNNER_TEMP/numeric-builder"
+          uv pip install --python "$RUNNER_TEMP/numeric-builder/bin/python" 'maturin==1.15.0'
+          export PATH="$RUNNER_TEMP/numeric-builder/bin:$PATH"
+          export VIRTUAL_ENV="$GITHUB_WORKSPACE/.venv"
+          export PYO3_PYTHON="$VIRTUAL_ENV/bin/python"
+          echo "$RUNNER_TEMP/numeric-builder/bin" >> "$GITHUB_PATH"
+          echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> "$GITHUB_ENV"
+          echo "PYO3_PYTHON=$PYO3_PYTHON" >> "$GITHUB_ENV"
+          git -C "$eg_source" diff --exit-code HEAD
+          git -C "$eg_source" ls-files > "$RUNNER_TEMP/numeric-inputs"
+          NUMERIC_SOURCE_SHA="$(git -C "$eg_source" rev-parse HEAD)"
+          export NUMERIC_SOURCE_SHA
+          rustc_id="$(rustc -Vv)"
+          cargo_id="$(cargo -V)"
+          maturin_id="$(maturin --version)"
+          cc_id="$(cc --version)"
+          export NUMERIC_TOOLS_ID="$rustc_id|$cargo_id|$maturin_id|$cc_id"
+          "$PYO3_PYTHON" scripts/numeric_artifact_cache.py key "$eg_source" "$RUNNER_TEMP/numeric-inputs" >> "$GITHUB_OUTPUT"
+
+      - name: Restore exact numeric extension
+        id: numeric-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/eg-numeric-artifact
+          key: ${{ steps.numeric-identity.outputs.key }}
+
+      - name: Validate numeric extension or rebuild
+        working-directory: ${{ github.workspace }}
+        env:
+          NUMERIC_CACHE_KEY: ${{ steps.numeric-identity.outputs.key }}
+        run: |
+          set -euo pipefail
+          eg_source="$GITHUB_WORKSPACE/.uv-workspace-siblings/agent-utilities/.uv-workspace-siblings/epistemic-graph"
+          helper=scripts/numeric_artifact_cache.py
+          cache="$RUNNER_TEMP/eg-numeric-artifact"
+          if "$PYO3_PYTHON" "$helper" restore "$eg_source" "$cache" --key "$NUMERIC_CACHE_KEY" && \
+             "$PYO3_PYTHON" -I "$helper" probe "$eg_source"; then
+            echo "numeric cache hit: locked-interpreter smoke passed"
+          else
+            "$PYO3_PYTHON" "$helper" clear "$eg_source" "$cache"
+            "$PYO3_PYTHON" "$eg_source/scripts/build_numeric_kernel.py"
+            "$PYO3_PYTHON" -I "$helper" probe "$eg_source"
+            git -C "$eg_source" diff --exit-code HEAD
+            "$PYO3_PYTHON" "$helper" record "$eg_source" "$cache" --key "$NUMERIC_CACHE_KEY"
+          fi
+          echo "PYTHONPATH=$eg_source${PYTHONPATH:+:$PYTHONPATH}" >> "$GITHUB_ENV"
           PYTHONPATH="$eg_source${PYTHONPATH:+:$PYTHONPATH}" uv run --no-sync python -c \
             'from pathlib import Path; import epistemic_graph; from epistemic_graph.generated import connector_pack, source_ingestion, storage; root = Path(".uv-workspace-siblings/agent-utilities/.uv-workspace-siblings/epistemic-graph").resolve(); assert Path(epistemic_graph.__file__).resolve().is_relative_to(root); assert connector_pack.ConnectorPackStatusRequest; assert source_ingestion.SourceCheckpoint; assert storage.send_agent_component_content'
+
+      - name: Save verified numeric extension
+        if: success() && steps.numeric-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/eg-numeric-artifact
+          key: ${{ steps.numeric-identity.outputs.key }}
 
       - name: Locked-environment type check (manual-stage hook, always full)
         run: uvx --from pre-commit==4.6.0 pre-commit run mypy-env --hook-stage manual --all-files
