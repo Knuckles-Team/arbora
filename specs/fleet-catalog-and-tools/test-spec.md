@@ -58,3 +58,38 @@ CI may run this probe with local containers/processes and synthetic credentials.
 - A missing SDK module skips contracts and raises nothing.
 - A domain ontology with triple-quoted literals never reaches the parser. A separate contracts body still registers.
 - A contracts body that the parser rejects logs a warning with its URI. Onboarding continues.
+
+## Certified fleet execution acceptance
+
+All added cases are specified, NOT RUN. Use the actual served intent operations and REST invoke route.
+The plan defines fixtures, authority boundaries, matrix coverage and measured capacity thresholds.
+
+| Requirement | Served proof |
+|---|---|
+| `GRAPHOS-FLEET-R034.7` | Typed fixtures reject missing bindings and dependency cycles. |
+| `GRAPHOS-FLEET-R034.8` | A stale dependency or one denied tool prevents all workflow calls. |
+| `GRAPHOS-FLEET-R034.9` | Served agents.run reaches the admission gate before AU execution. |
+| `GRAPHOS-FLEET-R034.10` | Unknown tools, cyclic dependencies and revoked grants produce no new effects. |
+| `GRAPHOS-FLEET-R034.11` | Independent trace reads prove atomic-before-composed ordering and exact tool binding. |
+| `GRAPHOS-FLEET-R034.12` | Observe the configured model request and zero denied backend calls; NOT RUN. |
+| `GRAPHOS-FLEET-R024.4` | Typed nested request/result round trips preserve every allocation boundary. |
+| `GRAPHOS-FLEET-R024.5` | Observe at least 200 concurrent instances and independent durable results under the declared budget. |
+| `GRAPHOS-FLEET-R024.6` | The served operation reaches the approved SDK provisioner and returned-result consumer. |
+| `GRAPHOS-FLEET-R024.7` | No denied allocation occurs; partial failures retain actual resource identities for cleanup. |
+| `GRAPHOS-FLEET-R024.8` | Counters reconcile with independent runtime and durable result observations. |
+| `GRAPHOS-FLEET-R024.9` | Mock allocations and smaller extrapolated runs cannot establish capacity; NOT RUN. |
+| `GRAPHOS-FLEET-R002.3` | Fixtures parse nested definitions and reject missing versions or unknown required fields. |
+| `GRAPHOS-FLEET-R002.4` | Compatible updates publish atomically; incompatible evolution leaves the prior generation active. |
+| `GRAPHOS-FLEET-R002.5` | Real served catalog probes supply both schema versions and verified producer receipts. |
+| `GRAPHOS-FLEET-R002.6` | Missing or contradictory producer evidence never permits a generation swap. |
+| `GRAPHOS-FLEET-R002.7` | Receipt reads identify exactly which definition each admitted workflow consumed. |
+| `GRAPHOS-FLEET-R002.8` | MCP and REST expose the same complete admitted generation; NOT RUN. |
+| `GRAPHOS-FLEET-R027.1` | All phases retain one tenant, run identity and exact skill digest. |
+| `GRAPHOS-FLEET-R027.2` | Independent graph and agent observations agree before a successful completion claim. |
+| `GRAPHOS-FLEET-R027.3` | One served request traverses discovery, distribution, provisioning and ingested skill consumption. |
+| `GRAPHOS-FLEET-R027.4` | Denied discovery returns no protected identity; no unauthorized agent or tool effect occurs. |
+| `GRAPHOS-FLEET-R027.5` | The evidence proves graph identity consumption rather than matching copied skill text. |
+| `GRAPHOS-FLEET-R027.6` | Separate helper tests cannot satisfy integrated acceptance; NOT RUN. |
+| `GRAPHOS-FLEET-R019.1` | The served integrated tests cover this consumer dependency; NOT RUN. |
+| `GRAPHOS-FLEET-R021.1` | The served integrated tests cover this consumer dependency; NOT RUN. |
+| `GRAPHOS-FLEET-R005.3` | The served integrated tests cover this consumer dependency; NOT RUN. |

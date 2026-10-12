@@ -76,7 +76,34 @@
     "GRAPHOS-FLEET-R034.3",
     "GRAPHOS-FLEET-R034.4",
     "GRAPHOS-FLEET-R034.5",
-    "GRAPHOS-FLEET-R034.6"
+    "GRAPHOS-FLEET-R034.6",
+    "GRAPHOS-FLEET-R034.7",
+    "GRAPHOS-FLEET-R034.8",
+    "GRAPHOS-FLEET-R034.9",
+    "GRAPHOS-FLEET-R034.10",
+    "GRAPHOS-FLEET-R034.11",
+    "GRAPHOS-FLEET-R034.12",
+    "GRAPHOS-FLEET-R024.4",
+    "GRAPHOS-FLEET-R024.5",
+    "GRAPHOS-FLEET-R024.6",
+    "GRAPHOS-FLEET-R024.7",
+    "GRAPHOS-FLEET-R024.8",
+    "GRAPHOS-FLEET-R024.9",
+    "GRAPHOS-FLEET-R002.3",
+    "GRAPHOS-FLEET-R002.4",
+    "GRAPHOS-FLEET-R002.5",
+    "GRAPHOS-FLEET-R002.6",
+    "GRAPHOS-FLEET-R002.7",
+    "GRAPHOS-FLEET-R002.8",
+    "GRAPHOS-FLEET-R027.1",
+    "GRAPHOS-FLEET-R027.2",
+    "GRAPHOS-FLEET-R027.3",
+    "GRAPHOS-FLEET-R027.4",
+    "GRAPHOS-FLEET-R027.5",
+    "GRAPHOS-FLEET-R027.6",
+    "GRAPHOS-FLEET-R019.1",
+    "GRAPHOS-FLEET-R021.1",
+    "GRAPHOS-FLEET-R005.3"
   ],
   "requirements": [
     {
@@ -97,14 +124,20 @@
     {
       "id": "GRAPHOS-FLEET-R002",
       "title": "Tool schema fingerprints recomputed from served schemas (rollup)",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "0f346a4d0e4a"
       ],
       "verified_by": [],
       "rollup_of": [
         "GRAPHOS-FLEET-R002.1",
-        "GRAPHOS-FLEET-R002.2"
+        "GRAPHOS-FLEET-R002.2",
+        "GRAPHOS-FLEET-R002.3",
+        "GRAPHOS-FLEET-R002.4",
+        "GRAPHOS-FLEET-R002.5",
+        "GRAPHOS-FLEET-R002.6",
+        "GRAPHOS-FLEET-R002.7",
+        "GRAPHOS-FLEET-R002.8"
       ]
     },
     {
@@ -190,14 +223,15 @@
     {
       "id": "GRAPHOS-FLEET-R005",
       "title": "A2A task routing with typed work-item and lease operations (rollup)",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "3b404ee3ecf8"
       ],
       "verified_by": [],
       "rollup_of": [
         "GRAPHOS-FLEET-R005.1",
-        "GRAPHOS-FLEET-R005.2"
+        "GRAPHOS-FLEET-R005.2",
+        "GRAPHOS-FLEET-R005.3"
       ]
     },
     {
@@ -553,11 +587,14 @@
     {
       "id": "GRAPHOS-FLEET-R019",
       "title": "Eunomia narrows authority at discover, load and call",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "269c409c5415"
       ],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-FLEET-R019.1"
+      ]
     },
     {
       "id": "GRAPHOS-FLEET-R020",
@@ -572,7 +609,7 @@
     {
       "id": "GRAPHOS-FLEET-R021",
       "title": "Fleet capability checks require exact scopes, deny unknown tools",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "18038a22a875",
         "2c70abad2b68",
@@ -580,7 +617,10 @@
         "444cedaf2b6d",
         "e7a32f572005"
       ],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-FLEET-R021.1"
+      ]
     },
     {
       "id": "GRAPHOS-FLEET-R022",
@@ -636,7 +676,13 @@
       "rollup_of": [
         "GRAPHOS-FLEET-R024.1",
         "GRAPHOS-FLEET-R024.2",
-        "GRAPHOS-FLEET-R024.3"
+        "GRAPHOS-FLEET-R024.3",
+        "GRAPHOS-FLEET-R024.4",
+        "GRAPHOS-FLEET-R024.5",
+        "GRAPHOS-FLEET-R024.6",
+        "GRAPHOS-FLEET-R024.7",
+        "GRAPHOS-FLEET-R024.8",
+        "GRAPHOS-FLEET-R024.9"
       ]
     },
     {
@@ -719,7 +765,7 @@
     {
       "id": "GRAPHOS-FLEET-R027",
       "title": "GraphOS onboards every configured fleet server",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "5edd6cc9a3d7",
         "619d25ac8e69",
@@ -727,7 +773,15 @@
         "be2026dd4ebf",
         "d9015e6d6cda"
       ],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-FLEET-R027.1",
+        "GRAPHOS-FLEET-R027.2",
+        "GRAPHOS-FLEET-R027.3",
+        "GRAPHOS-FLEET-R027.4",
+        "GRAPHOS-FLEET-R027.5",
+        "GRAPHOS-FLEET-R027.6"
+      ]
     },
     {
       "id": "GRAPHOS-FLEET-R028",
@@ -807,7 +861,13 @@
         "GRAPHOS-FLEET-R034.3",
         "GRAPHOS-FLEET-R034.4",
         "GRAPHOS-FLEET-R034.5",
-        "GRAPHOS-FLEET-R034.6"
+        "GRAPHOS-FLEET-R034.6",
+        "GRAPHOS-FLEET-R034.7",
+        "GRAPHOS-FLEET-R034.8",
+        "GRAPHOS-FLEET-R034.9",
+        "GRAPHOS-FLEET-R034.10",
+        "GRAPHOS-FLEET-R034.11",
+        "GRAPHOS-FLEET-R034.12"
       ]
     },
     {
@@ -848,6 +908,195 @@
     {
       "id": "GRAPHOS-FLEET-R034.6",
       "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R034.7",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R034.8",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R034.9",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R034.10",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R034.11",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R034.12",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R024.4",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R024.5",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R024.6",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R024.7",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R024.8",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R024.9",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R002.3",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R002.4",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R002.5",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R002.6",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R002.7",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R002.8",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R027.1",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R027.2",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R027.3",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R027.4",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R027.5",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R027.6",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R019.1",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R021.1",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R005.3",
+      "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

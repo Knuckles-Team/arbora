@@ -73,3 +73,12 @@ Acceptance requires every functional rule above, the positive/negative matrix in
 - Ship a local embedded policy and allow/deny fixtures in this repository so a fresh checkout exercises policy without a remote PDP.
 
 Requirement IDs are defined in [requirements.md](requirements.md); delivery state per ID is in `status.json`.
+
+## Certified fleet execution extension
+
+R034 adds dependency-ordered certification and full workflow tool admission.
+R024 adds typed provisioning and measured capacity with EG result aggregation.
+R002 adds versioned nested definition admission; R027 joins discovery, distribution, provisioning and ingested skill consumption.
+R019, R021 and R005 consume these contracts through their existing authority and work-item paths.
+All new definitions are SPECIFIED. Served acceptance remains NOT RUN.
+The design and producer dependencies are in [plan.md](plan.md); required positive and negative cases are in [test-spec.md](test-spec.md).
