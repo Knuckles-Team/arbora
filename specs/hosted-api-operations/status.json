@@ -65,6 +65,12 @@
     "GRAPHOS-OPS-R024.2",
     "GRAPHOS-OPS-R024.3",
     "GRAPHOS-OPS-R024.4",
+    "GRAPHOS-OPS-R024.4.1",
+    "GRAPHOS-OPS-R024.4.2",
+    "GRAPHOS-OPS-R024.4.3",
+    "GRAPHOS-OPS-R024.4.4",
+    "GRAPHOS-OPS-R024.4.5",
+    "GRAPHOS-OPS-R024.4.6",
     "GRAPHOS-OPS-R024.5",
     "GRAPHOS-OPS-R025",
     "GRAPHOS-OPS-R026",
@@ -752,7 +758,7 @@
     {
       "id": "GRAPHOS-OPS-R024",
       "title": "Telemetry, security, usage, and admin operations",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
@@ -793,11 +799,61 @@
     {
       "id": "GRAPHOS-OPS-R024.4",
       "title": "Memory operations — memory slice",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "5ffd23ca7883",
         "8d1bc46ecbdb"
       ],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-OPS-R024.4.1",
+        "GRAPHOS-OPS-R024.4.2",
+        "GRAPHOS-OPS-R024.4.3",
+        "GRAPHOS-OPS-R024.4.4",
+        "GRAPHOS-OPS-R024.4.5",
+        "GRAPHOS-OPS-R024.4.6"
+      ]
+    },
+    {
+      "id": "GRAPHOS-OPS-R024.4.1",
+      "title": "Versioned memory port",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R024.4.2",
+      "title": "Snapshot reads and listing",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R024.4.3",
+      "title": "Versioned saves and conflicts",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R024.4.4",
+      "title": "Hosted materialization",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R024.4.5",
+      "title": "Authority and replay",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R024.4.6",
+      "title": "Registration and served proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": []
     },
     {

@@ -123,3 +123,12 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
 - [ ] **GRAPHOS-OPS-R053.4:** Refusal.
 - [ ] **GRAPHOS-OPS-R053.5:** Evidence.
 - [ ] **GRAPHOS-OPS-R053.6:** Hot-path proof.
+
+## Versioned memory consumer sequence
+
+- [ ] **GRAPHOS-OPS-R024.4.1:** Versioned memory port; implement the planned served positive and negative acceptance.
+- [ ] **GRAPHOS-OPS-R024.4.2:** Snapshot reads and listing; implement the planned served positive and negative acceptance.
+- [ ] **GRAPHOS-OPS-R024.4.3:** Versioned saves and conflicts; implement the planned served positive and negative acceptance.
+- [ ] **GRAPHOS-OPS-R024.4.4:** Hosted materialization; implement the planned served positive and negative acceptance.
+- [ ] **GRAPHOS-OPS-R024.4.5:** Authority and replay; implement the planned served positive and negative acceptance.
+- [ ] **GRAPHOS-OPS-R024.4.6:** Registration and served proof; implement the planned served positive and negative acceptance.
