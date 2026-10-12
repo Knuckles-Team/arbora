@@ -49,3 +49,18 @@ Repository scanner checks include CCCC, jscpd, dupehound and KISS alongside Pyth
 | GRAPHOS-DEPLOY-R018.4 | tests/deployment/test_engine_attach.py | Second process attaches. |
 | GRAPHOS-DEPLOY-R018.5 | tests/deployment/test_engine_standdown.py | Owner stands down the engine. |
 | GRAPHOS-DEPLOY-R018.6 | tests/deployment/test_remote_engine.py | Remote engine skips local start. |
+
+## Confirmed deployment and guidance acceptance
+
+Use seed 4110 for 32 mixed inventories and independently test all nine target variants from the plan matrix.
+Enter `setup-config deploy`, present actual engine output, confirm exact bindings and observe admitted effects at controlled services.
+For reuse, record zero create, update, delete, install and restart calls; use independent service identity and liveness probes.
+Missing choices, changed digests, unavailable authority and unsupported rootless profiles refuse before the first effect.
+An unreachable reused engine starts zero replacement engines. Two host processes share the chosen engine across restart.
+Stop both hosts and prove the reused endpoint remains available; retain every original owned-engine lifecycle test.
+
+For each supported target, exercise real startup and original first-boot acceptance with an isolated filesystem and target runtime.
+Preserve administrator, identity, secrets, policy, readiness and SDK-federation checks; successful artifact rendering is insufficient.
+Parse deployment examples extracted from all three documentation surfaces and run their declared command fixtures.
+Probe both MCP transports and check unsupported flags, undeclared variables and stale profile bindings fail conformance.
+Missing deployment producers or target runtimes leave their scenarios unexecuted; no helper result provides that evidence.

@@ -31,3 +31,34 @@ On a supported Python version, clone this repository, run `uv sync --extra test`
 ## Quality and evidence
 
 Run the repository's current CCCC, jscpd differential/census, dupehound changed/census, KISS and language-native gates from `.pre-commit-config.yaml` and the hosted scanner job when code changes. A new duplicate or complexity violation is fixed by reusing the owning module, not by a suppression or baseline reset. Evidence names the exact commit, command, package versions, CI run, artifact hash and representative served receipts; compare the final remote head to that commit. If an optional/live tier is unavailable, keep acceptance pending and report the missing tier precisely.
+
+## Served startup configuration acceptance
+
+Run the installed launcher in an isolated workspace with controlled public dependency services.
+Use seed 4109 to permute declaration ordering across 32 cases; normalized digests and refusal sets must match.
+Probe a valid listener, then exercise missing, malformed, conflicting and undeclared names with zero process-start effects.
+Check port boundaries 0, 1, 65535 and 65536 without printing resolved values.
+Repeat after restart and compare safe evidence with the original configuration-schema acceptance.
+These proposed scenarios have not been run; current helper tests do not establish their served results.
+
+## Served installer and start acceptance
+
+Proposed tests enter installed commands with disposable homes and controlled real services; direct helper calls are insufficient.
+Use seed 4111 for 32 detection-order permutations across present, absent, malformed and version-mismatched harness installations.
+Require identical normalized changes. Check unrelated file digests, absent-directory nonexistence and conditional-write conflict refusal.
+Parse tool entries and instructions, invoke a controlled supported hook, then call the configured MCP server through a client.
+Interrupt a multi-file application and check actual partial outcomes and safe retry against current digests.
+
+Start terminal, web and both with an authorized workspace and controlled public client adapters.
+Probe HTTP during foreground terminal interaction; observe a distinct background thread and exactly one multiplexer and graph authority.
+Check missing client, denied workspace, occupied port and unavailable authority before accepting traffic.
+Generate 2,000 numbered records with seeded concurrent writers; check sequence continuity or explicitly recorded gaps after rotation.
+Use a 4 KiB test rotation bound and two retained files; memory and retained bytes remain within declared limits.
+Inject credentials into a controlled message and require redaction in every stored and projected record.
+Read from another tenant or workspace and require refusal. No diagnostic bytes appear on MCP stdout.
+Restart the host, observe a new instance identity, and check bounded shutdown without stopping reused services.
+
+For both MCP transports, initialize a real client, compare all eight tools and invoke an admitted and denied operation.
+Keep original R023 fallback, ranking and fleet-call tests in addition to this transport check.
+Unified terminal rendering requires the real terminal-client consumer; controlled adapters prove only the GraphOS handoff.
+The proposed served scenarios have not been run and establish no runtime delivery by themselves.

@@ -119,3 +119,57 @@ Data flow: server start → `detect_composition` probe → `start_composed_servi
 Attach point: graph_os/mcp_server/composition.py:43 (`detect_composition`) and :230 (`start_composed_services`).
 Reused: the existing composition detection and the in-process path of `GRAPHOS-DEPLOY-R017.7`. The single-binary engine build is an engine row.
 Decision: probe the endpoint, then start. Rejected alternative: a lock file per host, which goes stale after a crash.
+
+## Confirmed component choices (GRAPHOS-DEPLOY-R013/R018)
+
+Existing code: `deployment/cli.py:134` owns configuration commands; `genesis_environments.py` owns typed profile parsing.
+`config_generator.py:336` generates configuration; `:420` exposes its reference; `:1035` provides diagnostic checks.
+`mcp_server/composition.py:43` detects optional co-services; `:230` starts them.
+Its current `CompositionPlan` has messaging and web flags, not a complete deploy/reuse component inventory.
+Reachable today: profile parsing and existing composition are callable; full choice enforcement and target qualification are missing.
+
+Extend the existing R017 `setup-config deploy` design, not a second planner, renderer, backend registry or authority store.
+`ComponentDeploymentChoice` version 1 has `component_id`, `action`, `endpoint_ref`, `profile`, `tunings` and `confirmation_ref`.
+Actions are exactly `deploy` and `reuse`. Omit optional unselected components from the confirmed inventory.
+Required components cannot be omitted. Reuse requires an endpoint and a compatibility probe; deploy requires an admitted target.
+Sort choices by component ID and reject duplicates. Bind their canonical digest to the existing confirmed engine request.
+Operator choices constrain engine placement and assembly; they never independently authorize an effect.
+Keep R017's missing deployment-question, assembly and confirmation producers as explicit prerequisites.
+Use the existing SDK governed effect contract for source changes; GraphOS checks the approved bindings and returned receipts.
+
+Reuse permits read-only connectivity and compatibility probes plus local reference configuration.
+It forbids remote configuration, installation, replacement, restart, deletion, credential rotation and deployment effects.
+Reject an entire plan containing any such reused-component effect before applying its first step.
+An unavailable reused endpoint refuses; never reinterpret unavailability as permission to deploy.
+Do not stop reused resources on rollback or shutdown. Reconcile uncertain effects from actual producer receipts.
+
+### Target and privilege matrix
+
+| Target class | Required variants | Existing basis and prerequisite |
+|---|---|---|
+| Native package | Published package and explicit development editable installation | Existing bare-metal guidance; qualified start adapter and first-boot proof remain required. |
+| Standalone container | Daemon-managed; daemonless rootful; daemonless rootless | Existing image and guidance; each privilege profile requires admission and actual startup proof. |
+| Compose | Daemon-managed; daemonless rootful; daemonless rootless | Reuse `deploy/compose/compose.yaml`; qualify each runtime without a parallel planner. |
+| Swarm | Supported cluster profile | Reuse `deploy/swarm/stack.yml`; qualify actual deployment through the admitted producer. |
+| Kubernetes | Supported namespace and service-account profile | Reuse `deploy/helm/graph-os`; preserve identity, secrets, mounts and first-boot acceptance. |
+
+These nine variant cells are required definition targets, not claims that nine implementations exist.
+Validate runtime capability, privilege, writable mounts, network binding and identity before applying a profile.
+Missing adapters return `unsupported_target` without a substitute runtime. Rootless failures never trigger privilege escalation.
+The native package target does not add a systemd artifact; R017's existing unsupported-systemd decision remains unchanged.
+Use production package releases or digest-pinned images. Development editable installations require explicit development selection.
+R013.1 retains all original identity modes, administrator, policy, secrets, sidecar and SDK-federation requirements.
+The original provisioned development and production profiles retain their sidecar topology.
+Reuse configurations are separate declared variants; their evidence cannot satisfy the original sidecar first-boot acceptance.
+R018.1 through R018.6 remain unchanged; R018.7 and R018.8 add stricter confirmed reuse behavior.
+
+## Synchronized deployment guidance (GRAPHOS-DEPLOY-R010)
+
+Existing code: packaged deployment and development skills, README and documentation already exist.
+Reachable today: documentation exists; complete example extraction and served command parity are missing.
+Each `DeploymentExample` binds profile ID, configuration digest, prerequisite IDs, argument vector and expected readiness probe.
+Include installation, both MCP transports, identity, secret references, component choices, logs and shutdown for each supported profile.
+Extract examples from the skill, README and documentation and validate against the same parser and environment manifest.
+Reject stale flags and omitted consumed names; examples use placeholders, never live secrets or operator endpoints.
+Keep unavailable adapters explicit and refuse their example operation. Do not imply successful deployment from rendered files.
+R010.1 preserves the original development-skill topics and AGENTS navigation acceptance.

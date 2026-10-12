@@ -49,7 +49,18 @@
     "GRAPHOS-DEPLOY-R018.3",
     "GRAPHOS-DEPLOY-R018.4",
     "GRAPHOS-DEPLOY-R018.5",
-    "GRAPHOS-DEPLOY-R018.6"
+    "GRAPHOS-DEPLOY-R018.6",
+    "GRAPHOS-DEPLOY-R010.1",
+    "GRAPHOS-DEPLOY-R010.2",
+    "GRAPHOS-DEPLOY-R010.3",
+    "GRAPHOS-DEPLOY-R013.1",
+    "GRAPHOS-DEPLOY-R013.2",
+    "GRAPHOS-DEPLOY-R013.3",
+    "GRAPHOS-DEPLOY-R013.4",
+    "GRAPHOS-DEPLOY-R013.5",
+    "GRAPHOS-DEPLOY-R013.6",
+    "GRAPHOS-DEPLOY-R018.7",
+    "GRAPHOS-DEPLOY-R018.8"
   ],
   "requirements": [
     {
@@ -237,11 +248,16 @@
     {
       "id": "GRAPHOS-DEPLOY-R010",
       "title": "Ecosystem and repository development skills are published",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "96e23d7f4ed4"
       ],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-DEPLOY-R010.1",
+        "GRAPHOS-DEPLOY-R010.2",
+        "GRAPHOS-DEPLOY-R010.3"
+      ]
     },
     {
       "id": "GRAPHOS-DEPLOY-R011",
@@ -266,7 +282,7 @@
     {
       "id": "GRAPHOS-DEPLOY-R013",
       "title": "Development and production deployment profiles",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "0da5f7440603",
         "2abb9ebb3905",
@@ -274,7 +290,15 @@
         "d75db1ea42e8",
         "e9d992980035"
       ],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-DEPLOY-R013.1",
+        "GRAPHOS-DEPLOY-R013.2",
+        "GRAPHOS-DEPLOY-R013.3",
+        "GRAPHOS-DEPLOY-R013.4",
+        "GRAPHOS-DEPLOY-R013.5",
+        "GRAPHOS-DEPLOY-R013.6"
+      ]
     },
     {
       "id": "GRAPHOS-DEPLOY-R014",
@@ -454,7 +478,9 @@
         "GRAPHOS-DEPLOY-R018.3",
         "GRAPHOS-DEPLOY-R018.4",
         "GRAPHOS-DEPLOY-R018.5",
-        "GRAPHOS-DEPLOY-R018.6"
+        "GRAPHOS-DEPLOY-R018.6",
+        "GRAPHOS-DEPLOY-R018.7",
+        "GRAPHOS-DEPLOY-R018.8"
       ]
     },
     {
@@ -495,6 +521,83 @@
     {
       "id": "GRAPHOS-DEPLOY-R018.6",
       "title": "Remote engine skips local start",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R010.1",
+      "title": "Preserve development skill coverage",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R010.2",
+      "title": "Keep deployment guidance executable and synchronized",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R010.3",
+      "title": "Publish complete supported-profile instructions",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R013.1",
+      "title": "Preserve original profile and first-boot obligations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R013.2",
+      "title": "Record explicit component deploy or reuse choices",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R013.3",
+      "title": "Make reused components connect-only",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R013.4",
+      "title": "Define the complete deployment target matrix",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R013.5",
+      "title": "Bind confirmed profiles to governed deployment",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R013.6",
+      "title": "Prove component choices and target profiles",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R018.7",
+      "title": "Preserve reuse through engine attachment",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R018.8",
+      "title": "Keep reused resources alive across host shutdown",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

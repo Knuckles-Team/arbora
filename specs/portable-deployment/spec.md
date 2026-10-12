@@ -28,3 +28,11 @@ An external contributor can clone only GraphOS, install published dependencies, 
 - Every required gate has a portable CI execution path. External-integration probes remain available in a separate opt-in workflow with recorded environment identity.
 
 Requirement IDs are defined in [requirements.md](requirements.md); delivery state per ID is in `status.json`.
+
+## Confirmed deployment choices and guidance
+
+R013 adds explicit per-component deploy or reuse choices and a complete target and privilege matrix.
+R018 keeps reused engines connect-only across startup, retry and shutdown.
+R010 binds deployment guidance to supported profiles and both actual MCP transport entrypoints.
+Existing profile, first-boot and engine lifecycle acceptance remains required in full.
+The new target and no-effect reuse scenarios have not been run.
