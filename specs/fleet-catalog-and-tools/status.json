@@ -103,7 +103,10 @@
     "GRAPHOS-FLEET-R027.6",
     "GRAPHOS-FLEET-R019.1",
     "GRAPHOS-FLEET-R021.1",
-    "GRAPHOS-FLEET-R005.3"
+    "GRAPHOS-FLEET-R005.3",
+    "GRAPHOS-FLEET-R019.2",
+    "GRAPHOS-FLEET-R021.2",
+    "GRAPHOS-FLEET-R027.7"
   ],
   "requirements": [
     {
@@ -593,7 +596,8 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-FLEET-R019.1"
+        "GRAPHOS-FLEET-R019.1",
+        "GRAPHOS-FLEET-R019.2"
       ]
     },
     {
@@ -619,7 +623,8 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-FLEET-R021.1"
+        "GRAPHOS-FLEET-R021.1",
+        "GRAPHOS-FLEET-R021.2"
       ]
     },
     {
@@ -780,7 +785,8 @@
         "GRAPHOS-FLEET-R027.3",
         "GRAPHOS-FLEET-R027.4",
         "GRAPHOS-FLEET-R027.5",
-        "GRAPHOS-FLEET-R027.6"
+        "GRAPHOS-FLEET-R027.6",
+        "GRAPHOS-FLEET-R027.7"
       ]
     },
     {
@@ -1097,6 +1103,27 @@
     {
       "id": "GRAPHOS-FLEET-R005.3",
       "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R019.2",
+      "title": "Original policy contract",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R021.2",
+      "title": "Original fleet authority contract",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R027.7",
+      "title": "Original fleet onboarding contract",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

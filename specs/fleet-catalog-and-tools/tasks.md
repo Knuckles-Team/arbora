@@ -171,3 +171,11 @@ All tasks below remain unimplemented; runtime acceptance is NOT RUN.
 - [ ] **GRAPHOS-FLEET-R019.1:** Behavior: implement the requirement and bind its served acceptance test.
 - [ ] **GRAPHOS-FLEET-R021.1:** Behavior: implement the requirement and bind its served acceptance test.
 - [ ] **GRAPHOS-FLEET-R005.3:** Behavior: implement the requirement and bind its served acceptance test.
+
+## Original scope residual acceptance
+
+Historical parent evidence does not bind these new child IDs. Preserve the complete acceptance below before marking any child delivered.
+
+- [ ] **GRAPHOS-FLEET-R019.2:** Original policy contract; bind and verify the complete acceptance cases.
+- [ ] **GRAPHOS-FLEET-R021.2:** Original fleet authority contract; bind and verify the complete acceptance cases.
+- [ ] **GRAPHOS-FLEET-R027.7:** Original fleet onboarding contract; bind and verify the complete acceptance cases.

@@ -218,3 +218,14 @@ Exercise missing certification, denied tool, changed declaration, incompatible s
 Assert refusal before each protected effect, replay without duplicate allocation, and explicit partial outcomes after interruption.
 Every proof records exact host/producer revisions, fixture manifest, matrix row, timestamps, identities and redacted receipt digests.
 No runtime acceptance was run for this definition change.
+
+### Complete parent decomposition
+
+R019 retains its original policy contract in R019.2; R019.1 remains the workflow extension.
+R021 retains exact scopes, stdio parity, unknown-tool denial and served middleware in R021.2.
+R021.1 adds workflow binding without replacing those obligations.
+R027 retains configured-server onboarding, idempotency, failure isolation, CLI and boot behavior in R027.7.
+R027.1 through R027.6 add integrated provisioning acceptance alongside that original contract.
+The parent requirement text and original acceptance remain unchanged.
+All new residual children are SPECIFIED until their full acceptance and bound evidence satisfy the existing status generator.
+The coverage matrix in test-spec.md maps every original clause to its residual child and reusable test seam.
