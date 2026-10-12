@@ -108,3 +108,12 @@ identity, exact `identity:admin`, console origin and completed MFA aged no more
 than 900 seconds. Other operations retain their own policy. The existing
 `identity:authenticate` ServiceOnly scope permits consuming an already
 provisioned verified broker, never self-minting or provisioning its grant.
+
+
+## Scoped credential and protocol authority
+
+R023.1 through R023.6 require explicit cross-client credential grants, inline PKCE and approved vault persistence.
+R017.3 through R017.8 require stateless bearer validation with a signed tenant claim and independent current EG authorization.
+R019.1 through R019.6 require exact default-deny resource grants at web, SSH, RDP and database protocol boundaries.
+Existing OIDC mapping remains under R009. Host co-location grants no credential or resource access.
+Missing broker, SDK transport and EG/protocol enforcement wiring keeps these capabilities unavailable and their new requirements SPECIFIED.

@@ -104,3 +104,22 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] **GRAPHOS-IDENTITY-R026.5:** Caller-scoped client listing.
 - [ ] **GRAPHOS-IDENTITY-R026.6:** User and service account parity.
 - [ ] **GRAPHOS-IDENTITY-R026.7:** Cross-client denial is uniform.
+
+- [ ] **GRAPHOS-IDENTITY-R023.1:** Model: scoped identity synthesis.
+- [ ] **GRAPHOS-IDENTITY-R023.2:** Behavior: scoped identity synthesis.
+- [ ] **GRAPHOS-IDENTITY-R023.3:** Wiring: scoped identity synthesis.
+- [ ] **GRAPHOS-IDENTITY-R023.4:** Refusal: scoped identity synthesis.
+- [ ] **GRAPHOS-IDENTITY-R023.5:** Evidence: scoped identity synthesis.
+- [ ] **GRAPHOS-IDENTITY-R023.6:** Hot-path proof: scoped identity synthesis.
+- [ ] **GRAPHOS-IDENTITY-R017.3:** Model: scoped identity synthesis.
+- [ ] **GRAPHOS-IDENTITY-R017.4:** Behavior: scoped identity synthesis.
+- [ ] **GRAPHOS-IDENTITY-R017.5:** Wiring: scoped identity synthesis.
+- [ ] **GRAPHOS-IDENTITY-R017.6:** Refusal: scoped identity synthesis.
+- [ ] **GRAPHOS-IDENTITY-R017.7:** Evidence: scoped identity synthesis.
+- [ ] **GRAPHOS-IDENTITY-R017.8:** Hot-path proof: scoped identity synthesis.
+- [ ] **GRAPHOS-IDENTITY-R019.1:** Model: scoped identity synthesis.
+- [ ] **GRAPHOS-IDENTITY-R019.2:** Behavior: scoped identity synthesis.
+- [ ] **GRAPHOS-IDENTITY-R019.3:** Wiring: scoped identity synthesis.
+- [ ] **GRAPHOS-IDENTITY-R019.4:** Refusal: scoped identity synthesis.
+- [ ] **GRAPHOS-IDENTITY-R019.5:** Evidence: scoped identity synthesis.
+- [ ] **GRAPHOS-IDENTITY-R019.6:** Hot-path proof: scoped identity synthesis.
