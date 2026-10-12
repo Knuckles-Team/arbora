@@ -139,3 +139,43 @@ beyond an unrelated audit-chain capacity check. None of these is a safe
 - [ ] **GRAPHOS-FLEET-R033:** Fleet-catalog `servers` read owned by graph-os.
 - [ ] **GRAPHOS-FLEET-R033.1:** Define the typed fleet-catalog `servers` reader.
 - [ ] **GRAPHOS-FLEET-R033.2:** Add refusal tests for the `servers` reader.
+
+## Certified fleet execution definitions
+
+All tasks below remain unimplemented; runtime acceptance is NOT RUN.
+
+- [ ] **GRAPHOS-FLEET-R034.7:** Model: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R034.8:** Behavior: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R034.9:** Wiring: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R034.10:** Refusal: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R034.11:** Evidence: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R034.12:** Hot-path proof: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R024.4:** Model: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R024.5:** Behavior: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R024.6:** Wiring: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R024.7:** Refusal: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R024.8:** Evidence: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R024.9:** Hot-path proof: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R002.3:** Model: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R002.4:** Behavior: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R002.5:** Wiring: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R002.6:** Refusal: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R002.7:** Evidence: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R002.8:** Hot-path proof: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R027.1:** Model: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R027.2:** Behavior: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R027.3:** Wiring: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R027.4:** Refusal: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R027.5:** Evidence: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R027.6:** Hot-path proof: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R019.1:** Behavior: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R021.1:** Behavior: implement the requirement and bind its served acceptance test.
+- [ ] **GRAPHOS-FLEET-R005.3:** Behavior: implement the requirement and bind its served acceptance test.
+
+## Original scope residual acceptance
+
+Historical parent evidence does not bind these new child IDs. Preserve the complete acceptance below before marking any child delivered.
+
+- [ ] **GRAPHOS-FLEET-R019.2:** Original policy contract; bind and verify the complete acceptance cases.
+- [ ] **GRAPHOS-FLEET-R021.2:** Original fleet authority contract; bind and verify the complete acceptance cases.
+- [ ] **GRAPHOS-FLEET-R027.7:** Original fleet onboarding contract; bind and verify the complete acceptance cases.
