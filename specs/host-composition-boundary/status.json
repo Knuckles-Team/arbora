@@ -133,7 +133,29 @@
     "GRAPHOS-HOST-R027.1",
     "GRAPHOS-HOST-R027.2",
     "GRAPHOS-HOST-R027.3",
-    "GRAPHOS-HOST-R028"
+    "GRAPHOS-HOST-R028",
+    "GRAPHOS-HOST-R010.1",
+    "GRAPHOS-HOST-R010.2",
+    "GRAPHOS-HOST-R010.3",
+    "GRAPHOS-HOST-R010.4",
+    "GRAPHOS-HOST-R010.5",
+    "GRAPHOS-HOST-R010.6",
+    "GRAPHOS-HOST-R008.1",
+    "GRAPHOS-HOST-R008.2",
+    "GRAPHOS-HOST-R008.3",
+    "GRAPHOS-HOST-R008.4",
+    "GRAPHOS-HOST-R008.5",
+    "GRAPHOS-HOST-R009.1",
+    "GRAPHOS-HOST-R010.7",
+    "GRAPHOS-HOST-R009.2",
+    "GRAPHOS-HOST-R009.3",
+    "GRAPHOS-HOST-R009.4",
+    "GRAPHOS-HOST-R009.5",
+    "GRAPHOS-HOST-R009.6",
+    "GRAPHOS-HOST-R006.1",
+    "GRAPHOS-HOST-R006.2",
+    "GRAPHOS-HOST-R023.1",
+    "GRAPHOS-HOST-R023.2"
   ],
   "requirements": [
     {
@@ -390,11 +412,15 @@
     {
       "id": "GRAPHOS-HOST-R006",
       "title": "graph_os.fleet is the sole multiplexer and host owner",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "97b844e615b7"
       ],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-HOST-R006.1",
+        "GRAPHOS-HOST-R006.2"
+      ]
     },
     {
       "id": "GRAPHOS-HOST-R007",
@@ -980,7 +1006,7 @@
     {
       "id": "GRAPHOS-HOST-R008",
       "title": "GraphOS hosts its own boundary modules",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "776ceb15e7ba",
         "a04f32a44865",
@@ -988,21 +1014,36 @@
         "b0cd6a8f01de",
         "d3ef338ca1e3"
       ],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-HOST-R008.1",
+        "GRAPHOS-HOST-R008.2",
+        "GRAPHOS-HOST-R008.3",
+        "GRAPHOS-HOST-R008.4",
+        "GRAPHOS-HOST-R008.5"
+      ]
     },
     {
       "id": "GRAPHOS-HOST-R009",
       "title": "GraphOS hosts the agent HTTP server and A2A endpoints",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "e5efd4f0ca33"
       ],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-HOST-R009.1",
+        "GRAPHOS-HOST-R009.2",
+        "GRAPHOS-HOST-R009.3",
+        "GRAPHOS-HOST-R009.4",
+        "GRAPHOS-HOST-R009.5",
+        "GRAPHOS-HOST-R009.6"
+      ]
     },
     {
       "id": "GRAPHOS-HOST-R010",
       "title": "GraphOS owns hosting/deployment configuration settings",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "396d8307596f",
         "afc93c497524"
@@ -1010,6 +1051,15 @@
       "verified_by": [
         "tests/deployment/test_host_config.py:32",
         "tests/deployment/test_host_config.py:43"
+      ],
+      "rollup_of": [
+        "GRAPHOS-HOST-R010.1",
+        "GRAPHOS-HOST-R010.2",
+        "GRAPHOS-HOST-R010.3",
+        "GRAPHOS-HOST-R010.4",
+        "GRAPHOS-HOST-R010.5",
+        "GRAPHOS-HOST-R010.6",
+        "GRAPHOS-HOST-R010.7"
       ]
     },
     {
@@ -1138,11 +1188,15 @@
     {
       "id": "GRAPHOS-HOST-R023",
       "title": "GraphOS serves its eight-tool MCP intent surface from its own operation registry",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "c39349d16c53"
       ],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-HOST-R023.1",
+        "GRAPHOS-HOST-R023.2"
+      ]
     },
     {
       "id": "GRAPHOS-HOST-R024",
@@ -1249,6 +1303,160 @@
     {
       "id": "GRAPHOS-HOST-R028",
       "title": "Bump the pinned agent-utilities source for the new `agent_utilities.api.*` export modules",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R010.1",
+      "title": "Preserve configuration ownership",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R010.2",
+      "title": "Declare every consumed environment name",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R010.3",
+      "title": "Validate before any service starts",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R010.4",
+      "title": "Keep conditional configuration precise",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R010.5",
+      "title": "Bind environment guidance to declarations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R010.6",
+      "title": "Prove startup validation through the launcher",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1",
+      "title": "Preserve every boundary module",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.2",
+      "title": "Detect installed harnesses without effects",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.3",
+      "title": "Bind exact harness configuration changes",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.4",
+      "title": "Apply harness edits without overwriting unrelated content",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.5",
+      "title": "Prove detected-harness installation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R009.1",
+      "title": "Preserve hosted protocols and task authority",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R010.7",
+      "title": "Select terminal web or combined start",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R009.2",
+      "title": "Run terminal-mode HTTP in a supervised background thread",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R009.3",
+      "title": "Project scoped workspace logs",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R009.4",
+      "title": "Bound log delivery and shutdown",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R009.5",
+      "title": "Publish the terminal log-consumer handoff",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R009.6",
+      "title": "Prove start and logs through real processes",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R006.1",
+      "title": "Preserve the sole multiplexer owner",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R006.2",
+      "title": "Use one standard transport scaffold",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R023.1",
+      "title": "Preserve the entire intent surface",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R023.2",
+      "title": "Prove transport parity on the served surface",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

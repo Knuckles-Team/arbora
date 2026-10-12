@@ -199,3 +199,25 @@ Order: R017.1 (placement), R017.2 to R017.5 (assembly, view, confirm, refusal), 
 - [ ] **GRAPHOS-DEPLOY-R018.4:** Second process attaches.
 - [ ] **GRAPHOS-DEPLOY-R018.5:** Owner stands down the engine.
 - [ ] **GRAPHOS-DEPLOY-R018.6:** Remote engine skips local start.
+
+- [ ] Define and prove preserve development skill coverage (`GRAPHOS-DEPLOY-R010.1`) through the owning production entrypoint.
+
+- [ ] Define and prove keep deployment guidance executable and synchronized (`GRAPHOS-DEPLOY-R010.2`) through the owning production entrypoint.
+
+- [ ] Define and prove publish complete supported-profile instructions (`GRAPHOS-DEPLOY-R010.3`) through the owning production entrypoint.
+
+- [ ] Define and prove preserve original profile and first-boot obligations (`GRAPHOS-DEPLOY-R013.1`) through the owning production entrypoint.
+
+- [ ] Define and prove record explicit component deploy or reuse choices (`GRAPHOS-DEPLOY-R013.2`) through the owning production entrypoint.
+
+- [ ] Define and prove make reused components connect-only (`GRAPHOS-DEPLOY-R013.3`) through the owning production entrypoint.
+
+- [ ] Define and prove define the complete deployment target matrix (`GRAPHOS-DEPLOY-R013.4`) through the owning production entrypoint.
+
+- [ ] Define and prove bind confirmed profiles to governed deployment (`GRAPHOS-DEPLOY-R013.5`) through the owning production entrypoint.
+
+- [ ] Define and prove prove component choices and target profiles (`GRAPHOS-DEPLOY-R013.6`) through the owning production entrypoint.
+
+- [ ] Define and prove preserve reuse through engine attachment (`GRAPHOS-DEPLOY-R018.7`) through the owning production entrypoint.
+
+- [ ] Define and prove keep reused resources alive across host shutdown (`GRAPHOS-DEPLOY-R018.8`) through the owning production entrypoint.

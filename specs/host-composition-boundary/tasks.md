@@ -68,3 +68,47 @@ Status vocabulary is defined in [spec.md](spec.md). Check a task only after its 
 - [ ] **GRAPHOS-HOST-R027.2:** Add the loopback OIDC authority test fixture.
 - [ ] **GRAPHOS-HOST-R027.3:** Add the loopback OIDC authority script.
 - [ ] **GRAPHOS-HOST-R028:** Bump the pinned agent-utilities source for the new `agent_utilities.api.*` export modules.
+
+- [ ] Define and prove preserve configuration ownership (`GRAPHOS-HOST-R010.1`) through the owning production entrypoint.
+
+- [ ] Define and prove declare every consumed environment name (`GRAPHOS-HOST-R010.2`) through the owning production entrypoint.
+
+- [ ] Define and prove validate before any service starts (`GRAPHOS-HOST-R010.3`) through the owning production entrypoint.
+
+- [ ] Define and prove keep conditional configuration precise (`GRAPHOS-HOST-R010.4`) through the owning production entrypoint.
+
+- [ ] Define and prove bind environment guidance to declarations (`GRAPHOS-HOST-R010.5`) through the owning production entrypoint.
+
+- [ ] Define and prove prove startup validation through the launcher (`GRAPHOS-HOST-R010.6`) through the owning production entrypoint.
+
+- [ ] Define and prove preserve every boundary module (`GRAPHOS-HOST-R008.1`) through the owning production entrypoint.
+
+- [ ] Define and prove detect installed harnesses without effects (`GRAPHOS-HOST-R008.2`) through the owning production entrypoint.
+
+- [ ] Define and prove bind exact harness configuration changes (`GRAPHOS-HOST-R008.3`) through the owning production entrypoint.
+
+- [ ] Define and prove apply harness edits without overwriting unrelated content (`GRAPHOS-HOST-R008.4`) through the owning production entrypoint.
+
+- [ ] Define and prove prove detected-harness installation (`GRAPHOS-HOST-R008.5`) through the owning production entrypoint.
+
+- [ ] Define and prove preserve hosted protocols and task authority (`GRAPHOS-HOST-R009.1`) through the owning production entrypoint.
+
+- [ ] Define and prove select terminal web or combined start (`GRAPHOS-HOST-R010.7`) through the owning production entrypoint.
+
+- [ ] Define and prove run terminal-mode http in a supervised background thread (`GRAPHOS-HOST-R009.2`) through the owning production entrypoint.
+
+- [ ] Define and prove project scoped workspace logs (`GRAPHOS-HOST-R009.3`) through the owning production entrypoint.
+
+- [ ] Define and prove bound log delivery and shutdown (`GRAPHOS-HOST-R009.4`) through the owning production entrypoint.
+
+- [ ] Define and prove publish the terminal log-consumer handoff (`GRAPHOS-HOST-R009.5`) through the owning production entrypoint.
+
+- [ ] Define and prove prove start and logs through real processes (`GRAPHOS-HOST-R009.6`) through the owning production entrypoint.
+
+- [ ] Define and prove preserve the sole multiplexer owner (`GRAPHOS-HOST-R006.1`) through the owning production entrypoint.
+
+- [ ] Define and prove use one standard transport scaffold (`GRAPHOS-HOST-R006.2`) through the owning production entrypoint.
+
+- [ ] Define and prove preserve the entire intent surface (`GRAPHOS-HOST-R023.1`) through the owning production entrypoint.
+
+- [ ] Define and prove prove transport parity on the served surface (`GRAPHOS-HOST-R023.2`) through the owning production entrypoint.

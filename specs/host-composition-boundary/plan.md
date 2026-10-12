@@ -42,3 +42,99 @@ The transport adapter parses and bounds a payload, authenticates identity, appli
 New adapters remain small and cohesive. Before adding a class, inspect an existing `graph_os.*` port and route; extend the owning module where its contract fits. Avoid duplicate decision trees, hand-maintained action catalogs, hidden fallback authority and broad `except` that turns denial into success. A dependency contract mismatch returns a typed unavailable error and an observable receipt. A temporary migration shim must have one caller, one removal task and a test preventing expansion.
 
 Cross-repository work is sequenced by public package release: engine/SDK/AU contract first, GraphOS adapter second, client projection last. Public dependency versions in `pyproject.toml` and `uv.lock` express the minimum required API; no unpublished sibling path is a required test input.
+
+## Startup configuration design (GRAPHOS-HOST-R010)
+
+Existing code: `core/config_admin.py:51` reads four hosting variables and validates ports and profiles.
+`mcp_server/server.py:164` currently loads agent-runtime configuration before constructing the server.
+Reachable today: the four-field helper exists; complete declaration composition and startup validation are missing.
+
+The proposed immutable `HostEnvironmentManifest` uses schema version 1 and an ordered declaration list.
+Each declaration carries `name`, `component`, `source_revision`, `type`, `required_when`, `default`, `sensitive` and `call_sites`.
+Sort by component and name; reject conflicting duplicate names rather than depending on import order.
+Types are string, boolean, integer, URI, path and secret reference, with explicit bounds and enum values.
+Require public declaration producers for enabled SDK and agent-runtime components before claiming complete ecosystem coverage.
+Those producer contracts are prerequisites; the current four-field helper does not provide them.
+
+Resolve configuration once, validate, then bind an immutable snapshot before constructing transports or starting children.
+Retain existing XDG precedence; this definition grants no new environment override or permission source.
+Named reasons are `environment_undeclared`, `environment_missing`, `environment_malformed`, `environment_conflict` and `environment_manifest_unavailable`.
+Return names and reasons without resolved values. Validate ports against 1 through 65535.
+Use seeded declaration ordering permutations to prove identical normalized manifest digests and refusal sets.
+
+Preservation: R010.1 retains the complete original ownership and schema acceptance.
+All original rows and acceptance remain binding; narrower startup children cannot replace their evidence.
+
+## Detected harness installation (GRAPHOS-HOST-R008)
+
+Existing code: `deployment/cli.py:67` registers one harness; `:77` delegates a fence installer to agent-runtime internals.
+`core/` currently contains the configuration owner, not a complete generic installer or harness detector.
+Reachable today: the existing registration command is callable; generic detected-only installation is missing.
+Extend that command with a proposed `install-harnesses` subcommand rather than creating another installer service.
+Use versioned adapters for detection, parsing, managed-section edits and supported hooks.
+Support absence explicitly; do not create a harness directory merely because its adapter exists.
+
+`HarnessInstallation` schema version 1 records adapter, version, executable identity, configuration root and positive detection evidence.
+`HarnessConfigurationChange` records destination, before digest, proposed bytes digest, managed sections and installation identity.
+Validate roots and all proposed artifacts before applying; use conditional replacement with idempotent managed sections.
+Recheck each original digest immediately before replacement. Preserve unknown keys, comments and unrelated instructions.
+Multi-file interruption reports which artifacts changed; resume by reading actual digests, never by claiming an atomic transaction.
+Reasons are `harness_absent`, `harness_unsupported`, `harness_ambiguous`, `configuration_conflict`, `destination_denied` and `installation_incomplete`.
+An absent harness produces an observation without writes; unsupported requested configuration produces a refusal.
+Supported-hook absence is reported as a capability limitation, never silently described as installed.
+R008.1 preserves the complete original module census and every named owner.
+
+## Terminal start and scoped logs (GRAPHOS-HOST-R009/R010)
+
+Existing code: `agent_host/__init__.py:192` starts HTTP synchronously and explicitly excludes the terminal launcher.
+`mcp_server/composition.py:65` owns `CoServiceSupervisor`; `:230` starts existing co-services.
+`webui_host/webui_co_service.py:104` provides the hosted web service and stop-event lifecycle.
+Reachable today: HTTP hosting and supervised web threads exist; terminal start selection and log handoff are missing.
+
+Add `HostLaunchRequest` version 1 with `workspace`, `interfaces`, `web_logs`, `configuration_digest` and authenticated start context.
+`interfaces` is exactly `terminal`, `web` or `both`; expose only `--terminal` and `--web` selection flags.
+`--terminal --web` chooses both. With neither flag, retain the existing command behavior.
+`web_logs` controls the terminal log subscription; it cannot disable the host's required redacted log sink.
+Reject unknown fields. Resolve client availability and workspace authority before opening a listener.
+
+Run terminal-mode HTTP in a supervised background thread; retain the single MCP owner loop and multiplexer.
+Co-services submit operations to that loop; never block it waiting on another loop or create another authority.
+Keep authenticated host context in the background thread; each network request still authenticates its own caller.
+The foreground terminal consumes only public start and log contracts, never agent-runtime internals.
+`HostLaunchReceipt` version 1 carries host instance, interface mode, endpoint, workspace binding, log reference and readiness observations.
+These are proposed contracts, not existing exports or readiness claims.
+
+Use `<workspace>/agent_data/logs/server.log`, with owner-only file access and validated parent directories.
+Do not follow escaping symlinks. Reject incompatible ownership before opening the file.
+Default bounds are 10 MiB per file, five retained files and 16 KiB per redacted record.
+Sequences increase per host instance; rotation increments a generation and exposes retained sequence bounds.
+A shared workspace's `server.log` is host-internal; never pass its descriptor to a tenant client.
+Tenant tags inside records do not make a shared descriptor safe.
+A descriptor is permitted only for a tenant-exclusive projection whose entire readable contents belong to that authenticated tenant.
+Otherwise provide an authenticated filtered stream or opaque reference, bound to tenant, principal, workspace, host instance and generation.
+Authorize each descriptor grant and every stream/reference read or reconnect; filter before encoding or sending any bytes.
+Descriptor grants contain bounded immutable snapshots; new records require a newly authorized grant.
+Never accept a client-provided tenant or workspace as authority. Revocation and expiry end further delivery.
+Private projections require tenant-specific access control even when two tenants use the same workspace.
+If filesystem access cannot enforce that separation, refuse descriptor delivery and use the authenticated filtered path.
+Bind rotations to the same tenant; do not expose another tenant's records, aggregate file offsets or shared sequence metadata.
+Expose tenant-local sequence and gap metadata without revealing other tenants' activity.
+Record tenant, workspace, host instance, request, sequence, timestamp, severity and redacted message in the host-internal sink.
+Filter secrets and raw request bodies before writing; protocol stdout and terminal rendering receive no host log output.
+Use bounded delivery; a slow reader must not block serving or create an unbounded queue.
+Return an explicit gap when requested history was rotated. Shutdown drains logs and joins owned HTTP threads within five seconds.
+
+Reasons are `invalid_launch`, `client_unavailable`, `workspace_denied`, `log_unavailable`, `log_gap`, `bind_failed` and `shutdown_incomplete`.
+Preserve R009.1's original A2A, task-lifecycle and ACP acceptance; logs establish none of those independently.
+An exact terminal-client owner requirement and public adapter are prerequisites for unified terminal log viewing.
+No such consumer contract is provided by this host definition. Keep the complete client journey explicitly required.
+
+## Shared transport scaffold (GRAPHOS-HOST-R006/R023)
+
+Existing code: `mcp_server/server.py:164` exposes standard transport arguments and a shared fleet lifecycle.
+`runtime._build_server:2208` still imports the agent-runtime server factory; existing R007 owns replacement of that private coupling.
+Reachable today: both transport branches exist; this does not establish served parity or complete scaffold conformance.
+Keep one public GraphOS entrypoint, one registry and one multiplexer. Do not restore a standalone multiplexer server.
+Use typed arguments for transport, bind address, port and security; compare normalized served catalogs under one registry generation.
+R006.1 retains all original module ownership; R023.1 retains every tool, ranking, fallback and invocation-policy clause.
+The new transport acceptance must use real wire clients, including unauthorized calls and stdout-purity probes.

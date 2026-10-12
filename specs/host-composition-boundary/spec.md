@@ -32,3 +32,17 @@ One GraphOS process authenticates, authorizes, composes, routes, supervises and 
 This contract uses the published `epistemic-graph`, `agent-connector-sdk` and `agent-utilities` package APIs. Their own specifications explain implementation of the durable engine, connector effects and agent runtime. The GraphOS request, composition and parity obligations above are complete here.
 
 Requirement IDs are defined in [requirements.md](requirements.md); delivery state per ID is in `status.json`.
+
+## Complete startup configuration
+
+R010 retains its original ownership contract. Its children define complete environment declarations and validation before service startup.
+GraphOS validates public declarations provided by enabled components; their owners retain setting semantics and credential resolution.
+The new startup scenarios have not been run. Existing helper validation does not establish complete startup coverage.
+
+## Host start and installation boundaries
+
+R008 extends local harness installation; R009 extends hosted HTTP lifecycle and scoped workspace logs.
+R010 selects terminal, web or combined interaction; R006 and R023 retain one served MCP surface across transports.
+GraphOS owns hosting and local installation. Terminal and browser presentation remain with their public clients.
+The original parents remain complete contracts. Residual children preserve their acceptance alongside the new behavior.
+The proposed installer and terminal journeys have not been run.
