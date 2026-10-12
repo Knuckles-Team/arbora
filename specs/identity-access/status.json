@@ -61,12 +61,30 @@
     "GRAPHOS-IDENTITY-R017",
     "GRAPHOS-IDENTITY-R017.1",
     "GRAPHOS-IDENTITY-R017.2",
+    "GRAPHOS-IDENTITY-R017.3",
+    "GRAPHOS-IDENTITY-R017.4",
+    "GRAPHOS-IDENTITY-R017.5",
+    "GRAPHOS-IDENTITY-R017.6",
+    "GRAPHOS-IDENTITY-R017.7",
+    "GRAPHOS-IDENTITY-R017.8",
     "GRAPHOS-IDENTITY-R018",
     "GRAPHOS-IDENTITY-R019",
+    "GRAPHOS-IDENTITY-R019.1",
+    "GRAPHOS-IDENTITY-R019.2",
+    "GRAPHOS-IDENTITY-R019.3",
+    "GRAPHOS-IDENTITY-R019.4",
+    "GRAPHOS-IDENTITY-R019.5",
+    "GRAPHOS-IDENTITY-R019.6",
     "GRAPHOS-IDENTITY-R020",
     "GRAPHOS-IDENTITY-R021",
     "GRAPHOS-IDENTITY-R022",
     "GRAPHOS-IDENTITY-R023",
+    "GRAPHOS-IDENTITY-R023.1",
+    "GRAPHOS-IDENTITY-R023.2",
+    "GRAPHOS-IDENTITY-R023.3",
+    "GRAPHOS-IDENTITY-R023.4",
+    "GRAPHOS-IDENTITY-R023.5",
+    "GRAPHOS-IDENTITY-R023.6",
     "GRAPHOS-IDENTITY-R024",
     "GRAPHOS-IDENTITY-R025",
     "GRAPHOS-IDENTITY-R026",
@@ -717,7 +735,13 @@
       ],
       "rollup_of": [
         "GRAPHOS-IDENTITY-R017.1",
-        "GRAPHOS-IDENTITY-R017.2"
+        "GRAPHOS-IDENTITY-R017.2",
+        "GRAPHOS-IDENTITY-R017.3",
+        "GRAPHOS-IDENTITY-R017.4",
+        "GRAPHOS-IDENTITY-R017.5",
+        "GRAPHOS-IDENTITY-R017.6",
+        "GRAPHOS-IDENTITY-R017.7",
+        "GRAPHOS-IDENTITY-R017.8"
       ]
     },
     {
@@ -737,6 +761,48 @@
       "verified_by": []
     },
     {
+      "id": "GRAPHOS-IDENTITY-R017.3",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R017.4",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R017.5",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R017.6",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R017.7",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R017.8",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
       "id": "GRAPHOS-IDENTITY-R018",
       "title": "Identity administration operations for self, admin, config",
       "delivery_state": "LANDED",
@@ -749,12 +815,62 @@
     {
       "id": "GRAPHOS-IDENTITY-R019",
       "title": "Access operations for elevation and approval decisions",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "d467b8f6c708",
         "f0432f0a0cef",
         "f22badda8f35"
       ],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-IDENTITY-R019.1",
+        "GRAPHOS-IDENTITY-R019.2",
+        "GRAPHOS-IDENTITY-R019.3",
+        "GRAPHOS-IDENTITY-R019.4",
+        "GRAPHOS-IDENTITY-R019.5",
+        "GRAPHOS-IDENTITY-R019.6"
+      ]
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R019.1",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R019.2",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R019.3",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R019.4",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R019.5",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R019.6",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": []
     },
     {
@@ -797,6 +913,56 @@
     {
       "id": "GRAPHOS-IDENTITY-R023",
       "title": "Native, self-refreshing credentials for MCP clients",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-IDENTITY-R023.1",
+        "GRAPHOS-IDENTITY-R023.2",
+        "GRAPHOS-IDENTITY-R023.3",
+        "GRAPHOS-IDENTITY-R023.4",
+        "GRAPHOS-IDENTITY-R023.5",
+        "GRAPHOS-IDENTITY-R023.6"
+      ]
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R023.1",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R023.2",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R023.3",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R023.4",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R023.5",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R023.6",
+      "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
