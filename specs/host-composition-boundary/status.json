@@ -134,6 +134,9 @@
     "GRAPHOS-HOST-R027.2",
     "GRAPHOS-HOST-R027.3",
     "GRAPHOS-HOST-R028",
+    "GRAPHOS-HOST-R029",
+    "GRAPHOS-HOST-R030",
+    "GRAPHOS-HOST-R031",
     "GRAPHOS-HOST-R010.1",
     "GRAPHOS-HOST-R010.2",
     "GRAPHOS-HOST-R010.3",
@@ -1303,6 +1306,27 @@
     {
       "id": "GRAPHOS-HOST-R028",
       "title": "Bump the pinned agent-utilities source for the new `agent_utilities.api.*` export modules",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R029",
+      "title": "Tenant-bound native desktop actions",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R030",
+      "title": "Run-bound visual state",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R031",
+      "title": "Coding-agent discovery and sandbox handoff",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

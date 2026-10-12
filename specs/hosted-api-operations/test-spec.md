@@ -75,3 +75,11 @@ These paths are planned acceptance, not passing test receipts.
 | GRAPHOS-OPS-R024.4.4 | `tests/api/test_memory_files_served.py::test_materialization_ack_checks_generation` | A fresh acknowledgment permits EG in_sync only after successful materialization. | Observe a new edit without changing the head, then deliver an older acknowledgment; it must refuse. |
 | GRAPHOS-OPS-R024.4.5 | `tests/api/test_memory_files_served.py::test_authority_and_replay_are_non_disclosing` | Authorized same-body replay returns one durable receipt and performs no duplicate effects. | Denied existing, absent and creation requests match; changed-body replay and revoked replay disclose no head. |
 | GRAPHOS-OPS-R024.4.6 | `tests/api/test_memory_files_served.py::test_complete_served_memory_file_journey` | Real host, GraphOS and durable engine complete listing, conflict, resolution and acknowledgment. | Reject browser acknowledgment, symlink escape and unavailable producer; no mocked transport or persistence. |
+
+## Owner-bound projection acceptance (GRAPHOS-OPS-R054–R058)
+
+- `tests/api/test_agent_browser_ops.py::test_benchmark_activation_requires_technique_bound_evidence`: cover all five techniques, exact model/configuration, measured gain or non-regression, mismatched receipts, and no activation on refusal.
+- `tests/api/test_ops_admin_ops.py::test_process_remediation_requires_run_bound_approval`: cover proposal-only behavior, explicit run/process-bound approval, stale or mismatched evidence, and zero process effects on refusal.
+- `tests/api/test_decide_ops.py::test_changeset_review_binds_revision_classes_and_findings`: cover exact source revision, five flaw classes, evidence references, impact filtering, and refusal for missing or mismatched producer results.
+- `tests/api/test_write_back_models.py::test_prompt_json_roundtrip_and_difference_oracle_is_stable`: cover stable serialization, semantic equivalence, true semantic changes, and source-effect refusals.
+- `tests/gateway/test_schema_context_api.py::test_table_browser_projection_requires_owner_binding`: cover authorized data, denied scope, missing producer, and zero calls/effects on refusal. Add served WebUI consumer acceptance after owner contracts publish. These tests are proposed; none has run.

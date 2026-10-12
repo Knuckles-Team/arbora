@@ -158,7 +158,12 @@
     "GRAPHOS-OPS-R053.3",
     "GRAPHOS-OPS-R053.4",
     "GRAPHOS-OPS-R053.5",
-    "GRAPHOS-OPS-R053.6"
+    "GRAPHOS-OPS-R053.6",
+    "GRAPHOS-OPS-R054",
+    "GRAPHOS-OPS-R055",
+    "GRAPHOS-OPS-R056",
+    "GRAPHOS-OPS-R057",
+    "GRAPHOS-OPS-R058"
   ],
   "requirements": [
     {
@@ -1642,6 +1647,41 @@
     {
       "id": "GRAPHOS-OPS-R053.6",
       "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R054",
+      "title": "Technique-bound benchmark adoption",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R055",
+      "title": "Run-bound process remediation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R056",
+      "title": "Source-bound changeset review",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R057",
+      "title": "Stable prompt serialization and difference oracle",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R058",
+      "title": "Authorized table-browser projection",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

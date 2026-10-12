@@ -79,3 +79,7 @@ Run `uv run pytest tests/a2a/test_admission.py`, `uv run ruff check graph_os/a2a
 Approval acceptance prerequisites: GRAPHOS-A2A-R005.6 requires full R005.2 and the R006.2/R006.2.1 verified-caller bridge. The served tool-action fixture must refuse before these prerequisites exist. It must prove input-required/signature binding. It must cover replay, changed-params, different-human, expired and revoked-grant cases. R006.5/R006.8 must exercise a dedicated engine held-item port through shared invoke with Surface.A2A. Preserve all fences and assert zero calls to operator-console elevation.
 
 The served confirm fixture rejects missing, unknown and mixed confirmation_kind variants. It routes tool_action and held_item through the same async invoke/authority/audit path. It refuses missing engine policy evidence without a local threshold fallback.
+
+## Critique-gated output release (GRAPHOS-A2A-R022)
+
+- `tests/a2a/test_application.py::test_send_message_holds_output_until_bound_critique_passes` and `tests/a2a/test_application.py::test_send_message_rejects_untyped_preflight_and_failed_critique`: traverse held-item admission with a verified caller. Bind critique to the exact output. Missing, mismatched, rejected, or abstained verdicts leave output held. Routing alone cannot satisfy critique acceptance. These are proposed tests; no execution is claimed.

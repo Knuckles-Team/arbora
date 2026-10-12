@@ -205,6 +205,11 @@ Decision: one admitter for both held kinds, because both wait on the same confir
 
 Cross-repository: `EG-` rows for the held proposal, the verification record, the replay count and the retirement count; `AU-CONTROL-R040` and `AU-HARNESS-R023` apply the verdict.
 
+## Critique-gated output release (GRAPHOS-A2A-R022)
+
+- Keep the output-release gate at `graph_os/a2a/application.py:_send_message` separate from recipient selection in `graph_os/a2a/routing.py:OrchestratorA2ARouter.route`.
+- Require the typed AU checklist/questions and an EG verdict bound to the same output. Use the held-item contract in `GRAPHOS-A2A-R006.3` through `.8`, with verified-caller and signed-authority prerequisites in `GRAPHOS-A2A-R006.2.1` and `.5`.
+- Routing success cannot satisfy critique acceptance. Keep release unavailable until AU and EG producer contracts are published. Do not add another approval authority.
 ### References
 
 - arXiv:2606.17929 — Li, "PreAct: Computer-Using Agents that Get Faster on Repeated Tasks" (2026)

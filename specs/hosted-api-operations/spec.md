@@ -66,6 +66,12 @@ Each family below uses the same typed registry, invocation steps and error envel
 
 The GraphOS contribution includes a machine-readable former-tool inventory: each old intent/granular name maps to one stable op ID or a documented drop with a reason. The agent owner can delete its old resolver and tool definitions only when this inventory, parity tests, and generated client are published. The server never imports that old implementation at runtime.
 
+### Owner-bound projections (GRAPHOS-OPS-R054–R058)
+- **R054 Technique-bound benchmark.** AU must bind all five serving techniques to the model/configuration and measured evidence before activation.
+- **R055 Process remediation.** Keep proposals separate from termination; require run/process-bound approval and the AU liveness contract.
+- **R056 Changeset review.** Require source-bound evidence for five flaw classes and the owner review contract.
+- **R057 Prompt serialization.** Require deterministic JSON and a semantic difference oracle after EG and SDK contracts publish.
+- **R058 Table browser.** Keep the read-only projection unavailable until WebUI and EG bindings are assigned.
 ## Acceptance
 
 1. Every public method and route is either an operation or an explicitly inventoried protocol route, and every supported operation has identical allow/deny semantics across allowed surfaces.
