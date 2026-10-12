@@ -75,3 +75,19 @@ R002 adds versioned nested definition admission; R027 joins discovery, distribut
 R019, R021 and R005 consume these contracts through their existing authority and work-item paths.
 The served integration tests for these definitions have not been executed.
 The design and producer dependencies are in [plan.md](plan.md); required positive and negative cases are in [test-spec.md](test-spec.md).
+
+
+## Repository source-effect composition
+
+R003.4 preserves the complete original writable-fleet acceptance, including generic connectors and restart/fault behavior.
+R003.5 through R003.10 extend the same owner with an approved repository-effect profile.
+All existing R003 children remain required; repository-only proof cannot replace original fleet-wide acceptance.
+
+GraphOS authenticates, binds trusted configuration, confirms, routes and projects evidence through its existing shared invoke pipeline.
+The SDK and admitted connector own conditional provider mutation, immutable revisions, independent readback and source reconciliation.
+EG retains canonical change sets, approval authority and durable receipts. Ingestion and prompt exports grant no write authority.
+GRAPHOS-OPS-R009 remains a reference to existing authority requirements; this extension changes no approval or identity architecture.
+
+The SDK producer definition merged at `0c6c53dd63fe2a8f9b2ac3568b6d0e8f2c602734`.
+That definition does not establish an available production repository adapter or completed runtime acceptance.
+The current GraphOS preview helpers do not perform this served journey. The required acceptance cases have not run for this change.

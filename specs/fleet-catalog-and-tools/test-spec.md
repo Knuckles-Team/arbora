@@ -114,3 +114,75 @@ Existing tests are reuse targets, not new evidence for these child IDs. The resi
 
 Record exact revisions and bound test IDs separately for these residual children.
 A successful certification, workflow or provisioning test cannot substitute for original policy, scope or onboarding coverage.
+
+
+## Repository source-effect served acceptance
+
+These proposed tests live in tests/fleet/test_repository_source_effect_served.py. This definition change has not run them.
+Each row includes positive and negative assertions; all original R003 and R003.1 through R003.3 acceptance remains required.
+
+| Requirement | Proposed function | Required proof |
+|---|---|---|
+| GRAPHOS-FLEET-R003.4 | `test_original_fleet_restart` | Restart and fault each admitted writable profile. Observe original receipts without duplicate effects and no partial protocol state. Missing previews and mismatched keys must prevent writes. |
+| GRAPHOS-FLEET-R003.5 | `test_request_binding` | Round-trip seeded byte fixtures through HTTP and MCP. Compare canonical projections and refuse each independently altered field. |
+| GRAPHOS-FLEET-R003.6 | `test_trusted_composition` | A served request reaches the real admitted connector once. Unbound configuration and direct native bypass attempts reach it zero times. |
+| GRAPHOS-FLEET-R003.7 | `test_commit_binding` | One exact approved preview commits. Each binding change, invalid lease and missing required step-up produces zero provider mutations. |
+| GRAPHOS-FLEET-R003.8 | `test_actual_effect_readback` | Serve preview, approval and commit against a disposable provider. Independently read its revision and durable graph attempt. An echoed flag or unbound receipt must refuse success. |
+| GRAPHOS-FLEET-R003.9 | `test_refusal_parity` | Observe zero denied mutations on both surfaces. Inject readback failure after an effect and observe uncertainty without another write. |
+| GRAPHOS-FLEET-R003.10 | `test_restart_replay` | Race identical calls and crash at each effect boundary. Restart both processes and prove one effect or a truthful unresolved result. |
+
+
+### Original parent coverage
+
+| Original obligation | Retained coverage |
+|---|---|
+| Typed, previewed registry operation with no unguarded native child tool | R003.1, R003.2 and R003.4; verify actual served exposure and refused bypass |
+| Preview/key matching and identical replayed receipt | R003.2 and R003.4; include generic writable profiles, not only repository files |
+| Writable-fleet correctness across service restart and fault | R003.3 and R003.4; restart each admitted profile and observe durable results |
+
+The original restart/fault acceptance includes absence of partial protocol state. Record uncertainty completely when an external effect is possible.
+An uncertain result is not evidence that a provider write rolled back. Preserve original assertions; repository-only coverage is insufficient.
+
+### Real served fixture and sequence
+
+Start the actual GraphOS serving composition, a durable graph service and an admitted SDK connector in separate processes.
+Use a contributor-owned disposable provider repository and trusted fixture configuration; credentials stay outside recorded evidence.
+Record exact commits, registered operations, schema/configuration digests, authority fixtures and invocation surfaces.
+Imported classes, direct helper calls and in-memory receipt fakes cannot satisfy this served acceptance.
+Missing producer exports, connector composition or qualified replay binding must produce unavailable outcomes, not synthetic success.
+
+1. Form P from the canonical generated change set, full SDK intent and trusted connector-binding digest.
+2. Call fleet.write_back.preview through HTTP and MCP. Observe SDK dry_run and exact digest-bound preview with zero provider mutations.
+3. Prepare fleet.write_back.commit using identical P and the SDK key. Observe its existing commit-operation confirmation binding without mutation.
+4. Record explicit approval of the canonical change set through existing authority and complete required confirmation/step-up.
+   If approval changes the canonical request, repeat preview and preparation; no changed P can reuse the old binding.
+5. Call commit with identical P, the commit plan and original SDK key. Observe the admitted SDK call and one conditional provider effect.
+6. Independently read the returned immutable provider revision and path. Compare exact bytes, size and executable mode with approved intent.
+7. Read the durable graph attempt through a separate client. Match its request, revision and observation digest with the SDK receipt.
+8. Repeat and race identical requests. Restart both host and connector; recover the identical proven receipt with no additional effect.
+
+Use SDK's exact byte vectors, including empty bytes, non-ASCII UTF-8, distinct CRLF/LF and embedded zero bytes.
+Generate the 4096-byte vector with `payload[index] = (73*index + 19) mod 256`, index=0..4095.
+Across processes and both surfaces, identical P must yield identical params_digest and SDK change-set/patch digests.
+An identical durable replay must preserve the SDK receipt digest. Different actual effect revisions must not be hidden by digest equality.
+
+### Negative and recovery matrix
+
+Independently change connector, source instance, repository, target, path, immutable base, payload bytes/digest/size, executable mode and adapter digest.
+Also change actor, tenant, approval, effect key, trusted binding, policy and registry revision.
+Test unknown fields, sole-field patch/scope/provenance violations, missing approval/audit, expired requests and outer/inner key mismatches.
+Use traversal, symlink and encoded path aliases, denied scopes, policy outage, wrong principal and failed subject-read checks.
+Test missing step-up, expired plans and a preview-operation lease submitted to commit. Each pre-effect refusal causes zero provider mutations.
+Race a provider base change after preflight. The SDK must reject at effect time without overwriting the competing revision.
+A denied direct native child call must not reach the write-back producer. Read-only hydration never supplies approval.
+
+Inject a failed or mismatched independent readback after a possible effect. Assert an indeterminate outcome and zero additional mutations.
+Reject a response containing only an echoed key, applied flag, mutable revision or mismatched receipt identity/digest.
+Preserve engine/fleet error provenance through the existing error envelope; HTTP and MCP must agree on refusal category and effect count.
+
+Crash before plan consumption, after consumption before SDK dispatch, after provider effect, after readback and after durable receipt before response.
+Restart both processes against the same authorities. Require a proven original effect, authoritative no-effect, or a truthful unresolved result.
+After authoritative no-effect, only a still-authorized conditional retry may proceed; a changed base requires new approval.
+A consumed lease, a missing receipt, or another writer's identical bytes must never trigger blind reapply.
+Audit and receipt failures after mutation preserve uncertainty and known references rather than claiming rollback.
+Record request, plan, audit and SDK receipt associations with actual provider-call counters and fresh durable reads.

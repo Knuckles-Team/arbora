@@ -106,7 +106,14 @@
     "GRAPHOS-FLEET-R005.3",
     "GRAPHOS-FLEET-R019.2",
     "GRAPHOS-FLEET-R021.2",
-    "GRAPHOS-FLEET-R027.7"
+    "GRAPHOS-FLEET-R027.7",
+    "GRAPHOS-FLEET-R003.4",
+    "GRAPHOS-FLEET-R003.5",
+    "GRAPHOS-FLEET-R003.6",
+    "GRAPHOS-FLEET-R003.7",
+    "GRAPHOS-FLEET-R003.8",
+    "GRAPHOS-FLEET-R003.9",
+    "GRAPHOS-FLEET-R003.10"
   ],
   "requirements": [
     {
@@ -179,7 +186,14 @@
       "rollup_of": [
         "GRAPHOS-FLEET-R003.1",
         "GRAPHOS-FLEET-R003.2",
-        "GRAPHOS-FLEET-R003.3"
+        "GRAPHOS-FLEET-R003.3",
+        "GRAPHOS-FLEET-R003.4",
+        "GRAPHOS-FLEET-R003.5",
+        "GRAPHOS-FLEET-R003.6",
+        "GRAPHOS-FLEET-R003.7",
+        "GRAPHOS-FLEET-R003.8",
+        "GRAPHOS-FLEET-R003.9",
+        "GRAPHOS-FLEET-R003.10"
       ]
     },
     {
@@ -1124,6 +1138,55 @@
     {
       "id": "GRAPHOS-FLEET-R027.7",
       "title": "Original fleet onboarding contract",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R003.4",
+      "title": "Original writable-fleet acceptance residual",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R003.5",
+      "title": "Complete repository request binding",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R003.6",
+      "title": "Trusted composition through shared invoke",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R003.7",
+      "title": "Preview and approval bind the commit operation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R003.8",
+      "title": "Served effect and independent readback evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R003.9",
+      "title": "Zero-effect refusal parity",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R003.10",
+      "title": "Durable replay across host and connector restart",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
