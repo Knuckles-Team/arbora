@@ -68,14 +68,14 @@ Deleted Live Artifacts router (no router-level auth in the old module):
 - POST `/api/artifacts/{artifact_id}/refresh`: with inline `data` the body becomes the new derivation. Otherwise a registered source resolver re-derives from the graph (the default resolver preserved prior data). Returns ok, reason and rendered output. 404 when absent. A failed refresh preserves the prior render.
 - Stores: the shared Live Artifact store and refresh service, a module singleton. Caller: `server/app.py` mount only; the KG source installer was deleted with the router.
 
-Deleted Genius Agent widget: dashboard tile with type genius_agent, env prefix GENIUS_AGENT and observability category. Its fields were agents, skills, mcp_tools and status. Its data call returned hardcoded numbers and never contacted anything.
+Deleted Agent summary widget: dashboard tile with type genius_agent, env prefix GENIUS_AGENT and observability category. Its fields were agents, skills, mcp_tools and status. Its data call returned hardcoded numbers and never contacted anything.
 
 ### Design in this repository
 
 - Dashboard: owned by the existing dashboard router module and its aggregator, config manager and registry under the gateway package. No new module; add census and capability tests only.
 - Live Artifacts: new router module `graph_os/gateway/artifacts_api.py` (to be created) with typed request model, a store port and a refresh port declared in the gateway ports module, and a register function that mounts the three routes. The store and refresh service come from a public `agent_utilities.api` export (prerequisite row); graph-os never imports the agent-utilities knowledge-graph package directly.
 - The source resolver is a port argument, not a module global: the host passes a graph-backed resolver, default behaviour is preserve-prior-data.
-- Genius Agent widget: nothing to build.
+- Agent summary widget: nothing to build.
 
 ### Wiring
 
@@ -269,3 +269,109 @@ References:
 - arXiv:2606.06880 — Zhuang, Ni, Fun, Lin, Ma, "Towards Retrieving Interaction Spaces for Agentic Search" (2026)
 
 Research citations above describe inspiration only. The engine and transport contracts, verified authority boundaries and served acceptance requirements define the architecture.
+
+## Versioned memory files (GRAPHOS-OPS-R024.4)
+
+### Producer and existing boundary
+
+[EG-DURABLE-KERNEL-R085](https://github.com/Knuckles-Team/epistemic-graph/tree/c0b952776129fd509b9f87b411a298593c2591ec/specs/durable-graph-kernel) owns authoritative content, versions, conflicts and sync evidence.
+R085 is a producer definition. Its merge does not establish runtime availability.
+R084.3, R084.4 and R084.6 remain concurrency prerequisites, not a file-sync contract.
+GraphOS owns hosted file projection, authenticated serving and materialization acknowledgments.
+AU remains an EG-driven harness. WebUI displays returned state and submits edits.
+
+Current `graph_os/api/ops/memory.py` defines tenant-scoped generic `memory.read` and `memory.write` through `MemoryStore`.
+`handle_memory_read` at line 65 and `handle_memory_write` at line 74 resolve the existing `memory_store` binding.
+The current models contain no revisions, conflict retention, cursors or materialization evidence.
+Extend that module and service binding; do not add another authoritative store or reinterpret generic writes as versioned saves.
+Existing R024.4 evidence covers the generic operations only. Each new child requires independent acceptance.
+
+### Proposed GraphOS operation contracts
+
+These IDs define the GraphOS consumer contract; they are not registered runtime capabilities yet.
+All calls use `POST /api/v1/ops/{op_id}` and the corresponding resident MCP verb.
+
+| Proposed operation | Parameters and result | Producer | Scope |
+|---|---|---|---|
+| `memory.files.read` | Document ID and optional exact revision; authorized snapshot, sync state and conflict references | `ReadMemorySnapshot`, R085.1/.2/.4 | `memory:read` |
+| `memory.files.list` | Optional kind, limit 1–100 and opaque cursor; metadata-only page and next cursor | `ListMemorySnapshots`, R085.1/.2/.4 | `memory:read` |
+| `memory.files.save` | Generated submit or resolve action with its exact precondition and content; generated tagged outcome | `SyncMemorySnapshot`, R085.1/.3/.4 | `memory:write` |
+
+The scope names already exist for generic memory operations. Generated EG scope admission remains mandatory under R006.
+The adapter must preserve generated field names and tagged variants without a second permissive schema.
+Creation must use EG's explicit absent-head precondition. Missing expected revision must never mean unconditional overwrite.
+An update binds expected revision, expected digest, exact UTF-8 bytes and candidate digest.
+Resolve also binds the retained conflict and current accepted revision.
+GraphOS must not normalize newlines or recompute the engine's conflict decision.
+R085.1 bounds content to 1 MiB, document IDs to 256 bytes and logical paths to 1024 bytes.
+GraphOS must enforce body bounds before allocation or effects and preserve stricter serving limits explicitly.
+Kinds are observations, reflections, profile and active_context.
+Cursor scope, ordering, authorization and expiry remain EG decisions under R085.2.
+The client must restart pagination after a refused cursor, never silently combine different snapshots.
+
+### Tagged outcomes and non-disclosure
+
+Preserve EG's applied, observation_retained, conflict_retained, materialization_acknowledged and refused variants.
+There must be no shared accepted-head field outside the authorized variants.
+Refused contains only a registered error code and request-local correlation identity.
+It must contain no head, existence, revision, digest, conflict reference or stored receipt.
+Denied existing, absent and refused creation responses must have the same caller-visible shape and disclosure.
+`GRAPHOS-OPS-R010` envelope mapping must not add result-derived metadata to a refusal.
+Caller-visible logs, status views and error details must not recover withheld metadata.
+
+An authorized stale save may return conflict_retained only after EG durably retains both versions under R085.3 and R085.7.
+That outcome is not an authorization refusal and must not become a generic error that loses its content references.
+GraphOS must preserve accepted and submitted contents, digests and provenance in authorized hosted conflict artifacts.
+The accepted head remains unchanged. Storage failure must not claim conflict retention or successful materialization.
+Only an authorized exact-head resolve may change that head.
+EG controls retention and named holders; hosted artifact deletion must not release engine history independently.
+
+### Hosted files and observation-generation acknowledgments
+
+A new host adapter must project snapshots under a configured hosted-memory root.
+The root and capability wiring attach beside `build_operation_runtime` at `graph_os/api/invoke/bootstrap.py:167`.
+Use validated logical paths below that root; reject absolute paths, traversal, duplicate paths and symlink escapes.
+Host paths are private implementation details, never engine paths or caller-controlled authority.
+Write through an atomic replacement that preserves unobserved local edits; do not overwrite concurrent edits silently.
+The host must durably submit an observed edit through EG observe_file before replacing its contents.
+Unobserved or pending edits must block replacement until the engine admits their treatment.
+A failed observation or retention request must preserve the local file and withhold acknowledgment.
+
+The materializer reads the authorized snapshot and observation_generation before writing.
+It binds graph incarnation, document ID, accepted revision, digest, observation_generation and materialization attempt in the acknowledgment.
+Only the verified host materializer may invoke acknowledge_materialization through the same engine-backed port and governed authority path.
+Browser save bodies must reject observe_file and acknowledge_materialization actions.
+A client assertion or successful filesystem call alone must never establish in_sync.
+EG atomically checks both the head and generation under R085.6.
+A newer observed edit invalidates an old acknowledgment even if the accepted revision is unchanged.
+Pending edits and unresolved conflicts prevent in_sync; missing evidence yields unavailable.
+GraphOS must display EG's in_sync, graph_ahead, file_ahead, conflict or unavailable without a local competing state machine.
+Crash recovery must reread EG evidence and current hosted bytes before retrying materialization or acknowledgment.
+
+### R009 authority and R013 idempotency alignment
+
+The generated HTTP route must enter `invoke` at `graph_os/api/invoke/pipeline.py:810` before calling the memory port.
+Use its verified tenant, principal, graph incarnation and policy; request bodies must not replace them.
+Recheck access for read, list page, save, conflict artifacts and host acknowledgment.
+Use R013 authentication, cookie CSRF checks and idempotency handling without a private bypass route.
+Bind mutation identity to the exact action, graph incarnation, document, precondition, bytes and digest.
+Bind acknowledgment identity to observation generation and materialization attempt as well.
+Same-identity, same-body replay must preserve the original receipt without repeating mutation or file effects.
+Same identity with another body must refuse. Replay after revocation must not reveal a cached authorized result.
+GraphOS journal integration must preserve EG's durable idempotency identity rather than minting another identity on retry.
+Existing R009/R013 delivery evidence does not prove these new memory-specific requirements.
+
+### WebUI consumer mapping
+
+[WEBUI-APPS-R031](https://github.com/Knuckles-Team/agent-webui/tree/main/specs/graphos-app-surface) remains the existing presentation owner.
+This GraphOS change does not edit or deliver WebUI requirements.
+
+| Consumer row | GraphOS prerequisite | Required alignment |
+|---|---|---|
+| WEBUI-APPS-R031.2 | R024.4.1–.3 and .6 | `listMemoryFiles` uses memory.files.list; `saveMemoryFile` uses memory.files.save; exact content uses memory.files.read |
+| WEBUI-APPS-R031.3 | R024.4.2 and .6 | The real Files tab uses registered generated contracts through WebUI's `invoke` in `src/lib/graphos-api/invoke.ts` |
+| WEBUI-APPS-R031.4 | R024.4.3 and .5 | Display both versions only for authorized conflict_retained; refused contains no versions or head |
+| WEBUI-APPS-R031.7 | R024.4.4–.6 | Prove two-client conflict, restart readback and generation-bound acknowledgment through real served components |
+
+Producer order is R085 implementation and generated contracts, GraphOS port and serving, host materializer, then WebUI consumption.
+Missing producer implementation must remain unavailable. Definitions and planned tests must never count as served receipts.

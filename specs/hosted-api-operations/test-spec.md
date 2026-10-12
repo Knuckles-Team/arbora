@@ -58,3 +58,18 @@ The fixture must enter REST and MCP, traverse authorization and registration, an
 | GRAPHOS-OPS-R021.4.4 | `tests/api/test_runs_served.py::test_metrics_authority` | Authorized filters reach the engine unchanged. | Denied scope makes no engine call; no local aggregate replaces failure. |
 | GRAPHOS-OPS-R021.4.5 | `tests/api/test_runs_served.py::test_summary_and_plan_projection` | Fields map exactly; an authorized fresh plan preserves order and revision. | Missing plan export stays unavailable; wrong-run, expired and regressing snapshots reveal no items. |
 | GRAPHOS-OPS-R021.4.6 | `tests/api/test_runs_served.py::test_registered_rest_mcp_parity` | Generated clients invoke both registered transports with equal results. | Absent operation and malformed envelopes refuse without dispatch. |
+
+## Planned versioned memory served acceptance
+
+Each case must bind its exact child ID and enter real HTTP and MCP serving.
+Use disposable durable engine storage and authenticated callers; do not mock transport, authorization, the host or persistence.
+These paths are planned acceptance, not passing test receipts.
+
+| Requirement | Planned test | Positive served requirement | Negative served requirement |
+|---|---|---|---|
+| GRAPHOS-OPS-R024.4.1 | `tests/api/test_memory_files_served.py::test_models_and_port_preserve_tagged_outcomes` | Generated outcomes survive the actual HTTP/MCP adapter and engine readback. | Missing methods refuse; a refused result has no shared head or stored receipt. |
+| GRAPHOS-OPS-R024.4.2 | `tests/api/test_memory_files_served.py::test_read_list_preserve_scope_and_cursor` | Authorized listing retains stable ordering; exact revision reads return matching bytes. | Wrong-scope or expired cursors disclose no metadata; denied read reveals no existence. |
+| GRAPHOS-OPS-R024.4.3 | `tests/api/test_memory_files_served.py::test_competing_saves_preserve_both_versions` | Two clients save one base; the stale save retains both versions across restart. | Capacity failure retains nothing; stale resolution leaves the accepted head unchanged. |
+| GRAPHOS-OPS-R024.4.4 | `tests/api/test_memory_files_served.py::test_materialization_ack_checks_generation` | A fresh acknowledgment permits EG in_sync only after successful materialization. | Observe a new edit without changing the head, then deliver an older acknowledgment; it must refuse. |
+| GRAPHOS-OPS-R024.4.5 | `tests/api/test_memory_files_served.py::test_authority_and_replay_are_non_disclosing` | Authorized same-body replay returns one durable receipt and performs no duplicate effects. | Denied existing, absent and creation requests match; changed-body replay and revoked replay disclose no head. |
+| GRAPHOS-OPS-R024.4.6 | `tests/api/test_memory_files_served.py::test_complete_served_memory_file_journey` | Real host, GraphOS and durable engine complete listing, conflict, resolution and acknowledgment. | Reject browser acknowledgment, symlink escape and unavailable producer; no mocked transport or persistence. |
