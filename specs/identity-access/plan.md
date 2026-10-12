@@ -149,7 +149,7 @@ EG decides authorization and owns durable grants. GraphOS serves identity, broke
 SDK owns connector transport and credential-reference resolution. AU runs admitted work and gains no credential authority.
 No host-co-location privilege, shared plaintext token database or authentication-code file is permitted.
 
-Credential reuse is keyed by tenant, owner principal, requesting principal, client, provider, audience, scope set, resource and operation.
+Credential reuse binds tenant, owner principal, requesting principal/client and connector. It also binds provider, audience, scope set, resource and operation.
 All identifiers are bounded nonempty strings from verified authority or an approved catalog; clients cannot choose their authority binding.
 An explicit EG grant must match every key and authorize use, not merely possession of a vault reference.
 The approved vault stores token material, issuer/account binding, granted scopes, expiry and refresh version under that ownership tuple.
@@ -160,12 +160,12 @@ After restart, reconstruct use from vault persistence and current EG authority; 
 Unavailable grant or vault authority refuses use. Persist-before-ready requires a confirmed vault receipt; ambiguous writes require reconciliation before reuse.
 
 For a running operation, `credential_missing` begins one challenge only when its declared interaction policy allows authorization.
-Bind the pending immutable operation digest, request identity, tenant, principal/client, provider and EG decision to that challenge.
+Bind the pending operation digest, request identity, tenant, principal/client, connector, provider and EG decision to that challenge.
 The caller receives `authorization_required` plus an opaque challenge reference and the provider's safe authorization URL.
 Single-flight key is the exact ownership tuple and pending request; concurrent callers cannot attach another principal to the ceremony.
 Before exchange, validate state, client binding, exact redirect and approved issuer/token endpoint configuration; exchange the code with PKCE S256.
-After exchange, validate expected token type, signature, issuer, expiry and profile-specific audience before vault persistence.
-OIDC ID tokens require the bound nonce; an expected but absent ID token refuses.
+After exchange, apply the declared provider token profile below before vault persistence.
+JWT/OIDC verification and opaque-token binding use distinct validation methods; neither may fall back to the other.
 The existing random 64-character verifier and 120-second ceremony deadline remain SDK defaults; a host may admit shorter bounds.
 The deadline covers browser opening, callback binding, user input and token exchange, with no nested unbounded wait.
 Browser opening failure returns `browser_launch_failed`; listener failure returns `callback_unavailable.`
@@ -211,3 +211,44 @@ No second token store, local grant authority, OAuth manager or access-decision e
 SDK-CONNECTOR-CONTROL-R035/R046 must preserve challenge bindings, typed bounded errors and broker-owned persistence before these host flows become available.
 All new children remain SPECIFIED. No runtime security or access configuration changes are authorized by this definition batch.
 No arXiv derivation is claimed; the inputs describe protocol and ownership requirements.
+
+
+## Connector-bound grants and provider token profiles
+
+This shared contract refines GRAPHOS-IDENTITY-R023 and SDK-CONNECTOR-CONTROL-R035/R046; its implementation remains SPECIFIED.
+The exact credential-use tuple includes tenant, owner principal, requesting principal/client, connector, provider, audience, scopes, resource and operation.
+The host derives connector from authenticated admission and the certified target connector registration, with its immutable registry revision.
+A caller's connector ID is only a requested target; it cannot populate the trusted binding or current grant.
+Compare the admitted connector with the grant, challenge, vault ownership tuple and SDK transport before any secret resolution or exchange.
+Missing, forged or mismatched connector identity yields SDK `binding_mismatch` and host `reuse_denied`, with no credential or provider activity.
+Changing connector requires a matching new grant, even when principal, client, tenant, provider and scopes remain identical.
+
+ProviderTokenProfile is trusted configuration pinned by profile ID and revision in the grant and ceremony.
+It declares issuer/provider authority, client, permitted resource audiences, consent scope ceiling and separate ID/access/refresh token representations.
+Representations are jwt or opaque. OIDC ID tokens require jwt; access and refresh tokens may use either declared representation.
+The profile also declares required validation fields, opaque binding mode, trusted introspection endpoint and validity/reuse bounds.
+Never infer representation from token punctuation, client input or an unsuccessful signature verification. An unknown profile refuses without fallback.
+
+For JWT tokens, validate the allowed algorithm, trusted signature key, issuer and token-role-specific audience and validity claims.
+An OIDC ID token binds the client audience and ceremony nonce; access-token audiences bind approved resources.
+Require the profile's claims, including expiry for JWT/OIDC; reject missing claims, wrong issuer/audience, bad signature, expiry or nonce mismatch.
+Validate any provider tenant/account/consent claims against the established binding when the profile requires or returns them.
+An ID token proves identity; it is not an access token and cannot be injected into a provider API request.
+
+For opaque tokens, trust only an authenticated exchange with the configured provider endpoint under the bound client and PKCE ceremony.
+Record the provider response's authenticated account, granted scope and validity metadata. Never decode opaque bytes or invent issuer/signature/expiry claims.
+The profile selects `exchange_bound` or `introspection_required`. Its binding policy must establish the required account, audience/resource and consent evidence.
+Exchange-bound evidence comes from the admitted authorization request and authenticated provider response under the declared provider contract.
+If that contract cannot establish a required binding, refuse; successful transport alone is insufficient.
+Required introspection uses the configured trusted endpoint and authenticated client, requires active=true and validates all declared binding fields.
+Inactive, contradictory or missing required introspection evidence refuses. Unavailable required introspection never falls back to exchange-only acceptance.
+Use provider expiry metadata when available. Otherwise apply a bounded host use lease; never describe that lease as provider token expiry.
+No reuse outlives the current grant or profile validity policy. Refresh tokens go only to the bound provider token endpoint.
+Refresh preserves connector, issuer/provider, client, tenant, account, audience and consent ceilings; any required missing evidence refuses.
+
+Host tenant and requesting identity always come from authenticated admission and EG authority, including for opaque provider tokens.
+This profile applies to outbound provider credentials only. GRAPHOS-IDENTITY-R017 API bearer admission still requires its signed tenant claim.
+The broker stores profile revision, validation method, binding digest and provenance for validity metadata alongside the vault receipt.
+Opaque exchange metadata and host lease bounds remain distinct from signed JWT claims in evidence and logs.
+Map profile errors to `invalid_token_profile` or `token_validation_failed`; required introspection failures use `introspection_unavailable` or `token_inactive`.
+These shared typed refusals stop persistence readiness and operation continuation; no token, code or raw introspection body enters public output.

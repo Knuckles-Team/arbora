@@ -10,10 +10,10 @@ Use an ephemeral engine process or in-memory contract fixture implementing the p
 |---|---|---|---|---|
 | IT-01 | IA-01, IA-02 | Engine contract + local issuer | First boot seeds mode once. Discovery/JWKS verify a token whose `sub` is stable. CAS increments epoch. | Competing epoch conflicts. Wrong `kid`, audience, tenant and expired token fail. Configuration drift does not overwrite stored mode. |
 | IT-02 | IA-03 | Served loopback HTTP/MCP | `none` resolves `usr:bootstrap`, reaches engine RBAC, displays mode and warning in session/status/MCP initialize. | Non-loopback without exact acknowledgment refuses startup. DNS-rebinding Host and missing/cross-origin Origin on cookie mutation reject before token minting. Approver/live-order requests deny. |
-| IT-03 | IA-04 | Browser + local account fixture | Register under policy, log in, rotate session on login/privilege change, change password, reset once, log out; next request sees revocation. | Unknown username and wrong password give same public response; throttling applies; CSRF missing/replay, reused reset token, stale session, fixation ID all fail. |
+| IT-03 | IA-04 | Browser + local account fixture | Register under policy and log in. Rotate session on login/privilege change, change password, reset once and log out. Next request sees revocation. | Unknown username and wrong password give the same public response; throttling applies. Missing/replayed CSRF, reused reset token, stale session and fixation ID fail. |
 | IT-04 | IA-05 | TOTP/WebAuthn ceremony fixtures | Valid TOTP, passkey and recovery code authenticate. Configured group rule requires enrollment. Action step-up succeeds within freshness window. | Replayed TOTP step/code, wrong RP/origin/challenge, stale MFA, non-enrolled required-group member and bad sign counter fail. Optional-default user can sign in without MFA. |
 | IT-05 | IA-06 | REST/MCP operation contract | Admin console can manage a user, role, session, key, provider, policy and audit. Self sees own redacted record. Dry-run names resulting roles. | Delegated or service session, absent exact `identity:admin`, stale MFA, wrong tenant and MCP admin mutation deny. Secret/hash fields never appear. |
-| IT-06 | IA-07 | API-key + owner-scope fixture | Key with subset of current owner scopes works; refresh is in process and one session survives key rotation as specified. | Revoked/expired key, owner scope removal, approver scope, static token, missing key backend and replayed refresh family deny on next use. |
+| IT-06 | IA-07 | API-key + owner-scope fixture | A key with a subset of current owner scopes works. Refresh is in process; one session survives key rotation as specified. | Revoked/expired keys and removed owner scopes deny the next use. Approver scope, static tokens, missing backends and replayed refresh families deny. |
 | IT-07 | IA-08 | Two mock OIDC issuers | PKCE, state/nonce and subject link produce stable principal. Group removal removes sourced role. `Id_token_hint` sent on logout. | Wrong issuer/audience/signature/nonce, callback replay, unverified-email auto-link, duplicate link and privileged mapping without fresh admin MFA deny. |
 | IT-08 | IA-09 | Mock TLS LDAP, SCIM client, OIDC SAML broker | Escaped query returns bounded nested memberships. SCIM PATCH deprovisions and revokes session/key while preserving owned data. Brokered SAML yields verified OIDC identity. | Plain LDAP, filter injection, disabled AD account, SCIM token for another provider, malformed PATCH, SCIM restore without policy, and raw unverified SAML assertion deny. |
 | IT-09 | IA-10, IA-15 | CLI/doctor and fake SMTP | Claim/link/transition/rotate produce typed result. Doctor reports exposure and optional SMTP. Configured SMTP sends a one-use reset. | Token not printed twice or logged. Absent SMTP hides email-only option. Exposed demo and automatic service secret cause diagnostic failure. |
@@ -91,3 +91,20 @@ Bind R019.1 through R019.6 in `tests/identity/test_resource_protocol_access.py.`
 
 The four protocol fixtures must each use their real adapter boundary; a shared permission-helper test proves none of them alone.
 Absent adapters or qualified EG producer fields remain explicit acceptance blockers. Runtime acceptance is NOT RUN for this specification change.
+
+
+### Served connector and token-profile acceptance
+
+Extend the existing named served credential/PKCE tests through actual REST/MCP ingress, connector dispatch and controlled provider exchanges.
+Grant connector A and prove its authorized call succeeds. Keep tenant, principal/client, provider, audience and scopes unchanged, then target connector B.
+Caller-forged connector A metadata on B and a genuine B identity with only A's grant both refuse before secret resolution or exchange.
+An explicit B grant permits B without changing A's authority. Assert challenge, vault receipt and transport evidence contain the admitted connector.
+Use an OIDC provider returning a signed ID token plus opaque access and refresh tokens; the declared mixed profile must succeed.
+Separately prove the JWT access-token profile succeeds with valid signatures, audiences, expiry and resource bindings.
+Bad JWT signature, nonce, audience, issuer or expiry refuses; a JWT failure must never retry under an opaque profile.
+For exchange-bound opaque tokens, validate authenticated provider/client/PKCE and required resource/account/consent evidence without manufacturing JWT claims.
+For introspection-required opaque tokens, active and correctly bound evidence succeeds; inactive, unavailable or missing required fields refuses.
+An opaque token without provider expiry may use only the explicit bounded host lease. Assert evidence distinguishes the two validity sources.
+Forged profile selection, wrong connector, cross-tenant binding, excess scopes and unapproved resource audience all refuse with zero resumed effects.
+The outbound opaque profile must not admit an unsigned GraphOS API bearer or remove its required tenant claim.
+Inspect responses and logs for token/code leakage. These acceptance cases remain NOT RUN until the required runtime wiring exists.
