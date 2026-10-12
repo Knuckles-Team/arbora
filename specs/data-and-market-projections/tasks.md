@@ -33,3 +33,9 @@ private live services for local fixtures or silently downgrade a failing test.
 - [ ] **GRAPHOS-DATA-MARKET-R007.4:** Refusal.
 - [ ] **GRAPHOS-DATA-MARKET-R007.5:** Evidence.
 - [ ] **GRAPHOS-DATA-MARKET-R007.6:** Hot-path proof.
+
+<!-- spec-definition-patch:eg66-reads -->
+- [ ] **GDM-11:** Confirm the public provider/client contract supplies bounded list, search, and get for markets, events, and orders. Require stable IDs and cursor semantics. Test refusal when capability is absent. Paper submission is not a read.
+- [ ] **GDM-12:** Define strict request and versioned JSON models for all nine reads. Bind them to one tenant-scoped finance service shared by REST and MCP. Done when FI-11–FI-14 pass.
+- [ ] **GDM-13:** Register reads with `finance:read`. Resolve tenant/account binding before dispatch. Keep paper submission behind separate `finance:paper-trade`, lease, idempotency, and R017.2 ownership. Done when FI-15–FI-17 pass. Refusals must cause zero calls or effects. These tasks await implementation and upstream capability.
+<!-- /spec-definition-patch -->

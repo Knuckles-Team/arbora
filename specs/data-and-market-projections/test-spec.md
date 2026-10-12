@@ -98,3 +98,17 @@ Start from an immutable durable change set produced by `GovernedWriteBack.dry_ru
    Missing envelope wiring, unavailable authority and uncertain completion refuse or reconcile without another submission.
 
 These are required future served tests using the existing named acceptance cases; runtime acceptance remains NOT RUN.
+
+<!-- spec-definition-patch:eg66-reads -->
+## Structured marketplace reads (GRAPHOS-DATA-MARKET-R003.1–R003.6)
+
+These are required future tests; this definition does not claim they have run.
+
+- **FI-11 — operation contract:** Test all nine bindings. Validate strict parameters, resource kind, IDs, and pagination. Malformed input must cause zero provider calls.
+- **FI-12 — stable JSON:** Pin version-1 keys/types, decimals, UTC timestamps, explicit nulls, deterministic ordering, cursor continuity, and absence of provider-only fields.
+- **FI-13 — tenant/account refusal:** Serve two tenants through REST and MCP. Verify `finance:read` denial and missing/mismatched binding refuse before provider calls; cross-tenant/inaccessible IDs reveal no record. Assert R010 error mapping.
+- **FI-14 — surface parity:** Equivalent HTTP/MCP calls share the finance service and normalized JSON, typed refusals, and audit correlation.
+- **FI-15 — effect isolation:** Provider/effect spies prove read bindings never submit paper orders, reserve effect leases, or acquire write authority.
+- **FI-16 — paper submission preservation:** Keep parent R003 and FI-08 prerequisites: paper grant, verified account, lease, and idempotency. Denials cause no effect. A repeated valid key yields one receipt. Preserve R017.2 ownership.
+- **FI-17 — unavailable dependency:** If provider capability or a GraphOS binding is absent, return typed unavailable before dispatch. Never fabricate an empty result.
+<!-- /spec-definition-patch -->

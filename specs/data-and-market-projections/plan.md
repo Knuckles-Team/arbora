@@ -34,10 +34,10 @@ before dispatch and again on returned payload. Add one application service,
 then wire both `POST /graph/schema/context` and a `graph_schema` MCP action to
 it. Both entrypoints must use identical identity, policy, and error mapping.
 
-The service asks the graph engine through its published client API. Required
-engine behavior: a deterministic catalog graph, declared and inferred joins
-with evidence, approved ontology mapping state, and bounded dependency
-traversal. GraphOS projects these fields. It cannot derive unsupported matches. Capability discovery occurs at startup or first request. A missing or
+The graph engine serves requests through its published client API. Required
+engine behavior includes a deterministic catalog graph. It must include declared
+and inferred joins with evidence. It also includes approved ontology mapping
+state and bounded dependency traversal. GraphOS projects these fields. It cannot derive unsupported matches. Capability discovery occurs at startup or first request. A missing or
 incompatible version yields `UNAVAILABLE`; malformed input yields
 `INVALID_ARGUMENT`; denied or hidden objects yield `NOT_FOUND` without leaking
 existence. Engine timeout yields retryable `UNAVAILABLE`. Structured errors
@@ -134,9 +134,9 @@ Keep each behavior in one owning service and route both transports through it.
 Run CCCC against changed Python modules, jscpd for duplicated code, dupehound
 for semantic duplicates, KISS review for unnecessary abstraction, Ruff, mypy,
 pytest, and the repository's release workflow. Any scanner finding requires a
-real fix or a documented existing baseline comparison; do not suppress it to
-manufacture a green gate. Record exact commands, revisions, and results in the
-spec evidence before marking `ACCEPTED`.
+real fix or compare it with a documented existing baseline. Never suppress a
+finding to make a gate pass. Record exact commands, revisions, and results in
+the spec evidence before marking `ACCEPTED`.
 
 ## Confirmed order and position changes (GRAPHOS-DATA-MARKET-R007)
 
@@ -219,3 +219,42 @@ Execution validates proof and confirmation before consuming that lease through t
 Failure, races and restart must retain existing durable fencing and reconciliation guarantees. Do not add another approval or nonce store.
 Until envelope parsing, durable association and lifecycle wiring exist for both transports, refuse with UNAVAILABLE and no effect.
 SDK maps unavailable binding to `verification_unavailable`; mismatched intent or proof bindings cannot become verification success.
+
+<!-- spec-definition-patch:eg66-reads -->
+## Structured marketplace reads (GRAPHOS-DATA-MARKET-R003.1–R003.6)
+
+Define the nine operation IDs `markets.list/search/get`,
+`events.list/search/get`, and `orders.list/search/get`; route REST and MCP
+through one typed finance service and the R010 envelope. Reuse
+`graph_os/finance/markets.py` and the existing R017.1/R010 operation patterns.
+The current checkout lacks planned `graph_os/api/ops/finance.py` and
+`markets.py`. Contributors must add and wire those modules. This spec adds
+definitions only.
+
+List/search accept strict objects with `limit` (default 50, 1–100), optional
+opaque cursor, and documented resource filters; search requires bounded
+nonempty query text. Get requires one resource ID. Reject extra fields,
+malformed IDs/cursors, empty query, and invalid limits before dispatch. Cursors
+bind tenant, account, resource, filters, and sort position. List/search data
+has exactly `schema_version` (1), `as_of` (RFC 3339 UTC), `items`, and
+`page` (`limit`, nullable `next_cursor`); get has the version, timestamp,
+and one `item`. Resource keys are specified in R003.4; decimals are strings,
+optional values explicit nulls, and provider-only keys are excluded. Ordering
+and cursor continuation are deterministic; a provider unable to meet bounded
+pagination is unavailable, not emulated with an unbounded fetch.
+
+Authorize `finance:read`, resolve tenant membership and verified account,
+then send the scoped request to the provider. Caller-selected authority is
+rejected. Missing/mismatched binding uses the parent's typed unavailable
+response; scope refusal maps through R010. Missing and cross-tenant IDs are
+indistinguishable. Malformed, denied, unavailable, and inaccessible requests
+cause zero provider calls. Read handlers have no effect capability: no paper
+submit, lease reservation, or `finance:paper-trade` grant. Preserve parent R003
+paper submission and R017.2 subject ownership separately; do not add an
+account selector, provider client, error code, lease, or receipt store.
+
+Implementation awaits a public provider contract with bounded list/search/get
+for all three resources. GraphOS also needs typed operation bindings. Keep reads
+unavailable until dependencies and served tests exist. This specification claims
+no implementation or test result.
+<!-- /spec-definition-patch -->
