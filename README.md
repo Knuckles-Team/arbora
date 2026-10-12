@@ -90,7 +90,7 @@ The boundary is deliberate: Graph OS authenticates, composes, routes,
 supervises, and projects. Each sibling remains the source of truth for its own
 domain.
 
-![Knuckles platform runtime architecture](docs/assets/runtime-architecture.svg)
+![Knuckles platform runtime architecture](https://raw.githubusercontent.com/Knuckles-Team/epistemic-graph/main/docs/assets/runtime-architecture.svg)
 
 ## Quick Start
 
