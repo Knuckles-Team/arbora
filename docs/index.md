@@ -14,7 +14,7 @@
 </section>
 
 <figure class="site-architecture" markdown>
-  ![Knuckles platform runtime architecture](assets/runtime-architecture.svg)
+  ![Knuckles platform runtime architecture](https://raw.githubusercontent.com/Knuckles-Team/epistemic-graph/main/docs/assets/runtime-architecture.svg)
   <figcaption>One request path, five deliberately separate authorities.</figcaption>
 </figure>
 
