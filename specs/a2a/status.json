@@ -67,7 +67,8 @@
     "GRAPHOS-A2A-R020",
     "GRAPHOS-A2A-R020.1",
     "GRAPHOS-A2A-R020.2",
-    "GRAPHOS-A2A-R021"
+    "GRAPHOS-A2A-R021",
+    "GRAPHOS-A2A-R022"
   ],
   "requirements": [
     {
@@ -684,6 +685,13 @@
     {
       "id": "GRAPHOS-A2A-R021",
       "title": "Fresh checkout",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-A2A-R022",
+      "title": "Critique-gated output release",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

@@ -134,3 +134,11 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **GRAPHOS-OPS-R024.4.4:** Hosted materialization; implement the planned served positive and negative acceptance.
 - [ ] **GRAPHOS-OPS-R024.4.5:** Authority and replay; implement the planned served positive and negative acceptance.
 - [ ] **GRAPHOS-OPS-R024.4.6:** Registration and served proof; implement the planned served positive and negative acceptance.
+
+## Owner-bound projections (GRAPHOS-OPS-R054–R058)
+
+- [ ] **R054:** Resolve the AU-INTEGRATION-R014 producer operation and receipt; keep generic RLM benchmarking separate.
+- [ ] **R055:** Resolve AU liveness/proposal contracts before exposing remediation; preserve explicit run/process approval.
+- [ ] **R056:** Resolve the EG/AU review operation, finding schema, and impact-filter contract; leave `decide.commit` unchanged.
+- [ ] **R057:** Resolve EG R094 and SDK source-effect/receipt contracts before defining the GraphOS serializer or difference oracle.
+- [ ] **R058:** Resolve WebUI table-control/statistics requirements and EG producer bindings before extending schema-context reads.

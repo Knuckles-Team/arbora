@@ -14,7 +14,7 @@ On a supported Python version, clone this repository, run `uv sync --extra test`
 | Open UI co-service, reload catalog and close it | One FastMCP loop/multiplexer, no blocked loop or lost generation notification. |
 | Package wheel and import it in a fresh environment | Console scripts resolve and declared extras control optional imports. |
 | GRAPHOS-HOST-R019: mount the dashboard routes. Open `/ws/dashboard` and send a `subscribe` message | REST reads answer 200. The stream sends a snapshot, then an update scoped to the subscribed widgets. |
-| GRAPHOS-HOST-R020: call `install_decide_consumers` with a fake client, then with a failing client, a failing assembler and a client without SPARQL | All four consumers install. Each fault skips only its own consumer and raises nothing. |
+| GRAPHOS-HOST-R020: call `install_decide_consumers` with a fake client. Then use a failing client, a failing assembler, and a client without SPARQL. | All four consumers install. Each fault skips only its own consumer and raises nothing. |
 | GRAPHOS-HOST-R021: assemble a request through a fake engine client with the bound `commit_context`/`publish_context` providers | The fake client's `commit_decision` and `publish_graph` each record one call for a solved assembly; an abstained assembly records neither. |
 | GRAPHOS-HOST-R022: install the decide consumers, then plan a task with a fake assembler and a fake capability source | The planner's `capability_search`/`guardrail_source`/`workflows` are bound and callable; the planned agent's skills/tools are non-empty and its reuse metadata reflects the fake capability source's hit. |
 
@@ -69,3 +69,9 @@ For both MCP transports, initialize a real client, compare all eight tools and i
 Keep original R023 fallback, ranking and fleet-call tests in addition to this transport check.
 Unified terminal rendering requires the real terminal-client consumer; controlled adapters prove only the GraphOS handoff.
 The proposed served scenarios have not been run and establish no runtime delivery by themselves.
+
+## Owner-bound capability acceptance (GRAPHOS-HOST-R029–R031)
+
+- `tests/api/test_agent_browser_ops.py::test_native_desktop_actions_require_verified_grant_without_focus_capture`: exercise composed `pipeline.invoke` and `BoundOperationRuntime.dispatch`. Assert grant/tenant admission. Assert the returned outcome retains the request id. Assert no cursor capture or focus change. Missing, revoked, or cross-tenant grants must cause zero provider calls.
+- `tests/api/test_agent_browser_ops.py::test_visual_state_is_run_source_and_tenant_bound`: exercise composed dispatch across multiple steps. Assert the same run carries source/frame/revision identity. Assert expiry or source change invalidates the state. Stale or cross-tenant state must be refused before dispatch.
+- `tests/mcp_server/test_composition.py::test_coding_agent_flow_uses_owner_ports_and_sandbox`: exercise selected executable discovery, AU delivery of the EG-selected transformation, sandboxed WebUI rendering, and refusal if an owner port is missing. These tests are proposed; none has run.

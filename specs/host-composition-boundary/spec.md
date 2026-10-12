@@ -19,6 +19,9 @@ One GraphOS process authenticates, authorizes, composes, routes, supervises and 
 5. **Safe source migration.** Existing GraphOS copies under `gateway`, `fleet`, `deployment`, `a2a`, `webui_host` and `control_plane` are reconciled against their former AU duplicates. Missing behavior is ported to the owning GraphOS package or explicitly retired with a public compatibility decision. There is no second live host, dual script, duplicate route registration or fallback reader left behind.
 6. **Independent installation.** `uv sync --extra test` and the documented package extras suffice to import and test GraphOS from a clean checkout. Optional WebUI, connector and identity features fail with actionable unavailable errors when their public dependency is absent; they do not require sibling source trees, local operator inventory or live credentials to run unit/contract checks.
 
+7. **GRAPHOS-HOST-R029 Tenant-bound native desktop actions.** Require a verified sandbox grant and tenant match. Keep cursor/focus unchanged. The SDK provider contract remains unassigned.
+8. **GRAPHOS-HOST-R030 Run-bound visual state.** Preserve source/frame provenance and bind reusable state to identity, tenant, lifetime, and invalidation. The SDK and EG producer contracts remain unassigned.
+9. **GRAPHOS-HOST-R031 Coding-agent discovery and handoff.** Discover the selected executable, apply the EG transformation through AU, and render only in the WebUI sandbox. Keep the flow unavailable until owner ports are published.
 ## Acceptance
 
 - Import-boundary census reaches zero forbidden dependency-internal imports in `graph_os/**`; a planted forbidden import fails the same check in CI.

@@ -375,3 +375,11 @@ This GraphOS change does not edit or deliver WebUI requirements.
 
 Producer order is R085 implementation and generated contracts, GraphOS port and serving, host materializer, then WebUI consumption.
 Missing producer implementation must remain unavailable. Definitions and planned tests must never count as served receipts.
+
+## Owner-bound projections (GRAPHOS-OPS-R054–R058)
+
+- **R054:** Keep `rlm.benchmark` separate from serving-technique evidence. Add a projection through `graph_os/api/ops/registry_factory.py:get_registry` and `graph_os/api/invoke/pipeline.py:invoke` only after `AU-INTEGRATION-R014` publishes its producer and receipt.
+- **R055:** Bind a read/proposal projection through the shared registry/invoke path only after AU publishes liveness and proposal contracts. No GraphOS termination adapter exists.
+- **R056:** Keep `decide.commit` unchanged. Add a distinct review projection through the shared registry/invoke path. Wait until EG/AU publish the review operation and evidence contract.
+- **R057:** Add no repository-writeback attachment until EG `R094.2/.3/.5/.7` and SDK source-effect/receipt contracts publish. The current GraphOS tree has no serializer or served handler.
+- **R058:** Use the existing schema-context routes/service for read-only data. Add no table mutation or statistics until WebUI and EG publish their contracts.
