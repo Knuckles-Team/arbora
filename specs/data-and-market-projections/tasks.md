@@ -35,7 +35,11 @@ private live services for local fixtures or silently downgrade a failing test.
 - [ ] **GRAPHOS-DATA-MARKET-R007.6:** Hot-path proof.
 
 <!-- spec-definition-patch:eg66-reads -->
-- [ ] **GDM-11:** Confirm the public provider/client contract supplies bounded list, search, and get for markets, events, and orders. Require stable IDs and cursor semantics. Test refusal when capability is absent. Paper submission is not a read.
-- [ ] **GDM-12:** Define strict request and versioned JSON models for all nine reads. Bind them to one tenant-scoped finance service shared by REST and MCP. Done when FI-11–FI-14 pass.
-- [ ] **GDM-13:** Register reads with `finance:read`. Resolve tenant/account binding before dispatch. Keep paper submission behind separate `finance:paper-trade`, lease, idempotency, and R017.2 ownership. Done when FI-15–FI-17 pass. Refusals must cause zero calls or effects. These tasks await implementation and upstream capability.
+- [ ] **GDM-11:** Define `FinanceReadPortV1` in `graph_os/finance/markets.py` for the nine typed market/event/order reads. The existing `MarketProvider.market_read` covers one symbol only. Keep the operations unavailable until an admitted provider and the EG `finance:read` scope exist. Paper submission is not a read.
+- [ ] **GDM-12:** Define closed v1 request and result models. Specify resource
+  filters, ID/query grammar, fixed ordering, cursors, and metadata projection.
+  Cover all nine reads. Bind them to one tenant-scoped finance service. FI-11–
+  FI-14 must pass through the named REST and MCP routes.
+- [ ] **GDM-13:** Register reads with `finance:read` only after EG adds that scope. Resolve tenant/account binding before provider dispatch. Keep paper submission behind separate `finance:paper-trade`, lease, idempotency, and R017.2 ownership. FI-15–FI-17 must pass. Refusals must cause zero calls or effects. These tasks await implementation and upstream capability.
+- [ ] **GDM-14:** Attach the finance operations to `get_registry`, `NativeGatewayApplication.mount_rest_routes`, and the operation-backed MCP `/mcp` surface after contract admission. Done when the named served tests prove both real entrypoints use the same provider and no read reaches paper effects. The current API/MCP composition is not active.
 <!-- /spec-definition-patch -->

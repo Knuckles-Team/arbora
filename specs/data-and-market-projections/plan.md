@@ -103,11 +103,10 @@ and persist a proposal before any execution. The proposal key is
 proposal across restarts, timezone transitions and competing workers. Read
 the current quote and account binding into a versioned preview. Paper mode
 routes through the paper operation only after its grant and lease checks.
-Live mode routes only through the connector SDK's governed write-back path
-after a human approves the exact preview and the approval lease is consumed.
-Approval and connector effect receipts are joined to the proposal, and an
-unknown external effect enters reconciliation rather than being retried as a
-new order. Pause, revocation, policy change or changed preview data cancels
+A human approves the exact preview. The governed execution path consumes the approval lease. Live mode then routes only through the connector SDK's governed write-back path.
+GraphOS joins approval and connector-effect receipts to the proposal.
+Unknown external effects enter reconciliation; GraphOS must not retry them as
+new orders. Pause, revocation, policy change or changed preview data cancels
 the pending dispatch without claiming to reverse an earlier effect.
 
 ## Cross repository contract and dependency order
@@ -156,7 +155,7 @@ The SDK requires trusted key/account binding, bounded validity and replay protec
 Pass proof through the admitted connector operation; source credentials and native transaction handling remain with that connector.
 Keep paper and live scopes distinct. Never relabel a live request as paper to avoid a proof or authorization requirement.
 Replays resolve the same bound durable receipt; uncertain effects enter existing reconciliation, not a new order.
-The producer's explicit dependency gaps remain runtime blockers even after these definitions are published.
+The producer's explicit dependency gaps still block runtime delivery after owners publish these definitions.
 
 Decision: reuse the shared plan/confirm and governed effect path. Reject a finance-only approval path or local replay store.
 Cross-repository rows: SDK-GOVERNED-WRITEBACK-R001.1 through R001.6 and R004; GRAPHOS-DATA-MARKET-R003; GRAPHOS-OPS-R017.2.
@@ -223,38 +222,79 @@ SDK maps unavailable binding to `verification_unavailable`; mismatched intent or
 <!-- spec-definition-patch:eg66-reads -->
 ## Structured marketplace reads (GRAPHOS-DATA-MARKET-R003.1–R003.6)
 
-Define the nine operation IDs `markets.list/search/get`,
-`events.list/search/get`, and `orders.list/search/get`; route REST and MCP
-through one typed finance service and the R010 envelope. Reuse
-`graph_os/finance/markets.py` and the existing R017.1/R010 operation patterns.
-The current checkout lacks planned `graph_os/api/ops/finance.py` and
-`markets.py`. Contributors must add and wire those modules. This spec adds
-definitions only.
+The registry IDs are `markets.list`, `markets.search`, `markets.get`,
+`events.list`, `events.search`, `events.get`, `orders.list`, `orders.search`,
+and `orders.get`. All nine are read-only `finance:read` operations and use the
+R010 response envelope.
 
-List/search accept strict objects with `limit` (default 50, 1–100), optional
-opaque cursor, and documented resource filters; search requires bounded
-nonempty query text. Get requires one resource ID. Reject extra fields,
-malformed IDs/cursors, empty query, and invalid limits before dispatch. Cursors
-bind tenant, account, resource, filters, and sort position. List/search data
-has exactly `schema_version` (1), `as_of` (RFC 3339 UTC), `items`, and
-`page` (`limit`, nullable `next_cursor`); get has the version, timestamp,
-and one `item`. Resource keys are specified in R003.4; decimals are strings,
-optional values explicit nulls, and provider-only keys are excluded. Ordering
-and cursor continuation are deterministic; a provider unable to meet bounded
-pagination is unavailable, not emulated with an unbounded fetch.
+| Operation IDs | Handler and typed provider method |
+|---|---|
+| `markets.list/search/get` | `graph_os/api/ops/finance.py::operations` binds the three handlers to `FinanceReadPortV1.list_markets`, `.search_markets`, and `.get_market`. |
+| `events.list/search/get` | The same module binds to `FinanceReadPortV1.list_events`, `.search_events`, and `.get_event`. |
+| `orders.list/search/get` | The same module binds to `FinanceReadPortV1.list_orders`, `.search_orders`, and `.get_order`. |
 
-Authorize `finance:read`, resolve tenant membership and verified account,
-then send the scoped request to the provider. Caller-selected authority is
-rejected. Missing/mismatched binding uses the parent's typed unavailable
-response; scope refusal maps through R010. Missing and cross-tenant IDs are
-indistinguishable. Malformed, denied, unavailable, and inaccessible requests
-cause zero provider calls. Read handlers have no effect capability: no paper
-submit, lease reservation, or `finance:paper-trade` grant. Preserve parent R003
-paper submission and R017.2 subject ownership separately; do not add an
-account selector, provider client, error code, lease, or receipt store.
+`FinanceReadPortV1` is the new GraphOS-owned upstream adapter contract in
+`graph_os/finance/markets.py`. The existing `MarketProvider.market_read` and
+`MarketReadRequest` cover one symbol price only; they cannot provide these nine
+resource reads. Bind the new port as `finance_read_port` in the composed `services` object. Every typed request carries the already-resolved tenant and account internally. Client parameters never select either identity. No provider port or registered operation currently implements this contract. The EG scope catalog also lacks `finance:read`. Do not admit or serve the operations until EG adds the scope and a provider exposes the capability. This specification assigns no external producer requirement ID. `GRAPHOS-DATA-MARKET-R003.6` defines the missing GraphOS port and registration boundary. The existing owner links are `GRAPHOS-OPS-R010` (envelope), `GRAPHOS-OPS-R017.1` (subject/account authority), and `GRAPHOS-OPS-R017.2` (separate paper-trade subject ownership).
 
-Implementation awaits a public provider contract with bounded list/search/get
-for all three resources. GraphOS also needs typed operation bindings. Keep reads
-unavailable until dependencies and served tests exist. This specification claims
-no implementation or test result.
+### Request contract
+
+Each operation rejects unlisted fields. List/search accept `limit` from 1
+through 100; the default is 50. They may also accept an opaque `cursor` up to
+512 UTF-8 bytes. Get accepts only its resource ID. Market list/search filters are
+`event_id`, `status`, `starts_at_from`, `starts_at_to`, `ends_at_from`, and
+`ends_at_to`. Event list/search filters are `status`, `starts_at_from`,
+`starts_at_to`, `ends_at_from`, and `ends_at_to`. Order list/search filters are
+`market_id`, `status`, `side` (`buy` or `sell`), `created_at_from`, and
+`created_at_to`. Time filters are inclusive RFC 3339 UTC instants.
+
+All resource IDs are case-sensitive opaque ASCII strings matching
+`[A-Za-z0-9][A-Za-z0-9._:-]{0,127}`. This v1 grammar bounds untrusted IDs while
+preserving common provider identifiers without decoding or case folding.
+Search requires `query`: NFC text of 1–200 UTF-8 bytes. Search is a literal,
+case-sensitive substring match over market question/outcome name, event
+title/description, or order ID/market ID/outcome, respectively. Search does not rank results. List/search use deterministic ordering.
+Markets sort by `starts_at` ascending with nulls last, then `market_id` ascending.
+Events sort by `starts_at` ascending with nulls last, then `event_id` ascending.
+Orders sort by `created_at` descending with nulls last, then `order_id` ascending.
+The server fixes the sort. A cursor binds schema version, operation, resolved
+tenant and account, filters, sort position, and source snapshot revision.
+
+### Version-1 response contract
+
+Each result schema rejects unlisted keys. List/search responses contain exactly `schema_version`, `as_of`, `items`, and `page`. The version is integer 1. The timestamp is the authoritative provider snapshot time in RFC 3339 UTC. The page contains exactly `limit` and nullable `next_cursor`. Get responses contain exactly `schema_version`, `as_of`, and `item`. Each item has `source` (nonempty source ID), `as_of` (provider record time), nullable `session`, `freshness`, and `provenance`. `freshness` has exactly `state` and `age_seconds`. State is `fresh`, `stale`, or `unknown`; age is a nonnegative integer or null. `provenance` has exactly `record_id` and nullable `revision`. GraphOS returns provider metadata unchanged. Unknown freshness uses `state: unknown` and `age_seconds: null`. GraphOS does not infer freshness or provenance.
+
+`MarketItemV1` has exactly `market_id`, nullable `event_id`, `question`,
+`status`, nullable `starts_at` and `ends_at`, `outcomes`, nullable `updated_at`,
+and the common item metadata. Each outcome has exactly `name`, `price`,
+`currency`, and `unit`. `price` is a nullable decimal string. `currency` is
+null or a three-letter uppercase ISO 4217 code. `unit` is null or a bounded
+code. `EventItemV1` has exactly `event_id`, `title`, nullable
+`description`, `status`, nullable `starts_at` and `ends_at`, `market_ids`,
+nullable `updated_at`, and the common item metadata. `OrderItemV1` has exactly
+`order_id`, `market_id`, `side`, nullable `outcome`, nullable decimal-string
+`price`, nullable `price_currency`, nullable `price_unit`, nullable
+`quantity`, nullable `quantity_unit`, `status`, nullable `created_at` and
+`updated_at`, and the common item metadata. Non-null currency values use the
+same ISO 4217 grammar; units are nonempty codes of at most 32 ASCII characters
+matching `[A-Za-z][A-Za-z0-9._-]{0,31}`. Decimal strings use base-10 notation
+without exponent; floats are never accepted. Required fields are non-null.
+Nullable fields remain present as explicit nulls. GraphOS omits provider-only fields. GraphOS preserves source, currency/unit, session, freshness, and provenance on price-bearing records.
+
+### Attachment and acceptance
+
+Declare operations in `graph_os/api/ops/finance.py::operations`. The `get_registry` factory imports them from that module. Each handler calls only the typed `finance_read_port`; handlers cannot reserve a lease or reach paper submission. REST follows the real composition seam:
+`NativeGatewayApplication.mount_rest_routes` validates contract admission,
+then `graph_os/api/http/app.py::create_api_application` registers
+`POST /api/v1/ops/{op_id}`. The current process has no API dependencies,
+so this adapter is not yet production-attached.
+
+MCP follows `graph_os/api/mcp/serving.py::register_intent_surface` and the
+`/mcp` streamable-HTTP protocol route. Its JSON-RPC `tools/call` uses the
+registered `ask` tool with `arguments.op` and `arguments.params`. The current
+`graph_os/mcp_server/server.py` still uses the legacy agent-utilities surface;
+the operation-backed GraphOS MCP registration is not active. These are explicit missing attachment edges, not served evidence. Keep all nine operations unavailable until GraphOS admits the provider port and authority contract.
+
+Add future served tests at `tests/mcp_server/test_data_market_reads_served.py`. The test-spec names each required function and route-level acceptance. Preserve FI-01 through FI-10 and parent paper-order acceptance. This definition adds no runtime or test result claim.
 <!-- /spec-definition-patch -->

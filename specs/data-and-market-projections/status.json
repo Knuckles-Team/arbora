@@ -186,7 +186,7 @@
     },
     {
       "id": "GRAPHOS-DATA-MARKET-R003.6",
-      "title": "Hosted read/effect separation",
+      "title": "Producer port, registration, and read/effect separation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
