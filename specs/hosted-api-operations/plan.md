@@ -131,34 +131,79 @@ Because the AU resolver already re-runs `source_query`, GRAPHOS-OPS-R040.8 wires
 
 ## Run read operations
 
-### Data flow
+### Model and owner boundaries
 
-`runs.metrics` or `runs.get` call → invoke pipeline (`GRAPHOS-OPS-R009`) → `handle_runs_metrics` or `handle_runs_get` (`graph_os/api/ops/runs.py`) → `RunTraceReader` port → engine adapter → engine run-trace read → typed outcome → response envelope.
+`GRAPHOS-OPS-R021.4.1` through `.6` define the producer contract for both clients.
+The `runs` module, models, adapter and registry entries do not exist in current main.
+GraphOS must authenticate, route and project reads. It must not collect counters, select configuration or compute aggregates.
 
-### Declaration to response, traced on an existing operation
+[EG orchestration vocabulary](https://github.com/Knuckles-Team/epistemic-graph/tree/main/specs/orchestration-vocabulary) owns the trace and query contracts.
+[AU harness evolution](https://github.com/Knuckles-Team/agent-utilities/tree/main/specs/harness-evolution) owns run mechanisms.
+`AU-HARNESS-R017.3` collects counters. `AU-HARNESS-R017.4` forwards them through the ordered `_record_execution_trace` writer.
+`EG-ORCH-VOCAB-R009.15` through `.17` own validated ingestion and readback.
+Those rows prove graph readback; they do not promise a dedicated `get_run_summary` engine method.
+The adapter must use a published engine client contract. Missing client support blocks implementation, not the entire operation registry.
 
-`retrieval.search` shows the pattern. `operations()` calls `build_read_op` with params, result, handler path, and scope (`graph_os/api/ops/retrieval.py:112-123`). The handler resolves its port with `bound_service` (`retrieval.py:81`) and returns `{"value": ...}`. An uncomposed port fails closed with `UNAVAILABLE`. `registry_factory.py` lists the module. The `runs` module copies this shape.
+### Explicit per-run mapping
 
-### Types and scopes
+GraphOS wire and generated client models must use the snake_case fields below.
+Views must consume those fields without reading RDF names or guessing aliases.
 
-`RunMetricsOutcome` returns, per model profile and task class, `success_rate`, `cost_per_task_usd`, `overflow_rate`, and `run_count`. `RunSummary` returns `termination_reason`, `peak_context_tokens`, `context_budget_tokens`, and the applied `harness_config`. Names follow the run-trace vocabulary in the EG run-trace row. Scopes: `telemetry:read` for `runs.metrics` (`telemetry.py:55`) and `kg:read` for `runs.get` (`agents.py:131`). No scope class in `graph_os/api/registry/scopes.py` is added, because every scope already exists.
+| Engine source | GraphOS `runs.get` field | View meaning |
+|---|---|---|
+| `terminationReason`, `EG-ORCH-VOCAB-R009.1` | `termination_reason` | Recorded terminal reason |
+| `peakContextTokens`, `EG-ORCH-VOCAB-R009.2` | `peak_context_tokens` | Peak tokens, not current occupancy |
+| `contextBudgetTokens`, `EG-ORCH-VOCAB-R009.3` | `context_budget_tokens` | Run context budget |
+| `costUsd`, `EG-ORCH-VOCAB-R009.8` | `cost_usd` | This run's cost in USD |
+| `appliedHarnessConfig`, `EG-ORCH-VOCAB-R009.9` | `harness_config_ref`, `harness_config` | Committed decision reference and authorized projection |
+| AU `PlanState`, `AU-HARNESS-R014.1` | `current_plan` | Separate run-state snapshot described below |
 
-### What exists and what is new
+The applied configuration must resolve the recorded decision edge under the same caller authority.
+`harness_config` projects `context_policy`, `plan_scaffold` and `action_space`; it must not recompute the current configuration.
+Missing values must remain null with explicit availability metadata. A measured zero must remain zero.
+The adapter must reject malformed producer values rather than silently coerce them.
 
-Reused: `build_read_op`, `bound_service`, `Params`, the closed error enum, and the registry generator. New: the `runs` module, the `RunTraceReader` port, and the engine adapter. No engine client method for run traces appears in `graph_os` today. The adapter row `GRAPHOS-OPS-R021.4.2` depends on the engine exposing a wire-callable read method.
+### Aggregate semantics
 
-### Decisions
+`RunMetricsParams` selects optional `model_profile_ref`, `task_class` and a bounded time window.
+The engine must apply filters before aggregation. GraphOS must preserve the engine's grouping keys and evidence.
+`EG-ORCH-VOCAB-R010` defines solved as `final_answer` with `evaluationScore` equal to 1.0.
+`EG-ORCH-VOCAB-R010.1` supplies `success_rate`; `.3` supplies `overflow_rate`, grouped by model and task class.
+`.2` supplies `cost_per_solved_task_usd`, grouped by model, task class and applied configuration reference.
+The numerator includes costs from all traces; the denominator includes solved traces only.
+Zero solved traces must yield null cost and explicit abstention, never zero, infinity or a mean per run.
+The ambiguous `cost_per_task_usd` name must not enter this unimplemented API.
+The result must keep different query groupings separate. GraphOS must not broadcast pair-level rates onto configuration groups.
+Any `run_count` must come from the engine for the same filter and grouping, never a client-side count.
+`cost_usd` belongs only to `runs.get`; aggregate cost must never populate that per-run field.
 
-- The engine computes success rate, cost, and overflow rate. Rejected: aggregation in graph-os. It creates a second metrics store and a second definition of success.
-- `runs.get` reads the stored trace. Rejected: reconstructing the configuration from the A2A task. Only the written trace proves what the run applied.
-- A run in another tenant reads as absent, so existence does not leak.
+### Current-plan read boundary
 
-### Cross-repository dependencies
+`GRAPHOS-OPS-R021.4.5` must expose `current_plan` as a read-only projection with explicit availability.
+A present snapshot must contain `run_id`, a producer revision, observation time, and ordered `items`.
+Items preserve AU `PlanItem.text` and status: `pending`, `in_progress`, or `done`.
+An empty available item list differs from an unavailable snapshot.
+The producer must bind the snapshot to the requested run and caller authority.
+GraphOS must reject mismatched runs, malformed items and regressing revisions within one reader session.
+Unavailable, expired or inaccessible state must carry no items and must not appear current.
+The producer must define expiry and revision semantics before GraphOS accepts a snapshot as current.
 
-- Depends on the EG run-trace vocabulary row for `terminationReason`, `peakContextTokens`, `contextBudgetTokens`, and `harness_config`.
-- Depends on the AU-HARNESS row that writes those fields at run end.
-- Depends on the AU evaluation row that stores measured outcomes as engine facts.
-- Unblocks the client rows that show cost, context use, and termination reason.
+`AU-HARNESS-R014.1` through `.5` own mutable scaffold state and injection outside stored history.
+They specify no public snapshot export, authority binding, revision or expiry contract today.
+The AU owner must extend R014 with that public read contract before this projection becomes available.
+GraphOS must not invent an AU method, persist the scaffold, or reconstruct it from stored messages.
+Any durable graph projection needs an EG-owned contract first; R009 does not supply one.
+`runs.get` may return trace fields while `current_plan` remains explicitly unavailable.
+Clients must offer no plan mutation control. This read contract does not move harness or engine responsibilities.
+
+### Wiring and evidence
+
+REST `POST /api/v1/ops/{op_id}` and MCP must enter the existing invoke pipeline under `GRAPHOS-OPS-R009`.
+`handle_runs_get` and `handle_runs_metrics` must resolve `run_trace_reader` through `bound_service`.
+`graph_os/api/ops/retrieval.py:81` supplies the existing service-binding pattern.
+`graph_os/api/ops/registry_factory.py` supplies registration; `GRAPHOS-OPS-R025` owns generated artifacts.
+Planned tests must enter those served surfaces, verify authority propagation, and observe the engine result or refusal.
+A protocol import or mocked handler alone must not count as served evidence.
 
 ## GRAPHOS-OPS-R042 content screening and redaction
 

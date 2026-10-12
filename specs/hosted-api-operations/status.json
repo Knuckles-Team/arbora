@@ -631,42 +631,42 @@
     },
     {
       "id": "GRAPHOS-OPS-R021.4.1",
-      "title": "`RunTraceReader` port",
+      "title": "RunTraceReader port",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-OPS-R021.4.2",
-      "title": "Engine adapter for run traces",
+      "title": "Engine adapter",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-OPS-R021.4.3",
-      "title": "`runs.metrics` models",
+      "title": "Aggregate models",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-OPS-R021.4.4",
-      "title": "`runs.metrics` operation",
+      "title": "Aggregate operation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-OPS-R021.4.5",
-      "title": "`runs.get` operation",
+      "title": "Per-run operation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-OPS-R021.4.6",
-      "title": "Registration and generated artifacts",
+      "title": "Registration and served proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
