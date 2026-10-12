@@ -1486,7 +1486,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R029",
-      "title": "AU:36 GraphOS definition slice",
+      "title": "Grant-bound native desktop actions",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1507,7 +1507,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R030",
-      "title": "AU:35 GraphOS definition slice",
+      "title": "Run-bound visual state",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1521,7 +1521,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R031",
-      "title": "AU:107 GraphOS definition slice",
+      "title": "Coding-agent discovery and sandbox handoff",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

@@ -1689,7 +1689,7 @@
     },
     {
       "id": "GRAPHOS-OPS-R054",
-      "title": "AU:61 GraphOS definition slice",
+      "title": "Technique-bound benchmark adoption",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1717,7 +1717,7 @@
     },
     {
       "id": "GRAPHOS-OPS-R055",
-      "title": "AU:50 GraphOS definition slice",
+      "title": "Run-bound process remediation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1738,7 +1738,7 @@
     },
     {
       "id": "GRAPHOS-OPS-R056",
-      "title": "AU:83 GraphOS definition slice",
+      "title": "Changeset-bound review evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1752,7 +1752,7 @@
     },
     {
       "id": "GRAPHOS-OPS-R057",
-      "title": "AU:121 GraphOS definition slice",
+      "title": "Stable repository prompt serialization",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1780,7 +1780,7 @@
     },
     {
       "id": "GRAPHOS-OPS-R058",
-      "title": "WEBUI:8 GraphOS definition slice",
+      "title": "Authorized table-browser projection",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

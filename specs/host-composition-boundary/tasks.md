@@ -115,24 +115,12 @@ Status vocabulary is defined in [spec.md](spec.md). Check a task only after its 
 
 <!-- spec-definition-patch:batch-20261012-tasks -->
 - [ ] `GRAPHOS-HOST-R023.3`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-HOST-R029`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R029`: Record the SDK native-desktop port and certified provider contract. Add a grant-bound GraphOS operation. Require refusal without cursor/focus capture.
 - [ ] `GRAPHOS-HOST-R008.6`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-HOST-R026.6`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-HOST-R030`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R030`: Obtain the SDK observation producer and EG state/context contracts, then specify the GraphOS run-bound adapter and stale/cross-scope refusal.
 - [ ] `GRAPHOS-HOST-R022.1`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-HOST-R031`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-HOST-R010.8`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-HOST-R032`: Deliver every requirement in requirements.md.
-<!-- /spec-definition-patch -->
-
-<!-- spec-definition-patch:dispatch-20261012-host-composition-boundary-tasks -->
-- [ ] `GRAPHOS-HOST-R023.3`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-HOST-R029`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-HOST-R008.6`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-HOST-R026.6`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-HOST-R030`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-HOST-R022.1`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-HOST-R031`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R031`: Record public EG/AU/WebUI producer-consumer contracts. Bind GraphOS discovery/admission at the existing server composition boundary.
 - [ ] `GRAPHOS-HOST-R010.8`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-HOST-R032`: Deliver every requirement in requirements.md.
 <!-- /spec-definition-patch -->

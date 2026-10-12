@@ -49,24 +49,12 @@ The proposed installer and terminal journeys have not been run.
 
 <!-- spec-definition-patch:batch-20261012-scope -->
 - `GRAPHOS-HOST-R023.3`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-HOST-R029`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-HOST-R029`: Native desktop actions require a tenant-bound sandbox grant and must not capture cursor or focus; SDK provider remains unbound.
 - `GRAPHOS-HOST-R008.6`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-HOST-R026.6`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-HOST-R030`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-HOST-R030`: Visual observation state remains run-, source-, frame-, and tenant-bound; SDK and EG contracts are prerequisites.
 - `GRAPHOS-HOST-R022.1`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-HOST-R031`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-HOST-R010.8`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-HOST-R032`: Owner scope and complete acceptance are defined in requirements.md.
-<!-- /spec-definition-patch -->
-
-<!-- spec-definition-patch:dispatch-20261012-host-composition-boundary-spec -->
-- `GRAPHOS-HOST-R023.3`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-HOST-R029`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-HOST-R008.6`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-HOST-R026.6`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-HOST-R030`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-HOST-R022.1`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-HOST-R031`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-HOST-R031`: Coding-agent discovery, EG/AU transformation, and WebUI sandbox handoff remain owner-bound prerequisites.
 - `GRAPHOS-HOST-R010.8`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-HOST-R032`: Owner scope and complete acceptance are defined in requirements.md.
 <!-- /spec-definition-patch -->

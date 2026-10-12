@@ -85,7 +85,7 @@ Deleted Agent summary widget: dashboard tile with type genius_agent, env prefix 
 
 Out of scope:
 
-Moving the Live Artifact store or refresh service out of agent-utilities, new dashboard widgets, any change to the layout file format, and the MCP tool surface for artifacts (the research-artifact tool is unrelated).
+Out of scope: moving the Live Artifact store or refresh service from agent-utilities. New dashboard widgets are also out of scope. The layout file format will not change. The artifact MCP tool surface is excluded; the research-artifact tool is unrelated.
 
 ### Caveat resolutions (design, 2026-10-10)
 
@@ -111,7 +111,7 @@ Compared `git show 0eb67c99c^:agent_utilities/gateway/api.py` (328 lines) with `
 | POST /hydrate | write | none / hydration result dict | 403, 500 no engine, 500 sanitized | DIFFERS: same (row R001.7) |
 | GET /hydration-status | read | none / status dict | 403 | DIFFERS: same (row R001.7) |
 
-No route is MISSING. The capability resolver itself still imports `agent_utilities.core.config` and `agent_utilities.security.identity` (internal modules): DIFFERS in dependency only (row R001.9). Decision on the shard, hydration and active-engine dependency (DECIDED): use the engine client session and source-sync methods that `GRAPHOS-HOST-R002` already requires, not a new public `agent_utilities.api` export, because hydration and shard state are engine concerns. Row R001.6 first adds a contract test that the installed client exposes them; if it does not, the row is BLOCKED on the engine client owner and the route keeps its present imports.
+No route is MISSING. The capability resolver imports internal modules `agent_utilities.core.config` and `agent_utilities.security.identity`. This differs only in dependency (row R001.9). For shard, hydration, and active-engine dependencies, use the engine client session and source-sync methods required by `GRAPHOS-HOST-R002`. Do not add a public `agent_utilities.api` export; shard and hydration state belong to the engine. Row R001.6 first adds a contract test for these installed-client methods. If the client lacks them, the engine-client owner must resolve the block. The route keeps its current imports until then.
 
 #### D3 Live Artifacts authentication (DECIDED; not blocked)
 
@@ -377,45 +377,20 @@ Producer order is R085 implementation and generated contracts, GraphOS port and 
 Missing producer implementation must remain unavailable. Definitions and planned tests must never count as served receipts.
 
 <!-- spec-definition-patch:batch-20261012-plan -->
-- `GRAPHOS-OPS-R054`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R054`: Do not relabel or reuse `graph_os/api/ops/agents.py:handle_rlm`; `rlm.benchmark` is not technique evidence. Wait for AU-INTEGRATION-R014 to publish a producer operation and receipt. Then add a separate projection via `graph_os/api/ops/registry_factory.py:get_registry` and `graph_os/api/invoke/pipeline.py:invoke`. Do not infer evidence from an EG packet.
 - `GRAPHOS-OPS-R024.1.1`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-OPS-R014.1`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-OPS-R022.3`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R055`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R055`: Bind a future liveness projection only through graph_os/api/ops/registry_factory.py:get_registry and graph_os/api/invoke/pipeline.py:invoke after AU publishes the detector and proposal operation. No GraphOS termination adapter exists in this spec.
 - `GRAPHOS-OPS-R022.4`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-OPS-R053.7`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R056`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R056`: Keep `decide.commit` in `graph_os/api/ops/decide.py:handle_decide_commit`; it is not changeset review. Wait for EG/AU to publish a review operation and evidence contract. Then bind a distinct projection via `graph_os/api/ops/registry_factory.py:get_registry` and `graph_os/api/invoke/pipeline.py:invoke`. Do not substitute the generic probe score.
 - `GRAPHOS-OPS-R021.2.1.1`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R057`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R057`: Bind stable serialization through graph_os/api/ops/registry_factory.py:get_registry and graph_os/api/invoke/pipeline.py:invoke only after EG R094.2/.3/.5/.7 and the SDK source-effect receipt contract are bound. The current GraphOS tree has no repository prompt serializer, RepositoryWriteBackParams, or served repository-writeback handler.
 - `GRAPHOS-OPS-R050.2.1`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-OPS-R009.1`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-OPS-R053.8`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R058`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R059`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R060`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R061`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R062`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R063`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R064`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R065`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R066`: Plan the owner work and dependencies defined in requirements.md.
-<!-- /spec-definition-patch -->
-
-<!-- spec-definition-patch:dispatch-20261012-hosted-api-operations-plan -->
-- `GRAPHOS-OPS-R054`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R024.1.1`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R014.1`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R022.3`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R055`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R022.4`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R053.7`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R056`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R021.2.1.1`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R057`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R050.2.1`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R009.1`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R053.8`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R058`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R058`: Use `graph_os/gateway/schema_context_api.py:register_schema_context_routes` and `graph_os/gateway/schema_context_service.py:get_schema_context` as the existing read-only attachment. Do not add table mutations or statistics until WebUI and EG publish their contracts.
 - `GRAPHOS-OPS-R059`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-OPS-R060`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-OPS-R061`: Plan the owner work and dependencies defined in requirements.md.

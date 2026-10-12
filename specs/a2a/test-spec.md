@@ -10,7 +10,7 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing spec
 | A2A-T03 | A2A-02 | Assembly returns only caller-allowed agent skills and budgeted fleet items. Revoke a scope, refresh card and dispatch, and verify removed skill plus no alternate route. Missing upstream assembly returns `UNAVAILABLE`. |
 | A2A-T04 | A2A-03 | Invoke read, write and fleet call via A2A, MCP and HTTP with the same principal. Codes, effect gate, audit shape and registry digest agree. Unknown op/method and forged actor/tenant fields refuse without executing. |
 | A2A-T05 | A2A-04, A2A-05 | Pause on a PLAN effect; inspect durable `input-required` event and safe preview, restart GraphOS, sign confirmation as original human, consume fence once, observe exactly one effect and one linked audit outcome. |
-| A2A-T06 | A2A-05 | Table-drive different human, service/agent token, foreign tenant, invalid signature, missing/revoked grant, altered op/params/pending call/parent-child relation, stale policy/digest, expired lease, replay, canceled task and concurrent confirm. All return a distinct stable refusal with zero extra effects. |
+| A2A-T06 | A2A-05 | Table-drive human and service/agent tokens, foreign tenants, and invalid signatures. Include missing and revoked grants. Include altered operations, params, pending calls, and parent-child relations. Include stale policy/digest, expired leases, replay, canceled tasks, and concurrent confirmation. Each refusal returns a distinct stable code with zero extra effects. |
 | A2A-T07 | A2A-04, A2A-05 | Trigger identity admin or live approval requiring console. A2A returns `STEP_UP_REQUIRED` and safe URL; A2A confirm refuses; same-human fresh MFA console flow succeeds after two-person rule where required. |
 | A2A-T08 | A2A-06 | Audit reservation outage prevents effect. Simulate outcome write failure after effect: response is indeterminate with reconciliation handle; no rollback claim. Error bodies omit token, tenant and private actor values. |
 | A2A-T09 | A2A-07 | Clean public clone with pinned published dependencies passes contract suite and package build; no private service or sibling tree. CI-provisioned local served test passes streaming/approval/restart on exact commit. |
@@ -82,5 +82,5 @@ The served confirm fixture rejects missing, unknown and mixed confirmation_kind 
 
 <!-- spec-definition-patch:batch-20261012-tests -->
 - `GRAPHOS-A2A-R001.2`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-A2A-R022`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-A2A-R022`: Future acceptance: tests/a2a/test_application.py::test_send_message_holds_output_until_bound_critique_passes and tests/a2a/test_application.py::test_send_message_rejects_untyped_preflight_and_failed_critique. Cover accepted typed input, missing/malformed input, absent/mismatched/failed verdict and zero release on refusal. Not run by this spec-only change.
 <!-- /spec-definition-patch -->

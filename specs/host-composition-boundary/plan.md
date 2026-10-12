@@ -141,24 +141,12 @@ The new transport acceptance must use real wire clients, including unauthorized 
 
 <!-- spec-definition-patch:batch-20261012-plan -->
 - `GRAPHOS-HOST-R023.3`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-HOST-R029`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R029`: Wait for the SDK to publish a typed, grant-bound native-desktop port. Then attach desktop operations through `graph_os/api/ops/registry_factory.py:get_registry` and `graph_os/api/invoke/pipeline.py:invoke`. Keep them unavailable until a certified provider is composed.
 - `GRAPHOS-HOST-R008.6`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-HOST-R026.6`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-HOST-R030`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R030`: Wait for SDK and EG observation/state contracts. Bind typed observations and state at `graph_os/api/invoke/pipeline.py:invoke` and `graph_os/api/invoke/executor.py:OperationRuntime.dispatch`. Do not add a GraphOS-owned durable observation store.
 - `GRAPHOS-HOST-R022.1`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-HOST-R031`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-HOST-R010.8`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-HOST-R032`: Plan the owner work and dependencies defined in requirements.md.
-<!-- /spec-definition-patch -->
-
-<!-- spec-definition-patch:dispatch-20261012-host-composition-boundary-plan -->
-- `GRAPHOS-HOST-R023.3`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-HOST-R029`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-HOST-R008.6`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-HOST-R026.6`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-HOST-R030`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-HOST-R022.1`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-HOST-R031`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R031`: Use `graph_os/mcp_server/server.py:mcp_server` as the GraphOS host boundary. Bind to published EG selection, AU harness, and WebUI renderer contracts. Do not implement those owners. Keep the flow unavailable until all three ports are bound.
 - `GRAPHOS-HOST-R010.8`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-HOST-R032`: Plan the owner work and dependencies defined in requirements.md.
 <!-- /spec-definition-patch -->

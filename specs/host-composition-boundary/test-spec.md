@@ -72,24 +72,12 @@ The proposed served scenarios have not been run and establish no runtime deliver
 
 <!-- spec-definition-patch:batch-20261012-tests -->
 - `GRAPHOS-HOST-R023.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R029`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R029`: Future acceptance: `tests/api/test_agent_browser_ops.py::test_native_desktop_actions_require_verified_grant_without_focus_capture`. Permit a valid grant. Missing, revoked, or cross-tenant grants must refuse before provider calls. Preserve the interactive cursor. Preserve focus. Not run.
 - `GRAPHOS-HOST-R008.6`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-HOST-R026.6`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R030`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R030`: Future acceptance: tests/api/test_agent_browser_ops.py::test_visual_state_is_run_source_and_tenant_bound. Cover multi-step reuse, source/frame/revision identity, invalidation, cross-tenant refusal and no dispatch on stale state. Not run.
 - `GRAPHOS-HOST-R022.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R031`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R010.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R032`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-<!-- /spec-definition-patch -->
-
-<!-- spec-definition-patch:dispatch-20261012-host-composition-boundary-test-spec -->
-- `GRAPHOS-HOST-R023.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R029`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R008.6`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R026.6`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R030`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R022.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R031`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R031`: Future acceptance: tests/mcp_server/test_composition.py::test_coding_agent_flow_uses_owner_ports_and_sandbox. Cover executable discovery, EG-selected transformation delivery to AU, sandboxed WebUI rendering, and refusal when any owner port is absent. Not run.
 - `GRAPHOS-HOST-R010.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-HOST-R032`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 <!-- /spec-definition-patch -->

@@ -77,45 +77,20 @@ These paths are planned acceptance, not passing test receipts.
 | GRAPHOS-OPS-R024.4.6 | `tests/api/test_memory_files_served.py::test_complete_served_memory_file_journey` | Real host, GraphOS and durable engine complete listing, conflict, resolution and acknowledgment. | Reject browser acknowledgment, symlink escape and unavailable producer; no mocked transport or persistence. |
 
 <!-- spec-definition-patch:batch-20261012-tests -->
-- `GRAPHOS-OPS-R054`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R054`: Future acceptance: tests/api/test_agent_browser_ops.py::test_benchmark_activation_requires_technique_bound_evidence. Cover all five technique identities, model/configuration binding, gain/non-regression evidence, mismatched receipts and zero activation on refusal. Not run.
 - `GRAPHOS-OPS-R024.1.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-OPS-R014.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-OPS-R022.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R055`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R055`: Future acceptance: tests/api/test_ops_admin_ops.py::test_process_remediation_requires_run_bound_approval. Cover proposal-only response, explicit run/process-bound approval, stale/mismatched evidence and no process effect on refusal. Not run.
 - `GRAPHOS-OPS-R022.4`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-OPS-R053.7`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R056`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R056`: Future acceptance: tests/api/test_decide_ops.py::test_changeset_review_binds_revision_classes_and_findings. Cover exact source revision, five flaw classes, finding-to-code evidence, impact filter, and fail-closed missing/mismatched producer results. Not run.
 - `GRAPHOS-OPS-R021.2.1.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R057`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R057`: Future acceptance: tests/api/test_write_back_models.py::test_prompt_json_roundtrip_and_difference_oracle_is_stable. Cover deterministic serialization, semantic equivalence, true semantic changes, and existing source-effect refusals. Not run.
 - `GRAPHOS-OPS-R050.2.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-OPS-R009.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-OPS-R053.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R058`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R059`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R060`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R061`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R062`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R063`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R064`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R065`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R066`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-<!-- /spec-definition-patch -->
-
-<!-- spec-definition-patch:dispatch-20261012-hosted-api-operations-test-spec -->
-- `GRAPHOS-OPS-R054`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R024.1.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R014.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R022.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R055`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R022.4`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R053.7`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R056`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R021.2.1.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R057`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R050.2.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R009.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R053.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R058`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-OPS-R058`: Future acceptance: `tests/gateway/test_schema_context_api.py::test_table_browser_projection_requires_owner_binding` and a served WebUI consumer test after contract assignment. Cover authorized data and denied scope. Cover missing producer and zero calls/effects on refusal. Not run.
 - `GRAPHOS-OPS-R059`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-OPS-R060`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-OPS-R061`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.

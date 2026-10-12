@@ -9,7 +9,7 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] Implement shared invocation steps, safe error mapping, durable plan lease, audit reservation/outcome, policy and service executor.
 - [ ] Implement six MCP intent verbs, typed discovery/ranking, ten resident-tool boot invariant, and multi-kind fleet loading through `invoke`.
 - [ ] Implement `/api/v1` operation and resource route factories, protocol-route inventory, generated OpenAPI and Python/TypeScript clients.
-- [ ] Build the checked former-tool/route parity inventory, migrate domain handlers and generated-client consumers, then delete obsolete GraphOS registrars/routes and duplicate authority logic in one serving cutover.
+- [ ] Build a checked inventory of former tools and routes. Migrate domain handlers and generated-client consumers. Then delete obsolete GraphOS registrars/routes and duplicate authority logic in one serving cutover.
 - [ ] Prove contract, authorization, policy, idempotency, audit, negative and served cases in [test-spec.md](test-spec.md).
 - [ ] Run pinned CCCC, KISS, jscpd, Dupehound, Python, package and CI gates from a clean public checkout; capture exact revision evidence.
 - [ ] Review public documentation and mark only individually proven capabilities accepted.
@@ -136,45 +136,20 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **GRAPHOS-OPS-R024.4.6:** Registration and served proof; implement the planned served positive and negative acceptance.
 
 <!-- spec-definition-patch:batch-20261012-tasks -->
-- [ ] `GRAPHOS-OPS-R054`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R054`: Resolve the `AU-INTEGRATION-R014` benchmark producer operation and receipt schema. Then define a separate GraphOS projection through shared registry/invoke. Keep generic RLM benchmarking separate.
 - [ ] `GRAPHOS-OPS-R024.1.1`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R014.1`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R022.3`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R055`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R055`: Obtain the AU liveness/proposal contract and define the GraphOS read and approval boundary before registering any process action.
 - [ ] `GRAPHOS-OPS-R022.4`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R053.7`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R056`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R056`: Resolve the EG/AU changeset-review operation, finding schema, and impact-filter contract. Then add a distinct projection through shared registry/invoke. Leave `decide.commit` unchanged.
 - [ ] `GRAPHOS-OPS-R021.2.1.1`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R057`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R057`: Resolve the public EG and SDK write-back contracts and define deterministic prompt serialization and its semantic difference oracle; do not claim that GraphOS currently owns a repository-writeback handler.
 - [ ] `GRAPHOS-OPS-R050.2.1`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R009.1`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R053.8`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R058`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R059`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R060`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R061`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R062`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R063`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R064`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R065`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R066`: Deliver every requirement in requirements.md.
-<!-- /spec-definition-patch -->
-
-<!-- spec-definition-patch:dispatch-20261012-hosted-api-operations-tasks -->
-- [ ] `GRAPHOS-OPS-R054`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R024.1.1`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R014.1`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R022.3`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R055`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R022.4`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R053.7`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R056`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R021.2.1.1`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R057`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R050.2.1`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R009.1`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R053.8`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-OPS-R058`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R058`: Resolve WebUI table-control/statistics requirements and EG producer bindings. Then extend the schema-context attachment only for those published contracts.
 - [ ] `GRAPHOS-OPS-R059`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R060`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-OPS-R061`: Deliver every requirement in requirements.md.

@@ -213,5 +213,5 @@ Research citations above describe inspiration only. The engine and transport con
 
 <!-- spec-definition-patch:batch-20261012-plan -->
 - `GRAPHOS-A2A-R001.2`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-A2A-R022`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-A2A-R022`: Add typed preflight validation to `graph_os/a2a/application.py:_send_message` and `create_a2a_handlers`. Gate release on an EG verdict bound to that output. Require the AU checklist/critique producer. Reuse `GRAPHOS-A2A-R021` and `AU-CONTROL-R040` as the approval authority. Add no second authority.
 <!-- /spec-definition-patch -->
