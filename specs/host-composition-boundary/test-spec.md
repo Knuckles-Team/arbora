@@ -55,7 +55,14 @@ Check missing client, denied workspace, occupied port and unavailable authority 
 Generate 2,000 numbered records with seeded concurrent writers; check sequence continuity or explicitly recorded gaps after rotation.
 Use a 4 KiB test rotation bound and two retained files; memory and retained bytes remain within declared limits.
 Inject credentials into a controlled message and require redaction in every stored and projected record.
-Read from another tenant or workspace and require refusal. No diagnostic bytes appear on MCP stdout.
+Create two authenticated tenants in the same workspace and interleave distinct secret-free canary records into the host sink.
+Exercise both permitted delivery modes: tenant-exclusive projection descriptor and authenticated filtered stream/reference.
+Each tenant receives its own canaries and zero bytes, metadata or gap information identifying the other tenant's activity.
+Refuse a descriptor to the shared sink even when records contain tenant tags.
+Swap tenant references, forge workspace claims and replay another tenant's cursor; require refusal before returning any bytes.
+Repeat across rotation, reconnect, expiry and revocation. Never reuse an old tenant binding for a new session.
+If shared filesystem ownership cannot isolate a projection, descriptor mode refuses while the authenticated filtered path remains required.
+Retain the different-workspace denial case. No diagnostic bytes appear on MCP stdout.
 Restart the host, observe a new instance identity, and check bounded shutdown without stopping reused services.
 
 For both MCP transports, initialize a real client, compare all eight tools and invoke an admitted and denied operation.

@@ -108,8 +108,18 @@ Use `<workspace>/agent_data/logs/server.log`, with owner-only file access and va
 Do not follow escaping symlinks. Reject incompatible ownership before opening the file.
 Default bounds are 10 MiB per file, five retained files and 16 KiB per redacted record.
 Sequences increase per host instance; rotation increments a generation and exposes retained sequence bounds.
-The terminal receives a scoped descriptor or reference, not permission to arbitrary filesystem paths.
-Record tenant, workspace, host instance, request, sequence, timestamp, severity and redacted message.
+A shared workspace's `server.log` is host-internal; never pass its descriptor to a tenant client.
+Tenant tags inside records do not make a shared descriptor safe.
+A descriptor is permitted only for a tenant-exclusive projection whose entire readable contents belong to that authenticated tenant.
+Otherwise provide an authenticated filtered stream or opaque reference, bound to tenant, principal, workspace, host instance and generation.
+Authorize each descriptor grant and every stream/reference read or reconnect; filter before encoding or sending any bytes.
+Descriptor grants contain bounded immutable snapshots; new records require a newly authorized grant.
+Never accept a client-provided tenant or workspace as authority. Revocation and expiry end further delivery.
+Private projections require tenant-specific access control even when two tenants use the same workspace.
+If filesystem access cannot enforce that separation, refuse descriptor delivery and use the authenticated filtered path.
+Bind rotations to the same tenant; do not expose another tenant's records, aggregate file offsets or shared sequence metadata.
+Expose tenant-local sequence and gap metadata without revealing other tenants' activity.
+Record tenant, workspace, host instance, request, sequence, timestamp, severity and redacted message in the host-internal sink.
 Filter secrets and raw request bodies before writing; protocol stdout and terminal rendering receive no host log output.
 Use bounded delivery; a slow reader must not block serving or create an unbounded queue.
 Return an explicit gap when requested history was rotated. Shutdown drains logs and joins owned HTTP threads within five seconds.

@@ -52,7 +52,13 @@ Repository scanner checks include CCCC, jscpd, dupehound and KISS alongside Pyth
 
 ## Confirmed deployment and guidance acceptance
 
-Use seed 4110 for 32 mixed inventories and independently test all nine target variants from the plan matrix.
+Use seed 4110 for 32 mixed inventories; derive target cases from every unique matrix triple.
+Require explicit target, runtime and privilege fields, with no default or wildcard cell.
+Compare actual cases with the declared triple set; omitted, duplicate and unknown cells fail coverage.
+Independently require standalone and compose cases for both runtime families crossed with both rootful and rootless modes.
+Delete each managed-runtime privilege cell in turn; both matrix validation and acceptance coverage must detect the omission.
+For each cell, require a real served success and a no-effect refusal; unavailable adapters retain their missing positive evidence.
+Test both native installation selections without replacing target coverage with a fixed count.
 Enter `setup-config deploy`, present actual engine output, confirm exact bindings and observe admitted effects at controlled services.
 For reuse, record zero create, update, delete, install and restart calls; use independent service identity and liveness probes.
 Missing choices, changed digests, unavailable authority and unsupported rootless profiles refuse before the first effect.

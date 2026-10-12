@@ -145,15 +145,31 @@ Do not stop reused resources on rollback or shutdown. Reconcile uncertain effect
 
 ### Target and privilege matrix
 
-| Target class | Required variants | Existing basis and prerequisite |
-|---|---|---|
-| Native package | Published package and explicit development editable installation | Existing bare-metal guidance; qualified start adapter and first-boot proof remain required. |
-| Standalone container | Daemon-managed; daemonless rootful; daemonless rootless | Existing image and guidance; each privilege profile requires admission and actual startup proof. |
-| Compose | Daemon-managed; daemonless rootful; daemonless rootless | Reuse `deploy/compose/compose.yaml`; qualify each runtime without a parallel planner. |
-| Swarm | Supported cluster profile | Reuse `deploy/swarm/stack.yml`; qualify actual deployment through the admitted producer. |
-| Kubernetes | Supported namespace and service-account profile | Reuse `deploy/helm/graph-os`; preserve identity, secrets, mounts and first-boot acceptance. |
+| Cell ID | Target | Runtime | Privilege | Existing basis and prerequisite |
+|---|---|---|---|---|
+| `native-user` | `native_package` | `installed_python` | `unprivileged_user` | Existing bare-metal guidance; public package or explicit editable installation and first-boot proof. |
+| `container-managed-rootful` | `standalone_container` | `daemon_managed` | `rootful` | Existing image; require admitted runtime and served startup proof. |
+| `container-managed-rootless` | `standalone_container` | `daemon_managed` | `rootless` | Existing image; require admitted runtime and served startup proof. |
+| `container-daemonless-rootful` | `standalone_container` | `daemonless` | `rootful` | Existing image; require admitted runtime and served startup proof. |
+| `container-daemonless-rootless` | `standalone_container` | `daemonless` | `rootless` | Existing image; require admitted runtime and served startup proof. |
+| `compose-managed-rootful` | `compose` | `daemon_managed` | `rootful` | Reuse `deploy/compose/compose.yaml`; qualify the declared runtime and privilege. |
+| `compose-managed-rootless` | `compose` | `daemon_managed` | `rootless` | Reuse `deploy/compose/compose.yaml`; qualify the declared runtime and privilege. |
+| `compose-daemonless-rootful` | `compose` | `daemonless` | `rootful` | Reuse `deploy/compose/compose.yaml`; qualify the declared runtime and privilege. |
+| `compose-daemonless-rootless` | `compose` | `daemonless` | `rootless` | Reuse `deploy/compose/compose.yaml`; qualify the declared runtime and privilege. |
+| `swarm-managed-rootful` | `swarm` | `daemon_managed_cluster` | `rootful` | Reuse `deploy/swarm/stack.yml`; require scoped cluster authority and admitted deployment. |
+| `kubernetes-namespace` | `kubernetes` | `kubernetes_api` | `namespace_service_account` | Reuse `deploy/helm/graph-os`; preserve identity, secrets, mounts and first-boot acceptance. |
 
-These nine variant cells are required definition targets, not claims that nine implementations exist.
+Each profile binds the exact `(target, runtime, privilege)` triple and its cell ID; no field may be implicit.
+For local containers, privilege describes the runtime's rootful or rootless mode, not merely the workload user ID.
+The cluster API cell uses a namespace-bound service account; it does not claim local daemon privilege.
+Test both published-package and explicitly selected editable installation within the native cell.
+These cells define required coverage, not existing implementations.
+Derive acceptance cases from the matrix's unique triples; never encode a separate expected case count.
+Compare covered triples with declared triples and fail on omitted, duplicate or unrecognized cells.
+Also derive the standalone/compose cross-product of both runtime families and both privilege modes.
+Require that complete cross-product in the declared matrix and coverage, so an omitted cell retains its obligation.
+Every declared cell needs a real served positive case and a no-effect negative case before claiming support.
+An unavailable adapter retains its cell and missing positive evidence; a refusal alone does not qualify it.
 Validate runtime capability, privilege, writable mounts, network binding and identity before applying a profile.
 Missing adapters return `unsupported_target` without a substitute runtime. Rootless failures never trigger privilege escalation.
 The native package target does not add a systemd artifact; R017's existing unsupported-systemd decision remains unchanged.
