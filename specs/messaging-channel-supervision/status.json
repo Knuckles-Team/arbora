@@ -10,6 +10,7 @@
     "GRAPHOS-MESSAGING-R003",
     "GRAPHOS-MESSAGING-R004",
     "GRAPHOS-MESSAGING-R005",
+    "GRAPHOS-MESSAGING-R005.1",
     "GRAPHOS-MESSAGING-R006"
   ],
   "requirements": [
@@ -68,8 +69,8 @@
     },
     {
       "id": "GRAPHOS-MESSAGING-R005",
-      "title": "Typed degraded state for a missing adapter",
-      "delivery_state": "VERIFIED",
+      "title": "Typed degraded adapter state and configuration-aware health",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "29a592980f26",
         "785693fbf7a3"
@@ -77,7 +78,17 @@
       "verified_by": [
         "tests/messaging/test_registry_degraded.py:101",
         "tests/messaging/test_registry_degraded.py:85"
+      ],
+      "rollup_of": [
+        "GRAPHOS-MESSAGING-R005.1"
       ]
+    },
+    {
+      "id": "GRAPHOS-MESSAGING-R005.1",
+      "title": "Typed adapter degradation and configuration-aware health",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     },
     {
       "id": "GRAPHOS-MESSAGING-R006",
