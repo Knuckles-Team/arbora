@@ -2979,8 +2979,6 @@ class MCPMultiplexer:
         ``record_state=False``: an ephemeral per-principal session must never
         write into the process-wide admitted-tool map.
         """
-        if runtime_policy is None and not original_name.startswith("operation_"):
-            return None
         tools_result = await session.list_tools()
         tools = list(tools_result.tools)
         admitted = self._oauth_admitted_tools(

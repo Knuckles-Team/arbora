@@ -1019,3 +1019,85 @@ async def test_runtime_status_reports_limits_and_load():
     session.release.set()
     await task
     assert runtime.status()["in_flight"] == 0
+
+
+@pytest.mark.parametrize("outcome", ["cancel", "refuse"])
+async def test_half_open_preflight_termination_releases_probe(monkeypatch, outcome):
+    clock = SimpleNamespace(now=100.0)
+    monkeypatch.setattr(
+        "graph_os.fleet.child_resilience.time",
+        SimpleNamespace(monotonic=lambda: clock.now),
+    )
+    session = EchoSession("healthy")
+    runtime = ChildRuntime("probe", {"breaker_threshold": 1, "breaker_cooldown": 1})
+    runtime.adopt_sessions([session])
+    runtime.breaker.record_failure()
+    clock.now += 2
+    started, release = asyncio.Event(), asyncio.Event()
+
+    async def preflight(_session):
+        started.set()
+        await release.wait()
+        if outcome == "refuse":
+            raise ValueError("schema refused")
+
+    caller = asyncio.create_task(
+        runtime.call_tool("t", {}, retry_on_transient=False, preflight=preflight)
+    )
+    await started.wait()
+    assert runtime.breaker.state == "half_open"
+    if outcome == "cancel":
+        caller.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await caller
+        release.set()
+    else:
+        release.set()
+        with pytest.raises(ValueError, match="schema refused"):
+            await caller
+    await _wait_for(lambda: runtime.in_flight == 0)
+    assert runtime.breaker.state == "open"
+    assert session.calls == []
+
+    clock.now += 2
+    result = await runtime.call_tool("t", {}, retry_on_transient=False)
+    assert not result.is_error
+    assert runtime.breaker.state == "closed"
+    assert len(session.calls) == 1
+
+
+async def test_preflight_release_then_cancellation_never_dispatches():
+    session = EchoSession("healthy")
+    runtime = ChildRuntime("cancel-race", {})
+    runtime.adopt_sessions([session])
+    started, release = asyncio.Event(), asyncio.Event()
+
+    async def preflight(_session):
+        started.set()
+        await release.wait()
+
+    caller = asyncio.create_task(
+        runtime.call_tool("t", {}, retry_on_transient=False, preflight=preflight)
+    )
+    await started.wait()
+    release.set()
+    caller.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await caller
+    await _wait_for(lambda: runtime.in_flight == 0)
+    assert session.calls == []
+
+
+async def test_expired_preflight_deadline_never_dispatches(monkeypatch):
+    session = EchoSession("healthy")
+    runtime = ChildRuntime("expired-preflight", {"call_timeout": 60})
+    runtime.adopt_sessions([session])
+    monkeypatch.setattr(runtime, "_tool_call_deadline", lambda: 0.0)
+
+    async def preflight(_session):
+        await asyncio.sleep(0)
+
+    with pytest.raises(MCPChildCallTimeoutError):
+        await runtime.call_tool("t", {}, retry_on_transient=False, preflight=preflight)
+    await _wait_for(lambda: runtime.in_flight == 0)
+    assert session.calls == []

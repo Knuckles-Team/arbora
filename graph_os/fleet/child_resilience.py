@@ -60,6 +60,7 @@ import threading
 import time
 from collections import deque
 from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from typing import Any
 
 import anyio
@@ -269,6 +270,15 @@ ConnectFn = Callable[
 #: this to replace its cached forwarding schemas without polling a provider on
 #: every tool call.
 GenerationCallback = Callable[[list[Any]], Awaitable[None]]
+
+
+@dataclass(frozen=True)
+class _ToolCallFence:
+    """Keep one attempt's generation, admission check and schema preflight together."""
+
+    generation_marker: int | None
+    before_send: Callable[[int, str | None], None] | None
+    preflight: Callable[[Any], Awaitable[None]] | None
 
 
 class _GenerationChanged(RuntimeError):
@@ -953,9 +963,7 @@ class ChildRuntime:
                 return await self._call_once(
                     original_name,
                     arguments,
-                    generation_marker=generation_marker,
-                    before_send=before_send,
-                    preflight=preflight,
+                    _ToolCallFence(generation_marker, before_send, preflight),
                 )
             except BaseException as exc:
                 if not await self._recover_tool_call(exc, retry_on_transient, attempt):
@@ -1037,10 +1045,7 @@ class ChildRuntime:
         self,
         original_name: str,
         arguments: dict[str, Any],
-        *,
-        generation_marker: int | None = None,
-        before_send: Callable[[int, str | None], None] | None = None,
-        preflight: Callable[[Any], Awaitable[None]] | None = None,
+        fence: _ToolCallFence,
     ) -> Any:
         """One forwarding attempt (the body the retry loop wraps)."""
         probe_claimed = self._begin_request()
@@ -1049,17 +1054,16 @@ class ChildRuntime:
             snapshot_generation,
             snapshot_secret,
         ) = await self._reserve_tool_session(
-            generation_marker, before_send, probe_claimed
+            fence.generation_marker, fence.before_send, probe_claimed
         )
         return await self._send_tool(
             session,
             original_name,
             arguments,
-            generation_marker,
+            fence,
             snapshot_generation,
             snapshot_secret,
-            before_send,
-            preflight,
+            probe_claimed,
         )
 
     async def _reserve_tool_session(
@@ -1112,29 +1116,76 @@ class ChildRuntime:
         if before_send is not None:
             before_send(snapshot_generation, snapshot_secret)
 
+    async def _prepare_tool_dispatch(
+        self,
+        session: Any,
+        fence: _ToolCallFence,
+        generation: int,
+        secret: str | None,
+        assert_active: Callable[[], None],
+        probe_claimed: bool,
+    ) -> None:
+        """Settle a claimed probe when preflight terminates without dispatch."""
+        if fence.preflight is None:
+            return
+        try:
+            await fence.preflight(session)
+            assert_active()
+            self._check_tool_preflight(
+                fence.generation_marker, generation, secret, fence.before_send
+            )
+        except BaseException:
+            self._settle_preflight_probe(probe_claimed)
+            raise
+
+    def _settle_preflight_probe(self, probe_claimed: bool) -> None:
+        """Reopen an unresolved probe without replaying the refused operation."""
+        if probe_claimed and self.breaker.state == "half_open":
+            self.breaker.record_failure()
+
+    def _tool_call_deadline(self) -> float | None:
+        """Capture the caller's deadline before scheduling the shielded attempt."""
+        if self.call_timeout <= 0:
+            return None
+        return asyncio.get_running_loop().time() + self.call_timeout
+
+    @staticmethod
+    def _assert_tool_dispatch_active(
+        owner: asyncio.Task | None, deadline: float | None, abandoned: bool
+    ) -> None:
+        """Observe cancellation and expiry even before the caller's handler runs."""
+        if abandoned or (owner is not None and owner.cancelling()):
+            raise asyncio.CancelledError
+        if deadline is not None and asyncio.get_running_loop().time() >= deadline:
+            raise TimeoutError("tool call deadline expired during preflight")
+
     async def _send_tool(
         self,
         session: Any,
         original_name: str,
         arguments: dict[str, Any],
-        generation_marker: int | None,
+        fence: _ToolCallFence,
         snapshot_generation: int,
         snapshot_secret: str | None,
-        before_send: Callable[[int, str | None], None] | None,
-        preflight: Callable[[Any], Awaitable[None]] | None,
+        probe_claimed: bool,
     ) -> Any:
         """Retain the slot through preflight, dispatch and detached completion."""
         self._in_flight += 1
         preflight_abandoned = False
+        owner = asyncio.current_task()
+        deadline = self._tool_call_deadline()
 
         async def invoke() -> Any:
-            if preflight is not None:
-                await preflight(session)
-                if preflight_abandoned:
-                    raise asyncio.CancelledError
-                self._check_tool_preflight(
-                    generation_marker, snapshot_generation, snapshot_secret, before_send
-                )
+            await self._prepare_tool_dispatch(
+                session,
+                fence,
+                snapshot_generation,
+                snapshot_secret,
+                lambda: self._assert_tool_dispatch_active(
+                    owner, deadline, preflight_abandoned
+                ),
+                probe_claimed,
+            )
             return await session.call_tool(original_name, arguments)
 
         inner = asyncio.ensure_future(invoke())

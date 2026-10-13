@@ -47,7 +47,9 @@ class SchemaSession:
         return SimpleNamespace(is_error=False, content=[])
 
 
-def disclosure_fixture() -> tuple[Any, Any, dict[str, Any], dict[str, str]]:
+def disclosure_fixture(
+    alias: str = ALIAS,
+) -> tuple[Any, Any, dict[str, Any], dict[str, str]]:
     from agent_connector_sdk.mcp.schema_disclosure import (
         build_schema_disclosure,
         read_schema_fragment,
@@ -66,7 +68,7 @@ def disclosure_fixture() -> tuple[Any, Any, dict[str, Any], dict[str, str]]:
     disclosure = build_schema_disclosure(
         (input_schema, output_schema),
         operation=OPERATION,
-        alias=ALIAS,
+        alias=alias,
         source_sha256="a" * 64,
     )
     manifest = disclosure.manifest
@@ -105,13 +107,18 @@ def setup_mux(tmp_path: Any, runtime: ChildRuntime, descriptor: Any) -> Any:
     return mux
 
 
+def connect_schema_session(tmp_path: Any, session: SchemaSession) -> Any:
+    """Attach the supplied schema session through the ordinary child runtime."""
+    runtime = ChildRuntime("markets", {})
+    runtime.adopt_sessions([session])
+    return setup_mux(tmp_path, runtime, session.descriptor)
+
+
 @pytest.mark.usefixtures("stdio_fleet_authority")
 async def test_proxied_openapi_alias_reconstructs_before_call(tmp_path):
     _manifest, descriptor, arguments, resources = disclosure_fixture()
     session = SchemaSession(resources, descriptor)
-    runtime = ChildRuntime("markets", {})
-    runtime.adopt_sessions([session])
-    mux = setup_mux(tmp_path, runtime, descriptor)
+    mux = connect_schema_session(tmp_path, session)
 
     await mux.call_proxied_tool(PREFIXED, arguments)
 
@@ -131,9 +138,7 @@ async def test_stale_manifest_never_calls_alias(tmp_path):
     stale["source_sha256"] = "b" * 64
     stale_resources[manifest.manifest_uri] = json.dumps(stale)
     session = SchemaSession(stale_resources, descriptor)
-    runtime = ChildRuntime("markets", {})
-    runtime.adopt_sessions([session])
-    mux = setup_mux(tmp_path, runtime, descriptor)
+    mux = connect_schema_session(tmp_path, session)
 
     result = await mux.call_proxied_tool(PREFIXED, arguments)
 
@@ -148,9 +153,7 @@ async def test_missing_fragment_never_calls_alias(tmp_path):
     incomplete = dict(resources)
     incomplete.pop(manifest.fragment_uri_template.format(index=0))
     session = SchemaSession(incomplete, descriptor)
-    runtime = ChildRuntime("markets", {})
-    runtime.adopt_sessions([session])
-    mux = setup_mux(tmp_path, runtime, descriptor)
+    mux = connect_schema_session(tmp_path, session)
 
     result = await mux.call_proxied_tool(PREFIXED, arguments)
 
@@ -167,9 +170,7 @@ async def test_missing_admitted_output_schema_never_calls_alias(tmp_path):
     manifest, descriptor, arguments, resources = disclosure_fixture()
     descriptor.output_schema = None
     session = SchemaSession(resources, descriptor)
-    runtime = ChildRuntime("markets", {})
-    runtime.adopt_sessions([session])
-    mux = setup_mux(tmp_path, runtime, descriptor)
+    mux = connect_schema_session(tmp_path, session)
 
     result = await mux.call_proxied_tool(PREFIXED, arguments)
 
@@ -191,9 +192,7 @@ async def test_missing_admitted_output_schema_never_calls_alias(tmp_path):
 async def test_mismatched_action_never_calls_alias(tmp_path):
     _manifest, descriptor, _arguments, resources = disclosure_fixture()
     session = SchemaSession(resources, descriptor)
-    runtime = ChildRuntime("markets", {})
-    runtime.adopt_sessions([session])
-    mux = setup_mux(tmp_path, runtime, descriptor)
+    mux = connect_schema_session(tmp_path, session)
 
     result = await mux.call_proxied_tool(PREFIXED, {"action": "list_events"})
 
@@ -206,9 +205,7 @@ async def test_mismatched_action_never_calls_alias(tmp_path):
 async def test_catalog_change_during_fragment_reads_stops_before_alias_call(tmp_path):
     manifest, descriptor, arguments, resources = disclosure_fixture()
     session = SchemaSession(resources, descriptor)
-    runtime = ChildRuntime("markets", {})
-    runtime.adopt_sessions([session])
-    mux = setup_mux(tmp_path, runtime, descriptor)
+    mux = connect_schema_session(tmp_path, session)
     changed = False
 
     def change_catalog(uri: str) -> None:
@@ -229,9 +226,7 @@ async def test_catalog_change_during_fragment_reads_stops_before_alias_call(tmp_
 async def test_denied_session_reads_no_schema_resource(tmp_path):
     _manifest, descriptor, arguments, resources = disclosure_fixture()
     session = SchemaSession(resources, descriptor)
-    runtime = ChildRuntime("markets", {})
-    runtime.adopt_sessions([session])
-    mux = setup_mux(tmp_path, runtime, descriptor)
+    mux = connect_schema_session(tmp_path, session)
     mux._global_visible.clear()
 
     result = await mux.call_proxied_tool(PREFIXED, arguments)
@@ -255,9 +250,7 @@ async def test_uncertain_write_alias_is_not_replayed(tmp_path):
             raise ConnectionResetError("write outcome is uncertain")
 
     session = FailedWriteSession(resources, descriptor)
-    runtime = ChildRuntime("markets", {})
-    runtime.adopt_sessions([session])
-    mux = setup_mux(tmp_path, runtime, descriptor)
+    mux = connect_schema_session(tmp_path, session)
 
     result = await mux.call_proxied_tool(PREFIXED, arguments)
 
@@ -269,8 +262,6 @@ async def test_uncertain_write_alias_is_not_replayed(tmp_path):
 async def test_oauth_preflight_and_alias_call_share_each_ephemeral_session(
     tmp_path, monkeypatch
 ):
-    from graph_os.fleet import multiplexer as multiplexer_module
-
     manifest, descriptor, arguments, resources = disclosure_fixture()
     oauth_descriptor = SimpleNamespace(
         name=ALIAS,
@@ -283,6 +274,24 @@ async def test_oauth_preflight_and_alias_call_share_each_ephemeral_session(
         SchemaSession(resources, oauth_descriptor),
         SchemaSession(resources, oauth_descriptor),
     ]
+    mux, cfg, opened = setup_oauth_sessions(tmp_path, monkeypatch, sessions)
+    for _ in range(2):
+        await mux._call_ephemeral_oauth_session(
+            "markets", ALIAS, cfg, arguments, mux._catalog_epoch
+        )
+
+    assert len(opened) == 2 and opened[0] is not opened[1]
+    for session in opened:
+        assert session.events[0] == ("resource", manifest.manifest_uri)
+        assert session.events[-1] == ("call", ALIAS)
+
+
+def setup_oauth_sessions(
+    tmp_path: Any, monkeypatch: Any, sessions: list[SchemaSession]
+):
+    """Open scripted sessions through the real ephemeral OAuth call path."""
+    from graph_os.fleet import multiplexer as multiplexer_module
+
     cfg: dict[str, Any] = {}
     mux = multiplexer_from_fixture(tmp_path / "catalog.json")
     mux._catalog = {"markets": cfg}
@@ -300,12 +309,41 @@ async def test_oauth_preflight_and_alias_call_share_each_ephemeral_session(
         return session
 
     monkeypatch.setattr(mux, "_open_one_session", open_one)
-    for _ in range(2):
+    return mux, cfg, opened
+
+
+@pytest.mark.usefixtures("stdio_fleet_authority")
+async def test_nonprefixed_oauth_alias_refuses_stale_schema(tmp_path, monkeypatch):
+    alias = "read_entry"
+    manifest, descriptor, arguments, resources = disclosure_fixture(alias)
+    descriptor.name = alias
+    stale = manifest.model_dump()
+    stale["source_sha256"] = "b" * 64
+    resources[manifest.manifest_uri] = json.dumps(stale)
+    session = SchemaSession(resources, descriptor)
+    mux, cfg, opened = setup_oauth_sessions(tmp_path, monkeypatch, [session])
+
+    with pytest.raises(Exception, match="no longer matches"):
         await mux._call_ephemeral_oauth_session(
-            "markets", ALIAS, cfg, arguments, mux._catalog_epoch
+            "markets", alias, cfg, arguments, mux._catalog_epoch
         )
 
-    assert len(opened) == 2 and opened[0] is not opened[1]
-    for session in opened:
-        assert session.events[0] == ("resource", manifest.manifest_uri)
-        assert session.events[-1] == ("call", ALIAS)
+    assert opened == [session]
+    assert session.events == [("resource", manifest.manifest_uri)]
+    assert session.calls == []
+
+
+@pytest.mark.usefixtures("stdio_fleet_authority")
+async def test_oauth_ordinary_tool_calls_without_schema_resources(
+    tmp_path, monkeypatch
+):
+    descriptor = SimpleNamespace(name="read_entry", meta={})
+    session = SchemaSession({}, descriptor)
+    mux, cfg, _opened = setup_oauth_sessions(tmp_path, monkeypatch, [session])
+
+    await mux._call_ephemeral_oauth_session(
+        "markets", descriptor.name, cfg, {}, mux._catalog_epoch
+    )
+
+    assert session.events == [("call", descriptor.name)]
+    assert session.calls == [(descriptor.name, {})]
