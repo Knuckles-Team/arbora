@@ -163,7 +163,9 @@
     "GRAPHOS-OPS-R055",
     "GRAPHOS-OPS-R056",
     "GRAPHOS-OPS-R057",
-    "GRAPHOS-OPS-R058"
+    "GRAPHOS-OPS-R058",
+    "GRAPHOS-OPS-R061",
+    "GRAPHOS-OPS-R063"
   ],
   "requirements": [
     {
@@ -502,7 +504,7 @@
     },
     {
       "id": "GRAPHOS-OPS-R020.3.1",
-      "title": "Missing `ingest.packs.*` and `ingest.jobs.*` ops",
+      "title": "Missing ingest.packs.* and ingest.jobs.* ops",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "16c9b2bddda3"
@@ -718,7 +720,7 @@
     },
     {
       "id": "GRAPHOS-OPS-R022.2.1",
-      "title": "`evolution.loops.status` op",
+      "title": "evolution.loops.status operation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1682,6 +1684,20 @@
     {
       "id": "GRAPHOS-OPS-R058",
       "title": "Authorized table-browser projection",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R061",
+      "title": "Indexed token and cost projection",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R063",
+      "title": "Retrieval evaluation and authorized context projection",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
