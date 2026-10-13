@@ -311,6 +311,10 @@ class MCPChildCallTimeoutError(MCPChildError):
     backpressure instead of corrupting the shared session."""
 
 
+class _PreflightDeadlineExpired(MCPChildCallTimeoutError):
+    """The local dispatch deadline expired before any provider invocation."""
+
+
 class MCPChildUnavailableError(MCPChildError):
     """The child is not serving calls (restarting after a crash, or failed)."""
 
@@ -887,6 +891,12 @@ class ChildRuntime:
             if not abandoned:  # abandoned calls were already counted (timeout)
                 self._record("ok")
             return
+        self._finish_call_failure(exc, abandoned)
+
+    def _finish_call_failure(self, exc: BaseException, abandoned: bool) -> None:
+        """Classify completed failures without treating local expiry as dead transport."""
+        if isinstance(exc, _PreflightDeadlineExpired):
+            return  # The preflight owner already accounted for this local timeout.
         if isinstance(exc, TRANSPORT_EXCEPTIONS) or is_session_dead(exc):
             # Dead pipe / closed stream / terminated session: the child is gone,
             # not erroring. Rebuild the connection (a redeployed backend drops
@@ -1134,9 +1144,19 @@ class ChildRuntime:
             self._check_tool_preflight(
                 fence.generation_marker, generation, secret, fence.before_send
             )
-        except BaseException:
-            self._settle_preflight_probe(probe_claimed)
+        except BaseException as exc:
+            self._settle_preflight_failure(exc, probe_claimed)
             raise
+
+    def _settle_preflight_failure(
+        self, exc: BaseException, probe_claimed: bool
+    ) -> None:
+        """Account once for local expiry, or settle a cancelled/refused probe."""
+        if isinstance(exc, _PreflightDeadlineExpired):
+            self.breaker.record_failure()
+            self._record("timeout")
+        else:
+            self._settle_preflight_probe(probe_claimed)
 
     def _settle_preflight_probe(self, probe_claimed: bool) -> None:
         """Reopen an unresolved probe without replaying the refused operation."""
@@ -1149,15 +1169,16 @@ class ChildRuntime:
             return None
         return asyncio.get_running_loop().time() + self.call_timeout
 
-    @staticmethod
     def _assert_tool_dispatch_active(
-        owner: asyncio.Task | None, deadline: float | None, abandoned: bool
+        self, owner: asyncio.Task | None, deadline: float | None, abandoned: bool
     ) -> None:
         """Observe cancellation and expiry even before the caller's handler runs."""
         if abandoned or (owner is not None and owner.cancelling()):
             raise asyncio.CancelledError
         if deadline is not None and asyncio.get_running_loop().time() >= deadline:
-            raise TimeoutError("tool call deadline expired during preflight")
+            raise _PreflightDeadlineExpired(
+                self.name, "tool call deadline expired before dispatch"
+            )
 
     async def _send_tool(
         self,
@@ -1200,9 +1221,7 @@ class ChildRuntime:
             preflight_abandoned = True
             # Consecutive timeouts count toward opening the circuit; if the
             # detached call eventually succeeds, its completion closes it.
-            self.breaker.record_failure()
-            self._record("timeout")
-            self._abandoned.add(inner)
+            self._record_tool_timeout(inner)
             raise MCPChildCallTimeoutError(
                 self.name,
                 f"Tool '{original_name}' on child server '{self.name}' did "
@@ -1212,6 +1231,16 @@ class ChildRuntime:
         except asyncio.CancelledError:
             preflight_abandoned = True
             raise
+
+    def _record_tool_timeout(self, inner: asyncio.Task) -> None:
+        """Do not recount local expiry when the outer timeout wins delivery."""
+        if inner.done() and not inner.cancelled():
+            if isinstance(inner.exception(), _PreflightDeadlineExpired):
+                return
+        self.breaker.record_failure()
+        self._record("timeout")
+        if not inner.done():
+            self._abandoned.add(inner)
 
     async def _call_request_once(
         self,

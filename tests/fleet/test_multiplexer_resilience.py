@@ -1088,16 +1088,67 @@ async def test_preflight_release_then_cancellation_never_dispatches():
     assert session.calls == []
 
 
-async def test_expired_preflight_deadline_never_dispatches(monkeypatch):
+@pytest.mark.parametrize("half_open", [False, True])
+@pytest.mark.parametrize("outer_timeout", [False, True])
+async def test_expired_preflight_deadline_keeps_healthy_generation(
+    monkeypatch, half_open, outer_timeout
+):
+    clock = SimpleNamespace(now=100.0)
+    monkeypatch.setattr(
+        "graph_os.fleet.child_resilience.time",
+        SimpleNamespace(monotonic=lambda: clock.now),
+    )
     session = EchoSession("healthy")
-    runtime = ChildRuntime("expired-preflight", {"call_timeout": 60})
-    runtime.adopt_sessions([session])
-    monkeypatch.setattr(runtime, "_tool_call_deadline", lambda: 0.0)
+    connector = GenerationConnector([session])
+    runtime = ChildRuntime(
+        "expired-preflight",
+        {"call_timeout": 60, "breaker_threshold": 1, "breaker_cooldown": 1},
+        connect=connector,
+    )
+    await runtime.start()
+    try:
+        if half_open:
+            runtime.breaker.record_failure()
+            clock.now += 2
+        failures_before = runtime.breaker._failures
+        generation_before = runtime.generation
 
-    async def preflight(_session):
-        await asyncio.sleep(0)
+        async def preflight(_session):
+            await asyncio.sleep(0)
 
-    with pytest.raises(MCPChildCallTimeoutError):
-        await runtime.call_tool("t", {}, retry_on_transient=False, preflight=preflight)
-    await _wait_for(lambda: runtime.in_flight == 0)
-    assert session.calls == []
+        wait_for = asyncio.wait_for
+
+        async def deliver_outer_timeout(awaitable, timeout):
+            try:
+                return await wait_for(awaitable, timeout)
+            except MCPChildCallTimeoutError as exc:
+                raise TimeoutError("outer timer won delivery") from exc
+
+        with monkeypatch.context() as deadline_patch:
+            deadline_patch.setattr(runtime, "_tool_call_deadline", lambda: 0.0)
+            if outer_timeout:
+                deadline_patch.setattr(asyncio, "wait_for", deliver_outer_timeout)
+            with pytest.raises(MCPChildCallTimeoutError):
+                await runtime.call_tool(
+                    "t", {}, retry_on_transient=False, preflight=preflight
+                )
+        await _wait_for(lambda: runtime.in_flight == 0)
+        assert session.calls == []
+        assert runtime.breaker._failures == failures_before + 1
+        assert runtime.breaker.state == "open"
+        assert runtime.state == "up"
+        assert runtime.generation == generation_before
+        assert runtime.restart_count == 0
+        assert connector.connects == 1
+        assert not runtime._stop_generation.is_set()
+        assert not runtime._abandoned
+
+        clock.now += 2
+        result = await runtime.call_tool("t", {}, retry_on_transient=False)
+        assert not result.is_error
+        assert session.calls == ["t"]
+        assert runtime.breaker.state == "closed"
+        assert runtime.generation == generation_before
+        assert connector.connects == 1
+    finally:
+        await runtime.aclose()
