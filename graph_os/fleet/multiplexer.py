@@ -724,23 +724,32 @@ def _bounded_tool_annotations(tool: _typing.Any) -> dict | None:
     return dumped
 
 
+def _bounded_tool_schemas(tool: _typing.Any) -> dict[str, _typing.Any]:
+    """Project typed schemas before the catalog's shared size/depth validation."""
+    input_schema = getattr(tool, "input_schema", None) or {}
+    output_schema = getattr(tool, "output_schema", None)
+    if not isinstance(input_schema, dict):
+        raise RuntimeError("MCP child tool catalog is invalid")
+    schemas = {"inputSchema": input_schema}
+    if output_schema is not None:
+        if not isinstance(output_schema, dict):
+            raise RuntimeError("MCP child tool catalog is invalid")
+        schemas["outputSchema"] = output_schema
+    return schemas
+
+
 def _bounded_tool_entry(tool: _typing.Any) -> dict[str, _typing.Any]:
     """Project and validate ONE child tool descriptor."""
 
     name = getattr(tool, "name", None)
     description = getattr(tool, "description", "") or ""
-    input_schema = getattr(tool, "input_schema", None) or {}
     annotations = _bounded_tool_annotations(tool)
-    if (
-        not _bounded_catalog_name(name)
-        or not isinstance(description, str)
-        or not isinstance(input_schema, dict)
-    ):
+    if not _bounded_catalog_name(name) or not isinstance(description, str):
         raise RuntimeError("MCP child tool catalog is invalid")
     item: dict[str, _typing.Any] = {
         "name": name,
         "description": description,
-        "inputSchema": input_schema,
+        **_bounded_tool_schemas(tool),
     }
     if annotations is not None:
         item["annotations"] = annotations

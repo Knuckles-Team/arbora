@@ -1204,8 +1204,11 @@
         "763701d591a8"
       ],
       "verified_by": [
+        "tests/fleet/test_multiplexer_boundary.py:275",
+        "tests/fleet/test_multiplexer_boundary.py:283",
+        "tests/fleet/test_multiplexer_boundary.py:296",
         "tests/fleet/test_multiplexer_dynamic_gateway.py:1842",
-        "tests/fleet/test_multiplexer_schema_disclosure.py:12"
+        "tests/fleet/test_multiplexer_dynamic_gateway.py:1859"
       ]
     }
   ]

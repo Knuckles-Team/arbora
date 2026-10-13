@@ -1854,3 +1854,48 @@ def test_prefixing_preserves_child_annotations_and_output_schema(tmp_path):
     assert forwarded[0].output_schema == source.output_schema
     assert forwarded[0].input_schema == source.input_schema
     assert forwarded[0].meta == source.meta
+
+
+@pytest.mark.spec("GRAPHOS-FLEET-R035")
+@pytest.mark.usefixtures("stdio_fleet_authority")
+async def test_output_only_reconnect_refreshes_descriptor_revision_and_cache(tmp_path):
+    server = "schema-mcp"
+    mux = multiplexer_from_fixture(
+        _write_config(tmp_path, {server: {"command": "schema-child", "args": []}})
+    )
+    original = _schema_tool("query", "request")
+    updated = original.model_copy(
+        update={
+            "output_schema": {
+                "type": "object",
+                "properties": {"current": {"type": "integer"}},
+            }
+        }
+    )
+    before = _SchemaGenerationSession([original], tag="before")
+    after = _SchemaGenerationSession([updated], tag="after")
+    host, mounted = await _reconnect_mounted(mux, server, [before, after])
+    name = mounted[0].name
+    _register_forwarder(host, mux, mounted[0])
+    runtime = mux.children[server]
+    revision = mux._child_schema_revisions[server]
+    mux._probe_cache[server] = {"tools": ["old-output"]}
+    mux._tool_embeddings[f"{server}::query"] = [0.1]
+    try:
+        runtime.request_recycle()
+        await _wait_for_condition(
+            lambda: runtime.state == "up" and mux.sessions[server] is after
+        )
+        assert mux._child_schema_revisions[server] == revision + 1
+        assert mux.tool_object(name).output_schema == updated.output_schema
+        assert mux.tool_object(name).input_schema == original.input_schema
+        assert mux.tool_object(name).annotations == original.annotations
+        assert mux.tool_object(name).meta == original.meta
+        assert server not in mux._probe_cache
+        assert f"{server}::query" not in mux._tool_embeddings
+        assert before.calls == after.calls == []
+        result = await mux.call_proxied_tool(name, {})
+        assert result.content[0].text == "after:query"
+        assert before.listed == after.listed == 1
+    finally:
+        await mux.aclose()
