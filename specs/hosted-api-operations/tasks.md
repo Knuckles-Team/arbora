@@ -135,10 +135,14 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **GRAPHOS-OPS-R024.4.5:** Authority and replay; implement the planned served positive and negative acceptance.
 - [ ] **GRAPHOS-OPS-R024.4.6:** Registration and served proof; implement the planned served positive and negative acceptance.
 
-## Owner-bound projections (GRAPHOS-OPS-R054–R058)
+## Owner-bound projections (GRAPHOS-OPS-R054–R058, R061, R063)
 
 - [ ] **R054:** Resolve the AU-INTEGRATION-R014 producer operation and receipt; keep generic RLM benchmarking separate.
 - [ ] **R055:** Resolve AU liveness/proposal contracts before exposing remediation; preserve explicit run/process approval.
 - [ ] **R056:** Resolve the EG/AU review operation, finding schema, and impact-filter contract; leave `decide.commit` unchanged.
 - [ ] **R057:** Resolve EG R094 and SDK source-effect/receipt contracts before defining the GraphOS serializer or difference oracle.
 - [ ] **R058:** Resolve WebUI table-control/statistics requirements and EG producer bindings before extending schema-context reads.
+- [ ] **GRAPHOS-OPS-R061:** Define closed indexed-usage query/projection models and the EG reader in usage.py. Bind the tenant to the authenticated caller principal; ignore client-supplied tenant values. Preserve producer counters, exact totals, pinned PriceTableV1, revisions, cursor, unknown reasons, and the R010.101 latency profile. Keep runs.metrics and context budgets distinct.
+- [ ] **GRAPHOS-OPS-R061:** Wire the existing registry/invoke path to ObservabilityView.tsx. Specify served authorization, independent-ledger, pagination, unknown-value, stale-revision, and latency-profile acceptance.
+- [ ] **GRAPHOS-OPS-R063:** Define typed evaluation and context reads in graph_os/api/ops/retrieval.py. Bind the EG R100.100 ranking receipt and context method. Require identical inputs across registered algorithms. Preserve original-text UTF-8 offsets, revisions, authentication, and span bounds.
+- [ ] **GRAPHOS-OPS-R063:** Wire the shared registry/invoke route to the WebUI comparison panel. Specify served two-algorithm and independent-metric checks. Cover Unicode offsets, stale or denied access, missing labels, invalid maps, and over-limit spans.
