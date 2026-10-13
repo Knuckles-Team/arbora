@@ -1200,7 +1200,8 @@
         "1e55e62acb2a",
         "35fbba91b24b",
         "61c7f230ec1e",
-        "763701d591a8"
+        "763701d591a8",
+        "b8f3e4a01330"
       ],
       "verified_by": [
         "tests/fleet/test_multiplexer_schema_disclosure.py:12"
