@@ -724,23 +724,32 @@ def _bounded_tool_annotations(tool: _typing.Any) -> dict | None:
     return dumped
 
 
+def _bounded_tool_schemas(tool: _typing.Any) -> dict[str, _typing.Any]:
+    """Project typed schemas before the catalog's shared size/depth validation."""
+    input_schema = getattr(tool, "input_schema", None) or {}
+    output_schema = getattr(tool, "output_schema", None)
+    if not isinstance(input_schema, dict):
+        raise RuntimeError("MCP child tool catalog is invalid")
+    schemas = {"inputSchema": input_schema}
+    if output_schema is not None:
+        if not isinstance(output_schema, dict):
+            raise RuntimeError("MCP child tool catalog is invalid")
+        schemas["outputSchema"] = output_schema
+    return schemas
+
+
 def _bounded_tool_entry(tool: _typing.Any) -> dict[str, _typing.Any]:
     """Project and validate ONE child tool descriptor."""
 
     name = getattr(tool, "name", None)
     description = getattr(tool, "description", "") or ""
-    input_schema = getattr(tool, "input_schema", None) or {}
     annotations = _bounded_tool_annotations(tool)
-    if (
-        not _bounded_catalog_name(name)
-        or not isinstance(description, str)
-        or not isinstance(input_schema, dict)
-    ):
+    if not _bounded_catalog_name(name) or not isinstance(description, str):
         raise RuntimeError("MCP child tool catalog is invalid")
     item: dict[str, _typing.Any] = {
         "name": name,
         "description": description,
-        "inputSchema": input_schema,
+        **_bounded_tool_schemas(tool),
     }
     if annotations is not None:
         item["annotations"] = annotations
@@ -2530,8 +2539,275 @@ class MCPMultiplexer:
             )
         return server_name, original_name, child_config, runtime
 
+    @staticmethod
+    def _schema_disclosure_for_tool(
+        descriptor: _typing.Any, original_name: str
+    ) -> tuple[_typing.Any, _typing.Any] | None:
+        """Select one SDK-validated manifest from the admitted tool metadata."""
+        metadata = getattr(descriptor, "meta", None)
+        raw_manifest = (
+            metadata.get("openapi_schema")
+            if isinstance(metadata, _collections_abc.Mapping)
+            else None
+        )
+        if raw_manifest is None:
+            if original_name.startswith("operation_"):
+                raise _fastmcp_exceptions.ToolError(
+                    "OpenAPI operation schema disclosure is missing"
+                )
+            return None
+        try:
+            from agent_connector_sdk.mcp.schema_disclosure import SchemaManifest
+        except ImportError:
+            raise _fastmcp_exceptions.ToolError(
+                "OpenAPI schema disclosure contract is unavailable"
+            ) from None
+        try:
+            manifest = SchemaManifest.model_validate(raw_manifest)
+        except (TypeError, ValueError):
+            raise _fastmcp_exceptions.ToolError(
+                "OpenAPI operation schema disclosure is invalid"
+            ) from None
+        if manifest.alias != original_name:
+            raise _fastmcp_exceptions.ToolError(
+                "OpenAPI operation schema identity does not match the admitted tool"
+            )
+        return SchemaManifest, manifest
+
+    @staticmethod
+    def _schema_resource_payload(result: _typing.Any) -> dict[str, _typing.Any]:
+        """Read one bounded JSON text resource without trusting provider output."""
+        contents = getattr(result, "contents", None)
+        if not isinstance(contents, (list, tuple)) or len(contents) != 1:
+            raise _fastmcp_exceptions.ToolError(
+                "OpenAPI schema resource has an invalid content envelope"
+            )
+        item = contents[0]
+        mime_type = getattr(item, "mime_type", getattr(item, "mimeType", None))
+        text = getattr(item, "text", None)
+        if mime_type != "application/json" or not isinstance(text, str):
+            raise _fastmcp_exceptions.ToolError(
+                "OpenAPI schema resource is not JSON text"
+            )
+        if len(text.encode("utf-8")) > 32 * 1024:
+            raise _fastmcp_exceptions.ToolError(
+                "OpenAPI schema resource exceeds its envelope limit"
+            )
+        try:
+            payload = json.loads(text)
+        except (TypeError, ValueError):
+            raise _fastmcp_exceptions.ToolError(
+                "OpenAPI schema resource is not valid JSON"
+            ) from None
+        if not isinstance(payload, dict):
+            raise _fastmcp_exceptions.ToolError(
+                "OpenAPI schema resource has an invalid document"
+            )
+        return payload
+
+    async def _preflight_openapi_schema(
+        self,
+        session: _typing.Any,
+        manifest_model: _typing.Any,
+        manifest: _typing.Any,
+        descriptor: _typing.Any,
+        arguments: dict[str, _typing.Any],
+        before_read: _typing.Callable[[], None],
+    ) -> None:
+        """Fetch and reconstruct the selected schema through this child session."""
+        from agent_connector_sdk.mcp.schema_disclosure import reconstruct_schema
+
+        before_read()
+        manifest_result = await session.read_resource(manifest.manifest_uri)
+        remote_manifest_payload = self._schema_resource_payload(manifest_result)
+        try:
+            remote_manifest = manifest_model.model_validate(remote_manifest_payload)
+        except (TypeError, ValueError):
+            raise _fastmcp_exceptions.ToolError(
+                "OpenAPI schema manifest is invalid"
+            ) from None
+        if remote_manifest.model_dump() != manifest.model_dump():
+            raise _fastmcp_exceptions.ToolError(
+                "OpenAPI schema manifest no longer matches the selected tool"
+            )
+
+        fragments = []
+        for index in range(manifest.fragment_count):
+            before_read()
+            uri = manifest.fragment_uri_template.format(index=index)
+            result = await session.read_resource(uri)
+            fragments.append(self._schema_resource_payload(result))
+        try:
+            reconstructed = reconstruct_schema(manifest.model_dump(), fragments)
+        except (TypeError, ValueError):
+            raise _fastmcp_exceptions.ToolError(
+                "OpenAPI schema fragments failed complete reconstruction"
+            ) from None
+
+        self._assert_reconstructed_descriptor(reconstructed, descriptor)
+        self._assert_disclosed_action(
+            reconstructed["inputSchema"], manifest.operation, arguments
+        )
+
+    @staticmethod
+    def _assert_reconstructed_descriptor(
+        reconstructed: dict[str, _typing.Any], descriptor: _typing.Any
+    ) -> None:
+        """Require both reconstructed schemas to equal the admitted descriptor."""
+        input_schema = getattr(descriptor, "input_schema", None)
+        output_schema = getattr(descriptor, "output_schema", None)
+        if (
+            not isinstance(input_schema, dict)
+            or reconstructed["inputSchema"] != input_schema
+            or not isinstance(output_schema, dict)
+            or reconstructed["outputSchema"] != output_schema
+        ):
+            raise _fastmcp_exceptions.ToolError(
+                "Reconstructed OpenAPI schema differs from the admitted tool"
+            )
+
+    @staticmethod
+    def _assert_disclosed_action(
+        input_schema: dict[str, _typing.Any],
+        operation: str,
+        arguments: dict[str, _typing.Any],
+    ) -> None:
+        """Bind the sole schema action to the manifest and requested operation."""
+        branches = input_schema.get("oneOf")
+        if not isinstance(branches, list) or len(branches) != 1:
+            raise _fastmcp_exceptions.ToolError(
+                "OpenAPI operation schema is not bound to one action"
+            )
+        action_schema = (
+            branches[0].get("properties", {}).get("action", {})
+            if isinstance(branches[0], dict)
+            else {}
+        )
+        if (
+            not isinstance(action_schema, dict)
+            or (
+                action_schema.get("enum") != [operation]
+                and action_schema.get("const") != operation
+            )
+            or arguments.get("action") != operation
+        ):
+            raise _fastmcp_exceptions.ToolError(
+                "OpenAPI operation does not match the requested action"
+            )
+
+    def _proxied_tool_allows_transient_retry(self, prefixed_name: str) -> bool:
+        """Retry only a currently admitted tool whose effect is explicitly read-only."""
+        descriptor = next(
+            (tool for tool in self.aggregated_tools if tool.name == prefixed_name),
+            None,
+        )
+        if descriptor is None:
+            return False
+        try:
+            from graph_os.api.registry import Effect
+            from graph_os.fleet.gateway_ops import annotation_effect
+
+            effect, _, _ = annotation_effect(getattr(descriptor, "annotations", None))
+        except (TypeError, ValueError):
+            return False
+        return effect is Effect.READ
+
+    def _select_proxied_disclosure(
+        self, prefixed_name: str, original_name: str
+    ) -> tuple[_typing.Any, _typing.Any]:
+        """Select the currently visible descriptor and its disclosure contract."""
+        if not self.tool_dispatchable(prefixed_name):
+            raise _fastmcp_exceptions.ToolError(
+                "MCP child tool is not loaded for this session"
+            )
+        descriptor = next(
+            (tool for tool in self.aggregated_tools if tool.name == prefixed_name),
+            None,
+        )
+        if descriptor is None and original_name.startswith("operation_"):
+            raise _fastmcp_exceptions.ToolError(
+                "OpenAPI operation is not in the admitted child catalog"
+            )
+        selected_disclosure = (
+            self._schema_disclosure_for_tool(descriptor, original_name)
+            if descriptor is not None
+            else None
+        )
+
+        return descriptor, selected_disclosure
+
+    def _assert_proxied_catalog(
+        self,
+        prefixed_name: str,
+        server_name: str,
+        original_name: str,
+        runtime: _typing.Any,
+        epoch: int,
+        revision: int,
+    ) -> None:
+        """Recheck the catalog facts captured when this call was admitted."""
+        if (
+            not self.tool_dispatchable(prefixed_name)
+            or self._catalog_epoch != epoch
+            or self.children.get(server_name) is not runtime
+            or self.tool_to_server.get(prefixed_name) != (server_name, original_name)
+            or server_name in self._child_schema_refresh_errors
+            or self._child_schema_revisions.get(server_name, 0) != revision
+        ):
+            raise _fastmcp_exceptions.ToolError(
+                "MCP child admission changed before dispatch"
+            )
+
+    def _proxied_admission_checker(
+        self,
+        prefixed_name: str,
+        server_name: str,
+        original_name: str,
+        child_config: dict,
+        runtime: _typing.Any,
+        epoch: int,
+        revision: int,
+        generation: int,
+        schema_bound: bool,
+    ) -> _typing.Callable[[int, str | None], None]:
+        """Capture generation and authorization checks for queue and preflight waits."""
+
+        def recheck(current_generation: int, _secret: str | None) -> None:
+            _require_fleet_capability("delegate", _child_required_scopes(child_config))
+            if runtime.generation != current_generation or (
+                schema_bound and runtime.generation != generation
+            ):
+                raise _fastmcp_exceptions.ToolError(
+                    "MCP child admission changed before dispatch"
+                )
+            self._assert_proxied_catalog(
+                prefixed_name, server_name, original_name, runtime, epoch, revision
+            )
+
+        return recheck
+
+    def _make_schema_preflight(
+        self,
+        selected: _typing.Any,
+        descriptor: _typing.Any,
+        arguments: dict[str, _typing.Any],
+        before_read: _typing.Callable[[], None],
+    ) -> _typing.Callable[[_typing.Any], _typing.Awaitable[None]] | None:
+        """Use the selected session for every read of the chosen disclosure."""
+        if selected is None:
+            return None
+        manifest_model, manifest = selected
+
+        async def preflight(session: _typing.Any) -> None:
+            await self._preflight_openapi_schema(
+                session, manifest_model, manifest, descriptor, arguments, before_read
+            )
+
+        return preflight
+
     async def _dispatch_proxied_call(
         self,
+        prefixed_name: str,
         server_name: str,
         original_name: str,
         child_config: dict,
@@ -2540,8 +2816,46 @@ class MCPMultiplexer:
     ) -> MCPCallToolResult:
         """Forward one admitted call through the child's hardened runtime
         (per-server concurrency limit + bounded queue)."""
+        catalog_epoch_before = self._catalog_epoch
         revision_before = self._child_schema_revisions.get(server_name, 0)
-        result = await runtime.call_tool(original_name, arguments)
+        generation_before = runtime.generation
+        descriptor, selected_disclosure = self._select_proxied_disclosure(
+            prefixed_name, original_name
+        )
+        recheck_admission = self._proxied_admission_checker(
+            prefixed_name,
+            server_name,
+            original_name,
+            child_config,
+            runtime,
+            catalog_epoch_before,
+            revision_before,
+            generation_before,
+            selected_disclosure is not None,
+        )
+        preflight = self._make_schema_preflight(
+            selected_disclosure,
+            descriptor,
+            arguments,
+            lambda: recheck_admission(runtime.generation, None),
+        )
+        result = await runtime.call_tool(
+            original_name,
+            arguments,
+            retry_on_transient=(
+                selected_disclosure is None
+                and self._proxied_tool_allows_transient_retry(prefixed_name)
+            ),
+            generation_marker=generation_before,
+            before_send=recheck_admission,
+            preflight=preflight,
+        )
+        return await self._finalize_proxied_result(server_name, revision_before, result)
+
+    async def _finalize_proxied_result(
+        self, server_name: str, revision_before: int, result: MCPCallToolResult
+    ) -> MCPCallToolResult:
+        """Refuse failed refreshes and deliver schema changes on this live request."""
         # A reconnect can complete while the call above is waiting for the
         # runtime's ready gate.  Do not let that freshly recovered child
         # serve through a route whose outer schema could not be refreshed.
@@ -2578,7 +2892,12 @@ class MCPMultiplexer:
 
         try:
             return await self._dispatch_proxied_call(
-                server_name, original_name, child_config, runtime, call_arguments
+                prefixed_name,
+                server_name,
+                original_name,
+                child_config,
+                runtime,
+                call_arguments,
             )
         except _child_resilience.MCPChildError as e:
             # Typed per-child failure (busy/restarting/failed/circuit-open):
@@ -2638,6 +2957,7 @@ class MCPMultiplexer:
                 "Server is not a configured OAuth-gated remote MCP child"
             )
         _require_fleet_capability("delegate", _child_required_scopes(cfg))
+        catalog_epoch = self._catalog_epoch
         call_arguments = arguments or {}
         _assert_bounded_delegated_value(call_arguments)
         call_timeout = _child_call_timeout(cfg, timeout)
@@ -2647,7 +2967,7 @@ class MCPMultiplexer:
         try:
             return await asyncio.wait_for(
                 self._call_ephemeral_oauth_session(
-                    server_name, original_name, cfg, call_arguments
+                    server_name, original_name, cfg, call_arguments, catalog_epoch
                 ),
                 timeout=call_timeout,
             )
@@ -2662,24 +2982,55 @@ class MCPMultiplexer:
         original_name: str,
         session: _typing.Any,
         runtime_policy: _typing.Any,
-    ) -> None:
+    ) -> _typing.Any | None:
         """Refuse a tool this child's runtime policy does not admit.
 
         ``record_state=False``: an ephemeral per-principal session must never
         write into the process-wide admitted-tool map.
         """
-        if runtime_policy is None:
-            return
         tools_result = await session.list_tools()
+        tools = list(tools_result.tools)
+        admitted = self._oauth_admitted_tools(
+            server_name, original_name, runtime_policy, tools
+        )
+        return self._find_tool_descriptor(admitted, original_name)
+
+    @staticmethod
+    def _find_tool_descriptor(
+        tools: list[_typing.Any], name: str
+    ) -> _typing.Any | None:
+        """Find the exact advertised descriptor for one original child tool name."""
+        return next((tool for tool in tools if tool.name == name), None)
+
+    def _oauth_admitted_tools(
+        self,
+        server_name: str,
+        original_name: str,
+        runtime_policy: _typing.Any,
+        tools: list[_typing.Any],
+    ) -> list[_typing.Any]:
+        """Apply policy without modifying the shared session's admitted-tool map."""
+        if runtime_policy is None:
+            return tools
         admitted = self._admit_runtime_policy_tools(
-            server_name,
-            runtime_policy,
-            list(tools_result.tools),
-            record_state=False,
+            server_name, runtime_policy, tools, record_state=False
         )
         if original_name not in {tool.name for tool in admitted}:
             raise _fastmcp_exceptions.ToolError(
                 "MCP child tool is not admitted by runtime policy"
+            )
+        return admitted
+
+    def _assert_oauth_catalog(self, server_name: str, cfg: dict, epoch: int) -> None:
+        """Reauthorize the principal and refuse a changed child configuration."""
+        _require_fleet_capability("delegate", _child_required_scopes(cfg))
+        if (
+            self._catalog_epoch != epoch
+            or self._catalog is None
+            or self._catalog.get(server_name) is not cfg
+        ):
+            raise _fastmcp_exceptions.ToolError(
+                "MCP child admission changed before dispatch"
             )
 
     async def _call_ephemeral_oauth_session(
@@ -2688,26 +3039,80 @@ class MCPMultiplexer:
         original_name: str,
         cfg: dict,
         arguments: dict[str, _typing.Any],
+        catalog_epoch: int,
     ) -> MCPCallToolResult:
         """One tool call over a dedicated session bound to THIS caller's grant.
 
         The session never joins the shared pool and nothing is cached keyed
         only by server name, so a per-user OAuth grant is never shared.
         """
+        self._assert_oauth_catalog(server_name, cfg, catalog_epoch)
         runtime_cfg, runtime_policy = _prepare_runtime_child_policy(cfg)
         try:
             async with contextlib.AsyncExitStack() as stack:
                 session = await self._open_one_session(server_name, runtime_cfg, stack)
-                await self._assert_oauth_tool_admitted(
-                    server_name, original_name, session, runtime_policy
-                )
-                from graph_os.fleet.gateway_ops import check_native_transport
 
-                check_native_transport(server_name, original_name)
-                return await session.call_tool(original_name, arguments)
+                return await self._invoke_oauth_tool(
+                    session,
+                    server_name,
+                    original_name,
+                    cfg,
+                    arguments,
+                    catalog_epoch,
+                    runtime_policy,
+                )
         finally:
             if runtime_policy is not None:
                 _close_runtime_child_policy(runtime_policy)
+
+    async def _invoke_oauth_tool(
+        self,
+        session: _typing.Any,
+        server_name: str,
+        original_name: str,
+        cfg: dict,
+        arguments: dict[str, _typing.Any],
+        catalog_epoch: int,
+        runtime_policy: _typing.Any,
+    ) -> MCPCallToolResult:
+        """Run admission, schema reads and invocation on the caller's sole session."""
+
+        def recheck_oauth_admission() -> None:
+            self._assert_oauth_catalog(server_name, cfg, catalog_epoch)
+
+        recheck_oauth_admission()
+        descriptor = await self._assert_oauth_tool_admitted(
+            server_name, original_name, session, runtime_policy
+        )
+        selected_disclosure = (
+            self._schema_disclosure_for_tool(descriptor, original_name)
+            if descriptor is not None
+            else None
+        )
+        if original_name.startswith("operation_") and selected_disclosure is None:
+            raise _fastmcp_exceptions.ToolError(
+                "OpenAPI operation is not in the admitted child catalog"
+            )
+
+        from graph_os.fleet.gateway_ops import check_native_transport
+
+        def before_oauth_provider_call() -> None:
+            recheck_oauth_admission()
+            check_native_transport(server_name, original_name)
+
+        if selected_disclosure is not None:
+            manifest_model, manifest = selected_disclosure
+            before_oauth_provider_call()
+            await self._preflight_openapi_schema(
+                session,
+                manifest_model,
+                manifest,
+                descriptor,
+                arguments,
+                before_oauth_provider_call,
+            )
+        before_oauth_provider_call()
+        return await session.call_tool(original_name, arguments)
 
     @staticmethod
     def _tasks_child_capable(initialization: _typing.Any) -> bool:
@@ -3830,6 +4235,8 @@ class MCPMultiplexer:
                     name=prefixed_name,
                     description=tool.description or "",
                     input_schema=tool.input_schema,
+                    output_schema=getattr(tool, "output_schema", None),
+                    annotations=getattr(tool, "annotations", None),
                     # Preserve _meta (carries FastMCP tags) so downstream
                     # visibility filtering sees the child's real tags.
                     _meta=getattr(tool, "meta", None),

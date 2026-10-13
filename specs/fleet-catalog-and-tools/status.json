@@ -113,7 +113,8 @@
     "GRAPHOS-FLEET-R003.7",
     "GRAPHOS-FLEET-R003.8",
     "GRAPHOS-FLEET-R003.9",
-    "GRAPHOS-FLEET-R003.10"
+    "GRAPHOS-FLEET-R003.10",
+    "GRAPHOS-FLEET-R035"
   ],
   "requirements": [
     {
@@ -1190,6 +1191,25 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R035",
+      "title": "Authenticated schema preflight for OpenAPI operation aliases",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "1cf004ee454e",
+        "1e55e62acb2a",
+        "35fbba91b24b",
+        "61c7f230ec1e",
+        "763701d591a8"
+      ],
+      "verified_by": [
+        "tests/fleet/test_multiplexer_boundary.py:275",
+        "tests/fleet/test_multiplexer_boundary.py:283",
+        "tests/fleet/test_multiplexer_boundary.py:296",
+        "tests/fleet/test_multiplexer_dynamic_gateway.py:1842",
+        "tests/fleet/test_multiplexer_dynamic_gateway.py:1859"
+      ]
     }
   ]
 }

@@ -5,7 +5,7 @@
 **Owner:** graph-os
 
 This specification defines architecture and acceptance; it does not establish deployment or completed acceptance.
-**Scope IDs:** GRAPHOS-FLEET-R001, GRAPHOS-FLEET-R002, GRAPHOS-FLEET-R003, GRAPHOS-FLEET-R004, GRAPHOS-FLEET-R005, GRAPHOS-FLEET-R006, GRAPHOS-FLEET-R007, GRAPHOS-FLEET-R008, GRAPHOS-FLEET-R009, GRAPHOS-FLEET-R010, GRAPHOS-FLEET-R011, GRAPHOS-FLEET-R012, GRAPHOS-FLEET-R013, GRAPHOS-FLEET-R014, GRAPHOS-FLEET-R015, GRAPHOS-FLEET-R016, GRAPHOS-FLEET-R017, GRAPHOS-FLEET-R018, GRAPHOS-FLEET-R019, GRAPHOS-FLEET-R020, GRAPHOS-FLEET-R021, GRAPHOS-FLEET-R022, PA-12, GRAPHOS-FLEET-R026, GRAPHOS-FLEET-R027, GRAPHOS-FLEET-R028, GRAPHOS-FLEET-R030.
+**Scope IDs:** GRAPHOS-FLEET-R001, GRAPHOS-FLEET-R002, GRAPHOS-FLEET-R003, GRAPHOS-FLEET-R004, GRAPHOS-FLEET-R005, GRAPHOS-FLEET-R006, GRAPHOS-FLEET-R007, GRAPHOS-FLEET-R008, GRAPHOS-FLEET-R009, GRAPHOS-FLEET-R010, GRAPHOS-FLEET-R011, GRAPHOS-FLEET-R012, GRAPHOS-FLEET-R013, GRAPHOS-FLEET-R014, GRAPHOS-FLEET-R015, GRAPHOS-FLEET-R016, GRAPHOS-FLEET-R017, GRAPHOS-FLEET-R018, GRAPHOS-FLEET-R019, GRAPHOS-FLEET-R020, GRAPHOS-FLEET-R021, GRAPHOS-FLEET-R022, PA-12, GRAPHOS-FLEET-R023, GRAPHOS-FLEET-R024, GRAPHOS-FLEET-R025, GRAPHOS-FLEET-R029, GRAPHOS-FLEET-R026, GRAPHOS-FLEET-R027, GRAPHOS-FLEET-R028, GRAPHOS-FLEET-R030, GRAPHOS-FLEET-R031, GRAPHOS-FLEET-R032, GRAPHOS-FLEET-R033, GRAPHOS-FLEET-R034, GRAPHOS-FLEET-R035.
 
 ## Outcome
 
@@ -30,6 +30,8 @@ Record unresolved design decisions and any dependency, owner, and retry conditio
 11. **Fleet onboarding.** One idempotent pass onboards every enabled streamable-HTTP server in the MCP config. The pass registers the server in `__commons__`. It captures the served tools, prompts, skills and pack resources through the connector SDK. It attests that catalog with EG and imports the pack under the EG binding. A failure of one server leaves the other servers unaffected. The pass reports each failure by server name. The operator command `graph-os-production-ops onboard-fleet` runs one full pass. Boot starts the same pass on a background thread. The boot thread never blocks serving and never stops it. A fresh store needs no manual step.
 12. **Registration renewal.** A `RegisterServer` lease expires after its TTL. EG has no heartbeat operation. Each pass therefore re-registers every lease that expires within six hours. The pass covers fleet servers and the self-served `graph-os` and `agent-utilities` registrations. Each renewal window uses a new idempotency key. The boot thread repeats the pass every 30 minutes. After a pass admits a new server, the multiplexer re-reads the EG catalog. The multiplexer refuses that refresh while a child session runs. Then the next restart admits the server.
 
+13. **OpenAPI operation schema preflight.** Before invoking an admitted OpenAPI operation alias, GraphOS reads the SDK manifest and all ordered schema fragments. It uses the same authority-admitted child session for reads and invocation. SDK reconstruction must validate the canonical document and all hashes. Both reconstructed schemas must exactly match the admitted tool. The alias, operation and requested action must agree. Recheck caller delegation, runtime generation, catalog revision and tool mapping before every resource read and the final call. Missing, stale, incomplete, oversized or mismatched disclosure refuses before invocation. Do not automatically retry schema-bound aliases after uncertain outcomes. Schema preflight is read-only and does not replace existing MCP write confirmation or effect handling.
+
 ## Delivery slices and ownership
 
 | Slice | IDs | Acceptance boundary |
@@ -37,7 +39,7 @@ Record unresolved design decisions and any dependency, owner, and retry conditio
 | Registry and generated binding | GRAPHOS-FLEET-R011, GRAPHOS-FLEET-R012, GRAPHOS-FLEET-R016 | Exact engine coverage, stable digest, artifact drift checks |
 | Intent and discovery | GRAPHOS-FLEET-R013, GRAPHOS-FLEET-R014, GRAPHOS-FLEET-R005, GRAPHOS-FLEET-R006, GRAPHOS-FLEET-R007 | Ten resident tools, typed schemas, no legacy harvest, FastMCP 4 protocol proof |
 | Connector and fleet item inputs | GRAPHOS-FLEET-R001, GRAPHOS-FLEET-R002, GRAPHOS-FLEET-R003, GRAPHOS-FLEET-R004, GRAPHOS-FLEET-R008 | Real schema pins, pack annotations, typed write-back, sanitized feed metadata |
-| Fleet invocation and safety | GRAPHOS-FLEET-R015, GRAPHOS-FLEET-R018, GRAPHOS-FLEET-R019, GRAPHOS-FLEET-R020, GRAPHOS-FLEET-R021 | Native load/call, exact scopes, policy, no bypass, parity |
+| Fleet invocation and safety | GRAPHOS-FLEET-R015, GRAPHOS-FLEET-R018, GRAPHOS-FLEET-R019, GRAPHOS-FLEET-R020, GRAPHOS-FLEET-R021, GRAPHOS-FLEET-R035 | Native load/call, exact scopes, policy, schema-bound child preflight, no bypass, parity |
 | Orchestration correctness | GRAPHOS-FLEET-R009, GRAPHOS-FLEET-R010 | Atomic admission, correct generated assembly agents |
 | Reload and acceptance | GRAPHOS-FLEET-R022, PA-12, GRAPHOS-FLEET-R017 | Atomic generation swap, re-ingestion, negative cases, replica/served proof |
 | Fleet onboarding | GRAPHOS-FLEET-R026, GRAPHOS-FLEET-R027, GRAPHOS-FLEET-R028, GRAPHOS-FLEET-R030 | Per-server admission, attested import of each child catalog, lease renewal, unapproved access mappings |

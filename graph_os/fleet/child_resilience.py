@@ -60,6 +60,7 @@ import threading
 import time
 from collections import deque
 from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from typing import Any
 
 import anyio
@@ -271,6 +272,15 @@ ConnectFn = Callable[
 GenerationCallback = Callable[[list[Any]], Awaitable[None]]
 
 
+@dataclass(frozen=True)
+class _ToolCallFence:
+    """Keep one attempt's generation, admission check and schema preflight together."""
+
+    generation_marker: int | None
+    before_send: Callable[[int, str | None], None] | None
+    preflight: Callable[[Any], Awaitable[None]] | None
+
+
 class _GenerationChanged(RuntimeError):
     """Internal fence: a request snapshot became stale before send."""
 
@@ -299,6 +309,10 @@ class MCPChildCallTimeoutError(MCPChildError):
     The abandoned call is detached: it keeps its concurrency slot until the
     child actually finishes (or the session dies), so a wedged child applies
     backpressure instead of corrupting the shared session."""
+
+
+class _PreflightDeadlineExpired(MCPChildCallTimeoutError):
+    """The local dispatch deadline expired before any provider invocation."""
 
 
 class MCPChildUnavailableError(MCPChildError):
@@ -877,6 +891,12 @@ class ChildRuntime:
             if not abandoned:  # abandoned calls were already counted (timeout)
                 self._record("ok")
             return
+        self._finish_call_failure(exc, abandoned)
+
+    def _finish_call_failure(self, exc: BaseException, abandoned: bool) -> None:
+        """Classify completed failures without treating local expiry as dead transport."""
+        if isinstance(exc, _PreflightDeadlineExpired):
+            return  # The preflight owner already accounted for this local timeout.
         if isinstance(exc, TRANSPORT_EXCEPTIONS) or is_session_dead(exc):
             # Dead pipe / closed stream / terminated session: the child is gone,
             # not erroring. Rebuild the connection (a redeployed backend drops
@@ -922,7 +942,16 @@ class ChildRuntime:
                 self._ready.wait(), timeout=min(self.connect_timeout, _RECOVERY_WAIT)
             )
 
-    async def call_tool(self, original_name: str, arguments: dict[str, Any]) -> Any:
+    async def call_tool(
+        self,
+        original_name: str,
+        arguments: dict[str, Any],
+        *,
+        retry_on_transient: bool = True,
+        generation_marker: int | None = None,
+        before_send: Callable[[int, str | None], None] | None = None,
+        preflight: Callable[[Any], Awaitable[None]] | None = None,
+    ) -> Any:
         """Forward one tool call to the child under the per-server limits.
 
         Cancellation-safe: the child-side call runs in its own task and is
@@ -931,35 +960,46 @@ class ChildRuntime:
         the concurrency slot is released only when the child finishes.
 
         Self-healing: if the child's session was terminated (e.g. the backend
-        redeployed), the failed attempt triggers a reconnect and the call is
-        retried ONCE on the fresh generation — so a redeploy is invisible to
-        the caller instead of stranding it on "Session terminated"."""
+        redeployed), explicitly retryable calls may run once on the fresh
+        generation. Callers that cannot safely replay an uncertain operation
+        disable that retry; a generation-bound call is rechecked before send."""
         # Recycle a service-authenticated session before its bearer expires, so
         # the call never lands on a session whose auth context has died (which
         # would wedge it until call_timeout instead of erroring).
         await self._recycle_if_stale()
-        for attempt in range(2):
+        attempts = 2 if retry_on_transient else 1
+        for attempt in range(attempts):
             try:
-                return await self._call_once(original_name, arguments)
+                return await self._call_once(
+                    original_name,
+                    arguments,
+                    _ToolCallFence(generation_marker, before_send, preflight),
+                )
             except BaseException as exc:
-                # Retry ONCE on a transient child death — a terminated session
-                # (redeploy) OR the child process crashing mid-call (the
-                # post-restart warm-up race that otherwise surfaced as an empty
-                # "Error executing tool:"). _finish_call already asked the
-                # supervisor to reconnect; make it deterministic and then wait
-                # for the respawned generation (which rebuilds its engine, longer
-                # than the fast-fail ceiling) before re-issuing on the fresh
-                # session.
-                if attempt == 0 and is_transient_child_death(exc):
-                    self.request_restart(reason="transient_child_death")
-                    with contextlib.suppress(TimeoutError):
-                        await asyncio.wait_for(
-                            self._ready.wait(),
-                            timeout=min(self.connect_timeout, _RECOVERY_WAIT),
-                        )
-                    continue
-                raise
+                if not await self._recover_tool_call(exc, retry_on_transient, attempt):
+                    raise
+                generation_marker = self._retry_generation_marker(generation_marker)
         raise AssertionError("unreachable")  # pragma: no cover
+
+    def _retry_generation_marker(self, marker: int | None) -> int | None:
+        """Rebind an explicitly marked retry to the recovered generation."""
+        return None if marker is None else self.generation
+
+    async def _recover_tool_call(
+        self, exc: BaseException, retry_on_transient: bool, attempt: int
+    ) -> bool:
+        """Recycle failed transport and await only an explicitly permitted retry."""
+        if isinstance(exc, _GenerationChanged) or not is_transient_child_death(exc):
+            return False
+        self.request_restart(reason="transient_child_death")
+        if not retry_on_transient or attempt != 0:
+            return False
+        with contextlib.suppress(TimeoutError):
+            await asyncio.wait_for(
+                self._ready.wait(),
+                timeout=min(self.connect_timeout, _RECOVERY_WAIT),
+            )
+        return True
 
     async def call_request(
         self,
@@ -1011,35 +1051,165 @@ class ChildRuntime:
                 raise
         raise AssertionError("unreachable")  # pragma: no cover
 
-    async def _call_once(self, original_name: str, arguments: dict[str, Any]) -> Any:
+    async def _call_once(
+        self,
+        original_name: str,
+        arguments: dict[str, Any],
+        fence: _ToolCallFence,
+    ) -> Any:
         """One forwarding attempt (the body the retry loop wraps)."""
-        try:
-            self.breaker.before_call()
-        except _BreakerOpenSignal:
-            self._record("short_circuited")
-            raise MCPChildCircuitOpenError(self.name, "circuit_open") from None
-        # before_call() claims the single half-open probe slot when the
-        # breaker is recovering; if this call dies before reaching the child
-        # (busy/unavailable), the slot must be returned — as a failed probe,
-        # since the child was not demonstrably reachable. In the closed state
-        # those same pre-call rejections never touch the breaker.
-        probe_claimed = self.breaker.state == "half_open"
+        probe_claimed = self._begin_request()
+        (
+            session,
+            snapshot_generation,
+            snapshot_secret,
+        ) = await self._reserve_tool_session(
+            fence.generation_marker, fence.before_send, probe_claimed
+        )
+        return await self._send_tool(
+            session,
+            original_name,
+            arguments,
+            fence,
+            snapshot_generation,
+            snapshot_secret,
+            probe_claimed,
+        )
+
+    async def _reserve_tool_session(
+        self,
+        generation_marker: int | None,
+        before_send: Callable[[int, str | None], None] | None,
+        probe_claimed: bool,
+    ) -> tuple[Any, int, str | None]:
+        """Reserve one slot and select the same generation checked after waiting."""
         try:
             await self._await_ready()
+            snapshot_generation, snapshot_secret = self.task_generation_snapshot()
             await self._acquire_slot()
         except BaseException:
             if probe_claimed:
                 self.breaker.record_failure()
             raise
         try:
-            session = self._pick_session()
+            if generation_marker is None and before_send is None:
+                session = self._pick_session()
+            else:
+                session = self._select_request_session(
+                    generation_marker,
+                    snapshot_generation,
+                    snapshot_secret,
+                    before_send,
+                )
         except BaseException:
             self._release_slot()
             if probe_claimed:
                 self.breaker.record_failure()
             raise
+        return session, snapshot_generation, snapshot_secret
+
+    def _check_tool_preflight(
+        self,
+        generation_marker: int | None,
+        snapshot_generation: int,
+        snapshot_secret: str | None,
+        before_send: Callable[[int, str | None], None] | None,
+    ) -> None:
+        """Fence a completed preflight before any provider call begins."""
+        expected = (
+            snapshot_generation if generation_marker is None else generation_marker
+        )
+        if self._generation != expected:
+            raise _GenerationChanged(
+                f"Child server '{self.name}' changed connection generation during a preflight"
+            )
+        if before_send is not None:
+            before_send(snapshot_generation, snapshot_secret)
+
+    async def _prepare_tool_dispatch(
+        self,
+        session: Any,
+        fence: _ToolCallFence,
+        generation: int,
+        secret: str | None,
+        assert_active: Callable[[], None],
+        probe_claimed: bool,
+    ) -> None:
+        """Settle a claimed probe when preflight terminates without dispatch."""
+        if fence.preflight is None:
+            return
+        try:
+            await fence.preflight(session)
+            assert_active()
+            self._check_tool_preflight(
+                fence.generation_marker, generation, secret, fence.before_send
+            )
+        except BaseException as exc:
+            self._settle_preflight_failure(exc, probe_claimed)
+            raise
+
+    def _settle_preflight_failure(
+        self, exc: BaseException, probe_claimed: bool
+    ) -> None:
+        """Account once for local expiry, or settle a cancelled/refused probe."""
+        if isinstance(exc, _PreflightDeadlineExpired):
+            self.breaker.record_failure()
+            self._record("timeout")
+        else:
+            self._settle_preflight_probe(probe_claimed)
+
+    def _settle_preflight_probe(self, probe_claimed: bool) -> None:
+        """Reopen an unresolved probe without replaying the refused operation."""
+        if probe_claimed and self.breaker.state == "half_open":
+            self.breaker.record_failure()
+
+    def _tool_call_deadline(self) -> float | None:
+        """Capture the caller's deadline before scheduling the shielded attempt."""
+        if self.call_timeout <= 0:
+            return None
+        return asyncio.get_running_loop().time() + self.call_timeout
+
+    def _assert_tool_dispatch_active(
+        self, owner: asyncio.Task | None, deadline: float | None, abandoned: bool
+    ) -> None:
+        """Observe cancellation and expiry even before the caller's handler runs."""
+        if abandoned or (owner is not None and owner.cancelling()):
+            raise asyncio.CancelledError
+        if deadline is not None and asyncio.get_running_loop().time() >= deadline:
+            raise _PreflightDeadlineExpired(
+                self.name, "tool call deadline expired before dispatch"
+            )
+
+    async def _send_tool(
+        self,
+        session: Any,
+        original_name: str,
+        arguments: dict[str, Any],
+        fence: _ToolCallFence,
+        snapshot_generation: int,
+        snapshot_secret: str | None,
+        probe_claimed: bool,
+    ) -> Any:
+        """Retain the slot through preflight, dispatch and detached completion."""
         self._in_flight += 1
-        inner = asyncio.ensure_future(session.call_tool(original_name, arguments))
+        preflight_abandoned = False
+        owner = asyncio.current_task()
+        deadline = self._tool_call_deadline()
+
+        async def invoke() -> Any:
+            await self._prepare_tool_dispatch(
+                session,
+                fence,
+                snapshot_generation,
+                snapshot_secret,
+                lambda: self._assert_tool_dispatch_active(
+                    owner, deadline, preflight_abandoned
+                ),
+                probe_claimed,
+            )
+            return await session.call_tool(original_name, arguments)
+
+        inner = asyncio.ensure_future(invoke())
         inner.add_done_callback(self._finish_call)
         try:
             if self.call_timeout > 0:
@@ -1048,17 +1218,29 @@ class ChildRuntime:
                 )
             return await asyncio.shield(inner)
         except TimeoutError:
+            preflight_abandoned = True
             # Consecutive timeouts count toward opening the circuit; if the
             # detached call eventually succeeds, its completion closes it.
-            self.breaker.record_failure()
-            self._record("timeout")
-            self._abandoned.add(inner)
+            self._record_tool_timeout(inner)
             raise MCPChildCallTimeoutError(
                 self.name,
                 f"Tool '{original_name}' on child server '{self.name}' did "
                 f"not answer within {self.call_timeout}s; the call was "
                 f"detached and its slot is held until the child finishes.",
             ) from None
+        except asyncio.CancelledError:
+            preflight_abandoned = True
+            raise
+
+    def _record_tool_timeout(self, inner: asyncio.Task) -> None:
+        """Do not recount local expiry when the outer timeout wins delivery."""
+        if inner.done() and not inner.cancelled():
+            if isinstance(inner.exception(), _PreflightDeadlineExpired):
+                return
+        self.breaker.record_failure()
+        self._record("timeout")
+        if not inner.done():
+            self._abandoned.add(inner)
 
     async def _call_request_once(
         self,

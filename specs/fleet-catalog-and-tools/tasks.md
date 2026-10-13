@@ -191,3 +191,8 @@ Historical parent evidence does not bind these new child IDs. Preserve the compl
 - [ ] **GRAPHOS-FLEET-R003.10:** Implement durable replay across host and connector restart and bind the served acceptance defined in test-spec.md.
 
 Preserve all existing R003 tasks and receipts. These added runtime cases have not run for this definition change.
+
+
+## OpenAPI operation schema preflight
+
+- [ ] `GRAPHOS-FLEET-R035`: Bind schema-bound OpenAPI operation aliases to the admitted manifest and complete ordered SDK reconstruction on the invocation session. Compare both input/output schemas and action. Recheck authority/generation for every read and call. Disable uncertain-write replay, update the MCP dependency floor/lock, and record focused-vs-live evidence.
