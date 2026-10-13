@@ -113,7 +113,8 @@
     "GRAPHOS-FLEET-R003.7",
     "GRAPHOS-FLEET-R003.8",
     "GRAPHOS-FLEET-R003.9",
-    "GRAPHOS-FLEET-R003.10"
+    "GRAPHOS-FLEET-R003.10",
+    "GRAPHOS-FLEET-R035"
   ],
   "requirements": [
     {
@@ -1187,6 +1188,13 @@
     {
       "id": "GRAPHOS-FLEET-R003.10",
       "title": "Durable replay across host and connector restart",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R035",
+      "title": "Authenticated schema preflight for OpenAPI operation aliases",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

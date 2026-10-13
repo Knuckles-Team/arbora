@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+from types import SimpleNamespace
 from typing import Any
 
 import mcp.types
@@ -47,6 +48,10 @@ class GatedSession:
         return mcp.types.CallToolResult(
             content=[mcp.types.TextContent(type="text", text=f"ok:{name}")]
         )
+
+
+def _result_is_error(result: Any) -> bool:
+    return bool(getattr(result, "is_error", getattr(result, "isError", False)))
 
 
 class EchoSession:
@@ -137,6 +142,7 @@ async def test_multiplexer_surfaces_busy_error_as_typed_tool_result(tmp_path):
     runtime.adopt_sessions([session])
     mux.children["child"] = runtime
     mux.tool_to_server["ch__tool"] = ("child", "tool")
+    mux._global_visible.add("ch__tool")
 
     blocker = asyncio.create_task(mux.call_proxied_tool("ch__tool", {}))
     await asyncio.sleep(0.01)
@@ -349,7 +355,11 @@ async def test_detached_timeouts_apply_backpressure_until_child_recovers():
 class DeadPipeSession:
     """Fake session over a dead transport: every call hits a closed pipe."""
 
+    def __init__(self) -> None:
+        self.calls = 0
+
     async def call_tool(self, name: str, arguments: dict[str, Any]) -> Any:
+        self.calls += 1
         raise ConnectionResetError("child process exited")
 
 
@@ -378,6 +388,122 @@ async def _wait_for(predicate, timeout: float = 2.0) -> None:
     while not predicate():
         assert asyncio.get_running_loop().time() < deadline, "condition not reached"
         await asyncio.sleep(0.005)
+
+
+@pytest.mark.usefixtures("stdio_fleet_authority")
+async def test_mux_does_not_replay_unannotated_proxied_call_after_transport_loss(
+    tmp_path,
+):
+    dead = DeadPipeSession()
+    recovered = EchoSession("gen2")
+    connector = GenerationConnector([dead, recovered])
+    runtime = ChildRuntime(
+        "write-child",
+        {"max_concurrency": 1},
+        connect=connector,
+        restart_backoff_base=0.01,
+        restart_backoff_cap=0.02,
+    )
+    await runtime.start()
+    mux = multiplexer_from_fixture(tmp_path / "catalog.json")
+    mux._catalog = {"write-child": {}}
+    mux.children["write-child"] = runtime
+    mux.tool_to_server["write__action"] = ("write-child", "action")
+    mux._global_visible.add("write__action")
+
+    result = await mux.call_proxied_tool("write__action", {})
+
+    assert _result_is_error(result)
+    await _wait_for(lambda: runtime.state == "up" and connector.connects == 2)
+    assert dead.calls == 1
+    assert recovered.calls == []
+    await runtime.aclose()
+
+
+@pytest.mark.usefixtures("stdio_fleet_authority")
+async def test_mux_retries_explicitly_read_only_call_on_unchanged_recovered_schema(
+    tmp_path,
+):
+    dead = DeadPipeSession()
+    recovered = EchoSession("gen2")
+    connector = GenerationConnector([dead, recovered])
+    runtime = ChildRuntime(
+        "read-child",
+        {"max_concurrency": 1},
+        connect=connector,
+        restart_backoff_base=0.01,
+        restart_backoff_cap=0.02,
+    )
+    await runtime.start()
+    mux = multiplexer_from_fixture(tmp_path / "catalog.json")
+    mux._catalog = {"read-child": {}}
+    mux.children["read-child"] = runtime
+    mux.tool_to_server["read__lookup"] = ("read-child", "lookup")
+    mux._global_visible.add("read__lookup")
+    mux.aggregated_tools.append(
+        SimpleNamespace(name="read__lookup", annotations={"readOnlyHint": True})
+    )
+
+    result = await mux.call_proxied_tool("read__lookup", {})
+
+    assert not _result_is_error(result)
+    assert result.content[0].text == "gen2:lookup"
+    assert dead.calls == 1
+    assert recovered.calls == ["lookup"]
+    await runtime.aclose()
+
+
+@pytest.mark.usefixtures("stdio_fleet_authority")
+async def test_mux_rechecks_catalog_epoch_after_child_queue_wait(tmp_path):
+    mux = multiplexer_from_fixture(tmp_path / "catalog.json")
+    mux._catalog = {"child": {}}
+    session = GatedSession()
+    runtime = ChildRuntime(
+        "child",
+        {"max_concurrency": 1, "queue_timeout": 0.5},
+    )
+    runtime.adopt_sessions([session])
+    mux.children["child"] = runtime
+    mux.tool_to_server["child__tool"] = ("child", "tool")
+    mux._global_visible.add("child__tool")
+
+    first = asyncio.create_task(mux.call_proxied_tool("child__tool", {}))
+    await _wait_for(lambda: session.started == 1)
+    queued = asyncio.create_task(mux.call_proxied_tool("child__tool", {}))
+    await _wait_for(lambda: runtime.status()["queued"] == 1)
+    mux._catalog_epoch += 1
+    session.release.set()
+
+    first_result, queued_result = await asyncio.gather(first, queued)
+    assert not _result_is_error(first_result)
+    assert _result_is_error(queued_result)
+    assert session.started == 1
+
+
+async def test_call_tool_rejects_stale_generation_before_session_invocation():
+    retired = EchoSession("retired")
+    current = EchoSession("current")
+    runtime = ChildRuntime("generation-bound", {})
+    runtime.adopt_sessions([retired])
+    admitted_generation = runtime.generation
+    runtime.adopt_sessions([current])
+    before_send: list[tuple[int, str | None]] = []
+
+    with pytest.raises(RuntimeError, match="changed connection generation"):
+        await runtime.call_tool(
+            "lookup",
+            {},
+            retry_on_transient=False,
+            generation_marker=admitted_generation,
+            before_send=lambda generation, secret: before_send.append(
+                (generation, secret)
+            ),
+        )
+
+    assert retired.calls == []
+    assert current.calls == []
+    assert before_send == []
+    assert runtime.in_flight == 0
 
 
 async def test_crash_triggers_restart_and_child_recovers():
@@ -701,7 +827,12 @@ async def test_breaker_opens_after_consecutive_transport_failures_then_recovers(
     assert session.calls == 3
 
 
-async def test_failed_half_open_probe_reopens_the_circuit():
+async def test_failed_half_open_probe_reopens_the_circuit(monkeypatch):
+    clock = SimpleNamespace(now=100.0)
+    monkeypatch.setattr(
+        "graph_os.fleet.child_resilience.time",
+        SimpleNamespace(monotonic=lambda: clock.now),
+    )
     session = FlakySession(failures=10)
     runtime = ChildRuntime(
         "relapse", {"breaker_threshold": 1, "breaker_cooldown": 0.05}
@@ -716,7 +847,7 @@ async def test_failed_half_open_probe_reopens_the_circuit():
         await runtime.call_tool("t", {})
     assert runtime.breaker.state == "open"
 
-    await asyncio.sleep(0.06)
+    clock.now += 0.06
     # Same story for the half-open probe: it fails, and the retry inside
     # that same call reopens the breaker before returning, so this call
     # ALSO surfaces the typed circuit-open result (not the raw error).
@@ -789,6 +920,10 @@ async def test_multiplexer_surfaces_circuit_open_as_typed_tool_result(tmp_path):
     runtime.adopt_sessions([FlakySession(failures=1)])
     mux.children["fused"] = runtime
     mux.tool_to_server["fu__tool"] = ("fused", "tool")
+    mux._global_visible.add("fu__tool")
+    mux.aggregated_tools.append(
+        SimpleNamespace(name="fu__tool", annotations={"readOnlyHint": True})
+    )
 
     # ChildRuntime.call_tool retries once on a transient child death; with
     # breaker_threshold=1 the single failure already opens the circuit
