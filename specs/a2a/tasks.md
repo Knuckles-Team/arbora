@@ -116,3 +116,7 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
 ## Critique-gated output release (GRAPHOS-A2A-R022)
 
 - [ ] Bind the AU checklist/critique producer and EG exact-output verdict contract. Preserve R006.2.1 and R006.5 caller/signed-authority prerequisites. Keep routing separate from critique acceptance; then add the proposed release tests.
+
+## Additional owner requirements
+
+- [ ] `GRAPHOS-A2A-R001.2`: Deliver every requirement in requirements.md.

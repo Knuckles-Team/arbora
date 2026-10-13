@@ -177,3 +177,12 @@ The required redacted host sink stays enabled in every case; the preference cont
 Retain all existing tenant isolation, bounded delivery, rotation gaps, shutdown and single-authority requirements.
 R009.6 proves this through the real host and public adapter together with TUI-RUNTIME-R002.6.
 A controlled adapter can prove only the host handoff, not unified terminal rendering.
+
+## Additional owner requirements
+
+- `GRAPHOS-HOST-R023.3`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R008.6`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R026.6`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R022.1`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R010.8`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-HOST-R032`: Plan the owner work and dependencies defined in requirements.md.

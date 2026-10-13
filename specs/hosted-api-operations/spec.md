@@ -83,3 +83,21 @@ The GraphOS contribution includes a machine-readable former-tool inventory: each
 4. The scoped quality gates in [test-spec.md](test-spec.md) pass without suppressions, copied authority logic, or undisclosed private environment dependencies.
 
 Requirement IDs are defined in [requirements.md](requirements.md); delivery state per ID is in `status.json`.
+
+## Additional owner requirements
+
+- `GRAPHOS-OPS-R024.1.1`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R014.1`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R022.3`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R022.4`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R053.7`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R021.2.1.1`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R050.2.1`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R009.1`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R053.8`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R059`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R060`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R062`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R064`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R065`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-OPS-R066`: Owner scope and complete acceptance are defined in requirements.md.

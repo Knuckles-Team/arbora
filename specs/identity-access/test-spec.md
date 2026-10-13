@@ -108,3 +108,7 @@ An opaque token without provider expiry may use only the explicit bounded host l
 Forged profile selection, wrong connector, cross-tenant binding, excess scopes and unapproved resource audience all refuse with zero resumed effects.
 The outbound opaque profile must not admit an unsigned GraphOS API bearer or remove its required tenant claim.
 Inspect responses and logs for token/code leakage. These acceptance cases have not run. They require the runtime wiring.
+
+## Additional owner requirements
+
+- `GRAPHOS-IDENTITY-R026.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.

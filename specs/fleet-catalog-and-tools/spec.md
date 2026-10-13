@@ -93,3 +93,11 @@ GRAPHOS-OPS-R009 remains a reference to existing authority requirements; this ex
 The SDK producer definition merged at `0c6c53dd63fe2a8f9b2ac3568b6d0e8f2c602734`.
 That definition does not establish an available production repository adapter or completed runtime acceptance.
 The current GraphOS preview helpers do not perform this served journey. The required acceptance cases have not run for this change.
+
+## Additional owner requirements
+
+- `GRAPHOS-FLEET-R024.10`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-FLEET-R024.11`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-FLEET-R002.9`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-FLEET-R034.13`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-FLEET-R034.14`: Owner scope and complete acceptance are defined in requirements.md.

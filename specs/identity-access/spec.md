@@ -111,3 +111,7 @@ R017.3 through R017.8 require stateless bearer validation with a signed tenant c
 R019.1 through R019.6 require exact default-deny resource grants at web, SSH, RDP and database protocol boundaries.
 Existing OIDC mapping remains under R009. Host co-location grants no credential or resource access.
 Missing broker, SDK transport and EG/protocol enforcement wiring keeps these capabilities unavailable.
+
+## Additional owner requirements
+
+- `GRAPHOS-IDENTITY-R026.8`: Owner scope and complete acceptance are defined in requirements.md.

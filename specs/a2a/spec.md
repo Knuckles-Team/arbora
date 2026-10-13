@@ -126,3 +126,7 @@ GraphOS owns admission, refusal, and provenance at the door: given a request nam
 4. Quality gates pass at the exact default-branch revision with no duplicate admission authority, local heuristic fallback, or scanner suppression.
 
 Requirement IDs are defined in [requirements.md](requirements.md); delivery state per ID is in `status.json`.
+
+## Additional owner requirements
+
+- `GRAPHOS-A2A-R001.2`: Owner scope and complete acceptance are defined in requirements.md.

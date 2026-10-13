@@ -85,3 +85,12 @@ These cases extend GRAPHOS-HOST-R009.5, R009.6 and R010.7 with TUI-RUNTIME-R002.
 - `tests/host/test_terminal_host_served.py::test_terminal_log_handoff_preserves_scope_and_lifecycle`: two tenants share a workspace. Use the production adapter and reader to prove tenant-local records, rotation gaps, reconnect authorization, denial clearing and bounded cancellation. Preserve existing single-engine, single-multiplexer and owned-thread shutdown assertions.
 
 Missing receipt fields or public consumer exports block positive served acceptance. Helper success or a log file alone cannot satisfy it. Record both revisions and the authenticated handoff identity; never credentials.
+
+## Additional owner requirements
+
+- `GRAPHOS-HOST-R023.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R008.6`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R026.6`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R022.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R010.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-HOST-R032`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.

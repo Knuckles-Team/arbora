@@ -146,3 +146,21 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **GRAPHOS-OPS-R061:** Wire the existing registry/invoke path to ObservabilityView.tsx. Specify served authorization, independent-ledger, pagination, unknown-value, stale-revision, and latency-profile acceptance.
 - [ ] **GRAPHOS-OPS-R063:** Define typed evaluation and context reads in graph_os/api/ops/retrieval.py. Bind the EG R100.100 ranking receipt and context method. Require identical inputs across registered algorithms. Preserve original-text UTF-8 offsets, revisions, authentication, and span bounds.
 - [ ] **GRAPHOS-OPS-R063:** Wire the shared registry/invoke route to the WebUI comparison panel. Specify served two-algorithm and independent-metric checks. Cover Unicode offsets, stale or denied access, missing labels, invalid maps, and over-limit spans.
+
+## Additional owner requirements
+
+- [ ] `GRAPHOS-OPS-R024.1.1`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R014.1`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R022.3`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R022.4`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R053.7`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R021.2.1.1`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R050.2.1`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R009.1`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R053.8`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-OPS-R059`: Resolve the producer contracts named in plan.md. Then implement the existing registry attachment and its served proof. Preserve each specified refusal.
+- [ ] `GRAPHOS-OPS-R060`: Resolve the producer contracts named in plan.md. Then implement the existing registry attachment and its served proof. Preserve each specified refusal.
+- [ ] `GRAPHOS-OPS-R062`: Resolve the producer contracts named in plan.md. Then implement the existing registry attachment and its served proof. Preserve each specified refusal.
+- [ ] `GRAPHOS-OPS-R064`: Resolve the producer contracts named in plan.md. Then implement the existing registry attachment and its served proof. Preserve each specified refusal.
+- [ ] `GRAPHOS-OPS-R065`: Resolve the producer contracts named in plan.md. Then implement the existing registry attachment and its served proof. Preserve each specified refusal.
+- [ ] `GRAPHOS-OPS-R066`: Resolve the producer contracts named in plan.md. Then implement the existing registry attachment and its served proof. Preserve each specified refusal.

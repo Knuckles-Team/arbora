@@ -121,3 +121,12 @@ Status vocabulary is defined in [spec.md](spec.md). Check a task only after its 
 
 - [ ] Bind the effective authenticated web_logs receipt field and public run_host_terminal/HostLogReader.read interfaces for GRAPHOS-HOST-R009.5, R009.6 and R010.7. Implement producer prerequisites before claiming readiness.
 - [ ] Run the three named authenticated terminal-log cases in test-spec.md with TUI-RUNTIME-R002.2 through R002.6, including enabled reads and disabled/invalid zero-read observations. Preserve all existing lifecycle and scope acceptance.
+
+## Additional owner requirements
+
+- [ ] `GRAPHOS-HOST-R023.3`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R008.6`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R026.6`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R022.1`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R010.8`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-HOST-R032`: Deliver every requirement in requirements.md.

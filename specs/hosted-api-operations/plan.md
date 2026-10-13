@@ -403,3 +403,131 @@ Missing producer implementation must remain unavailable. Definitions and planned
 2. Extend graph_os/api/ops/retrieval.py with closed evaluation, comparison, and context models. Register retrieval.evaluation.compare and retrieval.context.search. Use existing build_read_op, memory:read, registry factory, and shared invoke for HTTP/MCP.
 3. Require identical corpus, complete label-set revision/digest, query-set ID/revision/digest, evaluator revision, k, and query inputs across algorithms. Pin each algorithm's settings digest to its own registered configuration. Preserve producer metrics and result digests. For hits_at_k, use the full identically labeled query set as denominator. Count a query when any relevant result appears in top k. Preserve half-open UTF-8 offsets into original stored text. Bind query/index/authorization revisions and a snapshot cursor. Limit responses to 100 spans and 8 KiB each. If indexing normalizes text, preserve a separate NFC digest and validate its byte map to original text.
 4. Align WebUI TryItPanel.tsx under WEBUI-APPS-R001.1.1-.6. Served proof checks two-algorithm metrics and identical inputs. It tests hostile-source escaping before highlighting and preserves original byte spans. It also checks Unicode slicing, authorization, staleness, missing labels, invalid maps, and limits. This remains planned work, not runtime delivery.
+
+## Additional owner requirements
+
+- `GRAPHOS-OPS-R024.1.1`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R014.1`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R022.3`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R022.4`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R053.7`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R021.2.1.1`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R050.2.1`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R009.1`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R053.8`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R059`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R060`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R062`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R064`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R065`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-OPS-R066`: Plan the owner work and dependencies defined in requirements.md.
+
+## Projection bindings and producer prerequisites (R059, R060, R062, R064–R066)
+
+These operation names and schemas are proposed contracts. No new operation is registered by this specification change.
+All six projections reuse the current authenticated invocation path.
+HTTP enters `graph_os/api/http/routes.py:make_endpoint` at line 96.
+MCP enters `graph_os/api/mcp/verbs.py:dispatch_verb` at line 377 and `_invoke_and_render` at line 259.
+Both reach `graph_os/api/invoke/pipeline.py:invoke` at line 810.
+Register approved declarations in `graph_os/api/ops/registry_factory.py:get_registry` at line 16.
+Bind verified caller authority before producer access; client-supplied tenant fields cannot select authority.
+Derive scopes from the published EG contract. Missing scope or owner method keeps the operation unavailable.
+A proposed method name below describes an owner specification, not an existing runtime export.
+
+### R059: evolution metrics
+
+Extend `graph_os/api/ops/usage.py:operations` and its composed reader for `evolution.proposals.metrics`.
+The producer is `EG-ORCH-VOCAB-R010.100`, proposed `Method::EvolutionTraceMetrics` and `EvolutionTraceMetricsV1`.
+Preserve proposal, prompt, metric-window, metric, progress, and trace IDs, revisions, and digests.
+Preserve ordered trace references, missing IDs, measured/unknown states, units, and partial coverage.
+Missing traces never become zero; trace counts and calibration never substitute for AU progress.
+The AU progress-to-ordered-run producer schema remains unassigned. Its publication blocks positive served acceptance.
+Map the result to WEBUI-APPS-R004.7 without joining or authoring progress in the browser or host.
+Planned proof: `tests/api/test_evolution_metrics_served.py::test_proposal_metrics_preserve_owner_join_and_denial`.
+Independently read two stored traces, their metrics, and AU progress through authenticated HTTP and MCP.
+Refuse stale windows, changed digests, unknown prompt revisions, and foreign tenants without data disclosure.
+
+### R060: harness sessions
+
+Extend the existing usage reader and registry for manifest, discovery, browse, search, and cost projections.
+SDK-SOURCE-INGEST-R013 owns `connector-sync --once` and the complete source-operation manifest.
+EG-ORCH-VOCAB-R009.101 specifies `Method::SearchHarnessSessions` over the `IndexHarnessSessionBatch` projection.
+Session costs use EG-ORCH-VOCAB-R010.101 accounting, currency, and coverage semantics.
+GraphOS reads those authorities; it cannot create another session index or author a supported-source list.
+Require a complete owner-approved manifest with source operations, revisions, authority, cursor forms, and coverage.
+That manifest remains an external prerequisite; do not infer supported harnesses from example fixtures.
+Use page sizes from 1 through 100 and preserve the producer's snapshot-bound cursor.
+Bind manifest and sync receipt digests, indexed revision, source identity, missing sources, and explicit refusal states.
+Return unavailable sources in coverage without revealing their protected session metadata.
+Planned proof: `tests/api/test_sessions_served.py::test_full_manifest_sessions_and_costs_survive_restart`.
+Exercise two available sources and a third unavailable source through HTTP, MCP, and WEBUI-APPS-R006.4.
+Check independent trace readback, replay, restart, cursor paging, cost units, unknown prices, and cross-tenant refusal.
+
+### R062: graph changes
+
+EG-DURABLE-KERNEL-R043.100 specifies `Method::OpenGraphSnapshot` and `Method::ReadGraphChanges`.
+Extend the composed read operations in `graph_os/api/ops/memory.py:operations` for feed and recovery projection.
+Preserve graph incarnation, committed revision, event identity, visibility revision, snapshot digest, and high-water cursor.
+Use producer page sizes from 1 through 256 and the 24-hour retention contract.
+Reauthorize every page and reconnect. Expiry returns typed recovery; revocation stops protected delivery.
+The existing registry does not supply a graph-feed transport adapter. Its authenticated bounded adapter remains required.
+Do not substitute `graph_os/gateway/fleet_events.py`, which reports fleet events rather than committed graph changes.
+
+The proposed `graph-visible-v1` profile uses two browsers and 10,000 nodes with 20,000 edges.
+Two writers each commit five updates per second for 60 seconds after a 10-second warm-up.
+Measure 600 updates from durable acknowledgement to both authorized browsers applying the corresponding revision.
+Use synchronized measurement timestamps and record clock uncertainty; uncertainty above 10 ms invalidates qualification.
+Require nearest-rank p95 at most 2,000 ms for each browser and no missing final revision.
+The EG feed's separate 1,000 ms boundary ends at authorized feed read, not browser application.
+WEBUI-APPS-R030.8 owns readable-layout and interaction limits; their declaration and evidence remain separate prerequisites.
+Planned proof: `tests/api/test_graph_changes_served.py::test_two_clients_recover_and_reauthorize_committed_feed`.
+Exercise concurrent writes, duplicates, delayed/reordered events, gaps, expiry, reconnect, and revocation.
+A missing profile, measurement, adapter, or owner binding cannot produce a passing latency result.
+
+### R064: viewport queries
+
+Extend `graph_os/api/ops/retrieval.py:operations` with viewport and selection handlers using its composed EG reader.
+EG-FEDERATED-QUERY-R081.103 owns `ViewportQueryV1` through `Method::UnifiedQuery` and `Method::ResolveViewportSelection`.
+Preserve its scatter/line formulas, typed axes, source/index/viewport revisions, policy digest, and closed selection union.
+Pixel dimensions range from 1 through 4096; the requested byte ceiling ranges from 1 through 16777216.
+Apply the producer's effective serialized-response ceiling and bin formulas. Do not invent a host decimator.
+Refuse ceilings too small for the mandatory envelope, stale indexes, invalid selections, and exceeded limits before usable output.
+Planned proof: `tests/api/test_viewport_served.py::test_billion_point_viewport_keeps_bins_selection_and_byte_bounds`.
+Enter HTTP and MCP with scatter and line requests against a declared billion-point indexed source.
+Independently inspect serialized bytes and bin counts. Check pan, zoom, selection, gaps, and stale-token refusal with WEBUI-APPS-R001.2.
+
+### R065: meetings
+
+Extend the composed operation declarations in `graph_os/api/ops/memory.py:operations` for transcript and summary reads.
+Route provider effects through the existing invocation policy and receipt boundary, never through a read handler.
+SDK-SOURCE-INGEST-R014 owns ordered transcript transport and selected provider dispatch.
+EG-MEDIA-VOCAB-R001.101 specifies `Method::MeetingTranscriptRevision`, `MeetingSummaryContextV1`, and `CommitMeetingSummaryV1`.
+AU-SEMANTIC-R030 owns provider admission, retry/attempt accounting, and disabled-provider refusal.
+The SDK meeting operation and AU receipt contract remain unbound; single-shot dictation cannot satisfy them.
+Preserve segment sequence, correction and finalization revisions, transcript digest, and selected local/hosted provider identity.
+Summary context requires at most 128 spans, 16384 bytes per segment, and 8192 tokens under the EG limit policy.
+Only the current complete finalized transcript permits summary effects. Corrections stale older summaries.
+Missing admission or a disabled local provider cannot trigger hosted fallback.
+Planned proof: `tests/api/test_meeting_served.py::test_corrected_final_transcript_binds_selected_summary_provider`.
+Exercise partial segments, gaps, corrections, exact replay, finalization, and both admitted execution classes with WEBUI-APPS-R001.5.
+Check independent provenance readback and zero provider calls for stale revisions or denied capture/egress.
+
+### R066: bookmarks
+
+Extend `graph_os/api/ops/retrieval.py:operations` with search, relationship, and bounded export projections.
+EG-MEDIA-VOCAB-R001.102 specifies `Method::BookmarkSemanticSearch` and `Method::BookmarkRelations`.
+SDK-SOURCE-INGEST-R005.7 through R005.12 owns ingestion into the existing SourceIngest/ChangeEnvelope path.
+Use one authorized snapshot for search, relationships, and CSV/JSON export consumed by WEBUI-APPS-R001.6.
+Require at most 100 hits, 500 relationships, and 1048576 serialized response bytes under the EG query limit policy.
+Preserve receipt, source, index, query, authorization, snapshot, and limit-policy digests and explicit unknown metadata.
+An expired snapshot or exceeded bound refuses; export cannot silently switch revisions or truncate success.
+Escape spreadsheet-formula-like CSV cells; never retrieve imported links or execute imported instructions.
+Planned proof: `tests/api/test_bookmarks_served.py::test_search_relationships_and_exports_share_authorized_snapshot`.
+Independently compare search and relationships with downloaded CSV/JSON records, digests, and provenance.
+Denied bookmarks and relationships must be absent from every response, count, and export.
+
+All named proofs in this section are planned and have not run.
+They require the corresponding owner contracts and real authenticated HTTP, MCP, and browser consumer paths.
+This section grants no delivery or runtime evidence.
+
+References: [EG orchestration](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/orchestration-vocabulary/spec.md), [EG durable kernel](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/durable-graph-kernel/spec.md), [EG query](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/federated-query-and-reasoning/spec.md), [EG media](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/media-and-personal-vocabulary/spec.md), [SDK ingest](https://github.com/Knuckles-Team/agent-connector-sdk/blob/a0f78fefbb486e4c7d97e608462cf5847a46bc7d/specs/SDK-SOURCE-INGEST/spec.md).

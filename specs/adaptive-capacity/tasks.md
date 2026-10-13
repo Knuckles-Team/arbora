@@ -10,3 +10,10 @@
 - [ ] Run disposable served fault injection for observe and enforce modes; attach redacted decision and refusal receipts.
 
 **Evidence:** None recorded for this complete GraphOS contract. Existing fleet/control-plane source is wiring inventory, not acceptance proof.
+
+## Additional owner requirements
+
+- [ ] `GRAPHOS-CAPACITY-R001.2`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-CAPACITY-R003`: Deliver every requirement in requirements.md.
+- [ ] `GRAPHOS-CAPACITY-R004`: Bind the AU driver and implement the served load profile, complete report, and threshold refusals in plan.md.
+- [ ] `GRAPHOS-CAPACITY-R001.3`: Deliver every requirement in requirements.md.

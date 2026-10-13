@@ -83,3 +83,7 @@ The served confirm fixture rejects missing, unknown and mixed confirmation_kind 
 ## Critique-gated output release (GRAPHOS-A2A-R022)
 
 - `tests/a2a/test_application.py::test_send_message_holds_output_until_bound_critique_passes` and `tests/a2a/test_application.py::test_send_message_rejects_untyped_preflight_and_failed_critique`: traverse held-item admission with a verified caller. Bind critique to the exact output. Missing, mismatched, rejected, or abstained verdicts leave output held. Routing alone cannot satisfy critique acceptance. These are proposed tests; no execution is claimed.
+
+## Additional owner requirements
+
+- `GRAPHOS-A2A-R001.2`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.

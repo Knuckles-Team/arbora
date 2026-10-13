@@ -2,23 +2,29 @@
   "schema_version": 2,
   "spec_id": "GRAPHOS-CAPACITY",
   "owner_repo": "graph-os",
-  "delivery_state": "VERIFIED",
+  "delivery_state": "SPECIFIED",
   "requirement_ids": [
     "GRAPHOS-CAPACITY-R001",
     "GRAPHOS-CAPACITY-R001.1",
-    "GRAPHOS-CAPACITY-R002"
+    "GRAPHOS-CAPACITY-R002",
+    "GRAPHOS-CAPACITY-R001.2",
+    "GRAPHOS-CAPACITY-R003",
+    "GRAPHOS-CAPACITY-R004",
+    "GRAPHOS-CAPACITY-R001.3"
   ],
   "requirements": [
     {
       "id": "GRAPHOS-CAPACITY-R001",
       "title": "AIMD error-budget throttling that only narrows automatically (rollup)",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "d2f29725918d"
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-CAPACITY-R001.1"
+        "GRAPHOS-CAPACITY-R001.1",
+        "GRAPHOS-CAPACITY-R001.2",
+        "GRAPHOS-CAPACITY-R001.3"
       ]
     },
     {
@@ -45,6 +51,34 @@
       "verified_by": [
         "tests/api/test_capacity_ops.py:26"
       ]
+    },
+    {
+      "id": "GRAPHOS-CAPACITY-R001.2",
+      "title": "AU:26 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-CAPACITY-R003",
+      "title": "AU:70 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-CAPACITY-R004",
+      "title": "AU:122 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-CAPACITY-R001.3",
+      "title": "EG:9 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     }
   ]
 }

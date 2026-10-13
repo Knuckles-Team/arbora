@@ -19,3 +19,44 @@ Decision receipts include budget/configuration digest, premise revision, prior s
 3. Insert one limiter in the fleet dispatch path; wire observe-only first and prove no behavior change.
 4. Add authorized status/mode operations, audit receipts and policy revision invalidation.
 5. Enable enforce mode per child behind explicit configuration, run served fault injection and record acceptance evidence.
+
+## Additional owner requirements
+
+- `GRAPHOS-CAPACITY-R001.2`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-CAPACITY-R003`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-CAPACITY-R004`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-CAPACITY-R001.3`: Plan the owner work and dependencies defined in requirements.md.
+
+## Served agent load profile (GRAPHOS-CAPACITY-R004)
+
+The proposed `agent-run-fixture-v1` profile measures one production agent route with a deterministic, authorized local fixture workload.
+The workload binds a message digest, agent/harness configuration digest, tool response digest, and EG dataset revision.
+Use the actual AU run loop and one local read-only tool call per request.
+A fake GraphOS handler or isolated scorer cannot provide this evidence.
+The AU load-driver/report contract has no assigned owner ID; publication of that contract remains a prerequisite.
+
+Enter `graph_os/api/http/routes.py:make_endpoint` at line 96 with an authenticated request.
+Call `graph_os/api/invoke/pipeline.py:invoke` at line 810 through the normal admission boundary.
+Dispatch `agents.run` through `graph_os/api/ops/agents.py:handle_agent` at line 43 into the composed A2A authority.
+Observe terminal completion through `agents.tasks.get` using the same tenant and returned task identity.
+This path already exists; the load driver and qualification report are proposed additions.
+
+Use 100 warm-up requests, then 1,000 measured requests at each concurrency: 1, 8, and 32.
+Each level uses closed-loop workers with one outstanding request per worker.
+Use fresh idempotency keys. Record starts and terminal observations with a monotonic clock.
+Measure latency from client submission through the complete terminal response, including transport and polling.
+Use nearest-rank p95 over all measured requests; assign the 30,000 ms timeout to incomplete requests.
+A failed admission, transport, tool, or terminal outcome counts once in the failure numerator.
+The denominator is all 1,000 scheduled measured requests; missing samples fail qualification.
+Each level must have p95 at most 2,000 ms and failure rate at most 1 percent.
+These are initial acceptance limits for this fixture profile, not claims about arbitrary model workloads.
+
+The report binds both repository revisions, workload digest, concurrency, counts, timing boundaries, and all raw sample digests.
+It records each level's p95, failure fraction, and overall pass/fail.
+No producer binding, unsupported profile, zero denominator, incomplete report, or changed workload permits a passing result.
+Do not grant capacity or alter policy from an invalid report.
+
+Planned proof: `tests/api/test_agent_load_served.py::test_agent_run_profile_measures_terminal_latency_and_failures`.
+Boundary proof: `tests/api/test_agent_load_served.py::test_agent_run_profile_rejects_missing_samples_and_exceeded_limits`.
+Test values below, equal to, and above both limits. Exercise missing bindings and zero samples.
+These tests have not run. This definition provides no runtime qualification receipt.

@@ -114,7 +114,12 @@
     "GRAPHOS-FLEET-R003.8",
     "GRAPHOS-FLEET-R003.9",
     "GRAPHOS-FLEET-R003.10",
-    "GRAPHOS-FLEET-R035"
+    "GRAPHOS-FLEET-R035",
+    "GRAPHOS-FLEET-R024.10",
+    "GRAPHOS-FLEET-R024.11",
+    "GRAPHOS-FLEET-R002.9",
+    "GRAPHOS-FLEET-R034.13",
+    "GRAPHOS-FLEET-R034.14"
   ],
   "requirements": [
     {
@@ -148,7 +153,8 @@
         "GRAPHOS-FLEET-R002.5",
         "GRAPHOS-FLEET-R002.6",
         "GRAPHOS-FLEET-R002.7",
-        "GRAPHOS-FLEET-R002.8"
+        "GRAPHOS-FLEET-R002.8",
+        "GRAPHOS-FLEET-R002.9"
       ]
     },
     {
@@ -702,7 +708,9 @@
         "GRAPHOS-FLEET-R024.6",
         "GRAPHOS-FLEET-R024.7",
         "GRAPHOS-FLEET-R024.8",
-        "GRAPHOS-FLEET-R024.9"
+        "GRAPHOS-FLEET-R024.9",
+        "GRAPHOS-FLEET-R024.10",
+        "GRAPHOS-FLEET-R024.11"
       ]
     },
     {
@@ -888,7 +896,9 @@
         "GRAPHOS-FLEET-R034.9",
         "GRAPHOS-FLEET-R034.10",
         "GRAPHOS-FLEET-R034.11",
-        "GRAPHOS-FLEET-R034.12"
+        "GRAPHOS-FLEET-R034.12",
+        "GRAPHOS-FLEET-R034.13",
+        "GRAPHOS-FLEET-R034.14"
       ]
     },
     {
@@ -1210,6 +1220,41 @@
         "tests/fleet/test_multiplexer_dynamic_gateway.py:1842",
         "tests/fleet/test_multiplexer_dynamic_gateway.py:1859"
       ]
+    },
+    {
+      "id": "GRAPHOS-FLEET-R024.10",
+      "title": "AU:29 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R024.11",
+      "title": "AU:30 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R002.9",
+      "title": "AU:52 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R034.13",
+      "title": "AU:98 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R034.14",
+      "title": "GRAPHOS:8 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     }
   ]
 }

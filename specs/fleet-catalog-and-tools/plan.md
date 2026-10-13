@@ -378,3 +378,11 @@ Exclude credentials and raw payloads from public evidence. No arXiv derivation o
 EG consumer reference changes wait for this producer definition to merge. AU model dispatch remains a separate dependency.
 
 The source validation environment resolves MCP >=2.3,<3 with the landed SDK. The root development override pins EG to the GraphOS-compatible revision 70037e8a400c7b32b1222623bb05bbfaf55deab8, resolving the AU path and SDK Git conflict. Source-only Python checks do not establish native EG kernel acceptance. Read-only calls without a schema disclosure may retry once on a recovered generation only after existing admission and catalog checks. Schema-bound aliases retain their original generation and never replay automatically.
+
+## Additional owner requirements
+
+- `GRAPHOS-FLEET-R024.10`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-FLEET-R024.11`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-FLEET-R002.9`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-FLEET-R034.13`: Plan the owner work and dependencies defined in requirements.md.
+- `GRAPHOS-FLEET-R034.14`: Plan the owner work and dependencies defined in requirements.md.

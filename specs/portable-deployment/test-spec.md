@@ -70,3 +70,10 @@ Preserve administrator, identity, secrets, policy, readiness and SDK-federation 
 Parse deployment examples extracted from all three documentation surfaces and run their declared command fixtures.
 Probe both MCP transports and check unsupported flags, undeclared variables and stale profile bindings fail conformance.
 Missing deployment producers or target runtimes leave their scenarios unexecuted; no helper result provides that evidence.
+
+## Additional owner requirements
+
+- `GRAPHOS-DEPLOY-R009.2`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-DEPLOY-R009.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-DEPLOY-R013.7`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-DEPLOY-R010.4`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.

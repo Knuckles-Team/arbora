@@ -36,3 +36,10 @@ R018 keeps reused engines connect-only across startup, retry and shutdown.
 R010 binds deployment guidance to supported profiles and both actual MCP transport entrypoints.
 Existing profile, first-boot and engine lifecycle acceptance remains required in full.
 The new target and no-effect reuse scenarios have not been run.
+
+## Additional owner requirements
+
+- `GRAPHOS-DEPLOY-R009.2`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-DEPLOY-R009.3`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-DEPLOY-R013.7`: Owner scope and complete acceptance are defined in requirements.md.
+- `GRAPHOS-DEPLOY-R010.4`: Owner scope and complete acceptance are defined in requirements.md.
