@@ -28,6 +28,7 @@ from graph_os.fleet.multiplexer import (
     _register_forwarder,
     _require_fleet_capability,
     _session_key,
+    _tenant_local_discovery_binding,
     _tool_is_verbose,
     get_server_prefix,
 )
@@ -124,6 +125,7 @@ def _fake_tool(
     tool.name = name
     tool.description = description
     tool.input_schema = schema if schema is not None else {}
+    tool.output_schema = None
     tool.annotations = None
     # FastMCP propagates tags via _meta; the multiplexer reads tool.meta.
     # An explicit `meta` (e.g. an MCP Apps `{"ui": {"resourceUri": ...}}`
@@ -168,6 +170,10 @@ def _schema_tool(name: str, property_name: str) -> mcp.types.Tool:
     return mcp.types.Tool(
         name=name,
         description=f"{property_name} schema",
+        annotations=mcp.types.ToolAnnotations(
+            read_only_hint=True, destructive_hint=False
+        ),
+        output_schema={"type": "object", "properties": {"result": {"type": "string"}}},
         input_schema={
             "type": "object",
             "properties": {property_name: {"type": "string"}},
@@ -189,7 +195,30 @@ async def _reconnect_mounted(mux, server_name: str, generations: list):
     host = FastMCP("schema-refresh-host")
     mux._host_mcp = host
     mounted = await mux.mount_child(server_name)
+    _load_schema_fixture_tools(mux, mounted)
     return host, mounted
+
+
+def _load_schema_fixture_tools(mux, tools):
+    """Load mounted tools for this caller; host registration remains separate."""
+    mux.session_loaded(_session_key()).update(tool.name for tool in tools)
+
+
+async def _call_after_schema_recovery(mux, prefixed_name, recovered):
+    """A refused uncertain call recovers transport, then a fresh call is admitted."""
+    server_name, _original_name = mux.tool_to_server[prefixed_name]
+    runtime = mux.children[server_name]
+    assert mux._proxied_tool_allows_transient_retry(prefixed_name)
+    assert (
+        mux.tool_object(prefixed_name).output_schema == recovered.tools[0].output_schema
+    )
+    failed = await mux.call_proxied_tool(prefixed_name, {})
+    assert failed.is_error is True
+    await _wait_for_condition(
+        lambda: runtime.state == "up" and mux.sessions[server_name] is recovered
+    )
+    assert recovered.calls == []  # No replay against the replaced or refused schema.
+    return await mux.call_proxied_tool(prefixed_name, {})
 
 
 async def _list_session_tool_names(client: Any, session_id: str) -> set[str]:
@@ -374,7 +403,7 @@ async def test_recovered_child_replaces_exposed_schema_without_catalog_polling(
     runtime = mux.children[server_name]
     runtime.restart_backoff_base = 0.005
     runtime.restart_backoff_cap = 0.005
-    result = await mux.call_proxied_tool(prefixed_name, {})
+    result = await _call_after_schema_recovery(mux, prefixed_name, refreshed)
     assert result.content[0].text == "recovered:query"
     assert mux.sessions[server_name] is refreshed
     assert mux.tool_object(prefixed_name).input_schema["properties"] == {
@@ -450,7 +479,7 @@ async def test_schema_refresh_failure_fails_closed_without_stranding_transport(
     runtime.restart_backoff_base = 0.005
     runtime.restart_backoff_cap = 0.005
 
-    result = await mux.call_proxied_tool(prefixed_name, {})
+    result = await _call_after_schema_recovery(mux, prefixed_name, recovered)
     assert result.is_error is True
     assert result.content[0].text == "schema_refresh_failed"
     assert runtime.state == "up"
@@ -532,7 +561,9 @@ async def test_schema_refresh_rolls_back_partial_host_registration_atomically(
     runtime.restart_backoff_base = 0.005
     runtime.restart_backoff_cap = 0.005
 
-    result = await mux.call_proxied_tool(prefixed_by_original["query"], {})
+    result = await _call_after_schema_recovery(
+        mux, prefixed_by_original["query"], recovered
+    )
 
     assert result.is_error is True
     assert result.content[0].text == "schema_refresh_failed"
@@ -638,6 +669,13 @@ def _fake_session(tools):
     res = MagicMock()
     res.tools = [_fake_tool(n, d) for n, d in tools]
     sess.list_tools = AsyncMock(return_value=res)
+    sess.list_resources = AsyncMock(
+        return_value=mcp.types.ListResourcesResult(resources=[])
+    )
+    sess.list_resource_templates = AsyncMock(
+        return_value=mcp.types.ListResourceTemplatesResult(resource_templates=[])
+    )
+    sess.list_prompts = AsyncMock(return_value=mcp.types.ListPromptsResult(prompts=[]))
     return sess
 
 
@@ -962,6 +1000,8 @@ async def test_concurrent_probes_honor_their_own_per_server_deadline(tmp_path):
 
     mux._open_one_session = AsyncMock(side_effect=_open)
 
+    # Initialize the real authority modules before measuring remote concurrency.
+    _tenant_local_discovery_binding()
     t0 = asyncio.get_running_loop().time()
     result = await mux.probe_catalog()  # no shared budget: purely per-server
     elapsed = asyncio.get_running_loop().time() - t0
@@ -1797,3 +1837,20 @@ def test_require_fleet_capability_allows_stdio_caller_with_exact_scope():
     )
     with use_actor(actor):
         _require_fleet_capability("discover")  # must not raise
+
+
+@pytest.mark.spec("GRAPHOS-FLEET-R035")
+def test_prefixing_preserves_child_annotations_and_output_schema(tmp_path):
+    mux = _mux_with_children(tmp_path, {"schema-mcp": [("query", "query")]})
+    source = _schema_tool("query", "request")
+    source.meta = {"fixture": "child-disclosure"}
+
+    forwarded, originals = mux._prefixed_child_tools("schema-mcp", [source], {})
+
+    assert len(forwarded) == 1
+    assert forwarded[0].name != source.name
+    assert originals == {forwarded[0].name: "query"}
+    assert forwarded[0].annotations == source.annotations
+    assert forwarded[0].output_schema == source.output_schema
+    assert forwarded[0].input_schema == source.input_schema
+    assert forwarded[0].meta == source.meta

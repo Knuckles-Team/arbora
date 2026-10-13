@@ -1204,6 +1204,7 @@
         "b8f3e4a01330"
       ],
       "verified_by": [
+        "tests/fleet/test_multiplexer_dynamic_gateway.py:1842",
         "tests/fleet/test_multiplexer_schema_disclosure.py:12"
       ]
     }

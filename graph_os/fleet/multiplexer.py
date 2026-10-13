@@ -4226,6 +4226,8 @@ class MCPMultiplexer:
                     name=prefixed_name,
                     description=tool.description or "",
                     input_schema=tool.input_schema,
+                    output_schema=getattr(tool, "output_schema", None),
+                    annotations=getattr(tool, "annotations", None),
                     # Preserve _meta (carries FastMCP tags) so downstream
                     # visibility filtering sees the child's real tags.
                     _meta=getattr(tool, "meta", None),
