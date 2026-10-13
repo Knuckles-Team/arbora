@@ -75,3 +75,13 @@ The proposed served scenarios have not been run and establish no runtime deliver
 - `tests/api/test_agent_browser_ops.py::test_native_desktop_actions_require_verified_grant_without_focus_capture`: exercise composed `pipeline.invoke` and `BoundOperationRuntime.dispatch`. Assert grant/tenant admission. Assert the returned outcome retains the request id. Assert no cursor capture or focus change. Missing, revoked, or cross-tenant grants must cause zero provider calls.
 - `tests/api/test_agent_browser_ops.py::test_visual_state_is_run_source_and_tenant_bound`: exercise composed dispatch across multiple steps. Assert the same run carries source/frame/revision identity. Assert expiry or source change invalidates the state. Stale or cross-tenant state must be refused before dispatch.
 - `tests/mcp_server/test_composition.py::test_coding_agent_flow_uses_owner_ports_and_sandbox`: exercise selected executable discovery, AU delivery of the EG-selected transformation, sandboxed WebUI rendering, and refusal if an owner port is missing. These tests are proposed; none has run.
+
+## Planned authenticated terminal log acceptance
+
+These cases extend GRAPHOS-HOST-R009.5, R009.6 and R010.7 with TUI-RUNTIME-R002.2 through R002.6. These cases have not been run.
+
+- `tests/host/test_terminal_host_served.py::test_effective_log_preference_is_authenticated`: start the real host and enter run_host_terminal. Check the strict effective web_logs value and host, workspace, tenant, principal, session, generation and expiry bindings. Change each binding independently. Missing, altered or expired bindings yield zero HostLogReader.read calls and zero delivered records.
+- `tests/host/test_terminal_host_served.py::test_terminal_log_mode_preference_matrix`: use terminal, web and both with true and false preferences. Only terminal/both with true show a correlated HTTP log during agent interaction. False, absent preference, missing reader and all web cases produce zero TUI reads. Check HTTP serving, the required redacted sink and agent interaction remain available where their interfaces are selected.
+- `tests/host/test_terminal_host_served.py::test_terminal_log_handoff_preserves_scope_and_lifecycle`: two tenants share a workspace. Use the production adapter and reader to prove tenant-local records, rotation gaps, reconnect authorization, denial clearing and bounded cancellation. Preserve existing single-engine, single-multiplexer and owned-thread shutdown assertions.
+
+Missing receipt fields or public consumer exports block positive served acceptance. Helper success or a log file alone cannot satisfy it. Record both revisions and the authenticated handoff identity; never credentials.

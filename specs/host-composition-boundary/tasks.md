@@ -118,3 +118,6 @@ Status vocabulary is defined in [spec.md](spec.md). Check a task only after its 
 - [ ] **R029:** Obtain the SDK native-desktop port/provider contract; bind verified grant, tenant, and no-capture behavior through composed dispatch.
 - [ ] **R030:** Obtain the SDK observation producer and EG state/context contract; bind run/source state and stale/cross-tenant refusal through composed dispatch.
 - [ ] **R031:** Obtain the EG, AU, and WebUI owner ports; bind discovery/admission at the server composition boundary.
+
+- [ ] Bind the effective authenticated web_logs receipt field and public run_host_terminal/HostLogReader.read interfaces for GRAPHOS-HOST-R009.5, R009.6 and R010.7. Implement producer prerequisites before claiming readiness.
+- [ ] Run the three named authenticated terminal-log cases in test-spec.md with TUI-RUNTIME-R002.2 through R002.6, including enabled reads and disabled/invalid zero-read observations. Preserve all existing lifecycle and scope acceptance.
