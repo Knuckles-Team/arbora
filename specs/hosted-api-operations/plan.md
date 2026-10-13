@@ -47,7 +47,13 @@ The retirement inventory is a checked artifact produced from the existing host r
 
 ## Fresh-checkout and quality design
 
-Retire the old implementation at cutover. This leaves one authority for scanners and reviewers.
+- Run `uv sync --extra test` and `uv run pytest tests/api tests/fleet`.
+- Run `uv run ruff check .` and `uv run ruff format --check .`.
+- Run `uv run mypy graph_os` with public pinned wheels and fixture identities.
+- CI may provision an ephemeral local engine/agent stack for served tests. No check requires a private host or credential.
+- Repository hooks run CCCC, KISS, jscpd, and Dupehound scans. Meet configured thresholds, including zero new clone pairs. Do not lower or suppress them.
+- Keep registry domain tables small. Prefer step tables over nested branching. Use one endpoint factory per surface and generated declarative types. Avoid repeated function bodies.
+- Eliminate the old implementation during cutover. Scanners and reviewers must see one authority.
 
 ## Gateway carry-over: dashboard, Live Artifacts, widget
 
@@ -395,5 +401,5 @@ Missing producer implementation must remain unavailable. Definitions and planned
 
 1. Bind the EG-DECISION-ENGINE-R100.100 DecisionEval ranking receipt. Map RetrievalRankingSubmit to RetrievalRankingV1. Map Method::RetrievalContextSearch to RetrievalContextSearchV1. Do not derive quality from retrieval.search or local RRF.
 2. Extend graph_os/api/ops/retrieval.py with closed evaluation, comparison, and context models. Register retrieval.evaluation.compare and retrieval.context.search. Use existing build_read_op, memory:read, registry factory, and shared invoke for HTTP/MCP.
-3. Require identical corpus, complete labeled query-set ID/revision/digest, evaluator, k, registered algorithm settings, and input digests. Preserve producer metrics and result digests. For hits_at_k, use the full identically labeled query set as denominator. Count a query when any relevant result appears in top k. Preserve half-open UTF-8 offsets into original stored text. Bind query/index/authorization revisions and a snapshot cursor. Limit responses to 100 spans and 8 KiB each. If indexing normalizes text, preserve a separate NFC digest and validate its byte map to original text.
-4. Align WebUI TryItPanel.tsx under WEBUI-APPS-R001.1.1-.6. Served proof checks two-algorithm metrics and identical inputs. It also checks Unicode byte slicing, authorization, staleness, missing labels, invalid maps, and limits. This remains planned work, not runtime delivery.
+3. Require identical corpus, complete label-set revision/digest, query-set ID/revision/digest, evaluator revision, k, and query inputs across algorithms. Pin each algorithm's settings digest to its own registered configuration. Preserve producer metrics and result digests. For hits_at_k, use the full identically labeled query set as denominator. Count a query when any relevant result appears in top k. Preserve half-open UTF-8 offsets into original stored text. Bind query/index/authorization revisions and a snapshot cursor. Limit responses to 100 spans and 8 KiB each. If indexing normalizes text, preserve a separate NFC digest and validate its byte map to original text.
+4. Align WebUI TryItPanel.tsx under WEBUI-APPS-R001.1.1-.6. Served proof checks two-algorithm metrics and identical inputs. It tests hostile-source escaping before highlighting and preserves original byte spans. It also checks Unicode slicing, authorization, staleness, missing labels, invalid maps, and limits. This remains planned work, not runtime delivery.
