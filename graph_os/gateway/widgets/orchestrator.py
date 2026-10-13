@@ -1,4 +1,4 @@
-"""Orchestrator widget — AI agent orchestration hub status."""
+"""Orchestrator widget — SI agent orchestration hub status."""
 
 from __future__ import annotations
 

@@ -1,5 +1,7 @@
 # GRAPHOS-FLEET requirements
 
+Super Intelligence (SI) is the Graph OS project term for model-backed agents.
+
 | ID | Requirement | Verification |
 |---|---|---|
 | `GRAPHOS-FLEET-R001` | **Typed pack publisher replaces placeholder ContentPack.** graph-os publishes fleet content packs using the engine-generated SQL record types instead of the placeholder `ContentPack` structure, so SQL and market-data connector items carry real typed schemas when they are added to the catalog. | Integration test asserts published packs use the generated types and that no code path constructs the placeholder `ContentPack`. |
@@ -68,7 +70,7 @@
 | `GRAPHOS-FLEET-R033` | **Fleet-catalog `servers` read owned by graph-os.** Rollup of `GRAPHOS-FLEET-R033.1` and `.2`; unblocks `AU-BOUNDARY-R001.4.2.2`. | All child rows are verified. |
 | `GRAPHOS-FLEET-R033.1` | **Define the typed fleet-catalog `servers` reader.** Add `FleetCatalogServersReader` in `graph_os/gateway/` returning typed server records scoped by tenant and principal, replacing the catalog read of AU `gateway/registry_api.py` used by `kg_server.py`. Unblocks `AU-BOUNDARY-R001.4.2.2`. | A test lists only servers visible to the calling tenant and principal. |
 | `GRAPHOS-FLEET-R033.2` | **Add refusal tests for the `servers` reader.** Missing principal, cross-tenant and unauthorized reads are refused with typed errors. Unblocks `AU-BOUNDARY-R001.4.2.2`. | Tests cover each refusal and confirm no records leak. |
-| `GRAPHOS-FLEET-R034` | **Skills and AI workflows are admitted before they run (rollup).** The host must audit each skill for unsafe instructions and tools. It must admit a workflow only with one owner, structured inputs, mapped data flows and a tool inventory. | All child rows are verified. |
+| `GRAPHOS-FLEET-R034` | **Skills and SI workflows are admitted before they run (rollup).** The host must audit each skill for unsafe instructions and tools. It must admit a workflow only with one owner, structured inputs, mapped data flows and a tool inventory. | All child rows are verified. |
 | `GRAPHOS-FLEET-R034.1` | **Model.** Add `SkillAuditReport` (findings, severity, policy limit) and `WorkflowAdmissionRecord` (owner, inputs schema, data flows, tool inventory) in graph_os/fleet/admission_models.py. | tests/fleet/test_admission_models.py checks required fields. |
 | `GRAPHOS-FLEET-R034.2` | **Behavior.** The default `skill_audit_policy` must scan skill text and declared tools and fail a skill when findings exceed a configured severity count. The default `workflow_admission_policy` must require all four workflow fields. Each default is replaceable by name. | Unit tests in tests/fleet/test_admission_models.py cover pass and fail cases. |
 | `GRAPHOS-FLEET-R034.3` | **Wiring.** Call both policies in `invoke` at graph_os/api/invoke/pipeline.py:810 before `_confirmation_gate`, for any operation that loads a skill or starts a workflow. The production caller is the served route at graph_os/api/http/routes.py:127. This row creates the call site. | tests/fleet/test_admission_wiring.py asserts the policies run before the effect. |
