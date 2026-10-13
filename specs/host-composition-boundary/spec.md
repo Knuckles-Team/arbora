@@ -19,6 +19,9 @@ One GraphOS process authenticates, authorizes, composes, routes, supervises and 
 5. **Safe source migration.** Existing GraphOS copies under `gateway`, `fleet`, `deployment`, `a2a`, `webui_host` and `control_plane` are reconciled against their former AU duplicates. Missing behavior is ported to the owning GraphOS package or explicitly retired with a public compatibility decision. There is no second live host, dual script, duplicate route registration or fallback reader left behind.
 6. **Independent installation.** `uv sync --extra test` and the documented package extras suffice to import and test GraphOS from a clean checkout. Optional WebUI, connector and identity features fail with actionable unavailable errors when their public dependency is absent; they do not require sibling source trees, local operator inventory or live credentials to run unit/contract checks.
 
+7. **GRAPHOS-HOST-R029 Tenant-bound native desktop actions.** Require a verified sandbox grant and tenant match. Keep cursor/focus unchanged. The SDK provider contract remains unassigned.
+8. **GRAPHOS-HOST-R030 Run-bound visual state.** Preserve source/frame provenance and bind reusable state to identity, tenant, lifetime, and invalidation. The SDK and EG producer contracts remain unassigned.
+9. **GRAPHOS-HOST-R031 Coding-agent discovery and handoff.** Discover the selected executable, apply the EG transformation through AU, and render only in the WebUI sandbox. Keep the flow unavailable until owner ports are published.
 ## Acceptance
 
 - Import-boundary census reaches zero forbidden dependency-internal imports in `graph_os/**`; a planted forbidden import fails the same check in CI.
@@ -47,14 +50,15 @@ GraphOS owns hosting and local installation. Terminal and browser presentation r
 The original parents remain complete contracts. Residual children preserve their acceptance alongside the new behavior.
 The proposed installer and terminal journeys have not been run.
 
-<!-- spec-definition-patch:batch-20261012-scope -->
+## Authenticated terminal log handoff
+
+GRAPHOS-HOST-R009.5, R009.6 and R010.7 bind the effective strict web_logs boolean into the proposed HostLaunchReceipt v1. Authenticate it with host, workspace, tenant, principal and session scope. Retain generation and expiry. Consume through TUI-RUNTIME-R002.2 through R002.6 using run_host_terminal and HostLogReader.read as specified in plan.md. Only terminal/both with true permits reads. Disabled, absent or invalid preference and web mode yield zero TUI reads while preserving the required host sink. Runtime receipt and adapter availability remain explicit prerequisites. This definition adds no implementation or served receipt.
+
+## Additional owner requirements
+
 - `GRAPHOS-HOST-R023.3`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-HOST-R029`: Native desktop actions require a tenant-bound sandbox grant and must not capture cursor or focus; SDK provider remains unbound.
 - `GRAPHOS-HOST-R008.6`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-HOST-R026.6`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-HOST-R030`: Visual observation state remains run-, source-, frame-, and tenant-bound; SDK and EG contracts are prerequisites.
 - `GRAPHOS-HOST-R022.1`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-HOST-R031`: Coding-agent discovery, EG/AU transformation, and WebUI sandbox handoff remain owner-bound prerequisites.
 - `GRAPHOS-HOST-R010.8`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-HOST-R032`: Owner scope and complete acceptance are defined in requirements.md.
-<!-- /spec-definition-patch -->

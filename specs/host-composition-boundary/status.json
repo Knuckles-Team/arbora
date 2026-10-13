@@ -134,6 +134,9 @@
     "GRAPHOS-HOST-R027.2",
     "GRAPHOS-HOST-R027.3",
     "GRAPHOS-HOST-R028",
+    "GRAPHOS-HOST-R029",
+    "GRAPHOS-HOST-R030",
+    "GRAPHOS-HOST-R031",
     "GRAPHOS-HOST-R010.1",
     "GRAPHOS-HOST-R010.2",
     "GRAPHOS-HOST-R010.3",
@@ -157,12 +160,9 @@
     "GRAPHOS-HOST-R023.1",
     "GRAPHOS-HOST-R023.2",
     "GRAPHOS-HOST-R023.3",
-    "GRAPHOS-HOST-R029",
     "GRAPHOS-HOST-R008.6",
     "GRAPHOS-HOST-R026.6",
-    "GRAPHOS-HOST-R030",
     "GRAPHOS-HOST-R022.1",
-    "GRAPHOS-HOST-R031",
     "GRAPHOS-HOST-R010.8",
     "GRAPHOS-HOST-R032"
   ],
@@ -1324,6 +1324,27 @@
       "verified_by": []
     },
     {
+      "id": "GRAPHOS-HOST-R029",
+      "title": "Tenant-bound native desktop actions",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R030",
+      "title": "Run-bound visual state",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R031",
+      "title": "Coding-agent discovery and sandbox handoff",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
       "id": "GRAPHOS-HOST-R010.1",
       "title": "Preserve configuration ownership",
       "delivery_state": "SPECIFIED",
@@ -1485,13 +1506,6 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R029",
-      "title": "Grant-bound native desktop actions",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
-    },
-    {
       "id": "GRAPHOS-HOST-R008.6",
       "title": "AU:96 GraphOS definition slice",
       "delivery_state": "SPECIFIED",
@@ -1506,22 +1520,8 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R030",
-      "title": "Run-bound visual state",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
-    },
-    {
       "id": "GRAPHOS-HOST-R022.1",
       "title": "AU:97 GraphOS definition slice",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
-    },
-    {
-      "id": "GRAPHOS-HOST-R031",
-      "title": "Coding-agent discovery and sandbox handoff",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

@@ -37,9 +37,9 @@ R010 binds deployment guidance to supported profiles and both actual MCP transpo
 Existing profile, first-boot and engine lifecycle acceptance remains required in full.
 The new target and no-effect reuse scenarios have not been run.
 
-<!-- spec-definition-patch:batch-20261012-scope -->
+## Additional owner requirements
+
 - `GRAPHOS-DEPLOY-R009.2`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-DEPLOY-R009.3`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-DEPLOY-R013.7`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-DEPLOY-R010.4`: Owner scope and complete acceptance are defined in requirements.md.
-<!-- /spec-definition-patch -->

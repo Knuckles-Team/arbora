@@ -112,6 +112,6 @@ R019.1 through R019.6 require exact default-deny resource grants at web, SSH, RD
 Existing OIDC mapping remains under R009. Host co-location grants no credential or resource access.
 Missing broker, SDK transport and EG/protocol enforcement wiring keeps these capabilities unavailable.
 
-<!-- spec-definition-patch:batch-20261012-scope -->
+## Additional owner requirements
+
 - `GRAPHOS-IDENTITY-R026.8`: Owner scope and complete acceptance are defined in requirements.md.
-<!-- /spec-definition-patch -->

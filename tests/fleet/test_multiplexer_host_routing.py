@@ -80,7 +80,9 @@ def test_multiplexer_tool_filtering():
 @pytest.mark.asyncio
 async def test_multiplexer_start_children_aggregation(tmp_path):
     import json
-    from unittest.mock import AsyncMock, MagicMock, patch
+    from unittest.mock import AsyncMock, patch
+
+    from mcp.types import Tool
 
     config = {
         "mcpServers": {
@@ -110,14 +112,11 @@ async def test_multiplexer_start_children_aggregation(tmp_path):
     async def mock_start_child(server_name, cfg):
         if server_name == "healthy-server":
             mock_session = AsyncMock()
-            mock_tool = MagicMock()
-            mock_tool.name = "healthy_tool"
-            mock_tool.description = "Healthy description"
-            mock_tool.input_schema = {}
-            # mcp.types.Tool(_meta=...) requires a dict or None -- an unset
-            # MagicMock attribute auto-vivifies to another MagicMock, which
-            # fails pydantic validation.
-            mock_tool.meta = None
+            mock_tool = Tool(
+                name="healthy_tool",
+                description="Healthy description",
+                input_schema={},
+            )
             return server_name, mock_session, [mock_tool], cfg
         return None
 
@@ -129,6 +128,9 @@ async def test_multiplexer_start_children_aggregation(tmp_path):
     # "healthy-server" auto-derives to "heal" (single meaningful token, 'server'
     # dropped as noise) — no nickname table entry needed.
     assert multiplexer.aggregated_tools[0].name == "heal__healthy_tool"
+
+    assert multiplexer.aggregated_tools[0].output_schema is None
+    assert multiplexer.aggregated_tools[0].annotations is None
 
 
 @pytest.mark.asyncio

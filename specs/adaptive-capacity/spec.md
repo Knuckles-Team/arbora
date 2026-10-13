@@ -25,9 +25,9 @@ A clean-checkout deterministic fixture demonstrates decrease, gradual recovery, 
 
 Requirement IDs are defined in [requirements.md](requirements.md); delivery state per ID is in `status.json`.
 
-<!-- spec-definition-patch:batch-20261012-scope -->
+## Additional owner requirements
+
 - `GRAPHOS-CAPACITY-R001.2`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-CAPACITY-R003`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-CAPACITY-R004`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-CAPACITY-R001.3`: Owner scope and complete acceptance are defined in requirements.md.
-<!-- /spec-definition-patch -->

@@ -105,6 +105,7 @@ GraphOS owns admission, refusal, and provenance at the door: given a request nam
 - **GRAPHOS-A2A-R019 Fail-closed refusal with typed reason and provenance.** Every admission decision, admitted or refused, carries a stable machine-readable reason (for a refusal) or provenance reference (for an admission) sufficient to audit exactly which upstream answer authorized it. A request is never admitted on the basis of an absent, errored, or timed-out upstream answer.
 - **GRAPHOS-A2A-R020 No advisory, cached, or partial substitute.** The admission door never returns a tool subset that is advisory-only, drawn from a prior request's cached answer, or a partial/best-effort coverage of the selected agent graph. An incomplete upstream answer is a refusal, not a smaller admission.
 - **GRAPHOS-A2A-R021 Fresh checkout.** Contract and unit tests for the admission model and its refusal behavior run with published packages and no private network, sibling checkout, or live production identity provider, so an external PR reviewer can run them unmodified.
+- **GRAPHOS-A2A-R022 Critique-gated output release.** Require typed AU checklist/questions and an EG verdict bound to the exact output. Use held-item admission from `GRAPHOS-A2A-R006.3` through `.8` and verified-caller prerequisites from `GRAPHOS-A2A-R006.2.1` and `.5`. Keep the `_send_message` release gate separate from agent routing; routing cannot satisfy critique acceptance.
 
 ### Trace coverage
 
@@ -126,7 +127,6 @@ GraphOS owns admission, refusal, and provenance at the door: given a request nam
 
 Requirement IDs are defined in [requirements.md](requirements.md); delivery state per ID is in `status.json`.
 
-<!-- spec-definition-patch:batch-20261012-scope -->
+## Additional owner requirements
+
 - `GRAPHOS-A2A-R001.2`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-A2A-R022`: Typed preflight and critique gate each output release; missing upstream evidence keeps the A2A route unavailable.
-<!-- /spec-definition-patch -->

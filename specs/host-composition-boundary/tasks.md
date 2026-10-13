@@ -113,14 +113,20 @@ Status vocabulary is defined in [spec.md](spec.md). Check a task only after its 
 
 - [ ] Define and prove prove transport parity on the served surface (`GRAPHOS-HOST-R023.2`) through the owning production entrypoint.
 
-<!-- spec-definition-patch:batch-20261012-tasks -->
+## Owner-bound capabilities (GRAPHOS-HOST-R029–R031)
+
+- [ ] **R029:** Obtain the SDK native-desktop port/provider contract; bind verified grant, tenant, and no-capture behavior through composed dispatch.
+- [ ] **R030:** Obtain the SDK observation producer and EG state/context contract; bind run/source state and stale/cross-tenant refusal through composed dispatch.
+- [ ] **R031:** Obtain the EG, AU, and WebUI owner ports; bind discovery/admission at the server composition boundary.
+
+- [ ] Bind the effective authenticated web_logs receipt field and public run_host_terminal/HostLogReader.read interfaces for GRAPHOS-HOST-R009.5, R009.6 and R010.7. Implement producer prerequisites before claiming readiness.
+- [ ] Run the three named authenticated terminal-log cases in test-spec.md with TUI-RUNTIME-R002.2 through R002.6, including enabled reads and disabled/invalid zero-read observations. Preserve all existing lifecycle and scope acceptance.
+
+## Additional owner requirements
+
 - [ ] `GRAPHOS-HOST-R023.3`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-HOST-R029`: Record the SDK native-desktop port and certified provider contract. Add a grant-bound GraphOS operation. Require refusal without cursor/focus capture.
 - [ ] `GRAPHOS-HOST-R008.6`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-HOST-R026.6`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-HOST-R030`: Obtain the SDK observation producer and EG state/context contracts, then specify the GraphOS run-bound adapter and stale/cross-scope refusal.
 - [ ] `GRAPHOS-HOST-R022.1`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-HOST-R031`: Record public EG/AU/WebUI producer-consumer contracts. Bind GraphOS discovery/admission at the existing server composition boundary.
 - [ ] `GRAPHOS-HOST-R010.8`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-HOST-R032`: Deliver every requirement in requirements.md.
-<!-- /spec-definition-patch -->

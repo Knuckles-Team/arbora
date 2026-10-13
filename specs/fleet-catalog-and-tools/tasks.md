@@ -192,10 +192,15 @@ Historical parent evidence does not bind these new child IDs. Preserve the compl
 
 Preserve all existing R003 tasks and receipts. These added runtime cases have not run for this definition change.
 
-<!-- spec-definition-patch:batch-20261012-tasks -->
+
+## OpenAPI operation schema preflight
+
+- [ ] `GRAPHOS-FLEET-R035`: Bind schema-bound OpenAPI operation aliases to the admitted manifest and complete ordered SDK reconstruction on the invocation session. Compare both input/output schemas and action. Recheck authority/generation for every read and call. Disable uncertain-write replay, update the MCP dependency floor/lock, and record focused-vs-live evidence.
+
+## Additional owner requirements
+
 - [ ] `GRAPHOS-FLEET-R024.10`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-FLEET-R024.11`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-FLEET-R002.9`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-FLEET-R034.13`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-FLEET-R034.14`: Deliver every requirement in requirements.md.
-<!-- /spec-definition-patch -->

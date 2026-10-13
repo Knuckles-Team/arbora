@@ -14,7 +14,7 @@ On a supported Python version, clone this repository, run `uv sync --extra test`
 | Open UI co-service, reload catalog and close it | One FastMCP loop/multiplexer, no blocked loop or lost generation notification. |
 | Package wheel and import it in a fresh environment | Console scripts resolve and declared extras control optional imports. |
 | GRAPHOS-HOST-R019: mount the dashboard routes. Open `/ws/dashboard` and send a `subscribe` message | REST reads answer 200. The stream sends a snapshot, then an update scoped to the subscribed widgets. |
-| GRAPHOS-HOST-R020: call `install_decide_consumers` with a fake client, then with a failing client, a failing assembler and a client without SPARQL | All four consumers install. Each fault skips only its own consumer and raises nothing. |
+| GRAPHOS-HOST-R020: call `install_decide_consumers` with a fake client. Then use a failing client, a failing assembler, and a client without SPARQL. | All four consumers install. Each fault skips only its own consumer and raises nothing. |
 | GRAPHOS-HOST-R021: assemble a request through a fake engine client with the bound `commit_context`/`publish_context` providers | The fake client's `commit_decision` and `publish_graph` each record one call for a solved assembly; an abstained assembly records neither. |
 | GRAPHOS-HOST-R022: install the decide consumers, then plan a task with a fake assembler and a fake capability source | The planner's `capability_search`/`guardrail_source`/`workflows` are bound and callable; the planned agent's skills/tools are non-empty and its reuse metadata reflects the fake capability source's hit. |
 
@@ -70,14 +70,27 @@ Keep original R023 fallback, ranking and fleet-call tests in addition to this tr
 Unified terminal rendering requires the real terminal-client consumer; controlled adapters prove only the GraphOS handoff.
 The proposed served scenarios have not been run and establish no runtime delivery by themselves.
 
-<!-- spec-definition-patch:batch-20261012-tests -->
+## Owner-bound capability acceptance (GRAPHOS-HOST-R029–R031)
+
+- `tests/api/test_agent_browser_ops.py::test_native_desktop_actions_require_verified_grant_without_focus_capture`: exercise composed `pipeline.invoke` and `BoundOperationRuntime.dispatch`. Assert grant/tenant admission. Assert the returned outcome retains the request id. Assert no cursor capture or focus change. Missing, revoked, or cross-tenant grants must cause zero provider calls.
+- `tests/api/test_agent_browser_ops.py::test_visual_state_is_run_source_and_tenant_bound`: exercise composed dispatch across multiple steps. Assert the same run carries source/frame/revision identity. Assert expiry or source change invalidates the state. Stale or cross-tenant state must be refused before dispatch.
+- `tests/mcp_server/test_composition.py::test_coding_agent_flow_uses_owner_ports_and_sandbox`: exercise selected executable discovery, AU delivery of the EG-selected transformation, sandboxed WebUI rendering, and refusal if an owner port is missing. These tests are proposed; none has run.
+
+## Planned authenticated terminal log acceptance
+
+These cases extend GRAPHOS-HOST-R009.5, R009.6 and R010.7 with TUI-RUNTIME-R002.2 through R002.6. These cases have not been run.
+
+- `tests/host/test_terminal_host_served.py::test_effective_log_preference_is_authenticated`: start the real host and enter run_host_terminal. Check the strict effective web_logs value and host, workspace, tenant, principal, session, generation and expiry bindings. Change each binding independently. Missing, altered or expired bindings yield zero HostLogReader.read calls and zero delivered records.
+- `tests/host/test_terminal_host_served.py::test_terminal_log_mode_preference_matrix`: use terminal, web and both with true and false preferences. Only terminal/both with true show a correlated HTTP log during agent interaction. False, absent preference, missing reader and all web cases produce zero TUI reads. Check HTTP serving, the required redacted sink and agent interaction remain available where their interfaces are selected.
+- `tests/host/test_terminal_host_served.py::test_terminal_log_handoff_preserves_scope_and_lifecycle`: two tenants share a workspace. Use the production adapter and reader to prove tenant-local records, rotation gaps, reconnect authorization, denial clearing and bounded cancellation. Preserve existing single-engine, single-multiplexer and owned-thread shutdown assertions.
+
+Missing receipt fields or public consumer exports block positive served acceptance. Helper success or a log file alone cannot satisfy it. Record both revisions and the authenticated handoff identity; never credentials.
+
+## Additional owner requirements
+
 - `GRAPHOS-HOST-R023.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R029`: Future acceptance: `tests/api/test_agent_browser_ops.py::test_native_desktop_actions_require_verified_grant_without_focus_capture`. Permit a valid grant. Missing, revoked, or cross-tenant grants must refuse before provider calls. Preserve the interactive cursor. Preserve focus. Not run.
 - `GRAPHOS-HOST-R008.6`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-HOST-R026.6`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R030`: Future acceptance: tests/api/test_agent_browser_ops.py::test_visual_state_is_run_source_and_tenant_bound. Cover multi-step reuse, source/frame/revision identity, invalidation, cross-tenant refusal and no dispatch on stale state. Not run.
 - `GRAPHOS-HOST-R022.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R031`: Future acceptance: tests/mcp_server/test_composition.py::test_coding_agent_flow_uses_owner_ports_and_sandbox. Cover executable discovery, EG-selected transformation delivery to AU, sandboxed WebUI rendering, and refusal when any owner port is absent. Not run.
 - `GRAPHOS-HOST-R010.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-HOST-R032`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-<!-- /spec-definition-patch -->

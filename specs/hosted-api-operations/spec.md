@@ -66,6 +66,15 @@ Each family below uses the same typed registry, invocation steps and error envel
 
 The GraphOS contribution includes a machine-readable former-tool inventory: each old intent/granular name maps to one stable op ID or a documented drop with a reason. The agent owner can delete its old resolver and tool definitions only when this inventory, parity tests, and generated client are published. The server never imports that old implementation at runtime.
 
+### Owner-bound projections (GRAPHOS-OPS-R054–R058, R061, R063)
+- **R054 Technique-bound benchmark.** AU must bind all five serving techniques to the model/configuration and measured evidence before activation.
+- **R055 Process remediation.** Keep proposals separate from termination; require run/process-bound approval and the AU liveness contract.
+- **R056 Changeset review.** Require source-bound evidence for five flaw classes and the owner review contract.
+- **R057 Prompt serialization.** Require deterministic JSON and a semantic difference oracle after EG and SDK contracts publish.
+- **R058 Table browser.** Keep the read-only projection unavailable until WebUI and EG bindings are assigned.
+- **R061 Indexed usage.** Define a separate authenticated projection for EG's indexed model/project/agent token and cost aggregates. Preserve owner accounting, currency uncertainty, and the producer latency profile; keep run metrics and context-budget semantics separate.
+- **R063 Retrieval evaluation and context.** Define typed EG-backed comparison and context reads over identical evaluation inputs. Preserve original-text UTF-8 byte offsets and bounded authorized spans; GraphOS does not score retrieval locally.
+
 ## Acceptance
 
 1. Every public method and route is either an operation or an explicitly inventoried protocol route, and every supported operation has identical allow/deny semantics across allowed surfaces.
@@ -75,27 +84,20 @@ The GraphOS contribution includes a machine-readable former-tool inventory: each
 
 Requirement IDs are defined in [requirements.md](requirements.md); delivery state per ID is in `status.json`.
 
-<!-- spec-definition-patch:batch-20261012-scope -->
-- `GRAPHOS-OPS-R054`: Benchmark adoption depends on technique-specific AU evidence for all five named serving techniques.
+## Additional owner requirements
+
 - `GRAPHOS-OPS-R024.1.1`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R014.1`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R022.3`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R055`: Process remediation requires run-bound owner evidence and separate explicit approval.
 - `GRAPHOS-OPS-R022.4`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R053.7`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R056`: Changeset review requires source-bound owner evidence across the five named flaw classes.
 - `GRAPHOS-OPS-R021.2.1.1`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R057`: Prompt JSON and Pydantic disk representation use a stable semantic difference oracle.
 - `GRAPHOS-OPS-R050.2.1`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R009.1`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R053.8`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R058`: Table-browser projections require authorized EG data and an assigned WebUI control/statistics contract.
 - `GRAPHOS-OPS-R059`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R060`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R061`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R062`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R063`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R064`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R065`: Owner scope and complete acceptance are defined in requirements.md.
 - `GRAPHOS-OPS-R066`: Owner scope and complete acceptance are defined in requirements.md.
-<!-- /spec-definition-patch -->

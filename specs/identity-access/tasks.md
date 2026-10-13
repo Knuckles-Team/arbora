@@ -124,6 +124,6 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] **GRAPHOS-IDENTITY-R019.5:** Evidence: scoped identity synthesis.
 - [ ] **GRAPHOS-IDENTITY-R019.6:** Hot-path proof: scoped identity synthesis.
 
-<!-- spec-definition-patch:batch-20261012-tasks -->
+## Additional owner requirements
+
 - [ ] `GRAPHOS-IDENTITY-R026.8`: Deliver every requirement in requirements.md.
-<!-- /spec-definition-patch -->

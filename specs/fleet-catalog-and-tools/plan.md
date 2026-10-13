@@ -80,6 +80,12 @@ Reused: the `invoke` pipeline and the `OpError` path. New: both policies and mod
 
 Decision: admit at the single pipeline boundary. Rejected alternative: audit at skill install only, which misses skills already present.
 
+## OpenAPI operation schema preflight (2026-10-13)
+
+The fleet's admitted `operation_*` aliases are individual actions over a domain tool. The consumer reads the SDK-published `openapi_schema` manifest and fragment templates. It uses the same child MCP session to invoke the alias. OAuth calls use their own fresh principal-bound session for both steps. The public SDK owns canonical reconstruction and digest validation. GraphOS compares both reconstructed schemas with the selected admitted descriptor. Before dispatch, it checks the `action` field against the manifest operation.
+
+Retain checks for exact delegate-scope, child generation, catalog epoch/revision, visibility and tool mapping. Apply them before every resource read and the final call. A changed admission, stale manifest, missing fragment or schema mismatch refuses without calling the alias. Disable automatic transient replay for schema-bound aliases because the domain-level annotation cannot reliably classify each operation's effect. Preflight is read-only and preserves the SDK/MCP confirmation path for the eventual call; it does not create approval or provider-effect evidence.
+
 ## Certified execution, provisioning and schema admission
 
 These extensions define missing host contracts. Reachable today: no complete integrated path.
@@ -371,10 +377,12 @@ Record exact producer/consumer revisions, admitted operation and schema, request
 Exclude credentials and raw payloads from public evidence. No arXiv derivation or runtime completion is claimed.
 EG consumer reference changes wait for this producer definition to merge. AU model dispatch remains a separate dependency.
 
-<!-- spec-definition-patch:batch-20261012-plan -->
+The source validation environment resolves MCP >=2.3,<3 with the landed SDK. The root development override pins EG to the GraphOS-compatible revision 70037e8a400c7b32b1222623bb05bbfaf55deab8, resolving the AU path and SDK Git conflict. Source-only Python checks do not establish native EG kernel acceptance. Read-only calls without a schema disclosure may retry once on a recovered generation only after existing admission and catalog checks. Schema-bound aliases retain their original generation and never replay automatically.
+
+## Additional owner requirements
+
 - `GRAPHOS-FLEET-R024.10`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-FLEET-R024.11`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-FLEET-R002.9`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-FLEET-R034.13`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-FLEET-R034.14`: Plan the owner work and dependencies defined in requirements.md.
-<!-- /spec-definition-patch -->

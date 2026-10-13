@@ -109,6 +109,6 @@ Forged profile selection, wrong connector, cross-tenant binding, excess scopes a
 The outbound opaque profile must not admit an unsigned GraphOS API bearer or remove its required tenant claim.
 Inspect responses and logs for token/code leakage. These acceptance cases have not run. They require the runtime wiring.
 
-<!-- spec-definition-patch:batch-20261012-tests -->
+## Additional owner requirements
+
 - `GRAPHOS-IDENTITY-R026.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-<!-- /spec-definition-patch -->

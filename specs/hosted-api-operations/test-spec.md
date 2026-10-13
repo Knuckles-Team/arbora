@@ -18,7 +18,7 @@ Governing [spec](spec.md).
 | HO-T10 | HO-08 | Per identity mode and PDP state: policy-off retains scope filter. Policy-on outage fails closed. Admin scope never implies delegate. Policy revision invalidates loaded items. Destructive/admin decisions are uncached. Discovery sets match across MCP, HTTP and A2A for one principal. |
 | HO-T11 | HO-09 | On clean public checkout, install pinned dependencies and run focused tests without private endpoints/sibling trees. In CI provision ephemeral local services, call served MCP and HTTP on the same request, and verify one durable result and audit pair. |
 | HO-T12 | HO-10 | Generate the former-tool/route inventory; every name is mapped or has reviewed drop reason. Use the generated Python and TypeScript clients in a real caller test. Search published source for retired names and verify no active consumer uses an old route. |
-| HO-T13 | HO-11 | Boot with one FastMCP loop and multiplexer. Enumerate tools/routes/methods and compare to registry plus explicit protocol list; remove any one resident registration in a fixture and assert startup fails. A loaded forwarder is the only runtime addition and its body calls `invoke`. |
+| HO-T13 | HO-11 | Boot one FastMCP loop and multiplexer. Enumerate tools, routes, and methods; compare them with the registry and protocol list. Remove one resident registration in a fixture; assert startup fails. A loaded forwarder is the only runtime addition. Its body calls invoke.
 | HO-T14 | GRAPHOS-OPS-R039 | Build the dashboard router. All 15 old method and path pairs present |
 | HO-T15 | GRAPHOS-OPS-R039 | Read-only caller on mutating routes. 403; API-key caller passes; health open |
 | HO-T16 | GRAPHOS-OPS-R040 | Create with empty template or oversize data. Typed validation or 400 refusal |
@@ -33,6 +33,8 @@ Governing [spec](spec.md).
 | HO-T25 | GRAPHOS-OPS-R021.4.4 | Run `tests/api/test_runs_ops.py::test_runs_metrics_passes_engine_values_through`; it must pass and bind to this row. |
 | HO-T26 | GRAPHOS-OPS-R021.4.5 | Run `tests/api/test_runs_ops.py::test_runs_get_returns_termination_context_and_applied_config`; it must pass and bind to this row. |
 | HO-T27 | GRAPHOS-OPS-R021.4.6 | Run `tests/api/test_runs_ops.py::test_runs_ops_registered_with_existing_scopes`; it must pass and bind to this row. |
+| HO-T28 | GRAPHOS-OPS-R061 | Planned test path: `tests/api/test_usage_indexed_served.py::test_indexed_usage_projection`. It remains unexecuted. See the R061 served-acceptance cases below. |
+| HO-T29 | GRAPHOS-OPS-R063 | Planned test path: `tests/api/test_retrieval_evaluation_served.py::test_evaluation_and_original_utf8_context`. It remains unexecuted. See the R063 served-acceptance cases below. |
 
 ## Drift and scanner acceptance
 
@@ -76,27 +78,30 @@ These paths are planned acceptance, not passing test receipts.
 | GRAPHOS-OPS-R024.4.5 | `tests/api/test_memory_files_served.py::test_authority_and_replay_are_non_disclosing` | Authorized same-body replay returns one durable receipt and performs no duplicate effects. | Denied existing, absent and creation requests match; changed-body replay and revoked replay disclose no head. |
 | GRAPHOS-OPS-R024.4.6 | `tests/api/test_memory_files_served.py::test_complete_served_memory_file_journey` | Real host, GraphOS and durable engine complete listing, conflict, resolution and acknowledgment. | Reject browser acknowledgment, symlink escape and unavailable producer; no mocked transport or persistence. |
 
-<!-- spec-definition-patch:batch-20261012-tests -->
-- `GRAPHOS-OPS-R054`: Future acceptance: tests/api/test_agent_browser_ops.py::test_benchmark_activation_requires_technique_bound_evidence. Cover all five technique identities, model/configuration binding, gain/non-regression evidence, mismatched receipts and zero activation on refusal. Not run.
+## Owner-bound projection acceptance (GRAPHOS-OPS-R054–R058, R061, R063)
+
+- `tests/api/test_agent_browser_ops.py::test_benchmark_activation_requires_technique_bound_evidence`: cover all five techniques, exact model/configuration, measured gain or non-regression, mismatched receipts, and no activation on refusal.
+- `tests/api/test_ops_admin_ops.py::test_process_remediation_requires_run_bound_approval`: cover proposal-only behavior, explicit run/process-bound approval, stale or mismatched evidence, and zero process effects on refusal.
+- `tests/api/test_decide_ops.py::test_changeset_review_binds_revision_classes_and_findings`: cover exact source revision, five flaw classes, evidence references, impact filtering, and refusal for missing or mismatched producer results.
+- `tests/api/test_write_back_models.py::test_prompt_json_roundtrip_and_difference_oracle_is_stable`: cover stable serialization, semantic equivalence, true semantic changes, and source-effect refusals.
+- `tests/gateway/test_schema_context_api.py::test_table_browser_projection_requires_owner_binding`: cover authorized data, denied scope, missing producer, and zero calls/effects on refusal. Add served WebUI consumer acceptance after owner contracts publish. These tests are proposed; none has run.
+- GRAPHOS-OPS-R061: Planned paths: `tests/api/test_usage_indexed_ops.py::test_query_maps_filters_and_cursor_to_eg` and `tests/api/test_usage_indexed_served.py::test_indexed_usage_projection`. Serve authenticated HTTP and MCP, then enter ObservabilityView.tsx. Reconcile each model/project/agent group against an independent EG ledger. Check four disjoint counters and producer-derived totals. Check exact rational aggregation and half-even rounding once per final group/category. Verify PriceTableV1, minor units, accounting/currency revisions, coverage, index watermark, cursor, and pinned-FX separation. Check the R010.101 p95 limit: 500 ms from authenticated-handler entry through serialization. Use 1,000,000 indexed traces, 32 readers, and 1,000 fixed-window queries. Verify denied or foreign tenants, stale cursors/revisions, and absent, invalid, or exceeded profile evidence. Unknown attribution, price, and currency retain reasons and never become zero or a mixed-currency total. These cases are planned; none is a runtime receipt.
+- GRAPHOS-OPS-R063: Planned operation test: `tests/api/test_retrieval_evaluation_ops.py::test_comparison_forwards_identical_inputs`. Planned served test: `tests/api/test_retrieval_evaluation_served.py::test_evaluation_and_original_utf8_context`. Serve two registered algorithms over one corpus, complete labeled query set, query-set ID/revision/digest, evaluator revision, and k. Use k from 1 through 1000. Keep corpus, labels, query set, evaluator, and query inputs identical across algorithms. Check each settings digest against that algorithm's pinned configuration. Check the hits_at_k denominator is the full identically labeled query set. Check the numerator counts queries with at least one relevant result in top k. Independently verify producer numerator, denominator, metric, and result digests through GraphOS and WebUI reads. Exercise composed, decomposed, and multibyte text. Each half-open byte span must slice original stored bytes and match the stored-text digest. Escape HTML-hostile source before highlighting. Verify highlights preserve original byte spans. If normalization is used, check its separate NFC digest and validated map to original bytes. Refuse missing labels and zero denominators. Refuse mismatched corpus, labels, evaluator, or query inputs. Refuse missing or mismatched per-algorithm settings digests. Refuse incomplete results and denied or cross-tenant reads. Refuse stale cursors/revisions and invalid offsets/maps. Refuse 101 spans or any span over 8 KiB. These cases are planned, not runtime receipts.
+
+## Additional owner requirements
+
 - `GRAPHOS-OPS-R024.1.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-OPS-R014.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-OPS-R022.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R055`: Future acceptance: tests/api/test_ops_admin_ops.py::test_process_remediation_requires_run_bound_approval. Cover proposal-only response, explicit run/process-bound approval, stale/mismatched evidence and no process effect on refusal. Not run.
 - `GRAPHOS-OPS-R022.4`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-OPS-R053.7`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R056`: Future acceptance: tests/api/test_decide_ops.py::test_changeset_review_binds_revision_classes_and_findings. Cover exact source revision, five flaw classes, finding-to-code evidence, impact filter, and fail-closed missing/mismatched producer results. Not run.
 - `GRAPHOS-OPS-R021.2.1.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R057`: Future acceptance: tests/api/test_write_back_models.py::test_prompt_json_roundtrip_and_difference_oracle_is_stable. Cover deterministic serialization, semantic equivalence, true semantic changes, and existing source-effect refusals. Not run.
 - `GRAPHOS-OPS-R050.2.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-OPS-R009.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-OPS-R053.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R058`: Future acceptance: `tests/gateway/test_schema_context_api.py::test_table_browser_projection_requires_owner_binding` and a served WebUI consumer test after contract assignment. Cover authorized data and denied scope. Cover missing producer and zero calls/effects on refusal. Not run.
-- `GRAPHOS-OPS-R059`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R060`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R061`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R062`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R063`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R064`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R065`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-OPS-R066`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-<!-- /spec-definition-patch -->
+- `GRAPHOS-OPS-R059`: Planned `tests/api/test_evolution_metrics_served.py::test_proposal_metrics_preserve_owner_join_and_denial` proves the owner binding and served acceptance in plan.md. Cover HTTP, MCP, and the named browser consumer. No execution is claimed.
+- `GRAPHOS-OPS-R060`: Planned `tests/api/test_sessions_served.py::test_full_manifest_sessions_and_costs_survive_restart` proves the owner binding and served acceptance in plan.md. Cover HTTP, MCP, and the named browser consumer. No execution is claimed.
+- `GRAPHOS-OPS-R062`: Planned `tests/api/test_graph_changes_served.py::test_two_clients_recover_and_reauthorize_committed_feed` proves the owner binding and served acceptance in plan.md. Cover HTTP, MCP, and the named browser consumer. No execution is claimed.
+- `GRAPHOS-OPS-R064`: Planned `tests/api/test_viewport_served.py::test_billion_point_viewport_keeps_bins_selection_and_byte_bounds` proves the owner binding and served acceptance in plan.md. Cover HTTP, MCP, and the named browser consumer. No execution is claimed.
+- `GRAPHOS-OPS-R065`: Planned `tests/api/test_meeting_served.py::test_corrected_final_transcript_binds_selected_summary_provider` proves the owner binding and served acceptance in plan.md. Cover HTTP, MCP, and the named browser consumer. No execution is claimed.
+- `GRAPHOS-OPS-R066`: Planned `tests/api/test_bookmarks_served.py::test_search_relationships_and_exports_share_authorized_snapshot` proves the owner binding and served acceptance in plan.md. Cover HTTP, MCP, and the named browser consumer. No execution is claimed.

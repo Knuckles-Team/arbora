@@ -1,10 +1,10 @@
 # Messaging channel supervision lifecycle — architecture
 
-Status: **READY FOR IMPLEMENTATION**. Delivery: **BUILDING** (`GRAPHOS-MESSAGING-R001.1` landing in this change). Governing [spec](spec.md).
+This plan describes the messaging supervision architecture and its health-reporting attachment points.
 
 ## Existing system and reuse
 
-`graph_os/messaging/router.py`'s `InboundRouter` already supervises each registered `MessagingBackend` through `_supervise_backend`, with a bounded exponential backoff (`MESSAGING_LISTEN_BACKOFF_BASE_S`/`_MAX_S`/`MESSAGING_LISTEN_HEALTHY_RESET_S`) and a clean `start()`/`stop()` pair that cancels and awaits listener and inbox-reaper tasks. `graph_os/messaging/registry.py`'s `MessagingRegistry.create_backend`/`create_all_enabled` already distinguishes a missing adapter (`ValueError`) from a missing dependency (`ImportError`) and currently only logs and skips it. None of this is exposed as a typed state a caller can read; it lives in log lines and booleans (`_running`, `backend.is_connected`). This spec adds the typed state model those existing code paths report into — it replaces no existing control flow and adds no second supervision loop.
+The typed supervision model and registry failure records remain the single state authority. The health projection below adds configuration and operator-enable context without a second supervision loop.
 
 ## Architecture
 
@@ -23,12 +23,21 @@ stateDiagram-v2
   STOPPING --> STOPPED: tasks drained
 ```
 
-`GRAPHOS-MESSAGING-R001.1` (this change) adds `graph_os/messaging/supervision.py`: a `ChannelSupervisionState` `enum.Enum`, a module-level `_TRANSITIONS` mapping each state to its legal successor set per the diagram above, and a `transition(current, target)` function raising `IllegalSupervisionTransition` (carrying `current`/`target` in its message) on any pair not in that table. This is a pure typed model with no asyncio, no backend import, and no router wiring — the next slice (`GRAPHOS-MESSAGING-R002`) wires `InboundRouter._supervise_backend` and `start()`/`stop()` to call `transition()` and expose a per-backend state read; `GRAPHOS-MESSAGING-R005` wires `MessagingRegistry.create_all_enabled` to record a `DEGRADED` entry instead of only logging. Both remaining slices are `SPECIFIED`, not built in this change.
+GRAPHOS-MESSAGING-R001.1 defines the pure typed model and illegal-transition refusal. GRAPHOS-MESSAGING-R001 and R002/R004 own router wiring and lifecycle behavior; GRAPHOS-MESSAGING-R005.1 adds the configuration-aware health projection to the existing registry and host-health read paths.
+
+## Configuration-aware health projection
+
+CompositionPlan.messaging_intake_enabled is true only when the operator explicitly enables intake and KG_DAEMON_ROLE is host. Backend credentials describe configuration, not operator intent; credential presence alone never starts intake or makes a disabled component alert-eligible.
+
+GraphOS assembles components.messaging_intake from the composition plan and MessagingRegistry.configured_backend_ids().
+It also reads typed degraded records and active backend connection state.
+requirements.md defines the stable JSON fields and state rules.
+GraphOS sorts backend entries by stable backend ID.
+The projection returns booleans, states, safe reason codes, and backend IDs.
+It omits credential values and raw exception text.
+
+Authenticated GET /api/dashboard/health and graph_configure(action="health") expose the same projection alongside the existing shared runtime report. Unauthenticated /health liveness and /health/ready readiness remain detail-free. Any component-health alert evaluator consumes alert_eligible; health reads do not emit notifications.
 
 ## Quality and environment
 
-Use `uv sync --extra test`, focused `uv run pytest tests/messaging` (new `tests/messaging/test_supervision.py`), Ruff, and mypy on the changed file. No fixture engine, network, or sibling checkout is required — the state model has no I/O.
-
-<!-- spec-definition-patch:batch-20261012-plan -->
-- `GRAPHOS-MESSAGING-R005.1`: Plan the owner work and dependencies defined in requirements.md.
-<!-- /spec-definition-patch -->
+At implementation, run the focused messaging tests and served health acceptance cases in test-spec.md, then the repository's standard spec and lifecycle gates. This spec publication adds no runtime code and claims no execution of the newly defined served health cases.

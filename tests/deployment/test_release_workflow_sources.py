@@ -440,3 +440,52 @@ def test_numeric_artifact_cache_is_exact_and_always_validated() -> None:
     )
     assert re.search(r"maturin==\d+\.\d+\.\d+", identity["run"])
     assert "maturin>=" not in identity["run"]
+
+
+def test_release_eg_checkout_matches_locked_source() -> None:
+    from urllib.parse import parse_qs, urlsplit
+
+    locked = tomllib.loads((ROOT / "uv.lock").read_text(encoding="utf-8"))
+    eg = next(
+        package for package in locked["package"] if package["name"] == "epistemic-graph"
+    )
+    source = urlsplit(eg["source"]["git"])
+    revision = parse_qs(source.query)["rev"][0]
+    checkout = next(
+        step["with"]
+        for step in _gate_steps()
+        if step.get("with", {}).get("repository") == "Knuckles-Team/epistemic-graph"
+    )
+    assert checkout["ref"] == revision == source.fragment
+
+
+def test_pinned_sdk_source_contains_schema_disclosure_contract() -> None:
+    import ast
+
+    checkout = next(
+        step["with"]
+        for step in _gate_steps()
+        if step.get("with", {}).get("repository") == "Knuckles-Team/agent-connector-sdk"
+    )
+    source = subprocess.check_output(
+        [
+            "git",
+            "-C",
+            str(ROOT / checkout["path"]),
+            "show",
+            f"{checkout['ref']}:agent_connector_sdk/mcp/schema_disclosure.py",
+        ],
+        text=True,
+    )
+    names = {
+        node.name
+        for node in ast.parse(source).body
+        if isinstance(node, (ast.FunctionDef, ast.ClassDef))
+    }
+    names |= {
+        alias.asname or alias.name
+        for node in ast.parse(source).body
+        if isinstance(node, ast.ImportFrom)
+        for alias in node.names
+    }
+    assert {"SchemaManifest", "reconstruct_schema"} <= names

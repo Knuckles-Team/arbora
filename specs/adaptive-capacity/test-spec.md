@@ -15,9 +15,9 @@ From a clean clone run `uv sync --extra test`, `uv run pytest`, `uv run ruff che
 
 Property tests should generate outcome sequences and assert `floor <= effective <= engine_headroom` and that automatic transitions never widen beyond an external ceiling. Run CCCC, KISS, jscpd and dupehound gates from the repository's pinned pipeline when source changes. Fix new findings without suppression or copied controller logic. Record exact command, commit, CI URL, fixture seed and redacted served receipt in `tasks.md`.
 
-<!-- spec-definition-patch:batch-20261012-tests -->
+## Additional owner requirements
+
 - `GRAPHOS-CAPACITY-R001.2`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-CAPACITY-R003`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-CAPACITY-R004`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `GRAPHOS-CAPACITY-R004`: Planned tests in `tests/api/test_agent_load_served.py` cover terminal latency, failures, and threshold boundaries. `test_agent_run_profile_measures_terminal_latency_and_failures` enters the served agent route. `test_agent_run_profile_rejects_missing_samples_and_exceeded_limits` rejects invalid or incomplete qualification. No execution is claimed.
 - `GRAPHOS-CAPACITY-R001.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-<!-- /spec-definition-patch -->

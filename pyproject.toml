@@ -37,8 +37,8 @@ dependencies = [
     "anyio>=4.13.0",
     # Production operations and the canary call the public client/numeric
     # surface directly; AU's transitive requirement is not enough for this
-    # package's own imports.  The local AU binding supplies the workspace EG
-    # source through its own .uv-workspace-siblings declaration.
+    # package's own imports. The root source override below aligns AU and SDK
+    # on the GraphOS-compatible revision without changing the published floor.
     "epistemic-graph>=2.27.0,<3.0.0",
     "fastapi>=0.139.2",
     "filelock>=3.32.0",
@@ -47,7 +47,7 @@ dependencies = [
     "PyYAML>=6.0.3",
     "starlette>=1.3.1",
     "fastmcp>=4.0.0b1",
-    "mcp>=2.0.0",
+    "mcp>=2.3.0,<3.0.0",
     "opentelemetry-api>=1.39.1",
     "pydantic-ai-slim[openai]==2.54.0",
     # Installed so its ``agent_utilities.skill_providers`` entry point (once
@@ -142,6 +142,10 @@ service = "graph_os.messaging.reach:service_port"
 # Portable development binding for the not-yet-published AU 2.5 release.
 # The path is ignored and supplied as a local symlink; package metadata keeps
 # the real PEP 508 floor above, so released wheels resolve from the index.
+[tool.uv]
+# Unify SDK and AU sources at the EG revision required by GraphOS.
+override-dependencies = ["epistemic-graph @ git+https://github.com/Knuckles-Team/epistemic-graph.git@70037e8a400c7b32b1222623bb05bbfaf55deab8"]
+
 [tool.uv.sources]
 agent-utilities = { path = ".uv-workspace-siblings/agent-utilities", editable = true }
 agent-connector-sdk = { path = ".uv-workspace-siblings/agent-connector-sdk", editable = true }

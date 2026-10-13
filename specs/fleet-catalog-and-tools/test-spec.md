@@ -187,10 +187,17 @@ A consumed lease, a missing receipt, or another writer's identical bytes must ne
 Audit and receipt failures after mutation preserve uncertainty and known references rather than claiming rollback.
 Record request, plan, audit and SDK receipt associations with actual provider-call counters and fresh durable reads.
 
-<!-- spec-definition-patch:batch-20261012-tests -->
+
+## OpenAPI operation schema preflight (`GRAPHOS-FLEET-R035`)
+
+Run `uv run --no-sync pytest tests/fleet/test_multiplexer_schema_disclosure.py` against the frozen GraphOS lock and merged public SDK source. The fixture cases prove ordered reconstruction and compare both selected schemas before invocation. Stale manifests, missing fragments, absent output schema and mismatched action must refuse before the operation call. Changed catalog, denied session, OAuth-session mismatch and uncertain-write replay must also refuse before that call. These tests use fake child sessions and do not prove live provider publication, production credentials, deployment, or provider effects. Report focused consumer evidence separately from any later live/release evidence.
+
+Cover non-prefixed OAuth aliases with stale disclosures and ordinary tools without schema metadata. Release preflight before cancelling its caller to prove the final-send cancellation fence. Cancel and refuse a half-open preflight, then prove a later healthy probe succeeds without replay. Compare CI's EG source revision with the lock and inspect the pinned SDK's public disclosure exports.
+
+## Additional owner requirements
+
 - `GRAPHOS-FLEET-R024.10`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-FLEET-R024.11`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-FLEET-R002.9`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-FLEET-R034.13`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-FLEET-R034.14`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-<!-- /spec-definition-patch -->

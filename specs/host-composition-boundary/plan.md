@@ -126,8 +126,9 @@ Return an explicit gap when requested history was rotated. Shutdown drains logs 
 
 Reasons are `invalid_launch`, `client_unavailable`, `workspace_denied`, `log_unavailable`, `log_gap`, `bind_failed` and `shutdown_incomplete`.
 Preserve R009.1's original A2A, task-lifecycle and ACP acceptance; logs establish none of those independently.
-An exact terminal-client owner requirement and public adapter are prerequisites for unified terminal log viewing.
-No such consumer contract is provided by this host definition. Keep the complete client journey explicitly required.
+The terminal consumer is specified by TUI-RUNTIME-R002.2 through R002.6.
+Bind R009.5, R009.6 and R010.7 to the public adapters in the amendment below.
+Consumer definitions are available; their runtime exports and the authenticated host handoff remain implementation prerequisites.
 
 ## Shared transport scaffold (GRAPHOS-HOST-R006/R023)
 
@@ -139,14 +140,49 @@ Use typed arguments for transport, bind address, port and security; compare norm
 R006.1 retains all original module ownership; R023.1 retains every tool, ranking, fallback and invocation-policy clause.
 The new transport acceptance must use real wire clients, including unauthorized calls and stdout-purity probes.
 
-<!-- spec-definition-patch:batch-20261012-plan -->
+## Native desktop, visual state, and coding-agent handoff (GRAPHOS-HOST-R029–R031)
+
+- **R029:** After the SDK publishes a typed grant-bound port and certified provider, bind it through `graph_os/api/invoke/pipeline.py:invoke` and `graph_os/api/invoke/executor.py:BoundOperationRuntime.dispatch` (line 273). `OperationRuntime.dispatch` is only a protocol.
+- **R030:** Bind observation and state through the same composed dispatch path. Do not add a local state store. Wait for SDK observation and EG state/context contracts.
+- **R031:** Use `graph_os/mcp_server/server.py:mcp_server` for host/admission composition. Wait for EG selection, AU harness, and WebUI renderer contracts; do not advertise the complete flow before all ports exist.
+
+## Amendment: authenticated terminal log preference
+
+Extend GRAPHOS-HOST-R009.5, GRAPHOS-HOST-R009.6 and GRAPHOS-HOST-R010.7.
+The consumer contract is [TUI-RUNTIME-R002.2 through R002.6](https://github.com/Knuckles-Team/agent-terminal-ui/blob/5ac5e3fec4d590f167d2c6bd694683dbd8950c26/specs/terminal-runtime/plan.md#tui-runtime-r002-consumer-boundary).
+This amendment provides definitions only. Keep these host rows SPECIFIED with empty acceptance receipts.
+
+The proposed HostLaunchReceipt version 1 must include required `web_logs: bool`.
+It is the effective preference resolved from HostLaunchRequest.web_logs and authorized host configuration.
+Use a strict boolean; missing, null and nonboolean values are invalid. Never infer true from a log reference.
+Bind this value and the entire receipt to the authenticated host session, host instance, workspace, tenant and principal.
+Retain the endpoint, interface mode, readiness, opaque log reference, generation and expiry bindings.
+Deliver the receipt through the existing authenticated host/client handoff. Receipt fields alone grant no authority.
+A changed binding, unknown version, expired session or missing preference refuses subscription before any log read.
+The current runtime has no receipt field or served handoff proving this binding. Until implemented, log viewing stays unavailable and performs zero reads.
+Do not fill this gap with an unsigned preference, client-selected scope or filesystem path.
+
+R010.7 resolves terminal, web or both before startup and passes the authenticated effective preference to R009.5.
+R009.5 provides `agent_terminal_ui.app.run_host_terminal(receipt: HostLaunchReceipt, *, client: AgentClient, log_reader: HostLogReader | None) -> None`.
+Inject the existing authenticated client and the TUI-defined `agent_terminal_ui.client.HostLogReader` implementation.
+Its asynchronous method is `read(log_ref: str, *, cursor: str | None, limit: int) -> HostLogBatch`.
+GraphOS implements the authorized producer side under R009.3 and R009.4; TUI owns rendering, subscription and cancellation under R002.3 through R002.5.
+The reader uses only the opaque reference and reauthorizes each read and reconnect. No new route or file reader is implied.
+These signatures are specified consumer interfaces, not claims of existing runtime exports.
+
+Only terminal and both modes with authenticated `web_logs=true` permit TUI log reads.
+False or absent preference, web mode, unavailable reader or invalid scope yields zero TUI reads.
+Agent interaction remains available when log viewing is disabled or unavailable.
+The required redacted host sink stays enabled in every case; the preference controls only the TUI subscription.
+Retain all existing tenant isolation, bounded delivery, rotation gaps, shutdown and single-authority requirements.
+R009.6 proves this through the real host and public adapter together with TUI-RUNTIME-R002.6.
+A controlled adapter can prove only the host handoff, not unified terminal rendering.
+
+## Additional owner requirements
+
 - `GRAPHOS-HOST-R023.3`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-HOST-R029`: Wait for the SDK to publish a typed, grant-bound native-desktop port. Then attach desktop operations through `graph_os/api/ops/registry_factory.py:get_registry` and `graph_os/api/invoke/pipeline.py:invoke`. Keep them unavailable until a certified provider is composed.
 - `GRAPHOS-HOST-R008.6`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-HOST-R026.6`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-HOST-R030`: Wait for SDK and EG observation/state contracts. Bind typed observations and state at `graph_os/api/invoke/pipeline.py:invoke` and `graph_os/api/invoke/executor.py:OperationRuntime.dispatch`. Do not add a GraphOS-owned durable observation store.
 - `GRAPHOS-HOST-R022.1`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-HOST-R031`: Use `graph_os/mcp_server/server.py:mcp_server` as the GraphOS host boundary. Bind to published EG selection, AU harness, and WebUI renderer contracts. Do not implement those owners. Keep the flow unavailable until all three ports are bound.
 - `GRAPHOS-HOST-R010.8`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-HOST-R032`: Plan the owner work and dependencies defined in requirements.md.
-<!-- /spec-definition-patch -->

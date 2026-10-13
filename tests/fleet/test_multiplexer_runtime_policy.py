@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import mcp.types
 import pytest
+from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
 
 from graph_os.fleet import multiplexer as mod
@@ -138,6 +139,11 @@ async def test_runtime_policy_owns_spawn_catalog_call_and_teardown(
 
     registered = mux._register_child_result(server_name, runtime, tools, cfg)
     assert len(registered) == 1
+    host = FastMCP("runtime-policy-fixture")
+    mod._register_forwarder(host, mux, registered[0])
+    assert not mux.tool_dispatchable(registered[0].name)
+    mux.session_loaded(mod._session_key()).add(registered[0].name)
+    assert mux.tool_dispatchable(registered[0].name)
     await mux.call_proxied_tool(registered[0].name, {})
     assert "call:read_inventory" in events
 

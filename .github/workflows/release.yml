@@ -116,7 +116,7 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           repository: Knuckles-Team/agent-connector-sdk
-          ref: 403908c0a53746cbee97256d539da28976d5ad80
+          ref: a0f78fefbb486e4c7d97e608462cf5847a46bc7d
           path: .uv-workspace-siblings/agent-connector-sdk
           persist-credentials: false
 

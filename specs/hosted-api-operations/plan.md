@@ -47,7 +47,13 @@ The retirement inventory is a checked artifact produced from the existing host r
 
 ## Fresh-checkout and quality design
 
-`uv sync --extra test`, `uv run pytest tests/api tests/fleet`, `uv run ruff check .`, `uv run ruff format --check .`, and `uv run mypy graph_os` must run with public pinned wheels and fixture identities. CI may provision an ephemeral local engine/agent stack for served tests; no check requires a private host or credential. Existing repository hooks provide CCCC, KISS, jscpd and Dupehound scanning; the scoped implementation must satisfy configured thresholds (including zero new clone pairs), not lower or suppress them. Keep registry domain tables small, use a step table rather than nested branching, one endpoint factory per surface, and generated declarative types rather than repeated function bodies. Delete old implementation in the cutover so scanners and reviewers see one authority.
+- Run `uv sync --extra test` and `uv run pytest tests/api tests/fleet`.
+- Run `uv run ruff check .` and `uv run ruff format --check .`.
+- Run `uv run mypy graph_os` with public pinned wheels and fixture identities.
+- CI may provision an ephemeral local engine/agent stack for served tests. No check requires a private host or credential.
+- Repository hooks run CCCC, KISS, jscpd, and Dupehound scans. Meet configured thresholds, including zero new clone pairs. Do not lower or suppress them.
+- Keep registry domain tables small. Prefer step tables over nested branching. Use one endpoint factory per surface and generated declarative types. Avoid repeated function bodies.
+- Eliminate the old implementation during cutover. Scanners and reviewers must see one authority.
 
 ## Gateway carry-over: dashboard, Live Artifacts, widget
 
@@ -74,7 +80,7 @@ Deleted Agent summary widget: dashboard tile with type genius_agent, env prefix 
 
 - Dashboard: owned by the existing dashboard router module and its aggregator, config manager and registry under the gateway package. No new module; add census and capability tests only.
 - Live Artifacts: new router module `graph_os/gateway/artifacts_api.py` (to be created) with typed request model, a store port and a refresh port declared in the gateway ports module, and a register function that mounts the three routes. The store and refresh service come from a public `agent_utilities.api` export (prerequisite row); graph-os never imports the agent-utilities knowledge-graph package directly.
-- The source resolver is a port argument, not a module global: the host passes a graph-backed resolver, default behaviour is preserve-prior-data.
+- Pass the source resolver as a port argument, never a module global. The host supplies a graph-backed resolver. The default preserves prior data.
 - Agent summary widget: nothing to build.
 
 ### Wiring
@@ -85,7 +91,7 @@ Deleted Agent summary widget: dashboard tile with type genius_agent, env prefix 
 
 Out of scope:
 
-Out of scope: moving the Live Artifact store or refresh service from agent-utilities. New dashboard widgets are also out of scope. The layout file format will not change. The artifact MCP tool surface is excluded; the research-artifact tool is unrelated.
+Out of scope: moving the Live Artifact store or refresh service from agent-utilities. Also out of scope: new dashboard widgets, layout-format changes, and an MCP artifact tool. The research-artifact tool is unrelated.
 
 ### Caveat resolutions (design, 2026-10-10)
 
@@ -111,7 +117,7 @@ Compared `git show 0eb67c99c^:agent_utilities/gateway/api.py` (328 lines) with `
 | POST /hydrate | write | none / hydration result dict | 403, 500 no engine, 500 sanitized | DIFFERS: same (row R001.7) |
 | GET /hydration-status | read | none / status dict | 403 | DIFFERS: same (row R001.7) |
 
-No route is MISSING. The capability resolver imports internal modules `agent_utilities.core.config` and `agent_utilities.security.identity`. This differs only in dependency (row R001.9). For shard, hydration, and active-engine dependencies, use the engine client session and source-sync methods required by `GRAPHOS-HOST-R002`. Do not add a public `agent_utilities.api` export; shard and hydration state belong to the engine. Row R001.6 first adds a contract test for these installed-client methods. If the client lacks them, the engine-client owner must resolve the block. The route keeps its current imports until then.
+No route is missing. The capability resolver still imports internal agent-utilities modules core.config and security.identity. This dependency difference belongs to R001.9. Decision: use the engine client session and source-sync methods required by GRAPHOS-HOST-R002 for shard, hydration, and active-engine state. Do not add another agent-utilities public API export. Row R001.6 first tests whether the installed client exposes these methods. If not, block that row on the engine client owner. Keep present imports until then.
 
 #### D3 Live Artifacts authentication (DECIDED; not blocked)
 
@@ -376,27 +382,152 @@ This GraphOS change does not edit or deliver WebUI requirements.
 Producer order is R085 implementation and generated contracts, GraphOS port and serving, host materializer, then WebUI consumption.
 Missing producer implementation must remain unavailable. Definitions and planned tests must never count as served receipts.
 
-<!-- spec-definition-patch:batch-20261012-plan -->
-- `GRAPHOS-OPS-R054`: Do not relabel or reuse `graph_os/api/ops/agents.py:handle_rlm`; `rlm.benchmark` is not technique evidence. Wait for AU-INTEGRATION-R014 to publish a producer operation and receipt. Then add a separate projection via `graph_os/api/ops/registry_factory.py:get_registry` and `graph_os/api/invoke/pipeline.py:invoke`. Do not infer evidence from an EG packet.
+## Owner-bound projections (GRAPHOS-OPS-R054–R058, R061, R063)
+
+- **R054:** Keep `rlm.benchmark` separate from serving-technique evidence. Add a projection through `graph_os/api/ops/registry_factory.py:get_registry` and `graph_os/api/invoke/pipeline.py:invoke` only after `AU-INTEGRATION-R014` publishes its producer and receipt.
+- **R055:** Bind a read/proposal projection through the shared registry/invoke path only after AU publishes liveness and proposal contracts. No GraphOS termination adapter exists.
+- **R056:** Keep `decide.commit` unchanged. Add a distinct review projection through the shared registry/invoke path. Wait until EG/AU publish the review operation and evidence contract.
+- **R057:** Add no repository-writeback attachment until EG `R094.2/.3/.5/.7` and SDK source-effect/receipt contracts publish. The current GraphOS tree has no serializer or served handler.
+- **R058:** Use the existing schema-context routes/service for read-only data. Add no table mutation or statistics until WebUI and EG publish their contracts.
+
+### GRAPHOS-OPS-R061: indexed usage projection
+
+1. Bind the GraphOS read to EG RunTraceUsageQueryV1 / EG-ORCH-VOCAB-R010.101; derive tenant only from verified caller claims and pass the producer's bounded window, model/project/agent grouping, currency, page size, and snapshot cursor.
+2. Extend the usage.py reader with closed UsageQueryV1 and UsageProjectionV1 models. Add a distinct usage.index.query port beside usage.read. Use existing usage:read, build_read_op, registry_factory, and shared invoke. Keep accounting separate from runs.metrics (R021.4.3/.4) and usage.read.
+3. Preserve four disjoint EG counters, producer totals, unknown reasons, pinned PriceTableV1, minor units, revisions, coverage, watermark, and cursor. Aggregate exact rational amounts by final group and category. Apply half-even rounding once. Keep unknown values unknown with reasons and coverage; never use zero. Keep currencies separate unless EG supplies pinned FX. Bind p95 <= 500 ms from authenticated-handler entry through serialized response. Use 1,000,000 indexed traces, 32 readers, and 1,000 fixed-window queries. Bind data/index/cache-policy revisions. Missing or invalid profile evidence is unavailable; an exceeded bound is not success.
+4. Connect the projection to WebUI ObservabilityView.tsx under WEBUI-APPS-R004.8.1-.6. Served proof compares groups with an independent EG ledger. It exercises authorization, pagination, unknown values, stale revisions, and absent, invalid, or exceeded profile evidence. This remains planned work, not runtime delivery.
+
+### GRAPHOS-OPS-R063: retrieval evaluation and context projection
+
+1. Bind the EG-DECISION-ENGINE-R100.100 DecisionEval ranking receipt. Map RetrievalRankingSubmit to RetrievalRankingV1. Map Method::RetrievalContextSearch to RetrievalContextSearchV1. Do not derive quality from retrieval.search or local RRF.
+2. Extend graph_os/api/ops/retrieval.py with closed evaluation, comparison, and context models. Register retrieval.evaluation.compare and retrieval.context.search. Use existing build_read_op, memory:read, registry factory, and shared invoke for HTTP/MCP.
+3. Require identical corpus, complete label-set revision/digest, query-set ID/revision/digest, evaluator revision, k, and query inputs across algorithms. Pin each algorithm's settings digest to its own registered configuration. Preserve producer metrics and result digests. For hits_at_k, use the full identically labeled query set as denominator. Count a query when any relevant result appears in top k. Preserve half-open UTF-8 offsets into original stored text. Bind query/index/authorization revisions and a snapshot cursor. Limit responses to 100 spans and 8 KiB each. If indexing normalizes text, preserve a separate NFC digest and validate its byte map to original text.
+4. Align WebUI TryItPanel.tsx under WEBUI-APPS-R001.1.1-.6. Served proof checks two-algorithm metrics and identical inputs. It tests hostile-source escaping before highlighting and preserves original byte spans. It also checks Unicode slicing, authorization, staleness, missing labels, invalid maps, and limits. This remains planned work, not runtime delivery.
+
+## Additional owner requirements
+
 - `GRAPHOS-OPS-R024.1.1`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-OPS-R014.1`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-OPS-R022.3`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R055`: Bind a future liveness projection only through graph_os/api/ops/registry_factory.py:get_registry and graph_os/api/invoke/pipeline.py:invoke after AU publishes the detector and proposal operation. No GraphOS termination adapter exists in this spec.
 - `GRAPHOS-OPS-R022.4`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-OPS-R053.7`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R056`: Keep `decide.commit` in `graph_os/api/ops/decide.py:handle_decide_commit`; it is not changeset review. Wait for EG/AU to publish a review operation and evidence contract. Then bind a distinct projection via `graph_os/api/ops/registry_factory.py:get_registry` and `graph_os/api/invoke/pipeline.py:invoke`. Do not substitute the generic probe score.
 - `GRAPHOS-OPS-R021.2.1.1`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R057`: Bind stable serialization through graph_os/api/ops/registry_factory.py:get_registry and graph_os/api/invoke/pipeline.py:invoke only after EG R094.2/.3/.5/.7 and the SDK source-effect receipt contract are bound. The current GraphOS tree has no repository prompt serializer, RepositoryWriteBackParams, or served repository-writeback handler.
 - `GRAPHOS-OPS-R050.2.1`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-OPS-R009.1`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-OPS-R053.8`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R058`: Use `graph_os/gateway/schema_context_api.py:register_schema_context_routes` and `graph_os/gateway/schema_context_service.py:get_schema_context` as the existing read-only attachment. Do not add table mutations or statistics until WebUI and EG publish their contracts.
 - `GRAPHOS-OPS-R059`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-OPS-R060`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R061`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-OPS-R062`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R063`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-OPS-R064`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-OPS-R065`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-OPS-R066`: Plan the owner work and dependencies defined in requirements.md.
-<!-- /spec-definition-patch -->
+
+## Projection bindings and producer prerequisites (R059, R060, R062, R064–R066)
+
+These operation names and schemas are proposed contracts. No new operation is registered by this specification change.
+All six projections reuse the current authenticated invocation path.
+HTTP enters `graph_os/api/http/routes.py:make_endpoint` at line 96.
+MCP enters `graph_os/api/mcp/verbs.py:dispatch_verb` at line 377 and `_invoke_and_render` at line 259.
+Both reach `graph_os/api/invoke/pipeline.py:invoke` at line 810.
+Register approved declarations in `graph_os/api/ops/registry_factory.py:get_registry` at line 16.
+Bind verified caller authority before producer access; client-supplied tenant fields cannot select authority.
+Derive scopes from the published EG contract. Missing scope or owner method keeps the operation unavailable.
+A proposed method name below describes an owner specification, not an existing runtime export.
+
+### R059: evolution metrics
+
+Extend `graph_os/api/ops/usage.py:operations` and its composed reader for `evolution.proposals.metrics`.
+The producer is `EG-ORCH-VOCAB-R010.100`, proposed `Method::EvolutionTraceMetrics` and `EvolutionTraceMetricsV1`.
+Preserve proposal, prompt, metric-window, metric, progress, and trace IDs, revisions, and digests.
+Preserve ordered trace references, missing IDs, measured/unknown states, units, and partial coverage.
+Missing traces never become zero; trace counts and calibration never substitute for AU progress.
+The AU progress-to-ordered-run producer schema remains unassigned. Its publication blocks positive served acceptance.
+Map the result to WEBUI-APPS-R004.7 without joining or authoring progress in the browser or host.
+Planned proof: `tests/api/test_evolution_metrics_served.py::test_proposal_metrics_preserve_owner_join_and_denial`.
+Independently read two stored traces, their metrics, and AU progress through authenticated HTTP and MCP.
+Refuse stale windows, changed digests, unknown prompt revisions, and foreign tenants without data disclosure.
+
+### R060: harness sessions
+
+Extend the existing usage reader and registry for manifest, discovery, browse, search, and cost projections.
+SDK-SOURCE-INGEST-R013 owns `connector-sync --once` and the complete source-operation manifest.
+EG-ORCH-VOCAB-R009.101 specifies `Method::SearchHarnessSessions` over the `IndexHarnessSessionBatch` projection.
+Session costs use EG-ORCH-VOCAB-R010.101 accounting, currency, and coverage semantics.
+GraphOS reads those authorities; it cannot create another session index or author a supported-source list.
+Require a complete owner-approved manifest with source operations, revisions, authority, cursor forms, and coverage.
+That manifest remains an external prerequisite; do not infer supported harnesses from example fixtures.
+Use page sizes from 1 through 100 and preserve the producer's snapshot-bound cursor.
+Bind manifest and sync receipt digests, indexed revision, source identity, missing sources, and explicit refusal states.
+Return unavailable sources in coverage without revealing their protected session metadata.
+Planned proof: `tests/api/test_sessions_served.py::test_full_manifest_sessions_and_costs_survive_restart`.
+Exercise two available sources and a third unavailable source through HTTP, MCP, and WEBUI-APPS-R006.4.
+Check independent trace readback, replay, restart, cursor paging, cost units, unknown prices, and cross-tenant refusal.
+
+### R062: graph changes
+
+EG-DURABLE-KERNEL-R043.100 specifies `Method::OpenGraphSnapshot` and `Method::ReadGraphChanges`.
+Extend the composed read operations in `graph_os/api/ops/memory.py:operations` for feed and recovery projection.
+Preserve graph incarnation, committed revision, event identity, visibility revision, snapshot digest, and high-water cursor.
+Use producer page sizes from 1 through 256 and the 24-hour retention contract.
+Reauthorize every page and reconnect. Expiry returns typed recovery; revocation stops protected delivery.
+The existing registry does not supply a graph-feed transport adapter. Its authenticated bounded adapter remains required.
+Do not substitute `graph_os/gateway/fleet_events.py`, which reports fleet events rather than committed graph changes.
+
+The proposed `graph-visible-v1` profile uses two browsers and 10,000 nodes with 20,000 edges.
+Two writers each commit five updates per second for 60 seconds after a 10-second warm-up.
+Measure 600 updates from durable acknowledgement to both authorized browsers applying the corresponding revision.
+Use synchronized measurement timestamps and record clock uncertainty; uncertainty above 10 ms invalidates qualification.
+Require nearest-rank p95 at most 2,000 ms for each browser and no missing final revision.
+The EG feed's separate 1,000 ms boundary ends at authorized feed read, not browser application.
+WEBUI-APPS-R030.8 owns readable-layout and interaction limits; their declaration and evidence remain separate prerequisites.
+Planned proof: `tests/api/test_graph_changes_served.py::test_two_clients_recover_and_reauthorize_committed_feed`.
+Exercise concurrent writes, duplicates, delayed/reordered events, gaps, expiry, reconnect, and revocation.
+A missing profile, measurement, adapter, or owner binding cannot produce a passing latency result.
+
+### R064: viewport queries
+
+Extend `graph_os/api/ops/retrieval.py:operations` with viewport and selection handlers using its composed EG reader.
+EG-FEDERATED-QUERY-R081.103 owns `ViewportQueryV1` through `Method::UnifiedQuery` and `Method::ResolveViewportSelection`.
+Preserve its scatter/line formulas, typed axes, source/index/viewport revisions, policy digest, and closed selection union.
+Pixel dimensions range from 1 through 4096; the requested byte ceiling ranges from 1 through 16777216.
+Apply the producer's effective serialized-response ceiling and bin formulas. Do not invent a host decimator.
+Refuse ceilings too small for the mandatory envelope, stale indexes, invalid selections, and exceeded limits before usable output.
+Planned proof: `tests/api/test_viewport_served.py::test_billion_point_viewport_keeps_bins_selection_and_byte_bounds`.
+Enter HTTP and MCP with scatter and line requests against a declared billion-point indexed source.
+Independently inspect serialized bytes and bin counts. Check pan, zoom, selection, gaps, and stale-token refusal with WEBUI-APPS-R001.2.
+
+### R065: meetings
+
+Extend the composed operation declarations in `graph_os/api/ops/memory.py:operations` for transcript and summary reads.
+Route provider effects through the existing invocation policy and receipt boundary, never through a read handler.
+SDK-SOURCE-INGEST-R014 owns ordered transcript transport and selected provider dispatch.
+EG-MEDIA-VOCAB-R001.101 specifies `Method::MeetingTranscriptRevision`, `MeetingSummaryContextV1`, and `CommitMeetingSummaryV1`.
+AU-SEMANTIC-R030 owns provider admission, retry/attempt accounting, and disabled-provider refusal.
+The SDK meeting operation and AU receipt contract remain unbound; single-shot dictation cannot satisfy them.
+Preserve segment sequence, correction and finalization revisions, transcript digest, and selected local/hosted provider identity.
+Summary context requires at most 128 spans, 16384 bytes per segment, and 8192 tokens under the EG limit policy.
+Only the current complete finalized transcript permits summary effects. Corrections stale older summaries.
+Missing admission or a disabled local provider cannot trigger hosted fallback.
+Planned proof: `tests/api/test_meeting_served.py::test_corrected_final_transcript_binds_selected_summary_provider`.
+Exercise partial segments, gaps, corrections, exact replay, finalization, and both admitted execution classes with WEBUI-APPS-R001.5.
+Check independent provenance readback and zero provider calls for stale revisions or denied capture/egress.
+
+### R066: bookmarks
+
+Extend `graph_os/api/ops/retrieval.py:operations` with search, relationship, and bounded export projections.
+EG-MEDIA-VOCAB-R001.102 specifies `Method::BookmarkSemanticSearch` and `Method::BookmarkRelations`.
+SDK-SOURCE-INGEST-R005.7 through R005.12 owns ingestion into the existing SourceIngest/ChangeEnvelope path.
+Use one authorized snapshot for search, relationships, and CSV/JSON export consumed by WEBUI-APPS-R001.6.
+Require at most 100 hits, 500 relationships, and 1048576 serialized response bytes under the EG query limit policy.
+Preserve receipt, source, index, query, authorization, snapshot, and limit-policy digests and explicit unknown metadata.
+An expired snapshot or exceeded bound refuses; export cannot silently switch revisions or truncate success.
+Escape spreadsheet-formula-like CSV cells; never retrieve imported links or execute imported instructions.
+Planned proof: `tests/api/test_bookmarks_served.py::test_search_relationships_and_exports_share_authorized_snapshot`.
+Independently compare search and relationships with downloaded CSV/JSON records, digests, and provenance.
+Denied bookmarks and relationships must be absent from every response, count, and export.
+
+All named proofs in this section are planned and have not run.
+They require the corresponding owner contracts and real authenticated HTTP, MCP, and browser consumer paths.
+This section grants no delivery or runtime evidence.
+
+References: [EG orchestration](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/orchestration-vocabulary/spec.md), [EG durable kernel](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/durable-graph-kernel/spec.md), [EG query](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/federated-query-and-reasoning/spec.md), [EG media](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/media-and-personal-vocabulary/spec.md), [SDK ingest](https://github.com/Knuckles-Team/agent-connector-sdk/blob/a0f78fefbb486e4c7d97e608462cf5847a46bc7d/specs/SDK-SOURCE-INGEST/spec.md).
