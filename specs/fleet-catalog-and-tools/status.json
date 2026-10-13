@@ -1195,9 +1195,13 @@
     {
       "id": "GRAPHOS-FLEET-R035",
       "title": "Authenticated schema preflight for OpenAPI operation aliases",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "61c7f230ec1e"
+      ],
+      "verified_by": [
+        "tests/fleet/test_multiplexer_schema_disclosure.py:12"
+      ]
     }
   ]
 }
