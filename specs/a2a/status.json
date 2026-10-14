@@ -321,7 +321,9 @@
       "title": "Wire request-bound caller retention and refresh",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/a2a/test_request_session_authority.py:46"
+      ]
     },
     {
       "id": "GRAPHOS-A2A-R006.2.2",
