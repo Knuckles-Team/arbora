@@ -324,7 +324,7 @@
         "013c270081a9"
       ],
       "verified_by": [
-        "tests/a2a/test_request_session_authority.py:46"
+        "tests/a2a/test_request_session_authority.py:42"
       ]
     },
     {

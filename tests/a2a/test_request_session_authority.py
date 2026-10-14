@@ -25,14 +25,10 @@ from agent_utilities.security.brain_context import (
 from fastapi import FastAPI, HTTPException
 
 from graph_os.a2a import mcp as a2a_mcp
-from graph_os.a2a.application import AmbientA2AAuthenticator, create_a2a_application
 from graph_os.a2a.service import A2AService
-from graph_os.api.http.auth import (
-    AmbientHTTPAuthenticator,
-    verified_bearer_session_for_request,
-)
 from graph_os.api.registry import Surface
 from graph_os.mcp_server import runtime as mcp_runtime
+from tests.a2a._support import authenticated_operation_app
 from tests.a2a.test_application import Authority, Router
 from tests.a2a.test_mcp import _Mcp
 from tests.a2a.test_operation_bridge import (
@@ -89,14 +85,7 @@ def fixture(monkeypatch: pytest.MonkeyPatch, *, failure: str = "") -> Any:
     runtime = SessionRuntime()
     runtime.change_caller = failure == "mismatched"
     services = replace(services, runtime=runtime)
-    app = create_a2a_application(
-        service=A2AService(authority=Authority(), router=Router()),
-        authenticator=AmbientA2AAuthenticator(),
-        operation_services=services,
-        operation_authenticator=AmbientHTTPAuthenticator(
-            session_for_request=verified_bearer_session_for_request,
-        ),
-    )
+    app = authenticated_operation_app(services)
 
     async def capture(scope: Any, receive: Any, send: Any) -> None:
         requests.append(scope)

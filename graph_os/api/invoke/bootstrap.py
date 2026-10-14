@@ -1,31 +1,15 @@
 """Production ``InvokeServices``/``BoundOperationRuntime`` composition.
 
-GRAPHOS-HOST-R024.1: assembles a real operation runtime from GraphOS's
-existing epistemic-graph adapter (:mod:`graph_os.epistemic`), audit adapter
-(:mod:`graph_os.api.invoke.eg_audit`), and plan store
-(:mod:`graph_os.api.invoke.plan`) -- no fabricated client, fake audit sink,
-or fake plan store. This module is tested against EG client fixtures (it
-never opens a live connection); wiring a live pool/connect configuration
-into the serving process at startup is the separate, later
-``graph_os.mcp_server.server`` cutover (GRAPHOS-HOST-R024.2), which this
-module does not perform.
+Assemble the GRAPHOS-OPS-R009 operation runtime from GraphOS's existing
+epistemic-graph adapter, audit adapter and plan store. The serving process
+must separately compose and admit these authorities before mounting them.
 
-Two capabilities genuinely do not exist on the installed ``epistemic_graph``
-client yet and fail closed here rather than fabricate behavior:
-
-* :func:`deny_subject_access` -- no registered operation sets
-  ``Executor.SERVICE`` today (the curated ``agents``/``browser``/``fleet``
-  operations, :mod:`graph_os.api.ops`, are all ``Executor.CALLER``), so this
-  is unreachable in practice. It exists only so a ``BoundOperationRuntime``
-  has a safe, explicit default before the first service-executor operation
-  is added, instead of silently granting access nothing checked.
-* :func:`unbridged_eg_dispatch` -- the EG contract's generated ``eg.*``
-  operations (:mod:`graph_os.api.registry.eg_binding`) each name a contract
-  method id, but the installed ``epistemic_graph`` client exposes no generic
-  "call this named method" surface (only ``apply_mutation``, ``reconcile``,
-  ``resource_stats``, ``health``, ``ping``, ``supports``) -- there is no
-  client method to call yet. Until that bridge exists, an ``eg.*`` operation
-  refuses with ``UNAVAILABLE`` instead of guessing at an API shape.
+Generated caller-bound EG methods use the provider's public ``send_by_id``
+entrypoint. The verified session supplies the graph; operation parameters
+cannot select the dispatch context. Service-executor operations still require
+an explicitly composed subject-access authority; the default denies access.
+These adapters do not perform the serving-process cutover or supply missing
+policy, audit, plan, or request-identity authorities.
 """
 
 from __future__ import annotations
@@ -38,14 +22,20 @@ from graph_os.api.invoke.eg_audit import EgAuditAdapter
 from graph_os.api.invoke.executor import (
     BoundOperationRuntime,
     ClientFactory,
+    ExecutionContext,
     ServiceClaims,
     SubjectCheck,
 )
-from graph_os.api.invoke.pipeline import InvokeServices
+from graph_os.api.invoke.pipeline import InvokeServices, OperationRefused
 from graph_os.api.invoke.plan import EgPlanStore
-from graph_os.api.invoke.steps import VerifiedCaller, freeze_claims
+from graph_os.api.invoke.steps import (
+    VerifiedCaller,
+    authenticate,
+    claim_values,
+    freeze_claims,
+)
 from graph_os.api.policy.eunomia import PolicyGate
-from graph_os.api.registry import Registry
+from graph_os.api.registry import EgMethod, Registry
 from graph_os.epistemic import ClientContext, EpistemicClientPool, VerifiedActor
 
 __all__ = [
@@ -56,7 +46,7 @@ __all__ = [
     "build_operation_runtime",
     "build_service_claims",
     "deny_subject_access",
-    "unbridged_eg_dispatch",
+    "dispatch_eg_method",
     "verify_current_from_session",
 ]
 
@@ -149,18 +139,71 @@ def build_service_claims(
 async def deny_subject_access(
     _client: Any, _caller: VerifiedCaller, _subject: str
 ) -> bool:
-    """Fail closed; no registered operation sets ``Executor.SERVICE`` yet."""
+    """Deny service execution until a subject-access authority is composed."""
 
     return False
 
 
-async def unbridged_eg_dispatch(binding: Any, _params: Any, _context: Any) -> Any:
-    """Refuse an EG contract method the installed client cannot call yet."""
+def _eg_method_id(binding: EgMethod) -> str:
+    from epistemic_graph.generated import METHOD_IDS
 
-    from epistemic_graph import EngineResponseError
+    if (
+        not isinstance(binding, EgMethod)
+        or binding.service != binding.op
+        or binding.service not in METHOD_IDS
+    ):
+        raise OperationRefused("UNAVAILABLE", {"reason": "invalid engine binding"})
+    return binding.service
 
-    raise EngineResponseError(
-        "UNAVAILABLE", f"no client bridge for EG method {binding.service!r}"
+
+async def _caller_dispatch_graph(context: ExecutionContext) -> str:
+    caller = context.caller
+    if context.service_identity:
+        raise OperationRefused("PRINCIPAL_NOT_ALLOWED")
+    if authenticate(caller) is not None or context.owner != caller.principal:
+        raise OperationRefused("UNAUTHENTICATED")
+    try:
+        current = await verify_current_from_session(caller)
+        actor = caller.session.actor
+        actor.ensure_credential_current()
+    except (
+        AttributeError,
+        PermissionError,
+        SessionRequiredError,
+        TypeError,
+        ValueError,
+    ):
+        raise OperationRefused("UNAUTHENTICATED") from None
+    if (
+        current != caller
+        or actor.authenticated is not True
+        or actor.tenant_id != caller.tenant
+    ):
+        raise OperationRefused("UNAUTHENTICATED")
+    return _session_graph(caller.session)
+
+
+def _session_graph(session: Any) -> str:
+    graph = getattr(session, "graph", None)
+    if not isinstance(graph, str) or not graph or graph != graph.strip():
+        raise OperationRefused("UNAUTHENTICATED")
+    return graph
+
+
+async def dispatch_eg_method(
+    binding: EgMethod, params: Mapping[str, Any], context: ExecutionContext
+) -> Any:
+    """Send one admitted method under its current caller's verified graph."""
+    from epistemic_graph.generated import send_by_id
+
+    method = _eg_method_id(binding)
+    graph = await _caller_dispatch_graph(context)
+    return await send_by_id(
+        context.client,
+        method,
+        claim_values(params),
+        graph,
+        idempotency_key=context.idempotency_key,
     )
 
 
@@ -173,20 +216,34 @@ def build_operation_runtime(
     service_principal: str,
     service_claims: ServiceClaims,
     check_access: SubjectCheck = deny_subject_access,
-    eg_dispatch: Callable[[Any, Any, Any], Any] = unbridged_eg_dispatch,
+    eg_dispatch: Callable[[Any, Any, Any], Any] = dispatch_eg_method,
 ) -> BoundOperationRuntime:
     """Assemble the real caller/service client factories and EG dispatch port."""
 
     client_factory = build_client_factory(
         pool, graph=graph, connect_context=connect_context
     )
+
+    async def verify_bound_caller(caller: VerifiedCaller) -> VerifiedCaller:
+        current = await verify_current_from_session(caller)
+        if _session_graph(current.session) != graph:
+            raise SessionRequiredError("caller graph differs from the runtime graph")
+        return current
+
+    async def dispatch_bound_method(
+        binding: Any, params: Mapping[str, Any], context: ExecutionContext
+    ) -> Any:
+        if _session_graph(context.caller.session) != graph:
+            raise OperationRefused("UNAUTHENTICATED")
+        return await eg_dispatch(binding, params, context)
+
     return BoundOperationRuntime(
         caller_client=client_factory,
-        verify_current=verify_current_from_session,
+        verify_current=verify_bound_caller,
         service_client=client_factory,
         service_claims=service_claims,
         check_access=check_access,
-        eg_dispatch=eg_dispatch,
+        eg_dispatch=dispatch_bound_method,
         service_scopes=service_scopes,
         service_principal=service_principal,
     )

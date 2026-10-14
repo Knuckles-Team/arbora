@@ -1,4 +1,4 @@
-"""GRAPHOS-HOST-R024.1: the production invoke-services composition, against
+"""GRAPHOS-OPS-R009: the production invoke-services composition, against
 EG client fixtures only -- this module never opens a live connection."""
 
 from __future__ import annotations
@@ -158,11 +158,12 @@ def test_deny_subject_access_denies() -> None:
     assert allowed is False
 
 
-def test_unbridged_eg_dispatch_fails_closed() -> None:
-    binding = SimpleNamespace(service="eg.example.method")
-    with pytest.raises(Exception) as excinfo:
-        asyncio.run(bootstrap.unbridged_eg_dispatch(binding, {}, None))
-    # The pinned test environment's installed epistemic_graph wheel predates
-    # EngineResponseError (a drift found by this PR, tracked separately, not
-    # fixed here); either exception proves this fails closed, not silently.
-    assert excinfo.type.__name__ in {"EngineResponseError", "ImportError"}
+@pytest.mark.spec("GRAPHOS-OPS-R009")
+def test_eg_dispatch_refuses_invalid_binding_before_send() -> None:
+    from graph_os.api.invoke.pipeline import OperationRefused
+
+    binding: Any = SimpleNamespace(service="NodeCount", op="NodeCount")
+    missing_context: Any = None
+    with pytest.raises(OperationRefused) as error:
+        asyncio.run(bootstrap.dispatch_eg_method(binding, {}, missing_context))
+    assert error.value.code == "UNAVAILABLE"
