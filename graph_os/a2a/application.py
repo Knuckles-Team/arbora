@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, Protocol, runtime_checkable
+from secrets import token_hex
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
@@ -18,6 +20,10 @@ from .authority import (
 from .models import A2AMessage, A2AOperationInvokeParams, A2APlanConfirmParams
 from .routing import A2AAssemblyUnavailable, A2AOperationBridgeUnavailable
 from .service import A2AService
+
+if TYPE_CHECKING:
+    from graph_os.api.http.auth import AmbientHTTPAuthenticator
+    from graph_os.api.invoke.pipeline import InvokeServices
 
 __all__ = [
     "A2AAuthenticator",
@@ -202,12 +208,153 @@ def _application_error(request_id: Any, error: Exception) -> JSONResponse:
     return _error(request_id, -32602, "Invalid params")
 
 
+def _operation_response(
+    outcome: Any, *, op: str, request_id: Any, caller_id: str, digest: str
+) -> JSONResponse:
+    """Project shared operation outcomes without reclassifying refusals."""
+    from graph_os.api.errors import a2a_error_status, to_envelope
+    from graph_os.api.invoke.steps import OpError
+
+    status = 200
+    if outcome.code == "OK":
+        payload = {
+            "ok": True,
+            "result": jsonable_encoder(outcome.value),
+            "meta": {"registry_digest": digest, "api_version": "v1"},
+        }
+    else:
+        status, payload = to_envelope(
+            outcome,
+            op=op,
+            request_id=caller_id or token_hex(12),
+            registry_digest=digest,
+        )
+    body: dict[str, Any] = {"jsonrpc": "2.0", "id": request_id}
+    if isinstance(outcome, OpError):
+        code, status = a2a_error_status(outcome.code, source=outcome.source)
+        body["error"] = {
+            "code": code,
+            "message": payload["error"]["message"],
+            "data": payload,
+        }
+    else:
+        body["result"] = payload
+    return JSONResponse(body, status_code=status, headers={"Cache-Control": "no-store"})
+
+
+async def _invoke_operation(
+    request: Request,
+    raw_params: dict[str, Any],
+    request_id: Any,
+    services: InvokeServices,
+    authenticator: AmbientHTTPAuthenticator,
+) -> JSONResponse:
+    from graph_os.api.http.auth import HTTPAuthenticationError
+    from graph_os.api.invoke.pipeline import invoke
+    from graph_os.api.invoke.steps import OpError, OpResult
+    from graph_os.api.registry import Surface
+
+    params = A2AOperationInvokeParams.model_validate(raw_params)
+    caller_id = ""
+    outcome: OpError | OpResult
+    try:
+        caller = await authenticator.authenticate(request)
+    except HTTPAuthenticationError:
+        outcome = OpError("UNAUTHENTICATED")
+    else:
+        # A plan reference cannot substitute for the missing signed A2A exchange.
+        if params.plan_ref is not None:
+            raise A2AOperationBridgeUnavailable(
+                "A2A plan consumption requires the signed approval exchange"
+            )
+        caller_id = caller.request_id
+        outcome = await invoke(
+            params.op,
+            params.params,
+            caller,
+            Surface.A2A,
+            services=services,
+            idempotency_key=params.idempotency_key,
+        )
+    return _operation_response(
+        outcome,
+        op=params.op,
+        request_id=request_id,
+        caller_id=caller_id,
+        digest=services.registry.digest,
+    )
+
+
+def _validate_operation_composition(
+    services: InvokeServices | None,
+    authenticator: AmbientHTTPAuthenticator | None,
+) -> None:
+    if (services is None) != (authenticator is None):
+        raise ValueError(
+            "operation services and authenticator must be composed together"
+        )
+
+
+async def _operation_request(
+    request: Request,
+    raw_params: dict[str, Any],
+    request_id: Any,
+    services: InvokeServices,
+    authenticator: AmbientHTTPAuthenticator,
+) -> JSONResponse:
+    try:
+        return await _invoke_operation(
+            request, raw_params, request_id, services, authenticator
+        )
+    except (A2AOperationBridgeUnavailable, ValidationError) as error:
+        return _application_error(request_id, error)
+
+
+async def _unary_request(
+    service: A2AService,
+    authenticator: A2AAuthenticator,
+    request: Request,
+    method: str,
+    raw_params: dict[str, Any],
+    request_id: Any,
+) -> JSONResponse:
+    write_methods = {"message/send", "tasks/cancel", "graphos.plan/confirm"}
+    scope = "kg:write" if method in write_methods else "kg:read"
+    await authenticator.authenticate(request, scope=scope)
+    try:
+        result = await _invoke_method(service, request, method, raw_params, request_id)
+    except (
+        A2AIdempotencyConflict,
+        A2AAssemblyUnavailable,
+        A2AOperationBridgeUnavailable,
+        A2AStreamingUnavailable,
+        A2ATransitionHistoryUnavailable,
+        A2ATaskNotCancelable,
+        ValidationError,
+        TypeError,
+        ValueError,
+    ) as error:
+        return _application_error(request_id, error)
+    if isinstance(result, JSONResponse):
+        return result
+    payload = result.model_dump(mode="json", by_alias=True)
+    return JSONResponse(
+        {"jsonrpc": "2.0", "id": request_id, "result": payload},
+        headers={"Cache-Control": "no-store"},
+    )
+
+
 def create_a2a_handlers(
-    *, service: A2AService, authenticator: A2AAuthenticator
+    *,
+    service: A2AService,
+    authenticator: A2AAuthenticator,
+    operation_services: InvokeServices | None = None,
+    operation_authenticator: AmbientHTTPAuthenticator | None = None,
 ) -> tuple[Any, Any]:
     """Create route handlers reusable by standalone FastAPI and FastMCP."""
     if not isinstance(authenticator, A2AAuthenticator):
         raise TypeError("authenticator does not implement A2AAuthenticator")
+    _validate_operation_composition(operation_services, operation_authenticator)
 
     async def agent_card(request: Request) -> JSONResponse:
         await authenticator.authenticate(request, scope="kg:read")
@@ -222,43 +369,36 @@ def create_a2a_handlers(
         if isinstance(envelope, JSONResponse):
             return envelope
         request_id, method, raw_params = envelope
-        write_methods = {"message/send", "tasks/cancel", "graphos.plan/confirm"}
-        scope = "kg:write" if method in write_methods else "kg:read"
-        await authenticator.authenticate(request, scope=scope)
-        try:
-            result = await _invoke_method(
-                service, request, method, raw_params, request_id
+        if method == "graphos.op/invoke" and operation_services is not None:
+            assert operation_authenticator is not None
+            return await _operation_request(
+                request,
+                raw_params,
+                request_id,
+                operation_services,
+                operation_authenticator,
             )
-        except (
-            A2AIdempotencyConflict,
-            A2AAssemblyUnavailable,
-            A2AOperationBridgeUnavailable,
-            A2AStreamingUnavailable,
-            A2ATransitionHistoryUnavailable,
-            A2ATaskNotCancelable,
-            ValidationError,
-            TypeError,
-            ValueError,
-        ) as error:
-            return _application_error(request_id, error)
-        if isinstance(result, JSONResponse):
-            return result
-        payload = result.model_dump(mode="json", by_alias=True)
-        return JSONResponse(
-            {"jsonrpc": "2.0", "id": request_id, "result": payload},
-            headers={"Cache-Control": "no-store"},
+        return await _unary_request(
+            service, authenticator, request, method, raw_params, request_id
         )
 
     return agent_card, json_rpc
 
 
 def create_a2a_application(
-    *, service: A2AService, authenticator: A2AAuthenticator
+    *,
+    service: A2AService,
+    authenticator: A2AAuthenticator,
+    operation_services: InvokeServices | None = None,
+    operation_authenticator: AmbientHTTPAuthenticator | None = None,
 ) -> FastAPI:
     metadata = service.card_metadata
     app = FastAPI(title=f"{metadata.name} A2A", version=metadata.version)
     card_handler, rpc_handler = create_a2a_handlers(
-        service=service, authenticator=authenticator
+        service=service,
+        authenticator=authenticator,
+        operation_services=operation_services,
+        operation_authenticator=operation_authenticator,
     )
     app.add_api_route("/.well-known/agent-card.json", card_handler, methods=["GET"])
     app.add_api_route("/a2a", rpc_handler, methods=["POST"])
