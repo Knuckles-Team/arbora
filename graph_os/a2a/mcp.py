@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from .application import AmbientA2AAuthenticator, create_a2a_handlers
 from .authority import WorkItemA2AAuthority
 from .routing import OrchestratorA2ARouter
 from .service import A2AService
+
+if TYPE_CHECKING:
+    from graph_os.api.http.auth import AmbientHTTPAuthenticator
+    from graph_os.api.invoke.pipeline import InvokeServices
 
 _SERVICE: A2AService | None = None
 
@@ -25,12 +29,41 @@ def _service() -> A2AService:
     return _SERVICE
 
 
-def register_a2a_tools(mcp: Any, *, tools: Any = None) -> None:
+def _admitted_handlers(
+    operation_services: InvokeServices | None,
+    operation_authenticator: AmbientHTTPAuthenticator | None,
+) -> tuple[Any, Any]:
+    """Validate composition and provider admission before exposing routes."""
+    handlers = create_a2a_handlers(
+        service=_service(),
+        authenticator=AmbientA2AAuthenticator(),
+        operation_services=operation_services,
+        operation_authenticator=operation_authenticator,
+    )
+    if operation_services is not None:
+        from graph_os.api.registry.contract_admission import (
+            validate_contract_admission,
+        )
+
+        validate_contract_admission(operation_services.registry)
+    return handlers
+
+
+def register_a2a_tools(
+    mcp: Any,
+    *,
+    tools: Any = None,
+    operation_services: InvokeServices | None = None,
+    operation_authenticator: AmbientHTTPAuthenticator | None = None,
+) -> None:
     """Register one action router and the protocol-native unary routes.
 
     The ``graph_a2a`` operation registers on ``tools`` (graph-os's backing
     server, reached through ``act``) and the HTTP routes on the served ``mcp``.
     """
+    card_handler, rpc_handler = _admitted_handlers(
+        operation_services, operation_authenticator
+    )
     registrar = tools if tools is not None else mcp
 
     @registrar.tool(
@@ -75,9 +108,6 @@ def register_a2a_tools(mcp: Any, *, tools: Any = None) -> None:
     from graph_os.mcp_server import runtime
 
     runtime.REGISTERED_TOOLS["graph_a2a"] = graph_a2a
-    card_handler, rpc_handler = create_a2a_handlers(
-        service=_service(), authenticator=AmbientA2AAuthenticator()
-    )
     mcp.custom_route("/.well-known/agent-card.json", methods=["GET"])(card_handler)
     mcp.custom_route("/a2a", methods=["POST"])(rpc_handler)
 
