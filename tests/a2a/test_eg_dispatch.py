@@ -21,13 +21,7 @@ from agent_utilities.security import request_identity
 from epistemic_graph import EngineResponseError
 from pydantic import BaseModel, ConfigDict, RootModel
 
-from graph_os.a2a.application import AmbientA2AAuthenticator, create_a2a_application
-from graph_os.a2a.service import A2AService
 from graph_os.api.errors import EngineRefusal
-from graph_os.api.http.auth import (
-    AmbientHTTPAuthenticator,
-    verified_bearer_session_for_request,
-)
 from graph_os.api.invoke import bootstrap
 from graph_os.api.invoke.executor import ExecutionContext
 from graph_os.api.invoke.pipeline import OperationRefused
@@ -41,7 +35,7 @@ from graph_os.api.registry import (
     Surface,
     Verb,
 )
-from tests.a2a.test_application import Authority, Router
+from tests.a2a._support import authenticated_operation_app
 from tests.a2a.test_operation_bridge import DenyPolicy, post, session
 from tests.a2a.test_request_session_authority import fixture as request_fixture
 from tests.api.test_invoke_contract import operation, setup_services
@@ -148,14 +142,7 @@ def fixture(monkeypatch: pytest.MonkeyPatch, failure: str = "") -> Any:
     )
     services, _runtime, _audit, _journal, _leases = setup_services(op, **changes)
     services = replace(services, runtime=runtime)
-    app = create_a2a_application(
-        service=A2AService(authority=Authority(), router=Router()),
-        authenticator=AmbientA2AAuthenticator(),
-        operation_services=services,
-        operation_authenticator=AmbientHTTPAuthenticator(
-            session_for_request=verified_bearer_session_for_request,
-        ),
-    )
+    app = authenticated_operation_app(services)
     return app, runtime, client, callers, op
 
 
