@@ -307,7 +307,7 @@
     {
       "id": "GRAPHOS-A2A-R006.2.1",
       "title": "Preserve the verified caller through GraphOS A2A authentication",
-      "delivery_state": "SPECIFIED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "cdde0200a54a"
       ],
@@ -319,9 +319,13 @@
     {
       "id": "GRAPHOS-A2A-R006.2.1.1",
       "title": "Wire request-bound caller retention and refresh",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "013c270081a9"
+      ],
+      "verified_by": [
+        "tests/a2a/test_request_session_authority.py:46"
+      ]
     },
     {
       "id": "GRAPHOS-A2A-R006.2.2",

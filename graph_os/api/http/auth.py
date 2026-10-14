@@ -6,11 +6,12 @@ import time
 from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any
 
-from fastapi import Request
+from fastapi import HTTPException, Request
 
 from graph_os.api.mcp.caller import caller_from_session
 
 if TYPE_CHECKING:
+    from agent_utilities.api.session import GraphSession
     from agent_utilities.security.request_identity import VerifiedLocalBearer
 
     from graph_os.api.invoke import VerifiedCaller
@@ -122,6 +123,59 @@ class AmbientHTTPAuthenticator:
             )
         except PermissionError:
             raise HTTPAuthenticationError("Verified identity required") from None
+
+
+async def verified_bearer_session_for_request(request: Request) -> GraphSession:
+    """Verify this exact request through AU's public served-session flow.
+
+    Each resolution verifies the presented credential afresh. Ambient sessions
+    and request-state claims cannot establish authority for this request.
+    """
+    scope = request.scope
+    headers = tuple(scope.get("headers", ()))
+    try:
+        actor = await _verify_bearer_headers(headers)
+        _require_request_snapshot(request, scope, headers)
+        return _mint_verified_session(actor)
+    except PermissionError:
+        raise HTTPAuthenticationError("Verified request session required") from None
+
+
+async def _verify_bearer_headers(headers: tuple[tuple[bytes, bytes], ...]) -> Any:
+    """Verify one presented credential while preserving infrastructure faults."""
+    from agent_utilities.security.auth import parse_bearer_authorization
+    from agent_utilities.security.request_identity import actor_from_bearer_token
+
+    token = parse_bearer_authorization(
+        [value for key, value in headers if key.lower() == b"authorization"]
+    )
+    if token is None:
+        raise HTTPAuthenticationError("Presented bearer required")
+    try:
+        return await actor_from_bearer_token(token)
+    except HTTPException as error:
+        if error.status_code != 401:
+            raise
+        raise HTTPAuthenticationError("Verified bearer required") from None
+
+
+def _require_request_snapshot(
+    request: Request, scope: Any, headers: tuple[tuple[bytes, bytes], ...]
+) -> None:
+    """Refuse request or credential replacement during awaited verification."""
+    if request.scope is not scope or tuple(scope.get("headers", ())) != headers:
+        raise HTTPAuthenticationError("Request changed during verification")
+
+
+def _mint_verified_session(actor: Any) -> GraphSession:
+    """Retain the verified actor and tenant in AU's current session projection."""
+    from agent_utilities.security.request_identity import mint_graph_session
+
+    session = mint_graph_session(actor)
+    if session.actor is not actor or session.tenant != actor.tenant_id:
+        raise HTTPAuthenticationError("Verified session authority mismatch")
+    session.ensure_authority_current()
+    return session
 
 
 async def verify_local_bearer_request(request: Request) -> VerifiedLocalBearer:

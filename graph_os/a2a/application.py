@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from secrets import token_hex
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
@@ -10,6 +11,8 @@ from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+
+from graph_os.api.http.auth import HTTPAuthenticationError
 
 from .authority import (
     A2AIdempotencyConflict,
@@ -24,6 +27,7 @@ from .service import A2AService
 if TYPE_CHECKING:
     from graph_os.api.http.auth import AmbientHTTPAuthenticator
     from graph_os.api.invoke.pipeline import InvokeServices
+    from graph_os.api.invoke.steps import VerifiedCaller
 
 __all__ = [
     "A2AAuthenticator",
@@ -35,17 +39,54 @@ __all__ = [
 
 @runtime_checkable
 class A2AAuthenticator(Protocol):
-    async def authenticate(self, request: Request, *, scope: str) -> None:
-        """Verify caller identity, tenant binding, and required scope."""
+    async def authenticate(
+        self, request: Request, *, scope: str
+    ) -> VerifiedCaller | None:
+        """Verify authority; an injected adapter may own its dispatch binding."""
 
 
 class AmbientA2AAuthenticator:
-    """Require the request identity middleware's verified GraphSession."""
+    """Resolve each HTTP request through AU's verified bearer/session flow."""
 
-    async def authenticate(self, request: Request, *, scope: str) -> None:  # noqa: ARG002
-        from agent_utilities.api.session import resolve_session
+    async def authenticate(self, request: Request, *, scope: str) -> VerifiedCaller:
+        caller = await _request_caller(request)
+        return _require_caller_scope(caller, scope)
 
-        resolve_session(required_scope=scope)
+
+async def _request_caller(request: Request) -> VerifiedCaller:
+    from graph_os.api.http.auth import (
+        AmbientHTTPAuthenticator,
+        verified_bearer_session_for_request,
+    )
+
+    return await AmbientHTTPAuthenticator(
+        session_for_request=verified_bearer_session_for_request
+    ).authenticate(request)
+
+
+def _require_caller_scope(caller: VerifiedCaller, scope: str) -> VerifiedCaller:
+    if scope not in caller.effective_scopes:
+        raise PermissionError("Required A2A scope unavailable")
+    return caller
+
+
+@contextmanager
+def _caller_session_scope(caller: VerifiedCaller | None) -> Iterator[None]:
+    """Bind a returned caller through legacy dispatch; never resolve a fallback."""
+    if caller is None:
+        # Explicit injected authenticators already own their admission/binding.
+        yield
+        return
+    from agent_utilities.api.session import use_session
+    from agent_utilities.security.brain_context import use_actor
+
+    with use_actor(caller.session.actor), use_session(caller.session):
+        yield
+
+
+def _authentication_error(request_id: Any, error: PermissionError) -> JSONResponse:
+    status = 401 if isinstance(error, HTTPAuthenticationError) else 403
+    return _error(request_id, -32001, "A2A authority refused", status)
 
 
 class _Params(BaseModel):
@@ -320,9 +361,14 @@ async def _unary_request(
 ) -> JSONResponse:
     write_methods = {"message/send", "tasks/cancel", "graphos.plan/confirm"}
     scope = "kg:write" if method in write_methods else "kg:read"
-    await authenticator.authenticate(request, scope=scope)
     try:
-        result = await _invoke_method(service, request, method, raw_params, request_id)
+        caller = await authenticator.authenticate(request, scope=scope)
+        with _caller_session_scope(caller):
+            result = await _invoke_method(
+                service, request, method, raw_params, request_id
+            )
+    except PermissionError as error:
+        return _authentication_error(request_id, error)
     except (
         A2AIdempotencyConflict,
         A2AAssemblyUnavailable,
@@ -335,11 +381,29 @@ async def _unary_request(
         ValueError,
     ) as error:
         return _application_error(request_id, error)
+    return _unary_response(result, request_id)
+
+
+def _unary_response(result: Any, request_id: Any) -> JSONResponse:
     if isinstance(result, JSONResponse):
         return result
     payload = result.model_dump(mode="json", by_alias=True)
     return JSONResponse(
         {"jsonrpc": "2.0", "id": request_id, "result": payload},
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+async def _agent_card_request(
+    service: A2AService, authenticator: A2AAuthenticator, request: Request
+) -> JSONResponse:
+    try:
+        await authenticator.authenticate(request, scope="kg:read")
+    except PermissionError as error:
+        return _authentication_error(None, error)
+    endpoint = str(request.url.replace(path="/a2a", query=""))
+    return JSONResponse(
+        service.agent_card(endpoint).model_dump(mode="json", by_alias=True),
         headers={"Cache-Control": "no-store"},
     )
 
@@ -357,12 +421,7 @@ def create_a2a_handlers(
     _validate_operation_composition(operation_services, operation_authenticator)
 
     async def agent_card(request: Request) -> JSONResponse:
-        await authenticator.authenticate(request, scope="kg:read")
-        endpoint = str(request.url.replace(path="/a2a", query=""))
-        return JSONResponse(
-            service.agent_card(endpoint).model_dump(mode="json", by_alias=True),
-            headers={"Cache-Control": "no-store"},
-        )
+        return await _agent_card_request(service, authenticator, request)
 
     async def json_rpc(request: Request) -> JSONResponse:
         envelope = await _request_envelope(request)
