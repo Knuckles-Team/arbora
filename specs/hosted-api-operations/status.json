@@ -286,10 +286,11 @@
         "deb2b45bf83d"
       ],
       "verified_by": [
+        "tests/a2a/test_eg_dispatch.py:49",
+        "tests/api/test_invoke_bootstrap.py:161",
         "tests/api/test_invoke_contract.py:238",
         "tests/api/test_invoke_governance.py:193",
-        "tests/api/test_invoke_governance.py:250",
-        "tests/api/test_invoke_governance.py:87"
+        "tests/api/test_invoke_governance.py:250"
       ],
       "rollup_of": [
         "GRAPHOS-OPS-R009.1"
