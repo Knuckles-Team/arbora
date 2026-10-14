@@ -53,7 +53,7 @@ flowchart LR
   C[A2A caller] --> AC[Agent Card: from_wired_authorities]
   C --> S[message/stream]
   C --> G["tasks/get (history)"]
-  S --> AU["AU WorkItem event stream (AU-CONTROL-001)"]
+  S --> AU["AU task-event reader: owner contract pending"]
   G --> EG["EG durable transition ledger (EG-DURABLE-KERNEL)"]
   AU --> PN[push-notification trigger]
   PN --> OB["EG durable outbox (EG-DURABLE-KERNEL-R001)"]
@@ -65,7 +65,7 @@ flowchart LR
 
 1. **`GRAPHOS-A2A-R009.1` (this PR):** typed capability model and protocols in `graph_os/a2a/models.py`, with unit tests proving default-false, selective-true and non-conforming-object refusal. No wiring yet — `A2AAgentCard`'s default factory still produces all-false, matching current truthful behavior.
 2. Depend on `GRAPHOS-A2A` landing (context-budget subset) before implementing the actual streaming cursor and push-trigger wiring, since both reuse its bounded-cursor machinery rather than duplicating it.
-3. Implement `message/stream` against the AU WorkItem event port (`AU-CONTROL-001`); on a gap, return the existing typed `UNAVAILABLE`.
+3. Publish the AU task-event reader contract before wiring `message/stream`. Its requirement ID and public export remain unassigned. Return typed `UNAVAILABLE` for a projection gap.
 4. Implement `tasks/get` history read-through to EG's durable kernel (`EG-DURABLE-KERNEL`); on an absent/unreachable authority, return the new `A2ATransitionHistoryUnavailable` (A2A-H04).
 5. Implement push-notification delivery over EG's durable outbox (`EG-DURABLE-KERNEL-R001`) with dead-letter reporting.
 6. Wire real authorities into composition only after each path is proven. Run the full test-spec and flip the relevant capability field to a live `true` at that revision, never earlier.
@@ -219,3 +219,66 @@ Research citations above describe inspiration only. The engine and transport con
 ## Additional owner requirements
 
 - `GRAPHOS-A2A-R001.2`: Plan the owner work and dependencies defined in requirements.md.
+
+## Verified caller correction
+
+Component: GraphOS A2A request adapter
+
+Depends-on: GRAPHOS-A2A-R006.2, [AU public session API](https://github.com/Knuckles-Team/agent-utilities/blob/50c313ab01871ff7e10aee2a9d0254fa55d71f07/agent_utilities/api/session.py)
+
+Code: ../../graph_os/a2a/application.py:39
+
+Code: ../../graph_os/a2a/application.py:225
+
+Code: ../../graph_os/a2a/mcp.py:15
+
+Code: ../../graph_os/api/mcp/caller.py:12
+
+Code: ../../graph_os/api/invoke/bootstrap.py:99
+
+Code: ../../graph_os/api/invoke/pipeline.py
+
+Code: ../../graph_os/mcp_server/composition.py:185
+
+AU's public GraphSession already satisfies the actor, tenant and engine_verified_context projection used by GraphOS.
+A bounded synthetic human-session probe passed caller_from_session and verify_current_from_session at the pinned source revisions.
+That evidence does not qualify production tokens, TLS, tenant isolation, deployed serving or engine effects.
+It establishes no new delivery receipt for this spec.
+
+AmbientA2AAuthenticator currently discards resolve_session's return and the request dispatch receives no caller.
+Preserve that verified session with its actual request credential provenance; never invent a credential kind from an ambient test context.
+Retain the existing human/service actor classification; unsupported agent kinds must refuse without relabeling.
+The A2A process composition must also inject the shared InvokeServices.
+Reuse the existing service builder and invoke pipeline; do not create another authorization or effect implementation.
+Use the registry operation's actual scopes, including write and fleet decisions.
+The current generic kg:read request classification cannot establish that operation-specific parity.
+Reverify session and tenant authority before invoking with Surface.A2A.
+Returning a caller without the shared service composition leaves R006.2 incomplete.
+
+```mermaid
+flowchart LR
+  R[Authenticated A2A request] --> A[Retain resolved AU GraphSession]
+  A --> C[Existing caller_from_session projection]
+  C --> V[Existing session refresh]
+  V --> I[Shared InvokeServices and Surface.A2A]
+  I --> O[Registered operation scope and effect boundary]
+```
+
+R005.2 retains its complete signed input-required and consume-once grant acceptance.
+The existing pending-input CAS and plan lease are reusable primitives, not that signed approval chain.
+The method spelling remains graphos.plan/confirm.
+Keep ordinary `graphos.op/invoke` unavailable until R006.2 acceptance passes.
+Keep `graphos.plan/confirm` unavailable until R005.2 and its caller prerequisites pass.
+
+The former AU control-plane label identifies no current task-event reader requirement.
+AU-CONTROL-R035 owns the signed dispatch envelope only; it is not an event-reader replacement.
+AU-CONTROL-R040.5 records workspace proposal events and does not define durable task/tenant stream replay.
+AU-BOUNDARY-R020 assigns durable state to EG; it does not define the missing public reader either.
+AU must publish the exact reader contract over the durable authority before GraphOS binds R001 or R010.
+Require task/tenant scope, ordered event identity, resume positions, restart recovery and explicit gaps in that producer contract.
+Do not invent a requirement ID or substitute an in-process event log.
+
+R006.2.1.1 isolates the remaining caller handoff acceptance.
+R006.2.2 isolates the remaining shared-service composition acceptance.
+Both stay pending until their production-path tests pass; compatibility evidence cannot close either child.
+Generate status from these pending children and preserve historical commit receipts without treating them as completed acceptance.

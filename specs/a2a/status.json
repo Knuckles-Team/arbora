@@ -26,6 +26,8 @@
     "GRAPHOS-A2A-R006.1",
     "GRAPHOS-A2A-R006.2",
     "GRAPHOS-A2A-R006.2.1",
+    "GRAPHOS-A2A-R006.2.1.1",
+    "GRAPHOS-A2A-R006.2.2",
     "GRAPHOS-A2A-R006.3",
     "GRAPHOS-A2A-R006.4",
     "GRAPHOS-A2A-R006.5",
@@ -290,22 +292,40 @@
     {
       "id": "GRAPHOS-A2A-R006.2",
       "title": "Bridge `graphos.op/invoke` to the shared hosted-operation registry",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "cdde0200a54a"
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-A2A-R006.2.1"
+        "GRAPHOS-A2A-R006.2.1",
+        "GRAPHOS-A2A-R006.2.2"
       ]
     },
     {
       "id": "GRAPHOS-A2A-R006.2.1",
-      "title": "A2A authenticator must yield a `VerifiedCaller`-compatible session (owner: agent-utilities)",
-      "delivery_state": "LANDED",
+      "title": "Preserve the verified caller through GraphOS A2A authentication",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "cdde0200a54a"
       ],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-A2A-R006.2.1.1"
+      ]
+    },
+    {
+      "id": "GRAPHOS-A2A-R006.2.1.1",
+      "title": "Wire request-bound caller retention and refresh",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-A2A-R006.2.2",
+      "title": "Compose shared invocation into A2A",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": []
     },
     {

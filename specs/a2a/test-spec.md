@@ -25,7 +25,7 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED** except `GRAPHOS
 | A2A-HT01 | A2A-H01, GRAPHOS-A2A-R009.1 | No authorities supplied: `A2AAgentCapabilities.from_wired_authorities()` returns all-false; `A2AAgentCapabilities()` default also all-false. Landed and proven by `tests/a2a/test_models.py::test_default_capabilities_are_all_false` and `::test_from_wired_authorities_with_none_stays_false`. |
 | A2A-HT02 | A2A-H01, GRAPHOS-A2A-R009.1 | A conforming authority object for one capability is supplied: only that field is true, the other two stay false. Landed and proven by `tests/a2a/test_models.py::test_from_wired_authorities_advertises_only_what_is_wired` and `::test_from_wired_authorities_all_three_wired`. |
 | A2A-HT03 | A2A-H01, GRAPHOS-A2A-R009.1 | A non-conforming object (missing the protocol's method) is supplied for any of the three authority kwargs: `from_wired_authorities` raises `TypeError`. No field is silently set true. Landed and proven by `tests/a2a/test_models.py::test_from_wired_authorities_refuses_non_conforming_object`. |
-| A2A-HT04 | A2A-H02 | With a scripted AU WorkItem event fixture, `message/stream` emits ordered status/step/terminal events matching the fixture. A missing or stale event in the fixture yields a typed `UNAVAILABLE`, not a fabricated event. (Open — depends on `GRAPHOS-A2A`.) |
+| A2A-HT04 | A2A-H02 | Planned projection tests must preserve event ordering and typed UNAVAILABLE on missing or stale events. Acceptance requires an owner-published AU task/tenant reader and real durable replay after restart. Scripted fixtures alone cannot close this producer dependency. |
 | A2A-HT05 | A2A-H03 | With a scripted EG durable-kernel fixture, `tasks/get` with history requested returns exactly the fixture's transition ledger. (Open — depends on `GRAPHOS-A2A`.) |
 | A2A-HT06 | A2A-H04 | No `A2ATransitionHistoryAuthority` wired, or the wired fixture authority raises on call: `tasks/get` history returns `A2ATransitionHistoryUnavailable` with a privacy-safe message and no history data. (Open.) |
 | A2A-HT07 | A2A-H05 | Push target fails once then recovers: delivered once via the durable outbox, surviving a simulated process restart. A target that fails repeatedly past the outbox's configured attempt budget is dead-lettered and reported. (Open.) |
@@ -87,3 +87,27 @@ The served confirm fixture rejects missing, unknown and mixed confirmation_kind 
 ## Additional owner requirements
 
 - `GRAPHOS-A2A-R001.2`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+
+## Verified caller and shared invocation acceptance
+
+Planned tests/a2a/test_verified_caller_bridge.py must start the actual A2A HTTP application and current authenticator.
+Use the real AU GraphSession, caller_from_session projection and verify_current_from_session refresh.
+Bind credentials at the request authentication boundary; an ambient synthetic session alone cannot qualify that boundary.
+Assert exact actor and tenant preservation through request dispatch into the shared invocation pipeline.
+Test absent, expired, revoked, wrong-tenant and unsupported actor credentials with zero authority and backend calls.
+Do not relabel ai_agent or automated_service to satisfy the human/service projection.
+Use read, write and fleet operations from the actual registry and compare A2A, MCP and HTTP scope/refusal behavior.
+The fixture must prove InvokeServices is composed by the production serving path, not injected only into an isolated helper.
+Returning a caller without reaching that path cannot close R006.2.
+
+The compatibility probe used a synthetic human session and real AU/GraphOS projection and refresh functions.
+It observed HTTP 501 and JSON-RPC -32011 for graphos.op/invoke and graphos.plan/confirm, with zero authority calls.
+Those results establish the current refusal and compatible session shape only.
+They do not establish production credential binding, deployed service, TLS, engine execution or signed human approval.
+Preserve every R005.2 input-required, signature, binding, expiry, revocation and replay acceptance case.
+R001/R010 durable replay and host receipt/log acceptance remain pending under their respective owner contracts.
+
+| Requirement | Planned test | Acceptance |
+|---|---|---|
+| GRAPHOS-A2A-R006.2.1.1 | `tests/a2a/test_verified_caller_bridge.py::test_http_retains_and_refreshes_verified_caller` | Preserve request-bound caller identity and refuse before downstream calls. |
+| GRAPHOS-A2A-R006.2.2 | `tests/a2a/test_verified_caller_bridge.py::test_serving_composition_reaches_shared_invoke` | Production composition reaches shared invocation and proves operation-specific surface parity. |
