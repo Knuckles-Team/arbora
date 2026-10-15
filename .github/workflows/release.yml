@@ -25,25 +25,44 @@ name: Release
 # have a separate delivery owner and are not published by this wheel workflow.
 # ─────────────────────────────────────────────────────────────────────────
 
+# Triggers (CI-STANDARD): a pull request runs `gates` only, diff-scoped; a push
+# to main runs the full suite and the builds, never a publish; a version tag or
+# a manual dispatch builds and publishes. Docs/spec-only changes start nothing
+# here; .github/workflows/gates-skip.yml reports the `gates` check for them.
 on:
   push:
     branches:
       - 'main'
+    paths-ignore:
+      - 'specs/**'
+      - 'docs/**'
+      - '**/*.md'
+      - 'plans/**'
+      - 'LICENSE'
     tags:
       - 'v*'
-  pull_request: {}
+  pull_request:
+    paths-ignore:
+      - 'specs/**'
+      - 'docs/**'
+      - '**/*.md'
+      - 'plans/**'
+      - 'LICENSE'
+  workflow_dispatch: {}
 
 concurrency:
-  group: release-${{ github.workflow }}-${{ github.ref }}
-  # Replace obsolete PR work; preserve main/tag runs that warm caches and publish.
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  # PR and main runs cancel superseded work; a tag/dispatch publish never cancels.
+  group: ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}', github.workflow, github.event.pull_request.number) || (github.ref_type == 'tag' && format('release-{0}-{1}', github.workflow, github.ref) || format('main-{0}', github.workflow)) }}
+  cancel-in-progress: ${{ github.ref_type != 'tag' }}
 
 permissions:
   contents: read
 
 jobs:
   gates:
-    # Cold native builds can exceed 17 minutes; cache hits still run all gates.
+    # PR gates are diff-scoped. A cold numeric-kernel rebuild (cache key covers
+    # this file and uv.lock) exceeds 15 minutes, so the cap stays above it;
+    # warm-cache runs finish well inside the 15-minute standard.
     timeout-minutes: ${{ github.event_name == 'pull_request' && 45 || 60 }}
     name: gates
     # Homelab self-hosted runner for same-repo push/PR traffic (the org
@@ -170,10 +189,15 @@ jobs:
             mkdir -p "$HOME/.config/agent-utilities/governance"
             printf '%s' "$PROHIBITED_IDENTITY_CATALOG" > "$HOME/.config/agent-utilities/governance/prohibited-identities.json"
           fi
-          uvx --from pre-commit==4.6.0 pre-commit run --all-files --show-diff-on-failure
-          # The standard moved the scanner and type gates to the pre-push stage;
-          # CI still runs them over the whole tree, not only the diff.
-          uvx --from pre-commit==4.6.0 pre-commit run --all-files --hook-stage pre-push --show-diff-on-failure
+          # Pull requests check the diff only (--from-ref/--to-ref); main and
+          # tags check every file at both stages.
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            range="--from-ref $PRE_COMMIT_FROM_REF --to-ref HEAD"
+          else
+            range="--all-files"
+          fi
+          uvx --from pre-commit==4.6.0 pre-commit run $range --show-diff-on-failure
+          uvx --from pre-commit==4.6.0 pre-commit run $range --hook-stage pre-push --show-diff-on-failure
 
       # External-index availability is a release boundary, not a PR/push
       # boundary. Repository-manager's one readiness primitive checks the
@@ -316,38 +340,11 @@ jobs:
             scripts/local_hook.sh pytest "${affected_tests[@]}"
           fi
 
-  # Fast, parallel spec-status lifecycle gate
-  # (plans/refactor/reconciliation-20261006/SPEC-STATUS-LIFECYCLE.md). Reads
-  # only git and tracked text under specs/ -- no build, no network -- so it
-  # runs standalone and is deliberately NOT a required check and NOT wired
-  # into any other job's `needs:`.
-  spec-gates:
-    name: spec-gates
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - *release-uv
-
-      - name: Spec status and decomposition are consistent
-        run: |
-          set -euo pipefail
-          uvx --from 'git+https://github.com/Knuckles-Team/pipelines@main' pipelines-hook spec-status
-          uvx --from 'git+https://github.com/Knuckles-Team/pipelines@main' pipelines-hook spec-decomposition
-
-      - name: Spec commit trailers (pull requests only)
-        if: github.event_name == 'pull_request'
-        run: |
-          set -euo pipefail
-          uvx --from 'git+https://github.com/Knuckles-Team/pipelines@main' \
-            pipelines-hook spec-trailers --base-ref "origin/${{ github.base_ref }}"
-
+  # Main-push only: the pull-request gates already run the diff-scoped
+  # complexity/kiss/dupehound hooks; the full censuses run once per main push.
   scanner-quality:
-    timeout-minutes: ${{ github.event_name == 'pull_request' && 10 || 60 }}
+    if: github.event_name == 'push' && github.ref_type == 'branch'
+    timeout-minutes: 60
     name: Scanner quality (cccc, KISS, dupehound, jscpd)
     runs-on: ubuntu-latest
     env:
@@ -417,6 +414,8 @@ jobs:
   build:
     timeout-minutes: ${{ github.event_name == 'pull_request' && 10 || 60 }}
     name: build
+    # Not part of PR CI: main push, tag and dispatch only.
+    if: github.event_name != 'pull_request'
     needs: [gates]
     runs-on: ${{ (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && fromJSON('["self-hosted", "homelab"]') || 'ubuntu-latest' }}
     env:
@@ -439,7 +438,7 @@ jobs:
     timeout-minutes: ${{ github.event_name == 'pull_request' && 10 || 60 }}
     name: publish
     needs: build
-    if: github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
+    if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
     runs-on: ubuntu-latest
     # D-ORC-10-style gate (see agent-utilities release.yml): publishing is
     # irreversible, so it must never be a side effect of an ordinary green
