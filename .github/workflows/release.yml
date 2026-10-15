@@ -195,6 +195,10 @@ jobs:
             range="--from-ref $PRE_COMMIT_FROM_REF --to-ref HEAD"
           else
             range="--all-files"
+            # Trailers belong to pull request commits; a squash merge does
+            # not carry the Spec: trailer, so push and tag runs skip the hook.
+            SKIP="${SKIP:+$SKIP,}spec-trailers"
+            export SKIP
           fi
           uvx --from pre-commit==4.6.0 pre-commit run $range --show-diff-on-failure
           uvx --from pre-commit==4.6.0 pre-commit run $range --hook-stage pre-push --show-diff-on-failure
