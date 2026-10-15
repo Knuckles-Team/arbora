@@ -171,8 +171,9 @@ jobs:
             printf '%s' "$PROHIBITED_IDENTITY_CATALOG" > "$HOME/.config/agent-utilities/governance/prohibited-identities.json"
           fi
           uvx --from pre-commit==4.6.0 pre-commit run --all-files --show-diff-on-failure
-          uvx --from pre-commit==4.6.0 pre-commit run --hook-stage pre-push \
-            --from-ref "$PRE_COMMIT_FROM_REF" --to-ref HEAD
+          # The standard moved the scanner and type gates to the pre-push stage;
+          # CI still runs them over the whole tree, not only the diff.
+          uvx --from pre-commit==4.6.0 pre-commit run --all-files --hook-stage pre-push --show-diff-on-failure
 
       # External-index availability is a release boundary, not a PR/push
       # boundary. Repository-manager's one readiness primitive checks the
