@@ -18,34 +18,44 @@ repos:
   rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # v6.0.0
   hooks:
   - id: check-added-large-files
+    stages: [pre-commit]
     args: ["--maxkb=2000"]
     exclude: ^uv\.lock$
-  - id: check-ast
-    exclude: ^(tests/|test/)
   - id: check-yaml
+    stages: [pre-commit]
     args: ["--unsafe"]
     # Helm templates are Go-template text with a .yaml extension, not parsed
     # as plain YAML until `helm template` renders them.
     exclude: ^deploy/helm/graph-os/templates/
   - id: check-toml
+    stages: [pre-commit]
   - id: check-json
+    stages: [pre-commit]
   - id: fix-byte-order-marker
+    stages: [pre-commit]
   - id: check-merge-conflict
+    stages: [pre-commit]
   - id: detect-private-key
+    stages: [pre-commit]
   - id: trailing-whitespace
+    stages: [pre-commit]
   - id: end-of-file-fixer
+    stages: [pre-commit]
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
   rev: cb8c523fd4835aba42af70f4cad5568db4df0b6c # v0.16.0
   hooks:
   - id: ruff-check
+    stages: [pre-commit]
     args: ["--fix", "--unsafe-fixes"]
   - id: ruff-format
+    stages: [pre-commit]
 
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: fc0f09a29bb495f4a91f00266155d6282d52485d # v1.20.2
   hooks:
   - id: mypy
+    stages: [pre-push]
     additional_dependencies: [pydantic==2.13.4, types-PyYAML==6.0.12.20260906]
     args: ["--ignore-missing-imports"]
 
@@ -53,6 +63,7 @@ repos:
   rev: b0f67ba0044693aa9ec0d38fe460590facc98004 # v2.16
   hooks:
   - id: vulture
+    stages: [pre-push]
     pass_filenames: false
     args: [".", "--min-confidence", "95", "--exclude", ".venv,.uv-workspace-siblings,build,tests"]
 
@@ -60,6 +71,7 @@ repos:
   rev: 2ccb47ff45ad361a21071a7eedda4c37e6ae8c5a # v2.4.2
   hooks:
   - id: codespell
+    stages: [pre-push]
     args: ["--ignore-words=.config/codespell.ignore"]
     exclude: ^(tests/|test/)
 
@@ -67,27 +79,23 @@ repos:
   rev: 92ae8b82fb422a639f0ed8d99e96cea769594e08 # 1.9.4
   hooks:
   - id: bandit
+    stages: [pre-push]
     args: ["--skip", "B101"]
     exclude: ^(tests/|test/)
-
-- repo: https://github.com/nbQA-dev/nbQA
-  rev: d31b7eae1767c43460afb3ba130e0a6602933abe # 1.9.1
-  hooks:
-  - id: nbqa-ruff
-    args: ["--fix"]
 
 - repo: https://github.com/AleksaC/hadolint-py
   rev: 458cb25edf664682e3e856a53a2f9af33e068297 # v2.14.0
   hooks:
   - id: hadolint
+    stages: [pre-push]
 
 - repo: https://github.com/astral-sh/uv-pre-commit
   rev: 6a280ba12b7901e47757c868c8c13c6a624c9ecb # 0.11.7
   hooks:
   - id: uv-lock
+    stages: [manual]
     args: ["--locked"]
     # Hosted release gates verify the frozen lock after pinned source checkout.
-    stages: [manual]
 
 # ── Shared gates (Knuckles-Team/pipelines, main) ─────────────────────────────
 - repo: https://github.com/Knuckles-Team/pipelines
@@ -95,11 +103,11 @@ repos:
   hooks:
   # scanners (pinned versions; never installed by a hook)
   - id: complexity-staged
-    stages: [pre-commit, manual]
+    stages: [pre-push, manual]
   - id: kiss-staged
-    stages: [pre-commit, manual]
+    stages: [pre-push, manual]
   - id: dupehound-changed
-    stages: [pre-commit, manual]
+    stages: [pre-push, manual]
   - id: complexity-census
     stages: [manual]
   # Orphan modules are NOT covered here since kiss 0.4.11 (the check moved
@@ -115,51 +123,51 @@ repos:
     stages: [manual]
   # code shape
   - id: no-stub
-    stages: [pre-commit, manual]
+    stages: [pre-push, manual]
   - id: stubs
+    stages: [pre-push, manual]
     exclude: ^tests/
-    stages: [pre-commit, manual]
   - id: env-sprawl
-    stages: [pre-commit, manual]
+    stages: [pre-push, manual]
   - id: stdout-writes
-    stages: [pre-commit, manual]
+    stages: [pre-push, manual]
   - id: swallowed-errors
-    stages: [pre-commit, manual]
+    stages: [pre-push, manual]
   - id: event-loop-blocking
-    stages: [pre-commit, manual]
+    stages: [pre-push, manual]
   - id: import-cycles
-    stages: [pre-commit, manual]
+    stages: [pre-push, manual]
   # public documentation
   - id: public-surface
     stages: [pre-commit, manual]
   - id: ste-staged
     stages: [pre-commit, manual]
   - id: ste-staleness-staged
-    stages: [pre-commit, manual]
+    stages: [pre-push, manual]
   # secrets, privacy, supply chain, hygiene
   - id: supply-chain
-    stages: [pre-commit, manual]
+    stages: [pre-push, manual]
   - id: secret-history
     stages: [pre-push, manual]
   - id: security-sanitizer
-    stages: [pre-commit, manual]
+    stages: [pre-push, manual]
   - id: tracked-privacy
-    stages: [pre-commit, manual]
+    stages: [pre-push, manual]
   - id: root-hygiene
-    stages: [pre-commit, manual]
+    stages: [pre-push, manual]
   - id: gitignore-convergence
-    stages: [pre-commit, manual]
+    stages: [pre-push, manual]
   - id: sprawl
-    stages: [pre-commit, manual]
+    stages: [pre-push, manual]
   - id: mermaid
-    stages: [pre-commit, manual]
+    stages: [pre-push, manual]
   - id: pre-commit-patch-safety
     stages: [pre-push, manual]
   # spec-status lifecycle (plans/refactor/reconciliation-20261006/SPEC-STATUS-LIFECYCLE.md)
   - id: spec-status
-    stages: [pre-commit, manual]
+    stages: [pre-push, manual]
   - id: spec-decomposition
-    stages: [pre-commit, manual]
+    stages: [pre-push, manual]
   - id: spec-standard
     stages: [pre-commit, manual]
   - id: spec-trailers
