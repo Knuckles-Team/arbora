@@ -168,8 +168,11 @@ def test_gates_run_the_repository_pre_commit_configuration() -> None:
     steps = _gate_steps()
     commands = "\n".join(step.get("run", "") for step in steps)
 
-    assert "pre-commit run --all-files" in commands
-    assert "pre-commit run --hook-stage pre-push" in commands
+    # Pull requests are diff-scoped, main and tags run every file.
+    assert "pre-commit run $range --show-diff-on-failure" in commands
+    assert "pre-commit run $range --hook-stage pre-push" in commands
+    assert "--from-ref $PRE_COMMIT_FROM_REF --to-ref HEAD" in commands
+    assert 'range="--all-files"' in commands
     assert {"pytest", "mypy-env"} <= _manual_hooks_named(commands)
     # The full suite runs only after the environment it needs is synced.
     assert _step_index(steps, "uv sync --frozen") < _step_index(steps, "pytest")
@@ -399,11 +402,11 @@ def test_scanner_cache_identity_fails_closed_without_a_compiler(
 
 def test_only_superseded_pull_request_runs_are_cancelled() -> None:
     concurrency = _workflow()["concurrency"]
-    assert concurrency["group"] == "release-${{ github.workflow }}-${{ github.ref }}"
-    assert (
-        concurrency["cancel-in-progress"]
-        == "${{ github.event_name == 'pull_request' }}"
-    )
+    group = concurrency["group"]
+    assert "format('pr-{0}-{1}'" in group and "pull_request.number" in group
+    assert "format('main-{0}'" in group and "format('release-{0}-{1}'" in group
+    # Superseded PR and main runs cancel; only tag publishes are preserved.
+    assert concurrency["cancel-in-progress"] == "${{ github.ref_type != 'tag' }}"
 
 
 def test_numeric_artifact_cache_is_exact_and_always_validated() -> None:
