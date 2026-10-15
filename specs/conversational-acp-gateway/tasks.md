@@ -23,4 +23,3 @@ Governing [spec](spec.md) and [plan](plan.md).
 - [ ] **GRAPHOS-ACP-R001.6:** Typed refusals for root, capability, permission and client
 - [ ] **GRAPHOS-ACP-R001.7:** Evidence record for admission and forwarded requests
 - [ ] **GRAPHOS-ACP-R001.8:** Hot-path proof through `session/new` with a fake client
-
