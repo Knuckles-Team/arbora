@@ -14,3 +14,13 @@ Governing [spec](spec.md) and [plan](plan.md).
 - [ ] **GRAPHOS-ACP-R001:** Conversational ACP gateway session admission and policy
 - [ ] **GRAPHOS-ACP-R001.1:** Remaining scope of GRAPHOS-ACP-R001 (slice .1): Conversational ACP gateway session admission and policy
 - [ ] **GRAPHOS-ACP-R001.2:** Remaining scope of GRAPHOS-ACP-R001 (slice .2): Conversational ACP gateway session admission and policy
+
+## Coding session admission (R001.3 to R001.8)
+
+- [ ] **GRAPHOS-ACP-R001.3:** Model for coding-session request, grant and admitted session
+- [ ] **GRAPHOS-ACP-R001.4:** Behavior for trusted-root and permission rules
+- [ ] **GRAPHOS-ACP-R001.5:** Wiring of `session/new` into the gateway route registration
+- [ ] **GRAPHOS-ACP-R001.6:** Typed refusals for root, capability, permission and client
+- [ ] **GRAPHOS-ACP-R001.7:** Evidence record for admission and forwarded requests
+- [ ] **GRAPHOS-ACP-R001.8:** Hot-path proof through `session/new` with a fake client
+

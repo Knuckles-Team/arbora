@@ -11,6 +11,12 @@
 | T-ACP-07 | ACP-05 | Unit | Admitted session from a prior available state, adapter goes unavailable, message attempted | Typed `chat_adapter_unavailable` refusal on the message check. No synthesized reply. |
 | T-ACP-08 | ACP-06 | Integration | Same credential resolved through the existing identity path and through ACP admission | Identical principal/tenant/scope snapshot on both paths. |
 | T-ACP-09 | ACP-07 | Unit | Status/doctor read with adapter unavailable and configured limits | Output reports adapter state and limits. No token or session secret present. |
+| T-ACP-10 | R001.3 | Unit | Request with empty root or unknown capability | Construction is rejected; types are frozen. |
+| T-ACP-11 | R001.4 | Unit | Trusted root, read, write, then standing grant | Read passes; write needs permission; standing grant skips the prompt. |
+| T-ACP-12 | R001.5 | Integration | App after `register_graph_routes` | ACP route exists; `session/new` reaches `CodingSessionAdmission.admit`. |
+| T-ACP-13 | R001.6 | Unit | Untrusted root, undeclared capability, denied permission, no client | One typed refusal each; nothing forwarded. |
+| T-ACP-14 | R001.7 | Unit | Admit, granted write, denied command | One trace record each; no file content. |
+| T-ACP-15 | R001.8 | Integration | `session/new` with a temporary trusted root and a fake client | Read passes, write waits for permission, untrusted root refused. |
 
 ## Release proof
 
