@@ -60,8 +60,10 @@ permissions:
 
 jobs:
   gates:
-    # PR gates are diff-scoped and capped at 15 minutes; main/tag run everything.
-    timeout-minutes: ${{ github.event_name == 'pull_request' && 15 || 60 }}
+    # PR gates are diff-scoped. A cold numeric-kernel rebuild (cache key covers
+    # this file and uv.lock) exceeds 15 minutes, so the cap stays above it;
+    # warm-cache runs finish well inside the 15-minute standard.
+    timeout-minutes: ${{ github.event_name == 'pull_request' && 45 || 60 }}
     name: gates
     # Homelab self-hosted runner for same-repo push/PR traffic (the org
     # runner group is scoped to the 6 core repos already); a fork PR's head
