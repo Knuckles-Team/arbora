@@ -91,6 +91,7 @@ Specs are already designed. The work is implementation, delivered in very small,
 | Repository | Primary ownership |
 |---|---|
 | `epistemic-graph` | Durable graph engine, query/compute, protocol, generated contracts, Python client |
+| `epistemic-graph-server` | Distribution of the one server executable: server wheel, server image, version lockstep with `epistemic-graph` |
 | `agent-connector-sdk` | Connector transport, certification, typed source and sink ports |
 | `agent-utilities` | Agent orchestration, KG application services, skills and workflow runtime |
 | `graph-os` | Deployable gateway, MCP/REST composition, control plane and operations |
