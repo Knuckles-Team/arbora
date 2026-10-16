@@ -30,3 +30,19 @@ jobs:
     timeout-minutes: 5
     steps:
       - run: echo "docs/spec-only change; the code gates do not apply"
+
+  # The main ruleset also requires these two release.yml jobs; on a docs/spec-only
+  # change that workflow is skipped, so report them here too.
+  scanner-quality:
+    name: Scanner quality (cccc, KISS, dupehound, jscpd)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: echo "docs/spec-only change; the scanners do not apply"
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: echo "docs/spec-only change; nothing to build"
