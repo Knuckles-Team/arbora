@@ -2,3 +2,6 @@
 # Each must correspond to a real false-positive in the tree. Matching is
 # case-insensitive.
 hass
+# Comparative statics is the economics term used by the provider's
+# PenaltyPolicy schema; preserve its digest-bound contract description.
+statics

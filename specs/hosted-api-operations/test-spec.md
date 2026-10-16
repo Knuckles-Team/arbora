@@ -117,3 +117,18 @@ R025.2 retains full deterministic generation, drift and installed-wheel proof.
 The emitted-client fixture is not this acceptance.
 
 | HO-QUERY-01 | GRAPHOS-OPS-R018.2.1 | `tests/api/test_query_ops.py`, `tests/api/test_registry_factory.py`, and `tests/api/test_resolve.py` prove provider method, scope and inner schema compatibility. They prove authorized fallback, verified caller graph binding and provider error propagation. Tests record the final transport; they do not qualify a live NL planner or compose the production schema validator. |
+
+## GRAPHOS-OPS-R025.2: Packaged generated artifacts
+
+Run the canonical generator twice with the pinned packaged EG contract and
+require `scripts/gen_api.py --check` to pass. Build the distribution from the
+real generated source. `tests/deployment/test_generated_client_wheel.py` installs
+that wheel without dependencies into an isolated target and imports its client
+from outside the checkout. It verifies registry resources, operation membership
+and matching response digests. Fixture-only generation cannot satisfy this test.
+
+Reference acceptance resolves every generated provider snapshot and OpenAPI
+reference. It compares resolved provider snapshots with the pinned source schema.
+Negative cases reject missing schema files, invalid pointers, traversal and remote
+references. Installed-wheel tests run outside the source tree without provider
+packages and exercise both schema lookup and invocation.

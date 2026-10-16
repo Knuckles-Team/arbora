@@ -934,7 +934,7 @@
     {
       "id": "GRAPHOS-OPS-R025",
       "title": "Generated registry, OpenAPI, and client artifacts",
-      "delivery_state": "SPECIFIED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "4b83c69e2b41"
       ],
@@ -952,17 +952,23 @@
         "144fd029bf2e"
       ],
       "verified_by": [
-        "tests/api/test_gen_api.py:248",
-        "tests/api/test_gen_api.py:270",
-        "tests/api/test_gen_api.py:285"
+        "tests/api/test_gen_api.py:258",
+        "tests/api/test_gen_api.py:280",
+        "tests/api/test_gen_api.py:295"
       ]
     },
     {
       "id": "GRAPHOS-OPS-R025.2",
       "title": "Remaining generated artifact acceptance",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "a247b168fa98"
+      ],
+      "verified_by": [
+        "tests/api/test_gen_api.py:312",
+        "tests/deployment/test_generated_client_wheel.py:15",
+        "tests/deployment/test_generated_client_wheel.py:26"
+      ]
     },
     {
       "id": "GRAPHOS-OPS-R026",

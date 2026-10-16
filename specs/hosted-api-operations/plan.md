@@ -543,3 +543,17 @@ a compatible engine contract and packaged artifacts.
 ### 2026-10-16 — Separate deterministic and natural-language queries
 
 `query.uql` remains deterministic under `query:unified`; `query.nl` is the authorized resolver fallback under `query:nl`. The latter binds its inner graph from the verified caller and preserves provider planner-unavailable refusals. No scope is automatically granted. Remaining SQL, search, indexes and analytics acceptance under R018.2 remains deferred.
+
+### 2026-10-16: R025.2 packaged schema references
+
+Generate each provider schema document once per artifact surface. Registry
+snapshots and OpenAPI components reference those documents. Keep the provider
+pointers, schema hashes and canonical registry digest unchanged. Resolve packaged
+references locally for Python consumers and compatibility checks. Reject missing
+resources, invalid pointers and paths outside the generated schema directory.
+Preserve all registered operations and resolved schema meaning. Hoist curated
+OpenAPI definitions so every local reference resolves.
+
+The wheel includes the registry and shared schema documents. Acceptance covers
+clean installed-wheel use, missing and unsafe references, deterministic generation
+and equality of resolved schemas. This proof does not establish a live server.
