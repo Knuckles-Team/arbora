@@ -1204,6 +1204,7 @@
       "title": "GraphOS serves its eight-tool MCP intent surface from its own operation registry",
       "delivery_state": "SPECIFIED",
       "landed_in": [
+        "51529da8abe6",
         "c39349d16c53"
       ],
       "verified_by": [],
