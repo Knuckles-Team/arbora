@@ -921,8 +921,10 @@
     {
       "id": "GRAPHOS-OPS-R025.1",
       "title": "Generated Python invocation boundary",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "144fd029bf2e"
+      ],
       "verified_by": [
         "tests/api/test_gen_api.py:248",
         "tests/api/test_gen_api.py:270",
