@@ -73,6 +73,8 @@
     "GRAPHOS-OPS-R024.4.6",
     "GRAPHOS-OPS-R024.5",
     "GRAPHOS-OPS-R025",
+    "GRAPHOS-OPS-R025.1",
+    "GRAPHOS-OPS-R025.2",
     "GRAPHOS-OPS-R026",
     "GRAPHOS-OPS-R026.1",
     "GRAPHOS-OPS-R026.2",
@@ -906,10 +908,34 @@
     {
       "id": "GRAPHOS-OPS-R025",
       "title": "Generated registry, OpenAPI, and client artifacts",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "4b83c69e2b41"
       ],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-OPS-R025.1",
+        "GRAPHOS-OPS-R025.2"
+      ]
+    },
+    {
+      "id": "GRAPHOS-OPS-R025.1",
+      "title": "Generated Python invocation boundary",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "144fd029bf2e"
+      ],
+      "verified_by": [
+        "tests/api/test_gen_api.py:248",
+        "tests/api/test_gen_api.py:270",
+        "tests/api/test_gen_api.py:285"
+      ]
+    },
+    {
+      "id": "GRAPHOS-OPS-R025.2",
+      "title": "Remaining generated artifact acceptance",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": []
     },
     {
