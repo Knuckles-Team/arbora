@@ -32,12 +32,12 @@ from agent_utilities.knowledge_graph.core.discovery_authority import OAuthGrantB
 from agent_utilities.knowledge_graph.core.fleet_catalog_tables import (
     TenantLocalDiscoveryBinding,
 )
-from agent_utilities.knowledge_graph.core.session import (
+from graph_os.api.contracts.session import (
     GraphSession,
     suspend_session,
     use_session,
 )
-from agent_utilities.mcp.remote_oauth_broker import (
+from graph_os.mcp_server.backing.remote_oauth_broker import (
     OAuthProviderError,
     OAuthTokenAbsentError,
     OAuthTokenStore,

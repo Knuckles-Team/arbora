@@ -21,7 +21,7 @@ occur:
   action-routed endpoints): the handler forwards the ENTIRE parsed body as
   ``_execute_tool(tool_name, **body)``. The real contract is therefore the
   underlying tool's own signature (``graph_write``/``graph_ingest`` in
-  ``agent_utilities/mcp/tools/write_ingest_tools.py``), which is what these
+  ``graph_os/mcp_server/backing/tools/write_ingest_tools/py``), which is what these
   models mirror field-for-field. ``_execute_tool`` itself validates the
   forwarded kwargs against that signature and raises
   ``UnsupportedToolFieldError`` (mapped to HTTP 400) for anything the tool
@@ -190,7 +190,7 @@ class GraphToolResponse(BaseModel):
             "otherwise (``safe_json_load``). Shape varies by route and, for "
             "the action-routed base endpoints, by the caller's own "
             "``action`` — see this route's tool implementation in "
-            "``agent_utilities/mcp/tools/write_ingest_tools.py`` for the "
+            "``graph_os/mcp_server/backing/tools/write_ingest_tools/py`` for the "
             "exact shape a given action produces."
         )
     )
@@ -208,7 +208,7 @@ class GraphWriteRequest(BaseModel):
     The handler forwards the ENTIRE parsed JSON body to
     ``_execute_tool("graph_write", **body)`` with no field filtering, so this
     model mirrors the ``graph_write`` MCP tool's own signature
-    (``agent_utilities/mcp/tools/write_ingest_tools.py``) field-for-field.
+    (``graph_os/mcp_server/backing/tools/write_ingest_tools/py``) field-for-field.
     Unlike the granular single-action routes below, ``properties``/``nodes``/
     ``evidence`` here are the RAW JSON-STRING types the tool itself declares
     (this route does no ``dict``/``list`` → JSON-string coercion the way the

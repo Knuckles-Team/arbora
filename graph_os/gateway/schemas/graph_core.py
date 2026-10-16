@@ -2,16 +2,16 @@
 plus its non-graph siblings (SCHEMA LANE 3/3).
 
 ``kg_server._mount_rest_routes`` mounts these routes with raw Starlette
-``app.add_route(...)`` (see ``agent_utilities/mcp/kg_server.py``), which carries
+``app.add_route(...)`` (see ``graph_os/mcp_server/backing/kg_server/py``), which carries
 no request/response schema at all — the live OpenAPI 3.1.0 spec documents
 **zero** ``/api/graph/*`` paths as a result. This module is the typed
 prerequisite for wiring ``response_model=``/body-typed parameters onto those
 routes (a later, single-owner lane); it does not touch ``kg_server.py`` itself.
 
 Every model here was derived by reading the actual handler in
-``agent_utilities/mcp/kg_server.py`` and, where the handler dispatches through
+``graph_os/mcp_server/backing/kg_server/py`` and, where the handler dispatches through
 ``_execute_tool("<tool>", **body)``, the real target tool signature in
-``REGISTERED_TOOLS`` (``agent_utilities/mcp/tools/*.py``) — never invented.
+``REGISTERED_TOOLS`` (``graph_os/mcp_server/backing/tools/*.py``) — never invented.
 See each model's docstring for its source handler/tool and the exact
 permissiveness contract (``extra="allow"`` vs ``extra="forbid"``) proven
 against that handler's code, not assumed.
@@ -209,7 +209,7 @@ GraphExplainAction = Literal["explain", "context", "executable_rag", "recommend"
 
 class GraphCodeRequest(BaseModel):
     """Request body for ``POST /graph/code`` — REST twin of the ``graph_code``
-    MCP tool (``agent_utilities/mcp/tools/analyze_suite.py``), mounted via the
+    MCP tool (``graph_os/mcp_server/backing/tools/analyze_suite/py``), mounted via the
     shared ``_make_action_endpoint("graph_code")`` factory in ``kg_server.py``.
 
     ``extra="forbid"``: PROVEN — the factory blind-splats ``**body`` into
@@ -324,7 +324,7 @@ class GraphExplainRequest(BaseModel):
 
 class GraphObserveRequest(BaseModel):
     """Request body for ``POST /graph/observe`` — REST twin of the
-    ``graph_observe`` MCP tool (``agent_utilities/mcp/tools/analyze_suite.py``),
+    ``graph_observe`` MCP tool (``graph_os/mcp_server/backing/tools/analyze_suite/py``),
     mounted via the same ``_make_action_endpoint`` factory.
 
     ``extra="forbid"``: PROVEN the same way as :class:`GraphCodeRequest` — the
@@ -380,7 +380,7 @@ class GraphObserveResponse(BaseModel):
 
 class GraphOrchestrateRequest(BaseModel):
     """Request body for ``POST /graph/orchestrate`` — REST twin of the
-    ``graph_orchestrate`` MCP tool (``agent_utilities/mcp/tools/analysis_tools.py``),
+    ``graph_orchestrate`` MCP tool (``graph_os/mcp_server/backing/tools/analysis_tools/py``),
     which resolves and executes one governed local-vLLM delegation.
 
     ``extra="forbid"``: PROVEN — ``graph_orchestrate_endpoint`` blind-splats
@@ -497,7 +497,7 @@ class GraphOrchestrateResponse(BaseModel):
 
 class GraphConfigureRequest(BaseModel):
     """Request body for ``POST /graph/configure`` — REST twin of the
-    ``graph_configure`` MCP tool (``agent_utilities/mcp/tools/analysis_tools.py``).
+    ``graph_configure`` MCP tool (``graph_os/mcp_server/backing/tools/analysis_tools/py``).
 
     ``extra="forbid"``: PROVEN — ``graph_configure_endpoint`` blind-splats
     ``**body`` into ``_execute_tool("graph_configure", **body)``, and the

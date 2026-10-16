@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Skills served from THIS process's own installed packages.
 
-``agent_utilities.mcp.server_factory._register_skill_providers`` already wires
+``graph_os.mcp_server.backing.server_factory._register_skill_providers`` already wires
 every package that declares the ``agent_utilities.skill_providers`` entry
 point (graph-os's own skills, agent-utilities' own skills, and any sibling
 package installed alongside graph-os that declares the same entry point --

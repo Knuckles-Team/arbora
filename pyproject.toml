@@ -19,9 +19,15 @@ license = "MIT"
 # surfaces. Connector widgets delegate through the served fleet and never
 # install connector clients.
 dependencies = [
-    # Portable development binding below resolves the not-yet-published AU 2.5
-    # workspace release; released wheels retain this real PEP 508 floor.
-    "agent-utilities[mcp]>=2.5.0,<3.0.0",
+    # AU 3.0.0 is the cut harness-only release: it ships no mcp/, gateway/,
+    # server/ or api/ packages. graph-os owns the MCP/REST serving surface
+    # (graph_os/mcp_server/backing, graph_os/api/contracts), so the former
+    # `[mcp]` extra's requirements are declared directly below.
+    "agent-utilities>=3.0.0,<4.0.0",
+    "eunomia-core>=0.3.10",
+    "httpx>=0.28.1",
+    "pyjwt>=2.13.0",
+    "python-multipart>=0.0.32",
     # GraphOS is the deployment composition root for connector workers.  The
     # SDK owns source transport and runner construction; GraphOS supplies its
     # authenticated epistemic-graph client through the SDK's public injection

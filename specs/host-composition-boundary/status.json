@@ -5,6 +5,7 @@
   "delivery_state": "SPECIFIED",
   "requirement_ids": [
     "GRAPHOS-HOST-R001",
+    "GRAPHOS-HOST-R001.1",
     "GRAPHOS-HOST-R002",
     "GRAPHOS-HOST-R003",
     "GRAPHOS-HOST-R004",
@@ -170,10 +171,20 @@
     {
       "id": "GRAPHOS-HOST-R001",
       "title": "Cross-repository composition boundary assignment",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "9760bef27075"
       ],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-HOST-R001.1"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.1",
+      "title": "GraphOS owns the MCP, REST and API serving code that agent-utilities 3.0.0 drops",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": []
     },
     {

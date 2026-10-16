@@ -121,7 +121,7 @@ def test_missing_sdk_module_skips(monkeypatch) -> None:
 def test_onboarding_registers_after_import(fake_sdk, monkeypatch) -> None:
     import asyncio
 
-    from agent_utilities.api.session import use_session
+    from graph_os.api.contracts.session import use_session
 
     from graph_os.deployment import semantic_provisioning
     from graph_os.fleet.onboarding import FleetEndpoint, FleetOnboarding

@@ -20,7 +20,7 @@ async def run_action_policy(
 ) -> Any:
     """Run synchronous policy reads and audit writes off the event loop."""
     if policy_runner is None:
-        from agent_utilities.mcp.concurrency import run_blocking
+        from graph_os.mcp_server.backing.concurrency import run_blocking
 
         policy_runner = run_blocking
     try:

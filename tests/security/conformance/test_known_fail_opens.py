@@ -171,7 +171,7 @@ def test_websocket_dashboard_citation_does_not_regress_to_the_dead_module() -> N
     """BUG-PE-038: this entry used to cite `gateway/ws.py:78-154` -- a module
     that is unused dead code today (nothing imports it; agent-webui's own
     `/ws/dashboard` handler has a `Deliberately NOT
-    agent_utilities.gateway.ws.dashboard_ws_router` comment explaining why)
+    graph_os.gateway.ws.dashboard_ws_router` comment explaining why)
     and is removed outright on `fix/dead-routes-and-union-perf` (BUG-PE-006).
     The real enforcement this surface's `AUTHENTICATED_REQUIRED` disposition
     describes is `WebUIAuthorizationMiddleware` in agent-webui's

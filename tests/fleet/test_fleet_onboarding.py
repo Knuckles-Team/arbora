@@ -15,7 +15,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from agent_utilities.knowledge_graph.core.session import GraphSession
+from graph_os.api.contracts.session import GraphSession
 
 from graph_os.deployment import production_ops
 from graph_os.deployment.semantic_provisioning import ensure_server_registrations
@@ -173,7 +173,7 @@ async def _served_pack(endpoint: FleetEndpoint, *, auth: Any = None) -> Any:
 def eg(monkeypatch: pytest.MonkeyPatch) -> _Registry:
     registry = _Registry()
     monkeypatch.setattr(
-        "agent_utilities.api.provisioning.get_action_policy",
+        "graph_os.api.contracts.provisioning.get_action_policy",
         lambda _engine: AllowPolicy(),
     )
     monkeypatch.setattr(
@@ -193,7 +193,7 @@ def _onboarding(registry: _Registry, capture: Any = _served_pack) -> FleetOnboar
 
 
 def _run_in_session(coro: Any) -> Any:
-    from agent_utilities.api.session import use_session
+    from graph_os.api.contracts.session import use_session
 
     session = _session()
     with use_session(session):

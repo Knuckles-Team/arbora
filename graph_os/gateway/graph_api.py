@@ -65,7 +65,7 @@ def _mount_sparql_route(app, prefix: str = "/api") -> None:
     """Mount ``{prefix}/sparql`` — a local, zero-dependency SPARQL endpoint."""
 
     async def sparql_endpoint(request: Request) -> JSONResponse:
-        from agent_utilities.api.session import (
+        from graph_os.api.contracts.session import (
             resolve_session,
             use_session,
         )
@@ -164,7 +164,7 @@ SQL_SCHEMA_DESCRIPTION = (
     "catalog browser renders. Accepts an OPTIONAL JSON body "
     '`{"schema": "<name>"}`; it carries **no SQL**. Every statement issued is a '
     "server-authored constant "
-    "(`agent_utilities.mcp.tools.graph_tools.CATALOG_STATEMENTS`) and the schema "
+    "(`graph_os.mcp_server.backing.tools.graph_tools.CATALOG_STATEMENTS`) and the schema "
     "filter is validated as a SQL identifier and applied in Python, so there is "
     "no interpolation and no path to row data. Dispatches through the same "
     "`_execute_tool` action core as the MCP `graph_table` tool, under the "
@@ -178,8 +178,8 @@ SQL_SCHEMA_DESCRIPTION = (
 
 async def _sql_schema_endpoint(request: Request) -> JSONResponse:
     """Serve ``POST /graph/sql-schema`` — the read-only catalog projection."""
-    from agent_utilities.api.session import resolve_session
-    from agent_utilities.mcp.tools.graph_tools import SqlSchemaUnavailable, sql_schema
+    from graph_os.api.contracts.session import resolve_session
+    from graph_os.mcp_server.backing.tools.graph_tools import SqlSchemaUnavailable, sql_schema
 
     try:
         resolve_session(required_scope="kg:read")
@@ -319,7 +319,7 @@ def register_graph_routes(app, prefix: str = "/api") -> None:
     # browser renders. Deliberately NOT a raw SQL passthrough: it takes no query
     # text, only an optional identifier-validated schema filter, and dispatches
     # through the same ``_execute_tool`` action core as the MCP ``graph_table``
-    # tool. See agent_utilities/mcp/tools/graph_tools.py.
+    # tool. See graph_os/mcp_server/backing/tools/graph_tools/py.
     _mount_sql_schema_route(app, prefix=prefix)
 
     # Native swarm supervisory plane (CONCEPT:AU-OS.safety.ontological-guardrail):

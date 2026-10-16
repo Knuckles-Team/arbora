@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from agent_utilities.knowledge_graph.core.session import (
+from graph_os.api.contracts.session import (
     GraphSession,
     current_session,
     use_session,

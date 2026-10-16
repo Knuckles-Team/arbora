@@ -11,8 +11,8 @@ from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
-from agent_utilities.api.session import GraphSession, resolve_session, use_session
-from agent_utilities.mcp.middlewares import ActorContextMiddleware
+from graph_os.api.contracts.session import GraphSession, resolve_session, use_session
+from graph_os.mcp_server.backing.middlewares import ActorContextMiddleware
 from agent_utilities.security.brain_context import (
     ActorContext,
     current_actor,

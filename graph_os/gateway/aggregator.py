@@ -53,7 +53,7 @@ def _service_authority() -> Any:
     this closes.
     """
     global _SERVICE_SESSION
-    from agent_utilities.api.session import SessionExpiredError
+    from graph_os.api.contracts.session import SessionExpiredError
 
     with _SERVICE_SESSION_LOCK:
         if _SERVICE_SESSION is not None:
@@ -85,7 +85,7 @@ def _run_as_service_actor[T](fn: Callable[[], T]) -> T:
     never crosses the executor boundary and the widget call still finds no
     actor (the exact defect this fixes).
     """
-    from agent_utilities.api.session import use_session
+    from graph_os.api.contracts.session import use_session
     from agent_utilities.security.brain_context import use_actor
 
     session = _service_authority()

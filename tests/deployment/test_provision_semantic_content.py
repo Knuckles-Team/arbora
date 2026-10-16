@@ -11,7 +11,7 @@ import json
 from typing import Any
 
 import pytest
-from agent_utilities.knowledge_graph.core.session import GraphSession
+from graph_os.api.contracts.session import GraphSession
 
 from graph_os.deployment import production_ops, semantic_provisioning
 from tests._eg_fakes import AllowPolicy, FakeEgEngine, service_session
@@ -151,7 +151,7 @@ def wired(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
     monkeypatch.setattr(bootstrap, "_wait_for_engine_materialization", lambda e: None)
     monkeypatch.setattr(
-        "agent_utilities.api.provisioning.get_action_policy",
+        "graph_os.api.contracts.provisioning.get_action_policy",
         lambda _engine: AllowPolicy(),
     )
     monkeypatch.setattr(

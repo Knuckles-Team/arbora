@@ -13,7 +13,7 @@ from typing import Any
 
 import httpx
 import pytest
-from agent_utilities.api.session import GraphSession, use_session
+from graph_os.api.contracts.session import GraphSession, use_session
 from agent_utilities.security.actor_identity import ActorType
 from agent_utilities.security.brain_context import ActorContext, CredentialLease
 from eunomia_core import schemas

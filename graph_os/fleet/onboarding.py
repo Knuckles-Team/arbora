@@ -171,8 +171,8 @@ def _capture_kinds() -> tuple[Any, ...]:
 def _child_auth() -> Any:
     """GraphOS's service credential for a child, as the multiplexer sends it."""
 
-    from agent_utilities.mcp.client_credentials import child_auth
-    from agent_utilities.mcp.httpx_boundary import coerce_httpx2_auth
+    from graph_os.mcp_server.backing.client_credentials import child_auth
+    from graph_os.mcp_server.backing.httpx_boundary import coerce_httpx2_auth
 
     return coerce_httpx2_auth(child_auth(None))
 
@@ -455,7 +455,7 @@ class FleetOnboardingService:
             yield
 
     def run_forever(self) -> None:
-        from agent_utilities.api.session import use_session
+        from graph_os.api.contracts.session import use_session
         from agent_utilities.security.brain_context import use_actor
 
         session = self.onboarding.session

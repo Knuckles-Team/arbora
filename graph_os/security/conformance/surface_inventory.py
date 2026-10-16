@@ -8,7 +8,7 @@ CONCEPT:AU-OS.identity.stack-wide-auth-conformance — see this package's
 GOC-62-keycloak-auth-standard.md`` §D2.
 
 :func:`enumerate_query_dialect_surfaces` parses the ACTUAL source of
-``agent_utilities/mcp/tools/query_tools.py`` (never a hand-maintained list) to
+``graph_os/mcp_server/backing/tools/query_tools/py`` (never a hand-maintained list) to
 find every ``if scope == "<literal>":`` branch inside the ``graph_query`` tool
 registration closure — i.e. every dialect a caller can request. A dialect
 added later (a new ``if scope == "graphql":`` branch, say) is discovered by
@@ -23,7 +23,7 @@ absence of a branch is itself the signal it is the fallthrough, not a
 surface this function could fail to find.
 
 GRAPHOS-HOST-R008 NOTE: this module now lives in graph-os, but the surface it
-introspects (``agent_utilities/mcp/tools/query_tools.py``) has not moved yet
+introspects (``graph_os/mcp_server/backing/tools/query_tools/py``) has not moved yet
 (AU-BOUNDARY-R003, a different seed group). ``QUERY_TOOLS_MODULE`` is
 therefore resolved through agent-utilities' INSTALLED package location
 (``importlib.util.find_spec``) rather than a same-repo relative path — the
@@ -44,13 +44,13 @@ __all__ = [
 
 
 def _locate_query_tools_module() -> Path | None:
-    """Resolve ``agent_utilities/mcp/tools/query_tools.py`` via the installed
+    """Resolve ``graph_os/mcp_server/backing/tools/query_tools/py`` via the installed
     ``agent_utilities`` package rather than a path relative to this file (this
     file no longer lives inside the same repository as its target). Returns
     ``None`` when the distribution cannot be located at all (e.g. a stub or
     namespace-only install) — the caller still fails loudly, just one level
     up, in :func:`enumerate_query_dialect_surfaces`."""
-    spec = importlib.util.find_spec("agent_utilities.mcp.tools.query_tools")
+    spec = importlib.util.find_spec("graph_os.mcp_server.backing.tools.query_tools")
     if spec is None or spec.origin is None:
         return None
     return Path(spec.origin).resolve()

@@ -85,11 +85,11 @@ def test_child_refusal_uses_structured_code_only() -> None:
 async def test_delegated_child_refusal_keeps_bounded_structured_code(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    api = ModuleType("agent_utilities.api")
+    api = ModuleType("graph_os.api.contracts")
     vars(api).update(use_session=lambda _session: nullcontext())
     brain = ModuleType("agent_utilities.security.brain_context")
     vars(brain).update(use_actor=lambda _actor: nullcontext())
-    monkeypatch.setitem(sys.modules, "agent_utilities.api", api)
+    monkeypatch.setitem(sys.modules, "graph_os.api.contracts", api)
     monkeypatch.setitem(sys.modules, "agent_utilities.security.brain_context", brain)
 
     class Mux:
@@ -316,7 +316,7 @@ async def test_uncertain_service_child_propagates_for_the_invoke_surface_to_map(
 async def test_oauth_callback_uses_matching_verified_actor(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import agent_utilities.api
+    import graph_os.api.contracts
     import agent_utilities.security.brain_context as brain_context
 
     bound: list[object] = []
@@ -329,7 +329,7 @@ async def test_oauth_callback_uses_matching_verified_actor(
         bound.append(actor)
         return nullcontext()
 
-    monkeypatch.setattr(agent_utilities.api, "use_session", fake_use_session)
+    monkeypatch.setattr(graph_os.api.contracts, "use_session", fake_use_session)
     monkeypatch.setattr(brain_context, "use_actor", fake_use_actor)
 
     class Mux:

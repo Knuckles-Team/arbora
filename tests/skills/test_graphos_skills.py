@@ -105,7 +105,7 @@ def test_query_workflow_skill_documents_the_registered_query_argument() -> None:
     """The query guide and its sidecar agree with the registered tool contract."""
     import inspect
 
-    from agent_utilities.mcp import kg_server
+    from graph_os.mcp_server.backing import kg_server
 
     kg_server.ensure_tools_registered()
     skill = SKILLS_ROOT / "graph-query-and-explanation"

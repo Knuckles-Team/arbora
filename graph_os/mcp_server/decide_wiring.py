@@ -22,7 +22,7 @@ def _mutation_context(session: Any, purpose_id: str) -> dict[str, Any]:
 
     EG's admitted-context step replaces the policy fields with its own
     current owner policy digest before any durable commit or publish (see
-    ``agent_utilities.api.provisioning``); this context only has to carry the
+    ``graph_os.api.contracts.provisioning``); this context only has to carry the
     verified session's identity and scope, not a pre-validated policy
     decision.
     """

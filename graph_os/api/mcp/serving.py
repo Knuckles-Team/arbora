@@ -9,7 +9,7 @@ function this module calls for the two launcher tools, exactly like any
 other library dependency.
 
 ``graph_os.mcp_server.server`` calls :func:`register_intent_surface` instead
-of the agent runtime's ``agent_utilities.mcp.graphos_surface.register_graphos_surface``
+of the agent runtime's ``graph_os.mcp_server.backing.graphos_surface.register_graphos_surface``
 (GRAPHOS-HOST-R024); that cutover, and the agent runtime's MCP-serving removal
 (GRAPHOS-HOST-R025), are separate, later changes.
 """
@@ -72,6 +72,6 @@ def _register_app_launchers(mcp: Any) -> None:
     routing logic lives in the agent runtime's registrar.
     """
 
-    from agent_utilities.mcp.tools.mcp_apps import register_mcp_apps_tools
+    from graph_os.mcp_server.backing.tools.mcp_apps import register_mcp_apps_tools
 
     register_mcp_apps_tools(mcp)

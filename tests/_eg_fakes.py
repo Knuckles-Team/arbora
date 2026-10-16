@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from agent_utilities.knowledge_graph.core.session import GraphSession
+from graph_os.api.contracts.session import GraphSession
 from agent_utilities.orchestration.action_policy import (
     ActionDecision,
     ActionRequest,

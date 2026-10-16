@@ -90,7 +90,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         sys.modules, "agent_utilities.core.contextual_model", contextual_model
     )
 
-    governance = types.ModuleType("agent_utilities.server.webui_contact_governance")
+    governance = types.ModuleType("graph_os.webui_host.contact_governance")
 
     def contact_delivery_factory_kwargs(
         app_factory: object, sync_runner: object
@@ -104,7 +104,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
     )
     monkeypatch.setitem(
         sys.modules,
-        "agent_utilities.server.webui_contact_governance",
+        "graph_os.webui_host.contact_governance",
         governance,
     )
 
@@ -120,7 +120,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         mcp_delegation,
     )
 
-    voice_delegation = types.ModuleType("agent_utilities.server.webui_voice_delegation")
+    voice_delegation = types.ModuleType("graph_os.webui_host.voice_delegation")
     _export(
         voice_delegation,
         "webui_voice_delegation_helpers",
@@ -128,7 +128,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
     )
     monkeypatch.setitem(
         sys.modules,
-        "agent_utilities.server.webui_voice_delegation",
+        "graph_os.webui_host.voice_delegation",
         voice_delegation,
     )
 

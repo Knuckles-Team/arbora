@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any, Protocol
 
-from agent_utilities.api import (
+from graph_os.api.contracts import (
     AgentControlPlane,
     GraphRlmRequest,
     compose_agent_control_plane,

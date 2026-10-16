@@ -159,10 +159,10 @@ def run_web_ui(
     # `ag-ui` extra is absent, and only a deployment that asked for the WebUI
     # should ever pay this import.
     from agent_utilities.core.contextual_model import create_context_agent
-    from agent_utilities.server.webui_contact_governance import (
+    from graph_os.webui_host.contact_governance import (
         contact_delivery_factory_kwargs,
     )
-    from agent_utilities.server.webui_voice_delegation import (
+    from graph_os.webui_host.voice_delegation import (
         webui_voice_delegation_helpers,
     )
     from agent_webui.api_extensions import (

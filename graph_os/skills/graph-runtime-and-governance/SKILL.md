@@ -143,7 +143,7 @@ the tool surface or skill taxonomy:
 
 ```text
 # in agent-utilities (the coverage checker and its test both still live there):
-python -m agent_utilities.mcp.skill_coverage
+python -m graph_os.mcp_server.backing.skill_coverage
 pytest tests/unit/test_gateway_mcp_parity.py -q      # tool <-> REST-route <-> skill legs
 ```
 

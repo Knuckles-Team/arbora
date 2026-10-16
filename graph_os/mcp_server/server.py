@@ -252,7 +252,7 @@ def mcp_server() -> None:
         # authority before engine bootstrap. An explicit client role remains a
         # hard serving-plane boundary; this entrypoint never promotes itself to
         # the host that owns maintenance, workers, or autonomous loops.
-        from agent_utilities.api.session import use_session
+        from graph_os.api.contracts.session import use_session
         from agent_utilities.core.config import config
         from agent_utilities.security.brain_context import use_actor
 
@@ -311,7 +311,7 @@ def mcp_server() -> None:
             )
             logger.info("Decide consumers installed: %s", installed)
 
-            from agent_utilities.mcp.graphos_surface import backing_server
+            from graph_os.mcp_server.backing.graphos_surface import backing_server
 
             # An ``act`` operation on the backing server, not a listed tool.
             register_graph_rlm(

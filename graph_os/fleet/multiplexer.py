@@ -1783,7 +1783,7 @@ def _swap_local_provider_components(
 #
 # A catalog entry opts into per-user delegated authorization by declaring an
 # admin-configured ``oauth_provider`` block (the exact shape
-# ``agent_utilities.mcp.remote_oauth_broker.ProviderDescriptor`` accepts) on
+# ``graph_os.mcp_server.backing.remote_oauth_broker.ProviderDescriptor`` accepts) on
 # its config -- the SAME "administrator-populated, never caller-supplied"
 # catalog these config dicts already are (headers/env/tls_profile/
 # allowed_private_hosts all come from here today). Such a server is
@@ -1829,7 +1829,7 @@ def _tenant_local_discovery_binding() -> _typing.Any | None:
     not derive an OAuth-like digest from roles/scopes or accept catalog fields.
     """
     try:
-        from agent_utilities.api.session import current_session
+        from graph_os.api.contracts.session import current_session
         from agent_utilities.knowledge_graph.core.fleet_catalog_tables import (
             TenantLocalDiscoveryBinding,
         )
@@ -1852,7 +1852,7 @@ def _remote_oauth_broker_for(
     provider block, reusing ONE broker instance per ``provider_id`` so its
     encrypted token store and DCR registration cache persist across calls
     instead of being rebuilt (and, for DCR, re-registered) on every request."""
-    from agent_utilities.mcp.remote_oauth_broker import (
+    from graph_os.mcp_server.backing.remote_oauth_broker import (
         ProviderDescriptor,
         ProviderRegistry,
         RemoteOAuthBroker,
@@ -1886,7 +1886,7 @@ def _resolve_remote_oauth_bearer(
     server-minted identity every other authorization decision in this gateway
     uses, never a caller-supplied string) and mints a bearer bound to the
     EXACT registered resource endpoint via
-    :meth:`~agent_utilities.mcp.remote_oauth_broker.RemoteOAuthBroker.bearer_headers_for`.
+    :meth:`~graph_os.mcp_server.backing.remote_oauth_broker.RemoteOAuthBroker.bearer_headers_for`.
     A missing, expired, or revoked grant raises -- fail closed, no fallback to
     any shared/service credential (U-44/U-45).
 
@@ -1932,7 +1932,7 @@ def current_remote_oauth_grant_bindings(actor: _typing.Any) -> tuple[_typing.Any
     from agent_utilities.knowledge_graph.core.discovery_authority import (
         OAuthGrantBinding,
     )
-    from agent_utilities.mcp.remote_oauth_broker import (
+    from graph_os.mcp_server.backing.remote_oauth_broker import (
         OAuthProviderError,
         OAuthScopeError,
         OAuthTokenAbsentError,
@@ -2032,7 +2032,7 @@ def _tasks_route_server(
 
 def _tasks_request_models(method: str) -> tuple[_typing.Any, _typing.Any]:
     """The ``(params, result)`` models for one Tasks method."""
-    from agent_utilities.mcp.tasks_extension import (
+    from graph_os.mcp_server.backing.tasks_extension import (
         _AckResult,
         _CancelTaskParams,
         _GetTaskParams,
@@ -2100,7 +2100,7 @@ def _build_task_request(
     current_secret: str | None,
 ) -> _typing.Any:
     """One outgoing Tasks request: envelope, delegation proof, and channel proof."""
-    from agent_utilities.mcp.tasks_extension import (
+    from graph_os.mcp_server.backing.tasks_extension import (
         TASKS_EXTENSION_ID,
         TASKS_EXTENSION_REVISION,
         _channel_proof,
@@ -2937,7 +2937,7 @@ class MCPMultiplexer:
         anything keyed only by server name. A caller without a valid grant for
         this provider gets a fail-closed error before any tool call is
         attempted (the connect step inside :meth:`_open_one_session` raises,
-        because :meth:`~agent_utilities.mcp.remote_oauth_broker.RemoteOAuthBroker.bearer_headers_for`
+        because :meth:`~graph_os.mcp_server.backing.remote_oauth_broker.RemoteOAuthBroker.bearer_headers_for`
         does).
 
         Fleet-global discoverability (this call reachable through
@@ -3118,7 +3118,7 @@ class MCPMultiplexer:
     def _tasks_child_capable(initialization: _typing.Any) -> bool:
         """Return whether one initialize result advertises this Tasks revision."""
 
-        from agent_utilities.mcp.tasks_extension import (
+        from graph_os.mcp_server.backing.tasks_extension import (
             TASKS_EXTENSION_ID,
             TASKS_EXTENSION_REVISION,
         )
@@ -3165,7 +3165,7 @@ class MCPMultiplexer:
         latest initialize result before any task ID crosses the route.
         """
 
-        from agent_utilities.mcp.tasks_extension import (
+        from graph_os.mcp_server.backing.tasks_extension import (
             TASKS_EXTENSION_ID,
             TASKS_EXTENSION_REVISION,
         )
@@ -3678,7 +3678,7 @@ class MCPMultiplexer:
         if oauth_bearer_headers is not None:
             _svc_auth = None
         else:
-            from agent_utilities.mcp.client_credentials import child_auth
+            from graph_os.mcp_server.backing.client_credentials import child_auth
 
             _svc_auth = child_auth(headers)
         use_sse = explicit_transport == "sse" or url.rstrip("/").endswith("/sse")
@@ -3687,10 +3687,10 @@ class MCPMultiplexer:
             # `child_auth`'s docstring); `sse_client`'s `auth` param is
             # typed `httpx2.Auth | None` (fastmcp's vendored SDK v2 HTTP
             # client, a distinct package from this repo's own `httpx` —
-            # see `agent_utilities/mcp/httpx_boundary.py`). Coerce at
+            # see `graph_os/mcp_server/backing/httpx_boundary/py`). Coerce at
             # this boundary rather than passing the foreign-typed object
             # straight through.
-            from agent_utilities.mcp.httpx_boundary import coerce_httpx2_auth
+            from graph_os.mcp_server.backing.httpx_boundary import coerce_httpx2_auth
 
             transport = sse_client(
                 url,
@@ -4024,7 +4024,7 @@ class MCPMultiplexer:
         # and then wedges on expiry); derive that lifetime from the token TTL.
         session_max_age: float | None = None
         if is_remote:
-            from agent_utilities.mcp.client_credentials import service_session_max_age
+            from graph_os.mcp_server.backing.client_credentials import service_session_max_age
 
             session_max_age = service_session_max_age(cfg.get("headers"))
         runtime: _child_resilience.ChildRuntime

@@ -44,7 +44,7 @@ async def handle_agent(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Use the serving A2A authority, which owns task and idempotency state."""
-    from agent_utilities.api import use_session
+    from graph_os.api.contracts import use_session
 
     if context.caller.session is None:
         raise RuntimeError("agent operation requires a verified session")
@@ -79,7 +79,7 @@ async def handle_rlm(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Compose AU's public RLM control plane with the verified caller context."""
-    from agent_utilities.api import GraphRlmRequest, compose_agent_control_plane
+    from graph_os.api.contracts import GraphRlmRequest, compose_agent_control_plane
     from pydantic import TypeAdapter
 
     if context.caller.session is None:

@@ -13,7 +13,7 @@ from typing import Any
 
 import httpx
 import pytest
-from agent_utilities.api.session import current_session, use_session
+from graph_os.api.contracts.session import current_session, use_session
 from agent_utilities.core.config import config
 from agent_utilities.security import request_identity
 from agent_utilities.security.actor_identity import ActorType

@@ -294,7 +294,7 @@ def _enable_service_auth(monkeypatch):
     monkeypatch.setenv("TEST_OIDC_CLIENT_SECRET", "s3cr3t")
     monkeypatch.setenv("OIDC_AUDIENCE", "graph-api")
     monkeypatch.setenv("OIDC_TOKEN_URL", "https://identity.example.test/token")
-    import agent_utilities.mcp.client_credentials as cc
+    import graph_os.mcp_server.backing.client_credentials as cc
 
     importlib.reload(cc)  # reset provider cache under the new env
     return cc

@@ -9,7 +9,7 @@ ingest data into the shared unified KG.
 
 Architecture:
     This module reuses the existing ``create_mcp_server()`` infrastructure
-    from ``agent_utilities.mcp.server_factory`` — zero new abstractions.
+    from ``graph_os.mcp_server.backing.server_factory`` — zero new abstractions.
     All tools delegate to ``IntelligenceGraphEngine`` methods that already
     exist in the 15-phase pipeline.
 
@@ -189,7 +189,7 @@ def verified_tool_session_scope():
     dispatch. The error surface deliberately omits principal, tenant, token,
     endpoint, and policy values.
     """
-    from agent_utilities.api.session import (
+    from graph_os.api.contracts.session import (
         current_session,
         use_session,
     )
@@ -566,7 +566,7 @@ def _make_tool_endpoint(tool_name: str):
 
 
 #: The ``graph_query`` MCP tool's own documented parameters (KG-2.134 /
-#: ``agent_utilities/mcp/tools/query_tools.py``'s ``graph_query`` signature).
+#: ``graph_os/mcp_server/backing/tools/query_tools/py``'s ``graph_query`` signature).
 #: Kept as an explicit allowlist so this REST twin never blind-splats an
 #: arbitrary request body into ``_execute_tool`` (LANE 9 / U-74 follow-up):
 #: an unrecognized field becomes an immediate, clean 4xx here instead of
@@ -595,7 +595,7 @@ def _rest_tabular_delegated_identity(request: Request):
     dispatch.
     """
 
-    from agent_utilities.mcp.delegated_auth import (
+    from graph_os.mcp_server.backing.delegated_auth import (
         _reset_delegated_identity,
         _set_delegated_identity,
     )
@@ -703,7 +703,7 @@ async def graph_search_endpoint(request: Request) -> JSONResponse:
         # generic 500 below instead. `graph_search`'s own wire field names
         # (`query`, `mode`, `top_k`, ...) already match its documented tool
         # parameters 1:1 — see `graph_search`'s signature in
-        # `agent_utilities/mcp/tools/query_tools.py` — so unlike
+        # `graph_os/mcp_server/backing/tools/query_tools/py` — so unlike
         # the canonical `graph_query` field there is no latent mismatch; only
         # the missing status-code mapping needed fixing.
         return _external_error_response(e, status_code=400, code="invalid_request")
@@ -2216,7 +2216,7 @@ def _build_server(bootstrap: bool = True):
             lifecycle itself and only needs ``REGISTERED_TOOLS`` populated so the
             centralized REST handlers can dispatch.
     """
-    from agent_utilities.mcp.server_factory import create_mcp_server
+    from graph_os.mcp_server.backing.server_factory import create_mcp_server
 
     is_readonly = False
 
@@ -2338,8 +2338,8 @@ def _register_graph_tool_surface(mcp: Any) -> None:
     gateway reaches exactly what the intent tools route to.
     """
 
-    from agent_utilities.mcp import kg_server
-    from agent_utilities.mcp.graphos_surface import register_graphos_surface
+    from graph_os.mcp_server.backing import kg_server
+    from graph_os.mcp_server.backing.graphos_surface import register_graphos_surface
 
     from graph_os.a2a.mcp import register_a2a_tools
     from graph_os.browser_control.mcp import register_browser_control_tools

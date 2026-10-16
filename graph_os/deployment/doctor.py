@@ -1566,7 +1566,7 @@ def _check_auth() -> dict[str, Any]:
 def _check_outbound_auth() -> dict[str, Any]:
     """Validate outbound MCP auth metadata without resolving credential material."""
     try:
-        from agent_utilities.mcp.client_credentials import (
+        from graph_os.mcp_server.backing.client_credentials import (
             outbound_auth_configuration_status,
         )
 

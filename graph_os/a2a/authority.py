@@ -115,7 +115,7 @@ class WorkItemA2AAuthority:
 
     @staticmethod
     def _session(scope: str) -> Any:
-        from agent_utilities.api.session import resolve_session
+        from graph_os.api.contracts.session import resolve_session
 
         return resolve_session(required_scope=scope)
 

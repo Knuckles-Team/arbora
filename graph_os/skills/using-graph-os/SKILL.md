@@ -62,7 +62,7 @@ runtime.py`, `_build_server`) restate this contract to every client.
 
 Before grepping source, use graph-os's own operations. Reach each one
 through an intent tool, e.g. `ask(action="graph_code.code_context",
-params={...})`. They are registered under these exact names (`agent_utilities/mcp/tools/`, served
+params={...})`. They are registered under these exact names (`graph_os/mcp_server/backing/tools/`, served
 through graph-os's `REGISTERED_TOOLS`/`_execute_tool` dispatch in
 `graph_os/mcp_server/runtime.py`, with a REST `/api` twin):
 

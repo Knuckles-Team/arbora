@@ -484,7 +484,7 @@ def test_eunomia_doctor_warns_when_narrowing_policy_is_off(monkeypatch):
 
 def test_outbound_auth_doctor_reports_redacted_readiness(monkeypatch):
     monkeypatch.setattr(
-        "agent_utilities.mcp.client_credentials.outbound_auth_configuration_status",
+        "graph_os.mcp_server.backing.client_credentials.outbound_auth_configuration_status",
         lambda: {
             "mode": "oidc-client-credentials",
             "ready": True,
@@ -511,7 +511,7 @@ def test_outbound_auth_doctor_fails_closed_on_missing_audience(monkeypatch):
     # exactly that shape and silently treats anything else (e.g. a tuple) as
     # empty, so the mock must match the real contract's type, not just value.
     monkeypatch.setattr(
-        "agent_utilities.mcp.client_credentials.outbound_auth_configuration_status",
+        "graph_os.mcp_server.backing.client_credentials.outbound_auth_configuration_status",
         lambda: {
             "mode": "oidc-client-credentials",
             "ready": False,

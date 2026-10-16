@@ -264,7 +264,7 @@ GOC15_SURFACE_MANIFEST: tuple[SurfaceEntry, ...] = (
         citation=(
             "agent-webui/agent/agent_webui/server.py:1822 _dashboard_ws -- "
             "WebUIAuthorizationMiddleware enforces kg:admin on /ws/dashboard "
-            "(BUG-PE-038: agent_utilities/gateway/ws.py's dashboard_ws_router, "
+            "(BUG-PE-038: graph_os/gateway/ws/py's dashboard_ws_router, "
             "this entry's prior citation, is unused dead code -- never mounted "
             "by agent-webui, which deliberately does not use it because its "
             "OLDER gateway:read/write/admin capability namespace never maps "
@@ -315,7 +315,7 @@ GOC15_SURFACE_MANIFEST: tuple[SurfaceEntry, ...] = (
     # ── CA-29 W1-end fleet transcription (DEC-CA-08) ───────────────────────
     #
     # lakekeeper-mcp (CA-40), spark-mcp (CA-42), opensearch-mcp (CA-43): all
-    # three are built via the same agent_utilities.mcp.server_factory
+    # three are built via the same graph_os.mcp_server.backing.server_factory
     # create_mcp_server() every other fleet MCP package uses, so they inherit
     # ActorContextMiddleware's existing fleet-wide default (server_factory.py
     # _configure_middleware:1275: `require_verified_session=(server_name ==
