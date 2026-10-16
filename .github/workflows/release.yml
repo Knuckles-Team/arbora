@@ -509,3 +509,40 @@ jobs:
         env:
           UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         run: uv publish --check-url https://pypi.org/simple dist/graph_os-*.whl
+
+  github-release:
+    name: github-release
+    # Created only after the wheel is on PyPI, so the release never links a
+    # project page that does not exist yet.
+    needs: [publish-pypi]
+    if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - name: Write release notes
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          {
+            echo "graph-os ${version} is published on PyPI:"
+            echo "https://pypi.org/project/graph-os/${version}/"
+            echo
+            echo '```'
+            echo "pip install graph-os==${version}"
+            echo '```'
+          } > "$RUNNER_TEMP/notes.md"
+      - name: Create or update the GitHub release
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --latest \
+              --notes-file "$RUNNER_TEMP/notes.md"
+          else
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --latest \
+              --title "$TAG" --notes-file "$RUNNER_TEMP/notes.md"
+          fi

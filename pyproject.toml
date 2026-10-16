@@ -39,7 +39,7 @@ dependencies = [
     # surface directly; AU's transitive requirement is not enough for this
     # package's own imports. The root source override below aligns AU and SDK
     # on the GraphOS-compatible revision without changing the published floor.
-    "epistemic-graph>=2.27.0,<3.0.0",
+    "epistemic-graph[server]>=2.27.1,<3.0.0",
     "fastapi>=0.139.2",
     "filelock>=3.32.0",
     "prometheus-client>=0.25.0",

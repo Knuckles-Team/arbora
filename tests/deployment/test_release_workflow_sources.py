@@ -100,7 +100,7 @@ def _manual_hook_ids() -> set[str]:
 
 def _manual_hooks_named(commands: str) -> set[str]:
     named = set(
-        re.findall(r"pre-commit run ([a-z][a-z-]*) --hook-stage manual", commands)
+        re.findall(r"pre-commit run(?: --config \"\$PINNED_PRECOMMIT\")? ([a-z][a-z-]*) --hook-stage manual", commands)
     )
     for group in re.findall(r"for hook in ([a-z -]+); do", commands):
         named |= set(group.split())
@@ -169,8 +169,14 @@ def test_gates_run_the_repository_pre_commit_configuration() -> None:
     commands = "\n".join(step.get("run", "") for step in steps)
 
     # Pull requests are diff-scoped, main and tags run every file.
-    assert "pre-commit run $range --show-diff-on-failure" in commands
-    assert "pre-commit run $range --hook-stage pre-push" in commands
+    assert (
+        'pre-commit run --config "$PINNED_PRECOMMIT" $range --show-diff-on-failure'
+        in commands
+    )
+    assert (
+        'pre-commit run --config "$PINNED_PRECOMMIT" $range --hook-stage pre-push'
+        in commands
+    )
     assert "--from-ref $PRE_COMMIT_FROM_REF --to-ref HEAD" in commands
     assert 'range="--all-files"' in commands
     assert {"pytest", "mypy-env"} <= _manual_hooks_named(commands)
