@@ -952,9 +952,9 @@
         "144fd029bf2e"
       ],
       "verified_by": [
-        "tests/api/test_gen_api.py:248",
-        "tests/api/test_gen_api.py:270",
-        "tests/api/test_gen_api.py:285"
+        "tests/api/test_gen_api.py:258",
+        "tests/api/test_gen_api.py:280",
+        "tests/api/test_gen_api.py:295"
       ]
     },
     {
@@ -962,7 +962,11 @@
       "title": "Remaining generated artifact acceptance",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_gen_api.py:312",
+        "tests/deployment/test_generated_client_wheel.py:15",
+        "tests/deployment/test_generated_client_wheel.py:26"
+      ]
     },
     {
       "id": "GRAPHOS-OPS-R026",

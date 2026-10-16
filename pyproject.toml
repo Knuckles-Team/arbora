@@ -144,7 +144,7 @@ service = "graph_os.messaging.reach:service_port"
 # the real PEP 508 floor above, so released wheels resolve from the index.
 [tool.uv]
 # Unify SDK and AU sources at the EG revision required by GraphOS.
-override-dependencies = ["epistemic-graph @ git+https://github.com/Knuckles-Team/epistemic-graph.git@70037e8a400c7b32b1222623bb05bbfaf55deab8"]
+override-dependencies = ["epistemic-graph @ git+https://github.com/Knuckles-Team/epistemic-graph.git@978532ee90bf06f3a26d8465efd63be94dd0dfa4"]
 
 [tool.uv.sources]
 agent-utilities = { path = ".uv-workspace-siblings/agent-utilities", editable = true }
@@ -160,7 +160,7 @@ include = ["graph_os*"]
 exclude = ["tests*"]
 
 [tool.setuptools.package-data]
-graph_os = ["ontology/**/*.ttl", "skills/**"]
+graph_os = ["ontology/**/*.ttl", "skills/**", "api/generated/*.json", "api/generated/schemas/*.json"]
 
 [tool.ruff]
 line-length = 88

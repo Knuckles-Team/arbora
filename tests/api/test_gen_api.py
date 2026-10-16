@@ -108,7 +108,7 @@ def test_compat_detects_stable_breaks_but_allows_additive_changes() -> None:
     assert any("removed result fields" in row for row in changes)
 
 
-def test_openapi_embeds_eg_schema_and_rewrites_local_refs(tmp_path: Path) -> None:
+def test_openapi_references_shared_provider_document(tmp_path: Path) -> None:
     schemas = tmp_path / "schemas"
     schemas.mkdir()
     (schemas / "method.request.json").write_text(
@@ -126,14 +126,14 @@ def test_openapi_embeds_eg_schema_and_rewrites_local_refs(tmp_path: Path) -> Non
     result = gen_api._openapi(registry, tmp_path)
     request = result["paths"]["/api/v1/ops/query.uql"]["post"]["requestBody"]
     assert request["content"]["application/json"]["schema"] == {
-        "$ref": "#/components/schemas/EgMethodRequest/methods/Create"
+        "$ref": "schemas/method.request.json#/methods/Create"
     }
-    assert result["components"]["schemas"]["EgMethodRequest"]["methods"]["Create"] == {
-        "$ref": "#/components/schemas/EgMethodRequest/$defs/Payload"
-    }
+    assert result["components"]["schemas"] == {}
 
 
-def _eg_compat_registry(root: Path, *, required_limit: bool, answer: bool) -> dict:
+def _eg_compat_registry(
+    root: Path, *, required_limit: bool, answer: bool, references: bool = False
+) -> dict:
     root.mkdir(parents=True)
     request = {
         "$defs": {
@@ -172,8 +172,18 @@ def _eg_compat_registry(root: Path, *, required_limit: bool, answer: bool) -> di
             "eg_schema": f"contract/schemas/{name}#/methods/Uql",
             "schema_sha256": hashlib.sha256(canonical).hexdigest(),
         }
+    return _fixture_snapshots(registry, root, references)
+
+
+def _fixture_snapshots(registry: dict, root: Path, references: bool) -> dict:
     gen_api._snapshot_eg_schemas(registry, root.parent)
-    return registry
+    return (
+        registry
+        if references
+        else gen_api._expand_registry(
+            registry, lambda name: (root.parent / name).read_bytes()
+        )
+    )
 
 
 def test_compat_resolves_eg_refs_and_detects_nested_breaks(tmp_path: Path) -> None:
@@ -297,3 +307,155 @@ async def test_emitted_invoker_rejects_unknown_operation_before_transport(
     with pytest.raises(KeyError, match="unknown.operation"):
         await emitted_client.invoke(Transport(), "unknown.operation", {})
     assert calls == []
+
+
+@pytest.mark.spec("GRAPHOS-OPS-R025.2")
+def test_reference_resources_preserve_emitted_lookup_and_digest(
+    engine_contract, monkeypatch, tmp_path
+):
+    _, contract, _ = engine_contract
+    registry = _eg_compat_registry(
+        contract / "schemas", required_limit=False, answer=True, references=True
+    )
+    expected = gen_api._expand_registry(
+        registry, lambda name: (contract / name).read_bytes()
+    )
+    artifacts = gen_api.generate(registry)
+    assert artifacts == gen_api.generate(registry)
+    destination = tmp_path / "installed"
+    destination.mkdir()
+    for path, content in artifacts.items():
+        if path.is_relative_to(gen_api.GENERATED):
+            target = destination / path.relative_to(gen_api.GENERATED)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(content)
+    for filename in ("method.request.json", "result.query.json"):
+        assert (
+            artifacts[gen_api.GENERATED / "schemas" / filename]
+            == artifacts[gen_api.ROOT / "docs/api/schemas" / filename]
+        )
+    module = ModuleType("reference_client")
+    exec(
+        compile(
+            artifacts[gen_api.ROOT / "graph_os/client/_generated_models.py"],
+            "reference_client.py",
+            "exec",
+        ),
+        module.__dict__,
+    )
+    monkeypatch.setattr(module.importlib.resources, "files", lambda name: destination)
+    actual = module.schema_for("query.uql")
+    assert actual == {
+        field: expected["ops"][0][field] for field in ("params", "result")
+    }
+    assert module.REGISTRY_DIGEST == registry["registry_digest"]
+    (destination / "schemas/method.request.json").unlink()
+    with pytest.raises(FileNotFoundError):
+        module.schema_for("query.uql")
+
+
+@pytest.mark.parametrize(
+    "reference",
+    [
+        "../outside.json#/x",
+        "schemas/../../outside.json#/x",
+        "/schemas/a.json#/x",
+        "https://host/schema.json#/x",
+        "schemas/a.json",
+        "schemas/a.json#bad",
+        "schemas/a.json?x#/x",
+        "schemas/a%2f..json#/x",
+    ],
+)
+def test_schema_resource_resolver_rejects_unsafe_reference_before_read(reference):
+    def forbidden_read(name):
+        raise AssertionError("unsafe reference must not be read")
+
+    spec = {
+        "eg_schema": "contract/" + reference,
+        "schema_snapshot": {"$ref": reference},
+    }
+    with pytest.raises(ValueError):
+        gen_api._expanded_spec(spec, forbidden_read)
+
+
+def test_schema_resource_resolver_rejects_digest_pointer_and_external_refs(tmp_path):
+    registry = _eg_compat_registry(
+        tmp_path / "schemas", required_limit=False, answer=True, references=True
+    )
+    spec = registry["ops"][0]["params"]
+
+    def read(name):
+        return (tmp_path / name).read_bytes()
+
+    with pytest.raises(ValueError, match="digest mismatch"):
+        gen_api._expanded_spec({**spec, "schema_sha256": "0" * 64}, read)
+    missing = "schemas/method.request.json#/absent"
+    with pytest.raises(ValueError, match="missing EG schema pointer"):
+        gen_api._expanded_spec(
+            {
+                **spec,
+                "eg_schema": "contract/" + missing,
+                "schema_snapshot": {"$ref": missing},
+            },
+            read,
+        )
+    with pytest.raises(ValueError, match="unsafe schema reference"):
+        gen_api._resolve_local_refs(
+            {"$ref": "https://external/schema"}, {}, frozenset()
+        )
+
+
+def test_openapi_namespaces_curated_local_definitions():
+    registry = _registry()
+    registry["ops"][0]["params"]["schema"] = {
+        "$defs": {"Item": {"type": "string"}},
+        "properties": {"item": {"$ref": "#/$defs/Item"}},
+    }
+    document = gen_api._openapi(registry)
+    request = document["paths"]["/api/v1/ops/query.uql"]["post"]["requestBody"][
+        "content"
+    ]["application/json"]["schema"]
+    model = gen_api._pointer(document, request["$ref"][1:])
+    item = gen_api._pointer(document, model["properties"]["item"]["$ref"][1:])
+    assert item == {"type": "string"}
+
+
+def test_compat_reads_baseline_schema_resources_from_same_git_ref(
+    tmp_path, monkeypatch
+):
+    from types import SimpleNamespace
+
+    before_root = tmp_path / "before"
+    after_root = tmp_path / "after"
+    before = _eg_compat_registry(
+        before_root / "schemas", required_limit=False, answer=True, references=True
+    )
+    after = _eg_compat_registry(
+        after_root / "contract/schemas",
+        required_limit=True,
+        answer=True,
+        references=True,
+    )
+    reads = []
+
+    def git_call(argv, **kwargs):
+        if argv[1] == "rev-parse":
+            return SimpleNamespace(returncode=0, stdout=b"baseline")
+        path = argv[2]
+        reads.append(path)
+        prefix = "baseline:graph_os/api/generated/"
+        assert path.startswith(prefix)
+        relative = path.removeprefix(prefix)
+        payload = (
+            json.dumps(before).encode()
+            if relative == "registry.json"
+            else (before_root / relative).read_bytes()
+        )
+        return SimpleNamespace(returncode=0, stdout=payload)
+
+    monkeypatch.setattr(gen_api.shutil, "which", lambda name: "/usr/bin/git")
+    monkeypatch.setattr(gen_api.subprocess, "run", git_call)
+    monkeypatch.setattr(gen_api.importlib.resources, "files", lambda name: after_root)
+    assert gen_api._check_compat(after, "baseline") == 1
+    assert "baseline:graph_os/api/generated/schemas/method.request.json" in reads
