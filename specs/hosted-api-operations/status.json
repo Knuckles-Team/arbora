@@ -444,9 +444,13 @@
     {
       "id": "GRAPHOS-OPS-R018.2.1",
       "title": "Distinct caller-bound query contracts",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "a2f74cb9621d"
+      ],
+      "verified_by": [
+        "tests/api/test_query_ops.py:41"
+      ]
     },
     {
       "id": "GRAPHOS-OPS-R018.2.2",

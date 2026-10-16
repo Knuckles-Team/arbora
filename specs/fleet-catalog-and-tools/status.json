@@ -559,7 +559,8 @@
       "title": "Resolver ranks catalog items with partitioned feedback",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "43db6b7ac49b"
+        "43db6b7ac49b",
+        "a2f74cb9621d"
       ],
       "verified_by": [
         "tests/api/test_resolve.py:114",
