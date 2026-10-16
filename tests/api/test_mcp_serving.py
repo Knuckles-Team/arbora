@@ -14,6 +14,7 @@ from contextlib import asynccontextmanager
 from types import SimpleNamespace
 from typing import Any
 
+import pytest
 from pydantic import BaseModel, ConfigDict
 
 from graph_os.api.invoke import InvokeServices, invoke
@@ -232,6 +233,7 @@ def replace_caller_for_request(
     return replace(projection, caller_for_request=lambda: _caller(**changes))
 
 
+@pytest.mark.spec("GRAPHOS-HOST-R023")
 def test_ask_fallback_uses_registered_nl_operation_through_shared_invoke() -> None:
     from graph_os.api.ops.query import operations
     from tests.api.test_invoke_contract import setup_services
