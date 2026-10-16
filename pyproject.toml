@@ -60,7 +60,7 @@ dependencies = [
 
 [[project.authors]]
 name = "Repository Maintainers"
-email = "maintainers@example.invalid"
+email = "maintainers@knuckles.team"
 
 [project.optional-dependencies]
 # Test-only, real tooling versions matched to agent-utilities' floors
