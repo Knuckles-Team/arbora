@@ -186,3 +186,7 @@ A controlled adapter can prove only the host handoff, not unified terminal rende
 - `GRAPHOS-HOST-R022.1`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-HOST-R010.8`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-HOST-R032`: Plan the owner work and dependencies defined in requirements.md.
+
+### 2026-10-16 — Authorized natural-language fallback
+
+R023 fallback uses the registered `query.nl` operation and shared invocation pipeline under `query:nl`. Remove the synthetic descriptor and direct callback path; absent or unauthorized query operations refuse before dispatch. Preserve all eight tools and ranking behavior.

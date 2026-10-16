@@ -20,7 +20,7 @@ from collections.abc import Callable
 from typing import Any
 
 from graph_os.api.mcp.discovery import FleetSearch
-from graph_os.api.mcp.verbs import VERBS, MCPProjection, NLQuery, make_verb
+from graph_os.api.mcp.verbs import VERBS, MCPProjection, make_verb
 from graph_os.api.registry import Invoke
 
 __all__ = ["register_intent_surface"]
@@ -36,7 +36,6 @@ def register_intent_surface(
     policy_gate: Any,
     invoke: Invoke,
     fleet_search: FleetSearch | None = None,
-    nl_query: NLQuery | None = None,
 ) -> MCPProjection:
     """Register GraphOS's served tools on ``mcp``; return the built projection.
 
@@ -55,7 +54,6 @@ def register_intent_surface(
         policy_gate,
         invoke,
         fleet_search,
-        nl_query,
     )
     for name in VERBS:
         mcp.add_tool(make_verb(name, projection))

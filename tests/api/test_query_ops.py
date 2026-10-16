@@ -12,19 +12,22 @@ from epistemic_graph import EngineResponseError
 from pydantic import ValidationError
 
 from graph_os.api.invoke.bootstrap import dispatch_eg_method
+from graph_os.api.invoke.executor import ExecutionContext
 from graph_os.api.invoke.pipeline import OperationRefused
 from graph_os.api.ops.query import NaturalLanguageParams, operations
 from graph_os.api.registry import EgMethod, EgSchemaRef
-from graph_os.api.invoke.executor import ExecutionContext
-from tests.api.test_invoke_bootstrap import FakeSession, _caller
 from tests._support import Actor
+from tests.api.test_invoke_bootstrap import FakeSession, _caller
+
 
 class RecordingClient:
     def __init__(self) -> None:
         self.sent: list[Any] = []
         self.error: Exception | None = None
 
-    async def _send(self, method: str, params: Any, graph: str, *, idempotency_key: Any = None) -> int:
+    async def _send(
+        self, method: str, params: Any, graph: str, *, idempotency_key: Any = None
+    ) -> int:
         self.sent.append((method, params, graph))
         if self.error is not None:
             raise self.error
@@ -33,9 +36,19 @@ class RecordingClient:
 
 def context(client: RecordingClient) -> ExecutionContext:
     session = FakeSession(actor=Actor(), tenant="tenant:a")
-    setattr(session, "graph", "tenant:bound")
-    caller = _caller(session, engine_claims=session.engine_verified_context(), policy_revision="policy:1")
-    return ExecutionContext(caller=caller, client=client, owner=caller.principal, service_identity=False, services={})
+    session.graph = "tenant:bound"
+    caller = _caller(
+        session,
+        engine_claims=session.engine_verified_context(),
+        policy_revision="policy:1",
+    )
+    return ExecutionContext(
+        caller=caller,
+        client=client,
+        owner=caller.principal,
+        service_identity=False,
+        services={},
+    )
 
 
 pytestmark = pytest.mark.spec("GRAPHOS-OPS-R018.2.1")
@@ -46,17 +59,27 @@ def test_query_bindings_match_actual_provider_authority_and_inner_schema() -> No
     contract = resources.files("epistemic_graph").joinpath("contract")
     methods = json.loads(contract.joinpath("methods.json").read_text())["methods"]
     for op in ops:
-        method = next(row for row in methods if row["id"] == op.binding.service)
+        binding = op.binding
+        assert isinstance(binding, EgMethod)
+        method = next(row for row in methods if row["id"] == binding.service)
         assert op.scopes == frozenset({method["policy"]["authz_action"]})
         assert method["is_wire_callable"] is True
         assert method["policy"]["mutates"] is False
     assert [(op.id, op.scopes, op.binding) for op in ops] == [
         ("query.uql", frozenset({"query:unified"}), EgMethod(service="Uql", op="Uql")),
-        ("query.nl", frozenset({"query:nl"}), EgMethod(service="NlQuery", op="NlQuery")),
+        (
+            "query.nl",
+            frozenset({"query:nl"}),
+            EgMethod(service="NlQuery", op="NlQuery"),
+        ),
     ]
     ref = ops[0].params
     assert isinstance(ref, EgSchemaRef)
-    document = json.loads(resources.files("epistemic_graph").joinpath("contract/schemas/method.request.json").read_text())
+    document = json.loads(
+        resources.files("epistemic_graph")
+        .joinpath("contract/schemas/method.request.json")
+        .read_text()
+    )
     selected: Any = document
     for key in ref.path.split("#/")[1].split("/"):
         selected = selected[key]
@@ -65,16 +88,29 @@ def test_query_bindings_match_actual_provider_authority_and_inner_schema() -> No
     assert selected["additionalProperties"] is False
 
 
-@pytest.mark.parametrize("extra", [{"graph": "foreign"}, {"nl": True}, {"query": "text"}])
-def test_nl_input_cannot_override_graph_or_use_legacy_uql_fields(extra: dict[str, Any]) -> None:
+@pytest.mark.parametrize(
+    "extra", [{"graph": "foreign"}, {"nl": True}, {"query": "text"}]
+)
+def test_nl_input_cannot_override_graph_or_use_legacy_uql_fields(
+    extra: dict[str, Any],
+) -> None:
     with pytest.raises(ValidationError):
         NaturalLanguageParams.model_validate({"text": "why", **extra})
 
 
-@pytest.mark.parametrize("method,payload", [("Uql", {"text": "MATCH ()", "params": {}}), ("NlQuery", {"text": "why"})])
-def test_query_dispatch_uses_verified_graph(method: str, payload: dict[str, Any]) -> None:
+@pytest.mark.parametrize(
+    "method,payload",
+    [("Uql", {"text": "MATCH ()", "params": {}}), ("NlQuery", {"text": "why"})],
+)
+def test_query_dispatch_uses_verified_graph(
+    method: str, payload: dict[str, Any]
+) -> None:
     client = RecordingClient()
-    result = asyncio.run(dispatch_eg_method(EgMethod(service=method, op=method), payload, context(client)))
+    result = asyncio.run(
+        dispatch_eg_method(
+            EgMethod(service=method, op=method), payload, context(client)
+        )
+    )
     assert result == 47
     expected = {**payload, "graph": "tenant:bound"} if method == "NlQuery" else payload
     assert client.sent[0][:3] == (method, expected, "tenant:bound")
@@ -84,7 +120,13 @@ def test_query_dispatch_uses_verified_graph(method: str, payload: dict[str, Any]
 def test_nl_dispatch_refuses_graph_retargeting_before_send() -> None:
     client = RecordingClient()
     with pytest.raises(OperationRefused) as error:
-        asyncio.run(dispatch_eg_method(EgMethod(service="NlQuery", op="NlQuery"), {"text": "why", "graph": "foreign"}, context(client)))
+        asyncio.run(
+            dispatch_eg_method(
+                EgMethod(service="NlQuery", op="NlQuery"),
+                {"text": "why", "graph": "foreign"},
+                context(client),
+            )
+        )
     assert error.value.code == "INVALID_ARGUMENT"
     assert client.sent == []
 
@@ -93,12 +135,22 @@ def test_nl_planner_unavailable_propagates_without_uql_fallback() -> None:
     client = RecordingClient()
     client.error = EngineResponseError("UNAVAILABLE", "planner unavailable")
     with pytest.raises(EngineResponseError):
-        asyncio.run(dispatch_eg_method(EgMethod(service="NlQuery", op="NlQuery"), {"text": "why"}, context(client)))
+        asyncio.run(
+            dispatch_eg_method(
+                EgMethod(service="NlQuery", op="NlQuery"),
+                {"text": "why"},
+                context(client),
+            )
+        )
     assert [sent[0] for sent in client.sent] == ["NlQuery"]
 
 
-@pytest.mark.parametrize("scope,allowed", [("query:unified", False), ("query:nl", True)])
-def test_nl_invocation_requires_its_distinct_permission(scope: str, allowed: bool) -> None:
+@pytest.mark.parametrize(
+    "scope,allowed", [("query:unified", False), ("query:nl", True)]
+)
+def test_nl_invocation_requires_its_distinct_permission(
+    scope: str, allowed: bool
+) -> None:
     from tests.api._support import make_verified_caller
     from tests.api.test_invoke_contract import run, setup_services
 
@@ -110,7 +162,9 @@ def test_nl_invocation_requires_its_distinct_permission(scope: str, allowed: boo
 
     runtime.on_dispatch = reply
     result = run(
-        services, op_id=op.id, params={"text": "why"},
+        services,
+        op_id=op.id,
+        params={"text": "why"},
         supplied=make_verified_caller(scope)(),
     )
     assert result.code == ("OK" if allowed else "SCOPE_REQUIRED")

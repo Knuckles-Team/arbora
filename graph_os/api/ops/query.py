@@ -24,9 +24,7 @@ def operations() -> tuple[OpSpec, ...]:
             params=EgSchemaRef(
                 path="contract/schemas/method.request.json#/methods/Uql/properties/params"
             ),
-            result=EgSchemaRef(
-                path="contract/schemas/result.query.json#/methods/Uql"
-            ),
+            result=EgSchemaRef(path="contract/schemas/result.query.json#/methods/Uql"),
             binding=EgMethod(service="Uql", op="Uql"),
             scopes=frozenset({"query:unified"}),
         ),
