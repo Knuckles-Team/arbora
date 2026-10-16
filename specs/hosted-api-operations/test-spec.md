@@ -105,3 +105,13 @@ These paths are planned acceptance, not passing test receipts.
 - `GRAPHOS-OPS-R064`: Planned `tests/api/test_viewport_served.py::test_billion_point_viewport_keeps_bins_selection_and_byte_bounds` proves the owner binding and served acceptance in plan.md. Cover HTTP, MCP, and the named browser consumer. No execution is claimed.
 - `GRAPHOS-OPS-R065`: Planned `tests/api/test_meeting_served.py::test_corrected_final_transcript_binds_selected_summary_provider` proves the owner binding and served acceptance in plan.md. Cover HTTP, MCP, and the named browser consumer. No execution is claimed.
 - `GRAPHOS-OPS-R066`: Planned `tests/api/test_bookmarks_served.py::test_search_relationships_and_exports_share_authorized_snapshot` proves the owner binding and served acceptance in plan.md. Cover HTTP, MCP, and the named browser consumer. No execution is claimed.
+
+## GRAPHOS-OPS-R025.1: Generated Python invocation
+
+Run the client emitted by scripts/gen_api.py against an injected transport.
+Unknown operations must make zero calls. Missing or changed response digests
+must refuse both success and error envelopes. Matching envelopes retain their
+result, error details and metadata. These tests do not qualify a producer wheel.
+
+R025.2 retains full deterministic generation, drift and installed-wheel proof.
+The emitted-client fixture is not this acceptance.

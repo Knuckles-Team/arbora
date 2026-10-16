@@ -164,3 +164,7 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] `GRAPHOS-OPS-R064`: Resolve the producer contracts named in plan.md. Then implement the existing registry attachment and its served proof. Preserve each specified refusal.
 - [ ] `GRAPHOS-OPS-R065`: Resolve the producer contracts named in plan.md. Then implement the existing registry attachment and its served proof. Preserve each specified refusal.
 - [ ] `GRAPHOS-OPS-R066`: Resolve the producer contracts named in plan.md. Then implement the existing registry attachment and its served proof. Preserve each specified refusal.
+
+- [ ] **GRAPHOS-OPS-R025.1:** Validate operation membership and response digest in the generated Python invoker.
+
+- [ ] **GRAPHOS-OPS-R025.2:** Complete deterministic artifact generation and installed-wheel acceptance from the pinned engine contract.

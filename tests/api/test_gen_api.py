@@ -224,3 +224,76 @@ def test_engine_emitter_refuses_absent_error_contract(engine_contract):
     (contract / "errors.json").unlink()
     with pytest.raises(ValueError):
         gen_api.generate(_registry())
+
+
+@pytest.fixture
+def emitted_client(engine_contract, tmp_path, monkeypatch):
+    """Execute emitted modules with the registry bytes emitted beside them."""
+    artifacts = gen_api.generate(_registry())
+    registry_path = tmp_path / "registry.json"
+    registry_path.write_bytes(artifacts[gen_api.GENERATED / "registry.json"])
+    package = ModuleType("emitted_client")
+    package.__path__ = [str(tmp_path)]
+    monkeypatch.setitem(sys.modules, package.__name__, package)
+    for name in ("_generated_models", "invoke"):
+        module = ModuleType(f"{package.__name__}.{name}")
+        monkeypatch.setitem(sys.modules, module.__name__, module)
+        source = artifacts[gen_api.ROOT / f"graph_os/client/{name}.py"]
+        exec(compile(source, f"{name}.py", "exec"), module.__dict__)
+    models = sys.modules["emitted_client._generated_models"]
+    monkeypatch.setattr(models.importlib.resources, "files", lambda _name: tmp_path)
+    return sys.modules["emitted_client.invoke"]
+
+
+@pytest.mark.spec("GRAPHOS-OPS-R025.1")
+@pytest.mark.asyncio
+@pytest.mark.parametrize("ok", [True, False])
+async def test_emitted_invoker_preserves_matching_envelope(emitted_client, ok):
+    envelope = {
+        "ok": ok,
+        "result": {"rows": [1]},
+        "error": {"code": "STEP_UP_REQUIRED", "details": {"plan_ref": "opaque"}},
+        "meta": {"registry_digest": _registry()["registry_digest"]},
+    }
+    calls = []
+
+    class Transport:
+        async def invoke(self, op_id, params):
+            calls.append((op_id, params))
+            return envelope
+
+    params = {"query": "MATCH ()"}
+    assert await emitted_client.invoke(Transport(), "query.uql", params) is envelope
+    assert calls == [("query.uql", params)]
+
+
+@pytest.mark.spec("GRAPHOS-OPS-R025.1")
+@pytest.mark.asyncio
+@pytest.mark.parametrize("ok", [True, False])
+@pytest.mark.parametrize("meta", [None, {}, [], {"registry_digest": "stale"}])
+async def test_emitted_invoker_refuses_missing_or_stale_digest(
+    emitted_client, ok, meta
+):
+    class Transport:
+        async def invoke(self, op_id, params):
+            return {"ok": ok, "meta": meta}
+
+    with pytest.raises(RuntimeError, match="GraphOS registry digest mismatch"):
+        await emitted_client.invoke(Transport(), "query.uql", {})
+
+
+@pytest.mark.spec("GRAPHOS-OPS-R025.1")
+@pytest.mark.asyncio
+async def test_emitted_invoker_rejects_unknown_operation_before_transport(
+    emitted_client,
+):
+    calls = []
+
+    class Transport:
+        async def invoke(self, op_id, params):
+            calls.append(op_id)
+            return {}
+
+    with pytest.raises(KeyError, match="unknown.operation"):
+        await emitted_client.invoke(Transport(), "unknown.operation", {})
+    assert calls == []
