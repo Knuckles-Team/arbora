@@ -59,12 +59,53 @@ permissions:
   contents: read
 
 jobs:
+  # Resolve the shared gate source (Knuckles-Team/pipelines `main`) exactly
+  # once per workflow run. Attempt 1 records the commit as an artifact; a
+  # re-run of all jobs reads it back and a re-run of failed jobs keeps this
+  # job's recorded output, so a re-run never sees a newer gate than attempt 1.
+  freeze-gate-source:
+    name: freeze-gate-source
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      sha: ${{ steps.ref.outputs.sha }}
+    steps:
+      - name: Resolve pipelines main (first attempt only)
+        if: github.run_attempt == 1
+        run: |
+          set -euo pipefail
+          sha="$(git ls-remote https://github.com/Knuckles-Team/pipelines refs/heads/main | cut -f1)"
+          [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo "could not resolve pipelines main" >&2; exit 1; }
+          printf '%s\n' "$sha" > "$RUNNER_TEMP/pipelines-ref"
+      - name: Record the commit for re-runs
+        if: github.run_attempt == 1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pipelines-ref
+          path: ${{ runner.temp }}/pipelines-ref
+      - name: Read the commit recorded by attempt 1
+        if: github.run_attempt > 1
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: pipelines-ref
+          path: ${{ runner.temp }}/recorded
+      - id: ref
+        run: |
+          set -euo pipefail
+          f="$RUNNER_TEMP/pipelines-ref"
+          [ -f "$f" ] || f="$RUNNER_TEMP/recorded/pipelines-ref"
+          sha="$(tr -d '[:space:]' < "$f")"
+          [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo "recorded gate source is not a commit: $sha" >&2; exit 1; }
+          echo "Shared gate source for this run: pipelines@$sha"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
   gates:
     # PR gates are diff-scoped. A cold numeric-kernel rebuild (cache key covers
     # this file and uv.lock) exceeds 15 minutes, so the cap stays above it;
     # warm-cache runs finish well inside the 15-minute standard.
     timeout-minutes: ${{ github.event_name == 'pull_request' && 45 || 60 }}
     name: gates
+    needs: [freeze-gate-source]
     # Homelab self-hosted runner for same-repo push/PR traffic (the org
     # runner group is scoped to the 6 core repos already); a fork PR's head
     # repo never matches `github.repository`, so it always lands on the
@@ -72,6 +113,7 @@ jobs:
     # untrusted fork without the separate first-run approval gate.
     runs-on: ${{ (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && fromJSON('["self-hosted", "homelab"]') || 'ubuntu-latest' }}
     env:
+      PIPELINES_REF: ${{ needs.freeze-gate-source.outputs.sha }}
       CARGO_BUILD_JOBS: "4"
       CARGO_PROFILE_DEV_DEBUG: "0"
       CARGO_PROFILE_RELEASE_DEBUG: "0"
@@ -177,6 +219,8 @@ jobs:
             BASE="$(git rev-list --max-parents=0 HEAD)"
           fi
           echo "PRE_COMMIT_FROM_REF=$BASE" >> "$GITHUB_ENV"
+          # Every gate below uses the shared gate source frozen for this run.
+          echo "PINNED_PRECOMMIT=$(bash scripts/pin_gate_source.sh "$PIPELINES_REF" "$RUNNER_TEMP/pre-commit-pinned.yaml")" >> "$GITHUB_ENV"
 
       # The prohibited-identity catalog is operator-owned and never committed;
       # a missing catalog makes the tracked-privacy hook fail closed.
@@ -200,8 +244,8 @@ jobs:
             SKIP="${SKIP:+$SKIP,}spec-trailers"
             export SKIP
           fi
-          uvx --from pre-commit==4.6.0 pre-commit run $range --show-diff-on-failure
-          uvx --from pre-commit==4.6.0 pre-commit run $range --hook-stage pre-push --show-diff-on-failure
+          uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" $range --show-diff-on-failure
+          uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" $range --hook-stage pre-push --show-diff-on-failure
 
       # External-index availability is a release boundary, not a PR/push
       # boundary. Repository-manager's one readiness primitive checks the
@@ -222,7 +266,7 @@ jobs:
           rm_source="$GITHUB_WORKSPACE/.uv-workspace-siblings/repository-manager"
           mkdir -p "$rm_source/.uv-workspace-siblings"
           ln -s "$GITHUB_WORKSPACE/.uv-workspace-siblings/agent-utilities" "$rm_source/.uv-workspace-siblings/agent-utilities"
-          uvx --from pre-commit==4.6.0 pre-commit run dependency-readiness --hook-stage manual --all-files
+          uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" dependency-readiness --hook-stage manual --all-files
 
       # The numeric kernel builds into the epistemic-graph checkout's private
       # target-isolated/ dir (never CARGO_TARGET_DIR); cache exactly that dir.
@@ -299,7 +343,7 @@ jobs:
           key: ${{ steps.numeric-identity.outputs.key }}
 
       - name: Locked-environment type check (manual-stage hook, always full)
-        run: uvx --from pre-commit==4.6.0 pre-commit run mypy-env --hook-stage manual --all-files
+        run: uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" mypy-env --hook-stage manual --all-files
 
       # Operator decision (2026-10-09): PR gates run a fast subset so a PR
       # auto-merges within minutes -- lint and the spec check already ran
@@ -312,7 +356,7 @@ jobs:
         id: pr-test-scope
         run: |
           set -euo pipefail
-          uvx --from 'git+https://github.com/Knuckles-Team/pipelines@main' \
+          uvx --from "git+https://github.com/Knuckles-Team/pipelines@${PIPELINES_REF}" \
             pipelines-hook pr-test-scope --base-ref "$PRE_COMMIT_FROM_REF" \
             --src-root graph_os --tests-root tests > "$RUNNER_TEMP/pr-test-scope.txt"
           cat "$RUNNER_TEMP/pr-test-scope.txt"
@@ -324,7 +368,7 @@ jobs:
 
       - name: Full test suite (push to main / release tag; manual-stage hook)
         if: github.event_name != 'pull_request'
-        run: uvx --from pre-commit==4.6.0 pre-commit run pytest --hook-stage manual --all-files
+        run: uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" pytest --hook-stage manual --all-files
 
       - name: Test suite -- pull request fast subset
         if: github.event_name == 'pull_request'
@@ -350,8 +394,10 @@ jobs:
     if: github.event_name == 'push' && github.ref_type == 'branch'
     timeout-minutes: 60
     name: Scanner quality (cccc, KISS, dupehound, jscpd)
+    needs: [freeze-gate-source]
     runs-on: ubuntu-latest
     env:
+      PIPELINES_REF: ${{ needs.freeze-gate-source.outputs.sha }}
       CARGO_BUILD_JOBS: "4"
       CARGO_PROFILE_RELEASE_DEBUG: "0"
     steps:
@@ -402,10 +448,10 @@ jobs:
           CX_DUP_BASE_REF: ${{ env.PRE_COMMIT_FROM_REF }}
         run: |
           set -euo pipefail
-          uvx --from 'git+https://github.com/Knuckles-Team/pipelines@main' \
+          uvx --from "git+https://github.com/Knuckles-Team/pipelines@${PIPELINES_REF}" \
             pipelines-hook scanner-versions cccc kiss dupehound jscpd
           for hook in complexity-census kiss-census dupehound-changed jscpd-differential jscpd-census; do
-            uvx --from pre-commit==4.6.0 pre-commit run "$hook" --hook-stage manual --all-files
+            uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" "$hook" --hook-stage manual --all-files
           done
 
       - name: Save verified scanner toolchain
