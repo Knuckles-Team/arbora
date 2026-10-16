@@ -168,3 +168,6 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **GRAPHOS-OPS-R025.1:** Validate operation membership and response digest in the generated Python invoker.
 
 - [ ] **GRAPHOS-OPS-R025.2:** Complete deterministic artifact generation and installed-wheel acceptance from the pinned engine contract.
+
+- [ ] **GRAPHOS-OPS-R018.2.1:** Distinct query declaration, resolver and caller dispatch contracts; live provider planner validation deferred.
+- [ ] **GRAPHOS-OPS-R018.2.2:** Remaining served query, SQL, search, indexes and analytics acceptance.

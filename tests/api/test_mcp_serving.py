@@ -14,6 +14,7 @@ from contextlib import asynccontextmanager
 from types import SimpleNamespace
 from typing import Any
 
+import pytest
 from pydantic import BaseModel, ConfigDict
 
 from graph_os.api.invoke import InvokeServices, invoke
@@ -209,7 +210,7 @@ def test_dispatch_runs_through_the_real_invocation_pipeline() -> None:
     result = asyncio.run(
         dispatch_verb("ask", projection, op="example.ask", params={"value": 7})
     )
-    assert result["ok"] is True
+    assert result["ok"] is True, result
     assert result["result"] == {"value": 7}
     assert runtime.calls == [("example.ask", {"value": 7})]
 
@@ -232,32 +233,61 @@ def replace_caller_for_request(
     return replace(projection, caller_for_request=lambda: _caller(**changes))
 
 
-def test_ask_falls_back_to_nl_query_only_when_no_operation_matches() -> None:
-    """The synthetic fallback descriptor never outranks a real matching op."""
+@pytest.mark.spec("GRAPHOS-HOST-R023")
+def test_ask_fallback_uses_registered_nl_operation_through_shared_invoke() -> None:
+    from graph_os.api.ops.query import operations
+    from tests.api.test_invoke_contract import setup_services
 
-    async def _nl_query(intent: str) -> dict[str, Any]:
-        return {"answer": intent}
+    op = operations()[1]
+    services, runtime, _, _, _ = setup_services(op)
 
-    # No registry ``ask`` operation at all: free text has nothing to match,
-    # so the resolver's last resort is the bound natural-language fallback.
-    empty_registry = Registry([_operation(id="example.act", verb=Verb.ACT)])
+    async def answer() -> dict[str, Any]:
+        return {"answer": "fixture answer"}
+
+    runtime.on_dispatch = answer
     projection = MCPProjection(
-        empty_registry,
-        object(),
+        services.registry,
+        services,
         IntentResolver(),
-        lambda: _caller(),
+        lambda: make_verified_caller("query:nl")(
+            effective_scopes=frozenset({"query:nl", "mcp:discover"})
+        ),
         PolicyGate("none"),
-        _unused_invoke,
-        None,
-        _nl_query,
+        invoke,
     )
     result = asyncio.run(dispatch_verb("ask", projection, intent="what is a widget?"))
-    assert result["ok"] is True
-    assert result["result"] == {"answer": "what is a widget?"}
+    assert result["ok"] is True, result
+    assert result["result"] == {"answer": "fixture answer"}
+    assert result["meta"]["resolved_op"] == "query.nl"
     assert result["meta"]["fallback"] is True
+    assert len(runtime.calls) == 1
+    assert runtime.calls[0][0].id == "query.nl"
+    assert runtime.calls[0][1] == {"text": "what is a widget?"}
+
+    preview = asyncio.run(
+        dispatch_verb("ask", projection, intent="what is a widget?", execute=False)
+    )
+    assert preview["ok"] is True
+    assert preview["result"]["preview"] is True
+    assert preview["result"]["op"] == "query.nl"
+    assert len(runtime.calls) == 1
+
+    from dataclasses import replace
+
+    unauthorized = replace(
+        projection,
+        caller_for_request=lambda: make_verified_caller("query:unified")(
+            effective_scopes=frozenset({"query:unified", "mcp:discover"})
+        ),
+    )
+    refused = asyncio.run(
+        dispatch_verb("ask", unauthorized, intent="what is a widget?")
+    )
+    assert refused["ok"] is False
+    assert len(runtime.calls) == 1
 
 
-def test_ask_fallback_is_not_offered_without_a_bound_nl_query() -> None:
+def test_ask_fallback_is_not_offered_without_a_registered_nl_operation() -> None:
     empty_registry = Registry([_operation(id="example.act", verb=Verb.ACT)])
     projection = MCPProjection(
         empty_registry,
@@ -272,4 +302,4 @@ def test_ask_fallback_is_not_offered_without_a_bound_nl_query() -> None:
 
 
 async def _unused_invoke(*_args: Any, **_kwargs: Any) -> Any:
-    raise AssertionError("invoke should not be reached by the fallback path")
+    raise AssertionError("invoke should not be reached without an authorized operation")
