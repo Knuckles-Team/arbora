@@ -446,11 +446,12 @@
       "title": "Distinct caller-bound query contracts",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "3ea22258010e",
         "51529da8abe6",
         "a2f74cb9621d"
       ],
       "verified_by": [
-        "tests/api/test_query_ops.py:54"
+        "tests/api/test_query_ops.py:57"
       ]
     },
     {
