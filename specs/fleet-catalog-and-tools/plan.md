@@ -386,3 +386,7 @@ The source validation environment resolves MCP >=2.3,<3 with the landed SDK. The
 - `GRAPHOS-FLEET-R002.9`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-FLEET-R034.13`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-FLEET-R034.14`: Plan the owner work and dependencies defined in requirements.md.
+
+### 2026-10-16 — Separate deterministic and natural-language queries
+
+`query.uql` remains deterministic under `query:unified`; `query.nl` is the authorized resolver fallback under `query:nl`. The latter binds its inner graph from the verified caller and preserves provider planner-unavailable refusals. No scope is automatically granted. Remaining SQL, search, indexes and analytics acceptance under R018.2 remains deferred.

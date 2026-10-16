@@ -198,10 +198,15 @@ async def dispatch_eg_method(
 
     method = _eg_method_id(binding)
     graph = await _caller_dispatch_graph(context)
+    payload = claim_values(params)
+    if method == "NlQuery":
+        if "graph" in payload:
+            raise OperationRefused("INVALID_ARGUMENT", {"field": "graph"})
+        payload["graph"] = graph
     return await send_by_id(
         context.client,
         method,
-        claim_values(params),
+        payload,
         graph,
         idempotency_key=context.idempotency_key,
     )

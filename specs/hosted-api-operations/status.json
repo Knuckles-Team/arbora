@@ -26,6 +26,8 @@
     "GRAPHOS-OPS-R018",
     "GRAPHOS-OPS-R018.1",
     "GRAPHOS-OPS-R018.2",
+    "GRAPHOS-OPS-R018.2.1",
+    "GRAPHOS-OPS-R018.2.2",
     "GRAPHOS-OPS-R019",
     "GRAPHOS-OPS-R019.1",
     "GRAPHOS-OPS-R019.2",
@@ -327,11 +329,11 @@
         "deb2b45bf83d"
       ],
       "verified_by": [
-        "tests/api/test_resolve.py:101",
-        "tests/api/test_resolve.py:40",
-        "tests/api/test_resolve.py:52",
-        "tests/api/test_resolve.py:62",
-        "tests/api/test_resolve.py:71"
+        "tests/api/test_resolve.py:103",
+        "tests/api/test_resolve.py:42",
+        "tests/api/test_resolve.py:54",
+        "tests/api/test_resolve.py:64",
+        "tests/api/test_resolve.py:73"
       ]
     },
     {
@@ -409,7 +411,7 @@
     {
       "id": "GRAPHOS-OPS-R018",
       "title": "Query, search, ontology, and analytics operations",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
@@ -429,10 +431,28 @@
     {
       "id": "GRAPHOS-OPS-R018.2",
       "title": "Uql, sql, search, indexes, and analytics.series operations",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "64a0c091b354"
       ],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-OPS-R018.2.1",
+        "GRAPHOS-OPS-R018.2.2"
+      ]
+    },
+    {
+      "id": "GRAPHOS-OPS-R018.2.1",
+      "title": "Distinct caller-bound query contracts",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R018.2.2",
+      "title": "Remaining query, SQL, search, indexes and analytics serving acceptance",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": []
     },
     {

@@ -539,3 +539,7 @@ against its packaged registry before transport. Compare every response digest
 with the generated registry identity before returning the envelope. Preserve
 matching refusal details. Full R025 still requires deterministic generation from
 a compatible engine contract and packaged artifacts.
+
+### 2026-10-16 — Separate deterministic and natural-language queries
+
+`query.uql` remains deterministic under `query:unified`; `query.nl` is the authorized resolver fallback under `query:nl`. The latter binds its inner graph from the verified caller and preserves provider planner-unavailable refusals. No scope is automatically granted. Remaining SQL, search, indexes and analytics acceptance under R018.2 remains deferred.
