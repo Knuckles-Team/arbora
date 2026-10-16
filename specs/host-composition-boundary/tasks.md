@@ -4,6 +4,13 @@ Status vocabulary is defined in [spec.md](spec.md). Check a task only after its 
 
 - [x] Extract and publish the GraphOS serving, gateway, fleet, A2A and deployment package boundary. Evidence: package modules under `graph_os/`, public `graph-os` console script in `pyproject.toml`. **State: Implemented; release/served acceptance for this whole spec still pending.**
 - [x] `GRAPHOS-HOST-R001.1`: move the agent-utilities MCP, API and WebUI server code that graph-os uses into `graph_os/mcp_server/backing/`, `graph_os/api/contracts/` and `graph_os/webui_host/`; require `agent-utilities>=3.0.0,<4.0.0`. Evidence: `tests/test_package_layout.py::test_graph_os_imports_no_au_serving_packages`.
+- [x] `GRAPHOS-HOST-R001.2`: `tests/mcp_server/test_harness_host.py` proves fail-closed before registration, bound tools/fleet/keepalive after, and cleared bindings after shutdown.
+- [x] `GRAPHOS-HOST-R001.3`: `tests/gateway/test_gateway_client.py` passes against `graph_os.gateway.client_sdk`.
+- [x] `GRAPHOS-HOST-R001.4`: `tests/deployment/test_graphos_deploy_artifacts.py` asserts the `agent_connector_sdk.skill_providers` entry-point group in `pyproject.toml`.
+- [x] `GRAPHOS-HOST-R001.5`: The moved test files pass on FastMCP 4.x with `epistemic-graph[server]==2.27.1`.
+- [x] `GRAPHOS-HOST-R001.6`: `tests/mcp_server/test_operation_registry.py` proves the packaged document is current, names exactly the served operations and loads through the harness reader.
+- [x] `GRAPHOS-HOST-R001.8`: `tests/mcp_server/test_engine_wiring_gate.py` passes against the installed epistemic-graph.
+- [x] `GRAPHOS-HOST-R001.9`: `tests/integration/profiles/test_profile_tiny_zero_dep.py::test_tiny_profile_serves_kg_over_gateway_with_zero_containers`.
 - [ ] `GRAPHOS-HOST-R007.2`: rollup; deliver `GRAPHOS-HOST-R007.2.1` to `GRAPHOS-HOST-R007.2.68` (one rewiring per violating module, 68 modules at split time) and then the fence test `GRAPHOS-HOST-R007.2.69`.
 - [ ] Inventory all dependency-internal imports and duplicate host scripts; attach a machine-readable owner/port map and the initial forbidden-import count.
 - [ ] Add missing public engine, SDK and AU ports in their owner packages and release/install them.

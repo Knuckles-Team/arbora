@@ -1,7 +1,7 @@
 """Serve installed ontology providers as MCP resources (spec: baseline-ingestion).
 
 The fleet server factory already serves skills as ``skill://`` and prompts as
-``prompt://``. This module adds each installed ``agent_utilities.ontology_providers``
+``prompt://``. This module adds each installed ``agent_connector_sdk.ontology_providers``
 package's ontologies and SHACL shapes through the connector SDK's own content
 helper, so one URI contract covers SDK connectors and factory-built servers:
 

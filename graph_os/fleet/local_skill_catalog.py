@@ -2,7 +2,7 @@
 """Skills served from THIS process's own installed packages.
 
 ``graph_os.mcp_server.backing.server_factory._register_skill_providers`` already wires
-every package that declares the ``agent_utilities.skill_providers`` entry
+every package that declares the ``agent_connector_sdk.skill_providers`` entry
 point (graph-os's own skills, agent-utilities' own skills, and any sibling
 package installed alongside graph-os that declares the same entry point --
 currently epistemic-graph and agent-webui) onto GraphOS's own served FastMCP

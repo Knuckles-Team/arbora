@@ -140,6 +140,7 @@ owns the entry point). GRAPHOS-DEPLOY-R007.1 (`agent-utilities-doctor`) is track
 - [x] **GRAPHOS-DEPLOY-R007.3** — `graph-os-daemon` console-script collision.
 - [x] **GRAPHOS-DEPLOY-R007.4** — `agent-utilities-venv` console-script collision.
 - [x] **GRAPHOS-DEPLOY-R007.5** — `graph-os-release-canary` console-script collision.
+- [x] **GRAPHOS-DEPLOY-R007.6** — engine_domains and graph_connections doctor checks. Evidence: `tests/deployment/test_doctor_graph.py`.
 
 All four: graph-os already declares the script on main
 ([merge `fd761d59a171c148b7f2d7d952369c3b2b1a8628`](https://github.com/Knuckles-Team/graph-os/commit/fd761d59a171c148b7f2d7d952369c3b2b1a8628)).
@@ -170,6 +171,7 @@ non-test importer (or, for `agent_utilities.deployment.cli`, a direct test impor
 
 - [ ] **GRAPHOS-DEPLOY-R009:** GraphOS owns hosting/deployment configuration settings
 - [ ] **GRAPHOS-DEPLOY-R009.1:** Remaining scope of GRAPHOS-DEPLOY-R009 (slice .1): GraphOS owns hosting/deployment configuration settings
+- [x] **GRAPHOS-DEPLOY-R009.2:** graph_config operation core in GraphOS. Evidence: `tests/core/test_agent_config_admin.py`.
 
 ## GRAPHOS-DEPLOY-R017 engine-routed deployment placement and assembly
 

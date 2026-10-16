@@ -2345,7 +2345,7 @@ class MCPMultiplexer:
         # cached like the probe cache above: every skill resolved from a
         # provider installed in THIS process (graph-os's own, agent-utilities'
         # own, and any sibling package declaring the same
-        # ``agent_utilities.skill_providers`` entry point), filed under the
+        # ``agent_connector_sdk.skill_providers`` entry point), filed under the
         # pseudo-server ``LOCAL_SKILLS_SERVER`` so it rides the SAME
         # find_tools/list_catalog path as a fleet-harvested skill.
         self._local_skill_probe_cache: dict[str, _typing.Any] | None = None
@@ -6251,7 +6251,7 @@ class MCPMultiplexer:
         "Local" means every skill ``agent_utilities.core.providers.
         resolve_skill_provider_dirs()`` resolves in THIS process — graph-os's
         own skills, agent-utilities' own, and any sibling package installed
-        alongside graph-os that declares the ``agent_utilities.skill_providers``
+        alongside graph-os that declares the ``agent_connector_sdk.skill_providers``
         entry point (CONCEPT:AU-KG.retrieval.unified-capability-contract). An
         individually unreadable/malformed skill, and a core-pack name no
         installed provider resolves, are reported loudly here (never fatal,

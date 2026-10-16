@@ -26,6 +26,7 @@ from typing import Any
 
 from . import doctor_certification as _doctor_certification
 from . import doctor_coverage as _doctor_coverage
+from . import doctor_graph as _doctor_graph
 from . import doctor_lakehouse as _doctor_lakehouse
 from . import doctor_observability as _doctor_observability
 from . import doctor_support as _doctor_support
@@ -193,6 +194,14 @@ def _langfuse_live_result(*args: Any, **kwargs: Any) -> Any:
 
 def _langfuse_ready_result(*args: Any, **kwargs: Any) -> Any:
     return _doctor_observability._langfuse_ready_result(*args, **kwargs)
+
+
+def _check_engine_domains() -> Any:
+    return _doctor_graph._check_engine_domains()
+
+
+def _check_graph_connections(live: bool = False) -> Any:
+    return _doctor_graph._check_graph_connections(live=live)
 
 
 def _check_langfuse(live: bool = False) -> Any:
@@ -2310,6 +2319,7 @@ CHECKS: dict[str, Callable[..., dict[str, Any]]] = {
     "workspace_config": _check_workspace_config,
     "engine_request_context": _check_engine_request_context,
     "engine": _check_engine,
+    "engine_domains": _check_engine_domains,
     "secrets": _check_secrets,
     "secrets_backend": _check_secrets_backend,
     "auth": _check_auth,
@@ -2322,6 +2332,7 @@ CHECKS: dict[str, Callable[..., dict[str, Any]]] = {
     "hooks": _check_hooks,
     "prepush_hook": _check_prepush_hook,
     "observability": _check_observability,
+    "graph_connections": _check_graph_connections,
     "langfuse": _check_langfuse,
     "a2a_persistence": _check_a2a_persistence,
     "skills": _check_skills,
@@ -2343,6 +2354,7 @@ CHECKS: dict[str, Callable[..., dict[str, Any]]] = {
 _LIVE_CHECK_NAMES = frozenset(
     {
         "mcp_fleet",
+        "graph_connections",
         "langfuse",
         "openai_catalog",
         "kafka",

@@ -2,7 +2,7 @@
 
 CONCEPT:AU-OS.config.two-surfaces-by-default
 
-Thin action router over :mod:`agent_utilities.core.config_admin` (the one core).
+Thin action router over :mod:`graph_os.core.agent_config_admin` (the one core).
 No behaviour lives in this module: the tool body validates nothing, redacts
 nothing and writes nothing itself, so the MCP surface and any future REST/CLI
 twin cannot drift.
@@ -87,7 +87,7 @@ def register_config_tools(mcp):
             description="Substring filter for a keyless 'describe'.",
         ),
     ) -> str:
-        from agent_utilities.core.config_admin import ConfigAdminError, dispatch
+        from graph_os.core.agent_config_admin import ConfigAdminError, dispatch
 
         try:
             return json.dumps(

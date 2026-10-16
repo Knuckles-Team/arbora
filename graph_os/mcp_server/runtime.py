@@ -1554,7 +1554,7 @@ async def graph_ontology_sync_packages_endpoint(request: Request) -> JSONRespons
     """REST twin of ``graph_ontology action='sync_packages'`` (CONCEPT:AU-KG.ontology.federation-runtime).
 
     Federation: load every ontology ``.ttl`` contributed by installed fleet
-    packages (``agent_utilities.ontology_providers``) through the shared ontology
+    packages (``agent_connector_sdk.ontology_providers``) through the shared ontology
     load path. Mirrors the generic ``POST /graph/ontology`` action twin as an
     explicit convenience route.
     """

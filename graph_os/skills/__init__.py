@@ -5,7 +5,7 @@ Docker Swarm, or Kubernetes through the chart in ``deploy/helm/graph-os``) and
 hands off to ``graphos-deployment``, which installs, configures and verifies
 the Graph OS runtime. ``graph-os-development`` documents how to develop a
 feature in this or a sibling ecosystem repository. Discovered through the
-``agent_utilities.skill_providers`` entry point.
+``agent_connector_sdk.skill_providers`` entry point.
 """
 
 from __future__ import annotations

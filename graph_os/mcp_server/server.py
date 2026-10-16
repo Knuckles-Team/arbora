@@ -199,6 +199,14 @@ def mcp_server() -> None:
     # Inject graph-os's own embedding model so fleet tool search ranks by
     # query↔description MEANING (semantic), not just literal token overlap.
     fleet_mux = _attach_fleet_runtime(mcp, fleet_catalog_reader)
+    # The harness's thin client host fails closed until graph-os registers
+    # its native toolset, fleet catalog and session keepalive bindings.
+    from graph_os.mcp_server.harness_host import (
+        register_harness_host,
+        unregister_harness_host,
+    )
+
+    register_harness_host(fleet_mux)
 
     transport = getattr(args, "transport", "stdio")
     host = getattr(args, "host", "127.0.0.1")
@@ -346,6 +354,7 @@ def mcp_server() -> None:
         else:
             raise ValueError("graph-os transport must be 'stdio' or 'streamable-http'")
     finally:
+        unregister_harness_host()
         if co_service_supervisor is not None:
             co_service_supervisor.stop_all()
         runtime._PROCESS_SESSION = None

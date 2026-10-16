@@ -6,6 +6,13 @@
   "requirement_ids": [
     "GRAPHOS-HOST-R001",
     "GRAPHOS-HOST-R001.1",
+    "GRAPHOS-HOST-R001.2",
+    "GRAPHOS-HOST-R001.3",
+    "GRAPHOS-HOST-R001.4",
+    "GRAPHOS-HOST-R001.5",
+    "GRAPHOS-HOST-R001.6",
+    "GRAPHOS-HOST-R001.8",
+    "GRAPHOS-HOST-R001.9",
     "GRAPHOS-HOST-R002",
     "GRAPHOS-HOST-R003",
     "GRAPHOS-HOST-R004",
@@ -177,12 +184,70 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-HOST-R001.1"
+        "GRAPHOS-HOST-R001.1",
+        "GRAPHOS-HOST-R001.2",
+        "GRAPHOS-HOST-R001.3",
+        "GRAPHOS-HOST-R001.4",
+        "GRAPHOS-HOST-R001.5",
+        "GRAPHOS-HOST-R001.6",
+        "GRAPHOS-HOST-R001.8",
+        "GRAPHOS-HOST-R001.9"
       ]
     },
     {
       "id": "GRAPHOS-HOST-R001.1",
       "title": "GraphOS owns the MCP, REST and API serving code that agent-utilities 3.0.0 drops",
+      "delivery_state": "LANDED",
+      "landed_in": [
+        "4eb2b408bd93"
+      ],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.2",
+      "title": "GraphOS registers the harness host bindings at startup",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.3",
+      "title": "GraphOS owns the surface gateway client SDK",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.4",
+      "title": "Provider plugin entry-point groups use the connector SDK namespace",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.5",
+      "title": "The moved serving code keeps its agent-utilities tests and runs on FastMCP 4",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.6",
+      "title": "GraphOS publishes its operation registry as versioned data",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.8",
+      "title": "Gate G-26: the served MCP surface is wired to epistemic-graph",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.9",
+      "title": "The tiny profile serves the KG over the gateway with zero containers",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
