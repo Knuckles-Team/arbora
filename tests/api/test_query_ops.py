@@ -34,9 +34,12 @@ class RecordingClient:
         return 47
 
 
+class QuerySession(FakeSession):
+    graph = "tenant:bound"
+
+
 def context(client: RecordingClient) -> ExecutionContext:
-    session = FakeSession(actor=Actor(), tenant="tenant:a")
-    session.graph = "tenant:bound"
+    session = QuerySession(actor=Actor(), tenant="tenant:a")
     caller = _caller(
         session,
         engine_claims=session.engine_verified_context(),
