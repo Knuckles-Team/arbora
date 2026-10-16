@@ -116,4 +116,4 @@ result, error details and metadata. These tests do not qualify a producer wheel.
 R025.2 retains full deterministic generation, drift and installed-wheel proof.
 The emitted-client fixture is not this acceptance.
 
-| HO-QUERY-01 | GRAPHOS-OPS-R018.2.1 | `tests/api/test_query_ops.py`, `tests/api/test_registry_factory.py`, and `tests/api/test_resolve.py` prove actual provider method/scope and inner schema compatibility, separate authorized fallback, graph injection from the verified caller and fail-closed provider errors. Tests record the final transport; they do not qualify a live NL planner or compose the production schema validator. |
+| HO-QUERY-01 | GRAPHOS-OPS-R018.2.1 | `tests/api/test_query_ops.py`, `tests/api/test_registry_factory.py`, and `tests/api/test_resolve.py` prove provider method, scope and inner schema compatibility. They prove authorized fallback, verified caller graph binding and provider error propagation. Tests record the final transport; they do not qualify a live NL planner or compose the production schema validator. |
