@@ -10,6 +10,7 @@
     "GRAPHOS-A2A-R002.1",
     "GRAPHOS-A2A-R002.2",
     "GRAPHOS-A2A-R002.2.1",
+    "GRAPHOS-A2A-R002.2.2",
     "GRAPHOS-A2A-R003",
     "GRAPHOS-A2A-R004",
     "GRAPHOS-A2A-R005",
@@ -130,7 +131,8 @@
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-A2A-R002.2.1"
+        "GRAPHOS-A2A-R002.2.1",
+        "GRAPHOS-A2A-R002.2.2"
       ]
     },
     {
@@ -139,6 +141,17 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-A2A-R002.2.2",
+      "title": "Reference-bound single-tool task worker",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5cbc820b4e83"
+      ],
+      "verified_by": [
+        "tests/a2a/test_tool_task.py:20"
+      ]
     },
     {
       "id": "GRAPHOS-A2A-R003",
