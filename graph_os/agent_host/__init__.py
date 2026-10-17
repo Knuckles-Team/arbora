@@ -41,6 +41,10 @@ from graph_os.agent_host.log_access import HostLogAccess
 from graph_os.agent_host.log_routes import register_host_log_routes
 from graph_os.agent_host.log_runtime import HostLogRuntime, register_host_log_runtime
 from graph_os.agent_host.start_admission import HostStartContext, check_host_start
+from graph_os.agent_host.start_configuration import (
+    HostStartConfiguration,
+    check_start_configuration,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -260,6 +264,29 @@ def create_agent_server(
     ):
         raise ValueError("invalid_launch")
     if enable_terminal_ui or enable_web_ui or enable_web_logs:
+        check_start_configuration(
+            host_start,
+            HostStartConfiguration(
+                workspace=workspace,
+                tag_prompts=tag_prompts,
+                tag_env_vars=tag_env_vars,
+                graph_name=graph_name,
+                mcp_url=mcp_url,
+                mcp_config=mcp_config,
+                router_model=router_model,
+                agent_model=agent_model,
+                min_confidence=min_confidence,
+                host=host,
+                port=port,
+                name=name,
+                system_prompt=system_prompt,
+                enable_terminal_ui=enable_terminal_ui,
+                enable_web_ui=enable_web_ui,
+                enable_web_logs=enable_web_logs,
+            ),
+            resources=(graph, graph_config, executor, host_logs, host_log_runtime),
+            unused_arguments=_unused_au_hosting_kwargs,
+        )
         check_host_start(
             host_start,
             workspace=workspace,
