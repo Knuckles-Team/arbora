@@ -32,6 +32,7 @@ def test_engine_admission_binds_one_principal_and_one_request_context() -> None:
     assert admission["graph_os_config"] == {
         "AUTH_JWT_AUDIENCE": "graph-os",
         "KG_POLICY_VERSION": "policy-1",
+        "MCP_HTTP_ALLOWED_PRIVATE_HOSTS": "",
     }
     assert admission["process_identity_roles"] == list(PROCESS_IDENTITY_ROLES)
     assert any(
@@ -44,3 +45,41 @@ def test_engine_admission_refuses_a_missing_value() -> None:
         generate_engine_admission(
             principal="p", audience="a", tenant=" ", policy_version="v"
         )
+
+
+def test_engine_admission_names_private_connector_hosts() -> None:
+    admission = generate_engine_admission(
+        principal="p",
+        audience="a",
+        tenant="t",
+        policy_version="v",
+        allowed_private_hosts=["github-mcp.mcp.svc", "10.0.0.5"],
+    )
+    assert admission["graph_os_config"]["MCP_HTTP_ALLOWED_PRIVATE_HOSTS"] == (
+        "github-mcp.mcp.svc,10.0.0.5"
+    )
+
+
+def test_engine_admission_cli_repeats_the_private_host_option(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    import json
+
+    from graph_os.deployment.cli import main
+
+    assert (
+        main(
+            [
+                "engine-admission",
+                "--principal=p",
+                "--audience=a",
+                "--tenant=t",
+                "--policy-version=v",
+                "--allowed-private-host=a.svc",
+                "--allowed-private-host=b.svc",
+            ]
+        )
+        == 0
+    )
+    out = json.loads(capsys.readouterr().out)
+    assert out["graph_os_config"]["MCP_HTTP_ALLOWED_PRIVATE_HOSTS"] == "a.svc,b.svc"

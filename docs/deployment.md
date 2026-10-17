@@ -82,7 +82,8 @@ context. Print the exact settings for a deployment:
 
 ```bash
 setup-config engine-admission --principal <process principal> \
-  --audience <audience> --tenant <tenant> --policy-version <policy version>
+  --audience <audience> --tenant <tenant> --policy-version <policy version> \
+  --allowed-private-host <connector host>
 ```
 
 The engine needs these settings:
@@ -112,6 +113,18 @@ On a fresh store, do these steps in order before the first serve:
 A fresh engine admits one principal only: the GraphOS process principal. Each
 other caller needs its own engine identity registration before its requests
 pass engine authorization.
+
+GraphOS reaches a fleet connector over plain HTTP only on loopback, or on a
+host that `MCP_HTTP_ALLOWED_PRIVATE_HOSTS` names. Set it in the GraphOS
+configuration when connectors run on private or cluster hosts:
+
+| GraphOS setting | Value |
+|---|---|
+| `MCP_HTTP_ALLOWED_PRIVATE_HOSTS` | The exact connector hostnames, comma-separated or as a JSON list, for example `github-mcp.mcp.svc.cluster.local,10.0.0.5` |
+
+Pass each host with `--allowed-private-host` and `setup-config
+engine-admission` prints the value under `graph_os_config`. A connector entry
+can also name its own host in `allowed_private_hosts`.
 
 `tests/test_real_boot.py` runs these steps against a real engine.
 

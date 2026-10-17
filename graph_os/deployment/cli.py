@@ -117,6 +117,7 @@ def _run_engine_admission(args: argparse.Namespace) -> int:
                 audience=args.audience,
                 tenant=args.tenant,
                 policy_version=args.policy_version,
+                allowed_private_hosts=args.allowed_private_host,
             ),
             indent=2,
         )
@@ -156,6 +157,13 @@ def main(argv: list[str] | None = None) -> int:
     e.add_argument("--audience", required=True)
     e.add_argument("--tenant", required=True)
     e.add_argument("--policy-version", required=True)
+    e.add_argument(
+        "--allowed-private-host",
+        action="append",
+        default=[],
+        metavar="HOST",
+        help="Private or cluster hostname of a fleet connector (repeatable).",
+    )
 
     d = sub.add_parser("doctor", help="Validate config completeness/health.")
     d.add_argument("--profile", choices=list(PROFILES), default=None)

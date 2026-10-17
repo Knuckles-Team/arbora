@@ -26,7 +26,7 @@ from __future__ import annotations
 import json
 import os
 import re
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -357,6 +357,7 @@ def generate_engine_admission(
     audience: str,
     tenant: str,
     policy_version: str,
+    allowed_private_hosts: Sequence[str] = (),
 ) -> dict[str, Any]:
     """The engine-side admission a served GraphOS deployment must set.
 
@@ -366,6 +367,10 @@ def generate_engine_admission(
     engine trusts exactly one signer on a fresh store, the GraphOS process
     principal, and imports GraphOS's semantic packs only from it. Secret values
     stay references; the deploy resolves them from its secret store.
+    ``allowed_private_hosts`` names the exact private or cluster hostnames of
+    the fleet connectors GraphOS reaches over HTTP; it becomes
+    ``MCP_HTTP_ALLOWED_PRIVATE_HOSTS`` (comma-separated, empty for loopback
+    only).
 
     Returns ``{"engine_environment": ..., "graph_os_config": ...,
     "process_identity_roles": ..., "first_start": ...}``.
@@ -380,6 +385,9 @@ def generate_engine_admission(
     ):
         if not isinstance(value, str) or not value.strip():
             raise ValueError(f"{name} is required")
+    hosts = [host.strip() for host in allowed_private_hosts]
+    if any(not host for host in hosts):
+        raise ValueError("allowed_private_hosts entries must be non-empty")
     importer = "principal:sha256:" + hashlib.sha256(principal.encode()).hexdigest()
     return {
         "engine_environment": {
@@ -402,6 +410,7 @@ def generate_engine_admission(
         "graph_os_config": {
             "AUTH_JWT_AUDIENCE": audience,
             "KG_POLICY_VERSION": policy_version,
+            "MCP_HTTP_ALLOWED_PRIVATE_HOSTS": ",".join(hosts),
         },
         "process_identity_roles": list(PROCESS_IDENTITY_ROLES),
         "first_start": [
