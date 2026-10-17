@@ -38,6 +38,8 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
+from agent_utilities.core.config import setting
+
 from graph_os.deployment.file_lock import (
     LockUnavailable,
     lock_exclusive_nb,
@@ -61,7 +63,7 @@ def _runtime_base() -> Path:
 
         base = Path(platformdirs.user_runtime_dir("graph-os"))
     except Exception:  # pragma: no cover - platformdirs present in practice
-        base = Path(os.environ.get("XDG_RUNTIME_DIR") or "/tmp") / "graph-os"  # nosec B108 — XDG fallback
+        base = Path(setting("XDG_RUNTIME_DIR", "/tmp")) / "graph-os"  # nosec B108 — XDG fallback
     base.mkdir(parents=True, exist_ok=True)
     return base
 

@@ -34,6 +34,8 @@ import time
 from pathlib import Path
 from typing import Any
 
+from agent_utilities.core.config import setting
+
 from graph_os.deployment.file_lock import (
     LockUnavailable,
     lock_exclusive_nb,
@@ -73,13 +75,13 @@ def _lock_path() -> Path:
     (subprocess-safe: children inherit the env), so they never collide with a live
     daemon's real lock.
     """
-    override = os.environ.get("GRAPH_OS_RUNTIME_DIR")
+    override = setting("GRAPH_OS_RUNTIME_DIR", "")
     if override:
         base = Path(override) / "graph-os"
     else:
         # Canonical shared runtime dir (data_dir()/runtime) — NOT platformdirs'
         # per-container user_runtime_dir, which breaks the cross-container flock.
-        base = Path(os.environ.get("XDG_RUNTIME_DIR") or "/var/tmp") / "graph-os"
+        base = Path(setting("XDG_RUNTIME_DIR", "/var/tmp")) / "graph-os"
     base.mkdir(parents=True, exist_ok=True)
     return base / "kg_daemon_host.lock"
 
@@ -117,8 +119,8 @@ def _try_acquire() -> bool:
         "pid": os.getpid(),
         "host": _socket.gethostname(),
         "started_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
-        "socket": os.environ.get("EPISTEMIC_GRAPH_SOCKET", "/tmp/epistemic-graph.sock"),  # nosec B108 — default UDS path, overridable via env
-        "role": os.environ.get("KG_DAEMON_ROLE", "auto"),
+        "socket": setting("EPISTEMIC_GRAPH_SOCKET", "/tmp/epistemic-graph.sock"),  # nosec B108 — default UDS path, overridable via env
+        "role": setting("KG_DAEMON_ROLE", "auto"),
     }
     try:
         data = json.dumps(meta).encode("utf-8")
@@ -146,11 +148,11 @@ def resolve_daemon_role(requested: str | None = None) -> str:
     global _effective_role
     if _effective_role is not None:
         return _effective_role
-    role = (requested or os.environ.get("KG_DAEMON_ROLE") or "auto").strip().lower()
+    role = (requested or setting("KG_DAEMON_ROLE", "auto")).strip().lower()
     if role not in {"host", "client", "auto"}:
         role = "auto"
 
-    if os.environ.get("GRAPH_OS_TESTING"):
+    if setting("GRAPH_OS_TESTING", ""):
         _effective_role = "client" if role == "client" else "host"
         return _effective_role
 
