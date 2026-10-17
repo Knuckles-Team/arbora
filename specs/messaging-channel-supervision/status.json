@@ -18,7 +18,10 @@
     "GRAPHOS-MESSAGING-R800.3",
     "GRAPHOS-MESSAGING-R800.4",
     "GRAPHOS-MESSAGING-R800.5",
-    "GRAPHOS-MESSAGING-R800.6"
+    "GRAPHOS-MESSAGING-R800.6",
+    "GRAPHOS-MESSAGING-R800.1000",
+    "GRAPHOS-MESSAGING-R800.1001",
+    "GRAPHOS-MESSAGING-R800.1002"
   ],
   "requirements": [
     {
@@ -120,7 +123,10 @@
         "GRAPHOS-MESSAGING-R800.3",
         "GRAPHOS-MESSAGING-R800.4",
         "GRAPHOS-MESSAGING-R800.5",
-        "GRAPHOS-MESSAGING-R800.6"
+        "GRAPHOS-MESSAGING-R800.6",
+        "GRAPHOS-MESSAGING-R800.1000",
+        "GRAPHOS-MESSAGING-R800.1001",
+        "GRAPHOS-MESSAGING-R800.1002"
       ]
     },
     {
@@ -161,6 +167,27 @@
     {
       "id": "GRAPHOS-MESSAGING-R800.6",
       "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-MESSAGING-R800.1000",
+      "title": "Intake lease on the engine WorkItem methods",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-MESSAGING-R800.1001",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-MESSAGING-R800.1002",
+      "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

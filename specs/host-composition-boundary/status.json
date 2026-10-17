@@ -174,7 +174,16 @@
     "GRAPHOS-HOST-R022.1",
     "GRAPHOS-HOST-R010.8",
     "GRAPHOS-HOST-R032",
-    "GRAPHOS-HOST-R010.9"
+    "GRAPHOS-HOST-R010.9",
+    "GRAPHOS-HOST-R008.1000",
+    "GRAPHOS-HOST-R008.1001",
+    "GRAPHOS-HOST-R008.1002",
+    "GRAPHOS-HOST-R008.1003",
+    "GRAPHOS-HOST-R008.1004",
+    "GRAPHOS-HOST-R008.1005",
+    "GRAPHOS-HOST-R008.1006",
+    "GRAPHOS-HOST-R008.1007",
+    "GRAPHOS-HOST-R008.1008"
   ],
   "requirements": [
     {
@@ -1155,7 +1164,16 @@
         "GRAPHOS-HOST-R008.3",
         "GRAPHOS-HOST-R008.4",
         "GRAPHOS-HOST-R008.5",
-        "GRAPHOS-HOST-R008.6"
+        "GRAPHOS-HOST-R008.6",
+        "GRAPHOS-HOST-R008.1000",
+        "GRAPHOS-HOST-R008.1001",
+        "GRAPHOS-HOST-R008.1002",
+        "GRAPHOS-HOST-R008.1003",
+        "GRAPHOS-HOST-R008.1004",
+        "GRAPHOS-HOST-R008.1005",
+        "GRAPHOS-HOST-R008.1006",
+        "GRAPHOS-HOST-R008.1007",
+        "GRAPHOS-HOST-R008.1008"
       ]
     },
     {
@@ -1681,6 +1699,69 @@
       "verified_by": [
         "tests/agent_host/test_interface_refusal.py:3"
       ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1000",
+      "title": "Startup bindings for messaging, A2A and readiness",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1001",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1002",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1003",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1004",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1005",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1006",
+      "title": "Hosted observability, ecosystem and deployment modules",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1007",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1008",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     }
   ]
 }
