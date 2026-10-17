@@ -94,6 +94,13 @@ async def handle_rlm(
     return {"value": result.model_dump(mode="json")}
 
 
+#: Operations whose idempotency the A2A WorkItem authority owns: the
+#: idempotency key derives the task id, so a replay returns the same task.
+NATIVE_IDEMPOTENCY: dict[str, str] = {
+    "agents.run": "graph_os.a2a.authority:WorkItemA2AAuthority",
+}
+
+
 def operations() -> tuple[OpSpec, ...]:
     """Operation records consumed by the central registry and all projections."""
     handler = Composite(handler="graph_os.api.ops.agents.handle_agent")

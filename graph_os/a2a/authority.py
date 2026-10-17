@@ -11,8 +11,6 @@ from typing import Any, Protocol, runtime_checkable
 
 from agent_connector_sdk.privacy import persistence_reference
 
-from graph_os.api.errors import not_served
-
 from .models import (
     A2AMessage,
     A2ARouteDecision,
@@ -34,6 +32,8 @@ __all__ = [
 _TASK_PREFIX = "a2a-"
 _WORK_ITEM_PREFIX = "workitem:orchestrator:"
 _A2A_METADATA_SCHEMA = "graph-os-a2a-unary-v1"
+#: How long one agent run may hold its WorkItem lease.
+_RUN_LEASE_SECONDS = 600.0
 _TERMINAL = frozenset({"succeeded", "failed", "cancelled", "dead_letter"})
 _STATE_MAP: dict[str, A2ATaskState] = {
     "submitted": "submitted",
@@ -112,8 +112,11 @@ def _digest(value: Any) -> str:
 class WorkItemA2AAuthority:
     """A2A projection over AU's sole durable WorkItem and dispatch authorities."""
 
-    def __init__(self, engine_provider: Callable[[], Any]) -> None:
+    def __init__(
+        self, engine_provider: Callable[[], Any], *, executor: Any = None
+    ) -> None:
         self._engine_provider = engine_provider
+        self._executor = executor
 
     @staticmethod
     def _session(scope: str) -> Any:
@@ -201,22 +204,25 @@ class WorkItemA2AAuthority:
         }
 
     @staticmethod
-    def _validate_existing(
-        item: dict[str, Any], *, session: Any, owner_ref: str, request_digest: str
-    ) -> None:
-        metadata = item.get("metadata")
-        valid = (
-            item.get("kind") == "orchestrator_task"
-            and item.get("tenant") == session.tenant
-            and item.get("created_by") == owner_ref
+    def _owned(item: Any, owner_ref: str) -> bool:
+        """The engine scopes ``get`` to the verified tenant; the owner is in metadata."""
+        metadata = item.get("metadata") if isinstance(item, dict) else None
+        return (
+            isinstance(item, dict)
+            and item.get("kind") == "orchestrator_task"
             and isinstance(metadata, dict)
             and metadata.get("a2a_schema") == _A2A_METADATA_SCHEMA
             and metadata.get("a2a_owner_ref") == owner_ref
         )
-        if not valid:
+
+    @classmethod
+    def _validate_existing(
+        cls, item: dict[str, Any], *, session: Any, owner_ref: str, request_digest: str
+    ) -> None:
+        del session
+        if not cls._owned(item, owner_ref):
             raise A2AIdempotencyConflict("A2A idempotency authority conflicts")
-        assert isinstance(metadata, dict)
-        if metadata.get("a2a_request_digest") != request_digest:
+        if item["metadata"].get("a2a_request_digest") != request_digest:
             raise A2AIdempotencyConflict(
                 "A2A idempotency key was reused with a different request"
             )
@@ -231,8 +237,75 @@ class WorkItemA2AAuthority:
         description: str,
         metadata: dict[str, Any],
     ) -> tuple[str, bool]:
-        raise not_served(
-            "knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605"
+        from graph_os import work_items
+
+        return work_items.submit_work_item_atomic(
+            work_engine,
+            kind="orchestrator_task",
+            queue="orchestrator_task",
+            payload_ref=task_id,
+            tenant=session.tenant,
+            description=description,
+            resource_class="agent_dispatch",
+            work_item_id=f"{_WORK_ITEM_PREFIX}{task_id}",
+            idempotency_key=task_id,
+            created_by=owner_ref,
+            metadata=metadata,
+        )
+
+    def _agent_executor(self) -> Any:
+        if self._executor is None:
+            from graph_os.agent_runs import AgentRunPort
+
+            self._executor = AgentRunPort()
+        return self._executor
+
+    async def _run(
+        self,
+        work_engine: Any,
+        *,
+        item_id: str,
+        session: Any,
+        agent_name: str,
+        task: str,
+    ) -> None:
+        """Lease the WorkItem, run the agent through the harness, commit the outcome."""
+        from graph_os import work_items
+        from graph_os.api.contracts.agent_control_contracts import (
+            AgentExecutionRequest,
+        )
+
+        claim = await asyncio.to_thread(
+            work_items.claim_specific,
+            work_engine,
+            item_id,
+            token=f"graph-os-a2a:{item_id}",
+            lease_ttl_s=_RUN_LEASE_SECONDS,
+        )
+        if claim is None:
+            return
+        outcome, result_ref, error_ref = "succeeded", None, None
+        try:
+            result = await self._agent_executor().execute_agent(
+                AgentExecutionRequest(agent_name=agent_name, task=task),
+                session=session,
+            )
+            result_ref = persistence_reference(
+                "run", result.run_id, namespace="graph-os-a2a"
+            )
+        except Exception as exc:  # noqa: BLE001 - a failed run is a failed task
+            outcome = "failed"
+            error_ref = persistence_reference(
+                "error", type(exc).__name__, namespace="graph-os-a2a"
+            )
+        await asyncio.to_thread(
+            work_items.commit_result,
+            work_engine,
+            item_id,
+            claim,
+            outcome=outcome,
+            result_ref=result_ref,
+            error_ref=error_ref,
         )
 
     async def dispatch(
@@ -276,16 +349,39 @@ class WorkItemA2AAuthority:
         if item_id != self._work_item_id(task_id):
             raise RuntimeError("canonical A2A WorkItem returned an invalid identity")
 
-        raise not_served(
-            "knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605"
+        from graph_os import work_items
+
+        item = await asyncio.to_thread(work_items.get_work_item, work_engine, item_id)
+        if not isinstance(item, dict):
+            raise RuntimeError("canonical A2A WorkItem is unavailable after admission")
+        self._validate_existing(
+            item,
+            session=session,
+            owner_ref=owner_ref,
+            request_digest=request_digest,
         )
+        if created or item.get("status") not in _TERMINAL:
+            await self._run(
+                work_engine,
+                item_id=item_id,
+                session=session,
+                agent_name=decision.agent_name,
+                task=description,
+            )
+            refreshed = await asyncio.to_thread(
+                work_items.get_work_item, work_engine, item_id
+            )
+            if isinstance(refreshed, dict):
+                item = refreshed
+        return self._project(item, task_id=task_id)
 
     def _authorized_item(self, task_id: str, scope: str) -> dict[str, Any] | None:
-        self._session(scope)
+        from graph_os import work_items
+
+        session = self._session(scope)
         _engine, work_engine = self._engine()
-        raise not_served(
-            "knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605"
-        )
+        item = work_items.get_work_item(work_engine, self._work_item_id(task_id))
+        return item if self._owned(item, self._owner_ref(session)) else None
 
     @staticmethod
     def _timestamp(value: Any) -> str | None:
@@ -447,7 +543,17 @@ class WorkItemA2AAuthority:
             return self._project(item, task_id=task_id)
         if item.get("status") in _TERMINAL:
             raise A2ATaskNotCancelable("A2A task is not cancelable")
+        from graph_os import work_items
+
         _engine, work_engine = self._engine()
-        raise not_served(
-            "knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605"
+        item_id = self._work_item_id(task_id)
+        if not await asyncio.to_thread(
+            work_items.cancel_work_item, work_engine, item_id
+        ):
+            raise A2ATaskNotCancelable("A2A task is not cancelable")
+        current = await asyncio.to_thread(
+            work_items.get_work_item, work_engine, item_id
         )
+        if not isinstance(current, dict):
+            raise A2ATaskNotCancelable("A2A task is not cancelable")
+        return self._project(current, task_id=task_id)
