@@ -16,7 +16,7 @@ class LogReadRequest(BaseModel):
     limit: int = Field(default=128, ge=1, le=128)
 
 
-def _credential(request: Request) -> str:
+def host_log_credential(request: Request) -> str:
     if request.headers.getlist("cookie") or request.url.query:
         raise HTTPException(403, "workspace_denied")
     values = request.headers.getlist("authorization")
@@ -39,7 +39,7 @@ def register_host_log_routes(app: FastAPI, access: HostLogAccess | None) -> None
     @app.post("/host/logs/reference")
     async def reference(request: Request) -> dict:
         service = available()
-        credential = _credential(request)
+        credential = host_log_credential(request)
         try:
             async with asyncio.timeout(1):
                 value = await service.reference(credential)
@@ -49,12 +49,12 @@ def register_host_log_routes(app: FastAPI, access: HostLogAccess | None) -> None
             raise HTTPException(503, "log_unavailable") from None
         except Exception:  # noqa: BLE001 - owner failures must not expose log material
             raise HTTPException(503, "log_unavailable") from None
-        return {"log_ref": value}
+        return service.reference_binding(value)
 
     @app.post("/host/logs/read")
     async def read(request: Request, body: LogReadRequest) -> dict:
         service = available()
-        credential = _credential(request)
+        credential = host_log_credential(request)
         try:
             async with asyncio.timeout(1):
                 batch = await service.read(

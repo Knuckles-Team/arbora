@@ -166,7 +166,8 @@
     "GRAPHOS-HOST-R010.8",
     "GRAPHOS-HOST-R032",
     "GRAPHOS-HOST-R010.9",
-    "GRAPHOS-HOST-R009.7"
+    "GRAPHOS-HOST-R009.7",
+    "GRAPHOS-HOST-R009.8"
   ],
   "requirements": [
     {
@@ -1050,7 +1051,8 @@
         "GRAPHOS-HOST-R009.4",
         "GRAPHOS-HOST-R009.5",
         "GRAPHOS-HOST-R009.6",
-        "GRAPHOS-HOST-R009.7"
+        "GRAPHOS-HOST-R009.7",
+        "GRAPHOS-HOST-R009.8"
       ]
     },
     {
@@ -1571,6 +1573,18 @@
       ],
       "verified_by": [
         "tests/agent_host/test_log_access.py:2"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R009.8",
+      "title": "Production host log sink",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "191af7948d99"
+      ],
+      "verified_by": [
+        "tests/agent_host/test_log_sink.py:2",
+        "tests/agent_host/test_log_sink_terminal.py:6"
       ]
     }
   ]
