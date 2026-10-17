@@ -796,7 +796,7 @@
       "title": "Fail-closed fleet health evidence",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "75e56cc9d33c"
+        "62c0320da4f9"
       ],
       "verified_by": [
         "tests/fleet/test_health.py:19"
