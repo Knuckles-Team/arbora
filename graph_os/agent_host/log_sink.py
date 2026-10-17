@@ -15,7 +15,12 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from graph_os.agent_host.log_access import HostLogBatch, HostLogDenied, HostLogRecord
+from graph_os.agent_host.log_access import (
+    HostLogBatch,
+    HostLogDenied,
+    HostLogRecord,
+    valid_generations,
+)
 
 
 class WorkspaceLogSink:
@@ -38,7 +43,9 @@ class WorkspaceLogSink:
         self._pending: set[asyncio.Task] = set()
         self._records: dict[str, deque[tuple[int, HostLogRecord]]] = {}
         self._sequences: dict[str, int] = {}
-        self._cursors: OrderedDict[str, tuple[str, int]] = OrderedDict()
+        self._cursors: OrderedDict[str, tuple[str, tuple[str, ...], int]] = (
+            OrderedDict()
+        )
         self._closed = False
         self._directory = self._open_directory()
         try:
@@ -194,11 +201,18 @@ class WorkspaceLogSink:
         tenant: str,
         workspace: str,
         host_instance: str,
+        source_generations: tuple[str, ...],
         cursor: str | None,
         limit: int,
     ) -> HostLogBatch:
         return await self._submit(
-            self._read, tenant, workspace, host_instance, cursor, limit
+            self._read,
+            tenant,
+            workspace,
+            host_instance,
+            source_generations,
+            cursor,
+            limit,
         )
 
     def _read(
@@ -206,12 +220,14 @@ class WorkspaceLogSink:
         tenant: str,
         workspace: str,
         host_instance: str,
+        source_generations: tuple[str, ...],
         cursor: str | None,
         limit: int,
     ) -> HostLogBatch:
         with self._lock:
             if (
                 self._closed
+                or not valid_generations(source_generations)
                 or (workspace, host_instance) != (self.workspace, self.host_instance)
                 or not 1 <= limit <= 128
             ):
@@ -219,17 +235,19 @@ class WorkspaceLogSink:
             after = 0
             if cursor is not None:
                 binding = self._cursors.get(cursor)
-                if binding is None or binding[0] != tenant:
+                if binding is None or binding[:2] != (tenant, source_generations):
                     raise HostLogDenied("log_unavailable")
-                after = binding[1]
+                after = binding[2]
             rows = self._records.get(tenant, ())
             gap = bool(rows and after < rows[0][0] - 1)
             selected = [
-                (sequence, record) for sequence, record in rows if sequence > after
+                (sequence, record)
+                for sequence, record in rows
+                if sequence > after and record.host_instance in source_generations
             ][:limit]
             next_sequence = selected[-1][0] if selected else after
             opaque = secrets.token_urlsafe(24)
-            self._cursors[opaque] = (tenant, next_sequence)
+            self._cursors[opaque] = (tenant, source_generations, next_sequence)
             if len(self._cursors) > 4096:
                 self._cursors.popitem(last=False)
             return HostLogBatch(tuple(record for _, record in selected), opaque, gap)

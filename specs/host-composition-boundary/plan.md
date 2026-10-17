@@ -249,6 +249,10 @@ Keep bounded tenant projections and opaque tenant-local cursors; never return sh
 This slice uses controlled identity grants with a real sink and HTTP server.
 It does not prove deployed policy, durable replay after restart, terminal rendering or full host lifecycle acceptance.
 
+### Source generation admission
+
+R009.8.1 extends WorkspaceGrantProvider decisions with explicit source generations. Caller session identity cannot establish generation entitlement. R009.8.2 retains durable replay and metadata acceptance.
+
 ### Startup admission port
 
 R010.7.1 adds injected host.start policy and session-binding owners.

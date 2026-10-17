@@ -6,6 +6,7 @@ import json
 import os
 import time
 from dataclasses import replace
+from functools import partial
 from pathlib import Path
 
 import pytest
@@ -29,6 +30,7 @@ def test_redaction_rotation_and_private_projection(tmp_path: Path) -> None:
             tenant="tenant-a",
             workspace=str(tmp_path),
             host_instance="host-1",
+            source_generations=("host-1",),
             cursor=None,
             limit=128,
         )
@@ -42,6 +44,7 @@ def test_redaction_rotation_and_private_projection(tmp_path: Path) -> None:
                 tenant="tenant-b",
                 workspace=str(tmp_path),
                 host_instance="host-1",
+                source_generations=("host-1",),
                 cursor=batch.cursor,
                 limit=128,
             )
@@ -92,13 +95,15 @@ def runtime_for(
         for key, value in owners.states.items()
     }
     owners.change["expires_at_ms"] = expiry - 1000
-    return HostLogRuntime.compose(
+    runtime = HostLogRuntime.compose(
         sessions=owners,
         grants=owners,
         workspace=str(tmp_path),
         interface_mode="terminal",
         web_logs=enabled,
     )
+    owners.change["source_generations"] = (runtime.sink.host_instance,)
+    return runtime
 
 
 def test_real_http_request_reaches_production_sink_and_authorized_read(
@@ -197,6 +202,7 @@ def test_cancelled_writer_retains_admission_until_worker_finishes(
                     tenant="a",
                     workspace=str(tmp_path),
                     host_instance="host-1",
+                    source_generations=("host-1",),
                     cursor=None,
                     limit=128,
                 )
@@ -212,4 +218,33 @@ def test_cancelled_writer_retains_admission_until_worker_finishes(
         )
     finally:
         release.set()
+        sink.close()
+
+
+def test_cursor_binds_exact_source_generations(tmp_path: Path) -> None:
+    # spec: GRAPHOS-HOST-R009.8.1
+    sink = WorkspaceLogSink(str(tmp_path), "host-1")
+
+    async def exercise() -> None:
+        await sink.emit(tenant="tenant-a", request_id="one", message="safe")
+        source_read = partial(
+            sink.read,
+            tenant="tenant-a",
+            workspace=str(tmp_path),
+            host_instance="host-1",
+            limit=128,
+        )
+        batch = await source_read(source_generations=("host-1",), cursor=None)
+        assert len(batch.records) == 1
+        with pytest.raises(PermissionError):
+            await source_read(
+                source_generations=("host-1", "other"),
+                cursor=batch.cursor,
+            )
+        excluded = await source_read(source_generations=("other",), cursor=None)
+        assert excluded.records == ()
+
+    try:
+        asyncio.run(exercise())
+    finally:
         sink.close()
