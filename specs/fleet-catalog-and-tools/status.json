@@ -552,12 +552,15 @@
     {
       "id": "GRAPHOS-FLEET-R012",
       "title": "EG-direct binding generator with reviewed exclusions",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "4b83c69e2b41",
-        "68e31b75248a"
+        "68e31b75248a",
+        "cc8a618e0ce5"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_eg_binding.py:203"
+      ]
     },
     {
       "id": "GRAPHOS-FLEET-R013",
