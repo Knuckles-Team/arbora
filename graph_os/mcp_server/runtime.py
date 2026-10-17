@@ -172,7 +172,7 @@ def _resolve_verified_scope_actor(session):
     Returns ``None`` when no actor is bound. Raises when a bound,
     authenticated actor disagrees with the session's own actor.
     """
-    from agent_utilities.security.brain_context import (
+    from graph_os.security.actor_context import (
         IdentityRequiredError,
         current_actor,
     )
@@ -194,12 +194,11 @@ def verified_tool_session_scope():
     dispatch. The error surface deliberately omits principal, tenant, token,
     endpoint, and policy values.
     """
-    from agent_utilities.security.brain_context import use_actor
-
     from graph_os.api.contracts.session import (
         current_session,
         use_session,
     )
+    from graph_os.security.actor_context import use_actor
 
     ambient = current_session()
     session = ambient or _PROCESS_SESSION
@@ -424,9 +423,10 @@ def safe_json_load(s: Any) -> Any:
     return s
 
 
-from agent_utilities.security.error_surface import public_error_payload
 from starlette.requests import Request
 from starlette.responses import JSONResponse
+
+from graph_os.security.error_surface import public_error_payload
 
 
 def _external_failure_payload(

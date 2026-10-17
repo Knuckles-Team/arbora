@@ -112,7 +112,7 @@ def _resolve_alert_intake_token() -> str | None:
         logger.error("messaging alert-intake disabled: token reference is required")
         return None
     try:
-        from agent_utilities.security.secrets_client import create_secrets_client
+        from graph_os.security.secrets import create_secrets_client
 
         token = create_secrets_client().resolve_ref(token_ref)
     except Exception:  # never disclose provider/ref details

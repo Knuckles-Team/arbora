@@ -46,9 +46,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from agent_utilities.security.error_surface import public_error_payload
-from agent_utilities.security.persistence_privacy import persistence_reference
-from agent_utilities.security.threat_defense_engine import PromptInjectionScanner
+from agent_connector_sdk.privacy import persistence_reference
 from pydantic import BaseModel
 
 from graph_os.api.errors import not_served
@@ -64,6 +62,8 @@ from graph_os.mcp_server.backing.tool_specs import (
     READ_ONLY_ACTIONS,
     TOOL_VERBS,
 )
+from graph_os.security.error_surface import public_error_payload
+from graph_os.security.prompt_injection import PromptInjectionScanner
 
 logger = logging.getLogger(__name__)
 
@@ -2733,27 +2733,6 @@ async def _lakehouse_status(hints: dict[str, Any]) -> dict[str, Any]:
     read must never fail closed just because a dependency lane is mid-flight.
     """
     out: dict[str, Any] = {}
-    # Policy-bundle epoch — CA-26 extends permission_sync.py with the outbound
-    # policy-bundle apply (FO-CA-011); not yet landed as of this lane.
-    # ``getattr`` (not ``from ... import name``) deliberately: the function does
-    # not exist yet, so a static import would be an unconditional mypy
-    # attr-defined error rather than the runtime-optional lookup this status
-    # surface needs to degrade gracefully once CA-26 lands.
-    try:
-        import agent_utilities.protocols.source_connectors.permission_sync as _perm_sync
-
-        epoch_fn = getattr(_perm_sync, "current_policy_bundle_epoch", None)
-        if epoch_fn is None:
-            out["policy_bundle_epoch"] = {"status": "unavailable", "owner": "CA-26"}
-        else:
-            out["policy_bundle_epoch"] = epoch_fn()
-    except ImportError:
-        out["policy_bundle_epoch"] = {"status": "unavailable", "owner": "CA-26"}
-    except Exception as exc:  # noqa: BLE001 — status read is best-effort
-        out["policy_bundle_epoch"] = {
-            "status": "error",
-            "detail": type(exc).__name__,
-        }
     # Index-rebuild trigger — CA-24 already landed a REAL, working rebuild
     # (`graph_ingest` `action="opensearch_reindex"`, DEC-CA-09): this surfaces
     # it as discoverable status/how-to-call under `manage`, not a second

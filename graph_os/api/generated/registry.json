@@ -101,7 +101,7 @@
       "id": "access.elevation.approve",
       "idempotency": "none",
       "params": {
-        "model": "agent_utilities.security.elevation.ElevationApproval",
+        "model": "graph_os.security.elevation.ElevationApproval",
         "schema": {
           "additionalProperties": false,
           "description": "Approve the request whose digest the approver saw.",
@@ -130,7 +130,7 @@
       "principals": "human_undelegated",
       "remove_in": null,
       "result": {
-        "model": "agent_utilities.security.elevation.ElevationView",
+        "model": "graph_os.security.elevation.ElevationView",
         "schema": {
           "$defs": {
             "ElevationScope": {
@@ -559,7 +559,7 @@
       "principals": "any",
       "remove_in": null,
       "result": {
-        "model": "agent_utilities.security.elevation.ElevationView",
+        "model": "graph_os.security.elevation.ElevationView",
         "schema": {
           "$defs": {
             "ElevationScope": {
@@ -722,7 +722,7 @@
       "id": "access.elevation.revoke",
       "idempotency": "none",
       "params": {
-        "model": "agent_utilities.security.elevation.ElevationRevocation",
+        "model": "graph_os.security.elevation.ElevationRevocation",
         "schema": {
           "additionalProperties": false,
           "description": "End a requested or active elevation now.",
@@ -744,7 +744,7 @@
       "principals": "any",
       "remove_in": null,
       "result": {
-        "model": "agent_utilities.security.elevation.ElevationView",
+        "model": "graph_os.security.elevation.ElevationView",
         "schema": {
           "$defs": {
             "ElevationScope": {

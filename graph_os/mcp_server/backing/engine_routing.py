@@ -599,8 +599,9 @@ _TABULAR_QUERY_SERVICE_LOCK = threading.Lock()
 def _trino_principal_ref() -> str:
     """Resolve the current verified caller's opaque persistence reference."""
 
-    from agent_utilities.security.brain_context import current_actor
-    from agent_utilities.security.persistence_privacy import persistence_reference
+    from agent_connector_sdk.privacy import persistence_reference
+
+    from graph_os.security.actor_context import current_actor
 
     actor = current_actor()
     actor.ensure_credential_current()
@@ -857,7 +858,7 @@ def resolve_graph_targets(
     returns as-is: ``graph_not_found``/``graph_selection_conflict`` for a bad
     explicit graph, otherwise the resolution failure.
     """
-    from agent_utilities.security.error_surface import public_error_text
+    from graph_os.security.error_surface import public_error_text
 
     try:
         entries, errors, fanout = resolve(connection)
@@ -966,11 +967,11 @@ def fanout_error_label(exc: BaseException) -> str:
     the SAME ``"target_operation_failed"`` label as a genuinely rejected
     query — indistinguishable to a caller deciding whether to retry, exactly
     the defect BUG-048 fixed at the single-target boundary. Reuses
-    :func:`agent_utilities.security.error_surface.is_engine_degraded` — the
+    :func:`graph_os.security.error_surface.is_engine_degraded` — the
     one place this breaker-vs-rejection vocabulary is defined — rather than
     reimplementing it a third time.
     """
-    from agent_utilities.security.error_surface import is_engine_degraded
+    from graph_os.security.error_surface import is_engine_degraded
 
     return "target_degraded" if is_engine_degraded(exc) else "target_operation_failed"
 

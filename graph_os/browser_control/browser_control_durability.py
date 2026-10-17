@@ -7,7 +7,7 @@ import secrets
 from dataclasses import dataclass
 from typing import Any, cast
 
-from agent_utilities.security.persistence_privacy import persistence_reference
+from agent_connector_sdk.privacy import persistence_reference
 
 from graph_os.browser_control.browser_control_binding import (
     BINDING_PROPERTY_NAMES,

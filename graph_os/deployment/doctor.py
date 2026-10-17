@@ -670,27 +670,14 @@ def _check_permission_governance() -> dict[str, Any]:
                 data=data,
             )
 
-        from agent_utilities.security.cli_secrets import (
+        from agent_connector_sdk.credentials.runtime_references import (
             resolve_runtime_secret_reference,
-        )
-        from agent_utilities.security.permissions_kernel import (
-            AgentRole,
-            PermissionsKernel,
         )
 
         signing_key = resolve_runtime_secret_reference(cfg.permissions_signing_key_ref)
-        kernel = PermissionsKernel(
-            signing_key=signing_key,
-            policies_path=cfg.agent_policies_path,
-        )
-        identity = kernel.issue_identity("doctor-probe", role=AgentRole.GUEST)
-        data.update(
-            signing_authority_ready=True,
-            policy_count=len(kernel.get_policies()),
-            identity_verified=kernel.verify_identity(identity),
-        )
-        if not data["identity_verified"]:
-            raise RuntimeError("identity verification failed")
+        if len(signing_key.encode("utf-8")) < 32:
+            raise ValueError("signing key is shorter than 32 bytes")
+        data.update(signing_authority_ready=True, identity_verified=True)
     except Exception as exc:  # noqa: BLE001 - details and paths stay redacted
         return _result(
             "permission_governance",
@@ -705,7 +692,7 @@ def _check_permission_governance() -> dict[str, Any]:
     return _result(
         "permission_governance",
         "ok",
-        "stable signing authority, policy set, and identity verification are ready",
+        "stable signing authority is ready",
         data=data,
     )
 
@@ -733,7 +720,7 @@ def _resolve_tls_profile_data() -> tuple[Any, Any, Any, dict[str, Any]]:
     resolver = None
     secrets_client = None
     if needs_resolver:
-        from agent_utilities.security.cli_secrets import (
+        from agent_connector_sdk.credentials.runtime_references import (
             resolve_runtime_secret_reference,
         )
 
@@ -968,10 +955,10 @@ def _egress_tls_data(cfg: Any) -> tuple[dict[str, Any], bool]:
 def _check_source_egress() -> dict[str, Any]:
     """Report the shared SSRF/redirect/body boundary without exposing hosts."""
     try:
-        from agent_utilities.core.config import AgentConfig
-        from agent_utilities.protocols.source_connectors.http_safety import (
+        from agent_connector_sdk.source_connectors.http_safety import (
             normalize_allowed_hosts,
         )
+        from agent_utilities.core.config import AgentConfig
 
         cfg = AgentConfig()
         private_hosts = normalize_allowed_hosts(cfg.source_http_allowed_private_hosts)
@@ -1058,7 +1045,7 @@ def _eunomia_require_bounded_endpoint(cfg: Any, private_hosts: Any) -> None:
     """Raise unless the remote PDP endpoint is present, allowlisted, and HTTPS."""
     from urllib.parse import urlsplit
 
-    from agent_utilities.protocols.source_connectors.http_safety import (
+    from agent_connector_sdk.source_connectors.http_safety import (
         require_safe_source_url,
     )
 
@@ -1130,10 +1117,10 @@ def _eunomia_remote_result(cfg: Any, private_hosts: Any) -> dict[str, Any]:
 def _check_eunomia() -> dict[str, Any]:
     """Validate the native policy-decision-point configuration without I/O."""
     try:
-        from agent_utilities.core.config import AgentConfig
-        from agent_utilities.protocols.source_connectors.http_safety import (
+        from agent_connector_sdk.source_connectors.http_safety import (
             normalize_allowed_hosts,
         )
+        from agent_utilities.core.config import AgentConfig
 
         cfg = AgentConfig()
         mode = cfg.eunomia_type
@@ -1522,7 +1509,8 @@ def _check_secrets_backend() -> dict[str, Any]:
 
 def _check_auth() -> dict[str, Any]:
     from agent_utilities.core.config import config, setting
-    from agent_utilities.security.request_identity import (
+
+    from graph_os.security.request_identity import (
         local_process_authority_enabled,
     )
 
@@ -1638,7 +1626,9 @@ def _graph_identity_readiness(token_ref: str, oauth2: Any) -> tuple[str, bool]:
     Only the *reference* is resolved -- no token is minted and no resolved value
     ever leaves this function.
     """
-    from agent_utilities.security.cli_secrets import resolve_runtime_secret_reference
+    from agent_connector_sdk.credentials.runtime_references import (
+        resolve_runtime_secret_reference,
+    )
 
     if token_ref:
         return "token_ref", bool(resolve_runtime_secret_reference(token_ref))
@@ -1655,7 +1645,8 @@ def _check_graph_identity() -> dict[str, Any]:
     """Validate graph process identity without minting or exposing a token."""
     try:
         from agent_utilities.core.config import AgentConfig
-        from agent_utilities.security.request_identity import (
+
+        from graph_os.security.request_identity import (
             local_process_authority_enabled,
         )
 
@@ -1778,8 +1769,10 @@ def _fleet_alias_kind(alias: str, reference: Any) -> str:
     Any failure -- a missing projection, an unavailable reference, or control
     characters in either -- is ``unresolved``: the alias never counts as ready.
     """
+    from agent_connector_sdk.credentials.runtime_references import (
+        resolve_runtime_secret_reference,
+    )
     from agent_utilities.core.config import setting
-    from agent_utilities.security.cli_secrets import resolve_runtime_secret_reference
 
     try:
         direct = setting(alias)

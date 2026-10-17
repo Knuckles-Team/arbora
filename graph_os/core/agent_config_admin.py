@@ -41,7 +41,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from agent_utilities.security.config_sensitivity import (
+from graph_os.security.config_sensitivity import (
     configuration_key_is_sensitive,
     runtime_reference,
 )

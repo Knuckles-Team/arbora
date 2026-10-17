@@ -489,9 +489,8 @@ def test_http_local_bearer_bridge_passes_exact_token_to_owner(monkeypatch):
     import asyncio
     import time
 
-    from agent_utilities.security import request_identity
-
     from graph_os.api.http.auth import verify_local_bearer_request
+    from graph_os.security import request_identity
 
     now = int(time.time())
     result = request_identity.VerifiedLocalBearer(
@@ -527,12 +526,11 @@ def test_http_local_bearer_bridge_passes_exact_token_to_owner(monkeypatch):
 def test_http_local_bearer_bridge_rejects_ambiguous_credentials(monkeypatch):
     import asyncio
 
-    from agent_utilities.security import request_identity
-
     from graph_os.api.http.auth import (
         HTTPAuthenticationError,
         verify_local_bearer_request,
     )
+    from graph_os.security import request_identity
 
     async def unexpected(token):
         raise AssertionError("ambiguous credentials must not reach verification")
@@ -613,14 +611,13 @@ def browser_producer_path(monkeypatch):
     import base64
     import time
 
-    from agent_utilities.security.request_identity import VerifiedLocalBearer
-
     from graph_os.identity.admission import BrowserAdmission
     from graph_os.identity.broker import GraphOSBrowserAuthority
     from graph_os.identity.browser import csrf_token_for
     from graph_os.identity.engine import Resolution
     from graph_os.identity.issuer import IssuerSettings, LocalIssuer
     from graph_os.identity.ports import CredentialState, SessionState
+    from graph_os.security.request_identity import VerifiedLocalBearer
 
     now = int(time.time())
     session = SessionFixture()

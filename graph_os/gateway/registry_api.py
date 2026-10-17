@@ -586,7 +586,7 @@ def _cursor_token(
 ) -> str:
     """Mint an existing HMAC run token bound to the registry read scope."""
 
-    from agent_utilities.security.run_token import mint_token
+    from graph_os.security.run_token import mint_token
 
     if grant_digest is not None:
         grant_digests = (grant_digest,)
@@ -623,7 +623,7 @@ def _decode_cursor(
 ) -> tuple[str, str]:
     """Verify cursor integrity and bind it to this tenant/principal/filter."""
 
-    from agent_utilities.security.run_token import TokenError, validate_token
+    from graph_os.security.run_token import TokenError, validate_token
 
     try:
         decoded = validate_token(token, endpoint="registry", operation="read")
@@ -638,7 +638,7 @@ def _decode_cursor(
 
 
 def _check_cursor_authority(decoded: Any, *, tenant: str, principal: str) -> None:
-    from agent_utilities.security.run_token import TokenError
+    from graph_os.security.run_token import TokenError
 
     if decoded.tenant_id != tenant or decoded.actor_id != principal:
         raise TokenError("cursor authority mismatch")
@@ -651,7 +651,7 @@ def _check_cursor_binding(
     query: str,
     grant_digests: tuple[str, ...],
 ) -> None:
-    from agent_utilities.security.run_token import TokenError
+    from graph_os.security.run_token import TokenError
 
     payload_grants = payload.get("grant_digests")
     if not isinstance(payload_grants, list) or not all(
@@ -667,7 +667,7 @@ def _check_cursor_binding(
 
 
 def _cursor_after_position(payload: dict[str, Any]) -> tuple[str, str]:
-    from agent_utilities.security.run_token import TokenError
+    from graph_os.security.run_token import TokenError
 
     after = payload.get("after")
     if (
@@ -689,7 +689,7 @@ def _redact_text(value: Any) -> Any:
         # them and the route can return an explicit unavailable response.
         return value
     try:
-        from agent_utilities.security.persistence_privacy import PersistencePrivacyGuard
+        from agent_connector_sdk.privacy import PersistencePrivacyGuard
 
         safe, _ = PersistencePrivacyGuard().sanitize_text(value)
         return safe
@@ -815,7 +815,7 @@ def _catalog_service_session() -> Any:
     ``skills``/... tables once, under this process's own fixed
     ``automated_service`` identity (whatever actor is ambient when the
     scheduled ``fleet-tool-schema-sync`` job runs — which resolves through
-    the SAME :func:`~agent_utilities.security.request_identity.
+    the SAME :func:`~graph_os.security.request_identity.
     system_write_session` this function calls). Any OTHER verified actor —
     including a fully authorized human carrying ``kg:admin`` — therefore
     opens its OWN, always-empty private catalog on read and gets
@@ -841,9 +841,8 @@ def _catalog_service_session() -> Any:
     own), so an unguarded call would just hand back the caller's own session
     and fix nothing.
     """
-    from agent_utilities.security.request_identity import system_write_session
-
     from graph_os.api.contracts.session import suspend_session
+    from graph_os.security.request_identity import system_write_session
 
     with suspend_session():
         return system_write_session()

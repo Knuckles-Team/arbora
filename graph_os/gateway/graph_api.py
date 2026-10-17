@@ -230,7 +230,7 @@ def register_graph_routes(app, prefix: str = "/api") -> None:
     # Validates ``Authorization: Bearer`` via
     # the existing JWKS machinery, scopes the request to an authenticated
     # ActorContext + GraphSession, and rejects unauthenticated requests with 401.
-    from agent_utilities.security.request_identity import ActorIdentityMiddleware
+    from graph_os.security.request_identity import ActorIdentityMiddleware
 
     app.add_middleware(ActorIdentityMiddleware)
 

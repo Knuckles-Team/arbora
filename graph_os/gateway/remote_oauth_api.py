@@ -11,13 +11,13 @@ Mirrors :mod:`graph_os.gateway.research_api` /
 mounted by one call, :func:`register_remote_oauth_routes`, with the same
 FastAPI-``include_router``-else-plain-``add_route`` fallback those modules use.
 Per the gateway's own identity convention
-(:class:`agent_utilities.security.request_identity.ActorIdentityMiddleware`,
+(:class:`graph_os.security.request_identity.ActorIdentityMiddleware`,
 mounted by :func:`graph_os.gateway.graph_api.register_graph_routes`
 BEFORE any route is reachable), every route here runs behind the same
 server-minted, JWT-verified
-:class:`~agent_utilities.security.brain_context.ActorContext`
+:class:`~graph_os.security.actor_context.ActorContext`
 every other gateway route uses — resolved via
-:func:`agent_utilities.security.brain_context.current_actor`, NEVER from
+:func:`graph_os.security.actor_context.current_actor`, NEVER from
 request JSON or query parameters. ``code``/``state`` are handled as secrets:
 this module never logs them, never echoes them back in a response body, and
 never places them in a redirect target — the ONE redirect this module ever
@@ -210,7 +210,7 @@ def _oauth_error_response(
     """Raise an HTTPException with a sanitized public payload.
 
     Uses this repo's ONE public-failure boundary
-    (:func:`agent_utilities.security.error_surface.public_error_payload`) so a
+    (:func:`graph_os.security.error_surface.public_error_payload`) so a
     caller never sees more than a generic code/message while the real cause is
     still server-logged for correlation. None of this module's own exception
     messages ever interpolate ``code``/``state``/a token value in the first
@@ -218,7 +218,7 @@ def _oauth_error_response(
     :mod:`graph_os.mcp_server.backing.remote_oauth_broker`), so this is defense in
     depth, not the only thing standing between a secret and a response body.
     """
-    from agent_utilities.security.error_surface import public_error_payload
+    from graph_os.security.error_surface import public_error_payload
 
     payload = public_error_payload(exc, logger=logger, code=code)
     raise HTTPException(status_code=status_code, detail=payload) from None
@@ -226,7 +226,7 @@ def _oauth_error_response(
 
 def _resolve_verified_actor() -> Any:
     """The server-minted actor for THIS request, or a 401."""
-    from agent_utilities.security.brain_context import (
+    from graph_os.security.actor_context import (
         IdentityRequiredError,
         current_actor,
     )

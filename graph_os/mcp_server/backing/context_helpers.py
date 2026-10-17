@@ -15,7 +15,7 @@ import json
 import logging
 from typing import Any
 
-from agent_utilities.security.error_surface import public_error_payload
+from graph_os.security.error_surface import public_error_payload
 
 logger = logging.getLogger(__name__)
 

@@ -15,10 +15,9 @@ from agent_utilities.orchestration.action_policy import (
     PolicyDisposition,
     PolicyReceipt,
 )
-from agent_utilities.security.actor_identity import ActorType
-from agent_utilities.security.brain_context import ActorContext
 
 from graph_os.api.contracts.session import GraphSession
+from graph_os.security.actor_context import ActorContext, ActorType
 
 
 class FakeEgEngine:

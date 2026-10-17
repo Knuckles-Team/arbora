@@ -6,10 +6,10 @@ import json
 import logging
 from typing import Any
 
-from agent_utilities.security.error_surface import public_error_text
 from pydantic import BaseModel, Field
 
 from graph_os.mcp_server import runtime
+from graph_os.security.error_surface import public_error_text
 
 logger = logging.getLogger(__name__)
 

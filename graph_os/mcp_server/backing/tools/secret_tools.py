@@ -1,6 +1,6 @@
 """graph_secret MCP tool — engine-backed encrypted secret store (CONCEPT:AU-OS.identity.encrypted-secret-store).
 
-Thin wrapper over :class:`agent_utilities.security.secrets_client.SecretsClient`
+Thin wrapper over :class:`graph_os.security.secrets.SecretsClient`
 (the one core). Secret set/get/list/delete reach the durable, engine-encrypted
 ``__secrets__`` graph (or the enterprise Vault backend) through the same client
 that every Python import uses, so this surface never re-implements storage. The
@@ -80,7 +80,7 @@ def register_secret_tools(mcp):
             default="", description="Why this mutation is happening (audit trail)."
         ),
     ) -> str:
-        from agent_utilities.security.secrets_client import create_secrets_client
+        from graph_os.security.secrets import create_secrets_client
 
         client = create_secrets_client()
 

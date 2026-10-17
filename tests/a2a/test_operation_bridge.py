@@ -13,8 +13,6 @@ from typing import Any
 
 import httpx
 import pytest
-from agent_utilities.security.actor_identity import ActorType
-from agent_utilities.security.brain_context import ActorContext, CredentialLease
 from eunomia_core import schemas
 from fastapi import FastAPI
 
@@ -28,6 +26,7 @@ from graph_os.api.policy.eunomia import PolicyGate
 from graph_os.api.registry import Confirm, Surface, contract_admission
 from graph_os.api.registry.eg_binding import EgContractError
 from graph_os.mcp_server import runtime as mcp_runtime
+from graph_os.security.actor_context import ActorContext, ActorType, CredentialLease
 from tests.a2a.test_application import Authenticator, Authority, Router
 from tests.a2a.test_mcp import _Mcp
 from tests.api.test_invoke_contract import FixtureRuntime, operation, setup_services

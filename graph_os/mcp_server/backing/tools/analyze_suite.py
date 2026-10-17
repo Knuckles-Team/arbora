@@ -22,7 +22,6 @@ import json
 from typing import Annotated, Any
 
 from agent_utilities.models.evidence_bundle import EvidenceBundle
-from agent_utilities.security.error_surface import public_error_text
 from pydantic import Field
 
 from graph_os.gateway.schemas.graph_core import (
@@ -37,6 +36,7 @@ from graph_os.mcp_server.backing.tools._surface_selection import (
     register_conditional_tools,
 )
 from graph_os.mcp_server.backing.tools.analysis_tools import execute_focused_analysis
+from graph_os.security.error_surface import public_error_text
 
 _OptionalNodeId = Annotated[str, Field(description="Optional node id.")]
 _OptionalDepth = Annotated[int, Field(description="Optional depth.")]
@@ -243,8 +243,8 @@ def register_analyze_suite_tools(
             # keep working even when the engine the ORIGINAL failure came from
             # is unavailable (that is frequently WHY the caller is resolving
             # it in the first place).
-            from agent_utilities.security.brain_context import IdentityRequiredError
-            from agent_utilities.security.error_surface import (
+            from graph_os.security.actor_context import IdentityRequiredError
+            from graph_os.security.error_surface import (
                 resolve_error_detail_for_actor,
             )
 

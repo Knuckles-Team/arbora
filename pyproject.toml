@@ -27,6 +27,8 @@ dependencies = [
     "eunomia-core>=0.3.10",
     "httpx>=0.28.1",
     "pyjwt>=2.15.1",
+    # graph_os.security.auth verifies bearer JWTs against the issuer's JWKS.
+    "joserfc>=1.7.5",
     "python-multipart>=0.0.32",
     # GraphOS is the deployment composition root for connector workers.  The
     # SDK owns source transport and runner construction; GraphOS supplies its
@@ -117,6 +119,8 @@ gateway-widgets = [
 # (Discord, Slack, WhatsApp, Teams, Google Chat/Meet, Matrix, IRC, Signal,
 # iMessage, LINE, Twitch, Synology Chat, voice calls, Nextcloud Talk) follow
 # the same adapter shape and remain to be landed.
+# graph_os.security.secrets: the KV v2 secret store backend.
+vault = ["hvac>=2.4.0"]
 messaging-telegram = ["python-telegram-bot>=22.8"]
 messaging-mattermost = ["mattermostdriver>=7.3.2"]
 messaging = [

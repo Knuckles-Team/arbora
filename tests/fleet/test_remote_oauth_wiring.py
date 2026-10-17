@@ -27,9 +27,6 @@ import time
 from unittest.mock import MagicMock
 
 import pytest
-from agent_utilities.security.actor_identity import ActorType
-from agent_utilities.security.brain_context import ActorContext, use_actor
-from agent_utilities.security.secrets_client import SecretsClient
 
 from graph_os.api.contracts.session import (
     GraphSession,
@@ -50,6 +47,8 @@ from graph_os.mcp_server.backing.remote_oauth_broker import (
     RemoteOAuthBroker,
     StoredToken,
 )
+from graph_os.security.actor_context import ActorContext, ActorType, use_actor
+from graph_os.security.secrets import SecretsClient
 from tests._support import FakeSecretsBackend
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 

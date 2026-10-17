@@ -181,9 +181,9 @@ def _live_streamable_http_server(
     # guard regardless of what engine backend is available in CI.
     @mcp.tool(name="_e2e_identity_probe")
     def _e2e_identity_probe() -> str:
-        from agent_utilities.security.brain_context import current_actor
 
         from graph_os.api.contracts.session import current_session
+        from graph_os.security.actor_context import current_actor
 
         actor = current_actor()
         session = current_session()

@@ -237,7 +237,7 @@ def test_unknown_auth_type_refuses():
 # ---------------------------------------------------------------------------
 def test_jwt_oidc_discovery_fills_missing_jwks_uri(monkeypatch):
     monkeypatch.setattr(
-        "agent_utilities.security.oidc_discovery.jwks_uri_for",
+        "graph_os.security.oidc_discovery.jwks_uri_for",
         lambda issuer: f"{issuer}/jwks",
     )
     args = _base_args(
@@ -326,7 +326,7 @@ def test_jwt_hmac_secret_resolved(monkeypatch):
     mock_client = MagicMock()
     mock_client.resolve_ref.return_value = "x" * 40
     monkeypatch.setattr(
-        "agent_utilities.security.secrets_client.create_secrets_client",
+        "graph_os.security.secrets.create_secrets_client",
         lambda: mock_client,
     )
     args = _base_args(

@@ -1808,7 +1808,7 @@ def test_require_fleet_capability_denies_stdio_caller_missing_the_exact_scope():
     """A verified stdio actor that lacks the fleet's own ``mcp:discover``
     scope is refused the same way a remote caller without it would be --
     being local carries no implicit discovery/delegation grant."""
-    from agent_utilities.security.brain_context import ActorContext, use_actor
+    from graph_os.security.actor_context import ActorContext, use_actor
 
     actor = ActorContext(
         actor_id="stdio-caller",
@@ -1827,7 +1827,7 @@ def test_require_fleet_capability_allows_stdio_caller_with_exact_scope():
     fleet's own ``mcp:discover`` scope passes -- the same outcome an
     equally-scoped remote caller gets, proving local stdio runs through the
     identical check rather than a separate, more permissive one."""
-    from agent_utilities.security.brain_context import ActorContext, use_actor
+    from graph_os.security.actor_context import ActorContext, use_actor
 
     actor = ActorContext(
         actor_id="stdio-caller",

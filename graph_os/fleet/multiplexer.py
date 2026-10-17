@@ -85,8 +85,6 @@ ToolResult = _fastmcp_tools.ToolResult
 import agent_utilities.core.resource_priority as _resource_priority
 from agent_utilities.core.capability_contract import Capability
 from agent_utilities.core.config import setting
-from agent_utilities.security.error_surface import public_error_text
-from agent_utilities.security.log_redaction import redact_for_log
 from mcp.client.sse import sse_client
 from mcp.client.streamable_http import streamable_http_client
 
@@ -98,6 +96,8 @@ from graph_os.fleet.local_skill_catalog import (
     missing_core_pack_names,
 )
 from graph_os.fleet.session_notifications import SessionCatalogNotifications
+from graph_os.security.error_surface import public_error_text
+from graph_os.security.log_redaction import redact_for_log
 
 # Direct all logs to stderr so stdout remains perfectly clean for stdio JSON-RPC
 logging.basicConfig(
@@ -443,7 +443,7 @@ def _resolve_fleet_runtime_reference(reference: str) -> str:
     elif _STORE_RUNTIME_REF_RE.fullmatch(reference) is None:
         raise RuntimeError("MCP child runtime reference is invalid")
 
-    from agent_utilities.security.cli_secrets import (
+    from agent_connector_sdk.credentials.runtime_references import (
         resolve_runtime_secret_reference,
     )
 
@@ -1371,7 +1371,7 @@ def _stdio_capabilities() -> frozenset[str]:
     unauthenticated actor is refused exactly like an unauthenticated remote
     caller — stdio carries no implicit trust.
     """
-    from agent_utilities.security.brain_context import current_actor
+    from graph_os.security.actor_context import current_actor
 
     try:
         actor = current_actor()
@@ -1398,8 +1398,9 @@ def _http_capabilities(token: _typing.Any) -> frozenset[str]:
     claims = getattr(token, "claims", None)
     if isinstance(claims, dict):
         try:
-            import agent_utilities.security.identity as _identity
             from agent_utilities.core.config import config
+
+            import graph_os.security.identity as _identity
 
             capabilities.update(
                 _identity.base_capabilities(
@@ -1882,7 +1883,7 @@ def _resolve_remote_oauth_bearer(
     Returns ``None`` when the child is not OAuth-gated (the existing
     service-credential/static-header path proceeds completely unchanged).
     When gated, resolves the VERIFIED current actor
-    (:func:`agent_utilities.security.brain_context.current_actor` -- the same
+    (:func:`graph_os.security.actor_context.current_actor` -- the same
     server-minted identity every other authorization decision in this gateway
     uses, never a caller-supplied string) and mints a bearer bound to the
     EXACT registered resource endpoint via
@@ -1895,7 +1896,7 @@ def _resolve_remote_oauth_bearer(
     """
     if not _oauth_gated(cfg):
         return None
-    from agent_utilities.security.brain_context import current_actor
+    from graph_os.security.actor_context import current_actor
 
     actor = current_actor()  # IdentityRequiredError (PermissionError) -> fail closed
     broker, descriptor = _remote_oauth_broker_for(cfg["oauth_provider"])
@@ -1911,7 +1912,7 @@ def _resolve_remote_oauth_grant(
 
     if not _oauth_gated(cfg):
         return None
-    from agent_utilities.security.brain_context import current_actor
+    from graph_os.security.actor_context import current_actor
 
     actor = current_actor()
     broker, descriptor = _remote_oauth_broker_for(cfg["oauth_provider"])

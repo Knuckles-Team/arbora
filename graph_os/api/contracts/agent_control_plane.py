@@ -11,7 +11,6 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Annotated, Any, Literal
 
-from agent_utilities.security.error_surface import public_error_payload
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator
 
 from graph_os.api.contracts.agent_control_contracts import (
@@ -40,6 +39,7 @@ from graph_os.api.contracts.agent_control_contracts import (
 )
 from graph_os.api.contracts.session import GraphSession, resolve_session
 from graph_os.api.errors import not_served
+from graph_os.security.error_surface import public_error_payload
 
 type _RequiredScope = Literal["kg:read", "kg:write"]
 type _OperationSpec = tuple[

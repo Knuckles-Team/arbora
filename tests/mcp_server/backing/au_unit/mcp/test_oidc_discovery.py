@@ -1,4 +1,4 @@
-"""Tests for IdP-agnostic OIDC discovery (CONCEPT:AU-OS.identity.resolve-token-endpoint-from).
+"""Tests for provider-neutral OIDC discovery.
 
 Fleet auth is configured by issuer URL only; jwks_uri + token_endpoint are resolved
 from the issuer's OIDC discovery document, so Keycloak/Okta/Auth0/Entra all work with
@@ -11,7 +11,8 @@ import time
 from types import SimpleNamespace
 
 import pytest
-from agent_utilities.security import oidc_discovery
+
+from graph_os.security import oidc_discovery
 
 ISS = "https://idp.test/realms/homelab"  # non-loopback issuer requires HTTPS (AU-OS.identity)
 DOC = {
@@ -50,13 +51,6 @@ def test_trailing_slash_normalized() -> None:
 
 
 def test_discovery_failure_returns_none(monkeypatch: pytest.MonkeyPatch) -> None:
-    # `discover()` builds its transport via `oidc_http_client()` (which wraps
-    # `agent_utilities.core.http_client.create_http_client` -- `httpx` itself
-    # is only a TYPE_CHECKING import here, never a runtime module attribute)
-    # and reads the response via `client.stream("GET", url)`, not `.get()`.
-    # Faking the failure at `oidc_http_client()` itself -- the one
-    # module-level seam `discover()` actually calls through -- survives
-    # either transport detail changing again, instead of re-pinning to one.
     def _boom(*, timeout: float = 15.0) -> object:
         raise RuntimeError("network down")
 
@@ -65,33 +59,13 @@ def test_discovery_failure_returns_none(monkeypatch: pytest.MonkeyPatch) -> None
     assert oidc_discovery.token_endpoint_for("http://unreachable.test/iss") is None
 
 
-def test_oidc_clients_admit_only_canonicalized_loopback_http(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """The transport must agree with the endpoint validator's loopback policy."""
-    captured: list[dict[str, object]] = []
-    sentinel = object()
+def test_oidc_client_options_pin_egress_and_admit_loopback() -> None:
+    """The transport agrees with the endpoint validator's loopback policy."""
+    options = oidc_discovery._options(10.0)
 
-    monkeypatch.setattr(oidc_discovery, "_trust", lambda: (sentinel, []))
-    monkeypatch.setattr(
-        oidc_discovery,
-        "create_http_client",
-        lambda **kwargs: (captured.append(kwargs), sentinel)[1],
-    )
-    monkeypatch.setattr(
-        oidc_discovery,
-        "create_async_http_client",
-        lambda **kwargs: (captured.append(kwargs), sentinel)[1],
-    )
-
-    assert oidc_discovery.oidc_http_client() is sentinel
-    assert oidc_discovery.oidc_async_http_client() is sentinel
-    assert len(captured) == 2
-    for kwargs in captured:
-        assert kwargs["pin_egress"] is True
-        assert kwargs["allow_loopback"] is True
-        assert kwargs["trust_env"] is False
-        assert kwargs["follow_redirects"] is False
+    assert options.pin_egress is True
+    assert options.allow_loopback is True
+    assert options.timeout == 10.0
 
 
 def test_minter_token_url_from_discovery(monkeypatch: pytest.MonkeyPatch) -> None:

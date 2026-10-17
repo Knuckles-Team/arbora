@@ -11,12 +11,8 @@ import re
 from collections.abc import Callable
 from typing import Any
 
+from agent_connector_sdk.privacy import persistence_reference
 from agent_utilities.core.event_loop import run_blocking_ordered
-from agent_utilities.security.error_surface import (
-    public_error_json,
-    public_error_text,
-)
-from agent_utilities.security.persistence_privacy import persistence_reference
 from pydantic import Field
 
 from graph_os.api.errors import not_served
@@ -24,6 +20,10 @@ from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
 from graph_os.mcp_server.backing.context_helpers import coerce_dict_param
 from graph_os.mcp_server.backing.write_ingest_types import IngestRequest
+from graph_os.security.error_surface import (
+    public_error_json,
+    public_error_text,
+)
 
 _OPAQUE_NODE_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,255}\Z")
 

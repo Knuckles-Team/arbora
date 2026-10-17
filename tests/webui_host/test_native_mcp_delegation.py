@@ -11,11 +11,6 @@ from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
-from agent_utilities.security.brain_context import (
-    ActorContext,
-    current_actor,
-    use_actor,
-)
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
 
@@ -24,6 +19,11 @@ from graph_os.fleet.multiplexer import _MAX_DELEGATED_VALUE_BYTES
 from graph_os.fleet.shared_multiplexer import _reset_served_multiplexer_for_tests
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.middlewares import ActorContextMiddleware
+from graph_os.security.actor_context import (
+    ActorContext,
+    current_actor,
+    use_actor,
+)
 from graph_os.webui_host.mcp_delegation import webui_mcp_delegation_helpers
 from tests.fleet.test_shared_multiplexer_loop import _LoopOwner
 

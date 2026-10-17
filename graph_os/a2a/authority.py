@@ -9,7 +9,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any, Protocol, runtime_checkable
 
-from agent_utilities.security.persistence_privacy import persistence_reference
+from agent_connector_sdk.privacy import persistence_reference
 
 from graph_os.api.errors import not_served
 

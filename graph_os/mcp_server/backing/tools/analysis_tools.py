@@ -20,30 +20,30 @@ from agent_utilities.orchestration.response_format import (
     ResponseFormat,
     validate_response_format,
 )
-from agent_utilities.security.config_sensitivity import (
-    ENDPOINT_KEY_PARTS as _ENDPOINT_MCP_KEY_PARTS,
-)
-from agent_utilities.security.config_sensitivity import (
-    PATH_KEY_PARTS as _PATH_MCP_KEY_PARTS,
-)
-from agent_utilities.security.config_sensitivity import (
-    SENSITIVE_KEY_PARTS as _SENSITIVE_MCP_KEY_PARTS,
-)
-from agent_utilities.security.config_sensitivity import (
-    configuration_key_is_sensitive as _configuration_key_is_sensitive,
-)
-from agent_utilities.security.config_sensitivity import (
-    normalised_key_parts as _normalised_key_parts,
-)
-from agent_utilities.security.config_sensitivity import (
-    runtime_reference as _runtime_reference,
-)
-from agent_utilities.security.error_surface import public_error_json, public_error_text
 from pydantic import Field
 
 from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
+from graph_os.security.config_sensitivity import (
+    ENDPOINT_KEY_PARTS as _ENDPOINT_MCP_KEY_PARTS,
+)
+from graph_os.security.config_sensitivity import (
+    PATH_KEY_PARTS as _PATH_MCP_KEY_PARTS,
+)
+from graph_os.security.config_sensitivity import (
+    SENSITIVE_KEY_PARTS as _SENSITIVE_MCP_KEY_PARTS,
+)
+from graph_os.security.config_sensitivity import (
+    configuration_key_is_sensitive as _configuration_key_is_sensitive,
+)
+from graph_os.security.config_sensitivity import (
+    normalised_key_parts as _normalised_key_parts,
+)
+from graph_os.security.config_sensitivity import (
+    runtime_reference as _runtime_reference,
+)
+from graph_os.security.error_surface import public_error_json, public_error_text
 
 logger = logging.getLogger(__name__)
 
@@ -1946,22 +1946,17 @@ _ANALYSIS_ACTION_DISPATCH = {
 
 def _configure_action_set_secret(action, config_key, config_value):
     # action(s): 'set_secret'
-    from agent_utilities.security.secrets_client import (
+    from graph_os.security.secrets import (
         create_secrets_client,
     )
-    from agent_utilities.security.xai_auth import get_secrets_client_for_xai
 
-    if config_key.startswith("xai/"):
-        client = get_secrets_client_for_xai()
-    else:
-        client = create_secrets_client()
-    client.set(config_key, config_value)
+    create_secrets_client().set(config_key, config_value)
     return json.dumps({"status": "success", "action": "set_secret", "stored": True})
 
 
 def _configure_action_vault_sync(action, config_key, config_value):
     # action(s): 'vault_sync'
-    from agent_utilities.security.secrets_client import (
+    from graph_os.security.secrets import (
         create_secrets_client,
     )
 
@@ -2126,7 +2121,7 @@ def _configure_mapping_approve(config_key, config_value, store):
 
 def _configure_mapping_approve_status(action, config_key, config_value, registry):
     # action(s): 'approve_connection_mapping', 'connection_mapping_status'
-    from agent_utilities.security.secrets_client import (
+    from graph_os.security.secrets import (
         create_secrets_client,
     )
 
@@ -2631,7 +2626,7 @@ def _configure_profile_propose_default(
 
 def _configure_mapping_profile_flow(action, config_key, config_value, registry):
     # action(s): 'discover_connection_schema', 'external_graph_doctor', 'profile_connection', 'propose_connection_mapping'
-    from agent_utilities.security.secrets_client import (
+    from graph_os.security.secrets import (
         create_secrets_client,
     )
 

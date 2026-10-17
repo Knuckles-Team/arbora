@@ -26,9 +26,6 @@ from typing import Any
 
 import httpx
 import pytest
-from agent_utilities.security.actor_identity import ActorType
-from agent_utilities.security.brain_context import ActorContext
-from agent_utilities.security.secrets_client import SecretsClient
 
 from graph_os.fleet.discovery_authority import OAuthGrantBinding
 from graph_os.mcp_server.backing.remote_oauth_broker import (
@@ -50,6 +47,8 @@ from graph_os.mcp_server.backing.remote_oauth_broker import (
     discover_authorization_server,
     discover_protected_resource,
 )
+from graph_os.security.actor_context import ActorContext, ActorType
+from graph_os.security.secrets import SecretsClient
 from tests._support import FakeSecretsBackend
 
 RESOURCE_URL = "https://mcp.example.com/remote"

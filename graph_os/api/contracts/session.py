@@ -2,10 +2,10 @@
 
 Identity, policy, placement, and trace originate in distinct subsystems:
 
-* :class:`~agent_utilities.security.brain_context.ActorContext` carries *who*
+* :class:`~graph_os.security.actor_context.ActorContext` carries *who*
   (``actor_id``/``actor_type``/``roles``/``tenant_id``/``authenticated``), set
-  ambiently via :func:`~agent_utilities.security.brain_context.use_actor` /
-  :func:`~agent_utilities.security.brain_context.current_actor`.
+  ambiently via :func:`~graph_os.security.actor_context.use_actor` /
+  :func:`~graph_os.security.actor_context.current_actor`.
 * :mod:`agent_utilities.observability.correlation` carries *what run this is
   part of* (the W3C ``traceparent`` / correlation id), also ambient.
 * Policy (``action_policy``/``permissioning``) is resolved per-call with no
@@ -38,7 +38,8 @@ from dataclasses import dataclass, field, replace
 from typing import Any
 
 from agent_utilities.core.resource_priority import current_priority
-from agent_utilities.security.brain_context import (
+
+from graph_os.security.actor_context import (
     ActorContext,
     CredentialExpiredError,
 )
@@ -314,7 +315,7 @@ class GraphSession:
         # regression here (a renamed/omitted required claim, an unrecognized
         # extra key) is exactly the class of defect that would otherwise only
         # surface as an opaque engine-side `deny_unknown_fields` rejection.
-        from agent_utilities.security.request_identity import validate_carrier_claims
+        from graph_os.security.request_identity import validate_carrier_claims
 
         validate_carrier_claims(context)
         return context
@@ -343,7 +344,7 @@ class GraphSession:
         pass-through, not a signing concern.
         """
         try:
-            from agent_utilities.security.delegation import current_delegation
+            from graph_os.security.delegation import current_delegation
         except Exception:  # noqa: BLE001 — delegation layer optional at import time
             return
         delegation = current_delegation()
@@ -415,7 +416,7 @@ class GraphSession:
 
 
 # ---------------------------------------------------------------------------
-# Ambient propagation — mirrors agent_utilities.security.brain_context
+# Ambient propagation — mirrors graph_os.security.actor_context
 # ---------------------------------------------------------------------------
 _current: contextvars.ContextVar[GraphSession | None] = contextvars.ContextVar(
     "graph_session", default=None

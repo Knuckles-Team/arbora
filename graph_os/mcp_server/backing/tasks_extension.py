@@ -244,7 +244,7 @@ def _mint_delegation_token(
 ) -> str:
     """Mint a short-lived, shared-secret run token for one task request."""
 
-    from agent_utilities.security.run_token import mint_token
+    from graph_os.security.run_token import mint_token
 
     binding = _delegation_binding(
         method,
@@ -768,7 +768,7 @@ class WorkItemTasksExtension(ServerExtension):
             claims = getattr(token, "claims", None) if token is not None else None
             if not isinstance(claims, Mapping) or not claims:
                 raise PermissionError("Verified graph authority is required")
-            from agent_utilities.security.request_identity import (
+            from graph_os.security.request_identity import (
                 actor_from_claims,
                 mint_graph_session,
             )
@@ -866,7 +866,7 @@ class WorkItemTasksExtension(ServerExtension):
 
     @staticmethod
     def _delegator_capabilities(token: Any, identity: Any, config: Any) -> set[str]:
-        from agent_utilities.security.identity import base_capabilities
+        from graph_os.security.identity import base_capabilities
 
         capabilities = {
             str(scope).strip()
@@ -893,7 +893,8 @@ class WorkItemTasksExtension(ServerExtension):
         resolution itself fails."""
         try:
             from agent_utilities.core.config import config
-            from agent_utilities.security.identity import normalize_identity
+
+            from graph_os.security.identity import normalize_identity
 
             identity = normalize_identity(claims)
             issuers = WorkItemTasksExtension._configured_issuers()
@@ -1125,7 +1126,7 @@ class WorkItemTasksExtension(ServerExtension):
 
     def _decode_delegation_token(self, token: str, method: str) -> Any:
         try:
-            from agent_utilities.security.run_token import validate_token
+            from graph_os.security.run_token import validate_token
 
             return validate_token(
                 token,

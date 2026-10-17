@@ -56,12 +56,12 @@ import re
 import threading
 from typing import Any
 
-from agent_utilities.security.error_surface import public_error_json
 from pydantic import Field
 
 from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
+from graph_os.security.error_surface import public_error_json
 
 logger = logging.getLogger(__name__)
 

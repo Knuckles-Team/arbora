@@ -67,7 +67,8 @@ def _mint_process_session(transport: str) -> Any:
     header.
     """
     from agent_utilities.core.config import config
-    from agent_utilities.security.request_identity import (
+
+    from graph_os.security.request_identity import (
         acquire_process_identity_token,
         local_process_authority_enabled,
         mint_actor_from_token_sync,
@@ -80,7 +81,7 @@ def _mint_process_session(transport: str) -> Any:
     else:
         token = acquire_process_identity_token(config)
         actor = mint_actor_from_token_sync(token)
-        from agent_utilities.security.brain_context import CredentialLease
+        from graph_os.security.actor_context import CredentialLease
 
         expires_at = getattr(actor, "credential_expires_at", None)
         if expires_at is None:
@@ -111,7 +112,7 @@ def _same_process_authority(left: Any, right: Any) -> bool:
 
 
 def _renewed_process_actor(config: Any) -> Any:
-    from agent_utilities.security.request_identity import (
+    from graph_os.security.request_identity import (
         acquire_process_identity_token,
         local_process_authority_enabled,
         mint_actor_from_token_sync,
@@ -283,7 +284,7 @@ async def authority_keepalive_scope(session: Any | None = None) -> AsyncIterator
     * Only a server-minted, renewable ``credential_lease`` is ever proactively
       renewed. A caller-presented bearer JWT carries no ``credential_lease`` and
       is never touched here — it stays exactly as fail-closed as before.
-    * The SAME mutable :class:`~agent_utilities.security.brain_context.CredentialLease`
+    * The SAME mutable :class:`~graph_os.security.actor_context.CredentialLease`
       object the session already holds is renewed in place, so every downstream
       authority check (``GraphSession.ensure_authority_current``, e.g.
       ``graph_compute.py``'s ``_invoke_at``) sees it transparently — no session

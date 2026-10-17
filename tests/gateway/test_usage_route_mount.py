@@ -11,12 +11,11 @@ agent_utilities/tests/unit/test_usage_api.py's authorization tests.
 
 from __future__ import annotations
 
-from agent_utilities.security.actor_identity import ActorType
-from agent_utilities.security.brain_context import ActorContext, use_actor
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from graph_os.gateway.usage_api import register_usage_routes
+from graph_os.security.actor_context import ActorContext, ActorType, use_actor
 
 
 def _app() -> FastAPI:

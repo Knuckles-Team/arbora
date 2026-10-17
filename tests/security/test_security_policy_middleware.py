@@ -1,8 +1,6 @@
 """Conformance tests for graph_os.security.security_policy_middleware.
 
-GRAPHOS-HOST-R008: the agent runtime declared no test for this module
-before it moved (``agent_utilities.security.security_policy_middleware``
-had zero importers and zero tests), so these are new, not ported.
+GRAPHOS-HOST-R008: the module had no tests before it moved, so these are new.
 """
 
 from __future__ import annotations

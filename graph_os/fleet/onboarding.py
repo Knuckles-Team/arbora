@@ -455,9 +455,8 @@ class FleetOnboardingService:
             yield
 
     def run_forever(self) -> None:
-        from agent_utilities.security.brain_context import use_actor
-
         from graph_os.api.contracts.session import use_session
+        from graph_os.security.actor_context import use_actor
 
         session = self.onboarding.session
         with use_actor(session.actor), use_session(session):

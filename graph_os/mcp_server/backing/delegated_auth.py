@@ -81,7 +81,7 @@ def _post_token(
     timeout: int = 30,
 ) -> dict[str, Any]:
     """POST one bounded token request through the canonical OIDC transport."""
-    from agent_utilities.security.oidc_discovery import (
+    from graph_os.security.oidc_discovery import (
         canonical_oidc_endpoint,
         oidc_http_client,
     )
@@ -152,7 +152,7 @@ def get_user_identity() -> dict[str, Any]:
     subject = claims.get("sub") or claims.get("client_id") or claims.get("azp")
     if not subject:
         return {"identity_ref": "", "has_claims": bool(claims)}
-    from agent_utilities.security.persistence_privacy import persistence_reference
+    from agent_connector_sdk.privacy import persistence_reference
 
     return {
         "identity_ref": persistence_reference("delegated_actor", subject),
@@ -313,7 +313,7 @@ def exchange_token_for_agent(
     captured by ``UserTokenMiddleware``) is exchanged for a delegated access token whose logical
     actor (``act``) chain appends ``agent:<name>`` — the spawned agent (``agent_label``, e.g.
     ``agent:researcher:run-…``) as the acting party. The authoritative on-behalf-of chain is the
-    engine envelope's ``delegation`` array (built in :mod:`agent_utilities.security.delegation`);
+    engine envelope's ``delegation`` array (built in :mod:`graph_os.security.delegation`);
     this returns the exchanged token that rides the envelope's ``oidc_token`` field so the engine
     cryptographically binds the *delegated* principal.
 
@@ -416,7 +416,7 @@ def get_3lo_authorization_url(
     """
     from urllib.parse import urlencode
 
-    from agent_utilities.security.oidc_discovery import canonical_oidc_endpoint
+    from graph_os.security.oidc_discovery import canonical_oidc_endpoint
 
     endpoint = canonical_oidc_endpoint(
         authorization_endpoint, field="authorization endpoint"
@@ -481,7 +481,7 @@ def exchange_authorization_code(
     RuntimeError
         If the code exchange fails.
     """
-    from agent_utilities.security.oidc_discovery import canonical_oidc_endpoint
+    from graph_os.security.oidc_discovery import canonical_oidc_endpoint
 
     token_endpoint = canonical_oidc_endpoint(token_endpoint, field="token endpoint")
     redirect_uri = canonical_oidc_endpoint(redirect_uri, field="redirect URI")
@@ -543,7 +543,7 @@ def refresh_access_token(
         Token response containing a new ``access_token`` and potentially
         a new ``refresh_token``.
     """
-    from agent_utilities.security.oidc_discovery import canonical_oidc_endpoint
+    from graph_os.security.oidc_discovery import canonical_oidc_endpoint
 
     token_endpoint = canonical_oidc_endpoint(token_endpoint, field="token endpoint")
     client_id = _bounded_text(client_id, field="OAuth client ID", maximum=512)

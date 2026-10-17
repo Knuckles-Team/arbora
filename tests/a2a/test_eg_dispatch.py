@@ -13,7 +13,6 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from agent_utilities.security import request_identity
 from epistemic_graph import EngineResponseError
 from pydantic import BaseModel, ConfigDict, RootModel
 
@@ -31,6 +30,7 @@ from graph_os.api.registry import (
     Surface,
     Verb,
 )
+from graph_os.security import request_identity
 from tests.a2a._support import authenticated_operation_app
 from tests.a2a.test_operation_bridge import DenyPolicy, post, session
 from tests.a2a.test_request_session_authority import fixture as request_fixture

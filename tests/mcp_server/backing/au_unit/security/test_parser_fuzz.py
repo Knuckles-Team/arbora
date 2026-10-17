@@ -5,16 +5,16 @@ from __future__ import annotations
 import random
 import string
 
-from agent_utilities.security.cli_secrets import (
+from agent_connector_sdk.credentials.runtime_references import (
     RuntimeSecretReferenceError,
     _validated_reference,
 )
-from agent_utilities.security.http_boundary import parse_cidrs
 
 from graph_os.mcp_server.backing.server_factory import (
     _FILTER_VALUE_RE,
     _bounded_filter_values,
 )
+from graph_os.security.http_boundary import parse_cidrs
 
 _SEED = 0xA63E17
 _ALPHABET = (

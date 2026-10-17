@@ -20,9 +20,8 @@ import asyncio
 import json
 from typing import Any
 
-from agent_utilities.security.actor_identity import ActorType
-from agent_utilities.security.brain_context import ActorContext, use_actor
-from agent_utilities.security.error_surface import public_error_payload
+from graph_os.security.actor_context import ActorContext, ActorType, use_actor
+from graph_os.security.error_surface import public_error_payload
 
 
 class _FakeMCP:
