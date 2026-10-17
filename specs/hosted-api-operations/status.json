@@ -186,7 +186,10 @@
     "ARBORA-OPS-R064",
     "ARBORA-OPS-R065",
     "ARBORA-OPS-R066",
-    "ARBORA-OPS-R700"
+    "ARBORA-OPS-R700",
+    "ARBORA-OPS-R843",
+    "ARBORA-OPS-R843.1",
+    "ARBORA-OPS-R843.2"
   ],
   "requirements": [
     {
@@ -1938,6 +1941,35 @@
         "tests/observability/test_readiness.py:54",
         "tests/observability/test_readiness.py:68"
       ]
+    },
+    {
+      "id": "ARBORA-OPS-R843",
+      "title": "Served engine operations replace the in-run agent-utilities tool wrappers",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R843.1",
+        "ARBORA-OPS-R843.2"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R843.1",
+      "title": "Delivered wrapper behaviour",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "379bfc44c56b"
+      ],
+      "verified_by": [
+        "tests/api/test_au_tool_parity.py:42"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R843.2",
+      "title": "Modules that are not engine wrappers",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     }
   ]
 }
