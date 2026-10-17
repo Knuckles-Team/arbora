@@ -15,6 +15,11 @@ NOW = lambda: dt.datetime(2026, 1, 1, tzinfo=dt.UTC)  # noqa: E731
 OK = lambda: check("ready")  # noqa: E731
 
 
+def _slow():
+    time.sleep(0.5)
+    return check("ready")
+
+
 def _raise():
     raise RuntimeError("x")
 
@@ -35,7 +40,7 @@ def test_all_ready():
     [
         (lambda: check("unavailable", reason="r"), "unavailable", ["engine"]),
         (_raise, "unavailable", ["engine"]),
-        (lambda: time.sleep(0.5) or check("ready"), "unavailable", ["engine"]),
+        (_slow, "unavailable", ["engine"]),
         (lambda: {"state": "bogus"}, "unavailable", ["engine"]),
     ],
 )
