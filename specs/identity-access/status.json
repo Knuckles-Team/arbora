@@ -1061,8 +1061,8 @@
       "title": "External policy sync renders the engine's row-visibility bundle and fails closed",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "42b3784e2ce9",
-        "51095e526c65"
+        "27e99d954a0b",
+        "dc73e892c9a6"
       ],
       "verified_by": [
         "tests/access/test_external_policy_sync.py:3"
