@@ -136,6 +136,7 @@
       "title": "Web UI keeps its component package name",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "15bc1fd4c49e",
         "d6f16cd447e2",
         "d75db1ea42e8",
         "eaabc7449a93"
@@ -184,7 +185,7 @@
         "fd761d59a171"
       ],
       "verified_by": [
-        "tests/deployment/test_component_names_and_scripts.py:41"
+        "tests/deployment/test_component_names_and_scripts.py:42"
       ]
     },
     {
@@ -196,7 +197,7 @@
         "fd761d59a171"
       ],
       "verified_by": [
-        "tests/deployment/test_component_names_and_scripts.py:50"
+        "tests/deployment/test_component_names_and_scripts.py:51"
       ]
     },
     {
