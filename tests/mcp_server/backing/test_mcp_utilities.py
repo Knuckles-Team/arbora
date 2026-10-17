@@ -48,7 +48,7 @@ def test_create_mcp_server_basic(mock_fastmcp):
         # 2025-11-25 task protocol, not the 2026-07-28 tasks extension — see
         # ``mcp/server_factory.py``'s ``create_mcp_server``). ``lifespan`` is a
         # fresh closure per call, so it's asserted for shape, not identity.
-        from agent_utilities._version import __version__
+        from graph_os._version import __version__
 
         mock_fastmcp.assert_called_once()
         call_args, call_kwargs = mock_fastmcp.call_args

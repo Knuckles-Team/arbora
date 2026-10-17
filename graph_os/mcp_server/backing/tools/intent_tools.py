@@ -302,7 +302,7 @@ _GRAPHOS_CPDS_PATH = (
 
 @functools.cache
 def _graphos_cpds() -> dict[str, dict[str, Any]]:
-    """Descriptors for the operations graph-os itself serves (browser, A2A)."""
+    """Capability descriptors for every operation graph-os serves."""
     raw = json.loads(_GRAPHOS_CPDS_PATH.read_text(encoding="utf-8"))
     return {entry["id"]: entry for entry in raw.get("capabilities", [])}
 

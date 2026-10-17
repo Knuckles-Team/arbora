@@ -145,7 +145,6 @@ def _validate_lease_row(
         item is None
         or item.get("kind") != _LEASE_KIND
         or not isinstance(metadata, dict)
-        or metadata.get("queue") != _LEASE_QUEUE
         or metadata.get("platform") != platform
         or metadata.get("identity_digest") != identity_digest
     ):

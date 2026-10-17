@@ -65,7 +65,7 @@ ROUTING_GROUPS: tuple[RoutingGroup, ...] = (
         "Query, search, explain, NL/tabular/data questions, tables, documents, catalogs.",
         "graph_query graph_search graph_federated_search graph_search_synthesis "
         "graph_explain nl_query tabular_query ask_data graph_ask graph_table "
-        "graph_catalog graph_document_tree graph_gis research_artifact",
+        "graph_catalog graph_document_tree graph_gis",
     ),
     _group(
         "write",
@@ -76,17 +76,17 @@ ROUTING_GROUPS: tuple[RoutingGroup, ...] = (
         "ingest",
         "Ingestion, source sync and connectors, ETL, feeds, pipelines, media.",
         "graph_ingest source_sync source_connector source_drain graph_etl "
-        "graph_feeds graph_pipeline document_process graph_media_sidecar",
+        "graph_feeds graph_pipeline document_process",
     ),
     _group(
         "code",
-        "Code intelligence, navigation, sandboxes.",
-        "graph_code graph_code_nav graph_sandbox",
+        "Code intelligence and navigation.",
+        "graph_code graph_code_nav",
     ),
     _group(
         "run",
-        "Loops, sessions, attended browser control.",
-        "graph_loops graph_sessions browser_control",
+        "Sessions and attended browser control.",
+        "graph_sessions browser_control",
     ),
     _group(
         "message",
@@ -101,8 +101,8 @@ ROUTING_GROUPS: tuple[RoutingGroup, ...] = (
     ),
     _group(
         "improve",
-        "Feedback, learning, graph engineering.",
-        "graph_feedback graph_learn graph_engineering",
+        "Feedback and learning.",
+        "graph_feedback graph_learn",
     ),
     _group(
         "ontology",

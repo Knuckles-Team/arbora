@@ -36,7 +36,13 @@ def test_surface_serves_intent_contract_and_registers_host_operations(
         "register_a2a_tools",
         lambda mcp, *, tools=None: calls.append(("a2a", mcp, tools)),
     )
-    monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {})
+    from graph_os import host_bindings
+
+    monkeypatch.setattr(
+        host_bindings,
+        "mount_sdk_a2a",
+        lambda mcp: calls.append(("sdk_a2a", mcp, None)),
+    )
     monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {})
 
     runtime._register_graph_tool_surface(served)
@@ -46,6 +52,7 @@ def test_surface_serves_intent_contract_and_registers_host_operations(
         # Browser control and A2A are ``act`` operations on the backing server.
         ("browser", backing, None),
         ("a2a", served, backing),
+        ("sdk_a2a", served, None),
     ]
     # REST dispatches exactly what the intent tools route to.
     assert "graph_query" in runtime.REGISTERED_TOOLS

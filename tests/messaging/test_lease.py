@@ -71,8 +71,8 @@ def _lease(platform: str) -> intake_lease.IntakeLease:
         platform=platform,
         item_id=f"workitem:messaging-intake:{platform}",
         claim={
-            "tenant": "test-tenant",
-            "lease_owner": "owner",
+            "tenant": "tenant-a",
+            "worker_ref": "w",
             "lease_epoch": 1,
             "fencing_token": 1,
         },

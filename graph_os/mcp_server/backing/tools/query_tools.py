@@ -102,6 +102,8 @@ def _json_default(obj: Any) -> Any:
 
     if dataclasses.is_dataclass(obj) and not isinstance(obj, type):
         return dataclasses.asdict(obj)
+    if isinstance(obj, EvidenceBundle):
+        return obj.model_dump(mode="json")
     return str(obj)
 
 
@@ -211,18 +213,30 @@ def _row_ids(rows: Any) -> list[str]:
     return list(seen)
 
 
-def _evidence_bundle_for_rows(engine: Any, rows: list[Any]) -> dict[str, Any]:
-    """The engine provenance envelope for the nodes in ``rows``.
+_AGG_CALL_RE = re.compile(
+    r"\b(?:count|sum|avg|min|max|collect|stdev|stdevp|percentilecont"
+    r"|percentiledisc|variance)\s*\(",
+    re.IGNORECASE,
+)
+
+
+def is_aggregation_cypher(cypher: str) -> bool:
+    """True when ``cypher`` projects an aggregate; quoted literals never count."""
+    no_literals = re.sub(r"'[^']*'|\"[^\"]*\"", "", cypher or "")
+    return bool(_AGG_CALL_RE.search(no_literals))
+
+
+def _evidence_bundle_for_rows(engine: Any, rows: list[Any]) -> EvidenceBundle:
+    """The :class:`EvidenceBundle` over the nodes a plain query returned.
 
     One ``ExplainProvenanceByIds`` call resolves every distinct row id. The
-    result is ``{"rows": []}`` when the engine lacks the method or no row
-    names a node.
+    bundle is empty when the engine lacks the method or no row names a node.
     """
     fetch = getattr(getattr(engine, "graph", None), "explain_provenance_by_ids", None)
     ids = _row_ids(rows)
     if fetch is None or not ids:
-        return {"rows": []}
-    return {"rows": list(fetch(ids) or [])}
+        return EvidenceBundle.from_engine_wire({"rows": []})
+    return EvidenceBundle.from_engine_wire({"rows": list(fetch(ids) or [])})
 
 
 def _resolve_symbol_id(engine, *, symbol: str, node_id: str) -> dict[str, Any] | None:
@@ -670,17 +684,6 @@ def _validate_uql_query(query: str) -> int:
     return _validate_uql_terminal_limit(lexical)
 
 
-def _prepare_uql_query(query: str) -> str:
-    """Reuse AU's shared text-rank pre-embedding chokepoint for native UQL."""
-    # Import lazily: engine_tools is a sibling MCP registration module and
-    # importing it at module load would create an avoidable registration cycle.
-    from graph_os.mcp_server.backing.tools.engine_tools import _embed_uql_rank_text
-
-    prepared = _embed_uql_rank_text("query", "uql", {"text": query})
-    rewritten = prepared.get("text")
-    return rewritten if isinstance(rewritten, str) else query
-
-
 def _refuse_nl_option(message: str, operation: str) -> EvidenceBundle:
     """Typed refusal for a natural-language option the engine planner lacks."""
     return EvidenceBundle.from_payload(
@@ -769,7 +772,7 @@ def _uql_fanout_evidence_request(
     if not callable(fetch):
         return None, []
 
-    raise not_served("knowledge_graph.core.epistemic_row", "EG-DURABLE-KERNEL-R609")
+    return fetch, _row_ids(rows)
 
 
 def _uql_fanout_target_evidence(
@@ -1018,14 +1021,6 @@ def _run_graph_query_uql(
             code="invalid_request",
             context={"tool": "graph_query", "scope": "uql"},
         )
-    try:
-        query = _prepare_uql_query(query)
-    except Exception as exc:  # noqa: BLE001 — embedding is a dependency boundary
-        return public_error_json(
-            exc,
-            code="dependency_unavailable",
-            context={"tool": "graph_query", "scope": "uql"},
-        )
     entries, errors, fanout, error_response = _run_graph_query_resolve_local(
         connection, graph
     )
@@ -1084,10 +1079,9 @@ def _run_graph_query_local(
     # graph (for example, one aggregate row repeated per graph). Summing generically is
     # unsafe (wrong for avg/min/max/distinct). Run the aggregation against the
     # canonical default graph only — control-plane/aggregate reads resolve there.
-    if union_read:
-        # The engine owns aggregate-versus-row detection for a union read.
-        raise not_served(
-            "knowledge_graph.orchestration.engine_query", "EG-CONTRACT-R005"
+    if union_read and is_aggregation_cypher(cypher):
+        return _run_graph_query_union_aggregate(
+            cypher, parsed_params, as_of, include_epistemic_flag, graph
         )
 
     if not fanout:
@@ -1108,6 +1102,32 @@ def _run_graph_query_local(
         errors,
         union_read,
     )
+
+
+def _run_graph_query_union_aggregate(
+    cypher: str,
+    parsed_params: dict[str, Any],
+    as_of: str,
+    include_epistemic_flag: bool,
+    graph: str,
+) -> str:
+    """CONCEPT:AU-KG.query.query-aggregation — an aggregation under the implicit content-graph
+    union runs against the canonical default graph only (see the caller for why).
+    """
+    engine = runtime._get_engine()
+    try:
+        if include_epistemic_flag:
+            results = engine.query_cypher(
+                cypher, parsed_params, as_of=as_of or None, include_epistemic=True
+            )
+        else:
+            results = engine.query_cypher(cypher, parsed_params, as_of=as_of or None)
+        return json.dumps(
+            {"rows": results, "connection": "default", "graph": graph},
+            default=str,
+        )
+    except Exception as e:
+        return public_error_json(e)
 
 
 def _run_graph_query_single(

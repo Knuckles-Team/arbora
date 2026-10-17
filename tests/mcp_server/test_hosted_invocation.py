@@ -55,7 +55,9 @@ def mount_a2a(monkeypatch, value):
     from graph_os.mcp_server.backing import graphos_surface
 
     served = FastMCP("hosted-invocation-test")
-    monkeypatch.setattr(graphos_surface, "register_graphos_surface", lambda _: served)
+    monkeypatch.setattr(
+        graphos_surface, "register_graphos_surface", lambda _mcp, **_kwargs: served
+    )
     monkeypatch.setattr(browser_mcp, "register_browser_control_tools", lambda _: None)
     monkeypatch.setattr(
         a2a_mcp, "_service", lambda: A2AService(authority=Authority(), router=Router())

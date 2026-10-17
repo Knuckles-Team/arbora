@@ -78,26 +78,6 @@ async def test_inspect_requires_target_query_or_node_id(monkeypatch):
     assert out == "Error: target (or query/node_id) required for inspect"
 
 
-async def test_contradictions_requires_query(monkeypatch):
-    out = await _call(monkeypatch, "contradictions")
-    assert out == "Error: contradictions needs the new claim text in `query`."
-
-
-async def test_evolve_code_requires_query(monkeypatch):
-    out = await _call(monkeypatch, "evolve_code")
-    assert out == "Error: evolve_code needs a task description in `query`."
-
-
-async def test_night_shift_requires_target(monkeypatch):
-    out = await _call(monkeypatch, "night_shift")
-    assert out == "Error: night_shift needs the vault root path in `target`."
-
-
-async def test_recommend_requires_query(monkeypatch):
-    out = await _call(monkeypatch, "recommend")
-    assert out == "Error: recommend needs a query/intent in `query`."
-
-
 async def test_unknown_action_falls_back_with_the_action_name(monkeypatch):
     out = await _call(monkeypatch, "definitely-not-a-real-action")
     assert out == "Error: Unknown analyze action 'definitely-not-a-real-action'"

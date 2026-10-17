@@ -45,6 +45,9 @@ class _MockMCP:
 
         return decorator
 
+    def add_extension(self, extension):
+        self.funcs[type(extension).__name__] = extension
+
 
 @pytest.fixture
 def graph_write_and_engine(tmp_path, monkeypatch):

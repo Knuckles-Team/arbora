@@ -2,7 +2,6 @@ schema_version: 2
 tier: domain
 claims:
   core:
-    - concept_registry
     - graph_memory
     - graph_ontology
     - graph_write
@@ -16,10 +15,8 @@ claims:
     - ontology_interface
     - ontology_leanix_sync
     - ontology_link_materialize
-    - ontology_model_profile
     - ontology_property_types
     - ontology_repository_provenance
-    - ontology_sampling_profile
     - ontology_value_types
     - write
   features: {}

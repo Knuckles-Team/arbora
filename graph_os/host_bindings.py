@@ -155,6 +155,8 @@ class _PrefixedApp:
     def __init__(self, app: Any, prefix: str) -> None:
         self.app = app
         self.prefix = prefix
+        # Route registries key a mounted endpoint by its name.
+        self.__name__ = "a2a_agent"
 
     async def __call__(self, scope: dict[str, Any], receive: Any, send: Any) -> None:
         path = str(scope.get("path", ""))

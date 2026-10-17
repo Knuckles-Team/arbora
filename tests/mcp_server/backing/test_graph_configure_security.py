@@ -162,10 +162,11 @@ def test_atomic_write_failure_preserves_existing_document(
 def test_workspace_mcp_path_rejects_escape(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from agent_utilities.core import config, workspace
-
-    monkeypatch.setattr(workspace, "get_agent_workspace", lambda: tmp_path)
-    monkeypatch.setattr(config, "setting", lambda key, default="": "../outside.json")
+    values = {"WORKSPACE_PATH": str(tmp_path), "MCP_CONFIG": "../outside.json"}
+    monkeypatch.setattr(
+        "graph_os.core.settings.setting",
+        lambda key, default="": values.get(key, default),
+    )
 
     with pytest.raises(PermissionError):
         analysis_tools._workspace_mcp_config_path()
@@ -249,8 +250,7 @@ def test_legacy_sparql_backend_actions_answer_typed_unavailable(action: str) -> 
         )
     )
 
-    assert result["error_type"] == "LegacyGraphBackendRemovedError"
-    assert "retired" in result["error"]
+    assert result["error_type"] == "GraphOSRefusal"
     assert "sensitive.invalid" not in json.dumps(result)
     assert "synthetic-credential-material" not in json.dumps(result)
 
@@ -259,7 +259,7 @@ def test_legacy_set_config_cannot_bypass_governed_config_admin(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """The retired synchronous alias must never reach ``save_config_item``."""
-    from agent_utilities.core import config
+    from graph_os.core import settings as config
 
     persisted: list[tuple[str, object]] = []
     fake = _FakeMCP()
