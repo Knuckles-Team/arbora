@@ -96,22 +96,6 @@ def test_full_returns_layout_and_data(client: TestClient) -> None:
     assert set(body["data"]) == {"alpha", "beta"}
 
 
-def test_daemon_routes_delegate_to_graph_os(
-    client: TestClient, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    from agent_utilities.knowledge_graph.core import shard_topology
-
-    from graph_os.gateway import daemon
-
-    monkeypatch.setattr(daemon, "daemon_status", lambda: {"role": "host"})
-    monkeypatch.setattr(
-        shard_topology, "shard_topology_status", lambda: {"mode": "single"}
-    )
-
-    assert client.get("/api/dashboard/daemon/status").json() == {"role": "host"}
-    assert client.get("/api/dashboard/daemon/shards").json() == {"mode": "single"}
-
-
 def test_health_is_served_without_capabilities(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:

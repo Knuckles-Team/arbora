@@ -11,8 +11,6 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Annotated, Any, Literal
 
-from agent_utilities.rlm.benchmarks.base import BenchResult
-from agent_utilities.rlm.telemetry import FailureClass
 from agent_utilities.security.error_surface import public_error_payload
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator
 
@@ -41,6 +39,7 @@ from graph_os.api.contracts.agent_control_contracts import (
     WorkItemSubmissionResult,
 )
 from graph_os.api.contracts.session import GraphSession, resolve_session
+from graph_os.api.errors import not_served
 
 type _RequiredScope = Literal["kg:read", "kg:write"]
 type _OperationSpec = tuple[
@@ -154,7 +153,7 @@ class GraphRlmRunResult(_StrictModel):
     result: str | None = None
     usage: dict[str, int | float] = Field(default_factory=dict)
     max_depth: int = 0
-    failure_class: FailureClass | None = None
+    failure_class: str | None = None
     error: GraphRlmError | None = None
 
 
@@ -162,7 +161,7 @@ class GraphRlmBenchmarkResult(_StrictModel):
     action: Literal["benchmark"]
     ok: bool
     task: str
-    results: list[BenchResult] = Field(default_factory=list)
+    results: list[dict[str, Any]] = Field(default_factory=list)
     scoreboard: str = ""
     available_tasks: list[str] = Field(default_factory=list)
     error: GraphRlmError | None = None
@@ -525,71 +524,15 @@ class AgentControlPlane:
 
     async def _execute(self, request: GraphRlmRequest) -> GraphRlmResult:
         if isinstance(request, GraphRlmRunRequest):
-            from agent_utilities.rlm.runner import run_rlm
-
-            output = await run_rlm(request.task, input_text=request.input_text)
-            if not output.get("ok"):
-                failure_class = output.get("failure_class", "unknown")
-                if failure_class not in {
-                    "model_generated_bad_code",
-                    "host_tool_timeout",
-                    "sandbox_exec_timeout",
-                    "sandbox_fatal",
-                    "sandbox_escalated",
-                    "evaluator_reject",
-                    "unknown",
-                }:
-                    failure_class = "unknown"
-                return GraphRlmRunResult(
-                    action="run",
-                    ok=False,
-                    task=request.task,
-                    failure_class=failure_class,
-                    error=self._failure(
-                        RuntimeError("RLM execution failed"),
-                        code="operation_failed",
-                    ),
-                )
-            return GraphRlmRunResult(
-                action="run",
-                ok=True,
-                task=request.task,
-                result=output.get("result"),
-                usage=output.get("usage") or {},
-                max_depth=int(output.get("max_depth") or 0),
+            raise not_served(
+                "rlm.runner", "AU-harness (deleted from AU)", owner="agent-utilities"
             )
 
         if isinstance(request, GraphRlmBenchmarkRequest):
-            from agent_utilities.rlm.benchmarks import (
-                list_tasks,
-                render_scoreboard,
-                run_benchmark,
-            )
-
-            benchmark = request.task or "s_niah"
-            available_tasks = list_tasks()
-            if benchmark not in available_tasks:
-                error = self._failure(
-                    ValueError("Unknown benchmark task"), code="invalid_request"
-                )
-                return GraphRlmBenchmarkResult(
-                    action="benchmark",
-                    ok=False,
-                    task=benchmark,
-                    available_tasks=available_tasks,
-                    error=error,
-                )
-            results = await run_benchmark(
-                benchmark,
-                scales=request.options.scales,
-                cases_per_scale=request.options.cases_per_scale,
-            )
-            return GraphRlmBenchmarkResult(
-                action="benchmark",
-                ok=True,
-                task=benchmark,
-                results=results,
-                scoreboard=render_scoreboard(results),
+            raise not_served(
+                "rlm.benchmarks",
+                "AU-harness (deleted from AU)",
+                owner="agent-utilities",
             )
 
         return await _evolve_prompt(request)
@@ -651,57 +594,4 @@ async def _evolve_prompt(
     request: GraphRlmEvolvePromptRequest,
 ) -> GraphRlmEvolutionResult:
     """Run the retained GEPA/DW-GRPO prompt-evolution behavior."""
-    from agent_utilities.harness.program_optimization import graded_score
-    from agent_utilities.rlm.gepa import GEPAInstance, GEPAOptimizer
-    from agent_utilities.rlm.predict_rlm import InputField, OutputField
-    from pydantic import BaseModel
-
-    class PromptEvolutionSignature(BaseModel):
-        """Answer the given query."""
-
-        query: str = InputField(default="", description="The task input.")
-        response: str = OutputField(default="", description="The model's answer.")
-
-    options = request.options
-    rows = options.dataset or [
-        GraphRlmPromptExample(query="What is the capital of France?", response="Paris"),
-        GraphRlmPromptExample(query="What is 2 + 2?", response="4"),
-    ]
-    dataset = [
-        GEPAInstance(
-            id=f"inst_{index}",
-            input_data={"query": row.query},
-            reference_output=row.response,
-        )
-        for index, row in enumerate(rows)
-    ]
-
-    async def evaluator(
-        instance: GEPAInstance, model_output: Any, _trace: str
-    ) -> tuple[dict[str, float], str]:
-        score = graded_score(
-            str(instance.reference_output or ""),
-            getattr(model_output, "response", "") or "",
-        )
-        return {"accuracy": score}, f"graded_score={score:.3f}"
-
-    optimizer = GEPAOptimizer(
-        signature_class=PromptEvolutionSignature,
-        base_prompt=request.task or "Answer the user's query accurately and concisely.",
-        evaluator_fn=evaluator,
-        objectives=options.objectives,
-    )
-    best = await optimizer.optimize(
-        dataset,
-        iterations=options.iterations,
-        batch_size=options.batch_size,
-    )
-    return GraphRlmEvolutionResult(
-        action="evolve_prompt",
-        ok=True,
-        winning_prompt=best.prompt_text,
-        scores=best.scores,
-        generation=best.generation,
-        reward_weights=optimizer.pool.reward_weights,
-        frontier_size=len(optimizer.pool.get_frontier()),
-    )
+    raise not_served("rlm.gepa", "EG-DECISION-ENGINE-R800")

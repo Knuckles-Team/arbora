@@ -14,6 +14,8 @@ import time
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
+from graph_os.api.errors import not_served
+
 logger = logging.getLogger(__name__)
 
 
@@ -66,31 +68,15 @@ def _publish_context(session: Any) -> Callable[[Mapping[str, Any]], Any]:
 def _install_assembler(
     eg_client: Any, session: Any, engine: Any, run: Callable[[Any], Any]
 ) -> Any:
-    from agent_utilities.decide.consumers.assembly import install_library_assembler
-
-    return install_library_assembler(
-        eg_client,
-        session,
-        engine,
-        run=run,
-        commit_context=_commit_context(session),
-        publish_context=_publish_context(session),
-    )
+    raise not_served("decide.consumers.assembly", "EG-DECISION-ENGINE-R036")
 
 
 def _published_templates() -> list[dict[str, Any]]:
-    from agent_utilities.decide.topology.templates import (
-        REFERENCE_TEMPLATES,
-        topology_facts,
-    )
-
-    return [topology_facts(spec) for spec in REFERENCE_TEMPLATES]
+    raise not_served("decide.topology.templates", "EG-DECISION-ENGINE-R105")
 
 
 def _install_topology(assembler: Any, run: Callable[[Any], Any]) -> None:
-    from agent_utilities.decide.consumers import topology
-
-    topology.install_topology(assembler, run, _published_templates)
+    raise not_served("decide.consumers.topology", "EG-DECISION-ENGINE-R036")
 
 
 def _capability_search(eg_client: Any, session: Any) -> Callable[[Sequence[str]], Any]:
@@ -154,19 +140,7 @@ def _guardrail_source(engine: Any) -> Callable[[Sequence[str]], Any]:
 def _workflow_lookup(engine: Any) -> Callable[[Sequence[str]], Any]:
     """The planner's compiled-workflow lookup: the registered graph workflow
     store's semantic match over the planned tasks."""
-    from agent_utilities.knowledge_graph.workflow_store import WorkflowStore
-
-    store = WorkflowStore(engine)
-
-    async def lookup(tasks: Sequence[str]) -> Mapping[str, Any] | None:
-        try:
-            hits = store.find_similar(" ".join(tasks), top_k=1)
-        except Exception as exc:
-            logger.warning("workflow lookup unavailable: %s", exc)
-            return None
-        return hits[0] if hits else None
-
-    return lookup
+    raise not_served("knowledge_graph.workflow_store", "EG-CQ-ORCH-R700")
 
 
 def _install_planner(
@@ -176,48 +150,22 @@ def _install_planner(
     session: Any,
     engine: Any,
 ) -> None:
-    from agent_utilities.decide.consumers import task_planner as tp
-
-    templates = getattr(tp, "installed_templates", lambda: None)()
-    tp.install_task_planner(
-        tp.TaskPlanner(
-            assembler=assembler,
-            templates=templates,
-            driver=run,
-            capability_search=_capability_search(eg_client, session),
-            guardrail_source=_guardrail_source(engine),
-            workflows=_workflow_lookup(engine),
-        )
-    )
+    raise not_served("decide.consumers.task_planner", "EG-CQ-ORCH-R001")
 
 
 def _ontology_provider(eg_client: Any) -> Any:
     sparql = getattr(eg_client, "sparql", None)
     if not callable(sparql):
         return None
-    from agent_utilities.knowledge_graph.virtual_graph.ontology import (
-        tbox_from_sparql,
+    raise not_served(
+        "knowledge_graph.virtual_graph.ontology", "EG-UNIFIED-DATA-PLANE-R037"
     )
-
-    async def provider() -> Any:
-        return await tbox_from_sparql(sparql)
-
-    return provider
 
 
 def _install_cross_source(eg_client: Any) -> bool:
-    from agent_utilities.knowledge_graph.virtual_graph.federation import (
-        install_cross_source,
+    raise not_served(
+        "knowledge_graph.virtual_graph.federation", "EG-UNIFIED-DATA-PLANE-R037"
     )
-
-    from graph_os.fleet.access_contracts import fleet_virtual_catalog
-
-    provider = _ontology_provider(eg_client)
-    if provider is None:
-        logger.info("cross-source report skipped: the engine client has no sparql")
-        return False
-    install_cross_source(fleet_virtual_catalog(), provider)
-    return True
 
 
 def install_decide_consumers(

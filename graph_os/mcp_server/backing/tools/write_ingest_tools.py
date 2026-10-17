@@ -19,6 +19,7 @@ from agent_utilities.security.error_surface import (
 from agent_utilities.security.persistence_privacy import persistence_reference
 from pydantic import Field
 
+from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
 from graph_os.mcp_server.backing.context_helpers import coerce_dict_param
@@ -216,50 +217,7 @@ def _bulk_ingest_change_envelope(
     """The heavy path — only ApplyChangeEnvelope(s) carries evidence/lineage/
     policy and a genuinely durable per-call idempotency key; BatchUpdate has
     neither at the wire level. One atomic transaction either way."""
-    from agent_utilities.knowledge_graph.ingestion import envelope_ingest
-
-    entities = [
-        {"id": m["id"], "node_type": m["node_type"], **m["properties"]}
-        for m in node_mutations
-    ]
-    relationships = [
-        {
-            "source": m["source"],
-            "target": m["target"],
-            "relationship": m["rel_type"],
-            **m["properties"],
-        }
-        for m in edge_mutations
-    ]
-    if entities and evidence_records:
-        # ChangeEnvelope attaches per-row evidence only on the envelope's
-        # PRIMARY object (`envelope_ingest._prepare_node_rows`'s `_evidence`
-        # pop) — the first node in the batch, matching `ingest_graph_slice`'s
-        # own "first entity is primary" contract.
-        entities[0] = {**entities[0], "_evidence": evidence_records}
-    try:
-        result = envelope_ingest.ingest_graph_slice(
-            engine,
-            "bulk_ingest",
-            entities,
-            relationships,
-            idempotency_key=idempotency_key,
-        )
-    except Exception as e:  # noqa: BLE001 — surface as data, not a 500
-        return public_error_json(e, context={"action": "bulk_ingest"})
-    # Surface the engine's own replay outcome honestly — `status` is
-    # "success" (applied) / "skipped" (idempotent replay) / "rejected" /
-    # "failed", never collapsed to a single "ok".
-    return json.dumps(
-        {
-            "action": "bulk_ingest",
-            "mode": "change_envelope",
-            "nodes_ingested": len(node_mutations),
-            "edges_ingested": len(edge_mutations),
-            **result,
-        },
-        default=str,
-    )
+    raise not_served("knowledge_graph.ingestion.envelope_ingest", "EG-REPO-INGEST-R002")
 
 
 def _bulk_ingest_batch_update(
@@ -502,7 +460,7 @@ def _ingest_summarize(async_jobs, sync_out, paths, graph, connection):
 
 
 async def _ingest_action_ingest(engine, request: IngestRequest) -> str:
-    target_path, max_depth, agent_id, content_type, connection, graph = (
+    _target_path, _max_depth, _agent_id, _content_type, _connection, _graph = (
         request.target_path,
         request.max_depth,
         request.agent_id,
@@ -511,68 +469,7 @@ async def _ingest_action_ingest(engine, request: IngestRequest) -> str:
         request.graph,
     )
     # action(s): 'ingest'
-    from agent_utilities.knowledge_graph.ingestion.engine import (
-        ContentType,
-        IngestionEngine,
-        IngestionManifest,
-    )
-
-    if not target_path:
-        return "Error: target_path required for ingest action"
-
-    paths = _ingest_parse_target_paths(target_path)
-    if not paths:
-        return "Error: target_path required for ingest action"
-
-    # ``content_type`` is auto-detected per path and is NOT an
-    # agent-facing concern (CONCEPT:AU-KG.research.skill-graph-distillation ContentType.classify is the
-    # single source of truth). It survives only as an internal override
-    # for genuinely ambiguous paths; ``isinstance(str)`` filters out the
-    # unresolved FastMCP ``FieldInfo`` default. Whatever the type, heavy
-    # categories ALWAYS route through the async durable queue so an
-    # ingest call can never block the caller for minutes — the old
-    # "explicit content_type → synchronous IngestionEngine" branch was a
-    # footgun that did exactly that.
-    override = (
-        content_type.strip().lower()
-        if (content_type and isinstance(content_type, str))
-        else ""
-    )
-
-    # DOCUMENT/CODEBASE are slow (chunk+embed / tree-sitter parse) and
-    # are handled by the background task worker → enqueue, never block.
-    # The remaining lightweight categories (config/prompt/skill/
-    # mcp_server/kb/conversation/policy/…) are fast and are only routed
-    # by the unified IngestionEngine, so they run inline.
-    async_types = {ContentType.DOCUMENT, ContentType.CODEBASE}
-    async_jobs: list[str] = []
-    sync_out: list[str] = []
-    ing: IngestionEngine | None = None
-    for p in paths:
-        ct = _ingest_resolve_content_type(p, override, ContentType)
-        if ct in async_types:
-            t_type = "codebase" if ct == ContentType.CODEBASE else "document"
-            jid, err = await _ingest_submit_async_job(
-                engine, p, t_type, agent_id, max_depth, graph
-            )
-            if err:
-                return err
-            async_jobs.append(jid)
-        else:
-            ing, line = await _ingest_sync_one(
-                ing,
-                engine,
-                ct,
-                p,
-                max_depth,
-                agent_id,
-                graph,
-                IngestionEngine,
-                IngestionManifest,
-            )
-            sync_out.append(line)
-
-    return _ingest_summarize(async_jobs, sync_out, paths, graph, connection)
+    raise not_served("knowledge_graph.ingestion.engine", "EG-REPO-INGEST-R651")
 
 
 async def _ingest_action_ingest_url(engine, request: IngestRequest) -> str:
@@ -648,13 +545,7 @@ async def _ingest_action_backfill_platform_history(
 
 def _sync_named_source(engine, request: IngestRequest, source: str) -> str:
     """Sync one named source: ``corpus_name`` is the mode, ``base_path`` an id list."""
-    from agent_utilities.knowledge_graph.core.source_sync import sync_source
-
-    mode = (request.corpus_name or "delta").strip().lower()
-    ids = None
-    if request.base_path.strip().startswith("["):
-        ids = [str(x) for x in json.loads(request.base_path)]
-    return json.dumps(sync_source(engine, source, mode=mode, ids=ids))
+    raise not_served("knowledge_graph.core.source_sync", "EG-INGEST-WORKER-R605")
 
 
 async def _ingest_action_archivebox_sync(engine, request: IngestRequest) -> str:
@@ -668,81 +559,25 @@ async def _ingest_action_gitlab_sync(engine, request: IngestRequest) -> str:
 
 
 async def _ingest_action_cdc_catchup(engine, request: IngestRequest) -> str:
-    corpus_name = request.corpus_name
     # action(s): 'cdc_catchup'
-    from agent_utilities.knowledge_graph.ingestion.debezium_envelope import (
-        get_envelope_source,
-        list_envelope_sources,
+    raise not_served(
+        "knowledge_graph.ingestion.debezium_envelope", "EG-REPO-INGEST-R651"
     )
-
-    handler = get_envelope_source("cdc")
-    if handler is None:
-        return json.dumps(
-            {
-                "status": "error",
-                "error": "cdc envelope source not registered",
-                # list_envelope_sources: what IS registered, so an
-                # operator sees the real available set rather than
-                # a bare failure with no next step.
-                "registered_sources": list_envelope_sources(),
-            }
-        )
-    res_d = await run_blocking_ordered(
-        handler,
-        engine,
-        mode=(corpus_name or "delta").strip().lower(),
-        ids=None,
-        client=None,
-    )
-    return json.dumps(res_d)
 
 
 async def _ingest_action_opensearch_reindex(engine, request: IngestRequest) -> str:
-    target_path, corpus_name, base_path = (
+    _target_path, _corpus_name, _base_path = (
         request.target_path,
         request.corpus_name,
         request.base_path,
     )
     # action(s): 'opensearch_reindex'
-    from agent_utilities.knowledge_graph.search.rebuild import mcp_reindex
-
-    tenant = (corpus_name or "").strip()
-    if not tenant:
-        return json.dumps(
-            {
-                "status": "error",
-                "error": "opensearch_reindex requires corpus_name=<eg graph/tenant id>",
-            }
-        )
-    object_type = (target_path or "").strip() or None
-    try:
-        from_seq = int(base_path.strip()) if base_path.strip() else 0
-    except ValueError:
-        return json.dumps(
-            {
-                "status": "error",
-                "error": f"opensearch_reindex base_path (from_seq) must be an integer, got {base_path!r}",
-            }
-        )
-    res_d = dict(
-        await run_blocking_ordered(mcp_reindex, tenant, object_type, from_seq=from_seq)
-    )
-    return json.dumps(res_d)
+    raise not_served("knowledge_graph.search.rebuild", "EG-FEDERATED-QUERY-R008")
 
 
 async def _ingest_action_gitlab_webhook(engine, request: IngestRequest) -> str:
-    description = request.description
     # action(s): 'gitlab_webhook'
-    from agent_utilities.knowledge_graph.core.gitlab_indexer import (
-        handle_gitlab_webhook,
-    )
-
-    try:
-        payload = json.loads(description) if description else {}
-    except (ValueError, TypeError):
-        return json.dumps({"status": "ignored", "reason": "invalid payload JSON"})
-    webhook_result = await run_blocking_ordered(handle_gitlab_webhook, engine, payload)
-    return json.dumps(webhook_result)
+    raise not_served("knowledge_graph.core.gitlab_indexer", "EG-REPO-INGEST-R600")
 
 
 async def _ingest_action_corpus(engine, request: IngestRequest) -> str:
@@ -867,59 +702,21 @@ async def _ingest_action_prioritize(engine, request: IngestRequest) -> str:
 
 
 async def _ingest_action_cohort_create(engine, request: IngestRequest) -> str:
-    target_path, base_path, description = (
+    _target_path, _base_path, _description = (
         request.target_path,
         request.base_path,
         request.description,
     )
     # action(s): 'cohort_create'
-    import json as _json
 
-    from agent_utilities.knowledge_graph.research.cohort import (
-        create_cohort,
-    )
-
-    def _aslist(v: str) -> list[str]:
-        v = (v or "").strip()
-        if not v:
-            return []
-        try:
-            parsed = _json.loads(v)
-            return (
-                [str(x) for x in parsed] if isinstance(parsed, list) else [str(parsed)]
-            )
-        except (ValueError, TypeError):
-            return [s.strip() for s in v.split(",") if s.strip()]
-
-    papers = _aslist(base_path)
-    repos = _aslist(target_path)
-    if not papers and not repos:
-        return public_error_text(
-            ValueError(
-                "cohort_create needs base_path=<JSON list of paper URLs> "
-                "and/or target_path=<JSON list of repo paths>"
-            ),
-            code="invalid_request",
-        )
-    return _json.dumps(
-        create_cohort(engine, papers=papers, repos=repos, goal=description),
-        indent=2,
-    )
+    raise not_served("knowledge_graph.research.cohort", "EG-DECISION-ENGINE-R652")
 
 
 async def _ingest_action_cohort_status(engine, request: IngestRequest) -> str:
-    target_path, job_id = request.target_path, request.job_id
+    _target_path, _job_id = request.target_path, request.job_id
     # action(s): 'cohort_status'
-    import json as _json
 
-    from agent_utilities.knowledge_graph.research.cohort import (
-        cohort_status,
-    )
-
-    cid = (job_id or target_path or "").strip()
-    if not cid:
-        return "Error: job_id=<cohort_id> required for cohort_status"
-    return _json.dumps(cohort_status(engine, cid), indent=2)
+    raise not_served("knowledge_graph.research.cohort", "EG-DECISION-ENGINE-R652")
 
 
 async def _ingest_action_profile(engine, request: IngestRequest) -> str:
@@ -936,19 +733,11 @@ async def _ingest_action_profile(engine, request: IngestRequest) -> str:
 
 
 async def _ingest_action_fleet_relevance(engine, request: IngestRequest) -> str:
-    corpus_name = request.corpus_name
     # action(s): 'fleet_relevance'
-    import json as _json
 
-    from agent_utilities.knowledge_graph.research.fleet_relevance import (
-        grade_fleet,
+    raise not_served(
+        "knowledge_graph.research.fleet_relevance", "EG-DECISION-ENGINE-R652"
     )
-
-    try:
-        thr = float(corpus_name) if corpus_name else 5.0
-    except ValueError:
-        thr = 5.0
-    return _json.dumps(grade_fleet(engine, threshold_pct=thr), indent=2)
 
 
 async def _ingest_action_rebuild_indexes(engine, request: IngestRequest) -> str:
@@ -958,101 +747,35 @@ async def _ingest_action_rebuild_indexes(engine, request: IngestRequest) -> str:
 
 
 async def _ingest_action_observe(engine, request: IngestRequest) -> str:
-    target_path, agent_id = request.target_path, request.agent_id
+    _target_path, _agent_id = request.target_path, request.agent_id
     # action(s): 'observe'
-    try:
-        from pathlib import Path as _Path
-
-        from agent_utilities.knowledge_graph.memory.observer import (
-            observe_from_file,
-        )
-
-        if not target_path:
-            return "Error: target_path required (path to JSONL transcript)"
-        observation_result = observe_from_file(
-            engine, _Path(target_path), source=agent_id or "mcp"
-        )
-        return observation_result or "No new observations extracted."
-    except Exception as e:
-        return public_error_text(e)
+    e = not_served("knowledge_graph.memory.observer", "EG-DECISION-ENGINE-R651")
+    return public_error_text(e)
 
 
 async def _ingest_action_materialize(engine, request: IngestRequest) -> str:
     # action(s): 'materialize'
-    try:
-        from agent_utilities.knowledge_graph.memory import (
-            materialize_memory,
-        )
-
-        paths = materialize_memory(engine)
-        return json.dumps(
-            {
-                "status": "materialized",
-                "files": {k: str(v) for k, v in paths.items()},
-            }
-        )
-    except Exception as e:
-        return public_error_text(e)
+    e = not_served("knowledge_graph.memory", "EG-DECISION-ENGINE-R651")
+    return public_error_text(e)
 
 
 async def _ingest_action_sync(engine, request: IngestRequest) -> str:
     # action(s): 'sync'
-    try:
-        from agent_utilities.knowledge_graph.memory import (
-            ingest_memory_edits,
-        )
-
-        results = ingest_memory_edits(engine)
-        return (
-            json.dumps({"status": "synced", "ingested": results})
-            if results
-            else "No edits detected."
-        )
-    except Exception as e:
-        return public_error_text(e)
+    e = not_served("knowledge_graph.memory", "EG-DECISION-ENGINE-R651")
+    return public_error_text(e)
 
 
 async def _ingest_action_reflect(engine, request: IngestRequest) -> str:
     # action(s): 'reflect'
-    try:
-        from agent_utilities.knowledge_graph.memory import (
-            run_reflector,
-        )
-
-        reflection_result = run_reflector(engine)
-        return reflection_result or "No observations to reflect on."
-    except Exception as e:
-        return public_error_text(e)
+    e = not_served("knowledge_graph.memory", "EG-DECISION-ENGINE-R651")
+    return public_error_text(e)
 
 
 async def _ingest_action_materialize_source(engine, request: IngestRequest) -> str:
-    corpus_name, description = request.corpus_name, request.description
+    _corpus_name, _description = request.corpus_name, request.description
     # action(s): 'materialize_source'
-    try:
-        from agent_utilities.knowledge_graph.enrichment.materialize import (
-            run_materialize_source,
-        )
-
-        category = (corpus_name or "").strip()
-        if not category:
-            return json.dumps(
-                {
-                    "error": "materialize_source requires corpus_name "
-                    "(the extractor category, e.g. 'camunda' or 'aris')"
-                }
-            )
-        extractor_config = (
-            json.loads(description)
-            if description and description.strip().startswith("{")
-            else None
-        )
-        # Shared core — same path the unified ``source_sync`` uses.
-        return json.dumps(
-            run_materialize_source(engine, category, config=extractor_config),
-            default=str,
-        )
-    except Exception as e:
-        return public_error_text(e)
+    e = not_served("knowledge_graph.enrichment.materialize", "EG-INGEST-WORKER-R606")
+    return public_error_text(e)
 
 
 async def _ingest_action_skill_workflows(engine, request: IngestRequest) -> str:
@@ -1083,25 +806,13 @@ async def _ingest_action_skill_workflows(engine, request: IngestRequest) -> str:
 
 
 async def _ingest_action_curate_wiki(engine, request: IngestRequest) -> str:
-    target_path = request.target_path
     # action(s): 'curate_wiki'
-    try:
-        from agent_utilities.knowledge_graph.ingestion.wiki_curator import (
-            curate_wiki,
-        )
-
-        if not target_path:
-            return json.dumps(
-                {"error": "curate_wiki requires target_path (the wiki dir)"}
-            )
-        summary = curate_wiki(engine, target_path)
-        return json.dumps(summary, default=str)
-    except Exception as e:
-        return public_error_text(e)
+    e = not_served("knowledge_graph.ingestion.wiki_curator", "EG-REPO-INGEST-R650")
+    return public_error_text(e)
 
 
 async def _ingest_action_distill(engine, request: IngestRequest) -> str:
-    target_path, max_depth, corpus_name, description, content_type = (
+    _target_path, _max_depth, _corpus_name, _description, _content_type = (
         request.target_path,
         request.max_depth,
         request.corpus_name,
@@ -1109,67 +820,12 @@ async def _ingest_action_distill(engine, request: IngestRequest) -> str:
         request.content_type,
     )
     # action(s): 'distill'
-    try:
-        from agent_utilities.knowledge_graph.distillation import (
-            SkillGraphDistiller,
-        )
-
-        if not target_path:
-            return json.dumps({"error": "distill requires target_path (output dir)"})
-        seed = corpus_name or None
-        query = description or None
-        if not (seed or query):
-            return json.dumps(
-                {
-                    "error": "distill requires a seed (corpus_name=node_id) "
-                    "or query (description=text)"
-                }
-            )
-        # content_type="workflow" → distill a graph-native skill-WORKFLOW
-        # (procedure step-DAG) instead of a documentation skill-graph.
-        as_workflow = (content_type or "").strip().lower() == "workflow"
-        distiller = await SkillGraphDistiller.connect()
-        try:
-            if as_workflow:
-                wf = await distiller.distill_workflow(
-                    seed=seed,
-                    query=query,
-                    depth=max_depth,
-                    out_dir=target_path,
-                )
-                payload = {
-                    "kind": "skill-workflow",
-                    "name": wf["name"],
-                    "steps": wf["steps"],
-                }
-            else:
-                manifest = await distiller.distill(
-                    seed=seed,
-                    query=query,
-                    depth=max_depth,
-                    out_dir=target_path,
-                )
-                payload = {
-                    "kind": "skill-graph",
-                    "stats": manifest["stats"],
-                }
-        finally:
-            await distiller.close()
-        return json.dumps(
-            {
-                "status": "distilled",
-                "out_dir": target_path,
-                "manifest": f"{target_path.rstrip('/')}/kg_manifest.json",
-                **payload,
-            },
-            default=str,
-        )
-    except Exception as e:
-        return public_error_text(e)
+    e = not_served("knowledge_graph.distillation", "EG-INGEST-WORKER-R702")
+    return public_error_text(e)
 
 
 async def _ingest_action_build_skill_graph(engine, request: IngestRequest) -> str:
-    action, target_path, corpus_name, base_path, description = (
+    _action, _target_path, _corpus_name, _base_path, _description = (
         request.action,
         request.target_path,
         request.corpus_name,
@@ -1177,53 +833,8 @@ async def _ingest_action_build_skill_graph(engine, request: IngestRequest) -> st
         request.description,
     )
     # action(s): 'build_skill_graph', 'skill_graph_status', 'rebuild_skill_graph'
-    import asyncio
 
-    from agent_utilities.knowledge_graph.distillation import (
-        SkillGraphPipeline,
-        SourceSpec,
-    )
-
-    pipe = SkillGraphPipeline()
-    if action == "build_skill_graph":
-        if not (corpus_name and target_path):
-            return json.dumps(
-                {
-                    "error": "build_skill_graph requires corpus_name (name) "
-                    "and target_path (output parent dir); base_path = JSON "
-                    "list of sources or 'kind=uri,kind=uri' shorthand."
-                }
-            )
-        try:
-            specs = _parse_source_specs(base_path, SourceSpec)
-        except ValueError as exc:
-            return public_error_json(exc)
-        if not specs:
-            return json.dumps({"error": "no sources provided in base_path"})
-        sg_built = await asyncio.to_thread(
-            lambda: pipe.build(
-                name=corpus_name,
-                specs=specs,
-                out_dir=target_path,
-                description=description or None,
-            )
-        )
-        return json.dumps(sg_built, default=str)
-    if action == "skill_graph_status":
-        if not target_path:
-            return json.dumps(
-                {"error": "skill_graph_status requires target_path (dir)"}
-            )
-        quick = corpus_name.strip().lower() == "quick"
-        sg_report = await asyncio.to_thread(
-            lambda: pipe.status(target_path, quick=quick)
-        )
-        return json.dumps(sg_report, default=str)
-    # rebuild_skill_graph
-    if not target_path:
-        return json.dumps({"error": "rebuild_skill_graph requires target_path (dir)"})
-    sg_rebuilt = await asyncio.to_thread(lambda: pipe.rebuild(target_path))
-    return json.dumps(sg_rebuilt, default=str)
+    raise not_served("knowledge_graph.distillation", "EG-INGEST-WORKER-R702")
 
 
 async def _ingest_action_agent_toolkit(engine, request: IngestRequest) -> str:
@@ -1269,26 +880,9 @@ async def _ingest_action_ingest_knowledge_pack(engine, request: IngestRequest) -
 
 
 async def _ingest_action_import_pack(engine, request: IngestRequest) -> str:
-    target_path, corpus_name = request.target_path, request.corpus_name
+    _target_path, _corpus_name = request.target_path, request.corpus_name
     # action(s): 'import_pack'
-    from agent_utilities.knowledge_graph.distillation import (
-        import_skill_graph_pack,
-    )
-
-    if not target_path:
-        return json.dumps(
-            {"error": "import_pack requires target_path (skill-graph dir)"}
-        )
-    try:
-        stats = await run_blocking_ordered(
-            import_skill_graph_pack,
-            engine,
-            target_path,
-            dedup=(corpus_name == "dedup"),
-        )
-        return json.dumps({"status": "imported", "stats": stats}, default=str)
-    except Exception as e:  # noqa: BLE001
-        return public_error_text(e)
+    raise not_served("knowledge_graph.distillation", "EG-INGEST-WORKER-R702")
 
 
 async def _ingest_fact_extract_text(description, target_path, path_cls):
@@ -1310,153 +904,43 @@ async def _ingest_fact_extract_text(description, target_path, path_cls):
 
 
 async def _ingest_action_fact_extract(engine, request: IngestRequest) -> str:
-    target_path, description = request.target_path, request.description
+    _target_path, _description = request.target_path, request.description
     # action(s): 'fact_extract'
-    from pathlib import Path
 
-    from agent_utilities.knowledge_graph.extraction import (
-        ExtractedFact,
-        extract_facts,
-        facts_to_jsonl,
-        persist_facts,
-    )
-    from agent_utilities.knowledge_graph.extraction.job_manager import (
-        EngineStoreAdapter,
-    )
-
-    text, source_ref = await _ingest_fact_extract_text(description, target_path, Path)
-    if not text.strip():
-        return json.dumps(
-            {
-                "error": "fact_extract requires text (description=) "
-                "or a readable file (target_path=)"
-            }
-        )
-
-    facts: list[ExtractedFact] = []
-    async for ev in extract_facts(text, rounds=1, source_file=source_ref):
-        if ev["type"] == "fact":
-            facts.append(ExtractedFact(**ev["fact"]))
-
-    # CONCEPT:AU-ORCH.execution.event-loop-blocking-sweep — persist_facts
-    # loops over every extracted fact issuing a synchronous
-    # add_node/add_edge KG round trip, so it must not run inline on
-    # the request-serving loop. The scanner in
-    # scripts/check_event_loop_blocking.py only matches ``engine.*``
-    # shaped attribute calls and therefore cannot see a blocking call
-    # made through a plain helper like this one (D-W15-6).
-    stats = await run_blocking_ordered(persist_facts, EngineStoreAdapter(engine), facts)
-    unique = sum(1 for f in facts if not f.is_duplicate)
-    return json.dumps(
-        {
-            "status": "extracted",
-            "facts": [f.model_dump() for f in facts],
-            "jsonl": facts_to_jsonl(facts),
-            "stats": {
-                **stats,
-                "total_facts": len(facts),
-                "unique_facts": unique,
-                "duplicate_facts": len(facts) - unique,
-            },
-        },
-        default=str,
-    )
+    raise not_served("knowledge_graph.extraction", "EG-INGEST-WORKER-R701")
 
 
 async def _ingest_action_sync_second_brain(engine, request: IngestRequest) -> str:
-    target_path, corpus_name, base_path = (
+    _target_path, _corpus_name, _base_path = (
         request.target_path,
         request.corpus_name,
         request.base_path,
     )
     # action(s): 'sync_second_brain'
-    from datetime import datetime as _datetime
 
-    from agent_utilities.knowledge_graph.extraction import (
-        sync_second_brain,
-    )
-
-    if not target_path:
-        return json.dumps(
-            {
-                "error": "sync_second_brain requires target_path "
-                "(a notes directory or file)"
-            }
-        )
-
-    since: float | None = None
-    raw_since = (base_path or "").strip()
-    if raw_since:
-        try:
-            since = float(raw_since)
-        except ValueError:
-            try:
-                since = _datetime.fromisoformat(raw_since).timestamp()
-            except ValueError:
-                since = None
-
-    sync_result = await sync_second_brain(
-        engine, target_path, since=since, corpus_name=corpus_name
-    )
-    return json.dumps(sync_result.model_dump(), default=str)
+    raise not_served("knowledge_graph.extraction", "EG-INGEST-WORKER-R701")
 
 
 async def _ingest_action_classify_topics(engine, request: IngestRequest) -> str:
-    target_path, corpus_name, description = (
+    _target_path, _corpus_name, _description = (
         request.target_path,
         request.corpus_name,
         request.description,
     )
     # action(s): 'classify_topics'
-    import hashlib
-    from pathlib import Path
 
-    from agent_utilities.knowledge_graph.enrichment.topic_classifier import (
-        classify_and_link_topics,
+    raise not_served(
+        "knowledge_graph.enrichment.topic_classifier", "EG-DECISION-ENGINE-R614"
     )
-
-    text = description or ""
-    doc_id = ""
-    if target_path:
-        p = Path(target_path)
-        if p.exists() and p.is_file():
-            text = text or await run_blocking_ordered(
-                p.read_text, encoding="utf-8", errors="ignore"
-            )
-            doc_id = "doc:source:" + persistence_reference(
-                "document_source", target_path, namespace="topic-classifier"
-            )
-        else:
-            doc_id = "doc:source:" + persistence_reference(
-                "document_source", target_path, namespace="topic-classifier"
-            )
-    if not text.strip():
-        return json.dumps(
-            {
-                "error": "classify_topics requires text (description=) "
-                "or a readable file (target_path=)"
-            }
-        )
-    if not doc_id:
-        doc_id = f"doc:adhoc:{hashlib.sha256(text.encode()).hexdigest()[:16]}"
-
-    backend = getattr(engine, "backend", None) or engine
-    topic_res = await classify_and_link_topics(
-        backend, doc_id, text, title=corpus_name or "", source_type="adhoc"
-    )
-    return json.dumps(topic_res, default=str)
 
 
 async def _ingest_action_enrich_pending_documents(
     engine, request: IngestRequest
 ) -> str:
     # action(s): 'enrich_pending_documents'
-    from agent_utilities.knowledge_graph.memory.native_ingest import (
-        enrich_pending_documents,
+    raise not_served(
+        "knowledge_graph.memory.native_ingest", "SDK", owner="agent-connector-sdk"
     )
-
-    sweep_res = await enrich_pending_documents(engine, limit=200)
-    return json.dumps(sweep_res)
 
 
 async def _ingest_extract_submit_text(target_path, description):
@@ -2089,28 +1573,10 @@ def register_write_ingest_tools(mcp):
         tags=["graph-os", "feedback", "learning"],
     )
     async def graph_feedback(
-        correction_type: str = Field(
-            description=(
-                "outcome | rule | eval | reads_avoided | action_outcome | gotcha | "
-                "selective_erasure."
-            )
-        ),
         target_id: str = Field(
             description="Entity/episode/query the correction is about."
         ),
-        corrected_value: str = Field(
-            default="",
-            description="The corrected value (reward, expected output, etc.).",
-        ),
         reason: str = Field(default="", description="Why — the human's explanation."),
-        rule_scope: str = Field(
-            default="governance",
-            description="For rule corrections: governance | voice | source | preference.",
-        ),
-        rule_kind: str = Field(
-            default="forbid",
-            description="For rule corrections: forbid | prefer | demote.",
-        ),
         actor_id: str = Field(
             default="human", description="Who issued the correction."
         ),
@@ -2121,24 +1587,10 @@ def register_write_ingest_tools(mcp):
             return "Error: IntelligenceGraphEngine not active."
 
         def _execute() -> str:
-            try:
-                from agent_utilities.knowledge_graph.adaptation.feedback import (
-                    FeedbackService,
-                )
-
-                service = FeedbackService.from_engine(engine)
-                result = service.record_correction(
-                    correction_type,
-                    target_id,
-                    corrected_value=corrected_value or None,
-                    reason=reason,
-                    actor_id=actor_id,
-                    rule_scope=rule_scope,
-                    rule_kind=rule_kind,
-                )
-                return json.dumps(result.as_dict())
-            except Exception as e:
-                return public_error_text(e)
+            e = not_served(
+                "knowledge_graph.adaptation.feedback", "EG-DECISION-ENGINE-R702"
+            )
+            return public_error_text(e)
 
         return await run_blocking_ordered(_execute)
 
@@ -2162,37 +1614,18 @@ def register_write_ingest_tools(mcp):
         ),
         tags=["graph-os", "skills", "ingest"],
     )
-    async def skill_classify(
-        skill_id: str = Field(
-            description="The skill's catalog id (skills[].id from /api/enhanced/tools)."
-        ),
-        skill_type: str = Field(description="skill | workflow | graph."),
-    ) -> str:
+    async def skill_classify() -> str:
         """Classify a skill and persist the choice (source file, else durable override)."""
         engine = runtime._get_engine()
         if not engine:
             return "Error: IntelligenceGraphEngine not active."
 
         def _execute() -> str:
-            try:
-                from agent_utilities.knowledge_graph.ingestion.skill_classification import (
-                    reclassify_skill,
-                )
-                from agent_utilities.security.brain_context import current_actor
-
-                try:
-                    principal = current_actor().actor_id
-                except Exception:
-                    principal = "system"
-                result = reclassify_skill(
-                    engine,
-                    skill_id=skill_id,
-                    skill_type=skill_type,
-                    principal=principal,
-                )
-                return json.dumps(result)
-            except Exception as e:
-                return public_error_text(e)
+            e = not_served(
+                "knowledge_graph.ingestion.skill_classification",
+                "EG-REPO-INGEST-R651",
+            )
+            return public_error_text(e)
 
         return await run_blocking_ordered(_execute)
 

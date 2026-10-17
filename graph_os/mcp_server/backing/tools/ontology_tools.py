@@ -17,9 +17,9 @@ from agent_utilities.security.error_surface import (
 )
 from pydantic import Field
 
+from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
-from graph_os.mcp_server.backing.context_helpers import coerce_dict_param
 from graph_os.mcp_server.backing.context_helpers import run_coro as _run_coro
 from graph_os.mcp_server.backing.ontology_types import (
     OntologyCatalogRequest,
@@ -133,17 +133,7 @@ def _ontology_interface_list(reg: Any, registry: str) -> str:
 
 
 def _ontology_interface_implementers(reg: Any, name: str) -> str:
-    from agent_utilities.knowledge_graph.ontology.interfaces import (
-        DEFAULT_INTERFACE_REGISTRY,
-        target_object_types,
-    )
-
-    impls = (
-        reg.resolve_target(name)
-        if reg is not DEFAULT_INTERFACE_REGISTRY
-        else target_object_types(name)
-    )
-    return json.dumps({"target": name, "implementers": impls})
+    raise not_served("knowledge_graph.ontology.interfaces", "EG-TYPED-PACKS-R650")
 
 
 def _ontology_interface_conforms(reg: Any, name: str, object_json: str) -> str:
@@ -156,72 +146,16 @@ def _ontology_interface_owl(reg: Any) -> str:
 
 
 def _ontology_interface_schema(reg: Any, registry: str, action: str) -> str:
-    from agent_utilities.knowledge_graph.ontology.links import DEFAULT_LINK_REGISTRY
-    from agent_utilities.knowledge_graph.ontology.schema_graph import (
-        build_schema_graph,
-        render_schema_markdown,
-    )
-
-    schema = build_schema_graph(reg, DEFAULT_LINK_REGISTRY)
-    if action == "graph":
-        return json.dumps({"registry": registry, **schema}, default=str)
-    title = f"{registry.title()} Ontology Schema"
-    return json.dumps(
-        {
-            "registry": registry,
-            "markdown": render_schema_markdown(schema, title=title),
-        }
-    )
+    raise not_served("knowledge_graph.ontology.links", "EG-TYPED-PACKS-R650")
 
 
 def _ontology_interface_lint(reg: Any, registry: str) -> str:
-    from agent_utilities.knowledge_graph.ontology.style_lint import lint_interfaces
-
-    issues = lint_interfaces(reg)
-    return json.dumps(
-        {
-            "registry": registry,
-            "issues": [i.as_dict() for i in issues],
-            "count": len(issues),
-        }
-    )
+    raise not_served("knowledge_graph.ontology.style_lint", "EG-TYPED-PACKS-R651")
 
 
-def _ontology_interface_explain_routing(
-    entity_id: str, required_capability_type: str, tenant: str, policy_tags: str
-) -> str:
-    from agent_utilities.graph.routing.enrichers.capability_routing import (
-        explain_routing_eligibility,
-    )
-
-    if not entity_id or not required_capability_type:
-        return json.dumps(
-            {
-                "error": "explain_routing_eligibility requires entity_id and "
-                "required_capability_type"
-            }
-        )
-    engine = runtime._get_engine()
-    tags = (
-        [t.strip() for t in policy_tags.split(",") if t.strip()]
-        if policy_tags
-        else None
-    )
-    report = explain_routing_eligibility(
-        engine,
-        entity_id,
-        required_capability_type=required_capability_type,
-        tenant=tenant or None,
-        policy_tags=tags,
-    )
-    return json.dumps(
-        {
-            "action": "explain_routing_eligibility",
-            "entity_id": entity_id,
-            "required_capability_type": required_capability_type,
-            **report,
-        },
-        default=str,
+def _ontology_interface_explain_routing() -> str:
+    raise not_served(
+        "graph.routing.enrichers.capability_routing", "EG-DECISION-ENGINE-R035.750"
     )
 
 
@@ -250,42 +184,11 @@ def _ontology_sampling_profile_resolve(task_text: str, role: str) -> str:
 def _ontology_sampling_profile_set(
     registry: Any, profile_json: str, task_class: str
 ) -> str:
-    from agent_utilities.agent.sampling_profile import SamplingProfile
-    from agent_utilities.knowledge_graph.ontology.value_types import (
-        sampling_profile_violations,
-    )
-
-    data = json.loads(profile_json) if profile_json else {}
-    if task_class:
-        data.setdefault("task_class", task_class)
-    profile = SamplingProfile.model_validate(data)
-    violations = sampling_profile_violations(profile.model_dump())
-    if violations:
-        return json.dumps({"error": "SHACL bound violation", "violations": violations})
-    registry.set_task_profile(profile)
-    return json.dumps({"set": profile.model_dump()}, default=str)
+    raise not_served("knowledge_graph.ontology.value_types", "EG-TYPED-PACKS-R650")
 
 
 def _ontology_sampling_profile_evolve(registry: Any, task_class: str) -> str:
-    from agent_utilities.agent.sampling_profile import SamplingProfile
-    from agent_utilities.harness.variant_pool import VariantPool
-    from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
-
-    engine = IntelligenceGraphEngine.get_active()
-    kg = getattr(engine, "kg", None) or getattr(engine, "_kg", None)
-    ci = kg.retrieval if kg is not None else None
-    if ci is None:
-        return json.dumps({"error": "no capability index available to score"})
-    vp = VariantPool.__new__(VariantPool)
-
-    # Live eval: reward = mean capability-index reward already recorded for
-    # this profile's prior outcomes; absent history, neutral 0.5 keeps the
-    # incumbent. The daemon/evolve loop feeds real outcomes over time.
-    def _evaluator(p: SamplingProfile) -> float:
-        return ci.reward_of(vp._profile_id(task_class, p))
-
-    promoted = vp.evolve_profile(registry, task_class, ci, _evaluator)
-    return json.dumps({"promoted": promoted.model_dump()}, default=str)
+    raise not_served("knowledge_graph.core.engine", "EG-PLACEMENT-R611")
 
 
 def _ontology_sampling_profile_owl(registry: Any) -> str:
@@ -306,53 +209,42 @@ class _WritebackCtx:
 
 
 def _graph_writeback_proposals() -> str:
-    from agent_utilities.knowledge_graph.enrichment.writeback import ProposalQueue
-
-    return json.dumps({"proposals": ProposalQueue().list(status="pending")})
+    raise not_served(
+        "knowledge_graph.enrichment.writeback",
+        "SDK-SOURCE-INGEST-R600",
+        owner="agent-connector-sdk",
+    )
 
 
 def _graph_writeback_approve(proposal_id: str, ctx: _WritebackCtx) -> str:
-    from agent_utilities.knowledge_graph.enrichment.writeback import approve_proposal
-
-    return json.dumps(
-        approve_proposal(str(proposal_id), backend=ctx.backend, engine=ctx.engine)
+    raise not_served(
+        "knowledge_graph.enrichment.writeback",
+        "SDK-SOURCE-INGEST-R600",
+        owner="agent-connector-sdk",
     )
 
 
 def _graph_writeback_asset_mirror(ctx: _WritebackCtx) -> str:
-    from agent_utilities.knowledge_graph.enrichment.writeback import run_asset_mirror
-
-    return json.dumps(
-        run_asset_mirror(backend=ctx.backend, engine=ctx.engine, dry_run=ctx.dry_run)
+    raise not_served(
+        "knowledge_graph.enrichment.writeback",
+        "SDK-SOURCE-INGEST-R600",
+        owner="agent-connector-sdk",
     )
 
 
 def _graph_writeback_inventory(ctx: _WritebackCtx) -> str:
-    from agent_utilities.knowledge_graph.enrichment.writeback import push_inventory
-
-    return json.dumps(
-        push_inventory(
-            str(ctx.target), backend=ctx.backend, engine=ctx.engine, dry_run=ctx.dry_run
-        )
+    raise not_served(
+        "knowledge_graph.enrichment.writeback",
+        "SDK-SOURCE-INGEST-R600",
+        owner="agent-connector-sdk",
     )
 
 
 def _graph_writeback_findings(ctx: _WritebackCtx, creations_json: str) -> str:
-    from agent_utilities.knowledge_graph.enrichment.writeback import push_findings
-
-    project = (
-        json.loads(creations_json)[0]
-        if creations_json and creations_json != "[]"
-        else None
-    )
-    return json.dumps(
-        push_findings(
-            str(ctx.target),
-            backend=ctx.backend,
-            engine=ctx.engine,
-            project=project,
-            dry_run=ctx.dry_run,
-        )
+    raise not_served(
+        "knowledge_graph.enrichment.writeback",
+        "SDK-SOURCE-INGEST-R600",
+        owner="agent-connector-sdk",
     )
 
 
@@ -364,23 +256,10 @@ def _graph_writeback_default(
     retirements_json: str,
     process_ids_json: str,
 ) -> str:
-    from agent_utilities.knowledge_graph.enrichment.writeback import run_writeback
-
-    ops = {
-        "inferences": json.loads(inferences_json) if inferences_json else [],
-        "enrichments": json.loads(enrichments_json) if enrichments_json else [],
-        "creations": json.loads(creations_json) if creations_json else [],
-        "retirements": json.loads(retirements_json) if retirements_json else [],
-        "process_ids": json.loads(process_ids_json) if process_ids_json else None,
-    }
-    return json.dumps(
-        run_writeback(
-            str(ctx.target),
-            backend=ctx.backend,
-            engine=ctx.engine,
-            dry_run=ctx.dry_run,
-            **ops,
-        )
+    raise not_served(
+        "knowledge_graph.enrichment.writeback",
+        "SDK-SOURCE-INGEST-R600",
+        owner="agent-connector-sdk",
     )
 
 
@@ -395,10 +274,10 @@ class _SpecTicketCtx:
 
 
 def _spec_ticket_pull(target: str, user: str, project_id: str) -> str:
-    from agent_utilities.knowledge_graph.enrichment.writeback import pull_assigned
-
-    return json.dumps(
-        pull_assigned(str(target), user=user or None, project_id=project_id or None)
+    raise not_served(
+        "knowledge_graph.enrichment.writeback",
+        "SDK-SOURCE-INGEST-R600",
+        owner="agent-connector-sdk",
     )
 
 
@@ -411,21 +290,10 @@ def _spec_ticket_link(
     agent: str,
     comment: str,
 ) -> str:
-    from agent_utilities.knowledge_graph.enrichment.writeback import link_spec
-
-    spec = json.loads(spec_json) if spec_json else {}
-    return json.dumps(
-        link_spec(
-            spec,
-            target=ctx.target,
-            issue_id=str(issue_id),
-            project_id=project_id or None,
-            assignee=assignee or None,
-            agent=agent or None,
-            comment=comment or None,
-            backend=ctx.backend,
-            dry_run=ctx.dry_run,
-        )
+    raise not_served(
+        "knowledge_graph.enrichment.writeback",
+        "SDK-SOURCE-INGEST-R600",
+        owner="agent-connector-sdk",
     )
 
 
@@ -537,60 +405,23 @@ def _source_sync_resolve_engine(connection: str, graph: str) -> tuple[Any, str |
 def _source_sync_run(
     engine: Any, source: str, mode: str, ids: list[Any], graph: str, connection: str
 ) -> dict[str, Any]:
-    from agent_utilities.knowledge_graph.core.source_sync import sync_source
-
-    with engine_routing.bound_to_graph(graph):
-        result = sync_source(engine, str(source), mode=str(mode), ids=ids or None)
-    if graph or connection:
-        result = dict(result)
-        result.setdefault("connection", connection or "default")
-        result.setdefault("graph", graph)
-    return result
+    raise not_served("knowledge_graph.core.source_sync", "EG-INGEST-WORKER-R605")
 
 
 def _graph_etl_list() -> str:
-    from agent_utilities.knowledge_graph.enrichment.registry import (
-        discover_extractors,
-        list_sources,
-    )
-    from agent_utilities.knowledge_graph.enrichment.writeback.core import list_sinks
-
-    discover_extractors()
-    names = sorted({s.category for s in list_sources()})
-    reg = engine_routing.get_connection_registry()
-    backends = sorted(
-        set(reg.names()) | {"stardog", "neo4j", "falkordb", "age", "jena_fuseki"}
-    )
-    return json.dumps({"sources": names, "sinks": list_sinks(), "backends": backends})
+    raise not_served("knowledge_graph.enrichment.registry", "EG-INGEST-WORKER-R606")
 
 
 def _graph_etl_lineage(engine: Any, source: str, sink: str, limit: int) -> str:
-    from agent_utilities.knowledge_graph.etl import query_lineage
-
-    return json.dumps(
-        {
-            "runs": query_lineage(
-                engine, source=source or None, sink=sink or None, limit=int(limit)
-            )
-        },
-        default=str,
-    )
+    raise not_served("knowledge_graph.etl", "EG-UNIFIED-DATA-PLANE-R702")
 
 
 def _graph_etl_resolve_sink_backend(sink: str) -> Any:
     # Write-back sinks + the native SQL-table sink need none — run_etl routes
     # sink='table' itself (KG-2.266).
-    from agent_utilities.knowledge_graph.enrichment.writeback.core import get_sink
-
-    if not sink or sink == "table" or get_sink(sink) is not None:
-        return None
-    reg = engine_routing.get_connection_registry()
-    if sink in reg.names():
-        be = getattr(reg.get_engine(sink), "backend", None)
-        return getattr(be, "_authority", be)
-    from agent_utilities.knowledge_graph.backends import create_backend
-
-    return create_backend(backend_type=sink)
+    raise not_served(
+        "knowledge_graph.enrichment.writeback.core", "SDK", owner="agent-connector-sdk"
+    )
 
 
 @dataclass
@@ -609,36 +440,13 @@ class _EtlRunArgs:
 
 
 def _graph_etl_run(args: _EtlRunArgs) -> str:
-    from agent_utilities.knowledge_graph.etl import run_etl
-
-    ids = json.loads(args.ids_json) if args.ids_json else []
-    srcs = json.loads(args.sources_json) if args.sources_json else []
-    ops = json.loads(args.ops_json) if args.ops_json else {}
-    sink_backend = _graph_etl_resolve_sink_backend(args.sink)
-    return json.dumps(
-        run_etl(
-            args.engine,
-            source=args.source or None,
-            mode=str(args.mode),
-            ids=ids or None,
-            sink=args.sink or None,
-            sink_backend=sink_backend,
-            sources=srcs or None,
-            dry_run=bool(args.dry_run),
-            ops=ops or None,
-        ),
-        default=str,
-    )
+    raise not_served("knowledge_graph.etl", "EG-UNIFIED-DATA-PLANE-R702")
 
 
 def _classification_claim_from_json(raw: str) -> Any:
-    from agent_utilities.knowledge_graph.ontology.classification_claims import (
-        ClassificationClaim,
+    raise not_served(
+        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
     )
-
-    data = dict(json.loads(raw))
-    data["evidence_refs"] = tuple(data.get("evidence_refs") or ())
-    return ClassificationClaim(**data)
 
 
 def _classification_claim_dict(claim: Any) -> dict[str, Any]:
@@ -676,162 +484,69 @@ class _ClassificationClaimsCtx:
 
 
 def _classification_claims_record(ctx: _ClassificationClaimsCtx) -> str:
-    from agent_utilities.knowledge_graph.ontology.classification_claims import (
-        claim_from_raw,
-        record_claim,
+    raise not_served(
+        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
     )
-
-    claim = claim_from_raw(
-        json.loads(ctx.claim_json) if ctx.claim_json else {},
-        source_snapshot=ctx.source_snapshot,
-        policy_approved=bool(ctx.policy_approved),
-    )
-    if claim is None:
-        return json.dumps(
-            {"status": "error", "error": "claim_json is malformed or rejected"}
-        )
-    record_claim(ctx.engine, claim)
-    return json.dumps({"status": "success", "claim": _classification_claim_dict(claim)})
 
 
 def _classification_claims_query(ctx: _ClassificationClaimsCtx) -> str:
-    from agent_utilities.knowledge_graph.ontology.classification_claims import (
-        query_claims,
+    raise not_served(
+        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
     )
-
-    claims = query_claims(
-        ctx.engine,
-        ctx.subject_id,
-        status=ctx.status or None,
-        category=ctx.category or None,
-    )
-    return json.dumps({"claims": [_classification_claim_dict(c) for c in claims]})
 
 
 def _classification_claims_categories(ctx: _ClassificationClaimsCtx) -> str:
-    from agent_utilities.knowledge_graph.ontology.classification_claims import (
-        query_categories,
-    )
-
-    return json.dumps(
-        {"categories": sorted(query_categories(ctx.engine, ctx.subject_id))}
+    raise not_served(
+        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
     )
 
 
 def _classification_claims_history(ctx: _ClassificationClaimsCtx) -> str:
-    from agent_utilities.knowledge_graph.ontology.classification_claims import (
-        query_claim_history,
+    raise not_served(
+        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
     )
-
-    claims = query_claim_history(ctx.engine, ctx.subject_id, ctx.category)
-    return json.dumps({"claims": [_classification_claim_dict(c) for c in claims]})
 
 
 def _classification_claims_resolve_evidence(ctx: _ClassificationClaimsCtx) -> str:
-    from agent_utilities.knowledge_graph.ontology.classification_claims import (
-        resolve_claim_evidence,
+    raise not_served(
+        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
     )
-
-    claim = _classification_claim_from_json(ctx.claim_json)
-    evidence = resolve_claim_evidence(
-        ctx.engine, claim, viewer_clearance=ctx.viewer_clearance or "internal"
-    )
-    return json.dumps({"evidence": evidence})
 
 
 def _classification_claims_review(ctx: _ClassificationClaimsCtx) -> str:
-    from agent_utilities.knowledge_graph.ontology.classification_claims import (
-        ClassificationPromotionLedger,
-    )
-
-    ledger = ClassificationPromotionLedger(ctx.engine)
-    updated = ledger.review(
-        _classification_claim_from_json(ctx.claim_json),
-        reason=ctx.reason or "under review",
-    )
-    return json.dumps(
-        {"status": "success", "claim": _classification_claim_dict(updated)}
+    raise not_served(
+        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
     )
 
 
 def _classification_claims_promote(ctx: _ClassificationClaimsCtx) -> str:
-    from agent_utilities.knowledge_graph.ontology.classification_claims import (
-        ClassificationPromotionLedger,
-    )
-
-    ledger = ClassificationPromotionLedger(ctx.engine)
-    updated = ledger.promote(
-        _classification_claim_from_json(ctx.claim_json),
-        reviewer=ctx.reviewer,
-        reason=ctx.reason or "promoted after review",
-    )
-    return json.dumps(
-        {"status": "success", "claim": _classification_claim_dict(updated)}
+    raise not_served(
+        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
     )
 
 
 def _classification_claims_reject(ctx: _ClassificationClaimsCtx) -> str:
-    from agent_utilities.knowledge_graph.ontology.classification_claims import (
-        ClassificationPromotionLedger,
-    )
-
-    ledger = ClassificationPromotionLedger(ctx.engine)
-    updated = ledger.reject(
-        _classification_claim_from_json(ctx.claim_json),
-        reviewer=ctx.reviewer,
-        reason=ctx.reason,
-    )
-    return json.dumps(
-        {"status": "success", "claim": _classification_claim_dict(updated)}
+    raise not_served(
+        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
     )
 
 
 def _classification_claims_supersede(ctx: _ClassificationClaimsCtx) -> str:
-    from agent_utilities.knowledge_graph.ontology.classification_claims import (
-        ClassificationPromotionLedger,
-    )
-
-    ledger = ClassificationPromotionLedger(ctx.engine)
-    old_updated, new_claim = ledger.supersede(
-        _classification_claim_from_json(ctx.claim_json),
-        _classification_claim_from_json(ctx.new_claim_json),
-        reason=ctx.reason or "superseded by a newer extraction",
-    )
-    return json.dumps(
-        {
-            "status": "success",
-            "old_claim": _classification_claim_dict(old_updated),
-            "new_claim": _classification_claim_dict(new_claim),
-        }
+    raise not_served(
+        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
     )
 
 
 def _classification_claims_lifecycle_history(ctx: _ClassificationClaimsCtx) -> str:
-    from agent_utilities.knowledge_graph.ontology.classification_claims import (
-        ClassificationPromotionLedger,
+    raise not_served(
+        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
     )
-
-    ledger = ClassificationPromotionLedger(ctx.engine)
-    return json.dumps({"events": ledger.history(ctx.claim_id)})
 
 
 def _classification_claims_propose_identity(ctx: _ClassificationClaimsCtx) -> str:
-    from agent_utilities.knowledge_graph.ontology.classification_claims import (
-        propose_cross_source_identity,
-        record_claim,
+    raise not_served(
+        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
     )
-
-    claim = propose_cross_source_identity(
-        artifact_a_id=ctx.artifact_a_id,
-        artifact_b_id=ctx.artifact_b_id,
-        evidence_refs=json.loads(ctx.evidence_refs_json or "[]"),
-        source_snapshot=ctx.source_snapshot,
-        extractor_ref=ctx.extractor_ref,
-        confidence=None if ctx.confidence < 0 else ctx.confidence,
-        tenant=ctx.tenant,
-    )
-    record_claim(ctx.engine, claim)
-    return json.dumps({"status": "success", "claim": _classification_claim_dict(claim)})
 
 
 _CLASSIFICATION_CLAIMS_ACTIONS: dict[str, Callable[[_ClassificationClaimsCtx], str]] = {
@@ -852,130 +567,43 @@ _CLASSIFICATION_CLAIMS_ACTIONS: dict[str, Callable[[_ClassificationClaimsCtx], s
 def _repo_provenance_snapshot(
     repo_id: str, commit_sha: str, ref: str
 ) -> tuple[Any, str, str | None]:
-    from agent_utilities.knowledge_graph.ontology.repository_provenance import (
-        RepositorySnapshot,
+    raise not_served(
+        "knowledge_graph.ontology.repository_provenance", "EG-TYPED-PACKS-R651"
     )
-
-    if not commit_sha:
-        return (
-            None,
-            "",
-            json.dumps(
-                {
-                    "status": "error",
-                    "error": "commit_sha is required for action='snapshot'",
-                }
-            ),
-        )
-    obj = RepositorySnapshot(repo_id=repo_id, commit_sha=commit_sha, ref=ref)
-    return obj, obj.snapshot_id, None
 
 
 def _repo_provenance_branch(
     repo_id: str, name: str, commit_sha: str
 ) -> tuple[Any, str, str | None]:
-    from agent_utilities.knowledge_graph.ontology.repository_provenance import Branch
-
-    if not name or not commit_sha:
-        return (
-            None,
-            "",
-            json.dumps(
-                {
-                    "status": "error",
-                    "error": "name and commit_sha are required for action='branch'",
-                }
-            ),
-        )
-    obj = Branch(repo_id=repo_id, name=name, head_commit_sha=commit_sha)
-    return obj, obj.branch_node_id, None
+    raise not_served(
+        "knowledge_graph.ontology.repository_provenance", "EG-TYPED-PACKS-R651"
+    )
 
 
 def _repo_provenance_tag(
     repo_id: str, name: str, commit_sha: str, annotation: str
 ) -> tuple[Any, str, str | None]:
-    from agent_utilities.knowledge_graph.ontology.repository_provenance import Tag
-
-    if not name or not commit_sha:
-        return (
-            None,
-            "",
-            json.dumps(
-                {
-                    "status": "error",
-                    "error": "name and commit_sha are required for action='tag'",
-                }
-            ),
-        )
-    obj = Tag(repo_id=repo_id, name=name, commit_sha=commit_sha, annotation=annotation)
-    return obj, obj.tag_node_id, None
+    raise not_served(
+        "knowledge_graph.ontology.repository_provenance", "EG-TYPED-PACKS-R651"
+    )
 
 
 def _repo_provenance_change_event(
     repo_id: str, commit_sha: str, kind: str, occurred_at: str, subject_id: str
 ) -> tuple[Any, str, str | None]:
-    from datetime import UTC, datetime
 
-    from agent_utilities.knowledge_graph.ontology.repository_provenance import (
-        ChangeEvent,
+    raise not_served(
+        "knowledge_graph.ontology.repository_provenance", "EG-TYPED-PACKS-R651"
     )
-
-    if not commit_sha or not kind:
-        return (
-            None,
-            "",
-            json.dumps(
-                {
-                    "status": "error",
-                    "error": "commit_sha and kind are required for action='change_event'",
-                }
-            ),
-        )
-    obj = ChangeEvent(
-        repo_id=repo_id,
-        commit_sha=commit_sha,
-        kind=kind,
-        occurred_at=occurred_at or datetime.now(UTC).isoformat(),
-        subject_id=subject_id,
-    )
-    return obj, obj.event_id, None
 
 
 def _repo_provenance_ingest(engine: Any, obj: Any, node_id: str, repo_id: str) -> str:
-    from agent_utilities.knowledge_graph.ingestion.envelope_ingest import (
-        ingest_graph_slice,
-    )
-
-    entities, relationships = obj.to_graph_slice()
-    result = ingest_graph_slice(
-        engine,
-        "repository_provenance",
-        entities,
-        relationships,
-        source_instance=repo_id,
-    )
-    return json.dumps(
-        {"status": "success", "id": node_id, "result": result}, default=str
-    )
+    raise not_served("knowledge_graph.ingestion.envelope_ingest", "EG-REPO-INGEST-R002")
 
 
 def _ontology_derive_list() -> str:
-    from agent_utilities.knowledge_graph.ontology.derived_properties import (
-        DEFAULT_DERIVED_REGISTRY,
-    )
-
-    return json.dumps(
-        [
-            {
-                "name": d.name,
-                "object_type": d.object_type,
-                "backing": str(d.backing),
-                "output_type": str(d.output_type),
-                "description": d.description,
-            }
-            for d in DEFAULT_DERIVED_REGISTRY.list_all()
-        ],
-        default=str,
+    raise not_served(
+        "knowledge_graph.ontology.derived_properties", "EG-TYPED-PACKS-R650"
     )
 
 
@@ -1006,9 +634,7 @@ class _ObjectEditsRecordArgs:
     expect: dict
 
 
-def _object_edits_compare_and_set(
-    ledger: Any, object_id: str, conditions: dict, props: dict, actor: str, etype: Any
-) -> str:
+def _object_edits_compare_and_set() -> str:
     # CONCEPT:AU-KG.ontology.optimistic-concurrency-object-property — atomic
     # optimistic-concurrency property set. The object id IS the node id (the
     # ledger persists the edit's target as MERGE (t {id: object_id})), so we
@@ -1016,67 +642,15 @@ def _object_edits_compare_and_set(
     # node still matches ``expect`` (missing field ≡ null), under the engine
     # write lock. If we lose the race we record NOTHING and surface
     # applied=false — never a misleading audit edit.
-    from agent_utilities.knowledge_graph.ontology.edits import Edit
-
-    engine = runtime._get_engine()
-    backend = getattr(engine, "backend", None)
-    if backend is None:
-        return json.dumps(
-            {
-                "action": "compare_and_set",
-                "object_id": object_id,
-                "applied": False,
-                "error": "no engine backend for conditional set",
-            }
-        )
-    applied = bool(
-        backend.compare_and_set_node_fields(object_id, conditions, dict(props))
-    )
-    if not applied:
-        return json.dumps(
-            {"action": "compare_and_set", "object_id": object_id, "applied": False}
-        )
-    edit = Edit(actor=actor, edit_type=etype, object_id=object_id, after=dict(props))
-    recorded = ledger.record(edit)
-    payload = recorded.model_dump()
-    payload["applied"] = True
-    return json.dumps(payload, default=str)
+    raise not_served("knowledge_graph.ontology.edits", "EG-TYPED-PACKS-R651")
 
 
 def _object_edits_record(ledger: Any, args: _ObjectEditsRecordArgs) -> str:
-    from agent_utilities.knowledge_graph.ontology.edits import Edit, EditType
-
-    etype = EditType(args.edit_type)
-    if etype in (EditType.LINK_ADD, EditType.LINK_REMOVE):
-        edit = Edit(
-            actor=args.actor,
-            edit_type=etype,
-            object_id=args.object_id,
-            link_source=args.object_id,
-            link_label=args.link_label,
-            link_target=args.link_target,
-        )
-        recorded = ledger.record(edit)
-        return json.dumps(recorded.model_dump(), default=str)
-
-    props = json.loads(args.properties_json) if args.properties_json else {}
-    conditions = coerce_dict_param(args.expect)
-    if etype == EditType.PROPERTY_SET and conditions:
-        return _object_edits_compare_and_set(
-            ledger, args.object_id, conditions, props, args.actor, etype
-        )
-    edit = Edit(
-        actor=args.actor, edit_type=etype, object_id=args.object_id, after=dict(props)
-    )
-    recorded = ledger.record(edit)
-    return json.dumps(recorded.model_dump(), default=str)
+    raise not_served("knowledge_graph.ontology.edits", "EG-TYPED-PACKS-R651")
 
 
 def _object_edits_revert(ledger: Any, edit_id: str, actor: str) -> str:
-    from agent_utilities.knowledge_graph.ontology.edits import revert_edit
-
-    comp = revert_edit(ledger, edit_id, actor=actor)
-    return json.dumps(comp.model_dump(), default=str)
+    raise not_served("knowledge_graph.ontology.edits", "EG-TYPED-PACKS-R651")
 
 
 def _object_edits_history(ledger: Any, object_id: str) -> str:
@@ -1096,76 +670,28 @@ def _object_edits_as_of(ledger: Any, object_id: str, ts: float) -> str:
 
 
 def _graph_share_hierarchy(action: str, tenant_id: str, parent_tenant_id: str) -> str:
-    import dataclasses
 
-    from agent_utilities.knowledge_graph.core import tenant_registry as _tr
-
-    try:
-        if action == "set_parent":
-            return json.dumps(
-                dataclasses.asdict(_tr.set_parent(tenant_id, parent_tenant_id))
-            )
-        if action == "clear_parent":
-            return json.dumps(dataclasses.asdict(_tr.clear_parent(tenant_id)))
-        from agent_utilities.security.brain_context import current_actor
-
-        target = tenant_id or getattr(current_actor(), "tenant_id", "")
-        return json.dumps(
-            {
-                "tenant_id": target,
-                "parent_tenant_id": _tr.parent_of(target) or "",
-                "ancestors": _tr.ancestor_chain(target),
-                "max_depth": _tr.MAX_TENANT_DEPTH,
-            }
-        )
-    except Exception as e:  # noqa: BLE001
-        return public_error_json(e)
+    raise not_served("knowledge_graph.core.tenant_registry", "EG-IDENTITY-R610")
 
 
 def _graph_share_org(node_id: str) -> str:
-    from agent_utilities.knowledge_graph.core import tenant_sharing as _ts
-
-    # BUG-6: share_with_org now returns False (no-op) for an id that
-    # doesn't resolve to a real node, instead of silently "succeeding".
-    if not _ts.share_with_org(node_id):
-        return json.dumps({"error": f"node not found: {node_id!r}", "node_id": node_id})
-    return json.dumps({"node_id": node_id, "shared_scope": "org"})
+    raise not_served("knowledge_graph.core.tenant_sharing", "EG-IDENTITY-R610")
 
 
 def _graph_share_commons(node_id: str) -> str:
-    from agent_utilities.knowledge_graph.core import tenant_sharing as _ts
-
-    ok = _ts.promote_to_commons(node_id)
-    if not ok:
-        return json.dumps({"error": f"node not found: {node_id!r}", "node_id": node_id})
-    return json.dumps({"node_id": node_id, "shared_scope": "commons", "promoted": ok})
+    raise not_served("knowledge_graph.core.tenant_sharing", "EG-IDENTITY-R610")
 
 
 def _graph_share_mark(node_id: str, marking: str) -> str:
-    from agent_utilities.knowledge_graph.core import tenant_sharing as _ts
-
-    if not marking:
-        return json.dumps({"error": "marking is required for action='mark'"})
-    _ts.share(node_id, marking)
-    return json.dumps({"node_id": node_id, "marking": marking})
+    raise not_served("knowledge_graph.core.tenant_sharing", "EG-IDENTITY-R610")
 
 
 def _graph_share_private(node_id: str) -> str:
-    from agent_utilities.knowledge_graph.core import tenant_sharing as _ts
-
-    # BUG-6: same existence guard as 'org' — no silent success.
-    if not _ts.make_private(node_id):
-        return json.dumps({"error": f"node not found: {node_id!r}", "node_id": node_id})
-    return json.dumps({"node_id": node_id, "shared_scope": "private"})
+    raise not_served("knowledge_graph.core.tenant_sharing", "EG-IDENTITY-R610")
 
 
 def _object_set_path(source_id: str, target_id: str) -> str:
-    from agent_utilities.knowledge_graph.ontology.object_path import find_object_path
-
-    if not source_id or not target_id:
-        return json.dumps({"error": "action='path' requires source_id and target_id"})
-    engine = runtime._get_engine()
-    return json.dumps(find_object_path(engine, source_id, target_id), default=str)
+    raise not_served("knowledge_graph.ontology.object_path", "EG-TYPED-PACKS-R650")
 
 
 def _object_set_base(
@@ -1265,33 +791,9 @@ def register_ontology_tools(mcp):
         ),
     ) -> str:
         """List/describe ontology property types and resolve/validate a type reference."""
-        from agent_utilities.knowledge_graph.ontology.property_types import (
-            column_type_for,
-            get_property_type,
-            list_property_types,
-            validate_value,
+        raise not_served(
+            "knowledge_graph.ontology.property_types", "EG-TYPED-PACKS-R650"
         )
-
-        try:
-            if action == "list":
-                return json.dumps({"property_types": list_property_types()})
-            if action == "describe":
-                pt = get_property_type(type_ref)
-                if pt is None:
-                    return json.dumps({"error": f"unknown type: {type_ref!r}"})
-                return json.dumps(pt.model_dump(), default=str)
-            if action == "column_type":
-                return json.dumps(
-                    {"type_ref": type_ref, "column_type": column_type_for(type_ref)}
-                )
-            if action == "validate":
-                parsed = json.loads(value) if value else None
-                return json.dumps(
-                    {"type_ref": type_ref, "valid": validate_value(type_ref, parsed)}
-                )
-            return json.dumps({"error": f"unknown action: {action!r}"})
-        except Exception as e:  # noqa: BLE001
-            return public_error_json(e)
 
     runtime.REGISTERED_TOOLS["ontology_property_types"] = ontology_property_types
 
@@ -1312,34 +814,7 @@ def register_ontology_tools(mcp):
         ),
     ) -> str:
         """List/describe value types and validate or coerce a value through one."""
-        from agent_utilities.knowledge_graph.ontology.value_types import (
-            coerce_value_type,
-            get_value_type,
-            list_value_types,
-            validate_value_type,
-        )
-
-        try:
-            if action == "list":
-                return json.dumps({"value_types": list_value_types()})
-            if action == "describe":
-                vt = get_value_type(name)
-                if vt is None:
-                    return json.dumps({"error": f"unknown value type: {name!r}"})
-                return json.dumps(vt.model_dump(), default=str)
-            parsed = json.loads(value) if value else None
-            if action == "validate":
-                return json.dumps(
-                    {"name": name, "valid": validate_value_type(name, parsed)}
-                )
-            if action == "coerce":
-                return json.dumps(
-                    {"name": name, "value": coerce_value_type(name, parsed)},
-                    default=str,
-                )
-            return json.dumps({"error": f"unknown action: {action!r}"})
-        except Exception as e:  # noqa: BLE001
-            return public_error_json(e)
+        raise not_served("knowledge_graph.ontology.value_types", "EG-TYPED-PACKS-R650")
 
     runtime.REGISTERED_TOOLS["ontology_value_types"] = ontology_value_types
 
@@ -1385,59 +860,14 @@ def register_ontology_tools(mcp):
             default="",
             description="Candidate tool/agent node id (action='explain_routing_eligibility').",
         ),
-        required_capability_type: str = Field(
-            default="",
-            description=(
-                "Required ontology capability type, e.g. 'TransportCapability' "
-                "(action='explain_routing_eligibility')."
-            ),
-        ),
         tenant: str = Field(
             default="",
             description="Required tenant scope, if any (action='explain_routing_eligibility').",
         ),
-        policy_tags: str = Field(
-            default="",
-            description=(
-                "Comma-separated required policy tags, if any "
-                "(action='explain_routing_eligibility')."
-            ),
-        ),
     ) -> str:
         """Resolve interface targeting, check conformance, emit interface OWL/SHACL, or explain
         WHY a candidate is routing-eligible (X-4)."""
-        from agent_utilities.knowledge_graph.ontology.interfaces import (
-            DEFAULT_INTERFACE_REGISTRY,
-        )
-        from agent_utilities.knowledge_graph.standardization.standards import (
-            ENTERPRISE_STANDARD_REGISTRY,
-        )
-
-        reg = (
-            ENTERPRISE_STANDARD_REGISTRY
-            if str(registry).lower() == "enterprise"
-            else DEFAULT_INTERFACE_REGISTRY
-        )
-        try:
-            if action == "list":
-                return _ontology_interface_list(reg, registry)
-            if action == "implementers":
-                return _ontology_interface_implementers(reg, name)
-            if action == "conforms":
-                return _ontology_interface_conforms(reg, name, object_json)
-            if action == "owl":
-                return _ontology_interface_owl(reg)
-            if action in ("graph", "summary"):
-                return _ontology_interface_schema(reg, registry, action)
-            if action == "lint":
-                return _ontology_interface_lint(reg, registry)
-            if action == "explain_routing_eligibility":
-                return _ontology_interface_explain_routing(
-                    entity_id, required_capability_type, tenant, policy_tags
-                )
-            return json.dumps({"error": f"unknown action: {action!r}"})
-        except Exception as e:  # noqa: BLE001
-            return public_error_json(e)
+        raise not_served("knowledge_graph.ontology.interfaces", "EG-TYPED-PACKS-R650")
 
     runtime.REGISTERED_TOOLS["ontology_interface"] = ontology_interface
 
@@ -1574,14 +1004,11 @@ def register_ontology_tools(mcp):
         ),
     ) -> str:
         """Compile the live LeanIX data model into OWL and apply it to both reasoning layers."""
-        from agent_utilities.knowledge_graph.ontology.leanix_metamodel import (
-            sync_leanix_ontology,
+        raise not_served(
+            "knowledge_graph.ontology.leanix_metamodel",
+            "SDK",
+            owner="agent-connector-sdk",
         )
-
-        try:
-            return json.dumps(sync_leanix_ontology(dry_run=bool(dry_run)))
-        except Exception as e:  # noqa: BLE001
-            return public_error_json(e)
 
     runtime.REGISTERED_TOOLS["ontology_leanix_sync"] = ontology_leanix_sync
 
@@ -1618,26 +1045,7 @@ def register_ontology_tools(mcp):
         ),
     ) -> str:
         """Attach, inspect, replace, or detach EG GraphSchema sources."""
-        from agent_utilities.knowledge_graph.ontology.lifecycle import OntologyLifecycle
-
-        try:
-            try:
-                engine = runtime._get_engine()
-            except Exception:  # noqa: BLE001 — fail closed below
-                engine = None
-            lc = OntologyLifecycle(engine=engine)
-
-            if action in _ONTOLOGY_CATALOG_ACTIONS:
-                catalog_request = OntologyCatalogRequest(
-                    source=source,
-                    source_type=source_type,
-                    iri=iri,
-                    version=version,
-                )
-                return _graph_ontology_catalog(action, lc, catalog_request)
-            return json.dumps({"error": f"unknown action: {action!r}"})
-        except Exception as e:  # noqa: BLE001
-            return public_error_json(e)
+        raise not_served("knowledge_graph.ontology.lifecycle", "EG-TYPED-PACKS-R651")
 
     runtime.REGISTERED_TOOLS["graph_ontology"] = graph_ontology
 
@@ -1932,33 +1340,9 @@ def register_ontology_tools(mcp):
             default="status",
             description="'status' (progress for a drain_id) or 'list' (registered chunked sources).",
         ),
-        drain_id: str = Field(
-            default="",
-            description="The drain handle returned by source_sync(mode='full') (for action='status').",
-        ),
     ) -> str:
         """Report progress of a chunked drain or list chunked-drain-capable sources."""
-        from agent_utilities.knowledge_graph.core.chunked_drain import (
-            drain_status,
-            list_chunked_sources,
-        )
-
-        try:
-            if str(action) == "list":
-                return json.dumps({"chunked_sources": list_chunked_sources()})
-            try:
-                engine = runtime._get_engine()
-            except Exception:  # noqa: BLE001
-                engine = None
-            if engine is None:
-                return json.dumps(
-                    {"status": "error", "error": "active engine required"}
-                )
-            if not drain_id:
-                return json.dumps({"error": "drain_id is required for action='status'"})
-            return json.dumps(drain_status(engine, str(drain_id)), default=str)
-        except Exception as e:  # noqa: BLE001
-            return public_error_json(e)
+        raise not_served("knowledge_graph.core.chunked_drain", "EG-INGEST-WORKER-R605")
 
     runtime.REGISTERED_TOOLS["source_drain"] = source_drain
 
@@ -2281,38 +1665,7 @@ def register_ontology_tools(mcp):
         ),
     ) -> str:
         """List registered ontology functions or invoke one with typed params."""
-        from agent_utilities.knowledge_graph.ontology.functions import (
-            DEFAULT_FUNCTION_REGISTRY,
-        )
-
-        try:
-            if action == "list":
-                return json.dumps(
-                    [
-                        {
-                            "name": s.name,
-                            "version": s.version,
-                            "kind": str(s.kind),
-                            "released": s.released,
-                            "inputs": [p.model_dump() for p in s.inputs],
-                            "output": str(s.output),
-                            "description": s.description,
-                        }
-                        for s in DEFAULT_FUNCTION_REGISTRY.list_functions()
-                    ],
-                    default=str,
-                )
-            if action == "invoke":
-                actor_id = actor or "mcp:caller"
-                ont = engine_routing._ontology_system()
-                parsed = json.loads(params) if params else {}
-                result = ont.invoke_function(
-                    name, parsed, version or None, actor_id=actor_id
-                )
-                return json.dumps(result.model_dump(), default=str)
-            return json.dumps({"error": f"unknown action: {action!r}"})
-        except Exception as e:  # noqa: BLE001
-            return public_error_json(e)
+        raise not_served("knowledge_graph.ontology.functions", "EG-TYPED-PACKS-R650")
 
     runtime.REGISTERED_TOOLS["ontology_function"] = ontology_function
 
@@ -2364,9 +1717,6 @@ def register_ontology_tools(mcp):
             default="materialize",
             description="'types' to list link types, or 'materialize' a junction.",
         ),
-        link_name: str = Field(
-            default="", description="The junction link type name, e.g. 'agent_skill'."
-        ),
         source_id: str = Field(default="", description="Source endpoint node id."),
         target_id: str = Field(default="", description="Target endpoint node id."),
         properties: str = Field(
@@ -2374,59 +1724,7 @@ def register_ontology_tools(mcp):
         ),
     ) -> str:
         """List link types or reify + persist a M:N link via the graph_write path."""
-        from agent_utilities.knowledge_graph.ontology.links import DEFAULT_LINK_REGISTRY
-
-        try:
-            if action == "types":
-                return json.dumps(
-                    [
-                        {
-                            "name": link.name,
-                            "source_type": str(link.source_type),
-                            "target_type": str(link.target_type),
-                            "edge_type": str(link.edge_type),
-                            "cardinality": str(link.cardinality),
-                            "is_junction": link.name
-                            in {j.name for j in DEFAULT_LINK_REGISTRY.junctions()},
-                        }
-                        for link in DEFAULT_LINK_REGISTRY.list_links()
-                    ],
-                    default=str,
-                )
-            ont = engine_routing._ontology_system()
-            props = json.loads(properties) if properties else {}
-            node, edge_a, edge_b = ont.materialize_link(
-                link_name, source_id, target_id, props
-            )
-            # Persist via the existing graph_write add_node / add_edge primitives.
-            await runtime._execute_tool(
-                "graph_write",
-                action="add_node",
-                node_type=str(node.type),
-                node_id=node.id,
-                properties=json.dumps(
-                    {"name": node.name, **(node.metadata or {})}, default=str
-                ),
-            )
-            for edge in (edge_a, edge_b):
-                await runtime._execute_tool(
-                    "graph_write",
-                    action="add_edge",
-                    source_id=edge.source,
-                    target_id=edge.target,
-                    rel_type=str(edge.type),
-                    properties=json.dumps(edge.metadata or {}, default=str),
-                )
-            return json.dumps(
-                {
-                    "junction_id": node.id,
-                    "edge_a_type": str(edge_a.type),
-                    "edge_b_type": str(edge_b.type),
-                },
-                default=str,
-            )
-        except Exception as e:  # noqa: BLE001
-            return public_error_json(e)
+        raise not_served("knowledge_graph.ontology.links", "EG-TYPED-PACKS-R650")
 
     runtime.REGISTERED_TOOLS["ontology_link_materialize"] = ontology_link_materialize
 
@@ -2566,43 +1864,16 @@ def register_ontology_tools(mcp):
             default="restricted_view",
             description="'redact' one object | 'restricted_view' an object set | 'mark' attach a marking.",
         ),
-        objects_json: str = Field(
-            default="[]", description="JSON list of object dicts (restricted_view)."
-        ),
         object_json: str = Field(
             default="{}", description="JSON object dict (redact)."
         ),
         node_id: str = Field(default="", description="Node id (action='mark')."),
         marking: str = Field(default="", description="Marking name (action='mark')."),
-        mask: bool = Field(
-            default=False,
-            description="Mask withheld properties instead of dropping them.",
-        ),
     ) -> str:
         """Redact / restrict / mark objects for the AMBIENT actor (no spoofable clearance)."""
-        from agent_utilities.knowledge_graph.ontology.permissioning import (
-            apply_marking,
-            redact_object,
-            restricted_view,
+        raise not_served(
+            "knowledge_graph.ontology.permissioning", "EG-TYPED-PACKS-R652"
         )
-
-        try:
-            # actor=None -> resolved from the ambient ActorContext set by the
-            # dispatcher's use_actor(); callers cannot inject their own clearance.
-            if action == "redact":
-                obj = json.loads(object_json) if object_json else {}
-                return json.dumps(redact_object(obj, None, mask=mask), default=str)
-            if action == "restricted_view":
-                objs = json.loads(objects_json) if objects_json else []
-                return json.dumps(restricted_view(objs, None, mask=mask), default=str)
-            if action == "mark":
-                apply_marking(node_id, marking)
-                return json.dumps(
-                    {"node_id": node_id, "marking": marking, "applied": True}
-                )
-            return json.dumps({"error": f"unknown action: {action!r}"})
-        except Exception as e:  # noqa: BLE001
-            return public_error_json(e)
 
     runtime.REGISTERED_TOOLS["object_permissioning"] = object_permissioning
 
@@ -2738,9 +2009,6 @@ def register_ontology_tools(mcp):
             default="", description="Optional pre-extracted text (OCR/external)."
         ),
         source: str = Field(default="", description="Provenance label (path/URL)."),
-        chunk_size: int = Field(
-            default=800, description="Target chunk size in characters."
-        ),
         overlap: int = Field(
             default=120, description="Overlap characters between chunks."
         ),
@@ -2750,55 +2018,7 @@ def register_ontology_tools(mcp):
         ),
     ) -> str:
         """Process a document into Document + Chunk ontology objects through the live graph."""
-        from agent_utilities.knowledge_graph.facade import KnowledgeGraph
-        from agent_utilities.knowledge_graph.ontology.document_processing import (
-            ChunkingConfig,
-            DocumentProcessor,
-        )
-        from agent_utilities.security.persistence_privacy import persistence_reference
-
-        try:
-            engine = None
-            try:
-                engine = runtime._get_engine()
-            except Exception:  # pragma: no cover - defensive
-                engine = None
-            if engine is None:
-                raise RuntimeError("document processing requires graph authority")
-            backend = getattr(engine, "backend", None) if engine is not None else None
-            kg = KnowledgeGraph()
-            if backend is not None:
-                kg._store = backend
-            proc = DocumentProcessor(
-                kg,
-                engine=engine,
-                chunking=ChunkingConfig(chunk_size=chunk_size, overlap=overlap),
-                contextual=contextual,
-            )
-            source_reference = persistence_reference(
-                "mcp_document_source",
-                source or (document if not text else "inline-document"),
-                namespace="ontology-tool",
-            )
-            result = proc.process(
-                document,
-                text=text or None,
-                source="mcp-document",
-                metadata={"source_reference": source_reference},
-                connector="mcp-document",
-                source_instance="ontology-tool",
-            )
-            return json.dumps(
-                {
-                    "document_id": result.document_id,
-                    "chunk_count": result.chunk_count,
-                    "persisted": result.persisted,
-                    "edges": len(result.edges),
-                },
-                default=str,
-            )
-        except Exception as e:  # noqa: BLE001
-            return public_error_json(e)
+        raise not_served("knowledge_graph.facade", "EG-CONTRACT-R005")
 
     runtime.REGISTERED_TOOLS["document_process"] = document_process
 
@@ -2809,12 +2029,11 @@ def register_ontology_tools(mcp):
     # the lean serving image omits it, so guard the registration so runtime still boots
     # — the quant tool is simply absent there. See AGENTS.md "Dependency discipline".
     try:
-        from agent_utilities.domains.finance.quant_mcp_tools import (
-            register_quant_tools,
+        raise not_served(
+            "domains.finance.quant_mcp_tools",
+            "GRAPHOS (served MCP tools)",
+            owner="graph-os",
         )
-
-        runtime.REGISTERED_TOOLS["quant"] = register_quant_tools(mcp, None)
-        runtime.ACTION_TOOL_ROUTES["quant"] = "/quant"
     except ImportError:
         logger.info(
             "quant tools skipped (finance extra not installed) — "
@@ -2847,49 +2066,8 @@ def register_ontology_tools(mcp):
             default=True,
             description="Enable contextual-retrieval enrichment (CONCEPT:AU-KG.enrichment.contextual-retrieval-enrichment).",
         ),
-        incremental: bool = Field(
-            default=True,
-            description="Use the connector's resumable poll (CONCEPT:AU-ECO.connector.incremental-poll-watermark) vs a full load.",
-        ),
     ) -> str:
         """List or run a document-source connector (CONCEPT:AU-ECO.connector.document-source-framework–4.29)."""
-        from agent_utilities.knowledge_graph.facade import KnowledgeGraph
-
-        try:
-            if action == "list":
-                from agent_utilities.protocols.source_connectors import list_sources
-
-                return json.dumps({"connectors": list_sources()})
-
-            if action == "run":
-                if not source_type:
-                    return json.dumps(
-                        {"error": "source_type is required for action='run'"}
-                    )
-                engine = None
-                try:
-                    engine = runtime._get_engine()
-                except Exception:  # pragma: no cover - defensive
-                    engine = None
-                backend = (
-                    getattr(engine, "backend", None) if engine is not None else None
-                )
-                kg = KnowledgeGraph()
-                if backend is not None:
-                    kg._store = backend
-                result = await kg.ontology.run_connector(
-                    source_type,
-                    dict(config or {}),
-                    connector_id=connector_id or None,
-                    contextual=contextual,
-                    incremental=incremental,
-                )
-                return json.dumps(result, default=str)
-
-            return json.dumps(
-                {"error": f"unknown action {action!r}; use 'list' or 'run'"}
-            )
-        except Exception as e:  # noqa: BLE001
-            return public_error_json(e)
+        raise not_served("knowledge_graph.facade", "EG-CONTRACT-R005")
 
     runtime.REGISTERED_TOOLS["source_connector"] = source_connector

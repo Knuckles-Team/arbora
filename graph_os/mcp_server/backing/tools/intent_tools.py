@@ -46,12 +46,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from agent_utilities.knowledge_graph.retrieval.capability_context import load_cpds
 from agent_utilities.security.error_surface import public_error_payload
 from agent_utilities.security.persistence_privacy import persistence_reference
 from agent_utilities.security.threat_defense_engine import PromptInjectionScanner
 from pydantic import BaseModel
 
+from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.intent_contract import (
     DESCRIBE_ACTION,
@@ -350,7 +350,7 @@ def _graphos_cpds() -> dict[str, dict[str, Any]]:
 def _load_cpds_required() -> dict[str, dict[str, Any]]:
     """Return the packaged current CPD authority or fail closed."""
 
-    cpds = {**load_cpds(), **_graphos_cpds()}
+    cpds = _graphos_cpds()
     if not cpds:
         raise RuntimeError("GraphOS capability descriptors are unavailable")
     return cpds
@@ -1804,25 +1804,7 @@ async def _question_route(
     """
     if verb != "ask" or raw_hints:
         return None
-    from agent_utilities.decide.consumers.task_planner import (
-        is_planning_question,
-        process_task_planner,
-    )
-    from agent_utilities.knowledge_graph.virtual_graph.federation import (
-        answer_cross_source,
-    )
-
-    if is_planning_question(intent):
-        plan = await process_task_planner().plan(intent)
-        why = "Planning question: answered by the task planner."
-        routing = _question_routing(intent_ref, "task_planner", why)
-        return {"result": plan.to_dict(), "routing": routing, "executed": True}
-    report = await answer_cross_source(intent)
-    if report is None:
-        return None
-    why = "Ontology concepts span installed virtual sources: federated report."
-    routing = _question_routing(intent_ref, "cross_source_report", why)
-    return {"result": report.to_dict(), "routing": routing, "executed": True}
+    raise not_served("decide.consumers.task_planner", "EG-CQ-ORCH-R001")
 
 
 async def dispatch_intent(
@@ -2786,18 +2768,10 @@ async def _lakehouse_status(hints: dict[str, Any]) -> dict[str, Any]:
     }
     # CDC-lag — CA-21's Debezium consumer (kafka_adapter.py) has no lag-
     # measurement function yet. Same ``getattr`` rationale as above.
-    try:
-        import agent_utilities.knowledge_graph.streams.kafka_adapter as _kafka_adapter
-
-        lag_fn = getattr(_kafka_adapter, "consumer_lag_status", None)
-        if lag_fn is None:
-            out["cdc_lag"] = {"status": "unavailable", "owner": "CA-21"}
-        else:
-            out["cdc_lag"] = lag_fn()
-    except ImportError:
-        out["cdc_lag"] = {"status": "unavailable", "owner": "CA-21"}
-    except Exception as exc:  # noqa: BLE001 — status read is best-effort
-        out["cdc_lag"] = {"status": "error", "detail": type(exc).__name__}
+    refusal = not_served(
+        "knowledge_graph.streams.kafka_adapter", "EG-UNIFIED-DATA-PLANE-R008.700"
+    )
+    out["cdc_lag"] = {"status": "error", "detail": type(refusal).__name__}
     return out
 
 

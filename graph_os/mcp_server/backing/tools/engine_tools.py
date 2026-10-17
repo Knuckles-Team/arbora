@@ -59,6 +59,7 @@ from typing import Any
 from agent_utilities.security.error_surface import public_error_json
 from pydantic import Field
 
+from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
 
@@ -208,23 +209,6 @@ ENGINE_DOMAINS: dict[str, list[str]] = _discover_domains()
 _DEFAULT_GRAPH_POOL_KEY = "__default__"
 
 
-def _client_factory(pool_key: str) -> Any:
-    """Return a non-owning process-client view for one pool key.
-
-    ``pool_key`` is the opaque cache key used by :func:`_client_for` (never
-    empty — see :data:`_DEFAULT_GRAPH_POOL_KEY`); it is translated back to the
-    real ``graph`` argument (``None`` for the deployment default). The first
-    access acquires the one :class:`GraphComputeEngine` authority; subsequent
-    graph keys are zero-connection views over that same transport.
-    """
-    from agent_utilities.knowledge_graph.core.graph_compute import (
-        GraphComputeEngine,
-    )
-
-    graph = None if pool_key == _DEFAULT_GRAPH_POOL_KEY else pool_key
-    return GraphComputeEngine.get_or_create(graph_name=graph).client
-
-
 def _client_evict(pool_key: str, client: Any) -> None:
     """Discard a graph view without closing the process transport."""
     del pool_key, client
@@ -248,14 +232,8 @@ def _get_client_pool() -> Any:
     if _CLIENT_POOL is None:
         with _CLIENT_POOL_LOCK:
             if _CLIENT_POOL is None:
-                from agent_utilities.knowledge_graph.core.tenant_engine_pool import (
-                    TenantEnginePool,
-                )
-
-                _CLIENT_POOL = TenantEnginePool(
-                    capacity=_client_pool_capacity(),
-                    factory=_client_factory,
-                    on_evict=_client_evict,
+                raise not_served(
+                    "knowledge_graph.core.tenant_engine_pool", "EG-PLACEMENT-R611"
                 )
     return _CLIENT_POOL
 

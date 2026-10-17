@@ -8,6 +8,7 @@ from typing import Any
 from agent_utilities.security.error_surface import public_error_text
 from pydantic import Field
 
+from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 
 
@@ -114,20 +115,8 @@ def register_job_tools(mcp: Any) -> None:
             if action == "cancel":
                 if not job_id:
                     return "Error: job_id required"
-                from agent_utilities.knowledge_graph.core import work_durability as _wi
-
-                item_id = _wi.orchestrator_work_item_id(job_id)
-                view = getattr(engine, "_work_item_engine", engine)
-                if not _wi.cancel_work_item(view, item_id):
-                    return json.dumps(
-                        {
-                            "status": "not_cancelled",
-                            "job_id": job_id,
-                            "error": "Job is missing, terminal, or held by an active lease",
-                        }
-                    )
-                return json.dumps(
-                    {"status": "cancelled", "job_id": job_id}, default=str
+                raise not_served(
+                    "knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605"
                 )
             if action == "input":
                 if not job_id:
@@ -137,65 +126,19 @@ def register_job_tools(mcp: Any) -> None:
                 )
                 if not isinstance(parsed_responses, dict):
                     raise ValueError("input_responses must decode to a JSON object")
-                from agent_utilities.knowledge_graph.core import work_durability as _wi
-
-                from graph_os.api.contracts.session import (
-                    resolve_session,
-                )
-
-                item_id = _wi.orchestrator_work_item_id(job_id)
-                view = getattr(engine, "_work_item_engine", engine)
-                session = resolve_session(required_scope="kg:write")
-                if not _wi.submit_work_item_input(
-                    view,
-                    item_id,
-                    tenant=session.tenant,
-                    response=parsed_responses,
-                ):
-                    return json.dumps(
-                        {
-                            "status": "not_submitted",
-                            "job_id": job_id,
-                            "error": (
-                                "Job is missing, not running, tenant-mismatched, "
-                                "or has no pending input request"
-                            ),
-                        }
-                    )
-                return json.dumps(
-                    {"status": "submitted", "job_id": job_id}, default=str
+                raise not_served(
+                    "knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605"
                 )
             if action == "dead_letter":
-                from agent_utilities.knowledge_graph.ingestion.dead_letter import (
-                    list_dead_letter_items,
-                )
-
-                view = getattr(engine, "_work_item_engine", engine)
-                return json.dumps(
-                    {
-                        "action": "dead_letter",
-                        "items": list_dead_letter_items(view, kind=kind, limit=limit),
-                    },
-                    default=str,
+                raise not_served(
+                    "knowledge_graph.ingestion.dead_letter", "EG-REPO-INGEST-R002"
                 )
             if action == "drain":
                 if not job_id:
                     return "Error: job_id required"
-                from agent_utilities.knowledge_graph.ingestion.dead_letter import (
-                    drain_dead_letter_item,
+                raise not_served(
+                    "knowledge_graph.ingestion.dead_letter", "EG-REPO-INGEST-R002"
                 )
-
-                from graph_os.api.contracts.session import (
-                    resolve_session,
-                )
-
-                view = getattr(engine, "_work_item_engine", engine)
-                session = resolve_session(required_scope="kg:write")
-                actor = getattr(session.actor, "actor_id", None) or "unknown"
-                result = drain_dead_letter_item(
-                    view, job_id, actor=str(actor), reason=reason
-                )
-                return json.dumps({"action": "drain", **result}, default=str)
             return f"Error: Unknown graph_jobs action '{action}'"
         except PermissionError:
             raise

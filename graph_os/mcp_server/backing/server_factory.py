@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from graph_os.api.errors import not_served
+
 """MCP Server Factory.
 
 Handles CLI argument parsing for MCP servers, automated server initialization
@@ -300,25 +302,12 @@ def _semantic_kg_matches(query_filter: str, name: str) -> list[str] | None:
     Returns the matched tool names (possibly empty, meaning "no match"), or
     ``None`` if the engine/orchestrator import or resolution itself failed.
     """
-    try:
-        from agent_utilities.knowledge_graph.core.engine import (
-            IntelligenceGraphEngine,
-        )
-        from agent_utilities.tools.dynamic_tool_orchestrator import (
-            DynamicToolOrchestrator,
-        )
-
-        engine = IntelligenceGraphEngine.get_active()
-        if not engine:
-            return []
-        orchestrator = DynamicToolOrchestrator(engine)
-        return list(orchestrator.resolve_mcp_tools(query_filter, server_name=name))
-    except Exception as exc:
-        logger.debug(
-            "Failed to filter components using Knowledge Graph (exception_type=%s)",
-            type(exc).__name__,
-        )
-        return None
+    exc = not_served("knowledge_graph.core.engine", "EG-PLACEMENT-R611")
+    logger.debug(
+        "Failed to filter components using Knowledge Graph (exception_type=%s)",
+        type(exc).__name__,
+    )
+    return None
 
 
 def _apply_semantic_filter(
@@ -2127,27 +2116,16 @@ async def _register_and_heartbeat_forever(name: str, url: str, ttl_secs: int) ->
     engine becomes reachable.
     """
     interval = max(1, ttl_secs // 3)
-    resources = {
+    {
         "transport": str(setting("TRANSPORT", "stdio") or "stdio"),
         "pid": os.getpid(),
     }
     while True:
-        try:
-            from agent_utilities.knowledge_graph.core.graph_compute import (
-                GraphComputeEngine,
-            )
-
-            engine = GraphComputeEngine.get_or_create()
-            await engine.async_client.server_registry.register(
-                name, url, resources=resources, ttl_secs=ttl_secs
-            )
-        except asyncio.CancelledError:
-            raise
-        except Exception as exc:  # noqa: BLE001 — self-registration retry loop, will retry next iteration
-            logger.debug(
-                "Fleet self-registration attempt failed, will retry: %s",
-                type(exc).__name__,
-            )
+        exc = not_served("knowledge_graph.core.graph_compute", "EG-PLACEMENT-R611")
+        logger.debug(
+            "Fleet self-registration attempt failed, will retry: %s",
+            type(exc).__name__,
+        )
         await asyncio.sleep(interval)
 
 
@@ -2191,26 +2169,11 @@ async def _shutdown_fleet_engine(manage_engine_shutdown: bool) -> None:
 
     if not manage_engine_shutdown:
         return
-    try:
-        from agent_utilities.knowledge_graph.core.graph_compute import (
-            GraphComputeEngine,
-        )
-
-        engine = GraphComputeEngine.get_active()
-        if engine is not None:
-            status = await asyncio.to_thread(engine.drain)
-            if status is not None and getattr(status, "timed_out", False):
-                logger.error(
-                    "GraphOS transport drain timed out with %s active request(s); "
-                    "continuity is not claimed",
-                    getattr(status, "active_requests", "unknown"),
-                )
-            engine.close()
-    except Exception as exc:  # noqa: BLE001 - lifecycle teardown must continue
-        logger.error(
-            "GraphOS transport drain failed; continuity is not claimed (%s)",
-            type(exc).__name__,
-        )
+    exc = not_served("knowledge_graph.core.graph_compute", "EG-PLACEMENT-R611")
+    logger.error(
+        "GraphOS transport drain failed; continuity is not claimed (%s)",
+        type(exc).__name__,
+    )
 
 
 def _fleet_registration_lifespan_factory(

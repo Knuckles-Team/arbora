@@ -152,7 +152,7 @@ service = "graph_os.messaging.reach:service_port"
 # The path is ignored and supplied as a local symlink; package metadata keeps
 # the real PEP 508 floor above, so released wheels resolve from the index.
 [tool.uv.sources]
-agent-utilities = { path = ".uv-workspace-siblings/agent-utilities", editable = true }
+agent-utilities = { git = "https://github.com/Knuckles-Team/agent-utilities.git", branch = "refactor/au-cut-to-eg" }
 agent-connector-sdk = { path = ".uv-workspace-siblings/agent-connector-sdk", editable = true }
 agent-webui = { path = ".uv-workspace-siblings/agent-webui", editable = true }
 

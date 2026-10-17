@@ -41,7 +41,6 @@ TOOL_VERBS: Mapping[str, tuple[str, ...]] = MappingProxyType(
         "graph_analyze": ("ask", "why"),
         "graph_context": ("ask",),
         "graph_document_tree": ("ask", "write"),
-        "graph_engineering": ("ask", "write"),
         "graph_table": ("ask", "write"),
         "graph_projection": ("ask",),
         "graph_catalog": ("find", "ask"),
@@ -90,7 +89,6 @@ TOOL_VERBS: Mapping[str, tuple[str, ...]] = MappingProxyType(
         "graph_compliance": ("ask", "why"),
         "graph_epistemic": ("why", "ask"),
         "graph_incident": ("ask", "act"),
-        "graph_argument": ("why", "write", "ask"),
         # ── writes / ingest / persist ──
         "graph_write": ("write",),
         # Ingestion submits are writes, but polling its queue is a read.  The
@@ -123,7 +121,6 @@ TOOL_VERBS: Mapping[str, tuple[str, ...]] = MappingProxyType(
         # shape as graph_etl/ontology_derive above.
         "ontology_repository_provenance": ("write",),
         "document_process": ("write",),
-        "graph_media_sidecar": ("write", "act"),
         "spec_ticket": ("write", "ask"),
         "engine_nodes": ("write", "ask"),
         "engine_edges": ("write",),
@@ -172,7 +169,6 @@ TOOL_VERBS: Mapping[str, tuple[str, ...]] = MappingProxyType(
         "engine_broker": ("act", "manage", "ask"),
         "engine_ledger": ("write", "act"),
         # ── manage / configure / admin ──
-        "graph_claims": ("manage", "act"),
         "graph_config": ("manage", "ask"),
         "graph_configure": ("manage",),
         "graph_secret": ("manage",),

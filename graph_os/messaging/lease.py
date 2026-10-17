@@ -19,7 +19,7 @@ import uuid
 from collections.abc import Callable, Iterable
 from typing import Any
 
-from agent_utilities.knowledge_graph.core.work_durability import (
+from graph_os.work_items import (
     NativeWorkItemRequired,
     WorkItemBackendUnavailable,
     claim_specific,
@@ -89,9 +89,8 @@ def _validate_lease_row(
     if (
         item is None
         or item.get("kind") != _LEASE_KIND
-        or item.get("queue") != _LEASE_QUEUE
-        or item.get("tenant") != tenant
         or not isinstance(metadata, dict)
+        or metadata.get("queue") != _LEASE_QUEUE
         or metadata.get("platform") != platform
         or metadata.get("identity_digest") != identity_digest
     ):
@@ -162,7 +161,7 @@ def acquire_intake_lease(
             "messaging intake lease is held by another owner: platform=%s", platform
         )
         return None
-    if not claim.get("_native") or claim.get("tenant") != tenant:
+    if claim.get("tenant") != tenant:
         raise NativeWorkItemRequired(
             f"messaging intake lease claim for {platform!r} lacked native tenant authority"
         )

@@ -45,6 +45,7 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import ConfigDict, Field, field_validator
 
+from graph_os.api.errors import not_served
 from graph_os.fleet.protocol_compat import mcp_protocol_exception
 
 # MCP SDK v2 (which the `fastmcp>=4.0.0b1` floor pulls in) renamed
@@ -1298,27 +1299,15 @@ class WorkItemTasksExtension(ServerExtension):
         if self._repository_task_id(params.task_id):
             return self._cancel_repository(params.task_id, session=session, route=route)
 
-        from agent_utilities.knowledge_graph.core import work_durability as _wi
-
-        item_id = self._owned_work_item_id(params.task_id, session)
-        if not _wi.cancel_work_item(self._engine(), item_id):
-            raise mcp_protocol_exception(-32602, "Failed to cancel task")
-        current = _wi.get_work_item(self._engine(), item_id)
-        if current is None:
-            raise mcp_protocol_exception(-32602, "Task disappeared after cancellation")
-        return self._ack_from_generic_item(
-            params.task_id, current, session=session, route=route
+        raise not_served(
+            "knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605"
         )
 
     def _owned_work_item_id(self, task_id: str, session: Any) -> str:
         """The work item behind ``task_id``; unknown unless the caller's tenant owns it."""
-        from agent_utilities.knowledge_graph.core import work_durability as _wi
-
-        item_id = _wi.orchestrator_work_item_id(task_id)
-        item = _wi.get_work_item(self._engine(), item_id)
-        if item is None or item.get("tenant") != session.tenant:
-            raise mcp_protocol_exception(-32602, "Unknown task")
-        return item_id
+        raise not_served(
+            "knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605"
+        )
 
     async def _handle_update(
         self, ctx: ServerRequestContext[Any, Any], params: _UpdateTaskParams
@@ -1339,21 +1328,8 @@ class WorkItemTasksExtension(ServerExtension):
                 route=route,
             )
 
-        from agent_utilities.knowledge_graph.core import work_durability as _wi
-
-        item_id = self._owned_work_item_id(params.task_id, session)
-        if not _wi.submit_work_item_input(
-            self._engine(),
-            item_id,
-            tenant=session.tenant,
-            response=params.input_responses,
-        ):
-            raise mcp_protocol_exception(-32602, "Failed to submit task input")
-        current = _wi.get_work_item(self._engine(), item_id)
-        if current is None:
-            raise mcp_protocol_exception(-32602, "Task disappeared after input update")
-        return self._ack_from_generic_item(
-            params.task_id, current, session=session, route=route
+        raise not_served(
+            "knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605"
         )
 
     def _project(
@@ -1370,37 +1346,9 @@ class WorkItemTasksExtension(ServerExtension):
                 )
             return self._project_repository(task_id, session=session, route=route)
 
-        from agent_utilities.knowledge_graph.core import work_durability as _wi
-
-        item_id = _wi.orchestrator_work_item_id(task_id)
-        item = _wi.get_work_item(self._engine(), item_id)
-        if item is None:
-            raise mcp_protocol_exception(-32602, "Unknown task")
-        if session is not None and item.get("tenant") != session.tenant:
-            raise mcp_protocol_exception(-32602, "Unknown task")
-        raw_status = str(item.get("status") or "").lower()
-        metadata = item.get("metadata")
-        pending = (
-            metadata.get("pending_input_request")
-            if isinstance(metadata, dict)
-            else None
+        raise not_served(
+            "knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605"
         )
-        status = self._map_work_item_status(raw_status, pending)
-        result = _GetTaskResult(
-            task_id=task_id,
-            status=status,
-            created_at=_iso_timestamp(item.get("created_at")),
-            last_updated_at=_iso_timestamp(item.get("updated_at")),
-            # Native WorkItems have no automatic record-expiration policy: they
-            # are durable graph records (mirrors the gateway's own ttlMs: null).
-            ttl_ms=None,
-            # `mcp_types.Result.meta` aliases to `_meta`; both spellings validate
-            # at runtime (`populate_by_name=True`), but the pydantic mypy plugin
-            # only recognizes the alias in the synthesized constructor signature.
-            _meta=self._response_meta(session, route),
-        )
-        self._apply_task_status_payload(result, status, task_id, item, pending)
-        return result
 
     @staticmethod
     def _map_work_item_status(raw_status: str, pending: Any) -> str:
@@ -1484,24 +1432,9 @@ class WorkItemTasksExtension(ServerExtension):
 
     @staticmethod
     def _repository_raw_item(engine: Any, view: Any) -> Mapping[str, Any]:
-        from agent_utilities.knowledge_graph.core import work_durability as _wi
-
-        item = _wi.get_work_item(engine, view.work_item_id)
-        if item is None:
-            raise mcp_protocol_exception(
-                -32603, "Repository WorkItem state is unavailable"
-            )
-        if (
-            not isinstance(item, Mapping)
-            or item.get("id") != view.work_item_id
-            or not isinstance(item.get("status"), str)
-            or not item.get("status", "").strip()
-            or "created_at" not in item
-            or "updated_at" not in item
-            or not isinstance(item.get("metadata"), Mapping)
-        ):
-            raise mcp_protocol_exception(-32603, "Repository WorkItem state is corrupt")
-        return item
+        raise not_served(
+            "knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605"
+        )
 
     @staticmethod
     def _repository_status(raw_state: Any) -> str:
@@ -1696,28 +1629,9 @@ class WorkItemTasksExtension(ServerExtension):
         session: Any,
         route: Mapping[str, Any] | None,
     ) -> _AckResult:
-        from agent_utilities.knowledge_graph.core import work_durability as _wi
-
-        view = self._repository_view(task_id, session)
-        updated = _wi.submit_work_item_input(
-            self._engine(),
-            view.work_item_id,
-            tenant=session.tenant,
-            response=input_responses,
+        raise not_served(
+            "knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605"
         )
-        after = self._repository_view(task_id, session)
-        if not updated:
-            state = self._repository_status(after.state)
-            if state in {"completed", "failed", "cancelled"}:
-                return self._ack_from_view(
-                    task_id,
-                    after,
-                    session=session,
-                    route=route,
-                    status_message="Input update lost a race with the durable outcome",
-                )
-            raise mcp_protocol_exception(-32602, "Failed to submit task input")
-        return self._ack_from_view(task_id, after, session=session, route=route)
 
     def _ack_from_generic_item(
         self,

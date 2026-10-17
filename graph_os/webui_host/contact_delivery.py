@@ -15,12 +15,6 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from agent_utilities.knowledge_graph.core.work_durability import (
-    claim_specific,
-    commit_result,
-    get_work_item,
-    submit_work_item_atomic,
-)
 from agent_utilities.messaging.service import MessagingService
 from agent_utilities.security.persistence_privacy import persistence_reference
 
@@ -32,6 +26,12 @@ from graph_os.webui_host.contact_governance import (
     existing_receipt,
     prepare_contact,
     work_item_submission,
+)
+from graph_os.work_items import (
+    claim_specific,
+    commit_result,
+    get_work_item,
+    submit_work_item_atomic,
 )
 
 if TYPE_CHECKING:
@@ -240,9 +240,11 @@ class WebUIContactDelivery:
 
 
 def build_webui_contact_delivery(
-    sync_runner: SyncRunner,
+    sync_runner: SyncRunner, engine: Any | None = None
 ) -> WebUIContactDelivery | None:
-    """Build only when the server has a valid delivery-only contact policy."""
+    """Build only with an engine client and a delivery-only contact policy."""
+    if engine is None:
+        return None
     from agent_webui.contact_delivery import load_contact_delivery_config
 
     config = load_contact_delivery_config()
@@ -251,11 +253,6 @@ def build_webui_contact_delivery(
         or config.retention_days != 0
         or destination_parts(config.destination) is None
     ):
-        return None
-    from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
-
-    engine = IntelligenceGraphEngine.get_active()
-    if WebUIContactDelivery._authority(engine) is None:
         return None
     return WebUIContactDelivery(
         engine, fixed_destination=config.destination, sync_runner=sync_runner

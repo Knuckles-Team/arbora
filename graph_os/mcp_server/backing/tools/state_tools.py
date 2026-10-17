@@ -21,64 +21,10 @@ from agent_utilities.security.error_surface import (
 from pydantic import Field
 from starlette.responses import JSONResponse
 
+from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 
 logger = logging.getLogger(__name__)
-
-
-def propose_lakehouse_maintenance_gap(
-    engine: Any,
-    *,
-    source: str,
-    statement: str,
-    signature: str = "",
-    domain: str = "lakehouse-maintenance",
-    severity: float = 0.5,
-    concept_ids: list[str] | None = None,
-) -> dict[str, Any] | None:
-    """CA-28's Loop-engine hook: let a lakehouse-maintenance detector propose
-    a Transform run or index rebuild the SAME way every other discovery track
-    does (CONCEPT:AU-AHE.harness.canonical-gap-lifecycle).
-
-    ``core.schedule_engine``'s three ``lakehouse-maintenance`` dispatch
-    targets (``debezium_lag_check``/``opensearch_reindex_staleness_check``/
-    ``lineage_sweep`` — CA-21/24/15/25's real detection logic, still to land)
-    call this on a genuine finding instead of inventing a second execution
-    path: it files one canonical ``:Gap`` via
-    :func:`agent_utilities.knowledge_graph.research.gaps.submit_gap` and lets
-    it flow through the EXISTING gaps -> SpecProposal -> ``review``
-    (approve|edit|reject) -> develop-Loop lifecycle ``graph_loops`` already
-    exposes (see :func:`register_state_tools`'s ``graph_loops`` tool, actions
-    ``gaps``/``submit_gap``/``review``).
-
-    Deliberately PROPOSE-ONLY — this function has no develop/apply path of
-    its own and never mutates lakehouse state, matching ``graph_loops``
-    ``run``'s existing ``mine_discovery`` default-ON-but-propose-only
-    contract (CONCEPT:AU-KG.evolution.mining-flywheel): a mined/detected
-    issue becomes a reviewable proposal, never an automatic change.
-
-    ``signature`` defaults to a stable hash of ``source``+``statement`` so a
-    repeated identical finding is idempotent (``submit_gap``'s own
-    ``gap:<source>:<signature>`` id dedupes re-detection rather than filing a
-    duplicate gap on every tick).
-    """
-    import hashlib
-
-    from agent_utilities.knowledge_graph.research.gaps import submit_gap
-
-    statement = (statement or "").strip()
-    if not statement:
-        return None
-    sig = signature or hashlib.sha256(f"{source}:{statement}".encode()).hexdigest()[:16]
-    return submit_gap(
-        engine,
-        source=source,
-        signature=sig,
-        statement=statement,
-        domain=domain,
-        severity=severity,
-        concept_ids=concept_ids or [],
-    )
 
 
 def _format_tool_response(resp: Any) -> str:
@@ -214,32 +160,6 @@ async def _resolve_goals_response(
     return None, json.dumps({"error": f"Unknown goals action: {action}"})
 
 
-def _sandbox_status_action() -> str:
-    """``"status"`` action of ``register_state_tools``'s ``graph_sandbox``.
-
-    Extracted verbatim (pure extract-method, no behaviour change).
-    """
-    import json as _json
-
-    from agent_utilities.deployment.doctor import _check_warm_fork
-    from agent_utilities.rlm.sandboxes.reward import SandboxRewardTracker
-
-    res = _check_warm_fork()
-    data = res.get("data") or {}
-    return _json.dumps(
-        {
-            "action": "status",
-            "status": res.get("status"),
-            "detail": res.get("detail"),
-            "rungs": data.get("rungs", {}),
-            "warm_rungs": data.get("warm_rungs", []),
-            "pool": data.get("pool", {}),
-            "rewards": SandboxRewardTracker.get().snapshot(),
-        },
-        default=str,
-    )
-
-
 def _sandbox_reap_action() -> str:
     """``"reap"`` action of ``register_state_tools``'s ``graph_sandbox``.
 
@@ -274,31 +194,10 @@ async def _sandbox_warm_action(rung: str) -> str:
     """
     import json as _json
 
-    from agent_utilities.runtime.warm_registry import WarmParentRegistry
-
     if not rung:
         return _json.dumps({"error": "warm requires an approved rung"})
-    from agent_utilities.rlm.sandboxes.base import ForkableSandbox
-    from agent_utilities.rlm.sandboxes.registry import default_sandboxes
-
-    backend = next((b for b in default_sandboxes() if b.name == rung), None)
-    if backend is None or not isinstance(backend, ForkableSandbox):
-        return _json.dumps(
-            {"error": "requested rung is not an available confined warm-fork"}
-        )
-    registry = WarmParentRegistry.get()
-    spec = backend.warm_spec()
-    already = registry.acquire(spec.key) is not None
-    if not already:
-        parent = await backend.warm(spec)
-        registry.register(spec.key, parent, close=parent.close, kind=backend.name)
-    return _json.dumps(
-        {
-            "action": "warm",
-            "rung": rung,
-            "already_warm": already,
-            "pool": registry.stats(),
-        }
+    raise not_served(
+        "rlm.sandboxes.base", "AU-harness (deleted from AU)", owner="agent-utilities"
     )
 
 
@@ -454,9 +353,7 @@ def _feeds_sync_action(engine: Any, url: str, mode: str) -> str:
             }
         )
     # Fallback: no queue (embedded engine) → run inline.
-    from agent_utilities.knowledge_graph.core.source_sync import sync_source
-
-    return _json.dumps(sync_source(engine, feed_source, mode=mode), default=str)
+    raise not_served("knowledge_graph.core.source_sync", "EG-INGEST-WORKER-R605")
 
 
 def _parse_json_or(raw: str, default: Any) -> Any:
@@ -874,81 +771,6 @@ async def _loops_prioritize_action(
     )
 
 
-async def _loops_state_action(engine: Any, p: _LoopsParams) -> str:
-    """``"state"`` action of ``register_state_tools``'s ``graph_loops``: LIVE
-    EvolutionState (CONCEPT:AU-KG.research.evolutionstate-live-surface-per/2.291)
-    — current stage + why, saturation gauge, open_gaps trend, velocity,
-    distilled-spec backlog.
-
-    Extracted verbatim (pure extract-method, no behaviour change).
-    """
-    import json as _json
-
-    from agent_utilities.knowledge_graph.research.evolution_state import (
-        read_evolution_state,
-    )
-
-    evolution = await run_blocking_ordered(read_evolution_state, engine)
-    return _json.dumps(
-        {"action": "state", "evolution": evolution}, indent=2, default=str
-    )
-
-
-async def _loops_specs_action(engine: Any, p: _LoopsParams) -> str:
-    """``"specs"`` action of ``register_state_tools``'s ``graph_loops``: the
-    distilled-spec backlog (CONCEPT:AU-KG.research.close-distill-develop-seam).
-
-    Extracted verbatim (pure extract-method, no behaviour change).
-    """
-    import json as _json
-
-    from agent_utilities.knowledge_graph.research.spec_proposals import list_specs
-
-    specs = await run_blocking_ordered(
-        list_specs, engine, status=(p.status or None), limit=p.limit
-    )
-    return _json.dumps({"action": "specs", "specs": specs}, default=str)
-
-
-async def _loops_review_action(engine: Any, p: _LoopsParams) -> str:
-    """``"review"`` action of ``register_state_tools``'s ``graph_loops``:
-    spec-level review/veto BEFORE develop
-    (CONCEPT:AU-OS.config.autonomous-spec-develop-off).
-
-    Extracted verbatim (pure extract-method, no behaviour change).
-    """
-    import json as _json
-
-    from agent_utilities.knowledge_graph.research.spec_proposals import review_spec
-
-    sid = p.spec_id or p.loop_id
-    if not sid or not p.decision:
-        return _json.dumps(
-            {"error": "review needs spec_id and decision (approve|edit|reject)"}
-        )
-    review_result = await run_blocking_ordered(
-        review_spec, engine, sid, p.decision, reviewer="user"
-    )
-    return _json.dumps({"action": "review", "result": review_result}, default=str)
-
-
-async def _loops_gaps_action(engine: Any, p: _LoopsParams) -> str:
-    """``"gaps"`` action of ``register_state_tools``'s ``graph_loops``: the
-    canonical :Gap backlog (CONCEPT:AU-AHE.harness.canonical-gap-lifecycle,
-    Wave 6) every discovery track (failure/research/skill/audit) files
-    into — in EG's listing order (ranking is the Decide layer's), excludes
-    resolved.
-
-    Extracted verbatim (pure extract-method, no behaviour change).
-    """
-    import json as _json
-
-    from agent_utilities.knowledge_graph.research.gaps import open_gaps
-
-    gaps = await run_blocking_ordered(open_gaps, engine, limit=p.limit)
-    return _json.dumps({"action": "gaps", "gaps": gaps}, default=str)
-
-
 def _decode_submit_gap_json(data_json: str) -> dict[str, Any] | None:
     """Decode + type-check ``submit_gap``'s ``data_json``, for
     ``_parse_submit_gap_fields``. Returns ``None`` if it decodes to
@@ -1008,27 +830,6 @@ def _parse_submit_gap_fields(data_json: str) -> tuple[dict[str, Any], str | None
     return fields, None
 
 
-async def _loops_submit_gap_action(engine: Any, p: _LoopsParams) -> str:
-    """``"submit_gap"`` action of ``register_state_tools``'s ``graph_loops``:
-    the SAME canonical entry point the failure/research/skill/audit
-    discovery tracks call internally — exposed here so an operator can file
-    one by hand (e.g. a manually-triaged issue).
-
-    Extracted verbatim (pure extract-method, no behaviour change).
-    """
-    import json as _json
-
-    from agent_utilities.knowledge_graph.research.gaps import submit_gap
-
-    fields, error_json = _parse_submit_gap_fields(p.data_json)
-    if error_json is not None:
-        return error_json
-    gap = await run_blocking_ordered(submit_gap, engine, **fields)
-    if gap is None:
-        return _json.dumps({"error": "submit_gap failed to persist"})
-    return _json.dumps({"action": "submit_gap", "gap": gap}, default=str)
-
-
 def _gap_provenance(gap: dict[str, Any]) -> dict[str, Any]:
     """The unified provenance chain of one Gap, read off EG's own Gap view:
     the SpecProposal it was SPECIFIED_BY (its latest spec reference) and the
@@ -1044,29 +845,6 @@ def _gap_provenance(gap: dict[str, Any]) -> dict[str, Any]:
         "specified_by_spec_id": spec_refs[-1] if spec_refs else None,
         "resolved_by": resolved[-1] if resolved else None,
     }
-
-
-async def _loops_gap_action(engine: Any, p: _LoopsParams) -> str:
-    """``"gap"`` action of ``register_state_tools``'s ``graph_loops``: one
-    :Gap plus its unified provenance chain — reuses ``loop_id`` as the
-    generic id field, the same convention 'cancel'/'prioritize'/'drive'
-    already use.
-
-    Extracted verbatim (pure extract-method, no behaviour change).
-    """
-    import json as _json
-
-    from agent_utilities.knowledge_graph.research.gaps import get_gap
-
-    gap_id = p.loop_id
-    if not gap_id:
-        return _json.dumps({"error": "gap needs a gap id in loop_id"})
-    gap = await run_blocking_ordered(get_gap, engine, gap_id)
-    if gap is None:
-        return _json.dumps({"action": "gap", "id": gap_id, "error": "gap not found"})
-    return _json.dumps(
-        {"action": "gap", "gap": gap, "provenance": _gap_provenance(gap)}, default=str
-    )
 
 
 def _build_loops_dispatch(
@@ -1088,12 +866,6 @@ def _build_loops_dispatch(
         "drive": lambda: _loops_drive_action(engine, p, core),
         "cancel": lambda: _loops_cancel_action(engine, p, core),
         "prioritize": lambda: _loops_prioritize_action(engine, p, core),
-        "state": lambda: _loops_state_action(engine, p),
-        "specs": lambda: _loops_specs_action(engine, p),
-        "review": lambda: _loops_review_action(engine, p),
-        "gaps": lambda: _loops_gaps_action(engine, p),
-        "submit_gap": lambda: _loops_submit_gap_action(engine, p),
-        "gap": lambda: _loops_gap_action(engine, p),
     }
 
 
@@ -1170,146 +942,6 @@ def register_state_tools(mcp):
             return public_error_json(e)
 
     runtime.REGISTERED_TOOLS["graph_goals"] = graph_goals
-
-    @mcp.tool(
-        name="graph_loops",
-        description=(
-            "The single entrypoint for long-running objectives (CONCEPT:AU-KG.research.these-properties-carry). A "
-            "Loop is one objective of kind research|develop|skill; the LoopController "
-            "advances every active Loop through ONE hot path. action in 'submit' "
-            "(create a Loop: objective + kind [+ validation_cmd/end_state for develop, "
-            "skill_ref for skill]), 'list' (active Loops), 'run' (advance all active "
-            "Loops one cycle — research acquires/reasons, develop validates, skill "
-            "executes), 'drive' (run ONE Loop by id to completion, durably — "
-            "resume/checkpoint/corrigible, any kind), 'cancel' (terminate a Loop by id), "
-            "'prioritize' (set claim bucket). TRANSPARENCY + STEERING (KG-2.290/292, "
-            "OS-5.73): 'state' (LIVE EvolutionState — current stage + why, saturation "
-            "gauge, open_gaps trend, velocity, spec backlog), 'specs' (distilled "
-            "SpecProposal backlog; filter by status), 'review' (approve|edit|reject a "
-            "distilled spec BEFORE it develops — spec_id + decision). 'run' also takes "
-            "``mine_discovery`` (CONCEPT:AU-KG.evolution.mining-flywheel, default ON via "
-            "KG_LOOP_MINE_DISCOVERY): the discovery-flywheel mining pass — association-"
-            "rule + anomaly + graph_learn link-prediction over the KG's Capability/"
-            "Concept nodes, write-back only (propose-only, never auto-merges). "
-            "GAP LIFECYCLE (CONCEPT:AU-AHE.harness.canonical-gap-lifecycle, Wave 6 — the "
-            "unified Gap->SDD->Implement->Promote->Close spine every discovery track "
-            "files into): 'gaps' (the open :Gap backlog, highest priority first), "
-            "'submit_gap' (file one canonical :Gap — data_json={source,signature,"
-            "statement,domain,severity,concept_ids}), 'gap' (one :Gap by id — reuses "
-            "loop_id — plus its provenance chain: the SpecProposal it was "
-            "SPECIFIED_BY and the develop-Loop that RESOLVES it, when either exists). "
-            "A gap's derived develop-Loop is driven the SAME way as any other Loop "
-            "('run'/'drive'); publishing it closes the gap (status -> resolved)."
-        ),
-        tags=["graph-os", "loops"],
-    )
-    async def graph_loops(
-        action: str = Field(
-            default="list",
-            description=(
-                "submit|list|run|drive|cancel|prioritize|state|specs|review|"
-                "gaps|submit_gap|gap"
-            ),
-        ),
-        objective: str = Field(default="", description="Objective text (submit)."),
-        kind: str = Field(
-            default="research", description="research|develop|skill (submit)."
-        ),
-        loop_id: str = Field(default="", description="Loop id (submit/cancel)."),
-        validation_cmd: str = Field(
-            default="",
-            description="Shell command whose exit-0 completes a develop Loop.",
-        ),
-        end_state: str = Field(default="", description="Human end-state (develop)."),
-        skill_ref: str = Field(
-            default="", description="Skill / skill-workflow name or id (skill Loop)."
-        ),
-        max_topics: int = Field(default=5, description="Loops to advance per run."),
-        limit: int = Field(default=10, description="Max rows (list)."),
-        priority_bucket: int = Field(
-            default=2,
-            ge=0,
-            le=3,
-            description="Integer WorkItem claim bucket 0-3 (submit/prioritize).",
-        ),
-        spec_id: str = Field(
-            default="", description="SpecProposal id (review action)."
-        ),
-        decision: str = Field(
-            default="",
-            description="approve|edit|reject — spec-review decision (review action).",
-        ),
-        status: str = Field(
-            default="",
-            description="Filter SpecProposals by status (specs action): "
-            "pending_review|approved|developing|published|reverted|rejected.",
-        ),
-        mine_discovery: bool | None = Field(
-            default=None,
-            description="'run' only: gate the discovery-flywheel mining stage "
-            "(CONCEPT:AU-KG.evolution.mining-flywheel). None (default) falls back to "
-            "config.kg_loop_mine_discovery (default True); explicit true/false overrides.",
-        ),
-        data_json: str = Field(
-            default="{}",
-            description="'submit_gap' only: JSON object {source, signature, statement, "
-            "domain, severity, concept_ids}. source/signature/statement are required; "
-            "severity (0..1, default 0.5) maps to the shared priority_bucket.",
-        ),
-    ) -> str:
-        """Submit / list / run / drive / cancel / prioritize Loops + observe & steer
-        the self-evolution flywheel (state / specs / review /
-        gaps / submit_gap / gap) — the one entrypoint."""
-        import json as _json
-
-        from agent_utilities.knowledge_graph.core.engine_tasks import (
-            _coerce_prio_bucket,
-        )
-        from agent_utilities.knowledge_graph.research.loop_controller import (
-            LoopController,
-        )
-        from agent_utilities.knowledge_graph.research.loops import (
-            active_loops,
-            mark_loop_status,
-            prioritize_loop,
-            submit_loop,
-        )
-
-        p = _LoopsParams(
-            objective=objective,
-            kind=kind,
-            loop_id=loop_id,
-            validation_cmd=validation_cmd,
-            end_state=end_state,
-            skill_ref=skill_ref,
-            max_topics=max_topics,
-            limit=limit,
-            priority_bucket=priority_bucket,
-            spec_id=spec_id,
-            decision=decision,
-            status=status,
-            mine_discovery=mine_discovery,
-            data_json=data_json,
-        )
-        core = _LoopsCore(
-            coerce_prio_bucket=_coerce_prio_bucket,
-            loop_controller_cls=LoopController,
-            active_loops=active_loops,
-            mark_loop_status=mark_loop_status,
-            prioritize_loop=prioritize_loop,
-            submit_loop=submit_loop,
-        )
-        try:
-            engine = runtime._get_engine()
-            dispatch = _build_loops_dispatch(engine, p, core)
-            handler = dispatch.get(action)
-            if handler is None:
-                return _json.dumps({"error": f"unknown action {action!r}"})
-            return await handler()
-        except Exception as e:
-            return public_error_json(e)
-
-    runtime.REGISTERED_TOOLS["graph_loops"] = graph_loops
 
     @mcp.tool(
         name="graph_schedules",
@@ -1396,8 +1028,6 @@ def register_state_tools(mcp):
         import json as _json
 
         try:
-            if action == "status":
-                return _sandbox_status_action()
             if action == "reap":
                 return _sandbox_reap_action()
             if action == "warm":
@@ -1660,74 +1290,6 @@ def register_state_tools(mcp):
             return public_error_json(e)
 
     runtime.REGISTERED_TOOLS["graph_feeds"] = graph_feeds
-
-    @mcp.tool(
-        name="research_artifact",
-        description=(
-            "Agent-Native Research Artifacts over the one ontology-driven KG "
-            "(CONCEPT:AU-KG.research.best-effort-lightweight-never/2.80). action in 'reason' (run OWL/RDF reasoning over "
-            "the whole ecosystem and harvest extrapolated cross-domain relationships "
-            "as research topics), 'compile' (paper -> ecosystem-grounded OWL-native "
-            "4-layer ARA), 'review'/'seal' (L1/L2/L3 OWL/SHACL-grounded review + "
-            "certificate), 'capture' (live research event w/ provenance), 'get', 'list', "
-            "'inquire' (native multi-perspective STORM inquiry: expert lenses -> "
-            "contradiction/agreement/blind-spot map + self-critique, CONCEPT:AU-KG.research.perspectival-inquiry)."
-        ),
-        tags=["graph-os", "research", "ontology"],
-    )
-    async def research_artifact(
-        action: str = Field(
-            default="reason",
-            description="reason|compile|review|seal|capture|get|list|inquire",
-        ),
-        topic: str = Field(default="", description="Topic to inquire into (inquire)."),
-        article_id: str = Field(
-            default="", description="Paper/article id (compile/review/get)."
-        ),
-        query: str = Field(
-            default="", description="Topic for 'reason' (reasoning is ecosystem-wide)."
-        ),
-        level: str = Field(default="L1", description="Seal level: L1|L2|L3 (review)."),
-        text: str = Field(default="", description="Event text (capture)."),
-        provenance: str = Field(
-            default="ai_executed",
-            description="capture provenance: user|ai_suggested|ai_executed|user_revised.",
-        ),
-        actor: str = Field(default="", description="Originating actor id (capture)."),
-        event_type: str = Field(default="", description="Force event type (capture)."),
-        target_codebase: str = Field(
-            default="", description="Codebase to ground claims against (compile)."
-        ),
-        limit: int = Field(default=50, description="Max rows (list)."),
-        materialize: bool = Field(
-            default=True, description="Persist inquiry nodes (inquire)."
-        ),
-    ) -> str:
-        """Run an ARA action over the one ontology-driven KG (single SoT)."""
-
-        from agent_utilities.knowledge_graph.research.ara.service import ARAService
-
-        try:
-            service = ARAService(runtime._get_engine())
-            result = service.run(
-                action,
-                article_id=article_id,
-                topic=topic or query,
-                query=query,
-                level=level,
-                text=text,
-                provenance=provenance,
-                actor=actor,
-                event_type=event_type,
-                target_codebase=target_codebase or None,
-                limit=limit,
-                materialize=materialize,
-            )
-            return json.dumps(result, default=str)
-        except Exception as e:
-            return public_error_json(e)
-
-    runtime.REGISTERED_TOOLS["research_artifact"] = research_artifact
 
     # ══════════════════════════════════════════════════════════════════
     # Ontology System — Palantir Foundry parity (type/link/function layer)

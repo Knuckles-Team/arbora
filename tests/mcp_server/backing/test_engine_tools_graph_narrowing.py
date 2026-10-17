@@ -32,14 +32,14 @@ import asyncio
 import json
 
 import pytest
-from agent_utilities.knowledge_graph.core.session import (
+from agent_utilities.security.actor_identity import ActorType
+from agent_utilities.security.brain_context import ActorContext, use_actor
+
+from graph_os.api.contracts.session import (
     GraphSession,
     current_session,
     use_session,
 )
-from agent_utilities.security.actor_identity import ActorType
-from agent_utilities.security.brain_context import ActorContext, use_actor
-
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
 from graph_os.mcp_server.backing.tools import engine_tools
@@ -357,7 +357,7 @@ def test_narrowing_behaves_identically_under_stdio_process_session(monkeypatch):
     ``session = ambient or _PROCESS_SESSION``). Narrowing must work
     identically there -- no auth-posture-conditional branch anywhere in
     ``_dispatch``."""
-    from agent_utilities.knowledge_graph.core.session import suspend_session
+    from graph_os.api.contracts.session import suspend_session
 
     runtime.ensure_tools_registered()
     client, observed = _observing_client()

@@ -81,17 +81,7 @@ class MessagingService:
 
     # ── Engine resolution ────────────────────────────────────────────
     def _resolve_engine(self) -> Any:
-        """Bind to the live served engine (matches gateway/daemon.py)."""
-        if self._engine is not None:
-            return self._engine
-        try:
-            from agent_utilities.knowledge_graph.core.engine import (
-                IntelligenceGraphEngine,
-            )
-
-            self._engine = IntelligenceGraphEngine.get_active()
-        except Exception as exc:  # returns None on failure; all callers already null-check the engine before use
-            logger.debug("[ECO-4.48] no active engine: %s", exc)
+        """Return the injected engine client, or ``None`` when none is bound."""
         return self._engine
 
     # ── Backend lifecycle ────────────────────────────────────────────

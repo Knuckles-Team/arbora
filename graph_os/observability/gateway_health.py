@@ -40,10 +40,11 @@ runtime, never the reverse).
 """
 
 import asyncio
-import json
 import logging
 import time
 from typing import Any
+
+from graph_os.api.errors import not_served
 
 logger = logging.getLogger(__name__)
 
@@ -139,20 +140,8 @@ async def _check_and_record(trend: dict[str, Any]) -> None:
             entity_type="Gateway",
         )
 
-        from agent_utilities.knowledge_graph.memory.native_ingest import media_store
-
-        store = media_store()
-        data = json.dumps(trend, sort_keys=True).encode("utf-8")
-        start_ms = int(float(trend.get("start_at") or 0.0) * 1000)
-        end_ms = int(float(trend.get("end_at") or 0.0) * 1000)
-        await asyncio.to_thread(
-            store.store_metric_window_evidence,
-            data,
-            metric=f"{_ENTITY_ID}:{_SIGNAL}",
-            start_ms=start_ms,
-            end_ms=end_ms,
-            mime_type="application/json",
-            source="gateway-health",
+        raise not_served(
+            "knowledge_graph.memory.native_ingest", "SDK", owner="agent-connector-sdk"
         )
     except Exception as e:  # noqa: BLE001 — best-effort, never affects the request path
         logger.debug("gateway health anomaly check failed: %s", e)

@@ -35,10 +35,10 @@ import json
 import time
 
 import pytest
-from agent_utilities.knowledge_graph.core.session import GraphSession, use_session
 from agent_utilities.security.actor_identity import ActorType
 from agent_utilities.security.brain_context import ActorContext, use_actor
 
+from graph_os.api.contracts.session import GraphSession, use_session
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.tools import engine_tools
 
@@ -119,7 +119,7 @@ async def test_offloaded_dispatch_still_sees_the_calling_tasks_session(monkeypat
     runtime.ensure_tools_registered()
     tool = engine_tools._make_domain_tool("nodes", ["has"])
 
-    from agent_utilities.knowledge_graph.core.session import current_session
+    from graph_os.api.contracts.session import current_session
 
     observed: dict[str, str] = {}
 

@@ -647,17 +647,6 @@
    "surface": "granular"
   },
   {
-   "actions": [
-    "add_scheme",
-    "evaluate",
-    "export_aif",
-    "import_aif"
-   ],
-   "feature": null,
-   "name": "graph_argument",
-   "surface": "granular"
-  },
-  {
    "actions": [],
    "feature": null,
    "name": "graph_ask",
@@ -701,21 +690,6 @@
    ],
    "feature": null,
    "name": "graph_catalog",
-   "surface": "granular"
-  },
-  {
-   "actions": [
-    "accept",
-    "deprecate",
-    "evaluate",
-    "get",
-    "list",
-    "propose",
-    "retract",
-    "validate"
-   ],
-   "feature": null,
-   "name": "graph_claims",
    "surface": "granular"
   },
   {
@@ -867,16 +841,6 @@
    ],
    "feature": null,
    "name": "graph_durable",
-   "surface": "granular"
-  },
-  {
-   "actions": [
-    "build_community_reports",
-    "global_search",
-    "local_search"
-   ],
-   "feature": null,
-   "name": "graph_engineering",
    "surface": "granular"
   },
   {
@@ -1150,17 +1114,6 @@
    ],
    "feature": null,
    "name": "graph_loops",
-   "surface": "granular"
-  },
-  {
-   "actions": [
-    "ingest_audio",
-    "ingest_jpeg",
-    "ingest_pdf",
-    "ingest_video"
-   ],
-   "feature": null,
-   "name": "graph_media_sidecar",
    "surface": "granular"
   },
   {
@@ -1844,11 +1797,6 @@
    "ask",
    "why"
   ],
-  "graph_argument": [
-   "why",
-   "write",
-   "ask"
-  ],
   "graph_ask": [
    "ask"
   ],
@@ -1869,10 +1817,6 @@
   "graph_catalog": [
    "find",
    "ask"
-  ],
-  "graph_claims": [
-   "manage",
-   "act"
   ],
   "graph_code": [
    "ask",
@@ -1909,10 +1853,6 @@
   "graph_durable": [
    "act",
    "ask"
-  ],
-  "graph_engineering": [
-   "ask",
-   "write"
   ],
   "graph_epistemic": [
    "why",

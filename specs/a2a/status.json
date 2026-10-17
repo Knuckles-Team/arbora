@@ -118,7 +118,7 @@
         "dfe297e0466d"
       ],
       "verified_by": [
-        "tests/a2a/test_authority.py:129"
+        "tests/a2a/test_authority.py:26"
       ]
     },
     {
@@ -480,7 +480,7 @@
         "35257e780f7c"
       ],
       "verified_by": [
-        "tests/a2a/test_authority.py:154"
+        "tests/a2a/test_authority.py:51"
       ]
     },
     {

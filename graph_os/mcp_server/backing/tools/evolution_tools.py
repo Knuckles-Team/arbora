@@ -8,6 +8,7 @@ from typing import Any
 from agent_utilities.security.error_surface import public_error_text
 from pydantic import Field
 
+from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 
 
@@ -51,17 +52,9 @@ def register_evolution_tools(mcp: Any) -> None:
         limit: int = Field(
             default=20, description="Bounded result/materialization limit."
         ),
-        synthesize: bool = Field(
-            default=False,
-            description="Synthesize synergy proposals during assimilation.",
-        ),
         force: bool = Field(
             default=False,
             description="Re-run assimilation even when its watermark is unchanged.",
-        ),
-        draft: bool = Field(
-            default=False,
-            description="Render reviewable skill drafts while distilling.",
         ),
     ) -> str:
         engine = runtime._get_engine()
@@ -69,48 +62,27 @@ def register_evolution_tools(mcp: Any) -> None:
             return "Error: IntelligenceGraphEngine not active."
         try:
             if action == "assimilate":
-                from agent_utilities.knowledge_graph.research.loop_controller import (
-                    run_assimilation_pass,
+                raise not_served(
+                    "knowledge_graph.research.loop_controller",
+                    "EG-DECISION-ENGINE-R653",
                 )
-
-                report = run_assimilation_pass(
-                    engine,
-                    synthesize=synthesize,
-                    top_n=max(1, int(limit)),
-                    force=force,
-                )
-                return json.dumps(report, indent=2, default=str)
 
             if action == "distill_skills":
-                from agent_utilities.knowledge_graph.distillation.skill_synthesizer import (
-                    ConnectorSkillDistiller,
+                raise not_served(
+                    "knowledge_graph.distillation.skill_synthesizer",
+                    "EG-TYPED-PACKS-R700",
                 )
-
-                distiller = ConnectorSkillDistiller(engine)
-                if target:
-                    return json.dumps(
-                        distiller.materialize(target), indent=2, default=str
-                    )
-                distill_report = distiller.run(draft=draft)
-                return json.dumps(distill_report.to_dict(), indent=2, default=str)
 
             if action == "standardize":
-                from agent_utilities.knowledge_graph.standardization import (
-                    run_standardization_pass,
-                )
-
-                return json.dumps(
-                    run_standardization_pass(engine, top_n=max(1, int(limit))),
-                    indent=2,
-                    default=str,
+                raise not_served(
+                    "knowledge_graph.standardization", "EG-UNIFIED-DATA-PLANE-R701"
                 )
 
             if action == "failure_ingest":
-                from agent_utilities.knowledge_graph.adaptation.failure_analyzer import (
-                    run_failure_ingest,
+                raise not_served(
+                    "knowledge_graph.adaptation.failure_analyzer",
+                    "EG-DECISION-ENGINE-R701",
                 )
-
-                return json.dumps(run_failure_ingest(engine), indent=2, default=str)
 
             if action == "audit_scan":
                 # Code-correctness/security-audit gap track (CONCEPT:AU-AHE.harness.audit-gap-detector):
@@ -148,23 +120,17 @@ def register_evolution_tools(mcp: Any) -> None:
                 # into the SAME core the direct-import callers already use.
                 if not target:
                     raise ValueError("target evidence id is required")
-                from agent_utilities.knowledge_graph.research.evidence import (
-                    evidence_lineage,
-                )
-
-                return json.dumps(
-                    evidence_lineage(engine, target), indent=2, default=str
+                raise not_served(
+                    "knowledge_graph.research.evidence", "EG-DECISION-ENGINE-R652"
                 )
 
             if action == "publish_proposal":
                 if not target:
                     raise ValueError("target proposal id is required")
-                from agent_utilities.knowledge_graph.research.change_publisher import (
-                    publish_proposal,
-                )
-
-                return json.dumps(
-                    publish_proposal(engine, target), indent=2, default=str
+                raise not_served(
+                    "knowledge_graph.research.change_publisher",
+                    "AU-harness (deleted from AU)",
+                    owner="agent-utilities",
                 )
 
             return f"Error: Unknown graph_evolution action '{action}'"

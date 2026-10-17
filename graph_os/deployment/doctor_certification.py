@@ -7,6 +7,8 @@ import stat
 from dataclasses import dataclass
 from typing import Any
 
+from graph_os.api.errors import not_served
+
 from .doctor_support import _result
 
 
@@ -84,22 +86,8 @@ def _validate_skill_certification_commands(
     cfg: Any, command_values: tuple[Any, ...]
 ) -> None:
     """The GraphOS endpoint must be the active one and the argv arrays sound."""
-    from pathlib import Path
 
-    from agent_utilities.skills.runtime_validation import (
-        _validate_external_command_argv,
-    )
-
-    if (
-        str(cfg.mcp_url or "").strip()
-        != str(cfg.skill_cert_graphos_endpoint or "").strip()
-    ):
-        raise RuntimeError("graph_os_endpoint_not_active")
-    graph_os = _validate_external_command_argv(command_values[0])
-    _validate_external_command_argv(command_values[1])
-    _validate_external_command_argv(command_values[2])
-    if Path(graph_os[0]).name != "graph-os":
-        raise RuntimeError("graph_os_executable_invalid")
+    raise not_served("skills.runtime_validation", "graph_os/skills", owner="graph-os")
 
 
 def _validate_skill_certification_material(
@@ -329,29 +317,7 @@ def _cert_configuration_gate(
 
 def _cert_validated_commands(cfg: Any, command_maps: tuple[Any, ...]) -> list[Any]:
     """Every certification command, proven exact-scenario and non-shell argv."""
-    from agent_utilities.core.config import PRODUCTION_CERTIFICATION_SCENARIOS
-    from agent_utilities.skills.runtime_validation import (
-        _validate_external_command_argv,
-    )
-
-    expected = set(PRODUCTION_CERTIFICATION_SCENARIOS)
-    if any(set(command_map) != expected for command_map in command_maps):
-        raise RuntimeError("production_certification_scenarios_not_exact")
-    commands = [
-        cfg.cert_load_command,
-        cfg.cert_metrics_command,
-        cfg.cert_evidence_signer_command,
-        cfg.cert_evidence_verifier_command,
-    ]
-    for command_map in command_maps:
-        commands.extend(
-            command_map[scenario] for scenario in PRODUCTION_CERTIFICATION_SCENARIOS
-        )
-    if not any("{report_file}" in part for part in cfg.cert_load_command):
-        raise RuntimeError("production_certification_load_report_missing")
-    for command in commands:
-        _validate_external_command_argv(command)
-    return commands
+    raise not_served("skills.runtime_validation", "graph_os/skills", owner="graph-os")
 
 
 def _cert_verify_release_manifest(cfg: Any) -> None:

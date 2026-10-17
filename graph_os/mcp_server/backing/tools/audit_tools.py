@@ -102,19 +102,6 @@ def register_audit_tools(mcp: Any) -> None:
                     }
                 )
             return json.dumps(_for_target(target_id), default=str)
-        if action == "lineage":
-            if not fragment_id:
-                return json.dumps(
-                    {
-                        "surface": "audit",
-                        "action": action,
-                        "error": "fragment_id required for lineage",
-                    }
-                )
-            return json.dumps(
-                _lineage(fragment_id, claim=claim, content_hash=content_hash),
-                default=str,
-            )
         return json.dumps(
             {
                 "surface": "audit",
@@ -175,26 +162,3 @@ def _for_target(target_id: str) -> dict[str, Any]:
     orch = Orchestrator(engine)
     result = orch.get_tool_calls_for_target(target_id)
     return {"surface": "audit", "action": "for_target", **result}
-
-
-def _lineage(fragment_id: str, *, claim: str, content_hash: str) -> dict[str, Any]:
-    """Source-to-claim lineage for one cited fragment (CONCEPT:AU-KG.retrieval.source-to-claim-lineage)."""
-    from agent_utilities.knowledge_graph.retrieval.lineage import (
-        LineageNotFoundError,
-        resolve_lineage,
-    )
-
-    engine = runtime._get_engine()
-    try:
-        record = resolve_lineage(
-            engine, fragment_id=fragment_id, claim_text=claim, content_hash=content_hash
-        )
-    except LineageNotFoundError as exc:
-        return {
-            "surface": "audit",
-            "action": "lineage",
-            "fragment_id": fragment_id,
-            "found": False,
-            **public_error_payload(exc, code="lineage_not_found"),
-        }
-    return {"surface": "audit", "action": "lineage", "found": True, **record}

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any, cast
 
 import pytest
 import yaml
@@ -155,27 +154,3 @@ def test_no_private_program_labels(root: Path) -> None:
         for pattern in PRIVATE_LABEL:
             match = pattern.search(text)
             assert match is None, f"{pattern.pattern!r} in {path}: {match}"
-
-
-def test_ingestion_mints_runnable_skills(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Delegation runs only CallableResource(AGENT_SKILL) nodes; the atomic leg mints them."""
-    from agent_utilities.knowledge_graph.ingestion import (
-        skill_workflow_ingest as ingest,
-    )
-
-    minted: list[tuple[str, str | None]] = []
-
-    def _record(_engine: object, **kwargs: Any) -> str:
-        minted.append((str(kwargs["name"]), kwargs.get("skill_type")))
-        return f"resource:skill:{kwargs['name']}"
-
-    monkeypatch.setattr(ingest, "ingest_runnable_skill", _record)
-    report = ingest.ingest_atomic_skills(cast(Any, object()), root=str(SKILLS_ROOT))
-
-    assert report["errors"] == 0
-    assert report["not_skill"] == 0
-    # Every bundled skill under the root is minted, not only this pair's
-    # contract (other skills, e.g. the repository development skill, are
-    # ingestable too and are out of scope for this test).
-    minted_set = set(minted)
-    assert {(name, "skill") for name in GRAPHOS_SKILLS} <= minted_set

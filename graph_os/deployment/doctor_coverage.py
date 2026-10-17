@@ -6,6 +6,8 @@ import stat
 from types import SimpleNamespace
 from typing import Any
 
+from graph_os.api.errors import not_served
+
 from .doctor_support import _result
 
 
@@ -84,42 +86,14 @@ def _check_skills() -> dict[str, Any]:
     they are absent, point at the one command that installs them. Local discovery
     paths never leave this probe.
     """
-    try:
-        from agent_utilities.skills import BUNDLED_SKILLS
-
-        from graph_os.core.providers import (
-            _skill_identity,
-            resolve_skill_provider_dirs,
-        )
-
-        installed_names = {
-            _skill_identity(root) for _provider, root in resolve_skill_provider_dirs()
-        }
-    except Exception as exc:  # noqa: BLE001
-        return _result(
-            "skills",
-            "fail",
-            f"current skill resolution failed ({type(exc).__name__})",
-            remediation="reconcile provider registrations and run `agent-utilities install`",
-            skill="graphos-deployment",
-            data={"ready": False, "redacted": True},
-        )
-
-    missing = sorted(set(BUNDLED_SKILLS) - installed_names)
-    if missing:
-        return _result(
-            "skills",
-            "warn",
-            f"{len(missing)} of {len(BUNDLED_SKILLS)} pre-bundled workflow skills are missing",
-            remediation="`agent-utilities install` (installs the thirteen-skill workflow toolkit)",
-            skill="graphos-deployment",
-            data={"installed": len(installed_names), "missing": missing},
-        )
+    exc = not_served("skills", "graph_os/skills", owner="graph-os")
     return _result(
         "skills",
-        "ok",
-        f"all {len(BUNDLED_SKILLS)} pre-bundled workflow skills are installed",
-        data={"installed": len(installed_names), "required": len(BUNDLED_SKILLS)},
+        "fail",
+        f"current skill resolution failed ({type(exc).__name__})",
+        remediation="reconcile provider registrations and run `agent-utilities install`",
+        skill="graphos-deployment",
+        data={"ready": False, "redacted": True},
     )
 
 

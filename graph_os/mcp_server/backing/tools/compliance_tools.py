@@ -29,16 +29,14 @@ compliance/redaction logic):
 from __future__ import annotations
 
 import json
-import logging
 from typing import Any
 
 from agent_utilities.core.event_loop import run_blocking_ordered
 from agent_utilities.security.error_surface import public_error_payload
 from pydantic import Field
 
+from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
-
-logger = logging.getLogger(__name__)
 
 #: Governance/compliance node labels already ingested by the CISO Assistant
 #: extractor (agent_utilities/knowledge_graph/enrichment/extractors/ciso_assistant.py)
@@ -171,35 +169,7 @@ def _confidence_rollup(engine: Any, label: str) -> dict[str, Any] | None:
     if rows is None:
         return None
 
-    from agent_utilities.knowledge_graph.core.epistemic_row import (
-        CONTESTED_LABEL,
-        NEUTRAL_CONFIDENCE,
-        epistemic_row_from_stream_row,
-    )
-
-    count = 0
-    contested = 0
-    low_confidence = 0
-    confidence_sum = 0.0
-    try:
-        for raw_row in rows:
-            row = epistemic_row_from_stream_row(raw_row)
-            count += 1
-            confidence_sum += row.confidence
-            if CONTESTED_LABEL in row.policy_labels or row.contradiction_ids:
-                contested += 1
-            elif row.confidence < NEUTRAL_CONFIDENCE:
-                low_confidence += 1
-    except Exception:  # noqa: BLE001 — a partial stream still reports what it saw
-        logger.debug("epistemic stream ended early; reporting partial", exc_info=True)
-    if count == 0:
-        return None
-    return {
-        "sampled": count,
-        "avg_confidence": round(confidence_sum / count, 4),
-        "contested": contested,
-        "low_confidence": low_confidence,
-    }
+    raise not_served("knowledge_graph.core.epistemic_row", "EG-DURABLE-KERNEL-R609")
 
 
 def _posture() -> dict[str, Any]:

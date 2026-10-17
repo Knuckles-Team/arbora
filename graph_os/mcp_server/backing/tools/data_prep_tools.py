@@ -43,13 +43,12 @@ from agent_utilities.data_prep import (
     RowModelRegistry,
     schema_digest,
 )
-from agent_utilities.knowledge_graph.ingestion.change_envelope import ChangeEnvelope
 from agent_utilities.models.company_brain import DataClassification
 from agent_utilities.protocols.epistemic_operations import ProtocolModel
-from agent_utilities.protocols.source_connectors.base import ExternalAccess
 from pydantic import Field, ValidationError, model_validator
 
 from graph_os.api.contracts.session import GraphSession
+from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 
 logger = logging.getLogger(__name__)
@@ -1315,14 +1314,7 @@ class _GraphNativeDataPrepProvider:
         )
         self._media_store = None
         if getattr(self._compute, "_client", None) is not None:
-            try:
-                from agent_utilities.knowledge_graph.memory.media_store import (
-                    MediaStore,
-                )
-
-                self._media_store = MediaStore(self._compute)
-            except Exception:  # pragma: no cover - native media seam is diagnosed below
-                self._media_store = None
+            self._media_store = None
         model_authority = _runtime_model_authority(engine)
         self._models = model_authority.registry if model_authority is not None else None
         self._inline_policy = _runtime_inline_policy(engine)
@@ -1578,14 +1570,7 @@ class _GraphNativeDataPrepProvider:
         if engine is self._engine and self._media_store is not None:
             return self._media_store
         if getattr(compute, "_client", None) is not None:
-            try:
-                from agent_utilities.knowledge_graph.memory.media_store import (
-                    MediaStore,
-                )
-
-                return MediaStore(compute)
-            except Exception:  # pragma: no cover - diagnosed as unavailable below
-                return None
+            return None
         return None
 
     def _fetch_blob(self, digest: str, *, engine: Any) -> bytes | None:
@@ -1804,17 +1789,7 @@ def _process_authority_factory(session: GraphSession) -> DataPrepAuthority:
     """Resolve the one process-owned native engine at served-call time."""
 
     try:
-        from agent_utilities.knowledge_graph.core.engine import (
-            IntelligenceGraphEngine,
-        )
-
-        engine = IntelligenceGraphEngine.get_active()
-        if engine is None:
-            # Importing this tool must not start a second graph authority.  The
-            # process-owned MCP startup path is the only place allowed to open it.
-            return _DefaultAuthority()
-        register_process_data_prep_runtime(engine)
-        return _NativeDataPrepAuthority(engine, session=session)
+        raise not_served("knowledge_graph.core.engine", "EG-PLACEMENT-R611")
     except (ImportError, RuntimeError):
         return _DefaultAuthority()
 
@@ -2630,68 +2605,10 @@ class _CommitContext:
 
 def _build_change_envelope(
     ctx: _CommitContext, *, stored_digest: str, output_bytes: bytes
-) -> ChangeEnvelope:
+) -> Any:
     """Build the native ChangeEnvelope for a governed commit_prepared write."""
 
-    result = ctx.prep.result
-    output_governance = ctx.prep.output_governance
-    receipt = ctx.receipt
-    plan = ctx.plan
-    request = ctx.request
-    session = ctx.session
-    evidence_payload, evidence_digest = _evidence_payload(result.evidence)
-    object_id = f"prepared:{receipt.output_content_digest.removeprefix('sha256:')}"
-    return ChangeEnvelope(
-        connector="data-prep",
-        operation="upsert",
-        tenant=session.tenant,
-        source_instance="data-prep",
-        source_object_id=object_id,
-        source_version=receipt.output_content_digest,
-        payload_type="AssetOccurrence",
-        blob_ref=stored_digest,
-        blob_digest=stored_digest,
-        blob_length=len(output_bytes),
-        blob_media_type="application/vnd.apache.arrow.stream",
-        source_acl=ExternalAccess(
-            is_public=output_governance.acl.is_public,
-            user_emails=list(output_governance.acl.principal_emails),
-            group_ids=list(output_governance.acl.group_ids),
-            read_roles=list(output_governance.acl.roles),
-            markings=list(output_governance.acl.markings),
-        ),
-        classification=output_governance.classification,
-        retention=output_governance.retention,
-        legal_hold=output_governance.legal_hold,
-        provenance={
-            "plan_ref": plan.plan_ref,
-            "plan_digest": result.evidence.plan_digest,
-            "model_ref": plan.model_ref,
-            "model_digest": result.evidence.model_digest,
-            "input_schema_ref": request.schema_ref,
-            "input_schema_digest": request.schema_digest,
-            "input_shape_ref": request.shape_ref,
-            "input_shape_digest": request.shape_digest,
-            "output_schema_ref": receipt.output_schema_ref,
-            "output_schema_digest": receipt.output_schema_digest,
-            "output_shape_ref": receipt.output_shape_ref,
-            "output_shape_digest": receipt.output_shape_digest,
-            "output_content_digest": receipt.output_content_digest,
-            "output_media_type": "application/vnd.apache.arrow.stream",
-            "input_content_digest": receipt.input_content_digest,
-            "policy_version": output_governance.policy_version,
-            "acl_principal_ids": list(output_governance.acl.principal_ids),
-            "acl_principal_emails": list(output_governance.acl.principal_emails),
-            "acl_group_ids": list(output_governance.acl.group_ids),
-            "acl_read_roles": list(output_governance.acl.roles),
-            "acl_markings": list(output_governance.acl.markings),
-            "prepared_receipt_digest": _sha256_bytes(ctx.prepared_ref.encode("utf-8")),
-            "prep_evidence": evidence_payload,
-            "prep_evidence_digest": evidence_digest,
-        },
-        structured_evidence=evidence_payload,
-        trace_context=session.trace_context,
-    )
+    raise not_served("knowledge_graph.ingestion.change_envelope", "EG-REPO-INGEST-R002")
 
 
 class DataPrepService:
@@ -3021,7 +2938,7 @@ class DataPrepService:
 
     def _ingest_commit(
         self,
-        envelope: ChangeEnvelope,
+        envelope: Any,
         *,
         session: GraphSession,
         deadline: float,
@@ -3030,29 +2947,9 @@ class DataPrepService:
     ) -> dict[str, Any]:
         try:
             _check_cancel(deadline)
-            from agent_utilities.knowledge_graph.ingestion.envelope_ingest import (
-                ingest_envelope,
+            raise not_served(
+                "knowledge_graph.ingestion.envelope_ingest", "EG-REPO-INGEST-R002"
             )
-
-            from graph_os.api.contracts.session import use_session
-
-            engine = self._authority.native_engine(session=session)
-            with use_session(session):
-                commit = ingest_envelope(engine, envelope)
-            if (
-                not isinstance(commit, dict)
-                or commit.get("status")
-                not in {
-                    "applied",
-                    "idempotent_skip",
-                    "success",
-                    "skipped",
-                }
-                or commit.get("native_atomic") is not True
-            ):
-                raise NativeCommitUnavailable(
-                    "native ChangeEnvelope commit was not atomically accepted"
-                )
         except Exception as exc:  # noqa: BLE001 - compensate before surfacing
             if ref_acquired:
                 try:
@@ -3070,7 +2967,6 @@ class DataPrepService:
             raise NativeCommitUnavailable(
                 "native ChangeEnvelope commit failed"
             ) from exc
-        return commit
 
     def _commit_response(
         self,

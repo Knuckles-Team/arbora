@@ -258,8 +258,7 @@
       ],
       "verified_by": [
         "tests/mcp_server/test_operation_registry.py:11",
-        "tests/mcp_server/test_operation_registry.py:17",
-        "tests/mcp_server/test_operation_registry.py:29"
+        "tests/mcp_server/test_operation_registry.py:17"
       ]
     },
     {
@@ -281,13 +280,11 @@
     {
       "id": "GRAPHOS-HOST-R001.9",
       "title": "The tiny profile serves the KG over the gateway with zero containers",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "LANDED",
       "landed_in": [
         "9e7f6499d96f"
       ],
-      "verified_by": [
-        "tests/integration/profiles/test_profile_tiny_zero_dep.py:94"
-      ]
+      "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R001.10",

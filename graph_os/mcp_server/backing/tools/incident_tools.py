@@ -47,6 +47,7 @@ from typing import Any
 from agent_utilities.security.error_surface import public_error_payload
 from pydantic import Field
 
+from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.context_helpers import action_policy_gate
 
@@ -246,31 +247,9 @@ def _incident_timeline(incident_id: str) -> dict[str, Any]:
                 "by": incident.get("resolvedBy"),
             }
         )
-    from agent_utilities.knowledge_graph.research.candidate_insight import (
-        _claim_metadata,
+    raise not_served(
+        "knowledge_graph.research.candidate_insight", "EG-DECISION-ENGINE-R652"
     )
-
-    for claim in _related_claims(incident_id, 20).get("claims") or []:
-        events.append(
-            {
-                "kind": "cites_causal_claim",
-                "at": _claim_metadata(claim).get("generated_at_time")
-                or incident.get("observedAt"),
-                "id": claim.get("id"),
-                "match_kind": claim.get("match_kind"),
-                "matched": claim.get("matched"),
-                "detail": claim.get("claim_text"),
-                "confidence": claim.get("confidence"),
-            }
-        )
-    events.sort(key=lambda e: str(e.get("at") or ""))
-    return {
-        "surface": "incident",
-        "action": "timeline",
-        "incident_id": incident_id,
-        "count": len(events),
-        "timeline": events,
-    }
 
 
 def register_incident_tools(mcp: Any) -> None:

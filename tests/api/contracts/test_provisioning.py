@@ -27,11 +27,6 @@ if TYPE_CHECKING:
         McpCatalogSnapshotBinding,
     )
 
-from agent_utilities.knowledge_graph.core.session import (
-    GraphSession,
-    ScopeError,
-    use_session,
-)
 from agent_utilities.orchestration.action_policy import (
     ActionDecision,
     ActionRequest,
@@ -45,6 +40,11 @@ from graph_os.api.contracts.provisioning import (
     PackImportAuthorityResolver,
     ProvisioningAuthorityError,
     pack_import_authority,
+)
+from graph_os.api.contracts.session import (
+    GraphSession,
+    ScopeError,
+    use_session,
 )
 
 # No file-level `engine` mark: test_resolver_requires_pack_control_scope_before_providers

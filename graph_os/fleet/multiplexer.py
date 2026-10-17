@@ -1829,11 +1829,10 @@ def _tenant_local_discovery_binding() -> _typing.Any | None:
     not derive an OAuth-like digest from roles/scopes or accept catalog fields.
     """
     try:
-        from agent_utilities.knowledge_graph.core.fleet_catalog_tables import (
+        from graph_os.api.contracts.session import current_session
+        from graph_os.fleet.discovery_authority import (
             TenantLocalDiscoveryBinding,
         )
-
-        from graph_os.api.contracts.session import current_session
 
         session = current_session()
         if session is None or not getattr(session.actor, "authenticated", False):
@@ -1930,10 +1929,9 @@ def current_remote_oauth_grant_bindings(actor: _typing.Any) -> tuple[_typing.Any
     closed when no exact grant remains.
     """
 
-    from agent_utilities.knowledge_graph.core.discovery_authority import (
+    from graph_os.fleet.discovery_authority import (
         OAuthGrantBinding,
     )
-
     from graph_os.mcp_server.backing.remote_oauth_broker import (
         OAuthProviderError,
         OAuthScopeError,
@@ -4952,10 +4950,8 @@ class MCPMultiplexer:
         only obtain a binding by completing a verified probe path above.
         Keeping the original object alongside its id makes id reuse harmless.
         """
-        from agent_utilities.knowledge_graph.core.discovery_authority import (
+        from graph_os.fleet.discovery_authority import (
             OAuthGrantBinding,
-        )
-        from agent_utilities.knowledge_graph.core.fleet_catalog_tables import (
             TenantLocalDiscoveryBinding,
         )
 

@@ -25,6 +25,8 @@ from agent_utilities.core.config import setting
 from agent_utilities.security.error_surface import public_error_payload
 from agent_utilities.security.log_redaction import redact_for_log
 
+from graph_os.api.errors import not_served
+
 logger = logging.getLogger(__name__)
 
 _engine: Any = None
@@ -228,7 +230,7 @@ def refresh_process_identity(session: Any) -> Any:
     return session
 
 
-def start_host_daemon(*, defer_background_start: bool = False) -> Any:
+def start_host_daemon() -> Any:
     """Start (once) the single consolidated KG daemon in this gateway process.
 
     Forces ``KG_DAEMON_ROLE=host`` so constructing the engine launches the
@@ -251,67 +253,7 @@ def start_host_daemon(*, defer_background_start: bool = False) -> Any:
         require_token_secret()
         # The gateway process is the authoritative daemon host.
         os.environ["KG_DAEMON_ROLE"] = "host"
-        from agent_utilities.knowledge_graph.core.engine import (
-            IntelligenceGraphEngine,
-        )
-
-        _engine = IntelligenceGraphEngine.get_or_create(
-            defer_background_start=defer_background_start
-        )
-        if not defer_background_start:
-            try:
-                # Ensure the on-demand task-worker pool is up in the host.
-                if hasattr(_engine, "start_task_workers"):
-                    _engine.start_task_workers()
-            except Exception as exc:  # noqa: BLE001 — best-effort pool start; the daemon must still come up, but the real cause is logged (not just its type) so a persistently-failing worker pool is diagnosable
-                logger.warning("host daemon: start_task_workers failed: %s", exc)
-        # Always-on KG-native observability
-        # (CONCEPT:AU-OS.config.model-factory-passthrough): install the trace sink
-        # backed by this host's engine, so every traced agent call persists a
-        # Trace/Span/Generation subgraph that is graph-queryable. One-time injection;
-        # best-effort (a failure here must never block the daemon).
-        try:
-            from agent_utilities.harness.trace_backend import KGTraceBackend
-            from agent_utilities.harness.tracing import set_kg_trace_sink
-
-            set_kg_trace_sink(KGTraceBackend(backend=_engine))
-        except Exception as exc:  # noqa: BLE001 — best-effort install; the daemon must still start without the trace sink, but the real cause is logged (not just its type) so a persistently-failing sink is diagnosable
-            # ``exc.args[0]`` (not ``str(exc)``/``repr(exc)``) so the exception
-            # surface gate's raw-text scan (which only flags str()/repr() calls
-            # and a bare exception name passed to a log call — never attribute/
-            # subscript access) stays satisfied while the real cause -- required
-            # by test_sink_install_failure_logs_the_real_cause_not_just_its_type
-            # -- still reaches the operator-facing warning.
-            logger.warning(
-                "host daemon: KG trace sink install failed: %s",
-                exc,
-            )
-        # Durable error-detail persistence (D-24,
-        # CONCEPT:AU-KG.audit.durable-error-detail):
-        # install the KG-backed sink so a caller's `error.detail_ref` stays resolvable
-        # past
-        # this process's lifetime and across replicas. One-time injection; best-effort
-        # (a failure here must never block the daemon or degrade error reporting — the
-        # in-process detail store keeps working on its own either way).
-        try:
-            from agent_utilities.observability.error_detail_sink import (
-                GraphErrorDetailSink,
-            )
-            from agent_utilities.security.error_surface import (
-                register_detail_persistence_sink,
-            )
-
-            register_detail_persistence_sink(GraphErrorDetailSink(engine=_engine))
-        except Exception as exc:  # noqa: BLE001 — best-effort install; the in-process detail store keeps working, but the real cause is logged (not just its type) so a persistently-failing sink is diagnosable
-            # See the KG trace sink handler above: ``.args[0]``, not
-            # ``str(exc)``/``repr(exc)``, keeps the real cause required by
-            # test_sink_install_failure_logs_the_real_cause_not_just_its_type
-            # while still satisfying the exception-surface gate.
-            logger.warning(
-                "host daemon: durable error-detail sink install failed: %s",
-                exc,
-            )
-        logger.info("Gateway host daemon started")
+        raise not_served("knowledge_graph.core.engine", "EG-PLACEMENT-R611")
     # CONCEPT:AU-ECO.messaging.inbound-messaging-router-runs — the inbound messaging
     # router runs in its OWN process
     # (``agent-utilities-messaging`` / ``agent_utilities.messaging.daemon``), NOT here,
@@ -388,12 +330,8 @@ def stop_host_daemon() -> None:
             logger.info("Drained %d warm-fork parent(s) on shutdown.", len(reaped))
     except Exception as exc:  # noqa: BLE001
         logger.warning("warm-parent drain on shutdown skipped: %s", exc)
-    try:
-        from agent_utilities.knowledge_graph.core.host_lock import release_host_lock
-
-        release_host_lock()
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("host lock release skipped: %s", exc)
+    refusal = not_served("knowledge_graph.core.host_lock", "graph-os", owner="graph-os")
+    logger.warning("host lock release skipped: %s", refusal)
     _engine = None
     logger.info("Host daemon stopped.")
 
@@ -412,120 +350,8 @@ def main() -> None:
     Flags: ``--drain-queue`` purges the durable queue before starting (recovery);
     ``--status`` prints the live host + daemon status and exits.
     """
-    import argparse
-    import json
-    import logging
-    import signal
 
-    from agent_utilities.knowledge_graph.core.host_lock import (
-        KGHostAlreadyRunning,
-        host_lock_holder,
-    )
-
-    ap = argparse.ArgumentParser(prog="graph-os-daemon")
-    ap.add_argument(
-        "--drain-queue",
-        action="store_true",
-        help="Purge the durable task queue before starting (corrupt-queue recovery).",
-    )
-    ap.add_argument(
-        "--status",
-        action="store_true",
-        help="Print the live host-lock holder + daemon status, then exit.",
-    )
-    args, _ = ap.parse_known_args()
-
-    logging.basicConfig(
-        level=setting("KG_DAEMON_LOG_LEVEL", "INFO"),
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-    )
-
-    # CONCEPT:AU-KG.ingest.attaching-this-root-logger — self-ingest telemetry: graph-os
-    # ships its own logs into
-    # the epistemic-graph engine obs store. Opt-in (default-off); no-op when unset.
-    try:
-        from agent_utilities.observability.self_ingest import (
-            install_self_ingest_logging,
-        )
-
-        install_self_ingest_logging()
-    except Exception as exc:
-        logger.warning("self-ingest logging not installed: %s", exc)
-
-    if args.status:
-        logger.info(
-            "%s",
-            json.dumps(
-                {"host_lock_holder": host_lock_holder(), "daemon": daemon_status()},
-                indent=2,
-                default=str,
-            ),
-        )
-        return
-
-    if args.drain_queue:
-        drain_task_queue()
-
-    stop = threading.Event()
-
-    def _handle(signum: int, _frame: Any) -> None:
-        logger.info("Received signal %s — shutting down host daemon.", signum)
-        stop.set()
-
-    for sig in (signal.SIGINT, signal.SIGTERM):
-        try:
-            signal.signal(sig, _handle)
-        except (ValueError, OSError) as exc:  # not in main thread / unsupported
-            logger.warning("signal handler registration skipped: %s", exc)
-
-    session = mint_process_identity()
-    from agent_utilities.security.brain_context import use_actor
-
-    from graph_os.api.contracts.session import use_session
-
-    with use_actor(session.actor), use_session(session):
-        try:
-            start_host_daemon()
-        except KGHostAlreadyRunning as exc:
-            logger.error("KG host is already running: %s", exc)
-            raise SystemExit(2) from None
-
-        # Single Telegram/messaging owner: this standalone host daemon
-        # (KG_DAEMON_ROLE=host) is the ONLY process allowed to start inbound
-        # polling (graph_os.mcp_server.composition.detect_composition gates
-        # on this same role). The main graph-os server never starts a poller
-        # of its own. Best-effort: a messaging composition failure must never
-        # take the host daemon down.
-        try:
-            from agent_utilities.core.config import config
-
-            from graph_os.mcp_server.composition import start_composed_services
-
-            start_composed_services(
-                session,
-                _engine,
-                messaging_intake_enabled=config.messaging_intake_enabled,
-            )
-        except Exception as exc:
-            logger.warning("host daemon: messaging composition skipped: %s", exc)
-
-        # D-OG-4: the standalone daemon has no HTTP server of its own — start
-        # one, best-effort, purely to expose the metrics this process already
-        # records (see start_daemon_metrics_listener's docstring for the
-        # bind/auth decision). Never fatal: logs loudly and continues on any
-        # failure.
-        start_daemon_metrics_listener()
-
-        logger.info("graph-os host daemon running")
-
-        try:
-            # Daemon threads do the work; this main-thread heartbeat also
-            # renews their shared credential lease before expiry.
-            while not stop.wait(timeout=30.0):
-                refresh_process_identity(session)
-                logger.debug("host daemon heartbeat")
-        finally:
-            stop_host_daemon()
+    raise not_served("knowledge_graph.core.host_lock", "graph-os", owner="graph-os")
 
 
 if __name__ == "__main__":

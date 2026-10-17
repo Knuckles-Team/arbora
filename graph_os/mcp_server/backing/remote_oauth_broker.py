@@ -114,9 +114,10 @@ from typing import Any, Protocol
 from urllib.parse import urlencode, urlsplit
 
 import httpx
-from agent_utilities.knowledge_graph.core.discovery_authority import OAuthGrantBinding
 from agent_utilities.security.brain_context import ActorContext
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+from graph_os.fleet.discovery_authority import OAuthGrantBinding
 
 logger = logging.getLogger(__name__)
 _audit_logger = logging.getLogger(

@@ -11,6 +11,8 @@ from typing import Any, Protocol, runtime_checkable
 
 from agent_utilities.security.persistence_privacy import persistence_reference
 
+from graph_os.api.errors import not_served
+
 from .models import (
     A2AMessage,
     A2ARouteDecision,
@@ -237,20 +239,8 @@ class WorkItemA2AAuthority:
         description: str,
         metadata: dict[str, Any],
     ) -> tuple[str, bool]:
-        from agent_utilities.knowledge_graph.core import work_durability as work
-
-        return work.submit_work_item_atomic(
-            work_engine,
-            kind="orchestrator_task",
-            queue="orchestrator_task",
-            payload_ref=task_id,
-            tenant=session.tenant,
-            description=description,
-            resource_class="agent_dispatch",
-            work_item_id=work.orchestrator_work_item_id(task_id),
-            idempotency_key=task_id,
-            created_by=owner_ref,
-            metadata=metadata,
+        raise not_served(
+            "knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605"
         )
 
     @staticmethod
@@ -325,46 +315,16 @@ class WorkItemA2AAuthority:
         if item_id != self._work_item_id(task_id):
             raise RuntimeError("canonical A2A WorkItem returned an invalid identity")
 
-        from agent_utilities.knowledge_graph.core import work_durability as work
-
-        item = await asyncio.to_thread(work.get_work_item, work_engine, item_id)
-        if not isinstance(item, dict):
-            raise RuntimeError("canonical A2A WorkItem is unavailable after admission")
-        self._validate_existing(
-            item,
-            session=session,
-            owner_ref=owner_ref,
-            request_digest=request_digest,
+        raise not_served(
+            "knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605"
         )
-        if created or item.get("status") not in _TERMINAL:
-            await asyncio.to_thread(
-                self._enqueue,
-                engine,
-                task_id=task_id,
-                context_id=context_id,
-                tenant=session.tenant,
-                decision=decision,
-            )
-        return self._project(item, task_id=task_id)
 
     def _authorized_item(self, task_id: str, scope: str) -> dict[str, Any] | None:
-        session = self._session(scope)
+        self._session(scope)
         _engine, work_engine = self._engine()
-        from agent_utilities.knowledge_graph.core import work_durability as work
-
-        item = work.get_work_item(work_engine, self._work_item_id(task_id))
-        owner_ref = self._owner_ref(session)
-        metadata = item.get("metadata") if isinstance(item, dict) else None
-        if not (
-            isinstance(item, dict)
-            and item.get("tenant") == session.tenant
-            and item.get("created_by") == owner_ref
-            and isinstance(metadata, dict)
-            and metadata.get("a2a_schema") == _A2A_METADATA_SCHEMA
-            and metadata.get("a2a_owner_ref") == owner_ref
-        ):
-            return None
-        return item
+        raise not_served(
+            "knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605"
+        )
 
     @staticmethod
     def _timestamp(value: Any) -> str | None:
@@ -527,17 +487,6 @@ class WorkItemA2AAuthority:
         if item.get("status") in _TERMINAL:
             raise A2ATaskNotCancelable("A2A task is not cancelable")
         _engine, work_engine = self._engine()
-        from agent_utilities.knowledge_graph.core import work_durability as work
-
-        cancelled = await asyncio.to_thread(
-            work.cancel_work_item,
-            work_engine,
-            self._work_item_id(task_id),
-            reason="a2a_client_cancelled",
+        raise not_served(
+            "knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605"
         )
-        if not cancelled:
-            raise A2ATaskNotCancelable("A2A task is not cancelable")
-        latest = await asyncio.to_thread(self._authorized_item, task_id, "kg:read")
-        if latest is None:
-            raise RuntimeError("A2A task disappeared after cancellation")
-        return self._project(latest, task_id=task_id)

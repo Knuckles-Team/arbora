@@ -27,10 +27,6 @@ import time
 from unittest.mock import MagicMock
 
 import pytest
-from agent_utilities.knowledge_graph.core.discovery_authority import OAuthGrantBinding
-from agent_utilities.knowledge_graph.core.fleet_catalog_tables import (
-    TenantLocalDiscoveryBinding,
-)
 from agent_utilities.security.actor_identity import ActorType
 from agent_utilities.security.brain_context import ActorContext, use_actor
 from agent_utilities.security.secrets_client import SecretsClient
@@ -41,6 +37,10 @@ from graph_os.api.contracts.session import (
     use_session,
 )
 from graph_os.fleet import multiplexer as mod
+from graph_os.fleet.discovery_authority import (
+    OAuthGrantBinding,
+    TenantLocalDiscoveryBinding,
+)
 from graph_os.mcp_server.backing.remote_oauth_broker import (
     OAuthProviderError,
     OAuthTokenAbsentError,

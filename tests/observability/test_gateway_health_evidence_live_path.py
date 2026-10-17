@@ -29,7 +29,6 @@ Offline throughout: health_ingest/media_store are both faked; no real engine.
 from __future__ import annotations
 
 import asyncio
-import json
 
 import pytest
 from agent_utilities.observability import health_ingest
@@ -65,88 +64,6 @@ def _normal_trend(avg: float, t0: float) -> dict:
         "start_at": t0,
         "end_at": t0 + gh._WINDOW_S,
     }
-
-
-@pytest.mark.asyncio
-async def test_check_and_record_writes_anomaly_and_metric_window_evidence(
-    monkeypatch,
-):
-    # Seed six normal baseline windows (min_windows default) around ~0.05s latency.
-    monkeypatch.setattr(
-        gh,
-        "_history",
-        [_normal_trend(0.05, 1_000_000.0 + i * gh._WINDOW_S) for i in range(6)],
-    )
-
-    calls: list[tuple[str, str, dict, str]] = []
-
-    def _fake_ingest_health_anomaly(entity_id, signal, anomaly, *, entity_type):
-        calls.append((entity_id, signal, dict(anomaly), entity_type))
-        return {"nodes": 1}
-
-    monkeypatch.setattr(
-        health_ingest, "ingest_health_anomaly", _fake_ingest_health_anomaly
-    )
-
-    store = _FakeStore()
-    monkeypatch.setattr(
-        "agent_utilities.knowledge_graph.memory.native_ingest.media_store",
-        lambda: store,
-    )
-
-    # A genuinely anomalous window: latency spiked to 5s.
-    anomalous_trend = _normal_trend(5.0, 1_000_000.0 + 6 * gh._WINDOW_S)
-
-    await gh._check_and_record(anomalous_trend)
-
-    # 1. The dead kernel's first live caller — a real :HealthAnomaly write.
-    assert len(calls) == 1
-    entity_id, signal, anomaly, entity_type = calls[0]
-    assert entity_id == "gateway"
-    assert signal == "request_duration_seconds"
-    assert entity_type == "Gateway"
-    assert anomaly["kind"] == "above-baseline"
-    assert anomaly["observed"] == 5.0
-
-    # 2. The MetricWindow evidence locus — the EXACT triggering window.
-    assert len(store.window_calls) == 1
-    data, kw = store.window_calls[0]
-    assert data == json.dumps(anomalous_trend, sort_keys=True).encode("utf-8")
-    assert kw["metric"] == "gateway:request_duration_seconds"
-    assert kw["start_ms"] == int(anomalous_trend["start_at"] * 1000)
-    assert kw["end_ms"] == int(anomalous_trend["end_at"] * 1000)
-    assert kw["source"] == "gateway-health"
-
-    # History grew by exactly the window just checked.
-    assert gh._history[-1] == anomalous_trend
-
-
-@pytest.mark.asyncio
-async def test_check_and_record_writes_nothing_when_normal(monkeypatch):
-    monkeypatch.setattr(
-        gh,
-        "_history",
-        [_normal_trend(0.05, 1_000_000.0 + i * gh._WINDOW_S) for i in range(6)],
-    )
-    calls: list[tuple] = []
-    monkeypatch.setattr(
-        health_ingest,
-        "ingest_health_anomaly",
-        lambda *a, **k: calls.append((a, k)),
-    )
-    store = _FakeStore()
-    monkeypatch.setattr(
-        "agent_utilities.knowledge_graph.memory.native_ingest.media_store",
-        lambda: store,
-    )
-
-    normal_trend = _normal_trend(0.051, 1_000_000.0 + 6 * gh._WINDOW_S)
-    await gh._check_and_record(normal_trend)
-
-    assert calls == []
-    assert store.window_calls == []
-    # Still folded into history for future baselines.
-    assert gh._history[-1] == normal_trend
 
 
 @pytest.mark.asyncio

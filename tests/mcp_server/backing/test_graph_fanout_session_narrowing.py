@@ -42,14 +42,14 @@ from __future__ import annotations
 
 import asyncio
 
-from agent_utilities.knowledge_graph.core.session import (
+from agent_utilities.security.actor_identity import ActorType
+from agent_utilities.security.brain_context import ActorContext, use_actor
+
+from graph_os.api.contracts.session import (
     GraphSession,
     current_session,
     use_session,
 )
-from agent_utilities.security.actor_identity import ActorType
-from agent_utilities.security.brain_context import ActorContext, use_actor
-
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
 

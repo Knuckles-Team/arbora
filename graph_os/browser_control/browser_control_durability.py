@@ -7,11 +7,6 @@ import secrets
 from dataclasses import dataclass
 from typing import Any, cast
 
-from agent_utilities.knowledge_graph.core.work_durability import (
-    commit_result,
-    get_work_item,
-    submit_work_item_atomic,
-)
 from agent_utilities.security.persistence_privacy import persistence_reference
 
 from graph_os.browser_control.browser_control_binding import (
@@ -20,6 +15,11 @@ from graph_os.browser_control.browser_control_binding import (
     binding_properties,
 )
 from graph_os.browser_control.browser_control_common import canonical_internal_json
+from graph_os.work_items import (
+    commit_result,
+    get_work_item,
+    submit_work_item_atomic,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -301,23 +301,22 @@ def _validate_fence_row(
     if row is None:
         raise RuntimeError("browser call fence was not durably readable")
     stored = row.get("metadata")
+    del idempotency_key  # the engine dedupes on it; the view never echoes it
     envelope = {
-        "id": item_id,
+        "work_item_id": item_id,
         "kind": "browser.control.call",
+        "input_ref": payload_reference,
+    }
+    labels = {
         "queue": "browser_control",
-        "tenant": refs.tenant,
-        "payload_ref": payload_reference,
-        "idempotency_key": idempotency_key,
         "resource_class": "network_io",
         "fairness_group": refs.actor_reference,
-        "max_attempts": 1,
-        "created_by": refs.actor_reference,
     }
     if (
         not isinstance(stored, dict)
         or any(
             stored.get(key) != value
-            for key, value in metadata.items()
+            for key, value in {**metadata, **labels}.items()
             if key != "admission_reference"
         )
         or any(row.get(key) != value for key, value in envelope.items())
