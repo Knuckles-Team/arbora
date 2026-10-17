@@ -435,6 +435,12 @@ jobs:
       - name: Build wheel
         run: uv build --wheel --out-dir dist
 
+      # Release-blocking: every non-Python file tracked under arbora/ must be
+      # package data. Source-tree tests cannot see a file the wheel leaves out
+      # (0.1.0 shipped without api/registry/eg_exclusions.yaml).
+      - name: Wheel carries every data file
+        run: uv run --no-project python -I scripts/wheel_boot_check.py contents dist/arbora-*.whl
+
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: arbora-wheel
@@ -457,7 +463,7 @@ jobs:
     needs: [build]
     if: github.event_name != 'pull_request'
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 20
+    timeout-minutes: 30
     continue-on-error: ${{ matrix.optional || false }}
     strategy:
       fail-fast: false
@@ -518,6 +524,50 @@ jobs:
               assert md.distribution(name).read_text("direct_url.json") is None, name
               print(name, md.version(name))
           print("arbora", md.version("arbora"))
+          '
+
+      # Release-blocking wheel boot gate. From a directory outside the source
+      # tree, the installed wheel must import from the venv, carry every file
+      # its RECORD names, build the full operation registry (EG exclusions and
+      # the default policy load as package data), and answer `arbora --help`
+      # and `--version` with no configuration.
+      - name: Boot the installed wheel outside the source tree
+        run: |
+          set -euo pipefail
+          boot="$RUNNER_TEMP/wheel-boot"
+          mkdir -p "$boot"
+          cp scripts/wheel_boot_check.py "$boot/"
+          cd "$boot"
+          "$SMOKE_PYTHON" -I wheel_boot_check.py runtime
+
+      # Linux x64 also boots a real arbora process against the
+      # epistemic-graph-server binary from the installed engine wheel, with
+      # arbora imported from the installed wheel. A skip fails the gate.
+      - name: Real boot of the installed wheel (linux x86_64)
+        if: matrix.name == 'linux-x86_64'
+        run: |
+          set -euo pipefail
+          uv export --frozen --no-emit-project --no-dev --extra webui --extra test \
+            --format requirements.txt --output-file "$RUNNER_TEMP/locked-test.txt"
+          uv pip install --no-config --python "$SMOKE_PYTHON" --require-hashes --no-deps \
+            --index-url https://pypi.org/simple -r "$RUNNER_TEMP/locked-test.txt"
+          boot="$RUNNER_TEMP/real-boot"
+          mkdir -p "$boot"
+          cp tests/test_real_boot.py tests/_boot_connector.py tests/conftest.py "$boot/"
+          printf '%s\n' '[pytest]' 'asyncio_mode = auto' 'markers =' \
+            '    spec: binds a test to a spec requirement ID' \
+            '    real_boot: boots a real arbora process against a real EG server' \
+            > "$boot/pytest.ini"
+          cd "$boot"
+          "$SMOKE_PYTHON" -I -c 'import arbora, sys; from pathlib import Path; p = Path(arbora.__file__).resolve(); assert Path(sys.prefix).resolve() in p.parents, p; print(p)'
+          "$SMOKE_PYTHON" -I -m pytest -p no:cacheprovider -rA --junitxml=real-boot.xml test_real_boot.py
+          "$SMOKE_PYTHON" -I -c '
+          import xml.etree.ElementTree as ET
+          suite = ET.parse("real-boot.xml").getroot().find("testsuite")
+          tests, skipped = int(suite.get("tests")), int(suite.get("skipped"))
+          failed = int(suite.get("failures")) + int(suite.get("errors"))
+          assert tests > 0 and skipped == 0 and failed == 0, (tests, skipped, failed)
+          print(f"real boot: {tests} passed against the installed wheel")
           '
 
   publish-pypi:

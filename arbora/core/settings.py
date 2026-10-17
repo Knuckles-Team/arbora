@@ -17,6 +17,7 @@ import json
 import os
 import threading
 import warnings
+from collections.abc import Mapping
 from functools import cache
 from pathlib import Path
 from typing import Any, Literal
@@ -28,12 +29,14 @@ __all__ = [
     "CONFIG_DIR_SETTING",
     "ArboraConfig",
     "config_dir",
+    "config_from_document",
     "csv_values",
     "plaintext_secret_keys",
     "write_private_mapping",
     "is_production_profile",
     "load_config",
     "platform_config_file",
+    "read_config_document",
     "runtime_config",
     "save_config_item",
     "setting",
@@ -908,20 +911,15 @@ class ArboraConfig(BaseModel):
     @classmethod
     def _parse_structured(cls, value: Any, info: Any) -> Any:
         field = cls.model_fields.get(info.field_name)
-        if field is None or not isinstance(value, str) or field.annotation is not Any:
+        if field is None or not isinstance(value, str):
             return value
-        text = value.strip()
-        if text[:1] in "[{":
-            try:
-                return json.loads(text)
-            except ValueError:
-                return value
-        return value
+        return _structured_text(field.annotation, value)
 
     def __init__(self, **values: Any) -> None:
         if not values:
             values = _environment_values()
-        super().__init__(**values)
+        # Empty text is an unset setting, as in the environment.
+        super().__init__(**{key: value for key, value in values.items() if value != ""})
 
 
 def _environment_values() -> dict[str, Any]:
@@ -939,13 +937,41 @@ def _adapter(name: str) -> TypeAdapter[Any]:
     return TypeAdapter(ArboraConfig.model_fields[name].annotation or Any)
 
 
-def _is_list_field(annotation: Any) -> bool:
-    """Whether a field annotation is ``list[...]`` (optionally ``| None``)."""
+def _structured_origins(annotation: Any) -> set[Any]:
+    """The container origins (``list``/``dict``/``Any``) a field annotation admits."""
     from typing import get_args, get_origin
 
-    if get_origin(annotation) is list:
-        return True
-    return any(get_origin(arg) is list for arg in get_args(annotation))
+    if annotation is Any:
+        return {Any}
+    origins = {get_origin(annotation)} | {
+        get_origin(arg) for arg in get_args(annotation)
+    }
+    if annotation in (list, dict):
+        origins.add(annotation)
+    return origins & {list, dict}
+
+
+def _structured_text(annotation: Any, raw: str) -> Any:
+    """Decode one environment or ``config.json`` string for a structured field.
+
+    The configuration document holds flat scalars only, so list and mapping
+    settings (and ``Any`` fields) arrive as JSON text. JSON text is decoded; a
+    list setting also accepts comma-separated text. Scalar fields and text that
+    is not JSON are returned unchanged for the field's own validation.
+    """
+    origins = _structured_origins(annotation)
+    if not origins:
+        return raw
+    if raw.strip()[:1] in "[{":
+        try:
+            return json.loads(raw)
+        except ValueError:
+            return raw
+    if list in origins and Any not in origins:
+        # A list setting is documented as a JSON list or comma-separated text;
+        # plain text used to fail validation and silently read as unset.
+        return csv_values(raw)
+    return raw
 
 
 def read_field(name: str) -> Any:
@@ -954,18 +980,7 @@ def read_field(name: str) -> Any:
     raw = os.environ.get(str(info.alias))
     if raw is None or raw == "":
         return info.get_default(call_default_factory=True)
-    value: Any = raw
-    if (info.annotation is Any or _is_list_field(info.annotation)) and raw.strip()[
-        :1
-    ] in "[{":
-        try:
-            value = json.loads(raw)
-        except ValueError:
-            value = raw
-    elif _is_list_field(info.annotation):
-        # A list setting is documented as a JSON list or comma-separated text;
-        # plain text used to fail validation and silently read as unset.
-        value = csv_values(raw)
+    value = _structured_text(info.annotation, raw)
     try:
         return _adapter(name).validate_python(value)
     except ValueError:
@@ -1012,6 +1027,25 @@ def load_config(*, reload: bool = False) -> Path | None:
     return _sdk_load(target, reload=reload) if target.is_file() else None
 
 
+def read_config_document(path: Path) -> dict[str, str]:
+    """Read ``config.json`` exactly as :func:`load_config` projects it.
+
+    Returns the key/value text the runtime would place in the environment.
+    Raises the loader's ``ConfigurationError`` for a document it refuses (not
+    a flat JSON object of scalars, or a credential value instead of a
+    reference).
+    """
+    # The SDK's one document reader; load_config applies the same function.
+    from agent_connector_sdk.config import _read_document
+
+    return _read_document(Path(path))
+
+
+def config_from_document(document: Mapping[str, str]) -> ArboraConfig:
+    """The :class:`ArboraConfig` the runtime builds from a loaded document."""
+    return ArboraConfig(**document)
+
+
 def _check_secret_policy(env_key: str, value: Any) -> None:
     if env_key.endswith(_CREDENTIAL_SUFFIXES) and not (
         isinstance(value, str) and value.startswith(_REFERENCE_SCHEMES)
@@ -1042,8 +1076,16 @@ def save_config_item(key: str, value: Any) -> str:
             document.pop(env_key, None)
             os.environ.pop(env_key, None)
         else:
-            document[env_key] = value
-            os.environ[env_key] = value if isinstance(value, str) else json.dumps(value)
+            # config.json holds flat scalars; a list or mapping is JSON text.
+            stored = (
+                json.dumps(value, sort_keys=True, separators=(",", ":"))
+                if isinstance(value, list | tuple | dict)
+                else value
+            )
+            document[env_key] = stored
+            os.environ[env_key] = (
+                stored if isinstance(stored, str) else json.dumps(stored)
+            )
         write_private_mapping(target, document)
     return env_key
 

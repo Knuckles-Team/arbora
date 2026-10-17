@@ -106,10 +106,25 @@ def test_skill_provider_is_registered_and_packaged() -> None:
 
     assert '[project.entry-points."agent_connector_sdk.skill_providers"]' in pyproject
     assert 'arbora = "arbora.skills"' in pyproject
-    # The broader glob packages every skill asset (SKILL.md, references/*.md,
-    # and the non-Markdown agents/*.yaml files the bundled skills also ship),
-    # not just Markdown.
-    assert '"skills/**"' in pyproject
+    # Package data is one extension glob per data type across the whole
+    # package, so every skill asset and every runtime-loaded file (EG
+    # exclusions, the default policy, generated contracts) ships. The release
+    # wheel boot gate checks the built wheel itself.
+    import tomllib
+
+    patterns = tomllib.loads(pyproject)["tool"]["setuptools"]["package-data"]["arbora"]
+    assert all(pattern.startswith("**/*.") for pattern in patterns), patterns
+    suffixes = {pattern.removeprefix("**/*") for pattern in patterns}
+    package = ROOT / "arbora"
+    unpackaged = sorted(
+        path.relative_to(package).as_posix()
+        for path in package.rglob("*")
+        if path.is_file()
+        and "__pycache__" not in path.parts
+        and path.suffix not in {".py", ".pyc"}
+        and path.suffix not in suffixes
+    )
+    assert unpackaged == []
 
 
 def test_swarm_stack_is_single_writer_stop_first_and_pinned() -> None:

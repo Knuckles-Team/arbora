@@ -322,6 +322,42 @@ def test_fleet_code_and_provenance_are_preserved() -> None:
     assert "secret" not in str(envelope)
 
 
+def test_fleet_refusal_carries_the_redacted_child_detail() -> None:
+    jwt = "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhbGljZSJ9.c2lnbmF0dXJl"  # sanitizer:ignore - synthetic redaction fixture
+    pw = "hunter22"  # sanitizer:ignore - synthetic redaction fixture
+    status, envelope = to_envelope(
+        FleetRefusal(
+            "CHILD_REFUSED",
+            "search",
+            "query",
+            detail=f"401 from upstream: Authorization: Bearer {jwt} password={pw} "
+            + "x" * 400,
+        ),
+        **CONTEXT,
+    )
+    assert status == 502
+    detail = envelope["error"]["details"]["detail"]
+    assert detail.startswith("401 from upstream: Authorization: [redacted]")
+    assert "password=[redacted]" in detail
+    assert jwt not in detail and pw not in detail
+    assert len(detail) <= 240
+    assert envelope["error"]["message"] == "Fleet call refused"
+
+
+def test_fleet_operation_error_carries_the_child_detail() -> None:
+    refusal = InvokeError(
+        "CHILD_REFUSED",
+        {"server": "search", "tool": "query", "detail": "not found", "token": "secret"},
+        "fleet",
+    )
+    _, envelope = to_envelope(refusal, **CONTEXT)
+    assert envelope["error"]["details"] == {
+        "server": "search",
+        "tool": "query",
+        "detail": "not found",
+    }
+
+
 def test_invocation_keeps_structured_child_code_and_bounds_provenance() -> None:
     refusal = InvokeError(
         "CHILD_BUSY", {"server": "search", "tool": "query", "token": "secret"}, "fleet"

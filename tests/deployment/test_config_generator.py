@@ -42,16 +42,16 @@ def test_generate_config_profile_presets():
     assert ent["ENGINE_TOPOLOGY"] == "out-of-process-shared"
     assert not tiny.get("GRAPH_DB_CONNECTION_PROFILE_REF")  # zero-infra
     assert "GRAPH_DB_CONNECTION_PROFILE_REF" in snp
-    assert snp["GRAPH_SERVICE_ENDPOINTS"] == []
+    assert snp["GRAPH_SERVICE_ENDPOINTS"] == "[]"
     assert "STATE_DB_URI" in ent
     assert ent["TASK_QUEUE_BACKEND"] == "kafka"
-    assert ent["GRAPH_SERVICE_ENDPOINTS"] == []
+    assert ent["GRAPH_SERVICE_ENDPOINTS"] == "[]"
     for production in (snp, ent):
         assert "KG_BRAIN_ENFORCE" not in production
         assert "KG_GRAPH_SESSION_REQUIRED" not in production
-        assert production["AUTH_JWT_JWKS_URI"] is None
-        assert production["AUTH_JWT_ISSUER"] is None
-        assert production["AUTH_JWT_AUDIENCE"] is None
+        assert production["AUTH_JWT_JWKS_URI"] == ""
+        assert production["AUTH_JWT_ISSUER"] == ""
+        assert production["AUTH_JWT_AUDIENCE"] == ""
         assert production["KG_POLICY_VERSION"] == "baseline-v1"
         assert production["EPISTEMIC_GRAPH_MAX_RESIDENT_GRAPHS"] == 1024
         assert production["EPISTEMIC_GRAPH_LAZY_OPEN_PAGE_SIZE"] == 4096
@@ -463,7 +463,7 @@ def test_doctor_accepts_single_node_local_engine_topology(tmp_path):
     cfg["AUTH_JWT_JWKS_URI"] = "https://identity.example.test/jwks"
     cfg["AUTH_JWT_ISSUER"] = "https://identity.example.test"
     cfg["AUTH_JWT_AUDIENCE"] = "graph-api"
-    assert cfg["GRAPH_SERVICE_ENDPOINTS"] == []
+    assert cfg["GRAPH_SERVICE_ENDPOINTS"] == "[]"
     out = tmp_path / "c.json"
     out.write_text(json.dumps(cfg))
     out.chmod(0o600)
@@ -483,7 +483,7 @@ def test_doctor_reports_missing_outbound_oidc_audience_without_values(tmp_path):
             "OIDC_CLIENT_ID": "fleet-client",
             "OIDC_CLIENT_SECRET_REF": "env://TEST_FLEET_CLIENT_SECRET",
             "OIDC_TOKEN_URL": "https://identity.example.test/token",
-            "OIDC_AUDIENCE": None,
+            "OIDC_AUDIENCE": "",
         }
     )
     out = tmp_path / "c.json"
@@ -577,3 +577,70 @@ def test_doctor_rejects_partial_memento_raw_retention_config(tmp_path):
         "approved_policy_required",
         "encryption_key_reference_required",
     }
+
+
+@pytest.mark.parametrize("profile", PROFILES)
+def test_generated_config_is_accepted_by_the_runtime_loader(
+    profile, tmp_path, monkeypatch
+):
+    """setup-config generate writes only what load_config projects."""
+    from unittest import mock
+
+    import agent_connector_sdk.config as sdk_config
+
+    out = tmp_path / "config.json"
+    write_config(profile, out)
+    document = json.loads(out.read_text())
+    nested = [
+        key
+        for key, value in document.items()
+        if not isinstance(value, str | int | float | bool)
+    ]
+    assert nested == []
+    # load_config projects every key into os.environ; restore the whole
+    # environment and the loader's memo so nothing leaks into later tests.
+    monkeypatch.setattr(sdk_config, "_loaded_from", None)
+    with mock.patch.dict(os.environ):
+        for key in document:
+            os.environ.pop(key, None)
+        assert sdk_config.load_config(out, reload=True) == out
+        ArboraConfig()  # the runtime build from the projected environment
+
+
+def test_generated_structured_settings_are_json_text(tmp_path):
+    from arbora.core.settings import config_from_document, read_config_document
+
+    out = tmp_path / "config.json"
+    write_config("tiny", out)
+    raw = json.loads(out.read_text())
+    cfg = config_from_document(read_config_document(out))
+    assert json.loads(raw["MCP_ALWAYS_LOAD"]) == cfg.mcp_always_load
+    assert json.loads(raw["MCP_FLEET_SECRET_REFS"]) == cfg.mcp_fleet_secret_refs
+
+
+def test_doctor_refuses_what_the_runtime_loader_refuses(tmp_path):
+    """A nested value fails load_config, so the doctor must not pass it."""
+    cfg = generate_config("tiny")
+    cfg["MCP_ALWAYS_LOAD"] = ["graph"]
+    out = tmp_path / "c.json"
+    out.write_text(json.dumps(cfg))
+    out.chmod(0o600)
+
+    rep = config_doctor("tiny", out)
+
+    assert rep["status"] == "error"
+    assert rep["error"] == "configuration_source_unreadable"
+    assert rep["error_class"] == "ConfigurationError"
+
+
+def test_doctor_accepts_json_text_lists_like_the_runtime(tmp_path):
+    cfg = generate_config("tiny")
+    cfg["MCP_ALWAYS_LOAD"] = json.dumps(["graph", "fleet"])
+    cfg["SOURCE_HTTP_ALLOWED_PRIVATE_HOSTS"] = "a.example.test,b.example.test"
+    out = tmp_path / "c.json"
+    out.write_text(json.dumps(cfg))
+    out.chmod(0o600)
+
+    rep = config_doctor("tiny", out)
+
+    assert rep["status"] == "success", rep

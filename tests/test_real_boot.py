@@ -63,6 +63,31 @@ ROLES = PROCESS_IDENTITY_ROLES
 OPERATOR_SUBJECT = PROCESS_SUBJECT
 
 
+#: Process plumbing the boot subprocesses may inherit; nothing that configures Arbora.
+_INHERITED_ENV = frozenset(
+    {
+        "PATH",
+        "LANG",
+        "LANGUAGE",
+        "TZ",
+        "TERM",
+        "TMPDIR",
+        "TEMP",
+        "TMP",
+        "USER",
+        "LOGNAME",
+        "SHELL",
+        "VIRTUAL_ENV",
+        "SSL_CERT_FILE",
+        "SSL_CERT_DIR",
+        "LD_LIBRARY_PATH",
+        "SYSTEMROOT",
+        "CI",
+    }
+)
+_INHERITED_ENV_PREFIXES = ("LC_", "PYTHON", "UV_", "COVERAGE_")
+
+
 def _server_binary() -> str:
     from epistemic_graph.server_binary import (
         ServerBinaryNotFoundError,
@@ -202,10 +227,13 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
     gos_log_path = root / "arbora.log"
     gos_log = gos_log_path.open("wb")
     try:
+        # Only process plumbing is inherited. Any Arbora setting in the parent
+        # environment (for example one an earlier test projected into
+        # os.environ) would override this stack's config.json, so none is.
         base_env = {
             key: value
             for key, value in os.environ.items()
-            if not key.startswith(("GRAPH_", "KG_", "AUTH_", "FASTMCP_", "EUNOMIA"))
+            if key in _INHERITED_ENV or key.startswith(_INHERITED_ENV_PREFIXES)
         }
         eg_env = {
             **base_env,
