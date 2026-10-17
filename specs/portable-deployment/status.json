@@ -136,6 +136,7 @@
       "title": "Web UI keeps its component package name",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "15bc1fd4c49e",
         "d6f16cd447e2",
         "d75db1ea42e8",
         "eaabc7449a93"
