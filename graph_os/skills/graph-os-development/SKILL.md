@@ -86,22 +86,16 @@ Specs are already designed. The work is implementation, delivered in very small,
 
 **Report**: at most 8 lines: PR URL, requirement IDs, test result, and any `ID:<main sha>` proof for rows already on main.
 
-## Ownership and reuse
+## Step 0: route the feature
 
-| Repository | Primary ownership |
-|---|---|
-| `epistemic-graph` | Durable graph engine, query/compute, protocol, generated contracts, Python client |
-| `epistemic-graph-server` | Distribution of the one server executable: server wheel, server image, version lockstep with `epistemic-graph` |
-| `agent-connector-sdk` | Connector transport, certification, typed source and sink ports |
-| `agent-utilities` | Agent orchestration, KG application services, skills and workflow runtime |
-| `graph-os` | Deployable gateway, MCP/REST composition, control plane and operations |
-| `agent-webui` | Browser interface and its Python service adapter |
-| `repository-manager` | Repository lifecycle, worktrees, gate orchestration and release readiness |
-| `pipelines` | Shared CI, quality and Pages workflows, artifact publication order |
-| `agent-terminal-ui` | Terminal client interaction and local presentation |
-| `emerald-exchange` | Finance strategy application, curation and governed trading workflows |
-| `tunnel-manager` | Tunnel inventory, configuration and control API |
-| `.github` | Public ecosystem map, cross-repository status and program governance |
+Route the feature before any code. The [ecosystem boundaries standard](https://github.com/Knuckles-Team/pipelines/blob/main/reference/ecosystem-boundaries.md) is the one ownership table.
+
+1. Split the feature into parts with its routing procedure.
+2. Find the owner of each part in its repository table.
+3. Write each part as a row in its owner's `specs/`. Extend an existing row first.
+4. Write code for a part only in the repository that owns it.
+
+## Ownership and reuse
 
 Other connector, frontend and service repositories may own additional
 requirements. Use the owner named by the public spec and verify it against
