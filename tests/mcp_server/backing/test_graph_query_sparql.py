@@ -2,8 +2,7 @@
 
 The `sparql` scope routes the `cypher` arg (the SPARQL text) to ``engine.sparql()``,
 which bridges to the epistemic-graph engine's native RDF surface
-(``backend.graph.sparql`` → ``client.rdf.sparql``). The REST twin ``/graph/query``
-dispatches the same tool, so surface-parity holds with no second handler.
+(``backend.graph.sparql`` → ``client.rdf.sparql``).
 """
 
 from __future__ import annotations
@@ -11,19 +10,12 @@ from __future__ import annotations
 import pytest
 from agent_utilities.knowledge_graph.orchestration.engine_query import QueryMixin
 
-from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
+from tests.mcp_server.backing._support import (
+    register_graph_query as _register_graph_query,
+)
 
 pytestmark = pytest.mark.concept("AU-KG.ingest.mirror-inbound")
-
-
-def _register_graph_query():
-    from fastmcp import FastMCP
-
-    from graph_os.mcp_server.backing.tools.query_tools import register_query_tools
-
-    register_query_tools(FastMCP("test"))
-    return runtime.REGISTERED_TOOLS["graph_query"]
 
 
 class _FakeEngine:

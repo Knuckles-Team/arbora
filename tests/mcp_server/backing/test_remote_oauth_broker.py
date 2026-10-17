@@ -27,7 +27,7 @@ import pytest
 from agent_utilities.knowledge_graph.core.discovery_authority import OAuthGrantBinding
 from agent_utilities.security.actor_identity import ActorType
 from agent_utilities.security.brain_context import ActorContext
-from agent_utilities.security.secrets_client import SecretsBackend, SecretsClient
+from agent_utilities.security.secrets_client import SecretsClient
 
 from graph_os.mcp_server.backing.remote_oauth_broker import (
     OAuthBindingError,
@@ -48,6 +48,7 @@ from graph_os.mcp_server.backing.remote_oauth_broker import (
     discover_authorization_server,
     discover_protected_resource,
 )
+from tests._support import FakeSecretsBackend
 
 RESOURCE_URL = "https://mcp.example.com/remote"
 ISSUER = "https://idp.example.com"
@@ -63,39 +64,6 @@ def _synthetic_value(*parts: str) -> str:
 
 
 OWNER_ACCESS_TOKEN = _synthetic_value("owner-", "secret-", "token")
-
-
-# ---------------------------------------------------------------------------
-# In-memory fake secrets backend — mirrors SecretsBackend's contract, with a
-# genuinely atomic compare_and_set so the single-use/refresh races are real.
-# ---------------------------------------------------------------------------
-class FakeSecretsBackend(SecretsBackend):
-    def __init__(self) -> None:
-        self._store: dict[str, str] = {}
-        self._lock = threading.Lock()
-
-    def get(self, key: str) -> str | None:
-        with self._lock:
-            return self._store.get(key)
-
-    def set(self, key: str, value: str, **metadata) -> None:
-        with self._lock:
-            self._store[key] = value
-
-    def delete(self, key: str) -> bool:
-        with self._lock:
-            return self._store.pop(key, None) is not None
-
-    def list_keys(self) -> list[str]:
-        with self._lock:
-            return sorted(self._store)
-
-    def compare_and_set(self, key: str, expected: str, value: str, **metadata) -> bool:
-        with self._lock:
-            if self._store.get(key) != expected:
-                return False
-            self._store[key] = value
-            return True
 
 
 @pytest.fixture
@@ -181,25 +149,37 @@ def _as_metadata_body(
     return json.dumps(body).encode()
 
 
-def happy_path_handler(request: httpx.Request) -> httpx.Response:
-    path = request.url.path
+def _issued_token_response() -> httpx.Response:
+    """The mock IdP's token-endpoint answer."""
+    return httpx.Response(
+        200,
+        content=json.dumps(
+            {
+                "access_token": "at-issued-by-mock-idp",
+                "refresh_token": "rt-issued-by-mock-idp",
+                "token_type": "Bearer",
+                "expires_in": 3600,
+                "scope": "mcp:read mcp:write",
+            }
+        ).encode(),
+    )
+
+
+def _discovery_response(path: str, **as_metadata) -> httpx.Response | None:
+    """The mock resource/AS discovery documents, or ``None`` for another path."""
     if path.startswith("/.well-known/oauth-protected-resource"):
         return httpx.Response(200, content=_resource_metadata_body())
     if path.startswith("/.well-known/oauth-authorization-server"):
-        return httpx.Response(200, content=_as_metadata_body())
+        return httpx.Response(200, content=_as_metadata_body(**as_metadata))
+    return None
+
+
+def happy_path_handler(request: httpx.Request) -> httpx.Response:
+    discovered = _discovery_response(request.url.path)
+    if discovered is not None:
+        return discovered
     if str(request.url) == TOKEN_ENDPOINT:
-        return httpx.Response(
-            200,
-            content=json.dumps(
-                {
-                    "access_token": "at-issued-by-mock-idp",
-                    "refresh_token": "rt-issued-by-mock-idp",
-                    "token_type": "Bearer",
-                    "expires_in": 3600,
-                    "scope": "mcp:read mcp:write",
-                }
-            ).encode(),
-        )
+        return _issued_token_response()
     return httpx.Response(404)
 
 
@@ -212,6 +192,72 @@ def client_factory_for(handler) -> callable:
     return _factory
 
 
+def _put_read_token(store, owner, access_token: str) -> None:
+    """Store one hour-long ``mcp:read`` ``acme`` token for ``owner``."""
+    store.put(
+        actor=owner,
+        provider_id="acme",
+        resource_url=RESOURCE_URL,
+        audience=RESOURCE_URL,
+        token=StoredToken(
+            access_token=access_token,
+            refresh_token=None,
+            token_type="Bearer",
+            expires_at=time.time() + 3600,
+            granted_scope="mcp:read",
+            key_version=1,
+            audience=RESOURCE_URL,
+        ),
+    )
+
+
+def _get_acme(store, actor):
+    """``actor``'s stored ``acme`` token for the test resource, or ``None``."""
+    return store.get(
+        actor=actor,
+        provider_id="acme",
+        resource_url=RESOURCE_URL,
+        audience=RESOURCE_URL,
+    )
+
+
+def _begin_state(broker, actor, browser_session_id: str = "sess-1") -> str:
+    """Begin an ``acme`` authorization and return its ``state`` parameter."""
+    url = broker.begin(
+        provider_id="acme", actor=actor, browser_session_id=browser_session_id
+    )
+    return url.split("state=")[1].split("&")[0]
+
+
+def _short_lived_token(access_token: str, refresh_token: str | None) -> StoredToken:
+    """A ten-second ``mcp:read`` token for the test resource."""
+    return StoredToken(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="Bearer",
+        expires_at=time.time() + 10,
+        granted_scope="mcp:read",
+        key_version=1,
+        audience=RESOURCE_URL,
+    )
+
+
+def _begin_dcr(secrets_client):
+    """A DCR-backed broker, its registration log, and one begun authorization URL."""
+    registrations: list = []
+    broker = RemoteOAuthBroker(
+        registry=registry_with(dcr_provider()),
+        secrets_client=secrets_client,
+        http_client_factory=client_factory_for(
+            dcr_handler_factory(registrations=registrations)
+        ),
+    )
+    url = broker.begin(
+        provider_id="acme-dcr", actor=verified_actor(), browser_session_id="s-1"
+    )
+    return broker, registrations, url
+
+
 def dcr_handler_factory(*, registrations: list, issued_client_id="dcr-issued-client"):
     """Discovery (advertising ``registration_endpoint``) + RFC 7591 registration
     + token exchange, all served by one mock. Appends the raw registration
@@ -219,14 +265,11 @@ def dcr_handler_factory(*, registrations: list, issued_client_id="dcr-issued-cli
     hit, so a test can assert exactly how many real registrations happened."""
 
     def handler(request: httpx.Request) -> httpx.Response:
-        path = request.url.path
-        if path.startswith("/.well-known/oauth-protected-resource"):
-            return httpx.Response(200, content=_resource_metadata_body())
-        if path.startswith("/.well-known/oauth-authorization-server"):
-            return httpx.Response(
-                200,
-                content=_as_metadata_body(registration_endpoint=REGISTRATION_ENDPOINT),
-            )
+        discovered = _discovery_response(
+            request.url.path, registration_endpoint=REGISTRATION_ENDPOINT
+        )
+        if discovered is not None:
+            return discovered
         if str(request.url) == REGISTRATION_ENDPOINT:
             registrations.append(json.loads(request.content))
             return httpx.Response(
@@ -242,18 +285,7 @@ def dcr_handler_factory(*, registrations: list, issued_client_id="dcr-issued-cli
                 ).encode(),
             )
         if str(request.url) == TOKEN_ENDPOINT:
-            return httpx.Response(
-                200,
-                content=json.dumps(
-                    {
-                        "access_token": "at-issued-by-mock-idp",
-                        "refresh_token": "rt-issued-by-mock-idp",
-                        "token_type": "Bearer",
-                        "expires_in": 3600,
-                        "scope": "mcp:read mcp:write",
-                    }
-                ).encode(),
-            )
+            return _issued_token_response()
         return httpx.Response(404)
 
     return handler
@@ -341,16 +373,7 @@ class TestDynamicClientRegistration:
             registrar.register(dcr_provider(), as_meta)
 
     def test_registrar_never_reads_or_stores_client_secret(self, secrets_client):
-        registrations: list = []
-        handler = dcr_handler_factory(registrations=registrations)
-        broker = RemoteOAuthBroker(
-            registry=registry_with(dcr_provider()),
-            secrets_client=secrets_client,
-            http_client_factory=client_factory_for(handler),
-        )
-        url = broker.begin(
-            provider_id="acme-dcr", actor=verified_actor(), browser_session_id="s-1"
-        )
+        broker, registrations, url = _begin_dcr(secrets_client)
         assert "client_id=dcr-issued-client" in url
         # The mock server returned a client_secret; nothing this broker
         # persisted (the transaction, the DCR cache) has anywhere to put one.
@@ -411,16 +434,7 @@ class TestDynamicClientRegistration:
         assert len(registrations) == 1
 
     def test_dcr_client_id_used_in_token_exchange(self, secrets_client):
-        registrations: list = []
-        handler = dcr_handler_factory(registrations=registrations)
-        broker = RemoteOAuthBroker(
-            registry=registry_with(dcr_provider()),
-            secrets_client=secrets_client,
-            http_client_factory=client_factory_for(handler),
-        )
-        url = broker.begin(
-            provider_id="acme-dcr", actor=verified_actor(), browser_session_id="s-1"
-        )
+        broker, registrations, url = _begin_dcr(secrets_client)
         state = url.split("state=")[1].split("&")[0]
         token = broker.callback(
             code="auth-code-1",
@@ -641,12 +655,7 @@ class TestTokenStoreIsolation:
             audience=RESOURCE_URL,
             token=token,
         )
-        fetched = store.get(
-            actor=actor,
-            provider_id="acme",
-            resource_url=RESOURCE_URL,
-            audience=RESOURCE_URL,
-        )
+        fetched = _get_acme(store, actor)
         assert fetched is not None
         assert fetched.access_token == "at-1"
 
@@ -654,71 +663,17 @@ class TestTokenStoreIsolation:
         store = OAuthTokenStore(secrets_client)
         owner = verified_actor(actor_id="user-a", tenant_id="tenant-1")
         attacker = verified_actor(actor_id="user-b", tenant_id="tenant-1")
-        token = StoredToken(
-            access_token=OWNER_ACCESS_TOKEN,
-            refresh_token=None,
-            token_type="Bearer",
-            expires_at=time.time() + 3600,
-            granted_scope="mcp:read",
-            key_version=1,
-            audience=RESOURCE_URL,
-        )
-        store.put(
-            actor=owner,
-            provider_id="acme",
-            resource_url=RESOURCE_URL,
-            audience=RESOURCE_URL,
-            token=token,
-        )
+        _put_read_token(store, owner, OWNER_ACCESS_TOKEN)
 
-        assert (
-            store.get(
-                actor=owner,
-                provider_id="acme",
-                resource_url=RESOURCE_URL,
-                audience=RESOURCE_URL,
-            )
-            is not None
-        )
-        assert (
-            store.get(
-                actor=attacker,
-                provider_id="acme",
-                resource_url=RESOURCE_URL,
-                audience=RESOURCE_URL,
-            )
-            is None
-        )
+        assert _get_acme(store, owner) is not None
+        assert _get_acme(store, attacker) is None
 
     def test_cross_tenant_read_denied(self, secrets_client):
         store = OAuthTokenStore(secrets_client)
         owner = verified_actor(actor_id="user-a", tenant_id="tenant-1")
         other_tenant_same_id = verified_actor(actor_id="user-a", tenant_id="tenant-2")
-        token = StoredToken(
-            access_token="tenant-1-secret",
-            refresh_token=None,
-            token_type="Bearer",
-            expires_at=time.time() + 3600,
-            granted_scope="mcp:read",
-            key_version=1,
-            audience=RESOURCE_URL,
-        )
-        store.put(
-            actor=owner,
-            provider_id="acme",
-            resource_url=RESOURCE_URL,
-            audience=RESOURCE_URL,
-            token=token,
-        )
-        assert (
-            store.get(
-                actor=other_tenant_same_id,
-                provider_id="acme",
-                resource_url=RESOURCE_URL,
-                audience=RESOURCE_URL,
-            )
-            is None
-        )
+        _put_read_token(store, owner, "tenant-1-secret")
+        assert _get_acme(store, other_tenant_same_id) is None
 
     def test_unauthenticated_actor_rejected(self, secrets_client):
         store = OAuthTokenStore(secrets_client)
@@ -736,15 +691,7 @@ class TestTokenStoreIsolation:
 # ---------------------------------------------------------------------------
 class TestRefreshAndRevoke:
     def _stored(self, store, secrets_client, actor, refresh_token="rt-0"):
-        token = StoredToken(
-            access_token="at-0",
-            refresh_token=refresh_token,
-            token_type="Bearer",
-            expires_at=time.time() + 10,
-            granted_scope="mcp:read",
-            key_version=1,
-            audience=RESOURCE_URL,
-        )
+        token = _short_lived_token("at-0", refresh_token)
         store.put(
             actor=actor,
             provider_id="acme",
@@ -771,12 +718,7 @@ class TestRefreshAndRevoke:
         store = OAuthTokenStore(secrets_client)
         actor = verified_actor()
         self._stored(store, secrets_client, actor)
-        before = store.get(
-            actor=actor,
-            provider_id="acme",
-            resource_url=RESOURCE_URL,
-            audience=RESOURCE_URL,
-        )
+        before = _get_acme(store, actor)
         assert before is not None
         provider = enabled_provider()
         client = httpx.Client(transport=httpx.MockTransport(happy_path_handler))
@@ -823,15 +765,7 @@ class TestRefreshAndRevoke:
             resource_url=RESOURCE_URL,
             audience=RESOURCE_URL,
         )
-        assert (
-            store.get(
-                actor=actor,
-                provider_id="acme",
-                resource_url=RESOURCE_URL,
-                audience=RESOURCE_URL,
-            )
-            is None
-        )
+        assert _get_acme(store, actor) is None
 
     def test_revoke_of_never_stored_token_still_fails_closed_on_next_read(
         self, secrets_client
@@ -847,15 +781,7 @@ class TestRefreshAndRevoke:
             resource_url=RESOURCE_URL,
             audience=RESOURCE_URL,
         )
-        assert (
-            store.get(
-                actor=actor,
-                provider_id="acme",
-                resource_url=RESOURCE_URL,
-                audience=RESOURCE_URL,
-            )
-            is None
-        )
+        assert _get_acme(store, actor) is None
         with pytest.raises(OAuthRevokedError):
             self._stored(store, secrets_client, actor)
 
@@ -870,15 +796,7 @@ class TestRefreshAndRevoke:
             resource_url=RESOURCE_URL,
             audience=RESOURCE_URL,
         )
-        token = StoredToken(
-            access_token="at-new",
-            refresh_token="rt-new",
-            token_type="Bearer",
-            expires_at=time.time() + 10,
-            granted_scope="mcp:read",
-            key_version=1,
-            audience=RESOURCE_URL,
-        )
+        token = _short_lived_token("at-new", "rt-new")
 
         store.put(
             actor=actor,
@@ -889,15 +807,7 @@ class TestRefreshAndRevoke:
             authorization_started_at=time.time() + 1,
         )
 
-        assert (
-            store.get(
-                actor=actor,
-                provider_id="acme",
-                resource_url=RESOURCE_URL,
-                audience=RESOURCE_URL,
-            )
-            is not None
-        )
+        assert _get_acme(store, actor) is not None
 
     def test_concurrent_refresh_serializes_without_corruption(self, secrets_client):
         store = OAuthTokenStore(secrets_client)
@@ -913,11 +823,9 @@ class TestRefreshAndRevoke:
             # (fixed alongside DCR — see the module's "Bug found and fixed"
             # note) so this mock must answer the two well-known discovery GETs
             # in addition to the actual POST to the discovered token_endpoint.
-            path = request.url.path
-            if path.startswith("/.well-known/oauth-protected-resource"):
-                return httpx.Response(200, content=_resource_metadata_body())
-            if path.startswith("/.well-known/oauth-authorization-server"):
-                return httpx.Response(200, content=_as_metadata_body())
+            discovered = _discovery_response(request.url.path)
+            if discovered is not None:
+                return discovered
             with lock:
                 call_count["n"] += 1
                 n = call_count["n"]
@@ -963,12 +871,7 @@ class TestRefreshAndRevoke:
         # cleanly or failed with the declared race error -- never a corrupted
         # or partially-written record.
         assert not errors or all(isinstance(e, OAuthRefreshRaceError) for e in errors)
-        final = store.get(
-            actor=actor,
-            provider_id="acme",
-            resource_url=RESOURCE_URL,
-            audience=RESOURCE_URL,
-        )
+        final = _get_acme(store, actor)
         assert final is not None
         assert final.access_token.startswith("at-rotated-")
 
@@ -1025,8 +928,7 @@ class TestBrokerBeginAndCallback:
         provider = enabled_provider()
         broker = self._broker(secrets_client, provider)
         actor = verified_actor()
-        url = broker.begin(provider_id="acme", actor=actor, browser_session_id="sess-1")
-        state = url.split("state=")[1].split("&")[0]
+        state = _begin_state(broker, actor)
 
         token = broker.callback(
             code="auth-code-abc", state=state, actor=actor, browser_session_id="sess-1"
@@ -1045,8 +947,7 @@ class TestBrokerBeginAndCallback:
         provider = enabled_provider()
         broker = self._broker(secrets_client, provider)
         actor = verified_actor()
-        url = broker.begin(provider_id="acme", actor=actor, browser_session_id="sess-1")
-        state = url.split("state=")[1].split("&")[0]
+        state = _begin_state(broker, actor)
 
         broker.callback(
             code="auth-code-abc", state=state, actor=actor, browser_session_id="sess-1"
@@ -1064,10 +965,7 @@ class TestBrokerBeginAndCallback:
         broker = self._broker(secrets_client, provider)
         initiator = verified_actor(actor_id="user-a")
         attacker = verified_actor(actor_id="user-b")
-        url = broker.begin(
-            provider_id="acme", actor=initiator, browser_session_id="sess-1"
-        )
-        state = url.split("state=")[1].split("&")[0]
+        state = _begin_state(broker, initiator)
 
         with pytest.raises(OAuthBindingError):
             broker.callback(
@@ -1081,8 +979,7 @@ class TestBrokerBeginAndCallback:
         provider = enabled_provider()
         broker = self._broker(secrets_client, provider)
         actor = verified_actor()
-        url = broker.begin(provider_id="acme", actor=actor, browser_session_id="sess-1")
-        state = url.split("state=")[1].split("&")[0]
+        state = _begin_state(broker, actor)
 
         with pytest.raises(OAuthBindingError):
             broker.callback(
@@ -1094,10 +991,9 @@ class TestBrokerBeginAndCallback:
 
     def test_callback_rejects_widened_scope(self, secrets_client):
         def widening_handler(request: httpx.Request) -> httpx.Response:
-            if request.url.path.startswith("/.well-known/oauth-protected-resource"):
-                return httpx.Response(200, content=_resource_metadata_body())
-            if request.url.path.startswith("/.well-known/oauth-authorization-server"):
-                return httpx.Response(200, content=_as_metadata_body())
+            discovered = _discovery_response(request.url.path)
+            if discovered is not None:
+                return discovered
             if str(request.url) == TOKEN_ENDPOINT:
                 return httpx.Response(
                     200,
@@ -1120,8 +1016,7 @@ class TestBrokerBeginAndCallback:
             http_client_factory=client_factory_for(widening_handler),
         )
         actor = verified_actor()
-        url = broker.begin(provider_id="acme", actor=actor, browser_session_id="sess-1")
-        state = url.split("state=")[1].split("&")[0]
+        state = _begin_state(broker, actor)
 
         with pytest.raises(OAuthScopeError):
             broker.callback(

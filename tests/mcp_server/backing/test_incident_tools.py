@@ -15,18 +15,7 @@ from agent_utilities.observability import health_ingest
 
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.tools.incident_tools import register_incident_tools
-
-
-class _CollectingMCP:
-    def __init__(self) -> None:
-        self.tools: dict[str, object] = {}
-
-    def tool(self, *, name, description="", tags=None):  # noqa: ANN001
-        def _deco(fn):
-            self.tools[name] = fn
-            return fn
-
-        return _deco
+from tests.mcp_server.backing._support import CollectingMCP as _CollectingMCP
 
 
 class _FakeEngine:
@@ -466,9 +455,8 @@ def _allow_gate(monkeypatch):
     )
 
 
-def test_ack_allowed_dispatches_to_set_incident_status(monkeypatch):
-    from agent_utilities.observability import incidents as inc
-
+def _allowed_status_tool(monkeypatch, inc):
+    """An allowed ``graph_incident`` over one open incident, recording status sets."""
     _allow_gate(monkeypatch)
     calls: list[tuple[str, str, str]] = []
 
@@ -479,7 +467,13 @@ def test_ack_allowed_dispatches_to_set_incident_status(monkeypatch):
     monkeypatch.setattr(inc, "set_incident_status", _fake_set_status)
     incident_id = "health:incident:storage-node-a:sig1"
     engine = _FakeEngine([(incident_id, {"status": "open", "summary": "x"})])
-    tool = _register(monkeypatch, engine)
+    return calls, incident_id, _register(monkeypatch, engine)
+
+
+def test_ack_allowed_dispatches_to_set_incident_status(monkeypatch):
+    from agent_utilities.observability import incidents as inc
+
+    calls, incident_id, tool = _allowed_status_tool(monkeypatch, inc)
     out = json.loads(
         tool(action="ack", incident_id=incident_id, actor_id="op1", reason="triage")
     )
@@ -493,17 +487,7 @@ def test_ack_allowed_dispatches_to_set_incident_status(monkeypatch):
 def test_resolve_allowed_dispatches_to_set_incident_status(monkeypatch):
     from agent_utilities.observability import incidents as inc
 
-    _allow_gate(monkeypatch)
-    calls: list[tuple[str, str, str]] = []
-
-    def _fake_set_status(incident_id, status, *, actor="", engine=None):
-        calls.append((incident_id, status, actor))
-        return {"nodes": 1, "edges": 0}
-
-    monkeypatch.setattr(inc, "set_incident_status", _fake_set_status)
-    incident_id = "health:incident:storage-node-a:sig1"
-    engine = _FakeEngine([(incident_id, {"status": "open", "summary": "x"})])
-    tool = _register(monkeypatch, engine)
+    calls, incident_id, tool = _allowed_status_tool(monkeypatch, inc)
     out = json.loads(tool(action="resolve", incident_id=incident_id, actor_id="op1"))
     assert "error" not in out
     assert calls == [(incident_id, inc.STATUS_RESOLVED, "op1")]

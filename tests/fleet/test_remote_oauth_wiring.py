@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import contextlib
 import json
-import threading
 import time
 from unittest.mock import MagicMock
 
@@ -34,7 +33,7 @@ from agent_utilities.knowledge_graph.core.fleet_catalog_tables import (
 )
 from agent_utilities.security.actor_identity import ActorType
 from agent_utilities.security.brain_context import ActorContext, use_actor
-from agent_utilities.security.secrets_client import SecretsBackend, SecretsClient
+from agent_utilities.security.secrets_client import SecretsClient
 
 from graph_os.api.contracts.session import (
     GraphSession,
@@ -51,6 +50,7 @@ from graph_os.mcp_server.backing.remote_oauth_broker import (
     RemoteOAuthBroker,
     StoredToken,
 )
+from tests._support import FakeSecretsBackend
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 
 RESOURCE_URL = "https://protected-mcp.example.com/mcp"
@@ -63,35 +63,6 @@ def _synthetic_value(*parts: str) -> str:
 
 
 ACCESS_TOKEN = _synthetic_value("at-", "valid-for-", "this-principal")
-
-
-class FakeSecretsBackend(SecretsBackend):
-    def __init__(self) -> None:
-        self._store: dict[str, str] = {}
-        self._lock = threading.Lock()
-
-    def get(self, key: str) -> str | None:
-        with self._lock:
-            return self._store.get(key)
-
-    def set(self, key: str, value: str, **metadata) -> None:
-        with self._lock:
-            self._store[key] = value
-
-    def delete(self, key: str) -> bool:
-        with self._lock:
-            return self._store.pop(key, None) is not None
-
-    def list_keys(self) -> list[str]:
-        with self._lock:
-            return sorted(self._store)
-
-    def compare_and_set(self, key: str, expected: str, value: str, **metadata) -> bool:
-        with self._lock:
-            if self._store.get(key) != expected:
-                return False
-            self._store[key] = value
-            return True
 
 
 def verified_actor(actor_id="user-a", tenant_id="tenant-1") -> ActorContext:

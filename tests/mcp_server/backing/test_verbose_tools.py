@@ -357,8 +357,8 @@ class _FakeDynamicClient:
         return None
 
 
-def test_action_enum_reads_literal_and_skips_freeform():
-    """_action_enum returns enum values for a Literal action, [] for free-form str."""
+def _mcp_with_enum_tool() -> FastMCP:
+    """A server with one ``enum_tool`` whose action is ``Literal["a", "b"]``."""
     mcp = FastMCP("t")
 
     @mcp.tool(name="enum_tool")
@@ -367,6 +367,13 @@ def test_action_enum_reads_literal_and_skips_freeform():
         params_json: str = Field(default="{}"),
     ) -> dict:
         return {}
+
+    return mcp
+
+
+def test_action_enum_reads_literal_and_skips_freeform():
+    """_action_enum returns enum values for a Literal action, [] for free-form str."""
+    mcp = _mcp_with_enum_tool()
 
     @mcp.tool(name="freeform_tool")
     async def freeform_tool(
@@ -401,14 +408,7 @@ def test_resolve_action_provider_drops_discovery_keywords():
 
 def test_tool_action_names_prefers_static_enum_over_provider():
     """A static Literal enum wins; the dynamic provider is the fallback only."""
-    mcp = FastMCP("t")
-
-    @mcp.tool(name="enum_tool")
-    async def enum_tool(
-        action: Literal["a", "b"] = Field(description="op"),
-        params_json: str = Field(default="{}"),
-    ) -> dict:
-        return {}
+    mcp = _mcp_with_enum_tool()
 
     tool = _provider_tools(mcp)["enum_tool"]
     assert _tool_action_names(tool, {"enum_tool": ["x", "y"]}) == ["a", "b"]

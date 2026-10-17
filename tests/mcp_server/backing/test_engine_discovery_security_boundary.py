@@ -25,6 +25,7 @@ from graph_os.fleet.multiplexer import (
     MCPMultiplexer,
     _bounded_tool_catalog,
 )
+from tests.mcp_server.backing._support import FakeStdioSession
 
 
 class _DiscoveryHarness(MCPDiscoveryMixin):
@@ -351,12 +352,8 @@ def test_tool_catalog_enforces_count_size_and_depth_bounds() -> None:
         _bounded_tool_catalog([too_deep])
 
 
-@pytest.mark.asyncio
-async def test_stdio_probe_delegates_only_allowlisted_environment(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    observed: dict = {}
+def _env_recording_stdio(observed: dict):
+    """A ``stdio_client`` stand-in that records the child environment."""
 
     @contextlib.asynccontextmanager
     async def fake_stdio(parameters, *, errlog):
@@ -364,22 +361,20 @@ async def test_stdio_probe_delegates_only_allowlisted_environment(
         assert errlog is not None
         yield "read", "write"
 
-    class FakeSession:
-        def __init__(self, *_args, **_kwargs):
-            pass
+    return fake_stdio
 
-        async def __aenter__(self):
-            return self
 
-        async def __aexit__(self, *_args):
-            return False
+@pytest.mark.asyncio
+async def test_stdio_probe_delegates_only_allowlisted_environment(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    observed: dict = {}
 
-        async def initialize(self):
-            return None
-
+    fake_stdio = _env_recording_stdio(observed)
     monkeypatch.setenv("UNRELATED_PRIVATE_TOKEN", "synthetic-secret")
     monkeypatch.setattr(multiplexer_module, "stdio_client", fake_stdio)
-    monkeypatch.setattr(multiplexer_module, "ClientSession", FakeSession)
+    monkeypatch.setattr(multiplexer_module, "ClientSession", FakeStdioSession)
     multiplexer = MCPMultiplexer(tmp_path / "unused.json")
 
     async with contextlib.AsyncExitStack() as stack:
@@ -405,27 +400,9 @@ async def test_stdio_provider_profile_is_preflighted_off_loop_and_projected(
 ) -> None:
     observed: dict[str, str] = {}
 
-    @contextlib.asynccontextmanager
-    async def fake_stdio(parameters, *, errlog):
-        observed.update(parameters.env or {})
-        assert errlog is not None
-        yield "read", "write"
-
-    class FakeSession:
-        def __init__(self, *_args, **_kwargs):
-            pass
-
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *_args):
-            return False
-
-        async def initialize(self):
-            return None
-
+    fake_stdio = _env_recording_stdio(observed)
     monkeypatch.setattr(multiplexer_module, "stdio_client", fake_stdio)
-    monkeypatch.setattr(multiplexer_module, "ClientSession", FakeSession)
+    monkeypatch.setattr(multiplexer_module, "ClientSession", FakeStdioSession)
     parent_config_root = tmp_path / "parent-private-config"
     parent_config_root.mkdir()
     (parent_config_root / "config.json").write_text(
@@ -634,25 +611,12 @@ async def test_provider_resolution_limit_is_process_wide_across_multiplexers(
         assert errlog is not None
         yield "read", "write"
 
-    class FakeSession:
-        def __init__(self, *_args, **_kwargs):
-            pass
-
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *_args):
-            return False
-
-        async def initialize(self):
-            return None
-
     monkeypatch.setattr(
         "agent_utilities.core.provider_runtime.prepare_provider_runtime_child_environment",
         delayed_prepare,
     )
     monkeypatch.setattr(multiplexer_module, "stdio_client", fake_stdio)
-    monkeypatch.setattr(multiplexer_module, "ClientSession", FakeSession)
+    monkeypatch.setattr(multiplexer_module, "ClientSession", FakeStdioSession)
     multiplexers = [
         MCPMultiplexer(tmp_path / "unused-one.json"),
         MCPMultiplexer(tmp_path / "unused-two.json"),

@@ -1579,25 +1579,22 @@ def test_runtime_integrations_doctor_redacts_invalid_config_value(monkeypatch):
     assert "identity=hidden" not in rendered
 
 
-def test_skills_check_requires_exact_suite_without_persisting_local_path(
-    tmp_path, monkeypatch
-):
+def _check_skills_from(source, tmp_path, monkeypatch):
+    """Run the skills check against ``source`` served as AU's skill provider.
+
+    agent-utilities' bundled skills reach GraphOS through the connector SDK
+    skill-provider group like every other package (GRAPHOS-HOST-R001.10).
+    Returns the provider groups the check asked for and its result.
+    """
     from agent_utilities.core import paths
     from agent_utilities.core.provider_materialization import build_asset_manifest
 
     from graph_os.core import providers
 
-    source = tmp_path / "source"
-    (source / "graph-query-and-explanation").mkdir(parents=True)
-    (source / "graph-query-and-explanation" / "SKILL.md").write_text(
-        "synthetic", encoding="utf-8"
-    )
     xdg = tmp_path / "xdg"
     xdg.mkdir()
     manifest = build_asset_manifest(source, leg="skills")
     monkeypatch.setattr(paths, "skills_dir", lambda: xdg)
-    # agent-utilities' bundled skills reach GraphOS through the connector SDK
-    # skill-provider group like every other package (GRAPHOS-HOST-R001.10).
     registration = providers.ProviderRegistration(
         name="agent-utilities",
         group=providers.SKILL_PROVIDER_GROUP,
@@ -1615,8 +1612,19 @@ def test_skills_check_requires_exact_suite_without_persisting_local_path(
         return (providers.ProviderAssets(registration, source, manifest),)
 
     monkeypatch.setattr(providers, "current_provider_assets", _assets)
+    return groups, D._check_skills()
 
-    result = D._check_skills()
+
+def test_skills_check_requires_exact_suite_without_persisting_local_path(
+    tmp_path, monkeypatch
+):
+
+    source = tmp_path / "source"
+    (source / "graph-query-and-explanation").mkdir(parents=True)
+    (source / "graph-query-and-explanation" / "SKILL.md").write_text(
+        "synthetic", encoding="utf-8"
+    )
+    groups, result = _check_skills_from(source, tmp_path, monkeypatch)
 
     assert groups == ["agent_connector_sdk.skill_providers"]
     assert result["status"] == "warn"
@@ -1627,42 +1635,14 @@ def test_skills_check_requires_exact_suite_without_persisting_local_path(
 
 
 def test_skills_check_accepts_the_complete_consolidated_suite(tmp_path, monkeypatch):
-    from agent_utilities.core import paths
-    from agent_utilities.core.provider_materialization import build_asset_manifest
     from agent_utilities.skills import BUNDLED_SKILLS
-
-    from graph_os.core import providers
 
     source = tmp_path / "source"
     for name in BUNDLED_SKILLS:
         skill_dir = source / name
         skill_dir.mkdir(parents=True)
         (skill_dir / "SKILL.md").write_text("synthetic", encoding="utf-8")
-    xdg = tmp_path / "xdg"
-    xdg.mkdir()
-    manifest = build_asset_manifest(source, leg="skills")
-    monkeypatch.setattr(paths, "skills_dir", lambda: xdg)
-    # agent-utilities' bundled skills reach GraphOS through the connector SDK
-    # skill-provider group like every other package (GRAPHOS-HOST-R001.10).
-    registration = providers.ProviderRegistration(
-        name="agent-utilities",
-        group=providers.SKILL_PROVIDER_GROUP,
-        target="agent_utilities.skills",
-        owner_name="agent-utilities",
-        owner_version="3.0.0",
-        digest="a" * 64,
-        source_root=source,
-        owned_paths=frozenset(),
-    )
-    groups = []
-
-    def _assets(group):
-        groups.append(group)
-        return (providers.ProviderAssets(registration, source, manifest),)
-
-    monkeypatch.setattr(providers, "current_provider_assets", _assets)
-
-    result = D._check_skills()
+    groups, result = _check_skills_from(source, tmp_path, monkeypatch)
 
     assert groups == ["agent_connector_sdk.skill_providers"]
 

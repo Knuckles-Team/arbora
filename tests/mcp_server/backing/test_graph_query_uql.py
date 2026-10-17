@@ -11,20 +11,13 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
 from graph_os.mcp_server.backing.tools import engine_tools
+from tests.mcp_server.backing._support import (
+    register_graph_query as _register_graph_query,
+)
 
 pytestmark = pytest.mark.concept("AU-KG.query.au-engine-execution-path")
-
-
-def _register_graph_query():
-    from fastmcp import FastMCP
-
-    from graph_os.mcp_server.backing.tools.query_tools import register_query_tools
-
-    register_query_tools(FastMCP("test"))
-    return runtime.REGISTERED_TOOLS["graph_query"]
 
 
 class _FakeCompute:

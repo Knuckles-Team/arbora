@@ -13,20 +13,10 @@ from __future__ import annotations
 import pytest
 from agent_utilities.knowledge_graph.orchestration.engine_query import QueryMixin
 
-from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
+from tests.mcp_server.backing._support import register_graph_query
 
 pytestmark = pytest.mark.concept("AU-KG.query.read-only-sql-over")
-
-
-def _register_graph_query():
-    """Register the query tools onto a throwaway FastMCP and return graph_query."""
-    from fastmcp import FastMCP
-
-    from graph_os.mcp_server.backing.tools.query_tools import register_query_tools
-
-    register_query_tools(FastMCP("test"))
-    return runtime.REGISTERED_TOOLS["graph_query"]
 
 
 class _FakeEngine:
@@ -42,7 +32,7 @@ class _FakeEngine:
 
 
 def test_sql_scope_routes_to_engine_sql(monkeypatch):
-    graph_query = _register_graph_query()
+    graph_query = register_graph_query()
     rows = [{"id": "n1", "label": "Agent"}]
     engine = _FakeEngine(rows)
     monkeypatch.setattr(
@@ -62,7 +52,7 @@ def test_sql_scope_rejects_as_of_instead_of_silently_dropping_it(monkeypatch):
     """The engine's SQL surface has no bitemporal instant filter — `as_of`
     must be refused explicitly, never silently executed as if it were
     honored (CONCEPT:AU-KG.query.as-of-instant-filter)."""
-    graph_query = _register_graph_query()
+    graph_query = register_graph_query()
     engine = _FakeEngine([{"id": "n1"}])
     monkeypatch.setattr(
         engine_routing,
@@ -84,7 +74,7 @@ def test_sql_scope_rejects_as_of_instead_of_silently_dropping_it(monkeypatch):
 
 
 def test_sql_scope_fans_out(monkeypatch):
-    graph_query = _register_graph_query()
+    graph_query = register_graph_query()
     e1, e2 = _FakeEngine([{"id": "a"}]), _FakeEngine([{"id": "b"}])
     monkeypatch.setattr(
         engine_routing,
@@ -101,7 +91,7 @@ def test_sql_scope_fans_out(monkeypatch):
 
 
 def test_sql_scope_surfaces_engine_error(monkeypatch):
-    graph_query = _register_graph_query()
+    graph_query = register_graph_query()
 
     class _Boom:
         def sql(self, query):

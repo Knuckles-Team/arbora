@@ -8,6 +8,7 @@ import json
 import threading
 import time
 from collections.abc import Callable
+from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
@@ -50,6 +51,83 @@ def _register_all() -> _FakeMCP:
     ):
         registrar(mcp)
     return mcp
+
+
+class _StubBackend:
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, dict]] = []
+
+    def execute(self, query, params):
+        self.calls.append((query, params))
+
+
+class _StubEngine:
+    def __init__(self) -> None:
+        self.nodes: dict[str, tuple[str, dict]] = {}
+        self.backend = _StubBackend()
+
+    def add_node(self, node_id, node_type, props):
+        self.nodes[node_id] = (node_type, props)
+
+
+def _install_reasoning_engine(monkeypatch: pytest.MonkeyPatch) -> _StubEngine:
+    engine = _StubEngine()
+    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
+    return engine
+
+
+def _patch_reasoning_agent(monkeypatch: pytest.MonkeyPatch, agent: Any) -> None:
+    monkeypatch.setattr(
+        "agent_utilities.core.model_factory.create_model", lambda **_kw: object()
+    )
+    monkeypatch.setattr(
+        "agent_utilities.core.contextual_model.create_context_agent",
+        lambda **_kw: agent,
+    )
+
+
+async def _reason(topology: str, **extra: Any) -> dict[str, Any]:
+    tool = _register_all().tools["graph_agents"]
+    return json.loads(
+        await tool(
+            action="reason",
+            task="What is 6*7?",
+            context="",
+            context_ref="",
+            max_fan_out=5,
+            max_steps=10,
+            host="",
+            container_id="",
+            options_json="{}",
+            topology=topology,
+            num_samples=3,
+            **extra,
+        )
+    )
+
+
+def _dynamic_workflow_tool(
+    monkeypatch: pytest.MonkeyPatch, result: Callable[[dict[str, Any]], Any]
+) -> tuple[Any, list[dict[str, object]]]:
+    """``graph_workflows`` with a recording ``execute_dynamic_workflow``."""
+    from agent_utilities.orchestration.manager import Orchestrator
+
+    from graph_os.mcp_server.backing.tools import workflow_tools
+
+    calls: list[dict[str, object]] = []
+
+    async def execute_dynamic(_self, workflow_id: str, task: str, **kwargs):
+        calls.append({"workflow_id": workflow_id, "task": task, **kwargs})
+        return result(kwargs)
+
+    monkeypatch.setattr(runtime, "_get_engine", lambda: object())
+    monkeypatch.setattr(
+        workflow_tools,
+        "_workflow_gate",
+        lambda _engine, _name: {"allowed": True},
+    )
+    monkeypatch.setattr(Orchestrator, "execute_dynamic_workflow", execute_dynamic)
+    return _register_all().tools["graph_workflows"], calls
 
 
 def test_orchestration_capabilities_have_one_current_owner() -> None:
@@ -148,28 +226,13 @@ def test_focused_tools_publish_collapsed_rest_routes() -> None:
 async def test_execute_dynamic_live_route_reaches_governed_orchestrator(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from agent_utilities.orchestration.manager import Orchestrator
-
-    from graph_os.mcp_server.backing.tools import workflow_tools
-
-    engine = object()
-    calls: list[dict[str, object]] = []
-
-    async def execute_dynamic(_self, workflow_id: str, task: str, **kwargs):
-        calls.append({"workflow_id": workflow_id, "task": task, **kwargs})
-        return {
+    tool, calls = _dynamic_workflow_tool(
+        monkeypatch,
+        lambda kw: {
             "backend": "pydantic-ai-harness.dynamic_workflow.DynamicWorkflow",
             "workflow_run_id": "run:00000000000000000000000000000000",
-        }
-
-    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
-    monkeypatch.setattr(
-        workflow_tools,
-        "_workflow_gate",
-        lambda _engine, _name: {"allowed": True},
+        },
     )
-    monkeypatch.setattr(Orchestrator, "execute_dynamic_workflow", execute_dynamic)
-    tool = _register_all().tools["graph_workflows"]
 
     payload = json.loads(
         await tool(
@@ -217,25 +280,10 @@ async def test_execute_dynamic_forwards_workflow_run_id_so_resume_is_reachable(
     implemented and unit-tested, was unreachable from the only entry point that
     exists.
     """
-    from agent_utilities.orchestration.manager import Orchestrator
-
-    from graph_os.mcp_server.backing.tools import workflow_tools
-
-    engine = object()
-    calls: list[dict[str, object]] = []
-
-    async def execute_dynamic(_self, workflow_id: str, task: str, **kwargs):
-        calls.append({"workflow_id": workflow_id, "task": task, **kwargs})
-        return {"backend": "x", "workflow_run_id": kwargs.get("workflow_run_id")}
-
-    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
-    monkeypatch.setattr(
-        workflow_tools,
-        "_workflow_gate",
-        lambda _engine, _name: {"allowed": True},
+    tool, calls = _dynamic_workflow_tool(
+        monkeypatch,
+        lambda kw: {"backend": "x", "workflow_run_id": kw.get("workflow_run_id")},
     )
-    monkeypatch.setattr(Orchestrator, "execute_dynamic_workflow", execute_dynamic)
-    tool = _register_all().tools["graph_workflows"]
 
     await tool(
         action="execute_dynamic",
@@ -468,23 +516,7 @@ async def test_graph_agents_reason_live_path_drives_real_cot_topology(
     """
     from graph_os.mcp_server.backing.tools import agent_execution_tools
 
-    class _StubBackend:
-        def __init__(self) -> None:
-            self.calls: list[tuple[str, dict]] = []
-
-        def execute(self, query, params):
-            self.calls.append((query, params))
-
-    class _StubEngine:
-        def __init__(self) -> None:
-            self.nodes: dict[str, tuple[str, dict]] = {}
-            self.backend = _StubBackend()
-
-        def add_node(self, node_id, node_type, props):
-            self.nodes[node_id] = (node_type, props)
-
-    engine = _StubEngine()
-    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
+    engine = _install_reasoning_engine(monkeypatch)
 
     scripted = [
         agent_execution_tools.ReasoningStepOutput(
@@ -497,43 +529,18 @@ async def test_graph_agents_reason_live_path_drives_real_cot_topology(
         ),
     ]
 
-    class _FakeRunResult:
-        def __init__(self, output) -> None:
-            self.output = output
-
     class _FakeAgent:
         def __init__(self, steps) -> None:
             self._steps = list(steps)
 
         def run_sync(self, _prompt: str):
             step = self._steps.pop(0) if self._steps else scripted[-1]
-            return _FakeRunResult(step)
+            return SimpleNamespace(output=step)
 
     fake_agent = _FakeAgent(scripted)
-    monkeypatch.setattr(
-        "agent_utilities.core.model_factory.create_model", lambda **_kw: object()
-    )
-    monkeypatch.setattr(
-        "agent_utilities.core.contextual_model.create_context_agent",
-        lambda **_kw: fake_agent,
-    )
+    _patch_reasoning_agent(monkeypatch, fake_agent)
 
-    tool = _register_all().tools["graph_agents"]
-    payload = json.loads(
-        await tool(
-            action="reason",
-            task="What is 6*7?",
-            context="",
-            context_ref="",
-            max_fan_out=5,
-            max_steps=10,
-            host="",
-            container_id="",
-            options_json="{}",
-            topology="cot",
-            num_samples=3,
-        )
-    )
+    payload = await _reason("cot")
 
     # The answer/node-count are only producible by actually running run_cot
     # over the scripted steps -- not a fabricated/static response.
@@ -583,23 +590,7 @@ async def test_graph_agents_reason_live_path_drives_real_tot_topology(
     """
     from graph_os.mcp_server.backing.tools import agent_execution_tools
 
-    class _StubBackend:
-        def __init__(self) -> None:
-            self.calls: list[tuple[str, dict]] = []
-
-        def execute(self, query, params):
-            self.calls.append((query, params))
-
-    class _StubEngine:
-        def __init__(self) -> None:
-            self.nodes: dict[str, tuple[str, dict]] = {}
-            self.backend = _StubBackend()
-
-        def add_node(self, node_id, node_type, props):
-            self.nodes[node_id] = (node_type, props)
-
-    engine = _StubEngine()
-    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
+    engine = _install_reasoning_engine(monkeypatch)
 
     expansion = agent_execution_tools.ToTGenerateOutput(
         children=[
@@ -612,46 +603,18 @@ async def test_graph_agents_reason_live_path_drives_real_tot_topology(
         ]
     )
 
-    class _FakeRunResult:
-        def __init__(self, output) -> None:
-            self.output = output
-
     class _FakeAgent:
         def __init__(self) -> None:
             self.calls = 0
 
         def run_sync(self, _prompt: str):
             self.calls += 1
-            return _FakeRunResult(expansion)
+            return SimpleNamespace(output=expansion)
 
     fake_agent = _FakeAgent()
-    monkeypatch.setattr(
-        "agent_utilities.core.model_factory.create_model", lambda **_kw: object()
-    )
-    monkeypatch.setattr(
-        "agent_utilities.core.contextual_model.create_context_agent",
-        lambda **_kw: fake_agent,
-    )
+    _patch_reasoning_agent(monkeypatch, fake_agent)
 
-    tool = _register_all().tools["graph_agents"]
-    payload = json.loads(
-        await tool(
-            action="reason",
-            task="What is 6*7?",
-            context="",
-            context_ref="",
-            max_fan_out=5,
-            max_steps=10,
-            host="",
-            container_id="",
-            options_json="{}",
-            topology="tot_bfs",
-            num_samples=3,
-            branching_factor=3,
-            beam_width=3,
-            max_depth=5,
-        )
-    )
+    payload = await _reason("tot_bfs", branching_factor=3, beam_width=3, max_depth=5)
 
     # Only ONE expansion round is needed: the goal-scoring child sorts first
     # under top_k pruning and is popped first under BFS -- proving the REAL
@@ -684,45 +647,13 @@ async def test_graph_agents_reason_tot_degrades_honestly_with_no_reachable_model
     no-model-reachable honesty contract for CoT."""
     from graph_os.mcp_server.backing.tools import agent_execution_tools  # noqa: F401
 
-    class _StubEngine:
-        def __init__(self) -> None:
-            self.nodes: dict[str, tuple[str, dict]] = {}
-
-            class _Backend:
-                def execute(self, query, params):
-                    pass
-
-            self.backend = _Backend()
-
-        def add_node(self, node_id, node_type, props):
-            self.nodes[node_id] = (node_type, props)
-
-    engine = _StubEngine()
-    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
+    _install_reasoning_engine(monkeypatch)
     monkeypatch.setattr(
         "agent_utilities.core.model_factory.create_model",
         lambda **_kw: (_ for _ in ()).throw(RuntimeError("no model reachable")),
     )
 
-    tool = _register_all().tools["graph_agents"]
-    payload = json.loads(
-        await tool(
-            action="reason",
-            task="What is 6*7?",
-            context="",
-            context_ref="",
-            max_fan_out=5,
-            max_steps=10,
-            host="",
-            container_id="",
-            options_json="{}",
-            topology="tot_dfs",
-            num_samples=3,
-            branching_factor=3,
-            beam_width=3,
-            max_depth=5,
-        )
-    )
+    payload = await _reason("tot_dfs", branching_factor=3, beam_width=3, max_depth=5)
 
     assert payload["topology"] == "tot_dfs"
     assert payload["node_count"] == 1  # only the root -- no children generated

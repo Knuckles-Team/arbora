@@ -20,20 +20,7 @@ from agent_utilities.media.video_sidecar import VideoSidecarResult
 
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.tools import media_sidecar_tools
-
-
-class _CollectingMCP:
-    """Minimal FastMCP stand-in that captures ``@mcp.tool``-registered functions."""
-
-    def __init__(self) -> None:
-        self.tools: dict[str, object] = {}
-
-    def tool(self, *, name, description="", tags=None):  # noqa: ANN001
-        def _deco(fn):
-            self.tools[name] = fn
-            return fn
-
-        return _deco
+from tests.mcp_server.backing._support import CollectingMCP as _CollectingMCP
 
 
 @pytest.fixture

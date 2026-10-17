@@ -243,8 +243,9 @@ def test_set_denies_when_the_policy_gate_itself_is_unavailable(monkeypatch):
     assert info["decision"] == "denied"
 
 
-def test_set_writes_through_the_standard_precedence_and_records_provenance(monkeypatch):
-    written = []
+def _allow_and_record_writes(monkeypatch) -> list:
+    """Allow every config change and record each persisted ``(key, value)``."""
+    written: list = []
     monkeypatch.setattr(
         "agent_utilities.core.config.save_config_item",
         lambda k, v: written.append((k, v)),
@@ -252,6 +253,11 @@ def test_set_writes_through_the_standard_precedence_and_records_provenance(monke
     monkeypatch.setattr(
         config_admin, "_gate", lambda key, reason: (True, {"decision": "allow"})
     )
+    return written
+
+
+def test_set_writes_through_the_standard_precedence_and_records_provenance(monkeypatch):
+    written = _allow_and_record_writes(monkeypatch)
     provenance = []
     monkeypatch.setattr(
         config_admin,
@@ -318,14 +324,7 @@ def test_set_can_change_the_always_load_declaration(monkeypatch):
 def test_a_failed_provenance_write_does_not_undo_an_applied_change(monkeypatch):
     """Provenance is best-effort by design: a downed backend must not roll back
     a change the operator was authorised to make and which is already durable."""
-    written = []
-    monkeypatch.setattr(
-        "agent_utilities.core.config.save_config_item",
-        lambda k, v: written.append((k, v)),
-    )
-    monkeypatch.setattr(
-        config_admin, "_gate", lambda key, reason: (True, {"decision": "allow"})
-    )
+    written = _allow_and_record_writes(monkeypatch)
     result = config_admin.set_value("MCP_ALWAYS_LOAD", '["a-mcp"]')
 
     assert result["applied"] is True

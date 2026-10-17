@@ -24,6 +24,21 @@ from graph_os.mcp_server.backing.server_factory import (
 )
 
 
+def _install_fake_skill_provider(monkeypatch, provider_cls) -> None:
+    """Serve ``provider_cls`` as ``fastmcp.server.providers.skills.SkillProvider``.
+
+    The parent packages are registered too (importlib needs them).
+    """
+    import sys
+    import types
+
+    fake_pkg = types.ModuleType("fastmcp.server.providers.skills")
+    fake_pkg.SkillProvider = provider_cls
+    monkeypatch.setitem(sys.modules, "fastmcp.server.providers.skills", fake_pkg)
+    for parent in ("fastmcp", "fastmcp.server", "fastmcp.server.providers"):
+        monkeypatch.setitem(sys.modules, parent, types.ModuleType(parent))
+
+
 def test_register_skill_providers_never_breaks_server_construction(caplog) -> None:
     """A server object that cannot take providers degrades to a log, not a raise.
 
@@ -54,8 +69,6 @@ def test_register_skill_providers_calls_add_provider_per_resolved_dir(
     is registered per :func:`resolve_skill_provider_dirs` entry — the SAME
     discovery the in-loop SkillsToolset/installer use, not a re-implementation.
     """
-    import sys
-    import types
 
     skill_root = tmp_path / "some-provider" / "a-skill"
     skill_root.mkdir(parents=True)
@@ -67,19 +80,7 @@ def test_register_skill_providers_calls_add_provider_per_resolved_dir(
         def __init__(self, path):
             calls.append(Path(path))
 
-    fake_pkg = types.ModuleType("fastmcp.server.providers.skills")
-    fake_pkg.SkillProvider = _FakeSkillProvider
-    monkeypatch.setitem(sys.modules, "fastmcp.server.providers.skills", fake_pkg)
-    # Ensure the parent packages resolve too (importlib needs them registered).
-    monkeypatch.setitem(sys.modules, "fastmcp", types.ModuleType("fastmcp"))
-    monkeypatch.setitem(
-        sys.modules, "fastmcp.server", types.ModuleType("fastmcp.server")
-    )
-    monkeypatch.setitem(
-        sys.modules,
-        "fastmcp.server.providers",
-        types.ModuleType("fastmcp.server.providers"),
-    )
+    _install_fake_skill_provider(monkeypatch, _FakeSkillProvider)
 
     monkeypatch.setattr(
         "graph_os.core.providers.resolve_skill_provider_dirs",
@@ -99,26 +100,13 @@ def test_register_skill_providers_one_bad_dir_does_not_sink_the_rest(
     monkeypatch,
 ) -> None:
     """A provider dir that fails to register must not prevent the others."""
-    import sys
-    import types
 
     class _FakeSkillProvider:
         def __init__(self, path):
             if str(path) == "bad":
                 raise RuntimeError("boom")
 
-    fake_pkg = types.ModuleType("fastmcp.server.providers.skills")
-    fake_pkg.SkillProvider = _FakeSkillProvider
-    monkeypatch.setitem(sys.modules, "fastmcp.server.providers.skills", fake_pkg)
-    monkeypatch.setitem(sys.modules, "fastmcp", types.ModuleType("fastmcp"))
-    monkeypatch.setitem(
-        sys.modules, "fastmcp.server", types.ModuleType("fastmcp.server")
-    )
-    monkeypatch.setitem(
-        sys.modules,
-        "fastmcp.server.providers",
-        types.ModuleType("fastmcp.server.providers"),
-    )
+    _install_fake_skill_provider(monkeypatch, _FakeSkillProvider)
     monkeypatch.setattr(
         "graph_os.core.providers.resolve_skill_provider_dirs",
         lambda: [("bad-provider", "bad"), ("good-provider", "good")],
