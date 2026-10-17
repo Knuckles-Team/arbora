@@ -28,8 +28,8 @@ import logging
 from typing import Any
 
 from agent_utilities.core.config import setting
-from agent_utilities.messaging.models import MessagingConfig
 
+from graph_os.messaging.models import MessagingConfig
 from graph_os.messaging.supervision import (
     AdapterImportFailed,
     AdapterMissing,

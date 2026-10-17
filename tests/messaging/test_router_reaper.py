@@ -7,9 +7,9 @@ from typing import Any
 import pytest
 from agent_utilities.core import config
 from agent_utilities.messaging import router as au_messaging_router
-from agent_utilities.messaging.models import SendResult
 
 from graph_os.messaging import inbox
+from graph_os.messaging.models import SendResult
 from graph_os.messaging.router import InboundRouter
 from graph_os.messaging.service import MessagingService
 

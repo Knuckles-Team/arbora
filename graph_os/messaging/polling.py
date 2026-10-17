@@ -54,9 +54,9 @@ async def _serve(engine: Any, platforms: list[str], router_box: dict[str, Any]) 
     # The agent runtime's public API package does not publish this surface yet
     # (tracked under GRAPHOS-HOST-R007); reach its existing messaging module
     # directly, consistent with the rest of this package's AU imports below.
-    from agent_utilities.messaging.commands import command_specs
     from agent_utilities.messaging.router import create_planner_handler
 
+    from graph_os.messaging.commands import command_specs
     from graph_os.messaging.router import InboundRouter
     from graph_os.messaging.service import MessagingService
 

@@ -13,13 +13,13 @@ from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
-from agent_utilities.messaging.models import (
+
+from graph_os.messaging import service as service_module
+from graph_os.messaging.models import (
     EventType,
     InboundEvent,
     SendResult,
 )
-
-from graph_os.messaging import service as service_module
 from graph_os.messaging.service import MessagingService
 
 from ._fakes import FakeMessagingBackend as _FakeBackend

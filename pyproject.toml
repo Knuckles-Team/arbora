@@ -110,8 +110,23 @@ gateway-widgets = [
 # the same adapter shape and remain to be landed.
 messaging-telegram = ["python-telegram-bot>=22.8"]
 messaging-mattermost = ["mattermostdriver>=7.3.2"]
+messaging-discord = ["discord.py>=2.7.1"]
+messaging-slack = ["slack-bolt>=1.30.0"]
+messaging-whatsapp = ["neonize>=0.5.2", "httpx>=0.28.1"]
+messaging-teams = ["botbuilder-core>=4.17.1"]
+messaging-googlechat = ["google-api-python-client>=2.198.0", "google-auth>=2.62.0"]
+messaging-googlemeet = ["google-api-python-client>=2.198.0", "google-auth>=2.62.0"]
+messaging-matrix = ["matrix-nio>=0.26.0"]
+messaging-irc = ["irc>=20.5.0"]
+messaging-signal = []
+messaging-imessage = []  # macOS-only, AppleScript bridge
+messaging-line = ["line-bot-sdk>=3.26.0"]
+messaging-twitch = ["twitchio>=3.3.2"]
+messaging-synology = ["httpx>=0.28.1"]
+messaging-voicecall = ["twilio>=9.12.0"]
+messaging-nextcloud = ["httpx>=0.28.1"]
 messaging = [
-    "graph-os[messaging-telegram,messaging-mattermost]"
+    "graph-os[messaging-telegram,messaging-mattermost,messaging-discord,messaging-slack,messaging-whatsapp,messaging-teams,messaging-googlechat,messaging-googlemeet,messaging-matrix,messaging-irc,messaging-signal,messaging-line,messaging-twitch,messaging-synology,messaging-voicecall,messaging-nextcloud]"
 ]
 
 [project.scripts]
@@ -134,6 +149,21 @@ graph-os = "graph_os.skills"
 [project.entry-points."agent_utilities.messaging"]
 telegram = "graph_os.messaging.backends.telegram:TelegramBackend"
 mattermost = "graph_os.messaging.backends.mattermost:MattermostBackend"
+discord = "graph_os.messaging.backends.discord:DiscordBackend"
+slack = "graph_os.messaging.backends.slack:SlackBackend"
+whatsapp = "graph_os.messaging.backends.whatsapp:WhatsAppBackend"
+teams = "graph_os.messaging.backends.teams:TeamsBackend"
+googlechat = "graph_os.messaging.backends.googlechat:GoogleChatBackend"
+googlemeet = "graph_os.messaging.backends.googlemeet:GoogleMeetBackend"
+matrix = "graph_os.messaging.backends.matrix:MatrixBackend"
+irc = "graph_os.messaging.backends.irc:IRCBackend"
+signal = "graph_os.messaging.backends.signal:SignalBackend"
+imessage = "graph_os.messaging.backends.imessage:IMessageBackend"
+line = "graph_os.messaging.backends.line:LINEBackend"
+twitch = "graph_os.messaging.backends.twitch:TwitchBackend"
+synology = "graph_os.messaging.backends.synology:SynologyChatBackend"
+voicecall = "graph_os.messaging.backends.voicecall:VoiceCallBackend"
+nextcloud = "graph_os.messaging.backends.nextcloud:NextcloudTalkBackend"
 
 [project.entry-points."agent_utilities.messaging.reach"]
 notify_sync = "graph_os.messaging.reach:notify_sync"

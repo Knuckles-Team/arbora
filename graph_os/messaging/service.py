@@ -30,16 +30,16 @@ import time
 from typing import TYPE_CHECKING, Any
 
 from agent_utilities.core.config import setting
-from agent_utilities.messaging.models import InboundEvent, MediaAttachment, SendResult
 
 from graph_os.messaging.governed_send import (
     PolicyRunner,
     mirror_outbound_if_enabled,
     run_action_policy,
 )
+from graph_os.messaging.models import InboundEvent, MediaAttachment, SendResult
 
 if TYPE_CHECKING:
-    from agent_utilities.messaging.base import MessagingBackend
+    from graph_os.messaging.base import MessagingBackend
 
 logger = logging.getLogger(__name__)
 
@@ -295,7 +295,8 @@ class MessagingService:
         self, platform: str, channel_id: str, text: str, engine: Any
     ) -> None:
         from agent_utilities.messaging.kg_ingest import ingest_outbound_to_kg
-        from agent_utilities.messaging.models import Message
+
+        from graph_os.messaging.models import Message
 
         try:
             await ingest_outbound_to_kg(

@@ -40,12 +40,13 @@ from typing import Any
 from urllib.parse import urlparse
 
 from agent_utilities.core.config import setting
-from agent_utilities.messaging.base import MessagingBackend
-from agent_utilities.messaging.capabilities import (
+
+from graph_os.messaging.base import MessagingBackend
+from graph_os.messaging.capabilities import (
     CAPABILITY_MATRIX,
     MessagingCapabilities,
 )
-from agent_utilities.messaging.models import (
+from graph_os.messaging.models import (
     Channel,
     EventType,
     InboundEvent,

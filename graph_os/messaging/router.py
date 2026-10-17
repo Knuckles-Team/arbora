@@ -12,8 +12,7 @@ import time
 from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any
 
-from agent_utilities.messaging.models import EventType, InboundEvent
-
+from graph_os.messaging.models import EventType, InboundEvent
 from graph_os.messaging.supervision import (
     ChannelSupervisionState,
     legal_targets,
@@ -21,7 +20,7 @@ from graph_os.messaging.supervision import (
 )
 
 if TYPE_CHECKING:
-    from agent_utilities.messaging.base import MessagingBackend
+    from graph_os.messaging.base import MessagingBackend
 
 logger = logging.getLogger(__name__)
 EventHandler = Callable[[InboundEvent, "MessagingBackend"], Awaitable[None]]

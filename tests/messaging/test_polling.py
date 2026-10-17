@@ -26,10 +26,9 @@ import threading
 import time
 from typing import Any
 
-from agent_utilities.messaging import commands
 from agent_utilities.messaging import router as au_messaging_router
 
-from graph_os.messaging import polling
+from graph_os.messaging import commands, polling
 from graph_os.messaging import router as graphos_router
 from graph_os.messaging.service import MessagingService
 
