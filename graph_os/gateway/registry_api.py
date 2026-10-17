@@ -1181,8 +1181,8 @@ def _authorized_page(
     # pull the whole table even if that bound were ever raised.
     fetch = min(min(limit, _MAX_LIMIT) + 1, _MAX_CATALOG_ROWS + 1)
     columns = ", ".join(spec.columns)
-    statement = (  # nosec B608 - static spec table/columns; values are _sql_literal-escaped
-        f"SELECT {columns} FROM {spec.table} WHERE {where} "
+    statement = (
+        f"SELECT {columns} FROM {spec.table} WHERE {where} "  # nosec B608 - static spec table/columns; values are _sql_literal-escaped
         f"ORDER BY LOWER({spec.name_column}), id LIMIT {fetch}"
     )
     try:

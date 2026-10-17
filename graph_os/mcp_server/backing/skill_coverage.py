@@ -17,6 +17,7 @@ domain sidecar.
 
 from __future__ import annotations
 
+import logging
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -511,13 +512,17 @@ def compute_coverage(
     return _finalize_coverage_report(report, covered, universe)
 
 
+logger = logging.getLogger(__name__)
+
+
 def _emit(message: str) -> None:
-    """Write one report line to stdout (the CLI entry point's only output)."""
-    sys.stdout.write(f"{message}\n")
+    """Emit one report line through logging (stderr), never the stdio surface."""
+    logger.info(message)
 
 
 def main() -> int:
     """Run the coverage gate and print a concise deterministic report."""
+    logging.basicConfig(level=logging.INFO, stream=sys.stderr, format="%(message)s")
     report = compute_coverage()
     if report.ok:
         _emit(
