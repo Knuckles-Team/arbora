@@ -189,6 +189,10 @@ def compose_served_invocation(
         )
 
     minted = session()
+
+    async def service_client() -> Any:
+        return await pool.connected_client(connect_context(session().tenant), graph)
+
     runtime = build_operation_runtime(
         pool=pool,
         graph=graph,
@@ -202,9 +206,6 @@ def compose_served_invocation(
         ),
         bindings=bindings,
     )
-
-    async def service_client() -> Any:
-        return await pool.connected_client(connect_context(session().tenant), graph)
 
     async def audit_client(tenant: str) -> Any:
         return await pool.connected_client(connect_context(tenant), graph)

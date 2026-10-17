@@ -247,11 +247,16 @@ def graphos_registrars() -> list[Any]:
     ]
 
 
-def register_graphos_surface(mcp: Any, *, canonical: bool = False) -> Any:
+def register_graphos_surface(
+    mcp: Any, *, canonical: bool = False, intent_tools: bool = True
+) -> Any:
     """Register graph-os's intent tools on ``mcp``; return the backing server.
 
     ``canonical=True`` registers every backing family regardless of the
     per-family ``<FAMILY>TOOL`` deployment toggles (catalog generation only).
+    ``intent_tools=False`` builds only the backing server: the served process
+    registers its own registry-backed intent surface instead
+    (GRAPHOS-HOST-R024).
     """
     from fastmcp import FastMCP
 
@@ -267,8 +272,9 @@ def register_graphos_surface(mcp: Any, *, canonical: bool = False) -> Any:
         force_registration=canonical,
     )
     mcp._graphos_backing = backing
-    register_intent_tools(mcp)
-    register_mcp_apps_tools(mcp)
+    if intent_tools:
+        register_intent_tools(mcp)
+        register_mcp_apps_tools(mcp)
     return backing
 
 

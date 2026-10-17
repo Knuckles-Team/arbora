@@ -811,7 +811,16 @@ def _register_graph_tool_surface(
         if not isinstance(invocation, HostedInvocation):
             raise TypeError("admitted hosted invocation is required")
         invocation.validate()
-    backing = register_graphos_surface(mcp, canonical=canonical)
+        # GRAPHOS-HOST-R024: GraphOS serves its own intent surface over the
+        # shared operation registry and invocation pipeline, so every served
+        # operation (``eg.*`` included) is discoverable and callable through
+        # find/ask/act. The backing server still holds host tools reached by
+        # the harness and the REST twins.
+        backing = register_graphos_surface(mcp, canonical=canonical, intent_tools=False)
+        _register_served_intent_surface(mcp, invocation)
+        invocation.mount_on_mcp(mcp)
+    else:
+        backing = register_graphos_surface(mcp, canonical=canonical)
     register_browser_control_tools(backing)
     if invocation is None:
         register_a2a_tools(mcp, tools=backing)
@@ -823,6 +832,46 @@ def _register_graph_tool_surface(
             operation_authenticator=invocation.authenticator,
         )
     mount_sdk_a2a(mcp)
+
+
+def _served_caller_session() -> Any:
+    """The request's verified session, else the stdio process session.
+
+    ``_PROCESS_SESSION`` is bound only on the stdio transport, so a network
+    request without its own verified session resolves no caller.
+    """
+    from graph_os.api.contracts.session import current_session
+
+    return current_session() or _PROCESS_SESSION
+
+
+def _served_credential_kind() -> str:
+    from graph_os.api.contracts.session import current_session
+
+    return "bearer" if current_session() is not None else "process"
+
+
+def _register_served_intent_surface(mcp: Any, invocation: Any) -> Any:
+    """Register the eight-tool intent surface over ``invocation``'s services."""
+    from graph_os.api.invoke.pipeline import invoke
+    from graph_os.api.mcp.caller import VerifiedMCPCaller
+    from graph_os.api.mcp.resolve import IntentResolver
+    from graph_os.api.mcp.serving import register_intent_surface
+
+    services = invocation.services
+    caller = VerifiedMCPCaller(
+        session_for_request=_served_caller_session,
+        credential_kind_for_request=_served_credential_kind,
+    )
+    return register_intent_surface(
+        mcp,
+        registry=services.registry,
+        services=services,
+        resolver=IntentResolver(),
+        caller_for_request=caller.caller_for_request,
+        policy_gate=services.policy_gate,
+        invoke=invoke,
+    )
 
 
 def _attach_headless_fleet_loader(mcp: Any) -> None:

@@ -61,6 +61,8 @@ ROLES = (
     "security:admin",
     "mcp:discover",
     "mcp:delegate",
+    "query:unified",
+    "node:read",
 )
 #: The served-surface caller. The fresh engine admits exactly one identity
 #: (the process principal), so the operator presents a separate credential for
@@ -390,7 +392,7 @@ def _post_op(stack: dict[str, Any], op_id: str, params: dict[str, Any]) -> Any:
 
 @pytest.mark.spec("GRAPHOS-HOST-R024")
 def test_http_serves_uql_and_an_eg_operation(stack: dict[str, Any]) -> None:
-    uql = _post_op(stack, "query.uql", {"query": "MATCH (n) RETURN n LIMIT 1"})
+    uql = _post_op(stack, "query.uql", {"text": "MATCH (:BootProbe) |> LIMIT 5"})
     assert uql["ok"] is True, uql
 
     nodes = _post_op(
@@ -427,7 +429,7 @@ async def test_mcp_lists_finds_and_asks_an_eg_operation(
         assert {"ask", "find", "act", "manage", "write", "why"} <= names, names
 
         found = _structured(
-            await client.call_tool("find", {"action": "describe", "params": {}})
+            await client.call_tool("find", {"intent": "GetNodesByLabel graph"})
         )
         assert found["ok"] is True, found
         listed = json.dumps(found["result"])
@@ -437,7 +439,7 @@ async def test_mcp_lists_finds_and_asks_an_eg_operation(
             await client.call_tool(
                 "ask",
                 {
-                    "action": "eg.graph.GetNodesByLabel",
+                    "op": "eg.graph.GetNodesByLabel",
                     "params": {"label": "BootProbe", "limit": 5},
                 },
             )
