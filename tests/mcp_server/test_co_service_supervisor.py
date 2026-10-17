@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextvars
 import threading
 import time
+from functools import partial
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.request import urlopen
 
@@ -84,7 +85,7 @@ def test_targeted_shutdown_preserves_borrowed_http_service() -> None:
     try:
         for name, server in zip(("owned", "borrowed"), servers, strict=True):
             supervisor.start_service(
-                name, lambda stop, server=server: serve(server, stop), session=object()
+                name, partial(serve, server), session=object()
             )
         for server in servers:
             with urlopen(
