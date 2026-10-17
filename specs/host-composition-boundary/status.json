@@ -1578,8 +1578,10 @@
     {
       "id": "GRAPHOS-HOST-R009.8",
       "title": "Production host log sink",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "191af7948d99"
+      ],
       "verified_by": [
         "tests/agent_host/test_log_sink.py:2",
         "tests/agent_host/test_log_sink_terminal.py:6"
