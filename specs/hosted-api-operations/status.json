@@ -52,6 +52,7 @@
     "GRAPHOS-OPS-R021.4.3",
     "GRAPHOS-OPS-R021.4.4",
     "GRAPHOS-OPS-R021.4.5",
+    "GRAPHOS-OPS-R021.4.5.1",
     "GRAPHOS-OPS-R021.4.6",
     "GRAPHOS-OPS-R022",
     "GRAPHOS-OPS-R022.1",
@@ -730,9 +731,23 @@
     {
       "id": "GRAPHOS-OPS-R021.4.5",
       "title": "Per-run operation",
-      "delivery_state": "SPECIFIED",
+      "delivery_state": "VERIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-OPS-R021.4.5.1"
+      ]
+    },
+    {
+      "id": "GRAPHOS-OPS-R021.4.5.1",
+      "title": "Current-plan read boundary",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5cbc820b4e83"
+      ],
+      "verified_by": [
+        "tests/api/test_runs_ops.py:20"
+      ]
     },
     {
       "id": "GRAPHOS-OPS-R021.4.6",
