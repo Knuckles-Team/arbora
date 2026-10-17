@@ -282,3 +282,30 @@ AU execution dictionaries contain live engines, nodes and toolsets; their topolo
 This slice rejects provided runtime objects and unused hosting arguments when callers request admission.
 R010.7.2.2 retains owner-attested runtime configuration and actual terminal/WebUI factory integration.
 Existing unsupported interface refusals remain after successful admission. Controlled owner tests establish boundary behavior, not deployed grants or served clients.
+
+### 2026-10-17: Versioned retained-log presentation
+
+R009.8.2.2 adds an explicit `version: 2` selector to the existing read request.
+The response contains version, records, cursor and gap. Each record carries the
+original host_instance, sequence, request, timestamp, severity and message.
+Version one remains message-only. No tenant or workspace identifiers are added
+to records. Fresh authority and opaque cursor bindings remain.
+Both clients require version two, render metadata literally and distinguish the
+exact HTTP 409 retention_gap response from refusal. A gap stops polling and
+clears protected content; it never resets a cursor or retries automatically.
+
+### 2026-10-17: Live admission qualification remains open
+
+R010.7.2.2 is not qualified by the metadata work. WebUI APIUI-06.1 is available
+at merged revision 6a7df660e0048d7453dff2e294c50f7882a5cec8; version 2.7.0 alone
+does not establish that contract. Its engine provider returns a borrowed engine
+and grants no session authority.
+
+A controlled isolated native engine constructed and created an in-memory graph.
+This does not prove admitted client startup. The current startup guard refuses
+provided runtime objects before admission owners run. HostSessionBinding binds
+GraphSession but does not attest provided engine/configuration ownership. The
+qualified session resolver adapter remains unavailable. Acceptance needs a served local fixture with that binding and an explicit session resolver.
+Real terminal and WebUI clients must share it. Test readiness, revocation and
+borrowed-resource lifetime. No production access or
+weakened authentication is an acceptable substitute.

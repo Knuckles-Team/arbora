@@ -198,3 +198,22 @@ def test_method_not_marked_wire_callable_is_not_bound(tmp_path: Path) -> None:
     path.write_text(json.dumps(document))
     ops = load_eg_bindings(contract_root=contract, exclusions_path=exclusions)
     assert {op.id for op in ops} == {"eg.query.Admin", "eg.query.Read"}
+
+
+@pytest.mark.spec("GRAPHOS-FLEET-R012")
+@pytest.mark.spec("GRAPHOS-OPS-R008")
+def test_pinned_contract_serves_every_wire_callable_method_as_generated_op() -> None:
+    """The packaged engine contract yields one ``eg.<domain>.<Method>`` op per callable method."""
+    from importlib import resources
+
+    root = resources.files("epistemic_graph").joinpath("contract")
+    rows = json.loads(root.joinpath("methods.json").read_text())["methods"]
+    expected = {
+        f"eg.{row['domain']}.{row['id']}" for row in rows if row["is_wire_callable"]
+    }
+    ops = load_eg_bindings()
+    ids = [op.id for op in ops]
+    assert expected
+    assert len(ids) == len(set(ids))
+    assert set(ids) == expected
+    assert all(isinstance(op.binding, EgMethod) for op in ops)
