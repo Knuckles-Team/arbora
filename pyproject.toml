@@ -34,7 +34,7 @@ dependencies = [
     # SDK owns source transport and runner construction; GraphOS supplies its
     # authenticated epistemic-graph client through the SDK's public injection
     # seam and never imports connector implementations.
-    "agent-connector-sdk[a2a]>=0.2.0,<1.0.0",
+    "agent-connector-sdk[a2a,mcp]>=0.2.0,<1.0.0",
     # The messaging channel layer's HTTP alert intake (graph_os/messaging/alert_intake.py)
     # imports aiohttp.web directly for its small webhook listener; platform-agnostic,
     # so unlike the chat-platform SDKs below this is not conditioned on a messaging extra.
@@ -111,7 +111,7 @@ webui = [
 # IDs: specs/portable-deployment/requirements.md,
 # specs/host-composition-boundary/requirements.md.
 gateway-widgets = [
-    "agent-connector-sdk[a2a]>=0.2.0,<1.0.0",
+    "agent-connector-sdk[a2a,mcp]>=0.2.0,<1.0.0",
 ]
 # Messaging channel adapters (CONCEPT:AU-ECO.messaging.native-backend-abstraction):
 # each chat platform SDK is its own extra so importing graph_os.messaging never
@@ -182,24 +182,22 @@ nextcloud = "graph_os.messaging.backends.nextcloud:NextcloudTalkBackend"
 notify_sync = "graph_os.messaging.reach:notify_sync"
 service = "graph_os.messaging.reach:service_port"
 
-# Train-only bindings until AU 3.0.0 and SDK 0.2.0 publish to the index.
-# Package metadata keeps the real PEP 508 floors above, so released wheels
-# resolve from the index.
+# Train-only binding: agent-webui resolves from its branch until 2.7.0
+# publishes. Package metadata keeps the real PEP 508 floors above.
 [tool.uv]
 # A dependency's own git pin of the engine never applies here.
 override-dependencies = [
     "epistemic-graph[server]>=2.27.1,<3.0.0",
-    # Train-only: agent-webui's branch pins the SDK at main; the train uses
-    # one SDK revision for every package until SDK 0.2.0 publishes.
-    "agent-connector-sdk[a2a] @ git+https://github.com/Knuckles-Team/agent-connector-sdk.git@feat/au-handoffs",
+    # Train-only: agent-webui's branch pins the SDK and AU by git; every
+    # package resolves the published releases instead.
+    "agent-connector-sdk[a2a,mcp]>=0.2.0,<1.0.0",
+    "agent-utilities>=3.0.0,<4.0.0",
     # Train-only: agent-webui's branch pins pydantic-ai 2.54.0; one version
     # serves the train until the webui release aligns its pin.
     "pydantic-ai-slim[openai,ui]==2.57.0",
 ]
 
 [tool.uv.sources]
-agent-utilities = { git = "https://github.com/Knuckles-Team/agent-utilities.git", branch = "refactor/au-cut-to-eg" }
-agent-connector-sdk = { git = "https://github.com/Knuckles-Team/agent-connector-sdk.git", branch = "feat/au-handoffs" }
 agent-webui = { git = "https://github.com/Knuckles-Team/agent-webui.git", branch = "feat/drop-au-imports" }
 # The engine always resolves from the package index, never from a git or
 # path source declared by a dependency.

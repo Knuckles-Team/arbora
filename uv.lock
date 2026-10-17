@@ -9,7 +9,8 @@ resolution-markers = [
 
 [manifest]
 overrides = [
-    { name = "agent-connector-sdk", extras = ["a2a"], git = "https://github.com/Knuckles-Team/agent-connector-sdk.git?branch=feat%2Fau-handoffs" },
+    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], specifier = ">=0.2.0,<1.0.0" },
+    { name = "agent-utilities", specifier = ">=3.0.0,<4.0.0" },
     { name = "epistemic-graph", extras = ["server"], specifier = ">=2.27.1,<3.0.0", index = "https://pypi.org/simple" },
     { name = "pydantic-ai-slim", extras = ["openai", "ui"], specifier = "==2.57.0" },
 ]
@@ -26,7 +27,7 @@ wheels = [
 [[package]]
 name = "agent-connector-sdk"
 version = "0.2.0"
-source = { git = "https://github.com/Knuckles-Team/agent-connector-sdk.git?branch=feat%2Fau-handoffs#10604a03795ea72da5b834ac4fadacb8ae3d105f" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
     { name = "cryptography" },
@@ -37,17 +38,24 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5b/6f/c78677deeee4a2eef1a1662aeadc516948c85fe3dc2c2afd88ee9c7ee68e/agent_connector_sdk-0.2.0-py3-none-any.whl", hash = "sha256:3468493ac962d2a768555c83cc94c7ac19d503e53f9820c1a3740a4afeae4803", size = 708464, upload-time = "2026-10-17T07:40:40.765Z" },
+]
 
 [package.optional-dependencies]
 a2a = [
     { name = "fasta2a", extra = ["pydantic-ai"] },
     { name = "starlette" },
 ]
+mcp = [
+    { name = "fastmcp" },
+    { name = "mcp" },
+]
 
 [[package]]
 name = "agent-utilities"
 version = "3.0.0"
-source = { git = "https://github.com/Knuckles-Team/agent-utilities?branch=refactor%2Fau-cut-to-eg#8a37ae4621d4fc31981a931ed73bc0f52a8e9fc2" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "platformdirs" },
     { name = "pydantic" },
@@ -55,13 +63,17 @@ dependencies = [
     { name = "pydantic-ai-slim", extra = ["openai", "ui"] },
     { name = "pydantic-graph" },
 ]
+sdist = { url = "https://files.pythonhosted.org/packages/49/2f/ce7fba20d75d37b790a84a7184c355aa2b3d49b6f1f976eace8e5273c4d8/agent_utilities-3.0.0.tar.gz", hash = "sha256:d920c0c7967aad7a7e1e9bc424b3ec238d8637c777daf311477ed1add87cc24d", size = 63200, upload-time = "2026-10-17T07:07:40.65Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5f/6c/a468d3aa4eaaa5182f2da00d615a08866867d75155388a95bdc7279c9ce9/agent_utilities-3.0.0-py3-none-any.whl", hash = "sha256:d24d3b4ff4200a16b96068190ee18b2baa9c7477f1893eb7a8575015dd71fe43", size = 61420, upload-time = "2026-10-17T07:07:39.397Z" },
+]
 
 [[package]]
 name = "agent-webui"
 version = "2.7.0"
 source = { git = "https://github.com/Knuckles-Team/agent-webui.git?branch=feat%2Fdrop-au-imports#1f531cca78334eba5082b98c487aef29970d1c98" }
 dependencies = [
-    { name = "agent-connector-sdk", extra = ["a2a"] },
+    { name = "agent-connector-sdk", extra = ["a2a", "mcp"] },
     { name = "agent-utilities" },
     { name = "fastapi" },
     { name = "httpx" },
@@ -1321,7 +1333,7 @@ wheels = [
 name = "graph-os"
 source = { editable = "." }
 dependencies = [
-    { name = "agent-connector-sdk", extra = ["a2a"] },
+    { name = "agent-connector-sdk", extra = ["a2a", "mcp"] },
     { name = "agent-utilities" },
     { name = "aiohttp" },
     { name = "anyio" },
@@ -1346,7 +1358,7 @@ dependencies = [
 
 [package.optional-dependencies]
 gateway-widgets = [
-    { name = "agent-connector-sdk", extra = ["a2a"] },
+    { name = "agent-connector-sdk", extra = ["a2a", "mcp"] },
 ]
 messaging = [
     { name = "botbuilder-core" },
@@ -1433,9 +1445,9 @@ webui = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agent-connector-sdk", extras = ["a2a"], git = "https://github.com/Knuckles-Team/agent-connector-sdk.git?branch=feat%2Fau-handoffs" },
-    { name = "agent-connector-sdk", extras = ["a2a"], marker = "extra == 'gateway-widgets'", git = "https://github.com/Knuckles-Team/agent-connector-sdk.git?branch=feat%2Fau-handoffs" },
-    { name = "agent-utilities", git = "https://github.com/Knuckles-Team/agent-utilities.git?branch=refactor%2Fau-cut-to-eg" },
+    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], specifier = ">=0.2.0,<1.0.0" },
+    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], marker = "extra == 'gateway-widgets'", specifier = ">=0.2.0,<1.0.0" },
+    { name = "agent-utilities", specifier = ">=3.0.0,<4.0.0" },
     { name = "agent-webui", marker = "extra == 'webui'", git = "https://github.com/Knuckles-Team/agent-webui.git?branch=feat%2Fdrop-au-imports" },
     { name = "aiohttp", specifier = ">=3.14.5" },
     { name = "anyio", specifier = ">=4.15.1" },
