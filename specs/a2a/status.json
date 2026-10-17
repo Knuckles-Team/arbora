@@ -74,7 +74,11 @@
     "GRAPHOS-A2A-R021",
     "GRAPHOS-A2A-R022",
     "GRAPHOS-A2A-R001.2",
-    "GRAPHOS-A2A-R010.1"
+    "GRAPHOS-A2A-R010.1",
+    "GRAPHOS-A2A-R001.3",
+    "GRAPHOS-A2A-R001.4",
+    "GRAPHOS-A2A-R001.5",
+    "GRAPHOS-A2A-R016.6"
   ],
   "requirements": [
     {
@@ -87,7 +91,10 @@
       "verified_by": [],
       "rollup_of": [
         "GRAPHOS-A2A-R001.1",
-        "GRAPHOS-A2A-R001.2"
+        "GRAPHOS-A2A-R001.2",
+        "GRAPHOS-A2A-R001.3",
+        "GRAPHOS-A2A-R001.4",
+        "GRAPHOS-A2A-R001.5"
       ]
     },
     {
@@ -569,7 +576,8 @@
         "GRAPHOS-A2A-R016.2",
         "GRAPHOS-A2A-R016.3",
         "GRAPHOS-A2A-R016.4",
-        "GRAPHOS-A2A-R016.5"
+        "GRAPHOS-A2A-R016.5",
+        "GRAPHOS-A2A-R016.6"
       ]
     },
     {
@@ -772,6 +780,34 @@
       "verified_by": [
         "tests/a2a/test_terminal_event.py:59"
       ]
+    },
+    {
+      "id": "GRAPHOS-A2A-R001.3",
+      "title": "Served agent keeps and lists caller conversations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-A2A-R001.4",
+      "title": "Served agent streams turn events or refuses streaming by type",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-A2A-R001.5",
+      "title": "Served agent accepts file parts",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-A2A-R016.6",
+      "title": "Caller model preference",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     }
   ]
 }
