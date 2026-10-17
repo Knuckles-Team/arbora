@@ -111,3 +111,7 @@ R001/R010 durable replay and host receipt/log acceptance remain pending under th
 |---|---|---|
 | GRAPHOS-A2A-R006.2.1.1 | `tests/a2a/test_verified_caller_bridge.py::test_http_retains_and_refreshes_verified_caller` | Preserve request-bound caller identity and refuse before downstream calls. |
 | GRAPHOS-A2A-R006.2.2 | `tests/a2a/test_verified_caller_bridge.py::test_serving_composition_reaches_shared_invoke` | Production composition reaches shared invocation and proves operation-specific surface parity. |
+
+## Detached signature validation
+
+`GRAPHOS-A2A-R005.2.2`: use ephemeral test keys with real Ed25519 signatures. Verify canonical binding bytes and reject changed identities, params digest, human, expiry and inactive grant snapshots. Exercise the existing `/a2a` confirmation refusal with no composed authority. A valid signature is only cryptographic evidence. It cannot prove live pending state, key ownership, revocation freshness or one-time consumption.

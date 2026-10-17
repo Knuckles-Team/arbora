@@ -150,9 +150,13 @@
     "GRAPHOS-HOST-R008.5",
     "GRAPHOS-HOST-R009.1",
     "GRAPHOS-HOST-R010.7",
+    "GRAPHOS-HOST-R010.7.1",
+    "GRAPHOS-HOST-R010.7.2",
     "GRAPHOS-HOST-R009.2",
     "GRAPHOS-HOST-R009.3",
     "GRAPHOS-HOST-R009.4",
+    "GRAPHOS-HOST-R009.4.1",
+    "GRAPHOS-HOST-R009.4.2",
     "GRAPHOS-HOST-R009.5",
     "GRAPHOS-HOST-R009.6",
     "GRAPHOS-HOST-R006.1",
@@ -1445,6 +1449,32 @@
       "title": "Select terminal web or combined start",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-HOST-R010.7.1",
+        "GRAPHOS-HOST-R010.7.2"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R010.7.1",
+      "title": "Check injected startup admission",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "aee6cfa29204"
+      ],
+      "verified_by": [
+        "tests/agent_host/test_start_admission.py:110",
+        "tests/agent_host/test_start_admission.py:146",
+        "tests/agent_host/test_start_admission.py:157",
+        "tests/agent_host/test_start_admission.py:172",
+        "tests/agent_host/test_start_admission.py:188"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R010.7.2",
+      "title": "Wire admitted interface startup",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": []
     },
     {
@@ -1464,6 +1494,30 @@
     {
       "id": "GRAPHOS-HOST-R009.4",
       "title": "Bound log delivery and shutdown",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-HOST-R009.4.1",
+        "GRAPHOS-HOST-R009.4.2"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R009.4.1",
+      "title": "Bound owned supervisor shutdown",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "6fa7e9832d48"
+      ],
+      "verified_by": [
+        "tests/mcp_server/test_co_service_supervisor.py:106",
+        "tests/mcp_server/test_co_service_supervisor.py:56",
+        "tests/mcp_server/test_co_service_supervisor.py:75"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R009.4.2",
+      "title": "Integrate delivery and terminal shutdown",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
