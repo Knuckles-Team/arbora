@@ -524,7 +524,9 @@ def _source_sync_resolve_engine(connection: str, graph: str) -> tuple[Any, str |
     if graph or connection:
         try:
             entries, errors, fanout = engine_routing._resolve_target_engines(connection)
-            entries = engine_routing.resolve_explicit_graph(entries, graph, fanout=fanout)
+            entries = engine_routing.resolve_explicit_graph(
+                entries, graph, fanout=fanout
+            )
         except engine_routing.GraphNotFoundError as e:
             return None, public_error_json(e, code="graph_not_found")
         except engine_routing.GraphSelectionConflictError as e:

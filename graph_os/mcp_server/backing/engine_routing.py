@@ -11,7 +11,6 @@ the REST registry API serves, and the fleet-catalog writer bridge.
 
 from __future__ import annotations
 
-import asyncio
 import contextlib
 import logging
 import threading
@@ -1173,33 +1172,3 @@ def _ontology_system():
 
 
 # ══════════════════════════════════════════════════════════════════
-
-
-async def _write_refreshed_fleet_catalog(
-    catalog,
-    configs,
-    bindings,
-    *,
-    catalog_generation: int | None = None,
-    snapshot_digest: str | None = None,
-):
-    """Bridge the served GraphOS mux into source-sync's canonical writer.
-
-    Forwards the candidate's exact ``catalog_generation``/``snapshot_digest``
-    through unchanged so the returned receipt acknowledges precisely the
-    generation this call ingested (multiplexer._write_catalog_candidate
-    verifies the echo before treating reingestion as reconciled).
-    """
-    from agent_utilities.knowledge_graph.core.source_sync import (
-        write_fleet_catalog_snapshot,
-    )
-
-    return await asyncio.to_thread(
-        write_fleet_catalog_snapshot,
-        runtime._get_engine(),
-        catalog,
-        configs=configs,
-        discovery_bindings=bindings,
-        catalog_generation=catalog_generation,
-        snapshot_digest=snapshot_digest,
-    )

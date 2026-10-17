@@ -87,7 +87,8 @@ def test_natural_language_tools_plan_through_eg_nl_query(monkeypatch, tool):
 
     monkeypatch.setattr(engine_tools, "_dispatch", _dispatch)
     monkeypatch.setattr(
-        runtime, "_get_engine",
+        runtime,
+        "_get_engine",
         lambda: pytest.fail("NL planning must not use a local engine planner"),
     )
     runtime.ensure_tools_registered()

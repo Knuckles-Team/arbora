@@ -2054,7 +2054,9 @@ def register_write_ingest_tools(mcp):
             # graph) is a separate axis from `connection`; it requires exactly one
             # resolved connection, so it fails closed against any fan-out.
             try:
-                entries, errors, fanout = engine_routing._resolve_target_engines(connection)
+                entries, errors, fanout = engine_routing._resolve_target_engines(
+                    connection
+                )
                 entries = engine_routing.resolve_explicit_graph(
                     entries, graph, fanout=fanout
                 )
@@ -2246,7 +2248,9 @@ def register_write_ingest_tools(mcp):
             return runtime._get_engine(), None
         try:
             entries, errors, fanout = engine_routing._resolve_target_engines(connection)
-            entries = engine_routing.resolve_explicit_graph(entries, graph, fanout=fanout)
+            entries = engine_routing.resolve_explicit_graph(
+                entries, graph, fanout=fanout
+            )
         except engine_routing.GraphNotFoundError as e:
             return None, public_error_text(e, code="graph_not_found")
         except engine_routing.GraphSelectionConflictError as e:

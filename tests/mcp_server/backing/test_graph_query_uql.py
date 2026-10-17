@@ -107,7 +107,9 @@ def test_uql_scope_uses_governed_engine_method_and_bundle(monkeypatch):
     graph_query = _register_graph_query()
     engine = _FakeEngine(_ROWS, _WIRE_ROWS)
     monkeypatch.setattr(
-        engine_routing, "_resolve_read_engines", _resolve_read_engines(("default", engine))
+        engine_routing,
+        "_resolve_read_engines",
+        _resolve_read_engines(("default", engine)),
     )
 
     out = graph_query(query=_UQL, scope="uql").model_dump()
@@ -123,7 +125,9 @@ def test_uql_include_epistemic_is_threaded_to_governed_method(monkeypatch):
     graph_query = _register_graph_query()
     engine = _FakeEngine([{"id": "agent:foo", "confidence": 0.8}])
     monkeypatch.setattr(
-        engine_routing, "_resolve_read_engines", _resolve_read_engines(("default", engine))
+        engine_routing,
+        "_resolve_read_engines",
+        _resolve_read_engines(("default", engine)),
     )
 
     out = graph_query(
@@ -139,7 +143,9 @@ def test_uql_rejects_unbounded_or_mutating_requests_before_engine(monkeypatch):
     graph_query = _register_graph_query()
     engine = _FakeEngine(_ROWS)
     monkeypatch.setattr(
-        engine_routing, "_resolve_read_engines", _resolve_read_engines(("default", engine))
+        engine_routing,
+        "_resolve_read_engines",
+        _resolve_read_engines(("default", engine)),
     )
 
     for query in (
@@ -158,7 +164,9 @@ def test_uql_limit_bound_is_intentionally_inclusive_and_bounded(monkeypatch):
     graph_query = _register_graph_query()
     engine = _FakeEngine(_ROWS)
     monkeypatch.setattr(
-        engine_routing, "_resolve_read_engines", _resolve_read_engines(("default", engine))
+        engine_routing,
+        "_resolve_read_engines",
+        _resolve_read_engines(("default", engine)),
     )
 
     for query in (
@@ -184,7 +192,9 @@ def test_uql_lexical_guard_does_not_reject_mutation_word_in_literal(monkeypatch)
     graph_query = _register_graph_query()
     engine = _FakeEngine(_ROWS)
     monkeypatch.setattr(
-        engine_routing, "_resolve_read_engines", _resolve_read_engines(("default", engine))
+        engine_routing,
+        "_resolve_read_engines",
+        _resolve_read_engines(("default", engine)),
     )
 
     query = "MATCH (:Agent) |> WHERE note = 'DELETE' |> LIMIT 5"
@@ -198,7 +208,9 @@ def test_uql_rejects_unused_query_parameters_before_engine(monkeypatch):
     graph_query = _register_graph_query()
     engine = _FakeEngine(_ROWS)
     monkeypatch.setattr(
-        engine_routing, "_resolve_read_engines", _resolve_read_engines(("default", engine))
+        engine_routing,
+        "_resolve_read_engines",
+        _resolve_read_engines(("default", engine)),
     )
 
     out = graph_query(
@@ -214,7 +226,9 @@ def test_uql_params_fail_closed_with_stable_invalid_request(monkeypatch, params)
     graph_query = _register_graph_query()
     engine = _FakeEngine(_ROWS)
     monkeypatch.setattr(
-        engine_routing, "_resolve_read_engines", _resolve_read_engines(("default", engine))
+        engine_routing,
+        "_resolve_read_engines",
+        _resolve_read_engines(("default", engine)),
     )
 
     out = graph_query(query=_UQL, scope="uql", params=params).model_dump()
@@ -228,7 +242,9 @@ def test_uql_rejects_top_level_as_of_before_engine(monkeypatch):
     graph_query = _register_graph_query()
     engine = _FakeEngine(_ROWS)
     monkeypatch.setattr(
-        engine_routing, "_resolve_read_engines", _resolve_read_engines(("default", engine))
+        engine_routing,
+        "_resolve_read_engines",
+        _resolve_read_engines(("default", engine)),
     )
 
     out = graph_query(
@@ -251,7 +267,8 @@ def test_uql_external_connection_without_surface_fails_clearly(monkeypatch):
             raise AssertionError("UQL must not fall back to external Cypher")
 
     monkeypatch.setattr(
-        engine_routing, "_resolve_read_engines",
+        engine_routing,
+        "_resolve_read_engines",
         _resolve_read_engines(("teradata", _CypherOnlyConnection())),
     )
 
@@ -276,7 +293,8 @@ def test_uql_fanout_preserves_targets_errors_and_per_target_evidence(monkeypatch
         pass
 
     monkeypatch.setattr(
-        engine_routing, "_resolve_read_engines",
+        engine_routing,
+        "_resolve_read_engines",
         _resolve_read_engines(
             ("one", first), ("two", second), ("postgres", _NoUqlConnection())
         ),
@@ -302,7 +320,8 @@ def test_uql_fanout_all_unsupported_targets_returns_typed_failure(monkeypatch):
         pass
 
     monkeypatch.setattr(
-        engine_routing, "_resolve_read_engines",
+        engine_routing,
+        "_resolve_read_engines",
         _resolve_read_engines(
             ("postgres", _NoUqlConnection()), ("teradata", _NoUqlConnection())
         ),
@@ -329,7 +348,8 @@ def test_uql_fanout_all_failed_targets_returns_typed_failure(monkeypatch):
             raise RuntimeError("engine unavailable")
 
     monkeypatch.setattr(
-        engine_routing, "_resolve_read_engines",
+        engine_routing,
+        "_resolve_read_engines",
         _resolve_read_engines(("one", _FailingEngine()), ("two", _FailingEngine())),
     )
 
@@ -345,7 +365,9 @@ def test_uql_rank_text_uses_shared_au_preembedding(monkeypatch):
     graph_query = _register_graph_query()
     engine = _FakeEngine(_ROWS)
     monkeypatch.setattr(
-        engine_routing, "_resolve_read_engines", _resolve_read_engines(("default", engine))
+        engine_routing,
+        "_resolve_read_engines",
+        _resolve_read_engines(("default", engine)),
     )
     monkeypatch.setattr(
         engine_tools,

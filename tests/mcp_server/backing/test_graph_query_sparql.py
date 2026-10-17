@@ -41,7 +41,8 @@ def test_sparql_scope_routes_to_engine_sparql(monkeypatch):
     rows = [{"s": "n1", "p": "rdf:type", "o": "Agent"}]
     engine = _FakeEngine(rows)
     monkeypatch.setattr(
-        engine_routing, "_resolve_target_engines",
+        engine_routing,
+        "_resolve_target_engines",
         lambda target: ([("kg", engine)], {}, False),
     )
     out = graph_query(
@@ -57,7 +58,8 @@ def test_sparql_scope_ask_roundtrip(monkeypatch):
     graph_query = _register_graph_query()
     engine = _FakeEngine([{"boolean": True}])
     monkeypatch.setattr(
-        engine_routing, "_resolve_target_engines",
+        engine_routing,
+        "_resolve_target_engines",
         lambda target: ([("kg", engine)], {}, False),
     )
     out = graph_query(query="ASK { ?s a ?o }", scope="sparql", params="{}").model_dump()
@@ -68,7 +70,8 @@ def test_sparql_scope_fans_out(monkeypatch):
     graph_query = _register_graph_query()
     e1, e2 = _FakeEngine([{"x": "a"}]), _FakeEngine([{"x": "b"}])
     monkeypatch.setattr(
-        engine_routing, "_resolve_target_engines",
+        engine_routing,
+        "_resolve_target_engines",
         lambda target: ([("k1", e1), ("k2", e2)], {}, True),
     )
     out = graph_query(

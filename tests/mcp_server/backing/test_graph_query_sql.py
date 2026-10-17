@@ -46,7 +46,8 @@ def test_sql_scope_routes_to_engine_sql(monkeypatch):
     rows = [{"id": "n1", "label": "Agent"}]
     engine = _FakeEngine(rows)
     monkeypatch.setattr(
-        engine_routing, "_resolve_target_engines",
+        engine_routing,
+        "_resolve_target_engines",
         lambda target: ([("kg", engine)], {}, False),
     )
 
@@ -64,7 +65,8 @@ def test_sql_scope_rejects_as_of_instead_of_silently_dropping_it(monkeypatch):
     graph_query = _register_graph_query()
     engine = _FakeEngine([{"id": "n1"}])
     monkeypatch.setattr(
-        engine_routing, "_resolve_target_engines",
+        engine_routing,
+        "_resolve_target_engines",
         lambda target: ([("kg", engine)], {}, False),
     )
 
@@ -85,7 +87,8 @@ def test_sql_scope_fans_out(monkeypatch):
     graph_query = _register_graph_query()
     e1, e2 = _FakeEngine([{"id": "a"}]), _FakeEngine([{"id": "b"}])
     monkeypatch.setattr(
-        engine_routing, "_resolve_target_engines",
+        engine_routing,
+        "_resolve_target_engines",
         lambda target: ([("k1", e1), ("k2", e2)], {}, True),
     )
 
@@ -105,7 +108,8 @@ def test_sql_scope_surfaces_engine_error(monkeypatch):
             raise ValueError("only SELECT/WITH/EXPLAIN are allowed")
 
     monkeypatch.setattr(
-        engine_routing, "_resolve_target_engines",
+        engine_routing,
+        "_resolve_target_engines",
         lambda target: ([("kg", _Boom())], {}, False),
     )
     out = graph_query(query="DELETE FROM nodes", scope="sql", params="{}").model_dump()

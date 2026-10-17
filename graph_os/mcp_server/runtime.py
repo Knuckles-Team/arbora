@@ -2434,18 +2434,16 @@ def _attach_headless_fleet_loader(mcp: Any) -> None:
     cause is recorded on ``mcp`` for ``intent_tools._fleet_mux`` to raise; the
     full exception is logged server-side.
     """
+    from graph_os.fleet.catalog_reader import DeferredFleetCatalogReader
     from graph_os.fleet.multiplexer import attach_fleet_loader
-    from graph_os.mcp_server.backing.engine_routing import (
-        _write_refreshed_fleet_catalog,
-    )
     from graph_os.mcp_server.server import _fleet_embed_fn
 
     try:
         attach_fleet_loader(
             mcp,
+            catalog_reader=DeferredFleetCatalogReader(),
             embed_fn=_fleet_embed_fn(),
             authority_scope=verified_tool_session_scope,
-            catalog_writer=_write_refreshed_fleet_catalog,
         )
     except Exception as exc:  # noqa: BLE001 - cause recorded verbatim below, never swallowed
         mcp._fleet_mux_unavailable_reason = (

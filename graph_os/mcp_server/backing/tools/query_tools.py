@@ -3331,7 +3331,9 @@ def register_query_tools(mcp):
             # connection, so it fails closed against any fan-out (explicit or the
             # implicit content-graph union) — never a silent ignore or union.
             try:
-                entries, errors, fanout = engine_routing._resolve_read_engines(connection)
+                entries, errors, fanout = engine_routing._resolve_read_engines(
+                    connection
+                )
                 entries = engine_routing.resolve_explicit_graph(
                     entries, graph, fanout=fanout
                 )

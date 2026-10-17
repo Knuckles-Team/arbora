@@ -14,21 +14,20 @@ from __future__ import annotations
 
 import logging
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
 import pytest
 
+from graph_os.fleet.catalog_reader import DeferredFleetCatalogReader
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server import server as graphos_server
-from graph_os.mcp_server.backing import engine_routing
 from graph_os.mcp_server.backing.tools.intent_tools import _fleet_mux
 
 
 def test_attach_headless_fleet_loader_calls_attach_fleet_loader_with_composed_args() -> (
     None
 ):
-    """Same arguments the full composed server passes at runtime.py's
-    ``state.fleet_mux = attach_fleet_loader(...)`` call."""
+    """Same arguments the served process passes in ``server._attach_fleet_runtime``."""
     mcp = SimpleNamespace()
     sentinel_embed = object()
     with (
@@ -39,9 +38,12 @@ def test_attach_headless_fleet_loader_calls_attach_fleet_loader_with_composed_ar
 
     mock_attach.assert_called_once_with(
         mcp,
+        catalog_reader=ANY,
         embed_fn=sentinel_embed,
         authority_scope=runtime.verified_tool_session_scope,
-        catalog_writer=engine_routing._write_refreshed_fleet_catalog,
+    )
+    assert isinstance(
+        mock_attach.call_args.kwargs["catalog_reader"], DeferredFleetCatalogReader
     )
     assert not hasattr(mcp, "_fleet_mux_unavailable_reason")
 
@@ -62,9 +64,7 @@ def test_attach_headless_fleet_loader_records_the_exact_failure_cause(
     """
     mcp = SimpleNamespace()
     with (
-        caplog.at_level(
-            logging.WARNING, logger="graph_os.mcp_server.runtime"
-        ),
+        caplog.at_level(logging.WARNING, logger="graph_os.mcp_server.runtime"),
         patch(
             "graph_os.fleet.multiplexer.attach_fleet_loader",
             side_effect=RuntimeError("no mcp_config.json found"),
@@ -84,7 +84,8 @@ def _assert_headless_build_attaches() -> None:
     built_mcp = SimpleNamespace()
     with (
         patch.object(
-            runtime, "_build_server",
+            runtime,
+            "_build_server",
             return_value=(SimpleNamespace(), built_mcp, []),
         ) as mock_build,
         patch.object(runtime, "_attach_headless_fleet_loader") as mock_attach,
