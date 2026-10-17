@@ -218,14 +218,15 @@ def test_binding_is_closed_frozen_and_bounded(signed: Any) -> None:
     with pytest.raises(ValidationError):
         evidence.binding.task_id = "changed"
     fields = dict(evidence.binding)
-    for updates in [
+    malformed: list[dict[str, Any]] = [
         {"extra": True},
         {"version": 2},
         {"domain": "other"},
         {"expires_at_ms": 999},
         {"grant_revision": 0},
         {"approving_human": "other"},
-    ]:
+    ]
+    for updates in malformed:
         with pytest.raises(ValidationError):
             PendingCallBinding(**(fields | updates))
 
