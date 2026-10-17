@@ -70,6 +70,24 @@ def _require_caller_scope(caller: VerifiedCaller, scope: str) -> VerifiedCaller:
     return caller
 
 
+async def _refresh_unary_caller(caller: VerifiedCaller | None) -> None:
+    """Refuse changed authority before entering the task service's session."""
+    if caller is None:
+        return
+    from graph_os.api.invoke.bootstrap import (
+        SessionRequiredError,
+        verify_current_from_session,
+    )
+    from graph_os.api.invoke.steps import authenticate
+
+    try:
+        current = await verify_current_from_session(caller)
+    except SessionRequiredError:
+        raise HTTPAuthenticationError("Current A2A authority required") from None
+    if current != caller or authenticate(current) is not None:
+        raise HTTPAuthenticationError("Current A2A authority required")
+
+
 @contextmanager
 def _caller_session_scope(caller: VerifiedCaller | None) -> Iterator[None]:
     """Bind a returned caller through legacy dispatch; never resolve a fallback."""
@@ -363,6 +381,7 @@ async def _unary_request(
     scope = "kg:write" if method in write_methods else "kg:read"
     try:
         caller = await authenticator.authenticate(request, scope=scope)
+        await _refresh_unary_caller(caller)
         with _caller_session_scope(caller):
             result = await _invoke_method(
                 service, request, method, raw_params, request_id

@@ -1,6 +1,16 @@
 # GRAPHOS-A2A — A2A projection, streaming, history and tool-subset admission — architecture
 
 ## A2A task and approval projection
+
+### Amendment 2026-10-17: unary caller refresh
+
+For GRAPHOS-A2A-R006.2.1.1, refresh a retained caller immediately before
+unary dispatch through the existing verify_current_from_session port. Refuse
+changed authority before binding the session or calling the task authority.
+Keep explicitly injected authenticators that own their binding compatible.
+Exercise the registered HTTP handlers with AU session minting and changed or
+revoked claims. This does not qualify signed approval or production issuers.
+
 Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing [spec](spec.md).
 
 ### Existing system and reuse

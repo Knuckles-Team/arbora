@@ -25,6 +25,7 @@ from agent_utilities.security.brain_context import (
 from fastapi import FastAPI, HTTPException
 
 from graph_os.a2a import mcp as a2a_mcp
+from graph_os.a2a.application import AmbientA2AAuthenticator
 from graph_os.a2a.service import A2AService
 from graph_os.api.registry import Surface
 from graph_os.mcp_server import runtime as mcp_runtime
@@ -332,6 +333,52 @@ def test_default_registered_unary_denies_before_authority_dispatch(
         app, "tasks/cancel", {"id": authority.task.id}, missing=missing
     )
     assert response.status_code == status
+    assert observed == []
+    assert authority.task.status.state == "submitted"
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        "revoked",
+        "tenant",
+        "principal",
+        "scopes",
+        "policy_version",
+        "missing-session",
+        "session-mismatch",
+    ],
+)
+def test_unary_refresh_refuses_changed_authority_before_dispatch(
+    monkeypatch: pytest.MonkeyPatch, failure: str
+) -> None:
+    app, authority, observed, _verified = registered_unary(monkeypatch)
+    original = AmbientA2AAuthenticator.authenticate
+
+    async def authenticate(self: Any, request: Any, *, scope: str) -> Any:
+        caller = await original(self, request, scope=scope)
+        if failure == "missing-session":
+            return replace(caller, session=None)
+        if failure == "session-mismatch":
+            return replace(caller, principal="person:changed")
+        original_claims = type(caller.session).engine_verified_context
+
+        def changed_claims(bound: Any) -> Any:
+            if failure == "revoked":
+                raise PermissionError("fixture revocation detail")
+            claims = dict(original_claims(bound))
+            claims[failure] = [] if failure == "scopes" else "changed"
+            return claims
+
+        monkeypatch.setattr(
+            type(caller.session), "engine_verified_context", changed_claims
+        )
+        return caller
+
+    monkeypatch.setattr(AmbientA2AAuthenticator, "authenticate", authenticate)
+    response = unary_request(app, "tasks/cancel", {"id": authority.task.id})
+    assert response.status_code in {401, 403}
+    assert response.json()["error"]["message"] == "A2A authority refused"
     assert observed == []
     assert authority.task.status.state == "submitted"
 
