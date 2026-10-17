@@ -1335,7 +1335,7 @@
     },
     {
       "id": "GRAPHOS-OPS-R039.7",
-      "title": "Replace `_active_engine` and `_hydration_manager` in graph_os/gateway/dashboard_api.py with the engine client source-sync methods, keeping 500 on no engine, 400 on `ValueError` and 422 on a malformed source",
+      "title": "Replace `_active_engine` and `_hydration_manager` in graph_os/gateway/dashboard_api.py with the engine client source-sync methods. Keep 500 on no engine, 400 on `ValueError` and 422 on a malformed source",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1909,13 +1909,14 @@
       "title": "Readiness snapshot joins independent probes",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "d5d3a7762579",
         "dbcdfe766c6e"
       ],
       "verified_by": [
-        "tests/observability/test_readiness.py:26",
-        "tests/observability/test_readiness.py:42",
-        "tests/observability/test_readiness.py:49",
-        "tests/observability/test_readiness.py:63"
+        "tests/observability/test_readiness.py:31",
+        "tests/observability/test_readiness.py:47",
+        "tests/observability/test_readiness.py:54",
+        "tests/observability/test_readiness.py:68"
       ]
     }
   ]
