@@ -193,6 +193,10 @@ jobs:
             mkdir -p "$HOME/.config/agent-utilities/governance"
             printf '%s' "$PROHIBITED_IDENTITY_CATALOG" > "$HOME/.config/agent-utilities/governance/prohibited-identities.json"
           fi
+          # ste-staged (prose lint) is advisory: the report-only step below
+          # runs it, so it never blocks a merge or a release.
+          SKIP="${SKIP:+$SKIP,}ste-staged"
+          export SKIP
           # Pull requests check the diff only (--from-ref/--to-ref); main and
           # tags check every file at both stages.
           if [ "${{ github.event_name }}" = "pull_request" ]; then
@@ -206,6 +210,17 @@ jobs:
           fi
           uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" $range --show-diff-on-failure
           uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" $range --hook-stage pre-push --show-diff-on-failure
+
+      - name: Prose lint (ste-staged, advisory, report-only)
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            range="--from-ref $PRE_COMMIT_FROM_REF --to-ref HEAD"
+          else
+            range="--all-files"
+          fi
+          uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" ste-staged $range
 
       # External-index availability is a release boundary, not a PR/push
       # boundary. Repository-manager's one readiness primitive checks the
