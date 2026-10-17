@@ -94,7 +94,7 @@ test = [
     "setuptools>=84.0.0",
 ]
 webui = [
-    "agent-webui>=2.6.3,<3.0.0",
+    "agent-webui>=2.7.0,<3.0.0",
     "uvicorn>=0.54.0",
 ]
 # portable-deployment spec, gateway-widgets extra requirement: graph_os/gateway/widgets/*.py
@@ -182,23 +182,13 @@ nextcloud = "graph_os.messaging.backends.nextcloud:NextcloudTalkBackend"
 notify_sync = "graph_os.messaging.reach:notify_sync"
 service = "graph_os.messaging.reach:service_port"
 
-# Train-only binding: agent-webui resolves from its branch until 2.7.0
-# publishes. Package metadata keeps the real PEP 508 floors above.
 [tool.uv]
 # A dependency's own git pin of the engine never applies here.
 override-dependencies = [
     "epistemic-graph[server]>=2.27.2,<3.0.0",
-    # Train-only: agent-webui's branch pins the SDK and AU by git; every
-    # package resolves the published releases instead.
-    "agent-connector-sdk[a2a,mcp]>=0.2.0,<1.0.0",
-    "agent-utilities>=3.0.0,<4.0.0",
-    # Train-only: agent-webui's branch pins pydantic-ai 2.54.0; one version
-    # serves the train until the webui release aligns its pin.
-    "pydantic-ai-slim[openai,ui]==2.57.0",
 ]
 
 [tool.uv.sources]
-agent-webui = { git = "https://github.com/Knuckles-Team/agent-webui.git", branch = "feat/drop-au-imports" }
 # The engine always resolves from the package index, never from a git or
 # path source declared by a dependency.
 epistemic-graph = { index = "pypi" }

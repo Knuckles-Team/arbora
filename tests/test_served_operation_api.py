@@ -28,7 +28,6 @@ from graph_os.a2a import mcp as a2a_mcp
 from graph_os.a2a.authority import WorkItemA2AAuthority
 from graph_os.a2a.routing import OrchestratorA2ARouter
 from graph_os.a2a.service import A2AService
-from graph_os.api.ops.memory import MemoryRecord
 from graph_os.core.settings import runtime_config
 from graph_os.mcp_server import runtime as mcp_runtime
 from graph_os.mcp_server.composition import install_gateway_application
@@ -94,14 +93,6 @@ class FakePool:
         return self.client
 
 
-class MemoryStore:
-    async def read(self, *, tenant: str, key: str) -> MemoryRecord:
-        return MemoryRecord(tenant=tenant, key=key, value={"note": "remembered"})
-
-    async def write(self, **_kwargs: Any) -> MemoryRecord:
-        raise AssertionError("not called")
-
-
 def _actor() -> ActorContext:
     return ActorContext(
         actor_id="person:one",
@@ -143,7 +134,7 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
         pool=FakePool(client),
         graph=process.graph,
         process_session=lambda: process,
-        bindings={"a2a": a2a, "memory_store": MemoryStore()},
+        bindings={"a2a": a2a},
         fleet_effect=refused_fleet_effect,
     )
     install_gateway_application(invocation)
@@ -202,8 +193,9 @@ def test_served_api_answers_the_web_ui_operations(served: Any) -> None:
     )
     assert task["status"]["state"] == "completed"
 
-    memory = _value(_call(app, "memory.read", {"key": "note"}))
-    assert memory["value"] == {"note": "remembered"}
+    # EG serves no memory method yet, so the served surface has no memory.*.
+    absent = _call(app, "memory.read", {"key": "note"})
+    assert absent.status_code in {404, 405}, absent.text
 
     rows = _value(_call(app, "query.uql", {"text": "MATCH (n) RETURN n", "params": {}}))
     assert rows == {"rows": [{"id": "node:one"}]}

@@ -20,7 +20,8 @@ def test_web_ui_keeps_agent_webui_package_name() -> None:
         Requirement(r) for r in PYPROJECT["project"]["optional-dependencies"]["webui"]
     ]
     assert "agent-webui" in {r.name for r in extra}
-    assert "agent-webui" in PYPROJECT["tool"]["uv"]["sources"]
+    # The web UI resolves from the package index like every other dependency.
+    assert "agent-webui" not in PYPROJECT["tool"]["uv"]["sources"]
     workflow = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
     assert "repository: Knuckles-Team/agent-webui" in workflow
     assert importlib.util.find_spec("agent_webui") is not None

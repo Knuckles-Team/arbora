@@ -8,12 +8,7 @@ resolution-markers = [
 ]
 
 [manifest]
-overrides = [
-    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], specifier = ">=0.2.0,<1.0.0" },
-    { name = "agent-utilities", specifier = ">=3.0.0,<4.0.0" },
-    { name = "epistemic-graph", extras = ["server"], specifier = ">=2.27.2,<3.0.0", index = "https://pypi.org/simple" },
-    { name = "pydantic-ai-slim", extras = ["openai", "ui"], specifier = "==2.57.0" },
-]
+overrides = [{ name = "epistemic-graph", extras = ["server"], specifier = ">=2.27.2,<3.0.0", index = "https://pypi.org/simple" }]
 
 [[package]]
 name = "aenum"
@@ -60,7 +55,7 @@ dependencies = [
     { name = "platformdirs" },
     { name = "pydantic" },
     { name = "pydantic-ai-harness" },
-    { name = "pydantic-ai-slim", extra = ["openai", "ui"] },
+    { name = "pydantic-ai-slim" },
     { name = "pydantic-graph" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/49/2f/ce7fba20d75d37b790a84a7184c355aa2b3d49b6f1f976eace8e5273c4d8/agent_utilities-3.0.0.tar.gz", hash = "sha256:d920c0c7967aad7a7e1e9bc424b3ec238d8637c777daf311477ed1add87cc24d", size = 63200, upload-time = "2026-10-17T07:07:40.65Z" }
@@ -71,21 +66,26 @@ wheels = [
 [[package]]
 name = "agent-webui"
 version = "2.7.0"
-source = { git = "https://github.com/Knuckles-Team/agent-webui.git?branch=feat%2Fdrop-au-imports#1f531cca78334eba5082b98c487aef29970d1c98" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "agent-connector-sdk", extra = ["a2a", "mcp"] },
+    { name = "agent-connector-sdk" },
     { name = "agent-utilities" },
     { name = "fastapi" },
     { name = "httpx" },
     { name = "joserfc" },
     { name = "langfuse" },
     { name = "logfire", extra = ["fastapi", "starlette"] },
-    { name = "pydantic-ai-slim", extra = ["openai", "ui"] },
+    { name = "msgpack" },
+    { name = "pydantic-ai-slim", extra = ["ui"] },
     { name = "python-multipart" },
     { name = "sse-starlette" },
     { name = "starlette" },
     { name = "uvicorn" },
     { name = "watchfiles" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7e/d1/a60f04df6f2f9f2cfe2440e8f49d1e600f1e8586ad695ec6b7589874a2c9/agent_webui-2.7.0.tar.gz", hash = "sha256:54b28ccfb5a14cb251368bd2e68315890fe56a4e9978ac85c3cd9d4fc58eb27a", size = 2235654, upload-time = "2026-10-17T09:02:10.392Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/db/e7/3d43da346a4f04feb5bf21c0c397ee67dedc6a2e982df2ca0b4e605090c5/agent_webui-2.7.0-py3-none-any.whl", hash = "sha256:bcb2e7f377c9e70e24f79fa941e6c310e5d16234092731bdc8602cc39ba1cf59", size = 2308912, upload-time = "2026-10-17T09:02:07.948Z" },
 ]
 
 [[package]]
@@ -991,6 +991,7 @@ version = "2.27.2"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f3/ee/2a1562db4d7a286a2f97695665b334305d56e0bc91b846c852b0a6ba230a/epistemic_graph_server-2.27.2-py3-none-macosx_11_0_arm64.whl", hash = "sha256:291fc5ed8b94c53c12a816a671c914a179462925d727034e8ce126b2d3b9763f", size = 70792091, upload-time = "2026-10-17T06:48:48.026Z" },
+    { url = "https://files.pythonhosted.org/packages/22/04/73cf05dd307538156501423326009abf32a9e813114e30830539c03cb821/epistemic_graph_server-2.27.2-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:c1afd2908f36815b3af8d76b50daad738bf8ca140a6283ae28b541d0ac3478d3", size = 58273650, upload-time = "2026-10-17T08:49:02.18Z" },
     { url = "https://files.pythonhosted.org/packages/cd/07/2ce26336106d4944504f53b797dcfeafe3a79a4687137e81d9829c3a8f34/epistemic_graph_server-2.27.2-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:2f5b9d8c51ea42308f11f7fe202ba54059e2f3e8d8e39449a3639f3d11d3000b", size = 62125407, upload-time = "2026-10-17T08:14:12.076Z" },
     { url = "https://files.pythonhosted.org/packages/bf/ff/1bd6ee17e081abdea8305ee0b2420f8e96d3dffbb55005a0a8d68047469f/epistemic_graph_server-2.27.2-py3-none-win_amd64.whl", hash = "sha256:8f9d05ebccb85156eccc8ad9333ac88af87320816e4892f4c2e7f7a8247c4fdc", size = 65564544, upload-time = "2026-10-17T07:38:34.202Z" },
 ]
@@ -1053,7 +1054,7 @@ wheels = [
 
 [package.optional-dependencies]
 pydantic-ai = [
-    { name = "pydantic-ai-slim", extra = ["openai", "ui"] },
+    { name = "pydantic-ai-slim" },
 ]
 
 [[package]]
@@ -1347,7 +1348,7 @@ dependencies = [
     { name = "opentelemetry-api" },
     { name = "prometheus-client" },
     { name = "pydantic" },
-    { name = "pydantic-ai-slim", extra = ["openai", "ui"] },
+    { name = "pydantic-ai-slim", extra = ["openai"] },
     { name = "pyjwt" },
     { name = "python-multipart" },
     { name = "pyyaml" },
@@ -1447,7 +1448,7 @@ requires-dist = [
     { name = "agent-connector-sdk", extras = ["a2a", "mcp"], specifier = ">=0.2.0,<1.0.0" },
     { name = "agent-connector-sdk", extras = ["a2a", "mcp"], marker = "extra == 'gateway-widgets'", specifier = ">=0.2.0,<1.0.0" },
     { name = "agent-utilities", specifier = ">=3.0.0,<4.0.0" },
-    { name = "agent-webui", marker = "extra == 'webui'", git = "https://github.com/Knuckles-Team/agent-webui.git?branch=feat%2Fdrop-au-imports" },
+    { name = "agent-webui", marker = "extra == 'webui'", specifier = ">=2.7.0,<3.0.0" },
     { name = "aiohttp", specifier = ">=3.14.5" },
     { name = "anyio", specifier = ">=4.15.1" },
     { name = "botbuilder-core", marker = "extra == 'messaging-teams'", specifier = ">=4.17.1" },
@@ -3006,7 +3007,7 @@ dependencies = [
     { name = "genai-prices" },
     { name = "httpx" },
     { name = "json-repair" },
-    { name = "pydantic-ai-slim", extra = ["openai", "ui"] },
+    { name = "pydantic-ai-slim" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/4b/5a/a62d50d750b29e678d8e9ad1445e3b4157b8e67648a8894154351c05583b/pydantic_ai_harness-0.57.0.tar.gz", hash = "sha256:c2f62ea4b531c418021deb534ec3ed1cbde796c6a93a716823828554f16ddc5f", size = 1085536, upload-time = "2026-10-16T03:51:11.538Z" }
 wheels = [

@@ -656,6 +656,34 @@ for _bootstrap_name in _bootstrap.BOOTSTRAP_EXPORTS:
     globals()[_bootstrap_name] = getattr(_bootstrap, _bootstrap_name)
 
 
+#: The served intent surface (GRAPHOS-HOST-R024): every verb takes ``op``,
+#: ``intent`` and ``params``.
+SERVED_INSTRUCTIONS = (
+    "Graph OS MCP server. One tool contract: the intent tools find (discover), "
+    "ask (read), why (explain), write, act (run) and manage (configure). Each "
+    "takes op='<operation id>' with params={...}, or a natural-language "
+    "intent='...' with op empty. find(intent='...') lists the matching "
+    "operations with their params schema; find(op='<operation id>') returns "
+    "one operation's spec. Engine methods are operations named "
+    "'eg.<service>.<Method>', for example ask(op='eg.graph.GetNodesByLabel', "
+    "params={'label': 'Agent', 'limit': 10}). write/act/manage preview first: "
+    "resubmit with the returned plan_ref and execute=true. The MCP fleet is "
+    "reached the same way: find(intent='...') also returns fleet tools, and "
+    "act(op='fleet.call', params={'server': ..., 'tool': ..., 'arguments': "
+    "{...}}) calls one. Discover before concluding a capability is unavailable."
+)
+
+#: The engine-less backing surface's contract (no operation registry).
+_LEGACY_INSTRUCTIONS = (
+    "Graph OS MCP server. One tool contract: the intent tools ask (read), "
+    "find (discover), write, act (run), manage (configure, approve, load fleet "
+    "servers) and why (explain). Each takes action='<tool>.<op>' + params, or "
+    "a natural-language intent with action empty. find(action='describe') "
+    "lists operations. write/act/manage preview first: resubmit the returned "
+    "plan_ref with execute=true."
+)
+
+
 def _build_server(
     bootstrap: bool = True, *, canonical_surface: bool = False, invocation: Any = None
 ):
@@ -694,19 +722,7 @@ def _build_server(
         name="graph-os",
         version=__version__,
         instructions=(
-            "Knowledge Graph MCP Server for agent-utilities. "
-            "One tool contract: the intent tools ask (read), find (discover), "
-            "write, act (run), manage (configure, approve, load fleet servers) "
-            "and why (explain). Each takes action='<tool>.<op>' + params, or "
-            "a natural-language intent with action empty. "
-            "find(action='describe') lists operations and "
-            "find(action='describe', params={'action': '<op>'}) returns one "
-            "operation's arguments. write/act/manage preview first: resubmit "
-            "the returned plan_ref with execute=true. The MCP fleet is reached "
-            "the same way: find(action='tools', intent=...) searches it and "
-            "act(action='fleet.call', params={'tool': ..., 'arguments': {...}}) "
-            "calls a fleet tool. Discover before concluding a capability is "
-            "unavailable."
+            _LEGACY_INSTRUCTIONS if invocation is None else SERVED_INSTRUCTIONS
         ),
         command_args=None if bootstrap else [],
         transport_choices=("stdio", "streamable-http"),

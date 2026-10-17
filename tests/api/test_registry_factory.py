@@ -18,7 +18,6 @@ from graph_os.api.ops import (
     fleet,
     get_registry,
     ingest,
-    memory,
     ops,
     policy,
     query,
@@ -129,7 +128,6 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *query.operations(),
         *retrieval.operations(),
         *swarm.operations(),
-        *memory.operations(),
         *work.operations(),
         *ops.operations(),
     )

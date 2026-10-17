@@ -76,16 +76,6 @@
         },
         "description": "Operation result"
       },
-      "Sharedcf80caf23eb4283f9ac754e059e3566a138ec6ad3cc57016cc02686fbf742cf1": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Schema3513ed756e54f8235292f62df63d9db4f1645272a99997331d08bc56e426edd9"
-            }
-          }
-        },
-        "description": "Operation result"
-      },
       "Sharede63130a5e06e6b5e929a069ac7bbb35f10cc62a0a97435792cac981bb422c718": {
         "content": {
           "application/json": {
@@ -217,22 +207,6 @@
       "Schema075c03b9cd39e20d2715d1d32e08519fd970c1e13528fa2016cdbe3891953f82": {
         "title": "Value"
       },
-      "Schema0b6d149e262729a8bf713871233d08a459df406c2a8962dcf99d47b8d36715d2": {
-        "additionalProperties": false,
-        "properties": {
-          "key": {
-            "$ref": "#/components/schemas/Schemadfe60a2e153b66133df27afb8212198c0aff178f5718b512f250b7083dfb87c9"
-          },
-          "value": {
-            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
-          }
-        },
-        "required": [
-          "key"
-        ],
-        "title": "MemoryWriteParams",
-        "type": "object"
-      },
       "Schema0d3bce83b8be7c2fd6a092afaab87eaceb4587fa003cc76b04d535a5fdea3361": {
         "additionalProperties": false,
         "properties": {
@@ -244,19 +218,6 @@
           "value"
         ],
         "title": "UsageReadResult",
-        "type": "object"
-      },
-      "Schema0fd8dc2d01f8881518e445420fe79d0b0456b3f2a6c0dd3f9484f4b63d761953": {
-        "additionalProperties": false,
-        "properties": {
-          "key": {
-            "$ref": "#/components/schemas/Schemadfe60a2e153b66133df27afb8212198c0aff178f5718b512f250b7083dfb87c9"
-          }
-        },
-        "required": [
-          "key"
-        ],
-        "title": "MemoryReadParams",
         "type": "object"
       },
       "Schema109baa93f8b988b2f1e23eb2154a501587f4c405fbccf71e902b2d9dc45c58eb": {
@@ -433,19 +394,6 @@
           "mode"
         ],
         "title": "CapacityModeResult",
-        "type": "object"
-      },
-      "Schema3513ed756e54f8235292f62df63d9db4f1645272a99997331d08bc56e426edd9": {
-        "additionalProperties": false,
-        "properties": {
-          "value": {
-            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
-          }
-        },
-        "required": [
-          "value"
-        ],
-        "title": "MemoryResult",
         "type": "object"
       },
       "Schema3716eaac209c05e4c44c45701aaa4c23e334eff4b07f3e1b9ba0b0ca57a50c38": {
@@ -1584,12 +1532,6 @@
         "maxLength": 80,
         "minLength": 1,
         "title": "Item Id",
-        "type": "string"
-      },
-      "Schemadfe60a2e153b66133df27afb8212198c0aff178f5718b512f250b7083dfb87c9": {
-        "maxLength": 256,
-        "minLength": 1,
-        "title": "Key",
         "type": "string"
       },
       "Schemadff72b3eabcba53568a4b2baa91f0e8c2048670c2f2d9ad7cd6559b1ad3faa93": {
@@ -17869,60 +17811,6 @@
         ]
       }
     },
-    "/api/v1/ops/memory.read": {
-      "post": {
-        "operationId": "memory.read",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Schema0fd8dc2d01f8881518e445420fe79d0b0456b3f2a6c0dd3f9484f4b63d761953"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Sharedcf80caf23eb4283f9ac754e059e3566a138ec6ad3cc57016cc02686fbf742cf1"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared20fd372f894728c720ea9fb2cbe02179faaa483cd81a534d03182c99f04e7fee"
-          }
-        },
-        "summary": "Read one memory record scoped to the caller's own tenant",
-        "tags": [
-          "memory"
-        ]
-      }
-    },
-    "/api/v1/ops/memory.write": {
-      "post": {
-        "operationId": "memory.write",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Schema0b6d149e262729a8bf713871233d08a459df406c2a8962dcf99d47b8d36715d2"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Sharedcf80caf23eb4283f9ac754e059e3566a138ec6ad3cc57016cc02686fbf742cf1"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared20fd372f894728c720ea9fb2cbe02179faaa483cd81a534d03182c99f04e7fee"
-          }
-        },
-        "summary": "Write one memory record scoped to the caller's own tenant",
-        "tags": [
-          "memory"
-        ]
-      }
-    },
     "/api/v1/ops/ops.backup": {
       "post": {
         "operationId": "ops.backup",
@@ -18533,5 +18421,5 @@
       }
     }
   },
-  "x-registry-digest": "d0406891137c0ea3d925e464b51dd414641699db0c6c23017787fde9e0c370a1"
+  "x-registry-digest": "2b7b9c41cd5d173cdb31b4d8b1cfc24f58446a5d2d5822cad5bafc5e16b02b58"
 }
