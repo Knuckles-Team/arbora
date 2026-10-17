@@ -1455,11 +1455,12 @@
       "landed_in": [
         "2646511870e7",
         "ab0d4bed45c4",
-        "c39349d16c53"
+        "c39349d16c53",
+        "d5f69ae59c75"
       ],
       "verified_by": [
-        "tests/test_real_boot.py:459",
-        "tests/test_real_boot.py:489"
+        "tests/test_real_boot.py:473",
+        "tests/test_real_boot.py:503"
       ]
     },
     {
