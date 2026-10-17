@@ -64,7 +64,14 @@
     "GRAPHOS-DEPLOY-R009.2",
     "GRAPHOS-DEPLOY-R009.3",
     "GRAPHOS-DEPLOY-R013.7",
-    "GRAPHOS-DEPLOY-R010.4"
+    "GRAPHOS-DEPLOY-R010.4",
+    "GRAPHOS-DEPLOY-R600",
+    "GRAPHOS-DEPLOY-R600.1",
+    "GRAPHOS-DEPLOY-R600.2",
+    "GRAPHOS-DEPLOY-R600.3",
+    "GRAPHOS-DEPLOY-R600.4",
+    "GRAPHOS-DEPLOY-R600.5",
+    "GRAPHOS-DEPLOY-R600.6"
   ],
   "requirements": [
     {
@@ -634,6 +641,63 @@
     {
       "id": "GRAPHOS-DEPLOY-R010.4",
       "title": "GRAPHOS:13 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R600",
+      "title": "Process singleton locks guard the served host (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-DEPLOY-R600.1",
+        "GRAPHOS-DEPLOY-R600.2",
+        "GRAPHOS-DEPLOY-R600.3",
+        "GRAPHOS-DEPLOY-R600.4",
+        "GRAPHOS-DEPLOY-R600.5",
+        "GRAPHOS-DEPLOY-R600.6"
+      ]
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R600.1",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R600.2",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R600.3",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R600.4",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R600.5",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R600.6",
+      "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
