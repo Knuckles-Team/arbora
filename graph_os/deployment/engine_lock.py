@@ -90,13 +90,11 @@ def _record_holder(fd: int, transport_key: str | None) -> None:
         "acquired_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "transport_digest": opaque_transport,
     }
-    try:
+    with contextlib.suppress(Exception):
         data = json.dumps(meta).encode("utf-8")
         os.ftruncate(fd, 0)
         os.pwrite(fd, data, 0)
         os.fsync(fd)
-    except Exception:  # pragma: no cover - metadata is advisory
-        pass
 
 
 def engine_lock_holder(transport_key: str | None) -> dict[str, Any] | None:
@@ -151,10 +149,8 @@ def engine_spawn_guard(
             _record_holder(fd, transport_key)
         yield acquired
     finally:
-        try:
+        with contextlib.suppress(Exception):
             if acquired:
                 unlock(fd)
-        except Exception:  # pragma: no cover
-            pass
         with contextlib.suppress(Exception):
             os.close(fd)
