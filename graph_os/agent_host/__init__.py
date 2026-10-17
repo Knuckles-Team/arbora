@@ -40,6 +40,7 @@ from pydantic import BaseModel
 from graph_os.agent_host.log_access import HostLogAccess
 from graph_os.agent_host.log_routes import register_host_log_routes
 from graph_os.agent_host.log_runtime import HostLogRuntime, register_host_log_runtime
+from graph_os.agent_host.start_admission import HostStartContext, check_host_start
 
 logger = logging.getLogger(__name__)
 
@@ -231,6 +232,7 @@ def create_agent_server(
     enable_terminal_ui: bool = False,
     enable_web_ui: bool | None = None,
     enable_web_logs: bool = False,
+    host_start: HostStartContext | None = None,
     **_unused_au_hosting_kwargs: Any,
 ) -> None:
     """Build and serve a connector agent -- the GraphOS-hosted replacement for
@@ -258,6 +260,13 @@ def create_agent_server(
     ):
         raise ValueError("invalid_launch")
     if enable_terminal_ui or enable_web_ui or enable_web_logs:
+        check_host_start(
+            host_start,
+            workspace=workspace,
+            terminal=enable_terminal_ui,
+            web=enable_web_ui,
+            web_logs=enable_web_logs,
+        )
         raise HostInterfaceUnavailable("client_unavailable")
 
     if graph is None or graph_config is None:
