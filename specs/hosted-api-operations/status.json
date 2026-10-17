@@ -278,7 +278,9 @@
         "97061e59c412",
         "f651a834b0db"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/api/test_eg_binding.py:203"
+      ],
       "retired_reason": "superseded by GRAPHOS-FLEET-R012"
     },
     {

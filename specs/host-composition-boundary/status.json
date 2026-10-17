@@ -1638,9 +1638,9 @@
       "verified_by": [
         "tests/agent_host/test_start_admission.py:105",
         "tests/agent_host/test_start_admission.py:118",
-        "tests/agent_host/test_start_admission.py:154",
-        "tests/agent_host/test_start_admission.py:165",
-        "tests/agent_host/test_start_admission.py:180"
+        "tests/agent_host/test_start_admission.py:150",
+        "tests/agent_host/test_start_admission.py:161",
+        "tests/agent_host/test_start_admission.py:176"
       ]
     },
     {
@@ -1662,11 +1662,11 @@
         "906170980099"
       ],
       "verified_by": [
-        "tests/agent_host/test_start_admission.py:258",
-        "tests/agent_host/test_start_admission.py:299",
-        "tests/agent_host/test_start_admission.py:325",
-        "tests/agent_host/test_start_admission.py:341",
-        "tests/agent_host/test_start_admission.py:348"
+        "tests/agent_host/test_start_admission.py:254",
+        "tests/agent_host/test_start_admission.py:295",
+        "tests/agent_host/test_start_admission.py:321",
+        "tests/agent_host/test_start_admission.py:337",
+        "tests/agent_host/test_start_admission.py:344"
       ]
     },
     {
@@ -1808,12 +1808,14 @@
     {
       "id": "GRAPHOS-HOST-R010.9",
       "title": "Refuse unsupported client interfaces before host effects",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "21bf942e9389",
         "c18b2c507267"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/agent_host/test_interface_refusal.py:3"
+      ]
     },
     {
       "id": "GRAPHOS-HOST-R009.7",
