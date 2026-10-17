@@ -16,6 +16,7 @@
     "GRAPHOS-A2A-R005.1",
     "GRAPHOS-A2A-R005.2",
     "GRAPHOS-A2A-R005.2.1",
+    "GRAPHOS-A2A-R005.2.2",
     "GRAPHOS-A2A-R005.3",
     "GRAPHOS-A2A-R005.4",
     "GRAPHOS-A2A-R005.5",
@@ -198,13 +199,14 @@
     {
       "id": "GRAPHOS-A2A-R005.2",
       "title": "Full signed human approval chain and input-required task emission",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "cdde0200a54a"
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-A2A-R005.2.1"
+        "GRAPHOS-A2A-R005.2.1",
+        "GRAPHOS-A2A-R005.2.2"
       ]
     },
     {
@@ -215,6 +217,15 @@
         "cdde0200a54a"
       ],
       "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-A2A-R005.2.2",
+      "title": "Validate detached pending-call signatures without authorizing execution",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/a2a/test_approval_signature.py:25"
+      ]
     },
     {
       "id": "GRAPHOS-A2A-R005.3",

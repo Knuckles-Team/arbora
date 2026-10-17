@@ -306,3 +306,7 @@ construction of those dependencies, the MCP registry cutover, durable provider
 qualification and full read/write/fleet parity remain pending under R006.2.2.
 Tests with controlled effect owners qualify the handoff only. They cannot
 qualify real credential issuers or durable effects.
+
+### Detached signature validation boundary
+
+R005.2.2 reuses `PlanBinding` and the existing closed confirmation payload. The binding and trusted public key remain server-side. The validator checks exact canonical bytes and current supplied caller/grant evidence. No issuer, key resolver or local grant store is added. The served confirmation route passes no authority and remains unavailable. EG must still own fresh grant and pending-task evidence, plus atomic consumption of the grant and plan fence. Supplied consumed/revoked snapshots test rejection only; they do not establish replay prevention.

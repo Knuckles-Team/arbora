@@ -952,9 +952,9 @@
         "144fd029bf2e"
       ],
       "verified_by": [
-        "tests/api/test_gen_api.py:258",
-        "tests/api/test_gen_api.py:280",
-        "tests/api/test_gen_api.py:295"
+        "tests/api/test_gen_api.py:266",
+        "tests/api/test_gen_api.py:288",
+        "tests/api/test_gen_api.py:303"
       ]
     },
     {
@@ -965,7 +965,8 @@
         "a247b168fa98"
       ],
       "verified_by": [
-        "tests/api/test_gen_api.py:312",
+        "tests/api/test_gen_api.py:320",
+        "tests/api/test_gen_api.py:470",
         "tests/deployment/test_generated_client_wheel.py:15",
         "tests/deployment/test_generated_client_wheel.py:26"
       ]
