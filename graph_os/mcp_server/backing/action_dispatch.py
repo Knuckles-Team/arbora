@@ -172,6 +172,24 @@ def resolve_action(
     return canonical
 
 
+def _resolve_client_action(
+    client: Any,
+    action: str,
+    *,
+    aliases: Mapping[str, str] | None,
+    service: str,
+) -> str | dict[str, Any]:
+    """Canonical method name for ``action`` on ``client``, or the discovery payload."""
+    actions = public_actions(client)
+    target = service or type(client).__name__
+    if action in DISCOVERY_ACTIONS:
+        return {"service": service or target, "actions": actions}
+    canonical = canonicalize(action, actions, aliases=aliases)
+    if canonical is None:
+        raise unknown_action_error(action, actions, target=target)
+    return canonical
+
+
 def dispatch(
     client: Any,
     action: str,
@@ -187,14 +205,9 @@ def dispatch(
     ``result_coercer`` is given it is applied to the return value (e.g. to call
     ``.model_dump()``); otherwise the raw result is returned.
     """
-    actions = public_actions(client)
-    target = service or type(client).__name__
-    if action in DISCOVERY_ACTIONS:
-        return {"service": service or target, "actions": actions}
-
-    canonical = canonicalize(action, actions, aliases=aliases)
-    if canonical is None:
-        raise unknown_action_error(action, actions, target=target)
+    canonical = _resolve_client_action(client, action, aliases=aliases, service=service)
+    if isinstance(canonical, dict):
+        return canonical
 
     method = getattr(client, canonical)
     # Self-heal the REST-body calling convention the same way run_blocking does:
@@ -225,14 +238,9 @@ async def dispatch_async(
     missing context or elicitation failure cancels the operation; it never
     silently converts an unattended call into write authority.
     """
-    actions = public_actions(client)
-    target = service or type(client).__name__
-    if action in DISCOVERY_ACTIONS:
-        return {"service": service or target, "actions": actions}
-
-    canonical = canonicalize(action, actions, aliases=aliases)
-    if canonical is None:
-        raise unknown_action_error(action, actions, target=target)
+    canonical = _resolve_client_action(client, action, aliases=aliases, service=service)
+    if isinstance(canonical, dict):
+        return canonical
 
     if is_destructive_action(
         canonical, operation

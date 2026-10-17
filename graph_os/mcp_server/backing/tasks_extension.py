@@ -329,6 +329,16 @@ def _is_scalar_task_input(current: Any) -> bool:
     return False
 
 
+def _enter_task_input_container(current: Any, items: int, seen: set[int]) -> None:
+    """Reject a cycle or an item-count overflow before walking a container."""
+    identity = id(current)
+    if identity in seen:
+        raise ValueError("task input contains a cycle")
+    seen.add(identity)
+    if len(current) > _MAX_TASK_INPUT_ITEMS - items:
+        raise ValueError("task input exceeds the maximum item count")
+
+
 def _push_task_input_dict_children(
     current: dict[Any, Any],
     depth: int,
@@ -336,12 +346,7 @@ def _push_task_input_dict_children(
     seen: set[int],
     stack: list[tuple[Any, int]],
 ) -> None:
-    identity = id(current)
-    if identity in seen:
-        raise ValueError("task input contains a cycle")
-    seen.add(identity)
-    if len(current) > _MAX_TASK_INPUT_ITEMS - items:
-        raise ValueError("task input exceeds the maximum item count")
+    _enter_task_input_container(current, items, seen)
     for key, child in current.items():
         if not isinstance(key, str):
             raise ValueError("task input object keys must be strings")
@@ -356,12 +361,7 @@ def _push_task_input_list_children(
     seen: set[int],
     stack: list[tuple[Any, int]],
 ) -> None:
-    identity = id(current)
-    if identity in seen:
-        raise ValueError("task input contains a cycle")
-    seen.add(identity)
-    if len(current) > _MAX_TASK_INPUT_ITEMS - items:
-        raise ValueError("task input exceeds the maximum item count")
+    _enter_task_input_container(current, items, seen)
     stack.extend((child, depth + 1) for child in current)
 
 

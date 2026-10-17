@@ -483,13 +483,7 @@ def _parse_request(request: Request) -> tuple[int, str, str | None]:
     """Parse bounded caller controls without putting them into SQL."""
 
     params = request.query_params
-    raw_limit = params.get("limit", str(_DEFAULT_LIMIT))
-    try:
-        limit = int(raw_limit)
-    except (TypeError, ValueError) as exc:
-        raise HTTPException(status_code=422, detail="invalid registry limit") from exc
-    if not 1 <= limit <= _MAX_LIMIT:
-        raise HTTPException(status_code=422, detail="registry limit is out of bounds")
+    limit = _parse_registry_limit(params.get("limit", str(_DEFAULT_LIMIT)))
     query = str(params.get("q", "") or "").strip()
     if len(query.encode("utf-8")) > _MAX_QUERY_BYTES:
         raise HTTPException(status_code=422, detail="registry filter is too long")
@@ -1254,6 +1248,27 @@ def _row_key(spec: _KindSpec, row: Mapping[str, Any]) -> tuple[str, str]:
     )
 
 
+def _kind_catalog_authority(kind: str) -> tuple[str, str, tuple[str, ...]]:
+    """Resolve the caller's catalog authority for ``kind`` or answer 403."""
+    try:
+        return _require_catalog_authority(
+            require_discovery_binding=_KIND_SPECS[kind].principal_column is not None
+        )
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail="registry access denied") from exc
+
+
+def _catalog_unavailable(
+    kind: str, exc: BaseException, *, what: str = "unavailable"
+) -> JSONResponse:
+    """The privacy-safe 503 body every registry read returns when the catalog fails."""
+    logger.warning("registry %s %s: %s", kind, what, exc)
+    return JSONResponse(
+        {"status": "unavailable", "reason": "catalog_unavailable"},
+        status_code=503,
+    )
+
+
 async def _list_kind(
     request: Request,
     *,
@@ -1267,12 +1282,7 @@ async def _list_kind(
     this annotation only makes that documented, doubly-typed return honest
     for static analysis — it changes no wire behavior)."""
     limit, query, cursor = _parse_request(request)
-    try:
-        tenant, principal, grant_digests = _require_catalog_authority(
-            require_discovery_binding=_KIND_SPECS[kind].principal_column is not None
-        )
-    except PermissionError as exc:
-        raise HTTPException(status_code=403, detail="registry access denied") from exc
+    tenant, principal, grant_digests = _kind_catalog_authority(kind)
     after: tuple[str, str] | None = None
     if cursor:
         after = _decode_cursor(
@@ -1316,18 +1326,8 @@ async def _list_kind(
                 engine=engine,
             ),
         )
-    except CatalogUnavailable as exc:
-        logger.warning("registry %s unavailable: %s", kind, exc)
-        return JSONResponse(
-            {"status": "unavailable", "reason": "catalog_unavailable"},
-            status_code=503,
-        )
     except Exception as exc:  # noqa: BLE001 - backend unavailability is privacy-safe
-        logger.warning("registry %s unavailable: %s", kind, exc)
-        return JSONResponse(
-            {"status": "unavailable", "reason": "catalog_unavailable"},
-            status_code=503,
-        )
+        return _catalog_unavailable(kind, exc)
     next_cursor = None
     if has_more and page_rows:
         last = _row_key(spec, page_rows[-1])
@@ -1342,11 +1342,7 @@ async def _list_kind(
     try:
         items = [_validate_item(kind, model, row) for row in page_rows]
     except CatalogUnavailable as exc:
-        logger.warning("registry %s response shape unavailable: %s", kind, exc)
-        return JSONResponse(
-            {"status": "unavailable", "reason": "catalog_unavailable"},
-            status_code=503,
-        )
+        return _catalog_unavailable(kind, exc, what="response shape")
     return RegistryPage[Any](
         kind=kind, items=items, count=total, next_cursor=next_cursor
     )
@@ -1365,12 +1361,7 @@ async def _get_kind(
     "unavailable", ...}`` body below is served exactly as constructed;
     this annotation only makes that documented, doubly-typed return honest
     for static analysis — it changes no wire behavior)."""
-    try:
-        tenant, principal, grant_digests = _require_catalog_authority(
-            require_discovery_binding=_KIND_SPECS[kind].principal_column is not None
-        )
-    except PermissionError as exc:
-        raise HTTPException(status_code=403, detail="registry access denied") from exc
+    tenant, principal, grant_digests = _kind_catalog_authority(kind)
     try:
         row = await _offload_catalog_call(
             _authorized_item,
@@ -1381,29 +1372,15 @@ async def _get_kind(
             item_id=item_id,
             engine=_get_catalog_engine(),
         )
-    except CatalogUnavailable as exc:
-        logger.warning("registry %s unavailable: %s", kind, exc)
-        return JSONResponse(
-            {"status": "unavailable", "reason": "catalog_unavailable"},
-            status_code=503,
-        )
     except Exception as exc:  # noqa: BLE001 - backend unavailability is privacy-safe
-        logger.warning("registry %s unavailable: %s", kind, exc)
-        return JSONResponse(
-            {"status": "unavailable", "reason": "catalog_unavailable"},
-            status_code=503,
-        )
+        return _catalog_unavailable(kind, exc)
     if row is None:
         # The same response is used for an absent row and another tenant's row.
         raise HTTPException(status_code=404, detail="registry item not found")
     try:
         item = _validate_item(kind, model, row)
     except CatalogUnavailable as exc:
-        logger.warning("registry %s response shape unavailable: %s", kind, exc)
-        return JSONResponse(
-            {"status": "unavailable", "reason": "catalog_unavailable"},
-            status_code=503,
-        )
+        return _catalog_unavailable(kind, exc, what="response shape")
     return RegistryItemEnvelope[Any](item=item)
 
 

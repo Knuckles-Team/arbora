@@ -54,13 +54,62 @@ from typing import Any
 
 from pydantic import Field
 
+# The iframe <-> host MCP-app bridge both views share; ``%PROP%`` is the init
+# prop the host hands the view and ``%ON_INIT%`` the view's own init handler.
+_BRIDGE_SCRIPT = """  // Bridge protocol (see mcp_apps.py / agent-webui bridge.ts docstrings):
+  //   iframe -> host: {type: "mcpapp/ready"}
+  //   host -> iframe: {type: "mcpapp/init", props: {%PROP%}}
+  //   iframe -> host: {type: "mcpapp/tool-call", id, name, arguments}
+  //   host -> iframe: {type: "mcpapp/tool-result", id, result}
+  //                 | {type: "mcpapp/tool-error", id, error: {message}}
+  var pending = Object.create(null);
+  var seq = 0;
+  var %PROP% = null;
+
+  function post(message) {
+    window.parent.postMessage(message, "*");
+  }
+
+  function callTool(name, args) {
+    var id = "call-" + (++seq);
+    return new Promise(function (resolve, reject) {
+      pending[id] = { resolve: resolve, reject: reject };
+      post({ type: "mcpapp/tool-call", id: id, name: name, arguments: args });
+    });
+  }
+
+  window.addEventListener("message", function (event) {
+    var data = event.data;
+    if (!data || typeof data !== "object") return;
+    if (data.type === "mcpapp/init") {
+%ON_INIT%      return;
+    }
+    if (data.type === "mcpapp/tool-result" && pending[data.id]) {
+      pending[data.id].resolve(data.result);
+      delete pending[data.id];
+      return;
+    }
+    if (data.type === "mcpapp/tool-error" && pending[data.id]) {
+      pending[data.id].reject(new Error((data.error && data.error.message) || "tool error"));
+      delete pending[data.id];
+    }
+  });
+
+"""
+
+
+def _bridge(prop: str, on_init: str) -> str:
+    return _BRIDGE_SCRIPT.replace("%PROP%", prop).replace("%ON_INIT%", on_init)
+
+
 TASK_PROGRESS_RESOURCE_URI = "ui://graph-os/task-progress.html"
 
 # Self-contained: no external script/style/font/image loads, so the CSP this
 # app needs is the empty set (no connect/resource/frame domains) -- the
 # strictest possible declaration. The host still decides what it actually
 # grants (never trusts this at face value); see the module docstring.
-_TASK_PROGRESS_HTML = """<!DOCTYPE html>
+_TASK_PROGRESS_HTML = (
+    """<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
@@ -87,49 +136,15 @@ _TASK_PROGRESS_HTML = """<!DOCTYPE html>
 <script>
 (function () {
   "use strict";
-  // Bridge protocol (see mcp_apps.py / agent-webui bridge.ts docstrings):
-  //   iframe -> host: {type: "mcpapp/ready"}
-  //   host -> iframe: {type: "mcpapp/init", props: {jobId}}
-  //   iframe -> host: {type: "mcpapp/tool-call", id, name, arguments}
-  //   host -> iframe: {type: "mcpapp/tool-result", id, result}
-  //                 | {type: "mcpapp/tool-error", id, error: {message}}
-  var pending = Object.create(null);
-  var seq = 0;
-  var jobId = null;
-
-  function post(message) {
-    window.parent.postMessage(message, "*");
-  }
-
-  function callTool(name, args) {
-    var id = "call-" + (++seq);
-    return new Promise(function (resolve, reject) {
-      pending[id] = { resolve: resolve, reject: reject };
-      post({ type: "mcpapp/tool-call", id: id, name: name, arguments: args });
-    });
-  }
-
-  window.addEventListener("message", function (event) {
-    var data = event.data;
-    if (!data || typeof data !== "object") return;
-    if (data.type === "mcpapp/init") {
-      jobId = data.props && data.props.jobId;
+"""
+    + _bridge(
+        "jobId",
+        """      jobId = data.props && data.props.jobId;
       document.getElementById("jobId").textContent = jobId || "-";
       poll();
-      return;
-    }
-    if (data.type === "mcpapp/tool-result" && pending[data.id]) {
-      pending[data.id].resolve(data.result);
-      delete pending[data.id];
-      return;
-    }
-    if (data.type === "mcpapp/tool-error" && pending[data.id]) {
-      pending[data.id].reject(new Error((data.error && data.error.message) || "tool error"));
-      delete pending[data.id];
-    }
-  });
-
-  function showError(message) {
+""",
+    )
+    + """  function showError(message) {
     var el = document.getElementById("err");
     el.hidden = false;
     el.textContent = message;
@@ -198,12 +213,14 @@ _TASK_PROGRESS_HTML = """<!DOCTYPE html>
 </body>
 </html>
 """
+)
 
 
 TRACE_WATERFALL_RESOURCE_URI = "ui://graph-os/trace-waterfall.html"
 
 # Self-contained, same CSP posture as task-progress (no external loads).
-_TRACE_WATERFALL_HTML = """<!DOCTYPE html>
+_TRACE_WATERFALL_HTML = (
+    """<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
@@ -235,48 +252,14 @@ _TRACE_WATERFALL_HTML = """<!DOCTYPE html>
 <script>
 (function () {
   "use strict";
-  // Bridge protocol (see mcp_apps.py / agent-webui bridge.ts docstrings):
-  //   iframe -> host: {type: "mcpapp/ready"}
-  //   host -> iframe: {type: "mcpapp/init", props: {traceId}}
-  //   iframe -> host: {type: "mcpapp/tool-call", id, name, arguments}
-  //   host -> iframe: {type: "mcpapp/tool-result", id, result}
-  //                 | {type: "mcpapp/tool-error", id, error: {message}}
-  var pending = Object.create(null);
-  var seq = 0;
-  var traceId = null;
-
-  function post(message) {
-    window.parent.postMessage(message, "*");
-  }
-
-  function callTool(name, args) {
-    var id = "call-" + (++seq);
-    return new Promise(function (resolve, reject) {
-      pending[id] = { resolve: resolve, reject: reject };
-      post({ type: "mcpapp/tool-call", id: id, name: name, arguments: args });
-    });
-  }
-
-  window.addEventListener("message", function (event) {
-    var data = event.data;
-    if (!data || typeof data !== "object") return;
-    if (data.type === "mcpapp/init") {
-      traceId = data.props && data.props.traceId;
+"""
+    + _bridge(
+        "traceId",
+        """      traceId = data.props && data.props.traceId;
       load();
-      return;
-    }
-    if (data.type === "mcpapp/tool-result" && pending[data.id]) {
-      pending[data.id].resolve(data.result);
-      delete pending[data.id];
-      return;
-    }
-    if (data.type === "mcpapp/tool-error" && pending[data.id]) {
-      pending[data.id].reject(new Error((data.error && data.error.message) || "tool error"));
-      delete pending[data.id];
-    }
-  });
-
-  function showError(message) {
+""",
+    )
+    + """  function showError(message) {
     var el = document.getElementById("err");
     el.hidden = !message;
     el.textContent = message || "";
@@ -373,6 +356,7 @@ _TRACE_WATERFALL_HTML = """<!DOCTYPE html>
 </body>
 </html>
 """
+)
 
 
 def register_mcp_apps_tools(mcp: Any) -> None:
