@@ -765,6 +765,7 @@
       "title": "Skills from every installed package, and an always-offered core pack, join the find/load path",
       "delivery_state": "LANDED",
       "landed_in": [
+        "3f7190f32493",
         "d16472d4df1d"
       ],
       "verified_by": []

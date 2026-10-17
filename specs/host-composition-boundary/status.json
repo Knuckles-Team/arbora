@@ -179,7 +179,7 @@
     {
       "id": "GRAPHOS-HOST-R001",
       "title": "Cross-repository composition boundary assignment",
-      "delivery_state": "SPECIFIED",
+      "delivery_state": "LANDED",
       "landed_in": [
         "9760bef27075"
       ],
@@ -266,6 +266,7 @@
       "title": "Gate G-26: the served MCP surface is wired to epistemic-graph",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "3f7190f32493",
         "9e7f6499d96f"
       ],
       "verified_by": [
@@ -290,9 +291,13 @@
     {
       "id": "GRAPHOS-HOST-R001.10",
       "title": "GraphOS owns provider discovery over the connector SDK groups",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "3f7190f32493"
+      ],
+      "verified_by": [
+        "tests/core/test_providers.py:24"
+      ]
     },
     {
       "id": "GRAPHOS-HOST-R002",
