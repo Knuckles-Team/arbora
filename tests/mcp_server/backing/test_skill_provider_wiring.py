@@ -33,7 +33,7 @@ def _install_fake_skill_provider(monkeypatch, provider_cls) -> None:
     import types
 
     fake_pkg = types.ModuleType("fastmcp.server.providers.skills")
-    fake_pkg.SkillProvider = provider_cls
+    setattr(fake_pkg, "SkillProvider", provider_cls)  # noqa: B010
     monkeypatch.setitem(sys.modules, "fastmcp.server.providers.skills", fake_pkg)
     for parent in ("fastmcp", "fastmcp.server", "fastmcp.server.providers"):
         monkeypatch.setitem(sys.modules, parent, types.ModuleType(parent))

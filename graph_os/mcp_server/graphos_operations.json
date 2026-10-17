@@ -886,7 +886,6 @@
     "build_skill_graph",
     "cancel",
     "cdc_catchup",
-    "classify_topics",
     "clear",
     "cohort_create",
     "cohort_status",
@@ -1324,7 +1323,7 @@
    "surface": "intent"
   }
  ],
- "registry_digest": "52692d3cb4a84ff12474a171b8305e92b9493c49be3352ed4b0bae1f2bcb9e11",
+ "registry_digest": "a6bad1e19c21c60f45fdc304e013012e711e3fad2032c869c37dab68d564f540",
  "schema_version": 1,
  "source": "graph-os operation registry (graph_os.mcp_server.backing.tool_specs)",
  "supported_features": [

@@ -28,7 +28,10 @@ _PROBE = (
 )
 
 
+@pytest.mark.spec("GRAPHOS-DEPLOY-R009.2")
 @pytest.mark.spec("GRAPHOS-DEPLOY-R009.2.1")
+@pytest.mark.spec("GRAPHOS-HOST-R001.9")
+@pytest.mark.spec("GRAPHOS-HOST-R001.9.1")
 def test_cold_import_of_the_served_surface_loads_no_external_driver() -> None:
     result = subprocess.run(  # noqa: S603 - fixed argv, the running interpreter
         [sys.executable, "-c", _PROBE],

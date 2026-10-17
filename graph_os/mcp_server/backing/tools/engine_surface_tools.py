@@ -1715,6 +1715,7 @@ def _ocel_mine(
     used for the trace projection is folded into the SAME committed slice as a
     real, versioned ``ProcessPerspective`` node, never a silent side channel.
     """
+    del exported
     raise not_served("knowledge_graph.ingestion.envelope_ingest", "EG-REPO-INGEST-R002")
 
 
@@ -1733,6 +1734,7 @@ def _conformance_commit(
     inputs: dict[str, Any], run: Any, deviations: Any
 ) -> dict[str, Any]:
     """Commit one ``ConformanceRun`` (+ its Deviations) as a tenant-scoped slice."""
+    del deviations
     raise not_served("knowledge_graph.ingestion.envelope_ingest", "EG-REPO-INGEST-R002")
 
 

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import itertools
+from typing import Any, cast
 
 import pytest
 
@@ -97,7 +98,7 @@ async def test_router_promotes_connected_backend_to_running_then_drains_to_stopp
     RUNNING on start() and STOPPED (never skipping STOPPING) on stop()."""
     router = InboundRouter()
     backend = FakeMessagingBackend("telegram")
-    router.register_backend(backend)
+    router.register_backend(cast(Any, backend))
     assert router.state_of("telegram") is ChannelSupervisionState.STOPPED
 
     start_task = asyncio.create_task(router.start())
@@ -115,7 +116,7 @@ async def test_router_never_promotes_an_unconnected_backend_to_running() -> None
     router = InboundRouter()
     backend = FakeMessagingBackend("mattermost")
     backend._connected = False
-    router.register_backend(backend)
+    router.register_backend(cast(Any, backend))
 
     start_task = asyncio.create_task(router.start())
     await asyncio.sleep(0)
@@ -179,7 +180,7 @@ async def test_backoff_delay_sequence_is_monotonically_bounded_by_cap(
 
     monkeypatch.setattr(router, "_record_listener_restart", fake_record)
 
-    await asyncio.wait_for(router._supervise_backend(backend), timeout=5)
+    await asyncio.wait_for(router._supervise_backend(cast(Any, backend)), timeout=5)
 
     assert len(delays) == 5
     assert delays[0] == pytest.approx(0.01)
@@ -213,7 +214,7 @@ async def test_backoff_resets_to_base_after_a_sustained_healthy_run(
 
     monkeypatch.setattr(router, "_record_listener_restart", fake_record)
 
-    await asyncio.wait_for(router._supervise_backend(backend), timeout=5)
+    await asyncio.wait_for(router._supervise_backend(cast(Any, backend)), timeout=5)
 
     delays = [d for d, _ in recorded]
     assert len(delays) == 3
@@ -237,7 +238,7 @@ async def test_stop_during_backoff_wait_cancels_cleanly_with_no_pending_restart(
 
     router = InboundRouter()
     backend = _AlwaysFailingBackend()
-    router.register_backend(backend)
+    router.register_backend(cast(Any, backend))
 
     start_task = asyncio.create_task(router.start())
     # Let start() create the supervisor task, run its one failing attempt,

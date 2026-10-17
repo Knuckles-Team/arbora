@@ -13,3 +13,14 @@ lod
 notin
 # "asend" is the async-generator protocol method (agen.asend), not "ascend".
 asend
+# Apostrophe-free negation tokens the evidence contradiction scan matches
+# after tokenization; they are vocabulary, not typos.
+cant
+dont
+doesnt
+didnt
+wont
+isnt
+arent
+wasnt
+werent

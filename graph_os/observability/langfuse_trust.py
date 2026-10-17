@@ -155,14 +155,14 @@ _LANGFUSE_PROVIDER_MAX_VERSION = Version("2")
 _AGENT_CONFIG_FIELDS = {
     "LANGFUSE_HOST": "langfuse_host",
     "LANGFUSE_PUBLIC_KEY_REF": "langfuse_public_key_ref",
-    "LANGFUSE_SECRET_KEY_REF": "langfuse_secret_key_ref",
+    "LANGFUSE_SECRET_KEY_REF": "langfuse_secret_key_ref",  # nosec B105 - field name
     "LANGFUSE_PERSISTENCE_HMAC_KEY_REF": "langfuse_persistence_hmac_key_ref",
     "LANGFUSE_TLS_PROFILE": "langfuse_tls_profile",
     "LANGFUSE_TLS_PROFILE_REF": "langfuse_tls_profile_ref",
     "LANGFUSE_CA_BUNDLE_REF": "langfuse_ca_bundle_ref",
     "LANGFUSE_CLIENT_CERT_REF": "langfuse_client_cert_ref",
     "LANGFUSE_CLIENT_KEY_REF": "langfuse_client_key_ref",
-    "LANGFUSE_CLIENT_KEY_PASSWORD_REF": "langfuse_client_key_password_ref",
+    "LANGFUSE_CLIENT_KEY_PASSWORD_REF": "langfuse_client_key_password_ref",  # nosec B105 - field name
     "LANGFUSE_PROXY_URL_REF": "langfuse_proxy_url_ref",
     "LANGFUSE_CAPTURE_CONTENT": "langfuse_capture_content",
     "LANGFUSE_KG_AUTO_INGEST": "langfuse_kg_auto_ingest",

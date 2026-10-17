@@ -6,7 +6,7 @@ import asyncio
 import time
 from dataclasses import replace
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from agent_connector_sdk.privacy import persistence_reference
@@ -1308,7 +1308,7 @@ async def test_policy_denial_is_audited_without_fence_or_dispatch(
     with use_session(session):
         service, _connection, engine, sent, tool = await _setup(session)
         lease = await _lease(service, _binding(session), tool)
-        service._policy.allow = False
+        cast(Any, service._policy).allow = False
         receipt = await service.execute_call(
             BrowserCallRequest(
                 lease_id=lease.lease_id,

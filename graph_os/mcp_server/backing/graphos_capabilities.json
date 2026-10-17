@@ -14389,11 +14389,6 @@
           "note": "no confident EG-P0-1 ledger match by name — likely an AU-level orchestration action with no 1:1 raw engine Method, not a gap in matching effort"
         },
         {
-          "action": "classify_topics",
-          "eg_method": null,
-          "note": "no confident EG-P0-1 ledger match by name — likely an AU-level orchestration action with no 1:1 raw engine Method, not a gap in matching effort"
-        },
-        {
           "action": "clear",
           "eg_method": null,
           "note": "no confident EG-P0-1 ledger match by name — likely an AU-level orchestration action with no 1:1 raw engine Method, not a gap in matching effort"

@@ -69,7 +69,7 @@ async def test_auth_state_scenario():
     mock_ctx.session = AsyncMock()
 
     async def login_tool(ctx):
-        token = "dummy_jwt_token"  # nosec B105
+        token = "dummy_jwt_token"  # nosec B105  # sanitizer:ignore - synthetic test token
         await context_helpers.ctx_set_state(ctx, "myproj", "token", token)
         return "logged_in"
 

@@ -1104,13 +1104,6 @@ async def _analysis_action_quant_insider(
     )
 
 
-async def _analysis_action_workforce_plan(
-    engine, action, query, top_k, node_id, depth, target
-):
-    # action(s): 'workforce_plan'
-    raise not_served("domains.hr.workforce_manager", "EG-TYPED-PACKS-R750")
-
-
 async def _analysis_action_close(engine, action, query, top_k, node_id, depth, target):
     # action(s): 'close'
     graph_compute = getattr(engine, "graph_compute", engine)
@@ -1431,7 +1424,6 @@ _ANALYSIS_ACTION_DISPATCH = {
     "quant_crypto": _analysis_action_quant_crypto,
     "quant_microstructure": _analysis_action_quant_microstructure,
     "quant_insider": _analysis_action_quant_insider,
-    "workforce_plan": _analysis_action_workforce_plan,
     "close": _analysis_action_close,
     "call_graph": _analysis_action_call_graph,
     "similar_code": _analysis_action_similar_code,

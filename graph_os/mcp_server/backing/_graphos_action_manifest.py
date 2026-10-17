@@ -1819,11 +1819,6 @@ GRAPHOS_ACTIONS: list[GraphosAction] = [
         "action": "cdc_catchup",
         "name": "graph_ingest_cdc_catchup",
     },
-    {
-        "tool": "graph_ingest",
-        "action": "classify_topics",
-        "name": "graph_ingest_classify_topics",
-    },
     {"tool": "graph_ingest", "action": "clear", "name": "graph_ingest_clear"},
     {
         "tool": "graph_ingest",

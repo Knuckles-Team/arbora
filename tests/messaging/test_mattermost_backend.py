@@ -15,7 +15,7 @@ import asyncio
 import json
 import sys
 import types
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -355,7 +355,7 @@ async def test_reach_user_routes_to_mattermost_last_active(
     MessagingService._instance = None
     svc = MessagingService.instance(_Eng())
     backend = FakeMessagingBackend(platform="mattermost")
-    svc.register_connected(backend)
+    svc.register_connected(cast(Any, backend))
     monkeypatch.setattr(svc, "get_backend", lambda _p: _wrap(backend))
     monkeypatch.setattr(
         svc, "_gate", lambda *a, **k: type("D", (), {"allowed": True})()

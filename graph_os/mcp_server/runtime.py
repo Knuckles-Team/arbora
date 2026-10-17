@@ -481,7 +481,7 @@ ACTION_TOOL_ROUTES: dict[str, str] = {
     "graph_feedback": "/graph/feedback",
     "graph_sessions": "/graph/sessions",
     "graph_reach": "/graph/reach",
-    "graph_secret": "/graph/secret",
+    "graph_secret": "/graph/secret",  # nosec B105 - a route path, not a secret
     "document_process": "/document/process",
     "source_connector": "/connector/source",
     "graph_writeback": "/graph/writeback",

@@ -246,7 +246,7 @@ class LangfuseExporter:
                         "correlation", cid, namespace=tenant_ref
                     )
             except Exception:  # noqa: BLE001 — never let correlation crash export
-                pass
+                logger.debug("langfuse correlation reference skipped", exc_info=True)
             trace = self._make_trace(
                 client,
                 run_id=str(clean_run_id),

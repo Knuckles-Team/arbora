@@ -21,6 +21,8 @@ Each test below fails on the pre-fix file and passes after it.
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 from graph_os.mcp_server.backing import server_factory
@@ -45,7 +47,7 @@ def _unsupported_auth_type_error() -> type[Exception]:
             "BUG-CX-023: server_factory defines no UnsupportedAuthTypeError -- "
             "an unrecognised auth_type still falls through to 'no auth'"
         )
-    return error
+    return cast(type[Exception], error)
 
 
 class _Component:

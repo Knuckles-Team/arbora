@@ -115,7 +115,7 @@ class GraphErrorDetailSink:
                 node_id, run_trace_id(run_correlation_id), ERROR_DETAIL_DIAGNOSES_EDGE
             )
         except Exception:  # noqa: BLE001 — opportunistic linkage only
-            pass
+            logger.debug("error detail run-trace linkage skipped", exc_info=True)
 
     def resolve(self, correlation_id: str) -> dict[str, Any] | None:
         """Read a previously persisted detail bundle back, or ``None`` if absent.

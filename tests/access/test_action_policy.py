@@ -24,7 +24,7 @@ def _fresh_policy(monkeypatch):
     approval.bind_approval_session(None)
 
 
-def _request(kind: str, target: str = "svc", actor: str | None = None):
+def _request(kind: str, target: str = "svc", actor: str = ""):
     return ap.ActionRequest(kind=kind, target=target, source="test", actor_id=actor)
 
 

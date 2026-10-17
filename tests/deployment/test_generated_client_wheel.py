@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.mark.spec("GRAPHOS-OPS-R025.2")
+@pytest.mark.spec("GRAPHOS-HOST-R001.3")
 def test_committed_artifacts_match_the_pinned_provider() -> None:
     result = subprocess.run(
         [sys.executable, str(ROOT / "scripts/gen_api.py"), "--check"],

@@ -726,7 +726,7 @@ class EvidenceBundle(BaseModel):
         return []
 
     @classmethod
-    def from_code_context_answer(cls, ans: Any, **overrides: Any) -> EvidenceBundle:
+    def from_code_context_answer(cls, answer: Any, **overrides: Any) -> EvidenceBundle:
         """Wrap ``build_code_context``'s output (a ``CodeContextAnswer`` or its ``as_dict()``).
 
         Reuses: ``citations`` -> ``evidence_spans``; ``coverage`` -> ``freshness``;
@@ -736,7 +736,7 @@ class EvidenceBundle(BaseModel):
         internal contradictions. ``confidence`` is always ``None`` — code_context is a
         deterministic, templated composition, not a scored estimate.
         """
-        payload = ans.as_dict() if hasattr(ans, "as_dict") else dict(ans)
+        payload = answer.as_dict() if hasattr(answer, "as_dict") else dict(answer)
 
         answer = str(payload.get("answer") or "")
         citations = list(payload.get("citations") or [])

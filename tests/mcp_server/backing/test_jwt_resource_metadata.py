@@ -146,7 +146,7 @@ def test_public_base_url_set_multi_realm_also_wraps() -> None:
     )
     assert isinstance(verifier, RemoteAuthProvider)
     assert hasattr(verifier.token_verifier, "_verifiers")
-    assert len(verifier.token_verifier._verifiers) == 2  # type: ignore[attr-defined]
+    assert len(verifier.token_verifier._verifiers) == 2
     assert len(verifier.authorization_servers) == 2
     assert [str(server) for server in verifier.authorization_servers] == [
         "https://kc.test/realms/master",

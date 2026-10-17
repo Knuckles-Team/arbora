@@ -537,7 +537,7 @@ def _parse_window(window: str) -> tuple[int, int] | None:
         eh, em = (list(map(int, end_s.strip().split(":"))) + [0])[:2]
         return sh * 60 + sm, eh * 60 + em
     except (ValueError, AttributeError):
-        logger.warning("action_policy: unparseable maintenance_window %r", window)
+        logger.warning("action_policy: unparsable maintenance_window %r", window)
         return None
 
 
