@@ -9,7 +9,7 @@ from typing import Literal
 
 from graph_os.client._schema import _expanded_spec
 
-REGISTRY_DIGEST = "2b7b9c41cd5d173cdb31b4d8b1cfc24f58446a5d2d5822cad5bafc5e16b02b58"
+REGISTRY_DIGEST = "8887c6b2c45430898b5b319a0109518dab01d6ff2bcd91f02e3e37087051fa01"
 API_VERSION = "1"
 type OperationId = Literal[
     "access.check",
@@ -499,6 +499,7 @@ type OperationId = Literal[
     "retrieval.freshness",
     "retrieval.search",
     "rlm.run",
+    "runs.current_plan",
     "security.posture.read",
     "swarm.topology.read",
     "telemetry.read",

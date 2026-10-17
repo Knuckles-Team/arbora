@@ -135,7 +135,14 @@
     "GRAPHOS-FLEET-R037.4",
     "GRAPHOS-FLEET-R037.5",
     "GRAPHOS-FLEET-R037.6",
-    "GRAPHOS-FLEET-R038"
+    "GRAPHOS-FLEET-R038",
+    "GRAPHOS-FLEET-R039",
+    "GRAPHOS-FLEET-R039.1",
+    "GRAPHOS-FLEET-R039.2",
+    "GRAPHOS-FLEET-R039.3",
+    "GRAPHOS-FLEET-R039.4",
+    "GRAPHOS-FLEET-R039.5",
+    "GRAPHOS-FLEET-R039.6"
   ],
   "requirements": [
     {
@@ -1410,6 +1417,63 @@
     {
       "id": "GRAPHOS-FLEET-R038",
       "title": "One protocol stack with one implementation per role",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R039",
+      "title": "Domain pack reads compose engine methods",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-FLEET-R039.1",
+        "GRAPHOS-FLEET-R039.2",
+        "GRAPHOS-FLEET-R039.3",
+        "GRAPHOS-FLEET-R039.4",
+        "GRAPHOS-FLEET-R039.5",
+        "GRAPHOS-FLEET-R039.6"
+      ]
+    },
+    {
+      "id": "GRAPHOS-FLEET-R039.1",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R039.2",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R039.3",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R039.4",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R039.5",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R039.6",
+      "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

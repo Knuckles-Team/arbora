@@ -730,6 +730,19 @@
         "title": "SecurityPostureReadResult",
         "type": "object"
       },
+      "Schema69af923f0300139d0b548d5a981145b615e86624534985c6597f08d5db15c466": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "RunsCurrentPlanResult",
+        "type": "object"
+      },
       "Schema703214a2183cb5a1c2bb46824a67b9a2e0e004e2ba1dfe95b967d8672d39537a": {
         "items": {
           "$ref": "#/components/schemas/Definitionda935471d1a4b0239d7591cb066897a8442219998fa78e1f825fd5698d277a33"
@@ -857,6 +870,20 @@
         ],
         "default": null,
         "title": "Cursor"
+      },
+      "Schema79eb626671193d787b1562980637cfcd217f5766896388cea5ddd578abb0beea": {
+        "additionalProperties": false,
+        "description": "The run to read. Caller authority never comes from parameters.",
+        "properties": {
+          "run_id": {
+            "$ref": "#/components/schemas/Schemadf135e01e5998bd761bf3770ae512003d9a8a935e6f90722820e930ca4b97338"
+          }
+        },
+        "required": [
+          "run_id"
+        ],
+        "title": "RunsCurrentPlanParams",
+        "type": "object"
       },
       "Schema7f72bf7cfe8ead111c70656a429c4f0d4793524693f91c39c47aa2fcdeef1b08": {
         "additionalProperties": false,
@@ -1532,6 +1559,12 @@
         "maxLength": 80,
         "minLength": 1,
         "title": "Item Id",
+        "type": "string"
+      },
+      "Schemadf135e01e5998bd761bf3770ae512003d9a8a935e6f90722820e930ca4b97338": {
+        "maxLength": 512,
+        "minLength": 1,
+        "title": "Run Id",
         "type": "string"
       },
       "Schemadff72b3eabcba53568a4b2baa91f0e8c2048670c2f2d9ad7cd6559b1ad3faa93": {
@@ -18203,6 +18236,40 @@
         ]
       }
     },
+    "/api/v1/ops/runs.current_plan": {
+      "post": {
+        "operationId": "runs.current_plan",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema79eb626671193d787b1562980637cfcd217f5766896388cea5ddd578abb0beea"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schema69af923f0300139d0b548d5a981145b615e86624534985c6597f08d5db15c466"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared20fd372f894728c720ea9fb2cbe02179faaa483cd81a534d03182c99f04e7fee"
+          }
+        },
+        "summary": "Read the current plan of one run",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
     "/api/v1/ops/security.posture.read": {
       "post": {
         "operationId": "security.posture.read",
@@ -18421,5 +18488,5 @@
       }
     }
   },
-  "x-registry-digest": "2b7b9c41cd5d173cdb31b4d8b1cfc24f58446a5d2d5822cad5bafc5e16b02b58"
+  "x-registry-digest": "8887c6b2c45430898b5b319a0109518dab01d6ff2bcd91f02e3e37087051fa01"
 }

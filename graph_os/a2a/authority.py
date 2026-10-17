@@ -423,9 +423,63 @@ class WorkItemA2AAuthority:
             metadata={"graphOs": public_metadata},
         )
 
-    async def get(self, task_id: str) -> A2ATask | None:
+    async def get_committed_task(self, task_id: str) -> A2ATask | None:
+        return await self.get(task_id, include_committed_event=True)
+
+    async def get(
+        self, task_id: str, *, include_committed_event: bool = False
+    ) -> A2ATask | None:
+        original = self._session("work:read") if include_committed_event else None
         item = await asyncio.to_thread(self._authorized_item, task_id, "kg:read")
-        return None if item is None else self._project(item, task_id=task_id)
+        if item is None:
+            return None
+        if original is not None:
+            current = self._session("work:read")
+            owner_ref = self._owner_ref(original)
+            if (
+                current != original
+                or item.get("tenant") != original.tenant
+                or item.get("created_by") != owner_ref
+                or item.get("metadata", {}).get("a2a_owner_ref") != owner_ref
+            ):
+                raise PermissionError("A2A caller changed during task read")
+        task = self._project(item, task_id=task_id)
+        if include_committed_event:
+            from .terminal_event import (
+                A2ATerminalEventUnavailable,
+                read_terminal_event,
+            )
+
+            session = original
+            owner_ref = self._owner_ref(session)
+            engine, _work_engine = self._engine()
+            try:
+                event = await asyncio.wait_for(
+                    read_terminal_event(
+                        engine, session=session, task_id=task_id, owner_ref=owner_ref
+                    ),
+                    timeout=5.0,
+                )
+            except TimeoutError as exc:
+                raise A2ATerminalEventUnavailable(
+                    "committed terminal event is unavailable"
+                ) from exc
+            current = self._session("work:read")
+            if (
+                current != session
+                or current.tenant != session.tenant
+                or current.graph != session.graph
+                or self._owner_ref(current) != owner_ref
+            ):
+                raise PermissionError("A2A caller changed during terminal read")
+            if event["status"] == "available" and (
+                _STATE_MAP[event["outcome"]] != task.status.state
+            ):
+                raise A2ATerminalEventUnavailable(
+                    "committed terminal event is unavailable"
+                )
+            task.metadata["graphOs"]["terminalEvent"] = event
+        return task
 
     @staticmethod
     def _cursor(owner_ref: str, tenant: str, item_id: str) -> str:

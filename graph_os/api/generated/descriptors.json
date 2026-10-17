@@ -5846,6 +5846,18 @@
       "verb": "act"
     },
     {
+      "domain": "runs",
+      "examples": [
+        "what is the current plan of this run"
+      ],
+      "id": "runs.current_plan",
+      "summary": "Read the current plan of one run",
+      "tags": [
+        "runs"
+      ],
+      "verb": "ask"
+    },
+    {
       "domain": "security",
       "examples": [
         "show the current security posture"
@@ -5930,5 +5942,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "2b7b9c41cd5d173cdb31b4d8b1cfc24f58446a5d2d5822cad5bafc5e16b02b58"
+  "registry_digest": "8887c6b2c45430898b5b319a0109518dab01d6ff2bcd91f02e3e37087051fa01"
 }

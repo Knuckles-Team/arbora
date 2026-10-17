@@ -115,3 +115,7 @@ R001/R010 durable replay and host receipt/log acceptance remain pending under th
 ## Detached signature validation
 
 `GRAPHOS-A2A-R005.2.2`: use ephemeral test keys with real Ed25519 signatures. Verify canonical binding bytes and reject changed identities, params digest, human, expiry and inactive grant snapshots. Exercise the existing `/a2a` confirmation refusal with no composed authority. A valid signature is only cryptographic evidence. It cannot prove live pending state, key ownership, revocation freshness or one-time consumption.
+
+### GRAPHOS-A2A-R010.1
+
+`tests/a2a/test_terminal_event.py` exercises safe projection, producer binding refusals, post-read authority refresh and zero reads for unauthorized tasks. HTTP dispatch and MCP share the same service option. These injected consumer tests do not establish native replay or released dependency compatibility.

@@ -12,6 +12,8 @@ from graph_os.messaging.models import SendResult
 from graph_os.messaging.router import InboundRouter
 from graph_os.messaging.service import MessagingService
 
+from ._fakes import FakeMessagingBackend
+
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("delivered", [False, True])
@@ -23,11 +25,11 @@ async def test_reaper_uses_bound_turn_handler_and_preserves_send_result(
     router._running = True
     seen: list[Any] = []
 
-    class Backend:
-        id = "telegram"
-
-        async def send_message(self, channel_id: str, reply: str) -> SendResult:
-            seen.append((channel_id, reply))
+    class Backend(FakeMessagingBackend):
+        async def send_message(
+            self, channel_id: str, text: str, **kwargs: Any
+        ) -> SendResult:
+            seen.append((channel_id, text))
             return SendResult(
                 success=delivered, platform=self.id, channel_id=channel_id
             )

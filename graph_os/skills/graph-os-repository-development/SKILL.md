@@ -23,6 +23,15 @@ to build, test, and ship a change once graph-os is the chosen owner.
 `AGENTS.md` at the repository root points here and stays a short navigation
 index — do not duplicate this skill's procedure back into it.
 
+## Step 0: route the feature
+
+Route the feature before any code.
+
+1. Read the [ecosystem boundaries standard](https://github.com/Knuckles-Team/pipelines/blob/main/reference/ecosystem-boundaries.md).
+2. Split the feature into parts with its routing procedure.
+3. If a part is not owned by graph-os, stop work on that part. Write its row in the owner's `specs/`, then link it by ID.
+4. Continue here only with the parts that graph-os owns.
+
 ## Architecture boundaries
 
 GraphOS is the deployable composition layer for the Knuckles agent platform.

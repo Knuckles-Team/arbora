@@ -24186,6 +24186,75 @@
     {
       "audit": "none",
       "binding": {
+        "handler": "graph_os.api.ops.runs.handle_runs_current_plan",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "what is the current plan of this run"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "runs.current_plan",
+      "idempotency": "none",
+      "params": {
+        "model": "graph_os.api.ops.runs.RunsCurrentPlanParams",
+        "schema": {
+          "additionalProperties": false,
+          "description": "The run to read. Caller authority never comes from parameters.",
+          "properties": {
+            "run_id": {
+              "maxLength": 512,
+              "minLength": 1,
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "run_id"
+          ],
+          "title": "RunsCurrentPlanParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "graph_os.api.ops.runs.RunsCurrentPlanResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "RunsCurrentPlanResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "kg:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Read the current plan of one run",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "ask"
+    },
+    {
+      "audit": "none",
+      "binding": {
         "handler": "graph_os.api.ops.security.handle_security_posture_read",
         "kind": "composite"
       },
@@ -24636,5 +24705,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "2b7b9c41cd5d173cdb31b4d8b1cfc24f58446a5d2d5822cad5bafc5e16b02b58"
+  "registry_digest": "8887c6b2c45430898b5b319a0109518dab01d6ff2bcd91f02e3e37087051fa01"
 }
