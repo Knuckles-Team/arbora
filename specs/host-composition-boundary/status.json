@@ -1460,8 +1460,8 @@
         "d5f69ae59c75"
       ],
       "verified_by": [
-        "tests/test_real_boot.py:501",
-        "tests/test_real_boot.py:531"
+        "tests/test_real_boot.py:537",
+        "tests/test_real_boot.py:567"
       ]
     },
     {

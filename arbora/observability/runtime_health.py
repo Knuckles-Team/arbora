@@ -737,11 +737,7 @@ def is_overall_healthy(report: Mapping[str, Any]) -> bool:
     # run in their own deployments stay fully reported but do not decide
     # rotation. Gating routing on those optional services would turn one
     # component's failure into a total one.
-    essential = {"engine", "fleet_supervision"}
-    return not any(
-        check["status"] == "unhealthy" and check["name"] in essential
-        for check in report.get("checks", [])
-    )
+    return not failing_checks(report)
 
 
 def _now_iso() -> str:
@@ -766,3 +762,19 @@ def not_served_authorities(report: Mapping[str, Any]) -> list[str]:
                 if isinstance(dep, Mapping) and dep.get("status") == "not_served"
             )
     return []
+
+
+#: The checks that decide readiness; the rest are reported, never gating.
+READINESS_ESSENTIAL = frozenset({"engine", "fleet_supervision"})
+
+
+def failing_checks(report: Mapping[str, Any]) -> list[str]:
+    """Names of the essential checks holding readiness down (``unhealthy``)."""
+
+    return sorted(
+        str(check.get("name"))
+        for check in report.get("checks") or ()
+        if isinstance(check, Mapping)
+        and check.get("status") == "unhealthy"
+        and check.get("name") in READINESS_ESSENTIAL
+    )

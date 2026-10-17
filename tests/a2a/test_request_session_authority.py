@@ -66,8 +66,10 @@ def fixture(monkeypatch: pytest.MonkeyPatch, *, failure: str = "") -> Any:
             ]  # sanitizer:ignore - synthetic ASGI credential
         actor = ActorContext(
             actor_id="person:one",
-            actor_type=ActorType.AUTOMATED_SERVICE
-            if failure == "automated-service"
+            # ai_agent stays an unsupported caller kind; a client-credentials
+            # automated_service is a service principal (0.1.3).
+            actor_type=ActorType.AI_AGENT
+            if failure == "unsupported-actor"
             else ActorType.HUMAN,
             tenant_id="tenant:one",
             authenticated=True,
@@ -132,7 +134,7 @@ def test_public_au_minter_reaches_pipeline_and_rechecks_every_request(
         "expired",
         "mismatched",
         "header-mutation",
-        "automated-service",
+        "unsupported-actor",
     ],
 )
 def test_denied_or_changed_credential_has_zero_effects(

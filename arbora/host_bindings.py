@@ -212,6 +212,11 @@ def mount_sdk_a2a(mcp: Any) -> Any:
     return admitted
 
 
+#: The engine's Cypher dialect requires a MATCH clause: a bare ``RETURN 1`` is
+#: refused (INVALID_ARGUMENT), which held every served pod's readiness at 503.
+ENGINE_PROBE_QUERY = "MATCH (n) RETURN n LIMIT 1"
+
+
 def _engine_probe(session: Any) -> dict[str, Any]:
     from arbora.mcp_server import runtime
 
@@ -221,10 +226,10 @@ def _engine_probe(session: Any) -> dict[str, Any]:
     from arbora.api.contracts.session import use_session
 
     if session is None:
-        engine.query_cypher("RETURN 1 AS ok", {})
+        engine.query_cypher(ENGINE_PROBE_QUERY, {})
     else:
         with use_session(session):
-            engine.query_cypher("RETURN 1 AS ok", {})
+            engine.query_cypher(ENGINE_PROBE_QUERY, {})
     return {"status": "ok"}
 
 

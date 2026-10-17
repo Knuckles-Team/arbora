@@ -749,6 +749,7 @@ def _build_server(
     async def readiness_check(request: Request) -> JSONResponse:  # noqa: ARG001
         from arbora.observability.runtime_health import (
             collect_health_async,
+            failing_checks,
             is_overall_healthy,
             not_served_authorities,
         )
@@ -756,6 +757,10 @@ def _build_server(
         report = await collect_health_async()
         ready = is_overall_healthy(report)
         body: dict[str, Any] = {"status": "ready" if ready else "not_ready"}
+        failing = failing_checks(report)
+        if failing:
+            # Names only (no reasons): the route is unauthenticated for kubelet.
+            body["failing"] = failing
         not_served = not_served_authorities(report)
         if not_served:
             # Names only: authorities this release does not serve (not applicable).

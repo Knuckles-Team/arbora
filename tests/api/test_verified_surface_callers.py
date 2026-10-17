@@ -174,7 +174,9 @@ def test_http_mcp_use_same_b_owned_caller_and_exact_authority():
     assert caller.mfa_at_ms is None
 
 
-@pytest.mark.parametrize("kind", ["service", "unknown", "agent", "system", "", None])
+@pytest.mark.parametrize(
+    "kind", ["service", "automated_service", "unknown", "agent", "system", "", None]
+)
 def test_principal_kind_is_never_inferred(kind):
     import asyncio
 
@@ -184,7 +186,8 @@ def test_principal_kind_is_never_inferred(kind):
     session.actor.actor_type = kind
     http, mcp = adapters(session)
     req = bearer_request((b"authorization", b"Bearer fixture"))
-    if kind == "service":
+    if kind in ("service", "automated_service"):
+        # A client-credentials identity is minted automated_service: a service.
         caller = asyncio.run(http.authenticate(req))
         assert caller == mcp.caller_for_request()
         assert caller.principal_kind == "service"
