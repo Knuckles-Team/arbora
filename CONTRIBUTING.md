@@ -8,13 +8,11 @@ for choosing work.
 
 ## Development setup
 
-Clone the sibling sources next to this checkout (see the
-[public source bootstrap](graph_os/skills/graph-os-development/references/bootstrap.md)),
-then run:
+Every dependency installs from PyPI at the version `uv.lock` pins, so no
+sibling source checkout is needed. Run:
 
 ```bash
-scripts/bootstrap.sh              # uv >= 0.9, pinned Python, sibling links, locked deps, git hooks
-scripts/bootstrap.sh --kernel     # also build epistemic-graph's numeric kernel (full test suite)
+scripts/bootstrap.sh              # uv >= 0.9, pinned Python, locked PyPI deps, git hooks
 scripts/bootstrap.sh --scanners   # also the pinned native scanners (~15 min cold)
 ```
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Repository-local pre-commit hooks that need prerequisites a fresh clone may
-# lack (the sibling source checkouts under .uv-workspace-siblings/ and the
-# synced test environment that scripts/bootstrap.sh provisions).
+# lack (the synced test environment that scripts/bootstrap.sh provisions; every
+# dependency installs from PyPI, so no sibling source checkout is needed).
 #
 #   scripts/local_hook.sh pytest [pytest args...]   full test suite
 #   scripts/local_hook.sh mypy-env                  mypy against the locked environment
@@ -30,21 +30,7 @@ unavailable() {
   esac
 }
 
-# The path sources pyproject.toml declares under [tool.uv.sources].
-declared_siblings() {
-  python3 - <<'PY'
-import tomllib
-sources = tomllib.load(open("pyproject.toml", "rb"))["tool"]["uv"]["sources"]
-for source in sources.values():
-    if "path" in source:
-        print(source["path"])
-PY
-}
-
 require_synced_env() {
-  while read -r sibling; do
-    [ -e "$sibling/pyproject.toml" ] || unavailable "sibling checkout $sibling is missing"
-  done < <(declared_siblings)
   [ -x .venv/bin/python ] || unavailable "the locked test environment (.venv) is not synced"
 }
 
@@ -55,16 +41,9 @@ case "$gate" in
     ;;
   pytest)
     require_synced_env
-    # epistemic-graph is overlaid from source (uv sync --no-install-package
-    # epistemic-graph), exactly as the release workflow does.
-    if ! .venv/bin/python -c "import epistemic_graph" 2>/dev/null; then
-      eg=.uv-workspace-siblings/agent-utilities/.uv-workspace-siblings/epistemic-graph
-      [ -e "$eg/epistemic_graph/__init__.py" ] || unavailable "epistemic-graph source $eg is missing"
-      PYTHONPATH="$(cd "$eg" && pwd)${PYTHONPATH:+:$PYTHONPATH}"
-      export PYTHONPATH
-    fi
+    # The published epistemic-graph wheel carries the numeric kernel.
     .venv/bin/python -c "import epistemic_graph.numeric" 2>/dev/null \
-      || unavailable "the epistemic-graph numeric kernel is not built" "scripts/bootstrap.sh --kernel"
+      || unavailable "the locked epistemic-graph wheel is not installed"
     exec uv run --no-sync python -m pytest "$@"
     ;;
   dependency-readiness)
@@ -76,7 +55,9 @@ case "$gate" in
       fi
     done
     [ -n "$source" ] || unavailable "no repository-manager checkout at .uv-workspace-siblings/repository-manager or ../repository-manager"
-    exec uv run --no-project --python 3.12 --prerelease=allow --with "$source" \
+    # --no-sources: the readiness tool's own agent-utilities requirement
+    # resolves from PyPI, never from a sibling source path it declares.
+    exec uv run --no-project --no-sources --python 3.12 --prerelease=allow --with "$source" \
       python -m repository_manager.dependency_readiness .
     ;;
   *)
