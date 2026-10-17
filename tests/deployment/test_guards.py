@@ -29,6 +29,9 @@ def test_production_profile(monkeypatch, value, production):
     [({"KUBERNETES_SERVICE_HOST": ""}, "not running under Kubernetes")],
 )
 def test_mount_guard_is_not_applicable_outside_a_pod(monkeypatch, env, reason):
+    # CI runs the suite with the skip variable set; this case is about the
+    # pod check itself, so the skip must not answer first.
+    monkeypatch.delenv(lmg._SKIP_ENV_VAR, raising=False)
     for name, value in env.items():
         monkeypatch.setenv(name, value)
     status, detail = lmg.check_live_mount_status()
