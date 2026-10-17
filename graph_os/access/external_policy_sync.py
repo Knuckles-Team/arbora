@@ -17,10 +17,11 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-import os
 import re
 from dataclasses import dataclass, field
 from typing import Any, Protocol, TypedDict
+
+from agent_utilities.core.config import setting
 
 logger = logging.getLogger(__name__)
 
@@ -725,7 +726,7 @@ def external_policy_sync_enabled() -> bool:
     before cutovers are deliberate is the exact "denies Lakekeeper
     access entirely" scenario the lane file warns against."""
     return bool(
-        os.environ.get("EXTERNAL_POLICY_SYNC_ENABLED", "").strip().lower()
+        str(setting("EXTERNAL_POLICY_SYNC_ENABLED", "")).strip().lower()
         in {"1", "true", "yes", "on"}
     )
 
