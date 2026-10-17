@@ -563,6 +563,8 @@ class ReachNotifier:
         }
 
 
-def dispatch_action_notification(spec: NotificationSpec, message: str) -> dict[str, Any]:
+def dispatch_action_notification(
+    spec: NotificationSpec, message: str
+) -> dict[str, Any]:
     """Deliver one completed-Action notification; failures are recorded, not raised."""
     return send_notification(spec, message, ReachNotifier())
