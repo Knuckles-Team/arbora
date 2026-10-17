@@ -184,7 +184,7 @@
         "fd761d59a171"
       ],
       "verified_by": [
-        "tests/deployment/test_component_names_and_scripts.py:40"
+        "tests/deployment/test_component_names_and_scripts.py:41"
       ]
     },
     {
@@ -196,7 +196,7 @@
         "fd761d59a171"
       ],
       "verified_by": [
-        "tests/deployment/test_component_names_and_scripts.py:49"
+        "tests/deployment/test_component_names_and_scripts.py:50"
       ]
     },
     {

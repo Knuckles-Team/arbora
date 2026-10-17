@@ -869,6 +869,7 @@
       "title": "Memory operations — memory slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [
+        "383897ed5238",
         "5ffd23ca7883",
         "8d1bc46ecbdb"
       ],
