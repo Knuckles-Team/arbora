@@ -3,7 +3,7 @@
 CONCEPT:GRAPHOS-HOST.harness.host-bindings
 
 The harness (``agent_utilities``) never serves tools or parses the fleet
-catalog. Its thin client host (``agent_utilities.graphos_client.host``) fails
+catalog. Its thin client host (``agent_utilities.host_ports``) fails
 closed until graph-os installs three bindings:
 
 * a **native toolset provider** that binds a caller-granted subset of
@@ -56,7 +56,7 @@ def fleet_catalog_view(multiplexer: Any) -> Callable[[], Mapping[str, Any]]:
     server under and its resolved (non-secret) client URL. A server whose
     entry cannot be rendered is left out rather than invented.
     """
-    from agent_utilities.graphos_client.host import FleetServer
+    from agent_utilities.host_ports import FleetServer
 
     def view() -> dict[str, FleetServer]:
         from graph_os.fleet.multiplexer import _resolve_runtime_value
@@ -87,7 +87,7 @@ def fleet_catalog_view(multiplexer: Any) -> Callable[[], Mapping[str, Any]]:
 
 def register_harness_host(multiplexer: Any | None = None) -> None:
     """Install graph-os's native toolset, fleet catalog and keepalive bindings."""
-    from agent_utilities.graphos_client import host
+    from agent_utilities import host_ports as host
 
     host.register_native_toolset_provider(
         host.NativeToolsetProvider(
@@ -102,7 +102,7 @@ def register_harness_host(multiplexer: Any | None = None) -> None:
 
 def unregister_harness_host() -> None:
     """Clear every binding graph-os installed."""
-    from agent_utilities.graphos_client import host
+    from agent_utilities import host_ports as host
 
     host.register_native_toolset_provider(None)
     host.register_fleet_catalog_provider(None)

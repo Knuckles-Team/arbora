@@ -6,7 +6,7 @@ import contextlib
 from types import SimpleNamespace
 
 import pytest
-from agent_utilities.graphos_client import host
+from agent_utilities import host_ports as host
 
 from graph_os.mcp_server import harness_host, runtime
 
