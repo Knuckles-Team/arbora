@@ -903,7 +903,7 @@ def _environment_values() -> dict[str, Any]:
 
 @cache
 def _adapter(name: str) -> TypeAdapter[Any]:
-    return TypeAdapter(GraphOSConfig.model_fields[name].annotation)
+    return TypeAdapter(GraphOSConfig.model_fields[name].annotation or Any)
 
 
 def read_field(name: str) -> Any:

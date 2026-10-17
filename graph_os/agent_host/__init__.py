@@ -9,8 +9,11 @@ the composition order) instead of importing agent-utilities directly.
 
 Scope of this first increment (the AU-BOUNDARY-R015 pilot slice): GraphOS
 owns the HTTP shell -- health, agent-card discovery, and a bounded A2A
-``message/send`` exchange. The connector supplies its graph bundle and
-its executor; GraphOS builds no agent of its own. Deliberately NOT ported in this increment, matching
+``message/send`` exchange. Agent/model construction stays with
+agent-utilities' public API (``agent_utilities.create_graph_agent`` /
+``initialize_graph_from_workspace`` and ``agent_utilities.graph.execute_graph``),
+which remains the agent orchestration authority per both repositories'
+``AGENTS.md``. Deliberately NOT ported in this increment, matching
 GRAPHOS-HOST-R009's own scope cut:
 
 - the EG-backed broker/durable task store AU's ``protocols/a2a_epistemic``
@@ -61,13 +64,12 @@ AgentExecutor = Callable[[Any, dict, str], dict]
 
 
 def _default_executor(graph: Any, graph_config: dict, query: str) -> dict:
-    """Refuse a run when the connector injected no executor.
+    """Run one query through agent-utilities' public execution port."""
+    import asyncio
 
-    The cut agent-utilities harness ships no graph execution port, so the
-    connector passes its own ``executor``.
-    """
-    del graph, graph_config, query
-    raise HostInterfaceUnavailable("executor_unavailable")
+    from agent_utilities.graph import execute_graph
+
+    return asyncio.run(execute_graph(graph, graph_config, query))
 
 
 def _extract_text(message: dict[str, Any]) -> str:
@@ -295,9 +297,30 @@ def create_agent_server(
         raise HostInterfaceUnavailable("client_unavailable")
 
     if graph is None or graph_config is None:
-        # The cut agent-utilities harness builds no graph; the connector
-        # supplies its own graph bundle.
-        raise HostInterfaceUnavailable("agent_unavailable")
+        from agent_utilities import create_graph_agent, initialize_workspace
+
+        if workspace:
+            initialize_workspace()
+        if tag_prompts:
+            graph, graph_config = create_graph_agent(
+                tag_prompts=tag_prompts,
+                tag_env_vars=tag_env_vars,
+                mcp_url=mcp_url,
+                mcp_config=mcp_config,
+                name=graph_name,
+                router_model=router_model,
+                agent_model=agent_model,
+                min_confidence=min_confidence,
+            )
+        else:
+            from agent_utilities import initialize_graph_from_workspace
+
+            graph, graph_config = initialize_graph_from_workspace(
+                mcp_config=mcp_config,
+                router_model=router_model,
+                agent_model=agent_model,
+                workspace=workspace,
+            )
 
     app = build_agent_host_app(
         graph=graph,

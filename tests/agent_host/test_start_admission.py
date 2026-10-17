@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import Mock
 
+import agent_utilities
 import pytest
 import uvicorn
 
@@ -135,6 +136,12 @@ def test_grant_mismatch_refuses_before_host_effects(
     build = Mock(side_effect=AssertionError("host built"))
     monkeypatch.setattr(host, "build_agent_host_app", build)
     effects = Mock(side_effect=AssertionError("startup effect"))
+    for name in (
+        "initialize_workspace",
+        "create_graph_agent",
+        "initialize_graph_from_workspace",
+    ):
+        monkeypatch.setattr(agent_utilities, name, effects)
     monkeypatch.setattr(uvicorn, "run", effects)
     with pytest.raises(PermissionError):
         host.create_agent_server(

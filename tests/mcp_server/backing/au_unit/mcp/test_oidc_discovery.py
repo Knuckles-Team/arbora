@@ -7,8 +7,8 @@ the same plumbing (no vendor-specific paths in config).
 
 from __future__ import annotations
 
+import argparse
 import time
-from types import SimpleNamespace
 
 import pytest
 
@@ -99,7 +99,7 @@ def test_server_factory_discovers_jwks(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.delenv("FASTMCP_SERVER_AUTH_JWT_JWKS_URI", raising=False)
     monkeypatch.delenv("OIDC_ISSUER", raising=False)
-    args = SimpleNamespace(
+    args = argparse.Namespace(
         token_jwks_uri=None,
         token_issuer=ISS,
         token_audience="agent-services",

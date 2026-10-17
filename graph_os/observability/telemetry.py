@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 import threading
-from typing import Any
+from typing import Any, cast
 
 from graph_os.core.settings import setting
 
@@ -74,7 +74,8 @@ def configure_standard_otel(*, service_name: str = "graph-os") -> bool:
         provider = TracerProvider(
             resource=Resource.create({"service.name": service_ref})
         )
-        provider.add_span_processor(BatchSpanProcessor(exporter))
+        # The exporter implements the SpanExporter protocol by duck typing.
+        provider.add_span_processor(BatchSpanProcessor(cast(Any, exporter)))
         trace.set_tracer_provider(provider)
         _provider = provider
         return True

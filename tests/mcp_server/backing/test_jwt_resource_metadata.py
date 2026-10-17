@@ -14,8 +14,8 @@ returned unwrapped (today's exact behavior, additive and backward compatible).
 
 from __future__ import annotations
 
+import argparse
 import asyncio
-from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -23,7 +23,7 @@ import pytest
 from graph_os.mcp_server.backing.server_factory import _configure_jwt_auth
 
 
-def _args(**kw: object) -> SimpleNamespace:
+def _args(**kw: object) -> argparse.Namespace:
     # NOTE: fake issuer/JWKS URLs below use https:// — ``_secure_auth_url``
     # requires HTTPS for any non-loopback hostname (AU-OS.identity hardening).
     base: dict[str, object] = {
@@ -37,7 +37,7 @@ def _args(**kw: object) -> SimpleNamespace:
         "public_base_url": None,
     }
     base.update(kw)
-    return SimpleNamespace(**base)
+    return argparse.Namespace(**base)
 
 
 def test_public_base_url_unset_returns_bare_verifier() -> None:

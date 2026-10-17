@@ -619,7 +619,7 @@ def _condensed_entries_from_registrars(
     entries: list[tuple[str, str, Any]] = []
     for item in registrars or []:
         if isinstance(item, tuple):
-            entries.append(item)  # type: ignore[arg-type]
+            entries.append(item)
             continue
         name = getattr(item, "__name__", "")
         match = re.fullmatch(r"register_(.+)_tools", name)
@@ -646,7 +646,7 @@ def _condensed_entries(
       ``(tag, env_var, fn)`` tuple.
     """
     if tool_registry:
-        return [tuple(e) for e in tool_registry]  # type: ignore[misc]
+        return [tuple(e) for e in tool_registry]
     if tools_module is not None:
         return _condensed_entries_from_module(tools_module)
     return _condensed_entries_from_registrars(registrars)

@@ -26,7 +26,7 @@ import threading
 from collections.abc import Collection, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
@@ -158,7 +158,9 @@ def _capture_kinds() -> tuple[Any, ...]:
 
     class PackResourceKind(ResourceArtifactKind):
         async def list_entries(self, session: Any, server: Any) -> Any:
-            return await super().list_entries(_PackResourceSession(session), server)
+            # The view implements the McpSession reads by duck typing.
+            view = cast(Any, _PackResourceSession(session))
+            return await super().list_entries(view, server)
 
     return (
         ToolArtifactKind(),

@@ -205,7 +205,7 @@ class VaultBackend(SecretsBackend):
     ) -> None:
         self._user_token = user_token or (lambda: None)
         try:
-            import hvac  # type: ignore[import-untyped]
+            import hvac
         except ImportError as exc:
             raise ImportError(
                 "The 'hvac' package is required for the Vault backend. "

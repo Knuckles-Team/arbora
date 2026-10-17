@@ -312,7 +312,7 @@ def _validate_against_model(field_name: str, value: Any) -> Any:
 
     info = AgentConfig.model_fields[field_name]
     try:
-        return TypeAdapter(info.annotation).validate_python(value)
+        return TypeAdapter(info.annotation or Any).validate_python(value)
     except ValidationError as exc:
         raise ConfigAdminError(
             "validation_failed",

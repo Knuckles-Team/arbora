@@ -22,6 +22,7 @@ DESTRUCTIVE branches did not.
 from __future__ import annotations
 
 import tempfile
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -29,7 +30,7 @@ import pytest
 
 class _MockMCP:
     def __init__(self) -> None:
-        self.funcs = {}
+        self.funcs: dict[str, Any] = {}
 
     def tool(self, *args, **kwargs):
         def decorator(fn):

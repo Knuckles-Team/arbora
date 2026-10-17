@@ -843,10 +843,21 @@ def _project_langfuse_trust(
     trust: ResolvedTLSProfile, target_env: MutableMapping[str, str]
 ) -> None:
     """Project only concrete runtime trust material into one process boundary."""
-    for key, value in trust.child_env(service="LANGFUSE").items():
-        if key == "UV_NATIVE_TLS":
-            continue
-        target_env[key] = value
+    if trust.ca_bundle_path is not None:
+        target_env["REQUESTS_CA_BUNDLE"] = str(trust.ca_bundle_path)
+        target_env["SSL_CERT_FILE"] = str(trust.ca_bundle_path)
+    if trust.ca_directory is not None:
+        target_env["SSL_CERT_DIR"] = str(trust.ca_directory)
+    if trust.proxy_url:
+        target_env["HTTPS_PROXY"] = trust.proxy_url
+        target_env["HTTP_PROXY"] = trust.proxy_url
+    if trust.no_proxy:
+        target_env["NO_PROXY"] = trust.no_proxy
+    if trust.client_bundle_path is not None:
+        # One combined PEM serves as both certificate and key, so the child
+        # rebuilds its TLS context without a password or a secret reference.
+        target_env["LANGFUSE_CLIENT_CERT"] = str(trust.client_bundle_path)
+        target_env["LANGFUSE_CLIENT_KEY"] = str(trust.client_bundle_path)
 
 
 def configure_langfuse_trust(

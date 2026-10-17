@@ -11,6 +11,7 @@ import json
 import os
 import stat
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -19,7 +20,7 @@ from graph_os.mcp_server.backing.tools import analysis_tools
 
 class _FakeMCP:
     def __init__(self) -> None:
-        self.tools: dict[str, object] = {}
+        self.tools: dict[str, Any] = {}
 
     def tool(self, *, name: str, description: str = "", tags=None):
         def _decorator(fn):

@@ -14,6 +14,8 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock
 
+import pytest
+
 import graph_os.fleet.multiplexer as multiplexer_module
 from graph_os.fleet.local_skill_catalog import LOCAL_SKILLS_SERVER
 from tests.fleet.test_multiplexer_dynamic_gateway import (
@@ -27,6 +29,7 @@ def _fixture_local_catalog(entries):
     return lambda: (entries, [])
 
 
+@pytest.mark.spec("GRAPHOS-FLEET-R025")
 async def test_discover_tools_ranks_a_local_skill_with_fleet_tools(
     tmp_path, monkeypatch
 ):
@@ -139,6 +142,7 @@ async def test_local_skill_shadows_a_fleet_harvested_skill_of_the_same_name(
     assert skill_hits[0]["description"] == "the local, installed-package version"
 
 
+@pytest.mark.spec("GRAPHOS-FLEET-R025")
 async def test_catalog_fleet_probe_lists_local_skills_without_a_query(
     tmp_path, monkeypatch
 ):

@@ -7,15 +7,15 @@ realm migration (trust both realms, flip the minter, drop the old realm).
 
 from __future__ import annotations
 
+import argparse
 import asyncio
-from types import SimpleNamespace
 
 import pytest
 
 from graph_os.mcp_server.backing.server_factory import _configure_jwt_auth
 
 
-def _args(**kw: object) -> SimpleNamespace:
+def _args(**kw: object) -> argparse.Namespace:
     # NOTE: fake issuer/JWKS URLs below use https:// — ``_secure_auth_url``
     # requires HTTPS for any non-loopback hostname (AU-OS.identity hardening).
     base: dict[str, object] = {
@@ -28,7 +28,7 @@ def _args(**kw: object) -> SimpleNamespace:
         "required_scopes": None,
     }
     base.update(kw)
-    return SimpleNamespace(**base)
+    return argparse.Namespace(**base)
 
 
 def test_single_realm_returns_plain_jwtverifier() -> None:

@@ -147,6 +147,8 @@ def _resolve_callable(node: ast.AST, namespace: dict[str, object]) -> object | N
 
 
 def _source_tree(func: object) -> ast.Module | None:
+    if not callable(func):
+        return None
     try:
         import textwrap
 
@@ -155,7 +157,7 @@ def _source_tree(func: object) -> ast.Module | None:
         return None
 
 
-def _assignment_targets(node: ast.Assign | ast.AnnAssign) -> list[ast.AST]:
+def _assignment_targets(node: ast.Assign | ast.AnnAssign) -> list[ast.expr]:
     return node.targets if isinstance(node, ast.Assign) else [node.target]
 
 
@@ -193,6 +195,8 @@ def _returned_mapping_keys(func: object) -> set[str]:
 
 
 def _parameter_names(func: object) -> list[str]:
+    if not callable(func):
+        return []
     try:
         return list(inspect.signature(func).parameters)
     except (TypeError, ValueError):

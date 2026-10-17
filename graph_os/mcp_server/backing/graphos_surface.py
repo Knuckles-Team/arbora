@@ -214,7 +214,8 @@ def host_operations(mcp: Any) -> Mapping[str, tuple[str, str | None]]:
     for name, tool in backing_tools(mcp).items():
         if name in manifest_tools:
             continue
-        for action in _action_enum(tool) or [None]:
+        actions: list[str | None] = list(_action_enum(tool)) or [None]
+        for action in actions:
             table[operation_id(name, action)] = (name, action)
     return MappingProxyType(table)
 

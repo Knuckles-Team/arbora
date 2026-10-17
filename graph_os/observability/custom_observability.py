@@ -94,7 +94,7 @@ __all__ = [
 
 logfire: Any
 try:
-    import logfire  # type: ignore[no-redef]  # annotated above as Any for the ImportError fallback
+    import logfire
 except ImportError:
     logfire = None
 

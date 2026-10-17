@@ -229,13 +229,19 @@ def _engine_probe(session: Any) -> dict[str, Any]:
 
 def _fleet_probe(session: Any) -> dict[str, Any]:
     from graph_os.api.contracts.session import use_session
+    from graph_os.fleet.health import collect_fleet_health
     from graph_os.gateway import fleet as fleet_api
 
+    def _collect() -> Any:
+        return collect_fleet_health(
+            fleet_api._fleet_authorities(), scope_resolver=fleet_api._tenant_scope
+        )
+
     if session is None:
-        snapshot = fleet_api.collect_fleet_health()
+        snapshot = _collect()
     else:
         with use_session(session):
-            snapshot = fleet_api.collect_fleet_health()
+            snapshot = _collect()
     detail = snapshot.evidence.model_dump(mode="json")
     if snapshot.evidence.ready:
         return {"status": "ok", "detail": detail}

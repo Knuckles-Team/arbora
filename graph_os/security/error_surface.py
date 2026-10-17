@@ -145,7 +145,7 @@ def is_engine_degraded(exc: BaseException) -> bool:
     ``public_error_payload`` is the canonical OperationResult-shaped boundary
     for the ~200+ ``except Exception: return public_error_json(e)`` call
     sites, but it is not the ONLY place a per-target/per-row failure gets
-    collapsed to a caller-facing label — ``agent_utilities.mcp.kg_server.
+    collapsed to a caller-facing label — ``graph_os.mcp_server.backing.
     fanout_execute`` (and its direct-call "primary target" mirrors in
     ``query_tools.py``) reduce a raised exception to a bare string, outside
     the ``OperationResult``/``OperationError`` schema entirely. Those sites
@@ -237,7 +237,7 @@ def register_detail_persistence_sink(sink: Any | None) -> None:
     (``agent_utilities.observability.error_detail_sink.GraphErrorDetailSink``,
     a KG-provenance writer linking the detail to the failing operation's
     ``:RunTrace``) is left to the process that wants durability past this
-    process's lifetime; see ``agent_utilities.gateway.daemon.start_host_daemon``
+    process's lifetime; see ``graph_os.gateway.daemon.start_host_daemon``
     for where the host daemon installs it.
 
     If ``sink`` also defines ``resolve(correlation_id) -> dict | None``,

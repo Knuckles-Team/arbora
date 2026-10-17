@@ -29,7 +29,7 @@ import concurrent.futures
 import functools
 import logging
 from collections.abc import Callable
-from typing import Any, TypeVar
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -39,15 +39,13 @@ __all__ = [
     "run_sync_isolated",
 ]
 
-_T = TypeVar("_T")
-
 
 async def run_blocking_ordered[T](
-    fn: Callable[..., _T],
+    fn: Callable[..., T],
     /,
     *args: Any,
     **kwargs: Any,
-) -> _T:
+) -> T:
     """Run synchronous work off the event loop without orphaning its completion.
 
     ``asyncio.to_thread`` keeps the server loop responsive and copies the current
@@ -131,7 +129,7 @@ def allow_nested_run_sync() -> None:
         )
 
 
-def run_sync_isolated[T](fn: Callable[[], _T]) -> _T:
+def run_sync_isolated[T](fn: Callable[[], T]) -> T:
     """Run a blocking ``asyncio.run``-based callable (e.g. ``Agent.run_sync``)
     safely regardless of whether the calling thread already has a running loop.
 

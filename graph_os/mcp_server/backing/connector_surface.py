@@ -149,8 +149,8 @@ def describe_operations(
 
     if not target:
         grouped: dict[str, list[str]] = {}
-        for op in operations.values():
-            grouped.setdefault(op.tool, []).append(op.id)
+        for each in operations.values():
+            grouped.setdefault(each.tool, []).append(each.id)
         return {"operations": grouped}
     op = operations.get(target)
     if op is None:
