@@ -275,10 +275,12 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "4b83c69e2b41",
-        "97061e59c412"
+        "97061e59c412",
+        "cc8a618e0ce5"
       ],
       "verified_by": [
         "tests/api/test_eg_binding.py:133",
+        "tests/api/test_eg_binding.py:204",
         "tests/api/test_eg_binding.py:88"
       ]
     },
