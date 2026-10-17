@@ -132,7 +132,7 @@ async def test_reach_user_uses_last_active_channel(svc: MessagingService) -> Non
     res = await svc.reach_user("hello", user_id="u1")
     assert res.success
     backend = await svc.get_backend("telegram")
-    assert backend is not None
+    assert isinstance(backend, _FakeBackend)
     assert backend.sent[-1] == ("555", "hello")
 
 
@@ -145,7 +145,7 @@ async def test_reach_user_falls_back_to_default_channel(
     res = await svc.reach_user("yo", user_id="unknown-user")
     assert res.success
     backend = await svc.get_backend("telegram")
-    assert backend is not None
+    assert isinstance(backend, _FakeBackend)
     assert backend.sent[-1] == ("999", "yo")
 
 

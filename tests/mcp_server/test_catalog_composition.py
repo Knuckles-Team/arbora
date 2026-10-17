@@ -8,9 +8,18 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
+from agent_utilities.api.catalog import AgentCatalogRecord, WorkflowCatalogRecord
 
 from graph_os.fleet.catalog_reader import DeferredFleetCatalogReader
 from graph_os.mcp_server import catalog_composition as composition
+
+
+class CatalogPorts:
+    async def list_current_workflows(self) -> list[WorkflowCatalogRecord]:
+        return []
+
+    async def list_authorized_agents(self) -> list[AgentCatalogRecord]:
+        return []
 
 
 class GraphCompute:
@@ -54,8 +63,8 @@ async def test_startup_injects_generated_clients_and_public_catalog_ports(
     engine = SimpleNamespace(graph_compute=compute)
     deferred = DeferredFleetCatalogReader()
     mux = Multiplexer()
-    workflows = object()
-    agents = object()
+    workflows = CatalogPorts()
+    agents = CatalogPorts()
     installed: list[Any] = []
 
     monkeypatch.setattr(
@@ -144,7 +153,10 @@ async def test_failed_initial_refresh_aborts_startup_without_static_fallback(
             session=Session(),
             deferred_fleet=deferred,
             multiplexer=Multiplexer(fail=True),
-            catalog_ports_factory=lambda engine, session: (object(), object()),
+            catalog_ports_factory=lambda engine, session: (
+                CatalogPorts(),
+                CatalogPorts(),
+            ),
             bind_graph=lambda graph: contextlib.nullcontext(),
         )
 

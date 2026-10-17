@@ -4,6 +4,7 @@ guarded, with bound commit/publish providers and task-planner lookups."""
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Sequence
 from types import SimpleNamespace
 
 from agent_utilities.decide.consumers import assembly, task_planner, topology
@@ -198,12 +199,15 @@ def test_unsolved_assembly_is_never_committed() -> None:
     assert graphs.published == []
 
 
-class _FakeAssembler:
+class _FakeAssembler(assembly.Assembler):
     """A minimal assembler stand-in: ``assemble_mapped`` only, no topology."""
 
-    tenant = "tenant-x"
+    def __init__(self) -> None:
+        super().__init__(graphs=object(), tenant="tenant-x")
 
-    async def assemble_mapped(self, goal: str, mapped: list[str]):
+    async def assemble_mapped(
+        self, goal: str, mapped: Sequence[str]
+    ) -> assembly.Assembled:
         return assembly.Assembled(
             result={
                 "record": {"outcome": {"outcome": "solved", "reasons": []}},

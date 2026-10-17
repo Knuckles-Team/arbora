@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from agent_utilities.messaging.base import MessagingBackend
+from agent_utilities.messaging.capabilities import MessagingCapabilities
 from agent_utilities.messaging.models import SendResult
 
 
@@ -18,14 +20,26 @@ def synthetic_token(*parts: str) -> str:
     return "".join(parts)
 
 
-class FakeMessagingBackend:
+class FakeMessagingBackend(MessagingBackend):
     """Minimal connected backend that records sends and supports reply_to."""
 
     def __init__(self, platform: str = "telegram") -> None:
-        self.id = platform
+        super().__init__()
+        self._platform = platform
         self._connected = True
         self.sent: list[tuple[str, str]] = []
         self.replies: list[tuple[str, str, str]] = []
+
+    @property
+    def id(self) -> str:
+        return self._platform
+
+    @property
+    def capabilities(self) -> MessagingCapabilities:
+        return MessagingCapabilities(send_text=True)
+
+    async def connect(self) -> None:
+        self._connected = True
 
     @property
     def is_connected(self) -> bool:
