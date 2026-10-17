@@ -622,12 +622,6 @@ class WorkItemTasksExtension(ServerExtension):
             )
 
     @staticmethod
-    def _repository_task_id(task_id: str) -> bool:
-        """Return whether an ID belongs to the RMDD repository namespace."""
-
-        return task_id.startswith(("rmjob:", "workitem:repository_manager:"))
-
-    @staticmethod
     def _actor_id(session: Any) -> str:
         actor = getattr(session, "actor", None)
         actor_id = str(getattr(actor, "actor_id", "") or "").strip()
@@ -824,7 +818,8 @@ class WorkItemTasksExtension(ServerExtension):
 
     @staticmethod
     def _configured_issuers() -> set[str]:
-        from agent_utilities.core.config import config, setting
+        from graph_os.core.settings import runtime_config as config
+        from graph_os.core.settings import setting
 
         expected_issuer = (
             getattr(config, "auth_jwt_issuer", None)
@@ -841,7 +836,8 @@ class WorkItemTasksExtension(ServerExtension):
 
     @staticmethod
     def _configured_audiences() -> set[str]:
-        from agent_utilities.core.config import config, setting
+        from graph_os.core.settings import runtime_config as config
+        from graph_os.core.settings import setting
 
         expected_audience = (
             getattr(config, "auth_jwt_audience", None)
@@ -892,8 +888,7 @@ class WorkItemTasksExtension(ServerExtension):
         stable protocol error as every other failure mode on this path if
         resolution itself fails."""
         try:
-            from agent_utilities.core.config import config
-
+            from graph_os.core.settings import runtime_config as config
             from graph_os.security.identity import normalize_identity
 
             identity = normalize_identity(claims)
@@ -1240,40 +1235,6 @@ class WorkItemTasksExtension(ServerExtension):
             raise mcp_protocol_exception(-32603, "IntelligenceGraphEngine not active.")
         return getattr(engine, "_work_item_engine", engine)
 
-    @staticmethod
-    def _run_trace(task_id: str) -> dict[str, Any] | None:
-        """Best-effort ``:RunTrace`` lookup for ``task_id`` (D-25-4).
-
-        ``None`` on ANY failure (no active engine, no correlated trace) --
-        this is a best-effort enrichment layered on top of the WorkItem
-        outcome that already answers a completed task authoritatively; a
-        RunTrace lookup hiccup must never turn an otherwise-successful
-        ``tasks/get`` read into an error.
-        """
-        try:
-            from agent_utilities.orchestration.manager import Orchestrator
-
-            from graph_os.mcp_server import runtime
-
-            engine = runtime._get_engine()
-            if engine is None:
-                return None
-            trace = Orchestrator(engine).get_run_trace(task_id)
-        except Exception as exc:  # noqa: BLE001 — best-effort enrichment, see docstring
-            logger.warning(
-                "tasks_extension: RunTrace lookup for task %s failed: %s",
-                task_id,
-                type(exc).__name__,
-            )
-            return None
-        # `get_run_trace`'s found-path always stamps `trace_id` -- the
-        # unambiguous "this really is a RunTrace row" signal (its `status`
-        # field is otherwise indistinguishable from a legitimate run outcome
-        # value like "succeeded"/"failed").
-        if "trace_id" not in trace:
-            return None
-        return trace
-
     async def _handle_get(
         self, ctx: ServerRequestContext[Any, Any], params: _GetTaskParams
     ) -> _GetTaskResult:
@@ -1297,11 +1258,16 @@ class WorkItemTasksExtension(ServerExtension):
         if route is not None and route["server"] != self.server_id:
             return await self._forward("tasks/cancel", params, session, route)
 
-        if self._repository_task_id(params.task_id):
-            return self._cancel_repository(params.task_id, session=session, route=route)
+        from agent_utilities.knowledge_graph.core import work_durability as _wi
 
-        raise not_served(
-            "knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605"
+        item_id = self._owned_work_item_id(params.task_id, session)
+        if not _wi.cancel_work_item(self._engine(), item_id):
+            raise mcp_protocol_exception(-32602, "Failed to cancel task")
+        current = _wi.get_work_item(self._engine(), item_id)
+        if current is None:
+            raise mcp_protocol_exception(-32602, "Task disappeared after cancellation")
+        return self._ack_from_generic_item(
+            params.task_id, current, session=session, route=route
         )
 
     def _owned_work_item_id(self, task_id: str, session: Any) -> str:
@@ -1321,16 +1287,21 @@ class WorkItemTasksExtension(ServerExtension):
         if route is not None and route["server"] != self.server_id:
             return await self._forward("tasks/update", params, session, route)
 
-        if self._repository_task_id(params.task_id):
-            return self._update_repository(
-                params.task_id,
-                params.input_responses,
-                session=session,
-                route=route,
-            )
+        from agent_utilities.knowledge_graph.core import work_durability as _wi
 
-        raise not_served(
-            "knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605"
+        item_id = self._owned_work_item_id(params.task_id, session)
+        if not _wi.submit_work_item_input(
+            self._engine(),
+            item_id,
+            tenant=session.tenant,
+            response=params.input_responses,
+        ):
+            raise mcp_protocol_exception(-32602, "Failed to submit task input")
+        current = _wi.get_work_item(self._engine(), item_id)
+        if current is None:
+            raise mcp_protocol_exception(-32602, "Task disappeared after input update")
+        return self._ack_from_generic_item(
+            params.task_id, current, session=session, route=route
         )
 
     def _project(
@@ -1340,16 +1311,17 @@ class WorkItemTasksExtension(ServerExtension):
         session: Any | None = None,
         route: Mapping[str, Any] | None = None,
     ) -> _GetTaskResult:
-        if self._repository_task_id(task_id):
-            if session is None:
-                raise mcp_protocol_exception(
-                    -32001, "Verified task owner is required for repository tasks"
-                )
-            return self._project_repository(task_id, session=session, route=route)
+        from agent_utilities.knowledge_graph.core import work_durability as _wi
 
-        raise not_served(
-            "knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605"
-        )
+        item_id = _wi.orchestrator_work_item_id(task_id)
+        item = _wi.get_work_item(self._engine(), item_id)
+        if item is None:
+            raise mcp_protocol_exception(-32602, "Unknown task")
+        if session is not None and item.get("tenant") != session.tenant:
+            raise mcp_protocol_exception(-32602, "Unknown task")
+        str(item.get("status") or "").lower()
+        metadata = item.get("metadata")
+        (metadata.get("pending_input_request") if isinstance(metadata, dict) else None)
 
     @staticmethod
     def _map_work_item_status(raw_status: str, pending: Any) -> str:
@@ -1368,27 +1340,7 @@ class WorkItemTasksExtension(ServerExtension):
     def _completed_task_payload(
         self, task_id: str, item: Mapping[str, Any]
     ) -> dict[str, Any]:
-        # D-25-4: `result_ref` is only ever an opaque completion marker
-        # (e.g. "orchestrator:<job>:completed") -- never the real agent
-        # output. `_execute_orchestrator_turn` pins the run's :RunTrace to
-        # THIS SAME task_id (`run_id=envelope.job_id`), so the real output
-        # is one more read away via the SAME `Orchestrator.get_run_trace`
-        # `graph_jobs(action="status", job_id="trace:...")` already uses --
-        # this module has direct engine access (unlike the isolated
-        # gateway sidecar), so it calls it in-process rather than proxying
-        # through another tool call.
-        trace = self._run_trace(task_id)
         ref = item.get("result_ref")
-        if trace is not None and trace.get("result_preview"):
-            return {
-                "resultPreview": trace["result_preview"],
-                "runId": trace.get("run_id") or task_id,
-            }
-        if trace is not None and trace.get("error"):
-            return {
-                "error": trace["error"],
-                "runId": trace.get("run_id") or task_id,
-            }
         if ref is not None:
             return {"resultRef": ref}
         return {"status": "completed"}
@@ -1407,232 +1359,6 @@ class WorkItemTasksExtension(ServerExtension):
             result.result = self._completed_task_payload(task_id, item)
         elif status == "failed":
             result.error = {"code": -32603, "message": "GraphOS WorkItem failed"}
-
-    def _repository_view(self, task_id: str, session: Any) -> Any:
-        """Load one repository view under the verified tenant and owner."""
-
-        from agent_utilities.orchestration.repository_work_item import (
-            get_repository_work_item,
-        )
-
-        try:
-            view = get_repository_work_item(
-                self._engine(),
-                task_id,
-                tenant=session.tenant,
-                owner_id=self._actor_id(session),
-            )
-        except (TypeError, ValueError, PermissionError):
-            view = None
-        if view is None:
-            # Deliberately collapse unknown, wrong-tenant, wrong-owner, and
-            # malformed namespace IDs into one response so task existence is
-            # not an oracle across tenants or actors.
-            raise mcp_protocol_exception(-32602, "Unknown task")
-        return view
-
-    @staticmethod
-    def _repository_raw_item(engine: Any, view: Any) -> Mapping[str, Any]:
-        raise not_served(
-            "knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605"
-        )
-
-    @staticmethod
-    def _repository_status(raw_state: Any) -> str:
-        state = str(raw_state or "").lower()
-        if state in _WORKING_RAW_STATUSES:
-            return "working"
-        if state == "succeeded":
-            return "completed"
-        if state in {"failed", "dead-letter", "dead_letter"}:
-            return "failed"
-        if state == "cancelled":
-            return "cancelled"
-        raise mcp_protocol_exception(-32603, "Unknown repository WorkItem status")
-
-    @staticmethod
-    def _repository_domain_payload(view: Any) -> dict[str, Any]:
-        from agent_utilities.orchestration.repository_work_item import (
-            repository_result_from_view,
-        )
-
-        # The adapter is the authority for parsing domain reason/refusal
-        # fields from the opaque error reference.  Keep the payload bounded to
-        # that typed result, which contains only immutable correlations and
-        # opaque artifact/result references (never command bodies or logs).
-        payload = repository_result_from_view(view).model_dump(
-            mode="json", exclude_none=True
-        )
-        # Keep the typed domain projection intact while exposing the stable
-        # camelCase names MCP clients expect for the correlations most often
-        # consumed by a result renderer.
-        aliases = {
-            "job_id": "jobId",
-            "work_item_id": "workItemId",
-            "request_id": "requestId",
-            "repository_id": "repositoryId",
-            "tenant_id": "tenantId",
-            "result_ref": "resultRef",
-            "error_ref": "errorRef",
-            "failure_class": "failureClass",
-            "refusal_code": "refusalCode",
-        }
-        for source, alias in aliases.items():
-            if source in payload:
-                payload[alias] = payload[source]
-        return payload
-
-    def _project_repository(
-        self,
-        task_id: str,
-        *,
-        session: Any,
-        route: Mapping[str, Any] | None,
-    ) -> _GetTaskResult:
-        view = self._repository_view(task_id, session)
-        raw = self._repository_raw_item(self._engine(), view)
-        status, input_request = self._resolve_repository_status(raw, view)
-        created_at = raw.get("created_at") if isinstance(raw, Mapping) else None
-        updated_at = raw.get("updated_at") if isinstance(raw, Mapping) else None
-        result = _GetTaskResult(
-            task_id=task_id,
-            status=status,
-            created_at=_iso_timestamp(created_at),
-            last_updated_at=_iso_timestamp(updated_at),
-            ttl_ms=None,
-            _meta=self._response_meta(session, route),
-        )
-        self._apply_repository_status_payload(result, status, view, input_request)
-        return result
-
-    def _resolve_repository_status(
-        self, raw: Mapping[str, Any], view: Any
-    ) -> tuple[str, Mapping[str, Any] | None]:
-        status = self._repository_status(view.state)
-        pending = raw.get("metadata") if isinstance(raw, Mapping) else None
-        pending_request = (
-            pending.get("pending_input_request")
-            if isinstance(pending, Mapping)
-            else None
-        )
-        # Narrowed once here (rather than re-checked via the bare `status ==
-        # "input_required"` below) so mypy — and the reader — can see that
-        # `input_request` is only ever a Mapping when it is actually used.
-        input_request: Mapping[str, Any] | None = None
-        if status == "working" and isinstance(pending_request, Mapping):
-            status = "input_required"
-            input_request = pending_request
-        return status, input_request
-
-    def _apply_repository_status_payload(
-        self,
-        result: _GetTaskResult,
-        status: str,
-        view: Any,
-        input_request: Mapping[str, Any] | None,
-    ) -> None:
-        if status == "input_required" and input_request is not None:
-            result.status_message = "Repository WorkItem is waiting for input"
-            result.input_requests = {"request": dict(input_request)}
-        elif status == "completed":
-            result.result = self._repository_domain_payload(view)
-        elif status == "failed":
-            domain = self._repository_domain_payload(view)
-            result.error = {
-                "code": -32603,
-                "message": "Repository WorkItem failed",
-                "failureClass": domain.get("failure_class"),
-                "refusalCode": domain.get("refusal_code"),
-                "errorRef": domain.get("error_ref"),
-                "result": domain,
-            }
-
-    def _ack_from_view(
-        self,
-        task_id: str,
-        view: Any,
-        *,
-        session: Any,
-        route: Mapping[str, Any] | None,
-        status_message: str | None = None,
-    ) -> _AckResult:
-        raw = self._repository_raw_item(self._engine(), view)
-        status = self._repository_status(view.state)
-        pending = raw.get("metadata") if isinstance(raw, Mapping) else None
-        if (
-            status == "working"
-            and isinstance(pending, Mapping)
-            and isinstance(pending.get("pending_input_request"), Mapping)
-        ):
-            status = "input_required"
-        return _AckResult(
-            task_id=task_id,
-            status=status,
-            status_message=status_message,
-            created_at=_iso_timestamp(raw["created_at"]),
-            last_updated_at=_iso_timestamp(raw["updated_at"]),
-            ttl_ms=None,
-            _meta=self._response_meta(session, route),
-        )
-
-    def _cancel_repository(
-        self,
-        task_id: str,
-        *,
-        session: Any,
-        route: Mapping[str, Any] | None,
-    ) -> _AckResult:
-        from agent_utilities.orchestration.repository_work_item import (
-            cancel_repository_work_item,
-        )
-
-        # Read through the owner filter before invoking the adapter mutation.
-        # The second read below makes a worker-vs-cancel race truthful: the
-        # response reports the durable winner, rather than claiming cancelled
-        # merely because our CAS was attempted.
-        self._repository_view(task_id, session)
-        cancelled = cancel_repository_work_item(
-            self._engine(), task_id, tenant=session.tenant
-        )
-        after = self._repository_view(task_id, session)
-        if after is None:  # pragma: no cover - defensive; _repository_view raises
-            raise mcp_protocol_exception(-32602, "Unknown task")
-        if not cancelled:
-            state = self._repository_status(after.state)
-            if state in {"completed", "failed", "cancelled"}:
-                return self._ack_from_view(
-                    task_id,
-                    after,
-                    session=session,
-                    route=route,
-                    status_message=(
-                        "Cancellation lost a race with the durable terminal outcome"
-                    ),
-                )
-            raise mcp_protocol_exception(-32602, "Failed to cancel task")
-        if str(after.state) != "cancelled":
-            return self._ack_from_view(
-                task_id,
-                after,
-                session=session,
-                route=route,
-                status_message=(
-                    "Cancellation raced with another durable WorkItem transition"
-                ),
-            )
-        return self._ack_from_view(task_id, after, session=session, route=route)
-
-    def _update_repository(
-        self,
-        task_id: str,
-        input_responses: dict[str, Any],
-        *,
-        session: Any,
-        route: Mapping[str, Any] | None,
-    ) -> _AckResult:
-        raise not_served(
-            "knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605"
-        )
 
     def _ack_from_generic_item(
         self,

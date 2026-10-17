@@ -74,19 +74,6 @@ def _run_codex(_: argparse.Namespace) -> int:
     return 0
 
 
-def _run_harness_fence(args: argparse.Namespace) -> int:
-    from pathlib import Path
-
-    from agent_utilities.claude_harness.claude_fence import write_fence
-    from agent_utilities.orchestration.action_policy import ActionPolicy
-
-    target = args.target or str(Path.home() / ".claude")
-    policy = ActionPolicy(policy_path=args.policy) if args.policy else ActionPolicy()
-    res = write_fence(target, policy, dry_run=args.dry_run)
-    print(json.dumps(res, indent=2, default=str))
-    return 0
-
-
 def _run_environments(args: argparse.Namespace) -> int:
     if args.environments_command == "list":
         catalog = list_environment_profiles()
@@ -126,7 +113,6 @@ _COMMAND_HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
     "doctor": _run_doctor,
     "reference": _run_reference,
     "codex": _run_codex,
-    "harness-fence": _run_harness_fence,
     "environments": _run_environments,
 }
 

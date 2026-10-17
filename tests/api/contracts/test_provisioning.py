@@ -27,13 +27,13 @@ if TYPE_CHECKING:
         McpCatalogSnapshotBinding,
     )
 
-from agent_utilities.orchestration.action_policy import (
+
+from graph_os.access.action_policy import (
     ActionDecision,
     ActionRequest,
     PolicyDisposition,
     PolicyReceipt,
 )
-
 from graph_os.api.contracts.provisioning import (
     PackImportAuthorityResolver,
     ProvisioningAuthorityError,

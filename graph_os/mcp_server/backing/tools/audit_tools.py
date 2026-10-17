@@ -11,7 +11,7 @@ time (the ``epistemic_graph`` client package does not yet wrap
 audit_verify` reaches it via the existing raw wire escape hatch — no Rust
 rebuild required).
 
-Two actions:
+One action:
 
 - ``verify`` — cryptographically walk the default graph's audit chain and report
   whether every entry's stored hash still matches its recomputed link (tamper
@@ -19,14 +19,6 @@ Two actions:
   build/config doesn't support it (no ``security`` feature compiled in, or no
   durable redb persist dir configured) — the remaining dependency in that case
   is a corresponding change in the ``epistemic-graph`` repo, NOT this one.
-- ``for_target`` — the entity-anchored reverse index (the KG-side half of G23):
-  every ``:ToolCall`` that acted on a given entity id, in call order, plus a
-  best-effort chain-verification snapshot alongside it. See
-  :meth:`~agent_utilities.orchestration.manager.Orchestrator.get_tool_calls_for_target`.
-- ``lineage`` — source-to-claim lineage (CONCEPT:AU-KG.retrieval.source-to-claim-lineage,
-  universal-ingestion program track 9): given a cited ``fragment_id``, walks
-  claim -> Fragment -> Artifact -> envelope fields -> pack (ontology-mapping)
-  version. See :func:`~agent_utilities.knowledge_graph.retrieval.lineage.resolve_lineage`.
 
 Mirrors the ``graph_ops_causal`` action-router shape (single ``@mcp.tool``, an
 ``action`` enum, registered into ``runtime.REGISTERED_TOOLS``) rather than
@@ -57,51 +49,18 @@ def register_audit_tools(mcp: Any) -> None:
             "graph's audit chain; ok=true when every entry's stored hash matches its "
             "recomputed link — a broken chain reports first_broken_seq. Degrades "
             "cleanly with a clear error when the connected engine build/config "
-            "doesn't expose it), 'for_target' (every :ToolCall -[:ACTED_ON]-> "
-            "target_id, in call order, plus a best-effort verify() snapshot "
-            "alongside it), 'lineage' (source-to-claim lineage: given a cited "
-            "fragment_id, walk claim -> Fragment -> Artifact -> envelope -> "
-            "pack version — CONCEPT:AU-KG.retrieval.source-to-claim-lineage)."
+            "doesn't expose it)."
         ),
         tags=["graph-os", "audit", "governance", "provenance"],
     )
     def graph_audit(
-        action: str = Field(
-            default="verify", description="verify | for_target | lineage"
-        ),
-        target_id: str = Field(
-            default="",
-            description="Entity id to reverse-index tool-call provenance for "
-            "(required for for_target).",
-        ),
-        fragment_id: str = Field(
-            default="",
-            description="Cited fragment id to resolve lineage for (required for lineage).",
-        ),
-        claim: str = Field(
-            default="",
-            description="The claim/fact text this lineage is for (lineage only, carried through verbatim).",
-        ),
-        content_hash: str = Field(
-            default="",
-            description="The content hash the citation was made against (lineage only, sharpens moved/stale detection).",
-        ),
+        action: str = Field(default="verify", description="verify"),
     ) -> str:
-        """Verify the tamper-evident audit chain, reverse-index provenance for an entity, or resolve a citation's lineage."""
+        """Verify the tamper-evident audit chain."""
         action = (action or "verify").strip().lower()
 
         if action == "verify":
             return json.dumps(_verify())
-        if action == "for_target":
-            if not target_id:
-                return json.dumps(
-                    {
-                        "surface": "audit",
-                        "action": action,
-                        "error": "target_id required for for_target",
-                    }
-                )
-            return json.dumps(_for_target(target_id), default=str)
         return json.dumps(
             {
                 "surface": "audit",
@@ -145,20 +104,3 @@ def _verify() -> dict[str, Any]:
             **public_error_payload(exc, code="dependency_unavailable"),
         }
     return {"surface": "audit", "action": "verify", "available": True, **report}
-
-
-def _for_target(target_id: str) -> dict[str, Any]:
-    """Entity-anchored reverse index of :ToolCall provenance, plus a verify snapshot."""
-    from agent_utilities.orchestration.manager import Orchestrator
-
-    engine = runtime._get_engine()
-    if engine is None:
-        return {
-            "surface": "audit",
-            "action": "for_target",
-            "target_id": target_id,
-            "error": "IntelligenceGraphEngine not active",
-        }
-    orch = Orchestrator(engine)
-    result = orch.get_tool_calls_for_target(target_id)
-    return {"surface": "audit", "action": "for_target", **result}

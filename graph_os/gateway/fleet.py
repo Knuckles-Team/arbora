@@ -35,16 +35,17 @@ import time
 from typing import Any
 
 from agent_utilities.core import sessions as _sessions
-from agent_utilities.orchestration.fleet_health import (
+from starlette.requests import Request
+from starlette.responses import JSONResponse
+
+from graph_os.api.errors import not_served
+from graph_os.fleet.health import (
+    FleetAuthorities,
     _domain_sql,
     collect_fleet_health,
     health_payload,
     mark_dependency_failure,
 )
-from starlette.requests import Request
-from starlette.responses import JSONResponse
-
-from graph_os.api.errors import not_served
 from graph_os.security.error_surface import public_error_payload
 
 logger = logging.getLogger(__name__)
@@ -130,15 +131,40 @@ def _fetch_sessions(
 
 def _multi_host_state() -> bool:
     """True when sessions may be owned by other hosts (state externalized)."""
-    from agent_utilities.core.state_store import postgres_state_enabled
+    from graph_os.core.settings import setting
 
-    return postgres_state_enabled()
+    uri = str(setting("STATE_DB_URI", "") or "")
+    return uri.startswith(("postgresql://", "postgres://"))
+
+
+def _goal_counts() -> dict[str, Any]:
+    """Probe the live goal authority; raise when it cannot answer."""
+
+    _sessions.rehydrate_goals()
+    engine = _sessions._goal_engine()
+    if engine is None:
+        raise RuntimeError("goal engine unavailable")
+    _sessions._list_goal_entries(engine, limit=1, raise_on_error=True)
+    return {
+        "active": len(_sessions.background_goal_runs),
+        "tracked": len(_sessions.active_goals),
+    }
+
+
+def _fleet_authorities() -> FleetAuthorities:
+    """Bind the supervisory readers this process serves.
+
+    The dispatch-worker registry is not served in graph-os yet, so it reports
+    ``unavailable`` rather than an empty list.
+    """
+
+    return FleetAuthorities(connect=_sessions._connect_db, goals=_goal_counts)
 
 
 async def fleet_health(request: Request) -> JSONResponse:
     """Aggregate swarm health from the shared fail-closed evidence collector."""
 
-    snapshot = collect_fleet_health(scope_resolver=_tenant_scope)
+    snapshot = collect_fleet_health(_fleet_authorities(), scope_resolver=_tenant_scope)
     return JSONResponse(
         health_payload(snapshot),
         status_code=200 if snapshot.evidence.ready else 503,
@@ -148,7 +174,7 @@ async def fleet_health(request: Request) -> JSONResponse:
 
 async def fleet_topology(request: Request) -> JSONResponse:
     """Live agent/team topology grouped by enterprise domain (paginated)."""
-    snapshot = collect_fleet_health(scope_resolver=_tenant_scope)
+    snapshot = collect_fleet_health(_fleet_authorities(), scope_resolver=_tenant_scope)
     limit, offset, status = _page_params(request)
     snapshot, rows = _topology_rows(snapshot, status, limit, offset)
     domains = _group_sessions(rows)
@@ -389,8 +415,7 @@ async def fleet_grant_approval(request: Request) -> JSONResponse:
         )
     if str(job_id).startswith("action_approval:"):
         try:
-            from agent_utilities.orchestration.approval import decide_action_approval
-
+            from graph_os.access.approval import decide_action_approval
             from graph_os.gateway.ports import gateway_application
 
             engine = gateway_application().engine()

@@ -12,8 +12,6 @@ from pathlib import Path
 
 from agent_utilities.core.workspace_config import validate_workspace_yml
 
-from graph_os.deployment import doctor as D
-
 VALID = """\
 name: "Test Workspace"
 path: "/tmp/ws"
@@ -109,8 +107,3 @@ def test_missing_file_is_not_found(tmp_path):
 
 
 # ── the doctor check (reuses the validator) ─────────────────────────────────
-
-
-def test_workspace_config_in_registry():
-    assert "workspace_config" in D.CHECKS
-    assert D.CHECKS["workspace_config"] is D._check_workspace_config

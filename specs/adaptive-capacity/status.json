@@ -10,7 +10,14 @@
     "GRAPHOS-CAPACITY-R001.2",
     "GRAPHOS-CAPACITY-R003",
     "GRAPHOS-CAPACITY-R004",
-    "GRAPHOS-CAPACITY-R001.3"
+    "GRAPHOS-CAPACITY-R001.3",
+    "GRAPHOS-CAPACITY-R750",
+    "GRAPHOS-CAPACITY-R750.750",
+    "GRAPHOS-CAPACITY-R750.751",
+    "GRAPHOS-CAPACITY-R750.752",
+    "GRAPHOS-CAPACITY-R750.753",
+    "GRAPHOS-CAPACITY-R750.754",
+    "GRAPHOS-CAPACITY-R750.755"
   ],
   "requirements": [
     {
@@ -79,6 +86,87 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-CAPACITY-R750",
+      "title": "Scaling authority and intent contracts (rollup)",
+      "delivery_state": "VERIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-CAPACITY-R750.750",
+        "GRAPHOS-CAPACITY-R750.751",
+        "GRAPHOS-CAPACITY-R750.752",
+        "GRAPHOS-CAPACITY-R750.753",
+        "GRAPHOS-CAPACITY-R750.754",
+        "GRAPHOS-CAPACITY-R750.755"
+      ]
+    },
+    {
+      "id": "GRAPHOS-CAPACITY-R750.750",
+      "title": "Scale authority validation",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "43b17c4d919c"
+      ],
+      "verified_by": [
+        "tests/fleet/scaling/test_scaling_authority_contract.py:21"
+      ]
+    },
+    {
+      "id": "GRAPHOS-CAPACITY-R750.751",
+      "title": "Authenticated bounded signal reads",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "43b17c4d919c"
+      ],
+      "verified_by": [
+        "tests/fleet/scaling/test_scaling_signal_authority.py:22"
+      ]
+    },
+    {
+      "id": "GRAPHOS-CAPACITY-R750.752",
+      "title": "Idempotent scale-intent reconciliation",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "43b17c4d919c"
+      ],
+      "verified_by": [
+        "tests/fleet/scaling/test_scaling_intent_reconciler.py:25"
+      ]
+    },
+    {
+      "id": "GRAPHOS-CAPACITY-R750.753",
+      "title": "Service-surface scale evaluator",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "43b17c4d919c"
+      ],
+      "verified_by": [
+        "tests/fleet/scaling/test_service_scale_units.py:31"
+      ]
+    },
+    {
+      "id": "GRAPHOS-CAPACITY-R750.754",
+      "title": "Attested resource-pool placement",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "43b17c4d919c"
+      ],
+      "verified_by": [
+        "tests/fleet/scaling/test_resource_pool_authority.py:27"
+      ]
+    },
+    {
+      "id": "GRAPHOS-CAPACITY-R750.755",
+      "title": "Engine-native reservation and development-lane transport",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "43b17c4d919c"
+      ],
+      "verified_by": [
+        "tests/fleet/scaling/test_resource_reservation.py:14"
+      ]
     }
   ]
 }

@@ -49,11 +49,9 @@ federated-search / promql / traces / gis).
 from __future__ import annotations
 
 import base64
-import hashlib
 import json
 import logging
 import uuid
-from datetime import datetime
 from typing import Any
 
 from pydantic import Field
@@ -619,53 +617,6 @@ def _waterfall_result(entry: dict[str, Any], trace_id: str) -> dict[str, Any]:
     return {"trace": _waterfall_trace_header(trace, trace_id), "nodes": nodes}
 
 
-def _trace_waterfall(trace_id: str) -> str:
-    """Fetch one trace's full Span/Generation subgraph from the ALWAYS-ON KG-native
-    sink (CONCEPT:AU-OS.config.model-factory-passthrough) and flatten it into a
-    waterfall-ready node list, for ``graph_traces action='waterfall'`` (D-25-1, the
-    trace-waterfall MCP App).
-
-    Deliberately does NOT probe the raw engine observability surface — like
-    ``action='get'``/``'search'`` (:func:`_trace_native_get`/:func:`_trace_native_search`),
-    it reads the KG-native sink first: ``harness.tracing.get_kg_trace_sink()`` — the
-    ``KGTraceBackend`` every daemon installs at startup — is the one trace store
-    guaranteed present wherever this tool runs, and is graph-queryable durably (not
-    just this in-memory mirror) once persisted. Neither ``SpanNode`` nor
-    ``GenerationNode`` carries an absolute start timestamp (only a completion-time
-    ``latency_ms`` duration), so this returns a NESTED-DURATION shape — each node's
-    own ``latencyMs`` relative to the trace total, plus ``parentId`` for nesting —
-    rather than fabricating precise concurrent start offsets the data doesn't
-    support. Never raises: an absent sink or unknown trace both return a clean
-    ``degraded``/``error`` payload.
-    """
-    from agent_utilities.harness.tracing import get_kg_trace_sink
-
-    sink = get_kg_trace_sink()
-    if sink is None or not callable(getattr(sink, "get_trace", None)):
-        return _degraded("traces", "waterfall", ["harness.tracing.get_kg_trace_sink"])
-    try:
-        entry = sink.get_trace(trace_id)
-    except Exception as exc:  # noqa: BLE001 — surface as data, never raise
-        return _surface_error(exc, surface="traces", action="waterfall")
-    if entry is None:
-        return json.dumps(
-            {
-                "surface": "traces",
-                "action": "waterfall",
-                "error": "trace not found",
-                "trace_id": trace_id,
-            }
-        )
-    return json.dumps(
-        {
-            "surface": "traces",
-            "action": "waterfall",
-            "result": _waterfall_result(entry, trace_id),
-        },
-        default=_json_default,
-    )
-
-
 def _trace_row(raw: dict[str, Any]) -> dict[str, Any]:
     """Normalize a raw ``TraceBackend.get_traces``/``get_trace_summary`` dict
     (``id``/``duration_ms``) into ``graph_traces``' own ``trace_id``/``duration``
@@ -687,72 +638,6 @@ def _trace_search_needle(service: str, operation: str, query: str) -> str:
 def _trace_row_matches(row: dict[str, Any], needle: str) -> bool:
     """Whether a normalized trace row contains the case-folded needle anywhere."""
     return needle in " ".join(str(v) for v in row.values() if v).lower()
-
-
-def _trace_sink_rows() -> list[dict[str, Any]] | None:
-    """Every normalized row from the KG-native trace sink.
-
-    ``None`` when no sink is installed at all (the caller then falls back to the
-    external engine probe); an installed-but-failing sink yields ``[]``.
-    """
-    from agent_utilities.harness.tracing import get_kg_trace_sink
-
-    sink = get_kg_trace_sink()
-    if sink is None or not callable(getattr(sink, "get_traces", None)):
-        return None
-    try:
-        raw_rows = _run_coro(sink.get_traces(""))
-    except Exception as exc:  # noqa: BLE001 — surface as data, never raise
-        logger.debug("graph_traces: KG-native search failed: %s", type(exc).__name__)
-        return []
-    return [_trace_row(r) for r in raw_rows or []]
-
-
-def _trace_native_search(
-    service: str, operation: str, query: str, limit: int
-) -> list[dict[str, Any]] | None:
-    """``graph_traces action='search'`` over the ALWAYS-ON KG-native trace sink —
-    the SAME store ``waterfall`` uses (CONCEPT:AU-KG.coordination.engine-message-broker).
-    Preferred over the raw external engine observability surface (which may not
-    exist in a given engine build) whenever a sink is installed; returns ``None``
-    only when no sink is installed at all, signalling the caller to fall back to
-    the external probe. ``service``/``operation``/``query`` filter client-side
-    (case-insensitively, against ``name``) since the sink's own ``get_traces``
-    takes no such filters; an installed-but-empty sink is a real (non-``None``)
-    empty result, not a fall-through.
-    """
-    rows = _trace_sink_rows()
-    if rows is None:
-        return None
-    needle = _trace_search_needle(service, operation, query)
-    if needle:
-        rows = [r for r in rows if _trace_row_matches(r, needle)]
-    return rows[: max(int(limit), 0)]
-
-
-def _trace_native_get(trace_id: str) -> dict[str, Any] | None:
-    """``graph_traces action='get'`` over the ALWAYS-ON KG-native trace sink —
-    see :func:`_trace_native_search`. Returns ``None`` — falling through to the
-    external engine probe — when no sink is installed, OR when an installed
-    sink doesn't know this trace id: the in-memory mirror only covers what THIS
-    process has traced since it started, so "not found" here is not proof the
-    trace doesn't exist (the external engine may know a trace from before a
-    restart, or one traced by a different process); only a genuine hit is
-    trusted as the final answer.
-    """
-    from agent_utilities.harness.tracing import get_kg_trace_sink
-
-    sink = get_kg_trace_sink()
-    if sink is None or not callable(getattr(sink, "get_trace_summary", None)):
-        return None
-    try:
-        raw = _run_coro(sink.get_trace_summary(trace_id))
-    except Exception as exc:  # noqa: BLE001 — treat as no native answer, fall through
-        logger.debug("graph_traces: KG-native get failed: %s", type(exc).__name__)
-        return None
-    if not raw or raw.get("error") == "not_found":
-        return None
-    return _trace_row(raw)
 
 
 def _degraded(surface: str, action: str, tried: list[str]) -> str:
@@ -1349,7 +1234,7 @@ def _prometheus_base_url() -> str | None:
     default: no engine surface + no URL configured is a clean degrade, never an
     invented hostname.
     """
-    from agent_utilities.core._env import setting
+    from graph_os.core.settings import setting
 
     url = str(setting("ENGINE_SURFACE_PROMETHEUS_URL", "") or "").strip()
     return url or None
@@ -1369,7 +1254,7 @@ def _prometheus_http_query(
     base_url = _prometheus_base_url()
     if not base_url:
         return None
-    from agent_utilities.core.http_client import create_http_client
+    from graph_os.core.transport import create_http_client
 
     path = "/api/v1/query_range" if action == "range" else "/api/v1/query"
     try:
@@ -1501,68 +1386,6 @@ def _fork_fanout(branches: list[Any], seed_vars: dict[str, Any], preferred: str)
 
     raise not_served(
         "rlm.sandboxes.base", "AU-harness (deleted from AU)", owner="agent-utilities"
-    )
-
-
-def _crossmodal_fork_fanout(
-    branches: list[Any],
-    seed_vars: dict[str, Any],
-    preferred: str,
-    context_query: str,
-    candidate_var: str,
-) -> str:
-    """Retrieve an engine cross-modal candidate set ONCE, then warm-fork ``branches`` over it.
-
-    The agent-utilities side of the epistemic-graph cross-modal seam
-    (CONCEPT:AU-ORCH.sandbox.crossmodal-fork-fanout): a vector+graph+text candidate set is
-    retrieved once for ``context_query`` and forked into every branch as ``candidate_var`` —
-    branches reuse that one context with no recompute. Falls back to the structured degraded
-    payload when no warm-fork rung is available or the engine retriever is unreachable.
-    """
-    try:
-        from agent_utilities.runtime.crossmodal_fork import CrossModalForkFanout
-    except Exception as exc:  # noqa: BLE001 — capability unimportable ⇒ degrade cleanly
-        return _surface_error(exc, surface="fork", code="dependency_unavailable")
-
-    fanout = CrossModalForkFanout()
-
-    async def _run() -> Any:
-        return await fanout.fan_out(
-            context_query,
-            [str(b) for b in branches],
-            preferred=preferred,
-            candidate_var=candidate_var,
-            extra_vars=seed_vars or None,
-        )
-
-    try:
-        res = _run_coro(_run())
-    except Exception as exc:  # noqa: BLE001 — engine/infra death → structured error, no crash
-        return _surface_error(exc, surface="fork")
-    return json.dumps(
-        {
-            "surface": "fork",
-            "context_query": context_query,
-            "candidate_var": candidate_var,
-            "candidate_count": res.candidate_count,
-            "retrieval_calls": res.retrieval_calls,
-            "reused_without_recompute": res.reused_without_recompute,
-            "degraded": res.degraded,
-            "error": res.error,
-            "sandbox": res.sandbox,
-            "branch_count": len(res.branches),
-            "branches": [
-                {
-                    "index": b.index,
-                    "ok": b.ok,
-                    "stdout": b.stdout,
-                    "error": b.error,
-                    "output": b.output,
-                }
-                for b in res.branches
-            ],
-        },
-        default=_json_default,
     )
 
 
@@ -1896,62 +1719,6 @@ def _ocel_mine(
     raise not_served("knowledge_graph.ingestion.envelope_ingest", "EG-REPO-INGEST-R002")
 
 
-def _ocel_import_slice(params: dict) -> tuple[str, Any, Any, str]:
-    """Pop + validate the governed OCEL import inputs, then import the slice.
-
-    Returns ``(tenant, slice_, provenance, ocel_mode)``. Raises ``ValueError``
-    for a missing tenant or an unknown ``ocel_mode`` — the caller maps those
-    onto an ``invalid_request`` surface error.
-    """
-    raise not_served("knowledge_graph.ingestion.ocel_adapter", "EG-REPO-INGEST-R651")
-
-
-def _ocel_import_and_dispatch(
-    action: str, params: dict
-) -> str | tuple[Any, Any, dict[str, Any]]:
-    """Import the governed OCEL document and run the requested ``ocel_mode``.
-
-    Returns a ready-to-send JSON string for the terminal ``derive``/
-    ``validate``/error modes, or ``(projection, exported, evidence)`` when
-    ``mine`` committed and the caller must still project + mine traces.
-    """
-    raise not_served("knowledge_graph.ingestion.envelope_ingest", "EG-REPO-INGEST-R002")
-
-
-def _graph_mine_process_ocel_json(action: str, params: dict, graph: str) -> str | None:
-    """graph_mine's 'process' action, OCEL JSON import path (mine/validate/derive).
-
-    A non-OCEL request returns ``None`` so ``graph_mine`` can continue through
-    its other process-input variants before generic engine dispatch.
-    """
-    if not (action == "process" and "ocel_json" in params):
-        return None
-    if "traces" in params or "events" in params:
-        return json.dumps(
-            {
-                "surface": "mining",
-                "action": action,
-                "code": "invalid_request",
-                "error": "provide OCEL input instead of events or traces",
-            }
-        )
-    try:
-        outcome = _ocel_import_and_dispatch(action, params)
-    except (PermissionError, TypeError, ValueError) as exc:
-        return _mining_request_error(exc, action)
-    except RuntimeError as exc:
-        return _mining_request_error(exc, action)
-    if isinstance(outcome, str):
-        return outcome
-    projection, exported, evidence = outcome
-    response = _invoke_mining_projection(
-        action, params=params, graph=graph, projection=projection
-    )
-    response["ocel"] = exported
-    response["tekg"] = evidence
-    return json.dumps(response, default=_json_default)
-
-
 def _popped_str(params: dict, key: str, *, strip: bool = True) -> str:
     """``params.pop(key)`` coerced to a plain (optionally stripped) string.
 
@@ -1963,71 +1730,9 @@ def _popped_str(params: dict, key: str, *, strip: bool = True) -> str:
     return value.strip() if strip else value
 
 
-def _conformance_inputs(params: dict) -> dict[str, Any]:
-    """Pop + validate every governed conformance-checking input, in order.
-
-    The validation ORDER here is load-bearing: a doubly-invalid request must
-    keep reporting the same first offence it always did.
-    """
-    from agent_utilities.usage.authorization import resolve_usage_tenant
-
-    tenant = resolve_usage_tenant(_popped_str(params, "tenant", strip=False) or None)
-    if not tenant:
-        raise ValueError("tenant is required for governed conformance checking")
-    perspective = _require_process_perspective(params)
-    traces = [tuple(trace) for trace in params.pop("traces")]
-    object_ids = list(params.pop("object_ids"))
-    allowed_edges = [
-        (str(pair[0]), str(pair[1])) for pair in params.pop("allowed_edges")
-    ]
-    model_ref = _popped_str(params, "model_ref")
-    graph_as_of_raw = _popped_str(params, "graph_as_of")
-    mapping_version = _popped_str(params, "mapping_version")
-    export_digest = _popped_str(params, "export_digest")
-    if not model_ref or not graph_as_of_raw or not mapping_version:
-        raise ValueError(
-            "conformance checking requires 'model_ref', 'graph_as_of', "
-            "and 'mapping_version'"
-        )
-    if not export_digest:
-        raise ValueError(
-            "conformance checking requires 'export_digest' — the export "
-            "digest of the source data this run executed over"
-        )
-    graph_as_of = datetime.fromisoformat(graph_as_of_raw.replace("Z", "+00:00"))
-    source_ref = _popped_str(params, "source_ref", strip=False)
-    run_id = (
-        _popped_str(params, "run_id", strip=False)
-        or hashlib.sha256(
-            "\x1f".join(
-                [
-                    source_ref,
-                    perspective.perspective_id,
-                    model_ref,
-                    export_digest,
-                    graph_as_of.isoformat(),
-                ]
-            ).encode("utf-8")
-        ).hexdigest()[:32]
-    )
-    return {
-        "tenant": tenant,
-        "perspective": perspective,
-        "traces": traces,
-        "object_ids": object_ids,
-        "allowed_edges": allowed_edges,
-        "model_ref": model_ref,
-        "graph_as_of": graph_as_of,
-        "mapping_version": mapping_version,
-        "export_digest": export_digest,
-        "source_ref": source_ref,
-        "run_id": run_id,
-        "start_activities": params.pop("start_activities", None),
-        "end_activities": params.pop("end_activities", None),
-    }
-
-
-def _conformance_commit() -> dict[str, Any]:
+def _conformance_commit(
+    inputs: dict[str, Any], run: Any, deviations: Any
+) -> dict[str, Any]:
     """Commit one ``ConformanceRun`` (+ its Deviations) as a tenant-scoped slice."""
     raise not_served("knowledge_graph.ingestion.envelope_ingest", "EG-REPO-INGEST-R002")
 
@@ -2054,27 +1759,6 @@ def _invoke_mining_projection(
     )
     response["projection"] = projection.public_metadata()
     return response
-
-
-def _graph_mine_process_conformance(
-    action: str, params: dict, graph: str
-) -> str | None:
-    """graph_mine's 'process' action, conformance-checking path (allowed_edges given).
-
-    Requests without an allowed-edge model return ``None``; the owning dispatcher
-    then evaluates the remaining process input shapes.
-    """
-    if not (action == "process" and "allowed_edges" in params):
-        return None
-    # CONCEPT:AU-KG.mining.process-conformance-checking (D-61-1) — "does
-    # THIS run's behavior fit a GIVEN model?", never re-discovering the
-    # model from the same traces being checked (that would make it
-    # discovery wearing conformance's name). Pure Python compute + a
-    # graph writeback; the real engine's mining client is never called
-    # here (there is no engine-side conformance primitive to dispatch
-    # to — the whole point of the ``ConformanceWorker`` seam is that the
-    # native/default worker needs none).
-    raise not_served("knowledge_graph.ingestion.envelope_ingest", "EG-REPO-INGEST-R002")
 
 
 def _graph_mine_process_events(action: str, params: dict, graph: str) -> str | None:
@@ -2251,16 +1935,6 @@ def _traces_get_dispatch(trace_id: str) -> tuple[str | None, dict[str, Any], Any
 
     Returns ``(finished_response | None, params, candidates)``.
     """
-    native = _trace_native_get(trace_id)
-    if native is not None:
-        return (
-            json.dumps(
-                {"surface": "traces", "action": "get", "result": native},
-                default=_json_default,
-            ),
-            {},
-            (),
-        )
     return None, {"trace_id": trace_id}, _TRACES_GET_CANDIDATES
 
 
@@ -2268,16 +1942,6 @@ def _traces_search_dispatch(
     service: str, operation: str, query: str, limit: int
 ) -> tuple[str | None, dict[str, Any], Any]:
     """``graph_traces action='search'`` — the KG-native sink first, else the probe."""
-    native_rows = _trace_native_search(service, operation, query, limit)
-    if native_rows is not None:
-        return (
-            json.dumps(
-                {"surface": "traces", "action": "search", "result": native_rows},
-                default=_json_default,
-            ),
-            {},
-            (),
-        )
     params = _drop_empty(service=service, operation=operation, query=query)
     params["limit"] = int(limit)
     return None, params, _TRACES_SEARCH_CANDIDATES
@@ -2932,10 +2596,8 @@ def register_engine_surface_tools(
         extra, rejection = _decode_json_object(params_json, "traces")
         if rejection is not None:
             return rejection
-        if action in {"waterfall", "get"} and not trace_id:
+        if action == "get" and not trace_id:
             return json.dumps({"surface": "traces", "error": "trace_id required"})
-        if action == "waterfall":
-            return _trace_waterfall(trace_id)
         if action == "get":
             done, params, candidates = _traces_get_dispatch(trace_id)
         elif action == "search":
@@ -3405,11 +3067,7 @@ def register_engine_surface_tools(
         # The 'process' action's three governed special cases, in their original
         # order: each returns None when its own guard does not match, falling
         # through to the generic _invoke dispatch below.
-        for special_case in (
-            _graph_mine_process_ocel_json,
-            _graph_mine_process_conformance,
-            _graph_mine_process_events,
-        ):
+        for special_case in (_graph_mine_process_events,):
             special_result = special_case(action, params, graph)
             if special_result is not None:
                 return special_result
@@ -3748,10 +3406,7 @@ def register_engine_surface_tools(
             "(run the same snippet across n branches); 'vars_json' seeds the shared "
             "namespace forked into every branch; 'sandbox' optionally pins the "
             "firecracker rung, else the cheapest available "
-            "warm-fork rung is used. Set 'context_query' to retrieve an engine cross-modal "
-            "candidate set (vector+graph+text fusion) ONCE and fork it into every branch as "
-            "'candidate_var' (default 'candidates') — the branches reuse that one context with "
-            "no recompute (CONCEPT:AU-ORCH.sandbox.crossmodal-fork-fanout). Degrades cleanly "
+            "warm-fork rung is used. Degrades cleanly "
             "(structured 'unavailable') when no warm-fork rung is available on this host."
         ),
         tags=["graph-os", "engine", "fork", "warm-fork", "fanout"],
@@ -3777,16 +3432,6 @@ def register_engine_surface_tools(
             default="",
             description="Preferred warm-fork rung name (empty ⇒ cheapest available).",
         ),
-        context_query: str = Field(
-            default="",
-            description="Optional: retrieve an engine cross-modal candidate set (vector+graph"
-            "+text) for this query ONCE and fork it into every branch (reused, no recompute).",
-        ),
-        candidate_var: str = Field(
-            default="candidates",
-            description="Namespace name the cross-modal candidate set is bound to in each branch "
-            "(only used when context_query is set).",
-        ),
     ) -> str:
         """Thin verb over the warm-fork primitive (CONCEPT:AU-KG.coordination.warm-fork-fanout)."""
         branches, rejection = _fork_branches(branches_json, code, n)
@@ -3795,14 +3440,6 @@ def register_engine_surface_tools(
         seed_vars, rejection = _decode_json_object(vars_json, "fork", field="vars_json")
         if rejection is not None:
             return rejection
-        if context_query.strip():
-            return _crossmodal_fork_fanout(
-                branches,
-                seed_vars,
-                sandbox.strip(),
-                context_query.strip(),
-                candidate_var.strip() or "candidates",
-            )
         return _fork_fanout(branches, seed_vars, sandbox.strip())
 
     runtime.REGISTERED_TOOLS["graph_fork"] = graph_fork

@@ -142,78 +142,9 @@ def test_graph_explain_request_rejects_unknown_action() -> None:
         schemas.GraphExplainRequest.model_validate(dict(action="summarize"))
 
 
-def test_graph_observe_request_valid() -> None:
-    req = schemas.GraphObserveRequest(
-        action="trace_rootcause", query="graph_orchestrate", top_k=5
-    )
-    assert req.top_k == 5
-
-
-def test_graph_observe_request_rejects_unknown_action() -> None:
-    with pytest.raises(ValidationError):
-        schemas.GraphObserveRequest.model_validate(dict(action="not_an_action"))
-
-
-def test_graph_observe_response_accepts_dict_result() -> None:
-    resp = schemas.GraphObserveResponse(status="success", result={"rows": []})
-    assert resp.result == {"rows": []}
-
-
-def test_graph_observe_response_accepts_string_result() -> None:
-    """graph_observe's declared return type is `str`; a non-JSON message
-    (e.g. a permission-denial or unknown-action string) passes through
-    `safe_json_load` unparsed."""
-    resp = schemas.GraphObserveResponse(
-        status="success", result="Error: Unknown observe action 'x'"
-    )
-    assert isinstance(resp.result, str)
-
-
 # ══════════════════════════════════════════════════════════════════
 # graph_orchestrate
 # ══════════════════════════════════════════════════════════════════
-
-
-def test_graph_orchestrate_request_valid_minimal() -> None:
-    req = schemas.GraphOrchestrateRequest(task="fix the failing test")
-    assert req.execution_mode == "auto"
-
-
-def test_graph_orchestrate_request_valid_full() -> None:
-    req = schemas.GraphOrchestrateRequest(
-        task="run the eval suite",
-        agent_name="",
-        skill_name="my-skill",
-        tool_server="my-server",
-        execution_mode="pydantic_graph",
-        max_steps=10,
-        allowed_tools=["graph_query", "graph_code"],
-        required_tools=["graph_query"],
-        response_format="json",
-        grounding="best_effort",
-    )
-    assert req.allowed_tools == ["graph_query", "graph_code"]
-
-
-def test_graph_orchestrate_request_rejects_bad_execution_mode() -> None:
-    with pytest.raises(ValidationError):
-        schemas.GraphOrchestrateRequest.model_validate(
-            dict(task="x", execution_mode="nonsense")
-        )
-
-
-def test_graph_orchestrate_request_rejects_unknown_field() -> None:
-    with pytest.raises(ValidationError):
-        schemas.GraphOrchestrateRequest.model_validate(
-            dict(task="x", agent="not-a-real-field")
-        )
-
-
-def test_graph_orchestrate_response_free_form_result() -> None:
-    resp = schemas.GraphOrchestrateResponse(
-        status="success", result={"output": "done", "mermaid": None, "run_id": "abc"}
-    )
-    assert resp.result["output"] == "done"
 
 
 # ══════════════════════════════════════════════════════════════════

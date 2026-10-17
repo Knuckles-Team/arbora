@@ -83,13 +83,13 @@ ToolResult = _fastmcp_tools.ToolResult
 # streamablehttp_client` on EVERY remote child, which is the whole deployed
 # fleet — `deploy/mcp-fleet.registry.yml` defaults to `streamable-http`).
 import agent_utilities.core.resource_priority as _resource_priority
-from agent_utilities.core.capability_contract import Capability
-from agent_utilities.core.config import setting
 from mcp.client.sse import sse_client
 from mcp.client.streamable_http import streamable_http_client
 
 import graph_os.fleet.catalog_reader as _catalog_reader
 import graph_os.fleet.child_resilience as _child_resilience
+from graph_os.core.capability_contract import Capability
+from graph_os.core.settings import setting
 from graph_os.fleet.local_skill_catalog import (
     LOCAL_SKILLS_SERVER,
     build_local_skill_catalog,
@@ -431,7 +431,7 @@ def _resolve_fleet_runtime_reference(reference: str) -> str:
         if direct not in (None, ""):
             return str(direct)
 
-        from agent_utilities.core.config import config as agent_config
+        from graph_os.core.settings import runtime_config as agent_config
 
         mappings = getattr(agent_config, "mcp_fleet_secret_refs", None)
         if not isinstance(mappings, dict):
@@ -469,7 +469,7 @@ def _resolve_runtime_value(
         had_template = bool(_ENV_TEMPLATE_RE.search(rendered))
 
         def replace(match: re.Match[str]) -> str:
-            from agent_utilities.core.config import setting
+            from graph_os.core.settings import setting
 
             variable = match.group(1)
             if not sensitive and _sensitive_config_key(variable):
@@ -1178,7 +1178,7 @@ def _prepare_runtime_child_policy(
         return cfg, None
     policy_name, profile_name = _runtime_child_policy_names(cfg)
 
-    from agent_utilities.core.config import config as agent_config
+    from graph_os.core.settings import runtime_config as agent_config
 
     factory = _load_runtime_child_policy_factory(policy_name)
     policy: _typing.Any = _ABSENT
@@ -1250,7 +1250,7 @@ def _child_pool_size(cfg: dict, is_remote: bool) -> int | None:
 
     if not is_remote:
         return 1
-    from agent_utilities.core.config import config as agent_config
+    from graph_os.core.settings import runtime_config as agent_config
 
     try:
         pool_size = int(cfg.get("pool_size") or agent_config.mcp_child_pool_size)
@@ -1398,9 +1398,8 @@ def _http_capabilities(token: _typing.Any) -> frozenset[str]:
     claims = getattr(token, "claims", None)
     if isinstance(claims, dict):
         try:
-            from agent_utilities.core.config import config
-
             import graph_os.security.identity as _identity
+            from graph_os.core.settings import runtime_config as config
 
             capabilities.update(
                 _identity.base_capabilities(
@@ -2066,7 +2065,7 @@ def _assert_tasks_caller_present(
 def _assert_tasks_signing_secret(server_name: str) -> None:
     """Fail closed unless the shared task-delegation signing secret is present."""
     try:
-        from agent_utilities.core.config import setting
+        from graph_os.core.settings import setting
 
         if not str(setting("AGENT_UTILITIES_TOKEN_SECRET", "") or "").strip():
             raise RuntimeError("shared task-delegation signing secret is unavailable")
@@ -3522,7 +3521,7 @@ class MCPMultiplexer:
         # so a deployment that legitimately reaches its MCP fleet over
         # plain HTTP behind a TLS-terminating ingress (MCP_TLS_TERMINATED)
         # could never declare that trust; it always hard-failed here first.
-        from agent_utilities.core.config import config as agent_config
+        from graph_os.core.settings import runtime_config as agent_config
 
         child_private_hosts = cfg.get("allowed_private_hosts", [])
         if not isinstance(child_private_hosts, list):
@@ -3614,8 +3613,8 @@ class MCPMultiplexer:
     def _resolve_remote_child_tls_trust(
         cfg: dict, stack: contextlib.AsyncExitStack
     ) -> _typing.Any:
-        from agent_utilities.core.config import config as agent_config
-        from agent_utilities.core.transport_security import (
+        from graph_os.core.settings import runtime_config as agent_config
+        from graph_os.core.transport import (
             resolve_configured_tls_profile,
         )
 
@@ -3642,7 +3641,7 @@ class MCPMultiplexer:
         allowed_private_hosts: list[str],
         stack: contextlib.AsyncExitStack,
     ) -> tuple[_typing.Any, _typing.Any]:
-        from agent_utilities.core.http_client import create_async_http_client
+        from graph_os.core.transport import create_async_http_client
 
         def _secure_httpx_factory(
             headers: dict[str, str] | None = None,
@@ -5072,7 +5071,7 @@ class MCPMultiplexer:
         Local import, same reason every other read of ``config`` in this
         module is local (avoid a module-load-time circular import with
         ``core.config``) (CONCEPT:AU-ECO.multiplexer.catalog-probe-ttl-staleness)."""
-        from agent_utilities.core.config import config as agent_config
+        from graph_os.core.settings import runtime_config as agent_config
 
         return agent_config.mcp_catalog_probe_ttl
 
@@ -6333,7 +6332,7 @@ class MCPMultiplexer:
         Returns ``{"results": [...], "unavailable": {server: error}}`` so the
         caller can both pick tools and see which servers couldn't be reached.
         """
-        from agent_utilities.core.config import config as agent_config
+        from graph_os.core.settings import runtime_config as agent_config
 
         if not top_k or top_k <= 0:
             top_k = agent_config.mcp_dynamic_top_k
@@ -6453,7 +6452,7 @@ class MCPMultiplexer:
         local_info = self._local_skill_probe_info()
         if not include_tools:
             return {**dict(self._probe_cache), LOCAL_SKILLS_SERVER: local_info}
-        from agent_utilities.core.config import config as agent_config
+        from graph_os.core.settings import runtime_config as agent_config
 
         probe = await self.probe_catalog(
             budget=agent_config.mcp_dynamic_discovery_timeout,

@@ -18,7 +18,6 @@ operations/structural surface; it is not a compatibility catch-all.
 
 from __future__ import annotations
 
-import json
 from typing import Annotated, Any
 
 from agent_utilities.models.evidence_bundle import EvidenceBundle
@@ -36,7 +35,6 @@ from graph_os.mcp_server.backing.tools._surface_selection import (
     register_conditional_tools,
 )
 from graph_os.mcp_server.backing.tools.analysis_tools import execute_focused_analysis
-from graph_os.security.error_surface import public_error_text
 
 _OptionalNodeId = Annotated[str, Field(description="Optional node id.")]
 _OptionalDepth = Annotated[int, Field(description="Optional depth.")]
@@ -209,78 +207,6 @@ def register_analyze_suite_tools(
         """One grounded, cited answer per question, routed to the right domain provider."""
         return await _delegate(action, query, top_k, node_id, depth, target)
 
-    @mcp.tool(
-        name="graph_observe",
-        description=(
-            "Reason over the KG-native observability subgraph — traces, online-scores, "
-            "assertion verdicts, generations, prompt versions — queries an opaque trace "
-            "store can't do (CONCEPT:AU-KG.ingest.observability-queries-opik-cannot). Actions: 'trace_rootcause' (FAILED "
-            "assertions + low scores joined to their trace's agent, grouped; query=agent/"
-            "capability filter), 'prompt_regression' (mean score per prompt version — which "
-            "regressed), 'failure_cluster' (failing traces clustered by the failed assertion "
-            "— systemic breaks across agents), 'error_detail' (resolve a failed operation's "
-            "opaque `error.detail_ref` back to its sanitized error_class/failing_layer/"
-            "traceback — query=the detail_ref; scoped to the caller's own tenant authority, "
-            "fails closed — CONCEPT:AU-KG.audit.error-detail-resolution)."
-        ),
-        tags=["graph-os", "observe", "eval"],
-    )
-    async def graph_observe(
-        action: str = Field(
-            default="trace_rootcause",
-            description="trace_rootcause | prompt_regression | failure_cluster | error_detail",
-        ),
-        query: str = Field(
-            default="",
-            description="Agent/capability filter (trace_rootcause) or a detail_ref (error_detail).",
-        ),
-        top_k: int = Field(default=20, description="Max rows/clusters."),
-    ) -> str:
-        """Observability + eval analytics over the trace/score subgraph (KG-2.257)."""
-        if action == "error_detail":
-            # Resolving a previously recorded failure is unrelated to the
-            # trace/score subgraph below and needs no active engine — it must
-            # keep working even when the engine the ORIGINAL failure came from
-            # is unavailable (that is frequently WHY the caller is resolving
-            # it in the first place).
-            from graph_os.security.actor_context import IdentityRequiredError
-            from graph_os.security.error_surface import (
-                resolve_error_detail_for_actor,
-            )
-
-            try:
-                detail = resolve_error_detail_for_actor(query)
-            except (IdentityRequiredError, PermissionError) as exc:
-                return public_error_text(exc, code="permission_denied")
-            if detail is None:
-                return json.dumps({"resolved": False, "detail_ref": query})
-            # tenant_id is internal bookkeeping for the authority check above
-            # (already the caller's own tenant, having passed that check) —
-            # omit it from the returned shape rather than echo it back.
-            public_detail = {k: v for k, v in detail.items() if k != "tenant_id"}
-            return json.dumps(
-                {"resolved": True, "detail_ref": query, **public_detail}, default=str
-            )
-
-        engine = runtime._get_engine()
-        if not engine:
-            return "Error: IntelligenceGraphEngine not active."
-        from agent_utilities.harness import trace_analytics as ta
-
-        backend = getattr(engine, "backend", None)
-        try:
-            if action == "trace_rootcause":
-                out = ta.trace_rootcause(backend, capability=query, top_k=top_k)
-            elif action == "prompt_regression":
-                out = ta.prompt_regression(backend, top_k=top_k)
-            elif action == "failure_cluster":
-                out = ta.failure_cluster(backend, top_k=top_k)
-            else:
-                return f"Error: Unknown observe action '{action}'"
-            return json.dumps(out, indent=2, default=str)
-        except Exception as e:
-            return public_error_text(e)
-
     register_conditional_tools(
         runtime.REGISTERED_TOOLS,
         [
@@ -288,7 +214,6 @@ def register_analyze_suite_tools(
             ("graph_research", graph_research, None),
             ("graph_evaluate", graph_evaluate, None),
             ("graph_explain", graph_explain, None),
-            ("graph_observe", graph_observe, None),
         ],
         excluded_names=frozenset({"graph_research"}),
         include_excluded=include_unserved_research,

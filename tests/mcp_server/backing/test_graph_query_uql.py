@@ -12,7 +12,6 @@ from __future__ import annotations
 import pytest
 
 from graph_os.mcp_server.backing import engine_routing
-from graph_os.mcp_server.backing.tools import engine_tools
 from tests.mcp_server.backing._support import (
     register_graph_query as _register_graph_query,
 )
@@ -348,29 +347,3 @@ def test_uql_fanout_all_failed_targets_returns_typed_failure(monkeypatch):
 
     assert out["error"]["code"] == "dependency_unavailable"
     assert out["reasoning_trace"][-1]["payload"]["targets"] == {}
-
-
-def test_uql_rank_text_uses_shared_au_preembedding(monkeypatch):
-    graph_query = _register_graph_query()
-    engine = _FakeEngine(_ROWS)
-    monkeypatch.setattr(
-        engine_routing,
-        "_resolve_read_engines",
-        _resolve_read_engines(("default", engine)),
-    )
-    monkeypatch.setattr(
-        engine_tools,
-        "_embed_texts",
-        lambda texts: [[0.1, 0.2] for _ in texts],
-    )
-
-    query = 'MATCH (:Agent) |> RANK BY ~"agents" |> LIMIT 5'
-    out = graph_query(query=query, scope="uql", params="{}").model_dump()
-
-    assert out["error"] is None
-    assert engine.seen == [
-        (
-            "MATCH (:Agent) |> RANK BY ~[0.10000000,0.20000000] |> LIMIT 5",
-            False,
-        )
-    ]

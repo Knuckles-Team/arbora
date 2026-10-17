@@ -21,9 +21,8 @@ import time
 from dataclasses import replace
 from typing import Any
 
-from agent_utilities.core.config import setting
-
 from graph_os.api.errors import not_served
+from graph_os.core.settings import setting
 from graph_os.security.error_surface import public_error_payload
 from graph_os.security.log_redaction import redact_for_log
 
@@ -157,8 +156,7 @@ def mint_process_identity() -> Any:
     backend, and attach a renewable in-memory lease so worker threads retain
     bounded authority without retaining token material.
     """
-    from agent_utilities.core.config import config
-
+    from graph_os.core.settings import runtime_config as config
     from graph_os.security.actor_context import CredentialLease
     from graph_os.security.request_identity import (
         acquire_process_identity_token,
@@ -190,9 +188,8 @@ def refresh_process_identity(session: Any) -> Any:
     actor type must remain byte-for-byte equivalent to the authority captured
     by the background worker threads.
     """
-    from agent_utilities.core.config import config
-
     from graph_os.api.contracts.session import SessionExpiredError
+    from graph_os.core.settings import runtime_config as config
     from graph_os.security.request_identity import (
         acquire_process_identity_token,
         mint_actor_from_token_sync,
@@ -322,17 +319,11 @@ def stop_host_daemon() -> None:
         except Exception as exc:  # noqa: BLE001
             logger.warning("engine checkpoint on shutdown skipped: %s", exc)
     try:
-        # CONCEPT:AU-OS.host.so-they-are-idle — tear down any warm-fork parents this
-        # host was pooling.
-        from agent_utilities.runtime.warm_registry import WarmParentRegistry
+        from agent_utilities.knowledge_graph.core.host_lock import release_host_lock
 
-        reaped = WarmParentRegistry.drain_active()
-        if reaped:
-            logger.info("Drained %d warm-fork parent(s) on shutdown.", len(reaped))
+        release_host_lock()
     except Exception as exc:  # noqa: BLE001
-        logger.warning("warm-parent drain on shutdown skipped: %s", exc)
-    refusal = not_served("knowledge_graph.core.host_lock", "graph-os", owner="graph-os")
-    logger.warning("host lock release skipped: %s", refusal)
+        logger.warning("host lock release skipped: %s", exc)
     _engine = None
     logger.info("Host daemon stopped.")
 

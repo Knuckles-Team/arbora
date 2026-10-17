@@ -15,8 +15,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Any
 
-from agent_utilities.core.config import setting
-
+from graph_os.core.settings import setting
 from graph_os.gateway.models import (
     ServiceCategory,
     ServiceConfig,
@@ -306,7 +305,7 @@ class BaseWidget(ABC):
     def _resolve_tls_profile(self, config: ServiceConfig) -> Any:
         """Resolve this widget's runtime-only trust policy through AgentConfig."""
 
-        from agent_utilities.core.transport_security import (
+        from graph_os.core.transport import (
             resolve_configured_tls_profile,
         )
 
@@ -328,7 +327,7 @@ class BaseWidget(ABC):
     ) -> Iterator[Any]:
         """Yield the canonical HTTPX client with this widget's TLS profile."""
 
-        from agent_utilities.core.http_client import create_http_client
+        from graph_os.core.transport import create_http_client
 
         trust = self._resolve_tls_profile(config)
         try:

@@ -207,8 +207,7 @@ class InboundRouter:
         """Periodically re-attempt durably-recorded but still-unanswered inbound messages
         (CONCEPT:AU-ECO.messaging.durable-inbound-pending). Uses this router's own backends + the universal reply path, so a
         turn that failed while the engine was down is answered once the system recovers."""
-        from agent_utilities.core.config import setting
-
+        from graph_os.core.settings import setting
         from graph_os.messaging.inbox import retry_unanswered
         from graph_os.messaging.service import MessagingService
 
@@ -308,7 +307,7 @@ class InboundRouter:
         Args:
             backend: The messaging backend to supervise.
         """
-        from agent_utilities.core.config import setting
+        from graph_os.core.settings import setting
 
         base = max(0.0, float(setting("MESSAGING_LISTEN_BACKOFF_BASE_S", "1")))
         cap = max(base, float(setting("MESSAGING_LISTEN_BACKOFF_MAX_S", "60")))

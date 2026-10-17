@@ -190,3 +190,32 @@ A controlled adapter can prove only the host handoff, not unified terminal rende
 ### 2026-10-16 — Authorized natural-language fallback
 
 R023 fallback uses the registered `query.nl` operation and shared invocation pipeline under `query:nl`. Delete the synthetic descriptor and direct callback path. Absent or unauthorized query operations refuse before dispatch. Preserve all eight tools and ranking behavior.
+
+### 2026-10-17: Refuse unavailable interface requests before startup
+
+R009.2 through R009.6 and R010.7 still lack a verified workspace/session start
+authority, authenticated HostLaunchReceipt and tenant-filtered HostLogReader.
+Do not derive workspace access from generic caller scopes or WebUI AccessContext.
+The connector create_agent_server absorbs enable_terminal_ui, enable_web_ui and enable_web_logs.
+It does not provide those capabilities.
+Reject explicit enabled requests with client_unavailable before graph creation
+or listener startup. Reject non-boolean selections with `invalid_launch`.
+Omitted, false and the existing optional web default preserve ordinary HTTP
+hosting. This validates refusal only; interface selection, scoped log delivery,
+rotation, reconnect and the served host/terminal acceptance remain pending.
+
+### 2026-10-17: Injected workspace log policy (R009.7)
+
+No current EG contract represents host filesystem workspace grants.
+Reuse GraphOS SessionAuthority for current owner-verified caller, session reference and expiry.
+Trusted composition provides a WorkspaceGrantProvider; missing composition denies every read.
+The provider returns an exact tenant, principal, session, workspace, action, policy revision, grant revision and expiry.
+No generic scope, request field or WebUI context creates a grant.
+HostLogAccess binds opaque references to these facts and one configured host instance.
+Each read resolves current session and policy before and after awaiting its record source.
+Changed bindings, revocation and expiry suppress delivery. Bounds limit references, batches, records and response time.
+The existing connector host registers optional reference and read adapters under /host/logs.
+The configured source must provide redacted tenant projections and tenant-local opaque cursors; shared file offsets remain forbidden.
+Controlled HTTP fixtures prove this composition contract, not deployed grants, filesystem logging, rotation or terminal rendering.
+No persistent credential store, local grant issuer or production configuration is added.
+R009.2 through R009.6 and R010.7 retain their full served acceptance.

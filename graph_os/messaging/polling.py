@@ -18,7 +18,7 @@ _MESSAGING_LOG_HANDLER_MARK = "_graphos_messaging_visibility_handler"
 
 def _ensure_messaging_log_visibility() -> None:
     """Keep channel and router lifecycle logs visible on stderr under stdio."""
-    from agent_utilities.core.config import setting
+    from graph_os.core.settings import setting
 
     level_name = str(setting("MESSAGING_LOG_LEVEL", "INFO")).strip().upper()
     level = getattr(logging, level_name, logging.INFO)
@@ -150,7 +150,7 @@ def run_poll_loop(
     # the one unified Telegram/Mattermost/… delivery instead of each tool wiring its own
     # notifier. Opt-in via MESSAGING_ALERT_INTAKE_PORT; runs as an INDEPENDENT task so a
     # failure here never affects the inbound listeners.
-    from agent_utilities.core.config import setting
+    from graph_os.core.settings import setting
 
     _intake_port = setting("MESSAGING_ALERT_INTAKE_PORT", "")
     if _intake_port:

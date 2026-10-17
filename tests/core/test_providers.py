@@ -13,13 +13,13 @@ from pathlib import Path, PurePosixPath
 from types import SimpleNamespace
 
 import pytest
-from agent_utilities.core.provider_materialization import (
+
+from graph_os.core import providers
+from graph_os.core.provider_materialization import (
     build_asset_manifest,
     inactive_marker,
     write_managed_provider_marker,
 )
-
-from graph_os.core import providers
 
 pytestmark = pytest.mark.spec("GRAPHOS-HOST-R001.10")
 

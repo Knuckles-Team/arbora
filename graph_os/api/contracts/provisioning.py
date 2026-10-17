@@ -44,11 +44,10 @@ if TYPE_CHECKING:
         McpCatalogSnapshotBinding,
     )
 
-from agent_utilities.orchestration.action_policy import (
+from graph_os.access.action_policy import (
     ActionRequest,
     get_action_policy,
 )
-
 from graph_os.api.contracts.session import GraphSession, resolve_session
 
 __all__ = [

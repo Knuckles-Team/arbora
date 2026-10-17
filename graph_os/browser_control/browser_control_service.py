@@ -10,8 +10,8 @@ from collections.abc import Awaitable, Callable
 from typing import Any, Literal, cast
 
 from agent_utilities.observability.langfuse_exporter import get_langfuse_exporter
-from agent_utilities.orchestration.action_policy import get_action_policy
 
+from graph_os.access.action_policy import get_action_policy
 from graph_os.browser_control.browser_control_api import (
     BrowserCallReceipt,
     BrowserChannelBinding,

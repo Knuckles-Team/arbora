@@ -61,3 +61,19 @@ def test_transition_history_unavailable_has_distinct_privacy_safe_error() -> Non
         },
     }
     assert "result" not in json.loads(bytes(response.body))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("metadata", "expected"),
+    [({"agent_name": "expert"}, "expert"), ({}, None), ({"agent_name": " "}, None)],
+)
+async def test_router_routes_only_to_the_named_agent(metadata, expected) -> None:
+    router = OrchestratorA2ARouter(lambda: pytest.fail("engine was accessed"))
+    message = _message().model_copy(update={"metadata": metadata})
+    if expected is None:
+        with pytest.raises(A2AAssemblyUnavailable, match="agent_name"):
+            await router.route(message, context_budget_tokens=None)
+        return
+    decision = await router.route(message, context_budget_tokens=None)
+    assert decision.agent_name == expected

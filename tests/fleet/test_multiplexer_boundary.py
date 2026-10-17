@@ -23,7 +23,7 @@ def test_noncredential_field_cannot_expand_secret_environment_name() -> None:
 
 
 def test_fleet_runtime_alias_prefers_direct_projection(monkeypatch) -> None:
-    from agent_utilities.core.config import config
+    from graph_os.core.settings import runtime_config as config
 
     monkeypatch.setattr(
         "graph_os.fleet.multiplexer.setting",
@@ -50,7 +50,7 @@ def test_fleet_runtime_alias_prefers_direct_projection(monkeypatch) -> None:
 def test_fleet_runtime_alias_uses_configured_ref_only_after_direct_miss(
     monkeypatch,
 ) -> None:
-    from agent_utilities.core.config import config
+    from graph_os.core.settings import runtime_config as config
 
     monkeypatch.setattr("graph_os.fleet.multiplexer.setting", lambda _alias: None)
     monkeypatch.setattr(
@@ -80,7 +80,7 @@ def test_fleet_runtime_alias_uses_configured_ref_only_after_direct_miss(
 def test_fleet_runtime_alias_fails_closed_without_direct_or_mapped_value(
     monkeypatch,
 ) -> None:
-    from agent_utilities.core.config import config
+    from graph_os.core.settings import runtime_config as config
 
     monkeypatch.setattr("graph_os.fleet.multiplexer.setting", lambda _alias: None)
     monkeypatch.setattr(config, "mcp_fleet_secret_refs", {}, raising=False)

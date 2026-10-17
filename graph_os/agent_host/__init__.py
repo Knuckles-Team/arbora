@@ -37,11 +37,14 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from graph_os.agent_host.log_access import HostLogAccess
+from graph_os.agent_host.log_routes import register_host_log_routes
 from graph_os.api.errors import not_served
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["build_agent_host_app", "create_agent_server"]
+__all__ = ["build_agent_host_app"]
+
 
 #: ``(graph, graph_config, query) -> result dict`` -- the default calls the
 #: agent-utilities protocol-agnostic execution port; tests inject a stub so
@@ -98,6 +101,7 @@ def build_agent_host_app(
     name: str | None = None,
     description: str | None = None,
     executor: AgentExecutor | None = None,
+    host_logs: HostLogAccess | None = None,
 ):
     """Build the FastAPI app that hosts one connector agent.
 
@@ -113,6 +117,7 @@ def build_agent_host_app(
     agent_description = description or ""
 
     app = FastAPI(title=agent_name)
+    register_host_log_routes(app, host_logs)
 
     @app.get("/health")
     def health() -> dict[str, str]:
@@ -185,81 +190,3 @@ def build_agent_host_app(
         }
 
     return app
-
-
-def create_agent_server(
-    *,
-    graph: Any | None = None,
-    graph_config: dict | None = None,
-    tag_prompts: dict[str, str] | None = None,
-    tag_env_vars: dict[str, str] | None = None,
-    graph_name: str = "GraphAgent",
-    mcp_url: str | None = None,
-    mcp_config: str | None = None,
-    router_model: str | None = None,
-    agent_model: str | None = None,
-    min_confidence: float = 0.0,
-    host: str | None = "127.0.0.1",
-    port: int | None = 9000,
-    name: str | None = None,
-    system_prompt: str | None = None,
-    workspace: str | None = None,
-    executor: AgentExecutor | None = None,
-    **_unused_au_hosting_kwargs: Any,
-) -> None:
-    """Build and serve a connector agent -- the GraphOS-hosted replacement for
-    ``agent_utilities.create_agent_server``.
-
-    Call signature intentionally mirrors AU's: a connector's
-    ``agent_server.py`` passes the same keyword arguments it already builds
-    from ``create_agent_parser()``. Agent construction, when no ``graph``/
-    ``graph_config`` bundle is supplied, still goes through AU's public graph
-    builder (that is agent-utilities' retained authority, not a duplicate
-    host); only the uvicorn/FastAPI serving shell is GraphOS's own.
-
-    ``**_unused_au_hosting_kwargs`` absorbs AU-hosting-only arguments a
-    caller may still pass during migration (``debug``, ``enable_web_ui``,
-    ``enable_otel``, ``a2a_broker``, ...) that this first increment does not
-    yet implement; see the migration recipe for current parity gaps. Notably
-    ``provider``/``model_id``/``base_url``/``api_key`` (the default-LLM
-    selection AU's own hosting shell forwards into its server config) land
-    here too and are not yet wired into graph construction -- a tracked
-    parity gap, not a silent behavior match.
-    """
-    if graph is None or graph_config is None:
-        from agent_utilities import create_graph_agent, initialize_workspace
-
-        if workspace:
-            initialize_workspace()
-        if tag_prompts:
-            graph, graph_config = create_graph_agent(
-                tag_prompts=tag_prompts,
-                tag_env_vars=tag_env_vars,
-                mcp_url=mcp_url,
-                mcp_config=mcp_config,
-                name=graph_name,
-                router_model=router_model,
-                agent_model=agent_model,
-                min_confidence=min_confidence,
-            )
-        else:
-            from agent_utilities import initialize_graph_from_workspace
-
-            graph, graph_config = initialize_graph_from_workspace(
-                mcp_config=mcp_config,
-                router_model=router_model,
-                agent_model=agent_model,
-                workspace=workspace,
-            )
-
-    app = build_agent_host_app(
-        graph=graph,
-        graph_config=graph_config,
-        name=name,
-        description=system_prompt,
-        executor=executor,
-    )
-
-    import uvicorn
-
-    uvicorn.run(app, host=host or "127.0.0.1", port=port or 9000)

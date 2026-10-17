@@ -9,8 +9,8 @@ from typing import Any
 
 from agent_connector_sdk.mcp.content import register_connector_content
 from agent_connector_sdk.mcp.network import build_network_serving_config
-from agent_utilities.core.config import setting
 
+from graph_os.core.settings import setting
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.composition import (
     install_gateway_application,
@@ -171,7 +171,7 @@ def mcp_server() -> None:
     ``/goals``, ``/tools``) is centralized in the API gateway
     (:mod:`graph_os.gateway`) — see :func:`_mount_rest_routes`.
     """
-    from agent_utilities.core.config import load_config
+    from graph_os.core.settings import load_config
 
     load_config()  # resolve settings through the one shared XDG config.json
     install_gateway_application()
@@ -260,9 +260,8 @@ def mcp_server() -> None:
         # authority before engine bootstrap. An explicit client role remains a
         # hard serving-plane boundary; this entrypoint never promotes itself to
         # the host that owns maintenance, workers, or autonomous loops.
-        from agent_utilities.core.config import config
-
         from graph_os.api.contracts.session import use_session
+        from graph_os.core.settings import runtime_config as config
         from graph_os.security.actor_context import use_actor
 
         with use_actor(bootstrap_session.actor), use_session(bootstrap_session):

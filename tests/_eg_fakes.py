@@ -9,13 +9,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from agent_utilities.orchestration.action_policy import (
+from graph_os.access.action_policy import (
     ActionDecision,
     ActionRequest,
     PolicyDisposition,
     PolicyReceipt,
 )
-
 from graph_os.api.contracts.session import GraphSession
 from graph_os.security.actor_context import ActorContext, ActorType
 

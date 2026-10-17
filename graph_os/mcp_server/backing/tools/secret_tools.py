@@ -27,7 +27,7 @@ from graph_os.mcp_server import runtime
 
 def _gate(kind: str, target: str, reason: str) -> tuple[bool, dict]:
     """Run the ActionPolicy gate for a secret mutation. CONCEPT:AU-OS.identity.encrypted-secret-store."""
-    from agent_utilities.orchestration.action_policy import (
+    from graph_os.access.action_policy import (
         ActionRequest,
         get_action_policy,
     )

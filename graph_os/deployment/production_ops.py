@@ -21,8 +21,10 @@ import time
 from pathlib import Path
 from typing import Any
 
-from agent_utilities.core.config import AgentConfig, setting
 from filelock import FileLock
+
+from graph_os.core.settings import GraphOSConfig as AgentConfig
+from graph_os.core.settings import setting
 
 
 class ProductionOperationError(RuntimeError):

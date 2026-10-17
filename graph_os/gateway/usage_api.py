@@ -23,7 +23,6 @@ from __future__ import annotations
 import logging
 from typing import Annotated
 
-from agent_connector_sdk.privacy import persistence_reference
 from agent_utilities.usage.authorization import (
     UsageAuthorizationError,
     require_usage_admin,
@@ -283,47 +282,6 @@ def search(q: str, limit: int = 50, tenant_id: str | None = None) -> list[Search
     )
 
 
-@usage_router.get("/traces")
-def traces(
-    session_id: str | None = None,
-    limit: int = 50,
-    tenant_id: str | None = None,
-) -> dict:
-    """Return privacy-safe Langfuse trace references for the caller's tenant."""
-
-    tenant = _tenant_scope(tenant_id)
-    try:
-        from agent_utilities.observability.langfuse_exporter import (
-            get_langfuse_exporter,
-        )
-
-        exporter = get_langfuse_exporter()
-        enabled = bool(getattr(exporter, "enabled", False))
-    except Exception:  # noqa: BLE001
-        enabled = False
-    if not enabled:
-        return {"enabled": False, "trace_count": 0, "traces": []}
-    rows = get_usage_service().sessions(
-        limit=min(max(limit, 1), 500), origin="runtime", tenant_id=tenant
-    )
-    if session_id:
-        from agent_utilities.usage.privacy import normalize_run_id
-
-        selected = normalize_run_id(session_id, tenant_id=tenant or "")
-        rows = [row for row in rows if row.id == selected]
-    return {
-        "enabled": True,
-        "trace_count": len(rows),
-        "traces": [
-            {
-                "trace_ref": persistence_reference("trace", r.id),
-                "project": r.project,
-            }
-            for r in rows
-        ],
-    }
-
-
 @usage_router.post("/sessions/upload")
 def upload_sessions(
     bundles: Annotated[list[ParsedSessionBundle], Body()],
@@ -347,21 +305,6 @@ def upload_sessions(
         if recorder.record_bundle(bundle):
             ok += 1
     return {"received": len(bundles), "ingested": ok}
-
-
-@usage_router.post("/sync")
-def sync_now() -> dict:
-    """Trigger an immediate local-log sync (auto-detect + parse + persist)."""
-
-    _require_usage_admin()
-    try:
-        from agent_utilities.ingestion.collector import collect_local_sessions
-
-        result = collect_local_sessions()
-        return {"status": "ok", **result}
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("usage_sync_failed error_type=%s", exc)
-        return {"status": "error", "detail": "usage sync failed"}
 
 
 def register_usage_routes(app, prefix: str = "/api") -> None:

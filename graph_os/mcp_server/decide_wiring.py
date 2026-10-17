@@ -79,15 +79,30 @@ def _install_topology(assembler: Any, run: Callable[[Any], Any]) -> None:
     raise not_served("decide.consumers.topology", "EG-DECISION-ENGINE-R036")
 
 
+async def _search_agent_cards(eg_client: Any, session: Any) -> Any:
+    """Search the session's graph for registered A2A agent cards through EG."""
+    import importlib
+
+    component = importlib.import_module("epistemic_graph.generated.agent_component")
+    storage = importlib.import_module("epistemic_graph.generated.storage")
+    graph = str(getattr(session, "graph", "") or "").strip()
+    if not graph:
+        raise LookupError("the verified session is not bound to a graph")
+    request = component.AgentComponentSearchRequest(
+        tenant_id=session.tenant,
+        kinds=[component.AgentComponentKind.A2A_AGENT_CARD],
+        limit=64,
+        cursor=None,
+    )
+    return await storage.send_agent_component_search(eg_client, request, graph)
+
+
 def _capability_search(eg_client: Any, session: Any) -> Callable[[Sequence[str]], Any]:
     """The planner's reuse lookup: registered A2A agent cards, served from EG."""
-    from agent_utilities.layers.clients import AgentClient
-
-    client = AgentClient(eg_client, session)
 
     async def lookup(_task_iris: Sequence[str]) -> list[dict[str, Any]]:
         try:
-            result = await client.agents()
+            result = await _search_agent_cards(eg_client, session)
         except Exception as exc:
             logger.warning("capability search unavailable: %s", exc)
             return []
@@ -111,7 +126,7 @@ def _capability_search(eg_client: Any, session: Any) -> Callable[[Sequence[str]]
 def _guardrail_source(engine: Any) -> Callable[[Sequence[str]], Any]:
     """The planner's policy rules: one side-effect-free AU action-policy
     verdict per task (never raises; fails closed -- AU-CONTROL-R017)."""
-    from agent_utilities.orchestration.action_policy import (
+    from graph_os.access.action_policy import (
         ActionRequest,
         get_action_policy,
     )

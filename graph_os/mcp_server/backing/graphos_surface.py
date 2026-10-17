@@ -74,23 +74,19 @@ ROUTING_GROUPS: tuple[RoutingGroup, ...] = (
     ),
     _group(
         "ingest",
-        "Ingestion, source sync and connectors, ETL, feeds, pipelines, media, data prep.",
+        "Ingestion, source sync and connectors, ETL, feeds, pipelines, media.",
         "graph_ingest source_sync source_connector source_drain graph_etl "
-        "graph_feeds graph_pipeline document_process "
-        "ingest_sessions graph_data_prep",
+        "graph_feeds graph_pipeline document_process graph_media_sidecar",
     ),
     _group(
         "code",
-        "Code intelligence, navigation, run version control, sandboxes.",
-        "graph_code graph_code_nav graph_runvcs graph_sandbox",
+        "Code intelligence, navigation, sandboxes.",
+        "graph_code graph_code_nav graph_sandbox",
     ),
     _group(
         "run",
-        "Agents, agent library, workflows, goals, jobs, schedules, loops, runs, "
-        "sessions, attended browser control.",
-        "graph_orchestrate graph_agents graph_workflows graph_goals graph_jobs "
-        "graph_schedules graph_loops graph_durable graph_sessions agent_library "
-        "browser_control",
+        "Loops, sessions, attended browser control.",
+        "graph_loops graph_sessions browser_control",
     ),
     _group(
         "message",
@@ -105,24 +101,23 @@ ROUTING_GROUPS: tuple[RoutingGroup, ...] = (
     ),
     _group(
         "improve",
-        "Feedback, learning, evolution proposals, graph engineering.",
-        "graph_feedback graph_learn graph_evolution graph_engineering",
+        "Feedback, learning, graph engineering.",
+        "graph_feedback graph_learn graph_engineering",
     ),
     _group(
         "ontology",
         "Ontology types, interfaces, derivations, object sets, indexes, permissions.",
         "graph_ontology ontology_classification_claims ontology_derive "
         "ontology_function ontology_interface ontology_leanix_sync "
-        "ontology_link_materialize ontology_model_profile ontology_property_types "
-        "ontology_repository_provenance ontology_sampling_profile "
-        "ontology_value_types concept_registry skill_classify object_set "
+        "ontology_link_materialize ontology_property_types "
+        "ontology_repository_provenance "
+        "ontology_value_types skill_classify object_set "
         "object_index object_permissioning",
     ),
     _group(
         "observe",
         "Logs, traces, PromQL, audit, usage, failure analysis, charts.",
-        "graph_logs graph_traces graph_observe graph_promql graph_audit "
-        "usage_query graph_viz",
+        "graph_logs graph_traces graph_promql graph_audit graph_viz",
     ),
     _group(
         "govern",
@@ -233,7 +228,6 @@ def graphos_registrars() -> list[Any]:
         au_tools.register_query_tools,
         au_tools.register_write_ingest_tools,
         au_tools.register_analysis_tools,
-        au_tools.register_agent_execution_tools,
         au_tools.register_analyze_suite_tools,
         au_tools.register_state_tools,
         au_tools.register_ontology_tools,
@@ -242,21 +236,18 @@ def graphos_registrars() -> list[Any]:
         au_tools.register_candidate_claim_tools,
         au_tools.register_secret_tools,
         au_tools.register_config_tools,
-        au_tools.register_data_prep_tools,
         au_tools.register_engine_tools,
         lambda server: au_tools.register_engine_surface_tools(
             server, include_unserved_mining=False
         ),
         au_tools.register_domain_ops_tools,
-        au_tools.register_evolution_tools,
         au_tools.register_governance_tools,
         au_tools.register_audit_tools,
         au_tools.register_epistemic_tools,
         au_tools.register_incident_tools,
-        au_tools.register_job_tools,
+        au_tools.register_media_sidecar_tools,
         au_tools.register_compliance_tools,
-        au_tools.register_workflow_tools,
-        au_tools.register_durable_tools,
+        au_tools.register_argument_tools,
     ]
 
 

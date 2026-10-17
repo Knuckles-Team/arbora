@@ -29,9 +29,9 @@ import logging
 import time
 from typing import TYPE_CHECKING, Any
 
-from agent_utilities.core.config import setting
 from agent_utilities.messaging.models import InboundEvent, MediaAttachment, SendResult
 
+from graph_os.core.settings import setting
 from graph_os.messaging.governed_send import (
     PolicyRunner,
     mirror_outbound_if_enabled,
@@ -262,7 +262,7 @@ class MessagingService:
     def _gate(self, channel_id: str, platform: str, *, source: str, reason: str) -> Any:
         """Run ActionPolicy, returning ``None`` when authorization is unavailable."""
         try:
-            from agent_utilities.orchestration.action_policy import (
+            from graph_os.access.action_policy import (
                 ActionRequest,
                 get_action_policy,
             )

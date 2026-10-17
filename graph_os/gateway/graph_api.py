@@ -218,7 +218,7 @@ def register_graph_routes(app, prefix: str = "/api") -> None:
     # outermost) — the server-minted ActorContext is already in scope when
     # the bucket key (tenant → actor → client IP) is resolved. Disabled by
     # default (GATEWAY_RATE_LIMIT=0); /metrics and health paths are exempt.
-    from agent_utilities.core.config import config
+    from graph_os.core.settings import runtime_config as config
 
     if config.gateway_rate_limit > 0:
         from graph_os.gateway.rate_limit import GatewayRateLimitMiddleware

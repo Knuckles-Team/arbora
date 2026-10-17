@@ -59,6 +59,7 @@
     "GRAPHOS-FLEET-R024.1",
     "GRAPHOS-FLEET-R024.2",
     "GRAPHOS-FLEET-R024.3",
+    "GRAPHOS-FLEET-R024.750",
     "GRAPHOS-FLEET-R025",
     "GRAPHOS-FLEET-R029",
     "GRAPHOS-FLEET-R026",
@@ -119,7 +120,22 @@
     "GRAPHOS-FLEET-R024.11",
     "GRAPHOS-FLEET-R002.9",
     "GRAPHOS-FLEET-R034.13",
-    "GRAPHOS-FLEET-R034.14"
+    "GRAPHOS-FLEET-R034.14",
+    "GRAPHOS-FLEET-R036",
+    "GRAPHOS-FLEET-R036.1",
+    "GRAPHOS-FLEET-R036.2",
+    "GRAPHOS-FLEET-R036.3",
+    "GRAPHOS-FLEET-R036.4",
+    "GRAPHOS-FLEET-R036.5",
+    "GRAPHOS-FLEET-R036.6",
+    "GRAPHOS-FLEET-R037",
+    "GRAPHOS-FLEET-R037.1",
+    "GRAPHOS-FLEET-R037.2",
+    "GRAPHOS-FLEET-R037.3",
+    "GRAPHOS-FLEET-R037.4",
+    "GRAPHOS-FLEET-R037.5",
+    "GRAPHOS-FLEET-R037.6",
+    "GRAPHOS-FLEET-R038"
   ],
   "requirements": [
     {
@@ -705,6 +721,7 @@
         "GRAPHOS-FLEET-R024.1",
         "GRAPHOS-FLEET-R024.2",
         "GRAPHOS-FLEET-R024.3",
+        "GRAPHOS-FLEET-R024.750",
         "GRAPHOS-FLEET-R024.4",
         "GRAPHOS-FLEET-R024.5",
         "GRAPHOS-FLEET-R024.6",
@@ -761,6 +778,15 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R024.750",
+      "title": "Fail-closed fleet health evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/fleet/test_health.py:18"
+      ]
     },
     {
       "id": "GRAPHOS-FLEET-R025",
@@ -1255,6 +1281,127 @@
     {
       "id": "GRAPHOS-FLEET-R034.14",
       "title": "GRAPHOS:8 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R036",
+      "title": "The connector contract is established on first connect (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-FLEET-R036.1",
+        "GRAPHOS-FLEET-R036.2",
+        "GRAPHOS-FLEET-R036.3",
+        "GRAPHOS-FLEET-R036.4",
+        "GRAPHOS-FLEET-R036.5",
+        "GRAPHOS-FLEET-R036.6"
+      ]
+    },
+    {
+      "id": "GRAPHOS-FLEET-R036.1",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R036.2",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R036.3",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R036.4",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R036.5",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R036.6",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R037",
+      "title": "Tools load per job from the engine answer (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-FLEET-R037.1",
+        "GRAPHOS-FLEET-R037.2",
+        "GRAPHOS-FLEET-R037.3",
+        "GRAPHOS-FLEET-R037.4",
+        "GRAPHOS-FLEET-R037.5",
+        "GRAPHOS-FLEET-R037.6"
+      ]
+    },
+    {
+      "id": "GRAPHOS-FLEET-R037.1",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R037.2",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R037.3",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R037.4",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R037.5",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R037.6",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R038",
+      "title": "One protocol stack with one implementation per role",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

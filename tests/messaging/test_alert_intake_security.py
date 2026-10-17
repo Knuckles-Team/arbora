@@ -1,8 +1,8 @@
 from types import SimpleNamespace
 
 import pytest
-from agent_utilities.core.config import AgentConfig
 
+from graph_os.core.settings import GraphOSConfig as AgentConfig
 from graph_os.messaging import alert_intake
 from graph_os.messaging.alert_intake import (
     _MAX_ALERT_CHARS,

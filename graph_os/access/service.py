@@ -9,11 +9,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from agent_utilities.orchestration.action_policy import (
+from graph_os.access.action_policy import (
     ACTION_APPROVAL_KIND,
     approval_lease_to_props,
 )
-
 from graph_os.security.elevation import (
     ElevationApproval,
     ElevationRequest,

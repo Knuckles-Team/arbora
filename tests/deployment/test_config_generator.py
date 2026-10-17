@@ -142,7 +142,7 @@ def test_generate_config_and_reference_include_production_certification_fields()
 
 @pytest.mark.parametrize("profile", PROFILES)
 def test_generate_config_roundtrips_through_agent_config(profile):
-    from agent_utilities.core.config import AgentConfig
+    from graph_os.core.settings import GraphOSConfig as AgentConfig
 
     generated = generate_config(profile)
     parsed = AgentConfig(**generated)

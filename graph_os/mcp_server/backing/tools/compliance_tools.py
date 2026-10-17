@@ -31,10 +31,10 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from agent_utilities.core.event_loop import run_blocking_ordered
 from pydantic import Field
 
 from graph_os.api.errors import not_served
+from graph_os.core.event_loop import run_blocking_ordered
 from graph_os.mcp_server import runtime
 from graph_os.security.error_surface import public_error_payload
 
@@ -119,7 +119,7 @@ def _policy_version() -> dict[str, Any]:
     rule count are reported.
     """
     try:
-        from agent_utilities.orchestration.action_policy import ActionPolicy
+        from graph_os.access.action_policy import ActionPolicy
 
         parsed = ActionPolicy()._load_file_policy()
         defaults = parsed.get("defaults")

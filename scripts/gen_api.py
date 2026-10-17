@@ -14,9 +14,7 @@ import argparse
 import hashlib
 import importlib
 import importlib.resources
-import inspect
 import json
-import re
 import shutil
 import subprocess  # nosec B404 -- fixed-argv git compatibility check
 import sys
@@ -26,6 +24,13 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 GENERATED = ROOT / "graph_os/api/generated"
 sys.path.insert(0, str(ROOT))
+
+from graph_os.client._schema import (
+    _expanded_spec,
+    _pointer,
+    _resolve_local_refs,
+    _resource_parts,
+)
 
 
 def _json_bytes(value: Any) -> bytes:
@@ -48,44 +53,6 @@ def _registry(module_name: str) -> dict[str, Any]:
     document["registry_digest"] = registry.digest
     _snapshot_eg_schemas(document)
     return document
-
-
-def _pointer(document: Any, reference: str) -> Any:
-    if not reference.startswith("/"):
-        raise ValueError(f"invalid EG schema pointer: {reference!r}")
-    value = document
-    for token in reference.lstrip("/").split("/"):
-        token = token.replace("~1", "/").replace("~0", "~")
-        if not isinstance(value, dict) or token not in value:
-            raise ValueError(f"missing EG schema pointer: {reference!r}")
-        value = value[token]
-    return value
-
-
-def _resolve_local_refs(value: Any, document: dict, seen: frozenset[str]) -> Any:
-    if isinstance(value, list):
-        return [_resolve_local_refs(item, document, seen) for item in value]
-    if not isinstance(value, dict):
-        return value
-    if "$ref" in value:
-        return _resolve_reference(value, document, seen)
-    return {
-        key: _resolve_local_refs(item, document, seen) for key, item in value.items()
-    }
-
-
-def _resolve_reference(value: dict, document: dict, seen: frozenset[str]) -> Any:
-    reference = value["$ref"]
-    if not isinstance(reference, str) or not reference.startswith("#/"):
-        raise ValueError("unsafe schema reference")
-    if reference in seen:
-        return value
-    target = _pointer(document, reference[1:])
-    resolved = _resolve_local_refs(target, document, seen | {reference})
-    siblings = {key: item for key, item in value.items() if key != "$ref"}
-    if not siblings:
-        return resolved
-    return {**resolved, **_resolve_local_refs(siblings, document, seen)}
 
 
 def _snapshot_eg_schemas(
@@ -138,34 +105,6 @@ def _descriptors(registry: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _resource_parts(reference: str) -> tuple[str, str]:
-    filename, separator, pointer = reference.partition("#")
-    if not separator or not re.fullmatch(r"schemas/[A-Za-z0-9_.-]+\.json", filename):
-        raise ValueError(f"unsafe schema resource: {reference!r}")
-    if not pointer.startswith("/"):
-        raise ValueError(f"invalid schema pointer: {reference!r}")
-    return filename, pointer
-
-
-def _expanded_spec(spec: dict, read_document: Any) -> dict:
-    snapshot = spec.get("schema_snapshot")
-    if not isinstance(snapshot, dict) or "$ref" not in snapshot:
-        return spec
-    reference = snapshot["$ref"]
-    if not isinstance(reference, str) or set(snapshot) != {"$ref"}:
-        raise ValueError("invalid schema snapshot reference")
-    filename, pointer = _resource_parts(reference)
-    if spec.get("eg_schema") != "contract/" + reference:
-        raise ValueError("schema snapshot differs from provider reference")
-    document = json.loads(read_document(filename))
-    canonical = json.dumps(document, sort_keys=True, separators=(",", ":")).encode()
-    if hashlib.sha256(canonical).hexdigest() != spec.get("schema_sha256"):
-        raise ValueError("schema resource digest mismatch")
-    selected = _pointer(document, pointer)
-    expanded = _resolve_local_refs(selected, document, frozenset())
-    return {**spec, "schema_snapshot": expanded}
-
-
 def _expand_registry(registry: dict, read_document: Any) -> dict:
     documents: dict[str, bytes] = {}
 
@@ -196,13 +135,7 @@ def _schema(
     documents: dict[str, Any],
 ) -> dict[str, Any]:
     if "schema" in value:
-        schema = value["schema"]
-        if "$defs" not in schema:
-            return schema
-        # Namespace the entire model so each local definition retains its root.
-        name = "Model" + hashlib.sha256(_json_bytes(schema)).hexdigest()
-        components[name] = _rewrite_schema_refs(schema, name)
-        return {"$ref": f"#/components/schemas/{name}"}
+        return _curated_schema(value["schema"], components)
     if "eg_schema" in value:
         reference = value["eg_schema"]
         if not reference.startswith("contract/"):
@@ -218,19 +151,110 @@ def _schema(
     raise ValueError(f"unknown schema reference: {value!r}")
 
 
-def _rewrite_schema_refs(value: Any, name: str) -> Any:
-    if isinstance(value, list):
-        return [_rewrite_schema_refs(item, name) for item in value]
-    if isinstance(value, dict):
-        return {
-            key: (
-                f"#/components/schemas/{name}{item[1:]}"
-                if key == "$ref" and isinstance(item, str) and item.startswith("#/")
-                else _rewrite_schema_refs(item, name)
-            )
-            for key, item in value.items()
+def _rewrite_schema_refs(value: Any, references: dict[str, str]) -> Any:
+    if not isinstance(value, dict):
+        return value
+    if set(value) & {"$id", "$anchor", "$dynamicRef", "$dynamicAnchor"}:
+        raise ValueError("scoped schema identifiers cannot be hoisted")
+    result = _map_schema_children(
+        value, lambda child: _rewrite_schema_refs(child, references)
+    )
+    reference = value.get("$ref")
+    if isinstance(reference, str):
+        if reference.startswith("#") and reference not in references:
+            raise ValueError("unsupported local schema reference")
+        result["$ref"] = references.get(reference, reference)
+    return result
+
+
+def _curated_schema(schema: dict, components: dict[str, Any]) -> dict:
+    definitions = schema.get("$defs", {})
+    references = {
+        f"#/$defs/{name}": "#/components/schemas/Definition"
+        + hashlib.sha256(
+            _json_bytes(_resolve_local_refs(value, schema, frozenset()))
+        ).hexdigest()
+        for name, value in definitions.items()
+    }
+    rewritten = _rewrite_schema_refs(schema, references)
+    for name, value in rewritten.pop("$defs", {}).items():
+        target = references[f"#/$defs/{name}"].rsplit("/", 1)[1]
+        components[target] = _shared_schema(value, components)
+    result = _shared_schema(rewritten, components)
+    if definitions:
+        # Preserve definition pointers and annotations without copying their bodies.
+        result = {
+            **result,
+            "$defs": {
+                name: {"$ref": references[f"#/$defs/{name}"]} for name in definitions
+            },
         }
-    return value
+    return result
+
+
+def _shared_schema(schema: Any, components: dict[str, Any]) -> Any:
+    if not isinstance(schema, dict) or set(schema) == {"$ref"}:
+        return schema
+    shared = _schema_children(schema, components)
+    name = "Schema" + hashlib.sha256(_json_bytes(shared)).hexdigest()
+    components[name] = shared
+    return {"$ref": f"#/components/schemas/{name}"}
+
+
+def _schema_children(schema: dict[str, Any], components: dict[str, Any]) -> dict:
+    return _map_schema_children(schema, lambda child: _shared_schema(child, components))
+
+
+def _map_schema_children(schema: dict[str, Any], transform: Any) -> dict:
+    result = dict(schema)
+    for key in ("properties", "patternProperties", "$defs", "dependentSchemas"):
+        if isinstance(schema.get(key), dict):
+            result[key] = {
+                name: transform(child) for name, child in schema[key].items()
+            }
+    for key in (
+        "items",
+        "additionalProperties",
+        "contains",
+        "not",
+        "if",
+        "then",
+        "else",
+        "propertyNames",
+        "unevaluatedProperties",
+        "unevaluatedItems",
+        "contentSchema",
+        "additionalItems",
+    ):
+        if key in schema:
+            result[key] = transform(schema[key])
+    for key in ("allOf", "anyOf", "oneOf", "prefixItems"):
+        if isinstance(schema.get(key), list):
+            result[key] = [transform(child) for child in schema[key]]
+    return result
+
+
+def _http_component_uses(paths: dict):
+    for methods in paths.values():
+        for operation in methods.values():
+            yield "requestBodies", operation, "requestBody"
+            for status in operation["responses"]:
+                yield "responses", operation["responses"], status
+
+
+def _shared_http_components(paths: dict) -> dict:
+    uses: dict[tuple[str, str], list] = {}
+    for group, owner, field in _http_component_uses(paths):
+        name = "Shared" + hashlib.sha256(_json_bytes(owner[field])).hexdigest()
+        uses.setdefault((group, name), []).append((owner, field))
+    shared: dict[str, dict] = {"requestBodies": {}, "responses": {}}
+    for (group, name), targets in uses.items():
+        if len(targets) > 1:
+            owner, field = targets[0]
+            shared[group][name] = owner[field]
+            for owner, field in targets:
+                owner[field] = {"$ref": f"#/components/{group}/{name}"}
+    return shared
 
 
 def _openapi(
@@ -286,19 +310,8 @@ def _openapi(
         "info": {"title": "GraphOS API", "version": str(registry["api_version"])},
         "x-registry-digest": registry["registry_digest"],
         "paths": paths,
-        "components": {"schemas": components},
+        "components": {"schemas": components, **_shared_http_components(paths)},
     }
-
-
-def _client_helpers() -> str:
-    helpers = (
-        _pointer,
-        _resolve_local_refs,
-        _resolve_reference,
-        _resource_parts,
-        _expanded_spec,
-    )
-    return "\n\n\n".join(inspect.getsource(helper).rstrip() for helper in helpers)
 
 
 def _client_models(registry: dict[str, Any]) -> bytes:
@@ -308,12 +321,12 @@ def _client_models(registry: dict[str, Any]) -> bytes:
         "",
         "from __future__ import annotations",
         "",
-        "import hashlib",
         "import importlib.resources",
         "import json",
-        "import re",
         "from functools import lru_cache",
-        "from typing import Any, Literal",
+        "from typing import Literal",
+        "",
+        "from graph_os.client._schema import _expanded_spec",
         "",
         f"REGISTRY_DIGEST = {json.dumps(registry['registry_digest'])}",
         f"API_VERSION = {json.dumps(str(registry['api_version']))}",
@@ -323,9 +336,6 @@ def _client_models(registry: dict[str, Any]) -> bytes:
     lines.extend(
         [
             "]",
-            "",
-            "",
-            _client_helpers(),
             "",
             "",
             "@lru_cache(maxsize=1)",
@@ -352,36 +362,6 @@ def _client_models(registry: dict[str, Any]) -> bytes:
         ]
     )
     return "\n".join(lines).encode()
-
-
-def _client_invoker() -> bytes:
-    return b'''"""Generic typed GraphOS operation invoker. Generated; do not edit."""
-
-from __future__ import annotations
-
-from collections.abc import Mapping
-from typing import Any, Protocol
-
-from ._generated_models import REGISTRY_DIGEST, OperationId, schema_for
-
-
-class Transport(Protocol):
-    async def invoke(
-        self, op_id: str, params: Mapping[str, Any]
-    ) -> Mapping[str, Any]: ...
-
-
-async def invoke(
-    transport: Transport, op_id: OperationId, params: Mapping[str, Any]
-) -> Mapping[str, Any]:
-    """Use one transport entrypoint for every declared operation."""
-    schema_for(op_id)
-    response = await transport.invoke(op_id, params)
-    meta = response.get("meta")
-    if not isinstance(meta, Mapping) or meta.get("registry_digest") != REGISTRY_DIGEST:
-        raise RuntimeError("GraphOS registry digest mismatch")
-    return response
-'''
 
 
 def _ts_client(registry: dict[str, Any]) -> bytes:
@@ -456,7 +436,6 @@ __all__ = ["EG_RECEIPT_DIGEST", "ENGINE_ERRORS", "REGISTRY_DIGEST"]
         ROOT
         / "graph_os/client/__init__.py": b'"""Generated GraphOS client surface."""\n',
         ROOT / "graph_os/client/_generated_models.py": _client_models(registry),
-        ROOT / "graph_os/client/invoke.py": _client_invoker(),
         ROOT / "docs/api/generated.ts": _ts_client(registry),
     }
     outputs.update(_shared_schema_outputs(registry))

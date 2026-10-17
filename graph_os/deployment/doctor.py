@@ -24,8 +24,6 @@ from collections.abc import Callable
 from types import SimpleNamespace
 from typing import Any
 
-from graph_os.api.errors import not_served
-
 from . import doctor_certification as _doctor_certification
 from . import doctor_coverage as _doctor_coverage
 from . import doctor_graph as _doctor_graph
@@ -70,10 +68,6 @@ def _cert_configuration_gate(*args: Any, **kwargs: Any) -> Any:
     return _doctor_certification._cert_configuration_gate(*args, **kwargs)
 
 
-def _cert_validated_commands(*args: Any, **kwargs: Any) -> Any:
-    return _doctor_certification._cert_validated_commands(*args, **kwargs)
-
-
 def _cert_verify_release_manifest(*args: Any, **kwargs: Any) -> Any:
     return _doctor_certification._cert_verify_release_manifest(*args, **kwargs)
 
@@ -88,10 +82,6 @@ def _cert_verify_bearer_token(*args: Any, **kwargs: Any) -> Any:
 
 def _cert_resolve_prometheus_trust(*args: Any, **kwargs: Any) -> Any:
     return _doctor_certification._cert_resolve_prometheus_trust(*args, **kwargs)
-
-
-def _check_production_certification(*args: Any, **kwargs: Any) -> Any:
-    return _doctor_certification._check_production_certification(*args, **kwargs)
 
 
 def _require_observability_imports(*args: Any, **kwargs: Any) -> Any:
@@ -150,18 +140,6 @@ def _probe_langfuse_mcp_visibility(*args: Any, **kwargs: Any) -> Any:
     return _doctor_observability._probe_langfuse_mcp_visibility(*args, **kwargs)
 
 
-def _langfuse_expected_trace_name(*args: Any, **kwargs: Any) -> Any:
-    return _doctor_observability._langfuse_expected_trace_name(*args, **kwargs)
-
-
-def _langfuse_await_trace(*args: Any, **kwargs: Any) -> Any:
-    return _doctor_observability._langfuse_await_trace(*args, **kwargs)
-
-
-def _probe_langfuse_trace_round_trip(*args: Any, **kwargs: Any) -> Any:
-    return _doctor_observability._probe_langfuse_trace_round_trip(*args, **kwargs)
-
-
 def _probe_langfuse_live(*args: Any, **kwargs: Any) -> Any:
     return _doctor_observability._probe_langfuse_live(*args, **kwargs)
 
@@ -212,10 +190,6 @@ def _check_langfuse(live: bool = False) -> Any:
     )
 
 
-def _check_workspace_config(*args: Any, **kwargs: Any) -> Any:
-    return _doctor_coverage._check_workspace_config(*args, **kwargs)
-
-
 def _check_skills(*args: Any, **kwargs: Any) -> Any:
     return _doctor_coverage._check_skills(*args, **kwargs)
 
@@ -230,10 +204,6 @@ def _count_generation(*args: Any, **kwargs: Any) -> Any:
 
 def _count_provider_materialization(*args: Any, **kwargs: Any) -> Any:
     return _doctor_coverage._count_provider_materialization(*args, **kwargs)
-
-
-def _count_own_provider(*args: Any, **kwargs: Any) -> Any:
-    return _doctor_coverage._count_own_provider(*args, **kwargs)
 
 
 def _nested_child_is_plain_dir(*args: Any, **kwargs: Any) -> Any:
@@ -252,16 +222,8 @@ def _scan_nested_children(*args: Any, **kwargs: Any) -> Any:
     return _doctor_coverage._scan_nested_children(*args, **kwargs)
 
 
-def _sweep_install_leg(*args: Any, **kwargs: Any) -> Any:
-    return _doctor_coverage._sweep_install_leg(*args, **kwargs)
-
-
 def _unified_install_result(*args: Any, **kwargs: Any) -> Any:
     return _doctor_coverage._unified_install_result(*args, **kwargs)
-
-
-def _check_unified_install(*args: Any, **kwargs: Any) -> Any:
-    return _doctor_coverage._check_unified_install(*args, **kwargs)
 
 
 def _endpoint_host_port(*args: Any, **kwargs: Any) -> Any:
@@ -430,7 +392,7 @@ def _check_evolution_staging() -> dict[str, Any]:
     from pathlib import Path
 
     try:
-        from agent_utilities.core.config import AgentConfig
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
 
         configured = AgentConfig().evolution_staging_root
     except Exception as exc:  # noqa: BLE001
@@ -599,7 +561,7 @@ def _execution_security_alert_intake(
 def _check_execution_security() -> dict[str, Any]:
     """Surface dangerous host-execution escape hatches without executing them."""
     try:
-        from agent_utilities.core.config import AgentConfig
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
 
         cfg = AgentConfig()
     except Exception as exc:  # noqa: BLE001
@@ -651,8 +613,8 @@ def _check_permission_governance() -> dict[str, Any]:
         "redacted": True,
     }
     try:
-        from agent_utilities.core.config import AgentConfig
-        from agent_utilities.core.profile_guard import is_production_profile
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
+        from graph_os.core.settings import is_production_profile
 
         cfg = AgentConfig()
         data["signing_reference_configured"] = bool(cfg.permissions_signing_key_ref)
@@ -699,8 +661,8 @@ def _check_permission_governance() -> dict[str, Any]:
 
 def _resolve_tls_profile_data() -> tuple[Any, Any, Any, dict[str, Any]]:
     """Returns (cfg, resolver, secrets_client, tls_data)."""
-    from agent_utilities.core.config import AgentConfig
-    from agent_utilities.core.transport_security import (
+    from graph_os.core.settings import GraphOSConfig as AgentConfig
+    from graph_os.core.transport import (
         resolve_tls_profile,
         tls_environment_from_config,
     )
@@ -773,7 +735,7 @@ def _engine_endpoints_are_ready(engine_endpoints: list[str]) -> bool:
 
 
 def _engine_tls_data(cfg: Any, resolver: Any) -> dict[str, bool]:
-    from agent_utilities.core.transport_security import resolve_tls_profile
+    from graph_os.core.transport import resolve_tls_profile
 
     trust = resolve_tls_profile(
         "ENGINE",
@@ -859,7 +821,7 @@ def _check_google_workspace_oauth() -> dict[str, Any]:
     """Validate optional OAuth bootstrap without disclosing tenant configuration."""
 
     try:
-        from agent_utilities.core.config import AgentConfig
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
 
         cfg = AgentConfig()
     except Exception as exc:  # noqa: BLE001
@@ -899,7 +861,7 @@ def _check_google_workspace_oauth() -> dict[str, Any]:
 
 def _egress_tls_profiles(cfg: Any) -> dict[str, Any]:
     """Resolve the model/embedding/OAuth2-token TLS profiles, in that order."""
-    from agent_utilities.core.transport_security import (
+    from graph_os.core.transport import (
         resolve_tls_profile,
         tls_environment_from_config,
     )
@@ -958,7 +920,8 @@ def _check_source_egress() -> dict[str, Any]:
         from agent_connector_sdk.source_connectors.http_safety import (
             normalize_allowed_hosts,
         )
-        from agent_utilities.core.config import AgentConfig
+
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
 
         cfg = AgentConfig()
         private_hosts = normalize_allowed_hosts(cfg.source_http_allowed_private_hosts)
@@ -1069,7 +1032,7 @@ def _eunomia_require_bounded_endpoint(cfg: Any, private_hosts: Any) -> None:
 
 def _eunomia_tls_data(cfg: Any) -> dict[str, Any]:
     """Redacted TLS posture for the remote PDP transport."""
-    from agent_utilities.core.transport_security import (
+    from graph_os.core.transport import (
         resolve_tls_profile,
         tls_environment_from_config,
     )
@@ -1120,7 +1083,8 @@ def _check_eunomia() -> dict[str, Any]:
         from agent_connector_sdk.source_connectors.http_safety import (
             normalize_allowed_hosts,
         )
-        from agent_utilities.core.config import AgentConfig
+
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
 
         cfg = AgentConfig()
         mode = cfg.eunomia_type
@@ -1208,7 +1172,7 @@ def _check_runtime_integrations() -> dict[str, Any]:
     without returning any configured value or making a network request.
     """
     try:
-        from agent_utilities.core.config import AgentConfig
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
 
         cfg = AgentConfig()
         inventory_configured = bool(cfg.infra_inventory_path)
@@ -1312,8 +1276,7 @@ def _check_engine() -> dict[str, Any]:
     not recreate AU engine election, placement, encryption, or autostart state.
     """
     try:
-        from agent_utilities.core.config import AgentConfig
-
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
         from graph_os.deployment.production_ops import (
             ProductionOperationError,
             _transport_for_endpoint,
@@ -1381,15 +1344,10 @@ def _check_secrets() -> dict[str, Any]:
         "overridden_count": 0,
     }
     try:
-        from agent_utilities.core.config import (
-            AgentConfig,
-            runtime_secret_source_status,
-        )
-
+        from graph_os.core.settings import GraphOSConfig
         from graph_os.deployment.config_generator import _unresolved_secret_refs
 
-        unresolved = _unresolved_secret_refs(AgentConfig())
-        source_status = runtime_secret_source_status()
+        unresolved = _unresolved_secret_refs(GraphOSConfig())
     except Exception as exc:  # noqa: BLE001
         return _result(
             "secrets",
@@ -1441,8 +1399,7 @@ def _check_secrets_backend() -> dict[str, Any]:
     happens to succeed (``_check_secrets`` above only catches total failure).
     """
     try:
-        from agent_utilities.core.config import AgentConfig
-
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
         from graph_os.deployment.config_generator import (
             secret_reference_scheme_counts,
         )
@@ -1508,8 +1465,8 @@ def _check_secrets_backend() -> dict[str, Any]:
 
 
 def _check_auth() -> dict[str, Any]:
-    from agent_utilities.core.config import config, setting
-
+    from graph_os.core.settings import runtime_config as config
+    from graph_os.core.settings import setting
     from graph_os.security.request_identity import (
         local_process_authority_enabled,
     )
@@ -1644,8 +1601,7 @@ def _graph_identity_readiness(token_ref: str, oauth2: Any) -> tuple[str, bool]:
 def _check_graph_identity() -> dict[str, Any]:
     """Validate graph process identity without minting or exposing a token."""
     try:
-        from agent_utilities.core.config import AgentConfig
-
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
         from graph_os.security.request_identity import (
             local_process_authority_enabled,
         )
@@ -1708,9 +1664,9 @@ def _check_mcp_fleet(live: bool = False) -> dict[str, Any]:
         import json
         from pathlib import Path
 
-        from agent_utilities.core.workspace import get_mcp_config_path
+        from graph_os.core.settings import platform_config_file
 
-        path = get_mcp_config_path()
+        path = platform_config_file("mcp_config.json")
         if not path or not Path(path).exists():
             return _result(
                 "mcp_fleet",
@@ -1772,7 +1728,8 @@ def _fleet_alias_kind(alias: str, reference: Any) -> str:
     from agent_connector_sdk.credentials.runtime_references import (
         resolve_runtime_secret_reference,
     )
-    from agent_utilities.core.config import setting
+
+    from graph_os.core.settings import setting
 
     try:
         direct = setting(alias)
@@ -1801,7 +1758,7 @@ def _check_mcp_fleet_secrets() -> dict[str, Any]:
         "redacted": True,
     }
     try:
-        from agent_utilities.core.config import AgentConfig
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
 
         mappings = AgentConfig().mcp_fleet_secret_refs
         if not isinstance(mappings, dict) or len(mappings) > 512:
@@ -1835,186 +1792,6 @@ def _check_mcp_fleet_secrets() -> dict[str, Any]:
         "mcp_fleet_secrets",
         "ok",
         "MCP fleet secret alias resolution is ready",
-        data=data,
-    )
-
-
-def _check_openai_catalog(live: bool = False) -> dict[str, Any]:
-    """Verify configured OpenAI models against the live catalogue (CONCEPT:AU-ORCH.adapter.openai-catalog-verification).
-
-    Static (default): reports which credential tier resolved (secret_ref/env/file/
-    none) and how many OpenAI-provider models are configured in the active model
-    registry, without a network call. ``live=True`` additionally calls
-    ``verify_openai_model`` for each configured model id, so a wrong/renamed/
-    inaccessible model id is caught before a deployment relies on it rather than
-    assumed to exist. Never reports the resolved API key value.
-    """
-    try:
-        from agent_utilities.core.credentials import CredentialResolver
-        from agent_utilities.models.model_registry import load_active_registry
-
-        creds = CredentialResolver().resolve("openai")
-        registry = load_active_registry()
-        openai_models = [m for m in registry.models if m.provider == "openai"]
-        data: dict[str, Any] = {
-            "credential_source": creds.source,
-            "credential_configured": bool(creds.api_key),
-            "configured_model_count": len(openai_models),
-            "live_probed": False,
-            "redacted": True,
-        }
-    except Exception as exc:  # noqa: BLE001 - doctor is a redaction boundary
-        return _result(
-            "openai_catalog",
-            "error",
-            f"openai catalog check failed ({type(exc).__name__})",
-            data={"redacted": True},
-        )
-
-    if not openai_models:
-        return _result(
-            "openai_catalog",
-            "skip",
-            "no OpenAI-provider models are configured in the active model registry",
-            data=data,
-        )
-    if not creds.api_key:
-        return _result(
-            "openai_catalog",
-            "fail",
-            "OpenAI models are configured but no API key/secret reference is available",
-            remediation=(
-                "Set OPENAI_API_KEY_REF to an env://, vault://, or secret:// "
-                "reference (preferred) or the literal OPENAI_API_KEY."
-            ),
-            data=data,
-        )
-    if not live:
-        return _result(
-            "openai_catalog",
-            "ok",
-            f"{len(openai_models)} OpenAI model(s) configured with a resolvable "
-            "credential (pass live=True to verify against the live catalogue)",
-            data=data,
-        )
-
-    return _openai_catalog_live_result(openai_models, creds, data)
-
-
-def _openai_catalog_live_result(
-    openai_models: list[Any], creds: Any, data: dict[str, Any]
-) -> dict[str, Any]:
-    """Verify every configured OpenAI model id against the live catalogue.
-
-    ``data`` is mutated with the probe outcome so the returned result always
-    carries what was actually verified -- a probe that cannot complete raises
-    into the caller rather than reporting ok.
-    """
-    from agent_utilities.core.openai_catalog import verify_openai_model
-
-    async def _verify_all() -> list[Any]:
-        return [
-            await verify_openai_model(
-                m.model_id,
-                api_key=creds.api_key,
-                base_url=m.base_url or creds.base_url,
-            )
-            for m in openai_models
-        ]
-
-    verifications = _run_async_doctor_probe(_verify_all)
-    data["live_probed"] = True
-    verified = sum(1 for v in verifications if v.exists)
-    data["verified_count"] = verified
-    data["unverified_model_ids"] = [v.model_id for v in verifications if not v.exists]
-    if verified < len(openai_models):
-        return _result(
-            "openai_catalog",
-            "fail",
-            f"{len(openai_models) - verified} of {len(openai_models)} configured "
-            "OpenAI model(s) were not found in the live catalogue",
-            remediation=(
-                "Correct the model_id or confirm the credential has access to it."
-            ),
-            data=data,
-        )
-    return _result(
-        "openai_catalog",
-        "ok",
-        f"all {len(openai_models)} configured OpenAI model(s) verified against "
-        "the live catalogue",
-        data=data,
-    )
-
-
-def _check_provider_profiles() -> dict[str, Any]:
-    """Resolve enabled provider profiles without exposing deployment metadata."""
-
-    data = {
-        "configured_count": 0,
-        "enabled_count": 0,
-        "disabled_count": 0,
-        "ready_count": 0,
-        "invalid_count": 0,
-        "redacted": True,
-    }
-    try:
-        from agent_utilities.core.config import AgentConfig
-        from agent_utilities.core.provider_runtime import (
-            prepare_provider_runtime_child_environment,
-        )
-
-        cfg = AgentConfig()
-        profiles = cfg.provider_configs
-        if not isinstance(profiles, dict) or len(profiles) > 256:
-            raise ValueError("provider profile mapping is invalid")
-        data["configured_count"] = len(profiles)
-        for profile_name, profile in profiles.items():
-            if not profile.enabled:
-                data["disabled_count"] += 1
-                continue
-            data["enabled_count"] += 1
-            try:
-                prepared = prepare_provider_runtime_child_environment(
-                    profile_name, config=cfg
-                )
-                prepared.close()
-                data["ready_count"] += 1
-            except Exception:  # noqa: BLE001 - deployment details stay redacted
-                data["invalid_count"] += 1
-    except Exception as exc:  # noqa: BLE001 - doctor is a redaction boundary
-        return _result(
-            "provider_profiles",
-            "fail",
-            f"provider runtime profile configuration is invalid ({type(exc).__name__})",
-            remediation=(
-                "Configure PROVIDER_CONFIGS with neutral profile names, runtime "
-                "references, and explicit TLS profile selectors."
-            ),
-            data=data,
-        )
-    if not data["configured_count"]:
-        return _result(
-            "provider_profiles",
-            "skip",
-            "no external provider runtime profiles are configured",
-            data=data,
-        )
-    if data["invalid_count"]:
-        return _result(
-            "provider_profiles",
-            "fail",
-            "one or more enabled provider runtime profiles are unavailable",
-            remediation=(
-                "Repair the referenced endpoint, credential, selector, or TLS "
-                "profile in the deployment-owned configuration."
-            ),
-            data=data,
-        )
-    return _result(
-        "provider_profiles",
-        "ok",
-        "enabled provider runtime profiles are ready",
         data=data,
     )
 
@@ -2182,36 +1959,6 @@ def _check_venv_drift() -> dict[str, Any]:
     )
 
 
-def _check_warm_fork() -> dict[str, Any]:
-    """Report available confined sandbox rungs and pooled VM parents."""
-    exc = not_served(
-        "rlm.sandboxes.registry",
-        "AU-harness (deleted from AU)",
-        owner="agent-utilities",
-    )
-    return _result(
-        "warm_fork",
-        "error",
-        f"could not enumerate sandbox rungs ({type(exc).__name__})",
-    )
-
-
-def _check_a2a_persistence() -> dict[str, Any]:
-    """Validate the unary facade's canonical WorkItem/dispatch dependencies."""
-
-    exc = not_served("knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605")
-    return _result(
-        "a2a_persistence",
-        "fail",
-        f"canonical A2A authority is unavailable ({type(exc).__name__})",
-        remediation=(
-            "Install compatible graph-os and agent-utilities artifacts with "
-            "WorkItem durability and signed agent dispatch."
-        ),
-        data={"ready": False, "redacted": True},
-    )
-
-
 # Registry: name -> callable. Order is the report order.
 CHECKS: dict[str, Callable[..., dict[str, Any]]] = {
     "python_env": _check_python_env,
@@ -2225,9 +1972,6 @@ CHECKS: dict[str, Callable[..., dict[str, Any]]] = {
     "source_egress": _check_source_egress,
     "eunomia": _check_eunomia,
     "runtime_integrations": _check_runtime_integrations,
-    "provider_profiles": _check_provider_profiles,
-    "openai_catalog": _check_openai_catalog,
-    "workspace_config": _check_workspace_config,
     "engine_request_context": _check_engine_request_context,
     "engine": _check_engine,
     "engine_domains": _check_engine_domains,
@@ -2236,7 +1980,6 @@ CHECKS: dict[str, Callable[..., dict[str, Any]]] = {
     "auth": _check_auth,
     "outbound_auth": _check_outbound_auth,
     "skill_certification": _check_skill_certification,
-    "production_certification": _check_production_certification,
     "graph_identity": _check_graph_identity,
     "mcp_fleet_secrets": _check_mcp_fleet_secrets,
     "mcp_fleet": _check_mcp_fleet,
@@ -2245,11 +1988,8 @@ CHECKS: dict[str, Callable[..., dict[str, Any]]] = {
     "observability": _check_observability,
     "graph_connections": _check_graph_connections,
     "langfuse": _check_langfuse,
-    "a2a_persistence": _check_a2a_persistence,
     "skills": _check_skills,
-    "unified_install": _check_unified_install,
     "venv_drift": _check_venv_drift,
-    "warm_fork": _check_warm_fork,
     "kafka": _check_kafka,
     "fuseki": _check_fuseki,
     "seaweedfs_s3": _check_seaweedfs_s3,
@@ -2267,7 +2007,6 @@ _LIVE_CHECK_NAMES = frozenset(
         "mcp_fleet",
         "graph_connections",
         "langfuse",
-        "openai_catalog",
         "kafka",
         "fuseki",
         "seaweedfs_s3",
@@ -2333,7 +2072,7 @@ def _load_runtime_config(names: list[str]) -> list[dict[str, Any]] | None:
     report ok against defaults the deployment does not use.
     """
     try:
-        from agent_utilities.core.config import load_config
+        from graph_os.core.settings import load_config
 
         load_config()
     except Exception as exc:  # noqa: BLE001 - source details may be sensitive

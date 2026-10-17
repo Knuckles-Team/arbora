@@ -2,24 +2,18 @@
 
 from __future__ import annotations
 
-import inspect
 import json
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.tools import (
-    register_agent_execution_tools,
     register_analysis_tools,
     register_domain_ops_tools,
-    register_evolution_tools,
     register_governance_tools,
-    register_job_tools,
-    register_workflow_tools,
 )
-from scripts.gen_graphos_manifest import harvest_actions
 
 
 class _FakeMCP:
@@ -38,12 +32,8 @@ def _register_all() -> _FakeMCP:
     mcp = _FakeMCP()
     for registrar in (
         register_analysis_tools,
-        register_agent_execution_tools,
         register_domain_ops_tools,
-        register_evolution_tools,
         register_governance_tools,
-        register_job_tools,
-        register_workflow_tools,
     ):
         registrar(mcp)
     return mcp
@@ -126,98 +116,6 @@ def _dynamic_workflow_tool(
     return _register_all().tools["graph_workflows"], calls
 
 
-def test_orchestration_capabilities_have_one_current_owner() -> None:
-    mcp = _register_all()
-
-    expected_actions = {
-        "graph_agents": {
-            "swarm",
-            "computer_use",
-            "synthesize_org",
-            "run_org",
-            "reason",
-        },
-        "graph_domain_ops": {
-            "allocate_budget",
-            "fit_markov_regime",
-            "register_rlm_actor",
-        },
-        "graph_evolution": {
-            "assimilate",
-            "audit_scan",
-            "distill_skills",
-            "standardize",
-            "failure_ingest",
-            "optimize_component",
-            "publish_proposal",
-            "evidence_lineage",
-        },
-        "graph_governance": {
-            "claim_ownership",
-            "grant_approval",
-            "ownership_apply",
-            "ownership_report",
-            "policy_status",
-            "submit_risk_veto",
-            "verify_action",
-        },
-        "graph_jobs": {
-            "dispatch",
-            "status",
-            "cancel",
-            "input",
-            "drain",
-            "dead_letter",
-        },
-        "graph_workflows": {
-            "compile",
-            "compile_process",
-            "list",
-            "execute",
-            "execute_dynamic",
-            "dispatch",
-            "status",
-            "export",
-        },
-    }
-    # 37, computed from `expected_actions` above, not guessed. This total has now
-    # gone stale four times, each time the same way: a lane adds an action to a
-    # tool, updates the action SET here, and does not touch this line -- so git
-    # merges the set change cleanly and leaves the count behind.
-    #   feat/wave7-followups-evolution -> graph_evolution "evidence_lineage" (D-71-4)
-    #   feat/wave25-followups-mcpapps  -> graph_jobs      "input"
-    #   83ee1066 governed-promotion    -> graph_jobs      "drain", "dead_letter"
-    #   goc/goc-61-admin-claim-ownership -> graph_governance "claim_ownership" (GOC-61)
-    # The third did not update the set either, so this test was RED on main until
-    # both were added above. The `harvest_actions(...) == actions` assertion below
-    # is what actually pins the surface against the real tools; this total is the
-    # redundant ratchet that catches a silently added action.
-    assert sum(map(len, expected_actions.values())) == 37
-    for tool, actions in expected_actions.items():
-        assert harvest_actions(mcp.tools[tool]) == actions
-
-    orchestrate = mcp.tools["graph_orchestrate"]
-    assert "action" not in inspect.signature(orchestrate).parameters
-    assert harvest_actions(orchestrate) == set()
-
-
-def test_focused_tools_publish_collapsed_rest_routes() -> None:
-    _register_all()
-    expected_routes = {
-        "graph_agents": "/graph/agents",
-        "graph_domain_ops": "/graph/domain-ops",
-        "graph_evolution": "/graph/evolution",
-        "graph_governance": "/graph/governance",
-        "graph_jobs": "/graph/jobs",
-        "graph_workflows": "/graph/workflows",
-    }
-    assert {
-        tool: runtime.ACTION_TOOL_ROUTES.get(tool) for tool in expected_routes
-    } == expected_routes
-    assert "graph_rlm" not in runtime.REGISTERED_TOOLS
-    assert "/graph/rlm" not in runtime.ACTION_TOOL_ROUTES.values()
-
-
 @pytest.mark.asyncio
 async def test_execute_dynamic_live_route_reaches_governed_orchestrator(
     monkeypatch: pytest.MonkeyPatch,
@@ -265,49 +163,35 @@ async def test_execute_dynamic_live_route_reaches_governed_orchestrator(
     ]
 
 
-@pytest.mark.asyncio
-async def test_execute_dynamic_forwards_workflow_run_id_so_resume_is_reachable(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Regression: the governed resume cache is keyed strictly on
-    ``workflow_run_id``, but neither ``graph_workflows`` nor
-    ``Orchestrator.execute_dynamic_workflow`` accepted or forwarded one -- so
-    every live invocation minted a fresh id and the resume path, though fully
-    implemented and unit-tested, was unreachable from the only entry point that
-    exists.
-    """
-    tool, calls = _dynamic_workflow_tool(
-        monkeypatch,
-        lambda kw: {"backend": "x", "workflow_run_id": kw.get("workflow_run_id")},
+def test_budget_domain_action_uses_composed_engine_capability(monkeypatch) -> None:
+    from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
+    from agent_utilities.knowledge_graph.orchestration.engine_enterprise import (
+        EnterpriseEngineMixin,
     )
 
-    await tool(
-        action="execute_dynamic",
-        workflow="review",
-        task="review the change",
-        workflow_run_id="run:deadbeef",
-    )
-    assert calls[0]["workflow_run_id"] == "run:deadbeef"
+    class _RecordingGraph:
+        def __init__(self) -> None:
+            self.nodes: dict[str, dict[str, object]] = {}
 
+        def add_node(self, node_id: str, **properties: object) -> None:
+            self.nodes[node_id] = properties
 
-@pytest.mark.asyncio
-async def test_graph_agents_reason_tot_degrades_honestly_with_no_reachable_model(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """No model reachable -> ToT's generate_fn returns no children, so
-    run_tot converges on the ROOT node itself (degraded, never a crash and
-    never a fabricated answer) -- mirrors _reasoning_step_fn's same
-    no-model-reachable honesty contract for CoT."""
-    from graph_os.mcp_server.backing.tools import agent_execution_tools  # noqa: F401
+    assert issubclass(IntelligenceGraphEngine, EnterpriseEngineMixin)
+    engine = cast(Any, object.__new__(IntelligenceGraphEngine))
+    engine.graph = _RecordingGraph()
+    engine.backend = None
+    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
 
-    _install_reasoning_engine(monkeypatch)
-    monkeypatch.setattr(
-        "agent_utilities.core.model_factory.create_model",
-        lambda **_kw: (_ for _ in ()).throw(RuntimeError("no model reachable")),
+    tool = _register_all().tools["graph_domain_ops"]
+    result = json.loads(
+        tool(
+            action="allocate_budget",
+            target_id="business-unit:test",
+            amount=2500.0,
+            currency="USD",
+        )
     )
 
-    payload = await _reason("tot_dfs", branching_factor=3, beam_width=3, max_depth=5)
-
-    assert payload["topology"] == "tot_dfs"
-    assert payload["node_count"] == 1  # only the root -- no children generated
-    assert payload["termination"]["degraded"] is True
+    assert result["business_unit_id"] == "business-unit:test"
+    assert result["amount"] == 2500.0
+    assert result["budget_id"] in engine.graph.nodes

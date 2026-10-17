@@ -17,7 +17,6 @@ from pydantic import Field
 from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
-from graph_os.mcp_server.backing.context_helpers import run_coro as _run_coro
 from graph_os.mcp_server.backing.ontology_types import (
     OntologyCatalogRequest,
 )
@@ -159,42 +158,10 @@ def _ontology_interface_explain_routing() -> str:
     )
 
 
-def _ontology_sampling_profile_list(registry: Any) -> str:
-    from agent_utilities.models.model_registry import _DEFAULT_TASK_PROFILES
-
-    effective = {**_DEFAULT_TASK_PROFILES, **registry.task_class_profiles}
-    return json.dumps(
-        {"profiles": {k: v.model_dump() for k, v in effective.items()}}, default=str
-    )
-
-
 def _ontology_sampling_profile_describe(registry: Any, task_class: str) -> str:
     return json.dumps(
         registry.pick_profile_for_task(task_class).model_dump(), default=str
     )
-
-
-def _ontology_sampling_profile_resolve(task_text: str, role: str) -> str:
-    from agent_utilities.agent.sampling_profile import resolve_sampling_profile
-
-    prof = resolve_sampling_profile(task_text or None, role=role or None)
-    return json.dumps(prof.model_dump(), default=str)
-
-
-def _ontology_sampling_profile_set(
-    registry: Any, profile_json: str, task_class: str
-) -> str:
-    raise not_served("knowledge_graph.ontology.value_types", "EG-TYPED-PACKS-R650")
-
-
-def _ontology_sampling_profile_evolve(registry: Any, task_class: str) -> str:
-    raise not_served("knowledge_graph.core.engine", "EG-PLACEMENT-R611")
-
-
-def _ontology_sampling_profile_owl(registry: Any) -> str:
-    from agent_utilities.models.model_registry import inference_owl_ttl
-
-    return json.dumps({"owl": inference_owl_ttl(registry)})
 
 
 @dataclass
@@ -295,74 +262,6 @@ def _spec_ticket_link(
         "SDK-SOURCE-INGEST-R600",
         owner="agent-connector-sdk",
     )
-
-
-def _concept_registry_list(repo_root: Any, status: str) -> str:
-    from agent_utilities.governance import concept_allocator as ca
-
-    return json.dumps(
-        {
-            "reservations": ca.list_reservations(
-                repo_root=repo_root, status=status or None
-            )
-        }
-    )
-
-
-def _concept_registry_reconcile(repo_root: Any) -> str:
-    from agent_utilities.governance import concept_allocator as ca
-
-    return json.dumps(ca.reconcile(repo_root=repo_root))
-
-
-def _concept_registry_release(repo_root: Any, concept_id: str) -> str:
-    from agent_utilities.governance import concept_allocator as ca
-
-    if not concept_id:
-        return json.dumps({"error": "release requires concept_id"})
-    return json.dumps(
-        {"released": ca.release_concept_id(concept_id, repo_root=repo_root)}
-    )
-
-
-def _concept_registry_reserve(
-    repo_root: Any,
-    concept_id: str,
-    session_id: str,
-    design_doc: str,
-    ttl_seconds: int,
-) -> str:
-    import uuid
-
-    from agent_utilities.governance import concept_allocator as ca
-
-    if not concept_id:
-        return json.dumps({"error": "reserve requires concept_id"})
-    sid = session_id or f"session-{uuid.uuid4().hex}"
-    record = ca.reserve_concept_id(
-        concept_id,
-        session_id=sid,
-        design_doc=design_doc or None,
-        ttl_seconds=int(ttl_seconds),
-        repo_root=repo_root,
-    )
-    # Compatibility projection through this already-authenticated
-    # GraphOS execution context. The local ledger is authoritative
-    # for this legacy path only; it is not a separate-host authority.
-    try:
-        _run_coro(
-            runtime._execute_tool(
-                "graph_write",
-                action="add_node",
-                node_id=record["id"],
-                node_type="ConceptReservation",
-                properties=json.dumps(record),
-            )
-        )
-        record["kg_projected"] = True
-    except Exception:  # noqa: BLE001 - projection is advisory
-        record["kg_projected"] = False
-    return json.dumps(record)
 
 
 def _source_sync_resolve_engine(connection: str, graph: str) -> tuple[Any, str | None]:
@@ -872,127 +771,6 @@ def register_ontology_tools(mcp):
     runtime.REGISTERED_TOOLS["ontology_interface"] = ontology_interface
 
     @mcp.tool(
-        name="ontology_sampling_profile",
-        description=(
-            "Task-aware LLM sampling profiles (CONCEPT:AU-ORCH.routing.sampling-profile-selection/KG-2.94): list/describe "
-            "the per-task-class profiles, 'resolve' the profile that would be picked for a "
-            "prompt/role, 'set' a profile (SHACL-validated), 'evolve' one round, or emit OWL."
-        ),
-        tags=["graph-os", "ontology"],
-    )
-    def ontology_sampling_profile(
-        action: str = Field(
-            default="list",
-            description="'list' | 'describe' | 'resolve' | 'set' | 'evolve' | 'owl'.",
-        ),
-        task_class: str = Field(
-            default="", description="Task class for describe/set/evolve."
-        ),
-        task_text: str = Field(
-            default="", description="Free-text prompt for action='resolve'."
-        ),
-        role: str = Field(
-            default="", description="Functional role for action='resolve'."
-        ),
-        profile_json: str = Field(
-            default="{}", description="JSON SamplingProfile dict for action='set'."
-        ),
-    ) -> str:
-        """List/describe/resolve/set/evolve sampling profiles, or emit their OWL."""
-        from agent_utilities.models.model_registry import load_active_registry
-
-        try:
-            registry = load_active_registry()
-            if action == "list":
-                return _ontology_sampling_profile_list(registry)
-            if action == "describe":
-                return _ontology_sampling_profile_describe(registry, task_class)
-            if action == "resolve":
-                return _ontology_sampling_profile_resolve(task_text, role)
-            if action == "set":
-                return _ontology_sampling_profile_set(
-                    registry, profile_json, task_class
-                )
-            if action == "evolve":
-                return _ontology_sampling_profile_evolve(registry, task_class)
-            if action == "owl":
-                return _ontology_sampling_profile_owl(registry)
-            return json.dumps({"error": f"unknown action: {action!r}"})
-        except Exception as e:  # noqa: BLE001
-            return public_error_json(e)
-
-    runtime.REGISTERED_TOOLS["ontology_sampling_profile"] = ontology_sampling_profile
-
-    @mcp.tool(
-        name="ontology_model_profile",
-        description=(
-            "Model profiles as first-class graph resources (CONCEPT:AU-KG.ontology.model-profile-graph-resource): "
-            "'list' the configured registry's models as profile previews (no KG write), "
-            "'sync' upserts a ModelProfileVersionNode per configured model into the KG, "
-            "'get' reads one persisted profile by model id, 'owl' emits the registry's OWL projection."
-        ),
-        tags=["graph-os", "ontology"],
-    )
-    def ontology_model_profile(
-        action: str = Field(
-            default="list",
-            description="'list' | 'sync' | 'get' | 'owl'.",
-        ),
-        model_id: str = Field(
-            default="", description="Registry model id for action='get'."
-        ),
-    ) -> str:
-        """List/sync/get model profiles, or emit their OWL projection."""
-        from agent_utilities.models.model_profile import (
-            build_model_profile,
-            model_profile_id,
-            sync_model_profiles,
-        )
-        from agent_utilities.models.model_registry import (
-            inference_owl_ttl,
-            load_active_registry,
-        )
-
-        try:
-            registry = load_active_registry()
-            if action == "list":
-                previews = [
-                    build_model_profile(m).model_dump() for m in registry.models
-                ]
-                return json.dumps({"profiles": previews}, default=str)
-            if action == "sync":
-                engine = runtime._get_engine()
-                ids = sync_model_profiles(engine, registry)
-                return json.dumps({"synced": ids, "count": len(ids)})
-            if action == "get":
-                definition = registry.get_by_id(model_id)
-                if definition is None:
-                    return json.dumps({"error": f"unknown model id: {model_id!r}"})
-                engine = runtime._get_engine()
-                get_node = getattr(engine, "get_node", None)
-                node_id = model_profile_id(definition)
-                stored = get_node(node_id) if callable(get_node) else None
-                if stored:
-                    return json.dumps({"profile": stored, "id": node_id}, default=str)
-                # Not yet synced to the KG — return the honest live projection instead
-                # of a bare "not found" so `get` is useful before the first `sync`.
-                return json.dumps(
-                    {
-                        "profile": build_model_profile(definition).model_dump(),
-                        "id": node_id,
-                        "synced": False,
-                    },
-                    default=str,
-                )
-            if action == "owl":
-                return json.dumps({"owl": inference_owl_ttl(registry)})
-            return json.dumps({"error": f"unknown action: {action!r}"})
-        except Exception as e:  # noqa: BLE001
-            return public_error_json(e)
-
-    runtime.REGISTERED_TOOLS["ontology_model_profile"] = ontology_model_profile
-
-    @mcp.tool(
         name="ontology_leanix_sync",
         description="Discover the live LeanIX metamodel and mirror it natively as OWL/RDF: regenerates ontology_leanix.ttl (every fact sheet type, relation, field) and registers the types for OWL promotion (CONCEPT:AU-KG.ingest.enterprise-source-extractor). dry_run=true previews without writing.",
         tags=["graph-os", "ontology"],
@@ -1189,68 +967,6 @@ def register_ontology_tools(mcp):
             return public_error_json(e)
 
     runtime.REGISTERED_TOOLS["spec_ticket"] = spec_ticket
-
-    @mcp.tool(
-        name="concept_registry",
-        description=(
-            "Coordinate canonical OKF-CIS concept ids for linked worktrees on one host "
-            "(CONCEPT:AU-OS.governance.atomic-concept-id-reservation). This compatibility "
-            "ledger path is not a separate-host authority; cross-host callers must use "
-            "the graph-os native concept reservation contract and fail closed when it is "
-            "unavailable. action='reserve' validates and claims concept_id, then appends "
-            "it to the committed, merge=union ledger; 'list' shows reservations; "
-            "'release' frees one; 'reconcile' marks landed/expired."
-        ),
-        tags=["graph-os", "governance", "concept"],
-    )
-    def concept_registry(
-        action: str = Field(
-            default="list",
-            description="'reserve', 'list', 'release', or 'reconcile'.",
-        ),
-        session_id: str = Field(
-            default="",
-            description="Optional claiming session value; only a digest is persisted.",
-        ),
-        design_doc: str = Field(
-            default="",
-            description="Optional design reference; only a digest is persisted.",
-        ),
-        concept_id: str = Field(
-            default="", description="Canonical ID for reserve or release."
-        ),
-        status: str = Field(
-            default="",
-            description="For 'list': filter by status (reserved/materialized/landed/released/expired/tombstoned).",
-        ),
-        ttl_seconds: int = Field(
-            default=86_400, description="Reservation TTL before it is reclaimable."
-        ),
-        repo: str = Field(
-            default="",
-            description="Repo root whose ledger to use (defaults to agent-utilities).",
-        ),
-    ) -> str:
-        """Concept-ID reservation ledger operations (see docs/concept_coordination.md)."""
-        from pathlib import Path
-
-        try:
-            repo_root = Path(repo).expanduser().resolve() if repo else None
-            if str(action) == "list":
-                return _concept_registry_list(repo_root, status)
-            if str(action) == "reconcile":
-                return _concept_registry_reconcile(repo_root)
-            if str(action) == "release":
-                return _concept_registry_release(repo_root, concept_id)
-            if str(action) == "reserve":
-                return _concept_registry_reserve(
-                    repo_root, concept_id, session_id, design_doc, ttl_seconds
-                )
-            return json.dumps({"error": f"unknown action: {action!r}"})
-        except Exception as e:  # noqa: BLE001
-            return public_error_json(e)
-
-    runtime.REGISTERED_TOOLS["concept_registry"] = concept_registry
 
     @mcp.tool(
         name="source_sync",

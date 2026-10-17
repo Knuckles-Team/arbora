@@ -17,9 +17,8 @@ import threading
 from pathlib import Path
 from typing import Any, TypedDict
 
-from agent_utilities.core.config import setting
-
 from graph_os.api.errors import not_served
+from graph_os.core.settings import setting
 
 logger = logging.getLogger(__name__)
 
@@ -613,7 +612,7 @@ def _trino_principal_ref() -> str:
 def _trino_composition_settings() -> tuple[str, str, str]:
     """Read and validate the process-owned Trino composition settings."""
 
-    from agent_utilities.core.config import config as runtime_config
+    from graph_os.core.settings import runtime_config
 
     if not runtime_config.enable_delegation:
         raise RuntimeError("Trino queries require delegated authentication")
@@ -681,7 +680,7 @@ def get_connection_registry():
 
 def _seed_external_graph_connectors(registry: Any) -> None:
     """Register reference-only external sources from config, best-effort per item."""
-    from agent_utilities.core.config import config as _cfg
+    from graph_os.core.settings import runtime_config as _cfg
 
     for declared in _cfg.external_graph_connectors or []:
         value = (
@@ -702,7 +701,7 @@ def _seed_external_graph_connectors(registry: Any) -> None:
 
 def _seed_kg_connections(registry: Any) -> None:
     """Register explicit KG_CONNECTIONS declarations from config, best-effort per item."""
-    from agent_utilities.core.config import config as _cfg
+    from graph_os.core.settings import runtime_config as _cfg
 
     for spec in _cfg.kg_connections or []:
         spec = dict(spec)
@@ -908,7 +907,7 @@ def bound_to_graph(graph: str) -> Any:
     A no-op when ``graph`` is empty. Otherwise reuses the SAME sanctioned
     session-retargeting primitive already used by
     ``agent_utilities.knowledge_graph.pipeline`` and
-    ``agent_utilities.orchestration.approval`` —
+    ``graph_os.access.approval`` —
     :meth:`~graph_os.api.contracts.session.GraphSession.with_graph`
     scoped for the call's duration via
     :func:`~graph_os.api.contracts.session.use_session`. This

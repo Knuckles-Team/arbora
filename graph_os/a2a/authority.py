@@ -222,14 +222,6 @@ class WorkItemA2AAuthority:
             )
 
     @staticmethod
-    def _prepare_task(engine: Any, text: str) -> str:
-        from agent_utilities.orchestration.manager import Orchestrator
-
-        orchestrator = Orchestrator(engine)
-        orchestrator._scan_task(text)
-        return orchestrator._redact_task(text)
-
-    @staticmethod
     def _submit(
         work_engine: Any,
         *,
@@ -241,39 +233,6 @@ class WorkItemA2AAuthority:
     ) -> tuple[str, bool]:
         raise not_served(
             "knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605"
-        )
-
-    @staticmethod
-    def _enqueue(
-        engine: Any,
-        *,
-        task_id: str,
-        context_id: str,
-        tenant: str,
-        decision: A2ARouteDecision,
-    ) -> None:
-        # AU's current carrier cannot enforce an assembly-selected tool subset.
-        # Refuse instead of persisting an advisory list that execution ignores.
-        if decision.selected_tools:
-            raise A2AAssemblyUnavailable(
-                "canonical agent dispatch cannot yet enforce an assembled tool subset"
-            )
-        from agent_utilities.orchestration.agent_dispatch import (
-            KIND_ORCHESTRATOR_TASK,
-            AgentTurnEnvelope,
-            enqueue_agent_turn,
-        )
-
-        enqueue_agent_turn(
-            AgentTurnEnvelope(
-                job_id=task_id,
-                session_id=context_id,
-                kind=KIND_ORCHESTRATOR_TASK,
-                payload_ref=task_id,
-                agent_name=decision.agent_name,
-                tenant=tenant,
-            ),
-            engine=engine,
         )
 
     async def dispatch(
@@ -290,7 +249,7 @@ class WorkItemA2AAuthority:
                 "canonical agent dispatch cannot yet enforce an assembled tool subset"
             )
         session = self._session("kg:write")
-        engine, work_engine = self._engine()
+        _engine, work_engine = self._engine()
         owner_ref = self._owner_ref(session)
         task_id = self._task_id(session.tenant, owner_ref, idempotency_key)
         context_id = self._context_id(session, message, task_id, owner_ref)
@@ -302,7 +261,9 @@ class WorkItemA2AAuthority:
             request_digest=request_digest,
             decision=decision,
         )
-        description = self._prepare_task(engine, message.task_text())
+        from graph_os.access.task_guard import screen_and_redact_agent_task
+
+        description = screen_and_redact_agent_task(message.task_text())
         item_id, created = await asyncio.to_thread(
             self._submit,
             work_engine,
