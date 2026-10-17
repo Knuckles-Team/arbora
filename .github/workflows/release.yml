@@ -4,10 +4,9 @@ name: Release
 # Modeled on agent-utilities'/epistemic-graph's release.yml two-workflow
 # split: this file is the ONLY workflow that can block a release
 # (gates -> build -> publish-pypi, wired with `needs:` so a failure names its
-# stage at a glance). Scanner quality blocks like every other job here now
-# that the fleet's own kiss fork build keeps it green; its native toolchain
-# is still runner-provisioned. Everything else (Pages) lives in its own
-# workflow.
+# stage at a glance). Scanner quality is advisory: it reports on every run
+# and never blocks a merge or a release; its native toolchain is still
+# runner-provisioned. Everything else (Pages) lives in its own workflow.
 #
 # CI runs this repository's own .pre-commit-config.yaml -- the commit and
 # push stages over every file, then the manual-stage hooks that need the
@@ -316,13 +315,16 @@ jobs:
             echo "required=true" >> "$GITHUB_OUTPUT"
           fi
 
-  # Generated client/schema changes need the canonical scanner before merge.
+  # Scanners (complexity, KISS, cccc, dupehound, jscpd) are advisory: they
+  # report on every run and never block a merge or a release (operator
+  # direction, 2026-10-17).
   scanner-quality:
     if: >-
       always() && needs.freeze-gate-source.result == 'success' &&
       ((github.event_name == 'push' && github.ref_type == 'branch') ||
       (github.event_name == 'pull_request' && needs.scanner-scope.outputs.required == 'true'))
     timeout-minutes: 60
+    continue-on-error: true
     name: Scanner quality (cccc, KISS, dupehound, jscpd)
     needs: [freeze-gate-source, scanner-scope]
     runs-on: ubuntu-latest

@@ -203,7 +203,7 @@ def test_release_dependency_readiness_blocks_tag_build_only() -> None:
     assert workflow["jobs"]["build"]["needs"] == ["gates"]
 
 
-def test_scanner_versions_receive_distinct_argv_and_the_job_blocks() -> None:
+def test_scanner_versions_receive_distinct_argv_and_the_job_is_advisory() -> None:
     scanner = _workflow()["jobs"]["scanner-quality"]
     command = next(
         step["run"]
@@ -213,7 +213,9 @@ def test_scanner_versions_receive_distinct_argv_and_the_job_blocks() -> None:
 
     assert "pipelines-hook scanner-versions cccc kiss dupehound jscpd" in command
     assert "['cccc'" not in command
-    assert "continue-on-error" not in scanner
+    assert scanner["continue-on-error"] is True
+    for job in ("build", "install-smoke", "publish-pypi", "github-release"):
+        assert "scanner-quality" not in _workflow()["jobs"][job].get("needs", [])
 
 
 def _scanner_step(name: str) -> dict[str, Any]:
