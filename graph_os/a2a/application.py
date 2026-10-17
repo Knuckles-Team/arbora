@@ -23,6 +23,7 @@ from .authority import (
 from .models import A2AMessage, A2AOperationInvokeParams, A2APlanConfirmParams
 from .routing import A2AAssemblyUnavailable, A2AOperationBridgeUnavailable
 from .service import A2AService
+from .terminal_event import A2ATerminalEventUnavailable
 
 if TYPE_CHECKING:
     from graph_os.api.http.auth import AmbientHTTPAuthenticator
@@ -122,6 +123,12 @@ class _TaskParams(_Params):
     id: str = Field(min_length=1, max_length=80)
 
 
+class _GetTaskParams(_TaskParams):
+    include_committed_event: bool = Field(
+        default=False, alias="includeCommittedEvent", strict=True
+    )
+
+
 class _ResubscribeParams(_Params):
     id: str = Field(min_length=1, max_length=80)
     cursor: str | None = Field(default=None, max_length=1024)
@@ -175,8 +182,10 @@ async def _send_message(service: A2AService, request: Request, raw_params: Any) 
 
 
 async def _get_task(service: A2AService, raw_params: Any, request_id: Any) -> Any:
-    task_params = _TaskParams.model_validate(raw_params)
-    result = await service.get_task(task_params.id)
+    task_params = _GetTaskParams.model_validate(raw_params)
+    result = await service.get_task(
+        task_params.id, include_committed_event=task_params.include_committed_event
+    )
     return result or _error(request_id, -32001, "Task not found", 404)
 
 
@@ -251,6 +260,7 @@ async def _invoke_method(
 
 
 _ERROR_CODES: dict[type[Exception], tuple[int, int]] = {
+    A2ATerminalEventUnavailable: (-32013, 503),
     A2AIdempotencyConflict: (-32009, 409),
     A2AAssemblyUnavailable: (-32003, 503),
     A2ATaskNotCancelable: (-32002, 409),
@@ -393,6 +403,7 @@ async def _unary_request(
     except PermissionError as error:
         return _authentication_error(request_id, error)
     except (
+        A2ATerminalEventUnavailable,
         A2AIdempotencyConflict,
         A2AAssemblyUnavailable,
         A2AOperationBridgeUnavailable,

@@ -83,6 +83,7 @@ def register_a2a_tools(
         limit: int = 50,
         context_budget_tokens: int = 0,
         endpoint_url: str = "/a2a",
+        include_committed_event: bool = False,
     ) -> str:
         service = _service()
         if action == "card":
@@ -96,7 +97,9 @@ def register_a2a_tools(
                 context_budget_tokens=context_budget_tokens or None,
             )
         elif action == "get":
-            result = await service.get_task(task_id)
+            result = await service.get_task(
+                task_id, include_committed_event=include_committed_event
+            )
             if result is None:
                 raise ValueError("A2A task not found")
         elif action == "list":

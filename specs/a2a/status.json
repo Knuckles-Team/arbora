@@ -72,7 +72,8 @@
     "GRAPHOS-A2A-R020.2",
     "GRAPHOS-A2A-R021",
     "GRAPHOS-A2A-R022",
-    "GRAPHOS-A2A-R001.2"
+    "GRAPHOS-A2A-R001.2",
+    "GRAPHOS-A2A-R010.1"
   ],
   "requirements": [
     {
@@ -456,7 +457,10 @@
       "title": "WorkItem stream projection, not a shadow log",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-A2A-R010.1"
+      ]
     },
     {
       "id": "GRAPHOS-A2A-R011",
@@ -743,6 +747,13 @@
     {
       "id": "GRAPHOS-A2A-R001.2",
       "title": "AU:21 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-A2A-R010.1",
+      "title": "Opt-in committed terminal point read",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
