@@ -292,3 +292,17 @@ R006.2.1.1 isolates the remaining caller handoff acceptance.
 R006.2.2 isolates the remaining shared-service composition acceptance.
 Both stay pending until their production-path tests pass; compatibility evidence cannot close either child.
 Generate status from these pending children and preserve historical commit receipts without treating them as completed acceptance.
+
+## Amendment: explicit serving dependency handoff
+
+R006.2.2 requires the native server to retain the same admitted services and
+request authenticator for A2A and HTTP. Add an explicit `HostedInvocation`
+argument to the trusted server entry and gateway installer. Validate provider
+admission before registration. Never infer a process credential for a request.
+Reject attempts to replace one dependency on an already composed gateway.
+
+This slice wires supplied dependencies through the native entry. Deployment
+construction of those dependencies, the MCP registry cutover, durable provider
+qualification and full read/write/fleet parity remain pending under R006.2.2.
+Tests with controlled effect owners qualify the handoff only. They cannot
+qualify real credential issuers or durable effects.

@@ -12,6 +12,7 @@ from typing import Any
 
 from graph_os.gateway.ports import configure_gateway_application
 from graph_os.mcp_server import runtime
+from graph_os.mcp_server.hosted_invocation import HostedInvocation
 from graph_os.mcp_server.routes import mount_rest_routes
 from graph_os.messaging.intake import configured_platforms, start_messaging_intake
 from graph_os.webui_host import run_web_ui
@@ -163,6 +164,9 @@ class CoServiceSupervisor:
 class NativeGatewayApplication:
     """Concrete application behavior behind the gateway transport port."""
 
+    def __init__(self, invocation: HostedInvocation | None = None) -> None:
+        self._invocation = invocation
+
     async def execute_tool(self, tool: str, /, **kwargs: Any) -> Any:
         return await runtime._execute_tool(tool, **kwargs)
 
@@ -188,6 +192,11 @@ class NativeGatewayApplication:
         action surface is unchanged; no partial API composition falls back to it.
         """
         dependencies = (services, visibility, authenticator, invoke)
+        if self._invocation is not None:
+            if any(value is not None for value in dependencies):
+                raise ValueError("cannot replace composed invocation dependencies")
+            self._invocation.mount_http(app, prefix=prefix)
+            return
         if all(value is None for value in dependencies):
             mount_rest_routes(app, prefix=prefix)
             return
@@ -219,10 +228,12 @@ class NativeGatewayApplication:
         return current_remote_oauth_grant_bindings(actor)
 
 
-def install_gateway_application() -> NativeGatewayApplication:
+def install_gateway_application(
+    invocation: HostedInvocation | None = None,
+) -> NativeGatewayApplication:
     """Install the native application adapter at the process composition root."""
 
-    application = NativeGatewayApplication()
+    application = NativeGatewayApplication(invocation)
     configure_gateway_application(application)
     return application
 
