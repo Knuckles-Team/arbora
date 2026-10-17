@@ -153,6 +153,8 @@
     "GRAPHOS-HOST-R009.2",
     "GRAPHOS-HOST-R009.3",
     "GRAPHOS-HOST-R009.4",
+    "GRAPHOS-HOST-R009.4.1",
+    "GRAPHOS-HOST-R009.4.2",
     "GRAPHOS-HOST-R009.5",
     "GRAPHOS-HOST-R009.6",
     "GRAPHOS-HOST-R006.1",
@@ -1462,6 +1464,30 @@
     {
       "id": "GRAPHOS-HOST-R009.4",
       "title": "Bound log delivery and shutdown",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-HOST-R009.4.1",
+        "GRAPHOS-HOST-R009.4.2"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R009.4.1",
+      "title": "Bound owned supervisor shutdown",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "6fa7e9832d48"
+      ],
+      "verified_by": [
+        "tests/mcp_server/test_co_service_supervisor.py:107",
+        "tests/mcp_server/test_co_service_supervisor.py:55",
+        "tests/mcp_server/test_co_service_supervisor.py:74"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R009.4.2",
+      "title": "Integrate delivery and terminal shutdown",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
