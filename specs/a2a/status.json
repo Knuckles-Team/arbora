@@ -414,8 +414,8 @@
       ],
       "verified_by": [
         "tests/a2a/test_first_party_facade.py:53",
-        "tests/a2a/test_first_party_facade.py:66",
-        "tests/a2a/test_first_party_facade.py:84"
+        "tests/a2a/test_first_party_facade.py:68",
+        "tests/a2a/test_first_party_facade.py:86"
       ]
     },
     {
