@@ -24,8 +24,6 @@ from collections.abc import Callable
 from types import SimpleNamespace
 from typing import Any
 
-from graph_os.core.handoff import raise_moved
-
 from . import doctor_certification as _doctor_certification
 from . import doctor_coverage as _doctor_coverage
 from . import doctor_graph as _doctor_graph
@@ -70,10 +68,6 @@ def _cert_configuration_gate(*args: Any, **kwargs: Any) -> Any:
     return _doctor_certification._cert_configuration_gate(*args, **kwargs)
 
 
-def _cert_validated_commands(*args: Any, **kwargs: Any) -> Any:
-    return _doctor_certification._cert_validated_commands(*args, **kwargs)
-
-
 def _cert_verify_release_manifest(*args: Any, **kwargs: Any) -> Any:
     return _doctor_certification._cert_verify_release_manifest(*args, **kwargs)
 
@@ -88,10 +82,6 @@ def _cert_verify_bearer_token(*args: Any, **kwargs: Any) -> Any:
 
 def _cert_resolve_prometheus_trust(*args: Any, **kwargs: Any) -> Any:
     return _doctor_certification._cert_resolve_prometheus_trust(*args, **kwargs)
-
-
-def _check_production_certification(*args: Any, **kwargs: Any) -> Any:
-    return _doctor_certification._check_production_certification(*args, **kwargs)
 
 
 def _require_observability_imports(*args: Any, **kwargs: Any) -> Any:
@@ -150,18 +140,6 @@ def _probe_langfuse_mcp_visibility(*args: Any, **kwargs: Any) -> Any:
     return _doctor_observability._probe_langfuse_mcp_visibility(*args, **kwargs)
 
 
-def _langfuse_expected_trace_name(*args: Any, **kwargs: Any) -> Any:
-    return _doctor_observability._langfuse_expected_trace_name(*args, **kwargs)
-
-
-def _langfuse_await_trace(*args: Any, **kwargs: Any) -> Any:
-    return _doctor_observability._langfuse_await_trace(*args, **kwargs)
-
-
-def _probe_langfuse_trace_round_trip(*args: Any, **kwargs: Any) -> Any:
-    return _doctor_observability._probe_langfuse_trace_round_trip(*args, **kwargs)
-
-
 def _probe_langfuse_live(*args: Any, **kwargs: Any) -> Any:
     return _doctor_observability._probe_langfuse_live(*args, **kwargs)
 
@@ -212,10 +190,6 @@ def _check_langfuse(live: bool = False) -> Any:
     )
 
 
-def _check_workspace_config(*args: Any, **kwargs: Any) -> Any:
-    return _doctor_coverage._check_workspace_config(*args, **kwargs)
-
-
 def _check_skills(*args: Any, **kwargs: Any) -> Any:
     return _doctor_coverage._check_skills(*args, **kwargs)
 
@@ -230,10 +204,6 @@ def _count_generation(*args: Any, **kwargs: Any) -> Any:
 
 def _count_provider_materialization(*args: Any, **kwargs: Any) -> Any:
     return _doctor_coverage._count_provider_materialization(*args, **kwargs)
-
-
-def _count_own_provider(*args: Any, **kwargs: Any) -> Any:
-    return _doctor_coverage._count_own_provider(*args, **kwargs)
 
 
 def _nested_child_is_plain_dir(*args: Any, **kwargs: Any) -> Any:
@@ -252,16 +222,8 @@ def _scan_nested_children(*args: Any, **kwargs: Any) -> Any:
     return _doctor_coverage._scan_nested_children(*args, **kwargs)
 
 
-def _sweep_install_leg(*args: Any, **kwargs: Any) -> Any:
-    return _doctor_coverage._sweep_install_leg(*args, **kwargs)
-
-
 def _unified_install_result(*args: Any, **kwargs: Any) -> Any:
     return _doctor_coverage._unified_install_result(*args, **kwargs)
-
-
-def _check_unified_install(*args: Any, **kwargs: Any) -> Any:
-    return _doctor_coverage._check_unified_install(*args, **kwargs)
 
 
 def _endpoint_host_port(*args: Any, **kwargs: Any) -> Any:
@@ -1845,37 +1807,6 @@ def _check_mcp_fleet_secrets() -> dict[str, Any]:
     )
 
 
-def _check_openai_catalog(live: bool = False) -> dict[str, Any]:
-    """Verify configured OpenAI models against the live catalogue (CONCEPT:AU-ORCH.adapter.openai-catalog-verification).
-
-    Static (default): reports which credential tier resolved (secret_ref/env/file/
-    none) and how many OpenAI-provider models are configured in the active model
-    registry, without a network call. ``live=True`` additionally calls
-    ``verify_openai_model`` for each configured model id, so a wrong/renamed/
-    inaccessible model id is caught before a deployment relies on it rather than
-    assumed to exist. Never reports the resolved API key value.
-    """
-    raise_moved("_check_openai_catalog", "core.credentials", "epistemic-graph")
-
-
-def _openai_catalog_live_result(
-    openai_models: list[Any], creds: Any, data: dict[str, Any]
-) -> dict[str, Any]:
-    """Verify every configured OpenAI model id against the live catalogue.
-
-    ``data`` is mutated with the probe outcome so the returned result always
-    carries what was actually verified -- a probe that cannot complete raises
-    into the caller rather than reporting ok.
-    """
-    raise_moved("_openai_catalog_live_result", "core.openai_catalog", "epistemic-graph")
-
-
-def _check_provider_profiles() -> dict[str, Any]:
-    """Resolve enabled provider profiles without exposing deployment metadata."""
-
-    raise_moved("_check_provider_profiles", "core.provider_runtime", "epistemic-graph")
-
-
 def _check_hooks() -> dict[str, Any]:
     try:
         from agent_utilities.ecosystem.hook_installer import HookInstaller
@@ -2039,19 +1970,6 @@ def _check_venv_drift() -> dict[str, Any]:
     )
 
 
-def _check_warm_fork() -> dict[str, Any]:
-    """Report available confined sandbox rungs and pooled VM parents."""
-    raise_moved("_check_warm_fork", "runtime.warm_registry", "the agent harness")
-
-
-def _check_a2a_persistence() -> dict[str, Any]:
-    """Validate the unary facade's canonical WorkItem/dispatch dependencies."""
-
-    raise_moved(
-        "_check_a2a_persistence", "orchestration.agent_dispatch", "epistemic-graph"
-    )
-
-
 # Registry: name -> callable. Order is the report order.
 CHECKS: dict[str, Callable[..., dict[str, Any]]] = {
     "python_env": _check_python_env,
@@ -2065,9 +1983,6 @@ CHECKS: dict[str, Callable[..., dict[str, Any]]] = {
     "source_egress": _check_source_egress,
     "eunomia": _check_eunomia,
     "runtime_integrations": _check_runtime_integrations,
-    "provider_profiles": _check_provider_profiles,
-    "openai_catalog": _check_openai_catalog,
-    "workspace_config": _check_workspace_config,
     "engine_request_context": _check_engine_request_context,
     "engine": _check_engine,
     "engine_domains": _check_engine_domains,
@@ -2076,7 +1991,6 @@ CHECKS: dict[str, Callable[..., dict[str, Any]]] = {
     "auth": _check_auth,
     "outbound_auth": _check_outbound_auth,
     "skill_certification": _check_skill_certification,
-    "production_certification": _check_production_certification,
     "graph_identity": _check_graph_identity,
     "mcp_fleet_secrets": _check_mcp_fleet_secrets,
     "mcp_fleet": _check_mcp_fleet,
@@ -2085,11 +1999,8 @@ CHECKS: dict[str, Callable[..., dict[str, Any]]] = {
     "observability": _check_observability,
     "graph_connections": _check_graph_connections,
     "langfuse": _check_langfuse,
-    "a2a_persistence": _check_a2a_persistence,
     "skills": _check_skills,
-    "unified_install": _check_unified_install,
     "venv_drift": _check_venv_drift,
-    "warm_fork": _check_warm_fork,
     "kafka": _check_kafka,
     "fuseki": _check_fuseki,
     "seaweedfs_s3": _check_seaweedfs_s3,
@@ -2107,7 +2018,6 @@ _LIVE_CHECK_NAMES = frozenset(
         "mcp_fleet",
         "graph_connections",
         "langfuse",
-        "openai_catalog",
         "kafka",
         "fuseki",
         "seaweedfs_s3",

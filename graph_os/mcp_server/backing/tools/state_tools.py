@@ -20,7 +20,6 @@ from pydantic import Field
 from starlette.responses import JSONResponse
 
 from graph_os.core.event_loop import run_blocking_ordered
-from graph_os.core.handoff import raise_moved
 from graph_os.mcp_server import runtime
 
 logger = logging.getLogger(__name__)
@@ -112,19 +111,6 @@ async def _resolve_fleet_response(
     return await fleet_topology(req)
 
 
-async def _resolve_session_crud_response(
-    action: str, req: Any, session_id: str
-) -> tuple[Any, str | None]:
-    """``list``/``get``/``delete``/``reply``/``cancel`` branch of
-    ``_resolve_sessions_response``.
-
-    Extracted verbatim (pure extract-method, no behaviour change). Returns
-    ``(resp, error_json)``; when ``error_json`` is not ``None`` the caller
-    should return it directly instead of formatting ``resp``.
-    """
-    raise_moved("_resolve_session_crud_response", "core.sessions", "the agent harness")
-
-
 async def _resolve_sessions_response(
     action: str,
     session_id: str,
@@ -148,15 +134,7 @@ async def _resolve_sessions_response(
     if action in {"health", "topology"}:
         resp = await _resolve_fleet_response(action, req, limit, offset, status)
         return resp, None
-    return await _resolve_session_crud_response(action, req, session_id)
-
-
-async def _resolve_goals_response(
-    action: str, goal_id: str, goal: str, max_iterations: int
-) -> tuple[Any, str | None]:
-    """The raw response for one ``graph_goals`` action as ``(resp, error_json)``
-    (see :func:`_resolve_session_crud_response`)."""
-    raise_moved("_resolve_goals_response", "core.sessions", "the agent harness")
+    return None, json.dumps({"error": f"unknown sessions action {action!r}"})
 
 
 def _sandbox_status_action() -> str:
@@ -183,22 +161,6 @@ def _sandbox_status_action() -> str:
         },
         default=str,
     )
-
-
-def _sandbox_reap_action() -> str:
-    """``"reap"`` action of ``register_state_tools``'s ``graph_sandbox``.
-
-    Extracted verbatim (pure extract-method, no behaviour change).
-    """
-    raise_moved("_sandbox_reap_action", "runtime.warm_registry", "the agent harness")
-
-
-async def _sandbox_warm_action(rung: str) -> str:
-    """``"warm"`` action of ``register_state_tools``'s ``graph_sandbox``.
-
-    Extracted verbatim (pure extract-method, no behaviour change).
-    """
-    raise_moved("_sandbox_warm_action", "runtime.warm_registry", "the agent harness")
 
 
 def _dedupe_preserve_order(items: list[str]) -> list[str]:
@@ -240,30 +202,6 @@ def _resolve_feed_urls(url: str, urls: str) -> list[str]:
     if url:
         out.append(url.strip())
     return _dedupe_preserve_order(out)
-
-
-def _feeds_list_action(engine: Any) -> str:
-    """``"list"`` action of ``register_state_tools``'s ``graph_feeds``.
-
-    Extracted verbatim (pure extract-method, no behaviour change).
-    """
-    raise_moved("_feeds_list_action", "automation.feed_sources", "epistemic-graph")
-
-
-def _feeds_add_action(engine: Any, targets: list[str]) -> str:
-    """``"add"`` action of ``register_state_tools``'s ``graph_feeds``.
-
-    Extracted verbatim (pure extract-method, no behaviour change).
-    """
-    raise_moved("_feeds_add_action", "automation.feed_sources", "epistemic-graph")
-
-
-def _feeds_remove_action(engine: Any, targets: list[str]) -> str:
-    """``"remove"`` action of ``register_state_tools``'s ``graph_feeds``.
-
-    Extracted verbatim (pure extract-method, no behaviour change).
-    """
-    raise_moved("_feeds_remove_action", "automation.feed_sources", "epistemic-graph")
 
 
 def _feeds_sync_action(engine: Any, url: str, mode: str) -> str:
@@ -339,72 +277,6 @@ class _RunVcsParams:
     work_item_ids: str = ""
     policy_overrides: str = ""
     model_responses: str = ""
-
-
-def _runvcs_twin_capture_action(p: _RunVcsParams) -> str:
-    """``"twin_capture"`` action of ``register_state_tools``'s
-    ``graph_runvcs`` (CONCEPT:AU-ORCH.twin.agent-digital-twin, X-8).
-
-    Extracted verbatim (pure extract-method, no behaviour change) — same
-    eager parse order as the original inline code, so a malformed
-    ``policy_decisions``/``evidence`` JSON string still raises before the
-    ``run_id``-required check, exactly as before.
-    """
-    raise_moved(
-        "_runvcs_twin_capture_action",
-        "orchestration.agent_digital_twin",
-        "epistemic-graph",
-    )
-
-
-def _runvcs_twin_replay_action(twin_obj: Any) -> str:
-    """``"twin_replay"`` action of ``register_state_tools``'s ``graph_runvcs``.
-
-    Extracted verbatim (pure extract-method, no behaviour change).
-    """
-    raise_moved(
-        "_runvcs_twin_replay_action",
-        "orchestration.agent_digital_twin",
-        "epistemic-graph",
-    )
-
-
-def _runvcs_twin_counterfactual_action(twin_obj: Any, p: _RunVcsParams) -> str:
-    """``"twin_counterfactual"`` action of ``register_state_tools``'s
-    ``graph_runvcs``.
-
-    Extracted verbatim (pure extract-method, no behaviour change).
-    """
-    raise_moved(
-        "_runvcs_twin_counterfactual_action",
-        "orchestration.agent_digital_twin",
-        "epistemic-graph",
-    )
-
-
-def _runvcs_twin_incident_action(twin_obj: Any) -> str:
-    """``"twin_incident"`` action of ``register_state_tools``'s ``graph_runvcs``.
-
-    Extracted verbatim (pure extract-method, no behaviour change).
-    """
-    raise_moved(
-        "_runvcs_twin_incident_action",
-        "orchestration.agent_digital_twin",
-        "epistemic-graph",
-    )
-
-
-def _runvcs_twin_family_action(action: str, p: _RunVcsParams) -> str:
-    """``twin_replay``/``twin_counterfactual``/``twin_incident`` dispatch for
-    ``register_state_tools``'s ``graph_runvcs``.
-
-    Extracted verbatim (pure extract-method, no behaviour change).
-    """
-    raise_moved(
-        "_runvcs_twin_family_action",
-        "orchestration.agent_digital_twin",
-        "epistemic-graph",
-    )
 
 
 async def _runvcs_live_session_action(
@@ -875,37 +747,6 @@ def register_state_tools(mcp):
     runtime.REGISTERED_TOOLS["graph_sessions"] = graph_sessions
 
     @mcp.tool(
-        name="graph_goals",
-        description="Orchestrate background/autonomous loops (action in 'create', 'list', 'iterations', 'cancel').",
-        tags=["graph-os", "goals"],
-    )
-    async def graph_goals(
-        action: str = Field(
-            description="Action: 'create', 'list', 'iterations', 'cancel'"
-        ),
-        goal_id: str = Field(default="", description="Target goal ID"),
-        goal: str = Field(
-            default="", description="Goal description/instruction for 'create' action"
-        ),
-        max_iterations: int = Field(
-            default=10, description="Max iterations for the autonomous loop"
-        ),
-    ) -> str:
-        """Orchestrate background/autonomous loops. Action: 'create', 'list', 'iterations', 'cancel'."""
-
-        try:
-            resp, error_json = await _resolve_goals_response(
-                action, goal_id, goal, max_iterations
-            )
-            if error_json is not None:
-                return error_json
-            return _format_tool_response(resp)
-        except Exception as e:
-            return public_error_json(e)
-
-    runtime.REGISTERED_TOOLS["graph_goals"] = graph_goals
-
-    @mcp.tool(
         name="graph_loops",
         description=(
             "The single entrypoint for long-running objectives (CONCEPT:AU-KG.research.these-properties-carry). A "
@@ -1046,41 +887,6 @@ def register_state_tools(mcp):
     runtime.REGISTERED_TOOLS["graph_loops"] = graph_loops
 
     @mcp.tool(
-        name="graph_schedules",
-        description=(
-            "Inspect and control the unified scheduler (CONCEPT:AU-OS.state.unified-scheduling-one-intelligent). Every "
-            "recurring job — the deploy/schedules.yml entries, the former "
-            "fixed-interval maintenance ticks, the self-evolution loop, and the "
-            "ScholarX RSS research feed — is a durable :Schedule node the one "
-            "scheduler tick enqueues from. action in 'list' (registry + live "
-            "run state), 'enable'/'disable' (toggle by name), 'prioritize' (set "
-            "the claim bucket 0-3 of the enqueued job), 'set_interval' (retune "
-            "cadence, seconds), 'run_now' (fire on the next tick)."
-        ),
-        tags=["graph-os", "scheduler"],
-    )
-    async def graph_schedules(
-        action: str = Field(
-            default="list",
-            description="list|enable|disable|prioritize|set_interval|run_now",
-        ),
-        name: str = Field(default="", description="Schedule name (all but list)."),
-        priority: int = Field(
-            default=2,
-            ge=0,
-            le=3,
-            description="Integer claim bucket 0-3 (prioritize).",
-        ),
-        interval_s: float = Field(
-            default=0.0, description="New interval seconds (set_interval)."
-        ),
-    ) -> str:
-        """List / enable / disable / prioritize / retune / run-now schedules."""
-        raise_moved("graph_schedules", "core", "epistemic-graph")
-
-    runtime.REGISTERED_TOOLS["graph_schedules"] = graph_schedules
-
-    @mcp.tool(
         name="graph_sandbox",
         description=(
             "Inspect and control the native warm-fork sandbox runtime (CONCEPT:AU-ORCH.sandbox.graph-sandbox-surface). "
@@ -1088,189 +894,25 @@ def register_state_tools(mcp):
             "copy-on-write state only where the boundary also confines filesystem, "
             "credentials, processes, and network (for example a firecracker microVM). "
             "action in 'status' "
-            "(per-rung availability + pooled warm-parent count + per-rung reward EMA), 'reap' "
-            "(close idle warm parents now + idle dev-workspaces), 'warm' (pre-pay a rung's "
-            "start-up so the next fan-out forks cheaply — name it with rung). Code execution "
+            "(per-rung availability + pooled warm-parent count + per-rung reward EMA). Code execution "
             "itself stays inside the governed RLM loop; this surface is lifecycle + visibility."
         ),
         tags=["graph-os", "sandbox", "warm-fork"],
     )
     async def graph_sandbox(
-        action: str = Field(default="status", description="status|reap|warm"),
-        rung: str = Field(
-            default="", description="Approved confined warm-fork rung to warm."
-        ),
+        action: str = Field(default="status", description="status"),
     ) -> str:
-        """Status / reap / warm the warm-fork sandbox rungs (CONCEPT:AU-ORCH.sandbox.graph-sandbox-surface, CONCEPT:AU-OS.host.so-they-are-idle)."""
+        """Report the warm-fork sandbox rungs (CONCEPT:AU-ORCH.sandbox.graph-sandbox-surface, CONCEPT:AU-OS.host.so-they-are-idle)."""
         import json as _json
 
         try:
             if action == "status":
                 return _sandbox_status_action()
-            if action == "reap":
-                return _sandbox_reap_action()
-            if action == "warm":
-                return await _sandbox_warm_action(rung)
             return _json.dumps({"error": "unknown sandbox action"})
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
     runtime.REGISTERED_TOOLS["graph_sandbox"] = graph_sandbox
-
-    @mcp.tool(
-        name="graph_runvcs",
-        description=(
-            "Agent-native run version-control (CONCEPT:AU-ORCH.runvcs.run-commit): fork, "
-            "revert and review a LIVE agent run as content-addressed commits that bind its "
-            "conversation + filesystem + process/event frontier into ONE exact world. action "
-            "in 'list' (live run sessions), 'status' (a run's event/commit/message counts + "
-            "log digest), 'commit' (snapshot messages+fs+events into one RunCommit — pass "
-            "label), 'revert' (restore a run's files+process+messages to a commit — pass "
-            "commit_id), 'fork' (branch a NEW run from a commit into a fresh workspace, parent "
-            "untouched — pass commit_id), 'discard' (drop the uncommitted event delta), "
-            "'replay' (deterministically replay the CURRENT live run's event log — a recorded "
-            "exchange stands in for the model — and verify reproduction). Retained-output "
-            "accept/discard of a finished run is governed by the run.select action-policy gate. "
-            "Agent Digital Twin actions (CONCEPT:AU-ORCH.twin.agent-digital-twin, X-8) — a "
-            "durable, replayable projection of a PAST run kept independently of any live "
-            "session: 'twin_capture' (build a twin two ways — pass `tool_calls` and/or "
-            "`model_exchanges` for the EXPLICIT-DATA path [the canonical path a live run, or "
-            "a test standing in for one, uses: this run's own already-collected data, mirrored "
-            "straight into the twin's event log], or omit both and pass `run_id` for the "
-            "KG-HYDRATION path [best-effort read of the KG's already-recorded :ToolCall/"
-            ":WorkItem rows for that run id]; either way `policy_decisions`/`evidence` are "
-            "attached when passed — they are NEVER auto-discovered from the KG — optionally "
-            "persist the result as a :AgentDigitalTwin node, and return the full serialized "
-            "twin JSON — pass that JSON back in as `twin` to the actions below), 'twin_replay' "
-            "(regression-replay a captured twin — pass `twin`), 'twin_counterfactual' "
-            "(re-drive a captured twin under a swapped policy/model version — pass `twin` plus "
-            "`policy_overrides` and/or `model_responses`, and optionally `versions` for "
-            "reporting), 'twin_incident' (ordered, human-inspectable step-through of a "
-            "captured twin's recorded run — pass `twin`)."
-        ),
-        tags=["graph-os", "runvcs", "fork", "revert", "twin"],
-    )
-    async def graph_runvcs(
-        action: str = Field(
-            default="list",
-            description=(
-                "list|status|commit|revert|fork|discard|replay|twin_capture|twin_replay|"
-                "twin_counterfactual|twin_incident"
-            ),
-        ),
-        run_id: str = Field(
-            default="",
-            description="Target run session id (live-run actions) or run id to hydrate a twin from (twin_capture).",
-        ),
-        commit_id: str = Field(
-            default="", description="Target commit id (revert|fork)."
-        ),
-        label: str = Field(default="", description="Commit label (commit)."),
-        twin: str = Field(
-            default="",
-            description=(
-                "JSON-serialized AgentDigitalTwin (CONCEPT:AU-ORCH.twin.agent-digital-twin) — "
-                "the output of action='twin_capture'. Required by twin_replay/"
-                "twin_counterfactual/twin_incident."
-            ),
-        ),
-        agent_name: str = Field(
-            default="", description="Agent name to stamp on the twin (twin_capture)."
-        ),
-        task: str = Field(
-            default="",
-            description="Task description to stamp on the twin (twin_capture).",
-        ),
-        versions: str = Field(
-            default="{}",
-            description=(
-                "JSON VersionPins fields (model_id, model_provider, prompt_version_id, "
-                "tool_versions, skill_versions, policy_version, policy_digest, catalog_epoch). "
-                "For twin_capture: the pins this run executed under. For twin_counterfactual: "
-                "the swapped pins to diff against the twin's recorded pins (reporting only — "
-                "pass policy_overrides/model_responses to actually change the replay outcome)."
-            ),
-        ),
-        outcome: str = Field(
-            default="",
-            description="Outcome status to stamp on the twin (twin_capture; default 'succeeded').",
-        ),
-        persist: bool = Field(
-            default=True,
-            description=(
-                "twin_capture: best-effort persist the twin as a durable :AgentDigitalTwin "
-                "KG node (no-op without a live engine)."
-            ),
-        ),
-        tool_calls: str = Field(
-            default="",
-            description=(
-                "twin_capture EXPLICIT-DATA path: JSON array of {tool_name, args, result, "
-                "error} records — the exact shape "
-                "orchestration.tool_provenance.extract_tool_calls returns. Non-empty here "
-                "(or in `model_exchanges`) makes twin_capture build the twin from this data "
-                "directly (agent_digital_twin.capture_twin) instead of hydrating from the KG."
-            ),
-        ),
-        model_exchanges: str = Field(
-            default="",
-            description=(
-                "twin_capture EXPLICIT-DATA path: JSON array of {request, response} model "
-                "exchanges to mirror into the twin's event log."
-            ),
-        ),
-        policy_decisions: str = Field(
-            default="",
-            description=(
-                "twin_capture (either path): JSON array of recorded ActionDecision dicts "
-                "(request/decision/tier/reason/rule_origin/approval_id/audit_id) to attach "
-                "to the twin. NEVER auto-discovered from the KG (today's "
-                "AgentPolicyDecisionNode audit rows carry no edge back to the RunTrace that "
-                "produced them) — pass them explicitly when known."
-            ),
-        ),
-        evidence: str = Field(
-            default="",
-            description=(
-                "twin_capture (either path): JSON array of EvidenceBundle-shaped dicts "
-                "backing the run's outcome."
-            ),
-        ),
-        budget: str = Field(
-            default="{}",
-            description=(
-                "twin_capture EXPLICIT-DATA path only: JSON budget dict to stamp on the twin."
-            ),
-        ),
-        work_item_ids: str = Field(
-            default="",
-            description=(
-                "twin_capture EXPLICIT-DATA path only: JSON array of WorkItem ids forming "
-                "the run's DAG (auto-discovered from the KG instead on the hydration path)."
-            ),
-        ),
-        policy_overrides: str = Field(
-            default="",
-            description=(
-                "JSON policy ruleset {version, defaults, rules} for twin_counterfactual — "
-                "recompute every recorded decision under this swapped policy version and "
-                "diff against what was originally decided."
-            ),
-        ),
-        model_responses: str = Field(
-            default="",
-            description=(
-                "JSON {request: alternate_response} for twin_counterfactual — substitute an "
-                "alternate model/prompt response for a recorded model exchange and surface the "
-                "resulting stream divergence."
-            ),
-        ),
-    ) -> str:
-        """List / inspect / commit / revert / fork / discard / replay a live run (run-VCS);
-        capture / replay / counterfactual-replay / step through an Agent Digital Twin (X-8)."""
-        raise_moved("graph_runvcs", "runtime.run_vcs.replay", "the agent harness")
-
-    runtime.REGISTERED_TOOLS["graph_runvcs"] = graph_runvcs
 
     @mcp.tool(
         name="graph_feeds",
@@ -1279,38 +921,21 @@ def register_state_tools(mcp):
             "Native RSS feeds, the FreshRSS aggregator, and ScholarX arXiv are "
             "first-class :FeedSource nodes ingested through ONE world-model gate "
             "(research items → prioritized fetch, news → relevance+novelty). action "
-            "in 'list' (registered feeds), 'add' (register one OR many native "
-            "RSS/Atom feeds — pass url=, or urls= a JSON array / comma-separated "
-            "list for a bulk add), 'remove' (deregister one or many by url/urls), "
             "'sync' (run the feed sweep now — native RSS + ScholarX through the "
             "gate; feeds are fetched concurrently)."
         ),
         tags=["graph-os", "feeds"],
     )
     async def graph_feeds(
-        action: str = Field(default="list", description="list|add|remove|sync"),
-        url: str = Field(default="", description="Feed URL (single add/remove)."),
-        urls: str = Field(
-            default="",
-            description=(
-                "BULK add/remove: many feed URLs in ONE call — a JSON array "
-                '(\'["https://a/feed","https://b/rss"]\') or a comma/newline-'
-                "separated string. Combined with `url` and deduped."
-            ),
-        ),
+        action: str = Field(default="sync", description="sync"),
+        url: str = Field(default="", description="Feed URL to sync (empty syncs all)."),
         mode: str = Field(default="delta", description="delta|full (sync)."),
     ) -> str:
-        """List / add / remove / sync unified RSS feed sources (add/remove are bulk-capable)."""
+        """Sync unified RSS feed sources."""
         import json as _json
 
         try:
             engine = runtime._get_engine()
-            if action == "list":
-                return _feeds_list_action(engine)
-            if action == "add":
-                return _feeds_add_action(engine, _resolve_feed_urls(url, urls))
-            if action == "remove":
-                return _feeds_remove_action(engine, _resolve_feed_urls(url, urls))
             if action == "sync":
                 return _feeds_sync_action(engine, url, mode)
             return _json.dumps({"error": f"unknown action {action!r}"})

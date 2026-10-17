@@ -21,7 +21,6 @@ from pydantic import Field
 from pydantic.fields import FieldInfo
 
 from graph_os.core.event_loop import run_blocking_ordered
-from graph_os.core.handoff import raise_moved
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
 
@@ -206,26 +205,35 @@ def build_code_nav_query(
     return cypher, params
 
 
-def _evidence_bundle_for_rows(engine: Any, rows: list[Any]) -> Any:
-    """Build an :class:`~agent_utilities.models.evidence_bundle.EvidenceBundle`
-    over a plain Cypher result ``rows`` for ``graph_query``'s typed response.
+def _row_ids(rows: Any) -> list[str]:
+    """Distinct node ids in plain query rows, in first-seen order.
 
-    Currency-upgrades ``rows`` the SAME way
-    :meth:`~agent_utilities.knowledge_graph.facade.KnowledgeGraph._attach_epistemic`
-    does for its per-row ``EpistemicRow`` path: extract the distinct ids
-    (:func:`~agent_utilities.knowledge_graph.core.epistemic_row.row_ids_from_plain_rows`),
-    resolve their engine-side epistemic envelope in ONE round-trip via
-    ``engine.graph.explain_provenance_by_ids`` (``Method::ExplainProvenanceByIds``),
-    then fold the resulting ``KnowledgeSet`` rows into ONE aggregate
-    :class:`EvidenceBundle` via :meth:`EvidenceBundle.from_engine_wire` — confidence
-    (top-scored row), freshness (bitemporal min/max), contradictions (scanned across
-    row claims), and policy exclusions, never fabricated. Degrades to an empty
-    bundle (never raises) when the engine has no ``explain_provenance_by_ids``
-    primitive or no row carries a resolvable id.
+    A row names a node either as ``RETURN n.id AS id`` or as a node mapping
+    with an ``id`` key under any alias. Other rows add nothing.
     """
-    raise_moved(
-        "_evidence_bundle_for_rows", "models.evidence_bundle", "epistemic-graph"
-    )
+    seen: dict[str, None] = {}
+    for row in rows if isinstance(rows, list) else []:
+        if not isinstance(row, dict):
+            continue
+        for value in (*row.values(), {"id": row.get("id")}):
+            if isinstance(value, dict) and isinstance(value.get("id"), str):
+                if value["id"]:
+                    seen.setdefault(value["id"], None)
+    return list(seen)
+
+
+def _evidence_bundle_for_rows(engine: Any, rows: list[Any]) -> dict[str, Any]:
+    """The engine provenance envelope for the nodes in ``rows``.
+
+    One ``ExplainProvenanceByIds`` call resolves every distinct row id. The
+    result is ``{"rows": []}`` when the engine lacks the method or no row
+    names a node.
+    """
+    fetch = getattr(getattr(engine, "graph", None), "explain_provenance_by_ids", None)
+    ids = _row_ids(rows)
+    if fetch is None or not ids:
+        return {"rows": []}
+    return {"rows": list(fetch(ids) or [])}
 
 
 def _resolve_symbol_id(engine, *, symbol: str, node_id: str) -> dict[str, Any] | None:
@@ -858,9 +866,7 @@ def _run_graph_query_uql_single(
         }
         if not include_epistemic:
             with engine_routing.bound_to_graph(graph):
-                payload["evidence_bundle"] = _evidence_bundle_for_rows(
-                    engine, rows
-                ).model_dump()
+                payload["evidence_bundle"] = _evidence_bundle_for_rows(engine, rows)
         return json.dumps(payload, default=_json_default)
     except engine_routing.GraphSelectionConflictError as exc:
         return public_error_json(exc, code="graph_selection_conflict")
@@ -1201,9 +1207,7 @@ def _run_graph_query_single(
                 "rows": results,
                 "connection": name,
                 "graph": graph,
-                "evidence_bundle": _evidence_bundle_for_rows(
-                    engine, results
-                ).model_dump(),
+                "evidence_bundle": _evidence_bundle_for_rows(engine, results),
             },
             default=str,
         )
@@ -1508,10 +1512,6 @@ def _graph_search_produce_results(
     return _graph_search_produce_results_extended(
         engine, session, mode=mode, query=query, top_k=top_k
     )
-
-
-def _graph_search_discover(engine: Any, query: str) -> str:
-    raise_moved("_graph_search_discover", "capabilities.manager", "epistemic-graph")
 
 
 def _graph_search_hard_negatives(engine: Any, query: str) -> str:
@@ -3284,8 +3284,6 @@ def register_query_tools(mcp):
                         self_correct=self_correct,
                         as_of=as_of,
                     )
-                elif mode == "discover":
-                    return _graph_search_discover(engine, query)
                 elif mode == "hard_negatives":
                     return _graph_search_hard_negatives(engine, query)
                 elif mode == "compiled":

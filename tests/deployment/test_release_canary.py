@@ -40,7 +40,6 @@ def test_run_canary_reports_only_aggregate_checks(monkeypatch) -> None:
         lambda **_: entries,
     )
     monkeypatch.setattr(release_canary, "_engine_binary_ready", lambda: True)
-    monkeypatch.setattr(release_canary, "_numeric_kernel_ready", lambda: True)
     monkeypatch.setattr(
         release_canary, "_served_fastmcp_matches_declared", lambda: True
     )
@@ -52,7 +51,6 @@ def test_run_canary_reports_only_aggregate_checks(monkeypatch) -> None:
         "checks": {
             "entry_points": True,
             "engine_binary": True,
-            "numeric_kernel": True,
             "served_fastmcp_matches_declared": True,
         },
         "privacySafe": True,

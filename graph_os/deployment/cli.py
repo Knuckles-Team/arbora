@@ -14,8 +14,6 @@ import json
 import sys
 from collections.abc import Callable
 
-from graph_os.core.handoff import raise_moved
-
 from .codex_registration import CodexRegistrationError, register_codex_graphos
 from .config_generator import (
     PROFILES,
@@ -76,10 +74,6 @@ def _run_codex(_: argparse.Namespace) -> int:
     return 0
 
 
-def _run_harness_fence(args: argparse.Namespace) -> int:
-    raise_moved("_run_harness_fence", "claude_harness.claude_fence", "epistemic-graph")
-
-
 def _run_environments(args: argparse.Namespace) -> int:
     if args.environments_command == "list":
         catalog = list_environment_profiles()
@@ -119,7 +113,6 @@ _COMMAND_HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
     "doctor": _run_doctor,
     "reference": _run_reference,
     "codex": _run_codex,
-    "harness-fence": _run_harness_fence,
     "environments": _run_environments,
 }
 

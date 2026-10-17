@@ -52,14 +52,12 @@ import base64
 import inspect
 import json
 import logging
-import re
 import threading
 from typing import Any
 
 from agent_utilities.security.error_surface import public_error_json
 from pydantic import Field
 
-from graph_os.core.handoff import raise_moved
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
 
@@ -506,127 +504,6 @@ def _reject_unbounded_analytics(
     return None
 
 
-# ── UQL server-side text-embedding pre-pass (F2 — the engine's EG-411 "no embedder bound op" state) ──
-#
-# ``RANK BY ~"some text"`` lowers to `Op::RankEmbed` and is resolved by an embedder
-# bound on the engine's `PlanCtx` — but nothing binds one there, so it always fails
-# with "no server-side text embedder is bound on this query" even though an
-# embedder IS configured and used everywhere else (``graph_search`` embeds the
-# query CLIENT-side via ``create_embedding_model`` then ranks). Rather than wait on
-# an engine-side `PlanCtx::with_embedder` wiring, mirror the `graph_search` pattern
-# here: pre-embed every quoted-text RANK leg in Python, with the SAME embedder (so
-# the vector dimension matches the stored node embeddings), and rewrite it to an
-# inline literal vector before the query reaches the engine. Native by default — no
-# opt-in flag — and fails loud if the embedder is unavailable (never silently drops
-# the RANK leg).
-_UQL_RANK_TEXT_OPEN_RE = re.compile(r'~\s*"')
-
-
-def _uql_rank_text_spans(text: str) -> list[tuple[int, int, str]]:
-    """Find every quoted-text RANK leg ``~"…"`` in a UQL string.
-
-    A leg is ``~`` immediately (whitespace allowed) followed by a double-quoted
-    string — mirrors ``eg-plan``'s parser (`RANK BY ~<vector_ref>` where a `"`
-    lookahead is the `Text` arm, `crates/eg-plan/src/uql/parser.rs::parse_vector_ref`)
-    and its lexer's double-quoted-string escaping (`lexer.rs::lex_string`): a
-    doubled quote (``""``) or a backslash-escaped ``\\"``/``\\\\`` is an escaped
-    character, anything else closes the string. Returns ``(start, end, literal)``
-    triples — ``start``/``end`` span the WHOLE ``~"…"`` run (for replacement),
-    ``literal`` is the unescaped text to embed. An inline vector (``~[…]``) or a
-    bare handle (``~handle``) never matches — neither has a `"` right after the
-    optional whitespace — so both pass through untouched.
-    """
-    spans: list[tuple[int, int, str]] = []
-    n = len(text)
-    for m in _UQL_RANK_TEXT_OPEN_RE.finditer(text):
-        start = m.start()
-        i = m.end()  # just past the opening quote
-        out_chars: list[str] = []
-        closed = False
-        while i < n:
-            c = text[i]
-            if c == '"':
-                if i + 1 < n and text[i + 1] == '"':
-                    out_chars.append('"')
-                    i += 2
-                    continue
-                i += 1
-                closed = True
-                break
-            if c == "\\" and i + 1 < n and text[i + 1] in ('"', "\\"):
-                out_chars.append(text[i + 1])
-                i += 2
-                continue
-            out_chars.append(c)
-            i += 1
-        if closed:
-            spans.append((start, i, "".join(out_chars)))
-    return spans
-
-
-def _collect_unified_rank_text(ops: Any, pending: list[dict[str, Any]]) -> None:
-    """Recurse a structured ``unified`` plan (list of op dicts) collecting every
-    ``{"Rank": {"query": "<text>"}}`` leg's field dict — including inside
-    ``FuseRrf`` branches — so its ``query`` can be overwritten with an embedded
-    vector in place. A ``Rank.query`` that's already a list (the normal inline-
-    vector form) is left untouched.
-    """
-    if not isinstance(ops, list):
-        return
-    for op in ops:
-        if not isinstance(op, dict):
-            continue
-        rank = op.get("Rank")
-        if isinstance(rank, dict) and isinstance(rank.get("query"), str):
-            pending.append(rank)
-        fuse = op.get("FuseRrf")
-        if isinstance(fuse, dict):
-            for branch in fuse.get("branches") or []:
-                _collect_unified_rank_text(branch, pending)
-
-
-def _embed_texts(texts: list[str]) -> list[list[float]]:
-    """Batch-embed ``texts`` with the SAME embedder :func:`create_embedding_model`
-    resolves everywhere else (``graph_search``, ingestion, enrichment, …) so the
-    vector dimension matches the stored node embeddings. Raises loud — never
-    silently drops a RANK leg — if no embedder can be constructed/reached.
-    """
-    raise_moved("_embed_texts", "core.embedding_utilities", "the agent harness")
-
-
-def _embed_uql_rank_text(
-    domain: str, action: str, params: dict[str, Any]
-) -> dict[str, Any]:
-    """Pre-embed every quoted-text ``RANK BY ~"…"`` leg before a ``uql``/``unified``
-    query dispatches (F2 fix — see the module comment above). The ONE chokepoint
-    for both UQL surfaces: :func:`_dispatch` calls this unconditionally for
-    ``engine_query`` before invoking the engine client, so neither surface
-    duplicates the embed-and-rewrite logic.
-    """
-    if domain != "query":
-        return params
-    if action == "uql" and isinstance(params.get("text"), str):
-        text = params["text"]
-        spans = _uql_rank_text_spans(text)
-        if spans:
-            vectors = _embed_texts([literal for _, _, literal in spans])
-            rewritten = text
-            for (start, end, _literal), vector in reversed(
-                list(zip(spans, vectors, strict=True))
-            ):
-                rendered = "[" + ",".join(f"{float(c):.8f}" for c in vector) + "]"
-                rewritten = rewritten[:start] + "~" + rendered + rewritten[end:]
-            params["text"] = rewritten
-    elif action == "unified" and isinstance(params.get("plan"), list):
-        pending: list[dict[str, Any]] = []
-        _collect_unified_rank_text(params["plan"], pending)
-        if pending:
-            vectors = _embed_texts([rank_field["query"] for rank_field in pending])
-            for rank_field, vector in zip(pending, vectors, strict=True):
-                rank_field["query"] = [float(c) for c in vector]
-    return params
-
-
 def _dispatch(
     domain: str, methods: set[str], action: str, params_json: str, graph: str
 ) -> str:
@@ -710,17 +587,6 @@ def _dispatch(
                 "action": action,
                 "guard": "RESULT_TOO_LARGE",
             }
-        )
-    # F2: pre-embed any quoted-text RANK leg (`RANK BY ~"text"`) in a `uql`/
-    # `unified` query — see the helper's module comment above. Fails loud (a
-    # JSON error payload), never silently drops the RANK leg.
-    try:
-        params = _embed_uql_rank_text(domain, action, params)
-    except Exception as exc:  # noqa: BLE001 — surface as engine-style error data, not a 500
-        return public_error_json(
-            exc,
-            code="dependency_unavailable",
-            context={"domain": domain, "action": action},
         )
     try:
         client = _client_for(graph)

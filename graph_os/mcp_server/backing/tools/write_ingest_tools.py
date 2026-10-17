@@ -19,7 +19,6 @@ from agent_utilities.security.persistence_privacy import persistence_reference
 from pydantic import Field
 
 from graph_os.core.event_loop import run_blocking_ordered
-from graph_os.core.handoff import raise_moved
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
 from graph_os.mcp_server.backing.context_helpers import coerce_dict_param
@@ -1237,14 +1236,6 @@ async def _ingest_action_agent_toolkit(engine, request: IngestRequest) -> str:
     return json.dumps(result, default=str)
 
 
-async def _ingest_action_ingest_knowledge_pack(engine, request: IngestRequest) -> str:
-    raise_moved(
-        "_ingest_action_ingest_knowledge_pack",
-        "models.knowledge_pack",
-        "epistemic-graph",
-    )
-
-
 async def _ingest_action_import_pack(engine, request: IngestRequest) -> str:
     target_path, corpus_name = request.target_path, request.corpus_name
     # action(s): 'import_pack'
@@ -1529,7 +1520,6 @@ _INGEST_ACTION_DISPATCH = {
     "skill_graph_status": _ingest_action_build_skill_graph,
     "rebuild_skill_graph": _ingest_action_build_skill_graph,
     "agent_toolkit": _ingest_action_agent_toolkit,
-    "ingest_knowledge_pack": _ingest_action_ingest_knowledge_pack,
     "import_pack": _ingest_action_import_pack,
     "fact_extract": _ingest_action_fact_extract,
     "sync_second_brain": _ingest_action_sync_second_brain,
@@ -2306,68 +2296,3 @@ def register_write_ingest_tools(mcp):
             return public_error_text(e)
 
     runtime.REGISTERED_TOOLS["graph_ingest"] = graph_ingest
-
-    @mcp.tool(
-        name="usage_query",
-        description=(
-            "Query usage/cost/observability analytics (CONCEPT:AU-ECO.mcp.usage-cost-observability-surface): token "
-            "counts, cost, model/tool/skill/db-call usage, session browser, "
-            "activity heatmap, full-text search, and Langfuse trace links. One "
-            "store covers both ingested agent logs and our own runtime telemetry."
-        ),
-        tags=["graph-os", "observability", "usage"],
-    )
-    async def usage_query(
-        action: str = Field(
-            default="summary",
-            description=(
-                "summary | by_model | by_project | by_agent | tools | activity | "
-                "sessions | session_detail | top_sessions | search | traces | series"
-            ),
-        ),
-        from_date: str = Field(default="", description="ISO start (started_at >=)."),
-        to_date: str = Field(default="", description="ISO end (started_at <=)."),
-        project: str = Field(default="", description="Filter by project."),
-        agent: str = Field(default="", description="Filter by agent type."),
-        model: str = Field(default="", description="Filter by model."),
-        origin: str = Field(
-            default="", description="ingested | runtime (omit for both)."
-        ),
-        tenant_id: str = Field(default="", description="Tenant scope."),
-        session_id: str = Field(default="", description="For action=session_detail."),
-        query: str = Field(default="", description="For action=search (FTS)."),
-        limit: int = Field(default=50, description="Row cap for list actions."),
-    ) -> str:
-        """Read-side analytics over the usage store. Returns JSON."""
-        raise_moved("usage_query", "usage.authorization", "epistemic-graph")
-
-    runtime.REGISTERED_TOOLS["usage_query"] = usage_query
-
-    @mcp.tool(
-        name="ingest_sessions",
-        description=(
-            "Ingest AI agent chat/session history into the usage store + KG "
-            "(CONCEPT:AU-ECO.mcp.client-side-chat-session). 'collect' auto-detects installed agents on THIS "
-            "host and parses their local logs (use when the engine is local). "
-            "'upload' accepts pre-parsed session bundles as JSON so a CLIENT can "
-            "parse its own logs and push them to a REMOTE/central engine that has "
-            "no filesystem access to the client — closing the remote-ingest gap. "
-            "'paths' ingests explicit files/dirs."
-        ),
-        tags=["graph-os", "ingest", "observability"],
-    )
-    async def ingest_sessions(
-        action: str = Field(default="collect", description="collect | upload | paths"),
-        bundles_json: str = Field(
-            default="",
-            description="For action=upload: JSON array of ParsedSessionBundle objects.",
-        ),
-        target_path: str = Field(
-            default="", description="For action=paths: JSON list or comma paths."
-        ),
-        tenant_id: str = Field(default="", description="Tenant scope for the rows."),
-    ) -> str:
-        """Client-parses, server-sinks ingestion of agent session logs."""
-        raise_moved("ingest_sessions", "usage.authorization", "epistemic-graph")
-
-    runtime.REGISTERED_TOOLS["ingest_sessions"] = ingest_sessions

@@ -42,8 +42,6 @@ from agent_utilities.usage.recorder import get_usage_recorder
 from agent_utilities.usage.service import get_usage_service
 from fastapi import APIRouter, Body, HTTPException, Query
 
-from graph_os.core.handoff import raise_moved
-
 logger = logging.getLogger(__name__)
 
 usage_router = APIRouter(tags=["observability"])
@@ -284,17 +282,6 @@ def search(q: str, limit: int = 50, tenant_id: str | None = None) -> list[Search
     )
 
 
-@usage_router.get("/traces")
-def traces(
-    session_id: str | None = None,
-    limit: int = 50,
-    tenant_id: str | None = None,
-) -> dict:
-    """Return privacy-safe Langfuse trace references for the caller's tenant."""
-
-    raise_moved("traces", "usage.privacy", "epistemic-graph")
-
-
 @usage_router.post("/sessions/upload")
 def upload_sessions(
     bundles: Annotated[list[ParsedSessionBundle], Body()],
@@ -318,13 +305,6 @@ def upload_sessions(
         if recorder.record_bundle(bundle):
             ok += 1
     return {"received": len(bundles), "ingested": ok}
-
-
-@usage_router.post("/sync")
-def sync_now() -> dict:
-    """Trigger an immediate local-log sync (auto-detect + parse + persist)."""
-
-    raise_moved("sync_now", "ingestion.collector", "epistemic-graph")
 
 
 def register_usage_routes(app, prefix: str = "/api") -> None:

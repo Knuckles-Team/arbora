@@ -11,8 +11,6 @@ from typing import Any, Protocol, runtime_checkable
 
 from agent_utilities.security.persistence_privacy import persistence_reference
 
-from graph_os.core.handoff import raise_moved
-
 from .models import (
     A2AMessage,
     A2ARouteDecision,
@@ -222,10 +220,6 @@ class WorkItemA2AAuthority:
             )
 
     @staticmethod
-    def _prepare_task(engine: Any, text: str) -> str:
-        raise_moved("_prepare_task", "orchestration.manager", "epistemic-graph")
-
-    @staticmethod
     def _submit(
         work_engine: Any,
         *,
@@ -251,19 +245,6 @@ class WorkItemA2AAuthority:
             metadata=metadata,
         )
 
-    @staticmethod
-    def _enqueue(
-        engine: Any,
-        *,
-        task_id: str,
-        context_id: str,
-        tenant: str,
-        decision: A2ARouteDecision,
-    ) -> None:
-        # AU's current carrier cannot enforce an assembly-selected tool subset.
-        # Refuse instead of persisting an advisory list that execution ignores.
-        raise_moved("_enqueue", "orchestration.agent_dispatch", "epistemic-graph")
-
     async def dispatch(
         self,
         *,
@@ -278,7 +259,7 @@ class WorkItemA2AAuthority:
                 "canonical agent dispatch cannot yet enforce an assembled tool subset"
             )
         session = self._session("kg:write")
-        engine, work_engine = self._engine()
+        _engine, work_engine = self._engine()
         owner_ref = self._owner_ref(session)
         task_id = self._task_id(session.tenant, owner_ref, idempotency_key)
         context_id = self._context_id(session, message, task_id, owner_ref)
@@ -290,7 +271,9 @@ class WorkItemA2AAuthority:
             request_digest=request_digest,
             decision=decision,
         )
-        description = self._prepare_task(engine, message.task_text())
+        from graph_os.access.task_guard import screen_and_redact_agent_task
+
+        description = screen_and_redact_agent_task(message.task_text())
         item_id, created = await asyncio.to_thread(
             self._submit,
             work_engine,
@@ -314,15 +297,6 @@ class WorkItemA2AAuthority:
             owner_ref=owner_ref,
             request_digest=request_digest,
         )
-        if created or item.get("status") not in _TERMINAL:
-            await asyncio.to_thread(
-                self._enqueue,
-                engine,
-                task_id=task_id,
-                context_id=context_id,
-                tenant=session.tenant,
-                decision=decision,
-            )
         return self._project(item, task_id=task_id)
 
     def _authorized_item(self, task_id: str, scope: str) -> dict[str, Any] | None:

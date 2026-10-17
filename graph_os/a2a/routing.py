@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-import asyncio
 from collections.abc import Callable
 from typing import Any, Protocol, runtime_checkable
-
-from graph_os.core.handoff import raise_moved
 
 from .models import A2AMessage, A2ARouteDecision
 
@@ -45,20 +42,15 @@ class A2ARouter(Protocol):
 
 
 class OrchestratorA2ARouter:
-    """Reuse AU capability resolution without inventing another router.
+    """Route an inbound message to the agent that its metadata names.
 
-    The current EG ``AgentAssemble`` handler is an explicit refusal stub and the
-    signed AU dispatch carrier cannot carry an allowed-tool subset. Requests
-    asking for budgeted assembly therefore fail closed until those owning seams
-    are live. Ordinary agent routing remains available through the canonical
-    orchestrator capability resolver.
+    Graph OS does not rank task text against capabilities; that choice belongs
+    to the engine. A message must name its agent in ``metadata.agent_name``.
+    Budgeted assembly fails closed until the engine serves governed assembly.
     """
 
     def __init__(self, engine_provider: Callable[[], Any]) -> None:
         self._engine_provider = engine_provider
-
-    def _resolve(self, text: str) -> dict[str, Any]:
-        raise_moved("_resolve", "orchestration.manager", "epistemic-graph")
 
     async def route(
         self, message: A2AMessage, *, context_budget_tokens: int | None
@@ -67,16 +59,12 @@ class OrchestratorA2ARouter:
             raise A2AAssemblyUnavailable(
                 "budgeted AgentAssemble tool selection is not available"
             )
-        result = await asyncio.to_thread(self._resolve, message.task_text())
-        kind = str(result.get("kind") or "")
-        name = str(result.get("name") or "").strip()
-        if kind != "agent" or not name:
+        name = str(message.metadata.get("agent_name") or "").strip()
+        if not name:
             raise A2AAssemblyUnavailable(
-                "resolved capability requires unavailable governed assembly"
+                "the message must name its agent in metadata.agent_name"
             )
-        decision_ref = str(result.get("id") or "").strip() or None
         return A2ARouteDecision(
             agent_name=name,
-            selection_mode="canonical-capability-router",
-            decision_record_ref=decision_ref,
+            selection_mode="named-agent",
         )

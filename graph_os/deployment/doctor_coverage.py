@@ -6,23 +6,7 @@ import stat
 from types import SimpleNamespace
 from typing import Any
 
-from graph_os.core.handoff import raise_moved
-
 from .doctor_support import _result
-
-
-def _check_workspace_config() -> dict[str, Any]:
-    """Validate the ``workspace.yml`` repository manifest.
-
-    ``workspace.yml`` is the canonical map of the ecosystem's repositories: the
-    bootstrap (``clone_missing_projects``), the read-only project enumeration that
-    self-configures KG ingestion breadth (``workspace_project_roots``, KG-2.7), and
-    genesis all parse it. A malformed manifest, a repository entry with no ``url``,
-    or an incoherent ``subdirectories`` shape silently shrinks what the platform
-    clones/ingests — so we validate it through the SAME loader (no re-parse) and
-    surface gaps as a doctor finding rather than a silent miss. The manifest path and
-    entry-specific validation details never cross the doctor reporting boundary."""
-    raise_moved("_check_workspace_config", "core.workspace_config", "epistemic-graph")
 
 
 def _check_skills() -> dict[str, Any]:
@@ -146,11 +130,6 @@ def _count_provider_materialization(
     )
 
 
-def _count_own_provider(root: Any, leg: str, tally: SimpleNamespace) -> None:
-    """Count the hub's OWN contribution for one leg."""
-    raise_moved("_count_own_provider", "core.unified_install", "epistemic-graph")
-
-
 def _nested_child_is_plain_dir(child: Any, tally: SimpleNamespace) -> bool:
     """A leg-root child must be a real directory; anything else is invalid_managed."""
     try:
@@ -207,13 +186,6 @@ def _scan_nested_children(
         if child.name.startswith("."):
             continue
         _classify_nested_child(child, leg, names, tally)
-
-
-def _sweep_install_leg(
-    leg: str, root: Any, registrations: Any, tally: SimpleNamespace
-) -> int:
-    """Count one leg's providers and nested children; returns its expected count."""
-    raise_moved("_sweep_install_leg", "core.unified_install", "epistemic-graph")
 
 
 def _unified_install_result(
@@ -278,15 +250,3 @@ def _unified_install_result(
         f"unified XDG tree complete — {tally.materialized} provider contribution(s) materialized",
         data=data,
     )
-
-
-def _check_unified_install() -> dict[str, Any]:
-    """Assert the unified XDG tree exists and matches installed providers (CONCEPT:AU-OS.host.doctor-unified-install).
-
-    ``agent-utilities install`` materializes every provider contribution (skills +
-    prompts + ontologies, incl. the hub's OWN under ``agent-utilities``) into one XDG
-    data tree the runtime reads from. This flags missing current providers, removed
-    managed providers, and unmarked nested directories without reporting their local
-    filesystem locations.
-    """
-    raise_moved("_check_unified_install", "core.unified_install", "epistemic-graph")

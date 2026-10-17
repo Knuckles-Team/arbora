@@ -15,9 +15,6 @@ from pathlib import Path
 from typing import Any, Literal, cast
 
 from agent_utilities.models.evidence_bundle import EvidenceBundle
-from agent_utilities.orchestration.response_format import (
-    ResponseFormat,
-)
 from agent_utilities.security.config_sensitivity import (
     ENDPOINT_KEY_PARTS as _ENDPOINT_MCP_KEY_PARTS,
 )
@@ -40,7 +37,6 @@ from agent_utilities.security.error_surface import public_error_json, public_err
 from pydantic import Field
 
 from graph_os.core.event_loop import run_blocking_ordered
-from graph_os.core.handoff import raise_moved
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
 
@@ -530,8 +526,18 @@ def _workspace_mcp_config_path() -> Path:
     (when set) or ``<workspace>/mcp_config.json`` and rejects traversal and every
     existing symlink component.
     """
+    from graph_os.core.settings import setting
 
-    raise_moved("_workspace_mcp_config_path", "core.workspace", "epistemic-graph")
+    workspace = str(setting("WORKSPACE_PATH", "") or "").strip()
+    root = (Path(workspace) if workspace else Path.cwd()).resolve(strict=True)
+    configured = str(setting("MCP_CONFIG", "") or "").strip()
+    candidate = _resolve_requested_mcp_config_path(root, configured)
+    relative = _assert_mcp_config_path_in_workspace(candidate, root)
+    if candidate.suffix.lower() != ".json":
+        raise ValueError("MCP config must be a JSON file")
+    _assert_no_symlink_components(root, relative)
+    _assert_resolved_mcp_config_in_workspace(candidate, root)
+    return candidate
 
 
 def _read_mcp_config_document(path: Path) -> dict[str, Any]:
@@ -888,15 +894,6 @@ async def _analysis_action_infra_sweep(
     return _json.dumps(collect_and_persist(engine, host_ids), indent=2, default=str)
 
 
-async def _analysis_action_specialize(
-    engine, action, query, top_k, node_id, depth, target
-):
-    # action(s): 'specialize'
-    raise_moved(
-        "_analysis_action_specialize", "harness.superhuman_gate", "epistemic-graph"
-    )
-
-
 async def _analysis_action_world_model_rollout(
     engine, action, query, top_k, node_id, depth, target
 ):
@@ -937,39 +934,6 @@ async def _analysis_action_research_ingest(
     return await rie.ingest_url(query)
 
 
-async def _analysis_action_evolve_variants(
-    engine, action, query, top_k, node_id, depth, target
-):
-    # action(s): 'evolve_variants'
-    raise_moved(
-        "_analysis_action_evolve_variants",
-        "harness.agentic_evolution_engine",
-        "epistemic-graph",
-    )
-
-
-async def _analysis_action_spawn_background(
-    engine, action, query, top_k, node_id, depth, target
-):
-    # action(s): 'spawn_background'
-    raise_moved(
-        "_analysis_action_spawn_background",
-        "harness.background_spawner",
-        "epistemic-graph",
-    )
-
-
-async def _analysis_action_track_citations(
-    engine, action, query, top_k, node_id, depth, target
-):
-    # action(s): 'track_citations'
-    raise_moved(
-        "_analysis_action_track_citations",
-        "harness.citation_tracker",
-        "epistemic-graph",
-    )
-
-
 async def _analysis_action_check_constraints(
     engine, action, query, top_k, node_id, depth, target
 ):
@@ -1001,59 +965,6 @@ async def _analysis_action_check_constraints(
         ],
     }
     return json.dumps(result, default=str)
-
-
-async def _analysis_action_guard_corpus(
-    engine, action, query, top_k, node_id, depth, target
-):
-    # action(s): 'guard_corpus'
-    raise_moved(
-        "_analysis_action_guard_corpus",
-        "harness.corpus_collapse_guard",
-        "epistemic-graph",
-    )
-
-
-async def _analysis_action_evaluate_harness(
-    engine, action, query, top_k, node_id, depth, target
-):
-    # action(s): 'evaluate_harness'
-    raise_moved(
-        "_analysis_action_evaluate_harness",
-        "harness.evaluation_engine",
-        "epistemic-graph",
-    )
-
-
-async def _analysis_action_evolve_agent(
-    engine, action, query, top_k, node_id, depth, target
-):
-    # action(s): 'evolve_agent'
-    raise_moved(
-        "_analysis_action_evolve_agent", "harness.evidence_corpus", "epistemic-graph"
-    )
-
-
-async def _analysis_action_recursive_distill(
-    engine, action, query, top_k, node_id, depth, target
-):
-    # action(s): 'recursive_distill'
-    raise_moved(
-        "_analysis_action_recursive_distill",
-        "harness.recursive_distill",
-        "epistemic-graph",
-    )
-
-
-async def _analysis_action_distill_search(
-    engine, action, query, top_k, node_id, depth, target
-):
-    # action(s): 'distill_search'
-    raise_moved(
-        "_analysis_action_distill_search",
-        "harness.search_distillation",
-        "epistemic-graph",
-    )
 
 
 async def _analysis_action_extract_claims(
@@ -1171,17 +1082,6 @@ async def _analysis_action_contradictions(
         findings, new_claim, existing_by_id, llm_fn, narrate_maintenance_action
     )
     return json.dumps(results, default=str)
-
-
-async def _analysis_action_evolve_code(
-    engine, action, query, top_k, node_id, depth, target
-):
-    # action(s): 'evolve_code'
-    raise_moved(
-        "_analysis_action_evolve_code",
-        "harness.agentic_evolution_engine",
-        "epistemic-graph",
-    )
 
 
 async def _analysis_action_night_shift(
@@ -1341,37 +1241,6 @@ def _analysis_benchmark_response(run_all: Any, to_markdown: Any, top_k: Any) -> 
     )
 
 
-async def _analysis_action_assimilation_benchmark(
-    engine, action, query, top_k, node_id, depth, target
-):
-    # action(s): 'assimilation_benchmark'
-    raise_moved(
-        "_analysis_action_assimilation_benchmark",
-        "harness.assimilation_benchmark",
-        "epistemic-graph",
-    )
-
-
-async def _analysis_action_latent_efficiency_benchmark(
-    engine, action, query, top_k, node_id, depth, target
-):
-    # action(s): 'latent_efficiency_benchmark'
-    raise_moved(
-        "_analysis_action_latent_efficiency_benchmark",
-        "harness.latent_efficiency_benchmark",
-        "epistemic-graph",
-    )
-
-
-async def _analysis_action_infer_links(
-    engine, action, query, top_k, node_id, depth, target
-):
-    # action(s): 'infer_links'
-    raise_moved(
-        "_analysis_action_infer_links", "models.schema_pack_loader", "epistemic-graph"
-    )
-
-
 async def _analysis_action_x_workflow(
     engine, action, query, top_k, node_id, depth, target
 ):
@@ -1423,15 +1292,6 @@ async def _analysis_action_epistemic_sync(
             ),
             "error_type": LegacyGraphBackendRemovedError.__name__,
         }
-    )
-
-
-async def _analysis_action_pick_skill(
-    engine, action, query, top_k, node_id, depth, target
-):
-    # action(s): 'pick_skill'
-    raise_moved(
-        "_analysis_action_pick_skill", "workflows.skill_picker", "epistemic-graph"
     )
 
 
@@ -1581,13 +1441,6 @@ async def _analysis_action_quant_microstructure(
         return _json.dumps(result, default=str)
     except Exception as e:
         return public_error_text(e)
-
-
-async def _analysis_action_quant_regime(
-    engine, action, query, top_k, node_id, depth, target
-):
-    # action(s): 'quant_regime'
-    raise_moved("_analysis_action_quant_regime", "numeric", "epistemic-graph")
 
 
 async def _analysis_action_quant_insider(
@@ -1873,44 +1726,6 @@ async def _analysis_action_adr(engine, action, query, top_k, node_id, depth, tar
     )
 
 
-async def _analysis_action_harness_gate(
-    engine, action, query, top_k, node_id, depth, target
-):
-    # action(s): 'harness_gate'
-    raise_moved(
-        "_analysis_action_harness_gate", "harness.harness_gate", "epistemic-graph"
-    )
-
-
-async def _analysis_action_harness_evolve(
-    engine, action, query, top_k, node_id, depth, target
-):
-    # action(s): 'harness_evolve'
-    raise_moved(
-        "_analysis_action_harness_evolve", "harness.aegis_loop", "epistemic-graph"
-    )
-
-
-async def _analysis_action_harness_certify(
-    engine, action, query, top_k, node_id, depth, target
-):
-    # action(s): 'harness_certify'
-    raise_moved(
-        "_analysis_action_harness_certify", "harness.co_evolution", "epistemic-graph"
-    )
-
-
-async def _analysis_action_harness_benchmark(
-    engine, action, query, top_k, node_id, depth, target
-):
-    # action(s): 'harness_benchmark'
-    raise_moved(
-        "_analysis_action_harness_benchmark",
-        "harness.harness_foundry_benchmark",
-        "epistemic-graph",
-    )
-
-
 async def _analysis_action_code_context(
     engine, action, query, top_k, node_id, depth, target
 ):
@@ -2164,35 +1979,20 @@ _ANALYSIS_ACTION_DISPATCH = {
     "security_scan": _analysis_action_security_scan,
     "placement_plan": _analysis_action_placement_plan,
     "infra_sweep": _analysis_action_infra_sweep,
-    "specialize": _analysis_action_specialize,
     "world_model_rollout": _analysis_action_world_model_rollout,
     "research_ingest": _analysis_action_research_ingest,
-    "evolve_variants": _analysis_action_evolve_variants,
-    "spawn_background": _analysis_action_spawn_background,
-    "track_citations": _analysis_action_track_citations,
     "check_constraints": _analysis_action_check_constraints,
-    "guard_corpus": _analysis_action_guard_corpus,
-    "evaluate_harness": _analysis_action_evaluate_harness,
-    "evolve_agent": _analysis_action_evolve_agent,
-    "recursive_distill": _analysis_action_recursive_distill,
-    "distill_search": _analysis_action_distill_search,
     "extract_claims": _analysis_action_extract_claims,
     "contradictions": _analysis_action_contradictions,
-    "evolve_code": _analysis_action_evolve_code,
     "night_shift": _analysis_action_night_shift,
     "recommend": _analysis_action_recommend,
-    "assimilation_benchmark": _analysis_action_assimilation_benchmark,
-    "latent_efficiency_benchmark": _analysis_action_latent_efficiency_benchmark,
-    "infer_links": _analysis_action_infer_links,
     "x_workflow": _analysis_action_x_workflow,
     "cleanup_documents": _analysis_action_cleanup_documents,
     "epistemic_sync": _analysis_action_epistemic_sync,
-    "pick_skill": _analysis_action_pick_skill,
     "quant_banking": _analysis_action_quant_banking,
     "quant_arb": _analysis_action_quant_arb,
     "quant_crypto": _analysis_action_quant_crypto,
     "quant_microstructure": _analysis_action_quant_microstructure,
-    "quant_regime": _analysis_action_quant_regime,
     "quant_insider": _analysis_action_quant_insider,
     "workforce_plan": _analysis_action_workforce_plan,
     "close": _analysis_action_close,
@@ -2202,10 +2002,6 @@ _ANALYSIS_ACTION_DISPATCH = {
     "change_coupling": _analysis_action_change_coupling,
     "code_evolution": _analysis_action_code_evolution,
     "adr": _analysis_action_adr,
-    "harness_gate": _analysis_action_harness_gate,
-    "harness_evolve": _analysis_action_harness_evolve,
-    "harness_certify": _analysis_action_harness_certify,
-    "harness_benchmark": _analysis_action_harness_benchmark,
     "code_context": _analysis_action_code_context,
     "executable_rag": _analysis_action_executable_rag,
     "cross_repo_usages": _analysis_action_cross_repo_usages,
@@ -3456,15 +3252,6 @@ def _configure_action_get_config(action, config_key, config_value):
     return _configure_get_config_value(env_key, known[env_key])
 
 
-def _configure_action_frontend_contributions(action, config_key, config_value):
-    # action(s): 'frontend_contributions'
-    raise_moved(
-        "_configure_action_frontend_contributions",
-        "core.frontend_providers",
-        "epistemic-graph",
-    )
-
-
 def _configure_action_health(action, config_key, config_value):
     # action(s): 'health'
     from agent_utilities.observability.runtime_health import collect_health
@@ -3500,15 +3287,6 @@ def _configure_action_preflight(action, config_key, config_value):
     return json.dumps(
         run_preflight(profile, opts.get("components")),
         default=str,
-    )
-
-
-def _configure_action_harness_fence(action, config_key, config_value):
-    # action(s): 'harness_fence'
-    raise_moved(
-        "_configure_action_harness_fence",
-        "claude_harness.claude_fence",
-        "epistemic-graph",
     )
 
 
@@ -3575,29 +3353,6 @@ def _configure_action_doctor(action, config_key, config_value):
         )
 
 
-def _configure_action_set_role_routing(action, config_key, config_value):
-    # action(s): 'set_role_routing'
-    raise_moved(
-        "_configure_action_set_role_routing", "models.model_registry", "epistemic-graph"
-    )
-
-
-def _configure_action_schema_pack(action, config_key, config_value):
-    # action(s): 'schema_pack'
-    raise_moved(
-        "_configure_action_schema_pack", "models.schema_pack_loader", "epistemic-graph"
-    )
-
-
-def _configure_action_schema_candidates(action, config_key, config_value):
-    # action(s): 'schema_candidates'
-    raise_moved(
-        "_configure_action_schema_candidates",
-        "models.schema_pack_audit",
-        "epistemic-graph",
-    )
-
-
 _CONFIGURE_ACTION_DISPATCH = {
     "set_secret": _configure_action_set_secret,
     "vault_sync": _configure_action_vault_sync,
@@ -3626,17 +3381,12 @@ _CONFIGURE_ACTION_DISPATCH = {
     "config_reference": _configure_action_generate_config,
     "get_config": _configure_action_get_config,
     "list_config": _configure_action_get_config,
-    "frontend_contributions": _configure_action_frontend_contributions,
     "health": _configure_action_health,
     "system_doctor": _configure_action_system_doctor,
     "preflight": _configure_action_preflight,
-    "harness_fence": _configure_action_harness_fence,
     "install_hooks": _configure_action_install_hooks,
     "uninstall_hooks": _configure_action_uninstall_hooks,
     "doctor": _configure_action_doctor,
-    "set_role_routing": _configure_action_set_role_routing,
-    "schema_pack": _configure_action_schema_pack,
-    "schema_candidates": _configure_action_schema_candidates,
 }
 
 
@@ -3768,125 +3518,6 @@ def register_analysis_tools(mcp):
         )
 
     runtime.REGISTERED_TOOLS["graph_analyze"] = graph_analyze
-
-    @mcp.tool(
-        name="graph_orchestrate",
-        description=(
-            "Resolve an ingested skill/workflow for a task and execute it on the local vLLM "
-            "through the governed graph-os delegation runtime. An explicit agent_name pins "
-            "the target. Authenticated MCP tools are mounted internally; the bounded result "
-            "includes resolution, run/session handles, tool-call provenance, and any approval "
-            "request."
-        ),
-        tags=["graph-os", "orchestrate", "agent"],
-    )
-    async def graph_orchestrate(
-        task: str = Field(default="", description="Task for the delegated agent."),
-        agent_name: str = Field(
-            default="",
-            description=(
-                "Optional registered agent name. Empty resolves the best ingested "
-                "skill/workflow/fleet-tool from the KG's unified capability ranking "
-                "(CONCEPT:AU-KG.retrieval.unified-capability-contract) — a resolved "
-                "Tool binds the default expert scoped to just that tool, exactly "
-                "like passing skill_name+tool_server+allowed_tools explicitly."
-            ),
-        ),
-        skill_name: str = Field(
-            default="",
-            description=(
-                "Exact ingested AGENT_SKILL name (in-loop OR a fleet-served "
-                "skill:// resource). Mutually exclusive with agent_name and "
-                "resolved fail-closed from the Knowledge Graph."
-            ),
-        ),
-        tool_server: str = Field(
-            default="",
-            description=(
-                "Exact configured MCP server catalog to bind to skill_name, OR "
-                "the server hosting a resolved/ranked fleet tool. The server "
-                "transport comes from the live fleet configuration."
-            ),
-        ),
-        execution_mode: Literal["auto", "pydantic_graph"] = Field(
-            default="auto",
-            description=(
-                "auto selects the leanest governed route; pydantic_graph requires "
-                "skill_name, tool_server, and non-empty allowed_tools, then forces "
-                "that contract through a real pydantic-graph graph.run."
-            ),
-        ),
-        max_steps: int = Field(
-            default=30, description="Maximum delegated tool-loop steps."
-        ),
-        context: str = Field(
-            default="",
-            description="Curated inline context injected into the delegated agent.",
-        ),
-        budget_tokens: int = Field(
-            default=0,
-            description="Hard total-token budget; zero uses the runtime default.",
-        ),
-        context_ref: str = Field(
-            default="",
-            description="Persisted ContextBlob id to resolve and inject.",
-        ),
-        allowed_tools: str | list[str] = Field(
-            default="",
-            description=(
-                "Least-privilege tool allow-list as a JSON list or comma-separated string."
-            ),
-        ),
-        required_tools: str | list[str] = Field(
-            default="",
-            description=(
-                "Tools that must each have recorded ToolCall provenance before the "
-                "run can succeed. Must be a subset of allowed_tools."
-            ),
-        ),
-        cred_ref: str = Field(
-            default="",
-            description="Reference to an ephemeral credential in the secrets backend.",
-        ),
-        open_channel: bool = Field(
-            default=False,
-            description="Open a native bidirectional message channel for this run.",
-        ),
-        reasoning_effort: str = Field(
-            default="",
-            description="CONCEPT:AU-ORCH.execution.delegation-reasoning-off — reasoning is an OPT-IN capability "
-            "(like RLM). A delegated agent runs with chain-of-thought OFF by default (deterministic "
-            "tool loops don't need it and it stacks ~18x per-turn latency). Set an effort "
-            "('low'/'medium'/'high') to turn reasoning ON for an execution that genuinely needs "
-            "deliberation (action='execute_agent'). Empty = off / inherit the model's setting.",
-        ),
-        model_class: str = Field(
-            default="standard",
-            description="Required configured model class: economy | standard.",
-        ),
-        response_format: ResponseFormat = Field(
-            default="text",
-            description=(
-                "Response contract: text for ordinary prose or json for one "
-                "Pydantic-validated JSON object."
-            ),
-        ),
-        grounding: Literal["required", "best_effort", "none"] = Field(
-            default="required",
-            description=(
-                "CONCEPT:AU-KG.retrieval.fail-closed-grounding-contract — required (the "
-                "default) fails this run closed if the mandatory evidence compilation "
-                "times out, errors, or the retrieval-quality gate rejects every "
-                "candidate, rather than silently answering ungrounded. best_effort/none "
-                "explicitly opt into degraded operation, marked in the model messages, "
-                "the RunTrace, and the OTel span, and never counted as a plain success."
-            ),
-        ),
-    ) -> str:
-        """Resolve and execute one governed local-vLLM delegation."""
-        raise_moved("graph_orchestrate", "orchestration.manager", "epistemic-graph")
-
-    runtime.REGISTERED_TOOLS["graph_orchestrate"] = graph_orchestrate
 
     @mcp.tool(
         name="graph_configure",

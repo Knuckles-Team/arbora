@@ -52,7 +52,6 @@ from agent_utilities.security.persistence_privacy import persistence_reference
 from agent_utilities.security.threat_defense_engine import PromptInjectionScanner
 from pydantic import BaseModel
 
-from graph_os.core.handoff import raise_moved
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.intent_contract import (
     DESCRIBE_ACTION,
@@ -94,8 +93,6 @@ _PRIMARY_TEXT_PARAM: dict[str, str] = {
     "graph_code": "query",
     "graph_explain": "query",
     "graph_evaluate": "query",
-    "graph_observe": "query",
-    "graph_orchestrate": "task",
 }
 
 #: Safe universal fallback for ``ask`` when the top-ranked candidate needs
@@ -120,9 +117,7 @@ _CONTROL_HINT_FIELDS = frozenset({"tool", "_tool", "action", "plan_ref"})
 #: Kept at the intent boundary rather than adding duplicate public parameters to
 #: the underlying tool.  A delegation target is an ``agent_name`` regardless of
 #: whether a caller describes it as an agent or its backing MCP server.
-_DOCUMENTED_HINT_ALIASES: dict[str, dict[str, str]] = {
-    "graph_orchestrate": {"agent": "agent_name", "server": "agent_name"},
-}
+_DOCUMENTED_HINT_ALIASES: dict[str, dict[str, str]] = {}
 _DESTRUCTIVE_TERMS = frozenset(
     {
         "clear",
@@ -234,19 +229,6 @@ class _PreviewPlan:
     hints: dict[str, Any]
 
 
-def _outcome_router() -> Any:
-    """The shared :class:`OutcomeRouter` for intent-surface dispatch outcomes.
-
-    CONCEPT:AU-ECO.mcp.intent-surface-outcome-learning. ONE learner, reused — the same
-    durable-bandit mechanism (``CapabilityIndex.record_outcome``/``reward_of``)
-    every other outcome-learned choice in this codebase already shares
-    (``ReasonerRouter``, ``variant_pool.evolve_profile``). The task class is
-    an opaque tenant+policy reference followed by the verb; raw identity and
-    policy values never enter the learner.
-    """
-    raise_moved("_outcome_router", "orchestration.outcome_router", "epistemic-graph")
-
-
 def _outcome_scope_ref() -> str | None:
     """Return an opaque verified authority partition for routing state.
 
@@ -277,24 +259,6 @@ def _outcome_scope_ref() -> str | None:
 
 def _reward_task_class(verb: str, scope_ref: str) -> str:
     return f"{scope_ref}:{verb}"
-
-
-def _record_dispatch_outcome(
-    scope_ref: str, verb: str, tool: str, *, success: bool
-) -> None:
-    """Record one trusted execution result in its tenant/policy partition.
-
-    CONCEPT:AU-ECO.mcp.intent-surface-outcome-learning. Bumps :data:`_REWARD_EPOCH` so any
-    cached resolution that could have used this outcome is invalidated on its
-    next lookup rather than served stale.
-    """
-    global _REWARD_EPOCH
-    try:
-        _outcome_router().record(
-            _reward_task_class(verb, scope_ref), tool, 1.0 if success else 0.0
-        )
-    finally:
-        _REWARD_EPOCH += 1
 
 
 def _normalize_intent(intent: str) -> str:
@@ -612,7 +576,6 @@ def resolve_intent(
     intent_tokens = _tokenize(intent)
     explicit_action = hints.get("action")
     pool = _resolution_pool(candidates, verb, explicit_action)
-    router = _outcome_router() if outcome_scope_ref is not None else None
     cpds = _load_cpds_required() if explicit_action is not None else {}
     ctx = _RankingContext(
         intent=intent,
@@ -620,7 +583,6 @@ def resolve_intent(
         verb=verb,
         explicit_action=explicit_action,
         cpds=cpds,
-        router=router,
         outcome_scope_ref=outcome_scope_ref,
     )
     ranked = [_rank_candidate(c, ctx) for c in pool]
@@ -703,7 +665,6 @@ class _RankingContext:
     verb: str | None
     explicit_action: Any
     cpds: dict[str, dict[str, Any]]
-    router: Any
     outcome_scope_ref: str | None
 
 
@@ -724,16 +685,6 @@ def _rank_candidate(
     if ctx.explicit_action is None:
         score += _declared_action_phrase_bonus(ctx.intent, c.tool)
     score += _skill_delegation_bonus(ctx.intent, c)
-    task_verb = ctx.verb if ctx.verb is not None else c.verbs[0]
-    reward = (
-        ctx.router.reward_of(
-            _reward_task_class(task_verb, ctx.outcome_scope_ref), c.capability_id
-        )
-        if ctx.router is not None and ctx.outcome_scope_ref is not None
-        else 0.5
-    )
-    if reward != 0.5:
-        score += _LEARNED_REWARD_WEIGHT * (reward - 0.5)
     return CapabilityCandidate(
         tool=c.tool,
         action=(
@@ -1716,13 +1667,7 @@ def _dispatch_reward_and_learning_eligibility(
     action_ambiguity: dict[str, Any],
 ) -> tuple[float, bool]:
     """Helper for `dispatch_intent`: the calibrated outcome reward + learning eligibility."""
-    reward = (
-        _outcome_router().reward_of(
-            _reward_task_class(verb, outcome_scope_ref), chosen_tool
-        )
-        if outcome_scope_ref is not None
-        else 0.5
-    )
+    reward = 0.5
     learning_eligible = bool(
         outcome_scope_ref
         and not explicit_tool
@@ -1747,26 +1692,18 @@ async def _dispatch_execute_and_record(
     try:
         result = await runtime._execute_tool(chosen_tool, **call_kwargs)
     except Exception as e:  # noqa: BLE001 — surface as a structured routing failure, not a 500
-        if learning_eligible and outcome_scope_ref is not None:
-            _record_dispatch_outcome(
-                outcome_scope_ref, verb, chosen_tool, success=False
-            )
         routing["decision_trace"]["result_provenance"]["status"] = "failed"
-        routing["learning"]["recorded"] = learning_eligible
+        routing["learning"]["recorded"] = False
         return {
             "routing": routing,
             "executed": False,
             **public_error_payload(e, logger=logger),
         }
     observed_success = _execution_succeeded(result)
-    if learning_eligible and outcome_scope_ref is not None:
-        _record_dispatch_outcome(
-            outcome_scope_ref, verb, chosen_tool, success=observed_success
-        )
     routing["decision_trace"]["result_provenance"]["status"] = (
         "succeeded" if observed_success else "failed"
     )
-    routing["learning"]["recorded"] = learning_eligible
+    routing["learning"]["recorded"] = False
     return {"result": result, "routing": routing, "executed": True}
 
 

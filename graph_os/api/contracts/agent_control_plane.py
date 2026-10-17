@@ -41,7 +41,6 @@ from graph_os.api.contracts.agent_control_contracts import (
     WorkItemSubmissionResult,
 )
 from graph_os.api.contracts.session import GraphSession, resolve_session
-from graph_os.core.handoff import raise_moved
 
 type _RequiredScope = Literal["kg:read", "kg:write"]
 type _OperationSpec = tuple[
@@ -78,35 +77,6 @@ class GraphRlmPromptExample(_StrictModel):
     response: str = Field(max_length=100_000)
 
 
-class GraphRlmEvolutionOptions(_StrictModel):
-    """Bounded GEPA prompt-evolution controls."""
-
-    objectives: list[str] = Field(
-        default_factory=lambda: ["accuracy"], min_length=1, max_length=8
-    )
-    iterations: int = Field(default=1, ge=1, le=20)
-    batch_size: int = Field(default=2, ge=1, le=16)
-    dataset: list[GraphRlmPromptExample] | None = Field(default=None, max_length=500)
-
-    @field_validator("objectives")
-    @classmethod
-    def _validate_objectives(cls, objectives: list[str]) -> list[str]:
-        if any(not objective.strip() for objective in objectives):
-            raise ValueError("objectives must be non-empty strings")
-        if len(set(objectives)) != len(objectives):
-            raise ValueError("objectives must be unique")
-        return objectives
-
-    @field_validator("dataset")
-    @classmethod
-    def _validate_dataset(
-        cls, dataset: list[GraphRlmPromptExample] | None
-    ) -> list[GraphRlmPromptExample] | None:
-        if dataset is not None and not dataset:
-            raise ValueError("dataset must be omitted or contain at least one example")
-        return dataset
-
-
 class GraphRlmRunRequest(_StrictModel):
     action: Literal["run"] = "run"
     task: str = Field(min_length=1, max_length=10_000)
@@ -119,14 +89,8 @@ class GraphRlmBenchmarkRequest(_StrictModel):
     options: GraphRlmBenchmarkOptions = Field(default_factory=GraphRlmBenchmarkOptions)
 
 
-class GraphRlmEvolvePromptRequest(_StrictModel):
-    action: Literal["evolve_prompt"] = "evolve_prompt"
-    task: str = Field(default="", max_length=10_000)
-    options: GraphRlmEvolutionOptions = Field(default_factory=GraphRlmEvolutionOptions)
-
-
 type GraphRlmRequest = Annotated[
-    GraphRlmRunRequest | GraphRlmBenchmarkRequest | GraphRlmEvolvePromptRequest,
+    GraphRlmRunRequest | GraphRlmBenchmarkRequest,
     Field(discriminator="action"),
 ]
 
@@ -169,26 +133,14 @@ class GraphRlmBenchmarkResult(_StrictModel):
     error: GraphRlmError | None = None
 
 
-class GraphRlmEvolutionResult(_StrictModel):
-    action: Literal["evolve_prompt"]
-    ok: bool
-    winning_prompt: str | None = None
-    scores: dict[str, float] = Field(default_factory=dict)
-    generation: int | None = None
-    reward_weights: dict[str, float] = Field(default_factory=dict)
-    frontier_size: int = 0
-    error: GraphRlmError | None = None
-
-
 type GraphRlmResult = Annotated[
-    GraphRlmRunResult | GraphRlmBenchmarkResult | GraphRlmEvolutionResult,
+    GraphRlmRunResult | GraphRlmBenchmarkResult,
     Field(discriminator="action"),
 ]
 
 _GRAPH_RLM_SCOPES: dict[type[BaseModel], Literal["kg:read", "kg:write"]] = {
     GraphRlmRunRequest: "kg:read",
     GraphRlmBenchmarkRequest: "kg:read",
-    GraphRlmEvolvePromptRequest: "kg:write",
 }
 
 
@@ -237,7 +189,7 @@ class AgentControlPlane:
                 GraphRlmRequest,
                 GraphRlmResult,
                 "kg:read",
-                (("evolve_prompt", "kg:write"),),
+                (),
             ),
             (
                 "resolve_capability",
@@ -349,9 +301,13 @@ class AgentControlPlane:
     async def _prepare_agent_task(
         self, task: str, agent_name: str | None
     ) -> tuple[str, CapabilityResolution]:
-        raise_moved(
-            "_prepare_agent_task", "orchestration.task_guard", "epistemic-graph"
+        from graph_os.access.task_guard import screen_and_redact_agent_task
+
+        sanitized_task = screen_and_redact_agent_task(task)
+        capability = await self.resolve_capability(
+            CapabilitySearchRequest(task=sanitized_task, agent_name=agent_name)
         )
+        return sanitized_task, capability
 
     async def execute_agent(
         self, request: AgentExecutionRequest
@@ -505,7 +461,7 @@ class AgentControlPlane:
         """Execute one typed RLM action under the injected verified authority."""
         if not isinstance(
             request,
-            (GraphRlmRunRequest, GraphRlmBenchmarkRequest, GraphRlmEvolvePromptRequest),
+            (GraphRlmRunRequest, GraphRlmBenchmarkRequest),
         ):
             raise TypeError("request must be a validated GraphRlmRequest")
 
@@ -554,40 +510,37 @@ class AgentControlPlane:
                 max_depth=int(output.get("max_depth") or 0),
             )
 
-        if isinstance(request, GraphRlmBenchmarkRequest):
-            from agent_utilities.rlm.benchmarks import (
-                list_tasks,
-                render_scoreboard,
-                run_benchmark,
-            )
+        from agent_utilities.rlm.benchmarks import (
+            list_tasks,
+            render_scoreboard,
+            run_benchmark,
+        )
 
-            benchmark = request.task or "s_niah"
-            available_tasks = list_tasks()
-            if benchmark not in available_tasks:
-                error = self._failure(
-                    ValueError("Unknown benchmark task"), code="invalid_request"
-                )
-                return GraphRlmBenchmarkResult(
-                    action="benchmark",
-                    ok=False,
-                    task=benchmark,
-                    available_tasks=available_tasks,
-                    error=error,
-                )
-            results = await run_benchmark(
-                benchmark,
-                scales=request.options.scales,
-                cases_per_scale=request.options.cases_per_scale,
+        benchmark = request.task or "s_niah"
+        available_tasks = list_tasks()
+        if benchmark not in available_tasks:
+            error = self._failure(
+                ValueError("Unknown benchmark task"), code="invalid_request"
             )
             return GraphRlmBenchmarkResult(
                 action="benchmark",
-                ok=True,
+                ok=False,
                 task=benchmark,
-                results=results,
-                scoreboard=render_scoreboard(results),
+                available_tasks=available_tasks,
+                error=error,
             )
-
-        return await _evolve_prompt(request)
+        results = await run_benchmark(
+            benchmark,
+            scales=request.options.scales,
+            cases_per_scale=request.options.cases_per_scale,
+        )
+        return GraphRlmBenchmarkResult(
+            action="benchmark",
+            ok=True,
+            task=benchmark,
+            results=results,
+            scoreboard=render_scoreboard(results),
+        )
 
     def _failed_result(
         self,
@@ -601,11 +554,9 @@ class AgentControlPlane:
             return GraphRlmRunResult(
                 action="run", ok=False, task=request.task, error=error
             )
-        if isinstance(request, GraphRlmBenchmarkRequest):
-            return GraphRlmBenchmarkResult(
-                action="benchmark", ok=False, task=request.task, error=error
-            )
-        return GraphRlmEvolutionResult(action="evolve_prompt", ok=False, error=error)
+        return GraphRlmBenchmarkResult(
+            action="benchmark", ok=False, task=request.task, error=error
+        )
 
     @staticmethod
     def _failure(exc: BaseException, *, code: str) -> GraphRlmError:
@@ -640,10 +591,3 @@ def compose_agent_control_plane(
         work_item_store=work_item_store,
         signed_dispatch=signed_dispatch,
     )
-
-
-async def _evolve_prompt(
-    request: GraphRlmEvolvePromptRequest,
-) -> GraphRlmEvolutionResult:
-    """Run the retained GEPA/DW-GRPO prompt-evolution behavior."""
-    raise_moved("_evolve_prompt", "harness.program_optimization", "epistemic-graph")

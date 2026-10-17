@@ -33,7 +33,6 @@ async def test_work_item_authority_reuses_one_store_for_lifecycle(
     from agent_utilities.knowledge_graph.core import work_durability as work
 
     rows: dict[str, dict[str, Any]] = {}
-    enqueued: list[str] = []
     session = SimpleNamespace(
         tenant="tenant-a", actor=SimpleNamespace(actor_id="actor-a")
     )
@@ -52,7 +51,9 @@ async def test_work_item_authority_reuses_one_store_for_lifecycle(
     engine = Engine()
     authority = WorkItemA2AAuthority(lambda: engine)
     monkeypatch.setattr(authority, "_session", lambda scope: session)
-    monkeypatch.setattr(authority, "_prepare_task", lambda _engine, text: text)
+    monkeypatch.setattr(
+        "graph_os.access.task_guard.screen_and_redact_agent_task", lambda text: text
+    )
     monkeypatch.setattr(
         "graph_os.a2a.authority.persistence_reference",
         lambda kind, value, **kwargs: f"{kind}-ref:{value}",
@@ -75,11 +76,6 @@ async def test_work_item_authority_reuses_one_store_for_lifecycle(
 
     monkeypatch.setattr(authority, "_submit", submit)
     monkeypatch.setattr(
-        authority,
-        "_enqueue",
-        lambda _engine, **kwargs: enqueued.append(kwargs["task_id"]),
-    )
-    monkeypatch.setattr(
         work, "get_work_item", lambda _engine, item_id: rows.get(item_id)
     )
 
@@ -98,7 +94,6 @@ async def test_work_item_authority_reuses_one_store_for_lifecycle(
     )
     assert replay.id == first.id
     assert first.status.timestamp == "1970-01-01T00:00:01+00:00"
-    assert enqueued == [first.id, first.id]
 
     loaded = await authority.get(first.id)
     listed, cursor = await authority.list(cursor=None, limit=10)
@@ -164,3 +159,19 @@ def test_transition_history_unavailable_has_distinct_privacy_safe_error() -> Non
         },
     }
     assert "result" not in json.loads(bytes(response.body))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("metadata", "expected"),
+    [({"agent_name": "expert"}, "expert"), ({}, None), ({"agent_name": " "}, None)],
+)
+async def test_router_routes_only_to_the_named_agent(metadata, expected) -> None:
+    router = OrchestratorA2ARouter(lambda: pytest.fail("engine was accessed"))
+    message = _message().model_copy(update={"metadata": metadata})
+    if expected is None:
+        with pytest.raises(A2AAssemblyUnavailable, match="agent_name"):
+            await router.route(message, context_budget_tokens=None)
+        return
+    decision = await router.route(message, context_budget_tokens=None)
+    assert decision.agent_name == expected

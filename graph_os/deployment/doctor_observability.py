@@ -6,8 +6,6 @@ from collections.abc import Callable
 from types import SimpleNamespace
 from typing import Any
 
-from graph_os.core.handoff import raise_moved
-
 from .doctor_support import _result
 
 
@@ -269,78 +267,12 @@ def _probe_langfuse_mcp_visibility(_cfg: Any) -> bool:
         return False
 
 
-def _langfuse_expected_trace_name(source_run_id: str) -> str:
-    """The tenant-qualified opaque trace name the exporter will persist."""
-    raise_moved("_langfuse_expected_trace_name", "usage.privacy", "epistemic-graph")
-
-
-def _langfuse_await_trace(expected_name: str, started_at: str) -> bool:
-    """Poll for the exported trace by name; ``False`` if it never lands."""
-    import time
-
-    for _ in range(10):
-        traces = _run_async_doctor_probe(
-            lambda: _call_langfuse_child(
-                "trace_list",
-                page=1,
-                limit=10,
-                name=expected_name,
-                from_timestamp=started_at,
-                order_by="timestamp.desc",
-                fields="core,basic",
-            )
-        )
-        if any(row.get("name") == expected_name for row in _langfuse_rows(traces)):
-            return True
-        time.sleep(1.0)
-    return False
-
-
-def _probe_langfuse_trace_round_trip(cfg: Any) -> tuple[bool, str]:
-    """``(round_trip_ok, error_code)``; ``error_code`` is "" only on success.
-
-    The source token is random and never leaves this function. The exporter
-    turns it into a tenant-qualified opaque identifier before persistence;
-    input and caller metadata are intentionally empty.
-    """
-    import uuid
-    from datetime import UTC, datetime
-
-    from agent_utilities.observability.langfuse_exporter import LangfuseExporter
-    from agent_utilities.observability.langfuse_trust import (
-        resolve_langfuse_credentials,
-    )
-
-    public_key, secret_key = resolve_langfuse_credentials(agent_config=cfg)
-    source_run_id = uuid.uuid4().hex
-    expected_name = _langfuse_expected_trace_name(source_run_id)
-    started_at = datetime.now(UTC).isoformat().replace("+00:00", "Z")
-    exporter = LangfuseExporter(
-        public_key=public_key,
-        secret_key=secret_key,
-        host=cfg.langfuse_host,
-    )
-    emitted = exporter.export_graph_run(
-        run_id=source_run_id,
-        query="",
-        status="success",
-        metadata={},
-    )
-    exporter.flush()
-    if not emitted:
-        return False, "trace_export_failed"
-    if _langfuse_await_trace(expected_name, started_at):
-        return True, ""
-    return False, "trace_round_trip_failed"
-
-
 def _probe_langfuse_live(cfg: Any) -> dict[str, Any]:
-    """Prove API, optional MCP, and optional metadata-only trace round trip."""
+    """Prove the Langfuse API through the MCP child."""
     result: dict[str, Any] = {
         "live_probed": True,
         "api_reachable": False,
         "mcp_visible": None,
-        "trace_round_trip": None,
         "redacted": True,
     }
     try:
@@ -351,17 +283,6 @@ def _probe_langfuse_live(cfg: Any) -> dict[str, Any]:
     if not result["mcp_visible"]:
         result["error_code"] = "mcp_visibility_failed"
         return result
-
-    if not cfg.trace_export_enabled:
-        return result
-
-    try:
-        round_trip, trace_error = _probe_langfuse_trace_round_trip(cfg)
-    except Exception:  # noqa: BLE001 - never expose response, endpoint, or identity
-        round_trip, trace_error = False, "trace_round_trip_failed"
-    result["trace_round_trip"] = round_trip
-    if trace_error:
-        result["error_code"] = trace_error
     return result
 
 
@@ -549,8 +470,6 @@ def _langfuse_live_result(
     live_ok = bool(data.get("api_reachable"))
     if cfg.langfuse_mcp_enabled:
         live_ok = live_ok and data.get("mcp_visible") is True
-    if cfg.trace_export_enabled:
-        live_ok = live_ok and data.get("trace_round_trip") is True
     if not live_ok:
         return _result(
             "langfuse",

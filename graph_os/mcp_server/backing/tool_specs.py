@@ -58,8 +58,6 @@ TOOL_VERBS: Mapping[str, tuple[str, ...]] = MappingProxyType(
         "browser_control": ("act",),
         "graph_a2a": ("act",),
         "graph_gis": ("ask",),
-        "usage_query": ("ask",),
-        "concept_registry": ("find", "ask"),
         "object_index": ("ask", "find"),
         "object_set": ("ask", "write"),
         "research_artifact": ("ask", "write"),
@@ -99,7 +97,6 @@ TOOL_VERBS: Mapping[str, tuple[str, ...]] = MappingProxyType(
         "graph_ingest": ("write", "ask"),
         # Profile/clean/validate are side-effect free; only commit_prepared
         # crosses the governed ChangeEnvelope mutation boundary.
-        "graph_data_prep": ("ask", "write"),
         "graph_writeback": ("write",),
         "graph_etl": ("write",),
         # Classifies one skill and persists the choice (source SKILL.md when
@@ -109,7 +106,6 @@ TOOL_VERBS: Mapping[str, tuple[str, ...]] = MappingProxyType(
         "source_sync": ("write",),
         "source_connector": ("manage", "write"),
         "source_drain": ("write",),
-        "ingest_sessions": ("write",),
         "object_edits": ("write",),
         "ontology_derive": ("write",),
         "ontology_link_materialize": ("write",),
@@ -138,21 +134,12 @@ TOOL_VERBS: Mapping[str, tuple[str, ...]] = MappingProxyType(
         "graph_feedback": ("why", "write"),
         "ontology_function": ("act", "write"),
         # ── act / orchestrate / execute / schedule ──
-        "graph_orchestrate": ("act",),
-        "graph_jobs": ("act", "ask"),
-        "graph_durable": ("act", "ask"),
-        "graph_agents": ("act",),
         # AU-CONTROL-R024: the Agent Library. ``find`` ranks it, ``ask`` reaches
         # only the reviewed read actions below, and ``manage`` saves records.
-        "agent_library": ("manage", "find", "ask"),
-        "graph_workflows": ("act", "ask", "manage"),
-        "graph_evolution": ("act",),
         "graph_governance": ("act", "manage"),
         "graph_domain_ops": ("act",),
         "graph_loops": ("act",),
-        "graph_goals": ("act",),
         "graph_sandbox": ("act",),
-        "graph_runvcs": ("act",),
         "graph_fork": ("act",),
         "graph_bus": ("act",),
         "graph_broker": ("act",),
@@ -179,13 +166,10 @@ TOOL_VERBS: Mapping[str, tuple[str, ...]] = MappingProxyType(
         "graph_sessions": ("manage", "ask"),
         "graph_kvcache": ("manage",),
         "graph_kv_checkpoint": ("write", "act"),
-        "graph_schedules": ("manage", "act"),
         "graph_ontology": ("write", "ask", "manage"),
         "ontology_property_types": ("manage", "ask"),
         "ontology_value_types": ("manage", "ask"),
         "ontology_interface": ("manage", "ask"),
-        "ontology_sampling_profile": ("manage", "ask"),
-        "ontology_model_profile": ("manage", "ask"),
         "object_permissioning": ("manage",),
         "engine_tenants": ("manage",),
         "engine_lifecycle": ("manage", "act"),
@@ -196,7 +180,6 @@ TOOL_VERBS: Mapping[str, tuple[str, ...]] = MappingProxyType(
         # ── why / explain / evaluate / observe ──
         "graph_explain": ("why",),
         "graph_evaluate": ("why",),
-        "graph_observe": ("why", "ask"),
         "graph_memory": ("write", "ask"),
         "engine_reasoning": ("why",),
     }
@@ -220,11 +203,7 @@ READ_ONLY_ACTIONS: Mapping[str, frozenset[str]] = MappingProxyType(
         "graph_explain": frozenset(
             {"explain", "context", "executable_rag", "recommend"}
         ),
-        "graph_observe": frozenset(
-            {"trace_rootcause", "prompt_regression", "failure_cluster", "error_detail"}
-        ),
         "graph_context": frozenset({"get", "list"}),
-        "agent_library": frozenset({"get", "list"}),
         "graph_code": frozenset(
             {
                 "blast_radius",
@@ -239,9 +218,6 @@ READ_ONLY_ACTIONS: Mapping[str, frozenset[str]] = MappingProxyType(
             }
         ),
         "graph_ingest": frozenset({"jobs", "job_status", "status"}),
-        "graph_data_prep": frozenset(
-            {"profile_dataset", "clean_dataset", "validate_prepared"}
-        ),
         # Only ``set`` mutates; the other four are pure reads over the pydantic
         # model and the effective configuration (CONCEPT:AU-OS.config.two-surfaces-by-default).
         # ``reload`` re-reads from disk without writing, so it is a read of the
@@ -250,22 +226,6 @@ READ_ONLY_ACTIONS: Mapping[str, frozenset[str]] = MappingProxyType(
         # Observability reads: usage analytics over the usage store, PromQL
         # evaluation, trace search/fetch/waterfall, and audit-chain
         # verification/provenance lookups. None of them writes.
-        "usage_query": frozenset(
-            {
-                "activity",
-                "by_agent",
-                "by_model",
-                "by_project",
-                "search",
-                "series",
-                "session_detail",
-                "sessions",
-                "summary",
-                "tools",
-                "top_sessions",
-                "traces",
-            }
-        ),
         "graph_promql": frozenset({"instant", "range"}),
         "graph_traces": frozenset({"get", "search", "waterfall"}),
         "graph_audit": frozenset({"verify", "for_target", "lineage"}),

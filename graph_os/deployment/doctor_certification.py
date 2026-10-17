@@ -7,8 +7,6 @@ import stat
 from dataclasses import dataclass
 from typing import Any
 
-from graph_os.core.handoff import raise_moved
-
 from .doctor_support import _result
 
 
@@ -329,11 +327,6 @@ def _cert_configuration_gate(
     return None
 
 
-def _cert_validated_commands(cfg: Any, command_maps: tuple[Any, ...]) -> list[Any]:
-    """Every certification command, proven exact-scenario and non-shell argv."""
-    raise_moved("_cert_validated_commands", "core.config", "epistemic-graph")
-
-
 def _cert_verify_release_manifest(cfg: Any) -> None:
     """The release manifest must verify -- signatures included -- against the matrix."""
     from importlib.resources import as_file, files
@@ -432,9 +425,3 @@ def _cert_resolve_prometheus_trust(cfg: Any) -> Any:
         profile_ref=cfg.cert_prometheus_tls_profile_ref,
         config=cfg,
     )
-
-
-def _check_production_certification() -> dict[str, Any]:
-    """Validate the complete production-campaign authority without disclosing it."""
-
-    raise_moved("_check_production_certification", "core.config", "epistemic-graph")

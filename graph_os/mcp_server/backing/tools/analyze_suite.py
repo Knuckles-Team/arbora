@@ -23,7 +23,6 @@ from typing import Annotated, Any
 from agent_utilities.models.evidence_bundle import EvidenceBundle
 from pydantic import Field
 
-from graph_os.core.handoff import raise_moved
 from graph_os.gateway.schemas.graph_core import (
     GraphCodeAction,
     GraphEvaluateAction,
@@ -208,36 +207,6 @@ def register_analyze_suite_tools(
         """One grounded, cited answer per question, routed to the right domain provider."""
         return await _delegate(action, query, top_k, node_id, depth, target)
 
-    @mcp.tool(
-        name="graph_observe",
-        description=(
-            "Reason over the KG-native observability subgraph — traces, online-scores, "
-            "assertion verdicts, generations, prompt versions — queries an opaque trace "
-            "store can't do (CONCEPT:AU-KG.ingest.observability-queries-opik-cannot). Actions: 'trace_rootcause' (FAILED "
-            "assertions + low scores joined to their trace's agent, grouped; query=agent/"
-            "capability filter), 'prompt_regression' (mean score per prompt version — which "
-            "regressed), 'failure_cluster' (failing traces clustered by the failed assertion "
-            "— systemic breaks across agents), 'error_detail' (resolve a failed operation's "
-            "opaque `error.detail_ref` back to its sanitized error_class/failing_layer/"
-            "traceback — query=the detail_ref; scoped to the caller's own tenant authority, "
-            "fails closed — CONCEPT:AU-KG.audit.error-detail-resolution)."
-        ),
-        tags=["graph-os", "observe", "eval"],
-    )
-    async def graph_observe(
-        action: str = Field(
-            default="trace_rootcause",
-            description="trace_rootcause | prompt_regression | failure_cluster | error_detail",
-        ),
-        query: str = Field(
-            default="",
-            description="Agent/capability filter (trace_rootcause) or a detail_ref (error_detail).",
-        ),
-        top_k: int = Field(default=20, description="Max rows/clusters."),
-    ) -> str:
-        """Observability + eval analytics over the trace/score subgraph (KG-2.257)."""
-        raise_moved("graph_observe", "harness", "epistemic-graph")
-
     register_conditional_tools(
         runtime.REGISTERED_TOOLS,
         [
@@ -245,7 +214,6 @@ def register_analyze_suite_tools(
             ("graph_research", graph_research, None),
             ("graph_evaluate", graph_evaluate, None),
             ("graph_explain", graph_explain, None),
-            ("graph_observe", graph_observe, None),
         ],
         excluded_names=frozenset({"graph_research"}),
         include_excluded=include_unserved_research,

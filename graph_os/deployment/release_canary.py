@@ -20,8 +20,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from graph_os.core.handoff import raise_moved
-
 _ENTRY_POINTS = {
     # Certify the native serving composition, not the removed informational
     # shell and never an AU compatibility alias.
@@ -50,10 +48,6 @@ def _engine_binary_ready() -> bool:
         and not candidate.is_symlink()
         and bool(metadata.st_mode & 0o111)
     )
-
-
-def _numeric_kernel_ready() -> bool:
-    raise_moved("_numeric_kernel_ready", "agent_utilities", "the agent harness")
 
 
 def _leading_major_version(text: str) -> int | None:
@@ -96,7 +90,6 @@ def run_canary() -> dict[str, Any]:
     checks = {
         "entry_points": _entry_points_ready(),
         "engine_binary": _engine_binary_ready(),
-        "numeric_kernel": _numeric_kernel_ready(),
         "served_fastmcp_matches_declared": _served_fastmcp_matches_declared(),
     }
     return {

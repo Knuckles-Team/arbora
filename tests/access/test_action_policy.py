@@ -9,7 +9,6 @@ import pytest
 
 from graph_os.access import action_policy as ap
 from graph_os.access import approval
-from graph_os.core.handoff import CapabilityMovedError, raise_moved
 
 
 @pytest.fixture(autouse=True)
@@ -144,10 +143,3 @@ def test_approval_decision_refusals(approval_id, decision, bound, applied, error
         _bind(_Graph(applied=applied))
     with pytest.raises(error):
         approval.decide_action_approval(None, approval_id, decision)
-
-
-def test_moved_capability_refusal_names_the_owner() -> None:
-    with pytest.raises(CapabilityMovedError) as caught:
-        raise_moved("graph_jobs", "orchestration.manager", "epistemic-graph")
-    assert caught.value.owner == "epistemic-graph"
-    assert "graph_jobs" in str(caught.value)
