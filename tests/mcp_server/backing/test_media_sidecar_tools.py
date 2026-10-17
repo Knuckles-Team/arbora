@@ -18,7 +18,7 @@ from agent_utilities.media.image_sidecar import ImageSidecarResult
 from agent_utilities.media.pdf_sidecar import PdfSidecarResult
 from agent_utilities.media.video_sidecar import VideoSidecarResult
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.tools import media_sidecar_tools
 
 
@@ -45,8 +45,8 @@ def tools() -> dict[str, object]:
 
 def test_graph_media_sidecar_registered_with_rest_twin(tools):
     assert "graph_media_sidecar" in tools
-    assert kg_server.REGISTERED_TOOLS.get("graph_media_sidecar") is not None
-    assert kg_server.ACTION_TOOL_ROUTES.get("graph_media_sidecar") == "/media/sidecar"
+    assert runtime.REGISTERED_TOOLS.get("graph_media_sidecar") is not None
+    assert runtime.ACTION_TOOL_ROUTES.get("graph_media_sidecar") == "/media/sidecar"
 
 
 def test_graph_media_sidecar_ingest_pdf_dispatches_to_the_pdf_adapter(

@@ -1,6 +1,6 @@
 """Auto-extracted graph-os MCP tools: ontology_tools (register_ontology_tools).
 
-Split out of kg_server._build_server to deepen the MCP surface into focused
+Split out of runtime._build_server to deepen the MCP surface into focused
 modules without changing tool behavior or names.
 """
 
@@ -17,7 +17,8 @@ from agent_utilities.security.error_surface import (
 )
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
+from graph_os.mcp_server.backing import engine_routing
 from graph_os.mcp_server.backing.ontology_types import (
     OntologyCatalogRequest,
 )
@@ -37,7 +38,7 @@ def _run_coro(coro: Any) -> Any:
     """Run an async coroutine from a sync MCP handler, loop-running or not.
 
     The concept tools are registered sync (FastMCP runs them off the event loop)
-    but ``kg_server._execute_tool`` is async. When no loop is running we
+    but ``runtime._execute_tool`` is async. When no loop is running we
     ``asyncio.run``; when one is, we run on a worker thread with its own loop so
     we never re-enter a running loop.
     """
@@ -218,7 +219,7 @@ def _ontology_interface_explain_routing(
                 "required_capability_type"
             }
         )
-    engine = kg_server._get_engine()
+    engine = runtime._get_engine()
     tags = (
         [t.strip() for t in policy_tags.split(",") if t.strip()]
         if policy_tags
@@ -500,7 +501,7 @@ def _concept_registry_reserve(
     # for this legacy path only; it is not a separate-host authority.
     try:
         _run_coro(
-            kg_server._execute_tool(
+            runtime._execute_tool(
                 "graph_write",
                 action="add_node",
                 node_id=record["id"],
@@ -522,17 +523,17 @@ def _source_sync_resolve_engine(connection: str, graph: str) -> tuple[Any, str |
     success."""
     if graph or connection:
         try:
-            entries, errors, fanout = kg_server._resolve_target_engines(connection)
-            entries = kg_server.resolve_explicit_graph(entries, graph, fanout=fanout)
-        except kg_server.GraphNotFoundError as e:
+            entries, errors, fanout = engine_routing._resolve_target_engines(connection)
+            entries = engine_routing.resolve_explicit_graph(entries, graph, fanout=fanout)
+        except engine_routing.GraphNotFoundError as e:
             return None, public_error_json(e, code="graph_not_found")
-        except kg_server.GraphSelectionConflictError as e:
+        except engine_routing.GraphSelectionConflictError as e:
             return None, public_error_json(e, code="graph_selection_conflict")
         except Exception as e:  # noqa: BLE001
             return None, public_error_json(e)
         if fanout or len(entries) != 1:
             return None, public_error_json(
-                kg_server.GraphSelectionConflictError(
+                engine_routing.GraphSelectionConflictError(
                     "source_sync targets exactly one backend; "
                     "'connection=all'/a list is not supported "
                     "(use source='all' to fan out across connectors "
@@ -543,7 +544,7 @@ def _source_sync_resolve_engine(connection: str, graph: str) -> tuple[Any, str |
         _sync_conn_name, engine = entries[0]
         return engine, None
     try:
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
     except Exception:  # noqa: BLE001
         engine = None
     return engine, None
@@ -554,7 +555,7 @@ def _source_sync_run(
 ) -> dict[str, Any]:
     from agent_utilities.knowledge_graph.core.source_sync import sync_source
 
-    with kg_server.bound_to_graph(graph):
+    with engine_routing.bound_to_graph(graph):
         result = sync_source(engine, str(source), mode=str(mode), ids=ids or None)
     if graph or connection:
         result = dict(result)
@@ -572,7 +573,7 @@ def _graph_etl_list() -> str:
 
     discover_extractors()
     names = sorted({s.category for s in list_sources()})
-    reg = kg_server.get_connection_registry()
+    reg = engine_routing.get_connection_registry()
     backends = sorted(
         set(reg.names()) | {"stardog", "neo4j", "falkordb", "age", "jena_fuseki"}
     )
@@ -599,7 +600,7 @@ def _graph_etl_resolve_sink_backend(sink: str) -> Any:
 
     if not sink or sink == "table" or get_sink(sink) is not None:
         return None
-    reg = kg_server.get_connection_registry()
+    reg = engine_routing.get_connection_registry()
     if sink in reg.names():
         be = getattr(reg.get_engine(sink), "backend", None)
         return getattr(be, "_authority", be)
@@ -995,14 +996,14 @@ def _ontology_derive_list() -> str:
 
 
 def _ontology_derive_compute(object_json: str, name: str, object_type: str) -> str:
-    ont = kg_server._ontology_system()
+    ont = engine_routing._ontology_system()
     obj = json.loads(object_json) if object_json else {}
     res = ont.derive(obj, name, object_type=object_type or None)
     return json.dumps(res.model_dump(), default=str)
 
 
 def _ontology_derive_compute_all(object_json: str, object_type: str) -> str:
-    ont = kg_server._ontology_system()
+    ont = engine_routing._ontology_system()
     obj = json.loads(object_json) if object_json else {}
     return json.dumps(ont.derive_all(obj, object_type=object_type or None), default=str)
 
@@ -1048,7 +1049,7 @@ def _object_edits_compare_and_set(
     # applied=false — never a misleading audit edit.
     from agent_utilities.knowledge_graph.ontology.edits import Edit
 
-    engine = kg_server._get_engine()
+    engine = runtime._get_engine()
     backend = getattr(engine, "backend", None)
     if backend is None:
         return json.dumps(
@@ -1194,7 +1195,7 @@ def _object_set_path(source_id: str, target_id: str) -> str:
 
     if not source_id or not target_id:
         return json.dumps({"error": "action='path' requires source_id and target_id"})
-    engine = kg_server._get_engine()
+    engine = runtime._get_engine()
     return json.dumps(find_object_path(engine, source_id, target_id), default=str)
 
 
@@ -1323,7 +1324,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["ontology_property_types"] = ontology_property_types
+    runtime.REGISTERED_TOOLS["ontology_property_types"] = ontology_property_types
 
     @mcp.tool(
         name="ontology_value_types",
@@ -1371,7 +1372,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["ontology_value_types"] = ontology_value_types
+    runtime.REGISTERED_TOOLS["ontology_value_types"] = ontology_value_types
 
     @mcp.tool(
         name="ontology_interface",
@@ -1469,7 +1470,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["ontology_interface"] = ontology_interface
+    runtime.REGISTERED_TOOLS["ontology_interface"] = ontology_interface
 
     @mcp.tool(
         name="ontology_sampling_profile",
@@ -1521,7 +1522,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["ontology_sampling_profile"] = ontology_sampling_profile
+    runtime.REGISTERED_TOOLS["ontology_sampling_profile"] = ontology_sampling_profile
 
     @mcp.tool(
         name="ontology_model_profile",
@@ -1561,14 +1562,14 @@ def register_ontology_tools(mcp):
                 ]
                 return json.dumps({"profiles": previews}, default=str)
             if action == "sync":
-                engine = kg_server._get_engine()
+                engine = runtime._get_engine()
                 ids = sync_model_profiles(engine, registry)
                 return json.dumps({"synced": ids, "count": len(ids)})
             if action == "get":
                 definition = registry.get_by_id(model_id)
                 if definition is None:
                     return json.dumps({"error": f"unknown model id: {model_id!r}"})
-                engine = kg_server._get_engine()
+                engine = runtime._get_engine()
                 get_node = getattr(engine, "get_node", None)
                 node_id = model_profile_id(definition)
                 stored = get_node(node_id) if callable(get_node) else None
@@ -1590,7 +1591,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["ontology_model_profile"] = ontology_model_profile
+    runtime.REGISTERED_TOOLS["ontology_model_profile"] = ontology_model_profile
 
     @mcp.tool(
         name="ontology_leanix_sync",
@@ -1613,7 +1614,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["ontology_leanix_sync"] = ontology_leanix_sync
+    runtime.REGISTERED_TOOLS["ontology_leanix_sync"] = ontology_leanix_sync
 
     @mcp.tool(
         name="graph_ontology",
@@ -1652,7 +1653,7 @@ def register_ontology_tools(mcp):
 
         try:
             try:
-                engine = kg_server._get_engine()
+                engine = runtime._get_engine()
             except Exception:  # noqa: BLE001 — fail closed below
                 engine = None
             lc = OntologyLifecycle(engine=engine)
@@ -1669,7 +1670,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["graph_ontology"] = graph_ontology
+    runtime.REGISTERED_TOOLS["graph_ontology"] = graph_ontology
 
     @mcp.tool(
         name="graph_writeback",
@@ -1729,7 +1730,7 @@ def register_ontology_tools(mcp):
         """Unified fail-closed write-back to any target system (dry-run-first)."""
         try:
             try:
-                engine = kg_server._get_engine()
+                engine = runtime._get_engine()
             except Exception:  # noqa: BLE001 - offline → no backend resolver
                 engine = None
             backend = getattr(engine, "backend", None) if engine is not None else None
@@ -1760,7 +1761,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["graph_writeback"] = graph_writeback
+    runtime.REGISTERED_TOOLS["graph_writeback"] = graph_writeback
 
     @mcp.tool(
         name="spec_ticket",
@@ -1795,7 +1796,7 @@ def register_ontology_tools(mcp):
         """Spec↔ticket↔agent linking + assignment + assigned-items read."""
         try:
             try:
-                engine = kg_server._get_engine()
+                engine = runtime._get_engine()
             except Exception:  # noqa: BLE001
                 engine = None
             backend = getattr(engine, "backend", None) if engine is not None else None
@@ -1810,7 +1811,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["spec_ticket"] = spec_ticket
+    runtime.REGISTERED_TOOLS["spec_ticket"] = spec_ticket
 
     @mcp.tool(
         name="concept_registry",
@@ -1872,7 +1873,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["concept_registry"] = concept_registry
+    runtime.REGISTERED_TOOLS["concept_registry"] = concept_registry
 
     @mcp.tool(
         name="source_sync",
@@ -1950,7 +1951,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["source_sync"] = source_sync
+    runtime.REGISTERED_TOOLS["source_sync"] = source_sync
 
     @mcp.tool(
         name="source_drain",
@@ -1977,7 +1978,7 @@ def register_ontology_tools(mcp):
             if str(action) == "list":
                 return json.dumps({"chunked_sources": list_chunked_sources()})
             try:
-                engine = kg_server._get_engine()
+                engine = runtime._get_engine()
             except Exception:  # noqa: BLE001
                 engine = None
             if engine is None:
@@ -1990,7 +1991,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["source_drain"] = source_drain
+    runtime.REGISTERED_TOOLS["source_drain"] = source_drain
 
     @mcp.tool(
         name="graph_etl",
@@ -2046,7 +2047,7 @@ def register_ontology_tools(mcp):
     ) -> str:
         """Run / inspect a unified ETL flow over the canonical KG hub."""
         try:
-            engine = kg_server._get_engine()
+            engine = runtime._get_engine()
         except Exception:  # noqa: BLE001
             engine = None
 
@@ -2077,7 +2078,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["graph_etl"] = graph_etl
+    runtime.REGISTERED_TOOLS["graph_etl"] = graph_etl
 
     @mcp.tool(
         name="ontology_classification_claims",
@@ -2164,7 +2165,7 @@ def register_ontology_tools(mcp):
     ) -> str:
         """Record / query / promote classification claims through the governed lifecycle."""
         try:
-            engine = kg_server._get_engine()
+            engine = runtime._get_engine()
         except Exception:  # noqa: BLE001
             engine = None
         if engine is None:
@@ -2200,7 +2201,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["ontology_classification_claims"] = (
+    runtime.REGISTERED_TOOLS["ontology_classification_claims"] = (
         ontology_classification_claims
     )
 
@@ -2256,7 +2257,7 @@ def register_ontology_tools(mcp):
     ) -> str:
         """Record repository provenance (RepositorySnapshot/Branch/Tag/ChangeEvent) into the KG."""
         try:
-            engine = kg_server._get_engine()
+            engine = runtime._get_engine()
         except Exception:  # noqa: BLE001
             engine = None
         if engine is None:
@@ -2287,7 +2288,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["ontology_repository_provenance"] = (
+    runtime.REGISTERED_TOOLS["ontology_repository_provenance"] = (
         ontology_repository_provenance
     )
 
@@ -2334,7 +2335,7 @@ def register_ontology_tools(mcp):
                 )
             if action == "invoke":
                 actor_id = actor or "mcp:caller"
-                ont = kg_server._ontology_system()
+                ont = engine_routing._ontology_system()
                 parsed = json.loads(params) if params else {}
                 result = ont.invoke_function(
                     name, parsed, version or None, actor_id=actor_id
@@ -2344,7 +2345,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["ontology_function"] = ontology_function
+    runtime.REGISTERED_TOOLS["ontology_function"] = ontology_function
 
     @mcp.tool(
         name="ontology_derive",
@@ -2382,7 +2383,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["ontology_derive"] = ontology_derive
+    runtime.REGISTERED_TOOLS["ontology_derive"] = ontology_derive
 
     @mcp.tool(
         name="ontology_link_materialize",
@@ -2423,13 +2424,13 @@ def register_ontology_tools(mcp):
                     ],
                     default=str,
                 )
-            ont = kg_server._ontology_system()
+            ont = engine_routing._ontology_system()
             props = json.loads(properties) if properties else {}
             node, edge_a, edge_b = ont.materialize_link(
                 link_name, source_id, target_id, props
             )
             # Persist via the existing graph_write add_node / add_edge primitives.
-            await kg_server._execute_tool(
+            await runtime._execute_tool(
                 "graph_write",
                 action="add_node",
                 node_type=str(node.type),
@@ -2439,7 +2440,7 @@ def register_ontology_tools(mcp):
                 ),
             )
             for edge in (edge_a, edge_b):
-                await kg_server._execute_tool(
+                await runtime._execute_tool(
                     "graph_write",
                     action="add_edge",
                     source_id=edge.source,
@@ -2458,7 +2459,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["ontology_link_materialize"] = ontology_link_materialize
+    runtime.REGISTERED_TOOLS["ontology_link_materialize"] = ontology_link_materialize
 
     @mcp.tool(
         name="object_edits",
@@ -2522,7 +2523,7 @@ def register_ontology_tools(mcp):
         when concurrent agents shape the same object so one never clobbers another.
         """
         try:
-            ont = kg_server._ontology_system()
+            ont = engine_routing._ontology_system()
             ledger = ont.edits
             if action == "record":
                 args = _ObjectEditsRecordArgs(
@@ -2545,7 +2546,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["object_edits"] = object_edits
+    runtime.REGISTERED_TOOLS["object_edits"] = object_edits
 
     @mcp.tool(
         name="object_index",
@@ -2564,7 +2565,7 @@ def register_ontology_tools(mcp):
     ) -> str:
         """Sync / reindex the live object search index and report staleness."""
         try:
-            ont = kg_server._ontology_system()
+            ont = engine_routing._ontology_system()
             funnel = ont.index_funnel
             if action == "sync":
                 nodes = json.loads(nodes_json) if nodes_json else []
@@ -2584,7 +2585,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["object_index"] = object_index
+    runtime.REGISTERED_TOOLS["object_index"] = object_index
 
     @mcp.tool(
         name="object_permissioning",
@@ -2634,7 +2635,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["object_permissioning"] = object_permissioning
+    runtime.REGISTERED_TOOLS["object_permissioning"] = object_permissioning
 
     @mcp.tool(
         name="graph_share",
@@ -2683,7 +2684,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["graph_share"] = graph_share
+    runtime.REGISTERED_TOOLS["graph_share"] = graph_share
 
     @mcp.tool(
         name="object_set",
@@ -2731,7 +2732,7 @@ def register_ontology_tools(mcp):
         try:
             if action == "path":
                 return _object_set_path(source_id, target_id)
-            ont = kg_server._ontology_system()
+            ont = engine_routing._ontology_system()
             base = _object_set_base(ont, action, type_or_interface, ids_json)
             effective_limit = _object_set_effective_limit(limit)
 
@@ -2753,7 +2754,7 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["object_set"] = object_set
+    runtime.REGISTERED_TOOLS["object_set"] = object_set
 
     @mcp.tool(
         name="document_process",
@@ -2790,7 +2791,7 @@ def register_ontology_tools(mcp):
         try:
             engine = None
             try:
-                engine = kg_server._get_engine()
+                engine = runtime._get_engine()
             except Exception:  # pragma: no cover - defensive
                 engine = None
             if engine is None:
@@ -2830,21 +2831,21 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["document_process"] = document_process
+    runtime.REGISTERED_TOOLS["document_process"] = document_process
 
     # Quant trading system tool (CONCEPT:AU-ECO.messaging.native-backend-abstraction): debate/regime/data/execute/
     # portfolio over the finance engines. Registered onto the MCP server AND the
-    # shared kg_server.REGISTERED_TOOLS map so the gateway REST twin (/quant) reaches it.
+    # shared runtime.REGISTERED_TOOLS map so the gateway REST twin (/quant) reaches it.
     # The finance domain needs the optional `[finance]` extra (scipy/pandas/statsmodels);
-    # the lean serving image omits it, so guard the registration so kg_server still boots
+    # the lean serving image omits it, so guard the registration so runtime still boots
     # — the quant tool is simply absent there. See AGENTS.md "Dependency discipline".
     try:
         from agent_utilities.domains.finance.quant_mcp_tools import (
             register_quant_tools,
         )
 
-        kg_server.REGISTERED_TOOLS["quant"] = register_quant_tools(mcp, None)
-        kg_server.ACTION_TOOL_ROUTES["quant"] = "/quant"
+        runtime.REGISTERED_TOOLS["quant"] = register_quant_tools(mcp, None)
+        runtime.ACTION_TOOL_ROUTES["quant"] = "/quant"
     except ImportError:
         logger.info(
             "quant tools skipped (finance extra not installed) — "
@@ -2898,7 +2899,7 @@ def register_ontology_tools(mcp):
                     )
                 engine = None
                 try:
-                    engine = kg_server._get_engine()
+                    engine = runtime._get_engine()
                 except Exception:  # pragma: no cover - defensive
                     engine = None
                 backend = (
@@ -2922,4 +2923,4 @@ def register_ontology_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["source_connector"] = source_connector
+    runtime.REGISTERED_TOOLS["source_connector"] = source_connector

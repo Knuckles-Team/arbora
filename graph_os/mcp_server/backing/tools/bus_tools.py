@@ -29,7 +29,7 @@ from agent_utilities.security.error_surface import public_error_json
 from fastmcp import Context
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.bus_types import BusExecContext as _BusExecContext
 from graph_os.mcp_server.backing.bus_types import BusRequest
 
@@ -40,12 +40,12 @@ def _bus_actor_scope(action: str) -> contextlib.AbstractContextManager:
     """Scope ``graph_bus`` to middleware/process-minted authority.
 
     ``graph_bus`` is a standalone FastMCP tool, so — unlike every action routed
-    through :func:`kg_server._execute_tool` — it must enter the same verified
+    through :func:`runtime._execute_tool` — it must enter the same verified
     session scope explicitly. Read and write actions both require tenant-bound
     authority; anonymous roster/status access would otherwise leak fleet state.
     """
     del action
-    return kg_server.verified_tool_session_scope()
+    return runtime.verified_tool_session_scope()
 
 
 def _session_identity(ctx: Context | None) -> str:
@@ -330,7 +330,7 @@ def register_bus_tools(mcp):
     ) -> str:
         from agent_utilities.messaging.bus import AgentBus
 
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
         bus = AgentBus.instance(engine)
 
         # Scope the whole call to the request's server-minted identity so the bus
@@ -338,7 +338,7 @@ def register_bus_tools(mcp):
         # unauthenticated caller is cleanly rejected for mutating actions rather than
         # silently writing as the ambient SYSTEM actor (CONCEPT:AU-ECO.bus.bus-register-under-served / OS-5.14).
         try:
-            await kg_server._ensure_process_authority_current()
+            await runtime._ensure_process_authority_current()
             _scope = _bus_actor_scope(action)
         except PermissionError as exc:
             return public_error_json(
@@ -370,4 +370,4 @@ def register_bus_tools(mcp):
         with _scope:
             return _dispatch_bus(bus, engine, request)
 
-    kg_server.REGISTERED_TOOLS["graph_bus"] = graph_bus
+    runtime.REGISTERED_TOOLS["graph_bus"] = graph_bus

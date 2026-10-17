@@ -13,7 +13,7 @@ from typing import Any, cast
 import pytest
 from scripts.gen_graphos_manifest import harvest_actions
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.tools import (
     register_agent_execution_tools,
     register_analysis_tools,
@@ -138,10 +138,10 @@ def test_focused_tools_publish_collapsed_rest_routes() -> None:
         "graph_workflows": "/graph/workflows",
     }
     assert {
-        tool: kg_server.ACTION_TOOL_ROUTES.get(tool) for tool in expected_routes
+        tool: runtime.ACTION_TOOL_ROUTES.get(tool) for tool in expected_routes
     } == expected_routes
-    assert "graph_rlm" not in kg_server.REGISTERED_TOOLS
-    assert "/graph/rlm" not in kg_server.ACTION_TOOL_ROUTES.values()
+    assert "graph_rlm" not in runtime.REGISTERED_TOOLS
+    assert "/graph/rlm" not in runtime.ACTION_TOOL_ROUTES.values()
 
 
 @pytest.mark.asyncio
@@ -162,7 +162,7 @@ async def test_execute_dynamic_live_route_reaches_governed_orchestrator(
             "workflow_run_id": "run:00000000000000000000000000000000",
         }
 
-    monkeypatch.setattr(kg_server, "_get_engine", lambda: engine)
+    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
     monkeypatch.setattr(
         workflow_tools,
         "_workflow_gate",
@@ -228,7 +228,7 @@ async def test_execute_dynamic_forwards_workflow_run_id_so_resume_is_reachable(
         calls.append({"workflow_id": workflow_id, "task": task, **kwargs})
         return {"backend": "x", "workflow_run_id": kwargs.get("workflow_run_id")}
 
-    monkeypatch.setattr(kg_server, "_get_engine", lambda: engine)
+    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
     monkeypatch.setattr(
         workflow_tools,
         "_workflow_gate",
@@ -265,7 +265,7 @@ async def test_workflow_catalog_read_does_not_block_the_server_event_loop(
         fallback_release.wait(0.5)
         return [{"name": "slow", "step_count": limit}]
 
-    monkeypatch.setattr(kg_server, "_get_engine", lambda: engine)
+    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
     monkeypatch.setattr(WorkflowStore, "list_workflows", slow_list)
     tool = _register_all().tools["graph_workflows"]
 
@@ -341,7 +341,7 @@ async def test_workflow_compile_live_route_isolates_graph_phases_and_authority(
         _phase(1, "save")
         return "workflow:stable"
 
-    monkeypatch.setattr(kg_server, "_get_engine", lambda: engine)
+    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
     monkeypatch.setattr(WorkflowCompiler, "_match_agent", slow_match)
     monkeypatch.setattr(WorkflowStore, "save_workflow", slow_save)
     monkeypatch.setattr(
@@ -433,7 +433,7 @@ def test_budget_domain_action_uses_composed_engine_capability(monkeypatch) -> No
     engine = cast(Any, object.__new__(IntelligenceGraphEngine))
     engine.graph = _RecordingGraph()
     engine.backend = None
-    monkeypatch.setattr(kg_server, "_get_engine", lambda: engine)
+    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
 
     tool = _register_all().tools["graph_domain_ops"]
     result = json.loads(
@@ -484,7 +484,7 @@ async def test_graph_agents_reason_live_path_drives_real_cot_topology(
             self.nodes[node_id] = (node_type, props)
 
     engine = _StubEngine()
-    monkeypatch.setattr(kg_server, "_get_engine", lambda: engine)
+    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
 
     scripted = [
         agent_execution_tools.ReasoningStepOutput(
@@ -599,7 +599,7 @@ async def test_graph_agents_reason_live_path_drives_real_tot_topology(
             self.nodes[node_id] = (node_type, props)
 
     engine = _StubEngine()
-    monkeypatch.setattr(kg_server, "_get_engine", lambda: engine)
+    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
 
     expansion = agent_execution_tools.ToTGenerateOutput(
         children=[
@@ -698,7 +698,7 @@ async def test_graph_agents_reason_tot_degrades_honestly_with_no_reachable_model
             self.nodes[node_id] = (node_type, props)
 
     engine = _StubEngine()
-    monkeypatch.setattr(kg_server, "_get_engine", lambda: engine)
+    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
     monkeypatch.setattr(
         "agent_utilities.core.model_factory.create_model",
         lambda **_kw: (_ for _ in ()).throw(RuntimeError("no model reachable")),
@@ -747,7 +747,7 @@ def test_graph_evolution_evidence_lineage_action_reaches_the_shared_core(
         }
 
     engine = object()
-    monkeypatch.setattr(kg_server, "_get_engine", lambda: engine)
+    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
     monkeypatch.setattr(evidence_module, "evidence_lineage", _fake_lineage)
 
     tool = _register_all().tools["graph_evolution"]

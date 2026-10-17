@@ -1,6 +1,6 @@
 """Auto-extracted graph-os MCP tools: write_ingest_tools (register_write_ingest_tools).
 
-Split out of kg_server._build_server to deepen the MCP surface into focused
+Split out of runtime._build_server to deepen the MCP surface into focused
 modules without changing tool behavior or names.
 """
 
@@ -19,7 +19,8 @@ from agent_utilities.security.error_surface import (
 from agent_utilities.security.persistence_privacy import persistence_reference
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
+from graph_os.mcp_server.backing import engine_routing
 from graph_os.mcp_server.backing.write_ingest_types import IngestRequest
 
 _OPAQUE_NODE_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,255}\Z")
@@ -421,7 +422,7 @@ async def _ingest_submit_async_job(engine, p, t_type, agent_id, max_depth, graph
     # worker-side wiring codebase already has.
     if graph and t_type != "codebase":
         return None, public_error_text(
-            kg_server.GraphSelectionConflictError(
+            engine_routing.GraphSelectionConflictError(
                 "explicit graph selection for async "
                 "ingestion is currently supported only "
                 f"for codebase content; {p!r} resolved "
@@ -465,7 +466,7 @@ async def _ingest_sync_one(
     # Sync path runs inline, in THIS request's own verified session --
     # narrow it directly for the call's duration (a no-op when `graph`
     # is empty).
-    with kg_server.bound_to_graph(graph):
+    with engine_routing.bound_to_graph(graph):
         r = await ing.ingest(
             ingestion_manifest_cls(
                 content_type=ct,
@@ -1527,7 +1528,7 @@ async def _ingest_action_extract_submit(engine, request: IngestRequest) -> str:
         request.description,
     )
     # action(s): 'extract_submit', 'extract_jobs', 'extract_status', 'extract_pause', 'extract_resume', 'extract_jsonl'
-    mgr = kg_server._get_extraction_manager(engine)
+    mgr = engine_routing._get_extraction_manager(engine)
 
     if action == "extract_submit":
         return await _ingest_extract_submit(mgr, target_path, max_depth, description)
@@ -2032,7 +2033,7 @@ def register_write_ingest_tools(mcp):
 
             def _run_write(name: str, engine: Any) -> str:
                 try:
-                    with kg_server.bound_to_graph(graph):
+                    with engine_routing.bound_to_graph(graph):
                         raw = _write_with_engine(engine)
                 except PermissionError as e:
                     # `_write_with_engine` already converts any exception the
@@ -2053,13 +2054,13 @@ def register_write_ingest_tools(mcp):
             # graph) is a separate axis from `connection`; it requires exactly one
             # resolved connection, so it fails closed against any fan-out.
             try:
-                entries, errors, fanout = kg_server._resolve_target_engines(connection)
-                entries = kg_server.resolve_explicit_graph(
+                entries, errors, fanout = engine_routing._resolve_target_engines(connection)
+                entries = engine_routing.resolve_explicit_graph(
                     entries, graph, fanout=fanout
                 )
-            except kg_server.GraphNotFoundError as e:
+            except engine_routing.GraphNotFoundError as e:
                 return public_error_text(e, code="graph_not_found")
-            except kg_server.GraphSelectionConflictError as e:
+            except engine_routing.GraphSelectionConflictError as e:
                 return public_error_text(e, code="graph_selection_conflict")
             except Exception as e:
                 return public_error_text(e)
@@ -2067,7 +2068,7 @@ def register_write_ingest_tools(mcp):
             # CONCEPT:AU-KG.ingest.role-enforcement — role enforcement: a 'read' (data source) or 'mirror'
             # (fan-out replica) connection rejects direct connection= writes. Mirrors are
             # written only through the fan-out outbox, never here.
-            registry = kg_server.get_connection_registry()
+            registry = engine_routing.get_connection_registry()
             errors = dict(errors)
             writable = []
             for name, eng in entries:
@@ -2088,7 +2089,7 @@ def register_write_ingest_tools(mcp):
                 return _run_write(write_name, write_engine)
 
             # Fan-out — per-target timeout so one slow backend can't stall the set.
-            results, fan_errors = kg_server.fanout_execute(
+            results, fan_errors = engine_routing.fanout_execute(
                 writable, lambda name, eng: _run_write(name, eng)
             )
             return json.dumps(
@@ -2097,7 +2098,7 @@ def register_write_ingest_tools(mcp):
 
         return await run_blocking_ordered(_execute)
 
-    kg_server.REGISTERED_TOOLS["graph_write"] = graph_write
+    runtime.REGISTERED_TOOLS["graph_write"] = graph_write
 
     @mcp.tool(
         name="graph_feedback",
@@ -2151,7 +2152,7 @@ def register_write_ingest_tools(mcp):
         ),
     ) -> str:
         """Record a human correction (outcome/rule/eval) and apply it durably."""
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
         if not engine:
             return "Error: IntelligenceGraphEngine not active."
 
@@ -2177,7 +2178,7 @@ def register_write_ingest_tools(mcp):
 
         return await run_blocking_ordered(_execute)
 
-    kg_server.REGISTERED_TOOLS["graph_feedback"] = graph_feedback
+    runtime.REGISTERED_TOOLS["graph_feedback"] = graph_feedback
 
     @mcp.tool(
         name="skill_classify",
@@ -2204,7 +2205,7 @@ def register_write_ingest_tools(mcp):
         skill_type: str = Field(description="skill | workflow | graph."),
     ) -> str:
         """Classify a skill and persist the choice (source file, else durable override)."""
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
         if not engine:
             return "Error: IntelligenceGraphEngine not active."
 
@@ -2231,7 +2232,7 @@ def register_write_ingest_tools(mcp):
 
         return await run_blocking_ordered(_execute)
 
-    kg_server.REGISTERED_TOOLS["skill_classify"] = skill_classify
+    runtime.REGISTERED_TOOLS["skill_classify"] = skill_classify
 
     def _ingest_resolve_engine(action, graph, connection):
         # extracted from graph_ingest's preamble (CX-AU-03: split for CCN).
@@ -2242,19 +2243,19 @@ def register_write_ingest_tools(mcp):
         # with no job created and no partial write. Returns
         # (engine_or_None, error_response_or_None).
         if not (action == "ingest" and (graph or connection)):
-            return kg_server._get_engine(), None
+            return runtime._get_engine(), None
         try:
-            entries, errors, fanout = kg_server._resolve_target_engines(connection)
-            entries = kg_server.resolve_explicit_graph(entries, graph, fanout=fanout)
-        except kg_server.GraphNotFoundError as e:
+            entries, errors, fanout = engine_routing._resolve_target_engines(connection)
+            entries = engine_routing.resolve_explicit_graph(entries, graph, fanout=fanout)
+        except engine_routing.GraphNotFoundError as e:
             return None, public_error_text(e, code="graph_not_found")
-        except kg_server.GraphSelectionConflictError as e:
+        except engine_routing.GraphSelectionConflictError as e:
             return None, public_error_text(e, code="graph_selection_conflict")
         except Exception as e:
             return None, public_error_text(e)
         if fanout or len(entries) != 1:
             return None, public_error_text(
-                kg_server.GraphSelectionConflictError(
+                engine_routing.GraphSelectionConflictError(
                     "action='ingest' targets exactly one backend; "
                     "'connection=all'/a list is not supported for ingestion"
                 ),
@@ -2361,7 +2362,7 @@ def register_write_ingest_tools(mcp):
         except Exception as e:
             return public_error_text(e)
 
-    kg_server.REGISTERED_TOOLS["graph_ingest"] = graph_ingest
+    runtime.REGISTERED_TOOLS["graph_ingest"] = graph_ingest
 
     @mcp.tool(
         name="usage_query",
@@ -2534,7 +2535,7 @@ def register_write_ingest_tools(mcp):
         except Exception as exc:  # noqa: BLE001
             return f"usage_query error_type={type(exc).__name__}"
 
-    kg_server.REGISTERED_TOOLS["usage_query"] = usage_query
+    runtime.REGISTERED_TOOLS["usage_query"] = usage_query
 
     @mcp.tool(
         name="ingest_sessions",
@@ -2626,7 +2627,7 @@ def register_write_ingest_tools(mcp):
             # records. ``skip_dedupe`` because each batch is a distinct,
             # idempotent (record_bundle replaces rows) payload — never collapse
             # two real uploads into one. A unique target keeps job ids distinct.
-            engine = kg_server._get_engine()
+            engine = runtime._get_engine()
             target = f"session-upload:{_uuid.uuid4().hex}"
             jid = await run_blocking_ordered(
                 engine.submit_task,
@@ -2679,4 +2680,4 @@ def register_write_ingest_tools(mcp):
         except Exception as exc:  # noqa: BLE001
             return f"ingest_sessions error_type={type(exc).__name__}"
 
-    kg_server.REGISTERED_TOOLS["ingest_sessions"] = ingest_sessions
+    runtime.REGISTERED_TOOLS["ingest_sessions"] = ingest_sessions

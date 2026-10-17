@@ -8,7 +8,7 @@ from typing import Any
 from agent_utilities.security.error_surface import public_error_text
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 
 
 def register_evolution_tools(mcp: Any) -> None:
@@ -64,7 +64,7 @@ def register_evolution_tools(mcp: Any) -> None:
             description="Render reviewable skill drafts while distilling.",
         ),
     ) -> str:
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
         if engine is None:
             return "Error: IntelligenceGraphEngine not active."
         try:
@@ -173,5 +173,5 @@ def register_evolution_tools(mcp: Any) -> None:
         except Exception as exc:
             return public_error_text(exc)
 
-    kg_server.REGISTERED_TOOLS["graph_evolution"] = graph_evolution
-    kg_server.ACTION_TOOL_ROUTES["graph_evolution"] = "/graph/evolution"
+    runtime.REGISTERED_TOOLS["graph_evolution"] = graph_evolution
+    runtime.ACTION_TOOL_ROUTES["graph_evolution"] = "/graph/evolution"

@@ -148,7 +148,7 @@ pytest tests/unit/test_gateway_mcp_parity.py -q      # tool <-> REST-route <-> s
 ```
 
 This is the third parity leg (tool⇄REST-route are the other two): every verb in
-`kg_server.REGISTERED_TOOLS` (minus a small, justified exemption list) is wrapped by a
+`runtime.REGISTERED_TOOLS` (minus a small, justified exemption list) is wrapped by a
 domain skill's `agents/graph-os.yaml`, and no domain skill's coverage points at a dead
 verb. A verb with no covering skill is **uncovered**; a coverage entry pointing at a
 non-existent verb is an **orphan** — fix both before merge, or add the verb to the

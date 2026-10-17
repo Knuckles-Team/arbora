@@ -19,7 +19,7 @@ changed fallback message) even when no individual handler body is touched.
 
 from __future__ import annotations
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.tools import analysis_tools
 
 
@@ -40,13 +40,13 @@ def _get_handler():
 
 async def _call(monkeypatch, action, **kwargs):
     # Calling the raw handler directly (rather than through FastMCP or
-    # ``kg_server._execute_tool``) bypasses pydantic's Field-default
+    # ``runtime._execute_tool``) bypasses pydantic's Field-default
     # resolution, so every omitted param must be passed explicitly as its
     # real resolved default -- otherwise it binds to the raw ``FieldInfo``
     # sentinel, which is truthy, silently defeating every `if not <param>:`
     # guard in the function. This mirrors what ``_execute_tool`` does for
     # every other caller.
-    monkeypatch.setattr(kg_server, "_get_engine", lambda: object())
+    monkeypatch.setattr(runtime, "_get_engine", lambda: object())
     handler = _get_handler()
     call_kwargs = {
         "query": "",
@@ -60,7 +60,7 @@ async def _call(monkeypatch, action, **kwargs):
 
 
 async def test_no_engine_returns_inactive_error(monkeypatch):
-    monkeypatch.setattr(kg_server, "_get_engine", lambda: None)
+    monkeypatch.setattr(runtime, "_get_engine", lambda: None)
     handler = _get_handler()
     out = await handler(
         action="inspect", query="", top_k=10, node_id="", depth=2, target=""

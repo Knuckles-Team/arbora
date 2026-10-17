@@ -3,7 +3,7 @@ multi-tenant session (GOC-59..67 EXPANSION-TRACKS, B-series).
 
 Root cause: ``ingest_routing.safe_engine_for_graph`` builds a ``for_graph()``
 view for every supplementary content graph in the implicit-default fan-out
-(``kg_server._resolve_read_engines``), but never rebinds ``session.graph`` to
+(``engine_routing._resolve_read_engines``), but never rebinds ``session.graph`` to
 match. The wire layer's own mismatch lock
 (``_SessionRoutedAsyncClient._send``, ``graph_compute.py:509-517``:
 "An explicit graph cannot retarget the verified GraphSession") accepts an
@@ -11,7 +11,7 @@ explicit ``graph`` only when it equals ``session.graph`` — so it rejected
 every non-"default" leg with ``PermissionError``, silently degrading the
 content-graph union to per-target errors.
 
-A second, independent defect made this worse: ``kg_server.fanout_execute``
+A second, independent defect made this worse: ``engine_routing.fanout_execute``
 ran each target via a plain ``concurrent.futures.ThreadPoolExecutor``, which
 does NOT propagate the calling thread's ``contextvars`` context (unlike
 ``asyncio.to_thread``, which the async tool endpoints use to reach this
@@ -20,14 +20,14 @@ synchronous helper in the first place) — so the ambient authenticated
 the mismatched ones.
 
 The fix reuses the sanctioned narrowing primitive
-(``kg_server.bound_to_graph`` — the same ``GraphSession.with_graph()`` +
+(``engine_routing.bound_to_graph`` — the same ``GraphSession.with_graph()`` +
 ``use_session()`` seam ``resolve_explicit_graph``/single-connection callers
 already use) around each content-graph fan-out call, and fixes
 ``fanout_execute`` to propagate a fresh ``contextvars.copy_context()`` per
 submission so ``bound_to_graph`` has an ambient session to narrow in the
 first place.
 
-These tests exercise the REAL ``kg_server.fanout_execute`` concurrency and
+These tests exercise the REAL ``engine_routing.fanout_execute`` concurrency and
 the real ``graph_query``/``graph_search`` fan-out code paths — no live engine
 required, mirroring ``test_graph_query_fanout_timeout.py``'s
 ``_resolve_read_engines`` monkeypatch pattern — with FAKE engines that
@@ -50,7 +50,8 @@ from agent_utilities.knowledge_graph.core.session import (
 from agent_utilities.security.actor_identity import ActorType
 from agent_utilities.security.brain_context import ActorContext, use_actor
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
+from graph_os.mcp_server.backing import engine_routing
 
 
 def _register_query_tools():
@@ -134,7 +135,7 @@ def test_fanout_execute_propagates_ambient_session_into_worker_threads():
         return name
 
     with use_actor(actor), use_session(session):
-        results, errors = kg_server.fanout_execute(
+        results, errors = engine_routing.fanout_execute(
             [("a", None), ("b", None), ("c", None)], _fn
         )
 
@@ -175,12 +176,12 @@ def test_graph_query_implicit_union_fanout_succeeds_across_two_graphs(monkeypatc
         ("code:repo-b", _GraphScopedEngine("code:repo-b", [{"id": "code:repo-b:1"}])),
     ]
     monkeypatch.setattr(
-        kg_server, "_resolve_read_engines", _fake_resolve_read_engines(entries)
+        engine_routing, "_resolve_read_engines", _fake_resolve_read_engines(entries)
     )
 
     with use_actor(actor), use_session(session):
         out = asyncio.run(
-            kg_server._execute_tool("graph_query", query="MATCH (n) RETURN n")
+            runtime._execute_tool("graph_query", query="MATCH (n) RETURN n")
         ).model_dump()
         # The narrowing is scoped to the call — the ambient session is
         # restored to the caller's own graph afterward, never leaked.
@@ -242,11 +243,11 @@ def test_graph_search_implicit_union_fanout_succeeds_across_two_graphs(monkeypat
         ("code:repo-b", _GraphScopedEngine("code:repo-b", [])),
     ]
     monkeypatch.setattr(
-        kg_server, "_resolve_read_engines", _fake_resolve_read_engines(entries)
+        engine_routing, "_resolve_read_engines", _fake_resolve_read_engines(entries)
     )
 
     with use_actor(actor), use_session(session):
-        text = asyncio.run(kg_server._execute_tool("graph_search", query="anything"))
+        text = asyncio.run(runtime._execute_tool("graph_search", query="anything"))
     # Every leg's own tag (its fixed graph name, echoed by `_GraphScopedEngine`)
     # made it into the merged output — none was swallowed as a mismatch error.
     assert "code:repo-a" in text

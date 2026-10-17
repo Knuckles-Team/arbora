@@ -51,7 +51,7 @@ import json
 from agent_utilities.security.error_surface import public_error_json
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 
 
 def _gate(kind: str, target: str, reason: str) -> tuple[bool, dict]:
@@ -66,7 +66,7 @@ def _gate(kind: str, target: str, reason: str) -> tuple[bool, dict]:
         get_action_policy,
     )
 
-    decision = get_action_policy(kg_server._get_engine()).decide(
+    decision = get_action_policy(runtime._get_engine()).decide(
         ActionRequest(
             kind=kind,
             target=target,
@@ -180,7 +180,7 @@ def register_claim_tools(mcp):
         )
 
         try:
-            engine = kg_server._get_engine()
+            engine = runtime._get_engine()
             flywheel = ClaimFlywheel(engine)
 
             if action == "evaluate":
@@ -342,4 +342,4 @@ def register_claim_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["graph_claims"] = graph_claims
+    runtime.REGISTERED_TOOLS["graph_claims"] = graph_claims

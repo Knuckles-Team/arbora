@@ -13,7 +13,7 @@ import json
 
 from agent_utilities.observability import health_ingest
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.tools.incident_tools import register_incident_tools
 
 
@@ -68,8 +68,8 @@ def test_registered_on_graphos_tool_table():
     mcp = _CollectingMCP()
     register_incident_tools(mcp)
     assert "graph_incident" in mcp.tools
-    assert kg_server.REGISTERED_TOOLS.get("graph_incident") is not None
-    assert kg_server.ACTION_TOOL_ROUTES.get("graph_incident") == "/incident"
+    assert runtime.REGISTERED_TOOLS.get("graph_incident") is not None
+    assert runtime.ACTION_TOOL_ROUTES.get("graph_incident") == "/incident"
 
 
 def test_correlate_action_delegates_to_incidents_module(monkeypatch):
@@ -526,7 +526,7 @@ def _denied_by_real_default_policy_never_mutates(monkeypatch, action: str) -> No
     ``incident.*`` has no explicit rule in the shipped default policy (mirrors
     ``claim.*`` in ``test_claim_tools.py``), so it falls to the conservative
     default tier (approval_required) — not an allowing decision.
-    ``kg_server._get_engine`` is stubbed to ``None`` — ``ActionPolicy(engine=
+    ``runtime._get_engine`` is stubbed to ``None`` — ``ActionPolicy(engine=
     None)`` degrades gracefully throughout, exactly like
     ``incidents.actuate_remediation``'s own no-engine default-held behavior.
     Concretely that lands on ``"unavailable"``, not a bare ``"queue_approval"``:
@@ -537,7 +537,7 @@ def _denied_by_real_default_policy_never_mutates(monkeypatch, action: str) -> No
     approval id comes back — never a silent allow."""
     from agent_utilities.observability import incidents as inc
 
-    monkeypatch.setattr(kg_server, "_get_engine", lambda: None)
+    monkeypatch.setattr(runtime, "_get_engine", lambda: None)
     mutated: list = []
     monkeypatch.setattr(
         inc, "set_incident_status", lambda *a, **k: mutated.append((a, k))

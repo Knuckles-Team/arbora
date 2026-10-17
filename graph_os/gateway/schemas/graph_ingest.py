@@ -11,7 +11,7 @@ contract a later lane wires onto those routes with
 Nothing here changes runtime behavior; it only describes the wire contract
 each handler already enforces.
 
-DERIVATION METHOD: for every route, the handler function in ``kg_server.py``
+DERIVATION METHOD: for every route, the handler function in ``runtime.py``
 was read line-by-line to see exactly which JSON keys it pulls out of
 ``request.json()`` (or the raw request for GET/DELETE) and which keyword
 arguments it forwards to ``_execute_tool(<tool_name>, **kwargs)``. Two shapes
@@ -71,7 +71,7 @@ again): the granular ``graph_write_bulk_endpoint`` (``POST
 ``graph_write(action="bulk_ingest", ...)``, silently discarding
 ``idempotency_key``/``evidence``/``upsert``/``connection``/``graph`` and
 always taking the non-idempotent ``BatchUpdate`` (light) path with
-``upsert=True``. That route no longer exists: ``kg_server.py``'s six-way
+``upsert=True``. That route no longer exists: ``runtime.py``'s six-way
 granular-route consolidation (see its ``GraphWriteAction`` union) deleted
 ``graph_write_bulk_endpoint`` and replaced it with ``POST /graph/write``,
 ``action='bulk_ingest'`` (``_BulkIngestAction``, which extends
@@ -88,7 +88,7 @@ dedicated request model is defined for either.
 
 RESPONSE SHAPE: every route in both families returns the SAME envelope on
 success — ``{"status": "success", "result": safe_json_load(res)}`` — built
-in ``kg_server.py`` right after each ``_execute_tool(...)`` call.
+in ``runtime.py`` right after each ``_execute_tool(...)`` call.
 ``safe_json_load`` JSON-decodes ``res`` when it is a JSON-parseable string and
 returns it unchanged otherwise (most of these tools return a human-readable
 plain string, e.g. ``"Node n1 added."``; several return a JSON-encoded
@@ -133,7 +133,7 @@ __all__ = [
 class GraphToolResponse(BaseModel):
     """The uniform success envelope every route in this module returns.
 
-    Built by ``kg_server.py`` as
+    Built by ``runtime.py`` as
     ``JSONResponse({"status": "success", "result": safe_json_load(res)})``
     immediately after each route's ``_execute_tool(...)`` call succeeds. A
     failed call never reaches this shape — it returns a differently-shaped
@@ -602,14 +602,14 @@ class GraphWriteEdgeDeleteRequest(BaseModel):
 class GraphWriteBulkRequest(BaseModel):
     """Field set shared by the (deleted) granular ``POST /graph/write/bulk``
     route and its replacement, ``POST /graph/write`` action='bulk_ingest'
-    (``_BulkIngestAction`` in ``kg_server.py``, which subclasses this model).
+    (``_BulkIngestAction`` in ``runtime.py``, which subclasses this model).
 
     HISTORY: the granular ``graph_write_bulk_endpoint`` this class originally
     modeled forwarded ONLY ``nodes`` to the underlying ``graph_write`` tool
     call, silently dropping ``idempotency_key``/``evidence``/``upsert``/
     ``connection``/``graph`` and always taking the non-idempotent
     ``BatchUpdate`` (light) path with ``upsert=True`` — a real data-loss/
-    double-write risk. That route no longer exists: ``kg_server.py``'s
+    double-write risk. That route no longer exists: ``runtime.py``'s
     granular-route consolidation deleted it and ``_BulkIngestAction``
     forwards all of those fields instead. This base class itself only ever
     declared ``nodes``; the fields the old route dropped were never on it,

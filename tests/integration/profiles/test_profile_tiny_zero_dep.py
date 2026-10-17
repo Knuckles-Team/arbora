@@ -74,7 +74,7 @@ def test_cold_import_pulls_no_external_service_drivers():
         "os.environ.pop('KAFKA_BOOTSTRAP_SERVERS', None)\n"
         # Import the served surface: the gateway route layer + the MCP/engine entry.
         "import graph_os.gateway.graph_api\n"
-        "import graph_os.mcp_server.backing.kg_server\n"
+        "import graph_os.mcp_server.runtime\n"
         "import agent_utilities.knowledge_graph.core.engine\n"
         f"forbidden = {list(_FORBIDDEN_DRIVERS)!r}\n"
         "leaked = [m for m in forbidden if m in sys.modules]\n"
@@ -105,9 +105,9 @@ def test_tiny_profile_serves_kg_over_gateway_with_zero_containers(monkeypatch):
     from starlette.testclient import TestClient
 
     from graph_os.gateway.graph_api import register_graph_routes
-    from graph_os.mcp_server.backing import kg_server
+    from graph_os.mcp_server import runtime
 
-    kg_server.ensure_tools_registered()
+    runtime.ensure_tools_registered()
 
     app = FastAPI()
     register_graph_routes(app, prefix="/api")
@@ -191,7 +191,7 @@ def test_tiny_profile_serves_kg_over_gateway_with_zero_containers(monkeypatch):
     from agent_utilities.security.brain_context import use_actor
 
     with use_actor(actor):
-        kg_server._get_engine()
+        runtime._get_engine()
 
     node_id = f"tiny:{uuid.uuid4().hex[:8]}"
     with TestClient(app) as client:
@@ -238,5 +238,5 @@ def test_tiny_profile_serves_kg_over_gateway_with_zero_containers(monkeypatch):
         assert node_id in json.dumps(payload["result"]), payload
 
     # The serving engine is backed by the zero-dep tiered stack — never Postgres.
-    engine = kg_server._get_engine()
+    engine = runtime._get_engine()
     assert type(engine.backend).__name__ != "PostgreSQLBackend"

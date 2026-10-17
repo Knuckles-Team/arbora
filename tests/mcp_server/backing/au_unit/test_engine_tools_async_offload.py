@@ -56,7 +56,7 @@ from agent_utilities.knowledge_graph.core.session import GraphSession, use_sessi
 from agent_utilities.security.actor_identity import ActorType
 from agent_utilities.security.brain_context import ActorContext, use_actor
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.tools import engine_tools
 
 ADMIN_ACTOR = ActorContext(
@@ -120,8 +120,8 @@ class _BlockingClient:
 
 
 def test_engine_tenants_create_offloads_blocking_native_io(monkeypatch):
-    kg_server.ensure_tools_registered()
-    tool = kg_server.REGISTERED_TOOLS["engine_tenants"]
+    runtime.ensure_tools_registered()
+    tool = runtime.REGISTERED_TOOLS["engine_tenants"]
 
     dispatch_started = threading.Event()
     release_dispatch = threading.Event()

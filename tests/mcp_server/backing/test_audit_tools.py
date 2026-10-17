@@ -2,7 +2,7 @@
 
 CONCEPT:AU-KG.audit.hash-chain-verify
 
-Mirrors the ``_CollectingMCP`` + ``kg_server._get_engine`` monkeypatch pattern
+Mirrors the ``_CollectingMCP`` + ``runtime._get_engine`` monkeypatch pattern
 used across the other MCP tool-surface tests (e.g. ``test_ops_causal_tools.py``)
 — no live engine required.
 """
@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.tools.audit_tools import register_audit_tools
 
 
@@ -57,7 +57,7 @@ class _FakeEngine:
 def _register(monkeypatch, engine):
     mcp = _CollectingMCP()
     register_audit_tools(mcp)
-    monkeypatch.setattr(kg_server, "_get_engine", lambda: engine)
+    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
     return mcp.tools["graph_audit"]
 
 
@@ -65,8 +65,8 @@ def test_registered_on_graphos_tool_table():
     mcp = _CollectingMCP()
     register_audit_tools(mcp)
     assert "graph_audit" in mcp.tools
-    assert kg_server.REGISTERED_TOOLS.get("graph_audit") is not None
-    assert kg_server.ACTION_TOOL_ROUTES.get("graph_audit") == "/audit"
+    assert runtime.REGISTERED_TOOLS.get("graph_audit") is not None
+    assert runtime.ACTION_TOOL_ROUTES.get("graph_audit") == "/audit"
 
 
 def test_verify_returns_clean_chain_report(monkeypatch):

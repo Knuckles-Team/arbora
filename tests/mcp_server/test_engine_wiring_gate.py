@@ -76,7 +76,7 @@ def test_natural_language_tools_plan_through_eg_nl_query(monkeypatch, tool):
     """Every served NL tool reaches EG ``QueryClient.nl_query`` and nothing else."""
     import json
 
-    from graph_os.mcp_server.backing import kg_server
+    from graph_os.mcp_server import runtime
 
     calls: list[tuple[str, str, dict[str, Any]]] = []
 
@@ -87,12 +87,11 @@ def test_natural_language_tools_plan_through_eg_nl_query(monkeypatch, tool):
 
     monkeypatch.setattr(engine_tools, "_dispatch", _dispatch)
     monkeypatch.setattr(
-        kg_server,
-        "_get_engine",
+        runtime, "_get_engine",
         lambda: pytest.fail("NL planning must not use a local engine planner"),
     )
-    kg_server.ensure_tools_registered()
-    func = kg_server.REGISTERED_TOOLS[tool]
+    runtime.ensure_tools_registered()
+    func = runtime.REGISTERED_TOOLS[tool]
     text_arg = "question" if tool in {"graph_ask", "ask_data"} else "text"
     kwargs: dict[str, Any] = {text_arg: "which nodes are alpha?", "limit": 1}
     if tool != "ask_data":

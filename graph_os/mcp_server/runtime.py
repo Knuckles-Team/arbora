@@ -64,6 +64,12 @@ logger = logging.getLogger(__name__)
 
 
 REGISTERED_TOOLS: dict[str, Any] = {}
+#: Names one complete ``_build_server`` registration produced. A non-empty
+#: ``REGISTERED_TOOLS`` alone does not prove the table is complete: a surface
+#: registrar (A2A, browser control, a single tool module) can add a few
+#: entries before the full build runs, which used to make
+#: :func:`ensure_tools_registered` a silent no-op over a partial table.
+_FULL_TOOL_NAMES: frozenset[str] = frozenset()
 
 
 def _build_dummy_request(path_params=None, json_body=None):
@@ -457,6 +463,69 @@ def _external_error_response(
 # parity contract test (tests/unit/test_gateway_mcp_parity.py) asserts this map
 # stays in lockstep with REGISTERED_TOOLS so the two surfaces never drift.
 ACTION_TOOL_ROUTES: dict[str, str] = {
+    "graph_query": "/graph/query",
+    "tabular_query": "/query/tabular",
+    "graph_ask": "/graph/ask",
+    "graph_table": "/graph/table",
+    "graph_search": "/graph/search",
+    "graph_search_synthesis": "/graph/search-synthesis",
+    "graph_code_nav": "/graph/code-nav",
+    "graph_document_tree": "/graph/document-tree",
+    "graph_write": "/graph/write",
+    "graph_ingest": "/graph/ingest",
+    "graph_analyze": "/graph/analyze",
+    "graph_code": "/graph/code",
+    "graph_evaluate": "/graph/evaluate",
+    "graph_explain": "/graph/explain",
+    "graph_observe": "/graph/observe",
+    "graph_orchestrate": "/graph/orchestrate",
+    "graph_config": "/graph/config",
+    "graph_configure": "/graph/configure",
+    "graph_context": "/graph/context",
+    "graph_feedback": "/graph/feedback",
+    "graph_sessions": "/graph/sessions",
+    "graph_goals": "/graph/goals",
+    "graph_message": "/graph/message",
+    "graph_reach": "/graph/reach",
+    "graph_bus": "/graph/bus",
+    "graph_secret": "/graph/secret",
+    "document_process": "/document/process",
+    "source_connector": "/connector/source",
+    "graph_writeback": "/graph/writeback",
+    "spec_ticket": "/spec/ticket",
+    "concept_registry": "/concept/registry",
+    "source_sync": "/source/sync",
+    "source_drain": "/source/drain",
+    "graph_etl": "/graph/etl",
+    "ontology_property_types": "/ontology/property-types",
+    "ontology_value_types": "/ontology/value-types",
+    "ontology_interface": "/ontology/interface",
+    "ontology_sampling_profile": "/ontology/sampling-profiles",
+    "ontology_model_profile": "/ontology/model-profiles",
+    "ontology_function": "/ontology/function",
+    "ontology_derive": "/ontology/derive",
+    "ontology_link_materialize": "/ontology/link-materialize",
+    "ontology_leanix_sync": "/ontology/leanix-sync",
+    "ontology_classification_claims": "/ontology/classification-claims",
+    "graph_data_prep": "/data/prep",
+    "ontology_repository_provenance": "/ontology/repository-provenance",
+    "graph_ontology": "/graph/ontology",
+    "object_edits": "/object/edits",
+    "object_index": "/object/index",
+    "object_permissioning": "/object/permissioning",
+    "object_set": "/object/set",
+    "graph_share": "/graph/share",
+    "usage_query": "/usage/query",
+    "ingest_sessions": "/usage/ingest-sessions",
+    "research_artifact": "/research/artifact",
+    "graph_loops": "/graph/loops",
+    "graph_schedules": "/graph/schedules",
+    "graph_feeds": "/graph/feeds",
+    "graph_sandbox": "/graph/sandbox",
+    "graph_runvcs": "/graph/runvcs",
+    "graph_claims": "/graph/claims",
+    "graph_candidate_claims": "/graph/candidate-claims",
+    "skill_classify": "/skill/classify",
     "browser_control": "/browser/control",
     "graph_a2a": "/graph/a2a",
 }
@@ -2207,7 +2276,7 @@ for _bootstrap_name in _bootstrap.BOOTSTRAP_EXPORTS:
     globals()[_bootstrap_name] = getattr(_bootstrap, _bootstrap_name)
 
 
-def _build_server(bootstrap: bool = True):
+def _build_server(bootstrap: bool = True, *, canonical_surface: bool = False):
     """Build the KG MCP server with all tools registered.
 
     Args:
@@ -2217,6 +2286,9 @@ def _build_server(bootstrap: bool = True):
             :func:`ensure_tools_registered`) because it owns the engine/daemon
             lifecycle itself and only needs ``REGISTERED_TOOLS`` populated so the
             centralized REST handlers can dispatch.
+        canonical_surface: Register every condensed domain regardless of
+            deployment toggles. This is reserved for catalog/gate construction;
+            served processes continue to honor their configured toggles.
     """
     from graph_os.mcp_server.backing.server_factory import create_mcp_server
 
@@ -2321,12 +2393,14 @@ def _build_server(bootstrap: bool = True):
         )
         return JSONResponse(result)
 
-    _register_graph_tool_surface(mcp)
+    _register_graph_tool_surface(mcp, canonical=canonical_surface)
 
+    global _FULL_TOOL_NAMES
+    _FULL_TOOL_NAMES = frozenset(REGISTERED_TOOLS)
     return args, mcp, middlewares
 
 
-def _register_graph_tool_surface(mcp: Any) -> None:
+def _register_graph_tool_surface(mcp: Any, *, canonical: bool = False) -> None:
     """Mount graph-os's one MCP tool contract.
 
     agent-utilities owns the contract (``register_graphos_surface``): the
@@ -2342,13 +2416,46 @@ def _register_graph_tool_surface(mcp: Any) -> None:
 
     from graph_os.a2a.mcp import register_a2a_tools
     from graph_os.browser_control.mcp import register_browser_control_tools
-    from graph_os.mcp_server.backing import kg_server
     from graph_os.mcp_server.backing.graphos_surface import register_graphos_surface
 
-    backing = register_graphos_surface(mcp)
+    backing = register_graphos_surface(mcp, canonical=canonical)
     register_browser_control_tools(backing)
     register_a2a_tools(mcp, tools=backing)
-    REGISTERED_TOOLS.update(kg_server.REGISTERED_TOOLS)
+
+
+def _attach_headless_fleet_loader(mcp: Any) -> None:
+    """Attach the fleet loader (AU-CONTROL-R031) to a headless build.
+
+    The served process attaches the fleet in :mod:`graph_os.mcp_server.server`;
+    a gateway-only process reaches the tools only through
+    :func:`ensure_tools_registered`, so without this every ``find``/``act``
+    fleet call through ``REGISTERED_TOOLS`` raised "No fleet multiplexer is
+    attached". When attach fails, nothing is attached and a class-name-only
+    cause is recorded on ``mcp`` for ``intent_tools._fleet_mux`` to raise; the
+    full exception is logged server-side.
+    """
+    from graph_os.fleet.multiplexer import attach_fleet_loader
+    from graph_os.mcp_server.backing.engine_routing import (
+        _write_refreshed_fleet_catalog,
+    )
+    from graph_os.mcp_server.server import _fleet_embed_fn
+
+    try:
+        attach_fleet_loader(
+            mcp,
+            embed_fn=_fleet_embed_fn(),
+            authority_scope=verified_tool_session_scope,
+            catalog_writer=_write_refreshed_fleet_catalog,
+        )
+    except Exception as exc:  # noqa: BLE001 - cause recorded verbatim below, never swallowed
+        mcp._fleet_mux_unavailable_reason = (
+            f"fleet loader attach failed in this headless build ({type(exc).__name__})"
+        )
+        logger.warning(
+            "ensure_tools_registered: fleet loader attach failed in this headless build (%s): %s",
+            type(exc).__name__,
+            exc,
+        )
 
 
 def ensure_tools_registered() -> None:
@@ -2360,7 +2467,10 @@ def ensure_tools_registered() -> None:
     effect; we discard the throwaway FastMCP instance and skip the engine
     bootstrap (``bootstrap=False``) because the gateway owns the engine/daemon
     lifecycle and the handlers resolve the engine lazily via ``_get_engine()``.
+    The throwaway ``mcp`` also gets the fleet loader
+    (:func:`_attach_headless_fleet_loader`).
     """
-    if REGISTERED_TOOLS:
+    if _FULL_TOOL_NAMES and _FULL_TOOL_NAMES <= REGISTERED_TOOLS.keys():
         return
-    _build_server(bootstrap=False)
+    _args, mcp, _middlewares = _build_server(bootstrap=False)
+    _attach_headless_fleet_loader(mcp)

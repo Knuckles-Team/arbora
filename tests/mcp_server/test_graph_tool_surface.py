@@ -14,7 +14,7 @@ def test_surface_serves_intent_contract_and_registers_host_operations(
 ) -> None:
     from graph_os.a2a import mcp as a2a_mcp
     from graph_os.browser_control import mcp as browser_mcp
-    from graph_os.mcp_server.backing import graphos_surface, kg_server
+    from graph_os.mcp_server.backing import graphos_surface
 
     served = object()
     backing = object()
@@ -22,7 +22,7 @@ def test_surface_serves_intent_contract_and_registers_host_operations(
 
     def surface(mcp: Any, **_: Any) -> Any:
         calls.append(("surface", mcp, None))
-        kg_server.REGISTERED_TOOLS["graph_query"] = object()
+        runtime.REGISTERED_TOOLS["graph_query"] = object()
         return backing
 
     monkeypatch.setattr(graphos_surface, "register_graphos_surface", surface)
@@ -37,7 +37,7 @@ def test_surface_serves_intent_contract_and_registers_host_operations(
         lambda mcp, *, tools=None: calls.append(("a2a", mcp, tools)),
     )
     monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {})
-    monkeypatch.setattr(kg_server, "REGISTERED_TOOLS", {})
+    monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {})
 
     runtime._register_graph_tool_surface(served)
 

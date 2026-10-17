@@ -13,13 +13,14 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.tool_specs import (
     INTENT_VERBS,
     TOOL_SPECS_BY_NAME,
     canonical_tool_names,
 )
 from graph_os.mcp_server.backing.tools import engine_tools
+from graph_os.mcp_server.routes import mount_rest_routes
 
 # The 21 ``engine_<domain>`` tool families are declared as REQUIRED
 # (``feature=None``) in the distribution-owned ``ToolSpec`` manifest -- a real
@@ -55,14 +56,14 @@ class _RecordingApp:
 
 
 def _mounted_paths(prefix: str = "") -> set[str]:
-    kg_server.ensure_tools_registered()
+    runtime.ensure_tools_registered()
     app = _RecordingApp()
-    kg_server._mount_rest_routes(app, prefix=prefix)
+    mount_rest_routes(app, prefix=prefix)
     return {path for path, _methods in app.routes}
 
 
 def _canonical_runtime_names() -> frozenset[str]:
-    tools = set(kg_server.REGISTERED_TOOLS)
+    tools = set(runtime.REGISTERED_TOOLS)
     unknown = tools - set(TOOL_SPECS_BY_NAME)
     assert not unknown, (
         f"runtime registered unknown ToolSpec families: {sorted(unknown)}"
@@ -78,9 +79,9 @@ def _canonical_runtime_names() -> frozenset[str]:
 
 @_NEEDS_ENGINE_DOMAINS
 def test_every_mcp_tool_has_a_rest_route():
-    kg_server.ensure_tools_registered()
-    tools = set(kg_server.REGISTERED_TOOLS)
-    mapped = set(kg_server.ACTION_TOOL_ROUTES)
+    runtime.ensure_tools_registered()
+    tools = set(runtime.REGISTERED_TOOLS)
+    mapped = set(runtime.ACTION_TOOL_ROUTES)
 
     assert tools == set(_canonical_runtime_names())
 
@@ -93,9 +94,9 @@ def test_every_mcp_tool_has_a_rest_route():
 
 @_NEEDS_ENGINE_DOMAINS
 def test_no_phantom_routes_for_missing_tools():
-    kg_server.ensure_tools_registered()
-    tools = set(kg_server.REGISTERED_TOOLS)
-    mapped = set(kg_server.ACTION_TOOL_ROUTES)
+    runtime.ensure_tools_registered()
+    tools = set(runtime.REGISTERED_TOOLS)
+    mapped = set(runtime.ACTION_TOOL_ROUTES)
 
     assert tools == set(_canonical_runtime_names())
 
@@ -107,7 +108,7 @@ def test_no_phantom_routes_for_missing_tools():
 
 def test_mapped_routes_are_actually_mounted():
     paths = _mounted_paths()
-    for tool, path in kg_server.ACTION_TOOL_ROUTES.items():
+    for tool, path in runtime.ACTION_TOOL_ROUTES.items():
         assert path in paths, (
             f"Tool '{tool}' maps to '{path}' but that route is not mounted by "
             "_mount_rest_routes."
@@ -117,7 +118,7 @@ def test_mapped_routes_are_actually_mounted():
 def test_prefix_is_applied_to_mounted_routes():
     # The API gateway mounts these under /api — confirm the prefix is honoured.
     paths = _mounted_paths(prefix="/api")
-    for path in kg_server.ACTION_TOOL_ROUTES.values():
+    for path in runtime.ACTION_TOOL_ROUTES.values():
         assert ("/api" + path) in paths
 
 
@@ -125,8 +126,8 @@ def test_retired_legacy_tool_fanout_is_not_mounted():
     """Old standalone mining/research routes are absent from AU's served API."""
     paths = _mounted_paths()
     retired = {"graph_mine", "graph_mine_deep", "graph_ops_causal", "graph_research"}
-    assert retired.isdisjoint(kg_server.REGISTERED_TOOLS)
-    assert retired.isdisjoint(kg_server.ACTION_TOOL_ROUTES)
+    assert retired.isdisjoint(runtime.REGISTERED_TOOLS)
+    assert retired.isdisjoint(runtime.ACTION_TOOL_ROUTES)
     assert "/graph/research" not in paths
     assert "/ops/causal" not in paths
     assert not any(path.startswith("/mining/") for path in paths)
@@ -136,7 +137,7 @@ def test_retired_legacy_tool_fanout_is_not_mounted():
         in {"synthesize", "deep-extract", "background-research", "relevance-sweep"}
         for path in paths
     )
-    for action in kg_server.GRAPHLEARN_ACTIONS:
+    for action in runtime.GRAPHLEARN_ACTIONS:
         assert f"/graphlearn/{action}" in paths
 
 

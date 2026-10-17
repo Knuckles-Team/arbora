@@ -7,7 +7,7 @@ import json
 import pytest
 from agent_utilities.runtime.warm_registry import WarmParentRegistry
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.tools.state_tools import register_state_tools
 
 
@@ -28,14 +28,14 @@ class _FakeMCP:
 def sandbox_tool():
     WarmParentRegistry._instance = None  # noqa: SLF001 - test isolation
     register_state_tools(_FakeMCP())
-    yield kg_server.REGISTERED_TOOLS["graph_sandbox"]
+    yield runtime.REGISTERED_TOOLS["graph_sandbox"]
     WarmParentRegistry.drain_active()
     WarmParentRegistry._instance = None  # noqa: SLF001
 
 
 def test_registered_on_both_surfaces():
     # REST twin auto-generated from the route table (CONCEPT:AU-ORCH.sandbox.graph-sandbox-surface).
-    assert kg_server.ACTION_TOOL_ROUTES.get("graph_sandbox") == "/graph/sandbox"
+    assert runtime.ACTION_TOOL_ROUTES.get("graph_sandbox") == "/graph/sandbox"
 
 
 async def test_status_reports_rungs(sandbox_tool):

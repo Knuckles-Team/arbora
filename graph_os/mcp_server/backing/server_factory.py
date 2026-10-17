@@ -76,7 +76,7 @@ class UnsupportedAuthTypeError(ValueError):
     do not understand.
 
     Subclasses :class:`ValueError` to match this module's existing idiom for an
-    invalid configuration value (and ``kg_server.UnsupportedToolFieldError``).
+    invalid configuration value (and ``runtime.UnsupportedToolFieldError``).
     """
 
 

@@ -28,7 +28,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 
 
 def register_config_tools(mcp):
@@ -103,4 +103,4 @@ def register_config_tools(mcp):
         except ConfigAdminError as exc:
             return json.dumps({"error": exc.code, "detail": exc.message})
 
-    kg_server.REGISTERED_TOOLS["graph_config"] = graph_config
+    runtime.REGISTERED_TOOLS["graph_config"] = graph_config

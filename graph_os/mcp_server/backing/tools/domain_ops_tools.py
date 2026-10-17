@@ -8,7 +8,7 @@ from typing import Any
 from agent_utilities.security.error_surface import public_error_text
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 
 
 def register_domain_ops_tools(mcp: Any) -> None:
@@ -44,7 +44,7 @@ def register_domain_ops_tools(mcp: Any) -> None:
         learning_rate: float = Field(default=0.01),
         discount_factor: float = Field(default=0.99),
     ) -> str:
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
         if engine is None:
             return "Error: IntelligenceGraphEngine not active."
         try:
@@ -110,5 +110,5 @@ def register_domain_ops_tools(mcp: Any) -> None:
         except Exception as exc:
             return public_error_text(exc)
 
-    kg_server.REGISTERED_TOOLS["graph_domain_ops"] = graph_domain_ops
-    kg_server.ACTION_TOOL_ROUTES["graph_domain_ops"] = "/graph/domain-ops"
+    runtime.REGISTERED_TOOLS["graph_domain_ops"] = graph_domain_ops
+    runtime.ACTION_TOOL_ROUTES["graph_domain_ops"] = "/graph/domain-ops"

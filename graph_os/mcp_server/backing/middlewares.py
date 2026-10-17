@@ -150,7 +150,7 @@ class ActorContextMiddleware(Middleware):
       is already set (a nested call under an already-authenticated caller), or
       (b) the tiny-profile local stdio process authority
       (:func:`~agent_utilities.security.request_identity.mint_local_process_session`,
-      bound as ``graph_os.mcp_server.backing.kg_server._PROCESS_SESSION``) is bound —
+      bound as ``graph_os.mcp_server.runtime._PROCESS_SESSION``) is bound —
       stdio has no per-call bearer token by protocol, so that process-lifetime,
       already-verified authority IS this transport's carrier, not an absence
       of one. Every other case raises
@@ -201,9 +201,9 @@ class ActorContextMiddleware(Middleware):
             # stdio local-process bootstrap.
             if current_session() is not None:
                 return await call_next(context)
-            from graph_os.mcp_server.backing import kg_server
+            from graph_os.mcp_server import runtime
 
-            if getattr(kg_server, "_PROCESS_SESSION", None) is not None:
+            if getattr(runtime, "_PROCESS_SESSION", None) is not None:
                 return await call_next(context)
             raise SessionRequiredError(
                 "Verified caller identity required: no validated bearer "

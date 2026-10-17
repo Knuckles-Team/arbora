@@ -1231,9 +1231,9 @@ class WorkItemTasksExtension(ServerExtension):
 
     @staticmethod
     def _engine() -> Any:
-        from graph_os.mcp_server.backing import kg_server
+        from graph_os.mcp_server import runtime
 
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
         if engine is None:
             raise mcp_protocol_exception(-32603, "IntelligenceGraphEngine not active.")
         return getattr(engine, "_work_item_engine", engine)
@@ -1251,9 +1251,9 @@ class WorkItemTasksExtension(ServerExtension):
         try:
             from agent_utilities.orchestration.manager import Orchestrator
 
-            from graph_os.mcp_server.backing import kg_server
+            from graph_os.mcp_server import runtime
 
-            engine = kg_server._get_engine()
+            engine = runtime._get_engine()
             if engine is None:
                 return None
             trace = Orchestrator(engine).get_run_trace(task_id)

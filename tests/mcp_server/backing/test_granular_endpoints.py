@@ -4,10 +4,8 @@ import pytest
 from starlette.applications import Starlette
 from starlette.testclient import TestClient
 
-from graph_os.mcp_server.backing.kg_server import (
+from graph_os.mcp_server.runtime import (
     _make_tool_endpoint,
-    # Tools/Toggle
-    get_tools_endpoint,
     graph_analyze_blast_radius_endpoint,
     graph_analyze_causal_endpoint,
     graph_analyze_context_endpoint,
@@ -18,12 +16,10 @@ from graph_os.mcp_server.backing.kg_server import (
     graph_analyze_inspect_endpoint,
     graph_analyze_invariant_endpoint,
     graph_analyze_security_scan_endpoint,
-    # Analyze
     graph_configure_doctor_endpoint,
     graph_configure_endpoint,
     graph_configure_install_hooks_endpoint,
     graph_configure_register_mcp_endpoint,
-    # Configure
     graph_configure_secret_endpoint,
     graph_configure_uninstall_hooks_endpoint,
     graph_ingest_agent_toolkit_endpoint,
@@ -36,20 +32,16 @@ from graph_os.mcp_server.backing.kg_server import (
     graph_ingest_observe_endpoint,
     graph_ingest_rebuild_indexes_endpoint,
     graph_ingest_reflect_endpoint,
-    # Ingest
     graph_ingest_submit_endpoint,
     graph_ingest_sync_endpoint,
     graph_orchestrate_endpoint,
-    # Bilateral base endpoints
     graph_query_endpoint,
-    # Query
     graph_query_federated_endpoint,
     graph_search_analogy_endpoint,
     graph_search_concept_endpoint,
     graph_search_dci_endpoint,
     graph_search_discover_endpoint,
     graph_search_endpoint,
-    # Search
     graph_search_memory_endpoint,
     graph_write_delete_edge_endpoint,
     graph_write_delete_node_endpoint,
@@ -57,9 +49,7 @@ from graph_os.mcp_server.backing.kg_server import (
     graph_write_external_endpoint,
     graph_write_memory_endpoint,
     graph_write_memory_recall_endpoint,
-    # Write
     graph_write_sdd_endpoint,
-    toggle_tool_endpoint,
 )
 
 graph_agents_endpoint = _make_tool_endpoint("graph_agents")
@@ -75,8 +65,6 @@ def test_app():
     app = Starlette()
 
     # Mount base and Tools endpoints
-    app.add_route("/tools", get_tools_endpoint, methods=["GET"])
-    app.add_route("/tools/toggle", toggle_tool_endpoint, methods=["POST"])
 
     app.add_route("/graph/query", graph_query_endpoint, methods=["POST"])
     app.add_route("/graph/search", graph_search_endpoint, methods=["POST"])
@@ -240,7 +228,7 @@ def client(test_app):
 
 
 @pytest.mark.asyncio
-@patch("graph_os.mcp_server.backing.kg_server._execute_tool", new_callable=AsyncMock)
+@patch("graph_os.mcp_server.runtime._execute_tool", new_callable=AsyncMock)
 async def test_base_endpoints(mock_execute_tool, client):
     # Setup mock return value
     mock_execute_tool.return_value = {"status": "mocked_success"}
@@ -259,7 +247,7 @@ async def test_base_endpoints(mock_execute_tool, client):
 
 
 @pytest.mark.asyncio
-@patch("graph_os.mcp_server.backing.kg_server._execute_tool", new_callable=AsyncMock)
+@patch("graph_os.mcp_server.runtime._execute_tool", new_callable=AsyncMock)
 async def test_granular_query_endpoints(mock_execute_tool, client):
     mock_execute_tool.return_value = {"status": "mocked_success"}
 
@@ -293,7 +281,7 @@ async def test_granular_query_endpoints(mock_execute_tool, client):
 
 
 @pytest.mark.asyncio
-@patch("graph_os.mcp_server.backing.kg_server._execute_tool", new_callable=AsyncMock)
+@patch("graph_os.mcp_server.runtime._execute_tool", new_callable=AsyncMock)
 async def test_granular_search_endpoints(mock_execute_tool, client):
     mock_execute_tool.return_value = [{"id": "node-1"}]
 
@@ -319,7 +307,7 @@ async def test_granular_search_endpoints(mock_execute_tool, client):
 
 
 @pytest.mark.asyncio
-@patch("graph_os.mcp_server.backing.kg_server._execute_tool", new_callable=AsyncMock)
+@patch("graph_os.mcp_server.runtime._execute_tool", new_callable=AsyncMock)
 async def test_collapsed_graph_write_endpoint(mock_execute_tool, client):
     """POST/DELETE /graph/write collapsed dispatch — replaces the deleted
     granular /graph/write/{node,edge,bulk,chat,execution} routes. Each
@@ -498,7 +486,7 @@ async def test_collapsed_graph_write_endpoint(mock_execute_tool, client):
 
 
 @pytest.mark.asyncio
-@patch("graph_os.mcp_server.backing.kg_server._execute_tool", new_callable=AsyncMock)
+@patch("graph_os.mcp_server.runtime._execute_tool", new_callable=AsyncMock)
 async def test_granular_ingest_endpoints(mock_execute_tool, client):
     mock_execute_tool.return_value = {"job_id": "job-100"}
 
@@ -527,7 +515,7 @@ async def test_granular_ingest_endpoints(mock_execute_tool, client):
 
 
 @pytest.mark.asyncio
-@patch("graph_os.mcp_server.backing.kg_server._execute_tool", new_callable=AsyncMock)
+@patch("graph_os.mcp_server.runtime._execute_tool", new_callable=AsyncMock)
 async def test_granular_analyze_endpoints(mock_execute_tool, client):
     mock_execute_tool.return_value = {"analysis": "complete"}
 
@@ -555,7 +543,7 @@ def test_retired_research_routes_are_not_mounted(client, path):
 
 
 @pytest.mark.asyncio
-@patch("graph_os.mcp_server.backing.kg_server._execute_tool", new_callable=AsyncMock)
+@patch("graph_os.mcp_server.runtime._execute_tool", new_callable=AsyncMock)
 async def test_focused_job_endpoint(mock_execute_tool, client):
     mock_execute_tool.return_value = {"status": "orchestrated"}
 
@@ -585,7 +573,7 @@ async def test_focused_job_endpoint(mock_execute_tool, client):
 
 
 @pytest.mark.asyncio
-@patch("graph_os.mcp_server.backing.kg_server._execute_tool", new_callable=AsyncMock)
+@patch("graph_os.mcp_server.runtime._execute_tool", new_callable=AsyncMock)
 async def test_granular_configure_endpoints(mock_execute_tool, client):
     mock_execute_tool.return_value = {"vault": "updated"}
 

@@ -42,7 +42,7 @@ On the ``stdio`` transport, stdout IS the JSON-RPC channel. Every co-service her
 is driven on its OWN dedicated thread with its OWN asyncio event loop — never
 sharing the FastMCP server's loop. Purity is owned fd-level, not by a process-wide
 ``print``/``warnings`` monkeypatch (see the "Stdio JSON-RPC purity" note in
-``graph_os/mcp_server/backing/server_factory/py``): once ``kg_server.mcp_server()`` calls
+``graph_os/mcp_server/backing/server_factory/py``): once ``runtime.mcp_server()`` calls
 ``mcp.run(transport="stdio")``, the MCP SDK's ``stdio_server()`` diverts the
 process's fd 1 to stderr for as long as serving continues, and every co-service
 thread here shares that same file-descriptor table for its whole active
@@ -62,7 +62,7 @@ restarts). :class:`CoServiceSupervisor` logs every crash loudly and restarts the
 service with bounded, backed-off retries (:data:`_MAX_RESTARTS` within
 :data:`_RESTART_WINDOW_SECONDS`); once the bound is hit it stops retrying and
 leaves a loud error in the log rather than crash-looping forever.
-:meth:`CoServiceSupervisor.stop_all` is invoked from ``kg_server.py``'s shutdown
+:meth:`CoServiceSupervisor.stop_all` is invoked from ``runtime.py``'s shutdown
 path (SIGTERM/SIGINT via ``mcp.run`` and the process ``finally`` block) and joins
 every co-service thread before the process exits.
 """
@@ -249,7 +249,7 @@ def start_co_services(
 ) -> CoServiceSupervisor:
     """Bring up every remaining configured co-service for THIS ``graph-os`` process.
 
-    Called once from ``kg_server.mcp_server()`` after ``_start_engine_bootstrap``
+    Called once from ``runtime.mcp_server()`` after ``_start_engine_bootstrap``
     so a real ``engine`` is available. Messaging is started here as a supervised
     co-service thread using that engine + the process's verified session.
     """

@@ -3,12 +3,12 @@ gateway's one asyncio event loop.
 
 Root cause: ``_make_domain_tool``'s returned coroutine (registered as
 ``engine_<domain>``, both the MCP tool and the ``/engine/<domain>`` REST
-handler via ``kg_server.REGISTERED_TOOLS``) used to call the SYNCHRONOUS
+handler via ``runtime.REGISTERED_TOOLS``) used to call the SYNCHRONOUS
 ``_dispatch`` function *inline* -- ``return _dispatch(...)`` inside an
 ``async def``. ``_dispatch`` does blocking native engine I/O (a real
 socket RPC, sometimes a multi-attempt retry loop tens of seconds long for a
 slow admin/lifecycle call such as ``tenants.create``). Because the tool
-function is declared ``async def``, ``kg_server._execute_tool``'s dispatch-
+function is declared ``async def``, ``runtime._execute_tool``'s dispatch-
 isolation check (``inspect.iscoroutinefunction(tool_func)``) treats it as
 "already async" and awaits it inline on the ONE gateway event-loop thread
 instead of routing it through ``asyncio.to_thread`` the way it does for
@@ -39,7 +39,7 @@ from agent_utilities.knowledge_graph.core.session import GraphSession, use_sessi
 from agent_utilities.security.actor_identity import ActorType
 from agent_utilities.security.brain_context import ActorContext, use_actor
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.tools import engine_tools
 
 ACTOR = ActorContext(
@@ -67,7 +67,7 @@ _BLOCK_SECONDS = 0.6
 
 @pytest.mark.asyncio
 async def test_slow_domain_tool_call_does_not_freeze_the_event_loop(monkeypatch):
-    kg_server.ensure_tools_registered()
+    runtime.ensure_tools_registered()
     tool = engine_tools._make_domain_tool("tenants", ["list"])
 
     def _blocking_dispatch(domain, methods, action, params_json, graph):
@@ -116,7 +116,7 @@ async def test_offloaded_dispatch_still_sees_the_calling_tasks_session(monkeypat
     correctness, not just concurrency. asyncio.to_thread copies the current
     context, so `_dispatch` running on the worker thread must observe the
     SAME ambient session the calling task set up."""
-    kg_server.ensure_tools_registered()
+    runtime.ensure_tools_registered()
     tool = engine_tools._make_domain_tool("nodes", ["has"])
 
     from agent_utilities.knowledge_graph.core.session import current_session

@@ -1,7 +1,7 @@
 """``graph_media_sidecar`` — the media-sidecar-delegation MCP surface
 (CONCEPT:AU-KG.ingest.media-sidecar-delegation).
 
-Two-surface (MCP + REST — ``graph_os/mcp_server/backing/kg_server/py`` auto-mounts
+Two-surface (MCP + REST — ``graph_os/mcp_server/runtime.py`` auto-mounts
 the REST twin from ``ACTION_TOOL_ROUTES``) entry point for the sidecar
 delegate pattern: ``ingest_pdf``/``ingest_jpeg``/``ingest_audio``/
 ``ingest_video`` each store the artifact, delegate extraction to the
@@ -41,7 +41,7 @@ from agent_utilities.media.video_sidecar import (
 from agent_utilities.security.error_surface import public_error_json
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 
 #: action name -> capability-manifest modality key, derived from the ONE
 #: source of truth (sidecar_contract.py) so this tool's action list can never
@@ -59,7 +59,7 @@ def _as_str(value: object, default: str = "") -> str:
     """Coerce an omitted FastMCP ``Field``-defaulted str param back to its
     declared default.
 
-    The internal/REST dispatcher (``kg_server._execute_tool``) calls a
+    The internal/REST dispatcher (``runtime._execute_tool``) calls a
     registered tool function directly, bypassing FastMCP's own pydantic
     validation — so a str param the caller omitted arrives as the
     unresolved ``pydantic.fields.FieldInfo`` object rather than its
@@ -212,5 +212,5 @@ def register_media_sidecar_tools(mcp) -> None:
         }
         return json.dumps(payload, default=str)
 
-    kg_server.REGISTERED_TOOLS["graph_media_sidecar"] = graph_media_sidecar
-    kg_server.ACTION_TOOL_ROUTES["graph_media_sidecar"] = "/media/sidecar"
+    runtime.REGISTERED_TOOLS["graph_media_sidecar"] = graph_media_sidecar
+    runtime.ACTION_TOOL_ROUTES["graph_media_sidecar"] = "/media/sidecar"

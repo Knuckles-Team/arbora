@@ -67,7 +67,7 @@ QUERY_DIALECT_MANIFEST: tuple[SurfaceEntry, ...] = (
         disposition=Disposition.AUTHENTICATED_REQUIRED,
         citation=(
             "mcp/tools/query_tools.py's implicit default -> "
-            "kg_server._resolve_read_engines -> engine.query_cypher "
+            "engine_routing._resolve_read_engines -> engine.query_cypher "
             "(knowledge_graph/orchestration/engine_query.py:137-185, explicit "
             "resolve_session(required_scope='kg:read') at :185)"
         ),
@@ -182,7 +182,7 @@ GOC15_SURFACE_MANIFEST: tuple[SurfaceEntry, ...] = (
             "reach privileged KG reads/writes. In that mode a claim-less call "
             "is refused (SessionRequiredError) unless an ambient GraphSession "
             "or the tiny-profile local process authority "
-            "(kg_server._PROCESS_SESSION) is already legitimately bound. The "
+            "(runtime._PROCESS_SESSION) is already legitimately bound. The "
             "other ~60 fleet MCP servers built via the same factory keep the "
             "prior no-op (require_verified_session=False default) -- each "
             "retains its own authorization contract; making this fail-closed "

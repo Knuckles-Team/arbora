@@ -1,15 +1,15 @@
 """Pydantic request/response models for the core ``/api/graph/*`` REST surface
 plus its non-graph siblings (SCHEMA LANE 3/3).
 
-``kg_server._mount_rest_routes`` mounts these routes with raw Starlette
-``app.add_route(...)`` (see ``graph_os/mcp_server/backing/kg_server/py``), which carries
+``runtime._mount_rest_routes`` mounts these routes with raw Starlette
+``app.add_route(...)`` (see ``graph_os/mcp_server/runtime.py``), which carries
 no request/response schema at all — the live OpenAPI 3.1.0 spec documents
 **zero** ``/api/graph/*`` paths as a result. This module is the typed
 prerequisite for wiring ``response_model=``/body-typed parameters onto those
-routes (a later, single-owner lane); it does not touch ``kg_server.py`` itself.
+routes (a later, single-owner lane); it does not touch ``runtime.py`` itself.
 
 Every model here was derived by reading the actual handler in
-``graph_os/mcp_server/backing/kg_server/py`` and, where the handler dispatches through
+``graph_os/mcp_server/runtime.py`` and, where the handler dispatches through
 ``_execute_tool("<tool>", **body)``, the real target tool signature in
 ``REGISTERED_TOOLS`` (``graph_os/mcp_server/backing/tools/*.py``) — never invented.
 See each model's docstring for its source handler/tool and the exact
@@ -121,7 +121,7 @@ class EvidenceBundleEnvelope(BaseModel):
 class GraphQueryFederatedRequest(BaseModel):
     """Request body for ``POST /graph/query/federated`` — a narrower,
     fixed-scope twin of ``graph_query`` (``graph_query_federated_endpoint`` in
-    ``kg_server.py``).
+    ``runtime.py``).
 
     ``extra="forbid"`` mirrors the handler's explicit allowlist for ``query``,
     ``params``, and ``reference_id``. Unknown fields fail before dispatch.
@@ -210,7 +210,7 @@ GraphExplainAction = Literal["explain", "context", "executable_rag", "recommend"
 class GraphCodeRequest(BaseModel):
     """Request body for ``POST /graph/code`` — REST twin of the ``graph_code``
     MCP tool (``graph_os/mcp_server/backing/tools/analyze_suite/py``), mounted via the
-    shared ``_make_action_endpoint("graph_code")`` factory in ``kg_server.py``.
+    shared ``_make_action_endpoint("graph_code")`` factory in ``runtime.py``.
 
     ``extra="forbid"``: PROVEN — the factory blind-splats ``**body`` into
     ``_execute_tool("graph_code", **body)``, but the tool function itself
@@ -566,7 +566,7 @@ class GraphConfigureResponse(BaseModel):
 class GraphConfigureSecretRequest(BaseModel):
     """Request body for ``POST /graph/configure/secret`` — REST twin of
     ``graph_configure(action='set_secret')`` (``graph_configure_secret_endpoint``
-    in ``kg_server.py``).
+    in ``runtime.py``).
 
     ``extra="allow"``: PROVEN — the handler reads exactly `config_key` and
     `config_value` via `body.get(...)` and forwards only those two as fixed
@@ -626,7 +626,7 @@ class GraphConfigureSecretResponse(BaseModel):
 class GraphConfigureVaultSyncRequest(BaseModel):
     """Request body for ``POST /graph/configure/vault-sync`` — REST twin of
     ``graph_configure(action='vault_sync')`` (``graph_configure_vault_sync_endpoint``
-    in ``kg_server.py``, CONCEPT:AU-OS.deployment.vault-first-routine-genesis).
+    in ``runtime.py``, CONCEPT:AU-OS.deployment.vault-first-routine-genesis).
 
     ``extra="allow"``: PROVEN the same way as :class:`GraphConfigureSecretRequest`
     — only `config_key`/`config_value` are read.
@@ -729,7 +729,7 @@ class HookDoctorEntry(BaseModel):
 class GraphConfigureDoctorResponse(BaseModel):
     """Response envelope for ``POST /graph/configure/doctor`` — REST twin of
     ``graph_configure(action='doctor')`` (``graph_configure_doctor_endpoint``
-    in ``kg_server.py``, no request body). `result` is keyed by internal
+    in ``runtime.py``, no request body). `result` is keyed by internal
     agent-surface identifiers (e.g. 'claude-code', 'agent-terminal-ui') —
     modeled as an open mapping rather than a closed key set since the agent
     surface roster can grow.

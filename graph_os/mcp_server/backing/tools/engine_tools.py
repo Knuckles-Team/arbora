@@ -59,7 +59,8 @@ from typing import Any
 from agent_utilities.security.error_surface import public_error_json
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
+from graph_os.mcp_server.backing import engine_routing
 
 logger = logging.getLogger(__name__)
 
@@ -690,7 +691,7 @@ def _dispatch(
     # `graph=` selection has already been rejected before the engine's own
     # RBAC/RLS ever got to evaluate the request.
     #
-    # Fix: narrow the SESSION first — through `kg_server.bound_to_graph`, the
+    # Fix: narrow the SESSION first — through `engine_routing.bound_to_graph`, the
     # exact `GraphSession.with_graph()` + `use_session()` primitive
     # `query_tools.py`'s `resolve_explicit_graph`/`bound_to_graph` callers
     # already use (no second authorization mechanism; the engine's own
@@ -704,7 +705,7 @@ def _dispatch(
 
     session = current_session()
     if graph and session is not None and session.graph != graph:
-        with kg_server.bound_to_graph(graph):
+        with engine_routing.bound_to_graph(graph):
             return _dispatch(domain, methods, action, params_json, graph)
 
     try:
@@ -825,7 +826,7 @@ def _make_domain_tool(domain: str, methods: list[str]):
         # blocking native engine I/O (a real socket RPC, sometimes a
         # multi-attempt retry loop tens of seconds long for a slow admin/
         # lifecycle call like ``tenants.create``). Because this function is
-        # declared ``async def``, kg_server._execute_tool's dispatch-isolation
+        # declared ``async def``, runtime._execute_tool's dispatch-isolation
         # check (``inspect.iscoroutinefunction(tool_func)``) treats it as
         # "already async" and awaits it INLINE on the gateway's one asyncio
         # event-loop thread instead of routing it through
@@ -841,7 +842,7 @@ def _make_domain_tool(domain: str, methods: list[str]):
         # Fix: execute ``_dispatch`` in a worker thread via
         # ``asyncio.to_thread``, which propagates the calling task's
         # contextvars (actor/session — ``contextvars.copy_context()``) into
-        # the thread, exactly like kg_server._execute_tool already does for
+        # the thread, exactly like runtime._execute_tool already does for
         # ordinary synchronous tools. This keeps the uniform "every
         # ``engine_*`` tool is declared ``async def``" surface while making
         # the actual blocking I/O yield the loop instead of monopolizing it.
@@ -883,5 +884,5 @@ def register_engine_tools(mcp) -> None:
         if _is_admin_domain(domain):
             tags.append("admin")
         mcp.tool(name=tool_name, description=description, tags=tags)(fn)
-        kg_server.REGISTERED_TOOLS[tool_name] = fn
-        kg_server.ACTION_TOOL_ROUTES[tool_name] = f"/engine/{domain}"
+        runtime.REGISTERED_TOOLS[tool_name] = fn
+        runtime.ACTION_TOOL_ROUTES[tool_name] = f"/engine/{domain}"

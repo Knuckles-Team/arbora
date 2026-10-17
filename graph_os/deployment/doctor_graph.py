@@ -137,7 +137,7 @@ def _graph_connection_inventory(cfg: Any) -> SimpleNamespace:
     declaration with the same alias. Duplicates within either source are invalid
     and cannot be hidden by that precedence rule.
     """
-    from graph_os.mcp_server.backing.kg_server import get_connection_registry
+    from graph_os.mcp_server.backing.engine_routing import get_connection_registry
 
     external_declarations, kg_declarations = _graph_connection_declarations(cfg)
     invalid_declaration_count = _invalid_declaration_count(

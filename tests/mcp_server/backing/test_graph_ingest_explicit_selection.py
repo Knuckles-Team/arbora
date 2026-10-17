@@ -5,7 +5,7 @@ an explicit graph never defaults, never fans out, and an unknown graph
 fails closed BEFORE any job is submitted or content is written.
 
 Root cause this closes: ``graph_ingest`` had no `connection`/`graph`
-parameters at all -- `kg_server._get_engine()` always returned the
+parameters at all -- `runtime._get_engine()` always returned the
 process-default root engine regardless of any explicit graph the caller
 might have selected elsewhere, so a codebase/document ingest job could only
 ever land on the default/registry-wide graph.
@@ -19,7 +19,8 @@ import pytest
 from agent_utilities.knowledge_graph.core.session import GraphSession
 from agent_utilities.security.brain_context import ActorContext, ActorType
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
+from graph_os.mcp_server.backing import engine_routing
 
 
 def _register_tools():
@@ -94,13 +95,13 @@ class _MultiGraphIngestEngine:
 
 @pytest.fixture(autouse=True)
 def _reset_state():
-    saved_registry = kg_server._CONNECTION_REGISTRY
-    saved_session = kg_server._PROCESS_SESSION
-    kg_server._CONNECTION_REGISTRY = None
-    kg_server._PROCESS_SESSION = _session()
+    saved_registry = engine_routing._CONNECTION_REGISTRY
+    saved_session = runtime._PROCESS_SESSION
+    engine_routing._CONNECTION_REGISTRY = None
+    runtime._PROCESS_SESSION = _session()
     yield
-    kg_server._CONNECTION_REGISTRY = saved_registry
-    kg_server._PROCESS_SESSION = saved_session
+    engine_routing._CONNECTION_REGISTRY = saved_registry
+    runtime._PROCESS_SESSION = saved_session
 
 
 def _install_engine(engine) -> None:
@@ -108,7 +109,7 @@ def _install_engine(engine) -> None:
         ConnectionRegistry,
     )
 
-    kg_server._CONNECTION_REGISTRY = ConnectionRegistry(
+    engine_routing._CONNECTION_REGISTRY = ConnectionRegistry(
         default_engine_provider=lambda: engine
     )
 
@@ -118,7 +119,7 @@ async def test_ingest_unknown_graph_fails_closed_before_any_job_is_submitted():
     engine = _MultiGraphIngestEngine(catalog_graphs=["graph-a"])
     _install_engine(engine)
 
-    out = await kg_server._execute_tool(
+    out = await runtime._execute_tool(
         "graph_ingest",
         action="ingest",
         target_path="checkout/some-repo",
@@ -137,7 +138,7 @@ async def test_ingest_explicit_graph_plus_fanout_connection_is_rejected():
     engine = _MultiGraphIngestEngine(catalog_graphs=["graph-a"])
     _install_engine(engine)
 
-    out = await kg_server._execute_tool(
+    out = await runtime._execute_tool(
         "graph_ingest",
         action="ingest",
         target_path="checkout/some-repo",
@@ -159,7 +160,7 @@ async def test_ingest_resolved_graph_is_threaded_into_submit_task_not_dropped():
     engine = _MultiGraphIngestEngine(catalog_graphs=["graph-a"])
     _install_engine(engine)
 
-    out = await kg_server._execute_tool(
+    out = await runtime._execute_tool(
         "graph_ingest",
         action="ingest",
         target_path="checkout/some-repo",
@@ -186,7 +187,7 @@ async def test_ingest_explicit_graph_on_document_content_fails_closed_not_silent
     engine = _MultiGraphIngestEngine(catalog_graphs=["graph-a"])
     _install_engine(engine)
 
-    out = await kg_server._execute_tool(
+    out = await runtime._execute_tool(
         "graph_ingest",
         action="ingest",
         target_path="checkout/some-notes.md",
@@ -200,17 +201,17 @@ async def test_ingest_explicit_graph_on_document_content_fails_closed_not_silent
 
 async def test_ingest_with_no_explicit_graph_is_unchanged_default_behavior(monkeypatch):
     """No `graph`/`connection` given at all -> the resolution block is a
-    complete no-op and the pre-existing `kg_server._get_engine()` path is
+    complete no-op and the pre-existing `runtime._get_engine()` path is
     untouched (the process-default engine, exactly as before this fix)."""
     _register_tools()
     engine = _MultiGraphIngestEngine(catalog_graphs=["graph-a"])
     # Unlike the explicit-selector tests above, the no-selector path never
     # consults the connection registry (`_install_engine`) -- it is the SAME
-    # `kg_server._get_engine()` singleton lookup `graph_ingest` always used;
+    # `runtime._get_engine()` singleton lookup `graph_ingest` always used;
     # stub it directly to observe that this fix left it alone.
-    monkeypatch.setattr(kg_server, "_get_engine", lambda: engine)
+    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
 
-    out = await kg_server._execute_tool(
+    out = await runtime._execute_tool(
         "graph_ingest",
         action="ingest",
         target_path="checkout/some-repo",

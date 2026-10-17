@@ -62,7 +62,7 @@ from typing import Any
 from agent_utilities.security.error_surface import public_error_json
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 
 #: Friendly action name -> underlying ``client.query.<method>`` name.
 #: ``why_not``/``what_would_invalidate`` deliberately map to the SAME
@@ -257,9 +257,9 @@ def register_epistemic_tools(mcp: Any) -> None:
             default=str,
         )
 
-    kg_server.REGISTERED_TOOLS["graph_epistemic"] = graph_epistemic
+    runtime.REGISTERED_TOOLS["graph_epistemic"] = graph_epistemic
     # No bespoke endpoint needed — the generic REST-twin factory in
-    # kg_server._build_server mounts POST /epistemic for every ACTION_TOOL_ROUTES
+    # runtime._build_server mounts POST /epistemic for every ACTION_TOOL_ROUTES
     # entry without a bespoke handler, dispatching through the SAME
     # _execute_tool core.
-    kg_server.ACTION_TOOL_ROUTES["graph_epistemic"] = "/epistemic"
+    runtime.ACTION_TOOL_ROUTES["graph_epistemic"] = "/epistemic"

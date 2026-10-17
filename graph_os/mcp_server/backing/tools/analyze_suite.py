@@ -31,7 +31,7 @@ from graph_os.gateway.schemas.graph_core import (
     GraphExplainAction,
     GraphResearchAction,
 )
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.tools._surface_selection import (
     conditional_tool_decorator,
     register_conditional_tools,
@@ -258,7 +258,7 @@ def register_analyze_suite_tools(
                 {"resolved": True, "detail_ref": query, **public_detail}, default=str
             )
 
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
         if not engine:
             return "Error: IntelligenceGraphEngine not active."
         from agent_utilities.harness import trace_analytics as ta
@@ -278,7 +278,7 @@ def register_analyze_suite_tools(
             return public_error_text(e)
 
     register_conditional_tools(
-        kg_server.REGISTERED_TOOLS,
+        runtime.REGISTERED_TOOLS,
         [
             ("graph_code", graph_code, None),
             ("graph_research", graph_research, None),

@@ -5,7 +5,7 @@ Thin wrapper over :class:`agent_utilities.security.secrets_client.SecretsClient`
 ``__secrets__`` graph (or the enterprise Vault backend) through the same client
 that every Python import uses, so this surface never re-implements storage. The
 REST twin is ``/graph/secret`` (auto-mounted from ``ACTION_TOOL_ROUTES`` in
-``kg_server.py``); both dispatch into the same client so they never drift.
+``runtime.py``); both dispatch into the same client so they never drift.
 
 Mutations (``set``/``delete``) are governed by the ActionPolicy gate
 (``secret.set`` / ``secret.delete``, approval_required); reads (``get``/``list``)
@@ -22,7 +22,7 @@ import json
 
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 
 
 def _gate(kind: str, target: str, reason: str) -> tuple[bool, dict]:
@@ -32,7 +32,7 @@ def _gate(kind: str, target: str, reason: str) -> tuple[bool, dict]:
         get_action_policy,
     )
 
-    decision = get_action_policy(kg_server._get_engine()).decide(
+    decision = get_action_policy(runtime._get_engine()).decide(
         ActionRequest(
             kind=kind,
             target=target,
@@ -107,4 +107,4 @@ def register_secret_tools(mcp):
             return json.dumps({"deleted": client.delete(key), "key": key, **info})
         return json.dumps({"error": f"unknown action: {action}"})
 
-    kg_server.REGISTERED_TOOLS["graph_secret"] = graph_secret
+    runtime.REGISTERED_TOOLS["graph_secret"] = graph_secret

@@ -11,7 +11,7 @@ from agent_utilities.core.event_loop import run_blocking_ordered
 from agent_utilities.security.error_surface import public_error_text
 from pydantic import BaseModel, Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 
 logger = logging.getLogger(__name__)
 
@@ -433,7 +433,7 @@ def register_agent_execution_tools(mcp: Any) -> None:
             description="reason(tot_bfs|tot_dfs) only: max thought-chain depth before giving up.",
         ),
     ) -> str:
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
         if engine is None:
             return "Error: IntelligenceGraphEngine not active."
         try:
@@ -523,8 +523,8 @@ def register_agent_execution_tools(mcp: Any) -> None:
         except Exception as exc:
             return public_error_text(exc)
 
-    kg_server.REGISTERED_TOOLS["graph_agents"] = graph_agents
-    kg_server.ACTION_TOOL_ROUTES["graph_agents"] = "/graph/agents"
+    runtime.REGISTERED_TOOLS["graph_agents"] = graph_agents
+    runtime.ACTION_TOOL_ROUTES["graph_agents"] = "/graph/agents"
 
     from graph_os.mcp_server.backing.tools.agent_library_tools import (
         register_agent_library_tool,

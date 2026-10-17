@@ -14,7 +14,7 @@ import json
 
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 
 
 def register_reach_tools(mcp):
@@ -58,7 +58,7 @@ def register_reach_tools(mcp):
     ) -> str:
         from agent_utilities.messaging.service import MessagingService
 
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
         svc = MessagingService.instance(engine)
 
         if action == "reach_user":
@@ -95,4 +95,4 @@ def register_reach_tools(mcp):
             return json.dumps(svc.status())
         return json.dumps({"error": f"unknown action: {action}"})
 
-    kg_server.REGISTERED_TOOLS["graph_reach"] = graph_reach
+    runtime.REGISTERED_TOOLS["graph_reach"] = graph_reach

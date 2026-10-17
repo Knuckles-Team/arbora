@@ -6,7 +6,7 @@ import pytest
 from starlette.applications import Starlette
 from starlette.testclient import TestClient
 
-from graph_os.mcp_server.backing.kg_server import graph_query_endpoint
+from graph_os.mcp_server.runtime import graph_query_endpoint
 
 
 @pytest.fixture
@@ -17,7 +17,7 @@ def client():
 
 
 @pytest.mark.asyncio
-@patch("graph_os.mcp_server.backing.kg_server._execute_tool", new_callable=AsyncMock)
+@patch("graph_os.mcp_server.runtime._execute_tool", new_callable=AsyncMock)
 async def test_query_field_reaches_the_canonical_tool_field(mock_execute_tool, client):
     mock_execute_tool.return_value = {"rows": []}
 
@@ -31,7 +31,7 @@ async def test_query_field_reaches_the_canonical_tool_field(mock_execute_tool, c
 
 
 @pytest.mark.asyncio
-@patch("graph_os.mcp_server.backing.kg_server._execute_tool", new_callable=AsyncMock)
+@patch("graph_os.mcp_server.runtime._execute_tool", new_callable=AsyncMock)
 async def test_retired_cypher_field_is_a_deterministic_4xx(mock_execute_tool, client):
     res = client.post("/graph/query", json={"cypher": "MATCH (n) RETURN n"})
 
@@ -41,7 +41,7 @@ async def test_retired_cypher_field_is_a_deterministic_4xx(mock_execute_tool, cl
 
 
 @pytest.mark.asyncio
-@patch("graph_os.mcp_server.backing.kg_server._execute_tool", new_callable=AsyncMock)
+@patch("graph_os.mcp_server.runtime._execute_tool", new_callable=AsyncMock)
 async def test_unknown_field_is_a_clean_4xx_not_a_500(mock_execute_tool, client):
     """A genuinely unrecognized field is a clean 4xx, not a 500."""
     res = client.post(
@@ -57,7 +57,7 @@ async def test_unknown_field_is_a_clean_4xx_not_a_500(mock_execute_tool, client)
 
 
 @pytest.mark.asyncio
-@patch("graph_os.mcp_server.backing.kg_server._execute_tool", new_callable=AsyncMock)
+@patch("graph_os.mcp_server.runtime._execute_tool", new_callable=AsyncMock)
 async def test_does_not_blind_splat_unknown_kwargs_into_execute_tool(
     mock_execute_tool, client
 ):
@@ -75,7 +75,7 @@ async def test_does_not_blind_splat_unknown_kwargs_into_execute_tool(
 
 
 @pytest.mark.asyncio
-@patch("graph_os.mcp_server.backing.kg_server._execute_tool", new_callable=AsyncMock)
+@patch("graph_os.mcp_server.runtime._execute_tool", new_callable=AsyncMock)
 async def test_documented_fields_all_pass_through(mock_execute_tool, client):
     """Every one of the tool's real documented parameters still reaches `_execute_tool`
     (the allowlist fix must not drop any legitimate field)."""
@@ -98,14 +98,14 @@ async def test_documented_fields_all_pass_through(mock_execute_tool, client):
 
 
 @pytest.mark.asyncio
-@patch("graph_os.mcp_server.backing.kg_server._execute_tool", new_callable=AsyncMock)
+@patch("graph_os.mcp_server.runtime._execute_tool", new_callable=AsyncMock)
 async def test_unsupported_tool_field_error_maps_to_4xx_not_500(
     mock_execute_tool, client
 ):
     """Defense-in-depth: even if `_execute_tool` itself raises
     `UnsupportedToolFieldError` (e.g. the allowlist above ever drifts from the tool's
     real signature), the endpoint still returns a deterministic 4xx, not a 500."""
-    from graph_os.mcp_server.backing.kg_server import UnsupportedToolFieldError
+    from graph_os.mcp_server.runtime import UnsupportedToolFieldError
 
     mock_execute_tool.side_effect = UnsupportedToolFieldError(
         "Tool 'graph_query' does not accept field(s): bogus."

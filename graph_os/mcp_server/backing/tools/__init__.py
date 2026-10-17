@@ -1,6 +1,6 @@
 """Grouped MCP tool registration modules for the graph-os server.
 
-Each exposes register_<group>(mcp), called from kg_server._build_server —
+Each exposes register_<group>(mcp), called from runtime._build_server —
 the strangler split of the former ~5k-line monolithic builder.
 """
 

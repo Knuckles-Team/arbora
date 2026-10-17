@@ -12,7 +12,7 @@ so a legitimate, RBAC-authorized ``graph=`` selection on ``POST
 /engine/nodes`` (or the equivalent MCP call) always failed with
 ``PermissionError`` before the engine's own RBAC/RLS ever evaluated it.
 
-The fix narrows the SESSION first (via ``kg_server.bound_to_graph`` -- the
+The fix narrows the SESSION first (via ``engine_routing.bound_to_graph`` -- the
 exact ``GraphSession.with_graph()``/``use_session()`` primitive
 ``query_tools.py``'s ``resolve_explicit_graph``/``bound_to_graph`` callers
 already use) and re-enters ``_dispatch`` once. This file proves: the
@@ -40,7 +40,8 @@ from agent_utilities.knowledge_graph.core.session import (
 from agent_utilities.security.actor_identity import ActorType
 from agent_utilities.security.brain_context import ActorContext, use_actor
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
+from graph_os.mcp_server.backing import engine_routing
 from graph_os.mcp_server.backing.tools import engine_tools
 
 ADMIN_ACTOR = ActorContext(
@@ -113,7 +114,7 @@ def _fresh_client_pool(monkeypatch):
 def test_explicit_graph_mismatch_narrows_session_before_client_construction(
     monkeypatch,
 ):
-    kg_server.ensure_tools_registered()
+    runtime.ensure_tools_registered()
     client, observed = _observing_client()
 
     client_for_calls: list[tuple[str, str]] = []
@@ -148,7 +149,7 @@ def test_explicit_graph_mismatch_narrows_session_before_client_construction(
 
 
 def test_no_narrowing_when_graph_matches_or_is_empty(monkeypatch):
-    kg_server.ensure_tools_registered()
+    runtime.ensure_tools_registered()
     client, observed = _observing_client()
 
     client_for_calls: list[str] = []
@@ -174,7 +175,7 @@ def test_no_narrowing_when_graph_matches_or_is_empty(monkeypatch):
 
 
 def test_recursion_terminates_after_exactly_one_narrowing(monkeypatch):
-    kg_server.ensure_tools_registered()
+    runtime.ensure_tools_registered()
     client, _observed = _observing_client()
     monkeypatch.setattr(engine_tools, "_client_for", lambda graph: client)
 
@@ -223,7 +224,7 @@ def test_engine_tenants_list_then_engine_nodes_list_by_label_succeeds(monkeypatc
     normal domain) against a session still naming the deployment default
     must succeed via the one-step narrowing -- not raise ``PermissionError``
     for a graph the caller just legitimately discovered."""
-    kg_server.ensure_tools_registered()
+    runtime.ensure_tools_registered()
 
     listed_graphs = ["tenant-acme-graph", "tenant-other-graph"]
 
@@ -297,14 +298,14 @@ def test_verified_identity_preserved_through_narrowing(monkeypatch):
     """Only ``.graph`` moves during narrowing -- actor, tenant, scopes, and
     policy_version are carried through unchanged (``with_graph`` is a
     ``dataclasses.replace`` of ONE field)."""
-    kg_server.ensure_tools_registered()
+    runtime.ensure_tools_registered()
     client, observed_calls = _observing_client()
     monkeypatch.setattr(engine_tools, "_client_for", lambda graph: client)
 
     session = _session(READER_ACTOR, "tenant-acme-graph", "kg:read")
     observed_sessions: list[GraphSession] = []
 
-    real_bound_to_graph = kg_server.bound_to_graph
+    real_bound_to_graph = engine_routing.bound_to_graph
 
     def _spy_bound_to_graph(graph):
         cm = real_bound_to_graph(graph)
@@ -320,7 +321,7 @@ def test_verified_identity_preserved_through_narrowing(monkeypatch):
 
         return _Spy()
 
-    monkeypatch.setattr(kg_server, "bound_to_graph", _spy_bound_to_graph)
+    monkeypatch.setattr(engine_routing, "bound_to_graph", _spy_bound_to_graph)
 
     with use_actor(READER_ACTOR), use_session(session):
         engine_tools._dispatch(
@@ -352,20 +353,20 @@ def test_narrowing_behaves_identically_under_stdio_process_session(monkeypatch):
     """Mirrors ``test_graph_explicit_selection.py``'s unauthenticated-posture
     proof: the local/stdio bootstrap has no per-request ambient session, only
     the process-lifetime ``_PROCESS_SESSION`` fallback
-    (``kg_server.verified_tool_session_scope``:
+    (``runtime.verified_tool_session_scope``:
     ``session = ambient or _PROCESS_SESSION``). Narrowing must work
     identically there -- no auth-posture-conditional branch anywhere in
     ``_dispatch``."""
     from agent_utilities.knowledge_graph.core.session import suspend_session
 
-    kg_server.ensure_tools_registered()
+    runtime.ensure_tools_registered()
     client, observed = _observing_client()
     monkeypatch.setattr(engine_tools, "_client_for", lambda graph: client)
 
-    saved_registry = kg_server._CONNECTION_REGISTRY
-    saved_process_session = kg_server._PROCESS_SESSION
-    kg_server._CONNECTION_REGISTRY = None
-    kg_server._PROCESS_SESSION = _session(
+    saved_registry = engine_routing._CONNECTION_REGISTRY
+    saved_process_session = runtime._PROCESS_SESSION
+    engine_routing._CONNECTION_REGISTRY = None
+    runtime._PROCESS_SESSION = _session(
         READER_ACTOR, "tenant-acme-graph", "kg:read", "kg:write"
     )
     try:
@@ -373,7 +374,7 @@ def test_narrowing_behaves_identically_under_stdio_process_session(monkeypatch):
             assert current_session() is None  # the stdio shape: no per-request ambient
 
             out = asyncio.run(
-                kg_server._execute_tool(
+                runtime._execute_tool(
                     "engine_nodes",
                     action="has",
                     params_json=json.dumps({"node_id": "n1"}),
@@ -384,7 +385,7 @@ def test_narrowing_behaves_identically_under_stdio_process_session(monkeypatch):
             assert payload["ok"] is True
             assert current_session() is None  # restored, no leak into the caller
     finally:
-        kg_server._CONNECTION_REGISTRY = saved_registry
-        kg_server._PROCESS_SESSION = saved_process_session
+        engine_routing._CONNECTION_REGISTRY = saved_registry
+        runtime._PROCESS_SESSION = saved_process_session
 
     assert observed == [("nodes", "has", "tenant-other-graph")]

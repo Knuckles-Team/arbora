@@ -34,7 +34,7 @@ from typing import Literal
 
 import pytest
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing._graphos_action_manifest import GRAPHOS_ACTIONS
 from graph_os.mcp_server.backing.graphos_surface import (
     ROUTING_GROUPS,
@@ -61,19 +61,19 @@ MCP_APP_TOOLS = frozenset({"graph_task_progress_app", "graph_trace_waterfall_app
 @pytest.fixture(scope="module")
 def served():
     """``(mcp, {name: tools/list definition})`` for a freshly built graph-os."""
-    saved = dict(kg_server.REGISTERED_TOOLS)
-    routes = dict(kg_server.ACTION_TOOL_ROUTES)
-    kg_server.REGISTERED_TOOLS.clear()
+    saved = dict(runtime.REGISTERED_TOOLS)
+    routes = dict(runtime.ACTION_TOOL_ROUTES)
+    runtime.REGISTERED_TOOLS.clear()
     try:
-        _args, mcp, _middlewares = kg_server._build_server(bootstrap=False)
+        _args, mcp, _middlewares = runtime._build_server(bootstrap=False)
         listed = asyncio.run(mcp.list_tools())
-        registry = dict(kg_server.REGISTERED_TOOLS)
+        registry = dict(runtime.REGISTERED_TOOLS)
         yield mcp, {tool.name: tool_definition(tool) for tool in listed}, registry
     finally:
-        kg_server.REGISTERED_TOOLS.clear()
-        kg_server.REGISTERED_TOOLS.update(saved)
-        kg_server.ACTION_TOOL_ROUTES.clear()
-        kg_server.ACTION_TOOL_ROUTES.update(routes)
+        runtime.REGISTERED_TOOLS.clear()
+        runtime.REGISTERED_TOOLS.update(saved)
+        runtime.ACTION_TOOL_ROUTES.clear()
+        runtime.ACTION_TOOL_ROUTES.update(routes)
 
 
 def test_default_tools_list_is_the_intent_verbs_and_the_app_launchers(served):
@@ -135,7 +135,7 @@ def test_the_dispatch_core_holds_every_served_manifest_family(served):
     assert not unserved, sorted(unserved)
     assert set(INTENT_VERBS) <= set(registry)
     for verb in INTENT_VERBS:
-        assert kg_server.ACTION_TOOL_ROUTES[verb] == f"/intent/{verb}"
+        assert runtime.ACTION_TOOL_ROUTES[verb] == f"/intent/{verb}"
     assert families - set(OPTIONAL_TOOL_FEATURES) <= set(backing_tools(mcp))
 
 

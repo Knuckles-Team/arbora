@@ -10,7 +10,7 @@ from typing import Any
 from agent_utilities.security.error_surface import public_error_text
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 
 _WORKFLOW_TASKS: dict[str, asyncio.Task[Any]] = {}
 
@@ -310,7 +310,7 @@ def register_workflow_tools(mcp: Any) -> None:
             ),
         ),
     ) -> str:
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
         if engine is None:
             return "Error: IntelligenceGraphEngine not active."
         try:
@@ -366,5 +366,5 @@ def register_workflow_tools(mcp: Any) -> None:
         except Exception as exc:
             return public_error_text(exc)
 
-    kg_server.REGISTERED_TOOLS["graph_workflows"] = graph_workflows
-    kg_server.ACTION_TOOL_ROUTES["graph_workflows"] = "/graph/workflows"
+    runtime.REGISTERED_TOOLS["graph_workflows"] = graph_workflows
+    runtime.ACTION_TOOL_ROUTES["graph_workflows"] = "/graph/workflows"

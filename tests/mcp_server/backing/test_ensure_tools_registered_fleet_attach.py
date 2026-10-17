@@ -18,28 +18,30 @@ from unittest.mock import patch
 
 import pytest
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
+from graph_os.mcp_server import server as graphos_server
+from graph_os.mcp_server.backing import engine_routing
 from graph_os.mcp_server.backing.tools.intent_tools import _fleet_mux
 
 
 def test_attach_headless_fleet_loader_calls_attach_fleet_loader_with_composed_args() -> (
     None
 ):
-    """Same arguments the full composed server passes at kg_server.py's
+    """Same arguments the full composed server passes at runtime.py's
     ``state.fleet_mux = attach_fleet_loader(...)`` call."""
     mcp = SimpleNamespace()
     sentinel_embed = object()
     with (
-        patch.object(kg_server, "_fleet_embed_fn", return_value=sentinel_embed),
+        patch.object(graphos_server, "_fleet_embed_fn", return_value=sentinel_embed),
         patch("graph_os.fleet.multiplexer.attach_fleet_loader") as mock_attach,
     ):
-        kg_server._attach_headless_fleet_loader(mcp)
+        runtime._attach_headless_fleet_loader(mcp)
 
     mock_attach.assert_called_once_with(
         mcp,
         embed_fn=sentinel_embed,
-        authority_scope=kg_server.verified_tool_session_scope,
-        catalog_writer=kg_server._write_refreshed_fleet_catalog,
+        authority_scope=runtime.verified_tool_session_scope,
+        catalog_writer=engine_routing._write_refreshed_fleet_catalog,
     )
     assert not hasattr(mcp, "_fleet_mux_unavailable_reason")
 
@@ -61,14 +63,14 @@ def test_attach_headless_fleet_loader_records_the_exact_failure_cause(
     mcp = SimpleNamespace()
     with (
         caplog.at_level(
-            logging.WARNING, logger="graph_os.mcp_server.backing.kg_server"
+            logging.WARNING, logger="graph_os.mcp_server.runtime"
         ),
         patch(
             "graph_os.fleet.multiplexer.attach_fleet_loader",
             side_effect=RuntimeError("no mcp_config.json found"),
         ),
     ):
-        kg_server._attach_headless_fleet_loader(mcp)
+        runtime._attach_headless_fleet_loader(mcp)
 
     assert getattr(mcp, "_fleet_mux", None) is None
     reason = mcp._fleet_mux_unavailable_reason
@@ -82,13 +84,12 @@ def _assert_headless_build_attaches() -> None:
     built_mcp = SimpleNamespace()
     with (
         patch.object(
-            kg_server,
-            "_build_server",
+            runtime, "_build_server",
             return_value=(SimpleNamespace(), built_mcp, []),
         ) as mock_build,
-        patch.object(kg_server, "_attach_headless_fleet_loader") as mock_attach,
+        patch.object(runtime, "_attach_headless_fleet_loader") as mock_attach,
     ):
-        kg_server.ensure_tools_registered()
+        runtime.ensure_tools_registered()
 
     mock_build.assert_called_once_with(bootstrap=False)
     mock_attach.assert_called_once_with(built_mcp)
@@ -99,7 +100,7 @@ def test_ensure_tools_registered_attaches_fleet_loader_to_the_built_mcp(
 ) -> None:
     """``ensure_tools_registered()`` now attaches a fleet loader to the exact
     ``mcp`` its headless ``_build_server(bootstrap=False)`` call returns."""
-    monkeypatch.setattr(kg_server, "REGISTERED_TOOLS", {})
+    monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {})
     _assert_headless_build_attaches()
 
 
@@ -107,13 +108,13 @@ def test_ensure_tools_registered_skips_rebuilding_when_fully_registered(
     monkeypatch,
 ) -> None:
     """The idempotency guard short-circuits once a full build's names are present."""
-    monkeypatch.setattr(kg_server, "REGISTERED_TOOLS", {"find": object()})
-    monkeypatch.setattr(kg_server, "_FULL_TOOL_NAMES", frozenset({"find"}))
+    monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {"find": object()})
+    monkeypatch.setattr(runtime, "_FULL_TOOL_NAMES", frozenset({"find"}))
     with (
-        patch.object(kg_server, "_build_server") as mock_build,
-        patch.object(kg_server, "_attach_headless_fleet_loader") as mock_attach,
+        patch.object(runtime, "_build_server") as mock_build,
+        patch.object(runtime, "_attach_headless_fleet_loader") as mock_attach,
     ):
-        kg_server.ensure_tools_registered()
+        runtime.ensure_tools_registered()
 
     mock_build.assert_not_called()
     mock_attach.assert_not_called()
@@ -127,8 +128,8 @@ def test_ensure_tools_registered_rebuilds_a_partial_table(monkeypatch) -> None:
     gateway dispatching over a partial table (and made the suite order
     dependent).
     """
-    monkeypatch.setattr(kg_server, "REGISTERED_TOOLS", {"graph_a2a": object()})
-    monkeypatch.setattr(kg_server, "_FULL_TOOL_NAMES", frozenset())
+    monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {"graph_a2a": object()})
+    monkeypatch.setattr(runtime, "_FULL_TOOL_NAMES", frozenset())
     _assert_headless_build_attaches()
 
 

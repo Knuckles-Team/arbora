@@ -105,13 +105,13 @@ def test_query_workflow_skill_documents_the_registered_query_argument() -> None:
     """The query guide and its sidecar agree with the registered tool contract."""
     import inspect
 
-    from graph_os.mcp_server.backing import kg_server
+    from graph_os.mcp_server import runtime
 
-    kg_server.ensure_tools_registered()
+    runtime.ensure_tools_registered()
     skill = SKILLS_ROOT / "graph-query-and-explanation"
     text = (skill / "SKILL.md").read_text(encoding="utf-8")
     sidecar = (skill / "agents" / "graph-os.yaml").read_text(encoding="utf-8")
-    parameters = inspect.signature(kg_server.REGISTERED_TOOLS["graph_query"]).parameters
+    parameters = inspect.signature(runtime.REGISTERED_TOOLS["graph_query"]).parameters
 
     assert "query" in parameters
     assert "cypher" not in parameters

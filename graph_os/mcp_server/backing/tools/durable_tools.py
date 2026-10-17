@@ -13,7 +13,7 @@ from typing import Any
 
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 
 
 def register_durable_tools(mcp: Any) -> None:
@@ -71,7 +71,7 @@ def register_durable_tools(mcp: Any) -> None:
         ),
         limit: int = Field(default=100, description="'status' only: max rows."),
     ) -> str:
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
         from agent_utilities.orchestration.durable_tool_surface import (
             DurableCallNotBacked,
             durable_call,
@@ -152,7 +152,7 @@ def register_durable_tools(mcp: Any) -> None:
     # Matches register_job_tools's own pattern (mcp/tools/job_tools.py): an
     # explicit REGISTERED_TOOLS entry (belt-and-suspenders alongside the
     # @mcp.tool() decorator) plus the REST twin, so
-    # kg_server._mount_rest_routes's generic ACTION_TOOL_ROUTES loop mounts
+    # runtime._mount_rest_routes's generic ACTION_TOOL_ROUTES loop mounts
     # POST /api/graph/durable for free (Two surfaces by default).
-    kg_server.REGISTERED_TOOLS["graph_durable"] = graph_durable
-    kg_server.ACTION_TOOL_ROUTES["graph_durable"] = "/graph/durable"
+    runtime.REGISTERED_TOOLS["graph_durable"] = graph_durable
+    runtime.ACTION_TOOL_ROUTES["graph_durable"] = "/graph/durable"

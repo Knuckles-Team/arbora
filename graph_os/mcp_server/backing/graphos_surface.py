@@ -15,7 +15,7 @@ gates; they are not MCP tools.
 
 The action-routed tools that implement the operations register on a private
 FastMCP instance (:func:`backing_server`). They populate the shared
-``kg_server.REGISTERED_TOOLS`` dispatch core — which the intent router, the REST
+``runtime.REGISTERED_TOOLS`` dispatch core — which the intent router, the REST
 gateway and every operation dispatch through — and supply the per-operation
 schemas ``describe`` serves. Host-native operations a server adds beside the
 manifest (graph-os's browser control, A2A, RLM) register on the same backing

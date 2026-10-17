@@ -47,7 +47,7 @@ from typing import Any
 from agent_utilities.security.error_surface import public_error_payload
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 
 
 def _incident_engine() -> Any | None:
@@ -65,7 +65,7 @@ def _gate(kind: str, target: str, reason: str, actor_id: str = "") -> tuple[bool
 
     Mirrors ``claim_tools._gate``/``secret_tools._gate`` exactly — a thin call
     into the shared ``get_action_policy(engine).decide(...)`` decision point,
-    never a reimplementation of its rules. Uses ``kg_server._get_engine()``
+    never a reimplementation of its rules. Uses ``runtime._get_engine()``
     (the same MCP-layer engine handle every other tool's gate uses for policy
     audit/rate-limit accounting) — a DIFFERENT handle than
     ``_incident_engine()``'s ``GraphComputeEngine``, which is what actually
@@ -78,7 +78,7 @@ def _gate(kind: str, target: str, reason: str, actor_id: str = "") -> tuple[bool
         get_action_policy,
     )
 
-    decision = get_action_policy(kg_server._get_engine()).decide(
+    decision = get_action_policy(runtime._get_engine()).decide(
         ActionRequest(
             kind=kind,
             target=target,
@@ -479,9 +479,9 @@ def register_incident_tools(mcp: Any) -> None:
             }
         )
 
-    kg_server.REGISTERED_TOOLS["graph_incident"] = graph_incident
+    runtime.REGISTERED_TOOLS["graph_incident"] = graph_incident
     # No bespoke endpoint needed — the generic REST-twin factory in
-    # kg_server._build_server mounts POST /incident for every ACTION_TOOL_ROUTES
+    # runtime._build_server mounts POST /incident for every ACTION_TOOL_ROUTES
     # entry without a bespoke handler, dispatching through the SAME
     # _execute_tool core.
-    kg_server.ACTION_TOOL_ROUTES["graph_incident"] = "/incident"
+    runtime.ACTION_TOOL_ROUTES["graph_incident"] = "/incident"

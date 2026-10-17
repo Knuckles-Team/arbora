@@ -376,9 +376,9 @@ def _record_provenance(
     """
     node_id = f"configchange:{env_key}:{int(time.time() * 1000)}"
     try:
-        from graph_os.mcp_server.backing import kg_server
+        from graph_os.mcp_server import runtime
 
-        kg_server._get_engine().add_node(
+        runtime._get_engine().add_node(
             node_id,
             {
                 "node_type": "ConfigChange",
@@ -414,9 +414,9 @@ def _gate(env_key: str, reason: str) -> tuple[bool, dict[str, Any]]:
             get_action_policy,
         )
 
-        from graph_os.mcp_server.backing import kg_server
+        from graph_os.mcp_server import runtime
 
-        decision = get_action_policy(kg_server._get_engine()).decide(
+        decision = get_action_policy(runtime._get_engine()).decide(
             ActionRequest(
                 kind="config.set",
                 target=env_key,

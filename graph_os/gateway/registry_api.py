@@ -224,7 +224,7 @@ class _KindSpec:
 #
 # PHASE A investigation — three sections `/api/enhanced/tools` still serves
 # from the filesystem/KG (`builtin_tools`, `skill_graphs`, `skill_workflows`,
-# see `graph_os.mcp_server.backing.kg_server._build_tools_payload_sync`'s own
+# see `graph_os.mcp_server.backing.engine_routing._build_tools_payload_sync`'s own
 # docstring, "FIX LANE (collapse-tool-endpoints)") were evaluated as
 # candidate additional `_KindSpec` entries here. None were added. Evidence:
 #
@@ -401,7 +401,7 @@ class CatalogUnavailable(RuntimeError):
 def _get_catalog_engine() -> Any:
     """Resolve the existing engine singleton; no reader-owned store exists."""
 
-    from graph_os.mcp_server.backing.kg_server import _get_engine
+    from graph_os.mcp_server.runtime import _get_engine
 
     return _get_engine()
 
@@ -419,7 +419,7 @@ async def _offload_catalog_call(
     other in-flight request on the process, not just this one. This mirrors
     the dispatch-isolation pattern already used for engine RPCs elsewhere in
     this system (``asyncio.wait_for(asyncio.to_thread(...))`` around
-    ``graph_os.mcp_server.backing.kg_server``'s tool dispatch,
+    ``graph_os.mcp_server.runtime``'s tool dispatch,
     CONCEPT:AU-ECO.mcp.gateway-dispatch-isolation): run the blocking call on
     a worker thread so the loop stays schedulable, and bound it with a
     deadline so a hung engine call fails this one request cleanly instead of
@@ -1409,7 +1409,7 @@ async def _get_kind(
 
 # Toggle-store item_type/key convention per kind, evidenced from the two
 # places that already write/read this preference store today:
-# ``graph_os.mcp_server.backing.kg_server._build_tools_payload_sync`` (servers,
+# ``graph_os.mcp_server.backing.engine_routing._build_tools_payload_sync`` (servers,
 # keyed by name — ``("mcp_server", name)``; skills, keyed by the skill's
 # frontmatter name, which is the same value as this catalog's ``name``
 # column — ``("skill", name)``) and
@@ -1450,7 +1450,7 @@ async def _merge_toggle_states(
     precedent for ``mcp_tools``/servers.
     """
 
-    from graph_os.mcp_server.backing.kg_server import get_toggle_states_batch
+    from graph_os.mcp_server.backing.engine_routing import get_toggle_states_batch
 
     toggleable = list(_iter_toggleable_items(kinds_map))
     if not toggleable:

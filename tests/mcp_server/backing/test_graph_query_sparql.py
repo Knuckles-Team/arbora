@@ -11,7 +11,8 @@ from __future__ import annotations
 import pytest
 from agent_utilities.knowledge_graph.orchestration.engine_query import QueryMixin
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
+from graph_os.mcp_server.backing import engine_routing
 
 pytestmark = pytest.mark.concept("AU-KG.ingest.mirror-inbound")
 
@@ -22,7 +23,7 @@ def _register_graph_query():
     from graph_os.mcp_server.backing.tools.query_tools import register_query_tools
 
     register_query_tools(FastMCP("test"))
-    return kg_server.REGISTERED_TOOLS["graph_query"]
+    return runtime.REGISTERED_TOOLS["graph_query"]
 
 
 class _FakeEngine:
@@ -40,8 +41,7 @@ def test_sparql_scope_routes_to_engine_sparql(monkeypatch):
     rows = [{"s": "n1", "p": "rdf:type", "o": "Agent"}]
     engine = _FakeEngine(rows)
     monkeypatch.setattr(
-        kg_server,
-        "_resolve_target_engines",
+        engine_routing, "_resolve_target_engines",
         lambda target: ([("kg", engine)], {}, False),
     )
     out = graph_query(
@@ -57,8 +57,7 @@ def test_sparql_scope_ask_roundtrip(monkeypatch):
     graph_query = _register_graph_query()
     engine = _FakeEngine([{"boolean": True}])
     monkeypatch.setattr(
-        kg_server,
-        "_resolve_target_engines",
+        engine_routing, "_resolve_target_engines",
         lambda target: ([("kg", engine)], {}, False),
     )
     out = graph_query(query="ASK { ?s a ?o }", scope="sparql", params="{}").model_dump()
@@ -69,8 +68,7 @@ def test_sparql_scope_fans_out(monkeypatch):
     graph_query = _register_graph_query()
     e1, e2 = _FakeEngine([{"x": "a"}]), _FakeEngine([{"x": "b"}])
     monkeypatch.setattr(
-        kg_server,
-        "_resolve_target_engines",
+        engine_routing, "_resolve_target_engines",
         lambda target: ([("k1", e1), ("k2", e2)], {}, True),
     )
     out = graph_query(

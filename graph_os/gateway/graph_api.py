@@ -124,7 +124,7 @@ def _mount_sparql_route(app, prefix: str = "/api") -> None:
 
     path = f"{prefix}/sparql"
     # Starlette-style add_route (works on FastAPI too): raw Request→Response with
-    # no FastAPI body/param validation, matching the other kg_server endpoints.
+    # no FastAPI body/param validation, matching the other runtime endpoints.
     app.add_route(path, sparql_endpoint, methods=["GET", "POST"])
     logger.info("Mounted local SPARQL endpoint")
 

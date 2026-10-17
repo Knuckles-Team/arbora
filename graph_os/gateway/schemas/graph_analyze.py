@@ -2,7 +2,7 @@
 ``/api/graph/search/*`` REST route families.
 
 CONCEPT:AU-KG.query.typed-rest-schemas — these routes are mounted in
-``graph_os/mcp_server/backing/kg_server/py::_mount_rest_routes`` (~lines 5043-5300) with raw
+``graph_os/mcp_server/runtime.py::_mount_rest_routes`` (~lines 5043-5300) with raw
 Starlette ``app.add_route(...)`` handlers that carry no schema, so none of them appear
 in the live OpenAPI document. Every model below was derived by reading the actual
 handler for the route (what it pulls out of the request body / query string) and, for
@@ -17,7 +17,7 @@ families:
   ``graph_explain`` tools (``graph_os/mcp_server/backing/tools/analysis_tools/py`` and
   ``analyze_suite.py``), every one of which returns an
   :class:`~agent_utilities.models.evidence_bundle.EvidenceBundle`. The handler then does
-  ``safe_json_load(res)`` (``kg_server.py::safe_json_load``), which calls
+  ``safe_json_load(res)`` (``runtime.py::safe_json_load``), which calls
   ``res.model_dump()`` for anything with a ``model_dump`` method — so the REST
   ``result`` field is always that EvidenceBundle's dict form. Hence one shared
   :class:`AnalyzeResponse` for the whole family.
@@ -39,7 +39,7 @@ has its own schema (``agent_utilities/protocols/epistemic_operations/__init__.py
 
 **Permissiveness.** Two request bodies are dispatched to a tool with a fixed signature
 and no ``**kwargs`` (``graph_analyze``, ``graph_search``) via a raw ``**body`` splat in
-``_execute_tool``; ``kg_server._validate_tool_kwargs_against_signature`` (U-74) already
+``_execute_tool``; ``runtime._validate_tool_kwargs_against_signature`` (U-74) already
 rejects any field outside that signature with a 400 today, so :class:`GraphAnalyzeRequest`
 and :class:`GraphSearchRequest` use ``extra="forbid"`` — this mirrors, not tightens,
 existing behavior. Every other request model here backs a hand-written handler that

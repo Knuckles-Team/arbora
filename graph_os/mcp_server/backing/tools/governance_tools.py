@@ -10,7 +10,7 @@ from agent_utilities.core.event_loop import run_blocking_ordered
 from agent_utilities.security.error_surface import public_error_text
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 
 
 def register_governance_tools(mcp: Any) -> None:
@@ -115,7 +115,7 @@ def register_governance_tools(mcp: Any) -> None:
             # not a graph read.
             return json.dumps(_policy_status(), indent=2, default=str)
 
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
         if engine is None:
             return "Error: IntelligenceGraphEngine not active."
 
@@ -138,8 +138,8 @@ def register_governance_tools(mcp: Any) -> None:
             apply=apply,
         )
 
-    kg_server.REGISTERED_TOOLS["graph_governance"] = graph_governance
-    kg_server.ACTION_TOOL_ROUTES["graph_governance"] = "/graph/governance"
+    runtime.REGISTERED_TOOLS["graph_governance"] = graph_governance
+    runtime.ACTION_TOOL_ROUTES["graph_governance"] = "/graph/governance"
 
 
 def _execute_governance_action(
@@ -373,7 +373,7 @@ def _claim_ownership(
     """GOC-61 admin ownership-claim — dispatches into the ONE shared core
     (:mod:`agent_utilities.knowledge_graph.core.ownership_claim`) that both this
     MCP tool and its automatic REST twin (``/graph/governance``,
-    ``kg_server.ACTION_TOOL_ROUTES``) run through. ``apply=False`` (the
+    ``runtime.ACTION_TOOL_ROUTES``) run through. ``apply=False`` (the
     default) is a read-only dry-run preview grouped by node_type, showing the
     owner-to-be per group; ``apply=True`` requires kg:admin and actually
     mutates, claiming ONLY nodes verified unowned immediately before the

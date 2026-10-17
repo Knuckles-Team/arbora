@@ -15,7 +15,7 @@ from typing import Any, Literal
 from agent_utilities.security.error_surface import public_error_text
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 
 AgentLibraryAction = Literal["list", "get", "save", "seed_roles"]
 
@@ -124,7 +124,7 @@ def register_agent_library_tool(mcp: Any) -> None:
             default="{}", description="JSON agent record (action=save)."
         ),
     ) -> str:
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
         if engine is None:
             return json.dumps({"error": "IntelligenceGraphEngine not active."})
         try:
@@ -137,8 +137,8 @@ def register_agent_library_tool(mcp: Any) -> None:
             return public_error_text(exc)
         return json.dumps(result, default=str)
 
-    kg_server.REGISTERED_TOOLS["agent_library"] = agent_library
-    kg_server.ACTION_TOOL_ROUTES["agent_library"] = "/graph/agent-library"
+    runtime.REGISTERED_TOOLS["agent_library"] = agent_library
+    runtime.ACTION_TOOL_ROUTES["agent_library"] = "/graph/agent-library"
 
 
 __all__ = ["register_agent_library_tool", "run_agent_library_action"]

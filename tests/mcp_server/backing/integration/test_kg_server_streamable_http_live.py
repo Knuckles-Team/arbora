@@ -2,7 +2,7 @@
 that the auth boundary genuinely rejects unauthenticated callers.
 
 This is deliberately NOT a mocked round trip: it builds the exact production
-FastMCP application (:func:`graph_os.mcp_server.backing.kg_server._build_server`,
+FastMCP application (:func:`graph_os.mcp_server.runtime._build_server`,
 the same call the served CLI entrypoint and the API gateway use), applies the
 real middleware/auth stack from ``create_mcp_server``/``_configure_auth``, and
 serves it with a real ``uvicorn`` server bound to a real loopback TCP port. A
@@ -128,7 +128,7 @@ def _live_streamable_http_server(
     import uvicorn
     from agent_utilities.core.config import config as live_config
 
-    from graph_os.mcp_server.backing import kg_server
+    from graph_os.mcp_server import runtime
 
     # Configure inbound JWT verification (FastMCP's own provider) exactly as
     # --auth-type jwt --token-jwks-uri/--token-issuer/--token-audience would.
@@ -152,7 +152,7 @@ def _live_streamable_http_server(
         live_config, "kg_policy_version", "e2e-test-policy-v1", raising=False
     )
 
-    args, mcp, middlewares = kg_server._build_server(bootstrap=False)
+    args, mcp, middlewares = runtime._build_server(bootstrap=False)
     # Re-parse our transport/auth argv through the real parser+auth configurer
     # (the same objects the CLI entrypoint builds), since _build_server(bootstrap=False)
     # deliberately ignores argv (see its docstring) and uses defaults.

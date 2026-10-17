@@ -35,7 +35,7 @@ from agent_utilities.core.event_loop import run_blocking_ordered
 from agent_utilities.security.error_surface import public_error_payload
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 
 #: Governance/compliance node labels already ingested by the CISO Assistant
 #: extractor (agent_utilities/knowledge_graph/enrichment/extractors/ciso_assistant.py)
@@ -200,7 +200,7 @@ def _confidence_rollup(engine: Any, label: str) -> dict[str, Any] | None:
 
 
 def _posture() -> dict[str, Any]:
-    engine = kg_server._get_engine()
+    engine = runtime._get_engine()
 
     # X4: policy version + auth/secrets posture reuse the existing
     # agent-utilities-doctor checks and need no KG engine at all — computed
@@ -254,7 +254,7 @@ def _posture() -> dict[str, Any]:
 def _export(
     *, cypher: str, node_ids_json: str, disclosure_level: str, as_of: str, limit: int
 ) -> dict[str, Any]:
-    engine = kg_server._get_engine()
+    engine = runtime._get_engine()
     if engine is None:
         return {
             "surface": "compliance",
@@ -415,9 +415,9 @@ def register_compliance_tools(mcp: Any) -> None:
             }
         )
 
-    kg_server.REGISTERED_TOOLS["graph_compliance"] = graph_compliance
+    runtime.REGISTERED_TOOLS["graph_compliance"] = graph_compliance
     # No bespoke endpoint needed — the generic REST-twin factory in
-    # kg_server._build_server mounts POST /compliance for every
+    # runtime._build_server mounts POST /compliance for every
     # ACTION_TOOL_ROUTES entry without a bespoke handler, dispatching through
     # the SAME _execute_tool core.
-    kg_server.ACTION_TOOL_ROUTES["graph_compliance"] = "/compliance"
+    runtime.ACTION_TOOL_ROUTES["graph_compliance"] = "/compliance"

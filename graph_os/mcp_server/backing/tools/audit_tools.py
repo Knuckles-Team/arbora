@@ -29,7 +29,7 @@ Two actions:
   version. See :func:`~agent_utilities.knowledge_graph.retrieval.lineage.resolve_lineage`.
 
 Mirrors the ``graph_ops_causal`` action-router shape (single ``@mcp.tool``, an
-``action`` enum, registered into ``kg_server.REGISTERED_TOOLS``) rather than
+``action`` enum, registered into ``runtime.REGISTERED_TOOLS``) rather than
 inventing a new tool convention.
 """
 
@@ -41,7 +41,7 @@ from typing import Any
 from agent_utilities.security.error_surface import public_error_payload
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 
 
 def register_audit_tools(mcp: Any) -> None:
@@ -123,17 +123,17 @@ def register_audit_tools(mcp: Any) -> None:
             }
         )
 
-    kg_server.REGISTERED_TOOLS["graph_audit"] = graph_audit
+    runtime.REGISTERED_TOOLS["graph_audit"] = graph_audit
     # No bespoke endpoint needed — the generic REST-twin factory in
-    # kg_server._build_server (CONCEPT:AU-KG.coordination.engine-message-broker) mounts
+    # runtime._build_server (CONCEPT:AU-KG.coordination.engine-message-broker) mounts
     # POST /audit for every ACTION_TOOL_ROUTES entry without a bespoke handler,
     # dispatching through the SAME _execute_tool core.
-    kg_server.ACTION_TOOL_ROUTES["graph_audit"] = "/audit"
+    runtime.ACTION_TOOL_ROUTES["graph_audit"] = "/audit"
 
 
 def _verify() -> dict[str, Any]:
     """Cryptographically verify the default graph's hash-chained audit log."""
-    engine = kg_server._get_engine()
+    engine = runtime._get_engine()
     if engine is None or getattr(engine, "graph", None) is None:
         return {
             "surface": "audit",
@@ -164,7 +164,7 @@ def _for_target(target_id: str) -> dict[str, Any]:
     """Entity-anchored reverse index of :ToolCall provenance, plus a verify snapshot."""
     from agent_utilities.orchestration.manager import Orchestrator
 
-    engine = kg_server._get_engine()
+    engine = runtime._get_engine()
     if engine is None:
         return {
             "surface": "audit",
@@ -184,7 +184,7 @@ def _lineage(fragment_id: str, *, claim: str, content_hash: str) -> dict[str, An
         resolve_lineage,
     )
 
-    engine = kg_server._get_engine()
+    engine = runtime._get_engine()
     try:
         record = resolve_lineage(
             engine, fragment_id=fragment_id, claim_text=claim, content_hash=content_hash

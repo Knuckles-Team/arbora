@@ -50,7 +50,7 @@ class _MockMCP:
 def graph_write_and_engine(tmp_path, monkeypatch):
     """Register the real tool surface against a fake engine we can assert on.
 
-    The engine is resolved AT CALL TIME via ``kg_server._resolve_target_engines``
+    The engine is resolved AT CALL TIME via ``engine_routing._resolve_target_engines``
     (not the build-time ``_get_engine``), so that is what must be patched — and it
     must stay patched while the tool runs. Getting this wrong makes every assertion
     pass against ``"Error: IntelligenceGraphEngine not active."``, i.e. a test that
@@ -74,25 +74,25 @@ def graph_write_and_engine(tmp_path, monkeypatch):
         return_value=(None, mock_mcp, []),
     ):
         with patch(
-            "graph_os.mcp_server.backing.kg_server._get_engine", return_value=engine
+            "graph_os.mcp_server.runtime._get_engine", return_value=engine
         ):
-            from graph_os.mcp_server.backing.kg_server import _build_server
+            from graph_os.mcp_server.runtime import _build_server
 
             _build_server(bootstrap=False)
 
-    from graph_os.mcp_server.backing import kg_server
+    from graph_os.mcp_server import runtime
+    from graph_os.mcp_server.backing import engine_routing
 
     registry = MagicMock()
     registry.is_writable.return_value = True
     monkeypatch.setattr(
-        kg_server,
-        "_resolve_target_engines",
+        engine_routing, "_resolve_target_engines",
         lambda _t: ([("primary", engine)], {}, False),
     )
-    monkeypatch.setattr(kg_server, "get_connection_registry", lambda: registry)
+    monkeypatch.setattr(engine_routing, "get_connection_registry", lambda: registry)
     # The action-routed tools register on graph-os's private backing server
     # and populate the shared dispatch core the intent tools route through.
-    return kg_server.REGISTERED_TOOLS["graph_write"], engine
+    return runtime.REGISTERED_TOOLS["graph_write"], engine
 
 
 @pytest.mark.asyncio

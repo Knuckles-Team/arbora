@@ -50,7 +50,7 @@ from agent_utilities.protocols.source_connectors.base import ExternalAccess
 from pydantic import Field, ValidationError, model_validator
 
 from graph_os.api.contracts.session import GraphSession
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 
 logger = logging.getLogger(__name__)
 
@@ -3324,8 +3324,8 @@ def register_data_prep_tools(mcp: Any) -> None:
 
             return public_error_json(exc, context={"action": normalized_action})
 
-    kg_server.REGISTERED_TOOLS["graph_data_prep"] = graph_data_prep
-    kg_server.ACTION_TOOL_ROUTES["graph_data_prep"] = "/data/prep"
+    runtime.REGISTERED_TOOLS["graph_data_prep"] = graph_data_prep
+    runtime.ACTION_TOOL_ROUTES["graph_data_prep"] = "/data/prep"
 
 
 __all__ = [

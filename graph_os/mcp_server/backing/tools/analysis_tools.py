@@ -1,6 +1,6 @@
 """Auto-extracted graph-os MCP tools: analysis_tools (register_analysis_tools).
 
-Split out of kg_server._build_server to deepen the MCP surface into focused
+Split out of runtime._build_server to deepen the MCP surface into focused
 modules without changing tool behavior or names.
 """
 
@@ -41,7 +41,8 @@ from agent_utilities.security.config_sensitivity import (
 from agent_utilities.security.error_surface import public_error_json, public_error_text
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
+from graph_os.mcp_server.backing import engine_routing
 
 logger = logging.getLogger(__name__)
 
@@ -2731,7 +2732,7 @@ def _configure_remove_connection(action, config_key, registry):
 
 def _configure_action_add_connection(action, config_key, config_value):
     # action(s): 'add_connection', 'remove_connection', 'list_connections'
-    registry = kg_server.get_connection_registry()
+    registry = engine_routing.get_connection_registry()
     if action == "list_connections":
         return json.dumps(registry.status(), default=str)
     if not config_key:
@@ -3635,7 +3636,7 @@ def _configure_action_approve_connection_mapping(action, config_key, config_valu
         return json.dumps(
             {"error": f"config_key (connection name) required for {action}"}
         )
-    registry = kg_server.get_connection_registry()
+    registry = engine_routing.get_connection_registry()
     if action in {
         "approve_connection_mapping",
         "connection_mapping_status",
@@ -4127,7 +4128,7 @@ def register_analysis_tools(mcp):
         ),
     ) -> str:
         """Execute complex analysis across the Knowledge Graph. Enables advanced semantic synthesis, causal dependency mapping, and structural inspection."""
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
         if not engine:
             return "Error: IntelligenceGraphEngine not active."
         handler = _ANALYSIS_ACTION_DISPATCH.get(action)
@@ -4208,7 +4209,7 @@ def register_analysis_tools(mcp):
             target=target,
         )
 
-    kg_server.REGISTERED_TOOLS["graph_analyze"] = graph_analyze
+    runtime.REGISTERED_TOOLS["graph_analyze"] = graph_analyze
 
     @mcp.tool(
         name="graph_orchestrate",
@@ -4332,7 +4333,7 @@ def register_analysis_tools(mcp):
         # declared type is Literal["auto", "pydantic_graph"], and only this
         # exact shape lets mypy narrow both branches back to that Literal.
         execution_mode = execution_mode if isinstance(execution_mode, str) else "auto"
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
         if engine is None:
             return "Error: IntelligenceGraphEngine not active."
         try:
@@ -4367,7 +4368,7 @@ def register_analysis_tools(mcp):
         except Exception as exc:
             return public_error_text(exc)
 
-    kg_server.REGISTERED_TOOLS["graph_orchestrate"] = graph_orchestrate
+    runtime.REGISTERED_TOOLS["graph_orchestrate"] = graph_orchestrate
 
     @mcp.tool(
         name="graph_configure",
@@ -4434,4 +4435,4 @@ def register_analysis_tools(mcp):
                 }
             )
 
-    kg_server.REGISTERED_TOOLS["graph_configure"] = graph_configure
+    runtime.REGISTERED_TOOLS["graph_configure"] = graph_configure

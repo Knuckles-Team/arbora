@@ -24,7 +24,7 @@ an injection surface and a path to row data. Instead:
 * only the engine's synthesized read-only ``information_schema`` relations are
   read; no user table is touched.
 
-Dispatch goes through the ONE shared action core — ``kg_server._execute_tool``
+Dispatch goes through the ONE shared action core — ``runtime._execute_tool``
 against the already-registered ``graph_table`` tool's read-only ``query``
 action — so the REST route added in :mod:`graph_os.gateway.graph_api` and
 the MCP surface execute the same code, under the same session/RLS enforcement,
@@ -157,10 +157,10 @@ def _decode_rows(raw: Any) -> list[dict[str, Any]] | None:
 
 async def _read_catalog(key: str) -> list[dict[str, Any]] | None:
     """Run ONE constant catalog statement through the shared action core."""
-    from graph_os.mcp_server.backing import kg_server
+    from graph_os.mcp_server import runtime
 
     try:
-        raw = await kg_server._execute_tool(
+        raw = await runtime._execute_tool(
             "graph_table", action="query", sql=CATALOG_STATEMENTS[key]
         )
     except Exception as exc:  # noqa: BLE001 — mapped to a typed, fail-closed error

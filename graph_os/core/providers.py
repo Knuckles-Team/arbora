@@ -549,7 +549,7 @@ def is_skill_graph_reference_path(path: Path, root: Path) -> bool:
     """True if ``path`` lies under a ``skill_graphs``/``skill-graphs`` subtree of ``root``.
 
     Shared by every caller that walks a skill root for ``SKILL.md`` files (this
-    module's own :func:`_skill_dirs` and ``graph_os/mcp_server/backing/kg_server.py``'s packaged-skill
+    module's own :func:`_skill_dirs` and ``graph_os/mcp_server/runtime.py``'s packaged-skill
     ingestion) so the reference-corpus exclusion stays in exactly one place.
     """
     return bool(_SKILL_GRAPH_SEGMENTS.intersection(path.relative_to(root).parts))

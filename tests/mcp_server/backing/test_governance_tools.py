@@ -18,7 +18,7 @@ import json
 
 from agent_utilities.knowledge_graph.maintenance import graph_ownership as go
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.tools.governance_tools import register_governance_tools
 
 
@@ -41,13 +41,13 @@ class _FakeEngine:
 def _register(monkeypatch, *, engine: object | None = _FakeEngine()) -> object:
     mcp = _CollectingMCP()
     register_governance_tools(mcp)
-    monkeypatch.setattr(kg_server, "_get_engine", lambda: engine)
+    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
     async_tool = mcp.tools["graph_governance"]
 
     # graph_governance is `async def` (D-50 — event-loop isolation for sync
     # MCP tool handlers with genuine blocking bodies). This suite predates
     # that change and calls the registered tool directly (bypassing
-    # kg_server._execute_tool, which already awaits async tools) — wrap it so
+    # runtime._execute_tool, which already awaits async tools) — wrap it so
     # every existing synchronous `tool(...)` call site keeps working unchanged.
     def _sync_tool(**kwargs):
         return asyncio.run(async_tool(**kwargs))
@@ -88,8 +88,8 @@ def test_registered_on_graphos_tool_table():
     mcp = _CollectingMCP()
     register_governance_tools(mcp)
     assert "graph_governance" in mcp.tools
-    assert kg_server.REGISTERED_TOOLS.get("graph_governance") is not None
-    assert kg_server.ACTION_TOOL_ROUTES.get("graph_governance") == "/graph/governance"
+    assert runtime.REGISTERED_TOOLS.get("graph_governance") is not None
+    assert runtime.ACTION_TOOL_ROUTES.get("graph_governance") == "/graph/governance"
 
 
 # ---------------------------------------------------------------------------

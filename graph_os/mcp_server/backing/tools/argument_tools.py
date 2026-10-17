@@ -23,7 +23,7 @@ engine's existing Claim/Evidence/BeliefState + Dung argumentation
 
 Mirrors the ``graph_ops_causal``/``graph_epistemic`` action-router shape
 (single ``@mcp.tool``, an ``action`` enum, JSON payload fields, registered
-into ``kg_server.REGISTERED_TOOLS``) rather than inventing a new tool
+into ``runtime.REGISTERED_TOOLS``) rather than inventing a new tool
 convention.
 """
 
@@ -35,7 +35,7 @@ from typing import Any
 from agent_utilities.security.error_surface import public_error_json
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 
 _ACTIONS: tuple[str, ...] = ("import_aif", "export_aif", "evaluate", "add_scheme")
 
@@ -228,9 +228,9 @@ def register_argument_tools(mcp: Any) -> None:
             {"surface": "argument", "action": action_key, "result": result}, default=str
         )
 
-    kg_server.REGISTERED_TOOLS["graph_argument"] = graph_argument
+    runtime.REGISTERED_TOOLS["graph_argument"] = graph_argument
     # No bespoke endpoint needed — the generic REST-twin factory in
-    # kg_server._build_server mounts POST /graph/argument for every
+    # runtime._build_server mounts POST /graph/argument for every
     # ACTION_TOOL_ROUTES entry without a bespoke handler, dispatching through
     # the SAME _execute_tool core.
-    kg_server.ACTION_TOOL_ROUTES["graph_argument"] = "/graph/argument"
+    runtime.ACTION_TOOL_ROUTES["graph_argument"] = "/graph/argument"

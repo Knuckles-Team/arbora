@@ -1,6 +1,6 @@
 """Auto-extracted graph-os MCP tools: state_tools (register_state_tools).
 
-Split out of kg_server._build_server to deepen the MCP surface into focused
+Split out of runtime._build_server to deepen the MCP surface into focused
 modules without changing tool behavior or names.
 """
 
@@ -21,7 +21,7 @@ from agent_utilities.security.error_surface import (
 from pydantic import Field
 from starlette.responses import JSONResponse
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 
 logger = logging.getLogger(__name__)
 
@@ -167,7 +167,7 @@ async def _resolve_sessions_response(
     ``(resp, error_json)``; when ``error_json`` is not ``None`` the caller
     should return it directly instead of formatting ``resp``.
     """
-    req = kg_server._build_dummy_request(
+    req = runtime._build_dummy_request(
         path_params={"session_id": session_id} if session_id else {},
         json_body={"content": user_reply} if user_reply else None,
     )
@@ -195,7 +195,7 @@ async def _resolve_goals_response(
         list_goals,
     )
 
-    req = kg_server._build_dummy_request(
+    req = runtime._build_dummy_request(
         path_params={"goal_id": goal_id} if goal_id else {},
         json_body={"objective": goal, "max_iterations": max_iterations}
         if action == "create"
@@ -210,12 +210,12 @@ async def _resolve_goals_response(
     if action == "iterations":
         if not goal_id:
             return None, json.dumps({"error": "goal_id is required"})
-        req_iter = kg_server._build_dummy_request(path_params={"goal_id": goal_id})
+        req_iter = runtime._build_dummy_request(path_params={"goal_id": goal_id})
         return await get_goal_iterations(req_iter), None
     if action == "cancel":
         if not goal_id:
             return None, json.dumps({"error": "goal_id is required"})
-        req_cancel = kg_server._build_dummy_request(path_params={"goal_id": goal_id})
+        req_cancel = runtime._build_dummy_request(path_params={"goal_id": goal_id})
         return await cancel_goal(req_cancel), None
     return None, json.dumps({"error": f"Unknown goals action: {action}"})
 
@@ -519,7 +519,7 @@ def _runvcs_twin_capture_action(p: _RunVcsParams) -> str:
         persist_twin,
     )
 
-    engine = kg_server._get_engine()
+    engine = runtime._get_engine()
     pins = VersionPins.from_dict(_parse_json_or(p.versions, {}))
     decisions = _parse_json_or(p.policy_decisions, [])
     evidence_items = _parse_json_or(p.evidence, [])
@@ -1144,7 +1144,7 @@ def register_state_tools(mcp):
         except Exception as e:
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["graph_sessions"] = graph_sessions
+    runtime.REGISTERED_TOOLS["graph_sessions"] = graph_sessions
 
     @mcp.tool(
         name="graph_goals",
@@ -1175,7 +1175,7 @@ def register_state_tools(mcp):
         except Exception as e:
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["graph_goals"] = graph_goals
+    runtime.REGISTERED_TOOLS["graph_goals"] = graph_goals
 
     @mcp.tool(
         name="graph_loops",
@@ -1306,7 +1306,7 @@ def register_state_tools(mcp):
             submit_loop=submit_loop,
         )
         try:
-            engine = kg_server._get_engine()
+            engine = runtime._get_engine()
             dispatch = _build_loops_dispatch(engine, p, core)
             handler = dispatch.get(action)
             if handler is None:
@@ -1315,7 +1315,7 @@ def register_state_tools(mcp):
         except Exception as e:
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["graph_loops"] = graph_loops
+    runtime.REGISTERED_TOOLS["graph_loops"] = graph_loops
 
     @mcp.tool(
         name="graph_schedules",
@@ -1353,7 +1353,7 @@ def register_state_tools(mcp):
         from agent_utilities.core import schedule_engine as _se
 
         try:
-            engine = kg_server._get_engine()
+            engine = runtime._get_engine()
             if action == "list":
                 return _json.dumps(
                     {"action": "list", "schedules": _se.calendar(engine)},
@@ -1375,7 +1375,7 @@ def register_state_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["graph_schedules"] = graph_schedules
+    runtime.REGISTERED_TOOLS["graph_schedules"] = graph_schedules
 
     @mcp.tool(
         name="graph_sandbox",
@@ -1412,7 +1412,7 @@ def register_state_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["graph_sandbox"] = graph_sandbox
+    runtime.REGISTERED_TOOLS["graph_sandbox"] = graph_sandbox
 
     @mcp.tool(
         name="graph_runvcs",
@@ -1618,7 +1618,7 @@ def register_state_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["graph_runvcs"] = graph_runvcs
+    runtime.REGISTERED_TOOLS["graph_runvcs"] = graph_runvcs
 
     @mcp.tool(
         name="graph_feeds",
@@ -1652,7 +1652,7 @@ def register_state_tools(mcp):
         import json as _json
 
         try:
-            engine = kg_server._get_engine()
+            engine = runtime._get_engine()
             if action == "list":
                 return _feeds_list_action(engine)
             if action == "add":
@@ -1665,7 +1665,7 @@ def register_state_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["graph_feeds"] = graph_feeds
+    runtime.REGISTERED_TOOLS["graph_feeds"] = graph_feeds
 
     @mcp.tool(
         name="research_artifact",
@@ -1714,7 +1714,7 @@ def register_state_tools(mcp):
         from agent_utilities.knowledge_graph.research.ara.service import ARAService
 
         try:
-            service = ARAService(kg_server._get_engine())
+            service = ARAService(runtime._get_engine())
             result = service.run(
                 action,
                 article_id=article_id,
@@ -1733,7 +1733,7 @@ def register_state_tools(mcp):
         except Exception as e:
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["research_artifact"] = research_artifact
+    runtime.REGISTERED_TOOLS["research_artifact"] = research_artifact
 
     # ══════════════════════════════════════════════════════════════════
     # Ontology System — Palantir Foundry parity (type/link/function layer)

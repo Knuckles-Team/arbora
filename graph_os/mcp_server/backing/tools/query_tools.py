@@ -1,6 +1,6 @@
 """Auto-extracted graph-os MCP tools: query_tools (register_query_tools).
 
-Split out of kg_server._build_server to deepen the MCP surface into focused
+Split out of runtime._build_server to deepen the MCP surface into focused
 modules without changing tool behavior or names.
 """
 
@@ -21,7 +21,8 @@ from agent_utilities.security.error_surface import public_error_json, public_err
 from pydantic import Field
 from pydantic.fields import FieldInfo
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
+from graph_os.mcp_server.backing import engine_routing
 
 logger = logging.getLogger(__name__)
 
@@ -385,18 +386,18 @@ def _run_graph_query_engine(
     error conversion, and response serialization are shared by SQL and SPARQL.
     """
     try:
-        entries, errors, fanout = kg_server._resolve_target_engines(connection)
-        entries = kg_server.resolve_explicit_graph(entries, graph, fanout=fanout)
-    except kg_server.GraphNotFoundError as e:
+        entries, errors, fanout = engine_routing._resolve_target_engines(connection)
+        entries = engine_routing.resolve_explicit_graph(entries, graph, fanout=fanout)
+    except engine_routing.GraphNotFoundError as e:
         return public_error_json(e, code="graph_not_found")
-    except kg_server.GraphSelectionConflictError as e:
+    except engine_routing.GraphSelectionConflictError as e:
         return public_error_json(e, code="graph_selection_conflict")
     except Exception as e:
         return public_error_json(e)
     if not fanout:
         name, engine = entries[0]
         try:
-            with kg_server.bound_to_graph(graph):
+            with engine_routing.bound_to_graph(graph):
                 rows = run_query(engine, query)
             return json.dumps(
                 {"rows": rows, "connection": name, "graph": graph},
@@ -408,7 +409,7 @@ def _run_graph_query_engine(
             )
         except Exception as e:
             return public_error_json(e)
-    results, fan_errors = kg_server.fanout_execute(
+    results, fan_errors = engine_routing.fanout_execute(
         entries, lambda _name, engine: run_query(engine, query)
     )
     return json.dumps(
@@ -455,8 +456,8 @@ def _run_graph_query_federated(
         from graph_os.api.contracts.session import resolve_session
 
         resolve_session(required_scope="kg:read")
-        engine = kg_server._get_engine()
-        registry = kg_server.get_connection_registry()
+        engine = runtime._get_engine()
+        registry = engine_routing.get_connection_registry()
         results = engine.execute_federated_query(
             reference_id, query, parsed_params, registry=registry
         )
@@ -763,7 +764,7 @@ def _run_graph_query_uql_rows(
             "the selected connection does not expose governed UQL through "
             "IntelligenceGraphEngine.uql"
         )
-    with kg_server.bound_to_graph(graph):
+    with engine_routing.bound_to_graph(graph):
         if include_epistemic:
             rows = engine.uql(query, include_epistemic=True)
         else:
@@ -804,7 +805,7 @@ def _uql_fanout_target_evidence(
         # provenance as for the UQL read itself.  The default target is
         # already the ambient authority and needs no retargeting.
         target_graph = name if union_read and name != "default" else ""
-        with kg_server.bound_to_graph(target_graph):
+        with engine_routing.bound_to_graph(target_graph):
             return list(fetch(ids) or [])
     except Exception as exc:  # noqa: BLE001 — evidence is best-effort per target
         logger.warning(
@@ -868,12 +869,12 @@ def _run_graph_query_uql_single(
             "graph": graph,
         }
         if not include_epistemic:
-            with kg_server.bound_to_graph(graph):
+            with engine_routing.bound_to_graph(graph):
                 payload["evidence_bundle"] = _evidence_bundle_for_rows(
                     engine, rows
                 ).model_dump()
         return json.dumps(payload, default=_json_default)
-    except kg_server.GraphSelectionConflictError as exc:
+    except engine_routing.GraphSelectionConflictError as exc:
         return public_error_json(exc, code="graph_selection_conflict")
     except PermissionError as exc:
         return public_error_json(
@@ -984,12 +985,12 @@ def _run_graph_query_resolve_local(
     directly so the caller can still short-circuit.
     """
     try:
-        entries, errors, fanout = kg_server._resolve_read_engines(connection)
-        entries = kg_server.resolve_explicit_graph(entries, graph, fanout=fanout)
+        entries, errors, fanout = engine_routing._resolve_read_engines(connection)
+        entries = engine_routing.resolve_explicit_graph(entries, graph, fanout=fanout)
         return entries, errors, fanout, None
-    except kg_server.GraphNotFoundError as e:
+    except engine_routing.GraphNotFoundError as e:
         return [], {}, False, public_error_json(e, code="graph_not_found")
-    except kg_server.GraphSelectionConflictError as e:
+    except engine_routing.GraphSelectionConflictError as e:
         return [], {}, False, public_error_json(e, code="graph_selection_conflict")
     except Exception as e:
         return [], {}, False, public_error_json(e)
@@ -1141,7 +1142,7 @@ def _run_graph_query_union_aggregate(
     """CONCEPT:AU-KG.query.query-aggregation — an aggregation under the implicit content-graph
     union runs against the canonical default graph only (see the caller for why).
     """
-    engine = kg_server._get_engine()
+    engine = runtime._get_engine()
     try:
         if include_epistemic_flag:
             results = engine.query_cypher(
@@ -1174,7 +1175,7 @@ def _run_graph_query_single(
         include_epistemic if isinstance(include_epistemic, bool) else False
     )
     try:
-        with kg_server.bound_to_graph(graph):
+        with engine_routing.bound_to_graph(graph):
             if include_epistemic_flag:
                 # Only pass the new kwarg when actually requested — keeps the
                 # default call shape byte-identical for any `query_cypher`
@@ -1218,7 +1219,7 @@ def _run_graph_query_single(
             },
             default=str,
         )
-    except kg_server.GraphSelectionConflictError as e:
+    except engine_routing.GraphSelectionConflictError as e:
         return public_error_json(e, code="graph_selection_conflict")
     except PermissionError as e:
         # Only an EXPLICIT `graph` request classifies its own denial as
@@ -1262,7 +1263,7 @@ def _run_graph_query_fanout_primary(
                 "Graph fan-out primary target failed (exception_type=%s)",
                 type(exc).__name__,
             )
-            fan_errors[name] = kg_server.fanout_error_label(exc)
+            fan_errors[name] = engine_routing.fanout_error_label(exc)
     return results, fan_errors
 
 
@@ -1275,7 +1276,7 @@ def _run_graph_query_fanout_targets(
     if not union_read:
         # Explicit cross-repo fan-out (`target='all'`/list) — per-target
         # timeout at the full budget so one slow backend can't stall the set.
-        return kg_server.fanout_execute(entries, fanout_query)
+        return engine_routing.fanout_execute(entries, fanout_query)
 
     # CONCEPT:AU-KG.ingest.unified-query-routing — mirror `graph_search`'s
     # primary/supplementary split (see the `graph_search` implementation
@@ -1304,10 +1305,10 @@ def _run_graph_query_fanout_targets(
         primary, fanout_query, content_graph_query
     )
     if supplementary:
-        sup_results, sup_errors = kg_server.fanout_execute(
+        sup_results, sup_errors = engine_routing.fanout_execute(
             supplementary,
             content_graph_query,
-            timeout=kg_server.DEFAULT_CONTENT_FANOUT_TIMEOUT_S,
+            timeout=engine_routing.DEFAULT_CONTENT_FANOUT_TIMEOUT_S,
         )
         results.update(sup_results)
         fan_errors.update(sup_errors)
@@ -1383,7 +1384,7 @@ def _run_graph_query_fanout(
         # B-18 fix: within the implicit content-graph UNION fan-out (never
         # the explicit multi-connection fan-out below, which never calls
         # this), `name` IS the physical graph `engine` is scoped to (see
-        # `kg_server._resolve_read_engines`'s
+        # `engine_routing._resolve_read_engines`'s
         # `ingest_routing.safe_engine_for_graph(gname)` — a `for_graph()`
         # view that fixes the outbound wire request's `graph` field but
         # never rebinds `session.graph` to match). The wire layer's own
@@ -1393,7 +1394,7 @@ def _run_graph_query_fanout(
         # SAME graph via the sanctioned `bound_to_graph` primitive
         # (CONCEPT:AU-KG.backend.explicit-graph-selection) so the request
         # is self-consistent instead of inventing a second mechanism.
-        with kg_server.bound_to_graph(name):
+        with engine_routing.bound_to_graph(name):
             return _fanout_query(name, engine)
 
     results, fan_errors = _run_graph_query_fanout_targets(
@@ -1601,7 +1602,7 @@ def _graph_search_single_target(
     """Single-connection ``graph_search`` path: bind the graph and run once."""
     name, engine = entries[0]
     try:
-        with kg_server.bound_to_graph(graph):
+        with engine_routing.bound_to_graph(graph):
             text = run_search(engine)
     except PermissionError as e:
         return public_error_text(
@@ -1650,10 +1651,10 @@ def _graph_search_implicit_fanout(
         else:
             results[name] = content_graph_search(name, engine)
     if supplementary:
-        sup_results, sup_errors = kg_server.fanout_execute(
+        sup_results, sup_errors = engine_routing.fanout_execute(
             supplementary,
             content_graph_search,
-            timeout=kg_server.DEFAULT_CONTENT_FANOUT_TIMEOUT_S,
+            timeout=engine_routing.DEFAULT_CONTENT_FANOUT_TIMEOUT_S,
         )
         results.update(sup_results)
         fan_errors.update(sup_errors)
@@ -1679,7 +1680,7 @@ def _graph_search_fanout(
     else:
         # Explicit cross-repo fan-out — per-target timeout at the full budget so
         # one slow backend can't stall the set.
-        results, fan_errors = kg_server.fanout_execute(
+        results, fan_errors = engine_routing.fanout_execute(
             entries, lambda name, engine: run_search(engine)
         )
     out_lines = [f"=== {name} ===\n{results[name]}" for name in results]
@@ -2131,7 +2132,7 @@ async def _catalog_graphs() -> dict[str, Any]:
         return _capability_entry(
             False, reason="no MultiTenantClient on the installed engine client"
         )
-    listing_fn = kg_server.REGISTERED_TOOLS.get("engine_tenants")
+    listing_fn = runtime.REGISTERED_TOOLS.get("engine_tenants")
     if listing_fn is None:
         return _capability_entry(True, methods=methods)
     try:
@@ -2205,7 +2206,7 @@ async def _catalog_sources() -> dict[str, Any]:
     # ``graph_catalog`` verifies this at its public boundary; retain the same
     # check here for direct in-process calls before touching the registry.
     resolve_session(required_scope="kg:read")
-    registry = kg_server.get_connection_registry()
+    registry = engine_routing.get_connection_registry()
     return build_source_catalog(registry=registry)
 
 
@@ -2299,7 +2300,7 @@ async def _graph_catalog_response(
             code="invalid_request",
         )
     try:
-        kg_server._get_engine()
+        runtime._get_engine()
     except Exception as exc:  # noqa: BLE001
         return public_error_json(exc, code="dependency_unavailable")
     catalog = await _build_graph_catalog()
@@ -2335,7 +2336,7 @@ async def _graph_context_put(
                 "key": key,
                 "ttl_s": int(ttl_s),
                 "created_at": time.time(),
-                "producer": kg_server._SESSION_ID,
+                "producer": runtime._SESSION_ID,
             },
         )
         # CONCEPT:AU-ORCH.session.session-anchored-collections-native — session-anchored collection: upsert the id-addressable
@@ -2650,7 +2651,7 @@ def register_query_tools(mcp):
         )
         return EvidenceBundle.from_payload(raw, operation="graph_query")
 
-    kg_server.REGISTERED_TOOLS["graph_query"] = graph_query
+    runtime.REGISTERED_TOOLS["graph_query"] = graph_query
 
     @mcp.tool(
         name="tabular_query",
@@ -2673,7 +2674,7 @@ def register_query_tools(mcp):
                 public_error_json(ValueError(rejection)), operation="tabular_query"
             )
         try:
-            payload = kg_server.get_tabular_query_service().execute(
+            payload = engine_routing.get_tabular_query_service().execute(
                 TabularQueryRequest(sql=sql)
             )
         except Exception as exc:  # noqa: BLE001 - public query error boundary
@@ -2684,7 +2685,7 @@ def register_query_tools(mcp):
             payload.to_payload(), operation="tabular_query"
         )
 
-    kg_server.REGISTERED_TOOLS["tabular_query"] = tabular_query
+    runtime.REGISTERED_TOOLS["tabular_query"] = tabular_query
 
     # ══════════════════════════════════════════════════════════════════
     # 1a-bis. graph_ask — CONCEPT:AU-KG.ingest.mirror-inbound natural-language → query
@@ -2747,7 +2748,7 @@ def register_query_tools(mcp):
                 public_error_json(e), operation="graph_ask"
             )
 
-    kg_server.REGISTERED_TOOLS["graph_ask"] = graph_ask
+    runtime.REGISTERED_TOOLS["graph_ask"] = graph_ask
 
     # ══════════════════════════════════════════════════════════════════
     # 1a-quater. nl_query — CONCEPT:AU-KG.query.ask-gateway-rest-twin AU-fleet-LLM as the engine's NL planner
@@ -2803,9 +2804,9 @@ def register_query_tools(mcp):
                 public_error_json(e), operation="nl_query"
             )
 
-    kg_server.REGISTERED_TOOLS["nl_query"] = nl_query
+    runtime.REGISTERED_TOOLS["nl_query"] = nl_query
     # CONCEPT:AU-KG.query.ask-gateway-rest-twin — gateway REST twin (W1 exposure; MCP⇄REST parity)
-    kg_server.ACTION_TOOL_ROUTES["nl_query"] = "/graph/nl-query"
+    runtime.ACTION_TOOL_ROUTES["nl_query"] = "/graph/nl-query"
 
     # ══════════════════════════════════════════════════════════════════
     # 1a-quinquies. ask_data — CONCEPT:AU-KG.query.data-gateway-rest-twin DB-GPT-style data-analysis agent loop
@@ -2858,9 +2859,9 @@ def register_query_tools(mcp):
             default=str,
         )
 
-    kg_server.REGISTERED_TOOLS["ask_data"] = ask_data
+    runtime.REGISTERED_TOOLS["ask_data"] = ask_data
     # CONCEPT:AU-KG.query.data-gateway-rest-twin — gateway REST twin (W1 exposure; MCP⇄REST parity)
-    kg_server.ACTION_TOOL_ROUTES["ask_data"] = "/graph/ask-data"
+    runtime.ACTION_TOOL_ROUTES["ask_data"] = "/graph/ask-data"
 
     # ══════════════════════════════════════════════════════════════════
     # 1a-ter. graph_table — CONCEPT:AU-KG.ingest.mirror-inbound connector/ETL → native engine SQL tables
@@ -2912,7 +2913,7 @@ def register_query_tools(mcp):
         from agent_utilities.knowledge_graph.core import table_ingest
 
         try:
-            engine = kg_server._get_engine()
+            engine = runtime._get_engine()
         except Exception as e:  # noqa: BLE001
             return public_error_json(e, code="dependency_unavailable")
 
@@ -2937,7 +2938,7 @@ def register_query_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["graph_table"] = graph_table
+    runtime.REGISTERED_TOOLS["graph_table"] = graph_table
 
     # ══════════════════════════════════════════════════════════════════
     # 1a-quater. graph_projection — CONCEPT:AU-KG.query.node-link-projection
@@ -2989,8 +2990,8 @@ def register_query_tools(mcp):
         projection["graph"] = run_kwargs["graph"]
         return json.dumps(projection, default=str)
 
-    kg_server.REGISTERED_TOOLS["graph_projection"] = graph_projection
-    kg_server.ACTION_TOOL_ROUTES["graph_projection"] = "/graph/projection"
+    runtime.REGISTERED_TOOLS["graph_projection"] = graph_projection
+    runtime.ACTION_TOOL_ROUTES["graph_projection"] = "/graph/projection"
 
     # ══════════════════════════════════════════════════════════════════
     # 1a-quinquies. graph_catalog — CONCEPT:AU-KG.query.unified-capability-catalog
@@ -3074,8 +3075,8 @@ def register_query_tools(mcp):
             graph=graph,
         )
 
-    kg_server.REGISTERED_TOOLS["graph_catalog"] = graph_catalog
-    kg_server.ACTION_TOOL_ROUTES["graph_catalog"] = "/graph/catalog"
+    runtime.REGISTERED_TOOLS["graph_catalog"] = graph_catalog
+    runtime.ACTION_TOOL_ROUTES["graph_catalog"] = "/graph/catalog"
 
     # ══════════════════════════════════════════════════════════════════
     # 1b. graph_context — CONCEPT:AU-ORCH.session.invoker-agent-handoff cross-process curated-context store
@@ -3105,7 +3106,7 @@ def register_query_tools(mcp):
             default=0, description="Optional time-to-live in seconds (0 = persistent)."
         ),
     ) -> str:
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
         if not engine:
             return json.dumps({"error": "IntelligenceGraphEngine not active."})
         if action == "put":
@@ -3120,7 +3121,7 @@ def register_query_tools(mcp):
             return await _graph_context_list(engine, session_id)
         return json.dumps({"error": f"unknown action: {action}"})
 
-    kg_server.REGISTERED_TOOLS["graph_context"] = graph_context
+    runtime.REGISTERED_TOOLS["graph_context"] = graph_context
 
     # ══════════════════════════════════════════════════════════════════
     # 1c. graph_message — CONCEPT:AU-ORCH.session.session-anchored-collections-native invoker↔spawned-agent message channel
@@ -3159,7 +3160,7 @@ def register_query_tools(mcp):
     ) -> str:
         from agent_utilities.messaging import agent_channel
 
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
         if not engine:
             return json.dumps({"error": "IntelligenceGraphEngine not active."})
         if action == "open":
@@ -3191,7 +3192,7 @@ def register_query_tools(mcp):
             return json.dumps({"closed": agent_channel.close(engine, channel_id)})
         return json.dumps({"error": f"unknown action: {action}"})
 
-    kg_server.REGISTERED_TOOLS["graph_message"] = graph_message
+    runtime.REGISTERED_TOOLS["graph_message"] = graph_message
 
     # ══════════════════════════════════════════════════════════════════
     # 2. kg_search — Unified search (hybrid, concept, analogy, memory)
@@ -3274,7 +3275,7 @@ def register_query_tools(mcp):
                 # failing (e.g. no ambient session) degrades the same way
                 # instead of escaping this helper uncaught.
                 try:
-                    with kg_server.bound_to_graph(name):
+                    with engine_routing.bound_to_graph(name):
                         return _run_search(engine)
                 except Exception as e:
                     return public_error_text(e)
@@ -3330,13 +3331,13 @@ def register_query_tools(mcp):
             # connection, so it fails closed against any fan-out (explicit or the
             # implicit content-graph union) — never a silent ignore or union.
             try:
-                entries, errors, fanout = kg_server._resolve_read_engines(connection)
-                entries = kg_server.resolve_explicit_graph(
+                entries, errors, fanout = engine_routing._resolve_read_engines(connection)
+                entries = engine_routing.resolve_explicit_graph(
                     entries, graph, fanout=fanout
                 )
-            except kg_server.GraphNotFoundError as e:
+            except engine_routing.GraphNotFoundError as e:
                 return public_error_text(e, code="graph_not_found")
-            except kg_server.GraphSelectionConflictError as e:
+            except engine_routing.GraphSelectionConflictError as e:
                 return public_error_text(e, code="graph_selection_conflict")
             except Exception as e:
                 return public_error_text(e)
@@ -3350,7 +3351,7 @@ def register_query_tools(mcp):
 
         return await run_blocking_ordered(_execute)
 
-    kg_server.REGISTERED_TOOLS["graph_search"] = graph_search
+    runtime.REGISTERED_TOOLS["graph_search"] = graph_search
 
     @mcp.tool(
         name="graph_search_synthesis",
@@ -3430,7 +3431,7 @@ def register_query_tools(mcp):
                     raise RuntimeError("authoritative graph query service unavailable")
                 return query_cypher(cypher, params or {}) or []
 
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
         if not engine:
             return "Error: IntelligenceGraphEngine not active."
         try:
@@ -3447,7 +3448,7 @@ def register_query_tools(mcp):
             return public_error_text(e)
         return _json.dumps(task.to_dict())
 
-    kg_server.REGISTERED_TOOLS["graph_search_synthesis"] = graph_search_synthesis
+    runtime.REGISTERED_TOOLS["graph_search_synthesis"] = graph_search_synthesis
 
     # ══════════════════════════════════════════════════════════════════
     # graph_code_nav — CONCEPT:AU-KG.backend.declared-columns-so-schema code-symbol navigation over the
@@ -3499,7 +3500,7 @@ def register_query_tools(mcp):
         limit: int = Field(default=200, description="Max rows to return."),
     ) -> str:
         """Templated code-symbol navigation over the resolved KG code graph."""
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
         if not engine:
             return json.dumps({"error": "IntelligenceGraphEngine not active"})
 
@@ -3541,7 +3542,7 @@ def register_query_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["graph_code_nav"] = graph_code_nav
+    runtime.REGISTERED_TOOLS["graph_code_nav"] = graph_code_nav
 
     def _graph_document_tree_build(
         document_id: str,
@@ -3878,7 +3879,7 @@ def register_query_tools(mcp):
         ),
     ) -> str:
         """Map-then-fetch + tree-navigation retrieval over a document section tree."""
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
 
         if action == "build":
             return _graph_document_tree_build(
@@ -3911,4 +3912,4 @@ def register_query_tools(mcp):
             }
         )
 
-    kg_server.REGISTERED_TOOLS["graph_document_tree"] = graph_document_tree
+    runtime.REGISTERED_TOOLS["graph_document_tree"] = graph_document_tree

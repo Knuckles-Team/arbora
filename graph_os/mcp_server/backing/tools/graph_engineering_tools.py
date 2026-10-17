@@ -11,9 +11,9 @@ natively in the Rust engine (``eg-compute::mining::community``); this surface
 reuses it plus the existing ``ContextCompiler`` for grounded assembly.
 
 Mirrors the ``graph_ops_causal`` shape exactly (single ``@mcp.tool``, an
-``action`` enum, registered into ``kg_server.REGISTERED_TOOLS`` +
-``kg_server.ACTION_TOOL_ROUTES`` — the generic REST-twin factory in
-``kg_server._build_server`` auto-mounts ``POST /graph/engineering``, no
+``action`` enum, registered into ``runtime.REGISTERED_TOOLS`` +
+``runtime.ACTION_TOOL_ROUTES`` — the generic REST-twin factory in
+``runtime._build_server`` auto-mounts ``POST /graph/engineering``, no
 bespoke endpoint needed) rather than inventing a new tool convention.
 """
 
@@ -25,7 +25,7 @@ from typing import Any
 from agent_utilities.security.error_surface import public_error_json
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 
 
 def register_graph_engineering_tools(mcp: Any) -> None:
@@ -132,7 +132,7 @@ def register_graph_engineering_tools(mcp: Any) -> None:
         )
 
         action_norm = (action or "local_search").strip().lower()
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
         if engine is None:
             return json.dumps(
                 {
@@ -193,9 +193,9 @@ def register_graph_engineering_tools(mcp: Any) -> None:
             default=str,
         )
 
-    kg_server.REGISTERED_TOOLS["graph_engineering"] = graph_engineering
+    runtime.REGISTERED_TOOLS["graph_engineering"] = graph_engineering
     # No bespoke endpoint needed — the generic REST-twin factory in
-    # kg_server._build_server (mirrors graph_ops_causal) mounts
+    # runtime._build_server (mirrors graph_ops_causal) mounts
     # POST /graph/engineering for every ACTION_TOOL_ROUTES entry without a
     # bespoke handler, dispatching through the SAME _execute_tool core.
-    kg_server.ACTION_TOOL_ROUTES["graph_engineering"] = "/graph/engineering"
+    runtime.ACTION_TOOL_ROUTES["graph_engineering"] = "/graph/engineering"

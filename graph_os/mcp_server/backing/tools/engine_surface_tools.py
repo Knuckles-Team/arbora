@@ -58,7 +58,7 @@ from typing import Any
 
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.engine_surface_types import (
     ChartRenderRequest,
     KvCheckpointIntelligenceRequest,
@@ -1640,7 +1640,7 @@ def _memory_crud(action: str, params: dict[str, Any]) -> str:
             properties=json.dumps(params.get("properties", {})),
         )
     try:
-        result = _run_coro(kg_server._execute_tool("graph_write", **call))
+        result = _run_coro(runtime._execute_tool("graph_write", **call))
     except Exception as exc:  # noqa: BLE001 — surface engine/core errors as data
         return _surface_error(exc, surface="memory", action=action)
     return json.dumps(
@@ -1902,7 +1902,7 @@ def _feature_limit(source: dict[str, Any]) -> int:
 def _feature_query_rows(cypher: str, graph: str) -> list[Any]:
     """Run one read-only projection through ``graph_query`` and validate its shape."""
     raw = _run_coro(
-        kg_server._execute_tool(
+        runtime._execute_tool(
             "graph_query", query=cypher, params="{}", scope="local", graph=graph or ""
         )
     )
@@ -1949,7 +1949,7 @@ def _deep_write_node(node_type: str, properties: dict[str, Any], graph: str) -> 
     node_id = f"{node_type.lower()}_dsm_{uuid.uuid4().hex}"
     try:
         _run_coro(
-            kg_server._execute_tool(
+            runtime._execute_tool(
                 "graph_write",
                 action="add_node",
                 node_id=node_id,
@@ -1968,7 +1968,7 @@ def _deep_write_edge(source_id: str, target_id: str, rel_type: str, graph: str) 
     (best-effort — see :func:`_deep_write_node`)."""
     try:
         _run_coro(
-            kg_server._execute_tool(
+            runtime._execute_tool(
                 "graph_write",
                 action="add_edge",
                 source_id=source_id,
@@ -2080,7 +2080,7 @@ def _record_process_signal_evidence(
         )
 
         record_evidence(
-            engine if engine is not None else kg_server._get_engine(),
+            engine if engine is not None else runtime._get_engine(),
             from_process_signal(evidence),
         )
     except Exception as exc:  # noqa: BLE001 — deliberate best-effort audit overlay: this Evidence write is a pure observability side-channel over an import whose authoritative outcome is already reported through the normal return path. Only the exception type is recorded, at DEBUG.
@@ -2217,7 +2217,7 @@ def _ocel_mine(
     # THE single commit of this slice. The degradation wrapper is wire-first's:
     # a write-path outage surfaces as a structured error, never a crash.
     try:
-        engine = kg_server._get_engine()
+        engine = runtime._get_engine()
         applied = ingest_graph_slice(
             engine,
             envelope.connector,
@@ -2464,7 +2464,7 @@ def _conformance_commit(
         entity["tenant_id"] = inputs["tenant"]
     for link in links:
         link["tenant_id"] = inputs["tenant"]
-    engine = kg_server._get_engine()
+    engine = runtime._get_engine()
     applied = ingest_graph_slice(
         engine,
         "conformance",
@@ -3098,8 +3098,8 @@ def register_engine_surface_tools(
             params=params,
         )
 
-    kg_server.REGISTERED_TOOLS["graph_broker"] = graph_broker
-    kg_server.ACTION_TOOL_ROUTES["graph_broker"] = "/graph/broker"
+    runtime.REGISTERED_TOOLS["graph_broker"] = graph_broker
+    runtime.ACTION_TOOL_ROUTES["graph_broker"] = "/graph/broker"
 
     # ══════════════════════════════════════════════════════════════════
     # graph_kvcache — shared content-addressed KV-cache (EG-187 / KG-2.306)
@@ -3142,7 +3142,7 @@ def register_engine_surface_tools(
         finally:
             _kvcache_close(backend)
 
-    kg_server.REGISTERED_TOOLS["graph_kvcache"] = graph_kvcache
+    runtime.REGISTERED_TOOLS["graph_kvcache"] = graph_kvcache
 
     # ══════════════════════════════════════════════════════════════════
     # graph_kv_checkpoint — KV-cache checkpoints as graph resources
@@ -3377,9 +3377,9 @@ def register_engine_surface_tools(
             {"surface": "kv_checkpoint", "error": f"unknown action {action!r}"}
         )
 
-    kg_server.REGISTERED_TOOLS["graph_kv_checkpoint"] = graph_kv_checkpoint
-    kg_server.ACTION_TOOL_ROUTES["graph_kv_checkpoint"] = "/graph/kv_checkpoint"
-    kg_server.ACTION_TOOL_ROUTES["graph_kvcache"] = "/graph/kvcache"
+    runtime.REGISTERED_TOOLS["graph_kv_checkpoint"] = graph_kv_checkpoint
+    runtime.ACTION_TOOL_ROUTES["graph_kv_checkpoint"] = "/graph/kv_checkpoint"
+    runtime.ACTION_TOOL_ROUTES["graph_kvcache"] = "/graph/kvcache"
 
     # ══════════════════════════════════════════════════════════════════
     # graph_federated_search — search across registered external graphs
@@ -3436,8 +3436,8 @@ def register_engine_surface_tools(
             params=params,
         )
 
-    kg_server.REGISTERED_TOOLS["graph_federated_search"] = graph_federated_search
-    kg_server.ACTION_TOOL_ROUTES["graph_federated_search"] = "/graph/federated-search"
+    runtime.REGISTERED_TOOLS["graph_federated_search"] = graph_federated_search
+    runtime.ACTION_TOOL_ROUTES["graph_federated_search"] = "/graph/federated-search"
 
     # ══════════════════════════════════════════════════════════════════
     # graph_promql — observability: PromQL metric queries
@@ -3495,8 +3495,8 @@ def register_engine_surface_tools(
             params=params,
         )
 
-    kg_server.REGISTERED_TOOLS["graph_promql"] = graph_promql
-    kg_server.ACTION_TOOL_ROUTES["graph_promql"] = "/graph/promql"
+    runtime.REGISTERED_TOOLS["graph_promql"] = graph_promql
+    runtime.ACTION_TOOL_ROUTES["graph_promql"] = "/graph/promql"
 
     # ══════════════════════════════════════════════════════════════════
     # graph_traces — observability: distributed-trace search / fetch
@@ -3564,8 +3564,8 @@ def register_engine_surface_tools(
             params=params,
         )
 
-    kg_server.REGISTERED_TOOLS["graph_traces"] = graph_traces
-    kg_server.ACTION_TOOL_ROUTES["graph_traces"] = "/graph/traces"
+    runtime.REGISTERED_TOOLS["graph_traces"] = graph_traces
+    runtime.ACTION_TOOL_ROUTES["graph_traces"] = "/graph/traces"
 
     # ══════════════════════════════════════════════════════════════════
     # graph_logs — observability: log stream query (D-W6-ISO-2)
@@ -3630,8 +3630,8 @@ def register_engine_surface_tools(
             params=params,
         )
 
-    kg_server.REGISTERED_TOOLS["graph_logs"] = graph_logs
-    kg_server.ACTION_TOOL_ROUTES["graph_logs"] = "/graph/logs"
+    runtime.REGISTERED_TOOLS["graph_logs"] = graph_logs
+    runtime.ACTION_TOOL_ROUTES["graph_logs"] = "/graph/logs"
 
     # ══════════════════════════════════════════════════════════════════
     # graph_gis — geospatial route / tile / geo-task ops
@@ -3680,8 +3680,8 @@ def register_engine_surface_tools(
             params=params,
         )
 
-    kg_server.REGISTERED_TOOLS["graph_gis"] = graph_gis
-    kg_server.ACTION_TOOL_ROUTES["graph_gis"] = "/graph/gis"
+    runtime.REGISTERED_TOOLS["graph_gis"] = graph_gis
+    runtime.ACTION_TOOL_ROUTES["graph_gis"] = "/graph/gis"
 
     # ══════════════════════════════════════════════════════════════════
     # graph_memory — EG-318 memory / scene / trajectory engine ops
@@ -3756,8 +3756,8 @@ def register_engine_surface_tools(
             params=params,
         )
 
-    kg_server.REGISTERED_TOOLS["graph_memory"] = graph_memory
-    kg_server.ACTION_TOOL_ROUTES["graph_memory"] = "/graph/memory"
+    runtime.REGISTERED_TOOLS["graph_memory"] = graph_memory
+    runtime.ACTION_TOOL_ROUTES["graph_memory"] = "/graph/memory"
 
     # ══════════════════════════════════════════════════════════════════
     # graph_mine — data-mining surface (CONCEPT:EG-KG.mining.frequent-itemset-mining)
@@ -4140,7 +4140,7 @@ def register_engine_surface_tools(
         )
 
     register_conditional_tools(
-        kg_server.REGISTERED_TOOLS,
+        runtime.REGISTERED_TOOLS,
         [
             ("graph_mine", graph_mine, "/mining/associate"),
             (
@@ -4151,7 +4151,7 @@ def register_engine_surface_tools(
         ],
         excluded_names=frozenset({"graph_mine", "graph_mine_deep"}),
         include_excluded=include_unserved_mining,
-        route_registry=kg_server.ACTION_TOOL_ROUTES,
+        route_registry=runtime.ACTION_TOOL_ROUTES,
     )
 
     # ══════════════════════════════════════════════════════════════════
@@ -4231,10 +4231,10 @@ def register_engine_surface_tools(
             params=params,
         )
 
-    kg_server.REGISTERED_TOOLS["graph_learn"] = graph_learn
+    runtime.REGISTERED_TOOLS["graph_learn"] = graph_learn
     # REST twin path: POST {prefix}/graphlearn/fit (bespoke natural-body mount in
-    # kg_server → the SAME _execute_tool core as the MCP verb).
-    kg_server.ACTION_TOOL_ROUTES["graph_learn"] = "/graphlearn/fit"
+    # runtime → the SAME _execute_tool core as the MCP verb).
+    runtime.ACTION_TOOL_ROUTES["graph_learn"] = "/graphlearn/fit"
 
     # ══════════════════════════════════════════════════════════════════
     # graph_pipeline — composable ML pipeline surface (CONCEPT:EG-KG.mining.ml-pipeline)
@@ -4336,10 +4336,10 @@ def register_engine_surface_tools(
             params=params,
         )
 
-    kg_server.REGISTERED_TOOLS["graph_pipeline"] = graph_pipeline
-    # REST twin path: POST {prefix}/pipeline/train (natural-body mount in kg_server →
+    runtime.REGISTERED_TOOLS["graph_pipeline"] = graph_pipeline
+    # REST twin path: POST {prefix}/pipeline/train (natural-body mount in runtime →
     # the SAME _execute_tool core as the MCP verb).
-    kg_server.ACTION_TOOL_ROUTES["graph_pipeline"] = "/pipeline/train"
+    runtime.ACTION_TOOL_ROUTES["graph_pipeline"] = "/pipeline/train"
 
     # ══════════════════════════════════════════════════════════════════
     # graph_fork — warm-fork / KV-cache fan-out (CONCEPT:AU-KG.coordination.warm-fork-fanout)
@@ -4412,8 +4412,8 @@ def register_engine_surface_tools(
             )
         return _fork_fanout(branches, seed_vars, sandbox.strip())
 
-    kg_server.REGISTERED_TOOLS["graph_fork"] = graph_fork
-    kg_server.ACTION_TOOL_ROUTES["graph_fork"] = "/graph/fork"
+    runtime.REGISTERED_TOOLS["graph_fork"] = graph_fork
+    runtime.ACTION_TOOL_ROUTES["graph_fork"] = "/graph/fork"
 
     # ══════════════════════════════════════════════════════════════════
     # graph_viz — GOC-88 (D-VZ-1 lane V5): agent-facing native visualization
@@ -4584,5 +4584,5 @@ def register_engine_surface_tools(
             }
         )
 
-    kg_server.REGISTERED_TOOLS["graph_viz"] = graph_viz
-    kg_server.ACTION_TOOL_ROUTES["graph_viz"] = "/graph/viz"
+    runtime.REGISTERED_TOOLS["graph_viz"] = graph_viz
+    runtime.ACTION_TOOL_ROUTES["graph_viz"] = "/graph/viz"

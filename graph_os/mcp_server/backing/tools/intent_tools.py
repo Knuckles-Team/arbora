@@ -50,7 +50,7 @@ from agent_utilities.security.persistence_privacy import persistence_reference
 from agent_utilities.security.threat_defense_engine import PromptInjectionScanner
 from pydantic import BaseModel
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.intent_contract import (
     DESCRIBE_ACTION,
     READ_ACTION_PREFIXES,
@@ -373,10 +373,10 @@ def _build_candidates(*, force: bool = False) -> list[CapabilityCandidate]:
     global _CANDIDATES_CACHE, _CANDIDATES_GENERATION
     if _CANDIDATES_CACHE is not None and not force:
         return _CANDIDATES_CACHE
-    kg_server.ensure_tools_registered()
+    runtime.ensure_tools_registered()
     actions_by_tool = _actions_by_tool()
     cpds = _load_cpds_required()
-    live_tools = sorted(set(kg_server.REGISTERED_TOOLS) - set(INTENT_VERBS))
+    live_tools = sorted(set(runtime.REGISTERED_TOOLS) - set(INTENT_VERBS))
     _require_cpd_coverage(live_tools, cpds)
     _require_verb_authority_coverage(live_tools)
 
@@ -782,7 +782,7 @@ def _operation_is_destructive(tool: str, action: str | None) -> bool:
 
 
 def _tool_accepts_argument(tool: str, argument: str) -> bool:
-    function = kg_server.REGISTERED_TOOLS.get(tool)
+    function = runtime.REGISTERED_TOOLS.get(tool)
     if function is None:
         return False
     try:
@@ -827,7 +827,7 @@ def _unsupported_hint_arguments(tool: str, call_kwargs: dict[str, Any]) -> list[
     a reviewed plan has been produced.
     """
 
-    function = kg_server.REGISTERED_TOOLS.get(tool)
+    function = runtime.REGISTERED_TOOLS.get(tool)
     if function is None:
         return sorted(call_kwargs)
     try:
@@ -849,7 +849,7 @@ def _unsupported_hint_arguments(tool: str, call_kwargs: dict[str, Any]) -> list[
 def _hint_argument_error(tool: str, unsupported: list[str]) -> str:
     """Give callers a stable correction path without exposing raw exceptions."""
 
-    function = kg_server.REGISTERED_TOOLS.get(tool)
+    function = runtime.REGISTERED_TOOLS.get(tool)
     try:
         parameters = inspect.signature(function).parameters.values() if function else ()
         accepted = sorted(
@@ -1350,7 +1350,7 @@ def _operation_approved(op_id: str) -> bool:
 
     ``approval_class`` is a static CPD declaration, not a per-call check inside
     the target tool; the real authorization boundary remains the actor/session
-    identity verification in ``kg_server.verified_tool_session_scope`` /
+    identity verification in ``runtime.verified_tool_session_scope`` /
     ``_execute_tool``. The approval step replaces the retired session
     ``load_tools`` acknowledgement with one every client can perform (no
     tool-list refresh involved — the gap BUG-040/BUG-050 found).
@@ -1457,7 +1457,7 @@ def _validate_explicit_action(
 
 def _declared_default_action(tool: str) -> str | None:
     """The default of the tool's own ``action`` parameter, if it declares one."""
-    function = kg_server.REGISTERED_TOOLS.get(tool)
+    function = runtime.REGISTERED_TOOLS.get(tool)
     if function is None:
         return None
     try:
@@ -1735,7 +1735,7 @@ async def _dispatch_execute_and_record(
     and build the final response dict.
     """
     try:
-        result = await kg_server._execute_tool(chosen_tool, **call_kwargs)
+        result = await runtime._execute_tool(chosen_tool, **call_kwargs)
     except Exception as e:  # noqa: BLE001 — surface as a structured routing failure, not a 500
         if learning_eligible and outcome_scope_ref is not None:
             _record_dispatch_outcome(
@@ -2352,7 +2352,7 @@ def _operation_hints(
     from graph_os.mcp_server.backing.intent_contract import shape_arguments
 
     controls = {key: params.pop(key) for key in ("plan_ref",) if key in params}
-    function = kg_server.REGISTERED_TOOLS.get(tool)
+    function = runtime.REGISTERED_TOOLS.get(tool)
     accepted: set[str] = set()
     var_keyword = False
     if function is not None:
@@ -2370,7 +2370,7 @@ def _operation_hints(
 def _fleet_mux(mcp: Any) -> Any:
     """The attached fleet multiplexer, or a precise refusal (AU-CONTROL-R031).
 
-    ``kg_server.ensure_tools_registered``'s headless build records the exact
+    ``runtime.ensure_tools_registered``'s headless build records the exact
     attach failure on ``mcp._fleet_mux_unavailable_reason`` when it could not
     attach a real multiplexer; surface that verbatim instead of the generic
     embedded/headless message so an operator sees why, not just that.
@@ -2841,7 +2841,7 @@ def _explicit_operation_hints(
             f"Unknown operation {action!r}; {verb}(action='describe') lists them."
         )
     feature = OPTIONAL_TOOL_FEATURES.get(resolved[0])
-    if feature and resolved[0] not in kg_server.REGISTERED_TOOLS:
+    if feature and resolved[0] not in runtime.REGISTERED_TOOLS:
         raise ValueError(
             f"{action!r} needs the optional '{feature}' feature, which this "
             "deployment does not install."
@@ -2892,7 +2892,7 @@ def register_intent_tools(mcp: Any) -> list[str]:
     optional ``intent`` + ``execute``; :mod:`graph_os.mcp_server.backing.intent_contract`)
     and runs through :func:`dispatch_intent` — the same governed router and the
     same ``_execute_tool`` core the backing operations use. Every one also gets a
-    ``REGISTERED_TOOLS`` entry and a REST twin (``kg_server.ACTION_TOOL_ROUTES``)
+    ``REGISTERED_TOOLS`` entry and a REST twin (``runtime.ACTION_TOOL_ROUTES``)
     so MCP and REST dispatch it identically.
     """
     from graph_os.mcp_server.backing.intent_contract import make_intent_tool
@@ -2916,9 +2916,9 @@ def register_intent_tools(mcp: Any) -> list[str]:
         )
         fn.__doc__ = _verb_description(verb)
         mcp.tool(name=verb, tags={"intent"}, description=_verb_description(verb))(fn)
-        kg_server.REGISTERED_TOOLS[verb] = fn
+        runtime.REGISTERED_TOOLS[verb] = fn
         # REST twin (CONCEPT:AU-ECO.mcp.two-surfaces-mcp-rest) — the generic
         # ACTION_TOOL_ROUTES loop in _mount_rest_routes wires this automatically.
-        kg_server.ACTION_TOOL_ROUTES[verb] = f"/intent/{verb}"
+        runtime.ACTION_TOOL_ROUTES[verb] = f"/intent/{verb}"
         registered.append(verb)
     return registered

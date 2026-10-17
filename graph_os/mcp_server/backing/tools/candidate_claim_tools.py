@@ -59,7 +59,7 @@ import json
 from agent_utilities.security.error_surface import public_error_json
 from pydantic import Field
 
-from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server import runtime
 
 
 def register_candidate_claim_tools(mcp):
@@ -222,7 +222,7 @@ def register_candidate_claim_tools(mcp):
                 )
                 persisted = 0
                 if persist and candidates:
-                    engine = kg_server._get_engine()
+                    engine = runtime._get_engine()
                     for candidate in candidates:
                         write_candidate(engine, candidate)
                         persisted += 1
@@ -239,4 +239,4 @@ def register_candidate_claim_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    kg_server.REGISTERED_TOOLS["graph_candidate_claims"] = graph_candidate_claims
+    runtime.REGISTERED_TOOLS["graph_candidate_claims"] = graph_candidate_claims
