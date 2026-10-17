@@ -1,0 +1,218 @@
+{{- $unified := include "arbora.unified" . -}}
+{{- $sidecar := include "arbora.sidecar" . -}}
+{{- $engineTls := and $unified .Values.engine.tcp.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "arbora.fullname" . }}-arbora
+  labels:
+    {{- include "arbora.labels" . | nindent 4 }}
+    app.kubernetes.io/component: arbora
+spec:
+  replicas: {{ if $unified }}1{{ else }}{{ .Values.arbora.replicas }}{{ end }}
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: arbora
+  strategy:
+    # The unified pod holds the engine store's single-writer lock: never overlap.
+    type: {{ if $unified }}Recreate{{ else }}RollingUpdate{{ end }}
+  template:
+    metadata:
+      labels:
+        {{- include "arbora.labels" . | nindent 8 }}
+        app.kubernetes.io/component: arbora
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      {{- include "arbora.podSpecHeader" . | nindent 6 }}
+      {{- if $sidecar }}
+      initContainers:
+        # Native sidecar: starts before arbora, stops after it, restarts on its own.
+        - name: engine
+          image: {{ include "arbora.engineImage" . }}
+          imagePullPolicy: {{ .Values.engine.image.pullPolicy }}
+          restartPolicy: Always
+          command:
+            {{- include "arbora.engineArgs" . | nindent 12 }}
+          {{- include "arbora.engineEnvFrom" . | nindent 10 }}
+          {{- if .Values.engine.tcp.enabled }}
+          ports:
+            - {name: engine, containerPort: {{ .Values.engine.port }}}
+          {{- end }}
+          startupProbe:
+            exec:
+              command: ["/bin/sh", "-c", "test -S /run/epistemic-graph/epistemic-graph.sock"]
+            # A large store recovers for minutes on a cold start.
+            failureThreshold: 360
+            periodSeconds: 5
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          resources:
+            {{- toYaml .Values.engine.resources | nindent 12 }}
+          volumeMounts:
+            {{- include "arbora.sharedVolumeMounts" . | nindent 12 }}
+            {{- if .Values.engine.tcp.enabled }}
+            - {name: engine-tls, mountPath: /etc/arbora/engine-tls, readOnly: true}
+            {{- end }}
+      {{- end }}
+      containers:
+        - name: arbora
+          image: {{ include "arbora.image" .Values.arbora.image }}
+          imagePullPolicy: {{ .Values.arbora.image.pullPolicy }}
+          command:
+            {{- toYaml .Values.arbora.args | nindent 12 }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "arbora.fullname" . }}-arbora
+            - secretRef:
+                name: {{ .Values.runtimeSecret.name }}
+                optional: {{ .Values.runtimeSecret.optional }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.arbora.port }}
+            {{- if .Values.arbora.webUi }}
+            - name: webui
+              containerPort: {{ .Values.arbora.webUiPort }}
+            {{- end }}
+            {{- if and $unified (not $sidecar) .Values.engine.tcp.enabled }}
+            - name: engine
+              containerPort: {{ .Values.engine.port }}
+            {{- end }}
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+              httpHeaders: [{name: Host, value: {{ .Values.arbora.probeHostHeader | quote }}}]
+            failureThreshold: 360
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+              httpHeaders: [{name: Host, value: {{ .Values.arbora.probeHostHeader | quote }}}]
+            failureThreshold: 6
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+              httpHeaders: [{name: Host, value: {{ .Values.arbora.probeHostHeader | quote }}}]
+            failureThreshold: 3
+            periodSeconds: 20
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          resources:
+            {{- toYaml .Values.arbora.resources | nindent 12 }}
+          volumeMounts:
+            {{- include "arbora.sharedVolumeMounts" . | nindent 12 }}
+            {{- if and $engineTls (not $sidecar) }}
+            - {name: engine-tls, mountPath: /etc/arbora/engine-tls, readOnly: true}
+            {{- end }}
+            {{- with .Values.arbora.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+        {{- if and $sidecar .Values.daemon.enabled }}
+        - name: daemon
+          # GRAPHOS-DEPLOY-R016: the one consolidated KG host daemon. Reuses
+          # the serving image and source mounts; an explicit env override
+          # takes the host role the shared ConfigMap no longer grants the
+          # arbora container above (Kubernetes env precedence: a
+          # container's own `env` wins over `envFrom` for the same key).
+          image: {{ include "arbora.image" .Values.arbora.image }}
+          imagePullPolicy: {{ .Values.arbora.image.pullPolicy }}
+          command: ["arbora-daemon"]
+          envFrom:
+            - configMapRef:
+                name: {{ include "arbora.fullname" . }}-arbora
+            - secretRef:
+                name: {{ .Values.runtimeSecret.name }}
+                optional: {{ .Values.runtimeSecret.optional }}
+          env:
+            - {name: KG_DAEMON_ROLE, value: host}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          resources:
+            {{- toYaml .Values.daemon.resources | nindent 12 }}
+          volumeMounts:
+            {{- include "arbora.sharedVolumeMounts" . | nindent 12 }}
+        {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: engine-socket
+          emptyDir: {}
+        - name: arbora-data
+          {{- if $unified }}
+          persistentVolumeClaim:
+            claimName: {{ include "arbora.fullname" . }}-arbora
+          {{- else }}
+          # Shared topology: arbora replicas are stateless.
+          emptyDir: {}
+          {{- end }}
+        {{- if $engineTls }}
+        - name: engine-tls
+          secret:
+            secretName: {{ .Values.engine.tls.secretName }}
+        {{- end }}
+        {{- with .Values.arbora.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.arbora.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.arbora.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.arbora.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "arbora.fullname" . }}-arbora
+  labels:
+    {{- include "arbora.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: arbora
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: http
+    {{- if .Values.arbora.webUi }}
+    - name: webui
+      port: {{ .Values.service.webUiPort }}
+      targetPort: webui
+    {{- end }}
+    {{- if and $unified .Values.engine.tcp.enabled }}
+    # In-cluster fleet connectors reach the pod's engine here (TLS + signed envelopes).
+    - name: engine
+      port: {{ .Values.engine.port }}
+      targetPort: engine
+    {{- end }}
+{{- if $unified }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "arbora.fullname" . }}-arbora
+  labels:
+    {{- include "arbora.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    {{- toYaml .Values.arbora.persistence.accessModes | nindent 4 }}
+  {{- with .Values.arbora.persistence.storageClass }}
+  storageClassName: {{ . | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.arbora.persistence.size }}
+{{- end }}

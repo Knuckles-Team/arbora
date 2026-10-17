@@ -12,9 +12,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from graph_os.api.invoke.pipeline import OperationRefused
-from graph_os.api.ops import ops as ops_admin
-from graph_os.api.ops.ops import (
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops import ops as ops_admin
+from arbora.api.ops.ops import (
     BackupReceipt,
     DoctorReport,
     OperationalConfig,

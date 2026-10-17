@@ -5,7 +5,7 @@ import base64
 
 import pytest
 
-from graph_os.identity.browser import (
+from arbora.identity.browser import (
     SESSION_COOKIE,
     _RequestBinding,
     csrf_token_for,
@@ -13,7 +13,7 @@ from graph_os.identity.browser import (
     session_cookie_header,
     session_from_scope,
 )
-from graph_os.identity.engine import IdentityUnavailable
+from arbora.identity.engine import IdentityUnavailable
 
 TOKEN = base64.urlsafe_b64encode(b"s" * 32).decode().rstrip("=")
 ORIGIN = "https://console.invalid"
@@ -93,7 +93,7 @@ def test_host_and_state_cannot_redefine_trusted_origin():
         (name, b"https://evil.invalid" if name == b"origin" else value)
         for name, value in scope["headers"]
     ]
-    scope["state"] = {"graphos_session_admitted": True}
+    scope["state"] = {"arbora_session_admitted": True}
     with pytest.raises(PermissionError):
         require_mutation_proof(scope, trusted_origin=ORIGIN)
 

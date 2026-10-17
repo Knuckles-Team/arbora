@@ -17,8 +17,8 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from graph_os.mcp_server.backing import server_factory
-from graph_os.mcp_server.backing.server_factory import (
+from arbora.mcp_server.backing import server_factory
+from arbora.mcp_server.backing.server_factory import (
     _register_skill_providers,
     create_mcp_server,
 )
@@ -49,7 +49,7 @@ def test_register_skill_providers_never_breaks_server_construction(caplog) -> No
     """
     fake_mcp = MagicMock(spec=[])  # no attributes at all, incl. no add_provider
 
-    with caplog.at_level("DEBUG", logger="graph_os.mcp_server.backing.server_factory"):
+    with caplog.at_level("DEBUG", logger="arbora.mcp_server.backing.server_factory"):
         _register_skill_providers(fake_mcp)  # must not raise
 
     assert "skill" in caplog.text.casefold()
@@ -83,7 +83,7 @@ def test_register_skill_providers_calls_add_provider_per_resolved_dir(
     _install_fake_skill_provider(monkeypatch, _FakeSkillProvider)
 
     monkeypatch.setattr(
-        "graph_os.core.providers.resolve_skill_provider_dirs",
+        "arbora.core.providers.resolve_skill_provider_dirs",
         lambda: [("some-provider", skill_root.parent)],
     )
 
@@ -108,7 +108,7 @@ def test_register_skill_providers_one_bad_dir_does_not_sink_the_rest(
 
     _install_fake_skill_provider(monkeypatch, _FakeSkillProvider)
     monkeypatch.setattr(
-        "graph_os.core.providers.resolve_skill_provider_dirs",
+        "arbora.core.providers.resolve_skill_provider_dirs",
         lambda: [("bad-provider", "bad"), ("good-provider", "good")],
     )
 
@@ -122,7 +122,7 @@ def test_register_skill_providers_one_bad_dir_does_not_sink_the_rest(
 
 def test_fleet_server_serves_only_its_own_package_skills() -> None:
     """A fleet server advertises its own package's skills, never a sibling's."""
-    from graph_os.mcp_server.backing.server_factory import _owned_skill_dirs
+    from arbora.mcp_server.backing.server_factory import _owned_skill_dirs
 
     dirs = [
         ("ansible-tower-mcp", Path("a/inventory")),
@@ -139,7 +139,7 @@ def test_fleet_server_serves_only_its_own_package_skills() -> None:
 
 
 def test_hub_and_unknown_owner_keep_the_full_catalogue() -> None:
-    from graph_os.mcp_server.backing.server_factory import _owned_skill_dirs
+    from arbora.mcp_server.backing.server_factory import _owned_skill_dirs
 
     dirs = [("gitlab-api", Path("g")), ("agent-utilities", Path("au"))]
     assert _owned_skill_dirs(dirs, "agent_utilities") == dirs
@@ -155,7 +155,7 @@ def test_create_mcp_server_scopes_skills_to_the_calling_package(
     monkeypatch,
 ) -> None:
     """The factory infers the owner from the module that called it."""
-    import graph_os.mcp_server.backing.server_factory as factory
+    import arbora.mcp_server.backing.server_factory as factory
 
     seen: list[str | None] = []
     monkeypatch.setattr(

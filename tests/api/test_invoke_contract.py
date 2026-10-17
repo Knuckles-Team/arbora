@@ -11,16 +11,16 @@ from typing import Any
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from graph_os.api.invoke import (
+from arbora.api.invoke import (
     InvokeServices,
     OpResult,
     VerifiedCaller,
     invoke,
 )
-from graph_os.api.invoke.audit import EffectReservation
-from graph_os.api.invoke.plan import EgPlanStore
-from graph_os.api.policy.eunomia import PolicyGate
-from graph_os.api.registry import (
+from arbora.api.invoke.audit import EffectReservation
+from arbora.api.invoke.plan import EgPlanStore
+from arbora.api.policy.eunomia import PolicyGate
+from arbora.api.registry import (
     AuditClass,
     Composite,
     Effect,

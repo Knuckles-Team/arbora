@@ -12,23 +12,23 @@
 # any of those; scripts/check_genesis_manifest.py gates drift.
 version: 1
 entrypoints:
-  substrate: graphos-genesis
+  substrate: arbora-genesis
   preflight: agent-utilities-doctor --preflight --profile <profile> [--component <c>]
   install: 'scripts/install.sh (Windows: scripts/install.ps1)'
   config: setup-config generate --profile <profile>
   verify: agent-utilities-doctor
-  single_node_skill: graphos-deployment
-  multi_node_skill: graphos-deployment
-  handoff: graphos-genesis -> InfrastructureHandoff(substrate_resolved=true) -> graphos-deployment
+  single_node_skill: arbora-deployment
+  multi_node_skill: arbora-deployment
+  handoff: arbora-genesis -> InfrastructureHandoff(substrate_resolved=true) -> arbora-deployment
 profiles:
   tiny:
-    summary: zero-external-infrastructure local evaluation or development; graph-os and the bundled engine
+    summary: zero-external-infrastructure local evaluation or development; arbora and the bundled engine
       operate as one managed unit
     recipe: docs/recipes/tiny.md
     docker: false
     secrets: engine-encrypted-or-runtime-reference
     servers: none
-    skill: graphos-deployment
+    skill: arbora-deployment
     orchestrator: bare-metal
     install_mode: deploy-baremetal
     idp: none
@@ -38,13 +38,13 @@ profiles:
     engine_idle_shutdown_secs: 60
     engine_topology: unified-in-process
   single-node-prod:
-    summary: one durable secured host with graph-os, the bundled engine, and a selected core connector
+    summary: one durable secured host with arbora, the bundled engine, and a selected core connector
       set
     recipe: docs/recipes/single-node-prod.md
     docker: true
     secrets: openbao-or-engine-encrypted
     servers: core
-    skill: graphos-deployment
+    skill: arbora-deployment
     orchestrator: docker-compose
     install_mode: deploy-container
     idp: keycloak
@@ -60,7 +60,7 @@ profiles:
     docker: true
     secrets: openbao
     servers: all
-    skill: graphos-deployment
+    skill: arbora-deployment
     orchestrator: kubernetes
     install_mode: deploy-container
     idp: keycloak
@@ -133,10 +133,10 @@ run_plan:
     - last-active
     - broadcast
   single_package_deploy:
-    invoke: deploy <package> with graphos-deployment
-    catalog: graphos-deployment
+    invoke: deploy <package> with arbora-deployment
+    catalog: arbora-deployment
   provisioner_by_orchestrator:
-    bare-metal: graphos-genesis
+    bare-metal: arbora-genesis
     docker-swarm: swarm-mesh-provisioner
     kubernetes: kubernetes-mesh-provisioner
     podman: podman-mesh-provisioner
@@ -148,14 +148,14 @@ preflight:
   always:
   - python>=3.11,<3.15
   - uv-or-pip
-  - 'epistemic-graph[full]>=2.27.0,<3.0.0 — pulled in via the `agent-utilities[graphos]` extra (GOC-73:
+  - 'epistemic-graph[full]>=2.27.0,<3.0.0 — pulled in via the `agent-utilities[arbora]` extra (GOC-73:
     opt-in, not a base dependency), required for every genesis profile since this deploy flow stands up
-    graph-os itself; install the approved platform wheel with its bundled server and folded numeric kernel.
+    arbora itself; install the approved platform wheel with its bundled server and folded numeric kernel.
     Runtime installation never compiles.'
   docker_when: profile != tiny
 engine:
   version: epistemic-graph[full]>=2.27.0,<3.0.0
-  install: 'pip install agent-utilities[graphos] (GOC-73: opt-in extra, not a base dependency)'
+  install: 'pip install agent-utilities[arbora] (GOC-73: opt-in extra, not a base dependency)'
   authority: redb-authoritative durable by default (CONCEPT:AU-KG.backend.backend-modes)
   resolver: CONCEPT:AU-OS.deployment.engine-resolver-auto-provision — remote -> share-running-local ->
     autostart the bundled full binary; refcounted (auto-stops idle) or persistent lifecycle
@@ -169,9 +169,9 @@ engine:
     unified-in-process: 'REQUESTED single-unit topology (tiny, single-node-prod). The resolver must record
       the EFFECTIVE process boundary: use a true in-process engine only when the deployed build proves
       it; otherwise the bundled supervised engine is an operational unit but remains out of process.'
-    out-of-process-shared: HYPERSCALING shape (enterprise default) — graph-os talks to a shared, independently-scaled
+    out-of-process-shared: HYPERSCALING shape (enterprise default) — arbora talks to a shared, independently-scaled
       engine over UDS/TCP (epistemic_graph.client, GIL-free); build the engine with the eg `cluster` cargo
-      feature (raft, multi-Raft sharding) and run N graph-os client pods behind the gateway, scaled via
+      feature (raft, multi-Raft sharding) and run N arbora client pods behind the gateway, scaled via
       k8s HPA independently of the engine.
     rule: both shapes keep engine calls BATCHED (one call = one batch op over graph-resident data, never
       a per-element Python loop) and the engine's compute internals pure Rust.
@@ -294,7 +294,7 @@ private_repos:
     tiny: 0
     single-node-prod: 1
     enterprise: 2
-  step: graphos-deployment enterprise workflow (CONCEPT:AU-OS.deployment.concept-2)
+  step: arbora-deployment enterprise workflow (CONCEPT:AU-OS.deployment.concept-2)
   tokens:
   - GIT_NAMESPACE
   - DEFAULT_BRANCH

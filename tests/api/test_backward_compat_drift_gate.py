@@ -8,7 +8,7 @@ from typing import Any
 import pytest
 from pydantic import BaseModel
 
-from graph_os.api.registry import (
+from arbora.api.registry import (
     OpSpec,
     PrincipalRule,
     diff_backward_compat,

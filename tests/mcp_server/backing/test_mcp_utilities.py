@@ -11,10 +11,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-import graph_os.mcp_server.backing.server_factory as server_factory
+import arbora.mcp_server.backing.server_factory as server_factory
 
-# Configured toolsets are built by graph-os, the harness host.
-pytestmark = pytest.mark.usefixtures("graphos_harness_host")
+# Configured toolsets are built by arbora, the harness host.
+pytestmark = pytest.mark.usefixtures("arbora_harness_host")
 
 
 def test_create_mcp_parser():
@@ -48,7 +48,7 @@ def test_create_mcp_server_basic(mock_fastmcp):
         # 2025-11-25 task protocol, not the 2026-07-28 tasks extension — see
         # ``mcp/server_factory.py``'s ``create_mcp_server``). ``lifespan`` is a
         # fresh closure per call, so it's asserted for shape, not identity.
-        from graph_os._version import __version__
+        from arbora._version import __version__
 
         mock_fastmcp.assert_called_once()
         call_args, call_kwargs = mock_fastmcp.call_args
@@ -147,10 +147,10 @@ def test_create_mcp_server_invalid_port():
         assert excinfo.value.code == 1
 
 
-@patch("graph_os.mcp_server.backing.eunomia_principal.create_eunomia_middleware")
+@patch("arbora.mcp_server.backing.eunomia_principal.create_eunomia_middleware")
 def test_create_mcp_server_eunomia(mock_create_mw):
     # ``server_factory._configure_middleware`` calls
-    # ``graph_os.mcp_server.backing.eunomia_principal.create_eunomia_middleware`` (its
+    # ``arbora.mcp_server.backing.eunomia_principal.create_eunomia_middleware`` (its
     # own wrapper — which does its own policy-file validation before ever
     # reaching the external ``eunomia_mcp`` package), not the external
     # package's function directly — that must be the patch target.

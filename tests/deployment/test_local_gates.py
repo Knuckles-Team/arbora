@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.deployment.local_gates import (
+from arbora.deployment.local_gates import (
     GateBlockedError,
     GateReport,
     require_green_local_gates,

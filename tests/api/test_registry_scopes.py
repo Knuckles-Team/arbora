@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from graph_os.api.registry import (
+from arbora.api.registry import (
     DOMAIN_SCOPE_CLASSES,
     FinanceScope,
     FleetScope,

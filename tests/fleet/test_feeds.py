@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.fleet.feeds import (
+from arbora.fleet.feeds import (
     FeedEventRejected,
     cicd_event,
     rum_event,

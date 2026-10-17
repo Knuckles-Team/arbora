@@ -11,14 +11,14 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
-from graph_os.a2a.approval import (
+from arbora.a2a.approval import (
     ApprovalVerificationEvidence,
     PendingCallBinding,
     SignatureCheck,
     verify_pending_signature,
 )
-from graph_os.a2a.models import A2APlanConfirmParams
-from graph_os.api.invoke.plan import PlanBinding, params_digest
+from arbora.a2a.models import A2APlanConfirmParams
+from arbora.api.invoke.plan import PlanBinding, params_digest
 from tests.a2a.test_application import _app
 from tests.api._support import make_verified_caller
 
@@ -78,7 +78,7 @@ def test_valid_signature_is_evidence_only(signed: Any) -> None:
         == SignatureCheck.VALID_SIGNATURE_ONLY
     )
     assert evidence.grant_status == "active"
-    assert b'"domain":"graphos.a2a.pending-call"' in evidence.binding.signing_bytes()
+    assert b'"domain":"arbora.a2a.pending-call"' in evidence.binding.signing_bytes()
     assert b'"version":1' in evidence.binding.signing_bytes()
 
 
@@ -234,7 +234,7 @@ def test_binding_is_closed_frozen_and_bounded(signed: Any) -> None:
 def test_route_reaches_verification_refusal_without_accepting_wire_authority(
     signed: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    import graph_os.a2a.approval as approval
+    import arbora.a2a.approval as approval
 
     observed = []
 
@@ -251,7 +251,7 @@ def test_route_reaches_verification_refusal_without_accepting_wire_authority(
         json={
             "jsonrpc": "2.0",
             "id": "confirm",
-            "method": "graphos.plan/confirm",
+            "method": "arbora.plan/confirm",
             "params": confirmation.model_dump(),
         },
     )

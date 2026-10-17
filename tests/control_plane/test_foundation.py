@@ -8,7 +8,7 @@ import json
 import pytest
 from pydantic import ValidationError
 
-from graph_os.control_plane.foundation import (
+from arbora.control_plane.foundation import (
     FoundationControlPlane,
     FoundationLifecycleError,
     FoundationRepositoryError,

@@ -12,7 +12,7 @@ from typing import Any
 
 from fastapi.testclient import TestClient
 
-from graph_os.agent_host import build_agent_host_app
+from arbora.agent_host import build_agent_host_app
 
 
 def _stub_executor(graph: Any, graph_config: dict, query: str) -> dict:

@@ -9,8 +9,8 @@ used across the other MCP tool-surface tests (e.g. ``test_ops_causal_tools.py``)
 
 from __future__ import annotations
 
-from graph_os.mcp_server import runtime
-from graph_os.mcp_server.backing.tools.audit_tools import register_audit_tools
+from arbora.mcp_server import runtime
+from arbora.mcp_server.backing.tools.audit_tools import register_audit_tools
 from tests.mcp_server.backing._support import CollectingMCP as _CollectingMCP
 
 
@@ -46,7 +46,7 @@ def _register(monkeypatch, engine):
     return mcp.tools["graph_audit"]
 
 
-def test_registered_on_graphos_tool_table():
+def test_registered_on_arbora_tool_table():
     mcp = _CollectingMCP()
     register_audit_tools(mcp)
     assert "graph_audit" in mcp.tools

@@ -1,4 +1,4 @@
-"""graph-os registers its harness host bindings with agent-utilities' thin client."""
+"""arbora registers its harness host bindings with agent-utilities' thin client."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from types import SimpleNamespace
 import pytest
 from agent_utilities import host_ports as host
 
-from graph_os.mcp_server import harness_host, runtime
+from arbora.mcp_server import harness_host, runtime
 
 
 @pytest.fixture(autouse=True)
@@ -27,7 +27,7 @@ class _Mux:
 
 
 @pytest.mark.spec("GRAPHOS-HOST-R001.2")
-def test_without_graph_os_the_harness_fails_closed():
+def test_without_arbora_the_harness_fails_closed():
     assert host.native_tool_names() == frozenset()
     assert host.fleet_catalog() == {}
     with pytest.raises(RuntimeError):
@@ -40,7 +40,7 @@ def test_registration_binds_native_tools_fleet_and_keepalive(monkeypatch):
     monkeypatch.setitem(runtime.REGISTERED_TOOLS, "graph_query", lambda: None)
     monkeypatch.setattr(
         runtime,
-        "build_native_graphos_toolset",
+        "build_native_arbora_toolset",
         lambda names, *, toolset_id: built.append((names, toolset_id)) or "ts",
     )
     entered = []
@@ -88,7 +88,7 @@ def test_unregister_clears_every_binding():
 
 @pytest.mark.spec("GRAPHOS-HOST-R001.2")
 def test_registration_binds_remote_toolsets_and_tool_clients(monkeypatch, tmp_path):
-    from graph_os.fleet import client_toolsets
+    from arbora.fleet import client_toolsets
 
     loaded = []
 
@@ -142,7 +142,7 @@ def test_tool_client_reports_tool_errors_as_host_errors():
 def test_mcp_server_entry_point_registers_the_host():
     import inspect
 
-    from graph_os.mcp_server import server
+    from arbora.mcp_server import server
 
     source = inspect.getsource(server.mcp_server)
     assert "register_harness_host(fleet_mux)" in source

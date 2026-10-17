@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from pydantic import ValidationError
 
-from graph_os.fleet.scaling.resource_pool_authority import (
+from arbora.fleet.scaling.resource_pool_authority import (
     CapabilityAttestation,
     CapabilityState,
     CostCapability,

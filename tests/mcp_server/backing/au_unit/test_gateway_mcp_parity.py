@@ -13,14 +13,14 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.mcp_server import runtime
-from graph_os.mcp_server.backing.tool_specs import (
+from arbora.mcp_server import runtime
+from arbora.mcp_server.backing.tool_specs import (
     INTENT_VERBS,
     TOOL_SPECS_BY_NAME,
     canonical_tool_names,
 )
-from graph_os.mcp_server.backing.tools import engine_tools
-from graph_os.mcp_server.routes import mount_rest_routes
+from arbora.mcp_server.backing.tools import engine_tools
+from arbora.mcp_server.routes import mount_rest_routes
 
 # The 21 ``engine_<domain>`` tool families are declared as REQUIRED
 # (``feature=None``) in the distribution-owned ``ToolSpec`` manifest -- a real
@@ -140,14 +140,14 @@ def test_retired_legacy_tool_fanout_is_not_mounted():
 
 
 # ── Third leg: MCP verb ⇄ domain-skill coverage (CONCEPT:AU-ECO.mcp.kg-skill-verb-coverage) ──
-# Beyond REST⇄MCP parity, every Graph-OS verb must be claimed explicitly by a
-# retained workflow skill's ``agents/graph-os.yaml`` sidecar. The contract lives
-# in ``graph_os.mcp_server.backing.skill_coverage`` and has no slug inference or waivers.
+# Beyond REST⇄MCP parity, every Arbora verb must be claimed explicitly by a
+# retained workflow skill's ``agents/arbora.yaml`` sidecar. The contract lives
+# in ``arbora.mcp_server.backing.skill_coverage`` and has no slug inference or waivers.
 #
 # Every domain-tier skill (the ones that claimed verb coverage) moved to
-# graph-os on 2026-10-03; agent-utilities now bundles only the platform-tier
+# arbora on 2026-10-03; agent-utilities now bundles only the platform-tier
 # agent-utilities-development skill. Full fleet-wide coverage completeness
-# can only be verified where the covering skills actually live -- graph-os's
+# can only be verified where the covering skills actually live -- arbora's
 # own test suite, which bundles them and depends on agent-utilities (the
 # reverse is not true) -- so the exact completeness assertion that used to
 # run here moved there. ``test_domain_skill_sidecars_are_valid_and_have_no_orphans``
@@ -156,32 +156,32 @@ def test_retired_legacy_tool_fanout_is_not_mounted():
 
 
 def test_domain_skill_sidecars_are_valid_and_have_no_orphans():
-    from graph_os.mcp_server.backing import skill_coverage
+    from arbora.mcp_server.backing import skill_coverage
 
     report = skill_coverage.compute_coverage()
     assert not report.orphans, (
-        "Domain skills claiming verbs outside the live Graph-OS surface: "
+        "Domain skills claiming verbs outside the live Arbora surface: "
         f"{report.orphans}. Fix the explicit sidecar claim."
     )
     assert not report.duplicates, (
-        "Graph-OS verbs with ambiguous domain ownership: "
+        "Arbora verbs with ambiguous domain ownership: "
         f"{report.duplicates}. Keep each verb in exactly one domain sidecar."
     )
     assert not report.invalid_sidecars, (
-        "Invalid agents/graph-os.yaml sidecars: "
+        "Invalid agents/arbora.yaml sidecars: "
         f"{report.invalid_sidecars}. Follow the closed version-2 schema."
     )
 
 
-def test_graphos_external_rlm_dependency_is_declared() -> None:
-    """``graph_rlm`` stays a declared external GraphOS dependency.
+def test_arbora_external_rlm_dependency_is_declared() -> None:
+    """``graph_rlm`` stays a declared external Arbora dependency.
 
     Its owning domain skill, ``graph-research-and-analysis``, moved to
-    graph-os on 2026-10-03 along with every other domain-tier skill, so the
+    arbora on 2026-10-03 along with every other domain-tier skill, so the
     "is it claimed by that skill's sidecar" half of this contract now lives
-    in graph-os's own test suite; this half (the name itself is still the
+    in arbora's own test suite; this half (the name itself is still the
     one agreed external-dependency marker) stays here.
     """
-    from graph_os.mcp_server.backing.skill_coverage import EXTERNAL_GRAPHOS_TOOL_NAMES
+    from arbora.mcp_server.backing.skill_coverage import EXTERNAL_ARBORA_TOOL_NAMES
 
-    assert EXTERNAL_GRAPHOS_TOOL_NAMES == {"graph_rlm"}
+    assert EXTERNAL_ARBORA_TOOL_NAMES == {"graph_rlm"}

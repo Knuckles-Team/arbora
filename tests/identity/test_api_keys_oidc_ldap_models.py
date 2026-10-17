@@ -2,10 +2,10 @@
 
 import pytest
 
-from graph_os.identity.api_keys import ApiKeyGrant
-from graph_os.identity.engine import IdentityUnavailable
-from graph_os.identity.ldap import LdapBindConfig
-from graph_os.identity.oidc import OidcMappingRule
+from arbora.identity.api_keys import ApiKeyGrant
+from arbora.identity.engine import IdentityUnavailable
+from arbora.identity.ldap import LdapBindConfig
+from arbora.identity.oidc import OidcMappingRule
 
 
 def test_api_key_accepts_non_approver_scopes() -> None:

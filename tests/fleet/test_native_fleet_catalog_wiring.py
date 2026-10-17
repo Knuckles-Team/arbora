@@ -1,4 +1,4 @@
-"""Focused wiring checks for the native graph-os fleet composition."""
+"""Focused wiring checks for the native arbora fleet composition."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import inspect
 import json
 from dataclasses import dataclass
 
-from graph_os.fleet.catalog_reader import (
+from arbora.fleet.catalog_reader import (
     CatalogServer,
     ComponentContent,
     ComponentRecord,
@@ -17,14 +17,14 @@ from graph_os.fleet.catalog_reader import (
     ReadReceipt,
     ServerRegistration,
 )
-from graph_os.fleet.multiplexer import MCPMultiplexer
-from graph_os.fleet.session_notifications import SessionCatalogNotifications
+from arbora.fleet.multiplexer import MCPMultiplexer
+from arbora.fleet.session_notifications import SessionCatalogNotifications
 
 CONTEXT = ReadContext(
     tenant_id="tenant-a",
     principal_id="principal-a",
     agent_id="agent-a",
-    audience="graph-os",
+    audience="arbora",
     policy_version="policy:current",
 )
 
@@ -132,7 +132,7 @@ def test_engine_component_transport_policy_is_preserved() -> None:
 
 
 def test_retired_reconciliation_symbols_are_absent() -> None:
-    import graph_os.fleet.multiplexer as module
+    import arbora.fleet.multiplexer as module
 
     source = inspect.getsource(module)
     for retired in (

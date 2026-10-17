@@ -1,6 +1,6 @@
 import pytest
 
-from graph_os.messaging.action_dispatch import (
+from arbora.messaging.action_dispatch import (
     NotificationSpec,
     RecordingNotifier,
     WebhookSpec,

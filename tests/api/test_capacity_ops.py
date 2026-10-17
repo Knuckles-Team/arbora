@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.api.ops import capacity
-from graph_os.api.registry import Effect, Registry, Surface
-from graph_os.fleet.error_budget import (
+from arbora.api.ops import capacity
+from arbora.api.registry import Effect, Registry, Surface
+from arbora.fleet.error_budget import (
     AimdConfig,
     BudgetWindow,
     OutcomeClass,
@@ -20,7 +20,7 @@ from graph_os.fleet.error_budget import (
     ThrottleMode,
     decide,
 )
-from graph_os.fleet.throttle_service import ThrottleRegistry
+from arbora.fleet.throttle_service import ThrottleRegistry
 from tests.api._ops_support import service_context as _context
 
 pytestmark = pytest.mark.spec("GRAPHOS-CAPACITY-R002")

@@ -8,7 +8,7 @@ from typing import cast
 import pytest
 from pydantic import ValidationError
 
-from graph_os.control_plane.webui import (
+from arbora.control_plane.webui import (
     AccessContext,
     AttachmentIdentity,
     ContentReference,
@@ -267,7 +267,7 @@ def test_retention_requires_ordered_cas_and_honors_legal_hold() -> None:
     assert released.state == "active"
 
 
-def test_ui_state_receipt_cannot_mutate_graphos_authority() -> None:
+def test_ui_state_receipt_cannot_mutate_arbora_authority() -> None:
     context = _context()
     service = WebUiService(InMemoryWebUiRepository())
     preference = PreferenceIdentity(
@@ -280,7 +280,7 @@ def test_ui_state_receipt_cannot_mutate_graphos_authority() -> None:
         digest=_digest("preference"),
     )
     receipt = service.save_ui_state(preference, context=context)
-    assert receipt.graphos_permission_mutations == 0
+    assert receipt.arbora_permission_mutations == 0
     assert receipt.provider_grants == 0
     assert receipt.public_shares == 0
     assert not hasattr(service, "grant_graph_permission")

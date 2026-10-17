@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.observability import error_detail_sink as eds
-from graph_os.observability import trace_ontology as to
+from arbora.observability import error_detail_sink as eds
+from arbora.observability import trace_ontology as to
 
 
 def test_trace_and_outcome_ids_are_stable_and_refuse_an_empty_run():

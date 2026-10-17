@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from graph_os.fleet.scaling.service_scale_units import (
+from arbora.fleet.scaling.service_scale_units import (
     CapacityAxis,
     CapacityDemand,
     CapacityObservation,

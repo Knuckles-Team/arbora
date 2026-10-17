@@ -6,13 +6,13 @@ import json
 
 import pytest
 
-from graph_os.a2a.application import _application_error
-from graph_os.a2a.authority import (
+from arbora.a2a.application import _application_error
+from arbora.a2a.authority import (
     A2ATransitionHistoryUnavailable,
     WorkItemA2AAuthority,
 )
-from graph_os.a2a.models import A2AMessage, A2ARouteDecision, A2ATextPart
-from graph_os.a2a.routing import A2AAssemblyUnavailable, OrchestratorA2ARouter
+from arbora.a2a.models import A2AMessage, A2ARouteDecision, A2ATextPart
+from arbora.a2a.routing import A2AAssemblyUnavailable, OrchestratorA2ARouter
 
 
 def _message(text: str = "do work") -> A2AMessage:

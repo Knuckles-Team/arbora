@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from graph_os.access import service
+from arbora.access import service
 
 
 def _context(*, principal: str = "approver", delegated: bool = False):
@@ -70,8 +70,8 @@ async def test_lease_listing_uses_verified_tenant() -> None:
 
 
 def test_operations_require_console_confirmation_for_decisions() -> None:
-    pytest.importorskip("graph_os.api.registry")
-    from graph_os.api.ops.access import operations
+    pytest.importorskip("arbora.api.registry")
+    from arbora.api.ops.access import operations
 
     ops = {op.id: op for op in operations()}
     assert "access.elevation.deny" not in ops

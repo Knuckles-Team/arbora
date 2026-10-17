@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from graph_os.observability.readiness import (
+from arbora.observability.readiness import (
     check,
     collect_readiness_snapshot,
     identity_check,

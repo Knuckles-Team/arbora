@@ -1,7 +1,7 @@
 """Multiplexer wiring for the remote-OAuth broker (NE-008 Deliverable 3).
 
 Proves the per-principal path added to
-``graph_os.fleet.multiplexer`` -- ``_resolve_remote_oauth_bearer``
+``arbora.fleet.multiplexer`` -- ``_resolve_remote_oauth_bearer``
 (the seam invoked from ``_open_one_session``), the pool-exclusion guard in
 ``_start_child``, and the probe-cache exclusion in ``_cache_probe``/
 ``_probe_cache_hit`` -- without re-deriving the attack matrix already proven
@@ -28,17 +28,17 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from graph_os.api.contracts.session import (
+from arbora.api.contracts.session import (
     GraphSession,
     suspend_session,
     use_session,
 )
-from graph_os.fleet import multiplexer as mod
-from graph_os.fleet.discovery_authority import (
+from arbora.fleet import multiplexer as mod
+from arbora.fleet.discovery_authority import (
     OAuthGrantBinding,
     TenantLocalDiscoveryBinding,
 )
-from graph_os.mcp_server.backing.remote_oauth_broker import (
+from arbora.mcp_server.backing.remote_oauth_broker import (
     OAuthProviderError,
     OAuthTokenAbsentError,
     OAuthTokenStore,
@@ -47,8 +47,8 @@ from graph_os.mcp_server.backing.remote_oauth_broker import (
     RemoteOAuthBroker,
     StoredToken,
 )
-from graph_os.security.actor_context import ActorContext, ActorType, use_actor
-from graph_os.security.secrets import SecretsClient
+from arbora.security.actor_context import ActorContext, ActorType, use_actor
+from arbora.security.secrets import SecretsClient
 from tests._support import FakeSecretsBackend
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 
@@ -342,7 +342,7 @@ def remote_transport(monkeypatch):
     ``create_async_http_client`` call was built with -- so a test can inspect
     the ACTUAL headers the multiplexer would have sent, without a real
     network call. Mirrors ``tests/unit/mcp/test_multiplexer_transports.py``."""
-    from graph_os.core import transport as http_client_mod
+    from arbora.core import transport as http_client_mod
 
     recorded_clients: list[dict] = []
     real_create_async_http_client = http_client_mod.create_async_http_client

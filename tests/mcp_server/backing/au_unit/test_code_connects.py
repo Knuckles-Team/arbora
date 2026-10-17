@@ -6,7 +6,7 @@ to :Code ids, runs a canned shortest path, and annotates each hop's edge.
 
 from __future__ import annotations
 
-from graph_os.mcp_server.backing.tools.query_tools import code_connects
+from arbora.mcp_server.backing.tools.query_tools import code_connects
 
 _AUTH = "code:auth.py::AuthService"
 _POOL = "code:database.py::DatabasePool"

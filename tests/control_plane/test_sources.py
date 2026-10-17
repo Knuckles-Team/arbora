@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 import pytest
 from pydantic import ValidationError
 
-from graph_os.control_plane.sources import (
+from arbora.control_plane.sources import (
     AbsenceVerification,
     CheckpointMutation,
     EntryKind,

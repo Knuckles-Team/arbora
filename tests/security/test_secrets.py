@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.security.secrets import SecretsBackend, SecretsClient
+from arbora.security.secrets import SecretsBackend, SecretsClient
 
 
 class _Memory(SecretsBackend):

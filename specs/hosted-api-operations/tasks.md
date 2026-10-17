@@ -4,12 +4,12 @@
 
 See [design](plan.md) and [tests](test-spec.md).
 
-- [ ] Validate public engine package contracts and exact method/error/scope coverage; identify one existing GraphOS entrypoint per domain.
+- [ ] Validate public engine package contracts and exact method/error/scope coverage; identify one existing Arbora entrypoint per domain.
 - [ ] Implement immutable operation registry, digest, bindings, exclusions, and deterministic generation.
 - [ ] Implement shared invocation steps, safe error mapping, durable plan lease, audit reservation/outcome, policy and service executor.
 - [ ] Implement six MCP intent verbs, typed discovery/ranking, ten resident-tool boot invariant, and multi-kind fleet loading through `invoke`.
 - [ ] Implement `/api/v1` operation and resource route factories, protocol-route inventory, generated OpenAPI and Python/TypeScript clients.
-- [ ] Build the checked former-tool/route parity inventory, migrate domain handlers and generated-client consumers, then delete obsolete GraphOS registrars/routes and duplicate authority logic in one serving cutover.
+- [ ] Build the checked former-tool/route parity inventory, migrate domain handlers and generated-client consumers, then delete obsolete Arbora registrars/routes and duplicate authority logic in one serving cutover.
 - [ ] Prove contract, authorization, policy, idempotency, audit, negative and served cases in [test-spec.md](test-spec.md).
 - [ ] Run pinned CCCC, KISS, jscpd, Dupehound, Python, package and CI gates from a clean public checkout; capture exact revision evidence.
 - [ ] Review public documentation and mark only individually proven capabilities accepted.
@@ -89,7 +89,7 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **GRAPHOS-OPS-R039:** Dashboard route parity
 - [ ] **GRAPHOS-OPS-R039.5:** Add one test in tests/gateway/test_dashboard_api
 - [ ] **GRAPHOS-OPS-R039.6:** Replace the `agent_utilities
-- [ ] **GRAPHOS-OPS-R039.7:** Replace `_active_engine` and `_hydration_manager` in graph_os/gateway/dashboard_api
+- [ ] **GRAPHOS-OPS-R039.7:** Replace `_active_engine` and `_hydration_manager` in arbora/gateway/dashboard_api
 - [ ] **GRAPHOS-OPS-R039.8:** Add one test in tests/gateway/test_registry
 - [ ] **GRAPHOS-OPS-R039.9:** Replace the `agent_utilities
 - [ ] **GRAPHOS-OPS-R040:** Live Artifacts routes
@@ -140,11 +140,11 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **R054:** Resolve the AU-INTEGRATION-R014 producer operation and receipt; keep generic RLM benchmarking separate.
 - [ ] **R055:** Resolve AU liveness/proposal contracts before exposing remediation; preserve explicit run/process approval.
 - [ ] **R056:** Resolve the EG/AU review operation, finding schema, and impact-filter contract; leave `decide.commit` unchanged.
-- [ ] **R057:** Resolve EG R094 and SDK source-effect/receipt contracts before defining the GraphOS serializer or difference oracle.
+- [ ] **R057:** Resolve EG R094 and SDK source-effect/receipt contracts before defining the Arbora serializer or difference oracle.
 - [ ] **R058:** Resolve WebUI table-control/statistics requirements and EG producer bindings before extending schema-context reads.
 - [ ] **GRAPHOS-OPS-R061:** Define closed indexed-usage query/projection models and the EG reader in usage.py. Bind the tenant to the authenticated caller principal; ignore client-supplied tenant values. Preserve producer counters, exact totals, pinned PriceTableV1, revisions, cursor, unknown reasons, and the R010.101 latency profile. Keep runs.metrics and context budgets distinct.
 - [ ] **GRAPHOS-OPS-R061:** Wire the existing registry/invoke path to ObservabilityView.tsx. Specify served authorization, independent-ledger, pagination, unknown-value, stale-revision, and latency-profile acceptance.
-- [ ] **GRAPHOS-OPS-R063:** Define typed evaluation and context reads in graph_os/api/ops/retrieval.py. Bind the EG R100.100 ranking receipt and context method. Require identical inputs across registered algorithms. Preserve original-text UTF-8 offsets, revisions, authentication, and span bounds.
+- [ ] **GRAPHOS-OPS-R063:** Define typed evaluation and context reads in arbora/api/ops/retrieval.py. Bind the EG R100.100 ranking receipt and context method. Require identical inputs across registered algorithms. Preserve original-text UTF-8 offsets, revisions, authentication, and span bounds.
 - [ ] **GRAPHOS-OPS-R063:** Wire the shared registry/invoke route to the WebUI comparison panel. Specify served two-algorithm and independent-metric checks. Cover Unicode offsets, stale or denied access, missing labels, invalid maps, and over-limit spans.
 
 ## Additional owner requirements

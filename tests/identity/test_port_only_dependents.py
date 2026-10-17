@@ -1,7 +1,7 @@
 """GRAPHOS-IDENTITY-R021.1: identity wiring depends only on identity ports.
 
-GraphOS's MCP server, web host (gateway), and web co-service (webui_host)
-packages must depend only on ``graph_os.identity.ports`` (the Protocol
+Arbora's MCP server, web host (gateway), and web co-service (webui_host)
+packages must depend only on ``arbora.identity.ports`` (the Protocol
 definitions + DTOs) for identity behavior, never on a concrete issuer,
 session, or authority implementation module. The concrete implementations
 are constructed once in the serving composition root and injected; these
@@ -11,7 +11,7 @@ composition root stops being the single source of truth for identity
 wiring.
 
 This is a regression guard: at the time this test was written none of the
-three packages imported ``graph_os.identity`` at all (identity objects are
+three packages imported ``arbora.identity`` at all (identity objects are
 injected, never imported concretely), so the test is expected to pass
 trivially today and to fail loudly the moment a future edit reaches past
 the ports module.
@@ -25,18 +25,18 @@ from pathlib import Path
 
 import pytest
 
-import graph_os.gateway as gateway_pkg
-import graph_os.mcp_server as mcp_server_pkg
-import graph_os.webui_host as webui_host_pkg
+import arbora.gateway as gateway_pkg
+import arbora.mcp_server as mcp_server_pkg
+import arbora.webui_host as webui_host_pkg
 
 #: Only the ports/DTO module may be imported by a dependent package; every
-#: other ``graph_os.identity`` submodule holds a concrete implementation.
-_ALLOWED_IDENTITY_MODULE = "graph_os.identity.ports"
+#: other ``arbora.identity`` submodule holds a concrete implementation.
+_ALLOWED_IDENTITY_MODULE = "arbora.identity.ports"
 
 _CHECKED_PACKAGES = {
-    "graph_os.mcp_server": mcp_server_pkg,
-    "graph_os.gateway": gateway_pkg,
-    "graph_os.webui_host": webui_host_pkg,
+    "arbora.mcp_server": mcp_server_pkg,
+    "arbora.gateway": gateway_pkg,
+    "arbora.webui_host": webui_host_pkg,
 }
 
 
@@ -54,7 +54,7 @@ def _package_source_files(package) -> list[Path]:
 
 
 def _is_identity_module(module: str) -> bool:
-    return module == "graph_os.identity" or module.startswith("graph_os.identity.")
+    return module == "arbora.identity" or module.startswith("arbora.identity.")
 
 
 def _forbidden_plain_imports(node: ast.Import) -> set[str]:
@@ -67,8 +67,8 @@ def _forbidden_plain_imports(node: ast.Import) -> set[str]:
 
 def _forbidden_from_imports(node: ast.ImportFrom) -> set[str]:
     module = node.module or ""
-    if module == "graph_os.identity":
-        # `from graph_os.identity import <concrete symbol>` — the package's
+    if module == "arbora.identity":
+        # `from arbora.identity import <concrete symbol>` — the package's
         # own __init__ re-exports concrete engine types, so importing the
         # bare package is itself a concrete-impl dependency, not a
         # ports-only one.

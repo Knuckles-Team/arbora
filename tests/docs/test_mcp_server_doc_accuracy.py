@@ -1,6 +1,6 @@
 """GRAPHOS-OPS-R030: accurate MCP server and API documentation.
 
-GraphOS keeps its MCP server documentation accurate to the live six-verb
+Arbora keeps its MCP server documentation accurate to the live six-verb
 MCP surface, replacing any outdated tool-count or endpoint description.
 This test parses the resident-tool-surface description published in
 ``docs/mcp-server.md`` and confirms its stated verb/tool counts and names
@@ -15,8 +15,8 @@ from pathlib import Path
 
 import pytest
 
-from graph_os.api.mcp.registration import FLEET_OPERATIONS, RESIDENT_NAMES
-from graph_os.api.mcp.verbs import VERBS
+from arbora.api.mcp.registration import FLEET_OPERATIONS, RESIDENT_NAMES
+from arbora.api.mcp.verbs import VERBS
 
 DOC_PATH = Path(__file__).resolve().parents[2] / "docs" / "mcp-server.md"
 

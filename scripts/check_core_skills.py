@@ -22,7 +22,7 @@ mistaken for an invocation.
 
 Usage::
 
-    python3 scripts/check_core_skills.py --repo-root . graph_os/skills/*/SKILL.md
+    python3 scripts/check_core_skills.py --repo-root . arbora/skills/*/SKILL.md
     python3 scripts/check_core_skills.py --repo-root . --list-file skills.txt
 
 Exit 0 = clean, 1 = findings, 2 = the gate could not establish its universe.

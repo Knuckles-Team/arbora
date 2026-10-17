@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.mcp_server.legacy_action_mapping import (
+from arbora.mcp_server.legacy_action_mapping import (
     APPROVED_ACTION_MAPPING,
     ActionOperationMapping,
     DuplicateActionMappingError,

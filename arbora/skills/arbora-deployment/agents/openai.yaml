@@ -1,0 +1,4 @@
+interface:
+  display_name: "Arbora Deployment"
+  short_description: "Install, configure and verify a Arbora runtime"
+  default_prompt: "Use $arbora-deployment to plan this Arbora installation change, apply only authorized steps, and verify the browser sign-in path and the MCP/API control plane."

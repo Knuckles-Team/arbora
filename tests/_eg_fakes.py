@@ -9,14 +9,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from graph_os.access.action_policy import (
+from arbora.access.action_policy import (
     ActionDecision,
     ActionRequest,
     PolicyDisposition,
     PolicyReceipt,
 )
-from graph_os.api.contracts.session import GraphSession
-from graph_os.security.actor_context import ActorContext, ActorType
+from arbora.api.contracts.session import GraphSession
+from arbora.security.actor_context import ActorContext, ActorType
 
 
 class FakeEgEngine:
@@ -59,11 +59,11 @@ class AllowPolicy:
 
 
 def service_session(tenant: str, graph: str) -> GraphSession:
-    """GraphOS's verified process session with the pack-import scopes."""
+    """Arbora's verified process session with the pack-import scopes."""
 
     return GraphSession(
         actor=ActorContext(
-            actor_id="service:graph-os",
+            actor_id="service:arbora",
             actor_type=ActorType.AUTOMATED_SERVICE,
             tenant_id=tenant,
             authenticated=True,
@@ -71,6 +71,6 @@ def service_session(tenant: str, graph: str) -> GraphSession:
         tenant=tenant,
         scopes=frozenset({"agent:pack-control", "connector:catalog-attest"}),
         graph=graph,
-        audience="graph-os",
+        audience="arbora",
         policy_version="policy-a",
     )

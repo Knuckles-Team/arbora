@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.control_plane.runs.capacity import (
+from arbora.control_plane.runs.capacity import (
     CapacityError,
     CapacityLedger,
     CapacityReDecisionExhaustedError,

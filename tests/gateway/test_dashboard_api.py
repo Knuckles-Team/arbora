@@ -1,6 +1,6 @@
-"""GRAPHOS-HOST-R019: GraphOS serves the dashboard REST reads and stream.
+"""GRAPHOS-HOST-R019: Arbora serves the dashboard REST reads and stream.
 
-agent-webui composes its ``/api`` surface from GraphOS. These tests prove the
+agent-webui composes its ``/api`` surface from Arbora. These tests prove the
 routes the frontend calls are mounted, answer with the aggregator's data, and
 that ``/ws/dashboard`` accepts a handshake and streams snapshot/update frames.
 No live engine or services: the aggregator and daemon are replaced by fakes.
@@ -14,8 +14,8 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from graph_os.gateway import dashboard_api
-from graph_os.gateway.models import DashboardLayout, WidgetData
+from arbora.gateway import dashboard_api
+from arbora.gateway.models import DashboardLayout, WidgetData
 
 FRONTEND_PATHS = (
     "/api/dashboard/full",
@@ -81,7 +81,7 @@ def test_graph_routes_compose_the_dashboard_surface() -> None:
     """register_graph_routes is the composer agent-webui calls."""
     import inspect
 
-    from graph_os.gateway import graph_api
+    from arbora.gateway import graph_api
 
     source = inspect.getsource(graph_api.register_graph_routes)
     assert "register_dashboard_routes(app, prefix=prefix)" in source
@@ -99,7 +99,7 @@ def test_full_returns_layout_and_data(client: TestClient) -> None:
 def test_health_is_served_without_capabilities(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from graph_os.observability import runtime_health
+    from arbora.observability import runtime_health
 
     async def _report() -> dict[str, Any]:
         return {"status": "ok"}

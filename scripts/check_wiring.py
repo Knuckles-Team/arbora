@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GraphOS's Python wiring gates: entry point for two checks over ``graph_os/``.
+"""Arbora's Python wiring gates: entry point for two checks over ``arbora/``.
 
 ``orphans`` (the ``check-orphan-modules`` pre-commit hook, every stage --
 this is the one that blocks): a module is an orphan when it is isolated, with
@@ -10,7 +10,7 @@ fan-out (it imports nothing from the package) -- mirroring the retired
 
 ``unreachable`` (the ``check-unreachable-modules`` pre-commit hook, manual
 stage only -- it reports, it does not block CI): starting from the roots a
-real process actually uses to start GraphOS (every ``[project.scripts]`` /
+real process actually uses to start Arbora (every ``[project.scripts]`` /
 ``[project.entry-points]`` target in ``pyproject.toml``, plus the top-level
 package), which modules does walking every import edge -- static and
 dynamic/name-based -- ever reach? A cluster of modules that only import each

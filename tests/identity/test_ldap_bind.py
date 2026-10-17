@@ -2,8 +2,8 @@
 
 import pytest
 
-from graph_os.identity.engine import IdentityUnavailable
-from graph_os.identity.ldap import LdapBindConfig, bind_directory, escape_filter_value
+from arbora.identity.engine import IdentityUnavailable
+from arbora.identity.ldap import LdapBindConfig, bind_directory, escape_filter_value
 
 _CONFIG = LdapBindConfig(host="ldap.example.org", port=636, bind_dn="cn=svc,dc=x")
 

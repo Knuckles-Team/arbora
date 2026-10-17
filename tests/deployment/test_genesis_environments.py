@@ -18,7 +18,7 @@ import copy
 import pytest
 import yaml
 
-from graph_os.deployment.genesis_environments import (
+from arbora.deployment.genesis_environments import (
     BUILTIN_ENVIRONMENTS_DIR,
     EnvironmentProfileError,
     MissingSecretReferenceError,
@@ -85,7 +85,7 @@ def test_extension_directory_adds_a_new_profile_with_zero_code_change(
     (ext_dir / "uat.yaml").write_text(yaml.safe_dump(uat), encoding="utf-8")
 
     monkeypatch.setattr(
-        "graph_os.deployment.genesis_environments._extension_dir",
+        "arbora.deployment.genesis_environments._extension_dir",
         lambda: ext_dir,
     )
 
@@ -103,7 +103,7 @@ def test_extension_directory_overrides_a_builtin_by_name(tmp_path, monkeypatch):
     (ext_dir / "dev.yaml").write_text(yaml.safe_dump(custom_dev), encoding="utf-8")
 
     monkeypatch.setattr(
-        "graph_os.deployment.genesis_environments._extension_dir",
+        "arbora.deployment.genesis_environments._extension_dir",
         lambda: ext_dir,
     )
 
@@ -126,7 +126,7 @@ def test_missing_secret_ref_raises_missing_secret_error():
     raw["secrets"]["required"][0]["ref"] = ""
     with pytest.raises(MissingSecretReferenceError) as exc:
         _profile_from_mapping(raw, source=BUILTIN_ENVIRONMENTS_DIR / "dev.yaml")
-    assert "graph-os-secrets" in str(exc.value)
+    assert "arbora-secrets" in str(exc.value)
     assert "do not infer credentials" in str(exc.value)
 
 
@@ -143,10 +143,10 @@ def test_secret_ref_must_use_a_recognized_scheme():
 @pytest.mark.parametrize(
     "ref",
     [
-        "env://GRAPH_OS_SECRET",
-        "vault://apps/graph-os/oidc-client-secret",
-        "secret://graph-os/oidc",
-        "k8s-secret://platform/graph-os-secrets",
+        "env://ARBORA_SECRET",
+        "vault://apps/arbora/oidc-client-secret",
+        "secret://arbora/oidc",
+        "k8s-secret://platform/arbora-secrets",
     ],
 )
 def test_every_recognized_scheme_is_accepted(ref):
@@ -193,7 +193,7 @@ def test_writable_path_with_unknown_medium_is_rejected():
 
 # ── fail loud: filesystem.runtime_paths (BUG-ROFS-1 configurability) ──────
 def test_default_profiles_bind_every_runtime_path_env_var():
-    from graph_os.deployment.genesis_environments import RUNTIME_PATH_ENV_VARS
+    from arbora.deployment.genesis_environments import RUNTIME_PATH_ENV_VARS
 
     for name in ("dev", "test", "prod"):
         profile = load_environment_profile(name)

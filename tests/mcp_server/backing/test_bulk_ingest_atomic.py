@@ -22,7 +22,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from graph_os.mcp_server.backing.tools import write_ingest_tools as wit
+from arbora.mcp_server.backing.tools import write_ingest_tools as wit
 
 
 class _FakeBatchEngine:

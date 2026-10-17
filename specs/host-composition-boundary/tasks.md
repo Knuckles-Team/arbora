@@ -2,76 +2,76 @@
 
 Status vocabulary is defined in [spec.md](spec.md). Check a task only after its listed proof exists; source presence alone is not a check mark.
 
-- [x] Extract and publish the GraphOS serving, gateway, fleet, A2A and deployment package boundary. Evidence: package modules under `graph_os/`, public `graph-os` console script in `pyproject.toml`. **State: Implemented; release/served acceptance for this whole spec still pending.**
-- [x] `GRAPHOS-HOST-R001.1`: move the agent-utilities MCP, API and WebUI server code that graph-os uses into `graph_os/mcp_server/backing/`, `graph_os/api/contracts/` and `graph_os/webui_host/`; require `agent-utilities>=3.0.0,<4.0.0`. Evidence: `tests/test_package_layout.py::test_graph_os_imports_no_au_serving_packages`.
+- [x] Extract and publish the Arbora serving, gateway, fleet, A2A and deployment package boundary. Evidence: package modules under `arbora/`, public `arbora` console script in `pyproject.toml`. **State: Implemented; release/served acceptance for this whole spec still pending.**
+- [x] `GRAPHOS-HOST-R001.1`: move the agent-utilities MCP, API and WebUI server code that arbora uses into `arbora/mcp_server/backing/`, `arbora/api/contracts/` and `arbora/webui_host/`; require `agent-utilities>=3.0.0,<4.0.0`. Evidence: `tests/test_package_layout.py::test_arbora_imports_no_au_serving_packages`.
 - [x] `GRAPHOS-HOST-R001.2`: `tests/mcp_server/test_harness_host.py` proves fail-closed before registration, bound tools/fleet/keepalive after, and cleared bindings after shutdown.
-- [x] `GRAPHOS-HOST-R001.3`: `tests/gateway/test_gateway_client.py` passes against `graph_os.gateway.client_sdk`.
-- [x] `GRAPHOS-HOST-R001.4`: `tests/deployment/test_graphos_deploy_artifacts.py` asserts the `agent_connector_sdk.skill_providers` entry-point group in `pyproject.toml`.
+- [x] `GRAPHOS-HOST-R001.3`: `tests/gateway/test_gateway_client.py` passes against `arbora.gateway.client_sdk`.
+- [x] `GRAPHOS-HOST-R001.4`: `tests/deployment/test_arbora_deploy_artifacts.py` asserts the `agent_connector_sdk.skill_providers` entry-point group in `pyproject.toml`.
 - [x] `GRAPHOS-HOST-R001.5`: The moved test files pass on FastMCP 4.x with `epistemic-graph[server]==2.27.1`.
 - [x] `GRAPHOS-HOST-R001.6`: `tests/mcp_server/test_operation_registry.py` proves the packaged document is current, names exactly the served operations and loads through the harness reader.
 - [x] `GRAPHOS-HOST-R001.8`: `tests/mcp_server/test_engine_wiring_gate.py` passes against the installed epistemic-graph.
 - [x] `GRAPHOS-HOST-R001.9`: `tests/integration/profiles/test_profile_tiny_zero_dep.py::test_tiny_profile_serves_kg_over_gateway_with_zero_containers`.
-- [x] `GRAPHOS-HOST-R001.10`: port provider discovery into `graph_os/core/providers.py` over the `agent_connector_sdk.*_providers` groups and repoint every GraphOS caller. Evidence: `tests/core/test_providers.py`.
+- [x] `GRAPHOS-HOST-R001.10`: port provider discovery into `arbora/core/providers.py` over the `agent_connector_sdk.*_providers` groups and repoint every Arbora caller. Evidence: `tests/core/test_providers.py`.
 - [ ] `GRAPHOS-HOST-R007.2`: rollup; deliver `GRAPHOS-HOST-R007.2.1` to `GRAPHOS-HOST-R007.2.68` (one rewiring per violating module, 68 modules at split time) and then the fence test `GRAPHOS-HOST-R007.2.69`.
 - [ ] Inventory all dependency-internal imports and duplicate host scripts; attach a machine-readable owner/port map and the initial forbidden-import count.
 - [ ] Add missing public engine, SDK and AU ports in their owner packages and release/install them.
-- [ ] Replace private imports throughout GraphOS with public ports and enforce a zero-import architecture test.
+- [ ] Replace private imports throughout Arbora with public ports and enforce a zero-import architecture test.
 - [ ] Route MCP, REST, A2A, messaging and UI requests through one typed application service and one authorization decision.
 - [ ] Reconcile duplicate gateway/deployment/MCP/fleet/A2A behavior and remove old host entrypoints after parity tests.
 - [ ] Prove one event-loop owner and bounded lifecycle under simultaneous co-services, reload and cancellation.
 - [ ] Run clean-checkout contract/full/quality gates and a wheel install smoke; link exact commit, CI run and wheel hash.
 - [ ] Run served authorization and receipt parity against an isolated release environment. Attach redacted evidence and mark Accepted only after this passes.
-- [x] GRAPHOS-HOST-R019: Mount `/api/dashboard/*` and `/ws/dashboard` from `graph_os.gateway.dashboard_api`. Evidence: `tests/gateway/test_dashboard_api.py`. **State: Building.** Remaining: served check of `/api/dashboard/full` (200) and `/ws/dashboard` (snapshot frame) after rollout.
-- [x] GRAPHOS-HOST-R019: Mount `/api/dashboard/*` and `/ws/dashboard` from `graph_os.gateway.dashboard_api`. Evidence: `tests/gateway/test_dashboard_api.py`. **State: Building.** Remaining: served check of `/api/dashboard/full` (200) and `/ws/dashboard` (snapshot frame) after rollout.
+- [x] GRAPHOS-HOST-R019: Mount `/api/dashboard/*` and `/ws/dashboard` from `arbora.gateway.dashboard_api`. Evidence: `tests/gateway/test_dashboard_api.py`. **State: Building.** Remaining: served check of `/api/dashboard/full` (200) and `/ws/dashboard` (snapshot frame) after rollout.
+- [x] GRAPHOS-HOST-R019: Mount `/api/dashboard/*` and `/ws/dashboard` from `arbora.gateway.dashboard_api`. Evidence: `tests/gateway/test_dashboard_api.py`. **State: Building.** Remaining: served check of `/api/dashboard/full` (200) and `/ws/dashboard` (snapshot frame) after rollout.
 - [x] GRAPHOS-HOST-R014: `pyproject.toml` pins `agent-utilities`/`agent-connector-sdk`/`epistemic-graph`/`agent-webui` as plain PEP 508 version ranges; `[tool.uv.sources]` stays a local-dev-only editable override that the `setuptools.build_meta` backend never consults. Evidence: `tests/test_dependency_manifest.py` (6 cases, checked against setuptools' own pyproject resolver). **State: Implemented for the manifest; the connector SDK/engine/AU packages are not yet published to an index, so this proves the manifest shape, not index availability.**
 - [x] GRAPHOS-HOST-R020: Install the decide consumers at serving start. Evidence: `tests/mcp_server/test_decide_wiring.py`. **State: Building.** Remaining: after rollout, confirm a live plan reports no `assembler_not_installed` gap.
-- [x] GRAPHOS-HOST-R021: Bind GraphOS commit and publish providers to the assembler; install the topology asker over the published reference templates. Evidence: `tests/mcp_server/test_decide_wiring.py`. **State: Building.** Remaining: after rollout, confirm a live plan's assembly commits and publishes against the served engine.
+- [x] GRAPHOS-HOST-R021: Bind Arbora commit and publish providers to the assembler; install the topology asker over the published reference templates. Evidence: `tests/mcp_server/test_decide_wiring.py`. **State: Building.** Remaining: after rollout, confirm a live plan's assembly commits and publishes against the served engine.
 - [x] GRAPHOS-HOST-R022: Bind capability-search, guardrail and workflow lookups to the task planner. Evidence: `tests/mcp_server/test_decide_wiring.py`. **State: Building.** Remaining: the capability-search provider's exact candidate shape from `AgentClient.agents()` is unverified against a live engine. After rollout, confirm a live plan's reuse hits and guardrail rows are non-degenerate.
-- [x] GRAPHOS-HOST-R008 (slice 1 of N): move `security/security_policy_middleware.py` from the agent runtime into `graph_os/security/`. Evidence: `graph_os/security/security_policy_middleware.py`, `tests/security/test_security_policy_middleware.py` (10 cases). The AU copy had zero in-repo importers and zero tests, so nothing there needed rewiring. Its deletion is tracked in a separate `agent-utilities` PR. **State: Building.** Remaining (per `agent_utilities/architecture/component-registry-boundary-seeds.yml` AU-BOUNDARY-R014): `security/request_identity.py`, `security/error_surface.py`, `security/browser_auth.py`, `security/auth.py`, `security/conformance/**`, the `observability` health/metrics modules, and the `core`/`ecosystem`/`knowledge_graph` modules in that seed group — one module per slice.
-- [x] GRAPHOS-HOST-R008 (slice 2 of N): move `ecosystem/agent_manager_dashboard.py` from the agent runtime into `graph_os/ecosystem/`. Evidence: `graph_os/ecosystem/agent_manager_dashboard.py`, `tests/ecosystem/test_agent_manager_dashboard.py` (5 cases, 4 ported + 1 new for the duck-typed engine param). The AU copy's only in-repo "importer" was its own package's `__init__.py` re-export (no real consumer); a companion `agent-utilities` PR deletes the AU copy and that re-export together. **State: Building** (PR #68, open).
-- [x] GRAPHOS-HOST-R008 (slice 3 of N): move `observability/gateway_health.py` into `graph_os/observability/`. Evidence: `graph_os/observability/gateway_health.py`, `tests/observability/test_gateway_health_evidence_live_path.py` (5 of the AU file's 5 tests ported; the 5th AU test, which proved `agent_utilities.observability.gateway_metrics`' middleware calls this module, stays in the agent runtime since that module has not moved). The AU copy's only in-repo importer is a function-local, try/except-wrapped, explicitly best-effort call inside `gateway_metrics.py` — deleting the AU copy exercises that module's own documented fallback path rather than breaking it; a companion `agent-utilities` PR adds a regression test proving exactly that. **State: Building** (PR #71, open). Remaining (per `agent_utilities/architecture/component-registry-boundary-seeds.yml` AU-BOUNDARY-R014): `security/request_identity.py`, `security/error_surface.py`, `security/browser_auth.py`, `security/auth.py`, `security/conformance/**`, `observability/gateway_metrics.py`, `observability/runtime_health.py`, `observability/health_ingest.py`, and the remaining `core`/`knowledge_graph` modules in that seed group — one module per slice, ascending by in-repo importer count, re-verified by bare-name grep each time (a dotted-path grep misses relative imports).
-- [x] GRAPHOS-HOST-R008 (slice 4 of N): move `observability/health.py` into `graph_os/observability/`. Evidence: `graph_os/observability/health.py` (18 tests ported). The AU copy's only real importer is `gateway_health.py`'s two function-local, try/except-wrapped, best-effort lazy imports. Its one hard dependent, `test_gateway_health_evidence_live_path.py`, is deleted in the companion AU PR and replaced with a graceful-degradation proof. **State: Building** (PR #76, open).
-- [x] GRAPHOS-HOST-R008 (slice 5 of N): move `security/conformance/**` (surface_manifest + surface_inventory, the GOC-62 auth conformance suite) into `graph_os/security/conformance/`. Evidence: `graph_os/security/conformance/`, 9 tests ported (8 pass; 1 fails identically on AU main today — pre-existing, BUG-PE-006, not introduced here). Zero real production importers in AU (only its own tests). Not a bare copy: `surface_inventory.QUERY_TOOLS_MODULE` and the proof-citation paths in `test_known_fail_opens.py` assumed same-repo-relative paths into `agent_utilities/mcp/tools/query_tools.py` and AU's own `tests/` tree; both now resolve through the installed `agent_utilities` distribution (`importlib.util.find_spec`), with the AU-`tests/`-relative checks skipping (not failing) when AU isn't present as an editable sibling checkout — extending this file's own existing graceful-skip convention for the epistemic-graph/agent-webui sibling checks. **State: Building** (PR #78, open).
+- [x] GRAPHOS-HOST-R008 (slice 1 of N): move `security/security_policy_middleware.py` from the agent runtime into `arbora/security/`. Evidence: `arbora/security/security_policy_middleware.py`, `tests/security/test_security_policy_middleware.py` (10 cases). The AU copy had zero in-repo importers and zero tests, so nothing there needed rewiring. Its deletion is tracked in a separate `agent-utilities` PR. **State: Building.** Remaining (per `agent_utilities/architecture/component-registry-boundary-seeds.yml` AU-BOUNDARY-R014): `security/request_identity.py`, `security/error_surface.py`, `security/browser_auth.py`, `security/auth.py`, `security/conformance/**`, the `observability` health/metrics modules, and the `core`/`ecosystem`/`knowledge_graph` modules in that seed group — one module per slice.
+- [x] GRAPHOS-HOST-R008 (slice 2 of N): move `ecosystem/agent_manager_dashboard.py` from the agent runtime into `arbora/ecosystem/`. Evidence: `arbora/ecosystem/agent_manager_dashboard.py`, `tests/ecosystem/test_agent_manager_dashboard.py` (5 cases, 4 ported + 1 new for the duck-typed engine param). The AU copy's only in-repo "importer" was its own package's `__init__.py` re-export (no real consumer); a companion `agent-utilities` PR deletes the AU copy and that re-export together. **State: Building** (PR #68, open).
+- [x] GRAPHOS-HOST-R008 (slice 3 of N): move `observability/gateway_health.py` into `arbora/observability/`. Evidence: `arbora/observability/gateway_health.py`, `tests/observability/test_gateway_health_evidence_live_path.py` (5 of the AU file's 5 tests ported; the 5th AU test, which proved `agent_utilities.observability.gateway_metrics`' middleware calls this module, stays in the agent runtime since that module has not moved). The AU copy's only in-repo importer is a function-local, try/except-wrapped, explicitly best-effort call inside `gateway_metrics.py` — deleting the AU copy exercises that module's own documented fallback path rather than breaking it; a companion `agent-utilities` PR adds a regression test proving exactly that. **State: Building** (PR #71, open). Remaining (per `agent_utilities/architecture/component-registry-boundary-seeds.yml` AU-BOUNDARY-R014): `security/request_identity.py`, `security/error_surface.py`, `security/browser_auth.py`, `security/auth.py`, `security/conformance/**`, `observability/gateway_metrics.py`, `observability/runtime_health.py`, `observability/health_ingest.py`, and the remaining `core`/`knowledge_graph` modules in that seed group — one module per slice, ascending by in-repo importer count, re-verified by bare-name grep each time (a dotted-path grep misses relative imports).
+- [x] GRAPHOS-HOST-R008 (slice 4 of N): move `observability/health.py` into `arbora/observability/`. Evidence: `arbora/observability/health.py` (18 tests ported). The AU copy's only real importer is `gateway_health.py`'s two function-local, try/except-wrapped, best-effort lazy imports. Its one hard dependent, `test_gateway_health_evidence_live_path.py`, is deleted in the companion AU PR and replaced with a graceful-degradation proof. **State: Building** (PR #76, open).
+- [x] GRAPHOS-HOST-R008 (slice 5 of N): move `security/conformance/**` (surface_manifest + surface_inventory, the GOC-62 auth conformance suite) into `arbora/security/conformance/`. Evidence: `arbora/security/conformance/`, 9 tests ported (8 pass; 1 fails identically on AU main today — pre-existing, BUG-PE-006, not introduced here). Zero real production importers in AU (only its own tests). Not a bare copy: `surface_inventory.QUERY_TOOLS_MODULE` and the proof-citation paths in `test_known_fail_opens.py` assumed same-repo-relative paths into `agent_utilities/mcp/tools/query_tools.py` and AU's own `tests/` tree; both now resolve through the installed `agent_utilities` distribution (`importlib.util.find_spec`), with the AU-`tests/`-relative checks skipping (not failing) when AU isn't present as an editable sibling checkout — extending this file's own existing graceful-skip convention for the epistemic-graph/agent-webui sibling checks. **State: Building** (PR #78, open).
 
 **Current evidence gap:** No exact commit and served receipt set is recorded here for the strict public-port cutover or the complete parity matrix. Preserve `Implemented in part / acceptance pending` until those are attached.
 
 ## Decomposition children (tracked)
 
-- [x] **GRAPHOS-HOST-R005:** graph_os.mcp_server.runtime serves retired MCP actions
-- [ ] **GRAPHOS-HOST-R005.1:** Remaining scope of GRAPHOS-HOST-R005 (slice .1): graph_os.mcp_server.runtime serves retired MCP actions
-- [ ] **GRAPHOS-HOST-R005.2:** Remaining scope of GRAPHOS-HOST-R005 (slice .2): graph_os.mcp_server.runtime serves retired MCP actions
+- [x] **GRAPHOS-HOST-R005:** arbora.mcp_server.runtime serves retired MCP actions
+- [ ] **GRAPHOS-HOST-R005.1:** Remaining scope of GRAPHOS-HOST-R005 (slice .1): arbora.mcp_server.runtime serves retired MCP actions
+- [ ] **GRAPHOS-HOST-R005.2:** Remaining scope of GRAPHOS-HOST-R005 (slice .2): arbora.mcp_server.runtime serves retired MCP actions
 - [x] **GRAPHOS-HOST-R007:** Agent runtime imported only through its public API
 - [ ] **GRAPHOS-HOST-R007.1:** Remaining scope of GRAPHOS-HOST-R007 (slice .1): Agent runtime imported only through its public API
 - [ ] **GRAPHOS-HOST-R007.2:** Remaining scope of GRAPHOS-HOST-R007 (slice .2): Agent runtime imported only through its public API
 - [x] **GRAPHOS-HOST-R005.1:** Landed typed approved action-to-operation mapping model. Evidence: `tests/mcp_server/test_legacy_action_mapping.py`.
 - [ ] **GRAPHOS-HOST-R005.2:** Parity test proves no served action is dropped (rollup of .2.1-.2.8)
 - [ ] **GRAPHOS-HOST-R005.2.1:** Approved mapping for the analyze action family
-- [ ] **GRAPHOS-HOST-R005.2.1.1:** Add graph-os operation for code navigation actions
-- [ ] **GRAPHOS-HOST-R005.2.1.2:** Add graph-os operation for impact actions
-- [ ] **GRAPHOS-HOST-R005.2.1.3:** Add graph-os operation for `similar_code` and the remaining `graph_analyze` actions
-- [ ] **GRAPHOS-HOST-R005.2.1.4:** Add graph-os operation for `process_writeback`
+- [ ] **GRAPHOS-HOST-R005.2.1.1:** Add arbora operation for code navigation actions
+- [ ] **GRAPHOS-HOST-R005.2.1.2:** Add arbora operation for impact actions
+- [ ] **GRAPHOS-HOST-R005.2.1.3:** Add arbora operation for `similar_code` and the remaining `graph_analyze` actions
+- [ ] **GRAPHOS-HOST-R005.2.1.4:** Add arbora operation for `process_writeback`
 - [ ] **GRAPHOS-HOST-R005.2.1.5:** Approve the analyze mappings
 - [ ] **GRAPHOS-HOST-R005.2.2:** Approved mapping for the configure action family
 - [ ] **GRAPHOS-HOST-R005.2.3:** Approved mapping for the ingest action family
 - [ ] **GRAPHOS-HOST-R005.2.3.1:** Map `sync` to `ingest.sources.sync`
-- [ ] **GRAPHOS-HOST-R005.2.3.2:** Add graph-os operation for ingest submission actions
-- [ ] **GRAPHOS-HOST-R005.2.3.3:** Add graph-os operation for `corpus`
-- [ ] **GRAPHOS-HOST-R005.2.3.4:** Add graph-os operation for job lifecycle actions
-- [ ] **GRAPHOS-HOST-R005.2.3.5:** Add graph-os operation for `rebuild_indexes` and `observe`
-- [ ] **GRAPHOS-HOST-R005.2.3.6:** Add graph-os operation for `materialize` and `materialize_source`
-- [ ] **GRAPHOS-HOST-R005.2.3.7:** Add graph-os operation for `reflect` and `agent_toolkit`
+- [ ] **GRAPHOS-HOST-R005.2.3.2:** Add arbora operation for ingest submission actions
+- [ ] **GRAPHOS-HOST-R005.2.3.3:** Add arbora operation for `corpus`
+- [ ] **GRAPHOS-HOST-R005.2.3.4:** Add arbora operation for job lifecycle actions
+- [ ] **GRAPHOS-HOST-R005.2.3.5:** Add arbora operation for `rebuild_indexes` and `observe`
+- [ ] **GRAPHOS-HOST-R005.2.3.6:** Add arbora operation for `materialize` and `materialize_source`
+- [ ] **GRAPHOS-HOST-R005.2.3.7:** Add arbora operation for `reflect` and `agent_toolkit`
 - [ ] **GRAPHOS-HOST-R005.2.3.8:** Approve the ingest mappings
 - [ ] **GRAPHOS-HOST-R005.2.4:** Approved mapping for the query-memory action family
 - [ ] **GRAPHOS-HOST-R005.2.5:** Approved mapping for the orchestrate action family
 - [ ] **GRAPHOS-HOST-R005.2.6:** Approved mapping for the mine-learn action family
 - [ ] **GRAPHOS-HOST-R005.2.7:** Approved mapping for the governance-ops action family
 - [ ] **GRAPHOS-HOST-R005.2.8:** Parity test over the full legacy action surface
-- [ ] **GRAPHOS-HOST-R026:** Durable A2A task persistence in the graph-os agent host.
+- [ ] **GRAPHOS-HOST-R026:** Durable A2A task persistence in the arbora agent host.
 - [ ] **GRAPHOS-HOST-R026.1:** Define the typed A2A task-store port.
 - [ ] **GRAPHOS-HOST-R026.2:** Implement the engine-backed A2A task store.
 - [ ] **GRAPHOS-HOST-R026.3:** Wire the hosted A2A app to the task store, fail-closed when absent.
 - [ ] **GRAPHOS-HOST-R026.4:** Add the doctor check for A2A task persistence.
-- [ ] **GRAPHOS-HOST-R026.5:** Point the `g34-a2a` certification gate at graph-os tests.
+- [ ] **GRAPHOS-HOST-R026.5:** Point the `g34-a2a` certification gate at arbora tests.
 - [ ] **GRAPHOS-HOST-R027:** Loopback OIDC authority for skill certification.
 - [ ] **GRAPHOS-HOST-R027.1:** Add the loopback OIDC authority owner module for skill certification.
 - [ ] **GRAPHOS-HOST-R027.2:** Add the loopback OIDC authority test fixture.

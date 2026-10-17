@@ -4,7 +4,7 @@
 resolution) needs the invocation pipeline's caller type and the identity
 module's session helpers, neither of which exists on this branch yet; its
 coverage returns with the slice that lands those modules (see
-``graph_os/api/http/auth.py``). Everything exercised here needs only the
+``arbora/api/http/auth.py``). Everything exercised here needs only the
 registry types and an injected ``invoke``/authenticator, matching
 GRAPHOS-OPS-R013.
 """
@@ -23,12 +23,12 @@ from fastapi.testclient import TestClient
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from graph_os.api.http.app import _subapp_path, create_api_application
-from graph_os.api.http.auth import AmbientHTTPAuthenticator
-from graph_os.api.http.openapi import document
-from graph_os.api.http.protocol_routes import PROTOCOL_ROUTES
-from graph_os.api.http.routes import _params, make_endpoint
-from graph_os.api.registry import Surface
+from arbora.api.http.app import _subapp_path, create_api_application
+from arbora.api.http.auth import AmbientHTTPAuthenticator
+from arbora.api.http.openapi import document
+from arbora.api.http.protocol_routes import PROTOCOL_ROUTES
+from arbora.api.http.routes import _params, make_endpoint
+from arbora.api.registry import Surface
 
 
 def request(
@@ -90,12 +90,12 @@ async def _unused_invoke(*_args: object, **_kwargs: object) -> None:
 
 @pytest.mark.spec("GRAPHOS-OPS-R013")
 def test_v1_subapp_mount_has_one_prefix(monkeypatch: pytest.MonkeyPatch) -> None:
-    module = ModuleType("graph_os.api.registry")
+    module = ModuleType("arbora.api.registry")
     vars(module).update(
         Surface=SimpleNamespace(HTTP="http"),
         canonical_op=lambda op: {"id": op.id},
     )
-    monkeypatch.setitem(sys.modules, "graph_os.api.registry", module)
+    monkeypatch.setitem(sys.modules, "arbora.api.registry", module)
     op = SimpleNamespace(
         id="identity.users.list",
         surfaces={"http"},
@@ -198,7 +198,7 @@ async def test_console_requires_verified_cookie_origin_human_and_fresh_mfa() -> 
 
     auth = AmbientHTTPAuthenticator(console_origin="https://console.example.test")
     headers = [
-        (b"cookie", b"__Host-graphos_session=opaque"),
+        (b"cookie", b"__Host-arbora_session=opaque"),
         (b"origin", b"https://console.example.test"),
         (b"x-csrf-token", b"csrf-secret"),
     ]
@@ -206,7 +206,7 @@ async def test_console_requires_verified_cookie_origin_human_and_fresh_mfa() -> 
         "POST",
         "/api/v1/ops/identity.users.disable",
         headers,
-        state={"graphos_session_admitted": True},
+        state={"arbora_session_admitted": True},
     )
     assert auth.is_console_request(attended, caller)
     assert not AmbientHTTPAuthenticator().is_console_request(attended, caller)
@@ -224,7 +224,7 @@ async def test_console_requires_verified_cookie_origin_human_and_fresh_mfa() -> 
         "POST",
         "/api/v1/ops/identity.users.disable",
         [headers[0], (b"origin", b"https://other.example.test"), headers[2]],
-        state={"graphos_session_admitted": True},
+        state={"arbora_session_admitted": True},
     )
     assert not auth.is_console_request(foreign, caller)
     assert not auth.is_console_request(
@@ -253,7 +253,7 @@ async def test_console_projection_passes_only_verified_surface() -> None:
     )
     common = [
         (b"content-type", b"application/json"),
-        (b"graphos-plan-ref", b"graphos_plan:reference"),
+        (b"arbora-plan-ref", b"arbora_plan:reference"),
     ]
     await endpoint(request("POST", "/api/v1/ops/identity.users.disable", common, b"{}"))
     await endpoint(
@@ -265,8 +265,8 @@ async def test_console_projection_passes_only_verified_surface() -> None:
         )
     )
     assert seen == [
-        (Surface.HTTP, "graphos_plan:reference"),
-        (Surface.CONSOLE, "graphos_plan:reference"),
+        (Surface.HTTP, "arbora_plan:reference"),
+        (Surface.CONSOLE, "arbora_plan:reference"),
     ]
 
 

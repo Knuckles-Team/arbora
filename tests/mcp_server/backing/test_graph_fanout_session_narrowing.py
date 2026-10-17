@@ -42,20 +42,20 @@ from __future__ import annotations
 
 import asyncio
 
-from graph_os.api.contracts.session import (
+from arbora.api.contracts.session import (
     GraphSession,
     current_session,
     use_session,
 )
-from graph_os.mcp_server import runtime
-from graph_os.mcp_server.backing import engine_routing
-from graph_os.security.actor_context import ActorContext, ActorType, use_actor
+from arbora.mcp_server import runtime
+from arbora.mcp_server.backing import engine_routing
+from arbora.security.actor_context import ActorContext, ActorType, use_actor
 
 
 def _register_query_tools():
     from fastmcp import FastMCP
 
-    from graph_os.mcp_server.backing.tools.query_tools import register_query_tools
+    from arbora.mcp_server.backing.tools.query_tools import register_query_tools
 
     register_query_tools(FastMCP("test"))
 

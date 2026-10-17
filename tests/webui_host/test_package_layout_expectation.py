@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.webui_host.package_layout_expectation import (
+from arbora.webui_host.package_layout_expectation import (
     AGENT_WEBUI_DISTRIBUTION,
     EXPECTED_TOP_LEVEL_MODULES,
     AgentWebUiLayoutError,

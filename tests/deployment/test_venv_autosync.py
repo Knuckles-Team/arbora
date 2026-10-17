@@ -17,8 +17,8 @@ from pathlib import Path
 
 import pytest
 
-from graph_os.deployment import venv_autosync, venv_sync
-from graph_os.deployment.venv_autosync import (
+from arbora.deployment import venv_autosync, venv_sync
+from arbora.deployment.venv_autosync import (
     AutosyncConfig,
     GitHookTrigger,
     Intent,
@@ -28,7 +28,7 @@ from graph_os.deployment.venv_autosync import (
     save_config,
     trigger,
 )
-from graph_os.deployment.venv_sync import METADATA, SOURCE_ONLY, Workspace
+from arbora.deployment.venv_sync import METADATA, SOURCE_ONLY, Workspace
 
 pytestmark = pytest.mark.skipif(
     shutil.which("git") is None, reason="git is required for the merge trigger"

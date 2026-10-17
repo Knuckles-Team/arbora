@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.fleet.multiplexer import (
+from arbora.fleet.multiplexer import (
     _MAX_SKILL_BODY_BYTES,
     MCPMultiplexer,
     _resource_body_text,

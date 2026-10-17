@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from graph_os.fleet.multiplexer import (
+from arbora.fleet.multiplexer import (
     MCPMultiplexer,
     clean_tool_name,
     get_server_prefix,
@@ -20,7 +20,7 @@ def test_get_server_prefix_hosts():
     assert get_server_prefix("container-manager-mcp-node303") == "cm_node303"
 
     # Plain servers → initials acronym (multi-word) or short stem (single word).
-    assert get_server_prefix("graph-os") == "go"
+    assert get_server_prefix("arbora") == "arbo"
     assert get_server_prefix("repository-manager-mcp") == "rm"
     assert get_server_prefix("some-random-mcp-server") == "sr"
 
@@ -153,7 +153,7 @@ async def test_multiplexer_start_child_timeout():
         except asyncio.CancelledError:
             raise
 
-    with patch("graph_os.fleet.multiplexer.stdio_client", side_effect=slow_connect):
+    with patch("arbora.fleet.multiplexer.stdio_client", side_effect=slow_connect):
         result = await multiplexer._start_child("slow-server", cfg)
 
     assert result is None

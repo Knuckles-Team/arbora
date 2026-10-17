@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.ingest import source_catalog as sc
+from arbora.ingest import source_catalog as sc
 
 
 def test_catalogue_without_registry_lists_providers_as_unavailable():

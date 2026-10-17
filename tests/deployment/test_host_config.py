@@ -10,11 +10,11 @@ from pathlib import Path
 import pytest
 
 MODULE_PATH = (
-    Path(__file__).resolve().parents[2] / "graph_os" / "deployment" / "host_config.py"
+    Path(__file__).resolve().parents[2] / "arbora" / "deployment" / "host_config.py"
 )
 
-# Loaded by file path rather than ``from graph_os.deployment.host_config import
-# ...`` because importing the ``graph_os.deployment`` package also executes
+# Loaded by file path rather than ``from arbora.deployment.host_config import
+# ...`` because importing the ``arbora.deployment`` package also executes
 # sibling submodules that import ``agent_utilities`` -- a dependency this
 # development environment does not have installed, and one this module is
 # written specifically not to need.
@@ -41,20 +41,20 @@ def test_module_does_not_import_agent_utilities_config_internals() -> None:
 
 
 @pytest.mark.spec("GRAPHOS-HOST-R010")
-def test_load_resolves_defaults_from_graphos_owned_env_vars() -> None:
+def test_load_resolves_defaults_from_arbora_owned_env_vars() -> None:
     settings = load_hosting_deployment_settings(env={})
     assert settings.bind_host == "127.0.0.1"
     assert settings.bind_port == 8000
     assert settings.deployment_environment == "development"
 
 
-def test_load_honors_graphos_owned_overrides() -> None:
+def test_load_honors_arbora_owned_overrides() -> None:
     settings = load_hosting_deployment_settings(
         env={
-            "GRAPH_OS_BIND_HOST": "127.0.0.1",
-            "GRAPH_OS_BIND_PORT": "9100",
-            "GRAPH_OS_PUBLIC_BASE_URL": "https://graphos.example.com",
-            "GRAPH_OS_DEPLOYMENT_ENVIRONMENT": "production",
+            "ARBORA_BIND_HOST": "127.0.0.1",
+            "ARBORA_BIND_PORT": "9100",
+            "ARBORA_PUBLIC_BASE_URL": "https://arbora.example.com",
+            "ARBORA_DEPLOYMENT_ENVIRONMENT": "production",
         }
     )
     assert settings.bind_port == 9100

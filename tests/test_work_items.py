@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from graph_os import work_items
+from arbora import work_items
 
 _CLAIM = {
     "tenant": "t1",

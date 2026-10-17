@@ -7,8 +7,8 @@ from typing import Any
 
 import pytest
 
-from graph_os.access import action_policy as ap
-from graph_os.access import approval
+from arbora.access import action_policy as ap
+from arbora.access import approval
 
 
 @pytest.fixture(autouse=True)

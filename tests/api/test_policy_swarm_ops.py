@@ -2,7 +2,7 @@
 
 ``policy.read`` and ``swarm.topology.read`` are each a lone caller-scoped
 port bound through ``tests/api/_ops_support.py``'s ``tenant_reader_context``;
-see ``graph_os.api.ops.ingest`` for the facade convention they follow
+see ``arbora.api.ops.ingest`` for the facade convention they follow
 (GRAPHOS-OPS-R020.1/R020.2).
 """
 
@@ -10,10 +10,10 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.api.invoke.pipeline import OperationRefused
-from graph_os.api.ops import policy, swarm
-from graph_os.api.ops.policy import PolicyState
-from graph_os.api.ops.swarm import SwarmTopology
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops import policy, swarm
+from arbora.api.ops.policy import PolicyState
+from arbora.api.ops.swarm import SwarmTopology
 from tests.api._ops_support import tenant_reader_context as _context
 
 

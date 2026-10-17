@@ -1,4 +1,4 @@
-"""Wiring tests for every RF-ADR-009 §2 GraphOS runtime package."""
+"""Wiring tests for every RF-ADR-009 §2 Arbora runtime package."""
 
 from __future__ import annotations
 
@@ -8,12 +8,12 @@ from pathlib import Path
 import pytest
 
 SUBMODULES = [
-    "graph_os.mcp_server",
-    "graph_os.fleet",
-    "graph_os.gateway",
-    "graph_os.control_plane",
-    "graph_os.webui_host",
-    "graph_os.deployment",
+    "arbora.mcp_server",
+    "arbora.fleet",
+    "arbora.gateway",
+    "arbora.control_plane",
+    "arbora.webui_host",
+    "arbora.deployment",
 ]
 
 
@@ -25,7 +25,7 @@ def test_submodule_imports_and_documents_its_ownership(module_name: str) -> None
 
 
 def test_serving_packages_do_not_import_legacy_au_multiplexer() -> None:
-    package_root = Path(__file__).parents[1] / "graph_os"
+    package_root = Path(__file__).parents[1] / "arbora"
     offenders = [
         path.relative_to(package_root).as_posix()
         for area in ("fleet", "mcp_server")
@@ -38,7 +38,7 @@ def test_serving_packages_do_not_import_legacy_au_multiplexer() -> None:
 
 def test_mcp_network_listener_uses_sdk_hardened_serving_contract() -> None:
     server = (
-        Path(__file__).parents[1] / "graph_os" / "mcp_server" / "server.py"
+        Path(__file__).parents[1] / "arbora" / "mcp_server" / "server.py"
     ).read_text(encoding="utf-8")
 
     assert (
@@ -50,7 +50,7 @@ def test_mcp_network_listener_uses_sdk_hardened_serving_contract() -> None:
 
 
 def test_runtime_consumes_only_public_au_session_and_catalog_ports() -> None:
-    package_root = Path(__file__).parents[1] / "graph_os"
+    package_root = Path(__file__).parents[1] / "arbora"
     session_port = package_root / "api" / "contracts" / "session.py"
     production = "\n".join(
         path.read_text(encoding="utf-8")
@@ -63,9 +63,9 @@ def test_runtime_consumes_only_public_au_session_and_catalog_ports() -> None:
     assert "agent_utilities.api.agent_control_plane" not in production
 
 
-def test_deployment_doctor_uses_native_graph_os_hosts() -> None:
+def test_deployment_doctor_uses_native_arbora_hosts() -> None:
     doctor = (
-        Path(__file__).parents[1] / "graph_os" / "deployment" / "doctor.py"
+        Path(__file__).parents[1] / "arbora" / "deployment" / "doctor.py"
     ).read_text(encoding="utf-8")
 
     assert "agent_utilities.mcp.multiplexer" not in doctor
@@ -74,7 +74,7 @@ def test_deployment_doctor_uses_native_graph_os_hosts() -> None:
 
 def test_bootstrap_has_no_retired_legacy_query_runtime() -> None:
     bootstrap = (
-        Path(__file__).parents[1] / "graph_os" / "mcp_server" / "bootstrap.py"
+        Path(__file__).parents[1] / "arbora" / "mcp_server" / "bootstrap.py"
     ).read_text(encoding="utf-8")
 
     retired_symbols = {
@@ -92,7 +92,7 @@ def test_bootstrap_has_no_retired_legacy_query_runtime() -> None:
         "_runtime_authority_binders",
         "_sync_ontologies_at_boot",
         "_ingest_self_tool_surface_at_boot",
-        "_graphos_self_tool_surface",
+        "_arbora_self_tool_surface",
         "_mcp_capability_declaration",
         "_ingest_mcp_config_capabilities",
         "_ingest_native_tool_capabilities",
@@ -112,21 +112,21 @@ def test_bootstrap_has_no_retired_legacy_query_runtime() -> None:
     assert all(symbol not in bootstrap for symbol in retired_symbols)
 
     runtime = (
-        Path(__file__).parents[1] / "graph_os" / "mcp_server" / "runtime.py"
+        Path(__file__).parents[1] / "arbora" / "mcp_server" / "runtime.py"
     ).read_text(encoding="utf-8")
     assert "get_existing_disabled_batch" not in runtime
 
 
 @pytest.mark.spec("GRAPHOS-HOST-R001.1")
-def test_graph_os_imports_no_au_serving_packages() -> None:
-    """GRAPHOS-HOST-R001.1: AU 3.0.0 is harness only; Graph OS owns MCP/REST/API."""
+def test_arbora_imports_no_au_serving_packages() -> None:
+    """GRAPHOS-HOST-R001.1: AU 3.0.0 is harness only; Arbora owns MCP/REST/API."""
     import re
 
     package_root = Path(__file__).parents[1]
     pattern = re.compile(r"agent_utilities[./](mcp|gateway|server|api)\b")
     offenders = [
         path.relative_to(package_root).as_posix()
-        for path in (package_root / "graph_os").rglob("*.py")
+        for path in (package_root / "arbora").rglob("*.py")
         if pattern.search(path.read_text(encoding="utf-8"))
     ]
 
@@ -134,9 +134,9 @@ def test_graph_os_imports_no_au_serving_packages() -> None:
 
 
 @pytest.mark.spec("GRAPHOS-HOST-R001.5")
-def test_graph_os_declares_and_runs_fastmcp_4() -> None:
+def test_arbora_declares_and_runs_fastmcp_4() -> None:
     from importlib.metadata import requires, version
 
-    declared = [r for r in requires("graph-os") or [] if r.startswith("fastmcp")]
+    declared = [r for r in requires("arbora") or [] if r.startswith("fastmcp")]
     assert declared and ">=4" in declared[0]
     assert version("fastmcp").split(".")[0] == "4"

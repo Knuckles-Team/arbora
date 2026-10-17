@@ -44,7 +44,7 @@ def _evidence(kind: str, commit: str, result: str = "passed") -> dict:
         "kind": kind,
         "commit": commit,
         "result": result,
-        "url": f"https://github.com/Knuckles-Team/graph-os/commit/{commit}",
+        "url": f"https://github.com/Knuckles-Team/arbora/commit/{commit}",
         "description": "fixture",
     }
 
@@ -53,7 +53,7 @@ def _status(requirements: list[dict]) -> dict:
     return {
         "schema_version": 1,
         "spec_id": "FIXTURE-001",
-        "owner_repo": "graph-os",
+        "owner_repo": "arbora",
         "requirement_ids": [r["id"] for r in requirements],
         "delivery_state": "BUILDING",
         "acceptance_state": "NOT_AUDITED",

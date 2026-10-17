@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 import pytest
 from pydantic import ValidationError
 
-from graph_os.control_plane.economics import (
+from arbora.control_plane.economics import (
     AllocationRef,
     EconomicsContractError,
     InMemoryEconomicsRepository,

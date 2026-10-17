@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from graph_os.acp import (
+from arbora.acp import (
     AcpRefusal,
     AcpRefusalReason,
     AcpSessionAdmission,

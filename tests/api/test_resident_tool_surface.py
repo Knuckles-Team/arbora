@@ -1,6 +1,6 @@
 """GRAPHOS-OPS-R029: single resident-tool server cutover.
 
-GraphOS's server factory registers only the six resident MCP verbs plus
+Arbora's server factory registers only the six resident MCP verbs plus
 ``find_tools``, ``load_tools``, ``unload_tools``, and ``multiplexer_status``,
 mounts the generated ``/api/v1`` sub-application behind an explicit
 protocol-route table, and removes the retired granular tool registrars,
@@ -17,9 +17,9 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.api.http.protocol_routes import PROTOCOL_ROUTES
-from graph_os.api.mcp.registration import FLEET_OPERATIONS, RESIDENT_NAMES
-from graph_os.api.mcp.verbs import VERBS
+from arbora.api.http.protocol_routes import PROTOCOL_ROUTES
+from arbora.api.mcp.registration import FLEET_OPERATIONS, RESIDENT_NAMES
+from arbora.api.mcp.verbs import VERBS
 
 EXPECTED_VERBS = ("find", "ask", "why", "write", "act", "manage")
 EXPECTED_FLEET_TOOLS = (
@@ -45,9 +45,9 @@ def test_retired_granular_tool_registrars_are_absent() -> None:
     import importlib
 
     for retired_module in (
-        "graph_os.api.ops.action_tools",
-        "graph_os.api.mcp.legacy_routes",
-        "graph_os.api.mcp.granular_registration",
+        "arbora.api.ops.action_tools",
+        "arbora.api.mcp.legacy_routes",
+        "arbora.api.mcp.granular_registration",
     ):
         with pytest.raises(ModuleNotFoundError):
             importlib.import_module(retired_module)

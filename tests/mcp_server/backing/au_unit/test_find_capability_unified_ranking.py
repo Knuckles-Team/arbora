@@ -14,7 +14,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from graph_os.mcp_server.backing.tools import intent_tools
+from arbora.mcp_server.backing.tools import intent_tools
 
 
 class _FakeFleetMux:

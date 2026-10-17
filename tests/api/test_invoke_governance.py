@@ -11,12 +11,12 @@ from types import SimpleNamespace
 import pytest
 from test_invoke_contract import caller, operation, run, setup_services
 
-from graph_os.api.invoke import FleetCallDecision, invoke
-from graph_os.api.invoke.eg_audit import EgAuditAdapter
-from graph_os.api.invoke.executor import BoundOperationRuntime
-from graph_os.api.invoke.plan import bind_plan
-from graph_os.api.policy.eunomia import PolicyGate
-from graph_os.api.registry import (
+from arbora.api.invoke import FleetCallDecision, invoke
+from arbora.api.invoke.eg_audit import EgAuditAdapter
+from arbora.api.invoke.executor import BoundOperationRuntime
+from arbora.api.invoke.plan import bind_plan
+from arbora.api.policy.eunomia import PolicyGate
+from arbora.api.registry import (
     AuditClass,
     Confirm,
     Effect,
@@ -172,7 +172,7 @@ def test_missing_durable_coverage_fails_closed_but_native_owner_is_supported():
     assert run(services, idempotency_key="same").code == "UNAVAILABLE"
     assert not runtime.calls
     # This fixture represents an existing owner that atomically implements replay;
-    # it is deliberately not installed as a production GraphOS journal.
+    # it is deliberately not installed as a production Arbora journal.
     services = replace(
         services, native_idempotency={"example.write": "fixture:OperationIdentity"}
     )
@@ -428,7 +428,7 @@ def test_bound_service_execution_uses_configured_principal_and_exact_scopes():
     asyncio.run(execute())
     assert seen[0]["principal"] == "svc:configured"
     for key, value in (
-        ("principal", "svc:graph-os"),
+        ("principal", "svc:arbora"),
         ("tenant", "other"),
         ("scopes", ["example:execute", "example:other"]),
     ):
@@ -519,7 +519,7 @@ def test_eg_audit_uses_actual_keyword_and_links_receipt(monkeypatch):
 def test_real_http_projection_reaches_invoke_and_durable_replay():
     import httpx
 
-    from graph_os.api.http.app import create_api_application
+    from arbora.api.http.app import create_api_application
 
     services, runtime, _, _, _ = setup_services()
 
@@ -681,7 +681,7 @@ def test_native_planned_unknown_outcome_remains_pending_without_plan_reconsumpti
 
 
 def test_external_effect_coordinator_has_exact_per_operation_coverage():
-    from graph_os.api.registry import Registry
+    from arbora.api.registry import Registry
 
     registry = Registry([operation(), operation(id="example.other")])
     services, runtime, audit, journal, leases = setup_services(
@@ -709,7 +709,7 @@ def test_invalid_external_effect_coverage_refuses_construction(coverage):
 
 
 def test_context_service_map_is_an_owned_immutable_snapshot():
-    from graph_os.api.invoke.executor import ExecutionContext
+    from arbora.api.invoke.executor import ExecutionContext
 
     source = {"admitted": object()}
     admitted = source["admitted"]

@@ -1,4 +1,4 @@
-"""Unit tests for ``graph_os.mcp_server.backing.tools.mcp_apps`` (CONCEPT:AU-ECO.ui.mcp-apps-host).
+"""Unit tests for ``arbora.mcp_server.backing.tools.mcp_apps`` (CONCEPT:AU-ECO.ui.mcp-apps-host).
 
 Covers BOTH shipped MCP Apps -- task-progress (pre-existing, previously untested)
 and trace-waterfall (D-25-1, new): each entry-point tool registers with the
@@ -14,7 +14,7 @@ from typing import Any
 
 import pytest
 
-from graph_os.mcp_server.backing.tools import mcp_apps
+from arbora.mcp_server.backing.tools import mcp_apps
 
 
 class _CollectingMCP:

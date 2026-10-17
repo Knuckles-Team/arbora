@@ -10,7 +10,7 @@ from decimal import Decimal
 import pytest
 from pydantic import ValidationError
 
-from graph_os.finance.dca import (
+from arbora.finance.dca import (
     DCAPlan,
     InMemoryDCAProposalStore,
     build_dca_proposal_key,

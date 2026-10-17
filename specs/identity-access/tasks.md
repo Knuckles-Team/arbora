@@ -8,11 +8,11 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] **GIA-04 (IA-05):** Add TOTP, WebAuthn, recovery-code and group-MFA policies while preserving action step-up. Prove IT-04.
 - [ ] **GIA-05 (IA-06/07):** Build identity self/admin operations and service/API key path; wire REST/MCP/CLI to the same authority. Refuse to advertise unavailable engine-backed methods. Prove IT-05/06.
 - [ ] **GIA-06 (IA-12/13):** Build access request, approval, lease, check and explanation service with exact-scope registry and fail-closed fleet/unknown-tool checks. Prove IT-11/12.
-  - Partial (GRAPHOS-IDENTITY-R019): `graph_os.access.service`/`graph_os.api.ops.access` registers `access.elevation.request/list/revoke/approve`, `access.leases.list/get`, `access.check` and `access.explain_policy` against the installed EG scope contract. `approvals.list/get/grant/deny` are implemented in the same service module but not yet registered as operations: the installed EG contract does not publish `approvals:read`/`approvals:decide` scopes. Follow-up: register those four operations once EG adds the two scopes.
+  - Partial (GRAPHOS-IDENTITY-R019): `arbora.access.service`/`arbora.api.ops.access` registers `access.elevation.request/list/revoke/approve`, `access.leases.list/get`, `access.check` and `access.explain_policy` against the installed EG scope contract. `approvals.list/get/grant/deny` are implemented in the same service module but not yet registered as operations: the installed EG contract does not publish `approvals:read`/`approvals:decide` scopes. Follow-up: register those four operations once EG adds the two scopes.
 - [ ] **GIA-07 (IA-08/09/15):** Add mockable OIDC, LDAP, SCIM, brokered SAML and optional SMTP adapters with strict validation, source-tagged memberships and deprovisioning. Prove IT-07/08/09.
-- [ ] **GIA-08 (IA-10):** Add `graph-os identity` commands, configuration defaults, doctor diagnostics and public operator guidance within this repository's GitHub Pages source. Prove CLI portions of IT-09.
-- [ ] **GIA-09 (IA-11):** Create and run the three-mode decision table and owned-data transition round trip. Use it across the engine and GraphOS contract fixture. Prove IT-10.
-- [ ] **GIA-09A (IA-16):** Inventory every GraphOS engine client, carry a verified local-issuer or permitted service token through each one, prove allow/deny and no fallback with IT-14, then coordinate removal of the engine authentication opt-out. Record the exact engine and GraphOS commits separately.
+- [ ] **GIA-08 (IA-10):** Add `arbora identity` commands, configuration defaults, doctor diagnostics and public operator guidance within this repository's GitHub Pages source. Prove CLI portions of IT-09.
+- [ ] **GIA-09 (IA-11):** Create and run the three-mode decision table and owned-data transition round trip. Use it across the engine and Arbora contract fixture. Prove IT-10.
+- [ ] **GIA-09A (IA-16):** Inventory every Arbora engine client, carry a verified local-issuer or permitted service token through each one, prove allow/deny and no fallback with IT-14, then coordinate removal of the engine authentication opt-out. Record the exact engine and Arbora commits separately.
 - [ ] **GIA-10:** Run all portable tests on the exact candidate commit; run Ruff, Mypy, hooks, CCCC, KISS, Dupehound, jscpd, frozen lock and wheel checks. Fix findings without weakening thresholds; record each job in `evidence.md`.
 - [ ] **GIA-11:** Merge the reviewed implementation to default branch; record exact commit and re-run acceptance evidence against that commit. Update delivery and acceptance states individually.
 
@@ -21,12 +21,12 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [x] **GIA-RD-01:** Split `GRAPHOS-IDENTITY-R004`, `R006`, `R007` into `.1` (typed model +
 - [x] **GIA-RD-02:** Split `GRAPHOS-IDENTITY-R008`, `R009`, `R010` into `.1` (typed model +
 - [x] **GIA-RD-03:** Split `GRAPHOS-IDENTITY-R011`, `R012` into `.1` (typed model +
-  validation + refusal tests under `graph_os/identity/`) and `.2` (remaining behavior,
+  validation + refusal tests under `arbora/identity/`) and `.2` (remaining behavior,
   stays `SPECIFIED`). Parents are now rollups. See `requirements.md`/`status.json`.
 
 ## Source ID coverage
 
-`GRAPHOS-IDENTITY-R001`, `GRAPHOS-IDENTITY-R002`–`GRAPHOS-IDENTITY-R017`, `GRAPHOS-IDENTITY-R018`, `GRAPHOS-IDENTITY-R019`, `GRAPHOS-IDENTITY-R020`, `GRAPHOS-IDENTITY-R021`, `GRAPHOS-IDENTITY-R022`, and `GRAPHOS-IDENTITY-R023` map to IA requirements in `spec.md`. Source IDs identify intended work, not completion. Cross-repository owners implement their side of the contract stated in this spec. GraphOS tasks cannot close their delivery without their own accepted evidence.
+`GRAPHOS-IDENTITY-R001`, `GRAPHOS-IDENTITY-R002`–`GRAPHOS-IDENTITY-R017`, `GRAPHOS-IDENTITY-R018`, `GRAPHOS-IDENTITY-R019`, `GRAPHOS-IDENTITY-R020`, `GRAPHOS-IDENTITY-R021`, `GRAPHOS-IDENTITY-R022`, and `GRAPHOS-IDENTITY-R023` map to IA requirements in `spec.md`. Source IDs identify intended work, not completion. Cross-repository owners implement their side of the contract stated in this spec. Arbora tasks cannot close their delivery without their own accepted evidence.
 
 ## Strict producer follow-through
 

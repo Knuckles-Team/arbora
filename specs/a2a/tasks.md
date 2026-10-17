@@ -3,7 +3,7 @@
 ## A2A task and approval projection
 Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](plan.md) and [tests](test-spec.md).
 
-- [ ] Inventory published A2A/WorkItem/assembly/grant/plan/audit contracts and existing GraphOS composition; record unavailable dependencies.
+- [ ] Inventory published A2A/WorkItem/assembly/grant/plan/audit contracts and existing Arbora composition; record unavailable dependencies.
 - [ ] Extend the existing A2A method table for durable stream/resubscribe and hosted-operation invoke; keep one task authority.
 - [ ] Implement parent-child WorkItem and pending-call projection with bounded event cursors and restart-safe `input-required` state.
 - [ ] Bind signed original-human grant and atomic plan fence to the pending call; keep confirmation disabled until served proof.
@@ -19,12 +19,12 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
   The bounded, restart-safe event-cursor backing for real durable streaming
   remains open under the parent requirement.
 - [x] Prove no duplicate skill/prompt harvest path (GRAPHOS-A2A-R003): a
-  static source-level absence check confirms graph-os never imports
+  static source-level absence check confirms arbora never imports
   agent-utilities' legacy `agent_utilities.mcp.multiplexer` /
   `shared_multiplexer`, and that the skill/prompt body-harvest functions
-  are defined in exactly one module, `graph_os/fleet/multiplexer.py`.
+  are defined in exactly one module, `arbora/fleet/multiplexer.py`.
 - [ ] **Prerequisite for GRAPHOS-A2A-R002** (owner repo: agent-utilities):
-  `WorkItemA2AAuthority._enqueue`/`dispatch` in `graph_os/a2a/authority.py`
+  `WorkItemA2AAuthority._enqueue`/`dispatch` in `arbora/a2a/authority.py`
   refuse every request carrying `decision.selected_tools` because AU's
   dispatch carrier (`agent_utilities.orchestration.agent_dispatch.
   AgentTurnEnvelope` / `enqueue_agent_turn`) has no field or mechanism to
@@ -41,34 +41,34 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
 - [ ] **GRAPHOS-A2A-R002.2:** Caller-filtered tool-subset enforcement at dispatch
 - [ ] **GRAPHOS-A2A-R002.2.1:** Remaining scope of GRAPHOS-A2A-R002.2 (slice .1): Caller-filtered tool-subset enforcement at dispatch
 - [ ] **GRAPHOS-A2A-R005:** Durable, fail-closed A2A approval exchange for tool calls
-- [ ] **GRAPHOS-A2A-R005.1:** Fail-closed `graphos.plan/confirm` stub on the A2A method table
+- [ ] **GRAPHOS-A2A-R005.1:** Fail-closed `arbora.plan/confirm` stub on the A2A method table
 - [ ] **GRAPHOS-A2A-R005.2:** Full signed human approval chain and input-required task emission
 - [ ] **GRAPHOS-A2A-R005.2.1:** Remaining scope of GRAPHOS-A2A-R005.2 (slice .1): Full signed human approval chain and input-required task emission
 - [ ] **GRAPHOS-A2A-R006:** Operation invoke and plan-confirm methods for A2A
-- [ ] **GRAPHOS-A2A-R006.1:** Register `graphos.op/invoke` and `graphos.plan/confirm`, fail-closed
-- [ ] **GRAPHOS-A2A-R006.2:** Bridge `graphos.op/invoke` to the shared hosted-operation registry
+- [ ] **GRAPHOS-A2A-R006.1:** Register `arbora.op/invoke` and `arbora.plan/confirm`, fail-closed
+- [ ] **GRAPHOS-A2A-R006.2:** Bridge `arbora.op/invoke` to the shared hosted-operation registry
 - [x] **GRAPHOS-A2A-R002.1:** Fail-closed refusal when assembly selects a tool subset
 - [ ] **GRAPHOS-A2A-R002.2:** Caller-filtered tool-subset enforcement at dispatch
 - [ ] **GRAPHOS-A2A-R002.2.1:** Remaining scope of GRAPHOS-A2A-R002.2 (slice .1): Caller-filtered tool-subset enforcement at dispatch
 - [ ] **GRAPHOS-A2A-R005:** Durable, fail-closed A2A approval exchange for tool calls
-- [x] **GRAPHOS-A2A-R005.1:** Fail-closed graphos.plan/confirm stub on the A2A method table
+- [x] **GRAPHOS-A2A-R005.1:** Fail-closed arbora.plan/confirm stub on the A2A method table
 - [ ] **GRAPHOS-A2A-R005.2:** Full signed human approval chain and input-required task emission
 - [ ] **GRAPHOS-A2A-R005.2.1:** Remaining scope of GRAPHOS-A2A-R005.2 (slice .1): Full signed human approval chain and input-required task emission
 - [ ] **GRAPHOS-A2A-R006:** Operation invoke and plan-confirm methods for A2A
-- [x] **GRAPHOS-A2A-R006.1:** Register graphos.op/invoke and graphos.plan/confirm, fail-closed
-- [ ] **GRAPHOS-A2A-R006.2:** Bridge graphos.op/invoke to the shared hosted-operation registry
-- [ ] **GRAPHOS-A2A-R006.2.1:** Retain and refresh the request-bound authenticated caller in GraphOS; prove credential, tenant and actor refusals.
+- [x] **GRAPHOS-A2A-R006.1:** Register arbora.op/invoke and arbora.plan/confirm, fail-closed
+- [ ] **GRAPHOS-A2A-R006.2:** Bridge arbora.op/invoke to the shared hosted-operation registry
+- [ ] **GRAPHOS-A2A-R006.2.1:** Retain and refresh the request-bound authenticated caller in Arbora; prove credential, tenant and actor refusals.
 
 ## A2A streaming, push notifications and transition-history projection
 Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED** except `GRAPHOS-A2A-R009.1`. See [design](plan.md) and [tests](test-spec.md).
 
-- [x] Define `A2AAgentCapabilities.from_wired_authorities` plus `A2AStreamingAuthority`/`A2APushNotificationAuthority`/`A2ATransitionHistoryAuthority` runtime-checkable protocols in `graph_os/a2a/models.py` (`GRAPHOS-A2A-R009`, `GRAPHOS-A2A-R009.1`). Default capabilities stay all-false; a non-conforming authority object raises `TypeError` instead of being silently accepted. Proven by `tests/a2a/test_models.py`.
+- [x] Define `A2AAgentCapabilities.from_wired_authorities` plus `A2AStreamingAuthority`/`A2APushNotificationAuthority`/`A2ATransitionHistoryAuthority` runtime-checkable protocols in `arbora/a2a/models.py` (`GRAPHOS-A2A-R009`, `GRAPHOS-A2A-R009.1`). Default capabilities stay all-false; a non-conforming authority object raises `TypeError` instead of being silently accepted. Proven by `tests/a2a/test_models.py`.
 - [ ] Wait for `GRAPHOS-A2A` (context-budget subset) to land; do not implement the streaming cursor or push-trigger machinery ahead of it (`GRAPHOS-A2A-R014`).
 - [ ] Implement `message/stream` reading AU's task-event reader through its public port; the owner requirement and export remain unassigned; no local event-log copy (`GRAPHOS-A2A-R010`).
 - [ ] Implement `tasks/get` history read-through to epistemic-graph's durable kernel (`EG-DURABLE-KERNEL`) (`GRAPHOS-A2A-R011`).
 - [ ] Add the `A2ATransitionHistoryUnavailable` typed refusal for an absent/unreachable history authority (`GRAPHOS-A2A-R012`).
   - [x] `GRAPHOS-A2A-R012.1`: landed inventory only — the protocol exists, the error type does not. Proven by `tests/a2a/test_models.py`.
-  - [ ] `GRAPHOS-A2A-R012.2`: add the `A2ATransitionHistoryUnavailable` error type to `graph_os/a2a/authority.py`.
+  - [ ] `GRAPHOS-A2A-R012.2`: add the `A2ATransitionHistoryUnavailable` error type to `arbora/a2a/authority.py`.
   - [ ] `GRAPHOS-A2A-R012.3`: wire `tasks/get`'s refusal (`A2A-HT06`); blocked on `GRAPHOS-A2A` (`GRAPHOS-A2A-R014`).
 - [ ] Implement push-notification delivery over epistemic-graph's durable outbox with dead-letter reporting (`GRAPHOS-A2A-R013`).
 - [ ] Wire real authorities into composition only after each path is proven. Run all test-spec rows. Record exact revision evidence before flipping any capability field `true` and marking its requirement accepted (`GRAPHOS-A2A-R015`).
@@ -78,7 +78,7 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
 
 - [x] Open this spec, linking EG's `AgentAssemble` owner (`EG-DECISION-ENGINE-001`/`EG-DECISION-ENGINE-R036`) and AU's signed envelope owner (`AU-CONTROL-R035`) by stable ID.
 - [x] Open the AU owner row this door depends on: `AU-CONTROL-R035`, the signed `AgentTurnEnvelope`'s missing allowed-tool-subset field (agent-utilities PR #135, merged).
-- [x] Add the typed `ToolSubsetAdmissionRequest`/`ToolSubsetAdmissionDecision` models (`graph_os/a2a/admission.py`), reusing the existing `_WireModel` base and `A2AContextBudget` (`GRAPHOS-A2A-R016`).
+- [x] Add the typed `ToolSubsetAdmissionRequest`/`ToolSubsetAdmissionDecision` models (`arbora/a2a/admission.py`), reusing the existing `_WireModel` base and `A2AContextBudget` (`GRAPHOS-A2A-R016`).
 - [x] Add `admit_tool_subset`, returning today's exact fail-closed `EG_ASSEMBLE_UNAVAILABLE` refusal (`GRAPHOS-A2A-R016.1`).
 - [x] Add the refusal unit test (`tests/a2a/test_admission.py`) proving the exact fields of that result (`GRAPHOS-A2A-R016.1`, `GRAPHOS-A2A-R019`).
 - [ ] **Prerequisite (owner repo: epistemic-graph):** `AgentAssemble` must stop returning unavailable before `admit_tool_subset` can derive a real subset (`GRAPHOS-A2A-R017`).

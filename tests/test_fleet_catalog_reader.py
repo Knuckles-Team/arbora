@@ -7,7 +7,7 @@ from dataclasses import replace
 
 import pytest
 
-from graph_os.fleet.catalog_reader import (
+from arbora.fleet.catalog_reader import (
     COMMONS_GRAPH,
     COMPONENT_CONTENT_SOURCE,
     COMPONENT_CURRENT_SOURCE,
@@ -33,7 +33,7 @@ CONTEXT = ReadContext(
     tenant_id="tenant-a",
     principal_id="principal-a",
     agent_id="agent-a",
-    audience="graph-os",
+    audience="arbora",
     policy_version="policy-v1",
 )
 OTHER_CONTEXT = replace(CONTEXT, tenant_id="tenant-b")
@@ -291,7 +291,7 @@ def test_reader_skips_a_live_server_without_a_component(
     bare = replace(SERVER, server_id="srv:bare-mcp", name="bare-mcp")
     port = FakeFleetCatalogPort(server_pages=[server_page(SERVER, bare)])
 
-    with caplog.at_level("WARNING", logger="graph_os.fleet.catalog_reader"):
+    with caplog.at_level("WARNING", logger="arbora.fleet.catalog_reader"):
         catalog = asyncio.run(FleetCatalogReader(port).read())
 
     assert [server.registration for server in catalog.servers] == [SERVER]
@@ -311,7 +311,7 @@ def test_reader_with_only_bare_registrations_returns_an_empty_catalog() -> None:
 
 
 def test_multiplexer_status_reports_unadmitted_servers_and_onboarding() -> None:
-    from graph_os.fleet.multiplexer import MCPMultiplexer
+    from arbora.fleet.multiplexer import MCPMultiplexer
 
     port = FakeFleetCatalogPort(
         server_pages=[

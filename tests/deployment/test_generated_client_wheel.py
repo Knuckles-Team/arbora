@@ -31,8 +31,8 @@ def test_generated_client_installs_with_its_registry(tmp_path: Path) -> None:
     for name in ("pyproject.toml", "README.md", "LICENSE"):
         shutil.copy2(ROOT / name, source / name)
     shutil.copytree(
-        ROOT / "graph_os",
-        source / "graph_os",
+        ROOT / "arbora",
+        source / "arbora",
         ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
     )
     wheels = tmp_path / "wheels"
@@ -107,11 +107,11 @@ import pathlib
 import sys
 sys.path.insert(0, sys.argv[1])
 assert importlib.util.find_spec('epistemic_graph') is None
-import graph_os.client._generated_models as models
-from graph_os.client.invoke import invoke
+import arbora.client._generated_models as models
+from arbora.client.invoke import invoke
 
 assert pathlib.Path(models.__file__).is_relative_to(sys.argv[1])
-registry = json.loads((importlib.resources.files('graph_os.api.generated') / 'registry.json').read_bytes())
+registry = json.loads((importlib.resources.files('arbora.api.generated') / 'registry.json').read_bytes())
 assert registry['registry_digest'] == models.REGISTRY_DIGEST
 assert models.schema_for('query.uql')['params']
 assert len(registry['ops']) > 0
@@ -163,8 +163,8 @@ import json
 import sys
 sys.path.insert(0, sys.argv[1])
 assert importlib.util.find_spec('epistemic_graph') is None
-import graph_os.client._generated_models as models
-root = importlib.resources.files('graph_os.api.generated')
+import arbora.client._generated_models as models
+root = importlib.resources.files('arbora.api.generated')
 path = root / 'registry.json'
 original = path.read_bytes()
 registry = json.loads(original)

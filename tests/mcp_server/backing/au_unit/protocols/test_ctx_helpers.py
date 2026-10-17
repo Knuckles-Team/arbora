@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from graph_os.mcp_server.backing import context_helpers
+from arbora.mcp_server.backing import context_helpers
 
 
 @pytest.mark.asyncio

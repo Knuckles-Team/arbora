@@ -201,7 +201,7 @@
     },
     {
       "id": "GRAPHOS-A2A-R005.1",
-      "title": "Fail-closed `graphos.plan/confirm` stub on the A2A method table",
+      "title": "Fail-closed `arbora.plan/confirm` stub on the A2A method table",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "a226c8fdf397"
@@ -306,7 +306,7 @@
     },
     {
       "id": "GRAPHOS-A2A-R006.1",
-      "title": "Register `graphos.op/invoke` and `graphos.plan/confirm`, fail-closed",
+      "title": "Register `arbora.op/invoke` and `arbora.plan/confirm`, fail-closed",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "cdde0200a54a"
@@ -318,7 +318,7 @@
     },
     {
       "id": "GRAPHOS-A2A-R006.2",
-      "title": "Bridge `graphos.op/invoke` to the shared hosted-operation registry",
+      "title": "Bridge `arbora.op/invoke` to the shared hosted-operation registry",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "cdde0200a54a"
@@ -333,7 +333,7 @@
     },
     {
       "id": "GRAPHOS-A2A-R006.2.1",
-      "title": "Preserve the verified caller through GraphOS A2A authentication",
+      "title": "Preserve the verified caller through Arbora A2A authentication",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "cdde0200a54a"
@@ -759,7 +759,7 @@
     },
     {
       "id": "GRAPHOS-A2A-R001.2",
-      "title": "AU:21 GraphOS definition slice",
+      "title": "AU:21 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

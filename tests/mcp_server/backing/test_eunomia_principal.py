@@ -51,13 +51,13 @@ def _request(uri="agent:allowed-agent", action="list"):
 
 
 def test_verified_principal_overrides_spoofed_headers(tmp_path, monkeypatch):
-    from graph_os.mcp_server.backing.eunomia_principal import create_eunomia_middleware
+    from arbora.mcp_server.backing.eunomia_principal import create_eunomia_middleware
 
     middleware = create_eunomia_middleware(
         _policy(tmp_path), require_verified_principal=True
     )
     monkeypatch.setattr(
-        "graph_os.mcp_server.backing.eunomia_principal.get_http_headers",
+        "arbora.mcp_server.backing.eunomia_principal.get_http_headers",
         lambda: {
             "x-agent-id": "spoofed-agent",
             "x-user-id": "spoofed-user",
@@ -79,13 +79,13 @@ def test_verified_principal_overrides_spoofed_headers(tmp_path, monkeypatch):
 
 
 def test_authenticated_mode_fails_closed_without_token(tmp_path, monkeypatch):
-    from graph_os.mcp_server.backing.eunomia_principal import create_eunomia_middleware
+    from arbora.mcp_server.backing.eunomia_principal import create_eunomia_middleware
 
     middleware = create_eunomia_middleware(
         _policy(tmp_path), require_verified_principal=True
     )
     monkeypatch.setattr(
-        "graph_os.mcp_server.backing.eunomia_principal.get_http_headers",
+        "arbora.mcp_server.backing.eunomia_principal.get_http_headers",
         lambda: {"x-agent-id": "allowed-agent"},
     )
 
@@ -97,11 +97,11 @@ def test_authenticated_mode_fails_closed_without_token(tmp_path, monkeypatch):
 
 
 def test_local_stdio_mode_can_use_bounded_header_identity(tmp_path, monkeypatch):
-    from graph_os.mcp_server.backing.eunomia_principal import create_eunomia_middleware
+    from arbora.mcp_server.backing.eunomia_principal import create_eunomia_middleware
 
     middleware = create_eunomia_middleware(_policy(tmp_path))
     monkeypatch.setattr(
-        "graph_os.mcp_server.backing.eunomia_principal.get_http_headers",
+        "arbora.mcp_server.backing.eunomia_principal.get_http_headers",
         lambda: {"x-agent-id": "allowed-agent", "user-agent": "local-client"},
     )
     monkeypatch.setattr(
@@ -113,7 +113,7 @@ def test_local_stdio_mode_can_use_bounded_header_identity(tmp_path, monkeypatch)
 
 @pytest.mark.asyncio
 async def test_embedded_policy_default_deny_and_allow(tmp_path):
-    from graph_os.mcp_server.backing.eunomia_principal import create_eunomia_middleware
+    from arbora.mcp_server.backing.eunomia_principal import create_eunomia_middleware
 
     middleware = create_eunomia_middleware(_policy(tmp_path))
     assert (await middleware._eunomia.check(_request())).allowed is True
@@ -123,7 +123,7 @@ async def test_embedded_policy_default_deny_and_allow(tmp_path):
 
 
 def test_resource_projection_never_contains_argument_values(tmp_path):
-    from graph_os.mcp_server.backing.eunomia_principal import create_eunomia_middleware
+    from arbora.mcp_server.backing.eunomia_principal import create_eunomia_middleware
 
     middleware = create_eunomia_middleware(_policy(tmp_path))
     context = MiddlewareContext(
@@ -141,7 +141,7 @@ def test_resource_projection_never_contains_argument_values(tmp_path):
 
 
 def test_policy_file_is_bounded(tmp_path):
-    from graph_os.mcp_server.backing.eunomia_principal import create_eunomia_middleware
+    from arbora.mcp_server.backing.eunomia_principal import create_eunomia_middleware
 
     path = tmp_path / "oversize.json"
     path.write_bytes(b" " * (1024 * 1024 + 1))
@@ -150,7 +150,7 @@ def test_policy_file_is_bounded(tmp_path):
 
 
 def test_remote_plaintext_requires_explicit_exception():
-    from graph_os.mcp_server.backing.eunomia_principal import create_eunomia_middleware
+    from arbora.mcp_server.backing.eunomia_principal import create_eunomia_middleware
 
     with pytest.raises(ValueError, match="HTTPS"):
         create_eunomia_middleware(
@@ -161,7 +161,7 @@ def test_remote_plaintext_requires_explicit_exception():
 
 @pytest.mark.asyncio
 async def test_remote_bridge_uses_bounded_native_transport(monkeypatch):
-    from graph_os.mcp_server.backing.eunomia_principal import create_eunomia_middleware
+    from arbora.mcp_server.backing.eunomia_principal import create_eunomia_middleware
 
     monkeypatch.setenv("TEST_EUNOMIA_KEY", "a" * 32)
     seen = []
@@ -197,7 +197,7 @@ async def test_remote_bridge_uses_bounded_native_transport(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_remote_response_misalignment_fails_closed():
-    from graph_os.mcp_server.backing.eunomia_principal import create_eunomia_middleware
+    from arbora.mcp_server.backing.eunomia_principal import create_eunomia_middleware
 
     middleware = create_eunomia_middleware(
         use_remote_eunomia=True,
@@ -221,7 +221,7 @@ class _FakeBridge:
 
 @pytest.mark.asyncio
 async def test_bulk_check_chunks_at_server_limit():
-    from graph_os.mcp_server.backing.eunomia_principal import _ChunkingBulkCheckBridge
+    from arbora.mcp_server.backing.eunomia_principal import _ChunkingBulkCheckBridge
 
     bridge = _FakeBridge()
     wrapped = _ChunkingBulkCheckBridge(bridge)
@@ -231,7 +231,7 @@ async def test_bulk_check_chunks_at_server_limit():
 
 
 def test_bulk_check_limit_cannot_exceed_server_contract():
-    from graph_os.mcp_server.backing.eunomia_principal import _ChunkingBulkCheckBridge
+    from arbora.mcp_server.backing.eunomia_principal import _ChunkingBulkCheckBridge
 
     with pytest.raises(ValueError, match="between"):
         _ChunkingBulkCheckBridge(_FakeBridge(), max_batch=101)
@@ -240,7 +240,7 @@ def test_bulk_check_limit_cannot_exceed_server_contract():
 async def test_listing_hides_only_invalid_component_identity(tmp_path, monkeypatch):
     from fastmcp.exceptions import ToolError
 
-    from graph_os.mcp_server.backing.eunomia_principal import create_eunomia_middleware
+    from arbora.mcp_server.backing.eunomia_principal import create_eunomia_middleware
 
     middleware = create_eunomia_middleware(_policy(tmp_path))
     monkeypatch.setattr(
@@ -258,7 +258,7 @@ async def test_listing_hides_only_invalid_component_identity(tmp_path, monkeypat
 
 
 async def test_listing_still_applies_policy_to_valid_names(tmp_path, monkeypatch):
-    from graph_os.mcp_server.backing.eunomia_principal import create_eunomia_middleware
+    from arbora.mcp_server.backing.eunomia_principal import create_eunomia_middleware
 
     middleware = create_eunomia_middleware(_policy(tmp_path))
     monkeypatch.setattr(

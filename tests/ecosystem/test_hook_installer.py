@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from graph_os.ecosystem import hook_installer as hi
+from arbora.ecosystem import hook_installer as hi
 
 
 @pytest.fixture

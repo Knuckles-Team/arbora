@@ -27,8 +27,8 @@ from typing import Any
 import httpx
 import pytest
 
-from graph_os.fleet.discovery_authority import OAuthGrantBinding
-from graph_os.mcp_server.backing.remote_oauth_broker import (
+from arbora.fleet.discovery_authority import OAuthGrantBinding
+from arbora.mcp_server.backing.remote_oauth_broker import (
     OAuthBindingError,
     OAuthDiscoveryError,
     OAuthProviderError,
@@ -47,8 +47,8 @@ from graph_os.mcp_server.backing.remote_oauth_broker import (
     discover_authorization_server,
     discover_protected_resource,
 )
-from graph_os.security.actor_context import ActorContext, ActorType
-from graph_os.security.secrets import SecretsClient
+from arbora.security.actor_context import ActorContext, ActorType
+from arbora.security.secrets import SecretsClient
 from tests._support import FakeSecretsBackend
 
 RESOURCE_URL = "https://mcp.example.com/remote"
@@ -337,7 +337,7 @@ class TestProviderRegistration:
 # ---------------------------------------------------------------------------
 class TestDynamicClientRegistration:
     def test_registrar_requires_pkce_s256(self):
-        from graph_os.mcp_server.backing.remote_oauth_broker import (
+        from arbora.mcp_server.backing.remote_oauth_broker import (
             AuthorizationServerMetadata,
             Rfc7591DynamicClientRegistrar,
         )
@@ -355,7 +355,7 @@ class TestDynamicClientRegistration:
             registrar.register(dcr_provider(), as_meta)
 
     def test_registrar_requires_registration_endpoint(self):
-        from graph_os.mcp_server.backing.remote_oauth_broker import (
+        from arbora.mcp_server.backing.remote_oauth_broker import (
             AuthorizationServerMetadata,
             OAuthProviderError,
             Rfc7591DynamicClientRegistrar,

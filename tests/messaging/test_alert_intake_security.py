@@ -2,8 +2,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from graph_os.messaging import alert_intake
-from graph_os.messaging.alert_intake import (
+from arbora.messaging import alert_intake
+from arbora.messaging.alert_intake import (
     _MAX_ALERT_CHARS,
     _extract_text,
     _handle,

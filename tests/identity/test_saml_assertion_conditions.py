@@ -5,8 +5,8 @@ from typing import Any
 
 import pytest
 
-from graph_os.identity.engine import IdentityUnavailable
-from graph_os.identity.saml import (
+from arbora.identity.engine import IdentityUnavailable
+from arbora.identity.saml import (
     ParsedSamlAssertion,
     SamlAssertionRefused,
     SamlRefusalReason,
@@ -15,9 +15,9 @@ from graph_os.identity.saml import (
 )
 
 _CERT = "-----BEGIN CERTIFICATE-----\nMII...\n-----END CERTIFICATE-----"
-_ACS = "https://graph-os.example.org/saml/acs"
+_ACS = "https://arbora.example.org/saml/acs"
 _T0 = datetime(2026, 10, 10, 12, 0, tzinfo=UTC)
-_PROVIDER = SamlServiceProvider("urn:graph-os:sp", _ACS, _CERT)
+_PROVIDER = SamlServiceProvider("urn:arbora:sp", _ACS, _CERT)
 
 
 def _assertion(**overrides: Any) -> ParsedSamlAssertion:
@@ -25,7 +25,7 @@ def _assertion(**overrides: Any) -> ParsedSamlAssertion:
         "assertion_id": "_a1",
         "issuer": "https://idp.example.org",
         "subject": "alice",
-        "audiences": ("urn:graph-os:sp",),
+        "audiences": ("urn:arbora:sp",),
         "recipient": _ACS,
         "not_before": _T0 - timedelta(minutes=1),
         "not_on_or_after": _T0 + timedelta(minutes=5),

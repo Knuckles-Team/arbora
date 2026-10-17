@@ -1,4 +1,4 @@
-"""GraphOS messaging service governance and channel routing tests (CONCEPT:AU-ECO.messaging.messaging-reach-service-governed–4.52).
+"""Arbora messaging service governance and channel routing tests (CONCEPT:AU-ECO.messaging.messaging-reach-service-governed–4.52).
 
 Covers governed sends, last-active channel routing + default fallback, the awaited-reply
 bridge, and that the inbound planner handler is no longer the canned-acknowledgment stub.
@@ -14,13 +14,13 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from graph_os.messaging import service as service_module
-from graph_os.messaging.models import (
+from arbora.messaging import service as service_module
+from arbora.messaging.models import (
     EventType,
     InboundEvent,
     SendResult,
 )
-from graph_os.messaging.service import MessagingService
+from arbora.messaging.service import MessagingService
 
 from ._fakes import FakeMessagingBackend
 
@@ -177,7 +177,7 @@ async def test_send_refuses_when_action_gate_is_unavailable(
     caplog: pytest.LogCaptureFixture, gate: Any
 ) -> None:
     """A missing or broken authorization gate cannot deliver or persist a message."""
-    from graph_os.messaging.host_ports import bind_host_ports
+    from arbora.messaging.host_ports import bind_host_ports
 
     bind_host_ports(action_gate=gate)
     engine = _FakeEngine()
@@ -224,7 +224,7 @@ async def test_send_can_suppress_outbound_kg_persistence(
 async def test_backend_connect_error_is_sanitized(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from graph_os.messaging.registry import MessagingRegistry
+    from arbora.messaging.registry import MessagingRegistry
 
     class _BrokenBackend:
         async def connect(self) -> None:
@@ -283,7 +283,7 @@ async def test_deliver_reply_resolves_awaited_reply(svc: MessagingService) -> No
 def test_registry_identity_digest_uses_stable_bot_id_without_secret(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from graph_os.messaging.registry import MessagingRegistry
+    from arbora.messaging.registry import MessagingRegistry
 
     from ._fakes import synthetic_token
 
@@ -302,10 +302,10 @@ def test_registry_identity_digest_uses_stable_bot_id_without_secret(
     assert "secret" not in digest
 
 
-def test_graphos_backend_status_reads_only_connected_configured_channels(
+def test_arbora_backend_status_reads_only_connected_configured_channels(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from graph_os.messaging.registry import MessagingRegistry
+    from arbora.messaging.registry import MessagingRegistry
 
     registry = SimpleNamespace(configured_backend_ids=lambda: ["telegram", "slack"])
     monkeypatch.setattr(MessagingRegistry, "instance", lambda: registry)

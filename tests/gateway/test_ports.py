@@ -7,8 +7,8 @@ from typing import Any
 
 import pytest
 
-from graph_os.gateway import ontology_api
-from graph_os.gateway.ports import (
+from arbora.gateway import ontology_api
+from arbora.gateway.ports import (
     configure_gateway_application,
     gateway_application,
 )

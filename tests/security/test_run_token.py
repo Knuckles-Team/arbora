@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.security.run_token import TokenError, mint_token, validate_token
+from arbora.security.run_token import TokenError, mint_token, validate_token
 
 
 @pytest.fixture(autouse=True)

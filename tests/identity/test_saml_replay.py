@@ -4,8 +4,8 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from graph_os.identity.engine import IdentityUnavailable
-from graph_os.identity.saml import (
+from arbora.identity.engine import IdentityUnavailable
+from arbora.identity.saml import (
     ParsedSamlAssertion,
     SamlAssertionRefused,
     SamlRefusalReason,
@@ -31,8 +31,8 @@ def _assertion(assertion_id: str = "_a1") -> ParsedSamlAssertion:
         assertion_id=assertion_id,
         issuer="https://idp.example.org",
         subject="alice",
-        audiences=("urn:graph-os:sp",),
-        recipient="https://graph-os.example.org/saml/acs",
+        audiences=("urn:arbora:sp",),
+        recipient="https://arbora.example.org/saml/acs",
         not_before=_T0 - timedelta(minutes=1),
         not_on_or_after=_T0 + timedelta(minutes=5),
     )

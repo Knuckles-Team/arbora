@@ -36,10 +36,10 @@ import time
 
 import pytest
 
-from graph_os.api.contracts.session import GraphSession, use_session
-from graph_os.mcp_server import runtime
-from graph_os.mcp_server.backing.tools import engine_tools
-from graph_os.security.actor_context import ActorContext, ActorType, use_actor
+from arbora.api.contracts.session import GraphSession, use_session
+from arbora.mcp_server import runtime
+from arbora.mcp_server.backing.tools import engine_tools
+from arbora.security.actor_context import ActorContext, ActorType, use_actor
 
 ACTOR = ActorContext(
     actor_id="principal:ops",
@@ -118,7 +118,7 @@ async def test_offloaded_dispatch_still_sees_the_calling_tasks_session(monkeypat
     runtime.ensure_tools_registered()
     tool = engine_tools._make_domain_tool("nodes", ["has"])
 
-    from graph_os.api.contracts.session import current_session
+    from arbora.api.contracts.session import current_session
 
     observed: dict[str, str] = {}
 

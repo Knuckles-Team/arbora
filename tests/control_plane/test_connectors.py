@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 import pytest
 from pydantic import ValidationError
 
-from graph_os.control_plane.connectors import (
+from arbora.control_plane.connectors import (
     AccessScope,
     AuthorizationDecision,
     AuthorizationKind,

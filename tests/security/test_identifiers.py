@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.security.identifiers import (
+from arbora.security.identifiers import (
     InvalidIdentifierError,
     quote_sql_identifier,
     validate_identifier,

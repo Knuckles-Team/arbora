@@ -1,4 +1,4 @@
-"""The SDK A2A application is reachable only through Graph OS admission."""
+"""The SDK A2A application is reachable only through Arbora admission."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from graph_os.a2a.sdk_app import AdmittedA2AApp
+from arbora.a2a.sdk_app import AdmittedA2AApp
 
 pytestmark = pytest.mark.asyncio
 

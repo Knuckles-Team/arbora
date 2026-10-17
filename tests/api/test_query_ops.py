@@ -11,11 +11,11 @@ import pytest
 from epistemic_graph import EngineResponseError
 from pydantic import ValidationError
 
-from graph_os.api.invoke.bootstrap import dispatch_eg_method
-from graph_os.api.invoke.executor import ExecutionContext
-from graph_os.api.invoke.pipeline import OperationRefused
-from graph_os.api.ops.query import NaturalLanguageParams, operations
-from graph_os.api.registry import EgMethod, EgSchemaRef
+from arbora.api.invoke.bootstrap import dispatch_eg_method
+from arbora.api.invoke.executor import ExecutionContext
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops.query import NaturalLanguageParams, operations
+from arbora.api.registry import EgMethod, EgSchemaRef
 from tests._support import Actor
 from tests.api.test_invoke_bootstrap import FakeSession, _caller
 

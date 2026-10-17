@@ -12,8 +12,8 @@ import json
 
 import pytest
 
-from graph_os.observability import gateway_health as gh
-from graph_os.observability import health as h
+from arbora.observability import gateway_health as gh
+from arbora.observability import health as h
 
 
 class _FakeStore:

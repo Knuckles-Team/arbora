@@ -8,8 +8,8 @@ registration silently no-oped. This asserts the real thing: a server built
 by au's own ``create_mcp_server`` actually serves a fleet package's
 ``prompts/*.json`` file as a ``prompt://`` resource, using the genuine
 fastmcp ``FileResource``, and a client can read the body back — the exact
-capability :meth:`~graph_os.fleet.multiplexer.MCPMultiplexer
-._harvest_prompt_bodies` depends on when graph-os probes this server.
+capability :meth:`~arbora.fleet.multiplexer.MCPMultiplexer
+._harvest_prompt_bodies` depends on when arbora probes this server.
 """
 
 from __future__ import annotations
@@ -44,11 +44,11 @@ async def test_create_mcp_server_serves_prompt_resources(
     assert FileResource is not None
 
     monkeypatch.setattr(
-        "graph_os.core.providers.resolve_prompt_provider_dirs",
+        "arbora.core.providers.resolve_prompt_provider_dirs",
         lambda: [("au-live-provider", demo_prompt_dir)],
     )
 
-    from graph_os.mcp_server.backing.server_factory import create_mcp_server
+    from arbora.mcp_server.backing.server_factory import create_mcp_server
 
     _args, mcp, _middlewares = create_mcp_server(
         "Prompts Live Path Test", command_args=[]

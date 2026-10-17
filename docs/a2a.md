@@ -1,6 +1,6 @@
 # Unary A2A facade
 
-GraphOS exposes one authenticated, unary-only A2A boundary over the existing
+Arbora exposes one authenticated, unary-only A2A boundary over the existing
 agent-utilities WorkItem and signed agent-dispatch authorities. It does not
 create an A2A-specific task database, broker, worker, or orchestration loop.
 

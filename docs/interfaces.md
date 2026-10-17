@@ -1,6 +1,6 @@
 # Interfaces
 
-Every Graph OS interface reaches the same governed application services. Choose
+Every Arbora interface reaches the same governed application services. Choose
 the transport that matches the caller; identity, tenant policy, and provenance
 remain part of the request lifecycle.
 
@@ -14,5 +14,5 @@ remain part of the request lifecycle.
 | Operators | Health, readiness, and fleet surfaces | [Capability status](status.md) |
 
 Agent Web UI, Agent Terminal UI, Geniusbot, and messaging channels are client
-experiences at this boundary. Graph OS owns their governed gateway; each client
+experiences at this boundary. Arbora owns their governed gateway; each client
 owns its presentation and local interaction state.

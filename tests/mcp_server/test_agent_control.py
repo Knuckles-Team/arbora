@@ -9,15 +9,15 @@ from typing import Any
 
 import pytest
 
-from graph_os.api.contracts.agent_control_plane import GraphRlmRunRequest
-from graph_os.api.contracts.session import GraphSession, resolve_session
-from graph_os.mcp_server import runtime
-from graph_os.mcp_server.agent_control import register_graph_rlm
-from graph_os.security.actor_context import ActorContext, ActorType
+from arbora.api.contracts.agent_control_plane import GraphRlmRunRequest
+from arbora.api.contracts.session import GraphSession, resolve_session
+from arbora.mcp_server import runtime
+from arbora.mcp_server.agent_control import register_graph_rlm
+from arbora.security.actor_context import ActorContext, ActorType
 
 
 class Mcp:
-    """A fake structurally satisfying ``graph_os.mcp_server.agent_control.ToolRegistrar``."""
+    """A fake structurally satisfying ``arbora.mcp_server.agent_control.ToolRegistrar``."""
 
     def __init__(self) -> None:
         self.tools: dict[str, Any] = {}

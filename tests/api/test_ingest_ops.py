@@ -10,8 +10,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from graph_os.api.invoke.pipeline import OperationRefused
-from graph_os.api.ops.ingest import (
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops.ingest import (
     get_job_status,
     get_source_status,
     index_repository,
@@ -20,7 +20,7 @@ from graph_os.api.ops.ingest import (
     operations,
     sync_source,
 )
-from graph_os.ingest.service import (
+from arbora.ingest.service import (
     IngestIndexReceipt,
     IngestJobRecord,
     IngestPackInventory,

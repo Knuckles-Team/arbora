@@ -1,4 +1,4 @@
-"""The native GraphOS host owns messaging intake admission."""
+"""The native Arbora host owns messaging intake admission."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from typing import Any
 
 import pytest
 
-from graph_os.messaging import intake
-from graph_os.messaging.intake import start_messaging_intake
+from arbora.messaging import intake
+from arbora.messaging.intake import start_messaging_intake
 
 
 def test_messaging_intake_requires_verified_session_and_channels() -> None:
@@ -61,7 +61,7 @@ def test_messaging_intake_passes_explicit_intent_and_verified_session(
     assert called == [(engine, ("telegram", "mattermost"), stop_event, session, True)]
 
 
-def test_graphos_intake_passes_only_leased_channels_to_poller(
+def test_arbora_intake_passes_only_leased_channels_to_poller(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     engine = object()
@@ -87,8 +87,8 @@ def test_graphos_intake_passes_only_leased_channels_to_poller(
     ) -> None:
         seen.append((served_engine, channels, stop, channel_stops))
 
-    monkeypatch.setattr("graph_os.messaging.lease.run_owned_intake", run_leased)
-    monkeypatch.setattr("graph_os.messaging.polling.run_poll_loop", poll)
+    monkeypatch.setattr("arbora.messaging.lease.run_owned_intake", run_leased)
+    monkeypatch.setattr("arbora.messaging.polling.run_poll_loop", poll)
     intake.run_owned_intake(
         engine, ("telegram", "mattermost"), stop_event, session, intake_intent=True
     )
@@ -112,7 +112,7 @@ def test_configured_platforms_uses_reach_service_without_daemon(
         def configured_platforms(self) -> list[str]:
             return ["telegram"]
 
-    from graph_os.messaging.service import MessagingService
+    from arbora.messaging.service import MessagingService
 
     monkeypatch.setattr(MessagingService, "instance", lambda arg: Service())
     assert intake.configured_platforms(engine) == ("telegram",)

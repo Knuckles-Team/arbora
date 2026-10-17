@@ -2,12 +2,12 @@
 
 ``scripts/check_wiring.py`` has no third-party dependencies, so these tests
 run it exactly as the ``check-orphan-modules`` and ``check-unreachable-modules``
-pre-commit hooks do: as a subprocess, against a throwaway ``graph_os/``
+pre-commit hooks do: as a subprocess, against a throwaway ``arbora/``
 package built under ``tmp_path``, never the real repository tree.
 
 The fixture package covers every shape the two gates must tell apart:
 
-* a reachable chain from a declared root (``graph_os`` itself and a
+* a reachable chain from a declared root (``arbora`` itself and a
   ``[project.scripts]`` entry) through a static import, a function-local
   import, and a dynamic import-by-string;
 * an isolated module (zero fan-in, zero fan-out) -- an orphan AND
@@ -40,34 +40,34 @@ def _build_fixture(root: Path) -> None:
         [project]
         name = "fixture"
         [project.scripts]
-        fixture-entry = "graph_os.reached.mid:entry_fn"
+        fixture-entry = "arbora.reached.mid:entry_fn"
         """,
     )
-    _write(root / "graph_os" / "__init__.py", '"""Fixture root package."""\n')
-    _write(root / "graph_os" / "reached" / "__init__.py", "")
+    _write(root / "arbora" / "__init__.py", '"""Fixture root package."""\n')
+    _write(root / "arbora" / "reached" / "__init__.py", "")
     _write(
-        root / "graph_os" / "reached" / "mid.py",
+        root / "arbora" / "reached" / "mid.py",
         """
         \"\"\"Reachable root (declared console script target).\"\"\"
 
-        import graph_os.reached.leaf
+        import arbora.reached.leaf
 
         # A plugin/registration-style map, resolved by VALUE, never a static
-        # import -- mirrors graph_os.gateway.registry's widget loader.
-        _DYNAMIC_TARGETS = {"d": "graph_os.dynamic_target"}
+        # import -- mirrors arbora.gateway.registry's widget loader.
+        _DYNAMIC_TARGETS = {"d": "arbora.dynamic_target"}
 
 
         def entry_fn() -> None:
             # Import only reached when this function actually runs --
             # the gate must still see it statically.
-            import graph_os.func_local
+            import arbora.func_local
 
-            graph_os.func_local.noop()
+            arbora.func_local.noop()
         """,
     )
-    _write(root / "graph_os" / "reached" / "leaf.py", '"""Reached transitively."""\n')
+    _write(root / "arbora" / "reached" / "leaf.py", '"""Reached transitively."""\n')
     _write(
-        root / "graph_os" / "func_local.py",
+        root / "arbora" / "func_local.py",
         """
         \"\"\"Reached only through a function-local import in mid.py.\"\"\"
 
@@ -77,7 +77,7 @@ def _build_fixture(root: Path) -> None:
         """,
     )
     _write(
-        root / "graph_os" / "dynamic_target.py",
+        root / "arbora" / "dynamic_target.py",
         """
         \"\"\"Reached only through mid.py's dynamic string-keyed map.
 
@@ -86,20 +86,20 @@ def _build_fixture(root: Path) -> None:
         imports its shared base module.
         \"\"\"
 
-        import graph_os.reached.leaf
+        import arbora.reached.leaf
         """,
     )
     _write(
-        root / "graph_os" / "isolated.py",
+        root / "arbora" / "isolated.py",
         '"""Zero fan-in, zero fan-out: an orphan, and unreachable."""\n',
     )
     _write(
-        root / "graph_os" / "cluster_a.py",
-        '"""Half of a mutually-importing, unreachable cluster."""\n\nimport graph_os.cluster_b\n',
+        root / "arbora" / "cluster_a.py",
+        '"""Half of a mutually-importing, unreachable cluster."""\n\nimport arbora.cluster_b\n',
     )
     _write(
-        root / "graph_os" / "cluster_b.py",
-        '"""Half of a mutually-importing, unreachable cluster."""\n\nimport graph_os.cluster_a\n',
+        root / "arbora" / "cluster_b.py",
+        '"""Half of a mutually-importing, unreachable cluster."""\n\nimport arbora.cluster_a\n',
     )
 
 
@@ -126,7 +126,7 @@ def test_orphans_flags_only_the_isolated_module(tmp_path: Path) -> None:
     result = _run("orphans", tmp_path)
 
     assert result.returncode == 1
-    assert _findings(result) == {"graph_os.isolated"}
+    assert _findings(result) == {"arbora.isolated"}
 
 
 def test_unreachable_flags_isolated_and_the_mutual_cluster(tmp_path: Path) -> None:
@@ -136,9 +136,9 @@ def test_unreachable_flags_isolated_and_the_mutual_cluster(tmp_path: Path) -> No
 
     assert result.returncode == 1
     assert _findings(result) == {
-        "graph_os.isolated",
-        "graph_os.cluster_a",
-        "graph_os.cluster_b",
+        "arbora.isolated",
+        "arbora.cluster_a",
+        "arbora.cluster_b",
     }
 
 
@@ -150,9 +150,9 @@ def test_unreachable_follows_the_static_chain_the_function_local_import_and_the_
     result = _run("unreachable", tmp_path)
 
     reached = {
-        "graph_os.reached.leaf",
-        "graph_os.func_local",
-        "graph_os.dynamic_target",
+        "arbora.reached.leaf",
+        "arbora.func_local",
+        "arbora.dynamic_target",
     }
     assert reached.isdisjoint(_findings(result))
 
@@ -161,9 +161,9 @@ def _build_fully_wired_fixture(root: Path) -> None:
     """The same fixture with the isolated module and the unreachable cluster
     removed -- every remaining module is both non-orphan and reachable."""
     _build_fixture(root)
-    (root / "graph_os" / "isolated.py").unlink()
-    (root / "graph_os" / "cluster_a.py").unlink()
-    (root / "graph_os" / "cluster_b.py").unlink()
+    (root / "arbora" / "isolated.py").unlink()
+    (root / "arbora" / "cluster_a.py").unlink()
+    (root / "arbora" / "cluster_b.py").unlink()
 
 
 @pytest.mark.parametrize("check", ["orphans", "unreachable"])

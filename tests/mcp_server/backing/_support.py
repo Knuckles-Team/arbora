@@ -1,4 +1,4 @@
-"""Shared fakes for graph-os's backing-tool tests."""
+"""Shared fakes for arbora's backing-tool tests."""
 
 from __future__ import annotations
 
@@ -21,8 +21,8 @@ def register_graph_query():
     """Register the query tools onto a throwaway FastMCP and return graph_query."""
     from fastmcp import FastMCP
 
-    from graph_os.mcp_server import runtime
-    from graph_os.mcp_server.backing.tools.query_tools import register_query_tools
+    from arbora.mcp_server import runtime
+    from arbora.mcp_server.backing.tools.query_tools import register_query_tools
 
     register_query_tools(FastMCP("test"))
     return runtime.REGISTERED_TOOLS["graph_query"]

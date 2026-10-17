@@ -1,17 +1,17 @@
 """Dynamic, name-based import edges: string literals that select a module.
 
-GraphOS has more than one plugin/registration mechanism that chooses a
-``graph_os`` submodule by a string at runtime instead of a static ``import``
-statement -- for example ``graph_os.gateway.registry``'s widget loader
+Arbora has more than one plugin/registration mechanism that chooses a
+``arbora`` submodule by a string at runtime instead of a static ``import``
+statement -- for example ``arbora.gateway.registry``'s widget loader
 (``importlib.import_module(module_path)`` where ``module_path`` comes from a
-``dict[str, str]`` of absolute dotted names) and ``graph_os.deployment``'s
+``dict[str, str]`` of absolute dotted names) and ``arbora.deployment``'s
 lazy-submodule facade (``import_module(".doctor", __name__)``, a relative
 dotted name). The reachability report (unlike the narrower, unchanged orphan
 check in :mod:`scripts.wiring.orphans`) must follow these or it would
 misreport every dynamically loaded module as unreachable.
 
 Any string literal anywhere in a module's body that resolves to another
-module in the discovered universe -- absolute (``"graph_os.a.b"``) or
+module in the discovered universe -- absolute (``"arbora.a.b"``) or
 relative (``".a.b"``, resolved like a relative ``import``) -- counts as one
 dynamic edge from that module to the target.
 """

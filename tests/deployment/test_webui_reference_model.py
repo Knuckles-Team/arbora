@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.deployment.webui_reference_model import (
+from arbora.deployment.webui_reference_model import (
     RENAMED_WEB_UI_DISTRIBUTION,
     RENAMED_WEB_UI_MODULE,
     StaleWebUiReferenceError,
@@ -33,7 +33,7 @@ def test_stale_package_name_is_refused() -> None:
     with pytest.raises(StaleWebUiReferenceError):
         WebUiPackageReference(
             WebUiReferenceKind.IMPORT_SITE,
-            "graph_os/browser_control/browser_control_service.py",
+            "arbora/browser_control/browser_control_service.py",
             "agent_web_ui",  # pre-rename / misspelled name
         )
 
@@ -43,5 +43,5 @@ def test_unrelated_package_name_is_refused() -> None:
         WebUiPackageReference(
             WebUiReferenceKind.PACKAGE_EXTRA,
             "pyproject.toml:[project.optional-dependencies].webui",
-            "graphos-webui",
+            "arbora-webui",
         )

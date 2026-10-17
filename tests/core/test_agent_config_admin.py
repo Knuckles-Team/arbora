@@ -20,7 +20,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from graph_os.core import agent_config_admin as config_admin
+from arbora.core import agent_config_admin as config_admin
 
 
 @pytest.fixture(autouse=True)
@@ -51,7 +51,7 @@ def test_describe_reports_docstring_type_default_current_and_alias():
 def test_describe_is_derived_so_a_new_field_needs_no_hand_registration():
     """Every AgentConfig field is describable. A hand-maintained allowlist would
     fail this the moment anyone added a field."""
-    from graph_os.core.settings import GraphOSConfig as AgentConfig
+    from arbora.core.settings import ArboraConfig as AgentConfig
 
     inventory = config_admin.describe()
     assert inventory["count"] == len(AgentConfig.model_fields)
@@ -85,9 +85,9 @@ def test_a_runtime_reference_is_shown_verbatim():
     """The reference is exactly what an operator needs ("which vault path?") and
     discloses nothing."""
     value, redacted = config_admin.redact(
-        "OIDC_CLIENT_SECRET_REF", "vault://kv/graphos#client_secret"
+        "OIDC_CLIENT_SECRET_REF", "vault://kv/arbora#client_secret"
     )
-    assert value == "vault://kv/graphos#client_secret"
+    assert value == "vault://kv/arbora#client_secret"
     assert redacted is False
 
 
@@ -173,7 +173,7 @@ def test_diff_shows_only_fields_that_differ_from_their_default(monkeypatch):
 def test_set_refuses_an_unknown_key_before_writing(monkeypatch):
     written = []
     monkeypatch.setattr(
-        "graph_os.core.settings.save_config_item",
+        "arbora.core.settings.save_config_item",
         lambda k, v: written.append((k, v)),
     )
     with pytest.raises(config_admin.ConfigAdminError) as exc:
@@ -186,7 +186,7 @@ def test_set_refuses_an_unknown_key_before_writing(monkeypatch):
 def test_set_refuses_a_value_the_model_rejects_before_writing(monkeypatch):
     written = []
     monkeypatch.setattr(
-        "graph_os.core.settings.save_config_item",
+        "arbora.core.settings.save_config_item",
         lambda k, v: written.append((k, v)),
     )
     # mcp_dynamic_discovery_timeout is a bounded float; a string is not one.
@@ -200,7 +200,7 @@ def test_set_refuses_a_value_the_model_rejects_before_writing(monkeypatch):
 def test_set_refuses_an_inline_secret(monkeypatch):
     written = []
     monkeypatch.setattr(
-        "graph_os.core.settings.save_config_item",
+        "arbora.core.settings.save_config_item",
         lambda k, v: written.append((k, v)),
     )
     with pytest.raises(config_admin.ConfigAdminError) as exc:
@@ -213,7 +213,7 @@ def test_set_refuses_an_inline_secret(monkeypatch):
 def test_set_denies_when_the_policy_gate_denies(monkeypatch):
     written = []
     monkeypatch.setattr(
-        "graph_os.core.settings.save_config_item",
+        "arbora.core.settings.save_config_item",
         lambda k, v: written.append((k, v)),
     )
     monkeypatch.setattr(
@@ -230,7 +230,7 @@ def test_set_denies_when_the_policy_gate_denies(monkeypatch):
 
 def test_set_denies_when_the_policy_gate_itself_is_unavailable(monkeypatch):
     """An unavailable gate must never read as permission."""
-    import graph_os.access.action_policy as policy
+    import arbora.access.action_policy as policy
 
     monkeypatch.setattr(
         policy,
@@ -247,7 +247,7 @@ def _allow_and_record_writes(monkeypatch) -> list:
     """Allow every config change and record each persisted ``(key, value)``."""
     written: list = []
     monkeypatch.setattr(
-        "graph_os.core.settings.save_config_item",
+        "arbora.core.settings.save_config_item",
         lambda k, v: written.append((k, v)),
     )
     monkeypatch.setattr(
@@ -285,13 +285,13 @@ def test_bug065_set_reports_process_scoped_field_not_fleet_wide_applied_live(
     to `applied_in_this_process`; the old, overclaiming name must not
     reappear in the response, and `restart_required` (already honestly
     process-scoped) is unchanged."""
-    monkeypatch.setattr("graph_os.core.settings.save_config_item", lambda k, v: None)
+    monkeypatch.setattr("arbora.core.settings.save_config_item", lambda k, v: None)
     monkeypatch.setattr(
         config_admin, "_gate", lambda key, reason: (True, {"decision": "allow"})
     )
     monkeypatch.setattr(config_admin, "_record_provenance", lambda key, **kw: None)
     monkeypatch.setattr(
-        "graph_os.deployment.config_generator.is_restart_required", lambda key: False
+        "arbora.deployment.config_generator.is_restart_required", lambda key: False
     )
 
     result = config_admin.set_value("MCP_ALWAYS_LOAD", '["tunnel-manager-mcp"]')
@@ -306,7 +306,7 @@ def test_set_can_change_the_always_load_declaration(monkeypatch):
     modifiable through an MCP tool."""
     written = {}
     monkeypatch.setattr(
-        "graph_os.core.settings.save_config_item",
+        "arbora.core.settings.save_config_item",
         lambda k, v: written.__setitem__(k, v),
     )
     monkeypatch.setattr(
@@ -335,7 +335,7 @@ def test_a_failed_provenance_write_does_not_undo_an_applied_change(monkeypatch):
 
 
 def test_reload_names_the_fields_that_still_need_a_restart(monkeypatch):
-    monkeypatch.setattr("graph_os.core.settings.load_config", lambda: None)
+    monkeypatch.setattr("arbora.core.settings.load_config", lambda: None)
     result = config_admin.reload()
 
     assert result["reloaded"] is True
@@ -355,7 +355,7 @@ async def test_dispatch_refuses_an_unknown_action():
 
 
 async def test_dispatch_reload_notifies_the_served_catalog_authority(monkeypatch):
-    from graph_os.fleet import shared_multiplexer
+    from arbora.fleet import shared_multiplexer
 
     monkeypatch.setattr(
         config_admin,
@@ -383,7 +383,7 @@ async def test_dispatch_reload_notifies_the_served_catalog_authority(monkeypatch
 async def test_dispatch_reload_reports_no_reconcile_without_a_served_authority(
     monkeypatch,
 ):
-    from graph_os.fleet import shared_multiplexer
+    from arbora.fleet import shared_multiplexer
 
     monkeypatch.setattr(
         config_admin,
@@ -397,25 +397,25 @@ async def test_dispatch_reload_reports_no_reconcile_without_a_served_authority(
     assert result["catalog"]["reconciled"] is False
 
 
-def test_graph_config_tool_routes_to_the_graphos_core():
+def test_graph_config_tool_routes_to_the_arbora_core():
     import inspect
 
-    from graph_os.mcp_server.backing.tools import config_tools
+    from arbora.mcp_server.backing.tools import config_tools
 
     source = inspect.getsource(config_tools)
-    assert "graph_os.core.agent_config_admin" in source
+    assert "arbora.core.agent_config_admin" in source
     assert "agent_utilities.core.config_admin" not in source
 
 
-def test_graph_config_is_registered_on_the_graphos_surface():
-    from graph_os.mcp_server.backing._graphos_action_manifest import GRAPHOS_ACTIONS
+def test_graph_config_is_registered_on_the_arbora_surface():
+    from arbora.mcp_server.backing._arbora_action_manifest import ARBORA_ACTIONS
 
-    actions = {e["action"] for e in GRAPHOS_ACTIONS if e["tool"] == "graph_config"}
+    actions = {e["action"] for e in ARBORA_ACTIONS if e["tool"] == "graph_config"}
     assert actions == {"get", "set", "describe", "reload", "diff"}
 
 
 def test_only_set_is_treated_as_a_mutation():
-    from graph_os.mcp_server.backing.tool_specs import READ_ONLY_ACTIONS
+    from arbora.mcp_server.backing.tool_specs import READ_ONLY_ACTIONS
 
     assert READ_ONLY_ACTIONS["graph_config"] == frozenset(
         {"describe", "get", "diff", "reload"}
@@ -423,7 +423,7 @@ def test_only_set_is_treated_as_a_mutation():
 
 
 def test_config_set_is_policy_gated_at_approval_tier():
-    from graph_os.access.action_policy import DEFAULT_POLICY
+    from arbora.access.action_policy import DEFAULT_POLICY
 
     rule = next(r for r in DEFAULT_POLICY["rules"] if r.get("kind") == "config.set")
     assert rule["tier"] == "approval_required"

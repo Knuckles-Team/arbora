@@ -7,7 +7,7 @@ import hashlib
 import pytest
 from pydantic import ValidationError
 
-from graph_os.control_plane.workflows import (
+from arbora.control_plane.workflows import (
     ApprovedBinding,
     ArtifactRef,
     BindingKind,

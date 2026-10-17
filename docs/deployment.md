@@ -1,22 +1,22 @@
 # Deployment and configuration
 
-GraphOS ships a local MCP server, an authenticated HTTP transport, configuration
+Arbora ships a local MCP server, an authenticated HTTP transport, configuration
 and diagnostic tools, and guarded production operations. Choose a profile,
 validate it, and run the release canary before changing live traffic.
 
 ## Install
 
-GraphOS supports Python 3.12 through 3.14.
+Arbora supports Python 3.12 through 3.14.
 
 ```bash
-python -m pip install graph-os
+python -m pip install arbora
 ```
 
 Add the optional Agent WebUI host integration when the same process will serve
 the UI:
 
 ```bash
-python -m pip install "graph-os[webui]"
+python -m pip install "arbora[webui]"
 ```
 
 ## Generate configuration
@@ -50,34 +50,34 @@ setup-config reference
 ## Container and Kubernetes deployment
 
 The source tree ships three deployment artifacts. Each consumes an
-operator-built image that carries GraphOS and the epistemic-graph engine
+operator-built image that carries Arbora and the epistemic-graph engine
 binary at matching releases, pinned by digest.
 
 | Artifact | Use |
 |---|---|
-| `deploy/compose/compose.yaml` | One host with Docker Compose or Podman: a single GraphOS service that supervises its engine, one data volume, ports published on loopback |
-| `deploy/swarm/stack.yml` | Docker Swarm: the same single GraphOS service as Compose, one replica with stop-first updates, pinned to the node that holds the data, secrets as Swarm secrets, overlay network |
-| `deploy/helm/graph-os` | Kubernetes: GraphOS with its engine as a native sidecar (or child) in one pod, or a shared engine StatefulSet; namespaced RBAC, split API and web UI ingress, NetworkPolicy |
+| `deploy/compose/compose.yaml` | One host with Docker Compose or Podman: a single Arbora service that supervises its engine, one data volume, ports published on loopback |
+| `deploy/swarm/stack.yml` | Docker Swarm: the same single Arbora service as Compose, one replica with stop-first updates, pinned to the node that holds the data, secrets as Swarm secrets, overlay network |
+| `deploy/helm/arbora` | Kubernetes: Arbora with its engine as a native sidecar (or child) in one pod, or a shared engine StatefulSet; namespaced RBAC, split API and web UI ingress, NetworkPolicy |
 
 Validate before use:
 
 ```bash
 docker compose -f deploy/compose/compose.yaml config --quiet
 docker stack config -c deploy/swarm/stack.yml
-helm lint deploy/helm/graph-os --strict
-helm template graph-os deploy/helm/graph-os --namespace <namespace> --values <values>
+helm lint deploy/helm/arbora --strict
+helm template arbora deploy/helm/arbora --namespace <namespace> --values <values>
 ```
 
 The engine store has exactly one writer: never scale the unified service, pod,
-or Swarm service past one replica. The bundled operator skills `graphos-genesis`
-(substrate) and `graphos-deployment` (installation, identity, verification) walk
+or Swarm service past one replica. The bundled operator skills `arbora-genesis`
+(substrate) and `arbora-deployment` (installation, identity, verification) walk
 through both the development (Compose) and production (Kubernetes/Helm)
 profiles end to end, including the forced first administrator, default
 authorization policy, secrets backend selection, and first-boot verification.
 
 ## Engine admission
 
-A served GraphOS process and its engine must agree on one verified request
+A served Arbora process and its engine must agree on one verified request
 context. Print the exact settings for a deployment:
 
 ```bash
@@ -90,14 +90,14 @@ The engine needs these settings:
 
 | Engine setting | Value |
 |---|---|
-| `GRAPH_SERVICE_AUTH_SECRET` | The shared HMAC secret; GraphOS reads the same value |
-| `EPISTEMIC_GRAPH_AUDIENCE` | Equal to the GraphOS `AUTH_JWT_AUDIENCE` |
-| `EPISTEMIC_GRAPH_TENANT` | The tenant of the GraphOS process token |
-| `EPISTEMIC_GRAPH_POLICY_VERSION` | Equal to the GraphOS `KG_POLICY_VERSION` |
-| `EPISTEMIC_GRAPH_SIGNER_KEYS_JSON` | One signer: the GraphOS process principal, with `may_grant_system` true |
+| `GRAPH_SERVICE_AUTH_SECRET` | The shared HMAC secret; Arbora reads the same value |
+| `EPISTEMIC_GRAPH_AUDIENCE` | Equal to the Arbora `AUTH_JWT_AUDIENCE` |
+| `EPISTEMIC_GRAPH_TENANT` | The tenant of the Arbora process token |
+| `EPISTEMIC_GRAPH_POLICY_VERSION` | Equal to the Arbora `KG_POLICY_VERSION` |
+| `EPISTEMIC_GRAPH_SIGNER_KEYS_JSON` | One signer: the Arbora process principal, with `may_grant_system` true |
 | `EPISTEMIC_GRAPH_CONNECTOR_PACK_IMPORTERS` | `*=principal:sha256:<SHA-256 of the process principal>` |
 
-The GraphOS process token must carry these roles: `kg:admin`,
+The Arbora process token must carry these roles: `kg:admin`,
 `connector:catalog-attest`, `admin:connector-pack`, `agent:pack-control`,
 `security:admin`, `mcp:discover`, `mcp:delegate`, `query:unified` and
 `node:read`.
@@ -106,34 +106,34 @@ On a fresh store, do these steps in order before the first serve:
 
 1. Bootstrap the process principal as the engine system identity. The process
    signs as itself with the `security:bootstrap` scope.
-2. Run `graph-os-production-ops provision-semantic-content --served-url <MCP URL>`.
-3. Run `graph-os-production-ops onboard-fleet --served-url <MCP URL>`. A fleet
+2. Run `arbora-production-ops provision-semantic-content --served-url <MCP URL>`.
+3. Run `arbora-production-ops onboard-fleet --served-url <MCP URL>`. A fleet
    connector's pack import needs an `ACTION_POLICY_PATH` rule that admits it.
 
-A fresh engine admits one principal only: the GraphOS process principal. Each
+A fresh engine admits one principal only: the Arbora process principal. Each
 other caller needs its own engine identity registration before its requests
 pass engine authorization.
 
-GraphOS reaches a fleet connector over plain HTTP only on loopback, or on a
-host that `MCP_HTTP_ALLOWED_PRIVATE_HOSTS` names. Set it in the GraphOS
+Arbora reaches a fleet connector over plain HTTP only on loopback, or on a
+host that `MCP_HTTP_ALLOWED_PRIVATE_HOSTS` names. Set it in the Arbora
 configuration when connectors run on private or cluster hosts:
 
-| GraphOS setting | Value |
+| Arbora setting | Value |
 |---|---|
 | `MCP_HTTP_ALLOWED_PRIVATE_HOSTS` | The exact connector hostnames, comma-separated or as a JSON list, for example `connector-a.example,connector-b.example` |
 
 Pass each host with `--allowed-private-host` and `setup-config
-engine-admission` prints the value under `graph_os_config`. A connector entry
+engine-admission` prints the value under `arbora_config`. A connector entry
 can also name its own host in `allowed_private_hosts`.
 
 `tests/test_real_boot.py` runs these steps against a real engine.
 
 ## Local MCP transport
 
-Use `stdio` when an MCP client launches GraphOS as a child process:
+Use `stdio` when an MCP client launches Arbora as a child process:
 
 ```bash
-graph-os --transport stdio
+arbora --transport stdio
 ```
 
 The helper can register that portable launcher with Codex:
@@ -142,7 +142,7 @@ The helper can register that portable launcher with Codex:
 setup-config codex
 ```
 
-For other clients, configure `graph-os --transport stdio` using the client's
+For other clients, configure `arbora --transport stdio` using the client's
 standard MCP server configuration format.
 
 ## Network transport
@@ -151,18 +151,18 @@ Serve the streamable HTTP transport on a private listener with a real token
 verifier. This example uses the JWT boundary:
 
 ```bash
-AUTH_JWT_AUDIENCE=graph-os KG_POLICY_VERSION=baseline-v1 \
-  graph-os --transport streamable-http \
+AUTH_JWT_AUDIENCE=arbora KG_POLICY_VERSION=baseline-v1 \
+  arbora --transport streamable-http \
   --host 127.0.0.1 --port 8000 \
   --auth-type jwt \
   --token-jwks-uri https://identity.example/.well-known/jwks.json \
   --token-issuer https://identity.example/ \
-  --token-audience graph-os
+  --token-audience arbora
 ```
 
 Network serving is a security boundary. Configure validated identity, tenant
 isolation, TLS, and the deployment's authorization policy before exposing the
-listener beyond loopback. GraphOS refuses network serving without a built
+listener beyond loopback. Arbora refuses network serving without a built
 authentication provider and rejects required authority that is absent or
 invalid.
 
@@ -177,12 +177,12 @@ setup-config release-plan candidate.json --trusted-digest 'sha256:<digest>' --pr
 The digest selects the canonical unsigned JSON document; it cannot establish
 trust. AU's configured
 `CERT_EVIDENCE_VERIFIER_COMMAND` independently authenticates the signed document
-before GraphOS consumes it. The signature envelope follows AU's public
+before Arbora consumes it. The signature envelope follows AU's public
 `verify_signed_evidence` contract, including algorithm, key ID, signature and
 subject digest. Missing or failed verification blocks planning.
 
 Candidate schema version 1 contains `candidate_id`, timezone-aware `created_at`,
-`artifacts`, `stages`, and one GraphOS `profiles` binding. Each artifact declares
+`artifacts`, `stages`, and one Arbora `profiles` binding. Each artifact declares
 its component ID, repository, full source revision, immutable digest, image or
 wheel kind, exact API/schema contract identifiers, and public GitHub build
 receipt. Each stage declares whether it is optional/enabled, its probe contract,
@@ -191,21 +191,21 @@ duplicate IDs, missing enabled predecessors, incompatible contracts and cycles
 are refused. Disabled optional stages are excluded from the plan. Ordering uses
 declared edges with component-ID tie-breaking.
 
-The profile binding pins both the profile file's SHA256 bytes and its GraphOS
+The profile binding pins both the profile file's SHA256 bytes and its Arbora
 artifact digest. The existing profile loader validates that same material; its
 release must be digest-pinned to the selected artifact. The output includes
 manifest/profile digests, ordered artifact revisions and public receipts. It
 reports `executed: false` and `acceptance: not_audited`: this command does not
 apply artifacts, evaluate live readiness, perform rollback, or qualify a
 release. Those remaining requirements are tracked by the
-[dependency-ordered release specification](https://github.com/Knuckles-Team/graph-os/tree/main/specs/dependency-ordered-release).
+[dependency-ordered release specification](https://github.com/Knuckles-Team/arbora/tree/main/specs/dependency-ordered-release).
 
 Run diagnostics against the resolved deployment configuration, then run the
 bounded release canary in the candidate environment:
 
 ```bash
 agent-utilities-doctor
-graph-os-release-canary
+arbora-release-canary
 ```
 
 The canary reports aggregate readiness probes and does not print paths,
@@ -215,18 +215,18 @@ failure, not a warning to suppress.
 The host daemon can be inspected independently:
 
 ```bash
-graph-os-daemon --status
+arbora-daemon --status
 ```
 
 ## Production operations
 
-`graph-os-production-ops` provides guarded backup and restore-validation
+`arbora-production-ops` provides guarded backup and restore-validation
 commands. They require the deployment's workload identity, graph coordinator,
 encryption, and mounted storage policy. Review the command help in the exact
 candidate environment before use:
 
 ```bash
-graph-os-production-ops --help
+arbora-production-ops --help
 ```
 
 Production operations emit opaque digests and aggregate counts rather than

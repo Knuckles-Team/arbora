@@ -1,12 +1,12 @@
 """Regression tests for the shared health-intelligence kernels
-(``graph_os.observability.health``) — the metric-agnostic generalization of
+(``arbora.observability.health``) — the metric-agnostic generalization of
 fan-manager's proven thermal kernels (``fan_manager.kg_control``). Mirrors
 ``agents/fan-manager/tests/test_kg_control.py``'s test patterns, generalized off °C.
 """
 
 from __future__ import annotations
 
-from graph_os.observability import health as h
+from arbora.observability import health as h
 
 
 def _trend(avg, control, at, *, span=5):

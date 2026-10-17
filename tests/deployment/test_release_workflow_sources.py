@@ -242,7 +242,7 @@ def test_scanner_cache_retains_installation_and_all_checks_before_save() -> None
     assert "if" not in provision
     assert "if" not in checks
     assert provision["run"].startswith("bash scripts/install_scanners.sh ")
-    assert "$RUNNER_TEMP/graph-os-scanners" in provision["run"]
+    assert "$RUNNER_TEMP/arbora-scanners" in provision["run"]
     assert set(_manual_hooks_named(checks["run"])) == {
         "complexity-census",
         "kiss-census",
@@ -266,7 +266,7 @@ def test_scanner_cache_is_exact_and_contains_only_the_scanner_prefix() -> None:
         restore["with"]
         == save["with"]
         == {
-            "path": "${{ runner.temp }}/graph-os-scanners",
+            "path": "${{ runner.temp }}/arbora-scanners",
             "key": "${{ steps.scanner-cache-identity.outputs.key }}",
         }
     )
@@ -344,7 +344,7 @@ def test_scanner_cache_identity_changes_with_build_inputs(
     env = scanner_identity_environment
     code, before = _scanner_cache_identity(env)
     assert code == 0
-    assert re.fullmatch(r"key=graph-os-scanners-v1-[0-9a-f]{64}\n", before)
+    assert re.fullmatch(r"key=arbora-scanners-v1-[0-9a-f]{64}\n", before)
     assert _scanner_cache_identity(env) == (0, before)
     code, after = _scanner_cache_identity({**env, changed_input: "changed"})
     assert code == 0
@@ -421,7 +421,7 @@ def test_install_smoke_covers_every_os_and_architecture_before_publish() -> None
     assert "uv export --frozen" in commands
     assert "--require-hashes --no-deps" in commands
     assert "--index-url https://pypi.org/simple" in commands
-    assert "--no-deps dist/graph_os-*.whl" in commands
+    assert "--no-deps dist/arbora-*.whl" in commands
     assert 'read_text("direct_url.json") is None' in commands
 
 
@@ -431,8 +431,8 @@ def test_github_release_links_the_published_pypi_version() -> None:
     notes = next(
         step for step in release["steps"] if step["name"] == "Write release notes"
     )
-    assert "https://pypi.org/project/graph-os/$version/" in notes["run"]
-    assert 'pip install \\"graph-os[webui]==$version\\"' in notes["run"]
+    assert "https://pypi.org/project/arbora/$version/" in notes["run"]
+    assert 'pip install \\"arbora[webui]==$version\\"' in notes["run"]
 
 
 def test_release_eg_resolves_from_the_package_index_as_wheels() -> None:
@@ -472,10 +472,10 @@ def test_installed_sdk_contains_schema_disclosure_contract() -> None:
         ("scripts/gen_api.py", "true"),
         (".github/workflows/release.yml", "true"),
         ("scripts/install_scanners.sh", "true"),
-        ("graph_os/client/invoke.py", "true"),
-        ("graph_os/api/generated/registry.json", "true"),
+        ("arbora/client/invoke.py", "true"),
+        ("arbora/api/generated/registry.json", "true"),
         ("docs/api/openapi.json", "true"),
-        ("graph_os/a2a/application.py", "false"),
+        ("arbora/a2a/application.py", "false"),
     ],
 )
 def test_scanner_scope_executes_only_for_generated_contract_changes(

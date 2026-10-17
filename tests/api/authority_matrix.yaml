@@ -5,7 +5,7 @@
 # operation is served on `op_surfaces`, requires `op_scopes`, and restricts
 # callers per `principal_rule`. `test_authority_parity.py` asserts the
 # registry's real authorization chokepoint (surface membership +
-# `graph_os.api.registry.authorized`) reaches exactly `expected` for every
+# `arbora.api.registry.authorized`) reaches exactly `expected` for every
 # row, so authorization cannot silently diverge for one principal kind,
 # operation or surface while looking correct for another.
 #

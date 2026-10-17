@@ -29,10 +29,10 @@ GRAPHOS-MESSAGING-R001.1 defines the pure typed model and illegal-transition ref
 
 CompositionPlan.messaging_intake_enabled is true only when the operator explicitly enables intake and KG_DAEMON_ROLE is host. Backend credentials describe configuration, not operator intent; credential presence alone never starts intake or makes a disabled component alert-eligible.
 
-GraphOS assembles components.messaging_intake from the composition plan and MessagingRegistry.configured_backend_ids().
+Arbora assembles components.messaging_intake from the composition plan and MessagingRegistry.configured_backend_ids().
 It also reads typed degraded records and active backend connection state.
 requirements.md defines the stable JSON fields and state rules.
-GraphOS sorts backend entries by stable backend ID.
+Arbora sorts backend entries by stable backend ID.
 The projection returns booleans, states, safe reason codes, and backend IDs.
 It omits credential values and raw exception text.
 

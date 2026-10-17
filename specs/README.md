@@ -1,8 +1,8 @@
-# graph-os specifications
+# arbora specifications
 
 These specs follow the ecosystem [spec standard](https://github.com/Knuckles-Team/pipelines/blob/main/reference/spec-standard.md): one owning spec per capability, extend an existing spec before creating one, audits and reviews land in the owning spec, one ID and title form, one file set. The `spec-standard` gate enforces it.
 
-This tracked `specs/` directory is the public build contract for **GRAPHOS** owned work. Every
+This tracked `specs/` directory is the public build contract for **ARBORA** owned work. Every
 spec must contain the behavior, architecture, interfaces, tests, quality gates, and acceptance
 criteria needed to implement it from this repository. External program notes may inform a draft,
 but no private document or local workspace path is required to build or verify a public spec.
@@ -54,14 +54,14 @@ States are `SPECIFIED`, `LANDED`, and `VERIFIED`. The generator sets them. See t
 Each directory's `requirements.md` is the authoritative definition of its requirement IDs; each
 `status.json` records their current delivery state and evidence.
 
-## Graph OS owner map
+## Arbora owner map
 
 | Prefix | Repository specs | Responsibility |
 |---|---|---|
 | `EG` | [epistemic-graph](https://github.com/Knuckles-Team/epistemic-graph/tree/main/specs) | Rust database, graph compute, ontology, governed ingestion, durable records and clients |
 | `SDK` | [agent-connector-sdk](https://github.com/Knuckles-Team/agent-connector-sdk/tree/main/specs) | connector control, transport, manifests, certification, governed effects |
 | `AU` | [agent-utilities](https://github.com/Knuckles-Team/agent-utilities/tree/main/specs) | agent orchestration and control workflows |
-| `GRAPHOS` | [graph-os](https://github.com/Knuckles-Team/graph-os/tree/main/specs) | serving composition, fleet, gateway, A2A, deployment operations |
+| `ARBORA` | [arbora](https://github.com/Knuckles-Team/arbora/tree/main/specs) | serving composition, fleet, gateway, A2A, deployment operations |
 | `WEBUI` | [agent-webui](https://github.com/Knuckles-Team/agent-webui/tree/main/specs) | browser presentation and interaction |
 | `RM` | [repository-manager](https://github.com/Knuckles-Team/repository-manager/tree/main/specs) | repository discovery, worktrees, source control and execution |
 
@@ -73,7 +73,7 @@ dedicated branch or worktree. Link the PR to spec IDs and update evidence and st
 corresponding gates actually pass. Use the [universal-skills spec-generator](https://github.com/Knuckles-Team/universal-skills/tree/main/universal_skills/development/spec-generator),
 [spec-verifier](https://github.com/Knuckles-Team/universal-skills/tree/main/universal_skills/development/spec-verifier),
 and [task-planner](https://github.com/Knuckles-Team/universal-skills/tree/main/universal_skills/development/task-planner)
-and the [graph-os-development](https://github.com/Knuckles-Team/graph-os/blob/main/graph_os/skills/graph-os-development/SKILL.md)
+and the [arbora-development](https://github.com/Knuckles-Team/arbora/blob/main/arbora/skills/arbora-development/SKILL.md)
 bootstrap skill, together with the [SDD full lifecycle](https://github.com/Knuckles-Team/universal-skills/tree/main/universal_skills/development-workflows/sdd-full-lifecycle) workflow.
 
 - [`GRAPHOS-A2A`](a2a/spec.md) — A2A projection, streaming, history and tool-subset admission
@@ -81,12 +81,12 @@ bootstrap skill, together with the [SDD full lifecycle](https://github.com/Knuck
 - [`GRAPHOS-CAPACITY`](adaptive-capacity/spec.md) — Adaptive capacity control
 - [`GRAPHOS-ACP`](conversational-acp-gateway/spec.md) — Conversational ACP gateway session projection and policy
 - [`GRAPHOS-DATA-MARKET`](data-and-market-projections/spec.md) — Schema context, source admission, and finance projection
-- [`GRAPHOS-RELEASE`](dependency-ordered-release/spec.md) — Dependency-ordered, digest-pinned GraphOS rollout
+- [`GRAPHOS-RELEASE`](dependency-ordered-release/spec.md) — Dependency-ordered, digest-pinned Arbora rollout
 - [`GRAPHOS-FLEET`](fleet-catalog-and-tools/spec.md) — Fleet catalog, intent tools, and policy safe reload
-- [`GRAPHOS-HOST`](host-composition-boundary/spec.md) — GraphOS host composition and ownership boundary
+- [`GRAPHOS-HOST`](host-composition-boundary/spec.md) — Arbora host composition and ownership boundary
 - [`GRAPHOS-OPS`](hosted-api-operations/spec.md) — Hosted API and intent operations
 - [`GRAPHOS-IDENTITY`](identity-access/spec.md) — ACCESS — identity, authorization, and access operations
 - [`GRAPHOS-MCP-RESOURCES`](mcp-resource-publication-reconciliation/spec.md) — MCP resource/template publication reconciliation
 - [`GRAPHOS-MESSAGING`](messaging-channel-supervision/spec.md) — Messaging channel supervision lifecycle
-- [`GRAPHOS-DEPLOY`](portable-deployment/spec.md) — Portable GraphOS development and deployment
+- [`GRAPHOS-DEPLOY`](portable-deployment/spec.md) — Portable Arbora development and deployment
 - [`GRAPHOS-INGRESS`](public-ingress-identity/spec.md) — Portable public ingress and identity cutover

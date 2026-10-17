@@ -25,7 +25,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from graph_os.fleet import multiplexer as mod
+from arbora.fleet import multiplexer as mod
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 
 
@@ -71,7 +71,7 @@ def recorded_http(monkeypatch):
     monkeypatch.setattr(mod, "streamable_http_client", _fake)
     monkeypatch.setattr(mod, "ClientSession", _FakeSessionCM)
 
-    from graph_os.core.settings import runtime_config as config
+    from arbora.core.settings import runtime_config as config
 
     # Plain-http fixture hostname, as a real TLS-terminated-at-ingress child.
     monkeypatch.setattr(config, "mcp_http_allowed_private_hosts", ["fleet.example"])

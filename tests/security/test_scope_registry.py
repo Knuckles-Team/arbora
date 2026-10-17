@@ -1,4 +1,4 @@
-"""graph-os's identity scope registry is generated from the installed EG scopes.json."""
+"""arbora's identity scope registry is generated from the installed EG scopes.json."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from graph_os.security import scope_registry
+from arbora.security import scope_registry
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -27,7 +27,7 @@ def _generator():
 def test_the_generated_module_is_the_installed_eg_registry():
     pytest.importorskip("epistemic_graph")
     gen = _generator()
-    assert (ROOT / "graph_os" / "security" / "scope_registry.py").read_text(
+    assert (ROOT / "arbora" / "security" / "scope_registry.py").read_text(
         encoding="utf-8"
     ) == gen.render(gen.installed_registry_bytes())
 

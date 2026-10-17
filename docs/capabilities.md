@@ -1,10 +1,10 @@
 # Capabilities
 
-Graph OS exposes one governed runtime across the platform's supported
+Arbora exposes one governed runtime across the platform's supported
 transports and hosted interfaces. The [status page](status.md) identifies the
 exact surface shipped by the current release.
 
-| Capability | What Graph OS provides | Detailed guide |
+| Capability | What Arbora provides | Detailed guide |
 |---|---|---|
 | MCP | Local `stdio` and authenticated streamable HTTP transports | [MCP server](mcp-server.md) |
 | REST | HTTP projection of the shared application services | [REST gateway](gateway.md) |

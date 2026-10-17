@@ -11,8 +11,8 @@ import asyncio
 
 from fastmcp import FastMCP
 
-from graph_os.mcp_server.backing.action_dispatch import is_destructive_action
-from graph_os.mcp_server.backing.verbose_tools import (
+from arbora.mcp_server.backing.action_dispatch import is_destructive_action
+from arbora.mcp_server.backing.verbose_tools import (
     _build_params_json_tool,
     _build_typed_tool,
     _camel_to_snake,
@@ -333,7 +333,7 @@ from typing import Literal  # noqa: E402
 
 from pydantic import Field  # noqa: E402
 
-from graph_os.mcp_server.backing.verbose_tools import (  # noqa: E402
+from arbora.mcp_server.backing.verbose_tools import (  # noqa: E402
     _action_enum,
     _provider_tools,
     _resolve_action_provider,

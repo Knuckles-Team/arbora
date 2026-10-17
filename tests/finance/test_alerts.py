@@ -8,7 +8,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from graph_os.finance.alerts import (
+from arbora.finance.alerts import (
     FlipAlertDelivery,
     InMemoryAlertDeliveryStore,
     record_alert_delivery,

@@ -1,6 +1,6 @@
 # Governed browser control
 
-`BrowserControlService` is GraphOS's single authority for remote calls to the
+`BrowserControlService` is Arbora's single authority for remote calls to the
 small browser-local WebMCP catalog. Agent WebUI provides an authenticated
 document channel and renders confirmation UI. It does not authorize calls,
 mint leases, own replay state, or persist outcomes.
@@ -15,31 +15,31 @@ the port.
 
 After a redirect, WebUI sends its short-lived server-only recent-auth grant and
 the reloaded page's current document, route, generation, catalog, and tool scope
-to `finalize_attended_arm`. GraphOS admits the grant in
+to `finalize_attended_arm`. Arbora admits the grant in
 `recent_auth_active` and CAS-transitions that same durable node to an active arm
-with the final scope. WebSocket open CAS-consumes it. GraphOS accepts only that
+with the final scope. WebSocket open CAS-consumes it. Arbora accepts only that
 final snapshot; pre-redirect document or generation evidence cannot open a
 channel.
 
 If finalization succeeds but the socket never opens, the WebUI DELETE path
 calls the same port's `revoke_attended_arm` operation before clearing its
-cookies. GraphOS validates the exact trusted binding and backchannel session,
+cookies. Arbora validates the exact trusted binding and backchannel session,
 then CAS-revokes either an active or consumed receipt. An already revoked or
 expired exact receipt is idempotent; mismatched authority fails closed.
 
 Construction requires an asynchronous WebUI/Keycloak introspection or
-backchannel revalidator. GraphOS calls it at channel open and on every inbound
+backchannel revalidator. Arbora calls it at channel open and on every inbound
 message, lease lookup, and call dispatch. The service is unavailable when that
 capability is not configured. The verified binding carries a zero-argument
 async closure whose captured credential remains inside WebUI; the configured
-adapter invokes it without exposing the token to GraphOS. The attended arm
+adapter invokes it without exposing the token to Arbora. The attended arm
 cannot outlive the access token, and every lease is capped by both expiries.
 
 <ol class="site-flow" aria-label="Attended browser-control flow">
   <li class="site-flow__step"><span class="site-flow__title">Step up</span><span class="site-flow__body">Agent WebUI verifies OIDC evidence and seals a one-use recent-auth grant.</span></li>
-  <li class="site-flow__step"><span class="site-flow__title">Bind</span><span class="site-flow__body">GraphOS finalizes and CAS-consumes the exact attended document binding.</span></li>
+  <li class="site-flow__step"><span class="site-flow__title">Bind</span><span class="site-flow__body">Arbora finalizes and CAS-consumes the exact attended document binding.</span></li>
   <li class="site-flow__step"><span class="site-flow__title">Register</span><span class="site-flow__body">The browser publishes a bounded catalog whose digests are recomputed and persisted.</span></li>
-  <li class="site-flow__step"><span class="site-flow__title">Lease</span><span class="site-flow__body">ActionPolicy authorizes the exact capability set and GraphOS persists the capped lease.</span></li>
+  <li class="site-flow__step"><span class="site-flow__title">Lease</span><span class="site-flow__body">ActionPolicy authorizes the exact capability set and Arbora persists the capped lease.</span></li>
   <li class="site-flow__step"><span class="site-flow__title">Confirm</span><span class="site-flow__body">Mutations require a visible user confirmation bound to the exact request digest.</span></li>
   <li class="site-flow__step"><span class="site-flow__title">Record</span><span class="site-flow__body">Dispatch and terminal outcome are fenced by durable WorkItem, RunTrace, ToolCall, and provenance records.</span></li>
 </ol>
@@ -51,7 +51,7 @@ channel registration, and lease issuance. Sign-out, backchannel revalidation
 failure, identity/tenant drift, origin/document/route/generation drift, expiry,
 explicit revocation, channel disconnect, timeout, and replay all fail closed.
 
-`catalog.register` carries `catalog_digest` and `tool_scope_digest`. GraphOS
+`catalog.register` carries `catalog_digest` and `tool_scope_digest`. Arbora
 recomputes both from a closed canonical JSON subset and rejects any mismatch
 with the browser message or trusted server binding. That subset permits valid
 Unicode strings, booleans, null, arrays, objects, and integers in JavaScript's
@@ -59,16 +59,16 @@ safe range. It rejects floating numbers, unsafe integers, lone surrogates, and
 non-JSON shapes; object keys use JavaScript UTF-16 ordering. Shared Python and
 TypeScript vectors pin the exact UTF-8 bytes and digest. The consumed arm binds the
 exact ordered descriptor catalog, tool IDs, and schema digests before the
-catalog becomes active. Successful registration returns a GraphOS
+catalog becomes active. Successful registration returns a Arbora
 `CatalogRegistrationReceipt`; the transport emits `channel.ready` only from
 that authoritative route, generation, catalog digest, and tool-scope digest.
-When a document pointer advances, GraphOS CAS-retires the prior registration;
+When a document pointer advances, Arbora CAS-retires the prior registration;
 historical evidence remains queryable without accumulating multiple records
 that claim to be active.
 
 Mutation confirmation is a two-message handshake. The browser first receives
 `control.confirmation_request` and must not execute it. After the user returns
-the exact `sha256:<hex64>` digest, GraphOS durably records that confirmation,
+the exact `sha256:<hex64>` digest, Arbora durably records that confirmation,
 claims the call fence, and sends `control.call` with
 `authorization=confirmed_mutation`. Read calls receive only `control.call` with
 `authorization=read` and no confirmation digest.
@@ -100,14 +100,14 @@ native atomic batch containing `RunTrace`, `ToolCall`, `OutcomeEvaluation`, and
 their edges; audit failure cancels the unclaimed fence and prevents dispatch.
 Terminal trace evidence is durable before the WorkItem terminal transition.
 Trace evidence uses the caller's content graph, while the deterministic
-WorkItem remains in GraphOS's existing `__control__` authority; durable replay
+WorkItem remains in Arbora's existing `__control__` authority; durable replay
 queries each record through its owning graph view.
 Langfuse is reported as
 `recorded`, `not_configured`, or `unavailable`, and no Langfuse trace identifier
 is fabricated.
 
-GraphOS keeps its server-side request and durable receipt contracts under
-`graph_os.browser_control`. The host injects the resulting service through
+Arbora keeps its server-side request and durable receipt contracts under
+`arbora.browser_control`. The host injects the resulting service through
 agent-webui's existing `BrowserControlPort`; it does not define a second WebUI
 transport or ask AU to host the authority. `browser_control_factory_kwargs`
 injects `browser_control=None` unless the WebUI factory supports that port, an
@@ -127,22 +127,22 @@ cancellation events, but cannot mint its own lease or start a call.
 
 The implementation keeps dependencies pointed from wire contracts to durable
 authorities to runtime behavior. WebUI's validated Pydantic messages are
-revalidated into GraphOS's server-side trust contracts at the connection seam;
+revalidated into Arbora's server-side trust contracts at the connection seam;
 there is no compatibility facade or AU runtime copy.
 
 | Modules | Single responsibility |
 | --- | --- |
-| `browser_control_common`, `descriptor`, `api`, `attendance_api` | Canonical JSON/digests, one tool descriptor, GraphOS requests/receipts, and internal validated attendance state |
+| `browser_control_common`, `descriptor`, `api`, `attendance_api` | Canonical JSON/digests, one tool descriptor, Arbora requests/receipts, and internal validated attendance state |
 | `browser_control_client`, `server`, `port` | Inbound and outbound trust validation plus the connection protocol; the product port is agent-webui's `BrowserControlPort` |
 | `browser_control_binding`, `attended`, `attendance` | Privacy-safe exact binding, one-use durable authority, and server-facing attendance lifecycle |
 | `browser_control_registration`, `durability` | Catalog/document authority and lease/WorkItem persistence |
 | `browser_control_state`, `validation`, `runtime` | Volatile handles, shared fail-closed validation, and the same-instance cross-loop caller binding |
 | `browser_control_channel`, `lease`, `policy` | Channel/catalog lifecycle, lease lifecycle, and ActionPolicy decisions |
 | `browser_control_dispatch`, `cancellation`, `provenance`, `outcome`, `service` | Policy/schema admission, fenced dispatch, cancellation, durable audit/replay, outcome convergence, and final composition |
-| `mcp` + `graph_os.mcp_server` | One governed MCP/REST action router over the runtime binding |
+| `mcp` + `arbora.mcp_server` | One governed MCP/REST action router over the runtime binding |
 
 There is no browser-control persistence adapter or alternate executor. Durable
-records use the active GraphOS authority, and browser execution only uses the
+records use the active Arbora authority, and browser execution only uses the
 authenticated channel sender.
 
 Catalog publication uses a recoverable three-step transition: create the

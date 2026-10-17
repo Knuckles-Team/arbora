@@ -4,12 +4,12 @@
 
 | Existing seam | Role in this design | Change boundary |
 |---|---|---|
-| `graph_os/fleet/catalog_reader.py` (`FleetCatalogIntegrityError`, `ReadReceipt`, `_verify_receipt`) | Prior art for a typed, fail-closed receipt check against an exact context/provenance match | Pattern only. Not modified or replaced by this spec |
+| `arbora/fleet/catalog_reader.py` (`FleetCatalogIntegrityError`, `ReadReceipt`, `_verify_receipt`) | Prior art for a typed, fail-closed receipt check against an exact context/provenance match | Pattern only. Not modified or replaced by this spec |
 | `specs/fleet-catalog-and-tools/` (GRAPHOS-FLEET-001 R022, PA-12) | Owns the atomic generation-publish state machine this gate will be called from | This spec adds the one pre-swap gate call for the four MCP families (`GRAPHOS-MCP-RESOURCES-R003`); it does not redesign the reload state machine |
 | epistemic-graph `specs/repository-index-and-ingestion` (EG-REPO-INGEST-001) | Produces the durable commit and the reconciliation receipt | Consumed by ID only; this repository defines no EG-side behavior |
 | `docs/status.md`, `docs/fleet.md` | Existing public description of the `reingestion-unreconciled` refusal | Kept truthful by `GRAPHOS-MCP-RESOURCES-R004`; not restructured |
 
-This is a contract spec, not a new store: graph-os holds no second copy of the four-family set
+This is a contract spec, not a new store: arbora holds no second copy of the four-family set
 and no second durability record. The only new code in this repository is the typed receipt model
 and the pure gate function. Everything else is a wiring obligation on an existing seam.
 
@@ -42,6 +42,6 @@ the caller, who is responsible for having actually asked epistemic-graph for it.
 
 ## Development environment
 
-No new runtime dependency, service, or fixture. `graph_os/fleet/mcp_resource_reconciliation.py`
+No new runtime dependency, service, or fixture. `arbora/fleet/mcp_resource_reconciliation.py`
 and its tests run in the existing local test environment with no network, DNS, secret, or live EG
 tenant required — the gate takes a receipt as a plain argument.

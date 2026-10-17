@@ -11,10 +11,10 @@ from dataclasses import replace
 import anyio
 import pytest
 
-from graph_os.deployment import kubernetes_first_boot as boot
-from graph_os.deployment.genesis_environments import load_environment_profile
+from arbora.deployment import kubernetes_first_boot as boot
+from arbora.deployment.genesis_environments import load_environment_profile
 
-IMAGE = "example.invalid/graphos@sha256:" + "a" * 64
+IMAGE = "example.invalid/arbora@sha256:" + "a" * 64
 CLAIM_SPEC = {
     "storageClassName": "fixture-storage",
     "accessModes": ["ReadWriteOnce"],
@@ -53,7 +53,7 @@ def owner(item):
 @pytest.fixture
 def snapshot():
     container = {
-        "name": "graphos",
+        "name": "arbora",
         "image": IMAGE,
         "volumeMounts": [{"name": "data", "mountPath": "/data"}],
     }
@@ -78,7 +78,7 @@ def snapshot():
             "conditions": [{"type": "Ready", "status": "True"}],
             "containerStatuses": [
                 {
-                    "name": "graphos",
+                    "name": "arbora",
                     "imageID": "docker-pullable://" + IMAGE,
                     "ready": True,
                     "state": {"running": {}},
@@ -400,7 +400,7 @@ def test_real_module_entrypoint_offline(profile, snapshot, tmp_path):
     command = [
         sys.executable,
         "-m",
-        "graph_os.deployment.kubernetes_first_boot",
+        "arbora.deployment.kubernetes_first_boot",
         "--profile",
         "dev",
         "--rendered",
@@ -426,9 +426,9 @@ def test_real_module_entrypoint_offline(profile, snapshot, tmp_path):
     "constraint",
     [
         {"securityContext": {"runAsNonRoot": True}},
-        {"serviceAccountName": "graphos"},
+        {"serviceAccountName": "arbora"},
         {"automountServiceAccountToken": False},
-        {"nodeSelector": {"workload": "graphos"}},
+        {"nodeSelector": {"workload": "arbora"}},
     ],
 )
 def test_pod_constraints_must_survive_controller_render(profile, snapshot, constraint):
@@ -702,7 +702,7 @@ def test_explicit_api_additions_preserve_rendered_constraints(profile, snapshot)
         pod["spec"],
     ):
         spec["securityContext"] = {"runAsNonRoot": True}
-        spec["serviceAccountName"] = "graphos"
+        spec["serviceAccountName"] = "arbora"
     pod["spec"].update(
         {
             "nodeName": "fixture-node",

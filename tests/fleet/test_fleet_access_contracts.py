@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 
 import pytest
 
-from graph_os.fleet import access_contracts as ac
+from arbora.fleet import access_contracts as ac
 
 vg = pytest.importorskip("agent_utilities.knowledge_graph.virtual_graph")
 VirtualCatalog = vg.VirtualCatalog
@@ -121,9 +121,9 @@ def test_missing_sdk_module_skips(monkeypatch) -> None:
 def test_onboarding_registers_after_import(fake_sdk, monkeypatch) -> None:
     import asyncio
 
-    from graph_os.api.contracts.session import use_session
-    from graph_os.deployment import semantic_provisioning
-    from graph_os.fleet.onboarding import FleetEndpoint, FleetOnboarding
+    from arbora.api.contracts.session import use_session
+    from arbora.deployment import semantic_provisioning
+    from arbora.fleet.onboarding import FleetEndpoint, FleetOnboarding
     from tests._eg_fakes import service_session
 
     async def fake_import(*args, **kwargs):

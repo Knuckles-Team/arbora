@@ -2,8 +2,8 @@
 
 import pytest
 
-from graph_os.identity.engine import IdentityUnavailable
-from graph_os.identity.ldap import LdapBindConfig
+from arbora.identity.engine import IdentityUnavailable
+from arbora.identity.ldap import LdapBindConfig
 
 _DN = "cn=svc,dc=example,dc=org"
 

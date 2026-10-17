@@ -11,10 +11,10 @@ from typing import Any
 
 import pytest
 
-from graph_os.api.errors import (
+from arbora.api.errors import (
+    ArboraErrorCode,
+    ArboraRefusal,
     FleetRefusal,
-    GraphOSErrorCode,
-    GraphOSRefusal,
     a2a_error_status,
     to_envelope,
 )
@@ -28,20 +28,20 @@ CONTEXT = {
 
 @dataclass
 class InvokeError:
-    """A fake structurally satisfying ``graph_os.api.errors.OpErrorLike``."""
+    """A fake structurally satisfying ``arbora.api.errors.OpErrorLike``."""
 
     code: str
     details: Mapping[str, Any] = field(default_factory=dict)
-    source: str = "graphos"
+    source: str = "arbora"
 
 
-def test_every_graphos_code_has_one_envelope() -> None:
-    for code in GraphOSErrorCode:
-        status, envelope = to_envelope(GraphOSRefusal(code), **CONTEXT)
+def test_every_arbora_code_has_one_envelope() -> None:
+    for code in ArboraErrorCode:
+        status, envelope = to_envelope(ArboraRefusal(code), **CONTEXT)
         assert status in range(400, 600)
         assert envelope["ok"] is False
         assert envelope["error"]["code"] == code.value
-        assert envelope["error"]["source"] == "graphos"
+        assert envelope["error"]["source"] == "arbora"
         assert envelope["error"]["op"] == CONTEXT["op"]
         assert envelope["error"]["request_id"] == CONTEXT["request_id"]
         assert envelope["meta"] == {
@@ -53,19 +53,19 @@ def test_every_graphos_code_has_one_envelope() -> None:
 @pytest.mark.parametrize(
     ("code", "status", "retryable"),
     [
-        (GraphOSErrorCode.UNAUTHENTICATED, 401, False),
-        (GraphOSErrorCode.SCOPE_REQUIRED, 403, False),
-        (GraphOSErrorCode.CONFIRMATION_REQUIRED, 428, False),
-        (GraphOSErrorCode.POLICY_UNAVAILABLE, 503, True),
-        (GraphOSErrorCode.INDETERMINATE, 500, False),
-        (GraphOSErrorCode.RATE_LIMITED, 429, True),
-        (GraphOSErrorCode.INTERNAL, 500, False),
+        (ArboraErrorCode.UNAUTHENTICATED, 401, False),
+        (ArboraErrorCode.SCOPE_REQUIRED, 403, False),
+        (ArboraErrorCode.CONFIRMATION_REQUIRED, 428, False),
+        (ArboraErrorCode.POLICY_UNAVAILABLE, 503, True),
+        (ArboraErrorCode.INDETERMINATE, 500, False),
+        (ArboraErrorCode.RATE_LIMITED, 429, True),
+        (ArboraErrorCode.INTERNAL, 500, False),
     ],
 )
-def test_graphos_http_status_and_retry_posture(
-    code: GraphOSErrorCode, status: int, retryable: bool
+def test_arbora_http_status_and_retry_posture(
+    code: ArboraErrorCode, status: int, retryable: bool
 ) -> None:
-    actual_status, envelope = to_envelope(GraphOSRefusal(code), **CONTEXT)
+    actual_status, envelope = to_envelope(ArboraRefusal(code), **CONTEXT)
     assert actual_status == status
     assert envelope["error"]["retryable"] is retryable
 
@@ -103,7 +103,7 @@ def test_indeterminate_outcome_keeps_only_fixed_audit_reason() -> None:
 
 
 @pytest.mark.parametrize("sequence", [0, 1, (1 << 64) - 1])
-@pytest.mark.parametrize("refusal_type", [InvokeError, GraphOSRefusal])
+@pytest.mark.parametrize("refusal_type", [InvokeError, ArboraRefusal])
 def test_indeterminate_projects_audit_adapter_pair(sequence, refusal_type) -> None:
     # B's EgAuditAdapter.preflight serializes [request digest, reservation seq].
     # This is its actual pair shape, not the test-only receipt:<digest> format.
@@ -114,9 +114,9 @@ def test_indeterminate_projects_audit_adapter_pair(sequence, refusal_type) -> No
         "backend": "tenant-secret@example.invalid",
     }
     status, envelope = to_envelope(
-        refusal_type(GraphOSErrorCode.INDETERMINATE, details=details), **CONTEXT
+        refusal_type(ArboraErrorCode.INDETERMINATE, details=details), **CONTEXT
     )
-    reference = f"graphos_audit:{digest}:{sequence}"
+    reference = f"arbora_audit:{digest}:{sequence}"
     assert status == 500
     assert envelope["error"]["retryable"] is False
     assert envelope["error"]["details"] == {
@@ -141,7 +141,7 @@ def test_indeterminate_projects_audit_adapter_pair(sequence, refusal_type) -> No
         "",
         "not json",
         "receipt:" + "a" * 64,
-        "graphos_audit:" + "a" * 64 + ":1",
+        "arbora_audit:" + "a" * 64 + ":1",
         json.dumps(["a" * 64]),
         json.dumps(["a" * 64, 1, "private"]),
         json.dumps(["a" * 63, 1]),
@@ -175,14 +175,14 @@ def test_indeterminate_rejects_invalid_or_private_audit_reference(reference) -> 
 
 
 def test_audit_reference_bounds_input_before_json_parse(monkeypatch) -> None:
-    from graph_os.api import errors
+    from arbora.api import errors
 
     reference = json.dumps(["a" * 64, (1 << 64) - 1], separators=(",", ":"))
     assert len(reference) == 89
     _, valid = to_envelope(
         InvokeError("INDETERMINATE", {"audit_ref": reference}), **CONTEXT
     )
-    assert len(valid["error"]["details"]["audit_ref"]) == 99
+    assert len(valid["error"]["details"]["audit_ref"]) == 98
 
     def unexpected_parse(value):
         pytest.fail("overlength audit reference reached JSON parser")
@@ -204,7 +204,7 @@ def test_audit_reference_is_only_projected_for_indeterminate(code) -> None:
 
 @pytest.mark.parametrize("source", ["fleet", "engine"])
 def test_audit_reference_is_never_projected_for_other_sources(source, monkeypatch):
-    generated = ModuleType("graph_os.api.generated.engine_errors")
+    generated = ModuleType("arbora.api.generated.engine_errors")
     generated.ENGINE_ERRORS = {"INDETERMINATE": (500, False)}
     monkeypatch.setitem(sys.modules, generated.__name__, generated)
     _, envelope = to_envelope(
@@ -214,11 +214,11 @@ def test_audit_reference_is_never_projected_for_other_sources(source, monkeypatc
     assert envelope["error"]["details"] == {}
 
 
-@pytest.mark.parametrize("source", ["graphos", "engine", "unknown"])
+@pytest.mark.parametrize("source", ["arbora", "engine", "unknown"])
 def test_audit_reference_does_not_bypass_unknown_code_refusal(source, monkeypatch):
-    from graph_os.api.registry.eg_binding import EgContractError
+    from arbora.api.registry.eg_binding import EgContractError
 
-    generated = ModuleType("graph_os.api.generated.engine_errors")
+    generated = ModuleType("arbora.api.generated.engine_errors")
     generated.ENGINE_ERRORS = {}
     monkeypatch.setitem(sys.modules, generated.__name__, generated)
     expected = EgContractError if source == "engine" else ValueError
@@ -249,7 +249,7 @@ def test_a2a_uses_the_closed_mapping_and_confirmation_is_a_result() -> None:
 def test_confirmation_keeps_only_bounded_resumption_data(
     code: str, include_console: bool
 ) -> None:
-    plan_ref = "graphos_plan:" + "a" * 48
+    plan_ref = "arbora_plan:" + "a" * 48
     details = {
         "plan_ref": plan_ref,
         "op": CONTEXT["op"],
@@ -271,7 +271,7 @@ def test_confirmation_rejects_unbounded_or_forged_resume_values() -> None:
         InvokeError(
             "STEP_UP_REQUIRED",
             {
-                "plan_ref": "graphos_plan:" + "x" * 200,
+                "plan_ref": "arbora_plan:" + "x" * 200,
                 "op": CONTEXT["op"],
                 "effect": "admin",
                 "console_url": "https://attacker.invalid/confirm",
@@ -284,19 +284,19 @@ def test_confirmation_rejects_unbounded_or_forged_resume_values() -> None:
 
 @pytest.mark.spec("GRAPHOS-OPS-R005")
 def test_engine_source_without_generated_contract_fails(monkeypatch) -> None:
-    from graph_os.api.registry.eg_binding import EgContractError
+    from arbora.api.registry.eg_binding import EgContractError
 
-    monkeypatch.setitem(sys.modules, "graph_os.api.generated.engine_errors", None)
+    monkeypatch.setitem(sys.modules, "arbora.api.generated.engine_errors", None)
     with pytest.raises(EgContractError):
         to_envelope(InvokeError("AUTH_TENANT_MISMATCH", source="engine"), **CONTEXT)
     with pytest.raises(EgContractError):
         a2a_error_status("AUTH_TENANT_MISMATCH", source="engine")
 
 
-def test_graphos_details_are_allowlisted() -> None:
+def test_arbora_details_are_allowlisted() -> None:
     _, envelope = to_envelope(
-        GraphOSRefusal(
-            GraphOSErrorCode.SCOPE_REQUIRED,
+        ArboraRefusal(
+            ArboraErrorCode.SCOPE_REQUIRED,
             "tenant-secret",
             {"missing_scopes": ["identity:admin"], "token": "token-secret"},
         ),
@@ -337,10 +337,10 @@ def test_invocation_keeps_structured_child_code_and_bounds_provenance() -> None:
 
 @pytest.mark.parametrize("retryable", [False, True])
 def test_generated_engine_table_controls_envelope(monkeypatch, retryable):
-    from graph_os.api.errors import EngineRefusal
-    from graph_os.api.registry.eg_binding import EgContractError
+    from arbora.api.errors import EngineRefusal
+    from arbora.api.registry.eg_binding import EgContractError
 
-    generated = ModuleType("graph_os.api.generated.engine_errors")
+    generated = ModuleType("arbora.api.generated.engine_errors")
     generated.ENGINE_ERRORS = {"SYNTHETIC_REFUSAL": (409, retryable)}
     monkeypatch.setitem(sys.modules, generated.__name__, generated)
     refusal = EngineRefusal("SYNTHETIC_REFUSAL", "tenant-secret", {"token": "secret"})

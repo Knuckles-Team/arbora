@@ -16,13 +16,13 @@ import pytest
 from epistemic_graph import EngineResponseError
 from pydantic import BaseModel, ConfigDict, RootModel
 
-from graph_os.api.errors import EngineRefusal
-from graph_os.api.invoke import bootstrap
-from graph_os.api.invoke.executor import ExecutionContext
-from graph_os.api.invoke.pipeline import OperationRefused
-from graph_os.api.mcp.caller import caller_from_session
-from graph_os.api.policy.eunomia import PolicyGate
-from graph_os.api.registry import (
+from arbora.api.errors import EngineRefusal
+from arbora.api.invoke import bootstrap
+from arbora.api.invoke.executor import ExecutionContext
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.mcp.caller import caller_from_session
+from arbora.api.policy.eunomia import PolicyGate
+from arbora.api.registry import (
     AuditClass,
     Effect,
     EgMethod,
@@ -30,7 +30,7 @@ from graph_os.api.registry import (
     Surface,
     Verb,
 )
-from graph_os.security import request_identity
+from arbora.security import request_identity
 from tests.a2a._support import authenticated_operation_app
 from tests.a2a.test_operation_bridge import DenyPolicy, post, session
 from tests.a2a.test_request_session_authority import fixture as request_fixture

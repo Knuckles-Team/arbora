@@ -1,6 +1,6 @@
-"""Gate G-26 (graph-os): the MCP surface graph-os serves is wired to epistemic-graph.
+"""Gate G-26 (arbora): the MCP surface arbora serves is wired to epistemic-graph.
 
-Formerly an agent-utilities certification gate; graph-os serves the MCP intent
+Formerly an agent-utilities certification gate; arbora serves the MCP intent
 and engine surfaces, so it proves here that what it serves resolves to the
 methods the installed epistemic-graph client actually exposes.
 """
@@ -16,7 +16,7 @@ pytest.importorskip("epistemic_graph")
 
 from epistemic_graph import client as eg_client  # noqa: E402
 
-from graph_os.mcp_server.backing.tools import engine_tools, query_tools  # noqa: E402
+from arbora.mcp_server.backing.tools import engine_tools, query_tools  # noqa: E402
 
 
 @pytest.mark.spec("GRAPHOS-HOST-R001.8")
@@ -76,7 +76,7 @@ def test_natural_language_tools_plan_through_eg_nl_query(monkeypatch, tool):
     """Every served NL tool reaches EG ``QueryClient.nl_query`` and nothing else."""
     import json
 
-    from graph_os.mcp_server import runtime
+    from arbora.mcp_server import runtime
 
     calls: list[tuple[str, str, dict[str, Any]]] = []
 

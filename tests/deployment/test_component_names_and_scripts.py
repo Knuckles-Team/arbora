@@ -30,7 +30,7 @@ def test_web_ui_keeps_agent_webui_package_name() -> None:
 
 # Exclusivity (agent-utilities no longer registering these) is verified against
 # agent-utilities main; a stale installed agent-utilities dist-info in a shared
-# venv may still list them, so only graph-os ownership is asserted here.
+# venv may still list them, so only arbora ownership is asserted here.
 def _declarers(script: str) -> list[tuple[str, str]]:
     found = []
     for ep in entry_points(group="console_scripts", name=script):
@@ -40,16 +40,16 @@ def _declarers(script: str) -> list[tuple[str, str]]:
 
 
 @pytest.mark.spec("GRAPHOS-DEPLOY-R007.1")
-def test_agent_utilities_doctor_declared_only_by_graph_os() -> None:
+def test_agent_utilities_doctor_declared_only_by_arbora() -> None:
     scripts = PYPROJECT["project"]["scripts"]
-    assert scripts["agent-utilities-doctor"] == "graph_os.deployment.doctor:main"
-    assert "graph_os.deployment.doctor:main" in {
+    assert scripts["agent-utilities-doctor"] == "arbora.deployment.doctor:main"
+    assert "arbora.deployment.doctor:main" in {
         v for _, v in _declarers("agent-utilities-doctor")
     }
 
 
 @pytest.mark.spec("GRAPHOS-DEPLOY-R007.2")
-def test_setup_config_declared_only_by_graph_os() -> None:
+def test_setup_config_declared_only_by_arbora() -> None:
     scripts = PYPROJECT["project"]["scripts"]
-    assert scripts["setup-config"] == "graph_os.deployment.cli:main"
-    assert "graph_os.deployment.cli:main" in {v for _, v in _declarers("setup-config")}
+    assert scripts["setup-config"] == "arbora.deployment.cli:main"
+    assert "arbora.deployment.cli:main" in {v for _, v in _declarers("setup-config")}

@@ -1341,21 +1341,21 @@
     },
     {
       "id": "GRAPHOS-OPS-R039.5",
-      "title": "Add one test in tests/gateway/test_dashboard_api.py pinning the key set returned by GET /daemon/status and POST /daemon/start against `graph_os.gateway.daemon.daemon_status`, compared with the old keys role, threads, jobs and queue depth",
+      "title": "Add one test in tests/gateway/test_dashboard_api.py pinning the key set returned by GET /daemon/status and POST /daemon/start against `arbora.gateway.daemon.daemon_status`, compared with the old keys role, threads, jobs and queue depth",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-OPS-R039.6",
-      "title": "Replace the `agent_utilities.knowledge_graph.core.shard_topology` import in graph_os/gateway/dashboard_api.py `daemon_shards` with the engine client shard-topology method, after a contract test in tests/gateway/test_dashboard_api.py shows the installed client exposes it (`GRAPHOS-HOST-R002`). BLOCKED on the engine client owner if the method is absent",
+      "title": "Replace the `agent_utilities.knowledge_graph.core.shard_topology` import in arbora/gateway/dashboard_api.py `daemon_shards` with the engine client shard-topology method, after a contract test in tests/gateway/test_dashboard_api.py shows the installed client exposes it (`GRAPHOS-HOST-R002`). BLOCKED on the engine client owner if the method is absent",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-OPS-R039.7",
-      "title": "Replace `_active_engine` and `_hydration_manager` in graph_os/gateway/dashboard_api.py with the engine client source-sync methods. Keep 500 on no engine, 400 on `ValueError` and 422 on a malformed source",
+      "title": "Replace `_active_engine` and `_hydration_manager` in arbora/gateway/dashboard_api.py with the engine client source-sync methods. Keep 500 on no engine, 400 on `ValueError` and 422 on a malformed source",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1369,7 +1369,7 @@
     },
     {
       "id": "GRAPHOS-OPS-R039.9",
-      "title": "Replace the `agent_utilities.core.config` and `agent_utilities.security.identity` imports in `_dashboard_capabilities` in graph_os/gateway/dashboard_api.py with a public `agent_utilities.api` capability resolver. Cross-repo prerequisite (owner: agent-utilities): export it under `AU-BOUNDARY-R013`",
+      "title": "Replace the `agent_utilities.core.config` and `agent_utilities.security.identity` imports in `_dashboard_capabilities` in arbora/gateway/dashboard_api.py with a public `agent_utilities.api` capability resolver. Cross-repo prerequisite (owner: agent-utilities): export it under `AU-BOUNDARY-R013`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1402,14 +1402,14 @@
     },
     {
       "id": "GRAPHOS-OPS-R040.2",
-      "title": "Add one typed model: create-artifact request in graph_os/gateway/artifacts_api.py, rejecting empty template and oversize data",
+      "title": "Add one typed model: create-artifact request in arbora/gateway/artifacts_api.py, rejecting empty template and oversize data",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-OPS-R040.3",
-      "title": "Add one port: artifact store and refresh ports plus a resolver callable type in graph_os/gateway/ports.py",
+      "title": "Add one port: artifact store and refresh ports plus a resolver callable type in arbora/gateway/ports.py",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1437,14 +1437,14 @@
     },
     {
       "id": "GRAPHOS-OPS-R040.7",
-      "title": "Wire one call site: a register function in graph_os/gateway/artifacts_api.py called where the host mounts the graph and usage routes, reusing `_require_dashboard_read` on GET and `_require_dashboard_write` on POST from graph_os/gateway/dashboard_api.py (capabilities, not engine scopes; decision D3)",
+      "title": "Wire one call site: a register function in arbora/gateway/artifacts_api.py called where the host mounts the graph and usage routes, reusing `_require_dashboard_read` on GET and `_require_dashboard_write` on POST from arbora/gateway/dashboard_api.py (capabilities, not engine scopes; decision D3)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-OPS-R040.8",
-      "title": "Wire one function: pass the exported `kg_source_resolver` (row GRAPHOS-OPS-R040.1) as the artifacts register function's resolver argument in graph_os/gateway/artifacts_api.py; no graph-os re-derivation code. Without it the default preserve-prior-data resolver is used",
+      "title": "Wire one function: pass the exported `kg_source_resolver` (row GRAPHOS-OPS-R040.1) as the artifacts register function's resolver argument in arbora/gateway/artifacts_api.py; no arbora re-derivation code. Without it the default preserve-prior-data resolver is used",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1821,63 +1821,63 @@
     },
     {
       "id": "GRAPHOS-OPS-R024.1.1",
-      "title": "AU:62 GraphOS definition slice",
+      "title": "AU:62 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-OPS-R014.1",
-      "title": "AU:95 GraphOS definition slice",
+      "title": "AU:95 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-OPS-R022.3",
-      "title": "AU:41 GraphOS definition slice",
+      "title": "AU:41 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-OPS-R022.4",
-      "title": "AU:53 GraphOS definition slice",
+      "title": "AU:53 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-OPS-R053.7",
-      "title": "AU:71 GraphOS definition slice",
+      "title": "AU:71 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-OPS-R021.2.1.1",
-      "title": "AU:93 GraphOS definition slice",
+      "title": "AU:93 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-OPS-R050.2.1",
-      "title": "EG:61 GraphOS definition slice",
+      "title": "EG:61 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-OPS-R009.1",
-      "title": "GRAPHOS:17 GraphOS definition slice",
+      "title": "ARBORA:17 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-OPS-R053.8",
-      "title": "GRAPHOS:25 GraphOS definition slice",
+      "title": "ARBORA:25 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

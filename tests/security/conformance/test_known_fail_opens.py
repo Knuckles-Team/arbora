@@ -14,7 +14,7 @@ agree:
    an explicit `resolve_session(required_scope="kg:read")` guard (matching the
    cypher/sql/sparql dialects) AND `ActorContextMiddleware` (the structural
    root cause -- an unconditional no-op with no token) gained a
-   `require_verified_session` mode wired on for graph-os specifically
+   `require_verified_session` mode wired on for arbora specifically
    (`mcp/middlewares.py`, `mcp/server_factory.py`). The manifest disposition
    is now `AUTHENTICATED_REQUIRED`, not `KNOWN_FAIL_OPEN` -- this test asserts
    that (not the reverse) so a REGRESSION (someone reverting the fix without
@@ -32,11 +32,11 @@ agree:
    BUG-036 fix above.
 
 GRAPHOS-HOST-R008 NOTE: this file's proof citations (``tests/unit/...``) name
-paths inside the agent-utilities REPOSITORY, not graph-os's own. This module
+paths inside the agent-utilities REPOSITORY, not arbora's own. This module
 moved here with the surface it audits (``mcp/tools/query_tools.py``'s
 dispatcher), but AU's ``tests/`` tree is dev-checkout content, never shipped
 in an installed distribution -- so the checks below resolve AU's repo root
-best-effort (an editable-install convention this homelab's graph-os
+best-effort (an editable-install convention this homelab's arbora
 deployment already relies on) and SKIP, rather than fail, when it is not
 found; this is the SAME pattern this file already used for the
 epistemic-graph/agent-webui sibling-repo checks, now extended to AU itself.
@@ -47,7 +47,7 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-from graph_os.security.conformance.surface_manifest import (
+from arbora.security.conformance.surface_manifest import (
     GOC15_SURFACE_MANIFEST,
     Disposition,
     lookup_query_dialect,
@@ -58,7 +58,7 @@ def _discover_au_root() -> Path | None:
     """Locate the agent-utilities checkout's repo root -- the one true
     source of the proof files this manifest cites -- via its installed
     package location. Works when agent-utilities is installed editable
-    (this homelab's graph-os deployment convention, a full sibling checkout
+    (this homelab's arbora deployment convention, a full sibling checkout
     on disk); returns ``None`` under a non-editable install (e.g. a wheel,
     which never ships ``tests/``), in which case callers skip."""
     spec = importlib.util.find_spec("agent_utilities")
@@ -71,7 +71,7 @@ def _discover_au_root() -> Path | None:
 
 _AU_ROOT = _discover_au_root()
 # The workspace root containing every sibling repo (agent-utilities,
-# epistemic-graph, agent-webui, graph-os, ...) -- one level above AU's own
+# epistemic-graph, agent-webui, arbora, ...) -- one level above AU's own
 # repo root, exactly as it was one level above THIS file's repo root before
 # the move (``_REPO_ROOT.parent``).
 _WORKSPACE_ROOT = _AU_ROOT.parent if _AU_ROOT is not None else None
@@ -171,7 +171,7 @@ def test_websocket_dashboard_citation_does_not_regress_to_the_dead_module() -> N
     """BUG-PE-038: this entry used to cite `gateway/ws.py:78-154` -- a module
     that is unused dead code today (nothing imports it; agent-webui's own
     `/ws/dashboard` handler has a `Deliberately NOT
-    graph_os.gateway.ws.dashboard_ws_router` comment explaining why)
+    arbora.gateway.ws.dashboard_ws_router` comment explaining why)
     and is removed outright on `fix/dead-routes-and-union-perf` (BUG-PE-006).
     The real enforcement this surface's `AUTHENTICATED_REQUIRED` disposition
     describes is `WebUIAuthorizationMiddleware` in agent-webui's

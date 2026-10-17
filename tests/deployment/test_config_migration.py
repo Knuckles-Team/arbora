@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from graph_os.core.settings import plaintext_secret_keys
-from graph_os.deployment.config_generator import (
+from arbora.core.settings import plaintext_secret_keys
+from arbora.deployment.config_generator import (
     config_doctor,
     migrate_config_file,
 )

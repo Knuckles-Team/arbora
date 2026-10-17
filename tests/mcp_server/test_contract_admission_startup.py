@@ -7,10 +7,10 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
-from graph_os.api.http import app as api_app
-from graph_os.api.registry import contract_admission
-from graph_os.api.registry.eg_binding import EgContractError
-from graph_os.mcp_server.composition import NativeGatewayApplication
+from arbora.api.http import app as api_app
+from arbora.api.registry import contract_admission
+from arbora.api.registry.eg_binding import EgContractError
+from arbora.mcp_server.composition import NativeGatewayApplication
 from tests.api.test_contract_admission import installed_contract as installed_contract
 from tests.api.test_contract_admission import startup_evidence as startup_evidence
 

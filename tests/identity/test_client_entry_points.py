@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.identity.client_entry_points import (
+from arbora.identity.client_entry_points import (
     CLIENT_TOKEN_REQUIREMENTS,
     ClientEntryPoint,
     entry_points_without_verified_tokens,
@@ -21,7 +21,7 @@ def test_every_client_entry_point_is_registered() -> None:
 @pytest.mark.spec("GRAPHOS-IDENTITY-R017")
 def test_every_client_entry_point_carries_a_verified_token() -> None:
     # Empty once every client path has migrated -- the precondition
-    # GRAPHOS-IDENTITY-R017 requires before GraphOS can stop relying on
+    # GRAPHOS-IDENTITY-R017 requires before Arbora can stop relying on
     # the engine's unauthenticated opt-out.
     assert entry_points_without_verified_tokens() == ()
 

@@ -1,11 +1,11 @@
-"""Covers :mod:`graph_os.fleet.throttle_service` -- the in-process read/config
+"""Covers :mod:`arbora.fleet.throttle_service` -- the in-process read/config
 facade over recorded AIMD decisions, backing the GRAPHOS-CAPACITY-R002
 hosted operations.
 """
 
 from __future__ import annotations
 
-from graph_os.fleet.error_budget import (
+from arbora.fleet.error_budget import (
     BudgetWindow,
     OutcomeClass,
     OutcomeSample,
@@ -13,7 +13,7 @@ from graph_os.fleet.error_budget import (
     ThrottleMode,
     decide,
 )
-from graph_os.fleet.throttle_service import ThrottleRegistry
+from arbora.fleet.throttle_service import ThrottleRegistry
 from tests.fleet._support import CAPACITY_CONFIG as _CONFIG
 from tests.fleet._support import CAPACITY_PARTITION as _PARTITION
 

@@ -1,4 +1,4 @@
-"""The GraphOS inbox reaper keeps failed deliveries pending for another attempt."""
+"""The Arbora inbox reaper keeps failed deliveries pending for another attempt."""
 
 from __future__ import annotations
 
@@ -6,11 +6,11 @@ from typing import Any, cast
 
 import pytest
 
-from graph_os.messaging import inbox
-from graph_os.messaging.host_ports import bind_host_ports
-from graph_os.messaging.models import SendResult
-from graph_os.messaging.router import InboundRouter
-from graph_os.messaging.service import MessagingService
+from arbora.messaging import inbox
+from arbora.messaging.host_ports import bind_host_ports
+from arbora.messaging.models import SendResult
+from arbora.messaging.router import InboundRouter
+from arbora.messaging.service import MessagingService
 
 from ._fakes import FakeMessagingBackend
 

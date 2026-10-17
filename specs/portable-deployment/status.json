@@ -161,7 +161,7 @@
     },
     {
       "id": "GRAPHOS-DEPLOY-R007",
-      "title": "GraphOS hosts deployment doctor and skill certification",
+      "title": "Arbora hosts deployment doctor and skill certification",
       "delivery_state": "LANDED",
       "landed_in": [
         "fd761d59a171"
@@ -202,7 +202,7 @@
     },
     {
       "id": "GRAPHOS-DEPLOY-R007.3",
-      "title": "`graph-os-daemon` console-script collision resolved",
+      "title": "`arbora-daemon` console-script collision resolved",
       "delivery_state": "LANDED",
       "landed_in": [
         "fd761d59a171"
@@ -220,7 +220,7 @@
     },
     {
       "id": "GRAPHOS-DEPLOY-R007.5",
-      "title": "`graph-os-release-canary` console-script collision resolved",
+      "title": "`arbora-release-canary` console-script collision resolved",
       "delivery_state": "LANDED",
       "landed_in": [
         "fd761d59a171"
@@ -229,7 +229,7 @@
     },
     {
       "id": "GRAPHOS-DEPLOY-R007.6",
-      "title": "The GraphOS doctor checks the served engine families and graph connections",
+      "title": "The Arbora doctor checks the served engine families and graph connections",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "9e7f6499d96f"
@@ -240,7 +240,7 @@
     },
     {
       "id": "GRAPHOS-DEPLOY-R008",
-      "title": "GraphOS hosts its own boundary modules",
+      "title": "Arbora hosts its own boundary modules",
       "delivery_state": "LANDED",
       "landed_in": [
         "ae856bc9a101"
@@ -249,7 +249,7 @@
     },
     {
       "id": "GRAPHOS-DEPLOY-R009",
-      "title": "GraphOS owns hosting/deployment configuration settings",
+      "title": "Arbora owns hosting/deployment configuration settings",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "ae856bc9a101"
@@ -264,7 +264,7 @@
     },
     {
       "id": "GRAPHOS-DEPLOY-R009.1",
-      "title": "GraphOS hosts a typed `graph_os.core.config_admin` hosting/deployment settings module",
+      "title": "Arbora hosts a typed `arbora.core.config_admin` hosting/deployment settings module",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "ae856bc9a101"
@@ -278,7 +278,7 @@
     },
     {
       "id": "GRAPHOS-DEPLOY-R009.4",
-      "title": "GraphOS owns the `graph_config` operation",
+      "title": "Arbora owns the `graph_config` operation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [
@@ -345,7 +345,7 @@
     },
     {
       "id": "GRAPHOS-DEPLOY-R014",
-      "title": "Agent runtime split into connector SDK, GraphOS and engine",
+      "title": "Agent runtime split into connector SDK, Arbora and engine",
       "delivery_state": "LANDED",
       "landed_in": [
         "fe7c5c9a4a32"
@@ -647,7 +647,7 @@
     },
     {
       "id": "GRAPHOS-DEPLOY-R009.2",
-      "title": "EG:53 GraphOS definition slice",
+      "title": "EG:53 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "9e7f6499d96f"
@@ -678,21 +678,21 @@
     },
     {
       "id": "GRAPHOS-DEPLOY-R009.3",
-      "title": "EG:57 GraphOS definition slice",
+      "title": "EG:57 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-DEPLOY-R013.7",
-      "title": "GRAPHOS:12 GraphOS definition slice",
+      "title": "ARBORA:12 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-DEPLOY-R010.4",
-      "title": "GRAPHOS:13 GraphOS definition slice",
+      "title": "ARBORA:13 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

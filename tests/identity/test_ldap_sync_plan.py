@@ -2,8 +2,8 @@
 
 import pytest
 
-from graph_os.identity.engine import IdentityUnavailable
-from graph_os.identity.ldap import DirectoryUser, plan_directory_sync
+from arbora.identity.engine import IdentityUnavailable
+from arbora.identity.ldap import DirectoryUser, plan_directory_sync
 
 _ADMINS = "cn=admins,ou=groups,dc=example,dc=org"
 _MAPPING = {_ADMINS: {"admin"}}

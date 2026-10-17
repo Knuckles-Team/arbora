@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.ecosystem import ard_federation, ard_signing
+from arbora.ecosystem import ard_federation, ard_signing
 
 
 @pytest.fixture(autouse=True)

@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from graph_os.finance.schedule import (
+from arbora.finance.schedule import (
     FinanceScheduleEntry,
     InMemoryScheduleRunStore,
     record_schedule_run,

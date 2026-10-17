@@ -1,0 +1,166 @@
+#!/usr/bin/env python3
+"""Rename the graph-os project to arbora with deterministic literal replaces.
+
+Run from the repository root: ``python scripts/rename_to_arbora.py``.
+Re-running it on an already renamed tree is a no-op apart from the counts.
+
+Kept as-is, by design:
+
+* spec IDs (``GRAPHOS-<AREA>-R...``): spec status and the bound tests key on
+  them, so renaming them would drop delivered rows back to SPECIFIED;
+* generated files (``specs/*/status.json``, the API contracts), rebuilt by
+  their own generators after the rename;
+* ``CHANGELOG.md`` history (the rename entry is written by hand);
+* any line carrying the ``arbora-rename: keep`` marker (the one-release
+  configuration fallback that still reads the old location);
+* this script.
+"""
+
+from __future__ import annotations
+
+import re
+import shutil
+import subprocess  # nosec B404 -- fixed git argv, no shell
+import sys
+from collections import Counter
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+SELF = "scripts/rename_to_arbora.py"
+KEEP_MARKER = "arbora-rename: keep"
+EXCLUDED_FILES = {SELF, "CHANGELOG.md", "uv.lock"}
+# Generated outputs: rebuilt by their own generators after the rename (they also
+# quote other packages' docstrings, which this script must not rewrite).
+EXCLUDED_PATTERNS = (
+    re.compile(r"^specs/[^/]+/status\.json$"),
+    re.compile(r"^(graph_os|arbora)/api/generated/"),
+    re.compile(r"^(graph_os|arbora)/client/_generated_models\.py$"),
+    re.compile(r"^docs/api/(schemas/|openapi\.json$|generated\.ts$)"),
+)
+
+# Names another repository owns or reads on the wire. Empty: agent-utilities,
+# agent-connector-sdk, agent-webui and agent-terminal-ui apply the same mapping,
+# so clients and the server agree on every renamed wire name.
+KEEP: tuple[str, ...] = ()
+
+# Spec IDs: GRAPHOS- followed by an upper-case area or digit.
+SPEC_ID = re.compile(r"GRAPHOS-(?=[A-Z0-9])")
+
+# Ordered literal replacements (the brief's order), then the remaining spellings.
+REPLACEMENTS: tuple[tuple[str, str], ...] = (
+    ("graph_os", "arbora"),
+    ("Knuckles-Team/graph-os", "Knuckles-Team/arbora"),
+    (".config/graph-os", ".config/arbora"),
+    ("graph-os", "arbora"),
+    ("GRAPH_OS", "ARBORA"),
+    ("Graph OS", "Arbora"),
+    ("GraphOS", "Arbora"),
+    ("Graph-OS", "Arbora"),
+    ("Graph-os", "Arbora"),
+    ("GRAPH-OS", "ARBORA"),
+    ("GraphOs", "Arbora"),
+    ("Graphos", "Arbora"),
+    ("graphOs", "arbora"),
+    ("GRAPHOS", "ARBORA"),
+    ("graphos", "arbora"),
+)
+
+
+GIT = shutil.which("git") or "git"
+
+
+def _git(*args: str) -> bytes:
+    return subprocess.run(  # nosec B603 -- resolved git executable, fixed argv
+        [GIT, *args], cwd=ROOT, check=True, capture_output=True
+    ).stdout
+
+
+def tracked_files() -> list[str]:
+    return [p for p in _git("ls-files", "-z").decode().split("\0") if p]
+
+
+def excluded(path: str) -> bool:
+    return path in EXCLUDED_FILES or any(p.match(path) for p in EXCLUDED_PATTERNS)
+
+
+def _protect(text: str) -> tuple[str, list[str]]:
+    saved: list[str] = []
+
+    def stash(value: str) -> str:
+        saved.append(value)
+        return f"\0{len(saved) - 1}\0"
+
+    for token in KEEP:
+        text = text.replace(token, stash(token)) if token in text else text
+    text = SPEC_ID.sub(lambda m: stash(m.group(0)), text)
+    return text, saved
+
+
+def _restore(text: str, saved: list[str]) -> str:
+    return re.sub(r"\0(\d+)\0", lambda m: saved[int(m.group(1))], text)
+
+
+def rename_text(text: str, counts: Counter[str]) -> str:
+    out: list[str] = []
+    for line in text.splitlines(keepends=True):
+        if KEEP_MARKER in line:
+            out.append(line)
+            continue
+        body, saved = _protect(line)
+        for old, new in REPLACEMENTS:
+            n = body.count(old)
+            if n:
+                counts[old] += n
+                body = body.replace(old, new)
+        out.append(_restore(body, saved))
+    return "".join(out)
+
+
+def move_paths(counts: Counter[str]) -> None:
+    if (ROOT / "graph_os").is_dir():
+        _git("mv", "graph_os", "arbora")
+        counts["path:graph_os/"] += 1
+    for path in tracked_files():
+        if excluded(path):
+            continue
+        new = rename_text(path, Counter())
+        if new != path:
+            (ROOT / new).parent.mkdir(parents=True, exist_ok=True)
+            _git("mv", path, new)
+            counts["path"] += 1
+
+
+def main() -> int:
+    counts: Counter[str] = Counter()
+    move_paths(counts)
+    changed = 0
+    for path in tracked_files():
+        if excluded(path):
+            continue
+        file = ROOT / path
+        if file.is_symlink() or not file.is_file():
+            continue
+        raw = file.read_bytes()
+        if b"\0" in raw:
+            continue
+        try:
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError:
+            continue
+        new = rename_text(text, counts)
+        if new != text:
+            file.write_text(new, encoding="utf-8")
+            changed += 1
+    print(f"files rewritten: {changed}")
+    print(
+        f"paths moved: {counts.pop('path', 0)} files + {counts.pop('path:graph_os/', 0)} package dir"
+    )
+    for old, new in REPLACEMENTS:
+        if counts.get(old):
+            print(f"{counts[old]:6d}  {old!r} -> {new!r}")
+    print(f"{sum(counts.values()):6d}  total replacements")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -6,10 +6,10 @@ from typing import Any
 
 import pytest
 
-from graph_os.messaging import planner_handler
-from graph_os.messaging.host_ports import bind_host_ports
-from graph_os.messaging.models import EventType, InboundEvent, Message
-from graph_os.messaging.service import MessagingService
+from arbora.messaging import planner_handler
+from arbora.messaging.host_ports import bind_host_ports
+from arbora.messaging.models import EventType, InboundEvent, Message
+from arbora.messaging.service import MessagingService
 
 from ._fakes import FakeMessagingBackend
 

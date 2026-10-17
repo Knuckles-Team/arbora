@@ -225,7 +225,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R001.1",
-      "title": "GraphOS owns the MCP, REST and API serving code that agent-utilities 3.0.0 drops",
+      "title": "Arbora owns the MCP, REST and API serving code that agent-utilities 3.0.0 drops",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "4eb2b408bd93"
@@ -236,7 +236,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R001.2",
-      "title": "GraphOS registers the harness host bindings at startup",
+      "title": "Arbora registers the harness host bindings at startup",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "9e7f6499d96f"
@@ -256,7 +256,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R001.2.1",
-      "title": "GraphOS binds the run-loop providers at startup",
+      "title": "Arbora binds the run-loop providers at startup",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "25e15e2108e1"
@@ -294,7 +294,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R001.3",
-      "title": "GraphOS ships the surface client as its generated client",
+      "title": "Arbora ships the surface client as its generated client",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "9e7f6499d96f"
@@ -311,7 +311,7 @@
         "9e7f6499d96f"
       ],
       "verified_by": [
-        "tests/deployment/test_graphos_deploy_artifacts.py:103"
+        "tests/deployment/test_arbora_deploy_artifacts.py:103"
       ]
     },
     {
@@ -327,7 +327,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R001.6",
-      "title": "GraphOS publishes its operation registry as versioned data",
+      "title": "Arbora publishes its operation registry as versioned data",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "9e7f6499d96f"
@@ -386,7 +386,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R001.10",
-      "title": "GraphOS owns provider discovery over the connector SDK groups",
+      "title": "Arbora owns provider discovery over the connector SDK groups",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "3f7190f32493"
@@ -404,7 +404,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R003",
-      "title": "Web UI rename cutover across GraphOS",
+      "title": "Web UI rename cutover across Arbora",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "15bc1fd4c49e",
@@ -417,7 +417,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R004",
-      "title": "Single gateway implementation under graph_os/gateway",
+      "title": "Single gateway implementation under arbora/gateway",
       "delivery_state": "LANDED",
       "landed_in": [
         "45283d0137b9",
@@ -427,7 +427,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R005",
-      "title": "graph_os.mcp_server.runtime serves retired MCP actions",
+      "title": "arbora.mcp_server.runtime serves retired MCP actions",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "4ca77fbff9e3"
@@ -486,28 +486,28 @@
     },
     {
       "id": "GRAPHOS-HOST-R005.2.1.1",
-      "title": "Add graph-os operation for code navigation actions",
+      "title": "Add arbora operation for code navigation actions",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R005.2.1.2",
-      "title": "Add graph-os operation for impact actions",
+      "title": "Add arbora operation for impact actions",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R005.2.1.3",
-      "title": "Add graph-os operation for `similar_code` and the remaining `graph_analyze` actions",
+      "title": "Add arbora operation for `similar_code` and the remaining `graph_analyze` actions",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R005.2.1.4",
-      "title": "Add graph-os operation for `process_writeback`",
+      "title": "Add arbora operation for `process_writeback`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -556,42 +556,42 @@
     },
     {
       "id": "GRAPHOS-HOST-R005.2.3.2",
-      "title": "Add graph-os operation for ingest submission actions",
+      "title": "Add arbora operation for ingest submission actions",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R005.2.3.3",
-      "title": "Add graph-os operation for `corpus`",
+      "title": "Add arbora operation for `corpus`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R005.2.3.4",
-      "title": "Add graph-os operation for job lifecycle actions",
+      "title": "Add arbora operation for job lifecycle actions",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R005.2.3.5",
-      "title": "Add graph-os operation for `rebuild_indexes` and `observe`",
+      "title": "Add arbora operation for `rebuild_indexes` and `observe`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R005.2.3.6",
-      "title": "Add graph-os operation for `materialize` and `materialize_source`",
+      "title": "Add arbora operation for `materialize` and `materialize_source`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R005.2.3.7",
-      "title": "Add graph-os operation for `reflect` and `agent_toolkit`",
+      "title": "Add arbora operation for `reflect` and `agent_toolkit`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -640,7 +640,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R006",
-      "title": "graph_os.fleet is the sole multiplexer and host owner",
+      "title": "arbora.fleet is the sole multiplexer and host owner",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "97b844e615b7"
@@ -751,476 +751,476 @@
     },
     {
       "id": "GRAPHOS-HOST-R007.2.1",
-      "title": "Rewire `graph_os/a2a/authority.py` off agent-runtime internals",
+      "title": "Rewire `arbora/a2a/authority.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.2",
-      "title": "Rewire `graph_os/a2a/routing.py` off agent-runtime internals",
+      "title": "Rewire `arbora/a2a/routing.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.3",
-      "title": "Rewire `graph_os/access/service.py` off agent-runtime internals",
+      "title": "Rewire `arbora/access/service.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.4",
-      "title": "Rewire `graph_os/agent_host/__init__.py` off agent-runtime internals",
+      "title": "Rewire `arbora/agent_host/__init__.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.5",
-      "title": "Rewire `graph_os/api/http/auth.py` off agent-runtime internals",
+      "title": "Rewire `arbora/api/http/auth.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.6",
-      "title": "Rewire `graph_os/api/mcp/serving.py` off agent-runtime internals",
+      "title": "Rewire `arbora/api/mcp/serving.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.7",
-      "title": "Rewire `graph_os/api/ops/access.py` off agent-runtime internals",
+      "title": "Rewire `arbora/api/ops/access.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.8",
-      "title": "Rewire `graph_os/api/policy/pdp_remote.py` off agent-runtime internals",
+      "title": "Rewire `arbora/api/policy/pdp_remote.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.9",
-      "title": "Rewire `graph_os/browser_control/browser_control_binding.py` off agent-runtime internals",
+      "title": "Rewire `arbora/browser_control/browser_control_binding.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.10",
-      "title": "Rewire `graph_os/browser_control/browser_control_dispatch.py` off agent-runtime internals",
+      "title": "Rewire `arbora/browser_control/browser_control_dispatch.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.11",
-      "title": "Rewire `graph_os/browser_control/browser_control_durability.py` off agent-runtime internals",
+      "title": "Rewire `arbora/browser_control/browser_control_durability.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.12",
-      "title": "Rewire `graph_os/browser_control/browser_control_outcome.py` off agent-runtime internals",
+      "title": "Rewire `arbora/browser_control/browser_control_outcome.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.13",
-      "title": "Rewire `graph_os/browser_control/browser_control_policy.py` off agent-runtime internals",
+      "title": "Rewire `arbora/browser_control/browser_control_policy.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.14",
-      "title": "Rewire `graph_os/browser_control/browser_control_provenance.py` off agent-runtime internals",
+      "title": "Rewire `arbora/browser_control/browser_control_provenance.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.15",
-      "title": "Rewire `graph_os/browser_control/browser_control_service.py` off agent-runtime internals",
+      "title": "Rewire `arbora/browser_control/browser_control_service.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.16",
-      "title": "Rewire `graph_os/browser_control/browser_control_state.py` off agent-runtime internals",
+      "title": "Rewire `arbora/browser_control/browser_control_state.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.17",
-      "title": "Rewire `graph_os/browser_control/trace_bundle.py` off agent-runtime internals",
+      "title": "Rewire `arbora/browser_control/trace_bundle.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.18",
-      "title": "Rewire `graph_os/deployment/cli.py` off agent-runtime internals",
+      "title": "Rewire `arbora/deployment/cli.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.19",
-      "title": "Rewire `graph_os/deployment/config_generator.py` off agent-runtime internals",
+      "title": "Rewire `arbora/deployment/config_generator.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.20",
-      "title": "Rewire `graph_os/deployment/doctor_certification.py` off agent-runtime internals",
+      "title": "Rewire `arbora/deployment/doctor_certification.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.21",
-      "title": "Rewire `graph_os/deployment/doctor_coverage.py` off agent-runtime internals",
+      "title": "Rewire `arbora/deployment/doctor_coverage.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.22",
-      "title": "Rewire `graph_os/deployment/doctor_lakehouse.py` off agent-runtime internals",
+      "title": "Rewire `arbora/deployment/doctor_lakehouse.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.23",
-      "title": "Rewire `graph_os/deployment/doctor_observability.py` off agent-runtime internals",
+      "title": "Rewire `arbora/deployment/doctor_observability.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.24",
-      "title": "Rewire `graph_os/deployment/doctor.py` off agent-runtime internals",
+      "title": "Rewire `arbora/deployment/doctor.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.25",
-      "title": "Rewire `graph_os/deployment/genesis_environments.py` off agent-runtime internals",
+      "title": "Rewire `arbora/deployment/genesis_environments.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.26",
-      "title": "Rewire `graph_os/deployment/preflight.py` off agent-runtime internals",
+      "title": "Rewire `arbora/deployment/preflight.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.27",
-      "title": "Rewire `graph_os/deployment/production_ops.py` off agent-runtime internals",
+      "title": "Rewire `arbora/deployment/production_ops.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.28",
-      "title": "Rewire `graph_os/deployment/release_canary.py` off agent-runtime internals",
+      "title": "Rewire `arbora/deployment/release_canary.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.29",
-      "title": "Rewire `graph_os/deployment/release_candidate.py` off agent-runtime internals",
+      "title": "Rewire `arbora/deployment/release_candidate.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.30",
-      "title": "Rewire `graph_os/deployment/self_deploy.py` off agent-runtime internals",
+      "title": "Rewire `arbora/deployment/self_deploy.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.31",
-      "title": "Rewire `graph_os/fleet/access_contracts.py` off agent-runtime internals",
+      "title": "Rewire `arbora/fleet/access_contracts.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.32",
-      "title": "Rewire `graph_os/fleet/child_resilience.py` off agent-runtime internals",
+      "title": "Rewire `arbora/fleet/child_resilience.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.33",
-      "title": "Rewire `graph_os/fleet/gateway_ops.py` off agent-runtime internals",
+      "title": "Rewire `arbora/fleet/gateway_ops.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.34",
-      "title": "Rewire `graph_os/fleet/local_skill_catalog.py` off agent-runtime internals",
+      "title": "Rewire `arbora/fleet/local_skill_catalog.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.35",
-      "title": "Rewire `graph_os/fleet/multiplexer.py` off agent-runtime internals",
+      "title": "Rewire `arbora/fleet/multiplexer.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.36",
-      "title": "Rewire `graph_os/fleet/onboarding.py` off agent-runtime internals",
+      "title": "Rewire `arbora/fleet/onboarding.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.37",
-      "title": "Rewire `graph_os/gateway/aggregator.py` off agent-runtime internals",
+      "title": "Rewire `arbora/gateway/aggregator.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.38",
-      "title": "Rewire `graph_os/gateway/config.py` off agent-runtime internals",
+      "title": "Rewire `arbora/gateway/config.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.39",
-      "title": "Rewire `graph_os/gateway/daemon.py` off agent-runtime internals",
+      "title": "Rewire `arbora/gateway/daemon.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.40",
-      "title": "Rewire `graph_os/gateway/dashboard_api.py` off agent-runtime internals",
+      "title": "Rewire `arbora/gateway/dashboard_api.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.41",
-      "title": "Rewire `graph_os/gateway/fleet_events.py` off agent-runtime internals",
+      "title": "Rewire `arbora/gateway/fleet_events.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.42",
-      "title": "Rewire `graph_os/gateway/fleet.py` off agent-runtime internals",
+      "title": "Rewire `arbora/gateway/fleet.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.43",
-      "title": "Rewire `graph_os/gateway/graph_api.py` off agent-runtime internals",
+      "title": "Rewire `arbora/gateway/graph_api.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.44",
-      "title": "Rewire `graph_os/gateway/rate_limit.py` off agent-runtime internals",
+      "title": "Rewire `arbora/gateway/rate_limit.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.45",
-      "title": "Rewire `graph_os/gateway/remote_oauth_api.py` off agent-runtime internals",
+      "title": "Rewire `arbora/gateway/remote_oauth_api.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.46",
-      "title": "Rewire `graph_os/gateway/schemas/graph_core.py` off agent-runtime internals",
+      "title": "Rewire `arbora/gateway/schemas/graph_core.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.47",
-      "title": "Rewire `graph_os/gateway/usage_api.py` off agent-runtime internals",
+      "title": "Rewire `arbora/gateway/usage_api.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.48",
-      "title": "Rewire `graph_os/gateway/widgets/base.py` off agent-runtime internals",
+      "title": "Rewire `arbora/gateway/widgets/base.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.49",
-      "title": "Rewire `graph_os/gateway/widgets/ollama.py` off agent-runtime internals",
+      "title": "Rewire `arbora/gateway/widgets/ollama.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.50",
-      "title": "Rewire `graph_os/gateway/widgets/vector_db.py` off agent-runtime internals",
+      "title": "Rewire `arbora/gateway/widgets/vector_db.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.51",
-      "title": "Rewire `graph_os/mcp_server/bootstrap.py` off agent-runtime internals",
+      "title": "Rewire `arbora/mcp_server/bootstrap.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.52",
-      "title": "Rewire `graph_os/mcp_server/composition.py` off agent-runtime internals",
+      "title": "Rewire `arbora/mcp_server/composition.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.53",
-      "title": "Rewire `graph_os/mcp_server/decide_wiring.py` off agent-runtime internals",
+      "title": "Rewire `arbora/mcp_server/decide_wiring.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.54",
-      "title": "Rewire `graph_os/mcp_server/runtime.py` off agent-runtime internals",
+      "title": "Rewire `arbora/mcp_server/runtime.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.55",
-      "title": "Rewire `graph_os/mcp_server/server.py` off agent-runtime internals",
+      "title": "Rewire `arbora/mcp_server/server.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.56",
-      "title": "Rewire `graph_os/messaging/alert_intake.py` off agent-runtime internals",
+      "title": "Rewire `arbora/messaging/alert_intake.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.57",
-      "title": "Rewire `graph_os/messaging/backends/mattermost.py` off agent-runtime internals",
+      "title": "Rewire `arbora/messaging/backends/mattermost.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.58",
-      "title": "Rewire `graph_os/messaging/backends/telegram.py` off agent-runtime internals",
+      "title": "Rewire `arbora/messaging/backends/telegram.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.59",
-      "title": "Rewire `graph_os/messaging/governed_send.py` off agent-runtime internals",
+      "title": "Rewire `arbora/messaging/governed_send.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.60",
-      "title": "Rewire `graph_os/messaging/lease.py` off agent-runtime internals",
+      "title": "Rewire `arbora/messaging/lease.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.61",
-      "title": "Rewire `graph_os/messaging/polling.py` off agent-runtime internals",
+      "title": "Rewire `arbora/messaging/polling.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.62",
-      "title": "Rewire `graph_os/messaging/reach.py` off agent-runtime internals",
+      "title": "Rewire `arbora/messaging/reach.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.63",
-      "title": "Rewire `graph_os/messaging/registry.py` off agent-runtime internals",
+      "title": "Rewire `arbora/messaging/registry.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.64",
-      "title": "Rewire `graph_os/messaging/router.py` off agent-runtime internals",
+      "title": "Rewire `arbora/messaging/router.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.65",
-      "title": "Rewire `graph_os/messaging/service.py` off agent-runtime internals",
+      "title": "Rewire `arbora/messaging/service.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.66",
-      "title": "Rewire `graph_os/observability/gateway_health.py` off agent-runtime internals",
+      "title": "Rewire `arbora/observability/gateway_health.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.67",
-      "title": "Rewire `graph_os/semantic_content.py` off agent-runtime internals",
+      "title": "Rewire `arbora/semantic_content.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R007.2.68",
-      "title": "Rewire `graph_os/webui_host/webui_co_service.py` off agent-runtime internals",
+      "title": "Rewire `arbora/webui_host/webui_co_service.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1234,7 +1234,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R008",
-      "title": "GraphOS hosts its own boundary modules",
+      "title": "Arbora hosts its own boundary modules",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "776ceb15e7ba",
@@ -1264,7 +1264,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R009",
-      "title": "GraphOS hosts the agent HTTP server and A2A endpoints",
+      "title": "Arbora hosts the agent HTTP server and A2A endpoints",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "e5efd4f0ca33"
@@ -1283,7 +1283,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R010",
-      "title": "GraphOS owns hosting/deployment configuration settings",
+      "title": "Arbora owns hosting/deployment configuration settings",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "396d8307596f",
@@ -1307,7 +1307,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R011",
-      "title": "GraphOS serves the messaging channel and routing layer",
+      "title": "Arbora serves the messaging channel and routing layer",
       "delivery_state": "LANDED",
       "landed_in": [
         "63a66f60915a",
@@ -1319,7 +1319,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R012",
-      "title": "Component registry carries GraphOS and SDK boundary entries",
+      "title": "Component registry carries Arbora and SDK boundary entries",
       "delivery_state": "LANDED",
       "landed_in": [
         "9760bef27075",
@@ -1330,7 +1330,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R013",
-      "title": "Front ends import only public GraphOS/agent-runtime surfaces",
+      "title": "Front ends import only public Arbora/agent-runtime surfaces",
       "delivery_state": "LANDED",
       "landed_in": [
         "4ca77fbff9e3"
@@ -1339,7 +1339,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R014",
-      "title": "Agent runtime split into connector SDK, GraphOS and engine",
+      "title": "Agent runtime split into connector SDK, Arbora and engine",
       "delivery_state": "LANDED",
       "landed_in": [
         "0062797e3c37",
@@ -1368,7 +1368,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R017",
-      "title": "Browser inventory lists native GraphOS tools",
+      "title": "Browser inventory lists native Arbora tools",
       "delivery_state": "LANDED",
       "landed_in": [
         "3b2c6ac9d864",
@@ -1388,7 +1388,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R019",
-      "title": "GraphOS serves the service dashboard surface the web UI composes",
+      "title": "Arbora serves the service dashboard surface the web UI composes",
       "delivery_state": "LANDED",
       "landed_in": [
         "975596a67ed0",
@@ -1433,7 +1433,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R023",
-      "title": "GraphOS serves its eight-tool MCP intent surface from its own operation registry",
+      "title": "Arbora serves its eight-tool MCP intent surface from its own operation registry",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "51529da8abe6",
@@ -1451,7 +1451,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R024",
-      "title": "`graph_os.mcp_server.server` registers GraphOS's own intent surface, not the agent runtime's",
+      "title": "`arbora.mcp_server.server` registers Arbora's own intent surface, not the agent runtime's",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "2646511870e7",
@@ -1475,7 +1475,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R026",
-      "title": "Durable A2A task persistence in the graph-os agent host",
+      "title": "Durable A2A task persistence in the arbora agent host",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "8d1bc46ecbdb"
@@ -1520,7 +1520,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R026.5",
-      "title": "Point the `g34-a2a` certification gate at graph-os tests",
+      "title": "Point the `g34-a2a` certification gate at arbora tests",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1818,35 +1818,35 @@
     },
     {
       "id": "GRAPHOS-HOST-R023.3",
-      "title": "AU:20 GraphOS definition slice",
+      "title": "AU:20 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R008.6",
-      "title": "AU:96 GraphOS definition slice",
+      "title": "AU:96 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R026.6",
-      "title": "AU:112 GraphOS definition slice",
+      "title": "AU:112 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R022.1",
-      "title": "AU:97 GraphOS definition slice",
+      "title": "AU:97 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R010.8",
-      "title": "GRAPHOS:9 GraphOS definition slice",
+      "title": "ARBORA:9 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.security.actor_context import (
+from arbora.security.actor_context import (
     ActorContext,
     ActorType,
     IdentityRequiredError,

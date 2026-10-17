@@ -5,8 +5,8 @@ from typing import Any
 
 import pytest
 
-from graph_os.identity.engine import IdentityUnavailable
-from graph_os.identity.oidc import (
+from arbora.identity.engine import IdentityUnavailable
+from arbora.identity.oidc import (
     OidcRefusalReason,
     OidcTokenRefused,
     check_id_token_claims,

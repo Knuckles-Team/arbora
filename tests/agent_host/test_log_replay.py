@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from graph_os.agent_host.log_access import HostLogAccess, HostLogRetentionGap
-from graph_os.agent_host.log_sink import WorkspaceLogSink
+from arbora.agent_host.log_access import HostLogAccess, HostLogRetentionGap
+from arbora.agent_host.log_sink import WorkspaceLogSink
 from tests.agent_host.test_log_access import ControlledOwners, read, reference, serve
 
 

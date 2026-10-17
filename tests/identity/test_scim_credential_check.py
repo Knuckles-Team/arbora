@@ -2,8 +2,8 @@
 
 import pytest
 
-from graph_os.identity.engine import IdentityUnavailable
-from graph_os.identity.scim import (
+from arbora.identity.engine import IdentityUnavailable
+from arbora.identity.scim import (
     ScimCredentialRefused,
     ScimServiceCredential,
     check_scim_credential,

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.observability import custom_observability as co
-from graph_os.observability import langfuse_trust as lt
-from graph_os.observability import telemetry
+from arbora.observability import custom_observability as co
+from arbora.observability import langfuse_trust as lt
+from arbora.observability import telemetry
 
 
 @pytest.mark.parametrize(

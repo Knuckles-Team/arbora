@@ -6,7 +6,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from graph_os.messaging.inbox import (
+from arbora.messaging.inbox import (
     mark_answered,
     pending_unanswered,
     record_inbound,

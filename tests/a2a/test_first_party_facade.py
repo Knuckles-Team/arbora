@@ -1,11 +1,11 @@
 """GRAPHOS-A2A-R008: the A2A facade is first-party, not a vendored wrapper.
 
-graph-os implements the A2A protocol facade itself as source under
-``graph_os/a2a`` over the public graph-engine and agent orchestration ports,
+arbora implements the A2A protocol facade itself as source under
+``arbora/a2a`` over the public graph-engine and agent orchestration ports,
 rather than depending on or wrapping an external vendored A2A implementation
 (e.g. an ``a2a-sdk``-style package). This is a static, source-level
 dependency check: the declared distribution requirements never pull in a
-third-party A2A package, and the package's own source under ``graph_os/a2a``
+third-party A2A package, and the package's own source under ``arbora/a2a``
 never imports one.
 """
 
@@ -17,13 +17,13 @@ from pathlib import Path
 
 import pytest
 
-import graph_os
-import graph_os.a2a
-from graph_os.a2a.application import create_a2a_application
+import arbora
+import arbora.a2a
+from arbora.a2a.application import create_a2a_application
 
 
 def _package_root() -> Path:
-    return Path(graph_os.__file__).resolve().parent
+    return Path(arbora.__file__).resolve().parent
 
 
 def _repo_root() -> Path:
@@ -31,7 +31,7 @@ def _repo_root() -> Path:
 
 
 def _a2a_source_files() -> list[Path]:
-    return sorted(Path(graph_os.a2a.__file__).resolve().parent.rglob("*.py"))
+    return sorted(Path(arbora.a2a.__file__).resolve().parent.rglob("*.py"))
 
 
 def _declared_dependencies() -> list[str]:
@@ -60,7 +60,7 @@ def test_no_declared_dependency_is_a_vendored_a2a_implementation() -> None:
         and not dependency.startswith("agent-connector-sdk[")
     ]
     assert not offenders, (
-        "graph-os declares a dependency on what looks like a vendored A2A "
+        "arbora declares a dependency on what looks like a vendored A2A "
         f"implementation instead of implementing the facade first-party: {offenders}"
     )
 
@@ -73,12 +73,12 @@ def test_a2a_source_never_imports_an_external_a2a_package() -> None:
         hits = {
             module
             for module in _imported_top_level_modules(tree)
-            if "a2a" in module.lower() and module != "graph_os"
+            if "a2a" in module.lower() and module != "arbora"
         }
         if hits:
             offenders[path.relative_to(_package_root()).as_posix()] = hits
     assert not offenders, (
-        "graph_os/a2a source imports an external A2A-named package, "
+        "arbora/a2a source imports an external A2A-named package, "
         f"suggesting a vendored wrapper rather than a first-party facade: {offenders}"
     )
 
@@ -86,8 +86,8 @@ def test_a2a_source_never_imports_an_external_a2a_package() -> None:
 @pytest.mark.spec("GRAPHOS-A2A-R008")
 def test_a2a_facade_entry_point_is_implemented_in_this_repository() -> None:
     module = create_a2a_application.__module__
-    assert module.startswith("graph_os.a2a"), (
-        "the A2A facade entry point must be implemented under graph_os.a2a, "
+    assert module.startswith("arbora.a2a"), (
+        "the A2A facade entry point must be implemented under arbora.a2a, "
         f"found: {module}"
     )
     source_file = Path(create_a2a_application.__globals__["__file__"]).resolve()

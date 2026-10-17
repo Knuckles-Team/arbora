@@ -10,9 +10,9 @@ from unittest.mock import Mock
 import pytest
 from pydantic import ValidationError
 
-from graph_os.api.errors import GraphOSErrorCode, GraphOSRefusal
-from graph_os.gateway.schema_context_service import get_schema_context
-from graph_os.gateway.schemas.schema_context import SchemaContextRequest
+from arbora.api.errors import ArboraErrorCode, ArboraRefusal
+from arbora.gateway.schema_context_service import get_schema_context
+from arbora.gateway.schemas.schema_context import SchemaContextRequest
 
 
 def _valid_payload() -> dict[str, object]:
@@ -63,10 +63,10 @@ def test_get_schema_context_refuses_unavailable_with_zero_engine_calls() -> None
     request = SchemaContextRequest.model_validate(_valid_payload())
     engine = Mock(spec=[])
 
-    with pytest.raises(GraphOSRefusal) as excinfo:
+    with pytest.raises(ArboraRefusal) as excinfo:
         get_schema_context(engine, request)
 
-    assert excinfo.value.code == GraphOSErrorCode.UNAVAILABLE
+    assert excinfo.value.code == ArboraErrorCode.UNAVAILABLE
     assert engine.mock_calls == []
 
 

@@ -10,9 +10,9 @@ import json
 import pytest
 from pydantic import ValidationError
 
-from graph_os.deployment.cli import main
-from graph_os.deployment.genesis_environments import BUILTIN_ENVIRONMENTS_DIR
-from graph_os.deployment.release_candidate import (
+from arbora.deployment.cli import main
+from arbora.deployment.genesis_environments import BUILTIN_ENVIRONMENTS_DIR
+from arbora.deployment.release_candidate import (
     CandidateError,
     ExitCriteriaError,
     LocalGateResult,
@@ -30,10 +30,10 @@ _KEY = b"disposable-test-trust-key"
 def authority(monkeypatch):
     """Stand in for the signed-evidence verifier with independent fixture trust.
 
-    The verifier that graph-os will own is not bound yet, so production refuses
+    The verifier that arbora will own is not bound yet, so production refuses
     every candidate. These consumer tests replace that seam with an HMAC check.
     """
-    from graph_os.deployment import release_candidate
+    from arbora.deployment import release_candidate
 
     calls = []
 
@@ -57,7 +57,7 @@ def candidate():
 
     path = BUILTIN_ENVIRONMENTS_DIR / "prod.yaml"
     image = yaml.safe_load(path.read_bytes())["release"]["revision"]
-    ids = ("epistemic-graph", "graph-os", "agent-webui", "connector.optional")
+    ids = ("epistemic-graph", "arbora", "agent-webui", "connector.optional")
     artifacts = [
         {
             "component_id": key,
@@ -74,7 +74,7 @@ def candidate():
         }
         for key in ids
     ]
-    predecessors = {"graph-os": ["epistemic-graph"], "agent-webui": ["graph-os"]}
+    predecessors = {"arbora": ["epistemic-graph"], "agent-webui": ["arbora"]}
     stages = [
         {
             "component_id": key,
@@ -96,7 +96,7 @@ def candidate():
         "stages": stages,
         "profiles": [
             {
-                "component_id": "graph-os",
+                "component_id": "arbora",
                 "digest": "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest(),
                 "artifact_digest": image,
             }
@@ -128,7 +128,7 @@ def test_signed_candidate_order_and_immutable_reader(tmp_path, candidate, author
     with pytest.raises(ValidationError):
         parsed.candidate_id = "changed"
     plan = _plan(tmp_path, candidate)
-    assert plan["order"] == ["epistemic-graph", "graph-os", "agent-webui"]
+    assert plan["order"] == ["epistemic-graph", "arbora", "agent-webui"]
     assert plan["manifest_digest"] == digest
     assert plan["executed"] is False
     assert set(authority) == {"CERT_EVIDENCE_VERIFIER_COMMAND"}
@@ -140,7 +140,7 @@ def test_deterministic_optional_order(tmp_path, candidate, authority):
     candidate["stages"].reverse()
     candidate["artifacts"].reverse()
     assert _plan(tmp_path, candidate)["order"] == first
-    assert first == ["connector.optional", "epistemic-graph", "graph-os", "agent-webui"]
+    assert first == ["connector.optional", "epistemic-graph", "arbora", "agent-webui"]
 
 
 @pytest.mark.parametrize("sign", [False, True])
@@ -304,7 +304,7 @@ def test_duplicate_json_keys_and_bounded_regular_inputs(tmp_path):
 def test_missing_or_disabled_predecessor(tmp_path, candidate, authority, predecessor):
     candidate["stages"][1]["predecessors"][0]["component_id"] = predecessor
     with pytest.raises(
-        CandidateError, match="candidate_missing_predecessor:graph-os:" + predecessor
+        CandidateError, match="candidate_missing_predecessor:arbora:" + predecessor
     ):
         _plan(tmp_path, candidate)
 

@@ -3,7 +3,7 @@
 
 Root cause (gap G30): ``discover_tools`` ranked ONLY the live
 ``probe_catalog`` answer for each fleet server. Fleet onboarding
-(``graph_os/fleet/onboarding.py``) already imports each admitted server's
+(``arbora/fleet/onboarding.py``) already imports each admitted server's
 tools into the EG catalog before any child is ever mounted, but that
 snapshot was never read back for discovery — so a server whose live probe
 times out (the common case across a real fleet; see

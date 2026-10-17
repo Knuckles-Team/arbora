@@ -55,11 +55,11 @@ async def test_create_mcp_server_serves_skill_resources(
     assert SkillProvider is not None
 
     monkeypatch.setattr(
-        "graph_os.core.providers.resolve_skill_provider_dirs",
+        "arbora.core.providers.resolve_skill_provider_dirs",
         lambda: [("au-live-provider", demo_skill_dir)],
     )
 
-    from graph_os.mcp_server.backing.server_factory import create_mcp_server
+    from arbora.mcp_server.backing.server_factory import create_mcp_server
 
     _args, mcp, _middlewares = create_mcp_server(
         "Skills Live Path Test", command_args=[], skill_owner="au-live-provider"

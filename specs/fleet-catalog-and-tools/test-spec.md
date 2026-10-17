@@ -31,7 +31,7 @@ The oracle must include a loaded tool followed by scope removal, policy revision
 
 ## Reload and served probe
 
-Provision two local graph-os replicas, one synthetic child MCP server, a fixture policy, and a disposable durable event store. Capture the callable reload op ID, prior/candidate/active generation IDs and digests, one shared trace ID, and timestamps. Change one tool schema, prompt body, resource/template body, and skill body. Refresh and prove the two replicas converge on the same complete generation. Each affected item has one ordered ingestion receipt, and sessions receive the matching notifications. Hold one call in flight during swap to prove drain behavior. Repeat with a malformed body, duplicate server identity, stale digest, deleted asset, and policy outage. Record last-known-good, error, and absence of partial publication. Restart one replica and replay receipts to prove durability and idempotency.
+Provision two local arbora replicas, one synthetic child MCP server, a fixture policy, and a disposable durable event store. Capture the callable reload op ID, prior/candidate/active generation IDs and digests, one shared trace ID, and timestamps. Change one tool schema, prompt body, resource/template body, and skill body. Refresh and prove the two replicas converge on the same complete generation. Each affected item has one ordered ingestion receipt, and sessions receive the matching notifications. Hold one call in flight during swap to prove drain behavior. Repeat with a malformed body, duplicate server identity, stale digest, deleted asset, and policy outage. Record last-known-good, error, and absence of partial publication. Restart one replica and replay receipts to prove durability and idempotency.
 
 CI may run this probe with local containers/processes and synthetic credentials. A deployment-specific probe may additionally validate a real cluster, but its absence does not make unrelated cloud PR hooks fail. Completed acceptance requires the served probe to pass against landed code.
 
@@ -145,7 +145,7 @@ An uncertain result is not evidence that a provider write rolled back. Preserve 
 
 ### Real served fixture and sequence
 
-Start the actual GraphOS serving composition, a durable graph service and an admitted SDK connector in separate processes.
+Start the actual Arbora serving composition, a durable graph service and an admitted SDK connector in separate processes.
 Use a contributor-owned disposable provider repository and trusted fixture configuration; credentials stay outside recorded evidence.
 Record exact commits, registered operations, schema/configuration digests, authority fixtures and invocation surfaces.
 Imported classes, direct helper calls and in-memory receipt fakes cannot satisfy this served acceptance.
@@ -190,7 +190,7 @@ Record request, plan, audit and SDK receipt associations with actual provider-ca
 
 ## OpenAPI operation schema preflight (`GRAPHOS-FLEET-R035`)
 
-Run `uv run --no-sync pytest tests/fleet/test_multiplexer_schema_disclosure.py` against the frozen GraphOS lock and merged public SDK source. The fixture cases prove ordered reconstruction and compare both selected schemas before invocation. Stale manifests, missing fragments, absent output schema and mismatched action must refuse before the operation call. Changed catalog, denied session, OAuth-session mismatch and uncertain-write replay must also refuse before that call. These tests use fake child sessions and do not prove live provider publication, production credentials, deployment, or provider effects. Report focused consumer evidence separately from any later live/release evidence.
+Run `uv run --no-sync pytest tests/fleet/test_multiplexer_schema_disclosure.py` against the frozen Arbora lock and merged public SDK source. The fixture cases prove ordered reconstruction and compare both selected schemas before invocation. Stale manifests, missing fragments, absent output schema and mismatched action must refuse before the operation call. Changed catalog, denied session, OAuth-session mismatch and uncertain-write replay must also refuse before that call. These tests use fake child sessions and do not prove live provider publication, production credentials, deployment, or provider effects. Report focused consumer evidence separately from any later live/release evidence.
 
 Cover non-prefixed OAuth aliases with stale disclosures and ordinary tools without schema metadata. Release preflight before cancelling its caller to prove the final-send cancellation fence. Cancel and refuse a half-open preflight, then prove a later healthy probe succeeds without replay. Compare CI's EG source revision with the lock and inspect the pinned SDK's public disclosure exports.
 
@@ -246,4 +246,4 @@ Hot-path proof for `GRAPHOS-FLEET-R037`: `tests/fleet/test_job_loads_served.py::
 
 | Case | Row | Proving test and observation |
 |---|---|---|
-| Evidence | `GRAPHOS-FLEET-R038` | `tests/fleet/test_protocol_roles.py::test_one_implementation_per_role`: An import-graph test fails when a graph-os module implements a connector transport or connector server scaffolding. |
+| Evidence | `GRAPHOS-FLEET-R038` | `tests/fleet/test_protocol_roles.py::test_one_implementation_per_role`: An import-graph test fails when a arbora module implements a connector transport or connector server scaffolding. |

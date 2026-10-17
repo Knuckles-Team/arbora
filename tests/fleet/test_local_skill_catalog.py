@@ -1,9 +1,9 @@
 """Skills served from THIS process's own installed packages.
 
-Covers :mod:`graph_os.fleet.local_skill_catalog` — the local counterpart to
+Covers :mod:`arbora.fleet.local_skill_catalog` — the local counterpart to
 the fleet skill harvest (``tests/fleet/test_multiplexer_skills_over_mcp.py``):
 every entry here is resolved from an installed package via an injected
-``provider_dirs`` resolver (never the real ``graph_os.core.providers.
+``provider_dirs`` resolver (never the real ``arbora.core.providers.
 resolve_skill_provider_dirs``, so this stays hermetic), and every entry is
 built in the exact catalog shape (``name``/``uri``/``description``/
 ``instructions``) a harvested skill is.
@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from graph_os.fleet.local_skill_catalog import (
+from arbora.fleet.local_skill_catalog import (
     build_local_skill_catalog,
     core_pack_names,
     missing_core_pack_names,
@@ -121,7 +121,7 @@ def test_core_pack_names_are_always_present_without_a_query(tmp_path: Path) -> N
     """A fixture catalog mirroring the real core-pack set reports nothing
     missing — the list is read unconditionally, never behind a search term."""
     names = core_pack_names()
-    assert names  # the real graph_os/skills/core-pack.txt is non-empty
+    assert names  # the real arbora/skills/core-pack.txt is non-empty
 
     fixture_providers = [
         ("fixture-provider", _write_skill(tmp_path, name)) for name in names

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.fleet.catalog_items import (
+from arbora.fleet.catalog_items import (
     compute_schema_fingerprint,
     items_from_child_probe,
 )
@@ -68,7 +68,7 @@ def test_probed_non_tool_kinds_never_get_a_fingerprint() -> None:
         "srv",
         {
             "resources": [
-                {"uri": "graphos://x", "description": "", "inputSchema": _REAL_SCHEMA}
+                {"uri": "arbora://x", "description": "", "inputSchema": _REAL_SCHEMA}
             ]
         },
     )

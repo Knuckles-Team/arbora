@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.deployment import certification_assets as assets
-from graph_os.deployment import live_mount_guard as lmg
-from graph_os.deployment import profile_guard as pg
+from arbora.deployment import certification_assets as assets
+from arbora.deployment import live_mount_guard as lmg
+from arbora.deployment import profile_guard as pg
 
 
 @pytest.mark.parametrize(

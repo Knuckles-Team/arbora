@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-import graph_os.control_plane as control_plane
+import arbora.control_plane as control_plane
 
 
 def _module_names() -> list[str]:
@@ -45,7 +45,7 @@ def test_every_extracted_module_is_live_importable(module_name: str) -> None:
         "workflows",
     ],
 )
-def test_subpackage_exports_are_reachable_from_graph_os(package_name: str) -> None:
+def test_subpackage_exports_are_reachable_from_arbora(package_name: str) -> None:
     """Public subpackage entrypoints resolve through the new owner."""
     module = importlib.import_module(f"{control_plane.__name__}.{package_name}")
     for symbol in module.__all__:
@@ -84,9 +84,9 @@ def test_extraction_has_no_agent_utilities_dependency() -> None:
 def test_repository_protocols_keep_keyword_contract_names() -> None:
     """Static-analysis fixes must not rename keyword-callable API fields."""
 
-    from graph_os.control_plane.agents.repository import AgentRepository
-    from graph_os.control_plane.connectors.repository import ConnectorRepository
-    from graph_os.control_plane.projection.repository import OutboxReader
+    from arbora.control_plane.agents.repository import AgentRepository
+    from arbora.control_plane.connectors.repository import ConnectorRepository
+    from arbora.control_plane.projection.repository import OutboxReader
 
     assert tuple(inspect.signature(AgentRepository.cursor_for).parameters) == (
         "self",

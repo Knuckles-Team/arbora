@@ -2,9 +2,9 @@
 
 ## Existing wiring and ownership
 
-GraphOS already has fleet dispatch and admission in `graph_os.fleet` and hosted control-plane modules under `graph_os.control_plane`. Extend the dispatch admission point and the single hosted operation registry. The durable graph-engine `CapacityCell` and `CapacityLease` are external public contracts. GraphOS owns only runtime throttling state, policy, measurements and receipts. Do not clone the engine capacity model or add a second fleet call path.
+Arbora already has fleet dispatch and admission in `arbora.fleet` and hosted control-plane modules under `arbora.control_plane`. Extend the dispatch admission point and the single hosted operation registry. The durable graph-engine `CapacityCell` and `CapacityLease` are external public contracts. Arbora owns only runtime throttling state, policy, measurements and receipts. Do not clone the engine capacity model or add a second fleet call path.
 
-Create cohesive `graph_os.fleet.error_budget`, `throttle_controller` and `throttle_limiter` modules only if the current fleet package lacks an equivalent owner. Define typed `OutcomeSample`, `BudgetWindow`, `ThrottleDecision` and `ThrottleStatus` DTOs. The controller is pure over a window and prior state. The limiter is the sole mutable admission point. Bind those through a `throttle_service` adapter to `capacity.throttle.status` and `capacity.throttle.set_mode` operations. The exact engine method name and schema must be pinned to its published contract before an implementation advertises the feature. Until then discovery reports unavailable.
+Create cohesive `arbora.fleet.error_budget`, `throttle_controller` and `throttle_limiter` modules only if the current fleet package lacks an equivalent owner. Define typed `OutcomeSample`, `BudgetWindow`, `ThrottleDecision` and `ThrottleStatus` DTOs. The controller is pure over a window and prior state. The limiter is the sole mutable admission point. Bind those through a `throttle_service` adapter to `capacity.throttle.status` and `capacity.throttle.set_mode` operations. The exact engine method name and schema must be pinned to its published contract before an implementation advertises the feature. Until then discovery reports unavailable.
 
 ## Decision rule
 
@@ -32,12 +32,12 @@ Decision receipts include budget/configuration digest, premise revision, prior s
 The proposed `agent-run-fixture-v1` profile measures one production agent route with a deterministic, authorized local fixture workload.
 The workload binds a message digest, agent/harness configuration digest, tool response digest, and EG dataset revision.
 Use the actual AU run loop and one local read-only tool call per request.
-A fake GraphOS handler or isolated scorer cannot provide this evidence.
+A fake Arbora handler or isolated scorer cannot provide this evidence.
 The AU load-driver/report contract has no assigned owner ID; publication of that contract remains a prerequisite.
 
-Enter `graph_os/api/http/routes.py:make_endpoint` at line 96 with an authenticated request.
-Call `graph_os/api/invoke/pipeline.py:invoke` at line 810 through the normal admission boundary.
-Dispatch `agents.run` through `graph_os/api/ops/agents.py:handle_agent` at line 43 into the composed A2A authority.
+Enter `arbora/api/http/routes.py:make_endpoint` at line 96 with an authenticated request.
+Call `arbora/api/invoke/pipeline.py:invoke` at line 810 through the normal admission boundary.
+Dispatch `agents.run` through `arbora/api/ops/agents.py:handle_agent` at line 43 into the composed A2A authority.
 Observe terminal completion through `agents.tasks.get` using the same tenant and returned task identity.
 This path already exists; the load driver and qualification report are proposed additions.
 

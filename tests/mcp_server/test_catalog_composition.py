@@ -9,8 +9,8 @@ from typing import Any, cast
 
 import pytest
 
-from graph_os.fleet.catalog_reader import DeferredFleetCatalogReader
-from graph_os.mcp_server import catalog_composition as composition
+from arbora.fleet.catalog_reader import DeferredFleetCatalogReader
+from arbora.mcp_server import catalog_composition as composition
 
 
 class GraphCompute:
@@ -74,7 +74,7 @@ async def test_startup_injects_generated_clients_and_public_catalog_ports(
     monkeypatch.setattr(
         composition,
         "required_content_connectors",
-        lambda: ("graph-os", "agent-utilities"),
+        lambda: ("arbora", "agent-utilities"),
     )
 
     bound: list[str] = []
@@ -105,7 +105,7 @@ async def test_startup_injects_generated_clients_and_public_catalog_ports(
             "client": SimpleNamespace(graph=Session.graph),
             "tenant_id": "tenant-a",
             "graph": Session.graph,
-            "connectors": ("graph-os", "agent-utilities"),
+            "connectors": ("arbora", "agent-utilities"),
         }
     ]
     authority, authority_scope = installed[0]
@@ -134,9 +134,7 @@ async def test_failed_initial_refresh_aborts_startup_without_static_fallback(
         return None
 
     monkeypatch.setattr(composition, "verify_semantic_content", verified)
-    monkeypatch.setattr(
-        composition, "required_content_connectors", lambda: ("graph-os",)
-    )
+    monkeypatch.setattr(composition, "required_content_connectors", lambda: ("arbora",))
 
     with pytest.raises(RuntimeError, match="catalog unavailable"):
         await composition.compose_catalog_authorities(

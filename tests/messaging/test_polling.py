@@ -4,7 +4,7 @@ inbound listener.
 Previously the AU daemon ran EVERY backend's
 listener under the ONE ``_serve`` asyncio task and cancelled that whole task
 off the single shared ``stop_event`` — so
-``graph_os/messaging/lease.py::run_with_intake_leases`` setting that event on
+``arbora/messaging/lease.py::run_with_intake_leases`` setting that event on
 ANY platform's lease loss silently killed every OTHER healthy platform's
 inbound polling too (this is what took Telegram inbound down in production
 when only the Mattermost lease was lost).
@@ -26,10 +26,10 @@ import threading
 import time
 from typing import Any
 
-from graph_os.messaging import commands, polling
-from graph_os.messaging import router as graphos_router
-from graph_os.messaging.host_ports import bind_host_ports
-from graph_os.messaging.service import MessagingService
+from arbora.messaging import commands, polling
+from arbora.messaging import router as arbora_router
+from arbora.messaging.host_ports import bind_host_ports
+from arbora.messaging.service import MessagingService
 
 
 class _FakeRouter:
@@ -39,7 +39,7 @@ class _FakeRouter:
         self._tasks = tasks
 
 
-def test_graphos_poller_connects_backend_and_bound_handler(monkeypatch) -> None:
+def test_arbora_poller_connects_backend_and_bound_handler(monkeypatch) -> None:
     seen: list[Any] = []
 
     class FakeBackend:
@@ -72,7 +72,7 @@ def test_graphos_poller_connects_backend_and_bound_handler(monkeypatch) -> None:
         return handler
 
     monkeypatch.setattr(MessagingService, "instance", lambda _engine: Service())
-    monkeypatch.setattr(graphos_router, "InboundRouter", FakeRouter)
+    monkeypatch.setattr(arbora_router, "InboundRouter", FakeRouter)
     bind_host_ports(planner_handler_factory=make_handler)
     monkeypatch.setattr(commands, "command_specs", lambda _kind: ["help"])
 

@@ -10,8 +10,8 @@ from types import SimpleNamespace
 import pytest
 import yaml
 
-from graph_os.deployment import genesis_environments as environments
-from graph_os.deployment import preflight as P
+from arbora.deployment import genesis_environments as environments
+from arbora.deployment import preflight as P
 
 
 @pytest.fixture(autouse=True)
@@ -225,7 +225,7 @@ def test_invalid_profiles_do_not_fall_back(failure, tmp_path, core_ready, monkey
 def test_doctor_cli_propagates_kubernetes_prerequisite_refusal(
     core_ready, monkeypatch, capsys
 ):
-    from graph_os.deployment.doctor import _run_preflight_cli
+    from arbora.deployment.doctor import _run_preflight_cli
 
     monkeypatch.setattr(P.shutil, "which", lambda name: None)
     result = _run_preflight_cli(Namespace(profile="prod", components=None, json=True))

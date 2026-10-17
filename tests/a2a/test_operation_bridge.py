@@ -16,17 +16,17 @@ import pytest
 from eunomia_core import schemas
 from fastapi import FastAPI
 
-from graph_os.a2a import mcp as a2a_mcp
-from graph_os.a2a.application import create_a2a_application
-from graph_os.a2a.service import A2AService
-from graph_os.api.contracts.session import GraphSession, use_session
-from graph_os.api.http.auth import AmbientHTTPAuthenticator
-from graph_os.api.invoke.bootstrap import verify_current_from_session
-from graph_os.api.policy.eunomia import PolicyGate
-from graph_os.api.registry import Confirm, Surface, contract_admission
-from graph_os.api.registry.eg_binding import EgContractError
-from graph_os.mcp_server import runtime as mcp_runtime
-from graph_os.security.actor_context import ActorContext, ActorType, CredentialLease
+from arbora.a2a import mcp as a2a_mcp
+from arbora.a2a.application import create_a2a_application
+from arbora.a2a.service import A2AService
+from arbora.api.contracts.session import GraphSession, use_session
+from arbora.api.http.auth import AmbientHTTPAuthenticator
+from arbora.api.invoke.bootstrap import verify_current_from_session
+from arbora.api.policy.eunomia import PolicyGate
+from arbora.api.registry import Confirm, Surface, contract_admission
+from arbora.api.registry.eg_binding import EgContractError
+from arbora.mcp_server import runtime as mcp_runtime
+from arbora.security.actor_context import ActorContext, ActorType, CredentialLease
 from tests.a2a.test_application import Authenticator, Authority, Router
 from tests.a2a.test_mcp import _Mcp
 from tests.api.test_invoke_contract import FixtureRuntime, operation, setup_services
@@ -73,7 +73,7 @@ def session(scopes: frozenset[str] = frozenset({"example:write"})) -> GraphSessi
         tenant=actor.tenant_id,
         scopes=scopes,
         policy_version="policy:one",
-        audience="graph-os",
+        audience="arbora",
     )
 
 
@@ -109,7 +109,7 @@ def post(
     app: Any,
     *,
     params: Any = None,
-    method: str = "graphos.op/invoke",
+    method: str = "arbora.op/invoke",
     token: str = "fixture-verified",
 ) -> httpx.Response:
     async def execute() -> httpx.Response:
@@ -232,7 +232,7 @@ def test_missing_composition_still_refuses_without_effects() -> None:
     "method,params",
     [
         (
-            "graphos.plan/confirm",
+            "arbora.plan/confirm",
             {
                 "taskId": "task:one",
                 "pendingCallId": "pending:one",
@@ -241,7 +241,7 @@ def test_missing_composition_still_refuses_without_effects() -> None:
             },
         ),
         (
-            "graphos.op/invoke",
+            "arbora.op/invoke",
             {
                 "op": "example.write",
                 "params": {},
@@ -257,7 +257,7 @@ def test_unqualified_signed_approval_routes_remain_refused(
     app, _services, runtime, audit, journal, _requests = fixture()
     # The legacy task facade has its own explicit fixture credential authority.
     token = (  # sanitizer:ignore - synthetic ASGI credential
-        "verified" if method == "graphos.plan/confirm" else "fixture-verified"
+        "verified" if method == "arbora.plan/confirm" else "fixture-verified"
     )
     response = post(app, params=params, method=method, token=token)
     assert response.status_code == 501

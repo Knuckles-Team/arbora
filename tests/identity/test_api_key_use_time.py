@@ -4,8 +4,8 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from graph_os.identity.api_keys import ApiKeyGrant, effective_scopes
-from graph_os.identity.engine import IdentityUnavailable
+from arbora.identity.api_keys import ApiKeyGrant, effective_scopes
+from arbora.identity.engine import IdentityUnavailable
 
 NOW = datetime(2026, 10, 10, tzinfo=UTC)
 

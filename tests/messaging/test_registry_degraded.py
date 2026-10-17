@@ -14,9 +14,9 @@ from typing import Any
 
 import pytest
 
-from graph_os.messaging.registry import MessagingRegistry
-from graph_os.messaging.router import InboundRouter
-from graph_os.messaging.supervision import (
+from arbora.messaging.registry import MessagingRegistry
+from arbora.messaging.router import InboundRouter
+from arbora.messaging.supervision import (
     AdapterImportFailed,
     AdapterMissing,
     ChannelSupervisionState,

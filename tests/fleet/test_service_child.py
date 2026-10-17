@@ -9,9 +9,9 @@ from typing import Any
 
 import pytest
 
-from graph_os.fleet.catalog_items import CatalogItem
-from graph_os.fleet.multiplexer import _decode_engine_server_config
-from graph_os.fleet.service_child import (
+from arbora.fleet.catalog_items import CatalogItem
+from arbora.fleet.multiplexer import _decode_engine_server_config
+from arbora.fleet.service_child import (
     DurableReservation,
     ServiceChildAdapter,
     ServiceChildOutcomeUnknown,
@@ -21,7 +21,7 @@ from graph_os.fleet.service_child import (
 
 
 class Journal:
-    """A fake structurally satisfying ``graph_os.fleet.service_child.ServiceChildJournal``."""
+    """A fake structurally satisfying ``arbora.fleet.service_child.ServiceChildJournal``."""
 
     def __init__(
         self,
@@ -69,7 +69,7 @@ class Journal:
 
 
 class Transport:
-    """A fake structurally satisfying ``graph_os.fleet.service_child.ServiceChildTransport``."""
+    """A fake structurally satisfying ``arbora.fleet.service_child.ServiceChildTransport``."""
 
     def __init__(self, *, fail: bool = False, result: Any = None):
         self.fail = fail
@@ -277,7 +277,7 @@ async def test_mux_service_transport_uses_one_admitted_attempt() -> None:
     this repository's current multiplexer yet (the durable one-shot child
     journal/transport it needs is new infrastructure, GRAPHOS-FLEET-R015's
     service-credential path remains closed until it lands — see
-    :mod:`graph_os.fleet.gateway_ops`). This stub plays that same role so the
+    :mod:`arbora.fleet.gateway_ops`). This stub plays that same role so the
     adapter's own dispatch contract is proven independent of that larger,
     separate landing."""
     journal = Journal()

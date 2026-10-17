@@ -24,7 +24,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from graph_os.mcp_server.backing.server_factory import (
+from arbora.mcp_server.backing.server_factory import (
     _hardened_jwt_verifier,
     _validate_network_exposure,
     create_mcp_parser,

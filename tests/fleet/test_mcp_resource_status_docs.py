@@ -7,7 +7,7 @@ from typing import get_args
 
 import pytest
 
-from graph_os.fleet import mcp_resource_reconciliation as gate
+from arbora.fleet import mcp_resource_reconciliation as gate
 
 DOCS = Path(__file__).resolve().parents[2] / "docs"
 UNRECONCILED = "reingestion-unreconciled"

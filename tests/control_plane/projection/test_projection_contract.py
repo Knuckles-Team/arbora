@@ -2,7 +2,7 @@
 
 These fixtures are deliberately in-memory and persistence-independent. They
 exercise the protocol boundary only; the root validation track owns real
-relational and GraphOS adapter acceptance.
+relational and Arbora adapter acceptance.
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ from typing import Literal
 
 import pytest
 
-from graph_os.control_plane.projection import (
+from arbora.control_plane.projection import (
     AtomicCommitReceipt,
     AuthoritativeMutation,
     CheckpointConflict,
@@ -340,4 +340,4 @@ def test_observation_promotion_is_explicit_and_reverse_sync_is_rejected() -> Non
     assert receipt.event_id is not None
     assert authority.calls[0][0].origin == "graph_observation_promotion"
     with pytest.raises(ValueError, match="reverse_sync_is_not_an_authority_path"):
-        reject_reverse_sync(source="graphos")
+        reject_reverse_sync(source="arbora")

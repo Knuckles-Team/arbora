@@ -5,7 +5,7 @@ from __future__ import annotations
 import tomllib
 from pathlib import Path
 
-from graph_os.deployment import release_canary
+from arbora.deployment import release_canary
 
 
 def _project_scripts() -> dict[str, str]:
@@ -14,32 +14,32 @@ def _project_scripts() -> dict[str, str]:
         return tomllib.load(stream)["project"]["scripts"]
 
 
-def test_host_deployment_scripts_point_to_graph_os_modules() -> None:
+def test_host_deployment_scripts_point_to_arbora_modules() -> None:
     scripts = _project_scripts()
     assert scripts == {
-        "agent-utilities-doctor": "graph_os.deployment.doctor:main",
-        "agent-utilities-venv": "graph_os.deployment.venv_sync:main",
-        "graph-os": "graph_os.mcp_server.server:mcp_server",
-        "graph-os-daemon": "graph_os.gateway.daemon:main",
-        "graph-os-production-ops": "graph_os.deployment.production_ops:main",
-        "graph-os-connector-count-pins": "graph_os.fleet.connector_count_pins:main",
-        "graph-os-release-canary": "graph_os.deployment.release_canary:main",
-        "graph-os-capability-layers": "graph_os.architecture.capability_layers:main",
-        "graph-os-check-import-boundaries": "graph_os.architecture.boundary_census:main",
-        "graph-os-hosting-config": "graph_os.deployment.host_config:main",
-        "graph-os-wiring-sweep": "graph_os.evolution.wiring_sweep:main",
-        "setup-config": "graph_os.deployment.cli:main",
+        "agent-utilities-doctor": "arbora.deployment.doctor:main",
+        "agent-utilities-venv": "arbora.deployment.venv_sync:main",
+        "arbora": "arbora.mcp_server.server:mcp_server",
+        "arbora-daemon": "arbora.gateway.daemon:main",
+        "arbora-production-ops": "arbora.deployment.production_ops:main",
+        "arbora-connector-count-pins": "arbora.fleet.connector_count_pins:main",
+        "arbora-release-canary": "arbora.deployment.release_canary:main",
+        "arbora-capability-layers": "arbora.architecture.capability_layers:main",
+        "arbora-check-import-boundaries": "arbora.architecture.boundary_census:main",
+        "arbora-hosting-config": "arbora.deployment.host_config:main",
+        "arbora-wiring-sweep": "arbora.evolution.wiring_sweep:main",
+        "setup-config": "arbora.deployment.cli:main",
     }
 
 
 def test_release_canary_checks_the_same_direct_entrypoints() -> None:
     assert release_canary._ENTRY_POINTS == {
-        "graph-os": "graph_os.mcp_server.server:mcp_server",
-        "agent-utilities-doctor": "graph_os.deployment.doctor:main",
+        "arbora": "arbora.mcp_server.server:mcp_server",
+        "agent-utilities-doctor": "arbora.deployment.doctor:main",
     }
 
 
-def test_graph_os_entrypoint_resolves_to_the_native_server() -> None:
-    from graph_os.mcp_server.server import mcp_server
+def test_arbora_entrypoint_resolves_to_the_native_server() -> None:
+    from arbora.mcp_server.server import mcp_server
 
     assert callable(mcp_server)

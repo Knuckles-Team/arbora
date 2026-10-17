@@ -12,8 +12,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from graph_os.fleet.multiplexer import MCPMultiplexer
-from graph_os.fleet.shared_multiplexer import (
+from arbora.fleet.multiplexer import MCPMultiplexer
+from arbora.fleet.shared_multiplexer import (
     ServedMultiplexerBindingError,
     _reset_served_multiplexer_for_tests,
     bind_served_multiplexer,
@@ -21,7 +21,7 @@ from graph_os.fleet.shared_multiplexer import (
     get_served_multiplexer,
     run_on_served_multiplexer,
 )
-from graph_os.webui_host.mcp_delegation import webui_mcp_delegation_helpers
+from arbora.webui_host.mcp_delegation import webui_mcp_delegation_helpers
 from tests.fleet.catalog_fixture import (
     attach_multiplexer_from_fixture,
     multiplexer_from_fixture,
@@ -163,7 +163,7 @@ async def test_native_delegation_uses_served_probe_child_pool_and_bounds(
     config.write_text('{"mcpServers": {}}', encoding="utf-8")
     mux = multiplexer_from_fixture(config)
     monkeypatch.setattr(
-        "graph_os.fleet.multiplexer._require_fleet_capability", lambda *_args: None
+        "arbora.fleet.multiplexer._require_fleet_capability", lambda *_args: None
     )
     mux.probe_server = AsyncMock(  # type: ignore[method-assign]
         return_value={"tools": [{"name": "search", "inputSchema": {}}], "error": None}

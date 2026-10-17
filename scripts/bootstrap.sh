@@ -73,7 +73,7 @@ fi
 
 if [[ "$scanners" == 1 ]]; then
   echo "bootstrap: native scanners (cargo/npm builds; ~15 min cold)"
-  scanner_root="$HOME/.local/share/graph-os-scanners"
+  scanner_root="$HOME/.local/share/arbora-scanners"
   bins="$(bash scripts/install_scanners.sh "$scanner_root")"
   echo "bootstrap: add the scanners to PATH:"
   echo "$bins" | sed 's/^/  export PATH="/; s/$/:$PATH"/'

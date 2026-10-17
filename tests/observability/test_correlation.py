@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from agent_connector_sdk.identity import ActorContext, ActorType, use_actor
 
-from graph_os.observability import correlation as c
+from arbora.observability import correlation as c
 
 
 def test_inject_carries_one_correlation_id_and_the_identity():

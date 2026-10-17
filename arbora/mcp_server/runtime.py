@@ -1,0 +1,942 @@
+#!/usr/bin/python
+"""Knowledge Graph MCP Server — Thin wrapper over IntelligenceGraphEngine.
+
+CONCEPT:AU-ECO.mcp.knowledge-graph-exposure — Knowledge Graph MCP Exposure
+
+Exposes the internal Knowledge Graph as MCP tools for external agents
+(Claude Code, Antigravity IDE, OpenCode, Devin) to query, search, and
+ingest data into the shared unified KG.
+
+Architecture:
+    This module reuses the existing ``create_mcp_server()`` infrastructure
+    from ``arbora.mcp_server.backing.server_factory`` — zero new abstractions.
+    All tools delegate to ``IntelligenceGraphEngine`` methods that already
+    exist in the 15-phase pipeline.
+
+Security:
+    - Read-only by default for external agents.
+    - Write access requires ``kg:write`` scope via MCP auth.
+    - Every write carries provenance: ``agent_id``, ``session_id``,
+      ``workspace_path`` for multi-agent traceability.
+
+Usage:
+    # Start as stdio MCP server (default):
+    arbora --transport stdio
+
+    # Start as HTTP transport:
+    arbora --transport streamable-http --host 127.0.0.1 --port 8004
+
+Cross-IDE Discovery:
+    Register the Arbora endpoint with the MCP client::
+
+        {
+          "mcpServers": {
+            "arbora": {
+              "command": "arbora",
+              "args": ["--transport", "stdio"]
+            }
+          }
+        }
+"""
+
+from __future__ import annotations
+
+import contextlib
+import contextvars
+import json
+import logging
+import re
+import threading
+import uuid
+from types import MappingProxyType
+from typing import Any, cast
+
+from arbora._version import __version__
+from arbora.core.settings import setting
+from arbora.mcp_server.legacy_action_mapping import (
+    APPROVED_ACTION_MAPPING,
+    validate_served_actions,
+)
+
+logger = logging.getLogger(__name__)
+
+
+REGISTERED_TOOLS: dict[str, Any] = {}
+#: Names one complete ``_build_server`` registration produced. A non-empty
+#: ``REGISTERED_TOOLS`` alone does not prove the table is complete: a surface
+#: registrar (A2A, browser control, a single tool module) can add a few
+#: entries before the full build runs, which used to make
+#: :func:`ensure_tools_registered` a silent no-op over a partial table.
+_FULL_TOOL_NAMES: frozenset[str] = frozenset()
+
+
+def _build_dummy_request(path_params=None, json_body=None):
+    from starlette.requests import Request
+
+    scope: dict[str, Any] = {
+        "type": "http",
+        "path_params": path_params or {},
+        "query_string": b"",
+        "headers": [],
+    }
+    req = Request(scope)
+    if json_body is not None:
+
+        async def mock_json():
+            return json_body
+
+        # Intentional instance-level override of Request.json for this dummy/mock
+        # request (there is no other way to fake a request body without a real ASGI
+        # receive channel) — not a real Request whose .json() must stay bound.
+        req.json = mock_json
+    return req
+
+
+# Server-side authority for stdio MCP, minted once from configured runtime
+# secret-reference/OAuth2 identity. Network requests receive their session from middleware and
+# never fall back to this process authority.
+_PROCESS_SESSION: Any = None
+_PROCESS_SESSION_REFRESH_LOCK = threading.Lock()
+_PROCESS_AUTHORITY_STOP = threading.Event()
+_PROCESS_AUTHORITY_THREAD: threading.Thread | None = None
+
+# D-SNV-5 follow-up: guards :func:`authority_keepalive_scope` against starting a
+# second renewal loop for the same lease when one guarded scope nests inside
+# another on the same task tree (for example an MCP tool dispatch whose tool body
+# itself calls ``Orchestrator.execute_agent`` for a sub-delegation). contextvars
+# propagate across ``await``, ``asyncio.ensure_future``/``create_task``, and
+# ``asyncio.to_thread`` (which copies the current context into the worker thread),
+# so the guard is visible to a nested scope even when the nesting crosses a
+# to_thread boundary.
+_AUTHORITY_KEEPALIVE_ACTIVE: contextvars.ContextVar[bool] = contextvars.ContextVar(
+    "_authority_keepalive_active", default=False
+)
+
+_CALLER_AUTHORITY_FIELDS = frozenset({"_actor", "_roles", "_tenant"})
+
+
+def _reject_caller_authority(kwargs: dict[str, Any]) -> None:
+    """Reject legacy tool fields that attempted to self-assert authority."""
+    if _CALLER_AUTHORITY_FIELDS.intersection(kwargs):
+        raise PermissionError("Caller-supplied graph authority is forbidden")
+
+
+class UnsupportedToolFieldError(ValueError):
+    """U-74: a caller (generically the REST twin, which forwards the raw JSON
+    body as kwargs with no schema validation) supplied a field the target
+    tool's signature does not accept.
+
+    ``POST /engine/tenants`` with ``{"action": "list", "connection":
+    "default"}`` used to reach ``_engine_domain_tool(action, params_json,
+    graph)`` as an unfiltered ``**body`` call, raise a raw ``TypeError:
+    _engine_domain_tool() got an unexpected keyword argument 'connection'``,
+    and surface as an opaque HTTP 500 — indistinguishable from a real server
+    fault. This is a distinct exception type (rather than reusing the
+    existing ``_missing_required`` ``ValueError``) so the generic REST
+    endpoint factory below can map it to a deterministic 4xx instead of the
+    default 500, without changing behavior for any other error class."""
+
+
+def _validate_tool_kwargs_against_signature(
+    tool_name: str, tool_func: Any, kwargs: dict
+) -> None:
+    """Fail closed on a field the tool's own signature does not declare,
+    instead of forwarding it into the call and letting a bare ``TypeError``
+    surface as an internal error (U-74). A tool that declares ``**kwargs`` is
+    exempted — it explicitly accepts arbitrary fields."""
+    import inspect
+
+    try:
+        parameters = inspect.signature(tool_func).parameters
+    except (TypeError, ValueError):  # noqa: BLE001 — signature introspection
+        # failing (e.g. a builtin/C-implemented callable with no inspectable
+        # signature) is not this guard's problem to solve: this validation is
+        # purely an ADDITIONAL fail-fast check layered in front of the real
+        # call, so skipping it here only forgoes the nicer 4xx and falls back
+        # to today's behavior (any real failure still surfaces normally from
+        # the call itself, e.g. as the existing bare-TypeError-to-500 path).
+        return
+    if any(p.kind is inspect.Parameter.VAR_KEYWORD for p in parameters.values()):
+        return
+    unknown = sorted(set(kwargs) - set(parameters))
+    if unknown:
+        raise UnsupportedToolFieldError(
+            f"Tool {tool_name!r} does not accept field(s): {', '.join(unknown)}."
+        )
+
+
+def _resolve_verified_scope_actor(session):
+    """Resolve the ambient actor for `verified_tool_session_scope`, if any.
+
+    Returns ``None`` when no actor is bound. Raises when a bound,
+    authenticated actor disagrees with the session's own actor.
+    """
+    from arbora.security.actor_context import (
+        IdentityRequiredError,
+        current_actor,
+    )
+
+    try:
+        actor = current_actor()
+    except IdentityRequiredError:
+        return None
+    if actor is not None and actor.authenticated and actor != session.actor:
+        raise PermissionError("Verified actor and GraphSession authority differ")
+    return actor
+
+
+@contextlib.contextmanager
+def verified_tool_session_scope():
+    """Scope one served tool call to middleware/process-minted authority.
+
+    Identity, tenant, audience, and policy revision are validated before tool
+    dispatch. The error surface deliberately omits principal, tenant, token,
+    endpoint, and policy values.
+    """
+    from arbora.api.contracts.session import (
+        current_session,
+        use_session,
+    )
+    from arbora.security.actor_context import use_actor
+
+    ambient = current_session()
+    session = ambient or _PROCESS_SESSION
+    if session is None:
+        raise PermissionError("Verified GraphSession required")
+    try:
+        session.engine_verified_context()
+    except PermissionError:
+        raise PermissionError("Verified GraphSession authority is incomplete") from None
+
+    actor = _resolve_verified_scope_actor(session)
+
+    with contextlib.ExitStack() as stack:
+        if ambient is None:
+            stack.enter_context(use_session(session))
+        if actor is None or actor != session.actor:
+            stack.enter_context(use_actor(session.actor))
+        yield session
+
+
+async def _execute_tool(tool_name: str, **kwargs) -> Any:
+    tool_func = REGISTERED_TOOLS.get(tool_name)
+    if not tool_func:
+        raise ValueError(f"Tool {tool_name} not registered")
+
+    import inspect
+
+    _reject_caller_authority(kwargs)
+    # U-74: fail closed on a field the tool's signature does not declare
+    # (e.g. a caller reusing the query/write `connection` selector against a
+    # lifecycle tool that is action-only) BEFORE invocation, rather than
+    # forwarding it and letting a raw TypeError surface as an opaque 500.
+    _validate_tool_kwargs_against_signature(tool_name, tool_func, kwargs)
+
+    # Tool functions declare params as ``name: T = Field(default=...)``. When the tool is
+    # invoked through FastMCP, the schema layer resolves those defaults. Calling the raw
+    # function directly here (internal callers, the REST gateway, tests) does NOT — so any
+    # omitted param would be bound to the raw ``FieldInfo`` object, later blowing up with
+    # "'FieldInfo' object has no attribute 'replace'" / "not JSON serializable". Resolve
+    # FieldInfo defaults for omitted params so direct invocation matches the MCP behavior.
+    _missing_required: list[str] = []
+    try:
+        from pydantic.fields import FieldInfo
+        from pydantic_core import PydanticUndefined
+
+        for _name, _param in inspect.signature(tool_func).parameters.items():
+            if _name in kwargs:
+                continue
+            _default = _param.default
+            if isinstance(_default, FieldInfo):
+                _resolved = _default.default
+                if _resolved is not PydanticUndefined:
+                    kwargs[_name] = _resolved
+                elif getattr(_default, "default_factory", None) is not None:
+                    kwargs[_name] = _default.default_factory()  # type: ignore[misc, call-arg]
+                else:
+                    # Required param (Field with no default) omitted: without this the
+                    # raw FieldInfo would bind and later blow up deep in the tool with a
+                    # cryptic "'FieldInfo' object has no attribute 'strip'". Fail loud
+                    # with the actual missing-arg name instead.
+                    _missing_required.append(_name)
+    except Exception as exc:
+        logger.warning("tool default resolution failed: %s", exc)
+    if _missing_required:
+        raise ValueError(
+            f"Tool {tool_name!r} missing required argument(s): "
+            f"{', '.join(_missing_required)}."
+        )
+
+    import asyncio
+
+    # Dispatch isolation (CONCEPT:AU-ECO.mcp.gateway-dispatch-isolation): most graph_*/
+    # engine_* tools are SYNC and do blocking engine I/O. Running them inline blocks the ONE
+    # gateway asyncio loop, so a single hung/misbehaving tool call (an uncompiled engine
+    # surface, a bad action, a wedged backend) freezes the whole arbora child and
+    # disconnects EVERY connected MCP client. Run sync tools on a worker thread and bound
+    # every call with a timeout so a hung tool FAILS LOUD and frees the loop instead of taking
+    # the gateway down. The timeout is > the delegation wall-clock so execute_agent isn't
+    # killed. Threads propagate the current contextvars (actor/session) via to_thread.
+    _TOOL_CALL_TIMEOUT_S = 320.0
+
+    # Dispatch isolation (CONCEPT:AU-ECO.mcp.gateway-dispatch-isolation): most graph_*/
+    # engine_* tools are SYNC and do blocking engine I/O. Running them inline blocks the ONE
+    # gateway asyncio loop, so a single hung/misbehaving tool call (an uncompiled engine
+    # surface, a bad action, a wedged backend) freezes the whole arbora child and
+    # disconnects EVERY connected MCP client. Run sync tools on a worker thread and bound
+    # every call with a timeout so a hung tool FAILS LOUD and frees the loop instead of taking
+    # the gateway down. The timeout is > the delegation wall-clock so execute_agent isn't
+    # killed. Threads propagate the current contextvars (actor/session) via to_thread.
+    _TOOL_CALL_TIMEOUT_S = 320.0
+
+    async def _run() -> Any:
+        if inspect.iscoroutinefunction(tool_func):
+            return await asyncio.wait_for(
+                tool_func(**kwargs), timeout=_TOOL_CALL_TIMEOUT_S
+            )
+        return await asyncio.wait_for(
+            asyncio.to_thread(tool_func, **kwargs), timeout=_TOOL_CALL_TIMEOUT_S
+        )
+
+    async def _guarded() -> Any:
+        try:
+            active_session = await _ensure_process_authority_current()
+            with verified_tool_session_scope():
+                # D-SNV-5: a dispatch may run for the whole _TOOL_CALL_TIMEOUT_S
+                # window, but authority is otherwise checked only once, at entry.
+                # authority_keepalive_scope gives a renewable (server-minted
+                # process/client-credentials) session a background keepalive for
+                # the dispatch's duration so a long delegation renews its own
+                # authority instead of failing closed mid-flight — the SAME
+                # primitive Orchestrator.execute_agent opens directly, so a
+                # nested execute_agent call here (a tool that itself delegates)
+                # does not start a second renewal loop. A caller-presented
+                # bearer JWT has no credential_lease and is never proactively
+                # renewed here — that would be forging authority the server
+                # does not hold.
+                async with authority_keepalive_scope(active_session):
+                    return await _run()
+        except TimeoutError:
+            return {
+                "error": (
+                    f"tool {tool_name!r} exceeded the {_TOOL_CALL_TIMEOUT_S:.0f}s dispatch "
+                    "timeout and was abandoned; the gateway stayed responsive (fail-loud "
+                    "dispatch isolation)."
+                ),
+                "tool": tool_name,
+                "degraded": True,
+            }
+
+    # CONCEPT:AU-ORCH.scheduling.resource-priority-edict — an MCP tool call is the
+    # INTERACTIVE entry boundary (a live Claude / end-user request). Tag the whole
+    # dispatch INTERACTIVE so its engine reads — including a delegation's RAG
+    # context-compilation GetNodeProperties point-reads, which run on the ``to_thread``
+    # worker that inherits this context — carry the top QoS class and claim the engine's
+    # reserved read lane ahead of a saturating background-ingestion write storm. Tag ONLY
+    # when the context is UNTAGGED: a re-entrant call from a delegated agent (ORCHESTRATION)
+    # or a background task (BACKGROUND_INGESTION) keeps its own, lower class — never upgraded.
+    from arbora.access.priority import (
+        PriorityClass,
+        current_priority,
+        priority_scope,
+    )
+
+    if current_priority() is None:
+        with priority_scope(PriorityClass.INTERACTIVE):
+            return await _guarded()
+    return await _guarded()
+
+
+def served_legacy_actions_within_approved_mapping(
+    served_actions: tuple[str, ...],
+) -> None:
+    """Refuse a served-actions set containing an action with no approved
+    legacy-host mapping (RF-ADR-009 host-composition-boundary R005)."""
+    validate_served_actions(served_actions, APPROVED_ACTION_MAPPING)
+
+
+def build_native_arbora_toolset(tool_names: list[str], *, toolset_id: str) -> Any:
+    """Bind registered Arbora tools for one governed in-process delegation.
+
+    Native delegation must not connect Arbora back to its own HTTP endpoint or
+    call raw registered functions directly.  Each generated PydanticAI tool
+    preserves the registered function's schema but dispatches through
+    :func:`_execute_tool`, which reuses the verified caller session, rejects
+    caller-supplied authority, resolves FastMCP defaults, and preserves bounded
+    dispatch isolation.  The marker is consumed by the mandatory identity-policy
+    wrapper before a specialist receives the toolset.
+    """
+
+    from pydantic_ai import Tool
+    from pydantic_ai.toolsets.function import FunctionToolset
+
+    if not tool_names or len(tool_names) != len(set(tool_names)):
+        raise ValueError("native Arbora tool names must be non-empty and unique")
+    if not toolset_id or len(toolset_id) > 128:
+        raise ValueError("native Arbora toolset id is invalid")
+
+    registered: list[tuple[str, Any]] = []
+    for name in tool_names:
+        if re.fullmatch(r"[a-z][a-z0-9_]{0,63}", name or "") is None:
+            raise ValueError("native Arbora tool name is invalid")
+        function = REGISTERED_TOOLS.get(name)
+        if function is None:
+            raise RuntimeError("requested native Arbora tool is unavailable")
+        registered.append((name, function))
+
+    tools: list[Any] = []
+    for name, function in registered:
+        schema_source = Tool(function, name=name)
+
+        async def dispatch(_tool_name: str = name, **kwargs: Any) -> Any:
+            return await _execute_tool(_tool_name, **kwargs)
+
+        tools.append(
+            Tool.from_schema(
+                dispatch,
+                name=name,
+                description=schema_source.description,
+                json_schema=schema_source.function_schema.json_schema,
+                sequential=schema_source.sequential,
+            )
+        )
+
+    return FunctionToolset(
+        tools,
+        id=toolset_id,
+        metadata={"arbora_native": True},
+    )
+
+
+def safe_json_load(s: Any) -> Any:
+    if hasattr(s, "model_dump"):
+        return s.model_dump()
+    if isinstance(s, str):
+        try:
+            return json.loads(s)
+        except Exception as exc:  # noqa: BLE001 — non-JSON string is a normal input, not a failure
+            logger.debug(
+                "safe_json_load: input is not JSON, returned as-is: %s",
+                type(exc).__name__,
+            )
+    return s
+
+
+from starlette.requests import Request
+from starlette.responses import JSONResponse
+
+from arbora.security.error_surface import public_error_payload
+
+
+def _external_failure_payload(
+    exc: BaseException, *, code: str = "operation_failed"
+) -> dict[str, str]:
+    """Return a correlation-safe public error without exception details.
+
+    Driver and tool exceptions routinely embed credentials, endpoints, local
+    paths, queries, or request payloads.  External surfaces receive only a
+    stable code/message and an opaque correlation identifier.  The matching
+    log entry deliberately records the exception *type* only.
+    """
+
+    return public_error_payload(exc, logger=logger, code=code)
+
+
+def _external_error_response(
+    exc: BaseException, *, status_code: int = 500, code: str = "operation_failed"
+) -> JSONResponse:
+    """Build the canonical exception-safe REST error response."""
+
+    return JSONResponse(
+        _external_failure_payload(exc, code=code), status_code=status_code
+    )
+
+
+# ── Canonical tool ⇄ REST parity map ────────────────────────────────────────
+# Single source of truth: every action-routed MCP tool in ``REGISTERED_TOOLS``
+# has exactly one collapsed action-routed REST twin (POST, JSON body carries the
+# ``action`` and its args). Granular CRUD sub-routes (``/graph/write/node`` etc.)
+# are layered on top for fine-grained HTTP clients, but this map guarantees that
+# anything callable over MCP is also callable over REST and vice versa. The
+# parity contract test (tests/unit/test_gateway_mcp_parity.py) asserts this map
+# stays in lockstep with REGISTERED_TOOLS so the two surfaces never drift.
+ACTION_TOOL_ROUTES: dict[str, str] = {
+    "graph_query": "/graph/query",
+    "tabular_query": "/query/tabular",
+    "graph_ask": "/graph/ask",
+    "graph_table": "/graph/table",
+    "graph_search": "/graph/search",
+    "graph_search_synthesis": "/graph/search-synthesis",
+    "graph_code_nav": "/graph/code-nav",
+    "graph_document_tree": "/graph/document-tree",
+    "graph_write": "/graph/write",
+    "graph_ingest": "/graph/ingest",
+    "graph_analyze": "/graph/analyze",
+    "graph_code": "/graph/code",
+    "graph_evaluate": "/graph/evaluate",
+    "graph_explain": "/graph/explain",
+    "graph_config": "/graph/config",
+    "graph_configure": "/graph/configure",
+    "graph_context": "/graph/context",
+    "graph_feedback": "/graph/feedback",
+    "graph_sessions": "/graph/sessions",
+    "graph_reach": "/graph/reach",
+    "graph_secret": "/graph/secret",  # nosec B105 - a route path, not a secret
+    "document_process": "/document/process",
+    "source_connector": "/connector/source",
+    "graph_writeback": "/graph/writeback",
+    "spec_ticket": "/spec/ticket",
+    "source_sync": "/source/sync",
+    "source_drain": "/source/drain",
+    "graph_etl": "/graph/etl",
+    "ontology_property_types": "/ontology/property-types",
+    "ontology_value_types": "/ontology/value-types",
+    "ontology_interface": "/ontology/interface",
+    "ontology_function": "/ontology/function",
+    "ontology_derive": "/ontology/derive",
+    "ontology_link_materialize": "/ontology/link-materialize",
+    "ontology_leanix_sync": "/ontology/leanix-sync",
+    "ontology_classification_claims": "/ontology/classification-claims",
+    "ontology_repository_provenance": "/ontology/repository-provenance",
+    "graph_ontology": "/graph/ontology",
+    "object_edits": "/object/edits",
+    "object_index": "/object/index",
+    "object_permissioning": "/object/permissioning",
+    "object_set": "/object/set",
+    "graph_share": "/graph/share",
+    "graph_feeds": "/graph/feeds",
+    "graph_candidate_claims": "/graph/candidate-claims",
+    "skill_classify": "/skill/classify",
+    "browser_control": "/browser/control",
+    "graph_a2a": "/graph/a2a",
+}
+
+# Immutable seed used by deterministic catalog generators. Runtime registrars
+# extend ``ACTION_TOOL_ROUTES`` with their own twins, but a generator must never
+# inherit routes left behind by an earlier server build in the same process.
+BASE_ACTION_TOOL_ROUTES = MappingProxyType(dict(ACTION_TOOL_ROUTES))
+
+
+def _is_engine_dispatch_client_error(parsed: Any) -> bool:
+    """U-74 (GOC-83-W05): does a parsed ``engine_<domain>`` dispatch result
+    represent a CALLER-caused parameter mistake, rather than a real result or
+    a genuine server-side/engine-side failure?
+
+    ``engine_tools._dispatch`` is the ONE dispatcher every ``engine_<domain>``
+    tool shares; it never raises for an unknown action name, an unknown/
+    duplicate/wrong-type/missing parameter to the target EG method, or a
+    malformed ``params_json`` — it catches all of those and returns a JSON
+    STRING error payload instead, by design, so an MCP tool caller always gets
+    data back (never an exception it has to unwrap). That is the right
+    contract for the MCP surface, but the generic REST twin
+    (:func:`_make_tool_endpoint`) unconditionally wrapped ANY such string in
+    ``{"status": "success", ...}`` at HTTP 200 — a client-caused parameter
+    mistake was indistinguishable, over REST, from a real result. This
+    recognizes the two client-error shapes ``_dispatch`` emits (an unknown/
+    non-callable action name — a bare ``error: str``; or an
+    ``error.code == "invalid_request"`` structured payload from
+    ``public_error_json`` — unknown/duplicate/wrong-type/missing parameter, or
+    an undecodable ``params_json``), scoped ONLY to ``engine_*`` REST
+    responses (checked by the caller) so no other tool's REST status-code
+    contract changes. A ``dependency_unavailable`` (engine unreachable) or
+    unclassified ``operation_failed`` payload is NOT a client mistake and is
+    deliberately left at 200, matching prior behavior exactly.
+    """
+    if not isinstance(parsed, dict):
+        return False
+    error = parsed.get("error")
+    if isinstance(error, str):
+        # `_dispatch`'s two pre-call, action-name-level rejections: {"error":
+        # "unknown action ...", "actions": [...]} / {"error": "engine_<domain>
+        # has no callable action ..."} — both are a caller supplying an action
+        # name the domain doesn't have, i.e. exactly as client-caused as an
+        # unsupported top-level field.
+        return True
+    if isinstance(error, dict) and error.get("code") == "invalid_request":
+        # `public_error_json(..., code="invalid_request")` — raised for an
+        # undecodable `params_json`, or a `TypeError` from calling the target
+        # EG method with an unknown/duplicate/wrong-type/missing argument.
+        return True
+    return False
+
+
+def _make_tool_endpoint(tool_name: str):
+    """Build a thin REST handler that dispatches a JSON body to an MCP tool.
+
+    Both the MCP tool surface and the REST surface funnel through
+    :func:`_execute_tool` against the shared in-process engine, so a handler is
+    just: parse body → execute tool → wrap result. This factory is the canonical
+    adapter; per-tool endpoints below that need bespoke parsing keep their own
+    definitions, but every tool in :data:`ACTION_TOOL_ROUTES` without one is
+    served by this.
+    """
+
+    is_engine_domain_tool = tool_name.startswith("engine_")
+
+    async def _handler(request: Request) -> JSONResponse:
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        try:
+            res = await _execute_tool(tool_name, **body)
+            parsed = safe_json_load(res)
+            # U-74 (GOC-83-W05): an `engine_<domain>` action-name or
+            # parameter mistake never raises (see `_is_engine_dispatch_
+            # client_error`'s docstring) — surface it as a deterministic 4xx
+            # instead of an HTTP 200 that hides a caller-caused failure behind
+            # `"status": "success"`. Scoped to `engine_*` tools only; every
+            # other tool's REST status-code contract is unchanged.
+            if is_engine_domain_tool and _is_engine_dispatch_client_error(parsed):
+                return JSONResponse(
+                    {"status": "failed", "result": parsed}, status_code=400
+                )
+            if (
+                tool_name == "graph_sessions"
+                and isinstance(parsed, dict)
+                and isinstance(parsed.get("evidence"), dict)
+                and parsed["evidence"].get("ready") is False
+            ):
+                # Fleet health/topology are supervisory evidence, not ordinary
+                # session CRUD. Preserve the shared fail-closed HTTP signal
+                # while returning the exact typed evidence body used by MCP.
+                return JSONResponse(
+                    {"status": "unavailable", "result": parsed}, status_code=503
+                )
+            return JSONResponse({"status": "success", "result": parsed})
+        except UnsupportedToolFieldError as e:
+            # U-74: a caller-supplied field the tool doesn't accept is a
+            # client-side schema mismatch, not a server fault — deterministic
+            # 4xx instead of the generic 500 every other exception maps to.
+            return _external_error_response(e, status_code=400, code="invalid_request")
+        except Exception as e:
+            return _external_error_response(e)
+
+    _handler.__name__ = f"{tool_name}_endpoint"
+    return _handler
+
+
+# Default agent identity for provenance tracking
+_AGENT_ID = setting("AGENT_ID", f"mcp-client-{uuid.uuid4().hex}")
+_SESSION_ID = setting("SESSION_ID", uuid.uuid4().hex)
+
+
+_ENGINE_LOCK = threading.Lock()
+
+
+_ensure_process_authority_current = cast(Any, None)
+_get_engine = cast(Any, None)
+_mint_process_session = cast(Any, None)
+_release_readiness_authority = cast(Any, None)
+_set_readiness_authority = cast(Any, None)
+_start_engine_bootstrap = cast(Any, None)
+_start_process_authority_supervisor = cast(Any, None)
+_stop_process_authority_supervisor = cast(Any, None)
+authority_keepalive_scope = cast(Any, None)
+set_process_session = cast(Any, None)
+
+import arbora.mcp_server.bootstrap as _bootstrap
+
+for _bootstrap_name in (
+    "_AGENT_ID",
+    "_AUTHORITY_KEEPALIVE_ACTIVE",
+    "_ENGINE_LOCK",
+    "_PROCESS_AUTHORITY_STOP",
+    "_PROCESS_AUTHORITY_THREAD",
+    "_PROCESS_SESSION_REFRESH_LOCK",
+    "_SESSION_ID",
+    "setting",
+):
+    # ``bootstrap`` declares these names as explicit cycle-breaking host slots.
+    # Assign them rather than using ``setdefault``: the declarations exist with
+    # a ``None`` sentinel by design, so setdefault would retain that sentinel
+    # and make the first native dispatch fail before reaching a tool.
+    _bootstrap.__dict__[_bootstrap_name] = globals()[_bootstrap_name]
+for _bootstrap_name in _bootstrap.BOOTSTRAP_EXPORTS:
+    globals()[_bootstrap_name] = getattr(_bootstrap, _bootstrap_name)
+
+
+#: The served intent surface (GRAPHOS-HOST-R024): every verb takes ``op``,
+#: ``intent`` and ``params``.
+SERVED_INSTRUCTIONS = (
+    "Arbora MCP server. One tool contract: the intent tools find (discover), "
+    "ask (read), why (explain), write, act (run) and manage (configure). Each "
+    "takes op='<operation id>' with params={...}, or a natural-language "
+    "intent='...' with op empty. find(intent='...') lists the matching "
+    "operations with their params schema; find(op='<operation id>') returns "
+    "one operation's spec. Engine methods are operations named "
+    "'eg.<service>.<Method>', for example ask(op='eg.graph.GetNodesByLabel', "
+    "params={'label': 'Agent', 'limit': 10}). write/act/manage preview first: "
+    "resubmit with the returned plan_ref and execute=true. The MCP fleet is "
+    "reached the same way: find(intent='...') also returns fleet tools, and "
+    "act(op='fleet.call', params={'server': ..., 'tool': ..., 'arguments': "
+    "{...}}) calls one. Discover before concluding a capability is unavailable."
+)
+
+#: The engine-less backing surface's contract (no operation registry).
+_LEGACY_INSTRUCTIONS = (
+    "Arbora MCP server. One tool contract: the intent tools ask (read), "
+    "find (discover), write, act (run), manage (configure, approve, load fleet "
+    "servers) and why (explain). Each takes action='<tool>.<op>' + params, or "
+    "a natural-language intent with action empty. find(action='describe') "
+    "lists operations. write/act/manage preview first: resubmit the returned "
+    "plan_ref with execute=true."
+)
+
+
+def _build_server(
+    bootstrap: bool = True, *, canonical_surface: bool = False, invocation: Any = None
+):
+    """Build the KG MCP server with all tools registered.
+
+    Args:
+        bootstrap: Whether this is a directly served process. The caller starts
+            background engine bootstrap only after process identity is minted.
+            The API gateway calls this with ``bootstrap=False`` (via
+            :func:`ensure_tools_registered`) because it owns the engine/daemon
+            lifecycle itself and only needs ``REGISTERED_TOOLS`` populated so the
+            centralized REST handlers can dispatch.
+        canonical_surface: Register every condensed domain regardless of
+            deployment toggles. This is reserved for catalog/gate construction;
+            served processes continue to honor their configured toggles.
+    """
+    from arbora.mcp_server.backing.server_factory import create_mcp_server
+
+    is_readonly = False
+
+    def _check_readonly():
+        if is_readonly:
+            return json.dumps(
+                {
+                    "error": "Knowledge Graph is currently in READ-ONLY mode due to database lock contention. "
+                    "Write operations and ingestion are disabled until the other process releases the lock."
+                }
+            )
+        return None
+
+    # In embedded mode (bootstrap=False, e.g. the API gateway populating
+    # REGISTERED_TOOLS) do NOT parse the host process's argv — pass an empty
+    # command line so the factory uses defaults instead of choking on unrelated
+    # flags (pytest/uvicorn args) with SystemExit.
+    args, mcp, middlewares = create_mcp_server(
+        name="arbora",
+        version=__version__,
+        instructions=(
+            _LEGACY_INSTRUCTIONS if invocation is None else SERVED_INSTRUCTIONS
+        ),
+        command_args=None if bootstrap else [],
+        transport_choices=("stdio", "streamable-http"),
+    )
+
+    # Unauthenticated liveness + readiness for HTTP deployments (CONCEPT:AU-OS.deployment.liveness-vs-readiness-split).
+    # Both dispatch into the ONE shared health-check core
+    # (``observability.runtime_health.collect_health``) also used by the REST
+    # gateway's ``/health``/``/health/ready`` and by ``graph_configure(action=
+    # "health")`` — never a second implementation that can drift.
+    #
+    # ``/health`` is LIVENESS: it always answers 200 (this process itself is up
+    # and answering requests) even when the body reports "unhealthy" — a
+    # /health is a dependency-free, status-only liveness signal. The readiness
+    # twin executes the truthful bounded collector on its reserved control lane,
+    # but returns only ready/not_ready because both routes are intentionally
+    # unauthenticated for kubelet. Detailed component data stays behind
+    # graph_configure(action="health") and authenticated dashboard surfaces.
+    @mcp.custom_route("/health", methods=["GET"])
+    async def health_check(request: Request) -> JSONResponse:  # noqa: ARG001
+        return JSONResponse({"status": "ok"}, headers={"Cache-Control": "no-store"})
+
+    @mcp.custom_route("/health/ready", methods=["GET"])
+    async def readiness_check(request: Request) -> JSONResponse:  # noqa: ARG001
+        from arbora.observability.runtime_health import (
+            collect_health_async,
+            is_overall_healthy,
+        )
+
+        report = await collect_health_async()
+        ready = is_overall_healthy(report)
+        return JSONResponse(
+            {"status": "ready" if ready else "not_ready"},
+            status_code=200 if ready else 503,
+            headers={"Cache-Control": "no-store"},
+        )
+
+    # ARD registry surface (CONCEPT:AU-ECO.mcp.eco-serves-two-ard/ECO-4.97) — the arbora twin of the
+    # gateway routes in server/routers/ard.py. This is the container the deploy
+    # mechanic restarts, so it must answer the well-known + search paths too. Both
+    # delegate into the same ecosystem.ard_* core to stay in lockstep with the gateway.
+    @mcp.custom_route("/.well-known/ai-catalog.json", methods=["GET"])
+    async def ard_ai_catalog(request: Request) -> JSONResponse:  # noqa: ARG001
+        from arbora.ecosystem.ard_registry import build_ai_catalog
+
+        return JSONResponse(build_ai_catalog())
+
+    @mcp.custom_route("/search", methods=["POST"])
+    async def ard_search_route(request: Request) -> JSONResponse:
+        from arbora.ecosystem.ard_federation import ArdFederationRelay
+
+        try:
+            body = await request.json()
+        except Exception:  # noqa: BLE001 — malformed body ⇒ empty query, not a 500
+            body = {}
+        query = body.get("query") or {}
+        text = str(query.get("text") or body.get("text") or "")
+        types = ((query.get("filter") or {}).get("type")) or None
+        page_size = int(body.get("pageSize") or 5)
+        result = ArdFederationRelay().federated_search(
+            text,
+            types=types,
+            page_size=page_size,
+            mode=body.get("federationMode"),
+            via=body.get("via") or [],
+        )
+        return JSONResponse(result)
+
+    _register_graph_tool_surface(
+        mcp, canonical=canonical_surface, invocation=invocation
+    )
+
+    global _FULL_TOOL_NAMES
+    _FULL_TOOL_NAMES = frozenset(REGISTERED_TOOLS)
+    return args, mcp, middlewares
+
+
+def _register_graph_tool_surface(
+    mcp: Any, *, canonical: bool = False, invocation: Any = None
+) -> None:
+    """Mount arbora's one MCP tool contract.
+
+    agent-utilities owns the contract (``register_arbora_surface``): the
+    intent tools are served on ``mcp`` and route ``action`` + ``params`` to
+    the action-routed ``graph_*``/``engine_*`` operations registered on a
+    private backing server. arbora's own operations — browser control and
+    A2A here, the RLM control plane at serve time — register on that same
+    backing server and are reached through ``act``. Every operation
+    dispatches through agent-utilities' ``_execute_tool`` core, and this
+    process's ``REGISTERED_TOOLS`` mirrors the same functions so the REST
+    gateway reaches exactly what the intent tools route to.
+    """
+
+    from arbora.a2a.mcp import register_a2a_tools
+    from arbora.browser_control.mcp import register_browser_control_tools
+    from arbora.host_bindings import mount_sdk_a2a
+    from arbora.mcp_server.backing.arbora_surface import register_arbora_surface
+
+    if invocation is not None:
+        from arbora.mcp_server.hosted_invocation import HostedInvocation
+
+        if not isinstance(invocation, HostedInvocation):
+            raise TypeError("admitted hosted invocation is required")
+        invocation.validate()
+        # GRAPHOS-HOST-R024: Arbora serves its own intent surface over the
+        # shared operation registry and invocation pipeline, so every served
+        # operation (``eg.*`` included) is discoverable and callable through
+        # find/ask/act. The backing server still holds host tools reached by
+        # the harness and the REST twins.
+        backing = register_arbora_surface(mcp, canonical=canonical, intent_tools=False)
+        _register_served_intent_surface(mcp, invocation)
+        invocation.mount_on_mcp(mcp)
+    else:
+        backing = register_arbora_surface(mcp, canonical=canonical)
+    register_browser_control_tools(backing)
+    if invocation is None:
+        register_a2a_tools(mcp, tools=backing)
+    else:
+        register_a2a_tools(
+            mcp,
+            tools=backing,
+            operation_services=invocation.services,
+            operation_authenticator=invocation.authenticator,
+        )
+    mount_sdk_a2a(mcp)
+
+
+def _served_caller_session() -> Any:
+    """The request's verified session, else the stdio process session.
+
+    ``_PROCESS_SESSION`` is bound only on the stdio transport, so a network
+    request without its own verified session resolves no caller.
+    """
+    from arbora.api.contracts.session import current_session
+
+    return current_session() or _PROCESS_SESSION
+
+
+def _served_credential_kind() -> str:
+    from arbora.api.contracts.session import current_session
+
+    return "bearer" if current_session() is not None else "process"
+
+
+def _register_served_intent_surface(mcp: Any, invocation: Any) -> Any:
+    """Register the eight-tool intent surface over ``invocation``'s services."""
+    from arbora.api.invoke.pipeline import invoke
+    from arbora.api.mcp.caller import VerifiedMCPCaller
+    from arbora.api.mcp.resolve import IntentResolver
+    from arbora.api.mcp.serving import register_intent_surface
+
+    services = invocation.services
+    caller = VerifiedMCPCaller(
+        session_for_request=_served_caller_session,
+        credential_kind_for_request=_served_credential_kind,
+    )
+    return register_intent_surface(
+        mcp,
+        registry=services.registry,
+        services=services,
+        resolver=IntentResolver(),
+        caller_for_request=caller.caller_for_request,
+        policy_gate=services.policy_gate,
+        invoke=invoke,
+        fleet_search=getattr(
+            services.runtime.bindings.get("fleet_gateway"), "fleet_search", None
+        ),
+    )
+
+
+def _attach_headless_fleet_loader(mcp: Any) -> None:
+    """Attach the fleet loader (AU-CONTROL-R031) to a headless build.
+
+    The served process attaches the fleet in :mod:`arbora.mcp_server.server`;
+    a gateway-only process reaches the tools only through
+    :func:`ensure_tools_registered`, so without this every ``find``/``act``
+    fleet call through ``REGISTERED_TOOLS`` raised "No fleet multiplexer is
+    attached". When attach fails, nothing is attached and a class-name-only
+    cause is recorded on ``mcp`` for ``intent_tools._fleet_mux`` to raise; the
+    full exception is logged server-side.
+    """
+    from arbora.fleet.catalog_reader import DeferredFleetCatalogReader
+    from arbora.fleet.multiplexer import attach_fleet_loader
+
+    try:
+        attach_fleet_loader(
+            mcp,
+            catalog_reader=DeferredFleetCatalogReader(),
+            authority_scope=verified_tool_session_scope,
+        )
+    except Exception as exc:  # noqa: BLE001 - cause recorded verbatim below, never swallowed
+        mcp._fleet_mux_unavailable_reason = (
+            f"fleet loader attach failed in this headless build ({type(exc).__name__})"
+        )
+        logger.warning(
+            "ensure_tools_registered: fleet loader attach failed in this headless build (%s): %s",
+            type(exc).__name__,
+            exc,
+        )
+
+
+def ensure_tools_registered() -> None:
+    """Idempotently register all ``graph_*`` tools into ``REGISTERED_TOOLS``.
+
+    The centralized REST handlers (and the API gateway that mounts them via
+    :func:`_mount_rest_routes`) dispatch through ``REGISTERED_TOOLS`` using
+    :func:`_execute_tool`. Building the MCP server populates that dict as a side
+    effect; we discard the throwaway FastMCP instance and skip the engine
+    bootstrap (``bootstrap=False``) because the gateway owns the engine/daemon
+    lifecycle and the handlers resolve the engine lazily via ``_get_engine()``.
+    The throwaway ``mcp`` also gets the fleet loader
+    (:func:`_attach_headless_fleet_loader`).
+    """
+    if _FULL_TOOL_NAMES and _FULL_TOOL_NAMES <= REGISTERED_TOOLS.keys():
+        return
+    _args, mcp, _middlewares = _build_server(bootstrap=False)
+    _attach_headless_fleet_loader(mcp)

@@ -4,7 +4,7 @@ from copy import deepcopy
 
 import pytest
 
-from graph_os.identity.engine import IdentityUnavailable, Resolution
+from arbora.identity.engine import IdentityUnavailable, Resolution
 
 
 def resolution_value():

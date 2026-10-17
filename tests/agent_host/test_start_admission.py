@@ -11,19 +11,19 @@ import agent_utilities.graph
 import pytest
 import uvicorn
 
-import graph_os.agent_host as host
-from graph_os.agent_host.start_admission import (
+import arbora.agent_host as host
+from arbora.agent_host.start_admission import (
     HostSessionBinding,
     HostStartAdmission,
     HostStartContext,
     HostStartGrant,
     HostStartRequest,
 )
-from graph_os.agent_host.start_configuration import HostStartConfiguration
-from graph_os.api.contracts.session import GraphSession
-from graph_os.identity.engine import Resolution
-from graph_os.identity.ports import SessionState
-from graph_os.security.actor_context import ActorContext
+from arbora.agent_host.start_configuration import HostStartConfiguration
+from arbora.api.contracts.session import GraphSession
+from arbora.identity.engine import Resolution
+from arbora.identity.ports import SessionState
+from arbora.security.actor_context import ActorContext
 
 
 class Owners:

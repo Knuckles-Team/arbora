@@ -9,7 +9,7 @@ import re
 
 import pytest
 
-from graph_os.access import external_policy_sync as sync
+from arbora.access import external_policy_sync as sync
 
 TABLE = sync.TrinoTargetTable(
     "lakehouse", "analytics", "docs", has_markings_column=True

@@ -1,0 +1,73 @@
+"""Public operation-registry contract for Arbora surfaces and generators."""
+
+from .digest import canonical_op, canonical_registry, registry_digest
+from .registry import Caller, Invoke, PolicyDecision, Registry, authorized
+from .scopes import (
+    DOMAIN_SCOPE_CLASSES,
+    FinanceScope,
+    FleetScope,
+    LoopsScope,
+    OpsScope,
+)
+from .spec import (
+    AuditClass,
+    Composite,
+    Confirm,
+    Effect,
+    EgMethod,
+    EgSchemaRef,
+    Executor,
+    HttpShape,
+    Idempotency,
+    OpSpec,
+    PrincipalRule,
+    Stability,
+    SubjectRef,
+    SubjectSource,
+    Surface,
+    Verb,
+)
+from .surface_gate import (
+    CompatBreak,
+    SurfaceDrift,
+    diff_backward_compat,
+    diff_public_surface,
+    public_surface,
+)
+
+__all__ = [
+    "DOMAIN_SCOPE_CLASSES",
+    "AuditClass",
+    "Caller",
+    "CompatBreak",
+    "Composite",
+    "Confirm",
+    "Effect",
+    "EgMethod",
+    "EgSchemaRef",
+    "Executor",
+    "FinanceScope",
+    "FleetScope",
+    "HttpShape",
+    "Idempotency",
+    "Invoke",
+    "LoopsScope",
+    "OpSpec",
+    "OpsScope",
+    "PolicyDecision",
+    "PrincipalRule",
+    "Registry",
+    "Stability",
+    "SubjectRef",
+    "SubjectSource",
+    "Surface",
+    "SurfaceDrift",
+    "Verb",
+    "authorized",
+    "canonical_op",
+    "canonical_registry",
+    "diff_backward_compat",
+    "diff_public_surface",
+    "public_surface",
+    "registry_digest",
+]

@@ -2,8 +2,8 @@
 
 Unlike :mod:`scripts.wiring.orphans` (isolated modules: zero fan-in AND zero
 fan-out), this asks a stricter question: starting from the roots a real
-process actually uses to start GraphOS -- the console scripts and entry
-points in ``pyproject.toml`` -- which ``graph_os`` modules does walking every
+process actually uses to start Arbora -- the console scripts and entry
+points in ``pyproject.toml`` -- which ``arbora`` modules does walking every
 import edge (static, see ``static_imports``, and dynamic/name-based, see
 ``dynamic_imports``) ever reach? A cluster of modules that only import each
 other, reachable from no root, has nonzero fan-in/fan-out and passes the

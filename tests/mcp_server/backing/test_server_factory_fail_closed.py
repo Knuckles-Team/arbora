@@ -25,8 +25,8 @@ from typing import cast
 
 import pytest
 
-from graph_os.mcp_server.backing import server_factory
-from graph_os.mcp_server.backing.server_factory import (
+from arbora.mcp_server.backing import server_factory
+from arbora.mcp_server.backing.server_factory import (
     _component_passes,
     _configure_auth,
     create_mcp_parser,
@@ -73,7 +73,7 @@ def clean_env(monkeypatch):
     ):
         monkeypatch.delenv(key, raising=False)
     monkeypatch.setattr(
-        "graph_os.mcp_server.backing.server_factory._optional_http_request",
+        "arbora.mcp_server.backing.server_factory._optional_http_request",
         lambda: None,
     )
     return monkeypatch

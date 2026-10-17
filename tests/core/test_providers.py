@@ -1,4 +1,4 @@
-"""GraphOS-owned provider discovery (GRAPHOS-HOST-R001.10).
+"""Arbora-owned provider discovery (GRAPHOS-HOST-R001.10).
 
 Ported from the agent-utilities ``core.providers`` contract tests: discovery is
 distribution-owned and never imports provider code, rejects ambiguous or unsafe
@@ -14,8 +14,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from graph_os.core import providers
-from graph_os.core.provider_materialization import (
+from arbora.core import providers
+from arbora.core.provider_materialization import (
     build_asset_manifest,
     inactive_marker,
     write_managed_provider_marker,
@@ -24,7 +24,7 @@ from graph_os.core.provider_materialization import (
 pytestmark = pytest.mark.spec("GRAPHOS-HOST-R001.10")
 
 REGISTRATION = "a" * 64
-_GRAPH_OS = Path(__file__).resolve().parents[2] / "graph_os"
+_ARBORA = Path(__file__).resolve().parents[2] / "arbora"
 
 
 class _Distribution:
@@ -129,9 +129,9 @@ def test_discovery_queries_only_the_requested_sdk_group(
     assert requested == ["agent_connector_sdk.prompt_providers"]
 
 
-def test_graph_os_never_imports_the_agent_utilities_provider_module() -> None:
+def test_arbora_never_imports_the_agent_utilities_provider_module() -> None:
     offenders = []
-    for path in sorted(_GRAPH_OS.rglob("*.py")):
+    for path in sorted(_ARBORA.rglob("*.py")):
         tree = ast.parse(path.read_text(encoding="utf-8"))
         for node in ast.walk(tree):
             names = []
@@ -140,7 +140,7 @@ def test_graph_os_never_imports_the_agent_utilities_provider_module() -> None:
             elif isinstance(node, ast.Import):
                 names = [alias.name for alias in node.names]
             if any(name == "agent_utilities.core.providers" for name in names):
-                offenders.append(path.relative_to(_GRAPH_OS).as_posix())
+                offenders.append(path.relative_to(_ARBORA).as_posix())
     assert offenders == []
 
 
@@ -350,7 +350,7 @@ def test_duplicate_flat_skill_identity_resolves_deterministically(
     monkeypatch.setattr("agent_utilities.core.paths.skills_dir", lambda: tmp_path)
     monkeypatch.setattr(providers, "current_provider_assets", lambda _group: ())
 
-    with caplog.at_level("ERROR", logger="graph_os.core.providers"):
+    with caplog.at_level("ERROR", logger="arbora.core.providers"):
         roots = providers.resolve_skill_provider_dirs()
 
     assert roots == [("xdg-local", tmp_path / "one")]

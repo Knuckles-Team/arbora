@@ -8,9 +8,9 @@ from typing import Any
 
 import pytest
 
-from graph_os.browser_control import mcp as browser_control_mcp
-from graph_os.browser_control.browser_control_api import BrowserLeaseReceipt
-from graph_os.mcp_server import runtime
+from arbora.browser_control import mcp as browser_control_mcp
+from arbora.browser_control.browser_control_api import BrowserLeaseReceipt
+from arbora.mcp_server import runtime
 
 
 def _recording_mcp(tools: dict[str, Any]) -> SimpleNamespace:

@@ -13,8 +13,8 @@ from typing import Any, cast
 
 import pytest
 
-from graph_os.messaging.router import InboundRouter
-from graph_os.messaging.supervision import (
+from arbora.messaging.router import InboundRouter
+from arbora.messaging.supervision import (
     _TRANSITIONS,
     ChannelSupervisionState,
     IllegalSupervisionTransition,

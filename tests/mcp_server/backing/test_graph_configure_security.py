@@ -15,7 +15,7 @@ from typing import Any
 
 import pytest
 
-from graph_os.mcp_server.backing.tools import analysis_tools
+from arbora.mcp_server.backing.tools import analysis_tools
 
 
 class _FakeMCP:
@@ -50,13 +50,13 @@ def test_mcp_registration_rejects_sensitive_literals(field: str, value: str) -> 
 def test_mcp_registration_accepts_runtime_references() -> None:
     definition = {
         "command": "uvx",
-        "args": ["--from", "agent-utilities", "graph-os"],
-        "url": "${GRAPH_OS_URL}",
+        "args": ["--from", "agent-utilities", "arbora"],
+        "url": "${ARBORA_URL}",
         "env": {
-            "AGENT_ID": "${GRAPH_OS_AGENT_ID}",
-            "AUTH_TOKEN": "vault://apps/graph-os/token",
+            "AGENT_ID": "${ARBORA_AGENT_ID}",
+            "AUTH_TOKEN": "vault://apps/arbora/token",
             "MCP_CLIENT_AUTH": "oidc-client-credentials",
-            "REQUESTS_CA_BUNDLE": "${GRAPH_OS_CA_BUNDLE}",
+            "REQUESTS_CA_BUNDLE": "${ARBORA_CA_BUNDLE}",
         },
     }
 
@@ -85,20 +85,18 @@ def test_register_mcp_writes_atomically_with_private_mode(
     )
 
     analysis_tools._register_mcp_server(
-        "graph-os",
+        "arbora",
         json.dumps(
             {
                 "command": "uvx",
-                "args": ["--from", "agent-utilities", "graph-os"],
-                "env": {"AUTH_TOKEN": "${GRAPH_OS_TOKEN}"},
+                "args": ["--from", "agent-utilities", "arbora"],
+                "env": {"AUTH_TOKEN": "${ARBORA_TOKEN}"},
             }
         ),
     )
 
     stored = json.loads(config_path.read_text(encoding="utf-8"))
-    assert stored["mcpServers"]["graph-os"]["env"]["AUTH_TOKEN"] == (
-        "${GRAPH_OS_TOKEN}"
-    )
+    assert stored["mcpServers"]["arbora"]["env"]["AUTH_TOKEN"] == ("${ARBORA_TOKEN}")
     if os.name == "posix":
         assert stat.S_IMODE(config_path.stat().st_mode) == 0o600
     assert not list(tmp_path.glob(".mcp_config.json.*.tmp"))
@@ -117,7 +115,7 @@ def test_register_mcp_rejects_symlink_target(
     monkeypatch.setattr(analysis_tools, "_workspace_mcp_config_path", lambda: linked)
 
     with pytest.raises(PermissionError):
-        analysis_tools._register_mcp_server("graph-os", json.dumps({"command": "uvx"}))
+        analysis_tools._register_mcp_server("arbora", json.dumps({"command": "uvx"}))
 
     assert outside.read_text(encoding="utf-8") == '{"mcpServers": {}}'
 
@@ -135,7 +133,7 @@ def test_register_mcp_rejects_existing_inline_material_without_rewriting(
     )
 
     with pytest.raises(ValueError):
-        analysis_tools._register_mcp_server("graph-os", json.dumps({"command": "uvx"}))
+        analysis_tools._register_mcp_server("arbora", json.dumps({"command": "uvx"}))
 
     assert config_path.read_text(encoding="utf-8") == original
 
@@ -165,7 +163,7 @@ def test_workspace_mcp_path_rejects_escape(
 ) -> None:
     values = {"WORKSPACE_PATH": str(tmp_path), "MCP_CONFIG": "../outside.json"}
     monkeypatch.setattr(
-        "graph_os.core.settings.setting",
+        "arbora.core.settings.setting",
         lambda key, default="": values.get(key, default),
     )
 
@@ -186,7 +184,7 @@ def test_graph_configure_registration_error_is_source_safe(
     monkeypatch.setattr(analysis_tools, "_register_mcp_server", _fail)
     result = fake.tools["graph_configure"](
         action="register_mcp",
-        config_key="graph-os",
+        config_key="arbora",
         config_value=json.dumps({"command": "uvx"}),
     )
 
@@ -210,7 +208,7 @@ def test_graph_configure_preserves_filesystem_policy_denial(
     with pytest.raises(PermissionError) as denied:
         fake.tools["graph_configure"](
             action="register_mcp",
-            config_key="graph-os",
+            config_key="arbora",
             config_value=json.dumps({"command": "uvx"}),
         )
     assert str(denied.value) == "configuration operation denied"
@@ -251,7 +249,7 @@ def test_legacy_sparql_backend_actions_answer_typed_unavailable(action: str) -> 
         )
     )
 
-    assert result["error_type"] == "GraphOSRefusal"
+    assert result["error_type"] == "ArboraRefusal"
     assert "sensitive.invalid" not in json.dumps(result)
     assert "synthetic-credential-material" not in json.dumps(result)
 
@@ -260,7 +258,7 @@ def test_legacy_set_config_cannot_bypass_governed_config_admin(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """The retired synchronous alias must never reach ``save_config_item``."""
-    from graph_os.core import settings as config
+    from arbora.core import settings as config
 
     persisted: list[tuple[str, object]] = []
     fake = _FakeMCP()
@@ -286,7 +284,7 @@ def test_legacy_set_config_cannot_bypass_governed_config_admin(
 def test_get_config_redacts_endpoint_and_path_values(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import graph_os.deployment as deployment
+    import arbora.deployment as deployment
 
     fake = _FakeMCP()
     analysis_tools.register_analysis_tools(fake)

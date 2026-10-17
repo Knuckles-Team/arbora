@@ -1,1 +1,1 @@
-"""Graph-os test package (keeps focused cross-module fixtures local)."""
+"""Arbora test package (keeps focused cross-module fixtures local)."""

@@ -2,8 +2,8 @@
 
 Ported from the agent runtime's
 ``tests/unit/ecosystem/test_agent_manager_dashboard.py`` (GRAPHOS-HOST-R008).
-Proves :class:`graph_os.ecosystem.AgentManagerDashboard` is reachable from the
-package's public surface (``graph_os.ecosystem``, not only its own submodule) and
+Proves :class:`arbora.ecosystem.AgentManagerDashboard` is reachable from the
+package's public surface (``arbora.ecosystem``, not only its own submodule) and
 that ``run()`` produces a real report — no engine required, since every check degrades to a
 ``warning``/``error`` row rather than raising when its target is absent.
 """
@@ -12,12 +12,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from graph_os.ecosystem import AgentManagerDashboard, DashboardReport
+from arbora.ecosystem import AgentManagerDashboard, DashboardReport
 
 
 def test_dashboard_importable_from_package_root() -> None:
-    """Reachable via ``graph_os.ecosystem``, matching every sibling module."""
-    from graph_os import ecosystem
+    """Reachable via ``arbora.ecosystem``, matching every sibling module."""
+    from arbora import ecosystem
 
     assert ecosystem.AgentManagerDashboard is AgentManagerDashboard
     assert ecosystem.DashboardReport is DashboardReport

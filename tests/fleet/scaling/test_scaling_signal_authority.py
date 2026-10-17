@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from graph_os.fleet.scaling.scaling_signal_authority import (
+from arbora.fleet.scaling.scaling_signal_authority import (
     AuthenticatedSignalProvider,
     OpaqueReferenceAuthenticator,
     SignalBackendPage,

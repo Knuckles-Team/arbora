@@ -10,7 +10,7 @@ from unittest.mock import Mock
 import pytest
 import uvicorn
 
-import graph_os.agent_host as host
+import arbora.agent_host as host
 
 
 @pytest.mark.parametrize(

@@ -12,9 +12,9 @@ keep seeing that path.
 
 ``_empty_local_skill_catalog_by_default`` isolates every test in this
 directory from the local-skill source (CONCEPT:AU-KG.retrieval.unified-
-capability-contract, ``graph_os.fleet.local_skill_catalog``): the real
+capability-contract, ``arbora.fleet.local_skill_catalog``): the real
 ``build_local_skill_catalog`` resolves whatever is actually installed in
-THIS process (agent-utilities' own bundled skills, graph-os's own, any
+THIS process (agent-utilities' own bundled skills, arbora's own, any
 sibling package declaring the same entry point, …), which would otherwise
 leak into every ``discover_tools``/``_catalog_fleet_probe`` call
 non-deterministically and couple this suite's results to the synced
@@ -31,8 +31,8 @@ from collections.abc import Iterator
 
 import pytest
 
-import graph_os.fleet.multiplexer as _multiplexer_module
-from graph_os.security.actor_context import ActorContext, use_actor
+import arbora.fleet.multiplexer as _multiplexer_module
+from arbora.security.actor_context import ActorContext, use_actor
 
 # Covers every discover/delegate call these tests drive; no test in this
 # directory currently needs the "manage"-kind operation, so no administrative

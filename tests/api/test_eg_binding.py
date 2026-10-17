@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from graph_os.api.registry.eg_binding import EgContractError, load_eg_bindings
-from graph_os.api.registry.spec import (
+from arbora.api.registry.eg_binding import EgContractError, load_eg_bindings
+from arbora.api.registry.spec import (
     AuditClass,
     Effect,
     EgMethod,

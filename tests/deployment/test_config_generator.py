@@ -1,4 +1,4 @@
-"""Tests for the graph-os host deployment config generator / validator."""
+"""Tests for the arbora host deployment config generator / validator."""
 
 from __future__ import annotations
 
@@ -7,8 +7,8 @@ import os
 
 import pytest
 
-from graph_os.core.settings import GraphOSConfig
-from graph_os.deployment import (
+from arbora.core.settings import ArboraConfig
+from arbora.deployment import (
     PROFILES,
     config_doctor,
     config_reference,
@@ -22,7 +22,7 @@ from graph_os.deployment import (
 def test_generate_config_is_complete(profile):
     cfg = generate_config(profile)
     # The whole settings surface is present.
-    assert len(cfg) >= len(GraphOSConfig.model_fields)
+    assert len(cfg) >= len(ArboraConfig.model_fields)
     assert "GRAPH_" + "BACKEND" not in cfg
     assert "GRAPH_" + "AUTHORITY" not in cfg
 
@@ -77,7 +77,7 @@ def test_generate_config_profile_presets():
 
 @pytest.mark.parametrize("profile", PROFILES)
 def test_generate_config_roundtrips_through_agent_config(profile):
-    from graph_os.core.settings import GraphOSConfig as AgentConfig
+    from arbora.core.settings import ArboraConfig as AgentConfig
 
     generated = generate_config(profile)
     parsed = AgentConfig(**generated)
@@ -89,7 +89,7 @@ def test_generate_config_roundtrips_through_agent_config(profile):
 
 
 def test_generate_config_redacts_populated_secrets():
-    from graph_os.deployment.config_generator import _is_secret
+    from arbora.deployment.config_generator import _is_secret
 
     cfg = generate_config("enterprise")
     # No populated credential survives (None/"" are acceptable placeholders).
@@ -120,7 +120,7 @@ def test_generate_config_ignores_live_settings_and_sanitizes_nested_material(
             ]
         ),
     )
-    from graph_os.deployment.config_generator import (
+    from arbora.deployment.config_generator import (
         _sanitize_generated_value,
     )
 
@@ -163,7 +163,7 @@ def test_write_config_roundtrips(tmp_path):
     assert res["destination"] == "explicit"
     assert "path" not in res
     assert str(tmp_path) not in json.dumps(res)
-    assert res["keys"] >= len(GraphOSConfig.model_fields)
+    assert res["keys"] >= len(ArboraConfig.model_fields)
     loaded = json.loads(out.read_text())
     assert (
         loaded["GRAPH_DB_CONNECTION_PROFILE_REF"]
@@ -176,7 +176,7 @@ def test_write_config_default_uses_active_config_root_without_returning_path(
     monkeypatch,
 ):
     root = tmp_path / "active-root"
-    monkeypatch.setenv("GRAPH_OS_CONFIG_DIR", str(root))
+    monkeypatch.setenv("ARBORA_CONFIG_DIR", str(root))
 
     result = write_config("tiny")
 
@@ -190,7 +190,7 @@ def test_write_config_default_uses_active_config_root_without_returning_path(
 def test_config_reference_groups_all_fields():
     ref = config_reference()
     total = sum(len(s["fields"]) for s in ref)
-    assert total == len(GraphOSConfig.model_fields)  # every field appears exactly once
+    assert total == len(ArboraConfig.model_fields)  # every field appears exactly once
     # A known field is grouped and carries env + type.
     flat = {f["env"]: f for s in ref for f in s["fields"]}
     assert "AUTH_JWT_AUDIENCE" in flat
@@ -250,14 +250,14 @@ def test_doctor_reports_declared_engine_topology(tmp_path, profile, expected_top
 
 
 def test_secret_reference_inventory_covers_nested_and_secret_scheme(monkeypatch):
-    from graph_os.deployment.config_generator import _unresolved_secret_refs
+    from arbora.deployment.config_generator import _unresolved_secret_refs
 
     class _Secrets:
         def resolve_ref(self, reference):
             return "resolved" if reference.endswith("RESOLVED") else None
 
     monkeypatch.setattr(
-        "graph_os.security.secrets.create_secrets_client",
+        "arbora.security.secrets.create_secrets_client",
         lambda: _Secrets(),
     )
     monkeypatch.setenv("TEST_RESOLVED", "runtime-material")
@@ -276,7 +276,7 @@ def test_secret_reference_inventory_covers_nested_and_secret_scheme(monkeypatch)
 
 
 def test_env_only_secret_inventory_never_constructs_durable_backend(monkeypatch):
-    from graph_os.deployment.config_generator import _unresolved_secret_refs
+    from arbora.deployment.config_generator import _unresolved_secret_refs
 
     calls = 0
 
@@ -286,7 +286,7 @@ def test_env_only_secret_inventory_never_constructs_durable_backend(monkeypatch)
         raise AssertionError("env-only inventory must not construct a backend")
 
     monkeypatch.setattr(
-        "graph_os.security.secrets.create_secrets_client",
+        "arbora.security.secrets.create_secrets_client",
         forbidden_backend,
     )
     monkeypatch.setenv("TEST_ENV_ONLY_RESOLVED", "runtime-material")
@@ -306,7 +306,7 @@ def test_env_only_secret_inventory_never_constructs_durable_backend(monkeypatch)
 
 
 def test_secret_reference_scheme_counts_buckets_by_scheme():
-    from graph_os.deployment.config_generator import (
+    from arbora.deployment.config_generator import (
         secret_reference_scheme_counts,
     )
 
@@ -327,7 +327,7 @@ def test_secret_reference_scheme_counts_buckets_by_scheme():
 
 
 def test_secret_reference_scheme_counts_empty_when_no_references():
-    from graph_os.deployment.config_generator import (
+    from arbora.deployment.config_generator import (
         secret_reference_scheme_counts,
     )
 
@@ -339,7 +339,7 @@ def test_secret_reference_scheme_counts_empty_when_no_references():
 
 
 def test_secret_reference_scheme_counts_counts_repeated_scheme():
-    from graph_os.deployment.config_generator import (
+    from arbora.deployment.config_generator import (
         secret_reference_scheme_counts,
     )
 
@@ -367,7 +367,7 @@ def test_candidate_doctor_never_uses_ambient_secret_backend(
         raise RuntimeError(private_detail)
 
     monkeypatch.setattr(
-        "graph_os.security.secrets.create_secrets_client",
+        "arbora.security.secrets.create_secrets_client",
         forbidden_backend,
     )
     out = tmp_path / "c.json"

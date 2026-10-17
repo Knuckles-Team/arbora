@@ -8,9 +8,9 @@ from typing import Any
 
 import pytest
 
-from graph_os.fleet.catalog_items import CatalogItem, FleetCatalog, connector_items
-from graph_os.fleet.multiplexer_ops import MultiplexerOps
-from graph_os.fleet.session_loads import LoadCapExceeded, SessionLoads
+from arbora.fleet.catalog_items import CatalogItem, FleetCatalog, connector_items
+from arbora.fleet.multiplexer_ops import MultiplexerOps
+from arbora.fleet.session_loads import LoadCapExceeded, SessionLoads
 
 
 @pytest.mark.asyncio
@@ -204,7 +204,7 @@ async def test_notification_redelivery_and_policy_revocation() -> None:
 
 @pytest.mark.asyncio
 async def test_combined_source_admits_only_registered_eg_server() -> None:
-    from graph_os.fleet.catalog_sources import CombinedFleetSource
+    from arbora.fleet.catalog_sources import CombinedFleetSource
 
     tool = SimpleNamespace(
         entry=SimpleNamespace(
@@ -279,7 +279,7 @@ async def test_combined_source_admits_only_registered_eg_server() -> None:
 
 @pytest.mark.asyncio
 async def test_composition_binds_verified_reader_without_starting_probe() -> None:
-    from graph_os.fleet.catalog_composition import compose_multiplexer_ops
+    from arbora.fleet.catalog_composition import compose_multiplexer_ops
 
     class Reader:
         async def read(self):
@@ -422,8 +422,8 @@ async def test_admitted_tool_uses_call_policy_without_discovery_scope() -> None:
 
 
 def test_manifest_policy_is_verified_and_service_mode_requires_domain_scope() -> None:
-    from graph_os.fleet.catalog_items import items_from_child_probe
-    from graph_os.fleet.catalog_sources import _verified_server_policy
+    from arbora.fleet.catalog_items import items_from_child_probe
+    from arbora.fleet.catalog_sources import _verified_server_policy
 
     child = items_from_child_probe(
         "s",
@@ -456,7 +456,7 @@ def test_manifest_policy_is_verified_and_service_mode_requires_domain_scope() ->
 
 @pytest.mark.asyncio
 async def test_service_tool_subject_and_executor_scopes_are_eg_derived() -> None:
-    from graph_os.fleet.catalog_sources import CombinedFleetSource
+    from arbora.fleet.catalog_sources import CombinedFleetSource
 
     server = SimpleNamespace(
         component=SimpleNamespace(server_name="s", component_id="eg-server-42"),

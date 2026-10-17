@@ -425,11 +425,11 @@
     },
     {
       "id": "GRAPHOS-FLEET-R010",
-      "title": "RETIRED: superseded by the current registry architecture; graph_os/assembly.py was removed",
+      "title": "RETIRED: superseded by the current registry architecture; arbora/assembly.py was removed",
       "delivery_state": "RETIRED",
       "landed_in": [],
       "verified_by": [],
-      "retired_reason": "superseded by the current registry architecture; graph_os/assembly.py was removed"
+      "retired_reason": "superseded by the current registry architecture; arbora/assembly.py was removed"
     },
     {
       "id": "GRAPHOS-FLEET-R003.3",
@@ -536,14 +536,14 @@
     },
     {
       "id": "GRAPHOS-FLEET-R007.2",
-      "title": "agent-utilities' graph-os bridge surface gains native prompt/resource/template registration (cross-repo, owner: agent-utilities)",
+      "title": "agent-utilities' arbora bridge surface gains native prompt/resource/template registration (cross-repo, owner: agent-utilities)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-FLEET-R007.3",
-      "title": "graph-os's served bridge exercises native prompts, resources and templates end to end",
+      "title": "arbora's served bridge exercises native prompts, resources and templates end to end",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -723,7 +723,7 @@
     },
     {
       "id": "GRAPHOS-FLEET-R024",
-      "title": "Fleet reconciliation, scaling and deploy watch are served by GraphOS",
+      "title": "Fleet reconciliation, scaling and deploy watch are served by Arbora",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "c2d8c8ce46b8"
@@ -770,7 +770,7 @@
     },
     {
       "id": "GRAPHOS-FLEET-R024.1",
-      "title": "Deploy-watch verdict is a typed GraphOS operation",
+      "title": "Deploy-watch verdict is a typed Arbora operation",
       "delivery_state": "LANDED",
       "landed_in": [
         "c2d8c8ce46b8"
@@ -779,7 +779,7 @@
     },
     {
       "id": "GRAPHOS-FLEET-R024.2",
-      "title": "Remaining fleet reconciler, autoscaler, scaling-authority and deploy-watch scheduling behavior is served by GraphOS",
+      "title": "Remaining fleet reconciler, autoscaler, scaling-authority and deploy-watch scheduling behavior is served by Arbora",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -836,7 +836,7 @@
     },
     {
       "id": "GRAPHOS-FLEET-R027",
-      "title": "GraphOS onboards every configured fleet server",
+      "title": "Arbora onboards every configured fleet server",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "5edd6cc9a3d7",
@@ -858,7 +858,7 @@
     },
     {
       "id": "GRAPHOS-FLEET-R028",
-      "title": "GraphOS renews every registration before its lease lapses",
+      "title": "Arbora renews every registration before its lease lapses",
       "delivery_state": "LANDED",
       "landed_in": [
         "619d25ac8e69",
@@ -899,7 +899,7 @@
     },
     {
       "id": "GRAPHOS-FLEET-R033",
-      "title": "Fleet-catalog `servers` read owned by graph-os",
+      "title": "Fleet-catalog `servers` read owned by arbora",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -1267,35 +1267,35 @@
     },
     {
       "id": "GRAPHOS-FLEET-R024.10",
-      "title": "AU:29 GraphOS definition slice",
+      "title": "AU:29 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-FLEET-R024.11",
-      "title": "AU:30 GraphOS definition slice",
+      "title": "AU:30 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-FLEET-R002.9",
-      "title": "AU:52 GraphOS definition slice",
+      "title": "AU:52 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-FLEET-R034.13",
-      "title": "AU:98 GraphOS definition slice",
+      "title": "AU:98 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-FLEET-R034.14",
-      "title": "GRAPHOS:8 GraphOS definition slice",
+      "title": "ARBORA:8 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

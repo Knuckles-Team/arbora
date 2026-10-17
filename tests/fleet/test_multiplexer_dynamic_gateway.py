@@ -21,7 +21,7 @@ import pytest
 from fastmcp.exceptions import ToolError
 from fastmcp.tools import Tool
 
-from graph_os.fleet.multiplexer import (
+from arbora.fleet.multiplexer import (
     _LOCAL_SESSION_META_KEY,
     _fleet_required_capabilities,
     _make_forwarder,
@@ -279,7 +279,7 @@ def test_load_catalog_excludes_self_and_disabled(tmp_path):
 def test_load_catalog_admits_explicit_remote_langfuse_entry_via_direct_key_pair(
     tmp_path, monkeypatch
 ):
-    """Regression test for the graph-os fleet-catalog gap.
+    """Regression test for the arbora fleet-catalog gap.
 
     An explicit remote (streamable-http) ``langfuse-mcp`` entry ships with no
     ``env`` block, so credential resolution falls through to the parent
@@ -628,7 +628,7 @@ async def test_mount_child_unknown_server(tmp_path):
 
 
 async def test_start_children_eager_unchanged(tmp_path):
-    # "graph-os" is structurally excluded from the catalog -- it is the self
+    # "arbora" is structurally excluded from the catalog -- it is the self
     # identity (served natively, always on), never a mountable fleet child --
     # so this eager-start regression guard exercises two ordinary fleet
     # members instead (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog).
@@ -881,7 +881,7 @@ async def test_probe_entry_past_ttl_is_reported_stale(tmp_path, monkeypatch):
         "probed_at": fixed_now,
     }
     monkeypatch.setattr(
-        "graph_os.core.settings.runtime_config.mcp_catalog_probe_ttl", 10.0
+        "arbora.core.settings.runtime_config.mcp_catalog_probe_ttl", 10.0
     )
 
     # Inside the TTL: honestly fresh.
@@ -915,7 +915,7 @@ async def test_probe_catalog_retargets_ttl_expired_cache_entries(tmp_path, monke
         "probed_at": fixed_now,
     }
     monkeypatch.setattr(
-        "graph_os.core.settings.runtime_config.mcp_catalog_probe_ttl", 10.0
+        "arbora.core.settings.runtime_config.mcp_catalog_probe_ttl", 10.0
     )
 
     calls = 0
@@ -1041,7 +1041,7 @@ async def test_discover_prioritizes_named_server_inside_shared_budget(
 ):
     """A named domain is probed before unrelated fleet fan-out consumes the budget."""
 
-    from graph_os.core.settings import runtime_config as agent_config
+    from arbora.core.settings import runtime_config as agent_config
 
     tool_map = {
         **{f"slow-{index}-mcp": [] for index in range(24)},
@@ -1139,7 +1139,7 @@ async def test_probe_server_preserves_an_mcp_apps_tool_descriptor_meta(tmp_path)
     """
     ui_meta = {
         "ui": {
-            "resourceUri": "ui://graph-os/task-progress.html",
+            "resourceUri": "ui://arbora/task-progress.html",
             "visibility": ["model"],
         }
     }
@@ -1322,7 +1322,7 @@ async def test_discover_skips_disabled_tools(tmp_path):
 
 
 def test_format_probe_error_unwraps_exceptiongroup():
-    from graph_os.fleet.multiplexer import _format_probe_error
+    from arbora.fleet.multiplexer import _format_probe_error
 
     eg = ExceptionGroup(
         "boom",
@@ -1440,7 +1440,7 @@ async def test_always_on_holds_verbose_tools_in_catalog(tmp_path):
     """An always-on child's verbose tools are mounted (in the catalog, loadable)
     but NOT auto-exposed at boot — only the condensed surface is.
 
-    "graph-os" itself is structurally excluded from the catalog (self,
+    "arbora" itself is structurally excluded from the catalog (self,
     served natively) so this uses an ordinary fleet member to exercise the
     same condensed/verbose boot filter."""
     from fastmcp import FastMCP
@@ -1610,7 +1610,7 @@ def test_local_session_meta_cannot_override_an_authenticated_http_session(
     authenticated HTTP request context exists — otherwise an HTTP caller could
     simply declare another session's id in its own request ``_meta`` and
     inherit that session's loaded tools. This is why
-    :func:`graph_os.fleet.multiplexer._explicit_local_session_key` is only
+    :func:`arbora.fleet.multiplexer._explicit_local_session_key` is only
     ever consulted from the non-HTTP except-arms of ``_session_key`` — never
     from the HTTP try-body — so scoping this correlator can only ever ADD
     isolation between local, same-process callers; it can never be used to
@@ -1635,7 +1635,7 @@ def test_local_session_meta_cannot_override_an_authenticated_http_session(
 
 
 async def test_notify_tools_changed_returns_false_without_request_context():
-    from graph_os.fleet.multiplexer import _notify_tools_changed
+    from arbora.fleet.multiplexer import _notify_tools_changed
 
     sent = await _notify_tools_changed(None)
     assert sent is False
@@ -1647,7 +1647,7 @@ async def test_notify_tools_changed_surfaces_send_failure(monkeypatch, caplog):
     silence the caller can't observe (CLAUDE.md: never swallow an exception)."""
     import logging
 
-    from graph_os.fleet.multiplexer import _notify_tools_changed
+    from arbora.fleet.multiplexer import _notify_tools_changed
 
     class _FailingContext:
         async def send_notification(self, _note):
@@ -1671,7 +1671,7 @@ def test_load_tools_field_contract_never_reintroduces_notified(tmp_path):
     structural check that survives independent of any single test path."""
     import inspect
 
-    from graph_os.fleet import multiplexer
+    from arbora.fleet import multiplexer
 
     source = inspect.getsource(multiplexer)
     assert '"notified"' not in source
@@ -1808,7 +1808,7 @@ def test_require_fleet_capability_denies_stdio_caller_missing_the_exact_scope():
     """A verified stdio actor that lacks the fleet's own ``mcp:discover``
     scope is refused the same way a remote caller without it would be --
     being local carries no implicit discovery/delegation grant."""
-    from graph_os.security.actor_context import ActorContext, use_actor
+    from arbora.security.actor_context import ActorContext, use_actor
 
     actor = ActorContext(
         actor_id="stdio-caller",
@@ -1827,7 +1827,7 @@ def test_require_fleet_capability_allows_stdio_caller_with_exact_scope():
     fleet's own ``mcp:discover`` scope passes -- the same outcome an
     equally-scoped remote caller gets, proving local stdio runs through the
     identical check rather than a separate, more permissive one."""
-    from graph_os.security.actor_context import ActorContext, use_actor
+    from arbora.security.actor_context import ActorContext, use_actor
 
     actor = ActorContext(
         actor_id="stdio-caller",

@@ -7,7 +7,7 @@ from collections.abc import Iterator
 
 import pytest
 
-from graph_os.messaging.host_ports import reset_host_ports
+from arbora.messaging.host_ports import reset_host_ports
 
 
 @pytest.fixture(autouse=True)

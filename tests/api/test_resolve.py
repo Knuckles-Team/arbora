@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.api.mcp.resolve import Descriptor, IntentResolver
+from arbora.api.mcp.resolve import Descriptor, IntentResolver
 
 _DESCRIPTORS = (
     Descriptor(

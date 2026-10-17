@@ -3,7 +3,7 @@ requires = ["setuptools>=84.0.0", "wheel>=0.48.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "graph-os"
+name = "arbora"
 dynamic = ["version"]
 description = "The deployable MCP, REST, control-plane, fleet, WebUI, and operations composition for the Knuckles agent platform."
 readme = "README.md"
@@ -20,22 +20,22 @@ license = "MIT"
 # install connector clients.
 dependencies = [
     # AU 3.0.0 is the cut harness-only release: it ships no mcp/, gateway/,
-    # server/ or api/ packages. graph-os owns the MCP/REST serving surface
-    # (graph_os/mcp_server/backing, graph_os/api/contracts), so the former
+    # server/ or api/ packages. arbora owns the MCP/REST serving surface
+    # (arbora/mcp_server/backing, arbora/api/contracts), so the former
     # `[mcp]` extra's requirements are declared directly below.
-    "agent-utilities>=3.0.0,<4.0.0",
+    "agent-utilities>=3.0.1,<4.0.0",
     "eunomia-core>=0.3.10",
     "httpx>=0.28.1",
     "pyjwt>=2.15.1",
-    # graph_os.security.auth verifies bearer JWTs against the issuer's JWKS.
+    # arbora.security.auth verifies bearer JWTs against the issuer's JWKS.
     "joserfc>=1.7.5",
     "python-multipart>=0.0.32",
-    # GraphOS is the deployment composition root for connector workers.  The
-    # SDK owns source transport and runner construction; GraphOS supplies its
+    # Arbora is the deployment composition root for connector workers.  The
+    # SDK owns source transport and runner construction; Arbora supplies its
     # authenticated epistemic-graph client through the SDK's public injection
     # seam and never imports connector implementations.
-    "agent-connector-sdk[a2a,mcp]>=0.2.0,<1.0.0",
-    # The messaging channel layer's HTTP alert intake (graph_os/messaging/alert_intake.py)
+    "agent-connector-sdk[a2a,mcp]>=0.2.1,<1.0.0",
+    # The messaging channel layer's HTTP alert intake (arbora/messaging/alert_intake.py)
     # imports aiohttp.web directly for its small webhook listener; platform-agnostic,
     # so unlike the chat-platform SDKs below this is not conditioned on a messaging extra.
     "aiohttp>=3.14.5",
@@ -46,7 +46,7 @@ dependencies = [
     # Production operations and the canary call the public client/numeric
     # surface directly; AU's transitive requirement is not enough for this
     # package's own imports. The root source override below aligns AU and SDK
-    # on the GraphOS-compatible revision without changing the published floor.
+    # on the Arbora-compatible revision without changing the published floor.
     "epistemic-graph[server]>=2.27.2,<3.0.0",
     "fastapi>=0.143.3",
     "filelock>=4.2.0",
@@ -61,8 +61,8 @@ dependencies = [
     "pydantic-ai-slim[openai]==2.57.0",
     # Installed so its ``agent_utilities.skill_providers`` entry point (once
     # declared in universal-skills' own package) resolves in THIS process,
-    # the same way agent-utilities', epistemic-graph's, and graph-os's own
-    # skills already do — see graph_os/fleet/local_skill_catalog.py. No
+    # the same way agent-utilities', epistemic-graph's, and arbora's own
+    # skills already do — see arbora/fleet/local_skill_catalog.py. No
     # transitive dependencies of its own.
     "universal-skills>=1.3.11,<2.0.0",
 ]
@@ -94,32 +94,32 @@ test = [
     "setuptools>=84.0.0",
 ]
 webui = [
-    "agent-webui>=2.7.0,<3.0.0",
+    "agent-webui>=2.7.1,<3.0.0",
     "uvicorn>=0.54.0",
 ]
-# portable-deployment spec, gateway-widgets extra requirement: graph_os/gateway/widgets/*.py
-# each call BaseWidget._fleet_client() (graph_os/fleet) for live data -- the served
+# portable-deployment spec, gateway-widgets extra requirement: arbora/gateway/widgets/*.py
+# each call BaseWidget._fleet_client() (arbora/fleet) for live data -- the served
 # fleet admission seam, never a direct connector-package import (see the
 # `dependencies` comment above). No widget today transitively needs a
 # fleet connector package's own distribution, but any future widget that
 # does must resolve a connector built against agent-connector-sdk's current,
 # post-split module layout, not a pre-split agent-utilities-runtime shape.
-# This extra is GraphOS's side of that floor -- the agent-utilities
+# This extra is Arbora's side of that floor -- the agent-utilities
 # `gateway-widgets` extra it replaces (retired there under the AU boundary /
 # host-composition-boundary spec) pinned the same SDK transitively
 # through each connector package's own dependency on it. Full requirement
 # IDs: specs/portable-deployment/requirements.md,
 # specs/host-composition-boundary/requirements.md.
 gateway-widgets = [
-    "agent-connector-sdk[a2a,mcp]>=0.2.0,<1.0.0",
+    "agent-connector-sdk[a2a,mcp]>=0.2.1,<1.0.0",
 ]
 # Messaging channel adapters (CONCEPT:AU-ECO.messaging.native-backend-abstraction):
-# each chat platform SDK is its own extra so importing graph_os.messaging never
+# each chat platform SDK is its own extra so importing arbora.messaging never
 # requires every platform's client library to be installed. Further platforms
 # (Discord, Slack, WhatsApp, Teams, Google Chat/Meet, Matrix, IRC, Signal,
 # iMessage, LINE, Twitch, Synology Chat, voice calls, Nextcloud Talk) follow
 # the same adapter shape and remain to be landed.
-# graph_os.security.secrets: the KV v2 secret store backend.
+# arbora.security.secrets: the KV v2 secret store backend.
 vault = ["hvac>=2.4.0"]
 messaging-telegram = ["python-telegram-bot>=22.8"]
 messaging-mattermost = ["mattermostdriver>=7.3.2"]
@@ -139,48 +139,48 @@ messaging-synology = ["httpx>=0.28.1"]
 messaging-voicecall = ["twilio>=9.12.0"]
 messaging-nextcloud = ["httpx>=0.28.1"]
 messaging = [
-    "graph-os[messaging-telegram,messaging-mattermost,messaging-discord,messaging-slack,messaging-whatsapp,messaging-teams,messaging-googlechat,messaging-googlemeet,messaging-matrix,messaging-irc,messaging-signal,messaging-line,messaging-twitch,messaging-synology,messaging-voicecall,messaging-nextcloud]"
+    "arbora[messaging-telegram,messaging-mattermost,messaging-discord,messaging-slack,messaging-whatsapp,messaging-teams,messaging-googlechat,messaging-googlemeet,messaging-matrix,messaging-irc,messaging-signal,messaging-line,messaging-twitch,messaging-synology,messaging-voicecall,messaging-nextcloud]"
 ]
 
 [project.scripts]
-graph-os = "graph_os.mcp_server.server:mcp_server"
-graph-os-daemon = "graph_os.gateway.daemon:main"
-graph-os-release-canary = "graph_os.deployment.release_canary:main"
-graph-os-production-ops = "graph_os.deployment.production_ops:main"
-setup-config = "graph_os.deployment.cli:main"
-agent-utilities-doctor = "graph_os.deployment.doctor:main"
-agent-utilities-venv = "graph_os.deployment.venv_sync:main"
-graph-os-wiring-sweep = "graph_os.evolution.wiring_sweep:main"
-graph-os-connector-count-pins = "graph_os.fleet.connector_count_pins:main"
-graph-os-check-import-boundaries = "graph_os.architecture.boundary_census:main"
-graph-os-hosting-config = "graph_os.deployment.host_config:main"
-graph-os-capability-layers = "graph_os.architecture.capability_layers:main"
+arbora = "arbora.mcp_server.server:mcp_server"
+arbora-daemon = "arbora.gateway.daemon:main"
+arbora-release-canary = "arbora.deployment.release_canary:main"
+arbora-production-ops = "arbora.deployment.production_ops:main"
+setup-config = "arbora.deployment.cli:main"
+agent-utilities-doctor = "arbora.deployment.doctor:main"
+agent-utilities-venv = "arbora.deployment.venv_sync:main"
+arbora-wiring-sweep = "arbora.evolution.wiring_sweep:main"
+arbora-connector-count-pins = "arbora.fleet.connector_count_pins:main"
+arbora-check-import-boundaries = "arbora.architecture.boundary_census:main"
+arbora-hosting-config = "arbora.deployment.host_config:main"
+arbora-capability-layers = "arbora.architecture.capability_layers:main"
 
 [project.entry-points."agent_connector_sdk.skill_providers"]
-graph-os = "graph_os.skills"
+arbora = "arbora.skills"
 
 [project.entry-points."agent_utilities.messaging"]
-telegram = "graph_os.messaging.backends.telegram:TelegramBackend"
-mattermost = "graph_os.messaging.backends.mattermost:MattermostBackend"
-discord = "graph_os.messaging.backends.discord:DiscordBackend"
-slack = "graph_os.messaging.backends.slack:SlackBackend"
-whatsapp = "graph_os.messaging.backends.whatsapp:WhatsAppBackend"
-teams = "graph_os.messaging.backends.teams:TeamsBackend"
-googlechat = "graph_os.messaging.backends.googlechat:GoogleChatBackend"
-googlemeet = "graph_os.messaging.backends.googlemeet:GoogleMeetBackend"
-matrix = "graph_os.messaging.backends.matrix:MatrixBackend"
-irc = "graph_os.messaging.backends.irc:IRCBackend"
-signal = "graph_os.messaging.backends.signal:SignalBackend"
-imessage = "graph_os.messaging.backends.imessage:IMessageBackend"
-line = "graph_os.messaging.backends.line:LINEBackend"
-twitch = "graph_os.messaging.backends.twitch:TwitchBackend"
-synology = "graph_os.messaging.backends.synology:SynologyChatBackend"
-voicecall = "graph_os.messaging.backends.voicecall:VoiceCallBackend"
-nextcloud = "graph_os.messaging.backends.nextcloud:NextcloudTalkBackend"
+telegram = "arbora.messaging.backends.telegram:TelegramBackend"
+mattermost = "arbora.messaging.backends.mattermost:MattermostBackend"
+discord = "arbora.messaging.backends.discord:DiscordBackend"
+slack = "arbora.messaging.backends.slack:SlackBackend"
+whatsapp = "arbora.messaging.backends.whatsapp:WhatsAppBackend"
+teams = "arbora.messaging.backends.teams:TeamsBackend"
+googlechat = "arbora.messaging.backends.googlechat:GoogleChatBackend"
+googlemeet = "arbora.messaging.backends.googlemeet:GoogleMeetBackend"
+matrix = "arbora.messaging.backends.matrix:MatrixBackend"
+irc = "arbora.messaging.backends.irc:IRCBackend"
+signal = "arbora.messaging.backends.signal:SignalBackend"
+imessage = "arbora.messaging.backends.imessage:IMessageBackend"
+line = "arbora.messaging.backends.line:LINEBackend"
+twitch = "arbora.messaging.backends.twitch:TwitchBackend"
+synology = "arbora.messaging.backends.synology:SynologyChatBackend"
+voicecall = "arbora.messaging.backends.voicecall:VoiceCallBackend"
+nextcloud = "arbora.messaging.backends.nextcloud:NextcloudTalkBackend"
 
 [project.entry-points."agent_utilities.messaging.reach"]
-notify_sync = "graph_os.messaging.reach:notify_sync"
-service = "graph_os.messaging.reach:service_port"
+notify_sync = "arbora.messaging.reach:notify_sync"
+service = "arbora.messaging.reach:service_port"
 
 [tool.uv]
 # A dependency's own git pin of the engine never applies here.
@@ -199,15 +199,15 @@ url = "https://pypi.org/simple"
 explicit = true
 
 [tool.setuptools.dynamic]
-version = { attr = "graph_os._version.__version__" }
+version = { attr = "arbora._version.__version__" }
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["graph_os*"]
+include = ["arbora*"]
 exclude = ["tests*"]
 
 [tool.setuptools.package-data]
-graph_os = ["ontology/**/*.ttl", "skills/**", "mcp_server/graphos_operations.json", "mcp_server/backing/graphos_capabilities.json", "api/generated/*.json", "api/generated/schemas/*.json"]
+arbora = ["ontology/**/*.ttl", "skills/**", "mcp_server/arbora_operations.json", "mcp_server/backing/arbora_capabilities.json", "api/generated/*.json", "api/generated/schemas/*.json"]
 
 [tool.ruff]
 line-length = 88
@@ -217,7 +217,7 @@ target-version = "py312"
 select = ["E", "F", "I", "UP", "B"]
 # Deployment modules use long operator remediations and guarded imports. Keep
 # these narrow exceptions while retaining import, correctness, and modern
-# Python checks across GraphOS.
+# Python checks across Arbora.
 ignore = ["E402", "E501", "B007"]
 
 [tool.ruff.lint.flake8-bugbear]
@@ -238,22 +238,22 @@ markers = [
     "spec: binds a test to a spec requirement ID",
     "integration: integration test (moved agent-utilities profile tests)",
     "concept: binds a test to a concept ID (moved agent-utilities tests)",
-    "real_boot: boots a real graph-os process against a real EG server (linux x86_64)",
+    "real_boot: boots a real arbora process against a real EG server (linux x86_64)",
 ]
 
 # Inputs of the shared hooks (Knuckles-Team/pipelines .pre-commit-hooks.yaml).
 [tool.pipelines_hooks]
-packages = ["graph_os"]
+packages = ["arbora"]
 
 [tool.pipelines_hooks.public_surface]
-repository = "Knuckles-Team/graph-os"
-distribution = "graph-os"
-pages_url = "https://knuckles-team.github.io/graph-os/"
+repository = "Knuckles-Team/arbora"
+distribution = "arbora"
+pages_url = "https://knuckles-team.github.io/arbora/"
 mcp_server = true
 
 # The MCP server and gateway serve stdio/HTTP; stdout there is protocol output.
 [tool.pipelines_hooks.stdout_writes]
-served_paths = ["graph_os/mcp_server", "graph_os/gateway"]
+served_paths = ["arbora/mcp_server", "arbora/gateway"]
 
 [tool.pipelines_hooks.ste]
 paths = ["README.md", "AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md", "CHANGELOG.md", "docs", "specs"]

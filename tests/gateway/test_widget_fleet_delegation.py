@@ -8,18 +8,18 @@ from typing import Any, cast
 
 import pytest
 
-import graph_os.gateway.aggregator as aggregator_module
-from graph_os.fleet.multiplexer import MCPMultiplexer
-from graph_os.fleet.shared_multiplexer import (
+import arbora.gateway.aggregator as aggregator_module
+from arbora.fleet.multiplexer import MCPMultiplexer
+from arbora.fleet.shared_multiplexer import (
     _reset_served_multiplexer_for_tests,
     bind_served_multiplexer,
     claim_served_multiplexer_loop,
 )
-from graph_os.gateway.aggregator import Aggregator
-from graph_os.gateway.models import ServiceConfig
-from graph_os.gateway.registry import Registry
-from graph_os.gateway.widgets.github import Widget as GitHubWidget
-from graph_os.security.actor_context import ActorContext
+from arbora.gateway.aggregator import Aggregator
+from arbora.gateway.models import ServiceConfig
+from arbora.gateway.registry import Registry
+from arbora.gateway.widgets.github import Widget as GitHubWidget
+from arbora.security.actor_context import ActorContext
 
 # GRAPHOS-FLEET-R032: `_fetch_one` now binds the gateway's own service actor
 # (`_run_as_service_actor` -> `_service_authority`) around every widget

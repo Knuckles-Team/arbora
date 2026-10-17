@@ -1,4 +1,4 @@
-"""The served Graph OS surface imports no external-service client library."""
+"""The served Arbora surface imports no external-service client library."""
 
 from __future__ import annotations
 
@@ -22,8 +22,8 @@ _PROBE = (
     "for key in ('GRAPH_DB_CONNECTION_PROFILE_REF', 'STATE_DB_URI',"
     " 'KAFKA_BOOTSTRAP_SERVERS'):\n"
     "    os.environ.pop(key, None)\n"
-    "import graph_os.gateway.graph_api\n"
-    "import graph_os.mcp_server.server\n"
+    "import arbora.gateway.graph_api\n"
+    "import arbora.mcp_server.server\n"
     f"print(json.dumps([m for m in {list(_FORBIDDEN_DRIVERS)!r} if m in sys.modules]))\n"
 )
 

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
 
-from graph_os.fleet.multiplexer import (
+from arbora.fleet.multiplexer import (
     _bounded_skill_catalog,
 )
 from tests.fleet.test_multiplexer_dynamic_gateway import (

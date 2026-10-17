@@ -19,7 +19,7 @@ from typing import Any, cast
 
 import pytest
 
-from graph_os.messaging.models import EventType, PlatformId
+from arbora.messaging.models import EventType, PlatformId
 
 from ._fakes import FakeMessagingBackend
 
@@ -85,8 +85,8 @@ def _fake_mattermost(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def _backend() -> Any:
-    from graph_os.messaging.backends.mattermost import MattermostBackend
-    from graph_os.messaging.models import MessagingConfig
+    from arbora.messaging.backends.mattermost import MattermostBackend
+    from arbora.messaging.models import MessagingConfig
 
     from ._fakes import synthetic_token
 
@@ -107,7 +107,7 @@ def test_id_and_capabilities() -> None:
 
 def test_registered_as_first_class_platform() -> None:
     # Same enum + entry-point + capability matrix membership as Telegram.
-    from graph_os.messaging.capabilities import CAPABILITY_MATRIX
+    from arbora.messaging.capabilities import CAPABILITY_MATRIX
 
     assert PlatformId.MATTERMOST == "mattermost"
     assert "mattermost" in CAPABILITY_MATRIX
@@ -164,7 +164,7 @@ def test_normalize_posted_frame_with_audio_attachment() -> None:
     ``metadata.files`` FileInfo becomes a MediaAttachment the core transcription path
     (``router._transcribe_attachments``) can act on, with a bearer auth header since
     Mattermost serves file bytes from an authenticated endpoint."""
-    from graph_os.messaging.models import MediaType
+    from arbora.messaging.models import MediaType
 
     b = _backend()
     b._bot_user_id = "BOT123"
@@ -279,7 +279,7 @@ async def test_inbound_frame_reaches_router_and_reply_renders(
     handler's reply is rendered back through the Mattermost outbound API (the bot posts it).
     The orchestrator itself is stubbed — we are proving the transport wiring, not the LLM.
     """
-    from graph_os.messaging.router import InboundRouter
+    from arbora.messaging.router import InboundRouter
 
     b = _backend()
     await b.connect()
@@ -338,8 +338,8 @@ async def test_reach_user_routes_to_mattermost_last_active(
 ) -> None:
     """``reach_user`` follows the user to a Mattermost channel they were last active on —
     proving Mattermost is a first-class target of the platform-agnostic reach service."""
-    from graph_os.messaging.models import InboundEvent
-    from graph_os.messaging.service import MessagingService
+    from arbora.messaging.models import InboundEvent
+    from arbora.messaging.service import MessagingService
 
     class _Eng:
         def __init__(self) -> None:

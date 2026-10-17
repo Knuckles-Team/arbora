@@ -11,11 +11,11 @@ from types import SimpleNamespace
 
 import pytest
 
-from graph_os.identity.broker import GraphOSBrowserAuthority
-from graph_os.identity.engine import IdentityUnavailable, Resolution
-from graph_os.identity.engine_ports import UnavailableIdentityAuthority
-from graph_os.identity.issuer import claims_for
-from graph_os.identity.ports import SessionState
+from arbora.identity.broker import ArboraBrowserAuthority
+from arbora.identity.engine import IdentityUnavailable, Resolution
+from arbora.identity.engine_ports import UnavailableIdentityAuthority
+from arbora.identity.issuer import claims_for
+from arbora.identity.ports import SessionState
 
 from .test_engine_resolution import resolution_value
 from .test_issuer import SETTINGS
@@ -82,7 +82,7 @@ class OwnersFixture:
         )
 
     def producer(self):
-        return GraphOSBrowserAuthority(
+        return ArboraBrowserAuthority(
             self, self.verify_token, trusted_origin=ORIGIN, clock=lambda: self.now
         )
 
@@ -234,8 +234,8 @@ def test_marker_header_or_retained_evidence_cannot_install_private_binding():
     async def scenario():
         backend = OwnersFixture()
         owner, scope = backend.producer(), forwarded_scope()
-        scope["state"] = {"graphos_session_admitted": True}
-        scope["headers"].append((b"x-graphos-session-admitted", b"true"))
+        scope["state"] = {"arbora_session_admitted": True}
+        scope["headers"].append((b"x-arbora-session-admitted", b"true"))
         with pytest.raises(PermissionError):
             await owner.verify_request(scope)
         assert owner._requests == {}
@@ -246,7 +246,7 @@ def test_marker_header_or_retained_evidence_cannot_install_private_binding():
 def test_missing_real_eg_session_contract_has_typed_unavailable_refusal():
     async def scenario():
         backend = OwnersFixture()
-        owner = GraphOSBrowserAuthority(
+        owner = ArboraBrowserAuthority(
             UnavailableIdentityAuthority(),
             backend.verify_token,
             trusted_origin=ORIGIN,
@@ -339,7 +339,7 @@ def test_authority_change_during_token_await_refuses_and_cleans(phase, change):
                     session.scopes = ()
             return value
 
-        owner = GraphOSBrowserAuthority(
+        owner = ArboraBrowserAuthority(
             backend, verifier, trusted_origin=ORIGIN, clock=lambda: backend.now
         )
         with pytest.raises(PermissionError):

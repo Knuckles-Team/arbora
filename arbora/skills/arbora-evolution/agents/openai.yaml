@@ -1,0 +1,4 @@
+interface:
+  display_name: "Arbora Evolution"
+  short_description: "Research-to-implementation evolution pipeline and code-health sweep"
+  default_prompt: "Use $arbora-evolution to detect a hot research topic or regression signal, ingest and compare it against agent-utilities, generate a reviewed SDD plan, and route approved implementation to agent-utilities-development."

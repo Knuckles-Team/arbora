@@ -53,10 +53,10 @@ import pytest
 pytest.importorskip("epistemic_graph.client")
 
 
-from graph_os.api.contracts.session import GraphSession, use_session
-from graph_os.mcp_server import runtime
-from graph_os.mcp_server.backing.tools import engine_tools
-from graph_os.security.actor_context import ActorContext, ActorType, use_actor
+from arbora.api.contracts.session import GraphSession, use_session
+from arbora.mcp_server import runtime
+from arbora.mcp_server.backing.tools import engine_tools
+from arbora.security.actor_context import ActorContext, ActorType, use_actor
 
 ADMIN_ACTOR = ActorContext(
     actor_id="principal:ops",

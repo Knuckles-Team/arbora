@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.a2a.admission import (
+from arbora.a2a.admission import (
     ToolSubsetAdmissionDecision,
     ToolSubsetAdmissionRequest,
     admit_tool_subset,
 )
-from graph_os.a2a.models import A2AContextBudget
+from arbora.a2a.models import A2AContextBudget
 
 
 @pytest.mark.spec("GRAPHOS-A2A-R016")

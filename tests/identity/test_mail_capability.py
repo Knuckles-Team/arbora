@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.identity.mail_capability import (
+from arbora.identity.mail_capability import (
     EmailAffordances,
     MailAdapterRefused,
     SmtpAdapterSettings,

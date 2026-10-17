@@ -1,26 +1,26 @@
-# Graph OS on one host (laptop, workstation or a small durable server).
+# Arbora on one host (laptop, workstation or a small durable server).
 #
-# One service: the graph-os process serves MCP + REST/A2A on 8000 and the web UI
+# One service: the arbora process serves MCP + REST/A2A on 8000 and the web UI
 # on 8080, and starts/supervises its epistemic-graph engine as a child process
 # inside the same container (the unified topology; the engine binary ships in the
-# unified image). The engine store lives on the `graph-os-data` volume and has
+# unified image). The engine store lives on the `arbora-data` volume and has
 # exactly one writer: never scale this service.
 #
 # Usage (Docker Compose v2.24+, or `podman compose`):
 #   cp .env.example .env                     # image + mode (compose interpolation)
-#   cp graph-os.env.example graph-os.env     # secret values; never commit either copy
+#   cp arbora.env.example arbora.env     # secret values; never commit either copy
 #   docker compose config --quiet && docker compose up -d
-#   docker compose logs graph-os | grep 'setup code'   # local mode first boot
+#   docker compose logs arbora | grep 'setup code'   # local mode first boot
 #
 # Ports are published on 127.0.0.1 only. Publishing on another address is an
 # exposure decision: use identity mode local or external and put TLS in front.
-name: graph-os
+name: arbora
 
 services:
-  graph-os:
-    image: ${GRAPHOS_IMAGE:?set GRAPHOS_IMAGE to an immutable graph-os image reference, e.g. registry.example/graph-os@sha256:<digest>}
+  arbora:
+    image: ${ARBORA_IMAGE:?set ARBORA_IMAGE to an immutable arbora image reference, e.g. registry.example/arbora@sha256:<digest>}
     command:
-      - graph-os
+      - arbora
       - --transport
       - streamable-http
       - --host
@@ -30,37 +30,37 @@ services:
     restart: unless-stopped
     stop_grace_period: 90s
     environment:
-      APP_PROFILE: ${GRAPHOS_APP_PROFILE:-dev}
-      DEPLOYMENT_PROFILE: ${GRAPHOS_DEPLOYMENT_PROFILE:-tiny}
+      APP_PROFILE: ${ARBORA_APP_PROFILE:-dev}
+      DEPLOYMENT_PROFILE: ${ARBORA_DEPLOYMENT_PROFILE:-tiny}
       # none | local | external. Seeds the durable mode on FIRST boot only.
-      GRAPHOS_AUTH_MODE: ${GRAPHOS_AUTH_MODE:-local}
+      ARBORA_AUTH_MODE: ${ARBORA_AUTH_MODE:-local}
       # Inside a container the bind is never loopback, so `none` also needs the
       # exact acknowledgement (see .env.example). Keep the 127.0.0.1 port
       # publishing below when you use it.
-      GRAPHOS_AUTH_NONE_EXPOSE: ${GRAPHOS_AUTH_NONE_EXPOSE:-}
+      ARBORA_AUTH_NONE_EXPOSE: ${ARBORA_AUTH_NONE_EXPOSE:-}
       # Eunomia per mode: none -> none; local/external -> embedded (fails closed).
       EUNOMIA_TYPE: ${EUNOMIA_TYPE:-embedded}
       # Tiny installs keep secrets in the engine's encrypted secrets graph.
       SECRETS_BACKEND: ${SECRETS_BACKEND:-vault}
-      ALLOWED_HOSTS: ${GRAPHOS_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      ALLOWED_HOSTS: ${ARBORA_ALLOWED_HOSTS:-localhost,127.0.0.1}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
       RUM_OTLP_METRICS_ENDPOINT: ${RUM_OTLP_METRICS_ENDPOINT:-}
     env_file:
       # Fixed, non-tunable internal wiring for the unified topology (shared
       # with deploy/swarm/stack.yml, which keeps its own literal copy since
       # Swarm does not read env_file).
-      - path: ./graphos-runtime.env
-      # Secret values (GRAPH_SERVICE_AUTH_SECRET, optional GRAPHOS_SETUP_CODE,
-      # provider keys). Optional: without it graph-os generates the engine secret
+      - path: ./arbora-runtime.env
+      # Secret values (GRAPH_SERVICE_AUTH_SECRET, optional ARBORA_SETUP_CODE,
+      # provider keys). Optional: without it arbora generates the engine secret
       # per install and the doctor flags it for rotation.
-      - path: ./graph-os.env
+      - path: ./arbora.env
         required: false
     ports:
-      - "127.0.0.1:${GRAPHOS_API_PORT:-8000}:8000"
-      - "127.0.0.1:${GRAPHOS_UI_PORT:-8080}:8080"
+      - "127.0.0.1:${ARBORA_API_PORT:-8000}:8000"
+      - "127.0.0.1:${ARBORA_UI_PORT:-8080}:8080"
     volumes:
-      - graph-os-data:/var/lib/graph-os
-      - graph-os-run:/run/epistemic-graph
+      - arbora-data:/var/lib/arbora
+      - arbora-run:/run/epistemic-graph
     tmpfs:
       - /tmp
     read_only: true
@@ -86,5 +86,5 @@ services:
         max-file: "3"
 
 volumes:
-  graph-os-data: {}
-  graph-os-run: {}
+  arbora-data: {}
+  arbora-run: {}

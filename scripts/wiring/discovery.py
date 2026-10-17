@@ -1,8 +1,8 @@
-"""Shared module universe for GraphOS's wiring gates.
+"""Shared module universe for Arbora's wiring gates.
 
 Both the orphan-module check (``scripts/check_wiring.py orphans``) and the
 reachability report (``scripts/check_wiring.py unreachable``) start from the
-same universe: every ``.py`` file on disk under ``graph_os/`` and the roots
+same universe: every ``.py`` file on disk under ``arbora/`` and the roots
 declared in ``pyproject.toml``. Keeping that universe in one place means the
 two gates can never silently disagree about what exists or what counts as a
 root.
@@ -13,7 +13,7 @@ from __future__ import annotations
 import tomllib
 from pathlib import Path
 
-PACKAGE = "graph_os"
+PACKAGE = "arbora"
 
 
 class GateError(RuntimeError):
@@ -21,7 +21,7 @@ class GateError(RuntimeError):
 
 
 def discovered_modules(root: Path) -> dict[str, Path]:
-    """Every ``.py`` file on disk under ``graph_os/``, by dotted module name."""
+    """Every ``.py`` file on disk under ``arbora/``, by dotted module name."""
     base = root / PACKAGE
     modules: dict[str, Path] = {}
     for path in sorted(base.rglob("*.py")) if base.is_dir() else []:

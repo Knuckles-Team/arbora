@@ -1,14 +1,14 @@
-<section class="site-hero" aria-labelledby="graphos-title">
+<section class="site-hero" aria-labelledby="arbora-title">
   <p class="site-hero__eyebrow">The governed runtime door</p>
-  <h1 class="site-hero__title" id="graphos-title">Run the whole agent platform through one clear boundary.</h1>
+  <h1 class="site-hero__title" id="arbora-title">Run the whole agent platform through one clear boundary.</h1>
   <p class="site-hero__summary">
-    Graph OS is the process the operator runs. It authenticates MCP, REST, A2A, browser,
+    Arbora is the process the operator runs. It authenticates MCP, REST, A2A, browser,
     terminal, desktop, and messaging requests; composes the agent and graph
     services behind them; and supervises the connector fleet from one serving
     lifecycle.
   </p>
   <div class="site-hero__actions">
-    <a class="md-button md-button--primary" href="get-started/">Start Graph OS</a>
+    <a class="md-button md-button--primary" href="get-started/">Start Arbora</a>
     <a class="md-button" href="architecture/">See how it fits</a>
   </div>
 </section>
@@ -30,7 +30,7 @@
   <article class="site-card" markdown>
     <p class="site-card__title">Understand it</p>
     <p class="site-card__body">
-      Follow a request from client to GraphOS, agent control plane, durable
+      Follow a request from client to Arbora, agent control plane, durable
       graph, and connector service without blurring ownership.
     </p>
     <a href="architecture/">Explore the architecture →</a>
@@ -45,22 +45,22 @@
   </article>
 </div>
 
-## What GraphOS owns
+## What Arbora owns
 
 <div class="site-ownership">
   <div class="site-ownership__grid">
     <div class="site-ownership__item">
-      <span class="site-ownership__label">GraphOS owns</span>
+      <span class="site-ownership__label">Arbora owns</span>
       <span class="site-ownership__value">Process lifecycle, MCP and REST composition, unary A2A, request policy, fleet supervision, and optional WebUI hosting.</span>
     </div>
     <div class="site-ownership__item">
-      <span class="site-ownership__label">GraphOS delegates</span>
+      <span class="site-ownership__label">Arbora delegates</span>
       <span class="site-ownership__value">Agent decisions to agent-utilities, durable state and reasoning to epistemic-graph, source effects to connector services, and presentation to Agent WebUI.</span>
     </div>
   </div>
 </div>
 
-GraphOS does not copy those authorities. It binds their public contracts into
+Arbora does not copy those authorities. It binds their public contracts into
 one identity-aware application surface and reports unavailable authority
 explicitly.
 
@@ -69,11 +69,11 @@ explicitly.
 <ol class="site-flow">
   <li class="site-flow__step">
     <span class="site-flow__title">Enter through one door</span>
-    <span class="site-flow__body">An MCP, REST, A2A, or WebUI request reaches the GraphOS serving process.</span>
+    <span class="site-flow__body">An MCP, REST, A2A, or WebUI request reaches the Arbora serving process.</span>
   </li>
   <li class="site-flow__step">
     <span class="site-flow__title">Establish authority</span>
-    <span class="site-flow__body">GraphOS verifies identity, tenant, requested action, and the applicable policy.</span>
+    <span class="site-flow__body">Arbora verifies identity, tenant, requested action, and the applicable policy.</span>
   </li>
   <li class="site-flow__step">
     <span class="site-flow__title">Route to the owner</span>
@@ -89,7 +89,7 @@ explicitly.
 
 | If the operator must… | Go to… |
 |---|---|
-| Run MCP, REST, A2A, WebUI, or fleet supervision | **GraphOS** — the operator are here |
+| Run MCP, REST, A2A, WebUI, or fleet supervision | **Arbora** — the operator are here |
 | Build agents, workflows, evaluations, or skills | [agent-utilities](https://knuckles-team.github.io/agent-utilities/) |
 | Store, query, reason over, or prove durable knowledge | [epistemic-graph](https://knuckles-team.github.io/epistemic-graph/) |
 | Build and certify a source connector | [agent-connector-sdk](https://knuckles-team.github.io/agent-connector-sdk/) |
@@ -108,5 +108,5 @@ individual requirements and pull requests do not count as completed specificatio
 
 ## Planned run observation
 
-[GRAPHOS-OPS-R021.4](https://github.com/Knuckles-Team/graph-os/tree/main/specs/hosted-api-operations) defines planned run reads and served acceptance.
+[GRAPHOS-OPS-R021.4](https://github.com/Knuckles-Team/arbora/tree/main/specs/hosted-api-operations) defines planned run reads and served acceptance.
 The specification does not establish runtime availability.

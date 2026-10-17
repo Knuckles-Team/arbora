@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.deployment import (
+from arbora.deployment import (
     CI_TEMPLATES,
     PROFILE_REPO_SETS,
     STANDARD_REPOS,
@@ -18,7 +18,7 @@ from graph_os.deployment import (
     runner_plan,
     standard_repos,
 )
-from graph_os.deployment.repo_templates import (
+from arbora.deployment.repo_templates import (
     PLACEHOLDER_TOKENS,
     PROFILES,
     ci_enabled,

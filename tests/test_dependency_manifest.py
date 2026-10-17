@@ -1,10 +1,10 @@
 """GRAPHOS-HOST-R014: the dependency manifest pins published packages.
 
 The former combined agent-runtime source tree split into separately
-published repositories (the connector SDK, GraphOS, and the graph engine).
+published repositories (the connector SDK, Arbora, and the graph engine).
 ``[tool.uv.sources]`` in ``pyproject.toml`` still binds those packages to
 local editable checkouts for day-to-day development, but that table is a
-``uv``-only resolver hint: GraphOS's build backend is ``setuptools.build_meta``,
+``uv``-only resolver hint: Arbora's build backend is ``setuptools.build_meta``,
 which has no notion of ``[tool.uv.sources]`` and derives the installed
 distribution's ``Requires-Dist`` metadata from ``[project.dependencies]``
 alone. These tests prove both ends of that contract — the declared manifest

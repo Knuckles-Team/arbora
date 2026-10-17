@@ -1,6 +1,6 @@
 """The served process mounts the operation-invoke API the web UI calls.
 
-The test composes the served invocation the ``graph-os`` entry point composes,
+The test composes the served invocation the ``arbora`` entry point composes,
 installs it as the gateway application, mounts the graph routes the web UI
 co-service mounts, and then calls over HTTP each operation shape the web UI
 host parses: ``POST /api/v1/ops/<op_id>`` returning ``{"ok": true, "result":
@@ -23,20 +23,20 @@ import pytest
 from agent_utilities import host_ports
 from fastapi import FastAPI
 
-from graph_os import agent_runs
-from graph_os.a2a import mcp as a2a_mcp
-from graph_os.a2a.authority import WorkItemA2AAuthority
-from graph_os.a2a.routing import OrchestratorA2ARouter
-from graph_os.a2a.service import A2AService
-from graph_os.core.settings import runtime_config
-from graph_os.mcp_server import runtime as mcp_runtime
-from graph_os.mcp_server.composition import install_gateway_application
-from graph_os.mcp_server.served_invocation import (
+from arbora import agent_runs
+from arbora.a2a import mcp as a2a_mcp
+from arbora.a2a.authority import WorkItemA2AAuthority
+from arbora.a2a.routing import OrchestratorA2ARouter
+from arbora.a2a.service import A2AService
+from arbora.core.settings import runtime_config
+from arbora.mcp_server import runtime as mcp_runtime
+from arbora.mcp_server.composition import install_gateway_application
+from arbora.mcp_server.served_invocation import (
     compose_served_invocation,
     refused_fleet_effect,
 )
-from graph_os.security import request_identity
-from graph_os.security.actor_context import ActorContext, ActorType
+from arbora.security import request_identity
+from arbora.security.actor_context import ActorContext, ActorType
 from tests.test_agents_run_end_to_end import FakeEngine
 
 SCOPES = ("kg:read", "kg:write", "memory:read", "node:read", "query:unified")
@@ -109,7 +109,7 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     registry = tmp_path / "models.json"
     registry.write_text(json.dumps({"default": "test"}), encoding="utf-8")
     monkeypatch.setattr(runtime_config, "model_registry_path", str(registry))
-    monkeypatch.setattr(runtime_config, "auth_jwt_audience", "graph-os-fixture")
+    monkeypatch.setattr(runtime_config, "auth_jwt_audience", "arbora-fixture")
     monkeypatch.setattr(runtime_config, "kg_policy_version", "policy:fixture")
     # The identity gate needs a configured verifier; the verification is faked.
     monkeypatch.setattr(
@@ -138,7 +138,7 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
         fleet_effect=refused_fleet_effect,
     )
     install_gateway_application(invocation)
-    from graph_os.gateway.graph_api import register_graph_routes
+    from arbora.gateway.graph_api import register_graph_routes
 
     app = FastAPI()
     register_graph_routes(app)

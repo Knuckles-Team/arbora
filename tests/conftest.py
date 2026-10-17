@@ -13,5 +13,5 @@ def _isolated_configuration(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
     home = tmp_path / "config-home"
     home.mkdir()
     monkeypatch.setenv("XDG_CONFIG_HOME", str(home))
-    monkeypatch.setenv("GRAPH_OS_CONFIG_DIR", str(home / "graph-os"))
+    monkeypatch.setenv("ARBORA_CONFIG_DIR", str(home / "arbora"))
     monkeypatch.delenv("AGENT_UTILITIES_CONFIG_DIR", raising=False)

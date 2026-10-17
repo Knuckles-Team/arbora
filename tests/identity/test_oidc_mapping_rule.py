@@ -5,8 +5,8 @@ from typing import Any
 
 import pytest
 
-from graph_os.identity.engine import IdentityUnavailable
-from graph_os.identity.oidc import OidcMappingRule
+from arbora.identity.engine import IdentityUnavailable
+from arbora.identity.oidc import OidcMappingRule
 
 
 def _rule(**overrides: Any) -> OidcMappingRule:
