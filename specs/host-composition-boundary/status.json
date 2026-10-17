@@ -270,10 +270,12 @@
       "title": "A served agents.run call runs end to end",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "cc6349408a14"
+        "cc6349408a14",
+        "d3d50ac5d766"
       ],
       "verified_by": [
-        "tests/test_agents_run_end_to_end.py:116"
+        "tests/test_agents_run_end_to_end.py:117",
+        "tests/test_agents_run_end_to_end.py:164"
       ]
     },
     {
