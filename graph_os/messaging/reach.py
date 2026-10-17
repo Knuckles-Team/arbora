@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from agent_utilities.messaging.models import SendResult
-
+from graph_os.messaging.models import SendResult
 from graph_os.messaging.service import MessagingService, reach_user_sync
 
 

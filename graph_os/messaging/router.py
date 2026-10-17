@@ -12,8 +12,7 @@ import time
 from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any
 
-from agent_utilities.messaging.models import EventType, InboundEvent
-
+from graph_os.messaging.models import EventType, InboundEvent
 from graph_os.messaging.supervision import (
     ChannelSupervisionState,
     legal_targets,
@@ -21,7 +20,7 @@ from graph_os.messaging.supervision import (
 )
 
 if TYPE_CHECKING:
-    from agent_utilities.messaging.base import MessagingBackend
+    from graph_os.messaging.base import MessagingBackend
 
 logger = logging.getLogger(__name__)
 EventHandler = Callable[[InboundEvent, "MessagingBackend"], Awaitable[None]]
@@ -207,8 +206,7 @@ class InboundRouter:
         """Periodically re-attempt durably-recorded but still-unanswered inbound messages
         (CONCEPT:AU-ECO.messaging.durable-inbound-pending). Uses this router's own backends + the universal reply path, so a
         turn that failed while the engine was down is answered once the system recovers."""
-        from agent_utilities.core.config import setting
-
+        from graph_os.core.settings import setting
         from graph_os.messaging.inbox import retry_unanswered
         from graph_os.messaging.service import MessagingService
 
@@ -222,13 +220,11 @@ class InboundRouter:
                     backend = self._backend_for(str(m.get("platform", "")))
                     if backend is None:
                         return False
-                    # The agent runtime's public API package does not publish a
-                    # reply surface yet (tracked under GRAPHOS-HOST-R007); reach
-                    # its existing universal-reply path directly until it does.
-                    from agent_utilities.messaging.router import (
-                        _graph_agent_reply as graph_agent_reply,
-                    )
+                    from graph_os.messaging.host_ports import host_ports
 
+                    graph_agent_reply = host_ports().turn_handler
+                    if graph_agent_reply is None:
+                        return False
                     reply = await graph_agent_reply(
                         _eng, m.get("text", ""), session=m.get("session", "")
                     )
@@ -308,7 +304,7 @@ class InboundRouter:
         Args:
             backend: The messaging backend to supervise.
         """
-        from agent_utilities.core.config import setting
+        from graph_os.core.settings import setting
 
         base = max(0.0, float(setting("MESSAGING_LISTEN_BACKOFF_BASE_S", "1")))
         cap = max(base, float(setting("MESSAGING_LISTEN_BACKOFF_MAX_S", "60")))
@@ -396,14 +392,14 @@ class InboundRouter:
         Extracted verbatim from ``_supervise_backend`` (pure extract-method, no
         behaviour change).
         """
-        try:
-            from agent_utilities.observability.runtime_signals import (
-                KIND_LISTENER_RESTART,
-                record_runtime_signal,
-            )
+        from graph_os.messaging.host_ports import host_ports
 
+        record_runtime_signal = host_ports().runtime_signal
+        if record_runtime_signal is None:
+            return
+        try:
             record_runtime_signal(
-                KIND_LISTENER_RESTART,
+                "listener_restart",
                 backend_id,
                 {"delay_s": round(delay, 2), "ran_for_s": round(ran_for, 2)},
             )

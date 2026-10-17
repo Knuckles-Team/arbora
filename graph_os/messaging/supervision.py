@@ -11,7 +11,7 @@ through ``R005``) wires the router and registry to call :func:`transition`
 instead of mutating ad hoc booleans.
 
 Org boundary (GRAPHOS-MESSAGING-R006): GraphOS owns this supervision model.
-agent-utilities owns the adapter contract (``agent_utilities.messaging.base
+agent-utilities owns the adapter contract (``graph_os.messaging.base
 .MessagingBackend``) this model supervises; this module imports nothing from
 agent-utilities.
 """

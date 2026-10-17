@@ -22,12 +22,12 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
-from agent_utilities.messaging.base import MessagingBackend
-from agent_utilities.messaging.capabilities import (
+from graph_os.messaging.base import MessagingBackend
+from graph_os.messaging.capabilities import (
     CAPABILITY_MATRIX,
     MessagingCapabilities,
 )
-from agent_utilities.messaging.models import (
+from graph_os.messaging.models import (
     EventType,
     InboundEvent,
     MediaAttachment,
@@ -90,7 +90,7 @@ def _render_telegram_text(
     """
     parse_mode = (metadata or {}).get("parse_mode", "HTML")
     if parse_mode == "HTML" and not (metadata or {}).get("preformatted"):
-        from agent_utilities.messaging.render import markdown_to_telegram_html
+        from graph_os.messaging.render import markdown_to_telegram_html
 
         return markdown_to_telegram_html(text), parse_mode
     return text, parse_mode
@@ -407,7 +407,7 @@ class TelegramBackend(MessagingBackend):
         """
         if self._polling:
             return
-        from agent_utilities.core.config import setting
+        from graph_os.core.settings import setting
 
         base = str(setting("MESSAGING_WEBHOOK_BASE_URL", "")).strip()
         if base:

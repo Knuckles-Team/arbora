@@ -7,7 +7,7 @@ import logging
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from agent_utilities.messaging.models import SendResult
+from graph_os.messaging.models import SendResult
 
 logger = logging.getLogger(__name__)
 

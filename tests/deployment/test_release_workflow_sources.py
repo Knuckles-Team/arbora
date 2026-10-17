@@ -496,3 +496,67 @@ def test_pinned_sdk_source_contains_schema_disclosure_contract() -> None:
         for alias in node.names
     }
     assert {"SchemaManifest", "reconstruct_schema"} <= names
+
+
+@pytest.mark.parametrize(
+    ("path", "required"),
+    [
+        ("scripts/gen_api.py", "true"),
+        (".github/workflows/release.yml", "true"),
+        ("scripts/install_scanners.sh", "true"),
+        ("graph_os/client/invoke.py", "true"),
+        ("graph_os/api/generated/registry.json", "true"),
+        ("docs/api/openapi.json", "true"),
+        ("graph_os/a2a/application.py", "false"),
+    ],
+)
+def test_scanner_scope_executes_only_for_generated_contract_changes(
+    tmp_path, path, required
+):
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    source = tmp_path / path
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("before\n")
+    subprocess.run(["git", "add", path], cwd=tmp_path, check=True)
+    commit = [
+        "git",
+        "-c",
+        "user.name=Test",
+        "-c",
+        "user.email=test@example.test",
+        "commit",
+        "-qm",
+    ]
+    subprocess.run([*commit, "base"], cwd=tmp_path, check=True)
+    base = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=tmp_path, text=True
+    ).strip()
+    source.write_text("after\n")
+    subprocess.run(["git", "add", path], cwd=tmp_path, check=True)
+    subprocess.run([*commit, "change"], cwd=tmp_path, check=True)
+    output = tmp_path / "scope-output"
+    script = _workflow()["jobs"]["scanner-scope"]["steps"][1]["run"]
+    subprocess.run(
+        ["bash", "-c", script],
+        cwd=tmp_path,
+        env={**os.environ, "BASE_SHA": base, "GITHUB_OUTPUT": str(output)},
+        check=True,
+    )
+    assert output.read_text() == f"required={required}\n"
+
+
+def test_generator_scanner_runs_for_main_and_selected_pr_without_publication():
+    jobs = _workflow()["jobs"]
+    condition = jobs["scanner-quality"]["if"]
+    assert "github.event_name == 'push' && github.ref_type == 'branch'" in condition
+    assert (
+        "github.event_name == 'pull_request' && needs.scanner-scope.outputs.required == 'true'"
+        in condition
+    )
+    assert "needs.freeze-gate-source.result == 'success'" in condition
+    assert "scanner-scope" in jobs["scanner-quality"]["needs"]
+    assert jobs["build"]["if"] == "github.event_name != 'pull_request'"
+    assert (
+        jobs["publish-pypi"]["if"]
+        == "github.ref_type == 'tag' && startsWith(github.ref_name, 'v')"
+    )

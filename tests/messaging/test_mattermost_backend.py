@@ -18,7 +18,8 @@ import types
 from typing import Any
 
 import pytest
-from agent_utilities.messaging.models import EventType, PlatformId
+
+from graph_os.messaging.models import EventType, PlatformId
 
 from ._fakes import FakeMessagingBackend
 
@@ -84,9 +85,8 @@ def _fake_mattermost(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def _backend() -> Any:
-    from agent_utilities.messaging.models import MessagingConfig
-
     from graph_os.messaging.backends.mattermost import MattermostBackend
+    from graph_os.messaging.models import MessagingConfig
 
     from ._fakes import synthetic_token
 
@@ -107,7 +107,7 @@ def test_id_and_capabilities() -> None:
 
 def test_registered_as_first_class_platform() -> None:
     # Same enum + entry-point + capability matrix membership as Telegram.
-    from agent_utilities.messaging.capabilities import CAPABILITY_MATRIX
+    from graph_os.messaging.capabilities import CAPABILITY_MATRIX
 
     assert PlatformId.MATTERMOST == "mattermost"
     assert "mattermost" in CAPABILITY_MATRIX
@@ -164,7 +164,7 @@ def test_normalize_posted_frame_with_audio_attachment() -> None:
     ``metadata.files`` FileInfo becomes a MediaAttachment the core transcription path
     (``router._transcribe_attachments``) can act on, with a bearer auth header since
     Mattermost serves file bytes from an authenticated endpoint."""
-    from agent_utilities.messaging.models import MediaType
+    from graph_os.messaging.models import MediaType
 
     b = _backend()
     b._bot_user_id = "BOT123"
@@ -338,8 +338,7 @@ async def test_reach_user_routes_to_mattermost_last_active(
 ) -> None:
     """``reach_user`` follows the user to a Mattermost channel they were last active on —
     proving Mattermost is a first-class target of the platform-agnostic reach service."""
-    from agent_utilities.messaging.models import InboundEvent
-
+    from graph_os.messaging.models import InboundEvent
     from graph_os.messaging.service import MessagingService
 
     class _Eng:

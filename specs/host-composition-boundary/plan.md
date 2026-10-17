@@ -190,3 +190,16 @@ A controlled adapter can prove only the host handoff, not unified terminal rende
 ### 2026-10-16 — Authorized natural-language fallback
 
 R023 fallback uses the registered `query.nl` operation and shared invocation pipeline under `query:nl`. Delete the synthetic descriptor and direct callback path. Absent or unauthorized query operations refuse before dispatch. Preserve all eight tools and ranking behavior.
+
+### 2026-10-17: Refuse unavailable interface requests before startup
+
+R009.2 through R009.6 and R010.7 still lack a verified workspace/session start
+authority, authenticated HostLaunchReceipt and tenant-filtered HostLogReader.
+Do not derive workspace access from generic caller scopes or WebUI AccessContext.
+The connector create_agent_server absorbs enable_terminal_ui, enable_web_ui and enable_web_logs.
+It does not provide those capabilities.
+Reject explicit enabled requests with client_unavailable before graph creation
+or listener startup. Reject non-boolean selections with `invalid_launch`.
+Omitted, false and the existing optional web default preserve ordinary HTTP
+hosting. This validates refusal only; interface selection, scoped log delivery,
+rotation, reconnect and the served host/terminal acceptance remain pending.
