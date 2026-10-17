@@ -266,3 +266,12 @@ No deployed grant, credential configuration or listener is added by this increme
 The admission request binds a configuration digest to the policy decision only.
 This slice does not compute that digest from graph configuration or prove their agreement.
 R010.7.2 must compute the digest from the actual start configuration before any startup effect.
+
+### Actual declarative startup configuration (2026-10-17)
+
+R010.7.2.1 binds explicit builder inputs, listener settings, workspace and host metadata before calling admission owners.
+Canonical JSON rejects unsupported values and nonfinite numbers. Mapping order does not change the digest.
+AU execution dictionaries contain live engines, nodes and toolsets; their topology cache key cannot prove startup configuration identity.
+This slice rejects provided runtime objects and unused hosting arguments when callers request admission.
+R010.7.2.2 retains owner-attested runtime configuration and actual terminal/WebUI factory integration.
+Existing unsupported interface refusals remain after successful admission. Controlled owner tests establish boundary behavior, not deployed grants or served clients.
