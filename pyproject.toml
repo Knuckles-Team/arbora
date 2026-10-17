@@ -34,7 +34,7 @@ dependencies = [
     # SDK owns source transport and runner construction; GraphOS supplies its
     # authenticated epistemic-graph client through the SDK's public injection
     # seam and never imports connector implementations.
-    "agent-connector-sdk[a2a]>=0.2.0,<1.0.0",
+    "agent-connector-sdk>=0.2.0,<1.0.0",
     # The messaging channel layer's HTTP alert intake (graph_os/messaging/alert_intake.py)
     # imports aiohttp.web directly for its small webhook listener; platform-agnostic,
     # so unlike the chat-platform SDKs below this is not conditioned on a messaging extra.
@@ -185,9 +185,21 @@ service = "graph_os.messaging.reach:service_port"
 # Train-only bindings until AU 3.0.0 and SDK 0.2.0 publish to the index.
 # Package metadata keeps the real PEP 508 floors above, so released wheels
 # resolve from the index.
+[tool.uv]
+# A dependency's own git pin of the engine never applies here.
+override-dependencies = ["epistemic-graph[server]>=2.27.1,<3.0.0"]
+
 [tool.uv.sources]
 agent-utilities = { git = "https://github.com/Knuckles-Team/agent-utilities.git", branch = "refactor/au-cut-to-eg" }
 agent-connector-sdk = { git = "https://github.com/Knuckles-Team/agent-connector-sdk.git", branch = "feat/au-handoffs" }
+# The engine always resolves from the package index, never from a git or
+# path source declared by a dependency.
+epistemic-graph = { index = "pypi" }
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+explicit = true
 
 [tool.setuptools.dynamic]
 version = { attr = "graph_os._version.__version__" }
