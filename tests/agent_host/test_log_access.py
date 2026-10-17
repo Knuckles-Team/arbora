@@ -253,7 +253,11 @@ def test_session_revoked_while_grant_awaits(
     setup: tuple[ControlledOwners, HostLogAccess],
 ) -> None:
     owners, access = setup
-    owners.on_grant = lambda: owners.states.pop("a", None)
+
+    def revoke() -> None:
+        owners.states.pop("a", None)
+
+    owners.on_grant = revoke
     with serve(access) as client:
         assert (
             client.post(
@@ -270,13 +274,13 @@ def test_source_bounds_before_serialization(
 ) -> None:
     owners, access = setup
     record = HostLogRecord("tenant-a", str(tmp_path), "host-1", "safe")
-    records = (record,)
+    records: tuple[HostLogRecord, ...] = (record,)
     if bad == "foreign":
         records = (replace(record, tenant="tenant-b", message="private secret"),)
     elif bad == "oversized":
         records = (replace(record, message="x" * 16385),)
     else:
-        records = (record,) * 129
+        records: tuple[HostLogRecord, ...] = (record,) * 129
     owners.batch = HostLogBatch(records, None)
     with serve(access) as client:
         response = read(client, reference(client))
