@@ -71,8 +71,10 @@ _RETRYABLE = frozenset(
 )
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class GraphOSRefusal(Exception):
+    # Not frozen: raising sets ``__traceback__`` and context managers assign
+    # it again, which a frozen slotted dataclass refuses with a TypeError.
     code: GraphOSErrorCode
     message: str = "Request refused"
     details: Mapping[str, Any] = field(default_factory=dict)
