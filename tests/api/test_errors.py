@@ -324,12 +324,13 @@ def test_fleet_code_and_provenance_are_preserved() -> None:
 
 def test_fleet_refusal_carries_the_redacted_child_detail() -> None:
     jwt = "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhbGljZSJ9.c2lnbmF0dXJl"  # sanitizer:ignore - synthetic redaction fixture
+    pw = "hunter22"  # sanitizer:ignore - synthetic redaction fixture
     status, envelope = to_envelope(
         FleetRefusal(
             "CHILD_REFUSED",
             "search",
             "query",
-            detail=f"401 from upstream: Authorization: Bearer {jwt} password=hunter22 "  # sanitizer:ignore - synthetic redaction fixture
+            detail=f"401 from upstream: Authorization: Bearer {jwt} password={pw} "
             + "x" * 400,
         ),
         **CONTEXT,
@@ -338,7 +339,7 @@ def test_fleet_refusal_carries_the_redacted_child_detail() -> None:
     detail = envelope["error"]["details"]["detail"]
     assert detail.startswith("401 from upstream: Authorization: [redacted]")
     assert "password=[redacted]" in detail
-    assert jwt not in detail and "hunter22" not in detail  # sanitizer:ignore - synthetic redaction fixture
+    assert jwt not in detail and pw not in detail
     assert len(detail) <= 240
     assert envelope["error"]["message"] == "Fleet call refused"
 
