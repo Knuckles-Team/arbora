@@ -130,3 +130,5 @@ Status vocabulary is defined in [spec.md](spec.md). Check a task only after its 
 - [ ] `GRAPHOS-HOST-R022.1`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-HOST-R010.8`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-HOST-R032`: Deliver every requirement in requirements.md.
+
+- [x] `GRAPHOS-HOST-R010.9`: Refuse unsupported explicit interfaces before workspace, graph or listener effects.
