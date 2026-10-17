@@ -184,7 +184,8 @@
     "GRAPHOS-OPS-R062",
     "GRAPHOS-OPS-R064",
     "GRAPHOS-OPS-R065",
-    "GRAPHOS-OPS-R066"
+    "GRAPHOS-OPS-R066",
+    "GRAPHOS-OPS-R700"
   ],
   "requirements": [
     {
@@ -1902,6 +1903,20 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-OPS-R700",
+      "title": "Readiness snapshot joins independent probes",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "dbcdfe766c6e"
+      ],
+      "verified_by": [
+        "tests/observability/test_readiness.py:26",
+        "tests/observability/test_readiness.py:42",
+        "tests/observability/test_readiness.py:49",
+        "tests/observability/test_readiness.py:63"
+      ]
     }
   ]
 }
