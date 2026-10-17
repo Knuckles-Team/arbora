@@ -130,3 +130,8 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
 - [x] **GRAPHOS-A2A-R005.2.2:** Validate detached signatures against server-owned pending-call evidence. Keep confirmation refused until the live issuer, durable pending binding and atomic grant/plan consumption are qualified.
 
 - [ ] GRAPHOS-A2A-R010.1 — Wire the opt-in terminal read through shared task service and current session; validate producer bindings and explicit unavailable results.
+
+- [ ] **GRAPHOS-A2A-R001.3:** Back the served agent with the durable task store and serve caller-filtered `tasks/list`. Consumer: `TUI-RUNTIME-R012.3`.
+- [ ] **GRAPHOS-A2A-R001.4:** Refuse `message/stream` by type on the served agent, then serve turn events. Consumer: `TUI-RUNTIME-R012.1`.
+- [ ] **GRAPHOS-A2A-R001.5:** Accept bounded file parts on the served agent. Consumer: `TUI-RUNTIME-R012.5`.
+- [ ] **GRAPHOS-A2A-R016.6:** Honour an allowed caller model preference and serve `models.list`. Consumer: `TUI-RUNTIME-R012.2`.
