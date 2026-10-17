@@ -59,6 +59,7 @@
     "GRAPHOS-FLEET-R024.1",
     "GRAPHOS-FLEET-R024.2",
     "GRAPHOS-FLEET-R024.3",
+    "GRAPHOS-FLEET-R024.750",
     "GRAPHOS-FLEET-R025",
     "GRAPHOS-FLEET-R029",
     "GRAPHOS-FLEET-R026",
@@ -720,6 +721,7 @@
         "GRAPHOS-FLEET-R024.1",
         "GRAPHOS-FLEET-R024.2",
         "GRAPHOS-FLEET-R024.3",
+        "GRAPHOS-FLEET-R024.750",
         "GRAPHOS-FLEET-R024.4",
         "GRAPHOS-FLEET-R024.5",
         "GRAPHOS-FLEET-R024.6",
@@ -776,6 +778,15 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-FLEET-R024.750",
+      "title": "Fail-closed fleet health evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/fleet/test_health.py:18"
+      ]
     },
     {
       "id": "GRAPHOS-FLEET-R025",
