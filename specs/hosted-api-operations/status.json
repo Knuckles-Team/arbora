@@ -871,9 +871,12 @@
       "landed_in": [
         "383897ed5238",
         "5ffd23ca7883",
-        "8d1bc46ecbdb"
+        "8d1bc46ecbdb",
+        "94724be32c28"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/api/test_registry_factory.py:324"
+      ],
       "rollup_of": [
         "GRAPHOS-OPS-R024.4.1",
         "GRAPHOS-OPS-R024.4.2",
