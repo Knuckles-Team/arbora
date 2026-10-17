@@ -339,7 +339,7 @@
     },
     {
       "id": "GRAPHOS-DEPLOY-R017",
-      "title": "Deployment placement and sequencing go through the engine decision functionality",
+      "title": "Deployment placement and sequencing go through the engine decision capability",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -441,7 +441,7 @@
     },
     {
       "id": "GRAPHOS-DEPLOY-R017.12",
-      "title": "Resolve mode checks the supplied value",
+      "title": "Resolve mode validates the given value",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
