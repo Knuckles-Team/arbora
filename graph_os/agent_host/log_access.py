@@ -20,6 +20,10 @@ class HostLogDenied(PermissionError):
     """Current identity, workspace grant or reference binding was refused."""
 
 
+class HostLogRetentionGap(HostLogDenied):
+    """The authenticated resume position is no longer retained."""
+
+
 @dataclass(frozen=True, slots=True)
 class WorkspaceLogGrant:
     """Owner decision for one exact session and configured workspace."""
@@ -68,6 +72,10 @@ class HostLogRecord:
     workspace: str
     host_instance: str
     message: str
+    request: str = ""
+    sequence: int = 0
+    timestamp: float = 0.0
+    severity: str = "INFO"
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,6 +106,7 @@ class HostLogSource(Protocol):
 class _Reference:
     grant: WorkspaceLogGrant
     session_expiry: int
+    started: bool = False
     cursor: str | None = None
 
 
@@ -247,19 +256,24 @@ class HostLogAccess:
         limit: int,
     ) -> HostLogBatch:
         bound = self._references[reference]
-        if cursor != bound.cursor:
+        if bound.started and cursor != bound.cursor:
             raise HostLogDenied("workspace_denied")
-        batch = await self._source.read(
-            tenant=grant.tenant,
-            workspace=self._workspace,
-            host_instance=self._host,
-            source_generations=grant.source_generations,
-            cursor=cursor,
-            limit=limit,
-        )
+        try:
+            batch = await self._source.read(
+                tenant=grant.tenant,
+                workspace=self._workspace,
+                host_instance=self._host,
+                source_generations=grant.source_generations,
+                cursor=cursor,
+                limit=limit,
+            )
+        except HostLogRetentionGap:
+            await self._bound(credential, reference)
+            raise
+
         await self._bound(credential, reference)
         self._validate_batch(batch, grant, limit)
-        self._references[reference] = replace(bound, cursor=batch.cursor)
+        self._references[reference] = replace(bound, cursor=batch.cursor, started=True)
         return batch
 
     def _validate_batch(

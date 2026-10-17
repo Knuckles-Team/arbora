@@ -236,3 +236,10 @@ It does not prove deployed policy, durable replay after restart, terminal render
 ### Source generation admission
 
 R009.8.1 extends WorkspaceGrantProvider decisions with explicit source generations. Caller session identity cannot establish generation entitlement. R009.8.2 retains durable replay and metadata acceptance.
+
+### Retained host-file replay
+
+Reuse the five bounded owner-only log files and current exclusive sink lock.
+A private integrity key binds resume positions; it grants no read authority.
+Require fresh authenticated workspace/source-generation admission on every restart.
+Keep version-one message projection separate from full metadata presentation.
