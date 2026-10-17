@@ -2205,7 +2205,7 @@ for _bootstrap_name in _bootstrap.BOOTSTRAP_EXPORTS:
     globals()[_bootstrap_name] = getattr(_bootstrap, _bootstrap_name)
 
 
-def _build_server(bootstrap: bool = True):
+def _build_server(bootstrap: bool = True, *, invocation: Any = None):
     """Build the KG MCP server with all tools registered.
 
     Args:
@@ -2319,12 +2319,15 @@ def _build_server(bootstrap: bool = True):
         )
         return JSONResponse(result)
 
-    _register_graph_tool_surface(mcp)
+    if invocation is None:
+        _register_graph_tool_surface(mcp)
+    else:
+        _register_graph_tool_surface(mcp, invocation=invocation)
 
     return args, mcp, middlewares
 
 
-def _register_graph_tool_surface(mcp: Any) -> None:
+def _register_graph_tool_surface(mcp: Any, *, invocation: Any = None) -> None:
     """Mount graph-os's one MCP tool contract.
 
     agent-utilities owns the contract (``register_graphos_surface``): the
@@ -2344,9 +2347,23 @@ def _register_graph_tool_surface(mcp: Any) -> None:
     from graph_os.a2a.mcp import register_a2a_tools
     from graph_os.browser_control.mcp import register_browser_control_tools
 
+    if invocation is not None:
+        from graph_os.mcp_server.hosted_invocation import HostedInvocation
+
+        if not isinstance(invocation, HostedInvocation):
+            raise TypeError("admitted hosted invocation is required")
+        invocation.validate()
     backing = register_graphos_surface(mcp)
     register_browser_control_tools(backing)
-    register_a2a_tools(mcp, tools=backing)
+    if invocation is None:
+        register_a2a_tools(mcp, tools=backing)
+    else:
+        register_a2a_tools(
+            mcp,
+            tools=backing,
+            operation_services=invocation.services,
+            operation_authenticator=invocation.authenticator,
+        )
     REGISTERED_TOOLS.update(kg_server.REGISTERED_TOOLS)
 
 

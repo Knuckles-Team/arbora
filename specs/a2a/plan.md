@@ -293,6 +293,20 @@ R006.2.2 isolates the remaining shared-service composition acceptance.
 Both stay pending until their production-path tests pass; compatibility evidence cannot close either child.
 Generate status from these pending children and preserve historical commit receipts without treating them as completed acceptance.
 
+## Amendment: explicit serving dependency handoff
+
+R006.2.2 requires the native server to retain the same admitted services and
+request authenticator for A2A and HTTP. Add an explicit `HostedInvocation`
+argument to the trusted server entry and gateway installer. Validate provider
+admission before registration. Never infer a process credential for a request.
+Reject attempts to replace one dependency on an already composed gateway.
+
+This slice wires supplied dependencies through the native entry. Deployment
+construction of those dependencies, the MCP registry cutover, durable provider
+qualification and full read/write/fleet parity remain pending under R006.2.2.
+Tests with controlled effect owners qualify the handoff only. They cannot
+qualify real credential issuers or durable effects.
+
 ### Detached signature validation boundary
 
 R005.2.2 reuses `PlanBinding` and the existing closed confirmation payload. The binding and trusted public key remain server-side. The validator checks exact canonical bytes and current supplied caller/grant evidence. No issuer, key resolver or local grant store is added. The served confirmation route passes no authority and remains unavailable. EG must still own fresh grant and pending-task evidence, plus atomic consumption of the grant and plan fence. Supplied consumed/revoked snapshots test rejection only; they do not establish replay prevention.

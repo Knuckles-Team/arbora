@@ -346,7 +346,9 @@
       "title": "Compose shared invocation into A2A",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/mcp_server/test_hosted_invocation.py:25"
+      ]
     },
     {
       "id": "GRAPHOS-A2A-R006.3",
