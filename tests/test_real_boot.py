@@ -80,6 +80,7 @@ def _server_binary() -> str:
         return resolve_server_binary()
     except ServerBinaryNotFoundError as exc:
         pytest.skip(str(exc))
+        raise AssertionError("unreachable") from exc
 
 
 def _free_port() -> int:
