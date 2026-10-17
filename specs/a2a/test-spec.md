@@ -101,7 +101,7 @@ The fixture must prove InvokeServices is composed by the production serving path
 Returning a caller without reaching that path cannot close R006.2.
 
 The compatibility probe used a synthetic human session and real AU/Arbora projection and refresh functions.
-It observed HTTP 501 and JSON-RPC -32011 for arbora.op/invoke and graphos.plan/confirm, with zero authority calls.
+It observed HTTP 501 and JSON-RPC -32011 for arbora.op/invoke and arbora.plan/confirm, with zero authority calls.
 Those results establish the current refusal and compatible session shape only.
 They do not establish production credential binding, deployed service, TLS, engine execution or signed human approval.
 Preserve every R005.2 input-required, signature, binding, expiry, revocation and replay acceptance case.

@@ -59,7 +59,7 @@ class BrowserAdmission:
             raise PermissionError("request changed during caller resolution")
         state = dict(scope.get("state") or {})
         for name in (
-            "graphos_session_admitted",
+            "arbora_session_admitted",
             "arbora_identity_session_token",
             "arbora_console_mfa_at_ms",
             "user_claims",
@@ -78,5 +78,5 @@ class BrowserAdmission:
         ):
             # Existing C routing hint only; actual verification uses private owner
             # bindings and ignores all request-state authority assertions.
-            forwarded["state"]["graphos_session_admitted"] = True
+            forwarded["state"]["arbora_session_admitted"] = True
             yield forwarded

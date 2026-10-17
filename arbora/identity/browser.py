@@ -17,7 +17,7 @@ from urllib.parse import urlsplit
 
 from .engine import IdentityUnavailable
 
-SESSION_COOKIE = "__Host-graphos_session"
+SESSION_COOKIE = "__Host-arbora_session"
 _COOKIE_FLAGS = "Secure; HttpOnly; SameSite=Lax; Path=/"
 _SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 _TOKEN = re.compile(r"[A-Za-z0-9_-]{43}\Z")

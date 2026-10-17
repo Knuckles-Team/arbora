@@ -38,7 +38,7 @@ Repository scanner checks include CCCC, jscpd, dupehound and KISS alongside Pyth
 | Check | Expected result |
 |---|---|
 | Placement Decide | One typed request; engine decision returned verbatim; arbora names no backend. |
-| Assembly, view, confirm | Assembled graph shown read-only and executed only after `graphos.plan/confirm`. |
+| Assembly, view, confirm | Assembled graph shown read-only and executed only after `arbora.plan/confirm`. |
 | Refusal | Stubbed assemble or confirm yields a distinct typed refusal with no side effect. |
 | Existing artifacts | compose, helm, swarm resolve to files under `deploy/`, digest-pinned; systemd refused as unsupported. |
 | In-process | Live start calls `start_composed_services`. |

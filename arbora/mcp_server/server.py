@@ -109,7 +109,7 @@ def _preflight_mcp_sdk_floor() -> None:
     message = (
         f"installed MCP SDK does not satisfy the declared [mcp] floor: {result['detail']}. "
         "The runtime image and this source tree have diverged — rebuild the image "
-        "(docker/graphos-unified.Dockerfile) so its dependency closure matches the "
+        "(docker/arbora-unified.Dockerfile) so its dependency closure matches the "
         "source it serves. Set MCP_SDK_FLOOR_ENFORCE=warn to start anyway."
     )
     if mode == "warn":

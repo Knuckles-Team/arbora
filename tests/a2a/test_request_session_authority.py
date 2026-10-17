@@ -389,7 +389,7 @@ def test_default_registered_plan_confirm_stays_unavailable(
     app, _authority, observed, verified = registered_unary(monkeypatch)
     response = unary_request(
         app,
-        "graphos.plan/confirm",
+        "arbora.plan/confirm",
         {
             "taskId": "task:one",
             "pendingCallId": "pending:one",

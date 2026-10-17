@@ -6,7 +6,6 @@ import warnings
 
 import pytest
 
-import arbora
 from arbora.core import settings
 
 PREVIOUS_DIR_SETTING = "GRAPH_OS_CONFIG_DIR"  # arbora-rename: keep
@@ -91,31 +90,3 @@ def test_setting_reads_environment_typed_by_default(
     else:
         monkeypatch.setenv("GOS_TEST_SETTING", raw)
     assert settings.setting("GOS_TEST_SETTING", default) == expected
-
-
-def test_bridge_points_shared_helpers_at_the_arbora_directory(
-    home, monkeypatch
-) -> None:
-    monkeypatch.setenv("ARBORA_CONFIG_DIR", str(home / "explicit"))
-    arbora._bridge_shared_config_dir()
-    import os
-
-    assert os.environ[PREVIOUS_DIR_SETTING] == str(home / "explicit")
-
-
-def test_bridge_leaves_shared_helpers_alone_without_an_arbora_directory(
-    home,
-) -> None:
-    import os
-
-    arbora._bridge_shared_config_dir()
-    assert PREVIOUS_DIR_SETTING not in os.environ
-
-
-def test_bridge_never_overrides_an_explicit_shared_directory(home, monkeypatch) -> None:
-    monkeypatch.setenv(PREVIOUS_DIR_SETTING, str(home / "kept"))
-    _write(home / "arbora" / "config.json")
-    arbora._bridge_shared_config_dir()
-    import os
-
-    assert os.environ[PREVIOUS_DIR_SETTING] == str(home / "kept")

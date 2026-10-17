@@ -420,7 +420,7 @@ class WorkItemA2AAuthority:
                 state=state,
                 timestamp=WorkItemA2AAuthority._timestamp(item.get("updated_at")),
             ),
-            metadata={"graphOs": public_metadata},
+            metadata={"arbora": public_metadata},
         )
 
     async def get_committed_task(self, task_id: str) -> A2ATask | None:
@@ -478,7 +478,7 @@ class WorkItemA2AAuthority:
                 raise A2ATerminalEventUnavailable(
                     "committed terminal event is unavailable"
                 )
-            task.metadata["graphOs"]["terminalEvent"] = event
+            task.metadata["arbora"]["terminalEvent"] = event
         return task
 
     @staticmethod

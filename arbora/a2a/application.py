@@ -222,14 +222,14 @@ def _plan_confirm_stub(raw_params: Any) -> Any:
     # A parsed payload or valid detached signature cannot supply that authority.
     check = verify_pending_signature(confirmation, evidence=None)
     raise A2AOperationBridgeUnavailable(
-        f"graphos.plan/confirm authority unavailable: {check.value}"
+        f"arbora.plan/confirm authority unavailable: {check.value}"
     )
 
 
 _SYNC_METHODS: dict[str, Callable[[Any], Any]] = {
     "tasks/resubscribe": _resubscribe_stub,
     "arbora.op/invoke": _op_invoke_stub,
-    "graphos.plan/confirm": _plan_confirm_stub,
+    "arbora.plan/confirm": _plan_confirm_stub,
 }
 
 
@@ -391,7 +391,7 @@ async def _unary_request(
     raw_params: dict[str, Any],
     request_id: Any,
 ) -> JSONResponse:
-    write_methods = {"message/send", "tasks/cancel", "graphos.plan/confirm"}
+    write_methods = {"message/send", "tasks/cancel", "arbora.plan/confirm"}
     scope = "kg:write" if method in write_methods else "kg:read"
     try:
         caller = await authenticator.authenticate(request, scope=scope)

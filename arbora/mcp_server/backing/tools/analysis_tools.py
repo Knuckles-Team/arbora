@@ -2528,7 +2528,7 @@ def register_analysis_tools(mcp):
             "export consolidated/procedural memory to a SFT/DPO/GRPO corpus and "
             "optionally submit=true to dispatch a live data-science-mcp train; "
             "poll_job_id=<id> reads a submitted job's status back) | readiness "
-            "(GOC-02 — the graphos.readiness.v1 truthful engine/identity/catalog/"
+            "(GOC-02 — the arbora.readiness.v1 truthful engine/identity/catalog/"
             "source-sync/index/synthetic-query snapshot; readiness is never "
             "reported from liveness alone). Use graph_code, "
             "graph_research, graph_evaluate, graph_explain, or graph_observe for "
@@ -2563,7 +2563,7 @@ def register_analysis_tools(mcp):
             "infra_sweep",
             "security_scan",
             "distill_memory",
-            # GOC-02: the graphos.readiness.v1 snapshot (engine, identity/policy,
+            # GOC-02: the arbora.readiness.v1 snapshot (engine, identity/policy,
             # catalog, source_sync, dense/sparse index, synthetic query canary —
             # see readiness.py's module docstring). Structural/operational, so it
             # lives on this surface rather than one of the five focused domains.

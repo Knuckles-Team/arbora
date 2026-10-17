@@ -45,7 +45,7 @@ from here, and this check catches those too).
 U-26/BUG-172 -- a THIRD deployment shape broke the guard's founding premise.
 The docstring above says "every consumer live-mounts" -- that was true of the
 apps-namespace ``*-mcp`` fleet this module was written for, but the
-self-contained ``docker/graphos-unified.Dockerfile`` image installs
+self-contained ``docker/arbora-unified.Dockerfile`` image installs
 ``agent_utilities`` EDITABLE from local source *at build time*
 (``pip install -e /opt/agent-utilities``) and ships with no hostPath/source
 volume at all by design -- "editable" here only means a deployer MAY choose to
@@ -53,7 +53,7 @@ bind-mount fresher source over it later, not that one is expected. Naively
 applying the old rule ("no active mount ⇒ CRITICAL stale-code drift") to that
 pod is a false positive: the exact code that was reviewed, built, and shipped
 IS what is running: there is no live mount to have drifted FROM. The fix is
-provenance, not mount topology -- ``docker/graphos-unified.Dockerfile`` writes
+provenance, not mount topology -- ``docker/arbora-unified.Dockerfile`` writes
 a ``SOURCE_REVISION`` build ARG into a non-secret
 ``agent_utilities/.source-revision`` marker file (see
 :func:`_installed_source_revision`) beside this package at build time. Its
@@ -79,7 +79,7 @@ from arbora.core.settings import setting
 logger = logging.getLogger("arbora.live_mount_guard")
 
 #: Filename of the non-secret build-provenance marker
-#: ``docker/graphos-unified.Dockerfile`` writes beside this package at image
+#: ``docker/arbora-unified.Dockerfile`` writes beside this package at image
 #: build time (``arbora/.source-revision``, containing only a short
 #: git revision or ``"unknown"`` -- never a credential or path). Read from
 #: ``package_dir`` at runtime by :func:`_installed_source_revision`.

@@ -58,7 +58,7 @@ _ENGINE_FAMILIES = " ".join(
 
 #: The router's job-based routing table, in ``describe`` order. Every
 #: non-intent family of the generated action manifest belongs to exactly one
-#: group (gated by ``tests/unit/mcp/test_graphos_surface.py``).
+#: group (gated by ``tests/unit/mcp/test_arbora_surface.py``).
 ROUTING_GROUPS: tuple[RoutingGroup, ...] = (
     _group(
         "read",

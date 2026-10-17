@@ -198,7 +198,7 @@ async def test_console_requires_verified_cookie_origin_human_and_fresh_mfa() -> 
 
     auth = AmbientHTTPAuthenticator(console_origin="https://console.example.test")
     headers = [
-        (b"cookie", b"__Host-graphos_session=opaque"),
+        (b"cookie", b"__Host-arbora_session=opaque"),
         (b"origin", b"https://console.example.test"),
         (b"x-csrf-token", b"csrf-secret"),
     ]
@@ -206,7 +206,7 @@ async def test_console_requires_verified_cookie_origin_human_and_fresh_mfa() -> 
         "POST",
         "/api/v1/ops/identity.users.disable",
         headers,
-        state={"graphos_session_admitted": True},
+        state={"arbora_session_admitted": True},
     )
     assert auth.is_console_request(attended, caller)
     assert not AmbientHTTPAuthenticator().is_console_request(attended, caller)
@@ -224,7 +224,7 @@ async def test_console_requires_verified_cookie_origin_human_and_fresh_mfa() -> 
         "POST",
         "/api/v1/ops/identity.users.disable",
         [headers[0], (b"origin", b"https://other.example.test"), headers[2]],
-        state={"graphos_session_admitted": True},
+        state={"arbora_session_admitted": True},
     )
     assert not auth.is_console_request(foreign, caller)
     assert not auth.is_console_request(

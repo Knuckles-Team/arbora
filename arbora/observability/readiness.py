@@ -1,4 +1,4 @@
-"""Readiness snapshot (``graphos.readiness.v1``).
+"""Readiness snapshot (``arbora.readiness.v1``).
 
 One collector joins independent probes into a single snapshot. A probe returns
 a typed check; a probe that raises or overruns its deadline reports
@@ -17,7 +17,7 @@ from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
 from typing import Any, Literal
 
-SCHEMA_VERSION = "graphos.readiness.v1"
+SCHEMA_VERSION = "arbora.readiness.v1"
 
 State = Literal["ready", "degraded", "unavailable", "stale", "not_configured"]
 Check = dict[str, Any]

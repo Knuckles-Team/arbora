@@ -23,7 +23,7 @@ dependencies = [
     # server/ or api/ packages. arbora owns the MCP/REST serving surface
     # (arbora/mcp_server/backing, arbora/api/contracts), so the former
     # `[mcp]` extra's requirements are declared directly below.
-    "agent-utilities>=3.0.0,<4.0.0",
+    "agent-utilities>=3.0.1,<4.0.0",
     "eunomia-core>=0.3.10",
     "httpx>=0.28.1",
     "pyjwt>=2.15.1",
@@ -34,7 +34,7 @@ dependencies = [
     # SDK owns source transport and runner construction; Arbora supplies its
     # authenticated epistemic-graph client through the SDK's public injection
     # seam and never imports connector implementations.
-    "agent-connector-sdk[a2a,mcp]>=0.2.0,<1.0.0",
+    "agent-connector-sdk[a2a,mcp]>=0.2.1,<1.0.0",
     # The messaging channel layer's HTTP alert intake (arbora/messaging/alert_intake.py)
     # imports aiohttp.web directly for its small webhook listener; platform-agnostic,
     # so unlike the chat-platform SDKs below this is not conditioned on a messaging extra.
@@ -111,7 +111,7 @@ webui = [
 # IDs: specs/portable-deployment/requirements.md,
 # specs/host-composition-boundary/requirements.md.
 gateway-widgets = [
-    "agent-connector-sdk[a2a,mcp]>=0.2.0,<1.0.0",
+    "agent-connector-sdk[a2a,mcp]>=0.2.1,<1.0.0",
 ]
 # Messaging channel adapters (CONCEPT:AU-ECO.messaging.native-backend-abstraction):
 # each chat platform SDK is its own extra so importing arbora.messaging never

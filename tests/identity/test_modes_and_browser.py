@@ -93,7 +93,7 @@ def test_host_and_state_cannot_redefine_trusted_origin():
         (name, b"https://evil.invalid" if name == b"origin" else value)
         for name, value in scope["headers"]
     ]
-    scope["state"] = {"graphos_session_admitted": True}
+    scope["state"] = {"arbora_session_admitted": True}
     with pytest.raises(PermissionError):
         require_mutation_proof(scope, trusted_origin=ORIGIN)
 

@@ -11,7 +11,6 @@ Kept as-is, by design:
 * generated files (``specs/*/status.json``, the API contracts), rebuilt by
   their own generators after the rename;
 * ``CHANGELOG.md`` history (the rename entry is written by hand);
-* names that another repository owns or reads on the wire (``KEEP`` below);
 * any line carrying the ``arbora-rename: keep`` marker (the one-release
   configuration fallback that still reads the old location);
 * this script.
@@ -39,30 +38,10 @@ EXCLUDED_PATTERNS = (
     re.compile(r"^docs/api/(schemas/|openapi\.json$|generated\.ts$)"),
 )
 
-# Names owned by another repository, or read by another repository on the wire.
-KEEP = (
-    # agent-utilities module and file names
-    "agent_utilities.mcp._graphos_action_manifest",
-    "agent_utilities.mcp.graphos_surface",
-    "agent_utilities/mcp/graphos_surface.py",
-    "agent_utilities.skills.graphos_operations",
-    "tests/unit/mcp/test_graphos_surface.py",
-    "docker/graphos-unified.Dockerfile",
-    # agent-webui paths and the browser session contract it reads
-    "specs/graphos-app-surface",
-    "src/lib/graphos-api",
-    "__Host-graphos_session",
-    "__Host-graphos-session",
-    "x-graphos-session-admitted",
-    "graphos_session_admitted",
-    "graphos.readiness.v1",
-    'authority: Literal["graph-os"] = "graph-os"',  # BrowserControlPort check
-    # agent-terminal-ui wire contract
-    "graphos.plan/confirm",
-    '"graphOs"',
-    "['graphOs']",
-    '["graphOs"]',
-)
+# Names another repository owns or reads on the wire. Empty: agent-utilities,
+# agent-connector-sdk, agent-webui and agent-terminal-ui apply the same mapping,
+# so clients and the server agree on every renamed wire name.
+KEEP: tuple[str, ...] = ()
 
 # Spec IDs: GRAPHOS- followed by an upper-case area or digit.
 SPEC_ID = re.compile(r"GRAPHOS-(?=[A-Z0-9])")

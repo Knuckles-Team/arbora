@@ -47,9 +47,9 @@ class AmbientHTTPAuthenticator:
     def is_console_request(self, request: Request, caller: Any) -> bool:
         """Only a fresh attended browser session may use Surface.CONSOLE."""
         state = request.scope.get("state") or {}
-        if state.get("graphos_session_admitted") is not True:
+        if state.get("arbora_session_admitted") is not True:
             return False
-        if not request.cookies.get("__Host-graphos_session"):
+        if not request.cookies.get("__Host-arbora_session"):
             return False
         if (
             not self.console_origin
@@ -80,8 +80,8 @@ class AmbientHTTPAuthenticator:
     def _credential_kind(self, request: Request) -> str:
         """Classify the presented credential; refuse ambiguous or malformed ones."""
         state = request.scope.get("state") or {}
-        cookie = request.cookies.get("__Host-graphos_session")
-        admitted = state.get("graphos_session_admitted") is True
+        cookie = request.cookies.get("__Host-arbora_session")
+        admitted = state.get("arbora_session_admitted") is True
         if cookie is None and not admitted:
             return self._require_exact_bearer(request)
         if not cookie or not admitted or self._verify_browser_session is None:

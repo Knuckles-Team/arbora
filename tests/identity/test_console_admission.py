@@ -234,8 +234,8 @@ def test_marker_header_or_retained_evidence_cannot_install_private_binding():
     async def scenario():
         backend = OwnersFixture()
         owner, scope = backend.producer(), forwarded_scope()
-        scope["state"] = {"graphos_session_admitted": True}
-        scope["headers"].append((b"x-graphos-session-admitted", b"true"))
+        scope["state"] = {"arbora_session_admitted": True}
+        scope["headers"].append((b"x-arbora-session-admitted", b"true"))
         with pytest.raises(PermissionError):
             await owner.verify_request(scope)
         assert owner._requests == {}

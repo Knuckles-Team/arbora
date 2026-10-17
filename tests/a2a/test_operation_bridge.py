@@ -232,7 +232,7 @@ def test_missing_composition_still_refuses_without_effects() -> None:
     "method,params",
     [
         (
-            "graphos.plan/confirm",
+            "arbora.plan/confirm",
             {
                 "taskId": "task:one",
                 "pendingCallId": "pending:one",
@@ -257,7 +257,7 @@ def test_unqualified_signed_approval_routes_remain_refused(
     app, _services, runtime, audit, journal, _requests = fixture()
     # The legacy task facade has its own explicit fixture credential authority.
     token = (  # sanitizer:ignore - synthetic ASGI credential
-        "verified" if method == "graphos.plan/confirm" else "fixture-verified"
+        "verified" if method == "arbora.plan/confirm" else "fixture-verified"
     )
     response = post(app, params=params, method=method, token=token)
     assert response.status_code == 501

@@ -28,7 +28,7 @@ Mode transitions rotate the local issuer signer and revoke sessions. Plan a main
 
 ## Browser acceptance
 
-A qualifying probe exercises the actual sign-in form or IdP redirect, then requests `/auth/session` with the resulting browser cookie. It asserts the expected principal and server-resolved role. The local path also completes MFA for the test administrator. The external path starts at `/auth/oidc/{idp_id}/login`, follows the IdP authorization-code redirect, and verifies the callback sets `__Host-graphos_session`. A successful discovery document or Keycloak token endpoint is preparatory evidence only.
+A qualifying probe exercises the actual sign-in form or IdP redirect, then requests `/auth/session` with the resulting browser cookie. It asserts the expected principal and server-resolved role. The local path also completes MFA for the test administrator. The external path starts at `/auth/oidc/{idp_id}/login`, follows the IdP authorization-code redirect, and verifies the callback sets `__Host-arbora_session`. A successful discovery document or Keycloak token endpoint is preparatory evidence only.
 
 Use dedicated, non-production test users and keep their credentials in the deployment secret backend. Run the browser probe again against the production URL after rollout; a test namespace pass alone does not qualify production. Keep probe output free of cookies, tokens, credentials, and one-time codes.
 

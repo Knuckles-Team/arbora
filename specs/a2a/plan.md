@@ -33,14 +33,14 @@ flowchart LR
 
 An operation request uses the hosted registry and `invoke` pipeline, not an A2A-specific authorization implementation. The verified A2A adapter supplies actor, tenant, effective scopes, auth mode, policy revision and session provenance. The response carries the hosted API envelope within JSON-RPC `result`; JSON-RPC transport errors remain protocol errors. This preserves the engine/fleet's source error code and a privacy-safe message.
 
-When the orchestrator pauses on a pending effect, Arbora issues a durable plan lease bound to `(task_id, parent_work_item_id, child_work_item_id, pending_call_id, op_id, params_digest, principal, tenant, policy_revision, registry_digest, expiry)`. It sends an `input-required` event with a safe preview. The client obtains a fresh authenticated human signature/grant through the public identity contract; the service never stores the bearer itself. On `graphos.plan/confirm`, Arbora verifies the original human and each bound identity, asks the engine to atomically consume the human grant and plan fence, then dispatches through the common invocation pipeline. If any authority changes, return a stable refusal and preserve zero effect. A console-only admin effect instead returns a URL and is confirmed only on the console surface.
+When the orchestrator pauses on a pending effect, Arbora issues a durable plan lease bound to `(task_id, parent_work_item_id, child_work_item_id, pending_call_id, op_id, params_digest, principal, tenant, policy_revision, registry_digest, expiry)`. It sends an `input-required` event with a safe preview. The client obtains a fresh authenticated human signature/grant through the public identity contract; the service never stores the bearer itself. On `arbora.plan/confirm`, Arbora verifies the original human and each bound identity, asks the engine to atomically consume the human grant and plan fence, then dispatches through the common invocation pipeline. If any authority changes, return a stable refusal and preserve zero effect. A console-only admin effect instead returns a URL and is confirmed only on the console surface.
 
 Pre-effect audit reservation and post-effect outcome linking use the shared hosted-operation service. A two-person approval must prove two distinct qualified humans using the same durable relation. No service or delegated agent can synthesize either participant. All claims are rechecked at resume time. A canceled task cannot be confirmed. A committed effect is not treated as reversible by task cancellation.
 
 ### Implementation sequence
 
 1. Inventory published WorkItem, assembly, grant, plan lease, audit, and task-event contracts; pin versions and make unsupported capabilities typed unavailable.
-2. Extend A2A method table and models for `message/stream`, `tasks/resubscribe`, `arbora.op/invoke`, and `graphos.plan/confirm`; reuse `A2AService` and serving composition.
+2. Extend A2A method table and models for `message/stream`, `tasks/resubscribe`, `arbora.op/invoke`, and `arbora.plan/confirm`; reuse `A2AService` and serving composition.
 3. Add durable parent/child resolution, event cursor and input-required projection using public ports. Ensure no separate task state or private agent import.
 4. Bind pending calls to an attested original human and revocable grant; integrate atomic fence and shared invocation/audit path. Keep approval disabled until exact served proof.
 5. Generate/update public client contract and status, run [test-spec.md](test-spec.md), record exact default-branch evidence, then enable approval.
@@ -186,7 +186,7 @@ Consumers: AU-SEC-R012. Moves from agent-utilities: `agent_utilities/security/to
 
 Existing code: `arbora/a2a/application.py:140` (fail-closed confirm stub), `arbora/a2a/models.py:104` (`A2APlanConfirmParams`), `arbora/api/invoke/pipeline.py:641` (`_confirmation_gate`). `arbora/access/service.py:54` is operator-console elevation and is not an A2A approval port. Reachable today: no. The stub is reachable and always refuses; no admission function exists. Search terms: `admission`, `approval`, `untrusted`, `taint`, `pending_call`.
 
-Data flow: `POST /a2a` `graphos.plan/confirm` → `_invoke_method` (`application.py:157`) → async confirmation_kind dispatcher → shared invoke with Surface.A2A and verified signed authority → `ToolActionAdmitter.admit` (new) → one engine verdict → audit reservation (`GRAPHOS-A2A-R007`) → `ToolActionApproval` in the response → harness applies it.
+Data flow: `POST /a2a` `arbora.plan/confirm` → `_invoke_method` (`application.py:157`) → async confirmation_kind dispatcher → shared invoke with Surface.A2A and verified signed authority → `ToolActionAdmitter.admit` (new) → one engine verdict → audit reservation (`GRAPHOS-A2A-R007`) → `ToolActionApproval` in the response → harness applies it.
 
 Types: `ToolActionAdmissionRequest` (`pending_call_id`, `params_digest`, `trust_mark_ref`, `action_class`), `ToolActionApproval` (`verdict`, `approval_ref`, `decision_ref`), `ToolActionRefusal` (closed reasons).
 
@@ -204,7 +204,7 @@ Consumers: AU-CONTROL-R040, AU-HARNESS-R023. Moves from agent-utilities: `agent_
 
 Existing code: `arbora/a2a/application.py:140`, `arbora/a2a/models.py:104`, `arbora/access/service.py:54`, `agent_utilities/knowledge_graph/enrichment/writeback/approval.py:170` (`approve_proposal`, called from `agent_utilities/mcp/tools/ontology_tools.py:335`). Reachable today: no for arbora; yes for the harness-side function. Search terms: `admit`, `proposal`, `verdict`, `approve_proposal`, `stored program`.
 
-Data flow: `POST /a2a` `graphos.plan/confirm` → `_invoke_method` (`application.py:157`) → shared invoke with verified caller and Surface.A2A → `HeldItemAdmitter.admit` (new) → dedicated engine held-item verdict port (new).
+Data flow: `POST /a2a` `arbora.plan/confirm` → `_invoke_method` (`application.py:157`) → shared invoke with verified caller and Surface.A2A → `HeldItemAdmitter.admit` (new) → dedicated engine held-item verdict port (new).
 A program also passes a verification record check. A dedicated engine held-item admission port records the verdict through shared invoke with the verified caller and Surface.A2A, retaining signed human approval, grant/plan fences, scope/policy checks and audit reservation. This port and adapter are new; `approve_elevation` accepts ElevationApproval and hardcodes OPERATOR_CONSOLE, so it cannot authorize held items. Missing ports or full signed-chain/verified-caller prerequisites keep the stub refused. The harness then applies the `HeldItemVerdict` or leaves the item held.
 
 Types: `HeldItemAdmissionRequest`, `HeldItemVerdict`, closed refusal reasons. One closed confirmation_kind union distinguishes tool_action from held_item; reject missing, unknown or mixed variants. Replace the synchronous confirm stub with one async dispatcher into shared invoke, authority and audit. Engine policy supplies all verification/retirement thresholds; missing evidence refuses without local defaults. A registry operation that serves this outside A2A belongs to the hosted-api-operations spec and is not written here.
@@ -276,9 +276,9 @@ flowchart LR
 
 R005.2 retains its complete signed input-required and consume-once grant acceptance.
 The existing pending-input CAS and plan lease are reusable primitives, not that signed approval chain.
-The method spelling remains graphos.plan/confirm.
+The method spelling remains arbora.plan/confirm.
 Keep ordinary `arbora.op/invoke` unavailable until R006.2 acceptance passes.
-Keep `graphos.plan/confirm` unavailable until R005.2 and its caller prerequisites pass.
+Keep `arbora.plan/confirm` unavailable until R005.2 and its caller prerequisites pass.
 
 The former AU control-plane label identifies no current task-event reader requirement.
 AU-CONTROL-R035 owns the signed dispatch envelope only; it is not an event-reader replacement.

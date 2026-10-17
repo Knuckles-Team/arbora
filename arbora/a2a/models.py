@@ -102,7 +102,7 @@ class A2AOperationInvokeParams(_WireModel):
 
 
 class A2APlanConfirmParams(_WireModel):
-    """``graphos.plan/confirm`` params (GRAPHOS-A2A-R005.1/R006.1).
+    """``arbora.plan/confirm`` params (GRAPHOS-A2A-R005.1/R006.1).
 
     The signed human approval exchange this carries is not implemented yet;
     see ``A2AOperationBridgeUnavailable``.

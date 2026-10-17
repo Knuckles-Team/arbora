@@ -154,12 +154,12 @@ async def test_shared_service_opt_in_reads_public_au_run_client(
     ordinary = await service.get_task(TASK)
     assert calls == []
     assert ordinary is not None
-    assert "terminalEvent" not in ordinary.metadata["graphOs"]
+    assert "terminalEvent" not in ordinary.metadata["arbora"]
     task = await _get_task(
         service, {"id": TASK, "includeCommittedEvent": True}, "request"
     )
     assert calls == ["workitem:orchestrator:" + TASK]
-    assert task.metadata["graphOs"]["terminalEvent"] == record()["terminal_event"]
+    assert task.metadata["arbora"]["terminalEvent"] == record()["terminal_event"]
 
 
 @pytest.mark.asyncio
@@ -228,7 +228,7 @@ async def test_http_committed_read_and_refusal_are_privacy_safe(
         )
         assert response.status_code == 200
         assert (
-            response.json()["result"]["metadata"]["graphOs"]["terminalEvent"]
+            response.json()["result"]["metadata"]["arbora"]["terminalEvent"]
             == record()["terminal_event"]
         )
 

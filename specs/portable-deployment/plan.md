@@ -45,7 +45,7 @@ The engine decision-engine spec makes `graph.assemble()` the sole authority for 
 ### Design
 
 1. **Placement.** One typed Decide request/response mapping (R017.1). Engine prerequisite: a deployment-placement question kind under `EG-DECISION-ENGINE-R046`/`R111` (ID to be assigned by the engine spec; not invented here).
-2. **Sequencing.** Ordered fleet-tool steps are an `AgentAssemble` graph (R017.2). Present it read-only (R017.3), confirm through `graphos.plan/confirm` (R017.4, rows `GRAPHOS-A2A-R005.1`/`R006.1`, with `decide.commit`). Typed refusal while unavailable (R017.5). Engine prerequisite: the `AgentAssemble` handler in `arbora/a2a/routing.py` and `admission.py` is a refusal stub and must be replaced. The confirm surface is also a fail-closed stub.
+2. **Sequencing.** Ordered fleet-tool steps are an `AgentAssemble` graph (R017.2). Present it read-only (R017.3), confirm through `arbora.plan/confirm` (R017.4, rows `GRAPHOS-A2A-R005.1`/`R006.1`, with `decide.commit`). Typed refusal while unavailable (R017.5). Engine prerequisite: the `AgentAssemble` handler in `arbora/a2a/routing.py` and `admission.py` is a refusal stub and must be replaced. The confirm surface is also a fail-closed stub.
 3. **Artifacts.** Existing files only (R017.6): `deploy/compose/compose.yaml`, `deploy/helm/arbora`, `deploy/swarm/stack.yml`, selected by `deploy/environments/{dev,test,prod}.yaml`. No systemd artifact exists in `deploy/`; systemd is explicitly unsupported (decision D5 below).
 4. **In-process.** Unchanged `start_composed_services`, composition from `arbora.mcp_server.composition` (R017.7).
 5. **Command.** `setup-config deploy` is a thin subcommand that asks the engine and prints the decision and graph (R017.8).

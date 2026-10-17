@@ -50,7 +50,7 @@ def document(ops: Iterable[Any], *, digest: str) -> dict[str, Any]:
                 "sessionCookie": {
                     "type": "apiKey",
                     "in": "cookie",
-                    "name": "__Host-graphos-session",
+                    "name": "__Host-arbora-session",
                 },
             }
         },

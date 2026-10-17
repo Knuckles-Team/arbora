@@ -288,7 +288,7 @@ def test_json_rpc_refuses_plan_confirm_until_approval_exchange_exists() -> None:
         json={
             "jsonrpc": "2.0",
             "id": "confirm",
-            "method": "graphos.plan/confirm",
+            "method": "arbora.plan/confirm",
             "params": {
                 "task_id": authority.task.id,
                 "pending_call_id": "call-1",
@@ -307,7 +307,7 @@ def test_json_rpc_refuses_plan_confirm_until_approval_exchange_exists() -> None:
         json={
             "jsonrpc": "2.0",
             "id": "confirm-invalid",
-            "method": "graphos.plan/confirm",
+            "method": "arbora.plan/confirm",
             "params": {},
         },
     )

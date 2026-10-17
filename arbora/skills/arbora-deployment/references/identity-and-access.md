@@ -134,7 +134,7 @@ still be able to sign in with MFA.
 A browser probe must check the whole path. For local sign-in, submit the
 browser's JSON `/auth/login` request from the same origin, complete MFA for the
 administrator, and fetch `/auth/session` with the resulting
-`__Host-graphos_session` cookie. For external sign-in, begin at
+`__Host-arbora_session` cookie. For external sign-in, begin at
 `/auth/oidc/{idp_id}/login`, follow the IdP's PKCE authorization-code form and
 callback, then fetch `/auth/session` with that cookie. Compare the returned
 principal and **server-resolved** role for ordinary and administrator test

@@ -12,7 +12,7 @@ The document is derived from :data:`arbora.mcp_server.backing.tool_specs.TOOL_SP
 arbora does not serve. The packaged copy (``arbora_operations.json`` next
 to this module) is regenerated with ``python -m
 arbora.mcp_server.operation_registry --write`` and checked by the test suite.
-Its shape is the one ``agent_utilities.skills.graphos_operations`` reads.
+Its shape is the one ``agent_utilities.skills.arbora_operations`` reads.
 """
 
 from __future__ import annotations

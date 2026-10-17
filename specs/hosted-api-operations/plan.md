@@ -369,13 +369,13 @@ Existing R009/R013 delivery evidence does not prove these new memory-specific re
 
 ### WebUI consumer mapping
 
-[WEBUI-APPS-R031](https://github.com/Knuckles-Team/agent-webui/tree/main/specs/graphos-app-surface) remains the existing presentation owner.
+[WEBUI-APPS-R031](https://github.com/Knuckles-Team/agent-webui/tree/main/specs/arbora-app-surface) remains the existing presentation owner.
 This Arbora change does not edit or deliver WebUI requirements.
 
 | Consumer row | Arbora prerequisite | Required alignment |
 |---|---|---|
 | WEBUI-APPS-R031.2 | R024.4.1–.3 and .6 | `listMemoryFiles` uses memory.files.list; `saveMemoryFile` uses memory.files.save; exact content uses memory.files.read |
-| WEBUI-APPS-R031.3 | R024.4.2 and .6 | The real Files tab uses registered generated contracts through WebUI's `invoke` in `src/lib/graphos-api/invoke.ts` |
+| WEBUI-APPS-R031.3 | R024.4.2 and .6 | The real Files tab uses registered generated contracts through WebUI's `invoke` in `src/lib/arbora-api/invoke.ts` |
 | WEBUI-APPS-R031.4 | R024.4.3 and .5 | Display both versions only for authorized conflict_retained; refused contains no versions or head |
 | WEBUI-APPS-R031.7 | R024.4.4–.6 | Prove two-client conflict, restart readback and generation-bound acknowledgment through real served components |
 

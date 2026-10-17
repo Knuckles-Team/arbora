@@ -69,7 +69,7 @@ service token:
 Once served, also verify: a policy-filtered MCP/API intent surface (an item
 the policy denies is absent from discovery and its call is refused; stopping
 the policy service makes discovery fail closed with `POLICY_UNAVAILABLE`,
-then restore it); the identity-mode session cookie (`__Host-graphos_session`);
+then restore it); the identity-mode session cookie (`__Host-arbora_session`);
 a principal-scoped lease-kind allowlist for arbora (an allowed kind
 succeeds, another kind is refused); browser RUM samples arriving when an
 endpoint is configured.

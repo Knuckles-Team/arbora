@@ -14,14 +14,14 @@ ORIGIN = "https://console.example.test"
 def console_request(*, admitted=True, cookie=True, origin=ORIGIN):
     headers = [(b"origin", origin.encode())]
     if cookie:
-        headers.append((b"cookie", b"__Host-graphos_session=synthetic-fixture"))
+        headers.append((b"cookie", b"__Host-arbora_session=synthetic-fixture"))
     return Request(
         {
             "type": "http",
             "method": "POST",
             "path": "/api/v1/ops/fixture",
             "headers": headers,
-            "state": {"graphos_session_admitted": admitted},
+            "state": {"arbora_session_admitted": admitted},
         }
     )
 
@@ -648,7 +648,7 @@ def browser_producer_path(monkeypatch):
         "raw_path": b"/api/fixture",
         "query_string": b"",
         "headers": [
-            (b"cookie", f"__Host-graphos_session={cookie}".encode()),
+            (b"cookie", f"__Host-arbora_session={cookie}".encode()),
             (b"origin", ORIGIN.encode()),
             (b"x-csrf-token", csrf_token_for(cookie).encode()),
         ],
@@ -767,6 +767,6 @@ def test_actual_browser_producer_to_c_conversion_lifecycle(browser_producer_path
         assert owner._requests == {}
         with pytest.raises(HTTPAuthenticationError):
             await auth.authenticate(Request(normalized))
-        assert "graphos_session_admitted" not in incoming.get("state", {})
+        assert "arbora_session_admitted" not in incoming.get("state", {})
 
     asyncio.run(scenario())

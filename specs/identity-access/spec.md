@@ -78,7 +78,7 @@ expiry cannot be defaulted. The JWT remains outer `oidc_token`, never a field
 inside the strict engine request context. A parsed DTO or prepared claim mapping
 alone establishes neither authentication nor current engine authority.
 
-Browser credentials use only `__Host-graphos_session`, an opaque 256-bit secret
+Browser credentials use only `__Host-arbora_session`, an opaque 256-bit secret
 with server-side hashed storage. Cookie attributes are Secure, HttpOnly,
 SameSite=Lax and Path=/, without Domain; lifetime is bounded by authoritative
 idle/absolute expiry. A malformed, ambiguous, revoked or expired presented

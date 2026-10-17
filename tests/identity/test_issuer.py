@@ -319,7 +319,7 @@ def test_admission_owns_exact_cookie_token_and_caller_pairing(
             session = await owner.session_for_request(SimpleNamespace(scope=forwarded))
             assert session is sessions[0]
             assert forwarded is not original
-            assert forwarded["state"]["graphos_session_admitted"] is True
+            assert forwarded["state"]["arbora_session_admitted"] is True
             if substitute:
                 other = await issuer.issue(TOKEN)
                 forwarded["headers"] = [

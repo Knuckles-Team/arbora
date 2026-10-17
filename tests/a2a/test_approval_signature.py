@@ -251,7 +251,7 @@ def test_route_reaches_verification_refusal_without_accepting_wire_authority(
         json={
             "jsonrpc": "2.0",
             "id": "confirm",
-            "method": "graphos.plan/confirm",
+            "method": "arbora.plan/confirm",
             "params": confirmation.model_dump(),
         },
     )

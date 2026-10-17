@@ -172,7 +172,7 @@ class BrowserLeaseReceipt(BaseModel):
 class CatalogRegistrationReceipt(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    authority: Literal["graph-os"] = "graph-os"
+    authority: Literal["arbora"] = "arbora"
     route_id: str
     registration_generation: int
     catalog_digest: str
