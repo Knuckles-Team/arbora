@@ -1,4 +1,4 @@
-# GRAPHOS-RELEASE — Test specification
+# ARBORA-RELEASE — Test specification
 
 Governing [spec](spec.md). Evidence remains PENDING.
 

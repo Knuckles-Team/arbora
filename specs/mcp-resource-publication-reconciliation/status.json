@@ -1,30 +1,30 @@
 {
   "schema_version": 2,
-  "spec_id": "GRAPHOS-MCP-RESOURCES",
+  "spec_id": "ARBORA-MCP-RESOURCES",
   "owner_repo": "arbora",
   "delivery_state": "SPECIFIED",
   "requirement_ids": [
-    "GRAPHOS-MCP-RESOURCES-R001",
-    "GRAPHOS-MCP-RESOURCES-R001.1",
-    "GRAPHOS-MCP-RESOURCES-R002",
-    "GRAPHOS-MCP-RESOURCES-R003",
-    "GRAPHOS-MCP-RESOURCES-R003.1",
-    "GRAPHOS-MCP-RESOURCES-R003.2",
-    "GRAPHOS-MCP-RESOURCES-R004"
+    "ARBORA-MCP-RESOURCES-R001",
+    "ARBORA-MCP-RESOURCES-R001.1",
+    "ARBORA-MCP-RESOURCES-R002",
+    "ARBORA-MCP-RESOURCES-R003",
+    "ARBORA-MCP-RESOURCES-R003.1",
+    "ARBORA-MCP-RESOURCES-R003.2",
+    "ARBORA-MCP-RESOURCES-R004"
   ],
   "requirements": [
     {
-      "id": "GRAPHOS-MCP-RESOURCES-R001",
+      "id": "ARBORA-MCP-RESOURCES-R001",
       "title": "Publication gate refuses without a valid receipt (rollup)",
       "delivery_state": "VERIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-MCP-RESOURCES-R001.1"
+        "ARBORA-MCP-RESOURCES-R001.1"
       ]
     },
     {
-      "id": "GRAPHOS-MCP-RESOURCES-R001.1",
+      "id": "ARBORA-MCP-RESOURCES-R001.1",
       "title": "Typed `ReconciliationReceipt` model and publication gate",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -35,7 +35,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-MCP-RESOURCES-R002",
+      "id": "ARBORA-MCP-RESOURCES-R002",
       "title": "epistemic-graph is the sole admissible receipt source",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -46,18 +46,18 @@
       ]
     },
     {
-      "id": "GRAPHOS-MCP-RESOURCES-R003",
+      "id": "ARBORA-MCP-RESOURCES-R003",
       "title": "Gate wired at the one catalog-publish entry point (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-MCP-RESOURCES-R003.1",
-        "GRAPHOS-MCP-RESOURCES-R003.2"
+        "ARBORA-MCP-RESOURCES-R003.1",
+        "ARBORA-MCP-RESOURCES-R003.2"
       ]
     },
     {
-      "id": "GRAPHOS-MCP-RESOURCES-R003.1",
+      "id": "ARBORA-MCP-RESOURCES-R003.1",
       "title": "Swap guard function",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -69,14 +69,14 @@
       ]
     },
     {
-      "id": "GRAPHOS-MCP-RESOURCES-R003.2",
+      "id": "ARBORA-MCP-RESOURCES-R003.2",
       "title": "Call the guard from the publish step (depends on `fleet-catalog-and-tools` R022/PA-12 landing in arbora)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-MCP-RESOURCES-R004",
+      "id": "ARBORA-MCP-RESOURCES-R004",
       "title": "Status docs are the gate's result, not hand-maintained prose",
       "delivery_state": "VERIFIED",
       "landed_in": [

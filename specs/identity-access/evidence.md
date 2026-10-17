@@ -1,4 +1,4 @@
-# Evidence — GRAPHOS-IDENTITY-ACCESS
+# Evidence — ARBORA-IDENTITY-ACCESS
 
 As of 2026-09-28 this is a design artifact. Arbora delivery is **READY FOR IMPLEMENTATION** and acceptance is **NOT ACCEPTED**. The checked-out default-branch base used to author this spec does not contain the proposed `arbora.identity`, `arbora.access` or `arbora.api.ops` packages. Prior source snapshots and row labels are not proof that a current default-branch contract or served behavior exists.
 

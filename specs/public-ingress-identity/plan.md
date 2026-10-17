@@ -1,4 +1,4 @@
-# GRAPHOS-INGRESS — Design and implementation plan
+# ARBORA-INGRESS — Design and implementation plan
 
 ## Existing system and reuse
 

@@ -1,24 +1,24 @@
 {
   "schema_version": 2,
-  "spec_id": "GRAPHOS-RELEASE",
+  "spec_id": "ARBORA-RELEASE",
   "owner_repo": "arbora",
   "delivery_state": "SPECIFIED",
   "requirement_ids": [
-    "GRAPHOS-RELEASE-R001",
-    "GRAPHOS-RELEASE-R002",
-    "GRAPHOS-RELEASE-R003",
-    "GRAPHOS-RELEASE-R003.1",
-    "GRAPHOS-RELEASE-R003.2",
-    "GRAPHOS-RELEASE-R003.3",
-    "GRAPHOS-RELEASE-R003.4",
-    "GRAPHOS-RELEASE-R003.5",
-    "GRAPHOS-RELEASE-R003.6",
-    "GRAPHOS-RELEASE-R003.7",
-    "GRAPHOS-RELEASE-R003.8"
+    "ARBORA-RELEASE-R001",
+    "ARBORA-RELEASE-R002",
+    "ARBORA-RELEASE-R003",
+    "ARBORA-RELEASE-R003.1",
+    "ARBORA-RELEASE-R003.2",
+    "ARBORA-RELEASE-R003.3",
+    "ARBORA-RELEASE-R003.4",
+    "ARBORA-RELEASE-R003.5",
+    "ARBORA-RELEASE-R003.6",
+    "ARBORA-RELEASE-R003.7",
+    "ARBORA-RELEASE-R003.8"
   ],
   "requirements": [
     {
-      "id": "GRAPHOS-RELEASE-R001",
+      "id": "ARBORA-RELEASE-R001",
       "title": "Dependency-ordered, digest-verified release promotion",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -27,7 +27,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-RELEASE-R002",
+      "id": "ARBORA-RELEASE-R002",
       "title": "Local Kubernetes validation gates every push",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -43,7 +43,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-RELEASE-R003",
+      "id": "ARBORA-RELEASE-R003",
       "title": "Exit-criteria matrix maps readiness to tests",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -52,18 +52,18 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-RELEASE-R003.1",
-        "GRAPHOS-RELEASE-R003.2",
-        "GRAPHOS-RELEASE-R003.3",
-        "GRAPHOS-RELEASE-R003.4",
-        "GRAPHOS-RELEASE-R003.5",
-        "GRAPHOS-RELEASE-R003.6",
-        "GRAPHOS-RELEASE-R003.7",
-        "GRAPHOS-RELEASE-R003.8"
+        "ARBORA-RELEASE-R003.1",
+        "ARBORA-RELEASE-R003.2",
+        "ARBORA-RELEASE-R003.3",
+        "ARBORA-RELEASE-R003.4",
+        "ARBORA-RELEASE-R003.5",
+        "ARBORA-RELEASE-R003.6",
+        "ARBORA-RELEASE-R003.7",
+        "ARBORA-RELEASE-R003.8"
       ]
     },
     {
-      "id": "GRAPHOS-RELEASE-R003.1",
+      "id": "ARBORA-RELEASE-R003.1",
       "title": "Exit-criteria matrix registry and audit mechanism (arbora side, against the currently pinned epistemic-graph)",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -77,49 +77,49 @@
       ]
     },
     {
-      "id": "GRAPHOS-RELEASE-R003.2",
+      "id": "ARBORA-RELEASE-R003.2",
       "title": "Full exit-criteria matrix closes green across all seven obligations",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-RELEASE-R003.3",
+      "id": "ARBORA-RELEASE-R003.3",
       "title": "SPARQL and natural-language query-proof rows",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-RELEASE-R003.4",
+      "id": "ARBORA-RELEASE-R003.4",
       "title": "multi-agent orchestration-graph row",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-RELEASE-R003.5",
+      "id": "ARBORA-RELEASE-R003.5",
       "title": "connector-certification row",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-RELEASE-R003.6",
+      "id": "ARBORA-RELEASE-R003.6",
       "title": "write-back receipt row",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-RELEASE-R003.7",
+      "id": "ARBORA-RELEASE-R003.7",
       "title": "browser-and-identity-provider login probe row",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-RELEASE-R003.8",
+      "id": "ARBORA-RELEASE-R003.8",
       "title": "typed-abstention response row",
       "delivery_state": "SPECIFIED",
       "landed_in": [],

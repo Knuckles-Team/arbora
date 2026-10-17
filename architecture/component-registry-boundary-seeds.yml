@@ -3,7 +3,7 @@ owner_repository: arbora
 manifest_version: 1
 source_spec: specs/host-composition-boundary/requirements.md
 
-# GRAPHOS-HOST-R012 boundary seeds: this repository's own entry and the
+# ARBORA-HOST-R012 boundary seeds: this repository's own entry and the
 # connector SDK's entry in the architecture component registry (RF-021),
 # each naming its owning module paths and its public import surface. This
 # mirrors agent-utilities' own
@@ -18,7 +18,7 @@ source_spec: specs/host-composition-boundary/requirements.md
 # tests/test_component_registry_boundary_seeds.py.
 seeds:
   - owner_repository: arbora
-    requirement_id: GRAPHOS-HOST-R012
+    requirement_id: ARBORA-HOST-R012
     description: >-
       Arbora's own served-runtime packages: MCP/REST/A2A composition, the
       fleet multiplexer, the gateway, control-plane policy, optional web UI
@@ -43,7 +43,7 @@ seeds:
       - arbora.gateway
       - arbora.fleet
   - owner_repository: agent-connector-sdk
-    requirement_id: GRAPHOS-HOST-R012
+    requirement_id: ARBORA-HOST-R012
     description: >-
       The connector SDK's transport and content-pack boundary that Arbora's
       gateway and fleet modules consume directly: MCP server construction,

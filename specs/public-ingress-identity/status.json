@@ -1,15 +1,15 @@
 {
   "schema_version": 2,
-  "spec_id": "GRAPHOS-INGRESS",
+  "spec_id": "ARBORA-INGRESS",
   "owner_repo": "arbora",
   "delivery_state": "LANDED",
   "requirement_ids": [
-    "GRAPHOS-INGRESS-R001",
-    "GRAPHOS-INGRESS-R001.1"
+    "ARBORA-INGRESS-R001",
+    "ARBORA-INGRESS-R001.1"
   ],
   "requirements": [
     {
-      "id": "GRAPHOS-INGRESS-R001",
+      "id": "ARBORA-INGRESS-R001",
       "title": "Public ingress rename with Keycloak and OpenBao cutover",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -17,11 +17,11 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-INGRESS-R001.1"
+        "ARBORA-INGRESS-R001.1"
       ]
     },
     {
-      "id": "GRAPHOS-INGRESS-R001.1",
+      "id": "ARBORA-INGRESS-R001.1",
       "title": "Typed public-ingress profile model",
       "delivery_state": "LANDED",
       "landed_in": [

@@ -2,7 +2,7 @@
 
 - [ ] Identify the current fleet admission point and published engine CapacityCell/lease methods; record exact package versions and contract digest.
 - [ ] Add a pure, partitioned AIMD controller and deterministic budget-window fixtures.
-  - [x] GRAPHOS-CAPACITY-R001.1 (child, producer): `arbora/fleet/error_budget.py` + `tests/fleet/test_error_budget.py`.
+  - [x] ARBORA-CAPACITY-R001.1 (child, producer): `arbora/fleet/error_budget.py` + `tests/fleet/test_error_budget.py`.
 - [ ] Connect one limiter to the existing fleet dispatch path; prove observe mode does not enforce.
 - [ ] Add `capacity.throttle.status` and `capacity.throttle.set_mode` to the shared hosted operation registry with exact scopes, audit reservation and parity tests.
 - [ ] Prove fail-closed stale premise, unavailable policy/audit, tenant isolation and restart behavior.
@@ -13,7 +13,7 @@
 
 ## Additional owner requirements
 
-- [ ] `GRAPHOS-CAPACITY-R001.2`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-CAPACITY-R003`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-CAPACITY-R004`: Bind the AU driver and implement the served load profile, complete report, and threshold refusals in plan.md.
-- [ ] `GRAPHOS-CAPACITY-R001.3`: Deliver every requirement in requirements.md.
+- [ ] `ARBORA-CAPACITY-R001.2`: Deliver every requirement in requirements.md.
+- [ ] `ARBORA-CAPACITY-R003`: Deliver every requirement in requirements.md.
+- [ ] `ARBORA-CAPACITY-R004`: Bind the AU driver and implement the served load profile, complete report, and threshold refusals in plan.md.
+- [ ] `ARBORA-CAPACITY-R001.3`: Deliver every requirement in requirements.md.

@@ -1,4 +1,4 @@
-# GRAPHOS-ACCEPTANCE — Test specification
+# ARBORA-ACCEPTANCE — Test specification
 
 | Test ID | Requirement | Level | Setup and input | Expected observation | Evidence |
 |---|---|---|---|---|---|

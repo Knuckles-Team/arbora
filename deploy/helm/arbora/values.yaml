@@ -135,7 +135,7 @@ arbora:
   tolerations: []
   affinity: {}
 
-# GRAPHOS-DEPLOY-R016: the consolidated KG host daemon (console script
+# ARBORA-DEPLOY-R016: the consolidated KG host daemon (console script
 # `arbora-daemon`), split out of the arbora container into its own
 # container in the same pod. Reuses the arbora image, source mounts and
 # process identity; reaches the engine over the shared Unix socket volume

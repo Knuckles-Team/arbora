@@ -15,7 +15,7 @@
 
 Evidence reconciled against [main `937d38569cef9f07abf46fd064aff98c24a33c85`](https://github.com/Knuckles-Team/arbora/commit/937d38569cef9f07abf46fd064aff98c24a33c85).
 Each merge below is an ancestor of that revision. These receipts establish
-bounded source and CI progress. **GRAPHOS-DEPLOY-R013 remains BUILDING; the
+bounded source and CI progress. **ARBORA-DEPLOY-R013 remains BUILDING; the
 spec remains NOT_AUDITED.** The other requirements retain their existing states;
 the R005 WebUI rename dependency remains separate and open.
 
@@ -77,7 +77,7 @@ qualification environment; this documentation phase performs none of them.
   pod/TCP readiness alone is insufficient.
 - [ ] **Identity and default policy:** qualify the selected mode through the
   served authority described by
-  [GRAPHOS-IDENTITY-001](../identity-access/spec.md) and its
+  [ARBORA-IDENTITY-001](../identity-access/spec.md) and its
   [requirements](../identity-access/requirements.md).
   Prove none-mode loopback/Host/Origin and exposure guards, local first-admin
   setup where selected, and external-provider sign-in and principal/scope
@@ -111,13 +111,13 @@ qualification environment; this documentation phase performs none of them.
   restore and failed-startup/rollback evidence. Bind every redacted receipt to
   the exact profile/render/release and leave unsupported capability checks open.
 
-## GRAPHOS-DEPLOY-R007 split: one console-script collision per child
+## ARBORA-DEPLOY-R007 split: one console-script collision per child
 
-GRAPHOS-DEPLOY-R007 is a rollup; split by code root/script per SPEC-SIZING-AND-DEPENDENCIES.md §3,
+ARBORA-DEPLOY-R007 is a rollup; split by code root/script per SPEC-SIZING-AND-DEPENDENCIES.md §3,
 producer (agent-utilities, which deletes its duplicate) before consumer (arbora, which already
 owns the entry point).
 
-- [x] **GRAPHOS-DEPLOY-R007.1** — `agent-utilities-doctor` console-script collision. arbora already
+- [x] **ARBORA-DEPLOY-R007.1** — `agent-utilities-doctor` console-script collision. arbora already
   declares `agent-utilities-doctor = arbora.deployment.doctor:main` on main
   ([merge `fd761d59a171c148b7f2d7d952369c3b2b1a8628`](https://github.com/Knuckles-Team/arbora/commit/fd761d59a171c148b7f2d7d952369c3b2b1a8628)).
   agent-utilities side:
@@ -132,15 +132,15 @@ owns the entry point).
   and `arbora-daemon` (`agent_utilities.gateway.daemon:main` vs `arbora.gateway.daemon:main`).
 - [ ] Full module retirement of `agent_utilities.deployment.doctor` and the rest of the agent
   runtime's deployment package remains separate, larger work (migrate its remaining non-test
-  importers first): the unresolved core of GRAPHOS-DEPLOY-R007 proper.
-owns the entry point). GRAPHOS-DEPLOY-R007.1 (`agent-utilities-doctor`) is tracked separately
+  importers first): the unresolved core of ARBORA-DEPLOY-R007 proper.
+owns the entry point). ARBORA-DEPLOY-R007.1 (`agent-utilities-doctor`) is tracked separately
 ([agent-utilities PR #118](https://github.com/Knuckles-Team/agent-utilities/pull/118)).
 
-- [x] **GRAPHOS-DEPLOY-R007.2** — `setup-config` console-script collision.
-- [x] **GRAPHOS-DEPLOY-R007.3** — `arbora-daemon` console-script collision.
-- [x] **GRAPHOS-DEPLOY-R007.4** — `agent-utilities-venv` console-script collision.
-- [x] **GRAPHOS-DEPLOY-R007.5** — `arbora-release-canary` console-script collision.
-- [x] **GRAPHOS-DEPLOY-R007.6** — engine_domains and graph_connections doctor checks. Evidence: `tests/deployment/test_doctor_graph.py`.
+- [x] **ARBORA-DEPLOY-R007.2** — `setup-config` console-script collision.
+- [x] **ARBORA-DEPLOY-R007.3** — `arbora-daemon` console-script collision.
+- [x] **ARBORA-DEPLOY-R007.4** — `agent-utilities-venv` console-script collision.
+- [x] **ARBORA-DEPLOY-R007.5** — `arbora-release-canary` console-script collision.
+- [x] **ARBORA-DEPLOY-R007.6** — engine_domains and graph_connections doctor checks. Evidence: `tests/deployment/test_doctor_graph.py`.
 
 All four: arbora already declares the script on main
 ([merge `fd761d59a171c148b7f2d7d952369c3b2b1a8628`](https://github.com/Knuckles-Team/arbora/commit/fd761d59a171c148b7f2d7d952369c3b2b1a8628)).
@@ -153,10 +153,10 @@ non-test importer (or, for `agent_utilities.deployment.cli`, a direct test impor
 
 - [ ] Full module retirement of `agent_utilities.deployment.cli`, `.venv_sync`,
   `.release_canary`, and `agent_utilities.gateway.daemon` remains separate, larger work (migrate
-  their remaining non-test importers first): the unresolved core of GRAPHOS-DEPLOY-R007 proper,
+  their remaining non-test importers first): the unresolved core of ARBORA-DEPLOY-R007 proper,
   alongside `agent_utilities.deployment.doctor`'s retirement noted under R007.1.
 
-## GRAPHOS-DEPLOY-R016 host daemon container
+## ARBORA-DEPLOY-R016 host daemon container
 
 - [x] Add the `arbora-daemon` container to the internal deployment manifest. The container runs `python3 -m arbora.gateway.daemon` with `KG_DAEMON_ROLE=host` and `KG_DEV_MODE=false`.
 - [x] Extend the serving-role contract test. The test asserts one host-role container and keeps the serving container at the client role.
@@ -169,64 +169,64 @@ non-test importer (or, for `agent_utilities.deployment.cli`, a direct test impor
 
 ## Decomposition children (tracked)
 
-- [ ] **GRAPHOS-DEPLOY-R009:** Arbora owns hosting/deployment configuration settings
-- [ ] **GRAPHOS-DEPLOY-R009.1:** Remaining scope of GRAPHOS-DEPLOY-R009 (slice .1): Arbora owns hosting/deployment configuration settings
-- [x] **GRAPHOS-DEPLOY-R009.4:** graph_config operation core in Arbora. Evidence: `tests/core/test_agent_config_admin.py`.
+- [ ] **ARBORA-DEPLOY-R009:** Arbora owns hosting/deployment configuration settings
+- [ ] **ARBORA-DEPLOY-R009.1:** Remaining scope of ARBORA-DEPLOY-R009 (slice .1): Arbora owns hosting/deployment configuration settings
+- [x] **ARBORA-DEPLOY-R009.4:** graph_config operation core in Arbora. Evidence: `tests/core/test_agent_config_admin.py`.
 
-## GRAPHOS-DEPLOY-R017 engine-routed deployment placement and assembly
+## ARBORA-DEPLOY-R017 engine-routed deployment placement and assembly
 
 Order: R017.1 (placement), R017.2 to R017.5 (assembly, view, confirm, refusal), R017.6 and R017.7 (existing artifacts, in-process), R017.8 (command). Engine prerequisites: a deployment-placement question kind for `EG-DECISION-ENGINE-R046`/`R111` (name to be assigned by the engine spec) and a real `AgentAssemble` handler replacing the refusal stub. Until then R017.1 to R017.5 land only as typed refusals.
 
-- [ ] **GRAPHOS-DEPLOY-R017:** Deployment placement and sequencing go through the engine
-- [ ] **GRAPHOS-DEPLOY-R017.1:** Placement Decide mapping
-- [ ] **GRAPHOS-DEPLOY-R017.2:** Request assembly for a deployment task
-- [ ] **GRAPHOS-DEPLOY-R017.3:** Present the assembled graph read-only
-- [ ] **GRAPHOS-DEPLOY-R017.4:** Confirm through plan/confirm
-- [ ] **GRAPHOS-DEPLOY-R017.5:** Typed refusal while unavailable
-- [ ] **GRAPHOS-DEPLOY-R017.6:** Existing artifact per target
-- [ ] **GRAPHOS-DEPLOY-R017.7:** In-process unchanged
-- [ ] **GRAPHOS-DEPLOY-R017.8:** Thin setup-config subcommand
-- [ ] **GRAPHOS-DEPLOY-R017.9:** Checker dispatches on document shape.
-- [ ] **GRAPHOS-DEPLOY-R017.10:** Compose/Swarm literal images use the existing grammar.
-- [ ] **GRAPHOS-DEPLOY-R017.11:** Template mode accepts the required-variable form.
-- [ ] **GRAPHOS-DEPLOY-R017.12:** Resolve mode checks the supplied value.
-- [ ] **GRAPHOS-DEPLOY-R017.13:** Run the checker on the shipped Compose and Swarm files.
-- [ ] **GRAPHOS-DEPLOY-R017.14:** Helm pinned and default renders.
-- [ ] **GRAPHOS-DEPLOY-R017.15:** systemd stays refused.
-- [ ] **GRAPHOS-DEPLOY-R017.16:** Environment policy drives the check.
-- [ ] **GRAPHOS-DEPLOY-R018:** Small deployment shares one engine per host (rollup).
-- [ ] **GRAPHOS-DEPLOY-R018.1:** Engine endpoint type.
-- [ ] **GRAPHOS-DEPLOY-R018.2:** Probe before start.
-- [ ] **GRAPHOS-DEPLOY-R018.3:** Start only when absent.
-- [ ] **GRAPHOS-DEPLOY-R018.4:** Second process attaches.
-- [ ] **GRAPHOS-DEPLOY-R018.5:** Owner stands down the engine.
-- [ ] **GRAPHOS-DEPLOY-R018.6:** Remote engine skips local start.
+- [ ] **ARBORA-DEPLOY-R017:** Deployment placement and sequencing go through the engine
+- [ ] **ARBORA-DEPLOY-R017.1:** Placement Decide mapping
+- [ ] **ARBORA-DEPLOY-R017.2:** Request assembly for a deployment task
+- [ ] **ARBORA-DEPLOY-R017.3:** Present the assembled graph read-only
+- [ ] **ARBORA-DEPLOY-R017.4:** Confirm through plan/confirm
+- [ ] **ARBORA-DEPLOY-R017.5:** Typed refusal while unavailable
+- [ ] **ARBORA-DEPLOY-R017.6:** Existing artifact per target
+- [ ] **ARBORA-DEPLOY-R017.7:** In-process unchanged
+- [ ] **ARBORA-DEPLOY-R017.8:** Thin setup-config subcommand
+- [ ] **ARBORA-DEPLOY-R017.9:** Checker dispatches on document shape.
+- [ ] **ARBORA-DEPLOY-R017.10:** Compose/Swarm literal images use the existing grammar.
+- [ ] **ARBORA-DEPLOY-R017.11:** Template mode accepts the required-variable form.
+- [ ] **ARBORA-DEPLOY-R017.12:** Resolve mode checks the supplied value.
+- [ ] **ARBORA-DEPLOY-R017.13:** Run the checker on the shipped Compose and Swarm files.
+- [ ] **ARBORA-DEPLOY-R017.14:** Helm pinned and default renders.
+- [ ] **ARBORA-DEPLOY-R017.15:** systemd stays refused.
+- [ ] **ARBORA-DEPLOY-R017.16:** Environment policy drives the check.
+- [ ] **ARBORA-DEPLOY-R018:** Small deployment shares one engine per host (rollup).
+- [ ] **ARBORA-DEPLOY-R018.1:** Engine endpoint type.
+- [ ] **ARBORA-DEPLOY-R018.2:** Probe before start.
+- [ ] **ARBORA-DEPLOY-R018.3:** Start only when absent.
+- [ ] **ARBORA-DEPLOY-R018.4:** Second process attaches.
+- [ ] **ARBORA-DEPLOY-R018.5:** Owner stands down the engine.
+- [ ] **ARBORA-DEPLOY-R018.6:** Remote engine skips local start.
 
-- [ ] Define and prove preserve development skill coverage (`GRAPHOS-DEPLOY-R010.1`) through the owning production entrypoint.
+- [ ] Define and prove preserve development skill coverage (`ARBORA-DEPLOY-R010.1`) through the owning production entrypoint.
 
-- [ ] Define and prove keep deployment guidance executable and synchronized (`GRAPHOS-DEPLOY-R010.2`) through the owning production entrypoint.
+- [ ] Define and prove keep deployment guidance executable and synchronized (`ARBORA-DEPLOY-R010.2`) through the owning production entrypoint.
 
-- [ ] Define and prove publish complete supported-profile instructions (`GRAPHOS-DEPLOY-R010.3`) through the owning production entrypoint.
+- [ ] Define and prove publish complete supported-profile instructions (`ARBORA-DEPLOY-R010.3`) through the owning production entrypoint.
 
-- [ ] Define and prove preserve original profile and first-boot obligations (`GRAPHOS-DEPLOY-R013.1`) through the owning production entrypoint.
+- [ ] Define and prove preserve original profile and first-boot obligations (`ARBORA-DEPLOY-R013.1`) through the owning production entrypoint.
 
-- [ ] Define and prove record explicit component deploy or reuse choices (`GRAPHOS-DEPLOY-R013.2`) through the owning production entrypoint.
+- [ ] Define and prove record explicit component deploy or reuse choices (`ARBORA-DEPLOY-R013.2`) through the owning production entrypoint.
 
-- [ ] Define and prove make reused components connect-only (`GRAPHOS-DEPLOY-R013.3`) through the owning production entrypoint.
+- [ ] Define and prove make reused components connect-only (`ARBORA-DEPLOY-R013.3`) through the owning production entrypoint.
 
-- [ ] Define and prove define the complete deployment target matrix (`GRAPHOS-DEPLOY-R013.4`) through the owning production entrypoint.
+- [ ] Define and prove define the complete deployment target matrix (`ARBORA-DEPLOY-R013.4`) through the owning production entrypoint.
 
-- [ ] Define and prove bind confirmed profiles to governed deployment (`GRAPHOS-DEPLOY-R013.5`) through the owning production entrypoint.
+- [ ] Define and prove bind confirmed profiles to governed deployment (`ARBORA-DEPLOY-R013.5`) through the owning production entrypoint.
 
-- [ ] Define and prove prove component choices and target profiles (`GRAPHOS-DEPLOY-R013.6`) through the owning production entrypoint.
+- [ ] Define and prove prove component choices and target profiles (`ARBORA-DEPLOY-R013.6`) through the owning production entrypoint.
 
-- [ ] Define and prove preserve reuse through engine attachment (`GRAPHOS-DEPLOY-R018.7`) through the owning production entrypoint.
+- [ ] Define and prove preserve reuse through engine attachment (`ARBORA-DEPLOY-R018.7`) through the owning production entrypoint.
 
-- [ ] Define and prove keep reused resources alive across host shutdown (`GRAPHOS-DEPLOY-R018.8`) through the owning production entrypoint.
+- [ ] Define and prove keep reused resources alive across host shutdown (`ARBORA-DEPLOY-R018.8`) through the owning production entrypoint.
 
 ## Additional owner requirements
 
-- [ ] `GRAPHOS-DEPLOY-R009.2`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-DEPLOY-R009.3`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-DEPLOY-R013.7`: Deliver every requirement in requirements.md.
-- [ ] `GRAPHOS-DEPLOY-R010.4`: Deliver every requirement in requirements.md.
+- [ ] `ARBORA-DEPLOY-R009.2`: Deliver every requirement in requirements.md.
+- [ ] `ARBORA-DEPLOY-R009.3`: Deliver every requirement in requirements.md.
+- [ ] `ARBORA-DEPLOY-R013.7`: Deliver every requirement in requirements.md.
+- [ ] `ARBORA-DEPLOY-R010.4`: Deliver every requirement in requirements.md.

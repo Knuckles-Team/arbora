@@ -1,10 +1,10 @@
-# GRAPHOS-A2A — A2A projection, streaming, history and tool-subset admission — architecture
+# ARBORA-A2A — A2A projection, streaming, history and tool-subset admission — architecture
 
 ## A2A task and approval projection
 
 ### Amendment 2026-10-17: unary caller refresh
 
-For GRAPHOS-A2A-R006.2.1.1, refresh a retained caller immediately before
+For ARBORA-A2A-R006.2.1.1, refresh a retained caller immediately before
 unary dispatch through the existing verify_current_from_session port. Refuse
 changed authority before binding the session or calling the task authority.
 Keep explicitly injected authenticators that own their binding compatible.
@@ -50,7 +50,7 @@ Pre-effect audit reservation and post-effect outcome linking use the shared host
 Use `uv sync --extra test`, focused `uv run pytest tests/a2a tests/api`, Ruff, mypy, repository pre-commit hooks and wheel build. The shared hooks include CCCC, KISS, jscpd and Dupehound; do not weaken their configured thresholds or add suppressions. Keep one application service and one method table; use typed adapters and small functions. CI fixtures should start an ephemeral local engine/agent stack with synthetic principals and no external secrets. A separate served test verifies restart/resume. Public docs must describe only observed capability at the accepted revision.
 
 ## A2A streaming, push notifications and transition-history projection
-Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED** except `GRAPHOS-A2A-R009.1`, landed in this PR. Governing [spec](spec.md).
+Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED** except `ARBORA-A2A-R009.1`, landed in this PR. Governing [spec](spec.md).
 
 ### Existing system and reuse
 
@@ -73,8 +73,8 @@ flowchart LR
 
 ### Implementation sequence
 
-1. **`GRAPHOS-A2A-R009.1` (this PR):** typed capability model and protocols in `arbora/a2a/models.py`, with unit tests proving default-false, selective-true and non-conforming-object refusal. No wiring yet — `A2AAgentCard`'s default factory still produces all-false, matching current truthful behavior.
-2. Depend on `GRAPHOS-A2A` landing (context-budget subset) before implementing the actual streaming cursor and push-trigger wiring, since both reuse its bounded-cursor machinery rather than duplicating it.
+1. **`ARBORA-A2A-R009.1` (this PR):** typed capability model and protocols in `arbora/a2a/models.py`, with unit tests proving default-false, selective-true and non-conforming-object refusal. No wiring yet — `A2AAgentCard`'s default factory still produces all-false, matching current truthful behavior.
+2. Depend on `ARBORA-A2A` landing (context-budget subset) before implementing the actual streaming cursor and push-trigger wiring, since both reuse its bounded-cursor machinery rather than duplicating it.
 3. Publish the AU task-event reader contract before wiring `message/stream`. Its requirement ID and public export remain unassigned. Return typed `UNAVAILABLE` for a projection gap.
 4. Implement `tasks/get` history read-through to EG's durable kernel (`EG-DURABLE-KERNEL`); on an absent/unreachable authority, return the new `A2ATransitionHistoryUnavailable` (A2A-H04).
 5. Implement push-notification delivery over EG's durable outbox (`EG-DURABLE-KERNEL-R001`) with dead-letter reporting.
@@ -105,11 +105,11 @@ flowchart LR
 
 `ToolSubsetAdmissionRequest` and `ToolSubsetAdmissionDecision` (`arbora/a2a/admission.py`) are typed `pydantic` models reusing the existing `_WireModel` base and `A2AContextBudget` type from `arbora.a2a.models`, so the wire shape stays consistent with the rest of the A2A facade. `admit_tool_subset` is a pure function: given a request, it returns a decision. Today it always refuses with `EG_ASSEMBLE_UNAVAILABLE`, matching the existing router/authority behavior exactly, because that is the first upstream gap reached. Once EG `AgentAssemble` is callable, the function gains a dependency-injected EG assembly client and a second refusal path, `ENVELOPE_LACKS_ALLOWED_TOOL_SUBSET`, for the remaining AU gap; once both upstreams land, it returns an admitted decision whose `admitted_tools` and `provenance` trace to one committed EG decision record and one signed AU envelope field.
 
-`OrchestratorA2ARouter.route` and `WorkItemA2AAuthority._enqueue`/`dispatch` are updated, in a later increment under this spec, to call `admit_tool_subset` instead of inlining their own `A2AAssemblyUnavailable` raises, so there is exactly one admission authority instead of two duplicated fail-closed checks. That wiring is out of scope for the `GRAPHOS-A2A-R016.1` slice delivered now; it is the open remainder under `GRAPHOS-A2A-R017`/`R003`.
+`OrchestratorA2ARouter.route` and `WorkItemA2AAuthority._enqueue`/`dispatch` are updated, in a later increment under this spec, to call `admit_tool_subset` instead of inlining their own `A2AAssemblyUnavailable` raises, so there is exactly one admission authority instead of two duplicated fail-closed checks. That wiring is out of scope for the `ARBORA-A2A-R016.1` slice delivered now; it is the open remainder under `ARBORA-A2A-R017`/`R003`.
 
 ### Implementation sequence
 
-1. **This PR (`GRAPHOS-A2A-R016.1`):** add the typed `ToolSubsetAdmissionRequest`/`ToolSubsetAdmissionDecision` models and the `admit_tool_subset` function returning today's exact fail-closed result. Add the refusal unit test. Open the spec and the AU owner row (`AU-CONTROL-R035`) this door depends on.
+1. **This PR (`ARBORA-A2A-R016.1`):** add the typed `ToolSubsetAdmissionRequest`/`ToolSubsetAdmissionDecision` models and the `admit_tool_subset` function returning today's exact fail-closed result. Add the refusal unit test. Open the spec and the AU owner row (`AU-CONTROL-R035`) this door depends on.
 2. Once epistemic-graph publishes a non-stub `AgentAssemble` client, inject it into `admit_tool_subset` and add the `ENVELOPE_LACKS_ALLOWED_TOOL_SUBSET` refusal path for the still-missing AU field.
 3. Once agent-utilities lands `AU-CONTROL-R035` (the signed envelope's allowed-tool-subset field) and publishes the updated generated client, wire the admitted path: EG answer in, signed envelope out, with signature verification before any dispatch treats the subset as enforced.
 4. Replace `OrchestratorA2ARouter`'s and `WorkItemA2AAuthority`'s inline `A2AAssemblyUnavailable` raises with a call to `admit_tool_subset`, so there is exactly one admission authority.
@@ -132,18 +132,18 @@ Use `uv sync --extra test`, focused `uv run pytest tests/a2a/test_admission.py`,
 
 ### Types and fields
 
-- `ToolSubsetAdmissionRequest` gains `model_profile_ref`, `task_class`, and `priority` (`GRAPHOS-A2A-R016.2`, `R017.3`). The existing `context_budget` stays.
-- `ToolSubsetAdmissionDecision` gains `harness_config` and `context_budget_tokens` (`GRAPHOS-A2A-R016.3`).
+- `ToolSubsetAdmissionRequest` gains `model_profile_ref`, `task_class`, and `priority` (`ARBORA-A2A-R016.2`, `R017.3`). The existing `context_budget` stays.
+- `ToolSubsetAdmissionDecision` gains `harness_config` and `context_budget_tokens` (`ARBORA-A2A-R016.3`).
 - `HarnessConfigAnswer` mirrors the engine contract: `context_policy` with `soft_threshold`, `hard_threshold`, and `recent_window_fraction`; `plan_scaffold`; `action_space` with the allowed tool subset; premises; resolution kind; typed abstention.
-- New refusals: `HARNESS_CONFIG_UNAVAILABLE`, `HARNESS_CONFIG_ABSTAINED`, `ENVELOPE_LACKS_HARNESS_CONFIG`, `CONTEXT_BUDGET_MISSING` (`GRAPHOS-A2A-R016.4`).
+- New refusals: `HARNESS_CONFIG_UNAVAILABLE`, `HARNESS_CONFIG_ABSTAINED`, `ENVELOPE_LACKS_HARNESS_CONFIG`, `CONTEXT_BUDGET_MISSING` (`ARBORA-A2A-R016.4`).
 
 ### Attach point
 
-The admission call attaches in `A2AService.send_message` between `router.route` and `authority.dispatch` (`service.py:40-43`). `A2ARouteDecision` supplies the model profile and task class (`GRAPHOS-A2A-R016.5`). The caller supplies neither, because a caller must not choose its own model or task class. The `resolve_capability` result at `routing.py:61` may not carry these fields today. The code does not show it. `GRAPHOS-A2A-R016.5` raises `A2AAssemblyUnavailable` when they are absent.
+The admission call attaches in `A2AService.send_message` between `router.route` and `authority.dispatch` (`service.py:40-43`). `A2ARouteDecision` supplies the model profile and task class (`ARBORA-A2A-R016.5`). The caller supplies neither, because a caller must not choose its own model or task class. The `resolve_capability` result at `routing.py:61` may not carry these fields today. The code does not show it. `ARBORA-A2A-R016.5` raises `A2AAssemblyUnavailable` when they are absent.
 
 ### One engine round trip
 
-The `HarnessConfigAnswer` already carries the tool subset, because the engine decision reuses its tool-subset selection (the EG-DECISION-ENGINE row for the `HarnessConfig` question). Admission therefore makes one call and takes the subset from `action_space`. It makes no separate `AgentAssemble` call (`GRAPHOS-A2A-R017.2`). If the engine instead returns the two answers separately, `GRAPHOS-A2A-R017` still governs the subset source and the decider port gains one more call.
+The `HarnessConfigAnswer` already carries the tool subset, because the engine decision reuses its tool-subset selection (the EG-DECISION-ENGINE row for the `HarnessConfig` question). Admission therefore makes one call and takes the subset from `action_space`. It makes no separate `AgentAssemble` call (`ARBORA-A2A-R017.2`). If the engine instead returns the two answers separately, `ARBORA-A2A-R017` still governs the subset source and the decider port gains one more call.
 
 ### Failure and refusal behaviour
 
@@ -159,7 +159,7 @@ Reused: `_WireModel` and `A2AContextBudget` (`arbora/a2a/models.py`), the decisi
 
 ### Decisions
 
-- Abstention refuses. Admitting with the conservative default applies a substitute the engine did not commit. `GRAPHOS-A2A-R020` forbids an advisory, cached, or partial substitute. A default that arbora applies is a substitute. The run loop must not depend on a value arbora chose. The named default stays visible in `provenance` for the operator.
+- Abstention refuses. Admitting with the conservative default applies a substitute the engine did not commit. `ARBORA-A2A-R020` forbids an advisory, cached, or partial substitute. A default that arbora applies is a substitute. The run loop must not depend on a value arbora chose. The named default stays visible in `provenance` for the operator.
 - Rejected: a default threshold table in arbora. The engine owns policy, and a second table drifts from it.
 - Rejected: two engine calls (assembly, then harness). They can disagree and double latency.
 - Rejected: caller-supplied model profile or task class. A caller picks the cheapest configuration.
@@ -174,23 +174,23 @@ Reused: `_WireModel` and `A2AContextBudget` (`arbora/a2a/models.py`), the decisi
 
 ### Agent Card
 
-The card must not advertise a harness capability before `GRAPHOS-A2A-R017.6` passes. `GRAPHOS-A2A-R014` already fixes streaming, push, and history fields false. `GRAPHOS-A2A-R014.1` adds the same rule for any harness field. No such field exists today (`arbora/a2a/models.py:167`).
+The card must not advertise a harness capability before `ARBORA-A2A-R017.6` passes. `ARBORA-A2A-R014` already fixes streaming, push, and history fields false. `ARBORA-A2A-R014.1` adds the same rule for any harness field. No such field exists today (`arbora/a2a/models.py:167`).
 
 ### Open facts the code did not show
 
-The source of `priority` and the field names inside the `resolve_capability` result are not visible. `GRAPHOS-A2A-R017.3` and `R016.5` set them as explicit rows.
+The source of `priority` and the field names inside the `resolve_capability` result are not visible. `ARBORA-A2A-R017.3` and `R016.5` set them as explicit rows.
 
-## A2A tool-action admission (GRAPHOS-A2A-R005.3 to R005.8)
+## A2A tool-action admission (ARBORA-A2A-R005.3 to R005.8)
 
 Consumers: AU-SEC-R012. Moves from agent-utilities: `agent_utilities/security/tool_guard.py:383`.
 
 Existing code: `arbora/a2a/application.py:140` (fail-closed confirm stub), `arbora/a2a/models.py:104` (`A2APlanConfirmParams`), `arbora/api/invoke/pipeline.py:641` (`_confirmation_gate`). `arbora/access/service.py:54` is operator-console elevation and is not an A2A approval port. Reachable today: no. The stub is reachable and always refuses; no admission function exists. Search terms: `admission`, `approval`, `untrusted`, `taint`, `pending_call`.
 
-Data flow: `POST /a2a` `arbora.plan/confirm` → `_invoke_method` (`application.py:157`) → async confirmation_kind dispatcher → shared invoke with Surface.A2A and verified signed authority → `ToolActionAdmitter.admit` (new) → one engine verdict → audit reservation (`GRAPHOS-A2A-R007`) → `ToolActionApproval` in the response → harness applies it.
+Data flow: `POST /a2a` `arbora.plan/confirm` → `_invoke_method` (`application.py:157`) → async confirmation_kind dispatcher → shared invoke with Surface.A2A and verified signed authority → `ToolActionAdmitter.admit` (new) → one engine verdict → audit reservation (`ARBORA-A2A-R007`) → `ToolActionApproval` in the response → harness applies it.
 
 Types: `ToolActionAdmissionRequest` (`pending_call_id`, `params_digest`, `trust_mark_ref`, `action_class`), `ToolActionApproval` (`verdict`, `approval_ref`, `decision_ref`), `ToolActionRefusal` (closed reasons).
 
-Failure: any refusal denies. Approval stays refused until full GRAPHOS-A2A-R005.2 and the GRAPHOS-A2A-R006.2 verified-caller bridge (including R006.2.1) are proven end to end. A grant store alone cannot enable it; require input-required emission, signature verification and replay, changed-params, different-human, expiry and revocation refusals.
+Failure: any refusal denies. Approval stays refused until full ARBORA-A2A-R005.2 and the ARBORA-A2A-R006.2 verified-caller bridge (including R006.2.1) are proven end to end. A grant store alone cannot enable it; require input-required emission, signature verification and replay, changed-params, different-human, expiry and revocation refusals.
 
 Reuse: the method table and params model. New: the admitter and its models.
 
@@ -198,7 +198,7 @@ Decision: arbora checks, records and serves; the engine decides, because a secon
 
 Cross-repository: `EG-DECISION-ENGINE` (verdict on a tool action after untrusted content); `AU-SEC-R012` (applies the approval).
 
-## A2A held-item admission (GRAPHOS-A2A-R006.3 to R006.8)
+## A2A held-item admission (ARBORA-A2A-R006.3 to R006.8)
 
 Consumers: AU-CONTROL-R040, AU-HARNESS-R023. Moves from agent-utilities: `agent_utilities/knowledge_graph/enrichment/writeback/approval.py:47`.
 
@@ -215,10 +215,10 @@ Decision: one admitter for both held kinds, because both wait on the same confir
 
 Cross-repository: `EG-` rows for the held proposal, the verification record, the replay count and the retirement count; `AU-CONTROL-R040` and `AU-HARNESS-R023` apply the verdict.
 
-## Critique-gated output release (GRAPHOS-A2A-R022)
+## Critique-gated output release (ARBORA-A2A-R022)
 
 - Keep the output-release gate at `arbora/a2a/application.py:_send_message` separate from recipient selection in `arbora/a2a/routing.py:OrchestratorA2ARouter.route`.
-- Require the typed AU checklist/questions and an EG verdict bound to the same output. Use the held-item contract in `GRAPHOS-A2A-R006.3` through `.8`, with verified-caller and signed-authority prerequisites in `GRAPHOS-A2A-R006.2.1` and `.5`.
+- Require the typed AU checklist/questions and an EG verdict bound to the same output. Use the held-item contract in `ARBORA-A2A-R006.3` through `.8`, with verified-caller and signed-authority prerequisites in `ARBORA-A2A-R006.2.1` and `.5`.
 - Routing success cannot satisfy critique acceptance. Keep release unavailable until AU and EG producer contracts are published. Do not add another approval authority.
 ### References
 
@@ -228,13 +228,13 @@ Research citations above describe inspiration only. The engine and transport con
 
 ## Additional owner requirements
 
-- `GRAPHOS-A2A-R001.2`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-A2A-R001.2`: Plan the owner work and dependencies defined in requirements.md.
 
 ## Verified caller correction
 
 Component: Arbora A2A request adapter
 
-Depends-on: GRAPHOS-A2A-R006.2, [AU public session API](https://github.com/Knuckles-Team/agent-utilities/blob/50c313ab01871ff7e10aee2a9d0254fa55d71f07/agent_utilities/api/session.py)
+Depends-on: ARBORA-A2A-R006.2, [AU public session API](https://github.com/Knuckles-Team/agent-utilities/blob/50c313ab01871ff7e10aee2a9d0254fa55d71f07/agent_utilities/api/session.py)
 
 Code: ../../arbora/a2a/application.py:39
 
@@ -313,6 +313,6 @@ R005.2.2 reuses `PlanBinding` and the existing closed confirmation payload. The 
 
 ### Committed terminal read preparation
 
-Implement GRAPHOS-A2A-R010.1 against EG-DURABLE-KERNEL-R028.2 and AU RunClient.outcome. Keep the request opt-in and existing unary behavior unchanged. This point read supplies no lifecycle stream or replay cursor. Native producer qualification and released dependency availability remain separate acceptance conditions.
+Implement ARBORA-A2A-R010.1 against EG-DURABLE-KERNEL-R028.2 and AU RunClient.outcome. Keep the request opt-in and existing unary behavior unchanged. This point read supplies no lifecycle stream or replay cursor. Native producer qualification and released dependency availability remain separate acceptance conditions.
 
 The bounded projection preserves the actual outcome/tool_call/degraded/reconciled kind and physical scope identity, including its 32-byte digest. Physical storage owner tenant and sanitized graph name are receipt identity, not caller authorization. Routing uses the existing verified session graph transport. The projection caps identifier labels at 512 UTF-8 bytes and result references at 4096 bytes. These presentation bounds may refuse a larger otherwise valid producer record.

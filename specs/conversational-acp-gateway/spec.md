@@ -1,6 +1,6 @@
-# GRAPHOS-ACP — Conversational ACP gateway session projection and policy
+# ARBORA-ACP — Conversational ACP gateway session projection and policy
 
-**Owner:** arbora. **Requirement ID:** GRAPHOS-ACP-R001 (Arbora session-admission partition). **Delivery:** SPECIFIED. **Acceptance:** NOT_AUDITED.
+**Owner:** arbora. **Requirement ID:** ARBORA-ACP-R001 (Arbora session-admission partition). **Delivery:** SPECIFIED. **Acceptance:** NOT_AUDITED.
 
 ## Purpose and user stories
 
@@ -12,7 +12,7 @@ P0: A terminal client opens an ACP session carrying a verified Arbora principal;
 
 | ID | Requirement | Observable success |
 |---|---|---|
-| ACP-01 | Admit an ACP session only for a request carrying a verified Arbora principal produced by the existing identity path ([GRAPHOS-IDENTITY-001](../identity-access/spec.md)); an absent, malformed, expired or unverifiable credential refuses before a session object is created. | Admission check returns a typed refusal for missing/invalid credentials; no session record exists afterward. |
+| ACP-01 | Admit an ACP session only for a request carrying a verified Arbora principal produced by the existing identity path ([ARBORA-IDENTITY-001](../identity-access/spec.md)); an absent, malformed, expired or unverifiable credential refuses before a session object is created. | Admission check returns a typed refusal for missing/invalid credentials; no session record exists afterward. |
 | ACP-02 | Bind an admitted session to its exact principal ID, tenant and scope snapshot at admission time. The binding is immutable for the session's life and is never widened by a later message on the same session. | A session created for principal A cannot be reused, reassigned or escalated by any later request. The bound snapshot is unchanged on read. |
 | ACP-03 | Enforce a configured idle limit: a session with no accepted message within that window is refused on its next use and does not auto-renew. | A session idle past the configured limit is refused with a typed idle-expired reason on next access; it is not silently kept alive. |
 | ACP-04 | Enforce a configured absolute session lifetime independent of activity; a session past that lifetime is refused regardless of recent activity. | A session past its absolute expiry is refused even immediately after a message, with a typed expired reason. |
@@ -30,14 +30,14 @@ Out of scope here: the chat adapter's conversational behavior, the terminal UI's
 
 | Requirement | Requirement ID | Design | Tests | Acceptance evidence |
 |---|---|---|---|---|
-| ACP-01 | GRAPHOS-ACP-R001 | [Admission](plan.md#admission-and-binding) | T-ACP-01, T-ACP-02 | exact commit, unit evidence |
-| ACP-02 | GRAPHOS-ACP-R001 | [Admission](plan.md#admission-and-binding) | T-ACP-03 | unit evidence |
-| ACP-03 | GRAPHOS-ACP-R001 | [Policy limits](plan.md#idle-and-expiry-policy) | T-ACP-04 | unit evidence |
-| ACP-04 | GRAPHOS-ACP-R001 | [Policy limits](plan.md#idle-and-expiry-policy) | T-ACP-05 | unit evidence |
-| ACP-05 | GRAPHOS-ACP-R001 | [Adapter refusal](plan.md#adapter-unavailable-refusal) | T-ACP-06, T-ACP-07 | unit evidence |
-| ACP-06 | GRAPHOS-ACP-R001 | [Admission](plan.md#admission-and-binding) | T-ACP-08 | integration evidence |
-| ACP-07 | GRAPHOS-ACP-R001 | [Observability](plan.md#observability) | T-ACP-09 | unit evidence |
+| ACP-01 | ARBORA-ACP-R001 | [Admission](plan.md#admission-and-binding) | T-ACP-01, T-ACP-02 | exact commit, unit evidence |
+| ACP-02 | ARBORA-ACP-R001 | [Admission](plan.md#admission-and-binding) | T-ACP-03 | unit evidence |
+| ACP-03 | ARBORA-ACP-R001 | [Policy limits](plan.md#idle-and-expiry-policy) | T-ACP-04 | unit evidence |
+| ACP-04 | ARBORA-ACP-R001 | [Policy limits](plan.md#idle-and-expiry-policy) | T-ACP-05 | unit evidence |
+| ACP-05 | ARBORA-ACP-R001 | [Adapter refusal](plan.md#adapter-unavailable-refusal) | T-ACP-06, T-ACP-07 | unit evidence |
+| ACP-06 | ARBORA-ACP-R001 | [Admission](plan.md#admission-and-binding) | T-ACP-08 | integration evidence |
+| ACP-07 | ARBORA-ACP-R001 | [Observability](plan.md#observability) | T-ACP-09 | unit evidence |
 
-This spec represents only the Arbora session-admission and policy contract of GRAPHOS-ACP-R001. The agent-utilities chat adapter and the agent-terminal-ui client each have their own owner and must satisfy this contract from their side before an end-to-end conversational ACP session can be accepted.
+This spec represents only the Arbora session-admission and policy contract of ARBORA-ACP-R001. The agent-utilities chat adapter and the agent-terminal-ui client each have their own owner and must satisfy this contract from their side before an end-to-end conversational ACP session can be accepted.
 
 Requirement IDs are defined in [requirements.md](requirements.md); delivery state per ID is in `status.json`.

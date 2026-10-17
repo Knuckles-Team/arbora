@@ -1,4 +1,4 @@
-# Delivery tasks — GRAPHOS-IDENTITY-ACCESS
+# Delivery tasks — ARBORA-IDENTITY-ACCESS
 
 State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test reference in `evidence.md`.
 
@@ -8,7 +8,7 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] **GIA-04 (IA-05):** Add TOTP, WebAuthn, recovery-code and group-MFA policies while preserving action step-up. Prove IT-04.
 - [ ] **GIA-05 (IA-06/07):** Build identity self/admin operations and service/API key path; wire REST/MCP/CLI to the same authority. Refuse to advertise unavailable engine-backed methods. Prove IT-05/06.
 - [ ] **GIA-06 (IA-12/13):** Build access request, approval, lease, check and explanation service with exact-scope registry and fail-closed fleet/unknown-tool checks. Prove IT-11/12.
-  - Partial (GRAPHOS-IDENTITY-R019): `arbora.access.service`/`arbora.api.ops.access` registers `access.elevation.request/list/revoke/approve`, `access.leases.list/get`, `access.check` and `access.explain_policy` against the installed EG scope contract. `approvals.list/get/grant/deny` are implemented in the same service module but not yet registered as operations: the installed EG contract does not publish `approvals:read`/`approvals:decide` scopes. Follow-up: register those four operations once EG adds the two scopes.
+  - Partial (ARBORA-IDENTITY-R019): `arbora.access.service`/`arbora.api.ops.access` registers `access.elevation.request/list/revoke/approve`, `access.leases.list/get`, `access.check` and `access.explain_policy` against the installed EG scope contract. `approvals.list/get/grant/deny` are implemented in the same service module but not yet registered as operations: the installed EG contract does not publish `approvals:read`/`approvals:decide` scopes. Follow-up: register those four operations once EG adds the two scopes.
 - [ ] **GIA-07 (IA-08/09/15):** Add mockable OIDC, LDAP, SCIM, brokered SAML and optional SMTP adapters with strict validation, source-tagged memberships and deprovisioning. Prove IT-07/08/09.
 - [ ] **GIA-08 (IA-10):** Add `arbora identity` commands, configuration defaults, doctor diagnostics and public operator guidance within this repository's GitHub Pages source. Prove CLI portions of IT-09.
 - [ ] **GIA-09 (IA-11):** Create and run the three-mode decision table and owned-data transition round trip. Use it across the engine and Arbora contract fixture. Prove IT-10.
@@ -18,15 +18,15 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 
 ## Rapid-delivery split (2026-10-09)
 
-- [x] **GIA-RD-01:** Split `GRAPHOS-IDENTITY-R004`, `R006`, `R007` into `.1` (typed model +
-- [x] **GIA-RD-02:** Split `GRAPHOS-IDENTITY-R008`, `R009`, `R010` into `.1` (typed model +
-- [x] **GIA-RD-03:** Split `GRAPHOS-IDENTITY-R011`, `R012` into `.1` (typed model +
+- [x] **GIA-RD-01:** Split `ARBORA-IDENTITY-R004`, `R006`, `R007` into `.1` (typed model +
+- [x] **GIA-RD-02:** Split `ARBORA-IDENTITY-R008`, `R009`, `R010` into `.1` (typed model +
+- [x] **GIA-RD-03:** Split `ARBORA-IDENTITY-R011`, `R012` into `.1` (typed model +
   validation + refusal tests under `arbora/identity/`) and `.2` (remaining behavior,
   stays `SPECIFIED`). Parents are now rollups. See `requirements.md`/`status.json`.
 
 ## Source ID coverage
 
-`GRAPHOS-IDENTITY-R001`, `GRAPHOS-IDENTITY-R002`–`GRAPHOS-IDENTITY-R017`, `GRAPHOS-IDENTITY-R018`, `GRAPHOS-IDENTITY-R019`, `GRAPHOS-IDENTITY-R020`, `GRAPHOS-IDENTITY-R021`, `GRAPHOS-IDENTITY-R022`, and `GRAPHOS-IDENTITY-R023` map to IA requirements in `spec.md`. Source IDs identify intended work, not completion. Cross-repository owners implement their side of the contract stated in this spec. Arbora tasks cannot close their delivery without their own accepted evidence.
+`ARBORA-IDENTITY-R001`, `ARBORA-IDENTITY-R002`–`ARBORA-IDENTITY-R017`, `ARBORA-IDENTITY-R018`, `ARBORA-IDENTITY-R019`, `ARBORA-IDENTITY-R020`, `ARBORA-IDENTITY-R021`, `ARBORA-IDENTITY-R022`, and `ARBORA-IDENTITY-R023` map to IA requirements in `spec.md`. Source IDs identify intended work, not completion. Cross-repository owners implement their side of the contract stated in this spec. Arbora tasks cannot close their delivery without their own accepted evidence.
 
 ## Strict producer follow-through
 
@@ -42,89 +42,89 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 
 ## Decomposition children (tracked)
 
-- [x] **GRAPHOS-IDENTITY-R004.1:** Typed loopback bootstrap-principal model with refusal tests
-- [x] **GRAPHOS-IDENTITY-R004.2:** Bootstrap resolution path, Host/Origin validation, unsecured-mode indicators
-- [x] **GRAPHOS-IDENTITY-R006:** Optional MFA with TOTP, WebAuthn, and recovery codes (rollup)
-- [x] **GRAPHOS-IDENTITY-R006.1:** Typed MFA enrollment model with refusal tests
-- [x] **GRAPHOS-IDENTITY-R006.2:** TOTP, WebAuthn, recovery-code ceremonies and group enforcement
-- [x] **GRAPHOS-IDENTITY-R007:** Admin console tabs with mapping dry-run and mode wizard (rollup)
-- [x] **GRAPHOS-IDENTITY-R007.1:** Typed admin-console tab model with refusal tests
-- [x] **GRAPHOS-IDENTITY-R007.2:** Mapping dry-run preview and mode-transition wizard
-- [ ] **GRAPHOS-IDENTITY-R008.1:** Typed API-key grant model with refusal tests
-- [x] **GRAPHOS-IDENTITY-R008.2:** Scope intersection at use time and immediate revocation
-- [x] **GRAPHOS-IDENTITY-R009:** Multi-provider OIDC with mapping rules and JIT policy
-- [x] **GRAPHOS-IDENTITY-R009.1:** Typed OIDC mapping-rule model with refusal tests
-- [ ] **GRAPHOS-IDENTITY-R009.2:** OIDC authentication flow (rollup)
-- [ ] **GRAPHOS-IDENTITY-R009.2.1:** Ordered claim-to-rule evaluation
-- [ ] **GRAPHOS-IDENTITY-R009.2.2:** ID-token validation inputs and typed refusal
-- [ ] **GRAPHOS-IDENTITY-R009.2.3:** Callback handler wiring, link migration, hinted logout
-- [ ] **GRAPHOS-IDENTITY-R009.2.4:** Live IdP probe
-- [ ] **GRAPHOS-IDENTITY-R010:** LDAPS bind with nested group sync
-- [ ] **GRAPHOS-IDENTITY-R010.1:** Typed LDAPS bind-config model with refusal tests
-- [ ] **GRAPHOS-IDENTITY-R010.2:** Directory bind, filter escaping, nested-group sync, deprovisioning (rollup)
-- [x] **GRAPHOS-IDENTITY-R010.2.1:** Group-DN-to-role mapping evaluation with refusal on no match
-- [x] **GRAPHOS-IDENTITY-R010.2.2:** Bind through injected directory port, filter escaping
-- [ ] **GRAPHOS-IDENTITY-R010.2.3:** Scheduled nested-group sync and deprovisioning (rollup)
-- [x] **GRAPHOS-IDENTITY-R010.2.3.1:** Pure directory sync plan with empty-snapshot refusal
-- [ ] **GRAPHOS-IDENTITY-R010.2.3.2:** Schedule the sync and apply the plan through the identity port
-- [ ] **GRAPHOS-IDENTITY-R010.2.4:** Live directory probe
-- [ ] **GRAPHOS-IDENTITY-R011.1:** Typed SCIM service-credential model with refusal tests
-- [ ] **GRAPHOS-IDENTITY-R011.2:** SCIM create/update/patch/deactivate server surface (rollup)
-- [x] **GRAPHOS-IDENTITY-R011.2.1:** Typed SCIM User resource model with refusal tests
-- [x] **GRAPHOS-IDENTITY-R011.2.2:** SCIM credential check via `ScimServiceCredential.authorizes`
-- [ ] **GRAPHOS-IDENTITY-R011.2.3:** SCIM create/patch/deactivate handlers through an injected identity port
-- [ ] **GRAPHOS-IDENTITY-R011.2.4:** SCIM route registration
-- [ ] **GRAPHOS-IDENTITY-R012:** Native SAML service provider (rollup)
-- [ ] **GRAPHOS-IDENTITY-R012.1:** Typed SAML service-provider model with refusal tests
-- [ ] **GRAPHOS-IDENTITY-R012.2:** Assertion verification and SAML sign-in (rollup)
-- [ ] **GRAPHOS-IDENTITY-R012.2.1:** Typed parsed-assertion model and audience/recipient/time-window checks
-- [ ] **GRAPHOS-IDENTITY-R012.2.2:** Signature verification through an injected verifier port
-- [ ] **GRAPHOS-IDENTITY-R012.2.3:** Replay check and sign-in handler wiring
-- [ ] **GRAPHOS-IDENTITY-R012.2.3.1:** Replay check through a seen-assertion-id store port
-- [ ] **GRAPHOS-IDENTITY-R012.2.3.2:** Sign-in handler wiring into the browser authority
-- [ ] **GRAPHOS-IDENTITY-R012.2.4:** Live IdP sign-in probe
-- [ ] **GRAPHOS-IDENTITY-R016:** Optional SMTP adapter for identity email
-- [ ] **GRAPHOS-IDENTITY-R016.1:** Remaining scope of GRAPHOS-IDENTITY-R016 (slice .1): Optional SMTP adapter for identity email
-- [ ] **GRAPHOS-IDENTITY-R016.2:** Remaining scope of GRAPHOS-IDENTITY-R016 (slice .2): Optional SMTP adapter for identity email
-- [ ] **GRAPHOS-IDENTITY-R017.1:** Remaining scope of GRAPHOS-IDENTITY-R017 (slice .1): Remove the unauthenticated opt-out once clients migrate
-- [ ] **GRAPHOS-IDENTITY-R017.2:** Remaining scope of GRAPHOS-IDENTITY-R017 (slice .2): Remove the unauthenticated opt-out once clients migrate
-- [ ] **GRAPHOS-IDENTITY-R004.2:** Bootstrap resolution path, Host/Origin validation, unsecured-mode indicators
-- [ ] **GRAPHOS-IDENTITY-R006:** Optional MFA with TOTP, WebAuthn, and recovery codes (rollup)
-- [x] **GRAPHOS-IDENTITY-R006.1:** Typed MFA enrollment model with refusal tests
-- [ ] **GRAPHOS-IDENTITY-R006.2:** TOTP, WebAuthn, recovery-code ceremonies and group enforcement
-- [ ] **GRAPHOS-IDENTITY-R007:** Admin console tabs with mapping dry-run and mode wizard (rollup)
-- [x] **GRAPHOS-IDENTITY-R007.1:** Typed admin-console tab model with refusal tests
-- [ ] **GRAPHOS-IDENTITY-R007.2:** Mapping dry-run preview and mode-transition wizard
-- [ ] **GRAPHOS-IDENTITY-R025:** Register identity ops once the engine contract lists `identity:admin`.
-- [ ] **GRAPHOS-IDENTITY-R026:** Hosted sessions are attributed to a client and segmented by principal (rollup).
-- [ ] **GRAPHOS-IDENTITY-R026.1:** Client session record.
-- [ ] **GRAPHOS-IDENTITY-R026.2:** Record at session open.
-- [ ] **GRAPHOS-IDENTITY-R026.3:** Runs carry the session id.
-- [ ] **GRAPHOS-IDENTITY-R026.4:** Audit event per run.
-- [ ] **GRAPHOS-IDENTITY-R026.5:** Caller-scoped client listing.
-- [ ] **GRAPHOS-IDENTITY-R026.6:** User and service account parity.
-- [ ] **GRAPHOS-IDENTITY-R026.7:** Cross-client denial is uniform.
+- [x] **ARBORA-IDENTITY-R004.1:** Typed loopback bootstrap-principal model with refusal tests
+- [x] **ARBORA-IDENTITY-R004.2:** Bootstrap resolution path, Host/Origin validation, unsecured-mode indicators
+- [x] **ARBORA-IDENTITY-R006:** Optional MFA with TOTP, WebAuthn, and recovery codes (rollup)
+- [x] **ARBORA-IDENTITY-R006.1:** Typed MFA enrollment model with refusal tests
+- [x] **ARBORA-IDENTITY-R006.2:** TOTP, WebAuthn, recovery-code ceremonies and group enforcement
+- [x] **ARBORA-IDENTITY-R007:** Admin console tabs with mapping dry-run and mode wizard (rollup)
+- [x] **ARBORA-IDENTITY-R007.1:** Typed admin-console tab model with refusal tests
+- [x] **ARBORA-IDENTITY-R007.2:** Mapping dry-run preview and mode-transition wizard
+- [ ] **ARBORA-IDENTITY-R008.1:** Typed API-key grant model with refusal tests
+- [x] **ARBORA-IDENTITY-R008.2:** Scope intersection at use time and immediate revocation
+- [x] **ARBORA-IDENTITY-R009:** Multi-provider OIDC with mapping rules and JIT policy
+- [x] **ARBORA-IDENTITY-R009.1:** Typed OIDC mapping-rule model with refusal tests
+- [ ] **ARBORA-IDENTITY-R009.2:** OIDC authentication flow (rollup)
+- [ ] **ARBORA-IDENTITY-R009.2.1:** Ordered claim-to-rule evaluation
+- [ ] **ARBORA-IDENTITY-R009.2.2:** ID-token validation inputs and typed refusal
+- [ ] **ARBORA-IDENTITY-R009.2.3:** Callback handler wiring, link migration, hinted logout
+- [ ] **ARBORA-IDENTITY-R009.2.4:** Live IdP probe
+- [ ] **ARBORA-IDENTITY-R010:** LDAPS bind with nested group sync
+- [ ] **ARBORA-IDENTITY-R010.1:** Typed LDAPS bind-config model with refusal tests
+- [ ] **ARBORA-IDENTITY-R010.2:** Directory bind, filter escaping, nested-group sync, deprovisioning (rollup)
+- [x] **ARBORA-IDENTITY-R010.2.1:** Group-DN-to-role mapping evaluation with refusal on no match
+- [x] **ARBORA-IDENTITY-R010.2.2:** Bind through injected directory port, filter escaping
+- [ ] **ARBORA-IDENTITY-R010.2.3:** Scheduled nested-group sync and deprovisioning (rollup)
+- [x] **ARBORA-IDENTITY-R010.2.3.1:** Pure directory sync plan with empty-snapshot refusal
+- [ ] **ARBORA-IDENTITY-R010.2.3.2:** Schedule the sync and apply the plan through the identity port
+- [ ] **ARBORA-IDENTITY-R010.2.4:** Live directory probe
+- [ ] **ARBORA-IDENTITY-R011.1:** Typed SCIM service-credential model with refusal tests
+- [ ] **ARBORA-IDENTITY-R011.2:** SCIM create/update/patch/deactivate server surface (rollup)
+- [x] **ARBORA-IDENTITY-R011.2.1:** Typed SCIM User resource model with refusal tests
+- [x] **ARBORA-IDENTITY-R011.2.2:** SCIM credential check via `ScimServiceCredential.authorizes`
+- [ ] **ARBORA-IDENTITY-R011.2.3:** SCIM create/patch/deactivate handlers through an injected identity port
+- [ ] **ARBORA-IDENTITY-R011.2.4:** SCIM route registration
+- [ ] **ARBORA-IDENTITY-R012:** Native SAML service provider (rollup)
+- [ ] **ARBORA-IDENTITY-R012.1:** Typed SAML service-provider model with refusal tests
+- [ ] **ARBORA-IDENTITY-R012.2:** Assertion verification and SAML sign-in (rollup)
+- [ ] **ARBORA-IDENTITY-R012.2.1:** Typed parsed-assertion model and audience/recipient/time-window checks
+- [ ] **ARBORA-IDENTITY-R012.2.2:** Signature verification through an injected verifier port
+- [ ] **ARBORA-IDENTITY-R012.2.3:** Replay check and sign-in handler wiring
+- [ ] **ARBORA-IDENTITY-R012.2.3.1:** Replay check through a seen-assertion-id store port
+- [ ] **ARBORA-IDENTITY-R012.2.3.2:** Sign-in handler wiring into the browser authority
+- [ ] **ARBORA-IDENTITY-R012.2.4:** Live IdP sign-in probe
+- [ ] **ARBORA-IDENTITY-R016:** Optional SMTP adapter for identity email
+- [ ] **ARBORA-IDENTITY-R016.1:** Remaining scope of ARBORA-IDENTITY-R016 (slice .1): Optional SMTP adapter for identity email
+- [ ] **ARBORA-IDENTITY-R016.2:** Remaining scope of ARBORA-IDENTITY-R016 (slice .2): Optional SMTP adapter for identity email
+- [ ] **ARBORA-IDENTITY-R017.1:** Remaining scope of ARBORA-IDENTITY-R017 (slice .1): Remove the unauthenticated opt-out once clients migrate
+- [ ] **ARBORA-IDENTITY-R017.2:** Remaining scope of ARBORA-IDENTITY-R017 (slice .2): Remove the unauthenticated opt-out once clients migrate
+- [ ] **ARBORA-IDENTITY-R004.2:** Bootstrap resolution path, Host/Origin validation, unsecured-mode indicators
+- [ ] **ARBORA-IDENTITY-R006:** Optional MFA with TOTP, WebAuthn, and recovery codes (rollup)
+- [x] **ARBORA-IDENTITY-R006.1:** Typed MFA enrollment model with refusal tests
+- [ ] **ARBORA-IDENTITY-R006.2:** TOTP, WebAuthn, recovery-code ceremonies and group enforcement
+- [ ] **ARBORA-IDENTITY-R007:** Admin console tabs with mapping dry-run and mode wizard (rollup)
+- [x] **ARBORA-IDENTITY-R007.1:** Typed admin-console tab model with refusal tests
+- [ ] **ARBORA-IDENTITY-R007.2:** Mapping dry-run preview and mode-transition wizard
+- [ ] **ARBORA-IDENTITY-R025:** Register identity ops once the engine contract lists `identity:admin`.
+- [ ] **ARBORA-IDENTITY-R026:** Hosted sessions are attributed to a client and segmented by principal (rollup).
+- [ ] **ARBORA-IDENTITY-R026.1:** Client session record.
+- [ ] **ARBORA-IDENTITY-R026.2:** Record at session open.
+- [ ] **ARBORA-IDENTITY-R026.3:** Runs carry the session id.
+- [ ] **ARBORA-IDENTITY-R026.4:** Audit event per run.
+- [ ] **ARBORA-IDENTITY-R026.5:** Caller-scoped client listing.
+- [ ] **ARBORA-IDENTITY-R026.6:** User and service account parity.
+- [ ] **ARBORA-IDENTITY-R026.7:** Cross-client denial is uniform.
 
-- [ ] **GRAPHOS-IDENTITY-R023.1:** Model: scoped identity synthesis.
-- [ ] **GRAPHOS-IDENTITY-R023.2:** Behavior: scoped identity synthesis.
-- [ ] **GRAPHOS-IDENTITY-R023.3:** Wiring: scoped identity synthesis.
-- [ ] **GRAPHOS-IDENTITY-R023.4:** Refusal: scoped identity synthesis.
-- [ ] **GRAPHOS-IDENTITY-R023.5:** Evidence: scoped identity synthesis.
-- [ ] **GRAPHOS-IDENTITY-R023.6:** Hot-path proof: scoped identity synthesis.
-- [ ] **GRAPHOS-IDENTITY-R017.3:** Model: scoped identity synthesis.
-- [ ] **GRAPHOS-IDENTITY-R017.4:** Behavior: scoped identity synthesis.
-- [ ] **GRAPHOS-IDENTITY-R017.5:** Wiring: scoped identity synthesis.
-- [ ] **GRAPHOS-IDENTITY-R017.6:** Refusal: scoped identity synthesis.
-- [ ] **GRAPHOS-IDENTITY-R017.7:** Evidence: scoped identity synthesis.
-- [ ] **GRAPHOS-IDENTITY-R017.8:** Hot-path proof: scoped identity synthesis.
-- [ ] **GRAPHOS-IDENTITY-R019.1:** Model: scoped identity synthesis.
-- [ ] **GRAPHOS-IDENTITY-R019.2:** Behavior: scoped identity synthesis.
-- [ ] **GRAPHOS-IDENTITY-R019.3:** Wiring: scoped identity synthesis.
-- [ ] **GRAPHOS-IDENTITY-R019.4:** Refusal: scoped identity synthesis.
-- [ ] **GRAPHOS-IDENTITY-R019.5:** Evidence: scoped identity synthesis.
-- [ ] **GRAPHOS-IDENTITY-R019.6:** Hot-path proof: scoped identity synthesis.
+- [ ] **ARBORA-IDENTITY-R023.1:** Model: scoped identity synthesis.
+- [ ] **ARBORA-IDENTITY-R023.2:** Behavior: scoped identity synthesis.
+- [ ] **ARBORA-IDENTITY-R023.3:** Wiring: scoped identity synthesis.
+- [ ] **ARBORA-IDENTITY-R023.4:** Refusal: scoped identity synthesis.
+- [ ] **ARBORA-IDENTITY-R023.5:** Evidence: scoped identity synthesis.
+- [ ] **ARBORA-IDENTITY-R023.6:** Hot-path proof: scoped identity synthesis.
+- [ ] **ARBORA-IDENTITY-R017.3:** Model: scoped identity synthesis.
+- [ ] **ARBORA-IDENTITY-R017.4:** Behavior: scoped identity synthesis.
+- [ ] **ARBORA-IDENTITY-R017.5:** Wiring: scoped identity synthesis.
+- [ ] **ARBORA-IDENTITY-R017.6:** Refusal: scoped identity synthesis.
+- [ ] **ARBORA-IDENTITY-R017.7:** Evidence: scoped identity synthesis.
+- [ ] **ARBORA-IDENTITY-R017.8:** Hot-path proof: scoped identity synthesis.
+- [ ] **ARBORA-IDENTITY-R019.1:** Model: scoped identity synthesis.
+- [ ] **ARBORA-IDENTITY-R019.2:** Behavior: scoped identity synthesis.
+- [ ] **ARBORA-IDENTITY-R019.3:** Wiring: scoped identity synthesis.
+- [ ] **ARBORA-IDENTITY-R019.4:** Refusal: scoped identity synthesis.
+- [ ] **ARBORA-IDENTITY-R019.5:** Evidence: scoped identity synthesis.
+- [ ] **ARBORA-IDENTITY-R019.6:** Hot-path proof: scoped identity synthesis.
 
 ## Additional owner requirements
 
-- [ ] `GRAPHOS-IDENTITY-R026.8`: Deliver every requirement in requirements.md.
-- [x] `GRAPHOS-IDENTITY-R002.1`: scope registry generated from EG `scopes.json`. Evidence: `tests/security/test_scope_registry.py::test_the_generated_module_is_the_installed_eg_registry`.
+- [ ] `ARBORA-IDENTITY-R026.8`: Deliver every requirement in requirements.md.
+- [x] `ARBORA-IDENTITY-R002.1`: scope registry generated from EG `scopes.json`. Evidence: `tests/security/test_scope_registry.py::test_the_generated_module_is_the_installed_eg_registry`.

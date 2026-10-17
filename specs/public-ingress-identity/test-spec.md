@@ -1,4 +1,4 @@
-# GRAPHOS-INGRESS — Test specification
+# ARBORA-INGRESS — Test specification
 
 | Test ID | Requirement | Level | Fixture and input | Expected observation |
 |---|---|---|---|---|

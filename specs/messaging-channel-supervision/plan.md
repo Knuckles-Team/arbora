@@ -23,7 +23,7 @@ stateDiagram-v2
   STOPPING --> STOPPED: tasks drained
 ```
 
-GRAPHOS-MESSAGING-R001.1 defines the pure typed model and illegal-transition refusal. GRAPHOS-MESSAGING-R001 and R002/R004 own router wiring and lifecycle behavior; GRAPHOS-MESSAGING-R005.1 adds the configuration-aware health projection to the existing registry and host-health read paths.
+ARBORA-MESSAGING-R001.1 defines the pure typed model and illegal-transition refusal. ARBORA-MESSAGING-R001 and R002/R004 own router wiring and lifecycle behavior; ARBORA-MESSAGING-R005.1 adds the configuration-aware health projection to the existing registry and host-health read paths.
 
 ## Configuration-aware health projection
 

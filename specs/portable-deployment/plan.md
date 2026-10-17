@@ -30,11 +30,11 @@ The renderer can vary by target, but profile validation, config resolution, engi
 4. Add disposable first-boot fixtures and CI service orchestration. Split required portable PR checks from optional production integration acceptance.
 5. Document the exact commands on GitHub Pages and link this contract from the contribution guide; publish a verified package and run the external acceptance tier.
 
-## GRAPHOS-DEPLOY-R016 plan
+## ARBORA-DEPLOY-R016 plan
 
 The serving container stays at the client role. A second container in the same pod runs the host daemon. It reuses the serving image, source mounts and process identity configuration. It reaches the engine over the shared Unix socket volume. A non-empty endpoint setting makes the engine resolver connect-only. The daemon therefore never starts a second engine. The daemon shares the task-queue data volume, so work that clients enqueue reaches the host.
 
-## GRAPHOS-DEPLOY-R017 plan: engine-routed deployment placement and assembly
+## ARBORA-DEPLOY-R017 plan: engine-routed deployment placement and assembly
 
 The agent-utilities planner (deleted by commit `db29b2da6`, AU-BOUNDARY-R002.2) is not re-created. Arbora holds no plan type, no backend-selection logic and no renderer.
 
@@ -45,7 +45,7 @@ The engine decision-engine spec makes `graph.assemble()` the sole authority for 
 ### Design
 
 1. **Placement.** One typed Decide request/response mapping (R017.1). Engine prerequisite: a deployment-placement question kind under `EG-DECISION-ENGINE-R046`/`R111` (ID to be assigned by the engine spec; not invented here).
-2. **Sequencing.** Ordered fleet-tool steps are an `AgentAssemble` graph (R017.2). Present it read-only (R017.3), confirm through `arbora.plan/confirm` (R017.4, rows `GRAPHOS-A2A-R005.1`/`R006.1`, with `decide.commit`). Typed refusal while unavailable (R017.5). Engine prerequisite: the `AgentAssemble` handler in `arbora/a2a/routing.py` and `admission.py` is a refusal stub and must be replaced. The confirm surface is also a fail-closed stub.
+2. **Sequencing.** Ordered fleet-tool steps are an `AgentAssemble` graph (R017.2). Present it read-only (R017.3), confirm through `arbora.plan/confirm` (R017.4, rows `ARBORA-A2A-R005.1`/`R006.1`, with `decide.commit`). Typed refusal while unavailable (R017.5). Engine prerequisite: the `AgentAssemble` handler in `arbora/a2a/routing.py` and `admission.py` is a refusal stub and must be replaced. The confirm surface is also a fail-closed stub.
 3. **Artifacts.** Existing files only (R017.6): `deploy/compose/compose.yaml`, `deploy/helm/arbora`, `deploy/swarm/stack.yml`, selected by `deploy/environments/{dev,test,prod}.yaml`. No systemd artifact exists in `deploy/`; systemd is explicitly unsupported (decision D5 below).
 4. **In-process.** Unchanged `start_composed_services`, composition from `arbora.mcp_server.composition` (R017.7).
 5. **Command.** `setup-config deploy` is a thin subcommand that asks the engine and prints the decision and graph (R017.8).
@@ -67,7 +67,7 @@ The engine decision-engine spec makes `graph.assemble()` the sole authority for 
 
 ### Out of scope
 
-Executing any plan-only fleet call; container-manager, tunnel-manager and systems-manager tool contracts (owned by those repositories); replacing `deploy/helm` or the profile renderers required by GRAPHOS-DEPLOY-R003/R013; Swarm planning (the old planner never covered it).
+Executing any plan-only fleet call; container-manager, tunnel-manager and systems-manager tool contracts (owned by those repositories); replacing `deploy/helm` or the profile renderers required by ARBORA-DEPLOY-R003/R013; Swarm planning (the old planner never covered it).
 
 ## R017 caveat resolutions (design, 2026-10-10)
 
@@ -105,7 +105,7 @@ Extend the existing script rather than add a checker. Compose/Swarm `${NAME:?...
 
 ### D2 to D4 and D5
 
-Dashboard parity, artifact authentication and the agent-utilities export are resolved in `specs/hosted-api-operations/plan.md` (GRAPHOS-OPS-R039 to R041).
+Dashboard parity, artifact authentication and the agent-utilities export are resolved in `specs/hosted-api-operations/plan.md` (ARBORA-OPS-R039 to R041).
 
 ### D5 systemd target (DECIDED: keep unsupported)
 
@@ -113,14 +113,14 @@ Evidence: all three profiles under `deploy/environments/` set `target.orchestrat
 
 R017.6 therefore refuses `systemd` with a typed `unsupported_target` carrying the pointer to the bare-metal reference, and R017.15 tests that.
 
-## GRAPHOS-DEPLOY-R018 small deployment shares one engine
+## ARBORA-DEPLOY-R018 small deployment shares one engine
 
 Data flow: server start → `detect_composition` probe → `start_composed_services` starts or attaches → shared engine.
 Attach point: arbora/mcp_server/composition.py:43 (`detect_composition`) and :230 (`start_composed_services`).
-Reused: the existing composition detection and the in-process path of `GRAPHOS-DEPLOY-R017.7`. The single-binary engine build is an engine row.
+Reused: the existing composition detection and the in-process path of `ARBORA-DEPLOY-R017.7`. The single-binary engine build is an engine row.
 Decision: probe the endpoint, then start. Rejected alternative: a lock file per host, which goes stale after a crash.
 
-## Confirmed component choices (GRAPHOS-DEPLOY-R013/R018)
+## Confirmed component choices (ARBORA-DEPLOY-R013/R018)
 
 Existing code: `deployment/cli.py:134` owns configuration commands; `genesis_environments.py` owns typed profile parsing.
 `config_generator.py:336` generates configuration; `:420` exposes its reference; `:1035` provides diagnostic checks.
@@ -179,7 +179,7 @@ The original provisioned development and production profiles retain their sideca
 Reuse configurations are separate declared variants; their evidence cannot satisfy the original sidecar first-boot acceptance.
 R018.1 through R018.6 remain unchanged; R018.7 and R018.8 add stricter confirmed reuse behavior.
 
-## Synchronized deployment guidance (GRAPHOS-DEPLOY-R010)
+## Synchronized deployment guidance (ARBORA-DEPLOY-R010)
 
 Existing code: packaged deployment and development skills, README and documentation already exist.
 Reachable today: documentation exists; complete example extraction and served command parity are missing.
@@ -192,10 +192,10 @@ R010.1 preserves the original development-skill topics and AGENTS navigation acc
 
 ## Additional owner requirements
 
-- `GRAPHOS-DEPLOY-R009.2`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-DEPLOY-R009.3`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-DEPLOY-R013.7`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-DEPLOY-R010.4`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-DEPLOY-R009.2`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-DEPLOY-R009.3`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-DEPLOY-R013.7`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-DEPLOY-R010.4`: Plan the owner work and dependencies defined in requirements.md.
 
 ### 2026-10-17 — R004 frozen-environment fixture contracts
 
