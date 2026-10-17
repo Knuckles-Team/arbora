@@ -200,6 +200,7 @@ def test_method_not_marked_wire_callable_is_not_bound(tmp_path: Path) -> None:
     assert {op.id for op in ops} == {"eg.query.Admin", "eg.query.Read"}
 
 
+@pytest.mark.spec("GRAPHOS-OPS-R008")
 @pytest.mark.spec("GRAPHOS-FLEET-R012")
 def test_pinned_contract_serves_every_wire_callable_method_as_generated_op() -> None:
     """The packaged engine contract yields one ``eg.<domain>.<Method>`` op per callable method."""
