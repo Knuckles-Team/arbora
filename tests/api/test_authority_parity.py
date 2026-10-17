@@ -1,4 +1,4 @@
-"""GRAPHOS-OPS-R027 / GRAPHOS-FLEET-R017: the authority-parity oracle across
+"""ARBORA-OPS-R027 / ARBORA-FLEET-R017: the authority-parity oracle across
 principal, operation and serving surface.
 
 ``tests/api/authority_matrix.yaml`` enumerates every (principal rule, op
@@ -11,8 +11,8 @@ principal kind, operation or surface while looking correct for another.
 
 This module consolidates two independently-authored matrices (one inline
 synthetic probe of the ``authorized()`` chokepoint alone from
-``GRAPHOS-OPS-R027``, one additionally asserting serving-surface membership
-from a checked-in YAML fixture from ``GRAPHOS-FLEET-R017``) into a single
+``ARBORA-OPS-R027``, one additionally asserting serving-surface membership
+from a checked-in YAML fixture from ``ARBORA-FLEET-R017``) into a single
 fixture and test function. Every case from both lineages is kept; cases
 that were semantically identical across the two are deduped to one row
 carrying both specs' ``@pytest.mark.spec`` bindings.
@@ -111,13 +111,13 @@ def test_authority_matrix_row_matches_expected_outcome(case: dict[str, Any]) -> 
     assert actual is case["expected"], case["name"]
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R027")
+@pytest.mark.spec("ARBORA-OPS-R027")
 def test_authority_matrix_fixture_covers_every_principal_rule() -> None:
     covered = {case["principal_rule"] for case in _load_matrix()}
     assert covered == {rule.value for rule in PrincipalRule}
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R027")
+@pytest.mark.spec("ARBORA-OPS-R027")
 def test_authority_matrix_fixture_covers_every_caller_kind() -> None:
     covered = {case["caller_kind"] for case in _load_matrix()}
     assert {"human", "service"} <= covered

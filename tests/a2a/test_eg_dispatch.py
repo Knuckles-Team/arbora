@@ -36,7 +36,7 @@ from tests.a2a.test_operation_bridge import DenyPolicy, post, session
 from tests.a2a.test_request_session_authority import fixture as request_fixture
 from tests.api.test_invoke_contract import operation, setup_services
 
-pytestmark = pytest.mark.spec("GRAPHOS-OPS-R009")
+pytestmark = pytest.mark.spec("ARBORA-OPS-R009")
 
 #: The engine's per-tenant graph name for tenant ``tenant:one``.
 _TENANT_GRAPH = "tenant__tenant_one____commons__"

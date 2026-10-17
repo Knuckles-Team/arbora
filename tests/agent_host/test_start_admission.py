@@ -102,7 +102,7 @@ class Owners:
         )
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R010.7.1")
+@pytest.mark.spec("ARBORA-HOST-R010.7.1")
 def test_matching_owner_attestation_admits_exact_graph_session(tmp_path: Path) -> None:
     owner = Owners(tmp_path)
     context = owner.context()
@@ -115,7 +115,7 @@ def test_matching_owner_attestation_admits_exact_graph_session(tmp_path: Path) -
     assert "exact-credential" not in repr(context)
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R010.7.1")
+@pytest.mark.spec("ARBORA-HOST-R010.7.1")
 @pytest.mark.parametrize(
     "field,value",
     [
@@ -147,7 +147,7 @@ def test_grant_mismatch_refuses_before_host_effects(
     effects.assert_not_called()
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R010.7.1")
+@pytest.mark.spec("ARBORA-HOST-R010.7.1")
 def test_matching_actor_fields_do_not_replace_owner_attestation(tmp_path: Path) -> None:
     owner = Owners(tmp_path)
     owner.binding = None
@@ -158,7 +158,7 @@ def test_matching_actor_fields_do_not_replace_owner_attestation(tmp_path: Path) 
     assert owner.calls == 0
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R010.7.1")
+@pytest.mark.spec("ARBORA-HOST-R010.7.1")
 def test_admission_does_not_enable_missing_clients(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -173,7 +173,7 @@ def test_admission_does_not_enable_missing_clients(
     build.assert_not_called()
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R010.7.1")
+@pytest.mark.spec("ARBORA-HOST-R010.7.1")
 def test_revocation_during_policy_lookup_refuses(tmp_path: Path) -> None:
     owner = Owners(tmp_path)
 
@@ -189,7 +189,7 @@ def test_revocation_during_policy_lookup_refuses(tmp_path: Path) -> None:
         asyncio.run(admission.admit("exact-credential", owner.request, owner.graph))
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R010.7.1")
+@pytest.mark.spec("ARBORA-HOST-R010.7.1")
 def test_attestation_for_equal_but_distinct_graph_is_refused(tmp_path: Path) -> None:
     owner = Owners(tmp_path)
     assert owner.binding is not None
@@ -200,7 +200,7 @@ def test_attestation_for_equal_but_distinct_graph_is_refused(tmp_path: Path) -> 
         )
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R010.7.1")
+@pytest.mark.spec("ARBORA-HOST-R010.7.1")
 @pytest.mark.parametrize("credential", ["", " ", "a b", "a\n"])
 def test_malformed_credential_never_reaches_policy(
     tmp_path: Path, credential: str
@@ -212,7 +212,7 @@ def test_malformed_credential_never_reaches_policy(
     assert owner.calls == 0
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R010.7.1")
+@pytest.mark.spec("ARBORA-HOST-R010.7.1")
 def test_missing_graph_claim_is_typed_refusal(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -224,7 +224,7 @@ def test_missing_graph_claim_is_typed_refusal(
         )
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R010.7.1")
+@pytest.mark.spec("ARBORA-HOST-R010.7.1")
 @pytest.mark.parametrize(
     "changes",
     [{"interfaces": "both"}, {"web_logs": True}, {"configuration_digest": "b" * 64}],
@@ -240,7 +240,7 @@ def test_policy_request_mismatch_refuses(
         )
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R010.7.1")
+@pytest.mark.spec("ARBORA-HOST-R010.7.1")
 def test_expired_session_never_calls_policy(tmp_path: Path) -> None:
     owner = Owners(tmp_path)
     owner.state = replace(owner.state, expires_at_ms=0)
@@ -251,7 +251,7 @@ def test_expired_session_never_calls_policy(tmp_path: Path) -> None:
     assert owner.calls == 0
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R010.7.2.1")
+@pytest.mark.spec("ARBORA-HOST-R010.7.2.1")
 @pytest.mark.parametrize(
     "field,value",
     [
@@ -292,7 +292,7 @@ def test_actual_configuration_mismatch_precedes_all_owners(
     forbidden.assert_not_called()
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R010.7.2.1")
+@pytest.mark.spec("ARBORA-HOST-R010.7.2.1")
 @pytest.mark.parametrize(
     "field",
     ["graph", "graph_config", "executor", "host_logs", "host_log_runtime", "debug"],
@@ -318,7 +318,7 @@ def test_opaque_configuration_refuses_without_serializing_or_calling_owners(
     forbidden.assert_not_called()
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R010.7.2.1")
+@pytest.mark.spec("ARBORA-HOST-R010.7.2.1")
 def test_canonical_configuration_mapping_order_and_workspace(tmp_path: Path) -> None:
     configuration = HostStartConfiguration(
         workspace=str(tmp_path), tag_prompts={"a": "one", "b": "two"}
@@ -334,14 +334,14 @@ def test_canonical_configuration_mapping_order_and_workspace(tmp_path: Path) -> 
     assert configuration.digest() != replace(configuration, port=9001).digest()
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R010.7.2.1")
+@pytest.mark.spec("ARBORA-HOST-R010.7.2.1")
 @pytest.mark.parametrize("value", [float("nan"), float("inf"), object()])
 def test_noncanonical_configuration_refuses(value: Any) -> None:
     with pytest.raises(ValueError, match="invalid_launch_configuration"):
         HostStartConfiguration(min_confidence=value).digest()
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R010.7.2.1")
+@pytest.mark.spec("ARBORA-HOST-R010.7.2.1")
 def test_matching_actual_inputs_reach_admission_but_never_launch(
     tmp_path: Path,
 ) -> None:

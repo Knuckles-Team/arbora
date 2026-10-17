@@ -6,7 +6,7 @@ module's session helpers, neither of which exists on this branch yet; its
 coverage returns with the slice that lands those modules (see
 ``arbora/api/http/auth.py``). Everything exercised here needs only the
 registry types and an injected ``invoke``/authenticator, matching
-GRAPHOS-OPS-R013.
+ARBORA-OPS-R013.
 """
 
 from __future__ import annotations
@@ -88,7 +88,7 @@ async def _unused_invoke(*_args: object, **_kwargs: object) -> None:
     raise AssertionError("invoke should not be reached by this test")
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R013")
+@pytest.mark.spec("ARBORA-OPS-R013")
 def test_v1_subapp_mount_has_one_prefix(monkeypatch: pytest.MonkeyPatch) -> None:
     module = ModuleType("arbora.api.registry")
     vars(module).update(
@@ -185,7 +185,7 @@ def test_resource_path_rejects_other_api_versions() -> None:
         _subapp_path("/api/v2/identity/users")
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R013")
+@pytest.mark.spec("ARBORA-OPS-R013")
 async def test_console_requires_verified_cookie_origin_human_and_fresh_mfa() -> None:
     now = int(time.time() * 1000)
     caller = SimpleNamespace(
@@ -285,7 +285,7 @@ def _endpoint_kwargs(fake_invoke, *, generic):
     )
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R013")
+@pytest.mark.spec("ARBORA-OPS-R013")
 async def test_endpoint_rejects_an_empty_idempotency_key_and_forwards_a_valid_one() -> (
     None
 ):
@@ -323,7 +323,7 @@ async def test_endpoint_rejects_an_empty_idempotency_key_and_forwards_a_valid_on
     assert seen == ["key-1"]
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R013")
+@pytest.mark.spec("ARBORA-OPS-R013")
 async def test_resource_endpoint_merges_cursor_query_param_into_params() -> None:
     seen: list[dict[str, Any]] = []
 

@@ -1,5 +1,5 @@
 """Real owner-only sink and HTTP projection with controlled grant owners."""
-# spec: GRAPHOS-HOST-R009.8
+# spec: ARBORA-HOST-R009.8
 
 import asyncio
 import json
@@ -222,7 +222,7 @@ def test_cancelled_writer_retains_admission_until_worker_finishes(
 
 
 def test_cursor_binds_exact_source_generations(tmp_path: Path) -> None:
-    # spec: GRAPHOS-HOST-R009.8.1
+    # spec: ARBORA-HOST-R009.8.1
     sink = WorkspaceLogSink(str(tmp_path), "host-1")
 
     async def exercise() -> None:

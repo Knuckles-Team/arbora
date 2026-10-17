@@ -1,4 +1,4 @@
-"""Tests for the GRAPHOS-HOST-R015 layered agent-capability model."""
+"""Tests for the ARBORA-HOST-R015 layered agent-capability model."""
 
 from __future__ import annotations
 

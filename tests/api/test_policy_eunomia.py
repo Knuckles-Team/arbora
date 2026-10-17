@@ -1,4 +1,4 @@
-"""Exact scopes and principal rules precede narrowing Eunomia decisions (GRAPHOS-OPS-R034)."""
+"""Exact scopes and principal rules precede narrowing Eunomia decisions (ARBORA-OPS-R034)."""
 
 from __future__ import annotations
 

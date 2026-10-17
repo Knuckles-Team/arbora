@@ -40,7 +40,7 @@ from tests.a2a.test_operation_bridge import (
 )
 from tests.api.test_invoke_contract import operation, setup_services
 
-pytestmark = pytest.mark.spec("GRAPHOS-A2A-R006.2.1.1")
+pytestmark = pytest.mark.spec("ARBORA-A2A-R006.2.1.1")
 
 
 def fixture(monkeypatch: pytest.MonkeyPatch, *, failure: str = "") -> Any:

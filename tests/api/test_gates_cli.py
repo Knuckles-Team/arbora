@@ -1,4 +1,4 @@
-"""GRAPHOS-FLEET-R016: the API-surface and backward-compat CLI gates
+"""ARBORA-FLEET-R016: the API-surface and backward-compat CLI gates
 fail closed against a drifted fixture registry and pass against a
 compliant one. Each script is a thin CLI over
 ``arbora.api.registry.surface_gate``; these tests exercise the CLI
@@ -24,7 +24,7 @@ check_api_surface = importlib.import_module("scripts.check_api_surface")
 check_api_compat = importlib.import_module("scripts.check_api_compat")
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R016")
+@pytest.mark.spec("ARBORA-FLEET-R016")
 def test_surface_gate_writes_initial_baseline_and_passes(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -36,7 +36,7 @@ def test_surface_gate_writes_initial_baseline_and_passes(
     assert check_api_surface.main() == 0
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R016")
+@pytest.mark.spec("ARBORA-FLEET-R016")
 def test_surface_gate_fails_closed_on_drifted_fixture_registry(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -58,7 +58,7 @@ def test_surface_gate_fails_closed_on_drifted_fixture_registry(
     assert check_api_surface.main() == 1
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R016")
+@pytest.mark.spec("ARBORA-FLEET-R016")
 def test_compat_gate_writes_initial_baseline_and_passes(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -73,7 +73,7 @@ def test_compat_gate_writes_initial_baseline_and_passes(
     assert check_api_compat.main() == 0
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R016")
+@pytest.mark.spec("ARBORA-FLEET-R016")
 def test_compat_gate_fails_closed_on_narrowed_fixture_registry(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

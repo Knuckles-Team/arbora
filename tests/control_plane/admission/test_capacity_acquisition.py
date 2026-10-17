@@ -1,4 +1,4 @@
-"""GRAPHOS-FLEET-R009.1: all-or-nothing capacity acquisition."""
+"""ARBORA-FLEET-R009.1: all-or-nothing capacity acquisition."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from arbora.control_plane.runs.admission import (
 )
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R009.1")
+@pytest.mark.spec("ARBORA-FLEET-R009.1")
 def test_acquire_grants_all_or_nothing() -> None:
     capacity = CapacityAcquisition(capacity={"gpu": 2, "slots": 1})
 
@@ -20,7 +20,7 @@ def test_acquire_grants_all_or_nothing() -> None:
     assert capacity.held("run-1") == {"gpu": 2, "slots": 1}
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R009.1")
+@pytest.mark.spec("ARBORA-FLEET-R009.1")
 def test_denial_grants_exactly_one_redecision_then_fails_closed() -> None:
     capacity = CapacityAcquisition(capacity={"gpu": 1})
 
@@ -32,7 +32,7 @@ def test_denial_grants_exactly_one_redecision_then_fails_closed() -> None:
         capacity.acquire("run-1", {"gpu": 2})
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R009.1")
+@pytest.mark.spec("ARBORA-FLEET-R009.1")
 def test_partial_unavailability_holds_nothing() -> None:
     capacity = CapacityAcquisition(capacity={"gpu": 2, "slots": 0})
 
@@ -44,7 +44,7 @@ def test_partial_unavailability_holds_nothing() -> None:
     assert capacity.acquire("run-2", {"gpu": 2}) is True
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R009.1")
+@pytest.mark.spec("ARBORA-FLEET-R009.1")
 def test_stopped_run_releases_held_capacity() -> None:
     capacity = CapacityAcquisition(capacity={"gpu": 1})
 
@@ -57,7 +57,7 @@ def test_stopped_run_releases_held_capacity() -> None:
     assert capacity.acquire("run-2", {"gpu": 1}) is True
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R009.1")
+@pytest.mark.spec("ARBORA-FLEET-R009.1")
 def test_release_resets_the_redecision_budget_even_with_nothing_held() -> None:
     capacity = CapacityAcquisition(capacity={"gpu": 1})
 

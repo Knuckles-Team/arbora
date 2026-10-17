@@ -1,9 +1,9 @@
 """Focused authority tests for the telemetry, security, and usage read ports.
 
-Covers GRAPHOS-OPS-R024.1 (telemetry), GRAPHOS-OPS-R024.2 (security), and
-GRAPHOS-OPS-R024.3 (usage): each is a single tenant-scoped read bound to one
+Covers ARBORA-OPS-R024.1 (telemetry), ARBORA-OPS-R024.2 (security), and
+ARBORA-OPS-R024.3 (usage): each is a single tenant-scoped read bound to one
 typed port, matching the ingest-runner-facade convention
-(GRAPHOS-OPS-R020.1/R020.2).
+(ARBORA-OPS-R020.1/R020.2).
 """
 
 from __future__ import annotations

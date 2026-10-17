@@ -1,6 +1,6 @@
-"""GRAPHOS-OPS-R031.1: fleet meta-tool parity mapping (resident-fleet slice).
+"""ARBORA-OPS-R031.1: fleet meta-tool parity mapping (resident-fleet slice).
 
-Implements the resident-fleet-tool slice of GRAPHOS-OPS-R031 — Arbora
+Implements the resident-fleet-tool slice of ARBORA-OPS-R031 — Arbora
 publishes, in ``docs/mcp-server.md``, the parity mapping from each of its
 four resident fleet meta-tools to its destination operation. This test
 confirms the published table's rows match the live ``FLEET_OPERATIONS``
@@ -30,7 +30,7 @@ def _parse_published_mapping() -> dict[str, str]:
     return mapping
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R031.1")
+@pytest.mark.spec("ARBORA-OPS-R031.1")
 def test_doc_publishes_a_row_for_every_resident_fleet_tool() -> None:
     published = _parse_published_mapping()
     assert set(published) == set(FLEET_OPERATIONS), (
@@ -39,7 +39,7 @@ def test_doc_publishes_a_row_for_every_resident_fleet_tool() -> None:
     )
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R031.1")
+@pytest.mark.spec("ARBORA-OPS-R031.1")
 def test_published_mapping_matches_live_fleet_operations_registry() -> None:
     published = _parse_published_mapping()
     assert published == dict(FLEET_OPERATIONS)

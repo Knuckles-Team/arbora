@@ -1,4 +1,4 @@
-"""GRAPHOS-A2A-R008: the A2A facade is first-party, not a vendored wrapper.
+"""ARBORA-A2A-R008: the A2A facade is first-party, not a vendored wrapper.
 
 arbora implements the A2A protocol facade itself as source under
 ``arbora/a2a`` over the public graph-engine and agent orchestration ports,
@@ -50,7 +50,7 @@ def _imported_top_level_modules(tree: ast.Module) -> set[str]:
     return names
 
 
-@pytest.mark.spec("GRAPHOS-A2A-R008")
+@pytest.mark.spec("ARBORA-A2A-R008")
 def test_no_declared_dependency_is_a_vendored_a2a_implementation() -> None:
     offenders = [
         dependency
@@ -65,7 +65,7 @@ def test_no_declared_dependency_is_a_vendored_a2a_implementation() -> None:
     )
 
 
-@pytest.mark.spec("GRAPHOS-A2A-R008")
+@pytest.mark.spec("ARBORA-A2A-R008")
 def test_a2a_source_never_imports_an_external_a2a_package() -> None:
     offenders: dict[str, set[str]] = {}
     for path in _a2a_source_files():
@@ -83,7 +83,7 @@ def test_a2a_source_never_imports_an_external_a2a_package() -> None:
     )
 
 
-@pytest.mark.spec("GRAPHOS-A2A-R008")
+@pytest.mark.spec("ARBORA-A2A-R008")
 def test_a2a_facade_entry_point_is_implemented_in_this_repository() -> None:
     module = create_a2a_application.__module__
     assert module.startswith("arbora.a2a"), (

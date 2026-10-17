@@ -31,7 +31,7 @@ from tests.a2a.test_application import Authenticator, Authority, Router
 from tests.a2a.test_mcp import _Mcp
 from tests.api.test_invoke_contract import FixtureRuntime, operation, setup_services
 
-pytestmark = pytest.mark.spec("GRAPHOS-A2A-R006.2")
+pytestmark = pytest.mark.spec("ARBORA-A2A-R006.2")
 
 
 class SessionRuntime(FixtureRuntime):

@@ -1,10 +1,10 @@
-"""GRAPHOS-OPS-R032.1: identity dependency inversion via ports.
+"""ARBORA-OPS-R032.1: identity dependency inversion via ports.
 
 Static dependency-graph check: arbora.webui_host, arbora.webui_co_service,
 and arbora.mcp_server must import only arbora.identity.ports (the
 Protocol/DTO boundary) and never the concrete identity runtime
 (arbora.identity.engine or any other arbora.identity submodule), per
-specs/hosted-api-operations/requirements.md GRAPHOS-OPS-R032.
+specs/hosted-api-operations/requirements.md ARBORA-OPS-R032.
 """
 
 from __future__ import annotations
@@ -48,7 +48,7 @@ def _identity_import_violations(source_file: Path) -> list[str]:
     return violations
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R032.1")
+@pytest.mark.spec("ARBORA-OPS-R032.1")
 def test_serving_modules_depend_only_on_identity_ports() -> None:
     offenders: dict[str, list[str]] = {}
     for root in CHECKED_ROOTS:

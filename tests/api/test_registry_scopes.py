@@ -1,4 +1,4 @@
-"""Exported domain scope classes (GRAPHOS-OPS-R028)."""
+"""Exported domain scope classes (ARBORA-OPS-R028)."""
 
 from __future__ import annotations
 

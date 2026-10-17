@@ -100,7 +100,7 @@ def test_compose_is_single_writer_loopback_and_secret_free() -> None:
     ]
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R001.4")
+@pytest.mark.spec("ARBORA-HOST-R001.4")
 def test_skill_provider_is_registered_and_packaged() -> None:
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
 

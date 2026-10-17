@@ -1,4 +1,4 @@
-"""GRAPHOS-HOST-R006: arbora.fleet is the sole multiplexer implementation.
+"""ARBORA-HOST-R006: arbora.fleet is the sole multiplexer implementation.
 
 A package-layout test that fails closed if a *second* multiplexer class is
 ever defined outside ``arbora/fleet/`` -- the shape the requirement names

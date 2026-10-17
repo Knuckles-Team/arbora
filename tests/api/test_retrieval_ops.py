@@ -1,4 +1,4 @@
-"""Focused authority tests for ``retrieval.search`` (GRAPHOS-OPS-R021.2.1)."""
+"""Focused authority tests for ``retrieval.search`` (ARBORA-OPS-R021.2.1)."""
 
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ def _context(retriever: object | None):
     return tenant_store_context(store=retriever, service_name="retriever")
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R021.2.1")
+@pytest.mark.spec("ARBORA-OPS-R021.2.1")
 async def test_search_reaches_engine_under_callers_tenant_within_budget(
     op_by_id,
 ) -> None:
@@ -55,7 +55,7 @@ async def test_search_reaches_engine_under_callers_tenant_within_budget(
     assert op.scopes == frozenset({"memory:read"})
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R021.2.1")
+@pytest.mark.spec("ARBORA-OPS-R021.2.1")
 async def test_search_fails_closed_when_retriever_not_composed(op_by_id) -> None:
     op = op_by_id(retrieval.operations(), "retrieval.search")
     with pytest.raises(OperationRefused) as excinfo:
@@ -65,7 +65,7 @@ async def test_search_fails_closed_when_retriever_not_composed(op_by_id) -> None
     assert excinfo.value.code == "UNAVAILABLE"
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R021.2.2")
+@pytest.mark.spec("ARBORA-OPS-R021.2.2")
 async def test_freshness_reaches_engine_under_callers_tenant_read_only(
     op_by_id,
 ) -> None:
@@ -78,7 +78,7 @@ async def test_freshness_reaches_engine_under_callers_tenant_read_only(
     assert op.verb.value == "find"
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R021.2.2")
+@pytest.mark.spec("ARBORA-OPS-R021.2.2")
 async def test_freshness_fails_closed_when_retriever_not_composed(op_by_id) -> None:
     op = op_by_id(retrieval.operations(), "retrieval.freshness")
     with pytest.raises(OperationRefused) as excinfo:

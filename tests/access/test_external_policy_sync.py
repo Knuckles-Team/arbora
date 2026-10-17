@@ -1,6 +1,6 @@
 """External policy sync: bundle decoding, per-target rendering and the fail-closed applier."""
 
-# spec: GRAPHOS-IDENTITY-R650
+# spec: ARBORA-IDENTITY-R650
 
 from __future__ import annotations
 

@@ -1,5 +1,5 @@
 """Versioned HTTP projection of real retained host records."""
-# spec: GRAPHOS-HOST-R009.8.2.2
+# spec: ARBORA-HOST-R009.8.2.2
 
 import asyncio
 from dataclasses import replace

@@ -1,4 +1,4 @@
-"""GRAPHOS-OPS-R029: single resident-tool server cutover.
+"""ARBORA-OPS-R029: single resident-tool server cutover.
 
 Arbora's server factory registers only the six resident MCP verbs plus
 ``find_tools``, ``load_tools``, ``unload_tools``, and ``multiplexer_status``,
@@ -30,7 +30,7 @@ EXPECTED_FLEET_TOOLS = (
 )
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R029")
+@pytest.mark.spec("ARBORA-OPS-R029")
 def test_resident_tool_set_is_exactly_six_verbs_plus_four_fleet_tools() -> None:
     assert tuple(VERBS) == EXPECTED_VERBS
     assert tuple(FLEET_OPERATIONS) == EXPECTED_FLEET_TOOLS
@@ -40,7 +40,7 @@ def test_resident_tool_set_is_exactly_six_verbs_plus_four_fleet_tools() -> None:
     assert len(set(EXPECTED_VERBS) & set(EXPECTED_FLEET_TOOLS)) == 0
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R029")
+@pytest.mark.spec("ARBORA-OPS-R029")
 def test_retired_granular_tool_registrars_are_absent() -> None:
     import importlib
 
@@ -53,7 +53,7 @@ def test_retired_granular_tool_registrars_are_absent() -> None:
             importlib.import_module(retired_module)
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R029")
+@pytest.mark.spec("ARBORA-OPS-R029")
 def test_protocol_route_table_is_explicit_and_non_empty() -> None:
     paths = [route.path for route in PROTOCOL_ROUTES]
     assert len(paths) == len(set(paths)), "protocol route table has duplicate paths"
