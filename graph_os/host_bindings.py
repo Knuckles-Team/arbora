@@ -37,6 +37,7 @@ __all__ = [
     "action_gate",
     "bind_health_probes",
     "bind_messaging_ports",
+    "bind_run_ports",
     "fleet_agent",
     "mount_sdk_a2a",
     "outbound_mirror",
@@ -250,6 +251,13 @@ def _fleet_probe(session: Any) -> dict[str, Any]:
         "reason": f"fleet supervisory evidence is {snapshot.evidence.status}",
         "detail": detail,
     }
+
+
+def bind_run_ports() -> None:
+    """Bind the harness run-loop decision, model and event providers."""
+    from graph_os.agent_runs import bind_run_ports as _bind
+
+    _bind()
 
 
 def bind_health_probes() -> None:

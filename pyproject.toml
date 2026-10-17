@@ -187,11 +187,20 @@ service = "graph_os.messaging.reach:service_port"
 # resolve from the index.
 [tool.uv]
 # A dependency's own git pin of the engine never applies here.
-override-dependencies = ["epistemic-graph[server]>=2.27.1,<3.0.0"]
+override-dependencies = [
+    "epistemic-graph[server]>=2.27.1,<3.0.0",
+    # Train-only: agent-webui's branch pins the SDK at main; the train uses
+    # one SDK revision for every package until SDK 0.2.0 publishes.
+    "agent-connector-sdk @ git+https://github.com/Knuckles-Team/agent-connector-sdk.git@feat/au-handoffs",
+    # Train-only: agent-webui's branch pins pydantic-ai 2.54.0; one version
+    # serves the train until the webui release aligns its pin.
+    "pydantic-ai-slim[openai,ui]==2.57.0",
+]
 
 [tool.uv.sources]
 agent-utilities = { git = "https://github.com/Knuckles-Team/agent-utilities.git", branch = "refactor/au-cut-to-eg" }
 agent-connector-sdk = { git = "https://github.com/Knuckles-Team/agent-connector-sdk.git", branch = "feat/au-handoffs" }
+agent-webui = { git = "https://github.com/Knuckles-Team/agent-webui.git", branch = "feat/drop-au-imports" }
 # The engine always resolves from the package index, never from a git or
 # path source declared by a dependency.
 epistemic-graph = { index = "pypi" }

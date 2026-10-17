@@ -28,9 +28,6 @@ from graph_os.api.contracts.agent_control_contracts import (
 )
 from graph_os.api.contracts.agent_control_plane import (
     AgentControlPlane,
-    GraphRlmBenchmarkOptions,
-    GraphRlmBenchmarkRequest,
-    GraphRlmBenchmarkResult,
     GraphRlmError,
     GraphRlmPromptExample,
     GraphRlmRequest,
@@ -99,9 +96,6 @@ __all__ = [
     "CapabilitySearchRequest",
     "PolicyDisposition",
     "PolicyReceipt",
-    "GraphRlmBenchmarkOptions",
-    "GraphRlmBenchmarkRequest",
-    "GraphRlmBenchmarkResult",
     "GraphRlmError",
     "GraphRlmPromptExample",
     "GraphRlmRequest",

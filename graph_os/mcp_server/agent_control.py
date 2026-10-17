@@ -31,8 +31,7 @@ def register_graph_rlm(
     @mcp.tool(
         name="graph_rlm",
         description=(
-            "Run, benchmark, or evolve a recursive language model through the "
-            "verified agent control plane."
+            "Run a recursive language model through the verified agent control plane."
         ),
         tags={"graph-os", "agent-control-plane", "rlm"},
     )

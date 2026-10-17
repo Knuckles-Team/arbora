@@ -157,7 +157,7 @@ def operations() -> tuple[OpSpec, ...]:
                 effect=Effect.WRITE,
                 audit=AuditClass.EVENT,
             )
-            for action in ("run", "benchmark")
+            for action in ("run",)
         ),
     )
 

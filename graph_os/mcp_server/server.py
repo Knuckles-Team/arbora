@@ -157,9 +157,11 @@ def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
     from graph_os.host_bindings import (
         bind_health_probes,
         bind_messaging_ports,
+        bind_run_ports,
     )
 
     bind_messaging_ports()
+    bind_run_ports()
     bind_health_probes()
     _preflight_mcp_sdk_floor()
     _configure_graphos_otel()

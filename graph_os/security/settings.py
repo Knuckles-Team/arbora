@@ -30,13 +30,30 @@ DEFAULT_JWT_ALGORITHMS: tuple[str, ...] = (
 )
 
 
+def _raw(key: str) -> Any:
+    """The value of ``key`` through the one Graph OS settings view.
+
+    A ``GraphOSConfig`` field is read through ``runtime_config`` so a process
+    override and the environment agree; any other key reads the environment.
+    """
+    from graph_os.core.settings import GraphOSConfig, runtime_config
+
+    for name, info in GraphOSConfig.model_fields.items():
+        if info.alias == key:
+            value = getattr(runtime_config, name)
+            if isinstance(value, (list, dict)):
+                return json.dumps(value)
+            return value
+    return setting(key, "")
+
+
 def _text(key: str) -> str | None:
-    value = str(setting(key, "") or "").strip()
+    value = str(_raw(key) or "").strip()
     return value or None
 
 
 def _list(key: str) -> list[str]:
-    raw = str(setting(key, "") or "").strip()
+    raw = str(_raw(key) or "").strip()
     if not raw:
         return []
     if raw.startswith("["):
@@ -46,7 +63,7 @@ def _list(key: str) -> list[str]:
 
 
 def _mapping(key: str) -> Any:
-    raw = str(setting(key, "") or "").strip()
+    raw = str(_raw(key) or "").strip()
     return json.loads(raw) if raw else None
 
 

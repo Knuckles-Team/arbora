@@ -9,9 +9,9 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Annotated, Any, Literal
+from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
 from graph_os.api.contracts.agent_control_contracts import (
     AgentControlPlaneUnavailable,
@@ -38,7 +38,6 @@ from graph_os.api.contracts.agent_control_contracts import (
     WorkItemSubmissionResult,
 )
 from graph_os.api.contracts.session import GraphSession, resolve_session
-from graph_os.api.errors import not_served
 from graph_os.security.error_surface import public_error_payload
 
 type _RequiredScope = Literal["kg:read", "kg:write"]
@@ -55,22 +54,6 @@ class _StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
 
 
-class GraphRlmBenchmarkOptions(_StrictModel):
-    """Bounded long-context benchmark controls."""
-
-    scales: list[int] = Field(
-        default_factory=lambda: [50_000], min_length=1, max_length=4
-    )
-    cases_per_scale: int = Field(default=3, ge=1, le=10)
-
-    @field_validator("scales")
-    @classmethod
-    def _validate_scales(cls, scales: list[int]) -> list[int]:
-        if any(scale < 1 or scale > 10_000_000 for scale in scales):
-            raise ValueError("benchmark scales must be between 1 and 10000000")
-        return scales
-
-
 class GraphRlmPromptExample(_StrictModel):
     query: str = Field(min_length=1, max_length=100_000)
     response: str = Field(max_length=100_000)
@@ -82,16 +65,7 @@ class GraphRlmRunRequest(_StrictModel):
     input_text: str = Field(default="", max_length=10_000_000)
 
 
-class GraphRlmBenchmarkRequest(_StrictModel):
-    action: Literal["benchmark"] = "benchmark"
-    task: str = Field(default="s_niah", max_length=256)
-    options: GraphRlmBenchmarkOptions = Field(default_factory=GraphRlmBenchmarkOptions)
-
-
-type GraphRlmRequest = Annotated[
-    GraphRlmRunRequest | GraphRlmBenchmarkRequest,
-    Field(discriminator="action"),
-]
+type GraphRlmRequest = GraphRlmRunRequest
 
 
 class GraphRlmError(_StrictModel):
@@ -122,24 +96,10 @@ class GraphRlmRunResult(_StrictModel):
     error: GraphRlmError | None = None
 
 
-class GraphRlmBenchmarkResult(_StrictModel):
-    action: Literal["benchmark"]
-    ok: bool
-    task: str
-    results: list[dict[str, Any]] = Field(default_factory=list)
-    scoreboard: str = ""
-    available_tasks: list[str] = Field(default_factory=list)
-    error: GraphRlmError | None = None
-
-
-type GraphRlmResult = Annotated[
-    GraphRlmRunResult | GraphRlmBenchmarkResult,
-    Field(discriminator="action"),
-]
+type GraphRlmResult = GraphRlmRunResult
 
 _GRAPH_RLM_SCOPES: dict[type[BaseModel], Literal["kg:read", "kg:write"]] = {
     GraphRlmRunRequest: "kg:read",
-    GraphRlmBenchmarkRequest: "kg:read",
 }
 
 
@@ -460,7 +420,7 @@ class AgentControlPlane:
         """Execute one typed RLM action under the injected verified authority."""
         if not isinstance(
             request,
-            (GraphRlmRunRequest, GraphRlmBenchmarkRequest),
+            GraphRlmRunRequest,
         ):
             raise TypeError("request must be a validated GraphRlmRequest")
 
@@ -474,15 +434,26 @@ class AgentControlPlane:
             return self._failed_result(request, exc)
 
     async def _execute(self, request: GraphRlmRequest) -> GraphRlmResult:
-        if isinstance(request, GraphRlmRunRequest):
-            raise not_served(
-                "rlm.runner", "AU-harness (deleted from AU)", owner="agent-utilities"
-            )
+        from agent_utilities.rlm import run_rlm
 
-        raise not_served(
-            "rlm.benchmarks",
-            "AU-harness (deleted from AU)",
-            owner="agent-utilities",
+        outcome = await run_rlm(request.task, request.input_text)
+        if outcome.get("ok"):
+            return GraphRlmRunResult(
+                action="run",
+                ok=True,
+                task=request.task,
+                result=str(outcome.get("result") or ""),
+                usage=dict(outcome.get("usage") or {}),
+                max_depth=int(outcome.get("max_depth") or 0),
+            )
+        return GraphRlmRunResult(
+            action="run",
+            ok=False,
+            task=request.task,
+            failure_class=str(outcome.get("failure_class") or "") or None,
+            error=self._failure(
+                RuntimeError("recursive run failed"), code="operation_failed"
+            ),
         )
 
     def _failed_result(
@@ -493,13 +464,7 @@ class AgentControlPlane:
         code: str = "operation_failed",
     ) -> GraphRlmResult:
         error = self._failure(exc, code=code)
-        if isinstance(request, GraphRlmRunRequest):
-            return GraphRlmRunResult(
-                action="run", ok=False, task=request.task, error=error
-            )
-        return GraphRlmBenchmarkResult(
-            action="benchmark", ok=False, task=request.task, error=error
-        )
+        return GraphRlmRunResult(action="run", ok=False, task=request.task, error=error)
 
     @staticmethod
     def _failure(exc: BaseException, *, code: str) -> GraphRlmError:
@@ -526,6 +491,10 @@ def compose_agent_control_plane(
     signed_dispatch: SignedAgentDispatchPort | None = None,
 ) -> AgentControlPlane:
     """Compose AU application operations from verified inputs and explicit ports."""
+    if agent_executor is None:
+        from graph_os.agent_runs import AgentRunPort
+
+        agent_executor = AgentRunPort()
     return AgentControlPlane(
         eg_client,
         session,
