@@ -46,11 +46,9 @@ claim without a ``proposed_envelope`` (every non-ingestion claim family).
 
 from __future__ import annotations
 
-import json
-
-from agent_utilities.security.error_surface import public_error_json
 from pydantic import Field
 
+from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.context_helpers import action_policy_gate
 
@@ -154,173 +152,8 @@ def register_claim_tools(mcp):
         """Propose / validate / accept / deprecate / retract / evaluate / get / list
         claims through the governed ClaimFlywheel lifecycle, ActionPolicy-gated."""
 
-        from agent_utilities.knowledge_graph.research.claim_flywheel import (
-            ClaimFlywheel,
-            IllegalTransition,
-            list_claims,
+        raise not_served(
+            "knowledge_graph.research.claim_flywheel", "EG-DECISION-ENGINE-R652"
         )
-
-        try:
-            engine = runtime._get_engine()
-            flywheel = ClaimFlywheel(engine)
-
-            if action == "evaluate":
-                # Governed candidate-claim promotion entrypoint
-                # (CONCEPT:AU-KG.ingest.governed-claim-promotion) — the ONE
-                # live MCP/REST caller into
-                # knowledge_graph.ingestion.promotion.evaluate_and_advance for
-                # a source WITHOUT its own extraction pipeline wired yet
-                # (e.g. a script, or an operator testing a domain's
-                # thresholds). Runs propose+validate/hold/reject in one call;
-                # deliberately UNGATED here (mirrors graph_ingest's
-                # sync_second_brain, which already proposes claims into this
-                # SAME flywheel with no action_policy check) — no fact is
-                # written until a SEPARATE, gated 'accept' call clears the
-                # ActionPolicy approval queue.
-                if not envelope_json:
-                    return json.dumps({"error": "evaluate requires envelope_json"})
-                from agent_utilities.knowledge_graph.ingestion.change_envelope import (
-                    ChangeEnvelope,
-                )
-                from agent_utilities.knowledge_graph.ingestion.promotion import (
-                    PromotionRequest,
-                    envelope_from_dict,
-                    evaluate_and_advance,
-                )
-
-                try:
-                    envelope_data = json.loads(envelope_json)
-                    if not isinstance(envelope_data, dict):
-                        raise ValueError("envelope_json must decode to a JSON object")
-                    envelope: ChangeEnvelope = envelope_from_dict(envelope_data)
-                except Exception as exc:  # noqa: BLE001 — a malformed envelope is a client error
-                    return json.dumps(
-                        {"error": f"invalid envelope_json: {type(exc).__name__}"}
-                    )
-                claim = PromotionRequest(
-                    domain=domain,
-                    statement=statement,
-                    confidence=confidence,
-                    envelope=envelope,
-                    claim_id=claim_id or "",
-                )
-                outcome = evaluate_and_advance(engine, claim)
-                return json.dumps(
-                    {"action": "evaluate", "claim_id": claim.claim_id, **outcome},
-                    default=str,
-                )
-
-            if action == "get":
-                if not claim_id:
-                    return json.dumps({"error": "get requires claim_id"})
-                return json.dumps(
-                    {
-                        "action": "get",
-                        "claim_id": claim_id,
-                        "current_state": flywheel.current_state(claim_id).value,
-                        "history": flywheel.history(claim_id),
-                    },
-                    default=str,
-                )
-            if action == "list":
-                return json.dumps(
-                    {
-                        "action": "list",
-                        "claims": list_claims(
-                            engine, state=(state or None), limit=limit
-                        ),
-                    },
-                    default=str,
-                )
-            if action not in ("propose", "validate", "accept", "deprecate", "retract"):
-                return json.dumps({"error": f"unknown action {action!r}"})
-            if not claim_id:
-                return json.dumps({"error": f"{action} requires claim_id"})
-
-            allowed, policy = _gate(f"claim.{action}", claim_id, reason)
-            if not allowed:
-                return json.dumps(
-                    {
-                        "action": action,
-                        "claim_id": claim_id,
-                        "error": "policy_denied",
-                        "policy": policy,
-                    }
-                )
-
-            materialization = None
-            superseded_fact = None
-            transition_dict = None
-            try:
-                if action == "propose":
-                    transition = flywheel.propose(
-                        claim_id, reason=reason or "mined finding"
-                    )
-                elif action == "validate":
-                    transition = flywheel.validate(claim_id, valid, reason=reason)
-                elif action == "accept":
-                    transition = flywheel.accept(
-                        claim_id,
-                        reason=reason or "action-gated promotion",
-                        action_decision=policy["decision"],
-                    )
-                    # Ingestion candidate-claim materialization hook
-                    # (CONCEPT:AU-KG.ingest.governed-claim-promotion): a no-op
-                    # (returns None) for every OTHER claim family (mining,
-                    # ops-causal, ...) — only a claim carrying a
-                    # ``proposed_envelope`` (this program's promotion.py)
-                    # writes the real fact here. Never swallowed: a failed
-                    # materialization is returned to the caller, not hidden
-                    # behind an "accepted" that silently wrote nothing.
-                    from agent_utilities.knowledge_graph.ingestion.promotion import (
-                        materialize_on_claim_accepted,
-                    )
-
-                    materialization = materialize_on_claim_accepted(engine, claim_id)
-                elif action == "deprecate":
-                    transition = flywheel.deprecate(
-                        claim_id, reason=reason or "superseded or drifted"
-                    )
-                else:  # retract
-                    # Retraction ALSO supersedes an already-materialized fact
-                    # (Track B tie-in) rather than deleting it — one call into
-                    # promotion.retract_and_supersede so the two never drift
-                    # out of sync (it internally calls the SAME
-                    # ``flywheel.retract`` this branch used to call directly).
-                    from agent_utilities.knowledge_graph.ingestion.promotion import (
-                        retract_and_supersede,
-                    )
-
-                    retract_result = retract_and_supersede(
-                        engine, claim_id, reason=reason or "retracted"
-                    )
-                    transition_dict = retract_result["transition"]
-                    superseded_fact = retract_result["superseded_fact"]
-            except IllegalTransition as e:
-                return json.dumps(
-                    {
-                        "action": action,
-                        "claim_id": claim_id,
-                        "error": "illegal_transition",
-                        "detail": type(e).__name__,
-                        "policy": policy,
-                    }
-                )
-
-            if transition_dict is None:
-                transition_dict = transition.to_dict() if transition else None
-            return json.dumps(
-                {
-                    "action": action,
-                    "claim_id": claim_id,
-                    "policy": policy,
-                    "transition": transition_dict,
-                    "materialization": materialization,
-                    "superseded_fact": superseded_fact,
-                },
-                default=str,
-            )
-        except Exception as e:  # noqa: BLE001
-            return public_error_json(e)
 
     runtime.REGISTERED_TOOLS["graph_claims"] = graph_claims

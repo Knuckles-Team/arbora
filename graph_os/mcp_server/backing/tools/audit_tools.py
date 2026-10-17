@@ -41,6 +41,7 @@ from typing import Any
 from agent_utilities.security.error_surface import public_error_payload
 from pydantic import Field
 
+from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 
 
@@ -179,22 +180,4 @@ def _for_target(target_id: str) -> dict[str, Any]:
 
 def _lineage(fragment_id: str, *, claim: str, content_hash: str) -> dict[str, Any]:
     """Source-to-claim lineage for one cited fragment (CONCEPT:AU-KG.retrieval.source-to-claim-lineage)."""
-    from agent_utilities.knowledge_graph.retrieval.lineage import (
-        LineageNotFoundError,
-        resolve_lineage,
-    )
-
-    engine = runtime._get_engine()
-    try:
-        record = resolve_lineage(
-            engine, fragment_id=fragment_id, claim_text=claim, content_hash=content_hash
-        )
-    except LineageNotFoundError as exc:
-        return {
-            "surface": "audit",
-            "action": "lineage",
-            "fragment_id": fragment_id,
-            "found": False,
-            **public_error_payload(exc, code="lineage_not_found"),
-        }
-    return {"surface": "audit", "action": "lineage", "found": True, **record}
+    raise not_served("knowledge_graph.retrieval.lineage", "EG-FEDERATED-QUERY-R653")

@@ -21,6 +21,7 @@ from agent_utilities.security.error_surface import (
 from pydantic import Field
 from starlette.responses import JSONResponse
 
+from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 
 logger = logging.getLogger(__name__)
@@ -62,23 +63,8 @@ def propose_lakehouse_maintenance_gap(
     ``gap:<source>:<signature>`` id dedupes re-detection rather than filing a
     duplicate gap on every tick).
     """
-    import hashlib
 
-    from agent_utilities.knowledge_graph.research.gaps import submit_gap
-
-    statement = (statement or "").strip()
-    if not statement:
-        return None
-    sig = signature or hashlib.sha256(f"{source}:{statement}".encode()).hexdigest()[:16]
-    return submit_gap(
-        engine,
-        source=source,
-        signature=sig,
-        statement=statement,
-        domain=domain,
-        severity=severity,
-        concept_ids=concept_ids or [],
-    )
+    raise not_served("knowledge_graph.research.gaps", "EG-DECISION-ENGINE-R653")
 
 
 def _format_tool_response(resp: Any) -> str:
@@ -219,24 +205,9 @@ def _sandbox_status_action() -> str:
 
     Extracted verbatim (pure extract-method, no behaviour change).
     """
-    import json as _json
 
-    from agent_utilities.deployment.doctor import _check_warm_fork
-    from agent_utilities.rlm.sandboxes.reward import SandboxRewardTracker
-
-    res = _check_warm_fork()
-    data = res.get("data") or {}
-    return _json.dumps(
-        {
-            "action": "status",
-            "status": res.get("status"),
-            "detail": res.get("detail"),
-            "rungs": data.get("rungs", {}),
-            "warm_rungs": data.get("warm_rungs", []),
-            "pool": data.get("pool", {}),
-            "rewards": SandboxRewardTracker.get().snapshot(),
-        },
-        default=str,
+    raise not_served(
+        "rlm.sandboxes.reward", "AU-harness (deleted from AU)", owner="agent-utilities"
     )
 
 
@@ -274,31 +245,10 @@ async def _sandbox_warm_action(rung: str) -> str:
     """
     import json as _json
 
-    from agent_utilities.runtime.warm_registry import WarmParentRegistry
-
     if not rung:
         return _json.dumps({"error": "warm requires an approved rung"})
-    from agent_utilities.rlm.sandboxes.base import ForkableSandbox
-    from agent_utilities.rlm.sandboxes.registry import default_sandboxes
-
-    backend = next((b for b in default_sandboxes() if b.name == rung), None)
-    if backend is None or not isinstance(backend, ForkableSandbox):
-        return _json.dumps(
-            {"error": "requested rung is not an available confined warm-fork"}
-        )
-    registry = WarmParentRegistry.get()
-    spec = backend.warm_spec()
-    already = registry.acquire(spec.key) is not None
-    if not already:
-        parent = await backend.warm(spec)
-        registry.register(spec.key, parent, close=parent.close, kind=backend.name)
-    return _json.dumps(
-        {
-            "action": "warm",
-            "rung": rung,
-            "already_warm": already,
-            "pool": registry.stats(),
-        }
+    raise not_served(
+        "rlm.sandboxes.base", "AU-harness (deleted from AU)", owner="agent-utilities"
     )
 
 
@@ -454,9 +404,7 @@ def _feeds_sync_action(engine: Any, url: str, mode: str) -> str:
             }
         )
     # Fallback: no queue (embedded engine) → run inline.
-    from agent_utilities.knowledge_graph.core.source_sync import sync_source
-
-    return _json.dumps(sync_source(engine, feed_source, mode=mode), default=str)
+    raise not_served("knowledge_graph.core.source_sync", "EG-INGEST-WORKER-R605")
 
 
 def _parse_json_or(raw: str, default: Any) -> Any:
@@ -882,15 +830,9 @@ async def _loops_state_action(engine: Any, p: _LoopsParams) -> str:
 
     Extracted verbatim (pure extract-method, no behaviour change).
     """
-    import json as _json
 
-    from agent_utilities.knowledge_graph.research.evolution_state import (
-        read_evolution_state,
-    )
-
-    evolution = await run_blocking_ordered(read_evolution_state, engine)
-    return _json.dumps(
-        {"action": "state", "evolution": evolution}, indent=2, default=str
+    raise not_served(
+        "knowledge_graph.research.evolution_state", "EG-DECISION-ENGINE-R653"
     )
 
 
@@ -900,14 +842,10 @@ async def _loops_specs_action(engine: Any, p: _LoopsParams) -> str:
 
     Extracted verbatim (pure extract-method, no behaviour change).
     """
-    import json as _json
 
-    from agent_utilities.knowledge_graph.research.spec_proposals import list_specs
-
-    specs = await run_blocking_ordered(
-        list_specs, engine, status=(p.status or None), limit=p.limit
+    raise not_served(
+        "knowledge_graph.research.spec_proposals", "EG-DECISION-ENGINE-R654"
     )
-    return _json.dumps({"action": "specs", "specs": specs}, default=str)
 
 
 async def _loops_review_action(engine: Any, p: _LoopsParams) -> str:
@@ -917,19 +855,10 @@ async def _loops_review_action(engine: Any, p: _LoopsParams) -> str:
 
     Extracted verbatim (pure extract-method, no behaviour change).
     """
-    import json as _json
 
-    from agent_utilities.knowledge_graph.research.spec_proposals import review_spec
-
-    sid = p.spec_id or p.loop_id
-    if not sid or not p.decision:
-        return _json.dumps(
-            {"error": "review needs spec_id and decision (approve|edit|reject)"}
-        )
-    review_result = await run_blocking_ordered(
-        review_spec, engine, sid, p.decision, reviewer="user"
+    raise not_served(
+        "knowledge_graph.research.spec_proposals", "EG-DECISION-ENGINE-R654"
     )
-    return _json.dumps({"action": "review", "result": review_result}, default=str)
 
 
 async def _loops_gaps_action(engine: Any, p: _LoopsParams) -> str:
@@ -941,12 +870,8 @@ async def _loops_gaps_action(engine: Any, p: _LoopsParams) -> str:
 
     Extracted verbatim (pure extract-method, no behaviour change).
     """
-    import json as _json
 
-    from agent_utilities.knowledge_graph.research.gaps import open_gaps
-
-    gaps = await run_blocking_ordered(open_gaps, engine, limit=p.limit)
-    return _json.dumps({"action": "gaps", "gaps": gaps}, default=str)
+    raise not_served("knowledge_graph.research.gaps", "EG-DECISION-ENGINE-R653")
 
 
 def _decode_submit_gap_json(data_json: str) -> dict[str, Any] | None:
@@ -1016,17 +941,8 @@ async def _loops_submit_gap_action(engine: Any, p: _LoopsParams) -> str:
 
     Extracted verbatim (pure extract-method, no behaviour change).
     """
-    import json as _json
 
-    from agent_utilities.knowledge_graph.research.gaps import submit_gap
-
-    fields, error_json = _parse_submit_gap_fields(p.data_json)
-    if error_json is not None:
-        return error_json
-    gap = await run_blocking_ordered(submit_gap, engine, **fields)
-    if gap is None:
-        return _json.dumps({"error": "submit_gap failed to persist"})
-    return _json.dumps({"action": "submit_gap", "gap": gap}, default=str)
+    raise not_served("knowledge_graph.research.gaps", "EG-DECISION-ENGINE-R653")
 
 
 def _gap_provenance(gap: dict[str, Any]) -> dict[str, Any]:
@@ -1054,19 +970,8 @@ async def _loops_gap_action(engine: Any, p: _LoopsParams) -> str:
 
     Extracted verbatim (pure extract-method, no behaviour change).
     """
-    import json as _json
 
-    from agent_utilities.knowledge_graph.research.gaps import get_gap
-
-    gap_id = p.loop_id
-    if not gap_id:
-        return _json.dumps({"error": "gap needs a gap id in loop_id"})
-    gap = await run_blocking_ordered(get_gap, engine, gap_id)
-    if gap is None:
-        return _json.dumps({"action": "gap", "id": gap_id, "error": "gap not found"})
-    return _json.dumps(
-        {"action": "gap", "gap": gap, "provenance": _gap_provenance(gap)}, default=str
-    )
+    raise not_served("knowledge_graph.research.gaps", "EG-DECISION-ENGINE-R653")
 
 
 def _build_loops_dispatch(
@@ -1260,54 +1165,8 @@ def register_state_tools(mcp):
         """Submit / list / run / drive / cancel / prioritize Loops + observe & steer
         the self-evolution flywheel (state / specs / review /
         gaps / submit_gap / gap) — the one entrypoint."""
-        import json as _json
 
-        from agent_utilities.knowledge_graph.core.engine_tasks import (
-            _coerce_prio_bucket,
-        )
-        from agent_utilities.knowledge_graph.research.loop_controller import (
-            LoopController,
-        )
-        from agent_utilities.knowledge_graph.research.loops import (
-            active_loops,
-            mark_loop_status,
-            prioritize_loop,
-            submit_loop,
-        )
-
-        p = _LoopsParams(
-            objective=objective,
-            kind=kind,
-            loop_id=loop_id,
-            validation_cmd=validation_cmd,
-            end_state=end_state,
-            skill_ref=skill_ref,
-            max_topics=max_topics,
-            limit=limit,
-            priority_bucket=priority_bucket,
-            spec_id=spec_id,
-            decision=decision,
-            status=status,
-            mine_discovery=mine_discovery,
-            data_json=data_json,
-        )
-        core = _LoopsCore(
-            coerce_prio_bucket=_coerce_prio_bucket,
-            loop_controller_cls=LoopController,
-            active_loops=active_loops,
-            mark_loop_status=mark_loop_status,
-            prioritize_loop=prioritize_loop,
-            submit_loop=submit_loop,
-        )
-        try:
-            engine = runtime._get_engine()
-            dispatch = _build_loops_dispatch(engine, p, core)
-            handler = dispatch.get(action)
-            if handler is None:
-                return _json.dumps({"error": f"unknown action {action!r}"})
-            return await handler()
-        except Exception as e:
-            return public_error_json(e)
+        raise not_served("knowledge_graph.core.engine_tasks", "EG-INGEST-WORKER-R604")
 
     runtime.REGISTERED_TOOLS["graph_loops"] = graph_loops
 
@@ -1705,27 +1564,9 @@ def register_state_tools(mcp):
     ) -> str:
         """Run an ARA action over the one ontology-driven KG (single SoT)."""
 
-        from agent_utilities.knowledge_graph.research.ara.service import ARAService
-
-        try:
-            service = ARAService(runtime._get_engine())
-            result = service.run(
-                action,
-                article_id=article_id,
-                topic=topic or query,
-                query=query,
-                level=level,
-                text=text,
-                provenance=provenance,
-                actor=actor,
-                event_type=event_type,
-                target_codebase=target_codebase or None,
-                limit=limit,
-                materialize=materialize,
-            )
-            return json.dumps(result, default=str)
-        except Exception as e:
-            return public_error_json(e)
+        raise not_served(
+            "knowledge_graph.research.ara.service", "EG-DECISION-ENGINE-R652"
+        )
 
     runtime.REGISTERED_TOOLS["research_artifact"] = research_artifact
 

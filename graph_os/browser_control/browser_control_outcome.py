@@ -5,12 +5,6 @@ from __future__ import annotations
 import asyncio
 from typing import Any, Literal
 
-from agent_utilities.knowledge_graph.core.work_durability import (
-    TERMINAL_WORK_ITEM_STATUSES,
-    cancel_work_item,
-    commit_result,
-    get_work_item,
-)
 from agent_utilities.security.persistence_privacy import persistence_reference
 
 from graph_os.browser_control.browser_control_api import BrowserCallReceipt
@@ -22,6 +16,12 @@ from graph_os.browser_control.browser_control_durability import commit_call_outc
 from graph_os.browser_control.browser_control_state import (
     BrowserControlMixinState,
     _ActiveCall,
+)
+from graph_os.work_items import (
+    TERMINAL_WORK_ITEM_STATUSES,
+    cancel_work_item,
+    commit_result,
+    get_work_item,
 )
 
 _COMPLETED_CACHE_SIZE = 256

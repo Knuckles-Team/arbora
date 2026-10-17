@@ -19,7 +19,7 @@ from typing import Any, TypedDict
 
 from agent_utilities.core.config import setting
 
-from graph_os.mcp_server import runtime
+from graph_os.api.errors import not_served
 
 logger = logging.getLogger(__name__)
 
@@ -636,38 +636,9 @@ def get_tabular_query_service() -> Any:
     resolved by the backend on every dispatch.
     """
 
-    from agent_utilities.knowledge_graph.backends.trino_backend import (
-        TrinoQueryBackend,
+    raise not_served(
+        "knowledge_graph.backends.trino_backend", "EG-FEDERATED-QUERY-R053.700"
     )
-    from agent_utilities.knowledge_graph.core.tabular_query_service import (
-        TabularQueryService,
-    )
-
-    from graph_os.mcp_server.backing.delegated_auth import get_delegated_token
-
-    key = _trino_composition_settings()
-    global _TABULAR_QUERY_SERVICE, _TABULAR_QUERY_SERVICE_KEY
-    previous: Any = None
-    with _TABULAR_QUERY_SERVICE_LOCK:
-        if _TABULAR_QUERY_SERVICE is not None and _TABULAR_QUERY_SERVICE_KEY == key:
-            return _TABULAR_QUERY_SERVICE
-        endpoint, catalog, audience = key
-        backend = TrinoQueryBackend(
-            endpoint,
-            catalog=catalog,
-            token_provider=lambda: get_delegated_token(audience=audience),
-            principal_ref_provider=_trino_principal_ref,
-        )
-        service = TabularQueryService(backend)
-        previous = _TABULAR_QUERY_SERVICE
-        _TABULAR_QUERY_SERVICE = service
-        _TABULAR_QUERY_SERVICE_KEY = key
-    if previous is not None:
-        try:
-            previous.close()
-        except Exception:  # noqa: BLE001 - replacement is already fail-closed
-            logger.warning("previous tabular query service close failed", exc_info=True)
-    return service
 
 
 _EXTRACTION_MANAGER: Any = None
@@ -677,11 +648,9 @@ def _get_extraction_manager(engine: Any) -> Any:
     """Lazily build the single GPU-slot extraction job manager (KG-2.65)."""
     global _EXTRACTION_MANAGER
     if _EXTRACTION_MANAGER is None:
-        from agent_utilities.knowledge_graph.extraction.job_manager import (
-            ExtractionJobManager,
+        raise not_served(
+            "knowledge_graph.extraction.job_manager", "EG-DURABLE-KERNEL-R071"
         )
-
-        _EXTRACTION_MANAGER = ExtractionJobManager(engine)
     return _EXTRACTION_MANAGER
 
 
@@ -704,16 +673,9 @@ def get_connection_registry():
     with _REGISTRY_LOCK:
         if _CONNECTION_REGISTRY is not None:
             return _CONNECTION_REGISTRY
-        from agent_utilities.knowledge_graph.core.connection_registry import (
-            ConnectionRegistry,
+        raise not_served(
+            "knowledge_graph.core.connection_registry", "EG-UNIFIED-DATA-PLANE-R612"
         )
-
-        registry = ConnectionRegistry()
-        # Seed reference-only external sources first, then let an explicit
-        # KG_CONNECTIONS declaration with the same alias take precedence.
-        _seed_connection_registry(registry)
-        _CONNECTION_REGISTRY = registry
-        return _CONNECTION_REGISTRY
 
 
 def _seed_external_graph_connectors(registry: Any) -> None:
@@ -814,52 +776,7 @@ def _resolve_read_engines(
     connection, ``"all"``, a list) defers to the standard connection resolver
     unchanged, and with routing off this is byte-for-byte ``_resolve_target_engines``.
     """
-    from agent_utilities.knowledge_graph.core import ingest_routing
-
-    is_implicit_default = target is None or (
-        isinstance(target, str) and target.strip().lower() in ("", "default")
-    )
-    if not is_implicit_default:
-        return _resolve_target_engines(target)
-
-    read_graphs = ingest_routing.read_graph_targets()
-    if len(read_graphs) <= 1:
-        # Nothing routed yet → stay on the fast single default-graph path.
-        return _resolve_target_engines(target)
-
-    from agent_utilities.knowledge_graph.core.shard_topology import default_graph_name
-
-    default_graph = default_graph_name()
-    entries: list[tuple[str, Any]] = []
-    errors: dict[str, str] = {}
-    # CONCEPT:AU-KG.backend.fanout-dedup — de-duplicate fan-out targets by the engine's actual bound
-    # graph so the SAME backend (e.g. ``__commons__``) is never queried more than
-    # once. Without this a query for nodes that live only in the default graph is
-    # answered identically by every target, and an aggregation row (no node id to
-    # dedup on) is repeated once per graph. Key on the backend's ``graph_name``,
-    # falling back to ``id(engine)`` so two engines over one store collapse to one.
-    seen_backends: set[Any] = set()
-
-    def _backend_key(engine: Any) -> Any:
-        gname = getattr(getattr(engine, "backend", None), "graph_name", None)
-        return gname if gname is not None else id(engine)
-
-    for gname in read_graphs:
-        if gname == default_graph:
-            eng: Any = runtime._get_engine()
-            name = "default"
-        else:
-            eng, err = ingest_routing.safe_engine_for_graph(gname)
-            if err is not None:
-                errors[gname] = err
-                continue
-            name = gname
-        key = _backend_key(eng)
-        if key in seen_backends:
-            continue
-        seen_backends.add(key)
-        entries.append((name, eng))
-    return entries, errors, True
+    raise not_served("knowledge_graph.core.ingest_routing", "EG-INGEST-WORKER-R605")
 
 
 class GraphSelectionError(ValueError):
@@ -1121,17 +1038,7 @@ def _ontology_system():
     Module-level so the ontology/object tool group registers from
     mcp/tools/ontology_tools.py instead of a _build_server closure.
     """
-    from agent_utilities.knowledge_graph.facade import KnowledgeGraph
-
-    try:
-        engine = runtime._get_engine()
-    except Exception:  # pragma: no cover - defensive
-        engine = None
-    backend = getattr(engine, "backend", None) if engine is not None else None
-    kg = KnowledgeGraph()
-    if backend is not None:
-        kg._store = backend
-    return kg.ontology
+    raise not_served("knowledge_graph.facade", "EG-CONTRACT-R005")
 
     # Fleet tool schemas stay lazy.  Startup has already materialized each MCP
     # server declaration above; probing every child here would launch the whole

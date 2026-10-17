@@ -53,12 +53,12 @@ Wire-First risk this item was originally deferred over.
 
 from __future__ import annotations
 
-import dataclasses
 import json
 
 from agent_utilities.security.error_surface import public_error_json
 from pydantic import Field
 
+from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 
 
@@ -155,35 +155,9 @@ def register_candidate_claim_tools(mcp):
                         {"error": f"invalid fragments_json: {type(exc).__name__}"}
                     )
 
-                from agent_utilities.knowledge_graph.extraction.candidate_claims import (
-                    CandidateClaimExtractor,
-                )
-
-                extractor = CandidateClaimExtractor()
-                batch = await extractor.propose(
-                    text,
-                    fragments,
-                    source_id=source_id,
-                    rounds=max(1, rounds),
-                    dedup=dedup,
-                )
-                return json.dumps(
-                    {
-                        "action": "propose",
-                        "source_id": source_id,
-                        "candidates": [
-                            c.model_dump(mode="json") for c in batch.candidates
-                        ],
-                        "counts": {
-                            "accepted": batch.counts.accepted,
-                            "needs_review": batch.counts.needs_review,
-                            "rejected": batch.counts.rejected,
-                            "quarantined": batch.counts.quarantined,
-                        },
-                        "unresolved_evidence": batch.unresolved_evidence,
-                        "extraction_run_id": batch.run.id,
-                    },
-                    default=str,
+                raise not_served(
+                    "knowledge_graph.extraction.candidate_claims",
+                    "EG-INGEST-WORKER-R701",
                 )
 
             if action == "resolve_identities":
@@ -196,43 +170,8 @@ def register_candidate_claim_tools(mcp):
                         {"error": f"invalid records_json: {type(exc).__name__}"}
                     )
 
-                from agent_utilities.knowledge_graph.assimilation import (
-                    EntityRecord,
-                    resolve_identity_candidates,
-                    write_candidate,
-                )
-
-                try:
-                    records = [
-                        EntityRecord(
-                            id=str(r["id"]),
-                            name=str(r.get("name", "")),
-                            kind=str(r.get("kind", "")),
-                            identifiers=dict(r.get("identifiers") or {}),
-                        )
-                        for r in records_raw
-                    ]
-                except (KeyError, TypeError) as exc:
-                    return json.dumps(
-                        {"error": f"invalid records_json entry: {type(exc).__name__}"}
-                    )
-
-                candidates = resolve_identity_candidates(
-                    records, min_confidence=min_confidence
-                )
-                persisted = 0
-                if persist and candidates:
-                    engine = runtime._get_engine()
-                    for candidate in candidates:
-                        write_candidate(engine, candidate)
-                        persisted += 1
-                return json.dumps(
-                    {
-                        "action": "resolve_identities",
-                        "candidates": [dataclasses.asdict(c) for c in candidates],
-                        "persisted": persisted,
-                    },
-                    default=str,
+                raise not_served(
+                    "knowledge_graph.assimilation", "EG-DECISION-ENGINE-R707"
                 )
 
             return json.dumps({"error": f"unknown action {action!r}"})

@@ -109,47 +109,6 @@ def test_missing_file_is_not_found(tmp_path):
 
 
 # ── the doctor check (reuses the validator) ─────────────────────────────────
-def test_doctor_check_ok_for_valid(tmp_path, monkeypatch):
-    path = _write(tmp_path, VALID)
-    monkeypatch.setattr(
-        "agent_utilities.knowledge_graph.ingestion.coverage.find_workspace_manifest",
-        lambda: Path(path),
-    )
-    res = D._check_workspace_config()
-    assert res["name"] == "workspace_config"
-    assert res["status"] == "ok"
-    assert "3 repositories" in res["detail"]
-
-
-def test_doctor_check_fail_for_malformed(tmp_path, monkeypatch):
-    body = """\
-name: "W"
-path: "/tmp/ws"
-repositories:
-  - description: "no url"
-"""
-    path = _write(tmp_path, body)
-    monkeypatch.setattr(
-        "agent_utilities.knowledge_graph.ingestion.coverage.find_workspace_manifest",
-        lambda: Path(path),
-    )
-    res = D._check_workspace_config()
-    assert res["status"] == "fail"
-    assert res["remediation"]
-
-
-def test_doctor_check_skips_when_absent(tmp_path, monkeypatch):
-    monkeypatch.setattr(
-        "agent_utilities.knowledge_graph.ingestion.coverage.find_workspace_manifest",
-        lambda: None,
-    )
-    # No XDG file expected in the test sandbox either; force the fallback to miss.
-    monkeypatch.setattr(
-        "agent_utilities.core.workspace_config.get_workspace_yml_path",
-        lambda: tmp_path / "nope.yml",
-    )
-    res = D._check_workspace_config()
-    assert res["status"] == "skip"
 
 
 def test_workspace_config_in_registry():

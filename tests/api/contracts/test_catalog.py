@@ -7,12 +7,6 @@ import hashlib
 from typing import Any, cast
 
 import pytest
-from agent_utilities.knowledge_graph.core.session import (
-    GraphSession,
-    ScopeError,
-    SessionRequiredError,
-    use_session,
-)
 from agent_utilities.security.actor_identity import ActorType
 from agent_utilities.security.brain_context import ActorContext
 
@@ -22,6 +16,12 @@ from graph_os.api.contracts.catalog import (
     CatalogReadError,
     WorkflowCatalogRecord,
     catalog_read_ports,
+)
+from graph_os.api.contracts.session import (
+    GraphSession,
+    ScopeError,
+    SessionRequiredError,
+    use_session,
 )
 
 
@@ -179,7 +179,7 @@ def test_reads_require_verified_ambient_session_and_never_fallback_to_empty() ->
     engine = _Engine([], [])
     authority = CatalogReadAuthority(engine)
 
-    from agent_utilities.knowledge_graph.core.session import suspend_session
+    from graph_os.api.contracts.session import suspend_session
 
     with suspend_session(), pytest.raises(SessionRequiredError):
         authority.list_authorized_agents_sync()

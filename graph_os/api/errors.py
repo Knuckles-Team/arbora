@@ -78,6 +78,21 @@ class GraphOSRefusal(Exception):
     details: Mapping[str, Any] = field(default_factory=dict)
 
 
+def not_served(
+    capability: str, spec_row: str, owner: str = "epistemic-graph"
+) -> GraphOSRefusal:
+    """Refuse an operation whose capability its owner does not serve yet.
+
+    ``capability`` names the deleted in-process module the operation used.
+    ``spec_row`` is the owner's spec row that will serve it.
+    """
+    return GraphOSRefusal(
+        code=GraphOSErrorCode.UNAVAILABLE,
+        message=f"{owner} does not serve {capability} yet ({spec_row})",
+        details={"owner": owner, "capability": capability, "spec_row": spec_row},
+    )
+
+
 @dataclass(slots=True)
 class EngineRefusal(Exception):
     """An engine code whose HTTP status/retryability belong to its contract."""

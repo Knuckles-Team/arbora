@@ -13,27 +13,16 @@ from collections.abc import Callable, Sequence
 from typing import Any, Literal
 
 from agent_utilities.core.event_loop import run_blocking_ordered
-from agent_utilities.knowledge_graph.orchestration.engine_query import (
-    is_aggregation_cypher,
-)
 from agent_utilities.models.evidence_bundle import EvidenceBundle
 from agent_utilities.security.error_surface import public_error_json, public_error_text
 from pydantic import Field
 from pydantic.fields import FieldInfo
 
+from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
 
 logger = logging.getLogger(__name__)
-
-# CONCEPT:AU-KG.query.query-aggregation — `is_aggregation_cypher` (imported above)
-# is re-exported here so `from graph_os.mcp_server.backing.tools.query_tools import
-# is_aggregation_cypher` keeps working for existing callers/tests. Its canonical
-# definition + detection regex now live in `knowledge_graph.orchestration.
-# engine_query` (single source of truth): the governed read path
-# (`QueryMixin.query_cypher`) needs the SAME aggregate-vs-row detection this
-# federation router uses, and `engine_query` sits below `mcp.tools` in the
-# dependency direction, so it is the correct owner, not this module.
 
 
 def _parse_ranges(spec: str) -> list[tuple[int, int]]:
@@ -222,22 +211,7 @@ def _evidence_bundle_for_rows(engine: Any, rows: list[Any]) -> Any:
     bundle (never raises) when the engine has no ``explain_provenance_by_ids``
     primitive or no row carries a resolvable id.
     """
-    from agent_utilities.knowledge_graph.core.epistemic_row import (
-        row_ids_from_plain_rows,
-    )
-    from agent_utilities.models.evidence_bundle import EvidenceBundle
-
-    fetch = getattr(getattr(engine, "graph", None), "explain_provenance_by_ids", None)
-    if fetch is None:
-        return EvidenceBundle.from_engine_wire({"rows": []})
-    plain_rows = (
-        [r for r in rows if isinstance(r, dict)] if isinstance(rows, list) else []
-    )
-    id_props = row_ids_from_plain_rows(plain_rows)
-    if not id_props:
-        return EvidenceBundle.from_engine_wire({"rows": []})
-    wire_rows = fetch([ip["id"] for ip in id_props]) or []
-    return EvidenceBundle.from_engine_wire({"rows": wire_rows})
+    raise not_served("knowledge_graph.core.epistemic_row", "EG-DURABLE-KERNEL-R609")
 
 
 def _resolve_symbol_id(engine, *, symbol: str, node_id: str) -> dict[str, Any] | None:
@@ -784,13 +758,7 @@ def _uql_fanout_evidence_request(
     if not callable(fetch):
         return None, []
 
-    from agent_utilities.knowledge_graph.core.epistemic_row import (
-        row_ids_from_plain_rows,
-    )
-
-    plain_rows = [row for row in rows if isinstance(row, dict)]
-    id_props = row_ids_from_plain_rows(plain_rows)
-    return fetch, [item["id"] for item in id_props]
+    raise not_served("knowledge_graph.core.epistemic_row", "EG-DURABLE-KERNEL-R609")
 
 
 def _uql_fanout_target_evidence(
@@ -1107,9 +1075,10 @@ def _run_graph_query_local(
     # graph (for example, one aggregate row repeated per graph). Summing generically is
     # unsafe (wrong for avg/min/max/distinct). Run the aggregation against the
     # canonical default graph only — control-plane/aggregate reads resolve there.
-    if union_read and is_aggregation_cypher(cypher):
-        return _run_graph_query_union_aggregate(
-            cypher, parsed_params, as_of, include_epistemic_flag, graph
+    if union_read:
+        # The engine owns aggregate-versus-row detection for a union read.
+        raise not_served(
+            "knowledge_graph.orchestration.engine_query", "EG-CONTRACT-R005"
         )
 
     if not fanout:
@@ -1130,32 +1099,6 @@ def _run_graph_query_local(
         errors,
         union_read,
     )
-
-
-def _run_graph_query_union_aggregate(
-    cypher: str,
-    parsed_params: dict[str, Any],
-    as_of: str,
-    include_epistemic_flag: bool,
-    graph: str,
-) -> str:
-    """CONCEPT:AU-KG.query.query-aggregation — an aggregation under the implicit content-graph
-    union runs against the canonical default graph only (see the caller for why).
-    """
-    engine = runtime._get_engine()
-    try:
-        if include_epistemic_flag:
-            results = engine.query_cypher(
-                cypher, parsed_params, as_of=as_of or None, include_epistemic=True
-            )
-        else:
-            results = engine.query_cypher(cypher, parsed_params, as_of=as_of or None)
-        return json.dumps(
-            {"rows": results, "connection": "default", "graph": graph},
-            default=str,
-        )
-    except Exception as e:
-        return public_error_json(e)
 
 
 def _run_graph_query_single(
@@ -1425,29 +1368,9 @@ _GRAPH_SEARCH_RESULTS_MODES = frozenset(
 
 def _graph_search_rerank(engine: Any, session: Any, *, query: str, top_k: int) -> Any:
     # Semantic-retrieval hybrid re-scoring of a candidate set.
-    from agent_utilities.knowledge_graph.retrieval.semantic_retrieval_engine import (  # noqa: E501
-        HybridSearchScorer,
+    raise not_served(
+        "knowledge_graph.retrieval.semantic_retrieval_engine", "EG-FEDERATED-QUERY-R652"
     )
-
-    base = engine.search_hybrid(query=query, top_k=top_k, session=session) or []
-    docs = [
-        {
-            "id": (r.get("node", r) or {}).get("id", ""),
-            "text": (r.get("node", r) or {}).get("description", ""),
-            "embedding": (r.get("node", r) or {}).get("embedding"),
-        }
-        for r in base
-    ]
-    qemb: list[float] = []
-    embed_model = getattr(
-        getattr(engine, "hybrid_retriever", None), "embed_model", None
-    )
-    if embed_model is not None:
-        try:
-            qemb = embed_model.get_text_embedding(query)
-        except Exception:  # noqa: BLE001
-            qemb = []
-    return HybridSearchScorer().score_documents(query, qemb, docs)
 
 
 def _graph_search_produce_results_extended(
@@ -1468,19 +1391,14 @@ def _graph_search_produce_results_extended(
         return engine.search_memories(query=query, top_k=top_k)
     if mode == "latent":
         # KG-2.3 — route through the latent topology hierarchy.
-        from agent_utilities.knowledge_graph.retrieval.latent_topology_rag import (  # noqa: E501
-            LatentTopologicalRAG,
+        raise not_served(
+            "knowledge_graph.retrieval.latent_topology_rag", "EG-FEDERATED-QUERY-R652"
         )
-
-        return LatentTopologicalRAG(engine).retrieve(query, top_k=top_k)
     if mode == "sira":
         # Single-shot SIRA: hybrid-retrieve, then sparsity-align the set.
-        from agent_utilities.knowledge_graph.retrieval.single_shot_sira import (
-            SingleShotSIRA,
+        raise not_served(
+            "knowledge_graph.retrieval.single_shot_sira", "EG-FEDERATED-QUERY-R652"
         )
-
-        base = engine.search_hybrid(query=query, top_k=top_k, session=session) or []
-        return SingleShotSIRA(engine).align_context(base)
     # Only "rerank" remains among `_GRAPH_SEARCH_RESULTS_MODES` at this point —
     # the caller has already dispatched hyde/deep/hybrid/concept/analogy above,
     # and every other results-producing mode just above.
@@ -1537,17 +1455,9 @@ def _graph_search_discover(engine: Any, query: str) -> str:
 
 def _graph_search_hard_negatives(engine: Any, query: str) -> str:
     # KG-2.3 — mine hard negatives via the engine's hybrid retriever.
-    from agent_utilities.knowledge_graph.retrieval.hard_negative_miner import (  # noqa: E501
-        HardNegativeMiner,
+    raise not_served(
+        "knowledge_graph.retrieval.hard_negative_miner", "EG-FEDERATED-QUERY-R008"
     )
-
-    retriever = getattr(engine, "hybrid_retriever", None)
-    if retriever is None:
-        return "Error: hybrid retriever unavailable for hard-negative mining."
-    negs = HardNegativeMiner(retriever).mine(query)
-    if not negs:
-        return f"No hard negatives mined for: '{query}'"
-    return "\n".join(f"- {n.doc_id}: {getattr(n, 'reason', '')}" for n in negs)
 
 
 def _graph_search_compiled(
@@ -1560,19 +1470,9 @@ def _graph_search_compiled(
     # the live permissioning gate before returning citations + a proof graph —
     # replacing the plain relevance-sorted concat the shared formatter performs
     # for every other mode.
-    from agent_utilities.knowledge_graph.retrieval.context_compiler import (  # noqa: E501
-        ContextCompiler,
+    raise not_served(
+        "knowledge_graph.retrieval.context_compiler", "EG-FEDERATED-QUERY-R650"
     )
-
-    from graph_os.api.contracts.session import GraphSession
-
-    session = GraphSession.from_ambient()
-    compiler = ContextCompiler(engine)
-    kwargs: dict[str, Any] = {"top_k": top_k, "as_of": as_of or None}
-    if token_budget:
-        kwargs["token_budget"] = token_budget
-    bundle = compiler.compile(query, session=session, **kwargs)
-    return bundle.as_text()
 
 
 def _graph_search_format_results(results: Any) -> str:
@@ -2197,17 +2097,11 @@ async def _catalog_sources() -> dict[str, Any]:
     ensures one malformed optional profile degrades only the ``sources`` leg.
     """
 
-    from agent_utilities.knowledge_graph.core.source_catalog import (
-        build_source_catalog,
+    raise not_served(
+        "knowledge_graph.core.source_catalog",
+        "GRAPHOS (served catalogue read projection)",
+        owner="graph-os",
     )
-
-    from graph_os.api.contracts.session import resolve_session
-
-    # ``graph_catalog`` verifies this at its public boundary; retain the same
-    # check here for direct in-process calls before touching the registry.
-    resolve_session(required_scope="kg:read")
-    registry = engine_routing.get_connection_registry()
-    return build_source_catalog(registry=registry)
 
 
 async def _build_graph_catalog() -> dict[str, Any]:
@@ -2277,23 +2171,12 @@ async def _graph_catalog_response(
     normalized_action = action if isinstance(action, str) else "list"
     normalized_action = normalized_action.strip().lower()
     if normalized_action == "preview_sync":
-        try:
-            from agent_utilities.knowledge_graph.core.source_catalog import (
-                normalize_source_sync_preview,
-            )
-
-            return json.dumps(
-                normalize_source_sync_preview(
-                    source=source,
-                    mode=mode,
-                    ids_json=ids_json,
-                    connection=connection,
-                    graph=graph,
-                ),
-                default=str,
-            )
-        except Exception as exc:  # noqa: BLE001 — deterministic client error
-            return public_error_json(exc, code="invalid_request")
+        exc = not_served(
+            "knowledge_graph.core.source_catalog",
+            "GRAPHOS (served catalogue read projection)",
+            owner="graph-os",
+        )
+        return public_error_json(exc, code="invalid_request")
     if normalized_action != "list":
         return public_error_json(
             ValueError("action must be 'list' or 'preview_sync'"),
@@ -2664,25 +2547,8 @@ def register_query_tools(mcp):
     def tabular_query(
         sql: str = Field(description="A non-empty read-only SQL statement."),
     ) -> EvidenceBundle:
-        from agent_utilities.knowledge_graph.core.tabular_query_service import (
-            TabularQueryRequest,
-        )
-
-        rejection = _reject_unsafe_table_sql(str(sql or ""))
-        if rejection is not None:
-            return EvidenceBundle.from_payload(
-                public_error_json(ValueError(rejection)), operation="tabular_query"
-            )
-        try:
-            payload = engine_routing.get_tabular_query_service().execute(
-                TabularQueryRequest(sql=sql)
-            )
-        except Exception as exc:  # noqa: BLE001 - public query error boundary
-            return EvidenceBundle.from_payload(
-                public_error_json(exc), operation="tabular_query"
-            )
-        return EvidenceBundle.from_payload(
-            payload.to_payload(), operation="tabular_query"
+        raise not_served(
+            "knowledge_graph.core.tabular_query_service", "EG-UNIFIED-DATA-PLANE-R612"
         )
 
     runtime.REGISTERED_TOOLS["tabular_query"] = tabular_query
@@ -2910,33 +2776,7 @@ def register_query_tools(mcp):
             default=False, description="Drop+recreate the table first (ingest/rows)."
         ),
     ) -> str:
-        from agent_utilities.knowledge_graph.core import table_ingest
-
-        try:
-            engine = runtime._get_engine()
-        except Exception as e:  # noqa: BLE001
-            return public_error_json(e, code="dependency_unavailable")
-
-        try:
-            if action == "ingest":
-                return _graph_table_ingest(
-                    engine, table_ingest, source, table, config_json, limit, replace
-                )
-            if action == "rows":
-                return _graph_table_rows(
-                    engine, table_ingest, table, rows_json, replace
-                )
-            if action == "create":
-                return _graph_table_create(engine, table_ingest, table, columns_json)
-            if action == "list":
-                return json.dumps({"tables": table_ingest.list_tables(engine)})
-            if action == "drop":
-                return _graph_table_drop(engine, table_ingest, table)
-            if action == "query":
-                return _graph_table_query(engine, sql)
-            return json.dumps({"error": f"unknown action {action!r}"})
-        except Exception as e:  # noqa: BLE001
-            return public_error_json(e)
+        raise not_served("knowledge_graph.core.table_ingest", "EG-INGEST-WORKER-R606")
 
     runtime.REGISTERED_TOOLS["graph_table"] = graph_table
 
@@ -3398,50 +3238,8 @@ def register_query_tools(mcp):
         ),
     ) -> str:
         """Shortcut-resistant search-task synthesis and realized-difficulty diagnosis."""
-        import json as _json
 
-        from agent_utilities.graph.training_signals import realized_difficulty
-
-        if action == "diagnose":
-            try:
-                trajs = _json.loads(trajectories) if trajectories else []
-            except Exception as e:  # noqa: BLE001
-                return public_error_text(e)
-            return _json.dumps(realized_difficulty(trajs))
-
-        if action != "synthesize":
-            return f"Error: unknown action '{action}' (expected 'synthesize' or 'diagnose')."
-        if not answer_id:
-            return "Error: action=synthesize requires answer_id."
-
-        from agent_utilities.knowledge_graph.search_synthesis import synthesize
-
-        class _Reader:
-            def __init__(self, eng: Any) -> None:
-                self._eng = eng
-
-            def query(self, cypher: str, params: Any = None) -> list[dict[str, Any]]:
-                query_cypher = getattr(self._eng, "query_cypher", None)
-                if not callable(query_cypher):
-                    raise RuntimeError("authoritative graph query service unavailable")
-                return query_cypher(cypher, params or {}) or []
-
-        engine = runtime._get_engine()
-        if not engine:
-            return "Error: IntelligenceGraphEngine not active."
-        try:
-            task = synthesize(
-                _Reader(engine),
-                answer_id,
-                hops=hops,
-                fanout=fanout,
-                min_trust=min_trust,
-                root_popularity=root_popularity,
-                max_per_source=max_per_source,
-            )
-        except Exception as e:  # noqa: BLE001
-            return public_error_text(e)
-        return _json.dumps(task.to_dict())
+        raise not_served("graph.training_signals", "EG-DECISION-ENGINE-R751")
 
     runtime.REGISTERED_TOOLS["graph_search_synthesis"] = graph_search_synthesis
 
@@ -3547,84 +3345,20 @@ def register_query_tools(mcp):
         summarize: bool,
         engine: Any,
     ) -> str:
-        from agent_utilities.knowledge_graph.ontology.document_processing import (
-            SectionTreeConfig,
-            build_section_tree,
-            section_nodes_and_edges,
-        )
-        from agent_utilities.knowledge_graph.retrieval.hierarchical_document_retriever import (
-            structure_view,
-        )
-
-        if not text and not document_id:
-            return json.dumps({"error": "build requires 'text' or 'document_id'"})
-        cfg = SectionTreeConfig(thin=thin, summarize=summarize)
-        roots = build_section_tree(text, config=cfg)
-        nodes, edges = section_nodes_and_edges(document_id or "doc:inline", roots)
-        persisted = False
-        if persist and document_id and engine is not None:
-            persisted = _persist_sections(engine, nodes, edges)
-        return json.dumps(
-            {
-                "action": "build",
-                "document_id": document_id,
-                "section_count": len(nodes),
-                "persisted": persisted,
-                "structure": structure_view(roots),
-            },
-            default=str,
+        raise not_served(
+            "knowledge_graph.ontology.document_processing", "EG-REPO-INGEST-R652"
         )
 
     def _graph_document_tree_structure(document_id: str, engine: Any) -> str:
-        from agent_utilities.knowledge_graph.retrieval.hierarchical_document_retriever import (
-            HierarchicalDocumentRetriever,
-            structure_view,
-        )
-
-        if not document_id:
-            return json.dumps({"error": "structure requires 'document_id'"})
-        if engine is None:
-            return json.dumps({"error": "IntelligenceGraphEngine not active"})
-        roots = HierarchicalDocumentRetriever(engine).load_tree(document_id)
-        if not roots:
-            return json.dumps(
-                {"error": f"no section tree for document {document_id!r}"}
-            )
-        return json.dumps(
-            {
-                "action": "structure",
-                "document_id": document_id,
-                "structure": structure_view(roots),
-            },
-            default=str,
+        raise not_served(
+            "knowledge_graph.retrieval.hierarchical_document_retriever",
+            "EG-FEDERATED-QUERY-R653",
         )
 
     def _graph_document_tree_content(document_id: str, ranges: str, engine: Any) -> str:
-        from agent_utilities.knowledge_graph.retrieval.hierarchical_document_retriever import (
-            HierarchicalDocumentRetriever,
-            content_for_ranges,
-        )
-
-        if not document_id:
-            return json.dumps({"error": "content requires 'document_id'"})
-        if engine is None:
-            return json.dumps({"error": "IntelligenceGraphEngine not active"})
-        try:
-            parsed = _parse_ranges(ranges)
-        except ValueError as e:
-            return public_error_json(e)
-        roots = HierarchicalDocumentRetriever(engine).load_tree(document_id)
-        if not roots:
-            return json.dumps(
-                {"error": f"no section tree for document {document_id!r}"}
-            )
-        return json.dumps(
-            {
-                "action": "content",
-                "document_id": document_id,
-                "sections": content_for_ranges(roots, parsed),
-            },
-            default=str,
+        raise not_served(
+            "knowledge_graph.retrieval.hierarchical_document_retriever",
+            "EG-FEDERATED-QUERY-R653",
         )
 
     def _graph_document_tree_retrieve(
@@ -3635,72 +3369,15 @@ def register_query_tools(mcp):
         use_llm: bool,
         engine: Any,
     ) -> str:
-        from agent_utilities.knowledge_graph.ontology.document_processing import (
-            SectionTreeConfig,
-            build_section_tree,
-        )
-        from agent_utilities.knowledge_graph.retrieval.hierarchical_document_retriever import (
-            HierarchicalDocumentRetriever,
-        )
-
-        if not query:
-            return json.dumps({"error": "retrieve requires 'query'"})
-        retriever = HierarchicalDocumentRetriever(engine)
-        tree = None
-        if text:
-            tree = build_section_tree(
-                text, config=SectionTreeConfig(thin=True, summarize=True)
-            )
-        elif not document_id:
-            return json.dumps({"error": "retrieve requires 'text' or 'document_id'"})
-        matches = retriever.retrieve(
-            query,
-            document_id=document_id,
-            tree=tree,
-            top_k=top_k,
-            use_llm=use_llm,
-        )
-        return json.dumps(
-            {
-                "action": "retrieve",
-                "query": query,
-                "results": [m.as_dict() for m in matches],
-            },
-            default=str,
+        raise not_served(
+            "knowledge_graph.ontology.document_processing", "EG-REPO-INGEST-R652"
         )
 
     def _graph_document_tree_spine_resolve(
         engine: Any, action: str, text: str, artifact_id: str, document_id: str
     ) -> tuple[Sequence[Any], str, str | None]:
-        from agent_utilities.knowledge_graph.ingestion.evidence_spine import (
-            artifact_id_for,
-            fragment_markdown,
-            load_fragments,
-        )
-
-        if text:
-            # Inline text is fragmented deterministically — the same call the
-            # ingest path makes, so an inline preview and a stored spine
-            # agree on every address.
-            resolved_artifact = artifact_id or artifact_id_for(
-                "inline", "", document_id or "inline-document"
-            )
-            fragments = fragment_markdown(text, artifact_id=resolved_artifact)
-            return fragments, resolved_artifact, None
-        if artifact_id or document_id:
-            fragments = load_fragments(
-                engine, artifact_id=artifact_id, document_id=document_id
-            )
-            resolved_artifact = artifact_id or (
-                fragments[0].artifact_id if fragments else ""
-            )
-            return fragments, resolved_artifact, None
-        return (
-            [],
-            "",
-            json.dumps(
-                {"error": f"{action} requires 'text', 'artifact_id' or 'document_id'"}
-            ),
+        raise not_served(
+            "knowledge_graph.ingestion.evidence_spine", "EG-REPO-INGEST-R002"
         )
 
     def _graph_document_tree_spine_cite(
@@ -3709,23 +3386,8 @@ def register_query_tools(mcp):
         fragment_id: str,
         content_hash: str,
     ) -> str:
-        from agent_utilities.knowledge_graph.ingestion.evidence_spine import (
-            citation_status,
-        )
-
-        if not (fragment_id or content_hash):
-            return json.dumps(
-                {"error": "cite requires 'fragment_id' and/or 'content_hash'"}
-            )
-        return json.dumps(
-            {
-                "action": "cite",
-                "artifact_id": resolved_artifact,
-                **citation_status(
-                    fragments, fragment_id=fragment_id, content_hash=content_hash
-                ),
-            },
-            default=str,
+        raise not_served(
+            "knowledge_graph.ingestion.evidence_spine", "EG-REPO-INGEST-R002"
         )
 
     def _graph_document_tree_spine_fragments(

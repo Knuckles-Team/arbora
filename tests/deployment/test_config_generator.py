@@ -279,23 +279,6 @@ def test_config_reference_includes_memento_privacy_policy():
     assert "MEMENTO_RAW_ENCRYPTION_KEY_REF" in flat
 
 
-def test_config_reference_has_no_placement_control_switch():
-    # agent-utilities 3.0 removed the PLACEMENT_CONTROL_LOOP_ENABLED setting:
-    # placement control is opt-in per call (``placement_control_loop`` takes a
-    # required ``enabled`` keyword), so no config switch can turn it on.
-    import inspect
-
-    from agent_utilities.knowledge_graph.research.placement_mining import (
-        placement_control_loop,
-    )
-
-    flat = {f["env"]: f for s in config_reference() for f in s["fields"]}
-    assert "PLACEMENT_CONTROL_LOOP_ENABLED" not in flat
-    enabled = inspect.signature(placement_control_loop).parameters["enabled"]
-    assert enabled.kind is inspect.Parameter.KEYWORD_ONLY
-    assert enabled.default is inspect.Parameter.empty
-
-
 def test_config_reference_exposes_dispatch_lease_recovery_controls():
     flat = {f["env"]: f for s in config_reference() for f in s["fields"]}
     assert flat["AGENT_DISPATCH_CLAIM_TTL_S"]["default"] == 120.0

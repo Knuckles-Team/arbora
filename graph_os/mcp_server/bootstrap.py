@@ -11,6 +11,8 @@ from collections.abc import AsyncIterator
 from dataclasses import replace
 from typing import Any, cast
 
+from graph_os.api.errors import not_served
+
 logger = logging.getLogger(__name__)
 
 # Bound by ``runtime`` after this module's definitions load. Keeping the host
@@ -34,29 +36,7 @@ def _get_engine():
     noncritical worker startup remains asynchronous.
     (CONCEPT:EG-KG.storage.nonblocking-checkpoint)
     """
-    from agent_utilities.core.paths import ensure_dirs
-    from agent_utilities.knowledge_graph.backends import create_backend
-    from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
-
-    engine = IntelligenceGraphEngine.get_active()
-    if engine is not None:
-        return engine
-
-    with _ENGINE_LOCK:
-        engine = IntelligenceGraphEngine.get_active()
-        if engine is not None:
-            return engine
-        # First-run: ensure XDG dirs exist and create backend
-        ensure_dirs()
-
-        def _factory():
-            backend = create_backend()
-            return IntelligenceGraphEngine(
-                backend=backend,
-                defer_background_start=True,
-            )
-
-        return IntelligenceGraphEngine.get_or_create(factory=_factory)
+    raise not_served("knowledge_graph.backends", "EG-PLACEMENT-R611")
 
 
 def _set_readiness_authority(session: Any) -> object:
@@ -709,83 +689,7 @@ def _start_engine_bootstrap(session: Any) -> None:
     current EG ConnectorPack and GraphSchema read contracts. Startup therefore
     never discovers or ingests skills, prompts, sources, or fleet declarations.
     """
-    from agent_utilities.knowledge_graph.core.engine_tasks import (
-        _authorized_background_thread,
-        _require_verified_background_session,
-        daemon_role,
-    )
-    from agent_utilities.security.brain_context import use_actor
-
-    from graph_os.api.contracts.session import use_session
-
-    verified_session = _require_verified_background_session(session)
-    with (
-        use_actor(verified_session.actor),
-        use_session(verified_session),
-    ):
-        engine = _get_engine()
-        # A partially materialized graph cannot safely accept worker claims.
-        # Let this failure stop startup so the orchestrator retries rather than
-        # advertising a silently incomplete graph.
-        _wait_for_engine_materialization(engine)
-    # An explicit client role is a hard serving-plane boundary. In particular,
-    # stale KG_LOOP/maintenance settings must not turn a network-facing GraphOS
-    # process into an autonomous scheduler or queue worker. The requested role
-    # captured on the engine wins over any later process-environment mutation.
-    client_role = _engine_bootstrap_is_client(engine, daemon_role())
-    if not client_role:
-        # BUG-295 (NE-009/NE-020): the daemon role is the one that runs the
-        # unified scheduler (start_daemons() below), whose every tick reads
-        # and writes the isolated `__control__` graph under THIS process's
-        # own verified identity. Admit that identity into the narrow
-        # control:system RBAC role idempotently, once per process, before
-        # the scheduler can fire a single tick against it. Auto-at-boot by
-        # design (see system_rbac_admission's module docstring, "Auto-
-        # admission at boot"); degrades honestly — never crashes the
-        # process and never claims success it did not confirm. Until an
-        # operator seeds the missing NE-021 provisioner credential (or the
-        # engine is unreachable), this logs the exact actionable cause once
-        # per 30s backoff window and the scheduler keeps failing exactly as
-        # visibly as it does today, but now with a diagnosis attached.
-        try:
-            from agent_utilities.security.system_rbac_admission import (
-                ensure_system_principal_access,
-            )
-
-            ensure_system_principal_access(verified_session.actor.actor_id)
-        except Exception as exc:  # noqa: BLE001 - must never block/crash boot
-            logger.error(
-                "system-principal control-graph admission not confirmed; "
-                "the scheduler will keep failing until this is resolved "
-                "(%s: %s)",
-                type(exc).__name__,
-                exc,
-            )
-    start_daemons = getattr(engine, "start_background_daemons", None)
-    if not client_role and callable(start_daemons):
-        start_daemons()
-
-    def _bootstrap_engine() -> None:
-        try:
-            if (
-                not client_role
-                and engine
-                and engine.backend
-                and not getattr(engine.backend, "read_only", False)
-            ):
-                engine.start_task_workers()
-        except Exception as exc:
-            logger.error("KG engine background bootstrap failed: %s", exc)
-
-    try:
-        _authorized_background_thread(
-            verified_session,
-            _bootstrap_engine,
-            name="KGEngineBootstrap",
-        ).start()
-    except Exception as exc:
-        # Worker startup remains retryable operational work.
-        logger.error("GraphOS noncritical bootstrap launch failed: %s", exc)
+    raise not_served("knowledge_graph.core.engine_tasks", "EG-INGEST-WORKER-R604")
 
 
 def _process_session() -> Any:

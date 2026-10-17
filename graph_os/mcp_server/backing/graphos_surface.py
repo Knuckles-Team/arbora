@@ -76,7 +76,7 @@ ROUTING_GROUPS: tuple[RoutingGroup, ...] = (
         "ingest",
         "Ingestion, source sync and connectors, ETL, feeds, pipelines, media, data prep.",
         "graph_ingest source_sync source_connector source_drain graph_etl "
-        "graph_feeds graph_pipeline document_process graph_media_sidecar "
+        "graph_feeds graph_pipeline document_process "
         "ingest_sessions graph_data_prep",
     ),
     _group(
@@ -256,7 +256,6 @@ def graphos_registrars() -> list[Any]:
         au_tools.register_epistemic_tools,
         au_tools.register_incident_tools,
         au_tools.register_job_tools,
-        au_tools.register_media_sidecar_tools,
         au_tools.register_compliance_tools,
         au_tools.register_workflow_tools,
         au_tools.register_argument_tools,

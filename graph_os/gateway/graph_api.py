@@ -24,6 +24,8 @@ from typing import Any
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from graph_os.api.errors import not_served
+
 logger = logging.getLogger(__name__)
 
 # Cached OWL/RDF bridge for the local SPARQL endpoint (built lazily from the
@@ -37,28 +39,9 @@ def _get_sparql_bridge() -> Any:
     global _SPARQL_BRIDGE
     if _SPARQL_BRIDGE is not None:
         return _SPARQL_BRIDGE
-    try:
-        from agent_utilities.knowledge_graph.backends.owl import create_owl_backend
-        from agent_utilities.knowledge_graph.core.owl_bridge import OWLBridge
-
-        from graph_os.gateway.ports import gateway_application
-
-        engine = gateway_application().engine()
-        try:
-            owl_backend = create_owl_backend()  # local owlready2 if installed
-        except Exception:
-            # owlready2 absent → still serve SPARQL via rdflib materialization of
-            # the live LPG (query_sparql falls back when self.owl has no query_sparql).
-            owl_backend = None
-        _SPARQL_BRIDGE = OWLBridge(
-            graph=engine.graph_compute,
-            owl_backend=owl_backend,
-            backend=getattr(engine, "backend", None),
-        )
-    except Exception as exc:  # pragma: no cover - SPARQL is best-effort
-        logger.warning("Local SPARQL bridge unavailable (%s)", exc)
-        return None
-    return _SPARQL_BRIDGE
+    exc = not_served("knowledge_graph.backends.owl", "EG-PLACEMENT-R611")
+    logger.warning("Local SPARQL bridge unavailable (%s)", exc)
+    return None
 
 
 def _mount_sparql_route(app, prefix: str = "/api") -> None:
@@ -67,10 +50,9 @@ def _mount_sparql_route(app, prefix: str = "/api") -> None:
     async def sparql_endpoint(request: Request) -> JSONResponse:
         from graph_os.api.contracts.session import (
             resolve_session,
-            use_session,
         )
 
-        session = resolve_session(required_scope="kg:read")
+        resolve_session(required_scope="kg:read")
         query = await _sparql_query(request)
         if not query:
             return JSONResponse(
@@ -88,39 +70,10 @@ def _mount_sparql_route(app, prefix: str = "/api") -> None:
                 status_code=503,
             )
 
-        try:
-            # ``bridge.query_sparql`` targets whatever named graph the AMBIENT
-            # session is pinned to (OWLBridge -> GraphComputeEngine.sparql ->
-            # the session-routed engine client) -- retarget per graph the
-            # actor may read (GOC-61: org graph(s) then commons, same
-            # ``accessible_graphs`` ordering ``tenant_sharing.read_union``
-            # uses for Cypher) so a SPARQL query issued under a tenant-pinned
-            # session still sees the commons graph. ``read_union`` itself is
-            # NOT reused here: it additionally applies the Cypher-shaped
-            # ``filter_commons_catalog`` node-type restriction to commons
-            # rows, which would drop every SPARQL binding (a binding carries
-            # no Cypher ``node_type``) -- see its docstring.
-            from agent_utilities.knowledge_graph.core.tenant_sharing import (
-                accessible_graphs,
-            )
-
-            bindings = _query_accessible_graphs(
-                bridge, query, session, accessible_graphs, use_session
-            )
-            # W3C SPARQL-JSON-ish envelope (vars derived from the first binding).
-            varnames = list(bindings[0].keys()) if bindings else []
-            return JSONResponse(
-                {
-                    "status": "success",
-                    "head": {"vars": varnames},
-                    "results": {"bindings": bindings},
-                }
-            )
-        except Exception:
-            return JSONResponse(
-                {"status": "error", "message": "SPARQL query failed"},
-                status_code=500,
-            )
+        return JSONResponse(
+            {"status": "error", "message": "SPARQL query failed"},
+            status_code=500,
+        )
 
     path = f"{prefix}/sparql"
     # Starlette-style add_route (works on FastAPI too): raw Request→Response with

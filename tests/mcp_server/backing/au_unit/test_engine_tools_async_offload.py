@@ -52,10 +52,10 @@ import pytest
 # `engine_tools` module-import time.
 pytest.importorskip("epistemic_graph.client")
 
-from agent_utilities.knowledge_graph.core.session import GraphSession, use_session
 from agent_utilities.security.actor_identity import ActorType
 from agent_utilities.security.brain_context import ActorContext, use_actor
 
+from graph_os.api.contracts.session import GraphSession, use_session
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.tools import engine_tools
 

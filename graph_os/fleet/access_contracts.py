@@ -16,6 +16,8 @@ import logging
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Any
 
+from graph_os.api.errors import not_served
+
 logger = logging.getLogger(__name__)
 
 #: SDK access kind to AU virtual-graph source kind.
@@ -37,9 +39,7 @@ def fleet_virtual_catalog() -> Any:
     """The process virtual catalog that fleet onboarding registers into."""
 
     if not _CATALOG:
-        from agent_utilities.knowledge_graph.virtual_graph import VirtualCatalog
-
-        _CATALOG.append(VirtualCatalog())
+        raise not_served("knowledge_graph.virtual_graph", "EG-UNIFIED-DATA-PLANE-R037")
     return _CATALOG[0]
 
 
@@ -121,14 +121,7 @@ def _by_source(contracts: Sequence[Any]) -> dict[str, list[Any]]:
 
 
 def _entity(contract: Any) -> Any:
-    from agent_utilities.knowledge_graph.virtual_graph import DiscoveredEntity
-
-    return DiscoveredEntity(
-        name=contract.entity,
-        key=contract.key_field,
-        fields=tuple(sorted({f for _, f in contract.predicates})),
-        operation=contract.operation,
-    )
+    raise not_served("knowledge_graph.virtual_graph", "EG-UNIFIED-DATA-PLANE-R037")
 
 
 def _unwired_call(operation: str, arguments: Mapping[str, Any]) -> Any:
@@ -138,39 +131,11 @@ def _unwired_call(operation: str, arguments: Mapping[str, Any]) -> Any:
 def _register_source(
     catalog: Any, connector: str, source_id: str, contracts: Sequence[Any]
 ) -> None:
-    from agent_utilities.knowledge_graph.virtual_graph import (
-        MetadataContract,
-        OperationAdapter,
-        SourceConnection,
-    )
-
-    connection = SourceConnection(
-        source_id=source_id,
-        kind=SOURCE_KIND_BY_ACCESS[contracts[0].access_kind],
-        endpoint_ref=f"fleet://{connector}",
-    )
-    entities = {c.entity: _entity(c) for c in contracts}
-    metadata = MetadataContract(
-        source_id=source_id,
-        schema_version="1",
-        entities=tuple(entities.values()),
-    )
-    adapter = OperationAdapter(connection, metadata, _unwired_call)
-    catalog.register(connection, metadata, adapter)
+    raise not_served("knowledge_graph.virtual_graph", "EG-UNIFIED-DATA-PLANE-R037")
 
 
 def _add_mappings(catalog: Any, contracts: Sequence[Any]) -> int:
-    from agent_utilities.knowledge_graph.virtual_graph import VirtualMapping
-
-    known = {m.mapping_id for m in catalog.mappings}
-    added = 0
-    for contract in contracts:
-        mapping = VirtualMapping(**contract.virtual_mapping_fields())
-        if mapping.mapping_id in known:
-            continue
-        catalog.add_mapping(mapping)
-        added += 1
-    return added
+    raise not_served("knowledge_graph.virtual_graph", "EG-UNIFIED-DATA-PLANE-R037")
 
 
 def register_access_contracts(pack: Any, *, connector: str, catalog: Any = None) -> int:

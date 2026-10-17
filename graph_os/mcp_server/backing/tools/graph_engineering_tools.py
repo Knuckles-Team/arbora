@@ -19,12 +19,11 @@ bespoke endpoint needed) rather than inventing a new tool convention.
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
-from agent_utilities.security.error_surface import public_error_json
 from pydantic import Field
 
+from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 
 
@@ -125,72 +124,8 @@ def register_graph_engineering_tools(mcp: Any) -> None:
         ),
     ) -> str:
         """Thin action-router over knowledge_graph.retrieval.graph_engineering."""
-        from agent_utilities.knowledge_graph.retrieval.graph_engineering import (
-            build_community_reports,
-            global_search,
-            local_search,
-        )
-
-        action_norm = (action or "local_search").strip().lower()
-        engine = runtime._get_engine()
-        if engine is None:
-            return json.dumps(
-                {
-                    "surface": "graph_engineering",
-                    "action": action_norm,
-                    "error": "no active graph engine",
-                }
-            )
-
-        try:
-            if action_norm == "local_search":
-                kwargs: dict[str, Any] = (
-                    {"token_budget": token_budget} if token_budget > 0 else {}
-                )
-                result = local_search(
-                    engine,
-                    query,
-                    node_id=node_id,
-                    depth=depth,
-                    top_k=top_k,
-                    synthesize_answer=synthesize_answer,
-                    **kwargs,
-                )
-            elif action_norm == "global_search":
-                kwargs = {"token_budget": token_budget} if token_budget > 0 else {}
-                result = global_search(
-                    engine,
-                    query,
-                    level=level,
-                    max_communities=max_communities,
-                    **kwargs,
-                )
-            elif action_norm == "build_community_reports":
-                result = build_community_reports(
-                    engine,
-                    resolution=resolution,
-                    min_size=min_size,
-                    max_communities=max_communities,
-                    embed=embed,
-                )
-            else:
-                return json.dumps(
-                    {
-                        "surface": "graph_engineering",
-                        "action": action_norm,
-                        "error": f"unknown action {action_norm!r}",
-                    }
-                )
-        except (ValueError, TypeError) as exc:
-            return public_error_json(
-                exc,
-                code="invalid_request",
-                context={"surface": "graph_engineering", "action": action_norm},
-            )
-
-        return json.dumps(
-            {"surface": "graph_engineering", "action": action_norm, "result": result},
-            default=str,
+        raise not_served(
+            "knowledge_graph.retrieval.graph_engineering", "EG-FEDERATED-QUERY-R653"
         )
 
     runtime.REGISTERED_TOOLS["graph_engineering"] = graph_engineering

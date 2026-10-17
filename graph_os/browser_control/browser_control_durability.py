@@ -7,11 +7,6 @@ import secrets
 from dataclasses import dataclass
 from typing import Any, cast
 
-from agent_utilities.knowledge_graph.core.work_durability import (
-    commit_result,
-    get_work_item,
-    submit_work_item_atomic,
-)
 from agent_utilities.security.persistence_privacy import persistence_reference
 
 from graph_os.browser_control.browser_control_binding import (
@@ -20,6 +15,11 @@ from graph_os.browser_control.browser_control_binding import (
     binding_properties,
 )
 from graph_os.browser_control.browser_control_common import canonical_internal_json
+from graph_os.work_items import (
+    commit_result,
+    get_work_item,
+    submit_work_item_atomic,
+)
 
 
 @dataclass(frozen=True, slots=True)

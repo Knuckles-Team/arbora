@@ -16,25 +16,44 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 from collections.abc import Awaitable, Callable, Iterator, Mapping
 from typing import Any, Literal, TypeVar
 from urllib.parse import urlsplit, urlunsplit
 
-from agent_utilities.knowledge_graph.core.fleet_catalog_tables import (
-    DISCOVERY_AUTHORITY_OAUTH_GRANT,
-    DISCOVERY_AUTHORITY_TENANT_LOCAL,
-)
-from agent_utilities.knowledge_graph.core.table_ingest import (
-    _safe_ident,
-    _sql_literal,
-)
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.routing import Route
 
+from graph_os.api.errors import not_served
+from graph_os.fleet.discovery_authority import (
+    DISCOVERY_AUTHORITY_OAUTH_GRANT,
+    DISCOVERY_AUTHORITY_TENANT_LOCAL,
+)
+
 logger = logging.getLogger(__name__)
+
+
+_IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,62}$")
+_MAX_LITERAL_BYTES = 1024 * 1024
+
+
+def _safe_ident(name: str) -> str:
+    """Admit only a plain SQL identifier for the fixed catalog tables."""
+    if not isinstance(name, str) or not _IDENT_RE.fullmatch(name):
+        raise ValueError("invalid SQL identifier")
+    return name
+
+
+def _sql_literal(value: str) -> str:
+    """Render a text value as a single-quote-escaped SQL literal."""
+    rendered = str(value)
+    if "\x00" in rendered or len(rendered.encode("utf-8")) > _MAX_LITERAL_BYTES:
+        raise ValueError("SQL literal exceeds the supported limit")
+    return "'" + rendered.replace("'", "''") + "'"
+
 
 _MAX_LIMIT = 100
 _DEFAULT_LIMIT = 50
@@ -437,23 +456,7 @@ async def _offload_catalog_call(
 def _resolve_current_discovery_grants(actor: Any) -> tuple[str, ...]:
     """Resolve current grant fingerprints from the process-owned broker set."""
 
-    from agent_utilities.knowledge_graph.core.discovery_authority import (
-        OAuthGrantBinding,
-    )
-
-    from graph_os.fleet.multiplexer import current_remote_oauth_grant_bindings
-
-    return tuple(
-        sorted(
-            {
-                binding.fingerprint
-                for binding in current_remote_oauth_grant_bindings(actor)
-                if isinstance(binding, OAuthGrantBinding)
-                and isinstance(binding.fingerprint, str)
-                and binding.fingerprint
-            }
-        )
-    )
+    raise not_served("knowledge_graph.core.discovery_authority", "EG-PLACEMENT-R611")
 
 
 def _require_catalog_authority(

@@ -37,6 +37,8 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from graph_os.api.errors import not_served
+
 logger = logging.getLogger(__name__)
 
 __all__ = ["build_agent_host_app", "create_agent_server"]
@@ -49,11 +51,7 @@ AgentExecutor = Callable[[Any, dict, str], dict]
 
 def _default_executor(graph: Any, graph_config: dict, query: str) -> dict:
     """Run one query through agent-utilities' public execution port."""
-    import asyncio
-
-    from agent_utilities.graph import execute_graph
-
-    return asyncio.run(execute_graph(graph, graph_config, query))
+    raise not_served("graph", "AU-harness (deleted from AU)", owner="agent-utilities")
 
 
 def _extract_text(message: dict[str, Any]) -> str:

@@ -53,11 +53,12 @@ import hashlib
 import json
 import logging
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Any
 
 from pydantic import Field
 
+from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.context_helpers import run_coro as _run_coro
 from graph_os.mcp_server.backing.engine_surface_types import (
@@ -217,9 +218,7 @@ def _kv_backend() -> Any:
     Isolated behind this indirection so unit tests can inject a fake backend
     (CONCEPT:AU-KG.coordination.engine-message-broker).
     """
-    from agent_utilities.kvcache import EpistemicGraphKVBackend
-
-    return EpistemicGraphKVBackend.from_env()
+    raise not_served("kvcache", "EG-DURABLE-KERNEL-R800")
 
 
 class _EngineComputeAdapter:
@@ -267,11 +266,7 @@ def _checkpoint_error_code(exc: Exception) -> str:
     its own (still generic) ``permission_denied`` code, everything else falls to
     the default ``operation_failed``.
     """
-    from agent_utilities.kvcache import CrossTenantCheckpointError
-
-    if isinstance(exc, CrossTenantCheckpointError):
-        return "permission_denied"
-    return "operation_failed"
+    raise not_served("kvcache", "EG-DURABLE-KERNEL-R800")
 
 
 def _checkpoint_store(graph: str) -> Any:
@@ -281,9 +276,7 @@ def _checkpoint_store(graph: str) -> Any:
     Isolated behind this indirection so unit tests can inject a fake compute
     object, matching every other resolver in this module.
     """
-    from agent_utilities.kvcache.checkpoint import KVCheckpointStore
-
-    return KVCheckpointStore(_EngineComputeAdapter(_client(graph), graph))
+    raise not_served("kvcache.checkpoint", "EG-DURABLE-KERNEL-R800")
 
 
 #: Process-lifetime RAM tier shared by every ``graph_kv_checkpoint`` call
@@ -302,33 +295,7 @@ def _checkpoint_manager(graph: str) -> Any:
     degrade for a checkpoint layer whose default tier is RAM anyway.
     """
     global _RAM_CHECKPOINT_STORE
-    from agent_utilities.kvcache.tiering import (
-        RAMCheckpointStore,
-        TieredCheckpointManager,
-    )
-
-    if _RAM_CHECKPOINT_STORE is None:
-        _RAM_CHECKPOINT_STORE = RAMCheckpointStore()
-    try:
-        disk_store = _checkpoint_store(graph)
-    except Exception as exc:  # noqa: BLE001 — engine down degrades to RAM-only
-        logger.warning(
-            "[CONCEPT:AU-KG.memory.checkpoint-worthiness-scoring] durable checkpoint "
-            "tier unavailable (%s) — the manager will serve RAM only and refuse "
-            "every promotion",
-            type(exc).__name__,
-        )
-        disk_store = None
-    from agent_utilities.core._env import setting
-
-    return TieredCheckpointManager(
-        ram_store=_RAM_CHECKPOINT_STORE,
-        disk_store=disk_store,
-        # Where this deployment's durable store physically writes. A fact about
-        # topology, not a policy judgement, and consulted only when a contributing
-        # source actually restricts residency — unknown then denies.
-        durable_region=str(setting("DATA_RESIDENCY_REGION", "") or "").strip(),
-    )
+    raise not_served("kvcache.tiering", "EG-DURABLE-KERNEL-R800")
 
 
 def _bundle_object(raw: str) -> dict[str, Any]:
@@ -384,26 +351,7 @@ def _declared_source_entries(sources_json: str) -> tuple[list[Any], list[str]]:
     A bare ref string is left for the :class:`SourceLabelResolver`; a labelled
     object is taken as given. Anything else is a caller error.
     """
-    from agent_utilities.kvcache.eligibility import ContributingSource
-
-    labelled: list[Any] = []
-    refs: list[str] = []
-    raw = (sources_json or "").strip()
-    if not raw or raw in {"[]", "{}"}:
-        return labelled, refs
-    declared = json.loads(raw)
-    if not isinstance(declared, list):
-        raise ValueError("sources JSON must be a list")
-    for entry in declared:
-        if isinstance(entry, str):
-            refs.append(entry)
-        elif isinstance(entry, dict):
-            labelled.append(ContributingSource(**entry))
-        else:
-            raise ValueError(
-                "each source must be a ref string or a labelled source object"
-            )
-    return labelled, refs
+    raise not_served("kvcache.eligibility", "EG-DURABLE-KERNEL-R800")
 
 
 def _citation_refs(citation: Any) -> list[str]:
@@ -452,19 +400,7 @@ def _contributing_sources(
     (and therefore denies, naming itself). This function never returns fewer entries
     than it was given refs.
     """
-    from agent_utilities.kvcache.eligibility import get_source_label_resolver
-
-    labelled, refs = _declared_source_entries(sources_json)
-    refs = [*refs, *_bundle_citation_refs(context_bundle_json)]
-    # De-duplicate refs while preserving order; a source contributing twice is still
-    # one source, and duplicating it would only duplicate its labels.
-    unique_refs = tuple(dict.fromkeys(r for r in refs if r.strip()))
-    resolved = (
-        get_source_label_resolver().resolve(unique_refs, tenant=tenant)
-        if unique_refs
-        else ()
-    )
-    return tuple(labelled) + tuple(resolved)
+    raise not_served("kvcache.eligibility", "EG-DURABLE-KERNEL-R800")
 
 
 def _checkpoint_observation(bundles: dict[str, str]) -> Any:
@@ -476,32 +412,7 @@ def _checkpoint_observation(bundles: dict[str, str]) -> Any:
     ``observation_json`` fields always win over anything derived from a bundle —
     the caller's direct measurement is more authoritative than an inference.
     """
-    from agent_utilities.kvcache.worthiness import CheckpointObservation
-
-    observation_json = bundles["observation_json"]
-    payload = json.loads(observation_json) if observation_json else {}
-    if not isinstance(payload, dict):
-        raise ValueError("observation_json must be a JSON object")
-    derived: dict[str, Any] = {}
-    evidence_bundle_json = bundles["evidence_bundle_json"]
-    if evidence_bundle_json.strip() not in {"", "{}"}:
-        derived.update(
-            _measured_fields(
-                CheckpointObservation.from_evidence_bundle(
-                    _bundle_object(evidence_bundle_json)
-                )
-            )
-        )
-    context_bundle_json = bundles["context_bundle_json"]
-    if context_bundle_json.strip() not in {"", "{}"}:
-        derived.update(
-            _measured_fields(
-                CheckpointObservation.from_context_bundle(
-                    _bundle_object(context_bundle_json)
-                )
-            )
-        )
-    return CheckpointObservation(**{**derived, **payload})
+    raise not_served("kvcache.worthiness", "EG-DURABLE-KERNEL-R800")
 
 
 def _kv_ram_stats_response(action: str, manager: Any) -> str:
@@ -552,26 +463,7 @@ def _kv_explain_response(
     action: str, manager: Any, checkpoint_id: str, requesting_tenant: str
 ) -> str:
     """``action='explain'`` — why this checkpoint exists and why it is where it is."""
-    from agent_utilities.kvcache.checkpoint import KVCheckpointError
-
-    try:
-        return json.dumps(
-            {
-                "surface": "kv_checkpoint",
-                "action": action,
-                "result": manager.explain(
-                    checkpoint_id,
-                    requesting_tenant=_session_bound_tenant(requesting_tenant),
-                ).model_dump(mode="json"),
-            },
-            default=_json_default,
-        )
-    except ValueError as exc:
-        return _surface_error(
-            exc, surface="kv_checkpoint", action=action, code="invalid_request"
-        )
-    except KVCheckpointError as exc:
-        return _checkpoint_failure(exc, action)
+    raise not_served("kvcache.checkpoint", "EG-DURABLE-KERNEL-R800")
 
 
 def _kv_promote_response(
@@ -582,21 +474,7 @@ def _kv_promote_response(
     trigger: str,
 ) -> str:
     """``action='promote'`` — the gated RAM→disk promotion."""
-    from agent_utilities.kvcache.checkpoint import KVCheckpointError
-
-    try:
-        outcome = manager.promote(
-            checkpoint_id,
-            requesting_tenant=_session_bound_tenant(requesting_tenant),
-            trigger=trigger,  # type: ignore[arg-type]
-        )
-    except ValueError as exc:
-        return _surface_error(
-            exc, surface="kv_checkpoint", action=action, code="invalid_request"
-        )
-    except KVCheckpointError as exc:
-        return _checkpoint_failure(exc, action)
-    return _checkpoint_outcome(action, outcome)
+    raise not_served("kvcache.checkpoint", "EG-DURABLE-KERNEL-R800")
 
 
 def _kv_checkpoint_now(
@@ -607,49 +485,7 @@ def _kv_checkpoint_now(
     Durable persistence always passes the authority-derived eligibility gate; the
     tenant it is authorized under comes from the verified session, never the payload.
     """
-    from agent_utilities.kvcache.checkpoint import KVCheckpointError, KVCheckpointKey
-
-    try:
-        data = base64.b64decode(req["data_b64"]) if req["data_b64"] else b""
-        bound_tenant = _session_bound_tenant(req["tenant"])
-        key = KVCheckpointKey(
-            model_identity=req["model_identity"],
-            quantization=req["quantization"],
-            serving_engine=req["serving_engine"],
-            engine_version=req["engine_version"],
-            prefix_digest=req["prefix_digest"],
-            tenant=bound_tenant,
-            policy_version=req["policy_version"],
-        )
-        sources = _contributing_sources(
-            req["sources_json"],
-            bundles["context_bundle_json"],
-            tenant=bound_tenant,
-        )
-        supplied = (
-            bundles["observation_json"].strip() not in {"", "{}"}
-            or bundles["evidence_bundle_json"].strip() not in {"", "{}"}
-            or bundles["context_bundle_json"].strip() not in {"", "{}"}
-        )
-        observation = _checkpoint_observation(bundles) if supplied else None
-    except Exception as exc:  # noqa: BLE001 — bad payload/key/observation
-        return _surface_error(
-            exc, surface="kv_checkpoint", action=action, code="invalid_request"
-        )
-    try:
-        outcome = manager.checkpoint_now(
-            data,
-            key=key,
-            run_id=req["run_id"],
-            point=req["point"],
-            trigger=req["trigger"],
-            persist=req["persist"],
-            observation=observation,
-            sources=sources,
-        )
-    except KVCheckpointError as exc:
-        return _checkpoint_failure(exc, action)
-    return _checkpoint_outcome(action, outcome, advisory=True)
+    raise not_served("kvcache.checkpoint", "EG-DURABLE-KERNEL-R800")
 
 
 def _kv_checkpoint_intelligence(
@@ -982,24 +818,8 @@ def _require_process_perspective(params: dict[str, Any]) -> Any:
     consumes; raises ``ValueError`` (caught by the caller's existing
     invalid-request handling) when any is missing.
     """
-    from agent_utilities.knowledge_graph.ingestion.semantic_event_model import (
-        ProcessPerspective,
-    )
-
-    object_type = str(params.pop("object_type", "") or "").strip()
-    perspective_id = str(params.pop("perspective_id", "") or "").strip()
-    derivation_version = str(params.pop("derivation_version", "") or "").strip()
-    if not object_type or not perspective_id or not derivation_version:
-        raise ValueError(
-            "classical single-case flattening requires 'object_type', "
-            "'perspective_id', and 'derivation_version' — undisclosed "
-            "flattening is refused; declare the versioned ProcessPerspective "
-            "these traces are derived under"
-        )
-    return ProcessPerspective(
-        perspective_id=perspective_id,
-        object_types=(object_type,),
-        derivation_version=derivation_version,
+    raise not_served(
+        "knowledge_graph.ingestion.semantic_event_model", "EG-REPO-INGEST-R002"
     )
 
 
@@ -1631,19 +1451,7 @@ def _warm_forkable_sandboxes(preferred: str) -> list[Any]:
     pins a rung by name when set (and is ignored when it matches nothing). An
     unimportable subsystem degrades to an empty list.
     """
-    try:
-        from agent_utilities.rlm.sandboxes.registry import default_sandboxes
-    except Exception:  # noqa: BLE001 — subsystem unimportable ⇒ degrade cleanly
-        return []
-
-    forkable = [
-        sb
-        for sb in default_sandboxes()
-        if getattr(getattr(sb, "capabilities", None), "warm_fork", False)
-    ]
-    if preferred:
-        forkable = [sb for sb in forkable if sb.name == preferred] or forkable
-    return forkable
+    return []
 
 
 def _sandbox_available(sb: Any) -> bool:
@@ -1696,44 +1504,8 @@ def _fork_fanout(branches: list[Any], seed_vars: dict[str, Any], preferred: str)
             }
         )
 
-    from agent_utilities.rlm.sandboxes.base import SandboxEnv
-
-    async def _run_all() -> list[dict[str, Any]]:
-        import asyncio
-
-        async def _one(idx: int, snippet: Any) -> dict[str, Any]:
-            try:
-                result = await sb.execute(
-                    str(snippet), SandboxEnv(vars=dict(seed_vars))
-                )
-                return {
-                    "index": idx,
-                    "ok": result.error is None,
-                    "stdout": result.stdout,
-                    "error": result.error,
-                    "vars": result.updated_vars,
-                }
-            except Exception as exc:  # noqa: BLE001 — one branch never fails the set
-                return {
-                    "index": idx,
-                    "ok": False,
-                    **public_error_payload(exc),
-                }
-
-        return await asyncio.gather(*(_one(i, s) for i, s in enumerate(branches)))
-
-    try:
-        results = _run_coro(_run_all())
-    except Exception as exc:  # noqa: BLE001 — infra death → structured error, no crash
-        return _surface_error(exc, surface="fork")
-    return json.dumps(
-        {
-            "surface": "fork",
-            "sandbox": sb.name,
-            "branch_count": len(results),
-            "branches": results,
-        },
-        default=_json_default,
+    raise not_served(
+        "rlm.sandboxes.base", "AU-harness (deleted from AU)", owner="agent-utilities"
     )
 
 
@@ -2049,22 +1821,12 @@ def _record_process_signal_evidence(
     lazily *inside* the guard when the caller has none yet, so a failing
     engine resolution degrades exactly like a failing record.
     """
-    try:
-        from agent_utilities.knowledge_graph.research.evidence import (
-            from_process_signal,
-            record_evidence,
-        )
-
-        record_evidence(
-            engine if engine is not None else runtime._get_engine(),
-            from_process_signal(evidence),
-        )
-    except Exception as exc:  # noqa: BLE001 — deliberate best-effort audit overlay: this Evidence write is a pure observability side-channel over an import whose authoritative outcome is already reported through the normal return path. Only the exception type is recorded, at DEBUG.
-        logger.debug(
-            "OCEL process_signal evidence record failed for %s: %s",
-            evidence.get("idempotency_key"),
-            type(exc).__name__,
-        )
+    exc = not_served("knowledge_graph.research.evidence", "EG-DECISION-ENGINE-R652")
+    logger.debug(
+        "OCEL process_signal evidence record failed for %s: %s",
+        evidence.get("idempotency_key"),
+        type(exc).__name__,
+    )
 
 
 def _ocel_replay_deriver(slice_: Any) -> Any:
@@ -2073,34 +1835,9 @@ def _ocel_replay_deriver(slice_: Any) -> Any:
     CONCEPT:AU-KG.mining.incremental-object-centric-derivation — read-only by
     construction; commits nothing.
     """
-    from agent_utilities.knowledge_graph.ingestion.object_centric_derivation import (
-        IncrementalObjectCentricDeriver,
+    raise not_served(
+        "knowledge_graph.ingestion.object_centric_derivation", "EG-REPO-INGEST-R002"
     )
-
-    deriver = IncrementalObjectCentricDeriver()
-    for business_object in slice_.objects:
-        deriver.observe_object_attributes(
-            business_object.object_id, business_object.attributes
-        )
-    observed_at = datetime.now(UTC)
-    for event in sorted(
-        slice_.events,
-        key=lambda item: (
-            item.occurred_at,
-            item.sequence_tiebreaker,
-            item.event_id,
-        ),
-    ):
-        for participation in event.objects:
-            deriver.ingest_event(
-                event,
-                object_id=participation.object_id,
-                state_id=(
-                    f"{slice_.log_id}:{participation.object_id}:{event.event_id}"
-                ),
-                observed_at=observed_at,
-            )
-    return deriver
 
 
 def _ocel_derive_response(
@@ -2161,77 +1898,7 @@ def _ocel_mine(
     used for the trace projection is folded into the SAME committed slice as a
     real, versioned ``ProcessPerspective`` node, never a silent side channel.
     """
-    from agent_utilities.knowledge_graph.ingestion.envelope_ingest import (
-        ingest_graph_slice,
-    )
-    from agent_utilities.knowledge_graph.ingestion.event_log_adapter import (
-        project_object_centric_slice,
-    )
-
-    perspective = _require_process_perspective(params)
-    projection = project_object_centric_slice(slice_, perspective=perspective)
-    committed_slice = slice_.model_copy(
-        update={"perspectives": (*slice_.perspectives, perspective)}
-    )
-    # ``to_change_envelope`` still stamps tenant_id/ocel_provenance onto every
-    # entity/link and computes the digest-derived idempotency key — reuse that
-    # rendering — but a multi-entity slice's ``{"entities": [...],
-    # "relationships": [...]}`` typed_payload is NOT the single-row (+ optional
-    # ``_nodes``/``_links`` auxiliary) shape ``ingest_envelope``'s
-    # ``to_entity_dict``/``_prepare_node_rows`` understand: handing that
-    # envelope to ``ingest_envelope`` directly silently collapses the whole
-    # slice onto ONE untyped node (verified against a real engine — the
-    # "success" status did not mean the ProcessEvent/BusinessObject/
-    # ProcessPerspective nodes were ever created). ``ingest_graph_slice`` is
-    # the existing writer built for exactly this multi-node shape (first entity
-    # primary, the rest as governed ``_nodes``/``_links`` auxiliaries) — the
-    # same one ``IngestionEngine`` already uses for its concepts/facts passes.
-    envelope = committed_slice.to_change_envelope(
-        tenant=tenant,
-        provenance=provenance,
-    )
-    # THE single commit of this slice. The degradation wrapper is wire-first's:
-    # a write-path outage surfaces as a structured error, never a crash.
-    try:
-        engine = runtime._get_engine()
-        applied = ingest_graph_slice(
-            engine,
-            envelope.connector,
-            envelope.typed_payload["entities"],
-            envelope.typed_payload["relationships"],
-            source_instance=envelope.source_instance,
-            checkpoint=envelope.checkpoint,
-        )
-    except Exception as exc:  # noqa: BLE001 — a write-path outage degrades graph_mine, never crashes it
-        return _surface_error(
-            exc,
-            surface="mining",
-            action=action,
-            code="dependency_unavailable",
-        )
-    if applied.get("status") not in {"success", "skipped"}:
-        return json.dumps(
-            {
-                "surface": "mining",
-                "action": action,
-                "code": "write_failed",
-                "error": (
-                    "governed OCEL ChangeEnvelope commit failed: "
-                    f"{applied.get('error') or applied.get('status')}"
-                ),
-                "ocel": exported,
-                "tekg": {"idempotency_key": envelope.idempotency_key},
-            },
-            default=_json_default,
-        )
-    evidence = {
-        **_ocel_evidence(tenant, committed_slice, envelope),
-        "idempotency_key": applied.get("idempotency_key", envelope.idempotency_key),
-        "commit_status": applied.get("status"),
-        "write_status": applied.get("status"),
-    }
-    _record_process_signal_evidence(evidence, engine)
-    return projection, evidence
+    raise not_served("knowledge_graph.ingestion.envelope_ingest", "EG-REPO-INGEST-R002")
 
 
 def _ocel_import_slice(params: dict) -> tuple[str, Any, Any, str]:
@@ -2241,25 +1908,7 @@ def _ocel_import_slice(params: dict) -> tuple[str, Any, Any, str]:
     for a missing tenant or an unknown ``ocel_mode`` — the caller maps those
     onto an ``invalid_request`` surface error.
     """
-    from agent_utilities.knowledge_graph.ingestion.ocel_adapter import (
-        import_ocel_json,
-    )
-    from agent_utilities.usage.authorization import resolve_usage_tenant
-
-    tenant = resolve_usage_tenant(str(params.pop("tenant", "") or "") or None)
-    if not tenant:
-        raise ValueError("tenant is required for governed OCEL import")
-    slice_, provenance = import_ocel_json(
-        params.pop("ocel_json"),
-        tenant=tenant,
-        source_ref=str(params.pop("source_ref", "") or ""),
-        mapping_version=str(params.pop("mapping_version", "") or ""),
-        provenance=params.pop("provenance", None),
-    )
-    ocel_mode = str(params.pop("ocel_mode", "mine") or "mine").strip()
-    if ocel_mode not in {"mine", "validate", "derive"}:
-        raise ValueError("ocel_mode must be 'mine', 'validate', or 'derive'")
-    return tenant, slice_, provenance, ocel_mode
+    raise not_served("knowledge_graph.ingestion.ocel_adapter", "EG-REPO-INGEST-R651")
 
 
 def _ocel_import_and_dispatch(
@@ -2271,46 +1920,7 @@ def _ocel_import_and_dispatch(
     ``validate``/error modes, or ``(projection, exported, evidence)`` when
     ``mine`` committed and the caller must still project + mine traces.
     """
-    from agent_utilities.knowledge_graph.ingestion.envelope_ingest import (  # noqa: F401 — imported up-front so an unavailable write path fails here, exactly as it did before this function was extracted
-        ingest_graph_slice,
-    )
-    from agent_utilities.knowledge_graph.ingestion.event_log_adapter import (  # noqa: F401 — see above
-        project_object_centric_slice,
-    )
-    from agent_utilities.knowledge_graph.ingestion.ocel_adapter import (
-        export_ocel_json,
-    )
-
-    tenant, slice_, provenance, ocel_mode = _ocel_import_slice(params)
-    exported = export_ocel_json(slice_)
-    # Computed here from the bare (pre-perspective) ``slice_`` so this
-    # best-effort observability snapshot never blocks the import; each mode
-    # branch still computes its OWN envelope for the actual commit (the
-    # ``mine`` branch's includes the perspective).
-    envelope = slice_.to_change_envelope(tenant=tenant, provenance=provenance)
-    evidence = _ocel_evidence(tenant, slice_, envelope)
-    _record_process_signal_evidence(evidence)
-    if ocel_mode == "derive":
-        return _ocel_derive_response(action, slice_, tenant, evidence)
-    if ocel_mode == "validate":
-        envelope = slice_.to_change_envelope(
-            tenant=tenant,
-            provenance=provenance,
-        )
-        return json.dumps(
-            {
-                "surface": "mining",
-                "action": action,
-                "ocel": exported,
-                "tekg": _ocel_evidence(tenant, slice_, envelope),
-            },
-            default=_json_default,
-        )
-    mined = _ocel_mine(action, params, slice_, tenant, provenance, exported)
-    if isinstance(mined, str):
-        return mined
-    projection, evidence = mined
-    return projection, exported, evidence
+    raise not_served("knowledge_graph.ingestion.envelope_ingest", "EG-REPO-INGEST-R002")
 
 
 def _graph_mine_process_ocel_json(action: str, params: dict, graph: str) -> str | None:
@@ -2426,34 +2036,7 @@ def _conformance_commit(
     inputs: dict[str, Any], run: Any, deviations: Any
 ) -> dict[str, Any]:
     """Commit one ``ConformanceRun`` (+ its Deviations) as a tenant-scoped slice."""
-    from agent_utilities.knowledge_graph.ingestion.envelope_ingest import (
-        ingest_graph_slice,
-    )
-    from agent_utilities.knowledge_graph.ingestion.process_conformance import (
-        conformance_run_graph_slice,
-    )
-
-    entities, links = conformance_run_graph_slice(
-        run, deviations, source_ref=inputs["source_ref"]
-    )
-    for entity in entities:
-        entity["tenant_id"] = inputs["tenant"]
-    for link in links:
-        link["tenant_id"] = inputs["tenant"]
-    engine = runtime._get_engine()
-    applied = ingest_graph_slice(
-        engine,
-        "conformance",
-        entities,
-        links,
-        source_instance=inputs["run_id"],
-    )
-    if applied.get("status") not in {"success", "skipped"}:
-        raise RuntimeError(
-            "ConformanceRun ChangeEnvelope commit failed: "
-            f"{applied.get('error') or applied.get('status')}"
-        )
-    return {"applied": applied, "entities": entities, "links": links}
+    raise not_served("knowledge_graph.ingestion.envelope_ingest", "EG-REPO-INGEST-R002")
 
 
 def _mining_request_error(exc: Exception, action: str) -> str:
@@ -2498,57 +2081,7 @@ def _graph_mine_process_conformance(
     # here (there is no engine-side conformance primitive to dispatch
     # to — the whole point of the ``ConformanceWorker`` seam is that the
     # native/default worker needs none).
-    from agent_utilities.knowledge_graph.ingestion.envelope_ingest import (  # noqa: F401 — imported up-front so an unavailable write path fails here, exactly as it did before _conformance_commit was extracted
-        ingest_graph_slice,
-    )
-    from agent_utilities.knowledge_graph.ingestion.process_conformance import (
-        ConformanceRun,
-        run_conformance_check,
-    )
-
-    try:
-        inputs = _conformance_inputs(params)
-        run = ConformanceRun(
-            run_id=inputs["run_id"],
-            perspective=inputs["perspective"],
-            graph_as_of=inputs["graph_as_of"],
-            mapping_version=inputs["mapping_version"],
-            model_ref=inputs["model_ref"],
-            export_digest=inputs["export_digest"],
-        )
-        run, deviations = run_conformance_check(
-            inputs["traces"],
-            inputs["object_ids"],
-            inputs["allowed_edges"],
-            run=run,
-            start_activities=inputs["start_activities"],
-            end_activities=inputs["end_activities"],
-        )
-        committed = _conformance_commit(inputs, run, deviations)
-    except (PermissionError, TypeError, ValueError) as exc:
-        return _mining_request_error(exc, action)
-    except RuntimeError as exc:
-        return _mining_request_error(exc, action)
-    return json.dumps(
-        {
-            "surface": "mining",
-            "action": action,
-            "conformance_run": {
-                "run_id": run.run_id,
-                "run_digest": run.run_digest(),
-                "model_ref": run.model_ref,
-            },
-            "deviations": [
-                deviation.model_dump(mode="json") for deviation in deviations
-            ],
-            "tekg": {
-                "commit_status": committed["applied"].get("status"),
-                "node_count": len(committed["entities"]),
-                "relationship_count": len(committed["links"]),
-            },
-        },
-        default=_json_default,
-    )
+    raise not_served("knowledge_graph.ingestion.envelope_ingest", "EG-REPO-INGEST-R002")
 
 
 def _graph_mine_process_events(action: str, params: dict, graph: str) -> str | None:
@@ -2583,27 +2116,9 @@ def _graph_mine_process_events(action: str, params: dict, graph: str) -> str | N
                 ),
             }
         )
-    from agent_utilities.knowledge_graph.ingestion.event_log_adapter import (
-        project_object_centric_events,
+    raise not_served(
+        "knowledge_graph.ingestion.event_log_adapter", "EG-REPO-INGEST-R651"
     )
-
-    try:
-        perspective = _require_process_perspective(params)
-        projection = project_object_centric_events(
-            params.pop("events"),
-            perspective=perspective,
-        )
-    except (TypeError, ValueError) as exc:
-        return _surface_error(
-            exc,
-            surface="mining",
-            action=action,
-            code="invalid_request",
-        )
-    response = _invoke_mining_projection(
-        action, params=params, graph=graph, projection=projection
-    )
-    return json.dumps(response, default=_json_default)
 
 
 def _kvcache_get(backend: Any, action: str, key: str) -> str:
@@ -2685,53 +2200,7 @@ def _kvcache_close(backend: Any) -> None:
 
 def _kv_create_checkpoint(action: str, store: Any, req: dict[str, Any]) -> str:
     """``graph_kv_checkpoint`` ``create`` — the full key plus the blob bytes."""
-    from agent_utilities.kvcache import KVCheckpointKey
-
-    try:
-        data = base64.b64decode(req["data_b64"]) if req["data_b64"] else b""
-        provenance = (
-            json.loads(req["provenance_json"]) if req["provenance_json"] else {}
-        )
-    except (ValueError, TypeError) as exc:
-        return _surface_error(
-            exc, surface="kv_checkpoint", action=action, code="invalid_request"
-        )
-    try:
-        key = KVCheckpointKey(
-            model_identity=req["model_identity"],
-            quantization=req["quantization"],
-            serving_engine=req["serving_engine"],
-            engine_version=req["engine_version"],
-            prefix_digest=req["prefix_digest"],
-            tenant=req["tenant"],
-            policy_version=req["policy_version"],
-        )
-    except Exception as exc:  # noqa: BLE001 — bad/missing key component
-        return _surface_error(
-            exc, surface="kv_checkpoint", action=action, code="invalid_request"
-        )
-    try:
-        record = store.create_checkpoint(
-            data,
-            key=key,
-            run_id=req["run_id"],
-            point=req["point"],
-            provenance=provenance if isinstance(provenance, dict) else {},
-        )
-    except Exception as exc:  # noqa: BLE001 — surface engine errors as data
-        return _surface_error(exc, surface="kv_checkpoint", action=action)
-    if record is None:
-        return json.dumps(
-            {
-                "surface": "kv_checkpoint",
-                "action": action,
-                "error": "checkpoint creation failed (empty payload or engine write failure)",
-            }
-        )
-    return json.dumps(
-        {"surface": "kv_checkpoint", "action": action, "result": record.model_dump()},
-        default=_json_default,
-    )
+    raise not_served("kvcache", "EG-DURABLE-KERNEL-R800")
 
 
 def _kv_instantiate_agent(
@@ -2743,21 +2212,7 @@ def _kv_instantiate_agent(
     current_policy_version: str,
 ) -> str:
     """``graph_kv_checkpoint`` ``instantiate_agent`` — fail-closed load + lineage."""
-    from agent_utilities.kvcache import KVCheckpointError
-
-    try:
-        record = store.instantiate_agent(
-            checkpoint_id,
-            requesting_tenant=requesting_tenant,
-            new_run_id=new_run_id,
-            current_policy_version=current_policy_version or None,
-        )
-    except KVCheckpointError as exc:
-        return _checkpoint_failure(exc, action)
-    return json.dumps(
-        {"surface": "kv_checkpoint", "action": action, "result": record.model_dump()},
-        default=_json_default,
-    )
+    raise not_served("kvcache", "EG-DURABLE-KERNEL-R800")
 
 
 def _kv_restore_conversation(
@@ -2770,27 +2225,7 @@ def _kv_restore_conversation(
     allow_cold_start: bool,
 ) -> str:
     """``graph_kv_checkpoint`` ``restore_conversation`` — fail-closed load + lineage."""
-    from agent_utilities.kvcache import KVCheckpointError
-
-    try:
-        res = store.restore_conversation(
-            checkpoint_id,
-            conversation_id=conversation_id,
-            requesting_tenant=requesting_tenant,
-            current_policy_version=current_policy_version or None,
-            allow_cold_start=allow_cold_start,
-        )
-    except KVCheckpointError as exc:
-        return _checkpoint_failure(exc, action)
-    # Never inline the heavy blob bytes over the JSON tool surface — only
-    # provenance; a caller that needs the bytes fetches them directly from
-    # the engine's own blob store by digest (CONCEPT:AU-KG.memory.kv-checkpoint-resource).
-    payload = res.model_dump(exclude={"data"})
-    payload["size_bytes"] = len(res.data) if res.data is not None else 0
-    return json.dumps(
-        {"surface": "kv_checkpoint", "action": action, "result": payload},
-        default=_json_default,
-    )
+    raise not_served("kvcache", "EG-DURABLE-KERNEL-R800")
 
 
 def _decode_json_object(

@@ -31,6 +31,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
+from graph_os.api.errors import not_served
 from graph_os.gateway.aggregator import Aggregator
 from graph_os.gateway.config import ConfigManager
 from graph_os.gateway.models import DashboardLayout, WidgetData
@@ -229,11 +230,7 @@ async def daemon_status() -> dict[str, Any]:
 @dashboard_router.get("/daemon/shards")
 async def daemon_shards() -> dict[str, Any]:
     """Return the engine shard topology and per-shard reachability."""
-    from agent_utilities.knowledge_graph.core.shard_topology import (
-        shard_topology_status,
-    )
-
-    return shard_topology_status()
+    raise not_served("knowledge_graph.core.shard_topology", "EG-PLACEMENT-R611")
 
 
 @dashboard_router.post("/daemon/start")
@@ -248,20 +245,11 @@ async def daemon_start(request: Request) -> dict[str, Any]:
 
 
 def _active_engine() -> Any:
-    from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
-
-    engine = IntelligenceGraphEngine.get_active()
-    if not engine:
-        raise HTTPException(
-            status_code=500, detail="Active Knowledge Graph engine not available"
-        )
-    return engine
+    raise not_served("knowledge_graph.core.engine", "EG-PLACEMENT-R611")
 
 
 def _hydration_manager() -> Any:
-    from agent_utilities.knowledge_graph.core.hydration import HydrationManager
-
-    return HydrationManager()
+    raise not_served("knowledge_graph.core.hydration", "EG-INGEST-WORKER-R606")
 
 
 @dashboard_router.post("/hydrate/{source}")

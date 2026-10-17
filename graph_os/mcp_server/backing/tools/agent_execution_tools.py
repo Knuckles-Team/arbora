@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
-from typing import Any, Literal
+from typing import Any
 
-from agent_utilities.core.event_loop import run_blocking_ordered
 from agent_utilities.security.error_surface import public_error_text
 from pydantic import BaseModel, Field
 
+from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 
 logger = logging.getLogger(__name__)
@@ -204,96 +203,7 @@ async def _run_reasoning_topology(
     (:class:`ToTGenerateOutput`), each self-scored and self-judged for
     goal-completion by the SAME call — never a separate round-trip per child.
     """
-    from agent_utilities.graph.reasoning import (
-        COT_SPEC,
-        SELF_CONSISTENT_COT_SPEC,
-        TOT_BFS_SPEC,
-        TOT_DFS_SPEC,
-        Budgets,
-        record_topology_outcome,
-        register_topology,
-        run_cot,
-        run_self_consistent_cot,
-        run_tot,
-    )
-
-    budgets = Budgets(loop_budget=max(1, loop_budget))
-
-    if topology in ("tot_bfs", "tot_dfs"):
-        agent = _create_reasoning_agent(
-            ToTGenerateOutput,
-            "You are the expansion step of a Tree-of-Thought search toward "
-            "answering a question. Given the question and one current "
-            "thought, propose several DISTINCT candidate next thoughts, "
-            "each self-scored for promise and self-judged for whether it is "
-            "already a complete final answer.",
-        )
-        generate_fn, score_fn, is_goal_fn = _tot_functions(
-            agent, task, branching_factor=max(1, branching_factor)
-        )
-        spec = TOT_BFS_SPEC if topology == "tot_bfs" else TOT_DFS_SPEC
-        strategy: Literal["bfs", "dfs"] = "bfs" if topology == "tot_bfs" else "dfs"
-        state, proof = run_tot(
-            generate_fn,
-            score_fn,
-            is_goal_fn,
-            question=task,
-            budgets=budgets,
-            strategy=strategy,
-            branching_factor=max(1, branching_factor),
-            beam_width=max(1, beam_width),
-            max_depth=max(1, max_depth),
-        )
-        terminal = next((n for n in state.nodes.values() if n.is_terminal), None)
-        if terminal is not None:
-            answer = terminal.content
-        elif state.nodes:
-            best = max(state.nodes.values(), key=lambda n: (n.value or 0.0, n.node_id))
-            answer = best.content
-        else:
-            answer = ""
-    else:
-        agent = _create_reasoning_agent(
-            ReasoningStepOutput,
-            "You are one step in a graph-of-thought reasoning process "
-            "toward answering a question. Given the question and the "
-            "reasoning accumulated so far, produce ONLY the next "
-            "reasoning step.",
-        )
-        step_fn = _reasoning_step_fn(agent, task)
-
-        if topology == "self_consistent_cot":
-            spec = SELF_CONSISTENT_COT_SPEC
-            state, proof, answer = run_self_consistent_cot(
-                step_fn,
-                question=task,
-                num_samples=max(1, num_samples),
-                budgets=budgets,
-            )
-        else:
-            spec = COT_SPEC
-            state, proof = run_cot(step_fn, question=task, budgets=budgets)
-            terminal = next((n for n in state.nodes.values() if n.is_terminal), None)
-            answer = terminal.content if terminal is not None else ""
-
-    clean_success = bool(proof.success) and not proof.degraded
-    register_topology(engine, spec)
-    record_topology_outcome(
-        engine,
-        spec.topology_id,
-        success=proof.success,
-        quality_score=0.8 if clean_success else 0.0,
-        proof=proof,
-    )
-
-    return {
-        "topology": spec.name,
-        "topology_id": spec.topology_id,
-        "answer": answer,
-        "node_count": len(state.nodes),
-        "rationale_summary": list(state.rationale_summary),
-        "termination": proof.as_report(),
-    }
+    raise not_served("graph.reasoning", "EG-DECISION-ENGINE-R750")
 
 
 async def _run_swarm(
@@ -304,68 +214,9 @@ async def _run_swarm(
     context_ref: str,
     max_fan_out: int,
 ) -> dict[str, Any]:
-    from agent_utilities.core.config import DEFAULT_KG_MODEL_ID, DEFAULT_LLM_PROVIDER
-    from agent_utilities.core.model_factory import create_model
-    from agent_utilities.graph.parallel_engine import ParallelEngine
-    from agent_utilities.graph.planning import Planner
-    from agent_utilities.messaging.bus import swarm_topic
-    from agent_utilities.models.execution_manifest import ExecutionManifest
-
-    try:
-        model = create_model(
-            provider=DEFAULT_LLM_PROVIDER, model_id=DEFAULT_KG_MODEL_ID
-        )
-    except Exception:
-        model = None
-    plan = await Planner(model=model).decompose(task)
-    manifest = ExecutionManifest.from_graph_plan(plan, name="swarm", query=task)
-
-    swarm_context = context
-    if not swarm_context and context_ref:
-        try:
-            rows = await run_blocking_ordered(
-                engine.query_cypher,
-                "MATCH (c:ContextBlob) WHERE c.id = $id "
-                "RETURN c.id AS id, c.content AS content",
-                {"id": context_ref},
-            )
-            if rows and rows[0].get("content"):
-                swarm_context = str(rows[0]["content"])
-        except Exception:
-            swarm_context = ""
-
-    topic = swarm_topic(hashlib.sha256(task.encode()).hexdigest()[:16])
-    coordination = (
-        "You are one agent in a swarm on the same overall task. Coordinate with peers over "
-        f"the AgentBus topic '{topic}': announce ownership before work, share findings, and "
-        "check peer messages before duplicating effort."
+    raise not_served(
+        "graph.parallel_engine", "AU-harness (deleted from AU)", owner="agent-utilities"
     )
-    manifest.context = "\n\n".join(
-        part for part in (manifest.context, swarm_context, coordination) if part
-    )
-    manifest.metadata["verify"] = True
-    manifest.metadata["max_retries"] = 2
-    manifest.max_concurrency = max(1, int(max_fan_out))
-    for agent in manifest.agents:
-        if not agent.success_criteria:
-            agent.success_criteria = (
-                "Output must substantively address: "
-                f"{(agent.task_template or task)[:240]}"
-            )
-
-    result = await ParallelEngine(engine=engine).execute(manifest)
-    return {
-        "deliverable": result.synthesis_output,
-        "agent_count": result.agent_count,
-        "wave_count": result.wave_count,
-        "critical_path_length": result.critical_path_length,
-        "parallelism_ratio": result.parallelism_ratio,
-        "verification": result.verification,
-        "telemetry": result.telemetry,
-        "execution_id": result.execution_id,
-        "success": result.success,
-        "mermaid": result.mermaid,
-    }
 
 
 def register_agent_execution_tools(mcp: Any) -> None:

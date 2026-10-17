@@ -10,6 +10,7 @@ from agent_utilities.core.event_loop import run_blocking_ordered
 from agent_utilities.security.error_surface import public_error_text
 from pydantic import Field
 
+from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 
 
@@ -270,36 +271,7 @@ def _ownership_report() -> dict[str, Any]:
     :class:`EngineUnreachableError` surfaces as a structured error, not a fake
     TEMPLATE stand-in (the TEMPLATE fixture stays a script/test-only device).
     """
-    from agent_utilities.knowledge_graph.maintenance.graph_ownership import (
-        EngineUnreachableError,
-        build_ownership_report,
-        check_invariant,
-        render_markdown,
-        resolve_catalog_client,
-    )
-
-    try:
-        client = resolve_catalog_client()
-        report = build_ownership_report(
-            client,
-            mode="live",
-            source_note="live epistemic-graph engine catalog (graph_governance surface)",
-        )
-    except EngineUnreachableError as exc:
-        return {
-            "surface": "governance",
-            "action": "ownership_report",
-            "error": type(exc).__name__,
-        }
-    violations = check_invariant(report.dispositions, enforced=False)
-    return {
-        "surface": "governance",
-        "action": "ownership_report",
-        "mode": report.mode,
-        "counts": report.counts,
-        "invariant_violations_report_only": len(violations),
-        "markdown": render_markdown(report),
-    }
+    raise not_served("knowledge_graph.maintenance.graph_ownership", "EG-IDENTITY-R700")
 
 
 def _ownership_apply() -> dict[str, Any]:
@@ -312,53 +284,8 @@ def _ownership_apply() -> dict[str, Any]:
     (``scripts/apply_graph_ownership_grants.py --apply-unambiguous``), deliberately
     not reachable from MCP/REST, matching the module's own PREPARE-ONLY discipline.
     """
-    from dataclasses import asdict
 
-    from agent_utilities.knowledge_graph.maintenance.graph_ownership import (
-        EngineUnreachableError,
-        build_ownership_report,
-        resolve_catalog_client,
-    )
-    from agent_utilities.knowledge_graph.maintenance.graph_ownership_apply import (
-        FixtureRbacAdminClient,
-        apply_plan,
-        plan_grants,
-        rollback_to_json,
-    )
-
-    try:
-        client = resolve_catalog_client()
-        report = build_ownership_report(
-            client,
-            mode="live",
-            source_note="live epistemic-graph engine catalog (graph_governance surface)",
-        )
-    except EngineUnreachableError as exc:
-        return {
-            "surface": "governance",
-            "action": "ownership_apply",
-            "error": type(exc).__name__,
-        }
-
-    # UNAMBIGUOUS + not-already-covered only — the program's auto-apply-UNAMBIGUOUS /
-    # hold-ambiguous decision; never ambiguous rows (see plan_grants' own docstring).
-    plan = plan_grants(report)
-    # dry_run=True never calls a single method on the client — an empty fixture
-    # satisfies the RbacAdminClient parameter without touching anything real.
-    preview, rollback = apply_plan(plan, FixtureRbacAdminClient(), dry_run=True)
-    return {
-        "surface": "governance",
-        "action": "ownership_apply",
-        "mode": "dry_run",
-        "report_mode": report.mode,
-        "plan": [asdict(p) for p in plan],
-        "preview": [asdict(p) for p in preview],
-        "rollback": rollback_to_json(rollback),
-        "hint": (
-            "preview only; the live mutating apply is HG-4 human-gated via "
-            "scripts/apply_graph_ownership_grants.py --apply-unambiguous"
-        ),
-    }
+    raise not_served("knowledge_graph.maintenance.graph_ownership", "EG-IDENTITY-R700")
 
 
 def _claim_ownership(
@@ -384,75 +311,8 @@ def _claim_ownership(
     ``decisions/GOC-61-unowned-node-disposition.md`` for the authorized
     disposition this implements.
     """
-    from dataclasses import asdict
 
-    from agent_utilities.knowledge_graph.core.ownership_claim import (
-        OwnershipClaimError,
-        apply_claim,
-        preview_claim,
-    )
-    from agent_utilities.security.brain_context import use_actor
-
-    from graph_os.api.contracts.session import resolve_session
-
-    node_types = json.loads(node_types_json) if node_types_json else []
-    node_ids = json.loads(node_ids_json) if node_ids_json else []
-    if not isinstance(node_types, list) or not isinstance(node_ids, list):
-        return {
-            "surface": "governance",
-            "action": "claim_ownership",
-            "error": "node_types_json and node_ids_json must each decode to a JSON list",
-        }
-
-    # Fail-closed BEFORE touching the core: the session boundary requires
-    # kg:admin explicitly (this action is not gated by the tool's other
-    # actions, several of which need only kg:write or no scope at all).
-    try:
-        session = resolve_session(required_scope="kg:admin")
-    except Exception as exc:  # noqa: BLE001 — surfaced as a structured denial, never a bare 500
-        return {
-            "surface": "governance",
-            "action": "claim_ownership",
-            "error": f"kg:admin required: {type(exc).__name__}",
-        }
-
-    with use_actor(session.actor):
-        try:
-            if apply:
-                result = apply_claim(
-                    engine,
-                    owner_id=owner_id,
-                    node_types=node_types,
-                    node_ids=node_ids,
-                    shared_scope=shared_scope or "org",
-                    actor=session.actor,
-                )
-                return {
-                    "surface": "governance",
-                    "action": "claim_ownership",
-                    "mode": "apply",
-                    **asdict(result),
-                }
-            preview = preview_claim(
-                engine,
-                owner_id=owner_id,
-                node_types=node_types,
-                node_ids=node_ids,
-                actor=session.actor,
-            )
-            return {
-                "surface": "governance",
-                "action": "claim_ownership",
-                "mode": "dry_run",
-                **asdict(preview),
-                "hint": "preview only; pass apply=true to actually claim",
-            }
-        except OwnershipClaimError as exc:
-            return {
-                "surface": "governance",
-                "action": "claim_ownership",
-                "error": type(exc).__name__,
-            }
+    raise not_served("knowledge_graph.core.ownership_claim", "EG-IDENTITY-R610")
 
 
 def _policy_status() -> dict[str, Any]:

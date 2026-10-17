@@ -29,26 +29,18 @@ convention.
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
-from agent_utilities.security.error_surface import public_error_json
 from pydantic import Field
 
+from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 
 _ACTIONS: tuple[str, ...] = ("import_aif", "export_aif", "evaluate", "add_scheme")
 
 
 def _parse_map_json(argument_map_json: str, map_id: str) -> Any:
-    from agent_utilities.knowledge_graph.argumentation import aif
-
-    if not argument_map_json:
-        raise ValueError("argument_map_json is required")
-    data = json.loads(argument_map_json)
-    if not isinstance(data, dict):
-        raise ValueError("argument_map_json must decode to a JSON object")
-    return aif.from_aifdb_json(data, map_id=map_id or None)
+    raise not_served("knowledge_graph.argumentation.aif", "EG-FEDERATED-QUERY-R700")
 
 
 def _evaluate(
@@ -58,44 +50,7 @@ def _evaluate(
     actual acceptability computation to the engine's ``resolve_conflict``
     method through the SAME dispatcher ``graph_epistemic`` uses.
     """
-    from agent_utilities.knowledge_graph.argumentation import aif
-
-    from graph_os.mcp_server.backing.tools.engine_tools import _dispatch
-
-    projection = None
-    if argument_map is not None:
-        projection = aif.to_dung(argument_map)
-        ids = node_ids or list(projection.arguments)
-        qualified = [f"aif:{argument_map.map_id}:{i}" for i in ids]
-    else:
-        qualified = node_ids
-
-    if not qualified:
-        raise ValueError("evaluate requires argument_map_json or a non-empty node_ids")
-
-    params = json.dumps({"node_ids": qualified, "semantics": semantics})
-    raw = _dispatch("query", {"resolve_conflict"}, "resolve_conflict", params, graph)
-    try:
-        engine_result = json.loads(raw)
-    except (TypeError, ValueError):
-        engine_result = {"raw": raw}
-
-    response: dict[str, Any] = {
-        "semantics": semantics,
-        "node_ids": qualified,
-        "engine_result": engine_result,
-    }
-    if projection is not None:
-        response["dung_projection"] = {
-            "arguments": list(projection.arguments),
-            "attacks": [list(pair) for pair in projection.attacks],
-            "supports": [list(pair) for pair in projection.supports],
-            "preferences": [list(pair) for pair in projection.preferences],
-            "dropped_attacks_by_preference": [
-                list(pair) for pair in projection.dropped_attacks
-            ],
-        }
-    return response
+    raise not_served("knowledge_graph.argumentation.aif", "EG-FEDERATED-QUERY-R700")
 
 
 def register_argument_tools(mcp: Any) -> None:
@@ -173,60 +128,7 @@ def register_argument_tools(mcp: Any) -> None:
         ),
     ) -> str:
         """AIF argument maps: import_aif / export_aif / evaluate / add_scheme."""
-        from agent_utilities.knowledge_graph.argumentation import aif
-
-        action_key = (action or "evaluate").strip().lower()
-        try:
-            if action_key == "import_aif":
-                argument_map = _parse_map_json(argument_map_json, map_id)
-                result: Any = aif.import_argument_map(argument_map)
-            elif action_key == "export_aif":
-                if not map_id:
-                    raise ValueError("map_id is required for export_aif")
-                result = aif.to_aifdb_json(aif.export_argument_map(map_id))
-            elif action_key == "evaluate":
-                argument_map = (
-                    _parse_map_json(argument_map_json, map_id)
-                    if argument_map_json
-                    else None
-                )
-                parsed_ids = json.loads(node_ids) if node_ids else []
-                if not isinstance(parsed_ids, list):
-                    raise ValueError("node_ids must decode to a JSON array")
-                result = _evaluate(
-                    argument_map,
-                    [str(i) for i in parsed_ids],
-                    semantics or "grounded",
-                    graph,
-                )
-            elif action_key == "add_scheme":
-                if not scheme_name or not scheme_kind:
-                    raise ValueError(
-                        "scheme_name and scheme_kind are required for add_scheme"
-                    )
-                result = aif.add_scheme(
-                    scheme_name,
-                    scheme_kind,
-                    description=description,
-                    scheme_id=scheme_id or None,
-                )
-            else:
-                return json.dumps(
-                    {
-                        "surface": "argument",
-                        "action": action_key,
-                        "error": f"unknown action {action_key!r}",
-                        "actions": list(_ACTIONS),
-                    }
-                )
-        except (ValueError, TypeError) as exc:
-            return public_error_json(exc, code="invalid_request")
-        except Exception as exc:  # noqa: BLE001 — engine/dependency failures degrade, not crash
-            return public_error_json(exc, code="dependency_unavailable")
-
-        return json.dumps(
-            {"surface": "argument", "action": action_key, "result": result}, default=str
-        )
+        raise not_served("knowledge_graph.argumentation.aif", "EG-FEDERATED-QUERY-R700")
 
     runtime.REGISTERED_TOOLS["graph_argument"] = graph_argument
     # No bespoke endpoint needed — the generic REST-twin factory in

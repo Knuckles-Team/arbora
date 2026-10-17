@@ -157,7 +157,7 @@ service = "graph_os.messaging.reach:service_port"
 override-dependencies = ["epistemic-graph[server] @ git+https://github.com/Knuckles-Team/epistemic-graph.git@978532ee90bf06f3a26d8465efd63be94dd0dfa4"]
 
 [tool.uv.sources]
-agent-utilities = { path = ".uv-workspace-siblings/agent-utilities", editable = true }
+agent-utilities = { git = "https://github.com/Knuckles-Team/agent-utilities.git", branch = "refactor/au-cut-to-eg" }
 agent-connector-sdk = { path = ".uv-workspace-siblings/agent-connector-sdk", editable = true }
 agent-webui = { path = ".uv-workspace-siblings/agent-webui", editable = true }
 

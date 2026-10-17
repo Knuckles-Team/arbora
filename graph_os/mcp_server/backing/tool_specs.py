@@ -123,7 +123,6 @@ TOOL_VERBS: Mapping[str, tuple[str, ...]] = MappingProxyType(
         # shape as graph_etl/ontology_derive above.
         "ontology_repository_provenance": ("write",),
         "document_process": ("write",),
-        "graph_media_sidecar": ("write", "act"),
         "spec_ticket": ("write", "ask"),
         "engine_nodes": ("write", "ask"),
         "engine_edges": ("write",),

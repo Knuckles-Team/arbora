@@ -45,6 +45,8 @@ from agent_utilities.security.error_surface import public_error_payload
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from graph_os.api.errors import not_served
+
 logger = logging.getLogger(__name__)
 
 _MAX_PAGE = 1000
@@ -71,22 +73,8 @@ def _tenant_scope(dialect: str) -> tuple[str, list[Any]]:
     caller sees only its own sessions/agents; a verified platform admin sees
     the whole fleet. Missing or tenantless identity fails closed.
     """
-    try:
-        from agent_utilities.knowledge_graph.core.tenant_sharing import is_privileged
-        from agent_utilities.security.brain_context import current_actor
-
-        actor = current_actor()
-        if is_privileged(actor):
-            return "", []
-        if not actor.authenticated or not actor.tenant_id:
-            raise PermissionError(
-                "Fleet supervision requires verified tenant authority"
-            )
-        return f"{_tenant_sql(dialect)} = ?", [actor.tenant_id]
-    except PermissionError:
-        raise
-    except Exception as exc:
-        raise PermissionError("Fleet supervision authority is unavailable") from exc
+    exc = not_served("knowledge_graph.core.tenant_sharing", "EG-IDENTITY-R610")
+    raise PermissionError("Fleet supervision authority is unavailable") from exc
 
 
 def _page_params(

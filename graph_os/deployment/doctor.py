@@ -24,6 +24,8 @@ from collections.abc import Callable
 from types import SimpleNamespace
 from typing import Any
 
+from graph_os.api.errors import not_served
+
 from . import doctor_certification as _doctor_certification
 from . import doctor_coverage as _doctor_coverage
 from . import doctor_graph as _doctor_graph
@@ -2189,115 +2191,31 @@ def _check_venv_drift() -> dict[str, Any]:
 
 def _check_warm_fork() -> dict[str, Any]:
     """Report available confined sandbox rungs and pooled VM parents."""
-    rungs: dict[str, dict[str, Any]] = {}
-    try:
-        from agent_utilities.rlm.sandboxes.registry import default_sandboxes
-
-        for b in default_sandboxes():
-            caps = b.capabilities
-            try:
-                available = bool(b.is_available())
-            except Exception:  # noqa: BLE001 - a probe must never crash the doctor
-                available = False
-            rungs[b.name] = {
-                "available": available,
-                "isolated": caps.isolated,
-                "warm_fork": caps.warm_fork,
-                "rank": caps.preference_rank,
-            }
-    except Exception as exc:  # noqa: BLE001
-        return _result(
-            "warm_fork",
-            "error",
-            f"could not enumerate sandbox rungs ({type(exc).__name__})",
-        )
-
-    try:
-        from agent_utilities.runtime.warm_registry import WarmParentRegistry
-
-        pool = WarmParentRegistry.get().stats()
-    except Exception:  # noqa: BLE001
-        pool = {}
-
-    warm_rungs = sorted(
-        n for n, r in rungs.items() if r["warm_fork"] and r["available"]
+    exc = not_served(
+        "rlm.sandboxes.registry",
+        "AU-harness (deleted from AU)",
+        owner="agent-utilities",
     )
-    data = {"rungs": rungs, "warm_rungs": warm_rungs, "pool": pool}
-    if warm_rungs:
-        return _result(
-            "warm_fork",
-            "ok",
-            f"native warm-fork available via: {', '.join(warm_rungs)}",
-            data=data,
-        )
     return _result(
         "warm_fork",
-        "warn",
-        "no warm-fork rung available — sandboxes will cold-start every run",
-        remediation=(
-            "Install the sandbox extra plus a WASI payload, configure an immutable "
-            "container image, or connect a governed microVM controller."
-        ),
-        data=data,
+        "error",
+        f"could not enumerate sandbox rungs ({type(exc).__name__})",
     )
 
 
 def _check_a2a_persistence() -> dict[str, Any]:
     """Validate the unary facade's canonical WorkItem/dispatch dependencies."""
 
-    try:
-        from agent_utilities.knowledge_graph.core.work_durability import (
-            cancel_work_item,
-            get_work_item,
-            submit_work_item_atomic,
-        )
-        from agent_utilities.orchestration.agent_dispatch import enqueue_agent_turn
-
-        from graph_os.a2a import OrchestratorA2ARouter, WorkItemA2AAuthority
-    except Exception as exc:  # noqa: BLE001 - doctor reports no configuration values
-        return _result(
-            "a2a_persistence",
-            "fail",
-            f"canonical A2A authority is unavailable ({type(exc).__name__})",
-            remediation=(
-                "Install compatible graph-os and agent-utilities artifacts with "
-                "WorkItem durability and signed agent dispatch."
-            ),
-            data={"ready": False, "redacted": True},
-        )
-
-    callables = (
-        submit_work_item_atomic,
-        get_work_item,
-        cancel_work_item,
-        enqueue_agent_turn,
-    )
-    data = {
-        "canonical_work_item_authority": all(
-            callable(value) for value in callables[:3]
-        ),
-        "canonical_dispatch_authority": callable(enqueue_agent_turn),
-        "adapter_count": 2
-        if WorkItemA2AAuthority is not None and OrchestratorA2ARouter is not None
-        else 0,
-        "redacted": True,
-    }
-    if not all(data.values()):
-        return _result(
-            "a2a_persistence",
-            "fail",
-            "canonical A2A authority contract is incomplete",
-            remediation=(
-                "Install compatible WorkItem durability and signed agent dispatch "
-                "artifacts; do not configure a second A2A task store."
-            ),
-            data=data,
-        )
+    exc = not_served("knowledge_graph.core.work_durability", "EG-INGEST-WORKER-R605")
     return _result(
         "a2a_persistence",
-        "ok",
-        "A2A reuses canonical WorkItem durability and signed agent dispatch",
-        data=data,
+        "fail",
+        f"canonical A2A authority is unavailable ({type(exc).__name__})",
+        remediation=(
+            "Install compatible graph-os and agent-utilities artifacts with "
+            "WorkItem durability and signed agent dispatch."
+        ),
+        data={"ready": False, "redacted": True},
     )
 
 

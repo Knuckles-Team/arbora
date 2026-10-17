@@ -23,9 +23,10 @@ text in a chat box, not permanent KG evidence on every utterance.
 
 from __future__ import annotations
 
-import hashlib
 import logging
 from typing import Any, Protocol, TypedDict
+
+from graph_os.api.errors import not_served
 
 logger = logging.getLogger(__name__)
 
@@ -65,23 +66,7 @@ async def _transcribe_voice(*, content: bytes, content_type: str) -> dict[str, s
     genuine 500, never inventing text. Never returns a canned/placeholder
     string.
     """
-    from agent_utilities.media.sidecar_delegate import delegate_extract
-
-    digest = hashlib.sha256(content).hexdigest()
-    result = delegate_extract(
-        content, digest=digest, media_type=content_type, modality="audio"
-    )
-    if not result.available:
-        raise RuntimeError(result.error or "audio transcription sidecar unavailable")
-
-    segments = result.raw.get("segments")
-    segments = segments if isinstance(segments, list) else []
-    text = " ".join(
-        str(segment.get("text") or "").strip()
-        for segment in segments
-        if isinstance(segment, dict) and str(segment.get("text") or "").strip()
-    ).strip()
-    return {"text": text}
+    raise not_served("media.sidecar_delegate", "EG-REPO-INGEST-R800")
 
 
 def webui_voice_delegation_helpers() -> WebUiVoiceDelegation:

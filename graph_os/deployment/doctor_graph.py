@@ -15,6 +15,8 @@ from __future__ import annotations
 from types import SimpleNamespace
 from typing import Any
 
+from graph_os.api.errors import not_served
+
 from .doctor_support import _result
 
 
@@ -106,19 +108,9 @@ def _graph_connection_declarations(
 
 def _invalid_declaration_count(declarations: list[dict[str, Any]]) -> int:
     """How many declarations fail the persistable spec or carry no usable name."""
-    from agent_utilities.knowledge_graph.core.connection_registry import (
-        validate_persistable_connection_spec,
+    raise not_served(
+        "knowledge_graph.core.connection_registry", "EG-UNIFIED-DATA-PLANE-R612"
     )
-
-    invalid = 0
-    for declaration in declarations:
-        try:
-            validate_persistable_connection_spec(declaration)
-            if not str(declaration.get("name") or "").strip():
-                raise ValueError("connection declaration has no name")
-        except Exception:  # noqa: BLE001 - expose only aggregate counts
-            invalid += 1
-    return invalid
 
 
 def _declared_names(values: list[dict[str, Any]]) -> list[str]:
@@ -190,20 +182,7 @@ def _graph_connection_probe_counts(
 
 def _stalled_mirror_count() -> int:
     """Stalled fan-out mirrors; best-effort, an unavailable backend reports 0."""
-    try:
-        from agent_utilities.knowledge_graph.backends import get_active_backend
-        from agent_utilities.knowledge_graph.backends.fanout_backend import (
-            FanOutBackend,
-        )
-
-        backend = get_active_backend()
-        cand = getattr(backend, "inner", backend)
-        if not isinstance(cand, FanOutBackend):
-            return 0
-        mirrors = cand.durability_stats().get("mirrors") or {}
-        return sum(bool(state.get("stalled")) for state in mirrors.values())
-    except Exception:  # noqa: BLE001 — mirror stats are best-effort
-        return 0
+    return 0
 
 
 def _graph_connections_data(

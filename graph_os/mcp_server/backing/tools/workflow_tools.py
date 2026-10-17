@@ -10,17 +10,18 @@ from typing import Any
 from agent_utilities.security.error_surface import public_error_text
 from pydantic import Field
 
+from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 
 _WORKFLOW_TASKS: dict[str, asyncio.Task[Any]] = {}
 
 
 def _workflow_gate(engine: Any, name: str) -> dict[str, Any]:
-    from agent_utilities.knowledge_graph.core.workflow_gate import (
-        gate_workflow_execution,
+    raise not_served(
+        "knowledge_graph.core.workflow_gate",
+        "AU-harness (deleted from AU)",
+        owner="agent-utilities",
     )
-
-    return gate_workflow_execution(engine, name)
 
 
 def _gate_denial(name: str, gate: dict[str, Any]) -> str:
@@ -37,12 +38,7 @@ def _gate_denial(name: str, gate: dict[str, Any]) -> str:
 
 def _workflow_mermaid(engine: Any, name: str) -> str | None:
     """Read the persisted topology diagram without failing the workflow operation."""
-    try:
-        from agent_utilities.knowledge_graph.workflow_store import WorkflowStore
-
-        return WorkflowStore(engine).get_mermaid(name)
-    except Exception:
-        return None
+    return None
 
 
 async def _compile_workflow(
@@ -66,31 +62,11 @@ async def _compile_workflow(
 async def _compile_process_workflow(engine: Any, workflow: str, name: str) -> str:
     if not workflow:
         raise ValueError("workflow must contain the BusinessProcess id")
-    from agent_utilities.knowledge_graph.process_plan_compiler import (
-        ProcessPlanCompiler,
-    )
-
-    report = await ProcessPlanCompiler(engine).compile_and_store(
-        workflow, name=name or None
-    )
-    report["status"] = "compiled"
-    report["mermaid"] = await asyncio.to_thread(
-        _workflow_mermaid, engine, report["name"]
-    )
-    return json.dumps(report, default=str)
+    raise not_served("knowledge_graph.process_plan_compiler", "EG-CQ-ORCH-R700")
 
 
 async def _list_workflows(engine: Any, limit: int) -> str:
-    from agent_utilities.knowledge_graph.workflow_store import WorkflowStore
-
-    workflows = await asyncio.to_thread(WorkflowStore(engine).list_workflows, limit)
-    return json.dumps(
-        {
-            "source": "kg",
-            "workflows": workflows,
-        },
-        default=str,
-    )
+    raise not_served("knowledge_graph.workflow_store", "EG-CQ-ORCH-R700")
 
 
 async def _execute_or_dispatch_workflow(
@@ -212,16 +188,7 @@ def _workflow_status(workflow: str) -> str:
 async def _export_workflow(engine: Any, workflow: str, export_format: str) -> str:
     if not workflow:
         raise ValueError("workflow is required for export")
-    from agent_utilities.knowledge_graph.governance_import import export_workflow
-
-    exported = await asyncio.to_thread(
-        export_workflow, engine, workflow, fmt=export_format
-    )
-    return json.dumps(
-        exported,
-        indent=2,
-        default=str,
-    )
+    raise not_served("knowledge_graph.governance_import", "EG-CQ-ORCH-R701")
 
 
 def register_workflow_tools(mcp: Any) -> None:
@@ -288,17 +255,10 @@ def register_workflow_tools(mcp: Any) -> None:
             from agent_utilities.orchestration.manager import Orchestrator
 
             if action == "compile":
-                from agent_utilities.knowledge_graph.workflow_compiler import (
-                    WorkflowCompiler,
-                )
-
-                # Compilation is the only workflow surface that needs the
-                # concrete NL compiler. Bind it at this composition root and
-                # inject the one instance into the manager; execution/status/
-                # list paths do not construct a compiler they cannot use.
-                compiler = WorkflowCompiler(engine)
-                return await _compile_workflow(
-                    Orchestrator(engine, compiler=compiler), engine, task, name
+                raise not_served(
+                    "knowledge_graph.workflow_compiler",
+                    "AU-harness (deleted from AU)",
+                    owner="agent-utilities",
                 )
 
             orchestrator = Orchestrator(engine)

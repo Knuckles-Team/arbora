@@ -32,6 +32,7 @@ from typing import TYPE_CHECKING, Any
 from agent_utilities.core.config import setting
 from agent_utilities.messaging.models import InboundEvent, MediaAttachment, SendResult
 
+from graph_os.api.errors import not_served
 from graph_os.messaging.governed_send import (
     PolicyRunner,
     mirror_outbound_if_enabled,
@@ -84,14 +85,8 @@ class MessagingService:
         """Bind to the live served engine (matches gateway/daemon.py)."""
         if self._engine is not None:
             return self._engine
-        try:
-            from agent_utilities.knowledge_graph.core.engine import (
-                IntelligenceGraphEngine,
-            )
-
-            self._engine = IntelligenceGraphEngine.get_active()
-        except Exception as exc:  # returns None on failure; all callers already null-check the engine before use
-            logger.debug("[ECO-4.48] no active engine: %s", exc)
+        exc = not_served("knowledge_graph.core.engine", "EG-PLACEMENT-R611")
+        logger.debug("[ECO-4.48] no active engine: %s", exc)
         return self._engine
 
     # ── Backend lifecycle ────────────────────────────────────────────

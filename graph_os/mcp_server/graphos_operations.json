@@ -1154,17 +1154,6 @@
   },
   {
    "actions": [
-    "ingest_audio",
-    "ingest_jpeg",
-    "ingest_pdf",
-    "ingest_video"
-   ],
-   "feature": null,
-   "name": "graph_media_sidecar",
-   "surface": "granular"
-  },
-  {
-   "actions": [
     "link",
     "recall",
     "store"

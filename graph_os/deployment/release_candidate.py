@@ -14,6 +14,8 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from graph_os.api.errors import not_served
+
 Digest = Annotated[str, Field(pattern=r"^sha256:[a-f0-9]{64}$")]
 Identifier = Annotated[str, Field(pattern=r"^[a-z][a-z0-9.-]{0,63}$")]
 Revision = Annotated[str, Field(pattern=r"^[a-f0-9]{40}$")]
@@ -236,14 +238,8 @@ def _order(graph: dict[str, set[str]]) -> list[str]:
 
 
 def _verify_candidate(raw: Any) -> dict[str, Any]:
-    try:
-        from agent_utilities.skills.runtime_validation import verify_signed_evidence
-
-        return verify_signed_evidence(
-            raw, verifier_reference="CERT_EVIDENCE_VERIFIER_COMMAND"
-        )
-    except Exception as exc:
-        raise CandidateError("candidate_signature_unverified") from exc
+    exc = not_served("skills.runtime_validation", "graph_os/skills", owner="graph-os")
+    raise CandidateError("candidate_signature_unverified") from exc
 
 
 def read_candidate(path: Path, *, trusted_digest: str) -> tuple[Candidate, str]:
