@@ -1,4 +1,4 @@
-"""GRAPHOS-DEPLOY-R005 / R007: web UI package name and console-script ownership."""
+"""ARBORA-DEPLOY-R005 / R007: web UI package name and console-script ownership."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 PYPROJECT = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 
 
-@pytest.mark.spec("GRAPHOS-DEPLOY-R005")
+@pytest.mark.spec("ARBORA-DEPLOY-R005")
 def test_web_ui_keeps_agent_webui_package_name() -> None:
     extra = [
         Requirement(r) for r in PYPROJECT["project"]["optional-dependencies"]["webui"]
@@ -39,7 +39,7 @@ def _declarers(script: str) -> list[tuple[str, str]]:
     return found
 
 
-@pytest.mark.spec("GRAPHOS-DEPLOY-R007.1")
+@pytest.mark.spec("ARBORA-DEPLOY-R007.1")
 def test_agent_utilities_doctor_declared_only_by_arbora() -> None:
     scripts = PYPROJECT["project"]["scripts"]
     assert scripts["agent-utilities-doctor"] == "arbora.deployment.doctor:main"
@@ -48,7 +48,7 @@ def test_agent_utilities_doctor_declared_only_by_arbora() -> None:
     }
 
 
-@pytest.mark.spec("GRAPHOS-DEPLOY-R007.2")
+@pytest.mark.spec("ARBORA-DEPLOY-R007.2")
 def test_setup_config_declared_only_by_arbora() -> None:
     scripts = PYPROJECT["project"]["scripts"]
     assert scripts["setup-config"] == "arbora.deployment.cli:main"

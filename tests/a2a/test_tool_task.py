@@ -1,4 +1,4 @@
-"""Reference-bound single-tool tasks under one WorkItem lease (GRAPHOS-A2A-R002.2.2)."""
+"""Reference-bound single-tool tasks under one WorkItem lease (ARBORA-A2A-R002.2.2)."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from arbora.a2a.tool_task import (
     tool_task_work_item_id,
 )
 
-pytestmark = pytest.mark.spec("GRAPHOS-A2A-R002.2.2")
+pytestmark = pytest.mark.spec("ARBORA-A2A-R002.2.2")
 
 REQUEST = ToolTaskRequest(
     operation_id="graph.query",

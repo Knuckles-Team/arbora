@@ -1,4 +1,4 @@
-"""Registry property test for GRAPHOS-IDENTITY-R002.
+"""Registry property test for ARBORA-IDENTITY-R002.
 
 Arbora's own domain scopes must use the shared scope classes and stay
 consistent with the single generated engine scope registry rather than a
@@ -47,7 +47,7 @@ def test_scopes_by_name_indexes_every_declared_scope() -> None:
     assert indexed["webui:admin"].scope_class == "admin"
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R002")
+@pytest.mark.spec("ARBORA-IDENTITY-R002")
 def test_declared_scopes_match_a_consistent_registry(tmp_path: Path) -> None:
     contract, _exclusions = _fixture(tmp_path)
     scope_path = contract / "scopes.json"

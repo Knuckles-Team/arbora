@@ -203,4 +203,4 @@ def test_doctor_static_check_never_opens_connection_transport(monkeypatch) -> No
     assert registry.probed == []
 
 
-pytestmark = pytest.mark.spec("GRAPHOS-DEPLOY-R007.6")
+pytestmark = pytest.mark.spec("ARBORA-DEPLOY-R007.6")

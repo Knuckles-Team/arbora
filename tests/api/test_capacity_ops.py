@@ -1,4 +1,4 @@
-"""Focused contract for the GRAPHOS-CAPACITY-R002 hosted operations.
+"""Focused contract for the ARBORA-CAPACITY-R002 hosted operations.
 
 Exercises the operation's handler directly, via ``tests/api/_ops_support``'s
 shared context builder, rather than the full ``get_registry()`` assembly
@@ -23,7 +23,7 @@ from arbora.fleet.error_budget import (
 from arbora.fleet.throttle_service import ThrottleRegistry
 from tests.api._ops_support import service_context as _context
 
-pytestmark = pytest.mark.spec("GRAPHOS-CAPACITY-R002")
+pytestmark = pytest.mark.spec("ARBORA-CAPACITY-R002")
 
 _PARTITION_PARAMS = {
     "tenant": "t1",

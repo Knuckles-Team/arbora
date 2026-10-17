@@ -1,6 +1,6 @@
 """Focused MCP verb projection checks; server cutover is covered separately.
 
-``invoke`` (GRAPHOS-OPS-R007's single invocation chokepoint) is injected into
+``invoke`` (ARBORA-OPS-R007's single invocation chokepoint) is injected into
 ``MCPProjection`` rather than imported from ``arbora.api.invoke``, which
 does not exist on this branch yet; each test supplies its own fake.
 """
@@ -115,7 +115,7 @@ async def _unused_invoke(*_args: Any, **_kwargs: Any) -> Any:
 
 
 def _op_result(value: Any = None, *, code: str = "OK", details: Any = None) -> Any:
-    """A stand-in for ``OpResult`` (GRAPHOS-OPS-R007), checked structurally."""
+    """A stand-in for ``OpResult`` (ARBORA-OPS-R007), checked structurally."""
 
     return SimpleNamespace(value=value, code=code, details=details or {})
 

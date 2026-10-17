@@ -56,7 +56,7 @@ def project(value: Any) -> dict[str, Any]:
     return project_terminal_event(value, session=SESSION, task_id=TASK, owner_ref=OWNER)
 
 
-@pytest.mark.spec("GRAPHOS-A2A-R010.1")
+@pytest.mark.spec("ARBORA-A2A-R010.1")
 def test_committed_identity_is_projected_without_inventing_cursor() -> None:
     value = record()
     assert project(value) == value["terminal_event"]

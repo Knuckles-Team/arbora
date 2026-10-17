@@ -3,7 +3,7 @@
 Run with both reviewed source trees and their provisioned dependencies. Ordinary
 Arbora-only validation skips this receipt rather than claiming terminal proof.
 """
-# spec: GRAPHOS-HOST-R009.8
+# spec: ARBORA-HOST-R009.8
 
 from pathlib import Path
 from unittest.mock import AsyncMock
@@ -57,7 +57,7 @@ async def test_production_sink_over_http_into_mounted_terminal(tmp_path: Path) -
         runtime.sink.close()
 
 
-# spec: GRAPHOS-HOST-R009.8.2.2
+# spec: ARBORA-HOST-R009.8.2.2
 @pytest.mark.asyncio
 async def test_restarted_source_metadata_and_rotation_gap_in_terminal(
     tmp_path: Path,

@@ -1,4 +1,4 @@
-"""GRAPHOS-HOST-R009 / AU-BOUNDARY-R015: connector agent host wiring tests.
+"""ARBORA-HOST-R009 / AU-BOUNDARY-R015: connector agent host wiring tests.
 
 Exercises the real ``build_agent_host_app`` entry point a connector's
 ``agent_server.py`` reaches through ``create_agent_server`` -- health,

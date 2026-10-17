@@ -1,6 +1,6 @@
-"""GRAPHOS-OPS-R035.1: multiplexer meta-tool registration + visibility routing.
+"""ARBORA-OPS-R035.1: multiplexer meta-tool registration + visibility routing.
 
-specs/hosted-api-operations/requirements.md GRAPHOS-OPS-R035 requires the
+specs/hosted-api-operations/requirements.md ARBORA-OPS-R035 requires the
 multiplexer's meta-tool registration to be reduced to the four resident
 fleet tools (find_tools, load_tools, unload_tools, multiplexer_status), and
 its session-visibility middleware to route list/call requests only -- never
@@ -24,7 +24,7 @@ from arbora.api.mcp.registration import (
 )
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R035.1")
+@pytest.mark.spec("ARBORA-OPS-R035.1")
 def test_multiplexer_meta_tool_registration_is_reduced_to_four_resident_tools() -> None:
     assert frozenset(FLEET_OPERATIONS) == frozenset(
         {"find_tools", "load_tools", "unload_tools", "multiplexer_status"}
@@ -55,7 +55,7 @@ class _FakeBinding:
         return self._loaded
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R035.1")
+@pytest.mark.spec("ARBORA-OPS-R035.1")
 async def test_governed_session_visibility_only_routes_never_denies() -> None:
     """on_list_tools must filter the candidate list, raising nothing itself.
 

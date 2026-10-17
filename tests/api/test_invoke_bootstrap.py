@@ -1,4 +1,4 @@
-"""GRAPHOS-OPS-R009: the production invoke-services composition, against
+"""ARBORA-OPS-R009: the production invoke-services composition, against
 EG client fixtures only -- this module never opens a live connection."""
 
 from __future__ import annotations
@@ -158,7 +158,7 @@ def test_deny_subject_access_denies() -> None:
     assert allowed is False
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R009")
+@pytest.mark.spec("ARBORA-OPS-R009")
 def test_eg_dispatch_refuses_invalid_binding_before_send() -> None:
     from arbora.api.invoke.pipeline import OperationRefused
 

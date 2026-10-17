@@ -1,4 +1,4 @@
-"""GRAPHOS-ACP-001 R001.1: ACP session-policy model and admission check."""
+"""ARBORA-ACP-001 R001.1: ACP session-policy model and admission check."""
 
 from datetime import UTC, datetime, timedelta
 
@@ -28,7 +28,7 @@ def test_admit_refuses_without_principal() -> None:
     assert excinfo.value.reason is AcpRefusalReason.UNAUTHENTICATED
 
 
-@pytest.mark.spec("GRAPHOS-ACP-R001.1")
+@pytest.mark.spec("ARBORA-ACP-R001.1")
 def test_admit_succeeds_and_binds_principal() -> None:
     admission = AcpSessionAdmission(POLICY)
     session = admission.admit(PRINCIPAL, chat_adapter_available=True, now=T0)
@@ -68,7 +68,7 @@ def test_check_message_refuses_when_absolute_limit_exceeded_despite_activity() -
     assert excinfo.value.reason is AcpRefusalReason.ABSOLUTE_EXPIRED
 
 
-@pytest.mark.spec("GRAPHOS-ACP-R001.1")
+@pytest.mark.spec("ARBORA-ACP-R001.1")
 def test_admit_refuses_when_chat_adapter_unavailable() -> None:
     admission = AcpSessionAdmission(POLICY)
     with pytest.raises(AcpRefusal) as excinfo:

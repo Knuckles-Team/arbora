@@ -263,7 +263,7 @@ def emitted_client(engine_contract, tmp_path, monkeypatch):
     return sys.modules["emitted_client.invoke"]
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R025.1")
+@pytest.mark.spec("ARBORA-OPS-R025.1")
 @pytest.mark.asyncio
 @pytest.mark.parametrize("ok", [True, False])
 async def test_emitted_invoker_preserves_matching_envelope(emitted_client, ok):
@@ -285,7 +285,7 @@ async def test_emitted_invoker_preserves_matching_envelope(emitted_client, ok):
     assert calls == [("query.uql", params)]
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R025.1")
+@pytest.mark.spec("ARBORA-OPS-R025.1")
 @pytest.mark.asyncio
 @pytest.mark.parametrize("ok", [True, False])
 @pytest.mark.parametrize("meta", [None, {}, [], {"registry_digest": "stale"}])
@@ -300,7 +300,7 @@ async def test_emitted_invoker_refuses_missing_or_stale_digest(
         await emitted_client.invoke(Transport(), "query.uql", {})
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R025.1")
+@pytest.mark.spec("ARBORA-OPS-R025.1")
 @pytest.mark.asyncio
 async def test_emitted_invoker_rejects_unknown_operation_before_transport(
     emitted_client,
@@ -317,7 +317,7 @@ async def test_emitted_invoker_rejects_unknown_operation_before_transport(
     assert calls == []
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R025.2")
+@pytest.mark.spec("ARBORA-OPS-R025.2")
 def test_reference_resources_preserve_emitted_lookup_and_digest(
     engine_contract, monkeypatch, tmp_path
 ):
@@ -467,7 +467,7 @@ def test_compat_reads_baseline_schema_resources_from_same_git_ref(
     assert "baseline:arbora/api/generated/schemas/method.request.json" in reads
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R025.2")
+@pytest.mark.spec("ARBORA-OPS-R025.2")
 def test_openapi_reuses_curated_schemas_without_changing_resolved_meaning():
     registry = _registry()
     schema = {

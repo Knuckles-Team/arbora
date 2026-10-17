@@ -1,4 +1,4 @@
-"""GRAPHOS-HOST-R003: web UI rename references."""
+"""ARBORA-HOST-R003: web UI rename references."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R003")
+@pytest.mark.spec("ARBORA-HOST-R003")
 def test_webui_extra_source_and_release_checkout_reference_agent_webui() -> None:
     data = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     extra = data["project"]["optional-dependencies"]["webui"]

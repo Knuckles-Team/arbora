@@ -1,4 +1,4 @@
-"""The pre-commit mypy hook type-checks the test suite (GRAPHOS-DEPLOY-R004)."""
+"""The pre-commit mypy hook type-checks the test suite (ARBORA-DEPLOY-R004)."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import yaml
 CONFIG = Path(__file__).resolve().parents[2] / ".pre-commit-config.yaml"
 
 
-@pytest.mark.spec("GRAPHOS-DEPLOY-R004")
+@pytest.mark.spec("ARBORA-DEPLOY-R004")
 def test_mypy_hook_does_not_exclude_the_test_suite() -> None:
     config = yaml.safe_load(CONFIG.read_text(encoding="utf-8"))
     hooks = [

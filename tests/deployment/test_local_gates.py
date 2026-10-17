@@ -12,7 +12,7 @@ from arbora.deployment.local_gates import (
 )
 
 
-@pytest.mark.spec("GRAPHOS-RELEASE-R002")
+@pytest.mark.spec("ARBORA-RELEASE-R002")
 def test_push_blocked_while_a_local_gate_is_red() -> None:
     reports = [
         GateReport(name="ruff", green=True),
@@ -25,7 +25,7 @@ def test_push_blocked_while_a_local_gate_is_red() -> None:
     assert excinfo.value.failing == ("kubernetes-test-namespace",)
 
 
-@pytest.mark.spec("GRAPHOS-RELEASE-R002")
+@pytest.mark.spec("ARBORA-RELEASE-R002")
 def test_push_proceeds_once_every_local_gate_is_green() -> None:
     reports = [
         GateReport(name="ruff", green=True),
@@ -38,13 +38,13 @@ def test_push_proceeds_once_every_local_gate_is_green() -> None:
     require_green_local_gates(reports)  # does not raise
 
 
-@pytest.mark.spec("GRAPHOS-RELEASE-R002")
+@pytest.mark.spec("ARBORA-RELEASE-R002")
 def test_push_blocked_when_no_local_gate_has_reported_yet() -> None:
     with pytest.raises(GateBlockedError):
         require_green_local_gates([])
 
 
-@pytest.mark.spec("GRAPHOS-RELEASE-R002")
+@pytest.mark.spec("ARBORA-RELEASE-R002")
 def test_validate_test_namespace_runs_probe_and_reports_green() -> None:
     calls: list[str] = []
 
@@ -56,7 +56,7 @@ def test_validate_test_namespace_runs_probe_and_reports_green() -> None:
     assert calls == ["called"]
 
 
-@pytest.mark.spec("GRAPHOS-RELEASE-R002")
+@pytest.mark.spec("ARBORA-RELEASE-R002")
 def test_validate_test_namespace_reports_red_when_probe_raises() -> None:
     def probe() -> None:
         raise RuntimeError("workload not ready")
@@ -66,7 +66,7 @@ def test_validate_test_namespace_reports_red_when_probe_raises() -> None:
     assert "workload not ready" in report.detail
 
 
-@pytest.mark.spec("GRAPHOS-RELEASE-R002")
+@pytest.mark.spec("ARBORA-RELEASE-R002")
 def test_validate_test_namespace_rejects_a_malformed_namespace() -> None:
     report = validate_test_namespace("Not_Valid!", lambda: None)
     assert report.green is False

@@ -1,9 +1,9 @@
-"""Focused authority tests for the policy and swarm read ports (GRAPHOS-OPS-R021.3).
+"""Focused authority tests for the policy and swarm read ports (ARBORA-OPS-R021.3).
 
 ``policy.read`` and ``swarm.topology.read`` are each a lone caller-scoped
 port bound through ``tests/api/_ops_support.py``'s ``tenant_reader_context``;
 see ``arbora.api.ops.ingest`` for the facade convention they follow
-(GRAPHOS-OPS-R020.1/R020.2).
+(ARBORA-OPS-R020.1/R020.2).
 """
 
 from __future__ import annotations

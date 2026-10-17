@@ -1,6 +1,6 @@
 """Focused authority tests for the ingest runner facade.
 
-Covers GRAPHOS-OPS-R020.1 (source sync) and GRAPHOS-OPS-R020.2 (repository
+Covers ARBORA-OPS-R020.1 (source sync) and ARBORA-OPS-R020.2 (repository
 indexing, source list/status).
 """
 
@@ -94,7 +94,7 @@ def _context(*, runner: object | None, idempotency_key: str | None = "idem-1"):
     )
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R020.1")
+@pytest.mark.spec("ARBORA-OPS-R020.1")
 async def test_sync_returns_a_durable_job_receipt() -> None:
     runner = _FakeRunner()
     context = _context(runner=runner)
@@ -113,7 +113,7 @@ async def test_sync_returns_a_durable_job_receipt() -> None:
     assert runner.calls == [("tenant-a", "src-1", "incremental", "idem-1")]
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R020.1")
+@pytest.mark.spec("ARBORA-OPS-R020.1")
 async def test_sync_fails_closed_with_unavailable_when_runner_not_composed() -> None:
     context = _context(runner=None)
     with pytest.raises(OperationRefused) as excinfo:
@@ -135,7 +135,7 @@ def test_operation_declares_the_write_scope_and_audit_class() -> None:
     assert op.idempotency.value == "key_required"
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R020.2")
+@pytest.mark.spec("ARBORA-OPS-R020.2")
 async def test_index_returns_a_durable_job_receipt() -> None:
     runner = _FakeRunner()
     context = _context(runner=runner)
@@ -151,7 +151,7 @@ async def test_index_returns_a_durable_job_receipt() -> None:
     assert runner.index_calls == [("tenant-a", "repo-1", "idem-1")]
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R020.2")
+@pytest.mark.spec("ARBORA-OPS-R020.2")
 async def test_index_fails_closed_with_unavailable_when_runner_not_composed() -> None:
     context = _context(runner=None)
     with pytest.raises(OperationRefused) as excinfo:
@@ -165,7 +165,7 @@ async def test_index_requires_an_idempotency_key() -> None:
         await index_repository(context, {"repo_id": "repo-1"}, None)
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R020.2")
+@pytest.mark.spec("ARBORA-OPS-R020.2")
 async def test_list_sources_returns_the_tenant_inventory() -> None:
     runner = _FakeRunner()
     context = _context(runner=runner)
@@ -178,7 +178,7 @@ async def test_list_sources_returns_the_tenant_inventory() -> None:
     assert runner.list_calls == ["tenant-a"]
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R020.2")
+@pytest.mark.spec("ARBORA-OPS-R020.2")
 async def test_list_sources_fails_closed_with_unavailable_when_runner_not_composed() -> (
     None
 ):
@@ -188,7 +188,7 @@ async def test_list_sources_fails_closed_with_unavailable_when_runner_not_compos
     assert excinfo.value.code == "UNAVAILABLE"
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R020.2")
+@pytest.mark.spec("ARBORA-OPS-R020.2")
 async def test_source_status_returns_the_current_record() -> None:
     runner = _FakeRunner()
     context = _context(runner=runner)
@@ -199,7 +199,7 @@ async def test_source_status_returns_the_current_record() -> None:
     assert runner.status_calls == [("tenant-a", "src-1")]
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R020.2")
+@pytest.mark.spec("ARBORA-OPS-R020.2")
 async def test_source_status_fails_closed_with_unavailable_when_runner_not_composed() -> (
     None
 ):
@@ -225,7 +225,7 @@ def test_source_inventory_operations_declare_the_read_scope() -> None:
         assert op.effect.value == "read"
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R020.3.1.1")
+@pytest.mark.spec("ARBORA-OPS-R020.3.1.1")
 async def test_list_packs_returns_the_tenant_inventory() -> None:
     runner = _FakeRunner()
     result = await list_packs(_context(runner=runner), {}, None)
@@ -237,7 +237,7 @@ async def test_list_packs_returns_the_tenant_inventory() -> None:
     assert runner.pack_calls == ["tenant-a"]
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R020.3.1.1")
+@pytest.mark.spec("ARBORA-OPS-R020.3.1.1")
 async def test_list_packs_fails_closed_with_unavailable_when_runner_not_composed() -> (
     None
 ):
@@ -246,14 +246,14 @@ async def test_list_packs_fails_closed_with_unavailable_when_runner_not_composed
     assert excinfo.value.code == "UNAVAILABLE"
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R020.3.1.1")
+@pytest.mark.spec("ARBORA-OPS-R020.3.1.1")
 def test_packs_list_operation_declares_the_read_scope() -> None:
     op = {op.id: op for op in operations()}["ingest.packs.list"]
     assert op.scopes == frozenset({"ingest:read"})
     assert op.effect.value == "read"
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R020.3.1.2")
+@pytest.mark.spec("ARBORA-OPS-R020.3.1.2")
 async def test_job_status_reports_durable_job_state() -> None:
     runner = _FakeRunner()
     result = await get_job_status(_context(runner=runner), {"job_id": "job-9"}, None)
@@ -263,7 +263,7 @@ async def test_job_status_reports_durable_job_state() -> None:
     assert runner.job_calls == [("tenant-a", "job-9")]
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R020.3.1.2")
+@pytest.mark.spec("ARBORA-OPS-R020.3.1.2")
 async def test_job_status_fails_closed_with_unavailable_when_runner_not_composed() -> (
     None
 ):
@@ -272,7 +272,7 @@ async def test_job_status_fails_closed_with_unavailable_when_runner_not_composed
     assert excinfo.value.code == "UNAVAILABLE"
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R020.3.1.2")
+@pytest.mark.spec("ARBORA-OPS-R020.3.1.2")
 def test_jobs_status_operation_declares_the_read_scope() -> None:
     op = {op.id: op for op in operations()}["ingest.jobs.status"]
     assert op.scopes == frozenset({"ingest:read"})

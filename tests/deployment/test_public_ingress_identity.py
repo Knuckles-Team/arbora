@@ -1,9 +1,9 @@
-"""GRAPHOS-INGRESS-R001.1 — typed model render + refusal tests.
+"""ARBORA-INGRESS-R001.1 — typed model render + refusal tests.
 
 Covers test-spec.md T-IN-01 (deterministic redacted render) and T-IN-02
 (each malformed/unknown/missing input refuses with a diagnostic, no secret
 value leaked). This slice is standalone: no gateway/MCP wiring is exercised
-here (GRAPHOS-INGRESS-R001.2+).
+here (ARBORA-INGRESS-R001.2+).
 """
 
 from __future__ import annotations

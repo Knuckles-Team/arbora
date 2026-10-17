@@ -1,4 +1,4 @@
-"""GRAPHOS-OPS-R026.2: the backward-compatibility drift gate fails closed
+"""ARBORA-OPS-R026.2: the backward-compatibility drift gate fails closed
 when a previously published operation is removed or narrowed."""
 
 from __future__ import annotations
@@ -39,7 +39,7 @@ def _by_id(ops: list[OpSpec]) -> dict[str, OpSpec]:
     return {op.id: op for op in ops}
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R026.2")
+@pytest.mark.spec("ARBORA-OPS-R026.2")
 def test_no_break_when_nothing_changes() -> None:
     baseline = _by_id([_op()])
     current = _by_id([_op()])
@@ -48,7 +48,7 @@ def test_no_break_when_nothing_changes() -> None:
     assert result.explain() == ""
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R026.2")
+@pytest.mark.spec("ARBORA-OPS-R026.2")
 def test_gate_fails_when_a_published_operation_is_removed() -> None:
     baseline = _by_id([_op(), _op("identity.users.enable")])
     current = _by_id([_op()])
@@ -57,7 +57,7 @@ def test_gate_fails_when_a_published_operation_is_removed() -> None:
     assert result.removed_ops == ("identity.users.enable",)
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R026.2")
+@pytest.mark.spec("ARBORA-OPS-R026.2")
 def test_gate_fails_when_a_new_required_scope_is_added() -> None:
     baseline = _by_id([_op(scopes=frozenset({"identity:admin"}))])
     current = _by_id([_op(scopes=frozenset({"identity:admin", "identity:superuser"}))])
@@ -67,7 +67,7 @@ def test_gate_fails_when_a_new_required_scope_is_added() -> None:
     assert "narrowed scopes" in result.explain()
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R026.2")
+@pytest.mark.spec("ARBORA-OPS-R026.2")
 def test_widening_required_scopes_is_not_a_break() -> None:
     # Dropping a required scope only widens who may call -- compatible.
     baseline = _by_id([_op(scopes=frozenset({"identity:admin", "identity:superuser"}))])
@@ -76,7 +76,7 @@ def test_widening_required_scopes_is_not_a_break() -> None:
     assert not result.narrowed_scopes
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R026.2")
+@pytest.mark.spec("ARBORA-OPS-R026.2")
 def test_gate_fails_when_principal_rule_is_narrowed() -> None:
     baseline = _by_id([_op(principals=PrincipalRule.ANY, scopes=frozenset())])
     current = _by_id(
@@ -87,7 +87,7 @@ def test_gate_fails_when_principal_rule_is_narrowed() -> None:
     assert result.narrowed_principals == ("identity.users.disable",)
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R026.2")
+@pytest.mark.spec("ARBORA-OPS-R026.2")
 def test_widening_principal_rule_is_not_a_break() -> None:
     baseline = _by_id(
         [_op(principals=PrincipalRule.HUMAN_UNDELEGATED, scopes=frozenset())]

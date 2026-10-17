@@ -200,7 +200,7 @@ def test_artifact_refusal(tmp_path, candidate, authority, field, value):
 
 
 def test_gate_release_blocks_on_any_red_local_gate(tmp_path, candidate, authority):
-    """T-RL-09 (GRAPHOS-RELEASE-R002): a failing local gate blocks the push and
+    """T-RL-09 (ARBORA-RELEASE-R002): a failing local gate blocks the push and
     names it; once every gate is green, the push proceeds."""
     plan = _plan(tmp_path, candidate)
     gates = (
@@ -243,8 +243,8 @@ def _exit_criteria_rows():
 
 
 def test_exit_criteria_matrix_one_row_per_readiness_obligation():
-    """T-RL-10 (GRAPHOS-RELEASE-R003.1): a valid matrix carries one row per
-    readiness obligation named in GRAPHOS-RELEASE-R003."""
+    """T-RL-10 (ARBORA-RELEASE-R003.1): a valid matrix carries one row per
+    readiness obligation named in ARBORA-RELEASE-R003."""
     matrix = read_exit_criteria_matrix(_exit_criteria_rows())
     assert {row.obligation_id for row in matrix.rows} == set(_EXIT_CRITERIA_OBLIGATIONS)
 

@@ -1,8 +1,8 @@
-"""GRAPHOS-OPS-R012 / GRAPHOS-FLEET-R014: bounded resolver for NL operation lookup.
+"""ARBORA-OPS-R012 / ARBORA-FLEET-R014: bounded resolver for NL operation lookup.
 
 Covers combined lexical/semantic ranking order, the bounded result cache,
 the read-only preview fallback for an unmatched ``ask`` call (never a direct
-mutation), and (GRAPHOS-FLEET-R014) that ``record_execution``'s outcome
+mutation), and (ARBORA-FLEET-R014) that ``record_execution``'s outcome
 feedback is an EMA partitioned by the caller's opaque ``scope_ref`` so one
 tenant/policy partition's learned reward never leaks into another's rank.
 """
@@ -39,7 +39,7 @@ _NL_DESCRIPTOR = Descriptor(
 )
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R012")
+@pytest.mark.spec("ARBORA-OPS-R012")
 def test_rank_orders_lexical_name_match_above_description_only_match() -> None:
     resolver = IntentResolver()
     ranked = resolver.rank("act", "restart the deploy", _DESCRIPTORS, scope_ref=None)
@@ -51,7 +51,7 @@ def test_rank_orders_lexical_name_match_above_description_only_match() -> None:
     assert ranked[0].score > ranked[1].score
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R012")
+@pytest.mark.spec("ARBORA-OPS-R012")
 def test_rank_is_cached_for_an_identical_visible_snapshot() -> None:
     resolver = IntentResolver()
     first = resolver.rank("act", "restart the deploy", _DESCRIPTORS, scope_ref=None)
@@ -61,7 +61,7 @@ def test_rank_is_cached_for_an_identical_visible_snapshot() -> None:
     assert len(resolver._cache) == 1
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R012")
+@pytest.mark.spec("ARBORA-OPS-R012")
 def test_cache_evicts_oldest_entry_once_over_its_bound() -> None:
     resolver = IntentResolver(cache_limit=2)
     for n in range(3):
@@ -70,7 +70,7 @@ def test_cache_evicts_oldest_entry_once_over_its_bound() -> None:
     assert len(resolver._cache) == 2
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R012")
+@pytest.mark.spec("ARBORA-OPS-R012")
 def test_unmatched_ask_falls_back_to_read_only_nl_preview() -> None:
     resolver = IntentResolver()
     resolution = resolver.resolve(
@@ -88,7 +88,7 @@ def test_unmatched_ask_falls_back_to_read_only_nl_preview() -> None:
     )
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R012")
+@pytest.mark.spec("ARBORA-OPS-R012")
 def test_unmatched_ask_without_nl_refuses_rather_than_mutating() -> None:
     resolver = IntentResolver()
     resolution = resolver.resolve(
@@ -100,7 +100,7 @@ def test_unmatched_ask_without_nl_refuses_rather_than_mutating() -> None:
     assert resolution.preview is False
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R012")
+@pytest.mark.spec("ARBORA-OPS-R012")
 def test_matched_mutation_verb_always_requires_a_reviewed_preview() -> None:
     resolver = IntentResolver()
     resolution = resolver.resolve(
@@ -111,7 +111,7 @@ def test_matched_mutation_verb_always_requires_a_reviewed_preview() -> None:
     assert resolution.preview is True
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R014")
+@pytest.mark.spec("ARBORA-FLEET-R014")
 def test_outcome_feedback_is_partitioned_by_scope_ref() -> None:
     """A recorded outcome under one tenant/policy scope never leaks into another's rank.
 
@@ -158,7 +158,7 @@ def test_outcome_feedback_is_partitioned_by_scope_ref() -> None:
     )
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R014")
+@pytest.mark.spec("ARBORA-FLEET-R014")
 def test_scope_ref_requires_verified_tenant_and_policy_revision() -> None:
     resolver = IntentResolver()
     with pytest.raises(ValueError):
@@ -167,7 +167,7 @@ def test_scope_ref_requires_verified_tenant_and_policy_revision() -> None:
         resolver.scope_ref("tenant-a", "")
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R014")
+@pytest.mark.spec("ARBORA-FLEET-R014")
 def test_deterministic_uql_visibility_does_not_authorize_nl_fallback() -> None:
     resolution = IntentResolver().resolve(
         "ask",

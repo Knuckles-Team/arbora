@@ -1,4 +1,4 @@
-"""GRAPHOS-FLEET-R003.1: D18 write-back is typed, idempotent and preview-only."""
+"""ARBORA-FLEET-R003.1: D18 write-back is typed, idempotent and preview-only."""
 
 from __future__ import annotations
 

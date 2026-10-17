@@ -31,7 +31,7 @@ def request() -> CodingSessionRequest:
     return CodingSessionRequest(ROOT, frozenset(ClientCapability))
 
 
-@pytest.mark.spec("GRAPHOS-ACP-R001.3")
+@pytest.mark.spec("ARBORA-ACP-R001.3")
 def test_frozen_model_and_no_grant_injection() -> None:
     declared: Any = {ClientCapability.READ_TEXT_FILE}
     value = CodingSessionRequest(ROOT, declared)
