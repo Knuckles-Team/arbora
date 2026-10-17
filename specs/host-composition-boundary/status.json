@@ -235,7 +235,7 @@
     {
       "id": "GRAPHOS-HOST-R001.2",
       "title": "GraphOS registers the harness host bindings at startup",
-      "delivery_state": "SPECIFIED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "9e7f6499d96f"
       ],
@@ -253,8 +253,10 @@
     {
       "id": "GRAPHOS-HOST-R001.2.1",
       "title": "GraphOS binds the run-loop providers at startup",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "25e15e2108e1"
+      ],
       "verified_by": [
         "tests/test_agent_runs.py:42",
         "tests/test_agent_runs.py:60",
