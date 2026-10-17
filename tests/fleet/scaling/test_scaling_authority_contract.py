@@ -1,32 +1,19 @@
-# mypy: disable-error-code="arg-type,assignment,misc,call-arg"
 """Public-surface behaviour of the scaling authority contract."""
 
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import pytest
 from pydantic import ValidationError
 
 from graph_os.fleet.scaling.scaling_authority import (
-    ControllerMode,
-    ControllerRegistration,
-    DelegatedController,
-    FailureDomain,
-    FailureDomainStatus,
-    LeaseFence,
     MaintenanceWindow,
     ObservedOutcome,
-    OfflineRecoveryPolicy,
-    QuotaPolicy,
-    ResourcePool,
-    RollbackPolicy,
     ScaleAuthority,
-    ScaleCadence,
     ScaleDecision,
     ScaleExecution,
     ScaleIntent,
-    ScaleUnit,
     SignalSummaryRef,
-    WorkloadClass,
     validate_scale_intent,
     validate_scale_lifecycle,
 )
@@ -35,318 +22,290 @@ pytestmark = pytest.mark.spec("GRAPHOS-CAPACITY-R750.750")
 
 NOW = datetime(2030, 1, 1, 12, 0, tzinfo=UTC)
 LATER = NOW + timedelta(minutes=5)
+UNIT, WRITER, DOMAIN = "unit:gateway", "controller:main", "host:small-gpu-a"
+QUOTA = {"scope": "tenant:acme", "max_units": 12}
+RECOVERY = {"max_staleness_s": 120}
 
 
-def _fence(*, epoch: int = 4) -> LeaseFence:
-    return LeaseFence(
-        lease_id="lease:scaling-authority",
-        lease_epoch=epoch,
-        fence_token=9,
-        expires_at=NOW + timedelta(minutes=30),
-    )
+def fence(epoch: int = 4) -> dict[str, Any]:
+    return {
+        "lease_id": "lease:scaling-authority",
+        "lease_epoch": epoch,
+        "fence_token": 9,
+        "expires_at": NOW + timedelta(minutes=30),
+    }
 
 
-def _failure_domain(
-    status: FailureDomainStatus = FailureDomainStatus.HEALTHY,
-) -> FailureDomain:
-    return FailureDomain(
-        domain_id="host:small-gpu-a",
-        kind="host",
-        status=status,
-        last_observed_at=NOW,
-        authority_ref="authority:inventory",
-    )
+def unit(**update: Any) -> dict[str, Any]:
+    return {
+        "unit_id": UNIT,
+        "revision": 7,
+        "workload_class_id": "workload:gateway",
+        "resource_pool_id": "pool:replica-slots",
+        "cadence": "service_replica",
+        "controller_mode": "native",
+        "controller_id": WRITER,
+        "replica_writer_id": WRITER,
+        "min_replicas": 1,
+        "max_replicas": 8,
+        "reserved_headroom_replicas": 2,
+        "tenant_quota": {**QUOTA, "max_units": 8},
+        "failure_domain_id": DOMAIN,
+        "offline_recovery": RECOVERY,
+        "maintenance_window": {"window": "02:00-04:00"},
+        "rollback_policy": {"on_failure": "automatic", "max_attempts": 2},
+        **update,
+    }
 
 
-def _pool() -> ResourcePool:
-    return ResourcePool(
-        pool_id="pool:replica-slots",
-        revision=2,
-        resource_kind="replica_slots",
-        capacity_units=16,
-        allocated_units=2,
-        reserved_headroom_units=2,
-        failure_domain_id="host:small-gpu-a",
-        quota=QuotaPolicy(scope="tenant:acme", max_units=12),
-        lease_fence=_fence(),
-        offline_recovery=OfflineRecoveryPolicy(max_staleness_s=120),
-    )
+def writer(
+    unit_id: str = UNIT, controller_id: str = WRITER, **kw: Any
+) -> dict[str, Any]:
+    return {
+        "unit_id": unit_id,
+        "controller_id": controller_id,
+        "mode": "native",
+        "writes_replicas": True,
+        "lease_fence": fence(),
+        **kw,
+    }
 
 
-def _workload() -> WorkloadClass:
-    return WorkloadClass(
-        workload_id="workload:gateway",
-        revision=5,
-        tenant_ref="tenant:acme",
-        resource_pool_id="pool:replica-slots",
-        cadence=ScaleCadence.SERVICE_REPLICA,
-        priority=50,
-        max_concurrency=8,
-        quota=QuotaPolicy(scope="tenant:acme", max_units=12),
-    )
-
-
-def _unit() -> ScaleUnit:
-    return ScaleUnit(
-        unit_id="unit:gateway",
-        revision=7,
-        workload_class_id="workload:gateway",
-        resource_pool_id="pool:replica-slots",
-        cadence=ScaleCadence.SERVICE_REPLICA,
-        controller_mode=ControllerMode.NATIVE,
-        controller_id="controller:main",
-        replica_writer_id="controller:main",
-        min_replicas=1,
-        max_replicas=8,
-        reserved_headroom_replicas=2,
-        tenant_quota=QuotaPolicy(scope="tenant:acme", max_units=8),
-        failure_domain_id="host:small-gpu-a",
-        offline_recovery=OfflineRecoveryPolicy(max_staleness_s=120),
-        maintenance_window=MaintenanceWindow(window="02:00-04:00"),
-        rollback_policy=RollbackPolicy(on_failure="automatic", max_attempts=2),
-    )
-
-
-def _native_writer() -> ControllerRegistration:
-    return ControllerRegistration(
-        unit_id="unit:gateway",
-        controller_id="controller:main",
-        mode=ControllerMode.NATIVE,
-        writes_replicas=True,
-        lease_fence=_fence(),
-    )
-
-
-def _authority(
-    *,
-    failure_domain: FailureDomain | None = None,
-    unit: ScaleUnit | None = None,
-    controllers: tuple[ControllerRegistration, ...] | None = None,
+def authority(
+    units: tuple[dict[str, Any], ...] | None = None,
+    controllers: tuple[dict[str, Any], ...] | None = None,
+    domain_status: str = "healthy",
 ) -> ScaleAuthority:
-    return ScaleAuthority(
-        authority_revision=11,
-        failure_domains=(failure_domain or _failure_domain(),),
-        pools=(_pool(),),
-        workloads=(_workload(),),
-        units=(unit or _unit(),),
-        controllers=(_native_writer(),) if controllers is None else controllers,
+    return ScaleAuthority.model_validate(
+        {
+            "authority_revision": 11,
+            "failure_domains": [
+                {
+                    "domain_id": DOMAIN,
+                    "kind": "host",
+                    "status": domain_status,
+                    "last_observed_at": NOW,
+                    "authority_ref": "authority:inventory",
+                }
+            ],
+            "pools": [
+                {
+                    "pool_id": "pool:replica-slots",
+                    "revision": 2,
+                    "resource_kind": "replica_slots",
+                    "capacity_units": 16,
+                    "allocated_units": 2,
+                    "reserved_headroom_units": 2,
+                    "failure_domain_id": DOMAIN,
+                    "quota": QUOTA,
+                    "lease_fence": fence(),
+                    "offline_recovery": RECOVERY,
+                }
+            ],
+            "workloads": [
+                {
+                    "workload_id": "workload:gateway",
+                    "revision": 5,
+                    "tenant_ref": "tenant:acme",
+                    "resource_pool_id": "pool:replica-slots",
+                    "cadence": "service_replica",
+                    "priority": 50,
+                    "max_concurrency": 8,
+                    "quota": QUOTA,
+                }
+            ],
+            "units": units or (unit(),),
+            "controllers": (writer(),) if controllers is None else controllers,
+        }
     )
 
 
-def _summary() -> SignalSummaryRef:
-    return SignalSummaryRef(
-        summary_id="summary:gateway:queue-depth",
-        summary_digest="a" * 64,
-        source="telemetry",
-        unit_id="unit:gateway",
-        signal="queue_depth",
-        aggregation="p95",
-        window_start=NOW,
-        window_end=LATER,
-        sample_count=300,
-    )
+SUMMARY: dict[str, Any] = {
+    "summary_id": "summary:gateway:queue-depth",
+    "summary_digest": "a" * 64,
+    "source": "telemetry",
+    "unit_id": UNIT,
+    "signal": "queue_depth",
+    "aggregation": "p95",
+    "window_start": NOW,
+    "window_end": LATER,
+    "sample_count": 300,
+}
+INTENT: dict[str, Any] = {
+    "intent_id": "intent:gateway:12",
+    "unit_id": UNIT,
+    "revision": 12,
+    "expected_unit_revision": 7,
+    "cadence": "service_replica",
+    "desired_replicas": 4,
+    "signal_summary_ref": SUMMARY,
+    "controller_mode": "native",
+    "proposer_id": WRITER,
+    "replica_writer_id": WRITER,
+    "lease_fence": fence(),
+    "idempotency_key": "idempotency:gateway:12",
+    "reason": "p95 queue depth crossed the target",
+    "created_at": NOW,
+}
+LINK = {"unit_id": UNIT, "controller_mode": "native", "replica_writer_id": WRITER}
+EXECUTION: dict[str, Any] = {
+    **LINK,
+    "execution_id": "execution:gateway:12",
+    "intent_id": INTENT["intent_id"],
+    "decision_id": "decision:gateway:12",
+    "intent_revision": 12,
+    "execution_revision": 1,
+    "requested_replicas": 4,
+    "lease_fence": fence(),
+    "idempotency_key": INTENT["idempotency_key"],
+    "operation": "scale",
+    "state": "succeeded",
+    "started_at": NOW,
+    "completed_at": LATER,
+}
 
 
-def _intent() -> ScaleIntent:
-    return ScaleIntent(
-        intent_id="intent:gateway:12",
-        unit_id="unit:gateway",
-        revision=12,
-        expected_unit_revision=7,
-        cadence="service_replica",
-        desired_replicas=4,
-        signal_summary_ref=_summary(),
-        controller_mode=ControllerMode.NATIVE,
-        proposer_id="controller:main",
-        replica_writer_id="controller:main",
-        lease_fence=_fence(),
-        idempotency_key="idempotency:gateway:12",
-        reason="p95 queue depth crossed the target",
-        created_at=NOW,
-    )
-
-
-def _lifecycle(epoch: int = 4):
-    intent = _intent()
-    fence = _fence(epoch=epoch)
-    decision = ScaleDecision(
-        decision_id="decision:gateway:12",
-        intent_id=intent.intent_id,
-        intent_revision=intent.revision,
-        unit_id=intent.unit_id,
-        verdict="accepted",
-        controller_mode=ControllerMode.NATIVE,
-        decisioner_id="policy:scaling",
-        policy_revision=3,
-        replica_writer_id="controller:main",
-        lease_fence=fence,
-        reason="within bounds and headroom",
-        decided_at=NOW,
-    )
-    execution = ScaleExecution(
-        execution_id="execution:gateway:12",
-        intent_id=intent.intent_id,
-        decision_id=decision.decision_id,
-        intent_revision=intent.revision,
-        unit_id=intent.unit_id,
-        execution_revision=1,
-        requested_replicas=4,
-        controller_mode=ControllerMode.NATIVE,
-        replica_writer_id="controller:main",
-        lease_fence=fence,
-        idempotency_key=intent.idempotency_key,
-        operation="scale",
-        state="succeeded",
-        started_at=NOW,
-        completed_at=LATER,
-    )
-    outcome = ObservedOutcome(
-        outcome_id="outcome:gateway:12",
-        execution_id=execution.execution_id,
-        unit_id=intent.unit_id,
-        execution_revision=1,
-        observed_revision=1,
-        observed_replicas=4,
-        status="converged",
-        observed_by="observer:gateway",
-        failure_domain_id="host:small-gpu-a",
-        lease_fence=fence,
-        observed_at=LATER,
-    )
-    return intent, decision, execution, outcome
-
-
-def _writer(unit_id: str, controller_id: str) -> ControllerRegistration:
-    return ControllerRegistration(
-        unit_id=unit_id,
-        controller_id=controller_id,
-        mode=ControllerMode.NATIVE,
-        writes_replicas=True,
-        lease_fence=_fence(),
+def lifecycle(
+    epoch: int = 4,
+) -> tuple[ScaleIntent, ScaleDecision, ScaleExecution, ObservedOutcome]:
+    return (
+        ScaleIntent.model_validate(INTENT),
+        ScaleDecision.model_validate(
+            {
+                **LINK,
+                "decision_id": "decision:gateway:12",
+                "intent_id": INTENT["intent_id"],
+                "intent_revision": 12,
+                "verdict": "accepted",
+                "decisioner_id": "policy:scaling",
+                "policy_revision": 3,
+                "lease_fence": fence(epoch),
+                "reason": "within bounds and headroom",
+                "decided_at": NOW,
+            }
+        ),
+        ScaleExecution.model_validate({**EXECUTION, "lease_fence": fence(epoch)}),
+        ObservedOutcome.model_validate(
+            {
+                "outcome_id": "outcome:gateway:12",
+                "execution_id": EXECUTION["execution_id"],
+                "unit_id": UNIT,
+                "execution_revision": 1,
+                "observed_revision": 1,
+                "observed_replicas": 4,
+                "status": "converged",
+                "observed_by": "observer:gateway",
+                "failure_domain_id": DOMAIN,
+                "lease_fence": fence(epoch),
+                "observed_at": LATER,
+            }
+        ),
     )
 
 
 def test_native_authority_and_revisioned_lifecycle_are_accepted() -> None:
-    intent, *records = _lifecycle()
-    validate_scale_intent(intent, _authority())
-    validate_scale_lifecycle(intent, *records)
+    intent, decision, execution, outcome = lifecycle()
+    validate_scale_intent(intent, authority())
+    validate_scale_lifecycle(intent, decision, execution, outcome)
 
 
 def test_lease_fence_cannot_change_between_lifecycle_records() -> None:
-    intent, decision, execution, outcome = _lifecycle()
-    _, _, _, other_fence = _lifecycle(epoch=5)
+    intent, decision, execution, _ = lifecycle()
     with pytest.raises(ValueError, match="lease/fence"):
-        validate_scale_lifecycle(intent, decision, execution, other_fence)
+        validate_scale_lifecycle(intent, decision, execution, lifecycle(epoch=5)[3])
 
 
 def test_signal_reference_never_carries_samples() -> None:
-    summary = _summary()
-    assert "samples" not in summary.graph_projection()
+    assert "samples" not in SignalSummaryRef.model_validate(SUMMARY).graph_projection()
     with pytest.raises(ValidationError, match="extra"):
-        SignalSummaryRef.model_validate({**summary.model_dump(), "samples": [0.1]})
+        SignalSummaryRef.model_validate({**SUMMARY, "samples": [0.1]})
 
 
-def test_engine_local_cadence_cannot_create_graph_intent() -> None:
-    payload = {**_intent().model_dump(), "cadence": ScaleCadence.ENGINE_LOCAL.value}
-    with pytest.raises(ValidationError):
-        ScaleIntent.model_validate(payload)
-
-
-def test_exactly_one_replica_writer_per_unit() -> None:
-    with pytest.raises(ValidationError, match="exactly one replica writer"):
-        _authority(
-            controllers=(_native_writer(), _writer("unit:gateway", "controller:b"))
-        )
-    with pytest.raises(ValidationError, match="exactly one replica writer"):
-        _authority(controllers=())
-
-
-def test_delegated_hpa_has_one_writer_and_an_observer() -> None:
-    unit = _unit().model_copy(
-        update={
-            "controller_mode": ControllerMode.DELEGATED,
-            "delegated_controller": DelegatedController.HPA,
-            "controller_id": "controller:observer",
-            "replica_writer_id": "controller:hpa",
-        }
-    )
-
-    def registration(controller_id: str, writes: bool) -> ControllerRegistration:
-        return ControllerRegistration(
-            unit_id="unit:gateway",
-            controller_id=controller_id,
-            mode=ControllerMode.DELEGATED,
-            delegated_controller=DelegatedController.HPA,
-            writes_replicas=writes,
-            lease_fence=_fence(),
-        )
-
-    authority = _authority(
-        unit=unit,
+def test_delegated_controller_has_one_writer_and_an_observer() -> None:
+    delegated = {"mode": "delegated", "delegated_controller": "hpa"}
+    built = authority(
+        units=(
+            unit(
+                controller_mode="delegated",
+                delegated_controller="hpa",
+                controller_id="controller:observer",
+                replica_writer_id="controller:hpa",
+            ),
+        ),
         controllers=(
-            registration("controller:hpa", True),
-            registration("controller:observer", False),
+            writer(controller_id="controller:hpa", **delegated),
+            writer(
+                controller_id="controller:observer", writes_replicas=False, **delegated
+            ),
         ),
     )
-    assert authority.units[0].controller_mode == ControllerMode.DELEGATED.value
+    assert built.units[0].controller_mode == "delegated"
 
 
-def test_dependency_cycles_are_rejected() -> None:
-    with pytest.raises(ValidationError, match="self-dependency"):
-        _authority(unit=_unit().model_copy(update={"depends_on": ("unit:gateway",)}))
-    worker = _unit().model_copy(
-        update={
-            "unit_id": "unit:worker",
-            "controller_id": "controller:worker",
-            "replica_writer_id": "controller:worker",
-            "depends_on": ("unit:gateway",),
-        }
-    )
-    gateway = _unit().model_copy(update={"depends_on": ("unit:worker",)})
-    with pytest.raises(ValidationError, match="dependency cycle"):
-        ScaleAuthority(
-            authority_revision=11,
-            failure_domains=(_failure_domain(),),
-            pools=(_pool(),),
-            workloads=(_workload(),),
-            units=(gateway, worker),
-            controllers=(_native_writer(), _writer("unit:worker", "controller:worker")),
-        )
+WORKER = unit(
+    unit_id="unit:worker",
+    controller_id="controller:worker",
+    replica_writer_id="controller:worker",
+    depends_on=(UNIT,),
+)
 
 
 @pytest.mark.parametrize(
-    ("update", "error", "match"),
+    ("units", "controllers", "match"),
     [
-        ({"desired_replicas": 9}, ValueError, "min/max"),
-        ({"expected_unit_revision": 6}, ValueError, "stale"),
+        (
+            None,
+            (writer(), writer(controller_id="controller:b")),
+            "exactly one replica writer",
+        ),
+        (None, (), "exactly one replica writer"),
+        ((unit(depends_on=(UNIT,)),), None, "self-dependency"),
+        (
+            (unit(depends_on=("unit:worker",)), WORKER),
+            (writer(), writer("unit:worker", "controller:worker")),
+            "dependency cycle",
+        ),
+        ((unit(reserved_headroom_replicas=7),), None, "headroom"),
     ],
 )
-def test_scale_intent_enforces_bounds_and_revision(update, error, match) -> None:
-    with pytest.raises(error, match=match):
-        validate_scale_intent(_intent().model_copy(update=update), _authority())
-
-
-def test_headroom_beyond_bounds_is_refused() -> None:
-    with pytest.raises(ValidationError, match="headroom"):
-        _authority(unit=_unit().model_copy(update={"reserved_headroom_replicas": 7}))
-
-
-def test_offline_failure_domain_holds_intents() -> None:
-    offline = _authority(failure_domain=_failure_domain(FailureDomainStatus.OFFLINE))
-    with pytest.raises(ValueError, match="failure domain is offline"):
-        validate_scale_intent(_intent(), offline)
+def test_invalid_authority_inventory_is_refused(
+    units: tuple[dict[str, Any], ...] | None,
+    controllers: tuple[dict[str, Any], ...] | None,
+    match: str,
+) -> None:
+    with pytest.raises(ValidationError, match=match):
+        authority(units=units, controllers=controllers)
 
 
 @pytest.mark.parametrize(
-    ("state", "match"), [("failed", "failure_code"), ("simulated", "simulated")]
+    ("update", "domain_status", "match"),
+    [
+        ({"desired_replicas": 9}, "healthy", "min/max"),
+        ({"expected_unit_revision": 6}, "healthy", "stale"),
+        ({}, "offline", "failure domain is offline"),
+    ],
 )
-def test_unverified_execution_states_fail_closed(state, match) -> None:
-    _, _, execution, _ = _lifecycle()
-    payload = {**execution.model_dump(), "state": state}
-    with pytest.raises(ValidationError, match=match):
-        ScaleExecution.model_validate(payload)
+def test_scale_intent_is_checked_against_authority(
+    update: dict[str, Any], domain_status: str, match: str
+) -> None:
+    intent = ScaleIntent.model_validate({**INTENT, **update})
+    with pytest.raises(ValueError, match=match):
+        validate_scale_intent(intent, authority(domain_status=domain_status))
 
 
-def test_maintenance_window_must_be_utc_range() -> None:
-    with pytest.raises(ValidationError, match="UTC HH:MM-HH:MM"):
-        MaintenanceWindow(window="25:00-26:00")
+@pytest.mark.parametrize(
+    ("model", "payload", "match"),
+    [
+        (ScaleIntent, {**INTENT, "cadence": "engine_local"}, ""),
+        (ScaleExecution, {**EXECUTION, "state": "failed"}, "failure_code"),
+        (ScaleExecution, {**EXECUTION, "state": "simulated"}, "simulated"),
+        (MaintenanceWindow, {"window": "25:00-26:00"}, "UTC HH:MM-HH:MM"),
+    ],
+)
+def test_invalid_records_fail_closed(
+    model: type[ScaleIntent | ScaleExecution | MaintenanceWindow],
+    payload: dict[str, Any],
+    match: str,
+) -> None:
+    with pytest.raises(ValidationError, match=match or None):
+        model.model_validate(payload)

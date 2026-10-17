@@ -165,7 +165,8 @@
     "GRAPHOS-HOST-R022.1",
     "GRAPHOS-HOST-R010.8",
     "GRAPHOS-HOST-R032",
-    "GRAPHOS-HOST-R010.9"
+    "GRAPHOS-HOST-R010.9",
+    "GRAPHOS-HOST-R009.7"
   ],
   "requirements": [
     {
@@ -1048,7 +1049,8 @@
         "GRAPHOS-HOST-R009.3",
         "GRAPHOS-HOST-R009.4",
         "GRAPHOS-HOST-R009.5",
-        "GRAPHOS-HOST-R009.6"
+        "GRAPHOS-HOST-R009.6",
+        "GRAPHOS-HOST-R009.7"
       ]
     },
     {
@@ -1556,6 +1558,19 @@
       ],
       "verified_by": [
         "tests/agent_host/test_interface_refusal.py:3"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R009.7",
+      "title": "Injected host log authority",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "22534d1e5448",
+        "cdd77f05d30b",
+        "e30aad028a40"
+      ],
+      "verified_by": [
+        "tests/agent_host/test_log_access.py:2"
       ]
     }
   ]

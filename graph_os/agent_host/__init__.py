@@ -37,6 +37,9 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from graph_os.agent_host.log_access import HostLogAccess
+from graph_os.agent_host.log_routes import register_host_log_routes
+
 logger = logging.getLogger(__name__)
 
 __all__ = ["HostInterfaceUnavailable", "build_agent_host_app", "create_agent_server"]
@@ -107,6 +110,7 @@ def build_agent_host_app(
     name: str | None = None,
     description: str | None = None,
     executor: AgentExecutor | None = None,
+    host_logs: HostLogAccess | None = None,
 ):
     """Build the FastAPI app that hosts one connector agent.
 
@@ -122,6 +126,7 @@ def build_agent_host_app(
     agent_description = description or ""
 
     app = FastAPI(title=agent_name)
+    register_host_log_routes(app, host_logs)
 
     @app.get("/health")
     def health() -> dict[str, str]:
@@ -214,6 +219,7 @@ def create_agent_server(
     system_prompt: str | None = None,
     workspace: str | None = None,
     executor: AgentExecutor | None = None,
+    host_logs: HostLogAccess | None = None,
     enable_terminal_ui: bool = False,
     enable_web_ui: bool | None = None,
     enable_web_logs: bool = False,
@@ -278,6 +284,7 @@ def create_agent_server(
         name=name,
         description=system_prompt,
         executor=executor,
+        host_logs=host_logs,
     )
 
     import uvicorn

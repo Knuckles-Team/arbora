@@ -102,3 +102,5 @@ Sentinels reject workspace initialization, both graph builders and listener call
 Cover provided graphs, workspace construction, tag construction and defaults.
 Reject enabled options and malformed booleans. Preserve omitted and false options.
 These checks do not prove authorized host logs or terminal startup.
+
+- `GRAPHOS-HOST-R009.7`: Exercise the real host routes with controlled session, grant and record owners over loopback HTTP. Check tenant/session isolation, denial, revocation during a read, expiry and record bounds. No deployed grant configuration is claimed.

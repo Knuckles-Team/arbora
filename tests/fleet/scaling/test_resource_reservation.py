@@ -1,5 +1,4 @@
-# mypy: disable-error-code="arg-type,assignment,misc,call-arg"
-"""Focused tests for the narrow engine-native reservation transport."""
+"""Public-surface behaviour of the engine-native reservation transport."""
 
 from __future__ import annotations
 
@@ -13,123 +12,85 @@ from graph_os.fleet.scaling.resource_reservation import (
 )
 
 pytestmark = pytest.mark.spec("GRAPHOS-CAPACITY-R750.755")
+Request = dict[str, Any]
 
 
-class _WorkItems:
-    def __init__(self) -> None:
-        self.calls: list[tuple[str, dict[str, Any]]] = []
+class WorkItems:
+    """Generated-client namespace fake that echoes the method it served."""
 
-    def _result(self, name: str, *, request: dict[str, Any]) -> dict[str, Any]:
-        self.calls.append((name, request))
-        return {"schema_version": "1", "decision": "accepted"}
+    def __init__(self, reservations: int = 0, *, is_async: bool = False) -> None:
+        self.calls: list[str] = []
+        self.reservations = reservations
+        self.is_async = is_async
 
-    def reserve(self, *, request: dict[str, Any]) -> dict[str, Any]:
-        return self._result("reserve", request=request)
+    def _serve(self, name: str) -> Any:
+        self.calls.append(name)
+        result = {"decision": name, "reservations": [{}] * self.reservations}
+        if self.is_async:
 
-    def release(self, *, request: dict[str, Any]) -> dict[str, Any]:
-        return self._result("release", request=request)
+            async def pending() -> Request:
+                return result
 
-    def reclaim(self, *, request: dict[str, Any]) -> dict[str, Any]:
-        return self._result("reclaim", request=request)
+            return pending()
+        return result
 
-    def query_reservation(self, *, request: dict[str, Any]) -> dict[str, Any]:
-        return self._result("query", request=request)
+    def reserve(self, *, request: Request) -> Any:
+        return self._serve("reserve")
 
-    def status(self, *, request: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "schema_version": "1",
-            "complete": True,
-            "next_cursor": None,
-            "host_snapshot": None,
-            "host_ref": None,
-            "host_revision": 0,
-            "held_cpu_weight": 0,
-            "held_memory_mib": 0,
-            "held_disk_mib": 0,
-            "held_process_slots": 0,
-            "fairness_debt": 0,
-            "reservations": [],
-            "orphan_count": 0,
-            "superseded_count": 0,
-        }
+    def release(self, *, request: Request) -> Any:
+        return self._serve("release")
 
-    def update_host(self, *, request: dict[str, Any]) -> dict[str, Any]:
-        return self._result("update_host", request=request)
+    def reclaim(self, *, request: Request) -> Any:
+        return self._serve("reclaim")
+
+    def query_reservation(self, *, request: Request) -> Any:
+        return self._serve("query")
+
+    def status(self, *, request: Request) -> Any:
+        return self._serve("status")
+
+    def update_host(self, *, request: Request) -> Any:
+        return self._serve("update_host")
 
 
-class _Client:
-    def __init__(self) -> None:
-        self.work_items = _WorkItems()
+class Client:
+    def __init__(self, work_items: WorkItems, *, advertised: bool = True) -> None:
+        self.work_items = work_items
+        self.advertised = advertised
 
     def supports(self, operation: str) -> bool:
-        return operation in {
-            "ReserveWorkItemResources",
-            "ReleaseWorkItemResources",
-            "ReclaimWorkItemResources",
-            "QueryWorkItemReservation",
-            "ResourceReservationStatus",
-            "UpdateResourceHost",
-        }
+        return self.advertised
 
 
-def test_transport_maps_only_typed_native_operations() -> None:
-    client = _Client()
-    transport = EngineNativeReservationTransport(client)
-    request = {"operation_id": "fresh-invocation", "now_ms": 10}
-
-    assert transport.reserve(request)["decision"] == "accepted"
-    assert transport.release(request)["decision"] == "accepted"
-    assert transport.reclaim(request)["decision"] == "accepted"
-    assert transport.query(request)["decision"] == "accepted"
-    assert transport.update_host(request)["decision"] == "accepted"
-    transport.status({**request, "limit": 1})
-    assert [name for name, _ in client.work_items.calls] == [
+def test_each_operation_maps_to_its_typed_native_method() -> None:
+    items = WorkItems()
+    transport = EngineNativeReservationTransport(Client(items))
+    for operation in ("reserve", "release", "reclaim", "query", "update_host"):
+        assert getattr(transport, operation)({"now_ms": 1})["decision"]
+    transport.status({"limit": 1})
+    assert items.calls == [
         "reserve",
         "release",
         "reclaim",
         "query",
         "update_host",
+        "status",
     ]
 
 
-def test_transport_rejects_async_generated_client() -> None:
-    client = _Client()
-
-    async def reserve(*, request: dict[str, Any]) -> dict[str, Any]:
-        return {"request": request}
-
-    client.work_items.reserve = reserve
-    with pytest.raises(TypeError, match="sync generated client"):
-        EngineNativeReservationTransport(client).reserve({"now_ms": 1})
-
-
-def test_status_result_cannot_exceed_requested_bound() -> None:
-    class Overfull(_WorkItems):
-        def status(self, *, request: dict[str, Any]) -> dict[str, Any]:
-            result = super().status(request=request)
-            result["reservations"] = [
-                {"reservation_id": "one"},
-                {"reservation_id": "two"},
-            ]
-            return result
-
-    client = _Client()
-    client.work_items = Overfull()
-    with pytest.raises(ValueError, match="exceeded requested limit"):
+@pytest.mark.parametrize(
+    ("client", "error", "match"),
+    [
+        (object(), NativeReservationUnavailable, None),
+        (Client(WorkItems(), advertised=False), NativeReservationUnavailable, None),
+        (Client(WorkItems(is_async=True)), TypeError, "sync generated client"),
+        (Client(WorkItems(reservations=2)), ValueError, "exceeded requested limit"),
+    ],
+)
+def test_transport_fails_closed(
+    client: object, error: type[Exception], match: str | None
+) -> None:
+    with pytest.raises(error, match=match):
         EngineNativeReservationTransport(client).status({"limit": 1})
-
-
-def test_transport_fails_closed_without_work_item_namespace() -> None:
-    with pytest.raises(NativeReservationUnavailable):
-        EngineNativeReservationTransport(object())
-
-
-def test_transport_fails_closed_when_old_engine_does_not_advertise_method() -> None:
-    class OldEngine(_Client):
-        def supports(self, _operation: str) -> bool:
-            return False
-
-    client = OldEngine()
-    with pytest.raises(NativeReservationUnavailable):
-        EngineNativeReservationTransport(client).reserve({"now_ms": 1})
-    assert client.work_items.calls == []
+    if isinstance(client, Client) and not client.advertised:
+        assert client.work_items.calls == []

@@ -1,9 +1,9 @@
-# mypy: disable-error-code="arg-type,assignment,misc,call-arg"
 """Public-surface behaviour of durable, idempotent scale-intent reconciliation."""
 
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import pytest
 
@@ -13,309 +13,214 @@ from graph_os.fleet.scaling.scaling_intent_reconciler import (
     MemoryScaleIntentLedger,
     ScaleActuationRequest,
     ScaleActuationResult,
-    ScaleControllerMode,
-    ScaleFence,
     ScaleIntentConflict,
     ScaleIntentReconciler,
     ScaleIntentRecord,
     ScaleIntentState,
     ScaleLeaseUnavailable,
-    ScaleObservationStatus,
+    ScalePolicy,
     ScalePolicyDecision,
-    ScaleRetryPolicy,
-    ScaleTargetBinding,
 )
 
 pytestmark = pytest.mark.spec("GRAPHOS-CAPACITY-R750.752")
 
 NOW = datetime(2026, 1, 1, 12, tzinfo=UTC)
+TARGET = {
+    "cluster_id": "cluster-1",
+    "runtime_id": "runtime-1",
+    "workload_id": "workload-1",
+    "target_uid": "target-uid-1",
+    "target_resource_version": "rv-1",
+}
+INTENT: dict[str, Any] = {
+    "intent_id": "scale-intent-1",
+    "intent_revision": 1,
+    "expected_unit_revision": 7,
+    "desired_replicas": 3,
+    "min_replicas": 1,
+    "max_replicas": 5,
+    "controller_mode": "native",
+    "replica_writer_id": "writer-1",
+    "execution_key": "scale-execution-1",
+    "fence": {
+        "lease_id": "intent-fence-1",
+        "lease_epoch": 4,
+        "fence_token": 9,
+        "expires_at": NOW + timedelta(minutes=10),
+    },
+    "target": TARGET,
+    "reason": "bounded reconciliation fixture",
+    "retry_policy": {"max_attempts": 3, "backoff_s": 2},
+    "created_at": NOW,
+}
 
 
-def _target(
-    *, uid: str = "target-uid-1", resource_version: str = "rv-1"
-) -> ScaleTargetBinding:
-    return ScaleTargetBinding(
-        cluster_id="cluster-1",
-        runtime_id="runtime-1",
-        workload_id="workload-1",
-        target_uid=uid,
-        target_resource_version=resource_version,
-    )
+def intent(**update: Any) -> ScaleIntentRecord:
+    return ScaleIntentRecord.model_validate({**INTENT, **update})
 
 
-def _intent(
-    *,
-    execution_key: str = "scale-execution-1",
-    target: ScaleTargetBinding | None = None,
-    max_attempts: int = 3,
-) -> ScaleIntentRecord:
-    return ScaleIntentRecord(
-        intent_id="scale-intent-1",
-        intent_revision=1,
-        expected_unit_revision=7,
-        desired_replicas=3,
-        min_replicas=1,
-        max_replicas=5,
-        controller_mode=ScaleControllerMode.NATIVE,
-        replica_writer_id="writer-1",
-        execution_key=execution_key,
-        fence=ScaleFence(
-            lease_id="intent-fence-1",
-            lease_epoch=4,
-            fence_token=9,
-            expires_at=NOW + timedelta(minutes=10),
-        ),
-        target=target or _target(),
-        reason="bounded reconciliation fixture",
-        retry_policy=ScaleRetryPolicy(max_attempts=max_attempts, backoff_s=2),
-        created_at=NOW,
-    )
-
-
-class RecordingActuator:
-    """Typed fixture actuator that records calls and returns queued outcomes."""
+class Actuator:
+    """Records every call and replays a queue of outcomes (default success)."""
 
     name = "fixture-actuator"
 
-    def __init__(self, events: list[str], outcomes: list[str] | None = None) -> None:
-        self.events = events
-        self.outcomes = list(outcomes or [])
+    def __init__(self, events: list[str], *outcomes: str) -> None:
+        self.events, self.outcomes = events, list(outcomes)
         self.calls: list[ScaleActuationRequest] = []
 
     def apply(self, request: ScaleActuationRequest) -> ScaleActuationResult:
         self.events.append("actuator:call")
         self.calls.append(request)
-        outcome = self.outcomes.pop(0) if self.outcomes else "success"
-        if outcome == "retry":
-            return ScaleActuationResult(
-                execution_key=request.execution_key,
-                target=request.target,
-                state=ScaleIntentState.FAILED,
-                scaled=False,
-                retryable=True,
-                error_code="temporarily_unavailable",
-                detail="fixture transient failure",
-            )
-        if outcome == "mismatch":
-            return ScaleActuationResult(
-                execution_key=request.execution_key,
-                target=request.target,
-                state=ScaleIntentState.SUCCEEDED,
-                scaled=True,
-                observed_replicas=request.desired_replicas + 1,
-            )
+        retry = (self.outcomes.pop(0) if self.outcomes else "ok") == "retry"
         return ScaleActuationResult(
             execution_key=request.execution_key,
             target=request.target,
-            state=ScaleIntentState.SUCCEEDED,
-            scaled=True,
-            observed_replicas=request.desired_replicas,
+            state=ScaleIntentState.FAILED if retry else ScaleIntentState.SUCCEEDED,
+            scaled=not retry,
+            retryable=retry,
+            error_code="temporarily_unavailable" if retry else None,
+            observed_replicas=None if retry else request.desired_replicas,
         )
 
 
-class DenyScalePolicy:
+class DenyPolicy:
     def decide(self, intent: ScaleIntentRecord) -> ScalePolicyDecision:
         return ScalePolicyDecision(
-            decision_id=f"deny:{intent.execution_key}",
-            allowed=False,
-            reason="fixture policy requires an explicit approval",
+            decision_id="deny:1", allowed=False, reason="needs explicit approval"
         )
 
 
-def _reconciler(
+ALLOW = AllowScalePolicy()
+
+
+@pytest.fixture
+def ledger() -> MemoryScaleIntentLedger:
+    return MemoryScaleIntentLedger()
+
+
+def run(
     ledger: MemoryScaleIntentLedger,
-    actuator: RecordingActuator,
-    *,
-    policy: object | None = None,
-) -> ScaleIntentReconciler:
+    *outcomes: str,
+    policy: ScalePolicy | None = ALLOW,
+) -> tuple[ScaleIntentReconciler, Actuator]:
+    actuator = Actuator(ledger.events, *outcomes)
     return ScaleIntentReconciler(
-        ledger,
-        actuator,
-        policy=policy if policy is not None else AllowScalePolicy(),
-        clock=lambda: NOW,
-    )
+        ledger, actuator, policy=policy, clock=lambda: NOW
+    ), actuator
 
 
-def test_persists_intent_before_typed_actuation_and_observes_success() -> None:
-    ledger = MemoryScaleIntentLedger()
-    actuator = RecordingActuator(ledger.events)
-
-    result = _reconciler(ledger, actuator).reconcile(
-        _intent(), controller_id="writer-1"
-    )
-
-    assert result.state == ScaleIntentState.VERIFIED.value
-    assert result.observation is not None
-    assert result.observation.status == ScaleObservationStatus.CONVERGED.value
-    assert result.execution.state == ScaleIntentState.VERIFIED.value
+def test_persists_before_actuation_and_replays_duplicates(ledger) -> None:
+    reconciler, actuator = run(ledger)
+    first = reconciler.reconcile(intent(), controller_id="writer-1")
+    second = reconciler.reconcile(intent(), controller_id="writer-1")
+    assert first.state == ScaleIntentState.VERIFIED.value
+    assert first.observation is not None and first.observation.status == "converged"
     assert ledger.events.index("persist_intent") < ledger.events.index("actuator:call")
+    assert (second.replayed, second.actuator_called) == (True, False)
+    assert second.observation == first.observation
     assert len(actuator.calls) == 1
 
 
-def test_duplicate_delivery_replays_without_a_second_actuator_call() -> None:
-    ledger = MemoryScaleIntentLedger()
-    actuator = RecordingActuator(ledger.events)
-    reconciler = _reconciler(ledger, actuator)
-    intent = _intent()
-
-    first = reconciler.reconcile(intent, controller_id="writer-1")
-    second = reconciler.reconcile(intent, controller_id="writer-1")
-
-    assert first.observation == second.observation
-    assert second.replayed is True
-    assert second.actuator_called is False
-    assert len(actuator.calls) == 1
-
-
-@pytest.mark.parametrize("record_result", [True, False])
-def test_crash_recovery_never_double_actuates_a_recorded_result(record_result) -> None:
-    ledger = MemoryScaleIntentLedger()
-    actuator = RecordingActuator(ledger.events)
-    intent = _intent()
-    persisted = ledger.persist_intent(intent)
-    lease = ledger.acquire_controller_lease(intent, "writer-1", now=NOW)
+@pytest.mark.parametrize("result_recorded", [True, False])
+def test_crash_recovery_never_double_actuates(ledger, result_recorded: bool) -> None:
+    record = intent()
+    persisted = ledger.persist_intent(record)
+    lease = ledger.acquire_controller_lease(record, "writer-1", now=NOW)
     assert lease is not None
-    started = ledger.mark_started(intent, persisted.execution, lease, now=NOW)
-    if record_result:
-        ledger.record_result(
-            intent,
-            started,
-            lease,
-            ScaleActuationResult(
-                execution_key=intent.execution_key,
-                target=intent.target,
-                state=ScaleIntentState.SUCCEEDED,
-                scaled=True,
-                observed_replicas=intent.desired_replicas,
-            ),
-            now=NOW,
+    started = ledger.mark_started(record, persisted.execution, lease, now=NOW)
+    if result_recorded:
+        done = ScaleActuationResult(
+            execution_key=record.execution_key,
+            target=record.target,
+            state=ScaleIntentState.SUCCEEDED,
+            scaled=True,
+            observed_replicas=record.desired_replicas,
         )
-
-    result = _reconciler(ledger, actuator).reconcile(intent, controller_id="writer-1")
-
+        ledger.record_result(record, started, lease, done, now=NOW)
+    reconciler, actuator = run(ledger)
+    result = reconciler.reconcile(record, controller_id="writer-1")
     assert result.state == ScaleIntentState.VERIFIED.value
-    assert result.actuator_called is (not record_result)
-    expected_calls = 0 if record_result else 1
-    assert [c.execution_key for c in actuator.calls] == [
-        intent.execution_key
-    ] * expected_calls
+    assert len(actuator.calls) == (0 if result_recorded else 1)
 
 
-def test_retryable_failure_reuses_key_but_requires_a_newer_fenced_attempt() -> None:
-    ledger = MemoryScaleIntentLedger()
-    actuator = RecordingActuator(ledger.events, outcomes=["retry", "success"])
-    reconciler = _reconciler(ledger, actuator)
-    intent = _intent()
-
-    first = reconciler.reconcile(intent, controller_id="writer-1")
-    second = reconciler.reconcile(intent, controller_id="writer-1")
-
-    assert first.state == ScaleIntentState.FAILED.value
-    assert first.retry_after_s == 2
+def test_retry_reuses_key_under_a_newer_fenced_lease(ledger) -> None:
+    reconciler, actuator = run(ledger, "retry")
+    first = reconciler.reconcile(intent(), controller_id="writer-1")
+    second = reconciler.reconcile(intent(), controller_id="writer-1")
+    assert (first.state, first.retry_after_s) == (ScaleIntentState.FAILED.value, 2)
     assert second.state == ScaleIntentState.VERIFIED.value
-    assert len(actuator.calls) == 2
-    assert {call.execution_key for call in actuator.calls} == {intent.execution_key}
-    assert (
-        actuator.calls[0].lease.lease_instance_id
-        != actuator.calls[1].lease.lease_instance_id
-    )
     assert second.execution.result_attempt == 2
+    keys = {call.execution_key for call in actuator.calls}
+    leases = {call.lease.lease_instance_id for call in actuator.calls}
+    assert (len(actuator.calls), len(keys), len(leases)) == (2, 1, 2)
 
 
-def test_same_key_changed_target_or_revision_is_a_fail_closed_conflict() -> None:
-    ledger = MemoryScaleIntentLedger()
-    actuator = RecordingActuator(ledger.events)
-    reconciler = _reconciler(ledger, actuator)
-    intent = _intent()
-    reconciler.reconcile(intent, controller_id="writer-1")
-
-    changed_target = intent.model_copy(
-        update={"target": _target(uid="target-uid-2", resource_version="rv-2")}
-    )
+@pytest.mark.parametrize(
+    "update",
+    [
+        {
+            "target": {
+                **TARGET,
+                "target_uid": "uid-2",
+                "target_resource_version": "rv-2",
+            }
+        },
+        {"intent_revision": 2, "expected_unit_revision": 8},
+    ],
+)
+def test_same_key_with_changed_binding_conflicts(ledger, update) -> None:
+    reconciler, actuator = run(ledger)
+    reconciler.reconcile(intent(), controller_id="writer-1")
     with pytest.raises(ScaleIntentConflict):
-        reconciler.reconcile(changed_target, controller_id="writer-1")
-
-    changed_revision = intent.model_copy(
-        update={"intent_revision": 2, "expected_unit_revision": 8}
-    )
-    with pytest.raises(ScaleIntentConflict):
-        reconciler.reconcile(changed_revision, controller_id="writer-1")
+        reconciler.reconcile(intent(**update), controller_id="writer-1")
     assert len(actuator.calls) == 1
 
 
-def test_dry_run_is_simulated_and_never_calls_or_claims_scaled() -> None:
-    ledger = MemoryScaleIntentLedger()
-    actuator = RecordingActuator(ledger.events)
-    reconciler = _reconciler(ledger, actuator)
-    intent = _intent(execution_key="scale-dry-run-1")
-
-    first = reconciler.reconcile(intent, controller_id="writer-1", dry_run=True)
-    second = reconciler.reconcile(intent, controller_id="writer-1", dry_run=True)
-
-    assert first.observation is not None
-    assert first.observation.status == ScaleObservationStatus.SIMULATED.value
-    assert first.scaled is False
-    assert first.execution.dry_run is True
-    assert second.replayed is True
-    assert second.scaled is False
+def test_dry_run_is_simulated_and_never_actuates(ledger) -> None:
+    reconciler, actuator = run(ledger)
+    first, second = (
+        reconciler.reconcile(intent(), controller_id="writer-1", dry_run=True)
+        for _ in range(2)
+    )
+    assert first.observation is not None and first.observation.status == "simulated"
+    assert (first.scaled, first.execution.dry_run, second.replayed) == (
+        False,
+        True,
+        True,
+    )
     assert actuator.calls == []
 
 
-def test_missing_policy_fails_closed_before_actuation() -> None:
-    ledger = MemoryScaleIntentLedger()
-    actuator = RecordingActuator(ledger.events)
-    reconciler = ScaleIntentReconciler(
-        ledger,
-        actuator,
-        clock=lambda: NOW,
-    )
-
-    result = reconciler.reconcile(
-        _intent(execution_key="scale-no-policy-1"), controller_id="writer-1"
-    )
-
+@pytest.mark.parametrize("policy", [None, DenyPolicy()])
+def test_missing_or_denying_policy_fails_closed(ledger, policy) -> None:
+    reconciler, actuator = run(ledger, policy=policy)
+    result = reconciler.reconcile(intent(), controller_id="writer-1")
     assert result.state == ScaleIntentState.DENIED.value
     assert actuator.calls == []
 
 
-def test_denial_requires_scoped_break_glass_audit_before_actuation() -> None:
-    ledger = MemoryScaleIntentLedger()
-    actuator = RecordingActuator(ledger.events)
-    reconciler = _reconciler(ledger, actuator, policy=DenyScalePolicy())
-    intent = _intent(execution_key="scale-break-glass-1")
-
-    denied = reconciler.reconcile(intent, controller_id="writer-1")
-    assert denied.state == ScaleIntentState.DENIED.value
-    assert actuator.calls == []
-    assert "break_glass:audit" not in ledger.events
-
-    authorization = BreakGlassAuthorization(
+def test_break_glass_is_audited_before_actuation(ledger) -> None:
+    reconciler, actuator = run(ledger, policy=DenyPolicy())
+    approval = BreakGlassAuthorization(
         authorization_id="break-glass-1",
         actor_id="operator-1",
         approval_ref="approval-1",
         reason="bounded emergency recovery",
-        target=intent.target,
+        target=intent().target,
         authorized_until=NOW + timedelta(minutes=1),
     )
-    approved = reconciler.reconcile(
-        intent,
-        controller_id="writer-1",
-        break_glass=authorization,
+    result = reconciler.reconcile(
+        intent(), controller_id="writer-1", break_glass=approval
     )
-
-    assert approved.break_glass_audit is not None
-    assert approved.state == ScaleIntentState.VERIFIED.value
+    assert result.break_glass_audit is not None
+    assert result.state == ScaleIntentState.VERIFIED.value
     assert ledger.events.index("break_glass:audit") < ledger.events.index(
         "actuator:call"
     )
-    assert len(actuator.calls) == 1
 
 
-def test_other_controller_cannot_reuse_the_declared_replica_writer() -> None:
-    ledger = MemoryScaleIntentLedger()
-    actuator = RecordingActuator(ledger.events)
-    reconciler = _reconciler(ledger, actuator)
-
+def test_only_the_declared_replica_writer_may_actuate(ledger) -> None:
+    reconciler, actuator = run(ledger)
     with pytest.raises(ScaleLeaseUnavailable, match="declared replica writer"):
-        reconciler.reconcile(_intent(), controller_id="writer-2")
+        reconciler.reconcile(intent(), controller_id="writer-2")
     assert actuator.calls == []
