@@ -388,13 +388,36 @@ jobs:
             scripts/local_hook.sh pytest "${affected_tests[@]}"
           fi
 
-  # Main-push only: the pull-request gates already run the diff-scoped
-  # complexity/kiss/dupehound hooks; the full censuses run once per main push.
+  scanner-scope:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      required: ${{ steps.scope.outputs.required }}
+    steps:
+      - *release-checkout
+      - id: scope
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet "$BASE_SHA...HEAD" -- scripts/gen_api.py graph_os/client graph_os/api/generated docs/api .github/workflows/release.yml scripts/install_scanners.sh; then
+            echo "required=false" >> "$GITHUB_OUTPUT"
+          else
+            result=$?
+            [ "$result" -eq 1 ] || exit "$result"
+            echo "required=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Generated client/schema changes need the canonical scanner before merge.
   scanner-quality:
-    if: github.event_name == 'push' && github.ref_type == 'branch'
+    if: >-
+      always() && needs.freeze-gate-source.result == 'success' &&
+      ((github.event_name == 'push' && github.ref_type == 'branch') ||
+      (github.event_name == 'pull_request' && needs.scanner-scope.outputs.required == 'true'))
     timeout-minutes: 60
     name: Scanner quality (cccc, KISS, dupehound, jscpd)
-    needs: [freeze-gate-source]
+    needs: [freeze-gate-source, scanner-scope]
     runs-on: ubuntu-latest
     env:
       PIPELINES_REF: ${{ needs.freeze-gate-source.outputs.sha }}

@@ -94,3 +94,13 @@ Missing receipt fields or public consumer exports block positive served acceptan
 - `GRAPHOS-HOST-R022.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-HOST-R010.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-HOST-R032`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+
+## Unsupported interface refusal
+
+`GRAPHOS-HOST-R010.9` binds to tests/agent_host/test_interface_refusal.py.
+Sentinels reject workspace initialization, both graph builders and listener calls.
+Cover provided graphs, workspace construction, tag construction and defaults.
+Reject enabled options and malformed booleans. Preserve omitted and false options.
+These checks do not prove authorized host logs or terminal startup.
+
+- `GRAPHOS-HOST-R009.7`: Exercise the real host routes with controlled session, grant and record owners over loopback HTTP. Check tenant/session isolation, denial, revocation during a read, expiry and record bounds. No deployed grant configuration is claimed.

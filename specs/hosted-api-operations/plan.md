@@ -557,3 +557,15 @@ OpenAPI definitions so every local reference resolves.
 The wheel includes the registry and shared schema documents. Acceptance covers
 clean installed-wheel use, missing and unsafe references, deterministic generation
 and equality of resolved schemas. This proof does not establish a live server.
+
+### 2026-10-17: R025.2 canonical client and OpenAPI schemas
+
+Share schema reference resolution between generation and the installed client.
+Keep the generic transport invoker as one runtime source. Generate only its
+operation identifiers and registry identity. Reuse identical curated OpenAPI
+schemas through component references. Preserve resolved schemas, provider hashes,
+registry identity and installed-wheel behavior. Validate reference closure and
+scanner acceptance without exclusions or reduced thresholds.
+
+Run the canonical hosted scanner for generator, generated artifact and scanner
+workflow changes in pull requests. Keep publication limited to release tags.

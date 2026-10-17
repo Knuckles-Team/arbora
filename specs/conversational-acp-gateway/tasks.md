@@ -17,7 +17,7 @@ Governing [spec](spec.md) and [plan](plan.md).
 
 ## Coding session admission (R001.3 to R001.8)
 
-- [ ] **GRAPHOS-ACP-R001.3:** Model for coding-session request, grant and admitted session
+- [x] **GRAPHOS-ACP-R001.3:** Model for coding-session request, grant and admitted session
 - [ ] **GRAPHOS-ACP-R001.4:** Behavior for trusted-root and permission rules
 - [ ] **GRAPHOS-ACP-R001.5:** Wiring of `session/new` into the gateway route registration
 - [ ] **GRAPHOS-ACP-R001.6:** Typed refusals for root, capability, permission and client

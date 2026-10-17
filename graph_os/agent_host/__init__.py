@@ -37,9 +37,19 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from graph_os.agent_host.log_access import HostLogAccess
+from graph_os.agent_host.log_routes import register_host_log_routes
+
 logger = logging.getLogger(__name__)
 
-__all__ = ["build_agent_host_app", "create_agent_server"]
+__all__ = ["HostInterfaceUnavailable", "build_agent_host_app", "create_agent_server"]
+
+
+class HostInterfaceUnavailable(RuntimeError):
+    """An explicitly requested client interface has no authenticated handoff."""
+
+    reason = "client_unavailable"
+
 
 #: ``(graph, graph_config, query) -> result dict`` -- the default calls the
 #: agent-utilities protocol-agnostic execution port; tests inject a stub so
@@ -100,6 +110,7 @@ def build_agent_host_app(
     name: str | None = None,
     description: str | None = None,
     executor: AgentExecutor | None = None,
+    host_logs: HostLogAccess | None = None,
 ):
     """Build the FastAPI app that hosts one connector agent.
 
@@ -115,6 +126,7 @@ def build_agent_host_app(
     agent_description = description or ""
 
     app = FastAPI(title=agent_name)
+    register_host_log_routes(app, host_logs)
 
     @app.get("/health")
     def health() -> dict[str, str]:
@@ -207,6 +219,10 @@ def create_agent_server(
     system_prompt: str | None = None,
     workspace: str | None = None,
     executor: AgentExecutor | None = None,
+    host_logs: HostLogAccess | None = None,
+    enable_terminal_ui: bool = False,
+    enable_web_ui: bool | None = None,
+    enable_web_logs: bool = False,
     **_unused_au_hosting_kwargs: Any,
 ) -> None:
     """Build and serve a connector agent -- the GraphOS-hosted replacement for
@@ -220,14 +236,22 @@ def create_agent_server(
     host); only the uvicorn/FastAPI serving shell is GraphOS's own.
 
     ``**_unused_au_hosting_kwargs`` absorbs AU-hosting-only arguments a
-    caller may still pass during migration (``debug``, ``enable_web_ui``,
-    ``enable_otel``, ``a2a_broker``, ...) that this first increment does not
+    caller may still pass during migration (``debug``, ``enable_otel``,
+    ``a2a_broker``, ...) that this first increment does not
     yet implement; see the migration recipe for current parity gaps. Notably
     ``provider``/``model_id``/``base_url``/``api_key`` (the default-LLM
     selection AU's own hosting shell forwards into its server config) land
     here too and are not yet wired into graph construction -- a tracked
     parity gap, not a silent behavior match.
     """
+    selections = (enable_terminal_ui, enable_web_logs)
+    if any(type(value) is not bool for value in selections) or (
+        enable_web_ui is not None and type(enable_web_ui) is not bool
+    ):
+        raise ValueError("invalid_launch")
+    if enable_terminal_ui or enable_web_ui or enable_web_logs:
+        raise HostInterfaceUnavailable("client_unavailable")
+
     if graph is None or graph_config is None:
         from agent_utilities import create_graph_agent, initialize_workspace
 
@@ -260,6 +284,7 @@ def create_agent_server(
         name=name,
         description=system_prompt,
         executor=executor,
+        host_logs=host_logs,
     )
 
     import uvicorn
