@@ -8,7 +8,7 @@ class rules it carries are enforced by the EG identity store.
 from __future__ import annotations
 
 EG_SCOPE_REGISTRY_SHA256 = (
-    "bed97c332771c1969de88d532095d481b7c852fdedd05c6d5e6122591964d0b5"
+    "af13c419409914c0a9f1279493d59753300ecbd62d4181dbf25483866b3a5ac2"
 )
 
 #: scope -> class (user | domain | service-only | approver | admin).
@@ -71,6 +71,7 @@ SCOPE_CLASSES: dict[str, str] = {
     "compute:vision": "service-only",
     "connector:write-back": "service-only",
     "connector:write-back-read": "service-only",
+    "decide:commit": "service-only",
     "distcompute:read": "user",
     "edge:read": "user",
     "edge:write": "user",
@@ -137,6 +138,7 @@ SCOPE_CLASSES: dict[str, str] = {
     "ops:read": "admin",
     "owl:read": "user",
     "policy:capture-write": "domain",
+    "policy:read": "user",
     "quantum:run": "user",
     "query:cypher": "user",
     "query:decide": "user",
@@ -165,6 +167,7 @@ SCOPE_CLASSES: dict[str, str] = {
     "security:audit-write": "service-only",
     "security:bootstrap": "service-only",
     "security:check": "service-only",
+    "security:read": "user",
     "semantic:binding-read": "user",
     "semantic:binding-write": "user",
     "semantic:source-admit": "service-only",
@@ -179,7 +182,9 @@ SCOPE_CLASSES: dict[str, str] = {
     "stream:admin": "admin",
     "stream:read": "user",
     "stream:write": "user",
+    "swarm:read": "user",
     "telemetry:derive": "service-only",
+    "telemetry:read": "user",
     "telemetry:write": "service-only",
     "timeseries:read": "user",
     "timeseries:write": "service-only",
@@ -188,6 +193,7 @@ SCOPE_CLASSES: dict[str, str] = {
     "txn:write": "user",
     "udf:admin": "admin",
     "udf:exec": "user",
+    "usage:read": "user",
     "validation:read": "user",
     "viz:render": "user",
     "webui:admin": "admin",

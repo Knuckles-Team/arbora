@@ -11,7 +11,8 @@ resolution-markers = [
 overrides = [
     { name = "agent-connector-sdk", extras = ["a2a", "mcp"], specifier = ">=0.2.0,<1.0.0" },
     { name = "agent-utilities", specifier = ">=3.0.0,<4.0.0" },
-    { name = "epistemic-graph", extras = ["server"], specifier = ">=2.27.1,<3.0.0", index = "https://pypi.org/simple" },
+    { name = "epistemic-graph", specifier = ">=2.27.2,<3.0.0", index = "https://pypi.org/simple" },
+    { name = "epistemic-graph-server", specifier = ">=2.27.1,<3.0.0", index = "https://pypi.org/simple" },
     { name = "pydantic-ai-slim", extras = ["openai", "ui"], specifier = "==2.57.0" },
 ]
 
@@ -31,7 +32,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
     { name = "cryptography" },
-    { name = "epistemic-graph", extra = ["server"] },
+    { name = "epistemic-graph" },
     { name = "httpx" },
     { name = "httpx2" },
     { name = "mcp-types" },
@@ -965,7 +966,7 @@ wheels = [
 
 [[package]]
 name = "epistemic-graph"
-version = "2.27.1"
+version = "2.27.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
@@ -974,15 +975,10 @@ dependencies = [
     { name = "pyoxigraph" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ac/9e/93cbdebf7712eed211f6f723495b24cd0939a0194bafd2e4d5a94c8e08d6/epistemic_graph-2.27.1-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:501fa6457c16678365758f9fd75bc3dcb0a3b933008a140eec956ff7596bd33e", size = 7550572, upload-time = "2026-10-16T10:31:56.919Z" },
-    { url = "https://files.pythonhosted.org/packages/95/7b/64e94ee7e36ba23fd361bce5551eafea91713e787c5cb624a1261421e304/epistemic_graph-2.27.1-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:e21eb5ba8094c38c53bc3b5aaba006dbe64fef98d0df25e17c8e3bad9d1d604f", size = 7748838, upload-time = "2026-10-16T10:22:35.645Z" },
-    { url = "https://files.pythonhosted.org/packages/c0/32/a85902e5d893a1a8c401c7676d116c653e432dcb51928571a89b9501c81b/epistemic_graph-2.27.1-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:df997e55cb2c0ee73da3ac33fb96a723ce79529aac58bc41d05cb950bf15ba60", size = 8392662, upload-time = "2026-10-16T10:15:48.349Z" },
-    { url = "https://files.pythonhosted.org/packages/8e/f1/bd74d1d56a879f352a52016043658d6211e6af6fcc2a316dbf3a7c30fb40/epistemic_graph-2.27.1-cp39-abi3-win_amd64.whl", hash = "sha256:8e7e5751acd295cfea31654e07b2fb2180467475410e9c1505c4150a8fbbb358", size = 8892485, upload-time = "2026-10-16T10:28:23.974Z" },
-]
-
-[package.optional-dependencies]
-server = [
-    { name = "epistemic-graph-server" },
+    { url = "https://files.pythonhosted.org/packages/e3/ed/5fd9d0fe6de99cef7398e06f66f3cf38fc557f229b84af699152d8cc0159/epistemic_graph-2.27.2-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:84e72c926cb8e868e90b2dd35afdaec68e1d1e9b71fcb7e2f33a54e5e08bf0fa", size = 7551859, upload-time = "2026-10-17T06:39:44.369Z" },
+    { url = "https://files.pythonhosted.org/packages/15/56/394a1f7975f90f4976afa3e3ed0d78e91d406b8dad3f8d88db5f815ed477/epistemic_graph-2.27.2-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:89d948c5f62538e8d65d7de5851915c2efdfae94dfcbb8ed76009ffa613aa015", size = 7750113, upload-time = "2026-10-17T06:35:02.237Z" },
+    { url = "https://files.pythonhosted.org/packages/1a/12/8f0e775162ab16a248bec371d036277b529a0f4b2851b91192f814e229dc/epistemic_graph-2.27.2-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:db9b62191f7e3a5090d0a1d108b8d90d616cac4b64911c45de08eca29c635cfe", size = 8393920, upload-time = "2026-10-17T06:26:31.007Z" },
+    { url = "https://files.pythonhosted.org/packages/0e/ad/a59ca5653e9443df873d6122acfc7550f06328a2560d3cc35d080dd93bb8/epistemic_graph-2.27.2-cp39-abi3-win_amd64.whl", hash = "sha256:64b2bc5930901c98fa10b66f28a517b0a5e88f6e8fe38f24899d1cc6bf088f9e", size = 8893744, upload-time = "2026-10-17T06:25:15.569Z" },
 ]
 
 [[package]]
@@ -1337,7 +1333,8 @@ dependencies = [
     { name = "agent-utilities" },
     { name = "aiohttp" },
     { name = "anyio" },
-    { name = "epistemic-graph", extra = ["server"] },
+    { name = "epistemic-graph" },
+    { name = "epistemic-graph-server" },
     { name = "eunomia-core" },
     { name = "fastapi" },
     { name = "fastmcp" },
@@ -1453,7 +1450,8 @@ requires-dist = [
     { name = "anyio", specifier = ">=4.15.1" },
     { name = "botbuilder-core", marker = "extra == 'messaging-teams'", specifier = ">=4.17.1" },
     { name = "discord-py", marker = "extra == 'messaging-discord'", specifier = ">=2.7.1" },
-    { name = "epistemic-graph", extras = ["server"], specifier = ">=2.27.1,<3.0.0", index = "https://pypi.org/simple" },
+    { name = "epistemic-graph", specifier = ">=2.27.2,<3.0.0", index = "https://pypi.org/simple" },
+    { name = "epistemic-graph-server", specifier = ">=2.27.1,<3.0.0", index = "https://pypi.org/simple" },
     { name = "eunomia-core", specifier = ">=0.3.10" },
     { name = "fastapi", specifier = ">=0.143.3" },
     { name = "fastmcp", specifier = ">=4.1.0" },

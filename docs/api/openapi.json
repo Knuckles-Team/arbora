@@ -30,16 +30,6 @@
           }
         },
         "required": true
-      },
-      "Sharedeb8a095d587c144e4b95594de15059b1634d9ea24cf12d722c23960899bed58d": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Schema9170d54be70d2cc7125168f0e82859a66a10119882e0623c4b05560dd6113fef"
-            }
-          }
-        },
-        "required": true
       }
     },
     "responses": {
@@ -18298,51 +18288,18 @@
         ]
       }
     },
-    "/api/v1/ops/rlm.benchmark": {
-      "post": {
-        "operationId": "rlm.benchmark",
-        "requestBody": {
-          "$ref": "#/components/requestBodies/Sharedeb8a095d587c144e4b95594de15059b1634d9ea24cf12d722c23960899bed58d"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Shared4e86808af3e59673c891695bfc6f9b85eba988a2b14441db0b3887e80ebd7b96"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared20fd372f894728c720ea9fb2cbe02179faaa483cd81a534d03182c99f04e7fee"
-          }
-        },
-        "summary": "Execute governed RLM benchmark",
-        "tags": [
-          "rlm"
-        ]
-      }
-    },
-    "/api/v1/ops/rlm.evolve_prompt": {
-      "post": {
-        "operationId": "rlm.evolve_prompt",
-        "requestBody": {
-          "$ref": "#/components/requestBodies/Sharedeb8a095d587c144e4b95594de15059b1634d9ea24cf12d722c23960899bed58d"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Shared4e86808af3e59673c891695bfc6f9b85eba988a2b14441db0b3887e80ebd7b96"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared20fd372f894728c720ea9fb2cbe02179faaa483cd81a534d03182c99f04e7fee"
-          }
-        },
-        "summary": "Execute governed RLM evolve prompt",
-        "tags": [
-          "rlm"
-        ]
-      }
-    },
     "/api/v1/ops/rlm.run": {
       "post": {
         "operationId": "rlm.run",
         "requestBody": {
-          "$ref": "#/components/requestBodies/Sharedeb8a095d587c144e4b95594de15059b1634d9ea24cf12d722c23960899bed58d"
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema9170d54be70d2cc7125168f0e82859a66a10119882e0623c4b05560dd6113fef"
+              }
+            }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -18576,5 +18533,5 @@
       }
     }
   },
-  "x-registry-digest": "bf6ef7e6c20d34e341209a7c8048c5e10e0d340d9ca7c93941a627addc8ed45c"
+  "x-registry-digest": "d0406891137c0ea3d925e464b51dd414641699db0c6c23017787fde9e0c370a1"
 }

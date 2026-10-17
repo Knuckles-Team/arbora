@@ -5860,30 +5860,6 @@
     {
       "domain": "rlm",
       "examples": [
-        "benchmark with RLM"
-      ],
-      "id": "rlm.benchmark",
-      "summary": "Execute governed RLM benchmark",
-      "tags": [
-        "rlm"
-      ],
-      "verb": "act"
-    },
-    {
-      "domain": "rlm",
-      "examples": [
-        "evolve prompt with RLM"
-      ],
-      "id": "rlm.evolve_prompt",
-      "summary": "Execute governed RLM evolve prompt",
-      "tags": [
-        "rlm"
-      ],
-      "verb": "act"
-    },
-    {
-      "domain": "rlm",
-      "examples": [
         "run with RLM"
       ],
       "id": "rlm.run",
@@ -5978,5 +5954,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "bf6ef7e6c20d34e341209a7c8048c5e10e0d340d9ca7c93941a627addc8ed45c"
+  "registry_digest": "d0406891137c0ea3d925e464b51dd414641699db0c6c23017787fde9e0c370a1"
 }
