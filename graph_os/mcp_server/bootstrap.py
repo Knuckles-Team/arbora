@@ -20,7 +20,6 @@ _AUTHORITY_KEEPALIVE_ACTIVE = cast(Any, None)
 _ENGINE_LOCK = cast(Any, None)
 _PROCESS_AUTHORITY_STOP = cast(Any, None)
 _PROCESS_AUTHORITY_THREAD = cast(Any, None)
-_PROCESS_SESSION = cast(Any, None)
 _PROCESS_SESSION_REFRESH_LOCK = cast(Any, None)
 _SESSION_ID = cast(Any, None)
 setting = cast(Any, None)
@@ -218,7 +217,7 @@ async def _ensure_process_authority_current() -> Any:
             raise PermissionError("Verified GraphSession required")
         ambient.ensure_authority_current(minimum_ttl_seconds=30)
         return ambient
-    session = _PROCESS_SESSION
+    session = _process_session()
     if session is None:
         raise PermissionError("Verified GraphSession required")
     try:
@@ -331,7 +330,7 @@ async def authority_keepalive_scope(session: Any | None = None) -> AsyncIterator
     if session is None:
         from graph_os.api.contracts.session import current_session
 
-        session = current_session() or _PROCESS_SESSION
+        session = current_session() or _process_session()
     if session is None:
         yield
         return
@@ -789,11 +788,18 @@ def _start_engine_bootstrap(session: Any) -> None:
         logger.error("GraphOS noncritical bootstrap launch failed: %s", exc)
 
 
-def set_process_session(session: Any) -> None:
-    """Keep bootstrap authority state synchronized with the host runtime."""
+def _process_session() -> Any:
+    """The stdio process session; ``runtime`` holds the one live binding."""
+    from graph_os.mcp_server import runtime
 
-    global _PROCESS_SESSION
-    _PROCESS_SESSION = session
+    return runtime._PROCESS_SESSION
+
+
+def set_process_session(session: Any) -> None:
+    """Bind the process session on the host runtime (its single owner)."""
+    from graph_os.mcp_server import runtime
+
+    runtime._PROCESS_SESSION = session
 
 
 BOOTSTRAP_EXPORTS = tuple(

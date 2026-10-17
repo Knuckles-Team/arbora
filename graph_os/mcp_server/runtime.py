@@ -2262,7 +2262,6 @@ for _bootstrap_name in (
     "_ENGINE_LOCK",
     "_PROCESS_AUTHORITY_STOP",
     "_PROCESS_AUTHORITY_THREAD",
-    "_PROCESS_SESSION",
     "_PROCESS_SESSION_REFRESH_LOCK",
     "_SESSION_ID",
     "setting",
