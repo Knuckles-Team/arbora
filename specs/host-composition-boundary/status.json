@@ -309,7 +309,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R001.9",
-      "title": "The tiny profile serves the KG over the gateway with zero containers",
+      "title": "The tiny profile serves the graph with zero containers",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "9e7f6499d96f"
