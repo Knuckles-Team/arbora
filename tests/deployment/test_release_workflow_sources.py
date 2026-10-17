@@ -449,21 +449,13 @@ def test_numeric_artifact_cache_is_exact_and_always_validated() -> None:
     assert "maturin>=" not in identity["run"]
 
 
-def test_release_eg_checkout_matches_locked_source() -> None:
-    from urllib.parse import parse_qs, urlsplit
-
+def test_release_eg_resolves_from_the_package_index_as_wheels() -> None:
     locked = tomllib.loads((ROOT / "uv.lock").read_text(encoding="utf-8"))
     eg = next(
         package for package in locked["package"] if package["name"] == "epistemic-graph"
     )
-    source = urlsplit(eg["source"]["git"])
-    revision = parse_qs(source.query)["rev"][0]
-    checkout = next(
-        step["with"]
-        for step in _gate_steps()
-        if step.get("with", {}).get("repository") == "Knuckles-Team/epistemic-graph"
-    )
-    assert checkout["ref"] == revision == source.fragment
+    assert eg["source"] == {"registry": "https://pypi.org/simple"}
+    assert eg.get("wheels") and "sdist" not in eg
 
 
 def test_pinned_sdk_source_contains_schema_disclosure_contract() -> None:

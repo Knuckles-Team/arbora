@@ -24,9 +24,10 @@ The one intentional exception is ``ENGINE_TOPOLOGY`` — see
 from __future__ import annotations
 
 import json
+import os
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -548,15 +549,11 @@ def migrate_config_file(
 ) -> dict[str, Any]:
     """Reconcile a stale ``config.json`` so it loads under the current schema.
 
-    A stale ``config.json`` fails the load two ways: **retired** keys (rejected
-    with ``retired durable configuration key(s) are not accepted``) and, under
-    the strict production path, **unknown** keys not modelled by ``AgentConfig``.
-    This operates on the raw JSON — before any ``AgentConfig`` validation:
-
-    * Always strips retired keys (safe: they are removed capabilities).
-    * With ``strip_unknown=True`` also strips unknown/unmodelled keys (e.g. stray
-      connector settings) — these are reported either way so a caller can relocate
-      them to env/the secret store instead of losing them.
+    A stale ``config.json`` holds **unknown** keys that ``GraphOSConfig`` does
+    not model. This operates on the raw JSON before any validation. With
+    ``strip_unknown=True`` it strips unknown keys (for example stray connector
+    settings); they are reported either way, so a caller can relocate them to
+    the environment or the secret store instead of losing them.
 
     Writes a one-time backup and returns a value-free report (key *names* only).
     """
@@ -666,6 +663,28 @@ class _DoctorConfigContext:
     deployment_profile: str | None
     app_profile: str
     profile_source: str
+    #: The source document; it answers for keys the settings model omits.
+    document: Mapping[str, Any] = field(default_factory=dict)
+
+
+class ConfigurationSourceError(PermissionError):
+    """A production configuration source is readable by other users."""
+
+
+def _require_private_source(path: Path, profile: str | None) -> None:
+    """Refuse a production source that grants group or other permissions."""
+    if str(profile or "tiny").strip().casefold() == "tiny" or os.name != "posix":
+        return
+    if path.stat().st_mode & 0o077:
+        raise ConfigurationSourceError("production configuration must be owner-only")
+
+
+def _document_value(cfg: Any, env: str, document: Mapping[str, Any]) -> Any:
+    """A setting's value: the model field when modelled, else the source key."""
+    name = _alias_to_field(env)
+    if name in getattr(type(cfg), "model_fields", {}):
+        return getattr(cfg, name, None)
+    return document.get(env, getattr(cfg, name, None))
 
 
 def _config_doctor_load_from_path(
@@ -675,6 +694,9 @@ def _config_doctor_load_from_path(
         raw = json.loads(Path(config_path).read_text(encoding="utf-8"))
         if not isinstance(raw, dict):
             raise ValueError("configuration must be a JSON object")
+        _require_private_source(
+            Path(config_path), profile or raw.get("DEPLOYMENT_PROFILE")
+        )
     except Exception as exc:  # noqa: BLE001
         return {
             "status": "error",
@@ -702,7 +724,7 @@ def _config_doctor_load_from_path(
         if profile
         else ("configuration" if raw.get("DEPLOYMENT_PROFILE") else "default")
     )
-    return _DoctorConfigContext(cfg, prof, app_profile, profile_source)
+    return _DoctorConfigContext(cfg, prof, app_profile, profile_source, raw)
 
 
 def _config_doctor_load_live(
@@ -765,11 +787,13 @@ def _config_doctor_profile_check(
     return norm
 
 
-def _config_doctor_check_required_keys(cfg: Any, norm: str) -> dict[str, Any]:
+def _config_doctor_check_required_keys(
+    cfg: Any, norm: str, document: Mapping[str, Any] | None = None
+) -> dict[str, Any]:
     """1. Required-for-profile keys."""
 
     def _set(env: str) -> bool:
-        val = getattr(cfg, _alias_to_field(env), None)
+        val = _document_value(cfg, env, document or {})
         return bool(str(val).strip()) if val not in (None, False) else False
 
     missing = [k for k in _PROFILE_REQUIRED.get(norm, ()) if not _set(k)]
@@ -907,14 +931,16 @@ def _config_doctor_check_dispatch_lease(cfg: Any) -> dict[str, Any]:
     }
 
 
-def _config_doctor_check_readiness(cfg: Any, norm: str) -> dict[str, Any]:
+def _config_doctor_check_readiness(
+    cfg: Any, norm: str, document: Mapping[str, Any] | None = None
+) -> dict[str, Any]:
     """7. Production feature posture. Report only setting names, never
     configured values, endpoints, identities, secret references, or trace
     content."""
     readiness_mismatches: list[str] = []
     if norm != "tiny":
         for env, expected in _PRODUCTION_READINESS_EXPECTED.items():
-            actual = getattr(cfg, _alias_to_field(env), None)
+            actual = _document_value(cfg, env, document or {})
             if actual is not expected:
                 readiness_mismatches.append(env)
     return {
@@ -983,13 +1009,13 @@ def config_doctor(
             "source": loaded.profile_source,
             "ok": True,
         },
-        _config_doctor_check_required_keys(cfg, norm),
+        _config_doctor_check_required_keys(cfg, norm, loaded.document),
         _config_doctor_check_durability(cfg, norm),
         _config_doctor_check_secret_refs(cfg, config_path),
         _config_doctor_check_outbound_auth(cfg),
         _config_doctor_check_memento_retention(cfg),
         _config_doctor_check_dispatch_lease(cfg),
-        _config_doctor_check_readiness(cfg, norm),
+        _config_doctor_check_readiness(cfg, norm, loaded.document),
         _config_doctor_check_engine_topology(norm),
     ]
 

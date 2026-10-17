@@ -11,7 +11,6 @@ from graph_os.core.settings import plaintext_secret_keys
 from graph_os.deployment.config_generator import (
     config_doctor,
     migrate_config_file,
-    unknown_configuration_keys,
 )
 
 _RETIRED_ENGINE_KEY = "ENGINE_MODE"
@@ -42,43 +41,6 @@ def governed_retired_configuration_catalog(
     return policy
 
 
-def test_migrate_config_file_strips_retired_and_backs_up(tmp_path: Path) -> None:
-    p = tmp_path / "config.json"
-    p.write_text(json.dumps({_RETIRED_ENGINE_KEY: "external", "WORKSPACE_PATH": "a"}))
-    report = migrate_config_file(p)
-    assert report["status"] == "migrated"
-    assert report["removed"] == [_RETIRED_ENGINE_KEY]
-    assert Path(report["backup"]).exists()
-    on_disk = json.loads(p.read_text())
-    assert _RETIRED_ENGINE_KEY not in on_disk and on_disk["WORKSPACE_PATH"] == "a"
-
-
-def test_migrate_config_file_atomically_renames_messaging_selectors(
-    tmp_path: Path,
-) -> None:
-    p = tmp_path / "config.json"
-    p.write_text(
-        json.dumps(
-            {
-                _RETIRED_MESSAGING_TRIGGER: "/model",
-                _RETIRED_MESSAGING_MODEL: "addressed-model",
-                "MESSAGING_LOCAL_MODEL": "default-model",
-            }
-        )
-    )
-
-    report = migrate_config_file(p, backup=False)
-
-    assert report["status"] == "migrated"
-    assert len(report["renamed"]) == 3
-    assert json.loads(p.read_text()) == {
-        "MESSAGING_MODEL_TRIGGER": "/model",
-        "MESSAGING_ADDRESSED_MODEL": "addressed-model",
-        "MESSAGING_DEFAULT_MODEL": "default-model",
-    }
-    assert not list(tmp_path.glob(".config-*.tmp"))
-
-
 def test_migrate_config_file_preserves_non_selector_model_keys(tmp_path: Path) -> None:
     p = tmp_path / "config.json"
     original = json.dumps({"MESSAGING_VOICE_MODEL": "speech-model"})
@@ -103,59 +65,6 @@ def test_migrate_config_file_does_not_guess_unlisted_provider_keys(
     assert p.read_text() == original
 
 
-def test_migrate_config_file_rejects_messaging_key_conflict_without_writing(
-    tmp_path: Path,
-) -> None:
-    p = tmp_path / "config.json"
-    original = json.dumps(
-        {
-            _RETIRED_MESSAGING_MODEL: "old-selector",
-            "MESSAGING_ADDRESSED_MODEL": "new-selector",
-        }
-    )
-    p.write_text(original)
-
-    report = migrate_config_file(p, backup=False)
-
-    assert report == {
-        "status": "error",
-        "error": "messaging_model_migration_conflict",
-        "path": str(p),
-    }
-    assert p.read_text() == original
-
-
-def test_migrate_config_file_rejects_invalid_renamed_document_without_writing(
-    tmp_path: Path,
-) -> None:
-    p = tmp_path / "config.json"
-    original = json.dumps(
-        {
-            _RETIRED_MESSAGING_MODEL: "addressed-model",
-            "MESSAGING_INTAKE_ENABLED": "not-a-boolean",
-        }
-    )
-    p.write_text(original)
-
-    report = migrate_config_file(p, backup=False)
-
-    assert report["status"] == "error"
-    assert report["error"] == "messaging_model_migration_invalid"
-    assert p.read_text() == original
-
-
-def test_migrate_config_file_reports_but_keeps_unknown_by_default(
-    tmp_path: Path,
-) -> None:
-    p = tmp_path / "config.json"
-    p.write_text(
-        json.dumps({_RETIRED_ENGINE_KEY: "external", "CAMUNDA_URL": "http://c"})
-    )
-    report = migrate_config_file(p)  # strip_unknown defaults False
-    assert "CAMUNDA_URL" in report["unknown_present"]
-    assert "CAMUNDA_URL" in json.loads(p.read_text())  # connector key preserved
-
-
 def test_migrate_config_file_aggressive_strips_unknown(tmp_path: Path) -> None:
     p = tmp_path / "config.json"
     p.write_text(json.dumps({"WORKSPACE_PATH": "a", "CAMUNDA_URL": "http://c"}))
@@ -163,25 +72,6 @@ def test_migrate_config_file_aggressive_strips_unknown(tmp_path: Path) -> None:
     assert report["status"] == "migrated"
     assert "CAMUNDA_URL" in report["unknown_removed"]
     assert "CAMUNDA_URL" not in json.loads(p.read_text())
-
-
-def test_config_doctor_flags_retired_and_migrate_fixes(tmp_path: Path) -> None:
-    p = tmp_path / "config.json"
-    p.write_text(json.dumps({_RETIRED_ENGINE_KEY: "external", "WORKSPACE_PATH": "a"}))
-    flagged = config_doctor(profile="tiny", config_path=p)
-    assert flagged["status"] == "needs_migration"
-    assert flagged["healthy"] is False
-    # migrate=True removes them before validation
-    fixed = config_doctor(profile="tiny", config_path=p, migrate=True)
-    assert fixed["status"] != "needs_migration"
-    assert _RETIRED_ENGINE_KEY not in json.loads(p.read_text())
-
-
-def test_unknown_configuration_keys_excludes_fields_and_retired() -> None:
-    unknown = unknown_configuration_keys(
-        {"WORKSPACE_PATH": "a", _RETIRED_ENGINE_KEY: "x", "CAMUNDA_URL": "http://c"}
-    )
-    assert unknown == ["CAMUNDA_URL"]
 
 
 def test_plaintext_secret_keys_flags_inline_credentials() -> None:

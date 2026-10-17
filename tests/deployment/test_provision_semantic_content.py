@@ -191,11 +191,9 @@ def test_cli_provisions_both_packs_under_eg_issued_bindings(
     # A fresh store also lacks the WorkItem control graph (leases, queues).
     assert report["control_graph_created"] is True
     assert "__control__" in engine.graphs
-    assert sorted(report["registered"]) == ["agent-utilities", "graph-os"]
-    assert sorted(attest["connector"] for attest in engine.attests) == [
-        "agent-utilities",
-        "graph-os",
-    ]
+    # The cut agent-utilities harness ships no semantic content pack.
+    assert sorted(report["registered"]) == ["graph-os"]
+    assert sorted(attest["connector"] for attest in engine.attests) == ["graph-os"]
     for attest in engine.attests:
         # The first binding of a fresh store: no generation to fence on.
         assert attest.get("expected_catalog_generation") is None
@@ -207,7 +205,7 @@ def test_cli_provisions_both_packs_under_eg_issued_bindings(
     assert not [call for call in engine.calls if call[0] == "reproject"]
     attaches = [call for call in engine.calls if call[0] == "GraphSchema"]
     assert {call[1] for call in attaches} == {GRAPH}
-    final = [call for call in wired["verified"] if len(call["connectors"]) == 2]
+    final = [call for call in wired["verified"] if len(call["connectors"]) == 1]
     assert len(final) == 1 and final[0]["graph"] == GRAPH
 
 

@@ -12,10 +12,9 @@ doctor boundary.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from types import SimpleNamespace
 from typing import Any
-
-from graph_os.api.errors import not_served
 
 from .doctor_support import _result
 
@@ -106,9 +105,15 @@ def _graph_connection_declarations(
 
 
 def _invalid_declaration_count(declarations: list[dict[str, Any]]) -> int:
-    """How many declarations fail the persistable spec or carry no usable name."""
-    raise not_served(
-        "knowledge_graph.core.connection_registry", "EG-UNIFIED-DATA-PLANE-R612"
+    """How many declarations carry no usable name.
+
+    The engine's connection registry validates the rest of each declaration
+    when it binds the connection.
+    """
+    return sum(
+        1
+        for value in declarations
+        if not isinstance(value, Mapping) or not str(value.get("name") or "").strip()
     )
 
 

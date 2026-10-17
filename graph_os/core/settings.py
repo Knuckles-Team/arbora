@@ -87,7 +87,24 @@ def platform_config_file(name: str) -> Path:
     return legacy
 
 
-_CREDENTIAL_SUFFIXES = ("_SECRET", "_PASSWORD", "_TOKEN", "_API_KEY", "_PRIVATE_KEY")
+_CREDENTIAL_SUFFIXES = (
+    "_SECRET",
+    "_SECRET_KEY",
+    "_PASSWORD",
+    "_TOKEN",
+    "_API_KEY",
+    "_PRIVATE_KEY",
+)
+
+
+def _credential_shaped(key: str) -> bool:
+    """True for a key named as a credential, bare (``PASSWORD``) or suffixed."""
+    name = key.upper()
+    return name.endswith(_CREDENTIAL_SUFFIXES) or any(
+        name == suffix.lstrip("_") for suffix in _CREDENTIAL_SUFFIXES
+    )
+
+
 _REFERENCE_SCHEMES = ("env://", "openbao://", "vault://", "file://")
 _CONFIG_FILE = "config.json"
 _write_lock = threading.Lock()
@@ -1016,7 +1033,7 @@ def plaintext_secret_keys(document: dict[str, Any]) -> list[str]:
     return sorted(
         str(key)
         for key, value in document.items()
-        if str(key).upper().endswith(_CREDENTIAL_SUFFIXES)
+        if _credential_shaped(str(key))
         and value not in (None, "")
         and not (isinstance(value, str) and value.startswith(_REFERENCE_SCHEMES))
     )

@@ -339,7 +339,7 @@ def test_reload_names_the_fields_that_still_need_a_restart(monkeypatch):
     result = config_admin.reload()
 
     assert result["reloaded"] is True
-    assert "STATE_DB_URI" in result["restart_required_fields"]
+    assert "GRAPH_SERVICE_ENDPOINTS" in result["restart_required_fields"]
     assert result["live_fields"] > 0
 
 
