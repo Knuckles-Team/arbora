@@ -171,3 +171,50 @@ See [design](plan.md) and [tests](test-spec.md).
 
 - [ ] **ARBORA-OPS-R018.2.1:** Distinct query declaration, resolver and caller dispatch contracts; live provider planner validation deferred.
 - [ ] **ARBORA-OPS-R018.2.2:** Remaining served query, SQL, search, indexes and analytics acceptance.
+
+- [ ] **ARBORA-OPS-R801:** Graph node and relationship browse.
+- [ ] **ARBORA-OPS-R802:** Graph level-of-detail view.
+- [ ] **ARBORA-OPS-R803:** Graph statistics.
+- [ ] **ARBORA-OPS-R804:** Graph schema and node types.
+- [ ] **ARBORA-OPS-R805:** Graph edge write.
+- [ ] **ARBORA-OPS-R806:** Graph impact analysis.
+- [ ] **ARBORA-OPS-R807:** Code navigation context.
+- [ ] **ARBORA-OPS-R808:** Knowledge base articles.
+- [ ] **ARBORA-OPS-R809:** Spec-driven development documents.
+- [ ] **ARBORA-OPS-R810:** Agent library list and write.
+- [ ] **ARBORA-OPS-R811:** Agent library reload.
+- [ ] **ARBORA-OPS-R812:** Autonomous goal run.
+- [ ] **ARBORA-OPS-R813:** Graph maintenance run.
+- [ ] **ARBORA-OPS-R814:** Ingestion pipeline run.
+- [ ] **ARBORA-OPS-R815:** Graph prompts.
+- [ ] **ARBORA-OPS-R816:** Prompt library read.
+- [ ] **ARBORA-OPS-R817:** MCP server registry management.
+- [ ] **ARBORA-OPS-R818:** Scheduled task read.
+- [ ] **ARBORA-OPS-R819:** Workflow run and write.
+- [ ] **ARBORA-OPS-R820:** Ontology object explorer.
+- [ ] **ARBORA-OPS-R821:** Markets signals read.
+- [ ] **ARBORA-OPS-R822:** Bearer identity verification.
+- [ ] **ARBORA-OPS-R823:** Claim lifecycle and perspective arbitration.
+- [ ] **ARBORA-OPS-R824:** Skill evolution promotion gate.
+- [ ] **ARBORA-OPS-R825:** Feedback corrections.
+- [ ] **ARBORA-OPS-R826:** Fleet event remediation routing.
+- [ ] **ARBORA-OPS-R827:** Comparative-analysis skill.
+- [ ] **ARBORA-OPS-R828:** Usage ledger and price catalog.
+- [ ] **ARBORA-OPS-R829:** Incident and health-anomaly records.
+- [ ] **ARBORA-OPS-R830:** Graph ownership inference.
+- [ ] **ARBORA-OPS-R831:** Retrieval search composition.
+- [ ] **ARBORA-OPS-R832:** UQL shape validation stage.
+- [ ] **ARBORA-OPS-R833:** Ontology-grounded extraction.
+- [ ] **ARBORA-OPS-R834:** Run provenance and trace views.
+- [ ] **ARBORA-OPS-R835:** Orchestration competency questions.
+- [ ] **ARBORA-OPS-R836:** Placement and rebalance plans.
+- [ ] **ARBORA-OPS-R837:** Service-ownership links for repositories.
+- [ ] **ARBORA-OPS-R838:** Foreign source registration and intake.
+- [ ] **ARBORA-OPS-R839:** Code health sweep.
+- [ ] **ARBORA-OPS-R840:** Session transcript and feed intake.
+- [ ] **ARBORA-OPS-R841:** Skill pack validation.
+- [ ] **ARBORA-OPS-R842:** Governed actions.
+
+- [ ] **ARBORA-OPS-R843:** Served engine operations replace the in-run agent-utilities tool wrappers.
+- [x] **ARBORA-OPS-R843.1:** Delivered wrapper behaviour, bound to `tests/api/test_au_tool_parity.py`.
+- [ ] **ARBORA-OPS-R843.2:** Re-point the remaining modules to their composed rows or the harness.
