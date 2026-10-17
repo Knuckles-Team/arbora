@@ -110,7 +110,7 @@
         "43b17c4d919c"
       ],
       "verified_by": [
-        "tests/fleet/scaling/test_scaling_authority_contract.py:34"
+        "tests/fleet/scaling/test_scaling_authority_contract.py:21"
       ]
     },
     {
@@ -121,7 +121,7 @@
         "43b17c4d919c"
       ],
       "verified_by": [
-        "tests/fleet/scaling/test_scaling_signal_authority.py:26"
+        "tests/fleet/scaling/test_scaling_signal_authority.py:22"
       ]
     },
     {
@@ -132,7 +132,7 @@
         "43b17c4d919c"
       ],
       "verified_by": [
-        "tests/fleet/scaling/test_scaling_intent_reconciler.py:29"
+        "tests/fleet/scaling/test_scaling_intent_reconciler.py:25"
       ]
     },
     {
@@ -143,7 +143,7 @@
         "43b17c4d919c"
       ],
       "verified_by": [
-        "tests/fleet/scaling/test_service_scale_units.py:26"
+        "tests/fleet/scaling/test_service_scale_units.py:31"
       ]
     },
     {
@@ -165,7 +165,7 @@
         "43b17c4d919c"
       ],
       "verified_by": [
-        "tests/fleet/scaling/test_resource_reservation.py:15"
+        "tests/fleet/scaling/test_resource_reservation.py:14"
       ]
     }
   ]
