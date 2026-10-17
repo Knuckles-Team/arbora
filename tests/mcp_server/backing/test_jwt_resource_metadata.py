@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -110,7 +110,13 @@ def test_public_base_url_set_401_carries_resource_metadata() -> None:
     )
     # No "user" in scope == unauthenticated request -> the middleware's own
     # missing-auth 401 path, independent of any real bearer-token handling.
-    asyncio.run(middleware(scope={"type": "http"}, receive=None, send=_capture_send))
+    asyncio.run(
+        middleware(
+            scope={"type": "http"},
+            receive=cast(Any, None),
+            send=cast(Any, _capture_send),
+        )
+    )
 
     start = next(m for m in sent if m["type"] == "http.response.start")
     assert start["status"] == 401

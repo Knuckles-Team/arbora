@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from agent_utilities import host_ports
@@ -25,7 +26,7 @@ class _Engine:
 
 
 @pytest.fixture
-def bound(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> _Engine:
+def bound(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Engine]:
     registry = tmp_path / "models.json"
     registry.write_text(json.dumps({"default": "test"}), encoding="utf-8")
     monkeypatch.setattr(runtime_config, "model_registry_path", str(registry))
@@ -45,7 +46,7 @@ async def test_agent_run_executes_through_the_harness_with_bound_providers(
 ) -> None:
     result = await agent_runs.AgentRunPort().execute_agent(
         AgentExecutionRequest(agent_name="helper", task="say hello"),
-        session=object(),
+        session=cast(Any, object()),
     )
 
     assert result.run_id and result.output
@@ -84,7 +85,7 @@ async def test_a_run_without_a_model_fails_closed(
         with pytest.raises(RuntimeError, match="no model"):
             await agent_runs.AgentRunPort().execute_agent(
                 AgentExecutionRequest(agent_name="helper", task="say hello"),
-                session=object(),
+                session=cast(Any, object()),
             )
     finally:
         host_ports.register_run_decision_provider(None)

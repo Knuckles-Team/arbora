@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextlib
 from collections.abc import Iterator
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -89,9 +89,9 @@ async def test_startup_injects_generated_clients_and_public_catalog_ports(
         session=Session(),
         deferred_fleet=deferred,
         multiplexer=mux,
-        catalog_ports_factory=lambda received_engine, received_session: (
-            workflows,
-            agents,
+        catalog_ports_factory=lambda received_engine, received_session: cast(
+            Any,
+            (workflows, agents),
         ),
         bind_graph=bind_graph,
     )
@@ -144,7 +144,9 @@ async def test_failed_initial_refresh_aborts_startup_without_static_fallback(
             session=Session(),
             deferred_fleet=deferred,
             multiplexer=Multiplexer(fail=True),
-            catalog_ports_factory=lambda engine, session: (object(), object()),
+            catalog_ports_factory=lambda engine, session: cast(
+                Any, (object(), object())
+            ),
             bind_graph=lambda graph: contextlib.nullcontext(),
         )
 

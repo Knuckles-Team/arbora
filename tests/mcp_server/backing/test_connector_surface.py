@@ -12,7 +12,7 @@ from __future__ import annotations
 import asyncio
 import json
 import types
-from typing import Literal
+from typing import Any, Literal, cast
 
 import pytest
 from fastmcp import FastMCP
@@ -111,7 +111,7 @@ def _surface(monkeypatch: pytest.MonkeyPatch | None = None) -> FastMCP:
     return mcp
 
 
-def _call(mcp: FastMCP, tool: str, **arguments) -> dict:
+def _call(mcp: FastMCP, tool: str, **arguments) -> Any:
     result = asyncio.run(mcp.call_tool(tool, arguments))
     payload = result.structured_content
     if isinstance(payload, dict) and set(payload) == {"result"}:
@@ -120,7 +120,7 @@ def _call(mcp: FastMCP, tool: str, **arguments) -> dict:
 
 
 def _listed(mcp: FastMCP) -> list:
-    return asyncio.run(mcp.list_tools())
+    return list(asyncio.run(mcp.list_tools()))
 
 
 def test_served_surface_is_only_the_intent_tools() -> None:
@@ -146,7 +146,7 @@ def test_intent_tools_use_the_condensed_schema_within_budget() -> None:
 
 def test_every_backing_operation_is_an_addressable_operation() -> None:
     mcp = _surface()
-    operations = connector_operations(mcp._intent_backing)
+    operations = connector_operations(cast(Any, mcp)._intent_backing)
     assert {
         "svc_cmdb.get_instance",
         "svc_cmdb.delete_instance",
@@ -236,7 +236,7 @@ def test_per_domain_toggle_still_disables_a_backing_registrar(
         mcp, service="servicenow-api", tools_module=_tools_module()
     )
     assert tags == ["cmdb"]
-    operations = connector_operations(mcp._intent_backing)
+    operations = connector_operations(cast(Any, mcp)._intent_backing)
     assert not any(op.startswith("svc_change_management") for op in operations)
 
 
@@ -261,5 +261,5 @@ def test_multi_client_targets_each_contribute_operations() -> None:
         ],
     )
     assert [tool.name for tool in _listed(mcp)] == list(CONNECTOR_INTENT_TOOLS)
-    operations = connector_operations(mcp._intent_backing)
+    operations = connector_operations(cast(Any, mcp)._intent_backing)
     assert {"sonarr_get_series", "radarr_get_movies"} <= set(operations)

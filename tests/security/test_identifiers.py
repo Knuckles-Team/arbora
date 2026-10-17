@@ -49,7 +49,7 @@ def test_length_ceiling(gate, longest) -> None:
 def test_refusal_names_the_kind_and_is_a_value_error() -> None:
     with pytest.raises(ValueError) as refused:
         validate_identifier("bad;name", kind="relationship type")
-    assert refused.value.kind == "relationship type"
+    assert getattr(refused.value, "kind", None) == "relationship type"
 
 
 @pytest.mark.parametrize("name", ["Person", "kg_edges", "_private", "Node_1"])
