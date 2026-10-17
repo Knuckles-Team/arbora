@@ -630,7 +630,7 @@ def test_doctor_refuses_what_the_runtime_loader_refuses(tmp_path):
 def test_doctor_accepts_json_text_lists_like_the_runtime(tmp_path):
     cfg = generate_config("tiny")
     cfg["MCP_ALWAYS_LOAD"] = json.dumps(["graph", "fleet"])
-    cfg["SOURCE_HTTP_ALLOWED_PRIVATE_HOSTS"] = "a.internal,b.internal"
+    cfg["SOURCE_HTTP_ALLOWED_PRIVATE_HOSTS"] = "a.example.test,b.example.test"
     out = tmp_path / "c.json"
     out.write_text(json.dumps(cfg))
     out.chmod(0o600)
