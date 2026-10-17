@@ -152,8 +152,9 @@ service = "graph_os.messaging.reach:service_port"
 # The path is ignored and supplied as a local symlink; package metadata keeps
 # the real PEP 508 floor above, so released wheels resolve from the index.
 [tool.uv]
-# Unify SDK and AU on the published epistemic-graph release (PyPI wheel).
-override-dependencies = ["epistemic-graph[server]==2.27.1"]
+# Unify SDK and AU sources at the EG revision required by GraphOS: it carries
+# the curated graph-os scopes (decide:commit, ...) no published release has yet.
+override-dependencies = ["epistemic-graph[server] @ git+https://github.com/Knuckles-Team/epistemic-graph.git@978532ee90bf06f3a26d8465efd63be94dd0dfa4"]
 
 [tool.uv.sources]
 agent-utilities = { path = ".uv-workspace-siblings/agent-utilities", editable = true }
