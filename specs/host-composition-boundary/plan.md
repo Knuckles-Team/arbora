@@ -86,6 +86,22 @@ R008.1 preserves the complete original module census and every named owner.
 
 ## Terminal start and scoped logs (GRAPHOS-HOST-R009/R010)
 
+### Owned shutdown prerequisite
+
+GRAPHOS-HOST-R009.4.1 adds targeted supervisor shutdown. Stop only the named
+service; preserve borrowed siblings. All-service shutdown uses one monotonic
+deadline, retains live handles on timeout, and permits a later cleanup retry.
+Loopback HTTP tests verify the surviving sibling and bounded shutdown behavior.
+
+Combined startup needs two composition contracts.
+First, an authoritative `host.start` grant must bind session, tenant, principal,
+canonical workspace, interfaces, policy revision and expiry.
+Second, a WebUI factory must accept the provided host authority without resolving global runtime state.
+A `host.logs.read` grant cannot authorize startup.
+The next increment must validate the start grant before constructing any graph or listener.
+It must pass the same authority into HTTP and WebUI composition.
+Existing launcher refusals remain until composition uses both contracts and tests verify them.
+
 Existing code: `agent_host/__init__.py:192` starts HTTP synchronously and explicitly excludes the terminal launcher.
 `mcp_server/composition.py:65` owns `CoServiceSupervisor`; `:230` starts existing co-services.
 `webui_host/webui_co_service.py:104` provides the hosted web service and stop-event lifecycle.
@@ -219,3 +235,50 @@ The configured source must provide redacted tenant projections and tenant-local 
 Controlled HTTP fixtures prove this composition contract, not deployed grants, filesystem logging, rotation or terminal rendering.
 No persistent credential store, local grant issuer or production configuration is added.
 R009.2 through R009.6 and R010.7 retain their full served acceptance.
+
+### 2026-10-17: Required rotating sink and private projections (R009.8)
+
+HostLogRuntime composes the existing session and grant owners with WorkspaceLogSink.
+The existing host builder attaches this optional runtime before dispatch.
+An authenticated request writes a fixed arrival event before its handler runs.
+Bodies, query strings and credential headers never enter the sink.
+Sink recording remains active when terminal log viewing is disabled.
+Validate ownership, modes and links before opening files relative to a retained directory descriptor.
+Rotate at ten MiB and retain five files. Redact records through the existing AU privacy port before writing.
+Keep bounded tenant projections and opaque tenant-local cursors; never return shared files or offsets.
+This slice uses controlled identity grants with a real sink and HTTP server.
+It does not prove deployed policy, durable replay after restart, terminal rendering or full host lifecycle acceptance.
+
+### Source generation admission
+
+R009.8.1 extends WorkspaceGrantProvider decisions with explicit source generations. Caller session identity cannot establish generation entitlement. R009.8.2 retains durable replay and metadata acceptance.
+
+### Retained host-file replay
+
+Reuse the five bounded owner-only log files and current exclusive sink lock.
+A private integrity key binds resume positions; it grants no read authority.
+Require fresh authenticated workspace/source-generation admission on every restart.
+Keep version-one message projection separate from full metadata presentation.
+
+### Startup admission port
+
+R010.7.1 adds injected host.start policy and session-binding owners.
+The binding owner attests the exact GraphSession object and current SessionState.
+Actor fields and scopes cannot establish that binding.
+Admission refreshes identity after awaited owner calls and verifies explicit grant expiry.
+The connector entrypoint verifies the requested mode, workspace and preference before admission.
+It still refuses client startup until R010.7.2 provides shared-authority client factories.
+No deployed grant, credential configuration or listener is added by this increment.
+
+The admission request binds a configuration digest to the policy decision only.
+This slice does not compute that digest from graph configuration or prove their agreement.
+R010.7.2 must compute the digest from the actual start configuration before any startup effect.
+
+### Actual declarative startup configuration (2026-10-17)
+
+R010.7.2.1 binds explicit builder inputs, listener settings, workspace and host metadata before calling admission owners.
+Canonical JSON rejects unsupported values and nonfinite numbers. Mapping order does not change the digest.
+AU execution dictionaries contain live engines, nodes and toolsets; their topology cache key cannot prove startup configuration identity.
+This slice rejects provided runtime objects and unused hosting arguments when callers request admission.
+R010.7.2.2 retains owner-attested runtime configuration and actual terminal/WebUI factory integration.
+Existing unsupported interface refusals remain after successful admission. Controlled owner tests establish boundary behavior, not deployed grants or served clients.

@@ -20,6 +20,10 @@ class HostLogDenied(PermissionError):
     """Current identity, workspace grant or reference binding was refused."""
 
 
+class HostLogRetentionGap(HostLogDenied):
+    """The authenticated resume position is no longer retained."""
+
+
 @dataclass(frozen=True, slots=True)
 class WorkspaceLogGrant:
     """Owner decision for one exact session and configured workspace."""
@@ -32,6 +36,24 @@ class WorkspaceLogGrant:
     revision: str
     expires_at_ms: int
     action: Literal["host.logs.read"]
+    source_generations: tuple[str, ...] = ()
+
+
+def valid_generations(values: tuple[str, ...]) -> bool:
+    return (
+        type(values) is tuple
+        and 1 <= len(values) <= 32
+        and all(
+            type(value) is str
+            and 1 <= len(value) <= 128
+            and value not in {"*", "latest", "prior"}
+            and not any(
+                character.isspace() or ord(character) < 32 for character in value
+            )
+            for value in values
+        )
+        and len(set(values)) == len(values)
+    )
 
 
 class WorkspaceGrantProvider(Protocol):
@@ -50,6 +72,10 @@ class HostLogRecord:
     workspace: str
     host_instance: str
     message: str
+    request: str = ""
+    sequence: int = 0
+    timestamp: float = 0.0
+    severity: str = "INFO"
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,6 +94,7 @@ class HostLogSource(Protocol):
         tenant: str,
         workspace: str,
         host_instance: str,
+        source_generations: tuple[str, ...],
         cursor: str | None,
         limit: int,
     ) -> HostLogBatch:
@@ -79,6 +106,7 @@ class HostLogSource(Protocol):
 class _Reference:
     grant: WorkspaceLogGrant
     session_expiry: int
+    started: bool = False
     cursor: str | None = None
 
 
@@ -109,6 +137,8 @@ class HostLogAccess:
         ):
             raise ValueError("invalid_launch")
         self._enabled = interface_mode in {"terminal", "both"} and web_logs
+        self._interface_mode = interface_mode
+        self._web_logs = web_logs
         self._host = host_instance
         self._clock = clock
         self._references: dict[str, _Reference] = {}
@@ -146,6 +176,7 @@ class HostLogAccess:
         )
         if (
             actual != expected
+            or not valid_generations(grant.source_generations)
             or not grant.revision
             or type(grant.expires_at_ms) is not int
             or not now < grant.expires_at_ms <= state.expires_at_ms
@@ -167,6 +198,26 @@ class HostLogAccess:
         reference = secrets.token_urlsafe(32)
         self._references[reference] = _Reference(grant, state.expires_at_ms)
         return reference
+
+    def reference_binding(self, reference: str) -> dict:
+        """Describe a just-issued reference for the authenticated HTTP handoff."""
+        bound = self._references[reference]
+        grant = bound.grant
+        return {
+            "version": 1,
+            "log_ref": reference,
+            "host_instance": self._host,
+            "workspace": grant.workspace,
+            "tenant": grant.tenant,
+            "principal": grant.principal,
+            "session_ref": grant.session_ref,
+            "policy_revision": grant.policy_revision,
+            "grant_revision": grant.revision,
+            "expires_at_ms": min(grant.expires_at_ms, bound.session_expiry),
+            "interface_mode": self._interface_mode,
+            "web_logs": self._web_logs,
+            "ready": True,
+        }
 
     async def _bound(self, credential: str, reference: str) -> WorkspaceLogGrant:
         state, grant = await self._grant(credential)
@@ -205,18 +256,24 @@ class HostLogAccess:
         limit: int,
     ) -> HostLogBatch:
         bound = self._references[reference]
-        if cursor != bound.cursor:
+        if bound.started and cursor != bound.cursor:
             raise HostLogDenied("workspace_denied")
-        batch = await self._source.read(
-            tenant=grant.tenant,
-            workspace=self._workspace,
-            host_instance=self._host,
-            cursor=cursor,
-            limit=limit,
-        )
+        try:
+            batch = await self._source.read(
+                tenant=grant.tenant,
+                workspace=self._workspace,
+                host_instance=self._host,
+                source_generations=grant.source_generations,
+                cursor=cursor,
+                limit=limit,
+            )
+        except HostLogRetentionGap:
+            await self._bound(credential, reference)
+            raise
+
         await self._bound(credential, reference)
         self._validate_batch(batch, grant, limit)
-        self._references[reference] = replace(bound, cursor=batch.cursor)
+        self._references[reference] = replace(bound, cursor=batch.cursor, started=True)
         return batch
 
     def _validate_batch(
@@ -232,8 +289,8 @@ class HostLogAccess:
         for record in batch.records:
             if (
                 not isinstance(record, HostLogRecord)
-                or (record.tenant, record.workspace, record.host_instance)
-                != (grant.tenant, self._workspace, self._host)
+                or (record.tenant, record.workspace) != (grant.tenant, self._workspace)
+                or record.host_instance not in grant.source_generations
                 or not isinstance(record.message, str)
                 or len(record.message.encode("utf-8")) > 16 * 1024
             ):

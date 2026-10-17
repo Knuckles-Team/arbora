@@ -206,10 +206,14 @@ def _plan_confirm_stub(raw_params: Any) -> Any:
     # Registered in the method table (GRAPHOS-A2A-R005/R006) but
     # fail-closed: the signed human approval exchange is not implemented
     # end to end yet, so no approval attempt may succeed.
-    A2APlanConfirmParams.model_validate(raw_params)
+    from .approval import verify_pending_signature
+
+    confirmation = A2APlanConfirmParams.model_validate(raw_params)
+    # No trusted human-key resolver or durable pending/grant authority is wired.
+    # A parsed payload or valid detached signature cannot supply that authority.
+    check = verify_pending_signature(confirmation, evidence=None)
     raise A2AOperationBridgeUnavailable(
-        "graphos.plan/confirm is not available until the signed approval "
-        "exchange is implemented end to end"
+        f"graphos.plan/confirm authority unavailable: {check.value}"
     )
 
 

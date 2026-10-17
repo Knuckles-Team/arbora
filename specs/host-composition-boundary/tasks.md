@@ -143,3 +143,5 @@ Status vocabulary is defined in [spec.md](spec.md). Check a task only after its 
 - [x] `GRAPHOS-HOST-R010.9`: Refuse unsupported explicit interfaces before workspace, graph or listener effects.
 
 - [ ] `GRAPHOS-HOST-R009.7`: Inject and verify bounded host log authority.
+
+- [ ] `GRAPHOS-HOST-R009.8`: Record authenticated requests through the production sink.

@@ -30,6 +30,10 @@ import time
 from typing import TYPE_CHECKING, Any
 
 from graph_os.core.settings import setting
+from graph_os.messaging.action_dispatch import (
+    NotificationSpec,
+    send_notification,
+)
 from graph_os.messaging.governed_send import (
     PolicyRunner,
     mirror_outbound_if_enabled,
@@ -531,3 +535,31 @@ def reach_user_sync(text: str, **kwargs: Any) -> SendResult:
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
         return pool.submit(lambda: asyncio.run(svc.reach_user(text, **kwargs))).result()
+
+
+class ReachNotifier:
+    """Notifier that delivers an Action notification through governed reach."""
+
+    def notify(self, spec: NotificationSpec, message: str) -> dict[str, Any]:
+        result = reach_user_sync(
+            message,
+            source="action.notification",
+            reason=f"ontology Action notification on {spec.channel}",
+        )
+        return {
+            "kind": "notification",
+            "channel": spec.channel,
+            "recipient": spec.recipient,
+            "message": message,
+            "delivered": bool(result.success),
+            "transport": "reach",
+            "timestamp": time.time(),
+            **({} if result.success else {"error": str(result.error)}),
+        }
+
+
+def dispatch_action_notification(
+    spec: NotificationSpec, message: str
+) -> dict[str, Any]:
+    """Deliver one completed-Action notification; failures are recorded, not raised."""
+    return send_notification(spec, message, ReachNotifier())

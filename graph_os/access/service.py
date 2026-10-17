@@ -13,6 +13,12 @@ from graph_os.access.action_policy import (
     ACTION_APPROVAL_KIND,
     approval_lease_to_props,
 )
+from graph_os.access.external_policy_sync import (
+    Applier,
+    ApplyReport,
+    BundleFetcher,
+    clear_dirty_state,
+)
 from graph_os.security.elevation import (
     ElevationApproval,
     ElevationRequest,
@@ -20,6 +26,25 @@ from graph_os.security.elevation import (
     ElevationService,
     ElevationSurface,
 )
+
+
+def sync_external_policy(
+    fetcher: BundleFetcher,
+    applier: Applier,
+    *,
+    tenant: str,
+    graphs: list[str],
+    marking_names: list[str],
+) -> ApplyReport:
+    """Fetch the engine's row-visibility bundle and apply it to every target.
+
+    A failed fetch fails closed inside ``Applier.apply_all``. The tenant's dirty
+    flag clears after the cycle, so the next marking change dirties it again.
+    """
+    fetched = fetcher.fetch(tenant=tenant, graphs=graphs, marking_names=marking_names)
+    report = applier.apply_all(fetched)
+    clear_dirty_state(tenant)
+    return report
 
 
 def _elevations(context: Any) -> ElevationService:

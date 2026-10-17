@@ -16,6 +16,7 @@ from graph_os.mcp_server.composition import (
     install_gateway_application,
     start_composed_services,
 )
+from graph_os.mcp_server.hosted_invocation import HostedInvocation
 from graph_os.semantic_content import default_content_providers
 
 logger = logging.getLogger(__name__)
@@ -136,7 +137,7 @@ def _attach_fleet_runtime(mcp: Any, fleet_catalog_reader: Any) -> Any:
         ) from exc
 
 
-def mcp_server() -> None:
+def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
     """``graph-os`` MCP server entry point (registered as console_scripts).
 
     Thin FastMCP wrapper following the standard ``mcp_server.py`` template: it
@@ -149,7 +150,10 @@ def mcp_server() -> None:
     from graph_os.core.settings import load_config
 
     load_config()  # resolve settings through the one shared XDG config.json
-    install_gateway_application()
+    if invocation is None:
+        install_gateway_application()
+    else:
+        install_gateway_application(invocation)
     from graph_os.host_bindings import (
         bind_health_probes,
         bind_messaging_ports,
@@ -161,7 +165,10 @@ def mcp_server() -> None:
     _configure_graphos_otel()
     _configure_telemetry_engine_otel()
     os.environ["IS_KG_SERVER"] = "true"
-    args, mcp, middlewares = runtime._build_server()
+    if invocation is None:
+        args, mcp, middlewares = runtime._build_server()
+    else:
+        args, mcp, middlewares = runtime._build_server(invocation=invocation)
     _register_semantic_content(mcp)
     from graph_os.fleet.catalog_reader import DeferredFleetCatalogReader
 

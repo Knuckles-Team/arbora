@@ -69,6 +69,7 @@ class ControlledOwners:
         self.revision = "grant-1"
         self.change: dict[str, Any] = {}
         self.calls = 0
+        self.read_generations: list[tuple[str, ...]] = []
         self.on_read: Callable[[], None] = lambda: None
         self.on_grant: Callable[[], None] = lambda: None
         self.batch: HostLogBatch | None = None
@@ -96,6 +97,7 @@ class ControlledOwners:
                 revision=self.revision,
                 expires_at_ms=190_000,
                 action="host.logs.read",
+                source_generations=("host-1",),
             ),
             **self.change,
         )
@@ -106,10 +108,13 @@ class ControlledOwners:
         tenant: str,
         workspace: str,
         host_instance: str,
+        source_generations: tuple[str, ...],
         cursor: str | None,
         limit: int,
     ) -> HostLogBatch:
         self.calls += 1
+        self.read_generations.append(source_generations)
+        await asyncio.sleep(0)
         self.on_read()
         if self.slow:
             await asyncio.sleep(5)
@@ -120,8 +125,10 @@ class ControlledOwners:
 
 
 @contextmanager
-def serve(access: HostLogAccess | None) -> Iterator[httpx.Client]:
-    app = build_agent_host_app(graph=None, graph_config={}, host_logs=access)
+def serve(access: HostLogAccess | None, runtime: Any = None) -> Iterator[httpx.Client]:
+    app = build_agent_host_app(
+        graph=None, graph_config={}, host_logs=access, host_log_runtime=runtime
+    )
     with socket.socket() as listener:
         listener.bind(("127.0.0.1", 0))
         server = uvicorn.Server(
@@ -413,3 +420,78 @@ def test_concurrent_read_and_cancellation_release(
         assert await access.read("a", ref, cursor=batch.cursor, limit=128)
 
     asyncio.run(exercise())
+
+
+@pytest.mark.parametrize(
+    "generations",
+    [
+        (),
+        ("*",),
+        ("latest",),
+        ("prior",),
+        ("host-1", "host-1"),
+        ("bad\nvalue",),
+        ("x" * 129,),
+        tuple(str(i) for i in range(33)),
+        ["host-1"],
+    ],
+)
+def test_generation_grants_fail_closed(
+    setup: tuple[ControlledOwners, HostLogAccess], generations: Any
+) -> None:
+    # spec: GRAPHOS-HOST-R009.8.1
+    owners, access = setup
+    owners.change["source_generations"] = generations
+    with serve(access) as client:
+        response = client.post(
+            "/host/logs/reference", headers={"Authorization": "Bearer a"}
+        )
+        assert response.status_code == 403
+    assert owners.calls == 0
+
+
+@pytest.mark.parametrize("during_read", [False, True])
+def test_generation_change_invalidates_bound_handle(
+    setup: tuple[ControlledOwners, HostLogAccess], during_read: bool
+) -> None:
+    # spec: GRAPHOS-HOST-R009.8.1
+    owners, access = setup
+    owners.change["source_generations"] = ("host-1", "prior-generation")
+    with serve(access) as client:
+        ref = reference(client)
+
+        def narrow() -> None:
+            owners.change["source_generations"] = ("host-1",)
+
+        if during_read:
+            owners.on_read = narrow
+        else:
+            narrow()
+        response = read(client, ref)
+        assert response.status_code == 403
+        assert "redacted" not in response.text
+        assert owners.calls == int(during_read)
+        assert owners.read_generations == (
+            [("host-1", "prior-generation")] if during_read else []
+        )
+        owners.on_read = lambda: None
+        assert read(client, reference(client)).status_code == 200
+
+
+def test_original_generation_requires_explicit_grant(
+    setup: tuple[ControlledOwners, HostLogAccess], tmp_path: Path
+) -> None:
+    # spec: GRAPHOS-HOST-R009.8.1
+    owners, access = setup
+    record = HostLogRecord(
+        "tenant-a", str(tmp_path), "previous-generation", "historical"
+    )
+    owners.batch = HostLogBatch((record,), None)
+    with serve(access) as client:
+        assert read(client, reference(client)).status_code == 403
+        owners.change["source_generations"] = ("previous-generation",)
+        assert read(client, reference(client)).json()["records"] == [
+            {"message": "historical"}
+        ]
+    assert owners.batch.records[0] is record
+    assert record.host_instance == "previous-generation"

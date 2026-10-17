@@ -213,6 +213,36 @@ async def health_check() -> JSONResponse:
     return JSONResponse(report, headers={"Cache-Control": "no-store"})
 
 
+def _engine_probe() -> dict[str, Any]:
+    from graph_os.mcp_server import runtime
+    from graph_os.observability.readiness import check
+
+    get_engine = runtime._get_engine
+    if callable(get_engine) and get_engine() is not None:
+        return check("ready")
+    return check("unavailable", reason="no active engine")
+
+
+@dashboard_router.get("/readiness")
+async def readiness_check() -> JSONResponse:
+    """Readiness: the joined snapshot of the engine probe and registered probes."""
+    from graph_os.observability.readiness import (
+        collect_readiness_snapshot,
+        is_snapshot_ready,
+        registered_probes,
+    )
+
+    probes = {"engine": _engine_probe, **registered_probes()}
+    snapshot = await asyncio.to_thread(
+        collect_readiness_snapshot, probes, required=("engine",)
+    )
+    return JSONResponse(
+        snapshot,
+        status_code=200 if is_snapshot_ready(snapshot) else 503,
+        headers={"Cache-Control": "no-store"},
+    )
+
+
 @dashboard_router.get("/discover")
 async def discover_services() -> DashboardLayout:
     """Auto-discover services from the MCP configuration as a layout."""

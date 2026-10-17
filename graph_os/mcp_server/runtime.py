@@ -660,7 +660,9 @@ for _bootstrap_name in _bootstrap.BOOTSTRAP_EXPORTS:
     globals()[_bootstrap_name] = getattr(_bootstrap, _bootstrap_name)
 
 
-def _build_server(bootstrap: bool = True, *, canonical_surface: bool = False):
+def _build_server(
+    bootstrap: bool = True, *, canonical_surface: bool = False, invocation: Any = None
+):
     """Build the KG MCP server with all tools registered.
 
     Args:
@@ -777,14 +779,18 @@ def _build_server(bootstrap: bool = True, *, canonical_surface: bool = False):
         )
         return JSONResponse(result)
 
-    _register_graph_tool_surface(mcp, canonical=canonical_surface)
+    _register_graph_tool_surface(
+        mcp, canonical=canonical_surface, invocation=invocation
+    )
 
     global _FULL_TOOL_NAMES
     _FULL_TOOL_NAMES = frozenset(REGISTERED_TOOLS)
     return args, mcp, middlewares
 
 
-def _register_graph_tool_surface(mcp: Any, *, canonical: bool = False) -> None:
+def _register_graph_tool_surface(
+    mcp: Any, *, canonical: bool = False, invocation: Any = None
+) -> None:
     """Mount graph-os's one MCP tool contract.
 
     agent-utilities owns the contract (``register_graphos_surface``): the
@@ -803,9 +809,23 @@ def _register_graph_tool_surface(mcp: Any, *, canonical: bool = False) -> None:
     from graph_os.host_bindings import mount_sdk_a2a
     from graph_os.mcp_server.backing.graphos_surface import register_graphos_surface
 
+    if invocation is not None:
+        from graph_os.mcp_server.hosted_invocation import HostedInvocation
+
+        if not isinstance(invocation, HostedInvocation):
+            raise TypeError("admitted hosted invocation is required")
+        invocation.validate()
     backing = register_graphos_surface(mcp, canonical=canonical)
     register_browser_control_tools(backing)
-    register_a2a_tools(mcp, tools=backing)
+    if invocation is None:
+        register_a2a_tools(mcp, tools=backing)
+    else:
+        register_a2a_tools(
+            mcp,
+            tools=backing,
+            operation_services=invocation.services,
+            operation_authenticator=invocation.authenticator,
+        )
     mount_sdk_a2a(mcp)
 
 

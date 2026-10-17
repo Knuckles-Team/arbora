@@ -126,3 +126,5 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
 
 - [ ] **GRAPHOS-A2A-R006.2.1.1:** Wire request-bound caller retention and refresh, then pass its HTTP acceptance and refusal matrix.
 - [ ] **GRAPHOS-A2A-R006.2.2:** Compose shared InvokeServices through the production A2A entry point and prove operation-specific parity.
+
+- [x] **GRAPHOS-A2A-R005.2.2:** Validate detached signatures against server-owned pending-call evidence. Keep confirmation refused until the live issuer, durable pending binding and atomic grant/plan consumption are qualified.

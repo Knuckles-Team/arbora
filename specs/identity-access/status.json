@@ -96,7 +96,8 @@
     "GRAPHOS-IDENTITY-R026.5",
     "GRAPHOS-IDENTITY-R026.6",
     "GRAPHOS-IDENTITY-R026.7",
-    "GRAPHOS-IDENTITY-R026.8"
+    "GRAPHOS-IDENTITY-R026.8",
+    "GRAPHOS-IDENTITY-R650"
   ],
   "requirements": [
     {
@@ -1071,6 +1072,18 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R650",
+      "title": "External policy sync renders the engine's row-visibility bundle and fails closed",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "9fb174d4003e",
+        "c9d8920c5c3f"
+      ],
+      "verified_by": [
+        "tests/access/test_external_policy_sync.py:3"
+      ]
     }
   ]
 }

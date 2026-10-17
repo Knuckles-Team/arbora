@@ -9,11 +9,8 @@ the composition order) instead of importing agent-utilities directly.
 
 Scope of this first increment (the AU-BOUNDARY-R015 pilot slice): GraphOS
 owns the HTTP shell -- health, agent-card discovery, and a bounded A2A
-``message/send`` exchange. Agent/model construction stays with
-agent-utilities' public API (``agent_utilities.create_graph_agent`` /
-``initialize_graph_from_workspace`` and ``agent_utilities.graph.execute_graph``),
-which remains the agent orchestration authority per both repositories'
-``AGENTS.md``. Deliberately NOT ported in this increment, matching
+``message/send`` exchange. The connector supplies its graph bundle and
+its executor; GraphOS builds no agent of its own. Deliberately NOT ported in this increment, matching
 GRAPHOS-HOST-R009's own scope cut:
 
 - the EG-backed broker/durable task store AU's ``protocols/a2a_epistemic``
@@ -39,11 +36,22 @@ from pydantic import BaseModel
 
 from graph_os.agent_host.log_access import HostLogAccess
 from graph_os.agent_host.log_routes import register_host_log_routes
-from graph_os.api.errors import not_served
+from graph_os.agent_host.log_runtime import HostLogRuntime, register_host_log_runtime
+from graph_os.agent_host.start_admission import HostStartContext, check_host_start
+from graph_os.agent_host.start_configuration import (
+    HostStartConfiguration,
+    check_start_configuration,
+)
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["build_agent_host_app"]
+__all__ = ["HostInterfaceUnavailable", "build_agent_host_app", "create_agent_server"]
+
+
+class HostInterfaceUnavailable(RuntimeError):
+    """An explicitly requested client interface has no authenticated handoff."""
+
+    reason = "client_unavailable"
 
 
 #: ``(graph, graph_config, query) -> result dict`` -- the default calls the
@@ -53,8 +61,13 @@ AgentExecutor = Callable[[Any, dict, str], dict]
 
 
 def _default_executor(graph: Any, graph_config: dict, query: str) -> dict:
-    """Run one query through agent-utilities' public execution port."""
-    raise not_served("graph", "AU-harness (deleted from AU)", owner="agent-utilities")
+    """Refuse a run when the connector injected no executor.
+
+    The cut agent-utilities harness ships no graph execution port, so the
+    connector passes its own ``executor``.
+    """
+    del graph, graph_config, query
+    raise HostInterfaceUnavailable("executor_unavailable")
 
 
 def _extract_text(message: dict[str, Any]) -> str:
@@ -102,6 +115,7 @@ def build_agent_host_app(
     description: str | None = None,
     executor: AgentExecutor | None = None,
     host_logs: HostLogAccess | None = None,
+    host_log_runtime: HostLogRuntime | None = None,
 ):
     """Build the FastAPI app that hosts one connector agent.
 
@@ -117,6 +131,11 @@ def build_agent_host_app(
     agent_description = description or ""
 
     app = FastAPI(title=agent_name)
+    if host_log_runtime is not None:
+        if host_logs is not None:
+            raise ValueError("one host log composition required")
+        host_logs = host_log_runtime.access
+        register_host_log_runtime(app, host_log_runtime)
     register_host_log_routes(app, host_logs)
 
     @app.get("/health")
@@ -190,3 +209,106 @@ def build_agent_host_app(
         }
 
     return app
+
+
+def create_agent_server(
+    *,
+    graph: Any | None = None,
+    graph_config: dict | None = None,
+    tag_prompts: dict[str, str] | None = None,
+    tag_env_vars: dict[str, str] | None = None,
+    graph_name: str = "GraphAgent",
+    mcp_url: str | None = None,
+    mcp_config: str | None = None,
+    router_model: str | None = None,
+    agent_model: str | None = None,
+    min_confidence: float = 0.0,
+    host: str | None = "127.0.0.1",
+    port: int | None = 9000,
+    name: str | None = None,
+    system_prompt: str | None = None,
+    workspace: str | None = None,
+    executor: AgentExecutor | None = None,
+    host_logs: HostLogAccess | None = None,
+    host_log_runtime: HostLogRuntime | None = None,
+    enable_terminal_ui: bool = False,
+    enable_web_ui: bool | None = None,
+    enable_web_logs: bool = False,
+    host_start: HostStartContext | None = None,
+    **_unused_au_hosting_kwargs: Any,
+) -> None:
+    """Build and serve a connector agent -- the GraphOS-hosted replacement for
+    ``agent_utilities.create_agent_server``.
+
+    Call signature intentionally mirrors AU's: a connector's
+    ``agent_server.py`` passes the same keyword arguments it already builds
+    from ``create_agent_parser()``. Agent construction, when no ``graph``/
+    ``graph_config`` bundle is supplied, still goes through AU's public graph
+    builder (that is agent-utilities' retained authority, not a duplicate
+    host); only the uvicorn/FastAPI serving shell is GraphOS's own.
+
+    ``**_unused_au_hosting_kwargs`` absorbs AU-hosting-only arguments a
+    caller may still pass during migration (``debug``, ``enable_otel``,
+    ``a2a_broker``, ...) that this first increment does not
+    yet implement; see the migration recipe for current parity gaps. Notably
+    ``provider``/``model_id``/``base_url``/``api_key`` (the default-LLM
+    selection AU's own hosting shell forwards into its server config) land
+    here too and are not yet wired into graph construction -- a tracked
+    parity gap, not a silent behavior match.
+    """
+    selections = (enable_terminal_ui, enable_web_logs)
+    if any(type(value) is not bool for value in selections) or (
+        enable_web_ui is not None and type(enable_web_ui) is not bool
+    ):
+        raise ValueError("invalid_launch")
+    if enable_terminal_ui or enable_web_ui or enable_web_logs:
+        check_start_configuration(
+            host_start,
+            HostStartConfiguration(
+                workspace=workspace,
+                tag_prompts=tag_prompts,
+                tag_env_vars=tag_env_vars,
+                graph_name=graph_name,
+                mcp_url=mcp_url,
+                mcp_config=mcp_config,
+                router_model=router_model,
+                agent_model=agent_model,
+                min_confidence=min_confidence,
+                host=host,
+                port=port,
+                name=name,
+                system_prompt=system_prompt,
+                enable_terminal_ui=enable_terminal_ui,
+                enable_web_ui=enable_web_ui,
+                enable_web_logs=enable_web_logs,
+            ),
+            resources=(graph, graph_config, executor, host_logs, host_log_runtime),
+            unused_arguments=_unused_au_hosting_kwargs,
+        )
+        check_host_start(
+            host_start,
+            workspace=workspace,
+            terminal=enable_terminal_ui,
+            web=enable_web_ui,
+            web_logs=enable_web_logs,
+        )
+        raise HostInterfaceUnavailable("client_unavailable")
+
+    if graph is None or graph_config is None:
+        # The cut agent-utilities harness builds no graph; the connector
+        # supplies its own graph bundle.
+        raise HostInterfaceUnavailable("agent_unavailable")
+
+    app = build_agent_host_app(
+        graph=graph,
+        graph_config=graph_config,
+        name=name,
+        description=system_prompt,
+        executor=executor,
+        host_logs=host_logs,
+        host_log_runtime=host_log_runtime,
+    )
+
+    import uvicorn
+
+    uvicorn.run(app, host=host or "127.0.0.1", port=port or 9000)
