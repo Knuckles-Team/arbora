@@ -3,13 +3,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 
 from .authority import A2ATaskAuthority
 from .models import A2AAgentCard, A2AListResult, A2AMessage, A2ASkill, A2ATask
 from .routing import A2ARouter
+from .terminal_event import A2ATerminalEventUnavailable
 
 __all__ = ["A2ACardMetadata", "A2AService"]
+
+
+@runtime_checkable
+class _CommittedTerminalAuthority(Protocol):
+    async def get_committed_task(self, task_id: str) -> A2ATask | None: ...
 
 
 @dataclass(frozen=True)
@@ -46,7 +52,15 @@ class A2AService:
             decision=decision,
         )
 
-    async def get_task(self, task_id: str) -> A2ATask | None:
+    async def get_task(
+        self, task_id: str, *, include_committed_event: bool = False
+    ) -> A2ATask | None:
+        if include_committed_event:
+            if not isinstance(self.authority, _CommittedTerminalAuthority):
+                raise A2ATerminalEventUnavailable(
+                    "committed terminal event is unavailable"
+                )
+            return await self.authority.get_committed_task(task_id)
         return await self.authority.get(task_id)
 
     async def list_tasks(

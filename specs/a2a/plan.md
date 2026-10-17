@@ -310,3 +310,9 @@ qualify real credential issuers or durable effects.
 ### Detached signature validation boundary
 
 R005.2.2 reuses `PlanBinding` and the existing closed confirmation payload. The binding and trusted public key remain server-side. The validator checks exact canonical bytes and current supplied caller/grant evidence. No issuer, key resolver or local grant store is added. The served confirmation route passes no authority and remains unavailable. EG must still own fresh grant and pending-task evidence, plus atomic consumption of the grant and plan fence. Supplied consumed/revoked snapshots test rejection only; they do not establish replay prevention.
+
+### Committed terminal read preparation
+
+Implement GRAPHOS-A2A-R010.1 against EG-DURABLE-KERNEL-R028.2 and AU RunClient.outcome. Keep the request opt-in and existing unary behavior unchanged. This point read supplies no lifecycle stream or replay cursor. Native producer qualification and released dependency availability remain separate acceptance conditions.
+
+The bounded projection preserves the actual outcome/tool_call/degraded/reconciled kind and physical scope identity, including its 32-byte digest. Physical storage owner tenant and sanitized graph name are receipt identity, not caller authorization. Routing uses the existing verified session graph transport. Display identifiers are capped at 512 UTF-8 bytes; result references at 4096 bytes. These presentation bounds may refuse a larger otherwise valid producer record.
