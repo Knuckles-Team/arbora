@@ -756,7 +756,9 @@
       "title": "Opt-in committed terminal point read",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/a2a/test_terminal_event.py:59"
+      ]
     }
   ]
 }
