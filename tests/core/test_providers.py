@@ -1,4 +1,4 @@
-"""Arbora-owned provider discovery (GRAPHOS-HOST-R001.10).
+"""Arbora-owned provider discovery (ARBORA-HOST-R001.10).
 
 Ported from the agent-utilities ``core.providers`` contract tests: discovery is
 distribution-owned and never imports provider code, rejects ambiguous or unsafe
@@ -21,7 +21,7 @@ from arbora.core.provider_materialization import (
     write_managed_provider_marker,
 )
 
-pytestmark = pytest.mark.spec("GRAPHOS-HOST-R001.10")
+pytestmark = pytest.mark.spec("ARBORA-HOST-R001.10")
 
 REGISTRATION = "a" * 64
 _ARBORA = Path(__file__).resolve().parents[2] / "arbora"

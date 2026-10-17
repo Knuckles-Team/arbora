@@ -76,7 +76,7 @@ def test_operations_require_console_confirmation_for_decisions() -> None:
     ops = {op.id: op for op in operations()}
     assert "access.elevation.deny" not in ops
     # approvals.* stay unregistered until EG publishes approvals:read/decide
-    # (GRAPHOS-IDENTITY-R019 follow-up); service.py still implements them.
+    # (ARBORA-IDENTITY-R019 follow-up); service.py still implements them.
     assert "approvals.grant" not in ops
     assert "approvals.deny" not in ops
     op = ops["access.elevation.approve"]

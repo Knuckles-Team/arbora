@@ -1,4 +1,4 @@
-"""Focused contract for the GRAPHOS-OPS-R022.1 hosted work operations.
+"""Focused contract for the ARBORA-OPS-R022.1 hosted work operations.
 
 Exercises the handler directly via ``tests/api/_ops_support``'s shared
 context builder; full-registry wiring is covered separately by

@@ -1,4 +1,4 @@
-"""GRAPHOS-MCP-RESOURCES-R002: only the reconciliation module constructs receipts."""
+"""ARBORA-MCP-RESOURCES-R002: only the reconciliation module constructs receipts."""
 
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ def _constructs_receipt(path: Path) -> bool:
     )
 
 
-@pytest.mark.spec("GRAPHOS-MCP-RESOURCES-R002")
+@pytest.mark.spec("ARBORA-MCP-RESOURCES-R002")
 def test_no_arbora_module_constructs_receipt_outside_gate_module() -> None:
     modules = sorted(_PACKAGE_ROOT.rglob("*.py"))
     assert _OWNER in modules

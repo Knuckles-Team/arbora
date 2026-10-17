@@ -16,7 +16,7 @@ from arbora.fleet.health import (
     unavailable_fleet_health,
 )
 
-pytestmark = pytest.mark.spec("GRAPHOS-FLEET-R024.750")
+pytestmark = pytest.mark.spec("ARBORA-FLEET-R024.750")
 NOW = 1_000.0
 
 

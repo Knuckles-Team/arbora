@@ -26,7 +26,7 @@ class _Mux:
         return {"github-mcp": "github", "x-mcp": "x"}[name]
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R001.2")
+@pytest.mark.spec("ARBORA-HOST-R001.2")
 def test_without_arbora_the_harness_fails_closed():
     assert host.native_tool_names() == frozenset()
     assert host.fleet_catalog() == {}
@@ -34,7 +34,7 @@ def test_without_arbora_the_harness_fails_closed():
         host.build_native_toolset(["graph_query"], toolset_id="t")
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R001.2")
+@pytest.mark.spec("ARBORA-HOST-R001.2")
 def test_registration_binds_native_tools_fleet_and_keepalive(monkeypatch):
     built = []
     monkeypatch.setitem(runtime.REGISTERED_TOOLS, "graph_query", lambda: None)
@@ -73,7 +73,7 @@ def test_registration_binds_native_tools_fleet_and_keepalive(monkeypatch):
     assert entered == [True]
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R001.2")
+@pytest.mark.spec("ARBORA-HOST-R001.2")
 def test_unregister_clears_every_binding():
     harness_host.register_harness_host(SimpleNamespace(load_catalog=dict))
     harness_host.unregister_harness_host()
@@ -86,7 +86,7 @@ def test_unregister_clears_every_binding():
         host.open_tool_client("http://127.0.0.1:9/mcp")
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R001.2")
+@pytest.mark.spec("ARBORA-HOST-R001.2")
 def test_registration_binds_remote_toolsets_and_tool_clients(monkeypatch, tmp_path):
     from arbora.fleet import client_toolsets
 
@@ -106,7 +106,7 @@ def test_registration_binds_remote_toolsets_and_tool_clients(monkeypatch, tmp_pa
     assert host._TOOL_CLIENT is client_toolsets.open_tool_client
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R001.2")
+@pytest.mark.spec("ARBORA-HOST-R001.2")
 def test_tool_client_reports_tool_errors_as_host_errors():
     import asyncio
 
@@ -138,7 +138,7 @@ def test_tool_client_reports_tool_errors_as_host_errors():
     assert result.data == 2
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R001.2")
+@pytest.mark.spec("ARBORA-HOST-R001.2")
 def test_mcp_server_entry_point_registers_the_host():
     import inspect
 

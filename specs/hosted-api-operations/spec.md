@@ -1,4 +1,4 @@
-# GRAPHOS-OPS — Hosted API and intent operations
+# ARBORA-OPS — Hosted API and intent operations
 
 ## Status legend
 
@@ -28,23 +28,23 @@ The historical IDs below are stable trace IDs only. Every requirement needed to 
 
 | IDs | Arbora deliverable | Delivery |
 |---|---|---|
-| GRAPHOS-OPS-R005, GRAPHOS-OPS-R006 | Consume packaged engine `methods`, `errors`, `scopes`, schemas, and wire-callable flags; reject absent/inconsistent contracts | NOT ACCEPTED |
-| GRAPHOS-OPS-R007, GRAPHOS-OPS-R008 | Operation registry, digest, engine binding and explicit exclusions | NOT ACCEPTED |
-| GRAPHOS-OPS-R009, GRAPHOS-OPS-R010, GRAPHOS-OPS-R036 | Single invocation/authority/effect/audit path and typed error envelope | NOT ACCEPTED |
-| GRAPHOS-OPS-R011, GRAPHOS-OPS-R012 | Six MCP intent verbs, typed discovery, bounded resolver, preview-only natural-language mutation | NOT ACCEPTED |
-| GRAPHOS-OPS-R013 | Generated `/api/v1` HTTP projection and protocol-route inventory | NOT ACCEPTED |
-| GRAPHOS-OPS-R014, GRAPHOS-OPS-R015, GRAPHOS-OPS-R016, GRAPHOS-OPS-R017 | Identity/admin, access, capacity, finance and markets operation families | NOT ACCEPTED |
-| GRAPHOS-OPS-R018, GRAPHOS-OPS-R019, GRAPHOS-OPS-R020, GRAPHOS-OPS-R021 | Query/ontology/analytics, federation, ingestion, decision/retrieval/policy operation families | NOT ACCEPTED |
-| GRAPHOS-OPS-R022, GRAPHOS-OPS-R023, GRAPHOS-OPS-R024 | Work/evolution, agents/browser, telemetry/security/usage/memory/graph operation families | NOT ACCEPTED |
-| GRAPHOS-OPS-R025, GRAPHOS-OPS-R026, GRAPHOS-OPS-R027, GRAPHOS-OPS-R028 | Generated clients and artifacts; drift, scope, authority and compatibility tests | NOT ACCEPTED |
-| GRAPHOS-OPS-R029, GRAPHOS-OPS-R030 | Atomic serving cutover, accurate public API documentation, old-route retirement | NOT ACCEPTED |
-| GRAPHOS-OPS-R032 | Identity dependency inversion through public ports and one serving composition root | NOT ACCEPTED |
-| GRAPHOS-OPS-R033, GRAPHOS-OPS-R034, GRAPHOS-OPS-R035 | Multi-kind dynamic fleet, Eunomia enforcement, resident multiplexer cutover | NOT ACCEPTED |
-| GRAPHOS-OPS-R001, GRAPHOS-OPS-R002, GRAPHOS-OPS-R003, GRAPHOS-OPS-R004 | Native MCP/REST host, A2A and agent assembly interface, removal of harvest duplication, FastMCP 4 bridge | NOT ACCEPTED |
-| GRAPHOS-OPS-R031 | Arbora publishes a complete legacy-verb/tool-to-op or intentional-drop inventory for the agent owner. Removal of its former tool code is accepted separately by that repository | NOT ACCEPTED |
-| GRAPHOS-OPS-R037 | Final Arbora facade over public engine/agent/connector contracts | NOT ACCEPTED |
+| ARBORA-OPS-R005, ARBORA-OPS-R006 | Consume packaged engine `methods`, `errors`, `scopes`, schemas, and wire-callable flags; reject absent/inconsistent contracts | NOT ACCEPTED |
+| ARBORA-OPS-R007, ARBORA-OPS-R008 | Operation registry, digest, engine binding and explicit exclusions | NOT ACCEPTED |
+| ARBORA-OPS-R009, ARBORA-OPS-R010, ARBORA-OPS-R036 | Single invocation/authority/effect/audit path and typed error envelope | NOT ACCEPTED |
+| ARBORA-OPS-R011, ARBORA-OPS-R012 | Six MCP intent verbs, typed discovery, bounded resolver, preview-only natural-language mutation | NOT ACCEPTED |
+| ARBORA-OPS-R013 | Generated `/api/v1` HTTP projection and protocol-route inventory | NOT ACCEPTED |
+| ARBORA-OPS-R014, ARBORA-OPS-R015, ARBORA-OPS-R016, ARBORA-OPS-R017 | Identity/admin, access, capacity, finance and markets operation families | NOT ACCEPTED |
+| ARBORA-OPS-R018, ARBORA-OPS-R019, ARBORA-OPS-R020, ARBORA-OPS-R021 | Query/ontology/analytics, federation, ingestion, decision/retrieval/policy operation families | NOT ACCEPTED |
+| ARBORA-OPS-R022, ARBORA-OPS-R023, ARBORA-OPS-R024 | Work/evolution, agents/browser, telemetry/security/usage/memory/graph operation families | NOT ACCEPTED |
+| ARBORA-OPS-R025, ARBORA-OPS-R026, ARBORA-OPS-R027, ARBORA-OPS-R028 | Generated clients and artifacts; drift, scope, authority and compatibility tests | NOT ACCEPTED |
+| ARBORA-OPS-R029, ARBORA-OPS-R030 | Atomic serving cutover, accurate public API documentation, old-route retirement | NOT ACCEPTED |
+| ARBORA-OPS-R032 | Identity dependency inversion through public ports and one serving composition root | NOT ACCEPTED |
+| ARBORA-OPS-R033, ARBORA-OPS-R034, ARBORA-OPS-R035 | Multi-kind dynamic fleet, Eunomia enforcement, resident multiplexer cutover | NOT ACCEPTED |
+| ARBORA-OPS-R001, ARBORA-OPS-R002, ARBORA-OPS-R003, ARBORA-OPS-R004 | Native MCP/REST host, A2A and agent assembly interface, removal of harvest duplication, FastMCP 4 bridge | NOT ACCEPTED |
+| ARBORA-OPS-R031 | Arbora publishes a complete legacy-verb/tool-to-op or intentional-drop inventory for the agent owner. Removal of its former tool code is accepted separately by that repository | NOT ACCEPTED |
+| ARBORA-OPS-R037 | Final Arbora facade over public engine/agent/connector contracts | NOT ACCEPTED |
 
-GRAPHOS-A2A-R006 and GRAPHOS-A2A-R005 are specified in [A2A task projection](../a2a/spec.md). Browser and terminal client migrations are downstream consumer contracts. The server must publish a generated client and keep both surfaces equivalent.
+ARBORA-A2A-R006 and ARBORA-A2A-R005 are specified in [A2A task projection](../a2a/spec.md). Browser and terminal client migrations are downstream consumer contracts. The server must publish a generated client and keep both surfaces equivalent.
 
 ## Required operation families
 
@@ -66,7 +66,7 @@ Each family below uses the same typed registry, invocation steps and error envel
 
 The Arbora contribution includes a machine-readable former-tool inventory: each old intent/granular name maps to one stable op ID or a documented drop with a reason. The agent owner can delete its old resolver and tool definitions only when this inventory, parity tests, and generated client are published. The server never imports that old implementation at runtime.
 
-### Owner-bound projections (GRAPHOS-OPS-R054–R058, R061, R063)
+### Owner-bound projections (ARBORA-OPS-R054–R058, R061, R063)
 - **R054 Technique-bound benchmark.** AU must bind all five serving techniques to the model/configuration and measured evidence before activation.
 - **R055 Process remediation.** Keep proposals separate from termination; require run/process-bound approval and the AU liveness contract.
 - **R056 Changeset review.** Require source-bound evidence for five flaw classes and the owner review contract.
@@ -86,18 +86,18 @@ Requirement IDs are defined in [requirements.md](requirements.md); delivery stat
 
 ## Additional owner requirements
 
-- `GRAPHOS-OPS-R024.1.1`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R014.1`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R022.3`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R022.4`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R053.7`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R021.2.1.1`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R050.2.1`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R009.1`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R053.8`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R059`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R060`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R062`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R064`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R065`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-OPS-R066`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-OPS-R024.1.1`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-OPS-R014.1`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-OPS-R022.3`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-OPS-R022.4`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-OPS-R053.7`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-OPS-R021.2.1.1`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-OPS-R050.2.1`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-OPS-R009.1`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-OPS-R053.8`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-OPS-R059`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-OPS-R060`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-OPS-R062`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-OPS-R064`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-OPS-R065`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-OPS-R066`: Owner scope and complete acceptance are defined in requirements.md.

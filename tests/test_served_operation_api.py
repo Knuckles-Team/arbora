@@ -172,7 +172,7 @@ def _value(response: httpx.Response) -> Any:
     return result["value"] if isinstance(result, dict) and "value" in result else result
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R001.2.3")
+@pytest.mark.spec("ARBORA-HOST-R001.2.3")
 def test_served_api_answers_the_web_ui_operations(served: Any) -> None:
     app, client = served
 
@@ -214,7 +214,7 @@ def test_served_api_answers_the_web_ui_operations(served: Any) -> None:
     ]
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R001.2.3")
+@pytest.mark.spec("ARBORA-HOST-R001.2.3")
 @pytest.mark.asyncio
 async def test_served_mcp_surface_lists_the_intent_verbs_and_finds(
     served: Any, monkeypatch: pytest.MonkeyPatch

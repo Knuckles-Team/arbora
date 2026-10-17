@@ -1,4 +1,4 @@
-"""Typed channel supervision state machine (GRAPHOS-MESSAGING-R001.1).
+"""Typed channel supervision state machine (ARBORA-MESSAGING-R001.1).
 
 Covers every legal transition in the fixed table and a representative set
 of illegal ones, each of which must refuse via ``IllegalSupervisionTransition``
@@ -94,7 +94,7 @@ def test_stopped_has_no_incoming_self_loop() -> None:
 async def test_router_promotes_connected_backend_to_running_then_drains_to_stopped() -> (
     None
 ):
-    """GRAPHOS-MESSAGING-R002/R004 minimal wiring: a connected backend reaches
+    """ARBORA-MESSAGING-R002/R004 minimal wiring: a connected backend reaches
     RUNNING on start() and STOPPED (never skipping STOPPING) on stop()."""
     router = InboundRouter()
     backend = FakeMessagingBackend("telegram")
@@ -112,7 +112,7 @@ async def test_router_promotes_connected_backend_to_running_then_drains_to_stopp
 
 @pytest.mark.asyncio
 async def test_router_never_promotes_an_unconnected_backend_to_running() -> None:
-    """GRAPHOS-MESSAGING-R002: an unconnected backend is skipped, not RUNNING."""
+    """ARBORA-MESSAGING-R002: an unconnected backend is skipped, not RUNNING."""
     router = InboundRouter()
     backend = FakeMessagingBackend("mattermost")
     backend._connected = False
@@ -151,12 +151,12 @@ class _OneHealthyRunThenFailingBackend(FakeMessagingBackend):
         yield  # pragma: no cover - unreachable, makes this an async generator
 
 
-@pytest.mark.spec("GRAPHOS-MESSAGING-R003")
+@pytest.mark.spec("ARBORA-MESSAGING-R003")
 @pytest.mark.asyncio
 async def test_backoff_delay_sequence_is_monotonically_bounded_by_cap(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """GRAPHOS-MESSAGING-R003: a sequence of simulated short-lived failures
+    """ARBORA-MESSAGING-R003: a sequence of simulated short-lived failures
     produces a delay sequence that doubles each time and never exceeds
     ``MESSAGING_LISTEN_BACKOFF_MAX_S``."""
     monkeypatch.setenv("MESSAGING_LISTEN_BACKOFF_BASE_S", "0.01")
@@ -185,12 +185,12 @@ async def test_backoff_delay_sequence_is_monotonically_bounded_by_cap(
     assert delays[-1] == pytest.approx(0.04)
 
 
-@pytest.mark.spec("GRAPHOS-MESSAGING-R003")
+@pytest.mark.spec("ARBORA-MESSAGING-R003")
 @pytest.mark.asyncio
 async def test_backoff_resets_to_base_after_a_sustained_healthy_run(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """GRAPHOS-MESSAGING-R003: one long-lived healthy run followed by a
+    """ARBORA-MESSAGING-R003: one long-lived healthy run followed by a
     failure resets the backoff delay to base rather than continuing to
     double."""
     monkeypatch.setenv("MESSAGING_LISTEN_BACKOFF_BASE_S", "0.01")
@@ -220,12 +220,12 @@ async def test_backoff_resets_to_base_after_a_sustained_healthy_run(
     assert delays[2] == pytest.approx(0.01)  # reset to base after the healthy run
 
 
-@pytest.mark.spec("GRAPHOS-MESSAGING-R004")
+@pytest.mark.spec("ARBORA-MESSAGING-R004")
 @pytest.mark.asyncio
 async def test_stop_during_backoff_wait_cancels_cleanly_with_no_pending_restart(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """GRAPHOS-MESSAGING-R004: cancelling a router while a backend is
+    """ARBORA-MESSAGING-R004: cancelling a router while a backend is
     mid backoff-wait is a clean shutdown — stop() leaves no restart task
     behind and the task collection is empty."""
     monkeypatch.setenv("MESSAGING_LISTEN_BACKOFF_BASE_S", "30")

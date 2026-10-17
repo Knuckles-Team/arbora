@@ -1,4 +1,4 @@
-"""Tests for the GRAPHOS-HOST-R001 import-boundary census."""
+"""Tests for the ARBORA-HOST-R001 import-boundary census."""
 
 from __future__ import annotations
 

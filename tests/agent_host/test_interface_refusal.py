@@ -1,6 +1,6 @@
 """Refuse unsupported client interfaces before host side effects."""
 
-# spec: GRAPHOS-HOST-R010.9
+# spec: ARBORA-HOST-R010.9
 
 import sys
 from types import ModuleType

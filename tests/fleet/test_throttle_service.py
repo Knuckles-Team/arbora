@@ -1,5 +1,5 @@
 """Covers :mod:`arbora.fleet.throttle_service` -- the in-process read/config
-facade over recorded AIMD decisions, backing the GRAPHOS-CAPACITY-R002
+facade over recorded AIMD decisions, backing the ARBORA-CAPACITY-R002
 hosted operations.
 """
 

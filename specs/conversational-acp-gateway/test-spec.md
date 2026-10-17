@@ -1,4 +1,4 @@
-# GRAPHOS-ACP — Test specification
+# ARBORA-ACP — Test specification
 
 | Test ID | Requirement | Level | Fixture and input | Expected observation |
 |---|---|---|---|---|

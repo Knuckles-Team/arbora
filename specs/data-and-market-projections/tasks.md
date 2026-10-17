@@ -1,4 +1,4 @@
-# GRAPHOS-DATA-MARKET — implementation tasks
+# ARBORA-DATA-MARKET — implementation tasks
 
 Each task has an observable done condition. Dependencies are ordered so that
 Arbora does not claim a capability before its published downstream contract
@@ -9,7 +9,7 @@ exists. Current status for every task: **WAITING**.
   - [x] Models (`arbora/gateway/schemas/schema_context.py`) and the
     capability-gated service (`arbora/gateway/schema_context_service.py`)
     land SC-01 (strict rejection) and SC-04 (typed `UNAVAILABLE`, zero
-    engine dispatch) for GRAPHOS-DATA-MARKET-R005.
+    engine dispatch) for ARBORA-DATA-MARKET-R005.
   - [ ] SC-02/SC-03 wait on epistemic-graph publishing a `schema_context`
     client; no such capability exists yet to dispatch against.
 - [ ] **GDM-03:** Wire MCP and REST schema-context routes through that service. Done when SC-05 served parity proves identical authorization and bounded errors.
@@ -26,13 +26,13 @@ Before proposing a PR, compare changed modules against existing implementations
 for CCCC complexity, jscpd syntax duplication, dupehound semantic duplication,
 and KISS simplicity. Follow the repository's normal gate; do not substitute
 private live services for local fixtures or silently downgrade a failing test.
-- [ ] **GRAPHOS-DATA-MARKET-R007:** Confirmed order and position changes.
-- [ ] **GRAPHOS-DATA-MARKET-R007.1:** Model.
-- [ ] **GRAPHOS-DATA-MARKET-R007.2:** Behavior.
-- [ ] **GRAPHOS-DATA-MARKET-R007.3:** Wiring.
-- [ ] **GRAPHOS-DATA-MARKET-R007.4:** Refusal.
-- [ ] **GRAPHOS-DATA-MARKET-R007.5:** Evidence.
-- [ ] **GRAPHOS-DATA-MARKET-R007.6:** Hot-path proof.
+- [ ] **ARBORA-DATA-MARKET-R007:** Confirmed order and position changes.
+- [ ] **ARBORA-DATA-MARKET-R007.1:** Model.
+- [ ] **ARBORA-DATA-MARKET-R007.2:** Behavior.
+- [ ] **ARBORA-DATA-MARKET-R007.3:** Wiring.
+- [ ] **ARBORA-DATA-MARKET-R007.4:** Refusal.
+- [ ] **ARBORA-DATA-MARKET-R007.5:** Evidence.
+- [ ] **ARBORA-DATA-MARKET-R007.6:** Hot-path proof.
 
 <!-- spec-definition-patch:eg66-reads -->
 - [ ] **GDM-11:** Define `FinanceReadPortV1` in `arbora/finance/markets.py` for the nine typed market/event/order reads. The existing `MarketProvider.market_read` covers one symbol only. Keep the operations unavailable until an admitted provider and the EG `finance:read` scope exist. Paper submission is not a read.

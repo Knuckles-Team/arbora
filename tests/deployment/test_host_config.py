@@ -1,4 +1,4 @@
-"""Tests for the GRAPHOS-HOST-R010 hosting/deployment settings model."""
+"""Tests for the ARBORA-HOST-R010 hosting/deployment settings model."""
 
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ InvalidHostConfigError = host_config.InvalidHostConfigError
 load_hosting_deployment_settings = host_config.load_hosting_deployment_settings
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R010")
+@pytest.mark.spec("ARBORA-HOST-R010")
 def test_module_does_not_import_agent_utilities_config_internals() -> None:
     tree = ast.parse(MODULE_PATH.read_text(encoding="utf-8"), filename=str(MODULE_PATH))
     imported = {
@@ -40,7 +40,7 @@ def test_module_does_not_import_agent_utilities_config_internals() -> None:
     assert not any(m.startswith("agent_utilities") for m in imported)
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R010")
+@pytest.mark.spec("ARBORA-HOST-R010")
 def test_load_resolves_defaults_from_arbora_owned_env_vars() -> None:
     settings = load_hosting_deployment_settings(env={})
     assert settings.bind_host == "127.0.0.1"

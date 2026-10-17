@@ -1,5 +1,5 @@
 """Tests for the deduplicated flip-alert delivery record
-(GRAPHOS-DATA-MARKET-R001; FI-06/FI-07 in
+(ARBORA-DATA-MARKET-R001; FI-06/FI-07 in
 ``specs/data-and-market-projections/test-spec.md``).
 """
 

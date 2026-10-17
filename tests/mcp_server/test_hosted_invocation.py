@@ -22,7 +22,7 @@ from tests.a2a.test_application import Authority, Router
 from tests.a2a.test_operation_bridge import fixture, post, session
 from tests.api.test_invoke_contract import operation
 
-pytestmark = pytest.mark.spec("GRAPHOS-A2A-R006.2.2")
+pytestmark = pytest.mark.spec("ARBORA-A2A-R006.2.2")
 
 
 def composed(monkeypatch, *, scopes=frozenset({"example:write"})):

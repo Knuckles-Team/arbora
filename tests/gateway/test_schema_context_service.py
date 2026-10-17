@@ -1,5 +1,5 @@
 """Tests for the schema-context models and application service
-(GRAPHOS-DATA-MARKET-R005, GDM-02; SC-01/SC-04 in
+(ARBORA-DATA-MARKET-R005, GDM-02; SC-01/SC-04 in
 ``specs/data-and-market-projections/test-spec.md``).
 """
 

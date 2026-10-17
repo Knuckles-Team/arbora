@@ -16,7 +16,7 @@ class Boom:
         raise RuntimeError("sink down")
 
 
-@pytest.mark.spec("GRAPHOS-MESSAGING-R700")
+@pytest.mark.spec("ARBORA-MESSAGING-R700")
 def test_recording_notifier_journals_without_delivering():
     sink = RecordingNotifier(clock=CLOCK)
     out = send_notification(
@@ -30,7 +30,7 @@ def test_recording_notifier_journals_without_delivering():
     )
 
 
-@pytest.mark.spec("GRAPHOS-MESSAGING-R700")
+@pytest.mark.spec("ARBORA-MESSAGING-R700")
 def test_raising_sink_is_recorded_as_error():
     out = send_notification(NotificationSpec(), "m", Boom(), CLOCK)
     assert (out["transport"], out["delivered"], out["error"]) == (
@@ -53,7 +53,7 @@ def _raise(*_):
         (_raise, False, "http", ("error", "refused")),
     ],
 )
-@pytest.mark.spec("GRAPHOS-MESSAGING-R700")
+@pytest.mark.spec("ARBORA-MESSAGING-R700")
 def test_webhook_outcomes(post, delivered, transport, extra):
     spec = WebhookSpec(url="http://x", payload={"a": 1})
     out = send_webhook(spec, {"b": 2}, post, CLOCK)

@@ -1,6 +1,6 @@
-# GRAPHOS-DEPLOY — Portable Arbora development and deployment
+# ARBORA-DEPLOY — Portable Arbora development and deployment
 
-**Owner:** arbora. **Requirement IDs:** GRAPHOS-DEPLOY-R001, GRAPHOS-DEPLOY-R002, GRAPHOS-DEPLOY-R003, GRAPHOS-DEPLOY-R004, GRAPHOS-DEPLOY-R005, GRAPHOS-DEPLOY-R006, GRAPHOS-DEPLOY-R007, GRAPHOS-DEPLOY-R008, GRAPHOS-DEPLOY-R009, GRAPHOS-DEPLOY-R010, GRAPHOS-DEPLOY-R011, GRAPHOS-DEPLOY-R012, GRAPHOS-DEPLOY-R013, GRAPHOS-DEPLOY-R014. **Delivery:** implemented in part; **acceptance:** pending. The existing deployment utilities are real source, but a clean contributor install, all profile variants and first-boot proof are not accepted here.
+**Owner:** arbora. **Requirement IDs:** ARBORA-DEPLOY-R001, ARBORA-DEPLOY-R002, ARBORA-DEPLOY-R003, ARBORA-DEPLOY-R004, ARBORA-DEPLOY-R005, ARBORA-DEPLOY-R006, ARBORA-DEPLOY-R007, ARBORA-DEPLOY-R008, ARBORA-DEPLOY-R009, ARBORA-DEPLOY-R010, ARBORA-DEPLOY-R011, ARBORA-DEPLOY-R012, ARBORA-DEPLOY-R013, ARBORA-DEPLOY-R014. **Delivery:** implemented in part; **acceptance:** pending. The existing deployment utilities are real source, but a clean contributor install, all profile variants and first-boot proof are not accepted here.
 
 ## State legend
 
@@ -39,8 +39,8 @@ The new target and no-effect reuse scenarios have not been run.
 
 ## Additional owner requirements
 
-- `GRAPHOS-DEPLOY-R009.2`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-DEPLOY-R009.4`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-DEPLOY-R009.3`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-DEPLOY-R013.7`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-DEPLOY-R010.4`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-DEPLOY-R009.2`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-DEPLOY-R009.4`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-DEPLOY-R009.3`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-DEPLOY-R013.7`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-DEPLOY-R010.4`: Owner scope and complete acceptance are defined in requirements.md.

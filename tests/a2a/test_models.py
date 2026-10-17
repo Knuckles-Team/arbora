@@ -1,4 +1,4 @@
-"""Typed Agent Card capability-advertisement model (GRAPHOS-A2A-R009.1).
+"""Typed Agent Card capability-advertisement model (ARBORA-A2A-R009.1).
 
 Proves the Agent Card never advertises streaming, push notifications, or
 state-transition history unless a real durable authority is wired for it.
@@ -35,8 +35,8 @@ class _NotAnAuthority:
     """Deliberately does not implement any capability protocol."""
 
 
-@pytest.mark.spec("GRAPHOS-A2A-R009")
-@pytest.mark.spec("GRAPHOS-A2A-R009.1")
+@pytest.mark.spec("ARBORA-A2A-R009")
+@pytest.mark.spec("ARBORA-A2A-R009.1")
 def test_default_capabilities_are_all_false() -> None:
     capabilities = A2AAgentCapabilities()
     assert capabilities.streaming is False
@@ -44,8 +44,8 @@ def test_default_capabilities_are_all_false() -> None:
     assert capabilities.state_transition_history is False
 
 
-@pytest.mark.spec("GRAPHOS-A2A-R009")
-@pytest.mark.spec("GRAPHOS-A2A-R009.1")
+@pytest.mark.spec("ARBORA-A2A-R009")
+@pytest.mark.spec("ARBORA-A2A-R009.1")
 def test_from_wired_authorities_with_none_stays_false() -> None:
     capabilities = A2AAgentCapabilities.from_wired_authorities()
     assert capabilities.streaming is False
@@ -53,8 +53,8 @@ def test_from_wired_authorities_with_none_stays_false() -> None:
     assert capabilities.state_transition_history is False
 
 
-@pytest.mark.spec("GRAPHOS-A2A-R009")
-@pytest.mark.spec("GRAPHOS-A2A-R009.1")
+@pytest.mark.spec("ARBORA-A2A-R009")
+@pytest.mark.spec("ARBORA-A2A-R009.1")
 def test_from_wired_authorities_advertises_only_what_is_wired() -> None:
     capabilities = A2AAgentCapabilities.from_wired_authorities(
         streaming_authority=_StreamingAuthority(),
@@ -64,8 +64,8 @@ def test_from_wired_authorities_advertises_only_what_is_wired() -> None:
     assert capabilities.state_transition_history is False
 
 
-@pytest.mark.spec("GRAPHOS-A2A-R009")
-@pytest.mark.spec("GRAPHOS-A2A-R009.1")
+@pytest.mark.spec("ARBORA-A2A-R009")
+@pytest.mark.spec("ARBORA-A2A-R009.1")
 def test_from_wired_authorities_all_three_wired() -> None:
     capabilities = A2AAgentCapabilities.from_wired_authorities(
         streaming_authority=_StreamingAuthority(),
@@ -85,8 +85,8 @@ def test_from_wired_authorities_all_three_wired() -> None:
         {"transition_history_authority": _NotAnAuthority()},
     ],
 )
-@pytest.mark.spec("GRAPHOS-A2A-R009")
-@pytest.mark.spec("GRAPHOS-A2A-R009.1")
+@pytest.mark.spec("ARBORA-A2A-R009")
+@pytest.mark.spec("ARBORA-A2A-R009.1")
 def test_from_wired_authorities_refuses_non_conforming_object(
     kwargs: dict[str, object],
 ) -> None:
@@ -94,7 +94,7 @@ def test_from_wired_authorities_refuses_non_conforming_object(
         A2AAgentCapabilities.from_wired_authorities(**kwargs)  # type: ignore[arg-type]
 
 
-@pytest.mark.spec("GRAPHOS-A2A-R012.1")
+@pytest.mark.spec("ARBORA-A2A-R012.1")
 def test_protocols_are_runtime_checkable_against_conforming_objects() -> None:
     assert isinstance(_StreamingAuthority(), A2AStreamingAuthority)
     assert isinstance(_PushAuthority(), A2APushNotificationAuthority)

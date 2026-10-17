@@ -335,7 +335,7 @@ async def _head_digest(endpoint: FleetEndpoint, catalog: dict[str, Any]) -> str:
 def test_admitted_server_with_unchanged_pack_renews_without_reattest(
     eg: _Registry,
 ) -> None:
-    """GRAPHOS-FLEET-R027: an already-admitted, unchanged server is never
+    """ARBORA-FLEET-R027: an already-admitted, unchanged server is never
     re-attested (which would hit EG's IDEMPOTENCY_CONFLICT); it is renewed.
     """
 
@@ -357,7 +357,7 @@ def test_admitted_server_with_unchanged_pack_renews_without_reattest(
 def test_admitted_server_with_changed_pack_imports_new_revision(
     eg: _Registry,
 ) -> None:
-    """GRAPHOS-FLEET-R027: a changed pack is attested and imported, never
+    """ARBORA-FLEET-R027: a changed pack is attested and imported, never
     skipped as if unchanged.
     """
 
@@ -377,7 +377,7 @@ def test_admitted_server_with_changed_pack_imports_new_revision(
 def test_onboard_renews_the_servers_lease_when_the_pack_is_unchanged(
     eg: _Registry,
 ) -> None:
-    """GRAPHOS-FLEET-R027/R028: confirming an unchanged pack still calls the
+    """ARBORA-FLEET-R027/R028: confirming an unchanged pack still calls the
     server's own lease renewal -- it does not just skip and relabel.
 
     Calls ``onboard`` directly (not through ``onboard_fleet``) so the pass's
@@ -398,7 +398,7 @@ def test_onboard_renews_the_servers_lease_when_the_pack_is_unchanged(
 
 
 def test_other_engine_error_checking_status_stays_failed(eg: _Registry) -> None:
-    """GRAPHOS-FLEET-R027: a non-conflict engine error is never treated as
+    """ARBORA-FLEET-R027: a non-conflict engine error is never treated as
     success; the server stays failed, not onboarded or renewed.
     """
 

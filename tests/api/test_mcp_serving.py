@@ -1,4 +1,4 @@
-"""Arbora serves its own eight-tool MCP intent surface (GRAPHOS-HOST-R023).
+"""Arbora serves its own eight-tool MCP intent surface (ARBORA-HOST-R023).
 
 Covers the parity and dispatch proofs that requirement names: a tool-list
 match against the agent runtime's previously served contract, one dispatch
@@ -233,7 +233,7 @@ def replace_caller_for_request(
     return replace(projection, caller_for_request=lambda: _caller(**changes))
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R023")
+@pytest.mark.spec("ARBORA-HOST-R023")
 def test_ask_fallback_uses_registered_nl_operation_through_shared_invoke() -> None:
     from arbora.api.ops.query import operations
     from tests.api.test_invoke_contract import setup_services

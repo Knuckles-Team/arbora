@@ -20,27 +20,27 @@ def _rule(**overrides: Any) -> OidcMappingRule:
     return OidcMappingRule(**fields)
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R009.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R009.1")
 @pytest.mark.parametrize("policy", ["create", "deny"])
 def test_rule_accepts_each_known_jit_policy(policy: str) -> None:
     assert _rule(jit_policy=policy).jit_policy == policy
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R009.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R009.1")
 @pytest.mark.parametrize("policy", ["ignore", "", "CREATE"])
 def test_rule_refuses_unknown_jit_policy(policy: str) -> None:
     with pytest.raises(IdentityUnavailable):
         _rule(jit_policy=policy)
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R009.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R009.1")
 @pytest.mark.parametrize("order", [-1, -100, True, 1.5])
 def test_rule_refuses_negative_or_non_integer_order(order: Any) -> None:
     with pytest.raises(IdentityUnavailable):
         _rule(order=order)
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R009.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R009.1")
 def test_rule_is_immutable() -> None:
     field = "order"
     with pytest.raises(dataclasses.FrozenInstanceError):

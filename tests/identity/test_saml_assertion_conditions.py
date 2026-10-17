@@ -34,12 +34,12 @@ def _assertion(**overrides: Any) -> ParsedSamlAssertion:
     return ParsedSamlAssertion(**fields)
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R012.2.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R012.2.1")
 def test_valid_assertion_passes() -> None:
     check_assertion_conditions(_PROVIDER, _assertion(), _T0)
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R012.2.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R012.2.1")
 @pytest.mark.parametrize(
     ("overrides", "now", "reason"),
     [
@@ -61,7 +61,7 @@ def test_condition_failures_are_refused_with_typed_reason(
     assert info.value.reason is reason
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R012.2.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R012.2.1")
 def test_clock_skew_tolerates_small_drift() -> None:
     check_assertion_conditions(
         _PROVIDER,
@@ -71,7 +71,7 @@ def test_clock_skew_tolerates_small_drift() -> None:
     )
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R012.2.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R012.2.1")
 @pytest.mark.parametrize(
     "overrides",
     [
@@ -86,7 +86,7 @@ def test_malformed_assertion_is_refused(overrides: dict[str, Any]) -> None:
         _assertion(**overrides)
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R012.2.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R012.2.1")
 def test_naive_check_time_is_refused() -> None:
     with pytest.raises(IdentityUnavailable):
         check_assertion_conditions(_PROVIDER, _assertion(), datetime(2026, 10, 10, 12))

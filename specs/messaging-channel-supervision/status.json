@@ -1,32 +1,32 @@
 {
   "schema_version": 2,
-  "spec_id": "GRAPHOS-MESSAGING",
+  "spec_id": "ARBORA-MESSAGING",
   "owner_repo": "arbora",
   "delivery_state": "SPECIFIED",
   "requirement_ids": [
-    "GRAPHOS-MESSAGING-R001",
-    "GRAPHOS-MESSAGING-R001.1",
-    "GRAPHOS-MESSAGING-R002",
-    "GRAPHOS-MESSAGING-R003",
-    "GRAPHOS-MESSAGING-R004",
-    "GRAPHOS-MESSAGING-R005",
-    "GRAPHOS-MESSAGING-R005.1",
-    "GRAPHOS-MESSAGING-R006",
-    "GRAPHOS-MESSAGING-R800",
-    "GRAPHOS-MESSAGING-R800.1",
-    "GRAPHOS-MESSAGING-R800.2",
-    "GRAPHOS-MESSAGING-R800.3",
-    "GRAPHOS-MESSAGING-R800.4",
-    "GRAPHOS-MESSAGING-R800.5",
-    "GRAPHOS-MESSAGING-R800.6",
-    "GRAPHOS-MESSAGING-R700",
-    "GRAPHOS-MESSAGING-R800.1000",
-    "GRAPHOS-MESSAGING-R800.1001",
-    "GRAPHOS-MESSAGING-R800.1002"
+    "ARBORA-MESSAGING-R001",
+    "ARBORA-MESSAGING-R001.1",
+    "ARBORA-MESSAGING-R002",
+    "ARBORA-MESSAGING-R003",
+    "ARBORA-MESSAGING-R004",
+    "ARBORA-MESSAGING-R005",
+    "ARBORA-MESSAGING-R005.1",
+    "ARBORA-MESSAGING-R006",
+    "ARBORA-MESSAGING-R800",
+    "ARBORA-MESSAGING-R800.1",
+    "ARBORA-MESSAGING-R800.2",
+    "ARBORA-MESSAGING-R800.3",
+    "ARBORA-MESSAGING-R800.4",
+    "ARBORA-MESSAGING-R800.5",
+    "ARBORA-MESSAGING-R800.6",
+    "ARBORA-MESSAGING-R700",
+    "ARBORA-MESSAGING-R800.1000",
+    "ARBORA-MESSAGING-R800.1001",
+    "ARBORA-MESSAGING-R800.1002"
   ],
   "requirements": [
     {
-      "id": "GRAPHOS-MESSAGING-R001",
+      "id": "ARBORA-MESSAGING-R001",
       "title": "Typed channel supervision state machine",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -34,11 +34,11 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-MESSAGING-R001.1"
+        "ARBORA-MESSAGING-R001.1"
       ]
     },
     {
-      "id": "GRAPHOS-MESSAGING-R001.1",
+      "id": "ARBORA-MESSAGING-R001.1",
       "title": "Typed state model, transition table, and refusal tests",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -47,7 +47,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-MESSAGING-R002",
+      "id": "ARBORA-MESSAGING-R002",
       "title": "Health-gated start",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -56,7 +56,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-MESSAGING-R003",
+      "id": "ARBORA-MESSAGING-R003",
       "title": "Bounded restart backoff with healthy-run reset",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -68,7 +68,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-MESSAGING-R004",
+      "id": "ARBORA-MESSAGING-R004",
       "title": "Graceful stop and drain",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -79,7 +79,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-MESSAGING-R005",
+      "id": "ARBORA-MESSAGING-R005",
       "title": "Typed degraded adapter state and configuration-aware health",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -91,25 +91,25 @@
         "tests/messaging/test_registry_degraded.py:85"
       ],
       "rollup_of": [
-        "GRAPHOS-MESSAGING-R005.1"
+        "ARBORA-MESSAGING-R005.1"
       ]
     },
     {
-      "id": "GRAPHOS-MESSAGING-R005.1",
+      "id": "ARBORA-MESSAGING-R005.1",
       "title": "Typed adapter degradation and configuration-aware health",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-MESSAGING-R006",
+      "id": "ARBORA-MESSAGING-R006",
       "title": "Supervision/adapter ownership boundary",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-MESSAGING-R800",
+      "id": "ARBORA-MESSAGING-R800",
       "title": "Messaging adapter contract, command registry and the full channel adapter set (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -119,61 +119,61 @@
         "tests/messaging/test_primitives.py:17"
       ],
       "rollup_of": [
-        "GRAPHOS-MESSAGING-R800.1",
-        "GRAPHOS-MESSAGING-R800.2",
-        "GRAPHOS-MESSAGING-R800.3",
-        "GRAPHOS-MESSAGING-R800.4",
-        "GRAPHOS-MESSAGING-R800.5",
-        "GRAPHOS-MESSAGING-R800.6",
-        "GRAPHOS-MESSAGING-R800.1000",
-        "GRAPHOS-MESSAGING-R800.1001",
-        "GRAPHOS-MESSAGING-R800.1002"
+        "ARBORA-MESSAGING-R800.1",
+        "ARBORA-MESSAGING-R800.2",
+        "ARBORA-MESSAGING-R800.3",
+        "ARBORA-MESSAGING-R800.4",
+        "ARBORA-MESSAGING-R800.5",
+        "ARBORA-MESSAGING-R800.6",
+        "ARBORA-MESSAGING-R800.1000",
+        "ARBORA-MESSAGING-R800.1001",
+        "ARBORA-MESSAGING-R800.1002"
       ]
     },
     {
-      "id": "GRAPHOS-MESSAGING-R800.1",
+      "id": "ARBORA-MESSAGING-R800.1",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-MESSAGING-R800.2",
+      "id": "ARBORA-MESSAGING-R800.2",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-MESSAGING-R800.3",
+      "id": "ARBORA-MESSAGING-R800.3",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-MESSAGING-R800.4",
+      "id": "ARBORA-MESSAGING-R800.4",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-MESSAGING-R800.5",
+      "id": "ARBORA-MESSAGING-R800.5",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-MESSAGING-R800.6",
+      "id": "ARBORA-MESSAGING-R800.6",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-MESSAGING-R700",
+      "id": "ARBORA-MESSAGING-R700",
       "title": "Action notification and webhook dispatch",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -186,21 +186,21 @@
       ]
     },
     {
-      "id": "GRAPHOS-MESSAGING-R800.1000",
+      "id": "ARBORA-MESSAGING-R800.1000",
       "title": "Intake lease on the engine WorkItem methods",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-MESSAGING-R800.1001",
+      "id": "ARBORA-MESSAGING-R800.1001",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-MESSAGING-R800.1002",
+      "id": "ARBORA-MESSAGING-R800.1002",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],

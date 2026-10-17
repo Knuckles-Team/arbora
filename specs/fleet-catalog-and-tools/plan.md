@@ -70,7 +70,7 @@ On any build/validation/publish failure, retain the last-known-good active gener
 
 A contributor starts with this repository and its declared lockfiles, installs local dependencies, runs generated-contract checks and fixture tests, and starts a local MCP server with fake engine/child adapters and bundled policy. The test suite must not require private DNS, secrets, an existing tenant, or a live production service. Mark unavailable optional integration tests separately and use a provisionable container/local fixture for CI. Release acceptance adds a disposable two-replica arbora setup and synthetic connector; its setup commands and manifests belong in this repository.
 
-## GRAPHOS-FLEET-R034 skill and workflow admission
+## ARBORA-FLEET-R034 skill and workflow admission
 
 Data flow: POST route (arbora/api/http/routes.py:127) → `invoke` (arbora/api/invoke/pipeline.py:810) → skill audit and workflow admission → `_confirmation_gate` → effect.
 
@@ -323,7 +323,7 @@ These Arbora wrapper names are proposed contracts, not claims of existing export
 
 ### Shared invocation, trusted routing and confirmation
 
-Reference [GRAPHOS-OPS-R009](../hosted-api-operations/requirements.md) for the existing pipeline; do not edit that owner or duplicate its authority.
+Reference [ARBORA-OPS-R009](../hosted-api-operations/requirements.md) for the existing pipeline; do not edit that owner or duplicate its authority.
 Both registered operations use the same trusted binding and existing executor/fleet gateway composition.
 Use the admitted operation's published exact scopes, principal rules and subject mapping; invent no new scope or broad-admin substitute.
 Preserve surface checks, current caller validation, narrowing policy and subject-read checks before service execution.
@@ -381,17 +381,17 @@ The source validation environment resolves MCP >=2.3,<3 with the landed SDK. The
 
 ## Additional owner requirements
 
-- `GRAPHOS-FLEET-R024.10`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-FLEET-R024.11`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-FLEET-R002.9`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-FLEET-R034.13`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-FLEET-R034.14`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-FLEET-R024.10`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-FLEET-R024.11`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-FLEET-R002.9`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-FLEET-R034.13`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-FLEET-R034.14`: Plan the owner work and dependencies defined in requirements.md.
 
 ### 2026-10-16 — Separate deterministic and natural-language queries
 
 `query.uql` remains deterministic under `query:unified`; `query.nl` is the authorized resolver fallback under `query:nl`. The latter binds its inner graph from the verified caller and preserves provider planner-unavailable refusals. No scope is automatically granted. Remaining SQL, search, indexes and analytics acceptance under R018.2 remains deferred.
 
-## GRAPHOS-FLEET-R036 — connect-time contract handshake
+## ARBORA-FLEET-R036 — connect-time contract handshake
 
 References: [EG-TYPED-PACKS-R103](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/typed-packs-and-catalog/spec.md), [EG-TYPED-PACKS-R104](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/typed-packs-and-catalog/spec.md), [SDK-CONNECTOR-CONTROL-R068](https://github.com/Knuckles-Team/agent-connector-sdk/blob/main/specs/SDK-CONNECTOR-CONTROL/spec.md)
 
@@ -401,23 +401,23 @@ The engine validates and stores. arbora compares digests and forwards. arbora ho
 
 Budget: one onboarding pass per connector per 2 s window; resources of 8 MiB or less. These are starting defaults. A measurement on this platform replaces them.
 
-## GRAPHOS-FLEET-R037 — job-scoped lazy tool loading
+## ARBORA-FLEET-R037 — job-scoped lazy tool loading
 
 References: [EG-DECISION-ENGINE-R176](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/decision-engine/spec.md), [EG-DECISION-ENGINE-R177](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/decision-engine/spec.md)
 
 Call path: harness -> `find` verb (`verbs.py:18`) -> `find_tools` (`multiplexer_ops.py:150`) -> engine `Decide` load set -> `load_tools` (`multiplexer_ops.py:245`) -> `tools/list_changed` to the caller.
 
-The engine chooses. arbora applies the answer within the session cap of `GRAPHOS-FLEET-R018`. Skills arrive as engine queries (`EG-DECISION-ENGINE-R177`), not as static instruction text.
+The engine chooses. arbora applies the answer within the session cap of `ARBORA-FLEET-R018`. Skills arrive as engine queries (`EG-DECISION-ENGINE-R177`), not as static instruction text.
 
-## GRAPHOS-FLEET-R038 — protocol roles
+## ARBORA-FLEET-R038 — protocol roles
 
 | Protocol and role | Owner | What it does | Existing spec |
 |---|---|---|---|
-| MCP serving, platform | arbora | Harnesses call arbora as an MCP server: the intent tools and job-scoped lazy loading | `GRAPHOS-FLEET-R029`, `GRAPHOS-FLEET-R037` |
+| MCP serving, platform | arbora | Harnesses call arbora as an MCP server: the intent tools and job-scoped lazy loading | `ARBORA-FLEET-R029`, `ARBORA-FLEET-R037` |
 | MCP serving, connector | SDK | Each connector is an MCP server through the SDK `[mcp]` extra, with server scaffolding and the served security profile | `SDK-CONNECTOR-CONTROL-R014.17` |
-| MCP consuming, platform | arbora | The multiplexer is an MCP client of every connector: the connect-time contract path | `GRAPHOS-FLEET-R036` |
+| MCP consuming, platform | arbora | The multiplexer is an MCP client of every connector: the connect-time contract path | `ARBORA-FLEET-R036` |
 | MCP consuming, connector | SDK | A connector wraps an external MCP server as a data source | `SDK-CONNECTOR-CONTROL-R040`, `SDK-CONNECTOR-CONTROL-R069` |
-| A2A serving | arbora | Agents call the platform over A2A | `GRAPHOS-A2A` |
+| A2A serving | arbora | Agents call the platform over A2A | `ARBORA-A2A` |
 | A2A consuming | SDK | A connector treats an external agent as a data source | `SDK-CONNECTOR-CONTROL-R041`, `SDK-CONNECTOR-CONTROL-R069` |
 
 The harness reaches other agents only through arbora. Engine planning over the consuming roles is `EG-FEDERATED-QUERY-R073.2`.

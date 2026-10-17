@@ -1,4 +1,4 @@
-"""GRAPHOS-DEPLOY-R009.1: Arbora-owned hosting/deployment settings module."""
+"""ARBORA-DEPLOY-R009.1: Arbora-owned hosting/deployment settings module."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from arbora.core.config_admin import (
 )
 
 
-@pytest.mark.spec("GRAPHOS-DEPLOY-R009.1")
+@pytest.mark.spec("ARBORA-DEPLOY-R009.1")
 def test_does_not_import_agent_runtime_configuration_internals() -> None:
     """The module resolves hosting/deployment settings without reaching into
     the agent runtime's monolithic configuration module."""
@@ -27,7 +27,7 @@ def test_does_not_import_agent_runtime_configuration_internals() -> None:
     assert not any("agent_utilities" in line for line in import_lines)
 
 
-@pytest.mark.spec("GRAPHOS-DEPLOY-R009.1")
+@pytest.mark.spec("ARBORA-DEPLOY-R009.1")
 def test_resolves_defaults_from_empty_environment() -> None:
     settings = load_hosting_deployment_settings(env={})
     assert settings == HostingDeploymentSettings(
@@ -38,7 +38,7 @@ def test_resolves_defaults_from_empty_environment() -> None:
     )
 
 
-@pytest.mark.spec("GRAPHOS-DEPLOY-R009.1")
+@pytest.mark.spec("ARBORA-DEPLOY-R009.1")
 def test_resolves_overrides_from_environment() -> None:
     settings = load_hosting_deployment_settings(
         env={
@@ -54,7 +54,7 @@ def test_resolves_overrides_from_environment() -> None:
     assert settings.data_dir == "/data/arbora"
 
 
-@pytest.mark.spec("GRAPHOS-DEPLOY-R009.1")
+@pytest.mark.spec("ARBORA-DEPLOY-R009.1")
 @pytest.mark.parametrize(
     "env",
     [

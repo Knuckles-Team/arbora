@@ -1,6 +1,6 @@
-# GRAPHOS-CAPACITY — Adaptive capacity control
+# ARBORA-CAPACITY — Adaptive capacity control
 
-**Owner:** arbora. **Requirement IDs:** GRAPHOS-CAPACITY-R001; Arbora interface GRAPHOS-CAPACITY-R002. **Spec state:** ready to build. **Delivery state:** source not verified. **Acceptance state:** not accepted.
+**Owner:** arbora. **Requirement IDs:** ARBORA-CAPACITY-R001; Arbora interface ARBORA-CAPACITY-R002. **Spec state:** ready to build. **Delivery state:** source not verified. **Acceptance state:** not accepted.
 
 ## State legend
 
@@ -27,7 +27,7 @@ Requirement IDs are defined in [requirements.md](requirements.md); delivery stat
 
 ## Additional owner requirements
 
-- `GRAPHOS-CAPACITY-R001.2`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-CAPACITY-R003`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-CAPACITY-R004`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-CAPACITY-R001.3`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-CAPACITY-R001.2`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-CAPACITY-R003`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-CAPACITY-R004`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-CAPACITY-R001.3`: Owner scope and complete acceptance are defined in requirements.md.

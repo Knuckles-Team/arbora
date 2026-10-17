@@ -1,4 +1,4 @@
-"""Parity tests for the ported deploy-watch verdict rule (GRAPHOS-FLEET-R024.1).
+"""Parity tests for the ported deploy-watch verdict rule (ARBORA-FLEET-R024.1).
 
 Each case reproduces one branch of agent-utilities'
 ``agent_utilities.orchestration.deploy_watch.run_deploy_watch`` post-probe

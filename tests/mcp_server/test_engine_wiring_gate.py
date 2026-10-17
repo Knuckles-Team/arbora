@@ -19,7 +19,7 @@ from epistemic_graph import client as eg_client  # noqa: E402
 from arbora.mcp_server.backing.tools import engine_tools, query_tools  # noqa: E402
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R001.8")
+@pytest.mark.spec("ARBORA-HOST-R001.8")
 def test_every_engine_domain_family_resolves_to_an_eg_client_class():
     missing = {
         domain: name
@@ -31,7 +31,7 @@ def test_every_engine_domain_family_resolves_to_an_eg_client_class():
     assert not set(missing) & set(engine_tools.ENGINE_DOMAINS)
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R001.8")
+@pytest.mark.spec("ARBORA-HOST-R001.8")
 def test_every_served_engine_method_is_an_eg_coroutine():
     for domain, methods in engine_tools.ENGINE_DOMAINS.items():
         cls = getattr(eg_client, engine_tools._DOMAIN_CLASSES[domain])
@@ -41,7 +41,7 @@ def test_every_served_engine_method_is_an_eg_coroutine():
             )
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R001.8")
+@pytest.mark.spec("ARBORA-HOST-R001.8")
 def test_query_uql_dispatches_to_the_engine_uql_method():
     calls: list[tuple[str, dict[str, Any]]] = []
 
@@ -62,7 +62,7 @@ def test_query_uql_dispatches_to_the_engine_uql_method():
     assert rows is not None
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R001.8")
+@pytest.mark.spec("ARBORA-HOST-R001.8")
 def test_installed_eg_query_client_owns_the_nl_planner():
     planner = getattr(eg_client.QueryClient, "nl_query", None)
     assert inspect.iscoroutinefunction(planner), "EG exposes no nl_query planner"
@@ -70,7 +70,7 @@ def test_installed_eg_query_client_owns_the_nl_planner():
     assert engine_tools.action_policy("query", "nl_query")["scope"] == "kg:read"
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R001.8")
+@pytest.mark.spec("ARBORA-HOST-R001.8")
 @pytest.mark.parametrize("tool", ["nl_query", "graph_ask", "ask_data"])
 def test_natural_language_tools_plan_through_eg_nl_query(monkeypatch, tool):
     """Every served NL tool reaches EG ``QueryClient.nl_query`` and nothing else."""
@@ -112,7 +112,7 @@ def test_natural_language_tools_plan_through_eg_nl_query(monkeypatch, tool):
     assert "n1" in rendered and "n2" not in rendered
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R001.8")
+@pytest.mark.spec("ARBORA-HOST-R001.8")
 def test_no_local_nl_planner_is_imported_by_the_served_surface():
     from pathlib import Path
 

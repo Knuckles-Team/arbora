@@ -1,4 +1,4 @@
-"""``runs.current_plan`` read boundary (GRAPHOS-OPS-R021.4.5.1)."""
+"""``runs.current_plan`` read boundary (ARBORA-OPS-R021.4.5.1)."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from arbora.api.ops.runs import (
 )
 from tests.api._ops_support import tenant_reader_context
 
-pytestmark = pytest.mark.spec("GRAPHOS-OPS-R021.4.5.1")
+pytestmark = pytest.mark.spec("ARBORA-OPS-R021.4.5.1")
 
 NOW = datetime(2026, 1, 1, tzinfo=UTC)
 

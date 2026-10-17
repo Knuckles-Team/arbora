@@ -1,4 +1,4 @@
-"""GRAPHOS-OPS-R026.1: the API-surface drift gate fails closed on drift."""
+"""ARBORA-OPS-R026.1: the API-surface drift gate fails closed on drift."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ def _baseline() -> list[OpSpec]:
     return [_op(), _op("identity.users.list", verb=Verb.FIND, http=None)]
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R026.1")
+@pytest.mark.spec("ARBORA-OPS-R026.1")
 def test_no_drift_when_surface_is_unchanged() -> None:
     baseline = public_surface(_baseline())
     current = public_surface(_baseline())
@@ -28,7 +28,7 @@ def test_no_drift_when_surface_is_unchanged() -> None:
     assert drift.explain() == ""
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R026.1")
+@pytest.mark.spec("ARBORA-OPS-R026.1")
 def test_gate_fails_when_an_operation_is_added_without_baseline_update() -> None:
     baseline = public_surface(_baseline())
     current = public_surface([*_baseline(), _op("identity.users.disable")])
@@ -38,7 +38,7 @@ def test_gate_fails_when_an_operation_is_added_without_baseline_update() -> None
     assert "added: identity.users.disable" in drift.explain()
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R026.1")
+@pytest.mark.spec("ARBORA-OPS-R026.1")
 def test_gate_fails_when_a_published_operation_is_removed() -> None:
     baseline = public_surface(_baseline())
     current = public_surface([_op()])
@@ -47,7 +47,7 @@ def test_gate_fails_when_a_published_operation_is_removed() -> None:
     assert drift.removed == ("identity.users.list",)
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R026.1")
+@pytest.mark.spec("ARBORA-OPS-R026.1")
 def test_gate_fails_when_a_public_shape_changes_in_place() -> None:
     baseline = public_surface(_baseline())
     # Same id, but the route moved -- a silent wire-contract break.
@@ -64,7 +64,7 @@ def test_gate_fails_when_a_public_shape_changes_in_place() -> None:
     assert not drift.removed
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R026.1")
+@pytest.mark.spec("ARBORA-OPS-R026.1")
 def test_mcp_verb_set_change_is_detected_as_drift() -> None:
     baseline = public_surface(_baseline())
     current = public_surface(
@@ -74,7 +74,7 @@ def test_mcp_verb_set_change_is_detected_as_drift() -> None:
     assert drift.changed == ("identity.users.read",)
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R026.1")
+@pytest.mark.spec("ARBORA-OPS-R026.1")
 def test_surface_projection_excludes_non_public_surfaces_key() -> None:
     op = _op(surfaces=frozenset({Surface.MCP}))
     projected = public_surface([op])

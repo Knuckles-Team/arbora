@@ -1,4 +1,4 @@
-"""Tests for the admission dry-run planner (GRAPHOS-DATA-MARKET-R004, GDM-04).
+"""Tests for the admission dry-run planner (ARBORA-DATA-MARKET-R004, GDM-04).
 
 AD-01 (unit): dry run computes requirements and rollback steps without
 mutation or connector retirement. AD-03 (negative): an unapproved mapping, a

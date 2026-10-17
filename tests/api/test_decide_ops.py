@@ -1,4 +1,4 @@
-"""Decide operations are service-only (GRAPHOS-OPS-R021.1)."""
+"""Decide operations are service-only (ARBORA-OPS-R021.1)."""
 
 from __future__ import annotations
 

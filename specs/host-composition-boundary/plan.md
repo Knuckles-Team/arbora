@@ -43,7 +43,7 @@ New adapters remain small and cohesive. Before adding a class, inspect an existi
 
 Cross-repository work is sequenced by public package release: engine/SDK/AU contract first, Arbora adapter second, client projection last. Public dependency versions in `pyproject.toml` and `uv.lock` express the minimum required API; no unpublished sibling path is a required test input.
 
-## Startup configuration design (GRAPHOS-HOST-R010)
+## Startup configuration design (ARBORA-HOST-R010)
 
 Existing code: `core/config_admin.py:51` reads four hosting variables and validates ports and profiles.
 `mcp_server/server.py:164` currently loads agent-runtime configuration before constructing the server.
@@ -65,7 +65,7 @@ Use seeded declaration ordering permutations to prove identical normalized manif
 Preservation: R010.1 retains the complete original ownership and schema acceptance.
 All original rows and acceptance remain binding; narrower startup children cannot replace their evidence.
 
-## Detected harness installation (GRAPHOS-HOST-R008)
+## Detected harness installation (ARBORA-HOST-R008)
 
 Existing code: `deployment/cli.py:67` registers one harness; `:77` delegates a fence installer to agent-runtime internals.
 `core/` currently contains the configuration owner, not a complete generic installer or harness detector.
@@ -84,11 +84,11 @@ An absent harness produces an observation without writes; unsupported requested 
 Supported-hook absence is reported as a capability limitation, never silently described as installed.
 R008.1 preserves the complete original module census and every named owner.
 
-## Terminal start and scoped logs (GRAPHOS-HOST-R009/R010)
+## Terminal start and scoped logs (ARBORA-HOST-R009/R010)
 
 ### Owned shutdown prerequisite
 
-GRAPHOS-HOST-R009.4.1 adds targeted supervisor shutdown. Stop only the named
+ARBORA-HOST-R009.4.1 adds targeted supervisor shutdown. Stop only the named
 service; preserve borrowed siblings. All-service shutdown uses one monotonic
 deadline, retains live handles on timeout, and permits a later cleanup retry.
 Loopback HTTP tests verify the surviving sibling and bounded shutdown behavior.
@@ -146,7 +146,7 @@ The terminal consumer is specified by TUI-RUNTIME-R002.2 through R002.6.
 Bind R009.5, R009.6 and R010.7 to the public adapters in the amendment below.
 Consumer definitions are available; their runtime exports and the authenticated host handoff remain implementation prerequisites.
 
-## Shared transport scaffold (GRAPHOS-HOST-R006/R023)
+## Shared transport scaffold (ARBORA-HOST-R006/R023)
 
 Existing code: `mcp_server/server.py:164` exposes standard transport arguments and a shared fleet lifecycle.
 `runtime._build_server:2208` still imports the agent-runtime server factory; existing R007 owns replacement of that private coupling.
@@ -156,7 +156,7 @@ Use typed arguments for transport, bind address, port and security; compare norm
 R006.1 retains all original module ownership; R023.1 retains every tool, ranking, fallback and invocation-policy clause.
 The new transport acceptance must use real wire clients, including unauthorized calls and stdout-purity probes.
 
-## Native desktop, visual state, and coding-agent handoff (GRAPHOS-HOST-R029–R031)
+## Native desktop, visual state, and coding-agent handoff (ARBORA-HOST-R029–R031)
 
 - **R029:** After the SDK publishes a typed grant-bound port and certified provider, bind it through `arbora/api/invoke/pipeline.py:invoke` and `arbora/api/invoke/executor.py:BoundOperationRuntime.dispatch` (line 273). `OperationRuntime.dispatch` is only a protocol.
 - **R030:** Bind observation and state through the same composed dispatch path. Do not add a local state store. Wait for SDK observation and EG state/context contracts.
@@ -164,7 +164,7 @@ The new transport acceptance must use real wire clients, including unauthorized 
 
 ## Amendment: authenticated terminal log preference
 
-Extend GRAPHOS-HOST-R009.5, GRAPHOS-HOST-R009.6 and GRAPHOS-HOST-R010.7.
+Extend ARBORA-HOST-R009.5, ARBORA-HOST-R009.6 and ARBORA-HOST-R010.7.
 The consumer contract is [TUI-RUNTIME-R002.2 through R002.6](https://github.com/Knuckles-Team/agent-terminal-ui/blob/5ac5e3fec4d590f167d2c6bd694683dbd8950c26/specs/terminal-runtime/plan.md#tui-runtime-r002-consumer-boundary).
 This amendment provides definitions only. Keep these host rows SPECIFIED with empty acceptance receipts.
 
@@ -196,12 +196,12 @@ A controlled adapter can prove only the host handoff, not unified terminal rende
 
 ## Additional owner requirements
 
-- `GRAPHOS-HOST-R023.3`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-HOST-R008.6`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-HOST-R026.6`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-HOST-R022.1`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-HOST-R010.8`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-HOST-R032`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-HOST-R023.3`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-HOST-R008.6`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-HOST-R026.6`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-HOST-R022.1`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-HOST-R010.8`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-HOST-R032`: Plan the owner work and dependencies defined in requirements.md.
 
 ### 2026-10-16 — Authorized natural-language fallback
 

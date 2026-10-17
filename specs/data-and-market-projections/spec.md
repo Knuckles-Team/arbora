@@ -1,4 +1,4 @@
-# GRAPHOS-DATA-MARKET — Schema context, source admission, and finance projection
+# ARBORA-DATA-MARKET — Schema context, source admission, and finance projection
 
 ## Status legend
 
@@ -28,7 +28,7 @@ broker, or notification channel.
 
 ## User stories and functional requirements
 
-### Schema context (GRAPHOS-DATA-MARKET-R005)
+### Schema context (ARBORA-DATA-MARKET-R005)
 
 - **FR-01:** Authenticated REST and MCP callers can ask `schema_context` with
   `source_id`, `schema`, `object`, and `intent` (`definition`, `joins`, `ontology`,
@@ -45,7 +45,7 @@ broker, or notification channel.
   or the source has no approved catalog snapshot, Arbora returns typed
   `UNAVAILABLE` with no fabricated empty graph or ontology match.
 
-### Application admission (GRAPHOS-DATA-MARKET-R004)
+### Application admission (ARBORA-DATA-MARKET-R004)
 
 - **FR-04:** An authorized operator can dry-run admission of a named application
   and source into a shared data plane. The plan lists source dialect and version,
@@ -61,7 +61,7 @@ broker, or notification channel.
   the tenant, its mapping is unapproved, conformance is missing, or rollback is
   unproven. No migration of application-owned tables is implied by admission.
 
-### Finance projection and scheduling (GRAPHOS-DATA-MARKET-R001 / GRAPHOS-DATA-MARKET-R002 / GRAPHOS-DATA-MARKET-R003 / GRAPHOS-DATA-MARKET-R006)
+### Finance projection and scheduling (ARBORA-DATA-MARKET-R001 / ARBORA-DATA-MARKET-R002 / ARBORA-DATA-MARKET-R003 / ARBORA-DATA-MARKET-R006)
 
 - **FR-07:** Arbora exposes tenant-scoped market reads through one application service shared by REST and MCP. Each price, trend, portfolio, and position field includes source identity, as-of time, currency or unit, session, freshness, and provenance. Arbora performs bounded server-side pagination and decimation after authoritative calculations. Reads require `finance:read`. Missing tenant/account binding fails closed before touching a process-global provider account. The nine list/search/get contracts in R003.1–R003.6 use closed, versioned projections and preserve source metadata without host synthesis.
 - **FR-08:** Use the existing scheduler and agent workflow contract for backfill,
@@ -132,7 +132,7 @@ Requirement IDs are defined in [requirements.md](requirements.md); delivery stat
 
 ## Wallet verification boundary
 
-GRAPHOS-DATA-MARKET-R007 consumes SDK-GOVERNED-WRITEBACK-R001.1 through R001.6 for wallet signature verification.
+ARBORA-DATA-MARKET-R007 consumes SDK-GOVERNED-WRITEBACK-R001.1 through R001.6 for wallet signature verification.
 EG owns authorization decisions. Arbora authenticates, serves explicit confirmation and enforces the matching producer result.
 Neither a valid signature nor confirmation alone authorizes a source effect. Unavailable trust or durable proof binding refuses.
 
@@ -141,7 +141,7 @@ Proof and confirmation metadata use the separate, currently missing WalletExecut
 No proof or derived plan digest enters the confirmed business parameters. All new wiring remains SPECIFIED.
 
 <!-- spec-definition-patch:eg66-reads -->
-## Structured marketplace reads (GRAPHOS-DATA-MARKET-R003.1–R003.6)
+## Structured marketplace reads (ARBORA-DATA-MARKET-R003.1–R003.6)
 
 R003 defines nine read-only bindings: `markets.list/search/get`,
 `events.list/search/get`, and `orders.list/search/get`. List/search use a
@@ -154,12 +154,12 @@ provider dispatch. Identity comes from authenticated authority, never caller
 parameters. Missing/mismatched binding returns the parent's typed unavailable
 response; scope denial uses the existing R010 refusal mapping. Refusals make
 zero provider calls, and missing/inaccessible IDs are nonrevealing. This
-extends GRAPHOS-OPS-R017.1; GRAPHOS-OPS-R017.2 keeps subject ownership for
+extends ARBORA-OPS-R017.1; ARBORA-OPS-R017.2 keeps subject ownership for
 position and paper-trading actions.
 
 Reads cannot submit orders, reserve effect leases, or invoke paper-trade
 methods. Paper submission remains governed by parent R003: separate
 `finance:paper-trade`, tenant-bound account, durable lease, idempotency
-receipt, and GRAPHOS-OPS-R017.2 subject ownership. This is a definition only;
+receipt, and ARBORA-OPS-R017.2 subject ownership. This is a definition only;
 it records no implementation or served acceptance evidence.
 <!-- /spec-definition-patch -->

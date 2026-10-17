@@ -21,7 +21,7 @@ from arbora.gateway.registry import Registry
 from arbora.gateway.widgets.github import Widget as GitHubWidget
 from arbora.security.actor_context import ActorContext
 
-# GRAPHOS-FLEET-R032: `_fetch_one` now binds the gateway's own service actor
+# ARBORA-FLEET-R032: `_fetch_one` now binds the gateway's own service actor
 # (`_run_as_service_actor` -> `_service_authority`) around every widget
 # fetch; stand in an already-verified fake so these tests exercise fleet
 # delegation without minting a real process-identity token.

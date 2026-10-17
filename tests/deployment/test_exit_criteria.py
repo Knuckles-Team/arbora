@@ -7,7 +7,7 @@ import pytest
 from arbora.deployment.exit_criteria import ExitCriterion, audit_exit_criteria
 
 
-@pytest.mark.spec("GRAPHOS-RELEASE-R003.1")
+@pytest.mark.spec("ARBORA-RELEASE-R003.1")
 def test_audit_flags_a_row_satisfied_when_its_test_is_collected() -> None:
     matrix = [
         ExitCriterion(
@@ -24,7 +24,7 @@ def test_audit_flags_a_row_satisfied_when_its_test_is_collected() -> None:
     assert audit.all_satisfied is True
 
 
-@pytest.mark.spec("GRAPHOS-RELEASE-R003.1")
+@pytest.mark.spec("ARBORA-RELEASE-R003.1")
 def test_audit_flags_a_row_missing_when_its_test_is_not_collected() -> None:
     matrix = [
         ExitCriterion(
@@ -39,7 +39,7 @@ def test_audit_flags_a_row_missing_when_its_test_is_not_collected() -> None:
     assert audit.all_satisfied is False
 
 
-@pytest.mark.spec("GRAPHOS-RELEASE-R003.1")
+@pytest.mark.spec("ARBORA-RELEASE-R003.1")
 def test_audit_never_marks_an_unregistered_obligation_as_a_silent_pass() -> None:
     audit = audit_exit_criteria(matrix=[], collected_test_ids=["anything::at_all"])
     assert audit.satisfied == ()

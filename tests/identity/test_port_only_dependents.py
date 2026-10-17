@@ -1,4 +1,4 @@
-"""GRAPHOS-IDENTITY-R021.1: identity wiring depends only on identity ports.
+"""ARBORA-IDENTITY-R021.1: identity wiring depends only on identity ports.
 
 Arbora's MCP server, web host (gateway), and web co-service (webui_host)
 packages must depend only on ``arbora.identity.ports`` (the Protocol

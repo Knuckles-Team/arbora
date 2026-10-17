@@ -1,4 +1,4 @@
-"""Unit tests for GRAPHOS-FLEET-R009.1: the capacity-acquisition primitive.
+"""Unit tests for ARBORA-FLEET-R009.1: the capacity-acquisition primitive.
 
 Covers the acceptance clause directly: a denied acquisition allows exactly
 one re-decision (a second denial is refused, not retried indefinitely), and

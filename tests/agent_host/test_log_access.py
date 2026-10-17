@@ -1,5 +1,5 @@
 """Controlled owner fixtures prove served composition, not deployed grants."""
-# spec: GRAPHOS-HOST-R009.7
+# spec: ARBORA-HOST-R009.7
 
 from __future__ import annotations
 
@@ -439,7 +439,7 @@ def test_concurrent_read_and_cancellation_release(
 def test_generation_grants_fail_closed(
     setup: tuple[ControlledOwners, HostLogAccess], generations: Any
 ) -> None:
-    # spec: GRAPHOS-HOST-R009.8.1
+    # spec: ARBORA-HOST-R009.8.1
     owners, access = setup
     owners.change["source_generations"] = generations
     with serve(access) as client:
@@ -454,7 +454,7 @@ def test_generation_grants_fail_closed(
 def test_generation_change_invalidates_bound_handle(
     setup: tuple[ControlledOwners, HostLogAccess], during_read: bool
 ) -> None:
-    # spec: GRAPHOS-HOST-R009.8.1
+    # spec: ARBORA-HOST-R009.8.1
     owners, access = setup
     owners.change["source_generations"] = ("host-1", "prior-generation")
     with serve(access) as client:
@@ -481,7 +481,7 @@ def test_generation_change_invalidates_bound_handle(
 def test_original_generation_requires_explicit_grant(
     setup: tuple[ControlledOwners, HostLogAccess], tmp_path: Path
 ) -> None:
-    # spec: GRAPHOS-HOST-R009.8.1
+    # spec: ARBORA-HOST-R009.8.1
     owners, access = setup
     record = HostLogRecord(
         "tenant-a", str(tmp_path), "previous-generation", "historical"

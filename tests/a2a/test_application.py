@@ -65,7 +65,7 @@ def _app() -> tuple[Any, Authenticator, Authority]:
     return app, auth, authority
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R037")
+@pytest.mark.spec("ARBORA-OPS-R037")
 def test_agent_card_is_authenticated_truthful_and_has_one_path() -> None:
     app, auth, _authority = _app()
     client = TestClient(app)
@@ -87,7 +87,7 @@ def test_agent_card_is_authenticated_truthful_and_has_one_path() -> None:
     assert auth.scopes == ["kg:read", "kg:read"]
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R037")
+@pytest.mark.spec("ARBORA-OPS-R037")
 def test_json_rpc_unary_methods_use_typed_shared_contract() -> None:
     app, auth, authority = _app()
     client = TestClient(app)
@@ -157,10 +157,10 @@ def test_json_rpc_rejects_missing_idempotency_invalid_shape_and_unknown_task() -
 
 
 def test_json_rpc_refuses_resubscribe_until_streaming_is_implemented() -> None:
-    """GRAPHOS-A2A-R001.1: resubscribe is on the method table but fail-closed.
+    """ARBORA-A2A-R001.1: resubscribe is on the method table but fail-closed.
 
     Durable streaming has no bounded, restart-safe event-cursor backing yet
-    (GRAPHOS-A2A-R001), so ``tasks/resubscribe`` must refuse distinctly from
+    (ARBORA-A2A-R001), so ``tasks/resubscribe`` must refuse distinctly from
     an unrecognized method, and must still validate its params.
     """
     app, auth, authority = _app()
@@ -233,9 +233,9 @@ def test_json_rpc_preserves_service_error_translation() -> None:
     }
 
 
-@pytest.mark.spec("GRAPHOS-A2A-R006.1")
+@pytest.mark.spec("ARBORA-A2A-R006.1")
 def test_json_rpc_refuses_op_invoke_until_registry_bridge_exists() -> None:
-    """GRAPHOS-A2A-R006.1: ``arbora.op/invoke`` is on the method table but
+    """ARBORA-A2A-R006.1: ``arbora.op/invoke`` is on the method table but
     fail-closed until it is bridged to the shared hosted-operation registry
     (``Surface.A2A``), with a distinct error code, not method-not-found.
     """
@@ -271,10 +271,10 @@ def test_json_rpc_refuses_op_invoke_until_registry_bridge_exists() -> None:
     assert invalid.json()["error"]["code"] == -32602
 
 
-@pytest.mark.spec("GRAPHOS-A2A-R005.1")
-@pytest.mark.spec("GRAPHOS-A2A-R006.1")
+@pytest.mark.spec("ARBORA-A2A-R005.1")
+@pytest.mark.spec("ARBORA-A2A-R006.1")
 def test_json_rpc_refuses_plan_confirm_until_approval_exchange_exists() -> None:
-    """GRAPHOS-A2A-R005.1/R006.1: the human approval response method is
+    """ARBORA-A2A-R005.1/R006.1: the human approval response method is
     registered but every confirmation attempt is rejected until the full
     signed exchange is implemented end to end.
     """

@@ -1,5 +1,5 @@
 """Tests for the schema-context REST route
-(GRAPHOS-DATA-MARKET-R005, GDM-03; SC-05 in
+(ARBORA-DATA-MARKET-R005, GDM-03; SC-05 in
 ``specs/data-and-market-projections/test-spec.md``).
 """
 

@@ -22,7 +22,7 @@ from arbora.api.invoke.plan import PlanBinding, params_digest
 from tests.a2a.test_application import _app
 from tests.api._support import make_verified_caller
 
-pytestmark = pytest.mark.spec("GRAPHOS-A2A-R005.2.2")
+pytestmark = pytest.mark.spec("ARBORA-A2A-R005.2.2")
 caller = make_verified_caller("kg:write")
 
 

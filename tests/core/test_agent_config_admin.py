@@ -429,4 +429,4 @@ def test_config_set_is_policy_gated_at_approval_tier():
     assert rule["tier"] == "approval_required"
 
 
-pytestmark = pytest.mark.spec("GRAPHOS-DEPLOY-R009.4")
+pytestmark = pytest.mark.spec("ARBORA-DEPLOY-R009.4")

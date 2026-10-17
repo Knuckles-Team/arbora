@@ -1,9 +1,9 @@
-"""Focused authority tests for the operational-admin store (GRAPHOS-OPS-R024.5).
+"""Focused authority tests for the operational-admin store (ARBORA-OPS-R024.5).
 
 Covers ops.doctor, ops.config, ops.tenants, ops.backup, and ops.restore: all
 bound to one typed port, scoped to the caller's own tenant, failing closed
 with UNAVAILABLE when the port is not composed, matching the
-memory-store convention (GRAPHOS-OPS-R024.4).
+memory-store convention (ARBORA-OPS-R024.4).
 """
 
 from __future__ import annotations

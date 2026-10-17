@@ -322,7 +322,7 @@ async def test_uncertain_service_child_propagates_for_the_invoke_surface_to_map(
     """``handle_fleet_call`` does not itself translate an unconfirmed service-
     child outcome into a typed invoke-pipeline refusal: that mapping belongs
     to the served invocation surface, which does not exist on this repository
-    yet (GRAPHOS-FLEET-R012's remaining note). Until it does, the recovery
+    yet (ARBORA-FLEET-R012's remaining note). Until it does, the recovery
     reference must still reach the caller intact on the raised exception."""
 
     class Gateway:

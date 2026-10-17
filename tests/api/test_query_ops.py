@@ -54,7 +54,7 @@ def context(client: RecordingClient) -> ExecutionContext:
     )
 
 
-pytestmark = pytest.mark.spec("GRAPHOS-OPS-R018.2.1")
+pytestmark = pytest.mark.spec("ARBORA-OPS-R018.2.1")
 
 
 def test_query_bindings_match_actual_provider_authority_and_inner_schema() -> None:

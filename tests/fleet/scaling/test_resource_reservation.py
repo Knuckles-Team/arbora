@@ -11,7 +11,7 @@ from arbora.fleet.scaling.resource_reservation import (
     NativeReservationUnavailable,
 )
 
-pytestmark = pytest.mark.spec("GRAPHOS-CAPACITY-R750.755")
+pytestmark = pytest.mark.spec("ARBORA-CAPACITY-R750.755")
 Request = dict[str, Any]
 
 

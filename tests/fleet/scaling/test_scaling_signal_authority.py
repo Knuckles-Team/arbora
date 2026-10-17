@@ -19,7 +19,7 @@ from arbora.fleet.scaling.scaling_signal_authority import (
     summarize_signal_page,
 )
 
-pytestmark = pytest.mark.spec("GRAPHOS-CAPACITY-R750.751")
+pytestmark = pytest.mark.spec("ARBORA-CAPACITY-R750.751")
 
 NOW = datetime(2030, 1, 1, 12, 0, tzinfo=UTC)
 QUERY, SNAPSHOT = "sum(cpu_usage_seconds_total)", "b" * 64

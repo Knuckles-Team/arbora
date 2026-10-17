@@ -1,4 +1,4 @@
-"""GRAPHOS-OPS-R030: accurate MCP server and API documentation.
+"""ARBORA-OPS-R030: accurate MCP server and API documentation.
 
 Arbora keeps its MCP server documentation accurate to the live six-verb
 MCP surface, replacing any outdated tool-count or endpoint description.
@@ -21,7 +21,7 @@ from arbora.api.mcp.verbs import VERBS
 DOC_PATH = Path(__file__).resolve().parents[2] / "docs" / "mcp-server.md"
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R030")
+@pytest.mark.spec("ARBORA-OPS-R030")
 def test_doc_states_resident_tool_total_matches_live_registry() -> None:
     text = DOC_PATH.read_text(encoding="utf-8")
     match = re.search(r"exactly (\w+) resident tools", text)
@@ -35,7 +35,7 @@ def test_doc_states_resident_tool_total_matches_live_registry() -> None:
     assert stated_count == len(RESIDENT_NAMES)
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R030")
+@pytest.mark.spec("ARBORA-OPS-R030")
 def test_doc_lists_every_live_verb_and_fleet_tool_name() -> None:
     text = DOC_PATH.read_text(encoding="utf-8")
     for name in (*VERBS, *FLEET_OPERATIONS):

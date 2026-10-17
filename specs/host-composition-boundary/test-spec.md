@@ -13,10 +13,10 @@ On a supported Python version, clone this repository, run `uv sync --extra test`
 | Invoke a governed write through two entrypoints with same idempotency key | Exactly one downstream effect and one durable receipt. Duplicate call returns the same outcome. |
 | Open UI co-service, reload catalog and close it | One FastMCP loop/multiplexer, no blocked loop or lost generation notification. |
 | Package wheel and import it in a fresh environment | Console scripts resolve and declared extras control optional imports. |
-| GRAPHOS-HOST-R019: mount the dashboard routes. Open `/ws/dashboard` and send a `subscribe` message | REST reads answer 200. The stream sends a snapshot, then an update scoped to the subscribed widgets. |
-| GRAPHOS-HOST-R020: call `install_decide_consumers` with a fake client. Then use a failing client, a failing assembler, and a client without SPARQL. | All four consumers install. Each fault skips only its own consumer and raises nothing. |
-| GRAPHOS-HOST-R021: assemble a request through a fake engine client with the bound `commit_context`/`publish_context` providers | The fake client's `commit_decision` and `publish_graph` each record one call for a solved assembly; an abstained assembly records neither. |
-| GRAPHOS-HOST-R022: install the decide consumers, then plan a task with a fake assembler and a fake capability source | The planner's `capability_search`/`guardrail_source`/`workflows` are bound and callable; the planned agent's skills/tools are non-empty and its reuse metadata reflects the fake capability source's hit. |
+| ARBORA-HOST-R019: mount the dashboard routes. Open `/ws/dashboard` and send a `subscribe` message | REST reads answer 200. The stream sends a snapshot, then an update scoped to the subscribed widgets. |
+| ARBORA-HOST-R020: call `install_decide_consumers` with a fake client. Then use a failing client, a failing assembler, and a client without SPARQL. | All four consumers install. Each fault skips only its own consumer and raises nothing. |
+| ARBORA-HOST-R021: assemble a request through a fake engine client with the bound `commit_context`/`publish_context` providers | The fake client's `commit_decision` and `publish_graph` each record one call for a solved assembly; an abstained assembly records neither. |
+| ARBORA-HOST-R022: install the decide consumers, then plan a task with a fake assembler and a fake capability source | The planner's `capability_search`/`guardrail_source`/`workflows` are bound and callable; the planned agent's skills/tools are non-empty and its reuse metadata reflects the fake capability source's hit. |
 
 ## Negative cases
 
@@ -70,7 +70,7 @@ Keep original R023 fallback, ranking and fleet-call tests in addition to this tr
 Unified terminal rendering requires the real terminal-client consumer; controlled adapters prove only the Arbora handoff.
 The proposed served scenarios have not been run and establish no runtime delivery by themselves.
 
-## Owner-bound capability acceptance (GRAPHOS-HOST-R029–R031)
+## Owner-bound capability acceptance (ARBORA-HOST-R029–R031)
 
 - `tests/api/test_agent_browser_ops.py::test_native_desktop_actions_require_verified_grant_without_focus_capture`: exercise composed `pipeline.invoke` and `BoundOperationRuntime.dispatch`. Assert grant/tenant admission. Assert the returned outcome retains the request id. Assert no cursor capture or focus change. Missing, revoked, or cross-tenant grants must cause zero provider calls.
 - `tests/api/test_agent_browser_ops.py::test_visual_state_is_run_source_and_tenant_bound`: exercise composed dispatch across multiple steps. Assert the same run carries source/frame/revision identity. Assert expiry or source change invalidates the state. Stale or cross-tenant state must be refused before dispatch.
@@ -78,7 +78,7 @@ The proposed served scenarios have not been run and establish no runtime deliver
 
 ## Planned authenticated terminal log acceptance
 
-These cases extend GRAPHOS-HOST-R009.5, R009.6 and R010.7 with TUI-RUNTIME-R002.2 through R002.6. These cases have not been run.
+These cases extend ARBORA-HOST-R009.5, R009.6 and R010.7 with TUI-RUNTIME-R002.2 through R002.6. These cases have not been run.
 
 - `tests/host/test_terminal_host_served.py::test_effective_log_preference_is_authenticated`: start the real host and enter run_host_terminal. Check the strict effective web_logs value and host, workspace, tenant, principal, session, generation and expiry bindings. Change each binding independently. Missing, altered or expired bindings yield zero HostLogReader.read calls and zero delivered records.
 - `tests/host/test_terminal_host_served.py::test_terminal_log_mode_preference_matrix`: use terminal, web and both with true and false preferences. Only terminal/both with true show a correlated HTTP log during agent interaction. False, absent preference, missing reader and all web cases produce zero TUI reads. Check HTTP serving, the required redacted sink and agent interaction remain available where their interfaces are selected.
@@ -88,24 +88,24 @@ Missing receipt fields or public consumer exports block positive served acceptan
 
 ## Additional owner requirements
 
-- `GRAPHOS-HOST-R023.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R008.6`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R026.6`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R022.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R010.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-HOST-R032`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-HOST-R023.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-HOST-R008.6`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-HOST-R026.6`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-HOST-R022.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-HOST-R010.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-HOST-R032`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 
 ## Unsupported interface refusal
 
-`GRAPHOS-HOST-R010.9` binds to tests/agent_host/test_interface_refusal.py.
+`ARBORA-HOST-R010.9` binds to tests/agent_host/test_interface_refusal.py.
 Sentinels reject workspace initialization, both graph builders and listener calls.
 Cover provided graphs, workspace construction, tag construction and defaults.
 Reject enabled options and malformed booleans. Preserve omitted and false options.
 These checks do not prove authorized host logs or terminal startup.
 
-- `GRAPHOS-HOST-R009.7`: Exercise the real host routes with controlled session, grant and record owners over loopback HTTP. Check tenant/session isolation, denial, revocation during a read, expiry and record bounds. No deployed grant configuration is claimed.
+- `ARBORA-HOST-R009.7`: Exercise the real host routes with controlled session, grant and record owners over loopback HTTP. Check tenant/session isolation, denial, revocation during a read, expiry and record bounds. No deployed grant configuration is claimed.
 
-- `GRAPHOS-HOST-R009.8`: Use real temporary files and loopback HTTP to test private projections, redaction, rotation, unsafe links and disabled viewing. Keep deployed policy and restart replay pending.
+- `ARBORA-HOST-R009.8`: Use real temporary files and loopback HTTP to test private projections, redaction, rotation, unsafe links and disabled viewing. Keep deployed policy and restart replay pending.
 
 - R009.8.2.2: Real retained-file restart through HTTP version two preserves
   source generation, sequence, request, timestamp and severity. Version one

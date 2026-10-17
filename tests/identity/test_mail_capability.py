@@ -1,4 +1,4 @@
-"""Tests for the optional SMTP identity-mail capability (GRAPHOS-IDENTITY-R016)."""
+"""Tests for the optional SMTP identity-mail capability (ARBORA-IDENTITY-R016)."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from arbora.identity.mail_capability import (
 )
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R016")
+@pytest.mark.spec("ARBORA-IDENTITY-R016")
 def test_email_affordances_hidden_without_adapter() -> None:
     affordances = email_affordances(None)
 
@@ -27,7 +27,7 @@ def test_email_affordances_hidden_without_adapter() -> None:
     assert affordances.recovery_code is True
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R016")
+@pytest.mark.spec("ARBORA-IDENTITY-R016")
 def test_email_affordances_shown_once_an_adapter_is_configured() -> None:
     settings = SmtpAdapterSettings(
         host="smtp.example.org", port=587, mail_from="noreply@example.org"
@@ -42,7 +42,7 @@ def test_email_affordances_shown_once_an_adapter_is_configured() -> None:
     assert affordances.recovery_code is True
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R016")
+@pytest.mark.spec("ARBORA-IDENTITY-R016")
 @pytest.mark.parametrize(
     "kwargs",
     [

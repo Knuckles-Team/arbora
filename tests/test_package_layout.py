@@ -117,9 +117,9 @@ def test_bootstrap_has_no_retired_legacy_query_runtime() -> None:
     assert "get_existing_disabled_batch" not in runtime
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R001.1")
+@pytest.mark.spec("ARBORA-HOST-R001.1")
 def test_arbora_imports_no_au_serving_packages() -> None:
-    """GRAPHOS-HOST-R001.1: AU 3.0.0 is harness only; Arbora owns MCP/REST/API."""
+    """ARBORA-HOST-R001.1: AU 3.0.0 is harness only; Arbora owns MCP/REST/API."""
     import re
 
     package_root = Path(__file__).parents[1]
@@ -133,7 +133,7 @@ def test_arbora_imports_no_au_serving_packages() -> None:
     assert offenders == []
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R001.5")
+@pytest.mark.spec("ARBORA-HOST-R001.5")
 def test_arbora_declares_and_runs_fastmcp_4() -> None:
     from importlib.metadata import requires, version
 

@@ -323,7 +323,7 @@ def test_curated_scope_evidence_uses_provider_class_validation(
         get_registry()
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R024.4")
+@pytest.mark.spec("ARBORA-OPS-R024.4")
 def test_memory_operations_are_absent_until_the_engine_serves_them() -> None:
     from arbora.api.ops.registry_factory import get_registry
 

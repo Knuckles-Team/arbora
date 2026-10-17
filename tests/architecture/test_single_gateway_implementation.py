@@ -1,4 +1,4 @@
-"""GRAPHOS-HOST-R004: a single gateway implementation under arbora/gateway/.
+"""ARBORA-HOST-R004: a single gateway implementation under arbora/gateway/.
 
 A package-layout test that fails closed if a second, duplicate gateway
 package is ever added outside ``arbora/gateway/``. The retired

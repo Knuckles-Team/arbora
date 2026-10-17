@@ -1,4 +1,4 @@
-"""GRAPHOS-HOST-R019: Arbora serves the dashboard REST reads and stream.
+"""ARBORA-HOST-R019: Arbora serves the dashboard REST reads and stream.
 
 agent-webui composes its ``/api`` surface from Arbora. These tests prove the
 routes the frontend calls are mounted, answer with the aggregator's data, and

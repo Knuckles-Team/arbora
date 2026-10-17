@@ -291,7 +291,7 @@ def test_route_module_has_no_webui_or_au_gateway_fallback() -> None:
 def test_catalog_reads_run_under_the_configured_process_authority(
     monkeypatch: Any,
 ) -> None:
-    """GRAPHOS-HOST-R018: browser catalog reads bind the process authority."""
+    """ARBORA-HOST-R018: browser catalog reads bind the process authority."""
     from contextlib import contextmanager
 
     bound: list[str] = []

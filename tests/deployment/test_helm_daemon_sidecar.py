@@ -1,9 +1,9 @@
-"""GRAPHOS-DEPLOY-R016: the host daemon runs as its own pod container.
+"""ARBORA-DEPLOY-R016: the host daemon runs as its own pod container.
 
 The unified-in-process + ``engine.placement: sidecar`` profile splits the
 consolidated KG host daemon out of the ``arbora`` serving container into a
 dedicated ``daemon`` container in the same pod (see
-``specs/portable-deployment/plan.md`` "GRAPHOS-DEPLOY-R016 plan"). The
+``specs/portable-deployment/plan.md`` "ARBORA-DEPLOY-R016 plan"). The
 serving container keeps the client role so it never races the daemon for
 the host lock; the daemon container takes the host role through its own
 env override, which wins over the shared ConfigMap's ``KG_DAEMON_ROLE``.

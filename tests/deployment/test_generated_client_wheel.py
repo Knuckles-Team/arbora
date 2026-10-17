@@ -12,8 +12,8 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R025.2")
-@pytest.mark.spec("GRAPHOS-HOST-R001.3")
+@pytest.mark.spec("ARBORA-OPS-R025.2")
+@pytest.mark.spec("ARBORA-HOST-R001.3")
 def test_committed_artifacts_match_the_pinned_provider() -> None:
     result = subprocess.run(
         [sys.executable, str(ROOT / "scripts/gen_api.py"), "--check"],
@@ -24,7 +24,7 @@ def test_committed_artifacts_match_the_pinned_provider() -> None:
     assert result.returncode == 0, result.stdout + result.stderr
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R025.2")
+@pytest.mark.spec("ARBORA-OPS-R025.2")
 def test_generated_client_installs_with_its_registry(tmp_path: Path) -> None:
     source = tmp_path / "source"
     source.mkdir()

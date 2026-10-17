@@ -17,19 +17,19 @@ def _gate_unreconciled_codes() -> set[str]:
     return {code for code in get_args(gate.GateStatus) if code != "reconciled"}
 
 
-@pytest.mark.spec("GRAPHOS-MCP-RESOURCES-R004")
+@pytest.mark.spec("ARBORA-MCP-RESOURCES-R004")
 def test_gate_has_single_unreconciled_code() -> None:
     assert _gate_unreconciled_codes() == {UNRECONCILED}
 
 
-@pytest.mark.spec("GRAPHOS-MCP-RESOURCES-R004")
+@pytest.mark.spec("ARBORA-MCP-RESOURCES-R004")
 @pytest.mark.parametrize("doc", ["status.md", "fleet.md"])
 def test_docs_cite_gate_unreconciled_code(doc: str) -> None:
     text = (DOCS / doc).read_text(encoding="utf-8")
     assert f"`{UNRECONCILED}`" in text
 
 
-@pytest.mark.spec("GRAPHOS-MCP-RESOURCES-R004")
+@pytest.mark.spec("ARBORA-MCP-RESOURCES-R004")
 def test_status_row_states_no_publication_claim() -> None:
     rows = [
         line
@@ -41,7 +41,7 @@ def test_status_row_states_no_publication_claim() -> None:
     assert "does not claim publication" in rows[0]
 
 
-@pytest.mark.spec("GRAPHOS-MCP-RESOURCES-R004")
+@pytest.mark.spec("ARBORA-MCP-RESOURCES-R004")
 def test_docs_do_not_invent_unreconciled_codes() -> None:
     for doc in ("status.md", "fleet.md"):
         text = (DOCS / doc).read_text(encoding="utf-8")

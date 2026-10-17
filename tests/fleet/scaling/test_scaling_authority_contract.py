@@ -18,7 +18,7 @@ from arbora.fleet.scaling.scaling_authority import (
     validate_scale_lifecycle,
 )
 
-pytestmark = pytest.mark.spec("GRAPHOS-CAPACITY-R750.750")
+pytestmark = pytest.mark.spec("ARBORA-CAPACITY-R750.750")
 
 NOW = datetime(2030, 1, 1, 12, 0, tzinfo=UTC)
 LATER = NOW + timedelta(minutes=5)

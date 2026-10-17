@@ -1,6 +1,6 @@
 """Conformance tests for arbora.security.security_policy_middleware.
 
-GRAPHOS-HOST-R008: the module had no tests before it moved, so these are new.
+ARBORA-HOST-R008: the module had no tests before it moved, so these are new.
 """
 
 from __future__ import annotations

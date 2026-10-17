@@ -9,7 +9,7 @@ import pytest
 from arbora.fleet.child_resilience import ChildRuntime
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 
-pytestmark = pytest.mark.spec("GRAPHOS-FLEET-R035")
+pytestmark = pytest.mark.spec("ARBORA-FLEET-R035")
 
 OPERATION = "get_market"
 ALIAS = "operation_get_market_0123456789abcdef"

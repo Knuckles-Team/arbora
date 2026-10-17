@@ -1,5 +1,5 @@
 """Real retained-file restart and HTTP admission; no deployed policy issuer."""
-# spec: GRAPHOS-HOST-R009.8.2.1
+# spec: ARBORA-HOST-R009.8.2.1
 
 import asyncio
 import json
