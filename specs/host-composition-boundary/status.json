@@ -1451,11 +1451,15 @@
     {
       "id": "GRAPHOS-HOST-R024",
       "title": "`graph_os.mcp_server.server` registers GraphOS's own intent surface, not the agent runtime's",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "2646511870e7",
         "c39349d16c53"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_real_boot.py:394",
+        "tests/test_real_boot.py:424"
+      ]
     },
     {
       "id": "GRAPHOS-HOST-R025",
