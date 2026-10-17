@@ -330,8 +330,8 @@ def stop_host_daemon() -> None:
             logger.info("Drained %d warm-fork parent(s) on shutdown.", len(reaped))
     except Exception as exc:  # noqa: BLE001
         logger.warning("warm-parent drain on shutdown skipped: %s", exc)
-    exc = not_served("knowledge_graph.core.host_lock", "graph-os", owner="graph-os")
-    logger.warning("host lock release skipped: %s", exc)
+    refusal = not_served("knowledge_graph.core.host_lock", "graph-os", owner="graph-os")
+    logger.warning("host lock release skipped: %s", refusal)
     _engine = None
     logger.info("Host daemon stopped.")
 

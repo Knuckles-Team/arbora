@@ -2768,10 +2768,10 @@ async def _lakehouse_status(hints: dict[str, Any]) -> dict[str, Any]:
     }
     # CDC-lag — CA-21's Debezium consumer (kafka_adapter.py) has no lag-
     # measurement function yet. Same ``getattr`` rationale as above.
-    exc = not_served(
+    refusal = not_served(
         "knowledge_graph.streams.kafka_adapter", "EG-UNIFIED-DATA-PLANE-R008.700"
     )
-    out["cdc_lag"] = {"status": "error", "detail": type(exc).__name__}
+    out["cdc_lag"] = {"status": "error", "detail": type(refusal).__name__}
     return out
 
 

@@ -2314,13 +2314,13 @@ def _configure_mapping_ingest(action, config_key, config_value, registry):
                 "error_type": type(exc).__name__,
             }
         )
-    exc = not_served(
+    refusal = not_served(
         "knowledge_graph.ingestion.external_graph_schema", "EG-REPO-INGEST-R651"
     )
     return json.dumps(
         {
             "error": "external source declaration is invalid",
-            "error_type": type(exc).__name__,
+            "error_type": type(refusal).__name__,
         }
     )
 
