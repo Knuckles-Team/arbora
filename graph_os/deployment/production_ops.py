@@ -492,8 +492,12 @@ def _exit_status(report: dict[str, Any]) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from graph_os.core.settings import load_config
+
     args = _parser().parse_args(argv)
     try:
+        # The same shared config.json the served process reads.
+        load_config()
         report = _run(args)
     except Exception as exc:  # noqa: BLE001 - CLI returns one privacy-safe failure
         report = {

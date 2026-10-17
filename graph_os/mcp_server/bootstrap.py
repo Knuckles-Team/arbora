@@ -11,8 +11,6 @@ from collections.abc import AsyncIterator
 from dataclasses import replace
 from typing import Any, cast
 
-from graph_os.api.errors import not_served
-
 logger = logging.getLogger(__name__)
 
 # Bound by ``runtime`` after this module's definitions load. Keeping the host
@@ -28,15 +26,16 @@ setting = cast(Any, None)
 
 
 def _get_engine():
-    """Lazily initialize and return the IntelligenceGraphEngine singleton.
+    """The process engine handle over the one served EG client pool.
 
-    Thread-safe double-checked locking prevents concurrent runtime callers from
-    racing a second authority into existence. Direct GraphOS startup resolves
-    this engine synchronously only through the bounded materialization barrier;
-    noncritical worker startup remains asynchronous.
-    (CONCEPT:EG-KG.storage.nonblocking-checkpoint)
+    The same :func:`~graph_os.mcp_server.served_engine.process_engine_pool`
+    backs the operation-invoke API, so startup composition and served
+    operations share one set of EG transports. Every request through the
+    handle runs under the ambient verified session.
     """
-    raise not_served("knowledge_graph.backends", "EG-PLACEMENT-R611")
+    from graph_os.mcp_server.served_engine import served_engine
+
+    return served_engine()
 
 
 def _set_readiness_authority(session: Any) -> object:
@@ -681,14 +680,41 @@ def _engine_bootstrap_is_client(engine: Any, fallback_role: str) -> bool:
     return "client" in {requested_role, effective_role}
 
 
-def _start_engine_bootstrap(session: Any) -> None:
-    """Establish engine readiness, then start the elected host workers.
+#: How long serving start waits for the engine endpoint to answer.
+_ENGINE_READY_TIMEOUT_SECONDS = 120.0
 
-    Semantic content is verified by the native composition root through the
-    current EG ConnectorPack and GraphSchema read contracts. Startup therefore
-    never discovers or ingests skills, prompts, sources, or fleet declarations.
+
+def _start_engine_bootstrap(session: Any) -> None:
+    """Prove the engine answers under the process authority before serving.
+
+    EG owns its workers, materialization and durable state
+    (EG-INGEST-WORKER-R604); graph-os starts none of them. Startup only
+    connects the shared pool and reads EG's health document under the minted
+    process session, retrying until the endpoint answers or the bounded
+    deadline passes, so an unreachable engine stops startup with its cause.
     """
-    raise not_served("knowledge_graph.core.engine_tasks", "EG-INGEST-WORKER-R604")
+    from graph_os.api.contracts.session import use_session
+
+    engine = _get_engine()
+    graph = str(session.graph)
+    deadline = time.monotonic() + _ENGINE_READY_TIMEOUT_SECONDS
+    while True:
+        try:
+            with use_session(session):
+                health = asyncio.run(engine.health(graph))
+        except (ConnectionError, OSError, TimeoutError) as exc:
+            if time.monotonic() >= deadline:
+                raise RuntimeError(
+                    "epistemic-graph did not answer before serving start"
+                ) from exc
+            if _PROCESS_AUTHORITY_STOP.wait(1.0):
+                raise InterruptedError("shutdown cancelled engine bootstrap") from exc
+            continue
+        logger.info(
+            "Epistemic graph engine answered (status=%s)",
+            health.get("status") if isinstance(health, dict) else "unknown",
+        )
+        return
 
 
 def _process_session() -> Any:

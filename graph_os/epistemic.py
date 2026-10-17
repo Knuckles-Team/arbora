@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import threading
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass, replace
 from typing import Any, Protocol, Self
@@ -295,8 +296,13 @@ class EpistemicClientPool:
         self._connect = connect
         self._connect_kwargs = dict(connect_kwargs)
         self._clients: dict[str, EpistemicClient] = {}
+        # A transport client is bound to the event loop that connected it. The
+        # serving lifecycle runs startup composition and serving on different
+        # loops, so a graph's client is reconnected on a loop it was not
+        # opened on instead of being driven from a foreign loop.
+        self._client_loops: dict[str, asyncio.AbstractEventLoop] = {}
         self._graph_tenants: dict[str, str] = {}
-        self._lock = asyncio.Lock()
+        self._lock = threading.Lock()
         self._closed = False
 
     @property
@@ -305,25 +311,46 @@ class EpistemicClientPool:
 
     async def _client_for(self, context: ClientContext, graph: str) -> EpistemicClient:
         target = _non_empty("graph", graph)
-        async with self._lock:
-            if self._closed:
-                raise RuntimeError("epistemic client pool is closed")
-            bound_tenant = self._graph_tenants.get(target)
-            if bound_tenant is not None and bound_tenant != context.tenant:
-                raise TenantGraphBindingError(
-                    f"graph {target!r} is already bound to another tenant"
-                )
+        loop = asyncio.get_running_loop()
+        with self._lock:
+            self._check_binding(target, context)
             existing = self._clients.get(target)
-            if existing is not None:
+            if existing is not None and self._client_loops.get(target) is loop:
                 return existing
-            client = await self._connect(
-                graph_name=target,
-                verified_context=context.to_claims(),
-                **self._connect_kwargs,
+        client = await self._connect(
+            graph_name=target,
+            verified_context=context.to_claims(),
+            **self._connect_kwargs,
+        )
+        surplus: EpistemicClient | None = None
+        refusal: Exception | None = None
+        with self._lock:
+            try:
+                self._check_binding(target, context)
+            except Exception as exc:  # noqa: BLE001 - re-raised after closing the transport
+                refusal, surplus = exc, client
+            else:
+                current = self._clients.get(target)
+                if current is not None and self._client_loops.get(target) is loop:
+                    surplus, client = client, current
+                else:
+                    self._graph_tenants[target] = context.tenant
+                    self._clients[target] = client
+                    self._client_loops[target] = loop
+        if surplus is not None:
+            await surplus.close()
+        if refusal is not None:
+            raise refusal
+        return client
+
+    def _check_binding(self, target: str, context: ClientContext) -> None:
+        if self._closed:
+            raise RuntimeError("epistemic client pool is closed")
+        bound_tenant = self._graph_tenants.get(target)
+        if bound_tenant is not None and bound_tenant != context.tenant:
+            raise TenantGraphBindingError(
+                f"graph {target!r} is already bound to another tenant"
             )
-            self._graph_tenants[target] = context.tenant
-            self._clients[target] = client
-            return client
 
     async def connected_client(
         self, context: ClientContext, graph: str
@@ -360,12 +387,18 @@ class EpistemicClientPool:
     async def close(self) -> None:
         """Close every owned transport once and permanently close the pool."""
 
-        async with self._lock:
+        loop = asyncio.get_running_loop()
+        with self._lock:
             if self._closed:
                 return
             self._closed = True
-            clients = tuple(self._clients.values())
+            clients = tuple(
+                client
+                for graph, client in self._clients.items()
+                if self._client_loops.get(graph) is loop
+            )
             self._clients.clear()
+            self._client_loops.clear()
             self._graph_tenants.clear()
         for client in clients:
             await client.close()

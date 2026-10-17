@@ -6,7 +6,7 @@ description: >-
   Develop inside the graph-os repository itself: its architecture boundaries
   and module map, build-host and environment setup, required quality gates,
   generated-contract regeneration, and local identity setup. Use when working
-  on graph_os/* source, not when choosing which ecosystem repository owns a
+  on the graph_os package source, not when choosing which ecosystem repository owns a
   feature (see graph-os-development for that).
 license: MIT
 tags: [graph-os, development, architecture, gates, build-host]

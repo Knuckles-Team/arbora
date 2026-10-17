@@ -248,6 +248,7 @@ markers = [
     "spec: binds a test to a spec requirement ID",
     "integration: integration test (moved agent-utilities profile tests)",
     "concept: binds a test to a concept ID (moved agent-utilities tests)",
+    "real_boot: boots a real graph-os process against a real EG server (linux x86_64)",
 ]
 
 # Inputs of the shared hooks (Knuckles-Team/pipelines .pre-commit-hooks.yaml).

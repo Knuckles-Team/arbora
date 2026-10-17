@@ -24,7 +24,7 @@ import json
 from collections.abc import Callable, Mapping
 from functools import cache
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 from graph_os.api.registry import EgSchemaRef
 
@@ -254,21 +254,20 @@ def served_invocation_from_settings(
     Without ``GRAPH_SERVICE_ENDPOINTS`` the process has no engine to bind and
     serves no operation-invoke API.
     """
-    from epistemic_graph import EpistemicGraphClient
-
     from graph_os.core.settings import runtime_config, setting
-    from graph_os.epistemic import ConnectClient, EpistemicClientPool
+    from graph_os.mcp_server.served_engine import process_engine_pool
 
-    endpoints = runtime_config.graph_service_endpoints
-    if not endpoints:
+    if not runtime_config.graph_service_endpoints:
         return None
-    pool = EpistemicClientPool(
-        cast(ConnectClient, EpistemicGraphClient.connect), **engine_endpoint(endpoints)
-    )
+    # The one process pool: startup composition reads EG through it too.
+    pool = process_engine_pool()
     raw_key = str(setting("GRAPH_OS_PLAN_SEAL_KEY_HEX", "") or "").strip()
     return compose_served_invocation(
         pool=pool,
-        graph=str(setting("GRAPH_OS_GRAPH", "__commons__") or "__commons__"),
+        # Callers are admitted only on the process authority's own graph (the
+        # tenant graph minted with the session) unless a deployment pins one.
+        graph=str(setting("GRAPH_OS_GRAPH", "") or "").strip()
+        or str(process_session().graph),
         process_session=process_session,
         policy_mode=str(setting("EUNOMIA_MODE", "none") or "none"),
         plan_seal_key=bytes.fromhex(raw_key) if raw_key else None,

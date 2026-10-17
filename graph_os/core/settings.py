@@ -923,6 +923,15 @@ def _adapter(name: str) -> TypeAdapter[Any]:
     return TypeAdapter(GraphOSConfig.model_fields[name].annotation or Any)
 
 
+def _is_list_field(annotation: Any) -> bool:
+    """Whether a field annotation is ``list[...]`` (optionally ``| None``)."""
+    from typing import get_args, get_origin
+
+    if get_origin(annotation) is list:
+        return True
+    return any(get_origin(arg) is list for arg in get_args(annotation))
+
+
 def read_field(name: str) -> Any:
     """Read one :class:`GraphOSConfig` field from the environment now."""
     info = GraphOSConfig.model_fields[name]
@@ -930,11 +939,17 @@ def read_field(name: str) -> Any:
     if raw is None or raw == "":
         return info.get_default(call_default_factory=True)
     value: Any = raw
-    if info.annotation is Any and raw.strip()[:1] in "[{":
+    if (info.annotation is Any or _is_list_field(info.annotation)) and raw.strip()[
+        :1
+    ] in "[{":
         try:
             value = json.loads(raw)
         except ValueError:
             value = raw
+    elif _is_list_field(info.annotation):
+        # A list setting is documented as a JSON list or comma-separated text;
+        # plain text used to fail validation and silently read as unset.
+        value = csv_values(raw)
     try:
         return _adapter(name).validate_python(value)
     except ValueError:
