@@ -53,10 +53,10 @@ def test_engine_admission_names_private_connector_hosts() -> None:
         audience="a",
         tenant="t",
         policy_version="v",
-        allowed_private_hosts=["github-mcp.mcp.svc", "10.0.0.5"],
+        allowed_private_hosts=["connector-a.example", "connector-b.example"],
     )
     assert admission["graph_os_config"]["MCP_HTTP_ALLOWED_PRIVATE_HOSTS"] == (
-        "github-mcp.mcp.svc,10.0.0.5"
+        "connector-a.example,connector-b.example"
     )
 
 

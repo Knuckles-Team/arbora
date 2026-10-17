@@ -120,7 +120,7 @@ configuration when connectors run on private or cluster hosts:
 
 | GraphOS setting | Value |
 |---|---|
-| `MCP_HTTP_ALLOWED_PRIVATE_HOSTS` | The exact connector hostnames, comma-separated or as a JSON list, for example `github-mcp.mcp.svc.cluster.local,10.0.0.5` |
+| `MCP_HTTP_ALLOWED_PRIVATE_HOSTS` | The exact connector hostnames, comma-separated or as a JSON list, for example `connector-a.example,connector-b.example` |
 
 Pass each host with `--allowed-private-host` and `setup-config
 engine-admission` prints the value under `graph_os_config`. A connector entry

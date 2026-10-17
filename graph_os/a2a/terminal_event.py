@@ -120,15 +120,14 @@ def project_terminal_event(
 async def read_terminal_event(
     engine: Any, *, session: Any, task_id: str, owner_ref: str
 ) -> dict[str, Any]:
-    """Use the public session-routed transport and AU's owning run reader."""
+    """Read the committed WorkItem outcome over the session-routed engine client."""
     if not isinstance(session.graph, str) or not session.graph.strip():
         raise A2ATerminalEventUnavailable("committed terminal event is unavailable")
     try:
-        from agent_utilities.layers.clients import LayerClients
-
         client = engine.graph_compute.for_graph(session.graph).async_client
-        value = await LayerClients.for_session(client, session).runs.outcome(
-            f"workitem:orchestrator:{task_id}"
+        value = await client.work_items.get_outcome(
+            tenant=session.tenant,
+            work_item_id=f"workitem:orchestrator:{task_id}",
         )
     except PermissionError:
         raise
