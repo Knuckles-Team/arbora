@@ -44,3 +44,25 @@ Cross-repository: `AU-CONTROL` (`ClientCapabilityToolset`) issues the capability
 
 Decision: the client performs file and terminal actions as ACP client capabilities.
 Rejected: a Graph OS service that mounts the host checkout. It copies data and needs host credentials on the cluster.
+
+## Amendment 2026-10-17: bounded coding admission producer
+
+Implement the frozen R001.3 types and a partial R001.4/R001.6 admission
+boundary in `graph_os/acp/coding_session.py`. Reuse `AcpSessionAdmission` for
+identity binding, adapter availability and expiry. Match workspace root strings
+exactly against configured trusted roots; do not resolve paths or access the
+client filesystem. This comparison is admission policy, not path containment.
+The connected client still owns containment for every eventual host effect.
+
+The per-capability check allows only a declared read on a connected, live
+session. Writes, terminal methods and permission requests return
+`permission_required` until the real permission exchange exists. That reason
+is distinct from `permission_denied`, which requires an actual client decision.
+Grants remain empty. Admission and the admitted type accept no grants.
+`WorkspaceGrant` describes the future record; constructing one issues no grant.
+
+Focused tests cover immutable collections, exact root matching, and unknown or
+undeclared methods. They also cover disconnect, adapter loss and both expiry limits.
+They establish no served acceptance. Permission forwarding, standing grant
+issuance, routes, traces and the hot path remain open under R001.4 through
+R001.8. No local file/process execution or alternative transport is introduced.

@@ -25,6 +25,10 @@ class AcpRefusalReason(enum.Enum):
     IDLE_EXPIRED = "idle_expired"
     ABSOLUTE_EXPIRED = "absolute_expired"
     CHAT_ADAPTER_UNAVAILABLE = "chat_adapter_unavailable"
+    UNTRUSTED_ROOT = "untrusted_root"
+    CAPABILITY_NOT_DECLARED = "capability_not_declared"
+    CLIENT_DISCONNECTED = "client_disconnected"
+    PERMISSION_REQUIRED = "permission_required"
 
 
 class AcpRefusal(Exception):
@@ -50,6 +54,7 @@ class PrincipalContext:
     def __post_init__(self) -> None:
         if not self.principal_id or not self.tenant:
             raise ValueError("principal_id and tenant are required")
+        object.__setattr__(self, "scopes", frozenset(self.scopes))
 
 
 @dataclass(frozen=True)
