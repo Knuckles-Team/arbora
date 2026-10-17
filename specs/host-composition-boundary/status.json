@@ -9,6 +9,7 @@
     "GRAPHOS-HOST-R001.2",
     "GRAPHOS-HOST-R001.2.1",
     "GRAPHOS-HOST-R001.2.2",
+    "GRAPHOS-HOST-R001.2.3",
     "GRAPHOS-HOST-R001.3",
     "GRAPHOS-HOST-R001.4",
     "GRAPHOS-HOST-R001.5",
@@ -249,7 +250,8 @@
       ],
       "rollup_of": [
         "GRAPHOS-HOST-R001.2.1",
-        "GRAPHOS-HOST-R001.2.2"
+        "GRAPHOS-HOST-R001.2.2",
+        "GRAPHOS-HOST-R001.2.3"
       ]
     },
     {
@@ -276,6 +278,18 @@
       "verified_by": [
         "tests/test_agents_run_end_to_end.py:117",
         "tests/test_agents_run_end_to_end.py:164"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.2.3",
+      "title": "The served process mounts the operation-invoke API",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "192099593cdd"
+      ],
+      "verified_by": [
+        "tests/test_served_operation_api.py:184",
+        "tests/test_served_operation_api.py:225"
       ]
     },
     {
