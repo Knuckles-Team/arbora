@@ -1327,9 +1327,13 @@
       "title": "GraphOS serves its eight-tool MCP intent surface from its own operation registry",
       "delivery_state": "SPECIFIED",
       "landed_in": [
-        "c39349d16c53"
+        "51529da8abe6",
+        "c39349d16c53",
+        "e28e54dd74e5"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/api/test_mcp_serving.py:236"
+      ],
       "rollup_of": [
         "GRAPHOS-HOST-R023.1",
         "GRAPHOS-HOST-R023.2",

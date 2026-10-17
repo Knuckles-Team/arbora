@@ -14,7 +14,9 @@ import argparse
 import hashlib
 import importlib
 import importlib.resources
+import inspect
 import json
+import re
 import shutil
 import subprocess  # nosec B404 -- fixed-argv git compatibility check
 import sys
@@ -65,25 +67,31 @@ def _resolve_local_refs(value: Any, document: dict, seen: frozenset[str]) -> Any
         return [_resolve_local_refs(item, document, seen) for item in value]
     if not isinstance(value, dict):
         return value
-    reference = value.get("$ref")
-    if isinstance(reference, str) and reference.startswith("#/"):
-        if reference in seen:
-            return value
-        target = _pointer(document, reference[1:])
-        resolved = _resolve_local_refs(target, document, seen | {reference})
-        siblings = {key: item for key, item in value.items() if key != "$ref"}
-        if not siblings:
-            return resolved
-        return {**resolved, **_resolve_local_refs(siblings, document, seen)}
+    if "$ref" in value:
+        return _resolve_reference(value, document, seen)
     return {
         key: _resolve_local_refs(item, document, seen) for key, item in value.items()
     }
 
 
+def _resolve_reference(value: dict, document: dict, seen: frozenset[str]) -> Any:
+    reference = value["$ref"]
+    if not isinstance(reference, str) or not reference.startswith("#/"):
+        raise ValueError("unsafe schema reference")
+    if reference in seen:
+        return value
+    target = _pointer(document, reference[1:])
+    resolved = _resolve_local_refs(target, document, seen | {reference})
+    siblings = {key: item for key, item in value.items() if key != "$ref"}
+    if not siblings:
+        return resolved
+    return {**resolved, **_resolve_local_refs(siblings, document, seen)}
+
+
 def _snapshot_eg_schemas(
     registry: dict[str, Any], contract_root: Path | None = None
 ) -> None:
-    """Embed selected EG schema shapes for baseline compatibility comparison."""
+    """Record digest-bound references to shared provider schema documents."""
     root = contract_root or Path(
         str(importlib.resources.files("epistemic_graph") / "contract")
     )
@@ -94,12 +102,10 @@ def _snapshot_eg_schemas(
             reference = spec.get("eg_schema")
             if reference is None:
                 continue
-            filename, separator, pointer = reference.partition("#")
-            if not separator or not filename.startswith("contract/schemas/"):
+            if not reference.startswith("contract/"):
                 raise ValueError(f"invalid EG schema reference: {reference!r}")
-            relative = Path(filename.removeprefix("contract/"))
-            if ".." in relative.parts:
-                raise ValueError(f"EG schema leaves contract: {reference!r}")
+            filename, pointer = _resource_parts(reference.removeprefix("contract/"))
+            relative = Path(filename)
             if relative not in documents:
                 documents[relative] = json.loads((root / relative).read_bytes())
             document = documents[relative]
@@ -110,10 +116,8 @@ def _snapshot_eg_schemas(
                 raise ValueError(
                     f"EG schema digest changed during generation: {reference}"
                 )
-            selected = _pointer(document, pointer)
-            spec["schema_snapshot"] = _resolve_local_refs(
-                selected, document, frozenset()
-            )
+            _pointer(document, pointer)
+            spec["schema_snapshot"] = {"$ref": f"{relative.as_posix()}#{pointer}"}
 
 
 def _descriptors(registry: dict[str, Any]) -> dict[str, Any]:
@@ -134,24 +138,83 @@ def _descriptors(registry: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _resource_parts(reference: str) -> tuple[str, str]:
+    filename, separator, pointer = reference.partition("#")
+    if not separator or not re.fullmatch(r"schemas/[A-Za-z0-9_.-]+\.json", filename):
+        raise ValueError(f"unsafe schema resource: {reference!r}")
+    if not pointer.startswith("/"):
+        raise ValueError(f"invalid schema pointer: {reference!r}")
+    return filename, pointer
+
+
+def _expanded_spec(spec: dict, read_document: Any) -> dict:
+    snapshot = spec.get("schema_snapshot")
+    if not isinstance(snapshot, dict) or "$ref" not in snapshot:
+        return spec
+    reference = snapshot["$ref"]
+    if not isinstance(reference, str) or set(snapshot) != {"$ref"}:
+        raise ValueError("invalid schema snapshot reference")
+    filename, pointer = _resource_parts(reference)
+    if spec.get("eg_schema") != "contract/" + reference:
+        raise ValueError("schema snapshot differs from provider reference")
+    document = json.loads(read_document(filename))
+    canonical = json.dumps(document, sort_keys=True, separators=(",", ":")).encode()
+    if hashlib.sha256(canonical).hexdigest() != spec.get("schema_sha256"):
+        raise ValueError("schema resource digest mismatch")
+    selected = _pointer(document, pointer)
+    expanded = _resolve_local_refs(selected, document, frozenset())
+    return {**spec, "schema_snapshot": expanded}
+
+
+def _expand_registry(registry: dict, read_document: Any) -> dict:
+    documents: dict[str, bytes] = {}
+
+    def cached_document(name: str) -> bytes:
+        if name not in documents:
+            documents[name] = read_document(name)
+        return documents[name]
+
+    return {
+        **registry,
+        "ops": [
+            {
+                **op,
+                **{
+                    field: _expanded_spec(op[field], cached_document)
+                    for field in ("params", "result")
+                },
+            }
+            for op in registry["ops"]
+        ],
+    }
+
+
 def _schema(
-    value: dict[str, Any], components: dict[str, Any], contract_root: Path | None
+    value: dict[str, Any],
+    components: dict[str, Any],
+    contract_root: Path | None,
+    documents: dict[str, Any],
 ) -> dict[str, Any]:
     if "schema" in value:
-        return value["schema"]
+        schema = value["schema"]
+        if "$defs" not in schema:
+            return schema
+        # Namespace the entire model so each local definition retains its root.
+        name = "Model" + hashlib.sha256(_json_bytes(schema)).hexdigest()
+        components[name] = _rewrite_schema_refs(schema, name)
+        return {"$ref": f"#/components/schemas/{name}"}
     if "eg_schema" in value:
         reference = value["eg_schema"]
-        filename, separator, pointer = reference.partition("#")
-        if not separator or not filename.startswith("contract/schemas/"):
+        if not reference.startswith("contract/"):
             raise ValueError(f"invalid EG schema reference: {reference!r}")
-        relative = Path(filename.removeprefix("contract/"))
-        if ".." in relative.parts or contract_root is None:
+        resource = reference.removeprefix("contract/")
+        filename, pointer = _resource_parts(resource)
+        if contract_root is None:
             raise ValueError(f"EG schema unavailable: {reference!r}")
-        name = "Eg" + "".join(part.title() for part in relative.stem.split("."))
-        if name not in components:
-            document = json.loads((contract_root / relative).read_bytes())
-            components[name] = _rewrite_schema_refs(document, name)
-        return {"$ref": f"#/components/schemas/{name}{pointer}"}
+        if filename not in documents:
+            documents[filename] = json.loads((contract_root / filename).read_bytes())
+        _pointer(documents[filename], pointer)
+        return {"$ref": resource}
     raise ValueError(f"unknown schema reference: {value!r}")
 
 
@@ -175,6 +238,7 @@ def _openapi(
 ) -> dict[str, Any]:
     paths: dict[str, Any] = {}
     components: dict[str, Any] = {}
+    documents: dict[str, Any] = {}
     if contract_root is None and any(
         "eg_schema" in op[field]
         for op in registry["ops"]
@@ -197,7 +261,9 @@ def _openapi(
                 "required": True,
                 "content": {
                     "application/json": {
-                        "schema": _schema(op["params"], components, contract_root)
+                        "schema": _schema(
+                            op["params"], components, contract_root, documents
+                        )
                     }
                 },
             },
@@ -206,7 +272,9 @@ def _openapi(
                     "description": "Operation result",
                     "content": {
                         "application/json": {
-                            "schema": _schema(op["result"], components, contract_root)
+                            "schema": _schema(
+                                op["result"], components, contract_root, documents
+                            )
                         }
                     },
                 },
@@ -222,6 +290,17 @@ def _openapi(
     }
 
 
+def _client_helpers() -> str:
+    helpers = (
+        _pointer,
+        _resolve_local_refs,
+        _resolve_reference,
+        _resource_parts,
+        _expanded_spec,
+    )
+    return "\n\n\n".join(inspect.getsource(helper).rstrip() for helper in helpers)
+
+
 def _client_models(registry: dict[str, Any]) -> bytes:
     ids = [op["id"] for op in registry["ops"]]
     lines = [
@@ -229,10 +308,12 @@ def _client_models(registry: dict[str, Any]) -> bytes:
         "",
         "from __future__ import annotations",
         "",
+        "import hashlib",
         "import importlib.resources",
         "import json",
+        "import re",
         "from functools import lru_cache",
-        "from typing import Literal",
+        "from typing import Any, Literal",
         "",
         f"REGISTRY_DIGEST = {json.dumps(registry['registry_digest'])}",
         f"API_VERSION = {json.dumps(str(registry['api_version']))}",
@@ -242,6 +323,9 @@ def _client_models(registry: dict[str, Any]) -> bytes:
     lines.extend(
         [
             "]",
+            "",
+            "",
+            _client_helpers(),
             "",
             "",
             "@lru_cache(maxsize=1)",
@@ -254,9 +338,15 @@ def _client_models(registry: dict[str, Any]) -> bytes:
             "",
             "",
             "def schema_for(op_id: OperationId) -> dict:",
+            '    root = importlib.resources.files("graph_os.api.generated")',
             '    for op in _registry()["ops"]:',
             '        if op["id"] == op_id:',
-            '            return {"params": op["params"], "result": op["result"]}',
+            "            return {",
+            "                field: _expanded_spec(",
+            "                    op[field], lambda name: root.joinpath(name).read_bytes()",
+            "                )",
+            '                for field in ("params", "result")',
+            "            }",
             "    raise KeyError(op_id)",
             "",
         ]
@@ -272,7 +362,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any, Protocol
 
-from ._generated_models import OperationId
+from ._generated_models import REGISTRY_DIGEST, OperationId, schema_for
 
 
 class Transport(Protocol):
@@ -285,7 +375,12 @@ async def invoke(
     transport: Transport, op_id: OperationId, params: Mapping[str, Any]
 ) -> Mapping[str, Any]:
     """Use one transport entrypoint for every declared operation."""
-    return await transport.invoke(op_id, params)
+    schema_for(op_id)
+    response = await transport.invoke(op_id, params)
+    meta = response.get("meta")
+    if not isinstance(meta, Mapping) or meta.get("registry_digest") != REGISTRY_DIGEST:
+        raise RuntimeError("GraphOS registry digest mismatch")
+    return response
 '''
 
 
@@ -333,22 +428,30 @@ def _engine_errors(registry: dict[str, Any]) -> bytes:
     _verify_provider_receipt(pin)
     lines = [
         '"""Generated engine error contract. Do not edit."""',
-        f"REGISTRY_DIGEST = {identity!r}",
-        f"EG_RECEIPT_DIGEST = {pin!r}",
+        "",
+        f"REGISTRY_DIGEST = {json.dumps(identity)}",
+        f"EG_RECEIPT_DIGEST = {json.dumps(pin)}",
         "ENGINE_ERRORS: dict[str, tuple[int, bool]] = {",
     ]
-    lines.extend(f"    {code!r}: {errors[code]!r}," for code in sorted(errors))
+    lines.extend(
+        f"    {json.dumps(code)}: {errors[code]!r}," for code in sorted(errors)
+    )
     return ("\n".join([*lines, "}", ""])).encode()
 
 
 def generate(registry: dict[str, Any]) -> dict[Path, bytes]:
     if not registry.get("ops"):
         raise ValueError("refusing to generate an empty API registry")
-    return {
+    outputs = {
         GENERATED / "engine_errors.py": _engine_errors(registry),
         GENERATED / "registry.json": _json_bytes(registry),
         GENERATED / "descriptors.json": _json_bytes(_descriptors(registry)),
-        GENERATED / "__init__.py": b'"""Generated GraphOS API contract artifacts."""\n',
+        GENERATED / "__init__.py": b'''"""Generated GraphOS API contract artifacts."""
+
+from .engine_errors import EG_RECEIPT_DIGEST, ENGINE_ERRORS, REGISTRY_DIGEST
+
+__all__ = ["EG_RECEIPT_DIGEST", "ENGINE_ERRORS", "REGISTRY_DIGEST"]
+''',
         ROOT / "docs/api/openapi.json": _json_bytes(_openapi(registry)),
         ROOT
         / "graph_os/client/__init__.py": b'"""Generated GraphOS client surface."""\n',
@@ -356,6 +459,28 @@ def generate(registry: dict[str, Any]) -> dict[Path, bytes]:
         ROOT / "graph_os/client/invoke.py": _client_invoker(),
         ROOT / "docs/api/generated.ts": _ts_client(registry),
     }
+    outputs.update(_shared_schema_outputs(registry))
+    return outputs
+
+
+def _shared_schema_outputs(registry: dict[str, Any]) -> dict[Path, bytes]:
+    outputs: dict[Path, bytes] = {}
+    references = {
+        _resource_parts(op[field]["eg_schema"].removeprefix("contract/"))[0]
+        for op in registry["ops"]
+        for field in ("params", "result")
+        if "eg_schema" in op[field]
+    }
+    if references:
+        root = importlib.resources.files("epistemic_graph").joinpath("contract")
+        for filename in sorted(references):
+            document = json.loads(root.joinpath(filename).read_bytes())
+            content = (
+                json.dumps(document, sort_keys=True, separators=(",", ":")) + "\n"
+            ).encode()
+            outputs[GENERATED / filename] = content
+            outputs[ROOT / "docs/api" / filename] = content
+    return outputs
 
 
 def _shape(spec: dict[str, Any], *, result: bool) -> dict[str, Any]:
@@ -452,7 +577,22 @@ def _check_compat(registry: dict[str, Any], base_ref: str) -> int:
         print("gen_api: no baseline generated registry at base ref (first release)")
         return 0
     previous = json.loads(baseline.stdout)
-    changes = _breaking_changes(previous, registry)
+
+    def baseline_document(filename: str) -> bytes:
+        result = subprocess.run(  # nosec B603 -- fixed git argv, validated schema resource
+            [git, "show", f"{base_ref}:graph_os/api/generated/{filename}"],
+            cwd=ROOT,
+            capture_output=True,
+            check=True,
+        )
+        return result.stdout
+
+    previous = _expand_registry(previous, baseline_document)
+    provider = importlib.resources.files("epistemic_graph").joinpath("contract")
+    current = _expand_registry(
+        registry, lambda name: provider.joinpath(name).read_bytes()
+    )
+    changes = _breaking_changes(previous, current)
     if not changes:
         return 0
     old_major = int(str(previous["api_version"]).split(".", 1)[0])

@@ -34,7 +34,9 @@ _DESCRIPTORS = (
     ),
 )
 
-_UQL_DESCRIPTOR = Descriptor(id="query.uql", verb="ask", summary="Run a UQL query")
+_NL_DESCRIPTOR = Descriptor(
+    id="query.nl", verb="ask", summary="Plan a natural-language query"
+)
 
 
 @pytest.mark.spec("GRAPHOS-OPS-R012")
@@ -69,25 +71,25 @@ def test_cache_evicts_oldest_entry_once_over_its_bound() -> None:
 
 
 @pytest.mark.spec("GRAPHOS-OPS-R012")
-def test_unmatched_ask_falls_back_to_read_only_uql_preview() -> None:
+def test_unmatched_ask_falls_back_to_read_only_nl_preview() -> None:
     resolver = IntentResolver()
     resolution = resolver.resolve(
         "ask",
         "why did the deploy fail",
-        (*_DESCRIPTORS, _UQL_DESCRIPTOR),
+        (*_DESCRIPTORS, _NL_DESCRIPTOR),
         scope_ref=None,
     )
 
     assert resolution.fallback is True
-    assert resolution.op == "query.uql"
-    assert resolution.params["nl"] is True
+    assert resolution.op == "query.nl"
+    assert resolution.params == {"text": "why did the deploy fail"}
     assert resolution.preview is False, (
         "ask fallback must never require a mutation plan"
     )
 
 
 @pytest.mark.spec("GRAPHOS-OPS-R012")
-def test_unmatched_ask_without_uql_refuses_rather_than_mutating() -> None:
+def test_unmatched_ask_without_nl_refuses_rather_than_mutating() -> None:
     resolver = IntentResolver()
     resolution = resolver.resolve(
         "ask", "why did the deploy fail", _DESCRIPTORS, scope_ref=None
@@ -163,3 +165,15 @@ def test_scope_ref_requires_verified_tenant_and_policy_revision() -> None:
         resolver.scope_ref("", "policy-1")
     with pytest.raises(ValueError):
         resolver.scope_ref("tenant-a", "")
+
+
+@pytest.mark.spec("GRAPHOS-FLEET-R014")
+def test_deterministic_uql_visibility_does_not_authorize_nl_fallback() -> None:
+    resolution = IntentResolver().resolve(
+        "ask",
+        "why did the deploy fail",
+        (Descriptor(id="query.uql", verb="ask", summary="Execute UQL"),),
+        scope_ref=None,
+    )
+    assert resolution.op is None
+    assert resolution.fallback is False

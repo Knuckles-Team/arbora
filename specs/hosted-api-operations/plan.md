@@ -531,3 +531,29 @@ They require the corresponding owner contracts and real authenticated HTTP, MCP,
 This section grants no delivery or runtime evidence.
 
 References: [EG orchestration](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/orchestration-vocabulary/spec.md), [EG durable kernel](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/durable-graph-kernel/spec.md), [EG query](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/federated-query-and-reasoning/spec.md), [EG media](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/media-and-personal-vocabulary/spec.md), [SDK ingest](https://github.com/Knuckles-Team/agent-connector-sdk/blob/a0f78fefbb486e4c7d97e608462cf5847a46bc7d/specs/SDK-SOURCE-INGEST/spec.md).
+
+### 2026-10-16: Generated Python invocation boundary
+
+R025.1 extends the existing scripts/gen_api.py emitter. Validate operation IDs
+against its packaged registry before transport. Compare every response digest
+with the generated registry identity before returning the envelope. Preserve
+matching refusal details. Full R025 still requires deterministic generation from
+a compatible engine contract and packaged artifacts.
+
+### 2026-10-16 — Separate deterministic and natural-language queries
+
+`query.uql` remains deterministic under `query:unified`; `query.nl` is the authorized resolver fallback under `query:nl`. The latter binds its inner graph from the verified caller and preserves provider planner-unavailable refusals. No scope is automatically granted. Remaining SQL, search, indexes and analytics acceptance under R018.2 remains deferred.
+
+### 2026-10-16: R025.2 packaged schema references
+
+Generate each provider schema document once per artifact surface. Registry
+snapshots and OpenAPI components reference those documents. Keep the provider
+pointers, schema hashes and canonical registry digest unchanged. Resolve packaged
+references locally for Python consumers and compatibility checks. Reject missing
+resources, invalid pointers and paths outside the generated schema directory.
+Preserve all registered operations and resolved schema meaning. Hoist curated
+OpenAPI definitions so every local reference resolves.
+
+The wheel includes the registry and shared schema documents. Acceptance covers
+clean installed-wheel use, missing and unsafe references, deterministic generation
+and equality of resolved schemas. This proof does not establish a live server.

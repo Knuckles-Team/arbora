@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import inspect
 import json
+from importlib import resources
 from pathlib import Path
 
 import pytest
@@ -20,6 +21,7 @@ from graph_os.api.ops import (
     memory,
     ops,
     policy,
+    query,
     retrieval,
     security,
     swarm,
@@ -50,6 +52,8 @@ def provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Pat
     document["scopes"].extend(
         {"scope": scope, "class": "user"}
         for scope in (
+            "query:unified",
+            "query:nl",
             "kg:read",
             "kg:write",
             "mcp:discover",
@@ -79,6 +83,24 @@ def provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Pat
         )
     )
     scope_path.write_text(json.dumps(document))
+    source = resources.files("epistemic_graph").joinpath("contract")
+    methods_path = contract / "methods.json"
+    methods = json.loads(methods_path.read_text())
+    actual = json.loads(source.joinpath("methods.json").read_text())
+    methods["methods"].extend(
+        row for row in actual["methods"] if row["id"] in {"Uql", "NlQuery"}
+    )
+    methods_path.write_text(json.dumps(methods))
+    for filename in ("method.request.json", "result.query.json"):
+        path = contract / "schemas" / filename
+        synthetic = json.loads(path.read_text())
+        actual_schema = json.loads(source.joinpath("schemas", filename).read_text())
+        synthetic["methods"].update(
+            {key: actual_schema["methods"][key] for key in ("Uql", "NlQuery")}
+        )
+        synthetic["$defs"] = actual_schema.get("$defs", {})
+        path.write_text(json.dumps(synthetic))
+
     monkeypatch.setattr("importlib.resources.files", lambda package: contract.parent)
     monkeypatch.setattr(eg_binding, "_EXCLUSIONS", exclusions)
     return contract, exclusions
@@ -104,6 +126,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *telemetry.operations(),
         *usage.operations(),
         *policy.operations(),
+        *query.operations(),
         *retrieval.operations(),
         *swarm.operations(),
         *memory.operations(),
@@ -126,7 +149,7 @@ def test_only_exact_curated_method_is_suppressed(
     bindings = [
         op.binding.service for op in registry if isinstance(op.binding, EgMethod)
     ]
-    assert sorted(bindings) == ["Admin", "Read", "Service"]
+    assert sorted(bindings) == ["Admin", "NlQuery", "Read", "Service", "Uql"]
     assert registry.get("eg.query.Read") is None
     curated = registry["query.read"].binding
     assert isinstance(curated, EgMethod)

@@ -105,3 +105,30 @@ These paths are planned acceptance, not passing test receipts.
 - `GRAPHOS-OPS-R064`: Planned `tests/api/test_viewport_served.py::test_billion_point_viewport_keeps_bins_selection_and_byte_bounds` proves the owner binding and served acceptance in plan.md. Cover HTTP, MCP, and the named browser consumer. No execution is claimed.
 - `GRAPHOS-OPS-R065`: Planned `tests/api/test_meeting_served.py::test_corrected_final_transcript_binds_selected_summary_provider` proves the owner binding and served acceptance in plan.md. Cover HTTP, MCP, and the named browser consumer. No execution is claimed.
 - `GRAPHOS-OPS-R066`: Planned `tests/api/test_bookmarks_served.py::test_search_relationships_and_exports_share_authorized_snapshot` proves the owner binding and served acceptance in plan.md. Cover HTTP, MCP, and the named browser consumer. No execution is claimed.
+
+## GRAPHOS-OPS-R025.1: Generated Python invocation
+
+Run the client emitted by scripts/gen_api.py against an injected transport.
+Unknown operations must make zero calls. Missing or changed response digests
+must refuse both success and error envelopes. Matching envelopes retain their
+result, error details and metadata. These tests do not qualify a producer wheel.
+
+R025.2 retains full deterministic generation, drift and installed-wheel proof.
+The emitted-client fixture is not this acceptance.
+
+| HO-QUERY-01 | GRAPHOS-OPS-R018.2.1 | `tests/api/test_query_ops.py`, `tests/api/test_registry_factory.py`, and `tests/api/test_resolve.py` prove provider method, scope and inner schema compatibility. They prove authorized fallback, verified caller graph binding and provider error propagation. Tests record the final transport; they do not qualify a live NL planner or compose the production schema validator. |
+
+## GRAPHOS-OPS-R025.2: Packaged generated artifacts
+
+Run the canonical generator twice with the pinned packaged EG contract and
+require `scripts/gen_api.py --check` to pass. Build the distribution from the
+real generated source. `tests/deployment/test_generated_client_wheel.py` installs
+that wheel without dependencies into an isolated target and imports its client
+from outside the checkout. It verifies registry resources, operation membership
+and matching response digests. Fixture-only generation cannot satisfy this test.
+
+Reference acceptance resolves every generated provider snapshot and OpenAPI
+reference. It compares resolved provider snapshots with the pinned source schema.
+Negative cases reject missing schema files, invalid pointers, traversal and remote
+references. Installed-wheel tests run outside the source tree without provider
+packages and exercise both schema lookup and invocation.

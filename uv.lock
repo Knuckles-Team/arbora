@@ -7,7 +7,7 @@ resolution-markers = [
 ]
 
 [manifest]
-overrides = [{ name = "epistemic-graph", git = "https://github.com/Knuckles-Team/epistemic-graph.git?rev=70037e8a400c7b32b1222623bb05bbfaf55deab8" }]
+overrides = [{ name = "epistemic-graph", git = "https://github.com/Knuckles-Team/epistemic-graph.git?rev=978532ee90bf06f3a26d8465efd63be94dd0dfa4" }]
 
 [[package]]
 name = "agent-connector-sdk"
@@ -961,8 +961,8 @@ wheels = [
 
 [[package]]
 name = "epistemic-graph"
-version = "2.27.0"
-source = { git = "https://github.com/Knuckles-Team/epistemic-graph.git?rev=70037e8a400c7b32b1222623bb05bbfaf55deab8#70037e8a400c7b32b1222623bb05bbfaf55deab8" }
+version = "2.27.1"
+source = { git = "https://github.com/Knuckles-Team/epistemic-graph.git?rev=978532ee90bf06f3a26d8465efd63be94dd0dfa4#978532ee90bf06f3a26d8465efd63be94dd0dfa4" }
 dependencies = [
     { name = "httpx" },
     { name = "msgpack" },

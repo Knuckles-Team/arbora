@@ -26,6 +26,8 @@
     "GRAPHOS-OPS-R018",
     "GRAPHOS-OPS-R018.1",
     "GRAPHOS-OPS-R018.2",
+    "GRAPHOS-OPS-R018.2.1",
+    "GRAPHOS-OPS-R018.2.2",
     "GRAPHOS-OPS-R019",
     "GRAPHOS-OPS-R019.1",
     "GRAPHOS-OPS-R019.2",
@@ -73,6 +75,8 @@
     "GRAPHOS-OPS-R024.4.6",
     "GRAPHOS-OPS-R024.5",
     "GRAPHOS-OPS-R025",
+    "GRAPHOS-OPS-R025.1",
+    "GRAPHOS-OPS-R025.2",
     "GRAPHOS-OPS-R026",
     "GRAPHOS-OPS-R026.1",
     "GRAPHOS-OPS-R026.2",
@@ -325,11 +329,11 @@
         "deb2b45bf83d"
       ],
       "verified_by": [
-        "tests/api/test_resolve.py:101",
-        "tests/api/test_resolve.py:40",
-        "tests/api/test_resolve.py:52",
-        "tests/api/test_resolve.py:62",
-        "tests/api/test_resolve.py:71"
+        "tests/api/test_resolve.py:103",
+        "tests/api/test_resolve.py:42",
+        "tests/api/test_resolve.py:54",
+        "tests/api/test_resolve.py:64",
+        "tests/api/test_resolve.py:73"
       ]
     },
     {
@@ -407,7 +411,7 @@
     {
       "id": "GRAPHOS-OPS-R018",
       "title": "Query, search, ontology, and analytics operations",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
@@ -427,10 +431,34 @@
     {
       "id": "GRAPHOS-OPS-R018.2",
       "title": "Uql, sql, search, indexes, and analytics.series operations",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "64a0c091b354"
       ],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-OPS-R018.2.1",
+        "GRAPHOS-OPS-R018.2.2"
+      ]
+    },
+    {
+      "id": "GRAPHOS-OPS-R018.2.1",
+      "title": "Distinct caller-bound query contracts",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "3ea22258010e",
+        "51529da8abe6",
+        "a2f74cb9621d"
+      ],
+      "verified_by": [
+        "tests/api/test_query_ops.py:57"
+      ]
+    },
+    {
+      "id": "GRAPHOS-OPS-R018.2.2",
+      "title": "Remaining query, SQL, search, indexes and analytics serving acceptance",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": []
     },
     {
@@ -906,11 +934,41 @@
     {
       "id": "GRAPHOS-OPS-R025",
       "title": "Generated registry, OpenAPI, and client artifacts",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "4b83c69e2b41"
       ],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-OPS-R025.1",
+        "GRAPHOS-OPS-R025.2"
+      ]
+    },
+    {
+      "id": "GRAPHOS-OPS-R025.1",
+      "title": "Generated Python invocation boundary",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "144fd029bf2e"
+      ],
+      "verified_by": [
+        "tests/api/test_gen_api.py:258",
+        "tests/api/test_gen_api.py:280",
+        "tests/api/test_gen_api.py:295"
+      ]
+    },
+    {
+      "id": "GRAPHOS-OPS-R025.2",
+      "title": "Remaining generated artifact acceptance",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "a247b168fa98"
+      ],
+      "verified_by": [
+        "tests/api/test_gen_api.py:312",
+        "tests/deployment/test_generated_client_wheel.py:15",
+        "tests/deployment/test_generated_client_wheel.py:26"
+      ]
     },
     {
       "id": "GRAPHOS-OPS-R026",

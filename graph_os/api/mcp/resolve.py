@@ -320,17 +320,17 @@ def _ask_fallback(
     descriptors: Sequence[Descriptor | Mapping[str, Any]],
 ) -> Resolution:
     visible = tuple(_coerce(item) for item in descriptors)
-    has_uql = any(item.id == "query.uql" and item.verb == "ask" for item in visible)
-    if verb != "ask" or not has_uql:
+    has_nl = any(item.id == "query.nl" and item.verb == "ask" for item in visible)
+    if verb != "ask" or not has_nl:
         return Resolution(
             None, params, False, (), (), "No matching authorized operation"
         )
     return Resolution(
-        "query.uql",
-        {**params, "query": intent, "nl": True},
+        "query.nl",
+        {**params, "text": intent},
         False,
         (),
         (),
-        "Using the authorized natural-language UQL planner",
+        "Using the authorized engine natural-language planner",
         True,
     )
