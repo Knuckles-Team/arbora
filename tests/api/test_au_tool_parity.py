@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.api.registry.eg_binding import load_eg_bindings
-from graph_os.api.registry.spec import Effect
+from arbora.api.registry.eg_binding import load_eg_bindings
+from arbora.api.registry.spec import Effect
 
 # Each replaced wrapper module maps to the engine methods that deliver its
 # behaviour, and to the subset that must stay read-only for the read tools.

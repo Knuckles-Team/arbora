@@ -572,7 +572,7 @@ workflow changes in pull requests. Keep publication limited to release tags.
 
 ## Parity composed operations (ARBORA-OPS-R801 to R842)
 
-Each row composes served `eg.<domain>.<Method>` operations (see `graph_os/api/registry/eg_binding.py`) into one operation or skill for a named consumer. No row adds an engine method. Writes go through the governed change path and carry `Confirm.PLAN`.
+Each row composes served `eg.<domain>.<Method>` operations (see `arbora/api/registry/eg_binding.py`) into one operation or skill for a named consumer. No row adds an engine method. Writes go through the governed change path and carry `Confirm.PLAN`.
 
 | Row | Operation | Engine methods | Consumer |
 |---|---|---|---|
@@ -604,7 +604,7 @@ Each row composes served `eg.<domain>.<Method>` operations (see `graph_os/api/re
 | `ARBORA-OPS-R826` | `remediation.playbooks.route` | `eg.messaging.CepSubscribe`, `eg.messaging.CepPoll`, `eg.messaging.RegisterTrigger`, `eg.messaging.FiredTriggers`, `eg.query.Decide`, `eg.coordination.WorkOfferPut`, `eg.coordination.GapUpsert` | service-health goal; messaging-channel incident replies |
 | `ARBORA-OPS-R827` | `skill:comparative-analysis` | `eg.ingestion.SourceIngest`, `eg.compute.ResolveCandidates`, `eg.compute.Vf2SubgraphMatch`, `eg.compute.ComputeSimilarityEdges`, `eg.coordination.GapUpsert`, `eg.graph.AddNode`, `eg.ingestion.SemanticSearch` | comparative-analysis skill; research-scanner |
 | `ARBORA-OPS-R828` | `usage.read`, `usage.price_catalog.write` | `eg.storage.TsDefineSeries`, `eg.storage.TsAppend`, `eg.storage.TsRange`, `eg.storage.TsWindow`, `eg.graph.AddNode`, `eg.query.Uql` | dashboard usage and cost views; usage importers |
-| `ARBORA-OPS-R829` | `incidents.record`, `incidents.read` | `eg.messaging.CepSubscribe`, `eg.messaging.CepPoll`, `eg.messaging.RegisterTrigger`, `eg.messaging.FiredTriggers`, `eg.graph.AddNode`, `eg.graph.CompareAndSetNodeFields`, `eg.compute.MineRootCause` | graph-os incident routes; service-health goal |
+| `ARBORA-OPS-R829` | `incidents.record`, `incidents.read` | `eg.messaging.CepSubscribe`, `eg.messaging.CepPoll`, `eg.messaging.RegisterTrigger`, `eg.messaging.FiredTriggers`, `eg.graph.AddNode`, `eg.graph.CompareAndSetNodeFields`, `eg.compute.MineRootCause` | arbora incident routes; service-health goal |
 | `ARBORA-OPS-R830` | `access.graph_ownership.infer`, `access.graph_ownership.apply` | `eg.security.RbacAdmin`, `eg.security.GovernedChange`, `eg.security.CheckAccess`, `eg.security.GetIdentity`, `eg.reasoning.GraphSchemaList`, `eg.cluster.ListGraphs` | agent-webui graph admission; governance tools |
 | `ARBORA-OPS-R831` | `retrieval.search` | `eg.query.NlQuery`, `eg.ingestion.SemanticSearch`, `eg.ingestion.SemanticIndex`, `eg.graph.GetNeighborsBatch`, `eg.graph.GetSubgraph`, `eg.query.UnifiedQuery`, `eg.compute.CommunityDetection`, `eg.compute.ClusterHierarchyExpand`, `eg.graph.GetNodesByLabel`, `eg.reasoning.Sparql` | served `retrieval.search`; agent-webui `/graph/search`, `/graph/magma`; messaging recall |
 | `ARBORA-OPS-R832` | `query.uql` | `eg.reasoning.ShaclValidate`, `eg.query.Uql`, `eg.query.UnifiedQuery` | orchestration competency (CQ-ORCH-R004) |
@@ -621,4 +621,4 @@ Each row composes served `eg.<domain>.<Method>` operations (see `graph_os/api/re
 
 ## ARBORA-OPS-R843 — replaced tool wrappers
 
-The pinned engine contract generates one `eg.<domain>.<Method>` operation per callable method (`ARBORA-OPS-R008`). The wrapper modules in agent-utilities call the same methods through an in-process client. A harness that reaches graph-os over MCP or `fleet.call` needs none of them. `ARBORA-OPS-R843.2` records where each remaining module goes.
+The pinned engine contract generates one `eg.<domain>.<Method>` operation per callable method (`ARBORA-OPS-R008`). The wrapper modules in agent-utilities call the same methods through an in-process client. A harness that reaches arbora over MCP or `fleet.call` needs none of them. `ARBORA-OPS-R843.2` records where each remaining module goes.
