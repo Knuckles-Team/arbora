@@ -962,6 +962,7 @@
       "title": "Remaining generated artifact acceptance",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "43c5e4b631cb",
         "a247b168fa98"
       ],
       "verified_by": [
