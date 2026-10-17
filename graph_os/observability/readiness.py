@@ -101,3 +101,15 @@ def collect_readiness_snapshot(
 
 def is_snapshot_ready(snapshot: Mapping[str, Any]) -> bool:
     return snapshot.get("overall") == "ready"
+
+
+_PROBES: dict[str, Probe] = {}
+
+
+def register_probe(name: str, probe: Probe) -> None:
+    """Add a named probe to the registry that readiness surfaces collect from."""
+    _PROBES[name] = probe
+
+
+def registered_probes() -> dict[str, Probe]:
+    return dict(_PROBES)
