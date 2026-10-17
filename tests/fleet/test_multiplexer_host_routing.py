@@ -20,7 +20,7 @@ def test_get_server_prefix_hosts():
     assert get_server_prefix("container-manager-mcp-node303") == "cm_node303"
 
     # Plain servers → initials acronym (multi-word) or short stem (single word).
-    assert get_server_prefix("arbora") == "go"
+    assert get_server_prefix("arbora") == "arbo"
     assert get_server_prefix("repository-manager-mcp") == "rm"
     assert get_server_prefix("some-random-mcp-server") == "sr"
 

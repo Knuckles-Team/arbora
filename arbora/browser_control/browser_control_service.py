@@ -44,7 +44,7 @@ class BrowserControlService(
 ):
     """The one Arbora browser-control implementation shared by all projections."""
 
-    authority: Literal["arbora"] = "arbora"
+    authority: Literal["graph-os"] = "graph-os"
     supports_durable_fences: Literal[True] = True
     supports_durable_audit: Literal[True] = True
     supports_attended_leases: Literal[True] = True

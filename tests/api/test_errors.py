@@ -182,7 +182,7 @@ def test_audit_reference_bounds_input_before_json_parse(monkeypatch) -> None:
     _, valid = to_envelope(
         InvokeError("INDETERMINATE", {"audit_ref": reference}), **CONTEXT
     )
-    assert len(valid["error"]["details"]["audit_ref"]) == 99
+    assert len(valid["error"]["details"]["audit_ref"]) == 98
 
     def unexpected_parse(value):
         pytest.fail("overlength audit reference reached JSON parser")

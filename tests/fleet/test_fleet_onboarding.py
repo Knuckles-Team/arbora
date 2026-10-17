@@ -263,8 +263,8 @@ def test_fresh_store_pass_registers_attests_and_imports_each_server(
     assert sorted(report.renewed) == [
         "agent-utilities",
         "alpha-mcp",
-        "beta-mcp",
         "arbora",
+        "beta-mcp",
     ]
     registered = {params["name"]: params["url"] for params, _key in eg.registers}
     assert registered["alpha-mcp"] == ALPHA.url
