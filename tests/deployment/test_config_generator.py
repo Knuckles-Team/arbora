@@ -584,7 +584,9 @@ def test_generated_config_is_accepted_by_the_runtime_loader(
     profile, tmp_path, monkeypatch
 ):
     """setup-config generate writes only what load_config projects."""
-    from agent_connector_sdk.config import load_config
+    from unittest import mock
+
+    import agent_connector_sdk.config as sdk_config
 
     out = tmp_path / "config.json"
     write_config(profile, out)
@@ -595,10 +597,14 @@ def test_generated_config_is_accepted_by_the_runtime_loader(
         if not isinstance(value, str | int | float | bool)
     ]
     assert nested == []
-    for key in document:
-        monkeypatch.delenv(key, raising=False)
-    assert load_config(out, reload=True) == out
-    ArboraConfig()  # the runtime build from the projected environment
+    # load_config projects every key into os.environ; restore the whole
+    # environment and the loader's memo so nothing leaks into later tests.
+    monkeypatch.setattr(sdk_config, "_loaded_from", None)
+    with mock.patch.dict(os.environ):
+        for key in document:
+            os.environ.pop(key, None)
+        assert sdk_config.load_config(out, reload=True) == out
+        ArboraConfig()  # the runtime build from the projected environment
 
 
 def test_generated_structured_settings_are_json_text(tmp_path):

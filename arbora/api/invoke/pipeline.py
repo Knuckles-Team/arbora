@@ -791,9 +791,10 @@ async def _dispatch_outcome(call: _Call, audit_ref: str) -> OpResult | OpError:
         # handwritten code table or import-time generated metadata fallback.
         return OpError(exc.code, source="engine")
     except FleetRefusal as exc:
-        return OpError(
-            exc.code, {"server": exc.server, "tool": exc.tool}, source="fleet"
-        )
+        details = {"server": exc.server, "tool": exc.tool}
+        if exc.detail is not None:
+            details["detail"] = exc.detail
+        return OpError(exc.code, details, source="fleet")
     except TimeoutError:
         return _unsettled(call, audit_ref, "TIMEOUT")
     except Exception:

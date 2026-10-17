@@ -130,6 +130,9 @@ class FleetRefusal(Exception):
     tool: str
     message: str = "Fleet call refused"
     retryable: bool = False
+    #: The child's own error text, redacted and bounded by ``fleet_detail``
+    #: before it reaches a caller (the static ``message`` never carries it).
+    detail: str | None = None
 
 
 @runtime_checkable
@@ -155,8 +158,36 @@ _FLEET_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}\Z")
 _FLEET_CODE = re.compile(r"[A-Za-z][A-Za-z0-9_.:-]{0,127}\Z")
 
 
+#: Credential-shaped substrings a child error text may echo back.
+_DETAIL_REDACTIONS = (
+    re.compile(r"(?i)\b(bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}"),
+    re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}(?:\.[A-Za-z0-9_-]*)?"),
+    re.compile(
+        r"(?i)\b([A-Za-z0-9_-]*(?:token|secret|password|passwd|api[_-]?key|authorization)[A-Za-z0-9_-]*)"
+        r"(\s*[=:]\s*)(\"[^\"]*\"|'[^']*'|[^\s,;&]+)"
+    ),
+)
+FLEET_DETAIL_MAX = 240
+
+
+def fleet_detail(text: object) -> str | None:
+    """A child's error text fit for its authorized caller: redacted, one line, bounded."""
+
+    if not isinstance(text, str):
+        return None
+    out = " ".join(text.split())
+    out = _DETAIL_REDACTIONS[0].sub(lambda m: f"{m.group(1)} [redacted]", out)
+    out = _DETAIL_REDACTIONS[1].sub("[redacted]", out)
+    out = _DETAIL_REDACTIONS[2].sub(
+        lambda m: f"{m.group(1)}{m.group(2)}[redacted]", out
+    )
+    if len(out) > FLEET_DETAIL_MAX:
+        out = out[: FLEET_DETAIL_MAX - 1] + "\u2026"
+    return out or None
+
+
 def _fleet_details(code: str, details: Mapping[str, Any]) -> dict[str, str]:
-    """Project only bounded child provenance, never raw child payloads."""
+    """Project only bounded child provenance and the child's redacted error text."""
 
     if _FLEET_CODE.fullmatch(code) is None:
         raise ValueError("invalid fleet error code")
@@ -169,7 +200,11 @@ def _fleet_details(code: str, details: Mapping[str, Any]) -> dict[str, str]:
         or _FLEET_NAME.fullmatch(tool) is None
     ):
         return {}
-    return {"server": server, "tool": tool}
+    projected = {"server": server, "tool": tool}
+    detail = fleet_detail(details.get("detail"))
+    if detail is not None:
+        projected["detail"] = detail
+    return projected
 
 
 def _public_details(
@@ -295,7 +330,7 @@ def _classify_fleet_refusal(
     return _classify_fleet_code(
         error.code,
         retryable=error.retryable,
-        details={"server": error.server, "tool": error.tool},
+        details={"server": error.server, "tool": error.tool, "detail": error.detail},
     )
 
 

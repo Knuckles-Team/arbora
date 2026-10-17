@@ -15,7 +15,7 @@ from contextvars import ContextVar
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from arbora.api.errors import FleetRefusal
+from arbora.api.errors import FleetRefusal, fleet_detail
 from arbora.api.registry import Confirm, Effect, Executor, PrincipalRule
 
 if TYPE_CHECKING:
@@ -69,6 +69,25 @@ def _child_error_code(result: Any) -> str:
         if isinstance(code, str) and _CHILD_CODE.fullmatch(code)
         else "CHILD_REFUSED"
     )
+
+
+def _child_error_text(result: Any) -> str | None:
+    """The child's own error text: the structured message, else its text content."""
+
+    structured = getattr(
+        result, "structured_content", getattr(result, "structuredContent", None)
+    )
+    if isinstance(structured, Mapping):
+        error = structured.get("error")
+        typed = error if isinstance(error, Mapping) else structured
+        message = typed.get("message")
+        if isinstance(message, str) and message.strip():
+            return message
+    for part in getattr(result, "content", None) or ():
+        text = getattr(part, "text", None)
+        if isinstance(text, str) and text.strip():
+            return text
+    return None
 
 
 def _hint(annotations: Any, snake: str, camel: str) -> bool | None:
@@ -246,7 +265,12 @@ def oauth_delegated_call_for_mux(mux: Any) -> DelegatedCall:
         with use_actor(actor), use_session(session):
             result = await mux.call_admitted_child_once(server, tool, dict(arguments))
         if bool(getattr(result, "is_error", getattr(result, "isError", False))):
-            raise FleetRefusal(_child_error_code(result), server, tool)
+            raise FleetRefusal(
+                _child_error_code(result),
+                server,
+                tool,
+                detail=fleet_detail(_child_error_text(result)),
+            )
         return result.model_dump(mode="json", by_alias=True)
 
     return delegated

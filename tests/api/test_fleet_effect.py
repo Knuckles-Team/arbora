@@ -97,7 +97,10 @@ async def test_delegated_child_refusal_keeps_bounded_structured_code(
             return SimpleNamespace(
                 is_error=True,
                 structured_content={
-                    "error": {"code": "CHILD_BUSY", "message": "secret"}
+                    "error": {
+                        "code": "CHILD_BUSY",
+                        "message": "upstream busy; token=s3cr3t-value-123",
+                    }
                 },
             )
 
@@ -112,7 +115,40 @@ async def test_delegated_child_refusal_keeps_bounded_structured_code(
         "search",
         "query",
     )
-    assert "secret" not in str(refused.value)
+    # The child's own text reaches the caller as a redacted, bounded detail.
+    assert refused.value.detail == "upstream busy; token=[redacted]"
+    assert "s3cr3t" not in repr(refused.value)
+
+
+@pytest.mark.asyncio
+async def test_delegated_child_refusal_detail_falls_back_to_text_content(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    api = ModuleType("arbora.api.contracts")
+    vars(api).update(use_session=lambda _session: nullcontext())
+    brain = ModuleType("arbora.security.actor_context")
+    vars(brain).update(use_actor=lambda _actor: nullcontext())
+    monkeypatch.setitem(sys.modules, "arbora.api.contracts", api)
+    monkeypatch.setitem(sys.modules, "arbora.security.actor_context", brain)
+
+    class Mux:
+        async def call_admitted_child_once(self, *_args: object) -> object:
+            return SimpleNamespace(
+                is_error=True,
+                structured_content=None,
+                content=[
+                    SimpleNamespace(type="text", text="connection refused  by\nchild")
+                ],
+            )
+
+    actor = SimpleNamespace(authenticated=True, actor_id="alice", tenant_id="acme")
+    caller = SimpleNamespace(
+        session=SimpleNamespace(actor=actor), principal="alice", tenant="acme"
+    )
+    with pytest.raises(FleetRefusal) as refused:
+        await oauth_delegated_call_for_mux(Mux())("search", "query", {}, caller)
+    assert refused.value.code == "CHILD_REFUSED"
+    assert refused.value.detail == "connection refused by child"
 
 
 def test_annotations_default_to_write_and_destructive_wins() -> None:
