@@ -4,6 +4,7 @@
 import asyncio
 import json
 import os
+from functools import partial
 from pathlib import Path
 
 import pytest
@@ -116,24 +117,29 @@ def test_durable_cursor_rejects_tampering_and_scope_changes(
 
     async def exercise() -> None:
         await sink.emit(tenant="tenant-a", request_id="one", message="safe")
-        arguments = dict(
-            tenant="tenant-a",
+        source_read = partial(
+            sink.read,
             workspace=str(tmp_path),
             host_instance="host-1",
-            source_generations=("host-1",),
             limit=128,
         )
-        batch = await sink.read(**arguments, cursor=None)
+        tenant = "tenant-a"
+        generations: tuple[str, ...] = ("host-1",)
+        batch = await source_read(
+            tenant=tenant, source_generations=generations, cursor=None
+        )
         cursor = batch.cursor
         assert cursor is not None
         if mutation == "signature":
             cursor = "A" + cursor[1:]
         elif mutation == "tenant":
-            arguments["tenant"] = "tenant-b"
+            tenant = "tenant-b"
         else:
-            arguments["source_generations"] = ("host-1", "host-2")
+            generations = ("host-1", "host-2")
         with pytest.raises(PermissionError):
-            await sink.read(**arguments, cursor=cursor)
+            await source_read(
+                tenant=tenant, source_generations=generations, cursor=cursor
+            )
 
     try:
         asyncio.run(exercise())
