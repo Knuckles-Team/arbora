@@ -9,7 +9,7 @@ from typing import Literal
 
 from graph_os.client._schema import _expanded_spec
 
-REGISTRY_DIGEST = "bf6ef7e6c20d34e341209a7c8048c5e10e0d340d9ca7c93941a627addc8ed45c"
+REGISTRY_DIGEST = "91adaf1d0b3e9079c2bdb1ae8ed37bc8edbd22c4d77c94439208aa689ac4af2b"
 API_VERSION = "1"
 type OperationId = Literal[
     "access.check",
@@ -503,6 +503,7 @@ type OperationId = Literal[
     "rlm.benchmark",
     "rlm.evolve_prompt",
     "rlm.run",
+    "runs.current_plan",
     "security.posture.read",
     "swarm.topology.read",
     "telemetry.read",
