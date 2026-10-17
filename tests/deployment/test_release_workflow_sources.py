@@ -458,24 +458,14 @@ def test_release_eg_resolves_from_the_package_index_as_wheels() -> None:
     assert eg.get("wheels") and "sdist" not in eg
 
 
-def test_pinned_sdk_source_contains_schema_disclosure_contract() -> None:
+def test_installed_sdk_contains_schema_disclosure_contract() -> None:
+    """The SDK installs from the package index; read the installed module."""
     import ast
+    import importlib.util
 
-    checkout = next(
-        step["with"]
-        for step in _gate_steps()
-        if step.get("with", {}).get("repository") == "Knuckles-Team/agent-connector-sdk"
-    )
-    source = subprocess.check_output(
-        [
-            "git",
-            "-C",
-            str(ROOT / checkout["path"]),
-            "show",
-            f"{checkout['ref']}:agent_connector_sdk/mcp/schema_disclosure.py",
-        ],
-        text=True,
-    )
+    spec = importlib.util.find_spec("agent_connector_sdk.mcp.schema_disclosure")
+    assert spec is not None and spec.origin is not None
+    source = Path(spec.origin).read_text(encoding="utf-8")
     names = {
         node.name
         for node in ast.parse(source).body
