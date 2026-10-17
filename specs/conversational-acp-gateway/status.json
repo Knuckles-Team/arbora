@@ -61,8 +61,10 @@
     {
       "id": "GRAPHOS-ACP-R001.3",
       "title": "Model",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "fa860a640a8d"
+      ],
       "verified_by": [
         "tests/acp/test_coding_session.py:34"
       ]
