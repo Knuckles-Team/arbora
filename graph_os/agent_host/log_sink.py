@@ -6,11 +6,9 @@ import asyncio
 import fcntl
 import json
 import os
-import secrets
 import stat
 import threading
 import time
-from collections import OrderedDict, deque
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -19,15 +17,21 @@ from graph_os.agent_host.log_access import (
     HostLogBatch,
     HostLogDenied,
     HostLogRecord,
+    HostLogRetentionGap,
     valid_generations,
+)
+from graph_os.agent_host.log_replay import (
+    ReplayCursor,
+    cursor_key,
+    retained_records,
 )
 
 
 class WorkspaceLogSink:
     """Write before projection; never hand a shared descriptor to a client.
 
-    Projections and opaque cursors are host-lifetime state, not durable replay.
-    A restarted host must issue new references and a new host instance binding.
+    Retained files support replay after fresh authenticated admission.
+    Resume cursors establish position only, never workspace authority.
     """
 
     def __init__(
@@ -41,15 +45,16 @@ class WorkspaceLogSink:
         self._lock = threading.Lock()
         self._io_slots = threading.BoundedSemaphore(1)
         self._pending: set[asyncio.Task] = set()
-        self._records: dict[str, deque[tuple[int, HostLogRecord]]] = {}
         self._sequences: dict[str, int] = {}
-        self._cursors: OrderedDict[str, tuple[str, tuple[str, ...], int]] = (
-            OrderedDict()
-        )
         self._closed = False
+        self._failed = False
         self._directory = self._open_directory()
         try:
             fcntl.flock(self._directory, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            self._cursor_key = cursor_key(self._directory)
+            for record, _ in retained_records(self._directory, self.workspace):
+                if record.host_instance == host_instance:
+                    raise HostLogDenied("source_generation_reused")
             fd = self._file("server.log")
             os.close(fd)
         except BaseException:
@@ -150,8 +155,10 @@ class WorkspaceLogSink:
         )
         safe_message = str(clean["message"])
         with self._lock:
-            if self._closed or (
-                tenant not in self._records and len(self._records) >= 64
+            if (
+                self._closed
+                or self._failed
+                or (tenant not in self._sequences and len(self._sequences) >= 64)
             ):
                 raise HostLogDenied("log_unavailable")
             sequence = self._sequences.get(tenant, 0) + 1
@@ -181,19 +188,15 @@ class WorkspaceLogSink:
                     if written <= 0:
                         raise OSError("log_unavailable")
                     remaining = remaining[written:]
+                os.fsync(fd)
+                os.fsync(self._directory)
+            except BaseException:
+                self._failed = True
+                raise
             finally:
                 if fd >= 0:
                     os.close(fd)
             self._sequences[tenant] = sequence
-            projection = self._records.setdefault(tenant, deque(maxlen=128))
-            projection.append(
-                (
-                    sequence,
-                    HostLogRecord(
-                        tenant, self.workspace, self.host_instance, safe_message
-                    ),
-                )
-            )
 
     async def read(
         self,
@@ -227,30 +230,46 @@ class WorkspaceLogSink:
         with self._lock:
             if (
                 self._closed
+                or self._failed
                 or not valid_generations(source_generations)
                 or (workspace, host_instance) != (self.workspace, self.host_instance)
+                or type(limit) is not int
                 or not 1 <= limit <= 128
+                or (
+                    cursor is not None
+                    and (type(cursor) is not str or len(cursor) > 1024)
+                )
             ):
                 raise HostLogDenied("log_unavailable")
-            after = 0
-            if cursor is not None:
-                binding = self._cursors.get(cursor)
-                if binding is None or binding[:2] != (tenant, source_generations):
-                    raise HostLogDenied("log_unavailable")
-                after = binding[2]
-            rows = self._records.get(tenant, ())
-            gap = bool(rows and after < rows[0][0] - 1)
-            selected = [
-                (sequence, record)
-                for sequence, record in rows
-                if sequence > after and record.host_instance in source_generations
-            ][:limit]
-            next_sequence = selected[-1][0] if selected else after
-            opaque = secrets.token_urlsafe(24)
-            self._cursors[opaque] = (tenant, source_generations, next_sequence)
-            if len(self._cursors) > 4096:
-                self._cursors.popitem(last=False)
-            return HostLogBatch(tuple(record for _, record in selected), opaque, gap)
+            codec = ReplayCursor(
+                self._cursor_key, workspace, tenant, source_generations
+            )
+            anchor = codec.decode(cursor) if cursor is not None else None
+            found = anchor is None
+            selected: list[HostLogRecord] = []
+            last = anchor
+            gap = False
+            seen: set[str] = set()
+            for record, position in retained_records(self._directory, self.workspace):
+                if (
+                    record.tenant != tenant
+                    or record.host_instance not in source_generations
+                ):
+                    continue
+                if record.host_instance not in seen:
+                    gap = gap or (anchor is None and record.sequence > 1)
+                    seen.add(record.host_instance)
+                if not found:
+                    found = position == anchor
+                    continue
+                if len(selected) < limit:
+                    selected.append(record)
+                    last = position
+            if not found:
+                raise HostLogRetentionGap("retention_gap")
+            return HostLogBatch(
+                tuple(selected), codec.encode(last) if last else None, gap
+            )
 
     def close(self) -> None:
         """Close only this sink's descriptor; borrowed callers must not close it."""
@@ -260,7 +279,6 @@ class WorkspaceLogSink:
             if not self._closed:
                 os.close(self._directory)
                 self._closed = True
-                self._records.clear()
-                self._cursors.clear()
+                self._sequences.clear()
         finally:
             self._lock.release()

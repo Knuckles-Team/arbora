@@ -5,7 +5,7 @@ import asyncio
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
-from graph_os.agent_host.log_access import HostLogAccess
+from graph_os.agent_host.log_access import HostLogAccess, HostLogRetentionGap
 from graph_os.identity.engine import IdentityUnavailable
 
 
@@ -63,6 +63,8 @@ def register_host_log_routes(app: FastAPI, access: HostLogAccess | None) -> None
                     cursor=body.cursor,
                     limit=body.limit,
                 )
+        except HostLogRetentionGap:
+            raise HTTPException(409, "retention_gap") from None
         except PermissionError:
             raise HTTPException(403, "workspace_denied") from None
         except (IdentityUnavailable, TimeoutError):

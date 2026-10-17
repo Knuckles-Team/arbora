@@ -175,7 +175,9 @@
     "GRAPHOS-HOST-R009.7",
     "GRAPHOS-HOST-R009.8",
     "GRAPHOS-HOST-R009.8.1",
-    "GRAPHOS-HOST-R009.8.2"
+    "GRAPHOS-HOST-R009.8.2",
+    "GRAPHOS-HOST-R009.8.2.1",
+    "GRAPHOS-HOST-R009.8.2.2"
   ],
   "requirements": [
     {
@@ -1693,6 +1695,29 @@
     {
       "id": "GRAPHOS-HOST-R009.8.2",
       "title": "Retain restart acceptance",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-HOST-R009.8.2.1",
+        "GRAPHOS-HOST-R009.8.2.2"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R009.8.2.1",
+      "title": "Replay retained host files after restart",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "80f6b7b53f91",
+        "c7208d7d3822"
+      ],
+      "verified_by": [
+        "tests/agent_host/test_log_replay.py:2"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R009.8.2.2",
+      "title": "Complete consumer metadata presentation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
