@@ -137,6 +137,34 @@ def _attach_fleet_runtime(mcp: Any, fleet_catalog_reader: Any) -> Any:
         ) from exc
 
 
+def _served_invocation() -> tuple[HostedInvocation | None, Any]:
+    """Compose the operation-invoke API when an engine endpoint is configured.
+
+    The process authority is minted first because the invoke runtime's service
+    principal and scopes are that authority's. Without ``GRAPH_SERVICE_ENDPOINTS``
+    the process has no engine and mounts no operation-invoke API.
+    """
+    from graph_os.core.settings import runtime_config
+
+    if not runtime_config.graph_service_endpoints:
+        return None, None
+    from graph_os.a2a import mcp as a2a_mcp
+    from graph_os.mcp_server.backing.server_factory import create_mcp_parser
+    from graph_os.mcp_server.served_invocation import (
+        refused_fleet_effect,
+        served_invocation_from_settings,
+    )
+
+    args, _unknown = create_mcp_parser().parse_known_args()
+    session = runtime._mint_process_session(str(getattr(args, "transport", "stdio")))
+    invocation = served_invocation_from_settings(
+        process_session=lambda: session,
+        bindings={"a2a": a2a_mcp._service()},
+        fleet_effect=refused_fleet_effect,
+    )
+    return invocation, session
+
+
 def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
     """``graph-os`` MCP server entry point (registered as console_scripts).
 
@@ -150,6 +178,9 @@ def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
     from graph_os.core.settings import load_config
 
     load_config()  # resolve settings through the one shared XDG config.json
+    early_session = None
+    if invocation is None:
+        invocation, early_session = _served_invocation()
     if invocation is None:
         install_gateway_application()
     else:
@@ -204,7 +235,7 @@ def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
     port = int(getattr(args, "port", 8000))
     network_serving = build_network_serving_config(args)
 
-    bootstrap_session = runtime._mint_process_session(transport)
+    bootstrap_session = early_session or runtime._mint_process_session(transport)
     runtime._PROCESS_SESSION = bootstrap_session if transport == "stdio" else None
     runtime.set_process_session(runtime._PROCESS_SESSION)
     runtime._start_process_authority_supervisor(bootstrap_session)

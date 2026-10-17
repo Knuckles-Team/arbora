@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import importlib.resources
 import json
@@ -12,6 +13,26 @@ from typing import Any
 from pydantic import BaseModel
 
 from .spec import EgSchemaRef, OpSpec
+
+
+def _contract_document(path: str) -> tuple[Any, str]:
+    """One contract schema document and its canonical digest.
+
+    Every generated method binding names a pointer into one of a few shared
+    documents; parsing and hashing each document once per file version keeps
+    registry digest and admission linear in the operation count. A changed
+    file (size or modification time) is read again.
+    """
+    stat = Path(path).stat()
+    return _read_contract_document(path, stat.st_mtime_ns, stat.st_size)
+
+
+@functools.lru_cache(maxsize=64)
+def _read_contract_document(path: str, mtime_ns: int, size: int) -> tuple[Any, str]:
+    del mtime_ns, size  # cache key only
+    document = json.loads(Path(path).read_bytes())
+    content = json.dumps(document, sort_keys=True, separators=(",", ":")).encode()
+    return document, hashlib.sha256(content).hexdigest()
 
 
 def _eg_schema(model: EgSchemaRef, contract_root: Path | None) -> dict[str, str]:
@@ -27,18 +48,14 @@ def _eg_schema(model: EgSchemaRef, contract_root: Path | None) -> dict[str, str]
     root = contract_root or Path(
         str(importlib.resources.files("epistemic_graph") / "contract")
     )
-    document = json.loads((root / relative).read_bytes())
+    document, digest = _contract_document(str(root / relative))
     selected: Any = document
     for segment in pointer.lstrip("/").split("/"):
         segment = segment.replace("~1", "/").replace("~0", "~")
         if not isinstance(selected, dict) or segment not in selected:
             raise ValueError(f"missing EG schema pointer: {model.path!r}")
         selected = selected[segment]
-    content = json.dumps(document, sort_keys=True, separators=(",", ":")).encode()
-    return {
-        "eg_schema": model.path,
-        "schema_sha256": hashlib.sha256(content).hexdigest(),
-    }
+    return {"eg_schema": model.path, "schema_sha256": digest}
 
 
 def _schema(
