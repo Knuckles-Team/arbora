@@ -126,7 +126,7 @@
     },
     {
       "id": "GRAPHOS-IDENTITY-R002.1",
-      "title": "GraphOS owns the scope registry generated from EG `scopes.json`",
+      "title": "Arbora owns the scope registry generated from EG `scopes.json`",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "9e7f6499d96f"
@@ -727,7 +727,7 @@
     },
     {
       "id": "GRAPHOS-IDENTITY-R016.1",
-      "title": "Graph-os-side mail capability model",
+      "title": "Arbora-side mail capability model",
       "delivery_state": "LANDED",
       "landed_in": [
         "adf48206cdff"
@@ -1068,7 +1068,7 @@
     },
     {
       "id": "GRAPHOS-IDENTITY-R026.8",
-      "title": "GRAPHOS:16 GraphOS definition slice",
+      "title": "ARBORA:16 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
