@@ -41,7 +41,6 @@ from typing import Any
 from agent_utilities.security.error_surface import public_error_payload
 from pydantic import Field
 
-from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 
 
@@ -103,19 +102,6 @@ def register_audit_tools(mcp: Any) -> None:
                     }
                 )
             return json.dumps(_for_target(target_id), default=str)
-        if action == "lineage":
-            if not fragment_id:
-                return json.dumps(
-                    {
-                        "surface": "audit",
-                        "action": action,
-                        "error": "fragment_id required for lineage",
-                    }
-                )
-            return json.dumps(
-                _lineage(fragment_id, claim=claim, content_hash=content_hash),
-                default=str,
-            )
         return json.dumps(
             {
                 "surface": "audit",
@@ -176,8 +162,3 @@ def _for_target(target_id: str) -> dict[str, Any]:
     orch = Orchestrator(engine)
     result = orch.get_tool_calls_for_target(target_id)
     return {"surface": "audit", "action": "for_target", **result}
-
-
-def _lineage(fragment_id: str, *, claim: str, content_hash: str) -> dict[str, Any]:
-    """Source-to-claim lineage for one cited fragment (CONCEPT:AU-KG.retrieval.source-to-claim-lineage)."""
-    raise not_served("knowledge_graph.retrieval.lineage", "EG-FEDERATED-QUERY-R653")

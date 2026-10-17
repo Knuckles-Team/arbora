@@ -51,9 +51,7 @@ def test_two_contenders_cannot_both_enter_intake(monkeypatch):
             item_id,
             {
                 "kind": kwargs["kind"],
-                "queue": kwargs["queue"],
-                "tenant": kwargs["tenant"],
-                "metadata": kwargs["metadata"],
+                "metadata": {**kwargs["metadata"], "queue": kwargs["queue"]},
             },
         )
         return item_id, len(submit_calls) == 1
@@ -69,7 +67,6 @@ def test_two_contenders_cannot_both_enter_intake(monkeypatch):
                 return None
             owner = token
             return {
-                "_native": True,
                 "tenant": "test-tenant",
                 "lease_owner": token,
                 "lease_epoch": 1,
@@ -117,7 +114,6 @@ def test_lost_renewal_stops_the_listener(monkeypatch):
         platform="telegram",
         item_id="workitem:messaging-intake:test",
         claim={
-            "_native": True,
             "tenant": "test-tenant",
             "lease_owner": "owner",
             "lease_epoch": 1,
@@ -153,7 +149,6 @@ def test_renewal_worker_inherits_ambient_graph_session(monkeypatch):
         platform="telegram",
         item_id="workitem:messaging-intake:test",
         claim={
-            "_native": True,
             "tenant": "test-tenant",
             "lease_owner": "owner",
             "lease_epoch": 1,
@@ -215,7 +210,6 @@ def test_one_platform_lease_loss_leaves_other_platform_serving(monkeypatch):
         platform="mattermost",
         item_id="workitem:messaging-intake:mattermost",
         claim={
-            "_native": True,
             "tenant": "test-tenant",
             "lease_owner": "owner-mm",
             "lease_epoch": 1,
@@ -227,7 +221,6 @@ def test_one_platform_lease_loss_leaves_other_platform_serving(monkeypatch):
         platform="telegram",
         item_id="workitem:messaging-intake:telegram",
         claim={
-            "_native": True,
             "tenant": "test-tenant",
             "lease_owner": "owner-tg",
             "lease_epoch": 1,

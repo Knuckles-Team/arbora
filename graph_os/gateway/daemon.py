@@ -230,7 +230,7 @@ def refresh_process_identity(session: Any) -> Any:
     return session
 
 
-def start_host_daemon(*, defer_background_start: bool = False) -> Any:
+def start_host_daemon() -> Any:
     """Start (once) the single consolidated KG daemon in this gateway process.
 
     Forces ``KG_DAEMON_ROLE=host`` so constructing the engine launches the

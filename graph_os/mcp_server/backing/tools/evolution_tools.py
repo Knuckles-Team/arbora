@@ -52,17 +52,9 @@ def register_evolution_tools(mcp: Any) -> None:
         limit: int = Field(
             default=20, description="Bounded result/materialization limit."
         ),
-        synthesize: bool = Field(
-            default=False,
-            description="Synthesize synergy proposals during assimilation.",
-        ),
         force: bool = Field(
             default=False,
             description="Re-run assimilation even when its watermark is unchanged.",
-        ),
-        draft: bool = Field(
-            default=False,
-            description="Render reviewable skill drafts while distilling.",
         ),
     ) -> str:
         engine = runtime._get_engine()

@@ -3209,32 +3209,12 @@ def register_query_tools(mcp):
                 "verdict."
             ),
         ),
-        answer_id: str = Field(
-            default="",
-            description="action=synthesize — node id of the gold answer entity to build the task around.",
-        ),
         hops: int = Field(
             default=2, description="action=synthesize — evidence-graph BFS depth."
         ),
         fanout: int = Field(
             default=8,
             description="action=synthesize — max neighbors expanded per node.",
-        ),
-        min_trust: float = Field(
-            default=0.0,
-            description="action=synthesize — drop facts whose source_trust is below this.",
-        ),
-        max_per_source: int = Field(
-            default=1,
-            description="action=synthesize — max clues allowed to share one evidence source before co-coverage trips.",
-        ),
-        root_popularity: float = Field(
-            default=0.0,
-            description="action=synthesize — 0..1 familiarity of the answer entity (high → prior-binding risk).",
-        ),
-        trajectories: str = Field(
-            default="",
-            description='action=diagnose — JSON list of trajectories: [{"steps":[{"kind","observation","model_text"}],"answer_aliases":[...]}].',
         ),
     ) -> str:
         """Shortcut-resistant search-task synthesis and realized-difficulty diagnosis."""

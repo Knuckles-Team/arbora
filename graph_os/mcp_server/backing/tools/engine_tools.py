@@ -209,18 +209,6 @@ ENGINE_DOMAINS: dict[str, list[str]] = _discover_domains()
 _DEFAULT_GRAPH_POOL_KEY = "__default__"
 
 
-def _client_factory(pool_key: str) -> Any:
-    """Return a non-owning process-client view for one pool key.
-
-    ``pool_key`` is the opaque cache key used by :func:`_client_for` (never
-    empty — see :data:`_DEFAULT_GRAPH_POOL_KEY`); it is translated back to the
-    real ``graph`` argument (``None`` for the deployment default). The first
-    access acquires the one :class:`GraphComputeEngine` authority; subsequent
-    graph keys are zero-connection views over that same transport.
-    """
-    raise not_served("knowledge_graph.core.graph_compute", "EG-PLACEMENT-R611")
-
-
 def _client_evict(pool_key: str, client: Any) -> None:
     """Discard a graph view without closing the process transport."""
     del pool_key, client

@@ -153,9 +153,7 @@ def _ontology_interface_lint(reg: Any, registry: str) -> str:
     raise not_served("knowledge_graph.ontology.style_lint", "EG-TYPED-PACKS-R651")
 
 
-def _ontology_interface_explain_routing(
-    entity_id: str, required_capability_type: str, tenant: str, policy_tags: str
-) -> str:
+def _ontology_interface_explain_routing() -> str:
     raise not_served(
         "graph.routing.enrichers.capability_routing", "EG-DECISION-ENGINE-R035.750"
     )
@@ -636,9 +634,7 @@ class _ObjectEditsRecordArgs:
     expect: dict
 
 
-def _object_edits_compare_and_set(
-    ledger: Any, object_id: str, conditions: dict, props: dict, actor: str, etype: Any
-) -> str:
+def _object_edits_compare_and_set() -> str:
     # CONCEPT:AU-KG.ontology.optimistic-concurrency-object-property — atomic
     # optimistic-concurrency property set. The object id IS the node id (the
     # ledger persists the edit's target as MERGE (t {id: object_id})), so we
@@ -864,23 +860,9 @@ def register_ontology_tools(mcp):
             default="",
             description="Candidate tool/agent node id (action='explain_routing_eligibility').",
         ),
-        required_capability_type: str = Field(
-            default="",
-            description=(
-                "Required ontology capability type, e.g. 'TransportCapability' "
-                "(action='explain_routing_eligibility')."
-            ),
-        ),
         tenant: str = Field(
             default="",
             description="Required tenant scope, if any (action='explain_routing_eligibility').",
-        ),
-        policy_tags: str = Field(
-            default="",
-            description=(
-                "Comma-separated required policy tags, if any "
-                "(action='explain_routing_eligibility')."
-            ),
         ),
     ) -> str:
         """Resolve interface targeting, check conformance, emit interface OWL/SHACL, or explain
@@ -1358,10 +1340,6 @@ def register_ontology_tools(mcp):
             default="status",
             description="'status' (progress for a drain_id) or 'list' (registered chunked sources).",
         ),
-        drain_id: str = Field(
-            default="",
-            description="The drain handle returned by source_sync(mode='full') (for action='status').",
-        ),
     ) -> str:
         """Report progress of a chunked drain or list chunked-drain-capable sources."""
         raise not_served("knowledge_graph.core.chunked_drain", "EG-INGEST-WORKER-R605")
@@ -1739,9 +1717,6 @@ def register_ontology_tools(mcp):
             default="materialize",
             description="'types' to list link types, or 'materialize' a junction.",
         ),
-        link_name: str = Field(
-            default="", description="The junction link type name, e.g. 'agent_skill'."
-        ),
         source_id: str = Field(default="", description="Source endpoint node id."),
         target_id: str = Field(default="", description="Target endpoint node id."),
         properties: str = Field(
@@ -1889,18 +1864,11 @@ def register_ontology_tools(mcp):
             default="restricted_view",
             description="'redact' one object | 'restricted_view' an object set | 'mark' attach a marking.",
         ),
-        objects_json: str = Field(
-            default="[]", description="JSON list of object dicts (restricted_view)."
-        ),
         object_json: str = Field(
             default="{}", description="JSON object dict (redact)."
         ),
         node_id: str = Field(default="", description="Node id (action='mark')."),
         marking: str = Field(default="", description="Marking name (action='mark')."),
-        mask: bool = Field(
-            default=False,
-            description="Mask withheld properties instead of dropping them.",
-        ),
     ) -> str:
         """Redact / restrict / mark objects for the AMBIENT actor (no spoofable clearance)."""
         raise not_served(
@@ -2041,9 +2009,6 @@ def register_ontology_tools(mcp):
             default="", description="Optional pre-extracted text (OCR/external)."
         ),
         source: str = Field(default="", description="Provenance label (path/URL)."),
-        chunk_size: int = Field(
-            default=800, description="Target chunk size in characters."
-        ),
         overlap: int = Field(
             default=120, description="Overlap characters between chunks."
         ),
@@ -2100,10 +2065,6 @@ def register_ontology_tools(mcp):
         contextual: bool = Field(
             default=True,
             description="Enable contextual-retrieval enrichment (CONCEPT:AU-KG.enrichment.contextual-retrieval-enrichment).",
-        ),
-        incremental: bool = Field(
-            default=True,
-            description="Use the connector's resumable poll (CONCEPT:AU-ECO.connector.incremental-poll-watermark) vs a full load.",
         ),
     ) -> str:
         """List or run a document-source connector (CONCEPT:AU-ECO.connector.document-source-framework–4.29)."""

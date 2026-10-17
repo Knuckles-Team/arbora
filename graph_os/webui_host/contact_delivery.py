@@ -18,7 +18,6 @@ from typing import TYPE_CHECKING, Any
 from agent_utilities.messaging.service import MessagingService
 from agent_utilities.security.persistence_privacy import persistence_reference
 
-from graph_os.api.errors import not_served
 from graph_os.webui_host.contact_governance import (
     ContactDeliveryContext,
     allow_shared_attempt,
@@ -241,9 +240,11 @@ class WebUIContactDelivery:
 
 
 def build_webui_contact_delivery(
-    sync_runner: SyncRunner,
+    sync_runner: SyncRunner, engine: Any | None = None
 ) -> WebUIContactDelivery | None:
-    """Build only when the server has a valid delivery-only contact policy."""
+    """Build only with an engine client and a delivery-only contact policy."""
+    if engine is None:
+        return None
     from agent_webui.contact_delivery import load_contact_delivery_config
 
     config = load_contact_delivery_config()
@@ -253,4 +254,6 @@ def build_webui_contact_delivery(
         or destination_parts(config.destination) is None
     ):
         return None
-    raise not_served("knowledge_graph.core.engine", "EG-PLACEMENT-R611")
+    return WebUIContactDelivery(
+        engine, fixed_destination=config.destination, sync_runner=sync_runner
+    )

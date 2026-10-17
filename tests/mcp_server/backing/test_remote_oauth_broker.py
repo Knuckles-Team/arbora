@@ -21,6 +21,8 @@ import json
 import logging
 import threading
 import time
+from collections.abc import Callable
+from typing import Any
 
 import httpx
 import pytest
@@ -88,7 +90,7 @@ def unauthenticated_actor() -> ActorContext:
 
 
 def enabled_provider(**overrides) -> ProviderDescriptor:
-    fields = dict(
+    fields: dict[str, Any] = dict(
         provider_id="acme",
         resource_url=RESOURCE_URL,
         client_id="broker-public-client",
@@ -103,7 +105,7 @@ def enabled_provider(**overrides) -> ProviderDescriptor:
 def dcr_provider(**overrides) -> ProviderDescriptor:
     """A provider opted into RFC 7591 dynamic client registration (no
     pre-registered ``client_id``)."""
-    fields = dict(
+    fields: dict[str, Any] = dict(
         provider_id="acme-dcr",
         resource_url=RESOURCE_URL,
         dynamic_client_registration=True,
@@ -183,7 +185,7 @@ def happy_path_handler(request: httpx.Request) -> httpx.Response:
     return httpx.Response(404)
 
 
-def client_factory_for(handler) -> callable:
+def client_factory_for(handler) -> Callable[[], httpx.Client]:
     def _factory() -> httpx.Client:
         return httpx.Client(
             transport=httpx.MockTransport(handler), follow_redirects=False

@@ -16,14 +16,6 @@ from graph_os.mcp_server import runtime
 _WORKFLOW_TASKS: dict[str, asyncio.Task[Any]] = {}
 
 
-def _workflow_gate(engine: Any, name: str) -> dict[str, Any]:
-    raise not_served(
-        "knowledge_graph.core.workflow_gate",
-        "AU-harness (deleted from AU)",
-        owner="agent-utilities",
-    )
-
-
 def _gate_denial(name: str, gate: dict[str, Any]) -> str:
     return json.dumps(
         {
@@ -65,10 +57,6 @@ async def _compile_process_workflow(engine: Any, workflow: str, name: str) -> st
     raise not_served("knowledge_graph.process_plan_compiler", "EG-CQ-ORCH-R700")
 
 
-async def _list_workflows(engine: Any, limit: int) -> str:
-    raise not_served("knowledge_graph.workflow_store", "EG-CQ-ORCH-R700")
-
-
 async def _execute_or_dispatch_workflow(
     action: str,
     orchestrator: Any,
@@ -83,33 +71,6 @@ async def _execute_or_dispatch_workflow(
     dynamic_fallback: str,
     workflow_run_id: str,
 ) -> str:
-    if action in {"execute", "execute_dynamic", "dispatch"}:
-        if not workflow:
-            raise ValueError("workflow is required")
-        gate = await asyncio.to_thread(_workflow_gate, engine, workflow)
-        if gate.get("allowed") is not True:
-            return _gate_denial(workflow, gate)
-
-        if action == "execute":
-            return await _execute_workflow(
-                orchestrator, engine, workflow, task, max_steps
-            )
-
-        if action == "execute_dynamic":
-            dynamic_result = await orchestrator.execute_dynamic_workflow(
-                workflow_id=workflow,
-                task=task,
-                max_steps=max_steps,
-                max_agent_calls=max_agent_calls,
-                max_concurrency=max_concurrency,
-                budget_tokens=budget_tokens,
-                model_class=model_class,
-                unavailable_fallback=dynamic_fallback,
-                workflow_run_id=workflow_run_id or None,
-            )
-            return await _with_mermaid(dynamic_result, engine, workflow)
-
-        return await _dispatch_workflow(engine, workflow, task)
 
     raise ValueError(f"unsupported workflow execution action: {action}")
 
@@ -265,9 +226,6 @@ def register_workflow_tools(mcp: Any) -> None:
 
             if action == "compile_process":
                 return await _compile_process_workflow(engine, workflow, name)
-
-            if action == "list":
-                return await _list_workflows(engine, limit)
 
             if action in {"execute", "execute_dynamic", "dispatch"}:
                 return await _execute_or_dispatch_workflow(

@@ -2032,9 +2032,7 @@ def _conformance_inputs(params: dict) -> dict[str, Any]:
     }
 
 
-def _conformance_commit(
-    inputs: dict[str, Any], run: Any, deviations: Any
-) -> dict[str, Any]:
+def _conformance_commit() -> dict[str, Any]:
     """Commit one ``ConformanceRun`` (+ its Deviations) as a tenant-scoped slice."""
     raise not_served("knowledge_graph.ingestion.envelope_ingest", "EG-REPO-INGEST-R002")
 

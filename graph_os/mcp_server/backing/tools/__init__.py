@@ -9,13 +9,11 @@ from graph_os.mcp_server.backing.tools.agent_execution_tools import (
 )
 from graph_os.mcp_server.backing.tools.analysis_tools import register_analysis_tools
 from graph_os.mcp_server.backing.tools.analyze_suite import register_analyze_suite_tools
-from graph_os.mcp_server.backing.tools.argument_tools import register_argument_tools
 from graph_os.mcp_server.backing.tools.audit_tools import register_audit_tools
 from graph_os.mcp_server.backing.tools.bus_tools import register_bus_tools
 from graph_os.mcp_server.backing.tools.candidate_claim_tools import (
     register_candidate_claim_tools,
 )
-from graph_os.mcp_server.backing.tools.claim_tools import register_claim_tools
 from graph_os.mcp_server.backing.tools.compliance_tools import register_compliance_tools
 from graph_os.mcp_server.backing.tools.config_tools import register_config_tools
 from graph_os.mcp_server.backing.tools.data_prep_tools import register_data_prep_tools
@@ -28,9 +26,6 @@ from graph_os.mcp_server.backing.tools.engine_tools import register_engine_tools
 from graph_os.mcp_server.backing.tools.epistemic_tools import register_epistemic_tools
 from graph_os.mcp_server.backing.tools.evolution_tools import register_evolution_tools
 from graph_os.mcp_server.backing.tools.governance_tools import register_governance_tools
-from graph_os.mcp_server.backing.tools.graph_engineering_tools import (
-    register_graph_engineering_tools,
-)
 from graph_os.mcp_server.backing.tools.incident_tools import register_incident_tools
 from graph_os.mcp_server.backing.tools.job_tools import register_job_tools
 from graph_os.mcp_server.backing.tools.mcp_apps import register_mcp_apps_tools
@@ -55,7 +50,6 @@ __all__ = [
     "register_reach_tools",
     "register_bus_tools",
     "register_candidate_claim_tools",
-    "register_claim_tools",
     "register_secret_tools",
     "register_engine_tools",
     "register_domain_ops_tools",
@@ -71,7 +65,5 @@ __all__ = [
     "register_config_tools",
     "register_data_prep_tools",
     "register_workflow_tools",
-    "register_argument_tools",
-    "register_graph_engineering_tools",
     "register_durable_tools",
 ]

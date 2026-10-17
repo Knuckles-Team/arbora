@@ -9,7 +9,6 @@ from typing import Any
 from agent_utilities.security.error_surface import public_error_text
 from pydantic import BaseModel, Field
 
-from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 
 logger = logging.getLogger(__name__)
@@ -172,53 +171,6 @@ def _create_reasoning_agent(output_type: type, system_prompt: str) -> Any:
         return None
 
 
-async def _run_reasoning_topology(
-    engine: Any,
-    *,
-    topology: str,
-    task: str,
-    num_samples: int,
-    loop_budget: int,
-    branching_factor: int = 3,
-    beam_width: int = 3,
-    max_depth: int = 5,
-) -> dict[str, Any]:
-    """Run a real :mod:`agent_utilities.graph.reasoning` topology over ``task``.
-
-    CONCEPT:AU-ORCH.planning.reasoning-graph-topologies — the live entry point
-    the reasoning-topology package lacked (built + unit-tested, zero live
-    callers). Drives the real ``run_cot``/``run_self_consistent_cot``/``run_tot``
-    entry points with an LLM-backed step/expansion function
-    (:func:`_reasoning_step_fn`/:func:`_tot_functions`), then registers/updates
-    the run as a versioned, graph-addressable topology resource through
-    :mod:`agent_utilities.graph.reasoning.topology`'s own API
-    (:func:`~.topology.register_topology`, :func:`~.topology.
-    record_topology_outcome`) — the SAME best-effort, engine-optional pattern
-    :class:`agent_utilities.graph.topology_engine.TopologyEngine` already uses
-    for team-composition topologies, reused here rather than reimplemented.
-
-    ``topology in {"tot_bfs", "tot_dfs"}`` runs Tree-of-Thought (D-5.3-5.6-3):
-    unlike CoT's single linear chain, each expanded node fans out to up to
-    ``branching_factor`` candidate next-thoughts in ONE LLM call
-    (:class:`ToTGenerateOutput`), each self-scored and self-judged for
-    goal-completion by the SAME call — never a separate round-trip per child.
-    """
-    raise not_served("graph.reasoning", "EG-DECISION-ENGINE-R750")
-
-
-async def _run_swarm(
-    engine: Any,
-    task: str,
-    *,
-    context: str,
-    context_ref: str,
-    max_fan_out: int,
-) -> dict[str, Any]:
-    raise not_served(
-        "graph.parallel_engine", "AU-harness (deleted from AU)", owner="agent-utilities"
-    )
-
-
 def register_agent_execution_tools(mcp: Any) -> None:
     """Register focused multi-agent execution capabilities."""
 
@@ -247,7 +199,6 @@ def register_agent_execution_tools(mcp: Any) -> None:
         context_ref: str = Field(
             default="", description="Persisted ContextBlob id for the swarm."
         ),
-        max_fan_out: int = Field(default=5, ge=1),
         max_steps: int = Field(default=30, ge=1),
         host: str = Field(default="", description="Computer-use inventory host alias."),
         container_id: str = Field(
@@ -263,20 +214,10 @@ def register_agent_execution_tools(mcp: Any) -> None:
                 "reason only: 'cot' | 'self_consistent_cot' | 'tot_bfs' | 'tot_dfs'."
             ),
         ),
-        num_samples: int = Field(
-            default=3,
-            ge=1,
-            description="reason only: self_consistent_cot sample count.",
-        ),
         branching_factor: int = Field(
             default=3,
             ge=1,
             description="reason(tot_bfs|tot_dfs) only: candidate next-thoughts per expansion.",
-        ),
-        beam_width: int = Field(
-            default=3,
-            ge=1,
-            description="reason(tot_bfs|tot_dfs) only: frontier survivors kept per expansion.",
         ),
         max_depth: int = Field(
             default=5,
@@ -288,48 +229,6 @@ def register_agent_execution_tools(mcp: Any) -> None:
         if engine is None:
             return "Error: IntelligenceGraphEngine not active."
         try:
-            if action == "swarm":
-                if not task:
-                    raise ValueError("task is required for swarm")
-                return json.dumps(
-                    await _run_swarm(
-                        engine,
-                        task,
-                        context=context,
-                        context_ref=context_ref,
-                        max_fan_out=max_fan_out,
-                    ),
-                    default=str,
-                )
-
-            if action == "reason":
-                if not task:
-                    raise ValueError("task is required for reason")
-                topology_norm = (topology or "cot").strip().lower()
-                if topology_norm not in {
-                    "cot",
-                    "self_consistent_cot",
-                    "tot_bfs",
-                    "tot_dfs",
-                }:
-                    raise ValueError(
-                        f"unknown topology {topology_norm!r} for reason; choose "
-                        "'cot', 'self_consistent_cot', 'tot_bfs', or 'tot_dfs'"
-                    )
-                return json.dumps(
-                    await _run_reasoning_topology(
-                        engine,
-                        topology=topology_norm,
-                        task=task,
-                        num_samples=num_samples,
-                        branching_factor=branching_factor,
-                        beam_width=beam_width,
-                        max_depth=max_depth,
-                        loop_budget=max_steps,
-                    ),
-                    default=str,
-                )
-
             if action == "computer_use":
                 from agent_utilities.orchestration.computer_use_agent import (
                     provision_and_run_computer_use,

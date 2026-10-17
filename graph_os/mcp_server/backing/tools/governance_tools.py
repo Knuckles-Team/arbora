@@ -10,7 +10,6 @@ from agent_utilities.core.event_loop import run_blocking_ordered
 from agent_utilities.security.error_surface import public_error_text
 from pydantic import Field
 
-from graph_os.api.errors import not_served
 from graph_os.mcp_server import runtime
 
 
@@ -162,25 +161,6 @@ def _execute_governance_action(
     apply: bool,
 ) -> str:
     try:
-        if action == "ownership_report":
-            return json.dumps(_ownership_report(), default=str)
-
-        if action == "ownership_apply":
-            return json.dumps(_ownership_apply(), default=str)
-
-        if action == "claim_ownership":
-            return json.dumps(
-                _claim_ownership(
-                    engine,
-                    node_types_json=node_types_json,
-                    node_ids_json=node_ids_json,
-                    owner_id=owner_id,
-                    shared_scope=shared_scope,
-                    apply=apply,
-                ),
-                default=str,
-            )
-
         if action == "grant_approval":
             from agent_utilities.orchestration.approval import decide_action_approval
 
@@ -257,62 +237,6 @@ def _execute_governance_action(
         raise
     except Exception as exc:
         return public_error_text(exc)
-
-
-def _ownership_report() -> dict[str, Any]:
-    """The W2.8 per-graph RBAC-ownership disposition report (read-only).
-
-    CONCEPT:AU-KG.audit.graph-ownership-disposition. Runs the SAME
-    ``build_ownership_report`` pass ``scripts/graph_ownership_report.py`` uses,
-    against the live engine catalog reached through the process-authority engine
-    (:class:`~agent_utilities.knowledge_graph.maintenance.graph_ownership.
-    LiveEngineCatalogClient` — the same one every graph-os tool shares). Never
-    fabricates a report against an unreachable catalog: an
-    :class:`EngineUnreachableError` surfaces as a structured error, not a fake
-    TEMPLATE stand-in (the TEMPLATE fixture stays a script/test-only device).
-    """
-    raise not_served("knowledge_graph.maintenance.graph_ownership", "EG-IDENTITY-R700")
-
-
-def _ownership_apply() -> dict[str, Any]:
-    """Preview (never apply) the UNAMBIGUOUS ownership grant plan + its rollback.
-
-    CONCEPT:AU-KG.audit.graph-ownership-disposition (HG-4). This network surface
-    ALWAYS runs the dry-run half of :func:`~agent_utilities.knowledge_graph.
-    maintenance.graph_ownership_apply.apply_plan` — it never issues a single
-    mutating RBAC call. The actual live apply is a human-gated CLI
-    (``scripts/apply_graph_ownership_grants.py --apply-unambiguous``), deliberately
-    not reachable from MCP/REST, matching the module's own PREPARE-ONLY discipline.
-    """
-
-    raise not_served("knowledge_graph.maintenance.graph_ownership", "EG-IDENTITY-R700")
-
-
-def _claim_ownership(
-    engine: Any,
-    *,
-    node_types_json: str,
-    node_ids_json: str,
-    owner_id: str,
-    shared_scope: str,
-    apply: bool,
-) -> dict[str, Any]:
-    """GOC-61 admin ownership-claim — dispatches into the ONE shared core
-    (:mod:`agent_utilities.knowledge_graph.core.ownership_claim`) that both this
-    MCP tool and its automatic REST twin (``/graph/governance``,
-    ``runtime.ACTION_TOOL_ROUTES``) run through. ``apply=False`` (the
-    default) is a read-only dry-run preview grouped by node_type, showing the
-    owner-to-be per group; ``apply=True`` requires kg:admin and actually
-    mutates, claiming ONLY nodes verified unowned immediately before the
-    write. ``owner_id`` is required for BOTH modes — see that module's
-    docstring for the full invariant list (never reassigns an already-owned
-    node, owner_id always explicit and never a default, ``Concept`` cannot be
-    swept by node_type, never blind/unselective, real counts, idempotent) and
-    ``decisions/GOC-61-unowned-node-disposition.md`` for the authorized
-    disposition this implements.
-    """
-
-    raise not_served("knowledge_graph.core.ownership_claim", "EG-IDENTITY-R610")
 
 
 def _policy_status() -> dict[str, Any]:

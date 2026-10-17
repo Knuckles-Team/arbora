@@ -100,7 +100,7 @@ ROUTING_GROUPS: tuple[RoutingGroup, ...] = (
     _group(
         "reason",
         "Claims, arguments, epistemic status, evaluation, analysis, quant models.",
-        "graph_claims graph_candidate_claims graph_argument graph_epistemic "
+        "graph_candidate_claims graph_epistemic "
         "graph_evaluate graph_analyze quant graph_domain_ops",
     ),
     _group(
@@ -240,7 +240,6 @@ def graphos_registrars() -> list[Any]:
         au_tools.register_reach_tools,
         au_tools.register_bus_tools,
         au_tools.register_candidate_claim_tools,
-        au_tools.register_claim_tools,
         au_tools.register_secret_tools,
         au_tools.register_config_tools,
         au_tools.register_data_prep_tools,
@@ -251,14 +250,12 @@ def graphos_registrars() -> list[Any]:
         au_tools.register_domain_ops_tools,
         au_tools.register_evolution_tools,
         au_tools.register_governance_tools,
-        au_tools.register_graph_engineering_tools,
         au_tools.register_audit_tools,
         au_tools.register_epistemic_tools,
         au_tools.register_incident_tools,
         au_tools.register_job_tools,
         au_tools.register_compliance_tools,
         au_tools.register_workflow_tools,
-        au_tools.register_argument_tools,
         au_tools.register_durable_tools,
     ]
 

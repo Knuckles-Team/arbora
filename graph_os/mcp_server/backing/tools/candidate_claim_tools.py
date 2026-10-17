@@ -112,14 +112,6 @@ def register_candidate_claim_tools(mcp):
                 "resolve to a real EvidenceSpan."
             ),
         ),
-        rounds: int = Field(
-            default=1,
-            description="'propose' only: number of extraction passes (each a different sampling seed).",
-        ),
-        dedup: bool = Field(
-            default=True,
-            description="'propose' only: suppress near-duplicate candidates found within this call.",
-        ),
         records_json: str = Field(
             default="[]",
             description=(

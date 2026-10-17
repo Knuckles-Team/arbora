@@ -1573,28 +1573,10 @@ def register_write_ingest_tools(mcp):
         tags=["graph-os", "feedback", "learning"],
     )
     async def graph_feedback(
-        correction_type: str = Field(
-            description=(
-                "outcome | rule | eval | reads_avoided | action_outcome | gotcha | "
-                "selective_erasure."
-            )
-        ),
         target_id: str = Field(
             description="Entity/episode/query the correction is about."
         ),
-        corrected_value: str = Field(
-            default="",
-            description="The corrected value (reward, expected output, etc.).",
-        ),
         reason: str = Field(default="", description="Why — the human's explanation."),
-        rule_scope: str = Field(
-            default="governance",
-            description="For rule corrections: governance | voice | source | preference.",
-        ),
-        rule_kind: str = Field(
-            default="forbid",
-            description="For rule corrections: forbid | prefer | demote.",
-        ),
         actor_id: str = Field(
             default="human", description="Who issued the correction."
         ),
@@ -1632,12 +1614,7 @@ def register_write_ingest_tools(mcp):
         ),
         tags=["graph-os", "skills", "ingest"],
     )
-    async def skill_classify(
-        skill_id: str = Field(
-            description="The skill's catalog id (skills[].id from /api/enhanced/tools)."
-        ),
-        skill_type: str = Field(description="skill | workflow | graph."),
-    ) -> str:
+    async def skill_classify() -> str:
         """Classify a skill and persist the choice (source file, else durable override)."""
         engine = runtime._get_engine()
         if not engine:
