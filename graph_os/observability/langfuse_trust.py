@@ -517,7 +517,7 @@ def _read_ca_bundle_payload(value: bytes | str | Path) -> bytes | None:
 
 
 def _parse_ca_bundle_certificates(payload: bytes) -> list[x509.Certificate]:
-    """Parse PEM certificate blocks; returns [] if the bundle is unparseable."""
+    """Parse PEM certificate blocks; returns [] if the bundle is unparsable."""
     blocks = _PEM_CERT_RE.findall(payload)
     try:
         with warnings.catch_warnings():

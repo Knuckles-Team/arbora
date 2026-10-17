@@ -74,7 +74,7 @@ def configure_standard_otel(*, service_name: str = "graph-os") -> bool:
         provider = TracerProvider(
             resource=Resource.create({"service.name": service_ref})
         )
-        provider.add_span_processor(BatchSpanProcessor(exporter))  # type: ignore[arg-type]
+        provider.add_span_processor(BatchSpanProcessor(exporter))
         trace.set_tracer_provider(provider)
         _provider = provider
         return True

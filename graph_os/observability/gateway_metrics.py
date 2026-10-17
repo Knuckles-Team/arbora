@@ -1322,3 +1322,17 @@ class GatewayMetricsMiddleware:
                 record_request_duration(duration)
             except Exception as e:  # noqa: BLE001 — feeds an in-memory trend sample only (record_request_duration is itself documented as must-never-affect-the-response-path); a dropped sample just thins one window's anomaly-detection density, the response and the histogram above are already recorded
                 logger.debug("gateway health sample failed: %s", e)
+
+
+async def metrics_endpoint() -> Any:
+    """The ``/metrics`` route body: gateway series plus the engine series."""
+    from starlette.responses import Response
+
+    body, content_type = await render_metrics_with_engine()
+    return Response(body, media_type=content_type)
+
+
+async def metrics_asgi_endpoint(request: Any) -> Any:
+    """The ``/metrics`` route for a plain Starlette application."""
+    del request
+    return await metrics_endpoint()

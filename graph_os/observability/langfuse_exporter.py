@@ -134,7 +134,7 @@ class LangfuseExporter:
             if not trust.valid:
                 logger.error("Langfuse exporter disabled: invalid CA bundle")
                 return None
-            from langfuse import Langfuse  # type: ignore[import-not-found]
+            from langfuse import Langfuse
             from opentelemetry.sdk.trace import TracerProvider
 
             kwargs: dict[str, Any] = {
