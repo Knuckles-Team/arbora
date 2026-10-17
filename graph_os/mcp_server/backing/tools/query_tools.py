@@ -12,16 +12,16 @@ import re
 from collections.abc import Callable, Sequence
 from typing import Any, Literal
 
-from pydantic import Field
-from pydantic.fields import FieldInfo
-
 from agent_utilities.core.event_loop import run_blocking_ordered
 from agent_utilities.knowledge_graph.orchestration.engine_query import (
     is_aggregation_cypher,
 )
-from graph_os.mcp_server.backing import kg_server
 from agent_utilities.models.evidence_bundle import EvidenceBundle
 from agent_utilities.security.error_surface import public_error_json, public_error_text
+from pydantic import Field
+from pydantic.fields import FieldInfo
+
+from graph_os.mcp_server.backing import kg_server
 
 logger = logging.getLogger(__name__)
 
@@ -693,6 +693,53 @@ def _prepare_uql_query(query: str) -> str:
     prepared = _embed_uql_rank_text("query", "uql", {"text": query})
     rewritten = prepared.get("text")
     return rewritten if isinstance(rewritten, str) else query
+
+
+def _refuse_nl_option(message: str, operation: str) -> EvidenceBundle:
+    """Typed refusal for a natural-language option the engine planner lacks."""
+    return EvidenceBundle.from_payload(
+        public_error_json(ValueError(message), code="invalid_request"),
+        operation=operation,
+    )
+
+
+def _engine_nl_query(text: str, *, limit: int, operation: str) -> EvidenceBundle:
+    """Answer ``text`` through epistemic-graph's NL planner, never a local one.
+
+    GraphOS has no natural-language planner of its own: the request goes
+    through the governed ``engine_query`` dispatch to EG
+    ``QueryClient.nl_query``, whose planner emits UQL that the engine executes
+    on its deterministic UQL pipeline (``GRAPHOS-HOST-R001.8``).
+    """
+    from graph_os.mcp_server.backing.tools import engine_tools
+
+    methods = set(engine_tools.ENGINE_DOMAINS.get("query", ()))
+    if "nl_query" not in methods:
+        return EvidenceBundle.from_payload(
+            public_error_json(
+                RuntimeError("the installed epistemic-graph has no nl_query planner"),
+                code="dependency_unavailable",
+            ),
+            operation=operation,
+        )
+    raw = engine_tools._dispatch(
+        "query", methods, "nl_query", json.dumps({"text": str(text)}), ""
+    )
+    decoded = json.loads(raw)
+    if isinstance(decoded, dict):
+        return EvidenceBundle.from_payload(raw, operation=operation)
+    rows = [row for row in decoded or [] if isinstance(row, dict)]
+    bounded = rows[: max(int(limit), 0)]
+    return EvidenceBundle.from_nl_query(
+        {
+            "request": str(text),
+            "planner": "epistemic-graph",
+            "dialect": "uql",
+            "results": bounded,
+            "row_count": len(bounded),
+            "citations": [str(row["id"]) for row in bounded if "id" in row],
+        }
+    )
 
 
 def _run_graph_query_uql_rows(
@@ -1512,10 +1559,11 @@ def _graph_search_compiled(
     # the live permissioning gate before returning citations + a proof graph —
     # replacing the plain relevance-sorted concat the shared formatter performs
     # for every other mode.
-    from graph_os.api.contracts.session import GraphSession
     from agent_utilities.knowledge_graph.retrieval.context_compiler import (  # noqa: E501
         ContextCompiler,
     )
+
+    from graph_os.api.contracts.session import GraphSession
 
     session = GraphSession.from_ambient()
     compiler = ContextCompiler(engine)
@@ -2148,10 +2196,11 @@ async def _catalog_sources() -> dict[str, Any]:
     ensures one malformed optional profile degrades only the ``sources`` leg.
     """
 
-    from graph_os.api.contracts.session import resolve_session
     from agent_utilities.knowledge_graph.core.source_catalog import (
         build_source_catalog,
     )
+
+    from graph_os.api.contracts.session import resolve_session
 
     # ``graph_catalog`` verifies this at its public boundary; retain the same
     # check here for direct in-process calls before touching the registry.
@@ -2643,16 +2692,12 @@ def register_query_tools(mcp):
     @mcp.tool(
         name="graph_ask",
         description=(
-            "CONCEPT:AU-KG.ingest.mirror-inbound — ask the Knowledge Graph in plain English. An LLM "
-            "translates your question (grounded in the live node-label + SQL-table "
-            "schema) into a single read-only query in the best dialect — Cypher over "
-            "the property graph, SQL over the KG + user tables, or SPARQL over the RDF "
-            "projection — then executes it through the matching engine surface. Returns "
-            "the GENERATED query (auditable), the result rows, and citations (the node/"
-            "source ids touched), so the answer is grounded and verifiable, not a black "
-            "box. Set execute=false to preview the query without running it; pin "
-            "dialect='cypher'|'sql'|'sparql' to force one (default 'auto' lets the model "
-            "choose)."
+            "CONCEPT:AU-KG.ingest.mirror-inbound — ask the Knowledge Graph in plain English. "
+            "epistemic-graph's own NL planner (EG QueryClient.nl_query) turns the question "
+            "into one UQL query and runs it on the engine's deterministic UQL pipeline; "
+            "GraphOS runs no local planner. Returns the result rows and citations (row ids). "
+            "dialect must be 'auto'; execute=false and include_epistemic=true are refused "
+            "because the engine planner returns rows only."
         ),
         tags=["graph-os", "query", "nl"],
     )
@@ -2680,25 +2725,23 @@ def register_query_tools(mcp):
             ),
         ),
     ) -> EvidenceBundle:
-        from agent_utilities.knowledge_graph.core.nl_query import nl_to_query
-
-        try:
-            engine = kg_server._get_engine()
-        except Exception as e:  # noqa: BLE001
-            return EvidenceBundle.from_payload(
-                public_error_json(e, code="dependency_unavailable"),
-                operation="graph_ask",
+        if str(dialect) != "auto":
+            return _refuse_nl_option(
+                "the engine NL planner always plans UQL; dialect must be 'auto'",
+                "graph_ask",
+            )
+        if not bool(execute):
+            return _refuse_nl_option(
+                "the engine NL planner returns rows only; preview is unavailable",
+                "graph_ask",
+            )
+        if bool(include_epistemic):
+            return _refuse_nl_option(
+                "epistemic envelopes are unavailable for engine-planned queries",
+                "graph_ask",
             )
         try:
-            result = nl_to_query(
-                engine,
-                str(question),
-                dialect=str(dialect),
-                execute=bool(execute),
-                limit=int(limit),
-                include_epistemic=bool(include_epistemic),
-            )
-            return EvidenceBundle.from_nl_query(result)
+            return _engine_nl_query(question, limit=limit, operation="graph_ask")
         except Exception as e:  # noqa: BLE001
             return EvidenceBundle.from_payload(
                 public_error_json(e), operation="graph_ask"
@@ -2712,18 +2755,13 @@ def register_query_tools(mcp):
     @mcp.tool(
         name="nl_query",
         description=(
-            "CONCEPT:AU-KG.query.ask-gateway-rest-twin — ask the Knowledge Graph in plain English, planned by "
-            "agent-utilities' OWN configured fleet LLM (the local vLLM / provider the rest "
-            "of AU uses) acting as the engine's NL planner. The fleet model translates your "
-            "request (grounded in the live node-label + SQL-table schema) into a single "
-            "read-only query — preferring UQL, the engine's native cross-modal language "
-            "(also cypher/sql/sparql) — which is then submitted to the engine's OWN "
-            "deterministic executor via the existing AU->engine query path. This is the "
-            "'LLM opt-out from AU' half of the NL->query dual-mode: it uses the fleet LLM "
-            "instead of the engine's standalone ureq client. Returns the GENERATED query "
-            "(auditable), result rows, and citations. Set execute=false to preview without "
-            "running; pin dialect='uql'|'cypher'|'sql'|'sparql' to force one. Falls back to "
-            "a clean error when no LLM is configured."
+            "CONCEPT:AU-KG.query.ask-gateway-rest-twin — ask the Knowledge Graph in plain "
+            "English through epistemic-graph's NL planner (EG QueryClient.nl_query, via the "
+            "governed engine_query dispatch). The engine planner emits UQL and executes it on "
+            "its deterministic UQL pipeline; GraphOS runs no local planner. Returns the "
+            "result rows and citations. dialect must be 'auto' or 'uql'; execute=false and a "
+            "schema_hint are refused. Returns a typed error when the engine has no planner "
+            "configured."
         ),
         tags=["graph-os", "query", "nl"],
     )
@@ -2743,25 +2781,23 @@ def register_query_tools(mcp):
         ),
         limit: int = Field(default=50, description="Max result rows to return."),
     ) -> EvidenceBundle:
-        from agent_utilities.knowledge_graph.core import nl_planner
-
-        try:
-            engine = kg_server._get_engine()
-        except Exception as e:  # noqa: BLE001
-            return EvidenceBundle.from_payload(
-                public_error_json(e, code="dependency_unavailable"),
-                operation="nl_query",
+        if str(dialect) not in {"auto", "uql"}:
+            return _refuse_nl_option(
+                "the engine NL planner plans UQL; dialect must be 'auto' or 'uql'",
+                "nl_query",
+            )
+        if not bool(execute):
+            return _refuse_nl_option(
+                "the engine NL planner returns rows only; preview is unavailable",
+                "nl_query",
+            )
+        if str(schema_hint):
+            return _refuse_nl_option(
+                "the engine NL planner grounds itself; schema_hint is not accepted",
+                "nl_query",
             )
         try:
-            result = nl_planner.nl_query(
-                engine,
-                str(text),
-                dialect=str(dialect),
-                schema_hint=str(schema_hint),
-                execute=bool(execute),
-                limit=int(limit),
-            )
-            return EvidenceBundle.from_nl_query(result)
+            return _engine_nl_query(text, limit=limit, operation="nl_query")
         except Exception as e:  # noqa: BLE001
             return EvidenceBundle.from_payload(
                 public_error_json(e), operation="nl_query"
@@ -2777,16 +2813,11 @@ def register_query_tools(mcp):
     @mcp.tool(
         name="ask_data",
         description=(
-            "CONCEPT:AU-KG.query.data-gateway-rest-twin — answer a DATA question over the Knowledge Graph with a "
-            "DB-GPT-style, multi-step data-analysis agent (distinct from the single-shot "
-            "nl_query). The agent runs a bounded ReAct loop: schema-link the question to the "
-            "most relevant tables/labels, generate a read-only query via the AU fleet-LLM "
-            "planner (KG-2.305), execute it through the engine's own deterministic executor, "
-            "and — on a query error — feed the failing query + error back for up to "
-            "'max_corrections' self-correction retries; on success it synthesizes a "
-            "natural-language ANSWER from the rows. Returns the synthesized answer, the "
-            "query used (auditable), the result rows, citations, the linked schema, and the "
-            "full attempt trace. Falls back to a clean error when no LLM is configured."
+            "CONCEPT:AU-KG.query.data-gateway-rest-twin — answer a DATA question over the "
+            "Knowledge Graph through epistemic-graph's NL planner (EG QueryClient.nl_query): "
+            "the engine plans one UQL query and executes it on its deterministic pipeline. "
+            "GraphOS runs no local planner or self-correction loop (corrections_used is "
+            "always 0). Returns the evidence bundle with rows and citations."
         ),
         tags=["graph-os", "query", "nl", "data-analysis"],
     )
@@ -2804,25 +2835,28 @@ def register_query_tools(mcp):
         ),
         limit: int = Field(default=50, description="Max result rows to return."),
     ) -> str:
-        from agent_utilities.knowledge_graph.orchestration import data_analyst
-
-        try:
-            engine = kg_server._get_engine()
-        except Exception as e:  # noqa: BLE001
-            return public_error_json(e, code="dependency_unavailable")
-        try:
-            return json.dumps(
-                data_analyst.ask_data(
-                    engine,
-                    str(question),
-                    dialect=str(dialect),
-                    max_corrections=int(max_corrections),
-                    limit=int(limit),
+        if str(dialect) not in {"auto", "uql"}:
+            return public_error_json(
+                ValueError(
+                    "the engine NL planner plans UQL; dialect must be 'auto' or 'uql'"
                 ),
-                default=str,
+                code="invalid_request",
             )
+        try:
+            bundle = _engine_nl_query(question, limit=limit, operation="ask_data")
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
+        return json.dumps(
+            {
+                "question": str(question),
+                "planner": "epistemic-graph",
+                "dialect": "uql",
+                "max_corrections": int(max_corrections),
+                "corrections_used": 0,
+                "evidence_bundle": bundle.model_dump(mode="json"),
+            },
+            default=str,
+        )
 
     kg_server.REGISTERED_TOOLS["ask_data"] = ask_data
     # CONCEPT:AU-KG.query.data-gateway-rest-twin — gateway REST twin (W1 exposure; MCP⇄REST parity)

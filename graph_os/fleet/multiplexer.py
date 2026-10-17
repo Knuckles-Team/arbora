@@ -1829,10 +1829,11 @@ def _tenant_local_discovery_binding() -> _typing.Any | None:
     not derive an OAuth-like digest from roles/scopes or accept catalog fields.
     """
     try:
-        from graph_os.api.contracts.session import current_session
         from agent_utilities.knowledge_graph.core.fleet_catalog_tables import (
             TenantLocalDiscoveryBinding,
         )
+
+        from graph_os.api.contracts.session import current_session
 
         session = current_session()
         if session is None or not getattr(session.actor, "authenticated", False):
@@ -1932,6 +1933,7 @@ def current_remote_oauth_grant_bindings(actor: _typing.Any) -> tuple[_typing.Any
     from agent_utilities.knowledge_graph.core.discovery_authority import (
         OAuthGrantBinding,
     )
+
     from graph_os.mcp_server.backing.remote_oauth_broker import (
         OAuthProviderError,
         OAuthScopeError,
@@ -4024,7 +4026,9 @@ class MCPMultiplexer:
         # and then wedges on expiry); derive that lifetime from the token TTL.
         session_max_age: float | None = None
         if is_remote:
-            from graph_os.mcp_server.backing.client_credentials import service_session_max_age
+            from graph_os.mcp_server.backing.client_credentials import (
+                service_session_max_age,
+            )
 
             session_max_age = service_session_max_age(cfg.get("headers"))
         runtime: _child_resilience.ChildRuntime
@@ -6248,7 +6252,7 @@ class MCPMultiplexer:
     def _local_skill_probe_info(self) -> dict[str, _typing.Any]:
         """Build (once) and cache the local-skill pseudo-server probe entry.
 
-        "Local" means every skill ``agent_utilities.core.providers.
+        "Local" means every skill ``graph_os.core.providers.
         resolve_skill_provider_dirs()`` resolves in THIS process — graph-os's
         own skills, agent-utilities' own, and any sibling package installed
         alongside graph-os that declares the ``agent_connector_sdk.skill_providers``

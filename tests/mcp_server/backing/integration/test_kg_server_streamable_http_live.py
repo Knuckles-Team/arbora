@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import re
 import socket
 import threading
 import time
@@ -125,8 +126,8 @@ def _live_streamable_http_server(
 ):
     """Build and serve the REAL graph-os FastMCP app over a real TCP port."""
     import uvicorn
-
     from agent_utilities.core.config import config as live_config
+
     from graph_os.mcp_server.backing import kg_server
 
     # Configure inbound JWT verification (FastMCP's own provider) exactly as
@@ -155,7 +156,10 @@ def _live_streamable_http_server(
     # Re-parse our transport/auth argv through the real parser+auth configurer
     # (the same objects the CLI entrypoint builds), since _build_server(bootstrap=False)
     # deliberately ignores argv (see its docstring) and uses defaults.
-    from graph_os.mcp_server.backing.server_factory import _configure_auth, create_mcp_parser
+    from graph_os.mcp_server.backing.server_factory import (
+        _configure_auth,
+        create_mcp_parser,
+    )
 
     parser = create_mcp_parser(transport_choices=("stdio", "streamable-http"))
     real_args, _ = parser.parse_known_args(argv)
@@ -357,6 +361,9 @@ def test_streamable_http_serves_real_mcp_and_rejects_unauthenticated(
         # same, pre-existing environment gap every engine-backed test in this
         # repository skips around via the `tiny_engine` fixture.
         rendered = json.dumps(call_payload).lower()
+        # Match markers as whole tokens: a random hex correlation id in an
+        # engine error payload (e.g. ``correlation:3c68...f3401cbf...``) must
+        # not read as an HTTP 401.
         for forbidden in (
             "verified bearer identity required",
             "verified graphsession required",
@@ -364,7 +371,9 @@ def test_streamable_http_serves_real_mcp_and_rejects_unauthenticated(
             "unauthorized",
             "401",
         ):
-            assert forbidden not in rendered, (
+            assert not re.search(
+                rf"(?<![0-9a-z]){re.escape(forbidden)}(?![0-9a-z])", rendered
+            ), (
                 f"authenticated tool call ({candidate['name']!r}) was rejected as "
                 f"if unauthenticated ({forbidden!r} present) — the identity bridge "
                 f"did not run: {rendered[:500]}"

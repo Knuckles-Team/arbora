@@ -55,7 +55,7 @@ async def test_create_mcp_server_serves_skill_resources(
     assert SkillProvider is not None
 
     monkeypatch.setattr(
-        "agent_utilities.core.providers.resolve_skill_provider_dirs",
+        "graph_os.core.providers.resolve_skill_provider_dirs",
         lambda: [("au-live-provider", demo_skill_dir)],
     )
 

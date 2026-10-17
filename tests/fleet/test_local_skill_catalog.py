@@ -3,7 +3,7 @@
 Covers :mod:`graph_os.fleet.local_skill_catalog` — the local counterpart to
 the fleet skill harvest (``tests/fleet/test_multiplexer_skills_over_mcp.py``):
 every entry here is resolved from an installed package via an injected
-``provider_dirs`` resolver (never the real ``agent_utilities.core.providers.
+``provider_dirs`` resolver (never the real ``graph_os.core.providers.
 resolve_skill_provider_dirs``, so this stays hermetic), and every entry is
 built in the exact catalog shape (``name``/``uri``/``description``/
 ``instructions``) a harvested skill is.
@@ -34,7 +34,7 @@ def _write_skill(
 def test_entry_point_style_provider_lists_its_two_fixture_skills(
     tmp_path: Path,
 ) -> None:
-    """A provider resolved the way an ``agent_utilities.skill_providers``
+    """A provider resolved the way an ``agent_connector_sdk.skill_providers``
     entry point is (one ``(provider, skill_root)`` pair per skill) is listed."""
     one = _write_skill(tmp_path, "fixture-one", description="first fixture skill")
     two = _write_skill(tmp_path, "fixture-two", description="second fixture skill")

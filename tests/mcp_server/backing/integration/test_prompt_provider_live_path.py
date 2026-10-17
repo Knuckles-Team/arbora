@@ -44,7 +44,7 @@ async def test_create_mcp_server_serves_prompt_resources(
     assert FileResource is not None
 
     monkeypatch.setattr(
-        "agent_utilities.core.providers.resolve_prompt_provider_dirs",
+        "graph_os.core.providers.resolve_prompt_provider_dirs",
         lambda: [("au-live-provider", demo_prompt_dir)],
     )
 

@@ -23,8 +23,14 @@ from graph_os.messaging.supervision import (
 
 from ._fakes import FakeMessagingBackend
 
+# ``_TRANSITIONS`` maps each state to a frozenset; iterate it in declaration
+# order so every pytest-xdist worker collects the same parametrize IDs
+# (set order varies with the per-process string hash seed).
+_STATE_ORDER = list(ChannelSupervisionState)
 _ALL_LEGAL_PAIRS = [
-    (current, target) for current, targets in _TRANSITIONS.items() for target in targets
+    (current, target)
+    for current, targets in _TRANSITIONS.items()
+    for target in sorted(targets, key=_STATE_ORDER.index)
 ]
 
 _ILLEGAL_PAIRS = [

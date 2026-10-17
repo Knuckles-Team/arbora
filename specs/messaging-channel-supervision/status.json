@@ -52,8 +52,8 @@
         "29a592980f26"
       ],
       "verified_by": [
-        "tests/messaging/test_supervision.py:152",
-        "tests/messaging/test_supervision.py:186"
+        "tests/messaging/test_supervision.py:158",
+        "tests/messaging/test_supervision.py:192"
       ]
     },
     {
@@ -64,7 +64,7 @@
         "29a592980f26"
       ],
       "verified_by": [
-        "tests/messaging/test_supervision.py:221"
+        "tests/messaging/test_supervision.py:227"
       ]
     },
     {

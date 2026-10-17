@@ -60,7 +60,9 @@ def test_attach_headless_fleet_loader_records_the_exact_failure_cause(
     """
     mcp = SimpleNamespace()
     with (
-        caplog.at_level(logging.WARNING, logger="graph_os.mcp_server.backing.kg_server"),
+        caplog.at_level(
+            logging.WARNING, logger="graph_os.mcp_server.backing.kg_server"
+        ),
         patch(
             "graph_os.fleet.multiplexer.attach_fleet_loader",
             side_effect=RuntimeError("no mcp_config.json found"),
@@ -76,47 +78,58 @@ def test_attach_headless_fleet_loader_records_the_exact_failure_cause(
     assert "RuntimeError" in caplog.text
 
 
-def test_ensure_tools_registered_attaches_fleet_loader_to_the_built_mcp() -> None:
+def _assert_headless_build_attaches() -> None:
+    built_mcp = SimpleNamespace()
+    with (
+        patch.object(
+            kg_server,
+            "_build_server",
+            return_value=(SimpleNamespace(), built_mcp, []),
+        ) as mock_build,
+        patch.object(kg_server, "_attach_headless_fleet_loader") as mock_attach,
+    ):
+        kg_server.ensure_tools_registered()
+
+    mock_build.assert_called_once_with(bootstrap=False)
+    mock_attach.assert_called_once_with(built_mcp)
+
+
+def test_ensure_tools_registered_attaches_fleet_loader_to_the_built_mcp(
+    monkeypatch,
+) -> None:
     """``ensure_tools_registered()`` now attaches a fleet loader to the exact
     ``mcp`` its headless ``_build_server(bootstrap=False)`` call returns."""
-    saved = dict(kg_server.REGISTERED_TOOLS)
-    kg_server.REGISTERED_TOOLS.clear()
-    built_mcp = SimpleNamespace()
-    try:
-        with (
-            patch.object(
-                kg_server,
-                "_build_server",
-                return_value=(SimpleNamespace(), built_mcp, []),
-            ) as mock_build,
-            patch.object(kg_server, "_attach_headless_fleet_loader") as mock_attach,
-        ):
-            kg_server.ensure_tools_registered()
-
-        mock_build.assert_called_once_with(bootstrap=False)
-        mock_attach.assert_called_once_with(built_mcp)
-    finally:
-        kg_server.REGISTERED_TOOLS.clear()
-        kg_server.REGISTERED_TOOLS.update(saved)
+    monkeypatch.setattr(kg_server, "REGISTERED_TOOLS", {})
+    _assert_headless_build_attaches()
 
 
-def test_ensure_tools_registered_skips_rebuilding_when_already_populated() -> None:
-    """The idempotency guard still short-circuits before any attach attempt."""
-    saved = dict(kg_server.REGISTERED_TOOLS)
-    kg_server.REGISTERED_TOOLS.clear()
-    kg_server.REGISTERED_TOOLS["find"] = object()
-    try:
-        with (
-            patch.object(kg_server, "_build_server") as mock_build,
-            patch.object(kg_server, "_attach_headless_fleet_loader") as mock_attach,
-        ):
-            kg_server.ensure_tools_registered()
+def test_ensure_tools_registered_skips_rebuilding_when_fully_registered(
+    monkeypatch,
+) -> None:
+    """The idempotency guard short-circuits once a full build's names are present."""
+    monkeypatch.setattr(kg_server, "REGISTERED_TOOLS", {"find": object()})
+    monkeypatch.setattr(kg_server, "_FULL_TOOL_NAMES", frozenset({"find"}))
+    with (
+        patch.object(kg_server, "_build_server") as mock_build,
+        patch.object(kg_server, "_attach_headless_fleet_loader") as mock_attach,
+    ):
+        kg_server.ensure_tools_registered()
 
-        mock_build.assert_not_called()
-        mock_attach.assert_not_called()
-    finally:
-        kg_server.REGISTERED_TOOLS.clear()
-        kg_server.REGISTERED_TOOLS.update(saved)
+    mock_build.assert_not_called()
+    mock_attach.assert_not_called()
+
+
+def test_ensure_tools_registered_rebuilds_a_partial_table(monkeypatch) -> None:
+    """A surface registrar's few entries are not a complete tool table.
+
+    A2A or browser control can register a tool before any full build; that
+    used to make ``ensure_tools_registered`` a no-op and leave the REST
+    gateway dispatching over a partial table (and made the suite order
+    dependent).
+    """
+    monkeypatch.setattr(kg_server, "REGISTERED_TOOLS", {"graph_a2a": object()})
+    monkeypatch.setattr(kg_server, "_FULL_TOOL_NAMES", frozenset())
+    _assert_headless_build_attaches()
 
 
 def test_fleet_mux_returns_the_attached_multiplexer() -> None:

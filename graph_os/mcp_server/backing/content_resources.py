@@ -26,7 +26,7 @@ _Register = Callable[[Any, str, Path], int]
 def _ontology_sources() -> tuple[_Register, list[tuple[str, Path]]]:
     from agent_connector_sdk.mcp.content import register_ontology_resources
 
-    from agent_utilities.core.providers import resolve_ontology_provider_dirs
+    from graph_os.core.providers import resolve_ontology_provider_dirs
 
     return register_ontology_resources, resolve_ontology_provider_dirs()
 

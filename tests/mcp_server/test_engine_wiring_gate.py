@@ -60,3 +60,73 @@ def test_query_uql_dispatches_to_the_engine_uql_method():
     )
     assert calls and calls[0][0] == "MATCH (n) RETURN n LIMIT 1"
     assert rows is not None
+
+
+@pytest.mark.spec("GRAPHOS-HOST-R001.8")
+def test_installed_eg_query_client_owns_the_nl_planner():
+    planner = getattr(eg_client.QueryClient, "nl_query", None)
+    assert inspect.iscoroutinefunction(planner), "EG exposes no nl_query planner"
+    assert "nl_query" in engine_tools.ENGINE_DOMAINS["query"]
+    assert engine_tools.action_policy("query", "nl_query")["scope"] == "kg:read"
+
+
+@pytest.mark.spec("GRAPHOS-HOST-R001.8")
+@pytest.mark.parametrize("tool", ["nl_query", "graph_ask", "ask_data"])
+def test_natural_language_tools_plan_through_eg_nl_query(monkeypatch, tool):
+    """Every served NL tool reaches EG ``QueryClient.nl_query`` and nothing else."""
+    import json
+
+    from graph_os.mcp_server.backing import kg_server
+
+    calls: list[tuple[str, str, dict[str, Any]]] = []
+
+    def _dispatch(domain, methods, action, params_json, graph):
+        calls.append((domain, action, json.loads(params_json)))
+        assert "nl_query" in methods
+        return json.dumps([{"id": "n1", "name": "alpha"}, {"id": "n2"}])
+
+    monkeypatch.setattr(engine_tools, "_dispatch", _dispatch)
+    monkeypatch.setattr(
+        kg_server,
+        "_get_engine",
+        lambda: pytest.fail("NL planning must not use a local engine planner"),
+    )
+    kg_server.ensure_tools_registered()
+    func = kg_server.REGISTERED_TOOLS[tool]
+    text_arg = "question" if tool in {"graph_ask", "ask_data"} else "text"
+    kwargs: dict[str, Any] = {text_arg: "which nodes are alpha?", "limit": 1}
+    if tool != "ask_data":
+        kwargs["execute"] = True
+    if tool == "nl_query":
+        kwargs["schema_hint"] = ""
+    if tool == "graph_ask":
+        kwargs["include_epistemic"] = False
+    kwargs["dialect"] = "auto"
+    if tool == "ask_data":
+        kwargs["max_corrections"] = 2
+
+    result = func(**kwargs)
+
+    assert calls == [("query", "nl_query", {"text": "which nodes are alpha?"})]
+    rendered = result if isinstance(result, str) else result.model_dump_json()
+    assert "n1" in rendered and "n2" not in rendered
+
+
+@pytest.mark.spec("GRAPHOS-HOST-R001.8")
+def test_no_local_nl_planner_is_imported_by_the_served_surface():
+    from pathlib import Path
+
+    root = Path(engine_tools.__file__).resolve().parents[3]
+    offenders = [
+        path.relative_to(root).as_posix()
+        for path in root.rglob("*.py")
+        if any(
+            needle in path.read_text(encoding="utf-8")
+            for needle in (
+                "knowledge_graph.core.nl_planner",
+                "knowledge_graph.core.nl_query",
+                "orchestration import data_analyst",
+            )
+        )
+    ]
+    assert offenders == []

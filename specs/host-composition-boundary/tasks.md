@@ -11,6 +11,7 @@ Status vocabulary is defined in [spec.md](spec.md). Check a task only after its 
 - [x] `GRAPHOS-HOST-R001.6`: `tests/mcp_server/test_operation_registry.py` proves the packaged document is current, names exactly the served operations and loads through the harness reader.
 - [x] `GRAPHOS-HOST-R001.8`: `tests/mcp_server/test_engine_wiring_gate.py` passes against the installed epistemic-graph.
 - [x] `GRAPHOS-HOST-R001.9`: `tests/integration/profiles/test_profile_tiny_zero_dep.py::test_tiny_profile_serves_kg_over_gateway_with_zero_containers`.
+- [x] `GRAPHOS-HOST-R001.10`: port provider discovery into `graph_os/core/providers.py` over the `agent_connector_sdk.*_providers` groups and repoint every GraphOS caller. Evidence: `tests/core/test_providers.py`.
 - [ ] `GRAPHOS-HOST-R007.2`: rollup; deliver `GRAPHOS-HOST-R007.2.1` to `GRAPHOS-HOST-R007.2.68` (one rewiring per violating module, 68 modules at split time) and then the fence test `GRAPHOS-HOST-R007.2.69`.
 - [ ] Inventory all dependency-internal imports and duplicate host scripts; attach a machine-readable owner/port map and the initial forbidden-import count.
 - [ ] Add missing public engine, SDK and AU ports in their owner packages and release/install them.

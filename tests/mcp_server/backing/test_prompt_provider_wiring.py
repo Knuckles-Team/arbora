@@ -55,7 +55,7 @@ def test_register_prompt_providers_registers_one_resource_per_json_file(
     (provider_dir / "_manifest.json").write_text("{}", "utf-8")
 
     monkeypatch.setattr(
-        "agent_utilities.core.providers.resolve_prompt_provider_dirs",
+        "graph_os.core.providers.resolve_prompt_provider_dirs",
         lambda: [("servicenow-api", provider_dir)],
     )
 
@@ -85,7 +85,7 @@ def test_register_prompt_providers_one_bad_dir_does_not_sink_the_rest(
             raise OSError("permission denied")
 
     monkeypatch.setattr(
-        "agent_utilities.core.providers.resolve_prompt_provider_dirs",
+        "graph_os.core.providers.resolve_prompt_provider_dirs",
         lambda: [("bad-provider", _BadPath()), ("good-provider", good_dir)],
     )
 

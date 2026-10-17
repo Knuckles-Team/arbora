@@ -406,7 +406,7 @@ def parse_graph_os_sidecar(path: Path, *, skill_name: str) -> SkillMeta:
 
 def _provider_dirs() -> list[Path]:
     """Return the unified resolver's current, validated skill directories."""
-    from agent_utilities.core.providers import resolve_skill_provider_dirs
+    from graph_os.core.providers import resolve_skill_provider_dirs
 
     # Resolution deliberately fails closed on ambiguous global skill identities.
     # There is no direct-import fallback because it could revive retired provider

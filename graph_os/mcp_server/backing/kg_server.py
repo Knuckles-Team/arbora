@@ -68,6 +68,12 @@ logger = logging.getLogger(__name__)
 
 
 REGISTERED_TOOLS: dict[str, Any] = {}
+#: Names one complete ``_build_server`` registration produced. A non-empty
+#: ``REGISTERED_TOOLS`` alone does not prove the table is complete: a surface
+#: registrar (A2A, browser control, a single tool module) can add a few
+#: entries before the full build runs, which used to make
+#: :func:`ensure_tools_registered` a silent no-op over a partial table.
+_FULL_TOOL_NAMES: frozenset[str] = frozenset()
 
 
 def _build_dummy_request(path_params=None, json_body=None):
@@ -232,7 +238,10 @@ def _resolve_verified_scope_actor(session):
     Returns ``None`` when no actor is bound. Raises when a bound,
     authenticated actor disagrees with the session's own actor.
     """
-    from agent_utilities.security.brain_context import IdentityRequiredError, current_actor
+    from agent_utilities.security.brain_context import (
+        IdentityRequiredError,
+        current_actor,
+    )
 
     try:
         actor = current_actor()
@@ -251,8 +260,9 @@ def verified_tool_session_scope():
     dispatch. The error surface deliberately omits principal, tenant, token,
     endpoint, and policy values.
     """
-    from graph_os.api.contracts.session import current_session, use_session
     from agent_utilities.security.brain_context import use_actor
+
+    from graph_os.api.contracts.session import current_session, use_session
 
     ambient = current_session()
     session = ambient or _PROCESS_SESSION
@@ -787,10 +797,9 @@ def set_toggle_state(engine, item_type: str, item_id: str, enabled: bool):
         logger.error("Failed to save toggle state: %s", exc)
 
 
+from agent_utilities.security.error_surface import public_error_payload
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-
-from agent_utilities.security.error_surface import public_error_payload
 
 
 def _external_failure_payload(
@@ -1484,12 +1493,13 @@ def _rest_tabular_delegated_identity(request: Request):
     dispatch.
     """
 
+    from agent_utilities.security.auth import parse_bearer_authorization
+    from agent_utilities.security.brain_context import current_actor
+
     from graph_os.mcp_server.backing.delegated_auth import (
         _reset_delegated_identity,
         _set_delegated_identity,
     )
-    from agent_utilities.security.auth import parse_bearer_authorization
-    from agent_utilities.security.brain_context import current_actor
 
     actor = current_actor()
     actor.ensure_credential_current()
@@ -3031,6 +3041,7 @@ def get_tabular_query_service() -> Any:
     from agent_utilities.knowledge_graph.core.tabular_query_service import (
         TabularQueryService,
     )
+
     from graph_os.mcp_server.backing.delegated_auth import get_delegated_token
 
     key = _trino_composition_settings()
@@ -3065,7 +3076,9 @@ def _get_extraction_manager(engine: Any) -> Any:
     """Lazily build the single GPU-slot extraction job manager (KG-2.65)."""
     global _EXTRACTION_MANAGER
     if _EXTRACTION_MANAGER is None:
-        from agent_utilities.knowledge_graph.extraction.job_manager import ExtractionJobManager
+        from agent_utilities.knowledge_graph.extraction.job_manager import (
+            ExtractionJobManager,
+        )
 
         _EXTRACTION_MANAGER = ExtractionJobManager(engine)
     return _EXTRACTION_MANAGER
@@ -3074,10 +3087,11 @@ def _get_extraction_manager(engine: Any) -> Any:
 def _bind_mcp_probe_port(value: Any) -> None:
     """Bind canonical multiplexer/config/async seams for KG MCP consumers."""
     from agent_utilities.knowledge_graph.core.engine_mcp_discovery import MCPProbePort
-    from graph_os.fleet.multiplexer import MCPMultiplexer, _resolve_config_path
     from agent_utilities.protocols.source_connectors.connectors.mcp_package import (
         _run_async,
     )
+
+    from graph_os.fleet.multiplexer import MCPMultiplexer, _resolve_config_path
 
     port = MCPProbePort(
         probe_declaration=MCPMultiplexer.probe_declaration,
@@ -3725,7 +3739,7 @@ def _ingest_skill_capabilities(
     "already ingested / disabled" state for the WHOLE batch is resolved with
     ONE :func:`get_existing_disabled_batch` call before any per-skill write.
     """
-    from agent_utilities.core.providers import is_skill_graph_reference_path
+    from graph_os.core.providers import is_skill_graph_reference_path
 
     root = Path(skills_path)
     if not root.is_dir():
@@ -4269,7 +4283,8 @@ def _ingest_skill_provider_capabilities(
     """Section 3 of :func:`_ingest_capabilities`: every skill provider's ``SKILL.md`` files."""
     try:
         from agent_utilities.core.config import config
-        from agent_utilities.core.providers import resolve_skill_provider_dirs
+
+        from graph_os.core.providers import resolve_skill_provider_dirs
 
         sources = resolve_skill_provider_dirs()
         if config.custom_skills_directory:
@@ -4667,6 +4682,7 @@ def _refresh_process_authority(session: Any) -> Any:
     lease. Identity, roles, tenant, route, and policy may not change.
     """
     from agent_utilities.core.config import config
+
     from graph_os.api.contracts.session import SessionExpiredError
 
     lease = getattr(getattr(session, "actor", None), "credential_lease", None)
@@ -5249,9 +5265,10 @@ def _start_engine_bootstrap(
         _require_verified_background_session,
         daemon_role,
     )
-    from graph_os.api.contracts.session import use_session
     from agent_utilities.security.brain_context import use_actor
     from agent_utilities.skills import BUNDLED_SKILLS
+
+    from graph_os.api.contracts.session import use_session
 
     verified_session = _require_verified_background_session(session)
     with (
@@ -5576,6 +5593,8 @@ def _build_server(
 
     register_graphos_surface(mcp, canonical=canonical_surface)
 
+    global _FULL_TOOL_NAMES
+    _FULL_TOOL_NAMES = frozenset(REGISTERED_TOOLS)
     return args, mcp, middlewares
 
 
@@ -5643,7 +5662,7 @@ def ensure_tools_registered() -> None:
     ``mcp`` (:func:`_attach_headless_fleet_loader`), so a gateway-only
     process's ``find``/``act`` fleet actions are not permanently unavailable.
     """
-    if REGISTERED_TOOLS:
+    if _FULL_TOOL_NAMES and _FULL_TOOL_NAMES <= REGISTERED_TOOLS.keys():
         return
     _args, mcp, _middlewares = _build_server(bootstrap=False)
     _attach_headless_fleet_loader(mcp)
@@ -5673,6 +5692,7 @@ def _mount_rest_routes(app, prefix: str = "") -> None:
         list_goals,
         submit_session_reply,
     )
+
     from graph_os.gateway.schemas.graph_analyze import (
         SearchDiscoverRequest,
         SearchQueryTopKRequest,
@@ -6361,9 +6381,12 @@ async def open_graphos_mcp_surface(
         @contextlib.asynccontextmanager
         async def _composition_lifespan(_app: Any):
             from agent_utilities.core.config import config
-            from graph_os.api.contracts.session import use_session
-            from graph_os.mcp_server.backing.co_service_supervisor import start_co_services
             from agent_utilities.security.brain_context import use_actor
+
+            from graph_os.api.contracts.session import use_session
+            from graph_os.mcp_server.backing.co_service_supervisor import (
+                start_co_services,
+            )
 
             state.extension_entered = True
             state.services_closed = False
@@ -6443,8 +6466,9 @@ async def open_graphos_mcp_surface(
         # returns no thread or fails in its foreground gate.
         state.engine = _get_engine()
         state.engine_acquired = state.engine is not None
-        from graph_os.api.contracts.session import use_session
         from agent_utilities.security.brain_context import use_actor
+
+        from graph_os.api.contracts.session import use_session
 
         with use_actor(bootstrap_session.actor), use_session(bootstrap_session):
             state.bootstrap_thread = _start_engine_bootstrap(
@@ -6452,7 +6476,9 @@ async def open_graphos_mcp_surface(
                 engine=state.engine,
             )
 
-        from graph_os.mcp_server.backing.co_service_supervisor import CoServiceSupervisor
+        from graph_os.mcp_server.backing.co_service_supervisor import (
+            CoServiceSupervisor,
+        )
 
         state.supervisor = CoServiceSupervisor()
         surface = _GraphOSSurface(args, mcp, middlewares)

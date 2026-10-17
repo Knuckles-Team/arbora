@@ -85,11 +85,12 @@ def _check_skills() -> dict[str, Any]:
     paths never leave this probe.
     """
     try:
-        from agent_utilities.core.providers import (
+        from agent_utilities.skills import BUNDLED_SKILLS
+
+        from graph_os.core.providers import (
             _skill_identity,
             resolve_skill_provider_dirs,
         )
-        from agent_utilities.skills import BUNDLED_SKILLS
 
         installed_names = {
             _skill_identity(root) for _provider, root in resolve_skill_provider_dirs()
@@ -371,16 +372,17 @@ def _check_unified_install() -> dict[str, Any]:
             read_managed_provider_marker,
             resolve_managed_generation,
         )
-        from agent_utilities.core.providers import (
-            ONTOLOGY_PROVIDER_GROUP,
-            PROMPT_PROVIDER_GROUP,
-            SKILL_PROVIDER_GROUP,
-            provider_registrations,
-        )
         from agent_utilities.core.unified_install import (  # noqa: F401
             OWN_PROVIDER,
             own_provider_asset,
             unified_prompts_dir,
+        )
+
+        from graph_os.core.providers import (
+            ONTOLOGY_PROVIDER_GROUP,
+            PROMPT_PROVIDER_GROUP,
+            SKILL_PROVIDER_GROUP,
+            provider_registrations,
         )
     except Exception as exc:  # noqa: BLE001
         return _result(

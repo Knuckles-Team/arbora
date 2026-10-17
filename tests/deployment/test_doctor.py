@@ -178,7 +178,7 @@ def test_unified_install_doctor_never_reports_local_roots(monkeypatch, tmp_path)
             (source / "ontology.ttl").write_text("# ttl", encoding="utf-8")
         sources[leg] = (source, "a" * 64, build_asset_manifest(source, leg=leg))
     monkeypatch.setattr(
-        "agent_utilities.core.providers.provider_registrations", lambda _group: ()
+        "graph_os.core.providers.provider_registrations", lambda _group: ()
     )
     monkeypatch.setattr(unified_install, "own_provider_asset", lambda leg: sources[leg])
 
@@ -250,7 +250,7 @@ def test_unified_install_doctor_warns_on_stale_and_unmarked_provider_roots(
         unified_install, "unified_prompts_dir", lambda: roots["prompts"]
     )
     monkeypatch.setattr(
-        "agent_utilities.core.providers.provider_registrations", lambda _group: ()
+        "graph_os.core.providers.provider_registrations", lambda _group: ()
     )
     monkeypatch.setattr(unified_install, "own_provider_asset", lambda leg: sources[leg])
 
@@ -266,8 +266,10 @@ def test_unified_install_doctor_warns_on_stale_and_unmarked_provider_roots(
 def test_unified_install_doctor_fails_closed_on_unresolved_provider(
     monkeypatch, tmp_path
 ):
-    from agent_utilities.core import paths, providers, unified_install
+    from agent_utilities.core import paths, unified_install
     from agent_utilities.core.provider_materialization import build_asset_manifest
+
+    from graph_os.core import providers
 
     roots = {
         "skills": tmp_path / "skills",
@@ -1580,8 +1582,10 @@ def test_runtime_integrations_doctor_redacts_invalid_config_value(monkeypatch):
 def test_skills_check_requires_exact_suite_without_persisting_local_path(
     tmp_path, monkeypatch
 ):
-    from agent_utilities.core import paths, providers
+    from agent_utilities.core import paths
     from agent_utilities.core.provider_materialization import build_asset_manifest
+
+    from graph_os.core import providers
 
     source = tmp_path / "source"
     (source / "graph-query-and-explanation").mkdir(parents=True)
@@ -1592,15 +1596,29 @@ def test_skills_check_requires_exact_suite_without_persisting_local_path(
     xdg.mkdir()
     manifest = build_asset_manifest(source, leg="skills")
     monkeypatch.setattr(paths, "skills_dir", lambda: xdg)
-    monkeypatch.setattr(providers, "current_provider_assets", lambda _group: ())
-    monkeypatch.setattr(
-        providers,
-        "_own_skill_assets",
-        lambda: ("agent-utilities", "a" * 64, source, manifest),
+    # agent-utilities' bundled skills reach GraphOS through the connector SDK
+    # skill-provider group like every other package (GRAPHOS-HOST-R001.10).
+    registration = providers.ProviderRegistration(
+        name="agent-utilities",
+        group=providers.SKILL_PROVIDER_GROUP,
+        target="agent_utilities.skills",
+        owner_name="agent-utilities",
+        owner_version="3.0.0",
+        digest="a" * 64,
+        source_root=source,
+        owned_paths=frozenset(),
     )
+    groups = []
+
+    def _assets(group):
+        groups.append(group)
+        return (providers.ProviderAssets(registration, source, manifest),)
+
+    monkeypatch.setattr(providers, "current_provider_assets", _assets)
 
     result = D._check_skills()
 
+    assert groups == ["agent_connector_sdk.skill_providers"]
     assert result["status"] == "warn"
     # The required suite is AU's bundled set; the synthetic source holds none of it.
     assert result["data"]["missing"]
@@ -1609,9 +1627,11 @@ def test_skills_check_requires_exact_suite_without_persisting_local_path(
 
 
 def test_skills_check_accepts_the_complete_consolidated_suite(tmp_path, monkeypatch):
-    from agent_utilities.core import paths, providers
+    from agent_utilities.core import paths
     from agent_utilities.core.provider_materialization import build_asset_manifest
     from agent_utilities.skills import BUNDLED_SKILLS
+
+    from graph_os.core import providers
 
     source = tmp_path / "source"
     for name in BUNDLED_SKILLS:
@@ -1622,14 +1642,29 @@ def test_skills_check_accepts_the_complete_consolidated_suite(tmp_path, monkeypa
     xdg.mkdir()
     manifest = build_asset_manifest(source, leg="skills")
     monkeypatch.setattr(paths, "skills_dir", lambda: xdg)
-    monkeypatch.setattr(providers, "current_provider_assets", lambda _group: ())
-    monkeypatch.setattr(
-        providers,
-        "_own_skill_assets",
-        lambda: ("agent-utilities", "a" * 64, source, manifest),
+    # agent-utilities' bundled skills reach GraphOS through the connector SDK
+    # skill-provider group like every other package (GRAPHOS-HOST-R001.10).
+    registration = providers.ProviderRegistration(
+        name="agent-utilities",
+        group=providers.SKILL_PROVIDER_GROUP,
+        target="agent_utilities.skills",
+        owner_name="agent-utilities",
+        owner_version="3.0.0",
+        digest="a" * 64,
+        source_root=source,
+        owned_paths=frozenset(),
     )
+    groups = []
+
+    def _assets(group):
+        groups.append(group)
+        return (providers.ProviderAssets(registration, source, manifest),)
+
+    monkeypatch.setattr(providers, "current_provider_assets", _assets)
 
     result = D._check_skills()
+
+    assert groups == ["agent_connector_sdk.skill_providers"]
 
     assert result["status"] == "ok"
     assert result["data"]["required"] == len(BUNDLED_SKILLS)

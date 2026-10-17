@@ -1843,7 +1843,9 @@ def _configure_eunomia_middleware(args: argparse.Namespace) -> Any | None:
     if args.eunomia_type not in ["embedded", "remote"]:
         return None
     try:
-        from graph_os.mcp_server.backing.eunomia_principal import create_eunomia_middleware
+        from graph_os.mcp_server.backing.eunomia_principal import (
+            create_eunomia_middleware,
+        )
 
         require_verified = str(getattr(args, "auth_type", "none")) != "none"
         if args.eunomia_type == "remote":
@@ -2024,8 +2026,6 @@ def _build_uvicorn_config(
 
 def mcp_network_run_kwargs(args: argparse.Namespace) -> dict[str, Any]:
     """Return the one hardened FastMCP/Uvicorn network-serving configuration."""
-    from starlette.middleware import Middleware
-
     from agent_utilities.security.http_boundary import (
         BoundedRequestBodyMiddleware,
         ExactHostAuthorityMiddleware,
@@ -2035,6 +2035,7 @@ def mcp_network_run_kwargs(args: argparse.Namespace) -> dict[str, Any]:
         normalize_origins,
         parse_cidrs,
     )
+    from starlette.middleware import Middleware
 
     transport = str(getattr(args, "transport", "stdio") or "stdio").lower()
     if transport not in _NETWORK_TRANSPORTS:
@@ -2337,10 +2338,6 @@ def _register_operational_routes(
     route is absent. Wrapped defensively so older FastMCP builds without
     custom_route still produce a working server."""
     try:
-        from starlette.requests import Request as _Request
-        from starlette.responses import JSONResponse as _JSONResponse
-        from starlette.responses import Response as _Response
-
         # render_metrics_with_engine() merges the Python gateway's own
         # Prometheus exposition with the embedded epistemic-graph engine's
         # (fetched from its loopback-only listener — the engine refuses any
@@ -2353,6 +2350,9 @@ def _register_operational_routes(
         from agent_utilities.observability.gateway_metrics import (
             render_metrics_with_engine as _render_metrics_with_engine,
         )
+        from starlette.requests import Request as _Request
+        from starlette.responses import JSONResponse as _JSONResponse
+        from starlette.responses import Response as _Response
 
         if not remote_network or metrics_token is not None:
 
@@ -2608,7 +2608,9 @@ def create_mcp_server(
 
     _register_skill_providers(mcp, owner=skill_owner or _caller_package())
     _register_prompt_providers(mcp)
-    from graph_os.mcp_server.backing.content_resources import register_ontology_providers
+    from graph_os.mcp_server.backing.content_resources import (
+        register_ontology_providers,
+    )
 
     register_ontology_providers(mcp)
 
@@ -2675,7 +2677,7 @@ def _register_skill_providers(mcp: Any, owner: str | None = None) -> None:
     try:
         from fastmcp.server.providers.skills import SkillProvider
 
-        from agent_utilities.core.providers import resolve_skill_provider_dirs
+        from graph_os.core.providers import resolve_skill_provider_dirs
 
         registered = 0
         owned = _owned_skill_dirs(resolve_skill_provider_dirs(), owner)
@@ -2734,7 +2736,7 @@ def _register_prompt_providers(mcp: Any) -> None:
         from fastmcp.resources import FileResource
         from pydantic import AnyUrl
 
-        from agent_utilities.core.providers import resolve_prompt_provider_dirs
+        from graph_os.core.providers import resolve_prompt_provider_dirs
 
         registered = 0
         for provider_name, root_dir in resolve_prompt_provider_dirs():

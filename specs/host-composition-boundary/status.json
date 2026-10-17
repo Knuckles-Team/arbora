@@ -13,6 +13,7 @@
     "GRAPHOS-HOST-R001.6",
     "GRAPHOS-HOST-R001.8",
     "GRAPHOS-HOST-R001.9",
+    "GRAPHOS-HOST-R001.10",
     "GRAPHOS-HOST-R002",
     "GRAPHOS-HOST-R003",
     "GRAPHOS-HOST-R004",
@@ -191,7 +192,8 @@
         "GRAPHOS-HOST-R001.5",
         "GRAPHOS-HOST-R001.6",
         "GRAPHOS-HOST-R001.8",
-        "GRAPHOS-HOST-R001.9"
+        "GRAPHOS-HOST-R001.9",
+        "GRAPHOS-HOST-R001.10"
       ]
     },
     {
@@ -206,48 +208,88 @@
     {
       "id": "GRAPHOS-HOST-R001.2",
       "title": "GraphOS registers the harness host bindings at startup",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "9e7f6499d96f"
+      ],
+      "verified_by": [
+        "tests/mcp_server/test_harness_host.py:29",
+        "tests/mcp_server/test_harness_host.py:37",
+        "tests/mcp_server/test_harness_host.py:76",
+        "tests/mcp_server/test_harness_host.py:85"
+      ]
     },
     {
       "id": "GRAPHOS-HOST-R001.3",
       "title": "GraphOS owns the surface gateway client SDK",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "9e7f6499d96f"
+      ],
+      "verified_by": [
+        "tests/gateway/test_gateway_client.py:108"
+      ]
     },
     {
       "id": "GRAPHOS-HOST-R001.4",
       "title": "Provider plugin entry-point groups use the connector SDK namespace",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "LANDED",
+      "landed_in": [
+        "9e7f6499d96f"
+      ],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R001.5",
       "title": "The moved serving code keeps its agent-utilities tests and runs on FastMCP 4",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "LANDED",
+      "landed_in": [
+        "9e7f6499d96f"
+      ],
       "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R001.6",
       "title": "GraphOS publishes its operation registry as versioned data",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "9e7f6499d96f"
+      ],
+      "verified_by": [
+        "tests/mcp_server/test_operation_registry.py:11",
+        "tests/mcp_server/test_operation_registry.py:17",
+        "tests/mcp_server/test_operation_registry.py:29"
+      ]
     },
     {
       "id": "GRAPHOS-HOST-R001.8",
       "title": "Gate G-26: the served MCP surface is wired to epistemic-graph",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "9e7f6499d96f"
+      ],
+      "verified_by": [
+        "tests/mcp_server/test_engine_wiring_gate.py:115",
+        "tests/mcp_server/test_engine_wiring_gate.py:22",
+        "tests/mcp_server/test_engine_wiring_gate.py:34",
+        "tests/mcp_server/test_engine_wiring_gate.py:44",
+        "tests/mcp_server/test_engine_wiring_gate.py:65"
+      ]
     },
     {
       "id": "GRAPHOS-HOST-R001.9",
       "title": "The tiny profile serves the KG over the gateway with zero containers",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "9e7f6499d96f"
+      ],
+      "verified_by": [
+        "tests/integration/profiles/test_profile_tiny_zero_dep.py:94"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.10",
+      "title": "GraphOS owns provider discovery over the connector SDK groups",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

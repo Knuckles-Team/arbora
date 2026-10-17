@@ -11,7 +11,7 @@ overrides = [{ name = "epistemic-graph", git = "https://github.com/Knuckles-Team
 
 [[package]]
 name = "agent-connector-sdk"
-source = { editable = ".uv-workspace-siblings/agent-utilities/.uv-workspace-siblings/agent-connector-sdk" }
+source = { editable = ".uv-workspace-siblings/agent-connector-sdk" }
 dependencies = [
     { name = "anyio" },
     { name = "cryptography" },
@@ -28,7 +28,7 @@ dependencies = [
 requires-dist = [
     { name = "anyio", specifier = ">=4.13.0" },
     { name = "cryptography", specifier = ">=50.0.1" },
-    { name = "epistemic-graph", git = "https://github.com/Knuckles-Team/epistemic-graph.git?rev=a5b4a1f1f638baed374897578cc061f473e9687b" },
+    { name = "epistemic-graph", specifier = ">=2.27.0,<3" },
     { name = "fastmcp", specifier = ">=4.0.11,<5" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "httpx2", specifier = ">=2.12.0" },
@@ -77,31 +77,19 @@ dependencies = [
     { name = "urllib3" },
 ]
 
-[package.optional-dependencies]
-mcp = [
-    { name = "eunomia-core" },
-    { name = "fastapi" },
-    { name = "fastmcp" },
-    { name = "httpx" },
-    { name = "pydantic-ai-slim", extra = ["openai"] },
-    { name = "pyjwt" },
-    { name = "python-multipart" },
-    { name = "starlette" },
-]
-
 [package.metadata]
 requires-dist = [
-    { name = "agent-connector-sdk", editable = ".uv-workspace-siblings/agent-utilities/.uv-workspace-siblings/agent-connector-sdk" },
+    { name = "agent-connector-sdk", specifier = ">=0.1.0,<1.0.0" },
     { name = "agent-terminal-ui", marker = "extra == 'terminal'", specifier = ">=1.0.0" },
-    { name = "agent-utilities", extras = ["acp", "agent-anthropic", "agent-google", "agent-groq", "agent-huggingface", "agent-mistral", "agent-runtime", "ann", "auth", "browser", "documents", "embeddings-huggingface", "embeddings-ollama", "embeddings-openai", "feeds", "finance", "graph", "langfuse", "logfire", "mcp", "messaging", "pyarrow", "rdf", "sandbox", "stardog", "test", "vault"], marker = "extra == 'all'", specifier = ">=1.0.0" },
-    { name = "agent-utilities", extras = ["acp", "agent-anthropic", "agent-google", "agent-groq", "agent-huggingface", "agent-mistral", "agent-runtime", "event-kafka", "feeds", "finance", "graph", "pyarrow", "rdf", "sandbox", "trino"], marker = "extra == 'test'" },
+    { name = "agent-utilities", extras = ["acp", "agent-anthropic", "agent-google", "agent-groq", "agent-huggingface", "agent-mistral", "agent-runtime", "ann", "auth", "browser", "documents", "embeddings-huggingface", "embeddings-ollama", "embeddings-openai", "feeds", "finance", "langfuse", "logfire", "mcp", "messaging", "pyarrow", "rdf", "sandbox", "stardog", "test", "vault"], marker = "extra == 'all'", specifier = ">=1.0.0" },
+    { name = "agent-utilities", extras = ["acp", "agent-anthropic", "agent-google", "agent-groq", "agent-huggingface", "agent-mistral", "agent-runtime", "event-kafka", "feeds", "finance", "pyarrow", "rdf", "sandbox", "trino"], marker = "extra == 'test'" },
     { name = "agent-utilities", extras = ["ag-ui", "mcp", "sandbox", "terminal"], marker = "extra == 'agent-runtime'", specifier = ">=1.0.0" },
-    { name = "agent-utilities", extras = ["agent-headless", "auth", "embeddings-openai", "falkordb", "feeds", "gateway-widgets", "langfuse", "logfire", "mcp", "messaging-mattermost", "messaging-telegram", "metrics", "neo4j", "otel", "rdf", "vault"], marker = "extra == 'serving'" },
+    { name = "agent-utilities", extras = ["agent-headless", "auth", "embeddings-openai", "feeds", "gateway-widgets", "langfuse", "logfire", "mcp", "messaging-mattermost", "messaging-telegram", "metrics", "otel", "rdf", "vault"], marker = "extra == 'serving'" },
     { name = "agent-utilities", extras = ["embeddings"], marker = "extra == 'embeddings-huggingface'", specifier = ">=1.0.0" },
     { name = "agent-utilities", extras = ["embeddings"], marker = "extra == 'embeddings-ollama'", specifier = ">=1.0.0" },
     { name = "agent-utilities", extras = ["embeddings"], marker = "extra == 'embeddings-openai'", specifier = ">=1.0.0" },
-    { name = "agent-utilities", extras = ["falkordb", "fuseki", "kafka", "neo4j", "postgresql", "rdf", "test"], marker = "extra == 'test-backends'" },
     { name = "agent-utilities", extras = ["finance"], marker = "extra == 'finance-kronos'" },
+    { name = "agent-utilities", extras = ["fuseki", "kafka", "postgresql", "rdf", "test"], marker = "extra == 'test-backends'" },
     { name = "agent-utilities", extras = ["mcp", "sandbox"], marker = "extra == 'agent-headless'", specifier = ">=1.0.0" },
     { name = "agent-utilities", extras = ["messaging-discord", "messaging-googlechat", "messaging-googlemeet", "messaging-irc", "messaging-line", "messaging-matrix", "messaging-mattermost", "messaging-nextcloud", "messaging-signal", "messaging-slack", "messaging-synology", "messaging-teams", "messaging-telegram", "messaging-twitch", "messaging-voicecall", "messaging-whatsapp"], marker = "extra == 'messaging'" },
     { name = "agent-utilities", extras = ["rdf"], marker = "extra == 'stardog'" },
@@ -121,10 +109,9 @@ requires-dist = [
     { name = "defusedxml", specifier = ">=0.7.1,<0.8.0.dev0" },
     { name = "discord-py", marker = "extra == 'messaging-discord'", specifier = ">=2.7.1" },
     { name = "documentdb-mcp", marker = "extra == 'gateway-widgets'", specifier = ">=1.0.1" },
-    { name = "epistemic-graph", extras = ["full"], editable = ".uv-workspace-siblings/agent-utilities/.uv-workspace-siblings/epistemic-graph" },
+    { name = "epistemic-graph", extras = ["full"], specifier = ">=2.27.0,<3.0.0" },
     { name = "erpnext-agent", marker = "extra == 'gateway-widgets'", specifier = ">=1.0.1" },
     { name = "eunomia-core", marker = "extra == 'mcp'", specifier = ">=0.3.10" },
-    { name = "falkordb", marker = "extra == 'falkordb'", specifier = ">=1.6.2" },
     { name = "fasta2a", extras = ["pydantic-ai"], marker = "extra == 'agent-headless'", specifier = ">=0.6.1,<1.0.0" },
     { name = "fasta2a", extras = ["pydantic-ai"], marker = "extra == 'agent-runtime'", specifier = ">=0.6.1,<1.0.0" },
     { name = "fastapi", marker = "extra == 'mcp'", specifier = ">=0.139.2" },
@@ -157,7 +144,6 @@ requires-dist = [
     { name = "joserfc", specifier = ">=1.7.4" },
     { name = "jsonschema", specifier = ">=4.26.0" },
     { name = "keycloak-agent", marker = "extra == 'gateway-widgets'", specifier = ">=1.0.1" },
-    { name = "ladybug", marker = "extra == 'graph'", specifier = ">=0.18.2" },
     { name = "langfuse", marker = "extra == 'langfuse'", specifier = ">=4.14.1,<5" },
     { name = "langfuse-agent", marker = "extra == 'gateway-widgets'", specifier = ">=1.0.1" },
     { name = "line-bot-sdk", marker = "extra == 'messaging-line'", specifier = ">=3.25.0" },
@@ -173,7 +159,6 @@ requires-dist = [
     { name = "mutmut", marker = "extra == 'test'", specifier = ">=3.6.0" },
     { name = "mypy", marker = "extra == 'test'", specifier = ">=2.3.0" },
     { name = "nats-py", marker = "extra == 'nats'", specifier = ">=2.15.0" },
-    { name = "neo4j", marker = "extra == 'neo4j'", specifier = ">=6.2.0" },
     { name = "neonize", marker = "extra == 'messaging-whatsapp'", specifier = ">=0.4.3.post0" },
     { name = "nest-asyncio", marker = "extra == 'test'", specifier = ">=1.6.0" },
     { name = "networkx", marker = "extra == 'test'", specifier = ">=3.6.1" },
@@ -267,7 +252,7 @@ requires-dist = [
     { name = "wger-agent", marker = "extra == 'gateway-widgets'", specifier = ">=1.0.1" },
     { name = "yfinance", marker = "extra == 'finance'", specifier = ">=1.5.1" },
 ]
-provides-extras = ["graphos", "sandbox", "feeds", "kafka", "opensearch", "metrics", "otel", "nats", "pyarrow", "data-quality-ge", "data-quality-pandera", "mcp", "agent-runtime", "agent-headless", "agent-google", "agent-groq", "agent-mistral", "agent-anthropic", "agent-huggingface", "dynamic-workflow", "ag-ui", "terminal", "browser", "computer-use", "gateway-widgets", "acp", "documents", "embeddings", "embeddings-openai", "embeddings-huggingface", "embeddings-ollama", "logfire", "langfuse", "graph", "ann", "neo4j", "falkordb", "rdf", "stardog", "fuseki", "event-kafka", "ingest-dedup", "vault", "auth", "serving", "finance", "finance-kronos", "hr", "medical", "science", "law", "government", "postgresql", "trino", "messaging-discord", "messaging-slack", "messaging-telegram", "messaging-whatsapp", "messaging-teams", "messaging-googlechat", "messaging-googlemeet", "messaging-mattermost", "messaging-matrix", "messaging-irc", "messaging-signal", "messaging-imessage", "messaging-line", "messaging-twitch", "messaging-synology", "messaging-voicecall", "messaging-nextcloud", "messaging", "test", "test-backends", "all"]
+provides-extras = ["graphos", "sandbox", "feeds", "kafka", "opensearch", "metrics", "otel", "nats", "pyarrow", "data-quality-ge", "data-quality-pandera", "mcp", "agent-runtime", "agent-headless", "agent-google", "agent-groq", "agent-mistral", "agent-anthropic", "agent-huggingface", "dynamic-workflow", "ag-ui", "terminal", "browser", "computer-use", "gateway-widgets", "acp", "documents", "embeddings", "embeddings-openai", "embeddings-huggingface", "embeddings-ollama", "logfire", "langfuse", "ann", "rdf", "stardog", "fuseki", "event-kafka", "ingest-dedup", "vault", "auth", "serving", "finance", "finance-kronos", "hr", "medical", "science", "law", "government", "postgresql", "trino", "messaging-discord", "messaging-slack", "messaging-telegram", "messaging-whatsapp", "messaging-teams", "messaging-googlechat", "messaging-googlemeet", "messaging-mattermost", "messaging-matrix", "messaging-irc", "messaging-signal", "messaging-imessage", "messaging-line", "messaging-twitch", "messaging-synology", "messaging-voicecall", "messaging-nextcloud", "messaging", "test", "test-backends", "all"]
 
 [package.metadata.requires-dev]
 build = [
@@ -301,7 +286,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agent-utilities", extras = ["agent-headless", "graph", "graphos", "metrics"], marker = "extra == 'test'", editable = ".uv-workspace-siblings/agent-webui/.uv-workspace-siblings/agent-utilities" },
+    { name = "agent-utilities", extras = ["agent-headless", "graph", "graphos", "metrics"], marker = "extra == 'test'", specifier = ">=2.0.0" },
     { name = "fastapi", specifier = ">=0.142.2" },
     { name = "joserfc", specifier = ">=1.7.4" },
     { name = "langfuse", specifier = ">=4.14.1" },
@@ -1268,18 +1253,22 @@ name = "graph-os"
 source = { editable = "." }
 dependencies = [
     { name = "agent-connector-sdk" },
-    { name = "agent-utilities", extra = ["mcp"] },
+    { name = "agent-utilities" },
     { name = "aiohttp" },
     { name = "anyio" },
     { name = "epistemic-graph" },
+    { name = "eunomia-core" },
     { name = "fastapi" },
     { name = "fastmcp" },
     { name = "filelock" },
+    { name = "httpx" },
     { name = "mcp" },
     { name = "opentelemetry-api" },
     { name = "prometheus-client" },
     { name = "pydantic" },
     { name = "pydantic-ai-slim", extra = ["openai"] },
+    { name = "pyjwt" },
+    { name = "python-multipart" },
     { name = "pyyaml" },
     { name = "starlette" },
     { name = "universal-skills" },
@@ -1317,15 +1306,17 @@ webui = [
 requires-dist = [
     { name = "agent-connector-sdk", editable = ".uv-workspace-siblings/agent-connector-sdk" },
     { name = "agent-connector-sdk", marker = "extra == 'gateway-widgets'", editable = ".uv-workspace-siblings/agent-connector-sdk" },
-    { name = "agent-utilities", extras = ["mcp"], editable = ".uv-workspace-siblings/agent-utilities" },
+    { name = "agent-utilities", editable = ".uv-workspace-siblings/agent-utilities" },
     { name = "agent-webui", marker = "extra == 'webui'", editable = ".uv-workspace-siblings/agent-webui" },
     { name = "aiohttp", specifier = ">=3.14.1" },
     { name = "anyio", specifier = ">=4.13.0" },
     { name = "epistemic-graph", extras = ["server"], specifier = ">=2.27.1,<3.0.0" },
+    { name = "eunomia-core", specifier = ">=0.3.10" },
     { name = "fastapi", specifier = ">=0.139.2" },
-    { name = "fastmcp", specifier = ">=4.0.0b1" },
+    { name = "fastmcp", specifier = ">=4.0.11" },
     { name = "filelock", specifier = ">=3.32.0" },
     { name = "graph-os", extras = ["messaging-mattermost", "messaging-telegram"], marker = "extra == 'messaging'" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "mattermostdriver", marker = "extra == 'messaging-mattermost'", specifier = ">=7.3.2" },
     { name = "mcp", specifier = ">=2.3.0,<3.0.0" },
     { name = "mypy", marker = "extra == 'test'", specifier = ">=2.3.0" },
@@ -1333,9 +1324,11 @@ requires-dist = [
     { name = "prometheus-client", specifier = ">=0.25.0" },
     { name = "pydantic", specifier = ">=2.13.4,<3.0.0" },
     { name = "pydantic-ai-slim", extras = ["openai"], specifier = "==2.54.0" },
+    { name = "pyjwt", specifier = ">=2.13.0" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.4.0" },
     { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=1.3.0" },
     { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=7.1.0" },
+    { name = "python-multipart", specifier = ">=0.0.32" },
     { name = "python-telegram-bot", marker = "extra == 'messaging-telegram'", specifier = ">=22.8" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "ruff", marker = "extra == 'test'", specifier = "==0.16.0" },

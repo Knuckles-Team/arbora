@@ -111,7 +111,7 @@
     {
       "id": "GRAPHOS-IDENTITY-R002",
       "title": "Domain scopes consume the generated scope registry",
-      "delivery_state": "SPECIFIED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "a2212420d6c6",
         "d497f656144a"
@@ -126,9 +126,15 @@
     {
       "id": "GRAPHOS-IDENTITY-R002.1",
       "title": "GraphOS owns the scope registry generated from EG `scopes.json`",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "9e7f6499d96f"
+      ],
+      "verified_by": [
+        "tests/security/test_scope_registry.py:26",
+        "tests/security/test_scope_registry.py:35",
+        "tests/security/test_scope_registry.py:45"
+      ]
     },
     {
       "id": "GRAPHOS-IDENTITY-R003",

@@ -82,7 +82,7 @@ def test_register_skill_providers_calls_add_provider_per_resolved_dir(
     )
 
     monkeypatch.setattr(
-        "agent_utilities.core.providers.resolve_skill_provider_dirs",
+        "graph_os.core.providers.resolve_skill_provider_dirs",
         lambda: [("some-provider", skill_root.parent)],
     )
 
@@ -120,7 +120,7 @@ def test_register_skill_providers_one_bad_dir_does_not_sink_the_rest(
         types.ModuleType("fastmcp.server.providers"),
     )
     monkeypatch.setattr(
-        "agent_utilities.core.providers.resolve_skill_provider_dirs",
+        "graph_os.core.providers.resolve_skill_provider_dirs",
         lambda: [("bad-provider", "bad"), ("good-provider", "good")],
     )
 

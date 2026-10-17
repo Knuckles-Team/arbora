@@ -7,7 +7,7 @@ point (graph-os's own skills, agent-utilities' own skills, and any sibling
 package installed alongside graph-os that declares the same entry point --
 currently epistemic-graph and agent-webui) onto GraphOS's own served FastMCP
 instance as ``skill://{name}/SKILL.md`` resources, through
-``agent_utilities.core.providers.resolve_skill_provider_dirs()``. Those
+``graph_os.core.providers.resolve_skill_provider_dirs()``. Those
 resources are reachable by a client that already knows to read them, but the
 multiplexer's ``find_tools``/``discover_tools`` ranking (CONCEPT:AU-KG.
 retrieval.unified-capability-contract) only ever considered FLEET-harvested
@@ -86,7 +86,7 @@ def _frontmatter_fields(text: str) -> tuple[str | None, str | None]:
     """Best-effort ``name``/``description`` out of a ``SKILL.md``'s frontmatter.
 
     A lightweight line scan, not a YAML parser -- the same tradeoff
-    ``agent_utilities.core.providers._frontmatter_identity`` already makes for
+    ``graph_os.core.providers._frontmatter_identity`` already makes for
     ``name`` alone; this additionally resolves a folded/literal block
     ``description`` by joining its indented continuation lines.
     """
@@ -140,7 +140,7 @@ def _local_skill_entry(provider: str, skill_root: Path) -> dict[str, str]:
 def _default_provider_dirs() -> list[tuple[str, Path]]:
     """Lazy-imported default resolver, so importing this module never requires
     ``agent_utilities`` to be installed (only calling it, unpatched, does)."""
-    from agent_utilities.core.providers import resolve_skill_provider_dirs
+    from graph_os.core.providers import resolve_skill_provider_dirs
 
     return resolve_skill_provider_dirs()
 

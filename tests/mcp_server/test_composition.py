@@ -177,7 +177,7 @@ def test_graphos_runtime_shapes_use_connector_content_contract() -> None:
 
     The public ``graph-os-development``, ``graphos-deployment`` and
     ``graphos-genesis`` skills ship under ``graph_os/skills`` (package data
-    plus the ``agent_utilities.skill_providers`` entry point), so the SDK
+    plus the ``agent_connector_sdk.skill_providers`` entry point), so the SDK
     registers exactly one skills-directory provider rooted there and nothing
     else: no prompts, and one runtime shapes resource.
     """

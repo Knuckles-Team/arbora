@@ -56,10 +56,10 @@ import re
 import threading
 from typing import Any
 
+from agent_utilities.security.error_surface import public_error_json
 from pydantic import Field
 
 from graph_os.mcp_server.backing import kg_server
-from agent_utilities.security.error_surface import public_error_json
 
 logger = logging.getLogger(__name__)
 
@@ -371,6 +371,9 @@ _READ_VERB_PREFIXES: tuple[str, ...] = (
     # under the same query:unified / kg:read policy classification as SQL and
     # SPARQL (CONCEPT:AU-KG.query.au-engine-execution-path).
     "uql",
+    # EG ``QueryClient.nl_query``: the engine's NL planner emits UQL that rides
+    # the same read pipeline as ``uql`` (GRAPHOS-HOST-R001.8).
+    "nl_query",
     # Structured UnifiedQuery is the same read-only query:unified operation
     # that the UQL text surface lowers to.
     "unified",
