@@ -145,6 +145,10 @@ jobs:
           python-version: '3.12'
           enable-cache: true
           cache-dependency-glob: uv.lock
+          # A pull request restores the cache but never saves it: saving tars
+          # the self-hosted runner's whole uv cache, which ran a green PR
+          # gates job past its 15-minute budget. Main and tags still save.
+          save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Provision pinned Helm for deployment render tests
         env:
