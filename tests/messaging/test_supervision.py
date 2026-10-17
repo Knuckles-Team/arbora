@@ -119,26 +119,21 @@ async def test_router_never_promotes_an_unconnected_backend_to_running() -> None
     await asyncio.wait_for(start_task, timeout=1)
 
 
-class _AlwaysFailingBackend:
+class _AlwaysFailingBackend(FakeMessagingBackend):
     """Fixture backend whose ``listen()`` always raises immediately."""
-
-    id = "telegram"
-    is_connected = True
 
     async def listen(self):  # noqa: ANN201 - async generator, matches MessagingBackend.listen
         raise RuntimeError("simulated short-lived listener failure")
         yield  # pragma: no cover - unreachable, makes this an async generator
 
 
-class _OneHealthyRunThenFailingBackend:
+class _OneHealthyRunThenFailingBackend(FakeMessagingBackend):
     """Fixture backend: attempt 1 fails immediately, attempt 2 runs for a
     while (a simulated healthy run) before failing, attempt 3 fails
     immediately again."""
 
-    id = "telegram"
-    is_connected = True
-
     def __init__(self) -> None:
+        super().__init__()
         self.calls = 0
 
     async def listen(self):  # noqa: ANN201

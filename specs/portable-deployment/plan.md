@@ -196,3 +196,7 @@ R010.1 preserves the original development-skill topics and AGENTS navigation acc
 - `GRAPHOS-DEPLOY-R009.3`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-DEPLOY-R013.7`: Plan the owner work and dependencies defined in requirements.md.
 - `GRAPHOS-DEPLOY-R010.4`: Plan the owner work and dependencies defined in requirements.md.
+
+### 2026-10-17 — R004 frozen-environment fixture contracts
+
+Repair the locked-environment type gate with concrete messaging, assembler, and catalog test fixtures that implement their existing public contracts. Narrow fixture-specific state before inspection and annotate the validated RLM request. Preserve production behavior and protocol requirements; add no suppressions or dependency changes.

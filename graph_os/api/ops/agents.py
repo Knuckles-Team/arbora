@@ -84,7 +84,9 @@ async def handle_rlm(
 
     if context.caller.session is None:
         raise RuntimeError("RLM operation requires a verified session")
-    request = TypeAdapter(GraphRlmRequest).validate_python(params["request"])
+    request: GraphRlmRequest = TypeAdapter(GraphRlmRequest).validate_python(
+        params["request"]
+    )
     action = op.id.rsplit(".", 1)[-1]
     if request.action != action:
         raise ValueError("RLM action does not match operation")

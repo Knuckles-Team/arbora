@@ -1260,6 +1260,7 @@ async def test_policy_denial_is_audited_without_fence_or_dispatch(
     with use_session(session):
         service, _connection, engine, sent, tool = await _setup(session)
         lease = await _lease(service, _binding(session), tool)
+        assert isinstance(service._policy, _Policy)
         service._policy.allow = False
         receipt = await service.execute_call(
             BrowserCallRequest(
