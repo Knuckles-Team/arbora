@@ -21,6 +21,7 @@ from graph_os.agent_host.start_admission import (
     HostStartGrant,
     HostStartRequest,
 )
+from graph_os.agent_host.start_configuration import HostStartConfiguration
 from graph_os.identity.engine import Resolution
 from graph_os.identity.ports import SessionState
 
@@ -52,7 +53,14 @@ class Owners:
         self.state = SessionState(
             resolution, int(time.time() * 1000) + 60_000, "session-alice", None
         )
-        self.request = HostStartRequest(str(workspace), "terminal", False, "a" * 64)
+        self.request = HostStartRequest(
+            str(workspace),
+            "terminal",
+            False,
+            HostStartConfiguration(
+                workspace=str(workspace), enable_terminal_ui=True
+            ).digest(),
+        )
         self.grant = HostStartGrant(
             self.request,
             "tenant",
@@ -245,3 +253,117 @@ def test_expired_session_never_calls_policy(tmp_path: Path) -> None:
             workspace=str(tmp_path), interfaces="terminal", web_logs=False
         )
     assert owner.calls == 0
+
+
+@pytest.mark.spec("GRAPHOS-HOST-R010.7.2.1")
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("tag_prompts", {"code": "Assistant"}),
+        ("tag_env_vars", {"code": "ENABLED"}),
+        ("graph_name", "Other"),
+        ("mcp_url", "http://127.0.0.1:1234"),
+        ("mcp_config", "other.json"),
+        ("router_model", "router"),
+        ("agent_model", "agent"),
+        ("min_confidence", 0.5),
+        ("host", "0.0.0.0"),
+        ("port", 9001),
+        ("name", "Other"),
+        ("system_prompt", "Other prompt"),
+        ("enable_web_ui", True),
+        ("enable_web_logs", True),
+    ],
+)
+def test_actual_configuration_mismatch_precedes_all_owners(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: str, value: Any
+) -> None:
+    owner = Owners(tmp_path)
+    context = owner.context()
+    forbidden = Mock(side_effect=AssertionError("owner or startup called"))
+    monkeypatch.setattr(owner, "resolve_session", forbidden)
+    monkeypatch.setattr(owner, "attest", forbidden)
+    monkeypatch.setattr(owner, "authorize", forbidden)
+    monkeypatch.setattr(host, "build_agent_host_app", forbidden)
+    monkeypatch.setattr(uvicorn, "run", forbidden)
+    with pytest.raises(PermissionError, match="configuration_mismatch"):
+        host.create_agent_server(
+            workspace=str(tmp_path),
+            enable_terminal_ui=True,
+            host_start=context,
+            **{field: value},
+        )
+    forbidden.assert_not_called()
+
+
+@pytest.mark.spec("GRAPHOS-HOST-R010.7.2.1")
+@pytest.mark.parametrize(
+    "field",
+    ["graph", "graph_config", "executor", "host_logs", "host_log_runtime", "debug"],
+)
+def test_opaque_configuration_refuses_without_serializing_or_calling_owners(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: str
+) -> None:
+    class Opaque:
+        def __repr__(self) -> str:
+            raise AssertionError("serialized runtime object")
+
+    owner = Owners(tmp_path)
+    forbidden = Mock(side_effect=AssertionError("owner called"))
+    monkeypatch.setattr(owner, "resolve_session", forbidden)
+    arguments: dict[str, Any] = {field: Opaque()}
+    with pytest.raises(PermissionError, match="configuration_unavailable"):
+        host.create_agent_server(
+            workspace=str(tmp_path),
+            enable_terminal_ui=True,
+            host_start=owner.context(),
+            **arguments,
+        )
+    forbidden.assert_not_called()
+
+
+@pytest.mark.spec("GRAPHOS-HOST-R010.7.2.1")
+def test_canonical_configuration_mapping_order_and_workspace(tmp_path: Path) -> None:
+    configuration = HostStartConfiguration(
+        workspace=str(tmp_path), tag_prompts={"a": "one", "b": "two"}
+    )
+    assert (
+        configuration.digest()
+        == replace(
+            configuration,
+            workspace=str(tmp_path / "."),
+            tag_prompts={"b": "two", "a": "one"},
+        ).digest()
+    )
+    assert configuration.digest() != replace(configuration, port=9001).digest()
+
+
+@pytest.mark.spec("GRAPHOS-HOST-R010.7.2.1")
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), object()])
+def test_noncanonical_configuration_refuses(value: Any) -> None:
+    with pytest.raises(ValueError, match="invalid_launch_configuration"):
+        HostStartConfiguration(min_confidence=value).digest()
+
+
+@pytest.mark.spec("GRAPHOS-HOST-R010.7.2.1")
+def test_matching_actual_inputs_reach_admission_but_never_launch(
+    tmp_path: Path,
+) -> None:
+    owner = Owners(tmp_path)
+    configuration = HostStartConfiguration(
+        workspace=str(tmp_path),
+        enable_terminal_ui=True,
+        tag_prompts={"code": "Assistant"},
+        port=9123,
+    )
+    owner.request = replace(owner.request, configuration_digest=configuration.digest())
+    owner.grant = replace(owner.grant, request=owner.request)
+    with pytest.raises(host.HostInterfaceUnavailable):
+        host.create_agent_server(
+            workspace=str(tmp_path),
+            enable_terminal_ui=True,
+            tag_prompts={"code": "Assistant"},
+            port=9123,
+            host_start=owner.context(),
+        )
+    assert owner.calls == 1
