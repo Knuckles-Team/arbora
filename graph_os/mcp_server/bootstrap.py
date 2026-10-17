@@ -62,7 +62,7 @@ def _get_engine():
 def _set_readiness_authority(session: Any) -> object:
     """Hand the readiness probe the process's own verified authority."""
 
-    from agent_utilities.observability.runtime_health import claim_readiness_authority
+    from graph_os.observability.runtime_health import claim_readiness_authority
 
     return claim_readiness_authority(session)
 
@@ -70,7 +70,7 @@ def _set_readiness_authority(session: Any) -> object:
 def _release_readiness_authority(owner: object) -> None:
     """Release only the readiness authority claimed by this serving lifecycle."""
 
-    from agent_utilities.observability.runtime_health import release_readiness_authority
+    from graph_os.observability.runtime_health import release_readiness_authority
 
     if not release_readiness_authority(owner):
         raise RuntimeError("graph-os no longer owns the readiness authority")

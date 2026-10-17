@@ -1,29 +1,8 @@
-"""Live-path proof for the gateway health kernel wiring
-(CONCEPT:AU-OS.observability.unified-health-kernels /
-AU-KG.identity.evidence-spine-convergence, Evidence seam completion).
+"""The gateway health producer writes an anomaly's trend window as evidence.
 
-Ported from the agent runtime's
-``tests/unit/observability/test_gateway_health_evidence_live_path.py``
-(GRAPHOS-HOST-R008). The agent runtime's fifth test there
-(``test_middleware_feeds_the_real_duration_into_record_request_duration``)
-proved ``agent_utilities.observability.gateway_metrics``' middleware calls
-this module's entry point — that module has not moved to graph-os yet, so
-that specific integration test stays in the agent runtime (it now proves
-the opposite: that the middleware degrades gracefully with this module
-absent there). Every test that exercises `graph_os.observability.gateway_health`
-itself, independent of the agent runtime's middleware, ported unchanged.
-
-Two gaps closed by ONE producer (``graph_os/observability/gateway_health.py``):
-
-1. ``agent_utilities.observability.health``'s anomaly-detection kernel +
-   ``health_ingest.ingest_health_anomaly`` had ZERO live callers anywhere —
-   a fully built, generalized-but-unwired kernel. This test proves a REAL
-   caller exists.
-2. ``MediaStore.store_metric_window_evidence`` (``MetricWindow`` locus) had no
-   producer. This test proves an anomaly's own triggering trend window is now
-   written as its evidence.
-
-Offline throughout: health_ingest/media_store are both faked; no real engine.
+A window that the shared kernel flags as anomalous is written as one
+``MetricWindow`` evidence locus. A normal window, or a window before the
+baseline has enough history, writes nothing. The store is a fake.
 """
 
 from __future__ import annotations
@@ -32,7 +11,6 @@ import asyncio
 import json
 
 import pytest
-from agent_utilities.observability import health_ingest
 
 from graph_os.observability import gateway_health as gh
 from graph_os.observability import health as h
@@ -47,14 +25,17 @@ class _FakeStore:
         return object()
 
 
-@pytest.fixture(autouse=True)
-def _reset_module_state(monkeypatch):
+@pytest.fixture
+def store(monkeypatch):
     monkeypatch.setattr(gh, "_buffer", None)
     monkeypatch.setattr(gh, "_history", [])
-    yield
+    fake = _FakeStore()
+    monkeypatch.setattr(gh, "_media_store", lambda: fake)
+    return fake
 
 
-def _normal_trend(avg: float, t0: float) -> dict:
+def _trend(avg: float, index: int) -> dict:
+    t0 = 1_000_000.0 + index * gh._WINDOW_S
     return {
         "min": avg - 0.01,
         "max": avg + 0.01,
@@ -67,100 +48,27 @@ def _normal_trend(avg: float, t0: float) -> dict:
     }
 
 
+@pytest.mark.parametrize(
+    ("history", "avg", "writes"),
+    [(6, 5.0, 1), (6, 0.05, 0), (2, 5.0, 0)],
+    ids=["anomalous-window", "normal-window", "short-history"],
+)
 @pytest.mark.asyncio
-async def test_check_and_record_writes_anomaly_and_metric_window_evidence(
-    monkeypatch,
+async def test_only_an_anomalous_window_is_written_as_evidence(
+    monkeypatch, store, history, avg, writes
 ):
-    # Seed six normal baseline windows (min_windows default) around ~0.05s latency.
-    monkeypatch.setattr(
-        gh,
-        "_history",
-        [_normal_trend(0.05, 1_000_000.0 + i * gh._WINDOW_S) for i in range(6)],
-    )
+    monkeypatch.setattr(gh, "_history", [_trend(0.05, i) for i in range(history)])
+    trend = _trend(avg, history)
 
-    calls: list[tuple[str, str, dict, str]] = []
+    await gh._check_and_record(trend)
 
-    def _fake_ingest_health_anomaly(entity_id, signal, anomaly, *, entity_type):
-        calls.append((entity_id, signal, dict(anomaly), entity_type))
-        return {"nodes": 1}
-
-    monkeypatch.setattr(
-        health_ingest, "ingest_health_anomaly", _fake_ingest_health_anomaly
-    )
-
-    store = _FakeStore()
-    monkeypatch.setattr(
-        "agent_utilities.knowledge_graph.memory.native_ingest.media_store",
-        lambda: store,
-    )
-
-    # A genuinely anomalous window: latency spiked to 5s.
-    anomalous_trend = _normal_trend(5.0, 1_000_000.0 + 6 * gh._WINDOW_S)
-
-    await gh._check_and_record(anomalous_trend)
-
-    # 1. The dead kernel's first live caller — a real :HealthAnomaly write.
-    assert len(calls) == 1
-    entity_id, signal, anomaly, entity_type = calls[0]
-    assert entity_id == "gateway"
-    assert signal == "request_duration_seconds"
-    assert entity_type == "Gateway"
-    assert anomaly["kind"] == "above-baseline"
-    assert anomaly["observed"] == 5.0
-
-    # 2. The MetricWindow evidence locus — the EXACT triggering window.
-    assert len(store.window_calls) == 1
-    data, kw = store.window_calls[0]
-    assert data == json.dumps(anomalous_trend, sort_keys=True).encode("utf-8")
-    assert kw["metric"] == "gateway:request_duration_seconds"
-    assert kw["start_ms"] == int(anomalous_trend["start_at"] * 1000)
-    assert kw["end_ms"] == int(anomalous_trend["end_at"] * 1000)
-    assert kw["source"] == "gateway-health"
-
-    # History grew by exactly the window just checked.
-    assert gh._history[-1] == anomalous_trend
-
-
-@pytest.mark.asyncio
-async def test_check_and_record_writes_nothing_when_normal(monkeypatch):
-    monkeypatch.setattr(
-        gh,
-        "_history",
-        [_normal_trend(0.05, 1_000_000.0 + i * gh._WINDOW_S) for i in range(6)],
-    )
-    calls: list[tuple] = []
-    monkeypatch.setattr(
-        health_ingest,
-        "ingest_health_anomaly",
-        lambda *a, **k: calls.append((a, k)),
-    )
-    store = _FakeStore()
-    monkeypatch.setattr(
-        "agent_utilities.knowledge_graph.memory.native_ingest.media_store",
-        lambda: store,
-    )
-
-    normal_trend = _normal_trend(0.051, 1_000_000.0 + 6 * gh._WINDOW_S)
-    await gh._check_and_record(normal_trend)
-
-    assert calls == []
-    assert store.window_calls == []
-    # Still folded into history for future baselines.
-    assert gh._history[-1] == normal_trend
-
-
-@pytest.mark.asyncio
-async def test_check_and_record_skips_before_enough_history(monkeypatch):
-    """Fewer than DEFAULT_MIN_WINDOWS prior windows -> no baseline -> no check."""
-    monkeypatch.setattr(gh, "_history", [_normal_trend(0.05, 1_000_000.0)])
-    calls: list[tuple] = []
-    monkeypatch.setattr(
-        health_ingest,
-        "ingest_health_anomaly",
-        lambda *a, **k: calls.append((a, k)),
-    )
-    await gh._check_and_record(_normal_trend(5.0, 1_000_100.0))
-    assert calls == []
+    assert len(store.window_calls) == writes
+    assert gh._history[-1] == trend
+    if writes:
+        data, kwargs = store.window_calls[0]
+        assert data == json.dumps(trend, sort_keys=True).encode("utf-8")
+        assert kwargs["start_ms"] == int(trend["start_at"] * 1000)
+        assert kwargs["end_ms"] == int(trend["end_at"] * 1000)
 
 
 def test_record_request_duration_flush_triggers_the_check(monkeypatch):

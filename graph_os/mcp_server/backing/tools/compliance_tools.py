@@ -58,7 +58,7 @@ _POSTURE_LABELS: tuple[str, ...] = (
 
 #: X4 — auth-posture / secrets-posture doctor checks folded into ``posture``
 #: (CONCEPT:AU-KG.enrichment.compliance-posture-rollup). Reuses
-#: ``agent_utilities.deployment.doctor.run_doctor``'s EXISTING checks
+#: ``graph_os.deployment.doctor.run_doctor``'s EXISTING checks
 #: verbatim — every one of them is already defensive (never raises) and
 #: already redacted where it could carry anything sensitive (each check's
 #: own ``data`` marks ``"redacted": True``; see their docstrings in
@@ -78,13 +78,13 @@ _SECRETS_POSTURE_CHECKS: tuple[str, ...] = (
 
 
 def _doctor_posture(names: tuple[str, ...]) -> dict[str, Any]:
-    """One slice of :func:`agent_utilities.deployment.doctor.run_doctor` —
+    """One slice of :func:`graph_os.deployment.doctor.run_doctor` —
     status/counts/checks only (the SAME already-redacted shape ``doctor``
     itself returns). Best-effort: a failure to even reach the doctor module
     degrades to a single ``error`` entry rather than breaking ``posture``.
     """
     try:
-        from agent_utilities.deployment.doctor import run_doctor
+        from graph_os.deployment.doctor import run_doctor
 
         report = run_doctor(only=list(names))
     except Exception as exc:  # noqa: BLE001 — one doctor slice must not break posture()

@@ -38,9 +38,10 @@ import threading
 import time
 from typing import Any
 
-from agent_utilities.observability.gateway_metrics import GATEWAY_RATE_LIMITED
 from agent_utilities.security.brain_context import current_actor
 from agent_utilities.security.request_identity import HEALTH_PATHS
+
+from graph_os.observability.gateway_metrics import GATEWAY_RATE_LIMITED
 
 logger = logging.getLogger(__name__)
 

@@ -285,7 +285,7 @@ def test_legacy_set_config_cannot_bypass_governed_config_admin(
 def test_get_config_redacts_endpoint_and_path_values(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import agent_utilities.deployment as deployment
+    import graph_os.deployment as deployment
 
     fake = _FakeMCP()
     analysis_tools.register_analysis_tools(fake)

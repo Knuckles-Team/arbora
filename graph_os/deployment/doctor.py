@@ -650,7 +650,8 @@ def _check_permission_governance() -> dict[str, Any]:
     }
     try:
         from agent_utilities.core.config import AgentConfig
-        from agent_utilities.core.profile_guard import is_production_profile
+
+        from graph_os.deployment.profile_guard import is_production_profile
 
         cfg = AgentConfig()
         data["signing_reference_configured"] = bool(cfg.permissions_signing_key_ref)
@@ -1459,7 +1460,7 @@ def _check_secrets_backend() -> dict[str, Any]:
         )
 
         cfg = AgentConfig()
-        backend = str(getattr(cfg, "secrets_backend", None) or "engine")
+        backend = str(getattr(cfg, "secrets_backend", None) or "vault")
         counts = secret_reference_scheme_counts(cfg)
     except Exception as exc:  # noqa: BLE001
         return _result(
@@ -2026,7 +2027,7 @@ def _check_provider_profiles() -> dict[str, Any]:
 
 def _check_hooks() -> dict[str, Any]:
     try:
-        from agent_utilities.ecosystem.hook_installer import HookInstaller
+        from graph_os.ecosystem.hook_installer import HookInstaller
 
         rep = HookInstaller().doctor()
     except Exception as exc:  # noqa: BLE001
@@ -2372,7 +2373,7 @@ def _auto_fix(name: str) -> dict[str, Any]:
     """Run a conservative, idempotent remediation for an auto-fixable check."""
     if name == "hooks":
         try:
-            from agent_utilities.ecosystem.hook_installer import HookInstaller
+            from graph_os.ecosystem.hook_installer import HookInstaller
 
             inst = HookInstaller()
             inst.install()

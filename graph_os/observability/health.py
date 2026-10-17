@@ -24,7 +24,7 @@ kernels compose the full pattern:
    entities into one systemic cause (generalizes ``classify_ambient``'s "ambient").
 
 KG I/O (typed ``:HealthTrend``/``:HealthBaseline``/``:HealthAnomaly`` writers/readers)
-lives in :mod:`agent_utilities.observability.health_ingest`; this module is reason-only.
+is the knowledge engine's job; this module is reason-only.
 """
 
 import math

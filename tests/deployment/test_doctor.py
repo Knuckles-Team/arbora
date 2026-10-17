@@ -837,7 +837,8 @@ def test_skill_certification_doctor_proves_regular_material_and_commands(
 ):
     from agent_utilities.core import config as config_module
     from agent_utilities.core import paths
-    from agent_utilities.deployment import skill_validation_assets as assets
+
+    from graph_os.deployment import certification_assets as assets
 
     cfg = _skill_certification_config(tmp_path)
     monkeypatch.setattr(config_module, "AgentConfig", lambda: cfg)
@@ -1705,23 +1706,23 @@ def _langfuse_doctor_config(**overrides):
 def _patch_langfuse_static_dependencies(monkeypatch, cfg, *, launcher=None):
     monkeypatch.setattr("agent_utilities.core.config.AgentConfig", lambda: cfg)
     monkeypatch.setattr(
-        "agent_utilities.observability.langfuse_trust.langfuse_credentials_configured",
+        "graph_os.observability.langfuse_trust.langfuse_credentials_configured",
         lambda **_kwargs: True,
     )
     monkeypatch.setattr(
-        "agent_utilities.observability.langfuse_trust.resolve_langfuse_credentials",
+        "graph_os.observability.langfuse_trust.resolve_langfuse_credentials",
         lambda **_kwargs: ("synthetic-public", "synthetic-secret"),
     )
     monkeypatch.setattr(
-        "agent_utilities.observability.langfuse_trust.configure_langfuse_trust",
+        "graph_os.observability.langfuse_trust.configure_langfuse_trust",
         lambda **_kwargs: SimpleNamespace(valid=True, configured=False),
     )
     monkeypatch.setattr(
-        "agent_utilities.observability.langfuse_trust.resolve_langfuse_persistence_hmac_key",
+        "graph_os.observability.langfuse_trust.resolve_langfuse_persistence_hmac_key",
         lambda **_kwargs: "synthetic-persistence-key-material-32",
     )
     monkeypatch.setattr(
-        "agent_utilities.observability.langfuse_trust.langfuse_provider_contract_ready",
+        "graph_os.observability.langfuse_trust.langfuse_provider_contract_ready",
         lambda: launcher is not None,
     )
 
@@ -1765,12 +1766,12 @@ def test_langfuse_launcher_is_required_only_for_mcp(monkeypatch):
 
 
 def test_langfuse_doctor_rejects_placeholder_material_locally(monkeypatch):
-    from agent_utilities.observability.langfuse_trust import LangfuseTrustError
+    from graph_os.observability.langfuse_trust import LangfuseTrustError
 
     cfg = _langfuse_doctor_config()
     _patch_langfuse_static_dependencies(monkeypatch, cfg, launcher=None)
     monkeypatch.setattr(
-        "agent_utilities.observability.langfuse_trust.resolve_langfuse_credentials",
+        "graph_os.observability.langfuse_trust.resolve_langfuse_credentials",
         MagicMock(side_effect=LangfuseTrustError("langfuse_credentials_invalid")),
     )
 
@@ -1811,7 +1812,7 @@ def test_langfuse_persistence_ref_must_resolve(monkeypatch):
     )
     _patch_langfuse_static_dependencies(monkeypatch, cfg, launcher=None)
     monkeypatch.setattr(
-        "agent_utilities.observability.langfuse_trust.resolve_langfuse_persistence_hmac_key",
+        "graph_os.observability.langfuse_trust.resolve_langfuse_persistence_hmac_key",
         MagicMock(side_effect=RuntimeError("private provider detail")),
     )
 

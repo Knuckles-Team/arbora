@@ -19,21 +19,22 @@ def _require_observability_imports() -> None:
     from agent_utilities.core.transport_security import (  # noqa: F401
         resolve_configured_tls_profile,
     )
-    from agent_utilities.observability.custom_observability import (  # noqa: F401
-        _same_origin,
-    )
-    from agent_utilities.observability.langfuse_trust import (  # noqa: F401
-        resolve_langfuse_credentials,
-        resolve_langfuse_host,
-    )
     from agent_utilities.security.cli_secrets import (  # noqa: F401
         resolve_runtime_secret_reference,
+    )
+
+    from graph_os.observability.custom_observability import (  # noqa: F401
+        _same_origin,
+    )
+    from graph_os.observability.langfuse_trust import (  # noqa: F401
+        resolve_langfuse_credentials,
+        resolve_langfuse_host,
     )
 
 
 def _otel_endpoint(cfg: Any, langfuse_pair: bool) -> tuple[str, bool]:
     """``(endpoint, derived_from_langfuse)`` for the OTLP exporter."""
-    from agent_utilities.observability.langfuse_trust import resolve_langfuse_host
+    from graph_os.observability.langfuse_trust import resolve_langfuse_host
 
     endpoint = str(cfg.otel_exporter_otlp_endpoint or "").strip()
     endpoint_derived = not endpoint and langfuse_pair
@@ -44,8 +45,8 @@ def _otel_endpoint(cfg: Any, langfuse_pair: bool) -> tuple[str, bool]:
 
 def _otel_transport_posture(cfg: Any) -> SimpleNamespace:
     """Which OTLP endpoint applies and which authentication tier backs it."""
-    from agent_utilities.observability.custom_observability import _same_origin
-    from agent_utilities.observability.langfuse_trust import resolve_langfuse_host
+    from graph_os.observability.custom_observability import _same_origin
+    from graph_os.observability.langfuse_trust import resolve_langfuse_host
 
     langfuse_pair = bool(cfg.langfuse_public_key_ref and cfg.langfuse_secret_key_ref)
     endpoint, endpoint_derived = _otel_endpoint(cfg, langfuse_pair)
@@ -95,10 +96,11 @@ def _otel_data(cfg: Any, posture: SimpleNamespace, metrics: Any) -> dict[str, An
 
 def _otel_prove_credentials(cfg: Any, posture: SimpleNamespace) -> None:
     """Resolve the reference tier actually in use; raises when it is unavailable."""
-    from agent_utilities.observability.langfuse_trust import (
+    from agent_utilities.security.cli_secrets import resolve_runtime_secret_reference
+
+    from graph_os.observability.langfuse_trust import (
         resolve_langfuse_credentials,
     )
-    from agent_utilities.security.cli_secrets import resolve_runtime_secret_reference
 
     if posture.header_auth:
         resolve_runtime_secret_reference(cfg.otel_exporter_otlp_headers_ref)
@@ -129,7 +131,8 @@ def _otel_tls_verify_enabled(cfg: Any, langfuse_auth: bool) -> bool:
 
 def _check_observability() -> dict[str, Any]:
     from agent_utilities.core.config import AgentConfig, setting
-    from agent_utilities.core.profile_guard import is_production_profile
+
+    from graph_os.deployment.profile_guard import is_production_profile
 
     try:
         _require_observability_imports()
@@ -311,8 +314,8 @@ def _probe_langfuse_trace_round_trip(cfg: Any) -> tuple[bool, str]:
     import uuid
     from datetime import UTC, datetime
 
-    from agent_utilities.observability.langfuse_exporter import LangfuseExporter
-    from agent_utilities.observability.langfuse_trust import (
+    from graph_os.observability.langfuse_exporter import LangfuseExporter
+    from graph_os.observability.langfuse_trust import (
         resolve_langfuse_credentials,
     )
 
@@ -385,7 +388,8 @@ def _langfuse_inputs(cfg: Any) -> SimpleNamespace:
     accepted too; see ``langfuse_credentials_configured()``.
     """
     from agent_utilities.core.config import setting
-    from agent_utilities.observability.langfuse_trust import (
+
+    from graph_os.observability.langfuse_trust import (
         langfuse_provider_contract_ready,
     )
 
@@ -430,7 +434,7 @@ def _langfuse_configuration_gate(
     cfg: Any, inputs: SimpleNamespace, data: dict[str, Any]
 ) -> dict[str, Any] | None:
     """Skip an unconfigured integration; fail a half-configured credential pair."""
-    from agent_utilities.observability.langfuse_trust import (
+    from graph_os.observability.langfuse_trust import (
         langfuse_credentials_configured,
     )
 
@@ -462,7 +466,7 @@ def _langfuse_configuration_gate(
 
 def _langfuse_credential_gate(cfg: Any, data: dict[str, Any]) -> dict[str, Any] | None:
     """Resolve the credential material; anything unresolvable is a fail, never ok."""
-    from agent_utilities.observability.langfuse_trust import (
+    from graph_os.observability.langfuse_trust import (
         LangfuseTrustError,
         resolve_langfuse_credentials,
     )
@@ -487,7 +491,7 @@ def _langfuse_credential_gate(cfg: Any, data: dict[str, Any]) -> dict[str, Any] 
 
 def _langfuse_persistence_gate(cfg: Any, data: dict[str, Any]) -> dict[str, Any] | None:
     """Graph persistence needs its own identity key, and that key must resolve."""
-    from agent_utilities.observability.langfuse_trust import (
+    from graph_os.observability.langfuse_trust import (
         resolve_langfuse_persistence_hmac_key,
     )
 
@@ -523,7 +527,7 @@ def _langfuse_persistence_gate(cfg: Any, data: dict[str, Any]) -> dict[str, Any]
 
 def _langfuse_trust_gate(cfg: Any, data: dict[str, Any]) -> dict[str, Any] | None:
     """TLS verification can never be disabled for the Langfuse transport."""
-    from agent_utilities.observability.langfuse_trust import configure_langfuse_trust
+    from graph_os.observability.langfuse_trust import configure_langfuse_trust
 
     trust = configure_langfuse_trust(agent_config=cfg)
     data["tls_valid"] = trust.valid

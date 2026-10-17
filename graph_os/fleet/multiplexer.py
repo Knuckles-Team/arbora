@@ -337,7 +337,7 @@ def _sample_child_health_gauges() -> None:
 def _register_child_health_sampler() -> None:
     """Hook :func:`_sample_child_health_gauges` into the metrics scrape path."""
     try:
-        from agent_utilities.observability.gateway_metrics import (
+        from graph_os.observability.gateway_metrics import (
             register_scrape_sampler,
         )
 
@@ -4095,7 +4095,8 @@ class MCPMultiplexer:
         from agent_utilities.base_utilities import (
             is_loopback_url as _is_self_mcp_url,
         )
-        from agent_utilities.observability.langfuse_trust import (
+
+        from graph_os.observability.langfuse_trust import (
             LangfuseTrustError,
             is_langfuse_server,
             prepare_langfuse_mcp_config,
@@ -6888,7 +6889,7 @@ class MCPMultiplexer:
             "fleet_onboarding": self._fleet_onboarding,
         }
         try:
-            from agent_utilities.observability.gateway_metrics import (
+            from graph_os.observability.gateway_metrics import (
                 publish_multiplexer_child_gauges,
             )
 
@@ -7123,7 +7124,7 @@ async def _notify_tools_changed(mcp) -> bool:
 # Well-known ``_meta`` key an in-process caller can set on every ``tools/call``
 # it issues (``fastmcp.Client.call_tool(..., meta={_LOCAL_SESSION_META_KEY: id})``)
 # to explicitly identify which logical session it belongs to. Same wire key as
-# ``agent_utilities.observability.correlation.SESSION_HEADER`` so a caller that
+# ``graph_os.observability.correlation.SESSION_HEADER`` so a caller that
 # already threads a correlation/session id through ``correlation.inject()`` /
 # ``current_carrier()`` gets multiplexer session isolation for free — imported
 # lazily below (not at module scope) purely to avoid an eager cross-package

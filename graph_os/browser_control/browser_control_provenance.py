@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Any, Literal, cast
 
-from agent_utilities.observability.trace_ontology import outcome_id
 from agent_utilities.security.persistence_privacy import persistence_reference
 
 from graph_os.browser_control.browser_control_api import BrowserCallReceipt
@@ -19,6 +18,7 @@ from graph_os.browser_control.browser_control_state import (
     _ActiveCall,
 )
 from graph_os.browser_control.trace_bundle import record_trace_bundle
+from graph_os.observability.trace_ontology import outcome_id
 
 _BOUND_TRACE_NAMES = (
     "actor_reference",

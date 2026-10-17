@@ -308,7 +308,6 @@ async def _run_swarm(
     from agent_utilities.core.model_factory import create_model
     from agent_utilities.graph.parallel_engine import ParallelEngine
     from agent_utilities.graph.planning import Planner
-    from agent_utilities.messaging.bus import swarm_topic
     from agent_utilities.models.execution_manifest import ExecutionManifest
 
     try:
@@ -334,7 +333,7 @@ async def _run_swarm(
         except Exception:
             swarm_context = ""
 
-    topic = swarm_topic(hashlib.sha256(task.encode()).hexdigest()[:16])
+    topic = f"swarm:{hashlib.sha256(task.encode()).hexdigest()[:16]}"
     coordination = (
         "You are one agent in a swarm on the same overall task. Coordinate with peers over "
         f"the AgentBus topic '{topic}': announce ownership before work, share findings, and "

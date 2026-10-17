@@ -206,7 +206,7 @@ async def list_available_widgets() -> list[WidgetListItem]:
 @dashboard_router.get("/health")
 async def health_check() -> JSONResponse:
     """Liveness: always 200, with the shared runtime health report as body."""
-    from agent_utilities.observability.runtime_health import collect_health_async
+    from graph_os.observability.runtime_health import collect_health_async
 
     report = await collect_health_async()
     return JSONResponse(report, headers={"Cache-Control": "no-store"})

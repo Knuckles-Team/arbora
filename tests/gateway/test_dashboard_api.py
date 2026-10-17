@@ -115,7 +115,7 @@ def test_daemon_routes_delegate_to_graph_os(
 def test_health_is_served_without_capabilities(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from agent_utilities.observability import runtime_health
+    from graph_os.observability import runtime_health
 
     async def _report() -> dict[str, Any]:
         return {"status": "ok"}

@@ -1,7 +1,7 @@
 """Typed request value objects for ``engine_surface_tools``'s internal dispatchers.
 
 Leaf module — imports NOTHING from ``agent_utilities`` (CX wD10-R-ARITY / BUG-CX-004 §9b,
-same rationale as ``graph_os.mcp_server.backing.bus_types`` / ``graph_os.mcp_server.backing.ontology_types``:
+same rationale as ``graph_os.mcp_server.backing.ontology_types``:
 ``graph_os.mcp_server.backing.tools`` is the highest-leverage node in au's import SCC because its
 ``__init__.py`` eagerly imports all 35 tool-registration modules).
 

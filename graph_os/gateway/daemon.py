@@ -294,11 +294,12 @@ def start_host_daemon(*, defer_background_start: bool = False) -> Any:
         # (a failure here must never block the daemon or degrade error reporting — the
         # in-process detail store keeps working on its own either way).
         try:
-            from agent_utilities.observability.error_detail_sink import (
-                GraphErrorDetailSink,
-            )
             from agent_utilities.security.error_surface import (
                 register_detail_persistence_sink,
+            )
+
+            from graph_os.observability.error_detail_sink import (
+                GraphErrorDetailSink,
             )
 
             register_detail_persistence_sink(GraphErrorDetailSink(engine=_engine))
@@ -314,7 +315,7 @@ def start_host_daemon(*, defer_background_start: bool = False) -> Any:
         logger.info("Gateway host daemon started")
     # CONCEPT:AU-ECO.messaging.inbound-messaging-router-runs — the inbound messaging
     # router runs in its OWN process
-    # (``agent-utilities-messaging`` / ``agent_utilities.messaging.daemon``), NOT here,
+    # (the messaging intake co-service), NOT here,
     # so
     # the host's CPU-bound maintenance (codebase ingestion / relevance sweeps) can never
     # starve the inbound reply loop. It connects to this same shared engine as a client.
@@ -439,18 +440,6 @@ def main() -> None:
         level=setting("KG_DAEMON_LOG_LEVEL", "INFO"),
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
-
-    # CONCEPT:AU-KG.ingest.attaching-this-root-logger — self-ingest telemetry: graph-os
-    # ships its own logs into
-    # the epistemic-graph engine obs store. Opt-in (default-off); no-op when unset.
-    try:
-        from agent_utilities.observability.self_ingest import (
-            install_self_ingest_logging,
-        )
-
-        install_self_ingest_logging()
-    except Exception as exc:
-        logger.warning("self-ingest logging not installed: %s", exc)
 
     if args.status:
         logger.info(

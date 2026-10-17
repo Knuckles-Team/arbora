@@ -9,7 +9,7 @@ Reports: installed hooks, active skills, plugin bundles, AGENTS.md compliance,
 permission policies, and usage statistics from the KG.
 
 Ported from the agent runtime's
-``agent_utilities.ecosystem.agent_manager_dashboard`` (moved wholesale, no
+``graph_os.ecosystem.agent_manager_dashboard`` (moved wholesale, no
 behavior change) per the GRAPHOS-HOST-R008 boundary move: the
 AU-BOUNDARY-R014 seed names this module as owned by graph-os.
 """

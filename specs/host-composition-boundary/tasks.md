@@ -55,7 +55,7 @@ Status vocabulary is defined in [spec.md](spec.md). Check a task only after its 
 - [ ] **GRAPHOS-HOST-R005.2.3:** Approved mapping for the ingest action family
 - [ ] **GRAPHOS-HOST-R005.2.3.1:** Map `sync` to `ingest.sources.sync`
 - [ ] **GRAPHOS-HOST-R005.2.3.2:** Add graph-os operation for ingest submission actions
-- [ ] **GRAPHOS-HOST-R005.2.3.3:** Add graph-os operation for `backfill_platform_history` and `corpus`
+- [ ] **GRAPHOS-HOST-R005.2.3.3:** Add graph-os operation for `corpus`
 - [ ] **GRAPHOS-HOST-R005.2.3.4:** Add graph-os operation for job lifecycle actions
 - [ ] **GRAPHOS-HOST-R005.2.3.5:** Add graph-os operation for `rebuild_indexes` and `observe`
 - [ ] **GRAPHOS-HOST-R005.2.3.6:** Add graph-os operation for `materialize` and `materialize_source`

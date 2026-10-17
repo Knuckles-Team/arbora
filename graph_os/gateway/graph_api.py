@@ -290,7 +290,7 @@ def register_graph_routes(app, prefix: str = "/api") -> None:
     # instrumentation. With prometheus_client absent (optional ``metrics``
     # extra) everything degrades to a no-op.
     if config.gateway_metrics:
-        from agent_utilities.observability.gateway_metrics import (
+        from graph_os.observability.gateway_metrics import (
             GatewayMetricsMiddleware,
             metrics_asgi_endpoint,
             metrics_endpoint,

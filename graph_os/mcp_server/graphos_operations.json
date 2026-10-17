@@ -680,12 +680,6 @@
    "surface": "granular"
   },
   {
-   "actions": [],
-   "feature": null,
-   "name": "graph_bus",
-   "surface": "granular"
-  },
-  {
    "actions": [
     "propose",
     "resolve_identities"
@@ -1016,23 +1010,8 @@
   },
   {
    "actions": [
-    "ack",
-    "correlate",
-    "get",
-    "list",
-    "related_claims",
-    "resolve",
-    "timeline"
-   ],
-   "feature": null,
-   "name": "graph_incident",
-   "surface": "granular"
-  },
-  {
-   "actions": [
     "agent_toolkit",
     "archivebox_sync",
-    "backfill_platform_history",
     "build_skill_graph",
     "cancel",
     "cdc_catchup",
@@ -1171,18 +1150,6 @@
    ],
    "feature": null,
    "name": "graph_memory",
-   "surface": "granular"
-  },
-  {
-   "actions": [
-    "close",
-    "history",
-    "open",
-    "receive",
-    "send"
-   ],
-   "feature": null,
-   "name": "graph_message",
    "surface": "granular"
   },
   {
@@ -1690,7 +1657,6 @@
     "by_model",
     "by_project",
     "search",
-    "series",
     "session_detail",
     "sessions",
     "summary",
@@ -1715,7 +1681,7 @@
    "surface": "intent"
   }
  ],
- "registry_digest": "533ec7ecd7cb5cab28de006d46f66b376057676c246ac38a582ab00bee5ec839",
+ "registry_digest": "cefea108db0ce4920e942346a2d9fff219914ff972e63a8550fb8b4ab51b8ad8",
  "schema_version": 1,
  "source": "graph-os operation registry (graph_os.mcp_server.backing.tool_specs)",
  "supported_features": [
@@ -1859,9 +1825,6 @@
   "graph_broker": [
    "act"
   ],
-  "graph_bus": [
-   "act"
-  ],
   "graph_candidate_claims": [
    "act",
    "write"
@@ -1954,10 +1917,6 @@
    "act",
    "manage"
   ],
-  "graph_incident": [
-   "ask",
-   "act"
-  ],
   "graph_ingest": [
    "write",
    "ask"
@@ -1990,9 +1949,6 @@
   "graph_memory": [
    "write",
    "ask"
-  ],
-  "graph_message": [
-   "act"
   ],
   "graph_observe": [
    "why",

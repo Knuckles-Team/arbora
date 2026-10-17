@@ -221,8 +221,9 @@ def _sandbox_status_action() -> str:
     """
     import json as _json
 
-    from agent_utilities.deployment.doctor import _check_warm_fork
     from agent_utilities.rlm.sandboxes.reward import SandboxRewardTracker
+
+    from graph_os.deployment.doctor import _check_warm_fork
 
     res = _check_warm_fork()
     data = res.get("data") or {}

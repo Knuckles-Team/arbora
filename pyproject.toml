@@ -32,7 +32,7 @@ dependencies = [
     # SDK owns source transport and runner construction; GraphOS supplies its
     # authenticated epistemic-graph client through the SDK's public injection
     # seam and never imports connector implementations.
-    "agent-connector-sdk>=0.1.0,<1.0.0",
+    "agent-connector-sdk[a2a]>=0.1.0,<1.0.0",
     # The messaging channel layer's HTTP alert intake (graph_os/messaging/alert_intake.py)
     # imports aiohttp.web directly for its small webhook listener; platform-agnostic,
     # so unlike the chat-platform SDKs below this is not conditioned on a messaging extra.
@@ -187,7 +187,7 @@ service = "graph_os.messaging.reach:service_port"
 override-dependencies = ["epistemic-graph[server] @ git+https://github.com/Knuckles-Team/epistemic-graph.git@978532ee90bf06f3a26d8465efd63be94dd0dfa4"]
 
 [tool.uv.sources]
-agent-utilities = { path = ".uv-workspace-siblings/agent-utilities", editable = true }
+agent-utilities = { git = "https://github.com/Knuckles-Team/agent-utilities.git", branch = "refactor/au-cut-to-eg" }
 agent-connector-sdk = { path = ".uv-workspace-siblings/agent-connector-sdk", editable = true }
 agent-webui = { path = ".uv-workspace-siblings/agent-webui", editable = true }
 

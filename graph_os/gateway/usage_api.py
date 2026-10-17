@@ -293,7 +293,7 @@ def traces(
 
     tenant = _tenant_scope(tenant_id)
     try:
-        from agent_utilities.observability.langfuse_exporter import (
+        from graph_os.observability.langfuse_exporter import (
             get_langfuse_exporter,
         )
 

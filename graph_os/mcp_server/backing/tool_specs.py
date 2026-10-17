@@ -89,7 +89,6 @@ TOOL_VERBS: Mapping[str, tuple[str, ...]] = MappingProxyType(
         "graph_audit": ("why", "ask"),
         "graph_compliance": ("ask", "why"),
         "graph_epistemic": ("why", "ask"),
-        "graph_incident": ("ask", "act"),
         "graph_argument": ("why", "write", "ask"),
         # ── writes / ingest / persist ──
         "graph_write": ("write",),
@@ -154,9 +153,7 @@ TOOL_VERBS: Mapping[str, tuple[str, ...]] = MappingProxyType(
         "graph_sandbox": ("act",),
         "graph_runvcs": ("act",),
         "graph_fork": ("act",),
-        "graph_bus": ("act",),
         "graph_broker": ("act",),
-        "graph_message": ("act",),
         "graph_feeds": ("act", "ask"),
         # Track 4/5 of the universal-ingestion program. ``propose`` runs a
         # schema-constrained extraction pass and ``resolve_identities`` compares

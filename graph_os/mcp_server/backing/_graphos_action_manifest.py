@@ -1428,7 +1428,6 @@ GRAPHOS_ACTIONS: list[GraphosAction] = [
     {"tool": "graph_audit", "action": "lineage", "name": "graph_audit_lineage"},
     {"tool": "graph_audit", "action": "verify", "name": "graph_audit_verify"},
     {"tool": "graph_broker", "action": None, "name": "graph_broker"},
-    {"tool": "graph_bus", "action": None, "name": "graph_bus"},
     {
         "tool": "graph_candidate_claims",
         "action": "propose",
@@ -1980,21 +1979,6 @@ GRAPHOS_ACTIONS: list[GraphosAction] = [
         "action": "verify_action",
         "name": "graph_governance_verify_action",
     },
-    {"tool": "graph_incident", "action": "ack", "name": "graph_incident_ack"},
-    {
-        "tool": "graph_incident",
-        "action": "correlate",
-        "name": "graph_incident_correlate",
-    },
-    {"tool": "graph_incident", "action": "get", "name": "graph_incident_get"},
-    {"tool": "graph_incident", "action": "list", "name": "graph_incident_list"},
-    {
-        "tool": "graph_incident",
-        "action": "related_claims",
-        "name": "graph_incident_related_claims",
-    },
-    {"tool": "graph_incident", "action": "resolve", "name": "graph_incident_resolve"},
-    {"tool": "graph_incident", "action": "timeline", "name": "graph_incident_timeline"},
     {
         "tool": "graph_ingest",
         "action": "agent_toolkit",
@@ -2004,11 +1988,6 @@ GRAPHOS_ACTIONS: list[GraphosAction] = [
         "tool": "graph_ingest",
         "action": "archivebox_sync",
         "name": "graph_ingest_archivebox_sync",
-    },
-    {
-        "tool": "graph_ingest",
-        "action": "backfill_platform_history",
-        "name": "graph_ingest_backfill_platform_history",
     },
     {
         "tool": "graph_ingest",
@@ -2247,11 +2226,6 @@ GRAPHOS_ACTIONS: list[GraphosAction] = [
     {"tool": "graph_memory", "action": "link", "name": "graph_memory_link"},
     {"tool": "graph_memory", "action": "recall", "name": "graph_memory_recall"},
     {"tool": "graph_memory", "action": "store", "name": "graph_memory_store"},
-    {"tool": "graph_message", "action": "close", "name": "graph_message_close"},
-    {"tool": "graph_message", "action": "history", "name": "graph_message_history"},
-    {"tool": "graph_message", "action": "open", "name": "graph_message_open"},
-    {"tool": "graph_message", "action": "receive", "name": "graph_message_receive"},
-    {"tool": "graph_message", "action": "send", "name": "graph_message_send"},
     {
         "tool": "graph_observe",
         "action": "error_detail",
@@ -2737,7 +2711,6 @@ GRAPHOS_ACTIONS: list[GraphosAction] = [
     {"tool": "usage_query", "action": "by_model", "name": "usage_query_by_model"},
     {"tool": "usage_query", "action": "by_project", "name": "usage_query_by_project"},
     {"tool": "usage_query", "action": "search", "name": "usage_query_search"},
-    {"tool": "usage_query", "action": "series", "name": "usage_query_series"},
     {
         "tool": "usage_query",
         "action": "session_detail",
