@@ -132,6 +132,22 @@ def _valid_key(value: Any) -> bool:
     return isinstance(value, str) and 1 <= len(value) <= 256
 
 
+def _with_owned_idempotency(services: Any) -> dict[str, str]:
+    """Declared owners plus each registered operation whose authority owns replay.
+
+    ``agents.run`` derives its A2A task id from the idempotency key, so every
+    composition that registers it serves it without a separate declaration.
+    """
+    from graph_os.api.ops.agents import NATIVE_IDEMPOTENCY
+
+    owned = {
+        op_id: owner
+        for op_id, owner in NATIVE_IDEMPOTENCY.items()
+        if services.registry.get(op_id) is not None
+    }
+    return {**owned, **dict(services.native_idempotency)}
+
+
 @dataclass(frozen=True, slots=True)
 class InvokeServices:
     registry: Registry
@@ -148,6 +164,7 @@ class InvokeServices:
 
     def __post_init__(self) -> None:
         self._check_effect_coverage()
+        object.__setattr__(self, "native_idempotency", _with_owned_idempotency(self))
         self._check_native_idempotency()
         object.__setattr__(
             self, "native_idempotency", MappingProxyType(dict(self.native_idempotency))

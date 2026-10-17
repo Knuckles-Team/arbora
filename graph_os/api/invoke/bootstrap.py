@@ -271,17 +271,6 @@ def build_invoke_services(
     expected common case.
     """
 
-    from graph_os.api.ops.agents import NATIVE_IDEMPOTENCY
-
-    native = {
-        op_id: owner
-        for op_id, owner in NATIVE_IDEMPOTENCY.items()
-        if registry.get(op_id) is not None
-    }
-    changes["native_idempotency"] = {
-        **native,
-        **dict(changes.get("native_idempotency") or {}),
-    }
     audit = EgAuditAdapter(audit_client_factory)
     return InvokeServices(
         registry=registry,

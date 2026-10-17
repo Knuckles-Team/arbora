@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import time
 from pathlib import Path
 from typing import Any
 
@@ -126,7 +127,6 @@ def test_served_agents_run_executes_through_a2a_work_items_and_the_harness(
         registry=Registry(agents.operations()),
         runtime=runtime,
         external_effect_operations=frozenset(),
-        native_idempotency=agents.NATIVE_IDEMPOTENCY,
     )
     caller = make_verified_caller("kg:write")(session=session(frozenset({"kg:write"})))
     message = {
@@ -159,3 +159,73 @@ def test_served_agents_run_executes_through_a2a_work_items_and_the_harness(
         if event["node_type"] == "RunEvent"
     ]
     assert run_events == ["run_started", "node_transition", "graph_complete"]
+
+
+@pytest.mark.spec("GRAPHOS-HOST-R001.2.2")
+def test_served_process_runs_an_agent_over_its_http_a2a_route(
+    engine: FakeEngine, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Boot the served factory the ``graph-os`` entry point runs, then POST A2A."""
+    import httpx
+
+    import graph_os.a2a.mcp as a2a_mcp
+    from graph_os.security import request_identity
+    from graph_os.security.actor_context import ActorContext, ActorType
+
+    monkeypatch.setattr(runtime_config, "auth_jwt_audience", "graph-os-fixture")
+    monkeypatch.setattr(runtime_config, "kg_policy_version", "policy:fixture")
+
+    async def credential_owner(credential: str) -> ActorContext:
+        assert credential == "fixture-verified"  # sanitizer:ignore - synthetic
+        return ActorContext(
+            actor_id="person:one",
+            actor_type=ActorType.HUMAN,
+            tenant_id="tenant:one",
+            authenticated=True,
+            roles=("kg:write",),
+            credential_expires_at=int(time.time()) + 3600,
+        )
+
+    monkeypatch.setattr(request_identity, "actor_from_bearer_token", credential_owner)
+    monkeypatch.setattr(a2a_mcp, "_SERVICE", None)
+    _args, mcp, _middlewares = mcp_runtime._build_server(bootstrap=False)
+    app = mcp.http_app()
+
+    async def call() -> httpx.Response:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://served"
+        ) as client:
+            return await client.post(
+                "/a2a",
+                headers={
+                    "Authorization": "Bearer fixture-verified",
+                    "X-Request-Id": "request:served",
+                    "Idempotency-Key": "served-run-1",
+                },
+                json={
+                    "jsonrpc": "2.0",
+                    "id": "run:one",
+                    "method": "message/send",
+                    "params": {
+                        "message": {
+                            "role": "user",
+                            "messageId": "message-served",
+                            "parts": [{"kind": "text", "text": "say hello"}],
+                            "metadata": {"agent_name": "helper"},
+                        }
+                    },
+                },
+            )
+
+    response = asyncio.run(call())
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert "error" not in body, body
+    assert body["result"]["status"]["state"] == "completed"
+    assert engine.work_items.outcomes == ["succeeded"]
+    assert [
+        json.loads(event["properties"]["payload"])["type"]
+        for event in engine.events
+        if event["node_type"] == "RunEvent"
+    ] == ["run_started", "node_transition", "graph_complete"]
