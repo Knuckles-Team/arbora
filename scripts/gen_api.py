@@ -341,6 +341,9 @@ def _engine_errors(registry: dict[str, Any]) -> bytes:
     return ("\n".join([*lines, "}", ""])).encode()
 
 
+_CLIENT_INIT = '"""Generated GraphOS client surface.\n\n``graph_os.client`` is the public import path for frontends: the digest-bound\noperation client (``invoke``, ``_generated_models``) and, lazily, the surface\ngateway ``GatewayClient`` from ``graph_os.gateway.client_sdk``.\n"""\n\nfrom __future__ import annotations\n\nfrom typing import Any\n\n__all__ = ["DEFAULT_GATEWAY_URL", "GatewayClient"]\n\n\ndef __getattr__(name: str) -> Any:\n    if name in __all__:\n        from graph_os.gateway import client_sdk\n\n        return getattr(client_sdk, name)\n    raise AttributeError(name)\n'.encode()
+
+
 def generate(registry: dict[str, Any]) -> dict[Path, bytes]:
     if not registry.get("ops"):
         raise ValueError("refusing to generate an empty API registry")
@@ -351,7 +354,7 @@ def generate(registry: dict[str, Any]) -> dict[Path, bytes]:
         GENERATED / "__init__.py": b'"""Generated GraphOS API contract artifacts."""\n',
         ROOT / "docs/api/openapi.json": _json_bytes(_openapi(registry)),
         ROOT
-        / "graph_os/client/__init__.py": b'"""Generated GraphOS client surface."""\n',
+        / "graph_os/client/__init__.py": _CLIENT_INIT,
         ROOT / "graph_os/client/_generated_models.py": _client_models(registry),
         ROOT / "graph_os/client/invoke.py": _client_invoker(),
         ROOT / "docs/api/generated.ts": _ts_client(registry),
