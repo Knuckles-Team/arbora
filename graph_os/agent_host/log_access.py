@@ -109,6 +109,8 @@ class HostLogAccess:
         ):
             raise ValueError("invalid_launch")
         self._enabled = interface_mode in {"terminal", "both"} and web_logs
+        self._interface_mode = interface_mode
+        self._web_logs = web_logs
         self._host = host_instance
         self._clock = clock
         self._references: dict[str, _Reference] = {}
@@ -167,6 +169,26 @@ class HostLogAccess:
         reference = secrets.token_urlsafe(32)
         self._references[reference] = _Reference(grant, state.expires_at_ms)
         return reference
+
+    def reference_binding(self, reference: str) -> dict:
+        """Describe a just-issued reference for the authenticated HTTP handoff."""
+        bound = self._references[reference]
+        grant = bound.grant
+        return {
+            "version": 1,
+            "log_ref": reference,
+            "host_instance": self._host,
+            "workspace": grant.workspace,
+            "tenant": grant.tenant,
+            "principal": grant.principal,
+            "session_ref": grant.session_ref,
+            "policy_revision": grant.policy_revision,
+            "grant_revision": grant.revision,
+            "expires_at_ms": min(grant.expires_at_ms, bound.session_expiry),
+            "interface_mode": self._interface_mode,
+            "web_logs": self._web_logs,
+            "ready": True,
+        }
 
     async def _bound(self, credential: str, reference: str) -> WorkspaceLogGrant:
         state, grant = await self._grant(credential)

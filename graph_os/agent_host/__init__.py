@@ -39,6 +39,7 @@ from pydantic import BaseModel
 
 from graph_os.agent_host.log_access import HostLogAccess
 from graph_os.agent_host.log_routes import register_host_log_routes
+from graph_os.agent_host.log_runtime import HostLogRuntime, register_host_log_runtime
 
 logger = logging.getLogger(__name__)
 
@@ -111,6 +112,7 @@ def build_agent_host_app(
     description: str | None = None,
     executor: AgentExecutor | None = None,
     host_logs: HostLogAccess | None = None,
+    host_log_runtime: HostLogRuntime | None = None,
 ):
     """Build the FastAPI app that hosts one connector agent.
 
@@ -126,6 +128,11 @@ def build_agent_host_app(
     agent_description = description or ""
 
     app = FastAPI(title=agent_name)
+    if host_log_runtime is not None:
+        if host_logs is not None:
+            raise ValueError("one host log composition required")
+        host_logs = host_log_runtime.access
+        register_host_log_runtime(app, host_log_runtime)
     register_host_log_routes(app, host_logs)
 
     @app.get("/health")
@@ -220,6 +227,7 @@ def create_agent_server(
     workspace: str | None = None,
     executor: AgentExecutor | None = None,
     host_logs: HostLogAccess | None = None,
+    host_log_runtime: HostLogRuntime | None = None,
     enable_terminal_ui: bool = False,
     enable_web_ui: bool | None = None,
     enable_web_logs: bool = False,
@@ -285,6 +293,7 @@ def create_agent_server(
         description=system_prompt,
         executor=executor,
         host_logs=host_logs,
+        host_log_runtime=host_log_runtime,
     )
 
     import uvicorn

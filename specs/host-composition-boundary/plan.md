@@ -219,3 +219,16 @@ The configured source must provide redacted tenant projections and tenant-local 
 Controlled HTTP fixtures prove this composition contract, not deployed grants, filesystem logging, rotation or terminal rendering.
 No persistent credential store, local grant issuer or production configuration is added.
 R009.2 through R009.6 and R010.7 retain their full served acceptance.
+
+### 2026-10-17: Required rotating sink and private projections (R009.8)
+
+HostLogRuntime composes the existing session and grant owners with WorkspaceLogSink.
+The existing host builder attaches this optional runtime before dispatch.
+An authenticated request writes a fixed arrival event before its handler runs.
+Bodies, query strings and credential headers never enter the sink.
+Sink recording remains active when terminal log viewing is disabled.
+Validate ownership, modes and links before opening files relative to a retained directory descriptor.
+Rotate at ten MiB and retain five files. Redact records through the existing AU privacy port before writing.
+Keep bounded tenant projections and opaque tenant-local cursors; never return shared files or offsets.
+This slice uses controlled identity grants with a real sink and HTTP server.
+It does not prove deployed policy, durable replay after restart, terminal rendering or full host lifecycle acceptance.

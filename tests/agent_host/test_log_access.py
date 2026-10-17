@@ -120,8 +120,10 @@ class ControlledOwners:
 
 
 @contextmanager
-def serve(access: HostLogAccess | None) -> Iterator[httpx.Client]:
-    app = build_agent_host_app(graph=None, graph_config={}, host_logs=access)
+def serve(access: HostLogAccess | None, runtime: Any = None) -> Iterator[httpx.Client]:
+    app = build_agent_host_app(
+        graph=None, graph_config={}, host_logs=access, host_log_runtime=runtime
+    )
     with socket.socket() as listener:
         listener.bind(("127.0.0.1", 0))
         server = uvicorn.Server(
