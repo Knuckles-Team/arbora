@@ -321,7 +321,8 @@
       "title": "Wire request-bound caller retention and refresh",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "013c270081a9"
+        "013c270081a9",
+        "5fc890ade3ae"
       ],
       "verified_by": [
         "tests/a2a/test_request_session_authority.py:43"
