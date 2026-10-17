@@ -20,7 +20,8 @@ Kept as-is, by design:
 from __future__ import annotations
 
 import re
-import subprocess
+import shutil
+import subprocess  # nosec B404 -- fixed git argv, no shell
 import sys
 from collections import Counter
 from pathlib import Path
@@ -78,11 +79,17 @@ REPLACEMENTS: tuple[tuple[str, str], ...] = (
 )
 
 
-def tracked_files() -> list[str]:
-    out = subprocess.run(
-        ["git", "ls-files", "-z"], cwd=ROOT, check=True, capture_output=True
+GIT = shutil.which("git") or "git"
+
+
+def _git(*args: str) -> bytes:
+    return subprocess.run(  # nosec B603 -- resolved git executable, fixed argv
+        [GIT, *args], cwd=ROOT, check=True, capture_output=True
     ).stdout
-    return [p for p in out.decode().split("\0") if p]
+
+
+def tracked_files() -> list[str]:
+    return [p for p in _git("ls-files", "-z").decode().split("\0") if p]
 
 
 def excluded(path: str) -> bool:
@@ -124,7 +131,7 @@ def rename_text(text: str, counts: Counter[str]) -> str:
 
 def move_paths(counts: Counter[str]) -> None:
     if (ROOT / "graph_os").is_dir():
-        subprocess.run(["git", "mv", "graph_os", "arbora"], cwd=ROOT, check=True)
+        _git("mv", "graph_os", "arbora")
         counts["path:graph_os/"] += 1
     for path in tracked_files():
         if excluded(path):
@@ -132,7 +139,7 @@ def move_paths(counts: Counter[str]) -> None:
         new = rename_text(path, Counter())
         if new != path:
             (ROOT / new).parent.mkdir(parents=True, exist_ok=True)
-            subprocess.run(["git", "mv", path, new], cwd=ROOT, check=True)
+            _git("mv", path, new)
             counts["path"] += 1
 
 

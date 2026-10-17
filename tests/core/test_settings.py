@@ -8,12 +8,15 @@ import pytest
 
 from arbora.core import settings
 
+PREVIOUS_DIR_SETTING = "GRAPH_OS_CONFIG_DIR"  # arbora-rename: keep
+PREVIOUS_APP_DIR = "graph-os"  # arbora-rename: keep
+
 
 @pytest.fixture
 def home(tmp_path, monkeypatch):
     for name in (
         "ARBORA_CONFIG_DIR",
-        "GRAPH_OS_CONFIG_DIR",  # arbora-rename: keep
+        PREVIOUS_DIR_SETTING,
         "AGENT_UTILITIES_CONFIG_DIR",
     ):
         monkeypatch.delenv(name, raising=False)
@@ -59,13 +62,9 @@ def test_legacy_file_is_found_with_one_warning(home, monkeypatch, legacy_env) ->
 
 @pytest.mark.parametrize("legacy_env", [False, True])
 def test_previous_project_location_is_read_first(home, monkeypatch, legacy_env) -> None:
-    previous_dir = home / (
-        "previous" if legacy_env else "graph-os"
-    )  # arbora-rename: keep
+    previous_dir = home / ("previous" if legacy_env else PREVIOUS_APP_DIR)
     if legacy_env:
-        monkeypatch.setenv(
-            "GRAPH_OS_CONFIG_DIR", str(previous_dir)
-        )  # arbora-rename: keep
+        monkeypatch.setenv(PREVIOUS_DIR_SETTING, str(previous_dir))
     _write(home / "agent-utilities" / "mcp_config.json")
     previous = _write(previous_dir / "mcp_config.json")
     with pytest.warns(DeprecationWarning):
