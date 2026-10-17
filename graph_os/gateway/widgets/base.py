@@ -15,12 +15,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Any
 
-from agent_utilities.core.config import setting
-from agent_utilities.security.error_surface import (
-    PUBLIC_ERROR_MESSAGES,
-    public_error_payload,
-)
-
+from graph_os.core.settings import setting
 from graph_os.gateway.models import (
     ServiceCategory,
     ServiceConfig,
@@ -28,6 +23,10 @@ from graph_os.gateway.models import (
     WidgetField,
 )
 from graph_os.gateway.widgets.fleet_client import FleetConnectorClient
+from graph_os.security.error_surface import (
+    PUBLIC_ERROR_MESSAGES,
+    public_error_payload,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -258,7 +257,7 @@ class BaseWidget(ABC):
         # API responses nor YAML serialization can expose the resolved value.
         reference = config.credential_refs.get(key.lower())
         if reference:
-            from agent_utilities.security.secrets_client import create_secrets_client
+            from graph_os.security.secrets import create_secrets_client
 
             resolved = create_secrets_client().resolve_ref(reference)
             if not resolved:
@@ -306,7 +305,7 @@ class BaseWidget(ABC):
     def _resolve_tls_profile(self, config: ServiceConfig) -> Any:
         """Resolve this widget's runtime-only trust policy through AgentConfig."""
 
-        from agent_utilities.core.transport_security import (
+        from graph_os.core.transport import (
             resolve_configured_tls_profile,
         )
 
@@ -328,7 +327,7 @@ class BaseWidget(ABC):
     ) -> Iterator[Any]:
         """Yield the canonical HTTPX client with this widget's TLS profile."""
 
-        from agent_utilities.core.http_client import create_http_client
+        from graph_os.core.transport import create_http_client
 
         trust = self._resolve_tls_profile(config)
         try:

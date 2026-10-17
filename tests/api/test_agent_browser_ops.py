@@ -22,7 +22,7 @@ def _context(**services: object) -> SimpleNamespace:
 
 def test_agent_and_browser_ops_have_unique_ids_and_surface_limits() -> None:
     registry = Registry((*agents.operations(), *browser.operations()))
-    assert len(registry) == 12
+    assert len(registry) == 10
     assert registry["agents.run"].effect is Effect.WRITE
     assert (
         registry["browser.execute_call"].principals is PrincipalRule.HUMAN_UNDELEGATED
@@ -37,10 +37,10 @@ def test_agent_and_browser_ops_have_unique_ids_and_surface_limits() -> None:
 async def test_agent_run_uses_the_existing_a2a_service(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import agent_utilities.api
+    import graph_os.api.contracts
 
     monkeypatch.setattr(
-        agent_utilities.api, "use_session", lambda _session: nullcontext()
+        graph_os.api.contracts, "use_session", lambda _session: nullcontext()
     )
     calls: list[dict[str, object]] = []
 
@@ -69,10 +69,10 @@ async def test_agent_run_uses_the_existing_a2a_service(
 async def test_browser_op_uses_the_registered_authority(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import agent_utilities.api
+    import graph_os.api.contracts
 
     monkeypatch.setattr(
-        agent_utilities.api, "use_session", lambda _session: nullcontext()
+        graph_os.api.contracts, "use_session", lambda _session: nullcontext()
     )
     called: list[tuple[str, dict[str, object]]] = []
 

@@ -30,14 +30,29 @@ class HostedInvocation:
         """Recheck provider admission before each surface is mounted."""
         validate_contract_admission(self.services.registry)
 
-    def mount_http(self, app: Any, *, prefix: str) -> None:
+    def http_application(self) -> Any:
+        """The operation-invoke API application over these shared services."""
         from graph_os.api.http.app import create_api_application
 
         self.validate()
-        child = create_api_application(
+        return create_api_application(
             services=self.services,
             visibility=self.services.policy_gate.check_op,
             authenticator=self.authenticator,
             invoke=invoke,
         )
-        app.mount((prefix.rstrip("/") or "/api") + "/v1", child)
+
+    def mount_http(self, app: Any, *, prefix: str) -> None:
+        app.mount((prefix.rstrip("/") or "/api") + "/v1", self.http_application())
+
+    def mount_on_mcp(self, mcp: Any, *, prefix: str = "/api") -> None:
+        """Serve the API beside the MCP endpoint of the served HTTP transport.
+
+        FastMCP builds its HTTP application at run time from the server's
+        additional routes; the API is one more mounted route there. Each API
+        request authenticates its own bearer through ``authenticator``.
+        """
+        from starlette.routing import Mount
+
+        path = (prefix.rstrip("/") or "/api") + "/v1"
+        mcp._additional_http_routes.append(Mount(path, app=self.http_application()))

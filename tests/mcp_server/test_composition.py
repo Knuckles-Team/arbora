@@ -19,11 +19,11 @@ from graph_os.mcp_server.composition import (
 from graph_os.mcp_server.server import _register_semantic_content
 
 
-def test_native_action_route_contract_excludes_legacy_au_surface() -> None:
-    assert runtime.ACTION_TOOL_ROUTES == {
-        "browser_control": "/browser/control",
-        "graph_a2a": "/graph/a2a",
-    }
+def test_native_action_route_contract_serves_only_registered_tools() -> None:
+    runtime.ensure_tools_registered()
+    assert set(runtime.ACTION_TOOL_ROUTES) == set(runtime.REGISTERED_TOOLS)
+    assert runtime.ACTION_TOOL_ROUTES["browser_control"] == "/browser/control"
+    assert runtime.ACTION_TOOL_ROUTES["graph_a2a"] == "/graph/a2a"
 
 
 def test_bootstrap_exports_bind_runtime_host_state() -> None:
@@ -177,7 +177,7 @@ def test_graphos_runtime_shapes_use_connector_content_contract() -> None:
 
     The public ``graph-os-development``, ``graphos-deployment`` and
     ``graphos-genesis`` skills ship under ``graph_os/skills`` (package data
-    plus the ``agent_utilities.skill_providers`` entry point), so the SDK
+    plus the ``agent_connector_sdk.skill_providers`` entry point), so the SDK
     registers exactly one skills-directory provider rooted there and nothing
     else: no prompts, and one runtime shapes resource.
     """

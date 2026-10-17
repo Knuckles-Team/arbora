@@ -51,8 +51,11 @@ def test_mcp_network_listener_uses_sdk_hardened_serving_contract() -> None:
 
 def test_runtime_consumes_only_public_au_session_and_catalog_ports() -> None:
     package_root = Path(__file__).parents[1] / "graph_os"
+    session_port = package_root / "api" / "contracts" / "session.py"
     production = "\n".join(
-        path.read_text(encoding="utf-8") for path in package_root.rglob("*.py")
+        path.read_text(encoding="utf-8")
+        for path in package_root.rglob("*.py")
+        if path != session_port
     )
 
     assert "agent_utilities.knowledge_graph.core.session" not in production
@@ -112,3 +115,28 @@ def test_bootstrap_has_no_retired_legacy_query_runtime() -> None:
         Path(__file__).parents[1] / "graph_os" / "mcp_server" / "runtime.py"
     ).read_text(encoding="utf-8")
     assert "get_existing_disabled_batch" not in runtime
+
+
+@pytest.mark.spec("GRAPHOS-HOST-R001.1")
+def test_graph_os_imports_no_au_serving_packages() -> None:
+    """GRAPHOS-HOST-R001.1: AU 3.0.0 is harness only; Graph OS owns MCP/REST/API."""
+    import re
+
+    package_root = Path(__file__).parents[1]
+    pattern = re.compile(r"agent_utilities[./](mcp|gateway|server|api)\b")
+    offenders = [
+        path.relative_to(package_root).as_posix()
+        for path in (package_root / "graph_os").rglob("*.py")
+        if pattern.search(path.read_text(encoding="utf-8"))
+    ]
+
+    assert offenders == []
+
+
+@pytest.mark.spec("GRAPHOS-HOST-R001.5")
+def test_graph_os_declares_and_runs_fastmcp_4() -> None:
+    from importlib.metadata import requires, version
+
+    declared = [r for r in requires("graph-os") or [] if r.startswith("fastmcp")]
+    assert declared and ">=4" in declared[0]
+    assert version("fastmcp").split(".")[0] == "4"

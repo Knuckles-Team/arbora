@@ -3,14 +3,11 @@
 from __future__ import annotations
 
 import json
-from types import SimpleNamespace
-from typing import Any
 
 import pytest
 
 from graph_os.a2a.application import _application_error
 from graph_os.a2a.authority import (
-    A2AIdempotencyConflict,
     A2ATransitionHistoryUnavailable,
     WorkItemA2AAuthority,
 )
@@ -24,106 +21,6 @@ def _message(text: str = "do work") -> A2AMessage:
         parts=[A2ATextPart(text=text)],
         message_id="message-1",
     )
-
-
-@pytest.mark.asyncio
-async def test_work_item_authority_reuses_one_store_for_lifecycle(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    from agent_utilities.knowledge_graph.core import work_durability as work
-
-    rows: dict[str, dict[str, Any]] = {}
-    enqueued: list[str] = []
-    session = SimpleNamespace(
-        tenant="tenant-a", actor=SimpleNamespace(actor_id="actor-a")
-    )
-
-    class Engine:
-        _work_item_engine: Any
-
-        def __init__(self) -> None:
-            self._work_item_engine = self
-
-        def query_cypher(self, _query: str, params: dict[str, Any]) -> list[Any]:
-            return [
-                value for key, value in sorted(rows.items()) if key > params["after"]
-            ][: params["limit"]]
-
-    engine = Engine()
-    authority = WorkItemA2AAuthority(lambda: engine)
-    monkeypatch.setattr(authority, "_session", lambda scope: session)
-    monkeypatch.setattr(authority, "_prepare_task", lambda _engine, text: text)
-    monkeypatch.setattr(
-        "graph_os.a2a.authority.persistence_reference",
-        lambda kind, value, **kwargs: f"{kind}-ref:{value}",
-    )
-
-    def submit(_engine: Any, **kwargs: Any) -> tuple[str, bool]:
-        item_id = work.orchestrator_work_item_id(kwargs["task_id"])
-        if item_id in rows:
-            return item_id, False
-        rows[item_id] = {
-            "id": item_id,
-            "kind": "orchestrator_task",
-            "tenant": kwargs["session"].tenant,
-            "created_by": kwargs["owner_ref"],
-            "status": "ready",
-            "updated_at": 1.0,
-            "metadata": kwargs["metadata"],
-        }
-        return item_id, True
-
-    monkeypatch.setattr(authority, "_submit", submit)
-    monkeypatch.setattr(
-        authority,
-        "_enqueue",
-        lambda _engine, **kwargs: enqueued.append(kwargs["task_id"]),
-    )
-    monkeypatch.setattr(
-        work, "get_work_item", lambda _engine, item_id: rows.get(item_id)
-    )
-
-    def cancel(_engine: Any, item_id: str, **kwargs: Any) -> bool:
-        rows[item_id]["status"] = "cancelled"
-        rows[item_id]["updated_at"] = 2.0
-        return True
-
-    monkeypatch.setattr(work, "cancel_work_item", cancel)
-    decision = A2ARouteDecision(agent_name="expert", selection_mode="test")
-    first = await authority.dispatch(
-        message=_message(), idempotency_key="same", decision=decision
-    )
-    replay = await authority.dispatch(
-        message=_message(), idempotency_key="same", decision=decision
-    )
-    assert replay.id == first.id
-    assert first.status.timestamp == "1970-01-01T00:00:01+00:00"
-    assert enqueued == [first.id, first.id]
-
-    loaded = await authority.get(first.id)
-    listed, cursor = await authority.list(cursor=None, limit=10)
-    cancelled = await authority.cancel(first.id)
-    assert loaded == first
-    assert listed == [first]
-    assert cursor is None
-    assert cancelled.status.state == "canceled"
-
-    with pytest.raises(A2AIdempotencyConflict):
-        await authority.dispatch(
-            message=_message("different"),
-            idempotency_key="same",
-            decision=decision,
-        )
-
-    second = await authority.dispatch(
-        message=_message("other"), idempotency_key="other", decision=decision
-    )
-    first_page, next_cursor = await authority.list(cursor=None, limit=1)
-    second_page, final_cursor = await authority.list(cursor=next_cursor, limit=1)
-    listed_ids = [first_page[0].id, second_page[0].id]
-    assert sorted(listed_ids) == sorted([first.id, second.id])
-    assert next_cursor is not None
-    assert final_cursor is None
 
 
 @pytest.mark.spec("GRAPHOS-A2A-R002.1")
@@ -164,3 +61,19 @@ def test_transition_history_unavailable_has_distinct_privacy_safe_error() -> Non
         },
     }
     assert "result" not in json.loads(bytes(response.body))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("metadata", "expected"),
+    [({"agent_name": "expert"}, "expert"), ({}, None), ({"agent_name": " "}, None)],
+)
+async def test_router_routes_only_to_the_named_agent(metadata, expected) -> None:
+    router = OrchestratorA2ARouter(lambda: pytest.fail("engine was accessed"))
+    message = _message().model_copy(update={"metadata": metadata})
+    if expected is None:
+        with pytest.raises(A2AAssemblyUnavailable, match="agent_name"):
+            await router.route(message, context_budget_tokens=None)
+        return
+    decision = await router.route(message, context_budget_tokens=None)
+    assert decision.agent_name == expected

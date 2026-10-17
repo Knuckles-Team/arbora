@@ -9,23 +9,22 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from agent_utilities.orchestration.action_policy import (
+from graph_os.access.action_policy import (
     ACTION_APPROVAL_KIND,
     approval_lease_to_props,
 )
-from agent_utilities.security.elevation import (
-    ElevationApproval,
-    ElevationRequest,
-    ElevationRevocation,
-    ElevationService,
-    ElevationSurface,
-)
-
 from graph_os.access.external_policy_sync import (
     Applier,
     ApplyReport,
     BundleFetcher,
     clear_dirty_state,
+)
+from graph_os.security.elevation import (
+    ElevationApproval,
+    ElevationRequest,
+    ElevationRevocation,
+    ElevationService,
+    ElevationSurface,
 )
 
 

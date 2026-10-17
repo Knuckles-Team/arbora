@@ -9,7 +9,7 @@ Discovery Flow::
 
     1. User installs: ``pip install graph-os[messaging-telegram]``
     2. The ``telegram`` entry-point is registered in pyproject.toml
-    3. ``MessagingRegistry`` scans ``agent_utilities.messaging`` entry-points
+    3. ``MessagingRegistry`` scans ``graph_os.messaging`` entry-points
     4. ``registry.create_backend("telegram")`` loads the backend class
     5. Backend is instantiated with config and ready to connect
 
@@ -27,9 +27,8 @@ import importlib.metadata
 import logging
 from typing import Any
 
-from agent_utilities.core.config import setting
-from agent_utilities.messaging.models import MessagingConfig
-
+from graph_os.core.settings import setting
+from graph_os.messaging.models import MessagingConfig
 from graph_os.messaging.supervision import (
     AdapterImportFailed,
     AdapterMissing,
@@ -39,7 +38,7 @@ from graph_os.messaging.supervision import (
 logger = logging.getLogger(__name__)
 
 # Entry-point group name for messaging backend discovery.
-_ENTRY_POINT_GROUP = "agent_utilities.messaging"
+_ENTRY_POINT_GROUP = "graph_os.messaging"
 
 # Environment variable prefix for backend configuration.
 _ENV_PREFIX = "MESSAGING_"
@@ -106,7 +105,7 @@ class MessagingRegistry:
 
         CONCEPT:AU-ECO.messaging.native-backend-abstraction
 
-        Reads the ``agent_utilities.messaging`` entry-point group to find
+        Reads the ``graph_os.messaging`` entry-point group to find
         all installed backend classes. This is lazy — no backend code is
         imported until ``create_backend()`` is called.
         """

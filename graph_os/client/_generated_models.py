@@ -9,7 +9,7 @@ from typing import Literal
 
 from graph_os.client._schema import _expanded_spec
 
-REGISTRY_DIGEST = "91adaf1d0b3e9079c2bdb1ae8ed37bc8edbd22c4d77c94439208aa689ac4af2b"
+REGISTRY_DIGEST = "8887c6b2c45430898b5b319a0109518dab01d6ff2bcd91f02e3e37087051fa01"
 API_VERSION = "1"
 type OperationId = Literal[
     "access.check",
@@ -488,8 +488,6 @@ type OperationId = Literal[
     "ingest.sources.list",
     "ingest.sources.status",
     "ingest.sources.sync",
-    "memory.read",
-    "memory.write",
     "ops.backup",
     "ops.config",
     "ops.doctor",
@@ -500,8 +498,6 @@ type OperationId = Literal[
     "query.uql",
     "retrieval.freshness",
     "retrieval.search",
-    "rlm.benchmark",
-    "rlm.evolve_prompt",
     "rlm.run",
     "runs.current_plan",
     "security.posture.read",

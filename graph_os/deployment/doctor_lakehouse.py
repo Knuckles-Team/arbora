@@ -88,7 +88,7 @@ def _probe_http(url: str, timeout: float = 2.0) -> tuple[bool, int | None]:
     """
     import urllib.parse
 
-    from agent_utilities.core.http_client import create_http_client
+    from graph_os.core.transport import create_http_client
 
     # The URL comes from operator config, so restrict the scheme explicitly. A
     # `file://` or custom scheme in a config value must never be fetched.
@@ -118,7 +118,7 @@ def _probe_http(url: str, timeout: float = 2.0) -> tuple[bool, int | None]:
 def _check_kafka(live: bool = False, *, probe_tcp: Any = None) -> dict[str, Any]:
     """Kafka event-streaming broker (pre-existing, ``services/kafka``)."""
     try:
-        from agent_utilities.core.config import AgentConfig
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
 
         cfg = AgentConfig()
         servers = str(cfg.kafka_bootstrap_servers or "").strip()
@@ -195,7 +195,7 @@ def _check_kafka(live: bool = False, *, probe_tcp: Any = None) -> dict[str, Any]
 def _check_fuseki(live: bool = False, *, probe_http: Any = None) -> dict[str, Any]:
     """Jena/Fuseki SPARQL endpoint (pre-existing, ``services/apache-jena``)."""
     try:
-        from agent_utilities.core.config import AgentConfig
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
 
         cfg = AgentConfig()
         endpoint = str(cfg.kg_fuseki_endpoint or "").strip()
@@ -259,7 +259,7 @@ def _check_fuseki(live: bool = False, *, probe_http: Any = None) -> dict[str, An
 def _check_seaweedfs_s3(live: bool = False, *, probe_tcp: Any = None) -> dict[str, Any]:
     """SeaweedFS S3 gateway backing the Iceberg lakehouse (``services/lakehouse-seaweedfs``)."""
     try:
-        from agent_utilities.core.config import AgentConfig
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
 
         cfg = AgentConfig()
         endpoint = str(cfg.lakehouse_s3_endpoint or "").strip()
@@ -382,7 +382,7 @@ def _lakekeeper_gotcha_findings(uri: str, scope: str) -> list[str]:
 def _check_lakekeeper(live: bool = False, *, probe_http: Any = None) -> dict[str, Any]:
     """Lakekeeper Iceberg REST catalog (``services/lakekeeper``)."""
     try:
-        from agent_utilities.core.config import AgentConfig
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
 
         cfg = AgentConfig()
         uri = str(cfg.lakekeeper_catalog_uri or "").strip()
@@ -460,7 +460,7 @@ def _check_lakekeeper_db(live: bool = False) -> dict[str, Any]:
     proof is not proof of health.
     """
     try:
-        from agent_utilities.core.config import AgentConfig
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
 
         cfg = AgentConfig()
         ref = cfg.lakekeeper_db_uri_ref
@@ -523,7 +523,7 @@ def _check_lakekeeper_db(live: bool = False) -> dict[str, Any]:
 def _check_trino(live: bool = False, *, probe_http: Any = None) -> dict[str, Any]:
     """Trino coordinator (``services/trino``)."""
     try:
-        from agent_utilities.core.config import AgentConfig
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
 
         cfg = AgentConfig()
         endpoint = str(cfg.trino_endpoint or "").strip()
@@ -591,7 +591,7 @@ def _check_trino(live: bool = False, *, probe_http: Any = None) -> dict[str, Any
 def _check_spark_runner(live: bool = False, *, probe_tcp: Any = None) -> dict[str, Any]:
     """Spark exec-driven job runner (``services/spark``, Deployment ``spark-runner``)."""
     try:
-        from agent_utilities.core.config import AgentConfig
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
 
         cfg = AgentConfig()
         endpoint = str(cfg.spark_runner_endpoint or "").strip()

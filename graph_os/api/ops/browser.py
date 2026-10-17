@@ -31,7 +31,7 @@ async def handle_browser(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Delegate to the WebUI-owned browser authority with its session checks."""
-    from agent_utilities.api import use_session
+    from graph_os.api.contracts import use_session
 
     if context.caller.session is None:
         raise RuntimeError("browser operation requires a verified session")

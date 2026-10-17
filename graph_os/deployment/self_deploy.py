@@ -70,7 +70,7 @@ def execute_redeploy(
 
     # 1. Governance gate (fail-closed).
     try:
-        from agent_utilities.orchestration.action_policy import (
+        from graph_os.access.action_policy import (
             ActionRequest,
             get_action_policy,
         )

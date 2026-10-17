@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -46,7 +46,7 @@ async def test_provisioning_imports_and_attaches_each_provider_once(
 
     receipts = await provision_semantic_content(
         (provider("graph-os"), provider("agent-utilities")),
-        sink="verified-sink",
+        sink=cast(Any, "verified-sink"),
         reproject_pack=reproject,
         attach_pack=attach,
     )
@@ -91,7 +91,7 @@ async def test_duplicate_connector_provider_fails_before_import(
     with pytest.raises(ValueError, match="unique connectors"):
         await provision_semantic_content(
             (provider, provider),
-            sink=object(),
+            sink=cast(Any, object()),
             reproject_pack=reproject,
             attach_pack=attach,
         )

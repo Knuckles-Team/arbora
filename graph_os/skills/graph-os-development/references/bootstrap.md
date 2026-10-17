@@ -16,12 +16,9 @@ for repo in epistemic-graph agent-connector-sdk agent-utilities graph-os agent-w
   git clone "https://github.com/Knuckles-Team/${repo}.git"
 done
 
-mkdir -p agent-utilities/.uv-workspace-siblings graph-os/.uv-workspace-siblings agent-webui/.uv-workspace-siblings
+mkdir -p agent-utilities/.uv-workspace-siblings agent-webui/.uv-workspace-siblings
 ln -s ../../epistemic-graph agent-utilities/.uv-workspace-siblings/epistemic-graph
 ln -s ../../agent-connector-sdk agent-utilities/.uv-workspace-siblings/agent-connector-sdk
-ln -s ../../agent-utilities graph-os/.uv-workspace-siblings/agent-utilities
-ln -s ../../agent-connector-sdk graph-os/.uv-workspace-siblings/agent-connector-sdk
-ln -s ../../agent-webui graph-os/.uv-workspace-siblings/agent-webui
 ln -s ../../agent-utilities agent-webui/.uv-workspace-siblings/agent-utilities
 ```
 
@@ -51,32 +48,26 @@ require the six-core editable sibling layout merely to read or author specs.
 
 These symlinks are ignored local source bindings, not files to commit. If one
 already exists, inspect where it points rather than replacing it blindly.
-The Graph OS release workflow pins exact sibling commits; check its current
-`actions/checkout` `ref` values and align the clones to those revisions when
-reproducing CI or a specific PR. Using all current `main` branches is useful
+Graph OS needs no links: every dependency, the EG engine wheels included,
+installs from PyPI at the versions its `uv.lock` pins. For the other
+repositories, check each release workflow's `actions/checkout` `ref` values
+and align the clones to those revisions when reproducing CI or a specific PR.
+Using all current `main` branches is useful
 for integration development, but may not match the frozen `uv.lock` or a
 published package version. Do not resolve around a mismatch by silently
 substituting an older index wheel. Report the incompatible revision pair and
 update the intended lock/source contract in the owning repository.
 
-Graph OS's source test setup follows `.github/workflows/release.yml`: it builds
-the local EG numeric kernel, sets `PYTHONPATH` to that EG checkout, and runs
-`uv sync --frozen --extra test --extra webui --no-install-package epistemic-graph`
-before tests. From `graphos-src/graph-os`, `scripts/bootstrap.sh --kernel`
-creates the Graph OS links above, builds the kernel, syncs the environment and
-installs the git hooks; the equivalent manual commands are:
+Graph OS's test setup follows `.github/workflows/release.yml`: from
+`graphos-src/graph-os`, `scripts/bootstrap.sh` syncs the locked PyPI
+environment and installs the git hooks; the equivalent manual commands are:
 
 ```bash
-python -m pip install 'maturin>=1,<2'
-python ../epistemic-graph/scripts/build_numeric_kernel.py
-PYTHONPATH="$(realpath ../epistemic-graph)" uv sync --frozen --extra test --extra webui --no-install-package epistemic-graph
-PYTHONPATH="$(realpath ../epistemic-graph)" uv run --no-sync pytest
+uv sync --frozen --extra test --extra webui
+uv run --no-sync pytest
 ```
 
-The `--no-install-package` flag is intentional: current EG source can be ahead
-of published wheel metadata. Use the workflow's current commands and exact
-pinned refs rather than treating a local `uv sync --extra test` against the
-public index as CI parity. AU's release workflow likewise checks out a pinned
+AU's release workflow checks out a pinned
 SDK and skips EG wheel installation. Its supported test environment uses
 `uv sync --frozen --extra test --group guardrails --no-install-package
 epistemic-graph --no-install-package langfuse-agent`, then the tests in its

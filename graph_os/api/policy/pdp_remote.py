@@ -231,7 +231,7 @@ class RemotePolicy:
     async def _post(
         self, chunk: Sequence[schemas.CheckRequest]
     ) -> list[schemas.CheckResponse]:
-        from agent_utilities.protocols.source_connectors.http_safety import (
+        from agent_connector_sdk.source_connectors.http_safety import (
             safe_post_json_async,
         )
 

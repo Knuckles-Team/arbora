@@ -21,7 +21,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Protocol, TypedDict
 
-from agent_utilities.core.config import setting
+from graph_os.core.settings import setting
 
 logger = logging.getLogger(__name__)
 

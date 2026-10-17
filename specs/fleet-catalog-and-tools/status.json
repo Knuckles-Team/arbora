@@ -59,6 +59,7 @@
     "GRAPHOS-FLEET-R024.1",
     "GRAPHOS-FLEET-R024.2",
     "GRAPHOS-FLEET-R024.3",
+    "GRAPHOS-FLEET-R024.750",
     "GRAPHOS-FLEET-R025",
     "GRAPHOS-FLEET-R029",
     "GRAPHOS-FLEET-R026",
@@ -566,7 +567,9 @@
         "f651a834b0db"
       ],
       "verified_by": [
-        "tests/api/test_eg_binding.py:203"
+        "tests/api/test_eg_binding.py:133",
+        "tests/api/test_eg_binding.py:204",
+        "tests/api/test_eg_binding.py:88"
       ]
     },
     {
@@ -730,6 +733,7 @@
         "GRAPHOS-FLEET-R024.1",
         "GRAPHOS-FLEET-R024.2",
         "GRAPHOS-FLEET-R024.3",
+        "GRAPHOS-FLEET-R024.750",
         "GRAPHOS-FLEET-R024.4",
         "GRAPHOS-FLEET-R024.5",
         "GRAPHOS-FLEET-R024.6",
@@ -788,13 +792,26 @@
       "verified_by": []
     },
     {
+      "id": "GRAPHOS-FLEET-R024.750",
+      "title": "Fail-closed fleet health evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/fleet/test_health.py:18"
+      ]
+    },
+    {
       "id": "GRAPHOS-FLEET-R025",
       "title": "Skills from every installed package, and an always-offered core pack, join the find/load path",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "3f7190f32493",
         "d16472d4df1d"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/fleet/test_local_skill_discovery.py:145",
+        "tests/fleet/test_local_skill_discovery.py:32"
+      ]
     },
     {
       "id": "GRAPHOS-FLEET-R029",

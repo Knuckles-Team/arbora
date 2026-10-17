@@ -53,7 +53,7 @@ class SemanticProvisioningError(RuntimeError):
 def _bind_session_graph(graph: str) -> AbstractContextManager[object]:
     """Run one engine call under the verified session narrowed to ``graph``."""
 
-    from agent_utilities.api.session import resolve_session, use_session
+    from graph_os.api.contracts.session import resolve_session, use_session
 
     return use_session(resolve_session().with_graph(graph))
 
@@ -329,7 +329,8 @@ async def import_attested_pack(
     """
 
     from agent_connector_sdk.sinks.epistemic_graph import EpistemicGraphSink
-    from agent_utilities.api import pack_import_authority
+
+    from graph_os.api.contracts import pack_import_authority
 
     tenant_id = str(session.engine_verified_context()["tenant"])
     graph = str(session.graph)

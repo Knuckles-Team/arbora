@@ -25,16 +25,17 @@ import re
 import uuid
 from typing import Annotated, Any
 
-from agent_utilities.security.error_surface import public_error_payload
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
+from graph_os.api.errors import not_served
 from graph_os.gateway.aggregator import Aggregator
 from graph_os.gateway.config import ConfigManager
 from graph_os.gateway.models import DashboardLayout, WidgetData
 from graph_os.gateway.registry import get_registry
+from graph_os.security.error_surface import public_error_payload
 
 __all__ = [
     "DASHBOARD_WS_PATH",
@@ -65,8 +66,8 @@ def _dashboard_capabilities(request: Request) -> set[str] | None:
     if not claims or claims.get("auth_type") == "api_key":
         return None
     try:
-        from agent_utilities.core.config import config
-        from agent_utilities.security.identity import (
+        from graph_os.core.settings import runtime_config as config
+        from graph_os.security.identity import (
             base_capabilities,
             normalize_identity,
         )
@@ -206,18 +207,18 @@ async def list_available_widgets() -> list[WidgetListItem]:
 @dashboard_router.get("/health")
 async def health_check() -> JSONResponse:
     """Liveness: always 200, with the shared runtime health report as body."""
-    from agent_utilities.observability.runtime_health import collect_health_async
+    from graph_os.observability.runtime_health import collect_health_async
 
     report = await collect_health_async()
     return JSONResponse(report, headers={"Cache-Control": "no-store"})
 
 
 def _engine_probe() -> dict[str, Any]:
-    from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
-
+    from graph_os.mcp_server import runtime
     from graph_os.observability.readiness import check
 
-    if IntelligenceGraphEngine.get_active():
+    get_engine = runtime._get_engine
+    if callable(get_engine) and get_engine() is not None:
         return check("ready")
     return check("unavailable", reason="no active engine")
 
@@ -259,11 +260,7 @@ async def daemon_status() -> dict[str, Any]:
 @dashboard_router.get("/daemon/shards")
 async def daemon_shards() -> dict[str, Any]:
     """Return the engine shard topology and per-shard reachability."""
-    from agent_utilities.knowledge_graph.core.shard_topology import (
-        shard_topology_status,
-    )
-
-    return shard_topology_status()
+    raise not_served("knowledge_graph.core.shard_topology", "EG-PLACEMENT-R611")
 
 
 @dashboard_router.post("/daemon/start")
@@ -278,20 +275,11 @@ async def daemon_start(request: Request) -> dict[str, Any]:
 
 
 def _active_engine() -> Any:
-    from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
-
-    engine = IntelligenceGraphEngine.get_active()
-    if not engine:
-        raise HTTPException(
-            status_code=500, detail="Active Knowledge Graph engine not available"
-        )
-    return engine
+    raise not_served("knowledge_graph.core.engine", "EG-PLACEMENT-R611")
 
 
 def _hydration_manager() -> Any:
-    from agent_utilities.knowledge_graph.core.hydration import HydrationManager
-
-    return HydrationManager()
+    raise not_served("knowledge_graph.core.hydration", "EG-INGEST-WORKER-R606")
 
 
 @dashboard_router.post("/hydrate/{source}")

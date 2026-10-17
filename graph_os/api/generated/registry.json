@@ -101,7 +101,7 @@
       "id": "access.elevation.approve",
       "idempotency": "none",
       "params": {
-        "model": "agent_utilities.security.elevation.ElevationApproval",
+        "model": "graph_os.security.elevation.ElevationApproval",
         "schema": {
           "additionalProperties": false,
           "description": "Approve the request whose digest the approver saw.",
@@ -130,7 +130,7 @@
       "principals": "human_undelegated",
       "remove_in": null,
       "result": {
-        "model": "agent_utilities.security.elevation.ElevationView",
+        "model": "graph_os.security.elevation.ElevationView",
         "schema": {
           "$defs": {
             "ElevationScope": {
@@ -559,7 +559,7 @@
       "principals": "any",
       "remove_in": null,
       "result": {
-        "model": "agent_utilities.security.elevation.ElevationView",
+        "model": "graph_os.security.elevation.ElevationView",
         "schema": {
           "$defs": {
             "ElevationScope": {
@@ -722,7 +722,7 @@
       "id": "access.elevation.revoke",
       "idempotency": "none",
       "params": {
-        "model": "agent_utilities.security.elevation.ElevationRevocation",
+        "model": "graph_os.security.elevation.ElevationRevocation",
         "schema": {
           "additionalProperties": false,
           "description": "End a requested or active elevation now.",
@@ -744,7 +744,7 @@
       "principals": "any",
       "remove_in": null,
       "result": {
-        "model": "agent_utilities.security.elevation.ElevationView",
+        "model": "graph_os.security.elevation.ElevationView",
         "schema": {
           "$defs": {
             "ElevationScope": {
@@ -9289,7 +9289,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/AcquireCapacity",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/AcquireCapacity"
         }
@@ -9335,7 +9335,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/AnalyticsJob",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/AnalyticsJob"
         }
@@ -9381,7 +9381,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/CancelWorkItem",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/CancelWorkItem"
         }
@@ -9427,7 +9427,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/CapacityStatus",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/CapacityStatus"
         }
@@ -9473,7 +9473,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/CasWorkItemMetadata",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/CasWorkItemMetadata"
         }
@@ -9519,7 +9519,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/ClaimNext",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/ClaimNext"
         }
@@ -9565,7 +9565,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/ClaimWorkItem",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/ClaimWorkItem"
         }
@@ -9611,7 +9611,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/CleanupDevelopmentLane",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/CleanupDevelopmentLane"
         }
@@ -9657,7 +9657,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/CommitWorkItemResult",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/CommitWorkItemResult"
         }
@@ -9703,7 +9703,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/DecisionEval",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/DecisionEval"
         }
@@ -9749,7 +9749,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/DecisionFit",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/DecisionFit"
         }
@@ -9795,7 +9795,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/DecisionLog",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/DecisionLog"
         }
@@ -9841,7 +9841,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/DeferWorkItem",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/DeferWorkItem"
         }
@@ -9887,7 +9887,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/DevelopmentLaneStatus",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/DevelopmentLaneStatus"
         }
@@ -9933,7 +9933,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/FinishDevelopmentLane",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/FinishDevelopmentLane"
         }
@@ -9979,7 +9979,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/GapGet",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/GapGet"
         }
@@ -10025,7 +10025,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/GapList",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/GapList"
         }
@@ -10071,7 +10071,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/GapSettle",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/GapSettle"
         }
@@ -10117,7 +10117,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/GapTransition",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/GapTransition"
         }
@@ -10163,7 +10163,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/GapUpsert",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/GapUpsert"
         }
@@ -10209,7 +10209,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/GetControlLease",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/GetControlLease"
         }
@@ -10255,7 +10255,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/GetWorkItem",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/GetWorkItem"
         }
@@ -10301,7 +10301,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/GetWorkItemOutcome",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/GetWorkItemOutcome"
         }
@@ -10347,7 +10347,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/IssueControlLease",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/IssueControlLease"
         }
@@ -10393,7 +10393,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/KgDelegate",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/KgDelegate"
         }
@@ -10439,7 +10439,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/ListControlLeases",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/ListControlLeases"
         }
@@ -10485,7 +10485,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/ListWorkItems",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/ListWorkItems"
         }
@@ -10531,7 +10531,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/MintWorkItemClaimCapability",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/MintWorkItemClaimCapability"
         }
@@ -10577,7 +10577,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/ObserveDevelopmentLane",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/ObserveDevelopmentLane"
         }
@@ -10623,7 +10623,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/QueryDevelopmentLane",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/QueryDevelopmentLane"
         }
@@ -10669,7 +10669,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/QueryWorkItemReservation",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/QueryWorkItemReservation"
         }
@@ -10715,7 +10715,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/ReclaimExpiredCapacity",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/ReclaimExpiredCapacity"
         }
@@ -10761,7 +10761,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/ReclaimWorkItemResources",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/ReclaimWorkItemResources"
         }
@@ -10807,7 +10807,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/ReconcileCapacity",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/ReconcileCapacity"
         }
@@ -10853,7 +10853,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/ReleaseCapacity",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/ReleaseCapacity"
         }
@@ -10899,7 +10899,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/ReleaseWorkItemResources",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/ReleaseWorkItemResources"
         }
@@ -10945,7 +10945,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/RenewCapacity",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/RenewCapacity"
         }
@@ -10991,7 +10991,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/RenewDevelopmentLane",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/RenewDevelopmentLane"
         }
@@ -11037,7 +11037,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/RenewWorkItemLease",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/RenewWorkItemLease"
         }
@@ -11083,7 +11083,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/ReserveDevelopmentLane",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/ReserveDevelopmentLane"
         }
@@ -11129,7 +11129,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/ReserveWorkItemResources",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/ReserveWorkItemResources"
         }
@@ -11175,7 +11175,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/ResourceReservationStatus",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/ResourceReservationStatus"
         }
@@ -11221,7 +11221,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/ResourceStatsPage",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/ResourceStatsPage"
         }
@@ -11267,7 +11267,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/RetireSealedRecord",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/RetireSealedRecord"
         }
@@ -11313,7 +11313,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/Statechart",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/Statechart"
         }
@@ -11359,7 +11359,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/SubmitWorkItem",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/SubmitWorkItem"
         }
@@ -11405,7 +11405,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/SubmitWorkItems",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/SubmitWorkItems"
         }
@@ -11451,7 +11451,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/ThrottleCapacityCell",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/ThrottleCapacityCell"
         }
@@ -11497,7 +11497,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/TransitionControlLease",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/TransitionControlLease"
         }
@@ -11543,7 +11543,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/UpdateCapacityCell",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/UpdateCapacityCell"
         }
@@ -11589,7 +11589,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/UpdateDevelopmentLaneQuota",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/UpdateDevelopmentLaneQuota"
         }
@@ -11635,7 +11635,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/UpdateResourceHost",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/UpdateResourceHost"
         }
@@ -11681,7 +11681,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/VerifyWorkItemClaimCapability",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/VerifyWorkItemClaimCapability"
         }
@@ -11727,7 +11727,7 @@
       "remove_in": null,
       "result": {
         "eg_schema": "contract/schemas/result.coordination.json#/methods/WorkOfferPut",
-        "schema_sha256": "021ea8496230344f8f0433425a772512709318d0819eea8c2540d138f7180518",
+        "schema_sha256": "46522f29d74270fb8893034104abf0fbb4eeaa75352b2242e043d15ccfb5c9a3",
         "schema_snapshot": {
           "$ref": "schemas/result.coordination.json#/methods/WorkOfferPut"
         }
@@ -23368,147 +23368,6 @@
       "verb": "act"
     },
     {
-      "audit": "none",
-      "binding": {
-        "handler": "graph_os.api.ops.memory.handle_memory_read",
-        "kind": "composite"
-      },
-      "confirm": "none",
-      "effect": "read",
-      "examples": [
-        "read this memory key"
-      ],
-      "executor": "caller",
-      "executor_scopes": [],
-      "http": null,
-      "id": "memory.read",
-      "idempotency": "none",
-      "params": {
-        "model": "graph_os.api.ops.memory.MemoryReadParams",
-        "schema": {
-          "additionalProperties": false,
-          "properties": {
-            "key": {
-              "maxLength": 256,
-              "minLength": 1,
-              "title": "Key",
-              "type": "string"
-            }
-          },
-          "required": [
-            "key"
-          ],
-          "title": "MemoryReadParams",
-          "type": "object"
-        }
-      },
-      "principals": "any",
-      "remove_in": null,
-      "result": {
-        "model": "graph_os.api.ops.memory.MemoryResult",
-        "schema": {
-          "additionalProperties": false,
-          "properties": {
-            "value": {
-              "additionalProperties": true,
-              "title": "Value",
-              "type": "object"
-            }
-          },
-          "required": [
-            "value"
-          ],
-          "title": "MemoryResult",
-          "type": "object"
-        }
-      },
-      "scopes": [
-        "memory:read"
-      ],
-      "stability": "stable",
-      "subject": null,
-      "summary": "Read one memory record scoped to the caller's own tenant",
-      "surfaces": [
-        "a2a",
-        "http",
-        "mcp"
-      ],
-      "verb": "ask"
-    },
-    {
-      "audit": "event",
-      "binding": {
-        "handler": "graph_os.api.ops.memory.handle_memory_write",
-        "kind": "composite"
-      },
-      "confirm": "none",
-      "effect": "write",
-      "examples": [
-        "remember this for later"
-      ],
-      "executor": "caller",
-      "executor_scopes": [],
-      "http": null,
-      "id": "memory.write",
-      "idempotency": "key_required",
-      "params": {
-        "model": "graph_os.api.ops.memory.MemoryWriteParams",
-        "schema": {
-          "additionalProperties": false,
-          "properties": {
-            "key": {
-              "maxLength": 256,
-              "minLength": 1,
-              "title": "Key",
-              "type": "string"
-            },
-            "value": {
-              "additionalProperties": true,
-              "title": "Value",
-              "type": "object"
-            }
-          },
-          "required": [
-            "key"
-          ],
-          "title": "MemoryWriteParams",
-          "type": "object"
-        }
-      },
-      "principals": "any",
-      "remove_in": null,
-      "result": {
-        "model": "graph_os.api.ops.memory.MemoryResult",
-        "schema": {
-          "additionalProperties": false,
-          "properties": {
-            "value": {
-              "additionalProperties": true,
-              "title": "Value",
-              "type": "object"
-            }
-          },
-          "required": [
-            "value"
-          ],
-          "title": "MemoryResult",
-          "type": "object"
-        }
-      },
-      "scopes": [
-        "memory:write"
-      ],
-      "stability": "stable",
-      "subject": null,
-      "summary": "Write one memory record scoped to the caller's own tenant",
-      "surfaces": [
-        "a2a",
-        "http",
-        "mcp"
-      ],
-      "verb": "act"
-    },
-    {
       "audit": "event",
       "binding": {
         "handler": "graph_os.api.ops.ops.handle_ops_backup",
@@ -24266,140 +24125,6 @@
       "confirm": "none",
       "effect": "write",
       "examples": [
-        "benchmark with RLM"
-      ],
-      "executor": "caller",
-      "executor_scopes": [],
-      "http": null,
-      "id": "rlm.benchmark",
-      "idempotency": "none",
-      "params": {
-        "model": "graph_os.api.ops.agents.RlmParams",
-        "schema": {
-          "additionalProperties": false,
-          "properties": {
-            "request": {
-              "additionalProperties": true,
-              "title": "Request",
-              "type": "object"
-            }
-          },
-          "required": [
-            "request"
-          ],
-          "title": "RlmParams",
-          "type": "object"
-        }
-      },
-      "principals": "any",
-      "remove_in": null,
-      "result": {
-        "model": "graph_os.api.ops.agents.AgentResult",
-        "schema": {
-          "additionalProperties": false,
-          "properties": {
-            "value": {
-              "additionalProperties": true,
-              "title": "Value",
-              "type": "object"
-            }
-          },
-          "required": [
-            "value"
-          ],
-          "title": "AgentResult",
-          "type": "object"
-        }
-      },
-      "scopes": [
-        "kg:write"
-      ],
-      "stability": "stable",
-      "subject": null,
-      "summary": "Execute governed RLM benchmark",
-      "surfaces": [
-        "a2a",
-        "http",
-        "mcp"
-      ],
-      "verb": "act"
-    },
-    {
-      "audit": "event",
-      "binding": {
-        "handler": "graph_os.api.ops.agents.handle_rlm",
-        "kind": "composite"
-      },
-      "confirm": "none",
-      "effect": "write",
-      "examples": [
-        "evolve prompt with RLM"
-      ],
-      "executor": "caller",
-      "executor_scopes": [],
-      "http": null,
-      "id": "rlm.evolve_prompt",
-      "idempotency": "none",
-      "params": {
-        "model": "graph_os.api.ops.agents.RlmParams",
-        "schema": {
-          "additionalProperties": false,
-          "properties": {
-            "request": {
-              "additionalProperties": true,
-              "title": "Request",
-              "type": "object"
-            }
-          },
-          "required": [
-            "request"
-          ],
-          "title": "RlmParams",
-          "type": "object"
-        }
-      },
-      "principals": "any",
-      "remove_in": null,
-      "result": {
-        "model": "graph_os.api.ops.agents.AgentResult",
-        "schema": {
-          "additionalProperties": false,
-          "properties": {
-            "value": {
-              "additionalProperties": true,
-              "title": "Value",
-              "type": "object"
-            }
-          },
-          "required": [
-            "value"
-          ],
-          "title": "AgentResult",
-          "type": "object"
-        }
-      },
-      "scopes": [
-        "kg:write"
-      ],
-      "stability": "stable",
-      "subject": null,
-      "summary": "Execute governed RLM evolve prompt",
-      "surfaces": [
-        "a2a",
-        "http",
-        "mcp"
-      ],
-      "verb": "act"
-    },
-    {
-      "audit": "event",
-      "binding": {
-        "handler": "graph_os.api.ops.agents.handle_rlm",
-        "kind": "composite"
-      },
-      "confirm": "none",
-      "effect": "write",
-      "examples": [
         "run with RLM"
       ],
       "executor": "caller",
@@ -24980,5 +24705,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "91adaf1d0b3e9079c2bdb1ae8ed37bc8edbd22c4d77c94439208aa689ac4af2b"
+  "registry_digest": "8887c6b2c45430898b5b319a0109518dab01d6ff2bcd91f02e3e37087051fa01"
 }

@@ -4,11 +4,8 @@ claims:
   core:
     - graph_analyze
     - graph_candidate_claims
-    - graph_claims
-    - graph_evolution
     - graph_feedback
     - graph_learn
-    - research_artifact
   features: {}
   external:
     - graph_rlm

@@ -64,8 +64,8 @@ policy:
     remoteUrl: ""
 
 secrets:
-  # engine = the engine's encrypted secrets graph; vault = OpenBao or another
-  # Vault-compatible store (SECRETS_VAULT_URL + an auth method in config).
+  # vault = a Vault-compatible store (SECRETS_VAULT_URL + an auth method in
+  # config). It is the only secrets backend.
   backend: vault
   vaultUrl: https://secrets.example.invalid
 

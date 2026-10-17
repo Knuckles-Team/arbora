@@ -256,11 +256,11 @@ def _correlation_stamp() -> dict[str, str]:
     """
     stamp: dict[str, str] = {}
     try:
-        from agent_utilities.observability import correlation
+        from graph_os.observability import correlation
 
         stamp["correlation_id"] = correlation.ensure_correlation_id()
         try:
-            from agent_utilities.security.brain_context import current_actor
+            from graph_os.security.actor_context import current_actor
 
             actor = current_actor()
             if actor.actor_id and actor.actor_id != "system":
@@ -276,7 +276,7 @@ def _correlation_stamp() -> dict[str, str]:
 
 def persist_event(engine: Any, event: FleetEvent) -> str:
     """Write the event as a ``FleetEvent`` KG node; returns the node id."""
-    from agent_utilities.security.persistence_privacy import persistence_reference
+    from agent_connector_sdk.privacy import persistence_reference
 
     event_id = f"fleet_event:{uuid.uuid4().hex}"
     source_type = _source_type(event.source)
@@ -353,7 +353,7 @@ def _storm_capped(source: str, n: int = 1) -> bool:
 def _resolve_webhook_secret(cfg: Any) -> str | None:
     reference = str(cfg.fleet_events_token_ref or "").strip()
     if reference:
-        from agent_utilities.security.secrets_client import create_secrets_client
+        from graph_os.security.secrets import create_secrets_client
 
         secret = create_secrets_client().resolve_ref(reference)
         if not secret:
@@ -364,7 +364,7 @@ def _resolve_webhook_secret(cfg: Any) -> str | None:
 
 async def fleet_events_receive(request: Request) -> JSONResponse:
     """``POST /api/fleet/events`` — normalize, persist, and enqueue triage."""
-    from agent_utilities.core.config import AgentConfig
+    from graph_os.core.settings import GraphOSConfig as AgentConfig
 
     # Fresh config lets secret rotation take effect without a gateway restart.
     cfg = AgentConfig()
@@ -441,7 +441,7 @@ def _authenticate_request(request: Request, cfg: Any) -> JSONResponse | None:
         authenticated = hmac.compare_digest(offered, required)
     else:
         try:
-            from agent_utilities.security.brain_context import current_actor
+            from graph_os.security.actor_context import current_actor
 
             authenticated = current_actor().authenticated
         except Exception as exc:

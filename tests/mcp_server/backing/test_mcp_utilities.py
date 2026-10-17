@@ -1,0 +1,194 @@
+"""
+
+CONCEPT:AU-ECO.messaging.native-backend-abstraction
+Concept: building-mcp-servers
+
+Tests for MCP utilities.
+"""
+
+import contextlib
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+import graph_os.mcp_server.backing.server_factory as server_factory
+
+# Configured toolsets are built by graph-os, the harness host.
+pytestmark = pytest.mark.usefixtures("graphos_harness_host")
+
+
+def test_create_mcp_parser():
+    parser = server_factory.create_mcp_parser()
+    assert parser.description == "MCP Server"
+    # Check some default arguments
+    args = parser.parse_args(["--transport", "sse", "--port", "9000"])
+    assert args.transport == "sse"
+    assert args.port == 9000
+
+
+@patch("fastmcp.FastMCP")
+def test_create_mcp_server_basic(mock_fastmcp):
+    # Mocking parse_known_args to return default values
+    with patch("argparse.ArgumentParser.parse_known_args") as mock_parse:
+        mock_args = MagicMock()
+        mock_args.transport = "stdio"
+        mock_args.port = 8000
+        mock_args.enable_delegation = False
+        mock_args.auth_type = "none"
+        mock_args.help = False
+        mock_parse.return_value = (mock_args, [])
+
+        args, mcp, middlewares = server_factory.create_mcp_server(name="TestServer")
+
+        assert args == mock_args
+        # ``create_mcp_server`` now always stamps the package version onto
+        # the FastMCP instance (``version: str = __version__`` default), wires
+        # the fleet self-registration ``lifespan`` (CONCEPT:EG-KG.sharding.server-registry),
+        # and pins ``tasks=False`` (FastMCP 3.4.5 implements the superseded
+        # 2025-11-25 task protocol, not the 2026-07-28 tasks extension — see
+        # ``mcp/server_factory.py``'s ``create_mcp_server``). ``lifespan`` is a
+        # fresh closure per call, so it's asserted for shape, not identity.
+        from graph_os._version import __version__
+
+        mock_fastmcp.assert_called_once()
+        call_args, call_kwargs = mock_fastmcp.call_args
+        assert call_args == ("TestServer",)
+        assert call_kwargs["version"] == __version__
+        assert call_kwargs["auth"] is None
+        assert call_kwargs["instructions"] == ""
+        assert call_kwargs["tasks"] is False
+        assert callable(call_kwargs["lifespan"])
+        assert len(middlewares) >= 2  # Default middlewares
+
+
+def test_factory_lifespan_extension_unwinds_before_managed_engine(monkeypatch):
+    """The optional child lifespan is nested inside the factory context."""
+    events: list[str] = []
+    monkeypatch.setattr(server_factory, "to_boolean", lambda _value: False)
+
+    @contextlib.asynccontextmanager
+    async def extension(_app):
+        events.append("extension-enter")
+        try:
+            yield
+        finally:
+            events.append("extension-exit")
+
+    lifespan = server_factory._fleet_registration_lifespan_factory(
+        object(),
+        "test",
+        lifespan_extension=extension,
+        manage_engine_shutdown=False,
+    )
+
+    async def exercise():
+        async with lifespan(object()):
+            events.append("body")
+
+    import asyncio
+
+    asyncio.run(exercise())
+    assert events == ["extension-enter", "body", "extension-exit"]
+
+
+def test_create_mcp_server_exposes_metrics_health_and_tool_middleware(monkeypatch):
+    """A factory-built server mounts unauthenticated /metrics + /health routes
+    and the per-tool metrics middleware (CONCEPT:AU-OS.observability.no-op-without-metrics). Uses the real FastMCP
+    (no mock) so the registered HTTP routes can be inspected."""
+    monkeypatch.setattr("sys.argv", ["test-mcp"])  # defaults: auth none, eunomia none
+    args, mcp, middlewares = server_factory.create_mcp_server(
+        name="metrics-test", version="0.0.0", instructions="t"
+    )
+    mw_names = {type(m).__name__ for m in middlewares}
+    assert "ToolMetricsMiddleware" in mw_names
+    paths = {getattr(r, "path", None) for r in mcp.http_app().routes}
+    assert "/metrics" in paths
+    assert "/health" in paths
+
+
+def test_mcp_auth_config_defaults():
+    # Should use env vars
+    assert isinstance(server_factory.mcp_auth_config, dict)
+    assert "enable_delegation" in server_factory.mcp_auth_config
+
+
+@patch("requests.get")
+def test_create_mcp_server_delegation_error(mock_get):
+    # Test that delegation requires oidc-proxy
+    with patch("argparse.ArgumentParser.parse_known_args") as mock_parse:
+        mock_args = MagicMock()
+        mock_args.transport = "stdio"
+        mock_args.port = 8000
+        mock_args.help = False
+        mock_args.enable_delegation = True
+        mock_args.auth_type = "jwt"  # Wrong type
+        mock_args.audience = "aud"
+        mock_args.delegated_scopes = "api"
+        mock_args.oidc_config_url = None
+        mock_args.oidc_client_id = None
+        mock_args.oidc_client_secret = None
+        mock_parse.return_value = (mock_args, [])
+
+        with pytest.raises(SystemExit) as excinfo:
+            server_factory.create_mcp_server()
+        assert excinfo.value.code == 1
+
+
+def test_create_mcp_server_invalid_port():
+    with patch("argparse.ArgumentParser.parse_known_args") as mock_parse:
+        mock_args = MagicMock()
+        mock_args.transport = "stdio"
+        mock_args.help = False
+        mock_args.port = 70000  # Invalid
+        mock_parse.return_value = (mock_args, [])
+
+        with pytest.raises(SystemExit) as excinfo:
+            server_factory.create_mcp_server()
+        assert excinfo.value.code == 1
+
+
+@patch("graph_os.mcp_server.backing.eunomia_principal.create_eunomia_middleware")
+def test_create_mcp_server_eunomia(mock_create_mw):
+    # ``server_factory._configure_middleware`` calls
+    # ``graph_os.mcp_server.backing.eunomia_principal.create_eunomia_middleware`` (its
+    # own wrapper — which does its own policy-file validation before ever
+    # reaching the external ``eunomia_mcp`` package), not the external
+    # package's function directly — that must be the patch target.
+    #
+    # Mocking parse_known_args to return Eunomia options
+    with patch("argparse.ArgumentParser.parse_known_args") as mock_parse:
+        # Test Case 1: Embedded Eunomia
+        mock_args = MagicMock()
+        mock_args.transport = "stdio"
+        mock_args.port = 8000
+        mock_args.enable_delegation = False
+        mock_args.auth_type = "none"
+        mock_args.help = False
+        mock_args.eunomia_type = "embedded"
+        mock_args.eunomia_policy_file = "my_custom_policy.json"
+        mock_args.eunomia_remote_url = None
+        mock_args.eunomia_api_key_ref = None
+        mock_parse.return_value = (mock_args, [])
+
+        server_factory.create_mcp_server(name="TestServerEmbedded")
+        mock_create_mw.assert_called_with(
+            policy_file="my_custom_policy.json",
+            use_remote_eunomia=False,
+            require_verified_principal=False,
+        )
+
+        mock_create_mw.reset_mock()
+
+        # Test Case 2: Remote Eunomia
+        mock_args.eunomia_type = "remote"
+        mock_args.eunomia_policy_file = None
+        mock_args.eunomia_remote_url = "http://eunomia:8421"
+
+        server_factory.create_mcp_server(name="TestServerRemote")
+        mock_create_mw.assert_called_with(
+            policy_file=None,
+            use_remote_eunomia=True,
+            eunomia_endpoint="http://eunomia:8421",
+            api_key_ref=None,
+            require_verified_principal=False,
+        )

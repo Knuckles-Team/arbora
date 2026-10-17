@@ -5714,30 +5714,6 @@
       "verb": "act"
     },
     {
-      "domain": "memory",
-      "examples": [
-        "read this memory key"
-      ],
-      "id": "memory.read",
-      "summary": "Read one memory record scoped to the caller's own tenant",
-      "tags": [
-        "memory"
-      ],
-      "verb": "ask"
-    },
-    {
-      "domain": "memory",
-      "examples": [
-        "remember this for later"
-      ],
-      "id": "memory.write",
-      "summary": "Write one memory record scoped to the caller's own tenant",
-      "tags": [
-        "memory"
-      ],
-      "verb": "act"
-    },
-    {
       "domain": "ops",
       "examples": [
         "back up this tenant now"
@@ -5860,30 +5836,6 @@
     {
       "domain": "rlm",
       "examples": [
-        "benchmark with RLM"
-      ],
-      "id": "rlm.benchmark",
-      "summary": "Execute governed RLM benchmark",
-      "tags": [
-        "rlm"
-      ],
-      "verb": "act"
-    },
-    {
-      "domain": "rlm",
-      "examples": [
-        "evolve prompt with RLM"
-      ],
-      "id": "rlm.evolve_prompt",
-      "summary": "Execute governed RLM evolve prompt",
-      "tags": [
-        "rlm"
-      ],
-      "verb": "act"
-    },
-    {
-      "domain": "rlm",
-      "examples": [
         "run with RLM"
       ],
       "id": "rlm.run",
@@ -5990,5 +5942,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "91adaf1d0b3e9079c2bdb1ae8ed37bc8edbd22c4d77c94439208aa689ac4af2b"
+  "registry_digest": "8887c6b2c45430898b5b319a0109518dab01d6ff2bcd91f02e3e37087051fa01"
 }

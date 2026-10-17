@@ -12,7 +12,17 @@
     "GRAPHOS-MESSAGING-R005",
     "GRAPHOS-MESSAGING-R005.1",
     "GRAPHOS-MESSAGING-R006",
-    "GRAPHOS-MESSAGING-R700"
+    "GRAPHOS-MESSAGING-R800",
+    "GRAPHOS-MESSAGING-R800.1",
+    "GRAPHOS-MESSAGING-R800.2",
+    "GRAPHOS-MESSAGING-R800.3",
+    "GRAPHOS-MESSAGING-R800.4",
+    "GRAPHOS-MESSAGING-R800.5",
+    "GRAPHOS-MESSAGING-R800.6",
+    "GRAPHOS-MESSAGING-R700",
+    "GRAPHOS-MESSAGING-R800.1000",
+    "GRAPHOS-MESSAGING-R800.1001",
+    "GRAPHOS-MESSAGING-R800.1002"
   ],
   "requirements": [
     {
@@ -53,8 +63,8 @@
         "29a592980f26"
       ],
       "verified_by": [
-        "tests/messaging/test_supervision.py:147",
-        "tests/messaging/test_supervision.py:181"
+        "tests/messaging/test_supervision.py:154",
+        "tests/messaging/test_supervision.py:188"
       ]
     },
     {
@@ -65,7 +75,7 @@
         "29a592980f26"
       ],
       "verified_by": [
-        "tests/messaging/test_supervision.py:216"
+        "tests/messaging/test_supervision.py:223"
       ]
     },
     {
@@ -99,6 +109,70 @@
       "verified_by": []
     },
     {
+      "id": "GRAPHOS-MESSAGING-R800",
+      "title": "Messaging adapter contract, command registry and the full channel adapter set (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [
+        "9da18258ca1b"
+      ],
+      "verified_by": [
+        "tests/messaging/test_primitives.py:17"
+      ],
+      "rollup_of": [
+        "GRAPHOS-MESSAGING-R800.1",
+        "GRAPHOS-MESSAGING-R800.2",
+        "GRAPHOS-MESSAGING-R800.3",
+        "GRAPHOS-MESSAGING-R800.4",
+        "GRAPHOS-MESSAGING-R800.5",
+        "GRAPHOS-MESSAGING-R800.6",
+        "GRAPHOS-MESSAGING-R800.1000",
+        "GRAPHOS-MESSAGING-R800.1001",
+        "GRAPHOS-MESSAGING-R800.1002"
+      ]
+    },
+    {
+      "id": "GRAPHOS-MESSAGING-R800.1",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-MESSAGING-R800.2",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-MESSAGING-R800.3",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-MESSAGING-R800.4",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-MESSAGING-R800.5",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-MESSAGING-R800.6",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
       "id": "GRAPHOS-MESSAGING-R700",
       "title": "Action notification and webhook dispatch",
       "delivery_state": "VERIFIED",
@@ -110,6 +184,27 @@
         "tests/messaging/test_action_dispatch.py:33",
         "tests/messaging/test_action_dispatch.py:56"
       ]
+    },
+    {
+      "id": "GRAPHOS-MESSAGING-R800.1000",
+      "title": "Intake lease on the engine WorkItem methods",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-MESSAGING-R800.1001",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-MESSAGING-R800.1002",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     }
   ]
 }

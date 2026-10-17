@@ -4,7 +4,7 @@ Implements the admin slice of ``GRAPHOS-OPS-R024``: ``ops.doctor``,
 ``ops.config``, ``ops.tenants``, ``ops.backup``, and ``ops.restore`` over
 the hosted operational-admin store, bound by the caller's own authority and
 scoped to the caller's own tenant, through one typed port, matching the
-memory-store convention in :mod:`graph_os.api.ops.memory`. An uncomposed
+port convention in :mod:`graph_os.api.ops.ingest`. An uncomposed
 store fails closed with a typed ``UNAVAILABLE`` refusal rather than
 fabricating a result. Graph/query/search/ontology administration is out of
 scope here; it is owned by ``GRAPHOS-HOST-R026.x``.

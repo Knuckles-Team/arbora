@@ -38,8 +38,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
-from agent_utilities.core.config import setting
-
+from graph_os.core.settings import setting
 from graph_os.deployment.file_lock import (
     LockUnavailable,
     lock_exclusive_nb,

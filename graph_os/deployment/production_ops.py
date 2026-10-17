@@ -21,8 +21,10 @@ import time
 from pathlib import Path
 from typing import Any
 
-from agent_utilities.core.config import AgentConfig, setting
 from filelock import FileLock
+
+from graph_os.core.settings import GraphOSConfig as AgentConfig
+from graph_os.core.settings import setting
 
 
 class ProductionOperationError(RuntimeError):
@@ -387,13 +389,12 @@ async def _provision_semantic_content(served_url: str) -> dict[str, Any]:
     uses, so every EG call carries exactly the authority GraphOS serves with.
     """
 
-    from agent_utilities.api.session import use_session
-    from agent_utilities.security.brain_context import use_actor
-
+    from graph_os.api.contracts.session import use_session
     from graph_os.deployment.semantic_provisioning import provision_semantic_content
 
     # ``runtime`` binds bootstrap's host slots on import; import it first.
     from graph_os.mcp_server import bootstrap, runtime
+    from graph_os.security.actor_context import use_actor
 
     session = runtime._mint_process_session("http")
     with use_actor(session.actor), use_session(session):
@@ -408,9 +409,7 @@ async def _provision_semantic_content(served_url: str) -> dict[str, Any]:
 async def _onboard_fleet(served_url: str) -> dict[str, Any]:
     """Run one full fleet onboarding pass under GraphOS's process session."""
 
-    from agent_utilities.api.session import use_session
-    from agent_utilities.security.brain_context import use_actor
-
+    from graph_os.api.contracts.session import use_session
     from graph_os.fleet.onboarding import (
         FleetOnboarding,
         configured_fleet_endpoints,
@@ -418,6 +417,7 @@ async def _onboard_fleet(served_url: str) -> dict[str, Any]:
         self_served_connectors,
     )
     from graph_os.mcp_server import bootstrap, runtime
+    from graph_os.security.actor_context import use_actor
 
     session = runtime._mint_process_session("http")
     with use_actor(session.actor), use_session(session):
@@ -492,8 +492,12 @@ def _exit_status(report: dict[str, Any]) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from graph_os.core.settings import load_config
+
     args = _parser().parse_args(argv)
     try:
+        # The same shared config.json the served process reads.
+        load_config()
         report = _run(args)
     except Exception as exc:  # noqa: BLE001 - CLI returns one privacy-safe failure
         report = {

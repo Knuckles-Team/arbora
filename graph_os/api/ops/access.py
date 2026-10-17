@@ -4,12 +4,6 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from agent_utilities.security.elevation import (
-    ElevationApproval,
-    ElevationRevocation,
-    ElevationScope,
-    ElevationView,
-)
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
 from graph_os.access.service import (
@@ -32,6 +26,12 @@ from graph_os.api.registry import (
     PrincipalRule,
     Surface,
     Verb,
+)
+from graph_os.security.elevation import (
+    ElevationApproval,
+    ElevationRevocation,
+    ElevationScope,
+    ElevationView,
 )
 
 #: Re-exported so ``registry_factory.get_registry()`` can resolve each

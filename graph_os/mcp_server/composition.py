@@ -40,6 +40,15 @@ class CompositionPlan:
     def messaging_intake_configured(self) -> bool:
         return self.messaging_configured and self.messaging_intake_enabled
 
+    def co_service_names(self) -> tuple[str, ...]:
+        """Names of co-services this composition would bring up (any backend)."""
+        names: list[str] = []
+        if self.messaging_intake_configured:
+            names.append("messaging")
+        if self.web_ui_enabled:
+            names.append("agent-webui")
+        return tuple(names)
+
 
 def detect_composition(
     engine: Any = None, *, messaging_intake_enabled: bool | None = None
@@ -55,7 +64,8 @@ def detect_composition(
     alone must never decide pollership, so this role check is ANDed with the
     explicit flag rather than substituting for it.
     """
-    from agent_utilities.core.config import config, setting
+    from graph_os.core.settings import runtime_config as config
+    from graph_os.core.settings import setting
 
     is_gateway_daemon_role = str(setting("KG_DAEMON_ROLE", "client")).strip() == "host"
     return CompositionPlan(

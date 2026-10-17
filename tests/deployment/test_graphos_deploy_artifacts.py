@@ -6,6 +6,7 @@ import json
 import re
 from pathlib import Path
 
+import pytest
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -99,10 +100,11 @@ def test_compose_is_single_writer_loopback_and_secret_free() -> None:
     ]
 
 
+@pytest.mark.spec("GRAPHOS-HOST-R001.4")
 def test_skill_provider_is_registered_and_packaged() -> None:
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
 
-    assert '[project.entry-points."agent_utilities.skill_providers"]' in pyproject
+    assert '[project.entry-points."agent_connector_sdk.skill_providers"]' in pyproject
     assert 'graph-os = "graph_os.skills"' in pyproject
     # The broader glob packages every skill asset (SKILL.md, references/*.md,
     # and the non-Markdown agents/*.yaml files the bundled skills also ship),

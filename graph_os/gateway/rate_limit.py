@@ -4,8 +4,8 @@ CONCEPT:AU-OS.observability.no-op-without-metrics — Gateway Middle-Tier Harden
 
 Pure-ASGI middleware mounted by
 :func:`graph_os.gateway.graph_api.register_graph_routes` INSIDE the
-OS-5.14 :class:`~agent_utilities.security.request_identity.ActorIdentityMiddleware`
-so the server-minted :class:`~agent_utilities.security.brain_context.ActorContext`
+OS-5.14 :class:`~graph_os.security.request_identity.ActorIdentityMiddleware`
+so the server-minted :class:`~graph_os.security.actor_context.ActorContext`
 is already in scope. Bucket key precedence:
 
 1. ``ActorContext.tenant_id`` (multi-tenant isolation)
@@ -38,9 +38,9 @@ import threading
 import time
 from typing import Any
 
-from agent_utilities.observability.gateway_metrics import GATEWAY_RATE_LIMITED
-from agent_utilities.security.brain_context import current_actor
-from agent_utilities.security.request_identity import HEALTH_PATHS
+from graph_os.observability.gateway_metrics import GATEWAY_RATE_LIMITED
+from graph_os.security.actor_context import current_actor
+from graph_os.security.request_identity import HEALTH_PATHS
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +85,7 @@ class GatewayRateLimitMiddleware:
         rate: float | None = None,
         burst: float | None = None,
     ) -> None:
-        from agent_utilities.core.config import config
+        from graph_os.core.settings import runtime_config as config
 
         self.app = app
         self.rate = float(rate if rate is not None else config.gateway_rate_limit or 0)

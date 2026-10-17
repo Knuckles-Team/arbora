@@ -64,15 +64,15 @@ from dataclasses import dataclass
 from typing import Any
 
 import anyio
-from agent_utilities.observability.gateway_metrics import (
+
+from graph_os.fleet.protocol_compat import mcp_protocol_error
+from graph_os.observability.gateway_metrics import (
     MCP_CHILD_BREAKER_STATE,
     MCP_CHILD_CALLS,
     MCP_CHILD_QUEUE_DEPTH,
     MCP_CHILD_RESTARTS,
 )
-from agent_utilities.security.log_redaction import redact_for_log
-
-from graph_os.fleet.protocol_compat import mcp_protocol_error
+from graph_os.security.log_redaction import redact_for_log
 
 # MCP protocol error (e.g. a terminated streamable-http session). SDK v2
 # (>=2.0.0, the floor `fastmcp>=4.0.0b1` pulls in) renamed `McpError` ->
@@ -398,7 +398,7 @@ class ChildRuntime:
         session_max_age: float | None = None,
         on_generation: GenerationCallback | None = None,
     ) -> None:
-        from agent_utilities.core.config import config
+        from graph_os.core.settings import runtime_config as config
 
         self.name = name
         self.cfg = dict(cfg or {})

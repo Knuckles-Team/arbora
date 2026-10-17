@@ -22,9 +22,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from graph_os.api.registry.eg_binding import load_generated_scopes
+from graph_os.security import scope_registry
 
 #: The five scope classes the engine's generated registry recognizes.
 SCOPE_CLASSES = frozenset({"user", "domain", "service-only", "approver", "admin"})
+if not set(scope_registry.SCOPE_CLASSES.values()) <= SCOPE_CLASSES:
+    raise RuntimeError("the generated scope registry names an unknown scope class")
 
 
 @dataclass(frozen=True, slots=True)

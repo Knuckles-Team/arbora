@@ -222,6 +222,7 @@ def build_operation_runtime(
     service_claims: ServiceClaims,
     check_access: SubjectCheck = deny_subject_access,
     eg_dispatch: Callable[[Any, Any, Any], Any] = dispatch_eg_method,
+    bindings: Mapping[str, Any] | None = None,
 ) -> BoundOperationRuntime:
     """Assemble the real caller/service client factories and EG dispatch port."""
 
@@ -251,6 +252,7 @@ def build_operation_runtime(
         eg_dispatch=dispatch_bound_method,
         service_scopes=service_scopes,
         service_principal=service_principal,
+        bindings=bindings,
     )
 
 

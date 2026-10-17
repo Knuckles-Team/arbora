@@ -67,7 +67,7 @@ QUERY_DIALECT_MANIFEST: tuple[SurfaceEntry, ...] = (
         disposition=Disposition.AUTHENTICATED_REQUIRED,
         citation=(
             "mcp/tools/query_tools.py's implicit default -> "
-            "kg_server._resolve_read_engines -> engine.query_cypher "
+            "engine_routing._resolve_read_engines -> engine.query_cypher "
             "(knowledge_graph/orchestration/engine_query.py:137-185, explicit "
             "resolve_session(required_scope='kg:read') at :185)"
         ),
@@ -182,7 +182,7 @@ GOC15_SURFACE_MANIFEST: tuple[SurfaceEntry, ...] = (
             "reach privileged KG reads/writes. In that mode a claim-less call "
             "is refused (SessionRequiredError) unless an ambient GraphSession "
             "or the tiny-profile local process authority "
-            "(kg_server._PROCESS_SESSION) is already legitimately bound. The "
+            "(runtime._PROCESS_SESSION) is already legitimately bound. The "
             "other ~60 fleet MCP servers built via the same factory keep the "
             "prior no-op (require_verified_session=False default) -- each "
             "retains its own authorization contract; making this fail-closed "
@@ -245,11 +245,6 @@ GOC15_SURFACE_MANIFEST: tuple[SurfaceEntry, ...] = (
         citation="gateway/graph_api.py:60-111 -- explicit resolve_session(required_scope='kg:read')",
     ),
     SurfaceEntry(
-        surface_id="au:usage-observability-dashboard",
-        disposition=Disposition.AUTHENTICATED_REQUIRED,
-        citation="gateway/usage_api.py, usage/authorization.py:38-76",
-    ),
-    SurfaceEntry(
         surface_id="au:nl-query-ask",
         disposition=Disposition.AUTHENTICATED_REQUIRED,
         citation=(
@@ -264,7 +259,7 @@ GOC15_SURFACE_MANIFEST: tuple[SurfaceEntry, ...] = (
         citation=(
             "agent-webui/agent/agent_webui/server.py:1822 _dashboard_ws -- "
             "WebUIAuthorizationMiddleware enforces kg:admin on /ws/dashboard "
-            "(BUG-PE-038: agent_utilities/gateway/ws.py's dashboard_ws_router, "
+            "(BUG-PE-038: graph_os/gateway/ws/py's dashboard_ws_router, "
             "this entry's prior citation, is unused dead code -- never mounted "
             "by agent-webui, which deliberately does not use it because its "
             "OLDER gateway:read/write/admin capability namespace never maps "
@@ -315,7 +310,7 @@ GOC15_SURFACE_MANIFEST: tuple[SurfaceEntry, ...] = (
     # ── CA-29 W1-end fleet transcription (DEC-CA-08) ───────────────────────
     #
     # lakekeeper-mcp (CA-40), spark-mcp (CA-42), opensearch-mcp (CA-43): all
-    # three are built via the same agent_utilities.mcp.server_factory
+    # three are built via the same graph_os.mcp_server.backing.server_factory
     # create_mcp_server() every other fleet MCP package uses, so they inherit
     # ActorContextMiddleware's existing fleet-wide default (server_factory.py
     # _configure_middleware:1275: `require_verified_session=(server_name ==

@@ -82,22 +82,22 @@ ToolResult = _fastmcp_tools.ToolResult
 # turned the rename into a silent `RuntimeError: mcp SDK has no
 # streamablehttp_client` on EVERY remote child, which is the whole deployed
 # fleet — `deploy/mcp-fleet.registry.yml` defaults to `streamable-http`).
-import agent_utilities.core.resource_priority as _resource_priority
-from agent_utilities.core.capability_contract import Capability
-from agent_utilities.core.config import setting
-from agent_utilities.security.error_surface import public_error_text
-from agent_utilities.security.log_redaction import redact_for_log
 from mcp.client.sse import sse_client
 from mcp.client.streamable_http import streamable_http_client
 
+import graph_os.access.priority as _resource_priority
 import graph_os.fleet.catalog_reader as _catalog_reader
 import graph_os.fleet.child_resilience as _child_resilience
+from graph_os.core.capability_contract import Capability
+from graph_os.core.settings import setting
 from graph_os.fleet.local_skill_catalog import (
     LOCAL_SKILLS_SERVER,
     build_local_skill_catalog,
     missing_core_pack_names,
 )
 from graph_os.fleet.session_notifications import SessionCatalogNotifications
+from graph_os.security.error_surface import public_error_text
+from graph_os.security.log_redaction import redact_for_log
 
 # Direct all logs to stderr so stdout remains perfectly clean for stdio JSON-RPC
 logging.basicConfig(
@@ -337,7 +337,7 @@ def _sample_child_health_gauges() -> None:
 def _register_child_health_sampler() -> None:
     """Hook :func:`_sample_child_health_gauges` into the metrics scrape path."""
     try:
-        from agent_utilities.observability.gateway_metrics import (
+        from graph_os.observability.gateway_metrics import (
             register_scrape_sampler,
         )
 
@@ -395,11 +395,6 @@ _CHILD_ENV_ALLOWLIST = frozenset(
 )
 _TASK_DELEGATION_CHANNEL_ENV = "AGENT_UTILITIES_MCP_TASK_CHANNEL_SECRET"
 _PROVIDER_CHILD_ENV_KEYS = frozenset({"AGENT_PROVIDER_PROFILE", "PROVIDER_CONFIGS"})
-_PROVIDER_RESOLUTION_EXECUTOR = concurrent.futures.ThreadPoolExecutor(
-    max_workers=4,
-    thread_name_prefix="provider-runtime",
-)
-_PROVIDER_RESOLUTION_CAPACITY = threading.BoundedSemaphore(8)
 
 
 def _sensitive_config_key(name: str) -> bool:
@@ -431,7 +426,7 @@ def _resolve_fleet_runtime_reference(reference: str) -> str:
         if direct not in (None, ""):
             return str(direct)
 
-        from agent_utilities.core.config import config as agent_config
+        from graph_os.core.settings import runtime_config as agent_config
 
         mappings = getattr(agent_config, "mcp_fleet_secret_refs", None)
         if not isinstance(mappings, dict):
@@ -443,7 +438,7 @@ def _resolve_fleet_runtime_reference(reference: str) -> str:
     elif _STORE_RUNTIME_REF_RE.fullmatch(reference) is None:
         raise RuntimeError("MCP child runtime reference is invalid")
 
-    from agent_utilities.security.cli_secrets import (
+    from agent_connector_sdk.credentials.runtime_references import (
         resolve_runtime_secret_reference,
     )
 
@@ -469,7 +464,7 @@ def _resolve_runtime_value(
         had_template = bool(_ENV_TEMPLATE_RE.search(rendered))
 
         def replace(match: re.Match[str]) -> str:
-            from agent_utilities.core.config import setting
+            from graph_os.core.settings import setting
 
             variable = match.group(1)
             if not sensitive and _sensitive_config_key(variable):
@@ -1178,7 +1173,7 @@ def _prepare_runtime_child_policy(
         return cfg, None
     policy_name, profile_name = _runtime_child_policy_names(cfg)
 
-    from agent_utilities.core.config import config as agent_config
+    from graph_os.core.settings import runtime_config as agent_config
 
     factory = _load_runtime_child_policy_factory(policy_name)
     policy: _typing.Any = _ABSENT
@@ -1250,7 +1245,7 @@ def _child_pool_size(cfg: dict, is_remote: bool) -> int | None:
 
     if not is_remote:
         return 1
-    from agent_utilities.core.config import config as agent_config
+    from graph_os.core.settings import runtime_config as agent_config
 
     try:
         pool_size = int(cfg.get("pool_size") or agent_config.mcp_child_pool_size)
@@ -1371,7 +1366,7 @@ def _stdio_capabilities() -> frozenset[str]:
     unauthenticated actor is refused exactly like an unauthenticated remote
     caller — stdio carries no implicit trust.
     """
-    from agent_utilities.security.brain_context import current_actor
+    from graph_os.security.actor_context import current_actor
 
     try:
         actor = current_actor()
@@ -1398,8 +1393,8 @@ def _http_capabilities(token: _typing.Any) -> frozenset[str]:
     claims = getattr(token, "claims", None)
     if isinstance(claims, dict):
         try:
-            import agent_utilities.security.identity as _identity
-            from agent_utilities.core.config import config
+            import graph_os.security.identity as _identity
+            from graph_os.core.settings import runtime_config as config
 
             capabilities.update(
                 _identity.base_capabilities(
@@ -1783,7 +1778,7 @@ def _swap_local_provider_components(
 #
 # A catalog entry opts into per-user delegated authorization by declaring an
 # admin-configured ``oauth_provider`` block (the exact shape
-# ``agent_utilities.mcp.remote_oauth_broker.ProviderDescriptor`` accepts) on
+# ``graph_os.mcp_server.backing.remote_oauth_broker.ProviderDescriptor`` accepts) on
 # its config -- the SAME "administrator-populated, never caller-supplied"
 # catalog these config dicts already are (headers/env/tls_profile/
 # allowed_private_hosts all come from here today). Such a server is
@@ -1829,8 +1824,8 @@ def _tenant_local_discovery_binding() -> _typing.Any | None:
     not derive an OAuth-like digest from roles/scopes or accept catalog fields.
     """
     try:
-        from agent_utilities.api.session import current_session
-        from agent_utilities.knowledge_graph.core.fleet_catalog_tables import (
+        from graph_os.api.contracts.session import current_session
+        from graph_os.fleet.discovery_authority import (
             TenantLocalDiscoveryBinding,
         )
 
@@ -1852,7 +1847,7 @@ def _remote_oauth_broker_for(
     provider block, reusing ONE broker instance per ``provider_id`` so its
     encrypted token store and DCR registration cache persist across calls
     instead of being rebuilt (and, for DCR, re-registered) on every request."""
-    from agent_utilities.mcp.remote_oauth_broker import (
+    from graph_os.mcp_server.backing.remote_oauth_broker import (
         ProviderDescriptor,
         ProviderRegistry,
         RemoteOAuthBroker,
@@ -1882,11 +1877,11 @@ def _resolve_remote_oauth_bearer(
     Returns ``None`` when the child is not OAuth-gated (the existing
     service-credential/static-header path proceeds completely unchanged).
     When gated, resolves the VERIFIED current actor
-    (:func:`agent_utilities.security.brain_context.current_actor` -- the same
+    (:func:`graph_os.security.actor_context.current_actor` -- the same
     server-minted identity every other authorization decision in this gateway
     uses, never a caller-supplied string) and mints a bearer bound to the
     EXACT registered resource endpoint via
-    :meth:`~agent_utilities.mcp.remote_oauth_broker.RemoteOAuthBroker.bearer_headers_for`.
+    :meth:`~graph_os.mcp_server.backing.remote_oauth_broker.RemoteOAuthBroker.bearer_headers_for`.
     A missing, expired, or revoked grant raises -- fail closed, no fallback to
     any shared/service credential (U-44/U-45).
 
@@ -1895,7 +1890,7 @@ def _resolve_remote_oauth_bearer(
     """
     if not _oauth_gated(cfg):
         return None
-    from agent_utilities.security.brain_context import current_actor
+    from graph_os.security.actor_context import current_actor
 
     actor = current_actor()  # IdentityRequiredError (PermissionError) -> fail closed
     broker, descriptor = _remote_oauth_broker_for(cfg["oauth_provider"])
@@ -1911,7 +1906,7 @@ def _resolve_remote_oauth_grant(
 
     if not _oauth_gated(cfg):
         return None
-    from agent_utilities.security.brain_context import current_actor
+    from graph_os.security.actor_context import current_actor
 
     actor = current_actor()
     broker, descriptor = _remote_oauth_broker_for(cfg["oauth_provider"])
@@ -1929,10 +1924,10 @@ def current_remote_oauth_grant_bindings(actor: _typing.Any) -> tuple[_typing.Any
     closed when no exact grant remains.
     """
 
-    from agent_utilities.knowledge_graph.core.discovery_authority import (
+    from graph_os.fleet.discovery_authority import (
         OAuthGrantBinding,
     )
-    from agent_utilities.mcp.remote_oauth_broker import (
+    from graph_os.mcp_server.backing.remote_oauth_broker import (
         OAuthProviderError,
         OAuthScopeError,
         OAuthTokenAbsentError,
@@ -2032,7 +2027,7 @@ def _tasks_route_server(
 
 def _tasks_request_models(method: str) -> tuple[_typing.Any, _typing.Any]:
     """The ``(params, result)`` models for one Tasks method."""
-    from agent_utilities.mcp.tasks_extension import (
+    from graph_os.mcp_server.backing.tasks_extension import (
         _AckResult,
         _CancelTaskParams,
         _GetTaskParams,
@@ -2065,7 +2060,7 @@ def _assert_tasks_caller_present(
 def _assert_tasks_signing_secret(server_name: str) -> None:
     """Fail closed unless the shared task-delegation signing secret is present."""
     try:
-        from agent_utilities.core.config import setting
+        from graph_os.core.settings import setting
 
         if not str(setting("AGENT_UTILITIES_TOKEN_SECRET", "") or "").strip():
             raise RuntimeError("shared task-delegation signing secret is unavailable")
@@ -2084,11 +2079,9 @@ def _tasks_caller_identity(
     caller: _collections_abc.Mapping[str, _typing.Any],
 ) -> dict[str, _typing.Any]:
     """The verified tenant/owner/scopes a Tasks delegation is minted for."""
-    identity = {
-        "tenant": str(caller.get("tenant") or ""),
-        "owner": str(caller.get("owner") or ""),
-        "scopes": sorted(str(scope) for scope in caller.get("scopes", ())),
-    }
+    from graph_os.mcp_server.backing.context_helpers import caller_identity_fields
+
+    identity = caller_identity_fields(caller)
     if not identity["tenant"] or not identity["owner"]:
         raise _fastmcp_exceptions.ToolError("Tasks route caller is not verified")
     return identity
@@ -2100,7 +2093,7 @@ def _build_task_request(
     current_secret: str | None,
 ) -> _typing.Any:
     """One outgoing Tasks request: envelope, delegation proof, and channel proof."""
-    from agent_utilities.mcp.tasks_extension import (
+    from graph_os.mcp_server.backing.tasks_extension import (
         TASKS_EXTENSION_ID,
         TASKS_EXTENSION_REVISION,
         _channel_proof,
@@ -2345,7 +2338,7 @@ class MCPMultiplexer:
         # cached like the probe cache above: every skill resolved from a
         # provider installed in THIS process (graph-os's own, agent-utilities'
         # own, and any sibling package declaring the same
-        # ``agent_utilities.skill_providers`` entry point), filed under the
+        # ``agent_connector_sdk.skill_providers`` entry point), filed under the
         # pseudo-server ``LOCAL_SKILLS_SERVER`` so it rides the SAME
         # find_tools/list_catalog path as a fleet-harvested skill.
         self._local_skill_probe_cache: dict[str, _typing.Any] | None = None
@@ -2914,6 +2907,67 @@ class MCPMultiplexer:
         except Exception as e:
             return _child_error_result(public_error_text(e))
 
+    async def call_admitted_child_once(
+        self,
+        server_name: str,
+        original_name: str,
+        arguments: dict[str, _typing.Any] | None = None,
+        *,
+        timeout: float | None = None,
+    ) -> MCPCallToolResult:
+        """Make exactly one governed child call over a dedicated session.
+
+        The one call path the governed fleet gateway uses. An OAuth-gated
+        child is called with the current caller's own grant
+        (:meth:`call_oauth_gated_tool`). Any other child is called as GraphOS
+        itself: the session carries the child's configured static headers and
+        GraphOS's service credential, never a caller credential. Either way
+        the session never joins the shared pool and makes one attempt only.
+        The caller's own admission has already passed the invocation
+        pipeline; the child capability is re-checked here.
+        """
+        cfg = self.load_catalog().get(server_name)
+        if cfg is not None and _oauth_gated(cfg):
+            return await self.call_oauth_gated_tool(
+                server_name, original_name, arguments, timeout=timeout
+            )
+        return await self._call_service_child_once(
+            server_name, original_name, arguments, timeout=timeout
+        )
+
+    async def _call_service_child_once(
+        self,
+        server_name: str,
+        original_name: str,
+        arguments: dict[str, _typing.Any] | None,
+        *,
+        timeout: float | None,
+    ) -> MCPCallToolResult:
+        _require_fleet_capability("delegate")
+        cfg = self.load_catalog().get(server_name)
+        if cfg is None or _oauth_gated(cfg):
+            raise _fastmcp_exceptions.ToolError(
+                "Server is not a configured service-credential MCP child"
+            )
+        _require_fleet_capability("delegate", _child_required_scopes(cfg))
+        catalog_epoch = self._catalog_epoch
+        call_arguments = arguments or {}
+        _assert_bounded_delegated_value(call_arguments)
+        call_timeout = _child_call_timeout(cfg, timeout)
+        if not 0.001 <= call_timeout <= 300.0:
+            raise _fastmcp_exceptions.ToolError("Invalid call timeout")
+        try:
+            return await asyncio.wait_for(
+                self._call_ephemeral_child_session(
+                    server_name, original_name, cfg, call_arguments, catalog_epoch
+                ),
+                timeout=call_timeout,
+            )
+        except TimeoutError:
+            return _child_error_result("MCPChildTimeout")
+        except Exception as e:
+            return _child_error_result(public_error_text(e))
+
     async def call_oauth_gated_tool(
         self,
         server_name: str,
@@ -2937,7 +2991,7 @@ class MCPMultiplexer:
         anything keyed only by server name. A caller without a valid grant for
         this provider gets a fail-closed error before any tool call is
         attempted (the connect step inside :meth:`_open_one_session` raises,
-        because :meth:`~agent_utilities.mcp.remote_oauth_broker.RemoteOAuthBroker.bearer_headers_for`
+        because :meth:`~graph_os.mcp_server.backing.remote_oauth_broker.RemoteOAuthBroker.bearer_headers_for`
         does).
 
         Fleet-global discoverability (this call reachable through
@@ -3033,6 +3087,37 @@ class MCPMultiplexer:
                 "MCP child admission changed before dispatch"
             )
 
+    async def _call_ephemeral_child_session(
+        self,
+        server_name: str,
+        original_name: str,
+        cfg: dict,
+        arguments: dict[str, _typing.Any],
+        catalog_epoch: int,
+    ) -> MCPCallToolResult:
+        """One call over a dedicated service-credential session (no OAuth).
+
+        The same admission, schema and dispatch checks as the OAuth path
+        (:meth:`_invoke_oauth_tool`) run on the dedicated session.
+        """
+        self._assert_oauth_catalog(server_name, cfg, catalog_epoch)
+        runtime_cfg, runtime_policy = _prepare_runtime_child_policy(cfg)
+        try:
+            async with contextlib.AsyncExitStack() as stack:
+                session = await self._open_one_session(server_name, runtime_cfg, stack)
+                return await self._invoke_oauth_tool(
+                    session,
+                    server_name,
+                    original_name,
+                    cfg,
+                    arguments,
+                    catalog_epoch,
+                    runtime_policy,
+                )
+        finally:
+            if runtime_policy is not None:
+                _close_runtime_child_policy(runtime_policy)
+
     async def _call_ephemeral_oauth_session(
         self,
         server_name: str,
@@ -3118,7 +3203,7 @@ class MCPMultiplexer:
     def _tasks_child_capable(initialization: _typing.Any) -> bool:
         """Return whether one initialize result advertises this Tasks revision."""
 
-        from agent_utilities.mcp.tasks_extension import (
+        from graph_os.mcp_server.backing.tasks_extension import (
             TASKS_EXTENSION_ID,
             TASKS_EXTENSION_REVISION,
         )
@@ -3165,7 +3250,7 @@ class MCPMultiplexer:
         latest initialize result before any task ID crosses the route.
         """
 
-        from agent_utilities.mcp.tasks_extension import (
+        from graph_os.mcp_server.backing.tasks_extension import (
             TASKS_EXTENSION_ID,
             TASKS_EXTENSION_REVISION,
         )
@@ -3369,9 +3454,13 @@ class MCPMultiplexer:
         if not command and not is_remote:
             raise RuntimeError("MCP child requires a command or URL")
         if not is_remote:
-            from agent_utilities.core.config import enforce_mcp_stdio_permitted
+            from graph_os.core.settings import runtime_config
 
-            enforce_mcp_stdio_permitted(server_name=server_name)
+            if runtime_config.mcp_stdio_prohibited:
+                raise RuntimeError(
+                    "stdio transport is not permitted in this process "
+                    f"(server={server_name!r}): MCP_STDIO_PROHIBITED is set"
+                )
         return command, url, explicit_transport, is_remote
 
     @staticmethod
@@ -3424,55 +3513,15 @@ class MCPMultiplexer:
         stack: contextlib.AsyncExitStack,
         initialization_timeout: float,
     ) -> dict[str, str]:
-        from agent_utilities.core.provider_runtime import (
-            prepare_provider_runtime_child_environment,
-        )
+        """Refuse a child that selects a provider profile.
 
-        # Secret backends may perform blocking I/O. Keep resolution off the
-        # multiplexer event loop while still failing before process spawn.
-        # A bounded slot count prevents timed-out backend calls from
-        # exhausting the dedicated resolver executor; late results erase
-        # themselves. Do not cancel queued futures on caller timeout: a
-        # cancelled concurrent future is marked done before its executor
-        # work item is consumed, which would release capacity early and let
-        # cancelled items accumulate in ThreadPoolExecutor's internal queue.
-        acquired = _PROVIDER_RESOLUTION_CAPACITY.acquire(blocking=False)
-        resolution_future: concurrent.futures.Future[_typing.Any] | None = None
-        try:
-            if not acquired:
-                raise RuntimeError("provider resolution capacity unavailable")
-            resolution_future = _PROVIDER_RESOLUTION_EXECUTOR.submit(
-                prepare_provider_runtime_child_environment,
-                provider_profile,
-            )
-            resolution_future.add_done_callback(
-                lambda _future: _PROVIDER_RESOLUTION_CAPACITY.release()
-            )
-            acquired = False
-            prepared_provider = await asyncio.wait_for(
-                asyncio.shield(asyncio.wrap_future(resolution_future)),
-                timeout=initialization_timeout,
-            )
-        except asyncio.CancelledError:
-            if resolution_future is not None:
-                resolution_future.add_done_callback(
-                    _close_abandoned_provider_projection
-                )
-            elif acquired:
-                _PROVIDER_RESOLUTION_CAPACITY.release()
-            raise
-        except Exception:
-            if resolution_future is not None:
-                resolution_future.add_done_callback(
-                    _close_abandoned_provider_projection
-                )
-            elif acquired:
-                _PROVIDER_RESOLUTION_CAPACITY.release()
-            raise RuntimeError("MCP child provider profile is unavailable") from None
-        stack.callback(prepared_provider.close)
-        provider_environment = dict(prepared_provider.environment)
-        provider_environment.update(_provider_child_sandbox_environment(stack))
-        return provider_environment
+        Graph OS serves no provider runtime profiles, so a child that names one
+        fails closed before its process starts.
+        """
+        del stack, initialization_timeout
+        raise RuntimeError(
+            f"MCP child provider profile {provider_profile!r} is not served by this host"
+        )
 
     async def _resolve_child_provider_environment(
         self,
@@ -3523,7 +3572,7 @@ class MCPMultiplexer:
         # so a deployment that legitimately reaches its MCP fleet over
         # plain HTTP behind a TLS-terminating ingress (MCP_TLS_TERMINATED)
         # could never declare that trust; it always hard-failed here first.
-        from agent_utilities.core.config import config as agent_config
+        from graph_os.core.settings import runtime_config as agent_config
 
         child_private_hosts = cfg.get("allowed_private_hosts", [])
         if not isinstance(child_private_hosts, list):
@@ -3615,8 +3664,8 @@ class MCPMultiplexer:
     def _resolve_remote_child_tls_trust(
         cfg: dict, stack: contextlib.AsyncExitStack
     ) -> _typing.Any:
-        from agent_utilities.core.config import config as agent_config
-        from agent_utilities.core.transport_security import (
+        from graph_os.core.settings import runtime_config as agent_config
+        from graph_os.core.transport import (
             resolve_configured_tls_profile,
         )
 
@@ -3643,7 +3692,7 @@ class MCPMultiplexer:
         allowed_private_hosts: list[str],
         stack: contextlib.AsyncExitStack,
     ) -> tuple[_typing.Any, _typing.Any]:
-        from agent_utilities.core.http_client import create_async_http_client
+        from graph_os.core.transport import create_async_http_client
 
         def _secure_httpx_factory(
             headers: dict[str, str] | None = None,
@@ -3678,7 +3727,7 @@ class MCPMultiplexer:
         if oauth_bearer_headers is not None:
             _svc_auth = None
         else:
-            from agent_utilities.mcp.client_credentials import child_auth
+            from graph_os.mcp_server.backing.client_credentials import child_auth
 
             _svc_auth = child_auth(headers)
         use_sse = explicit_transport == "sse" or url.rstrip("/").endswith("/sse")
@@ -3687,10 +3736,10 @@ class MCPMultiplexer:
             # `child_auth`'s docstring); `sse_client`'s `auth` param is
             # typed `httpx2.Auth | None` (fastmcp's vendored SDK v2 HTTP
             # client, a distinct package from this repo's own `httpx` —
-            # see `agent_utilities/mcp/httpx_boundary.py`). Coerce at
+            # see `graph_os/mcp_server/backing/httpx_boundary/py`). Coerce at
             # this boundary rather than passing the foreign-typed object
             # straight through.
-            from agent_utilities.mcp.httpx_boundary import coerce_httpx2_auth
+            from graph_os.mcp_server.backing.httpx_boundary import coerce_httpx2_auth
 
             transport = sse_client(
                 url,
@@ -4024,7 +4073,9 @@ class MCPMultiplexer:
         # and then wedges on expiry); derive that lifetime from the token TTL.
         session_max_age: float | None = None
         if is_remote:
-            from agent_utilities.mcp.client_credentials import service_session_max_age
+            from graph_os.mcp_server.backing.client_credentials import (
+                service_session_max_age,
+            )
 
             session_max_age = service_session_max_age(cfg.get("headers"))
         runtime: _child_resilience.ChildRuntime
@@ -4090,10 +4141,8 @@ class MCPMultiplexer:
         server_name: str, cfg: dict, runtime_materialized: bool
     ) -> dict | None:
         """The catalog config for ONE entry, or ``None`` when it is not mountable."""
-        from agent_utilities.base_utilities import (
-            is_loopback_url as _is_self_mcp_url,
-        )
-        from agent_utilities.observability.langfuse_trust import (
+        from graph_os.core.transport import is_self_url as _is_self_mcp_url
+        from graph_os.observability.langfuse_trust import (
             LangfuseTrustError,
             is_langfuse_server,
             prepare_langfuse_mcp_config,
@@ -4950,10 +4999,8 @@ class MCPMultiplexer:
         only obtain a binding by completing a verified probe path above.
         Keeping the original object alongside its id makes id reuse harmless.
         """
-        from agent_utilities.knowledge_graph.core.discovery_authority import (
+        from graph_os.fleet.discovery_authority import (
             OAuthGrantBinding,
-        )
-        from agent_utilities.knowledge_graph.core.fleet_catalog_tables import (
             TenantLocalDiscoveryBinding,
         )
 
@@ -5073,7 +5120,7 @@ class MCPMultiplexer:
         Local import, same reason every other read of ``config`` in this
         module is local (avoid a module-load-time circular import with
         ``core.config``) (CONCEPT:AU-ECO.multiplexer.catalog-probe-ttl-staleness)."""
-        from agent_utilities.core.config import config as agent_config
+        from graph_os.core.settings import runtime_config as agent_config
 
         return agent_config.mcp_catalog_probe_ttl
 
@@ -6248,10 +6295,10 @@ class MCPMultiplexer:
     def _local_skill_probe_info(self) -> dict[str, _typing.Any]:
         """Build (once) and cache the local-skill pseudo-server probe entry.
 
-        "Local" means every skill ``agent_utilities.core.providers.
+        "Local" means every skill ``graph_os.core.providers.
         resolve_skill_provider_dirs()`` resolves in THIS process — graph-os's
         own skills, agent-utilities' own, and any sibling package installed
-        alongside graph-os that declares the ``agent_utilities.skill_providers``
+        alongside graph-os that declares the ``agent_connector_sdk.skill_providers``
         entry point (CONCEPT:AU-KG.retrieval.unified-capability-contract). An
         individually unreadable/malformed skill, and a core-pack name no
         installed provider resolves, are reported loudly here (never fatal,
@@ -6334,7 +6381,7 @@ class MCPMultiplexer:
         Returns ``{"results": [...], "unavailable": {server: error}}`` so the
         caller can both pick tools and see which servers couldn't be reached.
         """
-        from agent_utilities.core.config import config as agent_config
+        from graph_os.core.settings import runtime_config as agent_config
 
         if not top_k or top_k <= 0:
             top_k = agent_config.mcp_dynamic_top_k
@@ -6454,7 +6501,7 @@ class MCPMultiplexer:
         local_info = self._local_skill_probe_info()
         if not include_tools:
             return {**dict(self._probe_cache), LOCAL_SKILLS_SERVER: local_info}
-        from agent_utilities.core.config import config as agent_config
+        from graph_os.core.settings import runtime_config as agent_config
 
         probe = await self.probe_catalog(
             budget=agent_config.mcp_dynamic_discovery_timeout,
@@ -6886,7 +6933,7 @@ class MCPMultiplexer:
             "fleet_onboarding": self._fleet_onboarding,
         }
         try:
-            from agent_utilities.observability.gateway_metrics import (
+            from graph_os.observability.gateway_metrics import (
                 publish_multiplexer_child_gauges,
             )
 
@@ -7121,7 +7168,7 @@ async def _notify_tools_changed(mcp) -> bool:
 # Well-known ``_meta`` key an in-process caller can set on every ``tools/call``
 # it issues (``fastmcp.Client.call_tool(..., meta={_LOCAL_SESSION_META_KEY: id})``)
 # to explicitly identify which logical session it belongs to. Same wire key as
-# ``agent_utilities.observability.correlation.SESSION_HEADER`` so a caller that
+# ``graph_os.observability.correlation.SESSION_HEADER`` so a caller that
 # already threads a correlation/session id through ``correlation.inject()`` /
 # ``current_carrier()`` gets multiplexer session isolation for free — imported
 # lazily below (not at module scope) purely to avoid an eager cross-package
@@ -7200,15 +7247,9 @@ def _context_session_key(get_context: _typing.Any) -> str | None:
 
 def _token_session_key(token: _typing.Any) -> str:
     """The stable, keyed per-caller session key derived from one access token."""
-    claims = getattr(token, "claims", None) or {}
-    raw = "\x00".join(
-        str(value or "")
-        for value in (
-            getattr(token, "client_id", None),
-            claims.get("sub") if isinstance(claims, dict) else None,
-            claims.get("tenant_id") if isinstance(claims, dict) else None,
-        )
-    )
+    from graph_os.mcp_server.backing.context_helpers import token_caller_material
+
+    raw = token_caller_material(token)
     digest = hashlib.blake2s(
         raw.encode("utf-8"), key=_SESSION_KEY, digest_size=16
     ).hexdigest()

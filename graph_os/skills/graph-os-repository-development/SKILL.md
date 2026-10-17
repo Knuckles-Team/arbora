@@ -6,7 +6,7 @@ description: >-
   Develop inside the graph-os repository itself: its architecture boundaries
   and module map, build-host and environment setup, required quality gates,
   generated-contract regeneration, and local identity setup. Use when working
-  on graph_os/* source, not when choosing which ecosystem repository owns a
+  on the graph_os package source, not when choosing which ecosystem repository owns a
   feature (see graph-os-development for that).
 license: MIT
 tags: [graph-os, development, architecture, gates, build-host]
@@ -94,16 +94,14 @@ From a fresh clone (locally, or in a Claude Code cloud session where
 `.claude/hooks/session-start.sh` runs it automatically):
 
 ```bash
-scripts/bootstrap.sh              # uv >= 0.9, pinned Python, sibling sources, locked deps, git hooks
-scripts/bootstrap.sh --kernel     # also build epistemic-graph's numeric kernel (needed by the full suite)
+scripts/bootstrap.sh              # uv >= 0.9, pinned Python, locked PyPI deps, git hooks
 scripts/bootstrap.sh --scanners   # also the pinned cccc/kiss/dupehound/jscpd scanners (~15 min cold)
 ```
 
-Bootstrap is idempotent. It links each `[tool.uv.sources]` path under
-`.uv-workspace-siblings/` to a `../<repository>` checkout when one exists (the
-layout in `references/bootstrap.md`) and installs the pre-commit and pre-push
-hooks. A hook whose prerequisite is missing (a sibling checkout, the synced
-environment, the kernel) prints `SKIPPED (<gate>): <reason>` and exits 0
+Bootstrap is idempotent. Every dependency, the epistemic-graph engine wheels
+included, installs from PyPI at the version `uv.lock` pins; no sibling source
+is linked. It then installs the pre-commit and pre-push hooks. A hook whose
+prerequisite is missing (the synced environment) prints `SKIPPED (<gate>): <reason>` and exits 0
 locally; under CI (`$CI` set) it exits 2 with `CANNOT RUN`, so hosted CI never
 passes a gate that did not run.
 

@@ -16,9 +16,11 @@
     "GRAPHOS-DEPLOY-R007.3",
     "GRAPHOS-DEPLOY-R007.4",
     "GRAPHOS-DEPLOY-R007.5",
+    "GRAPHOS-DEPLOY-R007.6",
     "GRAPHOS-DEPLOY-R008",
     "GRAPHOS-DEPLOY-R009",
     "GRAPHOS-DEPLOY-R009.1",
+    "GRAPHOS-DEPLOY-R009.4",
     "GRAPHOS-DEPLOY-R010",
     "GRAPHOS-DEPLOY-R011",
     "GRAPHOS-DEPLOY-R012",
@@ -62,6 +64,8 @@
     "GRAPHOS-DEPLOY-R018.7",
     "GRAPHOS-DEPLOY-R018.8",
     "GRAPHOS-DEPLOY-R009.2",
+    "GRAPHOS-DEPLOY-R009.2.1",
+    "GRAPHOS-DEPLOY-R009.2.2",
     "GRAPHOS-DEPLOY-R009.3",
     "GRAPHOS-DEPLOY-R013.7",
     "GRAPHOS-DEPLOY-R010.4",
@@ -132,6 +136,7 @@
       "title": "Web UI keeps its component package name",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "15bc1fd4c49e",
         "d6f16cd447e2",
         "d75db1ea42e8",
         "eaabc7449a93"
@@ -167,7 +172,8 @@
         "GRAPHOS-DEPLOY-R007.2",
         "GRAPHOS-DEPLOY-R007.3",
         "GRAPHOS-DEPLOY-R007.4",
-        "GRAPHOS-DEPLOY-R007.5"
+        "GRAPHOS-DEPLOY-R007.5",
+        "GRAPHOS-DEPLOY-R007.6"
       ]
     },
     {
@@ -179,7 +185,7 @@
         "fd761d59a171"
       ],
       "verified_by": [
-        "tests/deployment/test_component_names_and_scripts.py:40"
+        "tests/deployment/test_component_names_and_scripts.py:42"
       ]
     },
     {
@@ -191,7 +197,7 @@
         "fd761d59a171"
       ],
       "verified_by": [
-        "tests/deployment/test_component_names_and_scripts.py:49"
+        "tests/deployment/test_component_names_and_scripts.py:51"
       ]
     },
     {
@@ -222,6 +228,17 @@
       "verified_by": []
     },
     {
+      "id": "GRAPHOS-DEPLOY-R007.6",
+      "title": "The GraphOS doctor checks the served engine families and graph connections",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "9e7f6499d96f"
+      ],
+      "verified_by": [
+        "tests/deployment/test_doctor_graph.py:206"
+      ]
+    },
+    {
       "id": "GRAPHOS-DEPLOY-R008",
       "title": "GraphOS hosts its own boundary modules",
       "delivery_state": "LANDED",
@@ -240,6 +257,7 @@
       "verified_by": [],
       "rollup_of": [
         "GRAPHOS-DEPLOY-R009.1",
+        "GRAPHOS-DEPLOY-R009.4",
         "GRAPHOS-DEPLOY-R009.2",
         "GRAPHOS-DEPLOY-R009.3"
       ]
@@ -256,6 +274,16 @@
         "tests/core/test_config_admin.py:30",
         "tests/core/test_config_admin.py:41",
         "tests/core/test_config_admin.py:57"
+      ]
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R009.4",
+      "title": "GraphOS owns the `graph_config` operation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/core/test_agent_config_admin.py:432",
+        "tests/core/test_agent_config_admin_type_names.py:21"
       ]
     },
     {
@@ -620,6 +648,30 @@
     {
       "id": "GRAPHOS-DEPLOY-R009.2",
       "title": "EG:53 GraphOS definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [
+        "9e7f6499d96f"
+      ],
+      "verified_by": [
+        "tests/deployment/test_small_profile_footprint.py:31"
+      ],
+      "rollup_of": [
+        "GRAPHOS-DEPLOY-R009.2.1",
+        "GRAPHOS-DEPLOY-R009.2.2"
+      ]
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R009.2.1",
+      "title": "Small-profile import footprint",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/deployment/test_small_profile_footprint.py:32"
+      ]
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R009.2.2",
+      "title": "Single-image deployment with capability parity",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

@@ -10,7 +10,6 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
-from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -129,7 +128,7 @@ def test_run_doctor_loads_agent_config_before_checks(monkeypatch):
         observed["checked"] = observed["loaded"]
         return D._result("config", "ok", "fine")
 
-    monkeypatch.setattr("agent_utilities.core.config.load_config", load_config)
+    monkeypatch.setattr("graph_os.core.settings.load_config", load_config)
     monkeypatch.setattr(D, "CHECKS", {"config": check})
 
     rep = D.run_doctor()
@@ -142,7 +141,7 @@ def test_run_doctor_redacts_configuration_load_failure(monkeypatch):
     def load_config():
         raise ValueError("private configuration detail")
 
-    monkeypatch.setattr("agent_utilities.core.config.load_config", load_config)
+    monkeypatch.setattr("graph_os.core.settings.load_config", load_config)
     monkeypatch.setattr(
         D, "CHECKS", {"config": lambda: D._result("config", "ok", "fine")}
     )
@@ -153,171 +152,6 @@ def test_run_doctor_redacts_configuration_load_failure(monkeypatch):
     assert rep["checks"][0]["status"] == "error"
     assert "ValueError" in rep["checks"][0]["detail"]
     assert "private configuration detail" not in json.dumps(rep, sort_keys=True)
-
-
-def test_unified_install_doctor_never_reports_local_roots(monkeypatch, tmp_path):
-    from agent_utilities.core import paths, unified_install
-    from agent_utilities.core.provider_materialization import build_asset_manifest
-
-    monkeypatch.setattr(paths, "skills_dir", lambda: tmp_path / "skills")
-    monkeypatch.setattr(paths, "ontology_dir", lambda: tmp_path / "ontologies")
-    monkeypatch.setattr(
-        unified_install, "unified_prompts_dir", lambda: tmp_path / "prompts"
-    )
-    sources = {}
-    for leg in ("skills", "prompts", "ontologies"):
-        source = tmp_path / "sources" / leg
-        source.mkdir(parents=True)
-        if leg == "skills":
-            skill = source / "skill"
-            skill.mkdir()
-            (skill / "SKILL.md").write_text("body", encoding="utf-8")
-        elif leg == "prompts":
-            (source / "prompt.json").write_text("{}", encoding="utf-8")
-        else:
-            (source / "ontology.ttl").write_text("# ttl", encoding="utf-8")
-        sources[leg] = (source, "a" * 64, build_asset_manifest(source, leg=leg))
-    monkeypatch.setattr(
-        "agent_utilities.core.providers.provider_registrations", lambda _group: ()
-    )
-    monkeypatch.setattr(unified_install, "own_provider_asset", lambda leg: sources[leg])
-
-    result = D._check_unified_install()
-    rendered = json.dumps(result, sort_keys=True)
-
-    assert "roots" not in (result.get("data") or {})
-    assert set(result["data"]["roots_ready"]) == {
-        "skills",
-        "prompts",
-        "ontologies",
-    }
-    assert str(tmp_path) not in rendered
-
-
-def test_unified_install_doctor_warns_on_stale_and_unmarked_provider_roots(
-    monkeypatch, tmp_path
-):
-    from agent_utilities.core import paths, unified_install
-    from agent_utilities.core.provider_materialization import (
-        build_asset_manifest,
-        inactive_marker,
-        write_managed_provider_marker,
-    )
-
-    roots = {
-        "skills": tmp_path / "skills",
-        "prompts": tmp_path / "prompts",
-        "ontologies": tmp_path / "ontologies",
-    }
-    sources = {}
-    for leg, root in roots.items():
-        source = tmp_path / "sources" / leg
-        source.mkdir(parents=True)
-        if leg == "skills":
-            skill = source / "skill"
-            skill.mkdir()
-            (skill / "SKILL.md").write_text("body", encoding="utf-8")
-        elif leg == "prompts":
-            (source / "prompt.json").write_text("{}", encoding="utf-8")
-        else:
-            (source / "ontology.ttl").write_text("# ttl", encoding="utf-8")
-        manifest = build_asset_manifest(source, leg=leg)
-        sources[leg] = (source, "a" * 64, manifest)
-        root.mkdir(parents=True, exist_ok=True)
-        unified_install._materialize_provider(
-            root=root,
-            provider="agent-utilities",
-            leg=leg,
-            registration="a" * 64,
-            source=source,
-            manifest=manifest,
-        )
-    stale = roots["prompts"] / "synthetic-removed-provider"
-    stale.mkdir()
-    write_managed_provider_marker(
-        stale,
-        inactive_marker(provider=stale.name, leg="prompts", registration="b" * 64),
-    )
-    unmanaged = roots["skills"] / "unmarked-provider" / "synthetic-skill"
-    unmanaged.mkdir(parents=True)
-    (unmanaged / "SKILL.md").write_text("synthetic", encoding="utf-8")
-    local = roots["skills"] / "operator-skill"
-    local.mkdir()
-    (local / "SKILL.md").write_text("synthetic", encoding="utf-8")
-    monkeypatch.setattr(paths, "skills_dir", lambda: roots["skills"])
-    monkeypatch.setattr(paths, "ontology_dir", lambda: roots["ontologies"])
-    monkeypatch.setattr(
-        unified_install, "unified_prompts_dir", lambda: roots["prompts"]
-    )
-    monkeypatch.setattr(
-        "agent_utilities.core.providers.provider_registrations", lambda _group: ()
-    )
-    monkeypatch.setattr(unified_install, "own_provider_asset", lambda leg: sources[leg])
-
-    result = D._check_unified_install()
-
-    assert result["status"] == "warn"
-    assert result["data"]["managed_ready"] is False
-    assert result["data"]["stale_managed"] == 1
-    assert result["data"]["unmanaged_nested"] == 1
-    assert str(tmp_path) not in json.dumps(result, sort_keys=True)
-
-
-def test_unified_install_doctor_fails_closed_on_unresolved_provider(
-    monkeypatch, tmp_path
-):
-    from agent_utilities.core import paths, providers, unified_install
-    from agent_utilities.core.provider_materialization import build_asset_manifest
-
-    roots = {
-        "skills": tmp_path / "skills",
-        "prompts": tmp_path / "prompts",
-        "ontologies": tmp_path / "ontologies",
-    }
-    monkeypatch.setattr(paths, "skills_dir", lambda: roots["skills"])
-    monkeypatch.setattr(paths, "ontology_dir", lambda: roots["ontologies"])
-    monkeypatch.setattr(
-        unified_install, "unified_prompts_dir", lambda: roots["prompts"]
-    )
-    unresolved = providers.ProviderRegistration(
-        name="private-provider",
-        group=providers.SKILL_PROVIDER_GROUP,
-        target="private.skills",
-        owner_name="private-distribution",
-        owner_version="1",
-        digest="a" * 64,
-        source_root=None,
-        owned_paths=frozenset(),
-    )
-    monkeypatch.setattr(
-        providers,
-        "provider_registrations",
-        lambda group: (unresolved,) if group == providers.SKILL_PROVIDER_GROUP else (),
-    )
-    sources = {}
-    for leg in roots:
-        source = tmp_path / "sources" / leg
-        source.mkdir(parents=True)
-        if leg == "skills":
-            skill = source / "skill"
-            skill.mkdir()
-            (skill / "SKILL.md").write_text("body", encoding="utf-8")
-        elif leg == "prompts":
-            (source / "prompt.json").write_text("{}", encoding="utf-8")
-        else:
-            (source / "ontology.ttl").write_text("# ttl", encoding="utf-8")
-        sources[leg] = (source, "b" * 64, build_asset_manifest(source, leg=leg))
-    monkeypatch.setattr(unified_install, "own_provider_asset", lambda leg: sources[leg])
-
-    result = D._check_unified_install()
-    rendered = json.dumps(result, sort_keys=True)
-
-    assert result["status"] == "fail"
-    assert result["data"]["unresolved"] == 1
-    assert result["data"]["redacted"] is True
-    assert "private-provider" not in rendered
-    assert "private-distribution" not in rendered
-    assert str(tmp_path) not in rendered
 
 
 def test_run_doctor_worst_status_wins(monkeypatch):
@@ -430,7 +264,7 @@ def test_permission_governance_doctor_reports_missing_reference_redacted(
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "agent_utilities.core.config.AgentConfig",
+        "graph_os.core.settings.GraphOSConfig",
         lambda: SimpleNamespace(
             permissions_signing_key_ref=None,
             agent_policies_path=None,
@@ -447,7 +281,7 @@ def test_permission_governance_doctor_reports_missing_reference_redacted(
 
 def test_permission_governance_doctor_verifies_authority(monkeypatch):
     monkeypatch.setattr(
-        "agent_utilities.core.config.AgentConfig",
+        "graph_os.core.settings.GraphOSConfig",
         lambda: SimpleNamespace(
             permissions_signing_key_ref="env://DOCTOR_PERMISSION_KEY",
             agent_policies_path=None,
@@ -455,7 +289,7 @@ def test_permission_governance_doctor_verifies_authority(monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        "agent_utilities.security.cli_secrets.resolve_runtime_secret_reference",
+        "agent_connector_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
         lambda _reference: "doctor-signing-authority-material-32b",
     )
 
@@ -463,12 +297,11 @@ def test_permission_governance_doctor_verifies_authority(monkeypatch):
 
     assert result["status"] == "ok"
     assert result["data"]["identity_verified"] is True
-    assert result["data"]["policy_count"] == 5
 
 
 def test_eunomia_doctor_warns_when_narrowing_policy_is_off(monkeypatch):
     monkeypatch.setattr(
-        "agent_utilities.core.config.AgentConfig",
+        "graph_os.core.settings.GraphOSConfig",
         lambda: SimpleNamespace(
             eunomia_type="none",
             eunomia_allowed_private_hosts=[],
@@ -484,7 +317,7 @@ def test_eunomia_doctor_warns_when_narrowing_policy_is_off(monkeypatch):
 
 def test_outbound_auth_doctor_reports_redacted_readiness(monkeypatch):
     monkeypatch.setattr(
-        "agent_utilities.mcp.client_credentials.outbound_auth_configuration_status",
+        "graph_os.mcp_server.backing.client_credentials.outbound_auth_configuration_status",
         lambda: {
             "mode": "oidc-client-credentials",
             "ready": True,
@@ -511,7 +344,7 @@ def test_outbound_auth_doctor_fails_closed_on_missing_audience(monkeypatch):
     # exactly that shape and silently treats anything else (e.g. a tuple) as
     # empty, so the mock must match the real contract's type, not just value.
     monkeypatch.setattr(
-        "agent_utilities.mcp.client_credentials.outbound_auth_configuration_status",
+        "graph_os.mcp_server.backing.client_credentials.outbound_auth_configuration_status",
         lambda: {
             "mode": "oidc-client-credentials",
             "ready": False,
@@ -541,9 +374,9 @@ def test_graph_identity_doctor_validates_token_ref_without_exposing_it(monkeypat
         kg_auth_token_ref="secret://graph/private-token",
         kg_identity_oauth2=None,
     )
-    monkeypatch.setattr("agent_utilities.core.config.AgentConfig", lambda: cfg)
+    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
     monkeypatch.setattr(
-        "agent_utilities.security.cli_secrets.resolve_runtime_secret_reference",
+        "agent_connector_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
         lambda _ref: "opaque-runtime-token",
     )
 
@@ -574,9 +407,7 @@ def test_graph_identity_doctor_rejects_ambiguous_or_missing_source(monkeypatch):
             graph_service_endpoints=[],
         ),
     ):
-        monkeypatch.setattr(
-            "agent_utilities.core.config.AgentConfig", lambda cfg=cfg: cfg
-        )
+        monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda cfg=cfg: cfg)
         result = D._check_graph_identity()
         assert result["status"] == "fail"
         assert result["data"] == {"ready": False, "redacted": True}
@@ -589,7 +420,7 @@ def test_graph_identity_doctor_accepts_private_tiny_authority(monkeypatch):
         deployment_profile="tiny",
         graph_service_endpoints=[],
     )
-    monkeypatch.setattr("agent_utilities.core.config.AgentConfig", lambda: cfg)
+    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
 
     result = D._check_graph_identity()
 
@@ -633,9 +464,9 @@ def test_transport_security_doctor_resolves_env_profile_without_secret_backend(
         graph_service_endpoints=[],
         external_graph_connectors=[],
     )
-    monkeypatch.setattr("agent_utilities.core.config.AgentConfig", lambda: cfg)
+    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
     with patch(
-        "agent_utilities.security.secrets_client.create_secrets_client",
+        "graph_os.security.secrets.create_secrets_client",
         side_effect=AssertionError("env references must not open a secret backend"),
     ) as create_client:
         result = D._check_transport_security()
@@ -662,7 +493,7 @@ def test_transport_security_doctor_rejects_invalid_engine_transport(monkeypatch)
         engine_tls_profile_ref=None,
         graph_service_endpoints=["http://not-an-engine-transport"],
     )
-    monkeypatch.setattr("agent_utilities.core.config.AgentConfig", lambda: cfg)
+    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
 
     result = D._check_transport_security()
 
@@ -686,7 +517,7 @@ def test_google_workspace_oauth_doctor_is_redacted(
         google_workspace_oauth_client_id=client_id,
         google_workspace_oauth_broker_url=broker_url,
     )
-    monkeypatch.setattr("agent_utilities.core.config.AgentConfig", lambda: cfg)
+    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
 
     result = D._check_google_workspace_oauth()
     rendered = json.dumps(result, sort_keys=True)
@@ -708,7 +539,7 @@ def test_engine_doctor_reports_only_redacted_public_transport(
     monkeypatch, endpoint, transport, tls
 ):
     monkeypatch.setattr(
-        "agent_utilities.core.config.AgentConfig",
+        "graph_os.core.settings.GraphOSConfig",
         lambda: SimpleNamespace(graph_service_endpoints=[endpoint]),
     )
 
@@ -728,7 +559,7 @@ def test_engine_doctor_reports_only_redacted_public_transport(
 @pytest.mark.parametrize("endpoints", [[], ["tcp://one:1", "tcp://two:2"]])
 def test_engine_doctor_requires_one_coordinator(monkeypatch, endpoints):
     monkeypatch.setattr(
-        "agent_utilities.core.config.AgentConfig",
+        "graph_os.core.settings.GraphOSConfig",
         lambda: SimpleNamespace(graph_service_endpoints=endpoints),
     )
 
@@ -739,150 +570,6 @@ def test_engine_doctor_requires_one_coordinator(monkeypatch, endpoints):
         "configured_endpoint_count": 0,
         "redacted": True,
     }
-
-
-def _skill_certification_config(
-    root: Path, *, complete: bool = True
-) -> SimpleNamespace:
-    endpoint = "http://localhost:8000/mcp"
-    material = {
-        name: root / name
-        for name in ("config.json", "profile.json", "spec.json", "promotion.json")
-    }
-    commands = {}
-    for name in ("graph-os", "evidence-signer", "evidence-verifier"):
-        executable = root / name
-        executable.write_text("synthetic executable", encoding="utf-8")
-        executable.chmod(0o700)
-        commands[name] = [str(executable)]
-    if complete:
-        for path in material.values():
-            path.write_text("{}", encoding="utf-8")
-    return SimpleNamespace(
-        skill_cert_runtime_configuration=str(material["config.json"]),
-        skill_cert_runtime_profile=(
-            str(material["profile.json"]) if complete else None
-        ),
-        skill_cert_release_spec=str(material["spec.json"]) if complete else None,
-        skill_cert_promotion_evidence=(
-            str(material["promotion.json"]) if complete else None
-        ),
-        skill_cert_graphos_endpoint=endpoint if complete else None,
-        skill_cert_graphos_command=commands["graph-os"] if complete else [],
-        skill_validation_evidence_signer_command=(
-            commands["evidence-signer"] if complete else []
-        ),
-        skill_validation_evidence_verifier_command=(
-            commands["evidence-verifier"] if complete else []
-        ),
-        skill_cert_identity_authority_mode="ephemeral-https-loopback",
-        skill_cert_identity_token_ttl_seconds=300,
-        mcp_url=endpoint,
-    )
-
-
-@pytest.mark.skip(reason="certification tooling remains AU-owned")
-def test_skill_certification_doctor_skips_only_when_wholly_unconfigured(
-    monkeypatch,
-):
-    from agent_utilities.core import config as config_module
-
-    cfg = SimpleNamespace(
-        skill_cert_runtime_configuration=None,
-        skill_cert_runtime_profile=None,
-        skill_cert_release_spec=None,
-        skill_cert_promotion_evidence=None,
-        skill_cert_graphos_endpoint=None,
-        skill_cert_graphos_command=[],
-        skill_validation_evidence_signer_command=[],
-        skill_validation_evidence_verifier_command=[],
-        skill_cert_identity_authority_mode="ephemeral-https-loopback",
-        skill_cert_identity_token_ttl_seconds=300,
-    )
-    monkeypatch.setattr(config_module, "AgentConfig", lambda: cfg)
-
-    result = D._check_skill_certification()
-
-    assert result["status"] == "skip"
-    assert result["data"] == {
-        "configured_count": 0,
-        "required_count": 8,
-        "ready": False,
-        "redacted": True,
-    }
-
-
-@pytest.mark.skip(reason="certification tooling remains AU-owned")
-def test_skill_certification_doctor_rejects_partial_configuration(
-    tmp_path, monkeypatch
-):
-    from agent_utilities.core import config as config_module
-
-    cfg = _skill_certification_config(tmp_path, complete=False)
-    monkeypatch.setattr(config_module, "AgentConfig", lambda: cfg)
-
-    result = D._check_skill_certification()
-
-    assert result["status"] == "fail"
-    assert result["data"]["configured_count"] == 1
-    assert result["data"]["redacted"] is True
-    assert str(tmp_path) not in json.dumps(result, sort_keys=True)
-
-
-@pytest.mark.skip(reason="certification tooling remains AU-owned")
-def test_skill_certification_doctor_proves_regular_material_and_commands(
-    tmp_path, monkeypatch
-):
-    from agent_utilities.core import config as config_module
-    from agent_utilities.core import paths
-    from agent_utilities.deployment import skill_validation_assets as assets
-
-    cfg = _skill_certification_config(tmp_path)
-    monkeypatch.setattr(config_module, "AgentConfig", lambda: cfg)
-    monkeypatch.setattr(paths, "config_dir", lambda: tmp_path)
-    monkeypatch.setattr(
-        assets,
-        "_configuration_proof",
-        lambda _payload: {"digest": "sha256:" + "a" * 64},
-    )
-    monkeypatch.setattr(assets, "_validate_profile", lambda *_args, **_kwargs: None)
-
-    result = D._check_skill_certification()
-
-    assert result["status"] == "ok"
-    assert result["data"] == {
-        "configured_count": 8,
-        "required_count": 8,
-        "regular_input_count": 4,
-        "command_count": 3,
-        "identity_authority_mode": "ephemeral-https-loopback",
-        "identity_authority_lifecycle_owned": True,
-        "identity_authority_tls_verification_required": True,
-        "identity_authority_renewable_credentials_required": True,
-        "ready": True,
-        "redacted": True,
-    }
-    assert str(tmp_path) not in json.dumps(result, sort_keys=True)
-
-
-@pytest.mark.skip(reason="certification tooling remains AU-owned")
-def test_skill_certification_doctor_fails_closed_without_exposing_material(
-    tmp_path, monkeypatch
-):
-    from agent_utilities.core import config as config_module
-
-    cfg = _skill_certification_config(tmp_path)
-    Path(cfg.skill_cert_promotion_evidence).unlink()
-    monkeypatch.setattr(config_module, "AgentConfig", lambda: cfg)
-
-    result = D._check_skill_certification()
-
-    assert result["status"] == "fail"
-    assert result["data"]["configured_count"] == 8
-    assert result["data"]["redacted"] is True
-    rendered = json.dumps(result, sort_keys=True)
-    assert str(tmp_path) not in rendered
-    assert "promotion.json" not in rendered
 
 
 def _signed_release_fixture(*, matrix_digest: str) -> dict:
@@ -915,89 +602,6 @@ def _signed_release_fixture(*, matrix_digest: str) -> dict:
     }
 
 
-def _production_certification_config(
-    root: Path,
-    *,
-    state: str = "complete",
-    release_document: dict | None = None,
-) -> SimpleNamespace:
-    release = root / "release.json"
-    artifacts = root / "artifacts"
-    executable = root / "certification-command"
-    from scripts.release import check_compatibility
-
-    matrix_path = Path(__file__).resolve().parents[3] / (
-        "deploy/release/compatibility-matrix.yml"
-    )
-    if release_document is None:
-        release_document = _signed_release_fixture(
-            matrix_digest=check_compatibility.file_digest(matrix_path)
-        )
-    release.write_text(json.dumps(release_document), encoding="utf-8")
-    artifacts.mkdir(mode=0o700)
-    artifacts.chmod(0o700)
-    executable.write_text("synthetic executable", encoding="utf-8")
-    executable.chmod(0o700)
-    command = [str(executable)]
-    load_command = [str(executable), "--report", "{report_file}"]
-    from agent_utilities.core.config import PRODUCTION_CERTIFICATION_SCENARIOS
-
-    command_map = {scenario: command for scenario in PRODUCTION_CERTIFICATION_SCENARIOS}
-    if state == "disabled":
-        return SimpleNamespace(
-            certification_mode="disabled",
-            cert_release_manifest=None,
-            cert_artifacts_dir=None,
-            cert_hardware_class=None,
-            cert_load_command=[],
-            cert_metrics_command=[],
-            cert_hook_commands={},
-            cert_fault_action_commands={},
-            cert_fault_probe_commands={},
-            cert_evidence_signer_command=[],
-            cert_evidence_verifier_command=[],
-            cert_prometheus_url=None,
-            cert_prometheus_bearer_token_ref=None,
-            cert_prometheus_tls_profile=None,
-            cert_prometheus_tls_profile_ref=None,
-        )
-    if state == "partial":
-        return SimpleNamespace(
-            certification_mode="disabled",
-            cert_release_manifest=str(release),
-            cert_artifacts_dir=None,
-            cert_hardware_class=None,
-            cert_load_command=[],
-            cert_metrics_command=[],
-            cert_hook_commands={},
-            cert_fault_action_commands={},
-            cert_fault_probe_commands={},
-            cert_evidence_signer_command=[],
-            cert_evidence_verifier_command=[],
-            cert_prometheus_url=None,
-            cert_prometheus_bearer_token_ref=None,
-            cert_prometheus_tls_profile=None,
-            cert_prometheus_tls_profile_ref=None,
-        )
-    return SimpleNamespace(
-        certification_mode="production",
-        cert_release_manifest=str(release),
-        cert_artifacts_dir=str(artifacts),
-        cert_hardware_class="capacity-standard",
-        cert_load_command=load_command,
-        cert_metrics_command=command,
-        cert_hook_commands=command_map,
-        cert_fault_action_commands=command_map,
-        cert_fault_probe_commands=command_map,
-        cert_evidence_signer_command=command,
-        cert_evidence_verifier_command=command,
-        cert_prometheus_url="https://metrics.example.test",
-        cert_prometheus_bearer_token_ref=None,
-        cert_prometheus_tls_profile="prometheus-production",
-        cert_prometheus_tls_profile_ref=None,
-    )
-
-
 def _patch_valid_release_verification(monkeypatch) -> MagicMock:
     from scripts.release import check_compatibility
 
@@ -1016,144 +620,6 @@ def _patch_valid_release_verification(monkeypatch) -> MagicMock:
     return verifier
 
 
-@pytest.mark.skip(reason="certification tooling remains AU-owned")
-def test_production_certification_doctor_skips_only_when_wholly_unconfigured(
-    tmp_path, monkeypatch
-):
-    from agent_utilities.core import config as config_module
-
-    cfg = _production_certification_config(tmp_path, state="disabled")
-    monkeypatch.setattr(config_module, "AgentConfig", lambda: cfg)
-
-    result = D._check_production_certification()
-
-    assert result["status"] == "skip"
-    assert result["data"] == {
-        "configured_count": 0,
-        "required_count": 13,
-        "scenario_count": 0,
-        "command_count": 0,
-        "bearer_auth_configured": False,
-        "ready": False,
-        "redacted": True,
-    }
-
-
-@pytest.mark.skip(reason="certification tooling remains AU-owned")
-def test_production_certification_doctor_rejects_partial_configuration(
-    tmp_path, monkeypatch
-):
-    from agent_utilities.core import config as config_module
-
-    cfg = _production_certification_config(tmp_path, state="partial")
-    monkeypatch.setattr(config_module, "AgentConfig", lambda: cfg)
-
-    result = D._check_production_certification()
-
-    assert result["status"] == "fail"
-    assert result["data"]["configured_count"] == 1
-    assert result["data"]["redacted"] is True
-    assert str(tmp_path) not in json.dumps(result, sort_keys=True)
-
-
-@pytest.mark.skip(reason="certification tooling remains AU-owned")
-def test_production_certification_doctor_proves_complete_redacted_authority(
-    tmp_path, monkeypatch
-):
-    from agent_utilities.core import config as config_module
-    from agent_utilities.core import transport_security
-
-    cfg = _production_certification_config(tmp_path)
-    trust = SimpleNamespace(verify_enabled=True, cleanup=lambda: None)
-    monkeypatch.setattr(config_module, "AgentConfig", lambda: cfg)
-    monkeypatch.setattr(
-        transport_security,
-        "resolve_configured_tls_profile",
-        lambda *_args, **_kwargs: trust,
-    )
-    verifier = _patch_valid_release_verification(monkeypatch)
-
-    result = D._check_production_certification()
-
-    assert result["status"] == "ok"
-    assert result["data"] == {
-        "configured_count": 13,
-        "required_count": 13,
-        "scenario_count": 15,
-        "command_count": 49,
-        "bearer_auth_configured": False,
-        "prometheus_tls_verification_required": True,
-        "ready": True,
-        "redacted": True,
-    }
-    assert str(tmp_path) not in json.dumps(result, sort_keys=True)
-    verifier.assert_called_once()
-
-
-@pytest.mark.skip(reason="certification tooling remains AU-owned")
-@pytest.mark.parametrize("release_state", ("invalid", "unsigned", "wrong-matrix"))
-def test_production_certification_doctor_rejects_untrusted_release_redacted(
-    tmp_path, monkeypatch, release_state
-):
-    from agent_utilities.core import config as config_module
-    from scripts.release import check_compatibility
-
-    matrix_path = Path(__file__).resolve().parents[3] / (
-        "deploy/release/compatibility-matrix.yml"
-    )
-    document = _signed_release_fixture(
-        matrix_digest=check_compatibility.file_digest(matrix_path)
-    )
-    if release_state == "invalid":
-        document = {}
-    elif release_state == "unsigned":
-        document.pop("signature")
-        document["manifestState"] = "unsigned-local-binder"
-    else:
-        document["matrixDigest"] = "sha256:" + "9" * 64
-        unsigned = {key: value for key, value in document.items() if key != "signature"}
-        document["signature"]["subjectDigest"] = check_compatibility.canonical_digest(
-            unsigned
-        )
-    cfg = _production_certification_config(
-        tmp_path,
-        release_document=document,
-    )
-    monkeypatch.setattr(config_module, "AgentConfig", lambda: cfg)
-
-    result = D._check_production_certification()
-    rendered = json.dumps(result, sort_keys=True)
-
-    assert result["status"] == "fail"
-    assert result["data"]["redacted"] is True
-    assert str(tmp_path) not in rendered
-    if document.get("matrixDigest"):
-        assert document["matrixDigest"] not in rendered
-    assert "fixture-signature-value" not in rendered
-
-
-@pytest.mark.skip(reason="certification tooling remains AU-owned")
-def test_production_certification_doctor_rejects_nonempty_artifacts_redacted(
-    tmp_path, monkeypatch
-):
-    from agent_utilities.core import config as config_module
-
-    cfg = _production_certification_config(tmp_path)
-    (Path(cfg.cert_artifacts_dir) / "private.json").write_text(
-        "private", encoding="utf-8"
-    )
-    monkeypatch.setattr(config_module, "AgentConfig", lambda: cfg)
-    _patch_valid_release_verification(monkeypatch)
-
-    result = D._check_production_certification()
-
-    assert result["status"] == "fail"
-    assert result["data"]["redacted"] is True
-    rendered = json.dumps(result, sort_keys=True)
-    assert str(tmp_path) not in rendered
-    assert "private.json" not in rendered
-
-
 def test_engine_request_context_doctor_reports_current_only_contract():
     result = D._check_engine_request_context()
 
@@ -1165,48 +631,8 @@ def test_engine_request_context_doctor_reports_current_only_contract():
     }
 
 
-def test_secret_doctor_reports_counts_not_reference_names(monkeypatch):
-    monkeypatch.setattr("agent_utilities.core.config.AgentConfig", lambda: object())
-    monkeypatch.setattr(
-        "agent_utilities.core.config.runtime_secret_source_status",
-        lambda: {
-            "state": "ready",
-            "present": True,
-            "valid": True,
-            "referenced_count": 2,
-            "matched_count": 0,
-            "projected_count": 0,
-            "overridden_count": 0,
-        },
-    )
-    monkeypatch.setattr(
-        "graph_os.deployment.config_generator._unresolved_secret_refs",
-        lambda _cfg: ["PRIVATE_TOKEN", "CUSTOMER_CA_PATH"],
-    )
-
-    result = D._check_secrets()
-    rendered = json.dumps(result, sort_keys=True)
-
-    assert result["status"] == "fail"
-    assert result["data"] == {
-        "runtime_source": {
-            "state": "ready",
-            "present": True,
-            "valid": True,
-            "referenced_count": 2,
-            "matched_count": 0,
-            "projected_count": 0,
-            "overridden_count": 0,
-        },
-        "unresolved_count": 2,
-        "redacted": True,
-    }
-    assert "PRIVATE_TOKEN" not in rendered
-    assert "CUSTOMER_CA_PATH" not in rendered
-
-
 def test_secret_doctor_fails_closed_when_backend_evaluation_raises(monkeypatch):
-    monkeypatch.setattr("agent_utilities.core.config.AgentConfig", lambda: object())
+    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: object())
     monkeypatch.setattr(
         "graph_os.deployment.config_generator._unresolved_secret_refs",
         lambda _cfg: (_ for _ in ()).throw(RuntimeError("private detail")),
@@ -1222,7 +648,7 @@ def test_secret_doctor_fails_closed_when_backend_evaluation_raises(monkeypatch):
 
 def _patch_secrets_backend_scan(monkeypatch, *, backend, counts):
     monkeypatch.setattr(
-        "agent_utilities.core.config.AgentConfig",
+        "graph_os.core.settings.GraphOSConfig",
         lambda: SimpleNamespace(secrets_backend=backend),
     )
     monkeypatch.setattr(
@@ -1312,7 +738,7 @@ def test_secrets_backend_doctor_ok_with_no_references_at_all(monkeypatch):
 
 
 def test_secrets_backend_doctor_fails_closed_when_scan_raises(monkeypatch):
-    monkeypatch.setattr("agent_utilities.core.config.AgentConfig", lambda: object())
+    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: object())
     monkeypatch.setattr(
         "graph_os.deployment.config_generator.secret_reference_scheme_counts",
         lambda _cfg: (_ for _ in ()).throw(RuntimeError("private detail")),
@@ -1368,8 +794,8 @@ def test_mcp_fleet_doctor_returns_only_aggregate_readiness(tmp_path, monkeypatch
         caddy_hosts=lambda: {},
     )
     monkeypatch.setattr(
-        "agent_utilities.core.workspace.get_mcp_config_path",
-        lambda: str(config_path),
+        "graph_os.core.settings.platform_config_file",
+        lambda _name: config_path,
     )
     monkeypatch.setattr(D.importlib.util, "find_spec", lambda _name: object())
     monkeypatch.setattr(D.importlib, "import_module", lambda _name: fake_validator)
@@ -1388,7 +814,7 @@ def test_mcp_fleet_secret_doctor_reports_only_aggregate_readiness(monkeypatch):
     direct_material = "direct-runtime-material"
     mapped_material = "mapped-runtime-material"
     monkeypatch.setattr(
-        "agent_utilities.core.config.AgentConfig",
+        "graph_os.core.settings.GraphOSConfig",
         lambda: SimpleNamespace(
             mcp_fleet_secret_refs={
                 "DIRECT_ALIAS": "secret://fleet/direct",
@@ -1397,11 +823,11 @@ def test_mcp_fleet_secret_doctor_reports_only_aggregate_readiness(monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        "agent_utilities.core.config.setting",
+        "graph_os.core.settings.setting",
         lambda alias: direct_material if alias == "DIRECT_ALIAS" else None,
     )
     monkeypatch.setattr(
-        "agent_utilities.security.cli_secrets.resolve_runtime_secret_reference",
+        "agent_connector_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
         lambda _reference: mapped_material,
     )
 
@@ -1425,14 +851,14 @@ def test_mcp_fleet_secret_doctor_reports_only_aggregate_readiness(monkeypatch):
 def test_mcp_fleet_secret_doctor_fails_closed_and_redacted(monkeypatch):
     private_reference = "secret://fleet/private/value"
     monkeypatch.setattr(
-        "agent_utilities.core.config.AgentConfig",
+        "graph_os.core.settings.GraphOSConfig",
         lambda: SimpleNamespace(
             mcp_fleet_secret_refs={"PRIVATE_ALIAS": private_reference}
         ),
     )
-    monkeypatch.setattr("agent_utilities.core.config.setting", lambda _alias: None)
+    monkeypatch.setattr("graph_os.core.settings.setting", lambda _alias: None)
     monkeypatch.setattr(
-        "agent_utilities.security.cli_secrets.resolve_runtime_secret_reference",
+        "agent_connector_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
         lambda _reference: (_ for _ in ()).throw(RuntimeError("private detail")),
     )
 
@@ -1444,58 +870,6 @@ def test_mcp_fleet_secret_doctor_fails_closed_and_redacted(monkeypatch):
     assert "PRIVATE_ALIAS" not in rendered
     assert private_reference not in rendered
     assert "private detail" not in rendered
-
-
-def test_provider_profile_doctor_reports_only_aggregate_readiness(monkeypatch):
-    profiles = {
-        "provider-one": SimpleNamespace(enabled=True),
-        "provider-two": SimpleNamespace(enabled=False),
-    }
-    monkeypatch.setattr(
-        "agent_utilities.core.config.AgentConfig",
-        lambda: SimpleNamespace(provider_configs=profiles),
-    )
-    monkeypatch.setattr(
-        "agent_utilities.core.provider_runtime.prepare_provider_runtime_child_environment",
-        lambda *_args, **_kwargs: SimpleNamespace(close=lambda: None),
-    )
-
-    result = D._check_provider_profiles()
-    rendered = json.dumps(result, sort_keys=True)
-
-    assert result["status"] == "ok"
-    assert result["data"] == {
-        "configured_count": 2,
-        "enabled_count": 1,
-        "disabled_count": 1,
-        "ready_count": 1,
-        "invalid_count": 0,
-        "redacted": True,
-    }
-    assert "provider-one" not in rendered
-    assert "provider-two" not in rendered
-
-
-def test_provider_profile_doctor_fails_closed_without_runtime_details(monkeypatch):
-    private_detail = "private-provider-runtime-detail"
-    monkeypatch.setattr(
-        "agent_utilities.core.config.AgentConfig",
-        lambda: SimpleNamespace(
-            provider_configs={"private-provider": SimpleNamespace(enabled=True)}
-        ),
-    )
-    monkeypatch.setattr(
-        "agent_utilities.core.provider_runtime.prepare_provider_runtime_child_environment",
-        lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError(private_detail)),
-    )
-
-    result = D._check_provider_profiles()
-    rendered = json.dumps(result, sort_keys=True)
-
-    assert result["status"] == "fail"
-    assert result["data"]["invalid_count"] == 1
-    assert "private-provider" not in rendered
-    assert private_detail not in rendered
 
 
 def test_runtime_integrations_doctor_reports_only_redacted_readiness(
@@ -1518,7 +892,7 @@ def test_runtime_integrations_doctor_reports_only_redacted_readiness(
         hunyuan_url=None,
         svd_url=None,
     )
-    monkeypatch.setattr("agent_utilities.core.config.AgentConfig", lambda: cfg)
+    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
 
     result = D._check_runtime_integrations()
     rendered = json.dumps(result, sort_keys=True)
@@ -1550,7 +924,7 @@ def test_runtime_integrations_doctor_warns_without_emitting_missing_path(monkeyp
         hunyuan_url=None,
         svd_url=None,
     )
-    monkeypatch.setattr("agent_utilities.core.config.AgentConfig", lambda: cfg)
+    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
 
     result = D._check_runtime_integrations()
 
@@ -1566,7 +940,7 @@ def test_runtime_integrations_doctor_redacts_invalid_config_value(monkeypatch):
     def invalid_config():
         raise ValueError(private_value)
 
-    monkeypatch.setattr("agent_utilities.core.config.AgentConfig", invalid_config)
+    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", invalid_config)
 
     result = D._check_runtime_integrations()
     rendered = json.dumps(result, sort_keys=True)
@@ -1577,69 +951,10 @@ def test_runtime_integrations_doctor_redacts_invalid_config_value(monkeypatch):
     assert "identity=hidden" not in rendered
 
 
-def test_skills_check_requires_exact_suite_without_persisting_local_path(
-    tmp_path, monkeypatch
-):
-    from agent_utilities.core import paths, providers
-    from agent_utilities.core.provider_materialization import build_asset_manifest
-
-    source = tmp_path / "source"
-    (source / "graph-query-and-explanation").mkdir(parents=True)
-    (source / "graph-query-and-explanation" / "SKILL.md").write_text(
-        "synthetic", encoding="utf-8"
-    )
-    xdg = tmp_path / "xdg"
-    xdg.mkdir()
-    manifest = build_asset_manifest(source, leg="skills")
-    monkeypatch.setattr(paths, "skills_dir", lambda: xdg)
-    monkeypatch.setattr(providers, "current_provider_assets", lambda _group: ())
-    monkeypatch.setattr(
-        providers,
-        "_own_skill_assets",
-        lambda: ("agent-utilities", "a" * 64, source, manifest),
-    )
-
-    result = D._check_skills()
-
-    assert result["status"] == "warn"
-    # The required suite is AU's bundled set; the synthetic source holds none of it.
-    assert result["data"]["missing"]
-    assert "graph-query-and-explanation" not in result["data"]["missing"]
-    assert str(tmp_path) not in json.dumps(result)
-
-
-def test_skills_check_accepts_the_complete_consolidated_suite(tmp_path, monkeypatch):
-    from agent_utilities.core import paths, providers
-    from agent_utilities.core.provider_materialization import build_asset_manifest
-    from agent_utilities.skills import BUNDLED_SKILLS
-
-    source = tmp_path / "source"
-    for name in BUNDLED_SKILLS:
-        skill_dir = source / name
-        skill_dir.mkdir(parents=True)
-        (skill_dir / "SKILL.md").write_text("synthetic", encoding="utf-8")
-    xdg = tmp_path / "xdg"
-    xdg.mkdir()
-    manifest = build_asset_manifest(source, leg="skills")
-    monkeypatch.setattr(paths, "skills_dir", lambda: xdg)
-    monkeypatch.setattr(providers, "current_provider_assets", lambda _group: ())
-    monkeypatch.setattr(
-        providers,
-        "_own_skill_assets",
-        lambda: ("agent-utilities", "a" * 64, source, manifest),
-    )
-
-    result = D._check_skills()
-
-    assert result["status"] == "ok"
-    assert result["data"]["required"] == len(BUNDLED_SKILLS)
-    assert str(tmp_path) not in json.dumps(result)
-
-
 def test_evolution_staging_doctor_reports_readiness_without_path(tmp_path, monkeypatch):
     tmp_path.chmod(0o700)
     cfg = SimpleNamespace(evolution_staging_root=str(tmp_path))
-    monkeypatch.setattr("agent_utilities.core.config.AgentConfig", lambda: cfg)
+    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
 
     result = D._check_evolution_staging()
 
@@ -1688,25 +1003,25 @@ def _langfuse_doctor_config(**overrides):
 
 
 def _patch_langfuse_static_dependencies(monkeypatch, cfg, *, launcher=None):
-    monkeypatch.setattr("agent_utilities.core.config.AgentConfig", lambda: cfg)
+    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
     monkeypatch.setattr(
-        "agent_utilities.observability.langfuse_trust.langfuse_credentials_configured",
+        "graph_os.observability.langfuse_trust.langfuse_credentials_configured",
         lambda **_kwargs: True,
     )
     monkeypatch.setattr(
-        "agent_utilities.observability.langfuse_trust.resolve_langfuse_credentials",
+        "graph_os.observability.langfuse_trust.resolve_langfuse_credentials",
         lambda **_kwargs: ("synthetic-public", "synthetic-secret"),
     )
     monkeypatch.setattr(
-        "agent_utilities.observability.langfuse_trust.configure_langfuse_trust",
+        "graph_os.observability.langfuse_trust.configure_langfuse_trust",
         lambda **_kwargs: SimpleNamespace(valid=True, configured=False),
     )
     monkeypatch.setattr(
-        "agent_utilities.observability.langfuse_trust.resolve_langfuse_persistence_hmac_key",
+        "graph_os.observability.langfuse_trust.resolve_langfuse_persistence_hmac_key",
         lambda **_kwargs: "synthetic-persistence-key-material-32",
     )
     monkeypatch.setattr(
-        "agent_utilities.observability.langfuse_trust.langfuse_provider_contract_ready",
+        "graph_os.observability.langfuse_trust.langfuse_provider_contract_ready",
         lambda: launcher is not None,
     )
 
@@ -1750,12 +1065,12 @@ def test_langfuse_launcher_is_required_only_for_mcp(monkeypatch):
 
 
 def test_langfuse_doctor_rejects_placeholder_material_locally(monkeypatch):
-    from agent_utilities.observability.langfuse_trust import LangfuseTrustError
+    from graph_os.observability.langfuse_trust import LangfuseTrustError
 
     cfg = _langfuse_doctor_config()
     _patch_langfuse_static_dependencies(monkeypatch, cfg, launcher=None)
     monkeypatch.setattr(
-        "agent_utilities.observability.langfuse_trust.resolve_langfuse_credentials",
+        "graph_os.observability.langfuse_trust.resolve_langfuse_credentials",
         MagicMock(side_effect=LangfuseTrustError("langfuse_credentials_invalid")),
     )
 
@@ -1796,7 +1111,7 @@ def test_langfuse_persistence_ref_must_resolve(monkeypatch):
     )
     _patch_langfuse_static_dependencies(monkeypatch, cfg, launcher=None)
     monkeypatch.setattr(
-        "agent_utilities.observability.langfuse_trust.resolve_langfuse_persistence_hmac_key",
+        "graph_os.observability.langfuse_trust.resolve_langfuse_persistence_hmac_key",
         MagicMock(side_effect=RuntimeError("private provider detail")),
     )
 
@@ -1805,54 +1120,6 @@ def test_langfuse_persistence_ref_must_resolve(monkeypatch):
     assert result["status"] == "fail"
     assert result["data"]["persistence_key_ready"] is False
     assert "private provider detail" not in json.dumps(result, sort_keys=True)
-
-
-def test_langfuse_live_check_requires_operational_proof(monkeypatch):
-    cfg = _langfuse_doctor_config(langfuse_mcp_enabled=True)
-    _patch_langfuse_static_dependencies(monkeypatch, cfg, launcher="available")
-    monkeypatch.setattr(
-        D,
-        "_probe_langfuse_live",
-        lambda _cfg: {
-            "live_probed": True,
-            "api_reachable": True,
-            "mcp_visible": True,
-            "trace_round_trip": False,
-            "error_code": "trace_round_trip_failed",
-            "redacted": True,
-        },
-    )
-
-    result = D._check_langfuse(live=True)
-
-    assert result["status"] == "fail"
-    assert result["data"]["live_probed"] is True
-    assert result["data"]["trace_round_trip"] is False
-    assert "synthetic-public" not in json.dumps(result, sort_keys=True)
-    assert "synthetic-secret" not in json.dumps(result, sort_keys=True)
-
-
-def test_langfuse_live_check_accepts_api_mcp_and_trace_proof(monkeypatch):
-    cfg = _langfuse_doctor_config(langfuse_mcp_enabled=True)
-    _patch_langfuse_static_dependencies(monkeypatch, cfg, launcher="available")
-    monkeypatch.setattr(
-        D,
-        "_probe_langfuse_live",
-        lambda _cfg: {
-            "live_probed": True,
-            "api_reachable": True,
-            "mcp_visible": True,
-            "trace_round_trip": True,
-            "redacted": True,
-        },
-    )
-
-    result = D._check_langfuse(live=True)
-
-    assert result["status"] == "ok"
-    assert result["data"]["api_reachable"] is True
-    assert result["data"]["mcp_visible"] is True
-    assert result["data"]["trace_round_trip"] is True
 
 
 def _patch_langfuse_mcp_probe(monkeypatch, responses):

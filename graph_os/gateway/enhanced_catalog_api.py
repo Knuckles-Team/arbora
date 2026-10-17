@@ -13,16 +13,16 @@ from collections.abc import Awaitable, Callable
 from contextlib import AbstractContextManager, nullcontext
 from typing import Literal, cast
 
-from agent_utilities.api import (
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, ConfigDict
+
+from graph_os.api.contracts import (
     AgentCatalogReadPort,
     AgentCatalogRecord,
     CatalogStatus,
     WorkflowCatalogReadPort,
     WorkflowCatalogRecord,
 )
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, ConfigDict
-
 from graph_os.fleet.catalog_reader import (
     CatalogServer as FleetCatalogServer,
 )

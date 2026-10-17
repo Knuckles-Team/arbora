@@ -9,9 +9,7 @@ from collections import OrderedDict
 from collections.abc import Awaitable, Callable
 from typing import Any, Literal, cast
 
-from agent_utilities.observability.langfuse_exporter import get_langfuse_exporter
-from agent_utilities.orchestration.action_policy import get_action_policy
-
+from graph_os.access.action_policy import get_action_policy
 from graph_os.browser_control.browser_control_api import (
     BrowserCallReceipt,
     BrowserChannelBinding,
@@ -28,6 +26,7 @@ from graph_os.browser_control.browser_control_outcome import BrowserOutcomeMixin
 from graph_os.browser_control.browser_control_policy import BrowserPolicyMixin
 from graph_os.browser_control.browser_control_provenance import BrowserProvenanceMixin
 from graph_os.browser_control.browser_control_state import _ActiveCall, _ChannelState
+from graph_os.observability.langfuse_exporter import get_langfuse_exporter
 
 SyncRunner = Callable[[Callable[[], Any]], Awaitable[Any]]
 SessionRevalidator = Callable[[BrowserChannelBinding], Awaitable[bool]]
@@ -105,7 +104,7 @@ class BrowserControlService(
     def _validate_ambient_binding(binding: BrowserChannelBinding) -> None:
         """Reject a foreign caller without disturbing the legitimate channel."""
 
-        from agent_utilities.api.session import resolve_session
+        from graph_os.api.contracts.session import resolve_session
 
         resolve_session(binding.session, required_scope="kg:write")
         if str(getattr(binding.session.actor, "actor_type", "")) != "human":

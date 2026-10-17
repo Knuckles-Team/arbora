@@ -78,8 +78,7 @@ async def _call_native_tool(
     timeout: float,
 ) -> Any:
     """Invoke only registered native tools through the served middleware chain."""
-    from agent_utilities.api.session import current_session
-
+    from graph_os.api.contracts.session import current_session
     from graph_os.mcp_server import runtime
 
     _require_fleet_capability("delegate")

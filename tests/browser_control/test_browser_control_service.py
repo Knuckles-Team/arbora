@@ -6,14 +6,12 @@ import asyncio
 import time
 from dataclasses import replace
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import pytest
-from agent_utilities.knowledge_graph.core.session import GraphSession, use_session
-from agent_utilities.security.actor_identity import ActorType
-from agent_utilities.security.brain_context import ActorContext
-from agent_utilities.security.persistence_privacy import persistence_reference
+from agent_connector_sdk.privacy import persistence_reference
 
+from graph_os.api.contracts.session import GraphSession, use_session
 from graph_os.browser_control.browser_control_api import (
     BrowserCallRequest,
     BrowserChannelBinding,
@@ -52,6 +50,7 @@ from graph_os.browser_control.browser_control_service import (
     BrowserControlService,
     browser_control_factory_kwargs,
 )
+from graph_os.security.actor_context import ActorContext, ActorType
 
 
 def _negative_claim() -> dict[str, Any]:
@@ -161,9 +160,58 @@ class _Authority:
         return {"status": "in_flight"}
 
 
+class _WorkItems:
+    """The engine ``work_items`` namespace over the fake authority's nodes."""
+
+    def __init__(self, authority: _Authority) -> None:
+        self._authority = authority
+
+    def submit(self, request: dict[str, Any]) -> dict[str, Any]:
+        item_id = str(request["work_item_id"])
+        nodes = self._authority.nodes
+        if item_id in nodes:
+            return {"work_item_id": item_id, "created": False}
+        nodes[item_id] = {
+            "id": item_id,
+            "work_item_id": item_id,
+            "kind": request["kind"],
+            "input_ref": request["input_ref"],
+            "payload_ref": request["input_ref"],
+            "metadata": dict(request["metadata"]),
+            "status": "ready",
+        }
+        return {"work_item_id": item_id, "created": True}
+
+    def get(self, *, tenant: str, work_item_id: str) -> dict[str, Any] | None:
+        del tenant
+        node = self._authority.nodes.get(work_item_id)
+        return dict(node) if node is not None else None
+
+    def claim(self, request: dict[str, Any]) -> dict[str, Any]:
+        return self._authority.claim_work_item(SimpleNamespace(**request))
+
+    def renew(self, **_fence: Any) -> dict[str, Any]:
+        return {"renewed": True}
+
+    def commit_result(self, **request: Any) -> dict[str, Any]:
+        node = self._authority.nodes[request["work_item_id"]]
+        if node.get("status") in {"succeeded", "failed", "cancelled"}:
+            return {"status": "noop"}
+        self._authority.commit_work_item_result(request)
+        return {"status": str(request["outcome"])}
+
+    def defer(self, **request: Any) -> dict[str, Any]:
+        self._authority.nodes[request["work_item_id"]]["status"] = "ready"
+        return {"status": "deferred"}
+
+    def cancel(self, **request: Any) -> dict[str, Any]:
+        return self._authority.cancel_work_item(request)
+
+
 class _Engine:
     def __init__(self) -> None:
         self._work_item_engine = _Authority()
+        self.work_items = _WorkItems(self._work_item_engine)
         self.trace_batches: list[list[dict[str, Any]]] = []
         self.fail_audit = False
 
@@ -1260,8 +1308,7 @@ async def test_policy_denial_is_audited_without_fence_or_dispatch(
     with use_session(session):
         service, _connection, engine, sent, tool = await _setup(session)
         lease = await _lease(service, _binding(session), tool)
-        assert isinstance(service._policy, _Policy)
-        service._policy.allow = False
+        cast(Any, service._policy).allow = False
         receipt = await service.execute_call(
             BrowserCallRequest(
                 lease_id=lease.lease_id,
@@ -1740,10 +1787,10 @@ async def test_replay_rejects_changed_work_item_envelope(
             for node in engine._work_item_engine.nodes.values()
             if node.get("kind") == "browser.control.call"
         )
-        work_item["queue"] = "changed"
+        work_item["metadata"]["queue"] = "changed"
         with pytest.raises(PermissionError, match="durable fence"):
             await service.execute_call(request)
-        work_item["queue"] = "browser_control"
+        work_item["metadata"]["queue"] = "browser_control"
         await connection.receive(
             ControlResultMessage(
                 call_id=sent[0].call_id,

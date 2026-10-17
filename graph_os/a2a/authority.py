@@ -9,7 +9,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any, Protocol, runtime_checkable
 
-from agent_utilities.security.persistence_privacy import persistence_reference
+from agent_connector_sdk.privacy import persistence_reference
 
 from .models import (
     A2AMessage,
@@ -32,6 +32,8 @@ __all__ = [
 _TASK_PREFIX = "a2a-"
 _WORK_ITEM_PREFIX = "workitem:orchestrator:"
 _A2A_METADATA_SCHEMA = "graph-os-a2a-unary-v1"
+#: How long one agent run may hold its WorkItem lease.
+_RUN_LEASE_SECONDS = 600.0
 _TERMINAL = frozenset({"succeeded", "failed", "cancelled", "dead_letter"})
 _STATE_MAP: dict[str, A2ATaskState] = {
     "submitted": "submitted",
@@ -110,12 +112,15 @@ def _digest(value: Any) -> str:
 class WorkItemA2AAuthority:
     """A2A projection over AU's sole durable WorkItem and dispatch authorities."""
 
-    def __init__(self, engine_provider: Callable[[], Any]) -> None:
+    def __init__(
+        self, engine_provider: Callable[[], Any], *, executor: Any = None
+    ) -> None:
         self._engine_provider = engine_provider
+        self._executor = executor
 
     @staticmethod
     def _session(scope: str) -> Any:
-        from agent_utilities.api.session import resolve_session
+        from graph_os.api.contracts.session import resolve_session
 
         return resolve_session(required_scope=scope)
 
@@ -199,33 +204,28 @@ class WorkItemA2AAuthority:
         }
 
     @staticmethod
-    def _validate_existing(
-        item: dict[str, Any], *, session: Any, owner_ref: str, request_digest: str
-    ) -> None:
-        metadata = item.get("metadata")
-        valid = (
-            item.get("kind") == "orchestrator_task"
-            and item.get("tenant") == session.tenant
-            and item.get("created_by") == owner_ref
+    def _owned(item: Any, owner_ref: str) -> bool:
+        """The engine scopes ``get`` to the verified tenant; the owner is in metadata."""
+        metadata = item.get("metadata") if isinstance(item, dict) else None
+        return (
+            isinstance(item, dict)
+            and item.get("kind") == "orchestrator_task"
             and isinstance(metadata, dict)
             and metadata.get("a2a_schema") == _A2A_METADATA_SCHEMA
             and metadata.get("a2a_owner_ref") == owner_ref
         )
-        if not valid:
+
+    @classmethod
+    def _validate_existing(
+        cls, item: dict[str, Any], *, session: Any, owner_ref: str, request_digest: str
+    ) -> None:
+        del session
+        if not cls._owned(item, owner_ref):
             raise A2AIdempotencyConflict("A2A idempotency authority conflicts")
-        assert isinstance(metadata, dict)
-        if metadata.get("a2a_request_digest") != request_digest:
+        if item["metadata"].get("a2a_request_digest") != request_digest:
             raise A2AIdempotencyConflict(
                 "A2A idempotency key was reused with a different request"
             )
-
-    @staticmethod
-    def _prepare_task(engine: Any, text: str) -> str:
-        from agent_utilities.orchestration.manager import Orchestrator
-
-        orchestrator = Orchestrator(engine)
-        orchestrator._scan_task(text)
-        return orchestrator._redact_task(text)
 
     @staticmethod
     def _submit(
@@ -237,9 +237,9 @@ class WorkItemA2AAuthority:
         description: str,
         metadata: dict[str, Any],
     ) -> tuple[str, bool]:
-        from agent_utilities.knowledge_graph.core import work_durability as work
+        from graph_os import work_items
 
-        return work.submit_work_item_atomic(
+        return work_items.submit_work_item_atomic(
             work_engine,
             kind="orchestrator_task",
             queue="orchestrator_task",
@@ -247,43 +247,65 @@ class WorkItemA2AAuthority:
             tenant=session.tenant,
             description=description,
             resource_class="agent_dispatch",
-            work_item_id=work.orchestrator_work_item_id(task_id),
+            work_item_id=f"{_WORK_ITEM_PREFIX}{task_id}",
             idempotency_key=task_id,
             created_by=owner_ref,
             metadata=metadata,
         )
 
-    @staticmethod
-    def _enqueue(
-        engine: Any,
+    def _agent_executor(self) -> Any:
+        if self._executor is None:
+            from graph_os.agent_runs import AgentRunPort
+
+            self._executor = AgentRunPort()
+        return self._executor
+
+    async def _run(
+        self,
+        work_engine: Any,
         *,
-        task_id: str,
-        context_id: str,
-        tenant: str,
-        decision: A2ARouteDecision,
+        item_id: str,
+        session: Any,
+        agent_name: str,
+        task: str,
     ) -> None:
-        # AU's current carrier cannot enforce an assembly-selected tool subset.
-        # Refuse instead of persisting an advisory list that execution ignores.
-        if decision.selected_tools:
-            raise A2AAssemblyUnavailable(
-                "canonical agent dispatch cannot yet enforce an assembled tool subset"
-            )
-        from agent_utilities.orchestration.agent_dispatch import (
-            KIND_ORCHESTRATOR_TASK,
-            AgentTurnEnvelope,
-            enqueue_agent_turn,
+        """Lease the WorkItem, run the agent through the harness, commit the outcome."""
+        from graph_os import work_items
+        from graph_os.api.contracts.agent_control_contracts import (
+            AgentExecutionRequest,
         )
 
-        enqueue_agent_turn(
-            AgentTurnEnvelope(
-                job_id=task_id,
-                session_id=context_id,
-                kind=KIND_ORCHESTRATOR_TASK,
-                payload_ref=task_id,
-                agent_name=decision.agent_name,
-                tenant=tenant,
-            ),
-            engine=engine,
+        claim = await asyncio.to_thread(
+            work_items.claim_specific,
+            work_engine,
+            item_id,
+            token=f"graph-os-a2a:{item_id}",
+            lease_ttl_s=_RUN_LEASE_SECONDS,
+        )
+        if claim is None:
+            return
+        outcome, result_ref, error_ref = "succeeded", None, None
+        try:
+            result = await self._agent_executor().execute_agent(
+                AgentExecutionRequest(agent_name=agent_name, task=task),
+                session=session,
+            )
+            result_ref = persistence_reference(
+                "run", result.run_id, namespace="graph-os-a2a"
+            )
+        except Exception as exc:  # noqa: BLE001 - a failed run is a failed task
+            outcome = "failed"
+            error_ref = persistence_reference(
+                "error", type(exc).__name__, namespace="graph-os-a2a"
+            )
+        await asyncio.to_thread(
+            work_items.commit_result,
+            work_engine,
+            item_id,
+            claim,
+            outcome=outcome,
+            result_ref=result_ref,
+            error_ref=error_ref,
         )
 
     async def dispatch(
@@ -300,7 +322,7 @@ class WorkItemA2AAuthority:
                 "canonical agent dispatch cannot yet enforce an assembled tool subset"
             )
         session = self._session("kg:write")
-        engine, work_engine = self._engine()
+        _engine, work_engine = self._engine()
         owner_ref = self._owner_ref(session)
         task_id = self._task_id(session.tenant, owner_ref, idempotency_key)
         context_id = self._context_id(session, message, task_id, owner_ref)
@@ -312,7 +334,9 @@ class WorkItemA2AAuthority:
             request_digest=request_digest,
             decision=decision,
         )
-        description = self._prepare_task(engine, message.task_text())
+        from graph_os.access.task_guard import screen_and_redact_agent_task
+
+        description = screen_and_redact_agent_task(message.task_text())
         item_id, created = await asyncio.to_thread(
             self._submit,
             work_engine,
@@ -325,9 +349,9 @@ class WorkItemA2AAuthority:
         if item_id != self._work_item_id(task_id):
             raise RuntimeError("canonical A2A WorkItem returned an invalid identity")
 
-        from agent_utilities.knowledge_graph.core import work_durability as work
+        from graph_os import work_items
 
-        item = await asyncio.to_thread(work.get_work_item, work_engine, item_id)
+        item = await asyncio.to_thread(work_items.get_work_item, work_engine, item_id)
         if not isinstance(item, dict):
             raise RuntimeError("canonical A2A WorkItem is unavailable after admission")
         self._validate_existing(
@@ -337,34 +361,27 @@ class WorkItemA2AAuthority:
             request_digest=request_digest,
         )
         if created or item.get("status") not in _TERMINAL:
-            await asyncio.to_thread(
-                self._enqueue,
-                engine,
-                task_id=task_id,
-                context_id=context_id,
-                tenant=session.tenant,
-                decision=decision,
+            await self._run(
+                work_engine,
+                item_id=item_id,
+                session=session,
+                agent_name=decision.agent_name,
+                task=description,
             )
+            refreshed = await asyncio.to_thread(
+                work_items.get_work_item, work_engine, item_id
+            )
+            if isinstance(refreshed, dict):
+                item = refreshed
         return self._project(item, task_id=task_id)
 
     def _authorized_item(self, task_id: str, scope: str) -> dict[str, Any] | None:
+        from graph_os import work_items
+
         session = self._session(scope)
         _engine, work_engine = self._engine()
-        from agent_utilities.knowledge_graph.core import work_durability as work
-
-        item = work.get_work_item(work_engine, self._work_item_id(task_id))
-        owner_ref = self._owner_ref(session)
-        metadata = item.get("metadata") if isinstance(item, dict) else None
-        if not (
-            isinstance(item, dict)
-            and item.get("tenant") == session.tenant
-            and item.get("created_by") == owner_ref
-            and isinstance(metadata, dict)
-            and metadata.get("a2a_schema") == _A2A_METADATA_SCHEMA
-            and metadata.get("a2a_owner_ref") == owner_ref
-        ):
-            return None
-        return item
+        item = work_items.get_work_item(work_engine, self._work_item_id(task_id))
+        return item if self._owned(item, self._owner_ref(session)) else None
 
     @staticmethod
     def _timestamp(value: Any) -> str | None:
@@ -391,7 +408,7 @@ class WorkItemA2AAuthority:
             "runId": task_id,
             "routing": public_route,
         }
-        from agent_utilities.observability.trace_ontology import (
+        from graph_os.observability.trace_ontology import (
             trace_id as canonical_trace_id,
         )
 
@@ -580,18 +597,17 @@ class WorkItemA2AAuthority:
             return self._project(item, task_id=task_id)
         if item.get("status") in _TERMINAL:
             raise A2ATaskNotCancelable("A2A task is not cancelable")
-        _engine, work_engine = self._engine()
-        from agent_utilities.knowledge_graph.core import work_durability as work
+        from graph_os import work_items
 
-        cancelled = await asyncio.to_thread(
-            work.cancel_work_item,
-            work_engine,
-            self._work_item_id(task_id),
-            reason="a2a_client_cancelled",
-        )
-        if not cancelled:
+        _engine, work_engine = self._engine()
+        item_id = self._work_item_id(task_id)
+        if not await asyncio.to_thread(
+            work_items.cancel_work_item, work_engine, item_id
+        ):
             raise A2ATaskNotCancelable("A2A task is not cancelable")
-        latest = await asyncio.to_thread(self._authorized_item, task_id, "kg:read")
-        if latest is None:
-            raise RuntimeError("A2A task disappeared after cancellation")
-        return self._project(latest, task_id=task_id)
+        current = await asyncio.to_thread(
+            work_items.get_work_item, work_engine, item_id
+        )
+        if not isinstance(current, dict):
+            raise A2ATaskNotCancelable("A2A task is not cancelable")
+        return self._project(current, task_id=task_id)

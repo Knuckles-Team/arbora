@@ -26,7 +26,7 @@ import threading
 from collections.abc import Collection, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
@@ -158,7 +158,9 @@ def _capture_kinds() -> tuple[Any, ...]:
 
     class PackResourceKind(ResourceArtifactKind):
         async def list_entries(self, session: Any, server: Any) -> Any:
-            return await super().list_entries(_PackResourceSession(session), server)
+            # The view implements the McpSession reads by duck typing.
+            view = cast(Any, _PackResourceSession(session))
+            return await super().list_entries(view, server)
 
     return (
         ToolArtifactKind(),
@@ -171,8 +173,8 @@ def _capture_kinds() -> tuple[Any, ...]:
 def _child_auth() -> Any:
     """GraphOS's service credential for a child, as the multiplexer sends it."""
 
-    from agent_utilities.mcp.client_credentials import child_auth
-    from agent_utilities.mcp.httpx_boundary import coerce_httpx2_auth
+    from graph_os.mcp_server.backing.client_credentials import child_auth
+    from graph_os.mcp_server.backing.httpx_boundary import coerce_httpx2_auth
 
     return coerce_httpx2_auth(child_auth(None))
 
@@ -455,8 +457,8 @@ class FleetOnboardingService:
             yield
 
     def run_forever(self) -> None:
-        from agent_utilities.api.session import use_session
-        from agent_utilities.security.brain_context import use_actor
+        from graph_os.api.contracts.session import use_session
+        from graph_os.security.actor_context import use_actor
 
         session = self.onboarding.session
         with use_actor(session.actor), use_session(session):
@@ -480,7 +482,7 @@ class FleetOnboardingService:
 def configured_served_url() -> str:
     """The MCP URL GraphOS serves at, from ``GRAPH_OS_SERVED_MCP_URL``."""
 
-    from agent_utilities.core.config import setting
+    from graph_os.core.settings import setting
 
     return str(setting("GRAPH_OS_SERVED_MCP_URL", "") or "")
 

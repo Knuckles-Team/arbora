@@ -6,8 +6,6 @@ import copy
 import hashlib
 import hmac
 import json
-import sys
-from types import ModuleType
 
 import pytest
 from pydantic import ValidationError
@@ -30,26 +28,26 @@ _KEY = b"disposable-test-trust-key"
 
 @pytest.fixture
 def authority(monkeypatch):
-    """Mock AU's public verifier boundary with independent fixture trust.
+    """Stand in for the signed-evidence verifier with independent fixture trust.
 
-    GraphOS must pass the whole signed input to this authority, using the fixed
-    configured verifier reference. These are consumer tests, not AU crypto tests.
+    The verifier that graph-os will own is not bound yet, so production refuses
+    every candidate. These consumer tests replace that seam with an HMAC check.
     """
-    calls = []
-    module = ModuleType("agent_utilities.skills.runtime_validation")
+    from graph_os.deployment import release_candidate
 
-    def verify(signed, *, verifier_reference):
-        calls.append(verifier_reference)
+    calls = []
+
+    def verify(signed):
+        calls.append("CERT_EVIDENCE_VERIFIER_COMMAND")
         unsigned = {key: value for key, value in signed.items() if key != "signature"}
         expected = hmac.new(
             _KEY, json.dumps(unsigned, sort_keys=True).encode(), "sha256"
         ).hexdigest()
         if not hmac.compare_digest(str(signed.get("signature", "")), expected):
-            raise RuntimeError("private endpoint/token must never escape")
+            raise release_candidate.CandidateError("candidate_signature_unverified")
         return unsigned
 
-    module.verify_signed_evidence = verify
-    monkeypatch.setitem(sys.modules, module.__name__, module)
+    monkeypatch.setattr(release_candidate, "_verify_candidate", verify)
     return calls
 
 
@@ -352,83 +350,6 @@ def test_real_cli_success_and_refusal_are_redacted(
     assert "fixture-token" not in output
     assert "private.invalid" not in output
     assert str(tmp_path) not in output
-
-
-def test_real_au_authority_rejects_attacker_self_hash(tmp_path, candidate, monkeypatch):
-    """Exercise AU and its external verifier with independent Ed25519 trust."""
-    import base64
-    from pathlib import Path
-
-    import cryptography
-    from agent_utilities.skills import runtime_validation
-    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-
-    key = Ed25519PrivateKey.generate()
-    public_key = key.public_key().public_bytes_raw()
-    key_id = "key:" + hashlib.sha256(public_key).hexdigest()
-    verifier = tmp_path / "verify.py"
-    verifier.write_text(
-        "import base64, hashlib, json, sys\n"
-        "sys.path.insert(0, sys.argv[2])\n"
-        "from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey\n"
-        "signed = json.load(sys.stdin)\n"
-        "signature = signed.pop('signature')\n"
-        "payload = json.dumps(signed, sort_keys=True, separators=(',', ':')).encode()\n"
-        "public = bytes.fromhex(sys.argv[1])\n"
-        "assert signature['algorithm'] == 'ed25519'\n"
-        "assert signature['keyId'] == 'key:' + hashlib.sha256(public).hexdigest()\n"
-        "Ed25519PublicKey.from_public_bytes(public).verify(\n"
-        "    base64.urlsafe_b64decode(signature['signature'] + '=='), payload)\n"
-        "print(json.dumps({'verified': True, 'keyId': signature['keyId'],\n"
-        "    'subjectDigest': 'sha256:' + hashlib.sha256(payload).hexdigest()}))\n"
-    )
-    monkeypatch.setenv(
-        "CERT_EVIDENCE_VERIFIER_COMMAND",
-        json.dumps(
-            [
-                str(Path(sys.executable).resolve()),
-                str(verifier),
-                public_key.hex(),
-                str(Path(cryptography.__file__).resolve().parents[1]),
-            ]
-        ),
-    )
-    assert runtime_validation.verify_signed_evidence.__module__ == (
-        "agent_utilities.skills.runtime_validation"
-    )
-    payload = json.dumps(candidate, sort_keys=True, separators=(",", ":")).encode()
-    digest = _canonical_digest(candidate)
-    signed = {
-        **candidate,
-        "signature": {
-            "algorithm": "ed25519",
-            "keyId": key_id,
-            "subjectDigest": digest,
-            "signature": base64.urlsafe_b64encode(key.sign(payload))
-            .decode()
-            .rstrip("="),
-        },
-    }
-    path = tmp_path / "signed.json"
-    path.write_text(json.dumps(signed))
-    assert (
-        plan_candidate(path, trusted_digest=digest, profile_name="prod")["executed"]
-        is False
-    )
-    # Rehash and re-sign modified content with an attacker-controlled key.
-    signed["candidate_id"] = "attacker"
-    unsigned = {k: v for k, v in signed.items() if k != "signature"}
-    digest = _canonical_digest(unsigned)
-    payload = json.dumps(unsigned, sort_keys=True, separators=(",", ":")).encode()
-    signed["signature"]["subjectDigest"] = digest
-    signed["signature"]["signature"] = (
-        base64.urlsafe_b64encode(Ed25519PrivateKey.generate().sign(payload))
-        .decode()
-        .rstrip("=")
-    )
-    path.write_text(json.dumps(signed))
-    with pytest.raises(CandidateError, match="^candidate_signature_unverified$"):
-        read_candidate(path, trusted_digest=digest)
 
 
 @pytest.mark.parametrize("kind", ["symlink", "fifo", "directory"])

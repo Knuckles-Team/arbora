@@ -13,11 +13,6 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from agent_utilities.knowledge_graph.core.shard_topology import (
-    default_graph_name,
-    tenant_graph_name,
-)
-from agent_utilities.security import request_identity
 from epistemic_graph import EngineResponseError
 from pydantic import BaseModel, ConfigDict, RootModel
 
@@ -35,12 +30,16 @@ from graph_os.api.registry import (
     Surface,
     Verb,
 )
+from graph_os.security import request_identity
 from tests.a2a._support import authenticated_operation_app
 from tests.a2a.test_operation_bridge import DenyPolicy, post, session
 from tests.a2a.test_request_session_authority import fixture as request_fixture
 from tests.api.test_invoke_contract import operation, setup_services
 
 pytestmark = pytest.mark.spec("GRAPHOS-OPS-R009")
+
+#: The engine's per-tenant graph name for tenant ``tenant:one``.
+_TENANT_GRAPH = "tenant__tenant_one____commons__"
 
 
 class ReadParams(BaseModel):
@@ -115,9 +114,7 @@ def fixture(monkeypatch: pytest.MonkeyPatch, failure: str = "") -> Any:
     monkeypatch.setattr(bootstrap, "verify_current_from_session", current)
     runtime = bootstrap.build_operation_runtime(
         pool=pool,
-        graph="fixture:wrong-graph"
-        if failure == "graph-mismatched"
-        else tenant_graph_name("tenant:one", base=default_graph_name()),
+        graph="fixture:wrong-graph" if failure == "graph-mismatched" else _TENANT_GRAPH,
         connect_context=connect_context,
         service_scopes=frozenset(),
         service_principal="service:fixture",
@@ -287,7 +284,7 @@ def test_runtime_preserves_engine_refusal_code(monkeypatch: pytest.MonkeyPatch) 
                 {},
                 context(
                     client,
-                    graph=tenant_graph_name("tenant:one", base=default_graph_name()),
+                    graph=_TENANT_GRAPH,
                 ),
             )
         )

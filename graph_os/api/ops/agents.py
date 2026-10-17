@@ -44,7 +44,7 @@ async def handle_agent(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Use the serving A2A authority, which owns task and idempotency state."""
-    from agent_utilities.api import use_session
+    from graph_os.api.contracts import use_session
 
     if context.caller.session is None:
         raise RuntimeError("agent operation requires a verified session")
@@ -79,20 +79,26 @@ async def handle_rlm(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Compose AU's public RLM control plane with the verified caller context."""
-    from agent_utilities.api import GraphRlmRequest, compose_agent_control_plane
     from pydantic import TypeAdapter
+
+    from graph_os.api.contracts import GraphRlmRequest, compose_agent_control_plane
 
     if context.caller.session is None:
         raise RuntimeError("RLM operation requires a verified session")
-    request: GraphRlmRequest = TypeAdapter(GraphRlmRequest).validate_python(
-        params["request"]
-    )
+    request: Any = TypeAdapter(GraphRlmRequest).validate_python(params["request"])
     action = op.id.rsplit(".", 1)[-1]
     if request.action != action:
         raise ValueError("RLM action does not match operation")
     control_plane = compose_agent_control_plane(context.client, context.caller.session)
     result = await control_plane.graph_rlm(request)
     return {"value": result.model_dump(mode="json")}
+
+
+#: Operations whose idempotency the A2A WorkItem authority owns: the
+#: idempotency key derives the task id, so a replay returns the same task.
+NATIVE_IDEMPOTENCY: dict[str, str] = {
+    "agents.run": "graph_os.a2a.authority:WorkItemA2AAuthority",
+}
 
 
 def operations() -> tuple[OpSpec, ...]:
@@ -158,7 +164,7 @@ def operations() -> tuple[OpSpec, ...]:
                 effect=Effect.WRITE,
                 audit=AuditClass.EVENT,
             )
-            for action in ("run", "benchmark", "evolve_prompt")
+            for action in ("run",)
         ),
     )
 

@@ -75,6 +75,59 @@ through both the development (Compose) and production (Kubernetes/Helm)
 profiles end to end, including the forced first administrator, default
 authorization policy, secrets backend selection, and first-boot verification.
 
+## Engine admission
+
+A served GraphOS process and its engine must agree on one verified request
+context. Print the exact settings for a deployment:
+
+```bash
+setup-config engine-admission --principal <process principal> \
+  --audience <audience> --tenant <tenant> --policy-version <policy version> \
+  --allowed-private-host <connector host>
+```
+
+The engine needs these settings:
+
+| Engine setting | Value |
+|---|---|
+| `GRAPH_SERVICE_AUTH_SECRET` | The shared HMAC secret; GraphOS reads the same value |
+| `EPISTEMIC_GRAPH_AUDIENCE` | Equal to the GraphOS `AUTH_JWT_AUDIENCE` |
+| `EPISTEMIC_GRAPH_TENANT` | The tenant of the GraphOS process token |
+| `EPISTEMIC_GRAPH_POLICY_VERSION` | Equal to the GraphOS `KG_POLICY_VERSION` |
+| `EPISTEMIC_GRAPH_SIGNER_KEYS_JSON` | One signer: the GraphOS process principal, with `may_grant_system` true |
+| `EPISTEMIC_GRAPH_CONNECTOR_PACK_IMPORTERS` | `*=principal:sha256:<SHA-256 of the process principal>` |
+
+The GraphOS process token must carry these roles: `kg:admin`,
+`connector:catalog-attest`, `admin:connector-pack`, `agent:pack-control`,
+`security:admin`, `mcp:discover`, `mcp:delegate`, `query:unified` and
+`node:read`.
+
+On a fresh store, do these steps in order before the first serve:
+
+1. Bootstrap the process principal as the engine system identity. The process
+   signs as itself with the `security:bootstrap` scope.
+2. Run `graph-os-production-ops provision-semantic-content --served-url <MCP URL>`.
+3. Run `graph-os-production-ops onboard-fleet --served-url <MCP URL>`. A fleet
+   connector's pack import needs an `ACTION_POLICY_PATH` rule that admits it.
+
+A fresh engine admits one principal only: the GraphOS process principal. Each
+other caller needs its own engine identity registration before its requests
+pass engine authorization.
+
+GraphOS reaches a fleet connector over plain HTTP only on loopback, or on a
+host that `MCP_HTTP_ALLOWED_PRIVATE_HOSTS` names. Set it in the GraphOS
+configuration when connectors run on private or cluster hosts:
+
+| GraphOS setting | Value |
+|---|---|
+| `MCP_HTTP_ALLOWED_PRIVATE_HOSTS` | The exact connector hostnames, comma-separated or as a JSON list, for example `connector-a.example,connector-b.example` |
+
+Pass each host with `--allowed-private-host` and `setup-config
+engine-admission` prints the value under `graph_os_config`. A connector entry
+can also name its own host in `allowed_private_hosts`.
+
+`tests/test_real_boot.py` runs these steps against a real engine.
+
 ## Local MCP transport
 
 Use `stdio` when an MCP client launches GraphOS as a child process:
@@ -155,7 +208,7 @@ agent-utilities-doctor
 graph-os-release-canary
 ```
 
-The canary reports aggregate readiness checks and does not print paths,
+The canary reports aggregate readiness probes and does not print paths,
 credentials, identities, or graph contents. A failed canary is a release
 failure, not a warning to suppress.
 

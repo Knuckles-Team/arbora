@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Literal, Protocol
 from graph_os.identity.ports import SessionAuthority, SessionState
 
 if TYPE_CHECKING:
-    from agent_utilities.api.session import GraphSession
+    from graph_os.api.contracts.session import GraphSession
 
 
 @dataclass(frozen=True)
@@ -91,7 +91,7 @@ class HostStartAdmission:
     async def admit(
         self, credential: str, request: HostStartRequest, graph_session: GraphSession
     ) -> AdmittedHostStart:
-        from agent_utilities.api.session import GraphSession
+        from graph_os.api.contracts.session import GraphSession
 
         self._check_credential(credential)
         if not isinstance(graph_session, GraphSession):

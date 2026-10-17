@@ -28,7 +28,7 @@ A co-service runs on ``_authorized_background_thread``, inheriting the graph-os
 process's verified actor and ``GraphSession`` for its whole lifetime. graph-os
 is the principal the engine's signer registry already trusts, so a WebUI
 request handled here can sign engine admission **as itself**
-(:func:`agent_utilities.security.admission_authority.resolve_admission_authority`)
+(the engine's admission authority, EG-IDENTITY-R950)
 — which is the only pairing the engine accepts
 (``verify_register_identity_signature`` requires ``signer == principal``). Run
 as a separate deployment, agent-webui holds no signer entry at all, which is
@@ -124,7 +124,8 @@ def run_web_ui(
     import os
 
     import uvicorn
-    from agent_utilities.core.config import config
+
+    from graph_os.core.settings import runtime_config as config
 
     bind_host = host or str(getattr(config, "host", None) or DEFAULT_WEB_UI_HOST)
     if port:
@@ -158,13 +159,6 @@ def run_web_ui(
     # Import here, not at module import: graph-os must start normally when the
     # `ag-ui` extra is absent, and only a deployment that asked for the WebUI
     # should ever pay this import.
-    from agent_utilities.core.contextual_model import create_context_agent
-    from agent_utilities.server.webui_contact_governance import (
-        contact_delivery_factory_kwargs,
-    )
-    from agent_utilities.server.webui_voice_delegation import (
-        webui_voice_delegation_helpers,
-    )
     from agent_webui.api_extensions import (
         get_engine_bounded,
         invoke_governed_helper,
@@ -176,16 +170,6 @@ def run_web_ui(
     from agent_webui.orchestrator_model import build_orchestrator_model
     from agent_webui.server import create_agent_web_app
 
-    from graph_os.browser_control.browser_control_runtime import (
-        register_browser_control_service,
-        unregister_browser_control_service,
-    )
-    from graph_os.browser_control.browser_control_service import (
-        browser_control_factory_kwargs,
-    )
-    from graph_os.mcp_server import runtime as mcp_runtime
-    from graph_os.webui_host.mcp_delegation import webui_mcp_delegation_helpers
-
     # Assemble exactly what agent-webui's own entrypoint assembles.
     #
     # NOT `server.app.build_agent_app`: that constructs au's ENTIRE server
@@ -196,7 +180,25 @@ def run_web_ui(
     # dashboard is a frontend facade over routes composed below; it needs the
     # orchestrator-model agent and the delegation helpers, nothing more. Same
     # measurement, this path: 11 seconds to a built app.
-    agent = create_context_agent(model=build_orchestrator_model(get_engine_bounded))
+    from pydantic_ai import Agent
+
+    from graph_os.browser_control.browser_control_runtime import (
+        register_browser_control_service,
+        unregister_browser_control_service,
+    )
+    from graph_os.browser_control.browser_control_service import (
+        browser_control_factory_kwargs,
+    )
+    from graph_os.mcp_server import runtime as mcp_runtime
+    from graph_os.webui_host.contact_governance import (
+        contact_delivery_factory_kwargs,
+    )
+    from graph_os.webui_host.mcp_delegation import webui_mcp_delegation_helpers
+    from graph_os.webui_host.voice_delegation import (
+        webui_voice_delegation_helpers,
+    )
+
+    agent = Agent(build_orchestrator_model(get_engine_bounded))
     helpers = {
         **webui_mcp_delegation_helpers(),
         **webui_voice_delegation_helpers(),

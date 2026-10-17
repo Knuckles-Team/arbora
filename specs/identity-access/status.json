@@ -6,6 +6,7 @@
   "requirement_ids": [
     "GRAPHOS-IDENTITY-R001",
     "GRAPHOS-IDENTITY-R002",
+    "GRAPHOS-IDENTITY-R002.1",
     "GRAPHOS-IDENTITY-R003",
     "GRAPHOS-IDENTITY-R004",
     "GRAPHOS-IDENTITY-R004.1",
@@ -118,6 +119,22 @@
       ],
       "verified_by": [
         "tests/api/test_domain_scopes.py:50"
+      ],
+      "rollup_of": [
+        "GRAPHOS-IDENTITY-R002.1"
+      ]
+    },
+    {
+      "id": "GRAPHOS-IDENTITY-R002.1",
+      "title": "GraphOS owns the scope registry generated from EG `scopes.json`",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "9e7f6499d96f"
+      ],
+      "verified_by": [
+        "tests/security/test_scope_registry.py:26",
+        "tests/security/test_scope_registry.py:35",
+        "tests/security/test_scope_registry.py:45"
       ]
     },
     {

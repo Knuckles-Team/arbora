@@ -2,22 +2,22 @@
 
 CONCEPT:AU-ECO.mcp.remote-oauth-broker — Deliverable 2 of NE-008 (GOC-85
 follow-through, closing U-11/U-41/U-43/U-44/U-45's gateway gap): before this
-module, :mod:`agent_utilities.mcp.remote_oauth_broker` shipped a complete,
+module, :mod:`graph_os.mcp_server.backing.remote_oauth_broker` shipped a complete,
 tested broker CORE with no HTTP surface reachable from a browser — no route
 could ever call ``begin()``/``callback()``. This module is that surface.
 
-Mirrors :mod:`graph_os.gateway.research_api` /
+Mirrors
 :mod:`graph_os.gateway.ontology_api`: a plain ``fastapi.APIRouter``
 mounted by one call, :func:`register_remote_oauth_routes`, with the same
 FastAPI-``include_router``-else-plain-``add_route`` fallback those modules use.
 Per the gateway's own identity convention
-(:class:`agent_utilities.security.request_identity.ActorIdentityMiddleware`,
+(:class:`graph_os.security.request_identity.ActorIdentityMiddleware`,
 mounted by :func:`graph_os.gateway.graph_api.register_graph_routes`
 BEFORE any route is reachable), every route here runs behind the same
 server-minted, JWT-verified
-:class:`~agent_utilities.security.brain_context.ActorContext`
+:class:`~graph_os.security.actor_context.ActorContext`
 every other gateway route uses — resolved via
-:func:`agent_utilities.security.brain_context.current_actor`, NEVER from
+:func:`graph_os.security.actor_context.current_actor`, NEVER from
 request JSON or query parameters. ``code``/``state`` are handled as secrets:
 this module never logs them, never echoes them back in a response body, and
 never places them in a redirect target — the ONE redirect this module ever
@@ -84,14 +84,14 @@ def _default_provider_registry() -> Any:
     configuration disables the registry with a bounded diagnostic — never a
     silently-accepted malformed provider.
     """
-    from agent_utilities.mcp.remote_oauth_broker import (
+    from graph_os.mcp_server.backing.remote_oauth_broker import (
         ProviderDescriptor,
         ProviderRegistry,
     )
 
     registry = ProviderRegistry()
     try:
-        from agent_utilities.core.config import config
+        from graph_os.core.settings import runtime_config as config
 
         entries = config.remote_oauth_providers
     except Exception as exc:  # noqa: BLE001 - disable the feature, not the gateway
@@ -117,7 +117,7 @@ def _default_provider_registry() -> Any:
 
 
 def _build_default_broker() -> Any:
-    from agent_utilities.mcp.remote_oauth_broker import RemoteOAuthBroker
+    from graph_os.mcp_server.backing.remote_oauth_broker import RemoteOAuthBroker
 
     return RemoteOAuthBroker(registry=_default_provider_registry())
 
@@ -171,7 +171,7 @@ def _success_redirect_url() -> str | None:
     plain JSON success body instead of redirecting.
     """
     try:
-        from agent_utilities.core.config import config
+        from graph_os.core.settings import runtime_config as config
 
         return config.remote_oauth_success_redirect_url
     except Exception as exc:  # noqa: BLE001 - fail closed to a JSON success body
@@ -210,15 +210,15 @@ def _oauth_error_response(
     """Raise an HTTPException with a sanitized public payload.
 
     Uses this repo's ONE public-failure boundary
-    (:func:`agent_utilities.security.error_surface.public_error_payload`) so a
+    (:func:`graph_os.security.error_surface.public_error_payload`) so a
     caller never sees more than a generic code/message while the real cause is
     still server-logged for correlation. None of this module's own exception
     messages ever interpolate ``code``/``state``/a token value in the first
     place (checked against every raise site in
-    :mod:`agent_utilities.mcp.remote_oauth_broker`), so this is defense in
+    :mod:`graph_os.mcp_server.backing.remote_oauth_broker`), so this is defense in
     depth, not the only thing standing between a secret and a response body.
     """
-    from agent_utilities.security.error_surface import public_error_payload
+    from graph_os.security.error_surface import public_error_payload
 
     payload = public_error_payload(exc, logger=logger, code=code)
     raise HTTPException(status_code=status_code, detail=payload) from None
@@ -226,7 +226,7 @@ def _oauth_error_response(
 
 def _resolve_verified_actor() -> Any:
     """The server-minted actor for THIS request, or a 401."""
-    from agent_utilities.security.brain_context import (
+    from graph_os.security.actor_context import (
         IdentityRequiredError,
         current_actor,
     )
@@ -247,7 +247,7 @@ async def authorize(provider_id: str, body: AuthorizeRequest) -> AuthorizeRespon
     authorization URL to send their browser to."""
     import asyncio
 
-    from agent_utilities.mcp.remote_oauth_broker import (
+    from graph_os.mcp_server.backing.remote_oauth_broker import (
         OAuthBindingError,
         OAuthDiscoveryError,
         OAuthProviderError,
@@ -288,14 +288,15 @@ async def oauth_callback(code: str, state: str, browser_session_id: str) -> Any:
     """
     import asyncio
 
-    from agent_utilities.mcp.remote_oauth_broker import (
+    from starlette.responses import JSONResponse, RedirectResponse
+
+    from graph_os.mcp_server.backing.remote_oauth_broker import (
         OAuthBindingError,
         OAuthDiscoveryError,
         OAuthRevokedError,
         OAuthScopeError,
         OAuthStateError,
     )
-    from starlette.responses import JSONResponse, RedirectResponse
 
     actor = _resolve_verified_actor()
     broker = _get_broker()
@@ -329,8 +330,9 @@ async def _revoke(provider_id: str) -> Any:
     """Revoke the verified caller's grant for one enabled provider."""
     import asyncio
 
-    from agent_utilities.mcp.remote_oauth_broker import OAuthProviderError
     from starlette.responses import Response
+
+    from graph_os.mcp_server.backing.remote_oauth_broker import OAuthProviderError
 
     actor = _resolve_verified_actor()
     broker = _get_broker()
@@ -382,7 +384,7 @@ def register_remote_oauth_routes(
     callback URL instead.
 
     Same FastAPI-``include_router``-else-plain-``add_route`` fallback as
-    :func:`graph_os.gateway.research_api.register_research_routes`.
+    :func:`graph_os.gateway.ontology_api.register_ontology_routes`.
     Optional dependencies are injected once before route mounting.
     """
     if broker is not None:

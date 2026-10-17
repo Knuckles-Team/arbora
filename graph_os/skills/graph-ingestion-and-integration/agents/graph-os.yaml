@@ -3,14 +3,11 @@ tier: domain
 claims:
   core:
     - document_process
-    - graph_data_prep
     - graph_etl
     - graph_feeds
     - graph_ingest
-    - graph_media_sidecar
     - graph_share
     - graph_writeback
-    - ingest_sessions
     - skill_classify
     - source_connector
     - source_drain

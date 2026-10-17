@@ -5,13 +5,9 @@ for a specific messaging platform. Backends are lazily imported via
 ``importlib.metadata.entry_points`` to avoid pulling in platform-specific
 dependencies unless explicitly installed.
 
-Supported backends:
-    - ``telegram`` — Telegram via ``python-telegram-bot``
-    - ``mattermost`` — Mattermost via ``mattermostdriver``
-
-Further platforms (Discord, Slack, WhatsApp, Teams, Google Chat/Meet,
-Matrix, IRC, Signal, iMessage, LINE, Twitch, Synology Chat, voice calls,
-Nextcloud Talk) follow the same adapter shape and remain to be landed.
+Supported backends: ``telegram``, ``mattermost``, ``discord``, ``slack``, ``whatsapp``,
+``teams``, ``googlechat``, ``googlemeet``, ``matrix``, ``irc``, ``signal``, ``imessage``,
+``line``, ``twitch``, ``synology``, ``voicecall`` and ``nextcloud``.
 
 Install individual backends with::
 

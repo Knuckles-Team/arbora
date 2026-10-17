@@ -71,11 +71,28 @@ _RETRYABLE = frozenset(
 )
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class GraphOSRefusal(Exception):
+    # Not frozen: raising sets ``__traceback__`` and context managers assign
+    # it again, which a frozen slotted dataclass refuses with a TypeError.
     code: GraphOSErrorCode
     message: str = "Request refused"
     details: Mapping[str, Any] = field(default_factory=dict)
+
+
+def not_served(
+    capability: str, spec_row: str, owner: str = "epistemic-graph"
+) -> GraphOSRefusal:
+    """Refuse an operation whose capability its owner does not serve yet.
+
+    ``capability`` names the deleted in-process module the operation used.
+    ``spec_row`` is the owner's spec row that will serve it.
+    """
+    return GraphOSRefusal(
+        code=GraphOSErrorCode.UNAVAILABLE,
+        message=f"{owner} does not serve {capability} yet ({spec_row})",
+        details={"owner": owner, "capability": capability, "spec_row": spec_row},
+    )
 
 
 @dataclass(slots=True)

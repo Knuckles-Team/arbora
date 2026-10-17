@@ -71,7 +71,7 @@ def recorded_http(monkeypatch):
     monkeypatch.setattr(mod, "streamable_http_client", _fake)
     monkeypatch.setattr(mod, "ClientSession", _FakeSessionCM)
 
-    from agent_utilities.core.config import config
+    from graph_os.core.settings import runtime_config as config
 
     # Plain-http fixture hostname, as a real TLS-terminated-at-ingress child.
     monkeypatch.setattr(config, "mcp_http_allowed_private_hosts", ["fleet.example"])

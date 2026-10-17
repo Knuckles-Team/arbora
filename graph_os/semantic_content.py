@@ -37,9 +37,7 @@ class SemanticProvisionReceipt[ReprojectReceiptT, AttachReceiptT]:
 def default_content_providers() -> tuple[ContentProvider, ...]:
     """Return the independently owned providers in this deployment."""
 
-    from agent_utilities.content import agent_utilities_content
-
-    return (connector_content, agent_utilities_content)
+    return (connector_content,)
 
 
 def required_content_connectors() -> tuple[str, ...]:

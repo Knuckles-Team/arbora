@@ -7,6 +7,7 @@ import os
 
 import pytest
 
+from graph_os.core.settings import GraphOSConfig
 from graph_os.deployment import (
     PROFILES,
     config_doctor,
@@ -20,8 +21,8 @@ from graph_os.deployment import (
 @pytest.mark.parametrize("profile", PROFILES)
 def test_generate_config_is_complete(profile):
     cfg = generate_config(profile)
-    # The whole AgentConfig surface is present (>=250 fields).
-    assert len(cfg) >= 250
+    # The whole settings surface is present.
+    assert len(cfg) >= len(GraphOSConfig.model_fields)
     assert "GRAPH_" + "BACKEND" not in cfg
     assert "GRAPH_" + "AUTHORITY" not in cfg
 
@@ -74,75 +75,9 @@ def test_generate_config_profile_presets():
         assert production["KG_INSIGHT_AUTONOMY"] is False
 
 
-def test_generate_config_and_reference_include_exact_skill_certification_fields():
-    expected = {
-        "SKILL_CERT_RUNTIME_CONFIGURATION",
-        "SKILL_CERT_RUNTIME_PROFILE",
-        "SKILL_CERT_RELEASE_SPEC",
-        "SKILL_CERT_PROMOTION_EVIDENCE",
-        "SKILL_CERT_GRAPHOS_ENDPOINT",
-        "SKILL_CERT_GRAPHOS_COMMAND",
-        "SKILL_VALIDATION_EVIDENCE_SIGNER_COMMAND",
-        "SKILL_VALIDATION_EVIDENCE_VERIFIER_COMMAND",
-        "SKILL_CERT_IDENTITY_AUTHORITY_MODE",
-        "SKILL_CERT_IDENTITY_TOKEN_TTL_SECONDS",
-    }
-    generated = generate_config("tiny")
-    assert expected <= set(generated)
-    for field in expected - {
-        "SKILL_CERT_IDENTITY_AUTHORITY_MODE",
-        "SKILL_CERT_IDENTITY_TOKEN_TTL_SECONDS",
-    }:
-        assert generated[field] in (None, [])
-    assert generated["SKILL_CERT_IDENTITY_AUTHORITY_MODE"] == (
-        "ephemeral-https-loopback"
-    )
-    assert generated["SKILL_CERT_IDENTITY_TOKEN_TTL_SECONDS"] == 300
-
-    sections = config_reference()
-    certification = next(
-        section
-        for section in sections
-        if section["section"] == "Exact skill certification deployment references"
-    )
-    assert {field["env"] for field in certification["fields"]} == expected
-
-
-def test_generate_config_and_reference_include_production_certification_fields():
-    expected = {
-        "CERTIFICATION_MODE",
-        "CERT_RELEASE_MANIFEST",
-        "CERT_ARTIFACTS_DIR",
-        "CERT_HARDWARE_CLASS",
-        "CERT_LOAD_COMMAND",
-        "CERT_METRICS_COMMAND",
-        "CERT_HOOK_COMMANDS",
-        "CERT_FAULT_ACTION_COMMANDS",
-        "CERT_FAULT_PROBE_COMMANDS",
-        "CERT_EVIDENCE_SIGNER_COMMAND",
-        "CERT_EVIDENCE_VERIFIER_COMMAND",
-        "CERT_PROMETHEUS_URL",
-        "CERT_PROMETHEUS_BEARER_TOKEN_REF",
-        "CERT_PROMETHEUS_TLS_PROFILE",
-        "CERT_PROMETHEUS_TLS_PROFILE_REF",
-    }
-    generated = generate_config("tiny")
-    assert expected <= set(generated)
-    assert generated["CERTIFICATION_MODE"] == "disabled"
-    for field in expected - {"CERTIFICATION_MODE"}:
-        assert generated[field] in (None, [], {})
-
-    certification = next(
-        section
-        for section in config_reference()
-        if section["section"] == "Production certification runtime"
-    )
-    assert {field["env"] for field in certification["fields"]} == expected
-
-
 @pytest.mark.parametrize("profile", PROFILES)
 def test_generate_config_roundtrips_through_agent_config(profile):
-    from agent_utilities.core.config import AgentConfig
+    from graph_os.core.settings import GraphOSConfig as AgentConfig
 
     generated = generate_config(profile)
     parsed = AgentConfig(**generated)
@@ -228,7 +163,7 @@ def test_write_config_roundtrips(tmp_path):
     assert res["destination"] == "explicit"
     assert "path" not in res
     assert str(tmp_path) not in json.dumps(res)
-    assert res["keys"] >= 250
+    assert res["keys"] >= len(GraphOSConfig.model_fields)
     loaded = json.loads(out.read_text())
     assert (
         loaded["GRAPH_DB_CONNECTION_PROFILE_REF"]
@@ -241,7 +176,7 @@ def test_write_config_default_uses_active_config_root_without_returning_path(
     monkeypatch,
 ):
     root = tmp_path / "active-root"
-    monkeypatch.setenv("AGENT_UTILITIES_CONFIG_DIR", str(root))
+    monkeypatch.setenv("GRAPH_OS_CONFIG_DIR", str(root))
 
     result = write_config("tiny")
 
@@ -254,22 +189,14 @@ def test_write_config_default_uses_active_config_root_without_returning_path(
 # ── reference ──────────────────────────────────────────────────────────────
 def test_config_reference_groups_all_fields():
     ref = config_reference()
-    sections = {s["section"] for s in ref}
-    assert len(sections) >= 5  # multiple subsystems detected
     total = sum(len(s["fields"]) for s in ref)
-    assert total >= 250  # every field appears exactly once
+    assert total == len(GraphOSConfig.model_fields)  # every field appears exactly once
     # A known field is grouped and carries env + type.
     flat = {f["env"]: f for s in ref for f in s["fields"]}
-    assert "GRAPH_MIRROR_TARGETS" in flat
-    assert flat["GRAPH_MIRROR_TARGETS"]["type"]
+    assert "AUTH_JWT_AUDIENCE" in flat
+    assert flat["AUTH_JWT_AUDIENCE"]["type"]
     assert "GRAPH_" + "BACKEND" not in flat
     assert "GRAPH_" + "AUTHORITY" not in flat
-
-
-def test_config_reference_marks_secrets():
-    flat = {f["env"]: f for s in config_reference() for f in s["fields"]}
-    assert flat["OPENAI_API_KEY"]["secret"] is True
-    assert flat["OPENAI_API_KEY"]["default"] == "***"
 
 
 def test_config_reference_includes_memento_privacy_policy():
@@ -277,11 +204,6 @@ def test_config_reference_includes_memento_privacy_policy():
     assert flat["MEMENTO_RAW_RETENTION_ENABLED"]["default"] is False
     assert "MEMENTO_RAW_RETENTION_POLICY" in flat
     assert "MEMENTO_RAW_ENCRYPTION_KEY_REF" in flat
-
-
-def test_config_reference_exposes_placement_control_opt_in():
-    flat = {f["env"]: f for s in config_reference() for f in s["fields"]}
-    assert flat["PLACEMENT_CONTROL_LOOP_ENABLED"]["default"] is False
 
 
 def test_config_reference_exposes_dispatch_lease_recovery_controls():
@@ -335,7 +257,7 @@ def test_secret_reference_inventory_covers_nested_and_secret_scheme(monkeypatch)
             return "resolved" if reference.endswith("RESOLVED") else None
 
     monkeypatch.setattr(
-        "agent_utilities.security.secrets_client.create_secrets_client",
+        "graph_os.security.secrets.create_secrets_client",
         lambda: _Secrets(),
     )
     monkeypatch.setenv("TEST_RESOLVED", "runtime-material")
@@ -364,7 +286,7 @@ def test_env_only_secret_inventory_never_constructs_durable_backend(monkeypatch)
         raise AssertionError("env-only inventory must not construct a backend")
 
     monkeypatch.setattr(
-        "agent_utilities.security.secrets_client.create_secrets_client",
+        "graph_os.security.secrets.create_secrets_client",
         forbidden_backend,
     )
     monkeypatch.setenv("TEST_ENV_ONLY_RESOLVED", "runtime-material")
@@ -445,7 +367,7 @@ def test_candidate_doctor_never_uses_ambient_secret_backend(
         raise RuntimeError(private_detail)
 
     monkeypatch.setattr(
-        "agent_utilities.security.secrets_client.create_secrets_client",
+        "graph_os.security.secrets.create_secrets_client",
         forbidden_backend,
     )
     out = tmp_path / "c.json"

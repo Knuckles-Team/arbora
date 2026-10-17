@@ -5,6 +5,20 @@
   "delivery_state": "SPECIFIED",
   "requirement_ids": [
     "GRAPHOS-HOST-R001",
+    "GRAPHOS-HOST-R001.1",
+    "GRAPHOS-HOST-R001.2",
+    "GRAPHOS-HOST-R001.2.1",
+    "GRAPHOS-HOST-R001.2.2",
+    "GRAPHOS-HOST-R001.2.3",
+    "GRAPHOS-HOST-R001.3",
+    "GRAPHOS-HOST-R001.4",
+    "GRAPHOS-HOST-R001.5",
+    "GRAPHOS-HOST-R001.6",
+    "GRAPHOS-HOST-R001.8",
+    "GRAPHOS-HOST-R001.9",
+    "GRAPHOS-HOST-R001.9.1",
+    "GRAPHOS-HOST-R001.9.2",
+    "GRAPHOS-HOST-R001.10",
     "GRAPHOS-HOST-R002",
     "GRAPHOS-HOST-R003",
     "GRAPHOS-HOST-R004",
@@ -177,17 +191,209 @@
     "GRAPHOS-HOST-R009.8.1",
     "GRAPHOS-HOST-R009.8.2",
     "GRAPHOS-HOST-R009.8.2.1",
-    "GRAPHOS-HOST-R009.8.2.2"
+    "GRAPHOS-HOST-R009.8.2.2",
+    "GRAPHOS-HOST-R008.1000",
+    "GRAPHOS-HOST-R008.1001",
+    "GRAPHOS-HOST-R008.1002",
+    "GRAPHOS-HOST-R008.1003",
+    "GRAPHOS-HOST-R008.1004",
+    "GRAPHOS-HOST-R008.1005",
+    "GRAPHOS-HOST-R008.1006",
+    "GRAPHOS-HOST-R008.1007",
+    "GRAPHOS-HOST-R008.1008"
   ],
   "requirements": [
     {
       "id": "GRAPHOS-HOST-R001",
       "title": "Cross-repository composition boundary assignment",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "9760bef27075"
       ],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-HOST-R001.1",
+        "GRAPHOS-HOST-R001.2",
+        "GRAPHOS-HOST-R001.3",
+        "GRAPHOS-HOST-R001.4",
+        "GRAPHOS-HOST-R001.5",
+        "GRAPHOS-HOST-R001.6",
+        "GRAPHOS-HOST-R001.8",
+        "GRAPHOS-HOST-R001.9",
+        "GRAPHOS-HOST-R001.10"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.1",
+      "title": "GraphOS owns the MCP, REST and API serving code that agent-utilities 3.0.0 drops",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "4eb2b408bd93"
+      ],
+      "verified_by": [
+        "tests/test_package_layout.py:120"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.2",
+      "title": "GraphOS registers the harness host bindings at startup",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "9e7f6499d96f"
+      ],
+      "verified_by": [
+        "tests/mcp_server/test_harness_host.py:109",
+        "tests/mcp_server/test_harness_host.py:141",
+        "tests/mcp_server/test_harness_host.py:29",
+        "tests/mcp_server/test_harness_host.py:37",
+        "tests/mcp_server/test_harness_host.py:76"
+      ],
+      "rollup_of": [
+        "GRAPHOS-HOST-R001.2.1",
+        "GRAPHOS-HOST-R001.2.2",
+        "GRAPHOS-HOST-R001.2.3"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.2.1",
+      "title": "GraphOS binds the run-loop providers at startup",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "25e15e2108e1"
+      ],
+      "verified_by": [
+        "tests/test_agent_runs.py:42",
+        "tests/test_agent_runs.py:60",
+        "tests/test_agent_runs.py:77"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.2.2",
+      "title": "A served agents.run call runs end to end",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "cc6349408a14",
+        "d3d50ac5d766"
+      ],
+      "verified_by": [
+        "tests/test_agents_run_end_to_end.py:117",
+        "tests/test_agents_run_end_to_end.py:164"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.2.3",
+      "title": "The served process mounts the operation-invoke API",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "192099593cdd"
+      ],
+      "verified_by": [
+        "tests/test_served_operation_api.py:175",
+        "tests/test_served_operation_api.py:217"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.3",
+      "title": "GraphOS ships the surface client as its generated client",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "9e7f6499d96f"
+      ],
+      "verified_by": [
+        "tests/deployment/test_generated_client_wheel.py:16"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.4",
+      "title": "Provider plugin entry-point groups use the connector SDK namespace",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "9e7f6499d96f"
+      ],
+      "verified_by": [
+        "tests/deployment/test_graphos_deploy_artifacts.py:103"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.5",
+      "title": "The moved serving code keeps its tests and runs on FastMCP 4",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "9e7f6499d96f"
+      ],
+      "verified_by": [
+        "tests/test_package_layout.py:136"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.6",
+      "title": "GraphOS publishes its operation registry as versioned data",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "9e7f6499d96f"
+      ],
+      "verified_by": [
+        "tests/mcp_server/test_operation_registry.py:11",
+        "tests/mcp_server/test_operation_registry.py:17"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.8",
+      "title": "Gate G-26: the served MCP surface is wired to epistemic-graph",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "3f7190f32493",
+        "9e7f6499d96f"
+      ],
+      "verified_by": [
+        "tests/mcp_server/test_engine_wiring_gate.py:115",
+        "tests/mcp_server/test_engine_wiring_gate.py:22",
+        "tests/mcp_server/test_engine_wiring_gate.py:34",
+        "tests/mcp_server/test_engine_wiring_gate.py:44",
+        "tests/mcp_server/test_engine_wiring_gate.py:65"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.9",
+      "title": "The tiny profile serves the graph with zero containers",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [
+        "9e7f6499d96f"
+      ],
+      "verified_by": [
+        "tests/deployment/test_small_profile_footprint.py:33"
+      ],
+      "rollup_of": [
+        "GRAPHOS-HOST-R001.9.1",
+        "GRAPHOS-HOST-R001.9.2"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.9.1",
+      "title": "The served surface imports no external-service driver",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/deployment/test_small_profile_footprint.py:34"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.9.2",
+      "title": "The tiny profile serves the graph with zero containers",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.10",
+      "title": "GraphOS owns provider discovery over the connector SDK groups",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "3f7190f32493"
+      ],
+      "verified_by": [
+        "tests/core/test_providers.py:24"
+      ]
     },
     {
       "id": "GRAPHOS-HOST-R002",
@@ -201,6 +407,7 @@
       "title": "Web UI rename cutover across GraphOS",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "15bc1fd4c49e",
         "4ca77fbff9e3",
         "6dda5ac3548c"
       ],
@@ -356,7 +563,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R005.2.3.3",
-      "title": "Add graph-os operation for `backfill_platform_history` and `corpus`",
+      "title": "Add graph-os operation for `corpus`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1043,7 +1250,16 @@
         "GRAPHOS-HOST-R008.3",
         "GRAPHOS-HOST-R008.4",
         "GRAPHOS-HOST-R008.5",
-        "GRAPHOS-HOST-R008.6"
+        "GRAPHOS-HOST-R008.6",
+        "GRAPHOS-HOST-R008.1000",
+        "GRAPHOS-HOST-R008.1001",
+        "GRAPHOS-HOST-R008.1002",
+        "GRAPHOS-HOST-R008.1003",
+        "GRAPHOS-HOST-R008.1004",
+        "GRAPHOS-HOST-R008.1005",
+        "GRAPHOS-HOST-R008.1006",
+        "GRAPHOS-HOST-R008.1007",
+        "GRAPHOS-HOST-R008.1008"
       ]
     },
     {
@@ -1236,11 +1452,17 @@
     {
       "id": "GRAPHOS-HOST-R024",
       "title": "`graph_os.mcp_server.server` registers GraphOS's own intent surface, not the agent runtime's",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "c39349d16c53"
+        "2646511870e7",
+        "ab0d4bed45c4",
+        "c39349d16c53",
+        "d5f69ae59c75"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_real_boot.py:473",
+        "tests/test_real_boot.py:503"
+      ]
     },
     {
       "id": "GRAPHOS-HOST-R025",
@@ -1469,9 +1691,9 @@
       "verified_by": [
         "tests/agent_host/test_start_admission.py:105",
         "tests/agent_host/test_start_admission.py:118",
-        "tests/agent_host/test_start_admission.py:154",
-        "tests/agent_host/test_start_admission.py:165",
-        "tests/agent_host/test_start_admission.py:180"
+        "tests/agent_host/test_start_admission.py:150",
+        "tests/agent_host/test_start_admission.py:161",
+        "tests/agent_host/test_start_admission.py:176"
       ]
     },
     {
@@ -1493,11 +1715,11 @@
         "906170980099"
       ],
       "verified_by": [
-        "tests/agent_host/test_start_admission.py:258",
-        "tests/agent_host/test_start_admission.py:299",
-        "tests/agent_host/test_start_admission.py:325",
-        "tests/agent_host/test_start_admission.py:341",
-        "tests/agent_host/test_start_admission.py:348"
+        "tests/agent_host/test_start_admission.py:254",
+        "tests/agent_host/test_start_admission.py:295",
+        "tests/agent_host/test_start_admission.py:321",
+        "tests/agent_host/test_start_admission.py:337",
+        "tests/agent_host/test_start_admission.py:344"
       ]
     },
     {
@@ -1726,6 +1948,69 @@
         "tests/agent_host/test_log_metadata.py:2",
         "tests/agent_host/test_log_sink_terminal.py:60"
       ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1000",
+      "title": "Startup bindings for messaging, A2A and readiness",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1001",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1002",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1003",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1004",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1005",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1006",
+      "title": "Hosted observability, ecosystem and deployment modules",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1007",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1008",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     }
   ]
 }

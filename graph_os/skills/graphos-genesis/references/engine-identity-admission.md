@@ -22,7 +22,7 @@ if signer != context.principal() {
 So there is no such thing as a separate "provisioner" identity that admits on another
 process's behalf. A process admits using its own verified principal, signing as itself,
 or it does not admit at all. The admission resolver (today
-`agent_utilities.security.admission_authority.resolve_admission_authority()`, in
+the engine admission authority, in
 the orchestration library graph-os imports) is the single resolver that expresses this: it reads the
 bound verified actor, uses that principal as both `agent_id` and `signer_id`, and finds
 that principal's key in this process's own signer registry. It never reads a secrets
@@ -38,7 +38,7 @@ Every admission bridge — tenant (`tenant_admission_cli`), Tier-2
 - It is **not** tenant content access. It grants nothing on any `tenant__*` graph.
 - It **is** a shared HMAC key that lets a process register an engine identity
   (`RegisterIdentity`) and mint/grant a narrow RBAC role
-  (`agent_utilities.security.system_rbac_admission.CONTROL_ROLE_NAME`,
+  (the control role,
   `"control:system"`) with exactly Read + Write on the engine's isolated control
   graph (`CONTROL_GRAPH_NAME`, `"__control__"`, defined in
   `agent_utilities/knowledge_graph/core/shard_topology.py`).
@@ -51,8 +51,8 @@ Every admission bridge — tenant (`tenant_admission_cli`), Tier-2
 
 **graph-os.** It is the process that talks to the engine on the platform's behalf, and
 it serves the agent-webui dashboard in-process as a supervised co-service
-(`agent_utilities.server.webui_co_service`, wired by
-`agent_utilities.mcp.co_service_supervisor`, enabled by `ENABLE_WEB_UI`). A co-service
+(`graph_os.webui_host.webui_co_service`, wired by
+`graph_os.mcp_server.backing.co_service_supervisor`, enabled by `ENABLE_WEB_UI`). A co-service
 runs on `_authorized_background_thread`, inheriting graph-os's verified actor and
 `GraphSession` for its whole lifetime — so a browser sign-in that must enrol a new user
 principal in `tenant:<slug>` is admitted by graph-os, signing as graph-os.

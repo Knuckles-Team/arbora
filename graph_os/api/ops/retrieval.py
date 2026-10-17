@@ -3,8 +3,7 @@
 ``retrieval.search`` runs a context-budgeted retrieval through one typed port
 under the caller's own tenant and authority; there is no local cache
 substitute. An uncomposed retriever fails closed with a typed ``UNAVAILABLE``
-refusal, matching :mod:`graph_os.api.ops.ingest` and
-:mod:`graph_os.api.ops.memory`.
+refusal, matching :mod:`graph_os.api.ops.ingest`.
 """
 
 from __future__ import annotations

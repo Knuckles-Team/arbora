@@ -12,10 +12,9 @@ from graph_os.mcp_server import runtime
 def test_surface_serves_intent_contract_and_registers_host_operations(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from agent_utilities.mcp import graphos_surface, kg_server
-
     from graph_os.a2a import mcp as a2a_mcp
     from graph_os.browser_control import mcp as browser_mcp
+    from graph_os.mcp_server.backing import graphos_surface
 
     served = object()
     backing = object()
@@ -23,7 +22,7 @@ def test_surface_serves_intent_contract_and_registers_host_operations(
 
     def surface(mcp: Any, **_: Any) -> Any:
         calls.append(("surface", mcp, None))
-        kg_server.REGISTERED_TOOLS["graph_query"] = object()
+        runtime.REGISTERED_TOOLS["graph_query"] = object()
         return backing
 
     monkeypatch.setattr(graphos_surface, "register_graphos_surface", surface)
@@ -37,8 +36,14 @@ def test_surface_serves_intent_contract_and_registers_host_operations(
         "register_a2a_tools",
         lambda mcp, *, tools=None: calls.append(("a2a", mcp, tools)),
     )
+    from graph_os import host_bindings
+
+    monkeypatch.setattr(
+        host_bindings,
+        "mount_sdk_a2a",
+        lambda mcp: calls.append(("sdk_a2a", mcp, None)),
+    )
     monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {})
-    monkeypatch.setattr(kg_server, "REGISTERED_TOOLS", {})
 
     runtime._register_graph_tool_surface(served)
 
@@ -47,6 +52,7 @@ def test_surface_serves_intent_contract_and_registers_host_operations(
         # Browser control and A2A are ``act`` operations on the backing server.
         ("browser", backing, None),
         ("a2a", served, backing),
+        ("sdk_a2a", served, None),
     ]
     # REST dispatches exactly what the intent tools route to.
     assert "graph_query" in runtime.REGISTERED_TOOLS

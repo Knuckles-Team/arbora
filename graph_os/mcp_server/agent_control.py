@@ -5,12 +5,11 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any, Protocol
 
-from agent_utilities.api import (
+from graph_os.api.contracts import (
     AgentControlPlane,
     GraphRlmRequest,
     compose_agent_control_plane,
 )
-
 from graph_os.mcp_server import runtime
 
 ControlPlaneFactory = Callable[[Any, Any], AgentControlPlane]
@@ -32,8 +31,7 @@ def register_graph_rlm(
     @mcp.tool(
         name="graph_rlm",
         description=(
-            "Run, benchmark, or evolve a recursive language model through the "
-            "verified agent control plane."
+            "Run a recursive language model through the verified agent control plane."
         ),
         tags={"graph-os", "agent-control-plane", "rlm"},
     )

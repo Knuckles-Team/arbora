@@ -118,7 +118,7 @@ async def test_per_server_max_concurrency_override_beats_global_default():
     runtime = ChildRuntime("custom", {"max_concurrency": 3})
     assert runtime.max_concurrency == 3
 
-    from agent_utilities.core.config import config
+    from graph_os.core.settings import runtime_config as config
 
     runtime_default = ChildRuntime("default", {})
     assert runtime_default.max_concurrency == config.mcp_child_max_concurrency
@@ -944,7 +944,7 @@ async def test_metrics_are_noop_safe_without_prometheus():
     # The multiplexer runs standalone; every metric must degrade to a no-op
     # when prometheus_client (the optional extra) is absent — and be a real
     # series when it is installed. Either way these calls must not raise.
-    from agent_utilities.observability import gateway_metrics as gm
+    from graph_os.observability import gateway_metrics as gm
 
     gm.MCP_CHILD_CALLS.labels(server="x", outcome="ok").inc()
     gm.MCP_CHILD_BREAKER_STATE.labels(server="x").set(2.0)

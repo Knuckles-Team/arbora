@@ -7,11 +7,9 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import Mock
 
-import agent_utilities
+import agent_utilities.graph
 import pytest
 import uvicorn
-from agent_utilities.api.session import GraphSession
-from agent_utilities.security.brain_context import ActorContext
 
 import graph_os.agent_host as host
 from graph_os.agent_host.start_admission import (
@@ -22,8 +20,10 @@ from graph_os.agent_host.start_admission import (
     HostStartRequest,
 )
 from graph_os.agent_host.start_configuration import HostStartConfiguration
+from graph_os.api.contracts.session import GraphSession
 from graph_os.identity.engine import Resolution
 from graph_os.identity.ports import SessionState
+from graph_os.security.actor_context import ActorContext
 
 
 class Owners:
@@ -136,12 +136,8 @@ def test_grant_mismatch_refuses_before_host_effects(
     build = Mock(side_effect=AssertionError("host built"))
     monkeypatch.setattr(host, "build_agent_host_app", build)
     effects = Mock(side_effect=AssertionError("startup effect"))
-    for name in (
-        "initialize_workspace",
-        "create_graph_agent",
-        "initialize_graph_from_workspace",
-    ):
-        monkeypatch.setattr(agent_utilities, name, effects)
+    for name in ("create_graph_agent", "initialize_graph_from_workspace"):
+        monkeypatch.setattr(agent_utilities.graph, name, effects)
     monkeypatch.setattr(uvicorn, "run", effects)
     with pytest.raises(PermissionError):
         host.create_agent_server(

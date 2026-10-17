@@ -2,15 +2,13 @@
 
 Hosts the gateway-health producer and the shared health-intelligence kernels
 moved from the agent runtime (CONCEPT:AU-OS.observability.unified-health-kernels,
-``agent_utilities.observability.health`` ported verbatim). Metric-agnostic
+ported verbatim). Metric-agnostic
 anomaly-detection reasoning (distill → baseline → detect → correlate) that any
 graph-os telemetry producer (e.g. ``graph_os.observability.gateway_health``)
-can wire a signal into. KG I/O stays with
-``agent_utilities.observability.health_ingest`` until that module moves too;
-this package is reason-only, same as its AU predecessor. Further
-AU-BOUNDARY-R014 observability modules (``gateway_metrics``,
-``runtime_health``, ``health_ingest``) land here incrementally, one
-GRAPHOS-HOST-R008 slice at a time.
+can wire a signal into. The knowledge engine owns anomaly and incident
+records; this package is reason-only.
+The gateway metrics, the runtime health core, the trace export setup and the
+correlation context live here too (GRAPHOS-HOST-R008).
 """
 
 from __future__ import annotations

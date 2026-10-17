@@ -5,21 +5,12 @@ from __future__ import annotations
 import contextlib
 from collections.abc import Iterator
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import pytest
-from agent_utilities.api.catalog import AgentCatalogRecord, WorkflowCatalogRecord
 
 from graph_os.fleet.catalog_reader import DeferredFleetCatalogReader
 from graph_os.mcp_server import catalog_composition as composition
-
-
-class CatalogPorts:
-    async def list_current_workflows(self) -> list[WorkflowCatalogRecord]:
-        return []
-
-    async def list_authorized_agents(self) -> list[AgentCatalogRecord]:
-        return []
 
 
 class GraphCompute:
@@ -63,8 +54,8 @@ async def test_startup_injects_generated_clients_and_public_catalog_ports(
     engine = SimpleNamespace(graph_compute=compute)
     deferred = DeferredFleetCatalogReader()
     mux = Multiplexer()
-    workflows = CatalogPorts()
-    agents = CatalogPorts()
+    workflows = object()
+    agents = object()
     installed: list[Any] = []
 
     monkeypatch.setattr(
@@ -98,9 +89,9 @@ async def test_startup_injects_generated_clients_and_public_catalog_ports(
         session=Session(),
         deferred_fleet=deferred,
         multiplexer=mux,
-        catalog_ports_factory=lambda received_engine, received_session: (
-            workflows,
-            agents,
+        catalog_ports_factory=lambda received_engine, received_session: cast(
+            Any,
+            (workflows, agents),
         ),
         bind_graph=bind_graph,
     )
@@ -153,9 +144,8 @@ async def test_failed_initial_refresh_aborts_startup_without_static_fallback(
             session=Session(),
             deferred_fleet=deferred,
             multiplexer=Multiplexer(fail=True),
-            catalog_ports_factory=lambda engine, session: (
-                CatalogPorts(),
-                CatalogPorts(),
+            catalog_ports_factory=lambda engine, session: cast(
+                Any, (object(), object())
             ),
             bind_graph=lambda graph: contextlib.nullcontext(),
         )

@@ -5,3 +5,22 @@ hass
 # Comparative statics is the economics term used by the provider's
 # PenaltyPolicy schema; preserve its digest-bound contract description.
 statics
+# "deriver" is the real name of the derivation component (a thing that derives).
+deriver
+# LOD is the level-of-detail parameter (graph rendering term), not a typo of "load".
+lod
+# NotIn is the SPARQL/filter operator identifier (NOT IN), emitted as a CamelCase name.
+notin
+# "asend" is the async-generator protocol method (agen.asend), not "ascend".
+asend
+# Apostrophe-free negation tokens the evidence contradiction scan matches
+# after tokenization; they are vocabulary, not typos.
+cant
+dont
+doesnt
+didnt
+wont
+isnt
+arent
+wasnt
+werent

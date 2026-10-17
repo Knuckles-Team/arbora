@@ -33,7 +33,7 @@ def _public_au_catalog_ports(
 ) -> tuple[WorkflowCatalogReadPort, AgentCatalogReadPort]:
     """Resolve only AU's public execution/control-plane application seam."""
 
-    from agent_utilities.api import catalog_read_ports
+    from graph_os.api.contracts import catalog_read_ports
 
     return catalog_read_ports(engine, session)
 
@@ -46,7 +46,7 @@ def _bind_session_graph(graph: str) -> AbstractContextManager[object]:
     the same verified authority re-targeted to that graph.
     """
 
-    from agent_utilities.api.session import resolve_session, use_session
+    from graph_os.api.contracts.session import resolve_session, use_session
 
     return use_session(resolve_session().with_graph(graph))
 
@@ -54,7 +54,7 @@ def _bind_session_graph(graph: str) -> AbstractContextManager[object]:
 def _use_process_session(session: Any) -> AbstractContextManager[object]:
     """Bind the GraphOS process session for one browser catalog read."""
 
-    from agent_utilities.api.session import use_session
+    from graph_os.api.contracts.session import use_session
 
     return use_session(session)
 

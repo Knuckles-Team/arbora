@@ -36,7 +36,6 @@ def test_reference_doc_exists_and_is_substantial() -> None:
         "control:system",
         "__control__",
         "CypherEngineError",
-        "resolve_admission_authority",
         "register_identity",
         "RegisterIdentity",
         "SIGNER_TRUST_DENIED",

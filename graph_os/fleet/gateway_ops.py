@@ -221,17 +221,17 @@ def tool_for_multiplexer_ops(ops: Any) -> ToolFor:
 
 
 def oauth_delegated_call_for_mux(mux: Any) -> DelegatedCall:
-    """Use only the per-principal OAuth child path; never the shared pool.
+    """Use one dedicated child session per call; never the shared pool.
 
-    ``call_oauth_gated_tool`` opens an ephemeral caller-grant session. A static
-    service child or malformed OAuth declaration fails inside that path.
+    ``call_admitted_child_once`` uses the caller's own grant for an
+    OAuth-gated child and GraphOS's service credential for any other child.
     """
 
     async def delegated(
         server: str, tool: str, arguments: Mapping[str, Any], caller: Any
     ) -> Any:
-        from agent_utilities.api import use_session
-        from agent_utilities.security.brain_context import use_actor
+        from graph_os.api.contracts import use_session
+        from graph_os.security.actor_context import use_actor
 
         session = caller.session
         if session is None:
@@ -244,7 +244,7 @@ def oauth_delegated_call_for_mux(mux: Any) -> DelegatedCall:
         ):
             raise PermissionError("delegated caller does not match verified session")
         with use_actor(actor), use_session(session):
-            result = await mux.call_oauth_gated_tool(server, tool, dict(arguments))
+            result = await mux.call_admitted_child_once(server, tool, dict(arguments))
         if bool(getattr(result, "is_error", getattr(result, "isError", False))):
             raise FleetRefusal(_child_error_code(result), server, tool)
         return result.model_dump(mode="json", by_alias=True)

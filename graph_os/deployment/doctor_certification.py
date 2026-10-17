@@ -7,6 +7,8 @@ import stat
 from dataclasses import dataclass
 from typing import Any
 
+from graph_os.api.errors import not_served
+
 from .doctor_support import _result
 
 
@@ -21,9 +23,9 @@ def _validate_skill_certification_regular_inputs(
     """
     from pathlib import Path
 
-    # Skill certification remains AU-owned product tooling.  The host doctor
-    # reports its readiness, but graph-os does not duplicate that implementation.
-    from agent_utilities.deployment.skill_validation_assets import _read_regular
+    # The host doctor reports certification readiness; the bounded asset
+    # readers live in graph_os.deployment.certification_assets.
+    from graph_os.deployment.certification_assets import _read_regular
 
     if any(value is None for value in path_values):
         raise RuntimeError("skill_certification_path_missing")
@@ -57,9 +59,7 @@ def _validate_skill_certification_profile(
     """Bind the runtime profile to the *active* configuration; raise otherwise."""
     from agent_utilities.core.paths import config_dir
 
-    # Skill certification remains AU-owned product tooling; graph-os only
-    # consumes its validation helpers while reporting host readiness.
-    from agent_utilities.deployment.skill_validation_assets import (
+    from graph_os.deployment.certification_assets import (
         _configuration_proof,
         _identity_authority_configuration,
         _json_without_duplicates,
@@ -84,22 +84,8 @@ def _validate_skill_certification_commands(
     cfg: Any, command_values: tuple[Any, ...]
 ) -> None:
     """The GraphOS endpoint must be the active one and the argv arrays sound."""
-    from pathlib import Path
 
-    from agent_utilities.skills.runtime_validation import (
-        _validate_external_command_argv,
-    )
-
-    if (
-        str(cfg.mcp_url or "").strip()
-        != str(cfg.skill_cert_graphos_endpoint or "").strip()
-    ):
-        raise RuntimeError("graph_os_endpoint_not_active")
-    graph_os = _validate_external_command_argv(command_values[0])
-    _validate_external_command_argv(command_values[1])
-    _validate_external_command_argv(command_values[2])
-    if Path(graph_os[0]).name != "graph-os":
-        raise RuntimeError("graph_os_executable_invalid")
+    raise not_served("skills.runtime_validation", "graph_os/skills", owner="graph-os")
 
 
 def _validate_skill_certification_material(
@@ -122,7 +108,7 @@ def _check_skill_certification() -> dict[str, Any]:
 
     required_count = 8
     try:
-        from agent_utilities.core.config import AgentConfig
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
 
         cfg = AgentConfig()
     except Exception as exc:  # noqa: BLE001 - report only the error category
@@ -327,47 +313,18 @@ def _cert_configuration_gate(
     return None
 
 
-def _cert_validated_commands(cfg: Any, command_maps: tuple[Any, ...]) -> list[Any]:
-    """Every certification command, proven exact-scenario and non-shell argv."""
-    from agent_utilities.core.config import PRODUCTION_CERTIFICATION_SCENARIOS
-    from agent_utilities.skills.runtime_validation import (
-        _validate_external_command_argv,
-    )
-
-    expected = set(PRODUCTION_CERTIFICATION_SCENARIOS)
-    if any(set(command_map) != expected for command_map in command_maps):
-        raise RuntimeError("production_certification_scenarios_not_exact")
-    commands = [
-        cfg.cert_load_command,
-        cfg.cert_metrics_command,
-        cfg.cert_evidence_signer_command,
-        cfg.cert_evidence_verifier_command,
-    ]
-    for command_map in command_maps:
-        commands.extend(
-            command_map[scenario] for scenario in PRODUCTION_CERTIFICATION_SCENARIOS
-        )
-    if not any("{report_file}" in part for part in cfg.cert_load_command):
-        raise RuntimeError("production_certification_load_report_missing")
-    for command in commands:
-        _validate_external_command_argv(command)
-    return commands
-
-
 def _cert_verify_release_manifest(cfg: Any) -> None:
     """The release manifest must verify -- signatures included -- against the matrix."""
     from importlib.resources import as_file, files
     from pathlib import Path
 
     import yaml
+    from scripts.release import check_compatibility as compatibility
 
-    # Production release/certification assets remain AU-owned.  This host
-    # check intentionally consumes, rather than extracts, their validators.
-    from agent_utilities.deployment.skill_validation_assets import (
+    from graph_os.deployment.certification_assets import (
         _json_without_duplicates,
         _read_regular,
     )
-    from scripts.release import check_compatibility as compatibility
 
     release_path = Path(str(cfg.cert_release_manifest))
     release = _json_without_duplicates(
@@ -424,7 +381,9 @@ def _cert_verify_artifacts_dir(cfg: Any) -> None:
 
 def _cert_verify_bearer_token(cfg: Any) -> None:
     """A configured Prometheus bearer ref must resolve to bounded, clean material."""
-    from agent_utilities.security.cli_secrets import resolve_runtime_secret_reference
+    from agent_connector_sdk.credentials.runtime_references import (
+        resolve_runtime_secret_reference,
+    )
 
     if not cfg.cert_prometheus_bearer_token_ref:
         return
@@ -444,106 +403,11 @@ def _cert_resolve_prometheus_trust(cfg: Any) -> Any:
     resolved profile owns temporary trust material and must reach the caller's
     ``finally`` for cleanup even when verification turns out to be disabled.
     """
-    from agent_utilities.core.transport_security import resolve_configured_tls_profile
+    from graph_os.core.transport import resolve_configured_tls_profile
 
     return resolve_configured_tls_profile(
         "certification-prometheus",
         profile_name=cfg.cert_prometheus_tls_profile,
         profile_ref=cfg.cert_prometheus_tls_profile_ref,
         config=cfg,
-    )
-
-
-def _check_production_certification() -> dict[str, Any]:
-    """Validate the complete production-campaign authority without disclosing it."""
-
-    required_count = 13
-    base_data = {
-        "configured_count": 0,
-        "required_count": required_count,
-        "scenario_count": 0,
-        "command_count": 0,
-        "bearer_auth_configured": False,
-        "ready": False,
-        "redacted": True,
-    }
-    try:
-        from agent_utilities.core.config import (
-            PRODUCTION_CERTIFICATION_SCENARIOS,
-            AgentConfig,
-        )
-
-        cfg = AgentConfig()
-    except Exception as exc:  # noqa: BLE001 - never report paths or values
-        return _result(
-            "production_certification",
-            "fail",
-            f"production certification configuration is invalid ({type(exc).__name__})",
-            remediation=(
-                "Configure the current production-certification fields through "
-                "XDG AgentConfig; retired direct hook variables and token files "
-                "are rejected."
-            ),
-            data=base_data,
-        )
-
-    command_maps = (
-        cfg.cert_hook_commands,
-        cfg.cert_fault_action_commands,
-        cfg.cert_fault_probe_commands,
-    )
-    configuration = _cert_configuration_gate(
-        cfg, command_maps, base_data, required_count
-    )
-    if configuration is not None:
-        return configuration
-
-    trust = None
-    try:
-        # Ordered exactly as before the split: commands, then the signed
-        # release, then the artifacts directory, then the bearer token, then
-        # TLS -- so an authority invalid in several ways still reports the same
-        # first failure it always did.
-        commands = _cert_validated_commands(cfg, command_maps)
-        _cert_verify_release_manifest(cfg)
-        _cert_verify_artifacts_dir(cfg)
-        _cert_verify_bearer_token(cfg)
-        trust = _cert_resolve_prometheus_trust(cfg)
-        if not trust.verify_enabled:
-            raise RuntimeError("production_prometheus_tls_verification_disabled")
-    except Exception as exc:  # noqa: BLE001 - never report paths or values
-        return _result(
-            "production_certification",
-            "fail",
-            f"production certification authority is unavailable ({type(exc).__name__})",
-            remediation=(
-                "Provide one signed regular release manifest, one empty private "
-                "artifacts directory, 49 absolute non-shell executable argv "
-                "commands, exact commands for all 15 scenarios, resolvable runtime "
-                "secret references, and a verification-enforcing Prometheus TLS "
-                "profile."
-            ),
-            data=base_data,
-        )
-    finally:
-        if trust is not None:
-            try:
-                trust.cleanup()
-            except Exception:  # noqa: BLE001 - best-effort cleanup cannot disclose material  # nosec B110
-                pass
-
-    return _result(
-        "production_certification",
-        "ok",
-        "production certification inputs and command boundaries are ready",
-        data={
-            "configured_count": required_count,
-            "required_count": required_count,
-            "scenario_count": len(PRODUCTION_CERTIFICATION_SCENARIOS),
-            "command_count": len(commands),
-            "bearer_auth_configured": bool(cfg.cert_prometheus_bearer_token_ref),
-            "prometheus_tls_verification_required": True,
-            "ready": True,
-            "redacted": True,
-        },
     )

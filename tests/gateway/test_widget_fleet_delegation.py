@@ -7,7 +7,6 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
-from agent_utilities.security.brain_context import ActorContext
 
 import graph_os.gateway.aggregator as aggregator_module
 from graph_os.fleet.multiplexer import MCPMultiplexer
@@ -20,6 +19,7 @@ from graph_os.gateway.aggregator import Aggregator
 from graph_os.gateway.models import ServiceConfig
 from graph_os.gateway.registry import Registry
 from graph_os.gateway.widgets.github import Widget as GitHubWidget
+from graph_os.security.actor_context import ActorContext
 
 # GRAPHOS-FLEET-R032: `_fetch_one` now binds the gateway's own service actor
 # (`_run_as_service_actor` -> `_service_authority`) around every widget

@@ -1,17 +1,17 @@
 """Pydantic request/response models for the core ``/api/graph/*`` REST surface
 plus its non-graph siblings (SCHEMA LANE 3/3).
 
-``kg_server._mount_rest_routes`` mounts these routes with raw Starlette
-``app.add_route(...)`` (see ``agent_utilities/mcp/kg_server.py``), which carries
+``runtime._mount_rest_routes`` mounts these routes with raw Starlette
+``app.add_route(...)`` (see ``graph_os/mcp_server/runtime.py``), which carries
 no request/response schema at all — the live OpenAPI 3.1.0 spec documents
 **zero** ``/api/graph/*`` paths as a result. This module is the typed
 prerequisite for wiring ``response_model=``/body-typed parameters onto those
-routes (a later, single-owner lane); it does not touch ``kg_server.py`` itself.
+routes (a later, single-owner lane); it does not touch ``runtime.py`` itself.
 
 Every model here was derived by reading the actual handler in
-``agent_utilities/mcp/kg_server.py`` and, where the handler dispatches through
+``graph_os/mcp_server/runtime.py`` and, where the handler dispatches through
 ``_execute_tool("<tool>", **body)``, the real target tool signature in
-``REGISTERED_TOOLS`` (``agent_utilities/mcp/tools/*.py``) — never invented.
+``REGISTERED_TOOLS`` (``graph_os/mcp_server/backing/tools/*.py``) — never invented.
 See each model's docstring for its source handler/tool and the exact
 permissiveness contract (``extra="allow"`` vs ``extra="forbid"``) proven
 against that handler's code, not assumed.
@@ -24,9 +24,9 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from agent_utilities.models.evidence_bundle import EvidenceBundle
 from pydantic import BaseModel, ConfigDict, Field
 
+from graph_os.api.evidence import EvidenceBundle
 from graph_os.gateway.schemas.connector import (
     ConnectorRunRequest,
     ConnectorRunResponse,
@@ -44,12 +44,6 @@ __all__ = [
     "GraphResearchRequest",
     "GraphEvaluateRequest",
     "GraphExplainRequest",
-    # graph_observe
-    "GraphObserveRequest",
-    "GraphObserveResponse",
-    # graph_orchestrate
-    "GraphOrchestrateRequest",
-    "GraphOrchestrateResponse",
     # graph_configure (generic + the three bespoke granular twins)
     "GraphConfigureRequest",
     "GraphConfigureResponse",
@@ -90,13 +84,13 @@ class EvidenceBundleEnvelope(BaseModel):
     ``/graph/research``, ``/graph/evaluate``, and ``/graph/explain``.
 
     Every one of those routes dispatches a tool whose declared return type is
-    :class:`~agent_utilities.models.evidence_bundle.EvidenceBundle`; the
+    :class:`~graph_os.api.evidence.EvidenceBundle`; the
     handler serializes it with ``safe_json_load``, which calls
     ``.model_dump()`` on a Pydantic model rather than round-tripping through
     JSON text — so ``result`` is exactly an ``EvidenceBundle`` dump, not a
     freeform dict. Reused verbatim here (not redefined) per the "share one
     definition across identical shapes" rule — see
-    ``agent_utilities/models/evidence_bundle.py`` for the fully-described
+    ``graph_os/api/evidence/bundle.py`` for the fully-described
     field set.
     """
 
@@ -121,7 +115,7 @@ class EvidenceBundleEnvelope(BaseModel):
 class GraphQueryFederatedRequest(BaseModel):
     """Request body for ``POST /graph/query/federated`` — a narrower,
     fixed-scope twin of ``graph_query`` (``graph_query_federated_endpoint`` in
-    ``kg_server.py``).
+    ``runtime.py``).
 
     ``extra="forbid"`` mirrors the handler's explicit allowlist for ``query``,
     ``params``, and ``reference_id``. Unknown fields fail before dispatch.
@@ -209,8 +203,8 @@ GraphExplainAction = Literal["explain", "context", "executable_rag", "recommend"
 
 class GraphCodeRequest(BaseModel):
     """Request body for ``POST /graph/code`` — REST twin of the ``graph_code``
-    MCP tool (``agent_utilities/mcp/tools/analyze_suite.py``), mounted via the
-    shared ``_make_action_endpoint("graph_code")`` factory in ``kg_server.py``.
+    MCP tool (``graph_os/mcp_server/backing/tools/analyze_suite/py``), mounted via the
+    shared ``_make_action_endpoint("graph_code")`` factory in ``runtime.py``.
 
     ``extra="forbid"``: PROVEN — the factory blind-splats ``**body`` into
     ``_execute_tool("graph_code", **body)``, but the tool function itself
@@ -318,178 +312,6 @@ class GraphExplainRequest(BaseModel):
 
 
 # ══════════════════════════════════════════════════════════════════
-# 3. graph_observe
-# ══════════════════════════════════════════════════════════════════
-
-
-class GraphObserveRequest(BaseModel):
-    """Request body for ``POST /graph/observe`` — REST twin of the
-    ``graph_observe`` MCP tool (``agent_utilities/mcp/tools/analyze_suite.py``),
-    mounted via the same ``_make_action_endpoint`` factory.
-
-    ``extra="forbid"``: PROVEN the same way as :class:`GraphCodeRequest` — the
-    tool signature is exactly ``action``/``query``/``top_k`` with no
-    ``**kwargs``.
-    """
-
-    model_config = ConfigDict(extra="forbid")
-
-    action: Literal[
-        "trace_rootcause", "prompt_regression", "failure_cluster", "error_detail"
-    ] = Field(
-        default="trace_rootcause",
-        description="Observability query to run over the trace/score subgraph.",
-    )
-    query: str = Field(
-        default="",
-        description="Agent/capability filter for 'trace_rootcause', or the "
-        "opaque `error.detail_ref` to resolve for 'error_detail'.",
-    )
-    top_k: int = Field(default=20, description="Max rows/clusters to return.")
-
-
-class GraphObserveResponse(BaseModel):
-    """Response envelope for ``POST /graph/observe``.
-
-    Unlike the EvidenceBundle-returning tools above, ``graph_observe``'s own
-    declared return type is a plain ``str``: for 'trace_rootcause'/
-    'prompt_regression'/'failure_cluster' it is ``json.dumps(...)`` of a
-    structured analytics payload (JSON-parsed by `safe_json_load` into a
-    dict); for 'error_detail' it can ALSO return a plain non-JSON prose
-    string (a permission-denied message, or "Error: Unknown observe
-    action ..."), which `safe_json_load` passes through unparsed. `result`
-    is genuinely free-form on the dict side (trace analytics rows vary by
-    query) — modeled permissively rather than inventing structure.
-    """
-
-    model_config = ConfigDict(extra="forbid")
-
-    status: Literal["success"] = Field(description="Always 'success' on this path.")
-    result: dict[str, Any] | str = Field(
-        description="A structured analytics payload (dict, shape depends on "
-        "`action` — free-form, not modeled further) for the three trace "
-        "actions, OR a plain prose string for 'error_detail' failures / an "
-        "unknown-action message."
-    )
-
-
-# ══════════════════════════════════════════════════════════════════
-# 4. graph_orchestrate
-# ══════════════════════════════════════════════════════════════════
-
-
-class GraphOrchestrateRequest(BaseModel):
-    """Request body for ``POST /graph/orchestrate`` — REST twin of the
-    ``graph_orchestrate`` MCP tool (``agent_utilities/mcp/tools/analysis_tools.py``),
-    which resolves and executes one governed local-vLLM delegation.
-
-    ``extra="forbid"``: PROVEN — ``graph_orchestrate_endpoint`` blind-splats
-    ``**body`` into ``_execute_tool("graph_orchestrate", **body)``, but the
-    tool's signature (17 named parameters, no ``**kwargs``) means an unknown
-    field raises ``UnsupportedToolFieldError`` deep inside `_execute_tool`
-    (the endpoint's generic ``except Exception`` still maps it to a REST
-    error, just not the deterministic-400 shape the factory-based endpoints
-    above get — worth a follow-up, out of scope for this schema-only lane).
-    """
-
-    model_config = ConfigDict(extra="forbid")
-
-    task: str = Field(default="", description="Task for the delegated agent.")
-    agent_name: str = Field(
-        default="",
-        description="Optional registered agent name. Empty resolves the "
-        "best ingested skill/workflow/fleet-tool from the KG's unified "
-        "capability ranking.",
-    )
-    skill_name: str = Field(
-        default="",
-        description="Exact ingested AGENT_SKILL name. Mutually exclusive "
-        "with `agent_name`.",
-    )
-    tool_server: str = Field(
-        default="",
-        description="Exact configured MCP server catalog entry to bind to "
-        "`skill_name`, or the server hosting a resolved/ranked fleet tool.",
-    )
-    execution_mode: Literal["auto", "pydantic_graph"] = Field(
-        default="auto",
-        description="'auto' selects the leanest governed route; "
-        "'pydantic_graph' requires `skill_name`, `tool_server`, and a "
-        "non-empty `allowed_tools`.",
-    )
-    max_steps: int = Field(default=30, description="Maximum delegated tool-loop steps.")
-    context: str = Field(
-        default="",
-        description="Curated inline context injected into the delegated agent.",
-    )
-    budget_tokens: int = Field(
-        default=0, description="Hard total-token budget; zero uses the runtime default."
-    )
-    context_ref: str = Field(
-        default="", description="Persisted ContextBlob id to resolve and inject."
-    )
-    allowed_tools: str | list[str] = Field(
-        default="",
-        description="Least-privilege tool allow-list as a JSON list or "
-        "comma-separated string.",
-    )
-    required_tools: str | list[str] = Field(
-        default="",
-        description="Tools that must each have recorded ToolCall provenance "
-        "before the run can succeed. Must be a subset of `allowed_tools`.",
-    )
-    cred_ref: str = Field(
-        default="",
-        description="Reference to an ephemeral credential in the secrets backend.",
-    )
-    open_channel: bool = Field(
-        default=False,
-        description="Open a native bidirectional message channel for this run.",
-    )
-    reasoning_effort: str = Field(
-        default="",
-        description="'low'/'medium'/'high' to turn reasoning ON for a "
-        "delegated execution; empty = off / inherit the model's setting.",
-    )
-    model_class: str = Field(
-        default="standard",
-        description="Required configured model class: 'economy' | 'standard'.",
-    )
-    response_format: Literal["text", "json"] = Field(
-        default="text",
-        description="'text' for ordinary prose, 'json' for one "
-        "Pydantic-validated JSON object.",
-    )
-    grounding: Literal["required", "best_effort", "none"] = Field(
-        default="required",
-        description="'required' fails the run closed if mandatory evidence "
-        "compilation fails; 'best_effort'/'none' explicitly opt into "
-        "degraded, marked-as-such operation.",
-    )
-
-
-class GraphOrchestrateResponse(BaseModel):
-    """Response envelope for ``POST /graph/orchestrate``.
-
-    The tool's own return type is ``str`` (``json.dumps(payload)``); the
-    handler JSON-parses it via ``safe_json_load``. `payload` is explicitly
-    documented by the tool as including "resolution, run/session handles,
-    tool-call provenance, and any approval request" plus `output`/`mermaid` —
-    genuinely free-form across execution modes, so `result` is modeled
-    permissively rather than inventing a fixed key set.
-    """
-
-    model_config = ConfigDict(extra="forbid")
-
-    status: Literal["success"] = Field(description="Always 'success' on this path.")
-    result: dict[str, Any] = Field(
-        description="Free-form delegation result — resolution info, run/session "
-        "handles, tool-call provenance, any approval request, plus `output` "
-        "and `mermaid` keys (always present, possibly null/empty)."
-    )
-
-
-# ══════════════════════════════════════════════════════════════════
 # 5. graph_configure (generic + the three bespoke granular twins this lane
 #    owns: doctor, secret, vault-sync)
 # ══════════════════════════════════════════════════════════════════
@@ -497,7 +319,7 @@ class GraphOrchestrateResponse(BaseModel):
 
 class GraphConfigureRequest(BaseModel):
     """Request body for ``POST /graph/configure`` — REST twin of the
-    ``graph_configure`` MCP tool (``agent_utilities/mcp/tools/analysis_tools.py``).
+    ``graph_configure`` MCP tool (``graph_os/mcp_server/backing/tools/analysis_tools/py``).
 
     ``extra="forbid"``: PROVEN — ``graph_configure_endpoint`` blind-splats
     ``**body`` into ``_execute_tool("graph_configure", **body)``, and the
@@ -566,7 +388,7 @@ class GraphConfigureResponse(BaseModel):
 class GraphConfigureSecretRequest(BaseModel):
     """Request body for ``POST /graph/configure/secret`` — REST twin of
     ``graph_configure(action='set_secret')`` (``graph_configure_secret_endpoint``
-    in ``kg_server.py``).
+    in ``runtime.py``).
 
     ``extra="allow"``: PROVEN — the handler reads exactly `config_key` and
     `config_value` via `body.get(...)` and forwards only those two as fixed
@@ -626,7 +448,7 @@ class GraphConfigureSecretResponse(BaseModel):
 class GraphConfigureVaultSyncRequest(BaseModel):
     """Request body for ``POST /graph/configure/vault-sync`` — REST twin of
     ``graph_configure(action='vault_sync')`` (``graph_configure_vault_sync_endpoint``
-    in ``kg_server.py``, CONCEPT:AU-OS.deployment.vault-first-routine-genesis).
+    in ``runtime.py``, CONCEPT:AU-OS.deployment.vault-first-routine-genesis).
 
     ``extra="allow"``: PROVEN the same way as :class:`GraphConfigureSecretRequest`
     — only `config_key`/`config_value` are read.
@@ -729,7 +551,7 @@ class HookDoctorEntry(BaseModel):
 class GraphConfigureDoctorResponse(BaseModel):
     """Response envelope for ``POST /graph/configure/doctor`` — REST twin of
     ``graph_configure(action='doctor')`` (``graph_configure_doctor_endpoint``
-    in ``kg_server.py``, no request body). `result` is keyed by internal
+    in ``runtime.py``, no request body). `result` is keyed by internal
     agent-surface identifiers (e.g. 'claude-code', 'agent-terminal-ui') —
     modeled as an open mapping rather than a closed key set since the agent
     surface roster can grow.

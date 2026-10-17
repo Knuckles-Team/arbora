@@ -1,268 +1,176 @@
-"""Focused tests for the durable messaging intake lease boundary."""
+"""The messaging intake lease runs on the engine's served WorkItem methods."""
 
 from __future__ import annotations
 
+import contextvars
 import threading
+from types import SimpleNamespace
 from typing import Any
 
-from agent_utilities.knowledge_graph.core.session import (
-    GraphSession,
-    SessionRequiredError,
-    current_session,
-    use_session,
-)
-from agent_utilities.knowledge_graph.core.work_durability import NativeWorkItemRequired
-from agent_utilities.security.actor_identity import ActorType
-from agent_utilities.security.brain_context import ActorContext
+import pytest
 
 from graph_os.messaging import lease as intake_lease
 
 
-def _verified_session() -> GraphSession:
-    actor = ActorContext(
-        actor_id="intake-lease-test",
-        actor_type=ActorType.AUTOMATED_SERVICE,
-        roles=("system",),
-        tenant_id="test-tenant",
-        authenticated=True,
-    )
-    return GraphSession(
-        actor=actor,
-        tenant=actor.tenant_id,
-        scopes=frozenset({"kg:admin"}),
-        policy_version="current",
-        audience="graph-runtime",
-    )
+class FakeWorkItems:
+    """The engine's WorkItem namespace: one owner per row, renewals by script."""
 
+    def __init__(self, *, renew: Any = True) -> None:
+        self.rows: dict[str, dict[str, Any]] = {}
+        self.owner: dict[str, str] = {}
+        self.deferred: list[str] = []
+        self.renew_answer = renew
+        self.lock = threading.Lock()
 
-def test_two_contenders_cannot_both_enter_intake(monkeypatch):
-    """The native claim result, not process-local state, selects one owner."""
-    monkeypatch.setattr(intake_lease, "_identity_digest", lambda platform: "identity")
-    rows: dict[str, dict[str, object]] = {}
-    submit_calls: list[dict[str, Any]] = []
-    claim_calls: list[str] = []
-    lock = threading.Lock()
-    owner: str | None = None
-
-    def _submit(engine, **kwargs):
-        submit_calls.append(kwargs)
-        item_id = str(kwargs["work_item_id"])
-        rows.setdefault(
-            item_id,
-            {
-                "kind": kwargs["kind"],
-                "queue": kwargs["queue"],
-                "tenant": kwargs["tenant"],
-                "metadata": kwargs["metadata"],
-            },
+    def submit(self, request: dict[str, Any]) -> dict[str, Any]:
+        assert request["context"] == {"tenant_id": "tenant-a"}
+        self.rows.setdefault(
+            request["work_item_id"],
+            {"kind": request["kind"], "metadata": request["metadata"]},
         )
-        return item_id, len(submit_calls) == 1
+        return {"created": True}
 
-    def _get_work_item(engine, item_id):
-        return rows.get(item_id)
+    def get(self, *, tenant: str, work_item_id: str) -> dict[str, Any] | None:
+        return self.rows.get(work_item_id)
 
-    def _claim(engine, item_id, *, token, lease_ttl_s):
-        nonlocal owner
-        with lock:
-            claim_calls.append(token)
-            if owner is not None:
-                return None
-            owner = token
-            return {
-                "_native": True,
-                "tenant": "test-tenant",
-                "lease_owner": token,
-                "lease_epoch": 1,
-                "fencing_token": 1,
-            }
+    def claim(self, request: dict[str, Any]) -> dict[str, Any]:
+        with self.lock:
+            item = request["work_item_id"]
+            if item in self.owner:
+                return {"claimed": False, "reason": "empty"}
+            self.owner[item] = request["worker_ref"]
+            return {"claimed": True, "lease_epoch": 1, "fencing_token": 1}
 
-    monkeypatch.setattr(intake_lease, "submit_work_item_atomic", _submit)
-    monkeypatch.setattr(intake_lease, "get_work_item", _get_work_item)
-    monkeypatch.setattr(intake_lease, "claim_specific", _claim)
+    def renew(self, *, work_item_id: str, **_: Any) -> dict[str, Any]:
+        answer = self.renew_answer
+        return {"renewed": answer(work_item_id) if callable(answer) else answer}
 
-    results: list[intake_lease.IntakeLease | None] = [None, None]
-
-    def _contend(index: int) -> None:
-        results[index] = intake_lease.acquire_intake_lease(
-            object(), "telegram", _verified_session()
-        )
-
-    threads = [threading.Thread(target=_contend, args=(index,)) for index in range(2)]
-    for thread in threads:
-        thread.start()
-    for thread in threads:
-        thread.join(timeout=5.0)
-
-    assert sum(result is not None for result in results) == 1
-    assert len(claim_calls) == 2
-    assert len(submit_calls) == 2
-    assert all("token" not in call["metadata"] for call in submit_calls)
+    def defer(self, *, work_item_id: str, **_: Any) -> dict[str, Any]:
+        self.deferred.append(work_item_id)
+        return {"deferred": True}
 
 
-def test_missing_native_lease_capability_fails_closed(monkeypatch):
-    monkeypatch.setattr(intake_lease, "_identity_digest", lambda platform: "identity")
-
-    def _unsupported(engine, **kwargs):
-        raise NativeWorkItemRequired("claim_work_item unavailable")
-
-    monkeypatch.setattr(intake_lease, "submit_work_item_atomic", _unsupported)
-    assert (
-        intake_lease.acquire_intake_leases(object(), ["telegram"], _verified_session())
-        == ()
+def _engine(work_items: Any) -> SimpleNamespace:
+    return SimpleNamespace(
+        work_items=work_items,
+        _effective_verified_context=lambda: {"tenant_id": "tenant-a"},
     )
 
 
-def test_lost_renewal_stops_the_listener(monkeypatch):
-    lease = intake_lease.IntakeLease(
-        platform="telegram",
-        item_id="workitem:messaging-intake:test",
+@pytest.fixture(autouse=True)
+def _fixed_identity(monkeypatch):
+    monkeypatch.setattr(intake_lease, "_identity_digest", lambda platform: "identity")
+    monkeypatch.setattr(intake_lease, "_clock", lambda: 1_000.0)
+
+
+SESSION = SimpleNamespace(tenant="tenant-a")
+
+
+def _lease(platform: str) -> intake_lease.IntakeLease:
+    return intake_lease.IntakeLease(
+        platform=platform,
+        item_id=f"workitem:messaging-intake:{platform}",
         claim={
-            "_native": True,
-            "tenant": "test-tenant",
-            "lease_owner": "owner",
+            "tenant": "tenant-a",
+            "worker_ref": "w",
             "lease_epoch": 1,
             "fencing_token": 1,
         },
         lease_ttl_s=0.03,
     )
-    served = threading.Event()
-    monkeypatch.setattr(intake_lease, "heartbeat", lambda *args, **kwargs: False)
-    monkeypatch.setattr(intake_lease, "defer_work_item", lambda *args, **kwargs: True)
 
-    def _serve(platforms, stop_event, platform_stop_events):
-        assert platforms == ["telegram"]
-        assert set(platform_stop_events) == {"telegram"}
-        served.set()
+
+def test_two_contenders_cannot_both_own_intake():
+    work_items = FakeWorkItems()
+    engine = _engine(work_items)
+    results: list[Any] = [None, None]
+    barrier = threading.Barrier(2)
+
+    def contend(index: int) -> None:
+        barrier.wait()
+        results[index] = intake_lease.acquire_intake_lease(engine, "telegram", SESSION)
+
+    threads = [threading.Thread(target=contend, args=(i,)) for i in range(2)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    owners = [result for result in results if result is not None]
+    assert len(owners) == 1
+    assert owners[0].claim["tenant"] == "tenant-a"
+    assert len(work_items.rows) == 1
+
+
+@pytest.mark.parametrize(
+    ("engine", "session"),
+    [
+        (SimpleNamespace(), SESSION),
+        (_engine(FakeWorkItems()), SimpleNamespace(tenant="")),
+    ],
+    ids=["engine-serves-no-work-items", "session-without-tenant"],
+)
+def test_missing_authority_opens_no_poller(engine, session):
+    assert intake_lease.acquire_intake_leases(engine, ["telegram"], session) == ()
+
+
+def test_foreign_row_is_never_claimed():
+    work_items = FakeWorkItems()
+    item_id = intake_lease._work_item_id("telegram", "identity")
+    work_items.rows[item_id] = {"kind": "other", "metadata": {}}
+    with pytest.raises(intake_lease.WorkItemBackendUnavailable):
+        intake_lease.acquire_intake_lease(_engine(work_items), "telegram", SESSION)
+    assert work_items.owner == {}
+
+
+def test_lost_renewal_stops_intake_and_releases_the_lease():
+    work_items = FakeWorkItems(renew=False)
+    stop = threading.Event()
+
+    def serve(platforms, stop_event, platform_events):
         assert stop_event.wait(timeout=2.0)
 
-    intake_lease.run_with_intake_leases(object(), (lease,), threading.Event(), _serve)
-    assert served.is_set()
-
-
-def test_renewal_worker_inherits_ambient_graph_session(monkeypatch):
-    """Bug 1: a bare ``threading.Thread`` does not inherit contextvars, so the
-    lease-renewal thread ran with an EMPTY context — losing the ambient
-    ``GraphSession`` the daemon entered via ``use_session()`` on the main
-    thread before starting the poll loop, even though lease *acquisition* on
-    the calling thread worked fine. The first ``heartbeat()`` call from the
-    renewal thread then raised ``SessionRequiredError`` ~28s later in
-    production. ``run_with_intake_leases`` must carry the ambient session
-    into the renewal thread via ``contextvars.copy_context()``.
-    """
-    lease = intake_lease.IntakeLease(
-        platform="telegram",
-        item_id="workitem:messaging-intake:test",
-        claim={
-            "_native": True,
-            "tenant": "test-tenant",
-            "lease_owner": "owner",
-            "lease_epoch": 1,
-            "fencing_token": 1,
-        },
-        lease_ttl_s=0.05,
+    intake_lease.run_with_intake_leases(
+        _engine(work_items), (_lease("telegram"),), stop, serve
     )
-    session = _verified_session()
-    observed_sessions: list[GraphSession | None] = []
-    heartbeat_called = threading.Event()
-
-    def _heartbeat(engine, item_id, claim, *, lease_ttl_s):
-        # Reproduces the real seam: engine_query/graph_compute._send_routed
-        # raises SessionRequiredError when current_session() is None. The
-        # renewal thread must see the SAME session the test entered below.
-        ambient = current_session()
-        if ambient is None:
-            raise SessionRequiredError(
-                "no ambient GraphSession reached the renewal thread"
-            )
-        observed_sessions.append(ambient)
-        heartbeat_called.set()
-        # Keep the lease alive so the test controls the stop deterministically.
-        return True
-
-    monkeypatch.setattr(intake_lease, "heartbeat", _heartbeat)
-    monkeypatch.setattr(intake_lease, "defer_work_item", lambda *args, **kwargs: True)
-
-    stop_event = threading.Event()
-
-    def _serve(platforms, stop_event_arg, platform_stop_events):
-        assert platforms == ["telegram"]
-        assert set(platform_stop_events) == {"telegram"}
-        assert heartbeat_called.wait(timeout=2.0)
-        stop_event_arg.set()
-
-    with use_session(session):
-        intake_lease.run_with_intake_leases(object(), (lease,), stop_event, _serve)
-
-    assert observed_sessions
-    assert all(seen is session for seen in observed_sessions)
+    assert stop.is_set()
+    assert work_items.deferred == ["workitem:messaging-intake:telegram"]
 
 
-def test_one_platform_lease_loss_leaves_other_platform_serving(monkeypatch):
-    """Bug 3: one platform's lease loss must drop ONLY that platform.
+def test_one_platform_loss_leaves_the_other_serving():
+    work_items = FakeWorkItems(renew=lambda item: not item.endswith("mattermost"))
+    stop = threading.Event()
 
-    Previously ANY lease's renewal failure set the single shared
-    ``stop_event`` unconditionally, and the old poller cancelled ONE asyncio task
-    that owned EVERY backend's listener off that one event — so mattermost
-    losing its lease silently killed telegram's inbound polling too.
-
-    ``run_with_intake_leases`` now calls ``serve`` exactly ONCE with a
-    per-platform ``threading.Event`` map: mattermost's lease loss must set
-    ONLY ``platform_stop_events["mattermost"]``, leaving
-    ``platform_stop_events["telegram"]`` (and the shared ``stop_event``)
-    untouched. GraphOS polling owns the listener cancellation proof.
-    """
-    mattermost = intake_lease.IntakeLease(
-        platform="mattermost",
-        item_id="workitem:messaging-intake:mattermost",
-        claim={
-            "_native": True,
-            "tenant": "test-tenant",
-            "lease_owner": "owner-mm",
-            "lease_epoch": 1,
-            "fencing_token": 1,
-        },
-        lease_ttl_s=0.05,
-    )
-    telegram = intake_lease.IntakeLease(
-        platform="telegram",
-        item_id="workitem:messaging-intake:telegram",
-        claim={
-            "_native": True,
-            "tenant": "test-tenant",
-            "lease_owner": "owner-tg",
-            "lease_epoch": 1,
-            "fencing_token": 1,
-        },
-        lease_ttl_s=0.05,
-    )
-
-    def _heartbeat(engine, item_id, claim, *, lease_ttl_s):
-        # mattermost's lease is lost on every renewal attempt; telegram's
-        # always renews cleanly.
-        return item_id != mattermost.item_id
-
-    monkeypatch.setattr(intake_lease, "heartbeat", _heartbeat)
-    monkeypatch.setattr(intake_lease, "defer_work_item", lambda *args, **kwargs: True)
-
-    stop_event = threading.Event()
-    serve_call: dict[str, object] = {}
-
-    def _serve(platforms, stop_event_arg, platform_stop_events):
-        serve_call["platforms"] = list(platforms)
-
-        # mattermost's per-platform event must fire on its own...
-        assert platform_stop_events["mattermost"].wait(timeout=2.0)
-        # ...while telegram's must NOT, and the shared stop must NOT fire —
-        # losing one of two leases is not a full stop.
-        assert not platform_stop_events["telegram"].wait(timeout=0.3)
-        assert not stop_event_arg.is_set()
-
-        # End the test deterministically (this is what a real SIGTERM, or
-        # every remaining platform also losing its lease, would do).
-        stop_event_arg.set()
+    def serve(platforms, stop_event, platform_events):
+        assert platforms == ["mattermost", "telegram"]
+        assert platform_events["mattermost"].wait(timeout=2.0)
+        assert not platform_events["telegram"].is_set()
+        assert not stop_event.is_set()
+        stop_event.set()
 
     intake_lease.run_with_intake_leases(
-        object(), (mattermost, telegram), stop_event, _serve
+        _engine(work_items), (_lease("mattermost"), _lease("telegram")), stop, serve
     )
 
-    assert serve_call["platforms"] == ["mattermost", "telegram"]
+
+def test_renewal_thread_keeps_the_callers_context():
+    marker: contextvars.ContextVar[str] = contextvars.ContextVar("marker", default="")
+    seen: list[str] = []
+    renewed = threading.Event()
+
+    def renew_answer(_item: str) -> bool:
+        seen.append(marker.get())
+        renewed.set()
+        return True
+
+    stop = threading.Event()
+
+    def serve(platforms, stop_event, platform_events):
+        assert renewed.wait(timeout=2.0)
+        stop_event.set()
+
+    marker.set("caller")
+    intake_lease.run_with_intake_leases(
+        _engine(FakeWorkItems(renew=renew_answer)), (_lease("telegram"),), stop, serve
+    )
+    assert seen and set(seen) == {"caller"}

@@ -881,7 +881,7 @@ async def test_probe_entry_past_ttl_is_reported_stale(tmp_path, monkeypatch):
         "probed_at": fixed_now,
     }
     monkeypatch.setattr(
-        "agent_utilities.core.config.config.mcp_catalog_probe_ttl", 10.0
+        "graph_os.core.settings.runtime_config.mcp_catalog_probe_ttl", 10.0
     )
 
     # Inside the TTL: honestly fresh.
@@ -915,7 +915,7 @@ async def test_probe_catalog_retargets_ttl_expired_cache_entries(tmp_path, monke
         "probed_at": fixed_now,
     }
     monkeypatch.setattr(
-        "agent_utilities.core.config.config.mcp_catalog_probe_ttl", 10.0
+        "graph_os.core.settings.runtime_config.mcp_catalog_probe_ttl", 10.0
     )
 
     calls = 0
@@ -1041,7 +1041,7 @@ async def test_discover_prioritizes_named_server_inside_shared_budget(
 ):
     """A named domain is probed before unrelated fleet fan-out consumes the budget."""
 
-    from agent_utilities.core.config import config as agent_config
+    from graph_os.core.settings import runtime_config as agent_config
 
     tool_map = {
         **{f"slow-{index}-mcp": [] for index in range(24)},
@@ -1808,7 +1808,7 @@ def test_require_fleet_capability_denies_stdio_caller_missing_the_exact_scope():
     """A verified stdio actor that lacks the fleet's own ``mcp:discover``
     scope is refused the same way a remote caller without it would be --
     being local carries no implicit discovery/delegation grant."""
-    from agent_utilities.security.brain_context import ActorContext, use_actor
+    from graph_os.security.actor_context import ActorContext, use_actor
 
     actor = ActorContext(
         actor_id="stdio-caller",
@@ -1827,7 +1827,7 @@ def test_require_fleet_capability_allows_stdio_caller_with_exact_scope():
     fleet's own ``mcp:discover`` scope passes -- the same outcome an
     equally-scoped remote caller gets, proving local stdio runs through the
     identical check rather than a separate, more permissive one."""
-    from agent_utilities.security.brain_context import ActorContext, use_actor
+    from graph_os.security.actor_context import ActorContext, use_actor
 
     actor = ActorContext(
         actor_id="stdio-caller",

@@ -43,7 +43,7 @@ repos:
     stages: [pre-commit]
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: cb8c523fd4835aba42af70f4cad5568db4df0b6c # v0.16.0
+  rev: 38bfb07c0c64c304f47eb52090f8288150c77730 # v0.17.1
   hooks:
   - id: ruff-check
     stages: [pre-commit]
@@ -52,11 +52,11 @@ repos:
     stages: [pre-commit]
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: fc0f09a29bb495f4a91f00266155d6282d52485d # v1.20.2
+  rev: 2834ec6639549dd6796205c8f011dedcd587288b # v2.4.0
   hooks:
   - id: mypy
     stages: [pre-push]
-    additional_dependencies: [pydantic==2.13.4, types-PyYAML==6.0.12.20260906]
+    additional_dependencies: [pydantic==2.13.5, types-PyYAML==6.0.12.20260906]
     args: ["--ignore-missing-imports"]
 
 - repo: https://github.com/jendrikseipp/vulture
@@ -68,7 +68,7 @@ repos:
     args: [".", "--min-confidence", "95", "--exclude", ".venv,.uv-workspace-siblings,build,tests"]
 
 - repo: https://github.com/codespell-project/codespell
-  rev: 2ccb47ff45ad361a21071a7eedda4c37e6ae8c5a # v2.4.2
+  rev: 57b21406f092110c18776e39b0bda50d37c945c8 # v2.4.3
   hooks:
   - id: codespell
     stages: [pre-push]
@@ -84,13 +84,13 @@ repos:
     exclude: ^(tests/|test/)
 
 - repo: https://github.com/AleksaC/hadolint-py
-  rev: 458cb25edf664682e3e856a53a2f9af33e068297 # v2.14.0
+  rev: 6e7504451511eaeb62a3e7f14d63b0296cbf86eb # v2.15.1
   hooks:
   - id: hadolint
     stages: [pre-push]
 
 - repo: https://github.com/astral-sh/uv-pre-commit
-  rev: 6a280ba12b7901e47757c868c8c13c6a624c9ecb # 0.11.7
+  rev: d4acaec07ac3bc6017fba3c3b8e9810af1b615db # 0.13.1
   hooks:
   - id: uv-lock
     stages: [manual]

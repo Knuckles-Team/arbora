@@ -20,50 +20,28 @@ _AUTHORITY_KEEPALIVE_ACTIVE = cast(Any, None)
 _ENGINE_LOCK = cast(Any, None)
 _PROCESS_AUTHORITY_STOP = cast(Any, None)
 _PROCESS_AUTHORITY_THREAD = cast(Any, None)
-_PROCESS_SESSION = cast(Any, None)
 _PROCESS_SESSION_REFRESH_LOCK = cast(Any, None)
 _SESSION_ID = cast(Any, None)
 setting = cast(Any, None)
 
 
 def _get_engine():
-    """Lazily initialize and return the IntelligenceGraphEngine singleton.
+    """The process engine handle over the one served EG client pool.
 
-    Thread-safe double-checked locking prevents concurrent runtime callers from
-    racing a second authority into existence. Direct GraphOS startup resolves
-    this engine synchronously only through the bounded materialization barrier;
-    noncritical worker startup remains asynchronous.
-    (CONCEPT:EG-KG.storage.nonblocking-checkpoint)
+    The same :func:`~graph_os.mcp_server.served_engine.process_engine_pool`
+    backs the operation-invoke API, so startup composition and served
+    operations share one set of EG transports. Every request through the
+    handle runs under the ambient verified session.
     """
-    from agent_utilities.core.paths import ensure_dirs
-    from agent_utilities.knowledge_graph.backends import create_backend
-    from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
+    from graph_os.mcp_server.served_engine import served_engine
 
-    engine = IntelligenceGraphEngine.get_active()
-    if engine is not None:
-        return engine
-
-    with _ENGINE_LOCK:
-        engine = IntelligenceGraphEngine.get_active()
-        if engine is not None:
-            return engine
-        # First-run: ensure XDG dirs exist and create backend
-        ensure_dirs()
-
-        def _factory():
-            backend = create_backend()
-            return IntelligenceGraphEngine(
-                backend=backend,
-                defer_background_start=True,
-            )
-
-        return IntelligenceGraphEngine.get_or_create(factory=_factory)
+    return served_engine()
 
 
 def _set_readiness_authority(session: Any) -> object:
     """Hand the readiness probe the process's own verified authority."""
 
-    from agent_utilities.observability.runtime_health import claim_readiness_authority
+    from graph_os.observability.runtime_health import claim_readiness_authority
 
     return claim_readiness_authority(session)
 
@@ -71,7 +49,7 @@ def _set_readiness_authority(session: Any) -> object:
 def _release_readiness_authority(owner: object) -> None:
     """Release only the readiness authority claimed by this serving lifecycle."""
 
-    from agent_utilities.observability.runtime_health import release_readiness_authority
+    from graph_os.observability.runtime_health import release_readiness_authority
 
     if not release_readiness_authority(owner):
         raise RuntimeError("graph-os no longer owns the readiness authority")
@@ -87,8 +65,8 @@ def _mint_process_session(transport: str) -> Any:
     additionally used for stdio tool calls, which have no request Authorization
     header.
     """
-    from agent_utilities.core.config import config
-    from agent_utilities.security.request_identity import (
+    from graph_os.core.settings import runtime_config as config
+    from graph_os.security.request_identity import (
         acquire_process_identity_token,
         local_process_authority_enabled,
         mint_actor_from_token_sync,
@@ -101,7 +79,7 @@ def _mint_process_session(transport: str) -> Any:
     else:
         token = acquire_process_identity_token(config)
         actor = mint_actor_from_token_sync(token)
-        from agent_utilities.security.brain_context import CredentialLease
+        from graph_os.security.actor_context import CredentialLease
 
         expires_at = getattr(actor, "credential_expires_at", None)
         if expires_at is None:
@@ -132,7 +110,7 @@ def _same_process_authority(left: Any, right: Any) -> bool:
 
 
 def _renewed_process_actor(config: Any) -> Any:
-    from agent_utilities.security.request_identity import (
+    from graph_os.security.request_identity import (
         acquire_process_identity_token,
         local_process_authority_enabled,
         mint_actor_from_token_sync,
@@ -157,8 +135,8 @@ def _refresh_process_authority(session: Any) -> Any:
     validation, only the bounded expiry is copied into the shared in-memory
     lease. Identity, roles, tenant, route, and policy may not change.
     """
-    from agent_utilities.api.session import SessionExpiredError
-    from agent_utilities.core.config import config
+    from graph_os.api.contracts.session import SessionExpiredError
+    from graph_os.core.settings import runtime_config as config
 
     lease = getattr(getattr(session, "actor", None), "credential_lease", None)
     if lease is None:
@@ -191,7 +169,7 @@ async def _ensure_process_authority_current() -> Any:
     the dispatch-entry check only; :func:`_keep_process_authority_current`
     covers the rest of a long-running dispatch.
     """
-    from agent_utilities.api.session import (
+    from graph_os.api.contracts.session import (
         SessionExpiredError,
         current_session,
     )
@@ -217,7 +195,7 @@ async def _ensure_process_authority_current() -> Any:
             raise PermissionError("Verified GraphSession required")
         ambient.ensure_authority_current(minimum_ttl_seconds=30)
         return ambient
-    session = _PROCESS_SESSION
+    session = _process_session()
     if session is None:
         raise PermissionError("Verified GraphSession required")
     try:
@@ -246,7 +224,7 @@ async def _keep_process_authority_current(session: Any) -> None:
     is open (started and cancelled there) — never a free-running background
     task.
     """
-    from agent_utilities.api.session import SessionExpiredError
+    from graph_os.api.contracts.session import SessionExpiredError
 
     lease = session.actor.credential_lease
     try:
@@ -303,14 +281,14 @@ async def authority_keepalive_scope(session: Any | None = None) -> AsyncIterator
     * Only a server-minted, renewable ``credential_lease`` is ever proactively
       renewed. A caller-presented bearer JWT carries no ``credential_lease`` and
       is never touched here — it stays exactly as fail-closed as before.
-    * The SAME mutable :class:`~agent_utilities.security.brain_context.CredentialLease`
+    * The SAME mutable :class:`~graph_os.security.actor_context.CredentialLease`
       object the session already holds is renewed in place, so every downstream
       authority check (``GraphSession.ensure_authority_current``, e.g.
       ``graph_compute.py``'s ``_invoke_at``) sees it transparently — no session
       object is replaced and the expiry check itself is never weakened or
       lengthened.
     * ``session`` defaults to the ambient :func:`GraphSession
-      <agent_utilities.api.session.current_session>` (falling
+      <graph_os.api.contracts.session.current_session>` (falling
       back to the stdio ``_PROCESS_SESSION``, same as ``verified_tool_session_scope``)
       resolved WITHOUT raising when neither is set — this helper only ever adds
       renewal; it must never introduce a new precondition. A caller with no
@@ -328,9 +306,9 @@ async def authority_keepalive_scope(session: Any | None = None) -> AsyncIterator
         return
 
     if session is None:
-        from agent_utilities.api.session import current_session
+        from graph_os.api.contracts.session import current_session
 
-        session = current_session() or _PROCESS_SESSION
+        session = current_session() or _process_session()
     if session is None:
         yield
         return
@@ -702,96 +680,55 @@ def _engine_bootstrap_is_client(engine: Any, fallback_role: str) -> bool:
     return "client" in {requested_role, effective_role}
 
 
+#: How long serving start waits for the engine endpoint to answer.
+_ENGINE_READY_TIMEOUT_SECONDS = 120.0
+
+
 def _start_engine_bootstrap(session: Any) -> None:
-    """Establish engine readiness, then start the elected host workers.
+    """Prove the engine answers under the process authority before serving.
 
-    Semantic content is verified by the native composition root through the
-    current EG ConnectorPack and GraphSchema read contracts. Startup therefore
-    never discovers or ingests skills, prompts, sources, or fleet declarations.
+    EG owns its workers, materialization and durable state
+    (EG-INGEST-WORKER-R604); graph-os starts none of them. Startup only
+    connects the shared pool and reads EG's health document under the minted
+    process session, retrying until the endpoint answers or the bounded
+    deadline passes, so an unreachable engine stops startup with its cause.
     """
-    from agent_utilities.api.session import use_session
-    from agent_utilities.knowledge_graph.core.engine_tasks import (
-        _authorized_background_thread,
-        _require_verified_background_session,
-        daemon_role,
-    )
-    from agent_utilities.security.brain_context import use_actor
+    from graph_os.api.contracts.session import use_session
 
-    verified_session = _require_verified_background_session(session)
-    with (
-        use_actor(verified_session.actor),
-        use_session(verified_session),
-    ):
-        engine = _get_engine()
-        # A partially materialized graph cannot safely accept worker claims.
-        # Let this failure stop startup so the orchestrator retries rather than
-        # advertising a silently incomplete graph.
-        _wait_for_engine_materialization(engine)
-    # An explicit client role is a hard serving-plane boundary. In particular,
-    # stale KG_LOOP/maintenance settings must not turn a network-facing GraphOS
-    # process into an autonomous scheduler or queue worker. The requested role
-    # captured on the engine wins over any later process-environment mutation.
-    client_role = _engine_bootstrap_is_client(engine, daemon_role())
-    if not client_role:
-        # BUG-295 (NE-009/NE-020): the daemon role is the one that runs the
-        # unified scheduler (start_daemons() below), whose every tick reads
-        # and writes the isolated `__control__` graph under THIS process's
-        # own verified identity. Admit that identity into the narrow
-        # control:system RBAC role idempotently, once per process, before
-        # the scheduler can fire a single tick against it. Auto-at-boot by
-        # design (see system_rbac_admission's module docstring, "Auto-
-        # admission at boot"); degrades honestly — never crashes the
-        # process and never claims success it did not confirm. Until an
-        # operator seeds the missing NE-021 provisioner credential (or the
-        # engine is unreachable), this logs the exact actionable cause once
-        # per 30s backoff window and the scheduler keeps failing exactly as
-        # visibly as it does today, but now with a diagnosis attached.
+    engine = _get_engine()
+    graph = str(session.graph)
+    deadline = time.monotonic() + _ENGINE_READY_TIMEOUT_SECONDS
+    while True:
         try:
-            from agent_utilities.security.system_rbac_admission import (
-                ensure_system_principal_access,
-            )
+            with use_session(session):
+                health = asyncio.run(engine.health(graph))
+        except (ConnectionError, OSError, TimeoutError) as exc:
+            if time.monotonic() >= deadline:
+                raise RuntimeError(
+                    "epistemic-graph did not answer before serving start"
+                ) from exc
+            if _PROCESS_AUTHORITY_STOP.wait(1.0):
+                raise InterruptedError("shutdown cancelled engine bootstrap") from exc
+            continue
+        logger.info(
+            "Epistemic graph engine answered (status=%s)",
+            health.get("status") if isinstance(health, dict) else "unknown",
+        )
+        return
 
-            ensure_system_principal_access(verified_session.actor.actor_id)
-        except Exception as exc:  # noqa: BLE001 - must never block/crash boot
-            logger.error(
-                "system-principal control-graph admission not confirmed; "
-                "the scheduler will keep failing until this is resolved "
-                "(%s: %s)",
-                type(exc).__name__,
-                exc,
-            )
-    start_daemons = getattr(engine, "start_background_daemons", None)
-    if not client_role and callable(start_daemons):
-        start_daemons()
 
-    def _bootstrap_engine() -> None:
-        try:
-            if (
-                not client_role
-                and engine
-                and engine.backend
-                and not getattr(engine.backend, "read_only", False)
-            ):
-                engine.start_task_workers()
-        except Exception as exc:
-            logger.error("KG engine background bootstrap failed: %s", exc)
+def _process_session() -> Any:
+    """The stdio process session; ``runtime`` holds the one live binding."""
+    from graph_os.mcp_server import runtime
 
-    try:
-        _authorized_background_thread(
-            verified_session,
-            _bootstrap_engine,
-            name="KGEngineBootstrap",
-        ).start()
-    except Exception as exc:
-        # Worker startup remains retryable operational work.
-        logger.error("GraphOS noncritical bootstrap launch failed: %s", exc)
+    return runtime._PROCESS_SESSION
 
 
 def set_process_session(session: Any) -> None:
-    """Keep bootstrap authority state synchronized with the host runtime."""
+    """Bind the process session on the host runtime (its single owner)."""
+    from graph_os.mcp_server import runtime
 
-    global _PROCESS_SESSION
-    _PROCESS_SESSION = session
+    runtime._PROCESS_SESSION = session
 
 
 BOOTSTRAP_EXPORTS = tuple(

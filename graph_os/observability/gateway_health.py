@@ -7,10 +7,10 @@ Wires two previously-dead pieces off ONE real, already-computed signal — the
 per-request latency the gateway's request middleware already measures for
 its Prometheus histogram, then discards once it is handed to ``.observe()``:
 
-1. ``agent_utilities.observability.health``'s anomaly-detection kernel
-   (:func:`~agent_utilities.observability.health.compute_baseline` /
-   :func:`~agent_utilities.observability.health.detect_anomaly`) plus
-   :func:`~agent_utilities.observability.health_ingest.ingest_health_anomaly`
+1. ``graph_os.observability.health``'s anomaly-detection kernel
+   (:func:`~graph_os.observability.health.compute_baseline` /
+   :func:`~graph_os.observability.health.detect_anomaly`) plus
+   the metric-window evidence write
    had zero live callers anywhere in the agent runtime — a fully-built,
    generalized kernel with no producer wiring it. This module is that live
    caller.
@@ -20,7 +20,7 @@ its Prometheus histogram, then discards once it is handed to ``.observe()``:
 
 Bounded by design — NOT one evidence write per request. Request durations are
 distilled into ONE trend row per ``_WINDOW_S`` window
-(:class:`~agent_utilities.observability.health.HealthTrendBuffer`, the same
+(:class:`~graph_os.observability.health.HealthTrendBuffer`, the same
 distill-don't-dump cadence every other health-kernel consumer uses), and a
 KG write only fires when ``detect_anomaly`` actually flags that window
 against the gateway's own rolling baseline — a rare, meaningful event, never
@@ -29,9 +29,9 @@ affect the request/response path it's decoupled from (fire-and-forget via
 ``asyncio.create_task``).
 
 Ported from the agent runtime's
-``agent_utilities.observability.gateway_health`` (moved wholesale, no
+``graph_os.observability.gateway_health`` (moved wholesale, no
 behavior change) per the GRAPHOS-HOST-R008 boundary move. The health
-kernel and KG-ingest modules it calls (``agent_utilities.observability.health``
+kernel and KG-ingest modules it calls (``graph_os.observability.health``
 / ``health_ingest``) and the KG memory store
 (``agent_utilities.knowledge_graph.memory.native_ingest``) have not moved
 yet; this module reaches back into the agent runtime for them, the normal
@@ -103,12 +103,30 @@ def record_request_duration(duration_s: float) -> None:
             pass
 
 
+_metric_evidence_store: Any = None
+
+
+def bind_metric_evidence_store(store: Any) -> None:
+    """Bind the store that keeps anomalous metric windows as evidence.
+
+    The store exposes ``store_metric_window_evidence``. Until the composition
+    root binds one, an anomaly is logged and not written.
+    """
+    global _metric_evidence_store
+    _metric_evidence_store = store
+
+
+def _media_store() -> Any:
+    if _metric_evidence_store is None:
+        raise RuntimeError("no metric evidence store is bound")
+    return _metric_evidence_store
+
+
 async def _check_and_record(trend: dict[str, Any]) -> None:
     """Best-effort: baseline + anomaly-detect the just-flushed window against
-    the gateway's rolling trend history; on a genuine anomaly, write BOTH the
-    ``:HealthAnomaly`` node (the dead kernel's first live caller) and a
-    ``MetricWindow`` evidence locus (the seam's producer) carrying the exact
-    triggering window. Never raises.
+    the gateway's rolling trend history; on a genuine anomaly, write a
+    ``MetricWindow`` evidence locus carrying the exact triggering window.
+    Never raises.
     """
     try:
         from graph_os.observability import health as h
@@ -129,19 +147,7 @@ async def _check_and_record(trend: dict[str, Any]) -> None:
         if anomaly is None:
             return
 
-        from agent_utilities.observability import health_ingest
-
-        await asyncio.to_thread(
-            health_ingest.ingest_health_anomaly,
-            _ENTITY_ID,
-            _SIGNAL,
-            anomaly,
-            entity_type="Gateway",
-        )
-
-        from agent_utilities.knowledge_graph.memory.native_ingest import media_store
-
-        store = media_store()
+        store = _media_store()
         data = json.dumps(trend, sort_keys=True).encode("utf-8")
         start_ms = int(float(trend.get("start_at") or 0.0) * 1000)
         end_ms = int(float(trend.get("end_at") or 0.0) * 1000)

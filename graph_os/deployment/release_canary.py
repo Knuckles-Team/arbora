@@ -50,19 +50,6 @@ def _engine_binary_ready() -> bool:
     )
 
 
-def _numeric_kernel_ready() -> bool:
-    try:
-        from agent_utilities import numeric as utilities_numeric
-
-        engine_numeric = importlib.import_module("epistemic_graph.numeric")
-        return bool(
-            getattr(engine_numeric, "__kernel__", None) == "eg-numeric"
-            and utilities_numeric.xp.sum([1.0, 2.0, 3.0]) == 6.0
-        )
-    except Exception:  # noqa: BLE001 - the result is intentionally aggregate-only
-        return False
-
-
 def _leading_major_version(text: str) -> int | None:
     match = re.match(r"\s*(\d+)", text)
     return int(match.group(1)) if match else None
@@ -103,7 +90,6 @@ def run_canary() -> dict[str, Any]:
     checks = {
         "entry_points": _entry_points_ready(),
         "engine_binary": _engine_binary_ready(),
-        "numeric_kernel": _numeric_kernel_ready(),
         "served_fastmcp_matches_declared": _served_fastmcp_matches_declared(),
     }
     return {

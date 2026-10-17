@@ -16,24 +16,25 @@ def _require_observability_imports() -> None:
     dependency before deciding anything: a broken install must still report
     ``error``, never a ``skip``/``fail`` derived from half a stack.
     """
-    from agent_utilities.core.transport_security import (  # noqa: F401
+    from agent_connector_sdk.credentials.runtime_references import (  # noqa: F401
+        resolve_runtime_secret_reference,
+    )
+
+    from graph_os.core.transport import (  # noqa: F401
         resolve_configured_tls_profile,
     )
-    from agent_utilities.observability.custom_observability import (  # noqa: F401
+    from graph_os.observability.custom_observability import (  # noqa: F401
         _same_origin,
     )
-    from agent_utilities.observability.langfuse_trust import (  # noqa: F401
+    from graph_os.observability.langfuse_trust import (  # noqa: F401
         resolve_langfuse_credentials,
         resolve_langfuse_host,
-    )
-    from agent_utilities.security.cli_secrets import (  # noqa: F401
-        resolve_runtime_secret_reference,
     )
 
 
 def _otel_endpoint(cfg: Any, langfuse_pair: bool) -> tuple[str, bool]:
     """``(endpoint, derived_from_langfuse)`` for the OTLP exporter."""
-    from agent_utilities.observability.langfuse_trust import resolve_langfuse_host
+    from graph_os.observability.langfuse_trust import resolve_langfuse_host
 
     endpoint = str(cfg.otel_exporter_otlp_endpoint or "").strip()
     endpoint_derived = not endpoint and langfuse_pair
@@ -44,8 +45,8 @@ def _otel_endpoint(cfg: Any, langfuse_pair: bool) -> tuple[str, bool]:
 
 def _otel_transport_posture(cfg: Any) -> SimpleNamespace:
     """Which OTLP endpoint applies and which authentication tier backs it."""
-    from agent_utilities.observability.custom_observability import _same_origin
-    from agent_utilities.observability.langfuse_trust import resolve_langfuse_host
+    from graph_os.observability.custom_observability import _same_origin
+    from graph_os.observability.langfuse_trust import resolve_langfuse_host
 
     langfuse_pair = bool(cfg.langfuse_public_key_ref and cfg.langfuse_secret_key_ref)
     endpoint, endpoint_derived = _otel_endpoint(cfg, langfuse_pair)
@@ -95,10 +96,13 @@ def _otel_data(cfg: Any, posture: SimpleNamespace, metrics: Any) -> dict[str, An
 
 def _otel_prove_credentials(cfg: Any, posture: SimpleNamespace) -> None:
     """Resolve the reference tier actually in use; raises when it is unavailable."""
-    from agent_utilities.observability.langfuse_trust import (
+    from agent_connector_sdk.credentials.runtime_references import (
+        resolve_runtime_secret_reference,
+    )
+
+    from graph_os.observability.langfuse_trust import (
         resolve_langfuse_credentials,
     )
-    from agent_utilities.security.cli_secrets import resolve_runtime_secret_reference
 
     if posture.header_auth:
         resolve_runtime_secret_reference(cfg.otel_exporter_otlp_headers_ref)
@@ -111,7 +115,7 @@ def _otel_prove_credentials(cfg: Any, posture: SimpleNamespace) -> None:
 
 def _otel_tls_verify_enabled(cfg: Any, langfuse_auth: bool) -> bool:
     """Resolve the OTEL TLS profile (falling back to Langfuse's) and report verify."""
-    from agent_utilities.core.transport_security import resolve_configured_tls_profile
+    from graph_os.core.transport import resolve_configured_tls_profile
 
     profile_name = cfg.otel_tls_profile
     profile_ref = cfg.otel_tls_profile_ref
@@ -128,8 +132,8 @@ def _otel_tls_verify_enabled(cfg: Any, langfuse_auth: bool) -> bool:
 
 
 def _check_observability() -> dict[str, Any]:
-    from agent_utilities.core.config import AgentConfig, setting
-    from agent_utilities.core.profile_guard import is_production_profile
+    from graph_os.core.settings import GraphOSConfig as AgentConfig
+    from graph_os.core.settings import is_production_profile, setting
 
     try:
         _require_observability_imports()
@@ -266,86 +270,12 @@ def _probe_langfuse_mcp_visibility(_cfg: Any) -> bool:
         return False
 
 
-def _langfuse_expected_trace_name(source_run_id: str) -> str:
-    """The tenant-qualified opaque trace name the exporter will persist."""
-    from agent_utilities.usage.privacy import normalize_run_id
-
-    try:
-        from agent_utilities.security.brain_context import current_actor
-
-        tenant_id = current_actor().tenant_id
-    except Exception:  # noqa: BLE001 - empty tenant namespace is opaque too
-        tenant_id = ""
-    return f"graph_run:{normalize_run_id(source_run_id, tenant_id=tenant_id)}"
-
-
-def _langfuse_await_trace(expected_name: str, started_at: str) -> bool:
-    """Poll for the exported trace by name; ``False`` if it never lands."""
-    import time
-
-    for _ in range(10):
-        traces = _run_async_doctor_probe(
-            lambda: _call_langfuse_child(
-                "trace_list",
-                page=1,
-                limit=10,
-                name=expected_name,
-                from_timestamp=started_at,
-                order_by="timestamp.desc",
-                fields="core,basic",
-            )
-        )
-        if any(row.get("name") == expected_name for row in _langfuse_rows(traces)):
-            return True
-        time.sleep(1.0)
-    return False
-
-
-def _probe_langfuse_trace_round_trip(cfg: Any) -> tuple[bool, str]:
-    """``(round_trip_ok, error_code)``; ``error_code`` is "" only on success.
-
-    The source token is random and never leaves this function. The exporter
-    turns it into a tenant-qualified opaque identifier before persistence;
-    input and caller metadata are intentionally empty.
-    """
-    import uuid
-    from datetime import UTC, datetime
-
-    from agent_utilities.observability.langfuse_exporter import LangfuseExporter
-    from agent_utilities.observability.langfuse_trust import (
-        resolve_langfuse_credentials,
-    )
-
-    public_key, secret_key = resolve_langfuse_credentials(agent_config=cfg)
-    source_run_id = uuid.uuid4().hex
-    expected_name = _langfuse_expected_trace_name(source_run_id)
-    started_at = datetime.now(UTC).isoformat().replace("+00:00", "Z")
-    exporter = LangfuseExporter(
-        public_key=public_key,
-        secret_key=secret_key,
-        host=cfg.langfuse_host,
-    )
-    emitted = exporter.export_graph_run(
-        run_id=source_run_id,
-        query="",
-        status="success",
-        metadata={},
-    )
-    exporter.flush()
-    if not emitted:
-        return False, "trace_export_failed"
-    if _langfuse_await_trace(expected_name, started_at):
-        return True, ""
-    return False, "trace_round_trip_failed"
-
-
 def _probe_langfuse_live(cfg: Any) -> dict[str, Any]:
-    """Prove API, optional MCP, and optional metadata-only trace round trip."""
+    """Prove the Langfuse API through the MCP child."""
     result: dict[str, Any] = {
         "live_probed": True,
         "api_reachable": False,
         "mcp_visible": None,
-        "trace_round_trip": None,
         "redacted": True,
     }
     try:
@@ -356,17 +286,6 @@ def _probe_langfuse_live(cfg: Any) -> dict[str, Any]:
     if not result["mcp_visible"]:
         result["error_code"] = "mcp_visibility_failed"
         return result
-
-    if not cfg.trace_export_enabled:
-        return result
-
-    try:
-        round_trip, trace_error = _probe_langfuse_trace_round_trip(cfg)
-    except Exception:  # noqa: BLE001 - never expose response, endpoint, or identity
-        round_trip, trace_error = False, "trace_round_trip_failed"
-    result["trace_round_trip"] = round_trip
-    if trace_error:
-        result["error_code"] = trace_error
     return result
 
 
@@ -384,8 +303,8 @@ def _langfuse_inputs(cfg: Any) -> SimpleNamespace:
     ``langfuse_agent.auth`` reads for the standalone agent/MCP server -- is
     accepted too; see ``langfuse_credentials_configured()``.
     """
-    from agent_utilities.core.config import setting
-    from agent_utilities.observability.langfuse_trust import (
+    from graph_os.core.settings import setting
+    from graph_os.observability.langfuse_trust import (
         langfuse_provider_contract_ready,
     )
 
@@ -430,7 +349,7 @@ def _langfuse_configuration_gate(
     cfg: Any, inputs: SimpleNamespace, data: dict[str, Any]
 ) -> dict[str, Any] | None:
     """Skip an unconfigured integration; fail a half-configured credential pair."""
-    from agent_utilities.observability.langfuse_trust import (
+    from graph_os.observability.langfuse_trust import (
         langfuse_credentials_configured,
     )
 
@@ -462,7 +381,7 @@ def _langfuse_configuration_gate(
 
 def _langfuse_credential_gate(cfg: Any, data: dict[str, Any]) -> dict[str, Any] | None:
     """Resolve the credential material; anything unresolvable is a fail, never ok."""
-    from agent_utilities.observability.langfuse_trust import (
+    from graph_os.observability.langfuse_trust import (
         LangfuseTrustError,
         resolve_langfuse_credentials,
     )
@@ -487,7 +406,7 @@ def _langfuse_credential_gate(cfg: Any, data: dict[str, Any]) -> dict[str, Any] 
 
 def _langfuse_persistence_gate(cfg: Any, data: dict[str, Any]) -> dict[str, Any] | None:
     """Graph persistence needs its own identity key, and that key must resolve."""
-    from agent_utilities.observability.langfuse_trust import (
+    from graph_os.observability.langfuse_trust import (
         resolve_langfuse_persistence_hmac_key,
     )
 
@@ -523,7 +442,7 @@ def _langfuse_persistence_gate(cfg: Any, data: dict[str, Any]) -> dict[str, Any]
 
 def _langfuse_trust_gate(cfg: Any, data: dict[str, Any]) -> dict[str, Any] | None:
     """TLS verification can never be disabled for the Langfuse transport."""
-    from agent_utilities.observability.langfuse_trust import configure_langfuse_trust
+    from graph_os.observability.langfuse_trust import configure_langfuse_trust
 
     trust = configure_langfuse_trust(agent_config=cfg)
     data["tls_valid"] = trust.valid
@@ -553,8 +472,6 @@ def _langfuse_live_result(
     live_ok = bool(data.get("api_reachable"))
     if cfg.langfuse_mcp_enabled:
         live_ok = live_ok and data.get("mcp_visible") is True
-    if cfg.trace_export_enabled:
-        live_ok = live_ok and data.get("trace_round_trip") is True
     if not live_ok:
         return _result(
             "langfuse",
@@ -623,7 +540,7 @@ def _check_langfuse(
 ) -> dict[str, Any]:
     """Validate Langfuse statically, or prove its live privacy-safe paths."""
     try:
-        from agent_utilities.core.config import AgentConfig
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
 
         cfg = AgentConfig()
         inputs = _langfuse_inputs(cfg)

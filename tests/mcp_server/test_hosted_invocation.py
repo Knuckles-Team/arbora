@@ -51,12 +51,13 @@ def composed(monkeypatch, *, scopes=frozenset({"example:write"})):
 
 
 def mount_a2a(monkeypatch, value):
-    from agent_utilities.mcp import graphos_surface
-
     from graph_os.browser_control import mcp as browser_mcp
+    from graph_os.mcp_server.backing import graphos_surface
 
     served = FastMCP("hosted-invocation-test")
-    monkeypatch.setattr(graphos_surface, "register_graphos_surface", lambda _: served)
+    monkeypatch.setattr(
+        graphos_surface, "register_graphos_surface", lambda _mcp, **_kwargs: served
+    )
     monkeypatch.setattr(browser_mcp, "register_browser_control_tools", lambda _: None)
     monkeypatch.setattr(
         a2a_mcp, "_service", lambda: A2AService(authority=Authority(), router=Router())
@@ -96,7 +97,8 @@ def test_native_a2a_and_gateway_share_authority_and_effect_boundary(
     response = http_post(http)
     assert a2a.status_code == response.status_code == (200 if allowed else 403)
     assert all(registry is value.services.registry for registry in admitted)
-    assert len(admitted) == 4
+    # The served MCP surface also mounts the operation API beside /mcp.
+    assert len(admitted) == 5
     assert len(effect.calls) == (2 if allowed else 0)
     if allowed:
         assert {event["surface"] for event in audit.events} == {"a2a", "http"}
@@ -141,8 +143,7 @@ def test_native_registration_refuses_stale_or_unverified_caller(monkeypatch, fai
 
 
 def test_native_entry_hands_same_bundle_to_both_compositions(monkeypatch):
-    from agent_utilities.core import config as config_module
-
+    from graph_os.core import settings as config_module
     from graph_os.mcp_server import server
 
     value, *_ = composed(monkeypatch)

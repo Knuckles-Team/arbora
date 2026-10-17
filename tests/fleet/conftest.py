@@ -30,9 +30,9 @@ from __future__ import annotations
 from collections.abc import Iterator
 
 import pytest
-from agent_utilities.security.brain_context import ActorContext, use_actor
 
 import graph_os.fleet.multiplexer as _multiplexer_module
+from graph_os.security.actor_context import ActorContext, use_actor
 
 # Covers every discover/delegate call these tests drive; no test in this
 # directory currently needs the "manage"-kind operation, so no administrative

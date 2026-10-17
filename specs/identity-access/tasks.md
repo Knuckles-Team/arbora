@@ -127,3 +127,4 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 ## Additional owner requirements
 
 - [ ] `GRAPHOS-IDENTITY-R026.8`: Deliver every requirement in requirements.md.
+- [x] `GRAPHOS-IDENTITY-R002.1`: scope registry generated from EG `scopes.json`. Evidence: `tests/security/test_scope_registry.py::test_the_generated_module_is_the_installed_eg_registry`.

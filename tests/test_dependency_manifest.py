@@ -83,9 +83,13 @@ def test_build_backend_cannot_see_the_local_dev_source_override() -> None:
         if name not in sources:
             continue
         source = sources[name]
-        assert source.get("editable") is True and "path" in source, (
-            f"{name}'s [tool.uv.sources] entry must stay a local editable dev "
-            "override, not a published-package substitute"
+        local = source.get("editable") is True and "path" in source
+        branch = "git" in source and "branch" in source
+        index = set(source) == {"index"}
+        assert local or branch or index, (
+            f"{name}'s [tool.uv.sources] entry must stay a dev override (a "
+            "local editable path or a development branch) or name the "
+            "package index, not a published-package substitute"
         )
 
 

@@ -227,8 +227,8 @@
         "b5bf4ba58902"
       ],
       "verified_by": [
-        "tests/deployment/test_release_canary.py:63",
-        "tests/deployment/test_release_canary.py:94"
+        "tests/deployment/test_release_canary.py:61",
+        "tests/deployment/test_release_canary.py:92"
       ]
     },
     {
@@ -272,18 +272,17 @@
     },
     {
       "id": "GRAPHOS-OPS-R008",
-      "title": "Generated engine-bound operations with exclusions",
-      "delivery_state": "VERIFIED",
+      "title": "RETIRED: superseded by GRAPHOS-FLEET-R012",
+      "delivery_state": "RETIRED",
       "landed_in": [
         "4b83c69e2b41",
         "97061e59c412",
         "f651a834b0db"
       ],
       "verified_by": [
-        "tests/api/test_eg_binding.py:133",
-        "tests/api/test_eg_binding.py:204",
-        "tests/api/test_eg_binding.py:88"
-      ]
+        "tests/api/test_eg_binding.py:203"
+      ],
+      "retired_reason": "superseded by GRAPHOS-FLEET-R012"
     },
     {
       "id": "GRAPHOS-OPS-R009",
@@ -295,7 +294,7 @@
         "deb2b45bf83d"
       ],
       "verified_by": [
-        "tests/a2a/test_eg_dispatch.py:43",
+        "tests/a2a/test_eg_dispatch.py:39",
         "tests/api/test_invoke_bootstrap.py:161",
         "tests/api/test_invoke_contract.py:238",
         "tests/api/test_invoke_governance.py:193",
@@ -743,7 +742,7 @@
       "title": "Current-plan read boundary",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "5cbc820b4e83"
+        "663cc8cad940"
       ],
       "verified_by": [
         "tests/api/test_runs_ops.py:20"
@@ -885,10 +884,14 @@
       "title": "Memory operations — memory slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [
+        "383897ed5238",
         "5ffd23ca7883",
-        "8d1bc46ecbdb"
+        "8d1bc46ecbdb",
+        "94724be32c28"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/api/test_registry_factory.py:326"
+      ],
       "rollup_of": [
         "GRAPHOS-OPS-R024.4.1",
         "GRAPHOS-OPS-R024.4.2",
@@ -987,7 +990,7 @@
         "tests/api/test_gen_api.py:320",
         "tests/api/test_gen_api.py:470",
         "tests/deployment/test_generated_client_wheel.py:15",
-        "tests/deployment/test_generated_client_wheel.py:26"
+        "tests/deployment/test_generated_client_wheel.py:27"
       ]
     },
     {

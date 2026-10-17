@@ -9,8 +9,8 @@ from typing import Any
 
 from agent_connector_sdk.mcp.content import register_connector_content
 from agent_connector_sdk.mcp.network import build_network_serving_config
-from agent_utilities.core.config import setting
 
+from graph_os.core.settings import setting
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.composition import (
     install_gateway_application,
@@ -20,8 +20,6 @@ from graph_os.mcp_server.hosted_invocation import HostedInvocation
 from graph_os.semantic_content import default_content_providers
 
 logger = logging.getLogger(__name__)
-
-_FLEET_EMBED_MODEL: Any = None
 
 
 def _register_semantic_content(mcp: Any) -> None:
@@ -36,35 +34,13 @@ def _register_semantic_content(mcp: Any) -> None:
         register_connector_content(mcp, provider())
 
 
-def _fleet_embed_fn():
-    """Return a sync batch-embed callable ``(texts) -> list[vector]`` for find_tools'
-    semantic tool ranking, backed by graph-os's own embedding model (built lazily +
-    cached on first use). The model is remote (vLLM) and sync, so the fleet loader calls
-    this OFF-THREAD. Any construction/inference failure is swallowed by the caller, which
-    then degrades to token-overlap ranking — so this never blocks fleet loading."""
-
-    def _embed(texts):
-        global _FLEET_EMBED_MODEL
-        if _FLEET_EMBED_MODEL is None:
-            from agent_utilities.core.embedding_utilities import create_embedding_model
-
-            _FLEET_EMBED_MODEL = create_embedding_model()
-        model = _FLEET_EMBED_MODEL
-        batch = getattr(model, "get_text_embedding_batch", None)
-        if callable(batch):
-            return batch(list(texts))
-        return [model.get_text_embedding(t) for t in texts]
-
-    return _embed
-
-
 def _configure_graphos_otel() -> None:
     """Activate the canonical metadata-only OTLP pipeline when configured."""
 
     if not setting("ENABLE_OTEL", False):
         return
     try:
-        from agent_utilities.observability.custom_observability import setup_otel
+        from graph_os.observability.custom_observability import setup_otel
 
         setup_otel(service_name="graph-os")
     except Exception as exc:  # noqa: BLE001 - observability cannot prevent serving
@@ -79,16 +55,16 @@ def _configure_telemetry_engine_otel() -> None:
 
     CONCEPT:AU-OS.observability.telemetry-observability — independent of
     ``_configure_graphos_otel``'s ``ENABLE_OTEL``-gated Logfire/Langfuse
-    pipeline: :class:`~agent_utilities.observability.TelemetryEngine` self-gates
-    purely on the standard ``OTEL_EXPORTER_OTLP_ENDPOINT``/``OTEL_SERVICE_NAME``/
+    pipeline: :func:`~graph_os.observability.telemetry.configure_standard_otel`
+    self-gates purely on the standard ``OTEL_EXPORTER_OTLP_ENDPOINT``/``OTEL_SERVICE_NAME``/
     ``OTEL_TRACES_EXPORTER`` vars (falling back to ``EPISTEMIC_GRAPH_OBS_ADDR``),
     so no new env var is introduced here. This is the ONE process-bootstrap
     call site that activates it for the graph-os MCP server — never per-request.
     """
     try:
-        from agent_utilities.observability import get_telemetry_engine
+        from graph_os.observability.telemetry import configure_standard_otel
 
-        configured = get_telemetry_engine().is_otel_configured()
+        configured = configure_standard_otel(service_name="graph-os")
         logger.info(
             "GraphOS OTLP trace export (standard env vars): %s",
             "enabled" if configured else "disabled",
@@ -151,7 +127,6 @@ def _attach_fleet_runtime(mcp: Any, fleet_catalog_reader: Any) -> Any:
         return attach_fleet_loader(
             mcp,
             catalog_reader=fleet_catalog_reader,
-            embed_fn=_fleet_embed_fn(),
             authority_scope=runtime.verified_tool_session_scope,
         )
     except Exception as exc:
@@ -160,6 +135,51 @@ def _attach_fleet_runtime(mcp: Any, fleet_catalog_reader: Any) -> Any:
             "bound to the MCP fleet (find/act/manage fleet operations), so the "
             "served surface would silently lose fleet access."
         ) from exc
+
+
+def _served_invocation() -> tuple[HostedInvocation | None, Any]:
+    """Compose the operation-invoke API when an engine endpoint is configured.
+
+    The process authority is minted first because the invoke runtime's service
+    principal and scopes are that authority's. Without ``GRAPH_SERVICE_ENDPOINTS``
+    the process has no engine and mounts no operation-invoke API.
+    """
+    from graph_os.core.settings import runtime_config
+
+    if not runtime_config.graph_service_endpoints:
+        return None, None
+    from graph_os.a2a import mcp as a2a_mcp
+    from graph_os.mcp_server.backing.server_factory import create_mcp_parser
+    from graph_os.mcp_server.fleet_composition import LateFleetGateway
+    from graph_os.mcp_server.served_invocation import served_invocation_from_settings
+
+    args, _unknown = create_mcp_parser().parse_known_args()
+    session = runtime._mint_process_session(str(getattr(args, "transport", "stdio")))
+    fleet = LateFleetGateway()
+    invocation = served_invocation_from_settings(
+        process_session=lambda: session,
+        bindings={"a2a": a2a_mcp._service(), "fleet_gateway": fleet},
+        fleet_effect=fleet.effect,
+    )
+    return invocation, session
+
+
+def _bind_served_fleet(
+    invocation: HostedInvocation | None, fleet_mux: Any, reader: Any
+) -> None:
+    """Bind the governed fleet gateway once the multiplexer is attached."""
+    if invocation is None:
+        return
+    from graph_os.mcp_server.fleet_composition import (
+        LateFleetGateway,
+        bind_fleet_gateway,
+    )
+
+    late = getattr(invocation.services.runtime, "bindings", {}).get("fleet_gateway")
+    if isinstance(late, LateFleetGateway):
+        bind_fleet_gateway(
+            late, mux=fleet_mux, reader=reader, services=invocation.services
+        )
 
 
 def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
@@ -172,13 +192,25 @@ def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
     ``/goals``, ``/tools``) is centralized in the API gateway
     (:mod:`graph_os.gateway`) — see :func:`_mount_rest_routes`.
     """
-    from agent_utilities.core.config import load_config
+    from graph_os.core.settings import load_config
 
     load_config()  # resolve settings through the one shared XDG config.json
+    early_session = None
+    if invocation is None:
+        invocation, early_session = _served_invocation()
     if invocation is None:
         install_gateway_application()
     else:
         install_gateway_application(invocation)
+    from graph_os.host_bindings import (
+        bind_health_probes,
+        bind_messaging_ports,
+        bind_run_ports,
+    )
+
+    bind_messaging_ports()
+    bind_run_ports()
+    bind_health_probes()
     _preflight_mcp_sdk_floor()
     _configure_graphos_otel()
     _configure_telemetry_engine_otel()
@@ -206,13 +238,22 @@ def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
     # Inject graph-os's own embedding model so fleet tool search ranks by
     # query↔description MEANING (semantic), not just literal token overlap.
     fleet_mux = _attach_fleet_runtime(mcp, fleet_catalog_reader)
+    # The harness's thin client host fails closed until graph-os registers
+    # its native toolset, fleet catalog and session keepalive bindings.
+    from graph_os.mcp_server.harness_host import (
+        register_harness_host,
+        unregister_harness_host,
+    )
+
+    register_harness_host(fleet_mux)
+    _bind_served_fleet(invocation, fleet_mux, fleet_catalog_reader)
 
     transport = getattr(args, "transport", "stdio")
     host = getattr(args, "host", "127.0.0.1")
     port = int(getattr(args, "port", 8000))
     network_serving = build_network_serving_config(args)
 
-    bootstrap_session = runtime._mint_process_session(transport)
+    bootstrap_session = early_session or runtime._mint_process_session(transport)
     runtime._PROCESS_SESSION = bootstrap_session if transport == "stdio" else None
     runtime.set_process_session(runtime._PROCESS_SESSION)
     runtime._start_process_authority_supervisor(bootstrap_session)
@@ -230,7 +271,7 @@ def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
     try:
         logger.info("Starting graph-os MCP server (transport=%s)", transport)
 
-        from agent_utilities.security.request_identity import (
+        from graph_os.security.request_identity import (
             apply_served_security_profile,
         )
 
@@ -259,9 +300,9 @@ def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
         # authority before engine bootstrap. An explicit client role remains a
         # hard serving-plane boundary; this entrypoint never promotes itself to
         # the host that owns maintenance, workers, or autonomous loops.
-        from agent_utilities.api.session import use_session
-        from agent_utilities.core.config import config
-        from agent_utilities.security.brain_context import use_actor
+        from graph_os.api.contracts.session import use_session
+        from graph_os.core.settings import runtime_config as config
+        from graph_os.security.actor_context import use_actor
 
         with use_actor(bootstrap_session.actor), use_session(bootstrap_session):
             runtime._start_engine_bootstrap(bootstrap_session)
@@ -318,7 +359,7 @@ def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
             )
             logger.info("Decide consumers installed: %s", installed)
 
-            from agent_utilities.mcp.graphos_surface import backing_server
+            from graph_os.mcp_server.backing.graphos_surface import backing_server
 
             # An ``act`` operation on the backing server, not a listed tool.
             register_graph_rlm(
@@ -353,6 +394,7 @@ def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
         else:
             raise ValueError("graph-os transport must be 'stdio' or 'streamable-http'")
     finally:
+        unregister_harness_host()
         if co_service_supervisor is not None:
             co_service_supervisor.stop_all()
         runtime._PROCESS_SESSION = None

@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import pytest
-from agent_utilities.core import config
-from agent_utilities.messaging import router as au_messaging_router
-from agent_utilities.messaging.models import SendResult
 
 from graph_os.messaging import inbox
+from graph_os.messaging.host_ports import bind_host_ports
+from graph_os.messaging.models import SendResult
 from graph_os.messaging.router import InboundRouter
 from graph_os.messaging.service import MessagingService
 
@@ -18,7 +17,7 @@ from ._fakes import FakeMessagingBackend
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("delivered", [False, True])
-async def test_reaper_uses_au_reply_port_and_preserves_send_result(
+async def test_reaper_uses_bound_turn_handler_and_preserves_send_result(
     monkeypatch: pytest.MonkeyPatch, delivered: bool
 ) -> None:
     engine = object()
@@ -58,10 +57,10 @@ async def test_reaper_uses_au_reply_port_and_preserves_send_result(
         router._running = False
         return int(delivered)
 
-    router._backends.append(Backend())
-    monkeypatch.setattr(config, "setting", lambda *_args: "0")
+    router._backends.append(cast(Any, Backend()))
+    monkeypatch.setenv("MESSAGING_INBOX_RETRY_S", "0")
     monkeypatch.setattr(MessagingService, "instance", lambda: Service())
-    monkeypatch.setattr(au_messaging_router, "_graph_agent_reply", reply)
+    bind_host_ports(turn_handler=reply)
     monkeypatch.setattr(inbox, "retry_unanswered", retry)
 
     await router._inbox_reaper_loop()

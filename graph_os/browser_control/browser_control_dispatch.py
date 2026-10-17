@@ -5,10 +5,6 @@ from __future__ import annotations
 import asyncio
 from typing import Any, Literal, cast
 
-from agent_utilities.knowledge_graph.core.work_durability import (
-    claim_specific,
-)
-
 from graph_os.browser_control.browser_control_api import (
     BrowserCallReceipt,
     BrowserCallRequest,
@@ -25,6 +21,9 @@ from graph_os.browser_control.browser_control_state import (
     _ActiveCall,
 )
 from graph_os.browser_control.browser_control_validation import verify_attended_arm
+from graph_os.work_items import (
+    claim_specific,
+)
 
 _CANCEL_ACK_SECONDS = 2.0
 

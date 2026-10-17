@@ -146,7 +146,7 @@ class WorkspaceLogSink:
             self._io_slots.release()
 
     def _emit(self, tenant: str, request_id: str, message: str) -> None:
-        from agent_utilities.security.persistence_privacy import (
+        from agent_connector_sdk.privacy import (
             sanitize_for_persistence,
         )
 

@@ -3,9 +3,8 @@
 Companion procedure to the organization's exit-criteria matrix
 (<https://knuckles-team.github.io/.github/build-first.html>). Each stage
 below names the exact automated check or script a reviewer runs directly;
-none depend on private infrastructure. Run the stages in order — a stage
-is qualified only once every check it names passes on the revision being
-released.
+none depend on private infrastructure. Run the stages in order. A stage
+is qualified only once every check it names passes on the release revision.
 
 A failing stage stops qualification of this release candidate at that
 stage. Record the exact revision, command, and result for each stage.
@@ -51,19 +50,13 @@ uv run --no-sync pytest tests/deployment
 uv build --wheel --out-dir dist
 ```
 
-The release gates cache the final numeric extension with
-`scripts/numeric_artifact_cache.py`. Its exact key binds the EG revision, manifests, locks, and build recipe.
-It also binds Rust, maturin, Python ABI, platform, and build flags. There are no fallback keys.
-The key includes both Cargo config filenames at the build working directory,
-every ancestor, and `CARGO_HOME`. File locations and contents both affect it.
-Cargo include directives stop identity generation before cache restore.
-They require explicit support before this cache path accepts them.
-
-Every hit must pass the receipt digest, artifact path, kernel marker, and
-numeric smoke check under the locked Python interpreter. A rejected hit
-rebuilds; a failed build or smoke check stops the job before cache save.
-Actions cache cannot replace an existing entry for the same key.
-Remove an invalid entry. A later build seeds it after the smoke check.
+The release builds from this repository alone. Every dependency installs from
+PyPI at the version `uv.lock` pins. That includes the epistemic-graph engine
+wheels, so the release compiles nothing. Before a tag publishes,
+`install-smoke` installs the built wheel and the locked PyPI dependencies.
+It checks every hash and runs on Linux x64, Linux arm64, macOS arm64 and
+Windows x64. The macOS x64 and Windows arm64 legs also run and report. They
+stay non-blocking until the engine publishes wheels for them.
 
 The Rust intermediate cache remains available for misses. A final-artifact
 hit can avoid compilation, but cold and warm native timings still need

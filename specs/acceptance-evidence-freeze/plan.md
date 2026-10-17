@@ -25,6 +25,7 @@ class EvidenceRecord:
     result: str
     url: str
 
+
 @dataclass(frozen=True)
 class RequirementGap:
     requirement_id: str

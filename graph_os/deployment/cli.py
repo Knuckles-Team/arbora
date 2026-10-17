@@ -74,19 +74,6 @@ def _run_codex(_: argparse.Namespace) -> int:
     return 0
 
 
-def _run_harness_fence(args: argparse.Namespace) -> int:
-    from pathlib import Path
-
-    from agent_utilities.claude_harness.claude_fence import write_fence
-    from agent_utilities.orchestration.action_policy import ActionPolicy
-
-    target = args.target or str(Path.home() / ".claude")
-    policy = ActionPolicy(policy_path=args.policy) if args.policy else ActionPolicy()
-    res = write_fence(target, policy, dry_run=args.dry_run)
-    print(json.dumps(res, indent=2, default=str))
-    return 0
-
-
 def _run_environments(args: argparse.Namespace) -> int:
     if args.environments_command == "list":
         catalog = list_environment_profiles()
@@ -120,13 +107,31 @@ def _run_environments(args: argparse.Namespace) -> int:
     return 2
 
 
+def _run_engine_admission(args: argparse.Namespace) -> int:
+    from .config_generator import generate_engine_admission
+
+    print(
+        json.dumps(
+            generate_engine_admission(
+                principal=args.principal,
+                audience=args.audience,
+                tenant=args.tenant,
+                policy_version=args.policy_version,
+                allowed_private_hosts=args.allowed_private_host,
+            ),
+            indent=2,
+        )
+    )
+    return 0
+
+
 _COMMAND_HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
+    "engine-admission": _run_engine_admission,
     "release-plan": _run_release_plan,
     "generate": _run_generate,
     "doctor": _run_doctor,
     "reference": _run_reference,
     "codex": _run_codex,
-    "harness-fence": _run_harness_fence,
     "environments": _run_environments,
 }
 
@@ -142,6 +147,22 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--profile", choices=list(PROFILES), default="tiny")
     g.add_argument(
         "--out", default=None, help="Output path (default: XDG config.json)."
+    )
+
+    e = sub.add_parser(
+        "engine-admission",
+        help="Print the engine admission a served deployment must set (JSON).",
+    )
+    e.add_argument("--principal", required=True, help="GraphOS process principal.")
+    e.add_argument("--audience", required=True)
+    e.add_argument("--tenant", required=True)
+    e.add_argument("--policy-version", required=True)
+    e.add_argument(
+        "--allowed-private-host",
+        action="append",
+        default=[],
+        metavar="HOST",
+        help="Private or cluster hostname of a fleet connector (repeatable).",
     )
 
     d = sub.add_parser("doctor", help="Validate config completeness/health.")

@@ -121,7 +121,7 @@
         "dfe297e0466d"
       ],
       "verified_by": [
-        "tests/a2a/test_authority.py:129"
+        "tests/a2a/test_authority.py:26"
       ]
     },
     {
@@ -147,7 +147,7 @@
       "title": "Reference-bound single-tool task worker",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "5cbc820b4e83"
+        "663cc8cad940"
       ],
       "verified_by": [
         "tests/a2a/test_tool_task.py:20"
@@ -175,9 +175,9 @@
       ],
       "verified_by": [
         "tests/deployment/test_release_canary.py:31",
-        "tests/deployment/test_release_canary.py:64",
-        "tests/deployment/test_release_canary.py:83",
-        "tests/deployment/test_release_canary.py:95"
+        "tests/deployment/test_release_canary.py:62",
+        "tests/deployment/test_release_canary.py:81",
+        "tests/deployment/test_release_canary.py:93"
       ]
     },
     {
@@ -324,7 +324,7 @@
         "cdde0200a54a"
       ],
       "verified_by": [
-        "tests/a2a/test_operation_bridge.py:35"
+        "tests/a2a/test_operation_bridge.py:34"
       ],
       "rollup_of": [
         "GRAPHOS-A2A-R006.2.1",
@@ -428,8 +428,8 @@
       ],
       "verified_by": [
         "tests/a2a/test_first_party_facade.py:53",
-        "tests/a2a/test_first_party_facade.py:66",
-        "tests/a2a/test_first_party_facade.py:84"
+        "tests/a2a/test_first_party_facade.py:68",
+        "tests/a2a/test_first_party_facade.py:86"
       ]
     },
     {
@@ -513,7 +513,7 @@
         "35257e780f7c"
       ],
       "verified_by": [
-        "tests/a2a/test_authority.py:154"
+        "tests/a2a/test_authority.py:51"
       ]
     },
     {

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from agent_utilities.orchestration.action_policy import ActionRequest
-from agent_utilities.security.persistence_privacy import persistence_reference
+from agent_connector_sdk.privacy import persistence_reference
 
+from graph_os.access.action_policy import ActionRequest
 from graph_os.browser_control.browser_control_api import (
     BrowserCallReceipt,
     BrowserCallRequest,

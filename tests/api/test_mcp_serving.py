@@ -37,8 +37,8 @@ from graph_os.api.registry import (
 from tests.api._support import make_verified_caller
 
 #: The agent runtime's previously served contract (``register_intent_tools``
-#: in ``agent_utilities/mcp/tools/intent_tools.py`` plus the two app launchers
-#: from ``agent_utilities/mcp/tools/mcp_apps.py``).
+#: in ``graph_os/mcp_server/backing/tools/intent_tools/py`` plus the two app launchers
+#: from ``graph_os/mcp_server/backing/tools/mcp_apps/py``).
 LIVE_CONTRACT_TOOL_NAMES = frozenset(
     {
         "ask",

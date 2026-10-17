@@ -18,8 +18,6 @@ from collections.abc import AsyncIterator, Callable
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
-from agent_utilities.security.error_surface import public_error_payload
-
 from graph_os.gateway.config import ConfigManager
 from graph_os.gateway.models import (
     DashboardLayout,
@@ -27,6 +25,7 @@ from graph_os.gateway.models import (
     WidgetData,
 )
 from graph_os.gateway.registry import Registry, get_registry
+from graph_os.security.error_surface import public_error_payload
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +52,7 @@ def _service_authority() -> Any:
     this closes.
     """
     global _SERVICE_SESSION
-    from agent_utilities.api.session import SessionExpiredError
+    from graph_os.api.contracts.session import SessionExpiredError
 
     with _SERVICE_SESSION_LOCK:
         if _SERVICE_SESSION is not None:
@@ -85,8 +84,8 @@ def _run_as_service_actor[T](fn: Callable[[], T]) -> T:
     never crosses the executor boundary and the widget call still finds no
     actor (the exact defect this fixes).
     """
-    from agent_utilities.api.session import use_session
-    from agent_utilities.security.brain_context import use_actor
+    from graph_os.api.contracts.session import use_session
+    from graph_os.security.actor_context import use_actor
 
     session = _service_authority()
     with use_actor(session.actor), use_session(session):

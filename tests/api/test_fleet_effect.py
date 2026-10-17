@@ -85,15 +85,15 @@ def test_child_refusal_uses_structured_code_only() -> None:
 async def test_delegated_child_refusal_keeps_bounded_structured_code(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    api = ModuleType("agent_utilities.api")
+    api = ModuleType("graph_os.api.contracts")
     vars(api).update(use_session=lambda _session: nullcontext())
-    brain = ModuleType("agent_utilities.security.brain_context")
+    brain = ModuleType("graph_os.security.actor_context")
     vars(brain).update(use_actor=lambda _actor: nullcontext())
-    monkeypatch.setitem(sys.modules, "agent_utilities.api", api)
-    monkeypatch.setitem(sys.modules, "agent_utilities.security.brain_context", brain)
+    monkeypatch.setitem(sys.modules, "graph_os.api.contracts", api)
+    monkeypatch.setitem(sys.modules, "graph_os.security.actor_context", brain)
 
     class Mux:
-        async def call_oauth_gated_tool(self, *_args: object) -> object:
+        async def call_admitted_child_once(self, *_args: object) -> object:
             return SimpleNamespace(
                 is_error=True,
                 structured_content={
@@ -316,8 +316,8 @@ async def test_uncertain_service_child_propagates_for_the_invoke_surface_to_map(
 async def test_oauth_callback_uses_matching_verified_actor(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import agent_utilities.api
-    import agent_utilities.security.brain_context as brain_context
+    import graph_os.api.contracts
+    import graph_os.security.actor_context as brain_context
 
     bound: list[object] = []
 
@@ -329,11 +329,13 @@ async def test_oauth_callback_uses_matching_verified_actor(
         bound.append(actor)
         return nullcontext()
 
-    monkeypatch.setattr(agent_utilities.api, "use_session", fake_use_session)
+    monkeypatch.setattr(graph_os.api.contracts, "use_session", fake_use_session)
     monkeypatch.setattr(brain_context, "use_actor", fake_use_actor)
 
     class Mux:
-        async def call_oauth_gated_tool(self, server: str, tool: str, arguments: dict):
+        async def call_admitted_child_once(
+            self, server: str, tool: str, arguments: dict
+        ):
             assert (server, tool, arguments) == ("s", "t", {"x": 1})
             return SimpleNamespace(
                 is_error=False,

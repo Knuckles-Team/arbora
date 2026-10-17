@@ -37,10 +37,10 @@ avoid expressing its acceptance criteria.
 | `graph_fork` | `branches_json` (JSON list of per-branch snippets) OR `code`+`n` (same snippet across n branches); `vars_json` seeds the shared namespace forked into every branch; `sandbox` optionally pins a rung | warm-fork fan-out over the ORCH-1.86..93 primitive — pay warm-up once for a parent context, fork N copy-on-write branches concurrently; degrades cleanly with no warm-fork rung on this host |
 | `graph_runvcs` (live run) | `list`, `status` (event/commit/message counts + log digest), `commit` (+`label`), `revert` (+`commit_id`), `fork` (+`commit_id`, branches a NEW run into a fresh workspace, parent untouched), `discard` (drop the uncommitted event delta), `replay` (deterministically replay the event log and verify reproduction) | agent-native version control for a LIVE run — snapshots conversation + filesystem + process/event frontier together into one content-addressed `RunCommit` |
 | `graph_runvcs` (Agent Digital Twin, X-8) | `twin_capture` (+`run_id`, best-effort hydrate from the KG's recorded `:ToolCall`/`:WorkItem` rows, `persist=true` default), `twin_replay` (regression-replay the recorded event log verbatim, never re-executes a real tool/model call; reports bit-for-bit `deterministic`), `twin_counterfactual` (re-drive the SAME recorded run under a swapped `policy_overrides` and/or `model_responses`, surfacing a `decision_delta`), `twin_incident` (read-only ordered step-through for human-inspectable investigation) | a durable, replayable projection of one PAST run — exact model/prompt/tool/skill/policy versions, its run graph, every tool call + evidence, its outcome — for regression testing, incident investigation, and counterfactual policy/model evaluation; same tool, same REST twin, same `_execute_tool` core as the live-run actions |
-| `graph_message` | `open` (from a `session_id`/`run_id` → `channel_id`), `send` (`channel_id`+`sender`+`payload`, `durable=true` persists as a replayable `AgentMessage` node), `receive` (with a `since` cursor), `history`, `close` | ephemeral (optionally durable) message channels for a run and its spawned agents |
-| `graph_bus` | `register`/`heartbeat`/`leave`/`status`, `roster` (discover peers + presence), `send` (`sender`+`payload`+`to`\|`topic`), `receive` (+`since`), `subscribe`/`unsubscribe`, `ack`, `dispatch` (hand an objective to the fleet as a Loop); mesh/federation: `register_hub`/`list_hubs`/`federate`/`federate_in` | the federated, durable, cross-host agent-to-agent bus (state lives in the KG) — distinct from `graph_message`'s per-run channels |
 | `graph_broker` | `declare_exchange` (+`exchange_type`), `declare_queue`, `bind` (`queue`+`exchange`[+`routing_key`]), `publish` (`exchange`+`routing_key`+`payload`), `consume` (+`max_messages`/`ack` via `params_json`), `stats`/`list_queues`/`list_exchanges` | the engine's AMQP-style message broker (exchanges + queues + streams), distinct from the agent-to-agent bus and from the modality-tier `engine_broker` |
 | `graph_reach` | `reach_user` (`text`[+`user_id`] → the user's last-active channel, else the configured default), `send` (explicit `platform`+`channel_id`+`text`), `list_channels` (`platform`), `last_channel` ([`user_id`]), `status` | outbound messages to the human user; every send is governed by the ActionPolicy gate and mirrored into conversational memory |
+| `graph_a2a` | `card`, `send` (`message`[+`idempotency_key`]), `get` (`task_id`), `list` (`cursor`, `limit`), `cancel` (`task_id`) | governed unary A2A tasks; streaming and push are not supported |
+| `browser_control` | `issue_lease`, `execute_call`, `cancel_call`, `reconcile_call`, `revoke_lease` (each with its exact `payload`) | drive an attended agent-webui document under a graph-os lease |
 
 ### Cold-start delegation (KG-driven router)
 
@@ -101,7 +101,7 @@ schedule, persist, load tools, or otherwise execute the plan.
 | Create recurring work | `graph_schedules` |
 | Isolate execution | `graph_sandbox` |
 | Fork, revert, or replay a run | `graph_fork`, `graph_runvcs` |
-| Exchange task messages | `graph_message`, `graph_bus`, `graph_broker` |
+| Exchange task messages | `graph_broker` |
 | Check participants or capability reach | `graph_reach` |
 
 Launch independent work items together, then wait at explicit dependency

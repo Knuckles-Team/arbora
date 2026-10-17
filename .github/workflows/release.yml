@@ -4,10 +4,9 @@ name: Release
 # Modeled on agent-utilities'/epistemic-graph's release.yml two-workflow
 # split: this file is the ONLY workflow that can block a release
 # (gates -> build -> publish-pypi, wired with `needs:` so a failure names its
-# stage at a glance). Scanner quality blocks like every other job here now
-# that the fleet's own kiss fork build keeps it green; its native toolchain
-# is still runner-provisioned. Everything else (Pages) lives in its own
-# workflow.
+# stage at a glance). Scanner quality is advisory: it reports on every run
+# and never blocks a merge or a release; its native toolchain is still
+# runner-provisioned. Everything else (Pages) lives in its own workflow.
 #
 # CI runs this repository's own .pre-commit-config.yaml -- the commit and
 # push stages over every file, then the manual-stage hooks that need the
@@ -20,9 +19,13 @@ name: Release
 # `complexity-staged` / `kiss-staged` hooks compare the staged index with
 # HEAD, which is empty on a fresh checkout.
 #
-# The package is pure Python; the only Rust build is epistemic-graph's
-# numeric kernel for the source-overlay test environment. Container images
-# have a separate delivery owner and are not published by this wheel workflow.
+# The package is pure Python and builds from this repository alone: every
+# dependency, the epistemic-graph engine wheels included, installs from PyPI
+# at the version uv.lock pins. No sibling source is checked out and nothing
+# is compiled. `install-smoke` installs the built wheel and its locked PyPI
+# dependencies on Linux, macOS and Windows (x64 and arm64) before a tag can
+# publish. Container images have a separate delivery owner and are not
+# published by this wheel workflow.
 # ─────────────────────────────────────────────────────────────────────────
 
 # Triggers (CI-STANDARD): a pull request runs `gates` only, diff-scoped; a push
@@ -79,13 +82,13 @@ jobs:
           printf '%s\n' "$sha" > "$RUNNER_TEMP/pipelines-ref"
       - name: Record the commit for re-runs
         if: github.run_attempt == 1
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: pipelines-ref
           path: ${{ runner.temp }}/pipelines-ref
       - name: Read the commit recorded by attempt 1
         if: github.run_attempt > 1
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: pipelines-ref
           path: ${{ runner.temp }}/recorded
@@ -100,10 +103,8 @@ jobs:
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
 
   gates:
-    # PR gates are diff-scoped. A cold numeric-kernel rebuild (cache key covers
-    # this file and uv.lock) exceeds 15 minutes, so the cap stays above it;
-    # warm-cache runs finish well inside the 15-minute standard.
-    timeout-minutes: ${{ github.event_name == 'pull_request' && 45 || 60 }}
+    # PR gates are diff-scoped and install only published wheels.
+    timeout-minutes: ${{ github.event_name == 'pull_request' && 15 || 60 }}
     name: gates
     needs: [freeze-gate-source]
     # Homelab self-hosted runner for same-repo push/PR traffic (the org
@@ -114,14 +115,11 @@ jobs:
     runs-on: ${{ (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && fromJSON('["self-hosted", "homelab"]') || 'ubuntu-latest' }}
     env:
       PIPELINES_REF: ${{ needs.freeze-gate-source.outputs.sha }}
-      CARGO_BUILD_JOBS: "4"
-      CARGO_PROFILE_DEV_DEBUG: "0"
-      CARGO_PROFILE_RELEASE_DEBUG: "0"
       # The homelab self-hosted runner is itself an RKE2 pod, so Kubernetes
       # injects KUBERNETES_SERVICE_HOST -- agent_utilities.core.live_mount_guard
       # (D-EGK-1) reads that as "running inside a pod" and asserts a hostPath
       # live-mount or a build-time .source-revision provenance marker, neither
-      # of which this job's plain sibling checkout has or needs. This is a CI
+      # of which this job's plain checkout has or needs. This is a CI
       # checkout, not a deployed graph-os instance, so the check is a false
       # positive here; skip it explicitly rather than fabricating a marker.
       AGENT_UTILITIES_SKIP_LIVE_MOUNT_CHECK: "true"
@@ -130,7 +128,7 @@ jobs:
       # differential gate flags a copy-pasted preamble as a new same-file
       # duplicate; this is the fix, not a jscpd exclusion.
       - &release-checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -141,17 +139,21 @@ jobs:
       # self-hosted runners this job (and `build`) may land on. uv's own
       # python-build-standalone download has no such requirement.
       - &release-uv
-        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
-          version: '0.11.7'
+          version: '0.13.1'
           python-version: '3.12'
           enable-cache: true
           cache-dependency-glob: uv.lock
+          # A pull request restores the cache but never saves it: saving tars
+          # the self-hosted runner's whole uv cache, which ran a green PR
+          # gates job past its 15-minute budget. Main and tags still save.
+          save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Provision pinned Helm for deployment render tests
         env:
-          HELM_VERSION: v4.3.0
-          HELM_SHA256: 86584a54def73570558f66f5111cc53dfed56689637ae32c1201205d494f54fb
+          HELM_VERSION: v4.3.1
+          HELM_SHA256: 0403a88ae20913d11b10a2467b50087721fea7581736da6b9d3992f5357fe54b
         run: |
           set -euo pipefail
           tool_dir="$(mktemp -d "$RUNNER_TEMP/helm.XXXXXX")"
@@ -164,48 +166,6 @@ jobs:
           tar -xzf "$archive" -C "$tool_dir" linux-amd64/helm
           test "$("$tool_dir/linux-amd64/helm" version --template '{{.Version}}')" = "$HELM_VERSION"
           printf '%s\n' "$tool_dir/linux-amd64" >> "$GITHUB_PATH"
-
-      - name: Checkout pinned agent-utilities source
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          repository: Knuckles-Team/agent-utilities
-          ref: 5d6d082ea2f06648ba612146d1df09f8cc30298e
-          path: .uv-workspace-siblings/agent-utilities
-          persist-credentials: false
-
-      - name: Checkout pinned agent-connector-sdk source
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          repository: Knuckles-Team/agent-connector-sdk
-          ref: a0f78fefbb486e4c7d97e608462cf5847a46bc7d
-          path: .uv-workspace-siblings/agent-connector-sdk
-          persist-credentials: false
-
-      - name: Checkout pinned agent-webui source
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          repository: Knuckles-Team/agent-webui
-          ref: 916382a450a1c157c5a6734365c668ec7246e39e
-          path: .uv-workspace-siblings/agent-webui
-          persist-credentials: false
-
-      - name: Checkout pinned epistemic-graph source
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          repository: Knuckles-Team/epistemic-graph
-          ref: 978532ee90bf06f3a26d8465efd63be94dd0dfa4
-          path: .uv-workspace-siblings/agent-utilities/.uv-workspace-siblings/epistemic-graph
-          persist-credentials: false
-
-      - name: Materialize nested pinned source paths
-        run: |
-          set -euo pipefail
-          au_source="$GITHUB_WORKSPACE/.uv-workspace-siblings/agent-utilities"
-          sdk_source="$GITHUB_WORKSPACE/.uv-workspace-siblings/agent-connector-sdk"
-          webui_source="$GITHUB_WORKSPACE/.uv-workspace-siblings/agent-webui"
-          mkdir -p "$au_source/.uv-workspace-siblings" "$webui_source/.uv-workspace-siblings"
-          ln -s "$sdk_source" "$au_source/.uv-workspace-siblings/agent-connector-sdk"
-          ln -s "$au_source" "$webui_source/.uv-workspace-siblings/agent-utilities"
 
       # The base the differential hooks compare against: the pull request base
       # or the previous push, else the root commit (a first push scans all of
@@ -250,9 +210,12 @@ jobs:
       # External-index availability is a release boundary, not a PR/push
       # boundary. Repository-manager's one readiness primitive checks the
       # package versions that this wheel declares before a tag can build.
+      # It is gate tooling, not a dependency: scripts/local_hook.sh installs
+      # it with --no-sources, so its own agent-utilities requirement resolves
+      # from PyPI rather than from a sibling source path.
       - name: Checkout pinned release-readiness implementation
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: Knuckles-Team/repository-manager
           ref: 0671b97250c7a2e87a1f63b43818e99eb90709a1
@@ -263,84 +226,31 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           set -euo pipefail
-          rm_source="$GITHUB_WORKSPACE/.uv-workspace-siblings/repository-manager"
-          mkdir -p "$rm_source/.uv-workspace-siblings"
-          ln -s "$GITHUB_WORKSPACE/.uv-workspace-siblings/agent-utilities" "$rm_source/.uv-workspace-siblings/agent-utilities"
           uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" dependency-readiness --hook-stage manual --all-files
 
-      # The numeric kernel builds into the epistemic-graph checkout's private
-      # target-isolated/ dir (never CARGO_TARGET_DIR); cache exactly that dir.
-      - name: Cache the epistemic-graph kernel build
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-        with:
-          workspaces: .uv-workspace-siblings/agent-utilities/.uv-workspace-siblings/epistemic-graph -> target-isolated
-
+      # Every dependency installs from PyPI exactly as uv.lock pins it, the
+      # published epistemic-graph wheel (numeric kernel included) among them;
+      # no sibling source checkout or source overlay exists.
       - name: Sync test environment
         run: |
           set -euo pipefail
-          uv sync --frozen --extra test --extra webui --no-install-package epistemic-graph
+          uv sync --frozen --extra test --extra webui
 
-      - name: Resolve exact numeric artifact identity
-        id: numeric-identity
-        working-directory: ${{ github.workspace }}
+      - name: Verify the engine client is the published wheel
         run: |
           set -euo pipefail
-          eg_source="$GITHUB_WORKSPACE/.uv-workspace-siblings/agent-utilities/.uv-workspace-siblings/epistemic-graph"
-          uv venv --python "$GITHUB_WORKSPACE/.venv/bin/python" "$RUNNER_TEMP/numeric-builder"
-          uv pip install --python "$RUNNER_TEMP/numeric-builder/bin/python" 'maturin==1.15.0'
-          export PATH="$RUNNER_TEMP/numeric-builder/bin:$PATH"
-          export VIRTUAL_ENV="$GITHUB_WORKSPACE/.venv"
-          export PYO3_PYTHON="$VIRTUAL_ENV/bin/python"
-          echo "$RUNNER_TEMP/numeric-builder/bin" >> "$GITHUB_PATH"
-          echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> "$GITHUB_ENV"
-          echo "PYO3_PYTHON=$PYO3_PYTHON" >> "$GITHUB_ENV"
-          git -C "$eg_source" diff --exit-code HEAD
-          git -C "$eg_source" ls-files > "$RUNNER_TEMP/numeric-inputs"
-          NUMERIC_SOURCE_SHA="$(git -C "$eg_source" rev-parse HEAD)"
-          export NUMERIC_SOURCE_SHA
-          rustc_id="$(rustc -Vv)"
-          cargo_id="$(cargo -V)"
-          maturin_id="$(maturin --version)"
-          cc_id="$(cc --version)"
-          export NUMERIC_TOOLS_ID="$rustc_id|$cargo_id|$maturin_id|$cc_id"
-          "$PYO3_PYTHON" scripts/numeric_artifact_cache.py key "$eg_source" "$RUNNER_TEMP/numeric-inputs" >> "$GITHUB_OUTPUT"
-
-      - name: Restore exact numeric extension
-        id: numeric-cache
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ${{ runner.temp }}/eg-numeric-artifact
-          key: ${{ steps.numeric-identity.outputs.key }}
-
-      - name: Validate numeric extension or rebuild
-        working-directory: ${{ github.workspace }}
-        env:
-          NUMERIC_CACHE_KEY: ${{ steps.numeric-identity.outputs.key }}
-        run: |
-          set -euo pipefail
-          eg_source="$GITHUB_WORKSPACE/.uv-workspace-siblings/agent-utilities/.uv-workspace-siblings/epistemic-graph"
-          helper=scripts/numeric_artifact_cache.py
-          cache="$RUNNER_TEMP/eg-numeric-artifact"
-          if "$PYO3_PYTHON" "$helper" restore "$eg_source" "$cache" --key "$NUMERIC_CACHE_KEY" && \
-             "$PYO3_PYTHON" -I "$helper" probe "$eg_source"; then
-            echo "numeric cache hit: locked-interpreter smoke passed"
-          else
-            "$PYO3_PYTHON" "$helper" clear "$eg_source" "$cache"
-            "$PYO3_PYTHON" "$eg_source/scripts/build_numeric_kernel.py"
-            "$PYO3_PYTHON" -I "$helper" probe "$eg_source"
-            git -C "$eg_source" diff --exit-code HEAD
-            "$PYO3_PYTHON" "$helper" record "$eg_source" "$cache" --key "$NUMERIC_CACHE_KEY"
-          fi
-          echo "PYTHONPATH=$eg_source${PYTHONPATH:+:$PYTHONPATH}" >> "$GITHUB_ENV"
-          PYTHONPATH="$eg_source${PYTHONPATH:+:$PYTHONPATH}" uv run --no-sync python -c \
-            'from pathlib import Path; import epistemic_graph; from epistemic_graph.generated import connector_pack, source_ingestion, storage; root = Path(".uv-workspace-siblings/agent-utilities/.uv-workspace-siblings/epistemic-graph").resolve(); assert Path(epistemic_graph.__file__).resolve().is_relative_to(root); assert connector_pack.ConnectorPackStatusRequest; assert source_ingestion.SourceCheckpoint; assert storage.send_agent_component_content'
-
-      - name: Save verified numeric extension
-        if: success() && steps.numeric-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ${{ runner.temp }}/eg-numeric-artifact
-          key: ${{ steps.numeric-identity.outputs.key }}
+          uv run --no-sync python -I -c '
+          import importlib.metadata as md
+          import epistemic_graph.numeric
+          from epistemic_graph.generated import connector_pack, source_ingestion, storage
+          assert connector_pack.ConnectorPackStatusRequest
+          assert source_ingestion.SourceCheckpoint
+          assert storage.send_agent_component_content
+          for name in ("epistemic-graph", "epistemic-graph-server", "agent-utilities", "agent-connector-sdk", "agent-webui"):
+              direct = md.distribution(name).read_text("direct_url.json")
+              assert direct is None, f"{name} is not an index install: {direct}"
+              print(name, md.version(name))
+          '
 
       - name: Locked-environment type check (manual-stage hook, always full)
         run: uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" mypy-env --hook-stage manual --all-files
@@ -409,13 +319,16 @@ jobs:
             echo "required=true" >> "$GITHUB_OUTPUT"
           fi
 
-  # Generated client/schema changes need the canonical scanner before merge.
+  # Scanners (complexity, KISS, cccc, dupehound, jscpd) are advisory: they
+  # report on every run and never block a merge or a release (operator
+  # direction, 2026-10-17).
   scanner-quality:
     if: >-
       always() && needs.freeze-gate-source.result == 'success' &&
       ((github.event_name == 'push' && github.ref_type == 'branch') ||
       (github.event_name == 'pull_request' && needs.scanner-scope.outputs.required == 'true'))
     timeout-minutes: 60
+    continue-on-error: true
     name: Scanner quality (cccc, KISS, dupehound, jscpd)
     needs: [freeze-gate-source, scanner-scope]
     runs-on: ubuntu-latest
@@ -431,7 +344,7 @@ jobs:
         with:
           toolchain: stable
 
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
 
@@ -500,17 +413,95 @@ jobs:
       - name: Build wheel
         run: uv build --wheel --out-dir dist
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: graph-os-wheel
           path: dist/graph_os-*.whl
           if-no-files-found: error
           retention-days: 7
 
+  # The wheel is pure Python, so one build serves every platform; what differs
+  # per platform is whether the locked PyPI dependency set installs and
+  # imports there. Each leg installs uv.lock's exact, hash-checked
+  # requirements from PyPI, then the built wheel with no dependency
+  # resolution of its own, and imports the composition root. Linux and
+  # Windows x64, Linux arm64 and macOS arm64 are the platforms the
+  # epistemic-graph engine publishes wheels for and gate the release. macOS
+  # x64 and Windows arm64 run and report on every release; they are
+  # non-blocking only because no engine wheel exists for them yet, so a red
+  # leg there names that gap instead of hiding it.
+  install-smoke:
+    name: install ${{ matrix.name }}
+    needs: [build]
+    if: github.event_name != 'pull_request'
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    continue-on-error: ${{ matrix.optional || false }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x86_64
+            runner: ubuntu-24.04
+          - name: linux-aarch64
+            runner: ubuntu-24.04-arm
+          - name: macos-aarch64
+            runner: macos-14
+          - name: macos-x86_64
+            runner: macos-15-intel
+            optional: true
+          - name: windows-x86_64
+            runner: windows-latest
+          - name: windows-aarch64
+            runner: windows-11-arm
+            optional: true
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - *release-checkout
+      - *release-uv
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: graph-os-wheel
+          path: dist
+
+      - name: Install the locked PyPI dependencies, then the wheel
+        run: |
+          set -euo pipefail
+          uv export --frozen --no-emit-project --no-dev --extra webui \
+            --format requirements.txt --output-file "$RUNNER_TEMP/locked.txt"
+          uv venv --python 3.12 "$RUNNER_TEMP/smoke"
+          py="$RUNNER_TEMP/smoke/bin/python"
+          [ -x "$py" ] || py="$RUNNER_TEMP/smoke/Scripts/python.exe"
+          echo "SMOKE_PYTHON=$py" >> "$GITHUB_ENV"
+          # --no-config: the export already carries this project's
+          # [tool.uv] overrides as exact pins; re-reading them would turn
+          # them back into ranges --require-hashes refuses.
+          uv pip install --no-config --python "$py" --require-hashes --no-deps \
+            --index-url https://pypi.org/simple -r "$RUNNER_TEMP/locked.txt"
+          uv pip install --no-config --python "$py" --no-deps dist/graph_os-*.whl
+          uv pip check --no-config --python "$py"
+
+      - name: Import the composition root from PyPI-installed dependencies
+        run: |
+          set -euo pipefail
+          "$SMOKE_PYTHON" -I -c '
+          import importlib.metadata as md
+          import graph_os, agent_utilities, agent_connector_sdk, agent_webui
+          import epistemic_graph.numeric
+          from graph_os.deployment import cli
+          for name in ("epistemic-graph", "epistemic-graph-server", "agent-utilities", "agent-connector-sdk", "agent-webui"):
+              assert md.distribution(name).read_text("direct_url.json") is None, name
+              print(name, md.version(name))
+          print("graph-os", md.version("graph-os"))
+          '
+
   publish-pypi:
     timeout-minutes: ${{ github.event_name == 'pull_request' && 10 || 60 }}
     name: publish
-    needs: build
+    needs: [build, install-smoke]
     if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
     runs-on: ubuntu-latest
     # D-ORC-10-style gate (see agent-utilities release.yml): publishing is
@@ -519,16 +510,59 @@ jobs:
     # environment in Settings > Environments > pypi-publish.
     environment: pypi-publish
     steps:
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: graph-os-wheel
           path: dist
 
-      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
-          version: '0.11.7'
+          version: '0.13.1'
 
       - name: Publish wheel
         env:
           UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         run: uv publish --check-url https://pypi.org/simple dist/graph_os-*.whl
+
+  github-release:
+    name: github-release
+    # Created only after the wheel is on PyPI, so the release never links a
+    # project page that does not exist yet.
+    needs: [publish-pypi]
+    if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - name: Write release notes
+        env:
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          {
+            echo "PyPI: [\`graph-os\` $version](https://pypi.org/project/graph-os/$version/)"
+            echo
+            echo '```bash'
+            echo "pip install \"graph-os[webui]==$version\""
+            echo '```'
+            echo
+            echo "Installs from PyPI on Linux (x86_64, aarch64), macOS (arm64) and"
+            echo "Windows (x86_64); macOS x86_64 and Windows arm64 await engine wheels."
+            echo
+            echo "Commit: $SHA"
+          } > "$RUNNER_TEMP/notes.md"
+      - name: Create or update the GitHub release
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --latest \
+              --notes-file "$RUNNER_TEMP/notes.md"
+          else
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --latest \
+              --title "Release $TAG" --notes-file "$RUNNER_TEMP/notes.md"
+          fi

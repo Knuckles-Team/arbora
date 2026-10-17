@@ -269,6 +269,7 @@ def test_member_uninstall_guardrail_refuses_the_real_destructive_plan(
 def test_locked_distribution_guardrail_refuses_removing_a_locked_package(
     workspace: Workspace,
 ) -> None:
+    saved = list(venv_sync.GUARDRAILS)
     venv_sync.GUARDRAILS[:] = [
         g for g in venv_sync.GUARDRAILS if g.name != "member_uninstall"
     ]
@@ -280,7 +281,9 @@ def test_locked_distribution_guardrail_refuses_removing_a_locked_package(
         assert verdict.decision == REFUSE
         assert verdict.guardrail == "locked_uninstall"
     finally:
-        venv_sync.register_guardrail(venv_sync.MemberUninstallGuardrail())
+        # Restore the exact order: re-registering appends, which would let
+        # another guardrail refuse first in a later test.
+        venv_sync.GUARDRAILS[:] = saved
 
 
 def test_uninstall_budget_allows_a_sanctioned_prune(workspace: Workspace) -> None:

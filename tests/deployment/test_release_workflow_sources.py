@@ -1,8 +1,9 @@
 """Structural contracts of the release workflow, derived from their sources of truth.
 
-The workflow's own pins (sibling commits, tool versions) are the single place a
-revision is recorded; these tests check that each pin is immutable and wired in
-the right order, never that it equals a copy kept here.
+The workflow's own pins (tool versions, gate tooling commits) are the single
+place a revision is recorded; these tests check that each pin is immutable and
+wired in the right order, never that it equals a copy kept here. Every runtime
+dependency installs from PyPI, so the workflow checks out no sibling source.
 """
 
 from __future__ import annotations
@@ -53,40 +54,6 @@ def _locked_paths() -> set[str]:
     }
 
 
-_SHELL_VAR = re.compile(r'^\s*(\w+)="\$GITHUB_WORKSPACE/([^"]+)"\s*$', re.MULTILINE)
-_SYMLINK = re.compile(r'ln -s "\$(\w+)" "\$(\w+)/([^"]+)"')
-
-
-def _materialized_paths(steps: list[dict[str, Any]], checkouts: set[str]) -> set[str]:
-    """Nested editable paths the workflow backs with a symlink, not a checkout.
-
-    ``agent-connector-sdk`` is declared as an editable path source by both
-    graph-os and agent-utilities (which needs it directly too); ``agent-utilities``
-    likewise by both graph-os and agent-webui. Both declarations resolve the
-    same real directory, so uv's resolver may record either project's
-    relative path in uv.lock for the same package -- this repository's own
-    "Materialize nested pinned source paths" step symlinks the nested
-    location to the already-checked-out flat one so `uv sync` succeeds
-    either way. Reading that step's own shell variables (rather than
-    hard-coding the paths here a second time) keeps this test correct when
-    the step's variable names change, and additionally verifies every
-    symlink's target is itself one of the checked-out paths -- a dangling
-    symlink would otherwise go unnoticed.
-    """
-    script = steps[_step_index(steps, "ln -s")]["run"]
-    var_paths = dict(_SHELL_VAR.findall(script))
-
-    materialized: set[str] = set()
-    for target_var, link_dir_var, suffix in _SYMLINK.findall(script):
-        target = var_paths[target_var]
-        assert target in checkouts, (
-            f"ln -s target ${target_var} ({target}) is not one of the "
-            "checked-out paths -- it would dangle"
-        )
-        materialized.add(f"{var_paths[link_dir_var]}/{suffix}")
-    return materialized
-
-
 def _manual_hook_ids() -> set[str]:
     config = yaml.safe_load(
         (ROOT / ".pre-commit-config.yaml").read_text(encoding="utf-8")
@@ -111,25 +78,29 @@ def _manual_hooks_named(commands: str) -> set[str]:
     return named
 
 
-def test_release_workflow_materializes_uv_path_sources_before_sync() -> None:
-    steps = _gate_steps()
-    before_sync = steps[: _step_index(steps, "uv sync --frozen --extra test")]
-    checkouts = {
-        step["with"]["path"]: step
-        for step in before_sync
+def test_release_builds_from_this_repository_and_pypi_only() -> None:
+    """No sibling source is checked out; every locked package is an index install."""
+    workflow = _workflow()
+    product_checkouts = [
+        (name, step["with"].get("repository"))
+        for name, job in workflow["jobs"].items()
+        for step in job["steps"]
         if step.get("uses", "").startswith("actions/checkout@")
-        and "path" in step.get("with", {})
-    }
-
-    assert _declared_paths() <= set(checkouts)
-    # "." is this checkout itself (the job's initial actions/checkout, always
-    # present); every other locked editable path must be either a dedicated
-    # checkout above or a symlink the workflow creates onto one.
-    provisioned = {".", *checkouts, *_materialized_paths(before_sync, set(checkouts))}
-    assert _locked_paths() <= provisioned
-    for step in checkouts.values():
-        assert SHA.fullmatch(step["with"]["ref"]), step["with"]
-        assert step["with"]["persist-credentials"] is False
+        and step.get("with", {}).get("repository")
+        not in (None, "Knuckles-Team/repository-manager")
+    ]
+    assert product_checkouts == []
+    text = (ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
+    for retired in (
+        "agent-utilities",
+        "agent-connector-sdk",
+        "agent-webui",
+        "epistemic-graph",
+    ):
+        assert f"repository: Knuckles-Team/{retired}" not in text
+    assert _declared_paths() == set()
+    # "." is this checkout itself; nothing else is an editable path install.
+    assert _locked_paths() == {"."}
 
 
 def test_every_uvx_runs_after_a_pinned_uv() -> None:
@@ -192,40 +163,20 @@ def test_every_manual_hook_ci_names_is_defined() -> None:
     assert _manual_hooks_named(commands) <= _manual_hook_ids()
 
 
-def test_epistemic_graph_is_overlaid_from_the_pinned_source() -> None:
+def test_engine_installs_from_the_locked_wheel_not_a_source_overlay() -> None:
     steps = _gate_steps()
-    command = steps[_step_index(steps, "helper=scripts/numeric_artifact_cache.py")][
-        "run"
-    ]
     sync = steps[_step_index(steps, "uv sync --frozen")]["run"]
+    verify = steps[_step_index(steps, "epistemic_graph.numeric")]["run"]
+    commands = "\n".join(step.get("run", "") for step in steps)
 
-    assert "--no-install-package epistemic-graph" in sync
-    assert "PYTHONPATH=$eg_source" in command
-    assert "helper=scripts/numeric_artifact_cache.py" in command
-    assert "epistemic_graph.__file__" in command
-
-
-def test_kernel_build_cache_covers_the_target_dir_cargo_uses() -> None:
-    steps = _gate_steps()
-    cache = next(
-        step for step in steps if "Swatinem/rust-cache@" in step.get("uses", "")
+    assert "--no-install-package" not in sync
+    assert "PYTHONPATH" not in commands
+    assert "build_numeric_kernel" not in commands
+    assert not any("Swatinem/rust-cache@" in step.get("uses", "") for step in steps)
+    assert 'read_text("direct_url.json")' in verify
+    assert _step_index(steps, "uv sync --frozen") < steps.index(
+        steps[_step_index(steps, "epistemic_graph.numeric")]
     )
-    workspace, _, target = cache["with"]["workspaces"].partition(" -> ")
-    kernel_checkout = next(
-        step
-        for step in steps
-        if step.get("with", {}).get("repository") == "Knuckles-Team/epistemic-graph"
-    )
-
-    assert workspace == kernel_checkout["with"]["path"]
-    # build_numeric_kernel.py always builds into <checkout>/target-isolated.
-    assert target == "target-isolated"
-    assert steps.index(cache) < _step_index(
-        steps, "helper=scripts/numeric_artifact_cache.py"
-    )
-    env = _workflow()["jobs"]["gates"]["env"]
-    assert env["CARGO_BUILD_JOBS"] == "4"
-    assert env["CARGO_PROFILE_RELEASE_DEBUG"] == "0"
 
 
 def test_release_dependency_readiness_blocks_tag_build_only() -> None:
@@ -246,10 +197,13 @@ def test_release_dependency_readiness_blocks_tag_build_only() -> None:
     assert checkout["if"] == readiness["if"] == "startsWith(github.ref, 'refs/tags/v')"
     assert steps.index(checkout) < steps.index(readiness)
     assert "dependency-readiness --hook-stage manual" in readiness["run"]
+    assert "ln -s" not in readiness["run"]
+    hook = (ROOT / "scripts" / "local_hook.sh").read_text(encoding="utf-8")
+    assert "uv run --no-project --no-sources" in hook
     assert workflow["jobs"]["build"]["needs"] == ["gates"]
 
 
-def test_scanner_versions_receive_distinct_argv_and_the_job_blocks() -> None:
+def test_scanner_versions_receive_distinct_argv_and_the_job_is_advisory() -> None:
     scanner = _workflow()["jobs"]["scanner-quality"]
     command = next(
         step["run"]
@@ -259,7 +213,9 @@ def test_scanner_versions_receive_distinct_argv_and_the_job_blocks() -> None:
 
     assert "pipelines-hook scanner-versions cccc kiss dupehound jscpd" in command
     assert "['cccc'" not in command
-    assert "continue-on-error" not in scanner
+    assert scanner["continue-on-error"] is True
+    for job in ("build", "install-smoke", "publish-pypi", "github-release"):
+        assert "scanner-quality" not in _workflow()["jobs"][job].get("needs", [])
 
 
 def _scanner_step(name: str) -> dict[str, Any]:
@@ -413,77 +369,89 @@ def test_only_superseded_pull_request_runs_are_cancelled() -> None:
     assert concurrency["cancel-in-progress"] == "${{ github.ref_type != 'tag' }}"
 
 
-def test_numeric_artifact_cache_is_exact_and_always_validated() -> None:
-    steps = _gate_steps()
-    restore = next(step for step in steps if step.get("id") == "numeric-cache")
-    save = next(
-        step for step in steps if step.get("name") == "Save verified numeric extension"
-    )
-    identity = steps[_step_index(steps, "numeric_artifact_cache.py key")]
-    validate = steps[_step_index(steps, "helper=scripts/numeric_artifact_cache.py")]
-    assert "restore-keys" not in restore["with"]
-    assert restore["with"] == save["with"]
-    assert "if" not in validate
-    assert (
-        identity["working-directory"]
-        == validate["working-directory"]
-        == "${{ github.workspace }}"
-    )
-    assert "success()" in save["if"]
-    assert _step_index(steps, "uv sync --frozen") < steps.index(identity)
-    assert (
-        steps.index(identity)
-        < steps.index(restore)
-        < steps.index(validate)
-        < steps.index(save)
-    )
-    assert '"$PYO3_PYTHON" scripts/numeric_artifact_cache.py' in identity["run"]
-    assert '"$PYO3_PYTHON" -I "$helper" probe' in validate["run"]
-    assert (
-        '"$PYO3_PYTHON" "$eg_source/scripts/build_numeric_kernel.py"' in validate["run"]
-    )
-    assert validate["run"].index('probe "$eg_source"') < validate["run"].index(
-        'record "$eg_source"'
-    )
-    assert re.search(r"maturin==\d+\.\d+\.\d+", identity["run"])
-    assert "maturin>=" not in identity["run"]
+_SMOKE_PLATFORMS = {
+    "linux-x86_64",
+    "linux-aarch64",
+    "macos-aarch64",
+    "macos-x86_64",
+    "windows-x86_64",
+    "windows-aarch64",
+}
+# The platforms the epistemic-graph engine publishes wheels for gate the
+# release; the other legs run and report but cannot pass until it does.
+_REQUIRED_SMOKE_PLATFORMS = {
+    "linux-x86_64",
+    "linux-aarch64",
+    "macos-aarch64",
+    "windows-x86_64",
+}
 
 
-def test_release_eg_checkout_matches_locked_source() -> None:
-    from urllib.parse import parse_qs, urlsplit
+def _locked_wheel_platforms(package: str) -> set[str]:
+    locked = tomllib.loads((ROOT / "uv.lock").read_text(encoding="utf-8"))
+    entry = next(item for item in locked["package"] if item["name"] == package)
+    tags = {wheel["url"].rsplit("-", 1)[-1] for wheel in entry["wheels"]}
+    platforms = set()
+    for tag in tags:
+        if "manylinux" in tag:
+            platforms.add("linux-x86_64" if "x86_64" in tag else "linux-aarch64")
+        elif "macosx" in tag:
+            platforms.add("macos-aarch64" if "arm64" in tag else "macos-x86_64")
+        elif "win" in tag:
+            platforms.add("windows-x86_64" if "amd64" in tag else "windows-aarch64")
+    return platforms
 
+
+def test_install_smoke_covers_every_os_and_architecture_before_publish() -> None:
+    jobs = _workflow()["jobs"]
+    smoke = jobs["install-smoke"]
+    legs = smoke["strategy"]["matrix"]["include"]
+
+    assert {leg["name"] for leg in legs} == _SMOKE_PLATFORMS
+    required = {leg["name"] for leg in legs if not leg.get("optional")}
+    assert required == _REQUIRED_SMOKE_PLATFORMS
+    # A leg is optional only while the engine publishes no wheel for it.
+    for package in ("epistemic-graph", "epistemic-graph-server"):
+        assert _locked_wheel_platforms(package) == _REQUIRED_SMOKE_PLATFORMS
+    assert smoke["strategy"]["fail-fast"] is False
+    assert smoke["needs"] == ["build"]
+    assert jobs["publish-pypi"]["needs"] == ["build", "install-smoke"]
+
+    commands = "\n".join(step.get("run", "") for step in smoke["steps"])
+    assert "uv export --frozen" in commands
+    assert "--require-hashes --no-deps" in commands
+    assert "--index-url https://pypi.org/simple" in commands
+    assert "--no-deps dist/graph_os-*.whl" in commands
+    assert 'read_text("direct_url.json") is None' in commands
+
+
+def test_github_release_links_the_published_pypi_version() -> None:
+    release = _workflow()["jobs"]["github-release"]
+    assert release["needs"] == ["publish-pypi"]
+    notes = next(
+        step for step in release["steps"] if step["name"] == "Write release notes"
+    )
+    assert "https://pypi.org/project/graph-os/$version/" in notes["run"]
+    assert 'pip install \\"graph-os[webui]==$version\\"' in notes["run"]
+
+
+def test_release_eg_resolves_from_the_package_index_as_wheels() -> None:
     locked = tomllib.loads((ROOT / "uv.lock").read_text(encoding="utf-8"))
     eg = next(
         package for package in locked["package"] if package["name"] == "epistemic-graph"
     )
-    source = urlsplit(eg["source"]["git"])
-    revision = parse_qs(source.query)["rev"][0]
-    checkout = next(
-        step["with"]
-        for step in _gate_steps()
-        if step.get("with", {}).get("repository") == "Knuckles-Team/epistemic-graph"
-    )
-    assert checkout["ref"] == revision == source.fragment
+    assert eg["source"] == {"registry": "https://pypi.org/simple"}
+    assert eg.get("wheels") and "sdist" not in eg
 
 
-def test_pinned_sdk_source_contains_schema_disclosure_contract() -> None:
+def test_installed_sdk_contains_schema_disclosure_contract() -> None:
+    """The SDK installs from the package index; read the installed module."""
     import ast
+    import importlib.util
 
-    checkout = next(
-        step["with"]
-        for step in _gate_steps()
-        if step.get("with", {}).get("repository") == "Knuckles-Team/agent-connector-sdk"
-    )
-    source = subprocess.check_output(
-        [
-            "git",
-            "-C",
-            str(ROOT / checkout["path"]),
-            "show",
-            f"{checkout['ref']}:agent_connector_sdk/mcp/schema_disclosure.py",
-        ],
-        text=True,
-    )
+    spec = importlib.util.find_spec("agent_connector_sdk.mcp.schema_disclosure")
+    assert spec is not None and spec.origin is not None
+    source = Path(spec.origin).read_text(encoding="utf-8")
     names = {
         node.name
         for node in ast.parse(source).body

@@ -27,15 +27,10 @@ class Widget(BaseWidget):
         return self.get_widget_fields("ollama")
 
     def fetch_data(self, config: ServiceConfig) -> WidgetData:
-        # GOC-87 staged httpx -> httpx2 migration: this widget's two
-        # unauthenticated, unpinned, non-streaming diagnostics GETs are the
-        # first call family ported to the httpx2-backed adapter (see
-        # agent_utilities.httpsupport.transport_factory.MIGRATED_HTTPX2_FAMILIES
-        # for why this family qualifies as low-risk).
-        from agent_utilities.httpsupport.transport_factory import create_http_client
+        from graph_os.core.transport import create_http_client
 
         url = self._resolve_url(config)
-        client = create_http_client(family="gateway-widget-diagnostics", timeout=5.0)
+        client = create_http_client(timeout=5.0)
         try:
             resp = client.request("GET", f"{url}/api/tags")
             data = resp.json() if resp.status_code == 200 else {}
