@@ -248,3 +248,17 @@ Rotate at ten MiB and retain five files. Redact records through the existing AU 
 Keep bounded tenant projections and opaque tenant-local cursors; never return shared files or offsets.
 This slice uses controlled identity grants with a real sink and HTTP server.
 It does not prove deployed policy, durable replay after restart, terminal rendering or full host lifecycle acceptance.
+
+### Startup admission port
+
+R010.7.1 adds injected host.start policy and session-binding owners.
+The binding owner attests the exact GraphSession object and current SessionState.
+Actor fields and scopes cannot establish that binding.
+Admission refreshes identity after awaited owner calls and verifies explicit grant expiry.
+The connector entrypoint verifies the requested mode, workspace and preference before admission.
+It still refuses client startup until R010.7.2 provides shared-authority client factories.
+No deployed grant, credential configuration or listener is added by this increment.
+
+The admission request binds a configuration digest to the policy decision only.
+This slice does not compute that digest from graph configuration or prove their agreement.
+R010.7.2 must compute the digest from the actual start configuration before any startup effect.
