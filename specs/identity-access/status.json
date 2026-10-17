@@ -1059,9 +1059,13 @@
     {
       "id": "GRAPHOS-IDENTITY-R650",
       "title": "External policy sync renders the engine's row-visibility bundle and fails closed",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "51095e526c65"
+      ],
+      "verified_by": [
+        "tests/access/test_external_policy_sync.py:3"
+      ]
     }
   ]
 }
