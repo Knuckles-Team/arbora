@@ -35,7 +35,7 @@ T = TypeVar("T")
 _BODY_PARAM_NAMES = ("data", "payload", "body")
 
 
-def _wrap_data_kwargs(func: Callable[..., T], args: tuple, kwargs: dict) -> dict:
+def _wrap_data_kwargs[T](func: Callable[..., T], args: tuple, kwargs: dict) -> dict:
     """Fold stray keyword fields into the target's REST-body param when it has one.
 
     Action-routed MCP tools pass the LLM's free-form ``params_json`` fields as
@@ -79,7 +79,7 @@ def _wrap_data_kwargs(func: Callable[..., T], args: tuple, kwargs: dict) -> dict
     return wrapped
 
 
-async def run_blocking(func: Callable[..., T], /, *args, **kwargs) -> T:
+async def run_blocking[T](func: Callable[..., T], /, *args, **kwargs) -> T:
     """Run a blocking sync callable in a worker thread, off the event loop.
 
     Returns the callable's result (or re-raises its exception) just like calling
@@ -107,7 +107,7 @@ async def run_blocking(func: Callable[..., T], /, *args, **kwargs) -> T:
     return result
 
 
-async def invoke_client_method(
+async def invoke_client_method[T](
     func: Callable[..., T | Awaitable[T]], /, *args, **kwargs
 ) -> T:
     """Invoke one provider SDK method without blocking the MCP event loop.

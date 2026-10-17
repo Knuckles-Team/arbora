@@ -188,7 +188,10 @@ def test_describe_serves_one_operations_schema_on_demand(served):
 def test_a_host_operation_is_reached_through_act_with_preview(served):
     """A host-native backing tool (graph-os's A2A / browser control shape)
     becomes ``act`` operations ``<tool>.<action>`` that preview first."""
-    from graph_os.mcp_server.backing.graphos_surface import backing_server, host_operations
+    from graph_os.mcp_server.backing.graphos_surface import (
+        backing_server,
+        host_operations,
+    )
 
     mcp, _listed, _registry = served
     calls: list[dict] = []

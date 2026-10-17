@@ -5,16 +5,16 @@ from __future__ import annotations
 import threading
 from typing import Any
 
+from agent_utilities.knowledge_graph.core.work_durability import NativeWorkItemRequired
+from agent_utilities.security.actor_identity import ActorType
+from agent_utilities.security.brain_context import ActorContext
+
 from graph_os.api.contracts.session import (
     GraphSession,
     SessionRequiredError,
     current_session,
     use_session,
 )
-from agent_utilities.knowledge_graph.core.work_durability import NativeWorkItemRequired
-from agent_utilities.security.actor_identity import ActorType
-from agent_utilities.security.brain_context import ActorContext
-
 from graph_os.messaging import lease as intake_lease
 
 

@@ -69,10 +69,9 @@ from pathlib import Path
 
 import anyio
 import httpx
-from fastmcp.utilities.logging import get_logger
-
 from agent_utilities.core._env import setting
 from agent_utilities.security.log_redaction import redact_for_log
+from fastmcp.utilities.logging import get_logger
 
 logger = get_logger(name="MultiplexerClientAuth")
 

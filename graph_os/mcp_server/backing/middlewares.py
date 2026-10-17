@@ -178,16 +178,17 @@ class ActorContextMiddleware(Middleware):
         return dict(claims) if claims else None
 
     async def on_call_tool(self, context: MiddlewareContext, call_next):
+        from agent_utilities.security.brain_context import reset_actor, set_actor
+        from agent_utilities.security.request_identity import (
+            actor_from_claims,
+            mint_graph_session,
+        )
+
         from graph_os.api.contracts.session import (
             SessionRequiredError,
             current_session,
             reset_session,
             set_session,
-        )
-        from agent_utilities.security.brain_context import reset_actor, set_actor
-        from agent_utilities.security.request_identity import (
-            actor_from_claims,
-            mint_graph_session,
         )
 
         claims = self._claims(context)

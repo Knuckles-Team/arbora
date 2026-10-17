@@ -180,6 +180,11 @@ select = ["E", "F", "I", "UP", "B"]
 # Python checks across GraphOS.
 ignore = ["E402", "E501", "B007"]
 
+[tool.ruff.lint.flake8-bugbear]
+# FastMCP tool parameters and FastAPI dependencies declare metadata through
+# these calls in argument defaults; they are evaluated once and immutable.
+extend-immutable-calls = ["pydantic.Field", "fastapi.Depends", "fastmcp.dependencies.Depends"]
+
 [tool.mypy]
 python_version = "3.12"
 ignore_missing_imports = true

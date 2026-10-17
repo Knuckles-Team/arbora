@@ -12,14 +12,14 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+from agent_utilities.security.error_surface import (
+    public_error_json,
+)
 from pydantic import Field
 
 from graph_os.mcp_server.backing import kg_server
 from graph_os.mcp_server.backing.ontology_types import (
     OntologyCatalogRequest,
-)
-from agent_utilities.security.error_surface import (
-    public_error_json,
 )
 
 logger = logging.getLogger(__name__)

@@ -31,8 +31,6 @@ from dataclasses import dataclass, replace
 from enum import StrEnum
 from typing import Any, Literal, NoReturn, Protocol
 
-from pydantic import Field, ValidationError, model_validator
-
 from agent_utilities.data_prep import (
     ArrowAdapter,
     CleanPipeline,
@@ -45,12 +43,14 @@ from agent_utilities.data_prep import (
     RowModelRegistry,
     schema_digest,
 )
-from graph_os.api.contracts.session import GraphSession
 from agent_utilities.knowledge_graph.ingestion.change_envelope import ChangeEnvelope
-from graph_os.mcp_server.backing import kg_server
 from agent_utilities.models.company_brain import DataClassification
 from agent_utilities.protocols.epistemic_operations import ProtocolModel
 from agent_utilities.protocols.source_connectors.base import ExternalAccess
+from pydantic import Field, ValidationError, model_validator
+
+from graph_os.api.contracts.session import GraphSession
+from graph_os.mcp_server.backing import kg_server
 
 logger = logging.getLogger(__name__)
 
@@ -3029,10 +3029,11 @@ class DataPrepService:
     ) -> dict[str, Any]:
         try:
             _check_cancel(deadline)
-            from graph_os.api.contracts.session import use_session
             from agent_utilities.knowledge_graph.ingestion.envelope_ingest import (
                 ingest_envelope,
             )
+
+            from graph_os.api.contracts.session import use_session
 
             engine = self._authority.native_engine(session=session)
             with use_session(session):

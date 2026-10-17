@@ -79,8 +79,9 @@ async def handle_rlm(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Compose AU's public RLM control plane with the verified caller context."""
-    from graph_os.api.contracts import GraphRlmRequest, compose_agent_control_plane
     from pydantic import TypeAdapter
+
+    from graph_os.api.contracts import GraphRlmRequest, compose_agent_control_plane
 
     if context.caller.session is None:
         raise RuntimeError("RLM operation requires a verified session")

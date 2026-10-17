@@ -77,8 +77,9 @@ def _caller_session_scope(caller: VerifiedCaller | None) -> Iterator[None]:
         # Explicit injected authenticators already own their admission/binding.
         yield
         return
-    from graph_os.api.contracts.session import use_session
     from agent_utilities.security.brain_context import use_actor
+
+    from graph_os.api.contracts.session import use_session
 
     with use_actor(caller.session.actor), use_session(caller.session):
         yield

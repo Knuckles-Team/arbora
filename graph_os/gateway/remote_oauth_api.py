@@ -288,6 +288,8 @@ async def oauth_callback(code: str, state: str, browser_session_id: str) -> Any:
     """
     import asyncio
 
+    from starlette.responses import JSONResponse, RedirectResponse
+
     from graph_os.mcp_server.backing.remote_oauth_broker import (
         OAuthBindingError,
         OAuthDiscoveryError,
@@ -295,7 +297,6 @@ async def oauth_callback(code: str, state: str, browser_session_id: str) -> Any:
         OAuthScopeError,
         OAuthStateError,
     )
-    from starlette.responses import JSONResponse, RedirectResponse
 
     actor = _resolve_verified_actor()
     broker = _get_broker()
@@ -329,8 +330,9 @@ async def _revoke(provider_id: str) -> Any:
     """Revoke the verified caller's grant for one enabled provider."""
     import asyncio
 
-    from graph_os.mcp_server.backing.remote_oauth_broker import OAuthProviderError
     from starlette.responses import Response
+
+    from graph_os.mcp_server.backing.remote_oauth_broker import OAuthProviderError
 
     actor = _resolve_verified_actor()
     broker = _get_broker()

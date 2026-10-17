@@ -44,11 +44,12 @@ if TYPE_CHECKING:
         McpCatalogSnapshotBinding,
     )
 
-from graph_os.api.contracts.session import GraphSession, resolve_session
 from agent_utilities.orchestration.action_policy import (
     ActionRequest,
     get_action_policy,
 )
+
+from graph_os.api.contracts.session import GraphSession, resolve_session
 
 __all__ = [
     "PackImportAuthorityResolver",
@@ -94,7 +95,7 @@ _ACTION_KIND = "connector_pack_import"
 _OPAQUE_PRINCIPAL = re.compile(r"^principal:sha256:[0-9a-f]{64}$")
 
 
-async def _resolve_provider(provider: ProvisioningProvider[T], *, label: str) -> T:
+async def _resolve_provider[T](provider: ProvisioningProvider[T], *, label: str) -> T:
     try:
         value = provider()
         if inspect.isawaitable(value):

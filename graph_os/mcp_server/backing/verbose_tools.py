@@ -779,7 +779,9 @@ def register_tool_surface(
     """
     from fastmcp import FastMCP
 
-    from graph_os.mcp_server.backing.connector_surface import register_connector_intent_tools
+    from graph_os.mcp_server.backing.connector_surface import (
+        register_connector_intent_tools,
+    )
 
     backing = FastMCP(f"{service}-backing")
     registered_tags = register_backing_tools(

@@ -11,6 +11,7 @@ from collections.abc import Callable
 from typing import Any, cast
 
 import pytest
+from scripts.gen_graphos_manifest import harvest_actions
 
 from graph_os.mcp_server.backing import kg_server
 from graph_os.mcp_server.backing.tools import (
@@ -22,7 +23,6 @@ from graph_os.mcp_server.backing.tools import (
     register_job_tools,
     register_workflow_tools,
 )
-from scripts.gen_graphos_manifest import harvest_actions
 
 
 class _FakeMCP:
@@ -148,8 +148,9 @@ def test_focused_tools_publish_collapsed_rest_routes() -> None:
 async def test_execute_dynamic_live_route_reaches_governed_orchestrator(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from graph_os.mcp_server.backing.tools import workflow_tools
     from agent_utilities.orchestration.manager import Orchestrator
+
+    from graph_os.mcp_server.backing.tools import workflow_tools
 
     engine = object()
     calls: list[dict[str, object]] = []
@@ -216,8 +217,9 @@ async def test_execute_dynamic_forwards_workflow_run_id_so_resume_is_reachable(
     implemented and unit-tested, was unreachable from the only entry point that
     exists.
     """
-    from graph_os.mcp_server.backing.tools import workflow_tools
     from agent_utilities.orchestration.manager import Orchestrator
+
+    from graph_os.mcp_server.backing.tools import workflow_tools
 
     engine = object()
     calls: list[dict[str, object]] = []
@@ -307,13 +309,14 @@ async def test_workflow_compile_live_route_isolates_graph_phases_and_authority(
     )
     from agent_utilities.knowledge_graph.workflow_compiler import WorkflowCompiler
     from agent_utilities.knowledge_graph.workflow_store import WorkflowStore
-    from graph_os.mcp_server.backing.tools import workflow_tools
     from agent_utilities.security.actor_identity import ActorType
     from agent_utilities.security.brain_context import (
         ActorContext,
         current_actor,
         use_actor,
     )
+
+    from graph_os.mcp_server.backing.tools import workflow_tools
 
     engine = object()
     main_thread = threading.current_thread()

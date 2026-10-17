@@ -73,7 +73,9 @@ def graph_write_and_engine(tmp_path, monkeypatch):
         "graph_os.mcp_server.backing.server_factory.create_mcp_server",
         return_value=(None, mock_mcp, []),
     ):
-        with patch("graph_os.mcp_server.backing.kg_server._get_engine", return_value=engine):
+        with patch(
+            "graph_os.mcp_server.backing.kg_server._get_engine", return_value=engine
+        ):
             from graph_os.mcp_server.backing.kg_server import _build_server
 
             _build_server(bootstrap=False)

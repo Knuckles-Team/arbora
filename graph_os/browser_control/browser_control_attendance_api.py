@@ -5,9 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from graph_os.api.contracts.session import GraphSession
 from pydantic import BaseModel, ConfigDict, field_validator
 
+from graph_os.api.contracts.session import GraphSession
 from graph_os.browser_control.browser_control_common import (
     _DIGEST,
     _TRUST_EVIDENCE,

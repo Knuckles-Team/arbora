@@ -67,9 +67,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
-
 from agent_utilities.models.evidence_bundle import EvidenceBundle
+from pydantic import BaseModel, ConfigDict, Field
 
 __all__ = [
     "AnalyzeResponse",

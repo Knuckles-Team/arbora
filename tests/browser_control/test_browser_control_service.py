@@ -9,11 +9,11 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from graph_os.api.contracts.session import GraphSession, use_session
 from agent_utilities.security.actor_identity import ActorType
 from agent_utilities.security.brain_context import ActorContext
 from agent_utilities.security.persistence_privacy import persistence_reference
 
+from graph_os.api.contracts.session import GraphSession, use_session
 from graph_os.browser_control.browser_control_api import (
     BrowserCallRequest,
     BrowserChannelBinding,

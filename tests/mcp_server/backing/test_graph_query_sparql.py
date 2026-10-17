@@ -9,8 +9,8 @@ dispatches the same tool, so surface-parity holds with no second handler.
 from __future__ import annotations
 
 import pytest
-
 from agent_utilities.knowledge_graph.orchestration.engine_query import QueryMixin
+
 from graph_os.mcp_server.backing import kg_server
 
 pytestmark = pytest.mark.concept("AU-KG.ingest.mirror-inbound")

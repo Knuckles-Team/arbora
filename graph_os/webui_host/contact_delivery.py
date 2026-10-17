@@ -23,6 +23,7 @@ from agent_utilities.knowledge_graph.core.work_durability import (
 )
 from agent_utilities.messaging.service import MessagingService
 from agent_utilities.security.persistence_privacy import persistence_reference
+
 from graph_os.webui_host.contact_governance import (
     ContactDeliveryContext,
     allow_shared_attempt,

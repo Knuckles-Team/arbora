@@ -21,6 +21,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from agent_utilities.models.evidence_bundle import EvidenceBundle
+from agent_utilities.security.error_surface import public_error_text
 from pydantic import Field
 
 from graph_os.gateway.schemas.graph_core import (
@@ -35,8 +37,6 @@ from graph_os.mcp_server.backing.tools._surface_selection import (
     register_conditional_tools,
 )
 from graph_os.mcp_server.backing.tools.analysis_tools import execute_focused_analysis
-from agent_utilities.models.evidence_bundle import EvidenceBundle
-from agent_utilities.security.error_surface import public_error_text
 
 
 def register_analyze_suite_tools(

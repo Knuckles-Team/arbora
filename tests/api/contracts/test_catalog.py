@@ -7,14 +7,6 @@ import hashlib
 from typing import Any, cast
 
 import pytest
-
-from graph_os.api.contracts.catalog import (
-    AgentCatalogRecord,
-    CatalogReadAuthority,
-    CatalogReadError,
-    WorkflowCatalogRecord,
-    catalog_read_ports,
-)
 from agent_utilities.knowledge_graph.core.session import (
     GraphSession,
     ScopeError,
@@ -23,6 +15,14 @@ from agent_utilities.knowledge_graph.core.session import (
 )
 from agent_utilities.security.actor_identity import ActorType
 from agent_utilities.security.brain_context import ActorContext
+
+from graph_os.api.contracts.catalog import (
+    AgentCatalogRecord,
+    CatalogReadAuthority,
+    CatalogReadError,
+    WorkflowCatalogRecord,
+    catalog_read_ports,
+)
 
 
 def _session() -> GraphSession:

@@ -48,10 +48,10 @@ from __future__ import annotations
 
 import json
 
+from agent_utilities.security.error_surface import public_error_json
 from pydantic import Field
 
 from graph_os.mcp_server.backing import kg_server
-from agent_utilities.security.error_surface import public_error_json
 
 
 def _gate(kind: str, target: str, reason: str) -> tuple[bool, dict]:

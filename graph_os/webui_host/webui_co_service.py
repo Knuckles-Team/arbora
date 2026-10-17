@@ -159,12 +159,6 @@ def run_web_ui(
     # `ag-ui` extra is absent, and only a deployment that asked for the WebUI
     # should ever pay this import.
     from agent_utilities.core.contextual_model import create_context_agent
-    from graph_os.webui_host.contact_governance import (
-        contact_delivery_factory_kwargs,
-    )
-    from graph_os.webui_host.voice_delegation import (
-        webui_voice_delegation_helpers,
-    )
     from agent_webui.api_extensions import (
         get_engine_bounded,
         invoke_governed_helper,
@@ -184,7 +178,13 @@ def run_web_ui(
         browser_control_factory_kwargs,
     )
     from graph_os.mcp_server import runtime as mcp_runtime
+    from graph_os.webui_host.contact_governance import (
+        contact_delivery_factory_kwargs,
+    )
     from graph_os.webui_host.mcp_delegation import webui_mcp_delegation_helpers
+    from graph_os.webui_host.voice_delegation import (
+        webui_voice_delegation_helpers,
+    )
 
     # Assemble exactly what agent-webui's own entrypoint assembles.
     #

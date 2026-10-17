@@ -10,8 +10,9 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
 
-from graph_os.api.contracts.session import resolve_session
 from agent_utilities.security.persistence_privacy import persistence_reference
+
+from graph_os.api.contracts.session import resolve_session
 
 _ACTOR_REFERENCE = re.compile(r"^[0-9a-f]{64}$")
 _IDEMPOTENCY_KEY = re.compile(r"^contactreq_[0-9a-f]{32}$")

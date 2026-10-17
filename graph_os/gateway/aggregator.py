@@ -85,8 +85,9 @@ def _run_as_service_actor[T](fn: Callable[[], T]) -> T:
     never crosses the executor boundary and the widget call still finds no
     actor (the exact defect this fixes).
     """
-    from graph_os.api.contracts.session import use_session
     from agent_utilities.security.brain_context import use_actor
+
+    from graph_os.api.contracts.session import use_session
 
     session = _service_authority()
     with use_actor(session.actor), use_session(session):

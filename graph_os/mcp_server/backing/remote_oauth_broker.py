@@ -114,13 +114,14 @@ from typing import Any, Protocol
 from urllib.parse import urlencode, urlsplit
 
 import httpx
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-
 from agent_utilities.knowledge_graph.core.discovery_authority import OAuthGrantBinding
 from agent_utilities.security.brain_context import ActorContext
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 logger = logging.getLogger(__name__)
-_audit_logger = logging.getLogger("graph_os.mcp_server.backing.remote_oauth_broker.audit")
+_audit_logger = logging.getLogger(
+    "graph_os.mcp_server.backing.remote_oauth_broker.audit"
+)
 
 __all__ = [
     "AuthorizationServerMetadata",

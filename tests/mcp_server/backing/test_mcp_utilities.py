@@ -13,9 +13,9 @@ import tempfile
 from unittest.mock import MagicMock, patch
 
 import pytest
+from agent_utilities.core.config import load_mcp_servers_from_config
 
 import graph_os.mcp_server.backing.server_factory as server_factory
-from agent_utilities.core.config import load_mcp_servers_from_config
 
 
 def test_create_mcp_parser():

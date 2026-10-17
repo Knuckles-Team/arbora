@@ -16,16 +16,18 @@ from __future__ import annotations
 import json
 
 import pytest
-
 from agent_utilities.knowledge_graph.core.session import GraphSession
-from graph_os.mcp_server.backing import kg_server
 from agent_utilities.security.brain_context import ActorContext, ActorType
+
+from graph_os.mcp_server.backing import kg_server
 
 
 def _register_tools():
     from fastmcp import FastMCP
 
-    from graph_os.mcp_server.backing.tools.write_ingest_tools import register_write_ingest_tools
+    from graph_os.mcp_server.backing.tools.write_ingest_tools import (
+        register_write_ingest_tools,
+    )
 
     mcp = FastMCP("test")
     register_write_ingest_tools(mcp)

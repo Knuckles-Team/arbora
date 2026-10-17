@@ -100,7 +100,10 @@ def _manual_hook_ids() -> set[str]:
 
 def _manual_hooks_named(commands: str) -> set[str]:
     named = set(
-        re.findall(r"pre-commit run(?: --config \"\$PINNED_PRECOMMIT\")? ([a-z][a-z-]*) --hook-stage manual", commands)
+        re.findall(
+            r"pre-commit run(?: --config \"\$PINNED_PRECOMMIT\")? ([a-z][a-z-]*) --hook-stage manual",
+            commands,
+        )
     )
     for group in re.findall(r"for hook in ([a-z -]+); do", commands):
         named |= set(group.split())

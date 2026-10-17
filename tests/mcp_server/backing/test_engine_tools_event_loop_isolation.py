@@ -35,12 +35,12 @@ import json
 import time
 
 import pytest
-
 from agent_utilities.knowledge_graph.core.session import GraphSession, use_session
-from graph_os.mcp_server.backing import kg_server
-from graph_os.mcp_server.backing.tools import engine_tools
 from agent_utilities.security.actor_identity import ActorType
 from agent_utilities.security.brain_context import ActorContext, use_actor
+
+from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server.backing.tools import engine_tools
 
 ACTOR = ActorContext(
     actor_id="principal:ops",

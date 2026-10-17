@@ -32,10 +32,10 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from agent_utilities.security.error_surface import public_error_json
 from pydantic import Field
 
 from graph_os.mcp_server.backing import kg_server
-from agent_utilities.security.error_surface import public_error_json
 
 _ACTIONS: tuple[str, ...] = ("import_aif", "export_aif", "evaluate", "add_scheme")
 
@@ -59,6 +59,7 @@ def _evaluate(
     method through the SAME dispatcher ``graph_epistemic`` uses.
     """
     from agent_utilities.knowledge_graph.argumentation import aif
+
     from graph_os.mcp_server.backing.tools.engine_tools import _dispatch
 
     projection = None

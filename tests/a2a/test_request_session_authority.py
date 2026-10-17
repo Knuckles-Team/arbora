@@ -13,7 +13,6 @@ from typing import Any
 
 import httpx
 import pytest
-from graph_os.api.contracts.session import current_session, use_session
 from agent_utilities.core.config import config
 from agent_utilities.security import request_identity
 from agent_utilities.security.actor_identity import ActorType
@@ -26,6 +25,7 @@ from fastapi import FastAPI, HTTPException
 
 from graph_os.a2a import mcp as a2a_mcp
 from graph_os.a2a.service import A2AService
+from graph_os.api.contracts.session import current_session, use_session
 from graph_os.api.registry import Surface
 from graph_os.mcp_server import runtime as mcp_runtime
 from tests.a2a._support import authenticated_operation_app

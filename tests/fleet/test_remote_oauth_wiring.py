@@ -32,11 +32,16 @@ from agent_utilities.knowledge_graph.core.discovery_authority import OAuthGrantB
 from agent_utilities.knowledge_graph.core.fleet_catalog_tables import (
     TenantLocalDiscoveryBinding,
 )
+from agent_utilities.security.actor_identity import ActorType
+from agent_utilities.security.brain_context import ActorContext, use_actor
+from agent_utilities.security.secrets_client import SecretsBackend, SecretsClient
+
 from graph_os.api.contracts.session import (
     GraphSession,
     suspend_session,
     use_session,
 )
+from graph_os.fleet import multiplexer as mod
 from graph_os.mcp_server.backing.remote_oauth_broker import (
     OAuthProviderError,
     OAuthTokenAbsentError,
@@ -46,11 +51,6 @@ from graph_os.mcp_server.backing.remote_oauth_broker import (
     RemoteOAuthBroker,
     StoredToken,
 )
-from agent_utilities.security.actor_identity import ActorType
-from agent_utilities.security.brain_context import ActorContext, use_actor
-from agent_utilities.security.secrets_client import SecretsBackend, SecretsClient
-
-from graph_os.fleet import multiplexer as mod
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 
 RESOURCE_URL = "https://protected-mcp.example.com/mcp"

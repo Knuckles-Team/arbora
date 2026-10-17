@@ -12,10 +12,9 @@ from graph_os.mcp_server import runtime
 def test_surface_serves_intent_contract_and_registers_host_operations(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from graph_os.mcp_server.backing import graphos_surface, kg_server
-
     from graph_os.a2a import mcp as a2a_mcp
     from graph_os.browser_control import mcp as browser_mcp
+    from graph_os.mcp_server.backing import graphos_surface, kg_server
 
     served = object()
     backing = object()

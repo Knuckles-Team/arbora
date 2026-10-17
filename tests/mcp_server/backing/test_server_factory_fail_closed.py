@@ -71,7 +71,8 @@ def clean_env(monkeypatch):
     ):
         monkeypatch.delenv(key, raising=False)
     monkeypatch.setattr(
-        "graph_os.mcp_server.backing.server_factory._optional_http_request", lambda: None
+        "graph_os.mcp_server.backing.server_factory._optional_http_request",
+        lambda: None,
     )
     return monkeypatch
 

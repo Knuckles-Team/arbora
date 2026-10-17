@@ -17,6 +17,7 @@ import asyncio
 import json
 
 from agent_utilities.knowledge_graph.maintenance import graph_ownership as go
+
 from graph_os.mcp_server.backing import kg_server
 from graph_os.mcp_server.backing.tools.governance_tools import register_governance_tools
 

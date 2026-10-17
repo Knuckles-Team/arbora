@@ -11,11 +11,11 @@ from __future__ import annotations
 import time
 
 import pytest
-
 from agent_utilities.knowledge_graph.backends.epistemic_graph_backend import (
     CypherEngineError,
 )
 from agent_utilities.knowledge_graph.core.engine_breaker import EngineCircuitOpenError
+
 from graph_os.mcp_server.backing.kg_server import fanout_error_label, fanout_execute
 
 pytestmark = pytest.mark.concept("AU-KG.backend.multi-connection-registry")

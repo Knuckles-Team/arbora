@@ -1249,8 +1249,9 @@ class WorkItemTasksExtension(ServerExtension):
         ``tasks/get`` read into an error.
         """
         try:
-            from graph_os.mcp_server.backing import kg_server
             from agent_utilities.orchestration.manager import Orchestrator
+
+            from graph_os.mcp_server.backing import kg_server
 
             engine = kg_server._get_engine()
             if engine is None:

@@ -387,9 +387,9 @@ async def _provision_semantic_content(served_url: str) -> dict[str, Any]:
     uses, so every EG call carries exactly the authority GraphOS serves with.
     """
 
-    from graph_os.api.contracts.session import use_session
     from agent_utilities.security.brain_context import use_actor
 
+    from graph_os.api.contracts.session import use_session
     from graph_os.deployment.semantic_provisioning import provision_semantic_content
 
     # ``runtime`` binds bootstrap's host slots on import; import it first.
@@ -408,9 +408,9 @@ async def _provision_semantic_content(served_url: str) -> dict[str, Any]:
 async def _onboard_fleet(served_url: str) -> dict[str, Any]:
     """Run one full fleet onboarding pass under GraphOS's process session."""
 
-    from graph_os.api.contracts.session import use_session
     from agent_utilities.security.brain_context import use_actor
 
+    from graph_os.api.contracts.session import use_session
     from graph_os.fleet.onboarding import (
         FleetOnboarding,
         configured_fleet_endpoints,

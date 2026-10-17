@@ -10,7 +10,6 @@ from graph_os.api.contracts import (
     GraphRlmRequest,
     compose_agent_control_plane,
 )
-
 from graph_os.mcp_server import runtime
 
 ControlPlaneFactory = Callable[[Any, Any], AgentControlPlane]

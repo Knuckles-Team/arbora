@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import json
 
-from graph_os.mcp_server.backing import kg_server
 from agent_utilities.security import persistence_privacy
+
+from graph_os.mcp_server.backing import kg_server
 
 
 def _fixed_persistence_key(monkeypatch) -> None:

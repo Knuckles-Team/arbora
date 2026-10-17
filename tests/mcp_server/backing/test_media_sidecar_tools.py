@@ -13,13 +13,13 @@ import base64
 import json
 
 import pytest
-
-from graph_os.mcp_server.backing import kg_server
-from graph_os.mcp_server.backing.tools import media_sidecar_tools
 from agent_utilities.media.audio_sidecar import AudioSidecarResult
 from agent_utilities.media.image_sidecar import ImageSidecarResult
 from agent_utilities.media.pdf_sidecar import PdfSidecarResult
 from agent_utilities.media.video_sidecar import VideoSidecarResult
+
+from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server.backing.tools import media_sidecar_tools
 
 
 class _CollectingMCP:

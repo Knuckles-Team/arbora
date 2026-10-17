@@ -189,11 +189,12 @@ def verified_tool_session_scope():
     dispatch. The error surface deliberately omits principal, tenant, token,
     endpoint, and policy values.
     """
+    from agent_utilities.security.brain_context import use_actor
+
     from graph_os.api.contracts.session import (
         current_session,
         use_session,
     )
-    from agent_utilities.security.brain_context import use_actor
 
     ambient = current_session()
     session = ambient or _PROCESS_SESSION
@@ -595,12 +596,13 @@ def _rest_tabular_delegated_identity(request: Request):
     dispatch.
     """
 
+    from agent_utilities.security.auth import parse_bearer_authorization
+    from agent_utilities.security.brain_context import current_actor
+
     from graph_os.mcp_server.backing.delegated_auth import (
         _reset_delegated_identity,
         _set_delegated_identity,
     )
-    from agent_utilities.security.auth import parse_bearer_authorization
-    from agent_utilities.security.brain_context import current_actor
 
     actor = current_actor()
     actor.ensure_credential_current()
@@ -2338,11 +2340,10 @@ def _register_graph_tool_surface(mcp: Any) -> None:
     gateway reaches exactly what the intent tools route to.
     """
 
-    from graph_os.mcp_server.backing import kg_server
-    from graph_os.mcp_server.backing.graphos_surface import register_graphos_surface
-
     from graph_os.a2a.mcp import register_a2a_tools
     from graph_os.browser_control.mcp import register_browser_control_tools
+    from graph_os.mcp_server.backing import kg_server
+    from graph_os.mcp_server.backing.graphos_surface import register_graphos_surface
 
     backing = register_graphos_surface(mcp)
     register_browser_control_tools(backing)

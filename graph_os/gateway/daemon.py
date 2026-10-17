@@ -187,12 +187,13 @@ def refresh_process_identity(session: Any) -> Any:
     actor type must remain byte-for-byte equivalent to the authority captured
     by the background worker threads.
     """
-    from graph_os.api.contracts.session import SessionExpiredError
     from agent_utilities.core.config import config
     from agent_utilities.security.request_identity import (
         acquire_process_identity_token,
         mint_actor_from_token_sync,
     )
+
+    from graph_os.api.contracts.session import SessionExpiredError
 
     try:
         session.ensure_authority_current(minimum_ttl_seconds=30)
@@ -478,8 +479,9 @@ def main() -> None:
             logger.warning("signal handler registration skipped: %s", exc)
 
     session = mint_process_identity()
-    from graph_os.api.contracts.session import use_session
     from agent_utilities.security.brain_context import use_actor
+
+    from graph_os.api.contracts.session import use_session
 
     with use_actor(session.actor), use_session(session):
         try:

@@ -14,10 +14,7 @@ import re
 from pathlib import Path
 from typing import Any, Literal, cast
 
-from pydantic import Field
-
 from agent_utilities.core.event_loop import run_blocking_ordered
-from graph_os.mcp_server.backing import kg_server
 from agent_utilities.models.evidence_bundle import EvidenceBundle
 from agent_utilities.orchestration.response_format import (
     ResponseFormat,
@@ -42,6 +39,9 @@ from agent_utilities.security.config_sensitivity import (
     runtime_reference as _runtime_reference,
 )
 from agent_utilities.security.error_surface import public_error_json, public_error_text
+from pydantic import Field
+
+from graph_os.mcp_server.backing import kg_server
 
 logger = logging.getLogger(__name__)
 
@@ -2445,12 +2445,13 @@ async def _analysis_action_readiness(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'readiness'
-    from graph_os.api.contracts.session import (
-        current_session,
-    )
     from agent_utilities.knowledge_graph.readiness import (
         collect_readiness_snapshot,
         is_snapshot_ready,
+    )
+
+    from graph_os.api.contracts.session import (
+        current_session,
     )
 
     session = current_session()

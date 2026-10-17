@@ -31,11 +31,11 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from agent_utilities.core.event_loop import run_blocking_ordered
+from agent_utilities.security.error_surface import public_error_payload
 from pydantic import Field
 
-from agent_utilities.core.event_loop import run_blocking_ordered
 from graph_os.mcp_server.backing import kg_server
-from agent_utilities.security.error_surface import public_error_payload
 
 #: Governance/compliance node labels already ingested by the CISO Assistant
 #: extractor (agent_utilities/knowledge_graph/enrichment/extractors/ciso_assistant.py)

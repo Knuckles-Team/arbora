@@ -11,9 +11,9 @@ from fastapi import HTTPException, Request
 from graph_os.api.mcp.caller import caller_from_session
 
 if TYPE_CHECKING:
-    from graph_os.api.contracts.session import GraphSession
     from agent_utilities.security.request_identity import VerifiedLocalBearer
 
+    from graph_os.api.contracts.session import GraphSession
     from graph_os.api.invoke import VerifiedCaller
 
 

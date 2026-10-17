@@ -122,7 +122,6 @@ def test_onboarding_registers_after_import(fake_sdk, monkeypatch) -> None:
     import asyncio
 
     from graph_os.api.contracts.session import use_session
-
     from graph_os.deployment import semantic_provisioning
     from graph_os.fleet.onboarding import FleetEndpoint, FleetOnboarding
     from tests._eg_fakes import service_session

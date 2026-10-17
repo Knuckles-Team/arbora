@@ -9,14 +9,14 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from agent_utilities.security.actor_identity import ActorType
+from agent_utilities.security.brain_context import ActorContext
+
 from graph_os.api.contracts.session import (
     GraphSession,
     current_session,
     use_session,
 )
-from agent_utilities.security.actor_identity import ActorType
-from agent_utilities.security.brain_context import ActorContext
-
 from graph_os.browser_control.browser_control_api import BrowserLeaseReceipt
 from graph_os.browser_control.browser_control_runtime import (
     bind_browser_control_owner,

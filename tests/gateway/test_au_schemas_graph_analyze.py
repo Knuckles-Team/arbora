@@ -12,10 +12,10 @@ fields).
 from __future__ import annotations
 
 import pytest
+from agent_utilities.models.evidence_bundle import EvidenceBundle
 from pydantic import BaseModel, ValidationError
 
 from graph_os.gateway.schemas import graph_analyze as schemas
-from agent_utilities.models.evidence_bundle import EvidenceBundle
 
 # ══════════════════════════════════════════════════════════════════
 # Every model this module defines, for the blanket "descriptions never rot" sweep.

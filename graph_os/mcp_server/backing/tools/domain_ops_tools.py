@@ -5,10 +5,10 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from agent_utilities.security.error_surface import public_error_text
 from pydantic import Field
 
 from graph_os.mcp_server.backing import kg_server
-from agent_utilities.security.error_surface import public_error_text
 
 
 def register_domain_ops_tools(mcp: Any) -> None:

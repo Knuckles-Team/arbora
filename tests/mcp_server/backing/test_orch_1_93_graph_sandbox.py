@@ -5,10 +5,10 @@ from __future__ import annotations
 import json
 
 import pytest
+from agent_utilities.runtime.warm_registry import WarmParentRegistry
 
 from graph_os.mcp_server.backing import kg_server
 from graph_os.mcp_server.backing.tools.state_tools import register_state_tools
-from agent_utilities.runtime.warm_registry import WarmParentRegistry
 
 
 class _FakeMCP:

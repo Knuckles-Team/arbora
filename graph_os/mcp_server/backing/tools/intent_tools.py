@@ -44,9 +44,12 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Any
 
+from agent_utilities.knowledge_graph.retrieval.capability_context import load_cpds
+from agent_utilities.security.error_surface import public_error_payload
+from agent_utilities.security.persistence_privacy import persistence_reference
+from agent_utilities.security.threat_defense_engine import PromptInjectionScanner
 from pydantic import BaseModel
 
-from agent_utilities.knowledge_graph.retrieval.capability_context import load_cpds
 from graph_os.mcp_server.backing import kg_server
 from graph_os.mcp_server.backing.intent_contract import (
     DESCRIBE_ACTION,
@@ -54,10 +57,11 @@ from graph_os.mcp_server.backing.intent_contract import (
     operation_id,
 )
 from graph_os.mcp_server.backing.optional_tool_features import OPTIONAL_TOOL_FEATURES
-from graph_os.mcp_server.backing.tool_specs import INTENT_VERBS, READ_ONLY_ACTIONS, TOOL_VERBS
-from agent_utilities.security.error_surface import public_error_payload
-from agent_utilities.security.persistence_privacy import persistence_reference
-from agent_utilities.security.threat_defense_engine import PromptInjectionScanner
+from graph_os.mcp_server.backing.tool_specs import (
+    INTENT_VERBS,
+    READ_ONLY_ACTIONS,
+    TOOL_VERBS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -2286,7 +2290,10 @@ def _verb_catalog(mcp: Any, verb: str, group: str | None) -> dict[str, Any]:
 
 def _describe_host_operation(mcp: Any, op_id: str) -> dict[str, Any] | None:
     """``describe`` for a host-native backing operation, or ``None``."""
-    from graph_os.mcp_server.backing.graphos_surface import backing_tools, host_operations
+    from graph_os.mcp_server.backing.graphos_surface import (
+        backing_tools,
+        host_operations,
+    )
     from graph_os.mcp_server.backing.intent_contract import schema_without_action
 
     resolved = host_operations(mcp).get(op_id)
@@ -2784,7 +2791,10 @@ async def _host_dispatch(
     mcp: Any, verb: str, action: str, params: dict[str, Any], execute: bool
 ) -> Any:
     """Serve a verb's operation outside the manifest, or ``None`` if not one."""
-    from graph_os.mcp_server.backing.graphos_surface import host_operations, resolve_operation
+    from graph_os.mcp_server.backing.graphos_surface import (
+        host_operations,
+        resolve_operation,
+    )
 
     handlers = {
         ("act", FLEET_CALL_ACTION): _fleet_call,

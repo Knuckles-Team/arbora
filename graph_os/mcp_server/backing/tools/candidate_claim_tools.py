@@ -56,10 +56,10 @@ from __future__ import annotations
 import dataclasses
 import json
 
+from agent_utilities.security.error_surface import public_error_json
 from pydantic import Field
 
 from graph_os.mcp_server.backing import kg_server
-from agent_utilities.security.error_surface import public_error_json
 
 
 def register_candidate_claim_tools(mcp):

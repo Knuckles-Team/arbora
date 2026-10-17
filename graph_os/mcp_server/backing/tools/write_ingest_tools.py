@@ -11,16 +11,16 @@ import re
 from collections.abc import Callable
 from typing import Any
 
-from pydantic import Field
-
 from agent_utilities.core.event_loop import run_blocking_ordered
-from graph_os.mcp_server.backing import kg_server
-from graph_os.mcp_server.backing.write_ingest_types import IngestRequest
 from agent_utilities.security.error_surface import (
     public_error_json,
     public_error_text,
 )
 from agent_utilities.security.persistence_privacy import persistence_reference
+from pydantic import Field
+
+from graph_os.mcp_server.backing import kg_server
+from graph_os.mcp_server.backing.write_ingest_types import IngestRequest
 
 _OPAQUE_NODE_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,255}\Z")
 
@@ -1259,7 +1259,6 @@ async def _ingest_action_ingest_knowledge_pack(engine, request: IngestRequest) -
     from pathlib import Path
 
     import yaml
-
     from agent_utilities.models.knowledge_pack import (
         KnowledgePackBundle,
         KnowledgePackHydrator,

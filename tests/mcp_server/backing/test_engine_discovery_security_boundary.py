@@ -13,13 +13,13 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-
 from agent_utilities.knowledge_graph.core.engine_ingestion import IngestionMixin
 from agent_utilities.knowledge_graph.core.engine_mcp_discovery import (
     MCPDiscoveryError,
     MCPDiscoveryMixin,
     MCPProbePort,
 )
+
 from graph_os.fleet import multiplexer as multiplexer_module
 from graph_os.fleet.multiplexer import (
     MCPMultiplexer,
@@ -190,8 +190,7 @@ def test_freshness_identity_is_keyed_and_ignores_resolved_credentials() -> None:
 
 
 @pytest.mark.asyncio
-async def test_discovery_reuses_canonical_probe_and_normalizes_tools(
-) -> None:
+async def test_discovery_reuses_canonical_probe_and_normalizes_tools() -> None:
     harness = _DiscoveryHarness()
     entry = harness.parse_mcp_config(_remote_config())[0]
     probe = AsyncMock(

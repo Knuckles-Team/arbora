@@ -157,8 +157,9 @@ def _refresh_process_authority(session: Any) -> Any:
     validation, only the bounded expiry is copied into the shared in-memory
     lease. Identity, roles, tenant, route, and policy may not change.
     """
-    from graph_os.api.contracts.session import SessionExpiredError
     from agent_utilities.core.config import config
+
+    from graph_os.api.contracts.session import SessionExpiredError
 
     lease = getattr(getattr(session, "actor", None), "credential_lease", None)
     if lease is None:
@@ -709,13 +710,14 @@ def _start_engine_bootstrap(session: Any) -> None:
     current EG ConnectorPack and GraphSchema read contracts. Startup therefore
     never discovers or ingests skills, prompts, sources, or fleet declarations.
     """
-    from graph_os.api.contracts.session import use_session
     from agent_utilities.knowledge_graph.core.engine_tasks import (
         _authorized_background_thread,
         _require_verified_background_session,
         daemon_role,
     )
     from agent_utilities.security.brain_context import use_actor
+
+    from graph_os.api.contracts.session import use_session
 
     verified_session = _require_verified_background_session(session)
     with (

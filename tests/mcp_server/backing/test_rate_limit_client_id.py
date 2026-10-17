@@ -18,8 +18,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from graph_os.mcp_server.backing import server_factory
 
 
@@ -92,7 +90,9 @@ async def test_configure_middleware_keys_rate_limiter_per_caller_not_one_shared_
     mock_args.auth_type = "none"
     mock_args.eunomia_type = "none"
 
-    middlewares = server_factory._configure_middleware(mock_args, server_name="graph-os")
+    middlewares = server_factory._configure_middleware(
+        mock_args, server_name="graph-os"
+    )
 
     rate_limiters = [m for m in middlewares if isinstance(m, RateLimitingMiddleware)]
     assert len(rate_limiters) == 1

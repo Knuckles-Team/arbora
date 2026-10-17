@@ -6,15 +6,15 @@ import argparse
 import sys
 
 import pytest
-
 from agent_utilities.agent.factory import create_agent_parser
-from graph_os.mcp_server.backing.server_factory import create_mcp_parser
 from agent_utilities.security import cli as secret_cli
 from agent_utilities.security.cli_secrets import (
     RuntimeSecretReferenceError,
     resolve_runtime_secret_reference,
     validate_runtime_secret_reference,
 )
+
+from graph_os.mcp_server.backing.server_factory import create_mcp_parser
 
 
 def _options(parser: argparse.ArgumentParser) -> set[str]:

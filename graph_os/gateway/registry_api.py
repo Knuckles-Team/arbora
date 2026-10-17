@@ -17,14 +17,8 @@ import asyncio
 import json
 import logging
 from collections.abc import Awaitable, Callable, Iterator, Mapping
-from typing import Any, Generic, Literal, TypeVar
+from typing import Any, Literal, TypeVar
 from urllib.parse import urlsplit, urlunsplit
-
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
-from starlette.requests import Request
-from starlette.responses import JSONResponse
-from starlette.routing import Route
 
 from agent_utilities.knowledge_graph.core.fleet_catalog_tables import (
     DISCOVERY_AUTHORITY_OAUTH_GRANT,
@@ -34,6 +28,11 @@ from agent_utilities.knowledge_graph.core.table_ingest import (
     _safe_ident,
     _sql_literal,
 )
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from starlette.requests import Request
+from starlette.responses import JSONResponse
+from starlette.routing import Route
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +131,7 @@ class RegistrySkill(_RegistryModel):
 RegistryItem = TypeVar("RegistryItem", bound=BaseModel)
 
 
-class RegistryPage(BaseModel, Generic[RegistryItem]):
+class RegistryPage[RegistryItem: BaseModel](BaseModel):
     """Typed, bounded page envelope shared by every registry collection."""
 
     model_config = ConfigDict(extra="forbid")
@@ -144,7 +143,7 @@ class RegistryPage(BaseModel, Generic[RegistryItem]):
     next_cursor: str | None = None
 
 
-class RegistryItemEnvelope(BaseModel, Generic[RegistryItem]):
+class RegistryItemEnvelope[RegistryItem: BaseModel](BaseModel):
     status: Literal["ok"] = "ok"
     item: RegistryItem
 
@@ -441,6 +440,7 @@ def _resolve_current_discovery_grants(actor: Any) -> tuple[str, ...]:
     from agent_utilities.knowledge_graph.core.discovery_authority import (
         OAuthGrantBinding,
     )
+
     from graph_os.fleet.multiplexer import current_remote_oauth_grant_bindings
 
     return tuple(
@@ -844,8 +844,9 @@ def _catalog_service_session() -> Any:
     own), so an unguarded call would just hand back the caller's own session
     and fix nothing.
     """
-    from graph_os.api.contracts.session import suspend_session
     from agent_utilities.security.request_identity import system_write_session
+
+    from graph_os.api.contracts.session import suspend_session
 
     with suspend_session():
         return system_write_session()

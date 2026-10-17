@@ -27,11 +27,6 @@ if TYPE_CHECKING:
         McpCatalogSnapshotBinding,
     )
 
-from graph_os.api.contracts.provisioning import (
-    PackImportAuthorityResolver,
-    ProvisioningAuthorityError,
-    pack_import_authority,
-)
 from agent_utilities.knowledge_graph.core.session import (
     GraphSession,
     ScopeError,
@@ -45,6 +40,12 @@ from agent_utilities.orchestration.action_policy import (
 )
 from agent_utilities.security.actor_identity import ActorType
 from agent_utilities.security.brain_context import ActorContext
+
+from graph_os.api.contracts.provisioning import (
+    PackImportAuthorityResolver,
+    ProvisioningAuthorityError,
+    pack_import_authority,
+)
 
 # No file-level `engine` mark: test_resolver_requires_pack_control_scope_before_providers
 # and test_resolver_does_not_accept_a_caller_supplied_policy below exercise

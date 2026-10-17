@@ -8,10 +8,10 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from graph_os.api.contracts.agent_control_plane import GraphRlmRunRequest
-from graph_os.api.contracts.session import GraphSession, resolve_session
 from agent_utilities.security.brain_context import ActorContext, ActorType
 
+from graph_os.api.contracts.agent_control_plane import GraphRlmRunRequest
+from graph_os.api.contracts.session import GraphSession, resolve_session
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.agent_control import register_graph_rlm
 

@@ -33,7 +33,10 @@ import json
 from collections.abc import Callable, Iterable, Mapping
 from typing import Any
 
-from graph_os.mcp_server.backing.concurrency import _wrap_data_kwargs, invoke_client_method
+from graph_os.mcp_server.backing.concurrency import (
+    _wrap_data_kwargs,
+    invoke_client_method,
+)
 from graph_os.mcp_server.backing.context_helpers import ctx_confirm_destructive
 
 #: Action strings that request the list of valid actions instead of executing one.

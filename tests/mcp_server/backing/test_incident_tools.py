@@ -11,9 +11,10 @@ from __future__ import annotations
 
 import json
 
+from agent_utilities.observability import health_ingest
+
 from graph_os.mcp_server.backing import kg_server
 from graph_os.mcp_server.backing.tools.incident_tools import register_incident_tools
-from agent_utilities.observability import health_ingest
 
 
 class _CollectingMCP:

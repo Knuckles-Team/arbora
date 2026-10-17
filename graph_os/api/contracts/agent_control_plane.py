@@ -9,8 +9,11 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Annotated, Any, Literal, TypeAlias
+from typing import Annotated, Any, Literal
 
+from agent_utilities.rlm.benchmarks.base import BenchResult
+from agent_utilities.rlm.telemetry import FailureClass
+from agent_utilities.security.error_surface import public_error_payload
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator
 
 from graph_os.api.contracts.agent_control_contracts import (
@@ -38,12 +41,9 @@ from graph_os.api.contracts.agent_control_contracts import (
     WorkItemSubmissionResult,
 )
 from graph_os.api.contracts.session import GraphSession, resolve_session
-from agent_utilities.rlm.benchmarks.base import BenchResult
-from agent_utilities.rlm.telemetry import FailureClass
-from agent_utilities.security.error_surface import public_error_payload
 
-_RequiredScope: TypeAlias = Literal["kg:read", "kg:write"]
-_OperationSpec: TypeAlias = tuple[
+type _RequiredScope = Literal["kg:read", "kg:write"]
+type _OperationSpec = tuple[
     str,
     Any,
     Any,
@@ -124,7 +124,7 @@ class GraphRlmEvolvePromptRequest(_StrictModel):
     options: GraphRlmEvolutionOptions = Field(default_factory=GraphRlmEvolutionOptions)
 
 
-GraphRlmRequest: TypeAlias = Annotated[
+type GraphRlmRequest = Annotated[
     GraphRlmRunRequest | GraphRlmBenchmarkRequest | GraphRlmEvolvePromptRequest,
     Field(discriminator="action"),
 ]
@@ -179,7 +179,7 @@ class GraphRlmEvolutionResult(_StrictModel):
     error: GraphRlmError | None = None
 
 
-GraphRlmResult: TypeAlias = Annotated[
+type GraphRlmResult = Annotated[
     GraphRlmRunResult | GraphRlmBenchmarkResult | GraphRlmEvolutionResult,
     Field(discriminator="action"),
 ]
@@ -651,11 +651,10 @@ async def _evolve_prompt(
     request: GraphRlmEvolvePromptRequest,
 ) -> GraphRlmEvolutionResult:
     """Run the retained GEPA/DW-GRPO prompt-evolution behavior."""
-    from pydantic import BaseModel
-
     from agent_utilities.harness.program_optimization import graded_score
     from agent_utilities.rlm.gepa import GEPAInstance, GEPAOptimizer
     from agent_utilities.rlm.predict_rlm import InputField, OutputField
+    from pydantic import BaseModel
 
     class PromptEvolutionSignature(BaseModel):
         """Answer the given query."""

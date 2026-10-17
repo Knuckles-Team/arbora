@@ -260,9 +260,10 @@ def mcp_server() -> None:
         # authority before engine bootstrap. An explicit client role remains a
         # hard serving-plane boundary; this entrypoint never promotes itself to
         # the host that owns maintenance, workers, or autonomous loops.
-        from graph_os.api.contracts.session import use_session
         from agent_utilities.core.config import config
         from agent_utilities.security.brain_context import use_actor
+
+        from graph_os.api.contracts.session import use_session
 
         with use_actor(bootstrap_session.actor), use_session(bootstrap_session):
             runtime._start_engine_bootstrap(bootstrap_session)

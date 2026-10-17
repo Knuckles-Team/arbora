@@ -11,8 +11,8 @@ import json
 from typing import Any
 
 import pytest
-from graph_os.api.contracts.session import GraphSession
 
+from graph_os.api.contracts.session import GraphSession
 from graph_os.deployment import production_ops, semantic_provisioning
 from tests._eg_fakes import AllowPolicy, FakeEgEngine, service_session
 

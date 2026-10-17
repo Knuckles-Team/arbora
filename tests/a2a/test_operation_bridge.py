@@ -13,7 +13,6 @@ from typing import Any
 
 import httpx
 import pytest
-from graph_os.api.contracts.session import GraphSession, use_session
 from agent_utilities.security.actor_identity import ActorType
 from agent_utilities.security.brain_context import ActorContext, CredentialLease
 from eunomia_core import schemas
@@ -22,6 +21,7 @@ from fastapi import FastAPI
 from graph_os.a2a import mcp as a2a_mcp
 from graph_os.a2a.application import create_a2a_application
 from graph_os.a2a.service import A2AService
+from graph_os.api.contracts.session import GraphSession, use_session
 from graph_os.api.http.auth import AmbientHTTPAuthenticator
 from graph_os.api.invoke.bootstrap import verify_current_from_session
 from graph_os.api.policy.eunomia import PolicyGate

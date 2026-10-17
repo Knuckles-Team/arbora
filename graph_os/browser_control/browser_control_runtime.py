@@ -6,9 +6,9 @@ import asyncio
 import threading
 from typing import Any, Literal
 
-from graph_os.api.contracts.session import resolve_session
 from pydantic import BaseModel
 
+from graph_os.api.contracts.session import resolve_session
 from graph_os.browser_control.browser_control_api import (
     BrowserCallRequest,
     CancelCallRequest,

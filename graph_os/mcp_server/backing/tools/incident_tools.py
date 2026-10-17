@@ -44,10 +44,10 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from agent_utilities.security.error_surface import public_error_payload
 from pydantic import Field
 
 from graph_os.mcp_server.backing import kg_server
-from agent_utilities.security.error_surface import public_error_payload
 
 
 def _incident_engine() -> Any | None:

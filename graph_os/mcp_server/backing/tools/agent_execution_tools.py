@@ -7,11 +7,11 @@ import json
 import logging
 from typing import Any, Literal
 
+from agent_utilities.core.event_loop import run_blocking_ordered
+from agent_utilities.security.error_surface import public_error_text
 from pydantic import BaseModel, Field
 
-from agent_utilities.core.event_loop import run_blocking_ordered
 from graph_os.mcp_server.backing import kg_server
-from agent_utilities.security.error_surface import public_error_text
 
 logger = logging.getLogger(__name__)
 

@@ -15,8 +15,8 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from graph_os.api.contracts.session import GraphSession
 
+from graph_os.api.contracts.session import GraphSession
 from graph_os.deployment import production_ops
 from graph_os.deployment.semantic_provisioning import ensure_server_registrations
 from graph_os.fleet import onboarding

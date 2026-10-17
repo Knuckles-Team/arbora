@@ -179,7 +179,10 @@ SQL_SCHEMA_DESCRIPTION = (
 async def _sql_schema_endpoint(request: Request) -> JSONResponse:
     """Serve ``POST /graph/sql-schema`` — the read-only catalog projection."""
     from graph_os.api.contracts.session import resolve_session
-    from graph_os.mcp_server.backing.tools.graph_tools import SqlSchemaUnavailable, sql_schema
+    from graph_os.mcp_server.backing.tools.graph_tools import (
+        SqlSchemaUnavailable,
+        sql_schema,
+    )
 
     try:
         resolve_session(required_scope="kg:read")

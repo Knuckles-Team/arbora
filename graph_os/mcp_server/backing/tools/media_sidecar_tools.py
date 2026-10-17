@@ -21,9 +21,6 @@ import base64
 import dataclasses
 import json
 
-from pydantic import Field
-
-from graph_os.mcp_server.backing import kg_server
 from agent_utilities.media.audio_sidecar import (
     AudioSidecarResult,
     ingest_audio_via_sidecar,
@@ -42,6 +39,9 @@ from agent_utilities.media.video_sidecar import (
     ingest_video_via_sidecar,
 )
 from agent_utilities.security.error_surface import public_error_json
+from pydantic import Field
+
+from graph_os.mcp_server.backing import kg_server
 
 #: action name -> capability-manifest modality key, derived from the ONE
 #: source of truth (sidecar_contract.py) so this tool's action list can never

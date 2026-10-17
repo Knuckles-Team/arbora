@@ -6,9 +6,9 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Annotated, Any, Literal
 
-from graph_os.api.contracts.session import GraphSession
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, field_validator
 
+from graph_os.api.contracts.session import GraphSession
 from graph_os.browser_control.browser_control_common import (
     _DIGEST,
     _ERROR_CODE,

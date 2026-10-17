@@ -13,15 +13,15 @@ from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlencode
 
-from pydantic import Field
-from starlette.responses import JSONResponse
-
 from agent_utilities.core.event_loop import run_blocking_ordered
-from graph_os.mcp_server.backing import kg_server
 from agent_utilities.security.error_surface import (
     public_error_json,
     public_error_payload,
 )
+from pydantic import Field
+from starlette.responses import JSONResponse
+
+from graph_os.mcp_server.backing import kg_server
 
 logger = logging.getLogger(__name__)
 

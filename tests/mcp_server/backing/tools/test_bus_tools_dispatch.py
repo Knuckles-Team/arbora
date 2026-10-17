@@ -81,13 +81,20 @@ def _req(**overrides: Any) -> BusRequest:
 
 def test_register_passes_split_capabilities_and_touches_acting_id():
     bus = _FakeBus()
-    req = _req(action="register", agent_id="a1", provider="anthropic", capabilities="x, y")
+    req = _req(
+        action="register", agent_id="a1", provider="anthropic", capabilities="x, y"
+    )
     out = _dispatch_bus(bus, engine=None, request=req)
     assert '"agent_id": "a1"' in out
     assert bus.calls[0] == (
         "register",
         ("a1",),
-        {"provider": "anthropic", "host": "", "capabilities": ["x", "y"], "session_id": ""},
+        {
+            "provider": "anthropic",
+            "host": "",
+            "capabilities": ["x", "y"],
+            "session_id": "",
+        },
     )
     assert bus.touched == ["a1"]
 
@@ -107,7 +114,9 @@ def test_send_falls_back_to_agent_id_and_dispatch_falls_back_to_sender():
     assert bus.calls[0][2]["sender"] == "a1"
 
     bus2 = _FakeBus()
-    _dispatch_bus(bus2, None, _req(action="dispatch", sender="a1", objective="do thing"))
+    _dispatch_bus(
+        bus2, None, _req(action="dispatch", sender="a1", objective="do thing")
+    )
     assert bus2.calls[0][2]["sender"] == "a1"
 
 
@@ -169,16 +178,22 @@ def test_federation_actions_reach_the_relay(monkeypatch):
             return {"applied": True}
 
     monkeypatch.setattr(
-        bus_tools_mod, "_bus_federation_relay", lambda engine: _FakeRelay.instance(engine)
+        bus_tools_mod,
+        "_bus_federation_relay",
+        lambda engine: _FakeRelay.instance(engine),
     )
 
     bus = _FakeBus()
     engine = object()
-    _dispatch_bus(bus, engine, _req(action="register_hub", agent_id="hub1", url="https://x"))
+    _dispatch_bus(
+        bus, engine, _req(action="register_hub", agent_id="hub1", url="https://x")
+    )
     _dispatch_bus(bus, engine, _req(action="list_hubs"))
     _dispatch_bus(bus, engine, _req(action="federate", group="g1", scope="org"))
     _dispatch_bus(
-        bus, engine, _req(action="federate_in", group="g1", to="r1, r2", payload="p", topic="tp")
+        bus,
+        engine,
+        _req(action="federate_in", group="g1", to="r1, r2", payload="p", topic="tp"),
     )
 
     kinds = [c[0] for c in calls if c[0] != "instance"]

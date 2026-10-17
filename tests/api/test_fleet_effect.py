@@ -316,8 +316,9 @@ async def test_uncertain_service_child_propagates_for_the_invoke_surface_to_map(
 async def test_oauth_callback_uses_matching_verified_actor(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import graph_os.api.contracts
     import agent_utilities.security.brain_context as brain_context
+
+    import graph_os.api.contracts
 
     bound: list[object] = []
 
