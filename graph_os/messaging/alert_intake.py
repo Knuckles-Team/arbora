@@ -23,8 +23,10 @@ import json
 import logging
 from typing import Any
 
-from agent_utilities.core.config import setting
 from aiohttp import web
+
+from graph_os.core.settings import setting
+from graph_os.messaging.transport import resolve_secret
 
 logger = logging.getLogger(__name__)
 
@@ -111,12 +113,7 @@ def _resolve_alert_intake_token() -> str | None:
     if not token_ref:
         logger.error("messaging alert-intake disabled: token reference is required")
         return None
-    try:
-        from agent_utilities.security.secrets_client import create_secrets_client
-
-        token = create_secrets_client().resolve_ref(token_ref)
-    except Exception:  # never disclose provider/ref details
-        token = None
+    token = resolve_secret(token_ref)
     if not token:
         logger.error("messaging alert-intake disabled: token reference is unresolved")
         return None

@@ -21,6 +21,8 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 FlushHandler = Callable[[str, list[Any]], Awaitable[None]]
+Clock = Callable[[], float]
+Sleep = Callable[[float], Awaitable[None]]
 
 
 class BurstCoalescer:
@@ -38,8 +40,13 @@ class BurstCoalescer:
         *,
         window_s: float = 2.5,
         max_wait_s: float = 12.0,
+        clock: Clock | None = None,
+        sleep: Sleep = asyncio.sleep,
     ) -> None:
+        """``clock`` and ``sleep`` default to the running loop's time and ``asyncio.sleep``."""
         self._on_flush = on_flush
+        self._clock = clock
+        self._sleep = sleep
         self._window = max(0.0, float(window_s))
         self._max = max(self._window, float(max_wait_s))
         self._buffers: dict[str, list[Any]] = {}
@@ -48,11 +55,11 @@ class BurstCoalescer:
 
     async def submit(self, key: str, item: Any) -> None:
         """Add ``item`` to ``key``'s batch and (re)arm the debounce timer."""
-        loop = asyncio.get_running_loop()
+        now = (self._clock or asyncio.get_running_loop().time)()
         self._buffers.setdefault(key, []).append(item)
-        self._first.setdefault(key, loop.time())
+        self._first.setdefault(key, now)
         # Hard cap: a user who never pauses still gets a reply.
-        if loop.time() - self._first[key] >= self._max:
+        if now - self._first[key] >= self._max:
             await self._flush(key)
             return
         old = self._timers.get(key)
@@ -62,7 +69,7 @@ class BurstCoalescer:
 
     async def _wait_and_flush(self, key: str) -> None:
         try:
-            await asyncio.sleep(self._window)
+            await self._sleep(self._window)
         except asyncio.CancelledError:
             return
         await self._flush(key)

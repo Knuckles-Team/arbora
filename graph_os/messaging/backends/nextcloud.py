@@ -11,8 +11,7 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
-from agent_utilities.core.config import setting
-
+from graph_os.core.settings import setting
 from graph_os.messaging.base import MessagingBackend
 from graph_os.messaging.capabilities import (
     CAPABILITY_MATRIX,
@@ -28,6 +27,7 @@ from graph_os.messaging.models import (
     PlatformId,
     SendResult,
 )
+from graph_os.messaging.transport import channel_http_client
 
 logger = logging.getLogger(__name__)
 
@@ -51,11 +51,6 @@ class NextcloudTalkBackend(MessagingBackend):
 
     async def connect(self) -> None:
         """Connect to Nextcloud Talk API. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
-        from agent_utilities.core.http_client import create_async_http_client
-        from agent_utilities.core.transport_security import (
-            resolve_configured_tls_profile,
-        )
-
         self._base_url = self.config.extra.get(
             "url", setting("NEXTCLOUD_URL", "")
         ).rstrip("/")
@@ -63,16 +58,12 @@ class NextcloudTalkBackend(MessagingBackend):
         token = self.config.token or setting("NEXTCLOUD_TOKEN", "")
         if not self._base_url or not token:
             raise ValueError("Set NEXTCLOUD_URL and NEXTCLOUD_TOKEN.")
-        trust = resolve_configured_tls_profile("nextcloud")
-        try:
-            self._client = create_async_http_client(
-                base_url=f"{self._base_url}/ocs/v2.php/apps/spreed/api/v4",
-                auth=(user, token) if user else None,
-                headers={"OCS-APIRequest": "true", "Accept": "application/json"},
-                **trust.httpx_kwargs(),
-            )
-        finally:
-            trust.cleanup()
+        self._client = channel_http_client(
+            "nextcloud",
+            base_url=f"{self._base_url}/ocs/v2.php/apps/spreed/api/v4",
+            auth=(user, token) if user else None,
+            headers={"OCS-APIRequest": "true", "Accept": "application/json"},
+        )
         self._connected = True
         logger.info(
             "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Nextcloud Talk backend connected."

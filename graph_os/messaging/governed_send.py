@@ -20,9 +20,7 @@ async def run_action_policy(
 ) -> Any:
     """Run synchronous policy reads and audit writes off the event loop."""
     if policy_runner is None:
-        from agent_utilities.mcp.concurrency import run_blocking
-
-        policy_runner = run_blocking
+        policy_runner = asyncio.to_thread
     try:
         return await asyncio.wait_for(
             policy_runner(operation), timeout=_ACTION_POLICY_DEADLINE_S

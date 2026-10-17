@@ -407,7 +407,7 @@ class TelegramBackend(MessagingBackend):
         """
         if self._polling:
             return
-        from agent_utilities.core.config import setting
+        from graph_os.core.settings import setting
 
         base = str(setting("MESSAGING_WEBHOOK_BASE_URL", "")).strip()
         if base:

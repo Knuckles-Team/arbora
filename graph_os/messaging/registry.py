@@ -27,8 +27,7 @@ import importlib.metadata
 import logging
 from typing import Any
 
-from agent_utilities.core.config import setting
-
+from graph_os.core.settings import setting
 from graph_os.messaging.models import MessagingConfig
 from graph_os.messaging.supervision import (
     AdapterImportFailed,

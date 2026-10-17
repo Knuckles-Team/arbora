@@ -15,7 +15,7 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
-from agent_utilities.security.identifiers import validate_identifier
+from graph_os.security.identifiers import validate_identifier
 
 
 @dataclass(frozen=True)

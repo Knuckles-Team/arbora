@@ -39,8 +39,7 @@ from collections.abc import AsyncIterator
 from typing import Any
 from urllib.parse import urlparse
 
-from agent_utilities.core.config import setting
-
+from graph_os.core.settings import setting
 from graph_os.messaging.base import MessagingBackend
 from graph_os.messaging.capabilities import (
     CAPABILITY_MATRIX,

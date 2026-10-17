@@ -11,8 +11,7 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
-from agent_utilities.core.config import setting
-
+from graph_os.core.settings import setting
 from graph_os.messaging.base import MessagingBackend
 from graph_os.messaging.capabilities import (
     CAPABILITY_MATRIX,
@@ -24,6 +23,7 @@ from graph_os.messaging.models import (
     PlatformId,
     SendResult,
 )
+from graph_os.messaging.transport import channel_http_client, resolve_secret
 
 logger = logging.getLogger(__name__)
 
@@ -35,9 +35,7 @@ def _configured_webhook(config: MessagingConfig) -> str:
     reference = str(setting("SYNOLOGY_CHAT_WEBHOOK_URL_REF", "") or "").strip()
     if not reference:
         return ""
-    from agent_utilities.security.secrets_client import create_secrets_client
-
-    return str(create_secrets_client().resolve_ref(reference) or "").strip()
+    return resolve_secret(reference)
 
 
 class SynologyChatBackend(MessagingBackend):
@@ -58,19 +56,12 @@ class SynologyChatBackend(MessagingBackend):
 
     async def connect(self) -> None:
         """Connect to Synology Chat webhook. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
-        from agent_utilities.core.http_client import create_async_http_client
-        from agent_utilities.core.transport_security import (
-            resolve_configured_tls_profile,
-        )
-
         webhook_url = _configured_webhook(self.config)
         if not webhook_url:
             raise ValueError("Configure a Synology webhook reference.")
-        trust = resolve_configured_tls_profile("synology-chat")
-        try:
-            self._client = create_async_http_client(**trust.httpx_kwargs())
-        finally:
-            trust.cleanup()
+        self._client = channel_http_client(
+            "synology-chat",
+        )
         self._connected = True
         logger.info(
             "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Synology Chat backend connected."

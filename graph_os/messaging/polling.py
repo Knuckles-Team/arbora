@@ -18,13 +18,13 @@ _MESSAGING_LOG_HANDLER_MARK = "_graphos_messaging_visibility_handler"
 
 def _ensure_messaging_log_visibility() -> None:
     """Keep channel and router lifecycle logs visible on stderr under stdio."""
-    from agent_utilities.core.config import setting
+    from graph_os.core.settings import setting
 
     level_name = str(setting("MESSAGING_LOG_LEVEL", "INFO")).strip().upper()
     level = getattr(logging, level_name, logging.INFO)
     if not isinstance(level, int):
         level = logging.INFO
-    for namespace in ("graph_os.messaging", "agent_utilities.messaging"):
+    for namespace in ("graph_os.messaging",):
         pkg_logger = logging.getLogger(namespace)
         pkg_logger.setLevel(level)
         pkg_logger.disabled = False
@@ -51,12 +51,11 @@ async def _serve(engine: Any, platforms: list[str], router_box: dict[str, Any]) 
     listener task later — without this coroutine needing to know anything
     about leases itself.
     """
-    # The agent runtime's public API package does not publish this surface yet
-    # (tracked under GRAPHOS-HOST-R007); reach its existing messaging module
-    # directly, consistent with the rest of this package's AU imports below.
-    from agent_utilities.messaging.router import create_planner_handler
-
     from graph_os.messaging.commands import command_specs
+    from graph_os.messaging.host_ports import host_ports
+    from graph_os.messaging.planner_handler import (
+        create_planner_handler as default_planner_handler,
+    )
     from graph_os.messaging.router import InboundRouter
     from graph_os.messaging.service import MessagingService
 
@@ -75,6 +74,9 @@ async def _serve(engine: Any, platforms: list[str], router_box: dict[str, Any]) 
         except Exception as exc:
             logger.warning("messaging: register_commands(%s) failed: %s", pid, exc)
         router.register_backend(backend)
+    create_planner_handler = (
+        host_ports().planner_handler_factory or default_planner_handler
+    )
     router.set_default_handler(await create_planner_handler(engine))
     logger.info(
         "[CONCEPT:AU-ECO.messaging.inbound-messaging-router-runs] messaging serving backends %s",
@@ -150,7 +152,7 @@ def run_poll_loop(
     # the one unified Telegram/Mattermost/… delivery instead of each tool wiring its own
     # notifier. Opt-in via MESSAGING_ALERT_INTAKE_PORT; runs as an INDEPENDENT task so a
     # failure here never affects the inbound listeners.
-    from agent_utilities.core.config import setting
+    from graph_os.core.settings import setting
 
     _intake_port = setting("MESSAGING_ALERT_INTAKE_PORT", "")
     if _intake_port:

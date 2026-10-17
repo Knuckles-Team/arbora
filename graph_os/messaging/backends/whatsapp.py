@@ -42,6 +42,7 @@ from graph_os.messaging.models import (
     PlatformId,
     SendResult,
 )
+from graph_os.messaging.transport import channel_http_client
 
 logger = logging.getLogger(__name__)
 
@@ -84,11 +85,6 @@ class WhatsAppBackend(MessagingBackend):
 
     async def _connect_business_api(self) -> None:
         """Initialize WhatsApp Business API client. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
-        from agent_utilities.core.http_client import create_async_http_client
-        from agent_utilities.core.transport_security import (
-            resolve_configured_tls_profile,
-        )
-
         if not self.config.token:
             raise ValueError("Set WHATSAPP_TOKEN for Business API mode.")
         if not self.config.app_id:
@@ -97,15 +93,11 @@ class WhatsAppBackend(MessagingBackend):
         if not base_url:
             raise ValueError("Configure the WhatsApp Business API base URL.")
 
-        trust = resolve_configured_tls_profile("whatsapp-business")
-        try:
-            self._client = create_async_http_client(
-                base_url=base_url,
-                headers={"Authorization": f"Bearer {self.config.token}"},
-                **trust.httpx_kwargs(),
-            )
-        finally:
-            trust.cleanup()
+        self._client = channel_http_client(
+            "whatsapp-business",
+            base_url=base_url,
+            headers={"Authorization": f"Bearer {self.config.token}"},
+        )
 
     async def _connect_bridge(self) -> None:
         """Initialize neonize bridge client. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
