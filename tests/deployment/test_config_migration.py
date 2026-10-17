@@ -6,16 +6,8 @@ import json
 from pathlib import Path
 
 import pytest
-from agent_utilities.core import config as au_config
-from agent_utilities.core.config import (
-    AgentConfig,
-    ConfigurationSourceError,
-    _staged_xdg_document,
-    plaintext_secret_keys,
-    retired_configuration_keys,
-    strip_retired_configuration_keys,
-)
 
+from graph_os.core.settings import plaintext_secret_keys
 from graph_os.deployment.config_generator import (
     config_doctor,
     migrate_config_file,
@@ -48,21 +40,6 @@ def governed_retired_configuration_catalog(
     )
     monkeypatch.setenv("AGENT_UTILITIES_CONFIG_DIR", str(config_dir))
     return policy
-
-
-def test_strip_retired_removes_only_retired() -> None:
-    mapping = {
-        _RETIRED_ENGINE_KEY: "external",  # retired
-        "OIDC_CLIENT_SECRET": "x",  # retired (durable secret)
-        "WORKSPACE_PATH": "keep-me",  # a real field alias
-        "CAMUNDA_URL": "http://c",  # unknown, not retired -> kept here
-    }
-    cleaned, removed = strip_retired_configuration_keys(mapping)
-    assert removed == [_RETIRED_ENGINE_KEY, "OIDC_CLIENT_SECRET"]
-    assert _RETIRED_ENGINE_KEY not in cleaned and "OIDC_CLIENT_SECRET" not in cleaned
-    assert cleaned["WORKSPACE_PATH"] == "keep-me"
-    assert cleaned["CAMUNDA_URL"] == "http://c"
-    assert _RETIRED_ENGINE_KEY in retired_configuration_keys()
 
 
 def test_migrate_config_file_strips_retired_and_backs_up(tmp_path: Path) -> None:
@@ -148,62 +125,6 @@ def test_migrate_config_file_rejects_messaging_key_conflict_without_writing(
     assert p.read_text() == original
 
 
-def test_xdg_load_migrates_persisted_messaging_selectors(tmp_path: Path) -> None:
-    p = tmp_path / "config.json"
-    p.write_text(json.dumps({_RETIRED_MESSAGING_MODEL: "addressed-model"}))
-    p.chmod(0o600)
-
-    staged = _staged_xdg_document(p, strict=True)
-
-    assert staged["MESSAGING_ADDRESSED_MODEL"] == "addressed-model"
-    assert json.loads(p.read_text()) == {"MESSAGING_ADDRESSED_MODEL": "addressed-model"}
-
-
-def test_xdg_load_rejects_invalid_renamed_document_without_writing(
-    tmp_path: Path,
-) -> None:
-    p = tmp_path / "config.json"
-    original = json.dumps(
-        {
-            _RETIRED_MESSAGING_MODEL: "addressed-model",
-            "MESSAGING_INTAKE_ENABLED": "not-a-boolean",
-        }
-    )
-    p.write_text(original)
-    p.chmod(0o600)
-
-    with pytest.raises(ConfigurationSourceError):
-        _staged_xdg_document(p, strict=True)
-
-    assert p.read_text() == original
-
-
-def test_xdg_load_rejects_invalid_governance_catalog_without_writing(
-    tmp_path: Path, governed_retired_configuration_catalog: Path
-) -> None:
-    governed_retired_configuration_catalog.write_text(
-        json.dumps(
-            {
-                "version": "test-v2",
-                "renames": {
-                    _RETIRED_MESSAGING_MODEL: "MESSAGING_VOICE_MODEL",
-                },
-            }
-        )
-    )
-    p = tmp_path / "config.json"
-    original = json.dumps({_RETIRED_MESSAGING_MODEL: "addressed-model"})
-    p.write_text(original)
-    p.chmod(0o600)
-
-    with pytest.raises(ConfigurationSourceError) as raised:
-        _staged_xdg_document(p, strict=True)
-
-    assert raised.value.source_type == "governance"
-    assert raised.value.error_class == "RetiredConfigurationCatalogError"
-    assert p.read_text() == original
-
-
 def test_migrate_config_file_rejects_invalid_renamed_document_without_writing(
     tmp_path: Path,
 ) -> None:
@@ -221,29 +142,6 @@ def test_migrate_config_file_rejects_invalid_renamed_document_without_writing(
     assert report["status"] == "error"
     assert report["error"] == "messaging_model_migration_invalid"
     assert p.read_text() == original
-
-
-def test_legacy_messaging_environment_input_fails_with_neutral_guidance(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """A retired key from the process environment fails closed at the same
-    value-free ``ConfigurationSourceError`` boundary as a staged document
-    (see ``test_xdg_load_rejects_invalid_governance_catalog_without_writing``
-    above). ``AgentConfig()`` only runs the staged-xdg load path on its first
-    call per process (``_ensure_env_loaded`` memoizes via the module-level
-    ``_env_loaded`` flag); later callers in the same suite would otherwise
-    skip straight to the plain, unwrapped settings ``ValidationError``, which
-    made this assertion depend on test execution order. Force the first-call
-    state so the boundary this test names is the one actually exercised.
-    """
-    monkeypatch.setenv(_RETIRED_MESSAGING_MODEL, "addressed-model")
-    monkeypatch.setattr(au_config, "_env_loaded", False)
-
-    with pytest.raises(ConfigurationSourceError) as raised:
-        AgentConfig()
-
-    assert raised.value.source_type == "xdg"
-    assert raised.value.error_class == "ValidationError"
 
 
 def test_migrate_config_file_reports_but_keeps_unknown_by_default(
@@ -284,27 +182,6 @@ def test_unknown_configuration_keys_excludes_fields_and_retired() -> None:
         {"WORKSPACE_PATH": "a", _RETIRED_ENGINE_KEY: "x", "CAMUNDA_URL": "http://c"}
     )
     assert unknown == ["CAMUNDA_URL"]
-
-
-def test_canonicalize_passes_through_connector_keys() -> None:
-    """The strict XDG canonicalizer preserves dynamic config.setting() keys
-    (connector/service config) instead of rejecting them — aligning with the
-    documented 'config.json drives setting()' mechanism. Retired keys are still
-    rejected downstream; ambiguous keys still raise."""
-    import pytest
-    from agent_utilities.core.config import _canonicalize_xdg_configuration
-
-    out = _canonicalize_xdg_configuration(
-        {"CAMUNDA_URL": "http://c", "WORKSPACE_PATH": "/x"}
-    )
-    assert out["CAMUNDA_URL"] == "http://c"  # dynamic key preserved
-    assert "WORKSPACE_PATH" in out  # known field canonicalized
-
-    # Assert the EXACT error: a bare `Exception` would pass on any failure at
-    # all, including an unrelated import or type error, so it would not actually
-    # prove that genuine key ambiguity is what gets rejected.
-    with pytest.raises(ConfigurationSourceError, match="AmbiguousKeyError"):
-        _canonicalize_xdg_configuration({"camunda_url": "a", "CAMUNDA_URL": "b"})
 
 
 def test_plaintext_secret_keys_flags_inline_credentials() -> None:

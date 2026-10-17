@@ -26,7 +26,7 @@ def test_bug013_engine_domains_doctor_fails_closed_on_production_profile(monkeyp
     from graph_os.mcp_server.backing.tools import engine_tools
 
     cfg = SimpleNamespace(deployment_profile="single-node-prod")
-    monkeypatch.setattr("agent_utilities.core.config.AgentConfig", lambda: cfg)
+    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
     monkeypatch.setattr(engine_tools, "ENGINE_DOMAINS", {})
 
     result = D._check_engine_domains()
@@ -44,7 +44,7 @@ def test_bug013_engine_domains_doctor_warns_not_fails_on_tiny_profile(monkeypatc
     from graph_os.mcp_server.backing.tools import engine_tools
 
     cfg = SimpleNamespace(deployment_profile="tiny")
-    monkeypatch.setattr("agent_utilities.core.config.AgentConfig", lambda: cfg)
+    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
     monkeypatch.setattr(engine_tools, "ENGINE_DOMAINS", {})
 
     result = D._check_engine_domains()
@@ -58,7 +58,7 @@ def test_bug013_engine_domains_doctor_ok_when_domains_registered(monkeypatch):
     from graph_os.mcp_server.backing.tools import engine_tools
 
     cfg = SimpleNamespace(deployment_profile="enterprise")
-    monkeypatch.setattr("agent_utilities.core.config.AgentConfig", lambda: cfg)
+    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
     monkeypatch.setattr(
         engine_tools, "ENGINE_DOMAINS", {"nodes": ["get_node"], "edges": ["get_edge"]}
     )
@@ -77,8 +77,8 @@ def test_bug013_engine_domains_wired_into_run_doctor_and_fails_the_sweep(monkeyp
     from graph_os.mcp_server.backing.tools import engine_tools
 
     cfg = SimpleNamespace(deployment_profile="single-node-prod")
-    monkeypatch.setattr("agent_utilities.core.config.AgentConfig", lambda: cfg)
-    monkeypatch.setattr("agent_utilities.core.config.load_config", lambda: None)
+    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
+    monkeypatch.setattr("graph_os.core.settings.load_config", lambda: None)
     monkeypatch.setattr(engine_tools, "ENGINE_DOMAINS", {})
 
     report = D.run_doctor(only=["engine_domains"])
@@ -137,7 +137,7 @@ def test_doctor_probes_kg_connections_only_and_returns_aggregate_metadata(
     monkeypatch,
 ) -> None:
     registry = _Registry()
-    monkeypatch.setattr("agent_utilities.core.config.AgentConfig", _config)
+    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", _config)
     monkeypatch.setattr(
         "graph_os.mcp_server.backing.engine_routing.get_connection_registry",
         lambda: registry,
@@ -170,7 +170,7 @@ def test_doctor_fails_closed_without_leaking_connection_probe_errors(
     monkeypatch,
 ) -> None:
     registry = _Registry(probe_error=True)
-    monkeypatch.setattr("agent_utilities.core.config.AgentConfig", _config)
+    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", _config)
     monkeypatch.setattr(
         "graph_os.mcp_server.backing.engine_routing.get_connection_registry",
         lambda: registry,
@@ -189,7 +189,7 @@ def test_doctor_fails_closed_without_leaking_connection_probe_errors(
 
 def test_doctor_static_check_never_opens_connection_transport(monkeypatch) -> None:
     registry = _Registry(probe_error=True)
-    monkeypatch.setattr("agent_utilities.core.config.AgentConfig", _config)
+    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", _config)
     monkeypatch.setattr(
         "graph_os.mcp_server.backing.engine_routing.get_connection_registry",
         lambda: registry,

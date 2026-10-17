@@ -173,7 +173,7 @@ def test_diff_shows_only_fields_that_differ_from_their_default(monkeypatch):
 def test_set_refuses_an_unknown_key_before_writing(monkeypatch):
     written = []
     monkeypatch.setattr(
-        "agent_utilities.core.config.save_config_item",
+        "graph_os.core.settings.save_config_item",
         lambda k, v: written.append((k, v)),
     )
     with pytest.raises(config_admin.ConfigAdminError) as exc:
@@ -186,7 +186,7 @@ def test_set_refuses_an_unknown_key_before_writing(monkeypatch):
 def test_set_refuses_a_value_the_model_rejects_before_writing(monkeypatch):
     written = []
     monkeypatch.setattr(
-        "agent_utilities.core.config.save_config_item",
+        "graph_os.core.settings.save_config_item",
         lambda k, v: written.append((k, v)),
     )
     # mcp_dynamic_discovery_timeout is a bounded float; a string is not one.
@@ -200,7 +200,7 @@ def test_set_refuses_a_value_the_model_rejects_before_writing(monkeypatch):
 def test_set_refuses_an_inline_secret(monkeypatch):
     written = []
     monkeypatch.setattr(
-        "agent_utilities.core.config.save_config_item",
+        "graph_os.core.settings.save_config_item",
         lambda k, v: written.append((k, v)),
     )
     with pytest.raises(config_admin.ConfigAdminError) as exc:
@@ -213,7 +213,7 @@ def test_set_refuses_an_inline_secret(monkeypatch):
 def test_set_denies_when_the_policy_gate_denies(monkeypatch):
     written = []
     monkeypatch.setattr(
-        "agent_utilities.core.config.save_config_item",
+        "graph_os.core.settings.save_config_item",
         lambda k, v: written.append((k, v)),
     )
     monkeypatch.setattr(
@@ -247,7 +247,7 @@ def _allow_and_record_writes(monkeypatch) -> list:
     """Allow every config change and record each persisted ``(key, value)``."""
     written: list = []
     monkeypatch.setattr(
-        "agent_utilities.core.config.save_config_item",
+        "graph_os.core.settings.save_config_item",
         lambda k, v: written.append((k, v)),
     )
     monkeypatch.setattr(
@@ -285,9 +285,7 @@ def test_bug065_set_reports_process_scoped_field_not_fleet_wide_applied_live(
     to `applied_in_this_process`; the old, overclaiming name must not
     reappear in the response, and `restart_required` (already honestly
     process-scoped) is unchanged."""
-    monkeypatch.setattr(
-        "agent_utilities.core.config.save_config_item", lambda k, v: None
-    )
+    monkeypatch.setattr("graph_os.core.settings.save_config_item", lambda k, v: None)
     monkeypatch.setattr(
         config_admin, "_gate", lambda key, reason: (True, {"decision": "allow"})
     )
@@ -308,7 +306,7 @@ def test_set_can_change_the_always_load_declaration(monkeypatch):
     modifiable through an MCP tool."""
     written = {}
     monkeypatch.setattr(
-        "agent_utilities.core.config.save_config_item",
+        "graph_os.core.settings.save_config_item",
         lambda k, v: written.__setitem__(k, v),
     )
     monkeypatch.setattr(
@@ -337,7 +335,7 @@ def test_a_failed_provenance_write_does_not_undo_an_applied_change(monkeypatch):
 
 
 def test_reload_names_the_fields_that_still_need_a_restart(monkeypatch):
-    monkeypatch.setattr("agent_utilities.core.config.load_config", lambda: None)
+    monkeypatch.setattr("graph_os.core.settings.load_config", lambda: None)
     result = config_admin.reload()
 
     assert result["reloaded"] is True

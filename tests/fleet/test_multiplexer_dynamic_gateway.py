@@ -881,7 +881,7 @@ async def test_probe_entry_past_ttl_is_reported_stale(tmp_path, monkeypatch):
         "probed_at": fixed_now,
     }
     monkeypatch.setattr(
-        "agent_utilities.core.config.config.mcp_catalog_probe_ttl", 10.0
+        "graph_os.core.settings.runtime_config.mcp_catalog_probe_ttl", 10.0
     )
 
     # Inside the TTL: honestly fresh.
@@ -915,7 +915,7 @@ async def test_probe_catalog_retargets_ttl_expired_cache_entries(tmp_path, monke
         "probed_at": fixed_now,
     }
     monkeypatch.setattr(
-        "agent_utilities.core.config.config.mcp_catalog_probe_ttl", 10.0
+        "graph_os.core.settings.runtime_config.mcp_catalog_probe_ttl", 10.0
     )
 
     calls = 0

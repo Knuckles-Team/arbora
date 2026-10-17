@@ -290,13 +290,6 @@ def register_graph_routes(app, prefix: str = "/api") -> None:
 
     register_ontology_routes(app, prefix=prefix)
 
-    # Granular, typed research surface (ARA over the one ontology-driven KG,
-    # CONCEPT:AU-KG.research.best-effort-lightweight-never/2.80) — dispatches through
-    # the same research_artifact MCP tool.
-    from graph_os.gateway.research_api import register_research_routes
-
-    register_research_routes(app, prefix=prefix)
-
     # Schema-context query surface (GRAPHOS-DATA-MARKET-R005, GDM-03) — same
     # owning service a future MCP graph_schema action will share (SC-05).
     from graph_os.gateway.schema_context_api import register_schema_context_routes

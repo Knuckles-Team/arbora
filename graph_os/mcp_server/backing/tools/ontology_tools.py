@@ -1738,24 +1738,6 @@ def register_ontology_tools(mcp):
 
     runtime.REGISTERED_TOOLS["document_process"] = document_process
 
-    # Quant trading system tool (CONCEPT:AU-ECO.messaging.native-backend-abstraction): debate/regime/data/execute/
-    # portfolio over the finance engines. Registered onto the MCP server AND the
-    # shared runtime.REGISTERED_TOOLS map so the gateway REST twin (/quant) reaches it.
-    # The finance domain needs the optional `[finance]` extra (scipy/pandas/statsmodels);
-    # the lean serving image omits it, so guard the registration so runtime still boots
-    # — the quant tool is simply absent there. See AGENTS.md "Dependency discipline".
-    try:
-        raise not_served(
-            "domains.finance.quant_mcp_tools",
-            "GRAPHOS (served MCP tools)",
-            owner="graph-os",
-        )
-    except ImportError:
-        logger.info(
-            "quant tools skipped (finance extra not installed) — "
-            "install agent-utilities[finance] to enable the `quant` MCP tool"
-        )
-
     @mcp.tool(
         name="source_connector",
         description="Document-source connectors (CONCEPT:AU-ECO.connector.document-source-framework–4.29, KG-2.59): list registered connectors, or run one (filesystem/web/rest/database/graphql_document/mcp:<package>/mcp_tool — GraphQL transports resolve endpoint, auth, TLS, schema mappings, and governance from runtime secret profiles; mcp_tool drives a fleet MCP listing tool as a paginated source) to ingest governed documents and ChangeEnvelopes into the KG with contextual enrichment (KG-2.50) and external permission sync (ECO-4.28).",

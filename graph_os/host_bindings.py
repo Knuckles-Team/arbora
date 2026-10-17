@@ -29,7 +29,6 @@ from typing import Any
 from fastmcp.server.extensions import ServerExtension
 
 from graph_os.core.settings import setting
-from graph_os.security.scope_registry import SCOPE_CLASSES
 
 __all__ = [
     "A2A_PATH",
@@ -50,8 +49,6 @@ FLEET_TOOLS = ("find", "act")
 MODEL_SETTING = "GRAPH_OS_AGENT_MODEL"
 #: The scopes that admit an outbound message send; each is an engine scope.
 SEND_SCOPES = frozenset({"kg:write", "kg:admin"})
-if not SEND_SCOPES <= SCOPE_CLASSES.keys():
-    raise RuntimeError("a send scope is not in the engine scope registry")
 #: Where the SDK A2A application is mounted.
 A2A_PATH = "/a2a/agent"
 

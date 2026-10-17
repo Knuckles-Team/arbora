@@ -342,7 +342,7 @@ def remote_transport(monkeypatch):
     ``create_async_http_client`` call was built with -- so a test can inspect
     the ACTUAL headers the multiplexer would have sent, without a real
     network call. Mirrors ``tests/unit/mcp/test_multiplexer_transports.py``."""
-    from agent_utilities.core import http_client as http_client_mod
+    from graph_os.core import transport as http_client_mod
 
     recorded_clients: list[dict] = []
     real_create_async_http_client = http_client_mod.create_async_http_client

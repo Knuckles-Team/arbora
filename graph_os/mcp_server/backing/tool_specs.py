@@ -59,7 +59,6 @@ TOOL_VERBS: Mapping[str, tuple[str, ...]] = MappingProxyType(
         "graph_gis": ("ask",),
         "object_index": ("ask", "find"),
         "object_set": ("ask", "write"),
-        "research_artifact": ("ask", "write"),
         "quant": ("ask", "act"),
         "engine_query": ("ask",),
         "engine_analytics": ("ask",),
@@ -86,7 +85,6 @@ TOOL_VERBS: Mapping[str, tuple[str, ...]] = MappingProxyType(
         "graph_audit": ("why", "ask"),
         "graph_compliance": ("ask", "why"),
         "graph_epistemic": ("why", "ask"),
-        "graph_incident": ("ask", "act"),
         # ── writes / ingest / persist ──
         "graph_write": ("write",),
         # Ingestion submits are writes, but polling its queue is a read.  The
@@ -135,7 +133,6 @@ TOOL_VERBS: Mapping[str, tuple[str, ...]] = MappingProxyType(
         # only the reviewed read actions below, and ``manage`` saves records.
         "graph_governance": ("act", "manage"),
         "graph_domain_ops": ("act",),
-        "graph_loops": ("act",),
         "graph_fork": ("act",),
         "graph_broker": ("act",),
         "graph_feeds": ("act", "ask"),

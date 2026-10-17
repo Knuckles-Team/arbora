@@ -6,7 +6,7 @@ module, :mod:`graph_os.mcp_server.backing.remote_oauth_broker` shipped a complet
 tested broker CORE with no HTTP surface reachable from a browser — no route
 could ever call ``begin()``/``callback()``. This module is that surface.
 
-Mirrors :mod:`graph_os.gateway.research_api` /
+Mirrors
 :mod:`graph_os.gateway.ontology_api`: a plain ``fastapi.APIRouter``
 mounted by one call, :func:`register_remote_oauth_routes`, with the same
 FastAPI-``include_router``-else-plain-``add_route`` fallback those modules use.
@@ -384,7 +384,7 @@ def register_remote_oauth_routes(
     callback URL instead.
 
     Same FastAPI-``include_router``-else-plain-``add_route`` fallback as
-    :func:`graph_os.gateway.research_api.register_research_routes`.
+    :func:`graph_os.gateway.ontology_api.register_ontology_routes`.
     Optional dependencies are injected once before route mounting.
     """
     if broker is not None:

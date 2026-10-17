@@ -75,20 +75,10 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
     monkeypatch.setitem(sys.modules, "uvicorn", uvicorn)
 
     # Keep the real configuration exports for lazily imported host dependencies.
-    config_module = importlib.import_module("agent_utilities.core.config")
-    monkeypatch.setattr(config_module.config, "host", "127.0.0.1")
-    monkeypatch.setattr(config_module.config, "port", 8000)
+    from graph_os.core.settings import runtime_config
 
-    contextual_model = types.ModuleType("agent_utilities.core.contextual_model")
-
-    def create_context_agent(*, model: object) -> object:
-        calls["agent_model"] = model
-        return "context-agent"
-
-    _export(contextual_model, "create_context_agent", create_context_agent)
-    monkeypatch.setitem(
-        sys.modules, "agent_utilities.core.contextual_model", contextual_model
-    )
+    monkeypatch.setattr(runtime_config, "host", "127.0.0.1")
+    monkeypatch.setattr(runtime_config, "port", 8000)
 
     governance = types.ModuleType("graph_os.webui_host.contact_governance")
 

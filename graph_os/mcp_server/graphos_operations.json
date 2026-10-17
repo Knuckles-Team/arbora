@@ -15,17 +15,6 @@
    "surface": "intent"
   },
   {
-   "actions": [
-    "get",
-    "list",
-    "save",
-    "seed_roles"
-   ],
-   "feature": null,
-   "name": "agent_library",
-   "surface": "granular"
-  },
-  {
    "actions": [],
    "feature": null,
    "name": "ask",
@@ -47,12 +36,6 @@
    ],
    "feature": null,
    "name": "browser_control",
-   "surface": "granular"
-  },
-  {
-   "actions": [],
-   "feature": null,
-   "name": "concept_registry",
    "surface": "granular"
   },
   {
@@ -621,18 +604,6 @@
   },
   {
    "actions": [
-    "computer_use",
-    "reason",
-    "run_org",
-    "swarm",
-    "synthesize_org"
-   ],
-   "feature": null,
-   "name": "graph_agents",
-   "surface": "granular"
-  },
-  {
-   "actions": [
     "distill_memory",
     "enrichment_coverage",
     "infra_sweep",
@@ -654,8 +625,6 @@
   },
   {
    "actions": [
-    "for_target",
-    "lineage",
     "verify"
    ],
    "feature": null,
@@ -743,10 +712,8 @@
     "discover_connection_schema",
     "doctor",
     "external_graph_doctor",
-    "frontend_contributions",
     "generate_config",
     "get_config",
-    "harness_fence",
     "health",
     "ingest_connection",
     "install_hooks",
@@ -761,9 +728,6 @@
     "reconcile",
     "register_mcp",
     "remove_connection",
-    "schema_candidates",
-    "schema_pack",
-    "set_role_routing",
     "set_secret",
     "setup_databases",
     "stardog_export_graph",
@@ -791,17 +755,6 @@
   },
   {
    "actions": [
-    "clean_dataset",
-    "commit_prepared",
-    "profile_dataset",
-    "validate_prepared"
-   ],
-   "feature": null,
-   "name": "graph_data_prep",
-   "surface": "granular"
-  },
-  {
-   "actions": [
     "build",
     "cite",
     "content",
@@ -821,20 +774,6 @@
    ],
    "feature": null,
    "name": "graph_domain_ops",
-   "surface": "granular"
-  },
-  {
-   "actions": [
-    "call",
-    "checkpoint",
-    "run",
-    "sleep",
-    "state_get",
-    "state_set",
-    "status"
-   ],
-   "feature": null,
-   "name": "graph_durable",
    "surface": "granular"
   },
   {
@@ -888,21 +827,6 @@
   },
   {
    "actions": [
-    "assimilate",
-    "audit_scan",
-    "distill_skills",
-    "evidence_lineage",
-    "failure_ingest",
-    "optimize_component",
-    "publish_proposal",
-    "standardize"
-   ],
-   "feature": null,
-   "name": "graph_evolution",
-   "surface": "granular"
-  },
-  {
-   "actions": [
     "context",
     "executable_rag",
     "explain",
@@ -926,9 +850,6 @@
   },
   {
    "actions": [
-    "add",
-    "list",
-    "remove",
     "sync"
    ],
    "feature": null,
@@ -949,21 +870,7 @@
   },
   {
    "actions": [
-    "cancel",
-    "create",
-    "iterations",
-    "list"
-   ],
-   "feature": null,
-   "name": "graph_goals",
-   "surface": "granular"
-  },
-  {
-   "actions": [
-    "claim_ownership",
     "grant_approval",
-    "ownership_apply",
-    "ownership_report",
     "policy_status",
     "submit_risk_veto",
     "verify_action"
@@ -999,7 +906,6 @@
     "gitlab_webhook",
     "import_pack",
     "ingest",
-    "ingest_knowledge_pack",
     "ingest_url",
     "job_status",
     "jobs",
@@ -1020,19 +926,6 @@
    ],
    "feature": null,
    "name": "graph_ingest",
-   "surface": "granular"
-  },
-  {
-   "actions": [
-    "cancel",
-    "dead_letter",
-    "dispatch",
-    "drain",
-    "input",
-    "status"
-   ],
-   "feature": null,
-   "name": "graph_jobs",
    "surface": "granular"
   },
   {
@@ -1078,25 +971,6 @@
   },
   {
    "actions": [
-    "cancel",
-    "drive",
-    "gap",
-    "gaps",
-    "list",
-    "prioritize",
-    "review",
-    "run",
-    "specs",
-    "state",
-    "submit",
-    "submit_gap"
-   ],
-   "feature": null,
-   "name": "graph_loops",
-   "surface": "granular"
-  },
-  {
-   "actions": [
     "link",
     "recall",
     "store"
@@ -1106,32 +980,9 @@
    "surface": "granular"
   },
   {
-   "actions": [
-    "error_detail",
-    "failure_cluster",
-    "prompt_regression",
-    "trace_rootcause"
-   ],
-   "feature": null,
-   "name": "graph_observe",
-   "surface": "granular"
-  },
-  {
-   "actions": [
-    "delete",
-    "get",
-    "list",
-    "load",
-    "update"
-   ],
-   "feature": null,
-   "name": "graph_ontology",
-   "surface": "granular"
-  },
-  {
    "actions": [],
    "feature": null,
-   "name": "graph_orchestrate",
+   "name": "graph_ontology",
    "surface": "granular"
   },
   {
@@ -1174,57 +1025,13 @@
    "surface": "granular"
   },
   {
-   "actions": [
-    "commit",
-    "discard",
-    "fork",
-    "list",
-    "replay",
-    "revert",
-    "status",
-    "twin_capture",
-    "twin_counterfactual",
-    "twin_incident",
-    "twin_replay"
-   ],
-   "feature": null,
-   "name": "graph_runvcs",
-   "surface": "granular"
-  },
-  {
-   "actions": [
-    "reap",
-    "status",
-    "warm"
-   ],
-   "feature": null,
-   "name": "graph_sandbox",
-   "surface": "granular"
-  },
-  {
-   "actions": [
-    "disable",
-    "enable",
-    "list",
-    "prioritize",
-    "run_now",
-    "set_interval"
-   ],
-   "feature": null,
-   "name": "graph_schedules",
-   "surface": "granular"
-  },
-  {
    "actions": [],
    "feature": null,
    "name": "graph_search",
    "surface": "granular"
   },
   {
-   "actions": [
-    "diagnose",
-    "synthesize"
-   ],
+   "actions": [],
    "feature": null,
    "name": "graph_search_synthesis",
    "surface": "granular"
@@ -1242,12 +1049,7 @@
   },
   {
    "actions": [
-    "cancel",
-    "delete",
-    "get",
     "health",
-    "list",
-    "reply",
     "topology"
    ],
    "feature": null,
@@ -1269,14 +1071,7 @@
    "surface": "granular"
   },
   {
-   "actions": [
-    "create",
-    "drop",
-    "ingest",
-    "list",
-    "query",
-    "rows"
-   ],
+   "actions": [],
    "feature": null,
    "name": "graph_table",
    "surface": "granular"
@@ -1284,8 +1079,7 @@
   {
    "actions": [
     "get",
-    "search",
-    "waterfall"
+    "search"
    ],
    "feature": null,
    "name": "graph_traces",
@@ -1300,21 +1094,6 @@
    ],
    "feature": null,
    "name": "graph_viz",
-   "surface": "granular"
-  },
-  {
-   "actions": [
-    "compile",
-    "compile_process",
-    "dispatch",
-    "execute",
-    "execute_dynamic",
-    "export",
-    "list",
-    "status"
-   ],
-   "feature": null,
-   "name": "graph_workflows",
    "surface": "granular"
   },
   {
@@ -1342,16 +1121,6 @@
    "actions": [],
    "feature": null,
    "name": "graph_writeback",
-   "surface": "granular"
-  },
-  {
-   "actions": [
-    "collect",
-    "paths",
-    "upload"
-   ],
-   "feature": null,
-   "name": "ingest_sessions",
    "surface": "granular"
   },
   {
@@ -1388,11 +1157,7 @@
    "surface": "granular"
   },
   {
-   "actions": [
-    "mark",
-    "redact",
-    "restricted_view"
-   ],
+   "actions": [],
    "feature": null,
    "name": "object_permissioning",
    "surface": "granular"
@@ -1443,25 +1208,13 @@
    "surface": "granular"
   },
   {
-   "actions": [
-    "invoke",
-    "list"
-   ],
+   "actions": [],
    "feature": null,
    "name": "ontology_function",
    "surface": "granular"
   },
   {
-   "actions": [
-    "conforms",
-    "explain_routing_eligibility",
-    "graph",
-    "implementers",
-    "lint",
-    "list",
-    "owl",
-    "summary"
-   ],
+   "actions": [],
    "feature": null,
    "name": "ontology_interface",
    "surface": "granular"
@@ -1473,31 +1226,13 @@
    "surface": "granular"
   },
   {
-   "actions": [
-    "types"
-   ],
+   "actions": [],
    "feature": null,
    "name": "ontology_link_materialize",
    "surface": "granular"
   },
   {
-   "actions": [
-    "get",
-    "list",
-    "owl",
-    "sync"
-   ],
-   "feature": null,
-   "name": "ontology_model_profile",
-   "surface": "granular"
-  },
-  {
-   "actions": [
-    "column_type",
-    "describe",
-    "list",
-    "validate"
-   ],
+   "actions": [],
    "feature": null,
    "name": "ontology_property_types",
    "surface": "granular"
@@ -1514,25 +1249,7 @@
    "surface": "granular"
   },
   {
-   "actions": [
-    "describe",
-    "evolve",
-    "list",
-    "owl",
-    "resolve",
-    "set"
-   ],
-   "feature": null,
-   "name": "ontology_sampling_profile",
-   "surface": "granular"
-  },
-  {
-   "actions": [
-    "coerce",
-    "describe",
-    "list",
-    "validate"
-   ],
+   "actions": [],
    "feature": null,
    "name": "ontology_value_types",
    "surface": "granular"
@@ -1561,20 +1278,11 @@
   {
    "actions": [],
    "feature": null,
-   "name": "research_artifact",
-   "surface": "granular"
-  },
-  {
-   "actions": [],
-   "feature": null,
    "name": "skill_classify",
    "surface": "granular"
   },
   {
-   "actions": [
-    "list",
-    "run"
-   ],
+   "actions": [],
    "feature": null,
    "name": "source_connector",
    "surface": "granular"
@@ -1604,24 +1312,6 @@
    "surface": "granular"
   },
   {
-   "actions": [
-    "activity",
-    "by_agent",
-    "by_model",
-    "by_project",
-    "search",
-    "session_detail",
-    "sessions",
-    "summary",
-    "tools",
-    "top_sessions",
-    "traces"
-   ],
-   "feature": null,
-   "name": "usage_query",
-   "surface": "granular"
-  },
-  {
    "actions": [],
    "feature": null,
    "name": "why",
@@ -1634,27 +1324,18 @@
    "surface": "intent"
   }
  ],
- "registry_digest": "cefea108db0ce4920e942346a2d9fff219914ff972e63a8550fb8b4ab51b8ad8",
+ "registry_digest": "52692d3cb4a84ff12474a171b8305e92b9493c49be3352ed4b0bae1f2bcb9e11",
  "schema_version": 1,
  "source": "graph-os operation registry (graph_os.mcp_server.backing.tool_specs)",
  "supported_features": [
   "finance"
  ],
  "tool_verbs": {
-  "agent_library": [
-   "manage",
-   "find",
-   "ask"
-  ],
   "ask_data": [
    "ask"
   ],
   "browser_control": [
    "act"
-  ],
-  "concept_registry": [
-   "find",
-   "ask"
   ],
   "document_process": [
    "write"
@@ -1756,9 +1437,6 @@
   "graph_a2a": [
    "act"
   ],
-  "graph_agents": [
-   "act"
-  ],
   "graph_analyze": [
    "ask",
    "why"
@@ -1802,20 +1480,12 @@
   "graph_context": [
    "ask"
   ],
-  "graph_data_prep": [
-   "ask",
-   "write"
-  ],
   "graph_document_tree": [
    "ask",
    "write"
   ],
   "graph_domain_ops": [
    "act"
-  ],
-  "graph_durable": [
-   "act",
-   "ask"
   ],
   "graph_epistemic": [
    "why",
@@ -1826,9 +1496,6 @@
   ],
   "graph_evaluate": [
    "why"
-  ],
-  "graph_evolution": [
-   "act"
   ],
   "graph_explain": [
    "why"
@@ -1850,19 +1517,12 @@
   "graph_gis": [
    "ask"
   ],
-  "graph_goals": [
-   "act"
-  ],
   "graph_governance": [
    "act",
    "manage"
   ],
   "graph_ingest": [
    "write",
-   "ask"
-  ],
-  "graph_jobs": [
-   "act",
    "ask"
   ],
   "graph_kv_checkpoint": [
@@ -1879,28 +1539,14 @@
   "graph_logs": [
    "ask"
   ],
-  "graph_loops": [
-   "act"
-  ],
-  "graph_media_sidecar": [
-   "write",
-   "act"
-  ],
   "graph_memory": [
    "write",
-   "ask"
-  ],
-  "graph_observe": [
-   "why",
    "ask"
   ],
   "graph_ontology": [
    "write",
    "ask",
    "manage"
-  ],
-  "graph_orchestrate": [
-   "act"
   ],
   "graph_pipeline": [
    "act",
@@ -1916,16 +1562,6 @@
    "ask"
   ],
   "graph_reach": [
-   "act"
-  ],
-  "graph_runvcs": [
-   "act"
-  ],
-  "graph_sandbox": [
-   "act"
-  ],
-  "graph_schedules": [
-   "manage",
    "act"
   ],
   "graph_search": [
@@ -1957,18 +1593,10 @@
    "act",
    "ask"
   ],
-  "graph_workflows": [
-   "act",
-   "ask",
-   "manage"
-  ],
   "graph_write": [
    "write"
   ],
   "graph_writeback": [
-   "write"
-  ],
-  "ingest_sessions": [
    "write"
   ],
   "nl_query": [
@@ -2009,20 +1637,12 @@
   "ontology_link_materialize": [
    "write"
   ],
-  "ontology_model_profile": [
-   "manage",
-   "ask"
-  ],
   "ontology_property_types": [
    "manage",
    "ask"
   ],
   "ontology_repository_provenance": [
    "write"
-  ],
-  "ontology_sampling_profile": [
-   "manage",
-   "ask"
   ],
   "ontology_value_types": [
    "manage",
@@ -2031,10 +1651,6 @@
   "quant": [
    "ask",
    "act"
-  ],
-  "research_artifact": [
-   "ask",
-   "write"
   ],
   "skill_classify": [
    "write"
@@ -2054,9 +1670,6 @@
    "ask"
   ],
   "tabular_query": [
-   "ask"
-  ],
-  "usage_query": [
    "ask"
   ]
  }

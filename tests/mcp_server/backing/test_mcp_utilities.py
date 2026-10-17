@@ -7,13 +7,9 @@ Tests for MCP utilities.
 """
 
 import contextlib
-import json
-import os
-import tempfile
 from unittest.mock import MagicMock, patch
 
 import pytest
-from agent_utilities.core.config import load_mcp_servers_from_config
 
 import graph_os.mcp_server.backing.server_factory as server_factory
 
@@ -108,41 +104,6 @@ def test_create_mcp_server_exposes_metrics_health_and_tool_middleware(monkeypatc
     paths = {getattr(r, "path", None) for r in mcp.http_app().routes}
     assert "/metrics" in paths
     assert "/health" in paths
-
-
-def test_load_mcp_servers_from_config_missing():
-    servers = load_mcp_servers_from_config("non_existent.json")
-    assert servers == []
-
-
-@patch("pydantic_ai.mcp.load_mcp_toolsets")
-def test_load_mcp_servers_from_config_success(mock_load):
-    config_data = {
-        "mcpServers": {
-            "test-server": {
-                "command": "python",
-                "args": ["-m", "test"],
-                "env": {"FOO": "BAR"},
-            }
-        }
-    }
-
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tmp:
-        json.dump(config_data, tmp)
-        tmp_path = tmp.name
-
-    try:
-        mock_server = MagicMock()
-        mock_load.return_value = [mock_server]
-
-        servers = load_mcp_servers_from_config(tmp_path)
-
-        assert len(servers) == 1
-        assert servers[0].id == "test-server"
-        mock_load.assert_called_once()
-    finally:
-        if os.path.exists(tmp_path):
-            os.remove(tmp_path)
 
 
 def test_mcp_auth_config_defaults():
