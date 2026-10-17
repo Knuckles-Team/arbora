@@ -651,7 +651,9 @@
       "landed_in": [
         "9e7f6499d96f"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/deployment/test_small_profile_footprint.py:31"
+      ],
       "rollup_of": [
         "GRAPHOS-DEPLOY-R009.2.1",
         "GRAPHOS-DEPLOY-R009.2.2"
@@ -663,7 +665,7 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [
-        "tests/deployment/test_small_profile_footprint.py:31"
+        "tests/deployment/test_small_profile_footprint.py:32"
       ]
     },
     {

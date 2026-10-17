@@ -13,6 +13,8 @@
     "GRAPHOS-HOST-R001.6",
     "GRAPHOS-HOST-R001.8",
     "GRAPHOS-HOST-R001.9",
+    "GRAPHOS-HOST-R001.9.1",
+    "GRAPHOS-HOST-R001.9.2",
     "GRAPHOS-HOST-R001.10",
     "GRAPHOS-HOST-R002",
     "GRAPHOS-HOST-R003",
@@ -201,7 +203,7 @@
     {
       "id": "GRAPHOS-HOST-R001",
       "title": "Cross-repository composition boundary assignment",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "9760bef27075"
       ],
@@ -246,12 +248,14 @@
     },
     {
       "id": "GRAPHOS-HOST-R001.3",
-      "title": "GraphOS owns the surface gateway client SDK",
-      "delivery_state": "LANDED",
+      "title": "GraphOS ships the surface client as its generated client",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "9e7f6499d96f"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/deployment/test_generated_client_wheel.py:16"
+      ]
     },
     {
       "id": "GRAPHOS-HOST-R001.4",
@@ -266,7 +270,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R001.5",
-      "title": "The moved serving code keeps its agent-utilities tests and runs on FastMCP 4",
+      "title": "The moved serving code keeps its tests and runs on FastMCP 4",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "9e7f6499d96f"
@@ -306,10 +310,32 @@
     {
       "id": "GRAPHOS-HOST-R001.9",
       "title": "The tiny profile serves the KG over the gateway with zero containers",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "9e7f6499d96f"
       ],
+      "verified_by": [
+        "tests/deployment/test_small_profile_footprint.py:33"
+      ],
+      "rollup_of": [
+        "GRAPHOS-HOST-R001.9.1",
+        "GRAPHOS-HOST-R001.9.2"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.9.1",
+      "title": "The served surface imports no external-service driver",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/deployment/test_small_profile_footprint.py:34"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.9.2",
+      "title": "The tiny profile serves the graph with zero containers",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": []
     },
     {

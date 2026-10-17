@@ -969,7 +969,7 @@
         "tests/api/test_gen_api.py:320",
         "tests/api/test_gen_api.py:470",
         "tests/deployment/test_generated_client_wheel.py:15",
-        "tests/deployment/test_generated_client_wheel.py:26"
+        "tests/deployment/test_generated_client_wheel.py:27"
       ]
     },
     {
