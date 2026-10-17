@@ -32,6 +32,24 @@ class WorkspaceLogGrant:
     revision: str
     expires_at_ms: int
     action: Literal["host.logs.read"]
+    source_generations: tuple[str, ...] = ()
+
+
+def valid_generations(values: tuple[str, ...]) -> bool:
+    return (
+        type(values) is tuple
+        and 1 <= len(values) <= 32
+        and all(
+            type(value) is str
+            and 1 <= len(value) <= 128
+            and value not in {"*", "latest", "prior"}
+            and not any(
+                character.isspace() or ord(character) < 32 for character in value
+            )
+            for value in values
+        )
+        and len(set(values)) == len(values)
+    )
 
 
 class WorkspaceGrantProvider(Protocol):
@@ -68,6 +86,7 @@ class HostLogSource(Protocol):
         tenant: str,
         workspace: str,
         host_instance: str,
+        source_generations: tuple[str, ...],
         cursor: str | None,
         limit: int,
     ) -> HostLogBatch:
@@ -148,6 +167,7 @@ class HostLogAccess:
         )
         if (
             actual != expected
+            or not valid_generations(grant.source_generations)
             or not grant.revision
             or type(grant.expires_at_ms) is not int
             or not now < grant.expires_at_ms <= state.expires_at_ms
@@ -233,6 +253,7 @@ class HostLogAccess:
             tenant=grant.tenant,
             workspace=self._workspace,
             host_instance=self._host,
+            source_generations=grant.source_generations,
             cursor=cursor,
             limit=limit,
         )
@@ -254,8 +275,8 @@ class HostLogAccess:
         for record in batch.records:
             if (
                 not isinstance(record, HostLogRecord)
-                or (record.tenant, record.workspace, record.host_instance)
-                != (grant.tenant, self._workspace, self._host)
+                or (record.tenant, record.workspace) != (grant.tenant, self._workspace)
+                or record.host_instance not in grant.source_generations
                 or not isinstance(record.message, str)
                 or len(record.message.encode("utf-8")) > 16 * 1024
             ):
