@@ -280,7 +280,7 @@ def test_source_bounds_before_serialization(
     elif bad == "oversized":
         records = (replace(record, message="x" * 16385),)
     else:
-        records: tuple[HostLogRecord, ...] = (record,) * 129
+        records = (record,) * 129
     owners.batch = HostLogBatch(records, None)
     with serve(access) as client:
         response = read(client, reference(client))
