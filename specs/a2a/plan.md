@@ -292,3 +292,7 @@ R006.2.1.1 isolates the remaining caller handoff acceptance.
 R006.2.2 isolates the remaining shared-service composition acceptance.
 Both stay pending until their production-path tests pass; compatibility evidence cannot close either child.
 Generate status from these pending children and preserve historical commit receipts without treating them as completed acceptance.
+
+### Detached signature validation boundary
+
+R005.2.2 reuses `PlanBinding` and the existing closed confirmation payload. The binding and trusted public key remain server-side. The validator checks exact canonical bytes and current supplied caller/grant evidence. No issuer, key resolver or local grant store is added. The served confirmation route passes no authority and remains unavailable. EG must still own fresh grant and pending-task evidence, plus atomic consumption of the grant and plan fence. Supplied consumed/revoked snapshots test rejection only; they do not establish replay prevention.
