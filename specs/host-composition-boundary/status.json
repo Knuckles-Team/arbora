@@ -213,10 +213,11 @@
         "9e7f6499d96f"
       ],
       "verified_by": [
+        "tests/mcp_server/test_harness_host.py:109",
+        "tests/mcp_server/test_harness_host.py:141",
         "tests/mcp_server/test_harness_host.py:29",
         "tests/mcp_server/test_harness_host.py:37",
-        "tests/mcp_server/test_harness_host.py:76",
-        "tests/mcp_server/test_harness_host.py:85"
+        "tests/mcp_server/test_harness_host.py:76"
       ]
     },
     {

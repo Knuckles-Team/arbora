@@ -17,6 +17,7 @@ domain sidecar.
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -510,31 +511,36 @@ def compute_coverage(
     return _finalize_coverage_report(report, covered, universe)
 
 
+def _emit(message: str) -> None:
+    """Write one report line to stdout (the CLI entry point's only output)."""
+    sys.stdout.write(f"{message}\n")
+
+
 def main() -> int:
     """Run the coverage gate and print a concise deterministic report."""
     report = compute_coverage()
     if report.ok:
-        print(
+        _emit(
             "Graph-OS skill coverage OK — "
             f"{len(report.covered)} canonical tools explicitly covered by domain skills."
         )
         return 0
     if report.uncovered:
-        print("UNCOVERED GRAPH-OS VERBS:")
+        _emit("UNCOVERED GRAPH-OS VERBS:")
         for verb in report.uncovered:
-            print(f"  - {verb}")
+            _emit(f"  - {verb}")
     if report.orphans:
-        print("SIDECAR CLAIMS FOR UNKNOWN VERBS:")
+        _emit("SIDECAR CLAIMS FOR UNKNOWN VERBS:")
         for skill, verb in report.orphans:
-            print(f"  - {skill} -> {verb}")
+            _emit(f"  - {skill} -> {verb}")
     if report.duplicates:
-        print("GRAPH-OS VERBS WITH MULTIPLE DOMAIN OWNERS:")
+        _emit("GRAPH-OS VERBS WITH MULTIPLE DOMAIN OWNERS:")
         for verb, skills in report.duplicates:
-            print(f"  - {verb}: {', '.join(skills)}")
+            _emit(f"  - {verb}: {', '.join(skills)}")
     if report.invalid_sidecars:
-        print("INVALID GRAPH-OS SIDECARS:")
+        _emit("INVALID GRAPH-OS SIDECARS:")
         for skill, error in report.invalid_sidecars:
-            print(f"  - {skill}: {error}")
+            _emit(f"  - {skill}: {error}")
     return 1
 
 

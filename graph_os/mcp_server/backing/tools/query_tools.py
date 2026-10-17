@@ -321,7 +321,7 @@ def _annotate_path_hops(engine: Any, path: list[Any]) -> list[dict[str, Any]]:
                 rel = erows[0].get("rel")
                 conf = erows[0].get("confidence")
         except Exception:  # noqa: BLE001 — annotation is best-effort
-            pass
+            logger.debug("edge annotation lookup failed", exc_info=True)
         hops.append({"from": a, "to": b, "rel": rel, "confidence": conf})
     return hops
 

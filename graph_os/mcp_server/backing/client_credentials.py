@@ -762,5 +762,5 @@ def service_session_max_age(existing: dict | None) -> float | None:
     try:
         provider.get_token()  # prime (cached) so access_token_ttl is real
     except Exception:  # pragma: no cover - mint failure; fall back to default TTL
-        pass
+        logger.debug("token prime failed; using default session TTL", exc_info=True)
     return max(_MIN_SESSION_MAX_AGE, provider.access_token_ttl - _EXPIRY_SKEW_S - 5.0)

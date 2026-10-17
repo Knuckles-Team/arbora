@@ -29,6 +29,7 @@ compliance/redaction logic):
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 
 from agent_utilities.core.event_loop import run_blocking_ordered
@@ -36,6 +37,8 @@ from agent_utilities.security.error_surface import public_error_payload
 from pydantic import Field
 
 from graph_os.mcp_server import runtime
+
+logger = logging.getLogger(__name__)
 
 #: Governance/compliance node labels already ingested by the CISO Assistant
 #: extractor (agent_utilities/knowledge_graph/enrichment/extractors/ciso_assistant.py)
@@ -188,7 +191,7 @@ def _confidence_rollup(engine: Any, label: str) -> dict[str, Any] | None:
             elif row.confidence < NEUTRAL_CONFIDENCE:
                 low_confidence += 1
     except Exception:  # noqa: BLE001 — a partial stream still reports what it saw
-        pass
+        logger.debug("epistemic stream ended early; reporting partial", exc_info=True)
     if count == 0:
         return None
     return {
@@ -317,7 +320,7 @@ def _export(
         try:
             belief = json.loads(raw)
         except (TypeError, ValueError):
-            belief = {"error": "unparseable engine response"}
+            belief = {"error": "unparsable engine response"}
         entries.append({"node_id": node_id, "belief": belief})
 
     return {

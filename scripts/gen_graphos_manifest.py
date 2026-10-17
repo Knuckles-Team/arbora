@@ -28,7 +28,8 @@ from __future__ import annotations
 import ast
 import inspect
 import json
-import subprocess
+import shutil
+import subprocess  # nosec B404 - only runs the repo formatter with a fixed argv, no shell
 import sys
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -699,9 +700,16 @@ def _format_in_place(path: Path) -> None:
     silently reintroduce the very diff-noise this exists to remove, and the next
     `ruff-format` hook would rewrite the file anyway.
     """
+    ruff = shutil.which("ruff")
+    if ruff is None:
+        raise RuntimeError(
+            f"cannot format {path}: 'ruff' is not on PATH. The manifest must be "
+            "emitted in the repo's formatted style or every regeneration shows "
+            "as a spurious whole-file diff."
+        )
     try:
-        proc = subprocess.run(  # noqa: S603 - fixed argv, no shell, repo-local tool
-            ["ruff", "format", "--quiet", str(path)],
+        proc = subprocess.run(  # noqa: S603 # nosec B603 - fixed argv, resolved path, no shell
+            [ruff, "format", "--quiet", str(path)],
             capture_output=True,
             text=True,
             check=False,

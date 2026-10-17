@@ -18,4 +18,4 @@ def test_union_type_names_are_spelled_out_on_every_python() -> None:
     assert _type_name(bool) == "bool"
 
 
-pytestmark = pytest.mark.spec("GRAPHOS-DEPLOY-R009.2")
+pytestmark = pytest.mark.spec("GRAPHOS-DEPLOY-R009.4")

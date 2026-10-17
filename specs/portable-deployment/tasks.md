@@ -171,7 +171,7 @@ non-test importer (or, for `agent_utilities.deployment.cli`, a direct test impor
 
 - [ ] **GRAPHOS-DEPLOY-R009:** GraphOS owns hosting/deployment configuration settings
 - [ ] **GRAPHOS-DEPLOY-R009.1:** Remaining scope of GRAPHOS-DEPLOY-R009 (slice .1): GraphOS owns hosting/deployment configuration settings
-- [x] **GRAPHOS-DEPLOY-R009.2:** graph_config operation core in GraphOS. Evidence: `tests/core/test_agent_config_admin.py`.
+- [x] **GRAPHOS-DEPLOY-R009.4:** graph_config operation core in GraphOS. Evidence: `tests/core/test_agent_config_admin.py`.
 
 ## GRAPHOS-DEPLOY-R017 engine-routed deployment placement and assembly
 

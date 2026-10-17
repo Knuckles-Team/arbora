@@ -1265,7 +1265,7 @@ def _render_chart(
 def _spec_mark(spec_json: str) -> Any:
     """The first mark's ``kind`` from a ViewSpec JSON string, or ``None``.
 
-    Never raises: an absent, unparseable or unexpectedly shaped spec simply
+    Never raises: an absent, unparsable or unexpectedly shaped spec simply
     yields ``None`` (the summary then says "a chart" rather than naming a mark).
     """
     if not spec_json.strip():
@@ -1935,7 +1935,7 @@ def _deep_write_node(node_type: str, properties: dict[str, Any], graph: str) -> 
             )
         )
     except Exception:  # noqa: BLE001 — writeback is best-effort
-        pass
+        logger.debug("deep-mining writeback failed", exc_info=True)
     return node_id
 
 
@@ -1954,7 +1954,7 @@ def _deep_write_edge(source_id: str, target_id: str, rel_type: str, graph: str) 
             )
         )
     except Exception:  # noqa: BLE001 — writeback is best-effort
-        pass
+        logger.debug("deep-mining writeback failed", exc_info=True)
 
 
 def _deep_series_params(
@@ -2680,7 +2680,7 @@ def _kvcache_close(backend: Any) -> None:
         try:
             close()
         except Exception:  # noqa: BLE001 — best-effort cleanup
-            pass
+            logger.debug("kv-cache backend close failed", exc_info=True)
 
 
 def _kv_create_checkpoint(action: str, store: Any, req: dict[str, Any]) -> str:

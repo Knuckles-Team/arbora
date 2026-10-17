@@ -266,8 +266,8 @@ def _token_exchange(
     exchange_data: dict[str, Any] = {
         "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
         "subject_token": subject_token,
-        "subject_token_type": "urn:ietf:params:oauth:token-type:access_token",
-        "requested_token_type": "urn:ietf:params:oauth:token-type:access_token",
+        "subject_token_type": "urn:ietf:params:oauth:token-type:access_token",  # nosec B105 - RFC 8693 type URN
+        "requested_token_type": "urn:ietf:params:oauth:token-type:access_token",  # nosec B105 - RFC 8693 type URN
         "audience": audience,
         "scope": scopes,
     }
@@ -373,7 +373,7 @@ def exchange_token_for_agent(
         # delegation in the issued token's `act` claim (Keycloak reads this via a client-scope
         # protocol mapper configured per the W1.10 checklist).
         extra={
-            "actor_token_type": "urn:ietf:params:oauth:token-type:jwt",
+            "actor_token_type": "urn:ietf:params:oauth:token-type:jwt",  # nosec B105 - RFC 8693 type URN
             "act_as": label,
         },
     )

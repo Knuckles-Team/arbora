@@ -1348,7 +1348,7 @@ async def _analysis_action_evolve_code(
             if resp.ok and resp.response.strip():
                 return (plan, resp.response)
         except Exception:  # noqa: BLE001 — offline / LLM error -> fallback
-            pass
+            logger.debug("LLM step failed; using deterministic fallback", exc_info=True)
         return (plan, f"{prior_code or ''}\n# step for: {plan}".strip())
 
     result = await asyncio.to_thread(
@@ -1390,7 +1390,7 @@ async def _analysis_action_night_shift(
                 if atoms:
                     return atoms
         except Exception:  # noqa: BLE001 — offline / LLM error -> fallback
-            pass
+            logger.debug("LLM step failed; using deterministic fallback", exc_info=True)
         from agent_utilities.knowledge_graph.research.night_shift import (
             default_extract,
         )

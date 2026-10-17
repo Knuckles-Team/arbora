@@ -1081,7 +1081,7 @@ def _authorized_count(
         grant_digests=grant_digests,
         query=query,
     )
-    statement = f"SELECT COUNT(*) AS row_count FROM {spec.table} WHERE {where}"
+    statement = f"SELECT COUNT(*) AS row_count FROM {spec.table} WHERE {where}"  # nosec B608 - static table, escaped literals
     try:
         rows = _rows_from_engine(sql_exec(statement))
     except CatalogUnavailable:
@@ -1181,7 +1181,7 @@ def _authorized_page(
     # pull the whole table even if that bound were ever raised.
     fetch = min(min(limit, _MAX_LIMIT) + 1, _MAX_CATALOG_ROWS + 1)
     columns = ", ".join(spec.columns)
-    statement = (
+    statement = (  # nosec B608 - static spec table/columns; values are _sql_literal-escaped
         f"SELECT {columns} FROM {spec.table} WHERE {where} "
         f"ORDER BY LOWER({spec.name_column}), id LIMIT {fetch}"
     )
@@ -1221,7 +1221,7 @@ def _authorized_item(
     )
     where += f" AND id = {_sql_literal(item_id)}"
     columns = ", ".join(spec.columns)
-    statement = f"SELECT {columns} FROM {spec.table} WHERE {where} LIMIT 1"
+    statement = f"SELECT {columns} FROM {spec.table} WHERE {where} LIMIT 1"  # nosec B608 - static spec table/columns; values are _sql_literal-escaped
     try:
         rows = _rows_from_engine(sql_exec(statement))
     except CatalogUnavailable:

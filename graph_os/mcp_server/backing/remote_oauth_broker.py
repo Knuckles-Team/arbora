@@ -582,7 +582,7 @@ class Rfc7591DynamicClientRegistrar:
             "redirect_uris": [provider.redirect_uri],
             "grant_types": ["authorization_code", "refresh_token"],
             "response_types": ["code"],
-            "token_endpoint_auth_method": "none",
+            "token_endpoint_auth_method": "none",  # nosec B105 - RFC 7591 public-client method name
             "application_type": "web",
         }
         client = self._http_client_factory()

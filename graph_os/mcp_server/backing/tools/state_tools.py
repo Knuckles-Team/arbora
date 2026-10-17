@@ -256,7 +256,7 @@ def _sandbox_reap_action() -> str:
 
         workspaces = DockerWorkspace.reap_idle()
     except Exception:  # noqa: BLE001 - dev-workspace reap is best-effort
-        pass
+        logger.debug("dev-workspace reap failed", exc_info=True)
     return _json.dumps(
         {
             "action": "reap",

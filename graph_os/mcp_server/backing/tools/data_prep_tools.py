@@ -76,7 +76,7 @@ _RECEIPT_ENDPOINT = "data-prep"
 # hashed would depend on the hash. Named rather than an inline "" so it reads
 # as the deliberate exclusion it is, and so a hardcoded-credential scanner is
 # not asked to distinguish this from a real secret.
-_TOKEN_CLEARED_FOR_DIGEST = ""
+_TOKEN_CLEARED_FOR_DIGEST = ""  # nosec B105 - empty digest sentinel, not a credential
 
 _RECEIPT_TTL_MS = 5 * 60 * 1000
 _RUNTIME_PROVIDER_ATTR = "_data_prep_runtime_provider"
@@ -2312,6 +2312,7 @@ def _native_apply_change_supported(engine: Any) -> bool:
             try:
                 supported = bool(supports("ApplyChangeEnvelope")) or supported
             except Exception:  # noqa: BLE001 - inspect every authority candidate
+                logger.debug("capability probe failed on candidate", exc_info=True)
                 continue
     return supported
 

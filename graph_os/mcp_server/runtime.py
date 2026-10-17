@@ -487,7 +487,7 @@ ACTION_TOOL_ROUTES: dict[str, str] = {
     "graph_message": "/graph/message",
     "graph_reach": "/graph/reach",
     "graph_bus": "/graph/bus",
-    "graph_secret": "/graph/secret",
+    "graph_secret": "/graph/secret",  # nosec B105 - HTTP route path, not a secret
     "document_process": "/document/process",
     "source_connector": "/connector/source",
     "graph_writeback": "/graph/writeback",
