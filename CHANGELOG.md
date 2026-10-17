@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-17
+- Fixed readiness never passing on a 0.1 deployment. A fleet supervisory
+  authority this release does not serve (goal rehydration, the control store,
+  the worker registry: `AuthorityNotServed`) now reports `not_served` in the
+  `fleet.health.v1` evidence and the readiness body. It is not applicable and
+  does not gate readiness; only served authorities do. Autoscaling and
+  convergence still require every authority served and healthy.
+- A fleet refusal now carries the child's own error text as a redacted,
+  bounded `detail` next to `server` and `tool`, so `CHILD_REFUSED` is no longer
+  opaque. The real-boot gate inherits only process environment, never an
+  Arbora setting leaked by an earlier test.
+
 ## [0.1.1] - 2026-10-17
 - Fixed the installed wheel crash-looping at startup with `EgContractError:
   cannot read EG exclusions`: `api/registry/eg_exclusions.yaml` and
