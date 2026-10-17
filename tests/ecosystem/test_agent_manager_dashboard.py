@@ -1,7 +1,7 @@
 """Tests for the Agent Manager Dashboard (CONCEPT:AU-ECO.ui.agent-manager-dashboard).
 
 Ported from the agent runtime's
-``tests/unit/ecosystem/test_agent_manager_dashboard.py`` (GRAPHOS-HOST-R008).
+``tests/unit/ecosystem/test_agent_manager_dashboard.py`` (ARBORA-HOST-R008).
 Proves :class:`arbora.ecosystem.AgentManagerDashboard` is reachable from the
 package's public surface (``arbora.ecosystem``, not only its own submodule) and
 that ``run()`` produces a real report — no engine required, since every check degrades to a

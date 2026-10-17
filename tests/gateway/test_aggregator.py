@@ -18,7 +18,7 @@ from arbora.gateway.registry import Registry
 from arbora.gateway.widgets.base import BaseWidget
 from arbora.security.actor_context import ActorContext
 
-# GRAPHOS-FLEET-R032: these tests never want a real process-identity token
+# ARBORA-FLEET-R032: these tests never want a real process-identity token
 # minted (that needs live credential config this suite does not have); they
 # stand in a fake, already-verified service session the same shape
 # `_service_authority` caches, so `_run_as_service_actor` has a real actor to
@@ -130,7 +130,7 @@ async def test_aggregator_fetch_one(tmp_path):
 
 
 class _ActorObservingWidget(BaseWidget):
-    """Records the actor bound at fetch time (GRAPHOS-FLEET-R032).
+    """Records the actor bound at fetch time (ARBORA-FLEET-R032).
 
     Before the fix, `widget._safe_fetch` ran on a plain `ThreadPoolExecutor`
     thread with no contextvars copied from the submitting coroutine, so
@@ -156,7 +156,7 @@ class _ActorObservingWidget(BaseWidget):
 
 
 @pytest.mark.asyncio
-@pytest.mark.spec("GRAPHOS-FLEET-R032")
+@pytest.mark.spec("ARBORA-FLEET-R032")
 async def test_aggregator_fetch_binds_service_actor(tmp_path):
     """A widget fetch through the Aggregator observes the bound service actor."""
     registry = Registry()

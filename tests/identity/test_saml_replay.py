@@ -38,14 +38,14 @@ def _assertion(assertion_id: str = "_a1") -> ParsedSamlAssertion:
     )
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R012.2.3.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R012.2.3.1")
 def test_first_assertion_is_accepted_and_recorded() -> None:
     store = _FakeStore()
     check_assertion_replay(_assertion(), store)
     assert store.seen == {"_a1": _T0 + timedelta(minutes=5)}
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R012.2.3.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R012.2.3.1")
 def test_repeated_assertion_id_is_refused_as_replayed() -> None:
     store = _FakeStore()
     check_assertion_replay(_assertion(), store)
@@ -54,14 +54,14 @@ def test_repeated_assertion_id_is_refused_as_replayed() -> None:
     assert info.value.reason is SamlRefusalReason.REPLAYED
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R012.2.3.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R012.2.3.1")
 def test_distinct_assertion_ids_are_both_accepted() -> None:
     store = _FakeStore()
     check_assertion_replay(_assertion("_a1"), store)
     check_assertion_replay(_assertion("_a2"), store)
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R012.2.3.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R012.2.3.1")
 def test_missing_store_fails_closed() -> None:
     with pytest.raises(IdentityUnavailable):
         check_assertion_replay(_assertion(), None)

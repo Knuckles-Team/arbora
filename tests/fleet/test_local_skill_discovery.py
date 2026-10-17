@@ -29,7 +29,7 @@ def _fixture_local_catalog(entries):
     return lambda: (entries, [])
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R025")
+@pytest.mark.spec("ARBORA-FLEET-R025")
 async def test_discover_tools_ranks_a_local_skill_with_fleet_tools(
     tmp_path, monkeypatch
 ):
@@ -142,7 +142,7 @@ async def test_local_skill_shadows_a_fleet_harvested_skill_of_the_same_name(
     assert skill_hits[0]["description"] == "the local, installed-package version"
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R025")
+@pytest.mark.spec("ARBORA-FLEET-R025")
 async def test_catalog_fleet_probe_lists_local_skills_without_a_query(
     tmp_path, monkeypatch
 ):

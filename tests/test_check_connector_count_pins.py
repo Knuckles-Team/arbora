@@ -1,4 +1,4 @@
-"""Tests for ``scripts/check_connector_count_pins.py`` (GRAPHOS-FLEET-R023.1).
+"""Tests for ``scripts/check_connector_count_pins.py`` (ARBORA-FLEET-R023.1).
 
 Mirrors ``tests/test_check_core_skills.py``'s convention: run the script
 exactly as a caller would, as a subprocess, never by importing it as a mock.

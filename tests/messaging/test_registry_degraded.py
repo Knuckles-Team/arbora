@@ -1,4 +1,4 @@
-"""GRAPHOS-MESSAGING-R005: a typed DEGRADED state for a missing channel adapter.
+"""ARBORA-MESSAGING-R005: a typed DEGRADED state for a missing channel adapter.
 
 ``MessagingRegistry.create_all_enabled`` must not only log and omit a
 configured channel whose adapter fails to load — it must also record that
@@ -82,7 +82,7 @@ def _create_all_enabled_with_one_missing(
     return registry, created
 
 
-@pytest.mark.spec("GRAPHOS-MESSAGING-R005")
+@pytest.mark.spec("ARBORA-MESSAGING-R005")
 def test_create_all_enabled_degrades_missing_adapter_and_creates_present_one(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -98,7 +98,7 @@ def test_create_all_enabled_degrades_missing_adapter_and_creates_present_one(
 
 
 @pytest.mark.asyncio
-@pytest.mark.spec("GRAPHOS-MESSAGING-R005")
+@pytest.mark.spec("ARBORA-MESSAGING-R005")
 async def test_present_channel_still_reaches_running_while_missing_one_is_degraded(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

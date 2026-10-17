@@ -1,4 +1,4 @@
-"""GRAPHOS-IDENTITY-R021: identity wiring depends only on identity ports.
+"""ARBORA-IDENTITY-R021: identity wiring depends only on identity ports.
 
 The served-runtime packages (web UI host, web co-service, MCP server, and the
 fleet multiplexer they compose into) must reach identity behavior only
@@ -74,7 +74,7 @@ def _identity_submodule(module_name: str) -> str | None:
     return module_name[len(prefix) + 1 :].split(".")[0]
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R021")
+@pytest.mark.spec("ARBORA-IDENTITY-R021")
 @pytest.mark.parametrize("package_name", SERVED_PACKAGES)
 def test_served_package_depends_only_on_identity_ports(package_name: str) -> None:
     package_dir = ARBORA / package_name
@@ -102,7 +102,7 @@ def test_served_package_depends_only_on_identity_ports(package_name: str) -> Non
     )
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R021")
+@pytest.mark.spec("ARBORA-IDENTITY-R021")
 def test_identity_package_has_no_import_cycle_with_served_packages() -> None:
     identity_dir = ARBORA / "identity"
     violations: list[str] = []

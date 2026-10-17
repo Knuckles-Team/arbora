@@ -31,7 +31,7 @@ agree:
    open (owned by `OWNER-EG-OBS`, a different repository); unaffected by the
    BUG-036 fix above.
 
-GRAPHOS-HOST-R008 NOTE: this file's proof citations (``tests/unit/...``) name
+ARBORA-HOST-R008 NOTE: this file's proof citations (``tests/unit/...``) name
 paths inside the agent-utilities REPOSITORY, not arbora's own. This module
 moved here with the surface it audits (``mcp/tools/query_tools.py``'s
 dispatcher), but AU's ``tests/`` tree is dev-checkout content, never shipped

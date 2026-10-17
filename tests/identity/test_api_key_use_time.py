@@ -1,4 +1,4 @@
-"""Contract tests for API-key use-time scope intersection and revocation (GRAPHOS-IDENTITY-R008.2)."""
+"""Contract tests for API-key use-time scope intersection and revocation (ARBORA-IDENTITY-R008.2)."""
 
 from datetime import UTC, datetime, timedelta
 
@@ -19,7 +19,7 @@ def _grant(expires_at: datetime | None = None) -> ApiKeyGrant:
     )
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R008.2")
+@pytest.mark.spec("ARBORA-IDENTITY-R008.2")
 def test_scopes_are_intersected_with_current_owner_scopes() -> None:
     grant = _grant()
     assert effective_scopes(grant, frozenset({"a:read", "c:read"}), now=NOW) == {
@@ -28,7 +28,7 @@ def test_scopes_are_intersected_with_current_owner_scopes() -> None:
     assert effective_scopes(grant, frozenset(), now=NOW) == frozenset()
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R008.2")
+@pytest.mark.spec("ARBORA-IDENTITY-R008.2")
 def test_revoked_key_is_denied_immediately() -> None:
     with pytest.raises(IdentityUnavailable):
         effective_scopes(
@@ -36,7 +36,7 @@ def test_revoked_key_is_denied_immediately() -> None:
         )
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R008.2")
+@pytest.mark.spec("ARBORA-IDENTITY-R008.2")
 def test_expired_key_is_denied_and_unexpired_allowed() -> None:
     owner = frozenset({"a:read"})
     with pytest.raises(IdentityUnavailable):
@@ -46,7 +46,7 @@ def test_expired_key_is_denied_and_unexpired_allowed() -> None:
     assert effective_scopes(_grant(NOW + timedelta(hours=1)), owner, now=NOW) == owner
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R008.2")
+@pytest.mark.spec("ARBORA-IDENTITY-R008.2")
 def test_approver_scope_never_effective_even_if_owner_holds_it() -> None:
     grant = _grant()
     field = "scopes"

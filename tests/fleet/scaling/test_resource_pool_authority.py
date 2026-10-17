@@ -24,7 +24,7 @@ from arbora.fleet.scaling.resource_pool_authority import (
     place,
 )
 
-pytestmark = pytest.mark.spec("GRAPHOS-CAPACITY-R750.754")
+pytestmark = pytest.mark.spec("ARBORA-CAPACITY-R750.754")
 
 NOW = datetime(2026, 8, 19, 12, tzinfo=UTC)
 known, amount = ResourceAccounting.known, ResourceAmount.known

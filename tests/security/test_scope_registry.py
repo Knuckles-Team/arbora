@@ -23,7 +23,7 @@ def _generator():
     return module
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R002.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R002.1")
 def test_the_generated_module_is_the_installed_eg_registry():
     pytest.importorskip("epistemic_graph")
     gen = _generator()
@@ -32,7 +32,7 @@ def test_the_generated_module_is_the_installed_eg_registry():
     ) == gen.render(gen.installed_registry_bytes())
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R002.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R002.1")
 def test_the_session_allowlist_is_exactly_the_registry():
     assert frozenset(scope_registry.SCOPE_CLASSES) == scope_registry.SESSION_SCOPES
     assert scope_registry.SCOPE_CLASSES["rbac:approve-elevation"] == "approver"
@@ -42,7 +42,7 @@ def test_the_session_allowlist_is_exactly_the_registry():
     )
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R002.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R002.1")
 def test_the_generator_refuses_an_unknown_scope_class():
     bad = json.dumps({"scopes": [{"scope": "x:y", "class": "superuser"}]}).encode()
     with pytest.raises(ValueError, match="unknown scope classes"):

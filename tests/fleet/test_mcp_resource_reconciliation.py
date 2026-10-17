@@ -1,6 +1,6 @@
 """Tests for the typed MCP resource/template publication gate.
 
-Covers GRAPHOS-MCP-RESOURCES-001 R001.1: missing, stale, and invalid receipts
+Covers ARBORA-MCP-RESOURCES-001 R001.1: missing, stale, and invalid receipts
 all return the typed ``reingestion-unreconciled`` result instead of claiming
 publication, and a receipt matching the exact candidate generation/digest and
 acknowledging all four families is reconciled.
@@ -19,7 +19,7 @@ from arbora.fleet.mcp_resource_reconciliation import (
     require_reconciled_for_swap,
 )
 
-pytestmark = pytest.mark.spec("GRAPHOS-MCP-RESOURCES-R001.1")
+pytestmark = pytest.mark.spec("ARBORA-MCP-RESOURCES-R001.1")
 
 TENANT = "tenant-a"
 GENERATION = 7
@@ -116,7 +116,7 @@ def _require(receipt: ReconciliationReceipt | None) -> ReconciliationReceipt:
     )
 
 
-@pytest.mark.spec("GRAPHOS-MCP-RESOURCES-R003.1")
+@pytest.mark.spec("ARBORA-MCP-RESOURCES-R003.1")
 @pytest.mark.parametrize(
     ("receipt", "reason"),
     [
@@ -135,7 +135,7 @@ def test_swap_guard_raises_typed_refusal(
     assert excinfo.value.result.receipt is receipt
 
 
-@pytest.mark.spec("GRAPHOS-MCP-RESOURCES-R003.1")
+@pytest.mark.spec("ARBORA-MCP-RESOURCES-R003.1")
 def test_swap_guard_returns_matching_receipt() -> None:
     receipt = _valid_receipt()
     assert _require(receipt) is receipt

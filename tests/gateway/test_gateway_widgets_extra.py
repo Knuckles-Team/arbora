@@ -1,4 +1,4 @@
-"""GRAPHOS-DEPLOY-R006: the ``gateway-widgets`` extra pins a compatible floor.
+"""ARBORA-DEPLOY-R006: the ``gateway-widgets`` extra pins a compatible floor.
 
 ``arbora/gateway/widgets/*.py`` each call ``BaseWidget._fleet_client()``
 for live data -- the served fleet admission seam, never a direct connector
@@ -7,7 +7,7 @@ Python package import (confirmed by
 by ``pyproject.toml``'s own ``dependencies`` comment). The ``gateway-widgets``
 extra is Arbora's side of the floor the agent-utilities extra of the same
 name pinned (retired there under AU-BOUNDARY-R001 /
-GRAPHOS-HOST-R004): a connector package transitively needs
+ARBORA-HOST-R004): a connector package transitively needs
 agent-connector-sdk's current, post-split module layout, never the
 pre-split agent-utilities-runtime shape a removed module lived in.
 
@@ -54,7 +54,7 @@ def test_manifest_declares_the_gateway_widgets_extra() -> None:
         )
 
 
-@pytest.mark.spec("GRAPHOS-DEPLOY-R006")
+@pytest.mark.spec("ARBORA-DEPLOY-R006")
 def test_gateway_widgets_pins_the_connector_sdk_floor() -> None:
     data = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
     requirements = {

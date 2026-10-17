@@ -8,7 +8,7 @@ from arbora.identity.saml import SamlServiceProvider
 _CERT = "-----BEGIN CERTIFICATE-----\nMII...\n-----END CERTIFICATE-----"
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R012.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R012.1")
 def test_saml_service_provider_accepts_valid_config() -> None:
     provider = SamlServiceProvider(
         entity_id="urn:arbora:sp",
@@ -18,7 +18,7 @@ def test_saml_service_provider_accepts_valid_config() -> None:
     assert provider.entity_id == "urn:arbora:sp"
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R012.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R012.1")
 def test_saml_service_provider_refuses_non_url_acs() -> None:
     with pytest.raises(IdentityUnavailable):
         SamlServiceProvider(
@@ -26,7 +26,7 @@ def test_saml_service_provider_refuses_non_url_acs() -> None:
         )
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R012.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R012.1")
 def test_saml_service_provider_refuses_missing_certificate() -> None:
     with pytest.raises(IdentityUnavailable):
         SamlServiceProvider(

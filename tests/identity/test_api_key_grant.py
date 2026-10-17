@@ -1,4 +1,4 @@
-"""Refusal tests for the typed API-key grant model (GRAPHOS-IDENTITY-R008.1)."""
+"""Refusal tests for the typed API-key grant model (ARBORA-IDENTITY-R008.1)."""
 
 import pytest
 
@@ -6,7 +6,7 @@ from arbora.identity.api_keys import ApiKeyGrant
 from arbora.identity.engine import IdentityUnavailable
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R008.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R008.1")
 @pytest.mark.parametrize("scope", ["approver", "approvals:decide"])
 def test_api_key_refuses_every_approver_class_scope(scope: str) -> None:
     with pytest.raises(IdentityUnavailable):
@@ -17,13 +17,13 @@ def test_api_key_refuses_every_approver_class_scope(scope: str) -> None:
         )
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R008.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R008.1")
 def test_api_key_refuses_empty_owner_principal_id() -> None:
     with pytest.raises(IdentityUnavailable):
         ApiKeyGrant(key_id="k1", owner_principal_id="", scopes=frozenset({"x:read"}))
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R008.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R008.1")
 def test_api_key_refuses_empty_key_id() -> None:
     with pytest.raises(IdentityUnavailable):
         ApiKeyGrant(key_id="", owner_principal_id="p1", scopes=frozenset())

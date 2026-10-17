@@ -28,7 +28,7 @@ def _snap(probes, **kw):
     return collect_readiness_snapshot(probes, now=NOW, deadline_s=0.2, **kw)
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R700")
+@pytest.mark.spec("ARBORA-OPS-R700")
 def test_all_ready():
     s = _snap({"engine": OK, "catalog": OK, "synthetic_query": OK})
     assert (s["overall"], s["required_failures"]) == ("ready", [])
@@ -44,14 +44,14 @@ def test_all_ready():
         (lambda: {"state": "bogus"}, "unavailable", ["engine"]),
     ],
 )
-@pytest.mark.spec("GRAPHOS-OPS-R700")
+@pytest.mark.spec("ARBORA-OPS-R700")
 def test_required_failure_fails_snapshot(bad, overall, failures):
     s = _snap({"engine": bad, "catalog": OK, "synthetic_query": OK})
     assert (s["overall"], s["required_failures"]) == (overall, failures)
     assert not is_snapshot_ready(s)
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R700")
+@pytest.mark.spec("ARBORA-OPS-R700")
 def test_optional_degradation_and_missing_required():
     s = _snap(
         {
@@ -65,7 +65,7 @@ def test_optional_degradation_and_missing_required():
     assert _snap({"engine": OK})["required_failures"] == ["catalog", "synthetic_query"]
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R700")
+@pytest.mark.spec("ARBORA-OPS-R700")
 def test_snapshot_id_is_deterministic_and_identity_needs_verified_actor():
     assert _snap({"engine": OK})["snapshot_id"] == _snap({"engine": OK})["snapshot_id"]
     verified = SimpleNamespace(actor=SimpleNamespace(authenticated=True))

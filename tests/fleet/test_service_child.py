@@ -275,7 +275,7 @@ async def test_mux_service_transport_uses_one_admitted_attempt() -> None:
     ``MCPMultiplexer.call_service_child_once`` is the owner-stamped service-
     credential transport this adapter requires; it is not implemented on
     this repository's current multiplexer yet (the durable one-shot child
-    journal/transport it needs is new infrastructure, GRAPHOS-FLEET-R015's
+    journal/transport it needs is new infrastructure, ARBORA-FLEET-R015's
     service-credential path remains closed until it lands — see
     :mod:`arbora.fleet.gateway_ops`). This stub plays that same role so the
     adapter's own dispatch contract is proven independent of that larger,

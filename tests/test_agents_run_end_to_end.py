@@ -114,7 +114,7 @@ def engine(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     host_ports.register_run_event_sink(None)
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R001.2.2")
+@pytest.mark.spec("ARBORA-HOST-R001.2.2")
 def test_served_agents_run_executes_through_a2a_work_items_and_the_harness(
     engine: FakeEngine,
 ) -> None:
@@ -161,7 +161,7 @@ def test_served_agents_run_executes_through_a2a_work_items_and_the_harness(
     assert run_events == ["run_started", "node_transition", "graph_complete"]
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R001.2.2")
+@pytest.mark.spec("ARBORA-HOST-R001.2.2")
 def test_served_process_runs_an_agent_over_its_http_a2a_route(
     engine: FakeEngine, monkeypatch: pytest.MonkeyPatch
 ) -> None:

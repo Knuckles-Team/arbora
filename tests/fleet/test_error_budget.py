@@ -1,4 +1,4 @@
-"""GRAPHOS-CAPACITY-R001.1: pure partitioned AIMD controller.
+"""ARBORA-CAPACITY-R001.1: pure partitioned AIMD controller.
 
 Covers :mod:`arbora.fleet.error_budget` -- bounded additive recovery,
 multiplicative decrease on budget breach, the engine/policy ceiling, caller
@@ -25,7 +25,7 @@ from arbora.fleet.error_budget import (
 from tests.fleet._support import CAPACITY_CONFIG as _CONFIG
 from tests.fleet._support import CAPACITY_PARTITION as _PARTITION
 
-pytestmark = pytest.mark.spec("GRAPHOS-CAPACITY-R001.1")
+pytestmark = pytest.mark.spec("ARBORA-CAPACITY-R001.1")
 
 
 def _window(window_id: str, outcomes: list[OutcomeClass]) -> BudgetWindow:

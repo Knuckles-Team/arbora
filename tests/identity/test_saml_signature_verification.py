@@ -1,4 +1,4 @@
-"""Signature verification through an injected port (GRAPHOS-IDENTITY-R012.2.2)."""
+"""Signature verification through an injected port (ARBORA-IDENTITY-R012.2.2)."""
 
 from __future__ import annotations
 
@@ -44,14 +44,14 @@ class FakeVerifier:
         return self.result
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R012.2.2")
+@pytest.mark.spec("ARBORA-IDENTITY-R012.2.2")
 def test_absent_verifier_is_refused() -> None:
     with pytest.raises(SamlAssertionRefused) as exc:
         verify_assertion(PROVIDER, _assertion(), None, NOW)
     assert exc.value.reason is SamlRefusalReason.SIGNATURE_VERIFIER_ABSENT
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R012.2.2")
+@pytest.mark.spec("ARBORA-IDENTITY-R012.2.2")
 def test_invalid_signature_is_refused_before_conditions() -> None:
     fake = FakeVerifier(False)
     with pytest.raises(SamlAssertionRefused) as exc:
@@ -60,7 +60,7 @@ def test_invalid_signature_is_refused_before_conditions() -> None:
     assert fake.calls == [PROVIDER.idp_certificate_pem]
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R012.2.2")
+@pytest.mark.spec("ARBORA-IDENTITY-R012.2.2")
 def test_valid_signature_then_conditions_are_checked() -> None:
     verify_assertion(PROVIDER, _assertion(), FakeVerifier(True), NOW)
     with pytest.raises(SamlAssertionRefused) as exc:

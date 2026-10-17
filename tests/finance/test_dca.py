@@ -1,5 +1,5 @@
 """Tests for the recurring DCA plan model and non-duplicating proposal key
-(GRAPHOS-DATA-MARKET-R006; FI-10 in
+(ARBORA-DATA-MARKET-R006; FI-10 in
 ``specs/data-and-market-projections/test-spec.md``).
 """
 

@@ -534,7 +534,7 @@ def test_a_service_principal_token_is_a_verified_caller(
     assert response.json()["ok"] is True
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R024")
+@pytest.mark.spec("ARBORA-HOST-R024")
 def test_http_serves_uql_and_an_eg_operation(stack: dict[str, Any]) -> None:
     uql = _post_op(stack, "query.uql", {"text": "MATCH (:BootProbe) |> LIMIT 5"})
     assert uql["ok"] is True, uql
@@ -564,7 +564,7 @@ def _structured(result: Any) -> dict[str, Any]:
     return data
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R024")
+@pytest.mark.spec("ARBORA-HOST-R024")
 async def test_mcp_lists_finds_and_asks_an_eg_operation(
     stack: dict[str, Any],
 ) -> None:

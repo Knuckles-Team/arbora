@@ -1,5 +1,5 @@
 """The admitted EG catalog snapshot backs ``find`` when a live probe cannot
-(GRAPHOS-FLEET-R031).
+(ARBORA-FLEET-R031).
 
 Root cause (gap G30): ``discover_tools`` ranked ONLY the live
 ``probe_catalog`` answer for each fleet server. Fleet onboarding

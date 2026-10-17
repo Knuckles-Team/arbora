@@ -39,7 +39,7 @@ def bound(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Engine]:
     host_ports.register_run_event_sink(None)
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R001.2.1")
+@pytest.mark.spec("ARBORA-HOST-R001.2.1")
 @pytest.mark.asyncio
 async def test_agent_run_executes_through_the_harness_with_bound_providers(
     bound: _Engine,
@@ -57,7 +57,7 @@ async def test_agent_run_executes_through_the_harness_with_bound_providers(
     assert {batch[0]["node_type"] for batch in bound.batches} == {"RunEvent"}
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R001.2.1")
+@pytest.mark.spec("ARBORA-HOST-R001.2.1")
 def test_a_registry_endpoint_builds_an_openai_compatible_model(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -74,7 +74,7 @@ def test_a_registry_endpoint_builds_an_openai_compatible_model(
     assert agent_runs.resolve_model("local").model_name == "m"
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R001.2.1")
+@pytest.mark.spec("ARBORA-HOST-R001.2.1")
 @pytest.mark.asyncio
 async def test_a_run_without_a_model_fails_closed(
     monkeypatch: pytest.MonkeyPatch,
