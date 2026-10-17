@@ -1563,8 +1563,10 @@
     {
       "id": "GRAPHOS-HOST-R009.7",
       "title": "Injected host log authority",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e30aad028a40"
+      ],
       "verified_by": [
         "tests/agent_host/test_log_access.py:2"
       ]
