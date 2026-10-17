@@ -1,152 +1,152 @@
 {
   "schema_version": 2,
-  "spec_id": "GRAPHOS-FLEET",
+  "spec_id": "ARBORA-FLEET",
   "owner_repo": "arbora",
   "delivery_state": "SPECIFIED",
   "requirement_ids": [
-    "GRAPHOS-FLEET-R001",
-    "GRAPHOS-FLEET-R002",
-    "GRAPHOS-FLEET-R002.1",
-    "GRAPHOS-FLEET-R002.2",
-    "GRAPHOS-FLEET-R003",
-    "GRAPHOS-FLEET-R003.1",
-    "GRAPHOS-FLEET-R003.2",
-    "GRAPHOS-FLEET-R004",
-    "GRAPHOS-FLEET-R005",
-    "GRAPHOS-FLEET-R005.1",
-    "GRAPHOS-FLEET-R005.2",
-    "GRAPHOS-FLEET-R006",
-    "GRAPHOS-FLEET-R007",
-    "GRAPHOS-FLEET-R008",
-    "GRAPHOS-FLEET-R008.1",
-    "GRAPHOS-FLEET-R008.2",
-    "GRAPHOS-FLEET-R009",
-    "GRAPHOS-FLEET-R009.1",
-    "GRAPHOS-FLEET-R009.2",
-    "GRAPHOS-FLEET-R009.3",
-    "GRAPHOS-FLEET-R010",
-    "GRAPHOS-FLEET-R003.3",
-    "GRAPHOS-FLEET-R006.1",
-    "GRAPHOS-FLEET-R006.2",
-    "GRAPHOS-FLEET-R006.3",
-    "GRAPHOS-FLEET-R006.3.1",
-    "GRAPHOS-FLEET-R006.3.2",
-    "GRAPHOS-FLEET-R006.3.3",
-    "GRAPHOS-FLEET-R006.3.4",
-    "GRAPHOS-FLEET-R006.4",
-    "GRAPHOS-FLEET-R006.5",
-    "GRAPHOS-FLEET-R007.1",
-    "GRAPHOS-FLEET-R007.2",
-    "GRAPHOS-FLEET-R007.3",
-    "GRAPHOS-FLEET-R011",
-    "GRAPHOS-FLEET-R012",
-    "GRAPHOS-FLEET-R013",
-    "GRAPHOS-FLEET-R014",
-    "GRAPHOS-FLEET-R015",
-    "GRAPHOS-FLEET-R016",
-    "GRAPHOS-FLEET-R017",
-    "GRAPHOS-FLEET-R018",
-    "GRAPHOS-FLEET-R019",
-    "GRAPHOS-FLEET-R020",
-    "GRAPHOS-FLEET-R021",
-    "GRAPHOS-FLEET-R022",
+    "ARBORA-FLEET-R001",
+    "ARBORA-FLEET-R002",
+    "ARBORA-FLEET-R002.1",
+    "ARBORA-FLEET-R002.2",
+    "ARBORA-FLEET-R003",
+    "ARBORA-FLEET-R003.1",
+    "ARBORA-FLEET-R003.2",
+    "ARBORA-FLEET-R004",
+    "ARBORA-FLEET-R005",
+    "ARBORA-FLEET-R005.1",
+    "ARBORA-FLEET-R005.2",
+    "ARBORA-FLEET-R006",
+    "ARBORA-FLEET-R007",
+    "ARBORA-FLEET-R008",
+    "ARBORA-FLEET-R008.1",
+    "ARBORA-FLEET-R008.2",
+    "ARBORA-FLEET-R009",
+    "ARBORA-FLEET-R009.1",
+    "ARBORA-FLEET-R009.2",
+    "ARBORA-FLEET-R009.3",
+    "ARBORA-FLEET-R010",
+    "ARBORA-FLEET-R003.3",
+    "ARBORA-FLEET-R006.1",
+    "ARBORA-FLEET-R006.2",
+    "ARBORA-FLEET-R006.3",
+    "ARBORA-FLEET-R006.3.1",
+    "ARBORA-FLEET-R006.3.2",
+    "ARBORA-FLEET-R006.3.3",
+    "ARBORA-FLEET-R006.3.4",
+    "ARBORA-FLEET-R006.4",
+    "ARBORA-FLEET-R006.5",
+    "ARBORA-FLEET-R007.1",
+    "ARBORA-FLEET-R007.2",
+    "ARBORA-FLEET-R007.3",
+    "ARBORA-FLEET-R011",
+    "ARBORA-FLEET-R012",
+    "ARBORA-FLEET-R013",
+    "ARBORA-FLEET-R014",
+    "ARBORA-FLEET-R015",
+    "ARBORA-FLEET-R016",
+    "ARBORA-FLEET-R017",
+    "ARBORA-FLEET-R018",
+    "ARBORA-FLEET-R019",
+    "ARBORA-FLEET-R020",
+    "ARBORA-FLEET-R021",
+    "ARBORA-FLEET-R022",
     "PA-12",
-    "GRAPHOS-FLEET-R023",
-    "GRAPHOS-FLEET-R023.1",
-    "GRAPHOS-FLEET-R024",
+    "ARBORA-FLEET-R023",
+    "ARBORA-FLEET-R023.1",
+    "ARBORA-FLEET-R024",
     "PA-12.1",
     "PA-12.2",
-    "GRAPHOS-FLEET-R024.1",
-    "GRAPHOS-FLEET-R024.2",
-    "GRAPHOS-FLEET-R024.3",
-    "GRAPHOS-FLEET-R024.750",
-    "GRAPHOS-FLEET-R025",
-    "GRAPHOS-FLEET-R029",
-    "GRAPHOS-FLEET-R026",
-    "GRAPHOS-FLEET-R027",
-    "GRAPHOS-FLEET-R028",
-    "GRAPHOS-FLEET-R030",
-    "GRAPHOS-FLEET-R031",
-    "GRAPHOS-FLEET-R032",
-    "GRAPHOS-FLEET-R033",
-    "GRAPHOS-FLEET-R033.1",
-    "GRAPHOS-FLEET-R033.2",
-    "GRAPHOS-FLEET-R034",
-    "GRAPHOS-FLEET-R034.1",
-    "GRAPHOS-FLEET-R034.2",
-    "GRAPHOS-FLEET-R034.3",
-    "GRAPHOS-FLEET-R034.4",
-    "GRAPHOS-FLEET-R034.5",
-    "GRAPHOS-FLEET-R034.6",
-    "GRAPHOS-FLEET-R034.7",
-    "GRAPHOS-FLEET-R034.8",
-    "GRAPHOS-FLEET-R034.9",
-    "GRAPHOS-FLEET-R034.10",
-    "GRAPHOS-FLEET-R034.11",
-    "GRAPHOS-FLEET-R034.12",
-    "GRAPHOS-FLEET-R024.4",
-    "GRAPHOS-FLEET-R024.5",
-    "GRAPHOS-FLEET-R024.6",
-    "GRAPHOS-FLEET-R024.7",
-    "GRAPHOS-FLEET-R024.8",
-    "GRAPHOS-FLEET-R024.9",
-    "GRAPHOS-FLEET-R002.3",
-    "GRAPHOS-FLEET-R002.4",
-    "GRAPHOS-FLEET-R002.5",
-    "GRAPHOS-FLEET-R002.6",
-    "GRAPHOS-FLEET-R002.7",
-    "GRAPHOS-FLEET-R002.8",
-    "GRAPHOS-FLEET-R027.1",
-    "GRAPHOS-FLEET-R027.2",
-    "GRAPHOS-FLEET-R027.3",
-    "GRAPHOS-FLEET-R027.4",
-    "GRAPHOS-FLEET-R027.5",
-    "GRAPHOS-FLEET-R027.6",
-    "GRAPHOS-FLEET-R019.1",
-    "GRAPHOS-FLEET-R021.1",
-    "GRAPHOS-FLEET-R005.3",
-    "GRAPHOS-FLEET-R019.2",
-    "GRAPHOS-FLEET-R021.2",
-    "GRAPHOS-FLEET-R027.7",
-    "GRAPHOS-FLEET-R003.4",
-    "GRAPHOS-FLEET-R003.5",
-    "GRAPHOS-FLEET-R003.6",
-    "GRAPHOS-FLEET-R003.7",
-    "GRAPHOS-FLEET-R003.8",
-    "GRAPHOS-FLEET-R003.9",
-    "GRAPHOS-FLEET-R003.10",
-    "GRAPHOS-FLEET-R035",
-    "GRAPHOS-FLEET-R024.10",
-    "GRAPHOS-FLEET-R024.11",
-    "GRAPHOS-FLEET-R002.9",
-    "GRAPHOS-FLEET-R034.13",
-    "GRAPHOS-FLEET-R034.14",
-    "GRAPHOS-FLEET-R036",
-    "GRAPHOS-FLEET-R036.1",
-    "GRAPHOS-FLEET-R036.2",
-    "GRAPHOS-FLEET-R036.3",
-    "GRAPHOS-FLEET-R036.4",
-    "GRAPHOS-FLEET-R036.5",
-    "GRAPHOS-FLEET-R036.6",
-    "GRAPHOS-FLEET-R037",
-    "GRAPHOS-FLEET-R037.1",
-    "GRAPHOS-FLEET-R037.2",
-    "GRAPHOS-FLEET-R037.3",
-    "GRAPHOS-FLEET-R037.4",
-    "GRAPHOS-FLEET-R037.5",
-    "GRAPHOS-FLEET-R037.6",
-    "GRAPHOS-FLEET-R038",
-    "GRAPHOS-FLEET-R039",
-    "GRAPHOS-FLEET-R039.1",
-    "GRAPHOS-FLEET-R039.2",
-    "GRAPHOS-FLEET-R039.3",
-    "GRAPHOS-FLEET-R039.4",
-    "GRAPHOS-FLEET-R039.5",
-    "GRAPHOS-FLEET-R039.6"
+    "ARBORA-FLEET-R024.1",
+    "ARBORA-FLEET-R024.2",
+    "ARBORA-FLEET-R024.3",
+    "ARBORA-FLEET-R024.750",
+    "ARBORA-FLEET-R025",
+    "ARBORA-FLEET-R029",
+    "ARBORA-FLEET-R026",
+    "ARBORA-FLEET-R027",
+    "ARBORA-FLEET-R028",
+    "ARBORA-FLEET-R030",
+    "ARBORA-FLEET-R031",
+    "ARBORA-FLEET-R032",
+    "ARBORA-FLEET-R033",
+    "ARBORA-FLEET-R033.1",
+    "ARBORA-FLEET-R033.2",
+    "ARBORA-FLEET-R034",
+    "ARBORA-FLEET-R034.1",
+    "ARBORA-FLEET-R034.2",
+    "ARBORA-FLEET-R034.3",
+    "ARBORA-FLEET-R034.4",
+    "ARBORA-FLEET-R034.5",
+    "ARBORA-FLEET-R034.6",
+    "ARBORA-FLEET-R034.7",
+    "ARBORA-FLEET-R034.8",
+    "ARBORA-FLEET-R034.9",
+    "ARBORA-FLEET-R034.10",
+    "ARBORA-FLEET-R034.11",
+    "ARBORA-FLEET-R034.12",
+    "ARBORA-FLEET-R024.4",
+    "ARBORA-FLEET-R024.5",
+    "ARBORA-FLEET-R024.6",
+    "ARBORA-FLEET-R024.7",
+    "ARBORA-FLEET-R024.8",
+    "ARBORA-FLEET-R024.9",
+    "ARBORA-FLEET-R002.3",
+    "ARBORA-FLEET-R002.4",
+    "ARBORA-FLEET-R002.5",
+    "ARBORA-FLEET-R002.6",
+    "ARBORA-FLEET-R002.7",
+    "ARBORA-FLEET-R002.8",
+    "ARBORA-FLEET-R027.1",
+    "ARBORA-FLEET-R027.2",
+    "ARBORA-FLEET-R027.3",
+    "ARBORA-FLEET-R027.4",
+    "ARBORA-FLEET-R027.5",
+    "ARBORA-FLEET-R027.6",
+    "ARBORA-FLEET-R019.1",
+    "ARBORA-FLEET-R021.1",
+    "ARBORA-FLEET-R005.3",
+    "ARBORA-FLEET-R019.2",
+    "ARBORA-FLEET-R021.2",
+    "ARBORA-FLEET-R027.7",
+    "ARBORA-FLEET-R003.4",
+    "ARBORA-FLEET-R003.5",
+    "ARBORA-FLEET-R003.6",
+    "ARBORA-FLEET-R003.7",
+    "ARBORA-FLEET-R003.8",
+    "ARBORA-FLEET-R003.9",
+    "ARBORA-FLEET-R003.10",
+    "ARBORA-FLEET-R035",
+    "ARBORA-FLEET-R024.10",
+    "ARBORA-FLEET-R024.11",
+    "ARBORA-FLEET-R002.9",
+    "ARBORA-FLEET-R034.13",
+    "ARBORA-FLEET-R034.14",
+    "ARBORA-FLEET-R036",
+    "ARBORA-FLEET-R036.1",
+    "ARBORA-FLEET-R036.2",
+    "ARBORA-FLEET-R036.3",
+    "ARBORA-FLEET-R036.4",
+    "ARBORA-FLEET-R036.5",
+    "ARBORA-FLEET-R036.6",
+    "ARBORA-FLEET-R037",
+    "ARBORA-FLEET-R037.1",
+    "ARBORA-FLEET-R037.2",
+    "ARBORA-FLEET-R037.3",
+    "ARBORA-FLEET-R037.4",
+    "ARBORA-FLEET-R037.5",
+    "ARBORA-FLEET-R037.6",
+    "ARBORA-FLEET-R038",
+    "ARBORA-FLEET-R039",
+    "ARBORA-FLEET-R039.1",
+    "ARBORA-FLEET-R039.2",
+    "ARBORA-FLEET-R039.3",
+    "ARBORA-FLEET-R039.4",
+    "ARBORA-FLEET-R039.5",
+    "ARBORA-FLEET-R039.6"
   ],
   "requirements": [
     {
-      "id": "GRAPHOS-FLEET-R001",
+      "id": "ARBORA-FLEET-R001",
       "title": "Typed pack publisher replaces placeholder ContentPack",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -161,7 +161,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R002",
+      "id": "ARBORA-FLEET-R002",
       "title": "Tool schema fingerprints recomputed from served schemas (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -169,19 +169,19 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-FLEET-R002.1",
-        "GRAPHOS-FLEET-R002.2",
-        "GRAPHOS-FLEET-R002.3",
-        "GRAPHOS-FLEET-R002.4",
-        "GRAPHOS-FLEET-R002.5",
-        "GRAPHOS-FLEET-R002.6",
-        "GRAPHOS-FLEET-R002.7",
-        "GRAPHOS-FLEET-R002.8",
-        "GRAPHOS-FLEET-R002.9"
+        "ARBORA-FLEET-R002.1",
+        "ARBORA-FLEET-R002.2",
+        "ARBORA-FLEET-R002.3",
+        "ARBORA-FLEET-R002.4",
+        "ARBORA-FLEET-R002.5",
+        "ARBORA-FLEET-R002.6",
+        "ARBORA-FLEET-R002.7",
+        "ARBORA-FLEET-R002.8",
+        "ARBORA-FLEET-R002.9"
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R002.1",
+      "id": "ARBORA-FLEET-R002.1",
       "title": "Per-tool schema fingerprint computed from the served schema",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -197,8 +197,8 @@
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R002.2",
-      "title": "Remaining scope of GRAPHOS-FLEET-R002 (slice .2): Tool schema fingerprints recomputed from served schemas (rollup)",
+      "id": "ARBORA-FLEET-R002.2",
+      "title": "Remaining scope of ARBORA-FLEET-R002 (slice .2): Tool schema fingerprints recomputed from served schemas (rollup)",
       "delivery_state": "LANDED",
       "landed_in": [
         "0f346a4d0e4a"
@@ -206,7 +206,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R003",
+      "id": "ARBORA-FLEET-R003",
       "title": "D18 write-back exposed only as a typed, previewed operation (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -214,20 +214,20 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-FLEET-R003.1",
-        "GRAPHOS-FLEET-R003.2",
-        "GRAPHOS-FLEET-R003.3",
-        "GRAPHOS-FLEET-R003.4",
-        "GRAPHOS-FLEET-R003.5",
-        "GRAPHOS-FLEET-R003.6",
-        "GRAPHOS-FLEET-R003.7",
-        "GRAPHOS-FLEET-R003.8",
-        "GRAPHOS-FLEET-R003.9",
-        "GRAPHOS-FLEET-R003.10"
+        "ARBORA-FLEET-R003.1",
+        "ARBORA-FLEET-R003.2",
+        "ARBORA-FLEET-R003.3",
+        "ARBORA-FLEET-R003.4",
+        "ARBORA-FLEET-R003.5",
+        "ARBORA-FLEET-R003.6",
+        "ARBORA-FLEET-R003.7",
+        "ARBORA-FLEET-R003.8",
+        "ARBORA-FLEET-R003.9",
+        "ARBORA-FLEET-R003.10"
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R003.1",
+      "id": "ARBORA-FLEET-R003.1",
       "title": "Typed write-back preview model and its refusal rule",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -244,7 +244,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R003.2",
+      "id": "ARBORA-FLEET-R003.2",
       "title": "Write-back registered as a typed, gated registry operation, not a native child tool",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -253,7 +253,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R004",
+      "id": "ARBORA-FLEET-R004",
       "title": "Pack annotations carry capability, digest, modality, cost, latency",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -268,7 +268,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R005",
+      "id": "ARBORA-FLEET-R005",
       "title": "A2A task routing with typed work-item and lease operations (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -276,13 +276,13 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-FLEET-R005.1",
-        "GRAPHOS-FLEET-R005.2",
-        "GRAPHOS-FLEET-R005.3"
+        "ARBORA-FLEET-R005.1",
+        "ARBORA-FLEET-R005.2",
+        "ARBORA-FLEET-R005.3"
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R005.1",
+      "id": "ARBORA-FLEET-R005.1",
       "title": "Typed WorkItem view, the GetWorkItem/ListWorkItems producer",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -298,8 +298,8 @@
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R005.2",
-      "title": "Remaining scope of GRAPHOS-FLEET-R005 (slice .2): A2A task routing with typed work-item and lease operations (rollup)",
+      "id": "ARBORA-FLEET-R005.2",
+      "title": "Remaining scope of ARBORA-FLEET-R005 (slice .2): A2A task routing with typed work-item and lease operations (rollup)",
       "delivery_state": "LANDED",
       "landed_in": [
         "3b404ee3ecf8"
@@ -307,7 +307,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R006",
+      "id": "ARBORA-FLEET-R006",
       "title": "Multiplexer skill and prompt harvest path removed",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -315,15 +315,15 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-FLEET-R006.1",
-        "GRAPHOS-FLEET-R006.2",
-        "GRAPHOS-FLEET-R006.3",
-        "GRAPHOS-FLEET-R006.4",
-        "GRAPHOS-FLEET-R006.5"
+        "ARBORA-FLEET-R006.1",
+        "ARBORA-FLEET-R006.2",
+        "ARBORA-FLEET-R006.3",
+        "ARBORA-FLEET-R006.4",
+        "ARBORA-FLEET-R006.5"
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R007",
+      "id": "ARBORA-FLEET-R007",
       "title": "Bridge upgraded to FastMCP 4 (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -331,13 +331,13 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-FLEET-R007.1",
-        "GRAPHOS-FLEET-R007.2",
-        "GRAPHOS-FLEET-R007.3"
+        "ARBORA-FLEET-R007.1",
+        "ARBORA-FLEET-R007.2",
+        "ARBORA-FLEET-R007.3"
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R008",
+      "id": "ARBORA-FLEET-R008",
       "title": "RUM, security-audit and CI/CD feeds join the catalog (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -345,12 +345,12 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-FLEET-R008.1",
-        "GRAPHOS-FLEET-R008.2"
+        "ARBORA-FLEET-R008.1",
+        "ARBORA-FLEET-R008.2"
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R008.1",
+      "id": "ARBORA-FLEET-R008.1",
       "title": "Typed feed-event model per feed kind",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -366,14 +366,14 @@
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R008.2",
+      "id": "ARBORA-FLEET-R008.2",
       "title": "Live feed ingestion wired into the catalog",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R009",
+      "id": "ARBORA-FLEET-R009",
       "title": "Run admission evaluates, commits and publishes with capacity control",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -383,13 +383,13 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-FLEET-R009.1",
-        "GRAPHOS-FLEET-R009.2",
-        "GRAPHOS-FLEET-R009.3"
+        "ARBORA-FLEET-R009.1",
+        "ARBORA-FLEET-R009.2",
+        "ARBORA-FLEET-R009.3"
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R009.1",
+      "id": "ARBORA-FLEET-R009.1",
       "title": "Capacity acquisition is all-or-nothing with one re-decision",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -405,7 +405,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R009.2",
+      "id": "ARBORA-FLEET-R009.2",
       "title": "Routing and composition publish only through acquired capacity",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -415,7 +415,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R009.3",
+      "id": "ARBORA-FLEET-R009.3",
       "title": "Run admission publishes with all-or-nothing capacity control",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -424,7 +424,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R010",
+      "id": "ARBORA-FLEET-R010",
       "title": "RETIRED: superseded by the current registry architecture; arbora/assembly.py was removed",
       "delivery_state": "RETIRED",
       "landed_in": [],
@@ -432,14 +432,14 @@
       "retired_reason": "superseded by the current registry architecture; arbora/assembly.py was removed"
     },
     {
-      "id": "GRAPHOS-FLEET-R003.3",
+      "id": "ARBORA-FLEET-R003.3",
       "title": "Write-back idempotency and preview gating survive a service restart",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R006.1",
+      "id": "ARBORA-FLEET-R006.1",
       "title": "Harvest call-site inventory, the removal baseline",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -452,7 +452,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R006.2",
+      "id": "ARBORA-FLEET-R006.2",
       "title": "Skill/prompt body-harvest cutover for an already-admitted child",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -468,20 +468,20 @@
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R006.3",
-      "title": "Dead harvest helpers removed (rollup over `GRAPHOS-FLEET-R006.3.1`-`.4`)",
+      "id": "ARBORA-FLEET-R006.3",
+      "title": "Dead harvest helpers removed (rollup over `ARBORA-FLEET-R006.3.1`-`.4`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-FLEET-R006.3.1",
-        "GRAPHOS-FLEET-R006.3.2",
-        "GRAPHOS-FLEET-R006.3.3",
-        "GRAPHOS-FLEET-R006.3.4"
+        "ARBORA-FLEET-R006.3.1",
+        "ARBORA-FLEET-R006.3.2",
+        "ARBORA-FLEET-R006.3.3",
+        "ARBORA-FLEET-R006.3.4"
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R006.3.1",
+      "id": "ARBORA-FLEET-R006.3.1",
       "title": "`_probe_protocol_families` harvest calls routed through the cutover helper",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -493,63 +493,63 @@
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R006.3.2",
+      "id": "ARBORA-FLEET-R006.3.2",
       "title": "Non-admitted fallback and `_harvest_resource_bodies` deleted",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R006.3.3",
+      "id": "ARBORA-FLEET-R006.3.3",
       "title": "Deadline and error-reason helpers deleted",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R006.3.4",
+      "id": "ARBORA-FLEET-R006.3.4",
       "title": "Harvest specs deleted",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R006.4",
+      "id": "ARBORA-FLEET-R006.4",
       "title": "Residual `_harvest`-named symbol renamed off the removed path",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R006.5",
+      "id": "ARBORA-FLEET-R006.5",
       "title": "Closing audit: no harvest or hydration code remains",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R007.1",
+      "id": "ARBORA-FLEET-R007.1",
       "title": "agent-connector-sdk's FastMCP instance gains native prompt/resource/template registration (cross-repo, owner: agent-connector-sdk)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R007.2",
+      "id": "ARBORA-FLEET-R007.2",
       "title": "agent-utilities' arbora bridge surface gains native prompt/resource/template registration (cross-repo, owner: agent-utilities)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R007.3",
+      "id": "ARBORA-FLEET-R007.3",
       "title": "arbora's served bridge exercises native prompts, resources and templates end to end",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R011",
+      "id": "ARBORA-FLEET-R011",
       "title": "Registry core computes a canonical digest and authorized find",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -558,7 +558,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R012",
+      "id": "ARBORA-FLEET-R012",
       "title": "EG-direct binding generator with reviewed exclusions",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -573,7 +573,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R013",
+      "id": "ARBORA-FLEET-R013",
       "title": "MCP projection exposes the six verbs with typed schemas",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -583,7 +583,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R014",
+      "id": "ARBORA-FLEET-R014",
       "title": "Resolver ranks catalog items with partitioned feedback",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -597,7 +597,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R015",
+      "id": "ARBORA-FLEET-R015",
       "title": "Typed operations cover agents, browser and fleet calls",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -607,7 +607,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R016",
+      "id": "ARBORA-FLEET-R016",
       "title": "Automated gates catch API surface and compatibility drift",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -621,7 +621,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R017",
+      "id": "ARBORA-FLEET-R017",
       "title": "Authority-parity oracle validates principal, operation and surface",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -630,7 +630,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R018",
+      "id": "ARBORA-FLEET-R018",
       "title": "Multiplexer exposes four resident fleet tools over one catalog",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -639,7 +639,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R019",
+      "id": "ARBORA-FLEET-R019",
       "title": "Eunomia narrows authority at discover, load and call",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -647,22 +647,22 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-FLEET-R019.1",
-        "GRAPHOS-FLEET-R019.2"
+        "ARBORA-FLEET-R019.1",
+        "ARBORA-FLEET-R019.2"
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R020",
-      "title": "RETIRED: superseded by GRAPHOS-FLEET-R029",
+      "id": "ARBORA-FLEET-R020",
+      "title": "RETIRED: superseded by ARBORA-FLEET-R029",
       "delivery_state": "RETIRED",
       "landed_in": [
         "1a8d280ab981"
       ],
       "verified_by": [],
-      "retired_reason": "superseded by GRAPHOS-FLEET-R029"
+      "retired_reason": "superseded by ARBORA-FLEET-R029"
     },
     {
-      "id": "GRAPHOS-FLEET-R021",
+      "id": "ARBORA-FLEET-R021",
       "title": "Fleet capability checks require exact scopes, deny unknown tools",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -674,12 +674,12 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-FLEET-R021.1",
-        "GRAPHOS-FLEET-R021.2"
+        "ARBORA-FLEET-R021.1",
+        "ARBORA-FLEET-R021.2"
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R022",
+      "id": "ARBORA-FLEET-R022",
       "title": "Catalog reconciliation re-ingests via durable replay",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -701,7 +701,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R023",
+      "id": "ARBORA-FLEET-R023",
       "title": "Connector count pins stay consistent across the fleet",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -709,11 +709,11 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-FLEET-R023.1"
+        "ARBORA-FLEET-R023.1"
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R023.1",
+      "id": "ARBORA-FLEET-R023.1",
       "title": "Pure connector count-pin comparison (producer)",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -722,7 +722,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R024",
+      "id": "ARBORA-FLEET-R024",
       "title": "Fleet reconciliation, scaling and deploy watch are served by Arbora",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -730,18 +730,18 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-FLEET-R024.1",
-        "GRAPHOS-FLEET-R024.2",
-        "GRAPHOS-FLEET-R024.3",
-        "GRAPHOS-FLEET-R024.750",
-        "GRAPHOS-FLEET-R024.4",
-        "GRAPHOS-FLEET-R024.5",
-        "GRAPHOS-FLEET-R024.6",
-        "GRAPHOS-FLEET-R024.7",
-        "GRAPHOS-FLEET-R024.8",
-        "GRAPHOS-FLEET-R024.9",
-        "GRAPHOS-FLEET-R024.10",
-        "GRAPHOS-FLEET-R024.11"
+        "ARBORA-FLEET-R024.1",
+        "ARBORA-FLEET-R024.2",
+        "ARBORA-FLEET-R024.3",
+        "ARBORA-FLEET-R024.750",
+        "ARBORA-FLEET-R024.4",
+        "ARBORA-FLEET-R024.5",
+        "ARBORA-FLEET-R024.6",
+        "ARBORA-FLEET-R024.7",
+        "ARBORA-FLEET-R024.8",
+        "ARBORA-FLEET-R024.9",
+        "ARBORA-FLEET-R024.10",
+        "ARBORA-FLEET-R024.11"
       ]
     },
     {
@@ -769,7 +769,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R024.1",
+      "id": "ARBORA-FLEET-R024.1",
       "title": "Deploy-watch verdict is a typed Arbora operation",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -778,21 +778,21 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R024.2",
+      "id": "ARBORA-FLEET-R024.2",
       "title": "Remaining fleet reconciler, autoscaler, scaling-authority and deploy-watch scheduling behavior is served by Arbora",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R024.3",
+      "id": "ARBORA-FLEET-R024.3",
       "title": "Agent runtime no longer ships the superseded fleet modules (cross-repo)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R024.750",
+      "id": "ARBORA-FLEET-R024.750",
       "title": "Fail-closed fleet health evidence",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -803,7 +803,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R025",
+      "id": "ARBORA-FLEET-R025",
       "title": "Skills from every installed package, and an always-offered core pack, join the find/load path",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -816,7 +816,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R029",
+      "id": "ARBORA-FLEET-R029",
       "title": "The intent tools are the only MCP surface",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -827,7 +827,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R026",
+      "id": "ARBORA-FLEET-R026",
       "title": "The catalog admits each server on its own",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -837,7 +837,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R027",
+      "id": "ARBORA-FLEET-R027",
       "title": "Arbora onboards every configured fleet server",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -849,17 +849,17 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-FLEET-R027.1",
-        "GRAPHOS-FLEET-R027.2",
-        "GRAPHOS-FLEET-R027.3",
-        "GRAPHOS-FLEET-R027.4",
-        "GRAPHOS-FLEET-R027.5",
-        "GRAPHOS-FLEET-R027.6",
-        "GRAPHOS-FLEET-R027.7"
+        "ARBORA-FLEET-R027.1",
+        "ARBORA-FLEET-R027.2",
+        "ARBORA-FLEET-R027.3",
+        "ARBORA-FLEET-R027.4",
+        "ARBORA-FLEET-R027.5",
+        "ARBORA-FLEET-R027.6",
+        "ARBORA-FLEET-R027.7"
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R028",
+      "id": "ARBORA-FLEET-R028",
       "title": "Arbora renews every registration before its lease lapses",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -869,7 +869,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R030",
+      "id": "ARBORA-FLEET-R030",
       "title": "Fleet onboarding registers connector access contracts unapproved",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -880,7 +880,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R031",
+      "id": "ARBORA-FLEET-R031",
       "title": "`find` ranks catalog-admitted tools when a live probe cannot answer",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -889,7 +889,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R032",
+      "id": "ARBORA-FLEET-R032",
       "title": "Gateway widget fetches run under a bound service actor",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -900,356 +900,356 @@
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R033",
+      "id": "ARBORA-FLEET-R033",
       "title": "Fleet-catalog `servers` read owned by arbora",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-FLEET-R033.1",
-        "GRAPHOS-FLEET-R033.2"
+        "ARBORA-FLEET-R033.1",
+        "ARBORA-FLEET-R033.2"
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R033.1",
+      "id": "ARBORA-FLEET-R033.1",
       "title": "Define the typed fleet-catalog `servers` reader",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R033.2",
+      "id": "ARBORA-FLEET-R033.2",
       "title": "Add refusal tests for the `servers` reader",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R034",
+      "id": "ARBORA-FLEET-R034",
       "title": "Skills and SI workflows are admitted before they run (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-FLEET-R034.1",
-        "GRAPHOS-FLEET-R034.2",
-        "GRAPHOS-FLEET-R034.3",
-        "GRAPHOS-FLEET-R034.4",
-        "GRAPHOS-FLEET-R034.5",
-        "GRAPHOS-FLEET-R034.6",
-        "GRAPHOS-FLEET-R034.7",
-        "GRAPHOS-FLEET-R034.8",
-        "GRAPHOS-FLEET-R034.9",
-        "GRAPHOS-FLEET-R034.10",
-        "GRAPHOS-FLEET-R034.11",
-        "GRAPHOS-FLEET-R034.12",
-        "GRAPHOS-FLEET-R034.13",
-        "GRAPHOS-FLEET-R034.14"
+        "ARBORA-FLEET-R034.1",
+        "ARBORA-FLEET-R034.2",
+        "ARBORA-FLEET-R034.3",
+        "ARBORA-FLEET-R034.4",
+        "ARBORA-FLEET-R034.5",
+        "ARBORA-FLEET-R034.6",
+        "ARBORA-FLEET-R034.7",
+        "ARBORA-FLEET-R034.8",
+        "ARBORA-FLEET-R034.9",
+        "ARBORA-FLEET-R034.10",
+        "ARBORA-FLEET-R034.11",
+        "ARBORA-FLEET-R034.12",
+        "ARBORA-FLEET-R034.13",
+        "ARBORA-FLEET-R034.14"
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R034.1",
+      "id": "ARBORA-FLEET-R034.1",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R034.2",
+      "id": "ARBORA-FLEET-R034.2",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R034.3",
+      "id": "ARBORA-FLEET-R034.3",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R034.4",
+      "id": "ARBORA-FLEET-R034.4",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R034.5",
+      "id": "ARBORA-FLEET-R034.5",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R034.6",
+      "id": "ARBORA-FLEET-R034.6",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R034.7",
+      "id": "ARBORA-FLEET-R034.7",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R034.8",
+      "id": "ARBORA-FLEET-R034.8",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R034.9",
+      "id": "ARBORA-FLEET-R034.9",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R034.10",
+      "id": "ARBORA-FLEET-R034.10",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R034.11",
+      "id": "ARBORA-FLEET-R034.11",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R034.12",
+      "id": "ARBORA-FLEET-R034.12",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R024.4",
+      "id": "ARBORA-FLEET-R024.4",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R024.5",
+      "id": "ARBORA-FLEET-R024.5",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R024.6",
+      "id": "ARBORA-FLEET-R024.6",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R024.7",
+      "id": "ARBORA-FLEET-R024.7",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R024.8",
+      "id": "ARBORA-FLEET-R024.8",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R024.9",
+      "id": "ARBORA-FLEET-R024.9",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R002.3",
+      "id": "ARBORA-FLEET-R002.3",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R002.4",
+      "id": "ARBORA-FLEET-R002.4",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R002.5",
+      "id": "ARBORA-FLEET-R002.5",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R002.6",
+      "id": "ARBORA-FLEET-R002.6",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R002.7",
+      "id": "ARBORA-FLEET-R002.7",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R002.8",
+      "id": "ARBORA-FLEET-R002.8",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R027.1",
+      "id": "ARBORA-FLEET-R027.1",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R027.2",
+      "id": "ARBORA-FLEET-R027.2",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R027.3",
+      "id": "ARBORA-FLEET-R027.3",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R027.4",
+      "id": "ARBORA-FLEET-R027.4",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R027.5",
+      "id": "ARBORA-FLEET-R027.5",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R027.6",
+      "id": "ARBORA-FLEET-R027.6",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R019.1",
+      "id": "ARBORA-FLEET-R019.1",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R021.1",
+      "id": "ARBORA-FLEET-R021.1",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R005.3",
+      "id": "ARBORA-FLEET-R005.3",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R019.2",
+      "id": "ARBORA-FLEET-R019.2",
       "title": "Original policy contract",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R021.2",
+      "id": "ARBORA-FLEET-R021.2",
       "title": "Original fleet authority contract",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R027.7",
+      "id": "ARBORA-FLEET-R027.7",
       "title": "Original fleet onboarding contract",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R003.4",
+      "id": "ARBORA-FLEET-R003.4",
       "title": "Original writable-fleet acceptance residual",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R003.5",
+      "id": "ARBORA-FLEET-R003.5",
       "title": "Complete repository request binding",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R003.6",
+      "id": "ARBORA-FLEET-R003.6",
       "title": "Trusted composition through shared invoke",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R003.7",
+      "id": "ARBORA-FLEET-R003.7",
       "title": "Preview and approval bind the commit operation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R003.8",
+      "id": "ARBORA-FLEET-R003.8",
       "title": "Served effect and independent readback evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R003.9",
+      "id": "ARBORA-FLEET-R003.9",
       "title": "Zero-effect refusal parity",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R003.10",
+      "id": "ARBORA-FLEET-R003.10",
       "title": "Durable replay across host and connector restart",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R035",
+      "id": "ARBORA-FLEET-R035",
       "title": "Authenticated schema preflight for OpenAPI operation aliases",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -1268,213 +1268,213 @@
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R024.10",
+      "id": "ARBORA-FLEET-R024.10",
       "title": "AU:29 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R024.11",
+      "id": "ARBORA-FLEET-R024.11",
       "title": "AU:30 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R002.9",
+      "id": "ARBORA-FLEET-R002.9",
       "title": "AU:52 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R034.13",
+      "id": "ARBORA-FLEET-R034.13",
       "title": "AU:98 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R034.14",
+      "id": "ARBORA-FLEET-R034.14",
       "title": "ARBORA:8 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R036",
+      "id": "ARBORA-FLEET-R036",
       "title": "The connector contract is established on first connect (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-FLEET-R036.1",
-        "GRAPHOS-FLEET-R036.2",
-        "GRAPHOS-FLEET-R036.3",
-        "GRAPHOS-FLEET-R036.4",
-        "GRAPHOS-FLEET-R036.5",
-        "GRAPHOS-FLEET-R036.6"
+        "ARBORA-FLEET-R036.1",
+        "ARBORA-FLEET-R036.2",
+        "ARBORA-FLEET-R036.3",
+        "ARBORA-FLEET-R036.4",
+        "ARBORA-FLEET-R036.5",
+        "ARBORA-FLEET-R036.6"
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R036.1",
+      "id": "ARBORA-FLEET-R036.1",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R036.2",
+      "id": "ARBORA-FLEET-R036.2",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R036.3",
+      "id": "ARBORA-FLEET-R036.3",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R036.4",
+      "id": "ARBORA-FLEET-R036.4",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R036.5",
+      "id": "ARBORA-FLEET-R036.5",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R036.6",
+      "id": "ARBORA-FLEET-R036.6",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R037",
+      "id": "ARBORA-FLEET-R037",
       "title": "Tools load per job from the engine answer (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-FLEET-R037.1",
-        "GRAPHOS-FLEET-R037.2",
-        "GRAPHOS-FLEET-R037.3",
-        "GRAPHOS-FLEET-R037.4",
-        "GRAPHOS-FLEET-R037.5",
-        "GRAPHOS-FLEET-R037.6"
+        "ARBORA-FLEET-R037.1",
+        "ARBORA-FLEET-R037.2",
+        "ARBORA-FLEET-R037.3",
+        "ARBORA-FLEET-R037.4",
+        "ARBORA-FLEET-R037.5",
+        "ARBORA-FLEET-R037.6"
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R037.1",
+      "id": "ARBORA-FLEET-R037.1",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R037.2",
+      "id": "ARBORA-FLEET-R037.2",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R037.3",
+      "id": "ARBORA-FLEET-R037.3",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R037.4",
+      "id": "ARBORA-FLEET-R037.4",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R037.5",
+      "id": "ARBORA-FLEET-R037.5",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R037.6",
+      "id": "ARBORA-FLEET-R037.6",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R038",
+      "id": "ARBORA-FLEET-R038",
       "title": "One protocol stack with one implementation per role",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R039",
+      "id": "ARBORA-FLEET-R039",
       "title": "Domain pack reads compose engine methods",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-FLEET-R039.1",
-        "GRAPHOS-FLEET-R039.2",
-        "GRAPHOS-FLEET-R039.3",
-        "GRAPHOS-FLEET-R039.4",
-        "GRAPHOS-FLEET-R039.5",
-        "GRAPHOS-FLEET-R039.6"
+        "ARBORA-FLEET-R039.1",
+        "ARBORA-FLEET-R039.2",
+        "ARBORA-FLEET-R039.3",
+        "ARBORA-FLEET-R039.4",
+        "ARBORA-FLEET-R039.5",
+        "ARBORA-FLEET-R039.6"
       ]
     },
     {
-      "id": "GRAPHOS-FLEET-R039.1",
+      "id": "ARBORA-FLEET-R039.1",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R039.2",
+      "id": "ARBORA-FLEET-R039.2",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R039.3",
+      "id": "ARBORA-FLEET-R039.3",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R039.4",
+      "id": "ARBORA-FLEET-R039.4",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R039.5",
+      "id": "ARBORA-FLEET-R039.5",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-FLEET-R039.6",
+      "id": "ARBORA-FLEET-R039.6",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],

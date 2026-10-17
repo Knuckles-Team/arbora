@@ -1,85 +1,85 @@
 {
   "schema_version": 2,
-  "spec_id": "GRAPHOS-DEPLOY",
+  "spec_id": "ARBORA-DEPLOY",
   "owner_repo": "arbora",
   "delivery_state": "SPECIFIED",
   "requirement_ids": [
-    "GRAPHOS-DEPLOY-R001",
-    "GRAPHOS-DEPLOY-R002",
-    "GRAPHOS-DEPLOY-R003",
-    "GRAPHOS-DEPLOY-R004",
-    "GRAPHOS-DEPLOY-R005",
-    "GRAPHOS-DEPLOY-R006",
-    "GRAPHOS-DEPLOY-R007",
-    "GRAPHOS-DEPLOY-R007.1",
-    "GRAPHOS-DEPLOY-R007.2",
-    "GRAPHOS-DEPLOY-R007.3",
-    "GRAPHOS-DEPLOY-R007.4",
-    "GRAPHOS-DEPLOY-R007.5",
-    "GRAPHOS-DEPLOY-R007.6",
-    "GRAPHOS-DEPLOY-R008",
-    "GRAPHOS-DEPLOY-R009",
-    "GRAPHOS-DEPLOY-R009.1",
-    "GRAPHOS-DEPLOY-R009.4",
-    "GRAPHOS-DEPLOY-R010",
-    "GRAPHOS-DEPLOY-R011",
-    "GRAPHOS-DEPLOY-R012",
-    "GRAPHOS-DEPLOY-R013",
-    "GRAPHOS-DEPLOY-R014",
-    "GRAPHOS-DEPLOY-R015",
-    "GRAPHOS-DEPLOY-R016",
-    "GRAPHOS-DEPLOY-R017",
-    "GRAPHOS-DEPLOY-R017.1",
-    "GRAPHOS-DEPLOY-R017.2",
-    "GRAPHOS-DEPLOY-R017.3",
-    "GRAPHOS-DEPLOY-R017.4",
-    "GRAPHOS-DEPLOY-R017.5",
-    "GRAPHOS-DEPLOY-R017.6",
-    "GRAPHOS-DEPLOY-R017.7",
-    "GRAPHOS-DEPLOY-R017.8",
-    "GRAPHOS-DEPLOY-R017.9",
-    "GRAPHOS-DEPLOY-R017.10",
-    "GRAPHOS-DEPLOY-R017.11",
-    "GRAPHOS-DEPLOY-R017.12",
-    "GRAPHOS-DEPLOY-R017.13",
-    "GRAPHOS-DEPLOY-R017.14",
-    "GRAPHOS-DEPLOY-R017.15",
-    "GRAPHOS-DEPLOY-R017.16",
-    "GRAPHOS-DEPLOY-R018",
-    "GRAPHOS-DEPLOY-R018.1",
-    "GRAPHOS-DEPLOY-R018.2",
-    "GRAPHOS-DEPLOY-R018.3",
-    "GRAPHOS-DEPLOY-R018.4",
-    "GRAPHOS-DEPLOY-R018.5",
-    "GRAPHOS-DEPLOY-R018.6",
-    "GRAPHOS-DEPLOY-R010.1",
-    "GRAPHOS-DEPLOY-R010.2",
-    "GRAPHOS-DEPLOY-R010.3",
-    "GRAPHOS-DEPLOY-R013.1",
-    "GRAPHOS-DEPLOY-R013.2",
-    "GRAPHOS-DEPLOY-R013.3",
-    "GRAPHOS-DEPLOY-R013.4",
-    "GRAPHOS-DEPLOY-R013.5",
-    "GRAPHOS-DEPLOY-R013.6",
-    "GRAPHOS-DEPLOY-R018.7",
-    "GRAPHOS-DEPLOY-R018.8",
-    "GRAPHOS-DEPLOY-R009.2",
-    "GRAPHOS-DEPLOY-R009.2.1",
-    "GRAPHOS-DEPLOY-R009.2.2",
-    "GRAPHOS-DEPLOY-R009.3",
-    "GRAPHOS-DEPLOY-R013.7",
-    "GRAPHOS-DEPLOY-R010.4",
-    "GRAPHOS-DEPLOY-R600",
-    "GRAPHOS-DEPLOY-R600.1",
-    "GRAPHOS-DEPLOY-R600.2",
-    "GRAPHOS-DEPLOY-R600.3",
-    "GRAPHOS-DEPLOY-R600.4",
-    "GRAPHOS-DEPLOY-R600.5",
-    "GRAPHOS-DEPLOY-R600.6"
+    "ARBORA-DEPLOY-R001",
+    "ARBORA-DEPLOY-R002",
+    "ARBORA-DEPLOY-R003",
+    "ARBORA-DEPLOY-R004",
+    "ARBORA-DEPLOY-R005",
+    "ARBORA-DEPLOY-R006",
+    "ARBORA-DEPLOY-R007",
+    "ARBORA-DEPLOY-R007.1",
+    "ARBORA-DEPLOY-R007.2",
+    "ARBORA-DEPLOY-R007.3",
+    "ARBORA-DEPLOY-R007.4",
+    "ARBORA-DEPLOY-R007.5",
+    "ARBORA-DEPLOY-R007.6",
+    "ARBORA-DEPLOY-R008",
+    "ARBORA-DEPLOY-R009",
+    "ARBORA-DEPLOY-R009.1",
+    "ARBORA-DEPLOY-R009.4",
+    "ARBORA-DEPLOY-R010",
+    "ARBORA-DEPLOY-R011",
+    "ARBORA-DEPLOY-R012",
+    "ARBORA-DEPLOY-R013",
+    "ARBORA-DEPLOY-R014",
+    "ARBORA-DEPLOY-R015",
+    "ARBORA-DEPLOY-R016",
+    "ARBORA-DEPLOY-R017",
+    "ARBORA-DEPLOY-R017.1",
+    "ARBORA-DEPLOY-R017.2",
+    "ARBORA-DEPLOY-R017.3",
+    "ARBORA-DEPLOY-R017.4",
+    "ARBORA-DEPLOY-R017.5",
+    "ARBORA-DEPLOY-R017.6",
+    "ARBORA-DEPLOY-R017.7",
+    "ARBORA-DEPLOY-R017.8",
+    "ARBORA-DEPLOY-R017.9",
+    "ARBORA-DEPLOY-R017.10",
+    "ARBORA-DEPLOY-R017.11",
+    "ARBORA-DEPLOY-R017.12",
+    "ARBORA-DEPLOY-R017.13",
+    "ARBORA-DEPLOY-R017.14",
+    "ARBORA-DEPLOY-R017.15",
+    "ARBORA-DEPLOY-R017.16",
+    "ARBORA-DEPLOY-R018",
+    "ARBORA-DEPLOY-R018.1",
+    "ARBORA-DEPLOY-R018.2",
+    "ARBORA-DEPLOY-R018.3",
+    "ARBORA-DEPLOY-R018.4",
+    "ARBORA-DEPLOY-R018.5",
+    "ARBORA-DEPLOY-R018.6",
+    "ARBORA-DEPLOY-R010.1",
+    "ARBORA-DEPLOY-R010.2",
+    "ARBORA-DEPLOY-R010.3",
+    "ARBORA-DEPLOY-R013.1",
+    "ARBORA-DEPLOY-R013.2",
+    "ARBORA-DEPLOY-R013.3",
+    "ARBORA-DEPLOY-R013.4",
+    "ARBORA-DEPLOY-R013.5",
+    "ARBORA-DEPLOY-R013.6",
+    "ARBORA-DEPLOY-R018.7",
+    "ARBORA-DEPLOY-R018.8",
+    "ARBORA-DEPLOY-R009.2",
+    "ARBORA-DEPLOY-R009.2.1",
+    "ARBORA-DEPLOY-R009.2.2",
+    "ARBORA-DEPLOY-R009.3",
+    "ARBORA-DEPLOY-R013.7",
+    "ARBORA-DEPLOY-R010.4",
+    "ARBORA-DEPLOY-R600",
+    "ARBORA-DEPLOY-R600.1",
+    "ARBORA-DEPLOY-R600.2",
+    "ARBORA-DEPLOY-R600.3",
+    "ARBORA-DEPLOY-R600.4",
+    "ARBORA-DEPLOY-R600.5",
+    "ARBORA-DEPLOY-R600.6"
   ],
   "requirements": [
     {
-      "id": "GRAPHOS-DEPLOY-R001",
+      "id": "ARBORA-DEPLOY-R001",
       "title": "Worker topology manifest is digest-pinned",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -88,7 +88,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R002",
+      "id": "ARBORA-DEPLOY-R002",
       "title": "Executable release-qualification runbook",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -104,7 +104,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-DEPLOY-R003",
+      "id": "ARBORA-DEPLOY-R003",
       "title": "Pre-push hooks always run the full gate suite",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -120,7 +120,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-DEPLOY-R004",
+      "id": "ARBORA-DEPLOY-R004",
       "title": "mypy hook type-checks the test suite",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -132,7 +132,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-DEPLOY-R005",
+      "id": "ARBORA-DEPLOY-R005",
       "title": "Web UI keeps its component package name",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -146,7 +146,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-DEPLOY-R006",
+      "id": "ARBORA-DEPLOY-R006",
       "title": "gateway-widgets extra pins a compatible connector floor",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -160,7 +160,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-DEPLOY-R007",
+      "id": "ARBORA-DEPLOY-R007",
       "title": "Arbora hosts deployment doctor and skill certification",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -168,16 +168,16 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-DEPLOY-R007.1",
-        "GRAPHOS-DEPLOY-R007.2",
-        "GRAPHOS-DEPLOY-R007.3",
-        "GRAPHOS-DEPLOY-R007.4",
-        "GRAPHOS-DEPLOY-R007.5",
-        "GRAPHOS-DEPLOY-R007.6"
+        "ARBORA-DEPLOY-R007.1",
+        "ARBORA-DEPLOY-R007.2",
+        "ARBORA-DEPLOY-R007.3",
+        "ARBORA-DEPLOY-R007.4",
+        "ARBORA-DEPLOY-R007.5",
+        "ARBORA-DEPLOY-R007.6"
       ]
     },
     {
-      "id": "GRAPHOS-DEPLOY-R007.1",
+      "id": "ARBORA-DEPLOY-R007.1",
       "title": "`agent-utilities-doctor` console-script collision resolved",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -189,7 +189,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-DEPLOY-R007.2",
+      "id": "ARBORA-DEPLOY-R007.2",
       "title": "`setup-config` console-script collision resolved",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -201,7 +201,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-DEPLOY-R007.3",
+      "id": "ARBORA-DEPLOY-R007.3",
       "title": "`arbora-daemon` console-script collision resolved",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -210,7 +210,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R007.4",
+      "id": "ARBORA-DEPLOY-R007.4",
       "title": "`agent-utilities-venv` console-script collision resolved",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -219,7 +219,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R007.5",
+      "id": "ARBORA-DEPLOY-R007.5",
       "title": "`arbora-release-canary` console-script collision resolved",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -228,7 +228,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R007.6",
+      "id": "ARBORA-DEPLOY-R007.6",
       "title": "The Arbora doctor checks the served engine families and graph connections",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -239,7 +239,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-DEPLOY-R008",
+      "id": "ARBORA-DEPLOY-R008",
       "title": "Arbora hosts its own boundary modules",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -248,7 +248,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R009",
+      "id": "ARBORA-DEPLOY-R009",
       "title": "Arbora owns hosting/deployment configuration settings",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -256,14 +256,14 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-DEPLOY-R009.1",
-        "GRAPHOS-DEPLOY-R009.4",
-        "GRAPHOS-DEPLOY-R009.2",
-        "GRAPHOS-DEPLOY-R009.3"
+        "ARBORA-DEPLOY-R009.1",
+        "ARBORA-DEPLOY-R009.4",
+        "ARBORA-DEPLOY-R009.2",
+        "ARBORA-DEPLOY-R009.3"
       ]
     },
     {
-      "id": "GRAPHOS-DEPLOY-R009.1",
+      "id": "ARBORA-DEPLOY-R009.1",
       "title": "Arbora hosts a typed `arbora.core.config_admin` hosting/deployment settings module",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -277,7 +277,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-DEPLOY-R009.4",
+      "id": "ARBORA-DEPLOY-R009.4",
       "title": "Arbora owns the `graph_config` operation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
@@ -287,7 +287,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-DEPLOY-R010",
+      "id": "ARBORA-DEPLOY-R010",
       "title": "Ecosystem and repository development skills are published",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -295,14 +295,14 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-DEPLOY-R010.1",
-        "GRAPHOS-DEPLOY-R010.2",
-        "GRAPHOS-DEPLOY-R010.3",
-        "GRAPHOS-DEPLOY-R010.4"
+        "ARBORA-DEPLOY-R010.1",
+        "ARBORA-DEPLOY-R010.2",
+        "ARBORA-DEPLOY-R010.3",
+        "ARBORA-DEPLOY-R010.4"
       ]
     },
     {
-      "id": "GRAPHOS-DEPLOY-R011",
+      "id": "ARBORA-DEPLOY-R011",
       "title": "Deployment layout test suite passes in full",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -312,7 +312,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R012",
+      "id": "ARBORA-DEPLOY-R012",
       "title": "Pipelines dependency is referenced at main, never pinned",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -322,7 +322,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R013",
+      "id": "ARBORA-DEPLOY-R013",
       "title": "Development and production deployment profiles",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -334,17 +334,17 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-DEPLOY-R013.1",
-        "GRAPHOS-DEPLOY-R013.2",
-        "GRAPHOS-DEPLOY-R013.3",
-        "GRAPHOS-DEPLOY-R013.4",
-        "GRAPHOS-DEPLOY-R013.5",
-        "GRAPHOS-DEPLOY-R013.6",
-        "GRAPHOS-DEPLOY-R013.7"
+        "ARBORA-DEPLOY-R013.1",
+        "ARBORA-DEPLOY-R013.2",
+        "ARBORA-DEPLOY-R013.3",
+        "ARBORA-DEPLOY-R013.4",
+        "ARBORA-DEPLOY-R013.5",
+        "ARBORA-DEPLOY-R013.6",
+        "ARBORA-DEPLOY-R013.7"
       ]
     },
     {
-      "id": "GRAPHOS-DEPLOY-R014",
+      "id": "ARBORA-DEPLOY-R014",
       "title": "Agent runtime split into connector SDK, Arbora and engine",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -353,7 +353,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R015",
+      "id": "ARBORA-DEPLOY-R015",
       "title": "AVX2 guard test runs on any hosted runner",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -362,7 +362,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R016",
+      "id": "ARBORA-DEPLOY-R016",
       "title": "One host daemon process shares the in-pod engine",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -373,280 +373,280 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R017",
+      "id": "ARBORA-DEPLOY-R017",
       "title": "Deployment placement and sequencing go through the engine decision capability",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-DEPLOY-R017.1",
-        "GRAPHOS-DEPLOY-R017.2",
-        "GRAPHOS-DEPLOY-R017.3",
-        "GRAPHOS-DEPLOY-R017.4",
-        "GRAPHOS-DEPLOY-R017.5",
-        "GRAPHOS-DEPLOY-R017.6",
-        "GRAPHOS-DEPLOY-R017.7",
-        "GRAPHOS-DEPLOY-R017.8",
-        "GRAPHOS-DEPLOY-R017.9",
-        "GRAPHOS-DEPLOY-R017.10",
-        "GRAPHOS-DEPLOY-R017.11",
-        "GRAPHOS-DEPLOY-R017.12",
-        "GRAPHOS-DEPLOY-R017.13",
-        "GRAPHOS-DEPLOY-R017.14",
-        "GRAPHOS-DEPLOY-R017.15",
-        "GRAPHOS-DEPLOY-R017.16"
+        "ARBORA-DEPLOY-R017.1",
+        "ARBORA-DEPLOY-R017.2",
+        "ARBORA-DEPLOY-R017.3",
+        "ARBORA-DEPLOY-R017.4",
+        "ARBORA-DEPLOY-R017.5",
+        "ARBORA-DEPLOY-R017.6",
+        "ARBORA-DEPLOY-R017.7",
+        "ARBORA-DEPLOY-R017.8",
+        "ARBORA-DEPLOY-R017.9",
+        "ARBORA-DEPLOY-R017.10",
+        "ARBORA-DEPLOY-R017.11",
+        "ARBORA-DEPLOY-R017.12",
+        "ARBORA-DEPLOY-R017.13",
+        "ARBORA-DEPLOY-R017.14",
+        "ARBORA-DEPLOY-R017.15",
+        "ARBORA-DEPLOY-R017.16"
       ]
     },
     {
-      "id": "GRAPHOS-DEPLOY-R017.1",
+      "id": "ARBORA-DEPLOY-R017.1",
       "title": "Placement Decide mapping",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R017.2",
+      "id": "ARBORA-DEPLOY-R017.2",
       "title": "Request assembly for a deployment task",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R017.3",
+      "id": "ARBORA-DEPLOY-R017.3",
       "title": "Present the assembled graph read-only",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R017.4",
+      "id": "ARBORA-DEPLOY-R017.4",
       "title": "Confirm through plan/confirm",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R017.5",
+      "id": "ARBORA-DEPLOY-R017.5",
       "title": "Typed refusal while unavailable",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R017.6",
+      "id": "ARBORA-DEPLOY-R017.6",
       "title": "Existing artifact per target",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R017.7",
+      "id": "ARBORA-DEPLOY-R017.7",
       "title": "In-process unchanged",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R017.8",
+      "id": "ARBORA-DEPLOY-R017.8",
       "title": "Thin setup-config subcommand",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R017.9",
+      "id": "ARBORA-DEPLOY-R017.9",
       "title": "Checker dispatches on document shape",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R017.10",
+      "id": "ARBORA-DEPLOY-R017.10",
       "title": "Compose/Swarm literal images use the existing grammar",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R017.11",
+      "id": "ARBORA-DEPLOY-R017.11",
       "title": "Template mode accepts the required-variable form",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R017.12",
+      "id": "ARBORA-DEPLOY-R017.12",
       "title": "Resolve mode validates the given value",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R017.13",
+      "id": "ARBORA-DEPLOY-R017.13",
       "title": "Run the checker on the shipped Compose and Swarm files",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R017.14",
+      "id": "ARBORA-DEPLOY-R017.14",
       "title": "Helm pinned and default renders",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R017.15",
+      "id": "ARBORA-DEPLOY-R017.15",
       "title": "systemd stays refused",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R017.16",
+      "id": "ARBORA-DEPLOY-R017.16",
       "title": "Environment policy drives the check",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R018",
+      "id": "ARBORA-DEPLOY-R018",
       "title": "Small deployment shares one engine per host",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-DEPLOY-R018.1",
-        "GRAPHOS-DEPLOY-R018.2",
-        "GRAPHOS-DEPLOY-R018.3",
-        "GRAPHOS-DEPLOY-R018.4",
-        "GRAPHOS-DEPLOY-R018.5",
-        "GRAPHOS-DEPLOY-R018.6",
-        "GRAPHOS-DEPLOY-R018.7",
-        "GRAPHOS-DEPLOY-R018.8"
+        "ARBORA-DEPLOY-R018.1",
+        "ARBORA-DEPLOY-R018.2",
+        "ARBORA-DEPLOY-R018.3",
+        "ARBORA-DEPLOY-R018.4",
+        "ARBORA-DEPLOY-R018.5",
+        "ARBORA-DEPLOY-R018.6",
+        "ARBORA-DEPLOY-R018.7",
+        "ARBORA-DEPLOY-R018.8"
       ]
     },
     {
-      "id": "GRAPHOS-DEPLOY-R018.1",
+      "id": "ARBORA-DEPLOY-R018.1",
       "title": "Engine endpoint type",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R018.2",
+      "id": "ARBORA-DEPLOY-R018.2",
       "title": "Probe before start",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R018.3",
+      "id": "ARBORA-DEPLOY-R018.3",
       "title": "Start only when absent",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R018.4",
+      "id": "ARBORA-DEPLOY-R018.4",
       "title": "Second process attaches",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R018.5",
+      "id": "ARBORA-DEPLOY-R018.5",
       "title": "Owner stands down the engine",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R018.6",
+      "id": "ARBORA-DEPLOY-R018.6",
       "title": "Remote engine skips local start",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R010.1",
+      "id": "ARBORA-DEPLOY-R010.1",
       "title": "Preserve development skill coverage",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R010.2",
+      "id": "ARBORA-DEPLOY-R010.2",
       "title": "Keep deployment guidance executable and synchronized",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R010.3",
+      "id": "ARBORA-DEPLOY-R010.3",
       "title": "Publish complete supported-profile instructions",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R013.1",
+      "id": "ARBORA-DEPLOY-R013.1",
       "title": "Preserve original profile and first-boot obligations",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R013.2",
+      "id": "ARBORA-DEPLOY-R013.2",
       "title": "Record explicit component deploy or reuse choices",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R013.3",
+      "id": "ARBORA-DEPLOY-R013.3",
       "title": "Make reused components connect-only",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R013.4",
+      "id": "ARBORA-DEPLOY-R013.4",
       "title": "Define the complete deployment target matrix",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R013.5",
+      "id": "ARBORA-DEPLOY-R013.5",
       "title": "Bind confirmed profiles to governed deployment",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R013.6",
+      "id": "ARBORA-DEPLOY-R013.6",
       "title": "Prove component choices and target profiles",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R018.7",
+      "id": "ARBORA-DEPLOY-R018.7",
       "title": "Preserve reuse through engine attachment",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R018.8",
+      "id": "ARBORA-DEPLOY-R018.8",
       "title": "Keep reused resources alive across host shutdown",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R009.2",
+      "id": "ARBORA-DEPLOY-R009.2",
       "title": "EG:53 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -656,12 +656,12 @@
         "tests/deployment/test_small_profile_footprint.py:31"
       ],
       "rollup_of": [
-        "GRAPHOS-DEPLOY-R009.2.1",
-        "GRAPHOS-DEPLOY-R009.2.2"
+        "ARBORA-DEPLOY-R009.2.1",
+        "ARBORA-DEPLOY-R009.2.2"
       ]
     },
     {
-      "id": "GRAPHOS-DEPLOY-R009.2.1",
+      "id": "ARBORA-DEPLOY-R009.2.1",
       "title": "Small-profile import footprint",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
@@ -670,85 +670,85 @@
       ]
     },
     {
-      "id": "GRAPHOS-DEPLOY-R009.2.2",
+      "id": "ARBORA-DEPLOY-R009.2.2",
       "title": "Single-image deployment with capability parity",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R009.3",
+      "id": "ARBORA-DEPLOY-R009.3",
       "title": "EG:57 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R013.7",
+      "id": "ARBORA-DEPLOY-R013.7",
       "title": "ARBORA:12 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R010.4",
+      "id": "ARBORA-DEPLOY-R010.4",
       "title": "ARBORA:13 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R600",
+      "id": "ARBORA-DEPLOY-R600",
       "title": "Process singleton locks guard the served host (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-DEPLOY-R600.1",
-        "GRAPHOS-DEPLOY-R600.2",
-        "GRAPHOS-DEPLOY-R600.3",
-        "GRAPHOS-DEPLOY-R600.4",
-        "GRAPHOS-DEPLOY-R600.5",
-        "GRAPHOS-DEPLOY-R600.6"
+        "ARBORA-DEPLOY-R600.1",
+        "ARBORA-DEPLOY-R600.2",
+        "ARBORA-DEPLOY-R600.3",
+        "ARBORA-DEPLOY-R600.4",
+        "ARBORA-DEPLOY-R600.5",
+        "ARBORA-DEPLOY-R600.6"
       ]
     },
     {
-      "id": "GRAPHOS-DEPLOY-R600.1",
+      "id": "ARBORA-DEPLOY-R600.1",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R600.2",
+      "id": "ARBORA-DEPLOY-R600.2",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R600.3",
+      "id": "ARBORA-DEPLOY-R600.3",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R600.4",
+      "id": "ARBORA-DEPLOY-R600.4",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R600.5",
+      "id": "ARBORA-DEPLOY-R600.5",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-DEPLOY-R600.6",
+      "id": "ARBORA-DEPLOY-R600.6",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],

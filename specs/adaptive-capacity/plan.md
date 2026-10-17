@@ -22,12 +22,12 @@ Decision receipts include budget/configuration digest, premise revision, prior s
 
 ## Additional owner requirements
 
-- `GRAPHOS-CAPACITY-R001.2`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-CAPACITY-R003`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-CAPACITY-R004`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-CAPACITY-R001.3`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-CAPACITY-R001.2`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-CAPACITY-R003`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-CAPACITY-R004`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-CAPACITY-R001.3`: Plan the owner work and dependencies defined in requirements.md.
 
-## Served agent load profile (GRAPHOS-CAPACITY-R004)
+## Served agent load profile (ARBORA-CAPACITY-R004)
 
 The proposed `agent-run-fixture-v1` profile measures one production agent route with a deterministic, authorized local fixture workload.
 The workload binds a message digest, agent/harness configuration digest, tool response digest, and EG dataset revision.

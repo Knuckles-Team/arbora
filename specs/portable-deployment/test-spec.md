@@ -23,7 +23,7 @@ Run `uv sync --extra test`, `uv run pytest`, `uv run ruff check .`, `uv run ruff
 
 Repository scanner checks include CCCC, jscpd, dupehound and KISS alongside Python gates when source changes; actual versions and differential rules are those pinned by this repository's shared pipeline. A failing required source gate must be fixed or narrowly reclassified with a reproducible portable substitute, never silently skipped. Hosted cluster checks carry an explicit optional/runtime label and do not gate a cloud PR unless the CI job provisions that environment itself.
 
-## GRAPHOS-DEPLOY-R016 host daemon container
+## ARBORA-DEPLOY-R016 host daemon container
 
 | Check | Expected result |
 |---|---|
@@ -33,7 +33,7 @@ Repository scanner checks include CCCC, jscpd, dupehound and KISS alongside Pyth
 | Server-side dry run | The API server accepts the deployment. |
 | Live host lock | The daemon status command reports this container as the host-lock holder. |
 
-## GRAPHOS-DEPLOY-R017 engine-routed deployment placement and assembly
+## ARBORA-DEPLOY-R017 engine-routed deployment placement and assembly
 
 | Check | Expected result |
 |---|---|
@@ -43,12 +43,12 @@ Repository scanner checks include CCCC, jscpd, dupehound and KISS alongside Pyth
 | Existing artifacts | compose, helm, swarm resolve to files under `deploy/`, digest-pinned; systemd refused as unsupported. |
 | In-process | Live start calls `start_composed_services`. |
 | Command | `setup-config deploy` prints the engine's decision and graph and imports no planning code. |
-| GRAPHOS-DEPLOY-R018.1 | tests/deployment/test_engine_endpoint.py | Engine endpoint type. |
-| GRAPHOS-DEPLOY-R018.2 | tests/deployment/test_engine_probe.py | Probe before start. |
-| GRAPHOS-DEPLOY-R018.3 | tests/deployment/test_engine_owner.py | Start only when absent. |
-| GRAPHOS-DEPLOY-R018.4 | tests/deployment/test_engine_attach.py | Second process attaches. |
-| GRAPHOS-DEPLOY-R018.5 | tests/deployment/test_engine_standdown.py | Owner stands down the engine. |
-| GRAPHOS-DEPLOY-R018.6 | tests/deployment/test_remote_engine.py | Remote engine skips local start. |
+| ARBORA-DEPLOY-R018.1 | tests/deployment/test_engine_endpoint.py | Engine endpoint type. |
+| ARBORA-DEPLOY-R018.2 | tests/deployment/test_engine_probe.py | Probe before start. |
+| ARBORA-DEPLOY-R018.3 | tests/deployment/test_engine_owner.py | Start only when absent. |
+| ARBORA-DEPLOY-R018.4 | tests/deployment/test_engine_attach.py | Second process attaches. |
+| ARBORA-DEPLOY-R018.5 | tests/deployment/test_engine_standdown.py | Owner stands down the engine. |
+| ARBORA-DEPLOY-R018.6 | tests/deployment/test_remote_engine.py | Remote engine skips local start. |
 
 ## Confirmed deployment and guidance acceptance
 
@@ -73,7 +73,7 @@ Missing deployment producers or target runtimes leave their scenarios unexecuted
 
 ## Additional owner requirements
 
-- `GRAPHOS-DEPLOY-R009.2`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-DEPLOY-R009.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-DEPLOY-R013.7`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-DEPLOY-R010.4`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-DEPLOY-R009.2`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-DEPLOY-R009.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-DEPLOY-R013.7`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-DEPLOY-R010.4`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.

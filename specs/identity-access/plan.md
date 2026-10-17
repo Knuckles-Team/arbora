@@ -1,4 +1,4 @@
-# Design — GRAPHOS-IDENTITY-ACCESS
+# Design — ARBORA-IDENTITY-ACCESS
 
 ## Current seam and implementation boundary
 
@@ -130,11 +130,11 @@ binding immediately, before the request context exits. The qualified EG
 adapter must uphold its live-resolution consistency contract; this ordering is
 not a distributed transaction or a substitute for final engine authorization.
 
-## GRAPHOS-IDENTITY-R026 client attribution and segmentation
+## ARBORA-IDENTITY-R026 client attribution and segmentation
 
 Data flow: verified token → client session record → run record and audit event → caller-scoped listing.
 Attach the audit event at `arbora/api/invoke/audit.py`. The first child locates the session-open site.
-Reused: the verified principal from `GRAPHOS-IDENTITY-R017.1`. Segmenting stored memories is an engine row.
+Reused: the verified principal from `ARBORA-IDENTITY-R017.1`. Segmenting stored memories is an engine row.
 Decision: attribute by verified principal only. Rejected alternative: a client-supplied client id, which a caller can forge.
 
 
@@ -215,7 +215,7 @@ No arXiv derivation is claimed; the inputs describe protocol and ownership requi
 
 ## Connector-bound grants and provider token profiles
 
-This shared contract refines GRAPHOS-IDENTITY-R023 and SDK-CONNECTOR-CONTROL-R035/R046. Implementation still needs the required runtime wiring.
+This shared contract refines ARBORA-IDENTITY-R023 and SDK-CONNECTOR-CONTROL-R035/R046. Implementation still needs the required runtime wiring.
 The exact credential-use tuple includes tenant, owner principal, requesting principal/client, connector, provider, audience, scopes, resource and operation.
 The host derives connector from authenticated admission and the certified target connector registration, with its immutable registry revision.
 A caller's connector ID is only a requested target; it cannot populate the trusted binding or current grant.
@@ -247,7 +247,7 @@ No reuse outlives the current grant or profile validity policy. Refresh tokens g
 Refresh preserves connector, issuer/provider, client, tenant, account, audience and consent ceilings; any required missing evidence refuses.
 
 Host tenant and requesting identity always come from authenticated admission and EG authority, including for opaque provider tokens.
-This profile applies to outbound provider credentials only. GRAPHOS-IDENTITY-R017 API bearer admission still requires its signed tenant claim.
+This profile applies to outbound provider credentials only. ARBORA-IDENTITY-R017 API bearer admission still requires its signed tenant claim.
 The broker stores profile revision, validation method, binding digest and provenance for validity metadata alongside the vault receipt.
 Opaque exchange metadata and host lease bounds remain distinct from signed JWT claims in evidence and logs.
 Map profile errors to `invalid_token_profile` or `token_validation_failed`; required introspection failures use `introspection_unavailable` or `token_inactive`.
@@ -255,4 +255,4 @@ These shared typed refusals stop persistence readiness and operation continuatio
 
 ## Additional owner requirements
 
-- `GRAPHOS-IDENTITY-R026.8`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-IDENTITY-R026.8`: Plan the owner work and dependencies defined in requirements.md.

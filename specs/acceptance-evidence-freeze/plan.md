@@ -1,4 +1,4 @@
-# GRAPHOS-ACCEPTANCE — Design and implementation plan
+# ARBORA-ACCEPTANCE — Design and implementation plan
 
 ## Existing system and reuse
 

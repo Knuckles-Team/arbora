@@ -1,4 +1,4 @@
-# GRAPHOS-RELEASE — Design and implementation plan
+# ARBORA-RELEASE — Design and implementation plan
 
 ## Existing system and reuse
 

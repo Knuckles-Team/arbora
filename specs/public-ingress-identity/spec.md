@@ -1,6 +1,6 @@
-# GRAPHOS-INGRESS — Portable public ingress and identity cutover
+# ARBORA-INGRESS — Portable public ingress and identity cutover
 
-**Owner:** arbora. **Requirement ID:** GRAPHOS-INGRESS-R001 (Arbora deployment-consumer partition). **Delivery:** SPECIFIED. **Acceptance:** NOT_AUDITED.
+**Owner:** arbora. **Requirement ID:** ARBORA-INGRESS-R001 (Arbora deployment-consumer partition). **Delivery:** SPECIFIED. **Acceptance:** NOT_AUDITED.
 
 ## Purpose and user stories
 
@@ -31,13 +31,13 @@ Out of scope: provisioning a specific DNS provider, certificate authority, OIDC 
 
 | Requirement | Requirement ID | Design | Tests | Acceptance evidence |
 |---|---|---|---|---|
-| IN-01 | GRAPHOS-INGRESS-R001 | [Profile contract](plan.md#profile-and-interface-contract) | T-IN-01, T-IN-02 | exact commit, rendered fixture |
-| IN-02 | GRAPHOS-INGRESS-R001 | [Request path](plan.md#request-and-deployment-path) | T-IN-03, T-IN-04 | integration trace |
-| IN-03 | GRAPHOS-INGRESS-R001 | [Security](plan.md#security-and-failure-handling) | T-IN-05, T-IN-06 | denied-request receipts |
-| IN-04 | GRAPHOS-INGRESS-R001 | [Cutover](plan.md#cutover-and-rollback) | T-IN-07, T-IN-08 | time-boxed served probe |
-| IN-05 | GRAPHOS-INGRESS-R001 | [Portable proof](plan.md#quality-and-release-gates) | T-IN-09 | public CI link |
-| IN-06 | GRAPHOS-INGRESS-R001 | [Observability](plan.md#security-and-failure-handling) | T-IN-10 | redacted served receipt |
+| IN-01 | ARBORA-INGRESS-R001 | [Profile contract](plan.md#profile-and-interface-contract) | T-IN-01, T-IN-02 | exact commit, rendered fixture |
+| IN-02 | ARBORA-INGRESS-R001 | [Request path](plan.md#request-and-deployment-path) | T-IN-03, T-IN-04 | integration trace |
+| IN-03 | ARBORA-INGRESS-R001 | [Security](plan.md#security-and-failure-handling) | T-IN-05, T-IN-06 | denied-request receipts |
+| IN-04 | ARBORA-INGRESS-R001 | [Cutover](plan.md#cutover-and-rollback) | T-IN-07, T-IN-08 | time-boxed served probe |
+| IN-05 | ARBORA-INGRESS-R001 | [Portable proof](plan.md#quality-and-release-gates) | T-IN-09 | public CI link |
+| IN-06 | ARBORA-INGRESS-R001 | [Observability](plan.md#security-and-failure-handling) | T-IN-10 | redacted served receipt |
 
-This spec represents only the Arbora consumer contract of GRAPHOS-INGRESS-R001. Infrastructure manifests and provider registrations have their own owners and must satisfy this contract before a hosted cutover can be accepted.
+This spec represents only the Arbora consumer contract of ARBORA-INGRESS-R001. Infrastructure manifests and provider registrations have their own owners and must satisfy this contract before a hosted cutover can be accepted.
 
 Requirement IDs are defined in [requirements.md](requirements.md); delivery state per ID is in `status.json`.

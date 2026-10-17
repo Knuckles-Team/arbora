@@ -1,4 +1,4 @@
-# GRAPHOS-A2A — tasks
+# ARBORA-A2A — tasks
 
 ## A2A task and approval projection
 Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](plan.md) and [tests](test-spec.md).
@@ -11,19 +11,19 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
 - [ ] Execute all positive, negative, replay, cross-tenant, cancellation, policy-change and restart tests in [test-spec.md](test-spec.md).
 - [ ] Run clean-checkout language, scanner, package and ephemeral served gates; record exact revision evidence and only then enable approval/mark accepted.
 - [x] Register `tasks/resubscribe` on the A2A method table as a typed,
-  validated, explicitly fail-closed stub (GRAPHOS-A2A-R001.1, split from
-  GRAPHOS-A2A-R001): `A2AStreamingUnavailable` is raised and returned as a
+  validated, explicitly fail-closed stub (ARBORA-A2A-R001.1, split from
+  ARBORA-A2A-R001): `A2AStreamingUnavailable` is raised and returned as a
   distinct JSON-RPC error (`-32010`, HTTP 501) rather than "method not
   found", proven by
   `tests/a2a/test_application.py::test_json_rpc_refuses_resubscribe_until_streaming_is_implemented`.
   The bounded, restart-safe event-cursor backing for real durable streaming
   remains open under the parent requirement.
-- [x] Prove no duplicate skill/prompt harvest path (GRAPHOS-A2A-R003): a
+- [x] Prove no duplicate skill/prompt harvest path (ARBORA-A2A-R003): a
   static source-level absence check confirms arbora never imports
   agent-utilities' legacy `agent_utilities.mcp.multiplexer` /
   `shared_multiplexer`, and that the skill/prompt body-harvest functions
   are defined in exactly one module, `arbora/fleet/multiplexer.py`.
-- [ ] **Prerequisite for GRAPHOS-A2A-R002** (owner repo: agent-utilities):
+- [ ] **Prerequisite for ARBORA-A2A-R002** (owner repo: agent-utilities):
   `WorkItemA2AAuthority._enqueue`/`dispatch` in `arbora/a2a/authority.py`
   refuse every request carrying `decision.selected_tools` because AU's
   dispatch carrier (`agent_utilities.orchestration.agent_dispatch.
@@ -32,106 +32,106 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
   must add that carried, enforced tool-subset field before R002's
   caller-filtered exposure can be implemented here.
 - [x] Add a release-canary check proving the promoted environment serves the
-  FastMCP major it declares (GRAPHOS-A2A-R004). Semantic/composition proof
+  FastMCP major it declares (ARBORA-A2A-R004). Semantic/composition proof
   that FastMCP 4 runs end to end remains open.
 
 ### Decomposition children (tracked)
 
-- [ ] **GRAPHOS-A2A-R002.1:** Fail-closed refusal when assembly selects a tool subset
-- [ ] **GRAPHOS-A2A-R002.2:** Caller-filtered tool-subset enforcement at dispatch
-- [ ] **GRAPHOS-A2A-R002.2.1:** Remaining scope of GRAPHOS-A2A-R002.2 (slice .1): Caller-filtered tool-subset enforcement at dispatch
-- [ ] **GRAPHOS-A2A-R005:** Durable, fail-closed A2A approval exchange for tool calls
-- [ ] **GRAPHOS-A2A-R005.1:** Fail-closed `arbora.plan/confirm` stub on the A2A method table
-- [ ] **GRAPHOS-A2A-R005.2:** Full signed human approval chain and input-required task emission
-- [ ] **GRAPHOS-A2A-R005.2.1:** Remaining scope of GRAPHOS-A2A-R005.2 (slice .1): Full signed human approval chain and input-required task emission
-- [ ] **GRAPHOS-A2A-R006:** Operation invoke and plan-confirm methods for A2A
-- [ ] **GRAPHOS-A2A-R006.1:** Register `arbora.op/invoke` and `arbora.plan/confirm`, fail-closed
-- [ ] **GRAPHOS-A2A-R006.2:** Bridge `arbora.op/invoke` to the shared hosted-operation registry
-- [x] **GRAPHOS-A2A-R002.1:** Fail-closed refusal when assembly selects a tool subset
-- [ ] **GRAPHOS-A2A-R002.2:** Caller-filtered tool-subset enforcement at dispatch
-- [ ] **GRAPHOS-A2A-R002.2.1:** Remaining scope of GRAPHOS-A2A-R002.2 (slice .1): Caller-filtered tool-subset enforcement at dispatch
-- [ ] **GRAPHOS-A2A-R005:** Durable, fail-closed A2A approval exchange for tool calls
-- [x] **GRAPHOS-A2A-R005.1:** Fail-closed arbora.plan/confirm stub on the A2A method table
-- [ ] **GRAPHOS-A2A-R005.2:** Full signed human approval chain and input-required task emission
-- [ ] **GRAPHOS-A2A-R005.2.1:** Remaining scope of GRAPHOS-A2A-R005.2 (slice .1): Full signed human approval chain and input-required task emission
-- [ ] **GRAPHOS-A2A-R006:** Operation invoke and plan-confirm methods for A2A
-- [x] **GRAPHOS-A2A-R006.1:** Register arbora.op/invoke and arbora.plan/confirm, fail-closed
-- [ ] **GRAPHOS-A2A-R006.2:** Bridge arbora.op/invoke to the shared hosted-operation registry
-- [ ] **GRAPHOS-A2A-R006.2.1:** Retain and refresh the request-bound authenticated caller in Arbora; prove credential, tenant and actor refusals.
+- [ ] **ARBORA-A2A-R002.1:** Fail-closed refusal when assembly selects a tool subset
+- [ ] **ARBORA-A2A-R002.2:** Caller-filtered tool-subset enforcement at dispatch
+- [ ] **ARBORA-A2A-R002.2.1:** Remaining scope of ARBORA-A2A-R002.2 (slice .1): Caller-filtered tool-subset enforcement at dispatch
+- [ ] **ARBORA-A2A-R005:** Durable, fail-closed A2A approval exchange for tool calls
+- [ ] **ARBORA-A2A-R005.1:** Fail-closed `arbora.plan/confirm` stub on the A2A method table
+- [ ] **ARBORA-A2A-R005.2:** Full signed human approval chain and input-required task emission
+- [ ] **ARBORA-A2A-R005.2.1:** Remaining scope of ARBORA-A2A-R005.2 (slice .1): Full signed human approval chain and input-required task emission
+- [ ] **ARBORA-A2A-R006:** Operation invoke and plan-confirm methods for A2A
+- [ ] **ARBORA-A2A-R006.1:** Register `arbora.op/invoke` and `arbora.plan/confirm`, fail-closed
+- [ ] **ARBORA-A2A-R006.2:** Bridge `arbora.op/invoke` to the shared hosted-operation registry
+- [x] **ARBORA-A2A-R002.1:** Fail-closed refusal when assembly selects a tool subset
+- [ ] **ARBORA-A2A-R002.2:** Caller-filtered tool-subset enforcement at dispatch
+- [ ] **ARBORA-A2A-R002.2.1:** Remaining scope of ARBORA-A2A-R002.2 (slice .1): Caller-filtered tool-subset enforcement at dispatch
+- [ ] **ARBORA-A2A-R005:** Durable, fail-closed A2A approval exchange for tool calls
+- [x] **ARBORA-A2A-R005.1:** Fail-closed arbora.plan/confirm stub on the A2A method table
+- [ ] **ARBORA-A2A-R005.2:** Full signed human approval chain and input-required task emission
+- [ ] **ARBORA-A2A-R005.2.1:** Remaining scope of ARBORA-A2A-R005.2 (slice .1): Full signed human approval chain and input-required task emission
+- [ ] **ARBORA-A2A-R006:** Operation invoke and plan-confirm methods for A2A
+- [x] **ARBORA-A2A-R006.1:** Register arbora.op/invoke and arbora.plan/confirm, fail-closed
+- [ ] **ARBORA-A2A-R006.2:** Bridge arbora.op/invoke to the shared hosted-operation registry
+- [ ] **ARBORA-A2A-R006.2.1:** Retain and refresh the request-bound authenticated caller in Arbora; prove credential, tenant and actor refusals.
 
 ## A2A streaming, push notifications and transition-history projection
-Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED** except `GRAPHOS-A2A-R009.1`. See [design](plan.md) and [tests](test-spec.md).
+Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED** except `ARBORA-A2A-R009.1`. See [design](plan.md) and [tests](test-spec.md).
 
-- [x] Define `A2AAgentCapabilities.from_wired_authorities` plus `A2AStreamingAuthority`/`A2APushNotificationAuthority`/`A2ATransitionHistoryAuthority` runtime-checkable protocols in `arbora/a2a/models.py` (`GRAPHOS-A2A-R009`, `GRAPHOS-A2A-R009.1`). Default capabilities stay all-false; a non-conforming authority object raises `TypeError` instead of being silently accepted. Proven by `tests/a2a/test_models.py`.
-- [ ] Wait for `GRAPHOS-A2A` (context-budget subset) to land; do not implement the streaming cursor or push-trigger machinery ahead of it (`GRAPHOS-A2A-R014`).
-- [ ] Implement `message/stream` reading AU's task-event reader through its public port; the owner requirement and export remain unassigned; no local event-log copy (`GRAPHOS-A2A-R010`).
-- [ ] Implement `tasks/get` history read-through to epistemic-graph's durable kernel (`EG-DURABLE-KERNEL`) (`GRAPHOS-A2A-R011`).
-- [ ] Add the `A2ATransitionHistoryUnavailable` typed refusal for an absent/unreachable history authority (`GRAPHOS-A2A-R012`).
-  - [x] `GRAPHOS-A2A-R012.1`: landed inventory only — the protocol exists, the error type does not. Proven by `tests/a2a/test_models.py`.
-  - [ ] `GRAPHOS-A2A-R012.2`: add the `A2ATransitionHistoryUnavailable` error type to `arbora/a2a/authority.py`.
-  - [ ] `GRAPHOS-A2A-R012.3`: wire `tasks/get`'s refusal (`A2A-HT06`); blocked on `GRAPHOS-A2A` (`GRAPHOS-A2A-R014`).
-- [ ] Implement push-notification delivery over epistemic-graph's durable outbox with dead-letter reporting (`GRAPHOS-A2A-R013`).
-- [ ] Wire real authorities into composition only after each path is proven. Run all test-spec rows. Record exact revision evidence before flipping any capability field `true` and marking its requirement accepted (`GRAPHOS-A2A-R015`).
+- [x] Define `A2AAgentCapabilities.from_wired_authorities` plus `A2AStreamingAuthority`/`A2APushNotificationAuthority`/`A2ATransitionHistoryAuthority` runtime-checkable protocols in `arbora/a2a/models.py` (`ARBORA-A2A-R009`, `ARBORA-A2A-R009.1`). Default capabilities stay all-false; a non-conforming authority object raises `TypeError` instead of being silently accepted. Proven by `tests/a2a/test_models.py`.
+- [ ] Wait for `ARBORA-A2A` (context-budget subset) to land; do not implement the streaming cursor or push-trigger machinery ahead of it (`ARBORA-A2A-R014`).
+- [ ] Implement `message/stream` reading AU's task-event reader through its public port; the owner requirement and export remain unassigned; no local event-log copy (`ARBORA-A2A-R010`).
+- [ ] Implement `tasks/get` history read-through to epistemic-graph's durable kernel (`EG-DURABLE-KERNEL`) (`ARBORA-A2A-R011`).
+- [ ] Add the `A2ATransitionHistoryUnavailable` typed refusal for an absent/unreachable history authority (`ARBORA-A2A-R012`).
+  - [x] `ARBORA-A2A-R012.1`: landed inventory only — the protocol exists, the error type does not. Proven by `tests/a2a/test_models.py`.
+  - [ ] `ARBORA-A2A-R012.2`: add the `A2ATransitionHistoryUnavailable` error type to `arbora/a2a/authority.py`.
+  - [ ] `ARBORA-A2A-R012.3`: wire `tasks/get`'s refusal (`A2A-HT06`); blocked on `ARBORA-A2A` (`ARBORA-A2A-R014`).
+- [ ] Implement push-notification delivery over epistemic-graph's durable outbox with dead-letter reporting (`ARBORA-A2A-R013`).
+- [ ] Wire real authorities into composition only after each path is proven. Run all test-spec rows. Record exact revision evidence before flipping any capability field `true` and marking its requirement accepted (`ARBORA-A2A-R015`).
 
 ## A2A context-budget tool-subset admission
 Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](plan.md) and [tests](test-spec.md).
 
 - [x] Open this spec, linking EG's `AgentAssemble` owner (`EG-DECISION-ENGINE-001`/`EG-DECISION-ENGINE-R036`) and AU's signed envelope owner (`AU-CONTROL-R035`) by stable ID.
 - [x] Open the AU owner row this door depends on: `AU-CONTROL-R035`, the signed `AgentTurnEnvelope`'s missing allowed-tool-subset field (agent-utilities PR #135, merged).
-- [x] Add the typed `ToolSubsetAdmissionRequest`/`ToolSubsetAdmissionDecision` models (`arbora/a2a/admission.py`), reusing the existing `_WireModel` base and `A2AContextBudget` (`GRAPHOS-A2A-R016`).
-- [x] Add `admit_tool_subset`, returning today's exact fail-closed `EG_ASSEMBLE_UNAVAILABLE` refusal (`GRAPHOS-A2A-R016.1`).
-- [x] Add the refusal unit test (`tests/a2a/test_admission.py`) proving the exact fields of that result (`GRAPHOS-A2A-R016.1`, `GRAPHOS-A2A-R019`).
-- [ ] **Prerequisite (owner repo: epistemic-graph):** `AgentAssemble` must stop returning unavailable before `admit_tool_subset` can derive a real subset (`GRAPHOS-A2A-R017`).
-- [ ] **Prerequisite (owner repo: agent-utilities, opened as `AU-CONTROL-R035`):** the signed `AgentTurnEnvelope` must carry and let a harness enforce an allowed-tool-subset field before an admitted decision can be cryptographically carried (`GRAPHOS-A2A-R018`).
+- [x] Add the typed `ToolSubsetAdmissionRequest`/`ToolSubsetAdmissionDecision` models (`arbora/a2a/admission.py`), reusing the existing `_WireModel` base and `A2AContextBudget` (`ARBORA-A2A-R016`).
+- [x] Add `admit_tool_subset`, returning today's exact fail-closed `EG_ASSEMBLE_UNAVAILABLE` refusal (`ARBORA-A2A-R016.1`).
+- [x] Add the refusal unit test (`tests/a2a/test_admission.py`) proving the exact fields of that result (`ARBORA-A2A-R016.1`, `ARBORA-A2A-R019`).
+- [ ] **Prerequisite (owner repo: epistemic-graph):** `AgentAssemble` must stop returning unavailable before `admit_tool_subset` can derive a real subset (`ARBORA-A2A-R017`).
+- [ ] **Prerequisite (owner repo: agent-utilities, opened as `AU-CONTROL-R035`):** the signed `AgentTurnEnvelope` must carry and let a harness enforce an allowed-tool-subset field before an admitted decision can be cryptographically carried (`ARBORA-A2A-R018`).
 - [ ] Once both prerequisites land: wire `admit_tool_subset` to the real EG assembly client and the signed envelope, add the admitted-path and partial/stale-refusal tests in [test-spec.md](test-spec.md), and replace `OrchestratorA2ARouter`'s and `WorkItemA2AAuthority`'s inline `A2AAssemblyUnavailable` raises with a call to this one admission authority.
-- [ ] **GRAPHOS-A2A-R016.2:** Admission request carries model profile and task class. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R016.3:** Admission decision carries the committed harness answer. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R016.4:** Refusal enum gains the harness reasons. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R016.5:** Routing decision carries model profile and task class. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R017.1:** Engine decision port for HarnessConfig. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R017.2:** Admission is async and calls the decider once. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R017.3:** Priority comes from the principal class. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R017.4:** Missing budget refuses. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R017.5:** Wire admission into the send path. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R017.6:** End-to-end admitted task. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R018.1:** Envelope carries harness_config. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R018.2:** Envelope without the field refuses. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R020.1:** Abstention refuses and records the named default. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R020.2:** Unavailable, stale, or partial answers refuse. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R019.1:** Provenance names the harness decision. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R014.1:** Card advertises no harness capability before it works. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R005.3:** Model. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R005.4:** Behavior. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R005.5:** Wiring. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R005.6:** Refusal. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R005.7:** Evidence. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R005.8:** Hot-path proof. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R006.3:** Model. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R006.4:** Behavior. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R006.5:** Wiring. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R006.6:** Refusal. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R006.7:** Evidence. Touches the file named in the requirement row.
-- [ ] **GRAPHOS-A2A-R006.8:** Hot-path proof. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R016.2:** Admission request carries model profile and task class. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R016.3:** Admission decision carries the committed harness answer. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R016.4:** Refusal enum gains the harness reasons. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R016.5:** Routing decision carries model profile and task class. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R017.1:** Engine decision port for HarnessConfig. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R017.2:** Admission is async and calls the decider once. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R017.3:** Priority comes from the principal class. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R017.4:** Missing budget refuses. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R017.5:** Wire admission into the send path. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R017.6:** End-to-end admitted task. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R018.1:** Envelope carries harness_config. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R018.2:** Envelope without the field refuses. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R020.1:** Abstention refuses and records the named default. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R020.2:** Unavailable, stale, or partial answers refuse. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R019.1:** Provenance names the harness decision. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R014.1:** Card advertises no harness capability before it works. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R005.3:** Model. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R005.4:** Behavior. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R005.5:** Wiring. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R005.6:** Refusal. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R005.7:** Evidence. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R005.8:** Hot-path proof. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R006.3:** Model. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R006.4:** Behavior. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R006.5:** Wiring. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R006.6:** Refusal. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R006.7:** Evidence. Touches the file named in the requirement row.
+- [ ] **ARBORA-A2A-R006.8:** Hot-path proof. Touches the file named in the requirement row.
 
-## Critique-gated output release (GRAPHOS-A2A-R022)
+## Critique-gated output release (ARBORA-A2A-R022)
 
 - [ ] Bind the AU checklist/critique producer and EG exact-output verdict contract. Preserve R006.2.1 and R006.5 caller/signed-authority prerequisites. Keep routing separate from critique acceptance; then add the proposed release tests.
 
 ## Additional owner requirements
 
-- [ ] `GRAPHOS-A2A-R001.2`: Deliver every requirement in requirements.md.
+- [ ] `ARBORA-A2A-R001.2`: Deliver every requirement in requirements.md.
 
 - [ ] Complete R006.2 by composing shared InvokeServices into the A2A facade and proving operation-specific authorization parity.
 - [ ] Bind R001/R010 to an owner-published durable task/tenant event-reader contract before implementing stream and resubscribe.
 
-- [ ] **GRAPHOS-A2A-R006.2.1.1:** Wire request-bound caller retention and refresh, then pass its HTTP acceptance and refusal matrix.
-- [ ] **GRAPHOS-A2A-R006.2.2:** Compose shared InvokeServices through the production A2A entry point and prove operation-specific parity.
+- [ ] **ARBORA-A2A-R006.2.1.1:** Wire request-bound caller retention and refresh, then pass its HTTP acceptance and refusal matrix.
+- [ ] **ARBORA-A2A-R006.2.2:** Compose shared InvokeServices through the production A2A entry point and prove operation-specific parity.
 
-- [x] **GRAPHOS-A2A-R005.2.2:** Validate detached signatures against server-owned pending-call evidence. Keep confirmation refused until the live issuer, durable pending binding and atomic grant/plan consumption are qualified.
+- [x] **ARBORA-A2A-R005.2.2:** Validate detached signatures against server-owned pending-call evidence. Keep confirmation refused until the live issuer, durable pending binding and atomic grant/plan consumption are qualified.
 
-- [ ] GRAPHOS-A2A-R010.1 — Wire the opt-in terminal read through shared task service and current session; validate producer bindings and explicit unavailable results.
+- [ ] ARBORA-A2A-R010.1 — Wire the opt-in terminal read through shared task service and current session; validate producer bindings and explicit unavailable results.
 
-- [ ] **GRAPHOS-A2A-R001.3:** Back the served agent with the durable task store and serve caller-filtered `tasks/list`. Consumer: `TUI-RUNTIME-R012.3`.
-- [ ] **GRAPHOS-A2A-R001.4:** Refuse `message/stream` by type on the served agent, then serve turn events. Consumer: `TUI-RUNTIME-R012.1`.
-- [ ] **GRAPHOS-A2A-R001.5:** Accept bounded file parts on the served agent. Consumer: `TUI-RUNTIME-R012.5`.
-- [ ] **GRAPHOS-A2A-R016.6:** Honour an allowed caller model preference and serve `models.list`. Consumer: `TUI-RUNTIME-R012.2`.
+- [ ] **ARBORA-A2A-R001.3:** Back the served agent with the durable task store and serve caller-filtered `tasks/list`. Consumer: `TUI-RUNTIME-R012.3`.
+- [ ] **ARBORA-A2A-R001.4:** Refuse `message/stream` by type on the served agent, then serve turn events. Consumer: `TUI-RUNTIME-R012.1`.
+- [ ] **ARBORA-A2A-R001.5:** Accept bounded file parts on the served agent. Consumer: `TUI-RUNTIME-R012.5`.
+- [ ] **ARBORA-A2A-R016.6:** Honour an allowed caller model preference and serve `models.list`. Consumer: `TUI-RUNTIME-R012.2`.

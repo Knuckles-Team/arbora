@@ -50,7 +50,7 @@ CI may run this probe with local containers/processes and synthetic credentials.
 
 No execution result is recorded in this template.
 
-## GRAPHOS-FLEET-R030
+## ARBORA-FLEET-R030
 
 `tests/fleet/test_fleet_access_contracts.py` uses a fake pack with one `ontology://` entry and a fake parser.
 - Onboarding registers one source connection and one mapping per contract.
@@ -67,33 +67,33 @@ The plan defines fixtures, authority boundaries, matrix coverage and measured ca
 
 | Requirement | Served proof |
 |---|---|
-| `GRAPHOS-FLEET-R034.7` | Typed fixtures reject missing bindings and dependency cycles. |
-| `GRAPHOS-FLEET-R034.8` | A stale dependency or one denied tool prevents all workflow calls. |
-| `GRAPHOS-FLEET-R034.9` | Served agents.run reaches the admission gate before AU execution. |
-| `GRAPHOS-FLEET-R034.10` | Unknown tools, cyclic dependencies and revoked grants produce no new effects. |
-| `GRAPHOS-FLEET-R034.11` | Independent trace reads prove atomic-before-composed ordering and exact tool binding. |
-| `GRAPHOS-FLEET-R034.12` | Observe the configured model request and zero denied backend calls. |
-| `GRAPHOS-FLEET-R024.4` | Typed nested request/result round trips preserve every allocation boundary. |
-| `GRAPHOS-FLEET-R024.5` | Observe at least 200 concurrent instances and independent durable results under the declared budget. |
-| `GRAPHOS-FLEET-R024.6` | The served operation reaches the approved SDK provisioner and returned-result consumer. |
-| `GRAPHOS-FLEET-R024.7` | No denied allocation occurs; partial failures retain actual resource identities for cleanup. |
-| `GRAPHOS-FLEET-R024.8` | Counters reconcile with independent runtime and durable result observations. |
-| `GRAPHOS-FLEET-R024.9` | Mock allocations and smaller extrapolated runs cannot establish capacity. |
-| `GRAPHOS-FLEET-R002.3` | Fixtures parse nested definitions and reject missing versions or unknown required fields. |
-| `GRAPHOS-FLEET-R002.4` | Compatible updates publish atomically; incompatible evolution leaves the prior generation active. |
-| `GRAPHOS-FLEET-R002.5` | Real served catalog probes supply both schema versions and verified producer receipts. |
-| `GRAPHOS-FLEET-R002.6` | Missing or contradictory producer evidence never permits a generation swap. |
-| `GRAPHOS-FLEET-R002.7` | Receipt reads identify exactly which definition each admitted workflow consumed. |
-| `GRAPHOS-FLEET-R002.8` | MCP and REST expose the same complete admitted generation. |
-| `GRAPHOS-FLEET-R027.1` | All phases retain one tenant, run identity and exact skill digest. |
-| `GRAPHOS-FLEET-R027.2` | Independent graph and agent observations agree before a successful completion claim. |
-| `GRAPHOS-FLEET-R027.3` | One served request traverses discovery, distribution, provisioning and ingested skill consumption. |
-| `GRAPHOS-FLEET-R027.4` | Denied discovery returns no protected identity; no unauthorized agent or tool effect occurs. |
-| `GRAPHOS-FLEET-R027.5` | The evidence proves graph identity consumption rather than matching copied skill text. |
-| `GRAPHOS-FLEET-R027.6` | Separate helper tests cannot satisfy integrated acceptance. |
-| `GRAPHOS-FLEET-R019.1` | The served integrated tests cover this consumer dependency. |
-| `GRAPHOS-FLEET-R021.1` | The served integrated tests cover this consumer dependency. |
-| `GRAPHOS-FLEET-R005.3` | The served integrated tests cover this consumer dependency. |
+| `ARBORA-FLEET-R034.7` | Typed fixtures reject missing bindings and dependency cycles. |
+| `ARBORA-FLEET-R034.8` | A stale dependency or one denied tool prevents all workflow calls. |
+| `ARBORA-FLEET-R034.9` | Served agents.run reaches the admission gate before AU execution. |
+| `ARBORA-FLEET-R034.10` | Unknown tools, cyclic dependencies and revoked grants produce no new effects. |
+| `ARBORA-FLEET-R034.11` | Independent trace reads prove atomic-before-composed ordering and exact tool binding. |
+| `ARBORA-FLEET-R034.12` | Observe the configured model request and zero denied backend calls. |
+| `ARBORA-FLEET-R024.4` | Typed nested request/result round trips preserve every allocation boundary. |
+| `ARBORA-FLEET-R024.5` | Observe at least 200 concurrent instances and independent durable results under the declared budget. |
+| `ARBORA-FLEET-R024.6` | The served operation reaches the approved SDK provisioner and returned-result consumer. |
+| `ARBORA-FLEET-R024.7` | No denied allocation occurs; partial failures retain actual resource identities for cleanup. |
+| `ARBORA-FLEET-R024.8` | Counters reconcile with independent runtime and durable result observations. |
+| `ARBORA-FLEET-R024.9` | Mock allocations and smaller extrapolated runs cannot establish capacity. |
+| `ARBORA-FLEET-R002.3` | Fixtures parse nested definitions and reject missing versions or unknown required fields. |
+| `ARBORA-FLEET-R002.4` | Compatible updates publish atomically; incompatible evolution leaves the prior generation active. |
+| `ARBORA-FLEET-R002.5` | Real served catalog probes supply both schema versions and verified producer receipts. |
+| `ARBORA-FLEET-R002.6` | Missing or contradictory producer evidence never permits a generation swap. |
+| `ARBORA-FLEET-R002.7` | Receipt reads identify exactly which definition each admitted workflow consumed. |
+| `ARBORA-FLEET-R002.8` | MCP and REST expose the same complete admitted generation. |
+| `ARBORA-FLEET-R027.1` | All phases retain one tenant, run identity and exact skill digest. |
+| `ARBORA-FLEET-R027.2` | Independent graph and agent observations agree before a successful completion claim. |
+| `ARBORA-FLEET-R027.3` | One served request traverses discovery, distribution, provisioning and ingested skill consumption. |
+| `ARBORA-FLEET-R027.4` | Denied discovery returns no protected identity; no unauthorized agent or tool effect occurs. |
+| `ARBORA-FLEET-R027.5` | The evidence proves graph identity consumption rather than matching copied skill text. |
+| `ARBORA-FLEET-R027.6` | Separate helper tests cannot satisfy integrated acceptance. |
+| `ARBORA-FLEET-R019.1` | The served integrated tests cover this consumer dependency. |
+| `ARBORA-FLEET-R021.1` | The served integrated tests cover this consumer dependency. |
+| `ARBORA-FLEET-R005.3` | The served integrated tests cover this consumer dependency. |
 
 ## Original parent acceptance coverage
 
@@ -102,15 +102,15 @@ Existing tests are reuse targets, not new evidence for these child IDs. The resi
 
 | Parent obligation | Child coverage | Existing test seam and required proof |
 |---|---|---|
-| R019 discover/load/call ordering and disabled filtering. | GRAPHOS-FLEET-R019.2 | Extend tests/api/test_policy_eunomia.py with served phase coverage and engine effect counters. |
-| R019 three deployment defaults and off warning. | GRAPHOS-FLEET-R019.2 | Reuse test_profile_defaults; assert the deployment doctor warning for disabled policy. |
-| R019 enabled denial and unreachable service. | GRAPHOS-FLEET-R019.2 | Reuse test_enabled_denial_and_unavailable_are_distinct and test_missing_pdp_fails_closed; exercise each served phase. |
-| R021 exact scopes with no broad-admin substitute, including stdio. | GRAPHOS-FLEET-R021.2 | Serve both stdio and network clients; allow exact scopes and refuse each broader substitute. |
-| R021 unknown native tool denial and active MCP policy middleware. | GRAPHOS-FLEET-R021.2 | Extend tests/mcp_server/test_graph_tool_surface.py; assert denied visibility and dispatch with middleware active. |
-| R027 configured-server selection and fresh-store register/capture/attest/import. | GRAPHOS-FLEET-R027.7 | Reuse tests/fleet/test_fleet_onboarding.py config filtering and fresh-store multi-server cases. |
-| R027 idempotency, admitted servers, per-server failure, registry outage and missing credential. | GRAPHOS-FLEET-R027.7 | Reuse the same onboarding test suite and assert healthy-server progress and no duplicate imports. |
-| R027 complete CLI pass and non-zero exit on any failure. | GRAPHOS-FLEET-R027.7 | Reuse test_cli_runs_one_full_pass_and_fails_on_any_server through the actual command. |
-| R027 background boot with non-blocking, non-fatal failure. | GRAPHOS-FLEET-R027.7 | Extend test_a_failing_pass_never_escapes_the_boot_thread with live serving and concurrent MCP requests. |
+| R019 discover/load/call ordering and disabled filtering. | ARBORA-FLEET-R019.2 | Extend tests/api/test_policy_eunomia.py with served phase coverage and engine effect counters. |
+| R019 three deployment defaults and off warning. | ARBORA-FLEET-R019.2 | Reuse test_profile_defaults; assert the deployment doctor warning for disabled policy. |
+| R019 enabled denial and unreachable service. | ARBORA-FLEET-R019.2 | Reuse test_enabled_denial_and_unavailable_are_distinct and test_missing_pdp_fails_closed; exercise each served phase. |
+| R021 exact scopes with no broad-admin substitute, including stdio. | ARBORA-FLEET-R021.2 | Serve both stdio and network clients; allow exact scopes and refuse each broader substitute. |
+| R021 unknown native tool denial and active MCP policy middleware. | ARBORA-FLEET-R021.2 | Extend tests/mcp_server/test_graph_tool_surface.py; assert denied visibility and dispatch with middleware active. |
+| R027 configured-server selection and fresh-store register/capture/attest/import. | ARBORA-FLEET-R027.7 | Reuse tests/fleet/test_fleet_onboarding.py config filtering and fresh-store multi-server cases. |
+| R027 idempotency, admitted servers, per-server failure, registry outage and missing credential. | ARBORA-FLEET-R027.7 | Reuse the same onboarding test suite and assert healthy-server progress and no duplicate imports. |
+| R027 complete CLI pass and non-zero exit on any failure. | ARBORA-FLEET-R027.7 | Reuse test_cli_runs_one_full_pass_and_fails_on_any_server through the actual command. |
+| R027 background boot with non-blocking, non-fatal failure. | ARBORA-FLEET-R027.7 | Extend test_a_failing_pass_never_escapes_the_boot_thread with live serving and concurrent MCP requests. |
 
 Record exact revisions and bound test IDs separately for these residual children.
 A successful certification, workflow or provisioning test cannot substitute for original policy, scope or onboarding coverage.
@@ -123,13 +123,13 @@ Each row includes positive and negative assertions; all original R003 and R003.1
 
 | Requirement | Proposed function | Required proof |
 |---|---|---|
-| GRAPHOS-FLEET-R003.4 | `test_original_fleet_restart` | Restart and fault each admitted writable profile. Observe original receipts without duplicate effects and no partial protocol state. Missing previews and mismatched keys must prevent writes. |
-| GRAPHOS-FLEET-R003.5 | `test_request_binding` | Round-trip seeded byte fixtures through HTTP and MCP. Compare canonical projections and refuse each independently altered field. |
-| GRAPHOS-FLEET-R003.6 | `test_trusted_composition` | A served request reaches the real admitted connector once. Unbound configuration and direct native bypass attempts reach it zero times. |
-| GRAPHOS-FLEET-R003.7 | `test_commit_binding` | One exact approved preview commits. Each binding change, invalid lease and missing required step-up produces zero provider mutations. |
-| GRAPHOS-FLEET-R003.8 | `test_actual_effect_readback` | Serve preview, approval and commit against a disposable provider. Independently read its revision and durable graph attempt. An echoed flag or unbound receipt must refuse success. |
-| GRAPHOS-FLEET-R003.9 | `test_refusal_parity` | Observe zero denied mutations on both surfaces. Inject readback failure after an effect and observe uncertainty without another write. |
-| GRAPHOS-FLEET-R003.10 | `test_restart_replay` | Race identical calls and crash at each effect boundary. Restart both processes and prove one effect or a truthful unresolved result. |
+| ARBORA-FLEET-R003.4 | `test_original_fleet_restart` | Restart and fault each admitted writable profile. Observe original receipts without duplicate effects and no partial protocol state. Missing previews and mismatched keys must prevent writes. |
+| ARBORA-FLEET-R003.5 | `test_request_binding` | Round-trip seeded byte fixtures through HTTP and MCP. Compare canonical projections and refuse each independently altered field. |
+| ARBORA-FLEET-R003.6 | `test_trusted_composition` | A served request reaches the real admitted connector once. Unbound configuration and direct native bypass attempts reach it zero times. |
+| ARBORA-FLEET-R003.7 | `test_commit_binding` | One exact approved preview commits. Each binding change, invalid lease and missing required step-up produces zero provider mutations. |
+| ARBORA-FLEET-R003.8 | `test_actual_effect_readback` | Serve preview, approval and commit against a disposable provider. Independently read its revision and durable graph attempt. An echoed flag or unbound receipt must refuse success. |
+| ARBORA-FLEET-R003.9 | `test_refusal_parity` | Observe zero denied mutations on both surfaces. Inject readback failure after an effect and observe uncertainty without another write. |
+| ARBORA-FLEET-R003.10 | `test_restart_replay` | Race identical calls and crash at each effect boundary. Restart both processes and prove one effect or a truthful unresolved result. |
 
 
 ### Original parent coverage
@@ -188,7 +188,7 @@ Audit and receipt failures after mutation preserve uncertainty and known referen
 Record request, plan, audit and SDK receipt associations with actual provider-call counters and fresh durable reads.
 
 
-## OpenAPI operation schema preflight (`GRAPHOS-FLEET-R035`)
+## OpenAPI operation schema preflight (`ARBORA-FLEET-R035`)
 
 Run `uv run --no-sync pytest tests/fleet/test_multiplexer_schema_disclosure.py` against the frozen Arbora lock and merged public SDK source. The fixture cases prove ordered reconstruction and compare both selected schemas before invocation. Stale manifests, missing fragments, absent output schema and mismatched action must refuse before the operation call. Changed catalog, denied session, OAuth-session mismatch and uncertain-write replay must also refuse before that call. These tests use fake child sessions and do not prove live provider publication, production credentials, deployment, or provider effects. Report focused consumer evidence separately from any later live/release evidence.
 
@@ -196,54 +196,54 @@ Cover non-prefixed OAuth aliases with stale disclosures and ordinary tools witho
 
 ## Additional owner requirements
 
-- `GRAPHOS-FLEET-R024.10`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-FLEET-R024.11`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-FLEET-R002.9`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-FLEET-R034.13`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `GRAPHOS-FLEET-R034.14`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-FLEET-R024.10`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-FLEET-R024.11`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-FLEET-R002.9`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-FLEET-R034.13`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-FLEET-R034.14`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 
-## GRAPHOS-FLEET-R036 acceptance
-
-| Case | Row | Proving test and observation |
-|---|---|---|
-
-| Model | `GRAPHOS-FLEET-R036.1` | `tests/fleet/test_connect_contract.py::test_contract_record_round_trips`: A round trip keeps every field and refuses a blank connector. |
-
-| Behavior | `GRAPHOS-FLEET-R036.2` | `tests/fleet/test_connect_contract.py::test_only_changed_resources_import`: A second connect with one changed resource sends one import. |
-
-| Wiring | `GRAPHOS-FLEET-R036.3` | `tests/fleet/test_connect_contract.py::test_list_changed_reaches_onboard`: A served connect and a `list_changed` event both reach `onboard`. |
-
-| Refusal | `GRAPHOS-FLEET-R036.4` | `tests/fleet/test_connect_contract.py::test_contract_refusals`: Each case records its reason, and a rejected connector serves no tools. |
-
-| Evidence | `GRAPHOS-FLEET-R036.5` | `tests/fleet/test_connect_contract.py::test_status_reports_contract`: The status read shows the digests and the engine receipts. |
-
-| Hot-path proof | `GRAPHOS-FLEET-R036.6` | `tests/fleet/test_connect_contract_served.py::test_first_connect_and_list_changed_reimport_only_changed`: The first connect imports all resources, and the change imports only the seed graph. |
-
-
-Hot-path proof for `GRAPHOS-FLEET-R036`: `tests/fleet/test_connect_contract_served.py::test_first_connect_and_list_changed_reimport_only_changed`.
-
-## GRAPHOS-FLEET-R037 acceptance
+## ARBORA-FLEET-R036 acceptance
 
 | Case | Row | Proving test and observation |
 |---|---|---|
 
-| Model | `GRAPHOS-FLEET-R037.1` | `tests/fleet/test_job_loads.py::test_job_load_round_trips`: A round trip keeps every field and refuses an empty request. |
+| Model | `ARBORA-FLEET-R036.1` | `tests/fleet/test_connect_contract.py::test_contract_record_round_trips`: A round trip keeps every field and refuses a blank connector. |
 
-| Behavior | `GRAPHOS-FLEET-R037.2` | `tests/fleet/test_job_loads.py::test_loads_only_answered_tools`: A 300-tool fleet loads only the answered tools. |
+| Behavior | `ARBORA-FLEET-R036.2` | `tests/fleet/test_connect_contract.py::test_only_changed_resources_import`: A second connect with one changed resource sends one import. |
 
-| Wiring | `GRAPHOS-FLEET-R037.3` | `tests/fleet/test_job_loads.py::test_find_job_reaches_load_tools`: A served `find` with a job reaches `load_tools`. |
+| Wiring | `ARBORA-FLEET-R036.3` | `tests/fleet/test_connect_contract.py::test_list_changed_reaches_onboard`: A served connect and a `list_changed` event both reach `onboard`. |
 
-| Refusal | `GRAPHOS-FLEET-R037.4` | `tests/fleet/test_job_loads.py::test_job_load_refusals`: Each case loads no tool and returns its reason. |
+| Refusal | `ARBORA-FLEET-R036.4` | `tests/fleet/test_connect_contract.py::test_contract_refusals`: Each case records its reason, and a rejected connector serves no tools. |
 
-| Evidence | `GRAPHOS-FLEET-R037.5` | `tests/fleet/test_job_loads.py::test_result_cites_decision`: Each loaded tool names its decision premise. |
+| Evidence | `ARBORA-FLEET-R036.5` | `tests/fleet/test_connect_contract.py::test_status_reports_contract`: The status read shows the digests and the engine receipts. |
 
-| Hot-path proof | `GRAPHOS-FLEET-R037.6` | `tests/fleet/test_job_loads_served.py::test_find_job_lazily_loads_answered_tools`: The session lists only the answered search tools, and `tools/list_changed` fires once. |
+| Hot-path proof | `ARBORA-FLEET-R036.6` | `tests/fleet/test_connect_contract_served.py::test_first_connect_and_list_changed_reimport_only_changed`: The first connect imports all resources, and the change imports only the seed graph. |
 
 
-Hot-path proof for `GRAPHOS-FLEET-R037`: `tests/fleet/test_job_loads_served.py::test_find_job_lazily_loads_answered_tools`.
+Hot-path proof for `ARBORA-FLEET-R036`: `tests/fleet/test_connect_contract_served.py::test_first_connect_and_list_changed_reimport_only_changed`.
 
-## GRAPHOS-FLEET-R038 acceptance
+## ARBORA-FLEET-R037 acceptance
 
 | Case | Row | Proving test and observation |
 |---|---|---|
-| Evidence | `GRAPHOS-FLEET-R038` | `tests/fleet/test_protocol_roles.py::test_one_implementation_per_role`: An import-graph test fails when a arbora module implements a connector transport or connector server scaffolding. |
+
+| Model | `ARBORA-FLEET-R037.1` | `tests/fleet/test_job_loads.py::test_job_load_round_trips`: A round trip keeps every field and refuses an empty request. |
+
+| Behavior | `ARBORA-FLEET-R037.2` | `tests/fleet/test_job_loads.py::test_loads_only_answered_tools`: A 300-tool fleet loads only the answered tools. |
+
+| Wiring | `ARBORA-FLEET-R037.3` | `tests/fleet/test_job_loads.py::test_find_job_reaches_load_tools`: A served `find` with a job reaches `load_tools`. |
+
+| Refusal | `ARBORA-FLEET-R037.4` | `tests/fleet/test_job_loads.py::test_job_load_refusals`: Each case loads no tool and returns its reason. |
+
+| Evidence | `ARBORA-FLEET-R037.5` | `tests/fleet/test_job_loads.py::test_result_cites_decision`: Each loaded tool names its decision premise. |
+
+| Hot-path proof | `ARBORA-FLEET-R037.6` | `tests/fleet/test_job_loads_served.py::test_find_job_lazily_loads_answered_tools`: The session lists only the answered search tools, and `tools/list_changed` fires once. |
+
+
+Hot-path proof for `ARBORA-FLEET-R037`: `tests/fleet/test_job_loads_served.py::test_find_job_lazily_loads_answered_tools`.
+
+## ARBORA-FLEET-R038 acceptance
+
+| Case | Row | Proving test and observation |
+|---|---|---|
+| Evidence | `ARBORA-FLEET-R038` | `tests/fleet/test_protocol_roles.py::test_one_implementation_per_role`: An import-graph test fails when a arbora module implements a connector transport or connector server scaffolding. |

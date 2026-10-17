@@ -1,4 +1,4 @@
-# GRAPHOS-A2A — A2A projection, streaming, history and tool-subset admission
+# ARBORA-A2A — A2A projection, streaming, history and tool-subset admission
 
 ## A2A task and approval projection
 ### Status legend
@@ -25,12 +25,12 @@ Arbora owns the transport, authenticated projection, operation adapter and serve
 
 | IDs | Arbora obligation | Delivery |
 |---|---|---|
-| GRAPHOS-A2A-R001, GRAPHOS-A2A-R008 | First-party native A2A facade over public engine and agent ports | NOT ACCEPTED |
-| GRAPHOS-A2A-R002 | Authenticated inbound routing and caller-filtered assembly/tool subset | NOT ACCEPTED |
-| GRAPHOS-A2A-R005 | Durable human tool-call approval exchange and fail-closed activation | NOT ACCEPTED |
-| GRAPHOS-A2A-R006 | `arbora.op/invoke`, `arbora.plan/confirm`, shared operation registry and error projection | NOT ACCEPTED |
-| GRAPHOS-A2A-R003, GRAPHOS-A2A-R004 | No fleet skill/prompt harvest duplicate; FastMCP 4 served bridge and one owner loop | NOT ACCEPTED |
-| GRAPHOS-A2A-R007 | Pre-effect audit reservation and outcome linkage for approved effects | NOT ACCEPTED |
+| ARBORA-A2A-R001, ARBORA-A2A-R008 | First-party native A2A facade over public engine and agent ports | NOT ACCEPTED |
+| ARBORA-A2A-R002 | Authenticated inbound routing and caller-filtered assembly/tool subset | NOT ACCEPTED |
+| ARBORA-A2A-R005 | Durable human tool-call approval exchange and fail-closed activation | NOT ACCEPTED |
+| ARBORA-A2A-R006 | `arbora.op/invoke`, `arbora.plan/confirm`, shared operation registry and error projection | NOT ACCEPTED |
+| ARBORA-A2A-R003, ARBORA-A2A-R004 | No fleet skill/prompt harvest duplicate; FastMCP 4 served bridge and one owner loop | NOT ACCEPTED |
+| ARBORA-A2A-R007 | Pre-effect audit reservation and outcome linkage for approved effects | NOT ACCEPTED |
 
 ### Acceptance
 
@@ -44,13 +44,13 @@ Requirement IDs are defined in [requirements.md](requirements.md); delivery stat
 ## A2A streaming, push notifications and transition-history projection
 ### Status legend
 
-Status terms (`READY FOR IMPLEMENTATION`/`BUILDING`/`SOURCE LANDED`/`ACCEPTED`) and acceptance evidence rules are defined once by [GRAPHOS-A2A](#status-legend); this spec's `ACCEPTED` additionally requires the streaming/push/history served-path evidence in [test-spec.md](test-spec.md).
+Status terms (`READY FOR IMPLEMENTATION`/`BUILDING`/`SOURCE LANDED`/`ACCEPTED`) and acceptance evidence rules are defined once by [ARBORA-A2A](#status-legend); this spec's `ACCEPTED` additionally requires the streaming/push/history served-path evidence in [test-spec.md](test-spec.md).
 
 ### User stories and scope
 
 An A2A caller needs to know, truthfully, whether this Arbora deployment can stream task updates, deliver push notifications on task state changes, and answer "what happened to this task and when" — before it relies on any of those. Arbora is the process and public door: it may advertise a capability on the Agent Card only when it can actually serve it. AU is the expected harness-facing task-event producer owner. Its durable task/tenant reader contract and public export remain unassigned. EG owns durable transition history. Arbora must project these owner authorities after their required contracts exist. It must not become a second authority.
 
-Depends on [`GRAPHOS-A2A`](spec.md) (the context-budget subset of the A2A task projection) landing first: this spec's streaming and push projections reuse the same bounded event-cursor and context-budget machinery GRAPHOS-A2A introduces, rather than inventing a second one.
+Depends on [`ARBORA-A2A`](spec.md) (the context-budget subset of the A2A task projection) landing first: this spec's streaming and push projections reuse the same bounded event-cursor and context-budget machinery ARBORA-A2A introduces, rather than inventing a second one.
 
 Arbora owns the transport, authenticated Agent Card projection and typed refusal. [agent-utilities](https://github.com/Knuckles-Team/agent-utilities) owns the harness-facing task-event producer. Its exact durable task/tenant reader requirement and public export remain unassigned. The required events cover launch, step, tool, usage, artifact, receipt and terminal outcomes. [epistemic-graph](https://github.com/Knuckles-Team/epistemic-graph) (`EG-DURABLE-KERNEL`) owns the durable, append-only transition-history ledger this spec projects as `tasks/get` history. Arbora must not persist a second WorkItem event log, a second transition-history ledger, or synthesize history from in-process state when the durable authority is unavailable.
 
@@ -59,19 +59,19 @@ Arbora owns the transport, authenticated Agent Card projection and typed refusal
 - **A2A-H01 Advertise only what is wired.** The Agent Card's `capabilities.streaming`, `capabilities.pushNotifications`, and `capabilities.stateTransitionHistory` fields are each `true` only when a real durable authority object for that capability is wired into the running composition (`A2AStreamingAuthority`, `A2APushNotificationAuthority`, `A2ATransitionHistoryAuthority` per `arbora/a2a/models.py`), and `false` otherwise. No configuration flag, environment variable, or partial/mocked authority can force a field `true` on its own.
 - **A2A-H02 WorkItem stream projection, not a shadow log.** `message/stream` and push-notification delivery read directly from the required AU public task-event reader (owner requirement and export remain unassigned) for task status, step, and terminal-outcome updates. Arbora stores no independent copy of that event log; a projection gap (missing or stale event) is surfaced as a typed `UNAVAILABLE`, never backfilled from local state.
 - **A2A-H03 Transition history is read-through to epistemic-graph.** `tasks/get` with history requested reads the task's full state-transition ledger through to epistemic-graph's `EG-DURABLE-KERNEL` durable authority. Arbora performs no local reconstruction of history from recent events. The response is exactly what the durable ledger returns, or the refusal in A2A-H04.
-- **A2A-H04 Typed refusal when the durable history authority is absent.** When no `A2ATransitionHistoryAuthority` is wired, or the wired authority is unreachable, Arbora returns a distinct JSON-RPC error `A2ATransitionHistoryUnavailable` (reusing the `-3201x` block introduced by `GRAPHOS-A2A-R009.1`'s `-32010`) with a privacy-safe message; it never returns an empty history, a partial in-memory reconstruction, or a generic method-not-found.
+- **A2A-H04 Typed refusal when the durable history authority is absent.** When no `A2ATransitionHistoryAuthority` is wired, or the wired authority is unreachable, Arbora returns a distinct JSON-RPC error `A2ATransitionHistoryUnavailable` (reusing the `-3201x` block introduced by `ARBORA-A2A-R009.1`'s `-32010`) with a privacy-safe message; it never returns an empty history, a partial in-memory reconstruction, or a generic method-not-found.
 - **A2A-H05 Push notifications are best-effort over a durable outbox.** Push delivery is retried from epistemic-graph's durable outbox (`EG-DURABLE-KERNEL-R001` head-only retry/dead-letter semantics), never from an in-process queue that is lost on restart. A push target that repeatedly fails is dead-lettered and reported, not silently dropped.
-- **A2A-H06 No capability advertised before GRAPHOS-A2A context-budget lands.** Until `GRAPHOS-A2A`'s context-budget subset is on the default branch, the three capability fields in A2A-H01 stay fixed `false` regardless of any authority object passed in; the composition layer refuses to wire a real authority ahead of its dependency.
+- **A2A-H06 No capability advertised before ARBORA-A2A context-budget lands.** Until `ARBORA-A2A`'s context-budget subset is on the default branch, the three capability fields in A2A-H01 stay fixed `false` regardless of any authority object passed in; the composition layer refuses to wire a real authority ahead of its dependency.
 - **A2A-H07 Caller-visible card matches served behavior at every revision.** A contract test asserts that whichever subset of streaming/push/history is actually exercised by the integration fixture at the exact tested revision matches the Agent Card's advertised capability subset — no field is ever `true` while its serving path is absent, and no field is `false` while its serving path is demonstrably live.
 
 ### Trace coverage
 
 | IDs | Arbora obligation | Delivery |
 |---|---|---|
-| GRAPHOS-A2A-R009.1 (this repo, landed) | Typed capability-advertisement model refusing untruthful advertisement | LANDED (`R001.1` slice, this PR) |
+| ARBORA-A2A-R009.1 (this repo, landed) | Typed capability-advertisement model refusing untruthful advertisement | LANDED (`R001.1` slice, this PR) |
 | AU reader ID unassigned | Durable task/tenant event reader | BLOCKED — AU must publish its contract and export |
 | EG-DURABLE-KERNEL-R001, R028 (epistemic-graph) | Durable transition-history ledger and outbox retry/dead-letter this spec reads through to | EXTERNAL — see EG's `specs/durable-graph-kernel` |
-| GRAPHOS-A2A (this repo, dependency) | Context-budget subset this spec's streaming/push cursor machinery reuses | NOT LANDED — blocks A2A-H06 |
+| ARBORA-A2A (this repo, dependency) | Context-budget subset this spec's streaming/push cursor machinery reuses | NOT LANDED — blocks A2A-H06 |
 
 ### Acceptance
 
@@ -99,24 +99,24 @@ Arbora owns admission, refusal, and provenance at the door: given a request nami
 
 ### Requirements
 
-- **GRAPHOS-A2A-R016 Typed admission request/decision model.** Arbora defines a typed `ToolSubsetAdmissionRequest` (selected agent graph reference, caller context budget) and `ToolSubsetAdmissionDecision` (admitted flag, admitted tool subset, typed refusal reason, provenance) at the A2A door, independent of any specific upstream wiring. Split into `GRAPHOS-A2A-R016.1`, the model plus a refusal test proving today's exact fail-closed result, with the live EG/AU wiring remaining open under the parent.
-- **GRAPHOS-A2A-R017 Context-budget-bound subset sourced from EG assembly.** The admission door derives the admitted tool subset only from a committed epistemic-graph `AgentAssemble` answer (`EG-DECISION-ENGINE-R036`) covering the selected agent graph within the caller's context budget. While `AgentAssemble` returns unavailable, admission refuses closed with reason `EG_ASSEMBLE_UNAVAILABLE` and never derives a subset by local heuristic, prior cached result, or partial coverage.
-- **GRAPHOS-A2A-R018 Cryptographic enforcement via the signed AU envelope.** An admitted tool subset is carried only inside the signed AU `AgentTurnEnvelope`'s allowed-tool-subset field (`AU-CONTROL-R035`) so a harness enforces it at execution time rather than treating it as advisory. While that field does not exist in the signed envelope, admission refuses closed with reason `ENVELOPE_LACKS_ALLOWED_TOOL_SUBSET` even if an EG assembly answer exists, and never dispatches an unenforceable subset.
-- **GRAPHOS-A2A-R019 Fail-closed refusal with typed reason and provenance.** Every admission decision, admitted or refused, carries a stable machine-readable reason (for a refusal) or provenance reference (for an admission) sufficient to audit exactly which upstream answer authorized it. A request is never admitted on the basis of an absent, errored, or timed-out upstream answer.
-- **GRAPHOS-A2A-R020 No advisory, cached, or partial substitute.** The admission door never returns a tool subset that is advisory-only, drawn from a prior request's cached answer, or a partial/best-effort coverage of the selected agent graph. An incomplete upstream answer is a refusal, not a smaller admission.
-- **GRAPHOS-A2A-R021 Fresh checkout.** Contract and unit tests for the admission model and its refusal behavior run with published packages and no private network, sibling checkout, or live production identity provider, so an external PR reviewer can run them unmodified.
-- **GRAPHOS-A2A-R022 Critique-gated output release.** Require typed AU checklist/questions and an EG verdict bound to the exact output. Use held-item admission from `GRAPHOS-A2A-R006.3` through `.8` and verified-caller prerequisites from `GRAPHOS-A2A-R006.2.1` and `.5`. Keep the `_send_message` release gate separate from agent routing; routing cannot satisfy critique acceptance.
+- **ARBORA-A2A-R016 Typed admission request/decision model.** Arbora defines a typed `ToolSubsetAdmissionRequest` (selected agent graph reference, caller context budget) and `ToolSubsetAdmissionDecision` (admitted flag, admitted tool subset, typed refusal reason, provenance) at the A2A door, independent of any specific upstream wiring. Split into `ARBORA-A2A-R016.1`, the model plus a refusal test proving today's exact fail-closed result, with the live EG/AU wiring remaining open under the parent.
+- **ARBORA-A2A-R017 Context-budget-bound subset sourced from EG assembly.** The admission door derives the admitted tool subset only from a committed epistemic-graph `AgentAssemble` answer (`EG-DECISION-ENGINE-R036`) covering the selected agent graph within the caller's context budget. While `AgentAssemble` returns unavailable, admission refuses closed with reason `EG_ASSEMBLE_UNAVAILABLE` and never derives a subset by local heuristic, prior cached result, or partial coverage.
+- **ARBORA-A2A-R018 Cryptographic enforcement via the signed AU envelope.** An admitted tool subset is carried only inside the signed AU `AgentTurnEnvelope`'s allowed-tool-subset field (`AU-CONTROL-R035`) so a harness enforces it at execution time rather than treating it as advisory. While that field does not exist in the signed envelope, admission refuses closed with reason `ENVELOPE_LACKS_ALLOWED_TOOL_SUBSET` even if an EG assembly answer exists, and never dispatches an unenforceable subset.
+- **ARBORA-A2A-R019 Fail-closed refusal with typed reason and provenance.** Every admission decision, admitted or refused, carries a stable machine-readable reason (for a refusal) or provenance reference (for an admission) sufficient to audit exactly which upstream answer authorized it. A request is never admitted on the basis of an absent, errored, or timed-out upstream answer.
+- **ARBORA-A2A-R020 No advisory, cached, or partial substitute.** The admission door never returns a tool subset that is advisory-only, drawn from a prior request's cached answer, or a partial/best-effort coverage of the selected agent graph. An incomplete upstream answer is a refusal, not a smaller admission.
+- **ARBORA-A2A-R021 Fresh checkout.** Contract and unit tests for the admission model and its refusal behavior run with published packages and no private network, sibling checkout, or live production identity provider, so an external PR reviewer can run them unmodified.
+- **ARBORA-A2A-R022 Critique-gated output release.** Require typed AU checklist/questions and an EG verdict bound to the exact output. Use held-item admission from `ARBORA-A2A-R006.3` through `.8` and verified-caller prerequisites from `ARBORA-A2A-R006.2.1` and `.5`. Keep the `_send_message` release gate separate from agent routing; routing cannot satisfy critique acceptance.
 
 ### Trace coverage
 
 | IDs | Arbora obligation | Delivery |
 |---|---|---|
-| GRAPHOS-A2A-R016, GRAPHOS-A2A-R016.1 | Typed admission request/decision model and its fail-closed refusal test | SPECIFIED |
-| GRAPHOS-A2A-R017 | Context-budget-bound subset sourced only from committed EG `AgentAssemble` | SPECIFIED (blocked on EG-DECISION-ENGINE-R036) |
-| GRAPHOS-A2A-R018 | Enforcement via the signed AU envelope's allowed-tool-subset field | SPECIFIED (blocked on AU-CONTROL-R035) |
-| GRAPHOS-A2A-R019 | Typed, provenanced result for every decision | SPECIFIED |
-| GRAPHOS-A2A-R020 | No advisory/cached/partial substitute ever admitted | SPECIFIED |
-| GRAPHOS-A2A-R021 | Fresh-checkout contract proof | SPECIFIED |
+| ARBORA-A2A-R016, ARBORA-A2A-R016.1 | Typed admission request/decision model and its fail-closed refusal test | SPECIFIED |
+| ARBORA-A2A-R017 | Context-budget-bound subset sourced only from committed EG `AgentAssemble` | SPECIFIED (blocked on EG-DECISION-ENGINE-R036) |
+| ARBORA-A2A-R018 | Enforcement via the signed AU envelope's allowed-tool-subset field | SPECIFIED (blocked on AU-CONTROL-R035) |
+| ARBORA-A2A-R019 | Typed, provenanced result for every decision | SPECIFIED |
+| ARBORA-A2A-R020 | No advisory/cached/partial substitute ever admitted | SPECIFIED |
+| ARBORA-A2A-R021 | Fresh-checkout contract proof | SPECIFIED |
 
 ### Acceptance
 
@@ -129,7 +129,7 @@ Requirement IDs are defined in [requirements.md](requirements.md); delivery stat
 
 ## Additional owner requirements
 
-- `GRAPHOS-A2A-R001.2`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-A2A-R001.2`: Owner scope and complete acceptance are defined in requirements.md.
 
 ## Verified caller and event producer boundaries
 

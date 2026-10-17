@@ -1,8 +1,8 @@
-# GRAPHOS-ACP — Design and implementation plan
+# ARBORA-ACP — Design and implementation plan
 
 ## Existing system and reuse
 
-Arbora already has one principal/tenant/scope resolution path consumed by REST and MCP ([GRAPHOS-IDENTITY-001](../identity-access/spec.md)). ACP admission must call that same path rather than re-implement verification. `arbora.identity` is the existing owner of session and principal types. `arbora.gateway` is the existing owner of serving composition. No ACP session store exists yet; `R001.1` adds the smallest typed model and admission check, not a transport.
+Arbora already has one principal/tenant/scope resolution path consumed by REST and MCP ([ARBORA-IDENTITY-001](../identity-access/spec.md)). ACP admission must call that same path rather than re-implement verification. `arbora.identity` is the existing owner of session and principal types. `arbora.gateway` is the existing owner of serving composition. No ACP session store exists yet; `R001.1` adds the smallest typed model and admission check, not a transport.
 
 ## Admission and binding
 

@@ -1,11 +1,11 @@
-# GRAPHOS-FLEET — Fleet catalog, intent tools, and policy safe reload
+# ARBORA-FLEET — Fleet catalog, intent tools, and policy safe reload
 
-**Spec ID:** GRAPHOS-FLEET
+**Spec ID:** ARBORA-FLEET
 
 **Owner:** arbora
 
 This specification defines architecture and acceptance; it does not establish deployment or completed acceptance.
-**Scope IDs:** GRAPHOS-FLEET-R001, GRAPHOS-FLEET-R002, GRAPHOS-FLEET-R003, GRAPHOS-FLEET-R004, GRAPHOS-FLEET-R005, GRAPHOS-FLEET-R006, GRAPHOS-FLEET-R007, GRAPHOS-FLEET-R008, GRAPHOS-FLEET-R009, GRAPHOS-FLEET-R010, GRAPHOS-FLEET-R011, GRAPHOS-FLEET-R012, GRAPHOS-FLEET-R013, GRAPHOS-FLEET-R014, GRAPHOS-FLEET-R015, GRAPHOS-FLEET-R016, GRAPHOS-FLEET-R017, GRAPHOS-FLEET-R018, GRAPHOS-FLEET-R019, GRAPHOS-FLEET-R020, GRAPHOS-FLEET-R021, GRAPHOS-FLEET-R022, PA-12, GRAPHOS-FLEET-R023, GRAPHOS-FLEET-R024, GRAPHOS-FLEET-R025, GRAPHOS-FLEET-R029, GRAPHOS-FLEET-R026, GRAPHOS-FLEET-R027, GRAPHOS-FLEET-R028, GRAPHOS-FLEET-R030, GRAPHOS-FLEET-R031, GRAPHOS-FLEET-R032, GRAPHOS-FLEET-R033, GRAPHOS-FLEET-R034, GRAPHOS-FLEET-R035.
+**Scope IDs:** ARBORA-FLEET-R001, ARBORA-FLEET-R002, ARBORA-FLEET-R003, ARBORA-FLEET-R004, ARBORA-FLEET-R005, ARBORA-FLEET-R006, ARBORA-FLEET-R007, ARBORA-FLEET-R008, ARBORA-FLEET-R009, ARBORA-FLEET-R010, ARBORA-FLEET-R011, ARBORA-FLEET-R012, ARBORA-FLEET-R013, ARBORA-FLEET-R014, ARBORA-FLEET-R015, ARBORA-FLEET-R016, ARBORA-FLEET-R017, ARBORA-FLEET-R018, ARBORA-FLEET-R019, ARBORA-FLEET-R020, ARBORA-FLEET-R021, ARBORA-FLEET-R022, PA-12, ARBORA-FLEET-R023, ARBORA-FLEET-R024, ARBORA-FLEET-R025, ARBORA-FLEET-R029, ARBORA-FLEET-R026, ARBORA-FLEET-R027, ARBORA-FLEET-R028, ARBORA-FLEET-R030, ARBORA-FLEET-R031, ARBORA-FLEET-R032, ARBORA-FLEET-R033, ARBORA-FLEET-R034, ARBORA-FLEET-R035.
 
 ## Outcome
 
@@ -36,13 +36,13 @@ Record unresolved design decisions and any dependency, owner, and retry conditio
 
 | Slice | IDs | Acceptance boundary |
 |---|---|---|
-| Registry and generated binding | GRAPHOS-FLEET-R011, GRAPHOS-FLEET-R012, GRAPHOS-FLEET-R016 | Exact engine coverage, stable digest, artifact drift checks |
-| Intent and discovery | GRAPHOS-FLEET-R013, GRAPHOS-FLEET-R014, GRAPHOS-FLEET-R005, GRAPHOS-FLEET-R006, GRAPHOS-FLEET-R007 | Ten resident tools, typed schemas, no legacy harvest, FastMCP 4 protocol proof |
-| Connector and fleet item inputs | GRAPHOS-FLEET-R001, GRAPHOS-FLEET-R002, GRAPHOS-FLEET-R003, GRAPHOS-FLEET-R004, GRAPHOS-FLEET-R008 | Real schema pins, pack annotations, typed write-back, sanitized feed metadata |
-| Fleet invocation and safety | GRAPHOS-FLEET-R015, GRAPHOS-FLEET-R018, GRAPHOS-FLEET-R019, GRAPHOS-FLEET-R020, GRAPHOS-FLEET-R021, GRAPHOS-FLEET-R035 | Native load/call, exact scopes, policy, schema-bound child preflight, no bypass, parity |
-| Orchestration correctness | GRAPHOS-FLEET-R009, GRAPHOS-FLEET-R010 | Atomic admission, correct generated assembly agents |
-| Reload and acceptance | GRAPHOS-FLEET-R022, PA-12, GRAPHOS-FLEET-R017 | Atomic generation swap, re-ingestion, negative cases, replica/served proof |
-| Fleet onboarding | GRAPHOS-FLEET-R026, GRAPHOS-FLEET-R027, GRAPHOS-FLEET-R028, GRAPHOS-FLEET-R030 | Per-server admission, attested import of each child catalog, lease renewal, unapproved access mappings |
+| Registry and generated binding | ARBORA-FLEET-R011, ARBORA-FLEET-R012, ARBORA-FLEET-R016 | Exact engine coverage, stable digest, artifact drift checks |
+| Intent and discovery | ARBORA-FLEET-R013, ARBORA-FLEET-R014, ARBORA-FLEET-R005, ARBORA-FLEET-R006, ARBORA-FLEET-R007 | Ten resident tools, typed schemas, no legacy harvest, FastMCP 4 protocol proof |
+| Connector and fleet item inputs | ARBORA-FLEET-R001, ARBORA-FLEET-R002, ARBORA-FLEET-R003, ARBORA-FLEET-R004, ARBORA-FLEET-R008 | Real schema pins, pack annotations, typed write-back, sanitized feed metadata |
+| Fleet invocation and safety | ARBORA-FLEET-R015, ARBORA-FLEET-R018, ARBORA-FLEET-R019, ARBORA-FLEET-R020, ARBORA-FLEET-R021, ARBORA-FLEET-R035 | Native load/call, exact scopes, policy, schema-bound child preflight, no bypass, parity |
+| Orchestration correctness | ARBORA-FLEET-R009, ARBORA-FLEET-R010 | Atomic admission, correct generated assembly agents |
+| Reload and acceptance | ARBORA-FLEET-R022, PA-12, ARBORA-FLEET-R017 | Atomic generation swap, re-ingestion, negative cases, replica/served proof |
+| Fleet onboarding | ARBORA-FLEET-R026, ARBORA-FLEET-R027, ARBORA-FLEET-R028, ARBORA-FLEET-R030 | Per-server admission, attested import of each child catalog, lease renewal, unapproved access mappings |
 
 The engine owns its durable records and method contract. The connector SDK owns pack and connector certification. Arbora owns serving composition, registry projection, fleet policy, session loading, and reload. A contributor may replace a missing external service with the fixtures and local fake adapters described in [test-spec.md](test-spec.md).
 
@@ -88,7 +88,7 @@ All existing R003 children remain required; repository-only proof cannot replace
 Arbora authenticates, binds trusted configuration, confirms, routes and projects evidence through its existing shared invoke pipeline.
 The SDK and admitted connector own conditional provider mutation, immutable revisions, independent readback and source reconciliation.
 EG retains canonical change sets, approval authority and durable receipts. Ingestion and prompt exports grant no write authority.
-GRAPHOS-OPS-R009 remains a reference to existing authority requirements; this extension changes no approval or identity architecture.
+ARBORA-OPS-R009 remains a reference to existing authority requirements; this extension changes no approval or identity architecture.
 
 The SDK producer definition merged at `0c6c53dd63fe2a8f9b2ac3568b6d0e8f2c602734`.
 That definition does not establish an available production repository adapter or completed runtime acceptance.
@@ -96,8 +96,8 @@ The current Arbora preview helpers do not perform this served journey. The requi
 
 ## Additional owner requirements
 
-- `GRAPHOS-FLEET-R024.10`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-FLEET-R024.11`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-FLEET-R002.9`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-FLEET-R034.13`: Owner scope and complete acceptance are defined in requirements.md.
-- `GRAPHOS-FLEET-R034.14`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-FLEET-R024.10`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-FLEET-R024.11`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-FLEET-R002.9`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-FLEET-R034.13`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-FLEET-R034.14`: Owner scope and complete acceptance are defined in requirements.md.

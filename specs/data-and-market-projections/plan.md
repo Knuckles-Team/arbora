@@ -1,4 +1,4 @@
-# GRAPHOS-DATA-MARKET — architecture and implementation design
+# ARBORA-DATA-MARKET — architecture and implementation design
 
 ## Ownership and reuse inventory
 
@@ -137,7 +137,7 @@ real fix or compare it with a documented existing baseline. Never suppress a
 finding to make a gate pass. Record exact commands, revisions, and results in
 the spec evidence before marking `ACCEPTED`.
 
-## Confirmed order and position changes (GRAPHOS-DATA-MARKET-R007)
+## Confirmed order and position changes (ARBORA-DATA-MARKET-R007)
 
 Data flow: authenticated REST/MCP call -> plan confirmation -> admitted connector -> SDK proof verification and governed apply -> durable effect receipt.
 Existing code: `_effect` at arbora/api/invoke/pipeline.py:218 binds the plan at line 230.
@@ -158,12 +158,12 @@ Replays resolve the same bound durable receipt; uncertain effects enter existing
 The producer's explicit dependency gaps still block runtime delivery after owners publish these definitions.
 
 Decision: reuse the shared plan/confirm and governed effect path. Reject a finance-only approval path or local replay store.
-Cross-repository rows: SDK-GOVERNED-WRITEBACK-R001.1 through R001.6 and R004; GRAPHOS-DATA-MARKET-R003; GRAPHOS-OPS-R017.2.
+Cross-repository rows: SDK-GOVERNED-WRITEBACK-R001.1 through R001.6 and R004; ARBORA-DATA-MARKET-R003; ARBORA-OPS-R017.2.
 
 
 ## Immutable intent and separate execution proof
 
-This contract is shared by SDK-GOVERNED-WRITEBACK-R001 and GRAPHOS-DATA-MARKET-R007. All new wiring remains SPECIFIED.
+This contract is shared by SDK-GOVERNED-WRITEBACK-R001 and ARBORA-DATA-MARKET-R007. All new wiring remains SPECIFIED.
 `WalletBusinessIntent` is a closed JSON object with these exact required keys:
 `schema_version`, `operation_id`, `connector_id`, `account_id`, `wallet_id`, `network_id`, `mode`, `action`,
 `destination`, `asset_id`, `amount`, `business_terms`, `change_set_id`, `idempotency_key`.
@@ -220,7 +220,7 @@ Until envelope parsing, durable association and lifecycle wiring exist for both 
 SDK maps unavailable binding to `verification_unavailable`; mismatched intent or proof bindings cannot become verification success.
 
 <!-- spec-definition-patch:eg66-reads -->
-## Structured marketplace reads (GRAPHOS-DATA-MARKET-R003.1–R003.6)
+## Structured marketplace reads (ARBORA-DATA-MARKET-R003.1–R003.6)
 
 The registry IDs are `markets.list`, `markets.search`, `markets.get`,
 `events.list`, `events.search`, `events.get`, `orders.list`, `orders.search`,
@@ -236,7 +236,7 @@ R010 response envelope.
 `FinanceReadPortV1` is the new Arbora-owned upstream adapter contract in
 `arbora/finance/markets.py`. The existing `MarketProvider.market_read` and
 `MarketReadRequest` cover one symbol price only; they cannot provide these nine
-resource reads. Bind the new port as `finance_read_port` in the composed `services` object. Every typed request carries the already-resolved tenant and account internally. Client parameters never select either identity. No provider port or registered operation currently implements this contract. The EG scope catalog also lacks `finance:read`. Do not admit or serve the operations until EG adds the scope and a provider exposes the capability. This specification assigns no external producer requirement ID. `GRAPHOS-DATA-MARKET-R003.6` defines the missing Arbora port and registration boundary. The existing owner links are `GRAPHOS-OPS-R010` (envelope), `GRAPHOS-OPS-R017.1` (subject/account authority), and `GRAPHOS-OPS-R017.2` (separate paper-trade subject ownership).
+resource reads. Bind the new port as `finance_read_port` in the composed `services` object. Every typed request carries the already-resolved tenant and account internally. Client parameters never select either identity. No provider port or registered operation currently implements this contract. The EG scope catalog also lacks `finance:read`. Do not admit or serve the operations until EG adds the scope and a provider exposes the capability. This specification assigns no external producer requirement ID. `ARBORA-DATA-MARKET-R003.6` defines the missing Arbora port and registration boundary. The existing owner links are `ARBORA-OPS-R010` (envelope), `ARBORA-OPS-R017.1` (subject/account authority), and `ARBORA-OPS-R017.2` (separate paper-trade subject ownership).
 
 ### Request contract
 

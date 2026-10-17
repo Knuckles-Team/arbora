@@ -28,7 +28,7 @@ The invocation order is: resolve and allowed surface. Strict params including au
 
 `POST /api/v1/ops/{op_id}` accepts the operation's JSON schema; `Idempotency-Key` is required for non-natural write ops. `GET /api/v1/registry` is caller-filtered and returns a digest ETag. `GET /api/v1/ops` and OpenAPI expose only public schema metadata; sensitive discovery is filtered per caller. Resource routes, including identity and fleet catalog paths, are generated from `HttpShape` and use the same handler. `Arbora-Plan-Ref` resumes a plan. HTTP preview returns 428 with `CONFIRMATION_REQUIRED` or `STEP_UP_REQUIRED`. MCP returns the same envelope in tool result. `meta.registry_digest` and `meta.api_version` are mandatory.
 
-The current MCP surface is GRAPHOS-FLEET-R029: six intent tools plus two Apps launchers. `find` accepts `op` or natural-language `intent`; exact operation IDs and typed params are required before effect. Verb ceilings are enforced (`ask/find/why` read, `write` write, `act` operational effects, `manage` admin). Discovery returns authorized schema descriptors. A bounded cache and tenant/policy-partitioned outcome ranking may improve suggestions. They must never turn fuzzy text into an unconfirmed mutation. Fleet discovery and status use `find`, invocation uses `act`, and mounts/releases use `manage` (GRAPHOS-FLEET-R029). Reuse GRAPHOS-FLEET-R011/R013 registry/discovery machinery and GRAPHOS-OPS-R007/R011/R012; add only missing operation wiring and no duplicate registry or disclosure rollup. Native child forwarding calls `invoke("fleet.call", ...)`; no transport calls bypass it. The child call uses the caller's delegated credential or a declared service-execution rule with the same deputy checks. `ToolAnnotations` classify read/destructive effects; unannotated means write; a reviewed manifest can tighten to admin.
+The current MCP surface is ARBORA-FLEET-R029: six intent tools plus two Apps launchers. `find` accepts `op` or natural-language `intent`; exact operation IDs and typed params are required before effect. Verb ceilings are enforced (`ask/find/why` read, `write` write, `act` operational effects, `manage` admin). Discovery returns authorized schema descriptors. A bounded cache and tenant/policy-partitioned outcome ranking may improve suggestions. They must never turn fuzzy text into an unconfirmed mutation. Fleet discovery and status use `find`, invocation uses `act`, and mounts/releases use `manage` (ARBORA-FLEET-R029). Reuse ARBORA-FLEET-R011/R013 registry/discovery machinery and ARBORA-OPS-R007/R011/R012; add only missing operation wiring and no duplicate registry or disclosure rollup. Native child forwarding calls `invoke("fleet.call", ...)`; no transport calls bypass it. The child call uses the caller's delegated credential or a declared service-execution rule with the same deputy checks. `ToolAnnotations` classify read/destructive effects; unannotated means write; a reviewed manifest can tighten to admin.
 
 Scopes are exact. `mcp:discover` and `mcp:delegate` do not imply each other; `mcp:admin` is not a super-scope. `finance:read`, `fleet:read/control`, `loops:read/control`, `ops:read/admin` and every operation scope must exist in the public engine registry. `EUNOMIA_TYPE=off` still enforces scopes; enabled PDP failure returns `POLICY_UNAVAILABLE`. Decisions cache at most 30 seconds by principal, revision, item, action; admin/destructive are uncached. A revision invalidates loaded visibility and sends list-change notifications. The enabled/disabled mode behavior is testable with an in-process fixture PDP.
 
@@ -57,7 +57,7 @@ The retirement inventory is a checked artifact produced from the existing host r
 
 ## Gateway carry-over: dashboard, Live Artifacts, widget
 
-Cross-repo IDs: AU-BOUNDARY-R001.2, AU-BOUNDARY-R001.3, AU-BOUNDARY-R001.7 (agent-utilities deletions); GRAPHOS-HOST-R005. Provenance: agent-utilities commits 0eb67c99c (dashboard router), 902f906ca (Live Artifacts router), 7717d2e62 (genius_agent widget).
+Cross-repo IDs: AU-BOUNDARY-R001.2, AU-BOUNDARY-R001.3, AU-BOUNDARY-R001.7 (agent-utilities deletions); ARBORA-HOST-R005. Provenance: agent-utilities commits 0eb67c99c (dashboard router), 902f906ca (Live Artifacts router), 7717d2e62 (genius_agent widget).
 
 Deleted dashboard router (prefix `/api/dashboard`, read capability on every route except `/health`; write capability on mutations; capabilities gateway:read, gateway:write, gateway:admin, admin; API-key callers unrestricted):
 - GET `/layout` and PUT `/layout`: read and persist the dashboard layout (shared YAML, reads always go back to disk).
@@ -117,7 +117,7 @@ Compared `git show 0eb67c99c^:agent_utilities/gateway/api.py` (328 lines) with `
 | POST /hydrate | write | none / hydration result dict | 403, 500 no engine, 500 sanitized | DIFFERS: same (row R001.7) |
 | GET /hydration-status | read | none / status dict | 403 | DIFFERS: same (row R001.7) |
 
-No route is missing. The capability resolver still imports internal agent-utilities modules core.config and security.identity. This dependency difference belongs to R001.9. Decision: use the engine client session and source-sync methods required by GRAPHOS-HOST-R002 for shard, hydration, and active-engine state. Do not add another agent-utilities public API export. Row R001.6 first tests whether the installed client exposes these methods. If not, block that row on the engine client owner. Keep present imports until then.
+No route is missing. The capability resolver still imports internal agent-utilities modules core.config and security.identity. This dependency difference belongs to R001.9. Decision: use the engine client session and source-sync methods required by ARBORA-HOST-R002 for shard, hydration, and active-engine state. Do not add another agent-utilities public API export. Row R001.6 first tests whether the installed client exposes these methods. If not, block that row on the engine client owner. Keep present imports until then.
 
 #### D3 Live Artifacts authentication (DECIDED; not blocked)
 
@@ -133,13 +133,13 @@ Proposed agent-utilities row (orchestrator adds it; new file `agent_utilities/ap
 
 > `AU-BOUNDARY-R013.<n>` **Export the Live Artifact store, models and refresh service.** Re-export `LiveArtifact`, `Provenance`, `BoundedJSONError`, `validate_bounded_json`, `LiveArtifactStore`, `get_live_artifact_store`, `RefreshService`, `RefreshResult`, `DataSource` and `kg_source_resolver` from `agent_utilities.knowledge_graph.live_artifacts` through `agent_utilities.api.live_artifacts`; delete the dead `install_kg_artifact_source`. Verification: an agent-utilities test imports each name from `agent_utilities.api` and the layout fence still passes.
 
-Because the AU resolver already re-runs `source_query`, GRAPHOS-OPS-R040.8 wires `kg_source_resolver` instead of re-implementing it (no parallel function). The bounded-JSON limits (depth 8, 100 keys, 500 items, 16 KiB string, 256 KiB total) stay in the AU validator. The arbora request model does not copy them.
+Because the AU resolver already re-runs `source_query`, ARBORA-OPS-R040.8 wires `kg_source_resolver` instead of re-implementing it (no parallel function). The bounded-JSON limits (depth 8, 100 keys, 500 items, 16 KiB string, 256 KiB total) stay in the AU validator. The arbora request model does not copy them.
 
 ## Run read operations
 
 ### Model and owner boundaries
 
-`GRAPHOS-OPS-R021.4.1` through `.6` define the producer contract for both clients.
+`ARBORA-OPS-R021.4.1` through `.6` define the producer contract for both clients.
 The `runs` module, models, adapter and registry entries do not exist in current main.
 Arbora must authenticate, route and project reads. It must not collect counters, select configuration or compute aggregates.
 
@@ -185,7 +185,7 @@ Any `run_count` must come from the engine for the same filter and grouping, neve
 
 ### Current-plan read boundary
 
-`GRAPHOS-OPS-R021.4.5` must expose `current_plan` as a read-only projection with explicit availability.
+`ARBORA-OPS-R021.4.5` must expose `current_plan` as a read-only projection with explicit availability.
 A present snapshot must contain `run_id`, a producer revision, observation time, and ordered `items`.
 Items preserve AU `PlanItem.text` and status: `pending`, `in_progress`, or `done`.
 An empty available item list differs from an unavailable snapshot.
@@ -204,14 +204,14 @@ Clients must offer no plan mutation control. This read contract does not move ha
 
 ### Wiring and evidence
 
-REST `POST /api/v1/ops/{op_id}` and MCP must enter the existing invoke pipeline under `GRAPHOS-OPS-R009`.
+REST `POST /api/v1/ops/{op_id}` and MCP must enter the existing invoke pipeline under `ARBORA-OPS-R009`.
 `handle_runs_get` and `handle_runs_metrics` must resolve `run_trace_reader` through `bound_service`.
 `arbora/api/ops/retrieval.py:81` supplies the existing service-binding pattern.
-`arbora/api/ops/registry_factory.py` supplies registration; `GRAPHOS-OPS-R025` owns generated artifacts.
+`arbora/api/ops/registry_factory.py` supplies registration; `ARBORA-OPS-R025` owns generated artifacts.
 Planned tests must enter those served surfaces, verify authority propagation, and observe the engine result or refusal.
 A protocol import or mocked handler alone must not count as served evidence.
 
-## GRAPHOS-OPS-R042 content screening and redaction
+## ARBORA-OPS-R042 content screening and redaction
 
 Data flow: POST route (arbora/api/http/routes.py:127) → `invoke` (arbora/api/invoke/pipeline.py:810) → screen → effect → redactor → response and trace.
 
@@ -226,7 +226,7 @@ Cross-repository: engine memory-write refusal, owner prefix `EG`, contract name 
 ### References
 
 - no-arXiv: AI Agent Traps (Franklin et al., SSRN 6372438, 2026).
-## Policy lifecycle operations that guard plans (GRAPHOS-OPS-R050)
+## Policy lifecycle operations that guard plans (ARBORA-OPS-R050)
 
 Data flow: `policy.create` over POST /api/v1/ops/{op_id} -> `_base_authority` (arbora/api/invoke/pipeline.py:208) -> `_policy` (:198) -> `PolicyAuthority.authorize` (arbora/control_plane/policy/repository.py:179) -> audit record.
 
@@ -236,7 +236,7 @@ Existing code: arbora/control_plane/policy/repository.py:100, :117, :129, :179; 
 
 Decision: Arbora serves the operation and admits plans, and the engine decides violation. Rejected: a policy evaluator inside Arbora, which duplicates engine decisions. Cross-repository: EG-DECISION-ENGINE-R001 owns policy decisions; Arbora owns authenticated operation admission and transport. Clause interpretation requires a published engine producer contract, not an AU policy evaluator.
 
-## Scoped security-evaluation operation (GRAPHOS-OPS-R051)
+## Scoped security-evaluation operation (ARBORA-OPS-R051)
 
 Data flow starts with `security.evaluate` over POST /api/v1/ops/{op_id}. `_effect` (arbora/api/invoke/pipeline.py:218) checks verified target authorization before calling new public EG selection/verdict adapters (EG-DECISION-ENGINE-R001/R138). The AU harness executes admitted probes. The engine returns the verdict, which is recorded in the audit record. Runtime limits and trace commits use EG-DECISION-ENGINE-R133; Decide itself remains read-only.
 
@@ -249,7 +249,7 @@ Decision: EG owns catalog facts, selection and probe verdicts (EG-DECISION-ENGIN
 References:
 - arXiv:2605.04019 — Dheekonda et al., "Redefining AI Red Teaming in the Agentic Era: From Weeks to Hours" (2026)
 
-## Authorization-segmented virtual schema projections (GRAPHOS-OPS-R052)
+## Authorization-segmented virtual schema projections (ARBORA-OPS-R052)
 
 Data flow: `query.projections` over POST /api/v1/ops/{op_id} -> `build_operation_runtime` (arbora/api/invoke/bootstrap.py:167) -> `scope_covers` -> audit record.
 
@@ -257,11 +257,11 @@ Types: `SchemaProjection`. Failure: `SUBJECT_ACCESS_DENIED` or `UNAVAILABLE`.
 
 Existing code: arbora/api/ops/_common.py:106; arbora/api/http/openapi.py:1; arbora/control_plane/agents/repository.py:81. Reachable today: no for projections. Search terms used: virtual schema, schema_context, projection, authorization boundary.
 
-Decision: Arbora filters by the caller's verified grants over engine labels. Rejected: Arbora-side boundary inference. Cross-repository: EG-IDENTITY-R001, EG-FEDERATED-QUERY-R001; GRAPHOS-DATA-MARKET-R005 owns schema_context.
+Decision: Arbora filters by the caller's verified grants over engine labels. Rejected: Arbora-side boundary inference. Cross-repository: EG-IDENTITY-R001, EG-FEDERATED-QUERY-R001; ARBORA-DATA-MARKET-R005 owns schema_context.
 
 Caller-visible responses, counts, refusal details, traces and audit views reveal no uncovered projection, including indirectly through a withheld count. Such counts may exist only in a separately authorized operator audit that the denied caller cannot read. Served acceptance holds visible projections fixed while varying hidden projections. It checks that caller-visible fields stay unchanged. The denied caller's operator-audit read must refuse without count leakage. The separately authorized operator must be permitted to inspect the count.
 
-## Bounded interaction space (GRAPHOS-OPS-R053)
+## Bounded interaction space (ARBORA-OPS-R053)
 
 Data flow: `retrieval.space` over POST /api/v1/ops/{op_id} -> the governed retriever entry (arbora/control_plane/retrieval/service.py:61) -> `union_top_k` -> audit record.
 
@@ -276,7 +276,7 @@ References:
 
 Research citations above describe inspiration only. The engine and transport contracts, verified authority boundaries and served acceptance requirements define the architecture.
 
-## Versioned memory files (GRAPHOS-OPS-R024.4)
+## Versioned memory files (ARBORA-OPS-R024.4)
 
 ### Producer and existing boundary
 
@@ -322,7 +322,7 @@ There must be no shared accepted-head field outside the authorized variants.
 Refused contains only a registered error code and request-local correlation identity.
 It must contain no head, existence, revision, digest, conflict reference or stored receipt.
 Denied existing, absent and refused creation responses must have the same caller-visible shape and disclosure.
-`GRAPHOS-OPS-R010` envelope mapping must not add result-derived metadata to a refusal.
+`ARBORA-OPS-R010` envelope mapping must not add result-derived metadata to a refusal.
 Caller-visible logs, status views and error details must not recover withheld metadata.
 
 An authorized stale save may return conflict_retained only after EG durably retains both versions under R085.3 and R085.7.
@@ -382,7 +382,7 @@ This Arbora change does not edit or deliver WebUI requirements.
 Producer order is R085 implementation and generated contracts, Arbora port and serving, host materializer, then WebUI consumption.
 Missing producer implementation must remain unavailable. Definitions and planned tests must never count as served receipts.
 
-## Owner-bound projections (GRAPHOS-OPS-R054–R058, R061, R063)
+## Owner-bound projections (ARBORA-OPS-R054–R058, R061, R063)
 
 - **R054:** Keep `rlm.benchmark` separate from serving-technique evidence. Add a projection through `arbora/api/ops/registry_factory.py:get_registry` and `arbora/api/invoke/pipeline.py:invoke` only after `AU-INTEGRATION-R014` publishes its producer and receipt.
 - **R055:** Bind a read/proposal projection through the shared registry/invoke path only after AU publishes liveness and proposal contracts. No Arbora termination adapter exists.
@@ -390,14 +390,14 @@ Missing producer implementation must remain unavailable. Definitions and planned
 - **R057:** Add no repository-writeback attachment until EG `R094.2/.3/.5/.7` and SDK source-effect/receipt contracts publish. The current Arbora tree has no serializer or served handler.
 - **R058:** Use the existing schema-context routes/service for read-only data. Add no table mutation or statistics until WebUI and EG publish their contracts.
 
-### GRAPHOS-OPS-R061: indexed usage projection
+### ARBORA-OPS-R061: indexed usage projection
 
 1. Bind the Arbora read to EG RunTraceUsageQueryV1 / EG-ORCH-VOCAB-R010.101; derive tenant only from verified caller claims and pass the producer's bounded window, model/project/agent grouping, currency, page size, and snapshot cursor.
 2. Extend the usage.py reader with closed UsageQueryV1 and UsageProjectionV1 models. Add a distinct usage.index.query port beside usage.read. Use existing usage:read, build_read_op, registry_factory, and shared invoke. Keep accounting separate from runs.metrics (R021.4.3/.4) and usage.read.
 3. Preserve four disjoint EG counters, producer totals, unknown reasons, pinned PriceTableV1, minor units, revisions, coverage, watermark, and cursor. Aggregate exact rational amounts by final group and category. Apply half-even rounding once. Keep unknown values unknown with reasons and coverage; never use zero. Keep currencies separate unless EG supplies pinned FX. Bind p95 <= 500 ms from authenticated-handler entry through serialized response. Use 1,000,000 indexed traces, 32 readers, and 1,000 fixed-window queries. Bind data/index/cache-policy revisions. Missing or invalid profile evidence is unavailable; an exceeded bound is not success.
 4. Connect the projection to WebUI ObservabilityView.tsx under WEBUI-APPS-R004.8.1-.6. Served proof compares groups with an independent EG ledger. It exercises authorization, pagination, unknown values, stale revisions, and absent, invalid, or exceeded profile evidence. This remains planned work, not runtime delivery.
 
-### GRAPHOS-OPS-R063: retrieval evaluation and context projection
+### ARBORA-OPS-R063: retrieval evaluation and context projection
 
 1. Bind the EG-DECISION-ENGINE-R100.100 DecisionEval ranking receipt. Map RetrievalRankingSubmit to RetrievalRankingV1. Map Method::RetrievalContextSearch to RetrievalContextSearchV1. Do not derive quality from retrieval.search or local RRF.
 2. Extend arbora/api/ops/retrieval.py with closed evaluation, comparison, and context models. Register retrieval.evaluation.compare and retrieval.context.search. Use existing build_read_op, memory:read, registry factory, and shared invoke for HTTP/MCP.
@@ -406,21 +406,21 @@ Missing producer implementation must remain unavailable. Definitions and planned
 
 ## Additional owner requirements
 
-- `GRAPHOS-OPS-R024.1.1`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R014.1`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R022.3`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R022.4`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R053.7`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R021.2.1.1`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R050.2.1`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R009.1`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R053.8`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R059`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R060`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R062`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R064`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R065`: Plan the owner work and dependencies defined in requirements.md.
-- `GRAPHOS-OPS-R066`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-OPS-R024.1.1`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-OPS-R014.1`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-OPS-R022.3`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-OPS-R022.4`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-OPS-R053.7`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-OPS-R021.2.1.1`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-OPS-R050.2.1`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-OPS-R009.1`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-OPS-R053.8`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-OPS-R059`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-OPS-R060`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-OPS-R062`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-OPS-R064`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-OPS-R065`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-OPS-R066`: Plan the owner work and dependencies defined in requirements.md.
 
 ## Projection bindings and producer prerequisites (R059, R060, R062, R064–R066)
 

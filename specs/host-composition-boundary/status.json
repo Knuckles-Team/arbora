@@ -1,210 +1,210 @@
 {
   "schema_version": 2,
-  "spec_id": "GRAPHOS-HOST",
+  "spec_id": "ARBORA-HOST",
   "owner_repo": "arbora",
   "delivery_state": "SPECIFIED",
   "requirement_ids": [
-    "GRAPHOS-HOST-R001",
-    "GRAPHOS-HOST-R001.1",
-    "GRAPHOS-HOST-R001.2",
-    "GRAPHOS-HOST-R001.2.1",
-    "GRAPHOS-HOST-R001.2.2",
-    "GRAPHOS-HOST-R001.2.3",
-    "GRAPHOS-HOST-R001.3",
-    "GRAPHOS-HOST-R001.4",
-    "GRAPHOS-HOST-R001.5",
-    "GRAPHOS-HOST-R001.6",
-    "GRAPHOS-HOST-R001.8",
-    "GRAPHOS-HOST-R001.9",
-    "GRAPHOS-HOST-R001.9.1",
-    "GRAPHOS-HOST-R001.9.2",
-    "GRAPHOS-HOST-R001.10",
-    "GRAPHOS-HOST-R002",
-    "GRAPHOS-HOST-R003",
-    "GRAPHOS-HOST-R004",
-    "GRAPHOS-HOST-R005",
-    "GRAPHOS-HOST-R005.1",
-    "GRAPHOS-HOST-R005.2",
-    "GRAPHOS-HOST-R005.2.1",
-    "GRAPHOS-HOST-R005.2.1.1",
-    "GRAPHOS-HOST-R005.2.1.2",
-    "GRAPHOS-HOST-R005.2.1.3",
-    "GRAPHOS-HOST-R005.2.1.4",
-    "GRAPHOS-HOST-R005.2.1.5",
-    "GRAPHOS-HOST-R005.2.2",
-    "GRAPHOS-HOST-R005.2.3",
-    "GRAPHOS-HOST-R005.2.3.1",
-    "GRAPHOS-HOST-R005.2.3.2",
-    "GRAPHOS-HOST-R005.2.3.3",
-    "GRAPHOS-HOST-R005.2.3.4",
-    "GRAPHOS-HOST-R005.2.3.5",
-    "GRAPHOS-HOST-R005.2.3.6",
-    "GRAPHOS-HOST-R005.2.3.7",
-    "GRAPHOS-HOST-R005.2.3.8",
-    "GRAPHOS-HOST-R005.2.4",
-    "GRAPHOS-HOST-R005.2.5",
-    "GRAPHOS-HOST-R005.2.6",
-    "GRAPHOS-HOST-R005.2.7",
-    "GRAPHOS-HOST-R005.2.8",
-    "GRAPHOS-HOST-R006",
-    "GRAPHOS-HOST-R007",
-    "GRAPHOS-HOST-R007.1",
-    "GRAPHOS-HOST-R007.2",
-    "GRAPHOS-HOST-R007.2.1",
-    "GRAPHOS-HOST-R007.2.2",
-    "GRAPHOS-HOST-R007.2.3",
-    "GRAPHOS-HOST-R007.2.4",
-    "GRAPHOS-HOST-R007.2.5",
-    "GRAPHOS-HOST-R007.2.6",
-    "GRAPHOS-HOST-R007.2.7",
-    "GRAPHOS-HOST-R007.2.8",
-    "GRAPHOS-HOST-R007.2.9",
-    "GRAPHOS-HOST-R007.2.10",
-    "GRAPHOS-HOST-R007.2.11",
-    "GRAPHOS-HOST-R007.2.12",
-    "GRAPHOS-HOST-R007.2.13",
-    "GRAPHOS-HOST-R007.2.14",
-    "GRAPHOS-HOST-R007.2.15",
-    "GRAPHOS-HOST-R007.2.16",
-    "GRAPHOS-HOST-R007.2.17",
-    "GRAPHOS-HOST-R007.2.18",
-    "GRAPHOS-HOST-R007.2.19",
-    "GRAPHOS-HOST-R007.2.20",
-    "GRAPHOS-HOST-R007.2.21",
-    "GRAPHOS-HOST-R007.2.22",
-    "GRAPHOS-HOST-R007.2.23",
-    "GRAPHOS-HOST-R007.2.24",
-    "GRAPHOS-HOST-R007.2.25",
-    "GRAPHOS-HOST-R007.2.26",
-    "GRAPHOS-HOST-R007.2.27",
-    "GRAPHOS-HOST-R007.2.28",
-    "GRAPHOS-HOST-R007.2.29",
-    "GRAPHOS-HOST-R007.2.30",
-    "GRAPHOS-HOST-R007.2.31",
-    "GRAPHOS-HOST-R007.2.32",
-    "GRAPHOS-HOST-R007.2.33",
-    "GRAPHOS-HOST-R007.2.34",
-    "GRAPHOS-HOST-R007.2.35",
-    "GRAPHOS-HOST-R007.2.36",
-    "GRAPHOS-HOST-R007.2.37",
-    "GRAPHOS-HOST-R007.2.38",
-    "GRAPHOS-HOST-R007.2.39",
-    "GRAPHOS-HOST-R007.2.40",
-    "GRAPHOS-HOST-R007.2.41",
-    "GRAPHOS-HOST-R007.2.42",
-    "GRAPHOS-HOST-R007.2.43",
-    "GRAPHOS-HOST-R007.2.44",
-    "GRAPHOS-HOST-R007.2.45",
-    "GRAPHOS-HOST-R007.2.46",
-    "GRAPHOS-HOST-R007.2.47",
-    "GRAPHOS-HOST-R007.2.48",
-    "GRAPHOS-HOST-R007.2.49",
-    "GRAPHOS-HOST-R007.2.50",
-    "GRAPHOS-HOST-R007.2.51",
-    "GRAPHOS-HOST-R007.2.52",
-    "GRAPHOS-HOST-R007.2.53",
-    "GRAPHOS-HOST-R007.2.54",
-    "GRAPHOS-HOST-R007.2.55",
-    "GRAPHOS-HOST-R007.2.56",
-    "GRAPHOS-HOST-R007.2.57",
-    "GRAPHOS-HOST-R007.2.58",
-    "GRAPHOS-HOST-R007.2.59",
-    "GRAPHOS-HOST-R007.2.60",
-    "GRAPHOS-HOST-R007.2.61",
-    "GRAPHOS-HOST-R007.2.62",
-    "GRAPHOS-HOST-R007.2.63",
-    "GRAPHOS-HOST-R007.2.64",
-    "GRAPHOS-HOST-R007.2.65",
-    "GRAPHOS-HOST-R007.2.66",
-    "GRAPHOS-HOST-R007.2.67",
-    "GRAPHOS-HOST-R007.2.68",
-    "GRAPHOS-HOST-R007.2.69",
-    "GRAPHOS-HOST-R008",
-    "GRAPHOS-HOST-R009",
-    "GRAPHOS-HOST-R010",
-    "GRAPHOS-HOST-R011",
-    "GRAPHOS-HOST-R012",
-    "GRAPHOS-HOST-R013",
-    "GRAPHOS-HOST-R014",
-    "GRAPHOS-HOST-R015",
-    "GRAPHOS-HOST-R016",
-    "GRAPHOS-HOST-R017",
-    "GRAPHOS-HOST-R018",
-    "GRAPHOS-HOST-R019",
-    "GRAPHOS-HOST-R020",
-    "GRAPHOS-HOST-R021",
-    "GRAPHOS-HOST-R022",
-    "GRAPHOS-HOST-R023",
-    "GRAPHOS-HOST-R024",
-    "GRAPHOS-HOST-R025",
-    "GRAPHOS-HOST-R026",
-    "GRAPHOS-HOST-R026.1",
-    "GRAPHOS-HOST-R026.2",
-    "GRAPHOS-HOST-R026.3",
-    "GRAPHOS-HOST-R026.4",
-    "GRAPHOS-HOST-R026.5",
-    "GRAPHOS-HOST-R027",
-    "GRAPHOS-HOST-R027.1",
-    "GRAPHOS-HOST-R027.2",
-    "GRAPHOS-HOST-R027.3",
-    "GRAPHOS-HOST-R028",
-    "GRAPHOS-HOST-R029",
-    "GRAPHOS-HOST-R030",
-    "GRAPHOS-HOST-R031",
-    "GRAPHOS-HOST-R010.1",
-    "GRAPHOS-HOST-R010.2",
-    "GRAPHOS-HOST-R010.3",
-    "GRAPHOS-HOST-R010.4",
-    "GRAPHOS-HOST-R010.5",
-    "GRAPHOS-HOST-R010.6",
-    "GRAPHOS-HOST-R008.1",
-    "GRAPHOS-HOST-R008.2",
-    "GRAPHOS-HOST-R008.3",
-    "GRAPHOS-HOST-R008.4",
-    "GRAPHOS-HOST-R008.5",
-    "GRAPHOS-HOST-R009.1",
-    "GRAPHOS-HOST-R010.7",
-    "GRAPHOS-HOST-R010.7.1",
-    "GRAPHOS-HOST-R010.7.2",
-    "GRAPHOS-HOST-R010.7.2.1",
-    "GRAPHOS-HOST-R010.7.2.2",
-    "GRAPHOS-HOST-R009.2",
-    "GRAPHOS-HOST-R009.3",
-    "GRAPHOS-HOST-R009.4",
-    "GRAPHOS-HOST-R009.4.1",
-    "GRAPHOS-HOST-R009.4.2",
-    "GRAPHOS-HOST-R009.5",
-    "GRAPHOS-HOST-R009.6",
-    "GRAPHOS-HOST-R006.1",
-    "GRAPHOS-HOST-R006.2",
-    "GRAPHOS-HOST-R023.1",
-    "GRAPHOS-HOST-R023.2",
-    "GRAPHOS-HOST-R023.3",
-    "GRAPHOS-HOST-R008.6",
-    "GRAPHOS-HOST-R026.6",
-    "GRAPHOS-HOST-R022.1",
-    "GRAPHOS-HOST-R010.8",
-    "GRAPHOS-HOST-R032",
-    "GRAPHOS-HOST-R010.9",
-    "GRAPHOS-HOST-R009.7",
-    "GRAPHOS-HOST-R009.8",
-    "GRAPHOS-HOST-R009.8.1",
-    "GRAPHOS-HOST-R009.8.2",
-    "GRAPHOS-HOST-R009.8.2.1",
-    "GRAPHOS-HOST-R009.8.2.2",
-    "GRAPHOS-HOST-R008.1000",
-    "GRAPHOS-HOST-R008.1001",
-    "GRAPHOS-HOST-R008.1002",
-    "GRAPHOS-HOST-R008.1003",
-    "GRAPHOS-HOST-R008.1004",
-    "GRAPHOS-HOST-R008.1005",
-    "GRAPHOS-HOST-R008.1006",
-    "GRAPHOS-HOST-R008.1007",
-    "GRAPHOS-HOST-R008.1008"
+    "ARBORA-HOST-R001",
+    "ARBORA-HOST-R001.1",
+    "ARBORA-HOST-R001.2",
+    "ARBORA-HOST-R001.2.1",
+    "ARBORA-HOST-R001.2.2",
+    "ARBORA-HOST-R001.2.3",
+    "ARBORA-HOST-R001.3",
+    "ARBORA-HOST-R001.4",
+    "ARBORA-HOST-R001.5",
+    "ARBORA-HOST-R001.6",
+    "ARBORA-HOST-R001.8",
+    "ARBORA-HOST-R001.9",
+    "ARBORA-HOST-R001.9.1",
+    "ARBORA-HOST-R001.9.2",
+    "ARBORA-HOST-R001.10",
+    "ARBORA-HOST-R002",
+    "ARBORA-HOST-R003",
+    "ARBORA-HOST-R004",
+    "ARBORA-HOST-R005",
+    "ARBORA-HOST-R005.1",
+    "ARBORA-HOST-R005.2",
+    "ARBORA-HOST-R005.2.1",
+    "ARBORA-HOST-R005.2.1.1",
+    "ARBORA-HOST-R005.2.1.2",
+    "ARBORA-HOST-R005.2.1.3",
+    "ARBORA-HOST-R005.2.1.4",
+    "ARBORA-HOST-R005.2.1.5",
+    "ARBORA-HOST-R005.2.2",
+    "ARBORA-HOST-R005.2.3",
+    "ARBORA-HOST-R005.2.3.1",
+    "ARBORA-HOST-R005.2.3.2",
+    "ARBORA-HOST-R005.2.3.3",
+    "ARBORA-HOST-R005.2.3.4",
+    "ARBORA-HOST-R005.2.3.5",
+    "ARBORA-HOST-R005.2.3.6",
+    "ARBORA-HOST-R005.2.3.7",
+    "ARBORA-HOST-R005.2.3.8",
+    "ARBORA-HOST-R005.2.4",
+    "ARBORA-HOST-R005.2.5",
+    "ARBORA-HOST-R005.2.6",
+    "ARBORA-HOST-R005.2.7",
+    "ARBORA-HOST-R005.2.8",
+    "ARBORA-HOST-R006",
+    "ARBORA-HOST-R007",
+    "ARBORA-HOST-R007.1",
+    "ARBORA-HOST-R007.2",
+    "ARBORA-HOST-R007.2.1",
+    "ARBORA-HOST-R007.2.2",
+    "ARBORA-HOST-R007.2.3",
+    "ARBORA-HOST-R007.2.4",
+    "ARBORA-HOST-R007.2.5",
+    "ARBORA-HOST-R007.2.6",
+    "ARBORA-HOST-R007.2.7",
+    "ARBORA-HOST-R007.2.8",
+    "ARBORA-HOST-R007.2.9",
+    "ARBORA-HOST-R007.2.10",
+    "ARBORA-HOST-R007.2.11",
+    "ARBORA-HOST-R007.2.12",
+    "ARBORA-HOST-R007.2.13",
+    "ARBORA-HOST-R007.2.14",
+    "ARBORA-HOST-R007.2.15",
+    "ARBORA-HOST-R007.2.16",
+    "ARBORA-HOST-R007.2.17",
+    "ARBORA-HOST-R007.2.18",
+    "ARBORA-HOST-R007.2.19",
+    "ARBORA-HOST-R007.2.20",
+    "ARBORA-HOST-R007.2.21",
+    "ARBORA-HOST-R007.2.22",
+    "ARBORA-HOST-R007.2.23",
+    "ARBORA-HOST-R007.2.24",
+    "ARBORA-HOST-R007.2.25",
+    "ARBORA-HOST-R007.2.26",
+    "ARBORA-HOST-R007.2.27",
+    "ARBORA-HOST-R007.2.28",
+    "ARBORA-HOST-R007.2.29",
+    "ARBORA-HOST-R007.2.30",
+    "ARBORA-HOST-R007.2.31",
+    "ARBORA-HOST-R007.2.32",
+    "ARBORA-HOST-R007.2.33",
+    "ARBORA-HOST-R007.2.34",
+    "ARBORA-HOST-R007.2.35",
+    "ARBORA-HOST-R007.2.36",
+    "ARBORA-HOST-R007.2.37",
+    "ARBORA-HOST-R007.2.38",
+    "ARBORA-HOST-R007.2.39",
+    "ARBORA-HOST-R007.2.40",
+    "ARBORA-HOST-R007.2.41",
+    "ARBORA-HOST-R007.2.42",
+    "ARBORA-HOST-R007.2.43",
+    "ARBORA-HOST-R007.2.44",
+    "ARBORA-HOST-R007.2.45",
+    "ARBORA-HOST-R007.2.46",
+    "ARBORA-HOST-R007.2.47",
+    "ARBORA-HOST-R007.2.48",
+    "ARBORA-HOST-R007.2.49",
+    "ARBORA-HOST-R007.2.50",
+    "ARBORA-HOST-R007.2.51",
+    "ARBORA-HOST-R007.2.52",
+    "ARBORA-HOST-R007.2.53",
+    "ARBORA-HOST-R007.2.54",
+    "ARBORA-HOST-R007.2.55",
+    "ARBORA-HOST-R007.2.56",
+    "ARBORA-HOST-R007.2.57",
+    "ARBORA-HOST-R007.2.58",
+    "ARBORA-HOST-R007.2.59",
+    "ARBORA-HOST-R007.2.60",
+    "ARBORA-HOST-R007.2.61",
+    "ARBORA-HOST-R007.2.62",
+    "ARBORA-HOST-R007.2.63",
+    "ARBORA-HOST-R007.2.64",
+    "ARBORA-HOST-R007.2.65",
+    "ARBORA-HOST-R007.2.66",
+    "ARBORA-HOST-R007.2.67",
+    "ARBORA-HOST-R007.2.68",
+    "ARBORA-HOST-R007.2.69",
+    "ARBORA-HOST-R008",
+    "ARBORA-HOST-R009",
+    "ARBORA-HOST-R010",
+    "ARBORA-HOST-R011",
+    "ARBORA-HOST-R012",
+    "ARBORA-HOST-R013",
+    "ARBORA-HOST-R014",
+    "ARBORA-HOST-R015",
+    "ARBORA-HOST-R016",
+    "ARBORA-HOST-R017",
+    "ARBORA-HOST-R018",
+    "ARBORA-HOST-R019",
+    "ARBORA-HOST-R020",
+    "ARBORA-HOST-R021",
+    "ARBORA-HOST-R022",
+    "ARBORA-HOST-R023",
+    "ARBORA-HOST-R024",
+    "ARBORA-HOST-R025",
+    "ARBORA-HOST-R026",
+    "ARBORA-HOST-R026.1",
+    "ARBORA-HOST-R026.2",
+    "ARBORA-HOST-R026.3",
+    "ARBORA-HOST-R026.4",
+    "ARBORA-HOST-R026.5",
+    "ARBORA-HOST-R027",
+    "ARBORA-HOST-R027.1",
+    "ARBORA-HOST-R027.2",
+    "ARBORA-HOST-R027.3",
+    "ARBORA-HOST-R028",
+    "ARBORA-HOST-R029",
+    "ARBORA-HOST-R030",
+    "ARBORA-HOST-R031",
+    "ARBORA-HOST-R010.1",
+    "ARBORA-HOST-R010.2",
+    "ARBORA-HOST-R010.3",
+    "ARBORA-HOST-R010.4",
+    "ARBORA-HOST-R010.5",
+    "ARBORA-HOST-R010.6",
+    "ARBORA-HOST-R008.1",
+    "ARBORA-HOST-R008.2",
+    "ARBORA-HOST-R008.3",
+    "ARBORA-HOST-R008.4",
+    "ARBORA-HOST-R008.5",
+    "ARBORA-HOST-R009.1",
+    "ARBORA-HOST-R010.7",
+    "ARBORA-HOST-R010.7.1",
+    "ARBORA-HOST-R010.7.2",
+    "ARBORA-HOST-R010.7.2.1",
+    "ARBORA-HOST-R010.7.2.2",
+    "ARBORA-HOST-R009.2",
+    "ARBORA-HOST-R009.3",
+    "ARBORA-HOST-R009.4",
+    "ARBORA-HOST-R009.4.1",
+    "ARBORA-HOST-R009.4.2",
+    "ARBORA-HOST-R009.5",
+    "ARBORA-HOST-R009.6",
+    "ARBORA-HOST-R006.1",
+    "ARBORA-HOST-R006.2",
+    "ARBORA-HOST-R023.1",
+    "ARBORA-HOST-R023.2",
+    "ARBORA-HOST-R023.3",
+    "ARBORA-HOST-R008.6",
+    "ARBORA-HOST-R026.6",
+    "ARBORA-HOST-R022.1",
+    "ARBORA-HOST-R010.8",
+    "ARBORA-HOST-R032",
+    "ARBORA-HOST-R010.9",
+    "ARBORA-HOST-R009.7",
+    "ARBORA-HOST-R009.8",
+    "ARBORA-HOST-R009.8.1",
+    "ARBORA-HOST-R009.8.2",
+    "ARBORA-HOST-R009.8.2.1",
+    "ARBORA-HOST-R009.8.2.2",
+    "ARBORA-HOST-R008.1000",
+    "ARBORA-HOST-R008.1001",
+    "ARBORA-HOST-R008.1002",
+    "ARBORA-HOST-R008.1003",
+    "ARBORA-HOST-R008.1004",
+    "ARBORA-HOST-R008.1005",
+    "ARBORA-HOST-R008.1006",
+    "ARBORA-HOST-R008.1007",
+    "ARBORA-HOST-R008.1008"
   ],
   "requirements": [
     {
-      "id": "GRAPHOS-HOST-R001",
+      "id": "ARBORA-HOST-R001",
       "title": "Cross-repository composition boundary assignment",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -212,19 +212,19 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-HOST-R001.1",
-        "GRAPHOS-HOST-R001.2",
-        "GRAPHOS-HOST-R001.3",
-        "GRAPHOS-HOST-R001.4",
-        "GRAPHOS-HOST-R001.5",
-        "GRAPHOS-HOST-R001.6",
-        "GRAPHOS-HOST-R001.8",
-        "GRAPHOS-HOST-R001.9",
-        "GRAPHOS-HOST-R001.10"
+        "ARBORA-HOST-R001.1",
+        "ARBORA-HOST-R001.2",
+        "ARBORA-HOST-R001.3",
+        "ARBORA-HOST-R001.4",
+        "ARBORA-HOST-R001.5",
+        "ARBORA-HOST-R001.6",
+        "ARBORA-HOST-R001.8",
+        "ARBORA-HOST-R001.9",
+        "ARBORA-HOST-R001.10"
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R001.1",
+      "id": "ARBORA-HOST-R001.1",
       "title": "Arbora owns the MCP, REST and API serving code that agent-utilities 3.0.0 drops",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -235,7 +235,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R001.2",
+      "id": "ARBORA-HOST-R001.2",
       "title": "Arbora registers the harness host bindings at startup",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -249,13 +249,13 @@
         "tests/mcp_server/test_harness_host.py:76"
       ],
       "rollup_of": [
-        "GRAPHOS-HOST-R001.2.1",
-        "GRAPHOS-HOST-R001.2.2",
-        "GRAPHOS-HOST-R001.2.3"
+        "ARBORA-HOST-R001.2.1",
+        "ARBORA-HOST-R001.2.2",
+        "ARBORA-HOST-R001.2.3"
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R001.2.1",
+      "id": "ARBORA-HOST-R001.2.1",
       "title": "Arbora binds the run-loop providers at startup",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -268,7 +268,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R001.2.2",
+      "id": "ARBORA-HOST-R001.2.2",
       "title": "A served agents.run call runs end to end",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -281,7 +281,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R001.2.3",
+      "id": "ARBORA-HOST-R001.2.3",
       "title": "The served process mounts the operation-invoke API",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -293,7 +293,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R001.3",
+      "id": "ARBORA-HOST-R001.3",
       "title": "Arbora ships the surface client as its generated client",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -304,7 +304,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R001.4",
+      "id": "ARBORA-HOST-R001.4",
       "title": "Provider plugin entry-point groups use the connector SDK namespace",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -315,7 +315,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R001.5",
+      "id": "ARBORA-HOST-R001.5",
       "title": "The moved serving code keeps its tests and runs on FastMCP 4",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -326,7 +326,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R001.6",
+      "id": "ARBORA-HOST-R001.6",
       "title": "Arbora publishes its operation registry as versioned data",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -338,7 +338,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R001.8",
+      "id": "ARBORA-HOST-R001.8",
       "title": "Gate G-26: the served MCP surface is wired to epistemic-graph",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -354,7 +354,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R001.9",
+      "id": "ARBORA-HOST-R001.9",
       "title": "The tiny profile serves the graph with zero containers",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -364,12 +364,12 @@
         "tests/deployment/test_small_profile_footprint.py:33"
       ],
       "rollup_of": [
-        "GRAPHOS-HOST-R001.9.1",
-        "GRAPHOS-HOST-R001.9.2"
+        "ARBORA-HOST-R001.9.1",
+        "ARBORA-HOST-R001.9.2"
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R001.9.1",
+      "id": "ARBORA-HOST-R001.9.1",
       "title": "The served surface imports no external-service driver",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
@@ -378,14 +378,14 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R001.9.2",
+      "id": "ARBORA-HOST-R001.9.2",
       "title": "The tiny profile serves the graph with zero containers",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R001.10",
+      "id": "ARBORA-HOST-R001.10",
       "title": "Arbora owns provider discovery over the connector SDK groups",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -396,14 +396,14 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R002",
+      "id": "ARBORA-HOST-R002",
       "title": "Graph engine client exposes the session/discovery surface",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R003",
+      "id": "ARBORA-HOST-R003",
       "title": "Web UI rename cutover across Arbora",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -416,7 +416,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R004",
+      "id": "ARBORA-HOST-R004",
       "title": "Single gateway implementation under arbora/gateway",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -426,7 +426,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R005",
+      "id": "ARBORA-HOST-R005",
       "title": "arbora.mcp_server.runtime serves retired MCP actions",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -434,12 +434,12 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-HOST-R005.1",
-        "GRAPHOS-HOST-R005.2"
+        "ARBORA-HOST-R005.1",
+        "ARBORA-HOST-R005.2"
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R005.1",
+      "id": "ARBORA-HOST-R005.1",
       "title": "Landed: the typed approved-mapping model",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -452,7 +452,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R005.2",
+      "id": "ARBORA-HOST-R005.2",
       "title": "Parity test proves no served action is dropped",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -460,91 +460,91 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-HOST-R005.2.1",
-        "GRAPHOS-HOST-R005.2.2",
-        "GRAPHOS-HOST-R005.2.3",
-        "GRAPHOS-HOST-R005.2.4",
-        "GRAPHOS-HOST-R005.2.5",
-        "GRAPHOS-HOST-R005.2.6",
-        "GRAPHOS-HOST-R005.2.7",
-        "GRAPHOS-HOST-R005.2.8"
+        "ARBORA-HOST-R005.2.1",
+        "ARBORA-HOST-R005.2.2",
+        "ARBORA-HOST-R005.2.3",
+        "ARBORA-HOST-R005.2.4",
+        "ARBORA-HOST-R005.2.5",
+        "ARBORA-HOST-R005.2.6",
+        "ARBORA-HOST-R005.2.7",
+        "ARBORA-HOST-R005.2.8"
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R005.2.1",
+      "id": "ARBORA-HOST-R005.2.1",
       "title": "Approved mapping for the analyze action family",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-HOST-R005.2.1.1",
-        "GRAPHOS-HOST-R005.2.1.2",
-        "GRAPHOS-HOST-R005.2.1.3",
-        "GRAPHOS-HOST-R005.2.1.4",
-        "GRAPHOS-HOST-R005.2.1.5"
+        "ARBORA-HOST-R005.2.1.1",
+        "ARBORA-HOST-R005.2.1.2",
+        "ARBORA-HOST-R005.2.1.3",
+        "ARBORA-HOST-R005.2.1.4",
+        "ARBORA-HOST-R005.2.1.5"
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R005.2.1.1",
+      "id": "ARBORA-HOST-R005.2.1.1",
       "title": "Add arbora operation for code navigation actions",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R005.2.1.2",
+      "id": "ARBORA-HOST-R005.2.1.2",
       "title": "Add arbora operation for impact actions",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R005.2.1.3",
+      "id": "ARBORA-HOST-R005.2.1.3",
       "title": "Add arbora operation for `similar_code` and the remaining `graph_analyze` actions",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R005.2.1.4",
+      "id": "ARBORA-HOST-R005.2.1.4",
       "title": "Add arbora operation for `process_writeback`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R005.2.1.5",
+      "id": "ARBORA-HOST-R005.2.1.5",
       "title": "Approve the analyze mappings",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R005.2.2",
+      "id": "ARBORA-HOST-R005.2.2",
       "title": "Approved mapping for the configure action family",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R005.2.3",
+      "id": "ARBORA-HOST-R005.2.3",
       "title": "Approved mapping for the ingest action family",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-HOST-R005.2.3.1",
-        "GRAPHOS-HOST-R005.2.3.2",
-        "GRAPHOS-HOST-R005.2.3.3",
-        "GRAPHOS-HOST-R005.2.3.4",
-        "GRAPHOS-HOST-R005.2.3.5",
-        "GRAPHOS-HOST-R005.2.3.6",
-        "GRAPHOS-HOST-R005.2.3.7",
-        "GRAPHOS-HOST-R005.2.3.8"
+        "ARBORA-HOST-R005.2.3.1",
+        "ARBORA-HOST-R005.2.3.2",
+        "ARBORA-HOST-R005.2.3.3",
+        "ARBORA-HOST-R005.2.3.4",
+        "ARBORA-HOST-R005.2.3.5",
+        "ARBORA-HOST-R005.2.3.6",
+        "ARBORA-HOST-R005.2.3.7",
+        "ARBORA-HOST-R005.2.3.8"
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R005.2.3.1",
+      "id": "ARBORA-HOST-R005.2.3.1",
       "title": "Map `sync` to `ingest.sources.sync`",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -555,91 +555,91 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R005.2.3.2",
+      "id": "ARBORA-HOST-R005.2.3.2",
       "title": "Add arbora operation for ingest submission actions",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R005.2.3.3",
+      "id": "ARBORA-HOST-R005.2.3.3",
       "title": "Add arbora operation for `corpus`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R005.2.3.4",
+      "id": "ARBORA-HOST-R005.2.3.4",
       "title": "Add arbora operation for job lifecycle actions",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R005.2.3.5",
+      "id": "ARBORA-HOST-R005.2.3.5",
       "title": "Add arbora operation for `rebuild_indexes` and `observe`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R005.2.3.6",
+      "id": "ARBORA-HOST-R005.2.3.6",
       "title": "Add arbora operation for `materialize` and `materialize_source`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R005.2.3.7",
+      "id": "ARBORA-HOST-R005.2.3.7",
       "title": "Add arbora operation for `reflect` and `agent_toolkit`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R005.2.3.8",
+      "id": "ARBORA-HOST-R005.2.3.8",
       "title": "Approve the ingest mappings",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R005.2.4",
+      "id": "ARBORA-HOST-R005.2.4",
       "title": "Approved mapping for the query-memory action family",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R005.2.5",
+      "id": "ARBORA-HOST-R005.2.5",
       "title": "Approved mapping for the orchestrate action family",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R005.2.6",
+      "id": "ARBORA-HOST-R005.2.6",
       "title": "Approved mapping for the mine-learn action family",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R005.2.7",
+      "id": "ARBORA-HOST-R005.2.7",
       "title": "Approved mapping for the governance-ops action family",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R005.2.8",
+      "id": "ARBORA-HOST-R005.2.8",
       "title": "Parity test over the full legacy action surface",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R006",
+      "id": "ARBORA-HOST-R006",
       "title": "arbora.fleet is the sole multiplexer and host owner",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -647,12 +647,12 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-HOST-R006.1",
-        "GRAPHOS-HOST-R006.2"
+        "ARBORA-HOST-R006.1",
+        "ARBORA-HOST-R006.2"
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R007",
+      "id": "ARBORA-HOST-R007",
       "title": "Agent runtime imported only through its public API",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -660,580 +660,580 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-HOST-R007.1",
-        "GRAPHOS-HOST-R007.2"
+        "ARBORA-HOST-R007.1",
+        "ARBORA-HOST-R007.2"
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R007.1",
+      "id": "ARBORA-HOST-R007.1",
       "title": "Landed: none of the fence exists yet",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2",
-      "title": "Add the import-fence test (rollup of `GRAPHOS-HOST-R007.2.1` to `GRAPHOS-HOST-R007.2.69`)",
+      "id": "ARBORA-HOST-R007.2",
+      "title": "Add the import-fence test (rollup of `ARBORA-HOST-R007.2.1` to `ARBORA-HOST-R007.2.69`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-HOST-R007.2.1",
-        "GRAPHOS-HOST-R007.2.2",
-        "GRAPHOS-HOST-R007.2.3",
-        "GRAPHOS-HOST-R007.2.4",
-        "GRAPHOS-HOST-R007.2.5",
-        "GRAPHOS-HOST-R007.2.6",
-        "GRAPHOS-HOST-R007.2.7",
-        "GRAPHOS-HOST-R007.2.8",
-        "GRAPHOS-HOST-R007.2.9",
-        "GRAPHOS-HOST-R007.2.10",
-        "GRAPHOS-HOST-R007.2.11",
-        "GRAPHOS-HOST-R007.2.12",
-        "GRAPHOS-HOST-R007.2.13",
-        "GRAPHOS-HOST-R007.2.14",
-        "GRAPHOS-HOST-R007.2.15",
-        "GRAPHOS-HOST-R007.2.16",
-        "GRAPHOS-HOST-R007.2.17",
-        "GRAPHOS-HOST-R007.2.18",
-        "GRAPHOS-HOST-R007.2.19",
-        "GRAPHOS-HOST-R007.2.20",
-        "GRAPHOS-HOST-R007.2.21",
-        "GRAPHOS-HOST-R007.2.22",
-        "GRAPHOS-HOST-R007.2.23",
-        "GRAPHOS-HOST-R007.2.24",
-        "GRAPHOS-HOST-R007.2.25",
-        "GRAPHOS-HOST-R007.2.26",
-        "GRAPHOS-HOST-R007.2.27",
-        "GRAPHOS-HOST-R007.2.28",
-        "GRAPHOS-HOST-R007.2.29",
-        "GRAPHOS-HOST-R007.2.30",
-        "GRAPHOS-HOST-R007.2.31",
-        "GRAPHOS-HOST-R007.2.32",
-        "GRAPHOS-HOST-R007.2.33",
-        "GRAPHOS-HOST-R007.2.34",
-        "GRAPHOS-HOST-R007.2.35",
-        "GRAPHOS-HOST-R007.2.36",
-        "GRAPHOS-HOST-R007.2.37",
-        "GRAPHOS-HOST-R007.2.38",
-        "GRAPHOS-HOST-R007.2.39",
-        "GRAPHOS-HOST-R007.2.40",
-        "GRAPHOS-HOST-R007.2.41",
-        "GRAPHOS-HOST-R007.2.42",
-        "GRAPHOS-HOST-R007.2.43",
-        "GRAPHOS-HOST-R007.2.44",
-        "GRAPHOS-HOST-R007.2.45",
-        "GRAPHOS-HOST-R007.2.46",
-        "GRAPHOS-HOST-R007.2.47",
-        "GRAPHOS-HOST-R007.2.48",
-        "GRAPHOS-HOST-R007.2.49",
-        "GRAPHOS-HOST-R007.2.50",
-        "GRAPHOS-HOST-R007.2.51",
-        "GRAPHOS-HOST-R007.2.52",
-        "GRAPHOS-HOST-R007.2.53",
-        "GRAPHOS-HOST-R007.2.54",
-        "GRAPHOS-HOST-R007.2.55",
-        "GRAPHOS-HOST-R007.2.56",
-        "GRAPHOS-HOST-R007.2.57",
-        "GRAPHOS-HOST-R007.2.58",
-        "GRAPHOS-HOST-R007.2.59",
-        "GRAPHOS-HOST-R007.2.60",
-        "GRAPHOS-HOST-R007.2.61",
-        "GRAPHOS-HOST-R007.2.62",
-        "GRAPHOS-HOST-R007.2.63",
-        "GRAPHOS-HOST-R007.2.64",
-        "GRAPHOS-HOST-R007.2.65",
-        "GRAPHOS-HOST-R007.2.66",
-        "GRAPHOS-HOST-R007.2.67",
-        "GRAPHOS-HOST-R007.2.68",
-        "GRAPHOS-HOST-R007.2.69"
+        "ARBORA-HOST-R007.2.1",
+        "ARBORA-HOST-R007.2.2",
+        "ARBORA-HOST-R007.2.3",
+        "ARBORA-HOST-R007.2.4",
+        "ARBORA-HOST-R007.2.5",
+        "ARBORA-HOST-R007.2.6",
+        "ARBORA-HOST-R007.2.7",
+        "ARBORA-HOST-R007.2.8",
+        "ARBORA-HOST-R007.2.9",
+        "ARBORA-HOST-R007.2.10",
+        "ARBORA-HOST-R007.2.11",
+        "ARBORA-HOST-R007.2.12",
+        "ARBORA-HOST-R007.2.13",
+        "ARBORA-HOST-R007.2.14",
+        "ARBORA-HOST-R007.2.15",
+        "ARBORA-HOST-R007.2.16",
+        "ARBORA-HOST-R007.2.17",
+        "ARBORA-HOST-R007.2.18",
+        "ARBORA-HOST-R007.2.19",
+        "ARBORA-HOST-R007.2.20",
+        "ARBORA-HOST-R007.2.21",
+        "ARBORA-HOST-R007.2.22",
+        "ARBORA-HOST-R007.2.23",
+        "ARBORA-HOST-R007.2.24",
+        "ARBORA-HOST-R007.2.25",
+        "ARBORA-HOST-R007.2.26",
+        "ARBORA-HOST-R007.2.27",
+        "ARBORA-HOST-R007.2.28",
+        "ARBORA-HOST-R007.2.29",
+        "ARBORA-HOST-R007.2.30",
+        "ARBORA-HOST-R007.2.31",
+        "ARBORA-HOST-R007.2.32",
+        "ARBORA-HOST-R007.2.33",
+        "ARBORA-HOST-R007.2.34",
+        "ARBORA-HOST-R007.2.35",
+        "ARBORA-HOST-R007.2.36",
+        "ARBORA-HOST-R007.2.37",
+        "ARBORA-HOST-R007.2.38",
+        "ARBORA-HOST-R007.2.39",
+        "ARBORA-HOST-R007.2.40",
+        "ARBORA-HOST-R007.2.41",
+        "ARBORA-HOST-R007.2.42",
+        "ARBORA-HOST-R007.2.43",
+        "ARBORA-HOST-R007.2.44",
+        "ARBORA-HOST-R007.2.45",
+        "ARBORA-HOST-R007.2.46",
+        "ARBORA-HOST-R007.2.47",
+        "ARBORA-HOST-R007.2.48",
+        "ARBORA-HOST-R007.2.49",
+        "ARBORA-HOST-R007.2.50",
+        "ARBORA-HOST-R007.2.51",
+        "ARBORA-HOST-R007.2.52",
+        "ARBORA-HOST-R007.2.53",
+        "ARBORA-HOST-R007.2.54",
+        "ARBORA-HOST-R007.2.55",
+        "ARBORA-HOST-R007.2.56",
+        "ARBORA-HOST-R007.2.57",
+        "ARBORA-HOST-R007.2.58",
+        "ARBORA-HOST-R007.2.59",
+        "ARBORA-HOST-R007.2.60",
+        "ARBORA-HOST-R007.2.61",
+        "ARBORA-HOST-R007.2.62",
+        "ARBORA-HOST-R007.2.63",
+        "ARBORA-HOST-R007.2.64",
+        "ARBORA-HOST-R007.2.65",
+        "ARBORA-HOST-R007.2.66",
+        "ARBORA-HOST-R007.2.67",
+        "ARBORA-HOST-R007.2.68",
+        "ARBORA-HOST-R007.2.69"
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.1",
+      "id": "ARBORA-HOST-R007.2.1",
       "title": "Rewire `arbora/a2a/authority.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.2",
+      "id": "ARBORA-HOST-R007.2.2",
       "title": "Rewire `arbora/a2a/routing.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.3",
+      "id": "ARBORA-HOST-R007.2.3",
       "title": "Rewire `arbora/access/service.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.4",
+      "id": "ARBORA-HOST-R007.2.4",
       "title": "Rewire `arbora/agent_host/__init__.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.5",
+      "id": "ARBORA-HOST-R007.2.5",
       "title": "Rewire `arbora/api/http/auth.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.6",
+      "id": "ARBORA-HOST-R007.2.6",
       "title": "Rewire `arbora/api/mcp/serving.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.7",
+      "id": "ARBORA-HOST-R007.2.7",
       "title": "Rewire `arbora/api/ops/access.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.8",
+      "id": "ARBORA-HOST-R007.2.8",
       "title": "Rewire `arbora/api/policy/pdp_remote.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.9",
+      "id": "ARBORA-HOST-R007.2.9",
       "title": "Rewire `arbora/browser_control/browser_control_binding.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.10",
+      "id": "ARBORA-HOST-R007.2.10",
       "title": "Rewire `arbora/browser_control/browser_control_dispatch.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.11",
+      "id": "ARBORA-HOST-R007.2.11",
       "title": "Rewire `arbora/browser_control/browser_control_durability.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.12",
+      "id": "ARBORA-HOST-R007.2.12",
       "title": "Rewire `arbora/browser_control/browser_control_outcome.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.13",
+      "id": "ARBORA-HOST-R007.2.13",
       "title": "Rewire `arbora/browser_control/browser_control_policy.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.14",
+      "id": "ARBORA-HOST-R007.2.14",
       "title": "Rewire `arbora/browser_control/browser_control_provenance.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.15",
+      "id": "ARBORA-HOST-R007.2.15",
       "title": "Rewire `arbora/browser_control/browser_control_service.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.16",
+      "id": "ARBORA-HOST-R007.2.16",
       "title": "Rewire `arbora/browser_control/browser_control_state.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.17",
+      "id": "ARBORA-HOST-R007.2.17",
       "title": "Rewire `arbora/browser_control/trace_bundle.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.18",
+      "id": "ARBORA-HOST-R007.2.18",
       "title": "Rewire `arbora/deployment/cli.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.19",
+      "id": "ARBORA-HOST-R007.2.19",
       "title": "Rewire `arbora/deployment/config_generator.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.20",
+      "id": "ARBORA-HOST-R007.2.20",
       "title": "Rewire `arbora/deployment/doctor_certification.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.21",
+      "id": "ARBORA-HOST-R007.2.21",
       "title": "Rewire `arbora/deployment/doctor_coverage.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.22",
+      "id": "ARBORA-HOST-R007.2.22",
       "title": "Rewire `arbora/deployment/doctor_lakehouse.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.23",
+      "id": "ARBORA-HOST-R007.2.23",
       "title": "Rewire `arbora/deployment/doctor_observability.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.24",
+      "id": "ARBORA-HOST-R007.2.24",
       "title": "Rewire `arbora/deployment/doctor.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.25",
+      "id": "ARBORA-HOST-R007.2.25",
       "title": "Rewire `arbora/deployment/genesis_environments.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.26",
+      "id": "ARBORA-HOST-R007.2.26",
       "title": "Rewire `arbora/deployment/preflight.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.27",
+      "id": "ARBORA-HOST-R007.2.27",
       "title": "Rewire `arbora/deployment/production_ops.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.28",
+      "id": "ARBORA-HOST-R007.2.28",
       "title": "Rewire `arbora/deployment/release_canary.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.29",
+      "id": "ARBORA-HOST-R007.2.29",
       "title": "Rewire `arbora/deployment/release_candidate.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.30",
+      "id": "ARBORA-HOST-R007.2.30",
       "title": "Rewire `arbora/deployment/self_deploy.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.31",
+      "id": "ARBORA-HOST-R007.2.31",
       "title": "Rewire `arbora/fleet/access_contracts.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.32",
+      "id": "ARBORA-HOST-R007.2.32",
       "title": "Rewire `arbora/fleet/child_resilience.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.33",
+      "id": "ARBORA-HOST-R007.2.33",
       "title": "Rewire `arbora/fleet/gateway_ops.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.34",
+      "id": "ARBORA-HOST-R007.2.34",
       "title": "Rewire `arbora/fleet/local_skill_catalog.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.35",
+      "id": "ARBORA-HOST-R007.2.35",
       "title": "Rewire `arbora/fleet/multiplexer.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.36",
+      "id": "ARBORA-HOST-R007.2.36",
       "title": "Rewire `arbora/fleet/onboarding.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.37",
+      "id": "ARBORA-HOST-R007.2.37",
       "title": "Rewire `arbora/gateway/aggregator.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.38",
+      "id": "ARBORA-HOST-R007.2.38",
       "title": "Rewire `arbora/gateway/config.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.39",
+      "id": "ARBORA-HOST-R007.2.39",
       "title": "Rewire `arbora/gateway/daemon.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.40",
+      "id": "ARBORA-HOST-R007.2.40",
       "title": "Rewire `arbora/gateway/dashboard_api.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.41",
+      "id": "ARBORA-HOST-R007.2.41",
       "title": "Rewire `arbora/gateway/fleet_events.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.42",
+      "id": "ARBORA-HOST-R007.2.42",
       "title": "Rewire `arbora/gateway/fleet.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.43",
+      "id": "ARBORA-HOST-R007.2.43",
       "title": "Rewire `arbora/gateway/graph_api.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.44",
+      "id": "ARBORA-HOST-R007.2.44",
       "title": "Rewire `arbora/gateway/rate_limit.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.45",
+      "id": "ARBORA-HOST-R007.2.45",
       "title": "Rewire `arbora/gateway/remote_oauth_api.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.46",
+      "id": "ARBORA-HOST-R007.2.46",
       "title": "Rewire `arbora/gateway/schemas/graph_core.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.47",
+      "id": "ARBORA-HOST-R007.2.47",
       "title": "Rewire `arbora/gateway/usage_api.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.48",
+      "id": "ARBORA-HOST-R007.2.48",
       "title": "Rewire `arbora/gateway/widgets/base.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.49",
+      "id": "ARBORA-HOST-R007.2.49",
       "title": "Rewire `arbora/gateway/widgets/ollama.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.50",
+      "id": "ARBORA-HOST-R007.2.50",
       "title": "Rewire `arbora/gateway/widgets/vector_db.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.51",
+      "id": "ARBORA-HOST-R007.2.51",
       "title": "Rewire `arbora/mcp_server/bootstrap.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.52",
+      "id": "ARBORA-HOST-R007.2.52",
       "title": "Rewire `arbora/mcp_server/composition.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.53",
+      "id": "ARBORA-HOST-R007.2.53",
       "title": "Rewire `arbora/mcp_server/decide_wiring.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.54",
+      "id": "ARBORA-HOST-R007.2.54",
       "title": "Rewire `arbora/mcp_server/runtime.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.55",
+      "id": "ARBORA-HOST-R007.2.55",
       "title": "Rewire `arbora/mcp_server/server.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.56",
+      "id": "ARBORA-HOST-R007.2.56",
       "title": "Rewire `arbora/messaging/alert_intake.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.57",
+      "id": "ARBORA-HOST-R007.2.57",
       "title": "Rewire `arbora/messaging/backends/mattermost.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.58",
+      "id": "ARBORA-HOST-R007.2.58",
       "title": "Rewire `arbora/messaging/backends/telegram.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.59",
+      "id": "ARBORA-HOST-R007.2.59",
       "title": "Rewire `arbora/messaging/governed_send.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.60",
+      "id": "ARBORA-HOST-R007.2.60",
       "title": "Rewire `arbora/messaging/lease.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.61",
+      "id": "ARBORA-HOST-R007.2.61",
       "title": "Rewire `arbora/messaging/polling.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.62",
+      "id": "ARBORA-HOST-R007.2.62",
       "title": "Rewire `arbora/messaging/reach.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.63",
+      "id": "ARBORA-HOST-R007.2.63",
       "title": "Rewire `arbora/messaging/registry.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.64",
+      "id": "ARBORA-HOST-R007.2.64",
       "title": "Rewire `arbora/messaging/router.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.65",
+      "id": "ARBORA-HOST-R007.2.65",
       "title": "Rewire `arbora/messaging/service.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.66",
+      "id": "ARBORA-HOST-R007.2.66",
       "title": "Rewire `arbora/observability/gateway_health.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.67",
+      "id": "ARBORA-HOST-R007.2.67",
       "title": "Rewire `arbora/semantic_content.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.68",
+      "id": "ARBORA-HOST-R007.2.68",
       "title": "Rewire `arbora/webui_host/webui_co_service.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R007.2.69",
+      "id": "ARBORA-HOST-R007.2.69",
       "title": "Add the `agent_utilities.api`-only import-fence test",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R008",
+      "id": "ARBORA-HOST-R008",
       "title": "Arbora hosts its own boundary modules",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -1245,25 +1245,25 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-HOST-R008.1",
-        "GRAPHOS-HOST-R008.2",
-        "GRAPHOS-HOST-R008.3",
-        "GRAPHOS-HOST-R008.4",
-        "GRAPHOS-HOST-R008.5",
-        "GRAPHOS-HOST-R008.6",
-        "GRAPHOS-HOST-R008.1000",
-        "GRAPHOS-HOST-R008.1001",
-        "GRAPHOS-HOST-R008.1002",
-        "GRAPHOS-HOST-R008.1003",
-        "GRAPHOS-HOST-R008.1004",
-        "GRAPHOS-HOST-R008.1005",
-        "GRAPHOS-HOST-R008.1006",
-        "GRAPHOS-HOST-R008.1007",
-        "GRAPHOS-HOST-R008.1008"
+        "ARBORA-HOST-R008.1",
+        "ARBORA-HOST-R008.2",
+        "ARBORA-HOST-R008.3",
+        "ARBORA-HOST-R008.4",
+        "ARBORA-HOST-R008.5",
+        "ARBORA-HOST-R008.6",
+        "ARBORA-HOST-R008.1000",
+        "ARBORA-HOST-R008.1001",
+        "ARBORA-HOST-R008.1002",
+        "ARBORA-HOST-R008.1003",
+        "ARBORA-HOST-R008.1004",
+        "ARBORA-HOST-R008.1005",
+        "ARBORA-HOST-R008.1006",
+        "ARBORA-HOST-R008.1007",
+        "ARBORA-HOST-R008.1008"
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R009",
+      "id": "ARBORA-HOST-R009",
       "title": "Arbora hosts the agent HTTP server and A2A endpoints",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -1271,18 +1271,18 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-HOST-R009.1",
-        "GRAPHOS-HOST-R009.2",
-        "GRAPHOS-HOST-R009.3",
-        "GRAPHOS-HOST-R009.4",
-        "GRAPHOS-HOST-R009.5",
-        "GRAPHOS-HOST-R009.6",
-        "GRAPHOS-HOST-R009.7",
-        "GRAPHOS-HOST-R009.8"
+        "ARBORA-HOST-R009.1",
+        "ARBORA-HOST-R009.2",
+        "ARBORA-HOST-R009.3",
+        "ARBORA-HOST-R009.4",
+        "ARBORA-HOST-R009.5",
+        "ARBORA-HOST-R009.6",
+        "ARBORA-HOST-R009.7",
+        "ARBORA-HOST-R009.8"
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R010",
+      "id": "ARBORA-HOST-R010",
       "title": "Arbora owns hosting/deployment configuration settings",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -1294,19 +1294,19 @@
         "tests/deployment/test_host_config.py:43"
       ],
       "rollup_of": [
-        "GRAPHOS-HOST-R010.1",
-        "GRAPHOS-HOST-R010.2",
-        "GRAPHOS-HOST-R010.3",
-        "GRAPHOS-HOST-R010.4",
-        "GRAPHOS-HOST-R010.5",
-        "GRAPHOS-HOST-R010.6",
-        "GRAPHOS-HOST-R010.7",
-        "GRAPHOS-HOST-R010.8",
-        "GRAPHOS-HOST-R010.9"
+        "ARBORA-HOST-R010.1",
+        "ARBORA-HOST-R010.2",
+        "ARBORA-HOST-R010.3",
+        "ARBORA-HOST-R010.4",
+        "ARBORA-HOST-R010.5",
+        "ARBORA-HOST-R010.6",
+        "ARBORA-HOST-R010.7",
+        "ARBORA-HOST-R010.8",
+        "ARBORA-HOST-R010.9"
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R011",
+      "id": "ARBORA-HOST-R011",
       "title": "Arbora serves the messaging channel and routing layer",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -1318,7 +1318,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R012",
+      "id": "ARBORA-HOST-R012",
       "title": "Component registry carries Arbora and SDK boundary entries",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -1329,7 +1329,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R013",
+      "id": "ARBORA-HOST-R013",
       "title": "Front ends import only public Arbora/agent-runtime surfaces",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -1338,7 +1338,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R014",
+      "id": "ARBORA-HOST-R014",
       "title": "Agent runtime split into connector SDK, Arbora and engine",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -1349,7 +1349,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R015",
+      "id": "ARBORA-HOST-R015",
       "title": "Layered agent capability model with a harness abstraction",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -1358,7 +1358,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R016",
+      "id": "ARBORA-HOST-R016",
       "title": "main branch includes the published dependency composition",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -1367,7 +1367,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R017",
+      "id": "ARBORA-HOST-R017",
       "title": "Browser inventory lists native Arbora tools",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -1377,7 +1377,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R018",
+      "id": "ARBORA-HOST-R018",
       "title": "Browser catalog reads run under the process authority",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -1387,7 +1387,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R019",
+      "id": "ARBORA-HOST-R019",
       "title": "Arbora serves the service dashboard surface the web UI composes",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -1397,7 +1397,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R020",
+      "id": "ARBORA-HOST-R020",
       "title": "Serving start installs the decide consumers",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -1409,7 +1409,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R021",
+      "id": "ARBORA-HOST-R021",
       "title": "Serving start binds the assembler's commit and publish providers and installs the topology asker",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -1419,7 +1419,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R022",
+      "id": "ARBORA-HOST-R022",
       "title": "Serving start binds the task planner's capability-search, guardrail and workflow lookups",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -1428,11 +1428,11 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-HOST-R022.1"
+        "ARBORA-HOST-R022.1"
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R023",
+      "id": "ARBORA-HOST-R023",
       "title": "Arbora serves its eight-tool MCP intent surface from its own operation registry",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -1444,13 +1444,13 @@
         "tests/api/test_mcp_serving.py:236"
       ],
       "rollup_of": [
-        "GRAPHOS-HOST-R023.1",
-        "GRAPHOS-HOST-R023.2",
-        "GRAPHOS-HOST-R023.3"
+        "ARBORA-HOST-R023.1",
+        "ARBORA-HOST-R023.2",
+        "ARBORA-HOST-R023.3"
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R024",
+      "id": "ARBORA-HOST-R024",
       "title": "`arbora.mcp_server.server` registers Arbora's own intent surface, not the agent runtime's",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -1465,7 +1465,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R025",
+      "id": "ARBORA-HOST-R025",
       "title": "The agent runtime's MCP serving stack is removed",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -1474,7 +1474,7 @@
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R026",
+      "id": "ARBORA-HOST-R026",
       "title": "Durable A2A task persistence in the arbora agent host",
       "delivery_state": "SPECIFIED",
       "landed_in": [
@@ -1482,207 +1482,207 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-HOST-R026.1",
-        "GRAPHOS-HOST-R026.2",
-        "GRAPHOS-HOST-R026.3",
-        "GRAPHOS-HOST-R026.4",
-        "GRAPHOS-HOST-R026.5",
-        "GRAPHOS-HOST-R026.6"
+        "ARBORA-HOST-R026.1",
+        "ARBORA-HOST-R026.2",
+        "ARBORA-HOST-R026.3",
+        "ARBORA-HOST-R026.4",
+        "ARBORA-HOST-R026.5",
+        "ARBORA-HOST-R026.6"
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R026.1",
+      "id": "ARBORA-HOST-R026.1",
       "title": "Define the typed A2A task-store port",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R026.2",
+      "id": "ARBORA-HOST-R026.2",
       "title": "Implement the engine-backed A2A task store",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R026.3",
+      "id": "ARBORA-HOST-R026.3",
       "title": "Wire the hosted A2A app to the task store, fail-closed when absent",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R026.4",
+      "id": "ARBORA-HOST-R026.4",
       "title": "Add the doctor check for A2A task persistence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R026.5",
+      "id": "ARBORA-HOST-R026.5",
       "title": "Point the `g34-a2a` certification gate at arbora tests",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R027",
+      "id": "ARBORA-HOST-R027",
       "title": "Loopback OIDC authority for skill certification",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-HOST-R027.1",
-        "GRAPHOS-HOST-R027.2",
-        "GRAPHOS-HOST-R027.3"
+        "ARBORA-HOST-R027.1",
+        "ARBORA-HOST-R027.2",
+        "ARBORA-HOST-R027.3"
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R027.1",
+      "id": "ARBORA-HOST-R027.1",
       "title": "Add the loopback OIDC authority owner module for skill certification",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R027.2",
+      "id": "ARBORA-HOST-R027.2",
       "title": "Add the loopback OIDC authority test fixture",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R027.3",
+      "id": "ARBORA-HOST-R027.3",
       "title": "Add the loopback OIDC authority script",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R028",
+      "id": "ARBORA-HOST-R028",
       "title": "Bump the pinned agent-utilities source for the new `agent_utilities.api.*` export modules",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R029",
+      "id": "ARBORA-HOST-R029",
       "title": "Tenant-bound native desktop actions",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R030",
+      "id": "ARBORA-HOST-R030",
       "title": "Run-bound visual state",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R031",
+      "id": "ARBORA-HOST-R031",
       "title": "Coding-agent discovery and sandbox handoff",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R010.1",
+      "id": "ARBORA-HOST-R010.1",
       "title": "Preserve configuration ownership",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R010.2",
+      "id": "ARBORA-HOST-R010.2",
       "title": "Declare every consumed environment name",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R010.3",
+      "id": "ARBORA-HOST-R010.3",
       "title": "Validate before any service starts",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R010.4",
+      "id": "ARBORA-HOST-R010.4",
       "title": "Keep conditional configuration precise",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R010.5",
+      "id": "ARBORA-HOST-R010.5",
       "title": "Bind environment guidance to declarations",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R010.6",
+      "id": "ARBORA-HOST-R010.6",
       "title": "Prove startup validation through the launcher",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R008.1",
+      "id": "ARBORA-HOST-R008.1",
       "title": "Preserve every boundary module",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R008.2",
+      "id": "ARBORA-HOST-R008.2",
       "title": "Detect installed harnesses without effects",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R008.3",
+      "id": "ARBORA-HOST-R008.3",
       "title": "Bind exact harness configuration changes",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R008.4",
+      "id": "ARBORA-HOST-R008.4",
       "title": "Apply harness edits without overwriting unrelated content",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R008.5",
+      "id": "ARBORA-HOST-R008.5",
       "title": "Prove detected-harness installation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R009.1",
+      "id": "ARBORA-HOST-R009.1",
       "title": "Preserve hosted protocols and task authority",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R010.7",
+      "id": "ARBORA-HOST-R010.7",
       "title": "Select terminal web or combined start",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-HOST-R010.7.1",
-        "GRAPHOS-HOST-R010.7.2"
+        "ARBORA-HOST-R010.7.1",
+        "ARBORA-HOST-R010.7.2"
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R010.7.1",
+      "id": "ARBORA-HOST-R010.7.1",
       "title": "Check injected startup admission",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -1697,18 +1697,18 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R010.7.2",
+      "id": "ARBORA-HOST-R010.7.2",
       "title": "Wire admitted interface startup",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-HOST-R010.7.2.1",
-        "GRAPHOS-HOST-R010.7.2.2"
+        "ARBORA-HOST-R010.7.2.1",
+        "ARBORA-HOST-R010.7.2.2"
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R010.7.2.1",
+      "id": "ARBORA-HOST-R010.7.2.1",
       "title": "Bind actual declarative startup inputs",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -1723,39 +1723,39 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R010.7.2.2",
+      "id": "ARBORA-HOST-R010.7.2.2",
       "title": "Complete admitted client composition",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R009.2",
+      "id": "ARBORA-HOST-R009.2",
       "title": "Run terminal-mode HTTP in a supervised background thread",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R009.3",
+      "id": "ARBORA-HOST-R009.3",
       "title": "Project scoped workspace logs",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R009.4",
+      "id": "ARBORA-HOST-R009.4",
       "title": "Bound log delivery and shutdown",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-HOST-R009.4.1",
-        "GRAPHOS-HOST-R009.4.2"
+        "ARBORA-HOST-R009.4.1",
+        "ARBORA-HOST-R009.4.2"
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R009.4.1",
+      "id": "ARBORA-HOST-R009.4.1",
       "title": "Bound owned supervisor shutdown",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -1768,98 +1768,98 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R009.4.2",
+      "id": "ARBORA-HOST-R009.4.2",
       "title": "Integrate delivery and terminal shutdown",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R009.5",
+      "id": "ARBORA-HOST-R009.5",
       "title": "Publish the terminal log-consumer handoff",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R009.6",
+      "id": "ARBORA-HOST-R009.6",
       "title": "Prove start and logs through real processes",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R006.1",
+      "id": "ARBORA-HOST-R006.1",
       "title": "Preserve the sole multiplexer owner",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R006.2",
+      "id": "ARBORA-HOST-R006.2",
       "title": "Use one standard transport scaffold",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R023.1",
+      "id": "ARBORA-HOST-R023.1",
       "title": "Preserve the entire intent surface",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R023.2",
+      "id": "ARBORA-HOST-R023.2",
       "title": "Prove transport parity on the served surface",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R023.3",
+      "id": "ARBORA-HOST-R023.3",
       "title": "AU:20 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R008.6",
+      "id": "ARBORA-HOST-R008.6",
       "title": "AU:96 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R026.6",
+      "id": "ARBORA-HOST-R026.6",
       "title": "AU:112 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R022.1",
+      "id": "ARBORA-HOST-R022.1",
       "title": "AU:97 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R010.8",
+      "id": "ARBORA-HOST-R010.8",
       "title": "ARBORA:9 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R032",
+      "id": "ARBORA-HOST-R032",
       "title": "Remote workbench compatibility manifest and admission",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R010.9",
+      "id": "ARBORA-HOST-R010.9",
       "title": "Refuse unsupported client interfaces before host effects",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -1871,7 +1871,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R009.7",
+      "id": "ARBORA-HOST-R009.7",
       "title": "Injected host log authority",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -1884,7 +1884,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R009.8",
+      "id": "ARBORA-HOST-R009.8",
       "title": "Production host log sink",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -1895,12 +1895,12 @@
         "tests/agent_host/test_log_sink_terminal.py:6"
       ],
       "rollup_of": [
-        "GRAPHOS-HOST-R009.8.1",
-        "GRAPHOS-HOST-R009.8.2"
+        "ARBORA-HOST-R009.8.1",
+        "ARBORA-HOST-R009.8.2"
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R009.8.1",
+      "id": "ARBORA-HOST-R009.8.1",
       "title": "Admit exact source generations",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -1915,18 +1915,18 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R009.8.2",
+      "id": "ARBORA-HOST-R009.8.2",
       "title": "Retain restart acceptance",
       "delivery_state": "VERIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
-        "GRAPHOS-HOST-R009.8.2.1",
-        "GRAPHOS-HOST-R009.8.2.2"
+        "ARBORA-HOST-R009.8.2.1",
+        "ARBORA-HOST-R009.8.2.2"
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R009.8.2.1",
+      "id": "ARBORA-HOST-R009.8.2.1",
       "title": "Replay retained host files after restart",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -1938,7 +1938,7 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R009.8.2.2",
+      "id": "ARBORA-HOST-R009.8.2.2",
       "title": "Complete consumer metadata presentation",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -1950,63 +1950,63 @@
       ]
     },
     {
-      "id": "GRAPHOS-HOST-R008.1000",
+      "id": "ARBORA-HOST-R008.1000",
       "title": "Startup bindings for messaging, A2A and readiness",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R008.1001",
+      "id": "ARBORA-HOST-R008.1001",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R008.1002",
+      "id": "ARBORA-HOST-R008.1002",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R008.1003",
+      "id": "ARBORA-HOST-R008.1003",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R008.1004",
+      "id": "ARBORA-HOST-R008.1004",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R008.1005",
+      "id": "ARBORA-HOST-R008.1005",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R008.1006",
+      "id": "ARBORA-HOST-R008.1006",
       "title": "Hosted observability, ecosystem and deployment modules",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R008.1007",
+      "id": "ARBORA-HOST-R008.1007",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
-      "id": "GRAPHOS-HOST-R008.1008",
+      "id": "ARBORA-HOST-R008.1008",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],

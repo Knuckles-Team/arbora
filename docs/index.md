@@ -108,5 +108,5 @@ individual requirements and pull requests do not count as completed specificatio
 
 ## Planned run observation
 
-[GRAPHOS-OPS-R021.4](https://github.com/Knuckles-Team/arbora/tree/main/specs/hosted-api-operations) defines planned run reads and served acceptance.
+[ARBORA-OPS-R021.4](https://github.com/Knuckles-Team/arbora/tree/main/specs/hosted-api-operations) defines planned run reads and served acceptance.
 The specification does not establish runtime availability.

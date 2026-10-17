@@ -1,14 +1,14 @@
-# GRAPHOS-INGRESS — Implementation tasks
+# ARBORA-INGRESS — Implementation tasks
 
 Governing [spec](spec.md) and [plan](plan.md).
 
-`GRAPHOS-INGRESS-R001` is sliced per the rapid-delivery contract (size score
-above 6, more than 2 code roots): `GRAPHOS-INGRESS-R001.1` (this slice) is the
+`ARBORA-INGRESS-R001` is sliced per the rapid-delivery contract (size score
+above 6, more than 2 code roots): `ARBORA-INGRESS-R001.1` (this slice) is the
 typed public-ingress profile model plus its load-time validation and refusal
 tests, standalone from `EnvironmentProfile`. `.2`+ wire it into the existing
 profile/gateway/MCP identity path and the cutover/rollback behavior.
 
-- [x] `GRAPHOS-INGRESS-R001.1` — Typed `PublicIngressProfile` model (version,
+- [x] `ARBORA-INGRESS-R001.1` — Typed `PublicIngressProfile` model (version,
   public_origin, tls_secret_ref, callback_uri, trusted_proxy) with closed-schema
   validation and refusal tests for T-IN-01/T-IN-02 in
   `arbora/deployment/public_ingress_identity.py` +

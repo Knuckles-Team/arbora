@@ -2,7 +2,7 @@
 
 Verification terms (exact-commit pass/fail, fixture vs. served-release-probe evidence, no
 blocking on an unavailable external environment) follow
-[GRAPHOS-FLEET-001](../fleet-catalog-and-tools/test-spec.md). This spec's cases cover only the
+[ARBORA-FLEET-001](../fleet-catalog-and-tools/test-spec.md). This spec's cases cover only the
 reconciliation receipt model below.
 
 ## Positive and negative cases

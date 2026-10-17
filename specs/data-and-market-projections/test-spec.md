@@ -1,4 +1,4 @@
-# GRAPHOS-DATA-MARKET — test and acceptance contract
+# ARBORA-DATA-MARKET — test and acceptance contract
 
 Tests use local graph-engine and PostgreSQL/MariaDB fixtures plus a deterministic
 market provider stub. No test depends on a private network, operator inventory,
@@ -61,12 +61,12 @@ acceptance `ACCEPTED` only after all applicable rows pass on that revision.
 
 ## Spec-audit rollup tests
 
-- GRAPHOS-DATA-MARKET-R007: the hot-path proof test passes and the typed refusal leaves no effect.
+- ARBORA-DATA-MARKET-R007: the hot-path proof test passes and the typed refusal leaves no effect.
 
 
 ## Wallet producer and consumer acceptance
 
-`tests/integration/test_order_confirmation.py::test_wallet_proof_confirmation_and_replay` binds GRAPHOS-DATA-MARKET-R007.1 through R007.6.
+`tests/integration/test_order_confirmation.py::test_wallet_proof_confirmation_and_replay` binds ARBORA-DATA-MARKET-R007.1 through R007.6.
 Start Arbora, the actual SDK verifier and a synthetic connector with a running durable graph authority.
 Enter both REST and MCP with the same authenticated caller and approved plan; observe exactly one controlled provider mutation.
 Repeat with missing confirmation, invalid signature, changed payload, wrong account/network/tenant, expired proof and revoked key; observe zero mutations.
@@ -100,7 +100,7 @@ Start from an immutable durable change set produced by `GovernedWriteBack.dry_ru
 These are required future served tests using the existing named acceptance cases. No runtime acceptance result is available.
 
 <!-- spec-definition-patch:eg66-reads -->
-## Structured marketplace reads (GRAPHOS-DATA-MARKET-R003.1–R003.6)
+## Structured marketplace reads (ARBORA-DATA-MARKET-R003.1–R003.6)
 
 These are required future tests; no runtime result is claimed. The tests run
 through the real mounted Arbora surfaces with an instrumented local provider.
