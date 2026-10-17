@@ -179,7 +179,7 @@ def test_engine_installs_from_the_locked_wheel_not_a_source_overlay() -> None:
     )
 
 
-def test_release_dependency_readiness_blocks_tag_build_only() -> None:
+def test_release_dependency_readiness_reports_on_tag_builds_only() -> None:
     workflow = _workflow()
     steps = workflow["jobs"]["gates"]["steps"]
     checkout = next(
@@ -188,7 +188,9 @@ def test_release_dependency_readiness_blocks_tag_build_only() -> None:
         if step.get("name") == "Checkout pinned release-readiness implementation"
     )
     readiness = next(
-        step for step in steps if step.get("name") == "Release dependency readiness"
+        step
+        for step in steps
+        if step.get("name") == "Release dependency readiness (advisory, report-only)"
     )
 
     assert checkout["with"]["repository"] == "Knuckles-Team/repository-manager"
@@ -196,6 +198,9 @@ def test_release_dependency_readiness_blocks_tag_build_only() -> None:
     assert checkout["with"]["persist-credentials"] is False
     assert checkout["if"] == readiness["if"] == "startsWith(github.ref, 'refs/tags/v')"
     assert steps.index(checkout) < steps.index(readiness)
+    # Advisory (operator gate cut): it reports and never blocks the build.
+    assert checkout["continue-on-error"] is True
+    assert readiness["continue-on-error"] is True
     assert "dependency-readiness --hook-stage manual" in readiness["run"]
     assert "ln -s" not in readiness["run"]
     hook = (ROOT / "scripts" / "local_hook.sh").read_text(encoding="utf-8")
