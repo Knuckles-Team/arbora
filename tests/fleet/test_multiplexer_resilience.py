@@ -944,7 +944,7 @@ async def test_metrics_are_noop_safe_without_prometheus():
     # The multiplexer runs standalone; every metric must degrade to a no-op
     # when prometheus_client (the optional extra) is absent — and be a real
     # series when it is installed. Either way these calls must not raise.
-    from agent_utilities.observability import gateway_metrics as gm
+    from graph_os.observability import gateway_metrics as gm
 
     gm.MCP_CHILD_CALLS.labels(server="x", outcome="ok").inc()
     gm.MCP_CHILD_BREAKER_STATE.labels(server="x").set(2.0)

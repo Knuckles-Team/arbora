@@ -2091,11 +2091,14 @@ async def _catalog_sources() -> dict[str, Any]:
     ensures one malformed optional profile degrades only the ``sources`` leg.
     """
 
-    raise not_served(
-        "knowledge_graph.core.source_catalog",
-        "GRAPHOS (served catalogue read projection)",
-        owner="graph-os",
-    )
+    from graph_os.api.contracts.session import resolve_session
+    from graph_os.ingest.source_catalog import build_source_catalog
+
+    # ``graph_catalog`` verifies this at its public boundary; retain the same
+    # check here for direct in-process calls before touching the registry.
+    resolve_session(required_scope="kg:read")
+    registry = engine_routing.get_connection_registry()
+    return build_source_catalog(registry=registry)
 
 
 async def _build_graph_catalog() -> dict[str, Any]:
@@ -2165,12 +2168,21 @@ async def _graph_catalog_response(
     normalized_action = action if isinstance(action, str) else "list"
     normalized_action = normalized_action.strip().lower()
     if normalized_action == "preview_sync":
-        exc = not_served(
-            "knowledge_graph.core.source_catalog",
-            "GRAPHOS (served catalogue read projection)",
-            owner="graph-os",
-        )
-        return public_error_json(exc, code="invalid_request")
+        try:
+            from graph_os.ingest.source_catalog import normalize_source_sync_preview
+
+            return json.dumps(
+                normalize_source_sync_preview(
+                    source=source,
+                    mode=mode,
+                    ids_json=ids_json,
+                    connection=connection,
+                    graph=graph,
+                ),
+                default=str,
+            )
+        except Exception as exc:  # noqa: BLE001 — deterministic client error
+            return public_error_json(exc, code="invalid_request")
     if normalized_action != "list":
         return public_error_json(
             ValueError("action must be 'list' or 'preview_sync'"),
@@ -2956,77 +2968,6 @@ def register_query_tools(mcp):
         return json.dumps({"error": f"unknown action: {action}"})
 
     runtime.REGISTERED_TOOLS["graph_context"] = graph_context
-
-    # ══════════════════════════════════════════════════════════════════
-    # 1c. graph_message — CONCEPT:AU-ORCH.session.session-anchored-collections-native invoker↔spawned-agent message channel
-    # ══════════════════════════════════════════════════════════════════
-    @mcp.tool(
-        name="graph_message",
-        description=(
-            "CONCEPT:AU-ORCH.session.session-anchored-collections-native — bidirectional, cross-process, ordered message channel between "
-            "an invoking agent and a spawned agent, over the epistemic-graph native channels. "
-            "Actions: 'open' (session_id+run_id → channel_id), 'send' (channel_id+sender+payload "
-            "[+durable]), 'receive' (channel_id [+since cursor] → new messages + cursor), "
-            "'history' (durable replay, survives restart), 'close'. Use the channel_id returned "
-            "by graph_orchestrate(open_channel=True) to talk to the spawned agent."
-        ),
-        tags=["graph-os", "orchestrate", "messaging"],
-    )
-    async def graph_message(
-        action: str = Field(
-            default="receive", description="open | send | receive | history | close"
-        ),
-        channel_id: str = Field(
-            default="", description="Channel id (send/receive/history/close)."
-        ),
-        session_id: str = Field(default="", description="Session id (open)."),
-        run_id: str = Field(default="", description="Spawned run id (open)."),
-        sender: str = Field(default="invoker", description="Sender label (send)."),
-        payload: str = Field(default="", description="Message text (send)."),
-        since: int = Field(
-            default=0, description="Cursor: messages already consumed (receive)."
-        ),
-        durable: bool = Field(
-            default=False,
-            description="When True (send), also persist the message as a graph AgentMessage "
-            "node so it survives engine restart and is replayable via action='history'.",
-        ),
-    ) -> str:
-        from agent_utilities.messaging import agent_channel
-
-        engine = runtime._get_engine()
-        if not engine:
-            return json.dumps({"error": "IntelligenceGraphEngine not active."})
-        if action == "open":
-            cid = agent_channel.open_channel(engine, session_id, run_id)
-            return json.dumps({"channel_id": cid})
-        if action == "send":
-            return json.dumps(
-                {
-                    "sent": agent_channel.send(
-                        engine, channel_id, sender, payload, durable=bool(durable)
-                    )
-                }
-            )
-        if action == "receive":
-            try:
-                msgs, cursor = agent_channel.receive(engine, channel_id, since=since)
-            except agent_channel.ChannelNotFoundError:
-                # BUG-8: surface the not-found condition instead of a silent
-                # empty result indistinguishable from "no new messages".
-                return json.dumps(
-                    {"error": "channel not found", "channel_id": channel_id}
-                )
-            return json.dumps({"messages": msgs, "cursor": cursor}, default=str)
-        if action == "history":
-            return json.dumps(
-                {"messages": agent_channel.history(engine, channel_id)}, default=str
-            )
-        if action == "close":
-            return json.dumps({"closed": agent_channel.close(engine, channel_id)})
-        return json.dumps({"error": f"unknown action: {action}"})
-
-    runtime.REGISTERED_TOOLS["graph_message"] = graph_message
 
     # ══════════════════════════════════════════════════════════════════
     # 2. kg_search — Unified search (hybrid, concept, analogy, memory)

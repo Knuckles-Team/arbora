@@ -39,12 +39,13 @@ from collections.abc import AsyncIterator
 from typing import Any
 from urllib.parse import urlparse
 
-from agent_utilities.messaging.base import MessagingBackend
-from agent_utilities.messaging.capabilities import (
+from graph_os.core.settings import setting
+from graph_os.messaging.base import MessagingBackend
+from graph_os.messaging.capabilities import (
     CAPABILITY_MATRIX,
     MessagingCapabilities,
 )
-from agent_utilities.messaging.models import (
+from graph_os.messaging.models import (
     Channel,
     EventType,
     InboundEvent,
@@ -57,8 +58,6 @@ from agent_utilities.messaging.models import (
     SendResult,
     Thread,
 )
-
-from graph_os.core.settings import setting
 
 logger = logging.getLogger(__name__)
 

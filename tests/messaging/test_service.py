@@ -13,16 +13,18 @@ from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
-from agent_utilities.messaging.models import (
+
+from graph_os.messaging import service as service_module
+from graph_os.messaging.models import (
     EventType,
     InboundEvent,
     SendResult,
 )
-
-from graph_os.messaging import service as service_module
 from graph_os.messaging.service import MessagingService
 
-from ._fakes import FakeMessagingBackend as _FakeBackend
+from ._fakes import FakeMessagingBackend
+
+_FakeBackend: Any = FakeMessagingBackend
 
 
 def test_inbound_inbox_uses_only_bound_host_engine() -> None:
@@ -131,7 +133,7 @@ async def test_reach_user_uses_last_active_channel(svc: MessagingService) -> Non
     # …so reach_user now routes there.
     res = await svc.reach_user("hello", user_id="u1")
     assert res.success
-    backend = await svc.get_backend("telegram")
+    backend: Any = await svc.get_backend("telegram")
     assert backend is not None
     assert backend.sent[-1] == ("555", "hello")
 
@@ -144,7 +146,7 @@ async def test_reach_user_falls_back_to_default_channel(
     monkeypatch.setenv("MESSAGING_DEFAULT_CHANNEL", "999")
     res = await svc.reach_user("yo", user_id="unknown-user")
     assert res.success
-    backend = await svc.get_backend("telegram")
+    backend: Any = await svc.get_backend("telegram")
     assert backend is not None
     assert backend.sent[-1] == ("999", "yo")
 
@@ -165,23 +167,23 @@ async def test_send_blocked_when_policy_denies(
     assert "policy" in res.error
 
 
-@pytest.mark.asyncio
-async def test_send_refuses_when_action_policy_raises(
-    monkeypatch: pytest.MonkeyPatch,
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    """A broken authorization dependency cannot deliver or persist a message."""
-    from agent_utilities.orchestration import action_policy
+def _raising_gate(_request: Any, _engine: Any) -> None:
+    raise RuntimeError("sensitive policy backend detail")
 
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("gate", [None, _raising_gate], ids=["unbound", "raises"])
+async def test_send_refuses_when_action_gate_is_unavailable(
+    caplog: pytest.LogCaptureFixture, gate: Any
+) -> None:
+    """A missing or broken authorization gate cannot deliver or persist a message."""
+    from graph_os.messaging.host_ports import bind_host_ports
+
+    bind_host_ports(action_gate=gate)
     engine = _FakeEngine()
     service = MessagingService(engine)
     backend = _FakeBackend()
     service.register_connected(backend)
-
-    def _raise_policy_error(_engine: Any) -> None:
-        raise RuntimeError("sensitive policy backend detail")
-
-    monkeypatch.setattr(action_policy, "get_action_policy", _raise_policy_error)
 
     result = await service.send(
         "telegram", "1", "must not leave the process", policy_runner=_immediate_policy

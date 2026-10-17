@@ -129,12 +129,12 @@ _PROFILE_PRESETS: dict[str, dict[str, Any]] = {
         # epistemic-graph engine is provisioned locally on first use.
         "APP_PROFILE": "dev",
         "DEPLOYMENT_PROFILE": "tiny",
-        "SECRETS_BACKEND": "engine",
+        "SECRETS_BACKEND": "vault",
         "ENGINE_TOPOLOGY": _ENGINE_TOPOLOGY_DEFAULTS["tiny"],
     },
     "single-node-prod": {
         # One host: the engine is the authority; pg-age is an async mirror (interop/
-        # BI/DR). Gateway hardened, secrets in encrypted engine storage.
+        # BI/DR). Gateway hardened, secrets resolved from the vault backend.
         "APP_PROFILE": "production",
         "DEPLOYMENT_PROFILE": "single-node-prod",
         "ENGINE_TOPOLOGY": _ENGINE_TOPOLOGY_DEFAULTS["single-node-prod"],
@@ -155,7 +155,7 @@ _PROFILE_PRESETS: dict[str, dict[str, Any]] = {
         "USAGE_CONTENT_RETENTION": "metadata",
         "LANGFUSE_CAPTURE_CONTENT": False,
         "PERSISTENCE_IDENTITY_HMAC_KEY_REF": "env://PERSISTENCE_IDENTITY_HMAC_KEY",
-        "SECRETS_BACKEND": "engine",
+        "SECRETS_BACKEND": "vault",
         "KAFKA_BOOTSTRAP_SERVERS": "",  # optional on one host; doctor will note it
         "ENABLE_OTEL": True,
         "OTEL_EXPORTER_OTLP_ENDPOINT": _PLACEHOLDER_OTEL,
@@ -783,8 +783,9 @@ def _config_doctor_check_required_keys(cfg: Any, norm: str) -> dict[str, Any]:
 
 def _config_doctor_check_durability(cfg: Any, norm: str) -> dict[str, Any]:
     """2. Durability / production-safety rules (always evaluated, advisory for tiny)."""
-    del cfg
-    violations: list[str] = []
+    from graph_os.deployment.profile_guard import collect_production_violations
+
+    violations = collect_production_violations(cfg)
     return {
         "check": "durability",
         "ok": not violations or norm == "tiny",

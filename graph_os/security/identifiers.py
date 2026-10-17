@@ -1,6 +1,3 @@
-#!/usr/bin/python
-from __future__ import annotations
-
 """Centralized identifier validation for interpolated Cypher/SQL/DDL fragments.
 
 Neither Cypher nor SQL/DDL syntax accepts a bound parameter for an
@@ -13,12 +10,8 @@ Left unchecked, a caller/ontology/connector-supplied name crafted as
 break out of the intended query shape even though every *value* in the same
 query is safely bound.
 
-The correct pattern already existed once —
-``agent_utilities.knowledge_graph.backends.epistemic_graph_backend``'s
-``_CYPHER_IDENTIFIER_RE`` (used by its ``prune()``) — but was never shared, so
-several other backends grew their own copy (or none at all). This module is
-the ONE place that pattern lives; every adapter that interpolates an
-identifier calls into it instead of hand-rolling its own regex.
+This module is the one place that pattern lives; every adapter that
+interpolates an identifier calls into it.
 
 Two call shapes:
 
@@ -38,6 +31,8 @@ offending value is never included in the message, mirroring
 ``CypherEngineError``'s no-leak discipline) so a crafted identifier cannot
 also be used to smuggle content into logs or error responses.
 """
+
+from __future__ import annotations
 
 import re
 

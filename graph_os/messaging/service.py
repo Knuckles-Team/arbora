@@ -29,17 +29,16 @@ import logging
 import time
 from typing import TYPE_CHECKING, Any
 
-from agent_utilities.messaging.models import InboundEvent, MediaAttachment, SendResult
-
 from graph_os.core.settings import setting
 from graph_os.messaging.governed_send import (
     PolicyRunner,
     mirror_outbound_if_enabled,
     run_action_policy,
 )
+from graph_os.messaging.models import InboundEvent, MediaAttachment, SendResult
 
 if TYPE_CHECKING:
-    from agent_utilities.messaging.base import MessagingBackend
+    from graph_os.messaging.base import MessagingBackend
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +80,10 @@ class MessagingService:
 
     # ── Engine resolution ────────────────────────────────────────────
     def _resolve_engine(self) -> Any:
-        """Return the injected engine client, or ``None`` when none is bound."""
+        """Bind to the live served engine (matches gateway/daemon.py)."""
+        if self._engine is not None:
+            return self._engine
+        logger.debug("[ECO-4.48] no engine is bound to the messaging service")
         return self._engine
 
     # ── Backend lifecycle ────────────────────────────────────────────
@@ -261,19 +263,20 @@ class MessagingService:
 
     def _gate(self, channel_id: str, platform: str, *, source: str, reason: str) -> Any:
         """Run ActionPolicy, returning ``None`` when authorization is unavailable."""
-        try:
-            from graph_os.access.action_policy import (
-                ActionRequest,
-                get_action_policy,
-            )
+        from graph_os.messaging.host_ports import host_ports
 
-            request = ActionRequest(
-                kind="message.send",
-                target=f"{platform}:{channel_id}",
-                source=source or "messaging",
-                reason=reason or "outbound message to user",
-            )
-            return get_action_policy(self._resolve_engine()).decide(request)
+        gate = host_ports().action_gate
+        if gate is None:
+            logger.warning("[ECO-4.48] no action gate is bound; outbound send refused")
+            return None
+        try:
+            request = {
+                "kind": "message.send",
+                "target": f"{platform}:{channel_id}",
+                "source": source or "messaging",
+                "reason": reason or "outbound message to user",
+            }
+            return gate(request, self._resolve_engine())
         except Exception as exc:  # gate failure must not silently send
             logger.warning(
                 "[ECO-4.48] action policy unavailable; outbound send refused (%s)",
@@ -284,13 +287,15 @@ class MessagingService:
     async def _ingest_outbound(
         self, platform: str, channel_id: str, text: str, engine: Any
     ) -> None:
-        from agent_utilities.messaging.kg_ingest import ingest_outbound_to_kg
-        from agent_utilities.messaging.models import Message
+        from graph_os.messaging.host_ports import host_ports
+        from graph_os.messaging.models import Message
 
+        mirror = host_ports().outbound_mirror
+        if mirror is None:
+            return
         try:
-            await ingest_outbound_to_kg(
-                Message(content=text, channel_id=channel_id, platform=platform),
-                knowledge_engine=engine,
+            await mirror(
+                Message(content=text, channel_id=channel_id, platform=platform), engine
             )
         except Exception as exc:  # best-effort KG mirror of an already-sent message (called only after result.success is True in send()); does not affect the SendResult returned to the caller
             logger.debug("[ECO-4.48] outbound ingest failed: %s", exc)
@@ -454,7 +459,7 @@ class MessagingService:
         """Render a core :class:`AgentReaction` on ``platform`` (the renderer contract).
 
         CONCEPT:AU-ECO.messaging.messaging-as-renderer — messaging is a RENDERER of the orchestrator's
-        :class:`~agent_utilities.orchestration.reactions.AgentReaction`, not the owner of
+        ``AgentReaction``, not the owner of
         the reaction logic. This paints the core decision onto chat via the backend's
         ``send_reaction`` / ``setMessageReaction``. Returns True if rendered.
         """

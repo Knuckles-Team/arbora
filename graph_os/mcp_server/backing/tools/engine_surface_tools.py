@@ -6,8 +6,7 @@ leaving them reachable only through the generic ``engine_<domain>`` 1:1 surface
 (``engine_tools.py``). This module ADDS those ergonomic wrappers:
 
 * ``graph_broker``          — the message broker (declare exchange/queue, bind,
-  publish, consume, stats — AMQP-style; distinct from the agent-to-agent
-  ``graph_bus`` in ``bus_tools.py``).
+  publish, consume, stats — AMQP-style).
 * ``graph_kvcache``         — the shared, content-addressed KV-cache over the
   EG-187 HTTP surface, driven through the KG-2.306
   :class:`~agent_utilities.kvcache.EpistemicGraphKVBackend` connector.
@@ -2095,8 +2094,7 @@ def register_engine_surface_tools(
         name="graph_broker",
         description=(
             "CONCEPT:AU-KG.coordination.engine-message-broker — the epistemic-graph engine message broker "
-            "(AMQP-style exchanges + queues + streams), distinct from the "
-            "agent-to-agent 'graph_bus'. Action-routed 1:1 over the engine broker "
+            "(AMQP-style exchanges + queues + streams). Action-routed 1:1 over the engine broker "
             "surface: set 'action' to the broker method — e.g. 'declare_exchange' "
             "(exchange [+exchange_type]), 'declare_queue' (queue), 'bind' (queue + "
             "exchange [+routing_key]), 'publish' (exchange + routing_key + payload), "

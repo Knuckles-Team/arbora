@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from agent_utilities.messaging.models import SendResult
+from graph_os.messaging.models import SendResult
 
 
 def synthetic_token(*parts: str) -> str:

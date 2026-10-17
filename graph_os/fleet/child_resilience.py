@@ -64,14 +64,14 @@ from dataclasses import dataclass
 from typing import Any
 
 import anyio
-from agent_utilities.observability.gateway_metrics import (
+
+from graph_os.fleet.protocol_compat import mcp_protocol_error
+from graph_os.observability.gateway_metrics import (
     MCP_CHILD_BREAKER_STATE,
     MCP_CHILD_CALLS,
     MCP_CHILD_QUEUE_DEPTH,
     MCP_CHILD_RESTARTS,
 )
-
-from graph_os.fleet.protocol_compat import mcp_protocol_error
 from graph_os.security.log_redaction import redact_for_log
 
 # MCP protocol error (e.g. a terminated streamable-http session). SDK v2

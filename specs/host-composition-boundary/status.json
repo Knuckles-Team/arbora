@@ -466,7 +466,7 @@
     },
     {
       "id": "GRAPHOS-HOST-R005.2.3.3",
-      "title": "Add graph-os operation for `backfill_platform_history` and `corpus`",
+      "title": "Add graph-os operation for `corpus`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

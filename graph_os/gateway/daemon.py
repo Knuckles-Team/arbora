@@ -254,7 +254,7 @@ def start_host_daemon() -> Any:
         raise not_served("knowledge_graph.core.engine", "EG-PLACEMENT-R611")
     # CONCEPT:AU-ECO.messaging.inbound-messaging-router-runs — the inbound messaging
     # router runs in its OWN process
-    # (``agent-utilities-messaging`` / ``agent_utilities.messaging.daemon``), NOT here,
+    # (the messaging intake co-service), NOT here,
     # so
     # the host's CPU-bound maintenance (codebase ingestion / relevance sweeps) can never
     # starve the inbound reply loop. It connects to this same shared engine as a client.

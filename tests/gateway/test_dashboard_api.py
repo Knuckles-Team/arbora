@@ -99,7 +99,7 @@ def test_full_returns_layout_and_data(client: TestClient) -> None:
 def test_health_is_served_without_capabilities(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from agent_utilities.observability import runtime_health
+    from graph_os.observability import runtime_health
 
     async def _report() -> dict[str, Any]:
         return {"status": "ok"}

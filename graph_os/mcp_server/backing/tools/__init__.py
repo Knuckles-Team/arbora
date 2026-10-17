@@ -7,7 +7,6 @@ the strangler split of the former ~5k-line monolithic builder.
 from graph_os.mcp_server.backing.tools.analysis_tools import register_analysis_tools
 from graph_os.mcp_server.backing.tools.analyze_suite import register_analyze_suite_tools
 from graph_os.mcp_server.backing.tools.audit_tools import register_audit_tools
-from graph_os.mcp_server.backing.tools.bus_tools import register_bus_tools
 from graph_os.mcp_server.backing.tools.candidate_claim_tools import (
     register_candidate_claim_tools,
 )
@@ -20,7 +19,6 @@ from graph_os.mcp_server.backing.tools.engine_surface_tools import (
 from graph_os.mcp_server.backing.tools.engine_tools import register_engine_tools
 from graph_os.mcp_server.backing.tools.epistemic_tools import register_epistemic_tools
 from graph_os.mcp_server.backing.tools.governance_tools import register_governance_tools
-from graph_os.mcp_server.backing.tools.incident_tools import register_incident_tools
 from graph_os.mcp_server.backing.tools.mcp_apps import register_mcp_apps_tools
 from graph_os.mcp_server.backing.tools.ontology_tools import register_ontology_tools
 from graph_os.mcp_server.backing.tools.query_tools import register_query_tools
@@ -39,7 +37,6 @@ __all__ = [
     "register_state_tools",
     "register_ontology_tools",
     "register_reach_tools",
-    "register_bus_tools",
     "register_candidate_claim_tools",
     "register_secret_tools",
     "register_engine_tools",
@@ -48,10 +45,7 @@ __all__ = [
     "register_governance_tools",
     "register_audit_tools",
     "register_epistemic_tools",
-    "register_incident_tools",
     "register_mcp_apps_tools",
     "register_compliance_tools",
     "register_config_tools",
-    "register_argument_tools",
-    "register_graph_engineering_tools",
 ]

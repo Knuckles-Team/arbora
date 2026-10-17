@@ -312,7 +312,7 @@ class WorkItemA2AAuthority:
             "runId": task_id,
             "routing": public_route,
         }
-        from agent_utilities.observability.trace_ontology import (
+        from graph_os.observability.trace_ontology import (
             trace_id as canonical_trace_id,
         )
 

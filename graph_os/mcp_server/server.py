@@ -63,7 +63,7 @@ def _configure_graphos_otel() -> None:
     if not setting("ENABLE_OTEL", False):
         return
     try:
-        from agent_utilities.observability.custom_observability import setup_otel
+        from graph_os.observability.custom_observability import setup_otel
 
         setup_otel(service_name="graph-os")
     except Exception as exc:  # noqa: BLE001 - observability cannot prevent serving
@@ -78,16 +78,16 @@ def _configure_telemetry_engine_otel() -> None:
 
     CONCEPT:AU-OS.observability.telemetry-observability — independent of
     ``_configure_graphos_otel``'s ``ENABLE_OTEL``-gated Logfire/Langfuse
-    pipeline: :class:`~agent_utilities.observability.TelemetryEngine` self-gates
-    purely on the standard ``OTEL_EXPORTER_OTLP_ENDPOINT``/``OTEL_SERVICE_NAME``/
+    pipeline: :func:`~graph_os.observability.telemetry.configure_standard_otel`
+    self-gates purely on the standard ``OTEL_EXPORTER_OTLP_ENDPOINT``/``OTEL_SERVICE_NAME``/
     ``OTEL_TRACES_EXPORTER`` vars (falling back to ``EPISTEMIC_GRAPH_OBS_ADDR``),
     so no new env var is introduced here. This is the ONE process-bootstrap
     call site that activates it for the graph-os MCP server — never per-request.
     """
     try:
-        from agent_utilities.observability import get_telemetry_engine
+        from graph_os.observability.telemetry import configure_standard_otel
 
-        configured = get_telemetry_engine().is_otel_configured()
+        configured = configure_standard_otel(service_name="graph-os")
         logger.info(
             "GraphOS OTLP trace export (standard env vars): %s",
             "enabled" if configured else "disabled",
@@ -175,6 +175,13 @@ def mcp_server() -> None:
 
     load_config()  # resolve settings through the one shared XDG config.json
     install_gateway_application()
+    from graph_os.host_bindings import (
+        bind_health_probes,
+        bind_messaging_ports,
+    )
+
+    bind_messaging_ports()
+    bind_health_probes()
     _preflight_mcp_sdk_floor()
     _configure_graphos_otel()
     _configure_telemetry_engine_otel()

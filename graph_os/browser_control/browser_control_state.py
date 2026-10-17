@@ -93,7 +93,7 @@ class BrowserControlMixinState:
         result_digest: str | None = None,
         error_code: str | None = None,
     ) -> BrowserCallReceipt:
-        from agent_utilities.observability.trace_ontology import trace_id
+        from graph_os.observability.trace_ontology import trace_id
 
         return BrowserCallReceipt(
             call_id=active.call_id,

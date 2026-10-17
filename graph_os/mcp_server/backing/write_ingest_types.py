@@ -1,7 +1,7 @@
 """Typed request value object for ``write_ingest_tools``'s ``_ingest_action_*`` handlers.
 
 Leaf module — imports NOTHING from ``agent_utilities`` (CX wD10-R-ARITY / BUG-CX-004 §9b,
-same rationale as ``graph_os.mcp_server.backing.bus_types`` / ``graph_os.mcp_server.backing.ontology_types`` /
+same rationale as ``graph_os.mcp_server.backing.ontology_types`` /
 ``graph_os.mcp_server.backing.engine_surface_types``: ``graph_os.mcp_server.backing.tools`` is the highest-
 leverage node in au's import SCC because its ``__init__.py`` eagerly imports all 35
 tool-registration modules).
@@ -14,7 +14,7 @@ agent_id, job_id, priority_bucket, corpus_name, base_path, description, content_
 connection, graph)`` — which is the exact anti-pattern the review named: the union of every
 action's parameters threaded through every handler whether or not that action reads them.
 This dataclass replaces that tuple; ``engine`` stays a separate positional argument since it
-is a live collaborator, not request data (same split as ``bus_types.BusExecContext``).
+is a live collaborator, not request data.
 """
 
 from __future__ import annotations

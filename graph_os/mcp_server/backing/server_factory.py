@@ -2305,12 +2305,13 @@ def _register_operational_routes(
         # process never mounts the REST gateway's own /metrics
         # (graph_os.gateway.graph_api.register_graph_routes), so this
         # custom_route is the only exposition actually served.
-        from agent_utilities.observability.gateway_metrics import (
-            render_metrics_with_engine as _render_metrics_with_engine,
-        )
         from starlette.requests import Request as _Request
         from starlette.responses import JSONResponse as _JSONResponse
         from starlette.responses import Response as _Response
+
+        from graph_os.observability.gateway_metrics import (
+            render_metrics_with_engine as _render_metrics_with_engine,
+        )
 
         if not remote_network or metrics_token is not None:
 

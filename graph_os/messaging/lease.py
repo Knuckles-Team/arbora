@@ -12,6 +12,7 @@ from __future__ import annotations
 import contextvars
 import dataclasses
 import hashlib
+import json
 import logging
 import threading
 import time
@@ -22,14 +23,67 @@ from typing import Any
 from graph_os.work_items import (
     NativeWorkItemRequired,
     WorkItemBackendUnavailable,
-    claim_specific,
-    defer_work_item,
-    get_work_item,
-    heartbeat,
-    submit_work_item_atomic,
 )
 
 logger = logging.getLogger(__name__)
+
+
+#: The wall clock in seconds; tests replace it.
+_clock: Callable[[], float] = time.time
+
+
+def _now_ms() -> int:
+    return int(_clock() * 1000)
+
+
+def _work_items(engine: Any) -> Any:
+    """The engine's served WorkItem namespace (submit, get, claim, renew, defer)."""
+    for holder in (engine, getattr(engine, "_client", None)):
+        namespace = getattr(holder, "work_items", None) if holder is not None else None
+        if namespace is not None:
+            return namespace
+    raise NativeWorkItemRequired("the knowledge engine serves no WorkItem methods")
+
+
+def _request_context(engine: Any) -> dict[str, Any]:
+    """The verified request context the engine bound to this client."""
+    for holder in (engine, getattr(engine, "_client", None)):
+        read = getattr(holder, "_effective_verified_context", None)
+        if callable(read):
+            return dict(read())
+    raise NativeWorkItemRequired("WorkItem submission needs a verified request context")
+
+
+def _submit_lease_row(
+    engine: Any, *, item_id: str, tenant: str, metadata: dict[str, Any]
+) -> None:
+    """Admit the lease row once; a replay of the same row is accepted."""
+    body = {"kind": _LEASE_KIND, "tenant": tenant, "metadata": metadata}
+    digest = hashlib.sha256(
+        json.dumps(body, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    _work_items(engine).submit(
+        {
+            "schema_version": "1",
+            "context": _request_context(engine),
+            "work_item_id": item_id,
+            "idempotency_key": item_id,
+            "command_digest": digest,
+            "kind": _LEASE_KIND,
+            "priority": 0,
+            "depends_on": [],
+            "input_ref": item_id,
+            "policy_digest": _LEASE_QUEUE,
+            "catalog_digest": _LEASE_QUEUE,
+            "model_digest": _LEASE_QUEUE,
+            "max_attempts": _MAX_LEASE_ATTEMPTS,
+            "deadline_unix": None,
+            "metadata": metadata,
+            "provenance_refs": [],
+            "max_tenant_in_flight": _MAX_TENANT_IN_FLIGHT,
+        }
+    )
+
 
 # The lease is intentionally short enough to make a crashed poller fail over in
 # bounded time, while the renewal loop keeps a healthy long-poll owner alive.
@@ -43,6 +97,7 @@ _LEASE_RESOURCE_CLASS = "messaging-intake"
 # reclaimable for the life of the deployment instead of dead-lettering it after
 # the generic WorkItem default of three attempts.
 _MAX_LEASE_ATTEMPTS = 2**31 - 1
+_MAX_TENANT_IN_FLIGHT = 4096
 
 
 @dataclasses.dataclass(frozen=True)
@@ -84,7 +139,7 @@ def _validate_lease_row(
     identity_digest: str,
     tenant: str,
 ) -> None:
-    item = get_work_item(engine, item_id)
+    item = _work_items(engine).get(tenant=tenant, work_item_id=item_id)
     metadata = item.get("metadata") if item is not None else None
     if (
         item is None
@@ -124,22 +179,11 @@ def acquire_intake_lease(
     tenant = _session_tenant(session)
     identity_digest = _identity_digest(platform)
     item_id = _work_item_id(platform, identity_digest)
-    submit_work_item_atomic(
+    _submit_lease_row(
         engine,
-        kind=_LEASE_KIND,
-        queue=_LEASE_QUEUE,
+        item_id=item_id,
         tenant=tenant,
-        work_item_id=item_id,
-        idempotency_key=item_id,
-        resource_class=_LEASE_RESOURCE_CLASS,
-        fairness_group=f"messaging:{platform}",
-        max_attempts=_MAX_LEASE_ATTEMPTS,
-        description="messaging inbound intake ownership lease",
-        created_by="messaging-intake",
-        metadata={
-            "platform": platform,
-            "identity_digest": identity_digest,
-        },
+        metadata={"platform": platform, "identity_digest": identity_digest},
     )
     _validate_lease_row(
         engine,
@@ -150,21 +194,26 @@ def acquire_intake_lease(
     )
 
     owner_ref = f"messaging-intake:{platform}:{uuid.uuid4().hex}"
-    claim = claim_specific(
-        engine,
-        item_id,
-        token=owner_ref,
-        lease_ttl_s=lease_ttl_s,
+    answer = _work_items(engine).claim(
+        {
+            "schema_version": "1",
+            "tenant_ref": tenant,
+            "work_item_id": item_id,
+            "queue_ref": None,
+            "resource_class": _LEASE_RESOURCE_CLASS,
+            "fairness_group": f"messaging:{platform}",
+            "worker_ref": owner_ref,
+            "now_ms": _now_ms(),
+            "lease_ms": int(lease_ttl_s * 1000),
+            "max_tenant_in_flight": _MAX_TENANT_IN_FLIGHT,
+        }
     )
-    if claim is None:
+    if not answer.get("claimed"):
         logger.info(
             "messaging intake lease is held by another owner: platform=%s", platform
         )
         return None
-    if claim.get("tenant") != tenant:
-        raise NativeWorkItemRequired(
-            f"messaging intake lease claim for {platform!r} lacked native tenant authority"
-        )
+    claim = {**answer, "tenant": tenant, "worker_ref": owner_ref}
     return IntakeLease(
         platform=platform,
         item_id=item_id,
@@ -212,12 +261,17 @@ def acquire_intake_leases(
 
 def _release_intake_lease(engine: Any, lease: IntakeLease) -> None:
     """Return a healthy lease to ``ready``; expiry remains the crash fallback."""
+    now_ms = _now_ms()
     try:
-        defer_work_item(
-            engine,
-            lease.item_id,
-            lease.claim,
-            next_retry_at=time.time(),
+        _work_items(engine).defer(
+            tenant=lease.claim["tenant"],
+            work_item_id=lease.item_id,
+            worker_id=lease.claim["worker_ref"],
+            lease_epoch=int(lease.claim["lease_epoch"]),
+            fencing_token=int(lease.claim["fencing_token"]),
+            idempotency_key=f"defer:{lease.item_id}:{lease.claim['lease_epoch']}",
+            next_retry_at_ms=now_ms,
+            now_ms=now_ms,
             reason_ref="messaging_intake_stopped",
         )
     except Exception as exc:  # expiry is the durable crash fallback
@@ -249,9 +303,16 @@ def _still_leased(
 def _renew_one(engine: Any, lease: IntakeLease) -> bool:
     """Heartbeat one lease; a renewal error counts as lost (fail closed)."""
     try:
-        return heartbeat(
-            engine, lease.item_id, lease.claim, lease_ttl_s=lease.lease_ttl_s
+        answer = _work_items(engine).renew(
+            tenant=lease.claim["tenant"],
+            work_item_id=lease.item_id,
+            worker_id=lease.claim["worker_ref"],
+            lease_epoch=int(lease.claim["lease_epoch"]),
+            fencing_token=int(lease.claim["fencing_token"]),
+            now_ms=_now_ms(),
+            lease_ms=int(lease.lease_ttl_s * 1000),
         )
+        return bool(answer.get("renewed", answer.get("ok", False)))
     except Exception as exc:  # losing a lease must stop that platform's polling
         logger.error(
             "messaging intake lease renewal failed: platform=%s error=%s",
@@ -397,6 +458,8 @@ def run_owned_intake(
 
 __all__ = [
     "DEFAULT_LEASE_TTL_S",
+    "NativeWorkItemRequired",
+    "WorkItemBackendUnavailable",
     "IntakeLease",
     "acquire_intake_lease",
     "acquire_intake_leases",

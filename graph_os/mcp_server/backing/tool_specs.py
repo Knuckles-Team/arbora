@@ -137,9 +137,7 @@ TOOL_VERBS: Mapping[str, tuple[str, ...]] = MappingProxyType(
         "graph_domain_ops": ("act",),
         "graph_loops": ("act",),
         "graph_fork": ("act",),
-        "graph_bus": ("act",),
         "graph_broker": ("act",),
-        "graph_message": ("act",),
         "graph_feeds": ("act", "ask"),
         # Track 4/5 of the universal-ingestion program. ``propose`` runs a
         # schema-constrained extraction pass and ``resolve_identities`` compares

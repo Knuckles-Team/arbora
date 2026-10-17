@@ -480,10 +480,9 @@ ACTION_TOOL_ROUTES: dict[str, str] = {
     "graph_context": "/graph/context",
     "graph_feedback": "/graph/feedback",
     "graph_sessions": "/graph/sessions",
-    "graph_message": "/graph/message",
+    "graph_goals": "/graph/goals",
     "graph_reach": "/graph/reach",
-    "graph_bus": "/graph/bus",
-    "graph_secret": "/graph/secret",  # nosec B105 - HTTP route path, not a secret
+    "graph_secret": "/graph/secret",
     "document_process": "/document/process",
     "source_connector": "/connector/source",
     "graph_writeback": "/graph/writeback",
@@ -734,7 +733,7 @@ def _build_server(bootstrap: bool = True, *, canonical_surface: bool = False):
 
     @mcp.custom_route("/health/ready", methods=["GET"])
     async def readiness_check(request: Request) -> JSONResponse:  # noqa: ARG001
-        from agent_utilities.observability.runtime_health import (
+        from graph_os.observability.runtime_health import (
             collect_health_async,
             is_overall_healthy,
         )
@@ -753,13 +752,13 @@ def _build_server(bootstrap: bool = True, *, canonical_surface: bool = False):
     # delegate into the same ecosystem.ard_* core to stay in lockstep with the gateway.
     @mcp.custom_route("/.well-known/ai-catalog.json", methods=["GET"])
     async def ard_ai_catalog(request: Request) -> JSONResponse:  # noqa: ARG001
-        from agent_utilities.ecosystem.ard_registry import build_ai_catalog
+        from graph_os.ecosystem.ard_registry import build_ai_catalog
 
         return JSONResponse(build_ai_catalog())
 
     @mcp.custom_route("/search", methods=["POST"])
     async def ard_search_route(request: Request) -> JSONResponse:
-        from agent_utilities.ecosystem.ard_federation import ArdFederationRelay
+        from graph_os.ecosystem.ard_federation import ArdFederationRelay
 
         try:
             body = await request.json()
@@ -801,11 +800,13 @@ def _register_graph_tool_surface(mcp: Any, *, canonical: bool = False) -> None:
 
     from graph_os.a2a.mcp import register_a2a_tools
     from graph_os.browser_control.mcp import register_browser_control_tools
+    from graph_os.host_bindings import mount_sdk_a2a
     from graph_os.mcp_server.backing.graphos_surface import register_graphos_surface
 
     backing = register_graphos_surface(mcp, canonical=canonical)
     register_browser_control_tools(backing)
     register_a2a_tools(mcp, tools=backing)
+    mount_sdk_a2a(mcp)
 
 
 def _attach_headless_fleet_loader(mcp: Any) -> None:

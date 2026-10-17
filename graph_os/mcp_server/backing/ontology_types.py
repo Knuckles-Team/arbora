@@ -1,7 +1,7 @@
 """Typed request value objects for the ``graph_ontology`` action dispatcher.
 
 Leaf module — imports NOTHING from ``agent_utilities`` (CX wD10-R-ARITY / BUG-CX-004 §9b,
-same rationale as ``graph_os.mcp_server.backing.bus_types``: ``graph_os.mcp_server.backing.tools`` is the
+same rationale as the other typed leaf modules: ``graph_os.mcp_server.backing.tools`` is the
 highest-leverage node in au's import SCC because its ``__init__.py`` eagerly imports all 35
 tool-registration modules, so anything defined *inside* that package pulls the whole cluster
 in for any external caller. These dataclasses are pure data, so a caller that only needs to

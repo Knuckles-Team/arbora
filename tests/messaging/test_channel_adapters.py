@@ -6,7 +6,8 @@ import sys
 from importlib import import_module
 
 import pytest
-from agent_utilities.messaging.base import MessagingBackend
+
+from graph_os.messaging.base import MessagingBackend
 
 
 @pytest.mark.parametrize(

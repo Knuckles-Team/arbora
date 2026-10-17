@@ -16,8 +16,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from agent_connector_sdk.privacy import persistence_reference
-from agent_utilities.messaging.service import MessagingService
 
+from graph_os.messaging.service import MessagingService
 from graph_os.webui_host.contact_governance import (
     ContactDeliveryContext,
     allow_shared_attempt,

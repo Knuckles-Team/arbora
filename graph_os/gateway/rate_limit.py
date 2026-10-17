@@ -38,8 +38,7 @@ import threading
 import time
 from typing import Any
 
-from agent_utilities.observability.gateway_metrics import GATEWAY_RATE_LIMITED
-
+from graph_os.observability.gateway_metrics import GATEWAY_RATE_LIMITED
 from graph_os.security.actor_context import current_actor
 from graph_os.security.request_identity import HEALTH_PATHS
 

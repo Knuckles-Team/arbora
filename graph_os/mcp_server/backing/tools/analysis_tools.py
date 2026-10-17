@@ -2249,7 +2249,7 @@ def _configure_parse_json_opts(config_value):
 
 def _configure_action_generate_config(action, config_key, config_value):
     # action(s): 'generate_config', 'config_doctor', 'config_reference'
-    from agent_utilities.deployment import (
+    from graph_os.deployment import (
         config_doctor,
         config_reference,
         write_config,
@@ -2279,7 +2279,7 @@ def _configure_action_generate_config(action, config_key, config_value):
 
 def _configure_known_env_fields():
     # extracted from 'get_config'/'list_config' (CX-AU-03: split for CCN)
-    from agent_utilities.deployment import config_reference
+    from graph_os.deployment import config_reference
 
     known: dict[str, dict] = {}
     for section in config_reference():
@@ -2301,7 +2301,7 @@ def _configure_list_config(known):
 
 def _configure_get_config_value(env_key, meta):
     # action(s): 'get_config'
-    from agent_utilities.deployment import is_restart_required
+    from graph_os.deployment import is_restart_required
 
     val = os.environ.get(env_key)
     if _configuration_key_is_sensitive(env_key, meta) and val:
@@ -2331,14 +2331,14 @@ def _configure_action_get_config(action, config_key, config_value):
 
 def _configure_action_health(action, config_key, config_value):
     # action(s): 'health'
-    from agent_utilities.observability.runtime_health import collect_health
+    from graph_os.observability.runtime_health import collect_health
 
     return json.dumps(collect_health(), default=str)
 
 
 def _configure_action_system_doctor(action, config_key, config_value):
     # action(s): 'system_doctor'
-    from agent_utilities.deployment import run_doctor
+    from graph_os.deployment import run_doctor
 
     opts, err = _configure_parse_json_opts(config_value)
     if err:
@@ -2355,7 +2355,7 @@ def _configure_action_system_doctor(action, config_key, config_value):
 
 def _configure_action_preflight(action, config_key, config_value):
     # action(s): 'preflight'
-    from agent_utilities.deployment.preflight import run_preflight
+    from graph_os.deployment.preflight import run_preflight
 
     profile = config_key or "tiny"
     opts, err = _configure_parse_json_opts(config_value)
@@ -2370,7 +2370,7 @@ def _configure_action_preflight(action, config_key, config_value):
 def _configure_action_install_hooks(action, config_key, config_value):
     # action(s): 'install_hooks'
     try:
-        from agent_utilities.ecosystem.hook_installer import HookInstaller
+        from graph_os.ecosystem.hook_installer import HookInstaller
 
         installer = HookInstaller()
         agents = config_value.split(",") if config_value else None
@@ -2397,7 +2397,7 @@ def _configure_action_install_hooks(action, config_key, config_value):
 def _configure_action_uninstall_hooks(action, config_key, config_value):
     # action(s): 'uninstall_hooks'
     try:
-        from agent_utilities.ecosystem.hook_installer import HookInstaller
+        from graph_os.ecosystem.hook_installer import HookInstaller
 
         agents = config_value.split(",") if config_value else None
         results = HookInstaller().uninstall(agents)
@@ -2416,7 +2416,7 @@ def _configure_action_uninstall_hooks(action, config_key, config_value):
 def _configure_action_doctor(action, config_key, config_value):
     # action(s): 'doctor'
     try:
-        from agent_utilities.ecosystem.hook_installer import HookInstaller
+        from graph_os.ecosystem.hook_installer import HookInstaller
 
         return json.dumps(HookInstaller().doctor(), default=str)
     except PermissionError:

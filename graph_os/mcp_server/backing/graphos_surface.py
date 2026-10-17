@@ -91,7 +91,7 @@ ROUTING_GROUPS: tuple[RoutingGroup, ...] = (
     _group(
         "message",
         "Conversations, reaching users on channels, the event bus and broker, A2A tasks.",
-        "graph_message graph_reach graph_bus graph_broker graph_a2a",
+        "graph_reach graph_broker graph_a2a",
     ),
     _group(
         "reason",
@@ -122,8 +122,7 @@ ROUTING_GROUPS: tuple[RoutingGroup, ...] = (
     _group(
         "govern",
         "Governance, compliance, secrets, configuration, connections, incidents.",
-        "graph_governance graph_compliance graph_secret graph_config "
-        "graph_configure graph_incident",
+        "graph_governance graph_compliance graph_secret graph_config graph_configure",
     ),
     _group(
         "memory",
@@ -232,7 +231,6 @@ def graphos_registrars() -> list[Any]:
         au_tools.register_state_tools,
         au_tools.register_ontology_tools,
         au_tools.register_reach_tools,
-        au_tools.register_bus_tools,
         au_tools.register_candidate_claim_tools,
         au_tools.register_secret_tools,
         au_tools.register_config_tools,
@@ -244,10 +242,7 @@ def graphos_registrars() -> list[Any]:
         au_tools.register_governance_tools,
         au_tools.register_audit_tools,
         au_tools.register_epistemic_tools,
-        au_tools.register_incident_tools,
-        au_tools.register_media_sidecar_tools,
         au_tools.register_compliance_tools,
-        au_tools.register_argument_tools,
     ]
 
 

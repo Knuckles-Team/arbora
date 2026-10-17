@@ -256,7 +256,7 @@ def _correlation_stamp() -> dict[str, str]:
     """
     stamp: dict[str, str] = {}
     try:
-        from agent_utilities.observability import correlation
+        from graph_os.observability import correlation
 
         stamp["correlation_id"] = correlation.ensure_correlation_id()
         try:

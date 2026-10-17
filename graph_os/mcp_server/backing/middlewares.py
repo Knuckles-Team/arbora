@@ -26,7 +26,7 @@ class ToolMetricsMiddleware(Middleware):
     """
 
     async def on_call_tool(self, context: MiddlewareContext, call_next):
-        from agent_utilities.observability.gateway_metrics import (
+        from graph_os.observability.gateway_metrics import (
             MCP_TOOL_CALLS,
             MCP_TOOL_DURATION,
             MCP_TOOL_IN_FLIGHT,

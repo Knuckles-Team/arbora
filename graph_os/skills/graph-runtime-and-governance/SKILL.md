@@ -27,11 +27,10 @@ work in `graphos-deployment`.
 | `graph_governance` | `grant_approval` (atomically decide a pending ActionApproval), `submit_risk_veto` (record a governed veto against a target), `verify_action` (evaluate an ActionPolicy request without writing a decision), `ownership_report` (W2.8 read-only per-graph RBAC-ownership disposition pass over the live engine catalog), `ownership_apply` (preview — always dry-run — the UNAMBIGUOUS grant plan + its rollback for that report), `policy_status` (live PermissionPolicy/context_policy + KG-native audit-sink configuration, no engine required) | the live mutating ownership grant apply itself is a SEPARATE, human-gated CLI (`scripts/apply_graph_ownership_grants.py --apply-unambiguous`, HG-4) — never reachable from MCP/REST |
 | `graph_audit` | `verify` (cryptographically walk the default graph's audit chain; returns `first_broken_seq` if tampered), `for_target` (every `:ToolCall` that acted on a `target_id`, in call order) | wraps the engine's mature hash-chained audit log (redb `AUDIT` table, SHA-256); degrades cleanly with `available: false` on a build without the `security` feature or a durable persist dir |
 | `graph_compliance` | `posture` (joins `graph_audit.verify()` with a node-count/status rollup of ingested governance labels — Control/Policy/Risk/ComplianceGate/…), `export` (bulk-export a `disclosure_level`-redacted subgraph for `node_ids` or a `cypher` id-selector) | pure aggregation over primitives that already exist, no new compliance/redaction logic; `posture`'s counts reflect whatever CISO Assistant/Egeria/TRM connectors have already ingested |
-| `graph_incident` | `correlate` (`window_s`/`days`; idempotent — an already-open incident with the same signature is deduped, not re-written), `list` (`status`-filtered, newest first), `get` (`incident_id`) | read-only — proposes/executes NO remediation; groups recent `:HealthAnomaly` rows across hardware/os/orchestration/service/network producers on the same host/window into one `:Incident`, estimating the deepest contributing layer as likely root cause |
 | `graph_observe` | `trace_rootcause` (failed assertions + low scores joined to their trace's agent, `query`=agent/capability filter), `prompt_regression` (mean score per prompt version — which regressed), `failure_cluster` (failing traces clustered by failed assertion — systemic breaks across agents) | queries the KG-native trace/score subgraph — joins an opaque trace store can't do |
 | `graph_secret` | `set` (governed by ActionPolicy `secret.set`), `get`, `list` (key names only, never values), `delete` (governed by `secret.delete`) | manages the `__secrets__` store — values sealed by encryption-at-rest, key names/metadata stay queryable; the enterprise OpenBao/Vault backend is used transparently when configured |
 | `graph_sessions` | `list`, `get`, `delete`, `reply` (`user_reply` to a `session_id`), `cancel` | durable session management |
-| `usage_query` | `summary`, `by_model`/`by_project`/`by_agent`, `tools`, `activity`, `sessions`/`session_detail`/`top_sessions`, `search`, `traces`, `series` (filter by date/project/agent/model) | usage/cost observability |
+| `usage_query` | `summary`, `by_model`/`by_project`/`by_agent`, `tools`, `activity`, `sessions`/`session_detail`/`top_sessions`, `search`, `traces` (filter by date/project/agent/model) | usage/cost observability |
 | `ingest_sessions` | `collect` (auto-detect local agents), `upload` (pre-parsed `bundles_json` to a remote engine), `paths` (explicit files) | agent chat/session-log ingestion |
 | `graph_kvcache` | `get` (base64 block bytes or miss), `put`, `contains`/`exists`, `stats` (occupancy + dedup counters) | content-addressed shared KV-cache; every transport error degrades to a cache miss, never raises |
 | `graph_kv_checkpoint` | `create` (checkpoint a KV-cache at an explicit run/point, keyed by model identity/quantization/serving-engine/version/prefix-digest/tenant/policy-version), `instantiate_agent` (fail-closed load + `initializedFrom` lineage edge from a new agent run), `restore_conversation` (fail-closed load + `restoredFrom` lineage edge; `allow_cold_start` for an explicit, traced cold-start fallback) | heavy KV blob stays behind the engine's content-addressed blob store, never inlined into the response; a tenant mismatch or stale policy version is ALWAYS refused |
@@ -79,7 +78,6 @@ dependency-ordered remediation will improve recovery.
 | Configuration and system doctor | `graph_configure` |
 | Health, metrics, or runtime state | `graph_observe` |
 | Trace and session history | `graph_traces`, `graph_sessions`, `usage_query` |
-| Incident workflow | `graph_incident` |
 | Audit or compliance evidence | `graph_audit`, `graph_compliance` |
 | Approval, veto, and policy verification | `graph_governance` |
 | Cache operations | `graph_kvcache` |
@@ -102,7 +100,7 @@ arguments. Pin an exact `action` when ambiguity is unsafe.
 | `ask` | `graph_query`, `graph_search`, `graph_analyze`, `nl_query`, `ask_data`, `graph_explain`, … | Natural-language read and analysis |
 | `find` | `describe`, `capabilities`, fleet `tools`, `catalog`, `status` | Discovery of operations and fleet tools |
 | `write` | `graph_write`, `graph_ingest`, `graph_writeback`, `source_sync`, `graph_etl`, … | Ingest, mutate and persist |
-| `act` | `graph_orchestrate`, `graph_loops`, `graph_goals`, `graph_sandbox`, `graph_bus`, `browser_control`, `graph_a2a`, `graph_rlm`, `fleet.call` | Execute, orchestrate and call fleet tools |
+| `act` | `graph_orchestrate`, `graph_loops`, `graph_goals`, `graph_sandbox`, `browser_control`, `graph_a2a`, `graph_rlm`, `fleet.call` | Execute, orchestrate and call fleet tools |
 | `manage` | `graph_configure`, `graph_secret`, `graph_sessions`, `graph_kvcache`, `graph_ontology`, `fleet.load`, `fleet.unload` | Configure, approve and mount fleet servers |
 | `why` | `graph_explain`, `graph_evaluate`, `graph_observe`, … | Explain a decision, belief or change |
 
