@@ -22,18 +22,6 @@ from graph_os.security.settings import setting
 
 logger = logging.getLogger(__name__)
 
-#: The dedicated engine graph that holds secret nodes, isolated from all other
-#: content/control-plane writes (mirrors the ``__control__`` isolation pattern,
-#: CONCEPT:AU-KG.backend.schedule-on-control-graph). Its value blobs are sealed by the engine's
-#: encryption-at-rest when the launcher resolves its external data-key reference.
-#: (Named ``__secrets__`` — a system ``__…__`` graph like ``__control__`` /
-#: ``__commons__`` — kept as a single constant so the dedicated-graph name is the
-#: one place to change it.)
-SECRETS_GRAPH = "__secrets__"
-
-#: Node label for a stored secret in the ``__secrets__`` graph.
-SECRET_LABEL = "Secret"
-
 
 def _split_versioned_key(key: str) -> tuple[str, int | None]:
     """Split an optional trailing ``@<version>`` KV v2 pin off ``key``.

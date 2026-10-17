@@ -188,7 +188,7 @@ def _decode_jwt(
 
         config = security_settings()
 
-        token_obj = jwt.decode(  # type: ignore
+        token_obj = jwt.decode(
             token,
             key_set,
             algorithms=config.auth_jwt_algorithms,
