@@ -297,10 +297,11 @@ def create_agent_server(
         raise HostInterfaceUnavailable("client_unavailable")
 
     if graph is None or graph_config is None:
-        from agent_utilities import create_graph_agent, initialize_workspace
+        from agent_utilities.graph import (
+            create_graph_agent,
+            initialize_graph_from_workspace,
+        )
 
-        if workspace:
-            initialize_workspace()
         if tag_prompts:
             graph, graph_config = create_graph_agent(
                 tag_prompts=tag_prompts,
@@ -313,8 +314,6 @@ def create_agent_server(
                 min_confidence=min_confidence,
             )
         else:
-            from agent_utilities import initialize_graph_from_workspace
-
             graph, graph_config = initialize_graph_from_workspace(
                 mcp_config=mcp_config,
                 router_model=router_model,
