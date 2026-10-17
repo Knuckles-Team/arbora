@@ -167,12 +167,12 @@ attachment blobs); file/media packages are document+blob heavy:
 When ingesting the workspace, also ingest infrastructure state so the KG is
 hydrated with the physical and virtual topology:
 
-- **Inventory file** — `$XDG_CONFIG_HOME/agent-utilities/inventory.yaml`
-  (default `$HOME/.config/agent-utilities/inventory.yaml`) → a `HardwareNode`
+- **Inventory file** — `$XDG_CONFIG_HOME/graph-os/inventory.yaml`
+  (default `$HOME/.config/graph-os/inventory.yaml`) → a `HardwareNode`
   per host (`hostname`, `ip_address`, `group`, `status`, ssh fields, extended
   metadata) + `HAS_INTERFACE`/`CONNECTS_VIA` edges.
-- **Runtime configuration** — `$XDG_CONFIG_HOME/agent-utilities/mcp_config.json`
-  and `$XDG_CONFIG_HOME/agent-utilities/config.json` describe MCP servers and
+- **Runtime configuration** — `$XDG_CONFIG_HOME/graph-os/mcp_config.json`
+  and `$XDG_CONFIG_HOME/graph-os/config.json` describe MCP servers and
   their deployment configuration.
 - **Ontology authority** — EG committed GraphSchema sources and
   `ontology_infrastructure.ttl` as ingestion targets, providing the formal

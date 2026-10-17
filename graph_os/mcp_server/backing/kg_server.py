@@ -27,7 +27,7 @@ Usage:
     graph-os --transport streamable-http --host 127.0.0.1 --port 8004
 
 Cross-IDE Discovery:
-    Register in ``~/.config/agent-utilities/mcp_config.json``::
+    Register in ``~/.config/graph-os/mcp_config.json``::
 
         {
           "mcpServers": {
@@ -4138,12 +4138,9 @@ def _load_mcp_config_servers() -> dict[str, Any] | None:
     """
     import json
 
-    import platformdirs
+    from agent_connector_sdk.paths import platform_config_file
 
-    APP_NAME = "agent-utilities"
-    APP_AUTHOR = "knuckles-team"
-    cfg_dir = Path(platformdirs.user_config_path(APP_NAME, APP_AUTHOR))
-    mcp_config_path = cfg_dir / "mcp_config.json"
+    mcp_config_path = platform_config_file("mcp_config.json")
     if not mcp_config_path.is_file() or mcp_config_path.is_symlink():
         return None
     payload = mcp_config_path.read_bytes()

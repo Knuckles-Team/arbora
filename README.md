@@ -114,6 +114,12 @@ start the same local transport directly:
 graph-os --transport stdio
 ```
 
+Platform configuration (`config.json`, `mcp_config.json`, `workspace.yml`,
+`inventory.yaml`, ...) lives in `~/.config/graph-os/` (`$XDG_CONFIG_HOME/graph-os`),
+overridable with `GRAPH_OS_CONFIG_DIR`. For one release, a file missing there is
+read from the legacy `~/.config/agent-utilities/` (or `AGENT_UTILITIES_CONFIG_DIR`)
+location, with one deprecation warning naming both paths.
+
 Network deployments use the identity, TLS, and authorization settings in the
 [deployment guide](https://knuckles-team.github.io/graph-os/deployment/).
 

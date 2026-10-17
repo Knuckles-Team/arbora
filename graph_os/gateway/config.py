@@ -2,7 +2,7 @@
 
 CONCEPT:AU-OS.config.gateway-service-dashboard — Gateway Service Dashboard
 
-Loads dashboard layout from ``~/.config/agent-utilities/services.yaml``
+Loads dashboard layout from ``~/.config/graph-os/services.yaml``
 and auto-discovers available services from ``mcp_config.json``.
 
 Uses ``agent_utilities.core.paths`` for all path resolution — no
