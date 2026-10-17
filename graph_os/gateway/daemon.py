@@ -318,12 +318,6 @@ def stop_host_daemon() -> None:
                 logger.info("Engine checkpoint written on shutdown.")
         except Exception as exc:  # noqa: BLE001
             logger.warning("engine checkpoint on shutdown skipped: %s", exc)
-    try:
-        from agent_utilities.knowledge_graph.core.host_lock import release_host_lock
-
-        release_host_lock()
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("host lock release skipped: %s", exc)
     _engine = None
     logger.info("Host daemon stopped.")
 

@@ -20,8 +20,6 @@ from graph_os.semantic_content import default_content_providers
 
 logger = logging.getLogger(__name__)
 
-_FLEET_EMBED_MODEL: Any = None
-
 
 def _register_semantic_content(mcp: Any) -> None:
     """Expose independently owned semantic artifacts through the SDK contract.
@@ -33,28 +31,6 @@ def _register_semantic_content(mcp: Any) -> None:
 
     for provider in default_content_providers():
         register_connector_content(mcp, provider())
-
-
-def _fleet_embed_fn():
-    """Return a sync batch-embed callable ``(texts) -> list[vector]`` for find_tools'
-    semantic tool ranking, backed by graph-os's own embedding model (built lazily +
-    cached on first use). The model is remote (vLLM) and sync, so the fleet loader calls
-    this OFF-THREAD. Any construction/inference failure is swallowed by the caller, which
-    then degrades to token-overlap ranking — so this never blocks fleet loading."""
-
-    def _embed(texts):
-        global _FLEET_EMBED_MODEL
-        if _FLEET_EMBED_MODEL is None:
-            from agent_utilities.core.embedding_utilities import create_embedding_model
-
-            _FLEET_EMBED_MODEL = create_embedding_model()
-        model = _FLEET_EMBED_MODEL
-        batch = getattr(model, "get_text_embedding_batch", None)
-        if callable(batch):
-            return batch(list(texts))
-        return [model.get_text_embedding(t) for t in texts]
-
-    return _embed
 
 
 def _configure_graphos_otel() -> None:
@@ -150,7 +126,6 @@ def _attach_fleet_runtime(mcp: Any, fleet_catalog_reader: Any) -> Any:
         return attach_fleet_loader(
             mcp,
             catalog_reader=fleet_catalog_reader,
-            embed_fn=_fleet_embed_fn(),
             authority_scope=runtime.verified_tool_session_scope,
         )
     except Exception as exc:

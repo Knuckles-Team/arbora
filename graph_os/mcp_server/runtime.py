@@ -822,13 +822,11 @@ def _attach_headless_fleet_loader(mcp: Any) -> None:
     """
     from graph_os.fleet.catalog_reader import DeferredFleetCatalogReader
     from graph_os.fleet.multiplexer import attach_fleet_loader
-    from graph_os.mcp_server.server import _fleet_embed_fn
 
     try:
         attach_fleet_loader(
             mcp,
             catalog_reader=DeferredFleetCatalogReader(),
-            embed_fn=_fleet_embed_fn(),
             authority_scope=verified_tool_session_scope,
         )
     except Exception as exc:  # noqa: BLE001 - cause recorded verbatim below, never swallowed

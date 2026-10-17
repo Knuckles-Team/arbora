@@ -34,7 +34,7 @@ dependencies = [
     # SDK owns source transport and runner construction; GraphOS supplies its
     # authenticated epistemic-graph client through the SDK's public injection
     # seam and never imports connector implementations.
-    "agent-connector-sdk[a2a]>=0.1.0,<1.0.0",
+    "agent-connector-sdk[a2a]>=0.2.0,<1.0.0",
     # The messaging channel layer's HTTP alert intake (graph_os/messaging/alert_intake.py)
     # imports aiohttp.web directly for its small webhook listener; platform-agnostic,
     # so unlike the chat-platform SDKs below this is not conditioned on a messaging extra.
@@ -182,13 +182,12 @@ nextcloud = "graph_os.messaging.backends.nextcloud:NextcloudTalkBackend"
 notify_sync = "graph_os.messaging.reach:notify_sync"
 service = "graph_os.messaging.reach:service_port"
 
-# Portable development binding for the not-yet-published AU 2.5 release.
-# The path is ignored and supplied as a local symlink; package metadata keeps
-# the real PEP 508 floor above, so released wheels resolve from the index.
+# Train-only bindings until AU 3.0.0 and SDK 0.2.0 publish to the index.
+# Package metadata keeps the real PEP 508 floors above, so released wheels
+# resolve from the index.
 [tool.uv.sources]
 agent-utilities = { git = "https://github.com/Knuckles-Team/agent-utilities.git", branch = "refactor/au-cut-to-eg" }
-agent-connector-sdk = { path = ".uv-workspace-siblings/agent-connector-sdk", editable = true }
-agent-webui = { path = ".uv-workspace-siblings/agent-webui", editable = true }
+agent-connector-sdk = { git = "https://github.com/Knuckles-Team/agent-connector-sdk.git", branch = "feat/au-handoffs" }
 
 [tool.setuptools.dynamic]
 version = { attr = "graph_os._version.__version__" }

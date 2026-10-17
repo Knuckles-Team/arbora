@@ -103,10 +103,23 @@ def record_request_duration(duration_s: float) -> None:
             pass
 
 
-def _media_store() -> Any:
-    from agent_utilities.knowledge_graph.memory.native_ingest import media_store
+_metric_evidence_store: Any = None
 
-    return media_store()
+
+def bind_metric_evidence_store(store: Any) -> None:
+    """Bind the store that keeps anomalous metric windows as evidence.
+
+    The store exposes ``store_metric_window_evidence``. Until the composition
+    root binds one, an anomaly is logged and not written.
+    """
+    global _metric_evidence_store
+    _metric_evidence_store = store
+
+
+def _media_store() -> Any:
+    if _metric_evidence_store is None:
+        raise RuntimeError("no metric evidence store is bound")
+    return _metric_evidence_store
 
 
 async def _check_and_record(trend: dict[str, Any]) -> None:

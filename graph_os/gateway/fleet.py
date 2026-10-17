@@ -34,12 +34,12 @@ import logging
 import time
 from typing import Any
 
-from agent_utilities.core import sessions as _sessions
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from graph_os.api.errors import not_served
 from graph_os.fleet.health import (
+    AuthorityNotServed,
     FleetAuthorities,
     _domain_sql,
     collect_fleet_health,
@@ -51,6 +51,23 @@ from graph_os.security.error_surface import public_error_payload
 logger = logging.getLogger(__name__)
 
 _MAX_PAGE = 1000
+
+#: The supervisory readers the composition root binds. Unbound readers fail
+#: closed as ``unavailable``.
+_AUTHORITIES = FleetAuthorities()
+
+
+def bind_fleet_authorities(authorities: FleetAuthorities) -> None:
+    """Bind the session-store and goal readers this process serves."""
+    global _AUTHORITIES
+    _AUTHORITIES = authorities
+
+
+def _connect() -> Any:
+    connect = _AUTHORITIES.connect
+    if connect is None:
+        raise AuthorityNotServed("session store is not served in this process")
+    return connect()
 
 
 def _tenant_sql(dialect: str) -> str:
@@ -102,7 +119,7 @@ def _fetch_sessions(
     offset: int = 0,
 ) -> list[dict[str, Any]]:
     """Read a filtered, paginated page of sessions tagged with their domain."""
-    conn = _sessions._connect_db()
+    conn = _connect()
     try:
         dom = _domain_sql(conn.dialect)
         where: list[str] = []
@@ -137,28 +154,9 @@ def _multi_host_state() -> bool:
     return uri.startswith(("postgresql://", "postgres://"))
 
 
-def _goal_counts() -> dict[str, Any]:
-    """Probe the live goal authority; raise when it cannot answer."""
-
-    _sessions.rehydrate_goals()
-    engine = _sessions._goal_engine()
-    if engine is None:
-        raise RuntimeError("goal engine unavailable")
-    _sessions._list_goal_entries(engine, limit=1, raise_on_error=True)
-    return {
-        "active": len(_sessions.background_goal_runs),
-        "tracked": len(_sessions.active_goals),
-    }
-
-
 def _fleet_authorities() -> FleetAuthorities:
-    """Bind the supervisory readers this process serves.
-
-    The dispatch-worker registry is not served in graph-os yet, so it reports
-    ``unavailable`` rather than an empty list.
-    """
-
-    return FleetAuthorities(connect=_sessions._connect_db, goals=_goal_counts)
+    """The supervisory readers bound by :func:`bind_fleet_authorities`."""
+    return _AUTHORITIES
 
 
 async def fleet_health(request: Request) -> JSONResponse:
@@ -184,12 +182,7 @@ async def fleet_topology(request: Request) -> JSONResponse:
     total_sessions = (
         snapshot.sessions.get("total") if snapshot.sessions is not None else None
     )
-    active_goals = getattr(_sessions, "active_goals", {})
-    goals = (
-        _sessions.make_serializable(list(active_goals.values()))
-        if snapshot.goals is not None and hasattr(_sessions, "make_serializable")
-        else None
-    )
+    goals = snapshot.goals
     workers = snapshot.dispatch_workers
     payload = {
         "generated_at": snapshot.evidence.generated_at,
@@ -251,26 +244,9 @@ def _group_sessions(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
 
 
 def _cancel_session_tasks(session_id: str) -> bool:
-    """Cancel any in-flight goal-loop task bound to ``session_id`` (in-memory)."""
-    cancelled = False
-    runs = getattr(_sessions, "background_goal_runs", {})
-    for goal_id, run in list(runs.items()):
-        if run.get("session_id") == session_id:
-            task = run.get("task")
-            if task is not None and not task.done():
-                task.cancel()
-            runs.pop(goal_id, None)
-            active = getattr(_sessions, "active_goals", {})
-            if goal_id in active:
-                goal_status: Any = getattr(
-                    _sessions, "GoalStatus", type("G", (), {"CANCELLED": "cancelled"})
-                )
-                active[goal_id]["status"] = goal_status.CANCELLED
-                persist = getattr(_sessions, "_persist_goal", None)
-                if callable(persist):
-                    persist(goal_id)
-            cancelled = True
-    return cancelled
+    """Graph OS runs no in-process goal loops, so no local task is cancelled."""
+    del session_id
+    return False
 
 
 async def _set_fleet_status(request: Request, new_status: str) -> JSONResponse:
@@ -338,7 +314,7 @@ def _write_fleet_status(
     multi_host: bool,
 ) -> tuple[list[str], dict[str, str]]:
     applied: dict[str, str] = {}
-    conn = _sessions._connect_db()
+    conn = _connect()
     try:
         cur = conn.cursor()
         for session_id in target_ids:

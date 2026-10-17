@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from agent_utilities.security.guardrails import PiiSanitizer
+from agent_connector_sdk.privacy_pii import PiiSanitizer
 
 from graph_os.security.prompt_injection import PromptInjectionScanner
 

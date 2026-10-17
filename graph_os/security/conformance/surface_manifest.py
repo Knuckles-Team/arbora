@@ -245,11 +245,6 @@ GOC15_SURFACE_MANIFEST: tuple[SurfaceEntry, ...] = (
         citation="gateway/graph_api.py:60-111 -- explicit resolve_session(required_scope='kg:read')",
     ),
     SurfaceEntry(
-        surface_id="au:usage-observability-dashboard",
-        disposition=Disposition.AUTHENTICATED_REQUIRED,
-        citation="gateway/usage_api.py, usage/authorization.py:38-76",
-    ),
-    SurfaceEntry(
         surface_id="au:nl-query-ask",
         disposition=Disposition.AUTHENTICATED_REQUIRED,
         citation=(

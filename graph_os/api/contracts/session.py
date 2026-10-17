@@ -6,7 +6,7 @@ Identity, policy, placement, and trace originate in distinct subsystems:
   (``actor_id``/``actor_type``/``roles``/``tenant_id``/``authenticated``), set
   ambiently via :func:`~graph_os.security.actor_context.use_actor` /
   :func:`~graph_os.security.actor_context.current_actor`.
-* :mod:`agent_utilities.observability.correlation` carries *what run this is
+* :mod:`graph_os.observability.correlation` carries *what run this is
   part of* (the W3C ``traceparent`` / correlation id), also ambient.
 * Policy (``action_policy``/``permissioning``) is resolved per-call with no
   stable version stamped onto the request at all.

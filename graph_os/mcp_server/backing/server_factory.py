@@ -30,14 +30,14 @@ from agent_connector_sdk.credentials.runtime_references import (
     resolve_runtime_secret_reference,
 )
 from agent_connector_sdk.utilities import to_boolean
-from agent_utilities._version import __version__
-from agent_utilities.core.config import (
-    DEFAULT_HOST,
-    DEFAULT_PORT,
-    setting,
-)
+
+from graph_os._version import __version__
+from graph_os.core.settings import setting
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_HOST = str(setting("HOST", "127.0.0.1"))
+DEFAULT_PORT = int(setting("PORT", 9000))
 
 
 # MCP-specific auth/delegation config (not in config.py)

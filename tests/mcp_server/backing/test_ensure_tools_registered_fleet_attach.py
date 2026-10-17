@@ -20,7 +20,6 @@ import pytest
 
 from graph_os.fleet.catalog_reader import DeferredFleetCatalogReader
 from graph_os.mcp_server import runtime
-from graph_os.mcp_server import server as graphos_server
 from graph_os.mcp_server.backing.tools.intent_tools import _fleet_mux
 
 
@@ -29,17 +28,12 @@ def test_attach_headless_fleet_loader_calls_attach_fleet_loader_with_composed_ar
 ):
     """Same arguments the served process passes in ``server._attach_fleet_runtime``."""
     mcp = SimpleNamespace()
-    sentinel_embed = object()
-    with (
-        patch.object(graphos_server, "_fleet_embed_fn", return_value=sentinel_embed),
-        patch("graph_os.fleet.multiplexer.attach_fleet_loader") as mock_attach,
-    ):
+    with patch("graph_os.fleet.multiplexer.attach_fleet_loader") as mock_attach:
         runtime._attach_headless_fleet_loader(mcp)
 
     mock_attach.assert_called_once_with(
         mcp,
         catalog_reader=ANY,
-        embed_fn=sentinel_embed,
         authority_scope=runtime.verified_tool_session_scope,
     )
     assert isinstance(
