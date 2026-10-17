@@ -201,3 +201,49 @@ Cover non-prefixed OAuth aliases with stale disclosures and ordinary tools witho
 - `GRAPHOS-FLEET-R002.9`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-FLEET-R034.13`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `GRAPHOS-FLEET-R034.14`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+
+## GRAPHOS-FLEET-R036 acceptance
+
+| Case | Row | Proving test and observation |
+|---|---|---|
+
+| Model | `GRAPHOS-FLEET-R036.1` | `tests/fleet/test_connect_contract.py::test_contract_record_round_trips`: A round trip keeps every field and refuses a blank connector. |
+
+| Behavior | `GRAPHOS-FLEET-R036.2` | `tests/fleet/test_connect_contract.py::test_only_changed_resources_import`: A second connect with one changed resource sends one import. |
+
+| Wiring | `GRAPHOS-FLEET-R036.3` | `tests/fleet/test_connect_contract.py::test_list_changed_reaches_onboard`: A served connect and a `list_changed` event both reach `onboard`. |
+
+| Refusal | `GRAPHOS-FLEET-R036.4` | `tests/fleet/test_connect_contract.py::test_contract_refusals`: Each case records its reason, and a rejected connector serves no tools. |
+
+| Evidence | `GRAPHOS-FLEET-R036.5` | `tests/fleet/test_connect_contract.py::test_status_reports_contract`: The status read shows the digests and the engine receipts. |
+
+| Hot-path proof | `GRAPHOS-FLEET-R036.6` | `tests/fleet/test_connect_contract_served.py::test_first_connect_and_list_changed_reimport_only_changed`: The first connect imports all resources, and the change imports only the seed graph. |
+
+
+Hot-path proof for `GRAPHOS-FLEET-R036`: `tests/fleet/test_connect_contract_served.py::test_first_connect_and_list_changed_reimport_only_changed`.
+
+## GRAPHOS-FLEET-R037 acceptance
+
+| Case | Row | Proving test and observation |
+|---|---|---|
+
+| Model | `GRAPHOS-FLEET-R037.1` | `tests/fleet/test_job_loads.py::test_job_load_round_trips`: A round trip keeps every field and refuses an empty request. |
+
+| Behavior | `GRAPHOS-FLEET-R037.2` | `tests/fleet/test_job_loads.py::test_loads_only_answered_tools`: A 300-tool fleet loads only the answered tools. |
+
+| Wiring | `GRAPHOS-FLEET-R037.3` | `tests/fleet/test_job_loads.py::test_find_job_reaches_load_tools`: A served `find` with a job reaches `load_tools`. |
+
+| Refusal | `GRAPHOS-FLEET-R037.4` | `tests/fleet/test_job_loads.py::test_job_load_refusals`: Each case loads no tool and returns its reason. |
+
+| Evidence | `GRAPHOS-FLEET-R037.5` | `tests/fleet/test_job_loads.py::test_result_cites_decision`: Each loaded tool names its decision premise. |
+
+| Hot-path proof | `GRAPHOS-FLEET-R037.6` | `tests/fleet/test_job_loads_served.py::test_find_job_lazily_loads_answered_tools`: The session lists only the answered search tools, and `tools/list_changed` fires once. |
+
+
+Hot-path proof for `GRAPHOS-FLEET-R037`: `tests/fleet/test_job_loads_served.py::test_find_job_lazily_loads_answered_tools`.
+
+## GRAPHOS-FLEET-R038 acceptance
+
+| Case | Row | Proving test and observation |
+|---|---|---|
+| Evidence | `GRAPHOS-FLEET-R038` | `tests/fleet/test_protocol_roles.py::test_one_implementation_per_role`: An import-graph test fails when a graph-os module implements a connector transport or connector server scaffolding. |

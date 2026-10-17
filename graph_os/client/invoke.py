@@ -1,4 +1,4 @@
-"""Generic typed GraphOS operation invoker. Generated; do not edit."""
+"""Generic typed GraphOS operation invoker."""
 
 from __future__ import annotations
 

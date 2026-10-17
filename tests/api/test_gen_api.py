@@ -11,6 +11,8 @@ from types import ModuleType
 
 import pytest
 
+from graph_os.client._schema import _resolve_local_refs
+
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts/gen_api.py"
 SPEC = importlib.util.spec_from_file_location("gen_api", SCRIPT)
 assert SPEC and SPEC.loader
@@ -64,6 +66,10 @@ def engine_contract(tmp_path, monkeypatch):
     return provider, contract, calls
 
 
+def _http_ref(document, value):
+    return gen_api._pointer(document, value["$ref"][1:]) if "$ref" in value else value
+
+
 def test_generator_emits_deterministic_artifacts(engine_contract) -> None:
     first = gen_api.generate(_registry())
     assert first == gen_api.generate(_registry())
@@ -78,7 +84,7 @@ def test_generator_emits_deterministic_artifacts(engine_contract) -> None:
     models = first[gen_api.ROOT / "graph_os/client/_generated_models.py"]
     assert len(models.splitlines()) < 900
     compile(models, "_generated_models.py", "exec")
-    compile(first[gen_api.ROOT / "graph_os/client/invoke.py"], "invoke.py", "exec")
+    assert gen_api.ROOT / "graph_os/client/invoke.py" not in first
 
 
 def test_generator_fails_closed_on_an_empty_registry() -> None:
@@ -124,11 +130,12 @@ def test_openapi_references_shared_provider_document(tmp_path: Path) -> None:
         "eg_schema": "contract/schemas/method.request.json#/methods/Create"
     }
     result = gen_api._openapi(registry, tmp_path)
-    request = result["paths"]["/api/v1/ops/query.uql"]["post"]["requestBody"]
+    body = result["paths"]["/api/v1/ops/query.uql"]["post"]["requestBody"]
+    request = _http_ref(result, body)
     assert request["content"]["application/json"]["schema"] == {
         "$ref": "schemas/method.request.json#/methods/Create"
     }
-    assert result["components"]["schemas"] == {}
+    assert {"type": "object"} in result["components"]["schemas"].values()
 
 
 def _eg_compat_registry(
@@ -248,7 +255,8 @@ def emitted_client(engine_contract, tmp_path, monkeypatch):
     for name in ("_generated_models", "invoke"):
         module = ModuleType(f"{package.__name__}.{name}")
         monkeypatch.setitem(sys.modules, module.__name__, module)
-        source = artifacts[gen_api.ROOT / f"graph_os/client/{name}.py"]
+        path = gen_api.ROOT / f"graph_os/client/{name}.py"
+        source = artifacts[path] if path in artifacts else path.read_bytes()
         exec(compile(source, f"{name}.py", "exec"), module.__dict__)
     models = sys.modules["emitted_client._generated_models"]
     monkeypatch.setattr(models.importlib.resources, "files", lambda _name: tmp_path)
@@ -401,9 +409,7 @@ def test_schema_resource_resolver_rejects_digest_pointer_and_external_refs(tmp_p
             read,
         )
     with pytest.raises(ValueError, match="unsafe schema reference"):
-        gen_api._resolve_local_refs(
-            {"$ref": "https://external/schema"}, {}, frozenset()
-        )
+        _resolve_local_refs({"$ref": "https://external/schema"}, {}, frozenset())
 
 
 def test_openapi_namespaces_curated_local_definitions():
@@ -413,12 +419,12 @@ def test_openapi_namespaces_curated_local_definitions():
         "properties": {"item": {"$ref": "#/$defs/Item"}},
     }
     document = gen_api._openapi(registry)
-    request = document["paths"]["/api/v1/ops/query.uql"]["post"]["requestBody"][
-        "content"
-    ]["application/json"]["schema"]
-    model = gen_api._pointer(document, request["$ref"][1:])
-    item = gen_api._pointer(document, model["properties"]["item"]["$ref"][1:])
-    assert item == {"type": "string"}
+    body = document["paths"]["/api/v1/ops/query.uql"]["post"]["requestBody"]
+    request = _http_ref(document, body)
+    model = _resolve_local_refs(
+        request["content"]["application/json"]["schema"], document, frozenset()
+    )
+    assert model["properties"]["item"] == {"type": "string"}
 
 
 def test_compat_reads_baseline_schema_resources_from_same_git_ref(
@@ -459,3 +465,84 @@ def test_compat_reads_baseline_schema_resources_from_same_git_ref(
     monkeypatch.setattr(gen_api.importlib.resources, "files", lambda name: after_root)
     assert gen_api._check_compat(after, "baseline") == 1
     assert "baseline:graph_os/api/generated/schemas/method.request.json" in reads
+
+
+@pytest.mark.spec("GRAPHOS-OPS-R025.2")
+def test_openapi_reuses_curated_schemas_without_changing_resolved_meaning():
+    registry = _registry()
+    schema = {
+        "type": "object",
+        "properties": {"first": {"type": "string"}, "second": {"type": "string"}},
+        "examples": [
+            {
+                "properties": {"first": "literal data"},
+                "$ref": "#literal",
+                "$id": "literal",
+            }
+        ],
+    }
+    registry["ops"][0]["params"]["schema"] = schema
+    registry["ops"][0]["result"]["schema"] = schema
+    document = gen_api._openapi(registry)
+    operation = document["paths"]["/api/v1/ops/query.uql"]["post"]
+    request_body = _http_ref(document, operation["requestBody"])
+    request = request_body["content"]["application/json"]["schema"]
+    response_body = _http_ref(document, operation["responses"]["200"])
+    response = response_body["content"]["application/json"]["schema"]
+    assert request == response
+    component = gen_api._pointer(document, request["$ref"][1:])
+    assert component["examples"] == schema["examples"]
+    validation = {key: value for key, value in component.items() if key != "examples"}
+    expected = {key: value for key, value in schema.items() if key != "examples"}
+    assert _resolve_local_refs(validation, document, frozenset()) == expected
+    assert component["properties"]["first"] == component["properties"]["second"]
+
+
+@pytest.mark.parametrize("keyword", ["$id", "$anchor", "$dynamicRef", "$dynamicAnchor"])
+def test_openapi_refuses_scope_changing_schema_keywords(keyword):
+    registry = _registry()
+    registry["ops"][0]["params"]["schema"] = {"type": "string", keyword: "scope"}
+    with pytest.raises(ValueError, match="cannot be hoisted"):
+        gen_api._openapi(registry)
+
+
+def test_openapi_keeps_recursive_definition_references_closed():
+    registry = _registry()
+    registry["ops"][0]["params"]["schema"] = {
+        "$defs": {
+            "Node": {"type": "object", "properties": {"next": {"$ref": "#/$defs/Node"}}}
+        },
+        "$ref": "#/$defs/Node",
+    }
+    document = gen_api._openapi(registry)
+
+    def visit(value):
+        if isinstance(value, dict):
+            if "$ref" in value:
+                assert gen_api._pointer(document, value["$ref"][1:]) is not None
+            for child in value.values():
+                visit(child)
+        elif isinstance(value, list):
+            for child in value:
+                visit(child)
+
+    visit(document)
+
+
+@pytest.mark.parametrize(
+    "position", ["unevaluatedItems", "contentSchema", "additionalItems"]
+)
+def test_openapi_rewrites_nested_schema_positions_and_refuses_scoped_ids(position):
+    registry = _registry()
+    schema = {"$defs": {"Item": {"type": "string"}}, position: {"$ref": "#/$defs/Item"}}
+    registry["ops"][0]["params"]["schema"] = schema
+    document = gen_api._openapi(registry)
+    operation = document["paths"]["/api/v1/ops/query.uql"]["post"]
+    body = _http_ref(document, operation["requestBody"])
+    resolved = _resolve_local_refs(
+        body["content"]["application/json"]["schema"], document, frozenset()
+    )
+    assert resolved[position] == {"type": "string"}
+    schema[position] = {"$id": "relative-scope", "type": "string"}
+    with pytest.raises(ValueError, match="cannot be hoisted"):
+        gen_api._openapi(registry)
