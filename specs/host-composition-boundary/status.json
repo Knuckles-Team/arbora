@@ -1551,7 +1551,8 @@
       "title": "Refuse unsupported client interfaces before host effects",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "21bf942e9389"
+        "21bf942e9389",
+        "c18b2c507267"
       ],
       "verified_by": [
         "tests/agent_host/test_interface_refusal.py:3"
