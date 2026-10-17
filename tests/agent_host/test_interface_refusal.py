@@ -43,12 +43,13 @@ def test_unavailable_interfaces_refuse_before_build_or_listen(
         setattr(runtime, name, constructor)
         constructors[name] = constructor
     monkeypatch.setitem(sys.modules, "agent_utilities", runtime)
-    args = {
+    construction_args: dict[str, dict[str, Any]] = {
         "provided": {"graph": object(), "graph_config": {}},
         "workspace": {"workspace": "untrusted-workspace"},
         "tags": {"tag_prompts": {"example": "text"}},
         "default": {},
-    }[construction]
+    }
+    args = construction_args[construction]
     with pytest.raises(host.HostInterfaceUnavailable) as raised:
         host.create_agent_server(**args, **selection)
     assert raised.value.reason == "client_unavailable"
