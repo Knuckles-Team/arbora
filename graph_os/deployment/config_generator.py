@@ -383,7 +383,7 @@ def generate_engine_admission(
     importer = "principal:sha256:" + hashlib.sha256(principal.encode()).hexdigest()
     return {
         "engine_environment": {
-            "GRAPH_SERVICE_AUTH_SECRET": "secret://graph-os/GRAPH_SERVICE_AUTH_SECRET",
+            "GRAPH_SERVICE_AUTH_SECRET": "secret://graph-os/GRAPH_SERVICE_AUTH_SECRET",  # nosec B105 - a reference
             "EPISTEMIC_GRAPH_AUDIENCE": audience,
             "EPISTEMIC_GRAPH_TENANT": tenant,
             "EPISTEMIC_GRAPH_POLICY_VERSION": policy_version,

@@ -84,7 +84,7 @@ class LateFleetGateway:
 
 async def _scoped(item: Any, caller: Any) -> bool:
     """Admission for one catalog item: the caller holds its required scopes."""
-    scopes = getattr(caller, "effective_scopes", frozenset())
+    scopes: frozenset[str] = getattr(caller, "effective_scopes", frozenset())
     return bool(item.required_scopes <= scopes)
 
 

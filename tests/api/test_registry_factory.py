@@ -319,3 +319,10 @@ def test_curated_scope_evidence_uses_provider_class_validation(
     path.write_text(json.dumps(document))
     with pytest.raises(EgContractError, match="invalid EG scope class"):
         get_registry()
+
+
+@pytest.mark.spec("GRAPHOS-OPS-R024.4")
+def test_memory_operations_are_absent_until_the_engine_serves_them() -> None:
+    from graph_os.api.ops.registry_factory import get_registry
+
+    assert not [op.id for op in get_registry() if op.id.startswith("memory.")]
