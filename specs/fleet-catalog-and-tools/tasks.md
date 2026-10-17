@@ -204,3 +204,19 @@ Preserve all existing R003 tasks and receipts. These added runtime cases have no
 - [ ] `GRAPHOS-FLEET-R002.9`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-FLEET-R034.13`: Deliver every requirement in requirements.md.
 - [ ] `GRAPHOS-FLEET-R034.14`: Deliver every requirement in requirements.md.
+
+- [ ] **GRAPHOS-FLEET-R036 (rollup):** The connector contract is established on first connect (rollup).
+- [ ] **GRAPHOS-FLEET-R036.1 (Model):** Add the typed model.
+- [ ] **GRAPHOS-FLEET-R036.2 (Behavior):** Implement the behavior.
+- [ ] **GRAPHOS-FLEET-R036.3 (Wiring):** Wire the production call site.
+- [ ] **GRAPHOS-FLEET-R036.4 (Refusal):** Add the typed refusals.
+- [ ] **GRAPHOS-FLEET-R036.5 (Evidence):** Emit the evidence.
+- [ ] **GRAPHOS-FLEET-R036.6 (Hot-path proof):** Add the served hot-path test.
+- [ ] **GRAPHOS-FLEET-R037 (rollup):** Tools load per job from the engine answer (rollup).
+- [ ] **GRAPHOS-FLEET-R037.1 (Model):** Add the typed model.
+- [ ] **GRAPHOS-FLEET-R037.2 (Behavior):** Implement the behavior.
+- [ ] **GRAPHOS-FLEET-R037.3 (Wiring):** Wire the production call site.
+- [ ] **GRAPHOS-FLEET-R037.4 (Refusal):** Add the typed refusals.
+- [ ] **GRAPHOS-FLEET-R037.5 (Evidence):** Emit the evidence.
+- [ ] **GRAPHOS-FLEET-R037.6 (Hot-path proof):** Add the served hot-path test.
+- [ ] **GRAPHOS-FLEET-R038:** One protocol stack with one implementation per role.
