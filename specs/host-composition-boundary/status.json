@@ -1480,9 +1480,9 @@
         "6fa7e9832d48"
       ],
       "verified_by": [
-        "tests/mcp_server/test_co_service_supervisor.py:107",
-        "tests/mcp_server/test_co_service_supervisor.py:55",
-        "tests/mcp_server/test_co_service_supervisor.py:74"
+        "tests/mcp_server/test_co_service_supervisor.py:106",
+        "tests/mcp_server/test_co_service_supervisor.py:56",
+        "tests/mcp_server/test_co_service_supervisor.py:75"
       ]
     },
     {
