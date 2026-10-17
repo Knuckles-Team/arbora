@@ -26,6 +26,7 @@ the engine's task-manager ``__init__`` and the result is read everywhere via
 from __future__ import annotations
 
 import atexit
+import contextlib
 import json
 import logging
 import os
@@ -81,7 +82,7 @@ def _lock_path() -> Path:
     else:
         # Canonical shared runtime dir (data_dir()/runtime) — NOT platformdirs'
         # per-container user_runtime_dir, which breaks the cross-container flock.
-        base = Path(setting("XDG_RUNTIME_DIR", "/var/tmp")) / "graph-os"
+        base = Path(setting("XDG_RUNTIME_DIR", "/var/tmp")) / "graph-os"  # nosec B108 - XDG fallback
     base.mkdir(parents=True, exist_ok=True)
     return base / "kg_daemon_host.lock"
 
@@ -122,13 +123,11 @@ def _try_acquire() -> bool:
         "socket": setting("EPISTEMIC_GRAPH_SOCKET", "/tmp/epistemic-graph.sock"),  # nosec B108 — default UDS path, overridable via env
         "role": setting("KG_DAEMON_ROLE", "auto"),
     }
-    try:
+    with contextlib.suppress(Exception):
         data = json.dumps(meta).encode("utf-8")
         os.ftruncate(fd, 0)
         os.pwrite(fd, data, 0)
         os.fsync(fd)
-    except Exception:  # pragma: no cover
-        pass
     _lock_fd = fd
     atexit.register(release_host_lock)
     return True
@@ -244,13 +243,9 @@ def release_host_lock() -> None:
     fd = _lock_fd
     if fd is None:
         return
-    try:
+    with contextlib.suppress(Exception):
         unlock(fd)
-    except Exception:  # pragma: no cover
-        pass
-    try:
+    with contextlib.suppress(Exception):
         os.close(fd)
-    except Exception:  # pragma: no cover
-        pass
     _lock_fd = None
     logger.info("Released KG host daemon lock.")
