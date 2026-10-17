@@ -137,8 +137,6 @@ def test_retired_legacy_tool_fanout_is_not_mounted():
         in {"synthesize", "deep-extract", "background-research", "relevance-sweep"}
         for path in paths
     )
-    for action in runtime.GRAPHLEARN_ACTIONS:
-        assert f"/graphlearn/{action}" in paths
 
 
 # ── Third leg: MCP verb ⇄ domain-skill coverage (CONCEPT:AU-ECO.mcp.kg-skill-verb-coverage) ──

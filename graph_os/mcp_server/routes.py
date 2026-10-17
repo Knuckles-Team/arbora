@@ -12,11 +12,11 @@ def _route(app: Any, prefix: str, path: str, handler: Any) -> None:
 
 
 def mount_rest_routes(app: Any, prefix: str = "") -> None:
-    """Mount exactly the actions registered by native GraphOS composition.
+    """Mount one REST twin per operation graph-os serves.
 
-    Legacy AU knowledge-graph/MCP actions are intentionally absent. Generated
-    EG/SDK adapters and the typed AU RLM operation extend the manifest only
-    when their verified composition adapters are installed.
+    ``runtime.ACTION_TOOL_ROUTES`` is the only REST surface: each entry is a
+    registered operation, posted as its action-routed JSON body. The retired
+    per-action granular routes are not mounted.
     """
 
     for tool_name, path in runtime.ACTION_TOOL_ROUTES.items():

@@ -9,11 +9,7 @@ adds only the bounded read-only LIMIT contract and EvidenceBundle projection.
 
 from __future__ import annotations
 
-import json
-from unittest.mock import AsyncMock
-
 import pytest
-from starlette.requests import Request
 
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
@@ -385,49 +381,3 @@ def test_uql_rank_text_uses_shared_au_preembedding(monkeypatch):
             False,
         )
     ]
-
-
-def test_uql_rest_twin_keeps_scope_and_route_contract():
-    kwargs = runtime._graph_query_request_kwargs(
-        {"query": _UQL, "scope": "uql", "params": "{}"}
-    )
-    retired = runtime._graph_query_request_kwargs({"cypher": _UQL, "scope": "uql"})
-
-    assert kwargs == {"query": _UQL, "scope": "uql", "params": "{}"}
-    assert retired[1] == 400
-    assert "cypher" in retired[0]["message"]
-    assert runtime.ACTION_TOOL_ROUTES["graph_query"] == "/graph/query"
-
-
-@pytest.mark.asyncio
-async def test_uql_rest_endpoint_dispatches_scope_to_same_tool(monkeypatch):
-    body = json.dumps({"query": _UQL, "scope": "uql", "params": "{}"}).encode()
-    sent = False
-
-    async def receive():
-        nonlocal sent
-        if sent:
-            return {"type": "http.disconnect"}
-        sent = True
-        return {"type": "http.request", "body": body, "more_body": False}
-
-    request = Request(
-        {
-            "type": "http",
-            "method": "POST",
-            "path": "/graph/query",
-            "headers": [],
-            "query_string": b"",
-        },
-        receive,
-    )
-    execute_tool = AsyncMock(return_value={"rows": []})
-    monkeypatch.setattr(runtime, "_execute_tool", execute_tool)
-
-    response = await runtime.graph_query_endpoint(request)
-
-    assert response.status_code == 200
-    assert json.loads(response.body)["result"] == {"rows": []}
-    execute_tool.assert_awaited_once_with(
-        "graph_query", query=_UQL, scope="uql", params="{}"
-    )

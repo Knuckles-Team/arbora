@@ -591,46 +591,6 @@ def _build_tools_payload_sync(
     }
 
 
-# 3. Collapsed Graph Write endpoint (POST + DELETE /graph/write)
-#
-# CONSOLIDATION: this used to be six separate granular routes — POST
-# /graph/write/node, POST/DELETE /graph/write/edge, POST /graph/write/bulk,
-# POST /graph/write/chat, POST /graph/write/execution — each a thin
-# hand-written Starlette handler reading a handful of ``body.get`` keys.
-# Collapsed into the SAME action-routed ``POST /graph/write`` the base
-# endpoint already exposed (plus a ``DELETE /graph/write`` twin for
-# ``delete_edge`` — see ``graph_write_delete_edge_endpoint`` below), now
-# dispatched through a real Pydantic discriminated union
-# (``GraphWriteAction``) instead of ``**body`` passthrough, so every action
-# gets its own validated shape AND FastAPI documents it.
-#
-# The six "primary" variants below (``_AddNodeAction`` ..
-# ``_RegisterExecutionAction``) extend the already-merged per-route models in
-# ``graph_os.gateway.schemas.graph_ingest`` (imported, not redefined)
-# — each adds the ``action`` discriminator plus ``connection``/``graph``,
-# which the granular routes never forwarded even though ``graph_write``
-# resolves them generically for EVERY action (``_resolve_target_engines``/
-# ``bound_to_graph`` run before the action dispatch, not just for
-# ``bulk_ingest``). ``_BulkIngestAction`` additionally restores
-# ``idempotency_key``/``evidence``/``upsert`` — the real defect this
-# consolidation fixes: the deleted ``graph_write_bulk_endpoint`` forwarded
-# ONLY ``nodes``, always taking the non-idempotent ``BatchUpdate``
-# (``upsert=True``) path even when a caller supplied an idempotency key, so a
-# retried bulk write could double-write.
-#
-# ``_OtherGraphWriteAction`` is the 7th union member and covers every action
-# that never had its own granular route (``delete_node``,
-# ``register_external_graph``, ``compare_and_set``, ``store_memory``,
-# ``recall_memory``, ``recall_media``, ``submit_sdd``, ``check_loop``) — it
-# IS ``GraphWriteRequest`` itself (imported, not redefined; the already
-# merged, ``extra="allow"``, full-passthrough model), with ``action``
-# narrowed to a Literal of exactly those eight values (Pydantic discriminated
-# unions support several tag values mapping to one member). This preserves
-# the pre-consolidation base route's full action vocabulary byte-for-byte
-# instead of silently dropping it down to only the six actions collapsed
-# here.
-
-
 _TABULAR_QUERY_SERVICE: Any = None
 _TABULAR_QUERY_SERVICE_KEY: tuple[str, str, str] | None = None
 _TABULAR_QUERY_SERVICE_LOCK = threading.Lock()
