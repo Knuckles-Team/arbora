@@ -152,6 +152,8 @@
     "GRAPHOS-HOST-R010.7",
     "GRAPHOS-HOST-R010.7.1",
     "GRAPHOS-HOST-R010.7.2",
+    "GRAPHOS-HOST-R010.7.2.1",
+    "GRAPHOS-HOST-R010.7.2.2",
     "GRAPHOS-HOST-R009.2",
     "GRAPHOS-HOST-R009.3",
     "GRAPHOS-HOST-R009.4",
@@ -1461,16 +1463,42 @@
         "aee6cfa29204"
       ],
       "verified_by": [
-        "tests/agent_host/test_start_admission.py:110",
-        "tests/agent_host/test_start_admission.py:146",
-        "tests/agent_host/test_start_admission.py:157",
-        "tests/agent_host/test_start_admission.py:172",
-        "tests/agent_host/test_start_admission.py:188"
+        "tests/agent_host/test_start_admission.py:105",
+        "tests/agent_host/test_start_admission.py:118",
+        "tests/agent_host/test_start_admission.py:154",
+        "tests/agent_host/test_start_admission.py:165",
+        "tests/agent_host/test_start_admission.py:180"
       ]
     },
     {
       "id": "GRAPHOS-HOST-R010.7.2",
       "title": "Wire admitted interface startup",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-HOST-R010.7.2.1",
+        "GRAPHOS-HOST-R010.7.2.2"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R010.7.2.1",
+      "title": "Bind actual declarative startup inputs",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "906170980099"
+      ],
+      "verified_by": [
+        "tests/agent_host/test_start_admission.py:258",
+        "tests/agent_host/test_start_admission.py:299",
+        "tests/agent_host/test_start_admission.py:325",
+        "tests/agent_host/test_start_admission.py:341",
+        "tests/agent_host/test_start_admission.py:348"
+      ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R010.7.2.2",
+      "title": "Complete admitted client composition",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
