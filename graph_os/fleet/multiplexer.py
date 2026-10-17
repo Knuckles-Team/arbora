@@ -82,10 +82,10 @@ ToolResult = _fastmcp_tools.ToolResult
 # turned the rename into a silent `RuntimeError: mcp SDK has no
 # streamablehttp_client` on EVERY remote child, which is the whole deployed
 # fleet — `deploy/mcp-fleet.registry.yml` defaults to `streamable-http`).
-import agent_utilities.core.resource_priority as _resource_priority
 from mcp.client.sse import sse_client
 from mcp.client.streamable_http import streamable_http_client
 
+import graph_os.access.priority as _resource_priority
 import graph_os.fleet.catalog_reader as _catalog_reader
 import graph_os.fleet.child_resilience as _child_resilience
 from graph_os.core.capability_contract import Capability
@@ -395,11 +395,6 @@ _CHILD_ENV_ALLOWLIST = frozenset(
 )
 _TASK_DELEGATION_CHANNEL_ENV = "AGENT_UTILITIES_MCP_TASK_CHANNEL_SECRET"
 _PROVIDER_CHILD_ENV_KEYS = frozenset({"AGENT_PROVIDER_PROFILE", "PROVIDER_CONFIGS"})
-_PROVIDER_RESOLUTION_EXECUTOR = concurrent.futures.ThreadPoolExecutor(
-    max_workers=4,
-    thread_name_prefix="provider-runtime",
-)
-_PROVIDER_RESOLUTION_CAPACITY = threading.BoundedSemaphore(8)
 
 
 def _sensitive_config_key(name: str) -> bool:
@@ -3367,9 +3362,13 @@ class MCPMultiplexer:
         if not command and not is_remote:
             raise RuntimeError("MCP child requires a command or URL")
         if not is_remote:
-            from agent_utilities.core.config import enforce_mcp_stdio_permitted
+            from graph_os.core.settings import runtime_config
 
-            enforce_mcp_stdio_permitted(server_name=server_name)
+            if runtime_config.mcp_stdio_prohibited:
+                raise RuntimeError(
+                    "stdio transport is not permitted in this process "
+                    f"(server={server_name!r}): MCP_STDIO_PROHIBITED is set"
+                )
         return command, url, explicit_transport, is_remote
 
     @staticmethod
@@ -3422,55 +3421,15 @@ class MCPMultiplexer:
         stack: contextlib.AsyncExitStack,
         initialization_timeout: float,
     ) -> dict[str, str]:
-        from agent_utilities.core.provider_runtime import (
-            prepare_provider_runtime_child_environment,
-        )
+        """Refuse a child that selects a provider profile.
 
-        # Secret backends may perform blocking I/O. Keep resolution off the
-        # multiplexer event loop while still failing before process spawn.
-        # A bounded slot count prevents timed-out backend calls from
-        # exhausting the dedicated resolver executor; late results erase
-        # themselves. Do not cancel queued futures on caller timeout: a
-        # cancelled concurrent future is marked done before its executor
-        # work item is consumed, which would release capacity early and let
-        # cancelled items accumulate in ThreadPoolExecutor's internal queue.
-        acquired = _PROVIDER_RESOLUTION_CAPACITY.acquire(blocking=False)
-        resolution_future: concurrent.futures.Future[_typing.Any] | None = None
-        try:
-            if not acquired:
-                raise RuntimeError("provider resolution capacity unavailable")
-            resolution_future = _PROVIDER_RESOLUTION_EXECUTOR.submit(
-                prepare_provider_runtime_child_environment,
-                provider_profile,
-            )
-            resolution_future.add_done_callback(
-                lambda _future: _PROVIDER_RESOLUTION_CAPACITY.release()
-            )
-            acquired = False
-            prepared_provider = await asyncio.wait_for(
-                asyncio.shield(asyncio.wrap_future(resolution_future)),
-                timeout=initialization_timeout,
-            )
-        except asyncio.CancelledError:
-            if resolution_future is not None:
-                resolution_future.add_done_callback(
-                    _close_abandoned_provider_projection
-                )
-            elif acquired:
-                _PROVIDER_RESOLUTION_CAPACITY.release()
-            raise
-        except Exception:
-            if resolution_future is not None:
-                resolution_future.add_done_callback(
-                    _close_abandoned_provider_projection
-                )
-            elif acquired:
-                _PROVIDER_RESOLUTION_CAPACITY.release()
-            raise RuntimeError("MCP child provider profile is unavailable") from None
-        stack.callback(prepared_provider.close)
-        provider_environment = dict(prepared_provider.environment)
-        provider_environment.update(_provider_child_sandbox_environment(stack))
-        return provider_environment
+        Graph OS serves no provider runtime profiles, so a child that names one
+        fails closed before its process starts.
+        """
+        del stack, initialization_timeout
+        raise RuntimeError(
+            f"MCP child provider profile {provider_profile!r} is not served by this host"
+        )
 
     async def _resolve_child_provider_environment(
         self,
@@ -4090,10 +4049,7 @@ class MCPMultiplexer:
         server_name: str, cfg: dict, runtime_materialized: bool
     ) -> dict | None:
         """The catalog config for ONE entry, or ``None`` when it is not mountable."""
-        from agent_utilities.base_utilities import (
-            is_loopback_url as _is_self_mcp_url,
-        )
-
+        from graph_os.core.transport import is_self_url as _is_self_mcp_url
         from graph_os.observability.langfuse_trust import (
             LangfuseTrustError,
             is_langfuse_server,

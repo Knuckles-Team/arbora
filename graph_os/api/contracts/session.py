@@ -37,8 +37,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field, replace
 from typing import Any
 
-from agent_utilities.core.resource_priority import current_priority
-
+from graph_os.access.priority import current_priority
 from graph_os.security.actor_context import (
     ActorContext,
     CredentialExpiredError,
@@ -247,8 +246,8 @@ class GraphSession:
         applicable: ``node`` (ADR-3 / W1.9 node-bound envelopes; normally
         supplied by the connection layer, not this method) and ``priority``
         (W2.4 engine-native QoS lanes — stamped here from the ambient
-        :class:`~agent_utilities.core.resource_priority.PriorityClass`
-        contextvar via :func:`~agent_utilities.core.resource_priority.current_priority`
+        :class:`~graph_os.access.priority.PriorityClass`
+        contextvar via :func:`~graph_os.access.priority.current_priority`
         when the calling context is tagged; omitted entirely when untagged, so
         an unclassified caller is unaffected). Both optional claims are
         MAC-covered exactly like every other claim. Trace correlation remains

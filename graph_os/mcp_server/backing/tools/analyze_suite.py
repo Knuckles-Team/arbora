@@ -20,9 +20,9 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from agent_utilities.models.evidence_bundle import EvidenceBundle
 from pydantic import Field
 
+from graph_os.api.evidence import EvidenceBundle
 from graph_os.gateway.schemas.graph_core import (
     GraphCodeAction,
     GraphEvaluateAction,

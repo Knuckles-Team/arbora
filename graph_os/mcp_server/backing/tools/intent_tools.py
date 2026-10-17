@@ -1204,7 +1204,7 @@ def _execution_succeeded(result: Any) -> bool:
     first routes it through the same dict-shaped checks below, so
     ``EvidenceBundle.error`` (truthy exactly when the source payload carried a
     real operation failure — never fabricated, see
-    ``agent_utilities.models.evidence_bundle``) is honored as the single source
+    ``graph_os.api.evidence``) is honored as the single source
     of truth instead of being invisible to this classifier.
     """
 

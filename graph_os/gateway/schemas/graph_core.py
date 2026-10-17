@@ -24,9 +24,9 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from agent_utilities.models.evidence_bundle import EvidenceBundle
 from pydantic import BaseModel, ConfigDict, Field
 
+from graph_os.api.evidence import EvidenceBundle
 from graph_os.gateway.schemas.connector import (
     ConnectorRunRequest,
     ConnectorRunResponse,
@@ -84,13 +84,13 @@ class EvidenceBundleEnvelope(BaseModel):
     ``/graph/research``, ``/graph/evaluate``, and ``/graph/explain``.
 
     Every one of those routes dispatches a tool whose declared return type is
-    :class:`~agent_utilities.models.evidence_bundle.EvidenceBundle`; the
+    :class:`~graph_os.api.evidence.EvidenceBundle`; the
     handler serializes it with ``safe_json_load``, which calls
     ``.model_dump()`` on a Pydantic model rather than round-tripping through
     JSON text — so ``result`` is exactly an ``EvidenceBundle`` dump, not a
     freeform dict. Reused verbatim here (not redefined) per the "share one
     definition across identical shapes" rule — see
-    ``agent_utilities/models/evidence_bundle.py`` for the fully-described
+    ``graph_os/api/evidence/bundle.py`` for the fully-described
     field set.
     """
 

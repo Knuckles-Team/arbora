@@ -13,10 +13,10 @@ import re
 from pathlib import Path
 from typing import Any, Literal, cast
 
-from agent_utilities.models.evidence_bundle import EvidenceBundle
 from pydantic import Field
 
 from graph_os.api.errors import not_served
+from graph_os.api.evidence import EvidenceBundle
 from graph_os.core.event_loop import run_blocking_ordered
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing

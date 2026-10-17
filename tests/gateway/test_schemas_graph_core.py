@@ -10,9 +10,9 @@ from __future__ import annotations
 import inspect
 
 import pytest
-from agent_utilities.models.evidence_bundle import EvidenceBundle
 from pydantic import BaseModel, ValidationError
 
+from graph_os.api.evidence import EvidenceBundle
 from graph_os.gateway.schemas import graph_core as schemas
 
 # ── every BaseModel this module defines (used by the blanket description

@@ -23,6 +23,8 @@ from agent_connector_sdk.tls.resolve import (
 )
 
 __all__ = [
+    "advertised_self_hosts",
+    "is_self_url",
     "DEFAULT_HTTP_TIMEOUT_S",
     "create_async_http_client",
     "create_http_client",
@@ -56,6 +58,29 @@ def is_loopback_url(url: str) -> bool:
     """True when ``url`` names a loopback host."""
     host = (urlsplit(str(url)).hostname or "").lower()
     return host in _LOOPBACK_HOSTS or host.startswith("127.")
+
+
+def advertised_self_hosts() -> set[str]:
+    """The named hosts that address this process: ``MCP_ALLOWED_HOSTS`` and a concrete bind ``HOST``."""
+    from graph_os.core.settings import setting
+
+    hosts = {
+        token.strip().lower()
+        for token in str(setting("MCP_ALLOWED_HOSTS", "") or "")
+        .replace(",", " ")
+        .split()
+        if token.strip()
+    }
+    bind = str(setting("HOST", "") or "").strip().lower()
+    if bind and bind not in {"0.0.0.0", "::", "[::]", "*"}:  # nosec B104 - wildcard names, not a bind
+        hosts.add(bind)
+    return hosts - _LOOPBACK_HOSTS
+
+
+def is_self_url(url: str) -> bool:
+    """True when ``url`` names one of this process's advertised hosts, on any port."""
+    host = (urlsplit(str(url or "")).hostname or "").lower()
+    return bool(host) and host in advertised_self_hosts()
 
 
 def _client_kwargs(
