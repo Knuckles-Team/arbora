@@ -226,8 +226,8 @@
         "b5bf4ba58902"
       ],
       "verified_by": [
-        "tests/deployment/test_release_canary.py:63",
-        "tests/deployment/test_release_canary.py:94"
+        "tests/deployment/test_release_canary.py:61",
+        "tests/deployment/test_release_canary.py:92"
       ]
     },
     {
@@ -271,18 +271,15 @@
     },
     {
       "id": "GRAPHOS-OPS-R008",
-      "title": "Generated engine-bound operations with exclusions",
-      "delivery_state": "VERIFIED",
+      "title": "RETIRED: superseded by GRAPHOS-FLEET-R012",
+      "delivery_state": "RETIRED",
       "landed_in": [
         "4b83c69e2b41",
         "97061e59c412",
-        "cc8a618e0ce5"
+        "f651a834b0db"
       ],
-      "verified_by": [
-        "tests/api/test_eg_binding.py:133",
-        "tests/api/test_eg_binding.py:204",
-        "tests/api/test_eg_binding.py:88"
-      ]
+      "verified_by": [],
+      "retired_reason": "superseded by GRAPHOS-FLEET-R012"
     },
     {
       "id": "GRAPHOS-OPS-R009",

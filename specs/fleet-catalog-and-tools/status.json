@@ -557,10 +557,12 @@
       "landed_in": [
         "4b83c69e2b41",
         "68e31b75248a",
-        "cc8a618e0ce5"
+        "f651a834b0db"
       ],
       "verified_by": [
-        "tests/api/test_eg_binding.py:203"
+        "tests/api/test_eg_binding.py:133",
+        "tests/api/test_eg_binding.py:203",
+        "tests/api/test_eg_binding.py:88"
       ]
     },
     {
@@ -794,12 +796,15 @@
     {
       "id": "GRAPHOS-FLEET-R025",
       "title": "Skills from every installed package, and an always-offered core pack, join the find/load path",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "3f7190f32493",
         "d16472d4df1d"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/fleet/test_local_skill_discovery.py:145",
+        "tests/fleet/test_local_skill_discovery.py:32"
+      ]
     },
     {
       "id": "GRAPHOS-FLEET-R029",

@@ -186,7 +186,16 @@
     "GRAPHOS-HOST-R009.8.1",
     "GRAPHOS-HOST-R009.8.2",
     "GRAPHOS-HOST-R009.8.2.1",
-    "GRAPHOS-HOST-R009.8.2.2"
+    "GRAPHOS-HOST-R009.8.2.2",
+    "GRAPHOS-HOST-R008.1000",
+    "GRAPHOS-HOST-R008.1001",
+    "GRAPHOS-HOST-R008.1002",
+    "GRAPHOS-HOST-R008.1003",
+    "GRAPHOS-HOST-R008.1004",
+    "GRAPHOS-HOST-R008.1005",
+    "GRAPHOS-HOST-R008.1006",
+    "GRAPHOS-HOST-R008.1007",
+    "GRAPHOS-HOST-R008.1008"
   ],
   "requirements": [
     {
@@ -212,11 +221,13 @@
     {
       "id": "GRAPHOS-HOST-R001.1",
       "title": "GraphOS owns the MCP, REST and API serving code that agent-utilities 3.0.0 drops",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "4eb2b408bd93"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_package_layout.py:120"
+      ]
     },
     {
       "id": "GRAPHOS-HOST-R001.2",
@@ -236,31 +247,33 @@
     {
       "id": "GRAPHOS-HOST-R001.3",
       "title": "GraphOS owns the surface gateway client SDK",
+      "delivery_state": "LANDED",
+      "landed_in": [
+        "9e7f6499d96f"
+      ],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R001.4",
+      "title": "Provider plugin entry-point groups use the connector SDK namespace",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "9e7f6499d96f"
       ],
       "verified_by": [
-        "tests/gateway/test_gateway_client.py:108"
+        "tests/deployment/test_graphos_deploy_artifacts.py:103"
       ]
-    },
-    {
-      "id": "GRAPHOS-HOST-R001.4",
-      "title": "Provider plugin entry-point groups use the connector SDK namespace",
-      "delivery_state": "LANDED",
-      "landed_in": [
-        "9e7f6499d96f"
-      ],
-      "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R001.5",
       "title": "The moved serving code keeps its agent-utilities tests and runs on FastMCP 4",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "9e7f6499d96f"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_package_layout.py:136"
+      ]
     },
     {
       "id": "GRAPHOS-HOST-R001.6",
@@ -1164,7 +1177,16 @@
         "GRAPHOS-HOST-R008.3",
         "GRAPHOS-HOST-R008.4",
         "GRAPHOS-HOST-R008.5",
-        "GRAPHOS-HOST-R008.6"
+        "GRAPHOS-HOST-R008.6",
+        "GRAPHOS-HOST-R008.1000",
+        "GRAPHOS-HOST-R008.1001",
+        "GRAPHOS-HOST-R008.1002",
+        "GRAPHOS-HOST-R008.1003",
+        "GRAPHOS-HOST-R008.1004",
+        "GRAPHOS-HOST-R008.1005",
+        "GRAPHOS-HOST-R008.1006",
+        "GRAPHOS-HOST-R008.1007",
+        "GRAPHOS-HOST-R008.1008"
       ]
     },
     {
@@ -1760,14 +1782,12 @@
     {
       "id": "GRAPHOS-HOST-R010.9",
       "title": "Refuse unsupported client interfaces before host effects",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "LANDED",
       "landed_in": [
         "21bf942e9389",
         "c18b2c507267"
       ],
-      "verified_by": [
-        "tests/agent_host/test_interface_refusal.py:3"
-      ]
+      "verified_by": []
     },
     {
       "id": "GRAPHOS-HOST-R009.7",
@@ -1847,6 +1867,69 @@
         "tests/agent_host/test_log_metadata.py:2",
         "tests/agent_host/test_log_sink_terminal.py:60"
       ]
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1000",
+      "title": "Startup bindings for messaging, A2A and readiness",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1001",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1002",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1003",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1004",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1005",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1006",
+      "title": "Hosted observability, ecosystem and deployment modules",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1007",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-HOST-R008.1008",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     }
   ]
 }

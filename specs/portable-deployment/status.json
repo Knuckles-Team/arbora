@@ -64,6 +64,8 @@
     "GRAPHOS-DEPLOY-R018.7",
     "GRAPHOS-DEPLOY-R018.8",
     "GRAPHOS-DEPLOY-R009.2",
+    "GRAPHOS-DEPLOY-R009.2.1",
+    "GRAPHOS-DEPLOY-R009.2.2",
     "GRAPHOS-DEPLOY-R009.3",
     "GRAPHOS-DEPLOY-R013.7",
     "GRAPHOS-DEPLOY-R010.4",
@@ -279,7 +281,7 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [
-        "tests/core/test_agent_config_admin.py:434",
+        "tests/core/test_agent_config_admin.py:432",
         "tests/core/test_agent_config_admin_type_names.py:21"
       ]
     },
@@ -645,10 +647,30 @@
     {
       "id": "GRAPHOS-DEPLOY-R009.2",
       "title": "EG:53 GraphOS definition slice",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "9e7f6499d96f"
       ],
+      "verified_by": [],
+      "rollup_of": [
+        "GRAPHOS-DEPLOY-R009.2.1",
+        "GRAPHOS-DEPLOY-R009.2.2"
+      ]
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R009.2.1",
+      "title": "Small-profile import footprint",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/deployment/test_small_profile_footprint.py:31"
+      ]
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-R009.2.2",
+      "title": "Single-image deployment with capability parity",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": []
     },
     {

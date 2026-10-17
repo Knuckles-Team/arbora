@@ -161,9 +161,9 @@
       ],
       "verified_by": [
         "tests/deployment/test_release_canary.py:31",
-        "tests/deployment/test_release_canary.py:64",
-        "tests/deployment/test_release_canary.py:83",
-        "tests/deployment/test_release_canary.py:95"
+        "tests/deployment/test_release_canary.py:62",
+        "tests/deployment/test_release_canary.py:81",
+        "tests/deployment/test_release_canary.py:93"
       ]
     },
     {
@@ -310,7 +310,7 @@
         "cdde0200a54a"
       ],
       "verified_by": [
-        "tests/a2a/test_operation_bridge.py:35"
+        "tests/a2a/test_operation_bridge.py:34"
       ],
       "rollup_of": [
         "GRAPHOS-A2A-R006.2.1",
