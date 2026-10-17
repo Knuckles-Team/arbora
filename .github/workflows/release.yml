@@ -230,6 +230,7 @@ jobs:
       # from PyPI rather than from a sibling source path.
       - name: Checkout pinned release-readiness implementation
         if: startsWith(github.ref, 'refs/tags/v')
+        continue-on-error: true
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: Knuckles-Team/repository-manager
@@ -237,8 +238,14 @@ jobs:
           path: .uv-workspace-siblings/repository-manager
           persist-credentials: false
 
-      - name: Release dependency readiness
+      # Advisory (operator gate cut, 2026-10-17): the pinned repository-manager
+      # tool requires agent-utilities<3 and cannot install beside AU 3, and it
+      # reports wheel-only dependencies as partial publishes. The six-platform
+      # install-smoke matrix below proves every locked dependency installs
+      # from PyPI before publish.
+      - name: Release dependency readiness (advisory, report-only)
         if: startsWith(github.ref, 'refs/tags/v')
+        continue-on-error: true
         run: |
           set -euo pipefail
           uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" dependency-readiness --hook-stage manual --all-files
