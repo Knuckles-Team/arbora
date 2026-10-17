@@ -34,6 +34,7 @@ mechanism; no second learner is introduced.
 
 from __future__ import annotations
 
+import functools
 import inspect
 import json
 import logging
@@ -42,6 +43,7 @@ import time
 from collections import Counter, OrderedDict
 from copy import deepcopy
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from agent_utilities.knowledge_graph.retrieval.capability_context import load_cpds
@@ -333,10 +335,22 @@ def _cache_key(
     )
 
 
+_GRAPHOS_CPDS_PATH = (
+    Path(__file__).resolve().parent.parent / "graphos_capabilities.json"
+)
+
+
+@functools.cache
+def _graphos_cpds() -> dict[str, dict[str, Any]]:
+    """Descriptors for the operations graph-os itself serves (browser, A2A)."""
+    raw = json.loads(_GRAPHOS_CPDS_PATH.read_text(encoding="utf-8"))
+    return {entry["id"]: entry for entry in raw.get("capabilities", [])}
+
+
 def _load_cpds_required() -> dict[str, dict[str, Any]]:
     """Return the packaged current CPD authority or fail closed."""
 
-    cpds = load_cpds()
+    cpds = {**load_cpds(), **_graphos_cpds()}
     if not cpds:
         raise RuntimeError("GraphOS capability descriptors are unavailable")
     return cpds

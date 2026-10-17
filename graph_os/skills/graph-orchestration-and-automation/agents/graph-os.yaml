@@ -4,6 +4,8 @@ claims:
   core:
     - act
     - agent_library
+    - browser_control
+    - graph_a2a
     - graph_agents
     - graph_broker
     - graph_bus

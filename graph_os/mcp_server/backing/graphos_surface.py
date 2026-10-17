@@ -86,14 +86,16 @@ ROUTING_GROUPS: tuple[RoutingGroup, ...] = (
     ),
     _group(
         "run",
-        "Agents, agent library, workflows, goals, jobs, schedules, loops, runs, sessions.",
+        "Agents, agent library, workflows, goals, jobs, schedules, loops, runs, "
+        "sessions, attended browser control.",
         "graph_orchestrate graph_agents graph_workflows graph_goals graph_jobs "
-        "graph_schedules graph_loops graph_durable graph_sessions agent_library",
+        "graph_schedules graph_loops graph_durable graph_sessions agent_library "
+        "browser_control",
     ),
     _group(
         "message",
-        "Conversations, reaching users on channels, the event bus and broker.",
-        "graph_message graph_reach graph_bus graph_broker",
+        "Conversations, reaching users on channels, the event bus and broker, A2A tasks.",
+        "graph_message graph_reach graph_bus graph_broker graph_a2a",
     ),
     _group(
         "reason",

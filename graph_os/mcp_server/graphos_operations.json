@@ -38,6 +38,18 @@
    "surface": "granular"
   },
   {
+   "actions": [
+    "cancel_call",
+    "execute_call",
+    "issue_lease",
+    "reconcile_call",
+    "revoke_lease"
+   ],
+   "feature": null,
+   "name": "browser_control",
+   "surface": "granular"
+  },
+  {
    "actions": [],
    "feature": null,
    "name": "concept_registry",
@@ -597,6 +609,18 @@
   },
   {
    "actions": [
+    "cancel",
+    "card",
+    "get",
+    "list",
+    "send"
+   ],
+   "feature": null,
+   "name": "graph_a2a",
+   "surface": "granular"
+  },
+  {
+   "actions": [
     "computer_use",
     "reason",
     "run_org",
@@ -882,6 +906,7 @@
     "causal",
     "check_constraints",
     "evaluate",
+    "evaluate_alpha",
     "evaluate_harness",
     "evolve_code",
     "evolve_model",
@@ -891,9 +916,11 @@
     "invariant",
     "latent_efficiency_benchmark",
     "quant_crypto",
+    "quant_exchange",
     "quant_insider",
     "quant_microstructure",
     "quant_regime",
+    "quant_strategy",
     "specialize",
     "world_model_rollout"
    ],
@@ -1113,7 +1140,6 @@
     "gap",
     "gaps",
     "list",
-    "placement_control",
     "prioritize",
     "review",
     "run",
@@ -1689,7 +1715,7 @@
    "surface": "intent"
   }
  ],
- "registry_digest": "3b6df35d31d7a04044ef337f98881b2bc484835a82283a03a10ba18309292ebc",
+ "registry_digest": "533ec7ecd7cb5cab28de006d46f66b376057676c246ac38a582ab00bee5ec839",
  "schema_version": 1,
  "source": "graph-os operation registry (graph_os.mcp_server.backing.tool_specs)",
  "supported_features": [
@@ -1703,6 +1729,9 @@
   ],
   "ask_data": [
    "ask"
+  ],
+  "browser_control": [
+   "act"
   ],
   "concept_registry": [
    "find",
@@ -1804,6 +1833,9 @@
   "engine_viz": [
    "act",
    "ask"
+  ],
+  "graph_a2a": [
+   "act"
   ],
   "graph_agents": [
    "act"

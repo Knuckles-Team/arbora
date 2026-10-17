@@ -26,6 +26,31 @@ GRAPHOS_ACTIONS: list[GraphosAction] = [
     },
     {"tool": "ask", "action": None, "name": "ask"},
     {"tool": "ask_data", "action": None, "name": "ask_data"},
+    {
+        "tool": "browser_control",
+        "action": "cancel_call",
+        "name": "browser_control_cancel_call",
+    },
+    {
+        "tool": "browser_control",
+        "action": "execute_call",
+        "name": "browser_control_execute_call",
+    },
+    {
+        "tool": "browser_control",
+        "action": "issue_lease",
+        "name": "browser_control_issue_lease",
+    },
+    {
+        "tool": "browser_control",
+        "action": "reconcile_call",
+        "name": "browser_control_reconcile_call",
+    },
+    {
+        "tool": "browser_control",
+        "action": "revoke_lease",
+        "name": "browser_control_revoke_lease",
+    },
     {"tool": "concept_registry", "action": None, "name": "concept_registry"},
     {"tool": "document_process", "action": None, "name": "document_process"},
     {
@@ -1332,6 +1357,11 @@ GRAPHOS_ACTIONS: list[GraphosAction] = [
     },
     {"tool": "engine_viz", "action": "render", "name": "engine_viz_render"},
     {"tool": "find", "action": None, "name": "find"},
+    {"tool": "graph_a2a", "action": "cancel", "name": "graph_a2a_cancel"},
+    {"tool": "graph_a2a", "action": "card", "name": "graph_a2a_card"},
+    {"tool": "graph_a2a", "action": "get", "name": "graph_a2a_get"},
+    {"tool": "graph_a2a", "action": "list", "name": "graph_a2a_list"},
+    {"tool": "graph_a2a", "action": "send", "name": "graph_a2a_send"},
     {
         "tool": "graph_agents",
         "action": "computer_use",
@@ -1772,6 +1802,11 @@ GRAPHOS_ACTIONS: list[GraphosAction] = [
     {"tool": "graph_evaluate", "action": "evaluate", "name": "graph_evaluate_evaluate"},
     {
         "tool": "graph_evaluate",
+        "action": "evaluate_alpha",
+        "name": "graph_evaluate_evaluate_alpha",
+    },
+    {
+        "tool": "graph_evaluate",
         "action": "evaluate_harness",
         "name": "graph_evaluate_evaluate_harness",
     },
@@ -1813,6 +1848,11 @@ GRAPHOS_ACTIONS: list[GraphosAction] = [
     },
     {
         "tool": "graph_evaluate",
+        "action": "quant_exchange",
+        "name": "graph_evaluate_quant_exchange",
+    },
+    {
+        "tool": "graph_evaluate",
         "action": "quant_insider",
         "name": "graph_evaluate_quant_insider",
     },
@@ -1825,6 +1865,11 @@ GRAPHOS_ACTIONS: list[GraphosAction] = [
         "tool": "graph_evaluate",
         "action": "quant_regime",
         "name": "graph_evaluate_quant_regime",
+    },
+    {
+        "tool": "graph_evaluate",
+        "action": "quant_strategy",
+        "name": "graph_evaluate_quant_strategy",
     },
     {
         "tool": "graph_evaluate",
@@ -2172,11 +2217,6 @@ GRAPHOS_ACTIONS: list[GraphosAction] = [
     {"tool": "graph_loops", "action": "gap", "name": "graph_loops_gap"},
     {"tool": "graph_loops", "action": "gaps", "name": "graph_loops_gaps"},
     {"tool": "graph_loops", "action": "list", "name": "graph_loops_list"},
-    {
-        "tool": "graph_loops",
-        "action": "placement_control",
-        "name": "graph_loops_placement_control",
-    },
     {"tool": "graph_loops", "action": "prioritize", "name": "graph_loops_prioritize"},
     {"tool": "graph_loops", "action": "review", "name": "graph_loops_review"},
     {"tool": "graph_loops", "action": "run", "name": "graph_loops_run"},

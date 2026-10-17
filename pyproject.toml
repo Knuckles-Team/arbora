@@ -169,7 +169,7 @@ include = ["graph_os*"]
 exclude = ["tests*"]
 
 [tool.setuptools.package-data]
-graph_os = ["ontology/**/*.ttl", "skills/**", "mcp_server/graphos_operations.json", "api/generated/*.json", "api/generated/schemas/*.json"]
+graph_os = ["ontology/**/*.ttl", "skills/**", "mcp_server/graphos_operations.json", "mcp_server/backing/graphos_capabilities.json", "api/generated/*.json", "api/generated/schemas/*.json"]
 
 [tool.ruff]
 line-length = 88

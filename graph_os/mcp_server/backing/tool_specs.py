@@ -55,6 +55,8 @@ TOOL_VERBS: Mapping[str, tuple[str, ...]] = MappingProxyType(
         "graph_code": ("ask", "act"),
         "graph_code_nav": ("ask",),
         "graph_reach": ("act",),
+        "browser_control": ("act",),
+        "graph_a2a": ("act",),
         "graph_gis": ("ask",),
         "usage_query": ("ask",),
         "concept_registry": ("find", "ask"),

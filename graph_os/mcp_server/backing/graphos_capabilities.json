@@ -1,0 +1,183 @@
+{
+  "capabilities": [
+    {
+      "id": "browser_control",
+      "title": "browser control",
+      "one_line": "drive an attended agent-webui document through graph-os authority (leases and governed calls).",
+      "intent_verbs": [
+        "act"
+      ],
+      "does": [
+        {
+          "action": "cancel_call",
+          "eg_method": null,
+          "mutates": "true",
+          "idempotent": "false",
+          "note": "graph-os-served operation; no engine method"
+        },
+        {
+          "action": "execute_call",
+          "eg_method": null,
+          "mutates": "true",
+          "idempotent": "false",
+          "note": "graph-os-served operation; no engine method"
+        },
+        {
+          "action": "issue_lease",
+          "eg_method": null,
+          "mutates": "true",
+          "idempotent": "false",
+          "note": "graph-os-served operation; no engine method"
+        },
+        {
+          "action": "reconcile_call",
+          "eg_method": null,
+          "mutates": "false",
+          "idempotent": "true",
+          "note": "graph-os-served operation; no engine method"
+        },
+        {
+          "action": "revoke_lease",
+          "eg_method": null,
+          "mutates": "true",
+          "idempotent": "false",
+          "note": "graph-os-served operation; no engine method"
+        }
+      ],
+      "typed_io": {
+        "rest_route": "/browser/control",
+        "tags": [
+          "granular",
+          "graph-os",
+          "browser-control",
+          "webmcp"
+        ],
+        "input_params": [
+          {
+            "name": "action",
+            "type": "string",
+            "required": true,
+            "description": "issue_lease | execute_call | cancel_call | reconcile_call | revoke_lease"
+          },
+          {
+            "name": "payload",
+            "type": "object",
+            "required": true,
+            "description": "Exact request object for the selected action."
+          }
+        ]
+      }
+    },
+    {
+      "id": "graph_a2a",
+      "title": "graph a2a",
+      "one_line": "discover or manage governed unary A2A tasks (agent card, send, get, list, cancel).",
+      "intent_verbs": [
+        "act"
+      ],
+      "does": [
+        {
+          "action": "cancel",
+          "eg_method": null,
+          "mutates": "true",
+          "idempotent": "false",
+          "note": "graph-os-served operation; no engine method"
+        },
+        {
+          "action": "card",
+          "eg_method": null,
+          "mutates": "false",
+          "idempotent": "true",
+          "note": "graph-os-served operation; no engine method"
+        },
+        {
+          "action": "get",
+          "eg_method": null,
+          "mutates": "false",
+          "idempotent": "true",
+          "note": "graph-os-served operation; no engine method"
+        },
+        {
+          "action": "list",
+          "eg_method": null,
+          "mutates": "false",
+          "idempotent": "true",
+          "note": "graph-os-served operation; no engine method"
+        },
+        {
+          "action": "send",
+          "eg_method": null,
+          "mutates": "true",
+          "idempotent": "false",
+          "note": "graph-os-served operation; no engine method"
+        }
+      ],
+      "typed_io": {
+        "rest_route": "/graph/a2a",
+        "tags": [
+          "granular",
+          "graph-os",
+          "a2a",
+          "orchestration"
+        ],
+        "input_params": [
+          {
+            "name": "action",
+            "type": "string",
+            "required": true,
+            "description": "card | send | get | list | cancel"
+          },
+          {
+            "name": "message",
+            "type": "object",
+            "required": false,
+            "default": null,
+            "description": "A2A message (send)."
+          },
+          {
+            "name": "task_id",
+            "type": "string",
+            "required": false,
+            "default": "",
+            "description": "Task id (get/cancel)."
+          },
+          {
+            "name": "idempotency_key",
+            "type": "string",
+            "required": false,
+            "default": "",
+            "description": "Idempotency key (send)."
+          },
+          {
+            "name": "cursor",
+            "type": "string",
+            "required": false,
+            "default": "",
+            "description": "Page cursor (list)."
+          },
+          {
+            "name": "limit",
+            "type": "integer",
+            "required": false,
+            "default": 50,
+            "description": "Page size (list)."
+          },
+          {
+            "name": "context_budget_tokens",
+            "type": "integer",
+            "required": false,
+            "default": 0,
+            "description": "Context budget for the task (send)."
+          },
+          {
+            "name": "endpoint_url",
+            "type": "string",
+            "required": false,
+            "default": "/a2a",
+            "description": "Advertised endpoint (card)."
+          }
+        ]
+      }
+    }
+  ]
+}
