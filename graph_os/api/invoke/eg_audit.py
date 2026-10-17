@@ -100,7 +100,14 @@ class EgAuditAdapter:
                 request_id=self._request_id(event, caller),
                 audit_class=audit_class.value,
             )
-        _check_receipt(receipt, caller.tenant, status)
+        # EG records the entry on the graph the audit client is bound to; a
+        # client bound to no named graph audits on the tenant's own.
+        graph = getattr(client, "graph_name", None) or getattr(
+            client, "_graph_name", None
+        )
+        _check_receipt(
+            receipt, graph if isinstance(graph, str) else caller.tenant, status
+        )
         return receipt
 
     async def preflight(
@@ -172,9 +179,9 @@ def _outcome_linked(receipt: Mapping[str, Any]) -> bool:
     )
 
 
-def _check_receipt(receipt: Any, tenant: str, status: str) -> None:
+def _check_receipt(receipt: Any, graph: str, status: str) -> None:
     """Validate the provider receipt and its reservation/outcome phase link."""
-    if not isinstance(receipt, Mapping) or receipt.get("graph") != tenant:
+    if not isinstance(receipt, Mapping) or receipt.get("graph") != graph:
         raise RuntimeError("EG audit receipt graph is invalid")
     if not all(_sequence(receipt.get(name)) for name in ("seq", "reservation_seq")):
         raise RuntimeError("EG audit receipt sequence is invalid")

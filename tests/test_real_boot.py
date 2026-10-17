@@ -277,6 +277,8 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
                     "ENABLE_WEB_UI": "false",
                     "MESSAGING_INTAKE_ENABLED": "false",
                     "ACTION_POLICY_PATH": str(config_dir / "action_policy.json"),
+                    # The connector fixture listens on loopback.
+                    "MCP_HTTP_ALLOWED_PRIVATE_HOSTS": "127.0.0.1",
                 }
             )
         )
@@ -408,7 +410,17 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
         base_url = f"http://127.0.0.1:{port}"
 
         def gos_logs() -> str:
-            return gos_log_path.read_text(errors="replace")[-20000:]
+            engine = (root / "eg.log").read_text(errors="replace")
+            engine_errors = "\n".join(
+                line
+                for line in engine.splitlines()
+                if "ERROR" in line or "WARN" in line
+            )
+            return (
+                gos_log_path.read_text(errors="replace")[-20000:]
+                + "\n--- engine warnings ---\n"
+                + engine_errors[-8000:]
+            )
 
         def ready() -> bool:
             import httpx
@@ -422,6 +434,8 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
 
         _wait(ready, timeout=BOOT_TIMEOUT_S, what="graph-os readiness", logs=gos_logs)
         yield {
+            "socket_path": str(socket_path),
+            "secret": secret,
             "base_url": base_url,
             "token": issuer.token(OPERATOR_SUBJECT),
             "logs": gos_logs,
@@ -530,14 +544,32 @@ async def test_mcp_find_returns_the_connector_tool(stack: dict[str, Any]) -> Non
         )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "fleet.call has no durable effect owner yet: EG serves no effect "
-        "journal for governed child calls, and a non-OAuth child has neither "
-        "a caller-credential path nor a one-shot service-child transport"
-    ),
-)
+async def _effect_items(stack: dict[str, Any]) -> list[dict[str, Any]]:
+    """The governed effects EG holds on the control graph, read from EG itself."""
+    from epistemic_graph import EpistemicGraphClient
+
+    client = await EpistemicGraphClient.connect(
+        socket_path=stack["socket_path"],
+        auth_secret=stack["secret"],
+        graph_name="__control__",
+        verified_context={
+            "principal": PROCESS_SUBJECT,
+            "tenant": TENANT,
+            "audience": AUDIENCE,
+            "agent_id": PROCESS_SUBJECT,
+            "roles": list(ROLES),
+            "scopes": list(ROLES),
+            "policy_version": POLICY_VERSION,
+            "delegation": [],
+        },
+    )
+    try:
+        page = await client.work_items.list(tenant=TENANT, kind="graphos.effect")
+    finally:
+        await client.close()
+    return list(page["items"])
+
+
 async def test_mcp_act_calls_the_connector_tool(stack: dict[str, Any]) -> None:
     """``act(op='fleet.call')`` reaches the connector through the gateway."""
     async with await _mcp_session(stack) as client:
@@ -558,3 +590,8 @@ async def test_mcp_act_calls_the_connector_tool(stack: dict[str, Any]) -> None:
         )
         assert called["ok"] is True, f"{called}\n{stack['logs']()}"
         assert "echo:boot" in json.dumps(called["result"]), called
+
+    # The effect is recorded in EG: one terminal WorkItem holds its outcome.
+    effect = await _effect_items(stack)
+    assert [item["status"] for item in effect] == ["succeeded"], effect
+    assert "echo:boot" in effect[0]["metadata"]["outcome"], effect

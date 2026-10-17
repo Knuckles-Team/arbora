@@ -93,7 +93,7 @@ async def test_delegated_child_refusal_keeps_bounded_structured_code(
     monkeypatch.setitem(sys.modules, "graph_os.security.actor_context", brain)
 
     class Mux:
-        async def call_oauth_gated_tool(self, *_args: object) -> object:
+        async def call_admitted_child_once(self, *_args: object) -> object:
             return SimpleNamespace(
                 is_error=True,
                 structured_content={
@@ -333,7 +333,9 @@ async def test_oauth_callback_uses_matching_verified_actor(
     monkeypatch.setattr(brain_context, "use_actor", fake_use_actor)
 
     class Mux:
-        async def call_oauth_gated_tool(self, server: str, tool: str, arguments: dict):
+        async def call_admitted_child_once(
+            self, server: str, tool: str, arguments: dict
+        ):
             assert (server, tool, arguments) == ("s", "t", {"x": 1})
             return SimpleNamespace(
                 is_error=False,

@@ -2907,6 +2907,67 @@ class MCPMultiplexer:
         except Exception as e:
             return _child_error_result(public_error_text(e))
 
+    async def call_admitted_child_once(
+        self,
+        server_name: str,
+        original_name: str,
+        arguments: dict[str, _typing.Any] | None = None,
+        *,
+        timeout: float | None = None,
+    ) -> MCPCallToolResult:
+        """Make exactly one governed child call over a dedicated session.
+
+        The one call path the governed fleet gateway uses. An OAuth-gated
+        child is called with the current caller's own grant
+        (:meth:`call_oauth_gated_tool`). Any other child is called as GraphOS
+        itself: the session carries the child's configured static headers and
+        GraphOS's service credential, never a caller credential. Either way
+        the session never joins the shared pool and makes one attempt only.
+        The caller's own admission has already passed the invocation
+        pipeline; the child capability is re-checked here.
+        """
+        cfg = self.load_catalog().get(server_name)
+        if cfg is not None and _oauth_gated(cfg):
+            return await self.call_oauth_gated_tool(
+                server_name, original_name, arguments, timeout=timeout
+            )
+        return await self._call_service_child_once(
+            server_name, original_name, arguments, timeout=timeout
+        )
+
+    async def _call_service_child_once(
+        self,
+        server_name: str,
+        original_name: str,
+        arguments: dict[str, _typing.Any] | None,
+        *,
+        timeout: float | None,
+    ) -> MCPCallToolResult:
+        _require_fleet_capability("delegate")
+        cfg = self.load_catalog().get(server_name)
+        if cfg is None or _oauth_gated(cfg):
+            raise _fastmcp_exceptions.ToolError(
+                "Server is not a configured service-credential MCP child"
+            )
+        _require_fleet_capability("delegate", _child_required_scopes(cfg))
+        catalog_epoch = self._catalog_epoch
+        call_arguments = arguments or {}
+        _assert_bounded_delegated_value(call_arguments)
+        call_timeout = _child_call_timeout(cfg, timeout)
+        if not 0.001 <= call_timeout <= 300.0:
+            raise _fastmcp_exceptions.ToolError("Invalid call timeout")
+        try:
+            return await asyncio.wait_for(
+                self._call_ephemeral_child_session(
+                    server_name, original_name, cfg, call_arguments, catalog_epoch
+                ),
+                timeout=call_timeout,
+            )
+        except TimeoutError:
+            return _child_error_result("MCPChildTimeout")
+        except Exception as e:
+            return _child_error_result(public_error_text(e))
+
     async def call_oauth_gated_tool(
         self,
         server_name: str,
@@ -3025,6 +3086,37 @@ class MCPMultiplexer:
             raise _fastmcp_exceptions.ToolError(
                 "MCP child admission changed before dispatch"
             )
+
+    async def _call_ephemeral_child_session(
+        self,
+        server_name: str,
+        original_name: str,
+        cfg: dict,
+        arguments: dict[str, _typing.Any],
+        catalog_epoch: int,
+    ) -> MCPCallToolResult:
+        """One call over a dedicated service-credential session (no OAuth).
+
+        The same admission, schema and dispatch checks as the OAuth path
+        (:meth:`_invoke_oauth_tool`) run on the dedicated session.
+        """
+        self._assert_oauth_catalog(server_name, cfg, catalog_epoch)
+        runtime_cfg, runtime_policy = _prepare_runtime_child_policy(cfg)
+        try:
+            async with contextlib.AsyncExitStack() as stack:
+                session = await self._open_one_session(server_name, runtime_cfg, stack)
+                return await self._invoke_oauth_tool(
+                    session,
+                    server_name,
+                    original_name,
+                    cfg,
+                    arguments,
+                    catalog_epoch,
+                    runtime_policy,
+                )
+        finally:
+            if runtime_policy is not None:
+                _close_runtime_child_policy(runtime_policy)
 
     async def _call_ephemeral_oauth_session(
         self,

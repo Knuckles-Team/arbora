@@ -215,7 +215,23 @@ def compose_served_invocation(
     if registry.get("fleet.call") is not None:
         if fleet_effect is None:
             raise ValueError("fleet.call needs the governed fleet gateway effect")
+        from graph_os.mcp_server.effect_journal import EgEffectJournal
+
         changes["fleet_effect"] = fleet_effect
+        # A governed child call is reserved and recorded in EG before dispatch.
+        from graph_os.deployment.semantic_provisioning import CONTROL_GRAPH
+
+        async def control_client() -> Any:
+            # EG holds WorkItems on the tenant's control graph.
+            return await pool.connected_client(
+                connect_context(session().tenant), CONTROL_GRAPH
+            )
+
+        changes["effects"] = EgEffectJournal(
+            control_client,
+            claims=lambda: connect_context(session().tenant).to_claims(),
+        )
+        changes["external_effect_operations"] = frozenset({"fleet.call"})
     services = build_invoke_services(
         registry=registry,
         runtime=runtime,
