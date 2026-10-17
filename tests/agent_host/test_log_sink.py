@@ -6,6 +6,7 @@ import json
 import os
 import time
 from dataclasses import replace
+from functools import partial
 from pathlib import Path
 
 import pytest
@@ -226,25 +227,21 @@ def test_cursor_binds_exact_source_generations(tmp_path: Path) -> None:
 
     async def exercise() -> None:
         await sink.emit(tenant="tenant-a", request_id="one", message="safe")
-        parameters = dict(
+        source_read = partial(
+            sink.read,
             tenant="tenant-a",
             workspace=str(tmp_path),
             host_instance="host-1",
             limit=128,
         )
-        batch = await sink.read(
-            **parameters, source_generations=("host-1",), cursor=None
-        )
+        batch = await source_read(source_generations=("host-1",), cursor=None)
         assert len(batch.records) == 1
         with pytest.raises(PermissionError):
-            await sink.read(
-                **parameters,
+            await source_read(
                 source_generations=("host-1", "other"),
                 cursor=batch.cursor,
             )
-        excluded = await sink.read(
-            **parameters, source_generations=("other",), cursor=None
-        )
+        excluded = await source_read(source_generations=("other",), cursor=None)
         assert excluded.records == ()
 
     try:
