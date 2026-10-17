@@ -50,6 +50,7 @@ from agent_utilities.protocols.source_connectors.base import ExternalAccess
 from pydantic import Field, ValidationError, model_validator
 
 from graph_os.api.contracts.session import GraphSession
+from graph_os.core.handoff import raise_moved
 from graph_os.mcp_server import runtime
 
 logger = logging.getLogger(__name__)
@@ -822,7 +823,7 @@ def _runtime_sources(engine: Any) -> tuple[Any, ...]:
     # only for explicitly exposed data-prep fields; no request can select an
     # object or import path through this fallback.
     try:
-        from agent_utilities.core.config import config as process_config
+        from graph_os.core.settings import runtime_config as process_config
 
         sources.append(process_config)
     except (
@@ -1944,7 +1945,7 @@ def _table_depth(table: Any) -> int:
 
 
 def _check_cancel(deadline: float) -> None:
-    from agent_utilities.core.task_cancellation import raise_if_task_cancelled
+    from graph_os.core.task_cancellation import raise_if_task_cancelled
 
     raise_if_task_cancelled()
     if time.monotonic() >= deadline:
@@ -2543,18 +2544,7 @@ def _validate_plan_shape(payload: Mapping[str, Any]) -> tuple[PrepRequest, Clean
 def _require_plan_matches_request(plan: CleanPlan, request: PrepRequest) -> None:
     """Bind the immutable plan's own refs/digests to the approved request."""
 
-    if plan.plan_ref != request.plan_ref or plan.model_ref != request.model_ref:
-        raise DataPrepToolError("plan references do not match the approved request")
-    if plan.artifact_ref is not None and plan.artifact_ref != request.artifact_ref:
-        raise DataPrepToolError("plan artifact reference is not approved")
-    if plan.source_ref is not None and plan.source_ref != request.artifact_ref:
-        raise DataPrepToolError("plan source reference is not approved")
-    from agent_utilities.data_prep import plan_digest
-
-    if plan_digest(plan) != request.plan_digest:
-        raise DataPrepToolError("plan digest does not match the immutable plan")
-    if plan.model_digest != request.model_digest:
-        raise DataPrepToolError("model digest must be pinned in the immutable plan")
+    raise_moved("_require_plan_matches_request", "data_prep", "epistemic-graph")
 
 
 def _resolve_operation(action: str) -> DataPrepAction:

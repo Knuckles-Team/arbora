@@ -14,11 +14,9 @@ import re
 from pathlib import Path
 from typing import Any, Literal, cast
 
-from agent_utilities.core.event_loop import run_blocking_ordered
 from agent_utilities.models.evidence_bundle import EvidenceBundle
 from agent_utilities.orchestration.response_format import (
     ResponseFormat,
-    validate_response_format,
 )
 from agent_utilities.security.config_sensitivity import (
     ENDPOINT_KEY_PARTS as _ENDPOINT_MCP_KEY_PARTS,
@@ -41,6 +39,8 @@ from agent_utilities.security.config_sensitivity import (
 from agent_utilities.security.error_surface import public_error_json, public_error_text
 from pydantic import Field
 
+from graph_os.core.event_loop import run_blocking_ordered
+from graph_os.core.handoff import raise_moved
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
 
@@ -170,7 +170,7 @@ def _last_declaration_named(declarations: Any, name: str) -> dict[str, Any] | No
 def _configured_external_graph_declaration(name: str) -> dict[str, Any]:
     """Resolve one reference-only declaration without returning it publicly."""
 
-    from agent_utilities.core.config import config as runtime_config
+    from graph_os.core.settings import runtime_config
 
     collections = (
         getattr(runtime_config, "external_graph_connectors", []) or [],
@@ -531,18 +531,7 @@ def _workspace_mcp_config_path() -> Path:
     existing symlink component.
     """
 
-    from agent_utilities.core.config import setting
-    from agent_utilities.core.workspace import get_agent_workspace
-
-    root = get_agent_workspace().resolve(strict=True)
-    configured = str(setting("MCP_CONFIG", "") or "").strip()
-    candidate = _resolve_requested_mcp_config_path(root, configured)
-    relative = _assert_mcp_config_path_in_workspace(candidate, root)
-    if candidate.suffix.lower() != ".json":
-        raise ValueError("MCP config must be a JSON file")
-    _assert_no_symlink_components(root, relative)
-    _assert_resolved_mcp_config_in_workspace(candidate, root)
-    return candidate
+    raise_moved("_workspace_mcp_config_path", "core.workspace", "epistemic-graph")
 
 
 def _read_mcp_config_document(path: Path) -> dict[str, Any]:
@@ -903,24 +892,9 @@ async def _analysis_action_specialize(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'specialize'
-    import json as _json
-
-    from agent_utilities.harness.superhuman_gate import SuperhumanCertifier
-    from agent_utilities.harness.world_model_task import (
-        specialize_world_model_from_engine,
+    raise_moved(
+        "_analysis_action_specialize", "harness.superhuman_gate", "epistemic-graph"
     )
-
-    summary = specialize_world_model_from_engine(
-        engine, certifier=SuperhumanCertifier()
-    )
-    if summary is None:
-        return _json.dumps(
-            {
-                "status": "noop",
-                "reason": "insufficient WorldModelTransition history to specialize",
-            }
-        )
-    return _json.dumps({"status": "ok", **summary}, default=str)
 
 
 async def _analysis_action_world_model_rollout(
@@ -967,47 +941,21 @@ async def _analysis_action_evolve_variants(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'evolve_variants'
-    from agent_utilities.harness.agentic_evolution_engine import (
-        AgenticEvolutionEngine,
+    raise_moved(
+        "_analysis_action_evolve_variants",
+        "harness.agentic_evolution_engine",
+        "epistemic-graph",
     )
-
-    if not query:
-        return "Error: evolve_variants needs a base_id in `query`."
-    aee = AgenticEvolutionEngine(engine)
-    result = aee.run_evolution_cycle(
-        base_id=query,
-        task_text=node_id or "",
-        top_k=top_k if top_k else 3,
-    )
-    return json.dumps(result, default=str)
 
 
 async def _analysis_action_spawn_background(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'spawn_background'
-    from agent_utilities.harness.background_spawner import (
-        BackgroundAgentSpawner,
-    )
-
-    if not engine:
-        return "Error: spawn_background requires an active engine."
-    if not query:
-        return "Error: spawn_background needs a task description in `query`."
-    spawner = BackgroundAgentSpawner(engine)
-    team = spawner.orchestrator.synthesize_team(
-        query=query,
-        domain=target or "background_operations",
-        complexity=depth if depth > 0 else 4,
-    )
-    return json.dumps(
-        {
-            "status": "ok",
-            "team_id": team.team_id,
-            "team_name": getattr(team, "team_name", "background_team"),
-            "agent_count": len(getattr(team, "agents", [])),
-        },
-        default=str,
+    raise_moved(
+        "_analysis_action_spawn_background",
+        "harness.background_spawner",
+        "epistemic-graph",
     )
 
 
@@ -1015,41 +963,10 @@ async def _analysis_action_track_citations(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'track_citations'
-    from agent_utilities.harness.citation_tracker import CitationTracker
-
-    if not query:
-        return "Error: track_citations needs agent response text in `query`."
-    tracker = CitationTracker()
-    citations = tracker.extract_citations(query)
-    if not citations:
-        return json.dumps({"status": "no_citations", "total": 0, "citations": []})
-    citation_data = [
-        {
-            "source_id": c.source_id,
-            "citation_type": c.citation_type,
-            "raw_text": c.raw_text,
-            "confidence": c.confidence,
-        }
-        for c in citations
-    ]
-    report = tracker.evaluate_citations(
-        citations,
-        retrieved_doc_ids=set(json.loads(target)) if target else None,
-        gold_doc_ids=set(json.loads(node_id)) if node_id else None,
-    )
-    return json.dumps(
-        {
-            "status": "extracted",
-            "total_citations": report.total_citations,
-            "precision": report.precision,
-            "recall": report.recall,
-            "f1": report.f1,
-            "citations": citation_data,
-            "hallucinated_citations": report.hallucinated_citations,
-            "uncited_evidence": report.uncited_evidence,
-            "citation_types": report.citation_types,
-        },
-        default=str,
+    raise_moved(
+        "_analysis_action_track_citations",
+        "harness.citation_tracker",
+        "epistemic-graph",
     )
 
 
@@ -1090,85 +1007,41 @@ async def _analysis_action_guard_corpus(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'guard_corpus'
-    from agent_utilities.harness.corpus_collapse_guard import (
-        CorpusCollapseGuard,
+    raise_moved(
+        "_analysis_action_guard_corpus",
+        "harness.corpus_collapse_guard",
+        "epistemic-graph",
     )
-
-    guard = CorpusCollapseGuard()
-    return json.dumps(guard.diagnostics(), default=str)
 
 
 async def _analysis_action_evaluate_harness(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'evaluate_harness'
-    from agent_utilities.harness.evaluation_engine import EvaluationEngine
-
-    if not query:
-        return "Error: evaluate_harness needs a trajectory_id in `query`."
-    eval_engine = EvaluationEngine(engine)
-    result = eval_engine.evaluate_and_decompose(
-        trajectory_id=query,
-        steps=[],
-        goal_achieved=True,
-        reasoning_effort=0.5,
+    raise_moved(
+        "_analysis_action_evaluate_harness",
+        "harness.evaluation_engine",
+        "epistemic-graph",
     )
-    return json.dumps(result, default=str)
 
 
 async def _analysis_action_evolve_agent(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'evolve_agent'
-    from agent_utilities.harness.evidence_corpus import EvidenceCorpus
-    from agent_utilities.harness.evolve_agent import EvolveAgent
-
-    if not query:
-        return "Error: evolve_agent needs an evidence corpus ID or path in `query`."
-    try:
-        workspace_path = os.getcwd()  # Fallback; ideally passed as param
-        evolve = EvolveAgent(
-            workspace_path=workspace_path,
-            registry=None,
-            knowledge_engine=engine,
-        )
-        # Best-effort: construct minimal EvidenceCorpus from query.
-        # In real usage, this would load from .specify/ or KG.
-        evidence = EvidenceCorpus(
-            round_id=query,
-            benchmark_score=0.5,
-            pass_rate=0.5,
-            total_tasks=0,
-        )
-        manifest = await evolve.evolve(evidence)
-        return json.dumps(manifest.model_dump(), default=str)
-    except Exception as e:
-        return public_error_text(e)
+    raise_moved(
+        "_analysis_action_evolve_agent", "harness.evidence_corpus", "epistemic-graph"
+    )
 
 
 async def _analysis_action_recursive_distill(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'recursive_distill'
-    from agent_utilities.harness.recursive_distill import RecursiveDistiller
-
-    if not engine:
-        return "Error: recursive_distill requires an active engine."
-    # RecursiveDistiller needs external-compute injections (corpus_source,
-    # trainer, evaluate_model, promote). Report what it expects so the
-    # caller can wire a distillation daemon (CONCEPT:AU-AHE.optimization.recursive-distillation-loop).
-    return json.dumps(
-        {
-            "status": "needs_injection",
-            "entry": "RecursiveDistiller.maybe_distill",
-            "requires": [
-                "corpus_source",
-                "trainer",
-                "evaluate_model",
-                "promote",
-            ],
-            "available": RecursiveDistiller is not None,
-        }
+    raise_moved(
+        "_analysis_action_recursive_distill",
+        "harness.recursive_distill",
+        "epistemic-graph",
     )
 
 
@@ -1176,34 +1049,11 @@ async def _analysis_action_distill_search(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'distill_search'
-    from agent_utilities.harness.search_distillation import (
-        SearchDistillationHarvester,
+    raise_moved(
+        "_analysis_action_distill_search",
+        "harness.search_distillation",
+        "epistemic-graph",
     )
-
-    if not query:
-        return "Error: distill_search needs a prompt in `query`."
-    harvester = SearchDistillationHarvester(engine)
-    candidates = [
-        (f"candidate_{i}", float(i) / max(1, top_k)) for i in range(1, top_k + 1)
-    ]
-    rows, pairs = harvester.harvest_candidates(query, candidates)
-    result = {
-        "sft_rows": [
-            {
-                "prompt": r.prompt,
-                "completion": r.completion,
-                "score": r.score,
-                "source": r.source,
-                "synthetic": r.synthetic,
-            }
-            for r in rows
-        ],
-        "preference_pairs": [
-            {"prompt": p.prompt, "chosen": p.chosen, "rejected": p.rejected}
-            for p in pairs
-        ],
-    }
-    return json.dumps(result, default=str)
 
 
 async def _analysis_action_extract_claims(
@@ -1327,36 +1177,11 @@ async def _analysis_action_evolve_code(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'evolve_code'
-    from agent_utilities.harness.agentic_evolution_engine import (
-        AgenticEvolutionEngine,
+    raise_moved(
+        "_analysis_action_evolve_code",
+        "harness.agentic_evolution_engine",
+        "epistemic-graph",
     )
-
-    if not query:
-        return "Error: evolve_code needs a task description in `query`."
-
-    def _llm_coder(plan: str, prior_code: str | None) -> tuple[str, str]:
-        try:
-            from agent_utilities.rlm.client import RLM
-
-            prompt = (
-                "Improve the code solution for this task. Return ONLY the "
-                "full updated Python code, no prose.\n"
-                f"Task: {query}\nStep plan: {plan}\n"
-                f"Current code:\n{prior_code or '(none)'}"
-            )
-            resp = RLM().completion(prompt)
-            if resp.ok and resp.response.strip():
-                return (plan, resp.response)
-        except Exception:  # noqa: BLE001 — offline / LLM error -> fallback
-            pass
-        return (plan, f"{prior_code or ''}\n# step for: {plan}".strip())
-
-    result = await asyncio.to_thread(
-        lambda: AgenticEvolutionEngine(engine).evolve_via_graph_search(
-            query, num_steps=top_k, coder_fn=_llm_coder
-        )
-    )
-    return json.dumps(result, default=str)
 
 
 async def _analysis_action_night_shift(
@@ -1520,17 +1345,10 @@ async def _analysis_action_assimilation_benchmark(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'assimilation_benchmark'
-    from agent_utilities.harness.assimilation_benchmark import (
-        run_all as _bench_run_all,
-    )
-    from agent_utilities.harness.assimilation_benchmark import (
-        to_markdown as _bench_md,
-    )
-
-    return _analysis_benchmark_response(
-        _bench_run_all,
-        _bench_md,
-        top_k,
+    raise_moved(
+        "_analysis_action_assimilation_benchmark",
+        "harness.assimilation_benchmark",
+        "epistemic-graph",
     )
 
 
@@ -1538,17 +1356,10 @@ async def _analysis_action_latent_efficiency_benchmark(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'latent_efficiency_benchmark'
-    from agent_utilities.harness.latent_efficiency_benchmark import (
-        run_all as _lat_run_all,
-    )
-    from agent_utilities.harness.latent_efficiency_benchmark import (
-        to_markdown as _lat_md,
-    )
-
-    return _analysis_benchmark_response(
-        _lat_run_all,
-        _lat_md,
-        top_k,
+    raise_moved(
+        "_analysis_action_latent_efficiency_benchmark",
+        "harness.latent_efficiency_benchmark",
+        "epistemic-graph",
     )
 
 
@@ -1556,34 +1367,8 @@ async def _analysis_action_infer_links(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'infer_links'
-    from agent_utilities.knowledge_graph.kb.link_inference import (
-        infer_links,
-    )
-    from agent_utilities.models.schema_pack_loader import get_active_pack
-
-    if not query:
-        return "Error: infer_links needs content text in `query`."
-    if not node_id:
-        return "Error: infer_links needs a source node ID in `node_id`."
-
-    schema_pack = get_active_pack()
-    if not schema_pack or not getattr(schema_pack, "link_inference", None):
-        return "Error: no active schema pack with link_inference rules available."
-
-    rules = schema_pack.link_inference
-    extracted = infer_links(query, node_id, rules)
-
-    return json.dumps(
-        [
-            {
-                "source_name": rel.source_name,
-                "target_name": rel.target_name,
-                "relationship_type": rel.relationship_type,
-                "confidence": rel.confidence,
-            }
-            for rel in extracted
-        ],
-        default=str,
+    raise_moved(
+        "_analysis_action_infer_links", "models.schema_pack_loader", "epistemic-graph"
     )
 
 
@@ -1645,29 +1430,8 @@ async def _analysis_action_pick_skill(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'pick_skill'
-    from agent_utilities.workflows.skill_picker import (
-        SkillCandidate,
-        SkillPicker,
-    )
-
-    if not query:
-        return "Error: pick_skill needs a skill query in `query`."
-    picker = SkillPicker()
-    # Without a skill registry endpoint or hardcoded candidates,
-    # we cannot populate the candidate list. Placeholder shows the API.
-    skill_candidates: list[SkillCandidate] = []
-    ranked = picker.rank(query, skill_candidates)
-    return json.dumps(
-        [
-            {
-                "name": s.candidate.name,
-                "score": s.score,
-                "breakdown": s.breakdown,
-                "scenario": s.candidate.resolved_scenario(),
-            }
-            for s in ranked
-        ],
-        default=str,
+    raise_moved(
+        "_analysis_action_pick_skill", "workflows.skill_picker", "epistemic-graph"
     )
 
 
@@ -1823,25 +1587,7 @@ async def _analysis_action_quant_regime(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'quant_regime'
-    from agent_utilities.domains.finance.regime_detector import (
-        RegimeDetector,
-    )
-
-    if not query:
-        return "Error: quant_regime needs a ticker symbol in `query`."
-
-    # Create bounded synthetic close data for demonstration. Each
-    # numeric operation crosses into the engine once as a batch.
-    from agent_utilities.numeric import xp
-
-    base_price = 100.0
-    returns = xp.random.default_rng(0).normal(0.0005, 0.02, 100)
-    close_multipliers = xp.cumprod([1.0 + float(change) for change in returns])
-    close_prices = [base_price * value for value in close_multipliers]
-
-    detector = RegimeDetector(engine)
-    regime = detector.detect_close_prices(close_prices, ticker=query)
-    return regime
+    raise_moved("_analysis_action_quant_regime", "numeric", "epistemic-graph")
 
 
 async def _analysis_action_quant_insider(
@@ -2131,25 +1877,8 @@ async def _analysis_action_harness_gate(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'harness_gate'
-    import json as _json
-
-    from agent_utilities.harness.harness_gate import HarnessGate
-
-    try:
-        facts = _json.loads(query) if query else {}
-    except Exception:
-        return "Error: harness_gate needs JSON harness-evolution facts in `query`."
-    verdict = HarnessGate().check_facts(
-        facts.get("edits", []) or [],
-        variants=facts.get("variants"),
-        pathologies=facts.get("pathologies"),
-    )
-    return _json.dumps(
-        {
-            "status": "ok",
-            "ships": verdict.passed,
-            "reasons": verdict.reasons,
-        }
+    raise_moved(
+        "_analysis_action_harness_gate", "harness.harness_gate", "epistemic-graph"
     )
 
 
@@ -2157,30 +1886,8 @@ async def _analysis_action_harness_evolve(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'harness_evolve'
-    import json as _json
-
-    from agent_utilities.harness.aegis_loop import AegisLoop
-
-    try:
-        seq = (_json.loads(query) or {}).get("edits", []) if query else []
-    except Exception:
-        return "Error: harness_evolve needs JSON {edits:[…]} in `query`."
-    pending = list(seq)
-
-    def _replay_evolver(_landscape, _q=pending):
-        return dict(_q.pop(0)) if _q else {"id": "noop", "dimension": "D0"}
-
-    loop = AegisLoop(_replay_evolver)
-    decisions = loop.run(rounds=len(seq) or 1)
-    return _json.dumps(
-        {
-            "status": "ok",
-            "decisions": [
-                {"round": d.round, "ships": d.shipped, "reasons": d.reasons}
-                for d in decisions
-            ],
-            "shipped": sum(1 for d in decisions if d.shipped),
-        }
+    raise_moved(
+        "_analysis_action_harness_evolve", "harness.aegis_loop", "epistemic-graph"
     )
 
 
@@ -2188,29 +1895,8 @@ async def _analysis_action_harness_certify(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'harness_certify'
-    import json as _json
-
-    from agent_utilities.harness.co_evolution import CrossHarnessCoEvolution
-    from agent_utilities.harness.harness_grounding import seal_variant
-
-    try:
-        payload = _json.loads(query) if query else {}
-    except Exception:
-        return "Error: harness_certify needs JSON in `query`."
-    cert = CrossHarnessCoEvolution().certify_promotion(
-        [float(x) for x in payload.get("held_out_rewards", [])],
-        payload.get("human_baseline"),
-    )
-    _, _, level = seal_variant(payload.get("variant_id", "harness_variant:adhoc"), cert)
-    return _json.dumps(
-        {
-            "status": "ok",
-            "certified": cert.certified,
-            "seal_level": level,
-            "ci_lower": cert.ci_lower,
-            "mean_reward": cert.mean_reward,
-        },
-        default=str,
+    raise_moved(
+        "_analysis_action_harness_certify", "harness.co_evolution", "epistemic-graph"
     )
 
 
@@ -2218,34 +1904,10 @@ async def _analysis_action_harness_benchmark(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'harness_benchmark'
-    import json as _json
-
-    from agent_utilities.harness.harness_foundry_benchmark import (
-        run_all as _hf_run,
-    )
-    from agent_utilities.harness.harness_foundry_benchmark import (
-        to_markdown as _hf_md,
-    )
-
-    hf_results = _hf_run()
-    return _json.dumps(
-        {
-            "status": "ok",
-            "reproduced": sum(1 for r in hf_results if r.claim_reproduced),
-            "total": len(hf_results),
-            "results": [
-                {
-                    "name": r.name,
-                    "baseline": r.baseline,
-                    "ours": r.ours,
-                    "lift": r.lift,
-                    "claim_reproduced": r.claim_reproduced,
-                }
-                for r in hf_results
-            ],
-            "markdown": _hf_md(hf_results),
-        },
-        default=str,
+    raise_moved(
+        "_analysis_action_harness_benchmark",
+        "harness.harness_foundry_benchmark",
+        "epistemic-graph",
     )
 
 
@@ -2699,7 +2361,7 @@ def _configure_add_connection_spec(action, config_key, config_value, registry):
         )
     # CONCEPT:AU-KG.backend.connection-registry — persist the connection list to config.json so
     # it survives restart (re-seeded from config.kg_connections).
-    from agent_utilities.core.config import save_config_item
+    from graph_os.core.settings import save_config_item
 
     save_config_item("kg_connections", registry.export_specs())
     return json.dumps(
@@ -2717,7 +2379,7 @@ def _configure_remove_connection(action, config_key, registry):
     # action(s): 'remove_connection'
     removed = registry.remove(config_key)
     if removed:
-        from agent_utilities.core.config import save_config_item
+        from graph_os.core.settings import save_config_item
 
         save_config_item("kg_connections", registry.export_specs())
     return json.dumps(
@@ -3796,22 +3458,10 @@ def _configure_action_get_config(action, config_key, config_value):
 
 def _configure_action_frontend_contributions(action, config_key, config_value):
     # action(s): 'frontend_contributions'
-    if config_key or config_value:
-        return json.dumps(
-            {
-                "error": (
-                    "frontend_contributions is a bounded read and "
-                    "takes no config_key/config_value"
-                )
-            }
-        )
-    from agent_utilities.core.config import config
-    from agent_utilities.core.frontend_providers import _catalog_payload
-
-    trusted_signers = frozenset(config.frontend_contribution_trusted_signers)
-    return json.dumps(
-        _catalog_payload(trusted_signers=trusted_signers),
-        default=str,
+    raise_moved(
+        "_configure_action_frontend_contributions",
+        "core.frontend_providers",
+        "epistemic-graph",
     )
 
 
@@ -3855,33 +3505,11 @@ def _configure_action_preflight(action, config_key, config_value):
 
 def _configure_action_harness_fence(action, config_key, config_value):
     # action(s): 'harness_fence'
-    try:
-        from pathlib import Path as _Path
-
-        from agent_utilities.claude_harness.claude_fence import write_fence
-        from agent_utilities.orchestration.action_policy import ActionPolicy
-
-        opts = json.loads(config_value) if config_value else {}
-        if not isinstance(opts, dict):
-            opts = {}
-        target = config_key or str(_Path.home() / ".claude")
-        policy_path = opts.get("policy")
-        policy = (
-            ActionPolicy(policy_path=policy_path) if policy_path else ActionPolicy()
-        )
-        return json.dumps(
-            write_fence(target, policy, dry_run=bool(opts.get("dry_run"))),
-            default=str,
-        )
-    except PermissionError:
-        raise
-    except Exception as exc:
-        return json.dumps(
-            {
-                "error": "harness fence update failed",
-                "error_type": type(exc).__name__,
-            }
-        )
+    raise_moved(
+        "_configure_action_harness_fence",
+        "claude_harness.claude_fence",
+        "epistemic-graph",
+    )
 
 
 def _configure_action_install_hooks(action, config_key, config_value):
@@ -3949,94 +3577,24 @@ def _configure_action_doctor(action, config_key, config_value):
 
 def _configure_action_set_role_routing(action, config_key, config_value):
     # action(s): 'set_role_routing'
-    try:
-        from pathlib import Path
-
-        from agent_utilities.core.config import config as _cfg
-        from agent_utilities.models.model_registry import (
-            ModelRegistry,
-            RoleSpec,
-        )
-
-        payload = json.loads(config_value) if config_value else {}
-        reg_path = getattr(_cfg, "model_registry_path", None)
-        if not reg_path or not Path(reg_path).is_file():
-            return json.dumps(
-                {
-                    "error": (
-                        "No model_registry_path configured; cannot "
-                        "persist role_routing."
-                    )
-                }
-            )
-        registry = ModelRegistry.load_from_file(reg_path)
-        for rname, spec in payload.items():
-            registry.role_routing[rname] = RoleSpec.model_validate(spec)
-        Path(reg_path).write_text(json.dumps(registry.model_dump(), indent=2))
-        return json.dumps(
-            {
-                "status": "success",
-                "action": "set_role_routing",
-                "roles": list(payload.keys()),
-            }
-        )
-    except PermissionError:
-        raise
-    except Exception as exc:
-        return json.dumps(
-            {
-                "error": "role routing update failed",
-                "error_type": type(exc).__name__,
-            }
-        )
+    raise_moved(
+        "_configure_action_set_role_routing", "models.model_registry", "epistemic-graph"
+    )
 
 
 def _configure_action_schema_pack(action, config_key, config_value):
     # action(s): 'schema_pack'
-    from agent_utilities.models.schema_pack_loader import (
-        get_active_pack,
-        set_active_pack,
-    )
-    from agent_utilities.models.schema_packs import list_schema_packs
-
-    if config_key:
-        pack = set_active_pack(config_key)
-        return json.dumps(
-            {
-                "status": "success",
-                "action": "schema_pack",
-                "active": pack.name,
-                "signature": pack.signature(),
-            }
-        )
-    active = get_active_pack()
-    return json.dumps(
-        {
-            "status": "success",
-            "action": "schema_pack",
-            "active": active.name,
-            "signature": active.signature(),
-            "available": list_schema_packs(),
-        }
+    raise_moved(
+        "_configure_action_schema_pack", "models.schema_pack_loader", "epistemic-graph"
     )
 
 
 def _configure_action_schema_candidates(action, config_key, config_value):
     # action(s): 'schema_candidates'
-    from agent_utilities.models.schema_pack_audit import (
-        SchemaCandidateAuditor,
-    )
-
-    try:
-        limit = int(config_value) if config_value else 100
-    except ValueError:
-        limit = 100
-    return json.dumps(
-        {
-            "status": "success",
-            "action": "schema_candidates",
-            "candidates": SchemaCandidateAuditor.instance().review(limit),
-        }
+    raise_moved(
+        "_configure_action_schema_candidates",
+        "models.schema_pack_audit",
+        "epistemic-graph",
     )
 
 
@@ -4326,47 +3884,7 @@ def register_analysis_tools(mcp):
         ),
     ) -> str:
         """Resolve and execute one governed local-vLLM delegation."""
-        response_format = validate_response_format(response_format)
-        skill_name = _coerced_str(skill_name)
-        tool_server = _coerced_str(tool_server)
-        # execution_mode keeps its inline ternary (not _coerced_str): its
-        # declared type is Literal["auto", "pydantic_graph"], and only this
-        # exact shape lets mypy narrow both branches back to that Literal.
-        execution_mode = execution_mode if isinstance(execution_mode, str) else "auto"
-        engine = runtime._get_engine()
-        if engine is None:
-            return "Error: IntelligenceGraphEngine not active."
-        try:
-            from agent_utilities.orchestration.manager import Orchestrator
-
-            allowed_tool_values = _normalize_tool_list_values(allowed_tools)
-            required_tool_values = _normalize_tool_list_values(required_tools)
-            payload = await Orchestrator(engine).execute_capability(
-                task=task,
-                agent_name=agent_name,
-                skill_name=skill_name,
-                tool_server=tool_server,
-                execution_mode=execution_mode,
-                max_steps=max_steps,
-                context=context or None,
-                budget_tokens=budget_tokens or None,
-                context_ref=context_ref or None,
-                allowed_tools=_clean_tool_names(allowed_tool_values),
-                required_tools=_clean_tool_names(required_tool_values),
-                cred_ref=cred_ref or None,
-                open_channel=open_channel,
-                reasoning_effort=reasoning_effort or None,
-                model_class=model_class,
-                response_format=response_format,
-                grounding=grounding,
-            )
-            payload.setdefault("output", "")
-            payload.setdefault("mermaid", None)
-            return json.dumps(payload, default=str)
-        except PermissionError:
-            raise
-        except Exception as exc:
-            return public_error_text(exc)
+        raise_moved("graph_orchestrate", "orchestration.manager", "epistemic-graph")
 
     runtime.REGISTERED_TOOLS["graph_orchestrate"] = graph_orchestrate
 

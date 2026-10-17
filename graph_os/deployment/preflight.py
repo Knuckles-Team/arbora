@@ -37,8 +37,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from agent_utilities.core.config import setting
-
+from graph_os.core.settings import setting
 from graph_os.webui_host.package_layout_expectation import (
     AGENT_WEBUI_DISTRIBUTION,
     EXPECTED_TOP_LEVEL_MODULES,

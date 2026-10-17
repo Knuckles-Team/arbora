@@ -6,10 +6,10 @@ import json
 import uuid
 from typing import Any
 
-from agent_utilities.core.event_loop import run_blocking_ordered
 from agent_utilities.security.error_surface import public_error_text
 from pydantic import Field
 
+from graph_os.core.event_loop import run_blocking_ordered
 from graph_os.mcp_server import runtime
 
 
@@ -181,7 +181,7 @@ def _execute_governance_action(
             )
 
         if action == "grant_approval":
-            from agent_utilities.orchestration.approval import decide_action_approval
+            from graph_os.access.approval import decide_action_approval
 
             return json.dumps(
                 decide_action_approval(engine, approval_id, decision),
@@ -220,7 +220,7 @@ def _execute_governance_action(
             )
 
         if action == "verify_action":
-            from agent_utilities.orchestration.action_policy import (
+            from graph_os.access.action_policy import (
                 ActionPolicy,
                 ActionRequest,
             )
@@ -466,7 +466,7 @@ def _policy_status() -> dict[str, Any]:
     control surface (there is nothing to set here; tune via the same config
     fields every other setting uses).
     """
-    from agent_utilities.core.config import config
+    from graph_os.core.settings import runtime_config as config
 
     return {
         "surface": "governance",

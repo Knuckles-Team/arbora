@@ -22,8 +22,8 @@ from pathlib import Path
 from typing import Any, cast
 from urllib.parse import urlsplit
 
+from agent_connector_sdk.utilities import to_boolean
 from agent_utilities._version import __version__
-from agent_utilities.base_utilities import to_boolean
 from agent_utilities.core.config import (
     DEFAULT_HOST,
     DEFAULT_PORT,

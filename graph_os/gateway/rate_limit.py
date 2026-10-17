@@ -85,7 +85,7 @@ class GatewayRateLimitMiddleware:
         rate: float | None = None,
         burst: float | None = None,
     ) -> None:
-        from agent_utilities.core.config import config
+        from graph_os.core.settings import runtime_config as config
 
         self.app = app
         self.rate = float(rate if rate is not None else config.gateway_rate_limit or 0)

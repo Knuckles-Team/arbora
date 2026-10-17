@@ -157,7 +157,8 @@ def test_run_doctor_redacts_configuration_load_failure(monkeypatch):
 
 def test_unified_install_doctor_never_reports_local_roots(monkeypatch, tmp_path):
     from agent_utilities.core import paths, unified_install
-    from agent_utilities.core.provider_materialization import build_asset_manifest
+
+    from graph_os.core.provider_materialization import build_asset_manifest
 
     monkeypatch.setattr(paths, "skills_dir", lambda: tmp_path / "skills")
     monkeypatch.setattr(paths, "ontology_dir", lambda: tmp_path / "ontologies")
@@ -198,7 +199,8 @@ def test_unified_install_doctor_warns_on_stale_and_unmarked_provider_roots(
     monkeypatch, tmp_path
 ):
     from agent_utilities.core import paths, unified_install
-    from agent_utilities.core.provider_materialization import (
+
+    from graph_os.core.provider_materialization import (
         build_asset_manifest,
         inactive_marker,
         write_managed_provider_marker,
@@ -267,9 +269,9 @@ def test_unified_install_doctor_fails_closed_on_unresolved_provider(
     monkeypatch, tmp_path
 ):
     from agent_utilities.core import paths, unified_install
-    from agent_utilities.core.provider_materialization import build_asset_manifest
 
     from graph_os.core import providers
+    from graph_os.core.provider_materialization import build_asset_manifest
 
     roots = {
         "skills": tmp_path / "skills",
@@ -1587,9 +1589,9 @@ def _check_skills_from(source, tmp_path, monkeypatch):
     Returns the provider groups the check asked for and its result.
     """
     from agent_utilities.core import paths
-    from agent_utilities.core.provider_materialization import build_asset_manifest
 
     from graph_os.core import providers
+    from graph_os.core.provider_materialization import build_asset_manifest
 
     xdg = tmp_path / "xdg"
     xdg.mkdir()

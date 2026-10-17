@@ -18,13 +18,12 @@ operations/structural surface; it is not a compatibility catch-all.
 
 from __future__ import annotations
 
-import json
 from typing import Annotated, Any
 
 from agent_utilities.models.evidence_bundle import EvidenceBundle
-from agent_utilities.security.error_surface import public_error_text
 from pydantic import Field
 
+from graph_os.core.handoff import raise_moved
 from graph_os.gateway.schemas.graph_core import (
     GraphCodeAction,
     GraphEvaluateAction,
@@ -237,49 +236,7 @@ def register_analyze_suite_tools(
         top_k: int = Field(default=20, description="Max rows/clusters."),
     ) -> str:
         """Observability + eval analytics over the trace/score subgraph (KG-2.257)."""
-        if action == "error_detail":
-            # Resolving a previously recorded failure is unrelated to the
-            # trace/score subgraph below and needs no active engine — it must
-            # keep working even when the engine the ORIGINAL failure came from
-            # is unavailable (that is frequently WHY the caller is resolving
-            # it in the first place).
-            from agent_utilities.security.brain_context import IdentityRequiredError
-            from agent_utilities.security.error_surface import (
-                resolve_error_detail_for_actor,
-            )
-
-            try:
-                detail = resolve_error_detail_for_actor(query)
-            except (IdentityRequiredError, PermissionError) as exc:
-                return public_error_text(exc, code="permission_denied")
-            if detail is None:
-                return json.dumps({"resolved": False, "detail_ref": query})
-            # tenant_id is internal bookkeeping for the authority check above
-            # (already the caller's own tenant, having passed that check) —
-            # omit it from the returned shape rather than echo it back.
-            public_detail = {k: v for k, v in detail.items() if k != "tenant_id"}
-            return json.dumps(
-                {"resolved": True, "detail_ref": query, **public_detail}, default=str
-            )
-
-        engine = runtime._get_engine()
-        if not engine:
-            return "Error: IntelligenceGraphEngine not active."
-        from agent_utilities.harness import trace_analytics as ta
-
-        backend = getattr(engine, "backend", None)
-        try:
-            if action == "trace_rootcause":
-                out = ta.trace_rootcause(backend, capability=query, top_k=top_k)
-            elif action == "prompt_regression":
-                out = ta.prompt_regression(backend, top_k=top_k)
-            elif action == "failure_cluster":
-                out = ta.failure_cluster(backend, top_k=top_k)
-            else:
-                return f"Error: Unknown observe action '{action}'"
-            return json.dumps(out, indent=2, default=str)
-        except Exception as e:
-            return public_error_text(e)
+        raise_moved("graph_observe", "harness", "epistemic-graph")
 
     register_conditional_tools(
         runtime.REGISTERED_TOOLS,

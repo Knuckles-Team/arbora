@@ -7,9 +7,9 @@ import json
 import uuid
 from typing import Any
 
-from agent_utilities.security.error_surface import public_error_text
 from pydantic import Field
 
+from graph_os.core.handoff import raise_moved
 from graph_os.mcp_server import runtime
 
 _WORKFLOW_TASKS: dict[str, asyncio.Task[Any]] = {}
@@ -161,52 +161,11 @@ async def _with_mermaid(result: Any, engine: Any, workflow: str) -> str:
 
 
 async def _dispatch_workflow(engine: Any, workflow: str, task: str) -> str:
-    from agent_utilities.workflows.runner import WorkflowRunner
-
-    session_id = f"wf-{uuid.uuid4().hex}"
-    runner = WorkflowRunner()
-    background = asyncio.create_task(
-        runner.execute_by_name(
-            workflow,
-            engine,
-            trace_session=session_id,
-            task=task or None,
-        ),
-        name=f"workflow:{session_id}",
-    )
-    _WORKFLOW_TASKS[session_id] = background
-    return json.dumps(
-        {
-            "status": "dispatched",
-            "session_id": session_id,
-            "status_url": "/api/graph/workflows",
-            "status_request": {
-                "action": "status",
-                "workflow": session_id,
-            },
-        }
-    )
+    raise_moved("_dispatch_workflow", "workflows.runner", "epistemic-graph")
 
 
 def _workflow_status(workflow: str) -> str:
-    if not workflow:
-        raise ValueError("workflow must contain the run/session id")
-    status_task = _WORKFLOW_TASKS.get(workflow)
-    if status_task is not None and not status_task.done():
-        return json.dumps({"session_id": workflow, "status": "running"}, default=str)
-    if status_task is not None:
-        try:
-            task_result = status_task.result()
-        except Exception as exc:
-            return public_error_text(exc)
-        return json.dumps(task_result.to_dict(), default=str)
-
-    from agent_utilities.workflows.runner import _active_workflows
-
-    stored_result = _active_workflows.get(workflow)
-    if stored_result is None:
-        return json.dumps({"session_id": workflow, "status": "not_found"})
-    return json.dumps(stored_result.to_dict(), default=str)
+    raise_moved("_workflow_status", "workflows.runner", "epistemic-graph")
 
 
 async def _export_workflow(engine: Any, workflow: str, export_format: str) -> str:
@@ -281,61 +240,7 @@ def register_workflow_tools(mcp: Any) -> None:
             ),
         ),
     ) -> str:
-        engine = runtime._get_engine()
-        if engine is None:
-            return "Error: IntelligenceGraphEngine not active."
-        try:
-            from agent_utilities.orchestration.manager import Orchestrator
-
-            if action == "compile":
-                from agent_utilities.knowledge_graph.workflow_compiler import (
-                    WorkflowCompiler,
-                )
-
-                # Compilation is the only workflow surface that needs the
-                # concrete NL compiler. Bind it at this composition root and
-                # inject the one instance into the manager; execution/status/
-                # list paths do not construct a compiler they cannot use.
-                compiler = WorkflowCompiler(engine)
-                return await _compile_workflow(
-                    Orchestrator(engine, compiler=compiler), engine, task, name
-                )
-
-            orchestrator = Orchestrator(engine)
-
-            if action == "compile_process":
-                return await _compile_process_workflow(engine, workflow, name)
-
-            if action == "list":
-                return await _list_workflows(engine, limit)
-
-            if action in {"execute", "execute_dynamic", "dispatch"}:
-                return await _execute_or_dispatch_workflow(
-                    action,
-                    orchestrator,
-                    engine,
-                    workflow,
-                    task,
-                    max_steps,
-                    max_agent_calls,
-                    max_concurrency,
-                    budget_tokens,
-                    model_class,
-                    dynamic_fallback,
-                    workflow_run_id,
-                )
-
-            if action == "status":
-                return _workflow_status(workflow)
-
-            if action == "export":
-                return await _export_workflow(engine, workflow, export_format)
-
-            return f"Error: Unknown graph_workflows action '{action}'"
-        except PermissionError:
-            raise
-        except Exception as exc:
-            return public_error_text(exc)
+        raise_moved("graph_workflows", "orchestration.manager", "epistemic-graph")
 
     runtime.REGISTERED_TOOLS["graph_workflows"] = graph_workflows
     runtime.ACTION_TOOL_ROUTES["graph_workflows"] = "/graph/workflows"

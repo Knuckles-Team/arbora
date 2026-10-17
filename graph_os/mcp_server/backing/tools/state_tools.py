@@ -13,14 +13,14 @@ from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlencode
 
-from agent_utilities.core.event_loop import run_blocking_ordered
 from agent_utilities.security.error_surface import (
     public_error_json,
-    public_error_payload,
 )
 from pydantic import Field
 from starlette.responses import JSONResponse
 
+from graph_os.core.event_loop import run_blocking_ordered
+from graph_os.core.handoff import raise_moved
 from graph_os.mcp_server import runtime
 
 logger = logging.getLogger(__name__)
@@ -122,33 +122,7 @@ async def _resolve_session_crud_response(
     ``(resp, error_json)``; when ``error_json`` is not ``None`` the caller
     should return it directly instead of formatting ``resp``.
     """
-    from agent_utilities.core.sessions import (
-        cancel_session_run,
-        delete_session,
-        get_all_sessions,
-        get_session_details,
-        submit_session_reply,
-    )
-
-    if action == "list":
-        return await get_all_sessions(req), None
-    if action == "get":
-        if not session_id:
-            return None, json.dumps({"error": "session_id is required"})
-        return await get_session_details(req), None
-    if action == "delete":
-        if not session_id:
-            return None, json.dumps({"error": "session_id is required"})
-        return await delete_session(req), None
-    if action == "reply":
-        if not session_id:
-            return None, json.dumps({"error": "session_id is required"})
-        return await submit_session_reply(req), None
-    if action == "cancel":
-        if not session_id:
-            return None, json.dumps({"error": "session_id is required"})
-        return await cancel_session_run(req), None
-    return None, json.dumps({"error": f"Unknown sessions action: {action}"})
+    raise_moved("_resolve_session_crud_response", "core.sessions", "the agent harness")
 
 
 async def _resolve_sessions_response(
@@ -182,36 +156,7 @@ async def _resolve_goals_response(
 ) -> tuple[Any, str | None]:
     """The raw response for one ``graph_goals`` action as ``(resp, error_json)``
     (see :func:`_resolve_session_crud_response`)."""
-    from agent_utilities.core.sessions import (
-        cancel_goal,
-        create_goal,
-        get_goal_iterations,
-        list_goals,
-    )
-
-    req = runtime._build_dummy_request(
-        path_params={"goal_id": goal_id} if goal_id else {},
-        json_body={"objective": goal, "max_iterations": max_iterations}
-        if action == "create"
-        else None,
-    )
-    if action == "list":
-        return await list_goals(req), None
-    if action == "create":
-        if not goal:
-            return None, json.dumps({"error": "goal is required"})
-        return await create_goal(req), None
-    if action == "iterations":
-        if not goal_id:
-            return None, json.dumps({"error": "goal_id is required"})
-        req_iter = runtime._build_dummy_request(path_params={"goal_id": goal_id})
-        return await get_goal_iterations(req_iter), None
-    if action == "cancel":
-        if not goal_id:
-            return None, json.dumps({"error": "goal_id is required"})
-        req_cancel = runtime._build_dummy_request(path_params={"goal_id": goal_id})
-        return await cancel_goal(req_cancel), None
-    return None, json.dumps({"error": f"Unknown goals action: {action}"})
+    raise_moved("_resolve_goals_response", "core.sessions", "the agent harness")
 
 
 def _sandbox_status_action() -> str:
@@ -245,26 +190,7 @@ def _sandbox_reap_action() -> str:
 
     Extracted verbatim (pure extract-method, no behaviour change).
     """
-    import json as _json
-
-    from agent_utilities.runtime.warm_registry import WarmParentRegistry
-
-    reaped = WarmParentRegistry.get().reap()
-    workspaces: list[str] = []
-    try:
-        from agent_utilities.runtime.docker_workspace import DockerWorkspace
-
-        workspaces = DockerWorkspace.reap_idle()
-    except Exception:  # noqa: BLE001 - dev-workspace reap is best-effort
-        pass
-    return _json.dumps(
-        {
-            "action": "reap",
-            "reaped_parent_count": len(reaped),
-            "reaped_workspace_count": len(workspaces),
-            "pool": WarmParentRegistry.get().stats(),
-        }
-    )
+    raise_moved("_sandbox_reap_action", "runtime.warm_registry", "the agent harness")
 
 
 async def _sandbox_warm_action(rung: str) -> str:
@@ -272,34 +198,7 @@ async def _sandbox_warm_action(rung: str) -> str:
 
     Extracted verbatim (pure extract-method, no behaviour change).
     """
-    import json as _json
-
-    from agent_utilities.runtime.warm_registry import WarmParentRegistry
-
-    if not rung:
-        return _json.dumps({"error": "warm requires an approved rung"})
-    from agent_utilities.rlm.sandboxes.base import ForkableSandbox
-    from agent_utilities.rlm.sandboxes.registry import default_sandboxes
-
-    backend = next((b for b in default_sandboxes() if b.name == rung), None)
-    if backend is None or not isinstance(backend, ForkableSandbox):
-        return _json.dumps(
-            {"error": "requested rung is not an available confined warm-fork"}
-        )
-    registry = WarmParentRegistry.get()
-    spec = backend.warm_spec()
-    already = registry.acquire(spec.key) is not None
-    if not already:
-        parent = await backend.warm(spec)
-        registry.register(spec.key, parent, close=parent.close, kind=backend.name)
-    return _json.dumps(
-        {
-            "action": "warm",
-            "rung": rung,
-            "already_warm": already,
-            "pool": registry.stats(),
-        }
-    )
+    raise_moved("_sandbox_warm_action", "runtime.warm_registry", "the agent harness")
 
 
 def _dedupe_preserve_order(items: list[str]) -> list[str]:
@@ -348,13 +247,7 @@ def _feeds_list_action(engine: Any) -> str:
 
     Extracted verbatim (pure extract-method, no behaviour change).
     """
-    import json as _json
-
-    from agent_utilities.automation.feed_sources import list_feed_sources
-
-    return _json.dumps(
-        {"action": "list", "feeds": list_feed_sources(engine)}, default=str
-    )
+    raise_moved("_feeds_list_action", "automation.feed_sources", "epistemic-graph")
 
 
 def _feeds_add_action(engine: Any, targets: list[str]) -> str:
@@ -362,34 +255,7 @@ def _feeds_add_action(engine: Any, targets: list[str]) -> str:
 
     Extracted verbatim (pure extract-method, no behaviour change).
     """
-    import json as _json
-
-    from agent_utilities.automation.feed_sources import upsert_feed_source
-
-    if not targets:
-        return _json.dumps({"error": "add needs a feed url (url=... or urls=[...])"})
-    results: list[dict] = []
-    for u in targets:
-        try:
-            nid = upsert_feed_source(
-                engine,
-                key=u,
-                source_system="rss",
-                feed_url=u,
-                kind="RssFeed",
-            )
-            results.append({"url": u, "id": nid})
-        except Exception as e:  # noqa: BLE001 — one bad feed never aborts the batch
-            results.append(public_error_payload(e))
-    added = [r for r in results if "id" in r]
-    return _json.dumps(
-        {
-            "action": "add",
-            "added": len(added),
-            "total": len(targets),
-            "results": results,
-        }
-    )
+    raise_moved("_feeds_add_action", "automation.feed_sources", "epistemic-graph")
 
 
 def _feeds_remove_action(engine: Any, targets: list[str]) -> str:
@@ -397,27 +263,7 @@ def _feeds_remove_action(engine: Any, targets: list[str]) -> str:
 
     Extracted verbatim (pure extract-method, no behaviour change).
     """
-    import json as _json
-
-    from agent_utilities.automation.feed_sources import remove_feed_source
-
-    if not targets:
-        return _json.dumps({"error": "remove needs a feed url (url=... or urls=[...])"})
-    results: list[dict] = []
-    for u in targets:
-        try:
-            ok = remove_feed_source(engine, key=u, source_system="rss")
-            results.append({"url": u, "ok": bool(ok)})
-        except Exception as e:  # noqa: BLE001
-            results.append(public_error_payload(e))
-    return _json.dumps(
-        {
-            "action": "remove",
-            "removed": sum(1 for r in results if r.get("ok")),
-            "total": len(targets),
-            "results": results,
-        }
-    )
+    raise_moved("_feeds_remove_action", "automation.feed_sources", "epistemic-graph")
 
 
 def _feeds_sync_action(engine: Any, url: str, mode: str) -> str:
@@ -504,70 +350,10 @@ def _runvcs_twin_capture_action(p: _RunVcsParams) -> str:
     ``policy_decisions``/``evidence`` JSON string still raises before the
     ``run_id``-required check, exactly as before.
     """
-    import json as _json
-
-    from agent_utilities.orchestration.agent_digital_twin import (
-        VersionPins,
-        capture_twin,
-        capture_twin_from_kg,
-        persist_twin,
-    )
-
-    engine = runtime._get_engine()
-    pins = VersionPins.from_dict(_parse_json_or(p.versions, {}))
-    decisions = _parse_json_or(p.policy_decisions, [])
-    evidence_items = _parse_json_or(p.evidence, [])
-    explicit_calls = _parse_json_or(p.tool_calls, [])
-    explicit_exchanges = _parse_json_or(p.model_exchanges, [])
-
-    if explicit_calls or explicit_exchanges:
-        # EXPLICIT-DATA path (capture_twin) — the canonical path a live
-        # run (or a test standing in for one) uses: build the twin
-        # straight from data the caller already collected, never
-        # re-derived from the KG.
-        twin_obj = capture_twin(
-            agent_name=p.agent_name,
-            task=p.task,
-            versions=pins,
-            run_id=p.run_id or None,
-            budget=_json.loads(p.budget) if p.budget and p.budget != "{}" else {},
-            work_item_ids=_parse_json_or(p.work_item_ids, []),
-            tool_calls=explicit_calls,
-            model_exchanges=explicit_exchanges,
-            policy_decisions=decisions,
-            evidence=evidence_items,
-            outcome=p.outcome or "succeeded",
-            engine=engine,
-        )
-    else:
-        # KG-HYDRATION path (capture_twin_from_kg) — best-effort read of
-        # an already-running KG's existing :ToolCall/:WorkItem rows.
-        if not p.run_id:
-            return _json.dumps(
-                {
-                    "error": "twin_capture requires run_id (or explicit "
-                    "tool_calls/model_exchanges for the explicit-data path)"
-                }
-            )
-        twin_obj = capture_twin_from_kg(
-            engine,
-            p.run_id,
-            agent_name=p.agent_name,
-            task=p.task,
-            versions=pins,
-            outcome=p.outcome,
-            policy_decisions=decisions,
-            evidence=evidence_items,
-        )
-    node_id = persist_twin(engine, twin_obj) if p.persist else None
-    return _json.dumps(
-        {
-            "action": "twin_capture",
-            "twin_id": twin_obj.twin_id,
-            "node_id": node_id,
-            "twin": twin_obj.to_dict(),
-        },
-        default=str,
+    raise_moved(
+        "_runvcs_twin_capture_action",
+        "orchestration.agent_digital_twin",
+        "epistemic-graph",
     )
 
 
@@ -576,20 +362,10 @@ def _runvcs_twin_replay_action(twin_obj: Any) -> str:
 
     Extracted verbatim (pure extract-method, no behaviour change).
     """
-    import json as _json
-
-    from agent_utilities.orchestration.agent_digital_twin import replay_twin
-
-    report = replay_twin(twin_obj)
-    return _json.dumps(
-        {
-            "action": "twin_replay",
-            "run_id": report.run_id,
-            "twin_id": report.twin_id,
-            "deterministic": report.deterministic,
-            "steps": report.regression.steps,
-            "model_calls": report.regression.model_calls,
-        }
+    raise_moved(
+        "_runvcs_twin_replay_action",
+        "orchestration.agent_digital_twin",
+        "epistemic-graph",
     )
 
 
@@ -599,37 +375,10 @@ def _runvcs_twin_counterfactual_action(twin_obj: Any, p: _RunVcsParams) -> str:
 
     Extracted verbatim (pure extract-method, no behaviour change).
     """
-    import json as _json
-
-    from agent_utilities.orchestration.agent_digital_twin import (
-        VersionPins,
-        counterfactual_replay,
-    )
-
-    versions_override = (
-        VersionPins.from_dict(_json.loads(p.versions))
-        if p.versions and p.versions != "{}"
-        else None
-    )
-    overrides = _parse_json_or(p.policy_overrides, None)
-    responses = _parse_json_or(p.model_responses, None)
-    report = counterfactual_replay(
-        twin_obj,
-        versions=versions_override,
-        policy_overrides=overrides,
-        model_responses=responses,
-    )
-    return _json.dumps(
-        {
-            "action": "twin_counterfactual",
-            "run_id": report.run_id,
-            "twin_id": report.twin_id,
-            "diverged": report.diverged,
-            "deterministic": report.deterministic,
-            "version_delta": report.version_delta,
-            "decision_delta": report.decision_delta,
-        },
-        default=str,
+    raise_moved(
+        "_runvcs_twin_counterfactual_action",
+        "orchestration.agent_digital_twin",
+        "epistemic-graph",
     )
 
 
@@ -638,14 +387,10 @@ def _runvcs_twin_incident_action(twin_obj: Any) -> str:
 
     Extracted verbatim (pure extract-method, no behaviour change).
     """
-    import json as _json
-
-    from agent_utilities.orchestration.agent_digital_twin import twin_incident_steps
-
-    steps = twin_incident_steps(twin_obj)
-    return _json.dumps(
-        {"action": "twin_incident", "run_id": twin_obj.run_id, "steps": steps},
-        default=str,
+    raise_moved(
+        "_runvcs_twin_incident_action",
+        "orchestration.agent_digital_twin",
+        "epistemic-graph",
     )
 
 
@@ -655,22 +400,11 @@ def _runvcs_twin_family_action(action: str, p: _RunVcsParams) -> str:
 
     Extracted verbatim (pure extract-method, no behaviour change).
     """
-    import json as _json
-
-    from agent_utilities.orchestration.agent_digital_twin import AgentDigitalTwin
-
-    if not p.twin:
-        return _json.dumps(
-            {"error": f"{action} requires `twin` (JSON from action='twin_capture')"}
-        )
-    twin_obj = AgentDigitalTwin.from_dict(_json.loads(p.twin))
-
-    if action == "twin_replay":
-        return _runvcs_twin_replay_action(twin_obj)
-    if action == "twin_counterfactual":
-        return _runvcs_twin_counterfactual_action(twin_obj, p)
-    # action == "twin_incident"
-    return _runvcs_twin_incident_action(twin_obj)
+    raise_moved(
+        "_runvcs_twin_family_action",
+        "orchestration.agent_digital_twin",
+        "epistemic-graph",
+    )
 
 
 async def _runvcs_live_session_action(
@@ -1342,32 +1076,7 @@ def register_state_tools(mcp):
         ),
     ) -> str:
         """List / enable / disable / prioritize / retune / run-now schedules."""
-        import json as _json
-
-        from agent_utilities.core import schedule_engine as _se
-
-        try:
-            engine = runtime._get_engine()
-            if action == "list":
-                return _json.dumps(
-                    {"action": "list", "schedules": _se.calendar(engine)},
-                    default=str,
-                )
-            if not name:
-                return _json.dumps({"error": f"{action} needs a schedule name"})
-            if action == "enable":
-                return _json.dumps(_se.set_enabled(engine, name, True))
-            if action == "disable":
-                return _json.dumps(_se.set_enabled(engine, name, False))
-            if action == "prioritize":
-                return _json.dumps(_se.set_priority(engine, name, priority))
-            if action == "set_interval":
-                return _json.dumps(_se.set_interval(engine, name, interval_s))
-            if action == "run_now":
-                return _json.dumps(_se.run_now(engine, name))
-            return _json.dumps({"error": f"unknown action {action!r}"})
-        except Exception as e:  # noqa: BLE001
-            return public_error_json(e)
+        raise_moved("graph_schedules", "core", "epistemic-graph")
 
     runtime.REGISTERED_TOOLS["graph_schedules"] = graph_schedules
 
@@ -1559,58 +1268,7 @@ def register_state_tools(mcp):
     ) -> str:
         """List / inspect / commit / revert / fork / discard / replay a live run (run-VCS);
         capture / replay / counterfactual-replay / step through an Agent Digital Twin (X-8)."""
-        import json as _json
-
-        from agent_utilities.runtime.run_vcs.replay import replay_run
-        from agent_utilities.runtime.run_vcs.run_session import RunSessionRegistry
-
-        registry = RunSessionRegistry.get()
-        p = _RunVcsParams(
-            run_id=run_id,
-            commit_id=commit_id,
-            label=label,
-            twin=twin,
-            agent_name=agent_name,
-            task=task,
-            versions=versions,
-            outcome=outcome,
-            persist=persist,
-            tool_calls=tool_calls,
-            model_exchanges=model_exchanges,
-            policy_decisions=policy_decisions,
-            evidence=evidence,
-            budget=budget,
-            work_item_ids=work_item_ids,
-            policy_overrides=policy_overrides,
-            model_responses=model_responses,
-        )
-        try:
-            if action == "list":
-                return _json.dumps({"action": "list", "runs": registry.list_ids()})
-
-            # ── Agent Digital Twin actions (CONCEPT:AU-ORCH.twin.agent-digital-twin, X-8) ──
-            # Twins project a PAST run independently of any live RunSessionRegistry entry,
-            # so these branch out before the live-session guard below.
-            if action == "twin_capture":
-                return _runvcs_twin_capture_action(p)
-            if action in ("twin_replay", "twin_counterfactual", "twin_incident"):
-                return _runvcs_twin_family_action(action, p)
-
-            session = registry.acquire(run_id) if run_id else None
-            if action != "list" and session is None:
-                return _json.dumps(
-                    {
-                        "error": f"no live run session {run_id!r}",
-                        "runs": registry.list_ids(),
-                    }
-                )
-            assert session is not None  # for type-narrowing (guarded above)
-
-            return await _runvcs_live_session_action(
-                action, session, registry, p, replay_run
-            )
-        except Exception as e:  # noqa: BLE001
-            return public_error_json(e)
+        raise_moved("graph_runvcs", "runtime.run_vcs.replay", "the agent harness")
 
     runtime.REGISTERED_TOOLS["graph_runvcs"] = graph_runvcs
 

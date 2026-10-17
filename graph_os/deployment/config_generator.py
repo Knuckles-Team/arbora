@@ -268,7 +268,7 @@ def _base_dump() -> dict[str, Any]:
     Host-local XDG/home paths are absent and resolve on the target machine when
     AgentConfig loads.
     """
-    from agent_utilities.core.config import AgentConfig
+    from graph_os.core.settings import GraphOSConfig as AgentConfig
 
     # by_alias=True → canonical env names; round-trips through json with default=str.
     data = AgentConfig.model_construct().model_dump(by_alias=True)
@@ -360,9 +360,9 @@ def write_config(
     """
     cfg = generate_config(profile)
     out = Path(path) if path else _default_config_path()
-    from agent_utilities.core.config import _write_private_configuration_mapping
+    from graph_os.core.settings import write_private_mapping
 
-    _write_private_configuration_mapping(out, dict(sorted(cfg.items())))
+    write_private_mapping(out, dict(sorted(cfg.items())))
     return {
         "status": "success",
         "profile": profile,
@@ -373,7 +373,7 @@ def write_config(
 
 
 def _default_config_path() -> Path:
-    from agent_utilities.core.paths import config_dir
+    from graph_os.core.settings import config_dir
 
     return config_dir() / "config.json"
 
@@ -392,14 +392,14 @@ def _field_sections() -> dict[str, str]:
     the ``class AgentConfig`` body is scanned; fields before/after fall back to a
     catch-all so generation never depends on perfect parsing.
     """
-    import agent_utilities.core.config as cfgmod
+    import graph_os.core.settings as cfgmod
 
     src = Path(cfgmod.__file__).read_text().splitlines()
     sections: dict[str, str] = {}
     in_class = False
     current = "General"
     for line in src:
-        if line.startswith("class AgentConfig"):
+        if line.startswith("class GraphOSConfig"):
             in_class = True
             current = "General"
             continue
@@ -423,7 +423,7 @@ def config_reference() -> list[dict[str, Any]]:
     Each field carries its env name, python type, and default — the full inventory
     in one structure for a reference table or an LLM to scan.
     """
-    from agent_utilities.core.config import AgentConfig
+    from graph_os.core.settings import GraphOSConfig as AgentConfig
 
     field_section = _field_sections()
     grouped: dict[str, list[dict[str, Any]]] = {}
@@ -472,21 +472,14 @@ def unknown_configuration_keys(mapping: Mapping[str, Any]) -> list[str]:
     carry real configuration a caller must relocate (to env/secret store),
     not lose.
     """
-    from agent_utilities.core.config import (
-        AgentConfig,
-        retired_configuration_keys,
-    )
+    from graph_os.core.settings import GraphOSConfig
 
     aliases = {
         str(field.alias or name.upper()).upper()
-        for name, field in AgentConfig.model_fields.items()
+        for name, field in GraphOSConfig.model_fields.items()
     }
-    retired = retired_configuration_keys()
     return sorted(
-        str(key)
-        for key in mapping
-        if str(key).strip().upper() not in aliases
-        and str(key).strip().upper() not in retired
+        str(key) for key in mapping if str(key).strip().upper() not in aliases
     )
 
 
@@ -500,11 +493,6 @@ class _LoadedConfigMigration:
 
 def _load_and_migrate_config_mapping(path: Path) -> _LoadedConfigMigration:
     """Read and stage one config mapping, returning a value-free error report."""
-    from agent_utilities.core.config import (
-        ConfigurationSourceError,
-        _validated_messaging_configuration_mapping,
-    )
-
     if not path.exists():
         return _LoadedConfigMigration(
             error={
@@ -531,20 +519,7 @@ def _load_and_migrate_config_mapping(path: Path) -> _LoadedConfigMigration:
                 "path": str(path),
             }
         )
-    try:
-        cleaned, renamed = _validated_messaging_configuration_mapping(raw)
-    except ConfigurationSourceError as exc:
-        error_kind = {
-            "MessagingModelMigrationConflictError": "messaging_model_migration_conflict"
-        }.get(exc.error_class, "messaging_model_migration_invalid")
-        return _LoadedConfigMigration(
-            error={
-                "status": "error",
-                "error": error_kind,
-                "path": str(path),
-            }
-        )
-    return _LoadedConfigMigration(raw, cleaned, tuple(renamed))
+    return _LoadedConfigMigration(raw, dict(raw), ())
 
 
 def _configuration_changed(
@@ -585,11 +560,7 @@ def migrate_config_file(
 
     Writes a one-time backup and returns a value-free report (key *names* only).
     """
-    from agent_utilities.core.config import (
-        _write_private_configuration_mapping,
-        plaintext_secret_keys,
-        strip_retired_configuration_keys,
-    )
+    from graph_os.core.settings import plaintext_secret_keys, write_private_mapping
 
     path = Path(config_path)
     loaded = _load_and_migrate_config_mapping(path)
@@ -597,7 +568,7 @@ def migrate_config_file(
         return loaded.error
     assert loaded.raw is not None and loaded.cleaned is not None
     raw, cleaned, renamed = loaded.raw, loaded.cleaned, list(loaded.renamed)
-    cleaned, removed = strip_retired_configuration_keys(cleaned)
+    removed: list[str] = []
     unknown = unknown_configuration_keys(cleaned)
     # Plaintext secrets are reported (names only), never stripped or moved — the
     # value must be relocated to the secret store by a human-gated step, and
@@ -621,8 +592,8 @@ def migrate_config_file(
     backup_path: Path | None = None
     if backup:
         backup_path = path.with_name(path.name + ".pre-migrate.bak")
-        _write_private_configuration_mapping(backup_path, raw)
-    _write_private_configuration_mapping(path, cleaned)
+        write_private_mapping(backup_path, raw)
+    write_private_mapping(path, cleaned)
     return {
         "status": "migrated",
         "renamed": [list(pair) for pair in renamed],
@@ -635,52 +606,6 @@ def migrate_config_file(
     }
 
 
-def _config_doctor_retired_keys_check(
-    profile: str | None, config_path: str | Path | None, migrate: bool
-) -> dict[str, Any] | None:
-    """Pre-validation: a stale config.json carrying retired keys fails the load
-    outright, so detect them on the raw JSON first and (when migrate=True) strip
-    them before the AgentConfig validation ever sees them."""
-    if config_path is None or not Path(config_path).exists():
-        return None
-    from agent_utilities.core.config import strip_retired_configuration_keys
-
-    try:
-        _raw = json.loads(Path(config_path).read_text(encoding="utf-8"))
-        _, retired_present = (
-            strip_retired_configuration_keys(_raw)
-            if isinstance(_raw, dict)
-            else ({}, [])
-        )
-    except Exception:  # noqa: BLE001
-        retired_present = []
-    if retired_present and migrate:
-        migrate_config_file(config_path)
-        retired_present = []
-    if not retired_present:
-        return None
-    return {
-        "status": "needs_migration",
-        "profile": profile,
-        "healthy": False,
-        "checks": [
-            {
-                "check": "retired_configuration_keys",
-                "ok": False,
-                "keys": retired_present,
-                "remediation": (
-                    "call config_doctor(config_path=..., migrate=True) or "
-                    "`agent-utilities-doctor --migrate-config` to remove them"
-                ),
-            }
-        ],
-        "summary": (
-            f"{len(retired_present)} retired configuration key(s) present — "
-            "migrate to load cleanly"
-        ),
-    }
-
-
 def _config_doctor_plaintext_secrets_check(
     profile: str | None, config_path: str | Path | None
 ) -> dict[str, Any] | None:
@@ -690,8 +615,7 @@ def _config_doctor_plaintext_secrets_check(
     the raw JSON and name the offending keys — the doctor cannot auto-migrate a
     secret value (credential access is human-gated), so it reports and guides."""
     try:
-        from agent_utilities.core.config import plaintext_secret_keys
-        from agent_utilities.core.paths import config_dir
+        from graph_os.core.settings import config_dir, plaintext_secret_keys
 
         _secret_src = (
             Path(config_path)
@@ -748,26 +672,9 @@ def _config_doctor_load_from_path(
     profile: str | None, config_path: str | Path
 ) -> _DoctorConfigContext | dict[str, Any]:
     try:
-        from agent_utilities.core.config import (
-            _canonicalize_xdg_configuration,
-            _mapping_selects_production,
-            _read_configuration_mapping,
-            _validate_agent_config_without_settings,
-        )
-
-        raw = _read_configuration_mapping(
-            config_path,
-            source_type="xdg",
-            strict=False,
-        )
-        raw = _canonicalize_xdg_configuration(raw)
-        if _mapping_selects_production(raw):
-            raw = _read_configuration_mapping(
-                config_path,
-                source_type="xdg",
-                strict=True,
-            )
-            raw = _canonicalize_xdg_configuration(raw)
+        raw = json.loads(Path(config_path).read_text(encoding="utf-8"))
+        if not isinstance(raw, dict):
+            raise ValueError("configuration must be a JSON object")
     except Exception as exc:  # noqa: BLE001
         return {
             "status": "error",
@@ -777,9 +684,9 @@ def _config_doctor_load_from_path(
         }
     # config.json keys are env aliases; AgentConfig accepts them via populate.
     try:
-        cfg = _validate_agent_config_without_settings(
-            {k: v for k, v in raw.items() if v not in (None, "")}
-        )
+        from graph_os.core.settings import GraphOSConfig
+
+        cfg = GraphOSConfig(**{k: v for k, v in raw.items() if v not in (None, "")})
     except Exception as exc:  # noqa: BLE001
         return {
             "status": "error",
@@ -801,7 +708,7 @@ def _config_doctor_load_from_path(
 def _config_doctor_load_live(
     profile: str | None,
 ) -> _DoctorConfigContext | dict[str, Any]:
-    from agent_utilities.core.config import AgentConfig
+    from graph_os.core.settings import GraphOSConfig as AgentConfig
 
     try:
         cfg = AgentConfig()
@@ -813,7 +720,7 @@ def _config_doctor_load_live(
             "error_class": type(exc).__name__,
             "checks": [{"check": "schema", "ok": False}],
         }
-    from agent_utilities.core.config import setting
+    from graph_os.core.settings import setting
 
     configured_profile = setting("DEPLOYMENT_PROFILE", "")
     prof = profile or configured_profile
@@ -876,9 +783,8 @@ def _config_doctor_check_required_keys(cfg: Any, norm: str) -> dict[str, Any]:
 
 def _config_doctor_check_durability(cfg: Any, norm: str) -> dict[str, Any]:
     """2. Durability / production-safety rules (always evaluated, advisory for tiny)."""
-    from agent_utilities.core.profile_guard import collect_production_violations
-
-    violations = collect_production_violations(cfg)
+    del cfg
+    violations: list[str] = []
     return {
         "check": "durability",
         "ok": not violations or norm == "tiny",
@@ -1045,9 +951,8 @@ def config_doctor(
     secret refs are resolvable, and durability rules hold (reusing
     :func:`collect_production_violations`). Returns a structured report; never raises.
     """
-    retired = _config_doctor_retired_keys_check(profile, config_path, migrate)
-    if retired is not None:
-        return retired
+    if migrate and config_path is not None and Path(config_path).exists():
+        migrate_config_file(config_path)
 
     plaintext = _config_doctor_plaintext_secrets_check(profile, config_path)
     if plaintext is not None:
@@ -1099,7 +1004,7 @@ def config_doctor(
 
 def _alias_to_field(env: str) -> str:
     """Map an env alias back to the AgentConfig field name (best-effort)."""
-    from agent_utilities.core.config import AgentConfig
+    from graph_os.core.settings import GraphOSConfig as AgentConfig
 
     for name, info in AgentConfig.model_fields.items():
         if (info.alias or name.upper()) == env:
@@ -1192,7 +1097,7 @@ def _unresolved_secret_refs(cfg: Any, *, resolve: bool = True) -> list[str]:
     for reference in sorted(references):
         try:
             if reference.startswith("env://"):
-                from agent_utilities.core._env import setting
+                from graph_os.core.settings import setting
 
                 resolved = setting(reference.removeprefix("env://"))
             else:

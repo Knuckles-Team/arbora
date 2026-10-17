@@ -63,7 +63,8 @@ def detect_composition(
     alone must never decide pollership, so this role check is ANDed with the
     explicit flag rather than substituting for it.
     """
-    from agent_utilities.core.config import config, setting
+    from graph_os.core.settings import runtime_config as config
+    from graph_os.core.settings import setting
 
     is_gateway_daemon_role = str(setting("KG_DAEMON_ROLE", "client")).strip() == "host"
     return CompositionPlan(

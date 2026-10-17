@@ -51,7 +51,7 @@ def test_trailing_slash_normalized() -> None:
 
 def test_discovery_failure_returns_none(monkeypatch: pytest.MonkeyPatch) -> None:
     # `discover()` builds its transport via `oidc_http_client()` (which wraps
-    # `agent_utilities.core.http_client.create_http_client` -- `httpx` itself
+    # `graph_os.core.transport.create_http_client` -- `httpx` itself
     # is only a TYPE_CHECKING import here, never a runtime module attribute)
     # and reads the response via `client.stream("GET", url)`, not `.get()`.
     # Faking the failure at `oidc_http_client()` itself -- the one

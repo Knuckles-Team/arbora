@@ -20,9 +20,9 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from agent_utilities.core.config import setting
 from agent_utilities.core.paths import config_dir, data_dir, mcp_config_path
 
+from graph_os.core.settings import setting
 from graph_os.gateway.models import (
     DashboardLayout,
     ServiceCategory,

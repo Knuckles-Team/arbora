@@ -158,7 +158,6 @@ def run_web_ui(
     # Import here, not at module import: graph-os must start normally when the
     # `ag-ui` extra is absent, and only a deployment that asked for the WebUI
     # should ever pay this import.
-    from agent_utilities.core.contextual_model import create_context_agent
     from agent_webui.api_extensions import (
         get_engine_bounded,
         invoke_governed_helper,
@@ -169,6 +168,18 @@ def run_web_ui(
     )
     from agent_webui.orchestrator_model import build_orchestrator_model
     from agent_webui.server import create_agent_web_app
+
+    # Assemble exactly what agent-webui's own entrypoint assembles.
+    #
+    # NOT `server.app.build_agent_app`: that constructs au's ENTIRE server
+    # application -- skills, ontology, A2A, embedding writes -- and mounts the
+    # dashboard as one part of it. Measured in the live pod, that path had not
+    # finished building after 32 minutes against a contended engine (16s
+    # commits), so the listener never bound and the co-service looked hung. The
+    # dashboard is a frontend facade over routes composed below; it needs the
+    # orchestrator-model agent and the delegation helpers, nothing more. Same
+    # measurement, this path: 11 seconds to a built app.
+    from pydantic_ai import Agent
 
     from graph_os.browser_control.browser_control_runtime import (
         register_browser_control_service,
@@ -186,17 +197,7 @@ def run_web_ui(
         webui_voice_delegation_helpers,
     )
 
-    # Assemble exactly what agent-webui's own entrypoint assembles.
-    #
-    # NOT `server.app.build_agent_app`: that constructs au's ENTIRE server
-    # application -- skills, ontology, A2A, embedding writes -- and mounts the
-    # dashboard as one part of it. Measured in the live pod, that path had not
-    # finished building after 32 minutes against a contended engine (16s
-    # commits), so the listener never bound and the co-service looked hung. The
-    # dashboard is a frontend facade over routes composed below; it needs the
-    # orchestrator-model agent and the delegation helpers, nothing more. Same
-    # measurement, this path: 11 seconds to a built app.
-    agent = create_context_agent(model=build_orchestrator_model(get_engine_bounded))
+    agent = Agent(build_orchestrator_model(get_engine_bounded))
     helpers = {
         **webui_mcp_delegation_helpers(),
         **webui_voice_delegation_helpers(),

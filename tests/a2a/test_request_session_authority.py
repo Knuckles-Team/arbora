@@ -13,7 +13,6 @@ from typing import Any
 
 import httpx
 import pytest
-from agent_utilities.core.config import config
 from agent_utilities.security import request_identity
 from agent_utilities.security.actor_identity import ActorType
 from agent_utilities.security.brain_context import (
@@ -28,6 +27,7 @@ from graph_os.a2a.application import AmbientA2AAuthenticator
 from graph_os.a2a.service import A2AService
 from graph_os.api.contracts.session import current_session, use_session
 from graph_os.api.registry import Surface
+from graph_os.core.settings import runtime_config as config
 from graph_os.mcp_server import runtime as mcp_runtime
 from tests.a2a._support import authenticated_operation_app
 from tests.a2a.test_application import Authority, Router

@@ -8,11 +8,11 @@ one tool, an ``action`` dispatch, the same engine resolution.
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
 from pydantic import Field
 
+from graph_os.core.handoff import raise_moved
 from graph_os.mcp_server import runtime
 
 
@@ -71,83 +71,9 @@ def register_durable_tools(mcp: Any) -> None:
         ),
         limit: int = Field(default=100, description="'status' only: max rows."),
     ) -> str:
-        engine = runtime._get_engine()
-        from agent_utilities.orchestration.durable_tool_surface import (
-            DurableCallNotBacked,
-            durable_call,
-            durable_checkpoint,
-            durable_run,
-            durable_sleep,
-            durable_state_get,
-            durable_state_set,
-            durable_status,
+        raise_moved(
+            "graph_durable", "orchestration.durable_tool_surface", "epistemic-graph"
         )
-
-        try:
-            if action == "run":
-                if not session_id:
-                    return "Error: session_id required"
-                return json.dumps(
-                    durable_run(
-                        engine,
-                        session_id,
-                        definition_version=definition_version or None,
-                    ),
-                    default=str,
-                )
-            if action == "checkpoint":
-                if not session_id or not name:
-                    return "Error: session_id and name required"
-                parsed_result = json.loads(value) if value else None
-                return json.dumps(
-                    durable_checkpoint(
-                        engine,
-                        session_id,
-                        name,
-                        parsed_result,
-                        definition_version=definition_version or None,
-                    ),
-                    default=str,
-                )
-            if action == "sleep":
-                if not session_id or not name:
-                    return "Error: session_id and name required"
-                return json.dumps(
-                    durable_sleep(
-                        engine,
-                        session_id,
-                        name,
-                        wake_at_ms,
-                        definition_version=definition_version or None,
-                    ),
-                    default=str,
-                )
-            if action == "status":
-                if engine is None:
-                    return "Error: IntelligenceGraphEngine not active."
-                parsed_kinds = tuple(json.loads(kinds)) if kinds else None
-                rows = durable_status(
-                    engine,
-                    kinds=parsed_kinds,
-                    status=status or None,
-                    limit=limit,
-                )
-                return json.dumps(rows, default=str)
-            if action == "state_get":
-                return json.dumps(
-                    durable_state_get(engine, session_id, name), default=str
-                )
-            if action == "state_set":
-                parsed_value = json.loads(value) if value else None
-                return json.dumps(
-                    durable_state_set(engine, session_id, name, parsed_value),
-                    default=str,
-                )
-            if action == "call":
-                return json.dumps(durable_call(engine, session_id, name), default=str)
-            return f"Error: unknown action {action!r}"
-        except DurableCallNotBacked as exc:
-            return f"Error: {type(exc).__name__}"
 
     # Matches register_job_tools's own pattern (mcp/tools/job_tools.py): an
     # explicit REGISTERED_TOOLS entry (belt-and-suspenders alongside the

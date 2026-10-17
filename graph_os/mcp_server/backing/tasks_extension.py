@@ -45,6 +45,7 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import ConfigDict, Field, field_validator
 
+from graph_os.core.handoff import raise_moved
 from graph_os.fleet.protocol_compat import mcp_protocol_exception
 
 # MCP SDK v2 (which the `fastmcp>=4.0.0b1` floor pulls in) renamed
@@ -823,7 +824,8 @@ class WorkItemTasksExtension(ServerExtension):
 
     @staticmethod
     def _configured_issuers() -> set[str]:
-        from agent_utilities.core.config import config, setting
+        from graph_os.core.settings import runtime_config as config
+        from graph_os.core.settings import setting
 
         expected_issuer = (
             getattr(config, "auth_jwt_issuer", None)
@@ -840,7 +842,8 @@ class WorkItemTasksExtension(ServerExtension):
 
     @staticmethod
     def _configured_audiences() -> set[str]:
-        from agent_utilities.core.config import config, setting
+        from graph_os.core.settings import runtime_config as config
+        from graph_os.core.settings import setting
 
         expected_audience = (
             getattr(config, "auth_jwt_audience", None)
@@ -891,8 +894,9 @@ class WorkItemTasksExtension(ServerExtension):
         stable protocol error as every other failure mode on this path if
         resolution itself fails."""
         try:
-            from agent_utilities.core.config import config
             from agent_utilities.security.identity import normalize_identity
+
+            from graph_os.core.settings import runtime_config as config
 
             identity = normalize_identity(claims)
             issuers = WorkItemTasksExtension._configured_issuers()
@@ -1248,29 +1252,7 @@ class WorkItemTasksExtension(ServerExtension):
         RunTrace lookup hiccup must never turn an otherwise-successful
         ``tasks/get`` read into an error.
         """
-        try:
-            from agent_utilities.orchestration.manager import Orchestrator
-
-            from graph_os.mcp_server import runtime
-
-            engine = runtime._get_engine()
-            if engine is None:
-                return None
-            trace = Orchestrator(engine).get_run_trace(task_id)
-        except Exception as exc:  # noqa: BLE001 — best-effort enrichment, see docstring
-            logger.warning(
-                "tasks_extension: RunTrace lookup for task %s failed: %s",
-                task_id,
-                type(exc).__name__,
-            )
-            return None
-        # `get_run_trace`'s found-path always stamps `trace_id` -- the
-        # unambiguous "this really is a RunTrace row" signal (its `status`
-        # field is otherwise indistinguishable from a legitimate run outcome
-        # value like "succeeded"/"failed").
-        if "trace_id" not in trace:
-            return None
-        return trace
+        raise_moved("_run_trace", "orchestration.manager", "epistemic-graph")
 
     async def _handle_get(
         self, ctx: ServerRequestContext[Any, Any], params: _GetTaskParams
@@ -1462,25 +1444,9 @@ class WorkItemTasksExtension(ServerExtension):
     def _repository_view(self, task_id: str, session: Any) -> Any:
         """Load one repository view under the verified tenant and owner."""
 
-        from agent_utilities.orchestration.repository_work_item import (
-            get_repository_work_item,
+        raise_moved(
+            "_repository_view", "orchestration.repository_work_item", "epistemic-graph"
         )
-
-        try:
-            view = get_repository_work_item(
-                self._engine(),
-                task_id,
-                tenant=session.tenant,
-                owner_id=self._actor_id(session),
-            )
-        except (TypeError, ValueError, PermissionError):
-            view = None
-        if view is None:
-            # Deliberately collapse unknown, wrong-tenant, wrong-owner, and
-            # malformed namespace IDs into one response so task existence is
-            # not an oracle across tenants or actors.
-            raise mcp_protocol_exception(-32602, "Unknown task")
-        return view
 
     @staticmethod
     def _repository_raw_item(engine: Any, view: Any) -> Mapping[str, Any]:
@@ -1518,35 +1484,11 @@ class WorkItemTasksExtension(ServerExtension):
 
     @staticmethod
     def _repository_domain_payload(view: Any) -> dict[str, Any]:
-        from agent_utilities.orchestration.repository_work_item import (
-            repository_result_from_view,
+        raise_moved(
+            "_repository_domain_payload",
+            "orchestration.repository_work_item",
+            "epistemic-graph",
         )
-
-        # The adapter is the authority for parsing domain reason/refusal
-        # fields from the opaque error reference.  Keep the payload bounded to
-        # that typed result, which contains only immutable correlations and
-        # opaque artifact/result references (never command bodies or logs).
-        payload = repository_result_from_view(view).model_dump(
-            mode="json", exclude_none=True
-        )
-        # Keep the typed domain projection intact while exposing the stable
-        # camelCase names MCP clients expect for the correlations most often
-        # consumed by a result renderer.
-        aliases = {
-            "job_id": "jobId",
-            "work_item_id": "workItemId",
-            "request_id": "requestId",
-            "repository_id": "repositoryId",
-            "tenant_id": "tenantId",
-            "result_ref": "resultRef",
-            "error_ref": "errorRef",
-            "failure_class": "failureClass",
-            "refusal_code": "refusalCode",
-        }
-        for source, alias in aliases.items():
-            if source in payload:
-                payload[alias] = payload[source]
-        return payload
 
     def _project_repository(
         self,
@@ -1648,45 +1590,11 @@ class WorkItemTasksExtension(ServerExtension):
         session: Any,
         route: Mapping[str, Any] | None,
     ) -> _AckResult:
-        from agent_utilities.orchestration.repository_work_item import (
-            cancel_repository_work_item,
+        raise_moved(
+            "_cancel_repository",
+            "orchestration.repository_work_item",
+            "epistemic-graph",
         )
-
-        # Read through the owner filter before invoking the adapter mutation.
-        # The second read below makes a worker-vs-cancel race truthful: the
-        # response reports the durable winner, rather than claiming cancelled
-        # merely because our CAS was attempted.
-        self._repository_view(task_id, session)
-        cancelled = cancel_repository_work_item(
-            self._engine(), task_id, tenant=session.tenant
-        )
-        after = self._repository_view(task_id, session)
-        if after is None:  # pragma: no cover - defensive; _repository_view raises
-            raise mcp_protocol_exception(-32602, "Unknown task")
-        if not cancelled:
-            state = self._repository_status(after.state)
-            if state in {"completed", "failed", "cancelled"}:
-                return self._ack_from_view(
-                    task_id,
-                    after,
-                    session=session,
-                    route=route,
-                    status_message=(
-                        "Cancellation lost a race with the durable terminal outcome"
-                    ),
-                )
-            raise mcp_protocol_exception(-32602, "Failed to cancel task")
-        if str(after.state) != "cancelled":
-            return self._ack_from_view(
-                task_id,
-                after,
-                session=session,
-                route=route,
-                status_message=(
-                    "Cancellation raced with another durable WorkItem transition"
-                ),
-            )
-        return self._ack_from_view(task_id, after, session=session, route=route)
 
     def _update_repository(
         self,

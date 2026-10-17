@@ -59,6 +59,7 @@ from typing import Any
 from agent_utilities.security.error_surface import public_error_json
 from pydantic import Field
 
+from graph_os.core.handoff import raise_moved
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
 
@@ -232,7 +233,7 @@ def _client_evict(pool_key: str, client: Any) -> None:
 
 def _client_pool_capacity() -> int:
     try:
-        from agent_utilities.core.config import config
+        from graph_os.core.settings import runtime_config as config
 
         return int(getattr(config, "kg_engine_tool_pool_size", 16) or 0)
     except Exception:  # noqa: BLE001 — default to a small bounded pool
@@ -590,25 +591,7 @@ def _embed_texts(texts: list[str]) -> list[list[float]]:
     vector dimension matches the stored node embeddings. Raises loud — never
     silently drops a RANK leg — if no embedder can be constructed/reached.
     """
-    from agent_utilities.core.embedding_utilities import create_embedding_model
-
-    try:
-        model = create_embedding_model()
-        batch = getattr(model, "get_text_embedding_batch", None)
-        vectors = (
-            batch(texts)
-            if callable(batch)
-            else [model.get_text_embedding(t) for t in texts]
-        )
-    except Exception as exc:  # noqa: BLE001 — degrade loud, never silent-drop the RANK leg
-        raise RuntimeError(
-            "UQL 'RANK BY ~\"text\"' needs a server-side text embedder — the engine "
-            "has none bound (the engine's 'no embedder bound op' state) and "
-            "pre-embedding it client-side "
-            "(agent_utilities.core.embedding_utilities.create_embedding_model) failed "
-            f"too: {type(exc).__name__}"
-        ) from exc
-    return [list(v) for v in vectors]
+    raise_moved("_embed_texts", "core.embedding_utilities", "the agent harness")
 
 
 def _embed_uql_rank_text(

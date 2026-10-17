@@ -51,9 +51,8 @@ import uuid
 from types import MappingProxyType
 from typing import Any, cast
 
-from agent_utilities.core.config import setting
-
 from graph_os._version import __version__
+from graph_os.core.settings import setting
 from graph_os.mcp_server.legacy_action_mapping import (
     APPROVED_ACTION_MAPPING,
     validate_served_actions,

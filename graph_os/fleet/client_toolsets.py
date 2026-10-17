@@ -27,7 +27,7 @@ def _service_auth() -> Any:
 
 def _http_client_factory(trust: Any, default_timeout: float) -> Any:
     """An httpx client factory closing over the resolved TLS policy and timeout."""
-    from agent_utilities.core.http_client import create_async_http_client
+    from graph_os.core.transport import create_async_http_client
 
     def factory(
         headers: dict[str, str] | None = None,
@@ -73,9 +73,9 @@ def build_url_toolset(
 
     A ``/sse`` URL selects the SSE transport; any other URL streamable HTTP.
     """
-    from agent_utilities.core.transport_security import resolve_configured_tls_profile
     from pydantic_ai.mcp import MCPToolset, SSETransport, StreamableHttpTransport
 
+    from graph_os.core.transport import resolve_configured_tls_profile
     from graph_os.fleet.protocol_compat import force_legacy_protocol_mode
     from graph_os.mcp_server.backing.httpx_boundary import coerce_httpx2_auth
 

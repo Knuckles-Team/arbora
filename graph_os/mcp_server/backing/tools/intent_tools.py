@@ -52,6 +52,7 @@ from agent_utilities.security.persistence_privacy import persistence_reference
 from agent_utilities.security.threat_defense_engine import PromptInjectionScanner
 from pydantic import BaseModel
 
+from graph_os.core.handoff import raise_moved
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.intent_contract import (
     DESCRIBE_ACTION,
@@ -243,12 +244,7 @@ def _outcome_router() -> Any:
     an opaque tenant+policy reference followed by the verb; raw identity and
     policy values never enter the learner.
     """
-    global _OUTCOME_ROUTER
-    if _OUTCOME_ROUTER is None:
-        from agent_utilities.orchestration.outcome_router import OutcomeRouter
-
-        _OUTCOME_ROUTER = OutcomeRouter(namespace="intent_surface")
-    return _OUTCOME_ROUTER
+    raise_moved("_outcome_router", "orchestration.outcome_router", "epistemic-graph")
 
 
 def _outcome_scope_ref() -> str | None:

@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
-from agent_utilities.security.error_surface import public_error_text
 from pydantic import Field
 
+from graph_os.core.handoff import raise_moved
 from graph_os.mcp_server import runtime
 
 
@@ -65,142 +64,7 @@ def register_job_tools(mcp: Any) -> None:
             default="", description="'drain' only: why this item is being drained."
         ),
     ) -> str:
-        engine = runtime._get_engine()
-        if engine is None:
-            return "Error: IntelligenceGraphEngine not active."
-        try:
-            from agent_utilities.orchestration.manager import Orchestrator
-
-            orchestrator = Orchestrator(engine)
-            if action == "dispatch":
-                parsed = json.loads(dependencies) if dependencies else []
-                if not isinstance(parsed, list):
-                    raise ValueError("dependencies must decode to a list")
-                dispatched_id = await orchestrator.dispatch_task(
-                    task, [str(item) for item in parsed]
-                )
-                from agent_utilities.orchestration.agent_dispatch import (
-                    KIND_ORCHESTRATOR_TASK,
-                    AgentTurnEnvelope,
-                    enqueue_agent_turn,
-                )
-
-                handle = enqueue_agent_turn(
-                    AgentTurnEnvelope(
-                        job_id=dispatched_id,
-                        session_id=dispatched_id,
-                        kind=KIND_ORCHESTRATOR_TASK,
-                        payload_ref=dispatched_id,
-                        agent_name=agent_name,
-                    ),
-                    engine=engine,
-                )
-                handle["status_url"] = "/api/graph/jobs"
-                handle["status_request"] = {
-                    "action": "status",
-                    "job_id": dispatched_id,
-                }
-                return json.dumps(handle, default=str)
-            if action == "status":
-                if not job_id:
-                    return "Error: job_id required"
-                if job_id.startswith(("run:", "trace:")):
-                    result = orchestrator.get_run_trace(job_id)
-                elif job_id.startswith(("wf-", "session:")):
-                    result = orchestrator.get_session_runs(job_id)
-                else:
-                    result = orchestrator.get_task_status(job_id)
-                return json.dumps(result, default=str)
-            if action == "cancel":
-                if not job_id:
-                    return "Error: job_id required"
-                from agent_utilities.knowledge_graph.core import work_durability as _wi
-
-                item_id = _wi.orchestrator_work_item_id(job_id)
-                view = getattr(engine, "_work_item_engine", engine)
-                if not _wi.cancel_work_item(view, item_id):
-                    return json.dumps(
-                        {
-                            "status": "not_cancelled",
-                            "job_id": job_id,
-                            "error": "Job is missing, terminal, or held by an active lease",
-                        }
-                    )
-                return json.dumps(
-                    {"status": "cancelled", "job_id": job_id}, default=str
-                )
-            if action == "input":
-                if not job_id:
-                    return "Error: job_id required"
-                parsed_responses = (
-                    json.loads(input_responses) if input_responses else {}
-                )
-                if not isinstance(parsed_responses, dict):
-                    raise ValueError("input_responses must decode to a JSON object")
-                from agent_utilities.knowledge_graph.core import work_durability as _wi
-
-                from graph_os.api.contracts.session import (
-                    resolve_session,
-                )
-
-                item_id = _wi.orchestrator_work_item_id(job_id)
-                view = getattr(engine, "_work_item_engine", engine)
-                session = resolve_session(required_scope="kg:write")
-                if not _wi.submit_work_item_input(
-                    view,
-                    item_id,
-                    tenant=session.tenant,
-                    response=parsed_responses,
-                ):
-                    return json.dumps(
-                        {
-                            "status": "not_submitted",
-                            "job_id": job_id,
-                            "error": (
-                                "Job is missing, not running, tenant-mismatched, "
-                                "or has no pending input request"
-                            ),
-                        }
-                    )
-                return json.dumps(
-                    {"status": "submitted", "job_id": job_id}, default=str
-                )
-            if action == "dead_letter":
-                from agent_utilities.knowledge_graph.ingestion.dead_letter import (
-                    list_dead_letter_items,
-                )
-
-                view = getattr(engine, "_work_item_engine", engine)
-                return json.dumps(
-                    {
-                        "action": "dead_letter",
-                        "items": list_dead_letter_items(view, kind=kind, limit=limit),
-                    },
-                    default=str,
-                )
-            if action == "drain":
-                if not job_id:
-                    return "Error: job_id required"
-                from agent_utilities.knowledge_graph.ingestion.dead_letter import (
-                    drain_dead_letter_item,
-                )
-
-                from graph_os.api.contracts.session import (
-                    resolve_session,
-                )
-
-                view = getattr(engine, "_work_item_engine", engine)
-                session = resolve_session(required_scope="kg:write")
-                actor = getattr(session.actor, "actor_id", None) or "unknown"
-                result = drain_dead_letter_item(
-                    view, job_id, actor=str(actor), reason=reason
-                )
-                return json.dumps({"action": "drain", **result}, default=str)
-            return f"Error: Unknown graph_jobs action '{action}'"
-        except PermissionError:
-            raise
-        except Exception as exc:
-            return public_error_text(exc)
+        raise_moved("graph_jobs", "orchestration.agent_dispatch", "epistemic-graph")
 
     runtime.REGISTERED_TOOLS["graph_jobs"] = graph_jobs
     runtime.ACTION_TOOL_ROUTES["graph_jobs"] = "/graph/jobs"

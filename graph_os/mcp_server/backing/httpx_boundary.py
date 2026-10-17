@@ -104,7 +104,7 @@ def coerce_httpx2_auth(value: Any) -> Any:
     ``httpx.Auth`` (either a plain ``httpx.BasicAuth`` or the self-refreshing
     ``ClientCredentialsAuth``) — because that object is *also* used to
     authenticate this package's own ``httpx.AsyncClient``-based transports
-    (:mod:`agent_utilities.core.http_client`), where the local type is
+    (:mod:`graph_os.core.transport`), where the local type is
     correct and required.
 
     Mirrors the ``mcp.client.sse.sse_client`` code path exactly (the

@@ -15,6 +15,7 @@ from typing import Any, Literal
 from agent_utilities.security.error_surface import public_error_text
 from pydantic import Field
 
+from graph_os.core.handoff import raise_moved
 from graph_os.mcp_server import runtime
 
 AgentLibraryAction = Literal["list", "get", "save", "seed_roles"]
@@ -30,23 +31,7 @@ def _field(data: dict[str, Any], *keys: str) -> str:
 
 
 def _record_from_json(agent_json: str) -> Any:
-    from agent_utilities.orchestration.agent_library import AgentRecord
-
-    data = json.loads(agent_json or "{}")
-    if not isinstance(data, dict):
-        raise ValueError("agent_json must decode to an object")
-    return AgentRecord(
-        name=_field(data, "name"),
-        system_prompt=_field(data, "system_prompt", "instructions"),
-        description=_field(data, "description"),
-        role=_field(data, "role"),
-        tools=tuple(str(t) for t in data.get("tools") or ()),
-        skills=tuple(str(s) for s in data.get("skills") or ()),
-        model_profile=_field(data, "model_profile"),
-        mcp_server=_field(data, "mcp_server"),
-        context_policy=dict(data.get("context_policy") or {}),
-        source="agent_library tool",
-    )
+    raise_moved("_record_from_json", "orchestration.agent_library", "epistemic-graph")
 
 
 def _list(library: Any, *, kind: str, **_: Any) -> dict[str, Any]:
@@ -69,9 +54,7 @@ def _save(library: Any, *, agent_json: str, **_: Any) -> dict[str, Any]:
 
 
 def _seed_roles(library: Any, **_: Any) -> dict[str, Any]:
-    from agent_utilities.orchestration.agent_library import seed_role_agents
-
-    return {"agents": [r.view() for r in seed_role_agents(library)]}
+    raise_moved("_seed_roles", "orchestration.agent_library", "epistemic-graph")
 
 
 _ACTIONS = {"list": _list, "get": _get, "save": _save, "seed_roles": _seed_roles}
@@ -86,13 +69,8 @@ def run_agent_library_action(
     agent_json: str = "",
 ) -> dict[str, Any]:
     """One ``agent_library`` action against ``engine``'s Agent Library."""
-    from agent_utilities.orchestration.agent_library import AgentLibrary
-
-    handler = _ACTIONS.get(action)
-    if handler is None:
-        return {"error": f"unknown agent_library action {action!r}"}
-    return handler(
-        AgentLibrary(engine), agent_id=agent_id, kind=kind, agent_json=agent_json
+    raise_moved(
+        "run_agent_library_action", "orchestration.agent_library", "epistemic-graph"
     )
 
 

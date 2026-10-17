@@ -86,7 +86,6 @@ def _mint_process_session(transport: str) -> Any:
     additionally used for stdio tool calls, which have no request Authorization
     header.
     """
-    from agent_utilities.core.config import config
     from agent_utilities.security.request_identity import (
         acquire_process_identity_token,
         local_process_authority_enabled,
@@ -94,6 +93,8 @@ def _mint_process_session(transport: str) -> Any:
         mint_graph_session,
         mint_local_process_session,
     )
+
+    from graph_os.core.settings import runtime_config as config
 
     if transport == "stdio" and local_process_authority_enabled(config):
         session = mint_local_process_session()
@@ -156,9 +157,8 @@ def _refresh_process_authority(session: Any) -> Any:
     validation, only the bounded expiry is copied into the shared in-memory
     lease. Identity, roles, tenant, route, and policy may not change.
     """
-    from agent_utilities.core.config import config
-
     from graph_os.api.contracts.session import SessionExpiredError
+    from graph_os.core.settings import runtime_config as config
 
     lease = getattr(getattr(session, "actor", None), "credential_lease", None)
     if lease is None:

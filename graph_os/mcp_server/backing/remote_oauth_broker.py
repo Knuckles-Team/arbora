@@ -1166,7 +1166,7 @@ def _audit(
 # The broker
 # ---------------------------------------------------------------------------
 def _default_broker_http_client() -> httpx.Client:
-    from agent_utilities.core.http_client import create_http_client
+    from graph_os.core.transport import create_http_client
 
     return create_http_client(
         timeout=_DISCOVERY_TIMEOUT_S,

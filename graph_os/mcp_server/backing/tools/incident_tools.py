@@ -25,7 +25,7 @@ This module is a THIN wrapper over the existing correlation engine:
 * ``ack``/``resolve`` -> state transitions on the ``:Incident`` node ITSELF
   (:func:`agent_utilities.observability.incidents.set_incident_status`),
   gated FIRST by the fail-closed
-  :class:`~agent_utilities.orchestration.action_policy.ActionPolicy`
+  :class:`~graph_os.access.action_policy.ActionPolicy`
   (kind ``incident.ack``/``incident.resolve`` — mirrors ``graph_claims``'s
   ``_gate`` pattern in ``claim_tools.py``) and provenance-stamped (who/when).
   A denied/queued decision blocks the mutation without ever touching the

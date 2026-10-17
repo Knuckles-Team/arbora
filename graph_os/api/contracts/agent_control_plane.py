@@ -41,6 +41,7 @@ from graph_os.api.contracts.agent_control_contracts import (
     WorkItemSubmissionResult,
 )
 from graph_os.api.contracts.session import GraphSession, resolve_session
+from graph_os.core.handoff import raise_moved
 
 type _RequiredScope = Literal["kg:read", "kg:write"]
 type _OperationSpec = tuple[
@@ -348,15 +349,9 @@ class AgentControlPlane:
     async def _prepare_agent_task(
         self, task: str, agent_name: str | None
     ) -> tuple[str, CapabilityResolution]:
-        from agent_utilities.orchestration.task_guard import (
-            screen_and_redact_agent_task,
+        raise_moved(
+            "_prepare_agent_task", "orchestration.task_guard", "epistemic-graph"
         )
-
-        sanitized_task = screen_and_redact_agent_task(task)
-        capability = await self.resolve_capability(
-            CapabilitySearchRequest(task=sanitized_task, agent_name=agent_name)
-        )
-        return sanitized_task, capability
 
     async def execute_agent(
         self, request: AgentExecutionRequest
@@ -651,57 +646,4 @@ async def _evolve_prompt(
     request: GraphRlmEvolvePromptRequest,
 ) -> GraphRlmEvolutionResult:
     """Run the retained GEPA/DW-GRPO prompt-evolution behavior."""
-    from agent_utilities.harness.program_optimization import graded_score
-    from agent_utilities.rlm.gepa import GEPAInstance, GEPAOptimizer
-    from agent_utilities.rlm.predict_rlm import InputField, OutputField
-    from pydantic import BaseModel
-
-    class PromptEvolutionSignature(BaseModel):
-        """Answer the given query."""
-
-        query: str = InputField(default="", description="The task input.")
-        response: str = OutputField(default="", description="The model's answer.")
-
-    options = request.options
-    rows = options.dataset or [
-        GraphRlmPromptExample(query="What is the capital of France?", response="Paris"),
-        GraphRlmPromptExample(query="What is 2 + 2?", response="4"),
-    ]
-    dataset = [
-        GEPAInstance(
-            id=f"inst_{index}",
-            input_data={"query": row.query},
-            reference_output=row.response,
-        )
-        for index, row in enumerate(rows)
-    ]
-
-    async def evaluator(
-        instance: GEPAInstance, model_output: Any, _trace: str
-    ) -> tuple[dict[str, float], str]:
-        score = graded_score(
-            str(instance.reference_output or ""),
-            getattr(model_output, "response", "") or "",
-        )
-        return {"accuracy": score}, f"graded_score={score:.3f}"
-
-    optimizer = GEPAOptimizer(
-        signature_class=PromptEvolutionSignature,
-        base_prompt=request.task or "Answer the user's query accurately and concisely.",
-        evaluator_fn=evaluator,
-        objectives=options.objectives,
-    )
-    best = await optimizer.optimize(
-        dataset,
-        iterations=options.iterations,
-        batch_size=options.batch_size,
-    )
-    return GraphRlmEvolutionResult(
-        action="evolve_prompt",
-        ok=True,
-        winning_prompt=best.prompt_text,
-        scores=best.scores,
-        generation=best.generation,
-        reward_weights=optimizer.pool.reward_weights,
-        frontier_size=len(optimizer.pool.get_frontier()),
-    )
+    raise_moved("_evolve_prompt", "harness.program_optimization", "epistemic-graph")

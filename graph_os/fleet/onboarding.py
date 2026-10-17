@@ -481,7 +481,7 @@ class FleetOnboardingService:
 def configured_served_url() -> str:
     """The MCP URL GraphOS serves at, from ``GRAPH_OS_SERVED_MCP_URL``."""
 
-    from agent_utilities.core.config import setting
+    from graph_os.core.settings import setting
 
     return str(setting("GRAPH_OS_SERVED_MCP_URL", "") or "")
 

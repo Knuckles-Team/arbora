@@ -49,7 +49,6 @@ federated-search / promql / traces / gis).
 from __future__ import annotations
 
 import base64
-import hashlib
 import json
 import logging
 import uuid
@@ -58,6 +57,7 @@ from typing import Any
 
 from pydantic import Field
 
+from graph_os.core.handoff import raise_moved
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.context_helpers import run_coro as _run_coro
 from graph_os.mcp_server.backing.engine_surface_types import (
@@ -319,7 +319,7 @@ def _checkpoint_manager(graph: str) -> Any:
             type(exc).__name__,
         )
         disk_store = None
-    from agent_utilities.core._env import setting
+    from graph_os.core.settings import setting
 
     return TieredCheckpointManager(
         ram_store=_RAM_CHECKPOINT_STORE,
@@ -807,32 +807,7 @@ def _trace_waterfall(trace_id: str) -> str:
     support. Never raises: an absent sink or unknown trace both return a clean
     ``degraded``/``error`` payload.
     """
-    from agent_utilities.harness.tracing import get_kg_trace_sink
-
-    sink = get_kg_trace_sink()
-    if sink is None or not callable(getattr(sink, "get_trace", None)):
-        return _degraded("traces", "waterfall", ["harness.tracing.get_kg_trace_sink"])
-    try:
-        entry = sink.get_trace(trace_id)
-    except Exception as exc:  # noqa: BLE001 — surface as data, never raise
-        return _surface_error(exc, surface="traces", action="waterfall")
-    if entry is None:
-        return json.dumps(
-            {
-                "surface": "traces",
-                "action": "waterfall",
-                "error": "trace not found",
-                "trace_id": trace_id,
-            }
-        )
-    return json.dumps(
-        {
-            "surface": "traces",
-            "action": "waterfall",
-            "result": _waterfall_result(entry, trace_id),
-        },
-        default=_json_default,
-    )
+    raise_moved("_trace_waterfall", "harness.tracing", "epistemic-graph")
 
 
 def _trace_row(raw: dict[str, Any]) -> dict[str, Any]:
@@ -864,17 +839,7 @@ def _trace_sink_rows() -> list[dict[str, Any]] | None:
     ``None`` when no sink is installed at all (the caller then falls back to the
     external engine probe); an installed-but-failing sink yields ``[]``.
     """
-    from agent_utilities.harness.tracing import get_kg_trace_sink
-
-    sink = get_kg_trace_sink()
-    if sink is None or not callable(getattr(sink, "get_traces", None)):
-        return None
-    try:
-        raw_rows = _run_coro(sink.get_traces(""))
-    except Exception as exc:  # noqa: BLE001 — surface as data, never raise
-        logger.debug("graph_traces: KG-native search failed: %s", type(exc).__name__)
-        return []
-    return [_trace_row(r) for r in raw_rows or []]
+    raise_moved("_trace_sink_rows", "harness.tracing", "epistemic-graph")
 
 
 def _trace_native_search(
@@ -909,19 +874,7 @@ def _trace_native_get(trace_id: str) -> dict[str, Any] | None:
     restart, or one traced by a different process); only a genuine hit is
     trusted as the final answer.
     """
-    from agent_utilities.harness.tracing import get_kg_trace_sink
-
-    sink = get_kg_trace_sink()
-    if sink is None or not callable(getattr(sink, "get_trace_summary", None)):
-        return None
-    try:
-        raw = _run_coro(sink.get_trace_summary(trace_id))
-    except Exception as exc:  # noqa: BLE001 — treat as no native answer, fall through
-        logger.debug("graph_traces: KG-native get failed: %s", type(exc).__name__)
-        return None
-    if not raw or raw.get("error") == "not_found":
-        return None
-    return _trace_row(raw)
+    raise_moved("_trace_native_get", "harness.tracing", "epistemic-graph")
 
 
 def _degraded(surface: str, action: str, tried: list[str]) -> str:
@@ -1534,7 +1487,7 @@ def _prometheus_base_url() -> str | None:
     default: no engine surface + no URL configured is a clean degrade, never an
     invented hostname.
     """
-    from agent_utilities.core._env import setting
+    from graph_os.core.settings import setting
 
     url = str(setting("ENGINE_SURFACE_PROMETHEUS_URL", "") or "").strip()
     return url or None
@@ -1554,7 +1507,7 @@ def _prometheus_http_query(
     base_url = _prometheus_base_url()
     if not base_url:
         return None
-    from agent_utilities.core.http_client import create_http_client
+    from graph_os.core.transport import create_http_client
 
     path = "/api/v1/query_range" if action == "range" else "/api/v1/query"
     try:
@@ -1752,50 +1705,8 @@ def _crossmodal_fork_fanout(
     branches reuse that one context with no recompute. Falls back to the structured degraded
     payload when no warm-fork rung is available or the engine retriever is unreachable.
     """
-    try:
-        from agent_utilities.runtime.crossmodal_fork import CrossModalForkFanout
-    except Exception as exc:  # noqa: BLE001 — capability unimportable ⇒ degrade cleanly
-        return _surface_error(exc, surface="fork", code="dependency_unavailable")
-
-    fanout = CrossModalForkFanout()
-
-    async def _run() -> Any:
-        return await fanout.fan_out(
-            context_query,
-            [str(b) for b in branches],
-            preferred=preferred,
-            candidate_var=candidate_var,
-            extra_vars=seed_vars or None,
-        )
-
-    try:
-        res = _run_coro(_run())
-    except Exception as exc:  # noqa: BLE001 — engine/infra death → structured error, no crash
-        return _surface_error(exc, surface="fork")
-    return json.dumps(
-        {
-            "surface": "fork",
-            "context_query": context_query,
-            "candidate_var": candidate_var,
-            "candidate_count": res.candidate_count,
-            "retrieval_calls": res.retrieval_calls,
-            "reused_without_recompute": res.reused_without_recompute,
-            "degraded": res.degraded,
-            "error": res.error,
-            "sandbox": res.sandbox,
-            "branch_count": len(res.branches),
-            "branches": [
-                {
-                    "index": b.index,
-                    "ok": b.ok,
-                    "stdout": b.stdout,
-                    "error": b.error,
-                    "output": b.output,
-                }
-                for b in res.branches
-            ],
-        },
-        default=_json_default,
+    raise_moved(
+        "_crossmodal_fork_fanout", "runtime.crossmodal_fork", "the agent harness"
     )
 
 
@@ -2241,25 +2152,7 @@ def _ocel_import_slice(params: dict) -> tuple[str, Any, Any, str]:
     for a missing tenant or an unknown ``ocel_mode`` — the caller maps those
     onto an ``invalid_request`` surface error.
     """
-    from agent_utilities.knowledge_graph.ingestion.ocel_adapter import (
-        import_ocel_json,
-    )
-    from agent_utilities.usage.authorization import resolve_usage_tenant
-
-    tenant = resolve_usage_tenant(str(params.pop("tenant", "") or "") or None)
-    if not tenant:
-        raise ValueError("tenant is required for governed OCEL import")
-    slice_, provenance = import_ocel_json(
-        params.pop("ocel_json"),
-        tenant=tenant,
-        source_ref=str(params.pop("source_ref", "") or ""),
-        mapping_version=str(params.pop("mapping_version", "") or ""),
-        provenance=params.pop("provenance", None),
-    )
-    ocel_mode = str(params.pop("ocel_mode", "mine") or "mine").strip()
-    if ocel_mode not in {"mine", "validate", "derive"}:
-        raise ValueError("ocel_mode must be 'mine', 'validate', or 'derive'")
-    return tenant, slice_, provenance, ocel_mode
+    raise_moved("_ocel_import_slice", "usage.authorization", "epistemic-graph")
 
 
 def _ocel_import_and_dispatch(
@@ -2364,62 +2257,7 @@ def _conformance_inputs(params: dict) -> dict[str, Any]:
     The validation ORDER here is load-bearing: a doubly-invalid request must
     keep reporting the same first offence it always did.
     """
-    from agent_utilities.usage.authorization import resolve_usage_tenant
-
-    tenant = resolve_usage_tenant(_popped_str(params, "tenant", strip=False) or None)
-    if not tenant:
-        raise ValueError("tenant is required for governed conformance checking")
-    perspective = _require_process_perspective(params)
-    traces = [tuple(trace) for trace in params.pop("traces")]
-    object_ids = list(params.pop("object_ids"))
-    allowed_edges = [
-        (str(pair[0]), str(pair[1])) for pair in params.pop("allowed_edges")
-    ]
-    model_ref = _popped_str(params, "model_ref")
-    graph_as_of_raw = _popped_str(params, "graph_as_of")
-    mapping_version = _popped_str(params, "mapping_version")
-    export_digest = _popped_str(params, "export_digest")
-    if not model_ref or not graph_as_of_raw or not mapping_version:
-        raise ValueError(
-            "conformance checking requires 'model_ref', 'graph_as_of', "
-            "and 'mapping_version'"
-        )
-    if not export_digest:
-        raise ValueError(
-            "conformance checking requires 'export_digest' — the export "
-            "digest of the source data this run executed over"
-        )
-    graph_as_of = datetime.fromisoformat(graph_as_of_raw.replace("Z", "+00:00"))
-    source_ref = _popped_str(params, "source_ref", strip=False)
-    run_id = (
-        _popped_str(params, "run_id", strip=False)
-        or hashlib.sha256(
-            "\x1f".join(
-                [
-                    source_ref,
-                    perspective.perspective_id,
-                    model_ref,
-                    export_digest,
-                    graph_as_of.isoformat(),
-                ]
-            ).encode("utf-8")
-        ).hexdigest()[:32]
-    )
-    return {
-        "tenant": tenant,
-        "perspective": perspective,
-        "traces": traces,
-        "object_ids": object_ids,
-        "allowed_edges": allowed_edges,
-        "model_ref": model_ref,
-        "graph_as_of": graph_as_of,
-        "mapping_version": mapping_version,
-        "export_digest": export_digest,
-        "source_ref": source_ref,
-        "run_id": run_id,
-        "start_activities": params.pop("start_activities", None),
-        "end_activities": params.pop("end_activities", None),
-    }
+    raise_moved("_conformance_inputs", "usage.authorization", "epistemic-graph")
 
 
 def _conformance_commit(

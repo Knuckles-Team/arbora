@@ -11,6 +11,8 @@ from typing import Any, Protocol, runtime_checkable
 
 from agent_utilities.security.persistence_privacy import persistence_reference
 
+from graph_os.core.handoff import raise_moved
+
 from .models import (
     A2AMessage,
     A2ARouteDecision,
@@ -221,11 +223,7 @@ class WorkItemA2AAuthority:
 
     @staticmethod
     def _prepare_task(engine: Any, text: str) -> str:
-        from agent_utilities.orchestration.manager import Orchestrator
-
-        orchestrator = Orchestrator(engine)
-        orchestrator._scan_task(text)
-        return orchestrator._redact_task(text)
+        raise_moved("_prepare_task", "orchestration.manager", "epistemic-graph")
 
     @staticmethod
     def _submit(
@@ -264,27 +262,7 @@ class WorkItemA2AAuthority:
     ) -> None:
         # AU's current carrier cannot enforce an assembly-selected tool subset.
         # Refuse instead of persisting an advisory list that execution ignores.
-        if decision.selected_tools:
-            raise A2AAssemblyUnavailable(
-                "canonical agent dispatch cannot yet enforce an assembled tool subset"
-            )
-        from agent_utilities.orchestration.agent_dispatch import (
-            KIND_ORCHESTRATOR_TASK,
-            AgentTurnEnvelope,
-            enqueue_agent_turn,
-        )
-
-        enqueue_agent_turn(
-            AgentTurnEnvelope(
-                job_id=task_id,
-                session_id=context_id,
-                kind=KIND_ORCHESTRATOR_TASK,
-                payload_ref=task_id,
-                agent_name=decision.agent_name,
-                tenant=tenant,
-            ),
-            engine=engine,
-        )
+        raise_moved("_enqueue", "orchestration.agent_dispatch", "epistemic-graph")
 
     async def dispatch(
         self,

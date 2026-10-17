@@ -6,6 +6,8 @@ import asyncio
 from collections.abc import Callable
 from typing import Any, Protocol, runtime_checkable
 
+from graph_os.core.handoff import raise_moved
+
 from .models import A2AMessage, A2ARouteDecision
 
 __all__ = [
@@ -56,17 +58,7 @@ class OrchestratorA2ARouter:
         self._engine_provider = engine_provider
 
     def _resolve(self, text: str) -> dict[str, Any]:
-        from agent_utilities.orchestration.manager import Orchestrator
-
-        engine = self._engine_provider()
-        if engine is None:
-            raise A2AAssemblyUnavailable("GraphOS routing authority is unavailable")
-        result = Orchestrator(engine).resolve_capability(text)
-        if not isinstance(result, dict):
-            raise A2AAssemblyUnavailable(
-                "GraphOS routing authority returned invalid data"
-            )
-        return result
+        raise_moved("_resolve", "orchestration.manager", "epistemic-graph")
 
     async def route(
         self, message: A2AMessage, *, context_budget_tokens: int | None

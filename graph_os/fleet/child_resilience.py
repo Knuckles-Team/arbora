@@ -398,7 +398,7 @@ class ChildRuntime:
         session_max_age: float | None = None,
         on_generation: GenerationCallback | None = None,
     ) -> None:
-        from agent_utilities.core.config import config
+        from graph_os.core.settings import runtime_config as config
 
         self.name = name
         self.cfg = dict(cfg or {})

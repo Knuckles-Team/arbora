@@ -144,9 +144,10 @@ def _fetch_sessions(
 
 def _multi_host_state() -> bool:
     """True when sessions may be owned by other hosts (state externalized)."""
-    from agent_utilities.core.state_store import postgres_state_enabled
+    from graph_os.core.settings import setting
 
-    return postgres_state_enabled()
+    uri = str(setting("STATE_DB_URI", "") or "")
+    return uri.startswith(("postgresql://", "postgres://"))
 
 
 def _goal_counts() -> dict[str, Any]:
@@ -427,8 +428,7 @@ async def fleet_grant_approval(request: Request) -> JSONResponse:
         )
     if str(job_id).startswith("action_approval:"):
         try:
-            from agent_utilities.orchestration.approval import decide_action_approval
-
+            from graph_os.access.approval import decide_action_approval
             from graph_os.gateway.ports import gateway_application
 
             engine = gateway_application().engine()

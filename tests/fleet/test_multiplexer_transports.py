@@ -56,7 +56,7 @@ class _FakeSessionCM:
 
 @pytest.fixture
 def transports(monkeypatch):
-    from agent_utilities.core.config import config
+    from graph_os.core.settings import runtime_config as config
 
     rec = {"stdio": [], "http": [], "sse": []}
     # MCP SDK v2 yields (read, write) for BOTH streamable-http and sse — the
@@ -165,7 +165,7 @@ async def test_stdio_child_refused_when_prohibited(transports, tmp_path, monkeyp
     """MCP_STDIO_PROHIBITED refuses a stdio child at ``_open_one_session`` --
     the single chokepoint ``_start_child`` and ``probe_server`` both share --
     instead of ever constructing ``StdioServerParameters``/``stdio_client``."""
-    from agent_utilities.core.config import config
+    from graph_os.core.settings import runtime_config as config
 
     monkeypatch.setattr(config, "mcp_stdio_prohibited", True)
     mux = multiplexer_from_fixture(tmp_path / "c.json")
@@ -178,7 +178,7 @@ async def test_stdio_child_refused_when_prohibited(transports, tmp_path, monkeyp
 async def test_open_one_session_raises_stated_reason_when_stdio_prohibited(
     tmp_path, monkeypatch
 ):
-    from agent_utilities.core.config import config
+    from graph_os.core.settings import runtime_config as config
 
     monkeypatch.setattr(config, "mcp_stdio_prohibited", True)
     mux = multiplexer_from_fixture(tmp_path / "c.json")
@@ -202,7 +202,7 @@ async def test_probe_server_reports_stdio_prohibited_as_stated_reason(
     structurally excluded from the catalog (self, served natively) by the
     EG-backed catalog source, so probing it would report "not in catalog"
     rather than exercising the stdio-prohibition path under test."""
-    from agent_utilities.core.config import config
+    from graph_os.core.settings import runtime_config as config
 
     monkeypatch.setattr(config, "mcp_stdio_prohibited", True)
     config_path = tmp_path / "c.json"
@@ -221,7 +221,7 @@ async def test_remote_child_unaffected_by_stdio_prohibition(
     transports, tmp_path, monkeypatch
 ):
     """The prohibition is stdio-specific -- a remote (HTTP) child is untouched."""
-    from agent_utilities.core.config import config
+    from graph_os.core.settings import runtime_config as config
 
     monkeypatch.setattr(config, "mcp_stdio_prohibited", True)
     mux = multiplexer_from_fixture(tmp_path / "c.json")

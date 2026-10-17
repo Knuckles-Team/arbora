@@ -31,14 +31,12 @@ Three properties are load-bearing, in priority order:
 
 from __future__ import annotations
 
-import ast
 import json
 import logging
 import time
 import types
 import typing
 from functools import lru_cache
-from pathlib import Path
 from typing import Any
 
 from agent_utilities.security.config_sensitivity import (
@@ -70,7 +68,7 @@ class ConfigAdminError(Exception):
 # ──────────────────────────────────────────────────────────────────────────
 def field_index() -> dict[str, str]:
     """``{ENV_ALIAS: field_name}`` for every ``AgentConfig`` field."""
-    from agent_utilities.core.config import AgentConfig
+    from graph_os.core.settings import GraphOSConfig as AgentConfig
 
     return {
         str(info.alias or name).upper(): name
@@ -91,34 +89,13 @@ def _attribute_docstrings() -> dict[str, str]:
     Fails soft to ``{}``: a missing docstring degrades ``describe`` to
     type/default/alias, it never breaks the surface.
     """
-    try:
-        import agent_utilities.core.config as cfgmod
+    from graph_os.core.settings import GraphOSConfig
 
-        source = Path(cfgmod.__file__).read_text(encoding="utf-8")
-        tree = ast.parse(source)
-    except Exception as exc:  # noqa: BLE001 - documentation is never critical
-        logger.debug("AgentConfig attribute docstrings unavailable: %s", exc)
-        return {}
-
-    out: dict[str, str] = {}
-    for node in ast.walk(tree):
-        if not isinstance(node, ast.ClassDef) or node.name != "AgentConfig":
-            continue
-        pending: str | None = None
-        for stmt in node.body:
-            if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
-                pending = stmt.target.id
-                continue
-            if (
-                pending
-                and isinstance(stmt, ast.Expr)
-                and isinstance(stmt.value, ast.Constant)
-                and isinstance(stmt.value.value, str)
-            ):
-                out[pending] = " ".join(stmt.value.value.split())
-            pending = None
-        break
-    return out
+    return {
+        name: info.description
+        for name, info in GraphOSConfig.model_fields.items()
+        if info.description
+    }
 
 
 def _type_name(annotation: Any) -> str:
@@ -177,7 +154,7 @@ def _resolve_key(key: str) -> tuple[str, str]:
     env_key = text.upper()
     if env_key in index:
         return env_key, index[env_key]
-    from agent_utilities.core.config import AgentConfig
+    from graph_os.core.settings import GraphOSConfig as AgentConfig
 
     lowered = text.lower()
     if lowered in AgentConfig.model_fields:
@@ -192,13 +169,13 @@ def _resolve_key(key: str) -> tuple[str, str]:
 
 def _effective(field_name: str) -> Any:
     """The live effective value of one field, from the process's config."""
-    from agent_utilities.core.config import config as agent_config
+    from graph_os.core.settings import runtime_config as agent_config
 
     return getattr(agent_config, field_name, None)
 
 
 def _default(field_name: str) -> Any:
-    from agent_utilities.core.config import AgentConfig
+    from graph_os.core.settings import GraphOSConfig as AgentConfig
 
     info = AgentConfig.model_fields[field_name]
     try:
@@ -215,8 +192,7 @@ def describe(key: str = "", *, contains: str = "") -> dict[str, Any]:
     name), so an agent can discover what is settable without reading source.
     Every value passes through :func:`redact`.
     """
-    from agent_utilities.core.config import AgentConfig
-
+    from graph_os.core.settings import GraphOSConfig as AgentConfig
     from graph_os.deployment.config_generator import is_restart_required
 
     docs = _attribute_docstrings()
@@ -310,8 +286,7 @@ def reload() -> dict[str, Any]:
     NEW value is loaded here but is NOT in effect until a restart. They are
     returned by name rather than being silently reported as applied.
     """
-    from agent_utilities.core.config import load_config
-
+    from graph_os.core.settings import load_config
     from graph_os.deployment.config_generator import is_restart_required
 
     load_config()
@@ -331,8 +306,9 @@ def reload() -> dict[str, Any]:
 def _validate_against_model(field_name: str, value: Any) -> Any:
     """Validate one value against the field's own pydantic type. Refuses on
     failure — an unvalidated write is exactly what this surface must not do."""
-    from agent_utilities.core.config import AgentConfig
     from pydantic import TypeAdapter, ValidationError
+
+    from graph_os.core.settings import GraphOSConfig as AgentConfig
 
     info = AgentConfig.model_fields[field_name]
     try:
@@ -409,11 +385,10 @@ def _gate(env_key: str, reason: str) -> tuple[bool, dict[str, Any]]:
     an unavailable policy engine must never read as permission.
     """
     try:
-        from agent_utilities.orchestration.action_policy import (
+        from graph_os.access.action_policy import (
             ActionRequest,
             get_action_policy,
         )
-
         from graph_os.mcp_server import runtime
 
         decision = get_action_policy(runtime._get_engine()).decide(
@@ -451,8 +426,7 @@ def set_value(key: str, value: Any, *, reason: str = "") -> dict[str, Any]:
     config/secret precedence path) → record provenance. Every refusal happens
     BEFORE anything is persisted.
     """
-    from agent_utilities.core.config import save_config_item
-
+    from graph_os.core.settings import save_config_item
     from graph_os.deployment.config_generator import is_restart_required
 
     env_key, field_name = _resolve_key(key)

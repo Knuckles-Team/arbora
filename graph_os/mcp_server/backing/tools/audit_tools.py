@@ -41,6 +41,7 @@ from typing import Any
 from agent_utilities.security.error_surface import public_error_payload
 from pydantic import Field
 
+from graph_os.core.handoff import raise_moved
 from graph_os.mcp_server import runtime
 
 
@@ -162,19 +163,7 @@ def _verify() -> dict[str, Any]:
 
 def _for_target(target_id: str) -> dict[str, Any]:
     """Entity-anchored reverse index of :ToolCall provenance, plus a verify snapshot."""
-    from agent_utilities.orchestration.manager import Orchestrator
-
-    engine = runtime._get_engine()
-    if engine is None:
-        return {
-            "surface": "audit",
-            "action": "for_target",
-            "target_id": target_id,
-            "error": "IntelligenceGraphEngine not active",
-        }
-    orch = Orchestrator(engine)
-    result = orch.get_tool_calls_for_target(target_id)
-    return {"surface": "audit", "action": "for_target", **result}
+    raise_moved("_for_target", "orchestration.manager", "epistemic-graph")
 
 
 def _lineage(fragment_id: str, *, claim: str, content_hash: str) -> dict[str, Any]:

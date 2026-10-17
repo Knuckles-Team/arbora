@@ -14,7 +14,7 @@ transition rules (the ``ClaimLifecycleState`` machine, terminal/sticky
 retraction) or its governance semantics. Every action is either a straight
 read off :class:`~agent_utilities.knowledge_graph.research.claim_flywheel.
 ClaimFlywheel` (``get``/``list``), or — for the five state-changing actions —
-FIRST a fail-closed :class:`~agent_utilities.orchestration.action_policy.
+FIRST a fail-closed :class:`~graph_os.access.action_policy.
 ActionPolicy` decision (mirroring ``graph_secret``'s ``_gate`` pattern in
 ``secret_tools.py``) and only THEN, if allowed, the matching
 ``ClaimFlywheel`` method call. A denied/queued decision returns

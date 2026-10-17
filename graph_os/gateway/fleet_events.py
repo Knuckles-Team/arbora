@@ -364,7 +364,7 @@ def _resolve_webhook_secret(cfg: Any) -> str | None:
 
 async def fleet_events_receive(request: Request) -> JSONResponse:
     """``POST /api/fleet/events`` — normalize, persist, and enqueue triage."""
-    from agent_utilities.core.config import AgentConfig
+    from graph_os.core.settings import GraphOSConfig as AgentConfig
 
     # Fresh config lets secret rotation take effect without a gateway restart.
     cfg = AgentConfig()

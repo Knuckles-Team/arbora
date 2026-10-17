@@ -12,7 +12,6 @@ import re
 from collections.abc import Callable, Sequence
 from typing import Any, Literal
 
-from agent_utilities.core.event_loop import run_blocking_ordered
 from agent_utilities.knowledge_graph.orchestration.engine_query import (
     is_aggregation_cypher,
 )
@@ -21,6 +20,8 @@ from agent_utilities.security.error_surface import public_error_json, public_err
 from pydantic import Field
 from pydantic.fields import FieldInfo
 
+from graph_os.core.event_loop import run_blocking_ordered
+from graph_os.core.handoff import raise_moved
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
 
@@ -222,22 +223,9 @@ def _evidence_bundle_for_rows(engine: Any, rows: list[Any]) -> Any:
     bundle (never raises) when the engine has no ``explain_provenance_by_ids``
     primitive or no row carries a resolvable id.
     """
-    from agent_utilities.knowledge_graph.core.epistemic_row import (
-        row_ids_from_plain_rows,
+    raise_moved(
+        "_evidence_bundle_for_rows", "models.evidence_bundle", "epistemic-graph"
     )
-    from agent_utilities.models.evidence_bundle import EvidenceBundle
-
-    fetch = getattr(getattr(engine, "graph", None), "explain_provenance_by_ids", None)
-    if fetch is None:
-        return EvidenceBundle.from_engine_wire({"rows": []})
-    plain_rows = (
-        [r for r in rows if isinstance(r, dict)] if isinstance(rows, list) else []
-    )
-    id_props = row_ids_from_plain_rows(plain_rows)
-    if not id_props:
-        return EvidenceBundle.from_engine_wire({"rows": []})
-    wire_rows = fetch([ip["id"] for ip in id_props]) or []
-    return EvidenceBundle.from_engine_wire({"rows": wire_rows})
 
 
 def _resolve_symbol_id(engine, *, symbol: str, node_id: str) -> dict[str, Any] | None:
@@ -1523,16 +1511,7 @@ def _graph_search_produce_results(
 
 
 def _graph_search_discover(engine: Any, query: str) -> str:
-    try:
-        from agent_utilities.capabilities.manager import CapabilityManager
-
-        manager = CapabilityManager(engine)
-        results = manager.discover_capabilities(query)
-        if not results:
-            return f"No capabilities found for '{query}'"
-        return "\n".join([f"- {r.name}: {r.description}" for r in results])
-    except ImportError:
-        return "Error: capabilities module not available"
+    raise_moved("_graph_search_discover", "capabilities.manager", "epistemic-graph")
 
 
 def _graph_search_hard_negatives(engine: Any, query: str) -> str:

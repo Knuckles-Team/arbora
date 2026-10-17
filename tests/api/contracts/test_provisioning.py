@@ -32,15 +32,15 @@ from agent_utilities.knowledge_graph.core.session import (
     ScopeError,
     use_session,
 )
-from agent_utilities.orchestration.action_policy import (
+from agent_utilities.security.actor_identity import ActorType
+from agent_utilities.security.brain_context import ActorContext
+
+from graph_os.access.action_policy import (
     ActionDecision,
     ActionRequest,
     PolicyDisposition,
     PolicyReceipt,
 )
-from agent_utilities.security.actor_identity import ActorType
-from agent_utilities.security.brain_context import ActorContext
-
 from graph_os.api.contracts.provisioning import (
     PackImportAuthorityResolver,
     ProvisioningAuthorityError,

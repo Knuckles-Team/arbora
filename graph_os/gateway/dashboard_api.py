@@ -65,11 +65,12 @@ def _dashboard_capabilities(request: Request) -> set[str] | None:
     if not claims or claims.get("auth_type") == "api_key":
         return None
     try:
-        from agent_utilities.core.config import config
         from agent_utilities.security.identity import (
             base_capabilities,
             normalize_identity,
         )
+
+        from graph_os.core.settings import runtime_config as config
 
         return set(
             base_capabilities(

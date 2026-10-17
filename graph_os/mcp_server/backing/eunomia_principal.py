@@ -320,7 +320,7 @@ def _resolve_api_key(reference: str | None) -> str | None:
         return None
     try:
         if reference.startswith("env://"):
-            from agent_utilities.core.config import setting
+            from graph_os.core.settings import setting
 
             value = setting(reference[len("env://") :])
         else:
@@ -726,7 +726,7 @@ def create_eunomia_middleware(
     may come from XDG config or environment.  No endpoint or trust material is
     embedded in the package.
     """
-    from agent_utilities.core.config import config
+    from graph_os.core.settings import runtime_config as config
 
     if use_remote_eunomia:
         if policy_file is not None or not eunomia_endpoint:

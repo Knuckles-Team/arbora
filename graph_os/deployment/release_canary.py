@@ -20,6 +20,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from graph_os.core.handoff import raise_moved
+
 _ENTRY_POINTS = {
     # Certify the native serving composition, not the removed informational
     # shell and never an AU compatibility alias.
@@ -51,16 +53,7 @@ def _engine_binary_ready() -> bool:
 
 
 def _numeric_kernel_ready() -> bool:
-    try:
-        from agent_utilities import numeric as utilities_numeric
-
-        engine_numeric = importlib.import_module("epistemic_graph.numeric")
-        return bool(
-            getattr(engine_numeric, "__kernel__", None) == "eg-numeric"
-            and utilities_numeric.xp.sum([1.0, 2.0, 3.0]) == 6.0
-        )
-    except Exception:  # noqa: BLE001 - the result is intentionally aggregate-only
-        return False
+    raise_moved("_numeric_kernel_ready", "agent_utilities", "the agent harness")
 
 
 def _leading_major_version(text: str) -> int | None:

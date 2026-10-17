@@ -14,6 +14,8 @@ import json
 import sys
 from collections.abc import Callable
 
+from graph_os.core.handoff import raise_moved
+
 from .codex_registration import CodexRegistrationError, register_codex_graphos
 from .config_generator import (
     PROFILES,
@@ -75,16 +77,7 @@ def _run_codex(_: argparse.Namespace) -> int:
 
 
 def _run_harness_fence(args: argparse.Namespace) -> int:
-    from pathlib import Path
-
-    from agent_utilities.claude_harness.claude_fence import write_fence
-    from agent_utilities.orchestration.action_policy import ActionPolicy
-
-    target = args.target or str(Path.home() / ".claude")
-    policy = ActionPolicy(policy_path=args.policy) if args.policy else ActionPolicy()
-    res = write_fence(target, policy, dry_run=args.dry_run)
-    print(json.dumps(res, indent=2, default=str))
-    return 0
+    raise_moved("_run_harness_fence", "claude_harness.claude_fence", "epistemic-graph")
 
 
 def _run_environments(args: argparse.Namespace) -> int:

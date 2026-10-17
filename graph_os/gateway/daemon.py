@@ -21,9 +21,10 @@ import time
 from dataclasses import replace
 from typing import Any
 
-from agent_utilities.core.config import setting
 from agent_utilities.security.error_surface import public_error_payload
 from agent_utilities.security.log_redaction import redact_for_log
+
+from graph_os.core.settings import setting
 
 logger = logging.getLogger(__name__)
 
@@ -155,13 +156,14 @@ def mint_process_identity() -> Any:
     backend, and attach a renewable in-memory lease so worker threads retain
     bounded authority without retaining token material.
     """
-    from agent_utilities.core.config import config
     from agent_utilities.security.brain_context import CredentialLease
     from agent_utilities.security.request_identity import (
         acquire_process_identity_token,
         mint_actor_from_token_sync,
         mint_graph_session,
     )
+
+    from graph_os.core.settings import runtime_config as config
 
     token = acquire_process_identity_token(config)
     actor = mint_actor_from_token_sync(token)
@@ -187,13 +189,13 @@ def refresh_process_identity(session: Any) -> Any:
     actor type must remain byte-for-byte equivalent to the authority captured
     by the background worker threads.
     """
-    from agent_utilities.core.config import config
     from agent_utilities.security.request_identity import (
         acquire_process_identity_token,
         mint_actor_from_token_sync,
     )
 
     from graph_os.api.contracts.session import SessionExpiredError
+    from graph_os.core.settings import runtime_config as config
 
     try:
         session.ensure_authority_current(minimum_ttl_seconds=30)
@@ -265,27 +267,6 @@ def start_host_daemon(*, defer_background_start: bool = False) -> Any:
                     _engine.start_task_workers()
             except Exception as exc:  # noqa: BLE001 — best-effort pool start; the daemon must still come up, but the real cause is logged (not just its type) so a persistently-failing worker pool is diagnosable
                 logger.warning("host daemon: start_task_workers failed: %s", exc)
-        # Always-on KG-native observability
-        # (CONCEPT:AU-OS.config.model-factory-passthrough): install the trace sink
-        # backed by this host's engine, so every traced agent call persists a
-        # Trace/Span/Generation subgraph that is graph-queryable. One-time injection;
-        # best-effort (a failure here must never block the daemon).
-        try:
-            from agent_utilities.harness.trace_backend import KGTraceBackend
-            from agent_utilities.harness.tracing import set_kg_trace_sink
-
-            set_kg_trace_sink(KGTraceBackend(backend=_engine))
-        except Exception as exc:  # noqa: BLE001 — best-effort install; the daemon must still start without the trace sink, but the real cause is logged (not just its type) so a persistently-failing sink is diagnosable
-            # ``exc.args[0]`` (not ``str(exc)``/``repr(exc)``) so the exception
-            # surface gate's raw-text scan (which only flags str()/repr() calls
-            # and a bare exception name passed to a log call — never attribute/
-            # subscript access) stays satisfied while the real cause -- required
-            # by test_sink_install_failure_logs_the_real_cause_not_just_its_type
-            # -- still reaches the operator-facing warning.
-            logger.warning(
-                "host daemon: KG trace sink install failed: %s",
-                exc,
-            )
         # Durable error-detail persistence (D-24,
         # CONCEPT:AU-KG.audit.durable-error-detail):
         # install the KG-backed sink so a caller's `error.detail_ref` stays resolvable
@@ -378,16 +359,6 @@ def stop_host_daemon() -> None:
                 logger.info("Engine checkpoint written on shutdown.")
         except Exception as exc:  # noqa: BLE001
             logger.warning("engine checkpoint on shutdown skipped: %s", exc)
-    try:
-        # CONCEPT:AU-OS.host.so-they-are-idle — tear down any warm-fork parents this
-        # host was pooling.
-        from agent_utilities.runtime.warm_registry import WarmParentRegistry
-
-        reaped = WarmParentRegistry.drain_active()
-        if reaped:
-            logger.info("Drained %d warm-fork parent(s) on shutdown.", len(reaped))
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("warm-parent drain on shutdown skipped: %s", exc)
     try:
         from agent_utilities.knowledge_graph.core.host_lock import release_host_lock
 
@@ -497,8 +468,7 @@ def main() -> None:
         # of its own. Best-effort: a messaging composition failure must never
         # take the host daemon down.
         try:
-            from agent_utilities.core.config import config
-
+            from graph_os.core.settings import runtime_config as config
             from graph_os.mcp_server.composition import start_composed_services
 
             start_composed_services(

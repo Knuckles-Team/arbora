@@ -11,7 +11,6 @@ import re
 from collections.abc import Callable
 from typing import Any
 
-from agent_utilities.core.event_loop import run_blocking_ordered
 from agent_utilities.security.error_surface import (
     public_error_json,
     public_error_text,
@@ -19,6 +18,8 @@ from agent_utilities.security.error_surface import (
 from agent_utilities.security.persistence_privacy import persistence_reference
 from pydantic import Field
 
+from graph_os.core.event_loop import run_blocking_ordered
+from graph_os.core.handoff import raise_moved
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
 from graph_os.mcp_server.backing.context_helpers import coerce_dict_param
@@ -1237,35 +1238,11 @@ async def _ingest_action_agent_toolkit(engine, request: IngestRequest) -> str:
 
 
 async def _ingest_action_ingest_knowledge_pack(engine, request: IngestRequest) -> str:
-    target_path = request.target_path
-    # action(s): 'ingest_knowledge_pack'
-    from pathlib import Path
-
-    import yaml
-    from agent_utilities.models.knowledge_pack import (
-        KnowledgePackBundle,
-        KnowledgePackHydrator,
-        KnowledgePackImporter,
+    raise_moved(
+        "_ingest_action_ingest_knowledge_pack",
+        "models.knowledge_pack",
+        "epistemic-graph",
     )
-
-    if not target_path:
-        return "Error: target_path required for ingest_knowledge_pack"
-
-    path = Path(target_path)
-    if not path.exists() or not path.is_file():
-        return f"Error: knowledge pack file not found at {target_path}"
-
-    def _load_knowledge_pack_file() -> Any:
-        with open(path, encoding="utf-8") as f:
-            if path.suffix in [".yaml", ".yml"]:
-                return yaml.safe_load(f)
-            return json.load(f)
-
-    data = await run_blocking_ordered(_load_knowledge_pack_file)
-    bundle = KnowledgePackBundle.from_dict(data)
-    await KnowledgePackHydrator.hydrate(bundle)
-    await run_blocking_ordered(KnowledgePackImporter.seed_into_kg, bundle, engine)
-    return f"Knowledge pack from {target_path} hydrated and ingested."
 
 
 async def _ingest_action_import_pack(engine, request: IngestRequest) -> str:
@@ -2362,144 +2339,7 @@ def register_write_ingest_tools(mcp):
         limit: int = Field(default=50, description="Row cap for list actions."),
     ) -> str:
         """Read-side analytics over the usage store. Returns JSON."""
-        import json as _json
-
-        from agent_utilities.usage.authorization import (
-            UsageAuthorizationError,
-            resolve_usage_tenant,
-        )
-        from agent_utilities.usage.service import get_usage_service
-
-        try:
-            authoritative_tenant = resolve_usage_tenant(tenant_id or None)
-        except UsageAuthorizationError as exc:
-            return f"usage_query authorization error: {exc.detail}"
-        svc = get_usage_service()
-        f = {
-            k: v
-            for k, v in {
-                "from_date": from_date,
-                "to_date": to_date,
-                "project": project,
-                "agent": agent,
-                "model": model,
-                "origin": origin,
-                "tenant_id": authoritative_tenant,
-            }.items()
-            if v
-        }
-
-        # Each handler returns ``(is_error, payload)``: an error payload is a
-        # plain string returned to the caller AS-IS (never JSON-encoded,
-        # matching the original direct `return "Error: ..."` branches); a
-        # non-error payload is JSON-encoded uniformly below.
-        def _action_summary() -> tuple[bool, Any]:
-            return False, svc.summary(**f).model_dump()
-
-        def _action_by_model() -> tuple[bool, Any]:
-            return False, [e.model_dump() for e in svc.by_model(**f)]
-
-        def _action_by_project() -> tuple[bool, Any]:
-            return False, [e.model_dump() for e in svc.by_project(**f)]
-
-        def _action_by_agent() -> tuple[bool, Any]:
-            return False, [e.model_dump() for e in svc.by_agent(**f)]
-
-        def _action_tools() -> tuple[bool, Any]:
-            return False, [e.model_dump() for e in svc.tools(**f)]
-
-        def _action_activity() -> tuple[bool, Any]:
-            return False, [e.model_dump() for e in svc.activity(**f)]
-
-        def _action_sessions() -> tuple[bool, Any]:
-            return False, [e.model_dump() for e in svc.sessions(limit=limit, **f)]
-
-        def _action_top_sessions() -> tuple[bool, Any]:
-            return False, [e.model_dump() for e in svc.top_sessions(limit=limit, **f)]
-
-        def _action_session_detail() -> tuple[bool, Any]:
-            if not session_id:
-                return True, "Error: session_id required for session_detail"
-            detail = svc.session_detail(session_id, **f)
-            return False, (detail.model_dump() if detail else None)
-
-        def _action_search() -> tuple[bool, Any]:
-            if not query:
-                return True, "Error: query required for search"
-            return False, [e.model_dump() for e in svc.search(query, limit=limit, **f)]
-
-        def _action_traces() -> tuple[bool, Any]:
-            from agent_utilities.observability.langfuse_exporter import (
-                get_langfuse_exporter,
-            )
-
-            exporter = get_langfuse_exporter()
-            enabled = bool(getattr(exporter, "enabled", False))
-            trace_filters = {**f, "origin": "runtime"}
-            rows = svc.sessions(limit=min(max(limit, 1), 500), **trace_filters)
-            return False, {
-                "enabled": enabled,
-                "trace_count": len(rows) if enabled else 0,
-                "traces": (
-                    [
-                        {
-                            "trace_ref": persistence_reference("trace", row.id),
-                            "project": row.project,
-                        }
-                        for row in rows
-                    ]
-                    if enabled
-                    else []
-                ),
-            }
-
-        def _action_series() -> tuple[bool, Any]:
-            # CONCEPT:AU-KG.ingest.per-agent-token-usage — per-agent token usage over time from the engine
-            # tsdb (native range/window), not a Python re-scan. ``from_date``/
-            # ``to_date`` are epoch seconds; ``model`` carries the bucket field
-            # (default total_tokens); ``limit`` carries the window size in seconds
-            # (0 = raw points). agent= the series key.
-            from agent_utilities.observability.token_tracker import query_token_series
-
-            try:
-                start = float(from_date) if from_date else 0.0
-                end = float(to_date) if to_date else 4.0e18
-            except ValueError:
-                return True, "Error: series from_date/to_date must be epoch seconds"
-            pts = query_token_series(
-                agent,
-                start,
-                end,
-                field=model or "total_tokens",
-                window_s=float(limit) if limit else None,
-                agg=origin or "sum",
-            )
-            return False, [{"ts": t, "value": v} for t, v in pts]
-
-        handlers: dict[str, Callable[[], tuple[bool, Any]]] = {
-            "summary": _action_summary,
-            "by_model": _action_by_model,
-            "by_project": _action_by_project,
-            "by_agent": _action_by_agent,
-            "tools": _action_tools,
-            "activity": _action_activity,
-            "sessions": _action_sessions,
-            "top_sessions": _action_top_sessions,
-            "session_detail": _action_session_detail,
-            "search": _action_search,
-            "traces": _action_traces,
-            "series": _action_series,
-        }
-        handler = handlers.get(action)
-        if handler is None:
-            return f"Error: unknown usage_query action '{action}'"
-        try:
-            is_error, out = handler()
-            if is_error:
-                return out
-            return _json.dumps(out, default=str)
-        except Exception as exc:  # noqa: BLE001
-            return f"usage_query error_type={type(exc).__name__}"
+        raise_moved("usage_query", "usage.authorization", "epistemic-graph")
 
     runtime.REGISTERED_TOOLS["usage_query"] = usage_query
 
@@ -2528,122 +2368,6 @@ def register_write_ingest_tools(mcp):
         tenant_id: str = Field(default="", description="Tenant scope for the rows."),
     ) -> str:
         """Client-parses, server-sinks ingestion of agent session logs."""
-        import json as _json
-        import uuid as _uuid
-
-        from agent_utilities.usage.authorization import (
-            UsageAuthorizationError,
-            require_usage_admin,
-            resolve_usage_tenant,
-        )
-
-        def _handle_collect(authoritative_tenant: str | None) -> str:
-            from agent_utilities.ingestion.collector import collect_local_sessions
-
-            require_usage_admin()
-            return _json.dumps(
-                collect_local_sessions(tenant_id=authoritative_tenant or ""),
-                default=str,
-            )
-
-        async def _handle_upload(authoritative_tenant: str | None) -> str:
-            # CONCEPT:AU-KG.ingest.drain-session-bundle — NON-BLOCKING upload. Each uploaded session
-            # expands to many usage-store rows (sessions + events + tool
-            # calls + FTS index), so the old synchronous ``record_bundle``
-            # loop blew past the 60s MCP client window under load even at
-            # batch=10. Mirror ``source_sync``/``graph_ingest``: ENQUEUE the
-            # bundles as a durable ``session_upload`` background task and
-            # return a ``job_id`` immediately — the host daemon's task worker
-            # drains it (parse → usage store) off the call path. A tiny batch
-            # is cheap, so it still runs inline (auto-sized, no user knob).
-            from agent_utilities.usage.models import ParsedSessionBundle
-            from agent_utilities.usage.privacy import normalize_bundle
-            from agent_utilities.usage.recorder import get_usage_recorder
-
-            raw = _json.loads(bundles_json) if bundles_json else []
-            if not isinstance(raw, list):
-                return "Error: bundles_json must contain a JSON array"
-            normalized_items: list[dict] = []
-            for item in raw:
-                bundle = ParsedSessionBundle.model_validate(item)
-                if authoritative_tenant:
-                    bundle.session.tenant_id = authoritative_tenant
-                normalized_items.append(normalize_bundle(bundle).model_dump())
-            # Inline fast path only for a handful of bundles — well under the
-            # call ceiling; anything larger enqueues.
-            _UPLOAD_INLINE_MAX = 3
-            if len(normalized_items) <= _UPLOAD_INLINE_MAX:
-                recorder = get_usage_recorder()
-                ok = 0
-                for item in normalized_items:
-                    bundle = ParsedSessionBundle.model_validate(item)
-                    if recorder.record_bundle(bundle):
-                        ok += 1
-                return _json.dumps(
-                    {
-                        "received": len(normalized_items),
-                        "ingested": ok,
-                        "status": "ingested",
-                    }
-                )
-
-            # Large upload → enqueue and return. Carry the bundles in the
-            # WorkItem metadata payload (same shape as ``kg_memory``,
-            # CONCEPT:AU-KG.compute.offloaded-memory-write); the host worker reads it back, parses and
-            # records. ``skip_dedupe`` because each batch is a distinct,
-            # idempotent (record_bundle replaces rows) payload — never collapse
-            # two real uploads into one. A unique target keeps job ids distinct.
-            engine = runtime._get_engine()
-            target = f"session-upload:{_uuid.uuid4().hex}"
-            jid = await run_blocking_ordered(
-                engine.submit_task,
-                target_path=target,
-                is_codebase=False,
-                provenance={"agent_id": "ingest_sessions"},
-                task_type="session_upload",
-                skip_dedupe=True,
-                extra_meta={"payload": {"bundles": normalized_items}},
-            )
-            return _json.dumps(
-                {
-                    "status": "enqueued",
-                    "job_id": jid,
-                    "received": len(normalized_items),
-                    "message": (
-                        f"{len(normalized_items)} session bundles enqueued as background job "
-                        f"{jid}; poll with graph_ingest action=job_status "
-                        f"job_id={jid}."
-                    ),
-                }
-            )
-
-        def _handle_paths(authoritative_tenant: str | None) -> str:
-            from agent_utilities.ingestion.collector import collect_paths
-
-            require_usage_admin()
-            raw = target_path.strip()
-            paths = (
-                _json.loads(raw)
-                if raw.startswith("[")
-                else [p.strip() for p in raw.split(",") if p.strip()]
-            )
-            return _json.dumps(
-                collect_paths(paths, tenant_id=authoritative_tenant or ""),
-                default=str,
-            )
-
-        try:
-            authoritative_tenant = resolve_usage_tenant(tenant_id or None)
-            if action == "collect":
-                return _handle_collect(authoritative_tenant)
-            if action == "upload":
-                return await _handle_upload(authoritative_tenant)
-            if action == "paths":
-                return _handle_paths(authoritative_tenant)
-            return f"Error: unknown ingest_sessions action '{action}'"
-        except UsageAuthorizationError as exc:
-            return f"ingest_sessions authorization error: {exc.detail}"
-        except Exception as exc:  # noqa: BLE001
-            return f"ingest_sessions error_type={type(exc).__name__}"
+        raise_moved("ingest_sessions", "usage.authorization", "epistemic-graph")
 
     runtime.REGISTERED_TOOLS["ingest_sessions"] = ingest_sessions

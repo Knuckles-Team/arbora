@@ -11,7 +11,7 @@ resolver uses distribution metadata rather than importing provider packages, rej
 ambiguous ownership, validates every source as bounded regular files, and selects an
 XDG generation only when its registration and content digests match the installed
 source exactly.  The bounded-manifest and managed-generation primitives remain the
-harness's install-tree contract (``agent_utilities.core.provider_materialization``).
+harness's install-tree contract (``graph_os.core.provider_materialization``).
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 from urllib.parse import unquote, urlparse
 
-from agent_utilities.core.provider_materialization import (
+from graph_os.core.provider_materialization import (
     MAX_PROVIDER_FILE_BYTES,
     AssetManifest,
     ProviderAssetError,

@@ -17,10 +17,10 @@ from agent_utilities.security.error_surface import (
 )
 from pydantic import Field
 
+from graph_os.core.handoff import raise_moved
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
 from graph_os.mcp_server.backing.context_helpers import coerce_dict_param
-from graph_os.mcp_server.backing.context_helpers import run_coro as _run_coro
 from graph_os.mcp_server.backing.ontology_types import (
     OntologyCatalogRequest,
 )
@@ -226,11 +226,8 @@ def _ontology_interface_explain_routing(
 
 
 def _ontology_sampling_profile_list(registry: Any) -> str:
-    from agent_utilities.models.model_registry import _DEFAULT_TASK_PROFILES
-
-    effective = {**_DEFAULT_TASK_PROFILES, **registry.task_class_profiles}
-    return json.dumps(
-        {"profiles": {k: v.model_dump() for k, v in effective.items()}}, default=str
+    raise_moved(
+        "_ontology_sampling_profile_list", "models.model_registry", "epistemic-graph"
     )
 
 
@@ -241,57 +238,31 @@ def _ontology_sampling_profile_describe(registry: Any, task_class: str) -> str:
 
 
 def _ontology_sampling_profile_resolve(task_text: str, role: str) -> str:
-    from agent_utilities.agent.sampling_profile import resolve_sampling_profile
-
-    prof = resolve_sampling_profile(task_text or None, role=role or None)
-    return json.dumps(prof.model_dump(), default=str)
+    raise_moved(
+        "_ontology_sampling_profile_resolve",
+        "agent.sampling_profile",
+        "epistemic-graph",
+    )
 
 
 def _ontology_sampling_profile_set(
     registry: Any, profile_json: str, task_class: str
 ) -> str:
-    from agent_utilities.agent.sampling_profile import SamplingProfile
-    from agent_utilities.knowledge_graph.ontology.value_types import (
-        sampling_profile_violations,
+    raise_moved(
+        "_ontology_sampling_profile_set", "agent.sampling_profile", "epistemic-graph"
     )
-
-    data = json.loads(profile_json) if profile_json else {}
-    if task_class:
-        data.setdefault("task_class", task_class)
-    profile = SamplingProfile.model_validate(data)
-    violations = sampling_profile_violations(profile.model_dump())
-    if violations:
-        return json.dumps({"error": "SHACL bound violation", "violations": violations})
-    registry.set_task_profile(profile)
-    return json.dumps({"set": profile.model_dump()}, default=str)
 
 
 def _ontology_sampling_profile_evolve(registry: Any, task_class: str) -> str:
-    from agent_utilities.agent.sampling_profile import SamplingProfile
-    from agent_utilities.harness.variant_pool import VariantPool
-    from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
-
-    engine = IntelligenceGraphEngine.get_active()
-    kg = getattr(engine, "kg", None) or getattr(engine, "_kg", None)
-    ci = kg.retrieval if kg is not None else None
-    if ci is None:
-        return json.dumps({"error": "no capability index available to score"})
-    vp = VariantPool.__new__(VariantPool)
-
-    # Live eval: reward = mean capability-index reward already recorded for
-    # this profile's prior outcomes; absent history, neutral 0.5 keeps the
-    # incumbent. The daemon/evolve loop feeds real outcomes over time.
-    def _evaluator(p: SamplingProfile) -> float:
-        return ci.reward_of(vp._profile_id(task_class, p))
-
-    promoted = vp.evolve_profile(registry, task_class, ci, _evaluator)
-    return json.dumps({"promoted": promoted.model_dump()}, default=str)
+    raise_moved(
+        "_ontology_sampling_profile_evolve", "agent.sampling_profile", "epistemic-graph"
+    )
 
 
 def _ontology_sampling_profile_owl(registry: Any) -> str:
-    from agent_utilities.models.model_registry import inference_owl_ttl
-
-    return json.dumps({"owl": inference_owl_ttl(registry)})
+    raise_moved(
+        "_ontology_sampling_profile_owl", "models.model_registry", "epistemic-graph"
+    )
 
 
 @dataclass
@@ -430,31 +401,15 @@ def _spec_ticket_link(
 
 
 def _concept_registry_list(repo_root: Any, status: str) -> str:
-    from agent_utilities.governance import concept_allocator as ca
-
-    return json.dumps(
-        {
-            "reservations": ca.list_reservations(
-                repo_root=repo_root, status=status or None
-            )
-        }
-    )
+    raise_moved("_concept_registry_list", "governance", "epistemic-graph")
 
 
 def _concept_registry_reconcile(repo_root: Any) -> str:
-    from agent_utilities.governance import concept_allocator as ca
-
-    return json.dumps(ca.reconcile(repo_root=repo_root))
+    raise_moved("_concept_registry_reconcile", "governance", "epistemic-graph")
 
 
 def _concept_registry_release(repo_root: Any, concept_id: str) -> str:
-    from agent_utilities.governance import concept_allocator as ca
-
-    if not concept_id:
-        return json.dumps({"error": "release requires concept_id"})
-    return json.dumps(
-        {"released": ca.release_concept_id(concept_id, repo_root=repo_root)}
-    )
+    raise_moved("_concept_registry_release", "governance", "epistemic-graph")
 
 
 def _concept_registry_reserve(
@@ -464,37 +419,7 @@ def _concept_registry_reserve(
     design_doc: str,
     ttl_seconds: int,
 ) -> str:
-    import uuid
-
-    from agent_utilities.governance import concept_allocator as ca
-
-    if not concept_id:
-        return json.dumps({"error": "reserve requires concept_id"})
-    sid = session_id or f"session-{uuid.uuid4().hex}"
-    record = ca.reserve_concept_id(
-        concept_id,
-        session_id=sid,
-        design_doc=design_doc or None,
-        ttl_seconds=int(ttl_seconds),
-        repo_root=repo_root,
-    )
-    # Compatibility projection through this already-authenticated
-    # GraphOS execution context. The local ledger is authoritative
-    # for this legacy path only; it is not a separate-host authority.
-    try:
-        _run_coro(
-            runtime._execute_tool(
-                "graph_write",
-                action="add_node",
-                node_id=record["id"],
-                node_type="ConceptReservation",
-                properties=json.dumps(record),
-            )
-        )
-        record["kg_projected"] = True
-    except Exception:  # noqa: BLE001 - projection is advisory
-        record["kg_projected"] = False
-    return json.dumps(record)
+    raise_moved("_concept_registry_reserve", "governance", "epistemic-graph")
 
 
 def _source_sync_resolve_engine(connection: str, graph: str) -> tuple[Any, str | None]:
@@ -1469,27 +1394,9 @@ def register_ontology_tools(mcp):
         ),
     ) -> str:
         """List/describe/resolve/set/evolve sampling profiles, or emit their OWL."""
-        from agent_utilities.models.model_registry import load_active_registry
-
-        try:
-            registry = load_active_registry()
-            if action == "list":
-                return _ontology_sampling_profile_list(registry)
-            if action == "describe":
-                return _ontology_sampling_profile_describe(registry, task_class)
-            if action == "resolve":
-                return _ontology_sampling_profile_resolve(task_text, role)
-            if action == "set":
-                return _ontology_sampling_profile_set(
-                    registry, profile_json, task_class
-                )
-            if action == "evolve":
-                return _ontology_sampling_profile_evolve(registry, task_class)
-            if action == "owl":
-                return _ontology_sampling_profile_owl(registry)
-            return json.dumps({"error": f"unknown action: {action!r}"})
-        except Exception as e:  # noqa: BLE001
-            return public_error_json(e)
+        raise_moved(
+            "ontology_sampling_profile", "models.model_registry", "epistemic-graph"
+        )
 
     runtime.REGISTERED_TOOLS["ontology_sampling_profile"] = ontology_sampling_profile
 
@@ -1513,52 +1420,7 @@ def register_ontology_tools(mcp):
         ),
     ) -> str:
         """List/sync/get model profiles, or emit their OWL projection."""
-        from agent_utilities.models.model_profile import (
-            build_model_profile,
-            model_profile_id,
-            sync_model_profiles,
-        )
-        from agent_utilities.models.model_registry import (
-            inference_owl_ttl,
-            load_active_registry,
-        )
-
-        try:
-            registry = load_active_registry()
-            if action == "list":
-                previews = [
-                    build_model_profile(m).model_dump() for m in registry.models
-                ]
-                return json.dumps({"profiles": previews}, default=str)
-            if action == "sync":
-                engine = runtime._get_engine()
-                ids = sync_model_profiles(engine, registry)
-                return json.dumps({"synced": ids, "count": len(ids)})
-            if action == "get":
-                definition = registry.get_by_id(model_id)
-                if definition is None:
-                    return json.dumps({"error": f"unknown model id: {model_id!r}"})
-                engine = runtime._get_engine()
-                get_node = getattr(engine, "get_node", None)
-                node_id = model_profile_id(definition)
-                stored = get_node(node_id) if callable(get_node) else None
-                if stored:
-                    return json.dumps({"profile": stored, "id": node_id}, default=str)
-                # Not yet synced to the KG — return the honest live projection instead
-                # of a bare "not found" so `get` is useful before the first `sync`.
-                return json.dumps(
-                    {
-                        "profile": build_model_profile(definition).model_dump(),
-                        "id": node_id,
-                        "synced": False,
-                    },
-                    default=str,
-                )
-            if action == "owl":
-                return json.dumps({"owl": inference_owl_ttl(registry)})
-            return json.dumps({"error": f"unknown action: {action!r}"})
-        except Exception as e:  # noqa: BLE001
-            return public_error_json(e)
+        raise_moved("ontology_model_profile", "models.model_profile", "epistemic-graph")
 
     runtime.REGISTERED_TOOLS["ontology_model_profile"] = ontology_model_profile
 

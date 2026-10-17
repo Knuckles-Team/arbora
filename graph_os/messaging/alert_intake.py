@@ -23,8 +23,9 @@ import json
 import logging
 from typing import Any
 
-from agent_utilities.core.config import setting
 from aiohttp import web
+
+from graph_os.core.settings import setting
 
 logger = logging.getLogger(__name__)
 

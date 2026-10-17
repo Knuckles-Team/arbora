@@ -126,8 +126,8 @@ def _live_streamable_http_server(
 ):
     """Build and serve the REAL graph-os FastMCP app over a real TCP port."""
     import uvicorn
-    from agent_utilities.core.config import config as live_config
 
+    from graph_os.core.settings import runtime_config as live_config
     from graph_os.mcp_server import runtime
 
     # Configure inbound JWT verification (FastMCP's own provider) exactly as

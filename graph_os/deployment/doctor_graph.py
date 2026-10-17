@@ -49,8 +49,7 @@ def _check_engine_domains() -> dict[str, Any]:
     advisory on ``tiny``, a hard failure elsewhere).
     """
     try:
-        from agent_utilities.core.config import AgentConfig
-
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
         from graph_os.mcp_server.backing.tools import engine_tools
 
         cfg = AgentConfig()
@@ -295,7 +294,7 @@ def _check_graph_connections(live: bool = False) -> dict[str, Any]:
     source rows, and exception details never cross the doctor boundary.
     """
     try:
-        from agent_utilities.core.config import AgentConfig
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
 
         inventory = _graph_connection_inventory(AgentConfig())
     except Exception:  # noqa: BLE001 - never expose deployment details

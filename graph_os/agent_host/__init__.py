@@ -39,6 +39,7 @@ from pydantic import BaseModel
 
 from graph_os.agent_host.log_access import HostLogAccess
 from graph_os.agent_host.log_routes import register_host_log_routes
+from graph_os.core.handoff import raise_moved
 
 logger = logging.getLogger(__name__)
 
@@ -244,49 +245,4 @@ def create_agent_server(
     here too and are not yet wired into graph construction -- a tracked
     parity gap, not a silent behavior match.
     """
-    selections = (enable_terminal_ui, enable_web_logs)
-    if any(type(value) is not bool for value in selections) or (
-        enable_web_ui is not None and type(enable_web_ui) is not bool
-    ):
-        raise ValueError("invalid_launch")
-    if enable_terminal_ui or enable_web_ui or enable_web_logs:
-        raise HostInterfaceUnavailable("client_unavailable")
-
-    if graph is None or graph_config is None:
-        from agent_utilities import create_graph_agent, initialize_workspace
-
-        if workspace:
-            initialize_workspace()
-        if tag_prompts:
-            graph, graph_config = create_graph_agent(
-                tag_prompts=tag_prompts,
-                tag_env_vars=tag_env_vars,
-                mcp_url=mcp_url,
-                mcp_config=mcp_config,
-                name=graph_name,
-                router_model=router_model,
-                agent_model=agent_model,
-                min_confidence=min_confidence,
-            )
-        else:
-            from agent_utilities import initialize_graph_from_workspace
-
-            graph, graph_config = initialize_graph_from_workspace(
-                mcp_config=mcp_config,
-                router_model=router_model,
-                agent_model=agent_model,
-                workspace=workspace,
-            )
-
-    app = build_agent_host_app(
-        graph=graph,
-        graph_config=graph_config,
-        name=name,
-        description=system_prompt,
-        executor=executor,
-        host_logs=host_logs,
-    )
-
-    import uvicorn
-
-    uvicorn.run(app, host=host or "127.0.0.1", port=port or 9000)
+    raise_moved("create_agent_server", "agent_utilities", "the agent harness")

@@ -91,12 +91,5 @@ def test_fetch_data_reports_error_when_service_is_unreachable():
     assert data.status == "error"
 
 
-def test_fetch_data_uses_the_migrated_httpx2_family():
-    """Confirms the port actually took: this family is httpx2-backed."""
-    from agent_utilities.httpsupport.transport_factory import MIGRATED_HTTPX2_FAMILIES
-
-    assert "gateway-widget-diagnostics" in MIGRATED_HTTPX2_FAMILIES
-
-
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-q"]))

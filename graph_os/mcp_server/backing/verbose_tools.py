@@ -717,7 +717,7 @@ def register_backing_tools(
     intent tools route to; they are never served directly. Returns the
     registered tags.
     """
-    from agent_utilities.core.config import setting
+    from graph_os.core.settings import setting
 
     toggles: dict[str, str] = getattr(backing, "_condensed_tool_toggles", {})
     ctx = _BackingRegistrationContext(

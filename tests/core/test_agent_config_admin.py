@@ -51,7 +51,7 @@ def test_describe_reports_docstring_type_default_current_and_alias():
 def test_describe_is_derived_so_a_new_field_needs_no_hand_registration():
     """Every AgentConfig field is describable. A hand-maintained allowlist would
     fail this the moment anyone added a field."""
-    from agent_utilities.core.config import AgentConfig
+    from graph_os.core.settings import GraphOSConfig as AgentConfig
 
     inventory = config_admin.describe()
     assert inventory["count"] == len(AgentConfig.model_fields)
@@ -230,7 +230,7 @@ def test_set_denies_when_the_policy_gate_denies(monkeypatch):
 
 def test_set_denies_when_the_policy_gate_itself_is_unavailable(monkeypatch):
     """An unavailable gate must never read as permission."""
-    import agent_utilities.orchestration.action_policy as policy
+    import graph_os.access.action_policy as policy
 
     monkeypatch.setattr(
         policy,
@@ -425,7 +425,7 @@ def test_only_set_is_treated_as_a_mutation():
 
 
 def test_config_set_is_policy_gated_at_approval_tier():
-    from agent_utilities.orchestration.action_policy import DEFAULT_POLICY
+    from graph_os.access.action_policy import DEFAULT_POLICY
 
     rule = next(r for r in DEFAULT_POLICY["rules"] if r.get("kind") == "config.set")
     assert rule["tier"] == "approval_required"

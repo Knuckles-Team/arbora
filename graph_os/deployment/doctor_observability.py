@@ -6,6 +6,8 @@ from collections.abc import Callable
 from types import SimpleNamespace
 from typing import Any
 
+from graph_os.core.handoff import raise_moved
+
 from .doctor_support import _result
 
 
@@ -16,9 +18,6 @@ def _require_observability_imports() -> None:
     dependency before deciding anything: a broken install must still report
     ``error``, never a ``skip``/``fail`` derived from half a stack.
     """
-    from agent_utilities.core.transport_security import (  # noqa: F401
-        resolve_configured_tls_profile,
-    )
     from agent_utilities.observability.custom_observability import (  # noqa: F401
         _same_origin,
     )
@@ -28,6 +27,10 @@ def _require_observability_imports() -> None:
     )
     from agent_utilities.security.cli_secrets import (  # noqa: F401
         resolve_runtime_secret_reference,
+    )
+
+    from graph_os.core.transport import (  # noqa: F401
+        resolve_configured_tls_profile,
     )
 
 
@@ -111,7 +114,7 @@ def _otel_prove_credentials(cfg: Any, posture: SimpleNamespace) -> None:
 
 def _otel_tls_verify_enabled(cfg: Any, langfuse_auth: bool) -> bool:
     """Resolve the OTEL TLS profile (falling back to Langfuse's) and report verify."""
-    from agent_utilities.core.transport_security import resolve_configured_tls_profile
+    from graph_os.core.transport import resolve_configured_tls_profile
 
     profile_name = cfg.otel_tls_profile
     profile_ref = cfg.otel_tls_profile_ref
@@ -128,8 +131,8 @@ def _otel_tls_verify_enabled(cfg: Any, langfuse_auth: bool) -> bool:
 
 
 def _check_observability() -> dict[str, Any]:
-    from agent_utilities.core.config import AgentConfig, setting
-    from agent_utilities.core.profile_guard import is_production_profile
+    from graph_os.core.settings import GraphOSConfig as AgentConfig
+    from graph_os.core.settings import is_production_profile, setting
 
     try:
         _require_observability_imports()
@@ -268,15 +271,7 @@ def _probe_langfuse_mcp_visibility(_cfg: Any) -> bool:
 
 def _langfuse_expected_trace_name(source_run_id: str) -> str:
     """The tenant-qualified opaque trace name the exporter will persist."""
-    from agent_utilities.usage.privacy import normalize_run_id
-
-    try:
-        from agent_utilities.security.brain_context import current_actor
-
-        tenant_id = current_actor().tenant_id
-    except Exception:  # noqa: BLE001 - empty tenant namespace is opaque too
-        tenant_id = ""
-    return f"graph_run:{normalize_run_id(source_run_id, tenant_id=tenant_id)}"
+    raise_moved("_langfuse_expected_trace_name", "usage.privacy", "epistemic-graph")
 
 
 def _langfuse_await_trace(expected_name: str, started_at: str) -> bool:
@@ -384,10 +379,11 @@ def _langfuse_inputs(cfg: Any) -> SimpleNamespace:
     ``langfuse_agent.auth`` reads for the standalone agent/MCP server -- is
     accepted too; see ``langfuse_credentials_configured()``.
     """
-    from agent_utilities.core.config import setting
     from agent_utilities.observability.langfuse_trust import (
         langfuse_provider_contract_ready,
     )
+
+    from graph_os.core.settings import setting
 
     return SimpleNamespace(
         public_input=bool(cfg.langfuse_public_key_ref)
@@ -623,7 +619,7 @@ def _check_langfuse(
 ) -> dict[str, Any]:
     """Validate Langfuse statically, or prove its live privacy-safe paths."""
     try:
-        from agent_utilities.core.config import AgentConfig
+        from graph_os.core.settings import GraphOSConfig as AgentConfig
 
         cfg = AgentConfig()
         inputs = _langfuse_inputs(cfg)

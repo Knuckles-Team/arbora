@@ -377,11 +377,10 @@ def action_policy_gate(
     decision point on the MCP-layer engine, never a reimplementation of its
     rules. Returns ``(allowed, decision info)``.
     """
-    from agent_utilities.orchestration.action_policy import (
+    from graph_os.access.action_policy import (
         ActionRequest,
         get_action_policy,
     )
-
     from graph_os.mcp_server import runtime
 
     request: dict[str, Any] = {

@@ -1041,7 +1041,7 @@ async def test_discover_prioritizes_named_server_inside_shared_budget(
 ):
     """A named domain is probed before unrelated fleet fan-out consumes the budget."""
 
-    from agent_utilities.core.config import config as agent_config
+    from graph_os.core.settings import runtime_config as agent_config
 
     tool_map = {
         **{f"slow-{index}-mcp": [] for index in range(24)},

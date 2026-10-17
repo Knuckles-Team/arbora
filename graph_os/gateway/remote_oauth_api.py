@@ -91,7 +91,7 @@ def _default_provider_registry() -> Any:
 
     registry = ProviderRegistry()
     try:
-        from agent_utilities.core.config import config
+        from graph_os.core.settings import runtime_config as config
 
         entries = config.remote_oauth_providers
     except Exception as exc:  # noqa: BLE001 - disable the feature, not the gateway
@@ -171,7 +171,7 @@ def _success_redirect_url() -> str | None:
     plain JSON success body instead of redirecting.
     """
     try:
-        from agent_utilities.core.config import config
+        from graph_os.core.settings import runtime_config as config
 
         return config.remote_oauth_success_redirect_url
     except Exception as exc:  # noqa: BLE001 - fail closed to a JSON success body
