@@ -69,7 +69,6 @@ every co-service thread before the process exits.
 
 from __future__ import annotations
 
-import dataclasses
 import logging
 import threading
 import time
@@ -85,60 +84,9 @@ _RESTART_WINDOW_SECONDS = 300.0
 _MAX_BACKOFF_SECONDS = 30.0
 
 
-@dataclasses.dataclass(frozen=True)
-class CompositionPlan:
-    """What THIS composition run detected as configured, independent of backend.
-
-    Reused by both the in-process supervisor below and graph-os's
-    multi-backend deployment planners (AU's own ``deployment/backends.py``
-    was retired under AU-BOUNDARY-R002) so messaging/web-UI composition is
-    decided in exactly one place.
-    """
-
-    messaging_platforms: tuple[str, ...] = ()
-    web_ui_enabled: bool = False
-    messaging_intake_enabled: bool = False
-
-    @property
-    def messaging_configured(self) -> bool:
-        return bool(self.messaging_platforms)
-
-    @property
-    def messaging_intake_configured(self) -> bool:
-        """Whether this plan may start an inbound listener."""
-        return self.messaging_configured and self.messaging_intake_enabled
-
-    def co_service_names(self) -> tuple[str, ...]:
-        """Names of co-services this composition would bring up (any backend)."""
-        names: list[str] = []
-        if self.messaging_intake_configured:
-            names.append("messaging")
-        if self.web_ui_enabled:
-            names.append("agent-webui")
-        return tuple(names)
-
-
-def detect_composition(
-    engine: Any = None, *, messaging_intake_enabled: bool | None = None
-) -> CompositionPlan:
-    """Detect the configured co-services from the already-loaded AgentConfig.
-
-    Pure/side-effect-free: safe to call before any engine or process identity
-    exists (used by the deployment planners as well as this supervisor).
-    """
-    from agent_utilities.core.config import config
-    from agent_utilities.messaging.daemon import configured_platforms
-
-    if messaging_intake_enabled is None:
-        # This is deployment intent, not a credential-derived default.  Keep
-        # the default false so generic interactive clients remain send-only.
-        messaging_intake_enabled = False
-
-    return CompositionPlan(
-        messaging_platforms=tuple(configured_platforms(engine)),
-        web_ui_enabled=bool(getattr(config, "enable_web_ui", False)),
-        messaging_intake_enabled=messaging_intake_enabled,
-    )
+# One composition decision: graph-os's own plan and detector (single
+# messaging owner, KG_DAEMON_ROLE=host gate) serve this supervisor too.
+from graph_os.mcp_server.composition import CompositionPlan, detect_composition
 
 
 class CoServiceSupervisor:

@@ -39,6 +39,15 @@ class CompositionPlan:
     def messaging_intake_configured(self) -> bool:
         return self.messaging_configured and self.messaging_intake_enabled
 
+    def co_service_names(self) -> tuple[str, ...]:
+        """Names of co-services this composition would bring up (any backend)."""
+        names: list[str] = []
+        if self.messaging_intake_configured:
+            names.append("messaging")
+        if self.web_ui_enabled:
+            names.append("agent-webui")
+        return tuple(names)
+
 
 def detect_composition(
     engine: Any = None, *, messaging_intake_enabled: bool | None = None
