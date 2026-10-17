@@ -291,7 +291,7 @@
         "deb2b45bf83d"
       ],
       "verified_by": [
-        "tests/a2a/test_eg_dispatch.py:43",
+        "tests/a2a/test_eg_dispatch.py:39",
         "tests/api/test_invoke_bootstrap.py:161",
         "tests/api/test_invoke_contract.py:238",
         "tests/api/test_invoke_governance.py:193",
