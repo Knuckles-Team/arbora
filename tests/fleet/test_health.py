@@ -141,3 +141,16 @@ def test_readiness_body_names_unserved_authorities() -> None:
         "worker_registry",
     ]
     assert not_served_authorities({"checks": []}) == []
+
+
+def test_readiness_body_names_failing_checks() -> None:
+    from arbora.observability.runtime_health import failing_checks
+
+    report = {
+        "checks": [
+            {"name": "engine", "status": "unhealthy", "reason": "secret detail"},
+            {"name": "messaging", "status": "not_configured"},
+            {"name": "source_provenance", "status": "unhealthy"},
+        ]
+    }
+    assert failing_checks(report) == ["engine"]

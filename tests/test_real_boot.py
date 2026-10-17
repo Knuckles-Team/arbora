@@ -137,18 +137,21 @@ class _Issuer:
         self._thread = threading.Thread(target=self._server.serve_forever, daemon=True)
         self._thread.start()
 
-    def token(self, subject: str, *, ttl: int = 3600) -> str:
+    def token(self, subject: str, *, ttl: int = 3600, email: bool = True) -> str:
         from joserfc import jwt
 
         now = int(time.time())
         roles = list(ROLES)
+        # A Keycloak client-credentials token carries no email: arbora mints it
+        # as an automated_service (service) principal.
+        identity = {"email": f"{subject}@boot.example"} if email else {}
         return jwt.encode(
             {"alg": "RS256", "typ": "at+jwt", "kid": "boot-test"},
             {
                 "iss": ISSUER,
                 "aud": AUDIENCE,
                 "sub": subject,
-                "email": f"{subject}@boot.example",
+                **identity,
                 "tenant_id": TENANT,
                 "roles": roles,
                 "scope": " ".join(roles),
@@ -466,6 +469,7 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
             "secret": secret,
             "base_url": base_url,
             "token": issuer.token(OPERATOR_SUBJECT),
+            "service_token": issuer.token(OPERATOR_SUBJECT, email=False),
             "logs": gos_logs,
         }
     finally:
@@ -496,6 +500,38 @@ def _post_op(stack: dict[str, Any], op_id: str, params: dict[str, Any]) -> Any:
         f"{op_id} answered {response.status_code}: {response.text}\n{stack['logs']()}"
     )
     return response.json()
+
+
+def test_readiness_passes_against_the_real_engine(stack: dict[str, Any]) -> None:
+    """/health/ready reaches 200: the engine probe is valid engine Cypher and
+    the authorities this release does not serve do not gate it."""
+    import httpx
+
+    deadline = time.monotonic() + 90
+    body: Any = None
+    while time.monotonic() < deadline:
+        response = httpx.get(f"{stack['base_url']}/health/ready", timeout=10)
+        body = response.json()
+        if response.status_code == 200:
+            break
+        time.sleep(2)
+    assert body["status"] == "ready", f"{body}\n{stack['logs']()}"
+
+
+def test_a_service_principal_token_is_a_verified_caller(
+    stack: dict[str, Any],
+) -> None:
+    """A no-email (client-credentials) token is a service caller, not refused."""
+    import httpx
+
+    response = httpx.post(
+        f"{stack['base_url']}/api/v1/ops/query.uql",
+        json={"text": "MATCH (:BootProbe) |> LIMIT 1"},
+        headers={"Authorization": f"Bearer {stack['service_token']}"},
+        timeout=30,
+    )
+    assert response.status_code == 200, f"{response.text}\n{stack['logs']()}"
+    assert response.json()["ok"] is True
 
 
 @pytest.mark.spec("GRAPHOS-HOST-R024")

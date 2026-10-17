@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable, Mapping
 from typing import TYPE_CHECKING, Any
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from arbora.api.invoke import VerifiedCaller
@@ -28,7 +31,8 @@ def caller_from_session(
     session.ensure_authority_current()
     actor = session.actor
     actor.ensure_credential_current()
-    if actor.authenticated is not True or actor.actor_type not in {"human", "service"}:
+    principal_kind = _PRINCIPAL_KINDS.get(str(actor.actor_type or ""))
+    if actor.authenticated is not True or principal_kind is None:
         raise PermissionError("Verified principal kind required")
     claims = session.engine_verified_context()
     scopes = session.scopes
@@ -41,7 +45,7 @@ def caller_from_session(
         tenant=session.tenant,
         effective_scopes=frozenset(scopes),
         engine_claims=claims,
-        principal_kind=actor.actor_type,
+        principal_kind=principal_kind,
         authenticated=True,
         delegated=bool(claims["delegation"]),
         credential_kind=credential_kind,
@@ -51,6 +55,16 @@ def caller_from_session(
         session=session,
     )
 
+
+#: Verified actor type -> caller principal kind. The served boundary mints a
+#: client-credentials (no-email) identity as ``automated_service``
+#: (``arbora.security.request_identity``); it is a service principal. Any other
+#: kind is never inferred and refuses.
+_PRINCIPAL_KINDS: dict[str, str] = {
+    "human": "human",
+    "service": "service",
+    "automated_service": "service",
+}
 
 _SCOPE_TYPES = (tuple, list, set, frozenset)
 
@@ -121,5 +135,7 @@ class VerifiedMCPCaller:
                 self._session_for_request(),
                 credential_kind=self._credential_kind_for_request(),
             )
-        except PermissionError:
+        except PermissionError as exc:
+            # Static, non-secret reason, so a refused caller is diagnosable.
+            logger.warning("MCP caller refused: %s", exc)
             return None

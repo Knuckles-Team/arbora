@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-10-17
+- Fixed every Keycloak service-account (client-credentials) caller being refused
+  UNAUTHENTICATED on MCP verbs, the ops API and A2A. Such a token carries no
+  email, so the served boundary mints it as an `automated_service` actor, and
+  the caller projection accepted only `human`/`service`. `automated_service` is
+  now a service principal. A refused caller logs its static reason.
+- Fixed readiness never passing: the engine probe sent `RETURN 1 AS ok`, which
+  the engine's Cypher refuses (it requires MATCH). It now sends
+  `MATCH (n) RETURN n LIMIT 1`.
+- `/health/ready` names the essential checks holding it down (`failing`).
+- The real-boot gate now asserts `/health/ready` is 200 against the real engine
+  and that a no-email service token is a verified caller.
+
 ## [0.1.2] - 2026-10-17
 - Fixed readiness never passing on a 0.1 deployment. A fleet supervisory
   authority this release does not serve (goal rehydration, the control store,

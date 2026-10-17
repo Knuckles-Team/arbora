@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import time
 from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any
@@ -9,6 +10,8 @@ from typing import TYPE_CHECKING, Any
 from fastapi import HTTPException, Request
 
 from arbora.api.mcp.caller import caller_from_session
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from arbora.api.contracts.session import GraphSession
@@ -120,7 +123,9 @@ class AmbientHTTPAuthenticator:
                 request_id=request.headers.get("x-request-id", "")[:128],
                 mfa_at_ms=mfa_at_ms,
             )
-        except PermissionError:
+        except PermissionError as exc:
+            # Static, non-secret reason, so a refused caller is diagnosable.
+            logger.warning("HTTP caller refused: %s", exc)
             raise HTTPAuthenticationError("Verified identity required") from None
 
 
