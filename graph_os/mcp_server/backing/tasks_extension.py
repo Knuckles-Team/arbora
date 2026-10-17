@@ -1032,11 +1032,11 @@ class WorkItemTasksExtension(ServerExtension):
         if not isinstance(caller, Mapping):
             raise mcp_protocol_exception(-32001, "Invalid delegated task identity")
         expected = self._caller_metadata(session)
-        normalized = {
-            "tenant": str(caller.get("tenant") or ""),
-            "owner": str(caller.get("owner") or ""),
-            "scopes": sorted(str(scope) for scope in caller.get("scopes", ())),
-        }
+        from graph_os.mcp_server.backing.context_helpers import (
+            caller_identity_fields,
+        )
+
+        normalized = caller_identity_fields(caller)
         if normalized != expected:
             raise mcp_protocol_exception(
                 -32001, "Delegated task identity does not match verified authority"
@@ -1300,10 +1300,7 @@ class WorkItemTasksExtension(ServerExtension):
 
         from agent_utilities.knowledge_graph.core import work_durability as _wi
 
-        item_id = _wi.orchestrator_work_item_id(params.task_id)
-        item = _wi.get_work_item(self._engine(), item_id)
-        if item is None or item.get("tenant") != session.tenant:
-            raise mcp_protocol_exception(-32602, "Unknown task")
+        item_id = self._owned_work_item_id(params.task_id, session)
         if not _wi.cancel_work_item(self._engine(), item_id):
             raise mcp_protocol_exception(-32602, "Failed to cancel task")
         current = _wi.get_work_item(self._engine(), item_id)
@@ -1312,6 +1309,16 @@ class WorkItemTasksExtension(ServerExtension):
         return self._ack_from_generic_item(
             params.task_id, current, session=session, route=route
         )
+
+    def _owned_work_item_id(self, task_id: str, session: Any) -> str:
+        """The work item behind ``task_id``; unknown unless the caller's tenant owns it."""
+        from agent_utilities.knowledge_graph.core import work_durability as _wi
+
+        item_id = _wi.orchestrator_work_item_id(task_id)
+        item = _wi.get_work_item(self._engine(), item_id)
+        if item is None or item.get("tenant") != session.tenant:
+            raise mcp_protocol_exception(-32602, "Unknown task")
+        return item_id
 
     async def _handle_update(
         self, ctx: ServerRequestContext[Any, Any], params: _UpdateTaskParams
@@ -1334,10 +1341,7 @@ class WorkItemTasksExtension(ServerExtension):
 
         from agent_utilities.knowledge_graph.core import work_durability as _wi
 
-        item_id = _wi.orchestrator_work_item_id(params.task_id)
-        item = _wi.get_work_item(self._engine(), item_id)
-        if item is None or item.get("tenant") != session.tenant:
-            raise mcp_protocol_exception(-32602, "Unknown task")
+        item_id = self._owned_work_item_id(params.task_id, session)
         if not _wi.submit_work_item_input(
             self._engine(),
             item_id,

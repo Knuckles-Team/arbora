@@ -21,6 +21,7 @@ from pydantic import Field
 
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
+from graph_os.mcp_server.backing.context_helpers import coerce_dict_param
 from graph_os.mcp_server.backing.write_ingest_types import IngestRequest
 
 _OPAQUE_NODE_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,255}\Z")
@@ -645,44 +646,25 @@ async def _ingest_action_backfill_platform_history(
     return json.dumps(result)
 
 
-async def _ingest_action_archivebox_sync(engine, request: IngestRequest) -> str:
-    corpus_name, base_path = request.corpus_name, request.base_path
-    # action(s): 'archivebox_sync'
-    from agent_utilities.knowledge_graph.core.source_sync import (
-        sync_source,
-    )
+def _sync_named_source(engine, request: IngestRequest, source: str) -> str:
+    """Sync one named source: ``corpus_name`` is the mode, ``base_path`` an id list."""
+    from agent_utilities.knowledge_graph.core.source_sync import sync_source
 
-    mode = (corpus_name or "delta").strip().lower()
+    mode = (request.corpus_name or "delta").strip().lower()
     ids = None
-    if base_path.strip().startswith("["):
-        ids = [str(x) for x in json.loads(base_path)]
-    res_d = sync_source(
-        engine,
-        "archivebox",
-        mode="full" if mode == "full" else mode,
-        ids=ids,
-    )
-    return json.dumps(res_d)
+    if request.base_path.strip().startswith("["):
+        ids = [str(x) for x in json.loads(request.base_path)]
+    return json.dumps(sync_source(engine, source, mode=mode, ids=ids))
+
+
+async def _ingest_action_archivebox_sync(engine, request: IngestRequest) -> str:
+    # action(s): \'archivebox_sync'
+    return _sync_named_source(engine, request, "archivebox")
 
 
 async def _ingest_action_gitlab_sync(engine, request: IngestRequest) -> str:
-    corpus_name, base_path = request.corpus_name, request.base_path
-    # action(s): 'gitlab_sync'
-    from agent_utilities.knowledge_graph.core.source_sync import (
-        sync_source,
-    )
-
-    mode = (corpus_name or "delta").strip().lower()
-    ids = None
-    if base_path.strip().startswith("["):
-        ids = [str(x) for x in json.loads(base_path)]
-    res_d = sync_source(
-        engine,
-        "gitlab",
-        mode="full" if mode == "full" else mode,
-        ids=ids,
-    )
-    return json.dumps(res_d)
+    # action(s): \'gitlab_sync'
+    return _sync_named_source(engine, request, "gitlab")
 
 
 async def _ingest_action_cdc_catchup(engine, request: IngestRequest) -> str:
@@ -1876,24 +1858,11 @@ def register_write_ingest_tools(mcp):
                     if not node_id:
                         return "Error: node_id required"
 
-                    # Omitted dict params arrive as the unresolved FastMCP
-                    # ``FieldInfo`` (default_factory is not resolved by the
-                    # internal/REST dispatcher); coerce anything non-dict — and a
-                    # JSON-string some MCP clients send — to a plain dict.
-                    def _as_dict(v: Any) -> dict:
-                        if isinstance(v, dict):
-                            return v
-                        if isinstance(v, str) and v.strip():
-                            try:
-                                parsed = json.loads(v)
-                                return parsed if isinstance(parsed, dict) else {}
-                            except (ValueError, TypeError):
-                                return {}
-                        return {}
-
                     applied = bool(
                         engine.backend.compare_and_set_node_fields(
-                            node_id, _as_dict(conditions), _as_dict(updates)
+                            node_id,
+                            coerce_dict_param(conditions),
+                            coerce_dict_param(updates),
                         )
                     )
                     return json.dumps(
@@ -2053,19 +2022,12 @@ def register_write_ingest_tools(mcp):
             # multi-store writes. CONCEPT:AU-KG.backend.explicit-graph-selection — `graph` (a physical engine
             # graph) is a separate axis from `connection`; it requires exactly one
             # resolved connection, so it fails closed against any fan-out.
-            try:
-                entries, errors, fanout = engine_routing._resolve_target_engines(
-                    connection
-                )
-                entries = engine_routing.resolve_explicit_graph(
-                    entries, graph, fanout=fanout
-                )
-            except engine_routing.GraphNotFoundError as e:
-                return public_error_text(e, code="graph_not_found")
-            except engine_routing.GraphSelectionConflictError as e:
-                return public_error_text(e, code="graph_selection_conflict")
-            except Exception as e:
-                return public_error_text(e)
+            targets = engine_routing.resolve_graph_targets(
+                engine_routing._resolve_target_engines, connection, graph
+            )
+            if isinstance(targets, str):
+                return targets
+            entries, errors, fanout = targets
 
             # CONCEPT:AU-KG.ingest.role-enforcement — role enforcement: a 'read' (data source) or 'mirror'
             # (fan-out replica) connection rejects direct connection= writes. Mirrors are

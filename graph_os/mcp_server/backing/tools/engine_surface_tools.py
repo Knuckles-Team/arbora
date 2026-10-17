@@ -59,6 +59,7 @@ from typing import Any
 from pydantic import Field
 
 from graph_os.mcp_server import runtime
+from graph_os.mcp_server.backing.context_helpers import run_coro as _run_coro
 from graph_os.mcp_server.backing.engine_surface_types import (
     ChartRenderRequest,
     KvCheckpointIntelligenceRequest,
@@ -230,6 +231,27 @@ class _EngineComputeAdapter:
     def __init__(self, client: Any, graph_name: str) -> None:
         self._client = client
         self.graph_name = graph_name
+
+
+def _checkpoint_failure(exc: Exception, action: str) -> str:
+    """The surface error for a ``KVCheckpointError`` raised by ``action``."""
+    return _surface_error(
+        exc, surface="kv_checkpoint", action=action, code=_checkpoint_error_code(exc)
+    )
+
+
+def _checkpoint_outcome(action: str, outcome: Any, *, advisory: bool = False) -> str:
+    """The JSON response for one checkpoint ``outcome``."""
+    body: dict[str, Any] = {
+        "surface": "kv_checkpoint",
+        "action": action,
+        "result": outcome.model_dump(mode="json", exclude={"recommendation"}),
+    }
+    if advisory:
+        body["advisory"] = (
+            outcome.recommendation.as_advisory() if outcome.recommendation else ""
+        )
+    return json.dumps(body, default=_json_default)
 
 
 def _checkpoint_error_code(exc: Exception) -> str:
@@ -549,12 +571,7 @@ def _kv_explain_response(
             exc, surface="kv_checkpoint", action=action, code="invalid_request"
         )
     except KVCheckpointError as exc:
-        return _surface_error(
-            exc,
-            surface="kv_checkpoint",
-            action=action,
-            code=_checkpoint_error_code(exc),
-        )
+        return _checkpoint_failure(exc, action)
 
 
 def _kv_promote_response(
@@ -578,20 +595,8 @@ def _kv_promote_response(
             exc, surface="kv_checkpoint", action=action, code="invalid_request"
         )
     except KVCheckpointError as exc:
-        return _surface_error(
-            exc,
-            surface="kv_checkpoint",
-            action=action,
-            code=_checkpoint_error_code(exc),
-        )
-    return json.dumps(
-        {
-            "surface": "kv_checkpoint",
-            "action": action,
-            "result": outcome.model_dump(mode="json", exclude={"recommendation"}),
-        },
-        default=_json_default,
-    )
+        return _checkpoint_failure(exc, action)
+    return _checkpoint_outcome(action, outcome)
 
 
 def _kv_checkpoint_now(
@@ -643,23 +648,8 @@ def _kv_checkpoint_now(
             sources=sources,
         )
     except KVCheckpointError as exc:
-        return _surface_error(
-            exc,
-            surface="kv_checkpoint",
-            action=action,
-            code=_checkpoint_error_code(exc),
-        )
-    return json.dumps(
-        {
-            "surface": "kv_checkpoint",
-            "action": action,
-            "result": outcome.model_dump(mode="json", exclude={"recommendation"}),
-            "advisory": (
-                outcome.recommendation.as_advisory() if outcome.recommendation else ""
-            ),
-        },
-        default=_json_default,
-    )
+        return _checkpoint_failure(exc, action)
+    return _checkpoint_outcome(action, outcome, advisory=True)
 
 
 def _kv_checkpoint_intelligence(
@@ -1581,20 +1571,6 @@ def _prometheus_http_query(
         return None
     result = (payload.get("data") or {}).get("result")
     return result if isinstance(result, list) else None
-
-
-def _run_coro(coro: Any) -> Any:
-    """Run an async coroutine from a sync MCP handler (loop-running or not)."""
-    import asyncio
-
-    try:
-        asyncio.get_running_loop()
-    except RuntimeError:
-        return asyncio.run(coro)
-    import concurrent.futures
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
-        return ex.submit(lambda: asyncio.run(coro)).result()
 
 
 # CONCEPT:AU-KG.memory.unified-memory-crud-core — the unified memory-CRUD core. graph_memory's recall/store/link
@@ -2777,12 +2753,7 @@ def _kv_instantiate_agent(
             current_policy_version=current_policy_version or None,
         )
     except KVCheckpointError as exc:
-        return _surface_error(
-            exc,
-            surface="kv_checkpoint",
-            action=action,
-            code=_checkpoint_error_code(exc),
-        )
+        return _checkpoint_failure(exc, action)
     return json.dumps(
         {"surface": "kv_checkpoint", "action": action, "result": record.model_dump()},
         default=_json_default,
@@ -2810,12 +2781,7 @@ def _kv_restore_conversation(
             allow_cold_start=allow_cold_start,
         )
     except KVCheckpointError as exc:
-        return _surface_error(
-            exc,
-            surface="kv_checkpoint",
-            action=action,
-            code=_checkpoint_error_code(exc),
-        )
+        return _checkpoint_failure(exc, action)
     # Never inline the heavy blob bytes over the JSON tool surface — only
     # provenance; a caller that needs the bytes fetches them directly from
     # the engine's own blob store by digest (CONCEPT:AU-KG.memory.kv-checkpoint-resource).

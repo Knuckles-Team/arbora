@@ -1758,15 +1758,9 @@ def _rate_limit_client_id(context: Any) -> str:
         token = None
     if token is None:
         return "anonymous"
-    claims = getattr(token, "claims", None) or {}
-    raw = "\x00".join(
-        str(value or "")
-        for value in (
-            getattr(token, "client_id", None),
-            claims.get("sub") if isinstance(claims, dict) else None,
-            claims.get("tenant_id") if isinstance(claims, dict) else None,
-        )
-    )
+    from graph_os.mcp_server.backing.context_helpers import token_caller_material
+
+    raw = token_caller_material(token)
     if not raw.strip("\x00"):
         return "anonymous"
     return "caller_" + hashlib.blake2s(raw.encode("utf-8"), digest_size=16).hexdigest()

@@ -2086,11 +2086,9 @@ def _tasks_caller_identity(
     caller: _collections_abc.Mapping[str, _typing.Any],
 ) -> dict[str, _typing.Any]:
     """The verified tenant/owner/scopes a Tasks delegation is minted for."""
-    identity = {
-        "tenant": str(caller.get("tenant") or ""),
-        "owner": str(caller.get("owner") or ""),
-        "scopes": sorted(str(scope) for scope in caller.get("scopes", ())),
-    }
+    from graph_os.mcp_server.backing.context_helpers import caller_identity_fields
+
+    identity = caller_identity_fields(caller)
     if not identity["tenant"] or not identity["owner"]:
         raise _fastmcp_exceptions.ToolError("Tasks route caller is not verified")
     return identity
@@ -7204,15 +7202,9 @@ def _context_session_key(get_context: _typing.Any) -> str | None:
 
 def _token_session_key(token: _typing.Any) -> str:
     """The stable, keyed per-caller session key derived from one access token."""
-    claims = getattr(token, "claims", None) or {}
-    raw = "\x00".join(
-        str(value or "")
-        for value in (
-            getattr(token, "client_id", None),
-            claims.get("sub") if isinstance(claims, dict) else None,
-            claims.get("tenant_id") if isinstance(claims, dict) else None,
-        )
-    )
+    from graph_os.mcp_server.backing.context_helpers import token_caller_material
+
+    raw = token_caller_material(token)
     digest = hashlib.blake2s(
         raw.encode("utf-8"), key=_SESSION_KEY, digest_size=16
     ).hexdigest()

@@ -19,7 +19,7 @@ operations/structural surface; it is not a compatibility catch-all.
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Annotated, Any
 
 from agent_utilities.models.evidence_bundle import EvidenceBundle
 from agent_utilities.security.error_surface import public_error_text
@@ -37,6 +37,10 @@ from graph_os.mcp_server.backing.tools._surface_selection import (
     register_conditional_tools,
 )
 from graph_os.mcp_server.backing.tools.analysis_tools import execute_focused_analysis
+
+_OptionalNodeId = Annotated[str, Field(description="Optional node id.")]
+_OptionalDepth = Annotated[int, Field(description="Optional depth.")]
+_OptionalTarget = Annotated[str, Field(description="Optional target.")]
 
 
 def register_analyze_suite_tools(
@@ -125,9 +129,9 @@ def register_analyze_suite_tools(
         ),
         query: str = Field(default="", description="Source / topic / artifact."),
         top_k: int = Field(default=10, description="Complexity budget / result count."),
-        node_id: str = Field(default="", description="Optional node id."),
-        depth: int = Field(default=2, description="Optional depth."),
-        target: str = Field(default="", description="Optional target."),
+        node_id: _OptionalNodeId = "",
+        depth: _OptionalDepth = 2,
+        target: _OptionalTarget = "",
     ) -> EvidenceBundle:
         """Research assimilation + knowledge-synthesis pipeline."""
         return await _delegate(action, query, top_k, node_id, depth, target)
@@ -162,9 +166,9 @@ def register_analyze_suite_tools(
             description="Subject of the evaluation (JSON / id / start state).",
         ),
         top_k: int = Field(default=10, description="Steps / result count."),
-        node_id: str = Field(default="", description="Optional node id."),
-        depth: int = Field(default=2, description="Optional depth."),
-        target: str = Field(default="", description="Optional target."),
+        node_id: _OptionalNodeId = "",
+        depth: _OptionalDepth = 2,
+        target: _OptionalTarget = "",
     ) -> EvidenceBundle:
         """Evaluation, harness gates, world-model rollouts, forecasting/causal analysis."""
         return await _delegate(action, query, top_k, node_id, depth, target)
@@ -197,7 +201,7 @@ def register_analyze_suite_tools(
         query: str = Field(default="", description="The question."),
         top_k: int = Field(default=10, description="Result count."),
         node_id: str = Field(default="", description="Optional anchor node id."),
-        depth: int = Field(default=2, description="Optional depth."),
+        depth: _OptionalDepth = 2,
         target: str = Field(
             default="", description="'domain:intent' | bare intent | 'domains'."
         ),

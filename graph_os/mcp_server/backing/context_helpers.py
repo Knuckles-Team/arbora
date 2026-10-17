@@ -11,6 +11,7 @@ CONCEPT:AU-ECO.mcp.standardized-interfaces — MCP Standardized Interfaces
 """
 
 
+import json
 import logging
 from typing import Any
 
@@ -307,3 +308,96 @@ async def ctx_graphql_get_type_details(
         return res
     except Exception as exc:
         return public_error_payload(exc, logger=logger)
+
+
+def coerce_dict_param(v: Any) -> dict:
+    """A dict tool parameter as a plain dict.
+
+    Omitted dict params arrive as the unresolved FastMCP ``FieldInfo``
+    (default_factory is not resolved by the internal/REST dispatcher); coerce
+    anything non-dict, and a JSON string some clients send, to a dict.
+    """
+    if isinstance(v, dict):
+        return v
+    if isinstance(v, str) and v.strip():
+        try:
+            parsed = json.loads(v)
+            return parsed if isinstance(parsed, dict) else {}
+        except (ValueError, TypeError):
+            return {}
+    return {}
+
+
+def run_coro(coro: Any) -> Any:
+    """Run an async coroutine from a sync MCP handler, loop-running or not.
+
+    With no running loop it uses ``asyncio.run``; with one, a worker thread
+    with its own loop, so a running loop is never re-entered.
+    """
+    import asyncio
+
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+    import concurrent.futures
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
+        return ex.submit(lambda: asyncio.run(coro)).result()
+
+
+def caller_identity_fields(caller: Any) -> dict[str, Any]:
+    """A Tasks delegation caller's tenant, owner and sorted scopes."""
+    return {
+        "tenant": str(caller.get("tenant") or ""),
+        "owner": str(caller.get("owner") or ""),
+        "scopes": sorted(str(scope) for scope in caller.get("scopes", ())),
+    }
+
+
+def token_caller_material(token: Any) -> str:
+    """The NUL-joined client id, subject and tenant one access token names."""
+    claims = getattr(token, "claims", None) or {}
+    return "\x00".join(
+        str(value or "")
+        for value in (
+            getattr(token, "client_id", None),
+            claims.get("sub") if isinstance(claims, dict) else None,
+            claims.get("tenant_id") if isinstance(claims, dict) else None,
+        )
+    )
+
+
+def action_policy_gate(
+    kind: str, target: str, reason: str, actor_id: str | None = None
+) -> tuple[bool, dict]:
+    """Run the fail-closed ActionPolicy gate for one mutation.
+
+    A thin call into the shared ``get_action_policy(engine).decide(...)``
+    decision point on the MCP-layer engine, never a reimplementation of its
+    rules. Returns ``(allowed, decision info)``.
+    """
+    from agent_utilities.orchestration.action_policy import (
+        ActionRequest,
+        get_action_policy,
+    )
+
+    from graph_os.mcp_server import runtime
+
+    request: dict[str, Any] = {
+        "kind": kind,
+        "target": target,
+        "source": "mcp",
+        "reason": reason or f"{kind} on {target}",
+    }
+    if actor_id is not None:
+        request["actor_id"] = actor_id
+    decision = get_action_policy(runtime._get_engine()).decide(ActionRequest(**request))
+    info = {
+        "decision": decision.decision,
+        "tier": decision.tier,
+        "reason": decision.reason,
+        "approval_id": decision.approval_id,
+        "audit_id": decision.audit_id,
+    }
+    return decision.allowed, info

@@ -931,6 +931,29 @@ def resolve_explicit_graph(
     return entries
 
 
+def resolve_graph_targets(
+    resolve: Any, connection: Any, graph: str
+) -> tuple[list[tuple[str, Any]], Any, bool] | str:
+    """``resolve(connection)`` then :func:`resolve_explicit_graph`.
+
+    Returns ``(entries, errors, fanout)``, or the public error text a tool
+    returns as-is: ``graph_not_found``/``graph_selection_conflict`` for a bad
+    explicit graph, otherwise the resolution failure.
+    """
+    from agent_utilities.security.error_surface import public_error_text
+
+    try:
+        entries, errors, fanout = resolve(connection)
+        entries = resolve_explicit_graph(entries, graph, fanout=fanout)
+    except GraphNotFoundError as e:
+        return public_error_text(e, code="graph_not_found")
+    except GraphSelectionConflictError as e:
+        return public_error_text(e, code="graph_selection_conflict")
+    except Exception as e:
+        return public_error_text(e)
+    return entries, errors, fanout
+
+
 def _validate_graph_exists_in_catalog(engine: Any, graph: str) -> None:
     """Best-effort existence check for ``graph`` against the engine's catalog.
 

@@ -19,6 +19,8 @@ from pydantic import Field
 
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
+from graph_os.mcp_server.backing.context_helpers import coerce_dict_param
+from graph_os.mcp_server.backing.context_helpers import run_coro as _run_coro
 from graph_os.mcp_server.backing.ontology_types import (
     OntologyCatalogRequest,
 )
@@ -32,26 +34,6 @@ logger = logging.getLogger(__name__)
 # all, materializing the entire matching id set (13,793 ``Concept`` nodes out of
 # 139,655 total in the deployment that OOM-killed the live graph-os pod).
 _OBJECT_SET_HARD_CAP = 10_000
-
-
-def _run_coro(coro: Any) -> Any:
-    """Run an async coroutine from a sync MCP handler, loop-running or not.
-
-    The concept tools are registered sync (FastMCP runs them off the event loop)
-    but ``runtime._execute_tool`` is async. When no loop is running we
-    ``asyncio.run``; when one is, we run on a worker thread with its own loop so
-    we never re-enter a running loop.
-    """
-    import asyncio
-
-    try:
-        asyncio.get_running_loop()
-    except RuntimeError:
-        return asyncio.run(coro)
-    import concurrent.futures
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
-        return ex.submit(lambda: asyncio.run(coro)).result()
 
 
 _ONTOLOGY_CATALOG_ACTIONS = frozenset({"load", "list", "get", "update", "delete"})
@@ -1010,21 +992,6 @@ def _ontology_derive_compute_all(object_json: str, object_type: str) -> str:
     return json.dumps(ont.derive_all(obj, object_type=object_type or None), default=str)
 
 
-def _object_edits_as_dict(v: Any) -> dict:
-    # Omitted dict params arrive as the unresolved FastMCP ``FieldInfo``
-    # (default_factory is not resolved by the internal/REST dispatcher);
-    # coerce anything non-dict — and a JSON-string some clients send.
-    if isinstance(v, dict):
-        return v
-    if isinstance(v, str) and v.strip():
-        try:
-            parsed = json.loads(v)
-            return parsed if isinstance(parsed, dict) else {}
-        except (ValueError, TypeError):
-            return {}
-    return {}
-
-
 @dataclass
 class _ObjectEditsRecordArgs:
     """Bundled `object_edits` action='record' parameters (kept under the
@@ -1093,7 +1060,7 @@ def _object_edits_record(ledger: Any, args: _ObjectEditsRecordArgs) -> str:
         return json.dumps(recorded.model_dump(), default=str)
 
     props = json.loads(args.properties_json) if args.properties_json else {}
-    conditions = _object_edits_as_dict(args.expect)
+    conditions = coerce_dict_param(args.expect)
     if etype == EditType.PROPERTY_SET and conditions:
         return _object_edits_compare_and_set(
             ledger, args.object_id, conditions, props, args.actor, etype

@@ -48,6 +48,7 @@ from agent_utilities.security.error_surface import public_error_payload
 from pydantic import Field
 
 from graph_os.mcp_server import runtime
+from graph_os.mcp_server.backing.context_helpers import action_policy_gate
 
 
 def _incident_engine() -> Any | None:
@@ -73,28 +74,7 @@ def _gate(kind: str, target: str, reason: str, actor_id: str = "") -> tuple[bool
     domain data) are intentionally kept on their own already-established
     engine paths.
     """
-    from agent_utilities.orchestration.action_policy import (
-        ActionRequest,
-        get_action_policy,
-    )
-
-    decision = get_action_policy(runtime._get_engine()).decide(
-        ActionRequest(
-            kind=kind,
-            target=target,
-            source="mcp",
-            reason=reason or f"{kind} on {target}",
-            actor_id=actor_id,
-        )
-    )
-    info = {
-        "decision": decision.decision,
-        "tier": decision.tier,
-        "reason": decision.reason,
-        "approval_id": decision.approval_id,
-        "audit_id": decision.audit_id,
-    }
-    return decision.allowed, info
+    return action_policy_gate(kind, target, reason, actor_id)
 
 
 def _list_incidents(*, status: str, severity: str, limit: int) -> dict[str, Any]:

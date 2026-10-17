@@ -226,11 +226,11 @@ async def dispatch_async(
     action: str,
     kwargs: Mapping[str, Any] | None = None,
     *,
+    ctx: Any = None,
+    operation: Mapping[str, Any] | None = None,
     aliases: Mapping[str, str] | None = None,
     service: str = "",
     result_coercer: Callable[[Any], Any] | None = None,
-    ctx: Any = None,
-    operation: Mapping[str, Any] | None = None,
 ) -> Any:
     """Resolve and execute an action without blocking the MCP event loop.
 

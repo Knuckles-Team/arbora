@@ -1269,6 +1269,29 @@ def _catalog_unavailable(
     )
 
 
+def _next_page_cursor(
+    spec: Any,
+    page_rows: list[Any],
+    has_more: bool,
+    *,
+    kind: str,
+    query: str,
+    authority: tuple[str, str, tuple[str, ...]],
+) -> str | None:
+    """The opaque cursor after ``page_rows``' last row, or ``None`` at the end."""
+    if not (has_more and page_rows):
+        return None
+    tenant, principal, grant_digests = authority
+    return _cursor_token(
+        kind=kind,
+        query=query,
+        after=_row_key(spec, page_rows[-1]),
+        tenant=tenant,
+        principal=principal,
+        grant_digests=grant_digests,
+    )
+
+
 async def _list_kind(
     request: Request,
     *,
@@ -1328,17 +1351,14 @@ async def _list_kind(
         )
     except Exception as exc:  # noqa: BLE001 - backend unavailability is privacy-safe
         return _catalog_unavailable(kind, exc)
-    next_cursor = None
-    if has_more and page_rows:
-        last = _row_key(spec, page_rows[-1])
-        next_cursor = _cursor_token(
-            kind=kind,
-            query=query,
-            after=last,
-            tenant=tenant,
-            principal=principal,
-            grant_digests=grant_digests,
-        )
+    next_cursor = _next_page_cursor(
+        spec,
+        page_rows,
+        has_more,
+        kind=kind,
+        query=query,
+        authority=(tenant, principal, grant_digests),
+    )
     try:
         items = [_validate_item(kind, model, row) for row in page_rows]
     except CatalogUnavailable as exc:
@@ -1355,12 +1375,8 @@ async def _get_kind(
     model: type[BaseModel],
     item_id: str,
 ) -> RegistryItemEnvelope[Any] | JSONResponse:
-    """Return the typed item envelope, or a bare ``JSONResponse`` on the
-    catalog-unavailable path (FastAPI honors a returned ``Response`` over
-    the declared ``response_model``, so the 503 ``{"status":
-    "unavailable", ...}`` body below is served exactly as constructed;
-    this annotation only makes that documented, doubly-typed return honest
-    for static analysis — it changes no wire behavior)."""
+    """Return the typed item envelope, or the bare 503 ``JSONResponse`` on
+    the catalog-unavailable path (see :func:`_list_kind`)."""
     tenant, principal, grant_digests = _kind_catalog_authority(kind)
     try:
         row = await _offload_catalog_call(
@@ -1553,17 +1569,14 @@ async def _list_multi_kind(request: Request) -> RegistryMultiKindPage:
                 status="unavailable", reason="catalog_unavailable"
             )
 
-        next_cursor = None
-        if has_more and page_rows:
-            last = _row_key(spec, page_rows[-1])
-            next_cursor = _cursor_token(
-                kind=kind,
-                query=query,
-                after=last,
-                tenant=tenant,
-                principal=principal,
-                grant_digests=grant_digests,
-            )
+        next_cursor = _next_page_cursor(
+            spec,
+            page_rows,
+            has_more,
+            kind=kind,
+            query=query,
+            authority=(tenant, principal, grant_digests),
+        )
         try:
             items = [_validate_item(kind, spec.model, row) for row in page_rows]
         except CatalogUnavailable as exc:

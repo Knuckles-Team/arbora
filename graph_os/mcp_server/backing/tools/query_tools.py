@@ -3330,19 +3330,12 @@ def register_query_tools(mcp):
             # CONCEPT:AU-KG.backend.explicit-graph-selection — `graph` requires exactly one resolved
             # connection, so it fails closed against any fan-out (explicit or the
             # implicit content-graph union) — never a silent ignore or union.
-            try:
-                entries, errors, fanout = engine_routing._resolve_read_engines(
-                    connection
-                )
-                entries = engine_routing.resolve_explicit_graph(
-                    entries, graph, fanout=fanout
-                )
-            except engine_routing.GraphNotFoundError as e:
-                return public_error_text(e, code="graph_not_found")
-            except engine_routing.GraphSelectionConflictError as e:
-                return public_error_text(e, code="graph_selection_conflict")
-            except Exception as e:
-                return public_error_text(e)
+            targets = engine_routing.resolve_graph_targets(
+                engine_routing._resolve_read_engines, connection, graph
+            )
+            if isinstance(targets, str):
+                return targets
+            entries, errors, fanout = targets
 
             if not fanout:
                 return _graph_search_single_target(entries, graph, _run_search)

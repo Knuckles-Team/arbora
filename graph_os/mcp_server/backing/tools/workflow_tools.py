@@ -120,19 +120,18 @@ async def _execute_or_dispatch_workflow(
             )
 
         if action == "execute_dynamic":
-            return await _execute_dynamic_workflow(
-                orchestrator,
-                engine,
-                workflow,
-                task,
-                max_steps,
-                max_agent_calls,
-                max_concurrency,
-                budget_tokens,
-                model_class,
-                dynamic_fallback,
-                workflow_run_id,
+            dynamic_result = await orchestrator.execute_dynamic_workflow(
+                workflow_id=workflow,
+                task=task,
+                max_steps=max_steps,
+                max_agent_calls=max_agent_calls,
+                max_concurrency=max_concurrency,
+                budget_tokens=budget_tokens,
+                model_class=model_class,
+                unavailable_fallback=dynamic_fallback,
+                workflow_run_id=workflow_run_id or None,
             )
+            return await _with_mermaid(dynamic_result, engine, workflow)
 
         return await _dispatch_workflow(engine, workflow, task)
 
@@ -147,42 +146,14 @@ async def _execute_workflow(
         task=task,
         max_steps=max_steps,
     )
+    return await _with_mermaid(result, engine, workflow)
+
+
+async def _with_mermaid(result: Any, engine: Any, workflow: str) -> str:
+    """``result`` with the workflow's Mermaid diagram, as JSON."""
     return json.dumps(
         {
             "result": result,
-            "mermaid": await asyncio.to_thread(_workflow_mermaid, engine, workflow),
-        },
-        default=str,
-    )
-
-
-async def _execute_dynamic_workflow(
-    orchestrator: Any,
-    engine: Any,
-    workflow: str,
-    task: str,
-    max_steps: int,
-    max_agent_calls: int,
-    max_concurrency: int,
-    budget_tokens: int | None,
-    model_class: str,
-    dynamic_fallback: str,
-    workflow_run_id: str,
-) -> str:
-    dynamic_result = await orchestrator.execute_dynamic_workflow(
-        workflow_id=workflow,
-        task=task,
-        max_steps=max_steps,
-        max_agent_calls=max_agent_calls,
-        max_concurrency=max_concurrency,
-        budget_tokens=budget_tokens,
-        model_class=model_class,
-        unavailable_fallback=dynamic_fallback,
-        workflow_run_id=workflow_run_id or None,
-    )
-    return json.dumps(
-        {
-            "result": dynamic_result,
             "mermaid": await asyncio.to_thread(_workflow_mermaid, engine, workflow),
         },
         default=str,

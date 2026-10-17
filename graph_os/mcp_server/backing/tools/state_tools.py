@@ -180,14 +180,8 @@ async def _resolve_sessions_response(
 async def _resolve_goals_response(
     action: str, goal_id: str, goal: str, max_iterations: int
 ) -> tuple[Any, str | None]:
-    """Resolve the raw response object for one ``graph_goals`` action, or an
-    already-JSON-encoded validation-error string, for
-    ``register_state_tools``'s ``graph_goals`` tool.
-
-    Extracted verbatim (pure extract-method, no behaviour change). Returns
-    ``(resp, error_json)``; when ``error_json`` is not ``None`` the caller
-    should return it directly instead of formatting ``resp``.
-    """
+    """The raw response for one ``graph_goals`` action as ``(resp, error_json)``
+    (see :func:`_resolve_session_crud_response`)."""
     from agent_utilities.core.sessions import (
         cancel_goal,
         create_goal,
