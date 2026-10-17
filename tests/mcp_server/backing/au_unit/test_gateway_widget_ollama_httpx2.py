@@ -19,8 +19,8 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import pytest
 
-from graph_os.gateway.models import ServiceConfig
-from graph_os.gateway.widgets.ollama import Widget
+from arbora.gateway.models import ServiceConfig
+from arbora.gateway.widgets.ollama import Widget
 
 
 class _FakeOllamaHandler(BaseHTTPRequestHandler):

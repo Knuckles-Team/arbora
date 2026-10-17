@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from graph_os.api.ops import (
+from arbora.api.ops import (
     access,
     agents,
     browser,
@@ -29,21 +29,21 @@ from graph_os.api.ops import (
     usage,
     work,
 )
-from graph_os.api.registry import (
+from arbora.api.registry import (
     Composite,
     EgMethod,
     Executor,
     SubjectRef,
     SubjectSource,
 )
-from graph_os.api.registry.eg_binding import EgContractError
+from arbora.api.registry.eg_binding import EgContractError
 from tests.api.test_eg_binding import _curated, _fixture
 
 
 @pytest.fixture
 def provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Path]:
     """Supply packaged contract resources without importing a live engine client."""
-    from graph_os.api.registry import eg_binding
+    from arbora.api.registry import eg_binding
 
     contract, exclusions = _fixture(tmp_path)
     # Synthetic approved scope evidence; production classifications are provider-owned.
@@ -170,10 +170,10 @@ def test_duplicate_curated_ids_are_rejected(
 @pytest.mark.parametrize(
     "handler",
     [
-        "graph_os.api.ops.agents.absent",
-        "graph_os.api.ops.agents.operations",
+        "arbora.api.ops.agents.absent",
+        "arbora.api.ops.agents.operations",
         "unapproved.module.handler",
-        "graph_os.api.ops.browser.handle_browser",
+        "arbora.api.ops.browser.handle_browser",
     ],
 )
 def test_unsupported_or_unbound_handler_is_rejected(
@@ -268,7 +268,7 @@ def test_curated_and_generated_id_collision_is_rejected(
 def test_missing_composite_caller_scope_fails_before_canonicalization(
     provider: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch, scope: str
 ) -> None:
-    from graph_os.api.ops import registry_factory
+    from arbora.api.ops import registry_factory
 
     contract, _ = provider
     path = contract / "scopes.json"
@@ -325,6 +325,6 @@ def test_curated_scope_evidence_uses_provider_class_validation(
 
 @pytest.mark.spec("GRAPHOS-OPS-R024.4")
 def test_memory_operations_are_absent_until_the_engine_serves_them() -> None:
-    from graph_os.api.ops.registry_factory import get_registry
+    from arbora.api.ops.registry_factory import get_registry
 
     assert not [op.id for op in get_registry() if op.id.startswith("memory.")]

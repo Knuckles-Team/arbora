@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from graph_os.control_plane.retrieval import (
+from arbora.control_plane.retrieval import (
     ArtifactRef,
     AuthorizationEvidence,
     ChunkRef,

@@ -1,10 +1,10 @@
 """GRAPHOS-FLEET-R006.1/.2: the harvest call-site inventory, and the first
 removal.
 
-``graph_os/fleet/multiplexer.py`` still carries the skill/prompt
+``arbora/fleet/multiplexer.py`` still carries the skill/prompt
 body-harvest path (``_harvest_resource_bodies`` and its helpers) that
 ``GRAPHOS-FLEET-R006.2``-``.5`` remove once the resident local-skill
-catalog (``graph_os/fleet/local_skill_catalog.py``) serves the same
+catalog (``arbora/fleet/local_skill_catalog.py``) serves the same
 capability for an admitted child. This is a static, source-level census:
 it enumerates every ``_harvest``-named entry point defined in that module
 and every direct call site of ``_harvest_resource_bodies`` in any
@@ -25,12 +25,12 @@ from pathlib import Path
 
 import pytest
 
-import graph_os
+import arbora
 
 _MULTIPLEXER_RELATIVE_PATH = Path("fleet") / "multiplexer.py"
 
 # GRAPHOS-FLEET-R006.1 baseline: every ``_harvest``-named entry point
-# (function or method) defined in graph_os/fleet/multiplexer.py today.
+# (function or method) defined in arbora/fleet/multiplexer.py today.
 # GRAPHOS-FLEET-R006.3 deletes _harvest_resource_bodies, _harvest_deadline
 # and _harvest_error_reason; GRAPHOS-FLEET-R006.4 renames
 # _harvest_probe_results off this list.
@@ -55,7 +55,7 @@ _BASELINE_TOTAL_CALL_SITES = sum(_BASELINE_CALL_SITES_BY_METHOD.values())
 
 
 def _multiplexer_source_path() -> Path:
-    package_root = Path(graph_os.__file__).resolve().parent
+    package_root = Path(arbora.__file__).resolve().parent
     return package_root / _MULTIPLEXER_RELATIVE_PATH
 
 
@@ -107,7 +107,7 @@ def test_harvest_named_entry_points_match_pinned_baseline() -> None:
     found = _harvest_named_entry_points(_multiplexer_tree())
     assert found == _BASELINE_HARVEST_ENTRY_POINTS, (
         "a harvest-named entry point was added or removed in "
-        "graph_os/fleet/multiplexer.py without updating the "
+        "arbora/fleet/multiplexer.py without updating the "
         "GRAPHOS-FLEET-R006.1 baseline: "
         f"found={sorted(found)} baseline={sorted(_BASELINE_HARVEST_ENTRY_POINTS)}"
     )
@@ -118,7 +118,7 @@ def test_harvest_resource_bodies_call_sites_match_pinned_baseline() -> None:
     found = _harvest_resource_bodies_call_sites_by_method(_multiplexer_tree())
     assert found == _BASELINE_CALL_SITES_BY_METHOD, (
         "a _harvest_resource_bodies call site was added or removed in "
-        "graph_os/fleet/multiplexer.py without updating the "
+        "arbora/fleet/multiplexer.py without updating the "
         f"GRAPHOS-FLEET-R006.1 baseline: found={found} "
         f"baseline={_BASELINE_CALL_SITES_BY_METHOD}"
     )
@@ -139,7 +139,7 @@ async def test_probe_protocol_families_resolves_admitted_skill_without_wire_read
 ) -> None:
     from types import SimpleNamespace
 
-    from graph_os.fleet import multiplexer as mux
+    from arbora.fleet import multiplexer as mux
 
     resource = SimpleNamespace(
         uri="skill://admitted/SKILL.md", name="admitted", description="d"

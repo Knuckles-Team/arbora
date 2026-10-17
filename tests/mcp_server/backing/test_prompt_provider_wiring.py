@@ -13,7 +13,7 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from graph_os.mcp_server.backing.server_factory import (
+from arbora.mcp_server.backing.server_factory import (
     _register_prompt_providers,
     create_mcp_server,
 )
@@ -22,7 +22,7 @@ from graph_os.mcp_server.backing.server_factory import (
 def test_register_prompt_providers_never_breaks_server_construction(caplog) -> None:
     fake_mcp = MagicMock(spec=[])  # no attributes at all, incl. no add_resource
 
-    with caplog.at_level("DEBUG", logger="graph_os.mcp_server.backing.server_factory"):
+    with caplog.at_level("DEBUG", logger="arbora.mcp_server.backing.server_factory"):
         _register_prompt_providers(fake_mcp)  # must not raise
 
     assert "prompt" in caplog.text.casefold()
@@ -55,7 +55,7 @@ def test_register_prompt_providers_registers_one_resource_per_json_file(
     (provider_dir / "_manifest.json").write_text("{}", "utf-8")
 
     monkeypatch.setattr(
-        "graph_os.core.providers.resolve_prompt_provider_dirs",
+        "arbora.core.providers.resolve_prompt_provider_dirs",
         lambda: [("servicenow-api", provider_dir)],
     )
 
@@ -85,7 +85,7 @@ def test_register_prompt_providers_one_bad_dir_does_not_sink_the_rest(
             raise OSError("permission denied")
 
     monkeypatch.setattr(
-        "graph_os.core.providers.resolve_prompt_provider_dirs",
+        "arbora.core.providers.resolve_prompt_provider_dirs",
         lambda: [("bad-provider", _BadPath()), ("good-provider", good_dir)],
     )
 

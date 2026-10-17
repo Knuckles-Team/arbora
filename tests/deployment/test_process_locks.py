@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from graph_os.deployment import engine_lock, file_lock, host_lock
+from arbora.deployment import engine_lock, file_lock, host_lock
 
 
 @pytest.fixture
@@ -39,8 +39,8 @@ def test_shared_locks_coexist_but_exclude_exclusive(pair):
 
 @pytest.fixture
 def fresh_host(tmp_path, monkeypatch):
-    monkeypatch.setenv("GRAPH_OS_RUNTIME_DIR", str(tmp_path))
-    monkeypatch.delenv("GRAPH_OS_TESTING", raising=False)
+    monkeypatch.setenv("ARBORA_RUNTIME_DIR", str(tmp_path))
+    monkeypatch.delenv("ARBORA_TESTING", raising=False)
     monkeypatch.delenv("KG_DAEMON_ROLE", raising=False)
     monkeypatch.setattr(host_lock, "_effective_role", None, raising=False)
     monkeypatch.setattr(host_lock, "_lock_fd", None, raising=False)

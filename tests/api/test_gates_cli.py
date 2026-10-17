@@ -1,7 +1,7 @@
 """GRAPHOS-FLEET-R016: the API-surface and backward-compat CLI gates
 fail closed against a drifted fixture registry and pass against a
 compliant one. Each script is a thin CLI over
-``graph_os.api.registry.surface_gate``; these tests exercise the CLI
+``arbora.api.registry.surface_gate``; these tests exercise the CLI
 layer (baseline load/write, exit codes) rather than re-testing the pure
 diff functions, which `tests/api/test_surface_drift_gate.py` and
 `tests/api/test_backward_compat_drift_gate.py` already cover.
@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from graph_os.api.registry import (
+from arbora.api.registry import (
     PrincipalRule,
 )
 from tests.api._support import identity_read_op as _op

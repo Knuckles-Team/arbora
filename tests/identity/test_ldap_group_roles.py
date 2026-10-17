@@ -2,8 +2,8 @@
 
 import pytest
 
-from graph_os.identity.engine import IdentityUnavailable
-from graph_os.identity.ldap import map_groups_to_roles
+from arbora.identity.engine import IdentityUnavailable
+from arbora.identity.ldap import map_groups_to_roles
 
 _ADMINS = "cn=admins,ou=groups,dc=example,dc=org"
 _OPS = "cn=ops,ou=groups,dc=example,dc=org"

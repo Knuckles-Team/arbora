@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.architecture.capability_layers import (
+from arbora.architecture.capability_layers import (
     CapabilityLayer,
     InProcessHarness,
     UnsupportedCapabilityLayerError,

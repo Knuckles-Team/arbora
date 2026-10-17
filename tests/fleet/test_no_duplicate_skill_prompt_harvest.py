@@ -1,16 +1,16 @@
-"""GRAPHOS-A2A-R003: the deployed graph-os package harvests fleet skills
+"""GRAPHOS-A2A-R003: the deployed arbora package harvests fleet skills
 and prompts through exactly one owner.
 
 agent-utilities ships its own legacy MCP multiplexer
 (``agent_utilities.mcp.multiplexer`` / ``agent_utilities.mcp.shared_multiplexer``)
-with its own skill/prompt body-harvest path. graph-os owns fleet composition
-and discovery (``graph-os-repository-development`` skill, "graph_os.fleet |
+with its own skill/prompt body-harvest path. arbora owns fleet composition
+and discovery (``arbora-repository-development`` skill, "arbora.fleet |
 MCP child lifecycle, catalog discovery..."); its served package must never
 import that legacy path, and
 must define the skill/prompt body-harvest functions
-(:func:`graph_os.fleet.multiplexer._harvest_resource_bodies`,
-:func:`~graph_os.fleet.multiplexer._bounded_skill_catalog`,
-:func:`~graph_os.fleet.multiplexer._bounded_prompt_catalog`) in exactly one
+(:func:`arbora.fleet.multiplexer._harvest_resource_bodies`,
+:func:`~arbora.fleet.multiplexer._bounded_skill_catalog`,
+:func:`~arbora.fleet.multiplexer._bounded_prompt_catalog`) in exactly one
 module. This is a static, source-level absence check: what the package's
 own source never imports can never load as a side effect of running it.
 """
@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pytest
 
-import graph_os
+import arbora
 
 _FORBIDDEN_MODULES = (
     "agent_utilities.mcp.multiplexer",
@@ -37,7 +37,7 @@ _HARVEST_FUNCTIONS = (
 
 
 def _package_root() -> Path:
-    return Path(graph_os.__file__).resolve().parent
+    return Path(arbora.__file__).resolve().parent
 
 
 def _iter_source_files() -> list[Path]:
@@ -72,7 +72,7 @@ def test_no_source_file_imports_the_legacy_au_multiplexer() -> None:
         if hits:
             offenders[path.relative_to(_package_root()).as_posix()] = hits
     assert not offenders, (
-        "graph_os source imports agent-utilities' legacy MCP multiplexer, "
+        "arbora source imports agent-utilities' legacy MCP multiplexer, "
         f"duplicating the skill/prompt harvest path: {offenders}"
     )
 

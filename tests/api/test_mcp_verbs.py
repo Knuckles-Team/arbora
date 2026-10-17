@@ -1,7 +1,7 @@
 """Focused MCP verb projection checks; server cutover is covered separately.
 
 ``invoke`` (GRAPHOS-OPS-R007's single invocation chokepoint) is injected into
-``MCPProjection`` rather than imported from ``graph_os.api.invoke``, which
+``MCPProjection`` rather than imported from ``arbora.api.invoke``, which
 does not exist on this branch yet; each test supplies its own fake.
 """
 
@@ -15,12 +15,12 @@ from typing import Any
 import pytest
 from pydantic import BaseModel
 
-from graph_os.api.mcp.discovery import find_visible
-from graph_os.api.mcp.resolve import IntentResolver
-from graph_os.api.mcp.resources import operation_spec, registry_index
-from graph_os.api.mcp.verbs import PARAMETERS, MCPProjection, dispatch_verb, make_verb
-from graph_os.api.policy import PolicyGate, PolicyUnavailable
-from graph_os.api.registry import Effect, Surface, Verb
+from arbora.api.mcp.discovery import find_visible
+from arbora.api.mcp.resolve import IntentResolver
+from arbora.api.mcp.resources import operation_spec, registry_index
+from arbora.api.mcp.verbs import PARAMETERS, MCPProjection, dispatch_verb, make_verb
+from arbora.api.policy import PolicyGate, PolicyUnavailable
+from arbora.api.registry import Effect, Surface, Verb
 
 
 class Input(BaseModel):
@@ -44,7 +44,7 @@ class Caller:
 
 
 def _op(op_id: str, verb: Verb, scope: str) -> Any:
-    from graph_os.api.registry import Confirm, Effect, PrincipalRule, Stability
+    from arbora.api.registry import Confirm, Effect, PrincipalRule, Stability
 
     return SimpleNamespace(
         id=op_id,
@@ -257,7 +257,7 @@ def test_exact_find_uses_governed_invoke_and_preview_stays_discovery() -> None:
 
 
 def test_resources_filter_operation_schemas_by_caller_authority() -> None:
-    from graph_os.api.registry import Composite, OpSpec
+    from arbora.api.registry import Composite, OpSpec
 
     permitted = OpSpec(
         id="things.read",
@@ -284,7 +284,7 @@ def test_resources_filter_operation_schemas_by_caller_authority() -> None:
         ]
         == "things.read"
     )
-    with pytest.raises(ValueError, match="Unknown GraphOS operation"):
+    with pytest.raises(ValueError, match="Unknown Arbora operation"):
         asyncio.run(operation_spec(registry, "things.secret", Caller(), gate))
 
 
@@ -304,7 +304,7 @@ def test_unavailable_policy_refuses_discovery_and_nl_resolution() -> None:
 
 
 def test_six_tools_share_one_schema_and_digest_in_instructions() -> None:
-    from graph_os.api.mcp.verbs import mcp_instructions
+    from arbora.api.mcp.verbs import mcp_instructions
 
     projection = _projection(Registry())
     tools = [

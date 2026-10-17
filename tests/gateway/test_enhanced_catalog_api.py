@@ -1,4 +1,4 @@
-"""W6 GraphOS-owned browser catalog contract."""
+"""W6 Arbora-owned browser catalog contract."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from graph_os.fleet.catalog_reader import (
+from arbora.fleet.catalog_reader import (
     CatalogComponent,
     ComponentContent,
     ComponentPin,
@@ -18,16 +18,16 @@ from graph_os.fleet.catalog_reader import (
     ReadReceipt,
     ServerRegistration,
 )
-from graph_os.fleet.catalog_reader import (
+from arbora.fleet.catalog_reader import (
     CatalogServer as FleetServer,
 )
-from graph_os.gateway import enhanced_catalog_api as api
+from arbora.gateway import enhanced_catalog_api as api
 
 CONTEXT = ReadContext(
     tenant_id="tenant-a",
     principal_id="principal-a",
     agent_id="agent-a",
-    audience="graph-os",
+    audience="arbora",
     policy_version="policy-a",
 )
 

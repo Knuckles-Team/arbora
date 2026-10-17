@@ -4,7 +4,7 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing [spe
 
 ## Existing wiring to reuse
 
-`graph_os.mcp_server.runtime` owns the served FastMCP loop, verified session scope, 320-second bounded dispatch, and `runtime.graph_client(tenant)`. `graph_os.gateway.graph_api.register_graph_routes` composes the REST host. `graph_os.fleet.multiplexer` owns per-session loading, forwarding, notifications, and child lifecycle. `graph_os.a2a` already has authenticated unary task methods. `graph_os.webui_host.mcp_delegation` must use the same public invocation boundary. These are migration seams, not new parallel servers. Engine state belongs to `epistemic-graph`. Decisions, context, traces and durable WorkItems belong to `epistemic-graph`. `agent-utilities` is the agent harness that applies engine decisions. Connector ingestion belongs to `agent-connector-sdk` (SDK-CONNECTOR-CONTROL-R005). Connector effects belong to the SDK and fleet. GraphOS authenticates, composes, supervises, routes and projects.
+`arbora.mcp_server.runtime` owns the served FastMCP loop, verified session scope, 320-second bounded dispatch, and `runtime.graph_client(tenant)`. `arbora.gateway.graph_api.register_graph_routes` composes the REST host. `arbora.fleet.multiplexer` owns per-session loading, forwarding, notifications, and child lifecycle. `arbora.a2a` already has authenticated unary task methods. `arbora.webui_host.mcp_delegation` must use the same public invocation boundary. These are migration seams, not new parallel servers. Engine state belongs to `epistemic-graph`. Decisions, context, traces and durable WorkItems belong to `epistemic-graph`. `agent-utilities` is the agent harness that applies engine decisions. Connector ingestion belongs to `agent-connector-sdk` (SDK-CONNECTOR-CONTROL-R005). Connector effects belong to the SDK and fleet. Arbora authenticates, composes, supervises, routes and projects.
 
 ## Component and data flow
 
@@ -20,19 +20,19 @@ flowchart LR
   R --> G["generated OpenAPI, schemas and clients"]
 ```
 
-Use immutable `OpSpec` data grouped by domain. An engine binding is generated from the versioned packaged method schema; a composite binding names a typed GraphOS service function. A curated alias suppresses the corresponding generated `eg.*` op so each wire method has exactly one owner. `Registry.digest` hashes canonical sorted schema and policy metadata. Route/verb factories create a single HTTP and MCP wrapper per operation family, never duplicated per-domain authorization.
+Use immutable `OpSpec` data grouped by domain. An engine binding is generated from the versioned packaged method schema; a composite binding names a typed Arbora service function. A curated alias suppresses the corresponding generated `eg.*` op so each wire method has exactly one owner. `Registry.digest` hashes canonical sorted schema and policy metadata. Route/verb factories create a single HTTP and MCP wrapper per operation family, never duplicated per-domain authorization.
 
 The invocation order is: resolve and allowed surface. Strict params including authority-field rejection. Authenticate. Principal kind. Exact caller scopes. Eunomia decision. Caller-side subject access for service execution. Effect preview/confirmation. Durable audit reservation for governed effect. Execute under caller claims or allowlisted service identity. Record outcome. Map to one envelope. The service executor stamps the verified caller as record owner, refuses caller-supplied owner, and rechecks authorization before deferred work. A post-effect audit failure returns an indeterminate receipt and reconciliation handle.
 
 ## Wire contracts
 
-`POST /api/v1/ops/{op_id}` accepts the operation's JSON schema; `Idempotency-Key` is required for non-natural write ops. `GET /api/v1/registry` is caller-filtered and returns a digest ETag. `GET /api/v1/ops` and OpenAPI expose only public schema metadata; sensitive discovery is filtered per caller. Resource routes, including identity and fleet catalog paths, are generated from `HttpShape` and use the same handler. `Graphos-Plan-Ref` resumes a plan. HTTP preview returns 428 with `CONFIRMATION_REQUIRED` or `STEP_UP_REQUIRED`. MCP returns the same envelope in tool result. `meta.registry_digest` and `meta.api_version` are mandatory.
+`POST /api/v1/ops/{op_id}` accepts the operation's JSON schema; `Idempotency-Key` is required for non-natural write ops. `GET /api/v1/registry` is caller-filtered and returns a digest ETag. `GET /api/v1/ops` and OpenAPI expose only public schema metadata; sensitive discovery is filtered per caller. Resource routes, including identity and fleet catalog paths, are generated from `HttpShape` and use the same handler. `Arbora-Plan-Ref` resumes a plan. HTTP preview returns 428 with `CONFIRMATION_REQUIRED` or `STEP_UP_REQUIRED`. MCP returns the same envelope in tool result. `meta.registry_digest` and `meta.api_version` are mandatory.
 
 The current MCP surface is GRAPHOS-FLEET-R029: six intent tools plus two Apps launchers. `find` accepts `op` or natural-language `intent`; exact operation IDs and typed params are required before effect. Verb ceilings are enforced (`ask/find/why` read, `write` write, `act` operational effects, `manage` admin). Discovery returns authorized schema descriptors. A bounded cache and tenant/policy-partitioned outcome ranking may improve suggestions. They must never turn fuzzy text into an unconfirmed mutation. Fleet discovery and status use `find`, invocation uses `act`, and mounts/releases use `manage` (GRAPHOS-FLEET-R029). Reuse GRAPHOS-FLEET-R011/R013 registry/discovery machinery and GRAPHOS-OPS-R007/R011/R012; add only missing operation wiring and no duplicate registry or disclosure rollup. Native child forwarding calls `invoke("fleet.call", ...)`; no transport calls bypass it. The child call uses the caller's delegated credential or a declared service-execution rule with the same deputy checks. `ToolAnnotations` classify read/destructive effects; unannotated means write; a reviewed manifest can tighten to admin.
 
 Scopes are exact. `mcp:discover` and `mcp:delegate` do not imply each other; `mcp:admin` is not a super-scope. `finance:read`, `fleet:read/control`, `loops:read/control`, `ops:read/admin` and every operation scope must exist in the public engine registry. `EUNOMIA_TYPE=off` still enforces scopes; enabled PDP failure returns `POLICY_UNAVAILABLE`. Decisions cache at most 30 seconds by principal, revision, item, action; admin/destructive are uncached. A revision invalidates loaded visibility and sends list-change notifications. The enabled/disabled mode behavior is testable with an in-process fixture PDP.
 
-Error source is `engine`, `fleet`, or `graphos`. Engine error codes pass through unchanged from the packaged error contract; GraphOS owns one mapping table for its closed enum. Details may include missing public scope names or a public target name, never secrets or private actor/tenant values. Timeouts and unknown outcomes remain typed errors. Stable API compatibility is checked against the merge base of public generated registry artifacts.
+Error source is `engine`, `fleet`, or `arbora`. Engine error codes pass through unchanged from the packaged error contract; Arbora owns one mapping table for its closed enum. Details may include missing public scope names or a public target name, never secrets or private actor/tenant values. Timeouts and unknown outcomes remain typed errors. Stable API compatibility is checked against the merge base of public generated registry artifacts.
 
 ## Migration and implementation order
 
@@ -49,7 +49,7 @@ The retirement inventory is a checked artifact produced from the existing host r
 
 - Run `uv sync --extra test` and `uv run pytest tests/api tests/fleet`.
 - Run `uv run ruff check .` and `uv run ruff format --check .`.
-- Run `uv run mypy graph_os` with public pinned wheels and fixture identities.
+- Run `uv run mypy arbora` with public pinned wheels and fixture identities.
 - CI may provision an ephemeral local engine/agent stack for served tests. No check requires a private host or credential.
 - Repository hooks run CCCC, KISS, jscpd, and Dupehound scans. Meet configured thresholds, including zero new clone pairs. Do not lower or suppress them.
 - Keep registry domain tables small. Prefer step tables over nested branching. Use one endpoint factory per surface and generated declarative types. Avoid repeated function bodies.
@@ -79,7 +79,7 @@ Deleted Agent summary widget: dashboard tile with type genius_agent, env prefix 
 ### Design in this repository
 
 - Dashboard: owned by the existing dashboard router module and its aggregator, config manager and registry under the gateway package. No new module; add census and capability tests only.
-- Live Artifacts: new router module `graph_os/gateway/artifacts_api.py` (to be created) with typed request model, a store port and a refresh port declared in the gateway ports module, and a register function that mounts the three routes. The store and refresh service come from a public `agent_utilities.api` export (prerequisite row); graph-os never imports the agent-utilities knowledge-graph package directly.
+- Live Artifacts: new router module `arbora/gateway/artifacts_api.py` (to be created) with typed request model, a store port and a refresh port declared in the gateway ports module, and a register function that mounts the three routes. The store and refresh service come from a public `agent_utilities.api` export (prerequisite row); arbora never imports the agent-utilities knowledge-graph package directly.
 - Pass the source resolver as a port argument, never a module global. The host supplies a graph-backed resolver. The default preserves prior data.
 - Agent summary widget: nothing to build.
 
@@ -97,7 +97,7 @@ Out of scope: moving the Live Artifact store or refresh service from agent-utili
 
 #### D2 Dashboard route parity (CONFIRMED by reading both files)
 
-Compared `git show 0eb67c99c^:agent_utilities/gateway/api.py` (328 lines) with `graph_os/gateway/dashboard_api.py` (389 lines). Both define the same 15 REST routes. The only addition is the websocket `/ws/dashboard` (moved from agent-webui; not part of the old router). Shared helpers are line-for-line equal: `_SERVICE_ID_RE`, the read and write capability sets (`gateway:read`, `gateway:write`, `gateway:admin`, `admin`; write excludes `gateway:read`), API-key callers unrestricted, the `/health` exemption in the read dependency, fail-closed 403 when capability resolution raises, and `Cache-Control: no-store` on health. Supporting modules differ only in import paths, a naive-UTC `_naive_utcnow` replacing deprecated `datetime.utcnow` in `models.py` (same value), and a new service-session in `aggregator.py`.
+Compared `git show 0eb67c99c^:agent_utilities/gateway/api.py` (328 lines) with `arbora/gateway/dashboard_api.py` (389 lines). Both define the same 15 REST routes. The only addition is the websocket `/ws/dashboard` (moved from agent-webui; not part of the old router). Shared helpers are line-for-line equal: `_SERVICE_ID_RE`, the read and write capability sets (`gateway:read`, `gateway:write`, `gateway:admin`, `admin`; write excludes `gateway:read`), API-key callers unrestricted, the `/health` exemption in the read dependency, fail-closed 403 when capability resolution raises, and `Cache-Control: no-store` on health. Supporting modules differ only in import paths, a naive-UTC `_naive_utcnow` replacing deprecated `datetime.utcnow` in `models.py` (same value), and a new service-session in `aggregator.py`.
 
 | Method and path | Auth | Request / response shape | Refusals | Result |
 |---|---|---|---|---|
@@ -107,10 +107,10 @@ Compared `git show 0eb67c99c^:agent_utilities/gateway/api.py` (328 lines) with `
 | GET /data/{service_id} | read | none / `WidgetData` | 403; 404 on bad id or "not found" error | CONFIRMED-equal |
 | GET /full | read | none / `DashboardResponse` | 403 | CONFIRMED-equal |
 | GET /data-subset | read | repeated `widget_id` / `dict[str, WidgetData]`; default `[]` became `None` and `set(widget_id or ())`, same empty result | 403 | CONFIRMED-equal |
-| GET /widgets | read | none / `list[WidgetListItem]` | 403 | DIFFERS: same shape, but the registry module map lives in `graph_os/gateway/registry.py`. The set of widget types is not compared in any test (row R001.8) |
+| GET /widgets | read | none / `list[WidgetListItem]` | 403 | DIFFERS: same shape, but the registry module map lives in `arbora/gateway/registry.py`. The set of widget types is not compared in any test (row R001.8) |
 | GET /health | none | none / health report | none (always 200) | CONFIRMED-equal |
 | GET /discover | read | none / `DashboardLayout` | 403 | CONFIRMED-equal |
-| GET /daemon/status | read | none / daemon status dict | 403 | DIFFERS: now `graph_os.gateway.daemon.daemon_status`; the module was refactored and its key set is not pinned (row R001.5) |
+| GET /daemon/status | read | none / daemon status dict | 403 | DIFFERS: now `arbora.gateway.daemon.daemon_status`; the module was refactored and its key set is not pinned (row R001.5) |
 | GET /daemon/shards | read | none / shard topology dict | 403 | DIFFERS: same wire; still imports `agent_utilities.knowledge_graph.core.shard_topology`, an internal module (row R001.6) |
 | POST /daemon/start | write | none / daemon status dict | 403 | DIFFERS: same as /daemon/status (row R001.5) |
 | POST /hydrate/{source} | write | none / hydration result dict | 403, 422 bad source, 500 no engine, 400 `ValueError`, 500 sanitized | DIFFERS: refusal codes equal. Engine and hydration come from AU internal modules (row R001.7) |
@@ -121,7 +121,7 @@ No route is missing. The capability resolver still imports internal agent-utilit
 
 #### D3 Live Artifacts authentication (DECIDED; not blocked)
 
-Evidence: `graph_os/api/registry/scopes.py` exports `FinanceScope`, `FleetScope`, `LoopsScope`, `OpsScope`; `graph_os/api/policy/domain_scopes.py` lists `fleet:events` and `webui:{admin,maintainer,reader,user}`. The pinned engine `contract/scopes.json` (175 rows, the file `eg_binding._load_scopes` reads and `tests/api/test_registry_factory.py` checks for "unregistered EG scope") has no `gateway:*` row. So `gateway:read` and `gateway:write` are NOT registry scopes. They are identity capabilities that the dashboard resolves from the identity group capability map (`_dashboard_capabilities`). The earlier text calling them "already in the engine contract" was wrong and is corrected above.
+Evidence: `arbora/api/registry/scopes.py` exports `FinanceScope`, `FleetScope`, `LoopsScope`, `OpsScope`; `arbora/api/policy/domain_scopes.py` lists `fleet:events` and `webui:{admin,maintainer,reader,user}`. The pinned engine `contract/scopes.json` (175 rows, the file `eg_binding._load_scopes` reads and `tests/api/test_registry_factory.py` checks for "unregistered EG scope") has no `gateway:*` row. So `gateway:read` and `gateway:write` are NOT registry scopes. They are identity capabilities that the dashboard resolves from the identity group capability map (`_dashboard_capabilities`). The earlier text calling them "already in the engine contract" was wrong and is corrected above.
 
 Decision: the artifact routes use the same dependencies as the dashboard routes (`_require_dashboard_read` for GET, `_require_dashboard_write` for POST, reused from `dashboard_api.py`, not copied). Behaviour matches sibling routes and no engine change is needed. Gateway scopes need no addition to the engine. `EG-IDENTITY-R007` registers `identity:admin`, `loops:read` and `loops:control` and is unrelated. The `loops:*` scopes are absent from the pinned `scopes.json` today. That is the concern of that row. Alternative rejected: map to registry scopes `webui:reader`/`webui:user`; those are the WebUI role namespace. That mapping creates a second authorization model for one gateway.
 
@@ -133,7 +133,7 @@ Proposed agent-utilities row (orchestrator adds it; new file `agent_utilities/ap
 
 > `AU-BOUNDARY-R013.<n>` **Export the Live Artifact store, models and refresh service.** Re-export `LiveArtifact`, `Provenance`, `BoundedJSONError`, `validate_bounded_json`, `LiveArtifactStore`, `get_live_artifact_store`, `RefreshService`, `RefreshResult`, `DataSource` and `kg_source_resolver` from `agent_utilities.knowledge_graph.live_artifacts` through `agent_utilities.api.live_artifacts`; delete the dead `install_kg_artifact_source`. Verification: an agent-utilities test imports each name from `agent_utilities.api` and the layout fence still passes.
 
-Because the AU resolver already re-runs `source_query`, GRAPHOS-OPS-R040.8 wires `kg_source_resolver` instead of re-implementing it (no parallel function). The bounded-JSON limits (depth 8, 100 keys, 500 items, 16 KiB string, 256 KiB total) stay in the AU validator. The graph-os request model does not copy them.
+Because the AU resolver already re-runs `source_query`, GRAPHOS-OPS-R040.8 wires `kg_source_resolver` instead of re-implementing it (no parallel function). The bounded-JSON limits (depth 8, 100 keys, 500 items, 16 KiB string, 256 KiB total) stay in the AU validator. The arbora request model does not copy them.
 
 ## Run read operations
 
@@ -141,7 +141,7 @@ Because the AU resolver already re-runs `source_query`, GRAPHOS-OPS-R040.8 wires
 
 `GRAPHOS-OPS-R021.4.1` through `.6` define the producer contract for both clients.
 The `runs` module, models, adapter and registry entries do not exist in current main.
-GraphOS must authenticate, route and project reads. It must not collect counters, select configuration or compute aggregates.
+Arbora must authenticate, route and project reads. It must not collect counters, select configuration or compute aggregates.
 
 [EG orchestration vocabulary](https://github.com/Knuckles-Team/epistemic-graph/tree/main/specs/orchestration-vocabulary) owns the trace and query contracts.
 [AU harness evolution](https://github.com/Knuckles-Team/agent-utilities/tree/main/specs/harness-evolution) owns run mechanisms.
@@ -152,10 +152,10 @@ The adapter must use a published engine client contract. Missing client support 
 
 ### Explicit per-run mapping
 
-GraphOS wire and generated client models must use the snake_case fields below.
+Arbora wire and generated client models must use the snake_case fields below.
 Views must consume those fields without reading RDF names or guessing aliases.
 
-| Engine source | GraphOS `runs.get` field | View meaning |
+| Engine source | Arbora `runs.get` field | View meaning |
 |---|---|---|
 | `terminationReason`, `EG-ORCH-VOCAB-R009.1` | `termination_reason` | Recorded terminal reason |
 | `peakContextTokens`, `EG-ORCH-VOCAB-R009.2` | `peak_context_tokens` | Peak tokens, not current occupancy |
@@ -172,14 +172,14 @@ The adapter must reject malformed producer values rather than silently coerce th
 ### Aggregate semantics
 
 `RunMetricsParams` selects optional `model_profile_ref`, `task_class` and a bounded time window.
-The engine must apply filters before aggregation. GraphOS must preserve the engine's grouping keys and evidence.
+The engine must apply filters before aggregation. Arbora must preserve the engine's grouping keys and evidence.
 `EG-ORCH-VOCAB-R010` defines solved as `final_answer` with `evaluationScore` equal to 1.0.
 `EG-ORCH-VOCAB-R010.1` supplies `success_rate`; `.3` supplies `overflow_rate`, grouped by model and task class.
 `.2` supplies `cost_per_solved_task_usd`, grouped by model, task class and applied configuration reference.
 The numerator includes costs from all traces; the denominator includes solved traces only.
 Zero solved traces must yield null cost and explicit abstention, never zero, infinity or a mean per run.
 The ambiguous `cost_per_task_usd` name must not enter this unimplemented API.
-The result must keep different query groupings separate. GraphOS must not broadcast pair-level rates onto configuration groups.
+The result must keep different query groupings separate. Arbora must not broadcast pair-level rates onto configuration groups.
 Any `run_count` must come from the engine for the same filter and grouping, never a client-side count.
 `cost_usd` belongs only to `runs.get`; aggregate cost must never populate that per-run field.
 
@@ -190,14 +190,14 @@ A present snapshot must contain `run_id`, a producer revision, observation time,
 Items preserve AU `PlanItem.text` and status: `pending`, `in_progress`, or `done`.
 An empty available item list differs from an unavailable snapshot.
 The producer must bind the snapshot to the requested run and caller authority.
-GraphOS must reject mismatched runs, malformed items and regressing revisions within one reader session.
+Arbora must reject mismatched runs, malformed items and regressing revisions within one reader session.
 Unavailable, expired or inaccessible state must carry no items and must not appear current.
-The producer must define expiry and revision semantics before GraphOS accepts a snapshot as current.
+The producer must define expiry and revision semantics before Arbora accepts a snapshot as current.
 
 `AU-HARNESS-R014.1` through `.5` own mutable scaffold state and injection outside stored history.
 They specify no public snapshot export, authority binding, revision or expiry contract today.
 The AU owner must extend R014 with that public read contract before this projection becomes available.
-GraphOS must not invent an AU method, persist the scaffold, or reconstruct it from stored messages.
+Arbora must not invent an AU method, persist the scaffold, or reconstruct it from stored messages.
 Any durable graph projection needs an EG-owned contract first; R009 does not supply one.
 `runs.get` may return trace fields while `current_plan` remains explicitly unavailable.
 Clients must offer no plan mutation control. This read contract does not move harness or engine responsibilities.
@@ -206,18 +206,18 @@ Clients must offer no plan mutation control. This read contract does not move ha
 
 REST `POST /api/v1/ops/{op_id}` and MCP must enter the existing invoke pipeline under `GRAPHOS-OPS-R009`.
 `handle_runs_get` and `handle_runs_metrics` must resolve `run_trace_reader` through `bound_service`.
-`graph_os/api/ops/retrieval.py:81` supplies the existing service-binding pattern.
-`graph_os/api/ops/registry_factory.py` supplies registration; `GRAPHOS-OPS-R025` owns generated artifacts.
+`arbora/api/ops/retrieval.py:81` supplies the existing service-binding pattern.
+`arbora/api/ops/registry_factory.py` supplies registration; `GRAPHOS-OPS-R025` owns generated artifacts.
 Planned tests must enter those served surfaces, verify authority propagation, and observe the engine result or refusal.
 A protocol import or mocked handler alone must not count as served evidence.
 
 ## GRAPHOS-OPS-R042 content screening and redaction
 
-Data flow: POST route (graph_os/api/http/routes.py:127) → `invoke` (graph_os/api/invoke/pipeline.py:810) → screen → effect → redactor → response and trace.
+Data flow: POST route (arbora/api/http/routes.py:127) → `invoke` (arbora/api/invoke/pipeline.py:810) → screen → effect → redactor → response and trace.
 
 Types: `ContentScreenVerdict`, `ScreenFinding` (class, span, rule id), `ContentOrigin`. The screen attaches in `invoke` after argument validation and before the effect; the redactor attaches after the effect. Failure behavior: quarantine returns a typed refusal, and a redactor error withholds the response.
 
-Reused: the body bound at graph_os/api/http/routes.py:42 and the `OpError` refusal path. New: the screen, the redactor and the origin tag.
+Reused: the body bound at arbora/api/http/routes.py:42 and the `OpError` refusal path. New: the screen, the redactor and the origin tag.
 
 Decision: one screen inside the single pipeline boundary. Rejected alternative: per-route filters, which a new route may skip.
 
@@ -228,48 +228,48 @@ Cross-repository: engine memory-write refusal, owner prefix `EG`, contract name 
 - no-arXiv: AI Agent Traps (Franklin et al., SSRN 6372438, 2026).
 ## Policy lifecycle operations that guard plans (GRAPHOS-OPS-R050)
 
-Data flow: `policy.create` over POST /api/v1/ops/{op_id} -> `_base_authority` (graph_os/api/invoke/pipeline.py:208) -> `_policy` (:198) -> `PolicyAuthority.authorize` (graph_os/control_plane/policy/repository.py:179) -> audit record.
+Data flow: `policy.create` over POST /api/v1/ops/{op_id} -> `_base_authority` (arbora/api/invoke/pipeline.py:208) -> `_policy` (:198) -> `PolicyAuthority.authorize` (arbora/control_plane/policy/repository.py:179) -> audit record.
 
 Types: `PolicyEntity`, `ConstitutionSource`, `PolicyChange`. Failure: `POLICY_DENIED` or `POLICY_UNAVAILABLE`, never a partial change.
 
-Existing code: graph_os/control_plane/policy/repository.py:100, :117, :129, :179; graph_os/control_plane/policy/models.py:203; graph_os/api/ops/policy.py:36; graph_os/api/invoke/pipeline.py:198, :208, :218. Reachable today: no. `PolicyAuthority` has no production constructor.
+Existing code: arbora/control_plane/policy/repository.py:100, :117, :129, :179; arbora/control_plane/policy/models.py:203; arbora/api/ops/policy.py:36; arbora/api/invoke/pipeline.py:198, :208, :218. Reachable today: no. `PolicyAuthority` has no production constructor.
 
-Decision: GraphOS serves the operation and admits plans, and the engine decides violation. Rejected: a policy evaluator inside GraphOS, which duplicates engine decisions. Cross-repository: EG-DECISION-ENGINE-R001 owns policy decisions; GraphOS owns authenticated operation admission and transport. Clause interpretation requires a published engine producer contract, not an AU policy evaluator.
+Decision: Arbora serves the operation and admits plans, and the engine decides violation. Rejected: a policy evaluator inside Arbora, which duplicates engine decisions. Cross-repository: EG-DECISION-ENGINE-R001 owns policy decisions; Arbora owns authenticated operation admission and transport. Clause interpretation requires a published engine producer contract, not an AU policy evaluator.
 
 ## Scoped security-evaluation operation (GRAPHOS-OPS-R051)
 
-Data flow starts with `security.evaluate` over POST /api/v1/ops/{op_id}. `_effect` (graph_os/api/invoke/pipeline.py:218) checks verified target authorization before calling new public EG selection/verdict adapters (EG-DECISION-ENGINE-R001/R138). The AU harness executes admitted probes. The engine returns the verdict, which is recorded in the audit record. Runtime limits and trace commits use EG-DECISION-ENGINE-R133; Decide itself remains read-only.
+Data flow starts with `security.evaluate` over POST /api/v1/ops/{op_id}. `_effect` (arbora/api/invoke/pipeline.py:218) checks verified target authorization before calling new public EG selection/verdict adapters (EG-DECISION-ENGINE-R001/R138). The AU harness executes admitted probes. The engine returns the verdict, which is recorded in the audit record. Runtime limits and trace commits use EG-DECISION-ENGINE-R133; Decide itself remains read-only.
 
 Types: `EvaluationGoal`, `EvaluationCatalog`, `EvaluationScope`, `Finding`. Failure: `SUBJECT_ACCESS_DENIED` before any attack runs.
 
-Existing code: graph_os/security/security_policy_middleware.py:52; graph_os/api/ops/registry_factory.py. Reachable today: no. Search terms used: red team, attack, scorer, jailbreak, target scope.
+Existing code: arbora/security/security_policy_middleware.py:52; arbora/api/ops/registry_factory.py. Reachable today: no. Search terms used: red team, attack, scorer, jailbreak, target scope.
 
-Decision: EG owns catalog facts, selection and probe verdicts (EG-DECISION-ENGINE-R001/R138); AU executes the selected probes; GraphOS admits by scope and serves the result. Reuse this R051 consumer instead of adding another security-evaluation rollup. Missing engine ports remain unavailable.
+Decision: EG owns catalog facts, selection and probe verdicts (EG-DECISION-ENGINE-R001/R138); AU executes the selected probes; Arbora admits by scope and serves the result. Reuse this R051 consumer instead of adding another security-evaluation rollup. Missing engine ports remain unavailable.
 
 References:
 - arXiv:2605.04019 — Dheekonda et al., "Redefining AI Red Teaming in the Agentic Era: From Weeks to Hours" (2026)
 
 ## Authorization-segmented virtual schema projections (GRAPHOS-OPS-R052)
 
-Data flow: `query.projections` over POST /api/v1/ops/{op_id} -> `build_operation_runtime` (graph_os/api/invoke/bootstrap.py:167) -> `scope_covers` -> audit record.
+Data flow: `query.projections` over POST /api/v1/ops/{op_id} -> `build_operation_runtime` (arbora/api/invoke/bootstrap.py:167) -> `scope_covers` -> audit record.
 
 Types: `SchemaProjection`. Failure: `SUBJECT_ACCESS_DENIED` or `UNAVAILABLE`.
 
-Existing code: graph_os/api/ops/_common.py:106; graph_os/api/http/openapi.py:1; graph_os/control_plane/agents/repository.py:81. Reachable today: no for projections. Search terms used: virtual schema, schema_context, projection, authorization boundary.
+Existing code: arbora/api/ops/_common.py:106; arbora/api/http/openapi.py:1; arbora/control_plane/agents/repository.py:81. Reachable today: no for projections. Search terms used: virtual schema, schema_context, projection, authorization boundary.
 
-Decision: GraphOS filters by the caller's verified grants over engine labels. Rejected: GraphOS-side boundary inference. Cross-repository: EG-IDENTITY-R001, EG-FEDERATED-QUERY-R001; GRAPHOS-DATA-MARKET-R005 owns schema_context.
+Decision: Arbora filters by the caller's verified grants over engine labels. Rejected: Arbora-side boundary inference. Cross-repository: EG-IDENTITY-R001, EG-FEDERATED-QUERY-R001; GRAPHOS-DATA-MARKET-R005 owns schema_context.
 
 Caller-visible responses, counts, refusal details, traces and audit views reveal no uncovered projection, including indirectly through a withheld count. Such counts may exist only in a separately authorized operator audit that the denied caller cannot read. Served acceptance holds visible projections fixed while varying hidden projections. It checks that caller-visible fields stay unchanged. The denied caller's operator-audit read must refuse without count leakage. The separately authorized operator must be permitted to inspect the count.
 
 ## Bounded interaction space (GRAPHOS-OPS-R053)
 
-Data flow: `retrieval.space` over POST /api/v1/ops/{op_id} -> the governed retriever entry (graph_os/control_plane/retrieval/service.py:61) -> `union_top_k` -> audit record.
+Data flow: `retrieval.space` over POST /api/v1/ops/{op_id} -> the governed retriever entry (arbora/control_plane/retrieval/service.py:61) -> `union_top_k` -> audit record.
 
 Types: `InteractionSpace`, `CorpusBoundary`, `QueryDirectory`. Failure: `LOAD_CAP_EXCEEDED`, `INVALID_ARGUMENT`, `UNAVAILABLE`.
 
-Existing code: graph_os/api/ops/retrieval.py:60, :77; graph_os/control_plane/retrieval/service.py:37, :61. Reachable today: no for the governed retriever; yes for `retrieval.search`. Search terms used: bm25, top_k, interaction space, working dir, corpus.
+Existing code: arbora/api/ops/retrieval.py:60, :77; arbora/control_plane/retrieval/service.py:37, :61. Reachable today: no for the governed retriever; yes for `retrieval.search`. Search terms used: bm25, top_k, interaction space, working dir, corpus.
 
-Decision: the engine ranks and GraphOS bounds the space. Rejected: returning ranked snippets only. Cross-repository: EG-FEDERATED-QUERY-R001 supplies query results, EG-DECISION-ENGINE-R029 chooses retrieval plans, EG-DECISION-ENGINE-R137 supplies context limits, and SDK-CONNECTOR-CONTROL-R005 supplies connector ingestion. AU executes engine-directed exploration.
+Decision: the engine ranks and Arbora bounds the space. Rejected: returning ranked snippets only. Cross-repository: EG-FEDERATED-QUERY-R001 supplies query results, EG-DECISION-ENGINE-R029 chooses retrieval plans, EG-DECISION-ENGINE-R137 supplies context limits, and SDK-CONNECTOR-CONTROL-R005 supplies connector ingestion. AU executes engine-directed exploration.
 
 References:
 - arXiv:2606.06880 — Zhuang, Ni, Fun, Lin, Ma, "Towards Retrieving Interaction Spaces for Agentic Search" (2026)
@@ -283,18 +283,18 @@ Research citations above describe inspiration only. The engine and transport con
 [EG-DURABLE-KERNEL-R085](https://github.com/Knuckles-Team/epistemic-graph/tree/c0b952776129fd509b9f87b411a298593c2591ec/specs/durable-graph-kernel) owns authoritative content, versions, conflicts and sync evidence.
 R085 is a producer definition. Its merge does not establish runtime availability.
 R084.3, R084.4 and R084.6 remain concurrency prerequisites, not a file-sync contract.
-GraphOS owns hosted file projection, authenticated serving and materialization acknowledgments.
+Arbora owns hosted file projection, authenticated serving and materialization acknowledgments.
 AU remains an EG-driven harness. WebUI displays returned state and submits edits.
 
-Current `graph_os/api/ops/memory.py` defines tenant-scoped generic `memory.read` and `memory.write` through `MemoryStore`.
+Current `arbora/api/ops/memory.py` defines tenant-scoped generic `memory.read` and `memory.write` through `MemoryStore`.
 `handle_memory_read` at line 65 and `handle_memory_write` at line 74 resolve the existing `memory_store` binding.
 The current models contain no revisions, conflict retention, cursors or materialization evidence.
 Extend that module and service binding; do not add another authoritative store or reinterpret generic writes as versioned saves.
 Existing R024.4 evidence covers the generic operations only. Each new child requires independent acceptance.
 
-### Proposed GraphOS operation contracts
+### Proposed Arbora operation contracts
 
-These IDs define the GraphOS consumer contract; they are not registered runtime capabilities yet.
+These IDs define the Arbora consumer contract; they are not registered runtime capabilities yet.
 All calls use `POST /api/v1/ops/{op_id}` and the corresponding resident MCP verb.
 
 | Proposed operation | Parameters and result | Producer | Scope |
@@ -308,9 +308,9 @@ The adapter must preserve generated field names and tagged variants without a se
 Creation must use EG's explicit absent-head precondition. Missing expected revision must never mean unconditional overwrite.
 An update binds expected revision, expected digest, exact UTF-8 bytes and candidate digest.
 Resolve also binds the retained conflict and current accepted revision.
-GraphOS must not normalize newlines or recompute the engine's conflict decision.
+Arbora must not normalize newlines or recompute the engine's conflict decision.
 R085.1 bounds content to 1 MiB, document IDs to 256 bytes and logical paths to 1024 bytes.
-GraphOS must enforce body bounds before allocation or effects and preserve stricter serving limits explicitly.
+Arbora must enforce body bounds before allocation or effects and preserve stricter serving limits explicitly.
 Kinds are observations, reflections, profile and active_context.
 Cursor scope, ordering, authorization and expiry remain EG decisions under R085.2.
 The client must restart pagination after a refused cursor, never silently combine different snapshots.
@@ -327,7 +327,7 @@ Caller-visible logs, status views and error details must not recover withheld me
 
 An authorized stale save may return conflict_retained only after EG durably retains both versions under R085.3 and R085.7.
 That outcome is not an authorization refusal and must not become a generic error that loses its content references.
-GraphOS must preserve accepted and submitted contents, digests and provenance in authorized hosted conflict artifacts.
+Arbora must preserve accepted and submitted contents, digests and provenance in authorized hosted conflict artifacts.
 The accepted head remains unchanged. Storage failure must not claim conflict retention or successful materialization.
 Only an authorized exact-head resolve may change that head.
 EG controls retention and named holders; hosted artifact deletion must not release engine history independently.
@@ -335,7 +335,7 @@ EG controls retention and named holders; hosted artifact deletion must not relea
 ### Hosted files and observation-generation acknowledgments
 
 A new host adapter must project snapshots under a configured hosted-memory root.
-The root and capability wiring attach beside `build_operation_runtime` at `graph_os/api/invoke/bootstrap.py:167`.
+The root and capability wiring attach beside `build_operation_runtime` at `arbora/api/invoke/bootstrap.py:167`.
 Use validated logical paths below that root; reject absolute paths, traversal, duplicate paths and symlink escapes.
 Host paths are private implementation details, never engine paths or caller-controlled authority.
 Write through an atomic replacement that preserves unobserved local edits; do not overwrite concurrent edits silently.
@@ -351,12 +351,12 @@ A client assertion or successful filesystem call alone must never establish in_s
 EG atomically checks both the head and generation under R085.6.
 A newer observed edit invalidates an old acknowledgment even if the accepted revision is unchanged.
 Pending edits and unresolved conflicts prevent in_sync; missing evidence yields unavailable.
-GraphOS must display EG's in_sync, graph_ahead, file_ahead, conflict or unavailable without a local competing state machine.
+Arbora must display EG's in_sync, graph_ahead, file_ahead, conflict or unavailable without a local competing state machine.
 Crash recovery must reread EG evidence and current hosted bytes before retrying materialization or acknowledgment.
 
 ### R009 authority and R013 idempotency alignment
 
-The generated HTTP route must enter `invoke` at `graph_os/api/invoke/pipeline.py:810` before calling the memory port.
+The generated HTTP route must enter `invoke` at `arbora/api/invoke/pipeline.py:810` before calling the memory port.
 Use its verified tenant, principal, graph incarnation and policy; request bodies must not replace them.
 Recheck access for read, list page, save, conflict artifacts and host acknowledgment.
 Use R013 authentication, cookie CSRF checks and idempotency handling without a private bypass route.
@@ -364,35 +364,35 @@ Bind mutation identity to the exact action, graph incarnation, document, precond
 Bind acknowledgment identity to observation generation and materialization attempt as well.
 Same-identity, same-body replay must preserve the original receipt without repeating mutation or file effects.
 Same identity with another body must refuse. Replay after revocation must not reveal a cached authorized result.
-GraphOS journal integration must preserve EG's durable idempotency identity rather than minting another identity on retry.
+Arbora journal integration must preserve EG's durable idempotency identity rather than minting another identity on retry.
 Existing R009/R013 delivery evidence does not prove these new memory-specific requirements.
 
 ### WebUI consumer mapping
 
 [WEBUI-APPS-R031](https://github.com/Knuckles-Team/agent-webui/tree/main/specs/graphos-app-surface) remains the existing presentation owner.
-This GraphOS change does not edit or deliver WebUI requirements.
+This Arbora change does not edit or deliver WebUI requirements.
 
-| Consumer row | GraphOS prerequisite | Required alignment |
+| Consumer row | Arbora prerequisite | Required alignment |
 |---|---|---|
 | WEBUI-APPS-R031.2 | R024.4.1–.3 and .6 | `listMemoryFiles` uses memory.files.list; `saveMemoryFile` uses memory.files.save; exact content uses memory.files.read |
 | WEBUI-APPS-R031.3 | R024.4.2 and .6 | The real Files tab uses registered generated contracts through WebUI's `invoke` in `src/lib/graphos-api/invoke.ts` |
 | WEBUI-APPS-R031.4 | R024.4.3 and .5 | Display both versions only for authorized conflict_retained; refused contains no versions or head |
 | WEBUI-APPS-R031.7 | R024.4.4–.6 | Prove two-client conflict, restart readback and generation-bound acknowledgment through real served components |
 
-Producer order is R085 implementation and generated contracts, GraphOS port and serving, host materializer, then WebUI consumption.
+Producer order is R085 implementation and generated contracts, Arbora port and serving, host materializer, then WebUI consumption.
 Missing producer implementation must remain unavailable. Definitions and planned tests must never count as served receipts.
 
 ## Owner-bound projections (GRAPHOS-OPS-R054–R058, R061, R063)
 
-- **R054:** Keep `rlm.benchmark` separate from serving-technique evidence. Add a projection through `graph_os/api/ops/registry_factory.py:get_registry` and `graph_os/api/invoke/pipeline.py:invoke` only after `AU-INTEGRATION-R014` publishes its producer and receipt.
-- **R055:** Bind a read/proposal projection through the shared registry/invoke path only after AU publishes liveness and proposal contracts. No GraphOS termination adapter exists.
+- **R054:** Keep `rlm.benchmark` separate from serving-technique evidence. Add a projection through `arbora/api/ops/registry_factory.py:get_registry` and `arbora/api/invoke/pipeline.py:invoke` only after `AU-INTEGRATION-R014` publishes its producer and receipt.
+- **R055:** Bind a read/proposal projection through the shared registry/invoke path only after AU publishes liveness and proposal contracts. No Arbora termination adapter exists.
 - **R056:** Keep `decide.commit` unchanged. Add a distinct review projection through the shared registry/invoke path. Wait until EG/AU publish the review operation and evidence contract.
-- **R057:** Add no repository-writeback attachment until EG `R094.2/.3/.5/.7` and SDK source-effect/receipt contracts publish. The current GraphOS tree has no serializer or served handler.
+- **R057:** Add no repository-writeback attachment until EG `R094.2/.3/.5/.7` and SDK source-effect/receipt contracts publish. The current Arbora tree has no serializer or served handler.
 - **R058:** Use the existing schema-context routes/service for read-only data. Add no table mutation or statistics until WebUI and EG publish their contracts.
 
 ### GRAPHOS-OPS-R061: indexed usage projection
 
-1. Bind the GraphOS read to EG RunTraceUsageQueryV1 / EG-ORCH-VOCAB-R010.101; derive tenant only from verified caller claims and pass the producer's bounded window, model/project/agent grouping, currency, page size, and snapshot cursor.
+1. Bind the Arbora read to EG RunTraceUsageQueryV1 / EG-ORCH-VOCAB-R010.101; derive tenant only from verified caller claims and pass the producer's bounded window, model/project/agent grouping, currency, page size, and snapshot cursor.
 2. Extend the usage.py reader with closed UsageQueryV1 and UsageProjectionV1 models. Add a distinct usage.index.query port beside usage.read. Use existing usage:read, build_read_op, registry_factory, and shared invoke. Keep accounting separate from runs.metrics (R021.4.3/.4) and usage.read.
 3. Preserve four disjoint EG counters, producer totals, unknown reasons, pinned PriceTableV1, minor units, revisions, coverage, watermark, and cursor. Aggregate exact rational amounts by final group and category. Apply half-even rounding once. Keep unknown values unknown with reasons and coverage; never use zero. Keep currencies separate unless EG supplies pinned FX. Bind p95 <= 500 ms from authenticated-handler entry through serialized response. Use 1,000,000 indexed traces, 32 readers, and 1,000 fixed-window queries. Bind data/index/cache-policy revisions. Missing or invalid profile evidence is unavailable; an exceeded bound is not success.
 4. Connect the projection to WebUI ObservabilityView.tsx under WEBUI-APPS-R004.8.1-.6. Served proof compares groups with an independent EG ledger. It exercises authorization, pagination, unknown values, stale revisions, and absent, invalid, or exceeded profile evidence. This remains planned work, not runtime delivery.
@@ -400,7 +400,7 @@ Missing producer implementation must remain unavailable. Definitions and planned
 ### GRAPHOS-OPS-R063: retrieval evaluation and context projection
 
 1. Bind the EG-DECISION-ENGINE-R100.100 DecisionEval ranking receipt. Map RetrievalRankingSubmit to RetrievalRankingV1. Map Method::RetrievalContextSearch to RetrievalContextSearchV1. Do not derive quality from retrieval.search or local RRF.
-2. Extend graph_os/api/ops/retrieval.py with closed evaluation, comparison, and context models. Register retrieval.evaluation.compare and retrieval.context.search. Use existing build_read_op, memory:read, registry factory, and shared invoke for HTTP/MCP.
+2. Extend arbora/api/ops/retrieval.py with closed evaluation, comparison, and context models. Register retrieval.evaluation.compare and retrieval.context.search. Use existing build_read_op, memory:read, registry factory, and shared invoke for HTTP/MCP.
 3. Require identical corpus, complete label-set revision/digest, query-set ID/revision/digest, evaluator revision, k, and query inputs across algorithms. Pin each algorithm's settings digest to its own registered configuration. Preserve producer metrics and result digests. For hits_at_k, use the full identically labeled query set as denominator. Count a query when any relevant result appears in top k. Preserve half-open UTF-8 offsets into original stored text. Bind query/index/authorization revisions and a snapshot cursor. Limit responses to 100 spans and 8 KiB each. If indexing normalizes text, preserve a separate NFC digest and validate its byte map to original text.
 4. Align WebUI TryItPanel.tsx under WEBUI-APPS-R001.1.1-.6. Served proof checks two-algorithm metrics and identical inputs. It tests hostile-source escaping before highlighting and preserves original byte spans. It also checks Unicode slicing, authorization, staleness, missing labels, invalid maps, and limits. This remains planned work, not runtime delivery.
 
@@ -426,17 +426,17 @@ Missing producer implementation must remain unavailable. Definitions and planned
 
 These operation names and schemas are proposed contracts. No new operation is registered by this specification change.
 All six projections reuse the current authenticated invocation path.
-HTTP enters `graph_os/api/http/routes.py:make_endpoint` at line 96.
-MCP enters `graph_os/api/mcp/verbs.py:dispatch_verb` at line 377 and `_invoke_and_render` at line 259.
-Both reach `graph_os/api/invoke/pipeline.py:invoke` at line 810.
-Register approved declarations in `graph_os/api/ops/registry_factory.py:get_registry` at line 16.
+HTTP enters `arbora/api/http/routes.py:make_endpoint` at line 96.
+MCP enters `arbora/api/mcp/verbs.py:dispatch_verb` at line 377 and `_invoke_and_render` at line 259.
+Both reach `arbora/api/invoke/pipeline.py:invoke` at line 810.
+Register approved declarations in `arbora/api/ops/registry_factory.py:get_registry` at line 16.
 Bind verified caller authority before producer access; client-supplied tenant fields cannot select authority.
 Derive scopes from the published EG contract. Missing scope or owner method keeps the operation unavailable.
 A proposed method name below describes an owner specification, not an existing runtime export.
 
 ### R059: evolution metrics
 
-Extend `graph_os/api/ops/usage.py:operations` and its composed reader for `evolution.proposals.metrics`.
+Extend `arbora/api/ops/usage.py:operations` and its composed reader for `evolution.proposals.metrics`.
 The producer is `EG-ORCH-VOCAB-R010.100`, proposed `Method::EvolutionTraceMetrics` and `EvolutionTraceMetricsV1`.
 Preserve proposal, prompt, metric-window, metric, progress, and trace IDs, revisions, and digests.
 Preserve ordered trace references, missing IDs, measured/unknown states, units, and partial coverage.
@@ -453,7 +453,7 @@ Extend the existing usage reader and registry for manifest, discovery, browse, s
 SDK-SOURCE-INGEST-R013 owns `connector-sync --once` and the complete source-operation manifest.
 EG-ORCH-VOCAB-R009.101 specifies `Method::SearchHarnessSessions` over the `IndexHarnessSessionBatch` projection.
 Session costs use EG-ORCH-VOCAB-R010.101 accounting, currency, and coverage semantics.
-GraphOS reads those authorities; it cannot create another session index or author a supported-source list.
+Arbora reads those authorities; it cannot create another session index or author a supported-source list.
 Require a complete owner-approved manifest with source operations, revisions, authority, cursor forms, and coverage.
 That manifest remains an external prerequisite; do not infer supported harnesses from example fixtures.
 Use page sizes from 1 through 100 and preserve the producer's snapshot-bound cursor.
@@ -466,12 +466,12 @@ Check independent trace readback, replay, restart, cursor paging, cost units, un
 ### R062: graph changes
 
 EG-DURABLE-KERNEL-R043.100 specifies `Method::OpenGraphSnapshot` and `Method::ReadGraphChanges`.
-Extend the composed read operations in `graph_os/api/ops/memory.py:operations` for feed and recovery projection.
+Extend the composed read operations in `arbora/api/ops/memory.py:operations` for feed and recovery projection.
 Preserve graph incarnation, committed revision, event identity, visibility revision, snapshot digest, and high-water cursor.
 Use producer page sizes from 1 through 256 and the 24-hour retention contract.
 Reauthorize every page and reconnect. Expiry returns typed recovery; revocation stops protected delivery.
 The existing registry does not supply a graph-feed transport adapter. Its authenticated bounded adapter remains required.
-Do not substitute `graph_os/gateway/fleet_events.py`, which reports fleet events rather than committed graph changes.
+Do not substitute `arbora/gateway/fleet_events.py`, which reports fleet events rather than committed graph changes.
 
 The proposed `graph-visible-v1` profile uses two browsers and 10,000 nodes with 20,000 edges.
 Two writers each commit five updates per second for 60 seconds after a 10-second warm-up.
@@ -486,7 +486,7 @@ A missing profile, measurement, adapter, or owner binding cannot produce a passi
 
 ### R064: viewport queries
 
-Extend `graph_os/api/ops/retrieval.py:operations` with viewport and selection handlers using its composed EG reader.
+Extend `arbora/api/ops/retrieval.py:operations` with viewport and selection handlers using its composed EG reader.
 EG-FEDERATED-QUERY-R081.103 owns `ViewportQueryV1` through `Method::UnifiedQuery` and `Method::ResolveViewportSelection`.
 Preserve its scatter/line formulas, typed axes, source/index/viewport revisions, policy digest, and closed selection union.
 Pixel dimensions range from 1 through 4096; the requested byte ceiling ranges from 1 through 16777216.
@@ -498,7 +498,7 @@ Independently inspect serialized bytes and bin counts. Check pan, zoom, selectio
 
 ### R065: meetings
 
-Extend the composed operation declarations in `graph_os/api/ops/memory.py:operations` for transcript and summary reads.
+Extend the composed operation declarations in `arbora/api/ops/memory.py:operations` for transcript and summary reads.
 Route provider effects through the existing invocation policy and receipt boundary, never through a read handler.
 SDK-SOURCE-INGEST-R014 owns ordered transcript transport and selected provider dispatch.
 EG-MEDIA-VOCAB-R001.101 specifies `Method::MeetingTranscriptRevision`, `MeetingSummaryContextV1`, and `CommitMeetingSummaryV1`.
@@ -514,7 +514,7 @@ Check independent provenance readback and zero provider calls for stale revision
 
 ### R066: bookmarks
 
-Extend `graph_os/api/ops/retrieval.py:operations` with search, relationship, and bounded export projections.
+Extend `arbora/api/ops/retrieval.py:operations` with search, relationship, and bounded export projections.
 EG-MEDIA-VOCAB-R001.102 specifies `Method::BookmarkSemanticSearch` and `Method::BookmarkRelations`.
 SDK-SOURCE-INGEST-R005.7 through R005.12 owns ingestion into the existing SourceIngest/ChangeEnvelope path.
 Use one authorized snapshot for search, relationships, and CSV/JSON export consumed by WEBUI-APPS-R001.6.

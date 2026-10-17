@@ -6,7 +6,7 @@ import argparse
 
 import pytest
 
-from graph_os.mcp_server.backing.server_factory import create_mcp_parser
+from arbora.mcp_server.backing.server_factory import create_mcp_parser
 
 
 def _options(parser: argparse.ArgumentParser) -> set[str]:

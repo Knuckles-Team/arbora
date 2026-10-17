@@ -21,8 +21,8 @@ from pathlib import Path
 
 import pytest
 
-from graph_os.deployment import venv_autosync, venv_sync
-from graph_os.deployment.venv_sync import (
+from arbora.deployment import venv_autosync, venv_sync
+from arbora.deployment.venv_sync import (
     ALLOW,
     DEFER,
     METADATA,

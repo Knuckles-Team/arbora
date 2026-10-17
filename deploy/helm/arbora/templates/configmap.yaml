@@ -1,0 +1,91 @@
+{{- include "arbora.validate" . }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "arbora.fullname" . }}-arbora
+  labels:
+    {{- include "arbora.labels" . | nindent 4 }}
+data:
+  {{- range $key, $value := .Values.arbora.config }}
+  {{ $key }}: {{ $value | toString | quote }}
+  {{- end }}
+  ENABLE_WEB_UI: {{ .Values.arbora.webUi | toString | quote }}
+  ARBORA_WEBUI_PORT: {{ .Values.arbora.webUiPort | toString | quote }}
+  ARBORA_AUTH_MODE: {{ .Values.identity.mode | quote }}
+  {{- with .Values.identity.issuer }}
+  ARBORA_IDENTITY_ISSUER: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.identity.tenant }}
+  ARBORA_IDENTITY_TENANT: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.identity.noneExposeAck }}
+  ARBORA_AUTH_NONE_EXPOSE: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.identity.noneHostname }}
+  ARBORA_AUTH_NONE_HOSTNAME: {{ . | quote }}
+  {{- end }}
+  EUNOMIA_TYPE: {{ include "arbora.eunomiaType" . | quote }}
+  {{- with .Values.policy.eunomia.policyFile }}
+  EUNOMIA_POLICY_FILE: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.policy.eunomia.remoteUrl }}
+  EUNOMIA_REMOTE_URL: {{ . | quote }}
+  {{- end }}
+  SECRETS_BACKEND: {{ .Values.secrets.backend | quote }}
+  {{- with .Values.secrets.vaultUrl }}
+  SECRETS_VAULT_URL: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.telemetry.otlpEndpoint }}
+  ENABLE_OTEL: "true"
+  OTEL_EXPORTER_OTLP_ENDPOINT: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.telemetry.rumOtlpMetricsEndpoint }}
+  RUM_OTLP_METRICS_ENDPOINT: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.capacity.prometheusUrl }}
+  SCALING_PROMETHEUS_URL: {{ . | quote }}
+  {{- end }}
+  XDG_CONFIG_HOME: /var/lib/arbora/config
+  XDG_DATA_HOME: /var/lib/arbora/data
+  XDG_STATE_HOME: /var/lib/arbora/state
+  XDG_CACHE_HOME: /tmp/cache
+  XDG_RUNTIME_DIR: /run/epistemic-graph
+  {{- if not (include "arbora.unified" .) }}
+  GRAPH_SERVICE_ENDPOINTS: {{ printf "tls://%s-engine:%v" (include "arbora.fullname" .) .Values.engine.port | quote }}
+  KG_DAEMON_ROLE: "client"
+  {{- else if include "arbora.sidecar" . }}
+  GRAPH_SERVICE_ENDPOINTS: "unix:///run/epistemic-graph/epistemic-graph.sock"
+  {{- /* GRAPHOS-DEPLOY-R016: the dedicated daemon container (arbora.yaml)
+         holds the host role via its own env override; this shared
+         ConfigMap's default keeps the arbora serving container at client
+         so it never races the daemon for the host lock. */}}
+  KG_DAEMON_ROLE: {{ if .Values.daemon.enabled }}"client"{{ else }}"host"{{ end }}
+  {{- else }}
+  # child placement: arbora starts and supervises the engine itself.
+  GRAPH_SERVICE_ENDPOINTS: ""
+  GRAPH_SERVICE_PERSIST_DIR: "/var/lib/arbora/engine"
+  ENGINE_LIFECYCLE: "persistent"
+  KG_DAEMON_ROLE: "host"
+  {{- if .Values.engine.tcp.enabled }}
+  GRAPH_SERVICE_TCP_ADDR: {{ printf "0.0.0.0:%v" .Values.engine.port | quote }}
+  GRAPH_SERVICE_TLS_CERT: "/etc/arbora/engine-tls/tls.crt"
+  GRAPH_SERVICE_TLS_KEY: "/etc/arbora/engine-tls/tls.key"
+  {{- end }}
+  GRAPH_SERVICE_METRICS_ADDR: "127.0.0.1:9101"
+  {{- range $key, $value := .Values.engine.config }}
+  {{ $key }}: {{ $value | toString | quote }}
+  {{- end }}
+  {{- end }}
+{{- if or (include "arbora.sidecar" .) (not (include "arbora.unified" .)) }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "arbora.fullname" . }}-engine
+  labels:
+    {{- include "arbora.labels" . | nindent 4 }}
+data:
+  {{- range $key, $value := .Values.engine.config }}
+  {{ $key }}: {{ $value | toString | quote }}
+  {{- end }}
+{{- end }}

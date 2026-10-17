@@ -1,7 +1,7 @@
 """The shared MCP builder serves the one condensed intent contract (ECO-4.82).
 
 CONCEPT:AU-ECO.mcp.intent-surface-condensed-collapse — every fleet server built
-with :func:`graph_os.mcp_server.backing.verbose_tools.register_tool_surface` lists only
+with :func:`arbora.mcp_server.backing.verbose_tools.register_tool_surface` lists only
 the intent tools ``find``/``ask``/``act``; each takes ``action`` + ``params``
 (+ optional ``intent``), and every backing operation stays reachable through
 them.
@@ -18,18 +18,18 @@ import pytest
 from fastmcp import FastMCP
 from pydantic import Field
 
-from graph_os.mcp_server.backing.connector_surface import (
+from arbora.mcp_server.backing.connector_surface import (
     CONNECTOR_INTENT_TOOLS,
     connector_operations,
 )
-from graph_os.mcp_server.backing.intent_contract import (
+from arbora.mcp_server.backing.intent_contract import (
     DEFAULT_SURFACE_TOKEN_BUDGET,
     DEFAULT_SURFACE_TOOL_LIMIT,
     INTENT_TOOL_TOKEN_BUDGET,
     estimate_tokens,
     tool_definition,
 )
-from graph_os.mcp_server.backing.verbose_tools import (
+from arbora.mcp_server.backing.verbose_tools import (
     register_tool_surface,
     register_verbose_tools,
 )

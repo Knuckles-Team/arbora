@@ -1,4 +1,4 @@
-"""Fail-closed contracts for AU's GraphOS provisioning authority."""
+"""Fail-closed contracts for AU's Arbora provisioning authority."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     # CI job installs no epistemic_graph package at all; a module-level
     # runtime import here previously made the WHOLE FILE skip at collection,
     # hiding the several tests below (scope/signature checks) that exercise
-    # graph_os.api.contracts.provisioning's OWN logic and need no engine package
+    # arbora.api.contracts.provisioning's OWN logic and need no engine package
     # at all. Tests that construct the real generated contract types import
     # them locally instead (see `_binding()` and the tests marked
     # `@pytest.mark.engine` below) so only THOSE genuinely fail closed -- via
@@ -28,27 +28,27 @@ if TYPE_CHECKING:
     )
 
 
-from graph_os.access.action_policy import (
+from arbora.access.action_policy import (
     ActionDecision,
     ActionRequest,
     PolicyDisposition,
     PolicyReceipt,
 )
-from graph_os.api.contracts.provisioning import (
+from arbora.api.contracts.provisioning import (
     PackImportAuthorityResolver,
     ProvisioningAuthorityError,
     pack_import_authority,
 )
-from graph_os.api.contracts.session import (
+from arbora.api.contracts.session import (
     GraphSession,
     ScopeError,
     use_session,
 )
-from graph_os.security.actor_context import ActorContext, ActorType
+from arbora.security.actor_context import ActorContext, ActorType
 
 # No file-level `engine` mark: test_resolver_requires_pack_control_scope_before_providers
 # and test_resolver_does_not_accept_a_caller_supplied_policy below exercise
-# graph_os.api.contracts.provisioning's own scope/signature logic and construct
+# arbora.api.contracts.provisioning's own scope/signature logic and construct
 # no generated epistemic-graph contract at all. Every OTHER test here calls
 # the resolver (which imports the generated contract unconditionally at the
 # very top of its own body) and is marked `@pytest.mark.engine` individually.
@@ -58,7 +58,7 @@ def _session(
     *, scopes: frozenset[str] = frozenset({"agent:pack-control"})
 ) -> GraphSession:
     actor = ActorContext(
-        actor_id="service:graph-os",
+        actor_id="service:arbora",
         actor_type=ActorType.AUTOMATED_SERVICE,
         tenant_id="tenant-a",
         authenticated=True,
@@ -68,7 +68,7 @@ def _session(
         tenant="tenant-a",
         scopes=scopes,
         graph="tenant-a",
-        audience="graph-os",
+        audience="arbora",
         policy_version="policy-a",
     )
 
@@ -103,7 +103,7 @@ class _AllowWithoutReceipt:
 
 def _install_policy(monkeypatch: pytest.MonkeyPatch, policy: Any) -> None:
     monkeypatch.setattr(
-        "graph_os.api.contracts.provisioning.get_action_policy",
+        "arbora.api.contracts.provisioning.get_action_policy",
         lambda _engine: policy,
     )
 
@@ -180,7 +180,7 @@ def test_policy_issued_resolver_returns_generated_contracts(
     assert context.purpose_id == "connector-pack:import"
     assert context.actor_scope == context.caller_principal
     assert context.caller_principal == (
-        "principal:sha256:" + hashlib.sha256(b"service:graph-os").hexdigest()
+        "principal:sha256:" + hashlib.sha256(b"service:arbora").hexdigest()
     )
     assert re.fullmatch(r"[0-9a-f]{64}", context.attempt_nonce)
     assert context.policy_decision_id == "action_decision:test"
@@ -240,7 +240,7 @@ def test_resolver_refuses_malformed_authoritative_principal(
             object(),
             session,
             catalog_binding=lambda: _binding(),
-            serving_principal=lambda: "service:graph-os",
+            serving_principal=lambda: "service:arbora",
         )
         with pytest.raises(ProvisioningAuthorityError, match="opaque"):
             _resolve_pack_import(resolver)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.security.identity import base_capabilities, normalize_identity
+from arbora.security.identity import base_capabilities, normalize_identity
 
 
 @pytest.mark.parametrize(

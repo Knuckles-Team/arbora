@@ -4,8 +4,8 @@ from typing import Any
 
 import pytest
 
-from graph_os.identity.engine import IdentityUnavailable
-from graph_os.identity.oidc import OidcMappingRule, select_mapping_rule
+from arbora.identity.engine import IdentityUnavailable
+from arbora.identity.oidc import OidcMappingRule, select_mapping_rule
 
 
 def _rule(order: int, match: str, provider: str = "kc") -> OidcMappingRule:

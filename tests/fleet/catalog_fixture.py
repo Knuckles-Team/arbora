@@ -1,6 +1,6 @@
 """Test-only fleet declarations for transport and lifecycle unit tests.
 
-Production GraphOS has no JSON catalog path.  These helpers keep child-runtime
+Production Arbora has no JSON catalog path.  These helpers keep child-runtime
 tests small by installing explicit in-memory declarations after constructing a
 multiplexer with a reader that must never be called.
 """
@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock
 
-from graph_os.fleet.multiplexer import MCPMultiplexer, attach_fleet_loader
+from arbora.fleet.multiplexer import MCPMultiplexer, attach_fleet_loader
 
 
 class _NeverRead:
@@ -32,7 +32,7 @@ def _install(mux: MCPMultiplexer, path: Path) -> MCPMultiplexer:
     mux._catalog = {}
     for name, config in servers.items():
         if not mux._catalog_entry_admissible(
-            name, config, {"mcp-multiplexer", "graph-os"}
+            name, config, {"mcp-multiplexer", "arbora"}
         ):
             continue
         admitted = mux._admit_catalog_entry(name, config, False)
@@ -60,19 +60,19 @@ async def bind_governed_forwarder_fixture(mux: MCPMultiplexer, result: Any) -> A
 
     from fastmcp import FastMCP
 
-    from graph_os.api.errors import FleetRefusal
-    from graph_os.api.invoke import InvokeServices, VerifiedCaller, invoke
-    from graph_os.api.invoke.audit import EffectReservation
-    from graph_os.api.mcp.registration import FleetMCPBinding, register_mcp_tools
-    from graph_os.api.mcp.verbs import MCPProjection
-    from graph_os.api.ops.fleet import handle_fleet_call, operations
-    from graph_os.api.policy import PolicyGate
-    from graph_os.api.registry import Registry, Surface
-    from graph_os.fleet.catalog_items import CatalogItem, FleetCatalog
-    from graph_os.fleet.gateway_ops import FleetGateway, tool_for_multiplexer_ops
-    from graph_os.fleet.multiplexer import make_governed_tool_mount
-    from graph_os.fleet.multiplexer_ops import MultiplexerOps
-    from graph_os.fleet.session_loads import SessionLoads
+    from arbora.api.errors import FleetRefusal
+    from arbora.api.invoke import InvokeServices, VerifiedCaller, invoke
+    from arbora.api.invoke.audit import EffectReservation
+    from arbora.api.mcp.registration import FleetMCPBinding, register_mcp_tools
+    from arbora.api.mcp.verbs import MCPProjection
+    from arbora.api.ops.fleet import handle_fleet_call, operations
+    from arbora.api.policy import PolicyGate
+    from arbora.api.registry import Registry, Surface
+    from arbora.fleet.catalog_items import CatalogItem, FleetCatalog
+    from arbora.fleet.gateway_ops import FleetGateway, tool_for_multiplexer_ops
+    from arbora.fleet.multiplexer import make_governed_tool_mount
+    from arbora.fleet.multiplexer_ops import MultiplexerOps
+    from arbora.fleet.session_loads import SessionLoads
 
     scopes = frozenset({"mcp:discover", "mcp:delegate"})
     caller = VerifiedCaller(

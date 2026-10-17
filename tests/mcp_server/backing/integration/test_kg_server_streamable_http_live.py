@@ -1,8 +1,8 @@
-"""Live proof that graph-os serves real MCP over the streamable-HTTP wire, and
+"""Live proof that arbora serves real MCP over the streamable-HTTP wire, and
 that the auth boundary genuinely rejects unauthenticated callers.
 
 This is deliberately NOT a mocked round trip: it builds the exact production
-FastMCP application (:func:`graph_os.mcp_server.runtime._build_server`,
+FastMCP application (:func:`arbora.mcp_server.runtime._build_server`,
 the same call the served CLI entrypoint and the API gateway use), applies the
 real middleware/auth stack from ``create_mcp_server``/``_configure_auth``, and
 serves it with a real ``uvicorn`` server bound to a real loopback TCP port. A
@@ -39,14 +39,14 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 from jwt.algorithms import RSAAlgorithm
 
-from graph_os.mcp_server.backing.intent_contract import DEFAULT_SURFACE_TOOL_LIMIT
-from graph_os.mcp_server.backing.tool_specs import INTENT_VERBS
+from arbora.mcp_server.backing.intent_contract import DEFAULT_SURFACE_TOOL_LIMIT
+from arbora.mcp_server.backing.tool_specs import INTENT_VERBS
 
 pytestmark = pytest.mark.timeout(120)
 
 
 def _assert_intent_contract_listed(tool_names: set[str]) -> None:
-    """graph-os lists the one intent contract: the six verbs, nothing granular."""
+    """arbora lists the one intent contract: the six verbs, nothing granular."""
     served = tool_names - {"_e2e_identity_probe"}
     assert set(INTENT_VERBS) <= served, sorted(served)
     assert len(served) <= DEFAULT_SURFACE_TOOL_LIMIT, sorted(served)
@@ -124,11 +124,11 @@ class _JWKSServer:
 def _live_streamable_http_server(
     monkeypatch, jwks: _JWKSServer, *, issuer: str, audience: str
 ):
-    """Build and serve the REAL graph-os FastMCP app over a real TCP port."""
+    """Build and serve the REAL arbora FastMCP app over a real TCP port."""
     import uvicorn
 
-    from graph_os.core.settings import runtime_config as live_config
-    from graph_os.mcp_server import runtime
+    from arbora.core.settings import runtime_config as live_config
+    from arbora.mcp_server import runtime
 
     # Configure inbound JWT verification (FastMCP's own provider) exactly as
     # --auth-type jwt --token-jwks-uri/--token-issuer/--token-audience would.
@@ -156,7 +156,7 @@ def _live_streamable_http_server(
     # Re-parse our transport/auth argv through the real parser+auth configurer
     # (the same objects the CLI entrypoint builds), since _build_server(bootstrap=False)
     # deliberately ignores argv (see its docstring) and uses defaults.
-    from graph_os.mcp_server.backing.server_factory import (
+    from arbora.mcp_server.backing.server_factory import (
         _configure_auth,
         create_mcp_parser,
     )
@@ -182,8 +182,8 @@ def _live_streamable_http_server(
     @mcp.tool(name="_e2e_identity_probe")
     def _e2e_identity_probe() -> str:
 
-        from graph_os.api.contracts.session import current_session
-        from graph_os.security.actor_context import current_actor
+        from arbora.api.contracts.session import current_session
+        from arbora.security.actor_context import current_actor
 
         actor = current_actor()
         session = current_session()
@@ -233,7 +233,7 @@ def test_streamable_http_serves_real_mcp_and_rejects_unauthenticated(
 ):
     """initialize handshake + real tool catalog, and a hard 401 with no token."""
     issuer = "https://e2e-test-issuer.invalid/realms/homelab"
-    audience = "graph-os-e2e-test"
+    audience = "arbora-e2e-test"
 
     with _live_streamable_http_server(
         monkeypatch, jwks_server, issuer=issuer, audience=audience
@@ -440,7 +440,7 @@ def test_streamable_http_serves_real_mcp_and_rejects_unauthenticated(
 
 
 def test_streamable_http_serves_2026_07_28_protocol_natively(monkeypatch, jwks_server):
-    """BUG-069 wiring proof: the exact same real graph-os server/port/path this
+    """BUG-069 wiring proof: the exact same real arbora server/port/path this
     module's other test drives against the legacy 2025-06-18 handshake ALSO
     answers a modern, stateless MCP 2026-07-28 single-exchange request — no
     ``mcp_v2_gateway`` sidecar, second port, or second process anywhere.
@@ -455,7 +455,7 @@ def test_streamable_http_serves_2026_07_28_protocol_natively(monkeypatch, jwks_s
     ``Mcp-Session-Id`` here: that absence, succeeding anyway, is the point.
     """
     issuer = "https://e2e-test-issuer.invalid/realms/homelab"
-    audience = "graph-os-e2e-test"
+    audience = "arbora-e2e-test"
 
     with _live_streamable_http_server(
         monkeypatch, jwks_server, issuer=issuer, audience=audience

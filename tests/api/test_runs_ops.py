@@ -7,8 +7,8 @@ from datetime import UTC, datetime, timedelta, timezone
 import pytest
 from pydantic import ValidationError
 
-from graph_os.api.ops import runs
-from graph_os.api.ops.runs import (
+from arbora.api.ops import runs
+from arbora.api.ops.runs import (
     UNAVAILABLE,
     CurrentPlanRead,
     CurrentPlanSnapshot,

@@ -9,8 +9,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from graph_os.api.errors import GraphOSErrorCode, GraphOSRefusal
-from graph_os.finance.markets import (
+from arbora.api.errors import ArboraErrorCode, ArboraRefusal
+from arbora.finance.markets import (
     AccountBinding,
     MarketReadRequest,
     get_market_read,
@@ -24,10 +24,10 @@ def _request() -> MarketReadRequest:
 def test_missing_binding_refuses_with_zero_provider_calls() -> None:
     provider = Mock(spec=[])
 
-    with pytest.raises(GraphOSRefusal) as excinfo:
+    with pytest.raises(ArboraRefusal) as excinfo:
         get_market_read(provider, _request(), account_binding=None)
 
-    assert excinfo.value.code == GraphOSErrorCode.UNAVAILABLE
+    assert excinfo.value.code == ArboraErrorCode.UNAVAILABLE
     assert provider.mock_calls == []
 
 
@@ -38,10 +38,10 @@ def test_mismatched_tenant_refuses_with_zero_provider_calls() -> None:
     provider = Mock(spec=[])
     binding = AccountBinding(tenant_id="tenant-b", account_id="acct-1")
 
-    with pytest.raises(GraphOSRefusal) as excinfo:
+    with pytest.raises(ArboraRefusal) as excinfo:
         get_market_read(provider, _request(), account_binding=binding)
 
-    assert excinfo.value.code == GraphOSErrorCode.UNAVAILABLE
+    assert excinfo.value.code == ArboraErrorCode.UNAVAILABLE
     assert provider.mock_calls == []
 
 
@@ -49,7 +49,7 @@ def test_mismatched_account_refuses_with_zero_provider_calls() -> None:
     provider = Mock(spec=[])
     binding = AccountBinding(tenant_id="tenant-a", account_id="acct-2")
 
-    with pytest.raises(GraphOSRefusal):
+    with pytest.raises(ArboraRefusal):
         get_market_read(provider, _request(), account_binding=binding)
 
     assert provider.mock_calls == []
@@ -59,10 +59,10 @@ def test_missing_provider_capability_refuses_before_dispatch() -> None:
     provider = Mock(spec=[])
     binding = AccountBinding(tenant_id="tenant-a", account_id="acct-1")
 
-    with pytest.raises(GraphOSRefusal) as excinfo:
+    with pytest.raises(ArboraRefusal) as excinfo:
         get_market_read(provider, _request(), account_binding=binding)
 
-    assert excinfo.value.code == GraphOSErrorCode.UNAVAILABLE
+    assert excinfo.value.code == ArboraErrorCode.UNAVAILABLE
 
 
 @pytest.mark.spec("GRAPHOS-OPS-R017.1")

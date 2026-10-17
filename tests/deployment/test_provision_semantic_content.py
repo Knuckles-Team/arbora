@@ -1,4 +1,4 @@
-"""``graph-os-production-ops provision-semantic-content`` through its CLI entrypoint.
+"""``arbora-production-ops provision-semantic-content`` through its CLI entrypoint.
 
 The EG transport is faked at ``client._send`` so every generated sender, model
 and decode runs for real; the process session, AU's policy-gated import
@@ -12,13 +12,13 @@ from typing import Any
 
 import pytest
 
-from graph_os.api.contracts.session import GraphSession
-from graph_os.deployment import production_ops, semantic_provisioning
+from arbora.api.contracts.session import GraphSession
+from arbora.deployment import production_ops, semantic_provisioning
 from tests._eg_fakes import AllowPolicy, FakeEgEngine, service_session
 
 TENANT = "tenant-a"
 GRAPH = "tenant__tenant-a__default"
-URL = "https://graph-os.example/mcp"
+URL = "https://arbora.example/mcp"
 OWNER = "principal:sha256:" + "e" * 64
 
 
@@ -142,7 +142,7 @@ def _session() -> GraphSession:
 
 @pytest.fixture
 def wired(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
-    from graph_os.mcp_server import bootstrap, runtime
+    from arbora.mcp_server import bootstrap, runtime
 
     state: dict[str, Any] = {"verified": []}
     engine = _Engine(registered=set(), graphs=set())
@@ -151,7 +151,7 @@ def wired(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
     monkeypatch.setattr(bootstrap, "_wait_for_engine_materialization", lambda e: None)
     monkeypatch.setattr(
-        "graph_os.api.contracts.provisioning.get_action_policy",
+        "arbora.api.contracts.provisioning.get_action_policy",
         lambda _engine: AllowPolicy(),
     )
     monkeypatch.setattr(
@@ -159,7 +159,7 @@ def wired(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     )
 
     async def verify(**kwargs: Any) -> None:
-        from graph_os.semantic_content import SemanticContentNotReadyError
+        from arbora.semantic_content import SemanticContentNotReadyError
 
         attached = {
             call[2]["op"]["connector"]
@@ -192,8 +192,8 @@ def test_cli_provisions_both_packs_under_eg_issued_bindings(
     assert report["control_graph_created"] is True
     assert "__control__" in engine.graphs
     # The cut agent-utilities harness ships no semantic content pack.
-    assert sorted(report["registered"]) == ["graph-os"]
-    assert sorted(attest["connector"] for attest in engine.attests) == ["graph-os"]
+    assert sorted(report["registered"]) == ["arbora"]
+    assert sorted(attest["connector"] for attest in engine.attests) == ["arbora"]
     for attest in engine.attests:
         # The first binding of a fresh store: no generation to fence on.
         assert attest.get("expected_catalog_generation") is None
@@ -213,7 +213,7 @@ def test_rerun_registers_and_creates_nothing(
     wired: dict[str, Any], capsys: pytest.CaptureFixture[str]
 ) -> None:
     engine: _Engine = wired["engine"]
-    engine.registered.update({"graph-os", "agent-utilities"})
+    engine.registered.update({"arbora", "agent-utilities"})
     engine.graphs.update({GRAPH, "__control__"})
 
     assert production_ops.main(["provision-semantic-content", "--served-url", URL]) == 0
@@ -243,7 +243,7 @@ def test_failed_verification_exits_non_zero(
 def test_served_url_is_required(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.delenv("GRAPH_OS_SERVED_MCP_URL", raising=False)
+    monkeypatch.delenv("ARBORA_SERVED_MCP_URL", raising=False)
 
     assert production_ops.main(["provision-semantic-content"]) == 1
     assert (
@@ -257,7 +257,7 @@ def test_registration_digest_matches_engine_canonical_json() -> None:
     import hashlib
 
     expected = hashlib.sha256(
-        b'{"resources":{"a":[2],"b":1},"url":"https://graph-os.example/mcp"}'
+        b'{"resources":{"a":[2],"b":1},"url":"https://arbora.example/mcp"}'
     ).hexdigest()
     assert digest == expected
 
@@ -265,7 +265,7 @@ def test_registration_digest_matches_engine_canonical_json() -> None:
 async def test_boot_creates_tenant_and_control_graphs_on_a_fresh_store() -> None:
     from contextlib import nullcontext
 
-    from graph_os.deployment.semantic_provisioning import ensure_base_graphs
+    from arbora.deployment.semantic_provisioning import ensure_base_graphs
 
     engine = _Engine(registered=set(), graphs=set())
     session = type("S", (), {"graph": GRAPH})()
@@ -281,6 +281,6 @@ async def test_boot_creates_tenant_and_control_graphs_on_a_fresh_store() -> None
 
 
 async def test_boot_skips_engines_without_native_graphs() -> None:
-    from graph_os.deployment.semantic_provisioning import ensure_base_graphs
+    from arbora.deployment.semantic_provisioning import ensure_base_graphs
 
     assert await ensure_base_graphs(engine=object(), session=object()) == {}

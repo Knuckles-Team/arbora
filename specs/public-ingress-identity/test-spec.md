@@ -4,7 +4,7 @@
 |---|---|---|---|---|
 | T-IN-01 | IN-01 | Unit | Complete generic HTTPS profile, local OIDC metadata, reference-only secrets | Deterministic redacted render with exact host, callback and profile digest. |
 | T-IN-02 | IN-01 | Unit | Missing TLS ref, malformed callback, HTTP non-loopback, unknown field | Each refuses with section/key diagnostic; no secret value appears. |
-| T-IN-03 | IN-02 | Integration | Local TLS proxy with configured trust, authenticated request | GraphOS gateway reaches existing identity middleware and expected application route. |
+| T-IN-03 | IN-02 | Integration | Local TLS proxy with configured trust, authenticated request | Arbora gateway reaches existing identity middleware and expected application route. |
 | T-IN-04 | IN-02 | Integration | Untrusted proxy sends forged forwarded host/scheme | Effective authority stays with transport Host or request is rejected. |
 | T-IN-05 | IN-03 | Contract | Valid OIDC token, exact Host/Origin, tenant grant | Authorized read succeeds and engine sees verified principal/scope. |
 | T-IN-06 | IN-03 | Contract | Missing/expired token, wildcard Host, wrong Origin, cross-tenant grant | 401/403 or profile refusal before mutation; no anonymous retry. |

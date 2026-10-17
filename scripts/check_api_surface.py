@@ -1,6 +1,6 @@
 """Pre-commit gate: fail closed on undisclosed API-surface drift (GRAPHOS-FLEET-R016).
 
-Thin CLI over ``graph_os.api.registry.surface_gate`` (``public_surface`` /
+Thin CLI over ``arbora.api.registry.surface_gate`` (``public_surface`` /
 ``diff_public_surface``): this script owns no comparison logic of its own,
 it only loads the checked-in baseline, projects the live registry through
 ``public_surface``, and reports the gate's verdict. A deliberate surface
@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from graph_os.api.registry import diff_public_surface, public_surface
+from arbora.api.registry import diff_public_surface, public_surface
 
 BASELINE = (
     Path(__file__).resolve().parents[1] / "tests" / "api" / "surface_baseline.json"
@@ -29,7 +29,7 @@ def _load_baseline(path: Path) -> dict[str, dict[str, Any]]:
 
 
 def _load_current() -> dict[str, dict[str, Any]]:
-    from graph_os.api.ops.registry_factory import get_registry
+    from arbora.api.ops.registry_factory import get_registry
 
     return public_surface(list(get_registry()))
 

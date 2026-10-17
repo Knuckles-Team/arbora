@@ -6,7 +6,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from graph_os.identity.saml import (
+from arbora.identity.saml import (
     ParsedSamlAssertion,
     SamlAssertionRefused,
     SamlRefusalReason,

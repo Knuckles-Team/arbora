@@ -31,7 +31,7 @@ small, versioned, and synthetic.
 
 ## Fresh checkout execution
 
-1. Clone `graph-os` and follow this repository's `AGENTS.md` for `uv sync
+1. Clone `arbora` and follow this repository's `AGENTS.md` for `uv sync
    --extra test`. The release workflow supplies pinned public sibling
    dependencies; a local contributor may use published packages or clone their
    public sources using the repository's documented setup.
@@ -40,9 +40,9 @@ small, versioned, and synthetic.
    `sample_app.order` tables and a fake provider account per tenant. Generate
    no fixture with real account or source data.
 3. Run focused unit/contract tests, then `uv run pytest`, `uv run ruff check .`,
-   `uv run ruff format --check .`, `uv run mypy graph_os`, and the applicable
+   `uv run ruff format --check .`, `uv run mypy arbora`, and the applicable
    repository hooks. Run CCCC, jscpd, dupehound and KISS review on changed code.
-4. Start one GraphOS server and call both MCP and REST surfaces with A/B
+4. Start one Arbora server and call both MCP and REST surfaces with A/B
    identities. Capture sanitized request IDs, response schemas, denied-call
    counters, restart/replay results, and the exact tested revision.
 
@@ -67,7 +67,7 @@ acceptance `ACCEPTED` only after all applicable rows pass on that revision.
 ## Wallet producer and consumer acceptance
 
 `tests/integration/test_order_confirmation.py::test_wallet_proof_confirmation_and_replay` binds GRAPHOS-DATA-MARKET-R007.1 through R007.6.
-Start GraphOS, the actual SDK verifier and a synthetic connector with a running durable graph authority.
+Start Arbora, the actual SDK verifier and a synthetic connector with a running durable graph authority.
 Enter both REST and MCP with the same authenticated caller and approved plan; observe exactly one controlled provider mutation.
 Repeat with missing confirmation, invalid signature, changed payload, wrong account/network/tenant, expired proof and revoked key; observe zero mutations.
 Remove each trust, verifier or durable-binding dependency and assert typed UNAVAILABLE before provider mutation.
@@ -103,10 +103,10 @@ These are required future served tests using the existing named acceptance cases
 ## Structured marketplace reads (GRAPHOS-DATA-MARKET-R003.1–R003.6)
 
 These are required future tests; no runtime result is claimed. The tests run
-through the real mounted GraphOS surfaces with an instrumented local provider.
+through the real mounted Arbora surfaces with an instrumented local provider.
 
 - **FI-11 — registration and request schema:** `tests/mcp_server/test_data_market_reads_served.py::test_all_nine_operations_have_closed_v1_schemas` checks all nine operation IDs and closed request schemas. It pins resource filters and limit bounds. It covers the 512-byte cursor cap, ID grammar, and the 1–200-byte NFC query cap. It checks search fields and fixed ordering. It rejects extra keys before provider calls.
-- **FI-12 — projection and metadata:** `tests/mcp_server/test_data_market_reads_served.py::test_v1_projections_preserve_metadata_and_paginate_deterministically` pins exact page/get/item keys and nullability. It checks decimal strings and UTC timestamps. It checks source/session/currency/unit/freshness/provenance and cursor continuation. It rejects provider-only keys. GraphOS preserves unknown metadata as explicit null or unknown where allowed. GraphOS never synthesizes these values.
+- **FI-12 — projection and metadata:** `tests/mcp_server/test_data_market_reads_served.py::test_v1_projections_preserve_metadata_and_paginate_deterministically` pins exact page/get/item keys and nullability. It checks decimal strings and UTC timestamps. It checks source/session/currency/unit/freshness/provenance and cursor continuation. It rejects provider-only keys. Arbora preserves unknown metadata as explicit null or unknown where allowed. Arbora never synthesizes these values.
 - **FI-13 — authority refusal:** `tests/mcp_server/test_data_market_reads_served.py::test_denials_and_malformed_requests_precede_provider_calls` tests tenant A/B and missing or mismatched accounts on the real routes. REST calls `POST /api/v1/ops/markets.list`. MCP sends JSON-RPC `tools/call` to `POST /mcp` with `name: ask` and `arguments.op: markets.list`. Denials use R010, make zero provider calls, and reveal no cross-tenant records.
 - **FI-14 — route parity:** `tests/mcp_server/test_data_market_reads_served.py::test_rest_post_and_mcp_tools_call_share_the_finance_port` exercises both registered entrypoints. Equivalent requests use one `finance_read_port`. Results and refusals normalize identically and retain audit correlation.
 - **FI-15 — effect isolation:** `tests/mcp_server/test_data_market_reads_served.py::test_read_operations_never_reserve_or_submit_effects` spies on paper submission and effect reservations. Reads carry only `Effect.READ` and reach neither path.

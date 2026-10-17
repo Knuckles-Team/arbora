@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from graph_os.fleet.child_resilience import ChildRuntime
+from arbora.fleet.child_resilience import ChildRuntime
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 
 pytestmark = pytest.mark.spec("GRAPHOS-FLEET-R035")
@@ -290,7 +290,7 @@ def setup_oauth_sessions(
     tmp_path: Any, monkeypatch: Any, sessions: list[SchemaSession]
 ):
     """Open scripted sessions through the real ephemeral OAuth call path."""
-    from graph_os.fleet import multiplexer as multiplexer_module
+    from arbora.fleet import multiplexer as multiplexer_module
 
     cfg: dict[str, Any] = {}
     mux = multiplexer_from_fixture(tmp_path / "catalog.json")

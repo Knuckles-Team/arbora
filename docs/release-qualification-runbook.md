@@ -38,9 +38,9 @@ gh run list --workflow=release.yml -R Knuckles-Team/agent-utilities --branch mai
 Same proof shape as stage 1, against the revision this release's
 `agent-utilities` dependency pins.
 
-## 4. GraphOS itself
+## 4. Arbora itself
 
-From a clean GraphOS checkout at the candidate revision, after
+From a clean Arbora checkout at the candidate revision, after
 `scripts/bootstrap.sh`:
 
 ```bash
@@ -66,13 +66,13 @@ Install the built wheel into a fresh environment and certify it is the
 one that will be promoted:
 
 ```bash
-graph-os-release-canary
+arbora-release-canary
 ```
 
-`graph-os-release-canary` fails closed (nonzero exit, no partial pass) when
+`arbora-release-canary` fails closed (nonzero exit, no partial pass) when
 a declared console entry point, the packaged engine binary, the folded
 numeric kernel, or the served FastMCP major is missing or mismatched — see
-`graph_os/deployment/release_canary.py`.
+`arbora/deployment/release_canary.py`.
 
 ## 5. Web UI (`agent-webui`, pending an in-flight package rename)
 
@@ -93,17 +93,17 @@ agent-utilities-doctor --only mcp_fleet mcp_fleet_secrets --live
 Both checks must report healthy for every connector package this release's
 fleet catalog declares; `mcp_fleet` proves live reachability
 (`--live`), `mcp_fleet_secrets` proves each declared secret reference
-resolves. See `graph_os/deployment/doctor.py`'s `CHECKS` table.
+resolves. See `arbora/deployment/doctor.py`'s `CHECKS` table.
 
 ## 7. Production redeployment
 
 ```bash
-graph-os-production-ops backup --archive-root <path>
-graph-os-production-ops restore-validate --archive-root <path> --scratch-root <path>
+arbora-production-ops backup --archive-root <path>
+arbora-production-ops restore-validate --archive-root <path> --scratch-root <path>
 ```
 
 A qualified release must restore-validate from its own backup before
-redeployment proceeds. See `graph_os/deployment/production_ops.py`.
+redeployment proceeds. See `arbora/deployment/production_ops.py`.
 
 ## Scope and limits
 

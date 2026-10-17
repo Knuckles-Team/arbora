@@ -8,10 +8,10 @@ import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
-from graph_os.a2a.application import create_a2a_application
-from graph_os.a2a.authority import A2AIdempotencyConflict
-from graph_os.a2a.models import A2ARouteDecision, A2ATask, A2ATaskStatus
-from graph_os.a2a.service import A2AService
+from arbora.a2a.application import create_a2a_application
+from arbora.a2a.authority import A2AIdempotencyConflict
+from arbora.a2a.models import A2ARouteDecision, A2ATask, A2ATaskStatus
+from arbora.a2a.service import A2AService
 
 
 class Authenticator:
@@ -235,7 +235,7 @@ def test_json_rpc_preserves_service_error_translation() -> None:
 
 @pytest.mark.spec("GRAPHOS-A2A-R006.1")
 def test_json_rpc_refuses_op_invoke_until_registry_bridge_exists() -> None:
-    """GRAPHOS-A2A-R006.1: ``graphos.op/invoke`` is on the method table but
+    """GRAPHOS-A2A-R006.1: ``arbora.op/invoke`` is on the method table but
     fail-closed until it is bridged to the shared hosted-operation registry
     (``Surface.A2A``), with a distinct error code, not method-not-found.
     """
@@ -249,7 +249,7 @@ def test_json_rpc_refuses_op_invoke_until_registry_bridge_exists() -> None:
         json={
             "jsonrpc": "2.0",
             "id": "invoke",
-            "method": "graphos.op/invoke",
+            "method": "arbora.op/invoke",
             "params": {"op": "kg.search", "params": {}},
         },
     )
@@ -263,7 +263,7 @@ def test_json_rpc_refuses_op_invoke_until_registry_bridge_exists() -> None:
         json={
             "jsonrpc": "2.0",
             "id": "invoke-invalid",
-            "method": "graphos.op/invoke",
+            "method": "arbora.op/invoke",
             "params": {},
         },
     )

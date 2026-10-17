@@ -10,14 +10,14 @@ import pytest
 from fastapi import FastAPI
 from fastmcp import FastMCP
 
-from graph_os.a2a import mcp as a2a_mcp
-from graph_os.a2a.service import A2AService
-from graph_os.api.http.auth import AmbientHTTPAuthenticator
-from graph_os.api.registry import Surface, contract_admission
-from graph_os.api.registry.eg_binding import EgContractError
-from graph_os.mcp_server import hosted_invocation, runtime
-from graph_os.mcp_server.composition import NativeGatewayApplication
-from graph_os.mcp_server.hosted_invocation import HostedInvocation
+from arbora.a2a import mcp as a2a_mcp
+from arbora.a2a.service import A2AService
+from arbora.api.http.auth import AmbientHTTPAuthenticator
+from arbora.api.registry import Surface, contract_admission
+from arbora.api.registry.eg_binding import EgContractError
+from arbora.mcp_server import hosted_invocation, runtime
+from arbora.mcp_server.composition import NativeGatewayApplication
+from arbora.mcp_server.hosted_invocation import HostedInvocation
 from tests.a2a.test_application import Authority, Router
 from tests.a2a.test_operation_bridge import fixture, post, session
 from tests.api.test_invoke_contract import operation
@@ -51,12 +51,12 @@ def composed(monkeypatch, *, scopes=frozenset({"example:write"})):
 
 
 def mount_a2a(monkeypatch, value):
-    from graph_os.browser_control import mcp as browser_mcp
-    from graph_os.mcp_server.backing import graphos_surface
+    from arbora.browser_control import mcp as browser_mcp
+    from arbora.mcp_server.backing import arbora_surface
 
     served = FastMCP("hosted-invocation-test")
     monkeypatch.setattr(
-        graphos_surface, "register_graphos_surface", lambda _mcp, **_kwargs: served
+        arbora_surface, "register_arbora_surface", lambda _mcp, **_kwargs: served
     )
     monkeypatch.setattr(browser_mcp, "register_browser_control_tools", lambda _: None)
     monkeypatch.setattr(
@@ -143,8 +143,8 @@ def test_native_registration_refuses_stale_or_unverified_caller(monkeypatch, fai
 
 
 def test_native_entry_hands_same_bundle_to_both_compositions(monkeypatch):
-    from graph_os.core import settings as config_module
-    from graph_os.mcp_server import server
+    from arbora.core import settings as config_module
+    from arbora.mcp_server import server
 
     value, *_ = composed(monkeypatch)
     installed = []
@@ -152,7 +152,7 @@ def test_native_entry_hands_same_bundle_to_both_compositions(monkeypatch):
     monkeypatch.setattr(server, "install_gateway_application", installed.append)
     for name in (
         "_preflight_mcp_sdk_floor",
-        "_configure_graphos_otel",
+        "_configure_arbora_otel",
         "_configure_telemetry_engine_otel",
     ):
         monkeypatch.setattr(server, name, lambda: None)

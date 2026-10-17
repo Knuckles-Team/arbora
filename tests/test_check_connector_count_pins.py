@@ -10,7 +10,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from graph_os.fleet.connector_count_pins import (
+from arbora.fleet.connector_count_pins import (
     CountPinSite,
     check_connector_count_pins,
 )

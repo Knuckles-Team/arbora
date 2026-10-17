@@ -12,7 +12,7 @@ uncovered.
 
 from __future__ import annotations
 
-from graph_os.security.conformance import surface_inventory, surface_manifest
+from arbora.security.conformance import surface_inventory, surface_manifest
 
 
 def test_every_live_dialect_has_a_manifest_disposition() -> None:

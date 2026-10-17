@@ -7,7 +7,7 @@ host's ``ToolResult``.
 Before the fix, ``_make_forwarder``'s ``_forward`` manually reconstructed
 ``ToolResult(content=..., structured_content=...)`` and never forwarded
 ``meta`` at all — a direct call to the child would carry its ``_meta``
-faithfully, but the SAME call routed through graph-os/the multiplexer
+faithfully, but the SAME call routed through arbora/the multiplexer
 silently dropped it, creating semantic drift between direct-provider and
 forwarded calls.
 """
@@ -17,7 +17,7 @@ from __future__ import annotations
 import mcp.types
 import pytest
 
-from graph_os.fleet.multiplexer import (
+from arbora.fleet.multiplexer import (
     ToolResult,
     _make_forwarder,
     _tool_result_from_child,
@@ -170,7 +170,7 @@ def test_fallback_still_forwards_meta_when_from_mcp_result_unavailable(
     """If a future FastMCP version drops ``ToolResult.from_mcp_result``, the
     degrade must still explicitly forward ``meta`` rather than silently
     reverting to the old lossy behavior."""
-    from graph_os.fleet import multiplexer as mux_module
+    from arbora.fleet import multiplexer as mux_module
 
     monkeypatch.delattr(mux_module.ToolResult, "from_mcp_result", raising=True)
 

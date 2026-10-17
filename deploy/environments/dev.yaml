@@ -30,7 +30,7 @@ target:
     kubernetes.io/hostname: r510
 
 release:
-  image_repository: knucklessg1/graph-os-unified
+  image_repository: knucklessg1/arbora-unified
   tag_policy: floating-tag
   image_pull_policy: Always
   revision: null
@@ -79,21 +79,21 @@ filesystem:
 
 configuration:
   config_map_refs:
-    - graph-os-env
+    - arbora-env
   env:
     KG_LOOP: "0"
     KG_FUSEKI_ENDPOINT: http://fuseki.example.invalid:80
 
 secrets:
   required:
-    - name: graph-os-secrets
-      ref: k8s-secret://platform/graph-os-secrets
+    - name: arbora-secrets
+      ref: k8s-secret://platform/arbora-secrets
       keys:
         - OIDC_CLIENT_SECRET
         - ENGINE_HMAC_KEY
 
 network:
-  ingress_host: graph-os-dev.example
+  ingress_host: arbora-dev.example
   service_port: 8000
   network_policy_enabled: false
   allowed_namespaces: []

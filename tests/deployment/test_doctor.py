@@ -15,7 +15,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from graph_os.deployment import doctor as D
+from arbora.deployment import doctor as D
 
 
 def _ok(name):
@@ -30,7 +30,7 @@ def test_module_entrypoint_is_warning_free_and_emits_exact_json() -> None:
             "-W",
             "error::RuntimeWarning",
             "-m",
-            "graph_os.deployment.doctor",
+            "arbora.deployment.doctor",
             "--only",
             "python_env",
             "--json",
@@ -49,7 +49,7 @@ def test_module_entrypoint_is_warning_free_and_emits_exact_json() -> None:
 
 def test_deployment_package_preserves_lazy_doctor_exports() -> None:
     """The public facade remains source-compatible after entrypoint hardening."""
-    from graph_os.deployment import CHECKS, run_doctor, run_preflight
+    from arbora.deployment import CHECKS, run_doctor, run_preflight
 
     assert CHECKS is D.CHECKS
     assert run_doctor is D.run_doctor
@@ -63,11 +63,11 @@ from concurrent.futures import ThreadPoolExecutor
 import json
 import sys
 
-import graph_os.deployment as deployment
+import arbora.deployment as deployment
 
 lazy_modules = (
-    "graph_os.deployment.doctor",
-    "graph_os.deployment.preflight",
+    "arbora.deployment.doctor",
+    "arbora.deployment.preflight",
 )
 assert not any(name in sys.modules for name in lazy_modules)
 assert {"CHECKS", "run_doctor", "run_preflight", "doctor", "preflight"} <= set(dir(deployment))
@@ -75,13 +75,13 @@ assert {"CHECKS", "run_doctor", "run_preflight", "doctor", "preflight"} <= set(d
 with ThreadPoolExecutor(max_workers=8) as pool:
     doctors = list(pool.map(lambda _: deployment.doctor, range(16)))
 assert all(module is doctors[0] for module in doctors)
-assert doctors[0].__name__ == "graph_os.deployment.doctor"
-assert "graph_os.deployment.preflight" not in sys.modules
+assert doctors[0].__name__ == "arbora.deployment.doctor"
+assert "arbora.deployment.preflight" not in sys.modules
 
 with ThreadPoolExecutor(max_workers=8) as pool:
     preflights = list(pool.map(lambda _: deployment.preflight, range(16)))
 assert all(module is preflights[0] for module in preflights)
-assert preflights[0].__name__ == "graph_os.deployment.preflight"
+assert preflights[0].__name__ == "arbora.deployment.preflight"
 assert deployment.CHECKS is doctors[0].CHECKS
 assert deployment.run_doctor is doctors[0].run_doctor
 assert deployment.run_preflight is preflights[0].run_preflight
@@ -128,7 +128,7 @@ def test_run_doctor_loads_agent_config_before_checks(monkeypatch):
         observed["checked"] = observed["loaded"]
         return D._result("config", "ok", "fine")
 
-    monkeypatch.setattr("graph_os.core.settings.load_config", load_config)
+    monkeypatch.setattr("arbora.core.settings.load_config", load_config)
     monkeypatch.setattr(D, "CHECKS", {"config": check})
 
     rep = D.run_doctor()
@@ -141,7 +141,7 @@ def test_run_doctor_redacts_configuration_load_failure(monkeypatch):
     def load_config():
         raise ValueError("private configuration detail")
 
-    monkeypatch.setattr("graph_os.core.settings.load_config", load_config)
+    monkeypatch.setattr("arbora.core.settings.load_config", load_config)
     monkeypatch.setattr(
         D, "CHECKS", {"config": lambda: D._result("config", "ok", "fine")}
     )
@@ -264,7 +264,7 @@ def test_permission_governance_doctor_reports_missing_reference_redacted(
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "graph_os.core.settings.GraphOSConfig",
+        "arbora.core.settings.ArboraConfig",
         lambda: SimpleNamespace(
             permissions_signing_key_ref=None,
             agent_policies_path=None,
@@ -281,7 +281,7 @@ def test_permission_governance_doctor_reports_missing_reference_redacted(
 
 def test_permission_governance_doctor_verifies_authority(monkeypatch):
     monkeypatch.setattr(
-        "graph_os.core.settings.GraphOSConfig",
+        "arbora.core.settings.ArboraConfig",
         lambda: SimpleNamespace(
             permissions_signing_key_ref="env://DOCTOR_PERMISSION_KEY",
             agent_policies_path=None,
@@ -301,7 +301,7 @@ def test_permission_governance_doctor_verifies_authority(monkeypatch):
 
 def test_eunomia_doctor_warns_when_narrowing_policy_is_off(monkeypatch):
     monkeypatch.setattr(
-        "graph_os.core.settings.GraphOSConfig",
+        "arbora.core.settings.ArboraConfig",
         lambda: SimpleNamespace(
             eunomia_type="none",
             eunomia_allowed_private_hosts=[],
@@ -317,7 +317,7 @@ def test_eunomia_doctor_warns_when_narrowing_policy_is_off(monkeypatch):
 
 def test_outbound_auth_doctor_reports_redacted_readiness(monkeypatch):
     monkeypatch.setattr(
-        "graph_os.mcp_server.backing.client_credentials.outbound_auth_configuration_status",
+        "arbora.mcp_server.backing.client_credentials.outbound_auth_configuration_status",
         lambda: {
             "mode": "oidc-client-credentials",
             "ready": True,
@@ -344,7 +344,7 @@ def test_outbound_auth_doctor_fails_closed_on_missing_audience(monkeypatch):
     # exactly that shape and silently treats anything else (e.g. a tuple) as
     # empty, so the mock must match the real contract's type, not just value.
     monkeypatch.setattr(
-        "graph_os.mcp_server.backing.client_credentials.outbound_auth_configuration_status",
+        "arbora.mcp_server.backing.client_credentials.outbound_auth_configuration_status",
         lambda: {
             "mode": "oidc-client-credentials",
             "ready": False,
@@ -374,7 +374,7 @@ def test_graph_identity_doctor_validates_token_ref_without_exposing_it(monkeypat
         kg_auth_token_ref="secret://graph/private-token",
         kg_identity_oauth2=None,
     )
-    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
+    monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: cfg)
     monkeypatch.setattr(
         "agent_connector_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
         lambda _ref: "opaque-runtime-token",
@@ -407,7 +407,7 @@ def test_graph_identity_doctor_rejects_ambiguous_or_missing_source(monkeypatch):
             graph_service_endpoints=[],
         ),
     ):
-        monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda cfg=cfg: cfg)
+        monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda cfg=cfg: cfg)
         result = D._check_graph_identity()
         assert result["status"] == "fail"
         assert result["data"] == {"ready": False, "redacted": True}
@@ -420,7 +420,7 @@ def test_graph_identity_doctor_accepts_private_tiny_authority(monkeypatch):
         deployment_profile="tiny",
         graph_service_endpoints=[],
     )
-    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
+    monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: cfg)
 
     result = D._check_graph_identity()
 
@@ -464,9 +464,9 @@ def test_transport_security_doctor_resolves_env_profile_without_secret_backend(
         graph_service_endpoints=[],
         external_graph_connectors=[],
     )
-    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
+    monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: cfg)
     with patch(
-        "graph_os.security.secrets.create_secrets_client",
+        "arbora.security.secrets.create_secrets_client",
         side_effect=AssertionError("env references must not open a secret backend"),
     ) as create_client:
         result = D._check_transport_security()
@@ -493,7 +493,7 @@ def test_transport_security_doctor_rejects_invalid_engine_transport(monkeypatch)
         engine_tls_profile_ref=None,
         graph_service_endpoints=["http://not-an-engine-transport"],
     )
-    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
+    monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: cfg)
 
     result = D._check_transport_security()
 
@@ -517,7 +517,7 @@ def test_google_workspace_oauth_doctor_is_redacted(
         google_workspace_oauth_client_id=client_id,
         google_workspace_oauth_broker_url=broker_url,
     )
-    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
+    monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: cfg)
 
     result = D._check_google_workspace_oauth()
     rendered = json.dumps(result, sort_keys=True)
@@ -539,7 +539,7 @@ def test_engine_doctor_reports_only_redacted_public_transport(
     monkeypatch, endpoint, transport, tls
 ):
     monkeypatch.setattr(
-        "graph_os.core.settings.GraphOSConfig",
+        "arbora.core.settings.ArboraConfig",
         lambda: SimpleNamespace(graph_service_endpoints=[endpoint]),
     )
 
@@ -559,7 +559,7 @@ def test_engine_doctor_reports_only_redacted_public_transport(
 @pytest.mark.parametrize("endpoints", [[], ["tcp://one:1", "tcp://two:2"]])
 def test_engine_doctor_requires_one_coordinator(monkeypatch, endpoints):
     monkeypatch.setattr(
-        "graph_os.core.settings.GraphOSConfig",
+        "arbora.core.settings.ArboraConfig",
         lambda: SimpleNamespace(graph_service_endpoints=endpoints),
     )
 
@@ -576,7 +576,7 @@ def _signed_release_fixture(*, matrix_digest: str) -> dict:
     from scripts.release import check_compatibility
 
     unsigned = {
-        "apiVersion": "graphos.io/v1",
+        "apiVersion": "arbora.io/v1",
         "kind": "ReleaseManifest",
         "manifestState": "signed-release",
         "releaseId": "release-doctor-fixture",
@@ -632,9 +632,9 @@ def test_engine_request_context_doctor_reports_current_only_contract():
 
 
 def test_secret_doctor_fails_closed_when_backend_evaluation_raises(monkeypatch):
-    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: object())
+    monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: object())
     monkeypatch.setattr(
-        "graph_os.deployment.config_generator._unresolved_secret_refs",
+        "arbora.deployment.config_generator._unresolved_secret_refs",
         lambda _cfg: (_ for _ in ()).throw(RuntimeError("private detail")),
     )
 
@@ -648,11 +648,11 @@ def test_secret_doctor_fails_closed_when_backend_evaluation_raises(monkeypatch):
 
 def _patch_secrets_backend_scan(monkeypatch, *, backend, counts):
     monkeypatch.setattr(
-        "graph_os.core.settings.GraphOSConfig",
+        "arbora.core.settings.ArboraConfig",
         lambda: SimpleNamespace(secrets_backend=backend),
     )
     monkeypatch.setattr(
-        "graph_os.deployment.config_generator.secret_reference_scheme_counts",
+        "arbora.deployment.config_generator.secret_reference_scheme_counts",
         lambda _cfg: counts,
     )
 
@@ -738,9 +738,9 @@ def test_secrets_backend_doctor_ok_with_no_references_at_all(monkeypatch):
 
 
 def test_secrets_backend_doctor_fails_closed_when_scan_raises(monkeypatch):
-    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: object())
+    monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: object())
     monkeypatch.setattr(
-        "graph_os.deployment.config_generator.secret_reference_scheme_counts",
+        "arbora.deployment.config_generator.secret_reference_scheme_counts",
         lambda _cfg: (_ for _ in ()).throw(RuntimeError("private detail")),
     )
 
@@ -794,7 +794,7 @@ def test_mcp_fleet_doctor_returns_only_aggregate_readiness(tmp_path, monkeypatch
         caddy_hosts=lambda: {},
     )
     monkeypatch.setattr(
-        "graph_os.core.settings.platform_config_file",
+        "arbora.core.settings.platform_config_file",
         lambda _name: config_path,
     )
     monkeypatch.setattr(D.importlib.util, "find_spec", lambda _name: object())
@@ -814,7 +814,7 @@ def test_mcp_fleet_secret_doctor_reports_only_aggregate_readiness(monkeypatch):
     direct_material = "direct-runtime-material"
     mapped_material = "mapped-runtime-material"
     monkeypatch.setattr(
-        "graph_os.core.settings.GraphOSConfig",
+        "arbora.core.settings.ArboraConfig",
         lambda: SimpleNamespace(
             mcp_fleet_secret_refs={
                 "DIRECT_ALIAS": "secret://fleet/direct",
@@ -823,7 +823,7 @@ def test_mcp_fleet_secret_doctor_reports_only_aggregate_readiness(monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        "graph_os.core.settings.setting",
+        "arbora.core.settings.setting",
         lambda alias: direct_material if alias == "DIRECT_ALIAS" else None,
     )
     monkeypatch.setattr(
@@ -851,12 +851,12 @@ def test_mcp_fleet_secret_doctor_reports_only_aggregate_readiness(monkeypatch):
 def test_mcp_fleet_secret_doctor_fails_closed_and_redacted(monkeypatch):
     private_reference = "secret://fleet/private/value"
     monkeypatch.setattr(
-        "graph_os.core.settings.GraphOSConfig",
+        "arbora.core.settings.ArboraConfig",
         lambda: SimpleNamespace(
             mcp_fleet_secret_refs={"PRIVATE_ALIAS": private_reference}
         ),
     )
-    monkeypatch.setattr("graph_os.core.settings.setting", lambda _alias: None)
+    monkeypatch.setattr("arbora.core.settings.setting", lambda _alias: None)
     monkeypatch.setattr(
         "agent_connector_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
         lambda _reference: (_ for _ in ()).throw(RuntimeError("private detail")),
@@ -892,7 +892,7 @@ def test_runtime_integrations_doctor_reports_only_redacted_readiness(
         hunyuan_url=None,
         svd_url=None,
     )
-    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
+    monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: cfg)
 
     result = D._check_runtime_integrations()
     rendered = json.dumps(result, sort_keys=True)
@@ -924,7 +924,7 @@ def test_runtime_integrations_doctor_warns_without_emitting_missing_path(monkeyp
         hunyuan_url=None,
         svd_url=None,
     )
-    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
+    monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: cfg)
 
     result = D._check_runtime_integrations()
 
@@ -940,7 +940,7 @@ def test_runtime_integrations_doctor_redacts_invalid_config_value(monkeypatch):
     def invalid_config():
         raise ValueError(private_value)
 
-    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", invalid_config)
+    monkeypatch.setattr("arbora.core.settings.ArboraConfig", invalid_config)
 
     result = D._check_runtime_integrations()
     rendered = json.dumps(result, sort_keys=True)
@@ -954,7 +954,7 @@ def test_runtime_integrations_doctor_redacts_invalid_config_value(monkeypatch):
 def test_evolution_staging_doctor_reports_readiness_without_path(tmp_path, monkeypatch):
     tmp_path.chmod(0o700)
     cfg = SimpleNamespace(evolution_staging_root=str(tmp_path))
-    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
+    monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: cfg)
 
     result = D._check_evolution_staging()
 
@@ -1003,25 +1003,25 @@ def _langfuse_doctor_config(**overrides):
 
 
 def _patch_langfuse_static_dependencies(monkeypatch, cfg, *, launcher=None):
-    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
+    monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: cfg)
     monkeypatch.setattr(
-        "graph_os.observability.langfuse_trust.langfuse_credentials_configured",
+        "arbora.observability.langfuse_trust.langfuse_credentials_configured",
         lambda **_kwargs: True,
     )
     monkeypatch.setattr(
-        "graph_os.observability.langfuse_trust.resolve_langfuse_credentials",
+        "arbora.observability.langfuse_trust.resolve_langfuse_credentials",
         lambda **_kwargs: ("synthetic-public", "synthetic-secret"),
     )
     monkeypatch.setattr(
-        "graph_os.observability.langfuse_trust.configure_langfuse_trust",
+        "arbora.observability.langfuse_trust.configure_langfuse_trust",
         lambda **_kwargs: SimpleNamespace(valid=True, configured=False),
     )
     monkeypatch.setattr(
-        "graph_os.observability.langfuse_trust.resolve_langfuse_persistence_hmac_key",
+        "arbora.observability.langfuse_trust.resolve_langfuse_persistence_hmac_key",
         lambda **_kwargs: "synthetic-persistence-key-material-32",
     )
     monkeypatch.setattr(
-        "graph_os.observability.langfuse_trust.langfuse_provider_contract_ready",
+        "arbora.observability.langfuse_trust.langfuse_provider_contract_ready",
         lambda: launcher is not None,
     )
 
@@ -1065,12 +1065,12 @@ def test_langfuse_launcher_is_required_only_for_mcp(monkeypatch):
 
 
 def test_langfuse_doctor_rejects_placeholder_material_locally(monkeypatch):
-    from graph_os.observability.langfuse_trust import LangfuseTrustError
+    from arbora.observability.langfuse_trust import LangfuseTrustError
 
     cfg = _langfuse_doctor_config()
     _patch_langfuse_static_dependencies(monkeypatch, cfg, launcher=None)
     monkeypatch.setattr(
-        "graph_os.observability.langfuse_trust.resolve_langfuse_credentials",
+        "arbora.observability.langfuse_trust.resolve_langfuse_credentials",
         MagicMock(side_effect=LangfuseTrustError("langfuse_credentials_invalid")),
     )
 
@@ -1111,7 +1111,7 @@ def test_langfuse_persistence_ref_must_resolve(monkeypatch):
     )
     _patch_langfuse_static_dependencies(monkeypatch, cfg, launcher=None)
     monkeypatch.setattr(
-        "graph_os.observability.langfuse_trust.resolve_langfuse_persistence_hmac_key",
+        "arbora.observability.langfuse_trust.resolve_langfuse_persistence_hmac_key",
         MagicMock(side_effect=RuntimeError("private provider detail")),
     )
 
@@ -1133,7 +1133,7 @@ def _patch_langfuse_mcp_probe(monkeypatch, responses):
         return payload
 
     monkeypatch.setattr(
-        "graph_os.deployment.doctor_observability._call_langfuse_child", call
+        "arbora.deployment.doctor_observability._call_langfuse_child", call
     )
     return calls
 

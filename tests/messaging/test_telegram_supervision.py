@@ -1,4 +1,4 @@
-"""Telegram conflict behavior across the GraphOS adapter and AU router."""
+"""Telegram conflict behavior across the Arbora adapter and AU router."""
 
 from __future__ import annotations
 
@@ -10,8 +10,8 @@ from typing import Any
 
 import pytest
 
-from graph_os.messaging.models import EventType
-from graph_os.messaging.router import InboundRouter
+from arbora.messaging.models import EventType
+from arbora.messaging.router import InboundRouter
 
 from ._fakes import synthetic_token
 
@@ -46,8 +46,8 @@ async def test_telegram_conflict_propagates_and_stops_updater_cleanly(
 ) -> None:
     """FIX 1 part B: a 409 ``Conflict`` on ``start_polling`` must stop the updater cleanly
     (no leaked half-open poller) and PROPAGATE to the supervisor — not be swallowed."""
-    from graph_os.messaging.backends.telegram import TelegramBackend
-    from graph_os.messaging.models import MessagingConfig
+    from arbora.messaging.backends.telegram import TelegramBackend
+    from arbora.messaging.models import MessagingConfig
 
     conflict_cls = fake_telegram
     monkeypatch.setenv("MESSAGING_WEBHOOK_BASE_URL", "")  # force the polling path
@@ -87,8 +87,8 @@ async def test_telegram_conflict_reaches_supervisor_and_retries(
     """FIX 1 end-to-end (mocked): a Telegram ``listen()`` that raises ``Conflict`` once is
     restarted by the supervisor and then serves — proving the 409 no longer permanently
     kills the listener."""
-    from graph_os.messaging.backends.telegram import TelegramBackend
-    from graph_os.messaging.models import MessagingConfig
+    from arbora.messaging.backends.telegram import TelegramBackend
+    from arbora.messaging.models import MessagingConfig
 
     conflict_cls = fake_telegram
     monkeypatch.setenv("MESSAGING_LISTEN_BACKOFF_BASE_S", "0.01")

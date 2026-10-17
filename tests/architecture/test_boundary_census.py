@@ -5,7 +5,7 @@ from __future__ import annotations
 import textwrap
 from pathlib import Path
 
-from graph_os.architecture.boundary_census import BoundaryOwner, ImportBoundaryCensus
+from arbora.architecture.boundary_census import BoundaryOwner, ImportBoundaryCensus
 
 
 def test_census_loads_seeds_from_the_published_registry() -> None:
@@ -46,11 +46,11 @@ def test_census_refuses_an_import_outside_the_public_surface(tmp_path: Path) -> 
     assert violations[0].imported == "agent_connector_sdk.credentials.internal"
 
 
-def test_owner_treats_graph_os_imports_as_self_owned() -> None:
+def test_owner_treats_arbora_imports_as_self_owned() -> None:
     census = ImportBoundaryCensus.from_seeds_file()
-    owner = census.owner_for("graph_os.fleet")
+    owner = census.owner_for("arbora.fleet")
     assert owner is not None
-    assert owner.owner_repository == "graph-os"
+    assert owner.owner_repository == "arbora"
 
 
 def test_covers_rejects_a_sibling_prefix_that_is_not_a_dotted_child() -> None:

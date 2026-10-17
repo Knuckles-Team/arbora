@@ -6,7 +6,7 @@ Before this fix, any process whose *only* build path was
 agent-webui) got a ``mcp`` with no fleet multiplexer ever attached, so every
 ``find``/``act`` fleet call raised a generic "embedded/headless build"
 error forever — even though AU already owns a complete, working fleet-attach
-implementation (:func:`graph_os.fleet.multiplexer.attach_fleet_loader`),
+implementation (:func:`arbora.fleet.multiplexer.attach_fleet_loader`),
 used with these exact arguments by this module's own full composed server.
 """
 
@@ -18,9 +18,9 @@ from unittest.mock import ANY, patch
 
 import pytest
 
-from graph_os.fleet.catalog_reader import DeferredFleetCatalogReader
-from graph_os.mcp_server import runtime
-from graph_os.mcp_server.backing.tools.intent_tools import _fleet_mux
+from arbora.fleet.catalog_reader import DeferredFleetCatalogReader
+from arbora.mcp_server import runtime
+from arbora.mcp_server.backing.tools.intent_tools import _fleet_mux
 
 
 def test_attach_headless_fleet_loader_calls_attach_fleet_loader_with_composed_args() -> (
@@ -28,7 +28,7 @@ def test_attach_headless_fleet_loader_calls_attach_fleet_loader_with_composed_ar
 ):
     """Same arguments the served process passes in ``server._attach_fleet_runtime``."""
     mcp = SimpleNamespace()
-    with patch("graph_os.fleet.multiplexer.attach_fleet_loader") as mock_attach:
+    with patch("arbora.fleet.multiplexer.attach_fleet_loader") as mock_attach:
         runtime._attach_headless_fleet_loader(mcp)
 
     mock_attach.assert_called_once_with(
@@ -58,9 +58,9 @@ def test_attach_headless_fleet_loader_records_the_exact_failure_cause(
     """
     mcp = SimpleNamespace()
     with (
-        caplog.at_level(logging.WARNING, logger="graph_os.mcp_server.runtime"),
+        caplog.at_level(logging.WARNING, logger="arbora.mcp_server.runtime"),
         patch(
-            "graph_os.fleet.multiplexer.attach_fleet_loader",
+            "arbora.fleet.multiplexer.attach_fleet_loader",
             side_effect=RuntimeError("no mcp_config.json found"),
         ),
     ):

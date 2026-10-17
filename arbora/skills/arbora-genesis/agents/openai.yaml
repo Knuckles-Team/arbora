@@ -1,0 +1,4 @@
+interface:
+  display_name: "Arbora Genesis"
+  short_description: "Provision a portable Day-0 substrate and hand off deployment"
+  default_prompt: "Use $arbora-genesis to resolve and provision the smallest suitable substrate (Docker Compose on one host, or Kubernetes with the arbora chart), then invoke $arbora-deployment for the application layer and prove the first-boot gates."

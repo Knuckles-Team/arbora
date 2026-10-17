@@ -10,7 +10,7 @@ locked ``mcp``/``fastmcp`` SDKs, that:
    only via ``exc_info``/traceback rendering, which message-text redaction
    cannot touch).
 3. The filter is wired at real import time: importing
-   ``graph_os.mcp_server.backing`` — the entry point every MCP consumer in this repo
+   ``arbora.mcp_server.backing`` — the entry point every MCP consumer in this repo
    already goes through — installs it with no further action, satisfying
    this repo's Wire-First bar (a capability isn't "done" until a live
    entrypoint reaches it).
@@ -25,7 +25,7 @@ import logging
 
 import pytest
 
-from graph_os.mcp_server.backing.oauth_log_hygiene import (
+from arbora.mcp_server.backing.oauth_log_hygiene import (
     _HYGIENE_LOGGER_NAMES,
     OAuthLogHygieneFilter,
     install_oauth_log_hygiene,
@@ -143,15 +143,15 @@ class TestInstallationIsIdempotent:
 
 class TestWiredAtPackageImport:
     """Wire-First: the capability must be reached from the real entrypoint
-    (importing `graph_os.mcp_server.backing`), not merely importable and unit-tested."""
+    (importing `arbora.mcp_server.backing`), not merely importable and unit-tested."""
 
     def test_importing_the_mcp_package_installs_hygiene(self) -> None:
-        import graph_os.mcp_server.backing as mcp_package
+        import arbora.mcp_server.backing as mcp_package
 
         importlib.reload(mcp_package)
 
         for name in _HYGIENE_LOGGER_NAMES:
             target = logging.getLogger(name)
             assert any(isinstance(f, OAuthLogHygieneFilter) for f in target.filters), (
-                f"importing graph_os.mcp_server.backing did not install log hygiene on {name!r}"
+                f"importing arbora.mcp_server.backing did not install log hygiene on {name!r}"
             )

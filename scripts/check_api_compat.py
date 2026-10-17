@@ -1,6 +1,6 @@
 """Pre-commit gate: fail closed on backward-incompatible narrowing (GRAPHOS-FLEET-R016).
 
-Thin CLI over ``graph_os.api.registry.surface_gate.diff_backward_compat``:
+Thin CLI over ``arbora.api.registry.surface_gate.diff_backward_compat``:
 the baseline only needs the two fields that gate inspects duck-typed
 (``scopes`` and ``principals``), so the checked-in fixture stores that
 narrow projection rather than a full, unserializable ``OpSpec``.
@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from graph_os.api.registry import OpSpec, PrincipalRule, diff_backward_compat
+from arbora.api.registry import OpSpec, PrincipalRule, diff_backward_compat
 
 BASELINE = (
     Path(__file__).resolve().parents[1] / "tests" / "api" / "compat_baseline.json"
@@ -43,7 +43,7 @@ def _load_baseline(path: Path) -> dict[str, _BaselineOp]:
 
 
 def _current_ops() -> dict[str, OpSpec]:
-    from graph_os.api.ops.registry_factory import get_registry
+    from arbora.api.ops.registry_factory import get_registry
 
     return {op.id: op for op in get_registry()}
 

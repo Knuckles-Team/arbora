@@ -8,9 +8,9 @@ from unittest.mock import patch
 
 from fastmcp import Client, FastMCP
 
-from graph_os.mcp_server.backing.content_resources import register_ontology_providers
+from arbora.mcp_server.backing.content_resources import register_ontology_providers
 
-_RESOLVER = "graph_os.core.providers.resolve_ontology_provider_dirs"
+_RESOLVER = "arbora.core.providers.resolve_ontology_provider_dirs"
 
 
 def _ontology(root: Path, name: str) -> Path:

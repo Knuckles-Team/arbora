@@ -2,8 +2,8 @@
 
 import pytest
 
-from graph_os.identity.api_keys import ApiKeyGrant
-from graph_os.identity.engine import IdentityUnavailable
+from arbora.identity.api_keys import ApiKeyGrant
+from arbora.identity.engine import IdentityUnavailable
 
 
 @pytest.mark.spec("GRAPHOS-IDENTITY-R008.1")

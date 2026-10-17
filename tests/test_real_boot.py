@@ -1,10 +1,10 @@
-"""Boot a real ``graph-os`` process against a real EG server (the deploy gate).
+"""Boot a real ``arbora`` process against a real EG server (the deploy gate).
 
 The unit suite builds the server without running its startup, so it cannot see
 a process that refuses to serve. This test starts the ``epistemic-graph-server``
-binary from the installed wheel on a temporary store, then the ``graph-os``
+binary from the installed wheel on a temporary store, then the ``arbora``
 console entry point as a subprocess configured through a temporary
-``GRAPH_OS_CONFIG_DIR``, and drives both served surfaces with a real bearer
+``ARBORA_CONFIG_DIR``, and drives both served surfaces with a real bearer
 credential:
 
 * HTTP: ``POST /api/v1/ops/query.uql`` and one generated ``eg.*`` operation;
@@ -36,7 +36,7 @@ from typing import Any
 
 import pytest
 
-from graph_os.deployment.config_generator import PROCESS_IDENTITY_ROLES
+from arbora.deployment.config_generator import PROCESS_IDENTITY_ROLES
 
 pytestmark = [
     pytest.mark.real_boot,
@@ -47,14 +47,14 @@ pytestmark = [
 ]
 
 TENANT = "boot"
-ISSUER = "http://127.0.0.1/graph-os-boot-test"
-AUDIENCE = "graph-os-boot-test"
+ISSUER = "http://127.0.0.1/arbora-boot-test"
+AUDIENCE = "arbora-boot-test"
 POLICY_VERSION = "boot-test-policy"
 TENANT_GRAPH = f"tenant__{TENANT}____commons__"
 BOOT_TIMEOUT_S = 180.0
 CONNECTOR = "boot-echo"
-PROCESS_SUBJECT = "graph-os-process"
-#: Graph administration plus the exact capabilities GraphOS needs to provision
+PROCESS_SUBJECT = "arbora-process"
+#: Graph administration plus the exact capabilities Arbora needs to provision
 #: its own semantic packs and reach the MCP fleet.
 ROLES = PROCESS_IDENTITY_ROLES
 #: The served-surface caller. The fresh engine admits exactly one identity
@@ -199,7 +199,7 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
     store = root / "store"
     store.mkdir()
     eg_log = (root / "eg.log").open("wb")
-    gos_log_path = root / "graph-os.log"
+    gos_log_path = root / "arbora.log"
     gos_log = gos_log_path.open("wb")
     try:
         base_env = {
@@ -215,7 +215,7 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
             "EPISTEMIC_GRAPH_POLICY_VERSION": POLICY_VERSION,
             "EPISTEMIC_GRAPH_REQUIRE_OIDC": "false",
             "EPISTEMIC_GRAPH_SECURITY_STATE_DIR": str(root / "security"),
-            # GraphOS imports its own semantic packs as its process principal.
+            # Arbora imports its own semantic packs as its process principal.
             "EPISTEMIC_GRAPH_CONNECTOR_PACK_IMPORTERS": "*=principal:sha256:"
             + hashlib.sha256(PROCESS_SUBJECT.encode()).hexdigest(),
             "EPISTEMIC_GRAPH_SIGNER_KEYS_JSON": json.dumps(
@@ -259,7 +259,7 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
         )
 
         # The operator's one provisioning step on a fresh engine: admit the
-        # graph-os process principal as the system identity, signing as itself.
+        # arbora process principal as the system identity, signing as itself.
         asyncio.run(_admit_process_identity(socket_path, secret, signer_key))
 
         config_dir = root / "config"
@@ -269,7 +269,7 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
                 {
                     "GRAPH_SERVICE_ENDPOINTS": f"unix://{socket_path}",
                     "DEPLOYMENT_PROFILE": "single-node-prod",
-                    "KG_AUTH_TOKEN_REF": "env://GRAPH_OS_BOOT_PROCESS_TOKEN",
+                    "KG_AUTH_TOKEN_REF": "env://ARBORA_BOOT_PROCESS_TOKEN",
                     "AUTH_JWT_JWKS_URI": issuer.jwks_uri,
                     "AUTH_JWT_ISSUER": ISSUER,
                     "AUTH_JWT_AUDIENCE": AUDIENCE,
@@ -284,7 +284,7 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
         )
         # The operator admits the fleet connector's pack import by policy; the
         # shipped default holds an unknown connector's import for approval.
-        from graph_os.access.action_policy import DEFAULT_POLICY, TIER_AUTO_NOTIFY
+        from arbora.access.action_policy import DEFAULT_POLICY, TIER_AUTO_NOTIFY
 
         policy = {
             **DEFAULT_POLICY,
@@ -328,9 +328,9 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
         )
         gos_env = {
             **base_env,
-            "GRAPH_OS_CONFIG_DIR": str(config_dir),
+            "ARBORA_CONFIG_DIR": str(config_dir),
             "GRAPH_SERVICE_AUTH_SECRET": secret,
-            "GRAPH_OS_BOOT_PROCESS_TOKEN": issuer.token(PROCESS_SUBJECT, ttl=7200),
+            "ARBORA_BOOT_PROCESS_TOKEN": issuer.token(PROCESS_SUBJECT, ttl=7200),
             "XDG_CONFIG_HOME": str(root / "xdg-config"),
             "XDG_DATA_HOME": str(root / "xdg-data"),
             "XDG_STATE_HOME": str(root / "xdg-state"),
@@ -339,12 +339,12 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
         }
         bindir = str(Path(sys.executable).parent)
         served_url = f"http://127.0.0.1:{port}/mcp"
-        # The documented operator step on a fresh store: provision GraphOS's
+        # The documented operator step on a fresh store: provision Arbora's
         # semantic packs under its own process identity before first serve.
         provision = subprocess.run(
             [
-                shutil.which("graph-os-production-ops", path=bindir)
-                or "graph-os-production-ops",
+                shutil.which("arbora-production-ops", path=bindir)
+                or "arbora-production-ops",
                 "provision-semantic-content",
                 "--served-url",
                 served_url,
@@ -366,8 +366,8 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
         )
         onboard = subprocess.run(
             [
-                shutil.which("graph-os-production-ops", path=bindir)
-                or "graph-os-production-ops",
+                shutil.which("arbora-production-ops", path=bindir)
+                or "arbora-production-ops",
                 "onboard-fleet",
                 "--served-url",
                 served_url,
@@ -381,8 +381,8 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
         assert onboard.returncode == 0, (
             f"fleet onboarding failed\n{onboard.stdout}\n{onboard.stderr}"
         )
-        entry = shutil.which("graph-os", path=bindir)
-        command = [entry] if entry else [sys.executable, "-m", "graph_os.mcp_server"]
+        entry = shutil.which("arbora", path=bindir)
+        command = [entry] if entry else [sys.executable, "-m", "arbora.mcp_server"]
         processes.append(
             subprocess.Popen(
                 [
@@ -426,13 +426,13 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
             import httpx
 
             if processes[-1].poll() is not None:
-                raise AssertionError(f"graph-os exited during startup\n{gos_logs()}")
+                raise AssertionError(f"arbora exited during startup\n{gos_logs()}")
             try:
                 return httpx.get(f"{base_url}/health", timeout=2).status_code == 200
             except httpx.HTTPError:
                 return False
 
-        _wait(ready, timeout=BOOT_TIMEOUT_S, what="graph-os readiness", logs=gos_logs)
+        _wait(ready, timeout=BOOT_TIMEOUT_S, what="arbora readiness", logs=gos_logs)
         yield {
             "socket_path": str(socket_path),
             "secret": secret,
@@ -564,7 +564,7 @@ async def _effect_items(stack: dict[str, Any]) -> list[dict[str, Any]]:
         },
     )
     try:
-        page = await client.work_items.list(tenant=TENANT, kind="graphos.effect")
+        page = await client.work_items.list(tenant=TENANT, kind="arbora.effect")
     finally:
         await client.close()
     return list(page["items"])

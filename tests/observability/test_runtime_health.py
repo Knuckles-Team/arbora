@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.observability import runtime_health as rh
+from arbora.observability import runtime_health as rh
 
 
 @pytest.fixture(autouse=True)

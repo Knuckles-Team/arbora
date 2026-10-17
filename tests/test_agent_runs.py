@@ -1,4 +1,4 @@
-"""Agent runs execute through the harness run loop with the Graph OS providers bound."""
+"""Agent runs execute through the harness run loop with the Arbora providers bound."""
 
 from __future__ import annotations
 
@@ -10,10 +10,10 @@ from typing import Any, cast
 import pytest
 from agent_utilities import host_ports
 
-from graph_os import agent_runs
-from graph_os.api.contracts.agent_control_contracts import AgentExecutionRequest
-from graph_os.core.settings import runtime_config
-from graph_os.mcp_server import runtime
+from arbora import agent_runs
+from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
+from arbora.core.settings import runtime_config
+from arbora.mcp_server import runtime
 
 
 class _Engine:

@@ -7,7 +7,7 @@ import threading
 import anyio
 import pytest
 
-from graph_os.mcp_server.backing.action_dispatch import (
+from arbora.mcp_server.backing.action_dispatch import (
     DISCOVERY_ACTIONS,
     canonicalize,
     dispatch,

@@ -2,16 +2,16 @@
 
 ## Existing wiring to reuse
 
-| GraphOS module | Existing responsibility | Required change |
+| Arbora module | Existing responsibility | Required change |
 |---|---|---|
-| `graph_os.mcp_server.server`, `runtime`, `composition`, `bootstrap` | FastMCP entrypoint, lifecycle and composition | Keep one loop and one multiplexer. Move dependency-specific construction behind public ports and fail closed on unavailable contracts. |
-| `graph_os.gateway` | REST routes, catalog and widget projection | Adapt routes to the same application operation and authorization decision as MCP. Keep vendor calls in admitted fleet tools. |
-| `graph_os.a2a` | Agent Card and task projection | Reuse the host application service, never create a task/event store. |
-| `graph_os.webui_host` | Optional WebUI co-service | Submit to owner loop; keep browser presentation in the WebUI package. |
-| `graph_os.control_plane` | Policy and reconciliation orchestration | Keep hosted decisions here while durable provenance and graph state use the engine client. |
-| `graph_os.deployment` | Configuration and operator commands | Reuse one XDG configuration resolver and publicly installable extras. |
+| `arbora.mcp_server.server`, `runtime`, `composition`, `bootstrap` | FastMCP entrypoint, lifecycle and composition | Keep one loop and one multiplexer. Move dependency-specific construction behind public ports and fail closed on unavailable contracts. |
+| `arbora.gateway` | REST routes, catalog and widget projection | Adapt routes to the same application operation and authorization decision as MCP. Keep vendor calls in admitted fleet tools. |
+| `arbora.a2a` | Agent Card and task projection | Reuse the host application service, never create a task/event store. |
+| `arbora.webui_host` | Optional WebUI co-service | Submit to owner loop; keep browser presentation in the WebUI package. |
+| `arbora.control_plane` | Policy and reconciliation orchestration | Keep hosted decisions here while durable provenance and graph state use the engine client. |
+| `arbora.deployment` | Configuration and operator commands | Reuse one XDG configuration resolver and publicly installable extras. |
 
-`graph_os.mcp_server.bootstrap` and `graph_os.a2a.routing` currently contain dependency-internal imports. Treat them as migration inventory, not approved architecture. A port is a narrow protocol describing the methods GraphOS actually calls; its adapter imports the dependency's supported public API. If a public method is missing, add it to the owning package and pin a released version before deleting the old import. Do not mirror the private implementation in GraphOS.
+`arbora.mcp_server.bootstrap` and `arbora.a2a.routing` currently contain dependency-internal imports. Treat them as migration inventory, not approved architecture. A port is a narrow protocol describing the methods Arbora actually calls; its adapter imports the dependency's supported public API. If a public method is missing, add it to the owning package and pin a released version before deleting the old import. Do not mirror the private implementation in Arbora.
 
 ## Request path
 
@@ -31,17 +31,17 @@ The transport adapter parses and bounds a payload, authenticates identity, appli
 
 ## Migration sequence
 
-1. Inventory each GraphOS-to-AU import and each duplicate host/module. Label its owner and the public port it needs. Cover eager, lazy and type-only imports.
-2. Add missing public dependency ports in their owners and test them through installed wheels. Replace GraphOS call sites by capability, beginning with identity/config, graph client and agent execution; no package-wide compatibility alias.
+1. Inventory each Arbora-to-AU import and each duplicate host/module. Label its owner and the public port it needs. Cover eager, lazy and type-only imports.
+2. Add missing public dependency ports in their owners and test them through installed wheels. Replace Arbora call sites by capability, beginning with identity/config, graph client and agent execution; no package-wide compatibility alias.
 3. Reconcile gateway, deployment, MCP, fleet, A2A and messaging copies against the public behavior tests. Delete old duplicate script registration after parity.
 4. Make owner-loop submission a single service and verify co-service lifecycle, reload and cancellation under concurrent sessions.
 5. Run the boundary census and served parity tests on a clean environment; record exact package versions and source hashes in `tasks.md`.
 
 ## Design constraints
 
-New adapters remain small and cohesive. Before adding a class, inspect an existing `graph_os.*` port and route; extend the owning module where its contract fits. Avoid duplicate decision trees, hand-maintained action catalogs, hidden fallback authority and broad `except` that turns denial into success. A dependency contract mismatch returns a typed unavailable error and an observable receipt. A temporary migration shim must have one caller, one removal task and a test preventing expansion.
+New adapters remain small and cohesive. Before adding a class, inspect an existing `arbora.*` port and route; extend the owning module where its contract fits. Avoid duplicate decision trees, hand-maintained action catalogs, hidden fallback authority and broad `except` that turns denial into success. A dependency contract mismatch returns a typed unavailable error and an observable receipt. A temporary migration shim must have one caller, one removal task and a test preventing expansion.
 
-Cross-repository work is sequenced by public package release: engine/SDK/AU contract first, GraphOS adapter second, client projection last. Public dependency versions in `pyproject.toml` and `uv.lock` express the minimum required API; no unpublished sibling path is a required test input.
+Cross-repository work is sequenced by public package release: engine/SDK/AU contract first, Arbora adapter second, client projection last. Public dependency versions in `pyproject.toml` and `uv.lock` express the minimum required API; no unpublished sibling path is a required test input.
 
 ## Startup configuration design (GRAPHOS-HOST-R010)
 
@@ -151,16 +151,16 @@ Consumer definitions are available; their runtime exports and the authenticated 
 Existing code: `mcp_server/server.py:164` exposes standard transport arguments and a shared fleet lifecycle.
 `runtime._build_server:2208` still imports the agent-runtime server factory; existing R007 owns replacement of that private coupling.
 Reachable today: both transport branches exist; this does not establish served parity or complete scaffold conformance.
-Keep one public GraphOS entrypoint, one registry and one multiplexer. Do not restore a standalone multiplexer server.
+Keep one public Arbora entrypoint, one registry and one multiplexer. Do not restore a standalone multiplexer server.
 Use typed arguments for transport, bind address, port and security; compare normalized served catalogs under one registry generation.
 R006.1 retains all original module ownership; R023.1 retains every tool, ranking, fallback and invocation-policy clause.
 The new transport acceptance must use real wire clients, including unauthorized calls and stdout-purity probes.
 
 ## Native desktop, visual state, and coding-agent handoff (GRAPHOS-HOST-R029–R031)
 
-- **R029:** After the SDK publishes a typed grant-bound port and certified provider, bind it through `graph_os/api/invoke/pipeline.py:invoke` and `graph_os/api/invoke/executor.py:BoundOperationRuntime.dispatch` (line 273). `OperationRuntime.dispatch` is only a protocol.
+- **R029:** After the SDK publishes a typed grant-bound port and certified provider, bind it through `arbora/api/invoke/pipeline.py:invoke` and `arbora/api/invoke/executor.py:BoundOperationRuntime.dispatch` (line 273). `OperationRuntime.dispatch` is only a protocol.
 - **R030:** Bind observation and state through the same composed dispatch path. Do not add a local state store. Wait for SDK observation and EG state/context contracts.
-- **R031:** Use `graph_os/mcp_server/server.py:mcp_server` for host/admission composition. Wait for EG selection, AU harness, and WebUI renderer contracts; do not advertise the complete flow before all ports exist.
+- **R031:** Use `arbora/mcp_server/server.py:mcp_server` for host/admission composition. Wait for EG selection, AU harness, and WebUI renderer contracts; do not advertise the complete flow before all ports exist.
 
 ## Amendment: authenticated terminal log preference
 
@@ -182,7 +182,7 @@ R010.7 resolves terminal, web or both before startup and passes the authenticate
 R009.5 provides `agent_terminal_ui.app.run_host_terminal(receipt: HostLaunchReceipt, *, client: AgentClient, log_reader: HostLogReader | None) -> None`.
 Inject the existing authenticated client and the TUI-defined `agent_terminal_ui.client.HostLogReader` implementation.
 Its asynchronous method is `read(log_ref: str, *, cursor: str | None, limit: int) -> HostLogBatch`.
-GraphOS implements the authorized producer side under R009.3 and R009.4; TUI owns rendering, subscription and cancellation under R002.3 through R002.5.
+Arbora implements the authorized producer side under R009.3 and R009.4; TUI owns rendering, subscription and cancellation under R002.3 through R002.5.
 The reader uses only the opaque reference and reauthorizes each read and reconnect. No new route or file reader is implied.
 These signatures are specified consumer interfaces, not claims of existing runtime exports.
 
@@ -223,7 +223,7 @@ rotation, reconnect and the served host/terminal acceptance remain pending.
 ### 2026-10-17: Injected workspace log policy (R009.7)
 
 No current EG contract represents host filesystem workspace grants.
-Reuse GraphOS SessionAuthority for current owner-verified caller, session reference and expiry.
+Reuse Arbora SessionAuthority for current owner-verified caller, session reference and expiry.
 Trusted composition provides a WorkspaceGrantProvider; missing composition denies every read.
 The provider returns an exact tenant, principal, session, workspace, action, policy revision, grant revision and expiry.
 No generic scope, request field or WebUI context creates a grant.

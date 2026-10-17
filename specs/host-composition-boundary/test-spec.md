@@ -2,7 +2,7 @@
 
 ## Clean-checkout path
 
-On a supported Python version, clone this repository, run `uv sync --extra test`, then `uv run pytest`, `uv run ruff check .`, `uv run ruff format --check .`, and `uv run mypy graph_os`. Run `uvx --from pre-commit==4.6.0 pre-commit run --all-files` for repository hooks. Contract tests use in-process fake public ports with deterministic data. They do not require a cluster, sibling checkout, credentials, or local inventory. Optional served tests may provision disposable dependencies in CI and must label that tier separately.
+On a supported Python version, clone this repository, run `uv sync --extra test`, then `uv run pytest`, `uv run ruff check .`, `uv run ruff format --check .`, and `uv run mypy arbora`. Run `uvx --from pre-commit==4.6.0 pre-commit run --all-files` for repository hooks. Contract tests use in-process fake public ports with deterministic data. They do not require a cluster, sibling checkout, credentials, or local inventory. Optional served tests may provision disposable dependencies in CI and must label that tier separately.
 
 ## Positive cases
 
@@ -67,7 +67,7 @@ Restart the host, observe a new instance identity, and check bounded shutdown wi
 
 For both MCP transports, initialize a real client, compare all eight tools and invoke an admitted and denied operation.
 Keep original R023 fallback, ranking and fleet-call tests in addition to this transport check.
-Unified terminal rendering requires the real terminal-client consumer; controlled adapters prove only the GraphOS handoff.
+Unified terminal rendering requires the real terminal-client consumer; controlled adapters prove only the Arbora handoff.
 The proposed served scenarios have not been run and establish no runtime delivery by themselves.
 
 ## Owner-bound capability acceptance (GRAPHOS-HOST-R029–R031)

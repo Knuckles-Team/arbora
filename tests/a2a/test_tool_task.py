@@ -8,7 +8,7 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from graph_os.a2a.tool_task import (
+from arbora.a2a.tool_task import (
     ToolTaskCarrier,
     ToolTaskRequest,
     ToolTaskResult,

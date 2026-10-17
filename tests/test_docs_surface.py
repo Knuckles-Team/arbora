@@ -1,4 +1,4 @@
-"""Public Graph OS documentation and shared-theme contracts."""
+"""Public Arbora documentation and shared-theme contracts."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ def test_readme_uses_the_public_title_and_exact_section_order() -> None:
 
     # Title-case section headings are the standardized public front door;
     # the shared `public-surface` pre-commit gate accepts this README as is.
-    assert readme.startswith("# Graph OS\n")
+    assert readme.startswith("# Arbora\n")
     assert headings == [
         "## Overview",
         "## Key Capabilities",

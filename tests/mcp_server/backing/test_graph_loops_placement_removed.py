@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-import graph_os.mcp_server.backing.tools.state_tools as state_tools
+import arbora.mcp_server.backing.tools.state_tools as state_tools
 
 
 @pytest.mark.spec("AU-SEMANTIC-R019.6.3.1")

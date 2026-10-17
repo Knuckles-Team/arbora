@@ -1,13 +1,13 @@
 # GRAPHOS-DATA-MARKET — implementation tasks
 
 Each task has an observable done condition. Dependencies are ordered so that
-GraphOS does not claim a capability before its published downstream contract
+Arbora does not claim a capability before its published downstream contract
 exists. Current status for every task: **WAITING**.
 
 - [ ] **GDM-01:** Pin graph-engine schema-context and finance API versions and the connector account-binding contract. Done when public client schemas and compatibility errors are recorded and SC-04/FI-02 fixtures compile.
 - [ ] **GDM-02:** Add strict schema-context request/response models and one application service. Done when SC-01–04 pass and the service consumes the public graph-engine client with provenance.
-  - [x] Models (`graph_os/gateway/schemas/schema_context.py`) and the
-    capability-gated service (`graph_os/gateway/schema_context_service.py`)
+  - [x] Models (`arbora/gateway/schemas/schema_context.py`) and the
+    capability-gated service (`arbora/gateway/schema_context_service.py`)
     land SC-01 (strict rejection) and SC-04 (typed `UNAVAILABLE`, zero
     engine dispatch) for GRAPHOS-DATA-MARKET-R005.
   - [ ] SC-02/SC-03 wait on epistemic-graph publishing a `schema_context`
@@ -35,7 +35,7 @@ private live services for local fixtures or silently downgrade a failing test.
 - [ ] **GRAPHOS-DATA-MARKET-R007.6:** Hot-path proof.
 
 <!-- spec-definition-patch:eg66-reads -->
-- [ ] **GDM-11:** Define `FinanceReadPortV1` in `graph_os/finance/markets.py` for the nine typed market/event/order reads. The existing `MarketProvider.market_read` covers one symbol only. Keep the operations unavailable until an admitted provider and the EG `finance:read` scope exist. Paper submission is not a read.
+- [ ] **GDM-11:** Define `FinanceReadPortV1` in `arbora/finance/markets.py` for the nine typed market/event/order reads. The existing `MarketProvider.market_read` covers one symbol only. Keep the operations unavailable until an admitted provider and the EG `finance:read` scope exist. Paper submission is not a read.
 - [ ] **GDM-12:** Define closed v1 request and result models. Specify resource
   filters, ID/query grammar, fixed ordering, cursors, and metadata projection.
   Cover all nine reads. Bind them to one tenant-scoped finance service. FI-11–

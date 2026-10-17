@@ -1,6 +1,6 @@
 # Fleet gateway
 
-`graph_os.fleet` owns the in-process MCP fleet gateway: child lifecycle and
+`arbora.fleet` owns the in-process MCP fleet gateway: child lifecycle and
 resilience, remote OAuth admission, bounded discovery and health probes,
 collision-free tool prefixes, and per-session dynamic loading/unloading.
 `MCPMultiplexer` is the native implementation in this repository.
@@ -15,9 +15,9 @@ static config file.
 ## Served-loop ownership
 
 The FastMCP server owns the only live multiplexer event loop. The colocated
-Agent WebUI runs on its own ASGI loop, so its GraphOS-native inventory, call,
+Agent WebUI runs on its own ASGI loop, so its Arbora-native inventory, call,
 and resource helpers submit asynchronous operations through
-`graph_os.fleet.shared_multiplexer.run_on_served_multiplexer`. The submitted
+`arbora.fleet.shared_multiplexer.run_on_served_multiplexer`. The submitted
 coroutine is created as a task on the serving loop with the caller's checked
 context; the WebUI awaits the concurrent completion and never blocks a thread
 on `Future.result()`. Raw multiplexer access from a foreign loop fails closed.
@@ -41,7 +41,7 @@ same served authority. Widget calls discover the child's admitted schema before
 delegation. The doctor proves `langfuse_observability` posture and a bounded
 trace read through the child MCP tool. The release canary independently checks
 the catalog declaration, launcher, and advertised tool; none of these paths
-imports a connector package. Langfuse reads do not trigger a GraphOS-owned
+imports a connector package. Langfuse reads do not trigger a Arbora-owned
 knowledge-graph ingestion side effect: durable source ingestion belongs to
 agent-connector-sdk and the epistemic-graph contract.
 
@@ -49,7 +49,7 @@ agent-connector-sdk and the epistemic-graph contract.
 
 The MCP composition owns `attach_fleet_loader`, installs the gateway
 application port, and binds the returned multiplexer through
-`graph_os.fleet.shared_multiplexer`. REST and WebUI consumers therefore observe
+`arbora.fleet.shared_multiplexer`. REST and WebUI consumers therefore observe
 the same lifecycle, health, OAuth, and discovery state. Co-services use only
 the asynchronous submission API.
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.fleet.session_loads import LoadCapExceeded, SessionLoads
+from arbora.fleet.session_loads import LoadCapExceeded, SessionLoads
 
 
 def test_default_cap_requires_explicit_lru_and_preserves_other_sessions() -> None:
@@ -45,9 +45,9 @@ def test_gateway_effect_returns_only_canonical_authoritative_decisions() -> None
     from dataclasses import replace
     from types import SimpleNamespace
 
-    from graph_os.api.invoke import FleetCallDecision
-    from graph_os.api.registry import Effect, Executor
-    from graph_os.fleet.gateway_ops import AdmittedTool, FleetGateway
+    from arbora.api.invoke import FleetCallDecision
+    from arbora.api.registry import Effect, Executor
+    from arbora.fleet.gateway_ops import AdmittedTool, FleetGateway
 
     descriptor = AdmittedTool(
         {"readOnlyHint": True}, None, frozenset({"data:read"}), "delegated"
@@ -101,12 +101,12 @@ def test_delegated_catalog_subject_is_not_service_executor_authority() -> None:
     import asyncio
     from types import SimpleNamespace
 
-    from graph_os.fleet.catalog_items import CatalogItem
-    from graph_os.fleet.catalog_sources import (
+    from arbora.fleet.catalog_items import CatalogItem
+    from arbora.fleet.catalog_sources import (
         _merge_probed_item,
         _verified_server_policy,
     )
-    from graph_os.fleet.gateway_ops import FleetGateway, tool_for_multiplexer_ops
+    from arbora.fleet.gateway_ops import FleetGateway, tool_for_multiplexer_ops
 
     item = CatalogItem(
         "fleet:tool:s/read",

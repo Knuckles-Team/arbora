@@ -1,10 +1,10 @@
-# GraphOS — repository guide
+# Arbora — repository guide
 
-GraphOS is the deployable composition layer for the Knuckles agent platform:
+Arbora is the deployable composition layer for the Knuckles agent platform:
 MCP/REST composition, MCP fleet supervision, control-plane policy, optional
 Agent WebUI hosting, unary A2A, governed browser control, and deployment
-operations under `graph_os/`. Public operator documentation lives at
-<https://knuckles-team.github.io/graph-os/>.
+operations under `arbora/`. Public operator documentation lives at
+<https://knuckles-team.github.io/arbora/>.
 
 Current capability limits are documented in `docs/status.md`. A capability
 waiting on another repository's public contract must fail closed and remain
@@ -13,7 +13,7 @@ fabricated receipt to make it appear complete.
 
 ## Boundaries
 
-- **Owns:** the one door. That covers admission, auth, approvals, served operations and the tool and operation registry. It also covers the MCP server and multiplexer, A2A serving and routing, config at `~/.config/graph-os`, and the EG methods served as `eg.*`.
+- **Owns:** the one door. That covers admission, auth, approvals, served operations and the tool and operation registry. It also covers the MCP server and multiplexer, A2A serving and routing, config at `~/.config/arbora`, and the EG methods served as `eg.*`.
 - **Never builds:** facts, stores, policy tables or decisions (route them to epistemic-graph). Protocol libraries and connector contracts go to agent-connector-sdk. The run loop goes to agent-utilities.
 - **Allowed dependencies:** epistemic-graph and agent-connector-sdk. From agent-utilities, only `host_ports`, `harness`, `runtime` and `core.paths`. Every package installs from PyPI.
 
@@ -23,16 +23,16 @@ Route every feature with the [ecosystem boundaries standard](https://github.com/
 
 | Need | Read |
 |---|---|
-| Architecture boundaries, module map, build-host/environment setup, required quality gates, contract regeneration, identity setup, and branching & isolation for working *in this repository* | [`graph_os/skills/graph-os-repository-development/SKILL.md`](graph_os/skills/graph-os-repository-development/SKILL.md) |
-| Choosing which Graph OS ecosystem repository owns a spec, and the public cross-repository contribution flow | [`graph_os/skills/graph-os-development/SKILL.md`](graph_os/skills/graph-os-development/SKILL.md) |
-| End-user / operator usage of a running GraphOS | [`graph_os/skills/using-graph-os/SKILL.md`](graph_os/skills/using-graph-os/SKILL.md) |
-| Standing up GraphOS (bare metal, Compose, Swarm, Kubernetes) | [`graph_os/skills/graphos-genesis/SKILL.md`](graph_os/skills/graphos-genesis/SKILL.md) |
+| Architecture boundaries, module map, build-host/environment setup, required quality gates, contract regeneration, identity setup, and branching & isolation for working *in this repository* | [`arbora/skills/arbora-repository-development/SKILL.md`](arbora/skills/arbora-repository-development/SKILL.md) |
+| Choosing which Arbora ecosystem repository owns a spec, and the public cross-repository contribution flow | [`arbora/skills/arbora-development/SKILL.md`](arbora/skills/arbora-development/SKILL.md) |
+| End-user / operator usage of a running Arbora | [`arbora/skills/using-arbora/SKILL.md`](arbora/skills/using-arbora/SKILL.md) |
+| Standing up Arbora (bare metal, Compose, Swarm, Kubernetes) | [`arbora/skills/arbora-genesis/SKILL.md`](arbora/skills/arbora-genesis/SKILL.md) |
 
 ## Non-negotiables
 
 - Module ownership and dependency boundaries (what belongs to `epistemic-graph`,
-  `agent-utilities`, `agent-connector-sdk`, `agent-webui` vs. GraphOS itself):
-  see [`graph_os/skills/graph-os-repository-development/SKILL.md`](graph_os/skills/graph-os-repository-development/SKILL.md).
+  `agent-utilities`, `agent-connector-sdk`, `agent-webui` vs. Arbora itself):
+  see [`arbora/skills/arbora-repository-development/SKILL.md`](arbora/skills/arbora-repository-development/SKILL.md).
 - MCP and REST routes share the same application service and authorization
   decision.
 - Security is fail closed: validated identity, tenant isolation, and the

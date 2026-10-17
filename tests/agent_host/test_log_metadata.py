@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from graph_os.agent_host.log_access import HostLogBatch, HostLogRecord
-from graph_os.agent_host.log_sink import WorkspaceLogSink
+from arbora.agent_host.log_access import HostLogBatch, HostLogRecord
+from arbora.agent_host.log_sink import WorkspaceLogSink
 from tests.agent_host.test_log_access import ControlledOwners, reference, serve
 from tests.agent_host.test_log_replay import access_for
 
@@ -94,7 +94,7 @@ def test_invalid_owner_metadata_refuses_without_server_error(
         ),
         None,
     )
-    from graph_os.agent_host.log_access import HostLogAccess
+    from arbora.agent_host.log_access import HostLogAccess
 
     access = HostLogAccess(
         sessions=owners,

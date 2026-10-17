@@ -2,7 +2,7 @@
 
 ## Required on every PR from a clean checkout
 
-Run `uv sync --extra test`, `uv run pytest`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy graph_os tests`, `uvx --from pre-commit==4.6.0 pre-commit run --all-files`, and `uv build --wheel --out-dir dist`. CI installs the wheel in a new environment and invokes `graph-os-release-canary --json` with a packaged engine wheel. Tests use local temporary paths, fake secret resolvers and deterministic network stubs. The gate must not require an operator's private environment, unprovided token or sibling source tree.
+Run `uv sync --extra test`, `uv run pytest`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy arbora tests`, `uvx --from pre-commit==4.6.0 pre-commit run --all-files`, and `uv build --wheel --out-dir dist`. CI installs the wheel in a new environment and invokes `arbora-release-canary --json` with a packaged engine wheel. Tests use local temporary paths, fake secret resolvers and deterministic network stubs. The gate must not require an operator's private environment, unprovided token or sibling source tree.
 
 | Positive case | Expected result |
 |---|---|
@@ -37,7 +37,7 @@ Repository scanner checks include CCCC, jscpd, dupehound and KISS alongside Pyth
 
 | Check | Expected result |
 |---|---|
-| Placement Decide | One typed request; engine decision returned verbatim; graph-os names no backend. |
+| Placement Decide | One typed request; engine decision returned verbatim; arbora names no backend. |
 | Assembly, view, confirm | Assembled graph shown read-only and executed only after `graphos.plan/confirm`. |
 | Refusal | Stubbed assemble or confirm yields a distinct typed refusal with no side effect. |
 | Existing artifacts | compose, helm, swarm resolve to files under `deploy/`, digest-pinned; systemd refused as unsupported. |

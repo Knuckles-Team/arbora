@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.a2a.work_items import (
+from arbora.a2a.work_items import (
     WorkItemView,
     list_work_item_views,
     parse_work_item_view,
@@ -24,7 +24,7 @@ _RECORD = {
     "created_by": "actor-ref-1",
     "queue": "orchestrator_task",
     "state": "running",
-    "metadata": {"a2a_schema": "graph-os-a2a-unary-v1"},
+    "metadata": {"a2a_schema": "arbora-a2a-unary-v1"},
 }
 
 
@@ -38,7 +38,7 @@ def test_projects_a_real_record_into_a_typed_view() -> None:
         created_by="actor-ref-1",
         queue="orchestrator_task",
         state="running",
-        metadata={"a2a_schema": "graph-os-a2a-unary-v1"},
+        metadata={"a2a_schema": "arbora-a2a-unary-v1"},
     )
 
 

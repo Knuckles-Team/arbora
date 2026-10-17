@@ -37,7 +37,7 @@ target:
     kubernetes.io/hostname: r510
 
 release:
-  image_repository: knucklessg1/graph-os-unified
+  image_repository: knucklessg1/arbora-unified
   tag_policy: digest-pinned
   image_pull_policy: Always
   revision: sha256:0296aff52eb88053e85937606f854fc8d159563bd8b3111f17e9f2dea9d5b621
@@ -60,7 +60,7 @@ filesystem:
         Process HOME/cache/temp state (Python egg cache, uv/pip scratch, XDG
         runtime dirs) under a read-only root filesystem — the same writable-path
         exception the concurrent readOnlyRootFilesystem hardening on
-        services/graph-os/k8s/graph-os.deployment.yaml is adding.
+        services/arbora/k8s/arbora.deployment.yaml is adding.
       size_limit: 1Gi
     - mount_path: /run/epistemic-graph
       medium: emptyDir
@@ -71,7 +71,7 @@ filesystem:
       reason: >-
         Node-pinned redb persistence directory; the engine holds a single-writer
         OS lock here, which is why replicas is capped at 1 (see the RollingUpdate
-        comment in graph-os.deployment.yaml).
+        comment in arbora.deployment.yaml).
       size_limit: null
   read_only_mounts:
     - /au
@@ -100,7 +100,7 @@ filesystem:
 
 configuration:
   config_map_refs:
-    - graph-os-env
+    - arbora-env
   env:
     KG_LOOP: "1"
     KG_LOOP_INTERVAL: "1800"
@@ -108,8 +108,8 @@ configuration:
 
 secrets:
   required:
-    - name: graph-os-secrets
-      ref: k8s-secret://platform/graph-os-secrets
+    - name: arbora-secrets
+      ref: k8s-secret://platform/arbora-secrets
       keys:
         - OIDC_CLIENT_SECRET
         - ENGINE_HMAC_KEY
@@ -118,12 +118,12 @@ secrets:
       keys:
         - PERSISTENCE_IDENTITY_HMAC_KEY
     - name: langfuse-otel
-      ref: vault://apps/graph-os/langfuse-otel
+      ref: vault://apps/arbora/langfuse-otel
       keys:
         - OTEL_EXPORTER_OTLP_HEADERS
 
 network:
-  ingress_host: graph-os.example
+  ingress_host: arbora.example
   service_port: 8000
   network_policy_enabled: true
   allowed_namespaces:
@@ -132,9 +132,9 @@ network:
 
 identity:
   idp: keycloak
-  service_account: graph-os
+  service_account: arbora
   automount_service_account_token: false
-  client_secret_ref: graph-os-secrets
+  client_secret_ref: arbora-secrets
 
 validation:
   readiness_checks:

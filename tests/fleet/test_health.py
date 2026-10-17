@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from graph_os.fleet.health import (
+from arbora.fleet.health import (
     FleetAuthorities,
     collect_fleet_health,
     health_payload,

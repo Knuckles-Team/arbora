@@ -1,11 +1,11 @@
 """The local-skill pseudo-server ranks and precedes alongside fleet discovery.
 
 Covers the multiplexer-side half of CONCEPT:AU-KG.retrieval.unified-capability-
-contract for :mod:`graph_os.fleet.local_skill_catalog`: ``discover_tools``
+contract for :mod:`arbora.fleet.local_skill_catalog`: ``discover_tools``
 folds :meth:`MCPMultiplexer._local_skill_probe_info` into the SAME probe dict
 a fleet harvest populates, so a skill served from a package installed in this
 process ranks with fleet tools, and a name collision with a fleet-harvested
-skill resolves to the local one. ``graph_os.fleet.local_skill_catalog``'s own
+skill resolves to the local one. ``arbora.fleet.local_skill_catalog``'s own
 discovery/parsing logic is covered in ``tests/fleet/test_local_skill_catalog.py``;
 this file only exercises the merge, ranking and precedence point.
 """
@@ -16,8 +16,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-import graph_os.fleet.multiplexer as multiplexer_module
-from graph_os.fleet.local_skill_catalog import LOCAL_SKILLS_SERVER
+import arbora.fleet.multiplexer as multiplexer_module
+from arbora.fleet.local_skill_catalog import LOCAL_SKILLS_SERVER
 from tests.fleet.test_multiplexer_dynamic_gateway import (
     CNT,
     CNT_TOOL,

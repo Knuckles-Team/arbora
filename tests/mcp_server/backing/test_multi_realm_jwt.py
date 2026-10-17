@@ -12,7 +12,7 @@ import asyncio
 
 import pytest
 
-from graph_os.mcp_server.backing.server_factory import _configure_jwt_auth
+from arbora.mcp_server.backing.server_factory import _configure_jwt_auth
 
 
 def _args(**kw: object) -> argparse.Namespace:

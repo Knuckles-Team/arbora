@@ -1,6 +1,6 @@
-# Contributing to Graph OS
+# Contributing to Arbora
 
-Graph OS is the deployable MCP, REST, control-plane, fleet, and WebUI
+Arbora is the deployable MCP, REST, control-plane, fleet, and WebUI
 composition for the Knuckles agent platform. Read [AGENTS.md](AGENTS.md) for
 source boundaries and development rules, and the
 [organization contribution guide](https://github.com/Knuckles-Team/.github/blob/main/CONTRIBUTING.md)
@@ -41,4 +41,4 @@ run is the CI gate minus provisioning. Scanner acceptance terms are in
    against `main`. Mark it ready once hosted CI is green.
 
 Report vulnerabilities through
-[GitHub Security Advisories](https://github.com/Knuckles-Team/graph-os/security/advisories/new).
+[GitHub Security Advisories](https://github.com/Knuckles-Team/arbora/security/advisories/new).

@@ -11,12 +11,12 @@ from typing import Any
 
 import pytest
 
-from graph_os.api.registry import EgMethod, PrincipalRule, Registry, eg_binding
-from graph_os.api.registry.contract_admission import (
+from arbora.api.registry import EgMethod, PrincipalRule, Registry, eg_binding
+from arbora.api.registry.contract_admission import (
     _validate_registry_bindings,
     validate_contract_admission,
 )
-from graph_os.api.registry.eg_binding import EgContractError, load_eg_bindings
+from arbora.api.registry.eg_binding import EgContractError, load_eg_bindings
 from tests.api.test_api_registry import make_op
 from tests.api.test_eg_binding import _fixture
 
@@ -290,7 +290,7 @@ def startup_evidence(
     exceptions: Any = ModuleType("epistemic_graph.contract_errors")
     exceptions.ContractDigestMismatch = _SyntheticMismatch
     exceptions.ContractArtifactMissing = _SyntheticMissing
-    generated: Any = ModuleType("graph_os.api.generated.engine_errors")
+    generated: Any = ModuleType("arbora.api.generated.engine_errors")
     generated.REGISTRY_DIGEST = registry.digest
     generated.EG_RECEIPT_DIGEST = pin
     generated.ENGINE_ERRORS = {"SYNTHETIC_REFUSAL": (409, False)}
@@ -425,7 +425,7 @@ def test_malformed_installed_error_rows_fail_even_if_provider_verifies(
 
 
 @pytest.mark.parametrize(
-    "module", ["graph_os.api.generated.engine_errors", "epistemic_graph.contract"]
+    "module", ["arbora.api.generated.engine_errors", "epistemic_graph.contract"]
 )
 def test_missing_contract_module_fails_closed(
     startup_evidence, monkeypatch, module

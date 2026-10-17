@@ -1,6 +1,6 @@
 """GRAPHOS-OPS-R031.1: fleet meta-tool parity mapping (resident-fleet slice).
 
-Implements the resident-fleet-tool slice of GRAPHOS-OPS-R031 — GraphOS
+Implements the resident-fleet-tool slice of GRAPHOS-OPS-R031 — Arbora
 publishes, in ``docs/mcp-server.md``, the parity mapping from each of its
 four resident fleet meta-tools to its destination operation. This test
 confirms the published table's rows match the live ``FLEET_OPERATIONS``
@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from graph_os.api.mcp.registration import FLEET_OPERATIONS
+from arbora.api.mcp.registration import FLEET_OPERATIONS
 
 DOC_PATH = Path(__file__).resolve().parents[2] / "docs" / "mcp-server.md"
 ROW_PATTERN = re.compile(r"\|\s*`(\w+)`\s*\|\s*`([\w.]+)`\s*\|")

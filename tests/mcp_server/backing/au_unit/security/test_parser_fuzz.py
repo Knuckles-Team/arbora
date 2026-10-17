@@ -10,11 +10,11 @@ from agent_connector_sdk.credentials.runtime_references import (
     _validated_reference,
 )
 
-from graph_os.mcp_server.backing.server_factory import (
+from arbora.mcp_server.backing.server_factory import (
     _FILTER_VALUE_RE,
     _bounded_filter_values,
 )
-from graph_os.security.http_boundary import parse_cidrs
+from arbora.security.http_boundary import parse_cidrs
 
 _SEED = 0xA63E17
 _ALPHABET = (

@@ -14,7 +14,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from graph_os.deployment import doctor as D
+from arbora.deployment import doctor as D
 
 
 def test_cpu_has_avx2_detects_flag_from_synthetic_cpuinfo_text():
@@ -22,7 +22,7 @@ def test_cpu_has_avx2_detects_flag_from_synthetic_cpuinfo_text():
     synthetic fixture text only -- it never reads or asserts on the real
     execution host's actual CPU, so it passes identically whether this
     runner is AVX2-capable or not."""
-    from graph_os.deployment.doctor_lakehouse import _cpu_has_avx2
+    from arbora.deployment.doctor_lakehouse import _cpu_has_avx2
 
     with_avx2 = "processor\t: 0\nflags\t\t: fpu vme avx2 sse4_2\n"
     without_avx2 = "processor\t: 0\nflags\t\t: fpu vme sse4_2\n"
@@ -35,7 +35,7 @@ def test_cpu_has_avx2_detects_flag_from_synthetic_cpuinfo_text():
 
 
 def test_cpu_has_avx2_wrapper_never_raises_when_cpuinfo_is_unreadable(monkeypatch):
-    from graph_os.deployment import doctor_lakehouse as module
+    from arbora.deployment import doctor_lakehouse as module
 
     def _raise(self):
         raise OSError("no /proc/cpuinfo on this platform")
@@ -75,7 +75,7 @@ def _cfg(**overrides):
     ],
 )
 def test_absent_data_plane_service_is_skip_not_fatal(monkeypatch, check_name, check_fn):
-    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: _cfg())
+    monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: _cfg())
 
     result = check_fn()
 
@@ -91,7 +91,7 @@ def test_absent_data_plane_service_is_skip_not_fatal(monkeypatch, check_name, ch
 
 def test_kafka_configured_non_live_is_ok_without_probing(monkeypatch):
     monkeypatch.setattr(
-        "graph_os.core.settings.GraphOSConfig",
+        "arbora.core.settings.ArboraConfig",
         lambda: _cfg(kafka_bootstrap_servers="kafka.example.invalid:9092"),
     )
 
@@ -106,7 +106,7 @@ def test_kafka_configured_non_live_is_ok_without_probing(monkeypatch):
 
 def test_kafka_live_probe_unreachable_fails_with_prescription(monkeypatch):
     monkeypatch.setattr(
-        "graph_os.core.settings.GraphOSConfig",
+        "arbora.core.settings.ArboraConfig",
         lambda: _cfg(kafka_bootstrap_servers="kafka.example.invalid:9092"),
     )
     monkeypatch.setattr(D, "_probe_tcp", lambda *_a, **_k: False)
@@ -122,7 +122,7 @@ def test_kafka_live_probe_unreachable_fails_with_prescription(monkeypatch):
 
 def test_kafka_live_probe_reachable_is_ok(monkeypatch):
     monkeypatch.setattr(
-        "graph_os.core.settings.GraphOSConfig",
+        "arbora.core.settings.ArboraConfig",
         lambda: _cfg(kafka_bootstrap_servers="kafka.example.invalid:9092"),
     )
     monkeypatch.setattr(D, "_probe_tcp", lambda *_a, **_k: True)
@@ -141,7 +141,7 @@ def test_fuseki_live_probe_uses_ping_endpoint(monkeypatch):
         return True, 200
 
     monkeypatch.setattr(
-        "graph_os.core.settings.GraphOSConfig",
+        "arbora.core.settings.ArboraConfig",
         lambda: _cfg(kg_fuseki_endpoint="http://fuseki.example.invalid"),
     )
     monkeypatch.setattr(D, "_probe_http", fake_probe_http)
@@ -154,7 +154,7 @@ def test_fuseki_live_probe_uses_ping_endpoint(monkeypatch):
 
 def test_seaweedfs_s3_live_probe_unreachable_fails(monkeypatch):
     monkeypatch.setattr(
-        "graph_os.core.settings.GraphOSConfig",
+        "arbora.core.settings.ArboraConfig",
         lambda: _cfg(lakehouse_s3_endpoint="http://s3gw.example.invalid:8333"),
     )
     monkeypatch.setattr(D, "_probe_tcp", lambda *_a, **_k: False)
@@ -176,7 +176,7 @@ def test_trino_live_probe_hits_v1_info(monkeypatch):
         return False, None
 
     monkeypatch.setattr(
-        "graph_os.core.settings.GraphOSConfig",
+        "arbora.core.settings.ArboraConfig",
         lambda: _cfg(trino_endpoint="http://trino.example.invalid:8080"),
     )
     monkeypatch.setattr(D, "_probe_http", fake_probe_http)
@@ -191,7 +191,7 @@ def test_trino_live_probe_hits_v1_info(monkeypatch):
 def test_spark_runner_unreachable_live_is_warn_not_fail(monkeypatch):
     """The UI listener is disabled between jobs -- unreachable is expected, not fatal."""
     monkeypatch.setattr(
-        "graph_os.core.settings.GraphOSConfig",
+        "arbora.core.settings.ArboraConfig",
         lambda: _cfg(spark_runner_endpoint="http://spark.example.invalid:4040"),
     )
     monkeypatch.setattr(D, "_probe_tcp", lambda *_a, **_k: False)
@@ -207,7 +207,7 @@ def test_spark_runner_unreachable_live_is_warn_not_fail(monkeypatch):
 
 def test_lakekeeper_flags_missing_catalog_suffix(monkeypatch):
     monkeypatch.setattr(
-        "graph_os.core.settings.GraphOSConfig",
+        "arbora.core.settings.ArboraConfig",
         lambda: _cfg(
             lakekeeper_catalog_uri="http://catalog.example.invalid:8181/v1",
             lakekeeper_oauth2_scope="lakekeeper",
@@ -223,7 +223,7 @@ def test_lakekeeper_flags_missing_catalog_suffix(monkeypatch):
 
 def test_lakekeeper_flags_default_oauth2_scope(monkeypatch):
     monkeypatch.setattr(
-        "graph_os.core.settings.GraphOSConfig",
+        "arbora.core.settings.ArboraConfig",
         lambda: _cfg(
             lakekeeper_catalog_uri="http://catalog.example.invalid:8181/catalog",
             lakekeeper_oauth2_scope="catalog",  # left at the Iceberg client's own default
@@ -238,7 +238,7 @@ def test_lakekeeper_flags_default_oauth2_scope(monkeypatch):
 
 def test_lakekeeper_correctly_configured_is_ok_non_live(monkeypatch):
     monkeypatch.setattr(
-        "graph_os.core.settings.GraphOSConfig",
+        "arbora.core.settings.ArboraConfig",
         lambda: _cfg(
             lakekeeper_catalog_uri="http://catalog.example.invalid:8181/catalog",
             lakekeeper_oauth2_scope="lakekeeper",
@@ -258,7 +258,7 @@ def test_lakekeeper_db_configured_live_is_warn_never_ok_claiming_reachable(
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "graph_os.core.settings.GraphOSConfig",
+        "arbora.core.settings.ArboraConfig",
         lambda: _cfg(lakekeeper_db_uri_ref="vault://apps/lakekeeper-db#uri"),
     )
 
@@ -272,7 +272,7 @@ def test_lakekeeper_db_configured_live_is_warn_never_ok_claiming_reachable(
 
 def test_lakekeeper_db_configured_non_live_is_ok(monkeypatch):
     monkeypatch.setattr(
-        "graph_os.core.settings.GraphOSConfig",
+        "arbora.core.settings.ArboraConfig",
         lambda: _cfg(lakekeeper_db_uri_ref="vault://apps/lakekeeper-db#uri"),
     )
 
@@ -302,8 +302,8 @@ def test_new_checks_registered_and_live_dispatchable(name):
 
 
 def test_run_doctor_wires_a_new_check_end_to_end(monkeypatch):
-    monkeypatch.setattr("graph_os.core.settings.load_config", lambda: None)
-    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: _cfg())
+    monkeypatch.setattr("arbora.core.settings.load_config", lambda: None)
+    monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: _cfg())
 
     report = D.run_doctor(only=["kafka"])
 

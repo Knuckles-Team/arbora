@@ -4,7 +4,7 @@ Check a task only after its linked code and tests land. A checked source task is
 the final release task records served evidence.
 
 - [x] T01 — Define frozen `ReconciliationReceipt` and `PublicationGateResult`, and the pure
-  `gate_mcp_resource_publication()` function in `graph_os/fleet/mcp_resource_reconciliation.py`.
+  `gate_mcp_resource_publication()` function in `arbora/fleet/mcp_resource_reconciliation.py`.
   Cover `GRAPHOS-MCP-RESOURCES-R001.1`.
 - [x] T02 — Add `tests/fleet/test_mcp_resource_reconciliation.py` covering missing, stale, digest-
   mismatched, generation-mismatched, partial-family, and wrong-tenant receipts as

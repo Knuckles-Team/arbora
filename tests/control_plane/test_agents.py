@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 import pytest
 from pydantic import ValidationError
 
-from graph_os.control_plane.agents import (
+from arbora.control_plane.agents import (
     AccessScope,
     AgentBindings,
     AgentControlPlane,
@@ -299,7 +299,7 @@ def _fixture() -> tuple[
         "approver_ref": "principal:reviewer",
         "evidence_ref": "evidence:research:1",
     }
-    from graph_os.control_plane.agents.models import _digest_payload
+    from arbora.control_plane.agents.models import _digest_payload
 
     approval = ApprovalRecord(
         approval_version="agent-approval.v1",

@@ -16,11 +16,11 @@ from typing import Any
 
 import pytest
 
-from graph_os.api.contracts.session import GraphSession
-from graph_os.deployment import production_ops
-from graph_os.deployment.semantic_provisioning import ensure_server_registrations
-from graph_os.fleet import onboarding
-from graph_os.fleet.onboarding import (
+from arbora.api.contracts.session import GraphSession
+from arbora.deployment import production_ops
+from arbora.deployment.semantic_provisioning import ensure_server_registrations
+from arbora.fleet import onboarding
+from arbora.fleet.onboarding import (
     RENEW_MARGIN_MS,
     FleetEndpoint,
     FleetOnboarding,
@@ -37,7 +37,7 @@ TENANT = "tenant-a"
 GRAPH = "tenant__tenant-a__default"
 NOW_MS = 1_800_000_000_000
 OWNER = "principal:sha256:" + "e" * 64
-SELF_URL = "https://graph-os.example/mcp"
+SELF_URL = "https://arbora.example/mcp"
 ALPHA = FleetEndpoint("alpha-mcp", "http://alpha-mcp.example/mcp")
 BETA = FleetEndpoint("beta-mcp", "http://beta-mcp.example/mcp")
 
@@ -60,7 +60,7 @@ class _Registry(FakeEgEngine):
         entries = [
             {
                 "name": name,
-                "url": SELF_URL if name == "graph-os" else f"http://{name}/mcp",
+                "url": SELF_URL if name == "arbora" else f"http://{name}/mcp",
                 "transport": "streamable_http",
                 "desired": "enabled",
                 "resources": {},
@@ -173,7 +173,7 @@ async def _served_pack(endpoint: FleetEndpoint, *, auth: Any = None) -> Any:
 def eg(monkeypatch: pytest.MonkeyPatch) -> _Registry:
     registry = _Registry()
     monkeypatch.setattr(
-        "graph_os.api.contracts.provisioning.get_action_policy",
+        "arbora.api.contracts.provisioning.get_action_policy",
         lambda _engine: AllowPolicy(),
     )
     monkeypatch.setattr(
@@ -182,7 +182,7 @@ def eg(monkeypatch: pytest.MonkeyPatch) -> _Registry:
     )
     monkeypatch.setattr(onboarding, "_child_auth", lambda: None)
     monkeypatch.setattr(
-        onboarding, "self_served_connectors", lambda: ("graph-os", "agent-utilities")
+        onboarding, "self_served_connectors", lambda: ("arbora", "agent-utilities")
     )
     _RecordingSink.imported = []
     return registry
@@ -193,7 +193,7 @@ def _onboarding(registry: _Registry, capture: Any = _served_pack) -> FleetOnboar
 
 
 def _run_in_session(coro: Any) -> Any:
-    from graph_os.api.contracts.session import use_session
+    from arbora.api.contracts.session import use_session
 
     session = _session()
     with use_session(session):
@@ -210,12 +210,12 @@ def test_endpoints_keep_only_enabled_streamable_http_servers() -> None:
                 "stdio-mcp": {"command": "run-stdio"},
                 "sse-mcp": {"url": "http://sse/sse", "transport": "sse"},
                 "file-mcp": {"url": "file:///tmp/mcp"},
-                "graph-os": {"url": SELF_URL},
+                "arbora": {"url": SELF_URL},
             }
         }
     ).encode()
 
-    endpoints = fleet_endpoints(raw, exclude={"graph-os"})
+    endpoints = fleet_endpoints(raw, exclude={"arbora"})
 
     assert endpoints == (
         FleetEndpoint("alpha-mcp", "https://alpha/mcp"),
@@ -245,8 +245,8 @@ def test_renewal_reregisters_only_lapsing_or_absent_leases() -> None:
     assert renewed == ("lapsing-mcp", "absent-mcp")
     window = NOW_MS // RENEW_MARGIN_MS
     assert [key for _params, key in registry.registers] == [
-        f"graph-os:register-server:lapsing-mcp:http://lapsing/mcp:{window}",
-        f"graph-os:register-server:absent-mcp:http://absent/mcp:{window}",
+        f"arbora:register-server:lapsing-mcp:http://lapsing/mcp:{window}",
+        f"arbora:register-server:absent-mcp:http://absent/mcp:{window}",
     ]
     assert all(params["ttl_secs"] == 86_400 for params, _key in registry.registers)
 
@@ -264,11 +264,11 @@ def test_fresh_store_pass_registers_attests_and_imports_each_server(
         "agent-utilities",
         "alpha-mcp",
         "beta-mcp",
-        "graph-os",
+        "arbora",
     ]
     registered = {params["name"]: params["url"] for params, _key in eg.registers}
     assert registered["alpha-mcp"] == ALPHA.url
-    assert registered["graph-os"] == SELF_URL
+    assert registered["arbora"] == SELF_URL
     assert eg.attested == ["alpha-mcp", "beta-mcp"]
     assert [connector for connector, _binding in _RecordingSink.imported] == [
         "alpha-mcp",
@@ -420,11 +420,11 @@ def test_other_engine_error_checking_status_stays_failed(eg: _Registry) -> None:
 def test_self_registrations_renew_at_their_live_url_without_a_served_url(
     eg: _Registry,
 ) -> None:
-    eg.leases["graph-os"] = 1
+    eg.leases["arbora"] = 1
 
     report = _run_in_session(onboard_fleet(_onboarding(eg), ()))
 
-    assert report.renewed == ["graph-os"]
+    assert report.renewed == ["arbora"]
     assert eg.registers[0][0]["url"] == SELF_URL
 
 
@@ -456,7 +456,7 @@ class _Mux:
         self.catalog = catalog
         self.error = error
         self.refreshes = 0
-        self._skip_servers = {"mcp-multiplexer", "graph-os"}
+        self._skip_servers = {"mcp-multiplexer", "arbora"}
         self._fleet_onboarding: dict[str, Any] | None = None
 
     def load_catalog(self) -> dict[str, Any]:
@@ -470,7 +470,7 @@ class _Mux:
 
 
 def test_refresh_runs_only_when_a_new_fleet_server_is_admissible() -> None:
-    report = OnboardingReport(renewed=["graph-os", "alpha-mcp"], onboarded=[])
+    report = OnboardingReport(renewed=["arbora", "alpha-mcp"], onboarded=[])
     mux = _Mux({"alpha-mcp": {}})
 
     assert asyncio.run(refresh_serving_catalog(mux, report, ["alpha-mcp"])) is False
@@ -546,7 +546,7 @@ def test_cli_runs_one_full_pass_and_fails_on_any_server(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    from graph_os.mcp_server import bootstrap, runtime
+    from arbora.mcp_server import bootstrap, runtime
 
     async def capture(endpoint: FleetEndpoint, *, auth: Any = None) -> Any:
         if endpoint is BETA:

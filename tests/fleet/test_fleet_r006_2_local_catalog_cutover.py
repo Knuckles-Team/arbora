@@ -1,9 +1,9 @@
 """GRAPHOS-FLEET-R006.2: skill/prompt body-harvest cutover for an
 already-admitted child.
 
-``_probe_skills``/``_probe_prompts`` (``graph_os/fleet/multiplexer.py``) now
+``_probe_skills``/``_probe_prompts`` (``arbora/fleet/multiplexer.py``) now
 resolve a resource's body from the resident local-skill catalog
-(``graph_os.fleet.local_skill_catalog.build_local_skill_catalog``) when its
+(``arbora.fleet.local_skill_catalog.build_local_skill_catalog``) when its
 name is already admitted there, skipping the live ``_harvest_resource_bodies``
 round trip entirely for that resource. A name the local catalog does not
 admit still falls back to the existing live harvest path over the mounted
@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-import graph_os.fleet.multiplexer as multiplexer_module
+import arbora.fleet.multiplexer as multiplexer_module
 from tests.fleet.test_multiplexer_dynamic_gateway import (
     CNT,
     CNT_TOOL,

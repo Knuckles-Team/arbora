@@ -2,8 +2,8 @@
 
 import pytest
 
-from graph_os.identity.engine import IdentityUnavailable
-from graph_os.identity.scim import ScimServiceCredential
+from arbora.identity.engine import IdentityUnavailable
+from arbora.identity.scim import ScimServiceCredential
 
 
 def test_scim_credential_authorizes_matching_provider() -> None:

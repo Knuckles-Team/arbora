@@ -1,4 +1,4 @@
-"""Governance and live-path tests for the Graph OS browser-control core."""
+"""Governance and live-path tests for the Arbora browser-control core."""
 
 from __future__ import annotations
 
@@ -11,8 +11,8 @@ from typing import Any, cast
 import pytest
 from agent_connector_sdk.privacy import persistence_reference
 
-from graph_os.api.contracts.session import GraphSession, use_session
-from graph_os.browser_control.browser_control_api import (
+from arbora.api.contracts.session import GraphSession, use_session
+from arbora.browser_control.browser_control_api import (
     BrowserCallRequest,
     BrowserChannelBinding,
     CancelCallRequest,
@@ -21,19 +21,19 @@ from graph_os.browser_control.browser_control_api import (
     ReconcileCallRequest,
     RenewLeaseRequest,
 )
-from graph_os.browser_control.browser_control_attendance_api import RecentAuthGrant
-from graph_os.browser_control.browser_control_binding import (
+from arbora.browser_control.browser_control_attendance_api import RecentAuthGrant
+from arbora.browser_control.browser_control_binding import (
     binding_references,
     descriptor_catalog_digest,
     descriptor_tool_scope_digest,
 )
-from graph_os.browser_control.browser_control_client import (
+from arbora.browser_control.browser_control_client import (
     CatalogRegisterMessage,
     ControlCancelledMessage,
     ControlConfirmMessage,
     ControlResultMessage,
 )
-from graph_os.browser_control.browser_control_common import (
+from arbora.browser_control.browser_control_common import (
     CancellationEffect,
     ConfirmationPolicy,
     MutationClass,
@@ -41,16 +41,16 @@ from graph_os.browser_control.browser_control_common import (
     content_sha256,
     schema_sha256,
 )
-from graph_os.browser_control.browser_control_descriptor import BrowserToolDescriptor
-from graph_os.browser_control.browser_control_registration import (
+from arbora.browser_control.browser_control_descriptor import BrowserToolDescriptor
+from arbora.browser_control.browser_control_registration import (
     active_registration_matches,
     register_catalog,
 )
-from graph_os.browser_control.browser_control_service import (
+from arbora.browser_control.browser_control_service import (
     BrowserControlService,
     browser_control_factory_kwargs,
 )
-from graph_os.security.actor_context import ActorContext, ActorType
+from arbora.security.actor_context import ActorContext, ActorType
 
 
 def _negative_claim() -> dict[str, Any]:
@@ -313,7 +313,7 @@ def _binding(session: GraphSession, **changes: Any) -> BrowserChannelBinding:
         attended_arm_issued_at=now - 1,
         attended_auth_time=now - 2,
         attended_acr="urn:example:acr:step-up",
-        attended_issuer="https://identity.example.invalid/realms/graph-os",
+        attended_issuer="https://identity.example.invalid/realms/arbora",
         session_revalidator=_live_binding_session,
         attended=True,
     )
@@ -535,8 +535,8 @@ async def test_ambiguous_fence_admission_recovers_only_owned_work_item(
     session: GraphSession,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from graph_os.browser_control import browser_control_cancellation as cancellation
-    from graph_os.browser_control import browser_control_durability as durability
+    from arbora.browser_control import browser_control_cancellation as cancellation
+    from arbora.browser_control import browser_control_durability as durability
 
     original_get = durability.get_work_item
     failed_after_create = False
@@ -635,7 +635,7 @@ async def test_audit_failure_prevents_dispatch_and_reaps_owned_fence(
     session: GraphSession,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from graph_os.browser_control import browser_control_outcome
+    from arbora.browser_control import browser_control_outcome
 
     monkeypatch.setattr(browser_control_outcome, "_UNKNOWN_RECONCILE_SECONDS", 0.0)
     with use_session(session):
@@ -1805,7 +1805,7 @@ async def test_replay_rejects_changed_work_item_envelope(
 async def test_unknown_call_is_reaped_after_durable_reconciliation_audit(
     session: GraphSession, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from graph_os.browser_control import browser_control_outcome
+    from arbora.browser_control import browser_control_outcome
 
     monkeypatch.setattr(browser_control_outcome, "_UNKNOWN_RECONCILE_SECONDS", 0.0)
     with use_session(session):
@@ -1988,7 +1988,7 @@ async def test_disconnect_retries_transient_registration_retirement(
     session: GraphSession,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from graph_os.browser_control import browser_control_channel as channel_module
+    from arbora.browser_control import browser_control_channel as channel_module
 
     original_retire = channel_module.retire_catalog
     attempts = 0

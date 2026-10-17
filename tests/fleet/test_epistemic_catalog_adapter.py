@@ -9,8 +9,8 @@ from typing import Any
 
 import pytest
 
-from graph_os.fleet import epistemic_adapter as adapter
-from graph_os.fleet.catalog_reader import (
+from arbora.fleet import epistemic_adapter as adapter
+from arbora.fleet.catalog_reader import (
     COMMONS_GRAPH,
     COMPONENT_CURRENT_SOURCE,
     COMPONENT_SEARCH_SOURCE,

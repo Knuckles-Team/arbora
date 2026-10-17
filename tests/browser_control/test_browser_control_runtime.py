@@ -10,19 +10,19 @@ from typing import Any
 
 import pytest
 
-from graph_os.api.contracts.session import (
+from arbora.api.contracts.session import (
     GraphSession,
     current_session,
     use_session,
 )
-from graph_os.browser_control.browser_control_api import BrowserLeaseReceipt
-from graph_os.browser_control.browser_control_runtime import (
+from arbora.browser_control.browser_control_api import BrowserLeaseReceipt
+from arbora.browser_control.browser_control_runtime import (
     bind_browser_control_owner,
     dispatch_browser_control,
     register_browser_control_service,
     unregister_browser_control_service,
 )
-from graph_os.security.actor_context import ActorContext, ActorType
+from arbora.security.actor_context import ActorContext, ActorType
 
 
 class _Service:
@@ -149,7 +149,7 @@ async def test_runtime_requires_write_scope(session: GraphSession) -> None:
 
 
 def test_both_production_webui_compositions_inject_the_same_authority() -> None:
-    from graph_os.webui_host import webui_co_service
+    from arbora.webui_host import webui_co_service
 
     source = Path(webui_co_service.__file__).read_text(encoding="utf-8")
     assert "browser_control_factory_kwargs(" in source

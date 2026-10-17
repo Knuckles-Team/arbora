@@ -1,6 +1,6 @@
 # Test contract
 
-From a clean clone run `uv sync --extra test`, `uv run pytest`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy graph_os`, and the normal pre-commit hooks. Pure controller and fake-port tests are required on every PR; they need no live cluster or credential. A disposable served fault-injection job can provision its own engine and child service, and labels its result separately.
+From a clean clone run `uv sync --extra test`, `uv run pytest`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy arbora`, and the normal pre-commit hooks. Pure controller and fake-port tests are required on every PR; they need no live cluster or credential. A disposable served fault-injection job can provision its own engine and child service, and labels its result separately.
 
 | Fixture | Expected result |
 |---|---|

@@ -5,7 +5,7 @@ needs the same minted ``VerifiedCaller`` -- principal, tenant, credential
 kind and a default scope narrow enough that only the operation under test
 is authorized -- differing only in which scope that default is. Duplicating
 the whole factory per module just lets the fixture drift from the real
-``VerifiedCaller`` contract (``graph_os.api.invoke.steps``).
+``VerifiedCaller`` contract (``arbora.api.invoke.steps``).
 """
 
 from __future__ import annotations
@@ -15,8 +15,8 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from graph_os.api.invoke.steps import VerifiedCaller
-from graph_os.api.registry import (
+from arbora.api.invoke.steps import VerifiedCaller
+from arbora.api.registry import (
     AuditClass,
     Composite,
     Effect,
@@ -43,7 +43,7 @@ def identity_disable_op_values(
         "verb": Verb.MANAGE,
         "summary": "Disable a user",
         "examples": ("Disable this user account",),
-        "binding": Composite(handler="graph_os.identity.admin_service.disable_user"),
+        "binding": Composite(handler="arbora.identity.admin_service.disable_user"),
         "scopes": frozenset({"identity:admin"}),
         "effect": Effect.ADMIN,
         "audit": AuditClass.IDENTITY_CHAIN,
@@ -100,7 +100,7 @@ def identity_read_op(op_id: str = "identity.users.read", **changes: Any) -> OpSp
         "examples": ("Look up this user",),
         "params": IdentityReadInput,
         "result": IdentityReadOutput,
-        "binding": Composite(handler="graph_os.identity.admin_service.read_user"),
+        "binding": Composite(handler="arbora.identity.admin_service.read_user"),
         "principals": PrincipalRule.ANY,
         "effect": Effect.READ,
         "http": HttpShape(method="GET", path="/v1/identity/users/{user_id}"),

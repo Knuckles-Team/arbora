@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.deployment.public_ingress_identity import (
+from arbora.deployment.public_ingress_identity import (
     PublicIngressProfile,
     PublicIngressProfileError,
     public_ingress_profile_from_mapping,
@@ -18,9 +18,9 @@ from graph_os.deployment.public_ingress_identity import (
 
 _VALID = {
     "version": 1,
-    "public_origin": "https://graph-os.example.com",
-    "tls_secret_ref": "k8s-secret://graph-os/public-ingress-tls",
-    "callback_uri": "https://graph-os.example.com/auth/callback",
+    "public_origin": "https://arbora.example.com",
+    "tls_secret_ref": "k8s-secret://arbora/public-ingress-tls",
+    "callback_uri": "https://arbora.example.com/auth/callback",
     "trusted_proxy": "ingress-controller",
 }
 
@@ -29,12 +29,12 @@ def test_valid_mapping_renders_deterministic_redacted_profile() -> None:
     profile = public_ingress_profile_from_mapping(_VALID)
 
     assert isinstance(profile, PublicIngressProfile)
-    assert profile.public_origin == "https://graph-os.example.com"
-    assert profile.callback_uri == "https://graph-os.example.com/auth/callback"
+    assert profile.public_origin == "https://arbora.example.com"
+    assert profile.callback_uri == "https://arbora.example.com/auth/callback"
 
     render = profile.redacted_render()
-    assert render["public_origin"] == "https://graph-os.example.com"
-    assert render["callback_uri"] == "https://graph-os.example.com/auth/callback"
+    assert render["public_origin"] == "https://arbora.example.com"
+    assert render["callback_uri"] == "https://arbora.example.com/auth/callback"
     assert render["profile_digest"] == profile.profile_digest
     # Same input -> same digest, deterministically.
     assert public_ingress_profile_from_mapping(_VALID).profile_digest == (
@@ -76,7 +76,7 @@ def test_missing_or_malformed_tls_ref_refuses(
     [
         "https://not-the-origin.example.com/auth/callback",
         "javascript:alert(1)",
-        "https://graph-os.example.com",  # not under the origin path
+        "https://arbora.example.com",  # not under the origin path
     ],
 )
 def test_malformed_callback_refuses(callback_uri: str) -> None:
@@ -89,9 +89,9 @@ def test_malformed_callback_refuses(callback_uri: str) -> None:
 @pytest.mark.parametrize(
     "public_origin",
     [
-        "http://graph-os.example.com",  # HTTP, non-loopback
+        "http://arbora.example.com",  # HTTP, non-loopback
         "https://*.example.com",  # wildcard Host
-        "ftp://graph-os.example.com",
+        "ftp://arbora.example.com",
     ],
 )
 def test_http_non_loopback_or_wildcard_origin_refuses(public_origin: str) -> None:

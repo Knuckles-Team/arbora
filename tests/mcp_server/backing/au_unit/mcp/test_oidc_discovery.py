@@ -12,7 +12,7 @@ import time
 
 import pytest
 
-from graph_os.security import oidc_discovery
+from arbora.security import oidc_discovery
 
 ISS = "https://idp.test/realms/homelab"  # non-loopback issuer requires HTTPS (AU-OS.identity)
 DOC = {
@@ -69,7 +69,7 @@ def test_oidc_client_options_pin_egress_and_admit_loopback() -> None:
 
 
 def test_minter_token_url_from_discovery(monkeypatch: pytest.MonkeyPatch) -> None:
-    from graph_os.mcp_server.backing import client_credentials
+    from arbora.mcp_server.backing import client_credentials
 
     monkeypatch.delenv("OIDC_TOKEN_URL", raising=False)
     monkeypatch.setenv("OIDC_ISSUER", ISS)
@@ -77,7 +77,7 @@ def test_minter_token_url_from_discovery(monkeypatch: pytest.MonkeyPatch) -> Non
 
 
 def test_minter_explicit_token_url_wins(monkeypatch: pytest.MonkeyPatch) -> None:
-    from graph_os.mcp_server.backing import client_credentials
+    from arbora.mcp_server.backing import client_credentials
 
     monkeypatch.setenv("OIDC_TOKEN_URL", "http://explicit.test/token")
     monkeypatch.setenv("OIDC_ISSUER", ISS)
@@ -85,7 +85,7 @@ def test_minter_explicit_token_url_wins(monkeypatch: pytest.MonkeyPatch) -> None
 
 
 def test_minter_multi_issuer_uses_primary(monkeypatch: pytest.MonkeyPatch) -> None:
-    from graph_os.mcp_server.backing import client_credentials
+    from arbora.mcp_server.backing import client_credentials
 
     monkeypatch.delenv("OIDC_TOKEN_URL", raising=False)
     monkeypatch.setenv("OIDC_ISSUER", f"{ISS},{OKTA}")  # primary = first
@@ -95,7 +95,7 @@ def test_minter_multi_issuer_uses_primary(monkeypatch: pytest.MonkeyPatch) -> No
 def test_server_factory_discovers_jwks(monkeypatch: pytest.MonkeyPatch) -> None:
     from fastmcp.server.auth.providers.jwt import JWTVerifier
 
-    from graph_os.mcp_server.backing.server_factory import _configure_jwt_auth
+    from arbora.mcp_server.backing.server_factory import _configure_jwt_auth
 
     monkeypatch.delenv("FASTMCP_SERVER_AUTH_JWT_JWKS_URI", raising=False)
     monkeypatch.delenv("OIDC_ISSUER", raising=False)

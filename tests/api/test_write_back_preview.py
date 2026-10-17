@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from graph_os.api.ops.write_back import (
+from arbora.api.ops.write_back import (
     WriteBackPreviewRequest,
     WriteBackRefused,
     preview_write_back,

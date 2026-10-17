@@ -26,7 +26,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from graph_os.mcp_server.backing.server_factory import (
+from arbora.mcp_server.backing.server_factory import (
     UnsupportedAuthTypeError,
     _configure_auth,
     _configure_jwt_auth,
@@ -61,7 +61,7 @@ def test_falsy_auth_type_returns_none():
 
 def test_delegation_without_oidc_proxy_exits(monkeypatch):
     monkeypatch.setattr(
-        "graph_os.mcp_server.backing.server_factory.mcp_auth_config",
+        "arbora.mcp_server.backing.server_factory.mcp_auth_config",
         {
             "enable_delegation": False,
             "audience": None,
@@ -79,7 +79,7 @@ def test_delegation_without_oidc_proxy_exits(monkeypatch):
 
 def test_delegation_without_audience_exits(monkeypatch):
     monkeypatch.setattr(
-        "graph_os.mcp_server.backing.server_factory.mcp_auth_config",
+        "arbora.mcp_server.backing.server_factory.mcp_auth_config",
         {
             "enable_delegation": False,
             "audience": None,
@@ -237,7 +237,7 @@ def test_unknown_auth_type_refuses():
 # ---------------------------------------------------------------------------
 def test_jwt_oidc_discovery_fills_missing_jwks_uri(monkeypatch):
     monkeypatch.setattr(
-        "graph_os.security.oidc_discovery.jwks_uri_for",
+        "arbora.security.oidc_discovery.jwks_uri_for",
         lambda issuer: f"{issuer}/jwks",
     )
     args = _base_args(
@@ -326,7 +326,7 @@ def test_jwt_hmac_secret_resolved(monkeypatch):
     mock_client = MagicMock()
     mock_client.resolve_ref.return_value = "x" * 40
     monkeypatch.setattr(
-        "graph_os.security.secrets.create_secrets_client",
+        "arbora.security.secrets.create_secrets_client",
         lambda: mock_client,
     )
     args = _base_args(

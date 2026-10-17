@@ -9,13 +9,13 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing spec
 | A2A-T02 | A2A-01, A2A-02 | Start local ephemeral engine/agent services. Stream ordered durable events; disconnect and resubscribe with cursor after restart. Each event arrives once by ID, terminal state persists, and task ID resolves to the same parent WorkItem/child relation. |
 | A2A-T03 | A2A-02 | Assembly returns only caller-allowed agent skills and budgeted fleet items. Revoke a scope, refresh card and dispatch, and verify removed skill plus no alternate route. Missing upstream assembly returns `UNAVAILABLE`. |
 | A2A-T04 | A2A-03 | Invoke read, write and fleet call via A2A, MCP and HTTP with the same principal. Codes, effect gate, audit shape and registry digest agree. Unknown op/method and forged actor/tenant fields refuse without executing. |
-| A2A-T05 | A2A-04, A2A-05 | Pause on a PLAN effect; inspect durable `input-required` event and safe preview, restart GraphOS, sign confirmation as original human, consume fence once, observe exactly one effect and one linked audit outcome. |
+| A2A-T05 | A2A-04, A2A-05 | Pause on a PLAN effect; inspect durable `input-required` event and safe preview, restart Arbora, sign confirmation as original human, consume fence once, observe exactly one effect and one linked audit outcome. |
 | A2A-T06 | A2A-05 | Table-drive different human, service/agent token, foreign tenant, invalid signature, missing/revoked grant, altered op/params/pending call/parent-child relation, stale policy/digest, expired lease, replay, canceled task and concurrent confirm. All return a distinct stable refusal with zero extra effects. |
 | A2A-T07 | A2A-04, A2A-05 | Trigger identity admin or live approval requiring console. A2A returns `STEP_UP_REQUIRED` and safe URL; A2A confirm refuses; same-human fresh MFA console flow succeeds after two-person rule where required. |
 | A2A-T08 | A2A-06 | Audit reservation outage prevents effect. Simulate outcome write failure after effect: response is indeterminate with reconciliation handle; no rollback claim. Error bodies omit token, tenant and private actor values. |
 | A2A-T09 | A2A-07 | Clean public clone with pinned published dependencies passes contract suite and package build; no private service or sibling tree. CI-provisioned local served test passes streaming/approval/restart on exact commit. |
 
-Run `uv run pytest tests/a2a tests/api`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy graph_os`, `uvx --from pre-commit==4.6.0 pre-commit run --all-files`, and `uv build --wheel --out-dir dist`. CCCC and KISS remain within configured limits, jscpd records zero new pairs, and Dupehound records no new clones. Capture exact commit, command, versions, result and public CI link in a local `evidence.md` before changing delivery to `ACCEPTED`.
+Run `uv run pytest tests/a2a tests/api`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy arbora`, `uvx --from pre-commit==4.6.0 pre-commit run --all-files`, and `uv build --wheel --out-dir dist`. CCCC and KISS remain within configured limits, jscpd records zero new pairs, and Dupehound records no new clones. Capture exact commit, command, versions, result and public CI link in a local `evidence.md` before changing delivery to `ACCEPTED`.
 
 ## A2A streaming, push notifications and transition-history projection
 Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED** except `GRAPHOS-A2A-R009.1`. Governing [spec](spec.md).
@@ -32,7 +32,7 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED** except `GRAPHOS
 | A2A-HT08 | A2A-H06 | With the `GRAPHOS-A2A` dependency flag unset, composition refuses to wire a real streaming/push/history authority; capability fields stay false regardless of attempted wiring. (Open.) |
 | A2A-HT09 | A2A-H07 | Integration fixture exercises a chosen subset of streaming/push/history. A contract test asserts the Agent Card's advertised subset at that revision exactly matches what the fixture actually exercises. (Open.) |
 
-Run `uv run pytest tests/a2a`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy graph_os`, and `uvx --from pre-commit==4.6.0 pre-commit run --files <changed>` for this PR's `GRAPHOS-A2A-R009.1` slice (A2A-HT01–HT03). The remaining rows (A2A-HT04–HT09) require `GRAPHOS-A2A` and live AU/EG fixtures and stay open until implemented. Capture exact commit, command, versions and result in a local `evidence.md` before changing delivery to `ACCEPTED`.
+Run `uv run pytest tests/a2a`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy arbora`, and `uvx --from pre-commit==4.6.0 pre-commit run --files <changed>` for this PR's `GRAPHOS-A2A-R009.1` slice (A2A-HT01–HT03). The remaining rows (A2A-HT04–HT09) require `GRAPHOS-A2A` and live AU/EG fixtures and stay open until implemented. Capture exact commit, command, versions and result in a local `evidence.md` before changing delivery to `ACCEPTED`.
 
 ## A2A context-budget tool-subset admission
 Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing spec: [GRAPHOS-A2A-002](spec.md).
@@ -74,7 +74,7 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing spec
 | A2A-HOLD-T11 | GRAPHOS-A2A-R006.7 | Run `tests/a2a/test_held_item_admission.py::test_audit_entry_names_verdict_and_item`; it must pass and bind to this row. |
 | A2A-HOLD-T12 | GRAPHOS-A2A-R006.8 | Run `tests/a2a/test_held_item_admission_e2e.py::test_confirm_admits_or_rejects_held_item`; it must pass and bind to this row. |
 
-Run `uv run pytest tests/a2a/test_admission.py`, `uv run ruff check graph_os/a2a/admission.py tests/a2a/test_admission.py`, `uv run ruff format --check graph_os/a2a/admission.py tests/a2a/test_admission.py`, and `uv run mypy graph_os/a2a/admission.py`. A2A-ADM-T03 and A2A-ADM-T04 remain open until the EG and AU dependencies (`EG-DECISION-ENGINE-R036`, `AU-CONTROL-R035`) are callable; this PR lands A2A-ADM-T01, A2A-ADM-T02, and A2A-ADM-T06 only. Capture exact commit, command, and result before changing delivery to `ACCEPTED`.
+Run `uv run pytest tests/a2a/test_admission.py`, `uv run ruff check arbora/a2a/admission.py tests/a2a/test_admission.py`, `uv run ruff format --check arbora/a2a/admission.py tests/a2a/test_admission.py`, and `uv run mypy arbora/a2a/admission.py`. A2A-ADM-T03 and A2A-ADM-T04 remain open until the EG and AU dependencies (`EG-DECISION-ENGINE-R036`, `AU-CONTROL-R035`) are callable; this PR lands A2A-ADM-T01, A2A-ADM-T02, and A2A-ADM-T06 only. Capture exact commit, command, and result before changing delivery to `ACCEPTED`.
 
 Approval acceptance prerequisites: GRAPHOS-A2A-R005.6 requires full R005.2 and the R006.2/R006.2.1 verified-caller bridge. The served tool-action fixture must refuse before these prerequisites exist. It must prove input-required/signature binding. It must cover replay, changed-params, different-human, expired and revoked-grant cases. R006.5/R006.8 must exercise a dedicated engine held-item port through shared invoke with Surface.A2A. Preserve all fences and assert zero calls to operator-console elevation.
 
@@ -100,8 +100,8 @@ Use read, write and fleet operations from the actual registry and compare A2A, M
 The fixture must prove InvokeServices is composed by the production serving path, not injected only into an isolated helper.
 Returning a caller without reaching that path cannot close R006.2.
 
-The compatibility probe used a synthetic human session and real AU/GraphOS projection and refresh functions.
-It observed HTTP 501 and JSON-RPC -32011 for graphos.op/invoke and graphos.plan/confirm, with zero authority calls.
+The compatibility probe used a synthetic human session and real AU/Arbora projection and refresh functions.
+It observed HTTP 501 and JSON-RPC -32011 for arbora.op/invoke and graphos.plan/confirm, with zero authority calls.
 Those results establish the current refusal and compatible session shape only.
 They do not establish production credential binding, deployed service, TLS, engine execution or signed human approval.
 Preserve every R005.2 input-required, signature, binding, expiry, revocation and replay acceptance case.

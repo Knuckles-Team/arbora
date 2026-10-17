@@ -5,14 +5,14 @@ import json
 
 import pytest
 
-from graph_os.identity.engine import IdentityUnavailable, Resolution
-from graph_os.identity.issuer import (
+from arbora.identity.engine import IdentityUnavailable, Resolution
+from arbora.identity.issuer import (
     ISSUER_KEY_RING_PATH,
     IssuerSettings,
     LocalIssuer,
     claims_for,
 )
-from graph_os.identity.ports import CredentialState
+from arbora.identity.ports import CredentialState
 
 from .test_engine_resolution import eg_public_resolution_fixture, resolution_value
 
@@ -202,7 +202,7 @@ def test_recheck_revocation_infrastructure_and_cancellation_propagate(
 def test_missing_eg_source_expiry_adapter_refuses_before_key_read(
     synthetic_signing_key,
 ):
-    from graph_os.identity.engine_ports import UnavailableIdentityAuthority
+    from arbora.identity.engine_ports import UnavailableIdentityAuthority
 
     store = ExistingFixtureKeyStore(synthetic_signing_key)
     issuer = LocalIssuer(store, SETTINGS, UnavailableIdentityAuthority())
@@ -267,7 +267,7 @@ def test_admission_owns_exact_cookie_token_and_caller_pairing(
     from joserfc import jwt
     from joserfc.jwk import RSAKey
 
-    from graph_os.identity.admission import BrowserAdmission
+    from arbora.identity.admission import BrowserAdmission
 
     from .test_console_admission import CallerFixture, OwnersFixture
     from .test_modes_and_browser import ORIGIN, TOKEN, request_scope
@@ -339,7 +339,7 @@ def test_admission_owns_exact_cookie_token_and_caller_pairing(
 
 
 def test_admission_rejects_incoming_cookie_bearer_before_issuing(synthetic_signing_key):
-    from graph_os.identity.admission import BrowserAdmission
+    from arbora.identity.admission import BrowserAdmission
 
     from .test_console_admission import OwnersFixture, forwarded_scope
     from .test_modes_and_browser import ORIGIN

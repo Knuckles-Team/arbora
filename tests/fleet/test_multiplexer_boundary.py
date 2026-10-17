@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import pytest
 from fastmcp.exceptions import ToolError
 
-from graph_os.fleet.multiplexer import (
+from arbora.fleet.multiplexer import (
     _assert_bounded_delegated_value,
     _bounded_tool_catalog,
     _resolve_runtime_value,
@@ -23,10 +23,10 @@ def test_noncredential_field_cannot_expand_secret_environment_name() -> None:
 
 
 def test_fleet_runtime_alias_prefers_direct_projection(monkeypatch) -> None:
-    from graph_os.core.settings import runtime_config as config
+    from arbora.core.settings import runtime_config as config
 
     monkeypatch.setattr(
-        "graph_os.fleet.multiplexer.setting",
+        "arbora.fleet.multiplexer.setting",
         lambda alias: (
             "direct-runtime-material" if alias == "CHILD_TOKEN_ALIAS" else None
         ),
@@ -50,9 +50,9 @@ def test_fleet_runtime_alias_prefers_direct_projection(monkeypatch) -> None:
 def test_fleet_runtime_alias_uses_configured_ref_only_after_direct_miss(
     monkeypatch,
 ) -> None:
-    from graph_os.core.settings import runtime_config as config
+    from arbora.core.settings import runtime_config as config
 
-    monkeypatch.setattr("graph_os.fleet.multiplexer.setting", lambda _alias: None)
+    monkeypatch.setattr("arbora.fleet.multiplexer.setting", lambda _alias: None)
     monkeypatch.setattr(
         config,
         "mcp_fleet_secret_refs",
@@ -80,9 +80,9 @@ def test_fleet_runtime_alias_uses_configured_ref_only_after_direct_miss(
 def test_fleet_runtime_alias_fails_closed_without_direct_or_mapped_value(
     monkeypatch,
 ) -> None:
-    from graph_os.core.settings import runtime_config as config
+    from arbora.core.settings import runtime_config as config
 
-    monkeypatch.setattr("graph_os.fleet.multiplexer.setting", lambda _alias: None)
+    monkeypatch.setattr("arbora.fleet.multiplexer.setting", lambda _alias: None)
     monkeypatch.setattr(config, "mcp_fleet_secret_refs", {}, raising=False)
 
     with pytest.raises(RuntimeError, match="unavailable"):
@@ -223,7 +223,7 @@ def test_catalog_rejects_direct_provider_profile_environment(tmp_path) -> None:
         lambda cfg: cfg["allowed_private_hosts"].append("changed.invalid"),
         lambda cfg: cfg.__setitem__("timeout", 31.0),
         lambda cfg: cfg.__setitem__("provider_profile", "changed-provider"),
-        lambda cfg: cfg.__setitem__("_graphos_parent_kg_ingestion", True),
+        lambda cfg: cfg.__setitem__("_arbora_parent_kg_ingestion", True),
     ],
 )
 def test_runtime_attestation_binds_complete_child_declaration(mutation) -> None:
@@ -235,7 +235,7 @@ def test_runtime_attestation_binds_complete_child_declaration(mutation) -> None:
             "tls_profile_ref": "secret://trust/profile",
             "allowed_private_hosts": ["service.invalid"],
             "timeout": 30.0,
-            "_graphos_parent_kg_ingestion": False,
+            "_arbora_parent_kg_ingestion": False,
         }
     )
 

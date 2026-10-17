@@ -1,11 +1,11 @@
-"""graph-os publishes its operation registry as versioned data."""
+"""arbora publishes its operation registry as versioned data."""
 
 from __future__ import annotations
 
 import pytest
 
-from graph_os.mcp_server import operation_registry as reg
-from graph_os.mcp_server.backing.tool_specs import TOOL_SPECS
+from arbora.mcp_server import operation_registry as reg
+from arbora.mcp_server.backing.tool_specs import TOOL_SPECS
 
 
 @pytest.mark.spec("GRAPHOS-HOST-R001.6")

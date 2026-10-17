@@ -60,7 +60,7 @@ coverage-linked `kiss test`, a much heavier and differently-scoped operation
 than this repository's wiring gate needs. The `check-orphan-modules`
 pre-commit hook (`scripts/check_wiring.py orphans`) enforces it instead,
 restoring the original structural semantics — see the
-`graph-os-repository-development` skill's "Orphan-module wiring gate
+`arbora-repository-development` skill's "Orphan-module wiring gate
 (Python)" section.
 
 ### Reachability report — informational, manual stage only
@@ -68,14 +68,14 @@ restoring the original structural semantics — see the
 A module with nonzero fan-in/fan-out passes the orphan check above even when
 no running process ever reaches it (it only imports, and is imported by,
 other equally unserved modules). `scripts/check_wiring.py unreachable` (the
-`check-unreachable-modules` pre-commit hook) reports every `graph_os` module
+`check-unreachable-modules` pre-commit hook) reports every `arbora` module
 that walking every import edge — static and dynamic/name-based — from the
 declared roots (`pyproject.toml`'s `[project.scripts]` / `[project.entry-points]`
 and the top-level package) never reaches. It runs at the `manual` stage
 only, so it never blocks `pre-commit` or `pre-push` and CI's blocking gate
 set is unchanged; it exists to make staged, not-yet-served code visible and
 trackable, not to force an immediate fix. See the
-`graph-os-repository-development` skill's "Reachability report (Python) —
+`arbora-repository-development` skill's "Reachability report (Python) —
 staged, not-yet-served code" section.
 
 ## Running the scanners

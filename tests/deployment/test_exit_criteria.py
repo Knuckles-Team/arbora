@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.deployment.exit_criteria import ExitCriterion, audit_exit_criteria
+from arbora.deployment.exit_criteria import ExitCriterion, audit_exit_criteria
 
 
 @pytest.mark.spec("GRAPHOS-RELEASE-R003.1")

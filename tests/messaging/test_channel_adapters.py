@@ -1,4 +1,4 @@
-"""The public channel adapters are supplied by GraphOS."""
+"""The public channel adapters are supplied by Arbora."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from importlib import import_module
 
 import pytest
 
-from graph_os.messaging.base import MessagingBackend
+from arbora.messaging.base import MessagingBackend
 
 
 @pytest.mark.parametrize(
@@ -17,13 +17,13 @@ from graph_os.messaging.base import MessagingBackend
         ("telegram", "TelegramBackend"),
     ],
 )
-def test_graphos_owns_channel_adapter(platform: str, class_name: str) -> None:
+def test_arbora_owns_channel_adapter(platform: str, class_name: str) -> None:
     adapter = getattr(
-        import_module(f"graph_os.messaging.backends.{platform}"), class_name
+        import_module(f"arbora.messaging.backends.{platform}"), class_name
     )
 
     assert issubclass(adapter, MessagingBackend)
-    assert adapter.__module__ == f"graph_os.messaging.backends.{platform}"
+    assert adapter.__module__ == f"arbora.messaging.backends.{platform}"
 
 
 @pytest.mark.asyncio
@@ -41,14 +41,14 @@ async def test_connect_names_the_extra_when_the_sdk_is_missing(
     sdk_module: str,
     extra: str,
 ) -> None:
-    """graph_os.messaging imports cleanly without any platform SDK installed.
+    """arbora.messaging imports cleanly without any platform SDK installed.
 
     Each backend's own ``connect()`` defers its SDK import so the module itself
     is always importable; only calling ``connect()`` without that one platform's
     SDK installed should fail, with a message naming the extra to install.
     """
     adapter = getattr(
-        import_module(f"graph_os.messaging.backends.{platform}"), class_name
+        import_module(f"arbora.messaging.backends.{platform}"), class_name
     )
     # A None entry in sys.modules makes the next `import <sdk_module>` raise
     # ImportError, simulating the SDK not being installed, without uninstalling it.

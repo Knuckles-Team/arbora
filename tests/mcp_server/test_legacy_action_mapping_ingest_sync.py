@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.api.ops import ingest
-from graph_os.mcp_server.legacy_action_mapping import APPROVED_ACTION_MAPPING
+from arbora.api.ops import ingest
+from arbora.mcp_server.legacy_action_mapping import APPROVED_ACTION_MAPPING
 
 
 @pytest.mark.spec("GRAPHOS-HOST-R005.2.3.1")

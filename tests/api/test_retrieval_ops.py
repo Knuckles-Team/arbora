@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.api.invoke.pipeline import OperationRefused
-from graph_os.api.ops import retrieval
-from graph_os.api.ops.retrieval import (
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops import retrieval
+from arbora.api.ops.retrieval import (
     RetrievalFreshnessOutcome,
     RetrievalHit,
     RetrievalSearchOutcome,

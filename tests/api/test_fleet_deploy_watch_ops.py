@@ -11,13 +11,13 @@ from types import SimpleNamespace
 
 import pytest
 
-from graph_os.api.ops import fleet_deploy_watch
-from graph_os.api.registry import Caller, Effect, Registry, Surface, Verb, authorized
+from arbora.api.ops import fleet_deploy_watch
+from arbora.api.registry import Caller, Effect, Registry, Surface, Verb, authorized
 
 
 @dataclass(frozen=True)
 class _FakeCaller:
-    """A concrete stand-in structurally satisfying ``graph_os.api.registry.Caller``."""
+    """A concrete stand-in structurally satisfying ``arbora.api.registry.Caller``."""
 
     effective_scopes: frozenset[str]
     principal_kind: str = "human"

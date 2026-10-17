@@ -1,0 +1,55 @@
+"""qBittorrent widget — download client status and transfer stats."""
+
+from __future__ import annotations
+
+import logging
+
+from arbora.gateway.models import (
+    ServiceCategory,
+    ServiceConfig,
+    WidgetData,
+    WidgetField,
+)
+from arbora.gateway.widgets.base import BaseWidget
+
+logger = logging.getLogger(__name__)
+
+
+class Widget(BaseWidget):
+    service_type = "qbittorrent"
+    display_name = "qBittorrent"
+    icon = "download"
+    category = ServiceCategory.MEDIA
+    description = "Download client — torrents, speed, and transfer stats"
+    env_prefix = "QBITTORRENT"
+
+    def get_fields(self) -> list[WidgetField]:
+        return self.get_widget_fields("qbittorrent")
+
+    def fetch_data(self, config: ServiceConfig) -> WidgetData:
+        client = self._fleet_client()
+
+        try:
+            torrents = client.list_torrents() or []
+            transfer = client.get_transfer_info() or {}
+        except Exception as e:
+            logger.warning("qBittorrent fetch: %s", e)
+            torrents = []
+            transfer = {}
+
+        downloading = sum(
+            1 for t in torrents if t.get("state", "").startswith("download")
+        )
+        seeding = sum(1 for t in torrents if t.get("state", "").startswith("upload"))
+        paused = sum(1 for t in torrents if "paused" in t.get("state", "").lower())
+
+        return WidgetData(
+            fields={
+                "downloading": downloading,
+                "seeding": seeding,
+                "paused": paused,
+                "dl_speed": transfer.get("dl_info_speed", 0),
+                "ul_speed": transfer.get("up_info_speed", 0),
+            },
+            status="ok",
+        )

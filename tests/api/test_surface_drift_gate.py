@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.api.registry import (
+from arbora.api.registry import (
     HttpShape,
     OpSpec,
     Surface,

@@ -4,15 +4,15 @@
 
 | Existing seam | Role in this design | Change boundary |
 |---|---|---|
-| `graph_os/fleet/catalog_reader.py` and `epistemic_adapter.py` | Typed fleet catalog reads and generated engine adapter | Extend one canonical item projection; preserve strict integrity failures |
-| `graph_os/fleet/multiplexer.py` | Child transport, session visibility, mounts, meta-tool registration | Make it a transport/session component. Route authority and effects through `invoke`. Remove default-open branches |
-| `graph_os/fleet/session_notifications.py` | Per-session list-change queue | Notify on load, unload, revocation, and generation change |
-| `graph_os/fleet/child_resilience.py` | Child health and reconnect | Include generation and health in status without granting authority |
-| `graph_os/mcp_server/{runtime,server,catalog_composition,composition}.py` | Served FastMCP instance and startup composition | Install the ten registry projections on the same event loop. Fail startup on incomplete attachment |
-| `graph_os/webui_host/mcp_delegation.py` | Host-to-MCP bridge | Route calls through the same registry/policy boundary |
-| `graph_os/deployment/doctor.py` | Local environment and policy diagnostics | Report policy off, unavailable, invalid config, and catalog digest mismatch |
+| `arbora/fleet/catalog_reader.py` and `epistemic_adapter.py` | Typed fleet catalog reads and generated engine adapter | Extend one canonical item projection; preserve strict integrity failures |
+| `arbora/fleet/multiplexer.py` | Child transport, session visibility, mounts, meta-tool registration | Make it a transport/session component. Route authority and effects through `invoke`. Remove default-open branches |
+| `arbora/fleet/session_notifications.py` | Per-session list-change queue | Notify on load, unload, revocation, and generation change |
+| `arbora/fleet/child_resilience.py` | Child health and reconnect | Include generation and health in status without granting authority |
+| `arbora/mcp_server/{runtime,server,catalog_composition,composition}.py` | Served FastMCP instance and startup composition | Install the ten registry projections on the same event loop. Fail startup on incomplete attachment |
+| `arbora/webui_host/mcp_delegation.py` | Host-to-MCP bridge | Route calls through the same registry/policy boundary |
+| `arbora/deployment/doctor.py` | Local environment and policy diagnostics | Report policy off, unavailable, invalid config, and catalog digest mismatch |
 
-Build on these seams; do not introduce a second catalog authority, child-call path, or policy decision point. `graph_os/api/registry/` owns immutable operation metadata. `graph_os/api/invoke/` owns validation, caller binding, exact scopes, policy, effects, execution, audit, and error mapping. `graph_os/api/mcp/` projects intent and resident fleet tools. `graph_os/fleet/gateway_ops.py` adapts catalog operations and creates native forwarders whose body delegates to `invoke("fleet.call", ...)`. The engine contract provides method schemas/scopes and durable event APIs; the SDK provides certified connector manifests and pack annotations.
+Build on these seams; do not introduce a second catalog authority, child-call path, or policy decision point. `arbora/api/registry/` owns immutable operation metadata. `arbora/api/invoke/` owns validation, caller binding, exact scopes, policy, effects, execution, audit, and error mapping. `arbora/api/mcp/` projects intent and resident fleet tools. `arbora/fleet/gateway_ops.py` adapts catalog operations and creates native forwarders whose body delegates to `invoke("fleet.call", ...)`. The engine contract provides method schemas/scopes and durable event APIs; the SDK provides certified connector manifests and pack annotations.
 
 ## Data and generation model
 
@@ -68,11 +68,11 @@ On any build/validation/publish failure, retain the last-known-good active gener
 
 ## Development environment
 
-A contributor starts with this repository and its declared lockfiles, installs local dependencies, runs generated-contract checks and fixture tests, and starts a local MCP server with fake engine/child adapters and bundled policy. The test suite must not require private DNS, secrets, an existing tenant, or a live production service. Mark unavailable optional integration tests separately and use a provisionable container/local fixture for CI. Release acceptance adds a disposable two-replica graph-os setup and synthetic connector; its setup commands and manifests belong in this repository.
+A contributor starts with this repository and its declared lockfiles, installs local dependencies, runs generated-contract checks and fixture tests, and starts a local MCP server with fake engine/child adapters and bundled policy. The test suite must not require private DNS, secrets, an existing tenant, or a live production service. Mark unavailable optional integration tests separately and use a provisionable container/local fixture for CI. Release acceptance adds a disposable two-replica arbora setup and synthetic connector; its setup commands and manifests belong in this repository.
 
 ## GRAPHOS-FLEET-R034 skill and workflow admission
 
-Data flow: POST route (graph_os/api/http/routes.py:127) → `invoke` (graph_os/api/invoke/pipeline.py:810) → skill audit and workflow admission → `_confirmation_gate` → effect.
+Data flow: POST route (arbora/api/http/routes.py:127) → `invoke` (arbora/api/invoke/pipeline.py:810) → skill audit and workflow admission → `_confirmation_gate` → effect.
 
 Types: `SkillAuditReport`, `WorkflowAdmissionRecord`. The policies attach before the confirmation gate. Failure behavior: a typed refusal naming the missing field or exceeded limit; nothing runs.
 
@@ -82,7 +82,7 @@ Decision: admit at the single pipeline boundary. Rejected alternative: audit at 
 
 ## OpenAPI operation schema preflight (2026-10-13)
 
-The fleet's admitted `operation_*` aliases are individual actions over a domain tool. The consumer reads the SDK-published `openapi_schema` manifest and fragment templates. It uses the same child MCP session to invoke the alias. OAuth calls use their own fresh principal-bound session for both steps. The public SDK owns canonical reconstruction and digest validation. GraphOS compares both reconstructed schemas with the selected admitted descriptor. Before dispatch, it checks the `action` field against the manifest operation.
+The fleet's admitted `operation_*` aliases are individual actions over a domain tool. The consumer reads the SDK-published `openapi_schema` manifest and fragment templates. It uses the same child MCP session to invoke the alias. OAuth calls use their own fresh principal-bound session for both steps. The public SDK owns canonical reconstruction and digest validation. Arbora compares both reconstructed schemas with the selected admitted descriptor. Before dispatch, it checks the `action` field against the manifest operation.
 
 Retain checks for exact delegate-scope, child generation, catalog epoch/revision, visibility and tool mapping. Apply them before every resource read and the final call. A changed admission, stale manifest, missing fragment or schema mismatch refuses without calling the alias. Disable automatic transient replay for schema-bound aliases because the domain-level annotation cannot reliably classify each operation's effect. Preflight is read-only and preserves the SDK/MCP confirmation path for the eventual call; it does not create approval or provider-effect evidence.
 
@@ -90,7 +90,7 @@ Retain checks for exact delegate-scope, child generation, catalog epoch/revision
 
 These extensions define missing host contracts. Reachable today: no complete integrated path.
 Existing helper coverage does not establish served acceptance.
-GraphOS owns admission, lifecycle and transport composition. EG owns decisions, skill identity, prompt semantics and aggregation.
+Arbora owns admission, lifecycle and transport composition. EG owns decisions, skill identity, prompt semantics and aggregation.
 AU executes approved model work. SDK owns tool schemas, connector transport and provisioner effects.
 No host policy may widen an EG grant. Generated workflow text never grants authority.
 The current intent projection remains authoritative; this extension adds no resident MCP tools.
@@ -99,13 +99,13 @@ The current intent projection remains authoritative; this extension adds no resi
 
 | Existing code | Reuse | Missing connection |
 |---|---|---|
-| graph_os/api/http/routes.py:113 endpoint; graph_os/api/mcp/verbs.py:377 dispatch_verb | Served adapters. | Certification and provisioning gates. |
-| graph_os/api/invoke/pipeline.py:810 invoke; :641 _confirmation_gate; :444 _dispatch | Authority, confirmation, effect journal and dispatch | Bind the full workflow snapshot before any effect |
-| graph_os/api/ops/agents.py:43 handle_agent; :97 operations | A2A delegation. | Provisioning and local-model orchestration. |
-| graph_os/control_plane/runs/admission.py:108 NativeWorkItemAdmissionProtocol | Exact persisted run admission | Durable producer adapter and runtime allocation receipt |
-| graph_os/control_plane/runs/capacity.py:53 CapacityLedger | Bounded acquisition | Fleet measurement, budget reservation and release integration |
-| graph_os/fleet/catalog_items.py:208 compute_schema_fingerprint | Real served schema digest | Versioned nested definitions and compatibility gate |
-| graph_os/fleet/onboarding.py:236 FleetOnboarding.onboard | SDK capture, EG attestation and import | Independent ingested identity read and provisioned-agent consumption |
+| arbora/api/http/routes.py:113 endpoint; arbora/api/mcp/verbs.py:377 dispatch_verb | Served adapters. | Certification and provisioning gates. |
+| arbora/api/invoke/pipeline.py:810 invoke; :641 _confirmation_gate; :444 _dispatch | Authority, confirmation, effect journal and dispatch | Bind the full workflow snapshot before any effect |
+| arbora/api/ops/agents.py:43 handle_agent; :97 operations | A2A delegation. | Provisioning and local-model orchestration. |
+| arbora/control_plane/runs/admission.py:108 NativeWorkItemAdmissionProtocol | Exact persisted run admission | Durable producer adapter and runtime allocation receipt |
+| arbora/control_plane/runs/capacity.py:53 CapacityLedger | Bounded acquisition | Fleet measurement, budget reservation and release integration |
+| arbora/fleet/catalog_items.py:208 compute_schema_fingerprint | Real served schema digest | Versioned nested definitions and compatibility gate |
+| arbora/fleet/onboarding.py:236 FleetOnboarding.onboard | SDK capture, EG attestation and import | Independent ingested identity read and provisioned-agent consumption |
 
 The current agents.run handler sends an A2A message; it does not prove VM allocation or certification.
 Semantic content provisioning imports graph content; it is not a VM/container provisioner.
@@ -115,7 +115,7 @@ Extend these owners and inject their published ports; do not build another selec
 ```mermaid
 sequenceDiagram
     participant Caller
-    participant Host as GraphOS invoke
+    participant Host as Arbora invoke
     participant EG
     participant SDK
     participant Agent as AU agent
@@ -137,7 +137,7 @@ A certification request binds tenant, skill ID/version/body digest, dependency D
 It also binds model endpoint configuration revision, model identity, system prompt digest and certification policy revision.
 The endpoint is a configured local model service. Fixture model requests must be observed through actual orchestration.
 EG owns scoring, selection and acceptance decisions; AU performs model calls through its public orchestration contract.
-GraphOS admits atomic skills first, then composed skills in dependency order using current producer attestations.
+Arbora admits atomic skills first, then composed skills in dependency order using current producer attestations.
 Missing dependencies, cycles, stale certificates or changed model/prompt/schema bindings prevent composed execution.
 Certificate validity is bounded by producer expiry, policy revision and all referenced artifact versions.
 Cancellation preserves completed receipts but never certifies unfinished work.
@@ -174,7 +174,7 @@ Only certified rows enter the runtime supported matrix; an empty matrix exposes 
 | Windows | x86_64 | cloud VM | Disposable approved provider VM and real agent process |
 
 Other tuples, mutable image tags, uncertified digests and unavailable adapters refuse before allocation.
-Provider transport belongs to SDK; GraphOS does not add provider clients.
+Provider transport belongs to SDK; Arbora does not add provider clients.
 Use the existing all-or-nothing capacity acquisition before dispatch. Do not silently reduce the requested instance count.
 Release reserved capacity after observed cleanup; retain holds for unknown active resources until reconciliation.
 Replay identity is tenant, run, operation and idempotency key, bound to the canonical request digest.
@@ -202,7 +202,7 @@ A minor update may add optional fields with defaults while preserving every exis
 Removing fields, adding required inputs, narrowing accepted values or changing types is breaking.
 A major change requires explicit consumer re-admission; it never silently replaces a workflow's pinned definition.
 EG owns prompt structure and evolution; SDK owns tool definition evolution and compatibility evidence.
-GraphOS consumes the published compatibility decision and rejects contradictions with its admitted schema snapshot.
+Arbora consumes the published compatibility decision and rejects contradictions with its admitted schema snapshot.
 Absent producer compatibility contracts return PRODUCER_UNAVAILABLE. Host parsing alone cannot close that producer gap.
 
 ### Producer dependencies and integrated acceptance
@@ -215,7 +215,7 @@ Absent producer compatibility contracts return PRODUCER_UNAVAILABLE. Host parsin
 | [AU specs](https://github.com/Knuckles-Team/agent-utilities/tree/main/specs) | Approved orchestration, local model call and returned-result path | R024/R034 require producer wiring to certification and EG aggregation; no host replacement |
 
 These dependencies are not implementation claims. Host definitions do not close missing producer clauses.
-The integration fixture starts GraphOS, the published EG service, an SDK connector, a provisioner and the configured local model.
+The integration fixture starts Arbora, the published EG service, an SDK connector, a provisioner and the configured local model.
 In one served run, discover a domain skill, consume its distribution decision, provision an agent and observe its actual model/tool call.
 Read the ingested skill identity independently from EG and compare it with the identity consumed by that agent.
 Read the durable result and aggregation receipt through the public authority, not the orchestration response alone.
@@ -257,13 +257,13 @@ It must not fabricate rollback or erase a known effect to claim no partial proto
 
 | Source seam | Current evidence | Required connection |
 |---|---|---|
-| `graph_os/api/ops/write_back.py:50 preview_write_back` | Pure preview; no provider mutation | Reuse its original contract and add the repository profile |
-| `graph_os/api/ops/write_back_models.py:99 commit_write_back` | Compares keys and returns applied=True; no provider call or durable readback | It cannot supply production effect evidence |
-| `graph_os/api/ops/registry_factory.py:16 get_registry` | Does not compose the write_back module | Register the existing preview/commit IDs with typed models and real bindings |
-| `graph_os/api/http/routes.py:113 endpoint` | Calls invoke at line 127; separates plan and idempotency headers | Serve the same repository projection as MCP |
-| `graph_os/api/mcp/verbs.py:259 _invoke_and_render` | Passes parameters and separate plan/key arguments to shared invoke | Use the existing intent surface, not another native tool |
-| `graph_os/api/invoke/pipeline.py:810 invoke` | Validates, authorizes, confirms, reserves and dispatches | Compose the qualified connector and durable replay boundary |
-| `graph_os/api/invoke/plan.py:50 bind_plan` | Binds operation, parameter digest, caller, tenant, policy and registry | Bind the commit operation and complete repository parameters |
+| `arbora/api/ops/write_back.py:50 preview_write_back` | Pure preview; no provider mutation | Reuse its original contract and add the repository profile |
+| `arbora/api/ops/write_back_models.py:99 commit_write_back` | Compares keys and returns applied=True; no provider call or durable readback | It cannot supply production effect evidence |
+| `arbora/api/ops/registry_factory.py:16 get_registry` | Does not compose the write_back module | Register the existing preview/commit IDs with typed models and real bindings |
+| `arbora/api/http/routes.py:113 endpoint` | Calls invoke at line 127; separates plan and idempotency headers | Serve the same repository projection as MCP |
+| `arbora/api/mcp/verbs.py:259 _invoke_and_render` | Passes parameters and separate plan/key arguments to shared invoke | Use the existing intent surface, not another native tool |
+| `arbora/api/invoke/pipeline.py:810 invoke` | Validates, authorizes, confirms, reserves and dispatches | Compose the qualified connector and durable replay boundary |
+| `arbora/api/invoke/plan.py:50 bind_plan` | Binds operation, parameter digest, caller, tenant, policy and registry | Bind the commit operation and complete repository parameters |
 
 The named acceptance tests do not exist at the inspected main revision.
 They are `tests/api/test_write_back_ops.py` and `tests/fleet/test_write_back_restart.py`.
@@ -275,7 +275,7 @@ Implementation evidence must name the admitted connector operation, schema revis
 
 For this profile, the existing operations remain `fleet.write_back.preview` and `fleet.write_back.commit`.
 Keep original generic request/result variants and their acceptance; do not reinterpret arbitrary generic change dictionaries as repository authority.
-Add the proposed GraphOS wrapper `RepositoryWriteBackParams` with exactly these members:
+Add the proposed Arbora wrapper `RepositoryWriteBackParams` with exactly these members:
 
 | Member | Meaning |
 |---|---|
@@ -284,7 +284,7 @@ Add the proposed GraphOS wrapper `RepositoryWriteBackParams` with exactly these 
 | connector_binding_digest | Digest identifying the trusted admitted connector binding used by this request |
 
 Call this complete object P. Both operations use the same P without field removal, normalization or executor-added business defaults.
-Use existing `params_digest(P)` for the GraphOS parameter binding. Preserve the SDK's separate canonical change-set and patch digest functions.
+Use existing `params_digest(P)` for the Arbora parameter binding. Preserve the SDK's separate canonical change-set and patch digest functions.
 Require `request.intent == durable.desired_patch["repository_effect"]` with the SDK's sole-field patch, scope and provenance constraints.
 Compare the submitted change_set against the authoritative generated record. Embedded actor and approval fields are claims to validate, never grants.
 Compare tenant and actor with the verified caller and existing delegated authority. No caller-selected endpoint, credential or executor is admitted.
@@ -304,7 +304,7 @@ Both scope fields are sorted unique string arrays from the existing operation au
 Subject is the registered subject projection with exactly source and path; path is null only when the registered mapping permits.
 configuration_revision identifies the exact trusted source configuration, including allowed repository targets and paths.
 A material scope or routing change must change that revision before this binding is usable.
-If the configured authority cannot supply a stable revision, admission remains unavailable; GraphOS cannot invent allowed paths.
+If the configured authority cannot supply a stable revision, admission remains unavailable; Arbora cannot invent allowed paths.
 Never include credentials or credential values. Tests must pin the exact closed projection and canonical ordering.
 Read that binding from existing trusted configuration, compare its digest and revalidate its revision before a new effect.
 A client presenting the digest cannot grant permission. Any material change requires a new preview and confirmation.
@@ -317,9 +317,9 @@ It performs no provider mutation and asserts no approval or applied effect.
 `RepositoryWriteBackResult` contains profile, request_digest, receipt and receipt_digest.
 Receipt is the unmodified SDK RepositorySourceEffectReceipt; receipt_digest uses the SDK receipt algorithm.
 Validate its complete identity, change-set, approval, audit, base, actual revision and readback bindings against the approved request.
-Its actual revision and readback facts must come from SDK producer evidence, never a GraphOS echo or helper flag.
+Its actual revision and readback facts must come from SDK producer evidence, never a Arbora echo or helper flag.
 A successful result requires the SDK durable attempt and readback contract. Return existing OpError envelopes for refusal or uncertainty.
-These GraphOS wrapper names are proposed contracts, not claims of existing exports.
+These Arbora wrapper names are proposed contracts, not claims of existing exports.
 
 ### Shared invocation, trusted routing and confirmation
 
@@ -328,11 +328,11 @@ Both registered operations use the same trusted binding and existing executor/fl
 Use the admitted operation's published exact scopes, principal rules and subject mapping; invent no new scope or broad-admin substitute.
 Preserve surface checks, current caller validation, narrowing policy and subject-read checks before service execution.
 Preserve console step-up and fresh authentication wherever existing effect/principal rules require them.
-Keep every SDK call inside the admitted connector boundary. GraphOS never writes repository files or calls a provider API directly.
+Keep every SDK call inside the admitted connector boundary. Arbora never writes repository files or calls a provider API directly.
 A raw child-tool bypass, missing service binding or unsupported producer returns a typed refusal with no provider mutation.
 
 HTTP sends P as the complete JSON body to the existing generic operation route.
-Use `Idempotency-Key` for the canonical SDK effect key and `GraphOS-Plan-Ref` for an existing confirmation reference.
+Use `Idempotency-Key` for the canonical SDK effect key and `Arbora-Plan-Ref` for an existing confirmation reference.
 MCP sends the same P through the existing intent operation, with separate idempotency_key and plan_ref parameters.
 No new HTTP envelope or resident MCP tool is required. Both surfaces must reject conflicting body/header/argument bindings.
 The SDK effect key remains request.change_set.idempotency_key; require the caller's outer key to match it.
@@ -347,7 +347,7 @@ Validate the exact preview and trusted connector association through the existin
 A helper's matching key alone does not prove preview, approval or current scope.
 
 After explicit confirmation and required step-up, submit the identical P with the commit lease and original SDK effect key.
-Validate SDK approval, contract pin, expiry and exact request bindings; preserve both GraphOS and SDK audit reservations before mutation.
+Validate SDK approval, contract pin, expiry and exact request bindings; preserve both Arbora and SDK audit reservations before mutation.
 Do not modify P to insert confirmation metadata, regenerate the SDK effect key or replace recorded approval with a plan reference.
 The provider must enforce the SDK conditional base and file-state constraints at effect time.
 A new base, path, payload, mode, actor, policy, registry or trusted binding requires fresh preparation and applicable approval.
@@ -355,13 +355,13 @@ A new base, path, payload, mode, actor, policy, registry or trusted binding requ
 The existing pipeline refuses confirmed effects without qualified external replay support in its services composition.
 Compose the existing qualified coordinator with SDK durable recovery; adding the operation name to a set is not qualification.
 Evidence must show the coordinator handles plan consumption, SDK effect identity, durable completion and uncertain outcomes together.
-Until that binding exists, preserve the current unavailable refusal. Do not add a GraphOS approval, confirmation or effect database.
+Until that binding exists, preserve the current unavailable refusal. Do not add a Arbora approval, confirmation or effect database.
 
 ### Receipt, restart and refusal boundaries
 
 SDK R004.8 supplies provider conditional mutation. R004.9 and R004.10 supply durable receipt and independent immutable-revision readback.
 R004.11 and the generic R004.2 supply reconciliation and identical durable replay; R004.12 supplies the served producer path.
-GraphOS projects this evidence and keeps its own existing audit references joined to the request and producer receipt digests.
+Arbora projects this evidence and keeps its own existing audit references joined to the request and producer receipt digests.
 No additional provider mutation or ingestion hydration may substitute for missing receipt evidence.
 A mismatch after a possible effect returns an indeterminate outcome and retains known references. It never claims zero effects or rollback.
 
@@ -377,7 +377,7 @@ Record exact producer/consumer revisions, admitted operation and schema, request
 Exclude credentials and raw payloads from public evidence. No arXiv derivation or runtime completion is claimed.
 EG consumer reference changes wait for this producer definition to merge. AU model dispatch remains a separate dependency.
 
-The source validation environment resolves MCP >=2.3,<3 with the landed SDK. The root development override pins EG to the GraphOS-compatible revision 70037e8a400c7b32b1222623bb05bbfaf55deab8, resolving the AU path and SDK Git conflict. Source-only Python checks do not establish native EG kernel acceptance. Read-only calls without a schema disclosure may retry once on a recovered generation only after existing admission and catalog checks. Schema-bound aliases retain their original generation and never replay automatically.
+The source validation environment resolves MCP >=2.3,<3 with the landed SDK. The root development override pins EG to the Arbora-compatible revision 70037e8a400c7b32b1222623bb05bbfaf55deab8, resolving the AU path and SDK Git conflict. Source-only Python checks do not establish native EG kernel acceptance. Read-only calls without a schema disclosure may retry once on a recovered generation only after existing admission and catalog checks. Schema-bound aliases retain their original generation and never replay automatically.
 
 ## Additional owner requirements
 
@@ -395,9 +395,9 @@ The source validation environment resolves MCP >=2.3,<3 with the landed SDK. The
 
 References: [EG-TYPED-PACKS-R103](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/typed-packs-and-catalog/spec.md), [EG-TYPED-PACKS-R104](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/typed-packs-and-catalog/spec.md), [SDK-CONNECTOR-CONTROL-R068](https://github.com/Knuckles-Team/agent-connector-sdk/blob/main/specs/SDK-CONNECTOR-CONTROL/spec.md)
 
-Call path: multiplexer client connect or `list_changed` -> `onboard` (`graph_os/fleet/onboarding.py:236`) -> `capture` (line 254) -> digest compare -> engine `ImportOntology` and seed import -> existing `import_attested_pack` for the pack head.
+Call path: multiplexer client connect or `list_changed` -> `onboard` (`arbora/fleet/onboarding.py:236`) -> `capture` (line 254) -> digest compare -> engine `ImportOntology` and seed import -> existing `import_attested_pack` for the pack head.
 
-The engine validates and stores. graph-os compares digests and forwards. graph-os holds no SHACL rule and no mapping rule.
+The engine validates and stores. arbora compares digests and forwards. arbora holds no SHACL rule and no mapping rule.
 
 Budget: one onboarding pass per connector per 2 s window; resources of 8 MiB or less. These are starting defaults. A measurement on this platform replaces them.
 
@@ -407,17 +407,17 @@ References: [EG-DECISION-ENGINE-R176](https://github.com/Knuckles-Team/epistemic
 
 Call path: harness -> `find` verb (`verbs.py:18`) -> `find_tools` (`multiplexer_ops.py:150`) -> engine `Decide` load set -> `load_tools` (`multiplexer_ops.py:245`) -> `tools/list_changed` to the caller.
 
-The engine chooses. graph-os applies the answer within the session cap of `GRAPHOS-FLEET-R018`. Skills arrive as engine queries (`EG-DECISION-ENGINE-R177`), not as static instruction text.
+The engine chooses. arbora applies the answer within the session cap of `GRAPHOS-FLEET-R018`. Skills arrive as engine queries (`EG-DECISION-ENGINE-R177`), not as static instruction text.
 
 ## GRAPHOS-FLEET-R038 — protocol roles
 
 | Protocol and role | Owner | What it does | Existing spec |
 |---|---|---|---|
-| MCP serving, platform | graph-os | Harnesses call graph-os as an MCP server: the intent tools and job-scoped lazy loading | `GRAPHOS-FLEET-R029`, `GRAPHOS-FLEET-R037` |
+| MCP serving, platform | arbora | Harnesses call arbora as an MCP server: the intent tools and job-scoped lazy loading | `GRAPHOS-FLEET-R029`, `GRAPHOS-FLEET-R037` |
 | MCP serving, connector | SDK | Each connector is an MCP server through the SDK `[mcp]` extra, with server scaffolding and the served security profile | `SDK-CONNECTOR-CONTROL-R014.17` |
-| MCP consuming, platform | graph-os | The multiplexer is an MCP client of every connector: the connect-time contract path | `GRAPHOS-FLEET-R036` |
+| MCP consuming, platform | arbora | The multiplexer is an MCP client of every connector: the connect-time contract path | `GRAPHOS-FLEET-R036` |
 | MCP consuming, connector | SDK | A connector wraps an external MCP server as a data source | `SDK-CONNECTOR-CONTROL-R040`, `SDK-CONNECTOR-CONTROL-R069` |
-| A2A serving | graph-os | Agents call the platform over A2A | `GRAPHOS-A2A` |
+| A2A serving | arbora | Agents call the platform over A2A | `GRAPHOS-A2A` |
 | A2A consuming | SDK | A connector treats an external agent as a data source | `SDK-CONNECTOR-CONTROL-R041`, `SDK-CONNECTOR-CONTROL-R069` |
 
-The harness reaches other agents only through graph-os. Engine planning over the consuming roles is `EG-FEDERATED-QUERY-R073.2`.
+The harness reaches other agents only through arbora. Engine planning over the consuming roles is `EG-FEDERATED-QUERY-R073.2`.

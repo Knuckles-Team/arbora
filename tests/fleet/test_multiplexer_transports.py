@@ -13,7 +13,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from graph_os.fleet import multiplexer as mod
+from arbora.fleet import multiplexer as mod
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 
 
@@ -56,7 +56,7 @@ class _FakeSessionCM:
 
 @pytest.fixture
 def transports(monkeypatch):
-    from graph_os.core.settings import runtime_config as config
+    from arbora.core.settings import runtime_config as config
 
     rec = {"stdio": [], "http": [], "sse": []}
     # MCP SDK v2 yields (read, write) for BOTH streamable-http and sse — the
@@ -122,7 +122,7 @@ async def test_remote_http_child_allowed_via_per_child_allowlist(transports, tmp
 @pytest.mark.asyncio
 async def test_stdio_child_still_uses_stdio(transports, tmp_path, capsys):
     mux = multiplexer_from_fixture(tmp_path / "c.json")
-    res = await mux._start_child("graph-os", {"command": "graph-os", "args": []})
+    res = await mux._start_child("arbora", {"command": "arbora", "args": []})
     assert res is not None
     assert len(transports["stdio"]) == 1 and not transports["http"]
     call = transports["stdio"][0]
@@ -165,11 +165,11 @@ async def test_stdio_child_refused_when_prohibited(transports, tmp_path, monkeyp
     """MCP_STDIO_PROHIBITED refuses a stdio child at ``_open_one_session`` --
     the single chokepoint ``_start_child`` and ``probe_server`` both share --
     instead of ever constructing ``StdioServerParameters``/``stdio_client``."""
-    from graph_os.core.settings import runtime_config as config
+    from arbora.core.settings import runtime_config as config
 
     monkeypatch.setattr(config, "mcp_stdio_prohibited", True)
     mux = multiplexer_from_fixture(tmp_path / "c.json")
-    res = await mux._start_child("graph-os", {"command": "graph-os", "args": []})
+    res = await mux._start_child("arbora", {"command": "arbora", "args": []})
     assert res is None
     assert not transports["stdio"]
 
@@ -178,14 +178,14 @@ async def test_stdio_child_refused_when_prohibited(transports, tmp_path, monkeyp
 async def test_open_one_session_raises_stated_reason_when_stdio_prohibited(
     tmp_path, monkeypatch
 ):
-    from graph_os.core.settings import runtime_config as config
+    from arbora.core.settings import runtime_config as config
 
     monkeypatch.setattr(config, "mcp_stdio_prohibited", True)
     mux = multiplexer_from_fixture(tmp_path / "c.json")
     with pytest.raises(RuntimeError, match="stdio transport is not permitted"):
         async with contextlib.AsyncExitStack() as stack:
             await mux._open_one_session(
-                "graph-os", {"command": "graph-os", "args": []}, stack
+                "arbora", {"command": "arbora", "args": []}, stack
             )
 
 
@@ -198,11 +198,11 @@ async def test_probe_server_reports_stdio_prohibited_as_stated_reason(
     indistinguishable from a healthy zero-tool server (the fail-closed rule:
     a degraded read must never look like a healthy result).
 
-    Uses an ordinary fleet server name, not "graph-os" -- that name is
+    Uses an ordinary fleet server name, not "arbora" -- that name is
     structurally excluded from the catalog (self, served natively) by the
     EG-backed catalog source, so probing it would report "not in catalog"
     rather than exercising the stdio-prohibition path under test."""
-    from graph_os.core.settings import runtime_config as config
+    from arbora.core.settings import runtime_config as config
 
     monkeypatch.setattr(config, "mcp_stdio_prohibited", True)
     config_path = tmp_path / "c.json"
@@ -221,7 +221,7 @@ async def test_remote_child_unaffected_by_stdio_prohibition(
     transports, tmp_path, monkeypatch
 ):
     """The prohibition is stdio-specific -- a remote (HTTP) child is untouched."""
-    from graph_os.core.settings import runtime_config as config
+    from arbora.core.settings import runtime_config as config
 
     monkeypatch.setattr(config, "mcp_stdio_prohibited", True)
     mux = multiplexer_from_fixture(tmp_path / "c.json")
@@ -294,7 +294,7 @@ def _enable_service_auth(monkeypatch):
     monkeypatch.setenv("TEST_OIDC_CLIENT_SECRET", "s3cr3t")
     monkeypatch.setenv("OIDC_AUDIENCE", "graph-api")
     monkeypatch.setenv("OIDC_TOKEN_URL", "https://identity.example.test/token")
-    import graph_os.mcp_server.backing.client_credentials as cc
+    import arbora.mcp_server.backing.client_credentials as cc
 
     importlib.reload(cc)  # reset provider cache under the new env
     return cc

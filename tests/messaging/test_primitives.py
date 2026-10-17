@@ -6,13 +6,13 @@ import json
 
 import pytest
 
-from graph_os.messaging.commands import (
+from arbora.messaging.commands import (
     COMMANDS,
     command_specs,
     describe,
     handle_command,
 )
-from graph_os.messaging.render import markdown_to_telegram_html as render
+from arbora.messaging.render import markdown_to_telegram_html as render
 
 pytestmark = pytest.mark.spec("GRAPHOS-MESSAGING-R800")
 
@@ -47,9 +47,9 @@ def test_render_inline_forms(markdown, expected):
 
 
 def test_render_structure_leaks_no_markdown_markers():
-    out = render("## Stacks\n- `graph-os` - up\n- *db*\n```python\n1 < 2\n```")
+    out = render("## Stacks\n- `arbora` - up\n- *db*\n```python\n1 < 2\n```")
     assert "<b>Stacks</b>" in out
-    assert "\u2022 <code>graph-os</code> - up" in out
+    assert "\u2022 <code>arbora</code> - up" in out
     assert "<pre>" in out and "1 &lt; 2" in out
     assert not any(m in out for m in ("##", "\n- ", "```"))
 

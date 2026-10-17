@@ -6,7 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from graph_os.deployment import doctor
+from arbora.deployment import doctor
 
 
 @pytest.mark.parametrize("rdf_installed", [False, True])

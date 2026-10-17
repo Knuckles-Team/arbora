@@ -1,4 +1,4 @@
-"""Focused contracts for the AU GraphOS catalog read ports."""
+"""Focused contracts for the AU Arbora catalog read ports."""
 
 from __future__ import annotations
 
@@ -8,20 +8,20 @@ from typing import Any, cast
 
 import pytest
 
-from graph_os.api.contracts.catalog import (
+from arbora.api.contracts.catalog import (
     AgentCatalogRecord,
     CatalogReadAuthority,
     CatalogReadError,
     WorkflowCatalogRecord,
     catalog_read_ports,
 )
-from graph_os.api.contracts.session import (
+from arbora.api.contracts.session import (
     GraphSession,
     ScopeError,
     SessionRequiredError,
     use_session,
 )
-from graph_os.security.actor_context import ActorContext, ActorType
+from arbora.security.actor_context import ActorContext, ActorType
 
 
 def _session() -> GraphSession:
@@ -36,7 +36,7 @@ def _session() -> GraphSession:
         tenant="tenant-a",
         scopes=frozenset({"kg:read"}),
         graph="tenant-a",
-        audience="graph-os",
+        audience="arbora",
         policy_version="policy-a",
     )
 
@@ -178,7 +178,7 @@ def test_reads_require_verified_ambient_session_and_never_fallback_to_empty() ->
     engine = _Engine([], [])
     authority = CatalogReadAuthority(engine)
 
-    from graph_os.api.contracts.session import suspend_session
+    from arbora.api.contracts.session import suspend_session
 
     with suspend_session(), pytest.raises(SessionRequiredError):
         authority.list_authorized_agents_sync()
@@ -198,7 +198,7 @@ def test_reads_require_the_kg_read_scope() -> None:
         tenant="tenant-a",
         scopes=frozenset(),
         graph="tenant-a",
-        audience="graph-os",
+        audience="arbora",
         policy_version="policy-a",
     )
     with use_session(session), pytest.raises(ScopeError):

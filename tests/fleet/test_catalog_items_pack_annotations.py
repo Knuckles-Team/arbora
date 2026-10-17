@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.fleet.catalog_items import PACK_ANNOTATION_FIELDS, connector_items
+from arbora.fleet.catalog_items import PACK_ANNOTATION_FIELDS, connector_items
 
 _COMPLETE_ENTRY = {
     "pack": "p",

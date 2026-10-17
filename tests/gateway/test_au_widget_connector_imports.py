@@ -34,8 +34,8 @@ import importlib.util
 
 import pytest
 
-from graph_os.gateway.models import ServiceConfig
-from graph_os.gateway.widgets import (
+from arbora.gateway.models import ServiceConfig
+from arbora.gateway.widgets import (
     arr,
     atlassian,
     container_manager,
@@ -136,7 +136,7 @@ def test_vector_db_reaches_vector_mcp_over_mcp_not_a_package_import():
     """
     import inspect
 
-    from graph_os.gateway.widgets import vector_db
+    from arbora.gateway.widgets import vector_db
 
     source = inspect.getsource(vector_db)
     assert "import vector_mcp" not in source

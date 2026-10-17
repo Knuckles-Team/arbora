@@ -12,9 +12,9 @@ from typing import Any
 
 import pytest
 
-from graph_os import epistemic
-from graph_os.api.invoke import bootstrap
-from graph_os.api.invoke.steps import VerifiedCaller
+from arbora import epistemic
+from arbora.api.invoke import bootstrap
+from arbora.api.invoke.steps import VerifiedCaller
 from tests._support import Actor
 
 
@@ -38,7 +38,7 @@ class FakeSession:
 
 def _caller(session: Any, **changes: Any) -> VerifiedCaller:
     fields = dict(
-        principal="service:graph-os",
+        principal="service:arbora",
         tenant="tenant:a",
         effective_scopes=frozenset({"example:ask"}),
         engine_claims={},
@@ -58,7 +58,7 @@ def test_verify_current_from_session_refreshes_claims() -> None:
     session = FakeSession(actor=Actor(), tenant="tenant:a")
     refreshed = asyncio.run(bootstrap.verify_current_from_session(_caller(session)))
     assert refreshed.engine_claims["policy_version"] == "policy:1"
-    assert refreshed.principal == "service:graph-os"
+    assert refreshed.principal == "service:arbora"
 
 
 def test_verify_current_from_session_rejects_actor_mismatch() -> None:
@@ -73,7 +73,7 @@ def test_verify_current_from_session_requires_a_session() -> None:
 
 
 class FakeClient:
-    """A fake structurally satisfying ``graph_os.epistemic.EpistemicClient``."""
+    """A fake structurally satisfying ``arbora.epistemic.EpistemicClient``."""
 
     def __init__(self, graph: str, context: Mapping[str, Any]) -> None:
         self.graph = graph
@@ -107,7 +107,7 @@ def test_build_client_factory_reuses_the_pooled_client() -> None:
     pool = epistemic.EpistemicClientPool(connect, auth_secret="test-secret")
     factory = bootstrap.build_client_factory(
         pool,
-        graph="graphos:ops",
+        graph="arbora:ops",
         connect_context=lambda tenant: epistemic.ClientContext.from_actor(
             Actor(),
             tenant=tenant,
@@ -122,7 +122,7 @@ def test_build_client_factory_reuses_the_pooled_client() -> None:
 
     first, second = asyncio.run(_connect_twice())
     assert first is second
-    assert created == ["graphos:ops"]
+    assert created == ["arbora:ops"]
 
 
 def test_build_service_claims_mints_exact_requested_scopes() -> None:
@@ -135,7 +135,7 @@ def test_build_service_claims_mints_exact_requested_scopes() -> None:
 
     claims = asyncio.run(_claims())
     assert claims["scopes"] == ["example:execute"]
-    assert claims["principal"] == "service:graph-os"
+    assert claims["principal"] == "service:arbora"
     assert claims["tenant"] == "tenant:a"
 
 
@@ -160,7 +160,7 @@ def test_deny_subject_access_denies() -> None:
 
 @pytest.mark.spec("GRAPHOS-OPS-R009")
 def test_eg_dispatch_refuses_invalid_binding_before_send() -> None:
-    from graph_os.api.invoke.pipeline import OperationRefused
+    from arbora.api.invoke.pipeline import OperationRefused
 
     binding: Any = SimpleNamespace(service="NodeCount", op="NodeCount")
     missing_context: Any = None

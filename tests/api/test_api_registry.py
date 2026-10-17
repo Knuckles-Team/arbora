@@ -8,7 +8,7 @@ from typing import Any
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from graph_os.api.registry import (
+from arbora.api.registry import (
     AuditClass,
     Caller,
     Confirm,
@@ -38,7 +38,7 @@ class Output(BaseModel):
 
 @dataclass(frozen=True)
 class _FakeCaller:
-    """A concrete stand-in structurally satisfying ``graph_os.api.registry.Caller``."""
+    """A concrete stand-in structurally satisfying ``arbora.api.registry.Caller``."""
 
     effective_scopes: frozenset[str]
     principal_kind: str = "human"

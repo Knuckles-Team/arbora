@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 from starlette.requests import Request
 
-from graph_os.api.http.auth import AmbientHTTPAuthenticator
+from arbora.api.http.auth import AmbientHTTPAuthenticator
 
 NOW_MS = 2_000_000
 ORIGIN = "https://console.example.test"
@@ -43,7 +43,7 @@ def attended_caller():
 def test_console_stepup_exact_freshness_boundary(
     monkeypatch, attended_caller, age_ms, eligible
 ):
-    monkeypatch.setattr("graph_os.api.http.auth.time.time", lambda: NOW_MS / 1000)
+    monkeypatch.setattr("arbora.api.http.auth.time.time", lambda: NOW_MS / 1000)
     attended_caller.mfa_at_ms = NOW_MS - age_ms
     auth = AmbientHTTPAuthenticator(console_origin=ORIGIN)
     assert auth.is_console_request(console_request(), attended_caller) is eligible
@@ -64,7 +64,7 @@ def test_console_stepup_exact_freshness_boundary(
 def test_console_needs_server_admission_cookie_and_exact_origin(
     monkeypatch, attended_caller, request_facts
 ):
-    monkeypatch.setattr("graph_os.api.http.auth.time.time", lambda: NOW_MS / 1000)
+    monkeypatch.setattr("arbora.api.http.auth.time.time", lambda: NOW_MS / 1000)
     auth = AmbientHTTPAuthenticator(console_origin=ORIGIN)
     assert not auth.is_console_request(
         console_request(**request_facts), attended_caller
@@ -84,14 +84,14 @@ def test_console_needs_server_admission_cookie_and_exact_origin(
 def test_console_rejects_unattended_authority(
     monkeypatch, attended_caller, field, value
 ):
-    monkeypatch.setattr("graph_os.api.http.auth.time.time", lambda: NOW_MS / 1000)
+    monkeypatch.setattr("arbora.api.http.auth.time.time", lambda: NOW_MS / 1000)
     setattr(attended_caller, field, value)
     auth = AmbientHTTPAuthenticator(console_origin=ORIGIN)
     assert not auth.is_console_request(console_request(), attended_caller)
 
 
 def test_console_origin_must_be_configured(monkeypatch, attended_caller):
-    monkeypatch.setattr("graph_os.api.http.auth.time.time", lambda: NOW_MS / 1000)
+    monkeypatch.setattr("arbora.api.http.auth.time.time", lambda: NOW_MS / 1000)
     assert not AmbientHTTPAuthenticator().is_console_request(
         console_request(), attended_caller
     )
@@ -142,7 +142,7 @@ def bearer_request(*headers):
 
 
 def adapters(session):
-    from graph_os.api.mcp.caller import VerifiedMCPCaller
+    from arbora.api.mcp.caller import VerifiedMCPCaller
 
     async def verified_session(_request):
         return session
@@ -159,7 +159,7 @@ def adapters(session):
 def test_http_mcp_use_same_b_owned_caller_and_exact_authority():
     import asyncio
 
-    from graph_os.api.invoke import VerifiedCaller
+    from arbora.api.invoke import VerifiedCaller
 
     session = SessionFixture()
     http, mcp = adapters(session)
@@ -178,7 +178,7 @@ def test_http_mcp_use_same_b_owned_caller_and_exact_authority():
 def test_principal_kind_is_never_inferred(kind):
     import asyncio
 
-    from graph_os.api.http.auth import HTTPAuthenticationError
+    from arbora.api.http.auth import HTTPAuthenticationError
 
     session = SessionFixture()
     session.actor.actor_type = kind
@@ -209,7 +209,7 @@ def test_principal_kind_is_never_inferred(kind):
 def test_mismatched_or_malformed_verified_claims_refuse_both_surfaces(key, value):
     import asyncio
 
-    from graph_os.api.http.auth import HTTPAuthenticationError
+    from arbora.api.http.auth import HTTPAuthenticationError
 
     session = SessionFixture()
     session.claims[key] = value
@@ -227,7 +227,7 @@ def test_mismatched_or_malformed_verified_claims_refuse_both_surfaces(key, value
 def test_missing_or_unverified_authority_refuses_both_surfaces(authority):
     import asyncio
 
-    from graph_os.api.http.auth import HTTPAuthenticationError
+    from arbora.api.http.auth import HTTPAuthenticationError
 
     session = SessionFixture()
     if authority == "absent":
@@ -267,7 +267,7 @@ def test_mcp_does_not_cache_authority_after_revocation():
 def test_http_requires_unambiguous_bearer(headers):
     import asyncio
 
-    from graph_os.api.http.auth import HTTPAuthenticationError
+    from arbora.api.http.auth import HTTPAuthenticationError
 
     http, _ = adapters(SessionFixture())
     with pytest.raises(HTTPAuthenticationError):
@@ -277,7 +277,7 @@ def test_http_requires_unambiguous_bearer(headers):
 def test_http_unconfigured_authority_fails_closed():
     import asyncio
 
-    from graph_os.api.http.auth import HTTPAuthenticationError
+    from arbora.api.http.auth import HTTPAuthenticationError
 
     with pytest.raises(HTTPAuthenticationError):
         asyncio.run(
@@ -291,7 +291,7 @@ def test_http_unconfigured_authority_fails_closed():
 def test_cookie_and_bearer_cannot_bypass_missing_browser_verification(admitted):
     import asyncio
 
-    from graph_os.api.http.auth import HTTPAuthenticationError
+    from arbora.api.http.auth import HTTPAuthenticationError
 
     http, _ = adapters(SessionFixture())
     req = console_request(admitted=admitted)
@@ -306,7 +306,7 @@ def test_browser_requires_verifier_and_preserves_verified_stepup(
 ):
     import asyncio
 
-    from graph_os.api.http.auth import HTTPAuthenticationError
+    from arbora.api.http.auth import HTTPAuthenticationError
 
     session = SessionFixture()
     calls = []
@@ -328,7 +328,7 @@ def test_browser_requires_verifier_and_preserves_verified_stepup(
         verify_browser_session=verify,
     )
     req = console_request()
-    monkeypatch.setattr("graph_os.api.http.auth.time.time", lambda: NOW_MS / 1000)
+    monkeypatch.setattr("arbora.api.http.auth.time.time", lambda: NOW_MS / 1000)
     if csrf_valid:
         caller = asyncio.run(auth.authenticate(req))
         assert caller.credential_kind == "session"
@@ -350,7 +350,7 @@ def test_request_state_does_not_supply_principal_tenant_scopes_or_stepup():
         principal="spoof",
         tenant="spoof",
         scopes=["fixture:admin"],
-        graphos_console_mfa_at_ms=NOW_MS,
+        arbora_console_mfa_at_ms=NOW_MS,
     )
     caller = asyncio.run(http.authenticate(req))
     assert caller == mcp.caller_for_request()
@@ -364,10 +364,10 @@ def test_real_http_endpoint_and_mcp_projection_share_verified_context(revoked):
 
     from starlette.responses import JSONResponse
 
-    from graph_os.api.http.routes import make_endpoint
-    from graph_os.api.invoke import OpResult
-    from graph_os.api.mcp.verbs import MCPProjection, dispatch_verb
-    from graph_os.api.registry import Surface, Verb
+    from arbora.api.http.routes import make_endpoint
+    from arbora.api.invoke import OpResult
+    from arbora.api.mcp.verbs import MCPProjection, dispatch_verb
+    from arbora.api.registry import Surface, Verb
 
     session = SessionFixture()
     session.revoked = revoked
@@ -419,7 +419,7 @@ def test_real_http_endpoint_and_mcp_projection_share_verified_context(revoked):
 def test_browser_rejects_non_integer_stepup_authority(mfa):
     import asyncio
 
-    from graph_os.api.http.auth import HTTPAuthenticationError
+    from arbora.api.http.auth import HTTPAuthenticationError
 
     async def resolve(req):
         return SessionFixture()
@@ -437,7 +437,7 @@ def test_browser_rejects_non_integer_stepup_authority(mfa):
 def test_authority_fault_is_not_hidden_as_authentication_denial():
     import asyncio
 
-    from graph_os.api.mcp.caller import VerifiedMCPCaller
+    from arbora.api.mcp.caller import VerifiedMCPCaller
 
     def broken():
         raise RuntimeError("fixture authority unavailable")
@@ -460,7 +460,7 @@ def test_authority_fault_is_not_hidden_as_authentication_denial():
 def test_verified_token_facts_are_not_a_current_engine_session():
     import asyncio
 
-    from graph_os.api.http.auth import HTTPAuthenticationError
+    from arbora.api.http.auth import HTTPAuthenticationError
 
     # Explicit partial-result fixture has authenticated token facts but no
     # qualified current policy/delegation or engine envelope.
@@ -479,7 +479,7 @@ def test_verified_token_facts_are_not_a_current_engine_session():
 
 
 def test_bound_browser_verifier_requires_explicit_authority():
-    from graph_os.api.http.auth import BoundBrowserVerifier
+    from arbora.api.http.auth import BoundBrowserVerifier
 
     with pytest.raises(ValueError, match="authority required"):
         BoundBrowserVerifier(authority=None, console_origin=ORIGIN)
@@ -489,8 +489,8 @@ def test_http_local_bearer_bridge_passes_exact_token_to_owner(monkeypatch):
     import asyncio
     import time
 
-    from graph_os.api.http.auth import verify_local_bearer_request
-    from graph_os.security import request_identity
+    from arbora.api.http.auth import verify_local_bearer_request
+    from arbora.security import request_identity
 
     now = int(time.time())
     result = request_identity.VerifiedLocalBearer(
@@ -526,11 +526,11 @@ def test_http_local_bearer_bridge_passes_exact_token_to_owner(monkeypatch):
 def test_http_local_bearer_bridge_rejects_ambiguous_credentials(monkeypatch):
     import asyncio
 
-    from graph_os.api.http.auth import (
+    from arbora.api.http.auth import (
         HTTPAuthenticationError,
         verify_local_bearer_request,
     )
-    from graph_os.security import request_identity
+    from arbora.security import request_identity
 
     async def unexpected(token):
         raise AssertionError("ambiguous credentials must not reach verification")
@@ -548,7 +548,7 @@ def test_bound_browser_verifier_calls_actual_webui_exporter(monkeypatch):
 
     from agent_webui.oidc_session import BrowserSessionEvidence
 
-    from graph_os.api.http.auth import BoundBrowserVerifier
+    from arbora.api.http.auth import BoundBrowserVerifier
 
     req = console_request()
     session = SessionFixture()
@@ -579,7 +579,7 @@ def test_bound_browser_verifier_calls_actual_webui_exporter(monkeypatch):
 def test_bound_browser_verifier_rejects_same_principal_substitute_session():
     import asyncio
 
-    from graph_os.api.http.auth import BoundBrowserVerifier
+    from arbora.api.http.auth import BoundBrowserVerifier
 
     bound_session = SessionFixture()
 
@@ -596,7 +596,7 @@ def test_bound_browser_verifier_rejects_same_principal_substitute_session():
 
 
 def test_bound_browser_verifier_requires_same_owner_session_port():
-    from graph_os.api.http.auth import BoundBrowserVerifier
+    from arbora.api.http.auth import BoundBrowserVerifier
 
     with pytest.raises(ValueError, match="authority required"):
         BoundBrowserVerifier(
@@ -611,13 +611,13 @@ def browser_producer_path(monkeypatch):
     import base64
     import time
 
-    from graph_os.identity.admission import BrowserAdmission
-    from graph_os.identity.broker import GraphOSBrowserAuthority
-    from graph_os.identity.browser import csrf_token_for
-    from graph_os.identity.engine import Resolution
-    from graph_os.identity.issuer import IssuerSettings, LocalIssuer
-    from graph_os.identity.ports import CredentialState, SessionState
-    from graph_os.security.request_identity import VerifiedLocalBearer
+    from arbora.identity.admission import BrowserAdmission
+    from arbora.identity.broker import ArboraBrowserAuthority
+    from arbora.identity.browser import csrf_token_for
+    from arbora.identity.engine import Resolution
+    from arbora.identity.issuer import IssuerSettings, LocalIssuer
+    from arbora.identity.ports import CredentialState, SessionState
+    from arbora.security.request_identity import VerifiedLocalBearer
 
     now = int(time.time())
     session = SessionFixture()
@@ -691,7 +691,7 @@ def browser_producer_path(monkeypatch):
             issued_claims, "https://issuer.invalid", "fixture-audience"
         )
 
-    owner = GraphOSBrowserAuthority(backend, verify, trusted_origin=ORIGIN)
+    owner = ArboraBrowserAuthority(backend, verify, trusted_origin=ORIGIN)
 
     async def session_for_token(token):
         await verify(token)
@@ -718,7 +718,7 @@ def browser_producer_path(monkeypatch):
 def test_actual_browser_producer_to_c_conversion_lifecycle(browser_producer_path, case):
     import asyncio
 
-    from graph_os.api.http.auth import BoundBrowserVerifier, HTTPAuthenticationError
+    from arbora.api.http.auth import BoundBrowserVerifier, HTTPAuthenticationError
 
     admission, owner, session, incoming, backend = browser_producer_path
     auth = AmbientHTTPAuthenticator(

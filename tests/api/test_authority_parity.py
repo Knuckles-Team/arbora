@@ -5,7 +5,7 @@ principal, operation and serving surface.
 surfaces/scopes, caller) combination this fixture covers and the single
 correct allow/deny outcome. This test asserts the registry's real
 authorization chokepoint -- surface membership plus
-``graph_os.api.registry.authorized`` -- reaches exactly that outcome for
+``arbora.api.registry.authorized`` -- reaches exactly that outcome for
 every row, so a change to either check cannot silently diverge for one
 principal kind, operation or surface while looking correct for another.
 
@@ -28,7 +28,7 @@ import pytest
 import yaml
 from pydantic import BaseModel
 
-from graph_os.api.registry import (
+from arbora.api.registry import (
     AuditClass,
     Composite,
     Effect,
@@ -90,7 +90,7 @@ def test_authority_matrix_row_matches_expected_outcome(case: dict[str, Any]) -> 
         examples=("Probe the authority chokepoint",),
         params=_Input,
         result=_Output,
-        binding=Composite(handler="graph_os.identity.admin_service.probe"),
+        binding=Composite(handler="arbora.identity.admin_service.probe"),
         principals=PrincipalRule(case["principal_rule"]),
         scopes=frozenset(case["op_scopes"]),
         surfaces=frozenset(Surface(s) for s in case["op_surfaces"]),

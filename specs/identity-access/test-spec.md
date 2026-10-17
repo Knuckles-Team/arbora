@@ -21,13 +21,13 @@ Use an ephemeral engine process or in-memory contract fixture implementing the p
 | IT-11 | IA-12 | Engine access contract + REST/MCP | Request/approve/deny/revoke, approval list, lease, check and explain return engine decision and audit receipt; route and MCP twin agree. | Self approval, delegated approval, expired lease, unavailable engine, missing exact scope and graph-only privilege shortcut deny; no local fallback receipt. |
 | IT-12 | IA-13 | Registry and dispatch property tests | Every advertised operation has an exact registered scope/class. Domain registry export matches engine source. Fleet operation passes with exact fleet grant. | `admin`, `kg:admin`, stdio transport, unknown tool and omitted registry entry never grant fleet/MCP access. |
 | IT-13 | IA-14 | Import graph + composition test | One server/issuer/session implementation is constructed and injected through ports. REST/MCP/web host share it. | Import cycle, orphan implementation, duplicate authority or direct web-host import of MCP implementation fails. |
-| IT-14 | IA-16 | Served engine verifier plus each GraphOS client entry point | Bootstrap, REST, MCP, A2A, CLI and background service requests carry an accepted signed local-issuer or permitted service token, with expected allow and deny decisions. | Missing/expired/wrong-audience token and explicit engine denial produce a typed error; no unsigned retry, fallback credential or auth-opt-out branch is invoked. An old client fails closed after engine opt-out removal. |
+| IT-14 | IA-16 | Served engine verifier plus each Arbora client entry point | Bootstrap, REST, MCP, A2A, CLI and background service requests carry an accepted signed local-issuer or permitted service token, with expected allow and deny decisions. | Missing/expired/wrong-audience token and explicit engine denial produce a typed error; no unsigned retry, fallback credential or auth-opt-out branch is invoked. An old client fails closed after engine opt-out removal. |
 
 ## Acceptance evidence and release checks
 
 For each test, `evidence.md` must link a reproducible job or command with exact commit, fixture revision, result and any justified skip. The public PR gate runs the full portable suite on a clean checkout. A separate served deployment qualification may exercise a real provider; it cannot substitute for portable contract and negative tests. Browser tests must prove rendered warnings, login/MFA, key revocation and admin restriction; API-only tests are insufficient for the browser story.
 
-Run repository checks from a clean checkout with `uv sync --extra test`, `uv run pytest`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy graph_os`, `uvx --from pre-commit==4.6.0 pre-commit run --all-files`, and the release workflow's build/lock checks. The scanner workflow provisions pinned CCCC, KISS, Dupehound and jscpd. Use the repository's configured thresholds and differential baseline; do not change them to fit this implementation. The current hook configuration names `complexity-staged`, `kiss-staged`, `dupehound-changed`, `complexity-census`, `kiss-census`, `jscpd-differential`, `jscpd-census`, and `scanner-versions`; the release workflow pins tool versions. Apply KISS with ports and one composition root, preserve the orphan-module gate, and reject duplicate issuer, policy and RBAC implementations. Record unavailable tool/threshold as a gap, never as a pass.
+Run repository checks from a clean checkout with `uv sync --extra test`, `uv run pytest`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy arbora`, `uvx --from pre-commit==4.6.0 pre-commit run --all-files`, and the release workflow's build/lock checks. The scanner workflow provisions pinned CCCC, KISS, Dupehound and jscpd. Use the repository's configured thresholds and differential baseline; do not change them to fit this implementation. The current hook configuration names `complexity-staged`, `kiss-staged`, `dupehound-changed`, `complexity-census`, `kiss-census`, `jscpd-differential`, `jscpd-census`, and `scanner-versions`; the release workflow pins tool versions. Apply KISS with ports and one composition root, preserve the orphan-module gate, and reject duplicate issuer, policy and RBAC implementations. Record unavailable tool/threshold as a gap, never as a pass.
 
 No pass on an unrelated branch, unmerged patch or earlier commit qualifies the exact landed commit. Acceptance requires IT-01 through IT-14, scanner/quality/release jobs, portable fresh-checkout proof, and resolved design decisions. A row can remain partial even if this umbrella spec is otherwise accepted.
 
@@ -71,7 +71,7 @@ Bind R023.1 through R023.6 in `tests/identity/test_scoped_credential_reuse.py.`
 Bind R017.3 through R017.8 in `tests/identity/test_bearer_tenant_ingress.py.`
 Bind R019.1 through R019.6 in `tests/identity/test_resource_protocol_access.py.`
 
-1. Start actual GraphOS REST/MCP ingress, a controlled local OIDC provider, real PKCE callback and approved synthetic vault authority.
+1. Start actual Arbora REST/MCP ingress, a controlled local OIDC provider, real PKCE callback and approved synthetic vault authority.
    Use real signed tokens and HTTP exchanges. Decoded claims or direct broker-helper calls alone cannot prove acceptance.
 2. Serve a credential-missing operation, complete the browser ceremony, verify S256/state/nonce and read back the vault receipt.
    Resume the unchanged operation once after fresh authorization. Retry and restart without duplicating the governed effect.
@@ -106,7 +106,7 @@ For exchange-bound opaque tokens, validate authenticated provider/client/PKCE an
 For introspection-required opaque tokens, active and correctly bound evidence succeeds; inactive, unavailable or missing required fields refuses.
 An opaque token without provider expiry may use only the explicit bounded host lease. Assert evidence distinguishes the two validity sources.
 Forged profile selection, wrong connector, cross-tenant binding, excess scopes and unapproved resource audience all refuse with zero resumed effects.
-The outbound opaque profile must not admit an unsigned GraphOS API bearer or remove its required tenant claim.
+The outbound opaque profile must not admit an unsigned Arbora API bearer or remove its required tenant claim.
 Inspect responses and logs for token/code leakage. These acceptance cases have not run. They require the runtime wiring.
 
 ## Additional owner requirements

@@ -6,7 +6,7 @@ Governing [spec](spec.md). Evidence remains PENDING.
 |---|---|---|---|---|
 | T-RL-01 | RL-01 | Contract | Signed candidate with full revisions and `sha256` artifacts | Canonical manifest digest and reviewable dry-run graph. |
 | T-RL-02 | RL-01 | Negative | Mutable tag, malformed digest, bad signature, duplicate component | Refusal before apply with stable error code and no target mutation. |
-| T-RL-03 | RL-02 | Unit | Engine → GraphOS → WebUI and optional connector edges | Stable topological order; disabled optional component excluded. |
+| T-RL-03 | RL-02 | Unit | Engine → Arbora → WebUI and optional connector edges | Stable topological order; disabled optional component excluded. |
 | T-RL-04 | RL-02 | Negative | Missing required predecessor or cycle | Refusal identifies offending edge; no partial rollout. |
 | T-RL-05 | RL-03 | Integration | Disposable target with matching predecessor digests and probes | Each dependent starts only after predecessor readiness and function pass. |
 | T-RL-06 | RL-03 | Negative | Stale image, incompatible API, failing function or timeout | Dependent not started; exact stage failure receipt. |

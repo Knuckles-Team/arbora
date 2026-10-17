@@ -12,7 +12,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from graph_os.gateway.schema_context_api import register_schema_context_routes
+from arbora.gateway.schema_context_api import register_schema_context_routes
 
 PATH = "/api/graph/schema/context"
 
@@ -64,7 +64,7 @@ def test_missing_engine_capability_returns_503(
 
     engine = Mock(spec=[])
     monkeypatch.setattr(
-        "graph_os.gateway.ports.gateway_application",
+        "arbora.gateway.ports.gateway_application",
         lambda: Mock(engine=Mock(return_value=engine)),
     )
     client = TestClient(_app())
@@ -81,7 +81,7 @@ def test_available_capability_dispatches_through_the_service(
     engine = Mock()
     engine.schema_context.schema_context.return_value = {"sentinel": "answer"}
     monkeypatch.setattr(
-        "graph_os.gateway.ports.gateway_application",
+        "arbora.gateway.ports.gateway_application",
         lambda: Mock(engine=Mock(return_value=engine)),
     )
     client = TestClient(_app())

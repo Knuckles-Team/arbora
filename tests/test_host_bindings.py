@@ -7,8 +7,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from graph_os import host_bindings as hb
-from graph_os.messaging.host_ports import host_ports, reset_host_ports
+from arbora import host_bindings as hb
+from arbora.messaging.host_ports import host_ports, reset_host_ports
 
 
 @pytest.fixture(autouse=True)

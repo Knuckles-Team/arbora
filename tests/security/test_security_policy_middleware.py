@@ -1,4 +1,4 @@
-"""Conformance tests for graph_os.security.security_policy_middleware.
+"""Conformance tests for arbora.security.security_policy_middleware.
 
 GRAPHOS-HOST-R008: the module had no tests before it moved, so these are new.
 """
@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.security import SecurityPolicyMiddleware, SecurityViolation
-from graph_os.security.security_policy_middleware import (
+from arbora.security import SecurityPolicyMiddleware, SecurityViolation
+from arbora.security.security_policy_middleware import (
     SecurityPolicyMiddleware as DirectImport,
 )
 

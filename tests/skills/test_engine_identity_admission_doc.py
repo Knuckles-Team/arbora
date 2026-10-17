@@ -1,4 +1,4 @@
-"""Contract of the engine-identity admission procedure shipped with graphos-genesis.
+"""Contract of the engine-identity admission procedure shipped with arbora-genesis.
 
 The admission credential (``EPISTEMIC_GRAPH_SIGNER_KEYS_JSON``) is easy to
 misprovision and fails invisibly, so the procedure must name the real chain,
@@ -13,9 +13,7 @@ from pathlib import Path
 
 import pytest
 
-SKILL_DIR = (
-    Path(__file__).resolve().parents[2] / "graph_os" / "skills" / "graphos-genesis"
-)
+SKILL_DIR = Path(__file__).resolve().parents[2] / "arbora" / "skills" / "arbora-genesis"
 REFERENCE = SKILL_DIR / "references" / "engine-identity-admission.md"
 SKILL_MD = SKILL_DIR / "SKILL.md"
 SECURITY_OPS = SKILL_DIR / "references" / "security-and-operations.md"

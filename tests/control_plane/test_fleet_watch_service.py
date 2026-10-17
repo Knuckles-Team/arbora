@@ -11,7 +11,7 @@ unobserved — never a rollback trigger on zero evidence.
 
 from __future__ import annotations
 
-from graph_os.control_plane.fleet_watch.service import (
+from arbora.control_plane.fleet_watch.service import (
     OUTCOME_FAILED,
     OUTCOME_SUCCESS,
     OUTCOME_UNOBSERVED,

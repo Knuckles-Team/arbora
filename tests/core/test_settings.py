@@ -1,4 +1,4 @@
-"""Graph OS configuration location and the one-release legacy fallback."""
+"""Arbora configuration location and the one-release legacy fallback."""
 
 from __future__ import annotations
 
@@ -6,12 +6,16 @@ import warnings
 
 import pytest
 
-from graph_os.core import settings
+from arbora.core import settings
 
 
 @pytest.fixture
 def home(tmp_path, monkeypatch):
-    for name in ("GRAPH_OS_CONFIG_DIR", "AGENT_UTILITIES_CONFIG_DIR"):
+    for name in (
+        "ARBORA_CONFIG_DIR",
+        "GRAPH_OS_CONFIG_DIR",  # arbora-rename: keep
+        "AGENT_UTILITIES_CONFIG_DIR",
+    ):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
     monkeypatch.setattr(settings, "_warned_legacy", set())
@@ -24,16 +28,16 @@ def _write(path):
     return path
 
 
-def test_default_location_is_graph_os(home) -> None:
+def test_default_location_is_arbora(home) -> None:
     assert (
         settings.platform_config_file("mcp_config.json")
-        == home / "graph-os" / "mcp_config.json"
+        == home / "arbora" / "mcp_config.json"
     )
 
 
 def test_explicit_directory_wins_even_when_legacy_exists(home, monkeypatch) -> None:
     _write(home / "agent-utilities" / "mcp_config.json")
-    monkeypatch.setenv("GRAPH_OS_CONFIG_DIR", str(home / "explicit"))
+    monkeypatch.setenv("ARBORA_CONFIG_DIR", str(home / "explicit"))
     assert (
         settings.platform_config_file("mcp_config.json")
         == home / "explicit" / "mcp_config.json"
@@ -53,9 +57,24 @@ def test_legacy_file_is_found_with_one_warning(home, monkeypatch, legacy_env) ->
         assert settings.platform_config_file("mcp_config.json") == legacy
 
 
+@pytest.mark.parametrize("legacy_env", [False, True])
+def test_previous_project_location_is_read_first(home, monkeypatch, legacy_env) -> None:
+    previous_dir = home / (
+        "previous" if legacy_env else "graph-os"
+    )  # arbora-rename: keep
+    if legacy_env:
+        monkeypatch.setenv(
+            "GRAPH_OS_CONFIG_DIR", str(previous_dir)
+        )  # arbora-rename: keep
+    _write(home / "agent-utilities" / "mcp_config.json")
+    previous = _write(previous_dir / "mcp_config.json")
+    with pytest.warns(DeprecationWarning):
+        assert settings.platform_config_file("mcp_config.json") == previous
+
+
 def test_preferred_file_beats_legacy(home) -> None:
     _write(home / "agent-utilities" / "mcp_config.json")
-    preferred = _write(home / "graph-os" / "mcp_config.json")
+    preferred = _write(home / "arbora" / "mcp_config.json")
     assert settings.platform_config_file("mcp_config.json") == preferred
 
 

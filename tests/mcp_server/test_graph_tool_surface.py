@@ -1,4 +1,4 @@
-"""graph-os serves the agent-utilities intent contract and adds its own operations."""
+"""arbora serves the agent-utilities intent contract and adds its own operations."""
 
 from __future__ import annotations
 
@@ -6,15 +6,15 @@ from typing import Any
 
 import pytest
 
-from graph_os.mcp_server import runtime
+from arbora.mcp_server import runtime
 
 
 def test_surface_serves_intent_contract_and_registers_host_operations(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from graph_os.a2a import mcp as a2a_mcp
-    from graph_os.browser_control import mcp as browser_mcp
-    from graph_os.mcp_server.backing import graphos_surface
+    from arbora.a2a import mcp as a2a_mcp
+    from arbora.browser_control import mcp as browser_mcp
+    from arbora.mcp_server.backing import arbora_surface
 
     served = object()
     backing = object()
@@ -25,7 +25,7 @@ def test_surface_serves_intent_contract_and_registers_host_operations(
         runtime.REGISTERED_TOOLS["graph_query"] = object()
         return backing
 
-    monkeypatch.setattr(graphos_surface, "register_graphos_surface", surface)
+    monkeypatch.setattr(arbora_surface, "register_arbora_surface", surface)
     monkeypatch.setattr(
         browser_mcp,
         "register_browser_control_tools",
@@ -36,7 +36,7 @@ def test_surface_serves_intent_contract_and_registers_host_operations(
         "register_a2a_tools",
         lambda mcp, *, tools=None: calls.append(("a2a", mcp, tools)),
     )
-    from graph_os import host_bindings
+    from arbora import host_bindings
 
     monkeypatch.setattr(
         host_bindings,

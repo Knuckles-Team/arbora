@@ -13,8 +13,8 @@ served observation. This spec claims no implementation or acceptance evidence.
 
 A caller can inspect a relational schema, see source ownership and change impact,
 admit one application at a time to a shared data plane, and use governed finance
-read, schedule, and alert surfaces without bypassing GraphOS's tenant and policy
-boundary. GraphOS owns authenticated serving, fleet composition, dispatch,
+read, schedule, and alert surfaces without bypassing Arbora's tenant and policy
+boundary. Arbora owns authenticated serving, fleet composition, dispatch,
 subscriptions, scheduling integration, and source admission workflow. The graph
 engine owns catalog facts, ontology mappings, query reasoning, durable market
 records, and finance calculations. Connector services own external account and
@@ -37,12 +37,12 @@ broker, or notification channel.
   cited provenance, and `as_of` time. `impact` includes dependent views, mappings,
   and consumers with bounded traversal. Undeclared or unverified relationships
   are labelled as proposals, never as approved facts.
-- **FR-02:** GraphOS authorizes the tenant and source before requesting any
+- **FR-02:** Arbora authorizes the tenant and source before requesting any
   schema context. The request is bounded (`depth`, `limit`, timeout, response
   bytes); invalid scope returns a typed client error and inaccessible objects
   have the same nonrevealing response as nonexistent objects.
 - **FR-03:** If the graph engine has not published a schema-context capability
-  or the source has no approved catalog snapshot, GraphOS returns typed
+  or the source has no approved catalog snapshot, Arbora returns typed
   `UNAVAILABLE` with no fabricated empty graph or ontology match.
 
 ### Application admission (GRAPHOS-DATA-MARKET-R004)
@@ -63,13 +63,13 @@ broker, or notification channel.
 
 ### Finance projection and scheduling (GRAPHOS-DATA-MARKET-R001 / GRAPHOS-DATA-MARKET-R002 / GRAPHOS-DATA-MARKET-R003 / GRAPHOS-DATA-MARKET-R006)
 
-- **FR-07:** GraphOS exposes tenant-scoped market reads through one application service shared by REST and MCP. Each price, trend, portfolio, and position field includes source identity, as-of time, currency or unit, session, freshness, and provenance. GraphOS performs bounded server-side pagination and decimation after authoritative calculations. Reads require `finance:read`. Missing tenant/account binding fails closed before touching a process-global provider account. The nine list/search/get contracts in R003.1–R003.6 use closed, versioned projections and preserve source metadata without host synthesis.
+- **FR-07:** Arbora exposes tenant-scoped market reads through one application service shared by REST and MCP. Each price, trend, portfolio, and position field includes source identity, as-of time, currency or unit, session, freshness, and provenance. Arbora performs bounded server-side pagination and decimation after authoritative calculations. Reads require `finance:read`. Missing tenant/account binding fails closed before touching a process-global provider account. The nine list/search/get contracts in R003.1–R003.6 use closed, versioned projections and preserve source metadata without host synthesis.
 - **FR-08:** Use the existing scheduler and agent workflow contract for backfill,
   scan, DCA-due, and flip-explainer jobs. A schedule records tenant, owner,
   authorized action, timezone, trigger, idempotency key, and last run. DST and
   replay cannot produce duplicate effects. A model explanation cites the exact
   calculation inputs and is informational only.
-- **FR-09:** GraphOS subscribes durably to the finance event topic family,
+- **FR-09:** Arbora subscribes durably to the finance event topic family,
   dispatches through configured notification channels, and deduplicates by
   tenant, event ID, and subscriber. Redelivery after restart has at-least-once
   transport with idempotent user-visible delivery. An alert never authorizes
@@ -78,7 +78,7 @@ broker, or notification channel.
   explicit `finance:paper-trade` grant, durable lease and idempotency receipt.
   Unverified account binding returns typed `UNAVAILABLE` before any provider
   call. Live order execution belongs to the connector's governed write-back
-  contract; GraphOS can submit only a separately approved, tenant-bound request
+  contract; Arbora can submit only a separately approved, tenant-bound request
   through that published contract.
 - **FR-11:** A recurring DCA plan stores its owner, tenant, symbol or asset ID,
   account binding, amount and currency as decimal values, IANA timezone,
@@ -119,7 +119,7 @@ broker, or notification channel.
 ## Open decisions
 
 - The graph engine's published schema-context method name and response schema
-  must be pinned before implementation; GraphOS may not infer it from an
+  must be pinned before implementation; Arbora may not infer it from an
   internal module or silently fall back to raw catalog reads.
 - The durable event and schedule APIs must be pinned to a published contract;
   delivery guarantees are at-least-once plus idempotency, not an unsupported
@@ -133,7 +133,7 @@ Requirement IDs are defined in [requirements.md](requirements.md); delivery stat
 ## Wallet verification boundary
 
 GRAPHOS-DATA-MARKET-R007 consumes SDK-GOVERNED-WRITEBACK-R001.1 through R001.6 for wallet signature verification.
-EG owns authorization decisions. GraphOS authenticates, serves explicit confirmation and enforces the matching producer result.
+EG owns authorization decisions. Arbora authenticates, serves explicit confirmation and enforces the matching producer result.
 Neither a valid signature nor confirmation alone authorizes a source effect. Unavailable trust or durable proof binding refuses.
 
 Confirmation binds the complete immutable `{"intent": WalletBusinessIntent}` projection defined in plan.md.

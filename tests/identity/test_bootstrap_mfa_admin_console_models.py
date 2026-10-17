@@ -2,10 +2,10 @@
 
 import pytest
 
-from graph_os.identity.admin_console import AdminConsoleTab
-from graph_os.identity.bootstrap import LoopbackBootstrapPrincipal
-from graph_os.identity.engine import IdentityUnavailable
-from graph_os.identity.mfa import MfaEnrollment
+from arbora.identity.admin_console import AdminConsoleTab
+from arbora.identity.bootstrap import LoopbackBootstrapPrincipal
+from arbora.identity.engine import IdentityUnavailable
+from arbora.identity.mfa import MfaEnrollment
 
 
 def test_bootstrap_accepts_loopback() -> None:

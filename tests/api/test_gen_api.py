@@ -11,7 +11,7 @@ from types import ModuleType
 
 import pytest
 
-from graph_os.client._schema import _resolve_local_refs
+from arbora.client._schema import _resolve_local_refs
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts/gen_api.py"
 SPEC = importlib.util.spec_from_file_location("gen_api", SCRIPT)
@@ -40,7 +40,7 @@ def _registry() -> dict:
 
 @pytest.fixture
 def engine_contract(tmp_path, monkeypatch):
-    from graph_os.api.registry import eg_binding
+    from arbora.api.registry import eg_binding
 
     contract = tmp_path / "contract"
     contract.mkdir()
@@ -81,10 +81,10 @@ def test_generator_emits_deterministic_artifacts(engine_contract) -> None:
         json.loads(first[gen_api.GENERATED / "registry.json"])["registry_digest"]
         == "a" * 64
     )
-    models = first[gen_api.ROOT / "graph_os/client/_generated_models.py"]
+    models = first[gen_api.ROOT / "arbora/client/_generated_models.py"]
     assert len(models.splitlines()) < 900
     compile(models, "_generated_models.py", "exec")
-    assert gen_api.ROOT / "graph_os/client/invoke.py" not in first
+    assert gen_api.ROOT / "arbora/client/invoke.py" not in first
 
 
 def test_generator_fails_closed_on_an_empty_registry() -> None:
@@ -255,7 +255,7 @@ def emitted_client(engine_contract, tmp_path, monkeypatch):
     for name in ("_generated_models", "invoke"):
         module = ModuleType(f"{package.__name__}.{name}")
         monkeypatch.setitem(sys.modules, module.__name__, module)
-        path = gen_api.ROOT / f"graph_os/client/{name}.py"
+        path = gen_api.ROOT / f"arbora/client/{name}.py"
         source = artifacts[path] if path in artifacts else path.read_bytes()
         exec(compile(source, f"{name}.py", "exec"), module.__dict__)
     models = sys.modules["emitted_client._generated_models"]
@@ -296,7 +296,7 @@ async def test_emitted_invoker_refuses_missing_or_stale_digest(
         async def invoke(self, op_id, params):
             return {"ok": ok, "meta": meta}
 
-    with pytest.raises(RuntimeError, match="GraphOS registry digest mismatch"):
+    with pytest.raises(RuntimeError, match="Arbora registry digest mismatch"):
         await emitted_client.invoke(Transport(), "query.uql", {})
 
 
@@ -345,7 +345,7 @@ def test_reference_resources_preserve_emitted_lookup_and_digest(
     module = ModuleType("reference_client")
     exec(
         compile(
-            artifacts[gen_api.ROOT / "graph_os/client/_generated_models.py"],
+            artifacts[gen_api.ROOT / "arbora/client/_generated_models.py"],
             "reference_client.py",
             "exec",
         ),
@@ -450,7 +450,7 @@ def test_compat_reads_baseline_schema_resources_from_same_git_ref(
             return SimpleNamespace(returncode=0, stdout=b"baseline")
         path = argv[2]
         reads.append(path)
-        prefix = "baseline:graph_os/api/generated/"
+        prefix = "baseline:arbora/api/generated/"
         assert path.startswith(prefix)
         relative = path.removeprefix(prefix)
         payload = (
@@ -464,7 +464,7 @@ def test_compat_reads_baseline_schema_resources_from_same_git_ref(
     monkeypatch.setattr(gen_api.subprocess, "run", git_call)
     monkeypatch.setattr(gen_api.importlib.resources, "files", lambda name: after_root)
     assert gen_api._check_compat(after, "baseline") == 1
-    assert "baseline:graph_os/api/generated/schemas/method.request.json" in reads
+    assert "baseline:arbora/api/generated/schemas/method.request.json" in reads
 
 
 @pytest.mark.spec("GRAPHOS-OPS-R025.2")

@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from graph_os.acp import (
+from arbora.acp import (
     AcpRefusal,
     AcpRefusalReason,
     AcpSessionPolicy,

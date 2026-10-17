@@ -1,12 +1,12 @@
 INHERIT: .pipeline-theme/templates/mkdocs-theme/base.mkdocs.yml
 
-site_name: Graph OS
+site_name: Arbora
 site_description: >-
   The governed MCP, REST, A2A, fleet, and Agent Web UI runtime for the Knuckles
   agent platform.
-site_url: https://knuckles-team.github.io/graph-os/
-repo_name: Knuckles-Team/graph-os
-repo_url: https://github.com/Knuckles-Team/graph-os
+site_url: https://knuckles-team.github.io/arbora/
+repo_name: Knuckles-Team/arbora
+repo_url: https://github.com/Knuckles-Team/arbora
 edit_uri: edit/main/docs/
 docs_dir: docs
 site_dir: site
@@ -14,24 +14,24 @@ strict: true
 copyright: Copyright &copy; Knuckles-Team — MIT licensed
 
 theme:
-  logo: assets/brands/graph-os-logo-v1.png
-  favicon: assets/brands/graph-os-logo-v1.png
+  logo: assets/brands/arbora-logo-v1.png
+  favicon: assets/brands/arbora-logo-v1.png
 
 plugins:
   - search
 
 extra:
   ecosystem:
-    current: graph-os
+    current: arbora
 
 nav:
   - Home: index.md
-  - Start Graph OS: get-started.md
+  - Start Arbora: get-started.md
   - Capabilities: capabilities.md
   - Interfaces: interfaces.md
   - How it fits: architecture.md
   - Specification status: spec-status.html
-  - Use Graph OS:
+  - Use Arbora:
       - MCP server: mcp-server.md
       - REST gateway: gateway.md
       - Fleet gateway: fleet.md

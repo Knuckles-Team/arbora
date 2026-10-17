@@ -9,7 +9,7 @@ from typing import Literal, cast
 import pytest
 from pydantic import ValidationError
 
-from graph_os.control_plane.policy import (
+from arbora.control_plane.policy import (
     ApprovalDecision,
     CapabilityBinding,
     ExactSignatureVerifier,
@@ -21,7 +21,7 @@ from graph_os.control_plane.policy import (
     PolicyRule,
     PolicyVersion,
 )
-from graph_os.control_plane.runs import (
+from arbora.control_plane.runs import (
     ArtifactRef,
     AuditChain,
     InMemoryNativeAdmission,

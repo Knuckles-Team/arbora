@@ -15,7 +15,7 @@ from typing import Any
 import mcp.types
 import pytest
 
-from graph_os.fleet.child_resilience import (
+from arbora.fleet.child_resilience import (
     ChildRuntime,
     MCPChildBusyError,
     MCPChildCallTimeoutError,
@@ -118,7 +118,7 @@ async def test_per_server_max_concurrency_override_beats_global_default():
     runtime = ChildRuntime("custom", {"max_concurrency": 3})
     assert runtime.max_concurrency == 3
 
-    from graph_os.core.settings import runtime_config as config
+    from arbora.core.settings import runtime_config as config
 
     runtime_default = ChildRuntime("default", {})
     assert runtime_default.max_concurrency == config.mcp_child_max_concurrency
@@ -186,7 +186,7 @@ async def test_multiplexer_opens_pool_size_connections_for_http_child(
     import contextlib
     from unittest.mock import MagicMock
 
-    from graph_os.fleet import multiplexer as mod
+    from arbora.fleet import multiplexer as mod
 
     connects: list[str] = []
 
@@ -240,7 +240,7 @@ async def test_stdio_child_ignores_pool_size_and_keeps_one_pipe(tmp_path, monkey
     import contextlib
     from unittest.mock import MagicMock
 
-    from graph_os.fleet import multiplexer as mod
+    from arbora.fleet import multiplexer as mod
 
     connects: list[Any] = []
 
@@ -830,7 +830,7 @@ async def test_breaker_opens_after_consecutive_transport_failures_then_recovers(
 async def test_failed_half_open_probe_reopens_the_circuit(monkeypatch):
     clock = SimpleNamespace(now=100.0)
     monkeypatch.setattr(
-        "graph_os.fleet.child_resilience.time",
+        "arbora.fleet.child_resilience.time",
         SimpleNamespace(monotonic=lambda: clock.now),
     )
     session = FlakySession(failures=10)
@@ -944,7 +944,7 @@ async def test_metrics_are_noop_safe_without_prometheus():
     # The multiplexer runs standalone; every metric must degrade to a no-op
     # when prometheus_client (the optional extra) is absent — and be a real
     # series when it is installed. Either way these calls must not raise.
-    from graph_os.observability import gateway_metrics as gm
+    from arbora.observability import gateway_metrics as gm
 
     gm.MCP_CHILD_CALLS.labels(server="x", outcome="ok").inc()
     gm.MCP_CHILD_BREAKER_STATE.labels(server="x").set(2.0)
@@ -1025,7 +1025,7 @@ async def test_runtime_status_reports_limits_and_load():
 async def test_half_open_preflight_termination_releases_probe(monkeypatch, outcome):
     clock = SimpleNamespace(now=100.0)
     monkeypatch.setattr(
-        "graph_os.fleet.child_resilience.time",
+        "arbora.fleet.child_resilience.time",
         SimpleNamespace(monotonic=lambda: clock.now),
     )
     session = EchoSession("healthy")
@@ -1095,7 +1095,7 @@ async def test_expired_preflight_deadline_keeps_healthy_generation(
 ):
     clock = SimpleNamespace(now=100.0)
     monkeypatch.setattr(
-        "graph_os.fleet.child_resilience.time",
+        "arbora.fleet.child_resilience.time",
         SimpleNamespace(monotonic=lambda: clock.now),
     )
     session = EchoSession("healthy")

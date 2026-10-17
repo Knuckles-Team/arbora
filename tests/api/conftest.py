@@ -12,7 +12,7 @@ from collections.abc import Callable, Iterable
 
 import pytest
 
-from graph_os.api.registry import OpSpec
+from arbora.api.registry import OpSpec
 
 
 @pytest.fixture

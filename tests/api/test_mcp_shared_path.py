@@ -11,21 +11,21 @@ import pytest
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
 
-from graph_os.api.invoke import OpError, OpResult, VerifiedCaller
-from graph_os.api.mcp.registration import (
+from arbora.api.invoke import OpError, OpResult, VerifiedCaller
+from arbora.api.mcp.registration import (
     RESIDENT_NAMES,
     FleetMCPBinding,
     GovernedSessionVisibility,
     register_mcp_tools,
 )
-from graph_os.api.mcp.verbs import MCPProjection
-from graph_os.api.ops.fleet import operations
-from graph_os.api.policy import PolicyGate
-from graph_os.api.registry import Registry, Surface
-from graph_os.fleet.catalog_items import CatalogItem, FleetCatalog
-from graph_os.fleet.multiplexer import _make_forwarder, make_governed_tool_mount
-from graph_os.fleet.multiplexer_ops import MultiplexerOps
-from graph_os.fleet.session_loads import SessionLoads
+from arbora.api.mcp.verbs import MCPProjection
+from arbora.api.ops.fleet import operations
+from arbora.api.policy import PolicyGate
+from arbora.api.registry import Registry, Surface
+from arbora.fleet.catalog_items import CatalogItem, FleetCatalog
+from arbora.fleet.multiplexer import _make_forwarder, make_governed_tool_mount
+from arbora.fleet.multiplexer_ops import MultiplexerOps
+from arbora.fleet.session_loads import SessionLoads
 
 
 @pytest.fixture
@@ -456,7 +456,7 @@ def test_reload_while_invoke_waits_invalidates_old_grant_not_new_load() -> None:
 
 
 def test_consumed_one_shot_is_revocable_while_transport_setup_waits() -> None:
-    from graph_os.fleet.gateway_ops import check_native_transport
+    from arbora.fleet.gateway_ops import check_native_transport
 
     async def run():
         state, ops, entered, release = await _loaded_one_shot_fixture()

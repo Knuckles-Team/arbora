@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.a2a.models import (
+from arbora.a2a.models import (
     A2AAgentCapabilities,
     A2APushNotificationAuthority,
     A2AStreamingAuthority,

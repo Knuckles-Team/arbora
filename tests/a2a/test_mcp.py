@@ -7,10 +7,10 @@ from typing import Any
 
 import pytest
 
-from graph_os.a2a import mcp as a2a_mcp
-from graph_os.a2a.models import A2ATask, A2ATaskStatus
-from graph_os.a2a.service import A2AService
-from graph_os.mcp_server import runtime
+from arbora.a2a import mcp as a2a_mcp
+from arbora.a2a.models import A2ATask, A2ATaskStatus
+from arbora.a2a.service import A2AService
+from arbora.mcp_server import runtime
 
 
 class _Mcp:

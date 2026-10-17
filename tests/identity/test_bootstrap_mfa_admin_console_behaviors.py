@@ -2,14 +2,14 @@
 
 import pytest
 
-from graph_os.identity.admin_console import (
+from arbora.identity.admin_console import (
     AdminConsoleTab,
     dry_run_mapping,
     transition_mode_step,
 )
-from graph_os.identity.bootstrap import resolve_bootstrap_access, unsecured_mode_banner
-from graph_os.identity.engine import IdentityUnavailable
-from graph_os.identity.mfa import (
+from arbora.identity.bootstrap import resolve_bootstrap_access, unsecured_mode_banner
+from arbora.identity.engine import IdentityUnavailable
+from arbora.identity.mfa import (
     MfaEnrollment,
     consume_recovery_code,
     enforce_group_requirement,

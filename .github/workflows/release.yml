@@ -120,7 +120,7 @@ jobs:
       # (D-EGK-1) reads that as "running inside a pod" and asserts a hostPath
       # live-mount or a build-time .source-revision provenance marker, neither
       # of which this job's plain checkout has or needs. This is a CI
-      # checkout, not a deployed graph-os instance, so the check is a false
+      # checkout, not a deployed arbora instance, so the check is a false
       # positive here; skip it explicitly rather than fabricating a marker.
       AGENT_UTILITIES_SKIP_LIVE_MOUNT_CHECK: "true"
     steps:
@@ -268,7 +268,7 @@ jobs:
           set -euo pipefail
           uvx --from "git+https://github.com/Knuckles-Team/pipelines@${PIPELINES_REF}" \
             pipelines-hook pr-test-scope --base-ref "$PRE_COMMIT_FROM_REF" \
-            --src-root graph_os --tests-root tests > "$RUNNER_TEMP/pr-test-scope.txt"
+            --src-root arbora --tests-root tests > "$RUNNER_TEMP/pr-test-scope.txt"
           cat "$RUNNER_TEMP/pr-test-scope.txt"
           {
             echo "scope<<PR_TEST_SCOPE_EOF"
@@ -287,7 +287,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$SCOPE" = "NONE" ]; then
-            echo "pr-test-scope: no graph_os/tests change in this diff; skipping pytest"
+            echo "pr-test-scope: no arbora/tests change in this diff; skipping pytest"
           elif [ "$SCOPE" = "FULL" ]; then
             echo "pr-test-scope: unmapped source change (or an unreadable diff); running the full suite"
             scripts/local_hook.sh pytest
@@ -311,7 +311,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
-          if git diff --quiet "$BASE_SHA...HEAD" -- scripts/gen_api.py graph_os/client graph_os/api/generated docs/api .github/workflows/release.yml scripts/install_scanners.sh; then
+          if git diff --quiet "$BASE_SHA...HEAD" -- scripts/gen_api.py arbora/client arbora/api/generated docs/api .github/workflows/release.yml scripts/install_scanners.sh; then
             echo "required=false" >> "$GITHUB_OUTPUT"
           else
             result=$?
@@ -361,13 +361,13 @@ jobs:
             "$SCANNER_RECIPE" "$rustc_identity" "$cargo_identity" \
             "$CARGO_BUILD_JOBS" "$CARGO_PROFILE_RELEASE_DEBUG" \
             "${RUSTFLAGS:-}" "${CARGO_ENCODED_RUSTFLAGS:-}" | sha256sum)"
-          printf 'key=graph-os-scanners-v1-%s\n' "${identity%% *}" >> "$GITHUB_OUTPUT"
+          printf 'key=arbora-scanners-v1-%s\n' "${identity%% *}" >> "$GITHUB_OUTPUT"
 
       - name: Restore scanner toolchain
         id: scanner-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: ${{ runner.temp }}/graph-os-scanners
+          path: ${{ runner.temp }}/arbora-scanners
           key: ${{ steps.scanner-cache-identity.outputs.key }}
 
       # Each scanner is installed to its own runner-local prefix at the
@@ -375,7 +375,7 @@ jobs:
       # scripts/bootstrap.sh --scanners runs locally). Always run the installer:
       # a cache hit must still pass the provider's receipt and build probes.
       - name: Provision pinned scanner toolchain
-        run: bash scripts/install_scanners.sh "$RUNNER_TEMP/graph-os-scanners" >> "$GITHUB_PATH"
+        run: bash scripts/install_scanners.sh "$RUNNER_TEMP/arbora-scanners" >> "$GITHUB_PATH"
 
       - *release-base
 
@@ -394,7 +394,7 @@ jobs:
         if: success() && steps.scanner-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: ${{ runner.temp }}/graph-os-scanners
+          path: ${{ runner.temp }}/arbora-scanners
           key: ${{ steps.scanner-cache-identity.outputs.key }}
 
   build:
@@ -415,8 +415,8 @@ jobs:
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: graph-os-wheel
-          path: dist/graph_os-*.whl
+          name: arbora-wheel
+          path: dist/arbora-*.whl
           if-no-files-found: error
           retention-days: 7
 
@@ -464,7 +464,7 @@ jobs:
 
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: graph-os-wheel
+          name: arbora-wheel
           path: dist
 
       - name: Install the locked PyPI dependencies, then the wheel
@@ -481,7 +481,7 @@ jobs:
           # them back into ranges --require-hashes refuses.
           uv pip install --no-config --python "$py" --require-hashes --no-deps \
             --index-url https://pypi.org/simple -r "$RUNNER_TEMP/locked.txt"
-          uv pip install --no-config --python "$py" --no-deps dist/graph_os-*.whl
+          uv pip install --no-config --python "$py" --no-deps dist/arbora-*.whl
           uv pip check --no-config --python "$py"
 
       - name: Import the composition root from PyPI-installed dependencies
@@ -489,13 +489,13 @@ jobs:
           set -euo pipefail
           "$SMOKE_PYTHON" -I -c '
           import importlib.metadata as md
-          import graph_os, agent_utilities, agent_connector_sdk, agent_webui
+          import arbora, agent_utilities, agent_connector_sdk, agent_webui
           import epistemic_graph.numeric
-          from graph_os.deployment import cli
+          from arbora.deployment import cli
           for name in ("epistemic-graph", "epistemic-graph-server", "agent-utilities", "agent-connector-sdk", "agent-webui"):
               assert md.distribution(name).read_text("direct_url.json") is None, name
               print(name, md.version(name))
-          print("graph-os", md.version("graph-os"))
+          print("arbora", md.version("arbora"))
           '
 
   publish-pypi:
@@ -512,7 +512,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: graph-os-wheel
+          name: arbora-wheel
           path: dist
 
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
@@ -522,7 +522,7 @@ jobs:
       - name: Publish wheel
         env:
           UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-        run: uv publish --check-url https://pypi.org/simple dist/graph_os-*.whl
+        run: uv publish --check-url https://pypi.org/simple dist/arbora-*.whl
 
   github-release:
     name: github-release
@@ -545,10 +545,10 @@ jobs:
           set -euo pipefail
           version="${TAG#v}"
           {
-            echo "PyPI: [\`graph-os\` $version](https://pypi.org/project/graph-os/$version/)"
+            echo "PyPI: [\`arbora\` $version](https://pypi.org/project/arbora/$version/)"
             echo
             echo '```bash'
-            echo "pip install \"graph-os[webui]==$version\""
+            echo "pip install \"arbora[webui]==$version\""
             echo '```'
             echo
             echo "Installs from PyPI on Linux (x86_64, aarch64), macOS (arm64) and"

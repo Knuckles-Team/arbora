@@ -10,11 +10,11 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.api.invoke.pipeline import OperationRefused
-from graph_os.api.ops import security, telemetry, usage
-from graph_os.api.ops.security import SecurityPosture
-from graph_os.api.ops.telemetry import TelemetrySnapshot
-from graph_os.api.ops.usage import UsageSnapshot
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops import security, telemetry, usage
+from arbora.api.ops.security import SecurityPosture
+from arbora.api.ops.telemetry import TelemetrySnapshot
+from arbora.api.ops.usage import UsageSnapshot
 from tests.api._ops_support import tenant_reader_context as _context
 
 

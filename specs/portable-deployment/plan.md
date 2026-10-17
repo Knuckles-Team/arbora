@@ -2,30 +2,30 @@
 
 ## Existing components
 
-`graph_os.deployment.genesis_environments` already models ten closed profile sections and reference-only secrets. `config_generator` and `cli` provide configuration commands; `preflight` checks profile-specific host prerequisites; `doctor`, `doctor_coverage` and `doctor_certification` diagnose installed capabilities; `release_canary` checks installed entrypoints and engine binary without starting services; `production_ops` performs guarded operational actions. `deploy/environments/` contains sample profile data. Extend these owners and their tests instead of adding a second installer, configuration parser or doctor.
+`arbora.deployment.genesis_environments` already models ten closed profile sections and reference-only secrets. `config_generator` and `cli` provide configuration commands; `preflight` checks profile-specific host prerequisites; `doctor`, `doctor_coverage` and `doctor_certification` diagnose installed capabilities; `release_canary` checks installed entrypoints and engine binary without starting services; `production_ops` performs guarded operational actions. `deploy/environments/` contains sample profile data. Extend these owners and their tests instead of adding a second installer, configuration parser or doctor.
 
-The package defines `graph-os`, `graph-os-daemon`, `setup-config`, `agent-utilities-doctor`, `agent-utilities-venv`, `graph-os-release-canary` and `graph-os-production-ops` scripts. Script existence is not functional proof; clean wheel installation and representative invocations are required.
+The package defines `arbora`, `arbora-daemon`, `setup-config`, `agent-utilities-doctor`, `agent-utilities-venv`, `arbora-release-canary` and `arbora-production-ops` scripts. Script existence is not functional proof; clean wheel installation and representative invocations are required.
 
 ## Configuration contract
 
 The parser accepts one explicit profile with sections `environment`, `target`, `release`, `runtime`, `filesystem`, `configuration`, `secrets`, `network`, `identity`, `validation`. Each section has a closed schema; unknown and missing fields are errors. `secrets` contains only resolvable references such as environment, vault or Kubernetes secret references. Runtime path bindings are anchored to declared writable mounts. The resolved profile yields a deterministic digest, used in rendered resource annotations and validation receipts. A difference between rendered and applied digest is a refusal.
 
-The environment adapter resolves the profile and validates host capabilities, then renders a reviewable plan with create/update/delete inventory. It must not read a secret value during a dry run. Apply requires explicit target confirmation and a validated identity mode. Post-apply probes use the same public GraphOS API and observe readiness, authorization, engine connection and fleet catalog. They do not reconstruct success from the existence of a file.
+The environment adapter resolves the profile and validates host capabilities, then renders a reviewable plan with create/update/delete inventory. It must not read a secret value during a dry run. Apply requires explicit target confirmation and a validated identity mode. Post-apply probes use the same public Arbora API and observe readiness, authorization, engine connection and fleet catalog. They do not reconstruct success from the existence of a file.
 
 ## Profiles and dependency boundaries
 
 | Profile | Required inputs | Guarantees |
 |---|---|---|
 | Local development | Python, `uv`, published graph engine and agent packages. Loopback binding | Unit/contract checks run without network services. Optional disposable served checks isolate state under a temporary directory. |
-| Single-host container | Container runtime, pinned images, explicit writable volumes and secret references | One GraphOS host, one graph authority, guarded identity and repeatable startup/recovery. |
+| Single-host container | Container runtime, pinned images, explicit writable volumes and secret references | One Arbora host, one graph authority, guarded identity and repeatable startup/recovery. |
 | Kubernetes | Namespace/RBAC target, pinned image digest, secret-provider references, mounts and probes | Explicit service account, rollout/rollback, readiness and post-deploy functional receipts. |
 
-The renderer can vary by target, but profile validation, config resolution, engine contract verification and functional check definitions are shared. Keep engine storage and graph semantics in `epistemic-graph`; GraphOS owns only deployment composition and diagnostics. The WebUI is an optional co-service, not a required core import. Public sample profiles use placeholder domains and secret references only.
+The renderer can vary by target, but profile validation, config resolution, engine contract verification and functional check definitions are shared. Keep engine storage and graph semantics in `epistemic-graph`; Arbora owns only deployment composition and diagnostics. The WebUI is an optional co-service, not a required core import. Public sample profiles use placeholder domains and secret references only.
 
 ## Delivery order
 
 1. Freeze the public profile schema and add a sample development profile whose requirements a contributor can meet from a fresh checkout.
-2. Complete the GraphOS-owned deployment port migration and command parity; delete agent-runtime duplicate entrypoints after an installed-wheel comparison.
+2. Complete the Arbora-owned deployment port migration and command parity; delete agent-runtime duplicate entrypoints after an installed-wheel comparison.
 3. Make Compose and Kubernetes renderers consume the same validated profile object; require digest-pinned images and sealed secret references.
 4. Add disposable first-boot fixtures and CI service orchestration. Split required portable PR checks from optional production integration acceptance.
 5. Document the exact commands on GitHub Pages and link this contract from the contribution guide; publish a verified package and run the external acceptance tier.
@@ -36,18 +36,18 @@ The serving container stays at the client role. A second container in the same p
 
 ## GRAPHOS-DEPLOY-R017 plan: engine-routed deployment placement and assembly
 
-The agent-utilities planner (deleted by commit `db29b2da6`, AU-BOUNDARY-R002.2) is not re-created. Graph-os holds no plan type, no backend-selection logic and no renderer.
+The agent-utilities planner (deleted by commit `db29b2da6`, AU-BOUNDARY-R002.2) is not re-created. Arbora holds no plan type, no backend-selection logic and no renderer.
 
 ### Why this is not a separate planner
 
-The engine decision-engine spec makes `graph.assemble()` the sole authority for composing an agent graph from typed tasks and capabilities (`EG-DECISION-ENGINE-R036`), routes tasks through the decision ladder (`EG-DECISION-ENGINE-R044`), and exposes topology and placement selection as one typed Decide question (`EG-DECISION-ENGINE-R046`, `R111`). A graph-os planner would be a second path to the same decisions. Graph-os only maps a request to the engine, presents the answer and gets human confirmation.
+The engine decision-engine spec makes `graph.assemble()` the sole authority for composing an agent graph from typed tasks and capabilities (`EG-DECISION-ENGINE-R036`), routes tasks through the decision ladder (`EG-DECISION-ENGINE-R044`), and exposes topology and placement selection as one typed Decide question (`EG-DECISION-ENGINE-R046`, `R111`). A arbora planner would be a second path to the same decisions. Arbora only maps a request to the engine, presents the answer and gets human confirmation.
 
 ### Design
 
 1. **Placement.** One typed Decide request/response mapping (R017.1). Engine prerequisite: a deployment-placement question kind under `EG-DECISION-ENGINE-R046`/`R111` (ID to be assigned by the engine spec; not invented here).
-2. **Sequencing.** Ordered fleet-tool steps are an `AgentAssemble` graph (R017.2). Present it read-only (R017.3), confirm through `graphos.plan/confirm` (R017.4, rows `GRAPHOS-A2A-R005.1`/`R006.1`, with `decide.commit`). Typed refusal while unavailable (R017.5). Engine prerequisite: the `AgentAssemble` handler in `graph_os/a2a/routing.py` and `admission.py` is a refusal stub and must be replaced. The confirm surface is also a fail-closed stub.
-3. **Artifacts.** Existing files only (R017.6): `deploy/compose/compose.yaml`, `deploy/helm/graph-os`, `deploy/swarm/stack.yml`, selected by `deploy/environments/{dev,test,prod}.yaml`. No systemd artifact exists in `deploy/`; systemd is explicitly unsupported (decision D5 below).
-4. **In-process.** Unchanged `start_composed_services`, composition from `graph_os.mcp_server.composition` (R017.7).
+2. **Sequencing.** Ordered fleet-tool steps are an `AgentAssemble` graph (R017.2). Present it read-only (R017.3), confirm through `graphos.plan/confirm` (R017.4, rows `GRAPHOS-A2A-R005.1`/`R006.1`, with `decide.commit`). Typed refusal while unavailable (R017.5). Engine prerequisite: the `AgentAssemble` handler in `arbora/a2a/routing.py` and `admission.py` is a refusal stub and must be replaced. The confirm surface is also a fail-closed stub.
+3. **Artifacts.** Existing files only (R017.6): `deploy/compose/compose.yaml`, `deploy/helm/arbora`, `deploy/swarm/stack.yml`, selected by `deploy/environments/{dev,test,prod}.yaml`. No systemd artifact exists in `deploy/`; systemd is explicitly unsupported (decision D5 below).
+4. **In-process.** Unchanged `start_composed_services`, composition from `arbora.mcp_server.composition` (R017.7).
 5. **Command.** `setup-config deploy` is a thin subcommand that asks the engine and prints the decision and graph (R017.8).
 
 ### Parity table
@@ -56,10 +56,10 @@ The engine decision-engine spec makes `graph.assemble()` the sole authority for 
 |---|---|---|
 | `DeploymentPlan`, `DeploymentStep`, `FleetToolCall`, `rendered_summary` | engine assembly (`AgentAssemble`, `EG-DECISION-ENGINE-R036`) | dropped as parallel |
 | `DeploymentBackend`, `get_backend`, `PlanOnlyBackendError` | engine decision (placement Decide, `R046`/`R111`) | dropped as parallel |
-| `detect_composition` / `CompositionPlan` | `graph_os.mcp_server.composition` | exists |
+| `detect_composition` / `CompositionPlan` | `arbora.mcp_server.composition` | exists |
 | `InProcessBackend` | `start_composed_services` | exists (R017.7 verifies) |
 | `render_compose`, `ContainerBackend` | `deploy/compose` | existing artifact |
-| `render_k8s_manifest`, `KubernetesBackend` | `deploy/helm/graph-os` | existing artifact |
+| `render_k8s_manifest`, `KubernetesBackend` | `deploy/helm/arbora` | existing artifact |
 | Swarm (never covered by old planner) | `deploy/swarm/stack.yml` | existing artifact |
 | `render_systemd_unit`, `NativeShellBackend` | none | not supported (no artifact in `deploy/`) |
 | `deploy-plan` CLI | `setup-config deploy` asking the engine | to build (R017.8) |
@@ -73,7 +73,7 @@ Executing any plan-only fleet call; container-manager, tunnel-manager and system
 
 ### Problem and evidence
 
-`scripts/check_deployment_image_digests.py` walks Kubernetes workload kinds (`_POD_PATHS`) in rendered YAML and accepts only `repository@sha256:<64 hex>`; its docstring states that tags and unrendered templates are unsupported. A Compose or Swarm file has no `kind`, so `_check_resource` raises "kind: expected a nonempty string" on it. R017.6 and `tests/deployment/test_deploy_artifacts.py` therefore cannot run the one checker over all three artifacts today. The only tests of the script are `tests/deployment/test_image_digests.py` (Kubernetes fixtures); `tests/deployment/test_graphos_deploy_artifacts.py` checks only that the Compose and Swarm `image` starts with `${GRAPHOS_IMAGE:?` (lines 83 and 126).
+`scripts/check_deployment_image_digests.py` walks Kubernetes workload kinds (`_POD_PATHS`) in rendered YAML and accepts only `repository@sha256:<64 hex>`; its docstring states that tags and unrendered templates are unsupported. A Compose or Swarm file has no `kind`, so `_check_resource` raises "kind: expected a nonempty string" on it. R017.6 and `tests/deployment/test_deploy_artifacts.py` therefore cannot run the one checker over all three artifacts today. The only tests of the script are `tests/deployment/test_image_digests.py` (Kubernetes fixtures); `tests/deployment/test_arbora_deploy_artifacts.py` checks only that the Compose and Swarm `image` starts with `${ARBORA_IMAGE:?` (lines 83 and 126).
 
 ### Architecture
 
@@ -93,9 +93,9 @@ One script, one `_valid_image`, one exit contract (0 pass, 1 error, at least one
 
 | Target | Image references in the artifact | Pinned in the file today |
 |---|---|---|
-| `deploy/compose/compose.yaml` | One service, `graph-os`: `image: ${GRAPHOS_IMAGE:?set GRAPHOS_IMAGE ...@sha256:<digest>}` (line 21). The engine runs inside the same container; no other service. | No literal digest. Compose refuses to start when the variable is unset; nothing checks that its value carries a digest. |
-| `deploy/swarm/stack.yml` | One service, `graph-os`: the same `${GRAPHOS_IMAGE:?...}` form (line 31). | Same: fail-closed on unset, digest not checked. |
-| `deploy/helm/graph-os` | `graphos.image` serves the `graph-os` container and the `graph-os-daemon` container (`templates/graphos.yaml` lines 62 and 123, via `graph-os.image`); the engine container uses `graph-os.engineImage` (lines 34 and `engine.yaml` 26), which falls back to `graphos.image` when `engine.image.repository` is empty; every `connectors[]` and `components[]` entry renders its own `image` (`extensions.yaml` line 37). | No. `values.yaml` defaults are `tag: replace-me`, `digest: ""`; `_helpers.tpl` renders `repository@digest` only when `digest` is set, otherwise `repository:tag`. Default rendering is therefore tag-based and would fail the checker (the intended fail-safe). |
+| `deploy/compose/compose.yaml` | One service, `arbora`: `image: ${ARBORA_IMAGE:?set ARBORA_IMAGE ...@sha256:<digest>}` (line 21). The engine runs inside the same container; no other service. | No literal digest. Compose refuses to start when the variable is unset; nothing checks that its value carries a digest. |
+| `deploy/swarm/stack.yml` | One service, `arbora`: the same `${ARBORA_IMAGE:?...}` form (line 31). | Same: fail-closed on unset, digest not checked. |
+| `deploy/helm/arbora` | `arbora.image` serves the `arbora` container and the `arbora-daemon` container (`templates/arbora.yaml` lines 62 and 123, via `arbora.image`); the engine container uses `arbora.engineImage` (lines 34 and `engine.yaml` 26), which falls back to `arbora.image` when `engine.image.repository` is empty; every `connectors[]` and `components[]` entry renders its own `image` (`extensions.yaml` line 37). | No. `values.yaml` defaults are `tag: replace-me`, `digest: ""`; `_helpers.tpl` renders `repository@digest` only when `digest` is set, otherwise `repository:tag`. Default rendering is therefore tag-based and would fail the checker (the intended fail-safe). |
 
 Environment profiles: `prod.yaml` and `test.yaml` declare `tag_policy: digest-pinned`; `dev.yaml` declares `floating-tag` (non-prod only). The profile policy and the artifact check are separate; this design makes the checker enforce it per target.
 
@@ -109,14 +109,14 @@ Dashboard parity, artifact authentication and the agent-utilities export are res
 
 ### D5 systemd target (DECIDED: keep unsupported)
 
-Evidence: all three profiles under `deploy/environments/` set `target.orchestrator: kubernetes` (`dev.yaml` line 25, `test.yaml` 26, `prod.yaml` 32), `genesis_environments.py` validates the orchestrator against `genesis.yaml` `run_plan.orchestrators`, and the production profile is Helm. The only systemd material in the repository is guidance: `graph_os/skills/graphos-genesis/references/bare-metal.md` and a Quadlet note in `compose-and-podman.md`; neither is a rendered artifact under `deploy/`. Decision: keep systemd unsupported as a placement artifact. A new artifact would need its own renderer or hand-kept unit file, a drift gate and a first-boot test with no profile that uses it, which is the parallel functionality the lane rules forbid. The reference stays operator guidance. Reopen condition: an `environments/*.yaml` profile with a non-kubernetes bare-metal orchestrator appears. Alternative: add `deploy/systemd/graph-os.service` with a unit-lint test; rejected for lack of a consumer.
+Evidence: all three profiles under `deploy/environments/` set `target.orchestrator: kubernetes` (`dev.yaml` line 25, `test.yaml` 26, `prod.yaml` 32), `genesis_environments.py` validates the orchestrator against `genesis.yaml` `run_plan.orchestrators`, and the production profile is Helm. The only systemd material in the repository is guidance: `arbora/skills/arbora-genesis/references/bare-metal.md` and a Quadlet note in `compose-and-podman.md`; neither is a rendered artifact under `deploy/`. Decision: keep systemd unsupported as a placement artifact. A new artifact would need its own renderer or hand-kept unit file, a drift gate and a first-boot test with no profile that uses it, which is the parallel functionality the lane rules forbid. The reference stays operator guidance. Reopen condition: an `environments/*.yaml` profile with a non-kubernetes bare-metal orchestrator appears. Alternative: add `deploy/systemd/arbora.service` with a unit-lint test; rejected for lack of a consumer.
 
 R017.6 therefore refuses `systemd` with a typed `unsupported_target` carrying the pointer to the bare-metal reference, and R017.15 tests that.
 
 ## GRAPHOS-DEPLOY-R018 small deployment shares one engine
 
 Data flow: server start → `detect_composition` probe → `start_composed_services` starts or attaches → shared engine.
-Attach point: graph_os/mcp_server/composition.py:43 (`detect_composition`) and :230 (`start_composed_services`).
+Attach point: arbora/mcp_server/composition.py:43 (`detect_composition`) and :230 (`start_composed_services`).
 Reused: the existing composition detection and the in-process path of `GRAPHOS-DEPLOY-R017.7`. The single-binary engine build is an engine row.
 Decision: probe the endpoint, then start. Rejected alternative: a lock file per host, which goes stale after a crash.
 
@@ -135,7 +135,7 @@ Required components cannot be omitted. Reuse requires an endpoint and a compatib
 Sort choices by component ID and reject duplicates. Bind their canonical digest to the existing confirmed engine request.
 Operator choices constrain engine placement and assembly; they never independently authorize an effect.
 Keep R017's missing deployment-question, assembly and confirmation producers as explicit prerequisites.
-Use the existing SDK governed effect contract for source changes; GraphOS checks the approved bindings and returned receipts.
+Use the existing SDK governed effect contract for source changes; Arbora checks the approved bindings and returned receipts.
 
 Reuse permits read-only connectivity and compatibility probes plus local reference configuration.
 It forbids remote configuration, installation, replacement, restart, deletion, credential rotation and deployment effects.
@@ -157,7 +157,7 @@ Do not stop reused resources on rollback or shutdown. Reconcile uncertain effect
 | `compose-daemonless-rootful` | `compose` | `daemonless` | `rootful` | Reuse `deploy/compose/compose.yaml`; qualify the declared runtime and privilege. |
 | `compose-daemonless-rootless` | `compose` | `daemonless` | `rootless` | Reuse `deploy/compose/compose.yaml`; qualify the declared runtime and privilege. |
 | `swarm-managed-rootful` | `swarm` | `daemon_managed_cluster` | `rootful` | Reuse `deploy/swarm/stack.yml`; require scoped cluster authority and admitted deployment. |
-| `kubernetes-namespace` | `kubernetes` | `kubernetes_api` | `namespace_service_account` | Reuse `deploy/helm/graph-os`; preserve identity, secrets, mounts and first-boot acceptance. |
+| `kubernetes-namespace` | `kubernetes` | `kubernetes_api` | `namespace_service_account` | Reuse `deploy/helm/arbora`; preserve identity, secrets, mounts and first-boot acceptance. |
 
 Each profile binds the exact `(target, runtime, privilege)` triple and its cell ID; no field may be implicit.
 For local containers, privilege describes the runtime's rootful or rootless mode, not merely the workload user ID.

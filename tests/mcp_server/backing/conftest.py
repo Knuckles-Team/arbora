@@ -1,4 +1,4 @@
-"""Shared fixtures for graph-os's backing-tool tests."""
+"""Shared fixtures for arbora's backing-tool tests."""
 
 from __future__ import annotations
 
@@ -8,9 +8,9 @@ import pytest
 
 
 @pytest.fixture
-def graphos_harness_host() -> Iterator[None]:
-    """graph-os registered as the harness host, as the served process does."""
-    from graph_os.mcp_server.harness_host import (
+def arbora_harness_host() -> Iterator[None]:
+    """arbora registered as the harness host, as the served process does."""
+    from arbora.mcp_server.harness_host import (
         register_harness_host,
         unregister_harness_host,
     )

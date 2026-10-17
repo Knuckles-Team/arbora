@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from graph_os.fleet_tool_call import (
+from arbora.fleet_tool_call import (
     FleetToolCallError,
     call_fleet_tool,
     run_coroutine,

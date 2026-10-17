@@ -15,15 +15,15 @@ import httpx
 import pytest
 from fastapi import FastAPI, HTTPException
 
-from graph_os.a2a import mcp as a2a_mcp
-from graph_os.a2a.application import AmbientA2AAuthenticator
-from graph_os.a2a.service import A2AService
-from graph_os.api.contracts.session import current_session, use_session
-from graph_os.api.registry import Surface
-from graph_os.core.settings import runtime_config as config
-from graph_os.mcp_server import runtime as mcp_runtime
-from graph_os.security import request_identity
-from graph_os.security.actor_context import (
+from arbora.a2a import mcp as a2a_mcp
+from arbora.a2a.application import AmbientA2AAuthenticator
+from arbora.a2a.service import A2AService
+from arbora.api.contracts.session import current_session, use_session
+from arbora.api.registry import Surface
+from arbora.core.settings import runtime_config as config
+from arbora.mcp_server import runtime as mcp_runtime
+from arbora.security import request_identity
+from arbora.security.actor_context import (
     ActorContext,
     ActorType,
     current_actor,
@@ -45,7 +45,7 @@ pytestmark = pytest.mark.spec("GRAPHOS-A2A-R006.2.1.1")
 
 def fixture(monkeypatch: pytest.MonkeyPatch, *, failure: str = "") -> Any:
     # Existing configuration only; AU's actual public session minter executes.
-    monkeypatch.setattr(config, "auth_jwt_audience", "graph-os-fixture")
+    monkeypatch.setattr(config, "auth_jwt_audience", "arbora-fixture")
     monkeypatch.setattr(config, "kg_policy_version", "policy:fixture")
     verified: list[Any] = []
     requests: list[Any] = []
@@ -186,7 +186,7 @@ def test_ambient_session_and_forged_state_never_replace_exact_bearer(
                 json={
                     "jsonrpc": "2.0",
                     "id": "foreign-request",
-                    "method": "graphos.op/invoke",
+                    "method": "arbora.op/invoke",
                     "params": {
                         "op": "example.write",
                         "params": {},

@@ -1,7 +1,7 @@
 """Optional cross-repository receipt: real sink, HTTP adapter and mounted TUI.
 
 Run with both reviewed source trees and their provisioned dependencies. Ordinary
-GraphOS-only validation skips this receipt rather than claiming terminal proof.
+Arbora-only validation skips this receipt rather than claiming terminal proof.
 """
 # spec: GRAPHOS-HOST-R009.8
 
@@ -65,7 +65,7 @@ async def test_restarted_source_metadata_and_rotation_gap_in_terminal(
     import time
     from dataclasses import replace
 
-    from graph_os.agent_host.log_sink import WorkspaceLogSink
+    from arbora.agent_host.log_sink import WorkspaceLogSink
     from tests.agent_host.test_log_replay import access_for
 
     owners = ControlledOwners()

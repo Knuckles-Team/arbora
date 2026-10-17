@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from graph_os.fleet.scaling.scaling_intent_reconciler import (
+from arbora.fleet.scaling.scaling_intent_reconciler import (
     AllowScalePolicy,
     BreakGlassAuthorization,
     MemoryScaleIntentLedger,

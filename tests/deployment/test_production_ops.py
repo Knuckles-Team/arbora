@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from graph_os.deployment import production_ops
+from arbora.deployment import production_ops
 
 
 @pytest.mark.parametrize(
@@ -99,8 +99,8 @@ def test_recovery_manifest_requires_portable_admin_state(tmp_path) -> None:
 
 def test_production_cli_failure_is_opaque(tmp_path, capsys, monkeypatch) -> None:
     for name in (
-        "GRAPH_OS_BACKUP_PRINCIPAL",
-        "GRAPH_OS_BACKUP_TENANT",
+        "ARBORA_BACKUP_PRINCIPAL",
+        "ARBORA_BACKUP_TENANT",
         "AUTH_JWT_AUDIENCE",
         "KG_POLICY_VERSION",
     ):

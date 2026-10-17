@@ -6,7 +6,7 @@ from typing import Literal, Optional, Union
 
 import pytest
 
-from graph_os.core.agent_config_admin import _type_name
+from arbora.core.agent_config_admin import _type_name
 
 
 def test_union_type_names_are_spelled_out_on_every_python() -> None:

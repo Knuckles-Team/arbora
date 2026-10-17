@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from graph_os.messaging import lease as intake_lease
+from arbora.messaging import lease as intake_lease
 
 
 class FakeWorkItems:

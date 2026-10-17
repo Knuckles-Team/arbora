@@ -11,8 +11,8 @@ from typing import Any
 
 import pytest
 
-from graph_os.api.ops import work
-from graph_os.api.registry import Effect, Registry, Surface
+from arbora.api.ops import work
+from arbora.api.registry import Effect, Registry, Surface
 from tests.api._ops_support import service_context
 
 

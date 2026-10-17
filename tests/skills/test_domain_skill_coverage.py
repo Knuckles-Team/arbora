@@ -2,9 +2,9 @@
 
 from pathlib import Path
 
-from graph_os.mcp_server.backing.skill_coverage import compute_coverage, discover_skills
+from arbora.mcp_server.backing.skill_coverage import compute_coverage, discover_skills
 
-SKILLS_ROOT = Path(__file__).resolve().parents[2] / "graph_os" / "skills"
+SKILLS_ROOT = Path(__file__).resolve().parents[2] / "arbora" / "skills"
 
 
 def test_every_verb_has_explicit_domain_skill_coverage() -> None:

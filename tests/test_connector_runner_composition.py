@@ -1,4 +1,4 @@
-"""GraphOS is the sole authenticated composition root for SDK runners."""
+"""Arbora is the sole authenticated composition root for SDK runners."""
 
 from __future__ import annotations
 
@@ -12,12 +12,12 @@ from agent_connector_sdk.credentials.references import SecretReference
 from agent_connector_sdk.runner.descriptors import RunnerSettings
 from agent_connector_sdk.sinks.epistemic_graph import PackImportAuthorityResolver
 
-from graph_os.connector_runner import (
+from arbora.connector_runner import (
     ConnectorRunnerComposition,
     ConnectorRunnerConfig,
     ConnectorRunnerNotReadyError,
 )
-from graph_os.epistemic import AuthorityError, ClientContext, ConnectClient
+from arbora.epistemic import AuthorityError, ClientContext, ConnectClient
 
 
 class Resolver:
@@ -65,10 +65,10 @@ def config(tmp_path: Path, **overrides: object) -> ConnectorRunnerConfig:
 
 def context(*, scopes: tuple[str, ...] = ("source:ingest",)) -> ClientContext:
     return ClientContext(
-        principal="service:graph-os",
+        principal="service:arbora",
         tenant="tenant-a",
         audience="epistemic-graph",
-        agent_id="service:graph-os",
+        agent_id="service:arbora",
         roles=("connector-runner",),
         scopes=scopes,
         policy_version="policy-7",
@@ -238,10 +238,10 @@ async def test_tenant_graph_binding_is_not_reused_across_tenants(
         pass
 
     other = ClientContext(
-        principal="service:graph-os",
+        principal="service:arbora",
         tenant="tenant-b",
         audience="epistemic-graph",
-        agent_id="service:graph-os",
+        agent_id="service:arbora",
         roles=("connector-runner",),
         scopes=("source:ingest",),
         policy_version="policy-7",

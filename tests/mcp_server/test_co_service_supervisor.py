@@ -1,4 +1,4 @@
-"""Focused tests for the GraphOS-owned co-service supervisor."""
+"""Focused tests for the Arbora-owned co-service supervisor."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from urllib.request import urlopen
 
 import pytest
 
-from graph_os.mcp_server.composition import CoServiceSupervisor
+from arbora.mcp_server.composition import CoServiceSupervisor
 
 
 def test_native_supervisor_preserves_ambient_context() -> None:

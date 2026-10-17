@@ -1,6 +1,6 @@
-"""Tests for graph_os.gateway.registry — migrated from service-dashboard-core."""
+"""Tests for arbora.gateway.registry — migrated from service-dashboard-core."""
 
-from graph_os.gateway.registry import Registry, get_registry
+from arbora.gateway.registry import Registry, get_registry
 
 
 def test_registry_singleton():

@@ -7,8 +7,8 @@ broad grant, missing conformance, or missing rollback proof blocks approval.
 
 from __future__ import annotations
 
-from graph_os.control_plane.admission.models import AdmissionIntent
-from graph_os.control_plane.admission.service import plan_admission
+from arbora.control_plane.admission.models import AdmissionIntent
+from arbora.control_plane.admission.service import plan_admission
 
 
 def _ready_intent(**overrides: object) -> AdmissionIntent:

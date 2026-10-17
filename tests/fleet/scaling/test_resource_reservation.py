@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from graph_os.fleet.scaling.resource_reservation import (
+from arbora.fleet.scaling.resource_reservation import (
     EngineNativeReservationTransport,
     NativeReservationUnavailable,
 )

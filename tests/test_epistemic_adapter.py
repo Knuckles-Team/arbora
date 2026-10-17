@@ -1,4 +1,4 @@
-"""Focused contract tests for GraphOS's direct epistemic-graph adapter."""
+"""Focused contract tests for Arbora's direct epistemic-graph adapter."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from typing import Any, cast
 
 import pytest
 
-from graph_os import epistemic as adapter
+from arbora import epistemic as adapter
 from tests._support import Actor
 
 
@@ -50,7 +50,7 @@ class Topology:
 
 
 class Client:
-    """A fake structurally satisfying ``graph_os.epistemic.EpistemicClient``."""
+    """A fake structurally satisfying ``arbora.epistemic.EpistemicClient``."""
 
     def __init__(self, graph: str, context: Mapping[str, Any]) -> None:
         self.graph = graph
@@ -124,7 +124,7 @@ def test_pool_reuses_one_client_per_graph_and_rebinds_context() -> None:
             # ``EpistemicClient`` is the adapter's narrow production surface
             # and does not declare ``context``; this test's own fake tracks
             # it for assertions, so the known concrete fake type is restored.
-            assert cast(Client, client).context["principal"] == "service:graph-os"
+            assert cast(Client, client).context["principal"] == "service:arbora"
         async with pool.bind(second, "tenant:a:graph") as same_client:
             assert same_client is client
             assert cast(Client, same_client).context["principal"] == "service:worker"

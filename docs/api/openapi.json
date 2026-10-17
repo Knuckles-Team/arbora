@@ -34,7 +34,7 @@
     },
     "responses": {
       "Shared20fd372f894728c720ea9fb2cbe02179faaa483cd81a534d03182c99f04e7fee": {
-        "description": "GraphOS error envelope"
+        "description": "Arbora error envelope"
       },
       "Shared453a4e3ac543fa587a9d581a42f37eb521106d830c51a0e75fd4f2c604cd4e09": {
         "content": {
@@ -1847,7 +1847,7 @@
     }
   },
   "info": {
-    "title": "GraphOS API",
+    "title": "Arbora API",
     "version": "1"
   },
   "openapi": "3.1.0",

@@ -18,16 +18,16 @@ from typing import Any
 import pytest
 from agent_utilities import host_ports
 
-from graph_os import agent_runs
-from graph_os.a2a.authority import WorkItemA2AAuthority
-from graph_os.a2a.routing import OrchestratorA2ARouter
-from graph_os.a2a.service import A2AService
-from graph_os.api.invoke import OpResult, invoke
-from graph_os.api.invoke.executor import BoundOperationRuntime
-from graph_os.api.ops import agents
-from graph_os.api.registry import Registry, Surface
-from graph_os.core.settings import runtime_config
-from graph_os.mcp_server import runtime as mcp_runtime
+from arbora import agent_runs
+from arbora.a2a.authority import WorkItemA2AAuthority
+from arbora.a2a.routing import OrchestratorA2ARouter
+from arbora.a2a.service import A2AService
+from arbora.api.invoke import OpResult, invoke
+from arbora.api.invoke.executor import BoundOperationRuntime
+from arbora.api.ops import agents
+from arbora.api.registry import Registry, Surface
+from arbora.core.settings import runtime_config
+from arbora.mcp_server import runtime as mcp_runtime
 from tests.a2a.test_operation_bridge import session
 from tests.api._support import make_verified_caller
 from tests.api.test_invoke_contract import FixtureRuntime, setup_services
@@ -165,14 +165,14 @@ def test_served_agents_run_executes_through_a2a_work_items_and_the_harness(
 def test_served_process_runs_an_agent_over_its_http_a2a_route(
     engine: FakeEngine, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Boot the served factory the ``graph-os`` entry point runs, then POST A2A."""
+    """Boot the served factory the ``arbora`` entry point runs, then POST A2A."""
     import httpx
 
-    import graph_os.a2a.mcp as a2a_mcp
-    from graph_os.security import request_identity
-    from graph_os.security.actor_context import ActorContext, ActorType
+    import arbora.a2a.mcp as a2a_mcp
+    from arbora.security import request_identity
+    from arbora.security.actor_context import ActorContext, ActorType
 
-    monkeypatch.setattr(runtime_config, "auth_jwt_audience", "graph-os-fixture")
+    monkeypatch.setattr(runtime_config, "auth_jwt_audience", "arbora-fixture")
     monkeypatch.setattr(runtime_config, "kg_policy_version", "policy:fixture")
 
     async def credential_owner(credential: str) -> ActorContext:

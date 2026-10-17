@@ -74,16 +74,16 @@ def graph_write_and_engine(tmp_path, monkeypatch):
     engine.backend = MagicMock()
     engine.backend.read_only = False
     with patch(
-        "graph_os.mcp_server.backing.server_factory.create_mcp_server",
+        "arbora.mcp_server.backing.server_factory.create_mcp_server",
         return_value=(None, mock_mcp, []),
     ):
-        with patch("graph_os.mcp_server.runtime._get_engine", return_value=engine):
-            from graph_os.mcp_server.runtime import _build_server
+        with patch("arbora.mcp_server.runtime._get_engine", return_value=engine):
+            from arbora.mcp_server.runtime import _build_server
 
             _build_server(bootstrap=False)
 
-    from graph_os.mcp_server import runtime
-    from graph_os.mcp_server.backing import engine_routing
+    from arbora.mcp_server import runtime
+    from arbora.mcp_server.backing import engine_routing
 
     registry = MagicMock()
     registry.is_writable.return_value = True
@@ -93,7 +93,7 @@ def graph_write_and_engine(tmp_path, monkeypatch):
         lambda _t: ([("primary", engine)], {}, False),
     )
     monkeypatch.setattr(engine_routing, "get_connection_registry", lambda: registry)
-    # The action-routed tools register on graph-os's private backing server
+    # The action-routed tools register on arbora's private backing server
     # and populate the shared dispatch core the intent tools route through.
     return runtime.REGISTERED_TOOLS["graph_write"], engine
 

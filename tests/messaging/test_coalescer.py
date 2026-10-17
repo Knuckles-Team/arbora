@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from graph_os.messaging.coalescer import BurstCoalescer
+from arbora.messaging.coalescer import BurstCoalescer
 
 pytestmark = pytest.mark.asyncio
 

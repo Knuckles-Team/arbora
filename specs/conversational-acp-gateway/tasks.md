@@ -2,7 +2,7 @@
 
 Governing [spec](spec.md) and [plan](plan.md).
 
-- [ ] Inventory existing `graph_os.identity` principal/session types and status/doctor reporting; record exact reusable interfaces.
+- [ ] Inventory existing `arbora.identity` principal/session types and status/doctor reporting; record exact reusable interfaces.
 - [x] `R001.1`: implement the typed ACP session-policy model and admission check (unauthenticated, over-limit and `chat_adapter_unavailable` refusals) with tests. No transport wiring in this slice.
 - [ ] `R001.2`: wire the admission check behind the actual ACP endpoint once agent-utilities' chat adapter is reachable.
 - [ ] `R001.3`: wire idle/expiry policy into status/doctor reporting.

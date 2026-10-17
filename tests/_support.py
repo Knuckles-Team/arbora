@@ -1,7 +1,7 @@
-"""Shared fakes for tests exercising ``graph_os.epistemic`` adapters directly.
+"""Shared fakes for tests exercising ``arbora.epistemic`` adapters directly.
 
 ``Actor`` is the one fake structurally satisfying
-``graph_os.epistemic.VerifiedActor`` that every direct-adapter test in this
+``arbora.epistemic.VerifiedActor`` that every direct-adapter test in this
 tree authenticates as; duplicating the dataclass per module just lets the
 fake drift from the real protocol it stands in for.
 """
@@ -12,14 +12,14 @@ import threading
 from collections.abc import Iterable
 from dataclasses import dataclass
 
-from graph_os.security.secrets import SecretsBackend
+from arbora.security.secrets import SecretsBackend
 
 
 @dataclass
 class Actor:
-    """A fake structurally satisfying ``graph_os.epistemic.VerifiedActor``."""
+    """A fake structurally satisfying ``arbora.epistemic.VerifiedActor``."""
 
-    actor_id: str = "service:graph-os"
+    actor_id: str = "service:arbora"
     tenant_id: str = "tenant:a"
     roles: Iterable[str] = ("graph-client",)
     authenticated: bool = True

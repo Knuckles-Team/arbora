@@ -1,4 +1,4 @@
-"""Characterize the graph-os WebUI host's live contact-delivery path."""
+"""Characterize the arbora WebUI host's live contact-delivery path."""
 
 from __future__ import annotations
 
@@ -22,9 +22,9 @@ def _export(module: types.ModuleType, name: str, value: object) -> None:
 
 
 def test_webui_host_import_is_lazy() -> None:
-    """The graph-os package remains importable without the optional ag-ui extra."""
-    package = importlib.import_module("graph_os.webui_host")
-    module = importlib.import_module("graph_os.webui_host.webui_co_service")
+    """The arbora package remains importable without the optional ag-ui extra."""
+    package = importlib.import_module("arbora.webui_host")
+    module = importlib.import_module("arbora.webui_host.webui_co_service")
 
     assert package.__all__ == ["compose_web_application", "run_web_ui"]
     assert package.compose_web_application is module.compose_web_application
@@ -40,12 +40,12 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
     """Exercise the moved host seam through app construction and shutdown.
 
     The production imports are intentionally lazy, so this test supplies the
-    same public seams that a graph-os installation resolves at runtime. It
+    same public seams that a arbora installation resolves at runtime. It
     verifies that the moved host still combines AU's context/delegation
     helpers, the WebUI factory's contact-delivery capability, and the
     supervised Uvicorn lifecycle.
     """
-    module = importlib.import_module("graph_os.webui_host.webui_co_service")
+    module = importlib.import_module("arbora.webui_host.webui_co_service")
     calls: dict[str, Any] = {}
 
     stop_event = __import__("threading").Event()
@@ -75,12 +75,12 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
     monkeypatch.setitem(sys.modules, "uvicorn", uvicorn)
 
     # Keep the real configuration exports for lazily imported host dependencies.
-    from graph_os.core.settings import runtime_config
+    from arbora.core.settings import runtime_config
 
     monkeypatch.setattr(runtime_config, "host", "127.0.0.1")
     monkeypatch.setattr(runtime_config, "port", 8000)
 
-    governance = types.ModuleType("graph_os.webui_host.contact_governance")
+    governance = types.ModuleType("arbora.webui_host.contact_governance")
 
     def contact_delivery_factory_kwargs(
         app_factory: object, sync_runner: object
@@ -94,11 +94,11 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
     )
     monkeypatch.setitem(
         sys.modules,
-        "graph_os.webui_host.contact_governance",
+        "arbora.webui_host.contact_governance",
         governance,
     )
 
-    mcp_delegation = types.ModuleType("graph_os.webui_host.mcp_delegation")
+    mcp_delegation = types.ModuleType("arbora.webui_host.mcp_delegation")
     _export(
         mcp_delegation,
         "webui_mcp_delegation_helpers",
@@ -106,11 +106,11 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
     )
     monkeypatch.setitem(
         sys.modules,
-        "graph_os.webui_host.mcp_delegation",
+        "arbora.webui_host.mcp_delegation",
         mcp_delegation,
     )
 
-    voice_delegation = types.ModuleType("graph_os.webui_host.voice_delegation")
+    voice_delegation = types.ModuleType("arbora.webui_host.voice_delegation")
     _export(
         voice_delegation,
         "webui_voice_delegation_helpers",
@@ -118,7 +118,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
     )
     monkeypatch.setitem(
         sys.modules,
-        "graph_os.webui_host.voice_delegation",
+        "arbora.webui_host.voice_delegation",
         voice_delegation,
     )
 
@@ -183,8 +183,8 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
     monkeypatch.setitem(sys.modules, "agent_webui.server", server_module)
 
     service = object()
-    from graph_os.browser_control import browser_control_service
-    from graph_os.mcp_server import runtime
+    from arbora.browser_control import browser_control_service
+    from arbora.mcp_server import runtime
 
     def browser_control_factory_kwargs(
         app_factory: object,
@@ -203,7 +203,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         "browser_control_factory_kwargs",
         browser_control_factory_kwargs,
     )
-    monkeypatch.setattr(runtime, "_get_engine", lambda: "graph-os-engine")
+    monkeypatch.setattr(runtime, "_get_engine", lambda: "arbora-engine")
     import pydantic_ai
 
     def _agent(model: object) -> str:
@@ -232,7 +232,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
     assert calls["contact_factory"] is create_agent_web_app
     assert callable(calls["contact_runner"])
     assert calls["browser_factory"] is create_agent_web_app
-    assert calls["browser_engine"] == "graph-os-engine"
+    assert calls["browser_engine"] == "arbora-engine"
     assert callable(calls["browser_runner"])
     assert calls["browser_revalidator"] is revalidate_browser_control_session
     assert calls["uvicorn_config"] == {
@@ -245,11 +245,11 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
     assert calls["server"].should_exit is True
 
 
-def test_graph_os_application_composer_mounts_native_routes(monkeypatch: Any) -> None:
-    """The injected WebUI seam reaches GraphOS's one REST composition path."""
+def test_arbora_application_composer_mounts_native_routes(monkeypatch: Any) -> None:
+    """The injected WebUI seam reaches Arbora's one REST composition path."""
 
-    module = importlib.import_module("graph_os.webui_host.webui_co_service")
-    from graph_os.gateway import graph_api
+    module = importlib.import_module("arbora.webui_host.webui_co_service")
+    from arbora.gateway import graph_api
 
     app = object()
     calls: list[tuple[object, str]] = []

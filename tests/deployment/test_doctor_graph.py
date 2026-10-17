@@ -1,8 +1,8 @@
-"""graph-os doctor: engine served-tool-family and graph-connection checks.
+"""arbora doctor: engine served-tool-family and graph-connection checks.
 
 Moved from agent-utilities (tests/unit/deployment/test_doctor.py BUG-013 rows
 and tests/unit/deployment/test_doctor_graph_connections.py) when the harness
-was cut; graph-os serves the engine families and owns the connection registry.
+was cut; arbora serves the engine families and owns the connection registry.
 """
 
 from __future__ import annotations
@@ -12,8 +12,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from graph_os.deployment import doctor as D
-from graph_os.deployment import doctor as doctor_module
+from arbora.deployment import doctor as D
+from arbora.deployment import doctor as doctor_module
 
 
 def test_bug013_engine_domains_doctor_fails_closed_on_production_profile(monkeypatch):
@@ -23,10 +23,10 @@ def test_bug013_engine_domains_doctor_fails_closed_on_production_profile(monkeyp
     past it. Reproduces the exact live shape: `engine_tools.ENGINE_DOMAINS`
     degrades to `{}` (its own documented graceful-but-loud fallback) when the
     `epistemic_graph` package is not importable."""
-    from graph_os.mcp_server.backing.tools import engine_tools
+    from arbora.mcp_server.backing.tools import engine_tools
 
     cfg = SimpleNamespace(deployment_profile="single-node-prod")
-    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
+    monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: cfg)
     monkeypatch.setattr(engine_tools, "ENGINE_DOMAINS", {})
 
     result = D._check_engine_domains()
@@ -41,10 +41,10 @@ def test_bug013_engine_domains_doctor_warns_not_fails_on_tiny_profile(monkeypatc
     """`tiny` is the one documented engine-less pre-bootstrap profile — the
     same distinction `_check_config` already draws — so the same absence is a
     `warn`, not a `fail`, there."""
-    from graph_os.mcp_server.backing.tools import engine_tools
+    from arbora.mcp_server.backing.tools import engine_tools
 
     cfg = SimpleNamespace(deployment_profile="tiny")
-    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
+    monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: cfg)
     monkeypatch.setattr(engine_tools, "ENGINE_DOMAINS", {})
 
     result = D._check_engine_domains()
@@ -55,10 +55,10 @@ def test_bug013_engine_domains_doctor_warns_not_fails_on_tiny_profile(monkeypatc
 def test_bug013_engine_domains_doctor_ok_when_domains_registered(monkeypatch):
     """Negative-direction proof: a real, populated registry reports `ok` on
     every profile — this check does not fail a healthy deployment."""
-    from graph_os.mcp_server.backing.tools import engine_tools
+    from arbora.mcp_server.backing.tools import engine_tools
 
     cfg = SimpleNamespace(deployment_profile="enterprise")
-    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
+    monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: cfg)
     monkeypatch.setattr(
         engine_tools, "ENGINE_DOMAINS", {"nodes": ["get_node"], "edges": ["get_edge"]}
     )
@@ -74,11 +74,11 @@ def test_bug013_engine_domains_wired_into_run_doctor_and_fails_the_sweep(monkeyp
     just the standalone check function — proves `engine_domains` is actually
     registered in `CHECKS` and that its `fail` status propagates to the
     overall sweep verdict, exactly like every other doctor check."""
-    from graph_os.mcp_server.backing.tools import engine_tools
+    from arbora.mcp_server.backing.tools import engine_tools
 
     cfg = SimpleNamespace(deployment_profile="single-node-prod")
-    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", lambda: cfg)
-    monkeypatch.setattr("graph_os.core.settings.load_config", lambda: None)
+    monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: cfg)
+    monkeypatch.setattr("arbora.core.settings.load_config", lambda: None)
     monkeypatch.setattr(engine_tools, "ENGINE_DOMAINS", {})
 
     report = D.run_doctor(only=["engine_domains"])
@@ -137,9 +137,9 @@ def test_doctor_probes_kg_connections_only_and_returns_aggregate_metadata(
     monkeypatch,
 ) -> None:
     registry = _Registry()
-    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", _config)
+    monkeypatch.setattr("arbora.core.settings.ArboraConfig", _config)
     monkeypatch.setattr(
-        "graph_os.mcp_server.backing.engine_routing.get_connection_registry",
+        "arbora.mcp_server.backing.engine_routing.get_connection_registry",
         lambda: registry,
     )
 
@@ -170,9 +170,9 @@ def test_doctor_fails_closed_without_leaking_connection_probe_errors(
     monkeypatch,
 ) -> None:
     registry = _Registry(probe_error=True)
-    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", _config)
+    monkeypatch.setattr("arbora.core.settings.ArboraConfig", _config)
     monkeypatch.setattr(
-        "graph_os.mcp_server.backing.engine_routing.get_connection_registry",
+        "arbora.mcp_server.backing.engine_routing.get_connection_registry",
         lambda: registry,
     )
 
@@ -189,9 +189,9 @@ def test_doctor_fails_closed_without_leaking_connection_probe_errors(
 
 def test_doctor_static_check_never_opens_connection_transport(monkeypatch) -> None:
     registry = _Registry(probe_error=True)
-    monkeypatch.setattr("graph_os.core.settings.GraphOSConfig", _config)
+    monkeypatch.setattr("arbora.core.settings.ArboraConfig", _config)
     monkeypatch.setattr(
-        "graph_os.mcp_server.backing.engine_routing.get_connection_registry",
+        "arbora.mcp_server.backing.engine_routing.get_connection_registry",
         lambda: registry,
     )
 

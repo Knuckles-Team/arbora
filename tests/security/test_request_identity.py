@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.security.actor_context import ActorContext
-from graph_os.security.request_identity import (
+from arbora.security.actor_context import ActorContext
+from arbora.security.request_identity import (
     ensure_correlation_id,
     tenant_graph_name,
     validate_carrier_claims,
@@ -35,7 +35,7 @@ def test_carrier_claims_missing_fields_refuse() -> None:
 
 
 def test_unauthenticated_actor_cannot_mint_a_session() -> None:
-    from graph_os.security.request_identity import mint_graph_session
+    from arbora.security.request_identity import mint_graph_session
 
     with pytest.raises(PermissionError):
         mint_graph_session(ActorContext(actor_id="x", authenticated=False))

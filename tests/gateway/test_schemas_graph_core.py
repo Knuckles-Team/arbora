@@ -1,4 +1,4 @@
-"""Tests for `graph_os.gateway.schemas.graph_core` (SCHEMA LANE 3/3).
+"""Tests for `arbora.gateway.schemas.graph_core` (SCHEMA LANE 3/3).
 
 Per model: a realistic currently-valid payload is accepted, an invalid one is
 rejected, and every declared field carries a non-empty description. The
@@ -12,8 +12,8 @@ import inspect
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from graph_os.api.evidence import EvidenceBundle
-from graph_os.gateway.schemas import graph_core as schemas
+from arbora.api.evidence import EvidenceBundle
+from arbora.gateway.schemas import graph_core as schemas
 
 # ── every BaseModel this module defines (used by the blanket description
 #    sweep below) — collected by introspection so a new model added later is
@@ -23,7 +23,7 @@ ALL_MODELS: list[type[BaseModel]] = [
     for _name, obj in vars(schemas).items()
     if inspect.isclass(obj)
     and issubclass(obj, BaseModel)
-    and obj.__module__.startswith("graph_os.gateway.schemas.")
+    and obj.__module__.startswith("arbora.gateway.schemas.")
 ]
 
 

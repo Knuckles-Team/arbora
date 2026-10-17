@@ -2,9 +2,9 @@
 
 CONCEPT:AU-ECO.mcp.cross-process-prompt-harvest — the ``prompt://`` sibling of
 ``test_skill_body_harvest.py``. ``_probe_prompts`` mirrors ``_probe_skills``:
-a fleet prompt is invisible to graph-os's in-process
+a fleet prompt is invisible to arbora's in-process
 ``resolve_prompt_provider_dirs()`` (the fleet package is deliberately not
-co-installed in graph-os's venv), so it can only ever become a ``:Prompt``
+co-installed in arbora's venv), so it can only ever become a ``:Prompt``
 node by reading the body back over the multiplexer's already-open probe
 session. These tests pin the body read, its bounds, and the rule that a body
 which cannot be read produces a NAMED reason rather than a silent gap.
@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.fleet.multiplexer import (
+from arbora.fleet.multiplexer import (
     _MAX_PROMPT_BODY_BYTES,
     MCPMultiplexer,
 )

@@ -6,7 +6,7 @@ import hashlib
 
 import pytest
 
-from graph_os.deployment.config_generator import (
+from arbora.deployment.config_generator import (
     PROCESS_IDENTITY_ROLES,
     generate_engine_admission,
 )
@@ -14,23 +14,23 @@ from graph_os.deployment.config_generator import (
 
 def test_engine_admission_binds_one_principal_and_one_request_context() -> None:
     admission = generate_engine_admission(
-        principal="graph-os-process",
-        audience="graph-os",
+        principal="arbora-process",
+        audience="arbora",
         tenant="acme",
         policy_version="policy-1",
     )
     engine = admission["engine_environment"]
-    assert engine["EPISTEMIC_GRAPH_AUDIENCE"] == "graph-os"
+    assert engine["EPISTEMIC_GRAPH_AUDIENCE"] == "arbora"
     assert engine["EPISTEMIC_GRAPH_TENANT"] == "acme"
     assert engine["EPISTEMIC_GRAPH_POLICY_VERSION"] == "policy-1"
-    assert list(engine["EPISTEMIC_GRAPH_SIGNER_KEYS_SHAPE"]) == ["graph-os-process"]
-    digest = hashlib.sha256(b"graph-os-process").hexdigest()
+    assert list(engine["EPISTEMIC_GRAPH_SIGNER_KEYS_SHAPE"]) == ["arbora-process"]
+    digest = hashlib.sha256(b"arbora-process").hexdigest()
     assert engine["EPISTEMIC_GRAPH_CONNECTOR_PACK_IMPORTERS"] == (
         f"*=principal:sha256:{digest}"
     )
     assert engine["GRAPH_SERVICE_AUTH_SECRET"].startswith("secret://")
-    assert admission["graph_os_config"] == {
-        "AUTH_JWT_AUDIENCE": "graph-os",
+    assert admission["arbora_config"] == {
+        "AUTH_JWT_AUDIENCE": "arbora",
         "KG_POLICY_VERSION": "policy-1",
         "MCP_HTTP_ALLOWED_PRIVATE_HOSTS": "",
     }
@@ -55,7 +55,7 @@ def test_engine_admission_names_private_connector_hosts() -> None:
         policy_version="v",
         allowed_private_hosts=["connector-a.example", "connector-b.example"],
     )
-    assert admission["graph_os_config"]["MCP_HTTP_ALLOWED_PRIVATE_HOSTS"] == (
+    assert admission["arbora_config"]["MCP_HTTP_ALLOWED_PRIVATE_HOSTS"] == (
         "connector-a.example,connector-b.example"
     )
 
@@ -65,7 +65,7 @@ def test_engine_admission_cli_repeats_the_private_host_option(
 ) -> None:
     import json
 
-    from graph_os.deployment.cli import main
+    from arbora.deployment.cli import main
 
     assert (
         main(
@@ -82,4 +82,4 @@ def test_engine_admission_cli_repeats_the_private_host_option(
         == 0
     )
     out = json.loads(capsys.readouterr().out)
-    assert out["graph_os_config"]["MCP_HTTP_ALLOWED_PRIVATE_HOSTS"] == "a.svc,b.svc"
+    assert out["arbora_config"]["MCP_HTTP_ALLOWED_PRIVATE_HOSTS"] == "a.svc,b.svc"

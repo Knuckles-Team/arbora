@@ -8,8 +8,8 @@ from typing import Any, cast
 
 import pytest
 
-from graph_os import semantic_content
-from graph_os.semantic_content import provision_semantic_content
+from arbora import semantic_content
+from arbora.semantic_content import provision_semantic_content
 
 
 @pytest.mark.asyncio
@@ -41,25 +41,25 @@ async def test_provisioning_imports_and_attaches_each_provider_once(
         return f"reproject:{connector}"
 
     monkeypatch.setattr(
-        "graph_os.semantic_content.provision_connector_content", provision
+        "arbora.semantic_content.provision_connector_content", provision
     )
 
     receipts = await provision_semantic_content(
-        (provider("graph-os"), provider("agent-utilities")),
+        (provider("arbora"), provider("agent-utilities")),
         sink=cast(Any, "verified-sink"),
         reproject_pack=reproject,
         attach_pack=attach,
     )
 
-    assert imported == ["graph-os", "agent-utilities"]
+    assert imported == ["arbora", "agent-utilities"]
     assert reprojected == imported
     assert attached == imported
     assert [receipt.import_outcome.pack_digest for receipt in receipts] == [
-        "sha256:graph-os",
+        "sha256:arbora",
         "sha256:agent-utilities",
     ]
     assert [receipt.reproject_receipt for receipt in receipts] == [
-        "reproject:graph-os",
+        "reproject:arbora",
         "reproject:agent-utilities",
     ]
 
@@ -71,7 +71,7 @@ async def test_duplicate_connector_provider_fails_before_import(
     calls = 0
 
     def provider() -> Any:
-        return SimpleNamespace(connector="graph-os")
+        return SimpleNamespace(connector="arbora")
 
     async def provision(content: Any, *, sink: Any) -> Any:
         nonlocal calls
@@ -79,7 +79,7 @@ async def test_duplicate_connector_provider_fails_before_import(
         return content, sink
 
     monkeypatch.setattr(
-        "graph_os.semantic_content.provision_connector_content", provision
+        "arbora.semantic_content.provision_connector_content", provision
     )
 
     async def reproject(connector: str) -> None:
@@ -105,7 +105,7 @@ async def test_readiness_requires_current_projected_attached_pack_heads() -> Non
             head=SimpleNamespace(record_id=f"record:{connector}"),
             projection=SimpleNamespace(projection="applied", graph="pack__" + "d" * 64),
         )
-        for connector in ("graph-os", "agent-utilities")
+        for connector in ("arbora", "agent-utilities")
     }
     sources = tuple(
         SimpleNamespace(
@@ -128,7 +128,7 @@ async def test_readiness_requires_current_projected_attached_pack_heads() -> Non
         client=object(),
         tenant_id="tenant-a",
         graph="tenant-a",
-        connectors=("graph-os", "agent-utilities"),
+        connectors=("arbora", "agent-utilities"),
         schema_reader=list_schema,
         status_reader=status,
     )
@@ -140,10 +140,10 @@ async def test_readiness_fails_closed_on_stale_attachment() -> None:
         return SimpleNamespace(
             dynamic_sources=(
                 SimpleNamespace(
-                    source_id="pack:graph-os",
+                    source_id="pack:arbora",
                     origin=SimpleNamespace(
                         origin="pack",
-                        connector="graph-os",
+                        connector="arbora",
                         record_id="record:old",
                     ),
                     shapes_sha256="ab" * 32,
@@ -164,7 +164,7 @@ async def test_readiness_fails_closed_on_stale_attachment() -> None:
             client=object(),
             tenant_id="tenant-a",
             graph="tenant-a",
-            connectors=("graph-os",),
+            connectors=("arbora",),
             schema_reader=list_schema,
             status_reader=status,
         )

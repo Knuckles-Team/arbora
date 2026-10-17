@@ -2,9 +2,9 @@
 
 import pytest
 
-from graph_os.identity.composition import IdentityPorts, build_identity_ports
-from graph_os.identity.engine import IdentityUnavailable, Resolution
-from graph_os.identity.ports import CredentialState, SessionState
+from arbora.identity.composition import IdentityPorts, build_identity_ports
+from arbora.identity.engine import IdentityUnavailable, Resolution
+from arbora.identity.ports import CredentialState, SessionState
 
 from .test_engine_resolution import resolution_value
 

@@ -1,18 +1,18 @@
-"""Tests for graph_os.gateway.config — migrated from service-dashboard-core."""
+"""Tests for arbora.gateway.config — migrated from service-dashboard-core."""
 
 import json
 from pathlib import Path
 
 import pytest
 
-from graph_os.gateway.config import ConfigManager
-from graph_os.gateway.models import (
+from arbora.gateway.config import ConfigManager
+from arbora.gateway.models import (
     DashboardLayout,
     ServiceCategory,
     ServiceConfig,
     ServiceGroup,
 )
-from graph_os.gateway.widgets.base import BaseWidget
+from arbora.gateway.widgets.base import BaseWidget
 
 
 class _URLWidget(BaseWidget):
@@ -37,7 +37,7 @@ def test_widget_url_is_required_and_resolves_explicit_config():
 
 def test_widget_url_resolves_process_configuration(monkeypatch):
     monkeypatch.setattr(
-        "graph_os.gateway.widgets.base.setting",
+        "arbora.gateway.widgets.base.setting",
         lambda key, default="": (
             "https://service.example.test"
             if key == "CONFIGURED_SERVICE_URL"
@@ -106,9 +106,9 @@ def test_auto_discover(tmp_path, monkeypatch):
     )
 
     # Patch path functions to use tmp_path
-    monkeypatch.setattr("graph_os.gateway.config.mcp_config_path", lambda: mcp_config)
+    monkeypatch.setattr("arbora.gateway.config.mcp_config_path", lambda: mcp_config)
     monkeypatch.setattr(
-        "graph_os.gateway.config.services_config_path",
+        "arbora.gateway.config.services_config_path",
         lambda: tmp_path / "services.yaml",
     )
 

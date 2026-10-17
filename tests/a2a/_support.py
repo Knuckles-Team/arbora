@@ -2,13 +2,13 @@
 
 from fastapi import FastAPI
 
-from graph_os.a2a.application import AmbientA2AAuthenticator, create_a2a_application
-from graph_os.a2a.service import A2AService
-from graph_os.api.http.auth import (
+from arbora.a2a.application import AmbientA2AAuthenticator, create_a2a_application
+from arbora.a2a.service import A2AService
+from arbora.api.http.auth import (
     AmbientHTTPAuthenticator,
     verified_bearer_session_for_request,
 )
-from graph_os.api.invoke.pipeline import InvokeServices
+from arbora.api.invoke.pipeline import InvokeServices
 from tests.a2a.test_application import Authority, Router
 
 

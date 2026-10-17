@@ -17,15 +17,15 @@ import httpx
 import pytest
 import uvicorn
 
-from graph_os.agent_host import build_agent_host_app
-from graph_os.agent_host.log_access import (
+from arbora.agent_host import build_agent_host_app
+from arbora.agent_host.log_access import (
     HostLogAccess,
     HostLogBatch,
     HostLogRecord,
     WorkspaceLogGrant,
 )
-from graph_os.identity.engine import Resolution
-from graph_os.identity.ports import SessionState
+from arbora.identity.engine import Resolution
+from arbora.identity.ports import SessionState
 
 
 def state(tenant: str, principal: str, session: str) -> SessionState:

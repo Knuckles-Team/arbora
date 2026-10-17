@@ -11,7 +11,7 @@ from typing import Any
 import pytest
 import yaml
 
-CHART = Path(__file__).resolve().parents[2] / "deploy" / "helm" / "graph-os"
+CHART = Path(__file__).resolve().parents[2] / "deploy" / "helm" / "arbora"
 NAMESPACE = "extension-fixture"
 LOCAL_PEER = {
     "namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": NAMESPACE}}
@@ -79,7 +79,7 @@ def _values(
 ) -> dict[str, Any]:
     values: dict[str, Any] = {
         "imagePullSecrets": pull_secrets,
-        "graphos": {"image": {"digest": "sha256:" + "b" * 64}},
+        "arbora": {"image": {"digest": "sha256:" + "b" * 64}},
         "engine": {"placement": "child" if mode == "child" else "sidecar"},
         "networkPolicy": {"ingressFrom": [INGRESS_PEER]},
         "connectors": [],
@@ -102,10 +102,10 @@ def _assert_extension_pods(
     pull_secrets: list[dict[str, str]],
 ) -> None:
     deployments = {
-        document["metadata"]["labels"]["graph-os.extension/name"]: document
+        document["metadata"]["labels"]["arbora.extension/name"]: document
         for document in documents
         if document["kind"] == "Deployment"
-        and "graph-os.extension/name" in document["metadata"]["labels"]
+        and "arbora.extension/name" in document["metadata"]["labels"]
     }
     assert set(deployments) == {extension["name"] for extension in expected}
     for extension in expected:

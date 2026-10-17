@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.fleet.mcp_resource_reconciliation import (
+from arbora.fleet.mcp_resource_reconciliation import (
     MCP_RESOURCE_FAMILIES,
     PublicationGateResult,
     PublicationRefusedError,

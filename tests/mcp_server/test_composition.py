@@ -9,14 +9,14 @@ from typing import Any
 
 import pytest
 
-from graph_os.gateway.ports import gateway_application
-from graph_os.mcp_server import runtime
-from graph_os.mcp_server.composition import (
+from arbora.gateway.ports import gateway_application
+from arbora.mcp_server import runtime
+from arbora.mcp_server.composition import (
     NativeGatewayApplication,
     install_gateway_application,
     start_composed_services,
 )
-from graph_os.mcp_server.server import _register_semantic_content
+from arbora.mcp_server.server import _register_semantic_content
 
 
 def test_native_action_route_contract_serves_only_registered_tools() -> None:
@@ -58,7 +58,7 @@ async def test_installed_gateway_port_dispatches_native_runtime(
     assert calls == [("graph_query", {"query": "MATCH"})]
 
 
-def test_webui_co_service_uses_graph_os_host(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_webui_co_service_uses_arbora_host(monkeypatch: pytest.MonkeyPatch) -> None:
     started: list[tuple[str, Any]] = []
 
     class Supervisor:
@@ -66,30 +66,28 @@ def test_webui_co_service_uses_graph_os_host(monkeypatch: pytest.MonkeyPatch) ->
             started.append((name, runner))
 
     monkeypatch.setattr(
-        "graph_os.mcp_server.composition.detect_composition",
+        "arbora.mcp_server.composition.detect_composition",
         lambda engine, **kwargs: SimpleNamespace(
             messaging_intake_configured=False,
             messaging_configured=False,
             web_ui_enabled=True,
         ),
     )
-    monkeypatch.setattr(
-        "graph_os.mcp_server.composition.CoServiceSupervisor", Supervisor
-    )
+    monkeypatch.setattr("arbora.mcp_server.composition.CoServiceSupervisor", Supervisor)
 
     start_composed_services(object(), object())
 
     assert started[0][0] == "agent-webui"
-    assert started[0][1].__module__ == "graph_os.webui_host.webui_co_service"
+    assert started[0][1].__module__ == "arbora.webui_host.webui_co_service"
 
 
-def test_messaging_co_service_reaches_graphos_owned_intake(
+def test_messaging_co_service_reaches_arbora_owned_intake(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """GraphOS, not the agent runtime, admits configured channels to the host.
+    """Arbora, not the agent runtime, admits configured channels to the host.
 
     Proves requirement GRAPHOS-HOST-R011's host wiring: ``start_composed_services``
-    reaches ``graph_os.messaging.intake.start_messaging_intake`` for the
+    reaches ``arbora.messaging.intake.start_messaging_intake`` for the
     "messaging" co-service rather than the agent runtime's own daemon.
     """
     calls: list[tuple[Any, Any, tuple[str, ...]]] = []
@@ -98,7 +96,7 @@ def test_messaging_co_service_reaches_graphos_owned_intake(
         calls.append((engine, session, tuple(platforms)))
 
     monkeypatch.setattr(
-        "graph_os.mcp_server.composition.detect_composition",
+        "arbora.mcp_server.composition.detect_composition",
         lambda engine, **kwargs: SimpleNamespace(
             messaging_intake_configured=True,
             messaging_configured=True,
@@ -107,7 +105,7 @@ def test_messaging_co_service_reaches_graphos_owned_intake(
         ),
     )
     monkeypatch.setattr(
-        "graph_os.mcp_server.composition.start_messaging_intake", fake_start
+        "arbora.mcp_server.composition.start_messaging_intake", fake_start
     )
 
     engine = object()
@@ -123,7 +121,7 @@ def test_messaging_intake_requires_gateway_daemon_role(
     """Single Telegram/messaging owner.
 
     The main server (``KG_DAEMON_ROLE=client``, the default for every
-    entry point other than ``graph_os.gateway.daemon``) must never start
+    entry point other than ``arbora.gateway.daemon``) must never start
     inbound polling — even with ``MESSAGING_INTAKE_ENABLED=true`` and a
     configured ``TELEGRAM_BOT_TOKEN`` — because a present token alone must
     not decide pollership (the ``getUpdates`` 409 conflict-loop root
@@ -132,7 +130,7 @@ def test_messaging_intake_requires_gateway_daemon_role(
 
     Spec: none (fix-forward)
     """
-    from graph_os.mcp_server import composition
+    from arbora.mcp_server import composition
 
     monkeypatch.setattr(
         composition, "configured_platforms", lambda engine: ("telegram",)
@@ -149,7 +147,7 @@ def test_messaging_intake_requires_gateway_daemon_role(
 
 
 def test_gateway_adapter_satisfies_runtime_protocol() -> None:
-    from graph_os.gateway.ports import GatewayApplicationPort
+    from arbora.gateway.ports import GatewayApplicationPort
 
     assert isinstance(NativeGatewayApplication(), GatewayApplicationPort)
 
@@ -160,7 +158,7 @@ def test_gateway_adapter_uses_native_oauth_binding_source(
     actor = object()
     expected = (object(),)
     monkeypatch.setattr(
-        "graph_os.fleet.multiplexer.current_remote_oauth_grant_bindings",
+        "arbora.fleet.multiplexer.current_remote_oauth_grant_bindings",
         lambda value: expected if value is actor else (),
     )
 
@@ -169,14 +167,14 @@ def test_gateway_adapter_uses_native_oauth_binding_source(
 
 def test_console_script_targets_native_serving_entrypoint() -> None:
     pyproject = Path(__file__).parents[2] / "pyproject.toml"
-    assert 'graph-os = "graph_os.mcp_server.server:mcp_server"' in pyproject.read_text()
+    assert 'arbora = "arbora.mcp_server.server:mcp_server"' in pyproject.read_text()
 
 
-def test_graphos_runtime_shapes_use_connector_content_contract() -> None:
-    """GraphOS serves its shapes and packaged skills as SDK connector content.
+def test_arbora_runtime_shapes_use_connector_content_contract() -> None:
+    """Arbora serves its shapes and packaged skills as SDK connector content.
 
-    The public ``graph-os-development``, ``graphos-deployment`` and
-    ``graphos-genesis`` skills ship under ``graph_os/skills`` (package data
+    The public ``arbora-development``, ``arbora-deployment`` and
+    ``arbora-genesis`` skills ship under ``arbora/skills`` (package data
     plus the ``agent_connector_sdk.skill_providers`` entry point), so the SDK
     registers exactly one skills-directory provider rooted there and nothing
     else: no prompts, and one runtime shapes resource.
@@ -185,8 +183,8 @@ def test_graphos_runtime_shapes_use_connector_content_contract() -> None:
     from agent_connector_sdk.mcp.content import register_connector_content
     from fastmcp.server.providers.skills import SkillsDirectoryProvider
 
-    import graph_os.skills
-    from graph_os.content import connector_content
+    import arbora.skills
+    from arbora.content import connector_content
 
     class Mcp:
         def __init__(self) -> None:
@@ -200,7 +198,7 @@ def test_graphos_runtime_shapes_use_connector_content_contract() -> None:
             self.providers.append(provider)
 
         def add_prompt(self, prompt: Any) -> None:
-            raise AssertionError("GraphOS does not package an SDK prompt")
+            raise AssertionError("Arbora does not package an SDK prompt")
 
     mcp = Mcp()
     registration = register_connector_content(mcp, connector_content())
@@ -213,7 +211,7 @@ def test_graphos_runtime_shapes_use_connector_content_contract() -> None:
     assert len(mcp.providers) == 1
     (provider,) = mcp.providers
     assert type(provider) is SkillsDirectoryProvider
-    skills_root = Path(graph_os.skills.__file__).resolve().parent
+    skills_root = Path(arbora.skills.__file__).resolve().parent
     assert sorted(path.parent.name for path in skills_root.glob("*/SKILL.md")) == [
         "agent-utilities-source-integration",
         "autonomous-contribution",
@@ -221,15 +219,15 @@ def test_graphos_runtime_shapes_use_connector_content_contract() -> None:
         "graph-ingestion-and-integration",
         "graph-modeling-and-mutation",
         "graph-orchestration-and-automation",
-        "graph-os-development",
-        "graph-os-evolution",
-        "graph-os-repository-development",
+        "arbora-development",
+        "arbora-evolution",
+        "arbora-repository-development",
         "graph-query-and-explanation",
         "graph-research-and-analysis",
         "graph-runtime-and-governance",
-        "graphos-deployment",
-        "graphos-genesis",
-        "using-graph-os",
+        "arbora-deployment",
+        "arbora-genesis",
+        "using-arbora",
     ]
     skill_uris = sorted(
         str(resource.uri) for resource in anyio.run(provider.list_resources)
@@ -247,31 +245,31 @@ def test_graphos_runtime_shapes_use_connector_content_contract() -> None:
         "skill://graph-modeling-and-mutation/_manifest",
         "skill://graph-orchestration-and-automation/SKILL.md",
         "skill://graph-orchestration-and-automation/_manifest",
-        "skill://graph-os-development/SKILL.md",
-        "skill://graph-os-development/_manifest",
-        "skill://graph-os-evolution/SKILL.md",
-        "skill://graph-os-evolution/_manifest",
-        "skill://graph-os-repository-development/SKILL.md",
-        "skill://graph-os-repository-development/_manifest",
+        "skill://arbora-development/SKILL.md",
+        "skill://arbora-development/_manifest",
+        "skill://arbora-evolution/SKILL.md",
+        "skill://arbora-evolution/_manifest",
+        "skill://arbora-repository-development/SKILL.md",
+        "skill://arbora-repository-development/_manifest",
         "skill://graph-query-and-explanation/SKILL.md",
         "skill://graph-query-and-explanation/_manifest",
         "skill://graph-research-and-analysis/SKILL.md",
         "skill://graph-research-and-analysis/_manifest",
         "skill://graph-runtime-and-governance/SKILL.md",
         "skill://graph-runtime-and-governance/_manifest",
-        "skill://graphos-deployment/SKILL.md",
-        "skill://graphos-deployment/_manifest",
-        "skill://graphos-genesis/SKILL.md",
-        "skill://graphos-genesis/_manifest",
-        "skill://using-graph-os/SKILL.md",
-        "skill://using-graph-os/_manifest",
+        "skill://arbora-deployment/SKILL.md",
+        "skill://arbora-deployment/_manifest",
+        "skill://arbora-genesis/SKILL.md",
+        "skill://arbora-genesis/_manifest",
+        "skill://using-arbora/SKILL.md",
+        "skill://using-arbora/_manifest",
     ]
 
     assert len(mcp.resources) == 1
     resource = mcp.resources[0]
     body = Path(resource.path).read_bytes()
-    assert str(resource.uri) == "shapes://graph-os/runtime.shapes.ttl"
-    assert resource.name == "shapes://graph-os/runtime.shapes.ttl"
+    assert str(resource.uri) == "shapes://arbora/runtime.shapes.ttl"
+    assert resource.name == "shapes://arbora/runtime.shapes.ttl"
     assert resource.mime_type == "text/turtle"
     assert len(body) == 2757
     assert hashlib.sha256(body).hexdigest() == (
@@ -282,19 +280,19 @@ def test_graphos_runtime_shapes_use_connector_content_contract() -> None:
 def test_public_mcp_registers_each_declared_provider_without_relabelling(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    graphos = object()
+    arbora = object()
     au = object()
     calls: list[tuple[object, object]] = []
     mcp = object()
     monkeypatch.setattr(
-        "graph_os.mcp_server.server.default_content_providers",
-        lambda: (lambda: graphos, lambda: au),
+        "arbora.mcp_server.server.default_content_providers",
+        lambda: (lambda: arbora, lambda: au),
     )
     monkeypatch.setattr(
-        "graph_os.mcp_server.server.register_connector_content",
+        "arbora.mcp_server.server.register_connector_content",
         lambda target, content: calls.append((target, content)),
     )
 
     _register_semantic_content(mcp)
 
-    assert calls == [(mcp, graphos), (mcp, au)]
+    assert calls == [(mcp, arbora), (mcp, au)]

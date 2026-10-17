@@ -2,19 +2,19 @@
 
 ## Ownership and reuse inventory
 
-GraphOS is the composition root. Keep one live request path:
+Arbora is the composition root. Keep one live request path:
 
-`REST or MCP -> GraphOS authentication/policy -> application service -> published
+`REST or MCP -> Arbora authentication/policy -> application service -> published
 graph-engine or fleet contract -> typed response and audit`.
 
-Reuse `graph_os.mcp_server.runtime` endpoint factories and `_run_json_endpoint`
+Reuse `arbora.mcp_server.runtime` endpoint factories and `_run_json_endpoint`
 for REST/MCP parity. The existing `graph_analyze_code_context_endpoint` and
 `_code_context_kwargs` show the bounded context route pattern; reuse the pattern,
 not its `graph_code` tool name or code-specific payload. Reuse
-`graph_os.gateway.schemas.graph_core` Pydantic request discipline
-(`extra="forbid"`), `graph_os.fleet.multiplexer` for admitted fleet calls,
-`graph_os.gateway.fleet` for the fleet surface, and
-`graph_os.control_plane.runs.admission` for run admission conventions. GraphOS
+`arbora.gateway.schemas.graph_core` Pydantic request discipline
+(`extra="forbid"`), `arbora.fleet.multiplexer` for admitted fleet calls,
+`arbora.gateway.fleet` for the fleet surface, and
+`arbora.control_plane.runs.admission` for run admission conventions. Arbora
 must not implement catalog extraction, ontology mapping, finance math, market
 provider transport, or a second agent scheduler.
 
@@ -25,7 +25,7 @@ served tests provide evidence.
 
 ## Schema context
 
-Define a strict request model in `graph_os.gateway.schemas.graph_core` (or a
+Define a strict request model in `arbora.gateway.schemas.graph_core` (or a
 small adjacent schema module) with `source_id`, `schema`, `object`, `intent`,
 `depth` 0–3, `limit` 1–100, optional catalog revision. Define a versioned
 response with source and tenant ID, object ID, catalog revision, `as_of`, facts,
@@ -37,7 +37,7 @@ it. Both entrypoints must use identical identity, policy, and error mapping.
 The graph engine serves requests through its published client API. Required
 engine behavior includes a deterministic catalog graph. It must include declared
 and inferred joins with evidence. It also includes approved ontology mapping
-state and bounded dependency traversal. GraphOS projects these fields. It cannot derive unsupported matches. Capability discovery occurs at startup or first request. A missing or
+state and bounded dependency traversal. Arbora projects these fields. It cannot derive unsupported matches. Capability discovery occurs at startup or first request. A missing or
 incompatible version yields `UNAVAILABLE`; malformed input yields
 `INVALID_ARGUMENT`; denied or hidden objects yield `NOT_FOUND` without leaking
 existence. Engine timeout yields retryable `UNAVAILABLE`. Structured errors
@@ -53,7 +53,7 @@ transition receipt before external actions. An operator can call dry-run,
 approve, attach, verify, activate, and rollback via one service with REST/MCP
 twins. The service calls the graph-engine catalog/mapping and query conformance
 contracts, and the existing fleet control contract for connector state. The
-source's credentials remain in the source service or secret provider; GraphOS
+source's credentials remain in the source service or secret provider; Arbora
 stores only opaque references.
 
 Dry-run returns a signed or hash-addressed plan snapshot. Approval pins that
@@ -68,7 +68,7 @@ and examples use generic `sample_app` tables.
 
 ## Finance read, schedule, and event bridge
 
-Build one finance application service exposed by REST and MCP. GraphOS receives
+Build one finance application service exposed by REST and MCP. Arbora receives
 an authenticated tenant and resolves an explicit account binding before any
 positions or paper-order call. It requests authoritative calculations and
 records from the graph engine through a published client contract, and market
@@ -104,26 +104,26 @@ proposal across restarts, timezone transitions and competing workers. Read
 the current quote and account binding into a versioned preview. Paper mode
 routes through the paper operation only after its grant and lease checks.
 A human approves the exact preview. The governed execution path consumes the approval lease. Live mode then routes only through the connector SDK's governed write-back path.
-GraphOS joins approval and connector-effect receipts to the proposal.
-Unknown external effects enter reconciliation; GraphOS must not retry them as
+Arbora joins approval and connector-effect receipts to the proposal.
+Unknown external effects enter reconciliation; Arbora must not retry them as
 new orders. Pause, revocation, policy change or changed preview data cancels
 the pending dispatch without claiming to reverse an earlier effect.
 
 ## Cross repository contract and dependency order
 
 1. The graph engine publishes versioned schema-context, catalog revision,
-   mapping status, finance record, and event APIs. GraphOS consumes public
+   mapping status, finance record, and event APIs. Arbora consumes public
    clients only. Its catalog/profiling and finance math are separate owners.
 2. The connector SDK and connector services publish source identity, health,
-   market transport, and account binding; GraphOS consumes an admitted fleet
-   tool. No provider-specific import is allowed in GraphOS.
-3. Agent workflows publish a scheduler and explanation interface; GraphOS
+   market transport, and account binding; Arbora consumes an admitted fleet
+   tool. No provider-specific import is allowed in Arbora.
+3. Agent workflows publish a scheduler and explanation interface; Arbora
    handles authentication and dispatch while those workflows own agent logic.
-4. Browser clients consume GraphOS read and operation APIs, with no privileged
+4. Browser clients consume Arbora read and operation APIs, with no privileged
    direct graph-engine or provider path.
 
 For local development, use mock interfaces implementing these versioned
-contracts. A mock proves GraphOS wiring, while final acceptance additionally
+contracts. A mock proves Arbora wiring, while final acceptance additionally
 requires a served graph-engine fixture and a local database fixture. A missing
 dependency is a typed `UNAVAILABLE`, never a compatibility alias.
 
@@ -140,12 +140,12 @@ the spec evidence before marking `ACCEPTED`.
 ## Confirmed order and position changes (GRAPHOS-DATA-MARKET-R007)
 
 Data flow: authenticated REST/MCP call -> plan confirmation -> admitted connector -> SDK proof verification and governed apply -> durable effect receipt.
-Existing code: `_effect` at graph_os/api/invoke/pipeline.py:218 binds the plan at line 230.
+Existing code: `_effect` at arbora/api/invoke/pipeline.py:218 binds the plan at line 230.
 The shared invocation path reserves durable audit and effect identity before dispatch.
 Reachable today: no order or wallet operation exists. Signature verification and its trust resolver are new SDK producer wiring.
 
 Producer: SDK-GOVERNED-WRITEBACK-R001.1 through R001.6 owns WalletProofRequest, WalletProofResult, canonical payload and supported verifier profiles.
-GraphOS imports the published contract and consumes its authenticated result unchanged; it contains no crypto verifier or key registry.
+Arbora imports the published contract and consumes its authenticated result unchanged; it contains no crypto verifier or key registry.
 Use EG's authorization decision and the existing account entitlement and effect reservation authorities.
 Confirmation binds the immutable intent digest defined below. The separate proof must match that digest and all authority bindings.
 Any missing producer, incompatible schema or unavailable durable proof binding keeps the operation UNAVAILABLE.
@@ -180,8 +180,8 @@ No normalization or mutation occurs after preparation. A changed default or sche
 The complete immutable binding projection is exactly `P = {"intent": WalletBusinessIntent}`.
 `plan_digest` is the lowercase hexadecimal SHA-256 of UTF-8 serialization of P.
 Serialization is exactly `json.dumps(P, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)`.
-P contains plain JSON values, so GraphOS `claim_values(P)` preserves them.
-This equals existing `graph_os/api/invoke/plan.py:24` `params_digest(P)`; it is not the signature payload digest.
+P contains plain JSON values, so Arbora `claim_values(P)` preserves them.
+This equals existing `arbora/api/invoke/plan.py:24` `params_digest(P)`; it is not the signature payload digest.
 Both owners use this exact definition and shared cross-language vectors, including non-ASCII values, nested terms and decimal strings.
 `bind_plan` also binds authenticated principal, tenant, policy revision, registry digest, operation, effect and confirmation mode.
 These authority bindings remain mandatory. Intent account, destination, amount, network and mode always participate in the digest.
@@ -203,9 +203,9 @@ The canonical signed payload remains the existing domain-separated RFC 8785 prof
 No plan digest, confirmation reference or proof occurs inside P. Signature insertion therefore introduces no digest cycle.
 
 The shared `WalletExecutionEnvelope` extension is missing and blocks activation of these operations.
-HTTP `graph_os/api/http/routes.py:72` currently merges the entire JSON body into params before invocation at line 127.
+HTTP `arbora/api/http/routes.py:72` currently merges the entire JSON body into params before invocation at line 127.
 For these registered operations, its new closed envelope parser must pass only envelope.params as operation parameters.
-MCP `graph_os/api/mcp/verbs.py:26` PARAMETERS and `_invoke_and_render` at line 258 need explicit wallet proof and confirmation metadata.
+MCP `arbora/api/mcp/verbs.py:26` PARAMETERS and `_invoke_and_render` at line 258 need explicit wallet proof and confirmation metadata.
 The MCP `params` property must carry the same P as HTTP; duplicate or conflicting metadata refuses.
 The shared Invoke contract must carry typed envelope metadata separately through confirmation and connector dispatch.
 This is an explicit shared transport dependency, not an existing side channel or handler-level field removal.
@@ -229,14 +229,14 @@ R010 response envelope.
 
 | Operation IDs | Handler and typed provider method |
 |---|---|
-| `markets.list/search/get` | `graph_os/api/ops/finance.py::operations` binds the three handlers to `FinanceReadPortV1.list_markets`, `.search_markets`, and `.get_market`. |
+| `markets.list/search/get` | `arbora/api/ops/finance.py::operations` binds the three handlers to `FinanceReadPortV1.list_markets`, `.search_markets`, and `.get_market`. |
 | `events.list/search/get` | The same module binds to `FinanceReadPortV1.list_events`, `.search_events`, and `.get_event`. |
 | `orders.list/search/get` | The same module binds to `FinanceReadPortV1.list_orders`, `.search_orders`, and `.get_order`. |
 
-`FinanceReadPortV1` is the new GraphOS-owned upstream adapter contract in
-`graph_os/finance/markets.py`. The existing `MarketProvider.market_read` and
+`FinanceReadPortV1` is the new Arbora-owned upstream adapter contract in
+`arbora/finance/markets.py`. The existing `MarketProvider.market_read` and
 `MarketReadRequest` cover one symbol price only; they cannot provide these nine
-resource reads. Bind the new port as `finance_read_port` in the composed `services` object. Every typed request carries the already-resolved tenant and account internally. Client parameters never select either identity. No provider port or registered operation currently implements this contract. The EG scope catalog also lacks `finance:read`. Do not admit or serve the operations until EG adds the scope and a provider exposes the capability. This specification assigns no external producer requirement ID. `GRAPHOS-DATA-MARKET-R003.6` defines the missing GraphOS port and registration boundary. The existing owner links are `GRAPHOS-OPS-R010` (envelope), `GRAPHOS-OPS-R017.1` (subject/account authority), and `GRAPHOS-OPS-R017.2` (separate paper-trade subject ownership).
+resource reads. Bind the new port as `finance_read_port` in the composed `services` object. Every typed request carries the already-resolved tenant and account internally. Client parameters never select either identity. No provider port or registered operation currently implements this contract. The EG scope catalog also lacks `finance:read`. Do not admit or serve the operations until EG adds the scope and a provider exposes the capability. This specification assigns no external producer requirement ID. `GRAPHOS-DATA-MARKET-R003.6` defines the missing Arbora port and registration boundary. The existing owner links are `GRAPHOS-OPS-R010` (envelope), `GRAPHOS-OPS-R017.1` (subject/account authority), and `GRAPHOS-OPS-R017.2` (separate paper-trade subject ownership).
 
 ### Request contract
 
@@ -263,7 +263,7 @@ tenant and account, filters, sort position, and source snapshot revision.
 
 ### Version-1 response contract
 
-Each result schema rejects unlisted keys. List/search responses contain exactly `schema_version`, `as_of`, `items`, and `page`. The version is integer 1. The timestamp is the authoritative provider snapshot time in RFC 3339 UTC. The page contains exactly `limit` and nullable `next_cursor`. Get responses contain exactly `schema_version`, `as_of`, and `item`. Each item has `source` (nonempty source ID), `as_of` (provider record time), nullable `session`, `freshness`, and `provenance`. `freshness` has exactly `state` and `age_seconds`. State is `fresh`, `stale`, or `unknown`; age is a nonnegative integer or null. `provenance` has exactly `record_id` and nullable `revision`. GraphOS returns provider metadata unchanged. Unknown freshness uses `state: unknown` and `age_seconds: null`. GraphOS does not infer freshness or provenance.
+Each result schema rejects unlisted keys. List/search responses contain exactly `schema_version`, `as_of`, `items`, and `page`. The version is integer 1. The timestamp is the authoritative provider snapshot time in RFC 3339 UTC. The page contains exactly `limit` and nullable `next_cursor`. Get responses contain exactly `schema_version`, `as_of`, and `item`. Each item has `source` (nonempty source ID), `as_of` (provider record time), nullable `session`, `freshness`, and `provenance`. `freshness` has exactly `state` and `age_seconds`. State is `fresh`, `stale`, or `unknown`; age is a nonnegative integer or null. `provenance` has exactly `record_id` and nullable `revision`. Arbora returns provider metadata unchanged. Unknown freshness uses `state: unknown` and `age_seconds: null`. Arbora does not infer freshness or provenance.
 
 `MarketItemV1` has exactly `market_id`, nullable `event_id`, `question`,
 `status`, nullable `starts_at` and `ends_at`, `outcomes`, nullable `updated_at`,
@@ -280,21 +280,21 @@ nullable `updated_at`, and the common item metadata. `OrderItemV1` has exactly
 same ISO 4217 grammar; units are nonempty codes of at most 32 ASCII characters
 matching `[A-Za-z][A-Za-z0-9._-]{0,31}`. Decimal strings use base-10 notation
 without exponent; floats are never accepted. Required fields are non-null.
-Nullable fields remain present as explicit nulls. GraphOS omits provider-only fields. GraphOS preserves source, currency/unit, session, freshness, and provenance on price-bearing records.
+Nullable fields remain present as explicit nulls. Arbora omits provider-only fields. Arbora preserves source, currency/unit, session, freshness, and provenance on price-bearing records.
 
 ### Attachment and acceptance
 
-Declare operations in `graph_os/api/ops/finance.py::operations`. The `get_registry` factory imports them from that module. Each handler calls only the typed `finance_read_port`; handlers cannot reserve a lease or reach paper submission. REST follows the real composition seam:
+Declare operations in `arbora/api/ops/finance.py::operations`. The `get_registry` factory imports them from that module. Each handler calls only the typed `finance_read_port`; handlers cannot reserve a lease or reach paper submission. REST follows the real composition seam:
 `NativeGatewayApplication.mount_rest_routes` validates contract admission,
-then `graph_os/api/http/app.py::create_api_application` registers
+then `arbora/api/http/app.py::create_api_application` registers
 `POST /api/v1/ops/{op_id}`. The current process has no API dependencies,
 so this adapter is not yet production-attached.
 
-MCP follows `graph_os/api/mcp/serving.py::register_intent_surface` and the
+MCP follows `arbora/api/mcp/serving.py::register_intent_surface` and the
 `/mcp` streamable-HTTP protocol route. Its JSON-RPC `tools/call` uses the
 registered `ask` tool with `arguments.op` and `arguments.params`. The current
-`graph_os/mcp_server/server.py` still uses the legacy agent-utilities surface;
-the operation-backed GraphOS MCP registration is not active. These are explicit missing attachment edges, not served evidence. Keep all nine operations unavailable until GraphOS admits the provider port and authority contract.
+`arbora/mcp_server/server.py` still uses the legacy agent-utilities surface;
+the operation-backed Arbora MCP registration is not active. These are explicit missing attachment edges, not served evidence. Keep all nine operations unavailable until Arbora admits the provider port and authority contract.
 
 Add future served tests at `tests/mcp_server/test_data_market_reads_served.py`. The test-spec names each required function and route-level acceptance. Preserve FI-01 through FI-10 and parent paper-order acceptance. This definition adds no runtime or test result claim.
 <!-- /spec-definition-patch -->

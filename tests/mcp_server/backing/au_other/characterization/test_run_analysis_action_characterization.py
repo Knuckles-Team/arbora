@@ -19,8 +19,8 @@ changed fallback message) even when no individual handler body is touched.
 
 from __future__ import annotations
 
-from graph_os.mcp_server import runtime
-from graph_os.mcp_server.backing.tools import analysis_tools
+from arbora.mcp_server import runtime
+from arbora.mcp_server.backing.tools import analysis_tools
 
 
 def _get_handler():

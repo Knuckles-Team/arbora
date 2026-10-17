@@ -36,7 +36,7 @@ def test_runbook_covers_every_required_component() -> None:
         "Graph engine",
         "Connector SDK",
         "Agent runtime",
-        "GraphOS itself",
+        "Arbora itself",
         "Web UI",
         "Connector package fleet",
         "Production redeployment",
@@ -46,7 +46,7 @@ def test_runbook_covers_every_required_component() -> None:
 
 @pytest.mark.spec("GRAPHOS-DEPLOY-R002")
 def test_runbook_cites_real_doctor_checks() -> None:
-    from graph_os.deployment.doctor import _LIVE_CHECK_NAMES, CHECKS
+    from arbora.deployment.doctor import _LIVE_CHECK_NAMES, CHECKS
 
     text = _runbook_text()
     for check_name in ("mcp_fleet", "mcp_fleet_secrets"):
@@ -61,8 +61,8 @@ def test_runbook_cites_real_console_scripts() -> None:
     scripts = pyproject["project"]["scripts"]
     text = _runbook_text()
     for script_name in (
-        "graph-os-release-canary",
-        "graph-os-production-ops",
+        "arbora-release-canary",
+        "arbora-production-ops",
         "agent-utilities-doctor",
     ):
         assert script_name in text

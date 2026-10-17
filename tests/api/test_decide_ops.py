@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from graph_os.api.invoke.steps import principal_rule
-from graph_os.api.ops import decide
+from arbora.api.invoke.steps import principal_rule
+from arbora.api.ops import decide
 from tests.api._support import make_verified_caller
 
 _caller = make_verified_caller("decide:commit")

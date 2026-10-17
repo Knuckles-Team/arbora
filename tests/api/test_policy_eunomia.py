@@ -8,9 +8,9 @@ from types import SimpleNamespace
 import pytest
 from eunomia_core import schemas
 
-from graph_os.api.policy import PolicyGate, PolicyUnavailable, fleet_resource
-from graph_os.api.policy.cache import DecisionCache
-from graph_os.api.policy.defaults import policy_mode
+from arbora.api.policy import PolicyGate, PolicyUnavailable, fleet_resource
+from arbora.api.policy.cache import DecisionCache
+from arbora.api.policy.defaults import policy_mode
 
 
 @dataclass

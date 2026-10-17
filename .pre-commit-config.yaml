@@ -1,4 +1,4 @@
-# Combined pre-commit and pre-push suite for graph-os, and the single source
+# Combined pre-commit and pre-push suite for arbora, and the single source
 # of the release workflow's gates: CI runs this file (commit and push stages
 # over every file, then the manual-stage hooks that need the provisioned
 # environment), so local and hosted runs execute the same gate code.
@@ -26,7 +26,7 @@ repos:
     args: ["--unsafe"]
     # Helm templates are Go-template text with a .yaml extension, not parsed
     # as plain YAML until `helm template` renders them.
-    exclude: ^deploy/helm/graph-os/templates/
+    exclude: ^deploy/helm/arbora/templates/
   - id: check-toml
     stages: [pre-commit]
   - id: check-json
@@ -111,7 +111,7 @@ repos:
   - id: complexity-census
     stages: [manual]
   # Orphan modules are NOT covered here since kiss 0.4.11 (the check moved
-  # to the coverage-linked `kiss test`); graph-os's Python orphan-module
+  # to the coverage-linked `kiss test`); arbora's Python orphan-module
   # wiring gate is the check-orphan-modules local hook below.
   - id: kiss-census
     stages: [manual]
@@ -188,7 +188,7 @@ repos:
     stages: [manual]
 
   # The isolated mypy hook above ignores missing imports; this one checks
-  # graph_os against the real locked dependency types.
+  # arbora against the real locked dependency types.
   - id: mypy-env
     name: mypy (locked environment)
     entry: scripts/local_hook.sh mypy-env
@@ -209,25 +209,25 @@ repos:
 
 - repo: local
   hooks:
-  # graph-os's Python orphan-module wiring gate (see .config/kiss.toml
+  # arbora's Python orphan-module wiring gate (see .config/kiss.toml
   # [global] and AGENTS.md "Orphan-module wiring gate (Python)"): a
-  # graph_os/ module with no production fan-in and no production fan-out
+  # arbora/ module with no production fan-in and no production fan-out
   # (on disk, tracked or not). Needs only the stdlib (ast, tomllib), so it
   # runs in a fresh clone with no synced environment.
   - id: check-orphan-modules
-    name: Wiring — no orphan graph_os module
+    name: Wiring — no orphan arbora module
     entry: python3 scripts/check_wiring.py orphans
     language: system
     pass_filenames: false
     always_run: true
-  # Reports graph_os/ modules no declared root (console script, entry point,
+  # Reports arbora/ modules no declared root (console script, entry point,
   # or the top-level package) reaches by any import edge -- static or
   # dynamic/name-based (see scripts/wiring/reachability.py). This is staged,
   # not-yet-served code: nonzero fan-in/fan-out lets a module pass
   # check-orphan-modules above even when nothing running ever reaches it.
   # Manual stage only -- it reports, it never blocks CI.
   - id: check-unreachable-modules
-    name: Wiring — report graph_os modules no entry point reaches (not served yet)
+    name: Wiring — report arbora modules no entry point reaches (not served yet)
     entry: python3 scripts/check_wiring.py unreachable
     language: system
     pass_filenames: false
@@ -242,12 +242,12 @@ repos:
   # Freshness check for this repository's own core-pack skills (see
   # scripts/check_core_skills.py): every backticked repository path and bare
   # console command they mention must still exist on disk / in
-  # pyproject.toml / under scripts/. Scoped to graph-os's own two core
+  # pyproject.toml / under scripts/. Scoped to arbora's own two core
   # skills for now; the deployment/genesis pair needs its own accuracy pass
   # before it can join this gate noise-free.
   - id: check-core-skills
     name: Core skills reference real paths and commands
-    entry: python3 scripts/check_core_skills.py --repo-root . graph_os/skills/graph-os-development/SKILL.md graph_os/skills/using-graph-os/SKILL.md
+    entry: python3 scripts/check_core_skills.py --repo-root . arbora/skills/arbora-development/SKILL.md arbora/skills/using-arbora/SKILL.md
     language: system
     pass_filenames: false
-    files: ^(graph_os/skills/(graph-os-development|using-graph-os)/SKILL\.md$|scripts/check_core_skills\.py$)
+    files: ^(arbora/skills/(arbora-development|using-arbora)/SKILL\.md$|scripts/check_core_skills\.py$)

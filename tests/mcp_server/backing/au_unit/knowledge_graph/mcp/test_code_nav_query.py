@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.mcp_server.backing.tools.query_tools import build_code_nav_query
+from arbora.mcp_server.backing.tools.query_tools import build_code_nav_query
 
 
 def test_find_definition_matches_by_name():

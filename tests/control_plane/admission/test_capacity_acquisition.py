@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from graph_os.control_plane.runs.admission import (
+from arbora.control_plane.runs.admission import (
     CapacityAcquisition,
     CapacityDeniedError,
 )

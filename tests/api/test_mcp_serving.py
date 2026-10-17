@@ -1,4 +1,4 @@
-"""GraphOS serves its own eight-tool MCP intent surface (GRAPHOS-HOST-R023).
+"""Arbora serves its own eight-tool MCP intent surface (GRAPHOS-HOST-R023).
 
 Covers the parity and dispatch proofs that requirement names: a tool-list
 match against the agent runtime's previously served contract, one dispatch
@@ -17,14 +17,14 @@ from typing import Any
 import pytest
 from pydantic import BaseModel, ConfigDict
 
-from graph_os.api.invoke import InvokeServices, invoke
-from graph_os.api.invoke.audit import EffectReservation
-from graph_os.api.invoke.plan import EgPlanStore
-from graph_os.api.mcp.resolve import IntentResolver
-from graph_os.api.mcp.serving import register_intent_surface
-from graph_os.api.mcp.verbs import MCPProjection, dispatch_verb
-from graph_os.api.policy.eunomia import PolicyGate
-from graph_os.api.registry import (
+from arbora.api.invoke import InvokeServices, invoke
+from arbora.api.invoke.audit import EffectReservation
+from arbora.api.invoke.plan import EgPlanStore
+from arbora.api.mcp.resolve import IntentResolver
+from arbora.api.mcp.serving import register_intent_surface
+from arbora.api.mcp.verbs import MCPProjection, dispatch_verb
+from arbora.api.policy.eunomia import PolicyGate
+from arbora.api.registry import (
     AuditClass,
     Composite,
     Effect,
@@ -37,8 +37,8 @@ from graph_os.api.registry import (
 from tests.api._support import make_verified_caller
 
 #: The agent runtime's previously served contract (``register_intent_tools``
-#: in ``graph_os/mcp_server/backing/tools/intent_tools/py`` plus the two app launchers
-#: from ``graph_os/mcp_server/backing/tools/mcp_apps/py``).
+#: in ``arbora/mcp_server/backing/tools/intent_tools/py`` plus the two app launchers
+#: from ``arbora/mcp_server/backing/tools/mcp_apps/py``).
 LIVE_CONTRACT_TOOL_NAMES = frozenset(
     {
         "ask",
@@ -56,7 +56,7 @@ LIVE_CONTRACT_TOOL_NAMES = frozenset(
 def test_register_intent_surface_matches_the_live_tool_contract() -> None:
     from fastmcp import FastMCP
 
-    mcp = FastMCP("graph-os-test")
+    mcp = FastMCP("arbora-test")
     registry = SimpleNamespace(digest="digest-one", api_version="1")
 
     async def _unused_invoke(*_args: Any, **_kwargs: Any) -> Any:
@@ -235,7 +235,7 @@ def replace_caller_for_request(
 
 @pytest.mark.spec("GRAPHOS-HOST-R023")
 def test_ask_fallback_uses_registered_nl_operation_through_shared_invoke() -> None:
-    from graph_os.api.ops.query import operations
+    from arbora.api.ops.query import operations
     from tests.api.test_invoke_contract import setup_services
 
     op = operations()[1]

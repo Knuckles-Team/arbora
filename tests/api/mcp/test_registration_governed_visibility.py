@@ -5,7 +5,7 @@ multiplexer's meta-tool registration to be reduced to the four resident
 fleet tools (find_tools, load_tools, unload_tools, multiplexer_status), and
 its session-visibility middleware to route list/call requests only -- never
 making an authorization decision itself. This binds both halves of that
-acceptance criterion directly against graph_os.api.mcp.registration without
+acceptance criterion directly against arbora.api.mcp.registration without
 needing a live server: the registration module is an isolated prepared
 surface that server/runtime intentionally does not call on this lane.
 """
@@ -17,7 +17,7 @@ from typing import Any, cast
 
 import pytest
 
-from graph_os.api.mcp.registration import (
+from arbora.api.mcp.registration import (
     FLEET_OPERATIONS,
     FleetMCPBinding,
     GovernedSessionVisibility,

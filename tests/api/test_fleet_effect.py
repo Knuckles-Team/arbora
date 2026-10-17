@@ -11,9 +11,9 @@ from typing import Any
 
 import pytest
 
-from graph_os.api.errors import FleetRefusal
-from graph_os.api.ops import fleet
-from graph_os.api.registry import (
+from arbora.api.errors import FleetRefusal
+from arbora.api.ops import fleet
+from arbora.api.registry import (
     Confirm,
     Effect,
     Executor,
@@ -21,7 +21,7 @@ from graph_os.api.registry import (
     Registry,
     Surface,
 )
-from graph_os.fleet.gateway_ops import (
+from arbora.fleet.gateway_ops import (
     AdmittedTool,
     DelegatedCall,
     FleetGateway,
@@ -34,7 +34,7 @@ from graph_os.fleet.gateway_ops import (
     oauth_delegated_call_for_mux,
     tool_for_multiplexer_ops,
 )
-from graph_os.fleet.service_child import ServiceChildOutcomeUnknown
+from arbora.fleet.service_child import ServiceChildOutcomeUnknown
 
 
 def _gateway_and_caller(
@@ -85,12 +85,12 @@ def test_child_refusal_uses_structured_code_only() -> None:
 async def test_delegated_child_refusal_keeps_bounded_structured_code(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    api = ModuleType("graph_os.api.contracts")
+    api = ModuleType("arbora.api.contracts")
     vars(api).update(use_session=lambda _session: nullcontext())
-    brain = ModuleType("graph_os.security.actor_context")
+    brain = ModuleType("arbora.security.actor_context")
     vars(brain).update(use_actor=lambda _actor: nullcontext())
-    monkeypatch.setitem(sys.modules, "graph_os.api.contracts", api)
-    monkeypatch.setitem(sys.modules, "graph_os.security.actor_context", brain)
+    monkeypatch.setitem(sys.modules, "arbora.api.contracts", api)
+    monkeypatch.setitem(sys.modules, "arbora.security.actor_context", brain)
 
     class Mux:
         async def call_admitted_child_once(self, *_args: object) -> object:
@@ -316,8 +316,8 @@ async def test_uncertain_service_child_propagates_for_the_invoke_surface_to_map(
 async def test_oauth_callback_uses_matching_verified_actor(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import graph_os.api.contracts
-    import graph_os.security.actor_context as brain_context
+    import arbora.api.contracts
+    import arbora.security.actor_context as brain_context
 
     bound: list[object] = []
 
@@ -329,7 +329,7 @@ async def test_oauth_callback_uses_matching_verified_actor(
         bound.append(actor)
         return nullcontext()
 
-    monkeypatch.setattr(graph_os.api.contracts, "use_session", fake_use_session)
+    monkeypatch.setattr(arbora.api.contracts, "use_session", fake_use_session)
     monkeypatch.setattr(brain_context, "use_actor", fake_use_actor)
 
     class Mux:
@@ -404,9 +404,9 @@ async def test_service_child_requires_resolved_decision_and_owner(
         subject_id: str | None
         credential_mode: str
 
-    invoke_module = ModuleType("graph_os.api.invoke")
+    invoke_module = ModuleType("arbora.api.invoke")
     vars(invoke_module).update(FleetCallDecision=Decision)
-    monkeypatch.setitem(sys.modules, "graph_os.api.invoke", invoke_module)
+    monkeypatch.setitem(sys.modules, "arbora.api.invoke", invoke_module)
     descriptor = AdmittedTool(
         None,
         "admin",

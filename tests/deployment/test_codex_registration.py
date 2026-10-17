@@ -14,10 +14,10 @@ from typing import Any
 
 import pytest
 
-from graph_os.deployment.codex_registration import (
+from arbora.deployment.codex_registration import (
     CodexRegistrationError,
-    graphos_stdio_spec,
-    register_codex_graphos,
+    arbora_stdio_spec,
+    register_codex_arbora,
 )
 
 
@@ -52,7 +52,7 @@ def _runner(
 def _canonical_payload() -> str:
     return json.dumps(
         {
-            "name": "graph-os",
+            "name": "arbora",
             "enabled": True,
             "disabled_reason": None,
             "startup_timeout_sec": None,
@@ -61,7 +61,7 @@ def _canonical_payload() -> str:
             "disabled_tools": None,
             "transport": {
                 "type": "stdio",
-                "command": "graph-os",
+                "command": "arbora",
                 "args": ["--transport", "stdio"],
                 "cwd": None,
                 "env": None,
@@ -72,32 +72,32 @@ def _canonical_payload() -> str:
 
 
 def test_portable_spec_has_no_environment_secret_or_machine_path() -> None:
-    spec = graphos_stdio_spec()
-    assert spec == {"command": "graph-os", "args": ["--transport", "stdio"]}
+    spec = arbora_stdio_spec()
+    assert spec == {"command": "arbora", "args": ["--transport", "stdio"]}
     assert not {"env", "cwd", "url", "headers"}.intersection(spec)
 
 
 def test_missing_registration_uses_exact_codex_add_command() -> None:
     calls, run = _runner([_result(1), _result()])
 
-    result = register_codex_graphos(runner=run)
+    result = register_codex_arbora(runner=run)
 
     assert calls == [
-        ["codex", "mcp", "get", "graph-os", "--json"],
+        ["codex", "mcp", "get", "arbora", "--json"],
         [
             "codex",
             "mcp",
             "add",
-            "graph-os",
+            "arbora",
             "--",
-            "graph-os",
+            "arbora",
             "--transport",
             "stdio",
         ],
     ]
     assert result == {
         "status": "registered",
-        "server": "graph-os",
+        "server": "arbora",
         "transport": "stdio",
     }
 
@@ -105,9 +105,9 @@ def test_missing_registration_uses_exact_codex_add_command() -> None:
 def test_canonical_registration_is_idempotent() -> None:
     calls, run = _runner([_result(stdout=_canonical_payload())])
 
-    result = register_codex_graphos(runner=run)
+    result = register_codex_arbora(runner=run)
 
-    assert calls == [["codex", "mcp", "get", "graph-os", "--json"]]
+    assert calls == [["codex", "mcp", "get", "arbora", "--json"]]
     assert result["status"] == "unchanged"
 
 
@@ -116,7 +116,7 @@ def test_canonical_registration_is_idempotent() -> None:
     [
         {
             "type": "stdio",
-            "command": "/machine/specific/bin/graph-os",
+            "command": "/machine/specific/bin/arbora",
             "args": [],
             "cwd": "/machine/specific/workspace",
             "env": {"TOKEN": "do-not-retain"},
@@ -124,7 +124,7 @@ def test_canonical_registration_is_idempotent() -> None:
         },
         {
             "type": "stdio",
-            "command": "graph-os",
+            "command": "arbora",
             "args": ["--transport", "stdio"],
             "cwd": None,
             "env": None,
@@ -136,21 +136,21 @@ def test_stale_registration_is_replaced_without_copying_state(
     stale_transport: dict[str, Any],
 ) -> None:
     stale = json.dumps(
-        {"name": "graph-os", "enabled": True, "transport": stale_transport}
+        {"name": "arbora", "enabled": True, "transport": stale_transport}
     )
     calls, run = _runner([_result(stdout=stale), _result(), _result()])
 
-    result = register_codex_graphos(runner=run)
+    result = register_codex_arbora(runner=run)
 
     assert calls[1:] == [
-        ["codex", "mcp", "remove", "graph-os"],
+        ["codex", "mcp", "remove", "arbora"],
         [
             "codex",
             "mcp",
             "add",
-            "graph-os",
+            "arbora",
             "--",
-            "graph-os",
+            "arbora",
             "--transport",
             "stdio",
         ],
@@ -170,9 +170,9 @@ def test_command_failure_does_not_expose_captured_output() -> None:
     )
 
     with pytest.raises(CodexRegistrationError) as error:
-        register_codex_graphos(runner=run)
+        register_codex_arbora(runner=run)
 
-    assert calls[-1][1:4] == ["mcp", "add", "graph-os"]
+    assert calls[-1][1:4] == ["mcp", "add", "arbora"]
     message = str(error.value)
     assert "secret-value" not in message
     assert "different-secret" not in message
@@ -183,14 +183,14 @@ def test_cli_registers_codex_and_retired_json_subcommand_is_absent(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    from graph_os.deployment import cli
+    from arbora.deployment import cli
 
     monkeypatch.setattr(
         cli,
-        "register_codex_graphos",
+        "register_codex_arbora",
         lambda: {
             "status": "unchanged",
-            "server": "graph-os",
+            "server": "arbora",
             "transport": "stdio",
         },
     )
