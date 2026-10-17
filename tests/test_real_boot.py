@@ -36,6 +36,8 @@ from typing import Any
 
 import pytest
 
+from graph_os.deployment.config_generator import PROCESS_IDENTITY_ROLES
+
 pytestmark = [
     pytest.mark.real_boot,
     pytest.mark.skipif(
@@ -50,20 +52,11 @@ AUDIENCE = "graph-os-boot-test"
 POLICY_VERSION = "boot-test-policy"
 TENANT_GRAPH = f"tenant__{TENANT}____commons__"
 BOOT_TIMEOUT_S = 180.0
+CONNECTOR = "boot-echo"
 PROCESS_SUBJECT = "graph-os-process"
 #: Graph administration plus the exact capabilities GraphOS needs to provision
 #: its own semantic packs and reach the MCP fleet.
-ROLES = (
-    "kg:admin",
-    "connector:catalog-attest",
-    "admin:connector-pack",
-    "agent:pack-control",
-    "security:admin",
-    "mcp:discover",
-    "mcp:delegate",
-    "query:unified",
-    "node:read",
-)
+ROLES = PROCESS_IDENTITY_ROLES
 #: The served-surface caller. The fresh engine admits exactly one identity
 #: (the process principal), so the operator presents a separate credential for
 #: that same admitted principal.
@@ -81,6 +74,11 @@ def _server_binary() -> str:
     except ServerBinaryNotFoundError as exc:
         pytest.skip(str(exc))
         raise AssertionError("unreachable") from exc
+
+
+def _listening(port: int) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+        return probe.connect_ex(("127.0.0.1", port)) == 0
 
 
 def _free_port() -> int:
@@ -278,10 +276,54 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
                     "KG_POLICY_VERSION": POLICY_VERSION,
                     "ENABLE_WEB_UI": "false",
                     "MESSAGING_INTAKE_ENABLED": "false",
+                    "ACTION_POLICY_PATH": str(config_dir / "action_policy.json"),
                 }
             )
         )
+        # The operator admits the fleet connector's pack import by policy; the
+        # shipped default holds an unknown connector's import for approval.
+        from graph_os.access.action_policy import DEFAULT_POLICY, TIER_AUTO_NOTIFY
+
+        policy = {
+            **DEFAULT_POLICY,
+            "rules": [
+                {
+                    "kind": "connector_pack_import",
+                    "target": CONNECTOR,
+                    "tier": TIER_AUTO_NOTIFY,
+                },
+                *DEFAULT_POLICY["rules"],
+            ],
+        }
+        policy_path = config_dir / "action_policy.json"
+        policy_path.write_text(json.dumps(policy))
         port = _free_port()
+        connector_port = _free_port()
+        processes.append(
+            subprocess.Popen(
+                [
+                    sys.executable,
+                    str(Path(__file__).with_name("_boot_connector.py")),
+                    str(connector_port),
+                ],
+                env=base_env,
+                stdout=gos_log,
+                stderr=subprocess.STDOUT,
+            )
+        )
+        connector_url = f"http://127.0.0.1:{connector_port}/mcp"
+        (config_dir / "mcp_config.json").write_text(
+            json.dumps(
+                {
+                    "mcpServers": {
+                        CONNECTOR: {
+                            "url": connector_url,
+                            "transport": "streamable-http",
+                        }
+                    }
+                }
+            )
+        )
         gos_env = {
             **base_env,
             "GRAPH_OS_CONFIG_DIR": str(config_dir),
@@ -313,6 +355,29 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
         )
         assert provision.returncode == 0, (
             f"semantic provisioning failed\n{provision.stdout}\n{provision.stderr}"
+        )
+        _wait(
+            lambda: _listening(connector_port),
+            timeout=60,
+            what="the connector fixture",
+            logs=lambda: gos_log_path.read_text(errors="replace"),
+        )
+        onboard = subprocess.run(
+            [
+                shutil.which("graph-os-production-ops", path=bindir)
+                or "graph-os-production-ops",
+                "onboard-fleet",
+                "--served-url",
+                served_url,
+            ],
+            env=gos_env,
+            capture_output=True,
+            text=True,
+            timeout=300,
+            check=False,
+        )
+        assert onboard.returncode == 0, (
+            f"fleet onboarding failed\n{onboard.stdout}\n{onboard.stderr}"
         )
         entry = shutil.which("graph-os", path=bindir)
         command = [entry] if entry else [sys.executable, "-m", "graph_os.mcp_server"]
@@ -446,3 +511,50 @@ async def test_mcp_lists_finds_and_asks_an_eg_operation(
             )
         )
         assert asked["ok"] is True, f"{asked}\n{stack['logs']()}"
+
+
+async def test_mcp_find_returns_the_connector_tool(stack: dict[str, Any]) -> None:
+    """An onboarded connector's tool is discoverable through ``find``."""
+    async with await _mcp_session(stack) as client:
+        found = _structured(
+            await client.call_tool("find", {"intent": "echo the given text"})
+        )
+        assert found["ok"] is True, found
+        tools = [
+            item
+            for item in found["result"]["items"]
+            if item.get("kind") == "fleet" and item.get("server") == CONNECTOR
+        ]
+        assert [item["name"] for item in tools] == ["echo"], (
+            f"{found}\n{stack['logs']()}"
+        )
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "fleet.call has no durable effect owner yet: EG serves no effect "
+        "journal for governed child calls, and a non-OAuth child has neither "
+        "a caller-credential path nor a one-shot service-child transport"
+    ),
+)
+async def test_mcp_act_calls_the_connector_tool(stack: dict[str, Any]) -> None:
+    """``act(op='fleet.call')`` reaches the connector through the gateway."""
+    async with await _mcp_session(stack) as client:
+        called = _structured(
+            await client.call_tool(
+                "act",
+                {
+                    "op": "fleet.call",
+                    "params": {
+                        "server": CONNECTOR,
+                        "tool": "echo",
+                        "arguments": {"text": "boot"},
+                    },
+                    "execute": True,
+                    "idempotency_key": f"boot-echo-{uuid.uuid4().hex[:8]}",
+                },
+            )
+        )
+        assert called["ok"] is True, f"{called}\n{stack['logs']()}"
+        assert "echo:boot" in json.dumps(called["result"]), called

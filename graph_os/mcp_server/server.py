@@ -150,19 +150,36 @@ def _served_invocation() -> tuple[HostedInvocation | None, Any]:
         return None, None
     from graph_os.a2a import mcp as a2a_mcp
     from graph_os.mcp_server.backing.server_factory import create_mcp_parser
-    from graph_os.mcp_server.served_invocation import (
-        refused_fleet_effect,
-        served_invocation_from_settings,
-    )
+    from graph_os.mcp_server.fleet_composition import LateFleetGateway
+    from graph_os.mcp_server.served_invocation import served_invocation_from_settings
 
     args, _unknown = create_mcp_parser().parse_known_args()
     session = runtime._mint_process_session(str(getattr(args, "transport", "stdio")))
+    fleet = LateFleetGateway()
     invocation = served_invocation_from_settings(
         process_session=lambda: session,
-        bindings={"a2a": a2a_mcp._service()},
-        fleet_effect=refused_fleet_effect,
+        bindings={"a2a": a2a_mcp._service(), "fleet_gateway": fleet},
+        fleet_effect=fleet.effect,
     )
     return invocation, session
+
+
+def _bind_served_fleet(
+    invocation: HostedInvocation | None, fleet_mux: Any, reader: Any
+) -> None:
+    """Bind the governed fleet gateway once the multiplexer is attached."""
+    if invocation is None:
+        return
+    from graph_os.mcp_server.fleet_composition import (
+        LateFleetGateway,
+        bind_fleet_gateway,
+    )
+
+    late = invocation.services.runtime.bindings.get("fleet_gateway")
+    if isinstance(late, LateFleetGateway):
+        bind_fleet_gateway(
+            late, mux=fleet_mux, reader=reader, services=invocation.services
+        )
 
 
 def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
@@ -229,6 +246,7 @@ def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
     )
 
     register_harness_host(fleet_mux)
+    _bind_served_fleet(invocation, fleet_mux, fleet_catalog_reader)
 
     transport = getattr(args, "transport", "stdio")
     host = getattr(args, "host", "127.0.0.1")

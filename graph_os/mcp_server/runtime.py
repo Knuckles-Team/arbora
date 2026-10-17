@@ -887,6 +887,9 @@ def _register_served_intent_surface(mcp: Any, invocation: Any) -> Any:
         caller_for_request=caller.caller_for_request,
         policy_gate=services.policy_gate,
         invoke=invoke,
+        fleet_search=getattr(
+            services.runtime.bindings.get("fleet_gateway"), "fleet_search", None
+        ),
     )
 
 

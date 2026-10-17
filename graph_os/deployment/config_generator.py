@@ -334,6 +334,85 @@ def _sanitize_generated_value(value: Any, *, key: str = "", parent: str = "") ->
     return value
 
 
+#: Capabilities the GraphOS process identity's token must carry: graph
+#: administration, the four exact capabilities that provision GraphOS's own
+#: semantic connector packs, fleet discovery and delegation, and the query and
+#: node-read scopes the served ``query.uql``/``eg.graph.*`` operations require.
+PROCESS_IDENTITY_ROLES: tuple[str, ...] = (
+    "kg:admin",
+    "connector:catalog-attest",
+    "admin:connector-pack",
+    "agent:pack-control",
+    "security:admin",
+    "mcp:discover",
+    "mcp:delegate",
+    "query:unified",
+    "node:read",
+)
+
+
+def generate_engine_admission(
+    *,
+    principal: str,
+    audience: str,
+    tenant: str,
+    policy_version: str,
+) -> dict[str, Any]:
+    """The engine-side admission a served GraphOS deployment must set.
+
+    GraphOS and the engine agree on one verified request context: the audience,
+    tenant and policy version below must equal the GraphOS process session's
+    (``AUTH_JWT_AUDIENCE``, the token's tenant, ``KG_POLICY_VERSION``). The
+    engine trusts exactly one signer on a fresh store, the GraphOS process
+    principal, and imports GraphOS's semantic packs only from it. Secret values
+    stay references; the deploy resolves them from its secret store.
+
+    Returns ``{"engine_environment": ..., "graph_os_config": ...,
+    "process_identity_roles": ..., "first_start": ...}``.
+    """
+    import hashlib
+
+    for name, value in (
+        ("principal", principal),
+        ("audience", audience),
+        ("tenant", tenant),
+        ("policy_version", policy_version),
+    ):
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(f"{name} is required")
+    importer = "principal:sha256:" + hashlib.sha256(principal.encode()).hexdigest()
+    return {
+        "engine_environment": {
+            "GRAPH_SERVICE_AUTH_SECRET": "secret://graph-os/GRAPH_SERVICE_AUTH_SECRET",
+            "EPISTEMIC_GRAPH_AUDIENCE": audience,
+            "EPISTEMIC_GRAPH_TENANT": tenant,
+            "EPISTEMIC_GRAPH_POLICY_VERSION": policy_version,
+            "EPISTEMIC_GRAPH_SIGNER_KEYS_JSON": (
+                "secret://graph-os/EPISTEMIC_GRAPH_SIGNER_KEYS_JSON"
+            ),
+            "EPISTEMIC_GRAPH_SIGNER_KEYS_SHAPE": {
+                principal: {
+                    "key": "<32-byte hex signer key>",
+                    "allowed_roles": [],
+                    "may_grant_system": True,
+                }
+            },
+            "EPISTEMIC_GRAPH_CONNECTOR_PACK_IMPORTERS": f"*={importer}",
+        },
+        "graph_os_config": {
+            "AUTH_JWT_AUDIENCE": audience,
+            "KG_POLICY_VERSION": policy_version,
+        },
+        "process_identity_roles": list(PROCESS_IDENTITY_ROLES),
+        "first_start": [
+            "bootstrap the process principal as the engine system identity "
+            "(security:bootstrap, signing as itself)",
+            "graph-os-production-ops provision-semantic-content --served-url <MCP URL>",
+            "graph-os-production-ops onboard-fleet --served-url <MCP URL>",
+        ],
+    }
+
+
 def generate_config(profile: str = "tiny") -> dict[str, Any]:
     """Return a portable config dict for ``profile`` (schema defaults + overlay).
 

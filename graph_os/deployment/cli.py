@@ -107,7 +107,25 @@ def _run_environments(args: argparse.Namespace) -> int:
     return 2
 
 
+def _run_engine_admission(args: argparse.Namespace) -> int:
+    from .config_generator import generate_engine_admission
+
+    print(
+        json.dumps(
+            generate_engine_admission(
+                principal=args.principal,
+                audience=args.audience,
+                tenant=args.tenant,
+                policy_version=args.policy_version,
+            ),
+            indent=2,
+        )
+    )
+    return 0
+
+
 _COMMAND_HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
+    "engine-admission": _run_engine_admission,
     "release-plan": _run_release_plan,
     "generate": _run_generate,
     "doctor": _run_doctor,
@@ -129,6 +147,15 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument(
         "--out", default=None, help="Output path (default: XDG config.json)."
     )
+
+    e = sub.add_parser(
+        "engine-admission",
+        help="Print the engine admission a served deployment must set (JSON).",
+    )
+    e.add_argument("--principal", required=True, help="GraphOS process principal.")
+    e.add_argument("--audience", required=True)
+    e.add_argument("--tenant", required=True)
+    e.add_argument("--policy-version", required=True)
 
     d = sub.add_parser("doctor", help="Validate config completeness/health.")
     d.add_argument("--profile", choices=list(PROFILES), default=None)
