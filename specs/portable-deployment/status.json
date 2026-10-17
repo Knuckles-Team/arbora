@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "spec_id": "GRAPHOS-DEPLOY",
-  "owner_repo": "graph-os",
+  "owner_repo": "arbora",
   "delivery_state": "SPECIFIED",
   "requirement_ids": [
     "GRAPHOS-DEPLOY-R001",

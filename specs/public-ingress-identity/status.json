@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "spec_id": "GRAPHOS-INGRESS",
-  "owner_repo": "graph-os",
+  "owner_repo": "arbora",
   "delivery_state": "LANDED",
   "requirement_ids": [
     "GRAPHOS-INGRESS-R001",
