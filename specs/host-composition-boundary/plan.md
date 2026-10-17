@@ -86,6 +86,22 @@ R008.1 preserves the complete original module census and every named owner.
 
 ## Terminal start and scoped logs (GRAPHOS-HOST-R009/R010)
 
+### Owned shutdown prerequisite
+
+GRAPHOS-HOST-R009.4.1 adds targeted supervisor shutdown. Stop only the named
+service; preserve borrowed siblings. All-service shutdown uses one monotonic
+deadline, retains live handles on timeout, and permits a later cleanup retry.
+Loopback HTTP tests verify the surviving sibling and bounded shutdown behavior.
+
+Combined startup needs two composition contracts.
+First, an authoritative `host.start` grant must bind session, tenant, principal,
+canonical workspace, interfaces, policy revision and expiry.
+Second, a WebUI factory must accept the provided host authority without resolving global runtime state.
+A `host.logs.read` grant cannot authorize startup.
+The next increment must validate the start grant before constructing any graph or listener.
+It must pass the same authority into HTTP and WebUI composition.
+Existing launcher refusals remain until composition uses both contracts and tests verify them.
+
 Existing code: `agent_host/__init__.py:192` starts HTTP synchronously and explicitly excludes the terminal launcher.
 `mcp_server/composition.py:65` owns `CoServiceSupervisor`; `:230` starts existing co-services.
 `webui_host/webui_co_service.py:104` provides the hosted web service and stop-event lifecycle.

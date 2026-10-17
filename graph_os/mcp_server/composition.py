@@ -137,19 +137,45 @@ class CoServiceSupervisor:
                 logger.error("co-service %s exited without a stop request", name)
 
     def stop_all(self, timeout: float = 10.0) -> bool:
-        """Signal every service and retain any handle that remains live."""
+        """Signal all services and join within one shared shutdown deadline."""
+        deadline = time.monotonic() + max(0.0, timeout)
         with self._lock:
             services = list(self._services.items())
         for _name, (stop_event, _thread) in services:
             stop_event.set()
-        for name, (_stop_event, thread) in services:
-            thread.join(timeout=timeout)
-            if thread.is_alive():
-                logger.error("co-service %s did not stop within %.0fs", name, timeout)
-                continue
-            with self._lock:
-                self._services.pop(name, None)
+        for name, service in services:
+            self._join_service(name, service, max(0.0, deadline - time.monotonic()))
         return not self.running()
+
+    def stop_service(self, name: str, timeout: float = 5.0) -> bool:
+        """Stop one caller-owned service without stopping borrowed siblings."""
+        with self._lock:
+            service = self._services.get(name)
+        if service is None:
+            return True
+        service[0].set()
+        return self._join_service(name, service, max(0.0, timeout))
+
+    def _join_service(
+        self,
+        name: str,
+        service: tuple[threading.Event, threading.Thread],
+        timeout: float,
+    ) -> bool:
+        thread = service[1]
+        if thread is threading.current_thread():
+            return False
+        thread.join(timeout=timeout)
+        if thread.is_alive():
+            logger.error(
+                "co-service %s did not stop before the shutdown deadline", name
+            )
+            return False
+        with self._lock:
+            # A concurrent stop/start must not lose the replacement's handle.
+            if self._services.get(name) is service:
+                self._services.pop(name)
+        return True
 
     def running(self) -> tuple[str, ...]:
         with self._lock:
