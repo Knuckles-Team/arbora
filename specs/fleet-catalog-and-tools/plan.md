@@ -390,3 +390,34 @@ The source validation environment resolves MCP >=2.3,<3 with the landed SDK. The
 ### 2026-10-16 — Separate deterministic and natural-language queries
 
 `query.uql` remains deterministic under `query:unified`; `query.nl` is the authorized resolver fallback under `query:nl`. The latter binds its inner graph from the verified caller and preserves provider planner-unavailable refusals. No scope is automatically granted. Remaining SQL, search, indexes and analytics acceptance under R018.2 remains deferred.
+
+## GRAPHOS-FLEET-R036 — connect-time contract handshake
+
+References: [EG-TYPED-PACKS-R103](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/typed-packs-and-catalog/spec.md), [EG-TYPED-PACKS-R104](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/typed-packs-and-catalog/spec.md), [SDK-CONNECTOR-CONTROL-R068](https://github.com/Knuckles-Team/agent-connector-sdk/blob/main/specs/SDK-CONNECTOR-CONTROL/spec.md)
+
+Call path: multiplexer client connect or `list_changed` -> `onboard` (`graph_os/fleet/onboarding.py:236`) -> `capture` (line 254) -> digest compare -> engine `ImportOntology` and seed import -> existing `import_attested_pack` for the pack head.
+
+The engine validates and stores. graph-os compares digests and forwards. graph-os holds no SHACL rule and no mapping rule.
+
+Budget: one onboarding pass per connector per 2 s window; resources of 8 MiB or less. These are starting defaults. A measurement on this platform replaces them.
+
+## GRAPHOS-FLEET-R037 — job-scoped lazy tool loading
+
+References: [EG-DECISION-ENGINE-R176](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/decision-engine/spec.md), [EG-DECISION-ENGINE-R177](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/decision-engine/spec.md)
+
+Call path: harness -> `find` verb (`verbs.py:18`) -> `find_tools` (`multiplexer_ops.py:150`) -> engine `Decide` load set -> `load_tools` (`multiplexer_ops.py:245`) -> `tools/list_changed` to the caller.
+
+The engine chooses. graph-os applies the answer within the session cap of `GRAPHOS-FLEET-R018`. Skills arrive as engine queries (`EG-DECISION-ENGINE-R177`), not as static instruction text.
+
+## GRAPHOS-FLEET-R038 — protocol roles
+
+| Protocol and role | Owner | What it does | Existing spec |
+|---|---|---|---|
+| MCP serving, platform | graph-os | Harnesses call graph-os as an MCP server: the intent tools and job-scoped lazy loading | `GRAPHOS-FLEET-R029`, `GRAPHOS-FLEET-R037` |
+| MCP serving, connector | SDK | Each connector is an MCP server through the SDK `[mcp]` extra, with server scaffolding and the served security profile | `SDK-CONNECTOR-CONTROL-R014.17` |
+| MCP consuming, platform | graph-os | The multiplexer is an MCP client of every connector: the connect-time contract path | `GRAPHOS-FLEET-R036` |
+| MCP consuming, connector | SDK | A connector wraps an external MCP server as a data source | `SDK-CONNECTOR-CONTROL-R040`, `SDK-CONNECTOR-CONTROL-R069` |
+| A2A serving | graph-os | Agents call the platform over A2A | `GRAPHOS-A2A` |
+| A2A consuming | SDK | A connector treats an external agent as a data source | `SDK-CONNECTOR-CONTROL-R041`, `SDK-CONNECTOR-CONTROL-R069` |
+
+The harness reaches other agents only through graph-os. Engine planning over the consuming roles is `EG-FEDERATED-QUERY-R073.2`.
