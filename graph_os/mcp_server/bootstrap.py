@@ -87,7 +87,8 @@ def _mint_process_session(transport: str) -> Any:
     header.
     """
     from agent_utilities.core.config import config
-    from agent_utilities.security.request_identity import (
+
+    from graph_os.security.request_identity import (
         acquire_process_identity_token,
         local_process_authority_enabled,
         mint_actor_from_token_sync,
@@ -100,7 +101,7 @@ def _mint_process_session(transport: str) -> Any:
     else:
         token = acquire_process_identity_token(config)
         actor = mint_actor_from_token_sync(token)
-        from agent_utilities.security.brain_context import CredentialLease
+        from graph_os.security.actor_context import CredentialLease
 
         expires_at = getattr(actor, "credential_expires_at", None)
         if expires_at is None:
@@ -131,7 +132,7 @@ def _same_process_authority(left: Any, right: Any) -> bool:
 
 
 def _renewed_process_actor(config: Any) -> Any:
-    from agent_utilities.security.request_identity import (
+    from graph_os.security.request_identity import (
         acquire_process_identity_token,
         local_process_authority_enabled,
         mint_actor_from_token_sync,
@@ -303,7 +304,7 @@ async def authority_keepalive_scope(session: Any | None = None) -> AsyncIterator
     * Only a server-minted, renewable ``credential_lease`` is ever proactively
       renewed. A caller-presented bearer JWT carries no ``credential_lease`` and
       is never touched here — it stays exactly as fail-closed as before.
-    * The SAME mutable :class:`~agent_utilities.security.brain_context.CredentialLease`
+    * The SAME mutable :class:`~graph_os.security.actor_context.CredentialLease`
       object the session already holds is renewed in place, so every downstream
       authority check (``GraphSession.ensure_authority_current``, e.g.
       ``graph_compute.py``'s ``_invoke_at``) sees it transparently — no session
@@ -714,9 +715,9 @@ def _start_engine_bootstrap(session: Any) -> None:
         _require_verified_background_session,
         daemon_role,
     )
-    from agent_utilities.security.brain_context import use_actor
 
     from graph_os.api.contracts.session import use_session
+    from graph_os.security.actor_context import use_actor
 
     verified_session = _require_verified_background_session(session)
     with (
@@ -733,34 +734,6 @@ def _start_engine_bootstrap(session: Any) -> None:
     # process into an autonomous scheduler or queue worker. The requested role
     # captured on the engine wins over any later process-environment mutation.
     client_role = _engine_bootstrap_is_client(engine, daemon_role())
-    if not client_role:
-        # BUG-295 (NE-009/NE-020): the daemon role is the one that runs the
-        # unified scheduler (start_daemons() below), whose every tick reads
-        # and writes the isolated `__control__` graph under THIS process's
-        # own verified identity. Admit that identity into the narrow
-        # control:system RBAC role idempotently, once per process, before
-        # the scheduler can fire a single tick against it. Auto-at-boot by
-        # design (see system_rbac_admission's module docstring, "Auto-
-        # admission at boot"); degrades honestly — never crashes the
-        # process and never claims success it did not confirm. Until an
-        # operator seeds the missing NE-021 provisioner credential (or the
-        # engine is unreachable), this logs the exact actionable cause once
-        # per 30s backoff window and the scheduler keeps failing exactly as
-        # visibly as it does today, but now with a diagnosis attached.
-        try:
-            from agent_utilities.security.system_rbac_admission import (
-                ensure_system_principal_access,
-            )
-
-            ensure_system_principal_access(verified_session.actor.actor_id)
-        except Exception as exc:  # noqa: BLE001 - must never block/crash boot
-            logger.error(
-                "system-principal control-graph admission not confirmed; "
-                "the scheduler will keep failing until this is resolved "
-                "(%s: %s)",
-                type(exc).__name__,
-                exc,
-            )
     start_daemons = getattr(engine, "start_background_daemons", None)
     if not client_role and callable(start_daemons):
         start_daemons()

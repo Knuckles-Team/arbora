@@ -22,17 +22,17 @@ from pathlib import Path
 from typing import Any, cast
 from urllib.parse import urlsplit
 
+from agent_connector_sdk.credentials.runtime_references import (
+    RuntimeSecretReferenceAction,
+    RuntimeSecretReferenceError,
+    resolve_runtime_secret_reference,
+)
 from agent_utilities._version import __version__
 from agent_utilities.base_utilities import to_boolean
 from agent_utilities.core.config import (
     DEFAULT_HOST,
     DEFAULT_PORT,
     setting,
-)
-from agent_utilities.security.cli_secrets import (
-    RuntimeSecretReferenceAction,
-    RuntimeSecretReferenceError,
-    resolve_runtime_secret_reference,
 )
 
 logger = logging.getLogger(__name__)
@@ -464,7 +464,7 @@ def _hardened_jwt_verifier(**kwargs: Any) -> Any:
         async def _fetch_jwks(self) -> dict[str, Any]:
             if not self.jwks_uri:
                 raise ValueError("JWKS URI is not configured")
-            from agent_utilities.security.auth import _fetch_jwks
+            from graph_os.security.auth import _fetch_jwks
 
             document = await _fetch_jwks(str(self.jwks_uri))
             return dict(document)
@@ -1064,7 +1064,7 @@ def _discover_delegation_token_endpoint(config_url: str) -> str:
     suffix = "/.well-known/openid-configuration"
     issuer = config_url[: -len(suffix)] if config_url.endswith(suffix) else config_url
 
-    from agent_utilities.security.oidc_discovery import discover
+    from graph_os.security.oidc_discovery import discover
 
     oidc_config = discover(issuer)
     token_endpoint = oidc_config.get("token_endpoint")
@@ -1116,7 +1116,7 @@ def _validate_allowed_redirect_uris(args: argparse.Namespace) -> list[str] | Non
 def _resolve_static_tokens_ref(reference: str) -> Any:
     if reference.startswith("env://"):
         return setting(reference[len("env://") :])
-    from agent_utilities.security.secrets_client import create_secrets_client
+    from graph_os.security.secrets import create_secrets_client
 
     return create_secrets_client().resolve_ref(reference)
 
@@ -1438,7 +1438,7 @@ def _resolve_jwt_basic_params(
 
 
 def _oidc_discover_jwks_uris(issuer: str) -> list[str | None]:
-    from agent_utilities.security.oidc_discovery import jwks_uri_for
+    from graph_os.security.oidc_discovery import jwks_uri_for
 
     return [jwks_uri_for(i.strip()) for i in str(issuer).split(",") if i.strip()]
 
@@ -1557,7 +1557,7 @@ def _resolve_jwt_secret_or_key(
         logger.error("Error: HMAC JWT verification requires --token-secret-ref")
         sys.exit(1)
     try:
-        from agent_utilities.security.secrets_client import create_secrets_client
+        from graph_os.security.secrets import create_secrets_client
 
         public_key = create_secrets_client().resolve_ref(secret_ref)
         if not isinstance(public_key, str) or len(public_key.encode()) < 32:
@@ -2020,7 +2020,9 @@ def _build_uvicorn_config(
 
 def mcp_network_run_kwargs(args: argparse.Namespace) -> dict[str, Any]:
     """Return the one hardened FastMCP/Uvicorn network-serving configuration."""
-    from agent_utilities.security.http_boundary import (
+    from starlette.middleware import Middleware
+
+    from graph_os.security.http_boundary import (
         BoundedRequestBodyMiddleware,
         ExactHostAuthorityMiddleware,
         OriginPolicyMiddleware,
@@ -2029,7 +2031,6 @@ def mcp_network_run_kwargs(args: argparse.Namespace) -> dict[str, Any]:
         normalize_origins,
         parse_cidrs,
     )
-    from starlette.middleware import Middleware
 
     transport = str(getattr(args, "transport", "stdio") or "stdio").lower()
     if transport not in _NETWORK_TRANSPORTS:
@@ -2279,7 +2280,7 @@ def _resolve_metrics_token() -> str | None:
         if metrics_ref.startswith("env://"):
             metrics_token = str(setting(metrics_ref[len("env://") :], "") or "")
         else:
-            from agent_utilities.security.secrets_client import create_secrets_client
+            from graph_os.security.secrets import create_secrets_client
 
             metrics_token = str(create_secrets_client().resolve_ref(metrics_ref) or "")
         if not 32 <= len(metrics_token) <= 4_096 or any(

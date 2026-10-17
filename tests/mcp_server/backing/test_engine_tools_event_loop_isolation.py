@@ -36,11 +36,10 @@ import time
 
 import pytest
 from agent_utilities.knowledge_graph.core.session import GraphSession, use_session
-from agent_utilities.security.actor_identity import ActorType
-from agent_utilities.security.brain_context import ActorContext, use_actor
 
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.tools import engine_tools
+from graph_os.security.actor_context import ActorContext, ActorType, use_actor
 
 ACTOR = ActorContext(
     actor_id="principal:ops",

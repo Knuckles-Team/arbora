@@ -11,10 +11,9 @@ from fastapi import HTTPException, Request
 from graph_os.api.mcp.caller import caller_from_session
 
 if TYPE_CHECKING:
-    from agent_utilities.security.request_identity import VerifiedLocalBearer
-
     from graph_os.api.contracts.session import GraphSession
     from graph_os.api.invoke import VerifiedCaller
+    from graph_os.security.request_identity import VerifiedLocalBearer
 
 
 class HTTPAuthenticationError(PermissionError):
@@ -143,8 +142,8 @@ async def verified_bearer_session_for_request(request: Request) -> GraphSession:
 
 async def _verify_bearer_headers(headers: tuple[tuple[bytes, bytes], ...]) -> Any:
     """Verify one presented credential while preserving infrastructure faults."""
-    from agent_utilities.security.auth import parse_bearer_authorization
-    from agent_utilities.security.request_identity import actor_from_bearer_token
+    from graph_os.security.auth import parse_bearer_authorization
+    from graph_os.security.request_identity import actor_from_bearer_token
 
     token = parse_bearer_authorization(
         [value for key, value in headers if key.lower() == b"authorization"]
@@ -169,7 +168,7 @@ def _require_request_snapshot(
 
 def _mint_verified_session(actor: Any) -> GraphSession:
     """Retain the verified actor and tenant in AU's current session projection."""
-    from agent_utilities.security.request_identity import mint_graph_session
+    from graph_os.security.request_identity import mint_graph_session
 
     session = mint_graph_session(actor)
     if session.actor is not actor or session.tenant != actor.tenant_id:
@@ -185,8 +184,8 @@ async def verify_local_bearer_request(request: Request) -> VerifiedLocalBearer:
     must obtain those from the qualified owner before producing a session.
     No ambient identity or legacy actor/session minter is consulted here.
     """
-    from agent_utilities.security.auth import parse_bearer_authorization
-    from agent_utilities.security.request_identity import verify_local_bearer_token
+    from graph_os.security.auth import parse_bearer_authorization
+    from graph_os.security.request_identity import verify_local_bearer_token
 
     try:
         token = parse_bearer_authorization(

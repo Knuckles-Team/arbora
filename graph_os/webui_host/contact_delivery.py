@@ -15,6 +15,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
+from agent_connector_sdk.privacy import persistence_reference
 from agent_utilities.knowledge_graph.core.work_durability import (
     claim_specific,
     commit_result,
@@ -22,7 +23,6 @@ from agent_utilities.knowledge_graph.core.work_durability import (
     submit_work_item_atomic,
 )
 from agent_utilities.messaging.service import MessagingService
-from agent_utilities.security.persistence_privacy import persistence_reference
 
 from graph_os.webui_host.contact_governance import (
     ContactDeliveryContext,

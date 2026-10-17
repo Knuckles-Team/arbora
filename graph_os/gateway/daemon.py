@@ -22,8 +22,9 @@ from dataclasses import replace
 from typing import Any
 
 from agent_utilities.core.config import setting
-from agent_utilities.security.error_surface import public_error_payload
-from agent_utilities.security.log_redaction import redact_for_log
+
+from graph_os.security.error_surface import public_error_payload
+from graph_os.security.log_redaction import redact_for_log
 
 logger = logging.getLogger(__name__)
 
@@ -156,8 +157,9 @@ def mint_process_identity() -> Any:
     bounded authority without retaining token material.
     """
     from agent_utilities.core.config import config
-    from agent_utilities.security.brain_context import CredentialLease
-    from agent_utilities.security.request_identity import (
+
+    from graph_os.security.actor_context import CredentialLease
+    from graph_os.security.request_identity import (
         acquire_process_identity_token,
         mint_actor_from_token_sync,
         mint_graph_session,
@@ -188,12 +190,12 @@ def refresh_process_identity(session: Any) -> Any:
     by the background worker threads.
     """
     from agent_utilities.core.config import config
-    from agent_utilities.security.request_identity import (
+
+    from graph_os.api.contracts.session import SessionExpiredError
+    from graph_os.security.request_identity import (
         acquire_process_identity_token,
         mint_actor_from_token_sync,
     )
-
-    from graph_os.api.contracts.session import SessionExpiredError
 
     try:
         session.ensure_authority_current(minimum_ttl_seconds=30)
@@ -246,7 +248,7 @@ def start_host_daemon(*, defer_background_start: bool = False) -> Any:
         # daemon refuses to boot (config-contract) instead of failing lazily on the
         # first spawn.
         # No-op in the shipped `warn`/`off` posture.
-        from agent_utilities.security.run_token import require_token_secret
+        from graph_os.security.run_token import require_token_secret
 
         require_token_secret()
         # The gateway process is the authoritative daemon host.
@@ -297,7 +299,8 @@ def start_host_daemon(*, defer_background_start: bool = False) -> Any:
             from agent_utilities.observability.error_detail_sink import (
                 GraphErrorDetailSink,
             )
-            from agent_utilities.security.error_surface import (
+
+            from graph_os.security.error_surface import (
                 register_detail_persistence_sink,
             )
 
@@ -479,9 +482,8 @@ def main() -> None:
             logger.warning("signal handler registration skipped: %s", exc)
 
     session = mint_process_identity()
-    from agent_utilities.security.brain_context import use_actor
-
     from graph_os.api.contracts.session import use_session
+    from graph_os.security.actor_context import use_actor
 
     with use_actor(session.actor), use_session(session):
         try:

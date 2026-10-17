@@ -2,9 +2,8 @@
 
 Combines jailbreak hardening, prompt-injection scanning, doom-loop tracking,
 and a tool-repetition guard into one gateway a caller runs over an incoming
-prompt or an outbound tool call. Ported from the agent runtime's
-``agent_utilities.security.security_policy_middleware`` (moved wholesale, no
-behavior change) per the GRAPHOS-HOST-R008 boundary move:
+prompt or an outbound tool call. It moved from the agent runtime unchanged
+per the GRAPHOS-HOST-R008 boundary move:
 ``graph-os`` hosts GraphOS's own security boundary modules; the agent
 runtime no longer declares this one.
 """

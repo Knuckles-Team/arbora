@@ -13,8 +13,6 @@ from agent_utilities.knowledge_graph.core.session import (
     SessionRequiredError,
     use_session,
 )
-from agent_utilities.security.actor_identity import ActorType
-from agent_utilities.security.brain_context import ActorContext
 
 from graph_os.api.contracts.catalog import (
     AgentCatalogRecord,
@@ -23,6 +21,7 @@ from graph_os.api.contracts.catalog import (
     WorkflowCatalogRecord,
     catalog_read_ports,
 )
+from graph_os.security.actor_context import ActorContext, ActorType
 
 
 def _session() -> GraphSession:

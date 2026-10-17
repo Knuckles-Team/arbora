@@ -115,11 +115,10 @@ class ActorContextMiddleware(Middleware):
     no server could scope resources or authorization to *who is calling*. This
     middleware is the fleet-wide identity bridge:
     it mints the actor once per tool call from the already-validated claims
-    (:func:`~agent_utilities.security.request_identity.actor_from_claims`, the
+    (:func:`~graph_os.security.request_identity.actor_from_claims`, the
     one IdP-agnostic mapping), mints the immutable graph authority, and scopes
     the call to both, so
-    :func:`~agent_utilities.security.entitlements.identity_scoped_resources` and
-    the KG permissioning layer all see the real caller.
+    the engine's permissioning layer sees the real caller.
 
     Mounted on every server the factory builds. Two modes, selected by
     ``require_verified_session`` (default ``False``, unchanged fleet-wide
@@ -149,7 +148,7 @@ class ActorContextMiddleware(Middleware):
       (a) an ambient :class:`~graph_os.api.contracts.session.GraphSession`
       is already set (a nested call under an already-authenticated caller), or
       (b) the tiny-profile local stdio process authority
-      (:func:`~agent_utilities.security.request_identity.mint_local_process_session`,
+      (:func:`~graph_os.security.request_identity.mint_local_process_session`,
       bound as ``graph_os.mcp_server.runtime._PROCESS_SESSION``) is bound —
       stdio has no per-call bearer token by protocol, so that process-lifetime,
       already-verified authority IS this transport's carrier, not an absence
@@ -178,17 +177,16 @@ class ActorContextMiddleware(Middleware):
         return dict(claims) if claims else None
 
     async def on_call_tool(self, context: MiddlewareContext, call_next):
-        from agent_utilities.security.brain_context import reset_actor, set_actor
-        from agent_utilities.security.request_identity import (
-            actor_from_claims,
-            mint_graph_session,
-        )
-
         from graph_os.api.contracts.session import (
             SessionRequiredError,
             current_session,
             reset_session,
             set_session,
+        )
+        from graph_os.security.actor_context import reset_actor, set_actor
+        from graph_os.security.request_identity import (
+            actor_from_claims,
+            mint_graph_session,
         )
 
         claims = self._claims(context)

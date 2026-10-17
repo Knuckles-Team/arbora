@@ -14,14 +14,14 @@ from typing import Any
 from urllib.parse import urlencode
 
 from agent_utilities.core.event_loop import run_blocking_ordered
-from agent_utilities.security.error_surface import (
-    public_error_json,
-    public_error_payload,
-)
 from pydantic import Field
 from starlette.responses import JSONResponse
 
 from graph_os.mcp_server import runtime
+from graph_os.security.error_surface import (
+    public_error_json,
+    public_error_payload,
+)
 
 logger = logging.getLogger(__name__)
 

@@ -38,10 +38,10 @@ from agent_utilities.media.video_sidecar import (
     VideoSidecarResult,
     ingest_video_via_sidecar,
 )
-from agent_utilities.security.error_surface import public_error_json
 from pydantic import Field
 
 from graph_os.mcp_server import runtime
+from graph_os.security.error_surface import public_error_json
 
 #: action name -> capability-manifest modality key, derived from the ONE
 #: source of truth (sidecar_contract.py) so this tool's action list can never

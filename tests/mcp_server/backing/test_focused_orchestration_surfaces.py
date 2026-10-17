@@ -357,14 +357,14 @@ async def test_workflow_compile_live_route_isolates_graph_phases_and_authority(
     )
     from agent_utilities.knowledge_graph.workflow_compiler import WorkflowCompiler
     from agent_utilities.knowledge_graph.workflow_store import WorkflowStore
-    from agent_utilities.security.actor_identity import ActorType
-    from agent_utilities.security.brain_context import (
+
+    from graph_os.mcp_server.backing.tools import workflow_tools
+    from graph_os.security.actor_context import (
         ActorContext,
+        ActorType,
         current_actor,
         use_actor,
     )
-
-    from graph_os.mcp_server.backing.tools import workflow_tools
 
     engine = object()
     main_thread = threading.current_thread()

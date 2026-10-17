@@ -16,6 +16,9 @@ def _require_observability_imports() -> None:
     dependency before deciding anything: a broken install must still report
     ``error``, never a ``skip``/``fail`` derived from half a stack.
     """
+    from agent_connector_sdk.credentials.runtime_references import (  # noqa: F401
+        resolve_runtime_secret_reference,
+    )
     from agent_utilities.core.transport_security import (  # noqa: F401
         resolve_configured_tls_profile,
     )
@@ -25,9 +28,6 @@ def _require_observability_imports() -> None:
     from agent_utilities.observability.langfuse_trust import (  # noqa: F401
         resolve_langfuse_credentials,
         resolve_langfuse_host,
-    )
-    from agent_utilities.security.cli_secrets import (  # noqa: F401
-        resolve_runtime_secret_reference,
     )
 
 
@@ -95,10 +95,12 @@ def _otel_data(cfg: Any, posture: SimpleNamespace, metrics: Any) -> dict[str, An
 
 def _otel_prove_credentials(cfg: Any, posture: SimpleNamespace) -> None:
     """Resolve the reference tier actually in use; raises when it is unavailable."""
+    from agent_connector_sdk.credentials.runtime_references import (
+        resolve_runtime_secret_reference,
+    )
     from agent_utilities.observability.langfuse_trust import (
         resolve_langfuse_credentials,
     )
-    from agent_utilities.security.cli_secrets import resolve_runtime_secret_reference
 
     if posture.header_auth:
         resolve_runtime_secret_reference(cfg.otel_exporter_otlp_headers_ref)
@@ -271,7 +273,7 @@ def _langfuse_expected_trace_name(source_run_id: str) -> str:
     from agent_utilities.usage.privacy import normalize_run_id
 
     try:
-        from agent_utilities.security.brain_context import current_actor
+        from graph_os.security.actor_context import current_actor
 
         tenant_id = current_actor().tenant_id
     except Exception:  # noqa: BLE001 - empty tenant namespace is opaque too

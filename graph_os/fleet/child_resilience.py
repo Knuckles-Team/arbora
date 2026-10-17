@@ -70,9 +70,9 @@ from agent_utilities.observability.gateway_metrics import (
     MCP_CHILD_QUEUE_DEPTH,
     MCP_CHILD_RESTARTS,
 )
-from agent_utilities.security.log_redaction import redact_for_log
 
 from graph_os.fleet.protocol_compat import mcp_protocol_error
+from graph_os.security.log_redaction import redact_for_log
 
 # MCP protocol error (e.g. a terminated streamable-http session). SDK v2
 # (>=2.0.0, the floor `fastmcp>=4.0.0b1` pulls in) renamed `McpError` ->

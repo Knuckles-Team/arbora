@@ -25,7 +25,6 @@ import re
 import uuid
 from typing import Annotated, Any
 
-from agent_utilities.security.error_surface import public_error_payload
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -35,6 +34,7 @@ from graph_os.gateway.aggregator import Aggregator
 from graph_os.gateway.config import ConfigManager
 from graph_os.gateway.models import DashboardLayout, WidgetData
 from graph_os.gateway.registry import get_registry
+from graph_os.security.error_surface import public_error_payload
 
 __all__ = [
     "DASHBOARD_WS_PATH",
@@ -66,7 +66,8 @@ def _dashboard_capabilities(request: Request) -> set[str] | None:
         return None
     try:
         from agent_utilities.core.config import config
-        from agent_utilities.security.identity import (
+
+        from graph_os.security.identity import (
             base_capabilities,
             normalize_identity,
         )

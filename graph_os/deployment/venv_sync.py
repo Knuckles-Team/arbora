@@ -100,7 +100,7 @@ def redact_path_for_log(path: object) -> str:
     CONCEPT:AU-OS.observability.log-location-privacy — a raw filesystem path in
     a log line leaks host layout to anyone with log read access. Stdlib-only
     (this module's own "must not import anything the venv provides" constraint
-    rules out the shared ``agent_utilities.security.log_redaction`` helper);
+    rules out the shared ``graph_os.security.log_redaction`` helper);
     the same input always hashes to the same tag within a process, so repeated
     log lines about the same path can still be correlated without the literal
     value ever appearing.

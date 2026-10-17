@@ -13,7 +13,8 @@ from agent_utilities.orchestration.action_policy import (
     ACTION_APPROVAL_KIND,
     approval_lease_to_props,
 )
-from agent_utilities.security.elevation import (
+
+from graph_os.security.elevation import (
     ElevationApproval,
     ElevationRequest,
     ElevationRevocation,

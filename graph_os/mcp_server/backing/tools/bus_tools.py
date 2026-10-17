@@ -25,13 +25,13 @@ import json
 from collections.abc import Callable
 from dataclasses import replace
 
-from agent_utilities.security.error_surface import public_error_json
 from fastmcp import Context
 from pydantic import Field
 
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.bus_types import BusExecContext as _BusExecContext
 from graph_os.mcp_server.backing.bus_types import BusRequest
+from graph_os.security.error_surface import public_error_json
 
 __all__ = ["BusRequest", "register_bus_tools"]
 

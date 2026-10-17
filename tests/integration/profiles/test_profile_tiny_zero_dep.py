@@ -99,13 +99,12 @@ def test_tiny_profile_serves_kg_over_gateway_with_zero_containers(monkeypatch):
             "local epistemic-graph engine not running (GRAPH_SERVICE_ENDPOINTS unset)"
         )
 
-    from agent_utilities.security.actor_identity import ActorType
-    from agent_utilities.security.brain_context import ActorContext
     from fastapi import FastAPI
     from starlette.testclient import TestClient
 
     from graph_os.gateway.graph_api import register_graph_routes
     from graph_os.mcp_server import runtime
+    from graph_os.security.actor_context import ActorContext, ActorType
 
     runtime.ensure_tools_registered()
 
@@ -141,7 +140,8 @@ def test_tiny_profile_serves_kg_over_gateway_with_zero_containers(monkeypatch):
         return actor
 
     import agent_utilities.core.config as config_mod
-    import agent_utilities.security.request_identity as request_identity
+
+    import graph_os.security.request_identity as request_identity
 
     monkeypatch.setattr(
         config_mod.config, "auth_jwt_jwks_uri", "https://identity.example.test/jwks"
@@ -188,7 +188,7 @@ def test_tiny_profile_serves_kg_over_gateway_with_zero_containers(monkeypatch):
     # binds to actor.tenant_id's OWN graph -- a mismatch the native engine's
     # placement layer rejects ("request context tenant does not match graph
     # tenant").
-    from agent_utilities.security.brain_context import use_actor
+    from graph_os.security.actor_context import use_actor
 
     with use_actor(actor):
         runtime._get_engine()

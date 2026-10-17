@@ -77,14 +77,9 @@ logger = logging.getLogger(__name__)
 # (``agent_utilities/knowledge_graph/actions/fleet_writeback.py``) — reused here,
 # not reinvented, so ``graph_mine_deep`` reaches data-science-mcp exactly like every
 # other fleet-delegation call site. Neither module imports torch/transformers.
-from agent_utilities.protocols.source_connectors.connectors.mcp_package import (
-    _run_async,
-)
-from agent_utilities.protocols.source_connectors.connectors.mcp_tool import (
-    call_tool_once,
-)
-from agent_utilities.security.error_surface import public_error_payload
-from agent_utilities.security.identifiers import CYPHER_IDENTIFIER_RE
+from graph_os.fleet_tool_call import call_fleet_tool, run_coroutine
+from graph_os.security.error_surface import public_error_payload
+from graph_os.security.identifiers import CYPHER_IDENTIFIER_RE
 
 logger = logging.getLogger(__name__)
 
@@ -258,7 +253,7 @@ def _checkpoint_error_code(exc: Exception) -> str:
     """Map a :class:`~agent_utilities.kvcache.KVCheckpointError` to one of the
     platform's registered public error codes (CONCEPT:AU-KG.memory.kv-checkpoint-resource).
 
-    Deliberately coarse: :func:`~agent_utilities.security.error_surface.public_error_payload`
+    Deliberately coarse: :func:`~graph_os.security.error_surface.public_error_payload`
     only recognizes a small fixed code vocabulary and collapses anything else to
     ``operation_failed`` — and collapsing here is itself the correct security
     posture, not a limitation. Distinguishing "not found" from "cross-tenant" from
@@ -957,7 +952,7 @@ def _surface_error(
     merging them into the redacted payload lets a caller correlate which
     surface/action failed (matching the success path's
     ``{"surface", "action", "result"}`` shape) without reintroducing anything
-    :func:`~agent_utilities.security.error_surface.public_error_payload`
+    :func:`~graph_os.security.error_surface.public_error_payload`
     exists to keep out: the raw exception text/args, which stays fully
     redacted (only ``type(exc).__name__`` is ever logged or returned).
     """
@@ -2891,8 +2886,7 @@ def _deep_call_delegate(
 
     Returns ``(raw_dict, None)`` or ``(None, error_json)``.
 
-    BUG-7: ``call_tool_once``'s decoder prefers a FastMCP result's structured
-    ``.data`` verbatim (``mcp_package._decode``) — when the delegate's tool itself
+    BUG-7: the fleet tool-call decoder returns the text content verbatim — when the delegate's tool itself
     returns an already-JSON-encoded string (this repo's own tool convention:
     ``return json.dumps(...)``), ``.data`` IS that raw string, not the parsed
     object, so ``raw`` arrives here as a ``str`` even though the delegate answered
@@ -2900,8 +2894,8 @@ def _deep_call_delegate(
     isn't a real outage.
     """
     try:
-        raw = _run_async(
-            call_tool_once(
+        raw = run_coroutine(
+            call_fleet_tool(
                 server=_DSM_SERVER_NAME,
                 tool=_DSM_TOOL_NAME,
                 params=tool_params,
@@ -4007,7 +4001,7 @@ def register_engine_surface_tools(
             "CONCEPT:AU-KG.mining.dsm-forecast-delegation — the deep-learning / heavy-Python family the "
             "engine core deliberately does NOT implement (no torch/GPU in the "
             "pure-Rust engine): this tool DISPATCHES to agents/data-science-mcp over "
-            "MCP (the fleet call_tool_once connector, same one 'fleet.write_record' "
+            "MCP (the fleet tool-call helper, same one 'fleet.write_record' "
             "uses) and folds the result back into the KG as typed nodes "
             "(CONCEPT:AU-KG.mining.foldback-typed-nodes). Actions: 'deep_forecast' (LSTM sequence "
             "forecaster — the delegated Prophet/LSTM family; Prophet itself needs an "

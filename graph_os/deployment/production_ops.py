@@ -387,13 +387,12 @@ async def _provision_semantic_content(served_url: str) -> dict[str, Any]:
     uses, so every EG call carries exactly the authority GraphOS serves with.
     """
 
-    from agent_utilities.security.brain_context import use_actor
-
     from graph_os.api.contracts.session import use_session
     from graph_os.deployment.semantic_provisioning import provision_semantic_content
 
     # ``runtime`` binds bootstrap's host slots on import; import it first.
     from graph_os.mcp_server import bootstrap, runtime
+    from graph_os.security.actor_context import use_actor
 
     session = runtime._mint_process_session("http")
     with use_actor(session.actor), use_session(session):
@@ -408,8 +407,6 @@ async def _provision_semantic_content(served_url: str) -> dict[str, Any]:
 async def _onboard_fleet(served_url: str) -> dict[str, Any]:
     """Run one full fleet onboarding pass under GraphOS's process session."""
 
-    from agent_utilities.security.brain_context import use_actor
-
     from graph_os.api.contracts.session import use_session
     from graph_os.fleet.onboarding import (
         FleetOnboarding,
@@ -418,6 +415,7 @@ async def _onboard_fleet(served_url: str) -> dict[str, Any]:
         self_served_connectors,
     )
     from graph_os.mcp_server import bootstrap, runtime
+    from graph_os.security.actor_context import use_actor
 
     session = runtime._mint_process_session("http")
     with use_actor(session.actor), use_session(session):

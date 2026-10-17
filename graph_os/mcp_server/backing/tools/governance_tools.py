@@ -7,10 +7,10 @@ import uuid
 from typing import Any
 
 from agent_utilities.core.event_loop import run_blocking_ordered
-from agent_utilities.security.error_surface import public_error_text
 from pydantic import Field
 
 from graph_os.mcp_server import runtime
+from graph_os.security.error_surface import public_error_text
 
 
 def register_governance_tools(mcp: Any) -> None:
@@ -391,9 +391,9 @@ def _claim_ownership(
         apply_claim,
         preview_claim,
     )
-    from agent_utilities.security.brain_context import use_actor
 
     from graph_os.api.contracts.session import resolve_session
+    from graph_os.security.actor_context import use_actor
 
     node_types = json.loads(node_types_json) if node_types_json else []
     node_ids = json.loads(node_ids_json) if node_ids_json else []

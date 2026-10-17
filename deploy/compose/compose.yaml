@@ -41,7 +41,7 @@ services:
       # Eunomia per mode: none -> none; local/external -> embedded (fails closed).
       EUNOMIA_TYPE: ${EUNOMIA_TYPE:-embedded}
       # Tiny installs keep secrets in the engine's encrypted secrets graph.
-      SECRETS_BACKEND: ${SECRETS_BACKEND:-engine}
+      SECRETS_BACKEND: ${SECRETS_BACKEND:-vault}
       ALLOWED_HOSTS: ${GRAPHOS_ALLOWED_HOSTS:-localhost,127.0.0.1}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
       RUM_OTLP_METRICS_ENDPOINT: ${RUM_OTLP_METRICS_ENDPOINT:-}

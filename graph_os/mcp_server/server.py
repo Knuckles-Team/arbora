@@ -231,7 +231,7 @@ def mcp_server() -> None:
     try:
         logger.info("Starting graph-os MCP server (transport=%s)", transport)
 
-        from agent_utilities.security.request_identity import (
+        from graph_os.security.request_identity import (
             apply_served_security_profile,
         )
 
@@ -261,9 +261,9 @@ def mcp_server() -> None:
         # hard serving-plane boundary; this entrypoint never promotes itself to
         # the host that owns maintenance, workers, or autonomous loops.
         from agent_utilities.core.config import config
-        from agent_utilities.security.brain_context import use_actor
 
         from graph_os.api.contracts.session import use_session
+        from graph_os.security.actor_context import use_actor
 
         with use_actor(bootstrap_session.actor), use_session(bootstrap_session):
             runtime._start_engine_bootstrap(bootstrap_session)

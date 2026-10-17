@@ -50,12 +50,8 @@ def test_bootstrap_starts_workers_after_materialization_without_hydration(
         lambda _session: contextlib.nullcontext(),
     )
     monkeypatch.setattr(
-        "agent_utilities.security.brain_context.use_actor",
+        "graph_os.security.actor_context.use_actor",
         lambda _actor: contextlib.nullcontext(),
-    )
-    monkeypatch.setattr(
-        "agent_utilities.security.system_rbac_admission.ensure_system_principal_access",
-        lambda _actor_id: None,
     )
 
     bootstrap._start_engine_bootstrap(session)

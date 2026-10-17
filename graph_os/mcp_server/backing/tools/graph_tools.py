@@ -121,7 +121,7 @@ def validate_schema_filter(value: Any) -> str | None:
     text = value.strip()
     if not text:
         return None
-    from agent_utilities.security.identifiers import (
+    from graph_os.security.identifiers import (
         InvalidIdentifierError,
         validate_sql_identifier,
     )

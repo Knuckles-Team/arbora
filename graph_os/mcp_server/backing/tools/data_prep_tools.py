@@ -31,6 +31,7 @@ from dataclasses import dataclass, replace
 from enum import StrEnum
 from typing import Any, Literal, NoReturn, Protocol
 
+from agent_connector_sdk.source_connectors.base import ExternalAccess
 from agent_utilities.data_prep import (
     ArrowAdapter,
     CleanPipeline,
@@ -45,12 +46,11 @@ from agent_utilities.data_prep import (
 )
 from agent_utilities.knowledge_graph.ingestion.change_envelope import ChangeEnvelope
 from agent_utilities.models.company_brain import DataClassification
-from agent_utilities.protocols.epistemic_operations import ProtocolModel
-from agent_utilities.protocols.source_connectors.base import ExternalAccess
 from pydantic import Field, ValidationError, model_validator
 
 from graph_os.api.contracts.session import GraphSession
 from graph_os.mcp_server import runtime
+from graph_os.security.operation_result import ProtocolModel
 
 logger = logging.getLogger(__name__)
 
@@ -289,7 +289,7 @@ class PreparedReceipt:
         }
 
     def encode(self) -> str:
-        from agent_utilities.security.run_token import mint_token
+        from graph_os.security.run_token import mint_token
 
         issued_at_ms = int(self.issued_at_ms or time.time() * 1000)
         expires_at_ms = int(self.expires_at_ms or issued_at_ms + _RECEIPT_TTL_MS)
@@ -376,7 +376,7 @@ def _decode_receipt_envelope(value: str) -> tuple[dict[str, Any], Any, str]:
             != token_encoded
         ):
             raise DataPrepToolError("prepared receipt encoding is non-canonical")
-        from agent_utilities.security.run_token import validate_token
+        from graph_os.security.run_token import validate_token
 
         run_token = validate_token(
             token,
@@ -3292,13 +3292,13 @@ def register_data_prep_tools(mcp: Any) -> None:
             result = service.execute(normalized_action, payload, session=session)
             return json.dumps(result, sort_keys=True, separators=(",", ":"))
         except PermissionError as exc:
-            from agent_utilities.security.error_surface import public_error_json
+            from graph_os.security.error_surface import public_error_json
 
             return public_error_json(
                 exc, code="permission_denied", context={"action": normalized_action}
             )
         except ArtifactAuthorityUnavailable as exc:
-            from agent_utilities.security.error_surface import public_error_json
+            from graph_os.security.error_surface import public_error_json
 
             return public_error_json(
                 exc,
@@ -3306,7 +3306,7 @@ def register_data_prep_tools(mcp: Any) -> None:
                 context={"action": normalized_action},
             )
         except NativeCommitUnavailable as exc:
-            from agent_utilities.security.error_surface import public_error_json
+            from graph_os.security.error_surface import public_error_json
 
             return public_error_json(
                 exc,
@@ -3314,13 +3314,13 @@ def register_data_prep_tools(mcp: Any) -> None:
                 context={"action": normalized_action},
             )
         except (DataPrepToolError, ValidationError, ValueError, TypeError) as exc:
-            from agent_utilities.security.error_surface import public_error_json
+            from graph_os.security.error_surface import public_error_json
 
             return public_error_json(
                 exc, code="invalid_request", context={"action": normalized_action}
             )
         except Exception as exc:  # noqa: BLE001 - public boundary is privacy-safe
-            from agent_utilities.security.error_surface import public_error_json
+            from graph_os.security.error_surface import public_error_json
 
             return public_error_json(exc, context={"action": normalized_action})
 

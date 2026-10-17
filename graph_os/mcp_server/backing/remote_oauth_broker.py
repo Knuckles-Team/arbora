@@ -8,8 +8,7 @@ CONCEPT:AU-ECO.mcp.remote-oauth-broker
 GOC-85 (U-11 / U-41 / U-43 / U-44 / U-45). Builds the credential class this repo has
 never had: a per-user, per-provider, per-remote-resource OAuth token, minted through a
 real browser-mediated authorization flow and owned by a server-side broker rather than
-the single-process local helper (:mod:`agent_utilities.security.browser_auth`, U-43 —
-never imported here) or a shared/service credential (U-44/U-45).
+the single-process local browser helper (U-43, not used here) or a shared/service credential (U-44/U-45).
 
 Confirmed by source inspection before this module was first written (matches the
 fail-closed regression pins in ``tests/unit/mcp/test_remote_oauth_fail_closed.py``,
@@ -22,7 +21,7 @@ exact names the canary greps for) anywhere in ``multiplexer.py``. NE-008 instead
 this broker's own, already-reserved seam
 (:meth:`RemoteOAuthBroker.bearer_headers_for`, see point 9 below) using the ONE
 verified-identity primitive this repo already had before this track started
-(:func:`agent_utilities.security.brain_context.current_actor`) — a deliberate design
+(:func:`graph_os.security.actor_context.current_actor`) — a deliberate design
 decision consistent with W07/GOC-15, not an incidental import.
 
 Ten-part architecture (lane doc ``plans/graph-os-completion-program/lanes/
@@ -115,8 +114,9 @@ from urllib.parse import urlencode, urlsplit
 
 import httpx
 from agent_utilities.knowledge_graph.core.discovery_authority import OAuthGrantBinding
-from agent_utilities.security.brain_context import ActorContext
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+from graph_os.security.actor_context import ActorContext
 
 logger = logging.getLogger(__name__)
 _audit_logger = logging.getLogger(
@@ -612,7 +612,7 @@ class _DynamicClientRegistrationCache:
     is reused for every subsequent :meth:`RemoteOAuthBroker.begin`. Concurrent
     first-callers in ONE process serialize on a per-provider lock
     (:func:`_lock_for`, the same primitive token refresh uses); across
-    processes, :meth:`~agent_utilities.security.secrets_client.SecretsClient.set_if_absent`
+    processes, :meth:`~graph_os.security.secrets.SecretsClient.set_if_absent`
     is the durable engine backend's atomic create-if-absent, so exactly one
     racer's registration wins and every other racer reads back the winner's
     ``client_id`` rather than persisting its own (wasted, but harmless) extra
@@ -722,7 +722,7 @@ class OAuthTransaction:
 class TransactionStore:
     """Session-bound encrypted transaction storage, single-use by atomic claim.
 
-    Backed by the same :class:`~agent_utilities.security.secrets_client.SecretsClient`
+    Backed by the same :class:`~graph_os.security.secrets.SecretsClient`
     every other secret in this repo uses (engine-backed encrypted store, or
     OpenBao/Vault when ``SECRETS_BACKEND=vault`` — never a new store). Single-use is
     enforced with :meth:`SecretsClient.compare_and_set` (already atomic on the durable
@@ -1180,8 +1180,8 @@ class RemoteOAuthBroker:
     """Provider-agnostic remote browser-OAuth broker.
 
     Construction takes a :class:`ProviderRegistry` (administrator-populated) and an
-    optional :class:`~agent_utilities.security.secrets_client.SecretsClient` (defaults
-    to :func:`agent_utilities.security.secrets_client.create_secrets_client` — the
+    optional :class:`~graph_os.security.secrets.SecretsClient` (defaults
+    to :func:`graph_os.security.secrets.create_secrets_client` — the
     same OpenBao/engine-backed encrypted store every other secret in this repo uses).
     """
 
@@ -1194,7 +1194,7 @@ class RemoteOAuthBroker:
         dcr_registrar: DynamicClientRegistrar | None = None,
     ) -> None:
         if secrets_client is None:
-            from agent_utilities.security.secrets_client import create_secrets_client
+            from graph_os.security.secrets import create_secrets_client
 
             secrets_client = create_secrets_client()
         self.registry = registry

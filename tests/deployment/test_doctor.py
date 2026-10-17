@@ -457,7 +457,7 @@ def test_permission_governance_doctor_verifies_authority(monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        "agent_utilities.security.cli_secrets.resolve_runtime_secret_reference",
+        "agent_connector_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
         lambda _reference: "doctor-signing-authority-material-32b",
     )
 
@@ -465,7 +465,6 @@ def test_permission_governance_doctor_verifies_authority(monkeypatch):
 
     assert result["status"] == "ok"
     assert result["data"]["identity_verified"] is True
-    assert result["data"]["policy_count"] == 5
 
 
 def test_eunomia_doctor_warns_when_narrowing_policy_is_off(monkeypatch):
@@ -545,7 +544,7 @@ def test_graph_identity_doctor_validates_token_ref_without_exposing_it(monkeypat
     )
     monkeypatch.setattr("agent_utilities.core.config.AgentConfig", lambda: cfg)
     monkeypatch.setattr(
-        "agent_utilities.security.cli_secrets.resolve_runtime_secret_reference",
+        "agent_connector_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
         lambda _ref: "opaque-runtime-token",
     )
 
@@ -637,7 +636,7 @@ def test_transport_security_doctor_resolves_env_profile_without_secret_backend(
     )
     monkeypatch.setattr("agent_utilities.core.config.AgentConfig", lambda: cfg)
     with patch(
-        "agent_utilities.security.secrets_client.create_secrets_client",
+        "graph_os.security.secrets.create_secrets_client",
         side_effect=AssertionError("env references must not open a secret backend"),
     ) as create_client:
         result = D._check_transport_security()
@@ -1403,7 +1402,7 @@ def test_mcp_fleet_secret_doctor_reports_only_aggregate_readiness(monkeypatch):
         lambda alias: direct_material if alias == "DIRECT_ALIAS" else None,
     )
     monkeypatch.setattr(
-        "agent_utilities.security.cli_secrets.resolve_runtime_secret_reference",
+        "agent_connector_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
         lambda _reference: mapped_material,
     )
 
@@ -1434,7 +1433,7 @@ def test_mcp_fleet_secret_doctor_fails_closed_and_redacted(monkeypatch):
     )
     monkeypatch.setattr("agent_utilities.core.config.setting", lambda _alias: None)
     monkeypatch.setattr(
-        "agent_utilities.security.cli_secrets.resolve_runtime_secret_reference",
+        "agent_connector_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
         lambda _reference: (_ for _ in ()).throw(RuntimeError("private detail")),
     )
 

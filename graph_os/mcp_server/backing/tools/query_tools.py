@@ -17,12 +17,12 @@ from agent_utilities.knowledge_graph.orchestration.engine_query import (
     is_aggregation_cypher,
 )
 from agent_utilities.models.evidence_bundle import EvidenceBundle
-from agent_utilities.security.error_surface import public_error_json, public_error_text
 from pydantic import Field
 from pydantic.fields import FieldInfo
 
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
+from graph_os.security.error_surface import public_error_json, public_error_text
 
 logger = logging.getLogger(__name__)
 

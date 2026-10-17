@@ -32,10 +32,10 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from agent_utilities.security.error_surface import public_error_json
 from pydantic import Field
 
 from graph_os.mcp_server import runtime
+from graph_os.security.error_surface import public_error_json
 
 _ACTIONS: tuple[str, ...] = ("import_aif", "export_aif", "evaluate", "add_scheme")
 

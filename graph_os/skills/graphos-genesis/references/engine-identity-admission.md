@@ -22,7 +22,7 @@ if signer != context.principal() {
 So there is no such thing as a separate "provisioner" identity that admits on another
 process's behalf. A process admits using its own verified principal, signing as itself,
 or it does not admit at all. The admission resolver (today
-`agent_utilities.security.admission_authority.resolve_admission_authority()`, in
+the engine admission authority, in
 the orchestration library graph-os imports) is the single resolver that expresses this: it reads the
 bound verified actor, uses that principal as both `agent_id` and `signer_id`, and finds
 that principal's key in this process's own signer registry. It never reads a secrets
@@ -38,7 +38,7 @@ Every admission bridge — tenant (`tenant_admission_cli`), Tier-2
 - It is **not** tenant content access. It grants nothing on any `tenant__*` graph.
 - It **is** a shared HMAC key that lets a process register an engine identity
   (`RegisterIdentity`) and mint/grant a narrow RBAC role
-  (`agent_utilities.security.system_rbac_admission.CONTROL_ROLE_NAME`,
+  (the control role,
   `"control:system"`) with exactly Read + Write on the engine's isolated control
   graph (`CONTROL_GRAPH_NAME`, `"__control__"`, defined in
   `agent_utilities/knowledge_graph/core/shard_topology.py`).

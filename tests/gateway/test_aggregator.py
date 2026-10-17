@@ -3,7 +3,6 @@
 from types import SimpleNamespace
 
 import pytest
-from agent_utilities.security.brain_context import ActorContext
 
 import graph_os.gateway.aggregator as aggregator_module
 from graph_os.gateway.aggregator import Aggregator
@@ -17,6 +16,7 @@ from graph_os.gateway.models import (
 )
 from graph_os.gateway.registry import Registry
 from graph_os.gateway.widgets.base import BaseWidget
+from graph_os.security.actor_context import ActorContext
 
 # GRAPHOS-FLEET-R032: these tests never want a real process-identity token
 # minted (that needs live credential config this suite does not have); they
@@ -148,7 +148,7 @@ class _ActorObservingWidget(BaseWidget):
         return []
 
     def fetch_data(self, config: ServiceConfig) -> WidgetData:
-        from agent_utilities.security.brain_context import current_actor
+        from graph_os.security.actor_context import current_actor
 
         actor = current_actor()
         type(self).observed_actor_id = str(actor.actor_id)

@@ -41,9 +41,10 @@ from agent_utilities.orchestration.fleet_health import (
     health_payload,
     mark_dependency_failure,
 )
-from agent_utilities.security.error_surface import public_error_payload
 from starlette.requests import Request
 from starlette.responses import JSONResponse
+
+from graph_os.security.error_surface import public_error_payload
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +74,8 @@ def _tenant_scope(dialect: str) -> tuple[str, list[Any]]:
     """
     try:
         from agent_utilities.knowledge_graph.core.tenant_sharing import is_privileged
-        from agent_utilities.security.brain_context import current_actor
+
+        from graph_os.security.actor_context import current_actor
 
         actor = current_actor()
         if is_privileged(actor):

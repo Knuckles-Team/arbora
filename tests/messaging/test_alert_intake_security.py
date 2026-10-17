@@ -61,7 +61,7 @@ def test_alert_intake_token_resolution_uses_runtime_secret_reference(monkeypatch
             return "resolved-token"
 
     monkeypatch.setattr(
-        "agent_utilities.security.secrets_client.create_secrets_client",
+        "graph_os.security.secrets.create_secrets_client",
         lambda: _Secrets(),
     )
     assert alert_intake._resolve_alert_intake_token() == "resolved-token"

@@ -37,12 +37,11 @@ from agent_utilities.knowledge_graph.core.session import (
     current_session,
     use_session,
 )
-from agent_utilities.security.actor_identity import ActorType
-from agent_utilities.security.brain_context import ActorContext, use_actor
 
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
 from graph_os.mcp_server.backing.tools import engine_tools
+from graph_os.security.actor_context import ActorContext, ActorType, use_actor
 
 ADMIN_ACTOR = ActorContext(
     actor_id="principal:ops",

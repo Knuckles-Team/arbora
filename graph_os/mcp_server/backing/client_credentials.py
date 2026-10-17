@@ -70,8 +70,9 @@ from pathlib import Path
 import anyio
 import httpx
 from agent_utilities.core._env import setting
-from agent_utilities.security.log_redaction import redact_for_log
 from fastmcp.utilities.logging import get_logger
+
+from graph_os.security.log_redaction import redact_for_log
 
 logger = get_logger(name="MultiplexerClientAuth")
 
@@ -127,7 +128,7 @@ def _resolve_env_secret(target: str) -> str:
 
 def _resolve_vault_secret(ref: str) -> str:
     """Resolve a non-``env://`` secret reference through the secrets backend."""
-    from agent_utilities.security.secrets_client import create_secrets_client
+    from graph_os.security.secrets import create_secrets_client
 
     return str(create_secrets_client().resolve_ref(ref) or "")
 
@@ -184,7 +185,7 @@ def _derive_token_url() -> str | None:
     primary_issuer = issuer.split(",", 1)[0].strip()
     if not primary_issuer:
         return None
-    from agent_utilities.security.oidc_discovery import token_endpoint_for
+    from graph_os.security.oidc_discovery import token_endpoint_for
 
     return token_endpoint_for(primary_issuer)
 
@@ -469,7 +470,7 @@ class ClientCredentialsTokenProvider:
             data["audience"] = self.audience
         if self.scope:
             data["scope"] = self.scope
-        from agent_utilities.security.oidc_discovery import oidc_http_client
+        from graph_os.security.oidc_discovery import oidc_http_client
 
         with oidc_http_client(timeout=float(self.timeout)) as client:
             with client.stream(

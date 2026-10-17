@@ -230,9 +230,8 @@ def oauth_delegated_call_for_mux(mux: Any) -> DelegatedCall:
     async def delegated(
         server: str, tool: str, arguments: Mapping[str, Any], caller: Any
     ) -> Any:
-        from agent_utilities.security.brain_context import use_actor
-
         from graph_os.api.contracts import use_session
+        from graph_os.security.actor_context import use_actor
 
         session = caller.session
         if session is None:

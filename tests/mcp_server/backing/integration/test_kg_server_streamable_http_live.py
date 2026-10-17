@@ -182,7 +182,8 @@ def _live_streamable_http_server(
     @mcp.tool(name="_e2e_identity_probe")
     def _e2e_identity_probe() -> str:
         from agent_utilities.knowledge_graph.core.session import current_session
-        from agent_utilities.security.brain_context import current_actor
+
+        from graph_os.security.actor_context import current_actor
 
         actor = current_actor()
         session = current_session()

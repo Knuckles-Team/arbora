@@ -424,7 +424,9 @@ def _cert_verify_artifacts_dir(cfg: Any) -> None:
 
 def _cert_verify_bearer_token(cfg: Any) -> None:
     """A configured Prometheus bearer ref must resolve to bounded, clean material."""
-    from agent_utilities.security.cli_secrets import resolve_runtime_secret_reference
+    from agent_connector_sdk.credentials.runtime_references import (
+        resolve_runtime_secret_reference,
+    )
 
     if not cfg.cert_prometheus_bearer_token_ref:
         return

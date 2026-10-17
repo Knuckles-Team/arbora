@@ -1197,7 +1197,7 @@ def _unresolved_secret_refs(cfg: Any, *, resolve: bool = True) -> list[str]:
                 resolved = setting(reference.removeprefix("env://"))
             else:
                 if client is None:
-                    from agent_utilities.security.secrets_client import (
+                    from graph_os.security.secrets import (
                         create_secrets_client,
                     )
 

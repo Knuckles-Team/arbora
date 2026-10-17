@@ -12,9 +12,6 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from agent_utilities.security.error_surface import (
-    public_error_json,
-)
 from pydantic import Field
 
 from graph_os.mcp_server import runtime
@@ -23,6 +20,9 @@ from graph_os.mcp_server.backing.context_helpers import coerce_dict_param
 from graph_os.mcp_server.backing.context_helpers import run_coro as _run_coro
 from graph_os.mcp_server.backing.ontology_types import (
     OntologyCatalogRequest,
+)
+from graph_os.security.error_surface import (
+    public_error_json,
 )
 
 logger = logging.getLogger(__name__)
@@ -1107,7 +1107,7 @@ def _graph_share_hierarchy(action: str, tenant_id: str, parent_tenant_id: str) -
             )
         if action == "clear_parent":
             return json.dumps(dataclasses.asdict(_tr.clear_parent(tenant_id)))
-        from agent_utilities.security.brain_context import current_actor
+        from graph_os.security.actor_context import current_actor
 
         target = tenant_id or getattr(current_actor(), "tenant_id", "")
         return json.dumps(
@@ -2750,12 +2750,12 @@ def register_ontology_tools(mcp):
         ),
     ) -> str:
         """Process a document into Document + Chunk ontology objects through the live graph."""
+        from agent_connector_sdk.privacy import persistence_reference
         from agent_utilities.knowledge_graph.facade import KnowledgeGraph
         from agent_utilities.knowledge_graph.ontology.document_processing import (
             ChunkingConfig,
             DocumentProcessor,
         )
-        from agent_utilities.security.persistence_privacy import persistence_reference
 
         try:
             engine = None
@@ -2857,7 +2857,7 @@ def register_ontology_tools(mcp):
 
         try:
             if action == "list":
-                from agent_utilities.protocols.source_connectors import list_sources
+                from agent_connector_sdk.source_connectors import list_sources
 
                 return json.dumps({"connectors": list_sources()})
 

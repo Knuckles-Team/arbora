@@ -13,7 +13,6 @@ from typing import Annotated, Any, Literal
 
 from agent_utilities.rlm.benchmarks.base import BenchResult
 from agent_utilities.rlm.telemetry import FailureClass
-from agent_utilities.security.error_surface import public_error_payload
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator
 
 from graph_os.api.contracts.agent_control_contracts import (
@@ -41,6 +40,7 @@ from graph_os.api.contracts.agent_control_contracts import (
     WorkItemSubmissionResult,
 )
 from graph_os.api.contracts.session import GraphSession, resolve_session
+from graph_os.security.error_surface import public_error_payload
 
 type _RequiredScope = Literal["kg:read", "kg:write"]
 type _OperationSpec = tuple[

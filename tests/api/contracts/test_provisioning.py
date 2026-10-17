@@ -38,14 +38,13 @@ from agent_utilities.orchestration.action_policy import (
     PolicyDisposition,
     PolicyReceipt,
 )
-from agent_utilities.security.actor_identity import ActorType
-from agent_utilities.security.brain_context import ActorContext
 
 from graph_os.api.contracts.provisioning import (
     PackImportAuthorityResolver,
     ProvisioningAuthorityError,
     pack_import_authority,
 )
+from graph_os.security.actor_context import ActorContext, ActorType
 
 # No file-level `engine` mark: test_resolver_requires_pack_control_scope_before_providers
 # and test_resolver_does_not_accept_a_caller_supplied_policy below exercise

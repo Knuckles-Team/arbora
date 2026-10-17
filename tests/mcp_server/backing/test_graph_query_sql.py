@@ -105,7 +105,7 @@ def test_sql_scope_surfaces_engine_error(monkeypatch):
     out = graph_query(query="DELETE FROM nodes", scope="sql", params="{}").model_dump()
     payload = out["reasoning_trace"][-1]["payload"]
     # The standardized, privacy-safe operation-failure envelope
-    # (agent_utilities.security.error_surface) no longer echoes raw exception
+    # (graph_os.security.error_surface) no longer echoes raw exception
     # text — only a generic code + correlation_id.
     assert payload["status"] == "failed"
     assert payload["error"]["code"] == "operation_failed"

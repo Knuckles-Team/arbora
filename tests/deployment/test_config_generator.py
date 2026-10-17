@@ -347,7 +347,7 @@ def test_secret_reference_inventory_covers_nested_and_secret_scheme(monkeypatch)
             return "resolved" if reference.endswith("RESOLVED") else None
 
     monkeypatch.setattr(
-        "agent_utilities.security.secrets_client.create_secrets_client",
+        "graph_os.security.secrets.create_secrets_client",
         lambda: _Secrets(),
     )
     monkeypatch.setenv("TEST_RESOLVED", "runtime-material")
@@ -376,7 +376,7 @@ def test_env_only_secret_inventory_never_constructs_durable_backend(monkeypatch)
         raise AssertionError("env-only inventory must not construct a backend")
 
     monkeypatch.setattr(
-        "agent_utilities.security.secrets_client.create_secrets_client",
+        "graph_os.security.secrets.create_secrets_client",
         forbidden_backend,
     )
     monkeypatch.setenv("TEST_ENV_ONLY_RESOLVED", "runtime-material")
@@ -457,7 +457,7 @@ def test_candidate_doctor_never_uses_ambient_secret_backend(
         raise RuntimeError(private_detail)
 
     monkeypatch.setattr(
-        "agent_utilities.security.secrets_client.create_secrets_client",
+        "graph_os.security.secrets.create_secrets_client",
         forbidden_backend,
     )
     out = tmp_path / "c.json"

@@ -16,10 +16,6 @@ from contextlib import contextmanager
 from typing import Any
 
 from agent_utilities.core.config import setting
-from agent_utilities.security.error_surface import (
-    PUBLIC_ERROR_MESSAGES,
-    public_error_payload,
-)
 
 from graph_os.gateway.models import (
     ServiceCategory,
@@ -28,6 +24,10 @@ from graph_os.gateway.models import (
     WidgetField,
 )
 from graph_os.gateway.widgets.fleet_client import FleetConnectorClient
+from graph_os.security.error_surface import (
+    PUBLIC_ERROR_MESSAGES,
+    public_error_payload,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -258,7 +258,7 @@ class BaseWidget(ABC):
         # API responses nor YAML serialization can expose the resolved value.
         reference = config.credential_refs.get(key.lower())
         if reference:
-            from agent_utilities.security.secrets_client import create_secrets_client
+            from graph_os.security.secrets import create_secrets_client
 
             resolved = create_secrets_client().resolve_ref(reference)
             if not resolved:

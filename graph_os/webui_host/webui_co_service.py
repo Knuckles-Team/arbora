@@ -28,7 +28,7 @@ A co-service runs on ``_authorized_background_thread``, inheriting the graph-os
 process's verified actor and ``GraphSession`` for its whole lifetime. graph-os
 is the principal the engine's signer registry already trusts, so a WebUI
 request handled here can sign engine admission **as itself**
-(:func:`agent_utilities.security.admission_authority.resolve_admission_authority`)
+(the engine's admission authority, EG-IDENTITY-R950)
 — which is the only pairing the engine accepts
 (``verify_register_identity_signature`` requires ``signer == principal``). Run
 as a separate deployment, agent-webui holds no signer entry at all, which is

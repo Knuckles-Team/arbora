@@ -17,10 +17,10 @@ import json
 
 import pytest
 from agent_utilities.knowledge_graph.core.session import GraphSession
-from agent_utilities.security.brain_context import ActorContext, ActorType
 
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
+from graph_os.security.actor_context import ActorContext, ActorType
 
 
 def _register_tools():

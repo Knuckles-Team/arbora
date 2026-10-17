@@ -32,10 +32,10 @@ import json
 from typing import Any
 
 from agent_utilities.core.event_loop import run_blocking_ordered
-from agent_utilities.security.error_surface import public_error_payload
 from pydantic import Field
 
 from graph_os.mcp_server import runtime
+from graph_os.security.error_surface import public_error_payload
 
 #: Governance/compliance node labels already ingested by the CISO Assistant
 #: extractor (agent_utilities/knowledge_graph/enrichment/extractors/ciso_assistant.py)

@@ -11,18 +11,18 @@ import re
 from collections.abc import Callable
 from typing import Any
 
+from agent_connector_sdk.privacy import persistence_reference
 from agent_utilities.core.event_loop import run_blocking_ordered
-from agent_utilities.security.error_surface import (
-    public_error_json,
-    public_error_text,
-)
-from agent_utilities.security.persistence_privacy import persistence_reference
 from pydantic import Field
 
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing import engine_routing
 from graph_os.mcp_server.backing.context_helpers import coerce_dict_param
 from graph_os.mcp_server.backing.write_ingest_types import IngestRequest
+from graph_os.security.error_surface import (
+    public_error_json,
+    public_error_text,
+)
 
 _OPAQUE_NODE_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,255}\Z")
 
@@ -2178,7 +2178,8 @@ def register_write_ingest_tools(mcp):
                 from agent_utilities.knowledge_graph.ingestion.skill_classification import (
                     reclassify_skill,
                 )
-                from agent_utilities.security.brain_context import current_actor
+
+                from graph_os.security.actor_context import current_actor
 
                 try:
                     principal = current_actor().actor_id

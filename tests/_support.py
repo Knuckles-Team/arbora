@@ -12,7 +12,7 @@ import threading
 from collections.abc import Iterable
 from dataclasses import dataclass
 
-from agent_utilities.security.secrets_client import SecretsBackend
+from graph_os.security.secrets import SecretsBackend
 
 
 @dataclass
