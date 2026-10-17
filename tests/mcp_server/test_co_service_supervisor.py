@@ -84,9 +84,7 @@ def test_targeted_shutdown_preserves_borrowed_http_service() -> None:
 
     try:
         for name, server in zip(("owned", "borrowed"), servers, strict=True):
-            supervisor.start_service(
-                name, partial(serve, server), session=object()
-            )
+            supervisor.start_service(name, partial(serve, server), session=object())
         for server in servers:
             with urlopen(
                 f"http://127.0.0.1:{server.server_port}/health", timeout=1
