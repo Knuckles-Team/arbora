@@ -133,7 +133,7 @@ async def test_reach_user_uses_last_active_channel(svc: MessagingService) -> Non
     # …so reach_user now routes there.
     res = await svc.reach_user("hello", user_id="u1")
     assert res.success
-    backend = await svc.get_backend("telegram")
+    backend: Any = await svc.get_backend("telegram")
     assert backend is not None
     assert backend.sent[-1] == ("555", "hello")
 
@@ -146,7 +146,7 @@ async def test_reach_user_falls_back_to_default_channel(
     monkeypatch.setenv("MESSAGING_DEFAULT_CHANNEL", "999")
     res = await svc.reach_user("yo", user_id="unknown-user")
     assert res.success
-    backend = await svc.get_backend("telegram")
+    backend: Any = await svc.get_backend("telegram")
     assert backend is not None
     assert backend.sent[-1] == ("999", "yo")
 
