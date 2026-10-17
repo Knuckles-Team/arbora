@@ -1,5 +1,5 @@
 """Tests for the tenant-scoped market read service
-(GRAPHOS-DATA-MARKET-R003; FI-01/FI-02 in
+(ARBORA-DATA-MARKET-R003; FI-01/FI-02 in
 ``specs/data-and-market-projections/test-spec.md``).
 """
 
@@ -31,7 +31,7 @@ def test_missing_binding_refuses_with_zero_provider_calls() -> None:
     assert provider.mock_calls == []
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R017.1")
+@pytest.mark.spec("ARBORA-OPS-R017.1")
 def test_mismatched_tenant_refuses_with_zero_provider_calls() -> None:
     """FI-02: tenant B's binding cannot read tenant A's market data."""
 
@@ -65,7 +65,7 @@ def test_missing_provider_capability_refuses_before_dispatch() -> None:
     assert excinfo.value.code == ArboraErrorCode.UNAVAILABLE
 
 
-@pytest.mark.spec("GRAPHOS-OPS-R017.1")
+@pytest.mark.spec("ARBORA-OPS-R017.1")
 def test_matched_binding_dispatches_through_the_provider() -> None:
     request = _request()
     binding = AccountBinding(tenant_id="tenant-a", account_id="acct-1")

@@ -272,7 +272,7 @@ def test_runtime_attestation_binds_remote_transport_destination(
     assert _runtime_materialized(declaration) is False
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R035")
+@pytest.mark.spec("ARBORA-FLEET-R035")
 @pytest.mark.parametrize("output_schema", [False, [], "not-a-schema", 7])
 def test_child_catalog_rejects_malformed_output_schema(output_schema):
     tool = SimpleNamespace(name="query", input_schema={}, output_schema=output_schema)
@@ -280,7 +280,7 @@ def test_child_catalog_rejects_malformed_output_schema(output_schema):
         _bounded_tool_catalog([tool])
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R035")
+@pytest.mark.spec("ARBORA-FLEET-R035")
 @pytest.mark.parametrize("boundary", ["size", "depth"])
 def test_child_output_schema_uses_shared_catalog_boundaries(boundary):
     schema: dict[str, object] = {"description": "x" * (4 * 1024 * 1024 + 1)}
@@ -293,7 +293,7 @@ def test_child_output_schema_uses_shared_catalog_boundaries(boundary):
         _bounded_tool_catalog([tool])
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R035")
+@pytest.mark.spec("ARBORA-FLEET-R035")
 @pytest.mark.parametrize("output_schema", [None, {}])
 def test_child_output_schema_is_optional_but_empty_schema_is_retained(output_schema):
     tool = SimpleNamespace(name="query", input_schema={}, output_schema=output_schema)

@@ -1,4 +1,4 @@
-"""GRAPHOS-HOST-R014: the dependency manifest pins published packages.
+"""ARBORA-HOST-R014: the dependency manifest pins published packages.
 
 The former combined agent-runtime source tree split into separately
 published repositories (the connector SDK, Arbora, and the graph engine).

@@ -28,7 +28,7 @@ from arbora.fleet.scaling.service_scale_units import (
     evaluate_scale,
 )
 
-pytestmark = pytest.mark.spec("GRAPHOS-CAPACITY-R750.753")
+pytestmark = pytest.mark.spec("ARBORA-CAPACITY-R750.753")
 
 NOW = datetime(2026, 8, 19, 12, 0, tzinfo=UTC)
 FRESH = {

@@ -14,7 +14,7 @@ from arbora.messaging.commands import (
 )
 from arbora.messaging.render import markdown_to_telegram_html as render
 
-pytestmark = pytest.mark.spec("GRAPHOS-MESSAGING-R800")
+pytestmark = pytest.mark.spec("ARBORA-MESSAGING-R800")
 
 
 class _Svc:

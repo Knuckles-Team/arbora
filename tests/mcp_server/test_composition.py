@@ -86,7 +86,7 @@ def test_messaging_co_service_reaches_arbora_owned_intake(
 ) -> None:
     """Arbora, not the agent runtime, admits configured channels to the host.
 
-    Proves requirement GRAPHOS-HOST-R011's host wiring: ``start_composed_services``
+    Proves requirement ARBORA-HOST-R011's host wiring: ``start_composed_services``
     reaches ``arbora.messaging.intake.start_messaging_intake`` for the
     "messaging" co-service rather than the agent runtime's own daemon.
     """

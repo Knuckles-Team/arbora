@@ -1,4 +1,4 @@
-"""Tests for the client entry-point token registry (GRAPHOS-IDENTITY-R017)."""
+"""Tests for the client entry-point token registry (ARBORA-IDENTITY-R017)."""
 
 from __future__ import annotations
 
@@ -11,17 +11,17 @@ from arbora.identity.client_entry_points import (
 )
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R017")
+@pytest.mark.spec("ARBORA-IDENTITY-R017")
 def test_every_client_entry_point_is_registered() -> None:
     registered = {req.entry_point for req in CLIENT_TOKEN_REQUIREMENTS}
 
     assert registered == set(ClientEntryPoint)
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R017")
+@pytest.mark.spec("ARBORA-IDENTITY-R017")
 def test_every_client_entry_point_carries_a_verified_token() -> None:
     # Empty once every client path has migrated -- the precondition
-    # GRAPHOS-IDENTITY-R017 requires before Arbora can stop relying on
+    # ARBORA-IDENTITY-R017 requires before Arbora can stop relying on
     # the engine's unauthenticated opt-out.
     assert entry_points_without_verified_tokens() == ()
 

@@ -1,4 +1,4 @@
-"""GRAPHOS-FLEET-R030: access contracts register as unapproved mappings."""
+"""ARBORA-FLEET-R030: access contracts register as unapproved mappings."""
 
 from __future__ import annotations
 

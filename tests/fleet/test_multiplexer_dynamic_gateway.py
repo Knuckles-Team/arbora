@@ -1547,7 +1547,7 @@ async def test_tool_dispatchable_false_for_catalogued_but_unmounted_tool(tmp_pat
     assert mux.tool_dispatchable(CNT_PREFIXED, session_key="any-session") is False
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R022")
+@pytest.mark.spec("ARBORA-IDENTITY-R022")
 def test_tool_dispatchable_false_for_unknown_name_on_a_serving_instance(
     tmp_path,
 ):
@@ -1758,7 +1758,7 @@ def test_fleet_required_capabilities_rejects_generic_admin_for_discover_and_dele
         assert admin_scope in _fleet_required_capabilities("manage")
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R022")
+@pytest.mark.spec("ARBORA-IDENTITY-R022")
 def test_require_fleet_capability_denies_admin_only_caller_for_discover(monkeypatch):
     """The previously over-broad path, now denied: an admin-only caller who
     holds no ``mcp:discover`` scope must be refused fleet discovery -- a
@@ -1795,7 +1795,7 @@ def test_require_fleet_capability_allows_caller_holding_the_extra_scope(monkeypa
 
 
 def test_require_fleet_capability_denies_stdio_caller_with_no_verified_actor():
-    """GRAPHOS-FLEET-R021: a local stdio caller is no longer trusted outright
+    """ARBORA-FLEET-R021: a local stdio caller is no longer trusted outright
     -- with no verified process actor bound at all, the exact same check
     applies and the call is refused, exactly as an unauthenticated remote
     caller would be."""
@@ -1803,7 +1803,7 @@ def test_require_fleet_capability_denies_stdio_caller_with_no_verified_actor():
         _require_fleet_capability("discover")
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R022")
+@pytest.mark.spec("ARBORA-IDENTITY-R022")
 def test_require_fleet_capability_denies_stdio_caller_missing_the_exact_scope():
     """A verified stdio actor that lacks the fleet's own ``mcp:discover``
     scope is refused the same way a remote caller without it would be --
@@ -1821,7 +1821,7 @@ def test_require_fleet_capability_denies_stdio_caller_missing_the_exact_scope():
             _require_fleet_capability("discover")
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R022")
+@pytest.mark.spec("ARBORA-IDENTITY-R022")
 def test_require_fleet_capability_allows_stdio_caller_with_exact_scope():
     """The correctly scoped stdio path: a verified local actor holding the
     fleet's own ``mcp:discover`` scope passes -- the same outcome an
@@ -1839,7 +1839,7 @@ def test_require_fleet_capability_allows_stdio_caller_with_exact_scope():
         _require_fleet_capability("discover")  # must not raise
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R035")
+@pytest.mark.spec("ARBORA-FLEET-R035")
 def test_prefixing_preserves_child_annotations_and_output_schema(tmp_path):
     mux = _mux_with_children(tmp_path, {"schema-mcp": [("query", "query")]})
     source = _schema_tool("query", "request")
@@ -1856,7 +1856,7 @@ def test_prefixing_preserves_child_annotations_and_output_schema(tmp_path):
     assert forwarded[0].meta == source.meta
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R035")
+@pytest.mark.spec("ARBORA-FLEET-R035")
 @pytest.mark.usefixtures("stdio_fleet_authority")
 async def test_output_only_reconnect_refreshes_descriptor_revision_and_cache(tmp_path):
     server = "schema-mcp"

@@ -1,4 +1,4 @@
-"""GRAPHOS-FLEET-R001: pack publishing uses the engine-generated types only.
+"""ARBORA-FLEET-R001: pack publishing uses the engine-generated types only.
 
 arbora's fleet content-pack path must never construct a placeholder record
 in place of the engine's own generated connector-pack contract: every status,
@@ -26,7 +26,7 @@ def _source_files() -> list[Path]:
     return sorted(root.rglob("*.py"))
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R001")
+@pytest.mark.spec("ARBORA-FLEET-R001")
 def test_no_placeholder_content_pack_type_is_defined_anywhere() -> None:
     """A placeholder ``ContentPack``-shaped record must never be reintroduced.
 
@@ -48,7 +48,7 @@ def test_no_placeholder_content_pack_type_is_defined_anywhere() -> None:
     assert offenders == []
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R001")
+@pytest.mark.spec("ARBORA-FLEET-R001")
 def test_semantic_content_status_request_is_the_engine_generated_type() -> None:
     """``verify_semantic_content`` must build the real EG ``ConnectorPackStatusRequest``."""
     from epistemic_graph.generated.connector_pack import ConnectorPackStatusRequest
@@ -62,7 +62,7 @@ def test_semantic_content_status_request_is_the_engine_generated_type() -> None:
     assert request.connector == "arbora"
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R001")
+@pytest.mark.spec("ARBORA-FLEET-R001")
 def test_fleet_catalog_port_reads_only_generated_agent_component_types() -> None:
     """``GeneratedFleetCatalogPort`` must be built from EG-generated request/entry
     types, never a arbora-local placeholder standing in for them."""

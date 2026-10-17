@@ -1,4 +1,4 @@
-"""GRAPHOS-FLEET-R006.2: skill/prompt body-harvest cutover for an
+"""ARBORA-FLEET-R006.2: skill/prompt body-harvest cutover for an
 already-admitted child.
 
 ``_probe_skills``/``_probe_prompts`` (``arbora/fleet/multiplexer.py``) now
@@ -30,7 +30,7 @@ def _fixture_local_catalog(entries):
     return lambda: (entries, [])
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R006.2")
+@pytest.mark.spec("ARBORA-FLEET-R006.2")
 async def test_admitted_skill_resolves_via_local_catalog_without_harvest(
     tmp_path, monkeypatch
 ):
@@ -65,7 +65,7 @@ async def test_admitted_skill_resolves_via_local_catalog_without_harvest(
     session.read_resource.assert_not_called()
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R006.2")
+@pytest.mark.spec("ARBORA-FLEET-R006.2")
 async def test_non_admitted_skill_still_falls_back_to_live_harvest(
     tmp_path, monkeypatch
 ):
@@ -88,7 +88,7 @@ async def test_non_admitted_skill_still_falls_back_to_live_harvest(
     session.read_resource.assert_called_once()
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R006.2")
+@pytest.mark.spec("ARBORA-FLEET-R006.2")
 async def test_admitted_prompt_resolves_via_local_catalog_without_harvest(
     tmp_path, monkeypatch
 ):
@@ -122,7 +122,7 @@ async def test_admitted_prompt_resolves_via_local_catalog_without_harvest(
     session.read_resource.assert_not_called()
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R006.2")
+@pytest.mark.spec("ARBORA-FLEET-R006.2")
 async def test_non_admitted_prompt_still_falls_back_to_live_harvest(
     tmp_path, monkeypatch
 ):

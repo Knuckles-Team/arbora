@@ -38,24 +38,24 @@ def _reason(claims: dict[str, Any], **kw: Any) -> OidcRefusalReason:
     return ei.value.reason
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R009.2.2")
+@pytest.mark.spec("ARBORA-IDENTITY-R009.2.2")
 def test_valid_claims_pass_with_string_or_list_audience() -> None:
     _check(_claims())
     _check(_claims(aud=["other", "client"]))
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R009.2.2")
+@pytest.mark.spec("ARBORA-IDENTITY-R009.2.2")
 def test_wrong_issuer_refused() -> None:
     assert _reason(_claims(iss="https://evil")) is OidcRefusalReason.WRONG_ISSUER
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R009.2.2")
+@pytest.mark.spec("ARBORA-IDENTITY-R009.2.2")
 def test_wrong_or_missing_audience_refused() -> None:
     assert _reason(_claims(aud="other")) is OidcRefusalReason.WRONG_AUDIENCE
     assert _reason(_claims(aud=None)) is OidcRefusalReason.WRONG_AUDIENCE
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R009.2.2")
+@pytest.mark.spec("ARBORA-IDENTITY-R009.2.2")
 def test_expired_and_missing_expiry_refused() -> None:
     past = _claims(exp=NOW.timestamp() - 1)
     assert _reason(past) is OidcRefusalReason.EXPIRED
@@ -63,17 +63,17 @@ def test_expired_and_missing_expiry_refused() -> None:
     assert _reason(_claims(exp=True)) is OidcRefusalReason.MISSING_EXPIRY
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R009.2.2")
+@pytest.mark.spec("ARBORA-IDENTITY-R009.2.2")
 def test_clock_skew_tolerates_recent_expiry() -> None:
     _check(_claims(exp=NOW.timestamp() - 5), clock_skew=timedelta(seconds=30))
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R009.2.2")
+@pytest.mark.spec("ARBORA-IDENTITY-R009.2.2")
 def test_nonce_mismatch_refused() -> None:
     assert _reason(_claims(nonce="x")) is OidcRefusalReason.NONCE_MISMATCH
 
 
-@pytest.mark.spec("GRAPHOS-IDENTITY-R009.2.2")
+@pytest.mark.spec("ARBORA-IDENTITY-R009.2.2")
 def test_naive_time_refused() -> None:
     with pytest.raises(IdentityUnavailable):
         check_id_token_claims(

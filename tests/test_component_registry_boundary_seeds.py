@@ -1,4 +1,4 @@
-"""GRAPHOS-HOST-R012: boundary seed entries for arbora and the connector SDK.
+"""ARBORA-HOST-R012: boundary seed entries for arbora and the connector SDK.
 
 A registry-completeness check: the architecture component registry boundary
 seed manifest this repository publishes names both arbora and

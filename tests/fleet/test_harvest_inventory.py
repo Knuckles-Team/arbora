@@ -1,19 +1,19 @@
-"""GRAPHOS-FLEET-R006.1/.2: the harvest call-site inventory, and the first
+"""ARBORA-FLEET-R006.1/.2: the harvest call-site inventory, and the first
 removal.
 
 ``arbora/fleet/multiplexer.py`` still carries the skill/prompt
 body-harvest path (``_harvest_resource_bodies`` and its helpers) that
-``GRAPHOS-FLEET-R006.2``-``.5`` remove once the resident local-skill
+``ARBORA-FLEET-R006.2``-``.5`` remove once the resident local-skill
 catalog (``arbora/fleet/local_skill_catalog.py``) serves the same
 capability for an admitted child. This is a static, source-level census:
 it enumerates every ``_harvest``-named entry point defined in that module
 and every direct call site of ``_harvest_resource_bodies`` in any
 function or method of that module, and pins the counts as the baseline the
-later children must shrink. ``GRAPHOS-FLEET-R006.2`` moved ``_probe_skills``'
+later children must shrink. ``ARBORA-FLEET-R006.2`` moved ``_probe_skills``'
 and ``_probe_prompts``' call sites behind the new
 ``_resolve_via_local_catalog_or_harvest`` cutover helper; a non-admitted
 child still reaches ``_harvest_resource_bodies`` through it, so that
-fallback stays counted until ``GRAPHOS-FLEET-R006.3`` removes it. A failure here means a
+fallback stays counted until ``ARBORA-FLEET-R006.3`` removes it. A failure here means a
 harvest-named symbol or call site was added or removed without updating
 the pinned baseline.
 """
@@ -29,10 +29,10 @@ import arbora
 
 _MULTIPLEXER_RELATIVE_PATH = Path("fleet") / "multiplexer.py"
 
-# GRAPHOS-FLEET-R006.1 baseline: every ``_harvest``-named entry point
+# ARBORA-FLEET-R006.1 baseline: every ``_harvest``-named entry point
 # (function or method) defined in arbora/fleet/multiplexer.py today.
-# GRAPHOS-FLEET-R006.3 deletes _harvest_resource_bodies, _harvest_deadline
-# and _harvest_error_reason; GRAPHOS-FLEET-R006.4 renames
+# ARBORA-FLEET-R006.3 deletes _harvest_resource_bodies, _harvest_deadline
+# and _harvest_error_reason; ARBORA-FLEET-R006.4 renames
 # _harvest_probe_results off this list.
 _BASELINE_HARVEST_ENTRY_POINTS = frozenset(
     {
@@ -43,10 +43,10 @@ _BASELINE_HARVEST_ENTRY_POINTS = frozenset(
     }
 )
 
-# GRAPHOS-FLEET-R006.1/.2 baseline: call sites of _harvest_resource_bodies,
-# by enclosing function. GRAPHOS-FLEET-R006.2 replaced the _probe_skills and
+# ARBORA-FLEET-R006.1/.2 baseline: call sites of _harvest_resource_bodies,
+# by enclosing function. ARBORA-FLEET-R006.2 replaced the _probe_skills and
 # _probe_prompts call sites with one non-admitted-child fallback in
-# _resolve_via_local_catalog_or_harvest; GRAPHOS-FLEET-R006.3 removes that
+# _resolve_via_local_catalog_or_harvest; ARBORA-FLEET-R006.3 removes that
 # fallback and the remaining _probe_protocol_families sites.
 _BASELINE_CALL_SITES_BY_METHOD = {
     "_resolve_via_local_catalog_or_harvest": 1,
@@ -102,37 +102,37 @@ def _harvest_resource_bodies_call_sites_by_method(
     return counts
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R006.1")
+@pytest.mark.spec("ARBORA-FLEET-R006.1")
 def test_harvest_named_entry_points_match_pinned_baseline() -> None:
     found = _harvest_named_entry_points(_multiplexer_tree())
     assert found == _BASELINE_HARVEST_ENTRY_POINTS, (
         "a harvest-named entry point was added or removed in "
         "arbora/fleet/multiplexer.py without updating the "
-        "GRAPHOS-FLEET-R006.1 baseline: "
+        "ARBORA-FLEET-R006.1 baseline: "
         f"found={sorted(found)} baseline={sorted(_BASELINE_HARVEST_ENTRY_POINTS)}"
     )
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R006.1")
+@pytest.mark.spec("ARBORA-FLEET-R006.1")
 def test_harvest_resource_bodies_call_sites_match_pinned_baseline() -> None:
     found = _harvest_resource_bodies_call_sites_by_method(_multiplexer_tree())
     assert found == _BASELINE_CALL_SITES_BY_METHOD, (
         "a _harvest_resource_bodies call site was added or removed in "
         "arbora/fleet/multiplexer.py without updating the "
-        f"GRAPHOS-FLEET-R006.1 baseline: found={found} "
+        f"ARBORA-FLEET-R006.1 baseline: found={found} "
         f"baseline={_BASELINE_CALL_SITES_BY_METHOD}"
     )
     assert sum(found.values()) == _BASELINE_TOTAL_CALL_SITES
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R006.3.1")
+@pytest.mark.spec("ARBORA-FLEET-R006.3.1")
 def test_probe_protocol_families_has_no_direct_harvest_call() -> None:
     found = _harvest_resource_bodies_call_sites_by_method(_multiplexer_tree())
     assert "_probe_protocol_families" not in found
     assert found == {"_resolve_via_local_catalog_or_harvest": 1}
 
 
-@pytest.mark.spec("GRAPHOS-FLEET-R006.3.1")
+@pytest.mark.spec("ARBORA-FLEET-R006.3.1")
 @pytest.mark.asyncio
 async def test_probe_protocol_families_resolves_admitted_skill_without_wire_read(
     monkeypatch: pytest.MonkeyPatch,

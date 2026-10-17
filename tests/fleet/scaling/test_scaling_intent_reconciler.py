@@ -22,7 +22,7 @@ from arbora.fleet.scaling.scaling_intent_reconciler import (
     ScalePolicyDecision,
 )
 
-pytestmark = pytest.mark.spec("GRAPHOS-CAPACITY-R750.752")
+pytestmark = pytest.mark.spec("ARBORA-CAPACITY-R750.752")
 
 NOW = datetime(2026, 1, 1, 12, tzinfo=UTC)
 TARGET = {

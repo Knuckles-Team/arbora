@@ -1,5 +1,5 @@
 """Tests for the idempotent finance-schedule run record
-(GRAPHOS-DATA-MARKET-R002; FI-04 in
+(ARBORA-DATA-MARKET-R002; FI-04 in
 ``specs/data-and-market-projections/test-spec.md``).
 """
 

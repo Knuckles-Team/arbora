@@ -1,4 +1,4 @@
-"""GRAPHOS-A2A-R003: the deployed arbora package harvests fleet skills
+"""ARBORA-A2A-R003: the deployed arbora package harvests fleet skills
 and prompts through exactly one owner.
 
 agent-utilities ships its own legacy MCP multiplexer
@@ -55,8 +55,8 @@ def _imported_module_names(tree: ast.Module) -> set[str]:
     return names
 
 
-@pytest.mark.spec("GRAPHOS-A2A-R003")
-@pytest.mark.spec("GRAPHOS-OPS-R003")
+@pytest.mark.spec("ARBORA-A2A-R003")
+@pytest.mark.spec("ARBORA-OPS-R003")
 def test_no_source_file_imports_the_legacy_au_multiplexer() -> None:
     offenders: dict[str, set[str]] = {}
     for path in _iter_source_files():

@@ -53,7 +53,7 @@ class _HealthHandler(BaseHTTPRequestHandler):
         pass
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R009.4.1")
+@pytest.mark.spec("ARBORA-HOST-R009.4.1")
 def test_service_can_request_stop_without_joining_itself() -> None:
     supervisor = CoServiceSupervisor()
     requested = threading.Event()
@@ -72,7 +72,7 @@ def test_service_can_request_stop_without_joining_itself() -> None:
         assert supervisor.stop_service("self", timeout=1)
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R009.4.1")
+@pytest.mark.spec("ARBORA-HOST-R009.4.1")
 def test_targeted_shutdown_preserves_borrowed_http_service() -> None:
     supervisor = CoServiceSupervisor()
     servers = [HTTPServer(("127.0.0.1", 0), _HealthHandler) for _ in range(2)]
@@ -103,7 +103,7 @@ def test_targeted_shutdown_preserves_borrowed_http_service() -> None:
             server.server_close()
 
 
-@pytest.mark.spec("GRAPHOS-HOST-R009.4.1")
+@pytest.mark.spec("ARBORA-HOST-R009.4.1")
 def test_shutdown_deadline_retains_stalled_handles_for_retry() -> None:
     supervisor = CoServiceSupervisor()
     release = threading.Event()
