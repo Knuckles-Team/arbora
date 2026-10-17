@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import sys
 from typing import Any
 
 from agent_connector_sdk.mcp.content import register_connector_content
@@ -192,6 +193,10 @@ def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
     ``/goals``, ``/tools``) is centralized in the API gateway
     (:mod:`arbora.gateway`) — see :func:`_mount_rest_routes`.
     """
+    from arbora.console import print_usage_or_version
+
+    if print_usage_or_version(sys.argv[1:]):
+        return
     from arbora.core.settings import load_config
 
     load_config()  # resolve settings through the one shared XDG config.json

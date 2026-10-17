@@ -719,7 +719,9 @@ def _validate_transport_choices(transport_choices: tuple[str, ...]) -> None:
 
 
 def create_mcp_parser(
-    *, transport_choices: tuple[str, ...] = _ALL_TRANSPORTS
+    *,
+    transport_choices: tuple[str, ...] = _ALL_TRANSPORTS,
+    resolve_secret_defaults: bool = True,
 ) -> argparse.ArgumentParser:
     """Create a standard argument parser for MCP servers.
 
@@ -727,6 +729,8 @@ def create_mcp_parser(
     host/port configuration, authentication (JWT, OIDC, OAuth), and Eunomia
     policy enforcement. Callers may narrow ``transport_choices`` when a server
     intentionally exposes a smaller current transport surface.
+    ``resolve_secret_defaults=False`` leaves the secret flag defaults unset so
+    usage text never reads configuration or a secret store.
 
     Returns:
         An argparse.ArgumentParser instance.
@@ -739,7 +743,11 @@ def create_mcp_parser(
         default_oauth_upstream_client_secret,
         default_openapi_password,
         default_openapi_client_secret,
-    ) = _resolve_mcp_parser_secret_defaults()
+    ) = (
+        _resolve_mcp_parser_secret_defaults()
+        if resolve_secret_defaults
+        else (None, None, None, None, None, None)
+    )
     _validate_transport_choices(transport_choices)
 
     parser = argparse.ArgumentParser(add_help=False, description="MCP Server")

@@ -90,3 +90,67 @@ def test_setting_reads_environment_typed_by_default(
     else:
         monkeypatch.setenv("GOS_TEST_SETTING", raw)
     assert settings.setting("GOS_TEST_SETTING", default) == expected
+
+
+@pytest.mark.parametrize(
+    ("alias", "text", "field", "expected"),
+    [
+        (
+            "MCP_ALWAYS_LOAD",
+            '["graph", "fleet"]',
+            "mcp_always_load",
+            ["graph", "fleet"],
+        ),
+        ("MCP_ALWAYS_LOAD", "graph, fleet", "mcp_always_load", ["graph", "fleet"]),
+        (
+            "GRAPH_SERVICE_ENDPOINTS",
+            '["unix:///run/eg.sock"]',
+            "graph_service_endpoints",
+            ["unix:///run/eg.sock"],
+        ),
+        (
+            "EXTRA_HEADERS",
+            '{"X-Tenant": "boot"}',
+            "extra_headers",
+            {"X-Tenant": "boot"},
+        ),
+        (
+            "MCP_FLEET_SECRET_REFS",
+            '{"fleet": "env://FLEET_TOKEN"}',
+            "mcp_fleet_secret_refs",
+            {"fleet": "env://FLEET_TOKEN"},
+        ),
+    ],
+)
+def test_config_accepts_json_text_for_structured_fields(
+    monkeypatch, alias, text, field, expected
+) -> None:
+    """The k8s config stores lists and mappings as JSON text in the environment."""
+    monkeypatch.setenv(alias, text)
+
+    assert getattr(settings.ArboraConfig(), field) == expected
+    assert getattr(settings.runtime_config, field) == expected
+    assert getattr(settings.ArboraConfig(**{alias: text}), field) == expected
+
+
+def test_config_document_round_trips_structured_values(tmp_path) -> None:
+    path = tmp_path / "config.json"
+    path.write_text(
+        '{"MCP_ALWAYS_LOAD": "[\\"graph\\"]", "EXTRA_HEADERS": "{\\"X\\": \\"1\\"}"}'
+    )
+
+    cfg = settings.config_from_document(settings.read_config_document(path))
+
+    assert cfg.mcp_always_load == ["graph"]
+    assert cfg.extra_headers == {"X": "1"}
+
+
+def test_save_config_item_writes_structured_values_as_json_text(home) -> None:
+    import json
+
+    settings.save_config_item("MCP_ALWAYS_LOAD", ["graph", "fleet"])
+    path = home / "arbora" / "config.json"
+
+    assert json.loads(path.read_text())["MCP_ALWAYS_LOAD"] == '["graph","fleet"]'
+    assert settings.read_config_document(path)["MCP_ALWAYS_LOAD"] == '["graph","fleet"]'
+    assert settings.ArboraConfig().mcp_always_load == ["graph", "fleet"]

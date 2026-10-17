@@ -31,6 +31,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from agent_connector_sdk.utilities import to_boolean
+
 if TYPE_CHECKING:
     from arbora.core.config_admin import HostingDeploymentSettings
 
@@ -436,7 +438,32 @@ def generate_config(profile: str = "tiny") -> dict[str, Any]:
     # JSON-normalize (drops non-serializable defaults to their str form).
     data = json.loads(json.dumps(data, default=str))
     data.update(_PROFILE_PRESETS[profile])
-    return _sanitize_generated_value(data)
+    return _flat_config_document(_sanitize_generated_value(data))
+
+
+def _flat_config_document(data: Mapping[str, Any]) -> dict[str, Any]:
+    """The ``config.json`` shape the runtime loader accepts: flat scalars only.
+
+    The loader projects each key into the environment and refuses a nested
+    value, so lists and mappings are written as JSON text (which
+    :class:`~arbora.core.settings.ArboraConfig` decodes). An unset (``None``)
+    setting is written as empty text, which every reader treats as unset; a
+    credential-shaped one is omitted, because the loader admits only a secret
+    reference under such a key.
+    """
+    from arbora.core.settings import _credential_shaped
+
+    flat: dict[str, Any] = {}
+    for key, value in data.items():
+        if value is None:
+            if not _credential_shaped(key):
+                flat[key] = ""
+            continue
+        if isinstance(value, list | tuple | dict):
+            flat[key] = json.dumps(value, sort_keys=True, separators=(",", ":"))
+        else:
+            flat[key] = value
+    return flat
 
 
 def write_config(
@@ -778,10 +805,12 @@ def _document_value(cfg: Any, env: str, document: Mapping[str, Any]) -> Any:
 def _config_doctor_load_from_path(
     profile: str | None, config_path: str | Path
 ) -> _DoctorConfigContext | dict[str, Any]:
+    from arbora.core.settings import config_from_document, read_config_document
+
     try:
-        raw = json.loads(Path(config_path).read_text(encoding="utf-8"))
-        if not isinstance(raw, dict):
-            raise ValueError("configuration must be a JSON object")
+        # The runtime loader's own reader: a document it refuses (nested
+        # values, credential values) is unreadable here too.
+        raw = read_config_document(Path(config_path))
         _require_private_source(
             Path(config_path), profile or raw.get("DEPLOYMENT_PROFILE")
         )
@@ -792,11 +821,10 @@ def _config_doctor_load_from_path(
             "error": "configuration_source_unreadable",
             "error_class": type(exc).__name__,
         }
-    # config.json keys are env aliases; AgentConfig accepts them via populate.
+    # The document's text values build the config exactly as the runtime
+    # builds it from the environment that load_config projects.
     try:
-        from arbora.core.settings import ArboraConfig
-
-        cfg = ArboraConfig(**{k: v for k, v in raw.items() if v not in (None, "")})
+        cfg = config_from_document(raw)
     except Exception as exc:  # noqa: BLE001
         return {
             "status": "error",
@@ -1029,6 +1057,10 @@ def _config_doctor_check_readiness(
     if norm != "tiny":
         for env, expected in _PRODUCTION_READINESS_EXPECTED.items():
             actual = _document_value(cfg, env, document or {})
+            if isinstance(expected, bool) and isinstance(actual, str):
+                # An unmodelled flag is document text; the runtime reads it
+                # through ``setting`` typed by its boolean default.
+                actual = to_boolean(actual)
             if actual is not expected:
                 readiness_mismatches.append(env)
     return {

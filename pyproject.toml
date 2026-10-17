@@ -207,7 +207,19 @@ include = ["arbora*"]
 exclude = ["tests*"]
 
 [tool.setuptools.package-data]
-arbora = ["ontology/**/*.ttl", "skills/**", "mcp_server/arbora_operations.json", "mcp_server/backing/arbora_capabilities.json", "api/generated/*.json", "api/generated/schemas/*.json"]
+# Every data file under arbora/ ships: a runtime load of a file left out of the
+# wheel crash-loops only an installed deploy, never a source-tree test. The
+# release workflow's wheel boot gate (scripts/wheel_boot_check.py) fails when
+# any non-Python file tracked under arbora/ is missing from the built wheel.
+arbora = [
+    "**/*.json",
+    "**/*.yaml",
+    "**/*.yml",
+    "**/*.toml",
+    "**/*.ttl",
+    "**/*.md",
+    "**/*.txt",
+]
 
 [tool.ruff]
 line-length = 88
