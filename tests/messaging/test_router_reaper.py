@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -55,7 +55,7 @@ async def test_reaper_uses_bound_turn_handler_and_preserves_send_result(
         router._running = False
         return int(delivered)
 
-    router._backends.append(Backend())
+    router._backends.append(cast(Any, Backend()))
     monkeypatch.setenv("MESSAGING_INBOX_RETRY_S", "0")
     monkeypatch.setattr(MessagingService, "instance", lambda: Service())
     bind_host_ports(turn_handler=reply)

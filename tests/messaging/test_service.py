@@ -22,7 +22,9 @@ from graph_os.messaging.models import (
 )
 from graph_os.messaging.service import MessagingService
 
-from ._fakes import FakeMessagingBackend as _FakeBackend
+from ._fakes import FakeMessagingBackend
+
+_FakeBackend: Any = FakeMessagingBackend
 
 
 def test_inbound_inbox_uses_only_bound_host_engine() -> None:

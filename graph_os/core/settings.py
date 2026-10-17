@@ -11,7 +11,6 @@ location is still found, with a single deprecation warning.
 
 from __future__ import annotations
 
-import os
 import warnings
 from pathlib import Path
 
@@ -33,11 +32,11 @@ _warned_legacy: set[Path] = set()
 
 
 def _config_home() -> Path:
-    return Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
+    return Path(setting("XDG_CONFIG_HOME", "") or Path.home() / ".config")
 
 
 def _env_dir(name: str) -> Path | None:
-    raw = os.environ.get(name, "").strip()
+    raw = str(setting(name, "") or "").strip()
     return Path(raw).expanduser() if raw else None
 
 
