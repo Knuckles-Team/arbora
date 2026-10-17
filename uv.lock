@@ -289,6 +289,178 @@ wheels = [
 ]
 
 [[package]]
+name = "arbora"
+source = { editable = "." }
+dependencies = [
+    { name = "agent-connector-sdk", extra = ["a2a", "mcp"] },
+    { name = "agent-utilities" },
+    { name = "aiohttp" },
+    { name = "anyio" },
+    { name = "epistemic-graph", extra = ["server"] },
+    { name = "eunomia-core" },
+    { name = "fastapi" },
+    { name = "fastmcp" },
+    { name = "filelock" },
+    { name = "httpx" },
+    { name = "joserfc" },
+    { name = "mcp" },
+    { name = "opentelemetry-api" },
+    { name = "prometheus-client" },
+    { name = "pydantic" },
+    { name = "pydantic-ai-slim", extra = ["openai"] },
+    { name = "pyjwt" },
+    { name = "python-multipart" },
+    { name = "pyyaml" },
+    { name = "starlette" },
+    { name = "universal-skills" },
+]
+
+[package.optional-dependencies]
+gateway-widgets = [
+    { name = "agent-connector-sdk", extra = ["a2a", "mcp"] },
+]
+messaging = [
+    { name = "botbuilder-core" },
+    { name = "discord-py" },
+    { name = "google-api-python-client" },
+    { name = "google-auth" },
+    { name = "httpx" },
+    { name = "irc" },
+    { name = "line-bot-sdk" },
+    { name = "matrix-nio" },
+    { name = "mattermostdriver" },
+    { name = "neonize" },
+    { name = "python-telegram-bot" },
+    { name = "slack-bolt" },
+    { name = "twilio" },
+    { name = "twitchio" },
+]
+messaging-discord = [
+    { name = "discord-py" },
+]
+messaging-googlechat = [
+    { name = "google-api-python-client" },
+    { name = "google-auth" },
+]
+messaging-googlemeet = [
+    { name = "google-api-python-client" },
+    { name = "google-auth" },
+]
+messaging-irc = [
+    { name = "irc" },
+]
+messaging-line = [
+    { name = "line-bot-sdk" },
+]
+messaging-matrix = [
+    { name = "matrix-nio" },
+]
+messaging-mattermost = [
+    { name = "mattermostdriver" },
+]
+messaging-nextcloud = [
+    { name = "httpx" },
+]
+messaging-slack = [
+    { name = "slack-bolt" },
+]
+messaging-synology = [
+    { name = "httpx" },
+]
+messaging-teams = [
+    { name = "botbuilder-core" },
+]
+messaging-telegram = [
+    { name = "python-telegram-bot" },
+]
+messaging-twitch = [
+    { name = "twitchio" },
+]
+messaging-voicecall = [
+    { name = "twilio" },
+]
+messaging-whatsapp = [
+    { name = "httpx" },
+    { name = "neonize" },
+]
+test = [
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "pytest-timeout" },
+    { name = "pytest-xdist" },
+    { name = "ruff" },
+    { name = "setuptools" },
+    { name = "types-pyyaml" },
+]
+vault = [
+    { name = "hvac" },
+]
+webui = [
+    { name = "agent-webui" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], specifier = ">=0.2.0,<1.0.0" },
+    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], marker = "extra == 'gateway-widgets'", specifier = ">=0.2.0,<1.0.0" },
+    { name = "agent-utilities", specifier = ">=3.0.0,<4.0.0" },
+    { name = "agent-webui", marker = "extra == 'webui'", specifier = ">=2.7.0,<3.0.0" },
+    { name = "aiohttp", specifier = ">=3.14.5" },
+    { name = "anyio", specifier = ">=4.15.1" },
+    { name = "arbora", extras = ["messaging-discord", "messaging-googlechat", "messaging-googlemeet", "messaging-irc", "messaging-line", "messaging-matrix", "messaging-mattermost", "messaging-nextcloud", "messaging-signal", "messaging-slack", "messaging-synology", "messaging-teams", "messaging-telegram", "messaging-twitch", "messaging-voicecall", "messaging-whatsapp"], marker = "extra == 'messaging'" },
+    { name = "botbuilder-core", marker = "extra == 'messaging-teams'", specifier = ">=4.17.1" },
+    { name = "discord-py", marker = "extra == 'messaging-discord'", specifier = ">=2.7.1" },
+    { name = "epistemic-graph", extras = ["server"], specifier = ">=2.27.2,<3.0.0", index = "https://pypi.org/simple" },
+    { name = "eunomia-core", specifier = ">=0.3.10" },
+    { name = "fastapi", specifier = ">=0.143.3" },
+    { name = "fastmcp", specifier = ">=4.1.0" },
+    { name = "filelock", specifier = ">=4.2.0" },
+    { name = "google-api-python-client", marker = "extra == 'messaging-googlechat'", specifier = ">=2.198.0" },
+    { name = "google-api-python-client", marker = "extra == 'messaging-googlemeet'", specifier = ">=2.198.0" },
+    { name = "google-auth", marker = "extra == 'messaging-googlechat'", specifier = ">=2.62.0" },
+    { name = "google-auth", marker = "extra == 'messaging-googlemeet'", specifier = ">=2.62.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-nextcloud'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-synology'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-whatsapp'", specifier = ">=0.28.1" },
+    { name = "hvac", marker = "extra == 'vault'", specifier = ">=2.4.0" },
+    { name = "irc", marker = "extra == 'messaging-irc'", specifier = ">=20.5.0" },
+    { name = "joserfc", specifier = ">=1.7.5" },
+    { name = "line-bot-sdk", marker = "extra == 'messaging-line'", specifier = ">=3.26.0" },
+    { name = "matrix-nio", marker = "extra == 'messaging-matrix'", specifier = ">=0.26.0" },
+    { name = "mattermostdriver", marker = "extra == 'messaging-mattermost'", specifier = ">=7.3.2" },
+    { name = "mcp", specifier = ">=2.3.0,<3.0.0" },
+    { name = "mypy", marker = "extra == 'test'", specifier = ">=2.4.0" },
+    { name = "neonize", marker = "extra == 'messaging-whatsapp'", specifier = ">=0.5.2" },
+    { name = "opentelemetry-api", specifier = ">=1.45.1" },
+    { name = "prometheus-client", specifier = ">=0.26.0" },
+    { name = "pydantic", specifier = ">=2.14.1,<3.0.0" },
+    { name = "pydantic-ai-slim", extras = ["openai"], specifier = "==2.57.0" },
+    { name = "pyjwt", specifier = ">=2.15.1" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=9.1.1" },
+    { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=1.4.0" },
+    { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=7.1.0" },
+    { name = "pytest-timeout", marker = "extra == 'test'", specifier = ">=2.4.0" },
+    { name = "pytest-xdist", marker = "extra == 'test'", specifier = ">=3.8.0" },
+    { name = "python-multipart", specifier = ">=0.0.32" },
+    { name = "python-telegram-bot", marker = "extra == 'messaging-telegram'", specifier = ">=22.8" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
+    { name = "ruff", marker = "extra == 'test'", specifier = "==0.17.1" },
+    { name = "setuptools", marker = "extra == 'test'", specifier = ">=84.0.0" },
+    { name = "slack-bolt", marker = "extra == 'messaging-slack'", specifier = ">=1.30.0" },
+    { name = "starlette", specifier = ">=1.8.0" },
+    { name = "twilio", marker = "extra == 'messaging-voicecall'", specifier = ">=9.12.0" },
+    { name = "twitchio", marker = "extra == 'messaging-twitch'", specifier = ">=3.3.2" },
+    { name = "types-pyyaml", marker = "extra == 'test'", specifier = ">=6.0.12.20260906" },
+    { name = "universal-skills", specifier = ">=1.3.11,<2.0.0" },
+    { name = "uvicorn", marker = "extra == 'webui'", specifier = ">=0.54.0" },
+]
+provides-extras = ["test", "webui", "gateway-widgets", "vault", "messaging-telegram", "messaging-mattermost", "messaging-discord", "messaging-slack", "messaging-whatsapp", "messaging-teams", "messaging-googlechat", "messaging-googlemeet", "messaging-matrix", "messaging-irc", "messaging-signal", "messaging-imessage", "messaging-line", "messaging-twitch", "messaging-synology", "messaging-voicecall", "messaging-nextcloud", "messaging"]
+
+[[package]]
 name = "asgiref"
 version = "3.12.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1328,178 +1500,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/8d/2b/6ce81972d5c8cab97
 wheels = [
     { url = "https://files.pythonhosted.org/packages/65/b9/6b29500a1c581ff4d77fd83c6568d068bee06f1b139fb6eb0a4f2d4bce8a/googleapis_common_protos-1.75.5-py3-none-any.whl", hash = "sha256:d7285525c23039db98f2463e6d5a4f9b958b94d497f03a844ece3259c4e72d5d", size = 307737, upload-time = "2026-09-29T19:25:48.735Z" },
 ]
-
-[[package]]
-name = "graph-os"
-source = { editable = "." }
-dependencies = [
-    { name = "agent-connector-sdk", extra = ["a2a", "mcp"] },
-    { name = "agent-utilities" },
-    { name = "aiohttp" },
-    { name = "anyio" },
-    { name = "epistemic-graph", extra = ["server"] },
-    { name = "eunomia-core" },
-    { name = "fastapi" },
-    { name = "fastmcp" },
-    { name = "filelock" },
-    { name = "httpx" },
-    { name = "joserfc" },
-    { name = "mcp" },
-    { name = "opentelemetry-api" },
-    { name = "prometheus-client" },
-    { name = "pydantic" },
-    { name = "pydantic-ai-slim", extra = ["openai"] },
-    { name = "pyjwt" },
-    { name = "python-multipart" },
-    { name = "pyyaml" },
-    { name = "starlette" },
-    { name = "universal-skills" },
-]
-
-[package.optional-dependencies]
-gateway-widgets = [
-    { name = "agent-connector-sdk", extra = ["a2a", "mcp"] },
-]
-messaging = [
-    { name = "botbuilder-core" },
-    { name = "discord-py" },
-    { name = "google-api-python-client" },
-    { name = "google-auth" },
-    { name = "httpx" },
-    { name = "irc" },
-    { name = "line-bot-sdk" },
-    { name = "matrix-nio" },
-    { name = "mattermostdriver" },
-    { name = "neonize" },
-    { name = "python-telegram-bot" },
-    { name = "slack-bolt" },
-    { name = "twilio" },
-    { name = "twitchio" },
-]
-messaging-discord = [
-    { name = "discord-py" },
-]
-messaging-googlechat = [
-    { name = "google-api-python-client" },
-    { name = "google-auth" },
-]
-messaging-googlemeet = [
-    { name = "google-api-python-client" },
-    { name = "google-auth" },
-]
-messaging-irc = [
-    { name = "irc" },
-]
-messaging-line = [
-    { name = "line-bot-sdk" },
-]
-messaging-matrix = [
-    { name = "matrix-nio" },
-]
-messaging-mattermost = [
-    { name = "mattermostdriver" },
-]
-messaging-nextcloud = [
-    { name = "httpx" },
-]
-messaging-slack = [
-    { name = "slack-bolt" },
-]
-messaging-synology = [
-    { name = "httpx" },
-]
-messaging-teams = [
-    { name = "botbuilder-core" },
-]
-messaging-telegram = [
-    { name = "python-telegram-bot" },
-]
-messaging-twitch = [
-    { name = "twitchio" },
-]
-messaging-voicecall = [
-    { name = "twilio" },
-]
-messaging-whatsapp = [
-    { name = "httpx" },
-    { name = "neonize" },
-]
-test = [
-    { name = "mypy" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "pytest-timeout" },
-    { name = "pytest-xdist" },
-    { name = "ruff" },
-    { name = "setuptools" },
-    { name = "types-pyyaml" },
-]
-vault = [
-    { name = "hvac" },
-]
-webui = [
-    { name = "agent-webui" },
-    { name = "uvicorn" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], specifier = ">=0.2.0,<1.0.0" },
-    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], marker = "extra == 'gateway-widgets'", specifier = ">=0.2.0,<1.0.0" },
-    { name = "agent-utilities", specifier = ">=3.0.0,<4.0.0" },
-    { name = "agent-webui", marker = "extra == 'webui'", specifier = ">=2.7.0,<3.0.0" },
-    { name = "aiohttp", specifier = ">=3.14.5" },
-    { name = "anyio", specifier = ">=4.15.1" },
-    { name = "botbuilder-core", marker = "extra == 'messaging-teams'", specifier = ">=4.17.1" },
-    { name = "discord-py", marker = "extra == 'messaging-discord'", specifier = ">=2.7.1" },
-    { name = "epistemic-graph", extras = ["server"], specifier = ">=2.27.2,<3.0.0", index = "https://pypi.org/simple" },
-    { name = "eunomia-core", specifier = ">=0.3.10" },
-    { name = "fastapi", specifier = ">=0.143.3" },
-    { name = "fastmcp", specifier = ">=4.1.0" },
-    { name = "filelock", specifier = ">=4.2.0" },
-    { name = "google-api-python-client", marker = "extra == 'messaging-googlechat'", specifier = ">=2.198.0" },
-    { name = "google-api-python-client", marker = "extra == 'messaging-googlemeet'", specifier = ">=2.198.0" },
-    { name = "google-auth", marker = "extra == 'messaging-googlechat'", specifier = ">=2.62.0" },
-    { name = "google-auth", marker = "extra == 'messaging-googlemeet'", specifier = ">=2.62.0" },
-    { name = "graph-os", extras = ["messaging-discord", "messaging-googlechat", "messaging-googlemeet", "messaging-irc", "messaging-line", "messaging-matrix", "messaging-mattermost", "messaging-nextcloud", "messaging-signal", "messaging-slack", "messaging-synology", "messaging-teams", "messaging-telegram", "messaging-twitch", "messaging-voicecall", "messaging-whatsapp"], marker = "extra == 'messaging'" },
-    { name = "httpx", specifier = ">=0.28.1" },
-    { name = "httpx", marker = "extra == 'messaging-nextcloud'", specifier = ">=0.28.1" },
-    { name = "httpx", marker = "extra == 'messaging-synology'", specifier = ">=0.28.1" },
-    { name = "httpx", marker = "extra == 'messaging-whatsapp'", specifier = ">=0.28.1" },
-    { name = "hvac", marker = "extra == 'vault'", specifier = ">=2.4.0" },
-    { name = "irc", marker = "extra == 'messaging-irc'", specifier = ">=20.5.0" },
-    { name = "joserfc", specifier = ">=1.7.5" },
-    { name = "line-bot-sdk", marker = "extra == 'messaging-line'", specifier = ">=3.26.0" },
-    { name = "matrix-nio", marker = "extra == 'messaging-matrix'", specifier = ">=0.26.0" },
-    { name = "mattermostdriver", marker = "extra == 'messaging-mattermost'", specifier = ">=7.3.2" },
-    { name = "mcp", specifier = ">=2.3.0,<3.0.0" },
-    { name = "mypy", marker = "extra == 'test'", specifier = ">=2.4.0" },
-    { name = "neonize", marker = "extra == 'messaging-whatsapp'", specifier = ">=0.5.2" },
-    { name = "opentelemetry-api", specifier = ">=1.45.1" },
-    { name = "prometheus-client", specifier = ">=0.26.0" },
-    { name = "pydantic", specifier = ">=2.14.1,<3.0.0" },
-    { name = "pydantic-ai-slim", extras = ["openai"], specifier = "==2.57.0" },
-    { name = "pyjwt", specifier = ">=2.15.1" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=9.1.1" },
-    { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=1.4.0" },
-    { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=7.1.0" },
-    { name = "pytest-timeout", marker = "extra == 'test'", specifier = ">=2.4.0" },
-    { name = "pytest-xdist", marker = "extra == 'test'", specifier = ">=3.8.0" },
-    { name = "python-multipart", specifier = ">=0.0.32" },
-    { name = "python-telegram-bot", marker = "extra == 'messaging-telegram'", specifier = ">=22.8" },
-    { name = "pyyaml", specifier = ">=6.0.3" },
-    { name = "ruff", marker = "extra == 'test'", specifier = "==0.17.1" },
-    { name = "setuptools", marker = "extra == 'test'", specifier = ">=84.0.0" },
-    { name = "slack-bolt", marker = "extra == 'messaging-slack'", specifier = ">=1.30.0" },
-    { name = "starlette", specifier = ">=1.8.0" },
-    { name = "twilio", marker = "extra == 'messaging-voicecall'", specifier = ">=9.12.0" },
-    { name = "twitchio", marker = "extra == 'messaging-twitch'", specifier = ">=3.3.2" },
-    { name = "types-pyyaml", marker = "extra == 'test'", specifier = ">=6.0.12.20260906" },
-    { name = "universal-skills", specifier = ">=1.3.11,<2.0.0" },
-    { name = "uvicorn", marker = "extra == 'webui'", specifier = ">=0.54.0" },
-]
-provides-extras = ["test", "webui", "gateway-widgets", "vault", "messaging-telegram", "messaging-mattermost", "messaging-discord", "messaging-slack", "messaging-whatsapp", "messaging-teams", "messaging-googlechat", "messaging-googlemeet", "messaging-matrix", "messaging-irc", "messaging-signal", "messaging-imessage", "messaging-line", "messaging-twitch", "messaging-synology", "messaging-voicecall", "messaging-nextcloud", "messaging"]
 
 [[package]]
 name = "griffelib"
