@@ -4,7 +4,7 @@ CONCEPT:GRAPHOS-HOST.harness.host-bindings
 
 The harness (``agent_utilities``) never serves tools or parses the fleet
 catalog. Its thin client host (``agent_utilities.host_ports``) fails
-closed until graph-os installs three bindings:
+closed until graph-os installs these bindings:
 
 * a **native toolset provider** that binds a caller-granted subset of
   graph-os's own served operations for one in-process delegation, dispatched
@@ -12,6 +12,9 @@ closed until graph-os installs three bindings:
 * a **fleet catalog provider** mapping each fleet server graph-os serves to its
   public tool prefix and client endpoint, read from the exact multiplexer
   graph-os serves; and
+* a **remote toolset provider** and a **tool client factory**
+  (:mod:`graph_os.fleet.client_toolsets`): graph-os's MCP client, carrying
+  its outbound service credential; and
 * an **authority keepalive** factory that renews the caller's renewable
   session lease for the whole of one delegation.
 
@@ -86,8 +89,10 @@ def fleet_catalog_view(multiplexer: Any) -> Callable[[], Mapping[str, Any]]:
 
 
 def register_harness_host(multiplexer: Any | None = None) -> None:
-    """Install graph-os's native toolset, fleet catalog and keepalive bindings."""
+    """Install graph-os's native, remote, client, catalog and keepalive bindings."""
     from agent_utilities import host_ports as host
+
+    from graph_os.fleet import client_toolsets
 
     host.register_native_toolset_provider(
         host.NativeToolsetProvider(
@@ -97,6 +102,8 @@ def register_harness_host(multiplexer: Any | None = None) -> None:
     host.register_fleet_catalog_provider(
         fleet_catalog_view(multiplexer) if multiplexer is not None else None
     )
+    host.register_remote_toolset_provider(client_toolsets.remote_toolset_provider())
+    host.register_tool_client_factory(client_toolsets.open_tool_client)
     host.register_authority_keepalive(_keepalive)
 
 
@@ -106,6 +113,8 @@ def unregister_harness_host() -> None:
 
     host.register_native_toolset_provider(None)
     host.register_fleet_catalog_provider(None)
+    host.register_remote_toolset_provider(None)
+    host.register_tool_client_factory(None)
     host.register_authority_keepalive(None)
 
 

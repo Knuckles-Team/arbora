@@ -17,6 +17,9 @@ from agent_utilities.core.config import load_mcp_servers_from_config
 
 import graph_os.mcp_server.backing.server_factory as server_factory
 
+# Configured toolsets are built by graph-os, the harness host.
+pytestmark = pytest.mark.usefixtures("graphos_harness_host")
+
 
 def test_create_mcp_parser():
     parser = server_factory.create_mcp_parser()

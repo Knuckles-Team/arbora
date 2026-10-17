@@ -11,7 +11,6 @@ from collections.abc import Callable
 from typing import Any, cast
 
 import pytest
-from scripts.gen_graphos_manifest import harvest_actions
 
 from graph_os.mcp_server import runtime
 from graph_os.mcp_server.backing.tools import (
@@ -23,6 +22,7 @@ from graph_os.mcp_server.backing.tools import (
     register_job_tools,
     register_workflow_tools,
 )
+from scripts.gen_graphos_manifest import harvest_actions
 
 
 class _FakeMCP:

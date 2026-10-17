@@ -7,10 +7,14 @@ import json
 import os
 from unittest.mock import MagicMock, patch
 
+import pytest
 from agent_utilities.core.config import load_mcp_servers_from_config
 from agent_utilities.models import MCPToolInfo
 
 from graph_os.mcp_server.backing.server_factory import create_mcp_parser
+
+# Configured toolsets are built by graph-os, the harness host.
+pytestmark = pytest.mark.usefixtures("graphos_harness_host")
 
 
 def test_mcp_parser_defaults():
