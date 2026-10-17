@@ -1909,8 +1909,8 @@
       "title": "Readiness snapshot joins independent probes",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "d5d3a7762579",
-        "dbcdfe766c6e"
+        "8ba82613f287",
+        "8fff5386d284"
       ],
       "verified_by": [
         "tests/observability/test_readiness.py:31",
