@@ -145,8 +145,10 @@
     {
       "id": "GRAPHOS-A2A-R002.2.2",
       "title": "Reference-bound single-tool task worker",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "663cc8cad940"
+      ],
       "verified_by": [
         "tests/a2a/test_tool_task.py:20"
       ]

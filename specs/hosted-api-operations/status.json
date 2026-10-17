@@ -730,7 +730,7 @@
     {
       "id": "GRAPHOS-OPS-R021.4.5",
       "title": "Per-run operation",
-      "delivery_state": "SPECIFIED",
+      "delivery_state": "VERIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
@@ -740,8 +740,10 @@
     {
       "id": "GRAPHOS-OPS-R021.4.5.1",
       "title": "Current-plan read boundary",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "663cc8cad940"
+      ],
       "verified_by": [
         "tests/api/test_runs_ops.py:20"
       ]
