@@ -8,6 +8,7 @@ from typing import Any
 import pytest
 
 from arbora.fleet.health import (
+    AuthorityNotServed,
     FleetAuthorities,
     collect_fleet_health,
     health_payload,
@@ -58,31 +59,56 @@ def test_all_authorities_served_is_ready() -> None:
     assert health_payload(snapshot)["evidence"]["schema_version"] == "fleet.health.v1"
 
 
-@pytest.mark.parametrize(
-    ("authorities", "status", "missing"),
-    [
-        (FleetAuthorities(connect=Store, goals=goals), "partial", "worker_registry"),
-        (
-            FleetAuthorities(connect=Store, goals=goals, workers=broken),
-            "partial",
-            "worker_registry",
-        ),
-        (FleetAuthorities(), "unavailable", "control_store"),
-    ],
-)
-def test_unserved_or_failed_authority_is_never_empty(
-    authorities: FleetAuthorities, status: str, missing: str
-) -> None:
-    snapshot = collect_fleet_health(authorities, now=NOW)
+def test_failed_authority_is_never_empty() -> None:
+    snapshot = collect_fleet_health(
+        FleetAuthorities(connect=Store, goals=goals, workers=broken), now=NOW
+    )
     evidence = snapshot.evidence
     assert (evidence.status, evidence.ready, evidence.autoscaling_ready) == (
-        status,
+        "partial",
         False,
         False,
     )
-    assert evidence.dependencies[missing].status == "unavailable"
+    assert evidence.dependencies["worker_registry"].status == "unavailable"
     assert snapshot.dispatch_workers is None
     assert all("secret" not in line for line in evidence.diagnostics)
+
+
+@pytest.mark.parametrize(
+    ("authorities", "status", "unserved"),
+    [
+        (
+            FleetAuthorities(connect=Store, goals=goals),
+            "healthy",
+            ("worker_registry",),
+        ),
+        (
+            FleetAuthorities(),
+            "not_served",
+            ("goal_rehydration", "control_store", "worker_registry"),
+        ),
+    ],
+)
+def test_unserved_authority_is_not_applicable_to_readiness(
+    authorities: FleetAuthorities, status: str, unserved: tuple[str, ...]
+) -> None:
+    """AuthorityNotServed reports not_served and never gates readiness."""
+    evidence = collect_fleet_health(authorities, now=NOW).evidence
+    assert (evidence.status, evidence.ready) == (status, True)
+    # Autoscaling and convergence still need every authority served.
+    assert not evidence.autoscaling_ready and not evidence.convergence_ready
+    assert all(evidence.dependencies[name].status == "not_served" for name in unserved)
+
+
+def test_reader_raising_authority_not_served_is_not_served() -> None:
+    def unserved() -> Any:
+        raise AuthorityNotServed("session store is not served in this process")
+
+    evidence = collect_fleet_health(
+        FleetAuthorities(connect=unserved, goals=goals, workers=lambda: []), now=NOW
+    ).evidence
+    assert evidence.dependencies["control_store"].status == "not_served"
+    assert (evidence.status, evidence.ready) == ("healthy", True)
 
 
 def test_late_failure_and_provider_failure_fail_closed() -> None:
@@ -93,3 +119,25 @@ def test_late_failure_and_provider_failure_fail_closed() -> None:
     assert not marked.evidence.convergence_ready
     unavailable = unavailable_fleet_health("autoscaler", now=NOW)
     assert (unavailable.status, unavailable.ready) == ("unavailable", False)
+
+
+def test_readiness_body_names_unserved_authorities() -> None:
+    from arbora.observability.runtime_health import not_served_authorities
+
+    evidence = collect_fleet_health(FleetAuthorities(), now=NOW).evidence
+    report = {
+        "checks": [
+            {"name": "engine", "status": "ok"},
+            {
+                "name": "fleet_supervision",
+                "status": "ok",
+                "detail": evidence.model_dump(mode="json"),
+            },
+        ]
+    }
+    assert not_served_authorities(report) == [
+        "control_store",
+        "goal_rehydration",
+        "worker_registry",
+    ]
+    assert not_served_authorities({"checks": []}) == []

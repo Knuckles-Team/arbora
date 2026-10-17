@@ -794,10 +794,12 @@
     {
       "id": "GRAPHOS-FLEET-R024.750",
       "title": "Fail-closed fleet health evidence",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "62c0320da4f9"
+      ],
       "verified_by": [
-        "tests/fleet/test_health.py:18"
+        "tests/fleet/test_health.py:19"
       ]
     },
     {

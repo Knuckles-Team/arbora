@@ -25,8 +25,14 @@ from typing import Any, Literal, TypedDict
 
 from pydantic import BaseModel, ConfigDict, Field
 
-FleetDependencyState = Literal["healthy", "partial", "degraded", "unavailable"]
-FleetHealthState = Literal["healthy", "partial", "degraded", "unavailable"]
+#: ``not_served``: this release has no reader for the authority (AuthorityNotServed).
+#: It is "not applicable", never a failure, and never gates readiness.
+FleetDependencyState = Literal[
+    "healthy", "partial", "degraded", "unavailable", "not_served"
+]
+FleetHealthState = Literal[
+    "healthy", "partial", "degraded", "unavailable", "not_served"
+]
 
 
 @dataclass(frozen=True)
@@ -36,8 +42,9 @@ class FleetAuthorities:
     ``connect`` opens a DB-API connection to the session/control store (with a
     ``dialect`` attribute).  ``goals`` returns ``{"active": n, "tracked": n}``
     from the live goal authority and raises when it cannot.  ``workers``
-    returns the dispatch-worker registry rows.  ``None`` means the authority is
-    not served in this process, which fails closed as ``unavailable``.
+    returns the dispatch-worker registry rows.  ``None`` (or a reader raising
+    :class:`AuthorityNotServed`) means the authority is not served in this
+    process: it reports ``not_served`` and does not gate readiness.
     """
 
     connect: Callable[[], Any] | None = None
@@ -193,8 +200,25 @@ def _dependency(
     )
 
 
+def _not_served(label: str, now: float) -> FleetDependencyEvidence:
+    return _dependency(
+        "not_served", now, None, (f"{label}: not served in this process",)
+    )
+
+
+def _fully_served(
+    status: FleetHealthState, dependencies: Iterable[FleetDependencyEvidence]
+) -> bool:
+    """Autoscaling and convergence need every authority served and healthy."""
+    return status == "healthy" and all(d.status != "not_served" for d in dependencies)
+
+
 def _rollup(dependencies: Iterable[FleetDependencyEvidence]) -> FleetHealthState:
-    states = [dependency.status for dependency in dependencies]
+    all_states = [dependency.status for dependency in dependencies]
+    # Only served authorities count; an unserved one is not applicable.
+    states = [state for state in all_states if state != "not_served"]
+    if all_states and not states:
+        return "not_served"
     if not states or all(state == "unavailable" for state in states):
         return "unavailable"
     if any(state == "partial" for state in states):
@@ -231,6 +255,7 @@ def _read_control_store(
     domains_ok = False
     scope_params = tuple(scope_params)
     conn: Any = None
+    not_served = False
     try:
         if connect is None:
             raise AuthorityNotServed("control store")
@@ -287,6 +312,8 @@ def _read_control_store(
         # Authentication/tenant failures are transport authorization failures,
         # not dependency health.  Preserve the gateway's existing boundary.
         raise
+    except AuthorityNotServed:
+        not_served = True
     except Exception as exc:  # noqa: BLE001 - represented in typed evidence
         diagnostics.append(_diagnostic("control_store.connection", exc))
     finally:
@@ -296,8 +323,11 @@ def _read_control_store(
             except Exception as exc:  # noqa: BLE001 - represented in typed evidence
                 diagnostics.append(_diagnostic("control_store.close", exc))
 
-    if status_ok and domains_ok and not diagnostics:
-        state: FleetDependencyState = "healthy"
+    if not_served:
+        state: FleetDependencyState = "not_served"
+        diagnostics.append("control_store: not served in this process")
+    elif status_ok and domains_ok and not diagnostics:
+        state = "healthy"
     elif status_ok and domains_ok:
         state = "degraded"
     elif status_ok or domains_ok:
@@ -327,6 +357,8 @@ def _read_goal_registry(
             _dependency("healthy", now, now),
             {"active": int(counts["active"]), "tracked": int(counts["tracked"])},
         )
+    except AuthorityNotServed:
+        return _not_served("goal_rehydration", now), None
     except Exception as exc:  # noqa: BLE001 - represented in typed evidence
         return (
             _dependency(
@@ -348,6 +380,8 @@ def _read_worker_registry(
         if not isinstance(workers, list):
             raise TypeError("worker registry returned a non-list result")
         return _dependency("healthy", now, now), workers
+    except AuthorityNotServed:
+        return _not_served("worker_registry", now), None
     except Exception as exc:  # noqa: BLE001 - represented in typed evidence
         return (
             _dependency(
@@ -412,9 +446,10 @@ def collect_fleet_health(
     )
     evidence = FleetHealthEvidence(
         status=status,
-        ready=status == "healthy",
-        autoscaling_ready=status == "healthy",
-        convergence_ready=status == "healthy",
+        # Readiness: every served authority is healthy (none served is ready).
+        ready=status in ("healthy", "not_served"),
+        autoscaling_ready=_fully_served(status, dependencies.values()),
+        convergence_ready=_fully_served(status, dependencies.values()),
         generated_at=generated_at,
         last_success_at=last_success_at,
         freshness_seconds=(
@@ -503,9 +538,9 @@ def mark_dependency_failure(
     evidence = snapshot.evidence.model_copy(
         update={
             "status": status,
-            "ready": status == "healthy",
-            "autoscaling_ready": status == "healthy",
-            "convergence_ready": status == "healthy",
+            "ready": status in ("healthy", "not_served"),
+            "autoscaling_ready": _fully_served(status, dependencies.values()),
+            "convergence_ready": _fully_served(status, dependencies.values()),
             "generated_at": generated_at,
             "last_success_at": last_success_at,
             "freshness_seconds": (

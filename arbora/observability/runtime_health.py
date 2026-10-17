@@ -748,3 +748,21 @@ def _now_iso() -> str:
     import datetime as _dt
 
     return _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds")
+
+
+def not_served_authorities(report: Mapping[str, Any]) -> list[str]:
+    """Names of fleet supervisory authorities this release does not serve.
+
+    Read from the ``fleet_supervision`` check's ``fleet.health.v1`` evidence;
+    a ``not_served`` authority is not applicable and never gates readiness.
+    """
+
+    for check in report.get("checks") or ():
+        if isinstance(check, Mapping) and check.get("name") == "fleet_supervision":
+            deps = (check.get("detail") or {}).get("dependencies") or {}
+            return sorted(
+                name
+                for name, dep in deps.items()
+                if isinstance(dep, Mapping) and dep.get("status") == "not_served"
+            )
+    return []

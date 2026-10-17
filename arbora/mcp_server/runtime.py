@@ -750,12 +750,18 @@ def _build_server(
         from arbora.observability.runtime_health import (
             collect_health_async,
             is_overall_healthy,
+            not_served_authorities,
         )
 
         report = await collect_health_async()
         ready = is_overall_healthy(report)
+        body: dict[str, Any] = {"status": "ready" if ready else "not_ready"}
+        not_served = not_served_authorities(report)
+        if not_served:
+            # Names only: authorities this release does not serve (not applicable).
+            body["not_served"] = not_served
         return JSONResponse(
-            {"status": "ready" if ready else "not_ready"},
+            body,
             status_code=200 if ready else 503,
             headers={"Cache-Control": "no-store"},
         )
