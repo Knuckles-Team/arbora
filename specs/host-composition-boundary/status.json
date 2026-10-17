@@ -1664,7 +1664,7 @@
     {
       "id": "GRAPHOS-HOST-R009.8",
       "title": "Production host log sink",
-      "delivery_state": "SPECIFIED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "191af7948d99"
       ],
@@ -1695,7 +1695,7 @@
     {
       "id": "GRAPHOS-HOST-R009.8.2",
       "title": "Retain restart acceptance",
-      "delivery_state": "SPECIFIED",
+      "delivery_state": "VERIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
@@ -1718,9 +1718,14 @@
     {
       "id": "GRAPHOS-HOST-R009.8.2.2",
       "title": "Complete consumer metadata presentation",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "ceaa3da1bbcc"
+      ],
+      "verified_by": [
+        "tests/agent_host/test_log_metadata.py:2",
+        "tests/agent_host/test_log_sink_terminal.py:60"
+      ]
     }
   ]
 }

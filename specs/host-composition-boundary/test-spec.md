@@ -106,3 +106,7 @@ These checks do not prove authorized host logs or terminal startup.
 - `GRAPHOS-HOST-R009.7`: Exercise the real host routes with controlled session, grant and record owners over loopback HTTP. Check tenant/session isolation, denial, revocation during a read, expiry and record bounds. No deployed grant configuration is claimed.
 
 - `GRAPHOS-HOST-R009.8`: Use real temporary files and loopback HTTP to test private projections, redaction, rotation, unsafe links and disabled viewing. Keep deployed policy and restart replay pending.
+
+- R009.8.2.2: Real retained-file restart through HTTP version two preserves
+  source generation, sequence, request, timestamp and severity. Version one
+  remains unchanged. Unsupported versions and malformed metadata refuse.
