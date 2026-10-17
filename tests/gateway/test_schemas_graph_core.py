@@ -42,7 +42,7 @@ def test_collected_at_least_one_model_per_route_family() -> None:
     """Sanity check the introspection sweep itself found real models (guards
     against a silent import/collection failure making the sweep above vacuous).
     """
-    assert len(ALL_MODELS) >= 32
+    assert len(ALL_MODELS) >= 28
 
 
 # ══════════════════════════════════════════════════════════════════

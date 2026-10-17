@@ -204,6 +204,13 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         browser_control_factory_kwargs,
     )
     monkeypatch.setattr(runtime, "_get_engine", lambda: "graph-os-engine")
+    import pydantic_ai
+
+    def _agent(model: object) -> str:
+        calls["agent_model"] = model
+        return "context-agent"
+
+    monkeypatch.setattr(pydantic_ai, "Agent", _agent)
 
     monkeypatch.delenv(module.ACCESS_LOG_POLICY_ENV, raising=False)
     module.run_web_ui(stop_event, host="0.0.0.0", port=8181)

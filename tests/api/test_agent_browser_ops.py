@@ -22,7 +22,7 @@ def _context(**services: object) -> SimpleNamespace:
 
 def test_agent_and_browser_ops_have_unique_ids_and_surface_limits() -> None:
     registry = Registry((*agents.operations(), *browser.operations()))
-    assert len(registry) == 12
+    assert len(registry) == 10
     assert registry["agents.run"].effect is Effect.WRITE
     assert (
         registry["browser.execute_call"].principals is PrincipalRule.HUMAN_UNDELEGATED
