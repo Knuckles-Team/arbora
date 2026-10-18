@@ -87,6 +87,9 @@ test = [
     "mypy>=2.4.0",
     "ruff==0.17.1",
     "types-PyYAML>=6.0.12.20260906",
+    # The messaging real-boot test drives the Telegram adapter against a local
+    # Bot API double (tests/test_real_boot_messaging.py).
+    "python-telegram-bot>=22.8",
     # DEV/TEST-ONLY. setuptools is already a `[build-system] requires` floor
     # (>=84.0.0) for this project's own PEP 517 backend — build requirements
     # are installed only into an ephemeral build environment, not the runtime

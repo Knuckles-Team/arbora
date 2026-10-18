@@ -31,6 +31,8 @@ class CompositionPlan:
     messaging_platforms: tuple[str, ...] = ()
     web_ui_enabled: bool = False
     messaging_intake_enabled: bool = False
+    #: Configured platforms the operator enabled for inbound intake.
+    intake_platforms: tuple[str, ...] = ()
 
     @property
     def messaging_configured(self) -> bool:
@@ -38,7 +40,7 @@ class CompositionPlan:
 
     @property
     def messaging_intake_configured(self) -> bool:
-        return self.messaging_configured and self.messaging_intake_enabled
+        return bool(self.intake_platforms) and self.messaging_intake_enabled
 
     def co_service_names(self) -> tuple[str, ...]:
         """Names of co-services this composition would bring up (any backend)."""
@@ -50,8 +52,18 @@ class CompositionPlan:
         return tuple(names)
 
 
+def _explicitly_true(value: Any) -> bool:
+    """True only for an explicit true value; the string ``"false"`` is false."""
+    if isinstance(value, bool):
+        return value
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
 def detect_composition(
-    engine: Any = None, *, messaging_intake_enabled: bool | None = None
+    engine: Any = None,
+    *,
+    messaging_intake_enabled: bool | None = None,
+    served_network: bool = False,
 ) -> CompositionPlan:
     """Read optional co-service intent without starting background work.
 
@@ -63,16 +75,27 @@ def detect_composition(
     ``MESSAGING_INTAKE_ENABLED`` deployment flag. A present ``TELEGRAM_BOT_TOKEN``
     alone must never decide pollership, so this role check is ANDed with the
     explicit flag rather than substituting for it.
+
+    The served network host (``served_network``: the ``streamable-http``
+    deployment container) is the channel gateway too (ARBORA-MESSAGING-R007):
+    with the explicit flag it may enter intake, and the engine's per-channel
+    WorkItem lease still admits exactly one poller per channel identity.
     """
+    from agent_connector_sdk.config import csv_values
+
     from arbora.core.settings import runtime_config as config
     from arbora.core.settings import setting
 
     is_gateway_daemon_role = str(setting("KG_DAEMON_ROLE", "client")).strip() == "host"
+    platforms = configured_platforms(engine)
+    # Intake is enabled per platform: credentials alone never open a poller.
+    enabled = set(csv_values(setting("MESSAGING_INTAKE_PLATFORMS", "")))
     return CompositionPlan(
-        messaging_platforms=configured_platforms(engine),
+        messaging_platforms=platforms,
+        intake_platforms=tuple(p for p in platforms if p in enabled),
         web_ui_enabled=bool(getattr(config, "enable_web_ui", False)),
-        messaging_intake_enabled=bool(messaging_intake_enabled)
-        and is_gateway_daemon_role,
+        messaging_intake_enabled=_explicitly_true(messaging_intake_enabled)
+        and (is_gateway_daemon_role or served_network),
     )
 
 
@@ -279,13 +302,18 @@ def start_composed_services(
     engine: Any,
     *,
     messaging_intake_enabled: bool | None = None,
+    served_network: bool = False,
 ) -> CoServiceSupervisor:
     """Start Arbora messaging intake and the arbora-owned WebUI host."""
 
-    plan = detect_composition(engine, messaging_intake_enabled=messaging_intake_enabled)
+    plan = detect_composition(
+        engine,
+        messaging_intake_enabled=messaging_intake_enabled,
+        served_network=served_network,
+    )
     supervisor = CoServiceSupervisor()
     if plan.messaging_intake_configured:
-        start_messaging_intake(supervisor, engine, session, plan.messaging_platforms)
+        start_messaging_intake(supervisor, engine, session, plan.intake_platforms)
     elif plan.messaging_configured:
         logger.info("messaging credentials are present but inbound intake is disabled")
     if plan.web_ui_enabled:

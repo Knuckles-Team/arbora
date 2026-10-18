@@ -217,7 +217,10 @@ def _terminate(process: subprocess.Popen[Any]) -> None:
 
 
 @contextlib.contextmanager
-def _booted_stack() -> Iterator[dict[str, Any]]:
+def _booted_stack(
+    extra_config: dict[str, str] | None = None,
+    extra_env: dict[str, str] | None = None,
+) -> Iterator[dict[str, Any]]:
     root = Path(tempfile.mkdtemp(prefix="gos-boot-", dir="/tmp"))
     issuer = _Issuer()
     processes: list[subprocess.Popen[Any]] = []
@@ -333,6 +336,7 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
                             }
                         ]
                     ),
+                    **(extra_config or {}),
                 }
             )
         )
@@ -391,6 +395,7 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
             "XDG_STATE_HOME": str(root / "xdg-state"),
             "XDG_CACHE_HOME": str(root / "xdg-cache"),
             "HOME": str(root),
+            **(extra_env or {}),
         }
         bindir = str(Path(sys.executable).parent)
         served_url = f"http://127.0.0.1:{port}/mcp"

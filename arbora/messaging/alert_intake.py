@@ -74,7 +74,7 @@ def _extract_alerts_text(body: dict[str, Any]) -> str | None:
     return None
 
 
-def _extract_text(body: Any) -> str:
+def extract_alert_text(body: Any) -> str:
     """Pull a human-readable message out of a webhook payload."""
     if isinstance(body, str):
         return (body.strip() or "(empty alert)")[:_MAX_ALERT_CHARS]
@@ -140,7 +140,7 @@ async def _handle(request: web.Request) -> web.Response:
             body: Any = await request.json()
         except Exception:
             body = await request.text()
-        text = _extract_text(body)
+        text = extract_alert_text(body)
 
         platform = setting("MESSAGING_DEFAULT_PLATFORM", "telegram")
         channel = setting("MESSAGING_DEFAULT_CHANNEL", "")

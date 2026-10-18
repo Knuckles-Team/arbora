@@ -24,11 +24,24 @@ from arbora.messaging.commands import handle_command
 from arbora.messaging.host_ports import host_ports
 from arbora.messaging.models import EventType, InboundEvent
 
-__all__ = ["channel_session", "create_planner_handler"]
+__all__ = ["channel_session", "create_planner_handler", "sender_admitted"]
 
 logger = logging.getLogger(__name__)
 
 InboundHandler = Callable[[InboundEvent, MessagingBackend], Awaitable[None]]
+
+
+def sender_admitted(event: InboundEvent) -> bool:
+    """Admit only senders the operator listed in ``MESSAGING_ALLOWED_SENDERS``.
+
+    Entries are ``<platform>:<user id>``, comma separated. An empty list
+    admits no one: a channel bot is reachable by anyone who finds it, and an
+    admitted message runs a turn under Arbora's verified process session.
+    """
+    from agent_connector_sdk.config import csv_values
+
+    allowed = set(csv_values(setting("MESSAGING_ALLOWED_SENDERS", "")))
+    return bool(event.user_id) and f"{event.platform}:{event.user_id}" in allowed
 
 
 def channel_session(platform: str, channel_id: str) -> str:
@@ -96,6 +109,12 @@ async def create_planner_handler(
             return
         content = event.content or (event.message.content if event.message else "")
         if not content:
+            return
+        if not sender_admitted(event):
+            logger.warning(
+                "messaging: refused a message from an unlisted %s sender",
+                event.platform,
+            )
             return
         if service.deliver_reply(str(event.platform), event.channel_id, content):
             return

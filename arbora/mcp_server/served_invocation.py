@@ -254,7 +254,13 @@ def compose_served_invocation(
             control_client,
             claims=lambda: connect_context(session().tenant).to_claims(),
         )
-        changes["external_effect_operations"] = frozenset({"fleet.call"})
+        # An alert send is an external effect too: the same journal holds it
+        # at most once per idempotency key (ARBORA-MESSAGING-R008).
+        changes["external_effect_operations"] = frozenset(
+            op_id
+            for op_id in ("fleet.call", "messaging.alert")
+            if registry.get(op_id) is not None
+        )
     services = build_invoke_services(
         registry=registry,
         runtime=runtime,
