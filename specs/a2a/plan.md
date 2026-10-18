@@ -316,3 +316,104 @@ R005.2.2 reuses `PlanBinding` and the existing closed confirmation payload. The 
 Implement ARBORA-A2A-R010.1 against EG-DURABLE-KERNEL-R028.2 and AU RunClient.outcome. Keep the request opt-in and existing unary behavior unchanged. This point read supplies no lifecycle stream or replay cursor. Native producer qualification and released dependency availability remain separate acceptance conditions.
 
 The bounded projection preserves the actual outcome/tool_call/degraded/reconciled kind and physical scope identity, including its 32-byte digest. Physical storage owner tenant and sanitized graph name are receipt identity, not caller authorization. Routing uses the existing verified session graph transport. The projection caps identifier labels at 512 UTF-8 bytes and result references at 4096 bytes. These presentation bounds may refuse a larger otherwise valid producer record.
+
+## R016.6 profile-use authority boundary (adopted architecture)
+
+This architecture does not enable model preference or certify R016.6. Existing
+GraphSession authentication and scope checks identify the caller. Agent catalog
+reads enforce visibility; EG AgentLibrary definitions pin model-profile
+components. Neither visibility nor provider configuration establishes permission
+to substitute a profile. A selected agent's component digest must not be changed
+under the identity of its original immutable definition.
+
+Adopted policy: require an explicit engine-owned profile-use authorization for
+caller preferences, distinct from catalog visibility. There is no implicit
+profile grant from kg:read, roles, CHAT_MODELS, MODEL_REGISTRY_PATH or provider
+availability. Until the owner implements that authorization, the
+profile authority is unavailable. Existing default-agent behavior is unchanged. Calls that explicitly request a
+profile preference, or use models.list, require the new authority; absence must
+not turn a preference-enabled request into an existing default-agent call.
+The issuer and storage schema are owner work, not inferred by this boundary.
+
+Proposed typed application port, supplied only by trusted composition:
+
+- ProfileAuthority.list_preferable(session: GraphSession) returns either a
+  bounded ProfileCatalog or ProfileUnavailable. Available empty is distinct from
+  unavailable. A maximum of 128 records is returned; overflow is unavailable,
+  never a silent partial catalog. This catalog expresses caller-level eligibility,
+  not permission for every routed capability. Final admission additionally
+  checks the exact capability revision. Each public record contains only profile_ref,
+  display_name and provider (bounded printable text), never endpoint or secrets.
+- ProfileAuthority.resolve_preference(session: GraphSession,
+  routed_capability_ref, routed_revision, preferred_profile_ref | None) returns
+  ProfileDecision or ProfileUnavailable. The routed identity and revision come
+  from the existing route authority, never caller metadata.
+- Internal decisions bind tenant, principal, graph, authoritative session
+  identity, capability identity/revision, selected profile reference/digest,
+  policy revision, authorization expiry and decision reference. These bindings
+  are validated against fresh owner session evidence, not minted from request
+  fields. Do not invent missing session identity or expiry.
+- Public task metadata projects selected_profile_ref and preference_honoured
+  only after execution admission accepts that exact selection. Display names
+  and provider names are descriptions, not authorization or routing targets.
+- Typed unavailable reasons: AUTHORITY_UNAVAILABLE, CALLER_CHANGED,
+  PROFILE_REVOKED, CAPABILITY_UNAVAILABLE, STALE_DECISION, INVALID_DECISION.
+  Refusals expose no foreign profile metadata or provider secrets.
+
+The authority owns selection. Allowed preferences require both current
+profile-use permission and approval by the exact routed capability revision.
+An absent preference uses the admitted routed profile. A disallowed preference
+may use that profile with preference_honoured=false only after its current
+admission is independently proven. Revocation, unavailable capability, stale
+session or missing authority refuses; no configuration fallback is permitted.
+Revalidate after asynchronous reads. The proposed owner operation
+ProfileAuthority.admit_for_dispatch(decision, session, task_admission_ref) must
+atomically revalidate current session, profile-use grant and capability revision
+with task admission, or return a typed refusal. Its EG public operation and
+transaction contract are not implemented; a separate resolve-then-check sequence
+cannot substitute for it or authorize dispatch. Add a revocation-between-resolution-
+and-admission test requiring zero queued tasks. Changed
+capability/profile digests require fresh assembly/admission, never mutation of
+an already sealed agent definition. No new credential, grant or issuer is
+created by composing the port.
+
+Acceptance matrix (all pending implementation):
+
+1. No injected authority returns AUTHORITY_UNAVAILABLE with zero provider calls.
+2. Fresh matching caller and capability permit an explicitly allowed preference;
+   list and decision agree, selected metadata names the admitted profile.
+3. A disallowed preference falls back only to a freshly admitted routed profile;
+   absent preference uses that profile; neither case creates a grant.
+4. Foreign principal/tenant/session replies return CALLER_CHANGED and reveal no
+   profile names; missing or expired owner session evidence fails closed.
+5. A revoked profile before or during resolution returns PROFILE_REVOKED with
+   zero dispatches; cached catalog membership cannot authorize execution.
+6. Missing, withdrawn or revision-changed routed capability returns
+   CAPABILITY_UNAVAILABLE or STALE_DECISION before model construction.
+7. Invalid, oversized, duplicate or secret-bearing catalog/decision projections
+   refuse; exact public projection excludes keys, endpoints and raw credentials.
+8. Actual SDK A2A entry and operation dispatch use the same composed authority;
+   old-router-only tests do not establish served model preference.
+
+Expected implementation ownership after policy acceptance: Arbora owns the
+application port, list operation, A2A projection and trusted composition; EG owns
+profile-use grants and sealed agent/component admission. Coordinate registry
+regeneration with its current owner. TUI consumes only the accepted generated
+operation and task metadata; no consumer-selected permission table is added.
+
+Existing owner mapping: ARBORA-A2A-R016.6 owns preference and catalog admission;
+R016.5 owns routed profile and task-class evidence; R017 and R017.1 own committed
+engine assembly/decision consumption; R019.1 owns decision provenance. EG-
+IDENTITY-R004 owns exact published scope classification, not implicit grants.
+EG-DECISION-ENGINE-R036 owns assembly and pinned components; R126.2.1 owns
+visibility-filtered capability coverage. These existing rows do not yet specify
+or implement the new atomic profile-use admission operation: extend their owner
+contracts before implementing it. EG-IDENTITY-R001 owns issuer verification; R002 owns atomic identity/RBAC
+writes and audit. Verified session evidence must come from the current identity
+owner, not a synthesized field in this boundary. No profile-use permission is inferred from any of these existing rows.
+
+The first code increment defines bounded preference input and a closed typed
+unavailable result in the existing admission module. It has no authority port
+implementation, no registered model operation, no selected-profile success and
+no change to existing default execution. Foreign caller, revocation and atomic
+admission acceptance remain producer work, not satisfied by syntax validation.
