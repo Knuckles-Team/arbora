@@ -9,7 +9,7 @@ resolution-markers = [
 ]
 
 [manifest]
-overrides = [{ name = "epistemic-graph", extras = ["server"], specifier = ">=2.27.2,<3.0.0", index = "https://pypi.org/simple" }]
+overrides = [{ name = "epistemic-graph", extras = ["server"], specifier = ">=2.27.3,<3.0.0", index = "https://pypi.org/simple" }]
 
 [[package]]
 name = "aenum"
@@ -455,7 +455,7 @@ requires-dist = [
     { name = "arbora", extras = ["messaging-discord", "messaging-googlechat", "messaging-googlemeet", "messaging-irc", "messaging-line", "messaging-matrix", "messaging-mattermost", "messaging-nextcloud", "messaging-signal", "messaging-slack", "messaging-synology", "messaging-teams", "messaging-telegram", "messaging-twitch", "messaging-voicecall", "messaging-whatsapp"], marker = "extra == 'messaging'" },
     { name = "botbuilder-core", marker = "extra == 'messaging-teams'", specifier = ">=4.17.1" },
     { name = "discord-py", marker = "extra == 'messaging-discord'", specifier = ">=2.7.1" },
-    { name = "epistemic-graph", extras = ["server"], specifier = ">=2.27.2,<3.0.0", index = "https://pypi.org/simple" },
+    { name = "epistemic-graph", extras = ["server"], specifier = ">=2.27.3,<3.0.0", index = "https://pypi.org/simple" },
     { name = "eunomia-core", specifier = ">=0.3.10" },
     { name = "fastapi", specifier = ">=0.143.3" },
     { name = "fastmcp", specifier = ">=4.1.0" },
@@ -1276,7 +1276,7 @@ wheels = [
 
 [[package]]
 name = "epistemic-graph"
-version = "2.27.2"
+version = "2.27.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
@@ -1284,11 +1284,12 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyoxigraph" },
 ]
+sdist = { url = "https://files.pythonhosted.org/packages/d7/41/1d7c0efaff2768c538eeebbfee7667148007158b2012c40214071a0b6fe0/epistemic_graph-2.27.3.tar.gz", hash = "sha256:c6809bd900dd3fc49b88eee087f413bd8a1487d21199362309a08e8fddf74a19", size = 7506042, upload-time = "2026-10-17T17:29:01.558Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e3/ed/5fd9d0fe6de99cef7398e06f66f3cf38fc557f229b84af699152d8cc0159/epistemic_graph-2.27.2-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:84e72c926cb8e868e90b2dd35afdaec68e1d1e9b71fcb7e2f33a54e5e08bf0fa", size = 7551859, upload-time = "2026-10-17T06:39:44.369Z" },
-    { url = "https://files.pythonhosted.org/packages/15/56/394a1f7975f90f4976afa3e3ed0d78e91d406b8dad3f8d88db5f815ed477/epistemic_graph-2.27.2-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:89d948c5f62538e8d65d7de5851915c2efdfae94dfcbb8ed76009ffa613aa015", size = 7750113, upload-time = "2026-10-17T06:35:02.237Z" },
-    { url = "https://files.pythonhosted.org/packages/1a/12/8f0e775162ab16a248bec371d036277b529a0f4b2851b91192f814e229dc/epistemic_graph-2.27.2-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:db9b62191f7e3a5090d0a1d108b8d90d616cac4b64911c45de08eca29c635cfe", size = 8393920, upload-time = "2026-10-17T06:26:31.007Z" },
-    { url = "https://files.pythonhosted.org/packages/0e/ad/a59ca5653e9443df873d6122acfc7550f06328a2560d3cc35d080dd93bb8/epistemic_graph-2.27.2-cp39-abi3-win_amd64.whl", hash = "sha256:64b2bc5930901c98fa10b66f28a517b0a5e88f6e8fe38f24899d1cc6bf088f9e", size = 8893744, upload-time = "2026-10-17T06:25:15.569Z" },
+    { url = "https://files.pythonhosted.org/packages/3b/55/79078ecd1fc2d235cfdfdb96a1480b2f14a02c2bddd9236a47901684945d/epistemic_graph-2.27.3-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:c70ba4a8d94ade15e682da8378620cf90d8abc2f0bb5225736969da08da70965", size = 7558709, upload-time = "2026-10-17T17:48:13.878Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/38/17f1600e94d0988efc8f3c7a03dc7735cdc21db9612156985ab80289cf86/epistemic_graph-2.27.3-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:01b0265fdcecc71409172c9da2a6a4836fb3bc3676dc23cca8e6991bd24d298f", size = 7755246, upload-time = "2026-10-17T17:56:16.995Z" },
+    { url = "https://files.pythonhosted.org/packages/b6/8c/0efdc2c6f6289d916d5dd564db562e045f9ee19c598cd1f5552dd31e62d1/epistemic_graph-2.27.3-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:7e38d04234d87c969228a4bc9c53f9b53fbcf5c9c6871d354716fd7d80ded8e9", size = 8399255, upload-time = "2026-10-17T17:49:11.521Z" },
+    { url = "https://files.pythonhosted.org/packages/40/94/8dca70982ff6a6e88c988acb0983f2ed4b1ec70a372467e241e78c79a6ad/epistemic_graph-2.27.3-cp39-abi3-win_amd64.whl", hash = "sha256:7ddeddfb4d048cdeae1a670ff1b98477cb83898c300bf0c681ce619a14b21e2a", size = 8900833, upload-time = "2026-10-17T17:52:18.802Z" },
 ]
 
 [package.optional-dependencies]
@@ -1298,13 +1299,13 @@ server = [
 
 [[package]]
 name = "epistemic-graph-server"
-version = "2.27.2"
+version = "2.27.3"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f3/ee/2a1562db4d7a286a2f97695665b334305d56e0bc91b846c852b0a6ba230a/epistemic_graph_server-2.27.2-py3-none-macosx_11_0_arm64.whl", hash = "sha256:291fc5ed8b94c53c12a816a671c914a179462925d727034e8ce126b2d3b9763f", size = 70792091, upload-time = "2026-10-17T06:48:48.026Z" },
-    { url = "https://files.pythonhosted.org/packages/22/04/73cf05dd307538156501423326009abf32a9e813114e30830539c03cb821/epistemic_graph_server-2.27.2-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:c1afd2908f36815b3af8d76b50daad738bf8ca140a6283ae28b541d0ac3478d3", size = 58273650, upload-time = "2026-10-17T08:49:02.18Z" },
-    { url = "https://files.pythonhosted.org/packages/cd/07/2ce26336106d4944504f53b797dcfeafe3a79a4687137e81d9829c3a8f34/epistemic_graph_server-2.27.2-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:2f5b9d8c51ea42308f11f7fe202ba54059e2f3e8d8e39449a3639f3d11d3000b", size = 62125407, upload-time = "2026-10-17T08:14:12.076Z" },
-    { url = "https://files.pythonhosted.org/packages/bf/ff/1bd6ee17e081abdea8305ee0b2420f8e96d3dffbb55005a0a8d68047469f/epistemic_graph_server-2.27.2-py3-none-win_amd64.whl", hash = "sha256:8f9d05ebccb85156eccc8ad9333ac88af87320816e4892f4c2e7f7a8247c4fdc", size = 65564544, upload-time = "2026-10-17T07:38:34.202Z" },
+    { url = "https://files.pythonhosted.org/packages/64/45/34130479fe2f42d238825ba1077520e8e6a8141766e6d713a7b7650b503f/epistemic_graph_server-2.27.3-py3-none-macosx_11_0_arm64.whl", hash = "sha256:f15115f391ebfcf32f93a59d70b7154ed0a02b971fbfa689a80972e5235b17aa", size = 70844947, upload-time = "2026-10-17T18:21:28.95Z" },
+    { url = "https://files.pythonhosted.org/packages/c9/c3/1f84aacb15165f60f726f6b02c40efe3384332e3fd838a805ac9f39f9ae1/epistemic_graph_server-2.27.3-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:c3c275978f55475b8c501a0b583c02b946b89758cf7adca717b6a4d67134c304", size = 65216650, upload-time = "2026-10-17T18:39:33.349Z" },
+    { url = "https://files.pythonhosted.org/packages/85/39/03ca869d5ff6134a0acc96cfc1a63f5f38357df4d705d1ddbc491b515443/epistemic_graph_server-2.27.3-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:752c0342fc7e2955f8f29c9c7e4f1ccb0660812fffbbe33dfe5555d8ffe3646d", size = 62142757, upload-time = "2026-10-17T18:05:51.12Z" },
+    { url = "https://files.pythonhosted.org/packages/73/d8/ea7b18e681d9fe23383c6cec3088d7e4e14e0ca688b7b0619717359260e6/epistemic_graph_server-2.27.3-py3-none-win_amd64.whl", hash = "sha256:43658631a140418823714bb6bf55e9f2e4173f05d48cbbae1c529911ddc5c9d3", size = 65584203, upload-time = "2026-10-17T19:10:32.644Z" },
 ]
 
 [[package]]

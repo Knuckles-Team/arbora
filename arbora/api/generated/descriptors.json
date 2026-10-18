@@ -5140,6 +5140,66 @@
     {
       "domain": "eg",
       "examples": [
+        "KvCas storage"
+      ],
+      "id": "eg.storage.KvCas",
+      "summary": "Compare-and-swap on the row commit version inside one admitted kv.redb write; 0 means absent. A failed comparison is a terminal, replayable verdict",
+      "tags": [
+        "eg"
+      ],
+      "verb": "write"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "KvDelete storage"
+      ],
+      "id": "eg.storage.KvDelete",
+      "summary": "Native MutationBatch in kv.redb. Re-deleting an absent key is a safe no-op that answers false",
+      "tags": [
+        "eg"
+      ],
+      "verb": "write"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "KvGet storage"
+      ],
+      "id": "eg.storage.KvGet",
+      "summary": "EG-DURABLE-KERNEL-R102. The key is scoped by verified tenant, principal (unless shared), request graph and namespace. It answers the value and its commit version",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "KvPut storage"
+      ],
+      "id": "eg.storage.KvPut",
+      "summary": "Native MutationBatch in kv.redb, committed before the acknowledgment. Each write stamps a new namespace commit version. The batch ledger is the durable audit",
+      "tags": [
+        "eg"
+      ],
+      "verb": "write"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "KvScan storage"
+      ],
+      "id": "eg.storage.KvScan",
+      "summary": "Bounded prefix scan over one snapshot. A page holds at most 1000 rows (default 100) and 4 MiB. An exclusive-start cursor resumes it",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
         "Restore storage"
       ],
       "id": "eg.storage.Restore",
@@ -5714,6 +5774,58 @@
       "verb": "act"
     },
     {
+      "domain": "memory",
+      "examples": [
+        "forget this memory",
+        "delete this remembered note"
+      ],
+      "id": "memory.delete",
+      "summary": "Forget one of the caller's memory entries",
+      "tags": [
+        "memory"
+      ],
+      "verb": "act"
+    },
+    {
+      "domain": "memory",
+      "examples": [
+        "list my memories",
+        "show remembered notes"
+      ],
+      "id": "memory.list",
+      "summary": "List the caller's memory entries in one namespace",
+      "tags": [
+        "memory"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "memory",
+      "examples": [
+        "read this memory key",
+        "what did I remember about this"
+      ],
+      "id": "memory.read",
+      "summary": "Read one of the caller's memory entries with its version",
+      "tags": [
+        "memory"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "memory",
+      "examples": [
+        "remember this for later",
+        "save this note to memory"
+      ],
+      "id": "memory.write",
+      "summary": "Remember one entry for the caller, optionally compare-and-set",
+      "tags": [
+        "memory"
+      ],
+      "verb": "act"
+    },
+    {
       "domain": "ops",
       "examples": [
         "back up this tenant now"
@@ -5954,5 +6066,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "d3010942777be32455dcf7f8bbd4c356fae1fefaf99d2926ad7deceaa06a4cbe"
+  "registry_digest": "8766a864a293551f8d0bca18958950133d7413659c3ff249cf22f63113b55e37"
 }

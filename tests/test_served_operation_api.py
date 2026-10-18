@@ -39,7 +39,7 @@ from arbora.security import request_identity
 from arbora.security.actor_context import ActorContext, ActorType
 from tests.test_agents_run_end_to_end import FakeEngine
 
-SCOPES = ("kg:read", "kg:write", "memory:read", "node:read", "query:unified")
+SCOPES = ("kg:read", "kg:write", "kv:read", "kv:write", "node:read", "query:unified")
 
 
 class FakeAudit:
@@ -78,11 +78,43 @@ class FakeClient(FakeEngine):
         self, method: str, params: Any, graph: str | None, **_kwargs: Any
     ) -> Any:
         self.sent.append((method, params, graph))
+        if method.startswith("Kv"):
+            return self._kv(method, params)
         if method == "Uql":
             return {"rows": [{"id": "node:one"}]}
         if method == "GetNodesByLabel":
             return [{"id": "node:one", "labels": ["Agent"]}]
         raise AssertionError(f"unexpected engine method {method}")
+
+
+    def _kv(self, method: str, params: Any) -> Any:
+        """EG KV semantics: versioned entries, CAS, prefix scan, delete."""
+        store = self.__dict__.setdefault("kv", {})
+        key = (params["namespace"], params.get("key"), bool(params.get("shared")))
+        if method == "KvGet":
+            return store.get(key)
+        if method == "KvPut":
+            version = (store.get(key) or {"version": 0})["version"] + 1
+            store[key] = {"value": params["value"], "version": version}
+            return {"version": version}
+        if method == "KvCas":
+            current = (store.get(key) or {"version": 0})["version"]
+            if current != params["expected_version"]:
+                return {"swapped": False, "version": current}
+            store[key] = {"value": params["new"], "version": current + 1}
+            return {"swapped": True, "version": current + 1}
+        if method == "KvScan":
+            rows = [
+                {"key": k[1], **entry}
+                for k, entry in sorted(store.items())
+                if k[0] == params["namespace"]
+                and k[2] == bool(params.get("shared"))
+                and k[1].startswith(params["prefix"])
+            ]
+            return {"entries": rows[: params["limit"]], "next_cursor": None}
+        if method == "KvDelete":
+            return store.pop(key, None) is not None
+        raise AssertionError(method)
 
 
 class FakePool:
@@ -193,9 +225,6 @@ def test_served_api_answers_the_web_ui_operations(served: Any) -> None:
     )
     assert task["status"]["state"] == "completed"
 
-    # EG serves no memory method yet, so the served surface has no memory.*.
-    absent = _call(app, "memory.read", {"key": "note"})
-    assert absent.status_code in {404, 405}, absent.text
 
     rows = _value(_call(app, "query.uql", {"text": "MATCH (n) RETURN n", "params": {}}))
     assert rows == {"rows": [{"id": "node:one"}]}
@@ -212,6 +241,80 @@ def test_served_api_answers_the_web_ui_operations(served: Any) -> None:
         "Uql",
         "GetNodesByLabel",
     ]
+
+
+@pytest.mark.spec("ARBORA-OPS-R844", "ARBORA-OPS-R845", "ARBORA-OPS-R846")
+def test_served_memory_operations_round_trip_over_eg_kv(served: Any) -> None:
+    """The web UI's memory.* calls reach EG KV under the caller's session."""
+    app, client = served
+    missing = _value(_call(app, "memory.read", {"key": "note-1"}))
+    assert missing["found"] is False and missing["version"] == 0
+
+    written = _value(
+        _call(
+            app,
+            "memory.write",
+            {"key": "note-1", "value": {"text": "hi"}},
+            **{"Idempotency-Key": "mem-1"},
+        )
+    )
+    assert written == {
+        "key": "note-1",
+        "namespace": "default",
+        "scope": "principal",
+        "swapped": True,
+        "version": 1,
+    }
+    read = _value(_call(app, "memory.read", {"key": "note-1"}))
+    assert read["found"] is True
+    assert read["value"] == {"text": "hi"} and read["version"] == 1
+
+    stale = _value(
+        _call(
+            app,
+            "memory.write",
+            {"key": "note-1", "value": {"text": "old"}, "expected_version": 0},
+            **{"Idempotency-Key": "mem-2"},
+        )
+    )
+    assert stale["swapped"] is False and stale["version"] == 1
+    fresh = _value(
+        _call(
+            app,
+            "memory.write",
+            {"key": "note-1", "value": {"text": "new"}, "expected_version": 1},
+            **{"Idempotency-Key": "mem-3"},
+        )
+    )
+    assert fresh["swapped"] is True and fresh["version"] == 2
+
+    listed = _value(_call(app, "memory.list", {}))
+    assert [(e["key"], e["value"], e["version"]) for e in listed["entries"]] == [
+        ("note-1", {"text": "new"}, 2)
+    ]
+    # Keys are namespaced memory/<namespace>/<key> in EG.
+    put = next(p for m, p, _g in client.sent if m == "KvPut")
+    assert (put["namespace"], put["key"], put["shared"]) == (
+        "memory",
+        "default/note-1",
+        False,
+    )
+
+    # Writing the shared namespace needs kv:shared:write, which this caller lacks.
+    shared = _call(
+        app,
+        "memory.write",
+        {"key": "team", "value": {}, "scope": "shared"},
+        **{"Idempotency-Key": "mem-4"},
+    )
+    assert shared.status_code == 403, shared.text
+    assert shared.json()["error"]["code"] == "SCOPE_REQUIRED"
+
+    deleted = _value(
+        _call(app, "memory.delete", {"key": "note-1"}, **{"Idempotency-Key": "mem-5"})
+    )
+    assert deleted["deleted"] is True
+    assert _value(_call(app, "memory.read", {"key": "note-1"}))["found"] is False
 
 
 @pytest.mark.spec("ARBORA-HOST-R001.2.3")

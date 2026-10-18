@@ -141,6 +141,10 @@ class FleetCatalog:
         limit: int = 20,
         context_budget_tokens: int | None = None,
     ) -> dict[str, Any]:
+        servers = tuple(servers)
+        # An empty query scoped to named servers lists those servers' items:
+        # it is a browse, not a malformed search.
+        browse = browse or (not query and bool(servers))
         _validate_search_request(query, browse, limit, context_budget_tokens)
         matched = await self._matching_items(caller, query, kinds, servers)
         items = sorted(

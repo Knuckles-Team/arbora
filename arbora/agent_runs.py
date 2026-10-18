@@ -149,8 +149,8 @@ def _engine() -> Any:
 def record_run_event(event: Mapping[str, Any]) -> None:
     """Write one run event to the engine as a ``RunEvent`` node.
 
-    The served engine writes a node through EG ``AddNode``; an engine with
-    the typed-batch seam uses that. A failed write is logged, never raised:
+    The served engine creates the node through EG ``CreateNodeIfAbsent``;
+    an engine with only the typed-batch seam or ``add_node`` uses that. A failed write is logged, never raised:
     a run does not fail because its trace could not be stored.
     """
     engine = _engine()
@@ -165,9 +165,14 @@ def record_run_event(event: Mapping[str, Any]) -> None:
         "payload": json.dumps(dict(event), sort_keys=True, default=str)[:65_536],
     }
     batch = getattr(engine, "batch_typed_mutations", None)
+    create_node = getattr(engine, "create_node", None)
     add_node = getattr(engine, "add_node", None)
     try:
-        if callable(batch):
+        if callable(create_node):
+            # A RunEvent id is unique, so it is a create. The served engine's
+            # AddNode is refused on a cold graph write path (EG 2.27.2).
+            create_node(node_id, "RunEvent", properties)
+        elif callable(batch):
             batch(
                 [
                     {
@@ -183,11 +188,15 @@ def record_run_event(event: Mapping[str, Any]) -> None:
         else:
             logger.warning("run event not persisted: no engine is bound")
     except Exception as exc:  # noqa: BLE001 - the trace never fails the run
+        # The engine's refusal code and detail are public contract values;
+        # they name why the write was refused, never a payload value.
         logger.warning(
-            "run event %s of run %s not persisted: %s",
+            "run event %s of run %s not persisted: %s %s %s",
             properties["event_type"],
             run_id,
             type(exc).__name__,
+            getattr(exc, "code", ""),
+            getattr(exc, "detail", ""),
         )
 
 

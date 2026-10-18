@@ -11,6 +11,16 @@
         },
         "required": true
       },
+      "Shared609223667d61742eff1fa5cda38ebc09655ba5ea242d2c80a83aada95e87b4df": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Schema58f3dda18398ba66749ae4fa50093087f8ff8d2faa1d3c738b5287f7761e56ce"
+            }
+          }
+        },
+        "required": true
+      },
       "Shared7a394c4291f70ad5cbb6f2016ce2f32d6808772d7a3c087f0f83a29babe1bc42": {
         "content": {
           "application/json": {
@@ -71,6 +81,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/Schema66a1e5b1d3ca3c142e8168dfb8f5e9cd89dc4a48ca6c7a9baa5c7e34e0823d48"
+            }
+          }
+        },
+        "description": "Operation result"
+      },
+      "Sharedcf80caf23eb4283f9ac754e059e3566a138ec6ad3cc57016cc02686fbf742cf1": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Schema3513ed756e54f8235292f62df63d9db4f1645272a99997331d08bc56e426edd9"
             }
           }
         },
@@ -423,6 +443,19 @@
         "title": "CapacityModeResult",
         "type": "object"
       },
+      "Schema3513ed756e54f8235292f62df63d9db4f1645272a99997331d08bc56e426edd9": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "MemoryResult",
+        "type": "object"
+      },
       "Schema3716eaac209c05e4c44c45701aaa4c23e334eff4b07f3e1b9ba0b0ca57a50c38": {
         "properties": {
           "value": {
@@ -658,6 +691,25 @@
         "title": "Terms",
         "type": "object"
       },
+      "Schema58f3dda18398ba66749ae4fa50093087f8ff8d2faa1d3c738b5287f7761e56ce": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "$ref": "#/components/schemas/Schemacfbce84aea566abdb311fb82c555085d95760a65cb9f4a16c8a2cf1ba8cc02d6"
+          },
+          "namespace": {
+            "$ref": "#/components/schemas/Schemae0b1e0d86759ae9fb55f6c0b1ccd214031b9b8d2a007d6660e82953ceee36f4b"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/Schemaa7aa617f7d34aed335a6aaace24872b1c3ec90d8641ec974eb8a77cf81798414"
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "title": "MemoryKeyParams",
+        "type": "object"
+      },
       "Schema5a3d01f9dc340cb3bd8bfd629cf42e9886d4c325a0767ead7800503ffd539c0f": {
         "additionalProperties": true,
         "title": "Message",
@@ -782,6 +834,10 @@
         "default": null,
         "title": "Query"
       },
+      "Schema6fa303fdbf080b52d9a1cdb8d6078fd9708fd34676ceb919344043b3971e1790": {
+        "minimum": 0,
+        "type": "integer"
+      },
       "Schema703214a2183cb5a1c2bb46824a67b9a2e0e004e2ba1dfe95b967d8672d39537a": {
         "items": {
           "$ref": "#/components/schemas/Definitionda935471d1a4b0239d7591cb066897a8442219998fa78e1f825fd5698d277a33"
@@ -792,6 +848,28 @@
       "Schema724bb9548de97c4935688ff6808363dccd8f10df1c154072d072941b89de5d4e": {
         "title": "Elevation Id",
         "type": "string"
+      },
+      "Schema72523f3c47bfb07398b4a0185e7a9eab3d44e92a5864427ae00e1a28b02c2485": {
+        "additionalProperties": false,
+        "properties": {
+          "cursor": {
+            "$ref": "#/components/schemas/Schema799118f85d2fe64421b089ab99b62659db00584b52f9a6df8185148f2cd3a096"
+          },
+          "limit": {
+            "$ref": "#/components/schemas/Schemab19b8ba358558a5ae0954297591c93391661cedd7ac627e8aa81bcec9d1c3621"
+          },
+          "namespace": {
+            "$ref": "#/components/schemas/Schemae0b1e0d86759ae9fb55f6c0b1ccd214031b9b8d2a007d6660e82953ceee36f4b"
+          },
+          "prefix": {
+            "$ref": "#/components/schemas/Schemaa77e0e91946b253a1aa77a1d10470e0bde5e90820d3c269e987219bf80525367"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/Schemaa7aa617f7d34aed335a6aaace24872b1c3ec90d8641ec974eb8a77cf81798414"
+          }
+        },
+        "title": "MemoryListParams",
+        "type": "object"
       },
       "Schema736e486dd9acaffcc1e210aa8fda9026a9b36cb48e9ec1089933b18a63577365": {
         "additionalProperties": false,
@@ -1100,6 +1178,18 @@
         "title": "OpsDoctorParams",
         "type": "object"
       },
+      "Schema9538d8e934707a69219dbe15aca8cee9f396a4723576b34813109cec55190d6a": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema6fa303fdbf080b52d9a1cdb8d6078fd9708fd34676ceb919344043b3971e1790"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Expected Version"
+      },
       "Schema9651beb0cda06d2616ad93118c2b167a41ca32c607fa07700b0579b6e42ce4d9": {
         "title": "Allowed",
         "type": "boolean"
@@ -1266,6 +1356,31 @@
         "title": "OpsRestoreParams",
         "type": "object"
       },
+      "Schema9f653a27b12e264c5c6cc1d3254785686adf00300f40876e3bf245e142a9d862": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_version": {
+            "$ref": "#/components/schemas/Schema9538d8e934707a69219dbe15aca8cee9f396a4723576b34813109cec55190d6a"
+          },
+          "key": {
+            "$ref": "#/components/schemas/Schemacfbce84aea566abdb311fb82c555085d95760a65cb9f4a16c8a2cf1ba8cc02d6"
+          },
+          "namespace": {
+            "$ref": "#/components/schemas/Schemae0b1e0d86759ae9fb55f6c0b1ccd214031b9b8d2a007d6660e82953ceee36f4b"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/Schemaa7aa617f7d34aed335a6aaace24872b1c3ec90d8641ec974eb8a77cf81798414"
+          },
+          "value": {
+            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "title": "MemoryWriteParams",
+        "type": "object"
+      },
       "Schemaa223f3c5963bf74e09fca8b2439cbc6936927cb90158a63c513a563d04391fba": {
         "additionalProperties": false,
         "properties": {
@@ -1302,6 +1417,21 @@
       },
       "Schemaa40c68b83817c6b07221626e3f15d4ff515bb589633926f33a341d0e87fec93b": {
         "pattern": "^lru$",
+        "type": "string"
+      },
+      "Schemaa77e0e91946b253a1aa77a1d10470e0bde5e90820d3c269e987219bf80525367": {
+        "default": "",
+        "maxLength": 128,
+        "title": "Prefix",
+        "type": "string"
+      },
+      "Schemaa7aa617f7d34aed335a6aaace24872b1c3ec90d8641ec974eb8a77cf81798414": {
+        "default": "principal",
+        "enum": [
+          "principal",
+          "shared"
+        ],
+        "title": "Scope",
         "type": "string"
       },
       "Schemaab9c6f751289751cd467757ba716178f3bdac6ac4ea4f500fb3e7060bd045639": {
@@ -1506,6 +1636,11 @@
         "title": "Value",
         "type": "object"
       },
+      "Schemacfbce84aea566abdb311fb82c555085d95760a65cb9f4a16c8a2cf1ba8cc02d6": {
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:@-]{0,127}$",
+        "title": "Key",
+        "type": "string"
+      },
       "Schemad20c4af0ddeca947da3945fcfbab9e9c3fad42bd28a49e2aae1791145f905dbc": {
         "anyOf": [
           {
@@ -1649,6 +1784,12 @@
         },
         "title": "Kinds",
         "type": "array"
+      },
+      "Schemae0b1e0d86759ae9fb55f6c0b1ccd214031b9b8d2a007d6660e82953ceee36f4b": {
+        "default": "default",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:@-]{0,127}$",
+        "title": "Namespace",
+        "type": "string"
       },
       "Schemae140ed0f270039f4d118d2542811b7110cf6e27c2fa27e987a8cca2e9fac939e": {
         "additionalProperties": false,
@@ -16409,6 +16550,176 @@
         ]
       }
     },
+    "/api/v1/ops/eg.storage.KvCas": {
+      "post": {
+        "operationId": "eg.storage.KvCas",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/KvCas"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.storage.json#/methods/KvCas"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Compare-and-swap on the row commit version inside one admitted kv.redb write; 0 means absent. A failed comparison is a terminal, replayable verdict",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.storage.KvDelete": {
+      "post": {
+        "operationId": "eg.storage.KvDelete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/KvDelete"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.storage.json#/methods/KvDelete"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Native MutationBatch in kv.redb. Re-deleting an absent key is a safe no-op that answers false",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.storage.KvGet": {
+      "post": {
+        "operationId": "eg.storage.KvGet",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/KvGet"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.storage.json#/methods/KvGet"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "EG-DURABLE-KERNEL-R102. The key is scoped by verified tenant, principal (unless shared), request graph and namespace. It answers the value and its commit version",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.storage.KvPut": {
+      "post": {
+        "operationId": "eg.storage.KvPut",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/KvPut"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.storage.json#/methods/KvPut"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Native MutationBatch in kv.redb, committed before the acknowledgment. Each write stamps a new namespace commit version. The batch ledger is the durable audit",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.storage.KvScan": {
+      "post": {
+        "operationId": "eg.storage.KvScan",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/KvScan"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.storage.json#/methods/KvScan"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Bounded prefix scan over one snapshot. A page holds at most 1000 rows (default 100) and 4 MiB. An exclusive-start cursor resumes it",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.storage.Restore": {
       "post": {
         "operationId": "eg.storage.Restore",
@@ -17938,6 +18249,100 @@
         ]
       }
     },
+    "/api/v1/ops/memory.delete": {
+      "post": {
+        "operationId": "memory.delete",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Shared609223667d61742eff1fa5cda38ebc09655ba5ea242d2c80a83aada95e87b4df"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Sharedcf80caf23eb4283f9ac754e059e3566a138ec6ad3cc57016cc02686fbf742cf1"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Forget one of the caller's memory entries",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
+    "/api/v1/ops/memory.list": {
+      "post": {
+        "operationId": "memory.list",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema72523f3c47bfb07398b4a0185e7a9eab3d44e92a5864427ae00e1a28b02c2485"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Sharedcf80caf23eb4283f9ac754e059e3566a138ec6ad3cc57016cc02686fbf742cf1"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "List the caller's memory entries in one namespace",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
+    "/api/v1/ops/memory.read": {
+      "post": {
+        "operationId": "memory.read",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Shared609223667d61742eff1fa5cda38ebc09655ba5ea242d2c80a83aada95e87b4df"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Sharedcf80caf23eb4283f9ac754e059e3566a138ec6ad3cc57016cc02686fbf742cf1"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Read one of the caller's memory entries with its version",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
+    "/api/v1/ops/memory.write": {
+      "post": {
+        "operationId": "memory.write",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema9f653a27b12e264c5c6cc1d3254785686adf00300f40876e3bf245e142a9d862"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Sharedcf80caf23eb4283f9ac754e059e3566a138ec6ad3cc57016cc02686fbf742cf1"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Remember one entry for the caller, optionally compare-and-set",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
     "/api/v1/ops/ops.backup": {
       "post": {
         "operationId": "ops.backup",
@@ -18616,5 +19021,5 @@
       }
     }
   },
-  "x-registry-digest": "d3010942777be32455dcf7f8bbd4c356fae1fefaf99d2926ad7deceaa06a4cbe"
+  "x-registry-digest": "8766a864a293551f8d0bca18958950133d7413659c3ff249cf22f63113b55e37"
 }
