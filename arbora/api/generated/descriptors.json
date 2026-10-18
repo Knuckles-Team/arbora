@@ -5810,6 +5810,18 @@
       "verb": "ask"
     },
     {
+      "domain": "research",
+      "examples": [
+        "research kubernetes pod disruption budgets on the web"
+      ],
+      "id": "research.web",
+      "summary": "Search the web, fetch and ingest the best pages, and return cited documents",
+      "tags": [
+        "research"
+      ],
+      "verb": "act"
+    },
+    {
       "domain": "retrieval",
       "examples": [
         "how fresh are my retrieval sources"
@@ -5942,5 +5954,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "bb0b971087538641a971d10306877248004f83c4870c645933746212e7c8d775"
+  "registry_digest": "d3010942777be32455dcf7f8bbd4c356fae1fefaf99d2926ad7deceaa06a4cbe"
 }

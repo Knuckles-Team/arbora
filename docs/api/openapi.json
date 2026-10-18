@@ -236,6 +236,19 @@
         "default": null,
         "title": "Kind"
       },
+      "Schema110d23ff8ffd5e86b2b822df5065e49c4219567dae8beda79a37c7a5cded5aa3": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "ResearchWebResult",
+        "type": "object"
+      },
       "Schema1201411dfa275e282e9f1dbf5b65995c8b2f58744af2041590aa6936c82d48f1": {
         "additionalProperties": false,
         "properties": {
@@ -757,6 +770,18 @@
         "title": "RunsCurrentPlanResult",
         "type": "object"
       },
+      "Schema6d52c56bffdc072fd3bc7e8ea87b1c6c8d9a90fdd5080fd4e52c34fc3aea72ba": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema85c1db78d5c7dc29b5e24f13a6d3f86af9075e032e322bfe2f7abd542739b409"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Query"
+      },
       "Schema703214a2183cb5a1c2bb46824a67b9a2e0e004e2ba1dfe95b967d8672d39537a": {
         "items": {
           "$ref": "#/components/schemas/Definitionda935471d1a4b0239d7591cb066897a8442219998fa78e1f825fd5698d277a33"
@@ -958,6 +983,11 @@
         "title": "AgentResult",
         "type": "object"
       },
+      "Schema85c1db78d5c7dc29b5e24f13a6d3f86af9075e032e322bfe2f7abd542739b409": {
+        "maxLength": 512,
+        "minLength": 1,
+        "type": "string"
+      },
       "Schema8786fb046bb05224d1b54c0743e4213aab64e56500a1fa2133b9511de9adb102": {
         "items": {
           "$ref": "#/components/schemas/Definition1ea37e3ece08b56882001f829f80d0f37387ba4d5ca6e012461aca7d1ab9fa08"
@@ -978,10 +1008,24 @@
         "title": "IngestSourceStatusParams",
         "type": "object"
       },
+      "Schema88fa90df40367e8c630b006ca6825747617de438e4541f93a47ffb5caa1cc63c": {
+        "default": 5,
+        "maximum": 32,
+        "minimum": 1,
+        "title": "Max Pages",
+        "type": "integer"
+      },
       "Schema8c6ee092ab6888335b7e1a23a6d71ebc4af1cde19fbf832d4d6e749fb6f3e2b9": {
         "additionalProperties": true,
         "title": "JsonResult",
         "type": "object"
+      },
+      "Schema8ce6fdc9f00c4c162a10a7887b66d650ddcf1cd193b9d77e0fcd3723b302d33e": {
+        "default": 86400,
+        "maximum": 31536000,
+        "minimum": 0,
+        "title": "Freshness Window S",
+        "type": "integer"
       },
       "Schema90198d00c8266e2f9c1ecae782c17f0710bf99d23e97e8a3dd26e0e7176ad0b1": {
         "title": "Revision",
@@ -1247,6 +1291,15 @@
         "title": "Tool",
         "type": "string"
       },
+      "Schemaa3ae4a490ad058ba1b38691fea5d1ea3d982d1379cda16248110870d46360787": {
+        "default": "webarchiver",
+        "enum": [
+          "webarchiver",
+          "archivebox"
+        ],
+        "title": "Backend",
+        "type": "string"
+      },
       "Schemaa40c68b83817c6b07221626e3f15d4ff515bb589633926f33a341d0e87fec93b": {
         "pattern": "^lru$",
         "type": "string"
@@ -1381,6 +1434,15 @@
         ],
         "title": "IngestRepositoryIndexParams",
         "type": "object"
+      },
+      "Schemabbc548bdd3e418660f1d5f68b0c4784dfdcaa24b9f3f820d8b6610080ccd8fac": {
+        "default": [],
+        "items": {
+          "$ref": "#/components/schemas/Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7"
+        },
+        "maxItems": 32,
+        "title": "Urls",
+        "type": "array"
       },
       "Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7": {
         "type": "string"
@@ -1632,6 +1694,13 @@
         "title": "IngestSourceSyncParams",
         "type": "object"
       },
+      "Schemae51d5599620656983cad194fe4eb7f9031e275bb4dc5a4a7e89af1d56cb7b84f": {
+        "default": 60,
+        "maximum": 300,
+        "minimum": 1,
+        "title": "Deadline S",
+        "type": "integer"
+      },
       "Schemae5b7ba120ea05335848f10d083d33ff75253ba12e25b82f6310f248eaf851f70": {
         "anyOf": [
           {
@@ -1648,6 +1717,31 @@
         "default": false,
         "title": "All Items",
         "type": "boolean"
+      },
+      "Schemae9c0a1ff011012f42ed940c9ca7de5d6424df124522e94a9e73cda655a4a67eb": {
+        "additionalProperties": false,
+        "properties": {
+          "backend": {
+            "$ref": "#/components/schemas/Schemaa3ae4a490ad058ba1b38691fea5d1ea3d982d1379cda16248110870d46360787"
+          },
+          "deadline_s": {
+            "$ref": "#/components/schemas/Schemae51d5599620656983cad194fe4eb7f9031e275bb4dc5a4a7e89af1d56cb7b84f"
+          },
+          "freshness_window_s": {
+            "$ref": "#/components/schemas/Schema8ce6fdc9f00c4c162a10a7887b66d650ddcf1cd193b9d77e0fcd3723b302d33e"
+          },
+          "max_pages": {
+            "$ref": "#/components/schemas/Schema88fa90df40367e8c630b006ca6825747617de438e4541f93a47ffb5caa1cc63c"
+          },
+          "query": {
+            "$ref": "#/components/schemas/Schema6d52c56bffdc072fd3bc7e8ea87b1c6c8d9a90fdd5080fd4e52c34fc3aea72ba"
+          },
+          "urls": {
+            "$ref": "#/components/schemas/Schemabbc548bdd3e418660f1d5f68b0c4784dfdcaa24b9f3f820d8b6610080ccd8fac"
+          }
+        },
+        "title": "ResearchWebParams",
+        "type": "object"
       },
       "Schemaebfd7f24843456b3e02e97bd2085f819c39ef62a20398d74626160b410a732b5": {
         "title": "Child",
@@ -18141,6 +18235,40 @@
         ]
       }
     },
+    "/api/v1/ops/research.web": {
+      "post": {
+        "operationId": "research.web",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schemae9c0a1ff011012f42ed940c9ca7de5d6424df124522e94a9e73cda655a4a67eb"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schema110d23ff8ffd5e86b2b822df5065e49c4219567dae8beda79a37c7a5cded5aa3"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Search the web, fetch and ingest the best pages, and return cited documents",
+        "tags": [
+          "research"
+        ]
+      }
+    },
     "/api/v1/ops/retrieval.freshness": {
       "post": {
         "operationId": "retrieval.freshness",
@@ -18488,5 +18616,5 @@
       }
     }
   },
-  "x-registry-digest": "bb0b971087538641a971d10306877248004f83c4870c645933746212e7c8d775"
+  "x-registry-digest": "d3010942777be32455dcf7f8bbd4c356fae1fefaf99d2926ad7deceaa06a4cbe"
 }
