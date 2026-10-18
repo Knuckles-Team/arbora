@@ -664,3 +664,16 @@ The unary A2A boot check copies its local model server into the isolated test di
 The test extra must install the published A2A-capable TUI client. The wheel boot job exports this extra with hashes. It runs the existing headless prompt test against the authenticated local stack and model fixture. Passing requires the expected model reply and no skipped tests. Source checkouts do not replace this package qualification.
 
 The published client must include its Textual stylesheets. Mounted-terminal acceptance consumes the same locked wheel as headless acceptance; neither may rely on assets from a source checkout.
+
+
+The native reader is stateless and receives ExecutionContext for each call. It reuses caller-bound EG dispatch authority checks and binds exact caller claims. The serving root composes it without retaining request identity. Publication still needs real native run admission and a live lease from A2A; no producer or harness decision is invented. EG 2.27.5 installed acceptance remains pending.
+
+
+The remaining producer uses EG-DURABLE-KERNEL-R028.4 for native run-owner admission
+and R028.5 for the exact live fence and snapshot transaction. A2A currently
+passes the verified session to execution but does not carry its native claim.
+That is missing integration, not an unresolved authority policy.
+EG-DECISION-ENGINE-R128.3 and R128.6 define the harness answer and scaffold rule.
+Successful served evaluation remains an owner implementation prerequisite; a
+test-supplied decision cannot stand in for it. No additional user policy decision
+is identified for this reader slice.

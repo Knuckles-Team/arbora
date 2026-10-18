@@ -60,6 +60,7 @@
     "ARBORA-OPS-R021.4.4",
     "ARBORA-OPS-R021.4.5",
     "ARBORA-OPS-R021.4.5.1",
+    "ARBORA-OPS-R021.4.5.1.1",
     "ARBORA-OPS-R021.4.6",
     "ARBORA-OPS-R022",
     "ARBORA-OPS-R022.1",
@@ -841,6 +842,20 @@
       ],
       "verified_by": [
         "tests/api/test_runs_ops.py:23"
+      ],
+      "rollup_of": [
+        "ARBORA-OPS-R021.4.5.1.1"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R021.4.5.1.1",
+      "title": "Native contextual reader composition",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "f4ae1be895a1"
+      ],
+      "verified_by": [
+        "tests/mcp_server/test_current_plan_reader.py:22"
       ]
     },
     {

@@ -16,6 +16,7 @@ from typing import Any, Protocol, runtime_checkable
 from agent_connector_sdk.current_plan import CurrentPlanRead, CurrentPlanRequest
 from pydantic import ValidationError
 
+from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.ops._common import Params, build_read_op
 from arbora.api.registry import OpSpec
 
@@ -31,7 +32,7 @@ class CurrentPlanReader(Protocol):
     """The host-composed read port for a run's live scaffold."""
 
     async def read(
-        self, *, run_id: str, tenant: str, principal: str
+        self, *, run_id: str, context: ExecutionContext
     ) -> CurrentPlanRead: ...
 
 
@@ -65,8 +66,7 @@ async def read_current_plan(
         return UNAVAILABLE
     raw = await reader.read(
         run_id=run_id,
-        tenant=context.caller.tenant,
-        principal=context.caller.principal,
+        context=context,
     )
     return project_current_plan(raw, run_id=run_id, now=clock())
 

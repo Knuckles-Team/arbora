@@ -1,0 +1,97 @@
+"""Project native current-plan reads under the admitted caller's authority.
+
+This host adapter owns no plan state and retains no caller, client or session.
+"""
+
+from __future__ import annotations
+
+from datetime import UTC, datetime, timedelta
+from typing import Any
+
+from agent_connector_sdk.current_plan import (
+    CurrentPlanRead,
+    CurrentPlanSnapshot,
+    PlanItem,
+)
+
+from arbora.api.invoke.bootstrap import _caller_dispatch_graph
+from arbora.api.invoke.executor import ExecutionContext
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.invoke.steps import claim_values
+from arbora.api.ops.runs import UNAVAILABLE
+
+
+async def _native_read(client: Any, *, run_id: str, tenant: str, graph: str) -> Any:
+    # Older published EG distributions cannot provide this projection yet.
+    try:
+        from epistemic_graph.generated.coordination import (
+            decode_get_current_plan,
+            send_get_current_plan,
+        )
+    except ImportError:
+        return None
+    from epistemic_graph import EngineResponseError
+    from epistemic_graph.generated import ContractViolation
+
+    from arbora.api.errors import EngineRefusal
+
+    try:
+        result = await send_get_current_plan(
+            client, {"run_id": run_id, "tenant": tenant}, graph
+        )
+    except EngineResponseError as exc:
+        raise EngineRefusal(exc.code) from exc
+    try:
+        snapshot = decode_get_current_plan(result)
+    except (ContractViolation, ValueError):
+        return None
+    return None if snapshot is None else snapshot.model_dump(mode="json")
+
+
+def _utc_millis(value: Any) -> datetime:
+    if type(value) is not int or value < 0:
+        raise ValueError("invalid snapshot time")
+    return datetime(1970, 1, 1, tzinfo=UTC) + timedelta(milliseconds=value)
+
+
+def _project(raw: Any) -> CurrentPlanRead:
+    if raw is None:
+        return UNAVAILABLE
+    try:
+        if not isinstance(raw, dict) or set(raw) != {
+            "run_id",
+            "revision",
+            "observed_at_ms",
+            "expires_at_ms",
+            "items",
+        }:
+            return UNAVAILABLE
+        if not isinstance(raw["items"], list):
+            return UNAVAILABLE
+        snapshot = CurrentPlanSnapshot(
+            run_id=raw["run_id"],
+            revision=raw["revision"],
+            observed_at=_utc_millis(raw["observed_at_ms"]),
+            expires_at=_utc_millis(raw["expires_at_ms"]),
+            items=tuple(PlanItem.model_validate(item) for item in raw["items"]),
+        )
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return UNAVAILABLE
+    return CurrentPlanRead(availability="available", snapshot=snapshot)
+
+
+class NativeCurrentPlanReader:
+    """One stateless reader shared by the serving root, bound afresh per call."""
+
+    async def read(self, *, run_id: str, context: ExecutionContext) -> CurrentPlanRead:
+        # Reuse the same session/owner/graph checks as caller-bound EG dispatch.
+        graph = await _caller_dispatch_graph(context)
+        if "kg:read" not in context.caller.effective_scopes:
+            raise OperationRefused("SCOPE_REQUIRED", {"missing_scopes": ["kg:read"]})
+        with context.client.use_verified_context(
+            claim_values(context.caller.engine_claims)
+        ):
+            raw = await _native_read(
+                context.client, run_id=run_id, tenant=context.caller.tenant, graph=graph
+            )
+        return _project(raw)

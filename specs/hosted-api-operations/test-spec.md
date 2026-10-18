@@ -227,3 +227,6 @@ Copy all boot helpers into the isolated wheel test directory. Start the copied m
 ### ARBORA-OPS-R001 published TUI acceptance
 
 Install the TUI from the locked test extra. Run `test_the_tui_headless_prompt_completes` with the installed console entry point. Require the expected model reply from the authenticated local stack. The installed-wheel job must report zero skips.
+
+
+Test the actual serving-root binding and contextual read path. Cover concurrent callers, owner/session/tenant/graph mismatch, and stale credentials. Test missing kg:read, native auth refusal, absent generated methods, and null or malformed snapshots. Preserve future and expiry rejection. Source doubles establish mapping and admission only; no unpublished package substitutes for installed acceptance.
