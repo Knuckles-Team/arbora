@@ -13,6 +13,7 @@
     "ARBORA-MESSAGING-R005.1",
     "ARBORA-MESSAGING-R006",
     "ARBORA-MESSAGING-R007",
+    "ARBORA-MESSAGING-R007.1",
     "ARBORA-MESSAGING-R008",
     "ARBORA-MESSAGING-R800",
     "ARBORA-MESSAGING-R800.1",
@@ -113,7 +114,7 @@
     {
       "id": "ARBORA-MESSAGING-R007",
       "title": "Served channel gateway",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "516ba93cd3fc"
       ],
@@ -121,7 +122,17 @@
         "tests/messaging/test_alert_operation.py:253",
         "tests/messaging/test_alert_operation.py:276",
         "tests/messaging/test_alert_operation.py:289"
+      ],
+      "rollup_of": [
+        "ARBORA-MESSAGING-R007.1"
       ]
+    },
+    {
+      "id": "ARBORA-MESSAGING-R007.1",
+      "title": "Per-sender identity for inbound turns",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R008",
