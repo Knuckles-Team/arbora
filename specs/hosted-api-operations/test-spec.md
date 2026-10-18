@@ -185,3 +185,18 @@ packages and exercise both schema lookup and invocation.
 | Case | Row | Proving test and observation |
 |---|---|---|
 | Evidence | `ARBORA-OPS-R843.1` | `tests/api/test_au_tool_parity.py::test_replaced_wrapper_methods_are_served`: each needed method is a generated operation. Every read tool maps only to a read-effect operation. |
+
+## ARBORA-OPS-R067 acceptance
+
+| Case | Row | Proving test and observation |
+|---|---|---|
+| Model | `ARBORA-OPS-R067.1` | `tests/api/test_research_web.py::test_params_and_result_round_trip`: A round trip keeps every field. |
+| Behavior | `ARBORA-OPS-R067.2` | `tests/api/test_research_web.py::test_composes_four_steps_in_order`: The engine receives the query, the question and the work item in order. |
+| Backend | `ARBORA-OPS-R067.3` | `tests/api/test_research_web_backends.py::test_explicit_archivebox_run`: A `backend=archivebox` run stores equal Documents. |
+| Fallback | `ARBORA-OPS-R067.3` | `tests/api/test_research_web_backends.py::test_forced_fallback_run`: A failed primary page reaches `archivebox` once and records it. |
+| Wiring | `ARBORA-OPS-R067.4` | `tests/api/test_research_web.py::test_served_invoke_reaches_handler`: A served call reaches the handler. |
+| Refusal | `ARBORA-OPS-R067.5` | `tests/api/test_research_web.py::test_research_web_refusals`: Each case returns its code and enqueues nothing. |
+| Evidence | `ARBORA-OPS-R067.6` | `tests/api/test_research_web.py::test_trace_names_decision_and_backends`: The trace holds the fields and no page text. |
+| Hot-path proof | `ARBORA-OPS-R067.7` | `tests/gateway/test_research_web_served.py::test_research_web_default_archivebox_and_fallback`: Three served calls store equal Documents and cite the backend. |
+
+Hot-path proof for `ARBORA-OPS-R067`: `tests/gateway/test_research_web_served.py::test_research_web_default_archivebox_and_fallback`.
