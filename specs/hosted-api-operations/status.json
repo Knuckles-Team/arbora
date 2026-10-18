@@ -967,7 +967,7 @@
         "94724be32c28"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:326"
+        "tests/api/test_registry_factory.py:328"
       ],
       "rollup_of": [
         "ARBORA-OPS-R024.4.1",
@@ -2034,9 +2034,18 @@
     {
       "id": "ARBORA-OPS-R067.3",
       "title": "Backend choice and fallback",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e30f49ca78d9",
+        "f482fcd9497c"
+      ],
+      "verified_by": [
+        "tests/api/test_research_ops.py:19",
+        "tests/api/test_research_ops.py:55",
+        "tests/api/test_research_ops.py:63",
+        "tests/api/test_research_ops.py:73",
+        "tests/api/test_research_web_backends.py:104"
+      ]
     },
     {
       "id": "ARBORA-OPS-R067.4",
