@@ -211,6 +211,7 @@ def test_served_invocation_binds_ingest_runner() -> None:
 
     fleet = object()
     bound = _with_ingest_runner({"fleet_gateway": fleet}, object(), "g", lambda t: t)
+    assert bound is not None
     assert isinstance(bound["ingest_runner"], ConnectorIngestRunner)
     assert _with_ingest_runner({}, object(), "g", lambda t: t) == {}
     assert isinstance(FleetSourceSession(fleet, None, "s"), FleetSourceSession)
