@@ -8,7 +8,7 @@ internal unit-context specialization serializes a null context and is refused.
 """
 
 from collections.abc import Mapping
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from types import MappingProxyType
 from typing import Any
 
@@ -91,6 +91,38 @@ def _context(value: Any) -> Mapping[str, Any]:
 
 
 @dataclass(frozen=True, slots=True, repr=False)
+class SessionRecord:
+    """Parsed durable facts; this value alone is never authentication proof."""
+
+    session_ref: str
+    tenant: str
+    principal_id: str
+    absolute_expires_at_ms: int
+    idle_expires_at_ms: int
+    mfa_at_ms: int | None
+
+    def __post_init__(self) -> None:
+        for value in (self.session_ref, self.tenant, self.principal_id):
+            _text(value)
+        if len(self.session_ref) > 256:
+            raise IdentityUnavailable("session reference exceeds bound")
+        for value in (self.absolute_expires_at_ms, self.idle_expires_at_ms):
+            self._timestamp(value)
+        if self.mfa_at_ms is not None:
+            self._timestamp(self.mfa_at_ms)
+
+    @staticmethod
+    def _timestamp(value: Any) -> None:
+        if type(value) is not int or not 0 <= value <= 2**64 - 1:
+            raise IdentityUnavailable("session timestamp must be an explicit uint64")
+
+    @classmethod
+    def parse(cls, value: Any) -> "SessionRecord":
+        _shape(value, frozenset(cls.__dataclass_fields__), frozenset())
+        return cls(**dict(value))
+
+
+@dataclass(frozen=True, slots=True, repr=False)
 class Resolution:
     """Immutable parsed response, not a constructible authentication proof."""
 
@@ -106,6 +138,7 @@ class Resolution:
     mfa_enrolled: bool
     session_mfa_pending: bool
     request_context: Mapping[str, Any]
+    session_record: SessionRecord | None = field(default=None, compare=False)
 
     def _validate_identity_shape(self) -> None:
         for name in ("principal_id", "username", "kind", "status"):
@@ -144,11 +177,23 @@ class Resolution:
         self._validate_identity_shape()
         self._validate_mfa_flags()
         self._reconcile_context()
+        if self.session_record is not None:
+            record = self.session_record
+            if not isinstance(record, SessionRecord):
+                raise IdentityUnavailable("explicit session record required")
+            if (
+                record.principal_id != self.principal_id
+                or record.tenant != self.request_context["tenant"]
+            ):
+                raise IdentityUnavailable("session record and resolution disagree")
 
     @classmethod
     def parse(cls, value: Any) -> "Resolution":
-        _shape(value, _RESOLUTION_FIELDS, frozenset())
-        return cls(**dict(value))
+        _shape(value, _RESOLUTION_FIELDS, frozenset({"session_record"}))
+        fields = dict(value)
+        if "session_record" in fields:
+            fields["session_record"] = SessionRecord.parse(fields["session_record"])
+        return cls(**fields)
 
     @classmethod
     def from_reply(cls, reply: Any) -> "Resolution":
