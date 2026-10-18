@@ -630,3 +630,15 @@ ARBORA-OPS-R021.4.5.1 consumes SDK-CONNECTOR-CONTROL-R070 through the SDK's publ
 This migration does not compose a producer, grant run access, choose a run owner, change authentication, or implement runs.get. An absent reader stays unavailable. The release and dependency lock must resolve from PyPI before this consumer change ships. Lease-bound publication remains an EG dependency; the pending run-owner admission policy must not be inferred from worker identity.
 
 The consumer stays on the SDK 0.2 release line for this change. SDK 0.3 changes the default MCP tool surface and requires separate compatibility acceptance. Successful task admission or these DTO tests do not prove live tool execution. The reported agents.run refusal for an unavailable native tool remains a separate served acceptance requirement.
+
+## Web research operation (R067)
+
+`research.web` is one served operation. It composes owners; it decides nothing. The engine answers the search as a virtual source (`EG-UNIFIED-DATA-PLANE-R038.7.7`). The engine selects the pages (`EG-DECISION-ENGINE-R802`). A connector reads each page through the SDK contract (`SDK-SOURCE-INGEST-R005.40`). The engine ingests and enriches each page (`EG-UNIFIED-DATA-PLANE-R651.7`).
+
+Call path: served route -> `invoke` (`arbora/api/invoke/pipeline.py:863`) -> `research.web` handler (`arbora/api/ops/research.py`) -> engine query -> engine `Decide` -> engine work item of kind `WebPage` -> SDK ingest worker -> connector `web_extract` -> engine `SourceIngest`.
+
+Backends: `webarchiver` (`CONN-WEBARCHIVER-WEB-SOURCE`) is primary. `archivebox` (`CONN-ARCHIVEBOX-API-WEB-SOURCE`) is secondary and the fallback for `upstream_failed` or an unreachable primary. A policy refusal never falls back. Both backends produce the same Document; only the recorded backend differs.
+
+Reuse: the ingest runner port of `ARBORA-OPS-R020.1`, the job status read of `ARBORA-OPS-R020.3.1.2` and the open-web screen of `ARBORA-OPS-R042`. The `web-crawler` skill of universal-skills calls this operation (`US-WEB-RESEARCH-R001`).
+
+Budget: 5 pages and a 60 s deadline by default, with at most 32 pages and 300 s. These are starting defaults. A measurement on this platform replaces them.

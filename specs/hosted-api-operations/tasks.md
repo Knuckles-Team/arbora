@@ -218,3 +218,14 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R843:** Served engine operations replace the in-run agent-utilities tool wrappers.
 - [x] **ARBORA-OPS-R843.1:** Delivered wrapper behaviour, bound to `tests/api/test_au_tool_parity.py`.
 - [ ] **ARBORA-OPS-R843.2:** Re-point the remaining modules to their composed rows or the harness.
+
+## Web research operation (R067)
+
+- [ ] **ARBORA-OPS-R067:** Web research operation composes search, selection, fetch and ingest.
+- [ ] **ARBORA-OPS-R067.1:** Model. Add the params and the result with citations.
+- [ ] **ARBORA-OPS-R067.2:** Behavior. Compose the four steps and the deadline.
+- [ ] **ARBORA-OPS-R067.3:** Backend. Add the explicit choice, the fallback and the recorded backend.
+- [ ] **ARBORA-OPS-R067.4:** Wiring. Register the operation behind `invoke`.
+- [ ] **ARBORA-OPS-R067.5:** Refusal. Add the typed refusals.
+- [ ] **ARBORA-OPS-R067.6:** Evidence. Record the trace fields.
+- [ ] **ARBORA-OPS-R067.7:** Hot-path proof. Add the served three-call test.
