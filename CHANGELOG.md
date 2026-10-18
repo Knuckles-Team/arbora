@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-10-18
+
+- Creates unique records through the atomic create operation and refuses bindings that only support upsert.
+- Preserves answered inbox state, retry attempts, and original timestamps when inbound messages are replayed.
+- Corrects the inbox node-label call shape. The older-store producer refusal remains under investigation; this release does not qualify fleet onboarding.
+
 ## [0.1.6] - 2026-10-18
 
 - Corrects A2A bearer refusal and unsupported-stream responses, and preserves process authority across supported token renewal.
