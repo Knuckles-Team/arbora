@@ -134,9 +134,14 @@ def test_one_python_version_is_pinned_for_every_job() -> None:
         if "python-version" in step.get("with", {})
     }
 
-    # scripts/bootstrap.sh reads this same pin.
+    # scripts/bootstrap.sh reads the same pin from .python-version.
     assert len(versions) == 1
-    assert re.fullmatch(r"3\.\d+", versions.pop())
+    pin = (
+        (Path(__file__).parents[2] / ".python-version")
+        .read_text(encoding="utf-8")
+        .strip()
+    )
+    assert versions.pop() == pin == "3.14"
 
 
 def test_gates_run_the_repository_pre_commit_configuration() -> None:

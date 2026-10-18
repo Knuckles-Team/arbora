@@ -142,7 +142,7 @@ jobs:
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           version: '0.13.1'
-          python-version: '3.12'
+          python-version: '3.14'
           enable-cache: true
           cache-dependency-glob: uv.lock
           # A pull request restores the cache but never saves it: saving tars
@@ -500,7 +500,7 @@ jobs:
           set -euo pipefail
           uv export --frozen --no-emit-project --no-dev --extra webui \
             --format requirements.txt --output-file "$RUNNER_TEMP/locked.txt"
-          uv venv --python 3.12 "$RUNNER_TEMP/smoke"
+          uv venv --python 3.14 "$RUNNER_TEMP/smoke"
           py="$RUNNER_TEMP/smoke/bin/python"
           [ -x "$py" ] || py="$RUNNER_TEMP/smoke/Scripts/python.exe"
           echo "SMOKE_PYTHON=$py" >> "$GITHUB_ENV"
@@ -569,6 +569,26 @@ jobs:
           assert tests > 0 and skipped == 0 and failed == 0, (tests, skipped, failed)
           print(f"real boot: {tests} passed against the installed wheel")
           '
+
+  backward-python:
+    # The one backward-support leg (pipelines reference/gate-standard.md
+    # "Python version"): the environment is 3.14 and requires-python keeps a
+    # 3.12 floor, so install the lock on 3.12, import the composition root and
+    # run the fleet conftest's tests there.
+    name: backward-python (3.12)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - *release-checkout
+      - *release-uv
+      - name: Install and import on the 3.12 floor
+        run: |
+          set -euo pipefail
+          uv sync --frozen --python 3.12 --extra test --extra webui
+          uv run --frozen --no-sync python -c 'import sys, arbora; from arbora.deployment import cli; print(sys.version)'
+          uv run --frozen --no-sync pytest -q tests/fleet
 
   publish-pypi:
     timeout-minutes: ${{ github.event_name == 'pull_request' && 10 || 60 }}

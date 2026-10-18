@@ -103,8 +103,8 @@ def _per_os_install_hint(tool: str) -> str:
 # ── individual checks (each returns one _result; never raises) ──────────────
 def _check_python() -> dict[str, Any]:
     v = sys.version_info
-    ok = (3, 11) <= (v.major, v.minor) < (3, 15)
-    detail = f"Python {platform.python_version()} (need >=3.11,<3.15)"
+    ok = (v.major, v.minor) >= (3, 12)
+    detail = f"Python {platform.python_version()} (need >=3.12)"
     if ok:
         return _result("python", "ok", detail)
     return _result(
