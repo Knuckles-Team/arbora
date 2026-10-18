@@ -187,3 +187,15 @@ async def test_original_wire_types_are_not_normalized(controlled_decoder):
     ports = build_engine_identity_ports(Client(reply), graph="identity-fixture")
     with pytest.raises(IdentityUnavailable):
         await ports.sessions.resolve_session("opaque-fixture-session")
+
+
+async def test_real_generated_atomic_record_when_producer_available():
+    from epistemic_graph.generated import models
+
+    if "session_record" not in models.PrincipalResolution.model_fields:
+        pytest.skip("EG-TYPED-PACKS-R085.1 generated producer is not installed")
+    ports = build_engine_identity_ports(Client(reply_value()), graph="identity-fixture")
+    state = await ports.sessions.resolve_session("opaque-fixture-session")
+    assert state.session_ref == record_value()["session_ref"]
+    assert state.expires_at_ms == record_value()["idle_expires_at_ms"]
+    assert state.resolution.principal_id == record_value()["principal_id"]

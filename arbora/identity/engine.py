@@ -106,8 +106,8 @@ class SessionRecord:
             _text(value)
         if len(self.session_ref) > 256:
             raise IdentityUnavailable("session reference exceeds bound")
-        for value in (self.absolute_expires_at_ms, self.idle_expires_at_ms):
-            self._timestamp(value)
+        for timestamp in (self.absolute_expires_at_ms, self.idle_expires_at_ms):
+            self._timestamp(timestamp)
         if self.mfa_at_ms is not None:
             self._timestamp(self.mfa_at_ms)
 
