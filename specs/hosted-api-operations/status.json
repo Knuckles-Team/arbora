@@ -667,6 +667,7 @@
       "title": "Behavior",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "19238c0dc2e7",
         "9671e64658f6"
       ],
       "verified_by": [
@@ -702,6 +703,7 @@
       "title": "Evidence",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "19238c0dc2e7",
         "9671e64658f6"
       ],
       "verified_by": [
@@ -714,7 +716,7 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [
-        "tests/test_real_boot.py:703"
+        "tests/test_real_boot.py:734"
       ]
     },
     {
