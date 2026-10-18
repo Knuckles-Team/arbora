@@ -190,6 +190,9 @@ service = "arbora.messaging.reach:service_port"
 override-dependencies = [
     "epistemic-graph[server]>=2.27.3,<3.0.0",
 ]
+# The engine installs from its published wheels only; its sdist (a Rust
+# build) is never a candidate.
+no-build-package = ["epistemic-graph", "epistemic-graph-server"]
 
 [tool.uv.sources]
 # The engine always resolves from the package index, never from a git or
