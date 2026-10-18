@@ -1870,13 +1870,15 @@
       "title": "Unique records are created, not upserted",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "3d0f79273e9d"
+        "3d0f79273e9d",
+        "f3580eb0f5d0"
       ],
       "verified_by": [
+        "tests/messaging/test_inbox.py:129",
+        "tests/test_unique_records.py:114",
+        "tests/test_unique_records.py:133",
         "tests/test_unique_records.py:37",
-        "tests/test_unique_records.py:67",
-        "tests/test_unique_records.py:75",
-        "tests/test_unique_records.py:90"
+        "tests/test_unique_records.py:67"
       ]
     },
     {
