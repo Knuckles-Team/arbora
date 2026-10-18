@@ -293,6 +293,19 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
         # arbora process principal as the system identity, signing as itself.
         asyncio.run(_admit_process_identity(socket_path, secret, signer_key))
 
+        model_port = _free_port()
+        processes.append(
+            subprocess.Popen(
+                [
+                    sys.executable,
+                    str(Path(__file__).with_name("_boot_model.py")),
+                    str(model_port),
+                ],
+                env=base_env,
+                stdout=eg_log,
+                stderr=subprocess.STDOUT,
+            )
+        )
         config_dir = root / "config"
         config_dir.mkdir()
         (config_dir / "config.json").write_text(
@@ -308,8 +321,18 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
                     "ENABLE_WEB_UI": "false",
                     "MESSAGING_INTAKE_ENABLED": "false",
                     "ACTION_POLICY_PATH": str(config_dir / "action_policy.json"),
-                    # The connector fixture listens on loopback.
+                    # The connector and model fixtures listen on loopback.
                     "MCP_HTTP_ALLOWED_PRIVATE_HOSTS": "127.0.0.1",
+                    "MODEL_HTTP_ALLOWED_PRIVATE_HOSTS": "127.0.0.1",
+                    "CHAT_MODELS": json.dumps(
+                        [
+                            {
+                                "id": "boot-model",
+                                "base_url": f"http://127.0.0.1:{model_port}/v1",
+                                "api_key_env": "ARBORA_BOOT_MODEL_KEY",
+                            }
+                        ]
+                    ),
                 }
             )
         )
@@ -362,6 +385,7 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
             "ARBORA_CONFIG_DIR": str(config_dir),
             "GRAPH_SERVICE_AUTH_SECRET": secret,
             "ARBORA_BOOT_PROCESS_TOKEN": issuer.token(PROCESS_SUBJECT, ttl=7200),
+            "ARBORA_BOOT_MODEL_KEY": "boot-model-key",  # sanitizer:ignore - synthetic
             "XDG_CONFIG_HOME": str(root / "xdg-config"),
             "XDG_DATA_HOME": str(root / "xdg-data"),
             "XDG_STATE_HOME": str(root / "xdg-state"),
@@ -659,3 +683,99 @@ async def test_mcp_act_calls_the_connector_tool(stack: dict[str, Any]) -> None:
     effect = await _effect_items(stack)
     assert [item["status"] for item in effect] == ["succeeded"], effect
     assert "echo:boot" in effect[0]["metadata"]["outcome"], effect
+
+
+# ── A2A: the TUI's transport ─────────────────────────────────────────────────
+
+
+def _a2a(stack: dict[str, Any], method: str, params: dict[str, Any], token: str):
+    import httpx
+
+    key = uuid.uuid4().hex
+    return httpx.post(
+        f"{stack['base_url']}/a2a",
+        json={"jsonrpc": "2.0", "id": method, "method": method, "params": params},
+        headers={"Authorization": f"Bearer {token}", "Idempotency-Key": key},
+        timeout=120,
+    )
+
+
+def _boot_message(text: str) -> dict[str, Any]:
+    return {
+        "kind": "message",
+        "role": "user",
+        "parts": [{"kind": "text", "text": text}],
+        "messageId": uuid.uuid4().hex,
+        "contextId": f"tui-{uuid.uuid4().hex}",
+    }
+
+
+@pytest.mark.spec("ARBORA-OPS-R001")
+def test_a2a_answers_a_rejected_bearer_with_401(stack: dict[str, Any]) -> None:
+    """0.1.5: an expired or wrongly signed bearer made /a2a and its card 500.
+
+    The TUI then reported an empty "A2A stream failed" instead of the refusal.
+    """
+    import httpx
+
+    card = httpx.get(
+        f"{stack['base_url']}/a2a/.well-known/agent-card.json",
+        headers={"Authorization": "Bearer not-a-valid-token"},
+        timeout=30,
+    )
+    assert card.status_code == 401, card.text
+    send = _a2a(stack, "message/send", {"message": _boot_message("hi")}, "not-a-valid-token")
+    assert send.status_code == 401, send.text
+    assert send.json()["error"]["message"] == "A2A authority refused"
+
+
+@pytest.mark.spec("ARBORA-OPS-R001")
+def test_message_stream_refuses_as_unsupported(stack: dict[str, Any]) -> None:
+    response = _a2a(
+        stack, "message/stream", {"message": _boot_message("hi")}, stack["token"]
+    )
+    assert response.status_code == 501, response.text
+    assert response.json()["error"]["code"] == -32010
+
+
+@pytest.mark.spec("ARBORA-OPS-R001")
+def test_a2a_message_send_completes_through_the_model(stack: dict[str, Any]) -> None:
+    response = _a2a(
+        stack, "message/send", {"message": _boot_message("hello")}, stack["token"]
+    )
+    assert response.status_code == 200, response.text
+    task = response.json()["result"]
+    for _ in range(60):
+        if task["status"]["state"] in {"completed", "failed"}:
+            break
+        time.sleep(1)
+        task = _a2a(stack, "tasks/get", {"id": task["id"]}, stack["token"]).json()[
+            "result"
+        ]
+    assert task["status"]["state"] == "completed", f"{task}\n{stack['logs']()}"
+    assert "example.org/arbora-boot" in json.dumps(task.get("artifacts"))
+    assert "not persisted" not in stack["logs"](), stack["logs"]()
+
+
+@pytest.mark.spec("ARBORA-OPS-R001")
+def test_the_tui_headless_prompt_completes(stack: dict[str, Any]) -> None:
+    """The TUI's own ``--headless --prompt`` path, end to end, when installed."""
+    exe = shutil.which("agent-terminal-ui", path=str(Path(sys.executable).parent))
+    if exe is None:
+        pytest.skip("agent-terminal-ui is not installed in this environment")
+    env = {
+        **{k: v for k, v in os.environ.items() if k in _INHERITED_ENV},
+        "AGENT_URL": stack["base_url"],
+        "AGENT_BEARER_TOKEN": stack["token"],
+        "HOME": tempfile.mkdtemp(prefix="tui-home-"),
+    }
+    done = subprocess.run(
+        [exe, "--headless", "--prompt", "hello"],
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=240,
+        check=False,
+    )
+    assert done.returncode == 0, f"{done.stdout}\n{done.stderr}\n{stack['logs']()}"
+    assert "https://example.org/arbora-boot" in done.stdout

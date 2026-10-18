@@ -147,7 +147,11 @@ async def verified_bearer_session_for_request(request: Request) -> GraphSession:
 
 async def _verify_bearer_headers(headers: tuple[tuple[bytes, bytes], ...]) -> Any:
     """Verify one presented credential while preserving infrastructure faults."""
-    from arbora.security.auth import parse_bearer_authorization
+    from arbora.security.auth import (
+        HTTP_401_UNAUTHORIZED,
+        TokenValidationError,
+        parse_bearer_authorization,
+    )
     from arbora.security.request_identity import actor_from_bearer_token
 
     token = parse_bearer_authorization(
@@ -159,6 +163,13 @@ async def _verify_bearer_headers(headers: tuple[tuple[bytes, bytes], ...]) -> An
         return await actor_from_bearer_token(token)
     except HTTPException as error:
         if error.status_code != 401:
+            raise
+        raise HTTPAuthenticationError("Verified bearer required") from None
+    except TokenValidationError as error:
+        # Verification raises the framework-free error: a rejected, expired
+        # or wrongly signed bearer is a 401, never a 500. A verification-path
+        # fault (status 500) still propagates.
+        if error.status_code != HTTP_401_UNAUTHORIZED:
             raise
         raise HTTPAuthenticationError("Verified bearer required") from None
 
