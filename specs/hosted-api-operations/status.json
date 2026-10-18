@@ -656,7 +656,7 @@
       "title": "Model",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "9671e64658f6"
+        "2ad164bd5414"
       ],
       "verified_by": [
         "tests/ingest/test_connector_sources.py:169"
@@ -667,8 +667,8 @@
       "title": "Behavior",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "19238c0dc2e7",
-        "9671e64658f6"
+        "23be3a8e9dd6",
+        "2ad164bd5414"
       ],
       "verified_by": [
         "tests/ingest/test_connector_sources.py:179"
@@ -679,9 +679,9 @@
       "title": "Wiring",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "28881b19f4a7",
-        "51a7c461cb5b",
-        "9671e64658f6"
+        "06d8baf844a1",
+        "094c8adb6318",
+        "2ad164bd5414"
       ],
       "verified_by": [
         "tests/ingest/test_connector_sources.py:208"
@@ -692,7 +692,7 @@
       "title": "Refusal",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "9671e64658f6"
+        "2ad164bd5414"
       ],
       "verified_by": [
         "tests/ingest/test_connector_sources.py:220"
@@ -703,8 +703,9 @@
       "title": "Evidence",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "19238c0dc2e7",
-        "9671e64658f6"
+        "23be3a8e9dd6",
+        "2ad164bd5414",
+        "ceb80658531e"
       ],
       "verified_by": [
         "tests/ingest/test_connector_sources.py:245"
@@ -716,7 +717,7 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [
-        "tests/test_real_boot.py:734"
+        "tests/test_real_boot.py:768"
       ]
     },
     {
