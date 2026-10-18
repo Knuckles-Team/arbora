@@ -29,6 +29,7 @@ def test_lifespan_revalidates_and_preserves_borrowed_ownership(tmp_path: Path):
     owner = ConstructionOwner(tmp_path)
     engine, graph = Mock(), Mock()
     owner.resources = replace(owner.resources, engine=engine, graph=graph)
+    assert owner.binding is not None
     owner.binding = replace(owner.binding, runtime=owner.resources)
     app = application(owner)
     assert owner.calls == 1
@@ -48,6 +49,7 @@ def test_lifespan_revalidates_and_preserves_borrowed_ownership(tmp_path: Path):
 def test_changed_start_cannot_enter_lifespan(tmp_path: Path, change: str):
     owner = ConstructionOwner(tmp_path)
     app = application(owner)
+    assert owner.binding is not None
     if change == "expiry":
         owner.state = replace(owner.state, expires_at_ms=int(time.time() * 1000) - 1)
     elif change == "revoke":
@@ -95,6 +97,7 @@ def test_cancelled_lifespan_clears_readiness(tmp_path: Path):
 @pytest.mark.spec("ARBORA-HOST-R010.7.2.2.2.1")
 def test_app_cannot_omit_the_admitted_graph(tmp_path: Path):
     owner = ConstructionOwner(tmp_path)
+    assert isinstance(owner.resources.graph_config, dict)
     with pytest.raises(PermissionError, match="configuration_unavailable"):
         build_agent_host_app(
             graph=None,
@@ -119,6 +122,7 @@ def test_falsey_admitted_executor_is_preserved(tmp_path: Path):
 
     owner = ConstructionOwner(tmp_path)
     owner.resources = replace(owner.resources, executor=Executor())
+    assert owner.binding is not None
     owner.binding = replace(owner.binding, runtime=owner.resources)
     with TestClient(application(owner)) as client:
         response = client.post(
