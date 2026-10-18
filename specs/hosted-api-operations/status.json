@@ -1959,16 +1959,24 @@
     {
       "id": "ARBORA-OPS-R009.2",
       "title": "Refusal causes are logged",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "0884ed403bbf"
+      ],
+      "verified_by": [
+        "tests/api/test_refusal_causes.py:16"
+      ]
     },
     {
       "id": "ARBORA-OPS-R009.3",
       "title": "Declared replay owners",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "0884ed403bbf"
+      ],
+      "verified_by": [
+        "tests/api/test_refusal_causes.py:33"
+      ]
     },
     {
       "id": "ARBORA-OPS-R053.8",
