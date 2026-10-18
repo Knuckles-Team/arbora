@@ -45,6 +45,7 @@ def test_wheel_boot_bundle_starts_the_model_and_serves_completions(tmp_path: Pat
         and node.func.attr == "with_name"
         and node.args
         and isinstance(node.args[0], ast.Constant)
+        and isinstance(node.args[0].value, str)
     }
     for helper in helpers:
         assert (tmp_path / helper).is_file(), f"boot bundle is missing {helper}"
