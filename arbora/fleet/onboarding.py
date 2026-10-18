@@ -205,6 +205,9 @@ class FleetOnboarding:
     capture: Any = None
     #: The virtual catalog that access contracts register into.
     virtual_catalog: Any = None
+    #: Servers whose next import the operator approved to withdraw more than
+    #: half of the published surface (a move to one tool per operation).
+    allow_mass_withdrawal: frozenset[str] = frozenset()
 
     @property
     def tenant_client(self) -> Any:
@@ -262,6 +265,7 @@ class FleetOnboarding:
                 client=self.tenant_client,
                 commons=self.commons_client,
                 pack=pack,
+                allow_mass_withdrawal=endpoint.name in self.allow_mass_withdrawal,
             )
         else:
             await self.renew({endpoint.name: endpoint.url})

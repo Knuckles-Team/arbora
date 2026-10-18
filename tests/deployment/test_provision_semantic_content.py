@@ -130,7 +130,10 @@ class _Sink:
     def __init__(self, client: Any, pack_import_authority: Any) -> None:
         self._resolve = pack_import_authority
 
-    async def import_pack(self, pack: Any) -> Any:
+    async def import_pack(
+        self, pack: Any, *, allow_mass_withdrawal: bool = False
+    ) -> Any:
+        del allow_mass_withdrawal
         binding, context = await self._resolve(pack.connector)
         _Sink.imported.append((pack.connector, binding, context))
         return type("Unchanged", (), {"result": "unchanged"})()

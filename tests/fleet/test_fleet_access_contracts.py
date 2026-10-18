@@ -221,3 +221,74 @@ def test_real_parser_skips_triple_quoted_domain_ontology() -> None:
     assert ac.parse_pack_contracts(pack) == ()
     with pytest.raises(sdk.AccessContractError):
         sdk.parse_access_contracts(DOMAIN_TTL)
+
+
+@pytest.mark.spec("ARBORA-FLEET-R027.8")
+@pytest.mark.parametrize(
+    ("approved", "expected"), [(frozenset(), False), (frozenset({"tickets-mcp"}), True)]
+)
+def test_onboarding_passes_the_operator_mass_withdrawal_decision(
+    fake_sdk, monkeypatch, approved, expected
+) -> None:
+    """Only a server the operator named may withdraw most of its pack surface."""
+    import asyncio
+
+    from arbora.api.contracts.session import use_session
+    from arbora.deployment import semantic_provisioning
+    from arbora.deployment.production_ops import _parser, _server_names
+    from arbora.fleet.onboarding import FleetEndpoint, FleetOnboarding
+    from tests._eg_fakes import service_session
+
+    seen: list[bool] = []
+
+    async def fake_import(*args, **kwargs):
+        seen.append(kwargs["allow_mass_withdrawal"])
+
+    async def capture(endpoint, *, auth):
+        return _pack()
+
+    monkeypatch.setattr(semantic_provisioning, "import_attested_pack", fake_import)
+
+    class _StatusClient:
+        async def _send(self, _method, _params, _graph, *, idempotency_key=None):
+            return {
+                "connector": "tickets-mcp",
+                "head": None,
+                "importer": None,
+                "last_receipt": None,
+                "members": {"published": 0, "retired": 0, "withdrawn": 0},
+                "projection": {"projection": "none"},
+                "schema_version": 1,
+                "tenant_id": "t",
+                "warnings": [],
+            }
+
+    class _Engine:
+        class graph_compute:
+            @staticmethod
+            def for_graph(name):
+                return types.SimpleNamespace(async_client=_StatusClient())
+
+    session = service_session("t", "g")
+    onboarding = FleetOnboarding(
+        engine=_Engine(),
+        session=session,
+        capture=capture,
+        virtual_catalog=VirtualCatalog(),
+        allow_mass_withdrawal=approved,
+    )
+    with use_session(session):
+        asyncio.run(
+            onboarding.onboard(FleetEndpoint("tickets-mcp", "http://x/mcp"), auth=None)
+        )
+    assert seen == [expected]
+    args = _parser().parse_args(
+        [
+            "onboard-fleet",
+            "--allow-mass-withdrawal",
+            "a-mcp,b-mcp",
+            "--allow-mass-withdrawal",
+            "c-mcp",
+        ]
+    )
+    assert _server_names(args.allow_mass_withdrawal) == {"a-mcp", "b-mcp", "c-mcp"}

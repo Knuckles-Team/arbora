@@ -321,11 +321,15 @@ async def import_attested_pack(
     commons: Any,
     pack: Any,
     bind_graph: GraphBinder = _bind_session_graph,
+    allow_mass_withdrawal: bool = False,
 ) -> Any:
     """Attest ``pack``'s catalog with EG, then import it under EG's binding.
 
     The caller owns projection and schema attachment. A rejected import
     raises :class:`SemanticProvisioningError` with every EG violation.
+    ``allow_mass_withdrawal`` is the operator's decision to publish a pack
+    that withdraws more than half of the published surface; EG then
+    requires ``admin:connector-pack``.
     """
 
     from agent_connector_sdk.sinks.epistemic_graph import EpistemicGraphSink
@@ -355,7 +359,9 @@ async def import_attested_pack(
                 serving_principal=lambda: owner,
             ),
         )
-        result = await sink.import_pack(pack)
+        result = await sink.import_pack(
+            pack, allow_mass_withdrawal=allow_mass_withdrawal
+        )
     rejection = _rejection(result, pack.connector)
     if rejection is not None:
         raise rejection
