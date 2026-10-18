@@ -5,8 +5,9 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import logging
 import secrets
-from collections.abc import Awaitable, Callable, Mapping
+from collections.abc import Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass, field, replace
 from types import MappingProxyType
 from typing import Any
@@ -44,6 +45,8 @@ from arbora.api.registry import (
     Registry,
     Surface,
 )
+
+_logger = logging.getLogger(__name__)
 
 DISPATCH_TIMEOUT_SECONDS = 320
 MFA_FRESH_SECONDS = 900
@@ -132,17 +135,37 @@ def _valid_key(value: Any) -> bool:
     return isinstance(value, str) and 1 <= len(value) <= 256
 
 
+def _declared_owners(modules: Iterable[str] | None = None) -> dict[str, str]:
+    """Every ops module's ``NATIVE_IDEMPOTENCY``: op id -> replay owner."""
+    import importlib
+    import pkgutil
+
+    import arbora.api.ops as ops_package
+
+    names = (
+        modules
+        if modules is not None
+        else [
+            f"{ops_package.__name__}.{info.name}"
+            for info in pkgutil.iter_modules(ops_package.__path__)
+        ]
+    )
+    owners: dict[str, str] = {}
+    for name in names:
+        module = importlib.import_module(name)
+        owners.update(getattr(module, "NATIVE_IDEMPOTENCY", None) or {})
+    return owners
+
+
 def _with_owned_idempotency(services: Any) -> dict[str, str]:
     """Declared owners plus each registered operation whose authority owns replay.
 
     ``agents.run`` derives its A2A task id from the idempotency key, so every
     composition that registers it serves it without a separate declaration.
     """
-    from arbora.api.ops.agents import NATIVE_IDEMPOTENCY
-
     owned = {
         op_id: owner
-        for op_id, owner in NATIVE_IDEMPOTENCY.items()
+        for op_id, owner in _declared_owners().items()
         if services.registry.get(op_id) is not None
     }
     return {**owned, **dict(services.native_idempotency)}
@@ -568,6 +591,12 @@ async def _record(
             assert services.effects is not None
             await services.effects.complete(reservation.reference, result)
     except Exception:
+        _logger.warning(
+            "operation %s outcome record failed (%s)",
+            call.op.id,
+            call.caller.request_id,
+            exc_info=True,
+        )
         return OpError("INDETERMINATE", {"audit_ref": audit_ref})
     return result
 
@@ -686,6 +715,8 @@ def _execution_refusal(call: _Call) -> OpError | None:
     if _missing_idempotency_key(call):
         return OpError("INVALID_ARGUMENT", {"field": "idempotency_key"})
     if call.governed and not call.native_replay and not call.external_replay:
+        # A governed write needs a replay owner: an ops module's
+        # NATIVE_IDEMPOTENCY entry or the external effect journal.
         return OpError("UNAVAILABLE", {"reason": "durable effect owner unavailable"})
     return None
 
@@ -740,6 +771,12 @@ async def _audit_preflight(call: _Call) -> str | OpError:
             call.caller,
         )
     except Exception:
+        _logger.warning(
+            "audit reservation failed for %s (%s)",
+            op.id,
+            call.caller.request_id,
+            exc_info=True,
+        )
         return unavailable
     return audit_ref if isinstance(audit_ref, str) and audit_ref else unavailable
 
@@ -756,6 +793,12 @@ async def _reserve_effect(call: _Call) -> EffectReservation | OpError:
             ),
         )
     except Exception:
+        _logger.warning(
+            "effect reservation failed for %s (%s)",
+            call.op.id,
+            call.caller.request_id,
+            exc_info=True,
+        )
         return unavailable
     if not isinstance(reservation, EffectReservation) or not reservation.reference:
         return unavailable
@@ -833,6 +876,12 @@ async def _dispatch_outcome(call: _Call, audit_ref: str) -> OpResult | OpError:
     except TimeoutError:
         return _unsettled(call, audit_ref, "TIMEOUT")
     except Exception:
+        _logger.warning(
+            "operation %s dispatch failed (%s)",
+            call.op.id,
+            call.caller.request_id,
+            exc_info=True,
+        )
         return _unsettled(call, audit_ref, "INTERNAL")
     return OpResult(value=value)
 
