@@ -49,3 +49,52 @@ def test_ops_modules_declare_replay_owners(monkeypatch: pytest.MonkeyPatch) -> N
     monkeypatch.setitem(sys.modules, module.__name__, module)
     declared = pipeline._declared_owners(["arbora.api.ops.agents", module.__name__])
     assert declared["demo.write"] == "demo:Owner" and "agents.run" in declared
+
+
+@pytest.mark.spec("ARBORA-OPS-R009.2")
+def test_provider_schema_refusal_cause_is_logged(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    from arbora.api.invoke.steps import _validate_provider
+    from arbora.api.registry import EgSchemaRef
+
+    def refuse(_model: Any, _params: Any) -> Any:
+        raise ValueError("records.0.provenance.tool_schema_sha256 is required")
+
+    def assert_tenant(_model: Any, params: Any) -> Any:
+        return {"nested": {"tenant": "other"}}
+
+    model = EgSchemaRef(path="method.request.json#/methods/SourceIngest")
+    with caplog.at_level(logging.WARNING, logger="arbora.api.invoke.steps"):
+        refused = _validate_provider(model, {}, refuse)  # type: ignore[arg-type]
+    assert getattr(refused, "code", None) == "INVALID_ARGUMENT"
+    assert "tool_schema_sha256 is required" in caplog.text
+    asserted = _validate_provider(model, {}, assert_tenant)  # type: ignore[arg-type]
+    assert getattr(asserted, "details", None) == {"field": "nested.tenant"}
+
+
+@pytest.mark.spec("ARBORA-OPS-R009.2")
+async def test_engine_refusal_detail_is_logged(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    from types import SimpleNamespace
+
+    from epistemic_graph import EngineResponseError
+
+    from arbora.api.errors import EngineRefusal
+    from arbora.api.invoke.executor import BoundOperationRuntime
+
+    async def refuse(*_args: Any) -> Any:
+        raise EngineResponseError("INVALID_ARGUMENT", "records[0].stream is empty")
+
+    runtime = object.__new__(BoundOperationRuntime)
+    runtime._eg_dispatch = refuse  # type: ignore[attr-defined]
+    op = SimpleNamespace(
+        id="eg.ingestion.SourceIngest", binding=SimpleNamespace(kind="eg")
+    )
+    context = SimpleNamespace(caller=SimpleNamespace(request_id="req-9"))
+    with caplog.at_level(logging.WARNING, logger="arbora.api.invoke.executor"):
+        with pytest.raises(EngineRefusal):
+            await runtime.dispatch(op, {}, context)  # type: ignore[arg-type]
+    assert "eg.ingestion.SourceIngest" in caplog.text and "req-9" in caplog.text
+    assert "records[0].stream is empty" in caplog.text
