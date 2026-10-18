@@ -2023,7 +2023,8 @@
       "title": "Attest runtime ownership",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "bbc699652d50"
+        "bbc699652d50",
+        "f261d4f80861"
       ],
       "verified_by": [
         "tests/agent_host/test_runtime_binding.py:2"
