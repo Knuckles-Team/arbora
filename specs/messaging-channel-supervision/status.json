@@ -120,8 +120,8 @@
       ],
       "verified_by": [
         "tests/messaging/test_alert_operation.py:253",
-        "tests/messaging/test_alert_operation.py:276",
-        "tests/messaging/test_alert_operation.py:289"
+        "tests/messaging/test_alert_operation.py:279",
+        "tests/messaging/test_alert_operation.py:292"
       ],
       "rollup_of": [
         "ARBORA-MESSAGING-R007.1"
@@ -178,7 +178,7 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [
-        "tests/messaging/test_alert_operation.py:319"
+        "tests/messaging/test_alert_operation.py:322"
       ]
     },
     {

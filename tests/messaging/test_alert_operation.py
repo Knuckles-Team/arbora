@@ -260,6 +260,7 @@ def test_the_served_network_host_owns_intake_only_on_an_explicit_true(
         composition, "configured_platforms", lambda engine: ("telegram",)
     )
     monkeypatch.setenv("KG_DAEMON_ROLE", "client")
+    monkeypatch.setenv("MESSAGING_INTAKE_PLATFORMS", "telegram")
 
     def plan(flag: Any, served: bool) -> bool:
         return composition.detect_composition(
@@ -271,6 +272,8 @@ def test_the_served_network_host_owns_intake_only_on_an_explicit_true(
     assert plan("false", True) is False
     assert plan(None, True) is False
     assert plan("true", False) is False
+    monkeypatch.setenv("MESSAGING_INTAKE_PLATFORMS", "slack")
+    assert plan("true", True) is False
 
 
 @pytest.mark.spec("ARBORA-MESSAGING-R007")

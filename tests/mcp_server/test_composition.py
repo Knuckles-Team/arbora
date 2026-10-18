@@ -101,6 +101,7 @@ def test_messaging_co_service_reaches_arbora_owned_intake(
             messaging_intake_configured=True,
             messaging_configured=True,
             messaging_platforms=("telegram",),
+            intake_platforms=("telegram",),
             web_ui_enabled=False,
         ),
     )
@@ -136,6 +137,7 @@ def test_messaging_intake_requires_gateway_daemon_role(
         composition, "configured_platforms", lambda engine: ("telegram",)
     )
 
+    monkeypatch.setenv("MESSAGING_INTAKE_PLATFORMS", "telegram")
     monkeypatch.setenv("KG_DAEMON_ROLE", "client")
     client_plan = composition.detect_composition(None, messaging_intake_enabled=True)
     assert client_plan.messaging_configured is True
