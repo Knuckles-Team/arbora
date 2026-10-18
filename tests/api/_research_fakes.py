@@ -61,36 +61,15 @@ class FakeFleet:
                     {"url": "https://d.example/pdb", "title": "D", "engine": "brave"},
                 ]
             }
-        if server == research.WEBARCHIVER_SERVER:
-            if arguments["url"] in self.webarchiver_fails:
-                return {
-                    "isError": True,
-                    "content": f"{self.reason}: {arguments['url']}",
-                }
-            return {
-                "backend": "webarchiver",
-                "fetch_mode": "http",
-                "retrieved_at": "2026-10-18T00:00:00+00:00",
-                "page": {
-                    "title": f"Title of {arguments['url']}",
-                    "canonical_url": arguments["url"],
-                    "text": ARTICLE + arguments["url"],
-                    "author": "Ada",
-                    "content_sha256": "",
-                },
-            }
-        if tool == research.ARCHIVEBOX_EXTRACT:
-            return {
-                "backend": "archivebox",
-                "url": arguments["url"],
-                "canonical_url": arguments["url"],
-                "title": f"Title of {arguments['url']}",
-                "author": "Ada",
-                "text": ARTICLE + arguments["url"],
-                "retrieved_at": "2026-10-18T00:00:01+00:00",
-                "snapshot_id": "snap-1",
-                "extractor": "readability",
-            }
+        if server in (research.WEBARCHIVER_SERVER, research.ARCHIVEBOX_SERVER):
+            assert tool == research.WEB_EXTRACT
+            url = arguments["request"]["url"]
+            backend = (
+                "webarchiver" if server == research.WEBARCHIVER_SERVER else "archivebox"
+            )
+            if backend == "webarchiver" and url in self.webarchiver_fails:
+                return {"kind": "refusal", "reason": self.reason, "detail": url}
+            return _contract_page(url, backend)
         raise AssertionError((server, tool))
 
 
@@ -144,3 +123,27 @@ def research_params(**overrides: Any) -> dict[str, Any]:
 
 def research_op() -> Any:
     return research.operations()[0]
+
+
+def _contract_page(url: str, backend: str) -> dict[str, Any]:
+    """A web-source contract ``WebPageResult`` as either connector returns it."""
+    import hashlib
+
+    text = ARTICLE + url
+    return {
+        "kind": "page",
+        "url": url,
+        "canonical_url": url,
+        "final_url": url,
+        "status": 200,
+        "content_type": "text/html",
+        "byte_count": len(text),
+        "content_digest": hashlib.sha256(text.encode()).hexdigest(),
+        "retrieved_at": "2026-10-18T00:00:00+00:00",
+        "title": f"Title of {url}",
+        "author": "Ada",
+        "published_at": "",
+        "outbound_links": [],
+        "text_markdown": text,
+        "backend": backend,
+    }

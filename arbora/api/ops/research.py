@@ -50,9 +50,9 @@ from arbora.api.registry import (
 SEARCH_SERVER = "searxng-mcp"
 SEARCH_TOOL = "web_search"
 WEBARCHIVER_SERVER = "webarchiver-mcp"
-WEBARCHIVER_EXTRACT = "web_extract"
+#: The web-source contract tool both page connectors serve.
+WEB_EXTRACT = "web_extract"
 ARCHIVEBOX_SERVER = "archivebox-mcp"
-ARCHIVEBOX_EXTRACT = "web_extract"
 
 #: The SourceIngest streams pages and chunks are committed under. Each record
 #: is bound to the fleet connector that fetched it, so its mapping reference is
@@ -60,7 +60,13 @@ ARCHIVEBOX_EXTRACT = "web_extract"
 #: Arbora's fleet onboarding imported for that server.
 PAGE_STREAM = "web_page"
 CHUNK_STREAM = "web_chunk"
-BACKEND_SERVERS = {"webarchiver": WEBARCHIVER_SERVER, "archivebox": ARCHIVEBOX_SERVER}
+BACKEND_SERVERS = {
+    "webarchiver": WEBARCHIVER_SERVER,
+    "archivebox": ARCHIVEBOX_SERVER,
+}
+#: Public web pages are not sensitive locations: these fields keep a public
+#: http(s) URL so a citation can name it. Every other location is redacted.
+CITABLE_FIELDS = frozenset({"source_uri", "url", "canonical_url"})
 
 _TRACKING_PARAMS = re.compile(r"^(utm_.*|fbclid|gclid|mc_cid|mc_eid|ref|ref_src)$")
 _CHUNK_CHARS = 1200
@@ -351,66 +357,53 @@ class FleetCaller:
         )
 
 
-async def fetch_webarchiver(fleet: FleetCaller, hit: SearchHit) -> WebPage:
+async def fetch_contract_page(
+    fleet: FleetCaller, hit: SearchHit, backend: str
+) -> WebPage:
+    """``web_extract`` on one connector of the SDK web-source contract.
+
+    webarchiver and archivebox serve the same tool, request, page result and
+    refusal reasons (SDK-SOURCE-INGEST-R005.40), so one parser reads both; the
+    page names the connector that produced it.
+    """
+    server = BACKEND_SERVERS[backend]
     try:
-        raw = await fleet.call(
-            WEBARCHIVER_SERVER, WEBARCHIVER_EXTRACT, {"url": hit.url}
-        )
+        raw = await fleet.call(server, WEB_EXTRACT, {"request": {"url": hit.url}})
     except OperationRefused:
         raise
     except Exception as exc:  # noqa: BLE001 - a child that cannot answer is unreachable
-        raise FetchFailed("webarchiver", "unreachable") from exc
+        raise FetchFailed(backend, "unreachable") from exc
     error = _is_error(raw)
     data = _unwrap(raw)
-    page = data.get("page") if isinstance(data, Mapping) else None
     if error:
-        raise FetchFailed("webarchiver", _reason(error))
-    if not isinstance(page, Mapping) or not page.get("text"):
-        raise FetchFailed("webarchiver", "upstream_failed")
-    return WebPage(
-        url=hit.url,
-        canonical_url=canonical_url(str(page.get("canonical_url") or hit.url)),
-        title=str(page.get("title") or hit.title),
-        text=str(page["text"]),
-        backend="webarchiver",
-        fetched_at=str(data.get("retrieved_at") or _now()),
-        author=str(page.get("author") or ""),
-        published=str(page.get("published") or ""),
-        site_name=str(page.get("site_name") or ""),
-        content_sha256=str(
-            data.get("content_digest") or page.get("content_sha256") or ""
-        ),
-        fetch_mode=str(data.get("fetch_mode") or "http"),
-    )
-
-
-async def fetch_archivebox(fleet: FleetCaller, hit: SearchHit) -> WebPage:
-    try:
-        raw = await fleet.call(ARCHIVEBOX_SERVER, ARCHIVEBOX_EXTRACT, {"url": hit.url})
-    except OperationRefused:
-        raise
-    except Exception as exc:  # noqa: BLE001 - a child that cannot answer is unreachable
-        raise FetchFailed("archivebox", "unreachable") from exc
-    error = _is_error(raw)
-    data = _unwrap(raw)
-    text = str(data.get("text") or "") if isinstance(data, Mapping) else ""
-    if error:
-        raise FetchFailed("archivebox", _reason(error))
-    if not text.strip():
-        raise FetchFailed("archivebox", "extract_empty")
+        raise FetchFailed(backend, _reason(error))
+    if not isinstance(data, Mapping):
+        raise FetchFailed(backend, "upstream_failed")
+    if data.get("kind") == "refusal":
+        raise FetchFailed(backend, str(data.get("reason") or "upstream_failed"))
+    text = str(data.get("text_markdown") or "")
+    if data.get("kind") != "page" or not text.strip():
+        raise FetchFailed(backend, "extract_empty")
     return WebPage(
         url=hit.url,
         canonical_url=canonical_url(str(data.get("canonical_url") or hit.url)),
         title=str(data.get("title") or hit.title),
         text=text,
-        backend="archivebox",
+        backend=str(data.get("backend") or backend),
         fetched_at=str(data.get("retrieved_at") or _now()),
         author=str(data.get("author") or ""),
         published=str(data.get("published_at") or ""),
-        site_name=str(data.get("site_name") or ""),
         content_sha256=str(data.get("content_digest") or ""),
-        fetch_mode=str(data.get("extractor") or "archivebox"),
+        fetch_mode="web_extract",
     )
+
+
+async def fetch_webarchiver(fleet: FleetCaller, hit: SearchHit) -> WebPage:
+    return await fetch_contract_page(fleet, hit, "webarchiver")
+
+
+async def fetch_archivebox(fleet: FleetCaller, hit: SearchHit) -> WebPage:
+    return await fetch_contract_page(fleet, hit, "archivebox")
 
 
 async def fetch_page(
@@ -459,12 +452,19 @@ class SourceIngestWriter:
             connector = BACKEND_SERVERS[backend]
             for binding, records in (
                 (
-                    IngestBinding(connector=connector, stream=PAGE_STREAM),
+                    IngestBinding(
+                        connector=connector,
+                        stream=PAGE_STREAM,
+                        citable_fields=CITABLE_FIELDS,
+                    ),
                     [_page_document(Document, doc) for doc in batch],
                 ),
                 (
                     IngestBinding(
-                        connector=connector, stream=CHUNK_STREAM, document_type="Chunk"
+                        connector=connector,
+                        stream=CHUNK_STREAM,
+                        document_type="Chunk",
+                        citable_fields=CITABLE_FIELDS,
                     ),
                     [
                         _chunk_document(Document, doc, chunk)

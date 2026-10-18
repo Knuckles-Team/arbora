@@ -64,7 +64,11 @@ async def test_forced_fallback_run() -> None:
     assert second["backend"] == "webarchiver"
     assert fallback["fallbacks"] == 1
     assert _without_backend(fallback) == _without_backend(primary)
-    retried = [a["url"] for s, _t, a in fleet.calls if s == research.ARCHIVEBOX_SERVER]
+    retried = [
+        a["request"]["url"]
+        for s, _t, a in fleet.calls
+        if s == research.ARCHIVEBOX_SERVER
+    ]
     assert retried == [FIRST]
 
 
