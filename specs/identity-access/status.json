@@ -202,7 +202,8 @@
       "title": "Consume exact persisted session facts",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "753803845a64"
+        "753803845a64",
+        "82a546bed3d3"
       ],
       "verified_by": [
         "tests/identity/test_engine_session_authority.py:13"
