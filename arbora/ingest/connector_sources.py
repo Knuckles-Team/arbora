@@ -12,7 +12,9 @@ Status comes from the shared engine KV checkpoint the SDK runner writes.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
+import inspect
 import uuid
 from collections.abc import Awaitable, Callable, Iterator, Mapping
 from contextlib import contextmanager
@@ -41,6 +43,7 @@ __all__ = ["SOURCE_SYNC_KIND", "ConnectorIngestRunner", "FleetSourceSession"]
 SOURCE_SYNC_KIND = "arbora.ingest.source_sync"
 _DECLARATION_SUFFIX = "_ingest_sources"
 _LEASE_S = 600.0
+_SEAM_TIMEOUT_S = 60.0
 #: The fleet catalog page size (its maximum) and page bound for one listing.
 _CATALOG_PAGE = 100
 _MAX_CATALOG_PAGES = 50
@@ -59,6 +62,52 @@ def _caller_session(caller: Any) -> Iterator[None]:
 
     with use_session(session):
         yield
+
+
+class _LoopBoundNamespace:
+    """A sync view of an async engine namespace, for a call in a worker thread.
+
+    The WorkItem seam (``arbora.work_items``) is synchronous; the served
+    engine client is async. Each call runs on the serving loop while the
+    worker thread waits for its result.
+    """
+
+    def __init__(self, namespace: Any, loop: asyncio.AbstractEventLoop) -> None:
+        self._namespace = namespace
+        self._loop = loop
+
+    def __getattr__(self, name: str) -> Any:
+        method = getattr(self._namespace, name)
+
+        def call(*args: Any, **kwargs: Any) -> Any:
+            result = method(*args, **kwargs)
+            if not inspect.isawaitable(result):
+                return result
+            return asyncio.run_coroutine_threadsafe(
+                _awaited(result), self._loop
+            ).result(_SEAM_TIMEOUT_S)
+
+        return call
+
+
+async def _awaited(value: Any) -> Any:
+    return await value
+
+
+class _SyncEngine:
+    """The ``engine`` shape the WorkItem seam reads: one ``work_items``."""
+
+    def __init__(self, client: Any, loop: asyncio.AbstractEventLoop) -> None:
+        self.work_items = _LoopBoundNamespace(client.work_items, loop)
+
+
+async def _seam(call: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+    """Run one WorkItem seam call in a worker thread (contextvars carried)."""
+    import functools
+
+    import anyio
+
+    return await anyio.to_thread.run_sync(functools.partial(call, *args, **kwargs))
 
 
 def _split(source_id: str) -> tuple[str, str]:
@@ -182,6 +231,7 @@ class ConnectorIngestRunner:
             records=state.records,
             last_job_id=state.last_job_id,
             sync_state=state.state,
+            sync_reason=(state.last_report or {}).get("reason"),
         )
 
     async def list_sources(
@@ -235,11 +285,14 @@ class ConnectorIngestRunner:
         from arbora import work_items
 
         server = _split(source_id)[0]
-        control = await self._control_client(tenant)
+        control = _SyncEngine(
+            await self._control_client(tenant), asyncio.get_running_loop()
+        )
         key = hashlib.sha256(
             f"{source_id}|{mode}|{idempotency_key}".encode()
         ).hexdigest()
-        item_id, created = work_items.submit_work_item_atomic(
+        item_id, created = await _seam(
+            work_items.submit_work_item_atomic,
             control,
             kind=SOURCE_SYNC_KIND,
             idempotency_key=key,
@@ -248,11 +301,12 @@ class ConnectorIngestRunner:
             metadata={"source_id": source_id, "mode": mode},
         )
         if not created:
-            current = work_items.get_work_item(control, item_id) or {}
+            current = await _seam(work_items.get_work_item, control, item_id) or {}
             return self._receipt(
                 item_id, source_id, tenant, mode, current.get("status")
             )
-        claim = work_items.claim_specific(
+        claim = await _seam(
+            work_items.claim_specific,
             control,
             item_id,
             token=f"arbora-ingest-{uuid.uuid4().hex}",
@@ -271,12 +325,18 @@ class ConnectorIngestRunner:
         try:
             report = await runner.sync(spec, mode=mode, job_id=item_id)
         except SourceSyncError as exc:
-            work_items.commit_result(
-                control, item_id, claim, outcome="failed", error_ref=exc.reason
+            await _seam(
+                work_items.commit_result,
+                control,
+                item_id,
+                claim,
+                outcome="failed",
+                error_ref=exc.reason,
             )
             return self._receipt(item_id, source_id, tenant, mode, "failed")
         outcome = "failed" if report.state == "failed" else "succeeded"
-        work_items.commit_result(
+        await _seam(
+            work_items.commit_result,
             control,
             item_id,
             claim,
@@ -314,9 +374,11 @@ class ConnectorIngestRunner:
     ) -> IngestJobRecord:
         from arbora import work_items
 
-        control = await self._control_client(tenant)
+        control = _SyncEngine(
+            await self._control_client(tenant), asyncio.get_running_loop()
+        )
         with _caller_session(caller):
-            item = work_items.get_work_item(control, job_id)
+            item = await _seam(work_items.get_work_item, control, job_id)
         if item is None:
             raise OperationRefused("NOT_FOUND", {"reason": "job is not known"})
         mapped = {"succeeded": "completed", "failed": "failed", "leased": "running"}

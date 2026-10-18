@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import logging
 import secrets
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field, replace
@@ -44,6 +45,8 @@ from arbora.api.registry import (
     Registry,
     Surface,
 )
+
+_logger = logging.getLogger(__name__)
 
 DISPATCH_TIMEOUT_SECONDS = 320
 MFA_FRESH_SECONDS = 900
@@ -135,14 +138,16 @@ def _valid_key(value: Any) -> bool:
 def _with_owned_idempotency(services: Any) -> dict[str, str]:
     """Declared owners plus each registered operation whose authority owns replay.
 
-    ``agents.run`` derives its A2A task id from the idempotency key, so every
-    composition that registers it serves it without a separate declaration.
+    ``agents.run`` derives its A2A task id from the idempotency key, and
+    ``ingest.sources.sync`` keys its engine WorkItem by it, so every
+    composition that registers them serves them without a separate declaration.
     """
-    from arbora.api.ops.agents import NATIVE_IDEMPOTENCY
+    from arbora.api.ops.agents import NATIVE_IDEMPOTENCY as AGENT_OWNED
+    from arbora.api.ops.ingest import NATIVE_IDEMPOTENCY as INGEST_OWNED
 
     owned = {
         op_id: owner
-        for op_id, owner in NATIVE_IDEMPOTENCY.items()
+        for op_id, owner in {**AGENT_OWNED, **INGEST_OWNED}.items()
         if services.registry.get(op_id) is not None
     }
     return {**owned, **dict(services.native_idempotency)}
@@ -568,6 +573,7 @@ async def _record(
             assert services.effects is not None
             await services.effects.complete(reservation.reference, result)
     except Exception:
+        _logger.warning("operation %s outcome record failed", call.op.id, exc_info=True)
         return OpError("INDETERMINATE", {"audit_ref": audit_ref})
     return result
 
@@ -740,6 +746,7 @@ async def _audit_preflight(call: _Call) -> str | OpError:
             call.caller,
         )
     except Exception:
+        _logger.warning("audit reservation failed for %s", op.id, exc_info=True)
         return unavailable
     return audit_ref if isinstance(audit_ref, str) and audit_ref else unavailable
 
@@ -756,6 +763,7 @@ async def _reserve_effect(call: _Call) -> EffectReservation | OpError:
             ),
         )
     except Exception:
+        _logger.warning("effect reservation failed for %s", call.op.id, exc_info=True)
         return unavailable
     if not isinstance(reservation, EffectReservation) or not reservation.reference:
         return unavailable
@@ -833,6 +841,7 @@ async def _dispatch_outcome(call: _Call, audit_ref: str) -> OpResult | OpError:
     except TimeoutError:
         return _unsettled(call, audit_ref, "TIMEOUT")
     except Exception:
+        _logger.warning("operation %s dispatch failed", call.op.id, exc_info=True)
         return _unsettled(call, audit_ref, "INTERNAL")
     return OpResult(value=value)
 
