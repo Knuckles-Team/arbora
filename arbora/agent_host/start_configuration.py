@@ -109,3 +109,33 @@ class HostRuntimeResources:
         return isinstance(other, HostRuntimeResources) and all(
             getattr(self, name) is getattr(other, name) for name in self.__slots__
         )
+
+
+def check_runtime_configuration(
+    context: HostStartContext | None,
+    configuration: HostStartConfiguration,
+    runtime: HostRuntimeResources,
+    *,
+    resources: tuple[object, ...],
+    unused_arguments: dict[str, object],
+) -> None:
+    """Admit a borrowed bundle at the launcher; never mint authority or close it."""
+    if context is None or not isinstance(runtime, HostRuntimeResources):
+        raise PermissionError("configuration_unavailable")
+    expected = (
+        runtime.graph,
+        runtime.graph_config,
+        runtime.executor,
+        runtime.host_logs,
+        runtime.host_log_runtime,
+    )
+    if (
+        unused_arguments
+        or len(resources) != len(expected)
+        or any(
+            actual is not None and actual is not supplied
+            for actual, supplied in zip(resources, expected, strict=True)
+        )
+    ):
+        raise PermissionError("configuration_unavailable")
+    context.check_runtime(configuration, runtime)

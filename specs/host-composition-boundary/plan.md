@@ -11,7 +11,7 @@
 | `arbora.control_plane` | Policy and reconciliation orchestration | Keep hosted decisions here while durable provenance and graph state use the engine client. |
 | `arbora.deployment` | Configuration and operator commands | Reuse one XDG configuration resolver and publicly installable extras. |
 
-`arbora.mcp_server.bootstrap` and `arbora.a2a.routing` currently contain dependency-internal imports. Treat them as migration inventory, not approved architecture. A port is a narrow protocol describing the methods Arbora actually calls; its adapter imports the dependency's supported public API. If a public method is missing, add it to the owning package and pin a released version before deleting the old import. Do not mirror the private implementation in Arbora.
+`arbora.mcp_server.bootstrap` and `arbora.a2a.routing` currently contain dependency-internal imports. Treat them as migration inventory, not approved architecture. A port is a narrow protocol describing the methods Arbora actually calls; its adapter imports the dependency's supported public API. If a public method is missing, add it to the owning package. Pin a released version before deleting the old import. Do not mirror the private implementation in Arbora.
 
 ## Request path
 
@@ -323,3 +323,13 @@ The remaining child retains real client startup and qualified session integratio
 Refresh the owner binding after final session resolution, so that await cannot hide a changed runtime revision.
 Accept increased idle expiry only when identity, session reference and MFA facts remain exact. Keep the original admission expiry ceiling.
 Shortened expiry or changed authority denies; construction-owner state snapshots follow the same rule.
+
+### Launcher bundle attachment
+
+ARBORA-HOST-R010.7.2.2.1 connects the existing runtime admission to
+create_agent_server through an explicit host_runtime argument. Legacy resource
+arguments may be omitted or refer to the same borrowed objects. Conflicts and
+unknown arguments refuse before owner calls. No resources are constructed or
+closed by this attachment. ARBORA-HOST-R010.7.2.2.2 remains pending: host.start
+policy and construction-owner implementations, browser current-caller binding,
+and authenticated client lifetime composition are not implemented by this bundle.
