@@ -24200,10 +24200,10 @@
       "id": "runs.current_plan",
       "idempotency": "none",
       "params": {
-        "model": "arbora.api.ops.runs.RunsCurrentPlanParams",
+        "model": "agent_connector_sdk.current_plan.CurrentPlanRequest",
         "schema": {
           "additionalProperties": false,
-          "description": "The run to read. Caller authority never comes from parameters.",
+          "description": "Select a run; caller authority is never a request field.",
           "properties": {
             "run_id": {
               "maxLength": 512,
@@ -24215,7 +24215,7 @@
           "required": [
             "run_id"
           ],
-          "title": "RunsCurrentPlanParams",
+          "title": "CurrentPlanRequest",
           "type": "object"
         }
       },
@@ -24705,5 +24705,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "b783d3ca241cda609cb6e37ab58fc4a3d73030ba3ece074034f5a6bc86a719e7"
+  "registry_digest": "bb0b971087538641a971d10306877248004f83c4870c645933746212e7c8d775"
 }
