@@ -22,7 +22,7 @@ wheels = [
 
 [[package]]
 name = "agent-connector-sdk"
-version = "0.3.1"
+version = "0.3.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -34,8 +34,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
+sdist = { url = "https://files.pythonhosted.org/packages/fa/b9/151d9bf8bde8a2682df9b1cdec8af9b487f9fb34b9c77bb79407dde7ff0c/agent_connector_sdk-0.3.3.tar.gz", hash = "sha256:0e0916589c68f99c78d192c37011a34ec0ed773212e4042fed4ca4a670f11aef", size = 717762, upload-time = "2026-10-18T09:40:21.861Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1d/cc/b1c3d3dd83b77dae8df3030df34f29a18cfa7390f8d2071b3c2f1ee041b1/agent_connector_sdk-0.3.1-py3-none-any.whl", hash = "sha256:14a09d18978462eb337b4b20a52d23e1528421776be672c705d73edc0d8d32a4", size = 722588, upload-time = "2026-10-18T08:12:33.999Z" },
+    { url = "https://files.pythonhosted.org/packages/dd/c0/30b635e1ea988a4a0f7c1d24699d18e1601681ca4195714c062472b2e980/agent_connector_sdk-0.3.3-py3-none-any.whl", hash = "sha256:6d2679bb2827cf736c516724c8de5a2b2709fe9a3f16462e5b9a6d811b4cc02d", size = 723989, upload-time = "2026-10-18T09:40:23.005Z" },
 ]
 
 [package.optional-dependencies]
@@ -446,8 +447,8 @@ webui = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], specifier = ">=0.3.1,<0.4.0" },
-    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], marker = "extra == 'gateway-widgets'", specifier = ">=0.3.1,<0.4.0" },
+    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], specifier = ">=0.3.3,<0.4.0" },
+    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], marker = "extra == 'gateway-widgets'", specifier = ">=0.3.3,<0.4.0" },
     { name = "agent-utilities", specifier = ">=3.0.1,<4.0.0" },
     { name = "agent-webui", marker = "extra == 'webui'", specifier = ">=2.7.1,<3.0.0" },
     { name = "aiohttp", specifier = ">=3.14.5" },
