@@ -727,6 +727,14 @@ async def handle_research_web(
     }
 
 
+#: Operations whose replay safety the engine's SourceIngest authority owns:
+#: every page and chunk record has a deterministic id (from its canonical URL)
+#: under its connector and stream, so a replayed call upserts the same records.
+NATIVE_IDEMPOTENCY: dict[str, str] = {
+    "research.web": "epistemic_graph:SourceIngest",
+}
+
+
 def operations() -> tuple[OpSpec, ...]:
     return (
         OpSpec(
@@ -756,6 +764,7 @@ __all__ = [
     "FetchFailed",
     "FleetCaller",
     "IngestedDocument",
+    "NATIVE_IDEMPOTENCY",
     "ResearchWebParams",
     "ResearchWebResult",
     "SearchHit",
