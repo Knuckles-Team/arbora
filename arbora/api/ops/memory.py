@@ -85,7 +85,7 @@ def _shared(params: Mapping[str, Any]) -> bool:
 def _require_shared_write(context: Any, params: Mapping[str, Any]) -> None:
     from arbora.api.invoke.pipeline import OperationRefused
 
-    scopes = getattr(context.caller, "effective_scopes", frozenset())
+    scopes: frozenset[str] = getattr(context.caller, "effective_scopes", frozenset())
     if _shared(params) and SHARED_WRITE_SCOPE not in scopes:
         raise OperationRefused(
             "SCOPE_REQUIRED", {"missing_scopes": [SHARED_WRITE_SCOPE]}

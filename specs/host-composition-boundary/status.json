@@ -290,8 +290,8 @@
         "192099593cdd"
       ],
       "verified_by": [
-        "tests/test_served_operation_api.py:175",
-        "tests/test_served_operation_api.py:217"
+        "tests/test_served_operation_api.py:207",
+        "tests/test_served_operation_api.py:320"
       ]
     },
     {
