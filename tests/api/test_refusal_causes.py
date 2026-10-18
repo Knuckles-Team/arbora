@@ -5,19 +5,29 @@ from __future__ import annotations
 import logging
 import sys
 import types
+from collections.abc import Mapping
+from dataclasses import dataclass, field
+from typing import Any
 
 import pytest
 
 from arbora.api.errors import to_envelope
 from arbora.api.invoke import pipeline
-from arbora.api.invoke.pipeline import OpError
+
+
+@dataclass
+class _Refusal:
+    """A pipeline refusal (the OpErrorLike shape the envelope projects)."""
+
+    code: str
+    details: Mapping[str, Any] = field(default_factory=dict)
 
 
 @pytest.mark.spec("ARBORA-OPS-R009.2")
 def test_refusal_cause_is_logged_with_request_id(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    refusal = OpError("UNAVAILABLE", {"reason": "durable effect owner unavailable"})
+    refusal = _Refusal("UNAVAILABLE", {"reason": "durable effect owner unavailable"})
     with caplog.at_level(logging.WARNING, logger="arbora.api.errors"):
         status, envelope = to_envelope(
             refusal, op="demo.op", request_id="req-123", registry_digest="d" * 64
