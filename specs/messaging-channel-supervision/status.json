@@ -12,6 +12,8 @@
     "ARBORA-MESSAGING-R005",
     "ARBORA-MESSAGING-R005.1",
     "ARBORA-MESSAGING-R006",
+    "ARBORA-MESSAGING-R007",
+    "ARBORA-MESSAGING-R008",
     "ARBORA-MESSAGING-R800",
     "ARBORA-MESSAGING-R800.1",
     "ARBORA-MESSAGING-R800.2",
@@ -109,6 +111,34 @@
       "verified_by": []
     },
     {
+      "id": "ARBORA-MESSAGING-R007",
+      "title": "Served channel gateway",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "516ba93cd3fc"
+      ],
+      "verified_by": [
+        "tests/messaging/test_alert_operation.py:253",
+        "tests/messaging/test_alert_operation.py:276",
+        "tests/messaging/test_alert_operation.py:289"
+      ]
+    },
+    {
+      "id": "ARBORA-MESSAGING-R008",
+      "title": "Alert intake operation",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "516ba93cd3fc"
+      ],
+      "verified_by": [
+        "tests/messaging/test_alert_operation.py:111",
+        "tests/messaging/test_alert_operation.py:125",
+        "tests/messaging/test_alert_operation.py:155",
+        "tests/messaging/test_alert_operation.py:185",
+        "tests/messaging/test_alert_operation.py:194"
+      ]
+    },
+    {
       "id": "ARBORA-MESSAGING-R800",
       "title": "Messaging adapter contract, command registry and the full channel adapter set (rollup)",
       "delivery_state": "SPECIFIED",
@@ -135,7 +165,9 @@
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/messaging/test_alert_operation.py:319"
+      ]
     },
     {
       "id": "ARBORA-MESSAGING-R800.2",
