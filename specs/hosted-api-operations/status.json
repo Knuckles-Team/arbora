@@ -186,6 +186,8 @@
     "ARBORA-OPS-R021.2.1.1",
     "ARBORA-OPS-R050.2.1",
     "ARBORA-OPS-R009.1",
+    "ARBORA-OPS-R009.2",
+    "ARBORA-OPS-R009.3",
     "ARBORA-OPS-R053.8",
     "ARBORA-OPS-R059",
     "ARBORA-OPS-R060",
@@ -319,7 +321,9 @@
         "tests/api/test_invoke_governance.py:250"
       ],
       "rollup_of": [
-        "ARBORA-OPS-R009.1"
+        "ARBORA-OPS-R009.1",
+        "ARBORA-OPS-R009.2",
+        "ARBORA-OPS-R009.3"
       ]
     },
     {
@@ -1948,6 +1952,20 @@
     {
       "id": "ARBORA-OPS-R009.1",
       "title": "ARBORA:17 Arbora definition slice",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R009.2",
+      "title": "Refusal causes are logged",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R009.3",
+      "title": "Declared replay owners",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
