@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+import re
 import threading
 import time
 from collections.abc import AsyncIterator
@@ -94,18 +95,71 @@ def _mint_process_session(transport: str) -> Any:
     return session
 
 
-def _same_process_authority(left: Any, right: Any) -> bool:
-    """Return whether a renewed token preserves the original authority."""
-    fields = (
-        "actor_id",
-        "actor_type",
-        "roles",
-        "tenant_id",
-        "authenticated",
-        "groups",
-    )
-    return all(
-        getattr(left, name, None) == getattr(right, name, None) for name in fields
+class ProcessAuthorityRenewalError(RuntimeError):
+    """A process-authority renewal refusal with a closed-vocabulary ``code``.
+
+    ``code`` is safe for the unauthenticated readiness route; the message is a
+    fixed sentence and never carries token, secret or endpoint material.
+    """
+
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code
+
+
+def _process_authority_change(left: Any, right: Any) -> str | None:
+    """Why a renewed token does not preserve the original authority, or ``None``.
+
+    Identity, tenant and groups must match exactly. Roles are compared as a
+    set: an identity provider may reorder them between tokens, and an additive
+    grant (an operator adding a role to the service account) keeps the running
+    session valid at its original, narrower role set. A revoked role fails
+    closed, because the session would otherwise keep authority the identity no
+    longer holds.
+    """
+    for name in ("actor_id", "actor_type", "tenant_id", "authenticated"):
+        if getattr(left, name, None) != getattr(right, name, None):
+            return "identity_changed"
+    if set(getattr(left, "groups", ()) or ()) != set(
+        getattr(right, "groups", ()) or ()
+    ):
+        return "groups_changed"
+    if not set(getattr(left, "roles", ()) or ()) <= set(
+        getattr(right, "roles", ()) or ()
+    ):
+        return "roles_revoked"
+    return None
+
+
+_SECRET_LIKE = re.compile(
+    r"(eyJ[\w-]+\.[\w-]+\.[\w-]*|(?i:bearer)\s+\S+|[A-Za-z0-9+/_-]{32,}={0,2})"
+)
+
+
+def _safe_reason(exc: BaseException) -> str:
+    """``Type: message`` with token-like material masked, bounded for one log line."""
+    return f"{type(exc).__name__}: " + _SECRET_LIKE.sub("<masked>", str(exc))[:300]
+
+
+def _cause_chain(exc: BaseException) -> str:
+    """The masked ``__cause__`` chain, outermost first (at most four links)."""
+    links: list[str] = []
+    cause = exc.__cause__
+    while cause is not None and len(links) < 4:
+        links.append(_safe_reason(cause))
+        cause = cause.__cause__
+    return " <- ".join(links) or "-"
+
+
+def _log_renewal_failure(what: str, exc: BaseException) -> None:
+    """Log a renewal failure with its code, message and cause; never a secret."""
+    logger.error(
+        "%s renewal failed (code=%s, exception_type=%s, error=%s, cause=%s)",
+        what,
+        getattr(exc, "code", "renewal_failed"),
+        type(exc).__name__,
+        _safe_reason(exc),
+        _cause_chain(exc),
     )
 
 
@@ -140,19 +194,41 @@ def _refresh_process_authority(session: Any) -> Any:
 
     lease = getattr(getattr(session, "actor", None), "credential_lease", None)
     if lease is None:
-        raise RuntimeError("Graph process authority is not renewable")
+        raise ProcessAuthorityRenewalError(
+            "not_renewable", "Graph process authority is not renewable"
+        )
     with _PROCESS_SESSION_REFRESH_LOCK:
         try:
             session.ensure_authority_current(minimum_ttl_seconds=30)
             return session
         except SessionExpiredError:  # noqa: BLE001 — expected: falls through to the renewal path below
             pass
-        renewed_actor = _renewed_process_actor(config)
-        if not _same_process_authority(session.actor, renewed_actor):
-            raise RuntimeError("Graph process authority changed during renewal")
+        try:
+            renewed_actor = _renewed_process_actor(config)
+        except Exception as exc:
+            raise ProcessAuthorityRenewalError(
+                "acquisition_failed", "Graph process identity could not be renewed"
+            ) from exc
+        change = _process_authority_change(session.actor, renewed_actor)
+        if change is not None:
+            raise ProcessAuthorityRenewalError(
+                change, "Graph process authority changed during renewal"
+            )
+        added = sorted(
+            set(getattr(renewed_actor, "roles", ()) or ())
+            - set(getattr(session.actor, "roles", ()) or ())
+        )
+        if added:
+            logger.warning(
+                "Graph process identity gained roles %s; the running session "
+                "keeps its original roles until the next restart",
+                added,
+            )
         expires_at = getattr(renewed_actor, "credential_expires_at", None)
         if expires_at is None or int(expires_at) <= int(time.time()) + 30:
-            raise RuntimeError("Graph process authority renewal is too short-lived")
+            raise ProcessAuthorityRenewalError(
+                "too_short_lived", "Graph process authority renewal is too short-lived"
+            )
         lease.renew(int(expires_at))
         session.ensure_authority_current(minimum_ttl_seconds=30)
         return session
@@ -245,10 +321,7 @@ async def _keep_process_authority_current(session: Any) -> None:
                 )
                 return
             except Exception as exc:  # noqa: BLE001 — keepalive is best-effort renewal; a hard failure surfaces at the next real authority check either way
-                logger.error(
-                    "Delegation authority keepalive renewal failed (exception_type=%s)",
-                    type(exc).__name__,
-                )
+                _log_renewal_failure("Delegation authority keepalive", exc)
     except asyncio.CancelledError:
         # D-SWG-3: expected, normal shutdown — the caller's
         # authority_keepalive_scope cancels this loop when the wrapped call
@@ -330,7 +403,14 @@ async def authority_keepalive_scope(session: Any | None = None) -> AsyncIterator
 
 
 def _process_authority_refresh_loop(session: Any) -> None:
-    """Keep a renewable process lease current for all captured worker sessions."""
+    """Keep a renewable process lease current for all captured worker sessions.
+
+    The loop runs for the life of the process: every lease is renewed before
+    it expires, and a failed renewal is retried every five seconds while
+    readiness reports its code (``process_authority_<code>``).
+    """
+    from arbora.observability.runtime_health import record_process_authority_failure
+
     lease = getattr(getattr(session, "actor", None), "credential_lease", None)
     if lease is None:
         return
@@ -342,11 +422,11 @@ def _process_authority_refresh_loop(session: Any) -> None:
         try:
             _refresh_process_authority(session)
         except Exception as exc:  # noqa: BLE001 - retry; expiry remains fail-closed
-            logger.error(
-                "Graph process authority renewal failed (exception_type=%s)",
-                type(exc).__name__,
-            )
+            _log_renewal_failure("Graph process authority", exc)
+            record_process_authority_failure(getattr(exc, "code", "renewal_failed"))
             _PROCESS_AUTHORITY_STOP.wait(5.0)
+        else:
+            record_process_authority_failure(None)
 
 
 def _start_process_authority_supervisor(session: Any) -> None:

@@ -767,6 +767,34 @@ def not_served_authorities(report: Mapping[str, Any]) -> list[str]:
 #: The checks that decide readiness; the rest are reported, never gating.
 READINESS_ESSENTIAL = frozenset({"engine", "fleet_supervision"})
 
+#: Closed vocabulary of process-authority renewal failures. Only these codes
+#: reach the unauthenticated readiness route, so it never echoes free text.
+PROCESS_AUTHORITY_FAILURE_CODES = frozenset(
+    {
+        "acquisition_failed",
+        "groups_changed",
+        "identity_changed",
+        "not_renewable",
+        "renewal_failed",
+        "roles_revoked",
+        "too_short_lived",
+    }
+)
+_PROCESS_AUTHORITY_FAILURE: list[str | None] = [None]
+
+
+def record_process_authority_failure(code: str | None) -> None:
+    """Record the current process-authority renewal failure (``None`` clears it)."""
+    if code is not None and code not in PROCESS_AUTHORITY_FAILURE_CODES:
+        code = "renewal_failed"
+    _PROCESS_AUTHORITY_FAILURE[0] = code
+
+
+def readiness_reason() -> str | None:
+    """``process_authority_<code>`` while process-authority renewal is failing."""
+    code = _PROCESS_AUTHORITY_FAILURE[0]
+    return None if code is None else f"process_authority_{code}"
+
 
 def failing_checks(report: Mapping[str, Any]) -> list[str]:
     """Names of the essential checks holding readiness down (``unhealthy``)."""
