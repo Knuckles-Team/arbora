@@ -103,6 +103,7 @@ def _server_binary() -> str:
 
 def _listening(port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+        probe.settimeout(1)
         return probe.connect_ex(("127.0.0.1", port)) == 0
 
 
@@ -204,6 +205,23 @@ def _wait(predicate: Any, *, timeout: float, what: str, logs: Any = None) -> Non
         time.sleep(0.25)
     detail = logs() if callable(logs) else ""
     raise AssertionError(f"timed out waiting for {what}\n{detail}")
+
+
+def _wait_for_model(process: subprocess.Popen[Any], port: int, log_path: Path) -> None:
+    def ready() -> bool:
+        if process.poll() is not None:
+            raise AssertionError(
+                "model fixture exited during startup\n"
+                + log_path.read_text(errors="replace")[-4000:]
+            )
+        return _listening(port)
+
+    _wait(
+        ready,
+        timeout=10,
+        what="the model fixture",
+        logs=lambda: log_path.read_text(errors="replace")[-4000:],
+    )
 
 
 def _terminate(process: subprocess.Popen[Any]) -> None:
@@ -309,6 +327,7 @@ def _booted_stack(
                 stderr=subprocess.STDOUT,
             )
         )
+        _wait_for_model(processes[-1], model_port, root / "eg.log")
         config_dir = root / "config"
         config_dir.mkdir()
         (config_dir / "config.json").write_text(

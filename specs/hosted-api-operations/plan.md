@@ -654,3 +654,7 @@ Call path for `ingest.sources.sync`: `invoke` → `sync_source` (`arbora/ingest/
 `ingest.sources.list` reads the configured fleet servers. For each server it calls the read-only `<prefix>_ingest_sources` tool. A server without the tool contributes no source. `ingest.sources.status` reads the shared KV checkpoint `ingest-source/<connector>/<source>`.
 
 A sync is resumable. The KV checkpoint keeps the cursor and the record digests after each accepted batch. A later sync with a new idempotency key resumes from that checkpoint.
+
+### 2026-10-18 installed-wheel model fixture correction (ARBORA-OPS-R001)
+
+The unary A2A boot check copies its local model server into the isolated test directory. It waits for that subprocess to listen before starting Arbora. A missing or exited fixture must report its startup log rather than surface as a later model connection error. Qualification covers actual loopback completions and the workflow fixture bundle. TUI qualification requires a published client with the current A2A contract. The published ACP client is not compatible evidence. This correction grants no host authority and makes no streaming or production-model claim.
