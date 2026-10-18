@@ -685,7 +685,7 @@ async def handle_research_web(
         state = "partial"
     return {
         "value": {
-            # TODO(R067.1): the engine work item and decision IDs, once served.
+            # The engine work item and decision IDs arrive with ARBORA-OPS-R067.1.
             "work_item_id": None,
             "decision_id": None,
             "state": state,
