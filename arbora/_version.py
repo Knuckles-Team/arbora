@@ -1,6 +1,6 @@
 """Single source of truth for the installed arbora version.
 
-Updated only by `bumpversion` (see `.bumpversion.cfg`) — never hand-edited.
+Updated only by `bump-my-version` (see `.bumpversion.toml`) — never hand-edited.
 """
 
-__version__ = "0.1.5"
+__version__ = "0.1.6"

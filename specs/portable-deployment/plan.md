@@ -200,3 +200,7 @@ R010.1 preserves the original development-skill topics and AGENTS navigation acc
 ### 2026-10-17 — R004 frozen-environment fixture contracts
 
 Repair the locked-environment type gate with concrete messaging, assembler, and catalog test fixtures that implement their existing public contracts. Narrow fixture-specific state before inspection and annotate the validated RLM request. Preserve production behavior and protocol requirements; add no suppressions or dependency changes.
+
+### 2026-10-18 release version registration (ARBORA-DEPLOY-R002)
+
+The version bump updates the package source and changelog through the configured bump tool. README uses a dynamic PyPI badge and has no static version string. Delete its stale bump registration. Use TOML so the changelog heading remains replacement text rather than an INI comment. Generate the matching lock and validate the candidate before creating a new release tag. Never replace an existing tag.
