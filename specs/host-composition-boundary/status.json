@@ -185,6 +185,7 @@
     "ARBORA-HOST-R022.1",
     "ARBORA-HOST-R010.8",
     "ARBORA-HOST-R032",
+    "ARBORA-HOST-R033",
     "ARBORA-HOST-R010.9",
     "ARBORA-HOST-R009.7",
     "ARBORA-HOST-R009.8",
@@ -1863,6 +1864,20 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-HOST-R033",
+      "title": "Unique records are created, not upserted",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "3d0f79273e9d"
+      ],
+      "verified_by": [
+        "tests/test_unique_records.py:37",
+        "tests/test_unique_records.py:67",
+        "tests/test_unique_records.py:75",
+        "tests/test_unique_records.py:90"
+      ]
     },
     {
       "id": "ARBORA-HOST-R010.9",
