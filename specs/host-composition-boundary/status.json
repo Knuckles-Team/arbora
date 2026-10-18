@@ -1690,7 +1690,8 @@
       "title": "Check injected startup admission",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "aee6cfa29204"
+        "aee6cfa29204",
+        "d8f76638c57b"
       ],
       "verified_by": [
         "tests/agent_host/test_start_admission.py:113",
@@ -2049,14 +2050,15 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "929134f25886",
-        "bbeaf1147f83"
+        "bbeaf1147f83",
+        "d8f76638c57b"
       ],
       "verified_by": [
         "tests/agent_host/test_runtime_lifespan.py:111",
+        "tests/agent_host/test_runtime_lifespan.py:142",
         "tests/agent_host/test_runtime_lifespan.py:27",
         "tests/agent_host/test_runtime_lifespan.py:45",
-        "tests/agent_host/test_runtime_lifespan.py:73",
-        "tests/agent_host/test_runtime_lifespan.py:82"
+        "tests/agent_host/test_runtime_lifespan.py:73"
       ]
     },
     {
