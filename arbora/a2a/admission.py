@@ -14,11 +14,15 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, StrictStr, field_validator
 
 from .models import A2AContextBudget, _WireModel
 
 __all__ = [
+    "ModelProfilePreference",
+    "ModelProfileRefusalReason",
+    "ModelProfileUnavailable",
+    "refuse_model_profile_preference",
     "ToolSubsetAdmissionDecision",
     "ToolSubsetAdmissionRefusalReason",
     "ToolSubsetAdmissionRequest",
@@ -65,3 +69,48 @@ def admit_tool_subset(
         refusal_reason="EG_ASSEMBLE_UNAVAILABLE",
         provenance="eg.AgentAssemble:unavailable",
     )
+
+
+ModelProfileRefusalReason = Literal[
+    "AUTHORITY_UNAVAILABLE",
+    "CALLER_CHANGED",
+    "PROFILE_REVOKED",
+    "CAPABILITY_UNAVAILABLE",
+    "STALE_DECISION",
+    "INVALID_DECISION",
+]
+
+
+class ModelProfilePreference(_WireModel):
+    """Untrusted preference only; this value conveys no execution authority."""
+
+    preferred_profile_ref: StrictStr | None = Field(default=None, max_length=512)
+
+    @field_validator("preferred_profile_ref")
+    @classmethod
+    def _printable_reference(cls, value: str | None) -> str | None:
+        if value is not None and (
+            not value.strip() or any(not character.isprintable() for character in value)
+        ):
+            raise ValueError("profile reference must be nonempty printable text")
+        return value
+
+
+class ModelProfileUnavailable(_WireModel):
+    """Closed refusal without profile data, credentials or fabricated receipts."""
+
+    status: Literal["unavailable"] = "unavailable"
+    reason: ModelProfileRefusalReason = "AUTHORITY_UNAVAILABLE"
+
+
+def refuse_model_profile_preference(
+    request: ModelProfilePreference,
+) -> ModelProfileUnavailable:
+    """Keep the uncomposed profile authority unavailable without reading settings.
+
+    R016.6 requires a current owner-issued profile-use decision and atomic
+    admission. Valid preference syntax, catalog visibility and provider settings
+    supply none of those. This boundary does not alter the default-agent path.
+    """
+    del request
+    return ModelProfileUnavailable()
