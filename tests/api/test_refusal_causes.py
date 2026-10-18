@@ -88,7 +88,7 @@ async def test_engine_refusal_detail_is_logged(
         raise EngineResponseError("INVALID_ARGUMENT", "records[0].stream is empty")
 
     runtime = object.__new__(BoundOperationRuntime)
-    runtime._eg_dispatch = refuse  # type: ignore[attr-defined]
+    runtime._eg_dispatch = refuse
     op = SimpleNamespace(
         id="eg.ingestion.SourceIngest", binding=SimpleNamespace(kind="eg")
     )
