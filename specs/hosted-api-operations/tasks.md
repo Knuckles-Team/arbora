@@ -64,6 +64,13 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R020.3.1.2:** `ingest.jobs.status` op
 - [ ] **ARBORA-OPS-R020.4:** Drift listing and repair-with-approval operations
 - [ ] **ARBORA-OPS-R020.5:** Embedding admission and re-embedding operations
+- [ ] **ARBORA-OPS-R020.6:** Connector sources served through the composed SDK sync runner
+- [ ] **ARBORA-OPS-R020.6.1:** Model
+- [ ] **ARBORA-OPS-R020.6.2:** Behavior
+- [ ] **ARBORA-OPS-R020.6.3:** Wiring
+- [ ] **ARBORA-OPS-R020.6.4:** Refusal
+- [ ] **ARBORA-OPS-R020.6.5:** Evidence
+- [ ] **ARBORA-OPS-R020.6.6:** Hot-path proof
 - [ ] **ARBORA-OPS-R020.3.1:** Remaining scope of ARBORA-OPS-R020.3 (slice .1): Pack and job management operations
 - [ ] **ARBORA-OPS-R022.2.1:** `evolution.loops.status` op
 - [ ] **ARBORA-OPS-R022.2.2:** `evolution.schedules.list` op
