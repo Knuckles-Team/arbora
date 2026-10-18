@@ -224,9 +224,9 @@
       ],
       "verified_by": [
         "tests/test_real_boot.py:713",
-        "tests/test_real_boot.py:732",
-        "tests/test_real_boot.py:741",
-        "tests/test_real_boot.py:760"
+        "tests/test_real_boot.py:734",
+        "tests/test_real_boot.py:743",
+        "tests/test_real_boot.py:762"
       ]
     },
     {
@@ -1044,7 +1044,7 @@
         "f7d50c485379"
       ],
       "verified_by": [
-        "tests/test_served_operation_api.py:246"
+        "tests/test_served_operation_api.py:244"
       ]
     },
     {
@@ -1055,7 +1055,7 @@
         "f7d50c485379"
       ],
       "verified_by": [
-        "tests/test_served_operation_api.py:246"
+        "tests/test_served_operation_api.py:244"
       ]
     },
     {
@@ -1067,7 +1067,7 @@
         "f7d50c485379"
       ],
       "verified_by": [
-        "tests/test_served_operation_api.py:246"
+        "tests/test_served_operation_api.py:244"
       ]
     },
     {
