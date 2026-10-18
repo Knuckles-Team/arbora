@@ -60,6 +60,7 @@
     "ARBORA-OPS-R021.4.4",
     "ARBORA-OPS-R021.4.5",
     "ARBORA-OPS-R021.4.5.1",
+    "ARBORA-OPS-R021.4.5.1.1",
     "ARBORA-OPS-R021.4.6",
     "ARBORA-OPS-R022",
     "ARBORA-OPS-R022.1",
@@ -824,7 +825,7 @@
     {
       "id": "ARBORA-OPS-R021.4.5",
       "title": "Per-run operation",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
@@ -834,13 +835,25 @@
     {
       "id": "ARBORA-OPS-R021.4.5.1",
       "title": "Current-plan read boundary",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "2e9f4b8bc465",
         "663cc8cad940"
       ],
       "verified_by": [
         "tests/api/test_runs_ops.py:23"
+      ],
+      "rollup_of": [
+        "ARBORA-OPS-R021.4.5.1.1"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R021.4.5.1.1",
+      "title": "Native contextual reader composition",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/mcp_server/test_current_plan_reader.py:22"
       ]
     },
     {

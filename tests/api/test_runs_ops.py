@@ -44,9 +44,9 @@ def _available(**changes: object) -> CurrentPlanRead:
 class _Reader:
     def __init__(self, result: object) -> None:
         self.result = result
-        self.calls: list[dict[str, str]] = []
+        self.calls: list[dict[str, object]] = []
 
-    async def read(self, **kwargs: str) -> object:
+    async def read(self, **kwargs: object) -> object:
         self.calls.append(kwargs)
         return self.result
 
@@ -63,9 +63,7 @@ async def test_served_read_forwards_caller_and_keeps_order(op_by_id) -> None:
     op = op_by_id(runs.operations(), "runs.current_plan")
     context = tenant_reader_context(reader=reader, service_name="current_plan_reader")
     result = await runs.handle_runs_current_plan(context, {"run_id": "run-one"}, op)
-    assert reader.calls == [
-        {"run_id": "run-one", "tenant": "tenant-a", "principal": "caller-a"}
-    ]
+    assert reader.calls == [{"run_id": "run-one", "context": context}]
     assert result["value"]["availability"] == "available"
     assert [i["status"] for i in result["value"]["snapshot"]["items"]] == [
         "done",
