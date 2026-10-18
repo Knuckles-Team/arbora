@@ -662,3 +662,5 @@ The unary A2A boot check copies its local model server into the isolated test di
 ### 2026-10-18 published TUI qualification dependency (ARBORA-OPS-R001)
 
 The test extra must install the published A2A-capable TUI client. The wheel boot job exports this extra with hashes. It runs the existing headless prompt test against the authenticated local stack and model fixture. Passing requires the expected model reply and no skipped tests. Source checkouts do not replace this package qualification.
+
+The published client must include its Textual stylesheets. Mounted-terminal acceptance consumes the same locked wheel as headless acceptance; neither may rely on assets from a source checkout.
