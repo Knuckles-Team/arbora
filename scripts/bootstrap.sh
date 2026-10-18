@@ -54,8 +54,8 @@ if ! command -v uv >/dev/null 2>&1 || [[ "$(uv_minor)" -lt 9 ]]; then
     || uv self update
 fi
 
-# The one Python pin: the release workflow's setup-python version.
-python_version="$(sed -n "s/^ *python-version: '\(.*\)'$/\1/p" .github/workflows/release.yml | head -n 1)"
+# The one Python pin: .python-version (the release workflow's setup-uv pin matches it).
+python_version="$(tr -d '[:space:]' < .python-version)"
 echo "bootstrap: Python $python_version"
 uv python install "$python_version"
 
