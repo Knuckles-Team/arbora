@@ -221,7 +221,8 @@
         "762c7f816fe3",
         "83aefbad2157",
         "b6902c2910fe",
-        "deb2b45bf83d"
+        "deb2b45bf83d",
+        "ee6a3bf85110"
       ],
       "verified_by": [
         "tests/deployment/test_real_boot_fixture.py:19",
