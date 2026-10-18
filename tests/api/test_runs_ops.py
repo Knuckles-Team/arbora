@@ -5,14 +5,17 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
+from agent_connector_sdk.current_plan import (
+    CurrentPlanRead,
+    CurrentPlanRequest,
+    CurrentPlanSnapshot,
+    PlanItem,
+)
 from pydantic import ValidationError
 
 from arbora.api.ops import runs
 from arbora.api.ops.runs import (
     UNAVAILABLE,
-    CurrentPlanRead,
-    CurrentPlanSnapshot,
-    PlanItem,
     project_current_plan,
 )
 from tests.api._ops_support import tenant_reader_context
@@ -79,7 +82,16 @@ async def test_absent_reader_is_unavailable_with_no_items(op_by_id) -> None:
     assert result == {"value": {"availability": "unavailable", "snapshot": None}}
 
 
-@pytest.mark.parametrize("params", [{"run_id": ""}, {"run_id": 7}, {"tenant": "x"}])
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"run_id": ""},
+        {"run_id": 7},
+        {"tenant": "x"},
+        {"run_id": "run-one", "tenant": "other"},
+        {"run_id": "run-one", "principal": "other"},
+    ],
+)
 async def test_malformed_params_never_reach_the_reader(op_by_id, params) -> None:
     reader = _Reader(UNAVAILABLE)
     op = op_by_id(runs.operations(), "runs.current_plan")
@@ -154,3 +166,10 @@ def test_malformed_snapshot_is_refused(changes: dict[str, object]) -> None:
 def test_availability_must_match_snapshot(values: dict[str, object]) -> None:
     with pytest.raises(ValidationError):
         CurrentPlanRead.model_validate(values)
+
+
+def test_registry_and_projection_use_sdk_contract() -> None:
+    op = runs.operations()[0]
+    assert op.params is CurrentPlanRequest
+    value = CurrentPlanRead(availability="available", snapshot=_snapshot())
+    assert project_current_plan(value, run_id="run-one", now=NOW) == value

@@ -622,3 +622,11 @@ Each row composes served `eg.<domain>.<Method>` operations (see `arbora/api/regi
 ## ARBORA-OPS-R843 — replaced tool wrappers
 
 The pinned engine contract generates one `eg.<domain>.<Method>` operation per callable method (`ARBORA-OPS-R008`). The wrapper modules in agent-utilities call the same methods through an in-process client. A harness that reaches arbora over MCP or `fleet.call` needs none of them. `ARBORA-OPS-R843.2` records where each remaining module goes.
+
+## Amendment 2026-10-18: SDK current-plan contract adoption
+
+ARBORA-OPS-R021.4.5.1 consumes SDK-CONNECTOR-CONTROL-R070 through the SDK's published package. Replace the local item, snapshot, read and request definitions with the SDK models. Keep the existing caller forwarding, read-only operation, scope, unavailable shape and freshness projection. Regenerate the API registry and check wire compatibility. A real SDK-created read must pass projection; body-supplied tenant or principal must fail before calling the reader.
+
+This migration does not compose a producer, grant run access, choose a run owner, change authentication, or implement runs.get. An absent reader stays unavailable. The release and dependency lock must resolve from PyPI before this consumer change ships. Lease-bound publication remains an EG dependency; the pending run-owner admission policy must not be inferred from worker identity.
+
+The consumer stays on the SDK 0.2 release line for this change. SDK 0.3 changes the default MCP tool surface and requires separate compatibility acceptance. Successful task admission or these DTO tests do not prove live tool execution. The reported agents.run refusal for an unavailable native tool remains a separate served acceptance requirement.
