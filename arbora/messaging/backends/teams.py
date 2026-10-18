@@ -40,8 +40,10 @@ from arbora.messaging.models import (
 
 logger = logging.getLogger(__name__)
 
-#: The Bot Framework token endpoint for a bot's client credentials.
-_TOKEN_URL = "https://login.microsoftonline.com/botframework.com/oauth2/v2.0/token"
+#: The Bot Framework login endpoint for a bot's client credentials.
+_BOT_FRAMEWORK_LOGIN = (
+    "https://login.microsoftonline.com/botframework.com/oauth2/v2.0/token"
+)
 
 
 class TeamsBackend(MessagingBackend):
@@ -127,7 +129,7 @@ class TeamsBackend(MessagingBackend):
         try:
             async with channel_http_client("teams", timeout=30) as client:
                 token = await client.post(
-                    _TOKEN_URL,
+                    _BOT_FRAMEWORK_LOGIN,
                     data={
                         "grant_type": "client_credentials",
                         "client_id": self.config.app_id,
