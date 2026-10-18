@@ -53,10 +53,19 @@ POLICY_VERSION = "boot-test-policy"
 TENANT_GRAPH = f"tenant__{TENANT}____commons__"
 BOOT_TIMEOUT_S = 180.0
 CONNECTOR = "boot-echo"
+#: The fixture web-source connector, named as the fleet names the primary backend.
+WEB_CONNECTOR = "webarchiver-mcp"
+PAGE_HTML = (
+    b"<html><head><title>Pod disruption budgets</title></head><body>"
+    + b"<p>A pod disruption budget limits voluntary evictions during a node drain.</p>"
+    * 30
+    + b"</body></html>"
+)
 PROCESS_SUBJECT = "arbora-process"
 #: Graph administration plus the exact capabilities Arbora needs to provision
 #: its own semantic packs and reach the MCP fleet.
-ROLES = PROCESS_IDENTITY_ROLES
+#: research.web is a scoped write; the operator also holds ``ingest:write``.
+ROLES = (*PROCESS_IDENTITY_ROLES, "ingest:write")
 #: The served-surface caller. The fresh engine admits exactly one identity
 #: (the process principal), so the operator presents a separate credential for
 #: that same admitted principal.
@@ -196,6 +205,25 @@ async def _admit_process_identity(
         await client.close()
 
 
+def _page_server() -> http.server.ThreadingHTTPServer:
+    """A loopback page server the fixture web connector fetches from."""
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self) -> None:  # noqa: N802 - http.server API
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(PAGE_HTML)))
+            self.end_headers()
+            self.wfile.write(PAGE_HTML)
+
+        def log_message(self, *_args: Any) -> None:
+            return
+
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    return server
+
+
 def _wait(predicate: Any, *, timeout: float, what: str, logs: Any = None) -> None:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
@@ -325,6 +353,11 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
                     "target": CONNECTOR,
                     "tier": TIER_AUTO_NOTIFY,
                 },
+                {
+                    "kind": "connector_pack_import",
+                    "target": WEB_CONNECTOR,
+                    "tier": TIER_AUTO_NOTIFY,
+                },
                 *DEFAULT_POLICY["rules"],
             ],
         }
@@ -344,6 +377,21 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
                 stderr=subprocess.STDOUT,
             )
         )
+        web_port = _free_port()
+        processes.append(
+            subprocess.Popen(
+                [
+                    sys.executable,
+                    str(Path(__file__).with_name("_boot_web_connector.py")),
+                    str(web_port),
+                    WEB_CONNECTOR,
+                ],
+                env=base_env,
+                stdout=gos_log,
+                stderr=subprocess.STDOUT,
+            )
+        )
+        page_server = _page_server()
         connector_url = f"http://127.0.0.1:{connector_port}/mcp"
         (config_dir / "mcp_config.json").write_text(
             json.dumps(
@@ -352,7 +400,11 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
                         CONNECTOR: {
                             "url": connector_url,
                             "transport": "streamable-http",
-                        }
+                        },
+                        WEB_CONNECTOR: {
+                            "url": f"http://127.0.0.1:{web_port}/mcp",
+                            "transport": "streamable-http",
+                        },
                     }
                 }
             )
@@ -388,6 +440,12 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
         )
         assert provision.returncode == 0, (
             f"semantic provisioning failed\n{provision.stdout}\n{provision.stderr}"
+        )
+        _wait(
+            lambda: _listening(web_port),
+            timeout=60,
+            what="the web connector fixture",
+            logs=lambda: gos_log_path.read_text(errors="replace"),
         )
         _wait(
             lambda: _listening(connector_port),
@@ -471,8 +529,11 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
             "token": issuer.token(OPERATOR_SUBJECT),
             "service_token": issuer.token(OPERATOR_SUBJECT, email=False),
             "logs": gos_logs,
+            "page_url": f"http://127.0.0.1:{page_server.server_address[1]}/pdb",
         }
     finally:
+        with contextlib.suppress(NameError):
+            page_server.shutdown()
         for process in reversed(processes):
             _terminate(process)
         eg_log.close()
@@ -659,3 +720,25 @@ async def test_mcp_act_calls_the_connector_tool(stack: dict[str, Any]) -> None:
     effect = await _effect_items(stack)
     assert [item["status"] for item in effect] == ["succeeded"], effect
     assert "echo:boot" in effect[0]["metadata"]["outcome"], effect
+
+
+@pytest.mark.spec("ARBORA-OPS-R067.3")
+def test_research_web_ingests_through_the_real_engine(stack: dict[str, Any]) -> None:
+    """``research.web`` commits a fetched page through SourceIngest.
+
+    The page is fetched by the fixture web-source connector, whose pack the
+    fleet onboarding imported with ``Document`` and ``Chunk`` mappings, so the
+    real engine resolves ``manifest:webarchiver-mcp#schema_mappings/<type>``.
+    """
+    body = _post_op(
+        stack, "research.web", {"urls": [stack["page_url"]], "max_pages": 1}
+    )
+    value = body["result"]["value"]
+    (document,) = value["documents"]
+    assert document["document_id"].startswith("web:")
+    assert document["backend"] == "webarchiver"
+    assert document["chunks"] >= 1
+    citation = document["citations"][0]
+    assert citation["url"] == stack["page_url"]
+    assert citation["backend"] == "webarchiver"
+    assert value["ingest"]["affected"] >= 1 + document["chunks"]
