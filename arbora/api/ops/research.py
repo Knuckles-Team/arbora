@@ -50,10 +50,9 @@ from arbora.api.registry import (
 SEARCH_SERVER = "searxng-mcp"
 SEARCH_TOOL = "web_search"
 WEBARCHIVER_SERVER = "webarchiver-mcp"
-WEBARCHIVER_EXTRACT = "webarchiver_extract"
+WEBARCHIVER_EXTRACT = "web_extract"
 ARCHIVEBOX_SERVER = "archivebox-mcp"
-ARCHIVEBOX_ADD = "archivebox_cli_add"
-ARCHIVEBOX_TEXT = "archivebox_get_snapshot_text"
+ARCHIVEBOX_EXTRACT = "web_extract"
 
 #: The SourceIngest binding web pages are committed under.
 INGEST_CONNECTOR = "webarchiver"
@@ -64,17 +63,9 @@ _CHUNK_CHARS = 1200
 _CHUNK_OVERLAP = 150
 
 
-#: webarchiver refusals that are policy, never retried on another backend.
-POLICY_REFUSALS = frozenset(
-    {
-        "robots_disallowed",
-        "policy_refused",
-        "egress_denied",
-        "invalid_url",
-        "content_type",
-        "too_large",
-    }
-)
+#: webarchiver failures that are retried once through ArchiveBox; every other
+#: refusal (robots_disallowed, policy_refused, egress_denied, ...) is final.
+FALLBACK_REASONS = frozenset({"upstream_failed", "unreachable"})
 
 
 class ResearchWebParams(Params):
@@ -378,46 +369,42 @@ async def fetch_webarchiver(fleet: FleetCaller, hit: SearchHit) -> WebPage:
         title=str(page.get("title") or hit.title),
         text=str(page["text"]),
         backend="webarchiver",
-        fetched_at=str(data.get("fetched_at") or _now()),
+        fetched_at=str(data.get("retrieved_at") or _now()),
         author=str(page.get("author") or ""),
         published=str(page.get("published") or ""),
         site_name=str(page.get("site_name") or ""),
-        content_sha256=str(page.get("content_sha256") or ""),
+        content_sha256=str(
+            data.get("content_digest") or page.get("content_sha256") or ""
+        ),
         fetch_mode=str(data.get("fetch_mode") or "http"),
     )
 
 
 async def fetch_archivebox(fleet: FleetCaller, hit: SearchHit) -> WebPage:
     try:
-        await fleet.call(
-            ARCHIVEBOX_SERVER,
-            ARCHIVEBOX_ADD,
-            {
-                "urls": [hit.url],
-                "tag": "research.web",
-                "extractors": "readability,htmltotext,title",
-            },
-        )
-        raw = await fleet.call(ARCHIVEBOX_SERVER, ARCHIVEBOX_TEXT, {"url": hit.url})
+        raw = await fleet.call(ARCHIVEBOX_SERVER, ARCHIVEBOX_EXTRACT, {"url": hit.url})
     except OperationRefused:
         raise
-    except Exception as exc:  # noqa: BLE001 - every child failure is a fetch failure
-        raise FetchFailed("archivebox", type(exc).__name__) from exc
+    except Exception as exc:  # noqa: BLE001 - a child that cannot answer is unreachable
+        raise FetchFailed("archivebox", "unreachable") from exc
     error = _is_error(raw)
     data = _unwrap(raw)
     text = str(data.get("text") or "") if isinstance(data, Mapping) else ""
-    if error or not text.strip():
-        raise FetchFailed("archivebox", error or "no extracted text")
+    if error:
+        raise FetchFailed("archivebox", _reason(error))
+    if not text.strip():
+        raise FetchFailed("archivebox", "extract_empty")
     return WebPage(
         url=hit.url,
-        canonical_url=canonical_url(str(data.get("url") or hit.url)),
+        canonical_url=canonical_url(str(data.get("canonical_url") or hit.url)),
         title=str(data.get("title") or hit.title),
         text=text,
         backend="archivebox",
-        fetched_at=str(data.get("archived_at") or _now()),
+        fetched_at=str(data.get("retrieved_at") or _now()),
         author=str(data.get("author") or ""),
-        published=str(data.get("published") or ""),
+        published=str(data.get("published_at") or ""),
         site_name=str(data.get("site_name") or ""),
+        content_sha256=str(data.get("content_digest") or ""),
         fetch_mode=str(data.get("extractor") or "archivebox"),
     )
 
@@ -436,7 +423,7 @@ async def fetch_page(
     try:
         return await fetch_webarchiver(fleet, hit), ""
     except FetchFailed as failed:
-        if failed.reason in POLICY_REFUSALS:
+        if failed.reason not in FALLBACK_REASONS:
             raise
         return await fetch_archivebox(fleet, hit), failed.reason
 
@@ -742,7 +729,7 @@ __all__ = [
     "Chunk",
     "EgEnrich",
     "InterimEnrich",
-    "POLICY_REFUSALS",
+    "FALLBACK_REASONS",
     "EngineEmbedder",
     "FetchFailed",
     "FleetCaller",
