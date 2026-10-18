@@ -2021,9 +2021,13 @@
     {
       "id": "ARBORA-HOST-R010.7.2.2.1",
       "title": "Attest runtime ownership",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "bbc699652d50"
+      ],
+      "verified_by": [
+        "tests/agent_host/test_runtime_binding.py:2"
+      ]
     },
     {
       "id": "ARBORA-HOST-R010.7.2.2.2",
