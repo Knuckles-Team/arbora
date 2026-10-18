@@ -220,13 +220,16 @@
       "landed_in": [
         "762c7f816fe3",
         "83aefbad2157",
-        "deb2b45bf83d"
+        "b6902c2910fe",
+        "deb2b45bf83d",
+        "ee6a3bf85110"
       ],
       "verified_by": [
-        "tests/test_real_boot.py:718",
-        "tests/test_real_boot.py:739",
-        "tests/test_real_boot.py:748",
-        "tests/test_real_boot.py:767"
+        "tests/deployment/test_real_boot_fixture.py:19",
+        "tests/test_real_boot.py:737",
+        "tests/test_real_boot.py:758",
+        "tests/test_real_boot.py:767",
+        "tests/test_real_boot.py:786"
       ]
     },
     {
