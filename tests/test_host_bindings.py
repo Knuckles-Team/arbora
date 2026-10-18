@@ -49,11 +49,14 @@ def test_bind_messaging_ports_binds_all_four_ports():
 def test_outbound_mirror_records_one_node_per_message():
     written = {}
 
-    def add_node(node_id, label, properties):
+    def create_node(node_id, label, properties):
+        if node_id in written:
+            return False
         written[node_id] = (label, properties)
+        return True
 
     message = SimpleNamespace(platform="slack", channel_id="c1", content="hi")
-    engine = SimpleNamespace(add_node=add_node)
+    engine = SimpleNamespace(create_node=create_node)
     asyncio.run(hb.outbound_mirror(message, engine))
     asyncio.run(hb.outbound_mirror(message, engine))
     assert len(written) == 1

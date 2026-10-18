@@ -59,6 +59,7 @@ from typing import Any, ClassVar
 
 from arbora.access.assurance import verify_action
 from arbora.core.settings import setting
+from arbora.unique_records import create_record
 
 logger = logging.getLogger(__name__)
 
@@ -1110,10 +1111,11 @@ class ActionPolicy:
             logger.debug("action_policy: approval dedup probe failed: %s", e)
         approval_id = f"action_approval:{uuid.uuid4().hex}"
         try:
-            self.engine.add_node(
+            create_record(
+                self.engine,
                 approval_id,
                 "ActionApproval",
-                properties={
+                {
                     "kind": request.kind,
                     "target": request.target,
                     "params_json": json.dumps(request.params, default=str)[:2000],
@@ -1142,10 +1144,11 @@ class ActionPolicy:
         audit_id = f"action_decision:{uuid.uuid4().hex}"
         req = decision.request
         try:
-            self.engine.add_node(
+            create_record(
+                self.engine,
                 audit_id,
                 "ActionDecision",
-                properties={
+                {
                     "kind": req.kind,
                     "target": req.target,
                     "params_json": json.dumps(req.params, default=str)[:2000],

@@ -32,9 +32,18 @@ def test_inbound_inbox_uses_only_bound_host_engine() -> None:
         def __init__(self) -> None:
             self.nodes: dict[str, dict[str, object]] = {}
 
+        def create_node(
+            self, node_id: str, label: str, properties: dict[str, object]
+        ) -> bool:
+            # The served engine's shape (EG CreateNodeIfAbsent).
+            created = node_id not in self.nodes
+            self.nodes.setdefault(node_id, properties)
+            return created
+
         def add_node(
-            self, *, node_id: str, node_type: str, properties: dict[str, object]
+            self, node_id: str, label: str, properties: dict[str, object]
         ) -> None:
+            # An in-place status update (EG AddNode).
             self.nodes[node_id] = properties
 
     bound = Engine()
