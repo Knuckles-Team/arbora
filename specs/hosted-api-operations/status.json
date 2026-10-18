@@ -674,6 +674,7 @@
       "title": "Wiring",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "28881b19f4a7",
         "51a7c461cb5b",
         "9671e64658f6"
       ],
@@ -689,7 +690,7 @@
         "9671e64658f6"
       ],
       "verified_by": [
-        "tests/ingest/test_connector_sources.py:219"
+        "tests/ingest/test_connector_sources.py:220"
       ]
     },
     {
@@ -700,7 +701,7 @@
         "9671e64658f6"
       ],
       "verified_by": [
-        "tests/ingest/test_connector_sources.py:244"
+        "tests/ingest/test_connector_sources.py:245"
       ]
     },
     {
