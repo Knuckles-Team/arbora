@@ -200,7 +200,9 @@
     "ARBORA-HOST-R008.1005",
     "ARBORA-HOST-R008.1006",
     "ARBORA-HOST-R008.1007",
-    "ARBORA-HOST-R008.1008"
+    "ARBORA-HOST-R008.1008",
+    "ARBORA-HOST-R010.7.2.2.1",
+    "ARBORA-HOST-R010.7.2.2.2"
   ],
   "requirements": [
     {
@@ -1689,11 +1691,11 @@
         "aee6cfa29204"
       ],
       "verified_by": [
-        "tests/agent_host/test_start_admission.py:105",
-        "tests/agent_host/test_start_admission.py:118",
-        "tests/agent_host/test_start_admission.py:150",
-        "tests/agent_host/test_start_admission.py:161",
-        "tests/agent_host/test_start_admission.py:176"
+        "tests/agent_host/test_start_admission.py:113",
+        "tests/agent_host/test_start_admission.py:126",
+        "tests/agent_host/test_start_admission.py:158",
+        "tests/agent_host/test_start_admission.py:169",
+        "tests/agent_host/test_start_admission.py:184"
       ]
     },
     {
@@ -1715,11 +1717,11 @@
         "906170980099"
       ],
       "verified_by": [
-        "tests/agent_host/test_start_admission.py:254",
-        "tests/agent_host/test_start_admission.py:295",
-        "tests/agent_host/test_start_admission.py:321",
-        "tests/agent_host/test_start_admission.py:337",
-        "tests/agent_host/test_start_admission.py:344"
+        "tests/agent_host/test_start_admission.py:262",
+        "tests/agent_host/test_start_admission.py:303",
+        "tests/agent_host/test_start_admission.py:329",
+        "tests/agent_host/test_start_admission.py:345",
+        "tests/agent_host/test_start_admission.py:352"
       ]
     },
     {
@@ -1727,7 +1729,11 @@
       "title": "Complete admitted client composition",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-HOST-R010.7.2.2.1",
+        "ARBORA-HOST-R010.7.2.2.2"
+      ]
     },
     {
       "id": "ARBORA-HOST-R009.2",
@@ -2008,6 +2014,20 @@
     {
       "id": "ARBORA-HOST-R008.1008",
       "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-HOST-R010.7.2.2.1",
+      "title": "Attest runtime ownership",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-HOST-R010.7.2.2.2",
+      "title": "Serve admitted clients",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

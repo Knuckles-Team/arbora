@@ -309,3 +309,17 @@ qualified session resolver adapter remains unavailable. Acceptance needs a serve
 Real terminal and WebUI clients must share it. Test readiness, revocation and
 borrowed-resource lifetime. No production access or
 weakened authentication is an acceptable substitute.
+
+
+### Runtime ownership admission (2026-10-17)
+
+Extend the existing construction owner's session binding to cover exact borrowed graph, engine, execution configuration and callback resources.
+The owner attests its current configuration revision and the canonical declarative digest; callers cannot mint these facts.
+Validate the actual digest before owner calls and after their awaits. Compare resource identity and owner revision across attestations.
+A frozen admitted bundle carries authorized resources to the launcher. It transfers no ownership and creates no engine or grant.
+Opaque resource internals remain the construction owner's responsibility; object identity alone never establishes permission.
+The remaining child retains real client startup and qualified session integration acceptance.
+
+Refresh the owner binding after final session resolution, so that await cannot hide a changed runtime revision.
+Accept increased idle expiry only when identity, session reference and MFA facts remain exact. Keep the original admission expiry ceiling.
+Shortened expiry or changed authority denies; construction-owner state snapshots follow the same rule.
