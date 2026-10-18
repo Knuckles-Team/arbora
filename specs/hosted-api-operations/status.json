@@ -1961,10 +1961,11 @@
       "title": "Refusal causes are logged",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "0884ed403bbf"
+        "0884ed403bbf",
+        "38a3cbefd076"
       ],
       "verified_by": [
-        "tests/api/test_refusal_causes.py:16"
+        "tests/api/test_refusal_causes.py:26"
       ]
     },
     {
@@ -1975,7 +1976,7 @@
         "0884ed403bbf"
       ],
       "verified_by": [
-        "tests/api/test_refusal_causes.py:33"
+        "tests/api/test_refusal_causes.py:43"
       ]
     },
     {
