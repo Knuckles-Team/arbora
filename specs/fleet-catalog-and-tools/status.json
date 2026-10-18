@@ -108,6 +108,7 @@
     "ARBORA-FLEET-R019.2",
     "ARBORA-FLEET-R021.2",
     "ARBORA-FLEET-R027.7",
+    "ARBORA-FLEET-R027.8",
     "ARBORA-FLEET-R003.4",
     "ARBORA-FLEET-R003.5",
     "ARBORA-FLEET-R003.6",
@@ -855,7 +856,8 @@
         "ARBORA-FLEET-R027.4",
         "ARBORA-FLEET-R027.5",
         "ARBORA-FLEET-R027.6",
-        "ARBORA-FLEET-R027.7"
+        "ARBORA-FLEET-R027.7",
+        "ARBORA-FLEET-R027.8"
       ]
     },
     {
@@ -1198,6 +1200,17 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R027.8",
+      "title": "Operator-approved mass withdrawal",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "711c428f5bc6"
+      ],
+      "verified_by": [
+        "tests/fleet/test_fleet_access_contracts.py:226"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R003.4",
