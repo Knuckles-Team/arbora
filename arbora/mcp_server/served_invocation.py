@@ -169,6 +169,36 @@ def engine_endpoint(endpoints: Any) -> dict[str, str]:
     return {"tcp_addr": endpoint.removeprefix("tcp://")}
 
 
+def _with_ingest_runner(
+    bindings: Mapping[str, Any] | None,
+    pool: Any,
+    graph: str,
+    connect_context: Callable[[str], Any],
+) -> Mapping[str, Any] | None:
+    """Bind the connector-source ``ingest_runner`` over the fleet gateway.
+
+    ARBORA-OPS-R020.6.3: the runner reaches connectors through the governed
+    ``fleet_gateway`` binding and the engine through the served pool.
+    """
+    if not bindings or "fleet_gateway" not in bindings or "ingest_runner" in bindings:
+        return bindings
+    from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+    from arbora.ingest.connector_sources import ConnectorIngestRunner
+
+    async def data_client(tenant: str) -> Any:
+        return await pool.connected_client(connect_context(tenant), graph)
+
+    async def control_client(tenant: str) -> Any:
+        return await pool.connected_client(connect_context(tenant), CONTROL_GRAPH)
+
+    runner = ConnectorIngestRunner(
+        fleet=bindings["fleet_gateway"],
+        data_client=data_client,
+        control_client=control_client,
+    )
+    return {**bindings, "ingest_runner": runner}
+
+
 def compose_served_invocation(
     *,
     pool: Any,
@@ -212,6 +242,7 @@ def compose_served_invocation(
         )
 
     minted = session()
+    bindings = _with_ingest_runner(bindings, pool, graph, connect_context)
 
     async def service_client() -> Any:
         return await pool.connected_client(connect_context(session().tenant), graph)
