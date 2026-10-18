@@ -9,10 +9,25 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Protocol
 
+from arbora.agent_host.start_configuration import (
+    HostRuntimeResources,
+    HostStartConfiguration,
+)
 from arbora.identity.ports import SessionAuthority, SessionState
 
 if TYPE_CHECKING:
     from arbora.api.contracts.session import GraphSession
+
+
+def _same_session(initial: SessionState, refreshed: SessionState) -> bool:
+    """Permit idle refresh without widening the admitted lifetime or identity."""
+    return (
+        isinstance(refreshed, SessionState)
+        and refreshed.resolution == initial.resolution
+        and refreshed.session_ref == initial.session_ref
+        and refreshed.mfa_at_ms == initial.mfa_at_ms
+        and refreshed.expires_at_ms >= initial.expires_at_ms
+    )
 
 
 @dataclass(frozen=True)
@@ -54,6 +69,25 @@ class HostSessionBinding:
     state: SessionState
     graph_session: GraphSession
     expires_at_ms: int
+    runtime: HostRuntimeResources | None = None
+    configuration_digest: str | None = None
+    configuration_revision: str | None = None
+
+    def same_binding(self, other: HostSessionBinding) -> bool:
+        return (
+            _same_session(self.state, other.state)
+            and self.graph_session is other.graph_session
+            and self.expires_at_ms == other.expires_at_ms
+            and self.configuration_digest == other.configuration_digest
+            and self.configuration_revision == other.configuration_revision
+            and (
+                self.runtime is other.runtime
+                or (
+                    self.runtime is not None
+                    and self.runtime.same_resources(other.runtime)
+                )
+            )
+        )
 
 
 class HostStartGrantProvider(Protocol):
@@ -64,8 +98,15 @@ class HostStartGrantProvider(Protocol):
 
 class HostSessionBindingProvider(Protocol):
     async def attest(
-        self, state: SessionState, graph_session: GraphSession
-    ) -> HostSessionBinding | None: ...
+        self,
+        state: SessionState,
+        graph_session: GraphSession,
+        *,
+        runtime: HostRuntimeResources | None = None,
+        configuration_digest: str | None = None,
+    ) -> HostSessionBinding | None:
+        """Attest current owned resources and revision; absent runtime facts deny."""
+        ...
 
 
 @dataclass(frozen=True, repr=False)
@@ -77,6 +118,8 @@ class AdmittedHostStart:
     graph_session: GraphSession
     grant: HostStartGrant
     expires_at_ms: int
+    runtime: HostRuntimeResources | None = None
+    configuration_revision: str | None = None
 
 
 class HostStartAdmission:
@@ -89,27 +132,47 @@ class HostStartAdmission:
         self._sessions, self._grants, self._bindings = sessions, grants, bindings
 
     async def admit(
-        self, credential: str, request: HostStartRequest, graph_session: GraphSession
+        self,
+        credential: str,
+        request: HostStartRequest,
+        graph_session: GraphSession,
+        *,
+        configuration: HostStartConfiguration | None = None,
+        runtime: HostRuntimeResources | None = None,
     ) -> AdmittedHostStart:
         from arbora.api.contracts.session import GraphSession
 
+        self._check_configuration(request, configuration, runtime)
         self._check_credential(credential)
         if not isinstance(graph_session, GraphSession):
             raise PermissionError("workspace_denied")
         graph_session.engine_verified_context()
         state = await self._sessions.resolve_session(credential)
+        self._check_configuration(request, configuration, runtime)
         if not isinstance(state, SessionState) or state.expires_at_ms <= int(
             time.time() * 1000
         ):
             raise PermissionError("workspace_denied")
-        binding = await self._attest(state, graph_session)
+        binding = await self._attest(
+            state, graph_session, request, configuration, runtime
+        )
         grant = await self._grants.authorize(state, request)
-        if await self._attest(state, graph_session) != binding:
+        self._check_configuration(request, configuration, runtime)
+        repeated = await self._attest(
+            state, graph_session, request, configuration, runtime
+        )
+        if not binding.same_binding(repeated):
             raise PermissionError("workspace_denied")
         refreshed = await self._sessions.resolve_session(credential)
-        claims = graph_session.engine_verified_context()
-        if refreshed != state or not isinstance(grant, HostStartGrant):
+        self._check_configuration(request, configuration, runtime)
+        if not _same_session(state, refreshed) or not isinstance(grant, HostStartGrant):
             raise PermissionError("workspace_denied")
+        final_binding = await self._attest(
+            state, graph_session, request, configuration, runtime
+        )
+        if not binding.same_binding(final_binding):
+            raise PermissionError("workspace_denied")
+        claims = graph_session.engine_verified_context()
         if any(
             claims.get(key) != state.resolution.request_context[key]
             for key in ("principal", "tenant", "audience", "policy_version")
@@ -117,21 +180,87 @@ class HostStartAdmission:
             raise PermissionError("workspace_denied")
         self._check_grant(grant, state, request)
         expiry = self._expiry(state, grant, binding)
-        return AdmittedHostStart(request, state, graph_session, grant, expiry)
+        return AdmittedHostStart(
+            request,
+            state,
+            graph_session,
+            grant,
+            expiry,
+            runtime,
+            binding.configuration_revision,
+        )
 
     async def _attest(
-        self, state: SessionState, graph_session: GraphSession
+        self,
+        state: SessionState,
+        graph_session: GraphSession,
+        request: HostStartRequest,
+        configuration: HostStartConfiguration | None,
+        runtime: HostRuntimeResources | None,
     ) -> HostSessionBinding:
-        binding = await self._bindings.attest(state, graph_session)
+        if runtime is None:
+            binding = await self._bindings.attest(state, graph_session)
+        else:
+            binding = await self._bindings.attest(
+                state,
+                graph_session,
+                runtime=runtime,
+                configuration_digest=request.configuration_digest,
+            )
+        self._check_configuration(request, configuration, runtime)
         if (
             not isinstance(binding, HostSessionBinding)
             or binding.graph_session is not graph_session
-            or binding.state != state
+            or not _same_session(state, binding.state)
             or type(binding.expires_at_ms) is not int
             or binding.expires_at_ms <= int(time.time() * 1000)
         ):
             raise PermissionError("workspace_denied")
+        self._check_runtime_binding(binding, runtime, request)
         return binding
+
+    @staticmethod
+    def _check_configuration(
+        request: HostStartRequest,
+        configuration: HostStartConfiguration | None,
+        runtime: HostRuntimeResources | None,
+    ) -> None:
+        if configuration is None and runtime is None:
+            return
+        if configuration is None or runtime is None:
+            raise PermissionError("configuration_unavailable")
+        if configuration.digest() != request.configuration_digest:
+            raise PermissionError("configuration_mismatch")
+        interfaces = {
+            (True, True): "both",
+            (True, False): "terminal",
+            (False, True): "web",
+        }.get((configuration.enable_terminal_ui, configuration.enable_web_ui is True))
+        if (
+            configuration.workspace is None
+            or str(Path(configuration.workspace).resolve(strict=True))
+            != request.workspace
+            or interfaces != request.interfaces
+            or configuration.enable_web_logs != request.web_logs
+        ):
+            raise PermissionError("configuration_mismatch")
+
+    @staticmethod
+    def _check_runtime_binding(
+        binding: HostSessionBinding,
+        runtime: HostRuntimeResources | None,
+        request: HostStartRequest,
+    ) -> None:
+        if runtime is None:
+            return
+        if (
+            not runtime.same_resources(binding.runtime)
+            or binding.configuration_digest != request.configuration_digest
+            or type(binding.configuration_revision) is not str
+            or not binding.configuration_revision.strip()
+            or len(binding.configuration_revision) > 256
+        ):
+            raise PermissionError("configuration_unavailable")
 
     @staticmethod
     def _check_credential(credential: str) -> None:
@@ -198,10 +327,34 @@ class HostStartContext:
             return asyncio.run(self._check())
         raise ValueError("synchronous host startup requires an idle event loop")
 
-    async def _check(self) -> AdmittedHostStart:
+    def check_runtime(
+        self,
+        configuration: HostStartConfiguration,
+        runtime: HostRuntimeResources,
+    ) -> AdmittedHostStart:
+        """Return exact resources admitted by the current construction owner."""
+        HostStartAdmission._check_configuration(self.request, configuration, runtime)
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            return asyncio.run(
+                self._check(configuration=configuration, runtime=runtime)
+            )
+        raise ValueError("synchronous host startup requires an idle event loop")
+
+    async def _check(
+        self,
+        *,
+        configuration: HostStartConfiguration | None = None,
+        runtime: HostRuntimeResources | None = None,
+    ) -> AdmittedHostStart:
         async with asyncio.timeout(1):
             return await self.admission.admit(
-                self.credential, self.request, self.graph_session
+                self.credential,
+                self.request,
+                self.graph_session,
+                configuration=configuration,
+                runtime=runtime,
             )
 
 

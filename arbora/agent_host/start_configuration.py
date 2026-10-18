@@ -82,3 +82,30 @@ def check_start_configuration(
         raise PermissionError("configuration_unavailable")
     if configuration.digest() != context.request.configuration_digest:
         raise PermissionError("configuration_mismatch")
+
+
+@dataclass(frozen=True, slots=True, repr=False, eq=False)
+class HostRuntimeResources:
+    """Exact borrowed resources; only the construction owner can attest them.
+
+    Freezing this descriptor does not freeze an engine or execution dictionary.
+    The owner must reject mutations or advance its attested configuration revision.
+    """
+
+    graph: object
+    engine: object
+    graph_config: object
+    executor: object | None = None
+    host_logs: object | None = None
+    host_log_runtime: object | None = None
+
+    def __post_init__(self) -> None:
+        if self.graph is None or self.engine is None or self.graph_config is None:
+            raise ValueError("runtime_resources_required")
+        if self.host_logs is not None and self.host_log_runtime is not None:
+            raise ValueError("one_host_log_composition_required")
+
+    def same_resources(self, other: HostRuntimeResources | None) -> bool:
+        return isinstance(other, HostRuntimeResources) and all(
+            getattr(self, name) is getattr(other, name) for name in self.__slots__
+        )
