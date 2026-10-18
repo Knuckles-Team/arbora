@@ -23,11 +23,8 @@ __all__ = ["create_record", "has_record_writer"]
 
 
 def has_record_writer(engine: Any) -> bool:
-    """Whether ``engine`` exposes a node write this module can use."""
-    return engine is not None and (
-        callable(getattr(engine, "create_node", None))
-        or callable(getattr(engine, "add_node", None))
-    )
+    """Whether ``engine`` exposes the required atomic create operation."""
+    return engine is not None and callable(getattr(engine, "create_node", None))
 
 
 def create_record(
@@ -38,23 +35,18 @@ def create_record(
 ) -> bool:
     """Create one ``label`` node ``node_id`` unless it already exists.
 
-    Uses the engine's ``create_node`` (EG ``CreateNodeIfAbsent``). An engine
-    with no create seam (an in-process test double, a backend that writes
-    through a typed batch) takes its ``add_node`` with the same arguments.
+    Uses the engine's atomic ``create_node`` (EG ``CreateNodeIfAbsent``).
+    An engine without this operation is refused without any write.
 
     Returns:
         True when this call created the node; False when it already existed.
 
     Raises:
-        RuntimeError: ``engine`` has no node write.
+        RuntimeError: ``engine`` has no atomic create operation.
         Exception: the engine's refusal, unchanged.
     """
     props = dict(properties or {})
     create = getattr(engine, "create_node", None) if engine is not None else None
     if callable(create):
         return bool(create(node_id, label, props))
-    add = getattr(engine, "add_node", None) if engine is not None else None
-    if callable(add):
-        add(node_id, label, properties=props)
-        return True
-    raise RuntimeError("no engine node write is bound")
+    raise RuntimeError("no engine atomic create operation is bound")

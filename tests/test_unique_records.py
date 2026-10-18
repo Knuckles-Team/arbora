@@ -12,7 +12,7 @@ from typing import Any
 
 import pytest
 
-from arbora.unique_records import create_record
+from arbora.unique_records import create_record, has_record_writer
 
 
 class _CreateOnlyEngine:
@@ -83,7 +83,7 @@ def test_a_refused_create_keeps_the_engine_refusal() -> None:
 
     with pytest.raises(_Refusal):
         create_record(_Engine(), "x", "ErrorDetail", {})
-    with pytest.raises(RuntimeError, match="no engine node write"):
+    with pytest.raises(RuntimeError, match="no engine atomic create"):
         create_record(SimpleNamespace(), "x", "ErrorDetail", {})
 
 
@@ -109,3 +109,29 @@ def test_the_served_engine_create_sends_create_node_if_absent(monkeypatch) -> No
     monkeypatch.setattr(engine, "_session_client", lambda: view, raising=False)
     assert create_record(engine, "action_decision:1", "ActionDecision", {}) is True
     assert sent == ["action_decision:1"]
+
+
+@pytest.mark.spec("ARBORA-HOST-R033")
+@pytest.mark.parametrize("create_binding", [None, False])
+def test_add_only_binding_is_refused_without_overwriting(create_binding: Any) -> None:
+    existing = {"status": "answered", "attempts": 3, "timestamp": "original"}
+    records = {"inbox:1": dict(existing)}
+    writes: list[str] = []
+
+    def add(node_id: str, label: str, properties: Any) -> None:
+        writes.append(node_id)
+        records[node_id] = dict(properties)
+
+    engine = SimpleNamespace(add_node=add, create_node=create_binding)
+    assert has_record_writer(engine) is False
+    with pytest.raises(RuntimeError, match="no engine atomic create"):
+        create_record(engine, "inbox:1", "InboxMessage", {"status": "pending"})
+    assert writes == []
+    assert records == {"inbox:1": existing}
+
+
+@pytest.mark.spec("ARBORA-HOST-R033")
+def test_record_writer_requires_callable_create() -> None:
+    assert has_record_writer(None) is False
+    assert has_record_writer(SimpleNamespace()) is False
+    assert has_record_writer(_CreateOnlyEngine()) is True

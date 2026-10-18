@@ -19,6 +19,12 @@ class _FakeEngine:
         self.nodes: dict[str, dict] = {}
         self._pending = pending or []
 
+    def create_node(self, node_id, node_type, properties=None):
+        if node_id in self.nodes:
+            return False
+        self.nodes[node_id] = dict(properties or {})
+        return True
+
     def add_node(self, node_id, node_type, properties=None):  # MERGE/upsert semantics
         self.nodes.setdefault(node_id, {}).update(properties or {})
 
@@ -118,3 +124,15 @@ async def test_retry_unanswered_answers_then_bumps_then_dead_letters():
 
     await retry_unanswered(eng3, track)
     assert eng3.nodes["z"]["status"] == "dead_letter" and calls == []
+
+
+@pytest.mark.spec("ARBORA-HOST-R033")
+def test_replayed_inbound_preserves_answered_record():
+    engine = _FakeEngine()
+    message = dict(platform="t", channel_id="c", message_id="1", text="hi", session="s")
+    inbox_id = record_inbound(engine, **message, received_at="original")
+    mark_answered(engine, inbox_id)
+    engine.nodes[inbox_id]["attempts"] = 3
+    existing = dict(engine.nodes[inbox_id])
+    assert record_inbound(engine, **message, received_at="replayed") == inbox_id
+    assert engine.nodes[inbox_id] == existing
