@@ -2,6 +2,25 @@
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-10-18
+- Fixed `fleet.catalog.search` (INTERNAL) and `fleet.call` (UNAVAILABLE) on the
+  HTTP operation API: the fleet gateway now runs each catalog read and call
+  under the verified caller's own session.
+- Fixed `fleet.call` to deployed connectors outliving the caller's 300 s bearer
+  (INDETERMINATE). Admission re-read the whole fleet catalog (about 1 min on a
+  65-server fleet) several times per call. A verified snapshot is now reused
+  per read context for `ARBORA_FLEET_CATALOG_TTL_S` (default 120 s), and
+  component content is reused per immutable revision.
+- `ask eg.graph.NodeCount` (and any EG method without params) accepts `{}`;
+  it was INVALID_ARGUMENT.
+- A2A `message/send` and `agents.run` without `metadata.agent_name` run on the
+  fleet's default agent (`arbora`) instead of answering 503.
+- The agent run model comes from the configured `CHAT_MODELS` registry when no
+  `MODEL_REGISTRY_PATH` is set.
+- The served engine exposes EG WorkItems (`work_items`) on `__control__`;
+  WorkItem submits send EG's typed request context and non-empty digests. A
+  failed A2A run logs its cause.
+
 ## [0.1.3] - 2026-10-17
 - Fixed every Keycloak service-account (client-credentials) caller being refused
   UNAUTHENTICATED on MCP verbs, the ops API and A2A. Such a token carries no

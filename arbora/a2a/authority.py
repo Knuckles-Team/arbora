@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import logging
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any, Protocol, runtime_checkable
@@ -294,6 +295,9 @@ class WorkItemA2AAuthority:
                 "run", result.run_id, namespace="arbora-a2a"
             )
         except Exception as exc:  # noqa: BLE001 - a failed run is a failed task
+            logging.getLogger(__name__).warning(
+                "A2A run %s failed: %s: %s", item_id, type(exc).__name__, str(exc)[:300]
+            )
             outcome = "failed"
             error_ref = persistence_reference(
                 "error", type(exc).__name__, namespace="arbora-a2a"

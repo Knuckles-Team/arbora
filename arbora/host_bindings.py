@@ -32,6 +32,7 @@ from arbora.core.settings import setting
 
 __all__ = [
     "A2A_PATH",
+    "FLEET_AGENT_NAME",
     "FLEET_TOOLS",
     "SendDecision",
     "action_gate",
@@ -46,6 +47,9 @@ __all__ = [
 
 #: The intent tools through which the fleet agent reaches the multiplexer.
 FLEET_TOOLS = ("find", "act")
+#: The fleet's default agent: an A2A message or ``agents.run`` that names no
+#: ``metadata.agent_name`` runs on it.
+FLEET_AGENT_NAME = "arbora"
 #: The model of the fleet agent, as a pydantic-ai model name.
 MODEL_SETTING = "ARBORA_AGENT_MODEL"
 #: The scopes that admit an outbound message send; each is an engine scope.
@@ -71,7 +75,7 @@ def fleet_agent() -> Any:
         from pydantic_ai import Agent
 
         model = str(setting(MODEL_SETTING, "") or "") or None
-        _agent = Agent(model, name="arbora", toolsets=[_fleet_toolset])
+        _agent = Agent(model, name=FLEET_AGENT_NAME, toolsets=[_fleet_toolset])
     return _agent
 
 

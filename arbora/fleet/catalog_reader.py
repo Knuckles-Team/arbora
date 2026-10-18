@@ -14,6 +14,8 @@ composition-root adapter.
 from __future__ import annotations
 
 import logging
+import threading
+import time
 from collections.abc import AsyncIterator, Sequence
 from dataclasses import dataclass
 from typing import Any, Final, Literal, Protocol
@@ -216,6 +218,10 @@ class FleetCatalogSource(Protocol):
     async def read(self) -> FleetCatalog: ...
 
 
+_MAX_CACHED_SNAPSHOTS: Final = 64
+_MAX_CACHED_CONTENTS: Final = 50_000
+
+
 class FleetCatalogReader:
     """Read and verify one complete EG-native fleet catalog snapshot."""
 
@@ -225,14 +231,26 @@ class FleetCatalogReader:
         *,
         page_size: int = 128,
         max_pages: int = 64,
+        snapshot_ttl_s: float = 0.0,
     ) -> None:
         if page_size < 1 or page_size > 256:
             raise ValueError("page_size must be between 1 and 256")
         if max_pages < 1 or max_pages > 256:
             raise ValueError("max_pages must be between 1 and 256")
+        if snapshot_ttl_s < 0:
+            raise ValueError("snapshot_ttl_s must not be negative")
         self._port = port
         self._page_size = page_size
         self._max_pages = max_pages
+        # A full read is ~3 EG round trips per component (thousands on a real
+        # fleet: ~1 min). One governed fleet.call admits its item several
+        # times, so without reuse it outlived the caller's 300 s bearer. A
+        # verified snapshot is reused per exact ReadContext (principal-bound)
+        # for ``snapshot_ttl_s``; content is reused per immutable revision.
+        self._snapshot_ttl_s = float(snapshot_ttl_s)
+        self._cache_lock = threading.Lock()
+        self._snapshots: dict[tuple[Any, ...], tuple[float, FleetCatalog]] = {}
+        self._contents: dict[tuple[Any, ...], ComponentContent] = {}
 
     async def read(
         self,
@@ -243,9 +261,24 @@ class FleetCatalogReader:
         selected_kinds = self._validated_kinds(kinds)
         context = await self._port.read_context()
         self._validate_context(context)
+        key = (context, selected_kinds)
+        if self._snapshot_ttl_s > 0:
+            with self._cache_lock:
+                cached = self._snapshots.get(key)
+            if (
+                cached is not None
+                and time.monotonic() - cached[0] < self._snapshot_ttl_s
+            ):
+                return cached[1]
         registrations = await self._read_servers(context)
         components = await self._read_components(context, selected_kinds)
-        return await self._join(context, registrations, components)
+        catalog = await self._join(context, registrations, components)
+        if self._snapshot_ttl_s > 0:
+            with self._cache_lock:
+                if len(self._snapshots) >= _MAX_CACHED_SNAPSHOTS:
+                    self._snapshots.clear()
+                self._snapshots[key] = (time.monotonic(), catalog)
+        return catalog
 
     @staticmethod
     def _validated_kinds(kinds: Sequence[ComponentKind]) -> tuple[ComponentKind, ...]:
@@ -444,6 +477,18 @@ class FleetCatalogReader:
     async def _read_content(
         self, context: ReadContext, entry: ComponentRecord
     ) -> ComponentContent:
+        key = (
+            context,
+            entry.component_id,
+            entry.entry_revision,
+            entry.definition_digest,
+            entry.content_digest,
+        )
+        if self._snapshot_ttl_s > 0:
+            with self._cache_lock:
+                hit = self._contents.get(key)
+            if hit is not None:
+                return hit
         content = await self._port.component_content(
             tenant_id=context.tenant_id,
             component_id=entry.component_id,
@@ -466,6 +511,11 @@ class FleetCatalogReader:
                 f"content for {entry.component_id!r} does not match "
                 "its current revision"
             )
+        if self._snapshot_ttl_s > 0:
+            with self._cache_lock:
+                if len(self._contents) >= _MAX_CACHED_CONTENTS:
+                    self._contents.clear()
+                self._contents[key] = content
         return content
 
     async def _server_pages(self) -> AsyncIterator[ServerPage]:

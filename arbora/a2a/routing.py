@@ -45,8 +45,9 @@ class OrchestratorA2ARouter:
     """Route an inbound message to the agent that its metadata names.
 
     Arbora does not rank task text against capabilities; that choice belongs
-    to the engine. A message must name its agent in ``metadata.agent_name``.
-    Budgeted assembly fails closed until the engine serves governed assembly.
+    to the engine. A message names its agent in ``metadata.agent_name``; a
+    message that names none (the TUI, plain A2A clients) runs on the fleet's
+    default agent (:data:`arbora.host_bindings.FLEET_AGENT_NAME`). Budgeted assembly fails closed until the engine serves governed assembly.
     """
 
     def __init__(self, engine_provider: Callable[[], Any]) -> None:
@@ -61,8 +62,10 @@ class OrchestratorA2ARouter:
             )
         name = str(message.metadata.get("agent_name") or "").strip()
         if not name:
-            raise A2AAssemblyUnavailable(
-                "the message must name its agent in metadata.agent_name"
+            from arbora.host_bindings import FLEET_AGENT_NAME
+
+            return A2ARouteDecision(
+                agent_name=FLEET_AGENT_NAME, selection_mode="default-agent"
             )
         return A2ARouteDecision(
             agent_name=name,
