@@ -138,8 +138,8 @@
       "title": "Served channel gateway",
       "delivery_state": "SPECIFIED",
       "landed_in": [
-        "d311a0e382cb",
-        "e1c761c1d1df"
+        "11a776ff65df",
+        "6afc063796e6"
       ],
       "verified_by": [
         "tests/messaging/test_alert_operation.py:253",
@@ -162,9 +162,9 @@
       "title": "Alert intake operation",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "d311a0e382cb",
-        "e1c761c1d1df",
-        "f4c5b45227fd"
+        "11a776ff65df",
+        "6afc063796e6",
+        "7089b148951f"
       ],
       "verified_by": [
         "tests/messaging/test_alert_operation.py:111",
