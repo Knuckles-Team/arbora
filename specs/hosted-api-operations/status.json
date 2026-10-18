@@ -218,9 +218,9 @@
       "title": "Native MCP/REST facade with A2A unary operations then streaming",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "2550ca9db944",
-        "c90efc2983e4",
-        "deb2b45bf83d"
+        "25de84426d9d",
+        "deb2b45bf83d",
+        "ede04bbb11a7"
       ],
       "verified_by": [
         "tests/test_real_boot.py:713",
@@ -976,11 +976,11 @@
       "title": "Memory operations — memory slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [
+        "055e8225b8bc",
         "383897ed5238",
         "5ffd23ca7883",
         "8d1bc46ecbdb",
-        "94724be32c28",
-        "f7d50c485379"
+        "94724be32c28"
       ],
       "verified_by": [
         "tests/api/test_registry_factory.py:332"
@@ -1041,7 +1041,7 @@
       "title": "Served memory read and write over EG KV",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "f7d50c485379"
+        "055e8225b8bc"
       ],
       "verified_by": [
         "tests/test_served_operation_api.py:244"
@@ -1052,7 +1052,7 @@
       "title": "Served memory list and delete",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "f7d50c485379"
+        "055e8225b8bc"
       ],
       "verified_by": [
         "tests/test_served_operation_api.py:244"
@@ -1063,8 +1063,8 @@
       "title": "Explicit shared memory scope",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "baa4de0093c2",
-        "f7d50c485379"
+        "055e8225b8bc",
+        "940eb9cd6f6b"
       ],
       "verified_by": [
         "tests/test_served_operation_api.py:244"
@@ -1075,7 +1075,7 @@
       "title": "KV methods in the registry",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "f7d50c485379"
+        "055e8225b8bc"
       ],
       "verified_by": [
         "tests/api/test_registry_factory.py:332"
