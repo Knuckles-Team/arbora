@@ -18,6 +18,8 @@ from arbora.api.ops import (
     fleet,
     get_registry,
     ingest,
+    memory,
+    messaging,
     ops,
     policy,
     query,
@@ -69,6 +71,8 @@ def provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Pat
             "capacity:read",
             "capacity:admin",
             "ingest:write",
+            "kv:read",
+            "kv:write",
             "ingest:read",
             "decide:commit",
             "telemetry:read",
@@ -123,6 +127,8 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *decide.operations(),
         *fleet.operations(),
         *ingest.operations(),
+        *memory.operations(),
+        *messaging.operations(),
         *security.operations(),
         *telemetry.operations(),
         *usage.operations(),
@@ -325,8 +331,10 @@ def test_curated_scope_evidence_uses_provider_class_validation(
         get_registry()
 
 
-@pytest.mark.spec("ARBORA-OPS-R024.4")
-def test_memory_operations_are_absent_until_the_engine_serves_them() -> None:
+@pytest.mark.spec("ARBORA-OPS-R024.4", "ARBORA-OPS-R847")
+def test_memory_and_kv_operations_are_registered() -> None:
     from arbora.api.ops.registry_factory import get_registry
 
-    assert not [op.id for op in get_registry() if op.id.startswith("memory.")]
+    ids = {op.id for op in get_registry()}
+    assert {"memory.read", "memory.write", "memory.list", "memory.delete"} <= ids
+    assert {f"eg.storage.Kv{m}" for m in ("Get", "Put", "Scan", "Delete", "Cas")} <= ids

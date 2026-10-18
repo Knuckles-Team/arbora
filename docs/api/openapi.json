@@ -11,6 +11,16 @@
         },
         "required": true
       },
+      "Shared609223667d61742eff1fa5cda38ebc09655ba5ea242d2c80a83aada95e87b4df": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Schema58f3dda18398ba66749ae4fa50093087f8ff8d2faa1d3c738b5287f7761e56ce"
+            }
+          }
+        },
+        "required": true
+      },
       "Shared7a394c4291f70ad5cbb6f2016ce2f32d6808772d7a3c087f0f83a29babe1bc42": {
         "content": {
           "application/json": {
@@ -71,6 +81,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/Schema66a1e5b1d3ca3c142e8168dfb8f5e9cd89dc4a48ca6c7a9baa5c7e34e0823d48"
+            }
+          }
+        },
+        "description": "Operation result"
+      },
+      "Sharedcf80caf23eb4283f9ac754e059e3566a138ec6ad3cc57016cc02686fbf742cf1": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Schema3513ed756e54f8235292f62df63d9db4f1645272a99997331d08bc56e426edd9"
             }
           }
         },
@@ -158,6 +178,10 @@
         "title": "NaturalLanguageParams",
         "type": "object"
       },
+      "Schema0493492edd50d56cef07a4b94fb8248453f39e2690f760b51aed38c3641aca0d": {
+        "title": "Delivered",
+        "type": "boolean"
+      },
       "Schema0519695d49098269eaef4f77e896c0d7076950c65d71998f772701650400eace": {
         "additionalProperties": false,
         "properties": {
@@ -206,6 +230,18 @@
       },
       "Schema075c03b9cd39e20d2715d1d32e08519fd970c1e13528fa2016cdbe3891953f82": {
         "title": "Value"
+      },
+      "Schema0856cd7a17b302d344469632673bb16599dfcb624e7619f66d68f267fab458f7": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schemab995e29237d5571ae28320149c6163c88c44fd56cba14dba91cc32a9985b4c0e"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Message"
       },
       "Schema0d3bce83b8be7c2fd6a092afaab87eaceb4587fa003cc76b04d535a5fdea3361": {
         "additionalProperties": false,
@@ -315,9 +351,20 @@
         "title": "CapacitySetModeParams",
         "type": "object"
       },
+      "Schema18e842c4d42e22675d17aa948633de272a4c2d551e05a3b676728e22afc1f55b": {
+        "items": {
+          "$ref": "#/components/schemas/Schemab697b1595c2d8f9677b6d14572d7a100ee9694279919359d64f493f6cadc3541"
+        },
+        "maxItems": 100,
+        "type": "array"
+      },
       "Schema1acc67e49d84b0d66be3e6187ce3a6b1674c9d47c7230b9f298b2f2e117ab25b": {
         "minLength": 1,
         "title": "Text",
+        "type": "string"
+      },
+      "Schema1b4f5a4f08b359f7f36ea61a3efd019a8567d1db66d0f9f75bcd668b4da50ad4": {
+        "title": "Platform",
         "type": "string"
       },
       "Schema1bdbc70115efc5b0858aa3694f16f8dcb1698a0c21510008fc3a7ee983de7a37": {
@@ -337,6 +384,10 @@
         "title": "ThrottleMode",
         "type": "string"
       },
+      "Schema1deea913c615421fe80d318b68134d6dc93f69763dc8cefa183de56b98f6013b": {
+        "maxLength": 16,
+        "type": "string"
+      },
       "Schema1e0b1cbf54c5771a7d13d62d42a58b76f82bc92b1d95baaa6a4154858b5a43da": {
         "type": "integer"
       },
@@ -348,6 +399,30 @@
         "minItems": 1,
         "title": "Scopes",
         "type": "array"
+      },
+      "Schema2035a3bece3f75f1a84b2ec1aa9401dab8f9b633c8f2e2d62c4d70344f6fdc60": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schemac5431461e4ddc283228014546f09a948ceab0646a9f9d49e05c50225e3a46df9"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Commonannotations"
+      },
+      "Schema2539bfc96b7549989d3181f5442ed91cbf79a788a111deefed4e65dbe651251d": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schemaf1deff8504bbc0a3b1886d947e0186af87f24cbc280362f57f7201d46a86e3be"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Receiver"
       },
       "Schema27fd10f3083b3fe243fb903b0248aee255e0d2dc67b473e91b2ec4113b40884e": {
         "additionalProperties": false,
@@ -388,6 +463,18 @@
         "title": "WorkOfferCreateParams",
         "type": "object"
       },
+      "Schema2db1e0b735a231257bc16ca3f2a2f7b503acca69ba97dc893290c4555197f853": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema8f8e73cb353005a1596cd1b5177beba2b2e6522e2951a2989db7a4ea9822bdde"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Status"
+      },
       "Schema2e1729b213c692f495c6093d2e2113f18e5ab66a90fed5a8bff6e927a4a8bc42": {
         "default": false,
         "title": "Own",
@@ -397,6 +484,18 @@
         "default": false,
         "title": "Browse",
         "type": "boolean"
+      },
+      "Schema3378ec22b14005381a0f00d4da380c95ac6eced62b6a2adfd8d8042d254b3708": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schemac5431461e4ddc283228014546f09a948ceab0646a9f9d49e05c50225e3a46df9"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Grouplabels"
       },
       "Schema342e5d63b75287bb73273ab9c2840d81b12e210eae88b8c137b0ebef9c3baa23": {
         "properties": {
@@ -410,6 +509,19 @@
         "title": "CapacityModeResult",
         "type": "object"
       },
+      "Schema3513ed756e54f8235292f62df63d9db4f1645272a99997331d08bc56e426edd9": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "MemoryResult",
+        "type": "object"
+      },
       "Schema3716eaac209c05e4c44c45701aaa4c23e334eff4b07f3e1b9ba0b0ca57a50c38": {
         "properties": {
           "value": {
@@ -421,6 +533,18 @@
         ],
         "title": "BrowserResult",
         "type": "object"
+      },
+      "Schema372334161040579d95e9052918658dd709c309f5563035e95b6c26e94230e1fe": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema109baa93f8b988b2f1e23eb2154a501587f4c405fbccf71e902b2d9dc45c58eb"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Groupkey"
       },
       "Schema384dc6630dcf70abb992e5fafd7ab07c0c3fe4c6476c137033f60db7aa8d739f": {
         "additionalProperties": true,
@@ -487,10 +611,34 @@
         "title": "Query",
         "type": "string"
       },
+      "Schema3d707d2656317bd106cd45297754733e58e9cace5a039104cd95583004a3f58d": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema1deea913c615421fe80d318b68134d6dc93f69763dc8cefa183de56b98f6013b"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Version"
+      },
       "Schema3e8f39e3192b05a7900b31a046533768e7a2e0cc941af920c14f6da2ddc63f09": {
         "additionalProperties": true,
         "title": "Checks",
         "type": "object"
+      },
+      "Schema3fd5e85f13e3be194e1444e7035c6df4b0af6029a1bf1114db9f0ed9e9439f7b": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schemaa5af9fa380f11a11430012f77d4294c4d1d74f645cb0c41fcf6d80e977251297"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Externalurl"
       },
       "Schema3fe6bbcbfa375d9b8081dc59f036f6ef5762d6ea7da9f1a259ff573cfdb35f73": {
         "title": "Request Digest",
@@ -645,6 +793,25 @@
         "title": "Terms",
         "type": "object"
       },
+      "Schema58f3dda18398ba66749ae4fa50093087f8ff8d2faa1d3c738b5287f7761e56ce": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "$ref": "#/components/schemas/Schemacfbce84aea566abdb311fb82c555085d95760a65cb9f4a16c8a2cf1ba8cc02d6"
+          },
+          "namespace": {
+            "$ref": "#/components/schemas/Schemae0b1e0d86759ae9fb55f6c0b1ccd214031b9b8d2a007d6660e82953ceee36f4b"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/Schemaa7aa617f7d34aed335a6aaace24872b1c3ec90d8641ec974eb8a77cf81798414"
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "title": "MemoryKeyParams",
+        "type": "object"
+      },
       "Schema5a3d01f9dc340cb3bd8bfd629cf42e9886d4c325a0767ead7800503ffd539c0f": {
         "additionalProperties": true,
         "title": "Message",
@@ -769,6 +936,27 @@
         "default": null,
         "title": "Query"
       },
+      "Schema6e312e3d53068afad3250c1f64c3c543bfe47d9bef7a4a820f1cc8fc378484b5": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schemab995e29237d5571ae28320149c6163c88c44fd56cba14dba91cc32a9985b4c0e"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Text"
+      },
+      "Schema6f371bb13ee4c8be0af635be57c7abc58c2ab9fdac5c6168ae6642edc131b297": {
+        "default": "",
+        "title": "Message Id",
+        "type": "string"
+      },
+      "Schema6fa303fdbf080b52d9a1cdb8d6078fd9708fd34676ceb919344043b3971e1790": {
+        "minimum": 0,
+        "type": "integer"
+      },
       "Schema703214a2183cb5a1c2bb46824a67b9a2e0e004e2ba1dfe95b967d8672d39537a": {
         "items": {
           "$ref": "#/components/schemas/Definitionda935471d1a4b0239d7591cb066897a8442219998fa78e1f825fd5698d277a33"
@@ -776,9 +964,35 @@
         "title": "Scopes",
         "type": "array"
       },
+      "Schema7238448713591e961a58655fb9896ebcbaedb142aa3a7a94a0f86497b61b611a": {
+        "title": "Channel Id",
+        "type": "string"
+      },
       "Schema724bb9548de97c4935688ff6808363dccd8f10df1c154072d072941b89de5d4e": {
         "title": "Elevation Id",
         "type": "string"
+      },
+      "Schema72523f3c47bfb07398b4a0185e7a9eab3d44e92a5864427ae00e1a28b02c2485": {
+        "additionalProperties": false,
+        "properties": {
+          "cursor": {
+            "$ref": "#/components/schemas/Schema799118f85d2fe64421b089ab99b62659db00584b52f9a6df8185148f2cd3a096"
+          },
+          "limit": {
+            "$ref": "#/components/schemas/Schemab19b8ba358558a5ae0954297591c93391661cedd7ac627e8aa81bcec9d1c3621"
+          },
+          "namespace": {
+            "$ref": "#/components/schemas/Schemae0b1e0d86759ae9fb55f6c0b1ccd214031b9b8d2a007d6660e82953ceee36f4b"
+          },
+          "prefix": {
+            "$ref": "#/components/schemas/Schemaa77e0e91946b253a1aa77a1d10470e0bde5e90820d3c269e987219bf80525367"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/Schemaa7aa617f7d34aed335a6aaace24872b1c3ec90d8641ec974eb8a77cf81798414"
+          }
+        },
+        "title": "MemoryListParams",
+        "type": "object"
       },
       "Schema736e486dd9acaffcc1e210aa8fda9026a9b36cb48e9ec1089933b18a63577365": {
         "additionalProperties": false,
@@ -798,6 +1012,18 @@
         ],
         "title": "OpsRestoreResult",
         "type": "object"
+      },
+      "Schema74f3eab3901a745aaac7e91347f7cb2c08680398b472c7c9f086e6a5c3d7d5b3": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schemac5431461e4ddc283228014546f09a948ceab0646a9f9d49e05c50225e3a46df9"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Commonlabels"
       },
       "Schema7560f09e372e29796c659b19ebbd55c1ca5e34925985035e09b0d2e228d35708": {
         "additionalProperties": false,
@@ -897,6 +1123,18 @@
         "default": null,
         "title": "Cursor"
       },
+      "Schema7a2a6e3f45436177cb6c0968b82ac7a4ff97af721b1128c80713c2ef3f203f81": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema18e842c4d42e22675d17aa948633de272a4c2d551e05a3b676728e22afc1f55b"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Alerts"
+      },
       "Schema7f72bf7cfe8ead111c70656a429c4f0d4793524693f91c39c47aa2fcdeef1b08": {
         "additionalProperties": false,
         "properties": {
@@ -975,6 +1213,18 @@
         "minLength": 1,
         "type": "string"
       },
+      "Schema86f8372f67406241d10d1fe63810cba3bc6213e1eb849e3b4ea38c0cee3902de": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema1e0b1cbf54c5771a7d13d62d42a58b76f82bc92b1d95baaa6a4154858b5a43da"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Truncatedalerts"
+      },
       "Schema8786fb046bb05224d1b54c0743e4213aab64e56500a1fa2133b9511de9adb102": {
         "items": {
           "$ref": "#/components/schemas/Definition1ea37e3ece08b56882001f829f80d0f37387ba4d5ca6e012461aca7d1ab9fa08"
@@ -1014,6 +1264,10 @@
         "title": "Freshness Window S",
         "type": "integer"
       },
+      "Schema8f8e73cb353005a1596cd1b5177beba2b2e6522e2951a2989db7a4ea9822bdde": {
+        "maxLength": 64,
+        "type": "string"
+      },
       "Schema90198d00c8266e2f9c1ecae782c17f0710bf99d23e97e8a3dd26e0e7176ad0b1": {
         "title": "Revision",
         "type": "integer"
@@ -1044,6 +1298,18 @@
         },
         "title": "TenantPage",
         "type": "object"
+      },
+      "Schema92ee39dd91cb175bf744aeeaf20789d996e6f84a97c9b1884383f3309b5d93ba": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schemab995e29237d5571ae28320149c6163c88c44fd56cba14dba91cc32a9985b4c0e"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Content"
       },
       "Schema937e4b93c9ba637865ce6f1ebbd4882c9f118eca39149be48129600b37e3dd8c": {
         "additionalProperties": false,
@@ -1086,6 +1352,18 @@
         "properties": {},
         "title": "OpsDoctorParams",
         "type": "object"
+      },
+      "Schema9538d8e934707a69219dbe15aca8cee9f396a4723576b34813109cec55190d6a": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema6fa303fdbf080b52d9a1cdb8d6078fd9708fd34676ceb919344043b3971e1790"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Expected Version"
       },
       "Schema9651beb0cda06d2616ad93118c2b167a41ca32c607fa07700b0579b6e42ce4d9": {
         "title": "Allowed",
@@ -1253,6 +1531,31 @@
         "title": "OpsRestoreParams",
         "type": "object"
       },
+      "Schema9f653a27b12e264c5c6cc1d3254785686adf00300f40876e3bf245e142a9d862": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_version": {
+            "$ref": "#/components/schemas/Schema9538d8e934707a69219dbe15aca8cee9f396a4723576b34813109cec55190d6a"
+          },
+          "key": {
+            "$ref": "#/components/schemas/Schemacfbce84aea566abdb311fb82c555085d95760a65cb9f4a16c8a2cf1ba8cc02d6"
+          },
+          "namespace": {
+            "$ref": "#/components/schemas/Schemae0b1e0d86759ae9fb55f6c0b1ccd214031b9b8d2a007d6660e82953ceee36f4b"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/Schemaa7aa617f7d34aed335a6aaace24872b1c3ec90d8641ec974eb8a77cf81798414"
+          },
+          "value": {
+            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "title": "MemoryWriteParams",
+        "type": "object"
+      },
       "Schemaa223f3c5963bf74e09fca8b2439cbc6936927cb90158a63c513a563d04391fba": {
         "additionalProperties": false,
         "properties": {
@@ -1289,6 +1592,25 @@
       },
       "Schemaa40c68b83817c6b07221626e3f15d4ff515bb589633926f33a341d0e87fec93b": {
         "pattern": "^lru$",
+        "type": "string"
+      },
+      "Schemaa5af9fa380f11a11430012f77d4294c4d1d74f645cb0c41fcf6d80e977251297": {
+        "maxLength": 2048,
+        "type": "string"
+      },
+      "Schemaa77e0e91946b253a1aa77a1d10470e0bde5e90820d3c269e987219bf80525367": {
+        "default": "",
+        "maxLength": 128,
+        "title": "Prefix",
+        "type": "string"
+      },
+      "Schemaa7aa617f7d34aed335a6aaace24872b1c3ec90d8641ec974eb8a77cf81798414": {
+        "default": "principal",
+        "enum": [
+          "principal",
+          "shared"
+        ],
+        "title": "Scope",
         "type": "string"
       },
       "Schemaab9c6f751289751cd467757ba716178f3bdac6ac4ea4f500fb3e7060bd045639": {
@@ -1410,6 +1732,10 @@
         "title": "TelemetryReadResult",
         "type": "object"
       },
+      "Schemab995e29237d5571ae28320149c6163c88c44fd56cba14dba91cc32a9985b4c0e": {
+        "maxLength": 4000,
+        "type": "string"
+      },
       "Schemabb7b708c381367f473bd187d93bfb2edbb54bf25f59130dde9c898716df88876": {
         "anyOf": [
           {
@@ -1482,9 +1808,101 @@
         "title": "IngestJobStatusResult",
         "type": "object"
       },
+      "Schemac46f4c4a21c6dac04e3ef5b44c3d940ff07d7c4bad8dbc911532bb3b3f56a8a6": {
+        "additionalProperties": false,
+        "description": "A monitoring webhook body: plain text or an Alertmanager notification.",
+        "properties": {
+          "alerts": {
+            "$ref": "#/components/schemas/Schema7a2a6e3f45436177cb6c0968b82ac7a4ff97af721b1128c80713c2ef3f203f81"
+          },
+          "commonAnnotations": {
+            "$ref": "#/components/schemas/Schema2035a3bece3f75f1a84b2ec1aa9401dab8f9b633c8f2e2d62c4d70344f6fdc60"
+          },
+          "commonLabels": {
+            "$ref": "#/components/schemas/Schema74f3eab3901a745aaac7e91347f7cb2c08680398b472c7c9f086e6a5c3d7d5b3"
+          },
+          "content": {
+            "$ref": "#/components/schemas/Schema92ee39dd91cb175bf744aeeaf20789d996e6f84a97c9b1884383f3309b5d93ba"
+          },
+          "externalURL": {
+            "$ref": "#/components/schemas/Schema3fd5e85f13e3be194e1444e7035c6df4b0af6029a1bf1114db9f0ed9e9439f7b"
+          },
+          "groupKey": {
+            "$ref": "#/components/schemas/Schema372334161040579d95e9052918658dd709c309f5563035e95b6c26e94230e1fe"
+          },
+          "groupLabels": {
+            "$ref": "#/components/schemas/Schema3378ec22b14005381a0f00d4da380c95ac6eced62b6a2adfd8d8042d254b3708"
+          },
+          "message": {
+            "$ref": "#/components/schemas/Schema0856cd7a17b302d344469632673bb16599dfcb624e7619f66d68f267fab458f7"
+          },
+          "msg": {
+            "$ref": "#/components/schemas/Schemac8988ac0c133eee1d37a57c7873fc8e2d0d2270106728130e931394b807f0e53"
+          },
+          "receiver": {
+            "$ref": "#/components/schemas/Schema2539bfc96b7549989d3181f5442ed91cbf79a788a111deefed4e65dbe651251d"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Schema2db1e0b735a231257bc16ca3f2a2f7b503acca69ba97dc893290c4555197f853"
+          },
+          "text": {
+            "$ref": "#/components/schemas/Schema6e312e3d53068afad3250c1f64c3c543bfe47d9bef7a4a820f1cc8fc378484b5"
+          },
+          "truncatedAlerts": {
+            "$ref": "#/components/schemas/Schema86f8372f67406241d10d1fe63810cba3bc6213e1eb849e3b4ea38c0cee3902de"
+          },
+          "version": {
+            "$ref": "#/components/schemas/Schema3d707d2656317bd106cd45297754733e58e9cace5a039104cd95583004a3f58d"
+          }
+        },
+        "title": "MessagingAlertParams",
+        "type": "object"
+      },
+      "Schemac5431461e4ddc283228014546f09a948ceab0646a9f9d49e05c50225e3a46df9": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7"
+        },
+        "type": "object"
+      },
+      "Schemac8988ac0c133eee1d37a57c7873fc8e2d0d2270106728130e931394b807f0e53": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schemab995e29237d5571ae28320149c6163c88c44fd56cba14dba91cc32a9985b4c0e"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Msg"
+      },
       "Schemacac9b06c3ec93a7fc8bde8feaeb94be496804f70091072f05fe0a117f04fb850": {
         "title": "Mode",
         "type": "string"
+      },
+      "Schemaccaf437a4d2f3796fc8df7087e95f0521813d43a9f29cea0f760bc425fc1e9aa": {
+        "description": "Where the alert went; never the channel credentials.",
+        "properties": {
+          "channel_id": {
+            "$ref": "#/components/schemas/Schema7238448713591e961a58655fb9896ebcbaedb142aa3a7a94a0f86497b61b611a"
+          },
+          "delivered": {
+            "$ref": "#/components/schemas/Schema0493492edd50d56cef07a4b94fb8248453f39e2690f760b51aed38c3641aca0d"
+          },
+          "message_id": {
+            "$ref": "#/components/schemas/Schema6f371bb13ee4c8be0af635be57c7abc58c2ab9fdac5c6168ae6642edc131b297"
+          },
+          "platform": {
+            "$ref": "#/components/schemas/Schema1b4f5a4f08b359f7f36ea61a3efd019a8567d1db66d0f9f75bcd668b4da50ad4"
+          }
+        },
+        "required": [
+          "delivered",
+          "platform",
+          "channel_id"
+        ],
+        "title": "MessagingAlertResult",
+        "type": "object"
       },
       "Schemacd6f9507acddcf03d24ac968c8619f6a7eed35baafdef22ea7c1ad5897bfbd8c": {
         "additionalProperties": false,
@@ -1505,6 +1923,11 @@
         },
         "title": "Value",
         "type": "object"
+      },
+      "Schemacfbce84aea566abdb311fb82c555085d95760a65cb9f4a16c8a2cf1ba8cc02d6": {
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:@-]{0,127}$",
+        "title": "Key",
+        "type": "string"
       },
       "Schemad20c4af0ddeca947da3945fcfbab9e9c3fad42bd28a49e2aae1791145f905dbc": {
         "anyOf": [
@@ -1649,6 +2072,12 @@
         },
         "title": "Kinds",
         "type": "array"
+      },
+      "Schemae0b1e0d86759ae9fb55f6c0b1ccd214031b9b8d2a007d6660e82953ceee36f4b": {
+        "default": "default",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:@-]{0,127}$",
+        "title": "Namespace",
+        "type": "string"
       },
       "Schemae140ed0f270039f4d118d2542811b7110cf6e27c2fa27e987a8cca2e9fac939e": {
         "additionalProperties": false,
@@ -1830,6 +2259,10 @@
         "title": "SecurityPostureReadParams",
         "type": "object"
       },
+      "Schemaf1deff8504bbc0a3b1886d947e0186af87f24cbc280362f57f7201d46a86e3be": {
+        "maxLength": 256,
+        "type": "string"
+      },
       "Schemaf2becb12f209b039bc22b1f47579b594876f9d971aaa0f1b70fd09fba813aae3": {
         "anyOf": [
           {
@@ -1990,6 +2423,40 @@
         "summary": "Search caller-visible fleet catalog items",
         "tags": [
           "fleet"
+        ]
+      }
+    },
+    "/api/v1/messaging/alert": {
+      "post": {
+        "operationId": "messaging.alert",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schemac46f4c4a21c6dac04e3ef5b44c3d940ff07d7c4bad8dbc911532bb3b3f56a8a6"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schemaccaf437a4d2f3796fc8df7087e95f0521813d43a9f29cea0f760bc425fc1e9aa"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Deliver a monitoring alert to the operator's default channel",
+        "tags": [
+          "messaging"
         ]
       }
     },
@@ -11853,6 +12320,40 @@
         ]
       }
     },
+    "/api/v1/ops/eg.ingestion.EnrichDocument": {
+      "post": {
+        "operationId": "eg.ingestion.EnrichDocument",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/EnrichDocument"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.ingestion.json#/methods/EnrichDocument"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "EG-UNIFIED-DATA-PLANE-R651.7: chunks one RLS-visible held Document and embeds the chunks. Chunk nodes, chunkOf edges, vectors and one enrichment record commit as one ChangeEnvelope. An enriched digest replays; a new digest supersedes the earlier chunks",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.ingestion.IndexRepository": {
       "post": {
         "operationId": "eg.ingestion.IndexRepository",
@@ -14534,6 +15035,40 @@
           }
         },
         "summary": "EPI-P3-7 (gap-fill) standalone Dung argumentation (grounded/preferred/stable) conflict resolution over a BeliefGraph snapshot; handler additionally gated `epistemic-tms`",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.query.SelectWebPages": {
+      "post": {
+        "operationId": "eg.query.SelectWebPages",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/SelectWebPages"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.query.json#/methods/SelectWebPages"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "EG-DECISION-ENGINE-R802: deterministic web page selection over search candidates. It dedupes by canonical URL and digest against held Documents and enforces a budget. It commits nothing and runs no model",
         "tags": [
           "eg"
         ]
@@ -18108,6 +18643,100 @@
         ]
       }
     },
+    "/api/v1/ops/memory.delete": {
+      "post": {
+        "operationId": "memory.delete",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Shared609223667d61742eff1fa5cda38ebc09655ba5ea242d2c80a83aada95e87b4df"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Sharedcf80caf23eb4283f9ac754e059e3566a138ec6ad3cc57016cc02686fbf742cf1"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Forget one of the caller's memory entries",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
+    "/api/v1/ops/memory.list": {
+      "post": {
+        "operationId": "memory.list",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema72523f3c47bfb07398b4a0185e7a9eab3d44e92a5864427ae00e1a28b02c2485"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Sharedcf80caf23eb4283f9ac754e059e3566a138ec6ad3cc57016cc02686fbf742cf1"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "List the caller's memory entries in one namespace",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
+    "/api/v1/ops/memory.read": {
+      "post": {
+        "operationId": "memory.read",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Shared609223667d61742eff1fa5cda38ebc09655ba5ea242d2c80a83aada95e87b4df"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Sharedcf80caf23eb4283f9ac754e059e3566a138ec6ad3cc57016cc02686fbf742cf1"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Read one of the caller's memory entries with its version",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
+    "/api/v1/ops/memory.write": {
+      "post": {
+        "operationId": "memory.write",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema9f653a27b12e264c5c6cc1d3254785686adf00300f40876e3bf245e142a9d862"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Sharedcf80caf23eb4283f9ac754e059e3566a138ec6ad3cc57016cc02686fbf742cf1"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Remember one entry for the caller, optionally compare-and-set",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
     "/api/v1/ops/ops.backup": {
       "post": {
         "operationId": "ops.backup",
@@ -18786,5 +19415,5 @@
       }
     }
   },
-  "x-registry-digest": "7c404ee300ed5659eeb7d47eb690b47588771105d0b0b6bc3f424d95e75fa1c0"
+  "x-registry-digest": "826d2c98ffda35a9443711f503790cad06533dd4a41f911c8b3c2f9b085b34b1"
 }

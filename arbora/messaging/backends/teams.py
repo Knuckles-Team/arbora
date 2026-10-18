@@ -40,6 +40,11 @@ from arbora.messaging.models import (
 
 logger = logging.getLogger(__name__)
 
+#: The Bot Framework login endpoint for a bot's client credentials.
+_BOT_FRAMEWORK_LOGIN = (
+    "https://login.microsoftonline.com/botframework.com/oauth2/v2.0/token"
+)
+
 
 class TeamsBackend(MessagingBackend):
     """Microsoft Teams messaging backend using ``botbuilder-core``. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
@@ -91,34 +96,68 @@ class TeamsBackend(MessagingBackend):
         reply_to_id: str = "",
         metadata: dict[str, Any] | None = None,
     ) -> SendResult:
-        """Send a Teams message. Supports Adaptive Cards via metadata. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Send a Teams message through the Bot Framework Connector REST API.
+
+        ``channel_id`` is the conversation id. ``MSTEAMS_SERVICE_URL`` (or the
+        ``service_url`` config extra) names the Connector service of the tenant.
+        Adaptive Cards ride in ``metadata["adaptive_card"]``.
+        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        """
+        from arbora.core.settings import setting
+        from arbora.messaging.transport import channel_http_client
+
+        service_url = str(
+            self.config.extra.get("service_url") or setting("MSTEAMS_SERVICE_URL", "")
+        ).rstrip("/")
+        if not service_url or not self.config.app_id or not self.config.app_secret:
+            return SendResult(
+                success=False,
+                platform=PlatformId.TEAMS,
+                channel_id=channel_id,
+                error="Teams send needs MSTEAMS_SERVICE_URL and app credentials.",
+            )
+        activity: dict[str, Any] = {"type": "message", "text": text}
+        if reply_to_id:
+            activity["replyToId"] = reply_to_id
+        if metadata and "adaptive_card" in metadata:
+            activity["attachments"] = [
+                {
+                    "contentType": "application/vnd.microsoft.card.adaptive",
+                    "content": metadata["adaptive_card"],
+                }
+            ]
         try:
-            from botbuilder.core import MessageFactory
-
-            activity = MessageFactory.text(text)
-
-            if metadata and "adaptive_card" in metadata:
-                from botbuilder.schema import Attachment
-
-                card = Attachment(
-                    content_type="application/vnd.microsoft.card.adaptive",
-                    content=metadata["adaptive_card"],
+            async with channel_http_client("teams", timeout=30) as client:
+                token = await client.post(
+                    _BOT_FRAMEWORK_LOGIN,
+                    data={
+                        "grant_type": "client_credentials",
+                        "client_id": self.config.app_id,
+                        "client_secret": self.config.app_secret,
+                        "scope": "https://api.botframework.com/.default",
+                    },
                 )
-                activity.attachments = [card]
-
-            # In production, you'd use a stored ConversationReference
-            # to proactively send messages. Here we provide the interface.
+                token.raise_for_status()
+                sent = await client.post(
+                    f"{service_url}/v3/conversations/{channel_id}/activities",
+                    json=activity,
+                    headers={"Authorization": f"Bearer {token.json()['access_token']}"},
+                )
+                sent.raise_for_status()
             return SendResult(
                 success=True,
+                message_id=str(sent.json().get("id", "")),
                 platform=PlatformId.TEAMS,
                 channel_id=channel_id,
             )
         except Exception as e:
             logger.error(
                 "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Teams send failed: %s",
-                e,
+                type(e).__name__,
             )
-            return SendResult(success=False, platform=PlatformId.TEAMS, error=str(e))
+            return SendResult(
+                success=False, platform=PlatformId.TEAMS, error=type(e).__name__
+            )
 
     async def send_typing(self, channel_id: str) -> None:
         """Send typing indicator. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""

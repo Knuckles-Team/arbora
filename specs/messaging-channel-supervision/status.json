@@ -12,6 +12,31 @@
     "ARBORA-MESSAGING-R005",
     "ARBORA-MESSAGING-R005.1",
     "ARBORA-MESSAGING-R006",
+    "ARBORA-MESSAGING-R007",
+    "ARBORA-MESSAGING-R007.1",
+    "ARBORA-MESSAGING-R008",
+    "ARBORA-MESSAGING-R009",
+    "ARBORA-MESSAGING-R009.1",
+    "ARBORA-MESSAGING-R009.2",
+    "ARBORA-MESSAGING-R009.3",
+    "ARBORA-MESSAGING-R009.4",
+    "ARBORA-MESSAGING-R009.5",
+    "ARBORA-MESSAGING-R009.6",
+    "ARBORA-MESSAGING-R009.7",
+    "ARBORA-MESSAGING-R009.8",
+    "ARBORA-MESSAGING-R009.9",
+    "ARBORA-MESSAGING-R009.10",
+    "ARBORA-MESSAGING-R009.11",
+    "ARBORA-MESSAGING-R009.12",
+    "ARBORA-MESSAGING-R009.13",
+    "ARBORA-MESSAGING-R009.14",
+    "ARBORA-MESSAGING-R009.15",
+    "ARBORA-MESSAGING-R009.16",
+    "ARBORA-MESSAGING-R009.17",
+    "ARBORA-MESSAGING-R009.18",
+    "ARBORA-MESSAGING-R009.19",
+    "ARBORA-MESSAGING-R009.20",
+    "ARBORA-MESSAGING-R009.21",
     "ARBORA-MESSAGING-R800",
     "ARBORA-MESSAGING-R800.1",
     "ARBORA-MESSAGING-R800.2",
@@ -109,6 +134,224 @@
       "verified_by": []
     },
     {
+      "id": "ARBORA-MESSAGING-R007",
+      "title": "Served channel gateway",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [
+        "11a776ff65df",
+        "6afc063796e6"
+      ],
+      "verified_by": [
+        "tests/messaging/test_alert_operation.py:253",
+        "tests/messaging/test_alert_operation.py:279",
+        "tests/messaging/test_alert_operation.py:292"
+      ],
+      "rollup_of": [
+        "ARBORA-MESSAGING-R007.1"
+      ]
+    },
+    {
+      "id": "ARBORA-MESSAGING-R007.1",
+      "title": "Per-sender identity for inbound turns",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-MESSAGING-R008",
+      "title": "Alert intake operation",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "11a776ff65df",
+        "6afc063796e6",
+        "7089b148951f"
+      ],
+      "verified_by": [
+        "tests/messaging/test_alert_operation.py:111",
+        "tests/messaging/test_alert_operation.py:125",
+        "tests/messaging/test_alert_operation.py:155",
+        "tests/messaging/test_alert_operation.py:185",
+        "tests/messaging/test_alert_operation.py:194"
+      ]
+    },
+    {
+      "id": "ARBORA-MESSAGING-R009",
+      "title": "Channel platform parity with the reference frameworks",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-MESSAGING-R009.1",
+        "ARBORA-MESSAGING-R009.2",
+        "ARBORA-MESSAGING-R009.3",
+        "ARBORA-MESSAGING-R009.4",
+        "ARBORA-MESSAGING-R009.5",
+        "ARBORA-MESSAGING-R009.6",
+        "ARBORA-MESSAGING-R009.7",
+        "ARBORA-MESSAGING-R009.8",
+        "ARBORA-MESSAGING-R009.9",
+        "ARBORA-MESSAGING-R009.10",
+        "ARBORA-MESSAGING-R009.11",
+        "ARBORA-MESSAGING-R009.12",
+        "ARBORA-MESSAGING-R009.13",
+        "ARBORA-MESSAGING-R009.14",
+        "ARBORA-MESSAGING-R009.15",
+        "ARBORA-MESSAGING-R009.16",
+        "ARBORA-MESSAGING-R009.17",
+        "ARBORA-MESSAGING-R009.18",
+        "ARBORA-MESSAGING-R009.19",
+        "ARBORA-MESSAGING-R009.20",
+        "ARBORA-MESSAGING-R009.21"
+      ]
+    },
+    {
+      "id": "ARBORA-MESSAGING-R009.1",
+      "title": "BlueBubbles iMessage relay channel (`bluebubbles`)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-MESSAGING-R009.2",
+      "title": "Buzz community relay channel (`buzz`)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-MESSAGING-R009.3",
+      "title": "DingTalk channel (`dingtalk`)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-MESSAGING-R009.4",
+      "title": "email channel (`email`)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-MESSAGING-R009.5",
+      "title": "Feishu and Lark channel (`feishu`)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-MESSAGING-R009.6",
+      "title": "Nostr channel (`nostr`)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-MESSAGING-R009.7",
+      "title": "ntfy push topics channel (`ntfy`)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-MESSAGING-R009.8",
+      "title": "Photon Spectrum channel (`photon`)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-MESSAGING-R009.9",
+      "title": "QQ Bot channel (`qqbot`)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-MESSAGING-R009.10",
+      "title": "Raft workspace channel (`raft`)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-MESSAGING-R009.11",
+      "title": "Reef encrypted channel channel (`reef`)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-MESSAGING-R009.12",
+      "title": "SimpleX Chat channel (`simplex`)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-MESSAGING-R009.13",
+      "title": "SMS channel (`sms`)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-MESSAGING-R009.14",
+      "title": "Tlon (Urbit) channel (`tlon`)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-MESSAGING-R009.15",
+      "title": "generic webhook channel (`webhook`)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-MESSAGING-R009.16",
+      "title": "WeCom channel (`wecom`)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-MESSAGING-R009.17",
+      "title": "Weixin channel (`weixin`)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-MESSAGING-R009.18",
+      "title": "X mentions channel (`x`)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-MESSAGING-R009.19",
+      "title": "Yuanbao channel (`yuanbao`)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-MESSAGING-R009.20",
+      "title": "Zalo Official Account channel (`zalo`)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-MESSAGING-R009.21",
+      "title": "Zalo personal account channel (`zalouser`)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
       "id": "ARBORA-MESSAGING-R800",
       "title": "Messaging adapter contract, command registry and the full channel adapter set (rollup)",
       "delivery_state": "SPECIFIED",
@@ -135,7 +378,10 @@
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/messaging/test_alert_operation.py:322",
+        "tests/messaging/test_all_backends.py:138"
+      ]
     },
     {
       "id": "ARBORA-MESSAGING-R800.2",

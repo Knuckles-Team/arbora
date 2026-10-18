@@ -63,6 +63,7 @@ evidence return. These preserve the earlier cookie and effective-route probes.
 | ARBORA-IDENTITY-R026.5 | `tests/identity/test_list_clients.py` | Caller-scoped client listing. |
 | ARBORA-IDENTITY-R026.6 | `tests/identity/test_principal_parity.py` | User and service account parity. |
 | ARBORA-IDENTITY-R026.7 | `tests/identity/test_cross_client_denial.py` | Cross-client denial is uniform. |
+| ARBORA-IDENTITY-R027 | `tests/mcp_server/test_process_authority_renewal.py` | Process authority renews over twelve hours of 300-second tokens; failures report a reason. |
 
 
 ## Served credential and resource authority acceptance

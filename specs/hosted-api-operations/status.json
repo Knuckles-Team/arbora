@@ -81,6 +81,10 @@
     "ARBORA-OPS-R024.4.4",
     "ARBORA-OPS-R024.4.5",
     "ARBORA-OPS-R024.4.6",
+    "ARBORA-OPS-R844",
+    "ARBORA-OPS-R845",
+    "ARBORA-OPS-R846",
+    "ARBORA-OPS-R847",
     "ARBORA-OPS-R024.5",
     "ARBORA-OPS-R025",
     "ARBORA-OPS-R025.1",
@@ -212,11 +216,18 @@
     {
       "id": "ARBORA-OPS-R001",
       "title": "Native MCP/REST facade with A2A unary operations then streaming",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "762c7f816fe3",
+        "83aefbad2157",
         "deb2b45bf83d"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_real_boot.py:718",
+        "tests/test_real_boot.py:739",
+        "tests/test_real_boot.py:748",
+        "tests/test_real_boot.py:767"
+      ]
     },
     {
       "id": "ARBORA-OPS-R002",
@@ -993,12 +1004,13 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "383897ed5238",
+        "5f79be652726",
         "5ffd23ca7883",
         "8d1bc46ecbdb",
         "94724be32c28"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:328"
+        "tests/api/test_registry_factory.py:334"
       ],
       "rollup_of": [
         "ARBORA-OPS-R024.4.1",
@@ -1050,6 +1062,51 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R844",
+      "title": "Served memory read and write over EG KV",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5f79be652726"
+      ],
+      "verified_by": [
+        "tests/test_served_operation_api.py:244"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R845",
+      "title": "Served memory list and delete",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5f79be652726"
+      ],
+      "verified_by": [
+        "tests/test_served_operation_api.py:244"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R846",
+      "title": "Explicit shared memory scope",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "20d3cc8c9878",
+        "5f79be652726"
+      ],
+      "verified_by": [
+        "tests/test_served_operation_api.py:244"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R847",
+      "title": "KV methods in the registry",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5f79be652726"
+      ],
+      "verified_by": [
+        "tests/api/test_registry_factory.py:334"
+      ]
     },
     {
       "id": "ARBORA-OPS-R024.5",

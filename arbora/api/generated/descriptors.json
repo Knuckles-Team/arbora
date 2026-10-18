@@ -3532,6 +3532,18 @@
     {
       "domain": "eg",
       "examples": [
+        "EnrichDocument ingestion"
+      ],
+      "id": "eg.ingestion.EnrichDocument",
+      "summary": "EG-UNIFIED-DATA-PLANE-R651.7: chunks one RLS-visible held Document and embeds the chunks. Chunk nodes, chunkOf edges, vectors and one enrichment record commit as one ChangeEnvelope. An enriched digest replays; a new digest supersedes the earlier chunks",
+      "tags": [
+        "eg"
+      ],
+      "verb": "write"
+    },
+    {
+      "domain": "eg",
+      "examples": [
         "IndexRepository ingestion"
       ],
       "id": "eg.ingestion.IndexRepository",
@@ -4472,6 +4484,18 @@
       ],
       "id": "eg.query.ResolveConflict",
       "summary": "EPI-P3-7 (gap-fill) standalone Dung argumentation (grounded/preferred/stable) conflict resolution over a BeliefGraph snapshot; handler additionally gated `epistemic-tms`",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "SelectWebPages query"
+      ],
+      "id": "eg.query.SelectWebPages",
+      "summary": "EG-DECISION-ENGINE-R802: deterministic web page selection over search candidates. It dedupes by canonical URL and digest against held Documents and enforces a budget. It commits nothing and runs no model",
       "tags": [
         "eg"
       ],
@@ -5774,6 +5798,70 @@
       "verb": "act"
     },
     {
+      "domain": "memory",
+      "examples": [
+        "forget this memory",
+        "delete this remembered note"
+      ],
+      "id": "memory.delete",
+      "summary": "Forget one of the caller's memory entries",
+      "tags": [
+        "memory"
+      ],
+      "verb": "act"
+    },
+    {
+      "domain": "memory",
+      "examples": [
+        "list my memories",
+        "show remembered notes"
+      ],
+      "id": "memory.list",
+      "summary": "List the caller's memory entries in one namespace",
+      "tags": [
+        "memory"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "memory",
+      "examples": [
+        "read this memory key",
+        "what did I remember about this"
+      ],
+      "id": "memory.read",
+      "summary": "Read one of the caller's memory entries with its version",
+      "tags": [
+        "memory"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "memory",
+      "examples": [
+        "remember this for later",
+        "save this note to memory"
+      ],
+      "id": "memory.write",
+      "summary": "Remember one entry for the caller, optionally compare-and-set",
+      "tags": [
+        "memory"
+      ],
+      "verb": "act"
+    },
+    {
+      "domain": "messaging",
+      "examples": [
+        "send this alert to the operator"
+      ],
+      "id": "messaging.alert",
+      "summary": "Deliver a monitoring alert to the operator's default channel",
+      "tags": [
+        "messaging"
+      ],
+      "verb": "act"
+    },
+    {
       "domain": "ops",
       "examples": [
         "back up this tenant now"
@@ -6014,5 +6102,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "7c404ee300ed5659eeb7d47eb690b47588771105d0b0b6bc3f424d95e75fa1c0"
+  "registry_digest": "826d2c98ffda35a9443711f503790cad06533dd4a41f911c8b3c2f9b085b34b1"
 }

@@ -9,7 +9,7 @@ from typing import Literal
 
 from arbora.client._schema import _expanded_spec
 
-REGISTRY_DIGEST = "7c404ee300ed5659eeb7d47eb690b47588771105d0b0b6bc3f424d95e75fa1c0"
+REGISTRY_DIGEST = "826d2c98ffda35a9443711f503790cad06533dd4a41f911c8b3c2f9b085b34b1"
 API_VERSION = "1"
 type OperationId = Literal[
     "access.check",
@@ -306,6 +306,7 @@ type OperationId = Literal[
     "eg.ingestion.AddEmbedding",
     "eg.ingestion.Asr",
     "eg.ingestion.Discover",
+    "eg.ingestion.EnrichDocument",
     "eg.ingestion.IndexRepository",
     "eg.ingestion.ObserveScreen",
     "eg.ingestion.ParseFile",
@@ -385,6 +386,7 @@ type OperationId = Literal[
     "eg.query.RankByProvenance",
     "eg.query.RecomputeMaterialization",
     "eg.query.ResolveConflict",
+    "eg.query.SelectWebPages",
     "eg.query.Sql",
     "eg.query.StaleMaterializations",
     "eg.query.TxnUnifiedQuery",
@@ -493,6 +495,11 @@ type OperationId = Literal[
     "ingest.sources.list",
     "ingest.sources.status",
     "ingest.sources.sync",
+    "memory.delete",
+    "memory.list",
+    "memory.read",
+    "memory.write",
+    "messaging.alert",
     "ops.backup",
     "ops.config",
     "ops.doctor",

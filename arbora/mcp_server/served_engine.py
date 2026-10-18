@@ -288,6 +288,40 @@ class ServedEngine:
 
         return str(_run_blocking(run))
 
+    def create_node(
+        self,
+        node_id: str,
+        label: str,
+        properties: Mapping[str, Any] | None = None,
+    ) -> bool:
+        """Create one labelled node through EG ``CreateNodeIfAbsent``.
+
+        An append-only record with a unique id (a ``RunEvent``) is a create,
+        not an upsert. EG 2.27.2 refuses ``AddNode`` on a graph whose write
+        path is cold (``INTERNAL: unclassified engine refusal``) while
+        ``CreateNodeIfAbsent`` on the same graph is admitted. Returns whether
+        this call created the node.
+        """
+        import msgpack
+        from epistemic_graph.generated.graph import send_create_node_if_absent
+
+        client = self._session_client()
+        body = {**dict(properties or {}), "type": label}
+        params = {
+            "node_id": node_id,
+            "properties_msgpack": msgpack.packb(body, use_bin_type=True),
+        }
+
+        async def run() -> Any:
+            return await send_create_node_if_absent(
+                client,
+                params,
+                client.graph_name,
+                idempotency_key=f"arbora:create-node:{node_id}",
+            )
+
+        return bool(_run_blocking(run))
+
 
 def process_engine_pool() -> Any:
     """The one EG client pool of this process, built on first use.

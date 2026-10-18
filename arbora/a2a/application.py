@@ -200,6 +200,14 @@ def _resubscribe_stub(raw_params: Any) -> Any:
     )
 
 
+def _stream_stub(raw_params: Any) -> Any:
+    # The card advertises ``streaming: false``. ``message/stream`` is still a
+    # known method: it validates its params and refuses as unsupported, so a
+    # client falls back to ``message/send`` instead of seeing an unknown method.
+    _SendParams.model_validate(raw_params)
+    raise A2AStreamingUnavailable("message/stream is not available; use message/send")
+
+
 def _op_invoke_stub(raw_params: Any) -> Any:
     # Registered in the method table (ARBORA-A2A-R006) but fail-closed:
     # the shared hosted-operation registry's invoke path is not bridged in
@@ -227,6 +235,7 @@ def _plan_confirm_stub(raw_params: Any) -> Any:
 
 
 _SYNC_METHODS: dict[str, Callable[[Any], Any]] = {
+    "message/stream": _stream_stub,
     "tasks/resubscribe": _resubscribe_stub,
     "arbora.op/invoke": _op_invoke_stub,
     "arbora.plan/confirm": _plan_confirm_stub,

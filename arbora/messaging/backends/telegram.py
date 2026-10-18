@@ -162,7 +162,14 @@ class TelegramBackend(MessagingBackend):
         if not self.config.token:
             raise ValueError("Set TELEGRAM_BOT_TOKEN or MESSAGING_TELEGRAM_TOKEN.")
 
-        self._app = ApplicationBuilder().token(self.config.token).build()
+        from arbora.core.settings import setting
+
+        builder = ApplicationBuilder().token(self.config.token)
+        # A self-hosted Bot API server (or a test double) replaces the public one.
+        base_url = str(setting("TELEGRAM_API_BASE_URL", "") or "").strip()
+        if base_url:
+            builder = builder.base_url(base_url)
+        self._app = builder.build()
 
         async def on_message(update: Any, context: Any) -> None:
             msg = update.message

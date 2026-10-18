@@ -33,6 +33,7 @@ def _event(text: str, kind: EventType = EventType.MESSAGE) -> InboundEvent:
         event_type=kind,
         platform="telegram",
         channel_id="42",
+        user_id="7",
         message=message,
         content=text,
     )
@@ -51,6 +52,8 @@ def turns(monkeypatch) -> list[tuple[Any, str, str]]:
 
 
 async def _handler(monkeypatch, timer, *, waiting: bool = False):
+    # The sender of every test event is admitted (ARBORA-MESSAGING-R007).
+    monkeypatch.setenv("MESSAGING_ALLOWED_SENDERS", "telegram:7")
     monkeypatch.setattr(
         MessagingService, "instance", lambda _engine=None: _Service(waiting)
     )

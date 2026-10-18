@@ -37,8 +37,10 @@ from arbora.messaging.supervision import (
 
 logger = logging.getLogger(__name__)
 
-# Entry-point group name for messaging backend discovery.
-_ENTRY_POINT_GROUP = "arbora.messaging"
+# Entry-point group name for messaging backend discovery: the group the wheel
+# publishes in pyproject.toml (ARBORA-MESSAGING-R800.1). A different name here
+# discovers no adapter at all, so every send reports "not installed".
+_ENTRY_POINT_GROUP = "agent_utilities.messaging"
 
 # Environment variable prefix for backend configuration.
 _ENV_PREFIX = "MESSAGING_"

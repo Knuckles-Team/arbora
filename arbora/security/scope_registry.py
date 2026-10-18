@@ -8,7 +8,7 @@ class rules it carries are enforced by the EG identity store.
 from __future__ import annotations
 
 EG_SCOPE_REGISTRY_SHA256 = (
-    "af13c419409914c0a9f1279493d59753300ecbd62d4181dbf25483866b3a5ac2"
+    "c1df928c6453dad40d3a32d0b4c5be68f52ed88191f25611986fc0502d654d7d"
 )
 
 #: scope -> class (user | domain | service-only | approver | admin).
@@ -108,6 +108,7 @@ SCOPE_CLASSES: dict[str, str] = {
     "kg:read": "user",
     "kg:write": "user",
     "kv:read": "user",
+    "kv:shared:write": "user",
     "kv:write": "user",
     "lane:cleanup": "service-only",
     "lane:quota": "service-only",
