@@ -128,3 +128,4 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 
 - [ ] `ARBORA-IDENTITY-R026.8`: Deliver every requirement in requirements.md.
 - [x] `ARBORA-IDENTITY-R002.1`: scope registry generated from EG `scopes.json`. Evidence: `tests/security/test_scope_registry.py::test_the_generated_module_is_the_installed_eg_registry`.
+- [x] `ARBORA-IDENTITY-R027`: Process authority renews indefinitely; failures log their cause and readiness names the reason. Evidence: `tests/mcp_server/test_process_authority_renewal.py`.

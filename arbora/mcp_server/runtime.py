@@ -813,6 +813,7 @@ def _build_server(
             failing_checks,
             is_overall_healthy,
             not_served_authorities,
+            readiness_reason,
         )
 
         report = await collect_health_async()
@@ -820,8 +821,12 @@ def _build_server(
         body: dict[str, Any] = {"status": "ready" if ready else "not_ready"}
         failing = failing_checks(report)
         if failing:
-            # Names only (no reasons): the route is unauthenticated for kubelet.
+            # Names and closed-vocabulary codes only: the route is
+            # unauthenticated for kubelet.
             body["failing"] = failing
+            reason = readiness_reason()
+            if reason is not None:
+                body["reason"] = reason
         not_served = not_served_authorities(report)
         if not_served:
             # Names only: authorities this release does not serve (not applicable).
