@@ -1962,10 +1962,14 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "0884ed403bbf",
-        "38a3cbefd076"
+        "38a3cbefd076",
+        "5b9f20060f40",
+        "9375e364cfde"
       ],
       "verified_by": [
-        "tests/api/test_refusal_causes.py:26"
+        "tests/api/test_refusal_causes.py:26",
+        "tests/api/test_refusal_causes.py:54",
+        "tests/api/test_refusal_causes.py:76"
       ]
     },
     {
@@ -2065,9 +2069,9 @@
       "landed_in": [
         "1a451cf70043",
         "1c39905dafb3",
-        "253689e47255",
+        "42084de67928",
         "5170b8a8edde",
-        "927596678c52"
+        "5d03b97e5f40"
       ],
       "verified_by": [
         "tests/api/test_client_http.py:27",

@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import inspect
+import logging
 from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from dataclasses import dataclass
@@ -21,6 +22,8 @@ from arbora.api.invoke.steps import (
     freeze_claims,
 )
 from arbora.api.registry import Executor, SubjectSource
+
+_logger = logging.getLogger(__name__)
 
 
 class OperationRuntime(Protocol):
@@ -282,6 +285,15 @@ class BoundOperationRuntime:
             try:
                 return await self._eg_dispatch(binding, params, context)
             except EngineResponseError as exc:
+                # The engine detail is diagnostic, never part of the public
+                # envelope; the operator log keeps it beside the request ID.
+                _logger.warning(
+                    "engine refused %s (%s): %s %s",
+                    op.id,
+                    getattr(context.caller, "request_id", ""),
+                    exc.code,
+                    (exc.detail or "")[:300],
+                )
                 raise EngineRefusal(exc.code) from exc
         if getattr(binding, "kind", None) != "composite":
             raise RuntimeError("operation has no executable binding")
