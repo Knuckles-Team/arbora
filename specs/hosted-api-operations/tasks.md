@@ -64,6 +64,13 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R020.3.1.2:** `ingest.jobs.status` op
 - [ ] **ARBORA-OPS-R020.4:** Drift listing and repair-with-approval operations
 - [ ] **ARBORA-OPS-R020.5:** Embedding admission and re-embedding operations
+- [ ] **ARBORA-OPS-R020.6:** Connector sources served through the composed SDK sync runner
+- [ ] **ARBORA-OPS-R020.6.1:** Model
+- [ ] **ARBORA-OPS-R020.6.2:** Behavior
+- [ ] **ARBORA-OPS-R020.6.3:** Wiring
+- [ ] **ARBORA-OPS-R020.6.4:** Refusal
+- [ ] **ARBORA-OPS-R020.6.5:** Evidence
+- [ ] **ARBORA-OPS-R020.6.6:** Hot-path proof
 - [ ] **ARBORA-OPS-R020.3.1:** Remaining scope of ARBORA-OPS-R020.3 (slice .1): Pack and job management operations
 - [ ] **ARBORA-OPS-R022.2.1:** `evolution.loops.status` op
 - [ ] **ARBORA-OPS-R022.2.2:** `evolution.schedules.list` op
@@ -157,6 +164,8 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] `ARBORA-OPS-R021.2.1.1`: Deliver every requirement in requirements.md.
 - [ ] `ARBORA-OPS-R050.2.1`: Deliver every requirement in requirements.md.
 - [ ] `ARBORA-OPS-R009.1`: Deliver every requirement in requirements.md.
+- [ ] **ARBORA-OPS-R009.2:** Refusal causes are logged
+- [ ] **ARBORA-OPS-R009.3:** Declared replay owners
 - [ ] `ARBORA-OPS-R053.8`: Deliver every requirement in requirements.md.
 - [ ] `ARBORA-OPS-R059`: Resolve the producer contracts named in plan.md. Then implement the existing registry attachment and its served proof. Preserve each specified refusal.
 - [ ] `ARBORA-OPS-R060`: Resolve the producer contracts named in plan.md. Then implement the existing registry attachment and its served proof. Preserve each specified refusal.
@@ -218,3 +227,14 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R843:** Served engine operations replace the in-run agent-utilities tool wrappers.
 - [x] **ARBORA-OPS-R843.1:** Delivered wrapper behaviour, bound to `tests/api/test_au_tool_parity.py`.
 - [ ] **ARBORA-OPS-R843.2:** Re-point the remaining modules to their composed rows or the harness.
+
+## Web research operation (R067)
+
+- [ ] **ARBORA-OPS-R067:** Web research operation composes search, selection, fetch and ingest.
+- [ ] **ARBORA-OPS-R067.1:** Model. Add the params and the result with citations.
+- [ ] **ARBORA-OPS-R067.2:** Behavior. Compose the four steps and the deadline.
+- [ ] **ARBORA-OPS-R067.3:** Backend. Add the explicit choice, the fallback and the recorded backend.
+- [ ] **ARBORA-OPS-R067.4:** Wiring. Register the operation behind `invoke`.
+- [ ] **ARBORA-OPS-R067.5:** Refusal. Add the typed refusals.
+- [ ] **ARBORA-OPS-R067.6:** Evidence. Record the trace fields.
+- [ ] **ARBORA-OPS-R067.7:** Hot-path proof. Add the served three-call test.

@@ -40,6 +40,13 @@
     "ARBORA-OPS-R020.3.1.2",
     "ARBORA-OPS-R020.4",
     "ARBORA-OPS-R020.5",
+    "ARBORA-OPS-R020.6",
+    "ARBORA-OPS-R020.6.1",
+    "ARBORA-OPS-R020.6.2",
+    "ARBORA-OPS-R020.6.3",
+    "ARBORA-OPS-R020.6.4",
+    "ARBORA-OPS-R020.6.5",
+    "ARBORA-OPS-R020.6.6",
     "ARBORA-OPS-R021",
     "ARBORA-OPS-R021.1",
     "ARBORA-OPS-R021.2",
@@ -179,6 +186,8 @@
     "ARBORA-OPS-R021.2.1.1",
     "ARBORA-OPS-R050.2.1",
     "ARBORA-OPS-R009.1",
+    "ARBORA-OPS-R009.2",
+    "ARBORA-OPS-R009.3",
     "ARBORA-OPS-R053.8",
     "ARBORA-OPS-R059",
     "ARBORA-OPS-R060",
@@ -186,6 +195,14 @@
     "ARBORA-OPS-R064",
     "ARBORA-OPS-R065",
     "ARBORA-OPS-R066",
+    "ARBORA-OPS-R067",
+    "ARBORA-OPS-R067.1",
+    "ARBORA-OPS-R067.2",
+    "ARBORA-OPS-R067.3",
+    "ARBORA-OPS-R067.4",
+    "ARBORA-OPS-R067.5",
+    "ARBORA-OPS-R067.6",
+    "ARBORA-OPS-R067.7",
     "ARBORA-OPS-R700",
     "ARBORA-OPS-R843",
     "ARBORA-OPS-R843.1",
@@ -304,7 +321,9 @@
         "tests/api/test_invoke_governance.py:250"
       ],
       "rollup_of": [
-        "ARBORA-OPS-R009.1"
+        "ARBORA-OPS-R009.1",
+        "ARBORA-OPS-R009.2",
+        "ARBORA-OPS-R009.3"
       ]
     },
     {
@@ -499,7 +518,7 @@
     {
       "id": "ARBORA-OPS-R020",
       "title": "Ingest operations through a typed SDK runner facade",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "e990e195ab42"
       ],
@@ -509,7 +528,8 @@
         "ARBORA-OPS-R020.2",
         "ARBORA-OPS-R020.3",
         "ARBORA-OPS-R020.4",
-        "ARBORA-OPS-R020.5"
+        "ARBORA-OPS-R020.5",
+        "ARBORA-OPS-R020.6"
       ]
     },
     {
@@ -614,6 +634,63 @@
       "landed_in": [
         "822f55d5835d"
       ],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R020.6",
+      "title": "Connector sources served through the composed SDK sync runner",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R020.6.1",
+        "ARBORA-OPS-R020.6.2",
+        "ARBORA-OPS-R020.6.3",
+        "ARBORA-OPS-R020.6.4",
+        "ARBORA-OPS-R020.6.5",
+        "ARBORA-OPS-R020.6.6"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R020.6.1",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R020.6.2",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R020.6.3",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R020.6.4",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R020.6.5",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R020.6.6",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": []
     },
     {
@@ -894,7 +971,7 @@
         "94724be32c28"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:326"
+        "tests/api/test_registry_factory.py:328"
       ],
       "rollup_of": [
         "ARBORA-OPS-R024.4.1",
@@ -1880,6 +1957,33 @@
       "verified_by": []
     },
     {
+      "id": "ARBORA-OPS-R009.2",
+      "title": "Refusal causes are logged",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "0884ed403bbf",
+        "38a3cbefd076",
+        "5b9f20060f40",
+        "9375e364cfde"
+      ],
+      "verified_by": [
+        "tests/api/test_refusal_causes.py:26",
+        "tests/api/test_refusal_causes.py:54",
+        "tests/api/test_refusal_causes.py:76"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R009.3",
+      "title": "Declared replay owners",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "0884ed403bbf"
+      ],
+      "verified_by": [
+        "tests/api/test_refusal_causes.py:43"
+      ]
+    },
+    {
       "id": "ARBORA-OPS-R053.8",
       "title": "ARBORA:25 Arbora definition slice",
       "delivery_state": "SPECIFIED",
@@ -1924,6 +2028,83 @@
     {
       "id": "ARBORA-OPS-R066",
       "title": "Bounded bookmark search, relationships, and export",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R067",
+      "title": "Web research operation composes search, selection, fetch and ingest (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R067.1",
+        "ARBORA-OPS-R067.2",
+        "ARBORA-OPS-R067.3",
+        "ARBORA-OPS-R067.4",
+        "ARBORA-OPS-R067.5",
+        "ARBORA-OPS-R067.6",
+        "ARBORA-OPS-R067.7"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R067.1",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R067.2",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R067.3",
+      "title": "Backend choice and fallback",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "1a451cf70043",
+        "1c39905dafb3",
+        "42084de67928",
+        "5170b8a8edde",
+        "5d03b97e5f40"
+      ],
+      "verified_by": [
+        "tests/api/test_client_http.py:27",
+        "tests/api/test_client_http.py:46",
+        "tests/api/test_research_ops.py:19",
+        "tests/api/test_research_ops.py:55",
+        "tests/api/test_research_ops.py:63"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R067.4",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R067.5",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R067.6",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R067.7",
+      "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

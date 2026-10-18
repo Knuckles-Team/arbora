@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
@@ -10,6 +11,10 @@ from typing import Any, Literal, cast
 from pydantic import BaseModel, ValidationError
 
 from arbora.api.registry import EgSchemaRef, PrincipalRule
+
+_logger = logging.getLogger(__name__)
+#: Bound on a logged diagnostic line (it may quote request content).
+_LOG_DETAIL_CHARS = 300
 
 FORBIDDEN_AUTHORITY = frozenset({"_actor", "_roles", "_tenant", "principal", "tenant"})
 FORBIDDEN_OWNER = frozenset({"owner", "owner_ref"})
@@ -117,12 +122,21 @@ def _validate_provider(
         return OpError("UNAVAILABLE", {"reason": "EG schema validator unavailable"})
     try:
         validated = schema_validate(model, params)
-    except ValueError:
+    except ValueError as exc:
+        _logger.warning(
+            "provider schema %s refused params: %s",
+            model,
+            (str(exc).splitlines() or [type(exc).__name__])[0][:_LOG_DETAIL_CHARS],
+        )
         return OpError("INVALID_ARGUMENT")
     except Exception:
+        _logger.warning("provider schema %s is unavailable", model, exc_info=True)
         return OpError("UNAVAILABLE", {"reason": "schema authority unavailable"})
-    if not isinstance(validated, Mapping) or forbidden_path(validated) is not None:
+    if not isinstance(validated, Mapping):
         return OpError("INVALID_ARGUMENT")
+    asserted = forbidden_path(validated)
+    if asserted is not None:
+        return OpError("INVALID_ARGUMENT", {"field": asserted})
     return validated
 
 

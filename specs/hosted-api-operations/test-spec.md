@@ -185,3 +185,37 @@ packages and exercise both schema lookup and invocation.
 | Case | Row | Proving test and observation |
 |---|---|---|
 | Evidence | `ARBORA-OPS-R843.1` | `tests/api/test_au_tool_parity.py::test_replaced_wrapper_methods_are_served`: each needed method is a generated operation. Every read tool maps only to a read-effect operation. |
+
+## ARBORA-OPS-R067 acceptance
+
+| Case | Row | Proving test and observation |
+|---|---|---|
+| Model | `ARBORA-OPS-R067.1` | `tests/api/test_research_web.py::test_params_and_result_round_trip`: A round trip keeps every field. |
+| Behavior | `ARBORA-OPS-R067.2` | `tests/api/test_research_web.py::test_composes_four_steps_in_order`: The engine receives the query, the question and the work item in order. |
+| Backend | `ARBORA-OPS-R067.3` | `tests/api/test_research_web_backends.py::test_explicit_archivebox_run`: A `backend=archivebox` run stores equal Documents. |
+| Fallback | `ARBORA-OPS-R067.3` | `tests/api/test_research_web_backends.py::test_forced_fallback_run`: A failed primary page reaches `archivebox` once and records it. |
+| Wiring | `ARBORA-OPS-R067.4` | `tests/api/test_research_web.py::test_served_invoke_reaches_handler`: A served call reaches the handler. |
+| Refusal | `ARBORA-OPS-R067.5` | `tests/api/test_research_web.py::test_research_web_refusals`: Each case returns its code and enqueues nothing. |
+| Evidence | `ARBORA-OPS-R067.6` | `tests/api/test_research_web.py::test_trace_names_decision_and_backends`: The trace holds the fields and no page text. |
+| Hot-path proof | `ARBORA-OPS-R067.7` | `tests/gateway/test_research_web_served.py::test_research_web_default_archivebox_and_fallback`: Three served calls store equal Documents and cite the backend. |
+
+Hot-path proof for `ARBORA-OPS-R067`: `tests/gateway/test_research_web_served.py::test_research_web_default_archivebox_and_fallback`.
+
+## Connector sources (ARBORA-OPS-R020.6)
+
+| Requirement | Case | Required assertion |
+|---|---|---|
+| `ARBORA-OPS-R020.6` | Connector sources served through the composed SDK sync runner | The rollup closes when `ARBORA-OPS-R020.6.1` through `ARBORA-OPS-R020.6.6` pass their proving tests. |
+| `ARBORA-OPS-R020.6.1` | Model | `tests/ingest/test_connector_sources.py::test_source_record_shape` validates the record and refuses a malformed source ID. |
+| `ARBORA-OPS-R020.6.2` | Behavior | `tests/ingest/test_connector_sources.py::test_list_sync_status_compose_runner` drives the three operations over a fake gateway and engine. |
+| `ARBORA-OPS-R020.6.3` | Wiring | `tests/ingest/test_connector_sources.py::test_served_invocation_binds_ingest_runner` finds the composed runner in the operation runtime bindings. |
+| `ARBORA-OPS-R020.6.4` | Refusal | `tests/ingest/test_connector_sources.py::test_refusals_fail_closed` covers each refusal and the failed WorkItem commit. |
+| `ARBORA-OPS-R020.6.5` | Evidence | `tests/ingest/test_connector_sources.py::test_receipt_binds_work_item` compares the receipt job ID with the committed WorkItem. |
+| `ARBORA-OPS-R020.6.6` | Hot-path proof | The test observes the declared source, a succeeded WorkItem and the ingested nodes with provenance. |
+
+## Refusal causes and replay owners (ARBORA-OPS-R009.2, R009.3)
+
+| Requirement | Case | Required assertion |
+|---|---|---|
+| `ARBORA-OPS-R009.2` | Refusal causes are logged | `tests/api/test_refusal_causes.py::test_refusal_cause_is_logged_with_request_id` observes the logged cause and the redacted envelope. |
+| `ARBORA-OPS-R009.3` | Declared replay owners | `tests/api/test_refusal_causes.py::test_ops_modules_declare_replay_owners` finds `agents.run` and a test module's declaration. |

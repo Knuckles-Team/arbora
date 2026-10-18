@@ -121,3 +121,8 @@ unknown fields, incomplete MFA, bootstrap and fresh refusal after a prior
 success. These fixtures prove consumer behavior only. EG native persistence,
 committed response publication and real admitted host startup must be tested
 against the qualified producer before claiming served acceptance.
+
+The existing HostStartAdmission accepts the consumer session port directly.
+Controlled owner fixtures check fresh session revocation and reference changes
+before admission returns. They do not qualify create_agent_server or native
+startup. Generated new-metadata decoding remains producer-dependent.

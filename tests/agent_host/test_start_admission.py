@@ -19,7 +19,10 @@ from arbora.agent_host.start_admission import (
     HostStartGrant,
     HostStartRequest,
 )
-from arbora.agent_host.start_configuration import HostStartConfiguration
+from arbora.agent_host.start_configuration import (
+    HostRuntimeResources,
+    HostStartConfiguration,
+)
 from arbora.api.contracts.session import GraphSession
 from arbora.identity.engine import Resolution
 from arbora.identity.ports import SessionState
@@ -89,7 +92,12 @@ class Owners:
         return self.grant
 
     async def attest(
-        self, state: SessionState, graph_session: GraphSession
+        self,
+        state: SessionState,
+        graph_session: GraphSession,
+        *,
+        runtime: HostRuntimeResources | None = None,
+        configuration_digest: str | None = None,
     ) -> HostSessionBinding | None:
         return self.binding
 

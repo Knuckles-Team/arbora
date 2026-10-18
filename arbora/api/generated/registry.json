@@ -23983,6 +23983,119 @@
       "verb": "ask"
     },
     {
+      "audit": "event",
+      "binding": {
+        "handler": "arbora.api.ops.research.handle_research_web",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "write",
+      "examples": [
+        "research kubernetes pod disruption budgets on the web"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "research.web",
+      "idempotency": "natural",
+      "params": {
+        "model": "arbora.api.ops.research.ResearchWebParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "backend": {
+              "default": "webarchiver",
+              "enum": [
+                "webarchiver",
+                "archivebox"
+              ],
+              "title": "Backend",
+              "type": "string"
+            },
+            "deadline_s": {
+              "default": 60,
+              "maximum": 300,
+              "minimum": 1,
+              "title": "Deadline S",
+              "type": "integer"
+            },
+            "freshness_window_s": {
+              "default": 86400,
+              "maximum": 31536000,
+              "minimum": 0,
+              "title": "Freshness Window S",
+              "type": "integer"
+            },
+            "max_pages": {
+              "default": 5,
+              "maximum": 32,
+              "minimum": 1,
+              "title": "Max Pages",
+              "type": "integer"
+            },
+            "query": {
+              "anyOf": [
+                {
+                  "maxLength": 512,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Query"
+            },
+            "urls": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 32,
+              "title": "Urls",
+              "type": "array"
+            }
+          },
+          "title": "ResearchWebParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.research.ResearchWebResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "ResearchWebResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "ingest:write",
+        "mcp:delegate"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Search the web, fetch and ingest the best pages, and return cited documents",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "act"
+    },
+    {
       "audit": "none",
       "binding": {
         "handler": "arbora.api.ops.retrieval.handle_retrieval_freshness",
@@ -24705,5 +24818,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "bb0b971087538641a971d10306877248004f83c4870c645933746212e7c8d775"
+  "registry_digest": "d3010942777be32455dcf7f8bbd4c356fae1fefaf99d2926ad7deceaa06a4cbe"
 }

@@ -199,3 +199,50 @@ async def test_real_generated_atomic_record_when_producer_available():
     assert state.session_ref == record_value()["session_ref"]
     assert state.expires_at_ms == record_value()["idle_expires_at_ms"]
     assert state.resolution.principal_id == record_value()["principal_id"]
+
+
+@pytest.mark.parametrize("refresh", ["unchanged", "revoked", "different_session"])
+async def test_consumer_drives_existing_host_start_admission(
+    controlled_decoder, tmp_path, refresh
+):
+    """Controlled owner wiring, not native startup or workspace authority proof."""
+    from dataclasses import replace
+
+    from arbora.agent_host.start_admission import HostStartAdmission
+    from tests.agent_host.test_start_admission import Owners
+
+    owner = Owners(tmp_path)
+    reply = reply_value()
+    reply["value"].update(
+        principal_id="alice",
+        username="alice",
+        roles=[],
+        scopes=[],
+        request_context=dict(owner.graph.engine_verified_context()),
+    )
+    reply["value"]["session_record"].update(
+        principal_id="alice", tenant="tenant", session_ref="session-alice"
+    )
+    client = Client(reply)
+    ports = build_engine_identity_ports(client, graph="identity-fixture")
+    owner.state = await ports.sessions.resolve_session("exact-credential")
+    owner.binding = replace(owner.binding, state=owner.state)
+
+    class Policy:
+        async def authorize(self, state, request):
+            if refresh == "revoked":
+                client.reply = PermissionError("revoked")
+            elif refresh == "different_session":
+                client.reply["value"]["session_record"]["session_ref"] = "other-session"
+            return owner.grant
+
+    admission = HostStartAdmission(ports.sessions, Policy(), owner)
+    if refresh == "unchanged":
+        admitted = await admission.admit("exact-credential", owner.request, owner.graph)
+        assert admitted.graph_session is owner.graph
+        assert admitted.state.session_ref == "session-alice"
+        assert admitted.expires_at_ms <= owner.grant.expires_at_ms
+    else:
+        with pytest.raises(PermissionError):
+            await admission.admit("exact-credential", owner.request, owner.graph)
+    assert len(client.calls) == 3
