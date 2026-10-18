@@ -316,7 +316,11 @@ jobs:
           else
             echo "pr-test-scope: running only the tests this diff affects:"
             echo "$SCOPE"
-            mapfile -t affected_tests <<< "$SCOPE"
+            # pytest 9 drops a conftest.py's fixtures for a directory whose
+            # files are interleaved with another directory's in the argument
+            # list ("fixture 'stdio_fleet_authority' not found"); the scope
+            # arrives in arbitrary order, so group each directory's files.
+            mapfile -t affected_tests < <(printf '%s\n' "$SCOPE" | awk -F/ '{d=$0; sub(/\/[^\/]*$/, "", d); print d "\t" $0}' | sort | cut -f2)
             scripts/local_hook.sh pytest "${affected_tests[@]}"
           fi
 
