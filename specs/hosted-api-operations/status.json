@@ -2063,11 +2063,11 @@
       "title": "Backend choice and fallback",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "41dfc093f957",
-        "a8ab9026ed21",
-        "e30f49ca78d9",
-        "f482fcd9497c",
-        "fff3d48c117b"
+        "1a451cf70043",
+        "1c39905dafb3",
+        "253689e47255",
+        "5170b8a8edde",
+        "927596678c52"
       ],
       "verified_by": [
         "tests/api/test_client_http.py:27",
