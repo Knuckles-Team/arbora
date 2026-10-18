@@ -137,3 +137,26 @@ def test_falsey_admitted_executor_is_preserved(tmp_path: Path):
         assert response.status_code == 200
         assert "error" not in response.json()
         assert "borrowed executor" in response.text
+
+
+@pytest.mark.spec("ARBORA-HOST-R010.7.2.2.2.1")
+@pytest.mark.parametrize(
+    "change", ["grant_revision", "session", "configuration", "expiry"]
+)
+def test_changed_grant_cannot_reenter_lifespan(tmp_path: Path, change: str):
+    owner = ConstructionOwner(tmp_path)
+    app = application(owner)
+    if change == "grant_revision":
+        owner.grant = replace(owner.grant, revision="another-lease:1")
+    elif change == "session":
+        owner.grant = replace(owner.grant, session_ref="another-session")
+    elif change == "configuration":
+        owner.grant = replace(
+            owner.grant, request=replace(owner.request, configuration_digest="f" * 64)
+        )
+    else:
+        owner.grant = replace(owner.grant, expires_at_ms=0)
+    with pytest.raises(PermissionError):
+        with TestClient(app):
+            pytest.fail("changed grant reached readiness")
+    assert not hasattr(app.state, "admitted_host_start")

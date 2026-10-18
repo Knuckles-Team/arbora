@@ -91,6 +91,21 @@ class HostSessionBinding:
 
 
 class HostStartGrantProvider(Protocol):
+    """Trusted access-owner projection, not a decoder for caller lease maps.
+
+    Each call must freshly resolve the exact tenant-scoped grant and verify
+    issuer authority for host.start, the immutable request/session binding,
+    current policy and lease revision, status and expiry. Kind/issuer strings
+    in a ControlLease grant body do not prove issuance authority. Generic
+    lease:write or graph access does not imply host-start authority.
+
+    A lease-backed implementation must preserve lease identity together with
+    its revision in the returned opaque revision token; equal revisions on
+    different leases must not establish continuity. Return None when the
+    owner cannot qualify any of these facts. No production owner is selected
+    by this protocol, and no approval or lease policy is introduced here.
+    """
+
     async def authorize(
         self, state: SessionState, request: HostStartRequest
     ) -> HostStartGrant | None: ...

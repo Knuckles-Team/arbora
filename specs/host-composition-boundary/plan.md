@@ -330,11 +330,71 @@ ARBORA-HOST-R010.7.2.2.1 connects the existing runtime admission to
 create_agent_server through an explicit host_runtime argument. Legacy resource
 arguments may be omitted or refer to the same borrowed objects. Conflicts and
 unknown arguments refuse before owner calls. No resources are constructed or
-closed by this attachment. ARBORA-HOST-R010.7.2.2.2 remains pending: host.start
-policy and construction-owner implementations, browser current-caller binding,
-and authenticated client lifetime composition are not implemented by this bundle.
+closed by this attachment. ARBORA-HOST-R010.7.2.2.2 remains pending.
+Missing parts include host.start policy, construction owners, browser caller binding
+and authenticated client lifetime composition.
 
 ## 2026-10-18 borrowed runtime lifespan
 
 R010.7.2.2.2.1 reuses the checked start and existing owner ports at ASGI startup.
 It adds no provider, policy or UI import. R010.7.2.2.2.2 retains live client acceptance.
+
+
+## 2026-10-18 R010.7.1 access-operation adapter assessment
+
+The existing operations cannot yet provide an authoritative HostStartGrant.
+`arbora/access/service.py:check_access` delegates graph access to CheckAccess
+and returns only allowed. EG AccessDecision binds agent, graph and read/write
+access; it carries no session, workspace, configuration or grant lifetime.
+RbacElevation remains graph-access elevation, not a host-start grant.
+
+ActionPolicy PolicyReceipt binds a request digest, disposition, origin and
+optional approval id. It does not expose a current exact-session grant with
+policy revision, grant revision and expiry. Hashing host-start fields into its
+request does not establish those missing authoritative facts.
+
+EG IssueControlLease can store all required fields in its immutable grant map,
+with tenant checks, revision and expiry. These fields represent storage facts.
+Generic lease permissions and principal-to-kind restrictions do not establish
+a qualified host-start issuer.
+Arbora's generic approval handlers are also not registered while their required
+approval scopes are absent. No existing host-start grant kind, issuer binding
+or authoritative projection is wired here. Do not turn a caller-authored lease
+map into authority merely because its fields match.
+
+Smallest follow-up under R010.7.1 and ARBORA-IDENTITY-R019: specify the host-start
+projection of the existing access owner. Bind its verified issuer and permitted
+lease kind. Derive tenant, principal and session from current authority.
+Validate workspace, interfaces, web_logs and actual configuration digest.
+Return existing HostStartGrant fields including current policy/grant revisions and expiry.
+Use the existing native control-lease lifecycle if its issuer restriction is
+qualified, without a new lease store. Then implement HostStartGrantProvider as
+that owner's consumer, refreshing status/revision/expiry before startup and
+re-admission. Until this binding exists, selected interfaces remain unavailable.
+
+This amendment adds no approval policy, role assignment, universal MFA, new TTL,
+single-use requirement or live issuer. Preserve human/service-account parity,
+existing conditional approval rules, replay-safe restart admission and the
+existing five-second ownership-aware shutdown bound. Ordinary no-auth loopback
+validation retains bootstrap principal, normal scopes/RBAC, Host/Origin checks
+and diagnostics independently of selected-interface grants.
+
+
+### Reviewed issuer privilege gap
+
+Independent architecture review rejects a raw ControlLeaseView-to-HostStartGrant
+adapter. Generic lease:write can issue a caller-chosen kind; principals absent
+from ControlLeaseKindPolicy's restriction map are permitted. ControlLeaseView
+contains no authenticated issuer provenance. host.start is currently the action
+literal required by this host contract, not an enforced scope in the inspected
+EG scope registry. Treating lease:write as host-start issuance introduces a new privilege decision.
+
+The specific pending decision is which existing access-owner permission may
+issue host-start authority, with an enforceable issuer-to-kind binding. This
+need not introduce a new scope, and does not require approval on every use of
+an already valid grant. No particular principal, new approval policy or deployed
+permission is selected here.
+
+The existing provider protocol now states fresh exact-read/provenance duties
+and requires lease identity plus revision for continuity. Adversarial fixtures reject generic lease maps even when every caller-provided field matches.
+ASGI lifespan fixtures reject changed grant revision, session, configuration or expiry before readiness. They do not qualify a production issuer or consumer adapter.
