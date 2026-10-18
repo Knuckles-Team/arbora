@@ -302,19 +302,6 @@
         "title": "CapacitySetModeParams",
         "type": "object"
       },
-      "Schema18ac9ddd6db535265f68136dbc8adf3281c24b3db640dd19a5fd79c99dc35887": {
-        "additionalProperties": false,
-        "properties": {
-          "value": {
-            "$ref": "#/components/schemas/Schemacf39ffc76907695a68d495a9c1e411fd37da742cfa5f8b9f90231effff240e3c"
-          }
-        },
-        "required": [
-          "value"
-        ],
-        "title": "IngestSourceStatusResult",
-        "type": "object"
-      },
       "Schema1acc67e49d84b0d66be3e6187ce3a6b1674c9d47c7230b9f298b2f2e117ab25b": {
         "minLength": 1,
         "title": "Text",
@@ -1316,6 +1303,19 @@
           }
         },
         "title": "FleetUnloadParams",
+        "type": "object"
+      },
+      "Schemab2e631b4636bd6bbe796db78f5f0efafe42402deb58b8bc7828ce6ee8e61274a": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "IngestSourceStatusResult",
         "type": "object"
       },
       "Schemab3f000c70ab02110b0c2096d32ea30c2b17fe66b750ffbbf1cb5aed4fc0290fa": {
@@ -16315,6 +16315,176 @@
         ]
       }
     },
+    "/api/v1/ops/eg.storage.KvCas": {
+      "post": {
+        "operationId": "eg.storage.KvCas",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/KvCas"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.storage.json#/methods/KvCas"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Compare-and-swap on the row commit version inside one admitted kv.redb write; 0 means absent. A failed comparison is a terminal, replayable verdict",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.storage.KvDelete": {
+      "post": {
+        "operationId": "eg.storage.KvDelete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/KvDelete"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.storage.json#/methods/KvDelete"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Native MutationBatch in kv.redb. Re-deleting an absent key is a safe no-op that answers false",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.storage.KvGet": {
+      "post": {
+        "operationId": "eg.storage.KvGet",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/KvGet"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.storage.json#/methods/KvGet"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "EG-DURABLE-KERNEL-R102. The key is scoped by verified tenant, principal (unless shared), request graph and namespace. It answers the value and its commit version",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.storage.KvPut": {
+      "post": {
+        "operationId": "eg.storage.KvPut",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/KvPut"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.storage.json#/methods/KvPut"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Native MutationBatch in kv.redb, committed before the acknowledgment. Each write stamps a new namespace commit version. The batch ledger is the durable audit",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.storage.KvScan": {
+      "post": {
+        "operationId": "eg.storage.KvScan",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/KvScan"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.storage.json#/methods/KvScan"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Bounded prefix scan over one snapshot. A page holds at most 1000 rows (default 100) and 4 MiB. An exclusive-start cursor resumes it",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.storage.Restore": {
       "post": {
         "operationId": "eg.storage.Restore",
@@ -17794,7 +17964,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Schema18ac9ddd6db535265f68136dbc8adf3281c24b3db640dd19a5fd79c99dc35887"
+                  "$ref": "#/components/schemas/Schemab2e631b4636bd6bbe796db78f5f0efafe42402deb58b8bc7828ce6ee8e61274a"
                 }
               }
             },
@@ -18488,5 +18658,5 @@
       }
     }
   },
-  "x-registry-digest": "bb0b971087538641a971d10306877248004f83c4870c645933746212e7c8d775"
+  "x-registry-digest": "971f81772f90fb7de214ec1ba3aac6ce66771bdfa07be80a2632dd5a6a4fb5a8"
 }

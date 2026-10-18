@@ -5140,6 +5140,66 @@
     {
       "domain": "eg",
       "examples": [
+        "KvCas storage"
+      ],
+      "id": "eg.storage.KvCas",
+      "summary": "Compare-and-swap on the row commit version inside one admitted kv.redb write; 0 means absent. A failed comparison is a terminal, replayable verdict",
+      "tags": [
+        "eg"
+      ],
+      "verb": "write"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "KvDelete storage"
+      ],
+      "id": "eg.storage.KvDelete",
+      "summary": "Native MutationBatch in kv.redb. Re-deleting an absent key is a safe no-op that answers false",
+      "tags": [
+        "eg"
+      ],
+      "verb": "write"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "KvGet storage"
+      ],
+      "id": "eg.storage.KvGet",
+      "summary": "EG-DURABLE-KERNEL-R102. The key is scoped by verified tenant, principal (unless shared), request graph and namespace. It answers the value and its commit version",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "KvPut storage"
+      ],
+      "id": "eg.storage.KvPut",
+      "summary": "Native MutationBatch in kv.redb, committed before the acknowledgment. Each write stamps a new namespace commit version. The batch ledger is the durable audit",
+      "tags": [
+        "eg"
+      ],
+      "verb": "write"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "KvScan storage"
+      ],
+      "id": "eg.storage.KvScan",
+      "summary": "Bounded prefix scan over one snapshot. A page holds at most 1000 rows (default 100) and 4 MiB. An exclusive-start cursor resumes it",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
         "Restore storage"
       ],
       "id": "eg.storage.Restore",
@@ -5942,5 +6002,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "bb0b971087538641a971d10306877248004f83c4870c645933746212e7c8d775"
+  "registry_digest": "971f81772f90fb7de214ec1ba3aac6ce66771bdfa07be80a2632dd5a6a4fb5a8"
 }
