@@ -12,6 +12,8 @@
     "ARBORA-IDENTITY-R004.1",
     "ARBORA-IDENTITY-R004.2",
     "ARBORA-IDENTITY-R005",
+    "ARBORA-IDENTITY-R005.1",
+    "ARBORA-IDENTITY-R005.2",
     "ARBORA-IDENTITY-R006",
     "ARBORA-IDENTITY-R006.1",
     "ARBORA-IDENTITY-R006.2",
@@ -185,10 +187,32 @@
     {
       "id": "ARBORA-IDENTITY-R005",
       "title": "Local account lifecycle with server-side sessions",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "9a8cbf921748"
       ],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-IDENTITY-R005.1",
+        "ARBORA-IDENTITY-R005.2"
+      ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R005.1",
+      "title": "Consume exact persisted session facts",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "753803845a64"
+      ],
+      "verified_by": [
+        "tests/identity/test_engine_session_authority.py:13"
+      ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R005.2",
+      "title": "Complete served account lifecycle acceptance",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": []
     },
     {
