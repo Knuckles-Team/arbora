@@ -13,6 +13,8 @@ from typing import Any
 
 import httpx
 
+from .invoke import Transport
+
 __all__ = ["HttpTransport", "OperationError"]
 
 
@@ -25,7 +27,7 @@ class OperationError(Exception):
         super().__init__(code)
 
 
-class HttpTransport:
+class HttpTransport(Transport):
     """POST one operation's params to a served Arbora REST gateway."""
 
     def __init__(
