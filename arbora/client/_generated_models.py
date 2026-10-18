@@ -9,7 +9,7 @@ from typing import Literal
 
 from arbora.client._schema import _expanded_spec
 
-REGISTRY_DIGEST = "d3010942777be32455dcf7f8bbd4c356fae1fefaf99d2926ad7deceaa06a4cbe"
+REGISTRY_DIGEST = "7c404ee300ed5659eeb7d47eb690b47588771105d0b0b6bc3f424d95e75fa1c0"
 API_VERSION = "1"
 type OperationId = Literal[
     "access.check",
@@ -440,6 +440,11 @@ type OperationId = Literal[
     "eg.storage.FromMsgpack",
     "eg.storage.GuardrailEntailment",
     "eg.storage.ImportSqliteFile",
+    "eg.storage.KvCas",
+    "eg.storage.KvDelete",
+    "eg.storage.KvGet",
+    "eg.storage.KvPut",
+    "eg.storage.KvScan",
     "eg.storage.Restore",
     "eg.storage.SqlSourceBatch",
     "eg.storage.ToMsgpack",

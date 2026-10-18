@@ -700,6 +700,40 @@ def _post_op_keyed(stack: dict[str, Any], op_id: str, params: dict[str, Any]) ->
     return response.json()
 
 
+async def _direct_submit(stack: dict[str, Any], connector: str) -> str:
+    """Submit one record straight to the engine; return its refusal (diagnostics)."""
+    from agent_connector_sdk.ingest.model import ChangeSet, Entity, IngestBinding
+    from agent_connector_sdk.ingest.service import KnowledgeIngest
+    from agent_connector_sdk.ingest.transport import EpistemicGraphIngestTransport
+    from epistemic_graph import EpistemicGraphClient
+
+    client = await EpistemicGraphClient.connect(
+        socket_path=stack["socket_path"],
+        auth_secret=stack["secret"],
+        graph_name=TENANT_GRAPH,
+        verified_context={
+            "principal": PROCESS_SUBJECT,
+            "tenant": TENANT,
+            "audience": AUDIENCE,
+            "agent_id": PROCESS_SUBJECT,
+            "roles": list(ROLES),
+            "scopes": list(ROLES),
+            "policy_version": POLICY_VERSION,
+            "delegation": [],
+        },
+    )
+    try:
+        await KnowledgeIngest(EpistemicGraphIngestTransport(client)).submit(
+            IngestBinding(connector=connector, stream="probe"),
+            ChangeSet(entities=(Entity(id="probe-1", node_type="FixtureItem"),)),
+        )
+        return "accepted"
+    except Exception as exc:  # diagnostics only
+        return f"{type(exc).__name__}: {exc}"
+    finally:
+        await client.close()
+
+
 async def _pack_status(stack: dict[str, Any], connector: str) -> Any:
     """The engine's ConnectorPack status for ``connector`` (diagnostics)."""
     from epistemic_graph import EpistemicGraphClient
@@ -748,8 +782,8 @@ def test_ingest_sources_list_sync_status(stack: dict[str, Any]) -> None:
     status = _post_op(stack, "ingest.sources.status", {"source_id": source_id})
     record = status["result"]["value"]
     if record.get("sync_reason") is not None:
-        pack = asyncio.run(_pack_status(stack, INGEST_CONNECTOR))
-        raise AssertionError(f"{record}\nPACK STATUS: {pack!r}")
+        direct = asyncio.run(_direct_submit(stack, INGEST_CONNECTOR))
+        raise AssertionError(f"{record}\nDIRECT SUBMIT: {direct}")
     assert record["last_job_id"] == receipt["job_id"], (status, stack["logs"]())
     assert receipt["status"] == "completed", (receipt, record, stack["logs"]())
     assert record["records"] == 3, record

@@ -64,6 +64,7 @@ class IngestSourceRecord(BaseModel):
     last_job_id: str | None = None
     sync_state: str | None = None
     sync_reason: str | None = None
+    sync_engine_code: str | None = None
 
 
 class IngestSourceInventory(BaseModel):

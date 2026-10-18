@@ -232,6 +232,7 @@ class ConnectorIngestRunner:
             last_job_id=state.last_job_id,
             sync_state=state.state,
             sync_reason=(state.last_report or {}).get("reason"),
+            sync_engine_code=(state.last_report or {}).get("engine_code"),
         )
 
     async def list_sources(
