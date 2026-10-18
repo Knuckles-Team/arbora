@@ -1,6 +1,8 @@
 #!/usr/bin/python
 from __future__ import annotations
 
+from arbora.unique_records import create_record
+
 """KG-backed durable sink for the public error-detail store (D-24).
 
 the error surface keeps a bounded, in-process
@@ -85,7 +87,7 @@ class GraphErrorDetailSink:
         props = {"correlation_id": correlation_id}
         props.update({field: record.get(field, "") for field in _RECORD_FIELDS})
         try:
-            self._engine.add_node(node_id, ERROR_DETAIL_NODE_LABEL, properties=props)
+            create_record(self._engine, node_id, ERROR_DETAIL_NODE_LABEL, props)
         except Exception:  # noqa: BLE001 — a provenance write must never fail the caller
             logger.warning(
                 "GraphErrorDetailSink failed to persist detail for correlation_id=%s",

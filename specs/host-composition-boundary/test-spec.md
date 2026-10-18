@@ -94,6 +94,7 @@ Missing receipt fields or public consumer exports block positive served acceptan
 - `ARBORA-HOST-R022.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-HOST-R010.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-HOST-R032`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-HOST-R033`: Unit tests drive the action policy and the served engine with recording doubles. They prove a create never reaches `AddNode`.
 
 ## Unsupported interface refusal
 

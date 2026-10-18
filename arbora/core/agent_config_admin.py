@@ -43,6 +43,7 @@ from arbora.security.config_sensitivity import (
     configuration_key_is_sensitive,
     runtime_reference,
 )
+from arbora.unique_records import create_record
 
 logger = logging.getLogger(__name__)
 
@@ -354,10 +355,11 @@ def _record_provenance(
     try:
         from arbora.mcp_server import runtime
 
-        runtime._get_engine().add_node(
+        create_record(
+            runtime._get_engine(),
             node_id,
+            "ConfigChange",
             {
-                "node_type": "ConfigChange",
                 "config_key": env_key,
                 "value_redacted": bool(redacted),
                 "reason": reason or "",
