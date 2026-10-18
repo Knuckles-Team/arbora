@@ -223,10 +223,10 @@
         "deb2b45bf83d"
       ],
       "verified_by": [
-        "tests/test_real_boot.py:718",
-        "tests/test_real_boot.py:739",
-        "tests/test_real_boot.py:748",
-        "tests/test_real_boot.py:767"
+        "tests/test_real_boot.py:853",
+        "tests/test_real_boot.py:874",
+        "tests/test_real_boot.py:883",
+        "tests/test_real_boot.py:902"
       ]
     },
     {
@@ -728,7 +728,7 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [
-        "tests/test_real_boot.py:768"
+        "tests/test_real_boot.py:797"
       ]
     },
     {
