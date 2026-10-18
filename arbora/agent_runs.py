@@ -147,29 +147,48 @@ def _engine() -> Any:
 
 
 def record_run_event(event: Mapping[str, Any]) -> None:
-    """Write one run event to the engine; without an engine it is logged only."""
+    """Write one run event to the engine as a ``RunEvent`` node.
+
+    The served engine writes a node through EG ``AddNode``; an engine with
+    the typed-batch seam uses that. A failed write is logged, never raised:
+    a run does not fail because its trace could not be stored.
+    """
     engine = _engine()
-    write = getattr(engine, "batch_typed_mutations", None)
-    if not callable(write):
-        logger.debug("run event not persisted: no engine is bound")
-        return
     run_id = str(event.get("run_id") or "")
+    node_id = f"runevent:{run_id}:{uuid.uuid4().hex}"
     properties = {
         "run_id": run_id,
+        # An A2A run takes its task id as its run id.
+        "task_id": run_id,
         "event_type": str(event.get("type") or ""),
         "step": int(event.get("step") or 0),
-        "payload": json.dumps(dict(event), sort_keys=True, default=str),
+        "payload": json.dumps(dict(event), sort_keys=True, default=str)[:65_536],
     }
-    write(
-        [
-            {
-                "kind": "node",
-                "id": f"runevent:{run_id}:{uuid.uuid4().hex}",
-                "node_type": "RunEvent",
-                "properties": properties,
-            }
-        ]
-    )
+    batch = getattr(engine, "batch_typed_mutations", None)
+    add_node = getattr(engine, "add_node", None)
+    try:
+        if callable(batch):
+            batch(
+                [
+                    {
+                        "kind": "node",
+                        "id": node_id,
+                        "node_type": "RunEvent",
+                        "properties": properties,
+                    }
+                ]
+            )
+        elif callable(add_node):
+            add_node(node_id, "RunEvent", properties)
+        else:
+            logger.warning("run event not persisted: no engine is bound")
+    except Exception as exc:  # noqa: BLE001 - the trace never fails the run
+        logger.warning(
+            "run event %s of run %s not persisted: %s",
+            properties["event_type"],
+            run_id,
+            type(exc).__name__,
+        )
 
 
 class AgentRunPort:

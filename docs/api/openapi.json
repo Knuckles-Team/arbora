@@ -349,6 +349,20 @@
         "title": "Scopes",
         "type": "array"
       },
+      "Schema27fd10f3083b3fe243fb903b0248aee255e0d2dc67b473e91b2ec4113b40884e": {
+        "additionalProperties": false,
+        "description": "Select a run; caller authority is never a request field.",
+        "properties": {
+          "run_id": {
+            "$ref": "#/components/schemas/Schemadf135e01e5998bd761bf3770ae512003d9a8a935e6f90722820e930ca4b97338"
+          }
+        },
+        "required": [
+          "run_id"
+        ],
+        "title": "CurrentPlanRequest",
+        "type": "object"
+      },
       "Schema2a3346c94061750a81babcb5329ad7ea97272279823e97f893693e79e07c6a7b": {
         "items": {
           "$ref": "#/components/schemas/Schemab697b1595c2d8f9677b6d14572d7a100ee9694279919359d64f493f6cadc3541"
@@ -870,20 +884,6 @@
         ],
         "default": null,
         "title": "Cursor"
-      },
-      "Schema79eb626671193d787b1562980637cfcd217f5766896388cea5ddd578abb0beea": {
-        "additionalProperties": false,
-        "description": "The run to read. Caller authority never comes from parameters.",
-        "properties": {
-          "run_id": {
-            "$ref": "#/components/schemas/Schemadf135e01e5998bd761bf3770ae512003d9a8a935e6f90722820e930ca4b97338"
-          }
-        },
-        "required": [
-          "run_id"
-        ],
-        "title": "RunsCurrentPlanParams",
-        "type": "object"
       },
       "Schema7f72bf7cfe8ead111c70656a429c4f0d4793524693f91c39c47aa2fcdeef1b08": {
         "additionalProperties": false,
@@ -18243,7 +18243,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Schema79eb626671193d787b1562980637cfcd217f5766896388cea5ddd578abb0beea"
+                "$ref": "#/components/schemas/Schema27fd10f3083b3fe243fb903b0248aee255e0d2dc67b473e91b2ec4113b40884e"
               }
             }
           },
@@ -18488,5 +18488,5 @@
       }
     }
   },
-  "x-registry-digest": "b783d3ca241cda609cb6e37ab58fc4a3d73030ba3ece074034f5a6bc86a719e7"
+  "x-registry-digest": "bb0b971087538641a971d10306877248004f83c4870c645933746212e7c8d775"
 }

@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import contextlib
+import contextvars
 import logging
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterator, Mapping
 from typing import TYPE_CHECKING, Any
 
 logger = logging.getLogger(__name__)
@@ -106,6 +108,44 @@ def _claims_match(claims: Mapping[str, Any], session: Any, actor: Any) -> bool:
     )
 
 
+_REQUEST_REF: contextvars.ContextVar[str] = contextvars.ContextVar(
+    "arbora_request_ref", default=""
+)
+
+
+@contextlib.contextmanager
+def use_request_ref(ref: str) -> Iterator[None]:
+    """Name the current in-process request (an agent run's tool call)."""
+    token = _REQUEST_REF.set(str(ref)[:256])
+    try:
+        yield
+    finally:
+        _REQUEST_REF.reset(token)
+
+
+def mcp_request_ref() -> str:
+    """The current request's reference, or empty outside a request.
+
+    An in-process call bound by :func:`use_request_ref` names itself. An MCP
+    request is ``mcp:<session id>:<JSON-RPC request id>``: JSON-RPC ids
+    restart per session, so the session id keeps two sessions apart.
+    """
+    bound = _REQUEST_REF.get()
+    if bound:
+        return bound
+    try:
+        from fastmcp.server.dependencies import get_context
+
+        ctx = get_context()
+        request_id = ctx.request_id
+        session_id = ctx.session_id
+    except Exception:  # noqa: BLE001 - no MCP request in scope
+        return ""
+    if not request_id:
+        return ""
+    return f"mcp:{session_id or '-'}:{request_id}"[:256]
+
+
 class VerifiedMCPCaller:
     """Synchronous callback compatible with ``MCPProjection``.
 
@@ -134,6 +174,7 @@ class VerifiedMCPCaller:
             return caller_from_session(
                 self._session_for_request(),
                 credential_kind=self._credential_kind_for_request(),
+                request_id=mcp_request_ref(),
             )
         except PermissionError as exc:
             # Static, non-secret reason, so a refused caller is diagnosable.

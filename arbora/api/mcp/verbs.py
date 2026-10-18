@@ -407,6 +407,45 @@ def make_verb(name: str, projection: MCPProjection) -> Any:
     )
 
 
+def native_verb(name: str, projection: MCPProjection) -> Any:
+    """The verb as an in-process async function returning its envelope.
+
+    An agent run binds it as a native tool. It shares the MCP tool's
+    parameters and dispatch, so the run's calls take the same governed path.
+    """
+
+    if name not in VERBS:
+        raise ValueError("unknown MCP intent verb")
+
+    async def verb(
+        op: str | None = None,
+        intent: str | None = None,
+        params: dict[str, Any] | None = None,
+        plan_ref: str | None = None,
+        execute: bool = True,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        return await dispatch_verb(
+            name,
+            projection,
+            op=op,
+            intent=intent,
+            params=params,
+            plan_ref=plan_ref,
+            execute=execute,
+            idempotency_key=idempotency_key,
+        )
+
+    verb.__name__ = name
+    verb.__doc__ = (
+        f"Arbora {name} intent. Name an exact registry op with params, or an "
+        "intent in plain words. Connector tools: find(intent=...) lists them; "
+        "act(op='fleet.call', params={'server': ..., 'tool': ..., "
+        "'arguments': {...}}) calls one."
+    )
+    return verb
+
+
 def mcp_instructions(projection: MCPProjection) -> str:
     """Advertise the schema refresh key and stable intent surface at initialize."""
 

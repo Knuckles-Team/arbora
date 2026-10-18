@@ -10,67 +10,16 @@ the same ``unavailable`` result, which carries no items.
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from datetime import UTC, datetime, timedelta
-from typing import Any, Literal, Protocol, runtime_checkable
+from datetime import UTC, datetime
+from typing import Any, Protocol, runtime_checkable
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
+from agent_connector_sdk.current_plan import CurrentPlanRead, CurrentPlanRequest
+from pydantic import ValidationError
 
 from arbora.api.ops._common import Params, build_read_op
 from arbora.api.registry import OpSpec
 
-_RUN_ID = Field(min_length=1, max_length=512)
-
-
-class _Strict(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
-
-
-class PlanItem(_Strict):
-    """One immutable plan item, in producer order."""
-
-    text: str = Field(min_length=1)
-    status: Literal["pending", "in_progress", "done"]
-
-
-class CurrentPlanSnapshot(_Strict):
-    """Immutable plan content and its producer validity interval."""
-
-    run_id: str = _RUN_ID
-    revision: int = Field(ge=0)
-    observed_at: datetime
-    expires_at: datetime
-    items: tuple[PlanItem, ...]
-
-    @model_validator(mode="after")
-    def _utc_interval(self) -> CurrentPlanSnapshot:
-        stamps = (self.observed_at, self.expires_at)
-        if any(stamp.utcoffset() != timedelta(0) for stamp in stamps):
-            raise ValueError("plan timestamps must use UTC")
-        if self.expires_at <= self.observed_at:
-            raise ValueError("plan expiry must follow observation")
-        return self
-
-
-class CurrentPlanRead(_Strict):
-    """An available plan (possibly empty) or an unavailable read with no items."""
-
-    availability: Literal["available", "unavailable"]
-    snapshot: CurrentPlanSnapshot | None = None
-
-    @model_validator(mode="after")
-    def _availability_matches(self) -> CurrentPlanRead:
-        if (self.availability == "available") != (self.snapshot is not None):
-            raise ValueError("plan availability must match snapshot presence")
-        return self
-
-
 UNAVAILABLE = CurrentPlanRead(availability="unavailable")
-
-
-class RunsCurrentPlanParams(Params):
-    """The run to read. Caller authority never comes from parameters."""
-
-    run_id: str = _RUN_ID
 
 
 class RunsCurrentPlanResult(Params):
@@ -79,7 +28,7 @@ class RunsCurrentPlanResult(Params):
 
 @runtime_checkable
 class CurrentPlanReader(Protocol):
-    """The run harness port that holds the live plan scaffold of a run."""
+    """The host-composed read port for a run's live scaffold."""
 
     async def read(
         self, *, run_id: str, tenant: str, principal: str
@@ -126,7 +75,7 @@ async def handle_runs_current_plan(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Return the current plan of one run, or ``unavailable`` with no items."""
-    run_id = RunsCurrentPlanParams.model_validate(dict(params)).run_id
+    run_id = CurrentPlanRequest.model_validate(dict(params)).run_id
     read = await read_current_plan(context, run_id)
     return {"value": read.model_dump(mode="json")}
 
@@ -137,7 +86,7 @@ def operations() -> tuple[OpSpec, ...]:
             op_id="runs.current_plan",
             summary="Read the current plan of one run",
             examples=("what is the current plan of this run",),
-            params=RunsCurrentPlanParams,
+            params=CurrentPlanRequest,
             result=RunsCurrentPlanResult,
             handler="arbora.api.ops.runs.handle_runs_current_plan",
             scope="kg:read",
@@ -151,9 +100,7 @@ __all__ = [
     "UNAVAILABLE",
     "CurrentPlanRead",
     "CurrentPlanReader",
-    "CurrentPlanSnapshot",
-    "PlanItem",
-    "RunsCurrentPlanParams",
+    "CurrentPlanRequest",
     "RunsCurrentPlanResult",
     "handle_runs_current_plan",
     "operations",

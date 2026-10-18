@@ -20,7 +20,7 @@ from collections.abc import Callable
 from typing import Any
 
 from arbora.api.mcp.discovery import FleetSearch
-from arbora.api.mcp.verbs import VERBS, MCPProjection, make_verb
+from arbora.api.mcp.verbs import VERBS, MCPProjection, make_verb, native_verb
 from arbora.api.registry import Invoke
 
 __all__ = ["register_intent_surface"]
@@ -55,8 +55,11 @@ def register_intent_surface(
         invoke,
         fleet_search,
     )
+    from arbora.mcp_server import runtime
+
     for name in VERBS:
         mcp.add_tool(make_verb(name, projection))
+        runtime.NATIVE_INTENT_TOOLS[name] = native_verb(name, projection)
     _register_app_launchers(mcp)
     return projection
 
