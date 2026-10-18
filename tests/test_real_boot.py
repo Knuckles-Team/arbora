@@ -700,6 +700,37 @@ def _post_op_keyed(stack: dict[str, Any], op_id: str, params: dict[str, Any]) ->
     return response.json()
 
 
+async def _pack_status(stack: dict[str, Any], connector: str) -> Any:
+    """The engine's ConnectorPack status for ``connector`` (diagnostics)."""
+    from epistemic_graph import EpistemicGraphClient
+    from epistemic_graph.generated.connector_pack import ConnectorPackStatusRequest
+    from epistemic_graph.generated.storage import send_connector_pack_status
+
+    client = await EpistemicGraphClient.connect(
+        socket_path=stack["socket_path"],
+        auth_secret=stack["secret"],
+        graph_name=TENANT_GRAPH,
+        verified_context={
+            "principal": PROCESS_SUBJECT,
+            "tenant": TENANT,
+            "audience": AUDIENCE,
+            "agent_id": PROCESS_SUBJECT,
+            "roles": list(ROLES),
+            "scopes": list(ROLES),
+            "policy_version": POLICY_VERSION,
+            "delegation": [],
+        },
+    )
+    try:
+        return await send_connector_pack_status(
+            client,
+            ConnectorPackStatusRequest(connector=connector, tenant_id=TENANT),
+            TENANT_GRAPH,
+        )
+    finally:
+        await client.close()
+
+
 @pytest.mark.spec("ARBORA-OPS-R020.6.6")
 def test_ingest_sources_list_sync_status(stack: dict[str, Any]) -> None:
     """A declared connector source lists, syncs as a WorkItem, and lands in EG."""
@@ -716,6 +747,9 @@ def test_ingest_sources_list_sync_status(stack: dict[str, Any]) -> None:
     receipt = synced["result"]["value"]
     status = _post_op(stack, "ingest.sources.status", {"source_id": source_id})
     record = status["result"]["value"]
+    if record.get("sync_reason") is not None:
+        pack = asyncio.run(_pack_status(stack, INGEST_CONNECTOR))
+        raise AssertionError(f"{record}\nPACK STATUS: {pack!r}")
     assert record["last_job_id"] == receipt["job_id"], (status, stack["logs"]())
     assert receipt["status"] == "completed", (receipt, record, stack["logs"]())
     assert record["records"] == 3, record
