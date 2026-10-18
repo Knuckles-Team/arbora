@@ -2048,14 +2048,15 @@
       "title": "Revalidate borrowed runtime at ASGI startup",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "929134f25886",
         "bbeaf1147f83"
       ],
       "verified_by": [
-        "tests/agent_host/test_runtime_lifespan.py:108",
+        "tests/agent_host/test_runtime_lifespan.py:111",
         "tests/agent_host/test_runtime_lifespan.py:27",
-        "tests/agent_host/test_runtime_lifespan.py:44",
-        "tests/agent_host/test_runtime_lifespan.py:71",
-        "tests/agent_host/test_runtime_lifespan.py:80"
+        "tests/agent_host/test_runtime_lifespan.py:45",
+        "tests/agent_host/test_runtime_lifespan.py:73",
+        "tests/agent_host/test_runtime_lifespan.py:82"
       ]
     },
     {
