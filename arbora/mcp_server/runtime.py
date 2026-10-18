@@ -384,7 +384,9 @@ def build_native_arbora_toolset(tool_names: list[str], *, toolset_id: str) -> An
     for name in tool_names:
         if re.fullmatch(r"[a-z][a-z0-9_]{0,63}", name or "") is None:
             raise ValueError("native Arbora tool name is invalid")
-        function = REGISTERED_TOOLS.get(name) or NATIVE_INTENT_TOOLS.get(name)
+        # A served intent verb wins over a legacy registered tool of the same
+        # name: the run must call the governed verb, not an action tool.
+        function = NATIVE_INTENT_TOOLS.get(name) or REGISTERED_TOOLS.get(name)
         if function is None:
             raise RuntimeError("requested native Arbora tool is unavailable")
         registered.append((name, function))
@@ -395,9 +397,9 @@ def build_native_arbora_toolset(tool_names: list[str], *, toolset_id: str) -> An
         schema_source = Tool(function, name=name)
 
         dispatch = (
-            _registered_dispatch(name)
-            if name in REGISTERED_TOOLS
-            else _intent_dispatch(name, function, run_id)
+            _intent_dispatch(name, function, run_id)
+            if name in NATIVE_INTENT_TOOLS
+            else _registered_dispatch(name)
         )
         tools.append(
             Tool.from_schema(

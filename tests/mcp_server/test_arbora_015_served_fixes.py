@@ -216,6 +216,12 @@ def test_the_fleet_agent_toolset_binds_the_served_intent_verbs(monkeypatch) -> N
 
     for name in FLEET_TOOLS:
         monkeypatch.setitem(runtime.NATIVE_INTENT_TOOLS, name, make(name))
+
+    # A legacy action tool of the same name must not shadow the served verb.
+    async def legacy_act(action: str = "") -> str:
+        raise AssertionError("legacy tool called")
+
+    monkeypatch.setitem(runtime.REGISTERED_TOOLS, "act", legacy_act)
     from agent_utilities import host_ports
 
     monkeypatch.setattr(host_ports, "emit_run_event", events.append)
