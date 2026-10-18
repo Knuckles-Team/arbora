@@ -451,7 +451,12 @@ def test_release_eg_resolves_from_the_package_index_as_wheels() -> None:
         package for package in locked["package"] if package["name"] == "epistemic-graph"
     )
     assert eg["source"] == {"registry": "https://pypi.org/simple"}
-    assert eg.get("wheels") and "sdist" not in eg
+    assert eg.get("wheels")
+    # EG 2.27.3 also publishes an sdist; the lock records it, but uv never
+    # builds the engine from source.
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    no_build = set(project["tool"]["uv"].get("no-build-package", ()))
+    assert {"epistemic-graph", "epistemic-graph-server"} <= no_build
 
 
 def test_installed_sdk_contains_schema_disclosure_contract() -> None:
