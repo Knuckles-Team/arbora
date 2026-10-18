@@ -23968,6 +23968,274 @@
     {
       "audit": "event",
       "binding": {
+        "handler": "arbora.api.ops.messaging.handle_messaging_alert",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "write",
+      "examples": [
+        "send this alert to the operator"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": {
+        "method": "POST",
+        "path": "/api/v1/messaging/alert"
+      },
+      "id": "messaging.alert",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.messaging.MessagingAlertParams",
+        "schema": {
+          "additionalProperties": false,
+          "description": "A monitoring webhook body: plain text or an Alertmanager notification.",
+          "properties": {
+            "alerts": {
+              "anyOf": [
+                {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "maxItems": 100,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Alerts"
+            },
+            "commonAnnotations": {
+              "anyOf": [
+                {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Commonannotations"
+            },
+            "commonLabels": {
+              "anyOf": [
+                {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Commonlabels"
+            },
+            "content": {
+              "anyOf": [
+                {
+                  "maxLength": 4000,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Content"
+            },
+            "externalURL": {
+              "anyOf": [
+                {
+                  "maxLength": 2048,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Externalurl"
+            },
+            "groupKey": {
+              "anyOf": [
+                {
+                  "maxLength": 1024,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Groupkey"
+            },
+            "groupLabels": {
+              "anyOf": [
+                {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Grouplabels"
+            },
+            "message": {
+              "anyOf": [
+                {
+                  "maxLength": 4000,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Message"
+            },
+            "msg": {
+              "anyOf": [
+                {
+                  "maxLength": 4000,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Msg"
+            },
+            "receiver": {
+              "anyOf": [
+                {
+                  "maxLength": 256,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Receiver"
+            },
+            "status": {
+              "anyOf": [
+                {
+                  "maxLength": 64,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Status"
+            },
+            "text": {
+              "anyOf": [
+                {
+                  "maxLength": 4000,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Text"
+            },
+            "truncatedAlerts": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Truncatedalerts"
+            },
+            "version": {
+              "anyOf": [
+                {
+                  "maxLength": 16,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Version"
+            }
+          },
+          "title": "MessagingAlertParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.messaging.MessagingAlertResult",
+        "schema": {
+          "description": "Where the alert went; never the channel credentials.",
+          "properties": {
+            "channel_id": {
+              "title": "Channel Id",
+              "type": "string"
+            },
+            "delivered": {
+              "title": "Delivered",
+              "type": "boolean"
+            },
+            "message_id": {
+              "default": "",
+              "title": "Message Id",
+              "type": "string"
+            },
+            "platform": {
+              "title": "Platform",
+              "type": "string"
+            }
+          },
+          "required": [
+            "delivered",
+            "platform",
+            "channel_id"
+          ],
+          "title": "MessagingAlertResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "kg:write"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Deliver a monitoring alert to the operator's default channel",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "act"
+    },
+    {
+      "audit": "event",
+      "binding": {
         "handler": "arbora.api.ops.ops.handle_ops_backup",
         "kind": "composite"
       },
@@ -25416,5 +25684,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "8766a864a293551f8d0bca18958950133d7413659c3ff249cf22f63113b55e37"
+  "registry_digest": "0bf182064dbebba007b5ac61ef0edcb254d41a465000811eb9ad2d248c3cb6e6"
 }

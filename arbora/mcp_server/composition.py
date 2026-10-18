@@ -50,8 +50,18 @@ class CompositionPlan:
         return tuple(names)
 
 
+def _explicitly_true(value: Any) -> bool:
+    """True only for an explicit true value; the string ``"false"`` is false."""
+    if isinstance(value, bool):
+        return value
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
 def detect_composition(
-    engine: Any = None, *, messaging_intake_enabled: bool | None = None
+    engine: Any = None,
+    *,
+    messaging_intake_enabled: bool | None = None,
+    served_network: bool = False,
 ) -> CompositionPlan:
     """Read optional co-service intent without starting background work.
 
@@ -63,6 +73,11 @@ def detect_composition(
     ``MESSAGING_INTAKE_ENABLED`` deployment flag. A present ``TELEGRAM_BOT_TOKEN``
     alone must never decide pollership, so this role check is ANDed with the
     explicit flag rather than substituting for it.
+
+    The served network host (``served_network``: the ``streamable-http``
+    deployment container) is the channel gateway too (ARBORA-MESSAGING-R007):
+    with the explicit flag it may enter intake, and the engine's per-channel
+    WorkItem lease still admits exactly one poller per channel identity.
     """
     from arbora.core.settings import runtime_config as config
     from arbora.core.settings import setting
@@ -71,8 +86,8 @@ def detect_composition(
     return CompositionPlan(
         messaging_platforms=configured_platforms(engine),
         web_ui_enabled=bool(getattr(config, "enable_web_ui", False)),
-        messaging_intake_enabled=bool(messaging_intake_enabled)
-        and is_gateway_daemon_role,
+        messaging_intake_enabled=_explicitly_true(messaging_intake_enabled)
+        and (is_gateway_daemon_role or served_network),
     )
 
 
@@ -279,10 +294,15 @@ def start_composed_services(
     engine: Any,
     *,
     messaging_intake_enabled: bool | None = None,
+    served_network: bool = False,
 ) -> CoServiceSupervisor:
     """Start Arbora messaging intake and the arbora-owned WebUI host."""
 
-    plan = detect_composition(engine, messaging_intake_enabled=messaging_intake_enabled)
+    plan = detect_composition(
+        engine,
+        messaging_intake_enabled=messaging_intake_enabled,
+        served_network=served_network,
+    )
     supervisor = CoServiceSupervisor()
     if plan.messaging_intake_configured:
         start_messaging_intake(supervisor, engine, session, plan.messaging_platforms)

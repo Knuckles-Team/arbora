@@ -5826,6 +5826,18 @@
       "verb": "act"
     },
     {
+      "domain": "messaging",
+      "examples": [
+        "send this alert to the operator"
+      ],
+      "id": "messaging.alert",
+      "summary": "Deliver a monitoring alert to the operator's default channel",
+      "tags": [
+        "messaging"
+      ],
+      "verb": "act"
+    },
+    {
       "domain": "ops",
       "examples": [
         "back up this tenant now"
@@ -6066,5 +6078,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "8766a864a293551f8d0bca18958950133d7413659c3ff249cf22f63113b55e37"
+  "registry_digest": "0bf182064dbebba007b5ac61ef0edcb254d41a465000811eb9ad2d248c3cb6e6"
 }

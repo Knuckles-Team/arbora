@@ -383,6 +383,7 @@ def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
                 bootstrap_session,
                 runtime._get_engine(),
                 messaging_intake_enabled=config.messaging_intake_enabled,
+                served_network=transport == "streamable-http",
             )
 
         if transport == "stdio":
