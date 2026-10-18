@@ -41,6 +41,9 @@ __all__ = ["SOURCE_SYNC_KIND", "ConnectorIngestRunner", "FleetSourceSession"]
 SOURCE_SYNC_KIND = "arbora.ingest.source_sync"
 _DECLARATION_SUFFIX = "_ingest_sources"
 _LEASE_S = 600.0
+#: The fleet catalog page size (its maximum) and page bound for one listing.
+_CATALOG_PAGE = 100
+_MAX_CATALOG_PAGES = 50
 
 ClientFactory = Callable[[str], Awaitable[Any]]
 
@@ -74,6 +77,11 @@ def _payload(result: Any) -> Any:
             if isinstance(result.get(key), Mapping):
                 return result[key]
     return result
+
+
+def _knowledge_ingest(client: Any) -> KnowledgeIngest:
+    """The SDK ingest service over one engine client (``SourceIngest``)."""
+    return KnowledgeIngest(EpistemicGraphIngestTransport(client))
 
 
 class FleetSourceSession:
@@ -111,18 +119,34 @@ class ConnectorIngestRunner:
     """
 
     def __init__(
-        self, *, fleet: Any, data_client: ClientFactory, control_client: ClientFactory
+        self,
+        *,
+        fleet: Any,
+        data_client: ClientFactory,
+        control_client: ClientFactory,
+        ingest_for: Callable[[Any], Any] | None = None,
     ) -> None:
         self._fleet = fleet
         self._data_client = data_client
         self._control_client = control_client
+        self._ingest_for = ingest_for or _knowledge_ingest
 
     async def _declarations(self, caller: Any) -> dict[str, IngestSourceDeclaration]:
-        found = await self._fleet.list(caller, kinds=("tool",), limit=500)
+        items: list[Mapping[str, Any]] = []
+        cursor: str | None = None
+        for _ in range(_MAX_CATALOG_PAGES):
+            params: dict[str, Any] = {"kinds": ("tool",), "limit": _CATALOG_PAGE}
+            if cursor:
+                params["cursor"] = cursor
+            found = await self._fleet.list(caller, **params)
+            items.extend(found.get("items", ()))
+            cursor = found.get("next_cursor")
+            if not cursor:
+                break
         servers = sorted(
             {
                 (str(item.get("server")), str(item.get("name")))
-                for item in found.get("items", ())
+                for item in items
                 if str(item.get("name", "")).endswith(_DECLARATION_SUFFIX)
                 and item.get("server")
             }
@@ -188,10 +212,15 @@ class ConnectorIngestRunner:
     ) -> IngestSyncReceipt:
 
         declaration, spec = await self._declared(caller, source_id)
-        with _caller_session(caller):
-            return await self._run(
-                declaration, spec, tenant, source_id, mode, idempotency_key, caller
-            )
+        from arbora.work_items import WorkItemBackendUnavailable
+
+        try:
+            with _caller_session(caller):
+                return await self._run(
+                    declaration, spec, tenant, source_id, mode, idempotency_key, caller
+                )
+        except WorkItemBackendUnavailable as exc:
+            raise OperationRefused("UNAVAILABLE", {"reason": str(exc)}) from exc
 
     async def _run(
         self,
@@ -236,7 +265,7 @@ class ConnectorIngestRunner:
             connector=declaration.connector,
             server=server,
             session=FleetSourceSession(self._fleet, caller, server),
-            ingest=KnowledgeIngest(EpistemicGraphIngestTransport(client)),
+            ingest=self._ingest_for(client),
             checkpoints=KvSourceCheckpoints(client),
         )
         try:
