@@ -54,9 +54,13 @@ WEBARCHIVER_EXTRACT = "web_extract"
 ARCHIVEBOX_SERVER = "archivebox-mcp"
 ARCHIVEBOX_EXTRACT = "web_extract"
 
-#: The SourceIngest binding web pages are committed under.
-INGEST_CONNECTOR = "webarchiver"
-INGEST_STREAM = "web_page"
+#: The SourceIngest streams pages and chunks are committed under. Each record
+#: is bound to the fleet connector that fetched it, so its mapping reference is
+#: ``manifest:<fleet server>#schema_mappings/<Document|Chunk>`` in the pack
+#: Arbora's fleet onboarding imported for that server.
+PAGE_STREAM = "web_page"
+CHUNK_STREAM = "web_chunk"
+BACKEND_SERVERS = {"webarchiver": WEBARCHIVER_SERVER, "archivebox": ARCHIVEBOX_SERVER}
 
 _TRACKING_PARAMS = re.compile(r"^(utm_.*|fbclid|gclid|mc_cid|mc_eid|ref|ref_src)$")
 _CHUNK_CHARS = 1200
@@ -448,52 +452,70 @@ class SourceIngestWriter:
             EpistemicGraphIngestTransport,
         )
 
-        records: list[Document] = []
-        for doc in documents:
-            page = doc.page
-            records.append(
-                Document(
-                    id=doc.document_id,
-                    text=page.text,
-                    title=page.title,
-                    source_uri=page.canonical_url,
-                    updated_at=page.fetched_at,
-                    properties=_document_properties(doc),
-                )
-            )
-            for chunk in doc.chunks:
-                records.append(
-                    Document(
-                        id=chunk.chunk_id,
-                        text=chunk.text,
-                        title=f"{page.title} [{chunk.index}]",
-                        source_uri=page.canonical_url,
-                        updated_at=page.fetched_at,
-                        properties={
-                            "kind": "chunk",
-                            "document_id": doc.document_id,
-                            "chunk_index": chunk.index,
-                            "char_start": chunk.start,
-                            "char_end": chunk.end,
-                            "backend": page.backend,
-                        },
-                    )
-                )
         ingest = KnowledgeIngest(EpistemicGraphIngestTransport(self.client))
-        receipt = await ingest.submit(
-            IngestBinding(connector=INGEST_CONNECTOR, stream=INGEST_STREAM),
-            ChangeSet(documents=tuple(records)),
-        )
-        return {
-            "affected": receipt.affected_count,
-            "relationships": receipt.relationship_count,
-        }
+        affected = relationships = 0
+        for backend in sorted({doc.page.backend for doc in documents}):
+            batch = [doc for doc in documents if doc.page.backend == backend]
+            connector = BACKEND_SERVERS[backend]
+            for binding, records in (
+                (
+                    IngestBinding(connector=connector, stream=PAGE_STREAM),
+                    [_page_document(Document, doc) for doc in batch],
+                ),
+                (
+                    IngestBinding(
+                        connector=connector, stream=CHUNK_STREAM, document_type="Chunk"
+                    ),
+                    [
+                        _chunk_document(Document, doc, chunk)
+                        for doc in batch
+                        for chunk in doc.chunks
+                    ],
+                ),
+            ):
+                if not records:
+                    continue
+                receipt = await ingest.submit(
+                    binding, ChangeSet(documents=tuple(records))
+                )
+                affected += receipt.affected_count
+                relationships += receipt.relationship_count
+        return {"affected": affected, "relationships": relationships}
+
+
+def _page_document(document_cls: Any, doc: IngestedDocument) -> Any:
+    page = doc.page
+    return document_cls(
+        id=doc.document_id,
+        text=page.text,
+        title=page.title,
+        source_uri=page.canonical_url,
+        updated_at=page.fetched_at,
+        properties=_document_properties(doc),
+    )
+
+
+def _chunk_document(document_cls: Any, doc: IngestedDocument, chunk: Chunk) -> Any:
+    page = doc.page
+    return document_cls(
+        id=chunk.chunk_id,
+        text=chunk.text,
+        title=f"{page.title} [{chunk.index}]",
+        source_uri=page.canonical_url,
+        updated_at=page.fetched_at,
+        properties={
+            "document_id": doc.document_id,
+            "chunk_index": chunk.index,
+            "char_start": chunk.start,
+            "char_end": chunk.end,
+            "backend": page.backend,
+        },
+    )
 
 
 def _document_properties(doc: IngestedDocument) -> dict[str, Any]:
     page, hit = doc.page, doc.hit
     return {
-        "kind": "web_page",
         "url": page.url,
         "canonical_url": page.canonical_url,
         "author": page.author,
