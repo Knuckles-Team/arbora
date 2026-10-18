@@ -120,6 +120,9 @@ def build_agent_host_app(
     executor: AgentExecutor | None = None,
     host_logs: HostLogAccess | None = None,
     host_log_runtime: HostLogRuntime | None = None,
+    host_start: HostStartContext | None = None,
+    host_configuration: HostStartConfiguration | None = None,
+    host_runtime: HostRuntimeResources | None = None,
 ):
     """Build the FastAPI app that hosts one connector agent.
 
@@ -128,13 +131,60 @@ def build_agent_host_app(
     callers keep using those AU entry points for construction; only the HTTP
     hosting moves here.
     """
+    from contextlib import asynccontextmanager
+
     from fastapi import FastAPI
 
-    run_executor = executor or _default_executor
+    run_executor = executor if executor is not None else _default_executor
     agent_name = name or "Agent"
     agent_description = description or ""
 
-    app = FastAPI(title=agent_name)
+    checked_start = None
+    if any(
+        value is not None for value in (host_start, host_configuration, host_runtime)
+    ):
+        if host_start is None or host_configuration is None or host_runtime is None:
+            raise PermissionError("configuration_unavailable")
+        actual = (graph, graph_config, executor, host_logs, host_log_runtime)
+        expected = (
+            host_runtime.graph,
+            host_runtime.graph_config,
+            host_runtime.executor,
+            host_runtime.host_logs,
+            host_runtime.host_log_runtime,
+        )
+        if any(
+            value is not supplied
+            for value, supplied in zip(actual, expected, strict=True)
+        ):
+            raise PermissionError("configuration_unavailable")
+        checked_start = check_runtime_configuration(
+            host_start,
+            host_configuration,
+            host_runtime,
+            resources=(graph, graph_config, executor, host_logs, host_log_runtime),
+            unused_arguments={},
+        )
+
+    @asynccontextmanager
+    async def lifespan(application):
+        if checked_start is not None:
+            assert (
+                host_start is not None
+                and host_configuration is not None
+                and host_runtime is not None
+            )
+            await host_start.revalidate_runtime(
+                checked_start, host_configuration, host_runtime
+            )
+            application.state.admitted_host_start = checked_start
+        try:
+            yield
+        finally:
+            if checked_start is not None:
+                del application.state.admitted_host_start
+
+    app = FastAPI(title=agent_name, lifespan=lifespan)
     if host_log_runtime is not None:
         if host_logs is not None:
             raise ValueError("one host log composition required")

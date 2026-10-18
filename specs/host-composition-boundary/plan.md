@@ -333,3 +333,8 @@ unknown arguments refuse before owner calls. No resources are constructed or
 closed by this attachment. ARBORA-HOST-R010.7.2.2.2 remains pending: host.start
 policy and construction-owner implementations, browser current-caller binding,
 and authenticated client lifetime composition are not implemented by this bundle.
+
+## 2026-10-18 borrowed runtime lifespan
+
+R010.7.2.2.2.1 reuses the checked start and existing owner ports at ASGI startup.
+It adds no provider, policy or UI import. R010.7.2.2.2.2 retains live client acceptance.

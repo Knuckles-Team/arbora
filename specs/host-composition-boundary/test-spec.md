@@ -117,3 +117,11 @@ owner calls. Actual create_agent_server revalidates the exact bundle through
 check_runtime. Changed owner bindings refuse. Successful admission still refuses
 client startup while interface authority and lifecycle composition are unavailable.
 These controlled tests establish no native or served-client qualification.
+
+## R010.7.2.2.2.1 ASGI readiness
+
+`tests/agent_host/test_runtime_lifespan.py` uses real ASGI lifespan handling with
+controlled existing owners. It tests expiry, revocation, changed revisions,
+resource replacement, cancellation and borrowed ownership. Missing runtime facts
+refuse before readiness. These fixtures grant no deployed access and do not
+qualify native session evidence, continuous request authorization or UI launch.

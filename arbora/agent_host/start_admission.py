@@ -342,6 +342,27 @@ class HostStartContext:
             )
         raise ValueError("synchronous host startup requires an idle event loop")
 
+    async def revalidate_runtime(
+        self,
+        previous: AdmittedHostStart,
+        configuration: HostStartConfiguration,
+        runtime: HostRuntimeResources,
+    ) -> AdmittedHostStart:
+        """Refresh existing owners without extending a checked start's authority."""
+        checked = await self._check(configuration=configuration, runtime=runtime)
+        if (
+            previous.expires_at_ms <= int(time.time() * 1000)
+            or checked.expires_at_ms < previous.expires_at_ms
+            or checked.request != previous.request
+            or checked.graph_session is not previous.graph_session
+            or not _same_session(previous.state, checked.state)
+            or checked.grant != previous.grant
+            or checked.configuration_revision != previous.configuration_revision
+            or not runtime.same_resources(previous.runtime)
+        ):
+            raise PermissionError("workspace_denied")
+        return previous
+
     async def _check(
         self,
         *,

@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from arbora.agent_host.start_admission import HostStartContext
+    from arbora.agent_host.start_admission import AdmittedHostStart, HostStartContext
 
 
 @dataclass(frozen=True)
@@ -118,7 +118,7 @@ def check_runtime_configuration(
     *,
     resources: tuple[object, ...],
     unused_arguments: dict[str, object],
-) -> None:
+) -> AdmittedHostStart:
     """Admit a borrowed bundle at the launcher; never mint authority or close it."""
     if context is None or not isinstance(runtime, HostRuntimeResources):
         raise PermissionError("configuration_unavailable")
@@ -138,4 +138,4 @@ def check_runtime_configuration(
         )
     ):
         raise PermissionError("configuration_unavailable")
-    context.check_runtime(configuration, runtime)
+    return context.check_runtime(configuration, runtime)
