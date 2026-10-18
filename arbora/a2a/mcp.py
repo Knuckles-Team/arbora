@@ -112,6 +112,8 @@ def register_a2a_tools(
 
     runtime.REGISTERED_TOOLS["graph_a2a"] = graph_a2a
     mcp.custom_route("/.well-known/agent-card.json", methods=["GET"])(card_handler)
+    # A2A clients read the card next to the endpoint the card names.
+    mcp.custom_route("/a2a/.well-known/agent-card.json", methods=["GET"])(card_handler)
     mcp.custom_route("/a2a", methods=["POST"])(rpc_handler)
 
 

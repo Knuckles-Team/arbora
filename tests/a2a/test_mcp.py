@@ -57,6 +57,9 @@ async def test_registration_exposes_exact_mcp_rest_and_native_subset(
         assert runtime.ACTION_TOOL_ROUTES["graph_a2a"] == "/graph/a2a"
         assert set(mcp.routes) == {
             ("/.well-known/agent-card.json", ("GET",)),
+            # The card next to the endpoint it names: the TUI reads it there to
+            # learn that streaming is off.
+            ("/a2a/.well-known/agent-card.json", ("GET",)),
             ("/a2a", ("POST",)),
         }
         payload = json.loads(

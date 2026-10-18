@@ -119,6 +119,14 @@ A2ATaskState = Literal[
 ]
 
 
+class A2AArtifact(_WireModel):
+    """One output of a task: the agent's reply text."""
+
+    artifact_id: str = Field(min_length=1, max_length=512)
+    name: str | None = Field(default=None, max_length=256)
+    parts: list[A2ATextPart] = Field(min_length=1, max_length=32)
+
+
 class A2ATaskStatus(_WireModel):
     state: A2ATaskState
     timestamp: str | None = None
@@ -129,6 +137,7 @@ class A2ATask(_WireModel):
     context_id: str = Field(pattern=r"^a2a-context-[0-9a-f]{64}$")
     kind: Literal["task"] = "task"
     status: A2ATaskStatus
+    artifacts: list[A2AArtifact] | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 

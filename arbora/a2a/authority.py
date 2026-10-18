@@ -6,6 +6,7 @@ import asyncio
 import hashlib
 import json
 import logging
+from collections import OrderedDict
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any, Protocol, runtime_checkable
@@ -13,11 +14,13 @@ from typing import Any, Protocol, runtime_checkable
 from agent_connector_sdk.privacy import persistence_reference
 
 from .models import (
+    A2AArtifact,
     A2AMessage,
     A2ARouteDecision,
     A2ATask,
     A2ATaskState,
     A2ATaskStatus,
+    A2ATextPart,
 )
 from .routing import A2AAssemblyUnavailable
 
@@ -36,6 +39,39 @@ _A2A_METADATA_SCHEMA = "arbora-a2a-unary-v1"
 #: How long one agent run may hold its WorkItem lease.
 _RUN_LEASE_SECONDS = 600.0
 _TERMINAL = frozenset({"succeeded", "failed", "cancelled", "dead_letter"})
+#: Agent reply text of recent runs, by task id. A WorkItem holds only the
+#: result reference; the durable record is the run's RunEvents in EG. This
+#: bounded process-local view serves the reply on task reads.
+_OUTPUTS: OrderedDict[str, str] = OrderedDict()
+_MAX_OUTPUTS = 1024
+_MAX_OUTPUT_CHARS = 65_536
+
+
+def remember_task_output(task_id: str, output: Any) -> None:
+    """Keep the reply text of one finished run for its task reads."""
+    if not task_id or output in (None, ""):
+        return
+    text = output if isinstance(output, str) else json.dumps(output, default=str)
+    _OUTPUTS[task_id] = text[:_MAX_OUTPUT_CHARS]
+    _OUTPUTS.move_to_end(task_id)
+    while len(_OUTPUTS) > _MAX_OUTPUTS:
+        _OUTPUTS.popitem(last=False)
+
+
+def task_output_artifacts(task_id: str) -> list[A2AArtifact] | None:
+    """The agent's reply to ``task_id`` as the task's one artifact, when known."""
+    text = _OUTPUTS.get(task_id)
+    if not text:
+        return None
+    return [
+        A2AArtifact(
+            artifact_id=f"{task_id}:reply",
+            name="reply",
+            parts=[A2ATextPart(text=text)],
+        )
+    ]
+
+
 _STATE_MAP: dict[str, A2ATaskState] = {
     "submitted": "submitted",
     "ready": "submitted",
@@ -269,8 +305,14 @@ class WorkItemA2AAuthority:
         session: Any,
         agent_name: str,
         task: str,
+        task_id: str = "",
     ) -> None:
-        """Lease the WorkItem, run the agent through the harness, commit the outcome."""
+        """Lease the WorkItem, run the agent through the harness, commit the outcome.
+
+        The run takes the task id as its run id, so its RunEvents name the
+        task. The fleet agent runs with Arbora's own ``find``/``act`` verbs
+        as its tools.
+        """
         from arbora import work_items
         from arbora.api.contracts.agent_control_contracts import (
             AgentExecutionRequest,
@@ -287,13 +329,23 @@ class WorkItemA2AAuthority:
             return
         outcome, result_ref, error_ref = "succeeded", None, None
         try:
+            from arbora.host_bindings import FLEET_AGENT_NAME, FLEET_TOOLS
+
             result = await self._agent_executor().execute_agent(
-                AgentExecutionRequest(agent_name=agent_name, task=task),
+                AgentExecutionRequest(
+                    agent_name=agent_name,
+                    task=task,
+                    run_id=task_id or None,
+                    allowed_tools=(
+                        FLEET_TOOLS if agent_name == FLEET_AGENT_NAME else None
+                    ),
+                ),
                 session=session,
             )
             result_ref = persistence_reference(
                 "run", result.run_id, namespace="arbora-a2a"
             )
+            remember_task_output(task_id, getattr(result, "output", None))
         except Exception as exc:  # noqa: BLE001 - a failed run is a failed task
             logging.getLogger(__name__).warning(
                 "A2A run %s failed: %s: %s", item_id, type(exc).__name__, str(exc)[:300]
@@ -371,6 +423,7 @@ class WorkItemA2AAuthority:
                 session=session,
                 agent_name=decision.agent_name,
                 task=description,
+                task_id=task_id,
             )
             refreshed = await asyncio.to_thread(
                 work_items.get_work_item, work_engine, item_id
@@ -424,6 +477,7 @@ class WorkItemA2AAuthority:
                 state=state,
                 timestamp=WorkItemA2AAuthority._timestamp(item.get("updated_at")),
             ),
+            artifacts=task_output_artifacts(task_id),
             metadata={"arbora": public_metadata},
         )
 

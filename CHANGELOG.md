@@ -2,6 +2,28 @@
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-10-18
+- Fixed `fleet.call` from an MCP client sending a child no arguments, and a
+  read-only child tool resolving as a write. The served catalog took a tool's
+  input schema and annotations only from a live child probe, and the served
+  path never probed. A `fleet.call`, or a `fleet.catalog.search` naming up to
+  8 servers, now probes each named server once (cached, retried after 60 s).
+  An unfiltered search still never sweeps the fleet.
+- `fleet.call` no longer requires `idempotency_key` for a read-only child tool
+  (`readOnlyHint`). For a write without a key, the key is derived from the
+  verified caller, the target tool, the arguments and the MCP request
+  (`mcp:<session>:<request id>`), so a retry of the same request dedupes.
+- Fixed agent runs on the fleet agent running without tools and recording no
+  RunEvents. The served `find`/`act` verbs are now native run tools that call
+  the same invocation pipeline under the run's session. The run takes the A2A
+  task id as its run id. The run event sink writes each event as a `RunEvent`
+  node through the served engine's `AddNode`, plus one `tool_call` event per
+  verb call that names the op and connector tool. A completed task carries
+  the agent's reply as its `artifacts`.
+- The Agent Card is also served at `/a2a/.well-known/agent-card.json`, next to
+  the endpoint it names, so A2A clients learn `streaming: false` and use
+  `message/send`.
+
 ## [0.1.4] - 2026-10-18
 - Fixed `fleet.catalog.search` (INTERNAL) and `fleet.call` (UNAVAILABLE) on the
   HTTP operation API: the fleet gateway now runs each catalog read and call
