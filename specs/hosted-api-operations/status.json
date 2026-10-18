@@ -81,6 +81,10 @@
     "ARBORA-OPS-R024.4.4",
     "ARBORA-OPS-R024.4.5",
     "ARBORA-OPS-R024.4.6",
+    "ARBORA-OPS-R844",
+    "ARBORA-OPS-R845",
+    "ARBORA-OPS-R846",
+    "ARBORA-OPS-R847",
     "ARBORA-OPS-R024.5",
     "ARBORA-OPS-R025",
     "ARBORA-OPS-R025.1",
@@ -968,10 +972,11 @@
         "383897ed5238",
         "5ffd23ca7883",
         "8d1bc46ecbdb",
-        "94724be32c28"
+        "94724be32c28",
+        "f7d50c485379"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:328"
+        "tests/api/test_registry_factory.py:332"
       ],
       "rollup_of": [
         "ARBORA-OPS-R024.4.1",
@@ -1023,6 +1028,51 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R844",
+      "title": "Served memory read and write over EG KV",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "f7d50c485379"
+      ],
+      "verified_by": [
+        "tests/test_served_operation_api.py:246"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R845",
+      "title": "Served memory list and delete",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "f7d50c485379"
+      ],
+      "verified_by": [
+        "tests/test_served_operation_api.py:246"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R846",
+      "title": "Explicit shared memory scope",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "baa4de0093c2",
+        "f7d50c485379"
+      ],
+      "verified_by": [
+        "tests/test_served_operation_api.py:246"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R847",
+      "title": "KV methods in the registry",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "f7d50c485379"
+      ],
+      "verified_by": [
+        "tests/api/test_registry_factory.py:332"
+      ]
     },
     {
       "id": "ARBORA-OPS-R024.5",
