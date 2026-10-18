@@ -68,6 +68,11 @@ REGISTERED_TOOLS: dict[str, Any] = {}
 #: entries before the full build runs, which used to make
 #: :func:`ensure_tools_registered` a silent no-op over a partial table.
 _FULL_TOOL_NAMES: frozenset[str] = frozenset()
+#: The served intent verbs (``find``, ``act``, ...) as in-process functions,
+#: registered by the served intent surface. An agent run binds them as its
+#: native tools; each call goes through the same invocation pipeline as an
+#: MCP client's call, under the run's verified session.
+NATIVE_INTENT_TOOLS: dict[str, Any] = {}
 
 
 def _build_dummy_request(path_params=None, json_body=None):
@@ -379,18 +384,21 @@ def build_native_arbora_toolset(tool_names: list[str], *, toolset_id: str) -> An
     for name in tool_names:
         if re.fullmatch(r"[a-z][a-z0-9_]{0,63}", name or "") is None:
             raise ValueError("native Arbora tool name is invalid")
-        function = REGISTERED_TOOLS.get(name)
+        function = REGISTERED_TOOLS.get(name) or NATIVE_INTENT_TOOLS.get(name)
         if function is None:
             raise RuntimeError("requested native Arbora tool is unavailable")
         registered.append((name, function))
 
+    run_id = toolset_id[4:] if toolset_id.startswith("run-") else ""
     tools: list[Any] = []
     for name, function in registered:
         schema_source = Tool(function, name=name)
 
-        async def dispatch(_tool_name: str = name, **kwargs: Any) -> Any:
-            return await _execute_tool(_tool_name, **kwargs)
-
+        dispatch = (
+            _registered_dispatch(name)
+            if name in REGISTERED_TOOLS
+            else _intent_dispatch(name, function, run_id)
+        )
         tools.append(
             Tool.from_schema(
                 dispatch,
@@ -406,6 +414,57 @@ def build_native_arbora_toolset(tool_names: list[str], *, toolset_id: str) -> An
         id=toolset_id,
         metadata={"arbora_native": True},
     )
+
+
+def _registered_dispatch(name: str) -> Any:
+    async def dispatch(**kwargs: Any) -> Any:
+        return await _execute_tool(name, **kwargs)
+
+    return dispatch
+
+
+def _intent_dispatch(name: str, verb: Any, run_id: str) -> Any:
+    async def dispatch(**kwargs: Any) -> Any:
+        return await _call_native_intent(name, verb, run_id, kwargs)
+
+    return dispatch
+
+
+async def _call_native_intent(
+    name: str, verb: Any, run_id: str, kwargs: dict[str, Any]
+) -> Any:
+    """Call one served intent verb for an agent run and record the call.
+
+    The verb resolves its caller from the run's verified session, exactly as
+    for an MCP client. Each call is one ``tool_call`` RunEvent naming the op
+    and, for ``fleet.call``, the connector tool.
+    """
+    import uuid as _uuid
+
+    from arbora.api.mcp.caller import use_request_ref
+
+    _reject_caller_authority(kwargs)
+    params = kwargs.get("params")
+    params = params if isinstance(params, dict) else {}
+    with use_request_ref(f"run:{run_id or '-'}:{_uuid.uuid4().hex}"):
+        payload = await verb(**kwargs)
+    if run_id:
+        from agent_utilities import host_ports
+
+        error = payload.get("error") if isinstance(payload, dict) else None
+        host_ports.emit_run_event(
+            {
+                "type": "tool_call",
+                "run_id": run_id,
+                "tool_name": name,
+                "op": kwargs.get("op") or "",
+                "server": params.get("server") or "",
+                "tool": params.get("tool") or "",
+                "ok": bool(isinstance(payload, dict) and payload.get("ok")),
+                "error": (error or {}).get("code") if isinstance(error, dict) else None,
+            }
+        )
+    return payload
 
 
 def safe_json_load(s: Any) -> Any:

@@ -17,6 +17,15 @@ Health = Callable[[], Mapping[str, Any]]
 SessionKeyFor = Callable[[Any], str | None]
 NativeName = Callable[[CatalogItem], str]
 ReadItem = Callable[[CatalogItem, Mapping[str, Any], Any], Awaitable[Any]]
+#: Fill the live protocol rows (input schema, annotations) of named servers.
+Prime = Callable[[Iterable[str]], Awaitable[None]]
+
+#: A server-filtered search primes at most this many servers.
+_MAX_PRIMED_SERVERS = 8
+
+
+async def _no_prime(_servers: Iterable[str]) -> None:
+    return None
 
 
 def item_binding(item: CatalogItem) -> tuple[str, ...]:
@@ -56,8 +65,10 @@ class MultiplexerOps:
         callable_item: Loadable | None = None,
         native_name: NativeName | None = None,
         read_item: ReadItem | None = None,
+        prime: Prime | None = None,
     ) -> None:
         self.catalog = catalog
+        self._prime = prime or _no_prime
         self.sessions = sessions
         self._loadable = loadable
         self._mount = mount
@@ -74,6 +85,10 @@ class MultiplexerOps:
     async def admitted_tool(self, caller: Any, server: str, tool: str) -> CatalogItem:
         """Return one call-authorized descriptor without requiring discovery scope."""
         _require_delegate_scope(caller)
+        # The verified EG record carries no schema or annotations; the
+        # target's live probe does. Without it a read-only tool resolves as
+        # a write, and the caller never learns the tool's parameters.
+        await self._prime((server,))
         item = await self.catalog._raw_get(f"fleet:tool:{server}/{tool}")
         if (
             item is None
@@ -150,7 +165,17 @@ class MultiplexerOps:
     async def find_tools(self, caller: Any, **params: Any) -> dict[str, Any]:
         """Forward to the one typed catalog search; see ``FleetCatalog.search``
         for the accepted ``query``/``kinds``/``servers``/``browse``/``cursor``/
-        ``limit``/``context_budget_tokens`` keywords and their validation."""
+        ``limit``/``context_budget_tokens`` keywords and their validation.
+
+        A search filtered to a few named servers first primes their live
+        probe, so the items carry ``input_schema``. An unfiltered search
+        never starts a fleet sweep."""
+        servers = params.get("servers") or ()
+        if isinstance(servers, str):
+            servers = (servers,)
+        servers = tuple(servers)
+        if 0 < len(servers) <= _MAX_PRIMED_SERVERS:
+            await self._prime(servers)
         return await self.catalog.search(caller, **params)
 
     def _forwarder(self, item: CatalogItem) -> Callable[..., Awaitable[Any]]:

@@ -633,6 +633,41 @@ def _request_refusal(call: _Call) -> OpError | None:
     return None
 
 
+def _derived_fleet_key(
+    op: Any, arguments: Mapping[str, Any], caller: VerifiedCaller
+) -> str | None:
+    """A deterministic key for a keyless write ``fleet.call``, or ``None``.
+
+    MCP clients send no idempotency key. A read-only child tool resolves to a
+    READ and needs none. For a write, the key is derived from the verified
+    caller, the target tool, the arguments and the request id, so a retry of
+    the same request dedupes. A caller without a request id still has to
+    supply a key.
+    """
+    request_id = caller.request_id
+    if (
+        op.id != "fleet.call"
+        or op.effect != Effect.WRITE
+        or op.idempotency == Idempotency.NATURAL
+        or not isinstance(request_id, str)
+        or not request_id
+        or request_id == "unassigned"
+    ):
+        return None
+    material = json.dumps(
+        [
+            caller.tenant,
+            caller.principal,
+            str(arguments.get("server", "")),
+            str(arguments.get("tool", "")),
+            params_digest(arguments),
+            request_id,
+        ],
+        separators=(",", ":"),
+    )
+    return "derived:" + hashlib.sha256(material.encode()).hexdigest()
+
+
 def _missing_idempotency_key(call: _Call) -> bool:
     op = call.op
     return (
@@ -850,6 +885,8 @@ async def invoke(
     if isinstance(resolved, OpError):
         return resolved
     effective_op, verified, decision = resolved
+    if idempotency_key is None and plan_ref is None:
+        idempotency_key = _derived_fleet_key(effective_op, arguments, verified)
     call = _Call(
         effective_op,
         arguments,
