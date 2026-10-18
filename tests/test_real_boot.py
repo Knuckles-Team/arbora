@@ -103,6 +103,7 @@ def _server_binary() -> str:
 
 def _listening(port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+        probe.settimeout(1)
         return probe.connect_ex(("127.0.0.1", port)) == 0
 
 
@@ -204,6 +205,23 @@ def _wait(predicate: Any, *, timeout: float, what: str, logs: Any = None) -> Non
         time.sleep(0.25)
     detail = logs() if callable(logs) else ""
     raise AssertionError(f"timed out waiting for {what}\n{detail}")
+
+
+def _wait_for_model(process: subprocess.Popen[Any], port: int, log_path: Path) -> None:
+    def ready() -> bool:
+        if process.poll() is not None:
+            raise AssertionError(
+                "model fixture exited during startup\n"
+                + log_path.read_text(errors="replace")[-4000:]
+            )
+        return _listening(port)
+
+    _wait(
+        ready,
+        timeout=10,
+        what="the model fixture",
+        logs=lambda: log_path.read_text(errors="replace")[-4000:],
+    )
 
 
 def _terminate(process: subprocess.Popen[Any]) -> None:
@@ -309,6 +327,7 @@ def _booted_stack(
                 stderr=subprocess.STDOUT,
             )
         )
+        _wait_for_model(processes[-1], model_port, root / "eg.log")
         config_dir = root / "config"
         config_dir.mkdir()
         (config_dir / "config.json").write_text(
@@ -766,11 +785,9 @@ def test_a2a_message_send_completes_through_the_model(stack: dict[str, Any]) -> 
 
 @pytest.mark.spec("ARBORA-OPS-R001")
 def test_the_tui_headless_prompt_completes(stack: dict[str, Any]) -> None:
-    """The TUI's own ``--headless --prompt`` path, end to end, when installed."""
+    """The installed test dependency completes its headless prompt end to end."""
     exe = shutil.which("agent-terminal-ui", path=str(Path(sys.executable).parent))
-    if exe is None:
-        pytest.skip("agent-terminal-ui is not installed in this environment")
-    assert exe is not None
+    assert exe is not None, "install the locked test extra for TUI acceptance"
     env = {
         **{k: v for k, v in os.environ.items() if k in _INHERITED_ENV},
         "AGENT_URL": stack["base_url"],

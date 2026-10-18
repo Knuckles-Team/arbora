@@ -218,15 +218,18 @@
       "title": "Native MCP/REST facade with A2A unary operations then streaming",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "4ad0c4d2dd78",
         "762c7f816fe3",
         "83aefbad2157",
-        "deb2b45bf83d"
+        "86a439753d2d",
+        "b6902c2910fe"
       ],
       "verified_by": [
-        "tests/test_real_boot.py:718",
-        "tests/test_real_boot.py:739",
-        "tests/test_real_boot.py:748",
-        "tests/test_real_boot.py:767"
+        "tests/deployment/test_real_boot_fixture.py:19",
+        "tests/test_real_boot.py:737",
+        "tests/test_real_boot.py:758",
+        "tests/test_real_boot.py:767",
+        "tests/test_real_boot.py:786"
       ]
     },
     {
