@@ -67,6 +67,40 @@ def _key(*parts: object) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
+def _typed_request_context(
+    claims: Mapping[str, Any], session: Any, key: str
+) -> dict[str, Any]:
+    """EG's typed ``RequestContext`` (v2) for one WorkItem request.
+
+    ``SubmitWorkItem`` refuses the bare authority claims; this is the same
+    context the effect journal sends, on the control graph that holds
+    WorkItems.
+    """
+    if "tenant_id" in claims:
+        return dict(claims)  # already EG's typed context
+    from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+    from arbora.mcp_server.effect_journal import _request_context
+
+    class _Graph:
+        graph_name = CONTROL_GRAPH
+
+    return _request_context(
+        {
+            "agent_id": claims.get("agent_id") or claims.get("principal"),
+            "principal": claims.get("principal"),
+            "tenant": claims.get("tenant") or getattr(session, "tenant", ""),
+            "audience": claims.get("audience") or getattr(session, "audience", ""),
+            "policy_version": claims.get("policy_version")
+            or getattr(session, "policy_version", ""),
+            "scopes": list(
+                claims.get("scopes") or getattr(session, "scopes", ()) or ()
+            ),
+        },
+        _Graph(),
+        key,
+    )
+
+
 def submit_work_item_atomic(
     engine: Any,
     *,
@@ -94,19 +128,28 @@ def submit_work_item_atomic(
         "description": description,
     }
     body = {**{k: v for k, v in labels.items() if v}, **dict(metadata or {})}
+    command_digest = _key(tenant_id, kind, work_item_id, payload_ref, body)
+    claims = dict(session.engine_verified_context())
+    context = _typed_request_context(claims, session, idempotency_key)
+    # EG refuses empty digests (``SubmitWorkItem.policy_digest must be a
+    # non-empty trimmed string``): bind the policy version, the command and
+    # "none" for a WorkItem that pins no model, as the effect journal does.
+    policy_version = str(
+        claims.get("policy_version") or getattr(session, "policy_version", "") or "none"
+    )
     request = {
         "schema_version": "1",
-        "context": dict(session.engine_verified_context()),
+        "context": context,
         "work_item_id": work_item_id,
         "idempotency_key": idempotency_key,
-        "command_digest": _key(tenant_id, kind, work_item_id, payload_ref, body),
+        "command_digest": command_digest,
         "kind": kind,
         "priority": int(priority),
         "depends_on": [],
-        "input_ref": payload_ref,
-        "policy_digest": "",
-        "catalog_digest": "",
-        "model_digest": "",
+        "input_ref": payload_ref or f"arbora-work-item:{command_digest}",
+        "policy_digest": hashlib.sha256(policy_version.encode()).hexdigest(),
+        "catalog_digest": command_digest,
+        "model_digest": "none",
         "max_attempts": int(max_attempts),
         "deadline_unix": None,
         "metadata": body,

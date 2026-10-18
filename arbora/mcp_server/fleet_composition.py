@@ -14,7 +14,8 @@ the admitted catalog item. Until binding, every port refuses ``UNAVAILABLE``.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from typing import Any
 
 __all__ = ["LateFleetGateway", "bind_fleet_gateway"]
@@ -24,6 +25,26 @@ def _unavailable() -> Exception:
     from arbora.api.invoke.pipeline import OperationRefused
 
     return OperationRefused("UNAVAILABLE", {"reason": "fleet gateway is not bound"})
+
+
+@contextmanager
+def _caller_session(caller: Any) -> Iterator[None]:
+    """Bind the verified caller's own session for one fleet read or call.
+
+    The fleet catalog reads EG through the ambient session (re-targeted to
+    ``__commons__`` and the tenant graph). The MCP surface binds one per
+    request; the HTTP operation API does not, so without this a catalog read
+    or ``fleet.call`` from ``/api/v1/ops`` raised ``SessionRequiredError``
+    (``INTERNAL``/``UNAVAILABLE``).
+    """
+    session = getattr(caller, "session", None)
+    if session is None:
+        yield
+        return
+    from arbora.api.contracts.session import use_session
+
+    with use_session(session):
+        yield
 
 
 class LateFleetGateway:
@@ -45,25 +66,32 @@ class LateFleetGateway:
         return self._gateway
 
     async def search(self, caller: Any, **params: Any) -> Any:
-        return await self._bound().search(caller, **params)
+        with _caller_session(caller):
+            return await self._bound().search(caller, **params)
 
     async def list(self, caller: Any, **params: Any) -> Any:
-        return await self._bound().list(caller, **params)
+        with _caller_session(caller):
+            return await self._bound().list(caller, **params)
 
     async def status(self, caller: Any, **params: Any) -> Any:
-        return await self._bound().status(caller, **params)
+        with _caller_session(caller):
+            return await self._bound().status(caller, **params)
 
     async def load(self, caller: Any, **params: Any) -> Any:
-        return await self._bound().load(caller, **params)
+        with _caller_session(caller):
+            return await self._bound().load(caller, **params)
 
     async def unload(self, caller: Any, **params: Any) -> Any:
-        return await self._bound().unload(caller, **params)
+        with _caller_session(caller):
+            return await self._bound().unload(caller, **params)
 
     async def effect(self, op: Any, params: Mapping[str, Any], caller: Any) -> Any:
-        return await self._bound().effect(op, params, caller)
+        with _caller_session(caller):
+            return await self._bound().effect(op, params, caller)
 
     async def call(self, caller: Any, *args: Any, **kwargs: Any) -> Any:
-        return await self._bound().call(caller, *args, **kwargs)
+        with _caller_session(caller):
+            return await self._bound().call(caller, *args, **kwargs)
 
     async def fleet_search(
         self,

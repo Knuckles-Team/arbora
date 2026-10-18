@@ -3,4 +3,4 @@
 Updated only by `bumpversion` (see `.bumpversion.cfg`) — never hand-edited.
 """
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"

@@ -73,6 +73,12 @@ def validate_provider_schema(
         # A generated method binding names the whole wire request; the
         # operation input is its ``params`` member.
         pointer = f"{pointer}/properties/params"
+    elif _is_parameterless_envelope(document, pointer):
+        # A method without ``params`` (``NodeCount``) takes an empty input;
+        # its envelope requires only ``method``, which no caller sends.
+        if params:
+            raise ValueError("operation input does not match its EG schema")
+        return {}
     uri = f"urn:arbora:eg-contract:{filename}"
     resource = Resource.from_contents(document, default_specification=DRAFT202012)
     validator = Draft202012Validator(
@@ -86,12 +92,29 @@ def validate_provider_schema(
     return dict(params)
 
 
-def _is_request_envelope(document: Mapping[str, Any], pointer: str) -> bool:
+def _selected(document: Mapping[str, Any], pointer: str) -> Any:
     selected: Any = document
     for segment in pointer.lstrip("/").split("/"):
         if not isinstance(selected, Mapping) or segment not in selected:
-            return False
+            return None
         selected = selected[segment]
+    return selected
+
+
+def _is_parameterless_envelope(document: Mapping[str, Any], pointer: str) -> bool:
+    selected = _selected(document, pointer)
+    if not isinstance(selected, Mapping):
+        return False
+    properties = selected.get("properties")
+    return (
+        selected.get("required") == ["method"]
+        and isinstance(properties, Mapping)
+        and set(properties) == {"method"}
+    )
+
+
+def _is_request_envelope(document: Mapping[str, Any], pointer: str) -> bool:
+    selected = _selected(document, pointer)
     required = selected.get("required") if isinstance(selected, Mapping) else None
     properties = selected.get("properties") if isinstance(selected, Mapping) else None
     return (

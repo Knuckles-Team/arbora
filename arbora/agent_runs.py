@@ -45,8 +45,42 @@ __all__ = [
 ]
 
 
+def _chat_models_registry(raw: Any) -> dict[str, Any]:
+    """The registry shape of the configured ``CHAT_MODELS`` list, or ``{}``.
+
+    ``CHAT_MODELS`` (config.json) is the deployment's model registry: a list of
+    ``{"id", "base_url", "provider", ...}`` entries. The first entry is the
+    default; ``api_key_env`` defaults to ``OPENAI_API_KEY``.
+    """
+    if isinstance(raw, str):
+        try:
+            raw = json.loads(raw) if raw.strip() else []
+        except ValueError:
+            return {}
+    if not isinstance(raw, list):
+        return {}
+    models: dict[str, Any] = {}
+    for entry in raw:
+        if not isinstance(entry, Mapping):
+            continue
+        model_id = str(entry.get("id") or "").strip()
+        if not model_id or not entry.get("base_url"):
+            continue
+        models.setdefault(
+            model_id,
+            {
+                "base_url": str(entry["base_url"]),
+                "model": str(entry.get("model") or model_id),
+                "api_key_env": str(entry.get("api_key_env") or "OPENAI_API_KEY"),
+            },
+        )
+    if not models:
+        return {}
+    return {"default": next(iter(models)), "models": models}
+
+
 def _registry() -> dict[str, Any]:
-    """The model registry document named by ``MODEL_REGISTRY_PATH``, or ``{}``.
+    """The model registry: ``MODEL_REGISTRY_PATH``, else ``CHAT_MODELS``, else ``{}``.
 
     Shape: ``{"default": "<model id>", "models": {"<model id>": {"base_url":
     ..., "model": ..., "api_key_env": ...}}}`` in JSON or YAML.
@@ -55,7 +89,7 @@ def _registry() -> dict[str, Any]:
 
     path = str(runtime_config.model_registry_path or "").strip()
     if not path:
-        return {}
+        return _chat_models_registry(getattr(runtime_config, "chat_models", None))
     text = Path(path).expanduser().read_text(encoding="utf-8")
     if path.endswith((".yaml", ".yml")):
         import yaml

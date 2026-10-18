@@ -196,12 +196,43 @@ def _run_blocking(coroutine_factory: Any) -> Any:
         return worker.submit(context.run, asyncio.run, coroutine_factory()).result()
 
 
+class _BlockingWorkItems:
+    """EG's ``work_items`` methods, called synchronously under the ambient session.
+
+    :mod:`arbora.work_items` (A2A tasks, browser control, messaging leases)
+    calls ``engine.work_items.<verb>(...)`` from synchronous code; each verb
+    runs the async EG method to completion through :func:`_run_blocking`.
+    """
+
+    def __init__(self, routed: Any) -> None:
+        self._routed = routed
+
+    def __getattr__(self, name: str) -> Any:
+        if name.startswith("_"):
+            raise AttributeError(name)
+        method = getattr(self._routed, name)
+
+        def call(*args: Any, **kwargs: Any) -> Any:
+            return _run_blocking(lambda: method(*args, **kwargs))
+
+        return call
+
+
 class ServedEngine:
     """The served process's engine handle over the one EG client pool."""
 
     def __init__(self, pool: Any) -> None:
         self.pool = pool
         self.graph_compute = _GraphCompute(pool)
+
+    @property
+    def work_items(self) -> _BlockingWorkItems:
+        """EG WorkItems, held on the tenant's control graph (``__control__``)."""
+        from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+
+        return _BlockingWorkItems(
+            self.graph_compute.for_graph(CONTROL_GRAPH).async_client.work_items
+        )
 
     async def health(self, graph: str) -> Mapping[str, Any]:
         """EG's own health document, read under the ambient session."""

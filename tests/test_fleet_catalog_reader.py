@@ -327,3 +327,37 @@ def test_multiplexer_status_reports_unadmitted_servers_and_onboarding() -> None:
     status = mux.status_snapshot()
     assert status["unadmitted_servers"] == ["b-mcp"]
     assert status["fleet_onboarding"] == mux._fleet_onboarding
+
+
+def test_reader_reuses_a_verified_snapshot_within_its_ttl() -> None:
+    """One governed fleet.call admits its item several times: one EG read serves them."""
+    port = FakeFleetCatalogPort()
+    reader = FleetCatalogReader(port, snapshot_ttl_s=60.0)
+
+    first = asyncio.run(reader.read())
+    second = asyncio.run(reader.read())
+
+    assert second is first
+    assert len(port.server_calls) == 1
+    assert len(port.search_calls) == 1
+
+
+def test_reader_without_a_ttl_reads_eg_every_time() -> None:
+    port = FakeFleetCatalogPort(
+        server_pages=[server_page(SERVER), server_page(SERVER)],
+        component_pages=[
+            component_page(SERVER_COMPONENT, TOOL_COMPONENT),
+            component_page(SERVER_COMPONENT, TOOL_COMPONENT),
+        ],
+    )
+    reader = FleetCatalogReader(port)
+
+    asyncio.run(reader.read())
+    asyncio.run(reader.read())
+
+    assert len(port.server_calls) == 2
+
+
+def test_reader_rejects_a_negative_ttl() -> None:
+    with pytest.raises(ValueError, match="snapshot_ttl_s"):
+        FleetCatalogReader(FakeFleetCatalogPort(), snapshot_ttl_s=-1)

@@ -38,6 +38,23 @@ def _public_au_catalog_ports(
     return catalog_read_ports(engine, session)
 
 
+#: How long one verified fleet snapshot is reused (seconds). A full read of a
+#: real fleet takes about a minute, and one governed fleet.call admits its item
+#: several times; a revoked component stays callable at most this long.
+CATALOG_SNAPSHOT_TTL_SETTING = "ARBORA_FLEET_CATALOG_TTL_S"
+DEFAULT_CATALOG_SNAPSHOT_TTL_S = 120.0
+
+
+def _catalog_snapshot_ttl_s() -> float:
+    from arbora.core.settings import setting
+
+    raw = str(setting(CATALOG_SNAPSHOT_TTL_SETTING, "") or "").strip()
+    try:
+        return max(0.0, float(raw)) if raw else DEFAULT_CATALOG_SNAPSHOT_TTL_S
+    except ValueError:
+        return DEFAULT_CATALOG_SNAPSHOT_TTL_S
+
+
 def _bind_session_graph(graph: str) -> AbstractContextManager[object]:
     """Narrow the ambient verified session to ``graph`` for one engine read.
 
@@ -101,7 +118,8 @@ async def compose_catalog_authorities(
             context=context,
             tenant_graph=tenant_graph,
             bind_graph=bind_graph,
-        )
+        ),
+        snapshot_ttl_s=_catalog_snapshot_ttl_s(),
     )
     with bind_graph(tenant_graph):
         await verify_semantic_content(
