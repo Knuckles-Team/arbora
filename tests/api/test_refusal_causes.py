@@ -66,10 +66,10 @@ def test_provider_schema_refusal_cause_is_logged(
 
     model = EgSchemaRef(path="method.request.json#/methods/SourceIngest")
     with caplog.at_level(logging.WARNING, logger="arbora.api.invoke.steps"):
-        refused = _validate_provider(model, {}, refuse)  # type: ignore[arg-type]
+        refused = _validate_provider(model, {}, refuse)
     assert getattr(refused, "code", None) == "INVALID_ARGUMENT"
     assert "tool_schema_sha256 is required" in caplog.text
-    asserted = _validate_provider(model, {}, assert_tenant)  # type: ignore[arg-type]
+    asserted = _validate_provider(model, {}, assert_tenant)
     assert getattr(asserted, "details", None) == {"field": "nested.tenant"}
 
 
