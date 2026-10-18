@@ -86,7 +86,6 @@ class FakeClient(FakeEngine):
             return [{"id": "node:one", "labels": ["Agent"]}]
         raise AssertionError(f"unexpected engine method {method}")
 
-
     def _kv(self, method: str, params: Any) -> Any:
         """EG KV semantics: versioned entries, CAS, prefix scan, delete."""
         store = self.__dict__.setdefault("kv", {})
@@ -224,7 +223,6 @@ def test_served_api_answers_the_web_ui_operations(served: Any) -> None:
         )
     )
     assert task["status"]["state"] == "completed"
-
 
     rows = _value(_call(app, "query.uql", {"text": "MATCH (n) RETURN n", "params": {}}))
     assert rows == {"rows": [{"id": "node:one"}]}

@@ -233,7 +233,9 @@ async def handle_memory_list(
         "value": {
             **_located(params),
             "entries": entries,
-            "next_cursor": page.get("next_cursor") if isinstance(page, Mapping) else None,
+            "next_cursor": page.get("next_cursor")
+            if isinstance(page, Mapping)
+            else None,
         }
     }
 
@@ -254,7 +256,9 @@ async def handle_memory_delete(
         },
         context.idempotency_key,
     )
-    return {"value": {"key": key, **_located(params), "deleted": bool(_payload(deleted))}}
+    return {
+        "value": {"key": key, **_located(params), "deleted": bool(_payload(deleted))}
+    }
 
 
 def operations() -> tuple[OpSpec, ...]:

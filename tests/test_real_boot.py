@@ -724,7 +724,9 @@ def test_a2a_answers_a_rejected_bearer_with_401(stack: dict[str, Any]) -> None:
         timeout=30,
     )
     assert card.status_code == 401, card.text
-    send = _a2a(stack, "message/send", {"message": _boot_message("hi")}, "not-a-valid-token")
+    send = _a2a(
+        stack, "message/send", {"message": _boot_message("hi")}, "not-a-valid-token"
+    )
     assert send.status_code == 401, send.text
     assert send.json()["error"]["message"] == "A2A authority refused"
 
