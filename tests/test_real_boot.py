@@ -763,6 +763,7 @@ def test_the_tui_headless_prompt_completes(stack: dict[str, Any]) -> None:
     exe = shutil.which("agent-terminal-ui", path=str(Path(sys.executable).parent))
     if exe is None:
         pytest.skip("agent-terminal-ui is not installed in this environment")
+    assert exe is not None
     env = {
         **{k: v for k, v in os.environ.items() if k in _INHERITED_ENV},
         "AGENT_URL": stack["base_url"],
