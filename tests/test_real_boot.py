@@ -65,7 +65,7 @@ PROCESS_SUBJECT = "arbora-process"
 #: Graph administration plus the exact capabilities Arbora needs to provision
 #: its own semantic packs and reach the MCP fleet.
 #: research.web is a scoped write; the operator also holds ``ingest:write``.
-ROLES = (*PROCESS_IDENTITY_ROLES, "ingest:write")
+ROLES = (*PROCESS_IDENTITY_ROLES, "ingest:write", "source:ingest")
 #: The served-surface caller. The fresh engine admits exactly one identity
 #: (the process principal), so the operator presents a separate credential for
 #: that same admitted principal.
@@ -742,3 +742,58 @@ def test_research_web_ingests_through_the_real_engine(stack: dict[str, Any]) -> 
     assert citation["url"] == stack["page_url"]
     assert citation["backend"] == "webarchiver"
     assert value["ingest"]["affected"] >= 1 + document["chunks"]
+
+
+def _framed_node_id(tenant: str, connector: str, stream: str, record_id: str) -> str:
+    """EG's ``source_node_id``: ``source:`` + framed SHA-256 of the record identity."""
+    domain = b"eg/source-record-identity/v1"
+    digest = hashlib.sha256()
+    digest.update(b"eg/framed-sha256/v1\0")
+    digest.update(len(domain).to_bytes(4, "big") + domain)
+    parts = [tenant, connector, stream, record_id]
+    digest.update(len(parts).to_bytes(4, "big"))
+    for part in parts:
+        raw = part.encode()
+        digest.update(len(raw).to_bytes(8, "big") + raw)
+    return "source:" + digest.hexdigest()
+
+
+@pytest.mark.spec("ARBORA-OPS-R067.3")
+def test_an_ingested_document_is_read_back_by_node_id(stack: dict[str, Any]) -> None:
+    """One Document record ingested under the fixture pack's mapping reads back.
+
+    This settles the read path a caller of ``research.web`` uses: the engine
+    names the node ``source:<framed digest>`` of (tenant, connector, stream,
+    record id), lists it under its ontology class, and serves its text.
+    """
+    from agent_connector_sdk.ingest import ChangeSet, Document, IngestBinding
+    from agent_connector_sdk.ingest.request import build_request
+
+    binding = IngestBinding(connector=WEB_CONNECTOR, stream="web_page")
+    request = build_request(
+        binding,
+        ChangeSet(
+            documents=(
+                Document(
+                    id="web:readback",
+                    text="A pod disruption budget limits voluntary evictions.",
+                    title="PDB",
+                    source_uri="https://example.org/pdb",
+                    properties={"backend": "webarchiver"},
+                ),
+            )
+        ),
+        previous=None,
+    )
+    receipt = _post_op(
+        stack, "eg.ingestion.SourceIngest", {"request": request.model_dump(mode="json", exclude_none=True)}
+    )
+    print("RECEIPT", json.dumps(receipt)[:1500])
+    listed = _post_op(stack, "eg.graph.GetNodesByLabel", {"label": "Document"})
+    print("LISTED", json.dumps(listed)[:1500])
+    for tenant in (TENANT, TENANT_GRAPH):
+        node_id = _framed_node_id(tenant, WEB_CONNECTOR, "web_page", "web:readback")
+        print("CANDIDATE", tenant, node_id, node_id in json.dumps(listed))
+    uql = _post_op(stack, "query.uql", {"text": "MATCH (:Document) |> LIMIT 10"})
+    print("UQL", json.dumps(uql)[:1500])
+    assert receipt["ok"] is True
