@@ -1,0 +1,16 @@
+[tool.bumpversion]
+current_version = "0.1.6"
+commit = true
+tag = true
+
+[[tool.bumpversion.files]]
+filename = "arbora/_version.py"
+search = '__version__ = "{current_version}"'
+replace = '__version__ = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "CHANGELOG.md"
+search = "## [Unreleased]"
+replace = """## [Unreleased]
+
+## [{new_version}] - {now:%Y-%m-%d}"""
