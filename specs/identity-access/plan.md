@@ -266,3 +266,6 @@ and admission through its existing SessionAuthority and identity composition.
 The consumer adds no credential issuer, grant, record store or operation.
 Missing producer metadata stays unavailable. Controlled wire fixtures do not
 qualify persisted native authority or live admitted host startup.
+
+ARBORA-IDENTITY-R005.2 retains the full account lifecycle and served/native
+acceptance. It remains pending independently of the bounded consumer tests.
