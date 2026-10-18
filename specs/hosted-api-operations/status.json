@@ -216,11 +216,18 @@
     {
       "id": "ARBORA-OPS-R001",
       "title": "Native MCP/REST facade with A2A unary operations then streaming",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "2550ca9db944",
+        "c90efc2983e4",
         "deb2b45bf83d"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_real_boot.py:713",
+        "tests/test_real_boot.py:732",
+        "tests/test_real_boot.py:741",
+        "tests/test_real_boot.py:760"
+      ]
     },
     {
       "id": "ARBORA-OPS-R002",
