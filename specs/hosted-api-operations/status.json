@@ -2037,14 +2037,15 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "e30f49ca78d9",
-        "f482fcd9497c"
+        "f482fcd9497c",
+        "fff3d48c117b"
       ],
       "verified_by": [
+        "tests/api/test_client_http.py:27",
+        "tests/api/test_client_http.py:46",
         "tests/api/test_research_ops.py:19",
         "tests/api/test_research_ops.py:55",
-        "tests/api/test_research_ops.py:63",
-        "tests/api/test_research_ops.py:73",
-        "tests/api/test_research_web_backends.py:104"
+        "tests/api/test_research_ops.py:63"
       ]
     },
     {
