@@ -1,0 +1,13 @@
+connector: boot-ingest
+schema_version: '1'
+resources:
+- name: FixtureItem
+  label: Fixture item
+schema_mappings:
+  FixtureItem:
+    fields:
+      name: title
+provenance:
+  generated_by: tests/_boot_ingest_connector.py
+  integrity:
+    hash: '0000000000000000000000000000000000000000000000000000000000000000'

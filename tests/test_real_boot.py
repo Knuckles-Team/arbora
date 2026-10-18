@@ -53,6 +53,7 @@ POLICY_VERSION = "boot-test-policy"
 TENANT_GRAPH = f"tenant__{TENANT}____commons__"
 BOOT_TIMEOUT_S = 180.0
 CONNECTOR = "boot-echo"
+INGEST_CONNECTOR = "boot-ingest"
 PROCESS_SUBJECT = "arbora-process"
 #: Graph administration plus the exact capabilities Arbora needs to provision
 #: its own semantic packs and reach the MCP fleet.
@@ -320,11 +321,14 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
         policy = {
             **DEFAULT_POLICY,
             "rules": [
-                {
-                    "kind": "connector_pack_import",
-                    "target": CONNECTOR,
-                    "tier": TIER_AUTO_NOTIFY,
-                },
+                *(
+                    {
+                        "kind": "connector_pack_import",
+                        "target": target,
+                        "tier": TIER_AUTO_NOTIFY,
+                    }
+                    for target in (CONNECTOR, INGEST_CONNECTOR)
+                ),
                 *DEFAULT_POLICY["rules"],
             ],
         }
@@ -344,6 +348,19 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
                 stderr=subprocess.STDOUT,
             )
         )
+        ingest_port = _free_port()
+        processes.append(
+            subprocess.Popen(
+                [
+                    sys.executable,
+                    str(Path(__file__).with_name("_boot_ingest_connector.py")),
+                    str(ingest_port),
+                ],
+                env=base_env,
+                stdout=gos_log,
+                stderr=subprocess.STDOUT,
+            )
+        )
         connector_url = f"http://127.0.0.1:{connector_port}/mcp"
         (config_dir / "mcp_config.json").write_text(
             json.dumps(
@@ -352,7 +369,11 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
                         CONNECTOR: {
                             "url": connector_url,
                             "transport": "streamable-http",
-                        }
+                        },
+                        INGEST_CONNECTOR: {
+                            "url": f"http://127.0.0.1:{ingest_port}/mcp",
+                            "transport": "streamable-http",
+                        },
                     }
                 }
             )
@@ -390,7 +411,7 @@ def _booted_stack() -> Iterator[dict[str, Any]]:
             f"semantic provisioning failed\n{provision.stdout}\n{provision.stderr}"
         )
         _wait(
-            lambda: _listening(connector_port),
+            lambda: _listening(connector_port) and _listening(ingest_port),
             timeout=60,
             what="the connector fixture",
             logs=lambda: gos_log_path.read_text(errors="replace"),
@@ -659,3 +680,49 @@ async def test_mcp_act_calls_the_connector_tool(stack: dict[str, Any]) -> None:
     effect = await _effect_items(stack)
     assert [item["status"] for item in effect] == ["succeeded"], effect
     assert "echo:boot" in effect[0]["metadata"]["outcome"], effect
+
+
+def _post_op_keyed(stack: dict[str, Any], op_id: str, params: dict[str, Any]) -> Any:
+    import httpx
+
+    response = httpx.post(
+        f"{stack['base_url']}/api/v1/ops/{op_id}",
+        json=params,
+        headers={
+            "Authorization": f"Bearer {stack['token']}",
+            "Idempotency-Key": f"boot-{uuid.uuid4().hex[:12]}",
+        },
+        timeout=120,
+    )
+    assert response.status_code == 200, (
+        f"{op_id} answered {response.status_code}: {response.text}\n{stack['logs']()}"
+    )
+    return response.json()
+
+
+@pytest.mark.spec("ARBORA-OPS-R020.6.6")
+def test_ingest_sources_list_sync_status(stack: dict[str, Any]) -> None:
+    """A declared connector source lists, syncs as a WorkItem, and lands in EG."""
+    source_id = f"{INGEST_CONNECTOR}/items"
+    listed = _post_op(stack, "ingest.sources.list", {})
+    assert listed["ok"] is True, listed
+    sources = {s["source_id"]: s for s in listed["result"]["value"]["sources"]}
+    assert sources[source_id]["record_type"] == "FixtureItem", listed
+
+    synced = _post_op_keyed(
+        stack, "ingest.sources.sync", {"source_id": source_id, "mode": "full"}
+    )
+    assert synced["ok"] is True, synced
+    receipt = synced["result"]["value"]
+    status = _post_op(stack, "ingest.sources.status", {"source_id": source_id})
+    record = status["result"]["value"]
+    assert record["last_job_id"] == receipt["job_id"], (status, stack["logs"]())
+    assert receipt["status"] == "completed", (receipt, record, stack["logs"]())
+    assert record["records"] == 3, record
+
+    nodes = _post_op(
+        stack, "eg.graph.GetNodesByLabel", {"label": "FixtureItem", "limit": 10}
+    )
+    encoded = json.dumps(nodes)
+    assert nodes["ok"] is True and encoded.count("item-") >= 3, encoded[:3000]
+    assert INGEST_CONNECTOR in encoded, encoded[:3000]
