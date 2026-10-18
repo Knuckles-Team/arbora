@@ -83,7 +83,7 @@ class IngestSourceStatusParams(_Params):
 
 
 class IngestSourceStatusResult(_Params):
-    value: dict[str, str]
+    value: dict[str, object]
 
 
 class IngestPacksListParams(_Params):

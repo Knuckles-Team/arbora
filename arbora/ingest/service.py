@@ -56,6 +56,13 @@ class IngestSourceRecord(BaseModel):
     source_id: str
     tenant: str
     state: IngestSourceState
+    connector: str | None = None
+    record_type: str | None = None
+    incremental: bool | None = None
+    cursor: str | None = None
+    records: int | None = None
+    last_job_id: str | None = None
+    sync_state: str | None = None
 
 
 class IngestSourceInventory(BaseModel):
@@ -105,17 +112,25 @@ class IngestRunner(Protocol):
     """
 
     async def sync_source(
-        self, *, tenant: str, source_id: str, mode: str, idempotency_key: str
+        self,
+        *,
+        tenant: str,
+        source_id: str,
+        mode: str,
+        idempotency_key: str,
+        caller: Any = None,
     ) -> IngestSyncReceipt: ...
 
     async def index_repository(
         self, *, tenant: str, repo_id: str, idempotency_key: str
     ) -> IngestIndexReceipt: ...
 
-    async def list_sources(self, *, tenant: str) -> IngestSourceInventory: ...
+    async def list_sources(
+        self, *, tenant: str, caller: Any = None
+    ) -> IngestSourceInventory: ...
 
     async def get_source_status(
-        self, *, tenant: str, source_id: str
+        self, *, tenant: str, source_id: str, caller: Any = None
     ) -> IngestSourceRecord: ...
 
     async def list_packs(self, *, tenant: str) -> IngestPackInventory: ...
@@ -142,6 +157,7 @@ async def sync_source(context: Any, params: Mapping[str, Any], op: Any) -> Any:
         source_id=params["source_id"],
         mode=params["mode"],
         idempotency_key=context.idempotency_key,
+        caller=context.caller,
     )
     return {"value": receipt.model_dump(mode="json")}
 
@@ -163,17 +179,21 @@ async def index_repository(context: Any, params: Mapping[str, Any], op: Any) -> 
 async def list_sources(context: Any, params: Mapping[str, Any], op: Any) -> Any:
     """List this tenant's ingestion sources through the composed runner."""
     runner = _bound_runner(context)
-    inventory = await runner.list_sources(tenant=context.caller.tenant)
-    return {"value": inventory.model_dump(mode="json")}
+    inventory = await runner.list_sources(
+        tenant=context.caller.tenant, caller=context.caller
+    )
+    return {"value": inventory.model_dump(mode="json", exclude_none=True)}
 
 
 async def get_source_status(context: Any, params: Mapping[str, Any], op: Any) -> Any:
     """Show one ingestion source's current status through the composed runner."""
     runner = _bound_runner(context)
     record = await runner.get_source_status(
-        tenant=context.caller.tenant, source_id=params["source_id"]
+        tenant=context.caller.tenant,
+        source_id=params["source_id"],
+        caller=context.caller,
     )
-    return {"value": record.model_dump(mode="json")}
+    return {"value": record.model_dump(mode="json", exclude_none=True)}
 
 
 async def list_packs(context: Any, params: Mapping[str, Any], op: Any) -> Any:

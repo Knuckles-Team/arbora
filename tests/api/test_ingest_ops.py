@@ -42,7 +42,13 @@ class _FakeRunner:
         self.job_calls: list[tuple[str, str]] = []
 
     async def sync_source(
-        self, *, tenant: str, source_id: str, mode: IngestSyncMode, idempotency_key: str
+        self,
+        *,
+        tenant: str,
+        source_id: str,
+        mode: IngestSyncMode,
+        idempotency_key: str,
+        caller: object = None,
     ) -> IngestSyncReceipt:
         self.calls.append((tenant, source_id, mode, idempotency_key))
         return IngestSyncReceipt(
@@ -61,7 +67,9 @@ class _FakeRunner:
             job_id="job-2", repo_id=repo_id, tenant=tenant, status="queued"
         )
 
-    async def list_sources(self, *, tenant: str) -> IngestSourceInventory:
+    async def list_sources(
+        self, *, tenant: str, caller: object = None
+    ) -> IngestSourceInventory:
         self.list_calls.append(tenant)
         return IngestSourceInventory(
             sources=(
@@ -70,7 +78,7 @@ class _FakeRunner:
         )
 
     async def get_source_status(
-        self, *, tenant: str, source_id: str
+        self, *, tenant: str, source_id: str, caller: object = None
     ) -> IngestSourceRecord:
         self.status_calls.append((tenant, source_id))
         return IngestSourceRecord(source_id=source_id, tenant=tenant, state="active")
