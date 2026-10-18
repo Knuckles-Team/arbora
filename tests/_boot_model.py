@@ -41,7 +41,16 @@ def _chunks() -> list[dict]:
         "model": MODEL,
     }
     return [
-        {**base, "choices": [{"index": 0, "delta": {"role": "assistant", "content": REPLY}, "finish_reason": None}]},
+        {
+            **base,
+            "choices": [
+                {
+                    "index": 0,
+                    "delta": {"role": "assistant", "content": REPLY},
+                    "finish_reason": None,
+                }
+            ],
+        },
         {**base, "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]},
     ]
 
@@ -51,7 +60,9 @@ class _Handler(http.server.BaseHTTPRequestHandler):
         return
 
     def do_GET(self) -> None:  # noqa: N802 - http.server API
-        body = json.dumps({"object": "list", "data": [{"id": MODEL, "object": "model"}]}).encode()
+        body = json.dumps(
+            {"object": "list", "data": [{"id": MODEL, "object": "model"}]}
+        ).encode()
         self._send(200, "application/json", body)
 
     def do_POST(self) -> None:  # noqa: N802 - http.server API
@@ -72,4 +83,6 @@ class _Handler(http.server.BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    http.server.ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), _Handler).serve_forever()
+    http.server.ThreadingHTTPServer(
+        ("127.0.0.1", int(sys.argv[1])), _Handler
+    ).serve_forever()
