@@ -642,3 +642,15 @@ Backends: `webarchiver` (`CONN-WEBARCHIVER-WEB-SOURCE`) is primary. `archivebox`
 Reuse: the ingest runner port of `ARBORA-OPS-R020.1`, the job status read of `ARBORA-OPS-R020.3.1.2` and the open-web screen of `ARBORA-OPS-R042`. The `web-crawler` skill of universal-skills calls this operation (`US-WEB-RESEARCH-R001`).
 
 Budget: 5 pages and a 60 s deadline by default, with at most 32 pages and 300 s. These are starting defaults. A measurement on this platform replaces them.
+
+## Connector sources through the SDK sync runner (ARBORA-OPS-R020.6)
+
+Depends-on: [SDK source sync runner](https://github.com/Knuckles-Team/agent-connector-sdk/blob/main/specs/SDK-SOURCE-INGEST/spec.md)
+
+Arbora serves connector sources. It owns admission, scopes and the durable job. The SDK owns the declarations and the runner. The engine owns `SourceIngest`, KV and WorkItems. No engine change is needed.
+
+Call path for `ingest.sources.sync`: `invoke` → `sync_source` (`arbora/ingest/service.py`) → `ConnectorIngestRunner.sync_source` (`arbora/ingest/connector_sources.py`). The runner submits and claims one WorkItem of kind `arbora.ingest.source_sync` through `arbora/work_items.py`. It then runs `SourceSyncRunner.sync` with a session over `LateFleetGateway.call`. Each tool call passes fleet admission with the read effect. The runner commits the WorkItem outcome after the run.
+
+`ingest.sources.list` reads the configured fleet servers. For each server it calls the read-only `<prefix>_ingest_sources` tool. A server without the tool contributes no source. `ingest.sources.status` reads the shared KV checkpoint `ingest-source/<connector>/<source>`.
+
+A sync is resumable. The KV checkpoint keeps the cursor and the record digests after each accepted batch. A later sync with a new idempotency key resumes from that checkpoint.
