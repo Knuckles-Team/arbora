@@ -658,3 +658,7 @@ A sync is resumable. The KV checkpoint keeps the cursor and the record digests a
 ### 2026-10-18 installed-wheel model fixture correction (ARBORA-OPS-R001)
 
 The unary A2A boot check copies its local model server into the isolated test directory. It waits for that subprocess to listen before starting Arbora. A missing or exited fixture must report its startup log rather than surface as a later model connection error. Qualification covers actual loopback completions and the workflow fixture bundle. TUI qualification requires a published client with the current A2A contract. The published ACP client is not compatible evidence. This correction grants no host authority and makes no streaming or production-model claim.
+
+### 2026-10-18 published TUI qualification dependency (ARBORA-OPS-R001)
+
+The test extra must install the published A2A-capable TUI client. The wheel boot job exports this extra with hashes. It runs the existing headless prompt test against the authenticated local stack and model fixture. Passing requires the expected model reply and no skipped tests. Source checkouts do not replace this package qualification.

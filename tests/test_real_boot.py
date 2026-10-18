@@ -785,11 +785,9 @@ def test_a2a_message_send_completes_through_the_model(stack: dict[str, Any]) -> 
 
 @pytest.mark.spec("ARBORA-OPS-R001")
 def test_the_tui_headless_prompt_completes(stack: dict[str, Any]) -> None:
-    """The TUI's own ``--headless --prompt`` path, end to end, when installed."""
+    """The installed test dependency completes its headless prompt end to end."""
     exe = shutil.which("agent-terminal-ui", path=str(Path(sys.executable).parent))
-    if exe is None:
-        pytest.skip("agent-terminal-ui is not installed in this environment")
-    assert exe is not None
+    assert exe is not None, "install the locked test extra for TUI acceptance"
     env = {
         **{k: v for k, v in os.environ.items() if k in _INHERITED_ENV},
         "AGENT_URL": stack["base_url"],

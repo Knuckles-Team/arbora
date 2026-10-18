@@ -223,3 +223,7 @@ Hot-path proof for `ARBORA-OPS-R067`: `tests/gateway/test_research_web_served.py
 ### ARBORA-OPS-R001 installed-wheel fixture acceptance
 
 Copy all boot helpers into the isolated wheel test directory. Start the copied model helper, wait for readiness, and check a real HTTP completion. A missing helper must fail with its subprocess diagnostic before Arbora dispatch. Keep incompatible or absent published TUI dependencies visible as a qualification blocker, not a passing end-to-end result.
+
+### ARBORA-OPS-R001 published TUI acceptance
+
+Install the TUI from the locked test extra. Run `test_the_tui_headless_prompt_completes` with the installed console entry point. Require the expected model reply from the authenticated local stack. The installed-wheel job must report zero skips.
