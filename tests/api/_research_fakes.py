@@ -29,7 +29,9 @@ class FakeFleet:
 
     async def effect(self, op: Any, params: dict[str, Any], caller: Any) -> Any:
         effect = (
-            Effect.WRITE if params["tool"] == research.ARCHIVEBOX_ADD else Effect.READ
+            Effect.WRITE
+            if params["server"] == research.ARCHIVEBOX_SERVER
+            else Effect.READ
         )
         return SimpleNamespace(
             effect=effect, required_scopes=frozenset({"mcp:delegate"})
@@ -68,7 +70,7 @@ class FakeFleet:
             return {
                 "backend": "webarchiver",
                 "fetch_mode": "http",
-                "fetched_at": "2026-10-18T00:00:00+00:00",
+                "retrieved_at": "2026-10-18T00:00:00+00:00",
                 "page": {
                     "title": f"Title of {arguments['url']}",
                     "canonical_url": arguments["url"],
@@ -77,14 +79,16 @@ class FakeFleet:
                     "content_sha256": "",
                 },
             }
-        if tool == research.ARCHIVEBOX_ADD:
-            return {"status": "ok"}
-        if tool == research.ARCHIVEBOX_TEXT:
+        if tool == research.ARCHIVEBOX_EXTRACT:
             return {
+                "backend": "archivebox",
                 "url": arguments["url"],
+                "canonical_url": arguments["url"],
                 "title": f"Title of {arguments['url']}",
+                "author": "Ada",
                 "text": ARTICLE + arguments["url"],
-                "archived_at": "2026-10-18T00:00:01+00:00",
+                "retrieved_at": "2026-10-18T00:00:01+00:00",
+                "snapshot_id": "snap-1",
                 "extractor": "readability",
             }
         raise AssertionError((server, tool))

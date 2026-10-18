@@ -64,12 +64,23 @@ async def test_forced_fallback_run() -> None:
     assert second["backend"] == "webarchiver"
     assert fallback["fallbacks"] == 1
     assert _without_backend(fallback) == _without_backend(primary)
-    retried = [a["urls"] for s, t, a in fleet.calls if t == research.ARCHIVEBOX_ADD]
-    assert retried == [[FIRST]]
+    retried = [a["url"] for s, _t, a in fleet.calls if s == research.ARCHIVEBOX_SERVER]
+    assert retried == [FIRST]
 
 
 @pytest.mark.spec("ARBORA-OPS-R067.3")
-@pytest.mark.parametrize("reason", sorted(research.POLICY_REFUSALS))
+@pytest.mark.parametrize(
+    "reason",
+    [
+        "robots_disallowed",
+        "policy_refused",
+        "egress_denied",
+        "unsupported_type",
+        "size_exceeded",
+        "rate_limited",
+        "extract_empty",
+    ],
+)
 async def test_policy_refusal_is_not_retried(reason: str) -> None:
     fleet = FakeFleet(webarchiver_fails={FIRST}, reason=reason)
     value, _ = await _run(fleet, max_pages=1)
