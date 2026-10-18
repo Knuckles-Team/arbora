@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import importlib
 import json
+import logging
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Protocol, runtime_checkable
+
+_logger = logging.getLogger(__name__)
 
 
 class ArboraErrorCode(StrEnum):
@@ -427,6 +430,18 @@ def to_envelope(
     if not op or not request_id or not registry_digest:
         raise ValueError("error envelope requires op, request_id, registry_digest")
     code, source, status, retryable, details = _classified_error(error)
+    if code in {"UNAVAILABLE", "INTERNAL"}:
+        # The envelope carries only reviewed fields; the operator log keeps
+        # the internal cause of a refusal the caller cannot act on.
+        _logger.warning(
+            "operation %s refused %s (%s): %r",
+            op,
+            code,
+            request_id,
+            getattr(error, "details", None) or type(error).__name__,
+            exc_info=isinstance(error, Exception)
+            and not isinstance(error, (ArboraRefusal, FleetRefusal)),
+        )
     defaults: dict[str, str] = {
         "arbora": "Request refused",
         "fleet": "Fleet call refused",

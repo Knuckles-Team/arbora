@@ -212,3 +212,10 @@ Hot-path proof for `ARBORA-OPS-R067`: `tests/gateway/test_research_web_served.py
 | `ARBORA-OPS-R020.6.4` | Refusal | `tests/ingest/test_connector_sources.py::test_refusals_fail_closed` covers each refusal and the failed WorkItem commit. |
 | `ARBORA-OPS-R020.6.5` | Evidence | `tests/ingest/test_connector_sources.py::test_receipt_binds_work_item` compares the receipt job ID with the committed WorkItem. |
 | `ARBORA-OPS-R020.6.6` | Hot-path proof | The test observes the declared source, a succeeded WorkItem and the ingested nodes with provenance. |
+
+## Refusal causes and replay owners (ARBORA-OPS-R009.2, R009.3)
+
+| Requirement | Case | Required assertion |
+|---|---|---|
+| `ARBORA-OPS-R009.2` | Refusal causes are logged | `tests/api/test_refusal_causes.py::test_refusal_cause_is_logged_with_request_id` observes the logged cause and the redacted envelope. |
+| `ARBORA-OPS-R009.3` | Declared replay owners | `tests/api/test_refusal_causes.py::test_ops_modules_declare_replay_owners` finds `agents.run` and a test module's declaration. |
