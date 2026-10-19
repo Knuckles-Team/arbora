@@ -239,5 +239,13 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R067.6:** Evidence. Record the trace fields.
 - [ ] **ARBORA-OPS-R067.7:** Hot-path proof. Add the served three-call test.
 
+## Served harness component and improvement library operations (R068)
+
+- [ ] **ARBORA-OPS-R068:** Serve the harness component and improvement library operations.
+- [ ] **ARBORA-OPS-R068.1:** Component reads. Add `harness.components.list` and `harness.components.get`.
+- [ ] **ARBORA-OPS-R068.2:** Lesson query. Add `harness.lessons.retrieve`.
+- [ ] **ARBORA-OPS-R068.3:** Evolution report. Add `harness.evolution.report`.
+- [ ] **ARBORA-OPS-R068.4:** Adoption. Add the service-only `harness.evolution.adopt`.
+
 
 - [ ] **ARBORA-OPS-R021.4.5.1.1:** Compose the stateless native reader and qualify source-level authority/projection checks; retain the installed-EG acceptance blocker.

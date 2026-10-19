@@ -677,3 +677,18 @@ EG-DECISION-ENGINE-R128.3 and R128.6 define the harness answer and scaffold rule
 Successful served evaluation remains an owner implementation prerequisite; a
 test-supplied decision cannot stand in for it. No additional user policy decision
 is identified for this reader slice.
+
+## Served harness component and improvement library operations (R068)
+
+arbora serves the reads and the adoption of the versioned harness
+substrate. The design is the recursive agent harness of
+arXiv:2610.14224. The component reads bind to the engine query of
+EG-ORCH-VOCAB-R801 under `kg:read`. The lesson query binds to
+EG-ORCH-VOCAB-R802.3. The report reads the contrast and the decision
+record of EG-DECISION-ENGINE-R803. The adoption commits only a
+decision record that names the engine decision. It routes through the
+service executor only, per the ARBORA-OPS-R021.1 pattern. It writes
+the adopted harness of EG-ORCH-VOCAB-R802. arbora computes no
+ranking and stores no harness content. The engine is the sole
+authority for versions, contrasts and lessons. The in-run cycle that
+drives these operations belongs to agent-utilities (AU-HARNESS-CYCLE-R001).
