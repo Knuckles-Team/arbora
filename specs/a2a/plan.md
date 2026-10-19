@@ -220,11 +220,6 @@ Cross-repository: `EG-` rows for the held proposal, the verification record, the
 - Keep the output-release gate at `arbora/a2a/application.py:_send_message` separate from recipient selection in `arbora/a2a/routing.py:OrchestratorA2ARouter.route`.
 - Require the typed AU checklist/questions and an EG verdict bound to the same output. Use the held-item contract in `ARBORA-A2A-R006.3` through `.8`, with verified-caller and signed-authority prerequisites in `ARBORA-A2A-R006.2.1` and `.5`.
 - Routing success cannot satisfy critique acceptance. Keep release unavailable until AU and EG producer contracts are published. Do not add another approval authority.
-### References
-
-- arXiv:2606.17929 — Li, "PreAct: Computer-Using Agents that Get Faster on Repeated Tasks" (2026)
-
-Research citations above describe inspiration only. The engine and transport contracts, verified authority boundaries and served acceptance requirements define the architecture.
 
 ## Additional owner requirements
 
