@@ -156,6 +156,7 @@ def test_json_rpc_rejects_missing_idempotency_invalid_shape_and_unknown_task() -
     assert unknown.json()["error"]["code"] == -32601
 
 
+@pytest.mark.spec("ARBORA-A2A-R001.1")
 def test_json_rpc_refuses_resubscribe_until_streaming_is_implemented() -> None:
     """ARBORA-A2A-R001.1: resubscribe is on the method table but fail-closed.
 
