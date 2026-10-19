@@ -208,6 +208,11 @@
     "ARBORA-OPS-R067.5",
     "ARBORA-OPS-R067.6",
     "ARBORA-OPS-R067.7",
+    "ARBORA-OPS-R068",
+    "ARBORA-OPS-R068.1",
+    "ARBORA-OPS-R068.2",
+    "ARBORA-OPS-R068.3",
+    "ARBORA-OPS-R068.4",
     "ARBORA-OPS-R700",
     "ARBORA-OPS-R843",
     "ARBORA-OPS-R843.1",
@@ -2180,6 +2185,47 @@
     {
       "id": "ARBORA-OPS-R067.7",
       "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R068",
+      "title": "Served harness component and improvement library operations (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R068.1",
+        "ARBORA-OPS-R068.2",
+        "ARBORA-OPS-R068.3",
+        "ARBORA-OPS-R068.4"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R068.1",
+      "title": "Component reads",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R068.2",
+      "title": "Lesson query",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R068.3",
+      "title": "Evolution report",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R068.4",
+      "title": "Adoption (service-only)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

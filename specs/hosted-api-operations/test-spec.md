@@ -230,3 +230,12 @@ Install the TUI from the locked test extra. Run `test_the_tui_headless_prompt_co
 
 
 Test the actual serving-root binding and contextual read path. Cover concurrent callers, owner/session/tenant/graph mismatch, and stale credentials. Test missing kg:read, native auth refusal, absent generated methods, and null or malformed snapshots. Preserve future and expiry rejection. Source doubles establish mapping and admission only; no unpublished package substitutes for installed acceptance.
+
+## ARBORA-OPS-R068 acceptance
+
+| Case | Row | Proving test and observation |
+|---|---|---|
+| Component reads | `ARBORA-OPS-R068.1` | `tests/api/test_harness_components.py::test_components_list_and_get_served`: A served round trip returns versions with their digests and valid intervals. |
+| Lesson query | `ARBORA-OPS-R068.2` | `tests/api/test_harness_lessons.py::test_lessons_retrieve_ranks_by_confidence`: The answer order follows the engine confidence ranking. |
+| Evolution report | `ARBORA-OPS-R068.3` | `tests/api/test_harness_evolution.py::test_evolution_report_denial_hides_both`: The denied caller sees the refusal and nothing else. |
+| Adoption | `ARBORA-OPS-R068.4` | `tests/api/test_harness_evolution.py::test_adopt_refuses_human_token`: A human-scoped caller cannot invoke the adoption. |
