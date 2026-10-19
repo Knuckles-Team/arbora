@@ -100,12 +100,15 @@
     {
       "id": "ARBORA-A2A-R001.1",
       "title": "Fail-closed `tasks/resubscribe` stub on the A2A method table",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "a8ed61b538e7",
+        "bc6b0b0827e2",
         "d5bff77ba836"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/a2a/test_application.py:159"
+      ]
     },
     {
       "id": "ARBORA-A2A-R002",
@@ -214,7 +217,7 @@
         "a226c8fdf397"
       ],
       "verified_by": [
-        "tests/a2a/test_application.py:274"
+        "tests/a2a/test_application.py:275"
       ]
     },
     {
@@ -319,8 +322,8 @@
         "cdde0200a54a"
       ],
       "verified_by": [
-        "tests/a2a/test_application.py:236",
-        "tests/a2a/test_application.py:275"
+        "tests/a2a/test_application.py:237",
+        "tests/a2a/test_application.py:276"
       ]
     },
     {
