@@ -1,0 +1,58 @@
+{
+  "schema_version": 2,
+  "spec_id": "GRAPHOS-DEPLOY-POLICY",
+  "owner_repo": "arbora",
+  "delivery_state": "SPECIFIED",
+  "requirement_ids": [
+    "GRAPHOS-DEPLOY-POLICY-R001",
+    "GRAPHOS-DEPLOY-POLICY-R002",
+    "GRAPHOS-DEPLOY-POLICY-R003",
+    "GRAPHOS-DEPLOY-POLICY-R004",
+    "GRAPHOS-DEPLOY-POLICY-R005",
+    "GRAPHOS-DEPLOY-POLICY-R006"
+  ],
+  "requirements": [
+    {
+      "id": "GRAPHOS-DEPLOY-POLICY-R001",
+      "title": "Declarative deployment manifest and plan preview",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-POLICY-R002",
+      "title": "Idempotent apply convergence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-POLICY-R003",
+      "title": "Drift inspection and destructive-change approval gates",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-POLICY-R004",
+      "title": "Declarative policy bundles as code",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-POLICY-R005",
+      "title": "Epistemic policy predicates (stated advantage)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "GRAPHOS-DEPLOY-POLICY-R006",
+      "title": "Served agent surface: llms.txt, MCP best-practice resources, versioned skill export",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    }
+  ]
+}
