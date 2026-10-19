@@ -21,7 +21,7 @@ Use an ephemeral engine process or in-memory contract fixture implementing the p
 | IT-11 | IA-12 | Engine access contract + REST/MCP | Request/approve/deny/revoke, approval list, lease, check and explain return engine decision and audit receipt; route and MCP twin agree. | Self approval, delegated approval, expired lease, unavailable engine, missing exact scope and graph-only privilege shortcut deny; no local fallback receipt. |
 | IT-12 | IA-13 | Registry and dispatch property tests | Every advertised operation has an exact registered scope/class. Domain registry export matches engine source. Fleet operation passes with exact fleet grant. | `admin`, `kg:admin`, stdio transport, unknown tool and omitted registry entry never grant fleet/MCP access. |
 | IT-13 | IA-14 | Import graph + composition test | One server/issuer/session implementation is constructed and injected through ports. REST/MCP/web host share it. | Import cycle, orphan implementation, duplicate authority or direct web-host import of MCP implementation fails. |
-| IT-14 | IA-16 | Served engine verifier plus each Arbora client entry point | Bootstrap, REST, MCP, A2A, CLI and background service requests carry an accepted signed local-issuer or permitted service token, with expected allow and deny decisions. | Missing/expired/wrong-audience token and explicit engine denial produce a typed error; no unsigned retry, fallback credential or auth-opt-out branch is invoked. An old client fails closed after engine opt-out removal. |
+| IT-14 | IA-16 | Served engine verifier plus each Arbora client entry point | Bootstrap, REST, MCP, A2A, CLI and background service requests carry an accepted signed local-issuer or permitted service token, with expected allow and deny decisions. | Missing/expired/wrong-audience tokens and explicit engine denial produce a typed error. The client never retries unsigned or uses fallback credentials or auth-opt-out branches. An old client fails closed after engine opt-out removal. |
 
 ## Acceptance evidence and release checks
 
@@ -113,3 +113,17 @@ Inspect responses and logs for token/code leakage. These acceptance cases have n
 ## Additional owner requirements
 
 - `ARBORA-IDENTITY-R026.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+
+## Atomic session record consumer
+
+ARBORA-IDENTITY-R005.1 tests exercise existing generated transport selection,
+strict principal/tenant correlation, minimum expiry, missing legacy metadata,
+unknown fields, incomplete MFA, bootstrap and fresh refusal after a prior
+success. These fixtures prove consumer behavior only. EG native persistence,
+committed response publication and real admitted host startup must be tested
+against the qualified producer before claiming served acceptance.
+
+The existing HostStartAdmission accepts the consumer session port directly.
+Controlled owner fixtures check fresh session revocation and reference changes
+before admission returns. They do not qualify create_agent_server or native
+startup. Generated new-metadata decoding remains producer-dependent.

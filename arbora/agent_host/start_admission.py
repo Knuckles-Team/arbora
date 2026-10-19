@@ -91,6 +91,21 @@ class HostSessionBinding:
 
 
 class HostStartGrantProvider(Protocol):
+    """Trusted access-owner projection, not a decoder for caller lease maps.
+
+    Each call must freshly resolve the exact tenant-scoped grant and verify
+    issuer authority for host.start, the immutable request/session binding,
+    current policy and lease revision, status and expiry. Kind/issuer strings
+    in a ControlLease grant body do not prove issuance authority. Generic
+    lease:write or graph access does not imply host-start authority.
+
+    A lease-backed implementation must preserve lease identity together with
+    its revision in the returned opaque revision token; equal revisions on
+    different leases must not establish continuity. Return None when the
+    owner cannot qualify any of these facts. No production owner is selected
+    by this protocol, and no approval or lease policy is introduced here.
+    """
+
     async def authorize(
         self, state: SessionState, request: HostStartRequest
     ) -> HostStartGrant | None: ...
@@ -341,6 +356,27 @@ class HostStartContext:
                 self._check(configuration=configuration, runtime=runtime)
             )
         raise ValueError("synchronous host startup requires an idle event loop")
+
+    async def revalidate_runtime(
+        self,
+        previous: AdmittedHostStart,
+        configuration: HostStartConfiguration,
+        runtime: HostRuntimeResources,
+    ) -> AdmittedHostStart:
+        """Refresh existing owners without extending a checked start's authority."""
+        checked = await self._check(configuration=configuration, runtime=runtime)
+        if (
+            previous.expires_at_ms <= int(time.time() * 1000)
+            or checked.expires_at_ms < previous.expires_at_ms
+            or checked.request != previous.request
+            or checked.graph_session is not previous.graph_session
+            or not _same_session(previous.state, checked.state)
+            or checked.grant != previous.grant
+            or checked.configuration_revision != previous.configuration_revision
+            or not runtime.same_resources(previous.runtime)
+        ):
+            raise PermissionError("workspace_denied")
+        return previous
 
     async def _check(
         self,

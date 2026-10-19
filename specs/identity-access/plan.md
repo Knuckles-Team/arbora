@@ -256,3 +256,16 @@ These shared typed refusals stop persistence readiness and operation continuatio
 ## Additional owner requirements
 
 - `ARBORA-IDENTITY-R026.8`: Plan the owner work and dependencies defined in requirements.md.
+
+### Atomic session record consumption
+
+ARBORA-IDENTITY-R005.1 consumes EG-TYPED-PACKS-R085.1 through the existing
+Session.Resolve operation. EG projects committed record identity, tenant and
+expiry facts under the same storage transaction. Arbora retains authentication
+and admission through its existing SessionAuthority and identity composition.
+The consumer adds no credential issuer, grant, record store or operation.
+Missing producer metadata stays unavailable. Controlled wire fixtures do not
+qualify persisted native authority or live admitted host startup.
+
+ARBORA-IDENTITY-R005.2 retains the full account lifecycle and served/native
+acceptance. It remains pending independently of the bounded consumer tests.

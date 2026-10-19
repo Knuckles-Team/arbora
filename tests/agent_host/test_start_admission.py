@@ -5,7 +5,7 @@ import time
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 
 import agent_utilities.graph
 import pytest
@@ -371,3 +371,42 @@ def test_matching_actual_inputs_reach_admission_but_never_launch(
             host_start=owner.context(),
         )
     assert owner.calls == 1
+
+
+@pytest.mark.spec("ARBORA-HOST-R010.7.1")
+@pytest.mark.parametrize(
+    "kind,issuer",
+    [
+        ("host.start", "claimed-authority"),
+        ("action.approval", "claimed-authority"),
+        ("host.start", "wrong-issuer"),
+    ],
+)
+def test_caller_lease_maps_never_become_start_authority(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str, issuer: str
+) -> None:
+    owner = Owners(tmp_path)
+    raw = {
+        "lease_id": "caller-lease",
+        "kind": kind,
+        "status": "active",
+        "revision": 1,
+        "expires_at_ms": owner.state.expires_at_ms,
+        "grant": {
+            "issuer": issuer,
+            "action": "host.start",
+            "tenant": "tenant",
+            "principal": "alice",
+            "session_ref": owner.state.session_ref,
+            "workspace": owner.request.workspace,
+            "interfaces": "terminal",
+            "web_logs": False,
+            "configuration_digest": owner.request.configuration_digest,
+            "policy_revision": "policy-1",
+        },
+    }
+    monkeypatch.setattr(owner, "authorize", AsyncMock(return_value=raw))
+    with pytest.raises(PermissionError, match="workspace_denied"):
+        owner.context().check(
+            workspace=str(tmp_path), interfaces="terminal", web_logs=False
+        )

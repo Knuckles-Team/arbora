@@ -42,7 +42,9 @@ from arbora.agent_host.log_routes import register_host_log_routes
 from arbora.agent_host.log_runtime import HostLogRuntime, register_host_log_runtime
 from arbora.agent_host.start_admission import HostStartContext, check_host_start
 from arbora.agent_host.start_configuration import (
+    HostRuntimeResources,
     HostStartConfiguration,
+    check_runtime_configuration,
     check_start_configuration,
 )
 
@@ -118,6 +120,9 @@ def build_agent_host_app(
     executor: AgentExecutor | None = None,
     host_logs: HostLogAccess | None = None,
     host_log_runtime: HostLogRuntime | None = None,
+    host_start: HostStartContext | None = None,
+    host_configuration: HostStartConfiguration | None = None,
+    host_runtime: HostRuntimeResources | None = None,
 ):
     """Build the FastAPI app that hosts one connector agent.
 
@@ -126,13 +131,60 @@ def build_agent_host_app(
     callers keep using those AU entry points for construction; only the HTTP
     hosting moves here.
     """
+    from contextlib import asynccontextmanager
+
     from fastapi import FastAPI
 
-    run_executor = executor or _default_executor
+    run_executor = executor if executor is not None else _default_executor
     agent_name = name or "Agent"
     agent_description = description or ""
 
-    app = FastAPI(title=agent_name)
+    checked_start = None
+    if any(
+        value is not None for value in (host_start, host_configuration, host_runtime)
+    ):
+        if host_start is None or host_configuration is None or host_runtime is None:
+            raise PermissionError("configuration_unavailable")
+        actual = (graph, graph_config, executor, host_logs, host_log_runtime)
+        expected = (
+            host_runtime.graph,
+            host_runtime.graph_config,
+            host_runtime.executor,
+            host_runtime.host_logs,
+            host_runtime.host_log_runtime,
+        )
+        if any(
+            value is not supplied
+            for value, supplied in zip(actual, expected, strict=True)
+        ):
+            raise PermissionError("configuration_unavailable")
+        checked_start = check_runtime_configuration(
+            host_start,
+            host_configuration,
+            host_runtime,
+            resources=(graph, graph_config, executor, host_logs, host_log_runtime),
+            unused_arguments={},
+        )
+
+    @asynccontextmanager
+    async def lifespan(application):
+        if checked_start is not None:
+            assert (
+                host_start is not None
+                and host_configuration is not None
+                and host_runtime is not None
+            )
+            await host_start.revalidate_runtime(
+                checked_start, host_configuration, host_runtime
+            )
+            application.state.admitted_host_start = checked_start
+        try:
+            yield
+        finally:
+            if checked_start is not None:
+                del application.state.admitted_host_start
+
+    app = FastAPI(title=agent_name, lifespan=lifespan)
     if host_log_runtime is not None:
         if host_logs is not None:
             raise ValueError("one host log composition required")
@@ -237,6 +289,7 @@ def create_agent_server(
     enable_web_ui: bool | None = None,
     enable_web_logs: bool = False,
     host_start: HostStartContext | None = None,
+    host_runtime: HostRuntimeResources | None = None,
     **_unused_au_hosting_kwargs: Any,
 ) -> None:
     """Build and serve a connector agent -- the Arbora-hosted replacement for
@@ -263,37 +316,51 @@ def create_agent_server(
         enable_web_ui is not None and type(enable_web_ui) is not bool
     ):
         raise ValueError("invalid_launch")
-    if enable_terminal_ui or enable_web_ui or enable_web_logs:
-        check_start_configuration(
-            host_start,
-            HostStartConfiguration(
-                workspace=workspace,
-                tag_prompts=tag_prompts,
-                tag_env_vars=tag_env_vars,
-                graph_name=graph_name,
-                mcp_url=mcp_url,
-                mcp_config=mcp_config,
-                router_model=router_model,
-                agent_model=agent_model,
-                min_confidence=min_confidence,
-                host=host,
-                port=port,
-                name=name,
-                system_prompt=system_prompt,
-                enable_terminal_ui=enable_terminal_ui,
-                enable_web_ui=enable_web_ui,
-                enable_web_logs=enable_web_logs,
-            ),
-            resources=(graph, graph_config, executor, host_logs, host_log_runtime),
-            unused_arguments=_unused_au_hosting_kwargs,
-        )
-        check_host_start(
-            host_start,
+    selected_interface = enable_terminal_ui or enable_web_ui or enable_web_logs
+    if host_runtime is not None and not selected_interface:
+        raise ValueError("runtime_requires_selected_interface")
+    if selected_interface:
+        configuration = HostStartConfiguration(
             workspace=workspace,
-            terminal=enable_terminal_ui,
-            web=enable_web_ui,
-            web_logs=enable_web_logs,
+            tag_prompts=tag_prompts,
+            tag_env_vars=tag_env_vars,
+            graph_name=graph_name,
+            mcp_url=mcp_url,
+            mcp_config=mcp_config,
+            router_model=router_model,
+            agent_model=agent_model,
+            min_confidence=min_confidence,
+            host=host,
+            port=port,
+            name=name,
+            system_prompt=system_prompt,
+            enable_terminal_ui=enable_terminal_ui,
+            enable_web_ui=enable_web_ui,
+            enable_web_logs=enable_web_logs,
         )
+        resources = (graph, graph_config, executor, host_logs, host_log_runtime)
+        if host_runtime is not None:
+            check_runtime_configuration(
+                host_start,
+                configuration,
+                host_runtime,
+                resources=resources,
+                unused_arguments=_unused_au_hosting_kwargs,
+            )
+        else:
+            check_start_configuration(
+                host_start,
+                configuration,
+                resources=resources,
+                unused_arguments=_unused_au_hosting_kwargs,
+            )
+            check_host_start(
+                host_start,
+                workspace=workspace,
+                terminal=enable_terminal_ui,
+                web=enable_web_ui,
+                web_logs=enable_web_logs,
+            )
         raise HostInterfaceUnavailable("client_unavailable")
 
     if graph is None or graph_config is None:

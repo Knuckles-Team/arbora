@@ -111,3 +111,18 @@ These checks do not prove authorized host logs or terminal startup.
 - R009.8.2.2: Real retained-file restart through HTTP version two preserves
   source generation, sequence, request, timestamp and severity. Version one
   remains unchanged. Unsupported versions and malformed metadata refuse.
+
+The R010.7.2.2.1 launcher attachment accepts an explicit borrowed runtime bundle.
+It rejects conflicting legacy resource arguments and absent admission before
+owner calls. Actual create_agent_server revalidates the exact bundle through
+check_runtime. Changed owner bindings refuse. Successful admission still refuses
+client startup while interface authority and lifecycle composition are unavailable.
+These controlled tests establish no native or served-client qualification.
+
+## R010.7.2.2.2.1 ASGI readiness
+
+`tests/agent_host/test_runtime_lifespan.py` uses real ASGI lifespan handling with
+controlled existing owners. It tests expiry, revocation, changed revisions,
+resource replacement, cancellation and borrowed ownership. Missing runtime facts
+refuse before readiness. These fixtures grant no deployed access and do not
+qualify native session evidence, continuous request authorization or UI launch.
