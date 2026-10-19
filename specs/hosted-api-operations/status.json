@@ -1484,9 +1484,13 @@
     {
       "id": "ARBORA-OPS-R039.3",
       "title": "Add one test in tests/gateway/test_dashboard_api.py asserting GET /health returns 200 without a capability and sets Cache-Control no-store",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "527856a2832b"
+      ],
+      "verified_by": [
+        "tests/gateway/test_dashboard_api.py:99"
+      ]
     },
     {
       "id": "ARBORA-OPS-R039.4",
@@ -1519,9 +1523,13 @@
     {
       "id": "ARBORA-OPS-R039.8",
       "title": "Add one test in tests/gateway/test_registry.py asserting GET /widgets returns every widget type of the deleted registry module map except `genius_agent`, with the same field set",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "bb8060f1c1bf"
+      ],
+      "verified_by": [
+        "tests/gateway/test_registry.py:40"
+      ]
     },
     {
       "id": "ARBORA-OPS-R039.9",
@@ -1622,7 +1630,7 @@
     {
       "id": "ARBORA-OPS-R041",
       "title": "Agent summary widget dropped (replaces AU-BOUNDARY-R001.7, commit 7717d2e62)",
-      "delivery_state": "SPECIFIED",
+      "delivery_state": "VERIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
@@ -1632,9 +1640,13 @@
     {
       "id": "ARBORA-OPS-R041.1",
       "title": "Add one test in tests/gateway/test_registry.py asserting genius_agent is absent from the widget registry and no fixed-value widget is registered",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "54771db54918"
+      ],
+      "verified_by": [
+        "tests/gateway/test_registry.py:31"
+      ]
     },
     {
       "id": "ARBORA-OPS-R042",
