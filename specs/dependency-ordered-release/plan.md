@@ -34,3 +34,13 @@ Before each stage, persist the previous artifact digest, profile digest and stag
 ## Quality and release gates
 
 Required PR checks prove manifest validation, deterministic ordering, profile/digest checks, negative failures and dry-run using disposable fixtures. Release acceptance adds signed artifact/build provenance, hosted integration or cluster test, canary, served Arbora identity and consumer probes, and rollback drill. Run `uv run pytest`, `uv run ruff check .`, `uv run mypy arbora`, and `uv build --wheel`; record exact revisions. CCCC cyclomatic ≤10/cognitive ≤15, KISS thresholds from `.kiss/kiss.toml`, and shared `dupehound-changed`, `jscpd-differential`, and `jscpd-census` gates apply to implementation. Keep this orchestration as a small state machine around existing components; no copied build scripts, second config parser, or mutable-tag escape hatch.
+
+
+## Amendment 2026-10-20: genuine pull-request wheel validation
+
+The existing wheel build also runs after pull-request gates. It builds the wheel,
+checks package data and retains the artifact. A skipped release build cannot
+stand in for this validation. Platform install qualification remains a release
+job; package publication still requires a version tag. This changes no release
+credential, approval or deployment boundary. Workflow tests preserve these
+conditions and the existing build command.
