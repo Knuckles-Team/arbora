@@ -236,3 +236,13 @@ def test_reader_refuses_missing_committed_event_coverage(missing: str) -> None:
         value["events"][0]["event_index"] = 2
     with pytest.raises(RunEventsUnavailable, match="missing"):
         validate(value)
+
+
+@pytest.mark.asyncio
+async def test_admitted_publisher_cannot_silently_downgrade_after_preflight() -> None:
+    from arbora.run_events import _publisher_for_binding
+
+    binding = AdmittedClaim(None, Session(), "run", "work-item:test", {})
+    publisher = RunEventPublisher(binding, None)
+    binding.adapters["events"] = publisher
+    assert await _publisher_for_binding(binding) is publisher
