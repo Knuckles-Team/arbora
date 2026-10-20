@@ -2325,13 +2325,14 @@
       "title": "Compose owner-bound A2A scaffold publication",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "3ad822513bd4",
         "8322f5a61782",
         "b40dfa4f4055"
       ],
       "verified_by": [
-        "tests/a2a/test_native_run_publication.py:20",
+        "tests/a2a/test_native_run_publication.py:21",
         "tests/test_agent_runs.py:96",
-        "tests/test_current_plan_publication.py:19"
+        "tests/test_current_plan_publication.py:21"
       ]
     }
   ]
