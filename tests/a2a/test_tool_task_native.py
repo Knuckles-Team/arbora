@@ -35,6 +35,7 @@ from tests.test_real_boot import (
 pytestmark = [
     pytest.mark.real_boot,
     pytest.mark.spec("ARBORA-A2A-R002.2.2"),
+    pytest.mark.spec("ARBORA-A2A-R002.2.2.2"),
 ]
 
 

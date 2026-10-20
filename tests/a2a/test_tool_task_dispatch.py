@@ -18,7 +18,10 @@ from arbora.security.actor_context import CredentialLease
 from tests._eg_fakes import service_session
 from tests.test_work_items import FakeEngine
 
-pytestmark = pytest.mark.spec("ARBORA-A2A-R002.2.2")
+pytestmark = [
+    pytest.mark.spec("ARBORA-A2A-R002.2.2"),
+    pytest.mark.spec("ARBORA-A2A-R002.2.2.2"),
+]
 
 
 @pytest.fixture

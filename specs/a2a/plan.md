@@ -432,3 +432,12 @@ reclaims a visible `leased` or `running` item. Native `dead_letter` and
 The delivery owner must leave such exceptions unacknowledged. The generic
 worker and restart recovery still need durable owner reconciliation; a
 pre-execution refusal on a later attempt cannot settle an earlier effect.
+
+### Tool-task evidence decomposition
+
+Keep `ARBORA-A2A-R002.2.2` unchanged as the complete worker requirement.
+Child `.1` covers a single invocation with controlled ports. Child `.2` covers
+the native fence adapter. Child `.3` retains served delivery, durable caller
+and request resolution, and reconciliation across uncertain deliveries.
+The pending third child keeps the parent incomplete. Existing unit markers
+and native adapter tests do not establish served recovery.
