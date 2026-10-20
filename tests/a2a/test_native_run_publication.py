@@ -10,12 +10,13 @@ import pytest
 from agent_utilities import host_ports
 from agent_utilities.harness.plan import PlanState
 
-from arbora import current_plan_publication, work_items
+from arbora import work_items
 from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.a2a.models import A2AMessage, A2ARouteDecision, A2ATextPart
 from arbora.api.contracts.session import use_session
 from tests.a2a.test_operation_bridge import session
 from tests.test_agents_run_end_to_end import FakeWorkItems
+from tests.test_current_plan_publication import register_publication_fixture
 
 pytestmark = pytest.mark.spec("ARBORA-OPS-R021.4.5.1.2")
 NATIVE_ID = "work-item:" + "a" * 64
@@ -62,11 +63,7 @@ async def test_admission_claim_au_callback_and_native_task_projection(
     monkeypatch.setattr(
         coordination, "decode_publish_current_plan", lambda x: x, raising=False
     )
-    getattr(
-        host_ports,
-        "register_optional_scaffold_publication_factory",
-        host_ports.register_scaffold_publication_factory,
-    )(current_plan_publication.publication_scope)
+    register_publication_fixture()
     items = NativeItems()
 
     async def submit(client: Any, params: Any, graph: str) -> Any:
