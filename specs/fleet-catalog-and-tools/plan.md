@@ -374,7 +374,7 @@ Changed intent requires a new preview and approval; unresolved outcomes remain u
 
 Test every requirement through the real HTTP and MCP composition with durable graph and connector processes.
 Record exact producer/consumer revisions, admitted operation and schema, request/receipt digests, actual revision and independent read observations.
-Exclude credentials and raw payloads from public evidence. No arXiv derivation or runtime completion is claimed.
+Exclude credentials and raw payloads from public evidence. No external derivation or runtime completion is claimed.
 EG consumer reference changes wait for this producer definition to merge. AU model dispatch remains a separate dependency.
 
 The source validation environment resolves MCP >=2.3,<3 with the landed SDK. The root development override pins EG to the Arbora-compatible revision 70037e8a400c7b32b1222623bb05bbfaf55deab8, resolving the AU path and SDK Git conflict. Source-only Python checks do not establish native EG kernel acceptance. Read-only calls without a schema disclosure may retry once on a recovered generation only after existing admission and catalog checks. Schema-bound aliases retain their original generation and never replay automatically.

@@ -223,9 +223,6 @@ Decision: one screen inside the single pipeline boundary. Rejected alternative: 
 
 Cross-repository: engine memory-write refusal, owner prefix `EG`, contract name memory write origin.
 
-### References
-
-- no-arXiv: AI Agent Traps (Franklin et al., SSRN 6372438, 2026).
 ## Policy lifecycle operations that guard plans (ARBORA-OPS-R050)
 
 Data flow: `policy.create` over POST /api/v1/ops/{op_id} -> `_base_authority` (arbora/api/invoke/pipeline.py:208) -> `_policy` (:198) -> `PolicyAuthority.authorize` (arbora/control_plane/policy/repository.py:179) -> audit record.
@@ -245,9 +242,6 @@ Types: `EvaluationGoal`, `EvaluationCatalog`, `EvaluationScope`, `Finding`. Fail
 Existing code: arbora/security/security_policy_middleware.py:52; arbora/api/ops/registry_factory.py. Reachable today: no. Search terms used: red team, attack, scorer, jailbreak, target scope.
 
 Decision: EG owns catalog facts, selection and probe verdicts (EG-DECISION-ENGINE-R001/R138); AU executes the selected probes; Arbora admits by scope and serves the result. Reuse this R051 consumer instead of adding another security-evaluation rollup. Missing engine ports remain unavailable.
-
-References:
-- arXiv:2605.04019 — Dheekonda et al., "Redefining AI Red Teaming in the Agentic Era: From Weeks to Hours" (2026)
 
 ## Authorization-segmented virtual schema projections (ARBORA-OPS-R052)
 
@@ -270,11 +264,6 @@ Types: `InteractionSpace`, `CorpusBoundary`, `QueryDirectory`. Failure: `LOAD_CA
 Existing code: arbora/api/ops/retrieval.py:60, :77; arbora/control_plane/retrieval/service.py:37, :61. Reachable today: no for the governed retriever; yes for `retrieval.search`. Search terms used: bm25, top_k, interaction space, working dir, corpus.
 
 Decision: the engine ranks and Arbora bounds the space. Rejected: returning ranked snippets only. Cross-repository: EG-FEDERATED-QUERY-R001 supplies query results, EG-DECISION-ENGINE-R029 chooses retrieval plans, EG-DECISION-ENGINE-R137 supplies context limits, and SDK-CONNECTOR-CONTROL-R005 supplies connector ingestion. AU executes engine-directed exploration.
-
-References:
-- arXiv:2606.06880 — Zhuang, Ni, Fun, Lin, Ma, "Towards Retrieving Interaction Spaces for Agentic Search" (2026)
-
-Research citations above describe inspiration only. The engine and transport contracts, verified authority boundaries and served acceptance requirements define the architecture.
 
 ## Versioned memory files (ARBORA-OPS-R024.4)
 
@@ -681,8 +670,7 @@ is identified for this reader slice.
 ## Served harness component and improvement library operations (R068)
 
 arbora serves the reads and the adoption of the versioned harness
-substrate. The design is the recursive agent harness of
-arXiv:2610.14224. The component reads bind to the engine query of
+substrate. The component reads bind to the engine query of
 EG-ORCH-VOCAB-R801 under `kg:read`. The lesson query binds to
 EG-ORCH-VOCAB-R802.3. The report reads the contrast and the decision
 record of EG-DECISION-ENGINE-R803. The adoption commits only a
