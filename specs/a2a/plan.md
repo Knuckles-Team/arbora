@@ -425,3 +425,8 @@ authoritative. Served transport tests observe decoded content in model input and
 zero tasks for refusals. This bounded text slice does not close R001.5: PNG input
 and revision-bound selected-model media capabilities still require the AU and
 model-authority prerequisites; live acceptance remains separately required.
+
+The flattened model task, including text, decoded file content and newline
+separators, must fit the execution contract's 100,000-character bound. Reject
+combined inputs above that bound during message validation, before routing or
+task admission; exact-bound inputs remain accepted.

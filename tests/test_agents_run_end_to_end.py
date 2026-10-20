@@ -177,6 +177,8 @@ def test_served_agents_run_executes_through_a2a_work_items_and_the_harness(
         "aggregate",
         "invalid_base64",
         "empty",
+        "combined_limit",
+        "combined_oversize",
     ],
 )
 def test_served_process_runs_an_agent_over_its_http_a2a_route(
@@ -222,6 +224,9 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
     parts: list[dict[str, Any]] = [{"kind": "text", "text": "say hello"}]
     if attachment_case != "none":
         content = b"attached text: maple"
+        if attachment_case in {"combined_limit", "combined_oversize"}:
+            parts[0]["text"] = "say hello" + "a" * (65_536 - len("say hello"))
+            content = b"b" * (34_463 if attachment_case == "combined_limit" else 34_464)
         if attachment_case == "oversize":
             content = b"x" * 65_537
         elif attachment_case == "invalid_utf8":
@@ -282,7 +287,7 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
 
     response = asyncio.run(call())
 
-    if attachment_case not in {"none", "text"}:
+    if attachment_case not in {"none", "text", "combined_limit"}:
         assert "error" in response.json(), response.text
         assert engine.work_items.rows == {}
         assert observed == []

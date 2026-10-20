@@ -91,6 +91,8 @@ class A2AMessage(_WireModel):
         files = [part.file for part in self.parts if isinstance(part, A2AFilePart)]
         if len(files) > 8 or self.attachment_size() > 65_536:
             raise ValueError("message exceeds inline file bounds")
+        if len(self.task_text()) > 100_000:
+            raise ValueError("message exceeds the execution task size bound")
         return self
 
     def attachment_size(self) -> int:
