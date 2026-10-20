@@ -66,3 +66,28 @@ undeclared methods. They also cover disconnect, adapter loss and both expiry lim
 They establish no served acceptance. Permission forwarding, standing grant
 issuance, routes, traces and the hot path remain open under R001.4 through
 R001.8. No local file/process execution or alternative transport is introduced.
+
+## HTTP duplex transport and preview slice — 2026-10-20
+
+R001.9 adds POST JSON-RPC and a GET SSE channel at `/api/acp`. A session is
+an ephemeral connection bound to the existing authenticated HTTP caller and the
+existing CodingSessionAdmission snapshot. It is not a second identity or
+approval authority. `session/new` accepts `cwd` and `clientCapabilities` (the
+closed capability method list); subsequent requests and SSE use the returned
+sessionId in `Arbora-Acp-Session`. Server client-capability requests carry
+JSON-RPC IDs. Client responses POST to the same URL. Each SSE record has a
+strict connection-local sequence. Reconnect and Last-Event-ID replay refuse;
+they cannot turn transient previews into durable unanswered approvals.
+
+The prompt adapter calls AU's existing received-run-plan path with the bound
+transport from AU-BOUNDARY-R043.6. It refuses any non-client toolset or native
+tool selection, rather than exposing a server workspace. Missing AU support
+refuses before admission. Trusted roots and idle/absolute limits come from
+normal Arbora configuration. No trusted roots are configured by default.
+
+Reads reach the connected client. A write first reads the original through
+that client, emits a diff preview, and returns permission_required. Commands
+emit their exact argv preview and return the same refusal. No write or terminal
+request is forwarded, and no approval token or pending record is invented.
+The canonical approval owner must supply atomic permission consumption and
+durable continuation before these effects can be enabled.

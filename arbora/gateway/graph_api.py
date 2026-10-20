@@ -318,6 +318,10 @@ def register_graph_routes(app, prefix: str = "/api") -> None:
 
     register_dashboard_routes(app, prefix=prefix)
 
+    from arbora.acp.routes import register_acp_routes
+
+    register_acp_routes(app, prefix=prefix)
+
     logger.info(
         "Mounted centralized Knowledge Graph REST routes + fleet supervisory "
         "plane under %r (arbora MCP is now a thin wrapper).",

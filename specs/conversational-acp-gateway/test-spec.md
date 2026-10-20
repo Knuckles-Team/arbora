@@ -21,3 +21,11 @@
 ## Release proof
 
 Record the exact commit, `uv run pytest` result for the targeted module, and the fast-subset hook results (`complexity-staged`, `kiss-staged`, `dupehound-changed`, `jscpd-differential`) on the changed files. A source test alone does not establish served or integration acceptance against a real agent-utilities adapter. That remains open until a live receipt exists.
+
+## R001.9 duplex qualification
+
+`tests/acp/test_duplex.py` covers bounded correlation, ordered events, client
+binding and cancellation. `tests/acp/test_routes.py` runs real loopback HTTP/SSE
+requests with a client that reads an isolated temporary file.
+Write and command requests produce previews without effects. Fixture authority is
+explicitly injected; this is not live identity or native approval acceptance.

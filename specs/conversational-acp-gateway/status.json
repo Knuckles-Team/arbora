@@ -12,7 +12,8 @@
     "ARBORA-ACP-R001.5",
     "ARBORA-ACP-R001.6",
     "ARBORA-ACP-R001.7",
-    "ARBORA-ACP-R001.8"
+    "ARBORA-ACP-R001.8",
+    "ARBORA-ACP-R001.9"
   ],
   "requirements": [
     {
@@ -32,7 +33,8 @@
         "ARBORA-ACP-R001.5",
         "ARBORA-ACP-R001.6",
         "ARBORA-ACP-R001.7",
-        "ARBORA-ACP-R001.8"
+        "ARBORA-ACP-R001.8",
+        "ARBORA-ACP-R001.9"
       ]
     },
     {
@@ -103,6 +105,19 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-ACP-R001.9",
+      "title": "Serve bounded read and preview duplex sessions",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/acp/test_duplex.py:42",
+        "tests/acp/test_duplex.py:60",
+        "tests/acp/test_duplex.py:72",
+        "tests/acp/test_routes.py:199",
+        "tests/acp/test_routes.py:78"
+      ]
     }
   ]
 }

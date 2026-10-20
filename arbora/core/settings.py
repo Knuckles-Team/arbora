@@ -138,6 +138,10 @@ class ArboraConfig(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
 
+    acp_trusted_roots: list[str] = Field(default_factory=list)
+    acp_idle_seconds: int = Field(default=300, ge=1, le=3600)
+    acp_absolute_seconds: int = Field(default=3600, ge=1, le=86400)
+
     agent_dispatch_claim_ttl_s: float = Field(
         default=120.0,
         alias="AGENT_DISPATCH_CLAIM_TTL_S",

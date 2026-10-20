@@ -107,17 +107,43 @@ class CodingSessionAdmission:
         now: datetime | None = None,
     ) -> CodingSessionAdmitted:
         """Check a declared read; no caller-supplied grant can enable effects."""
-        snapshot = self._sessions.check_message(
-            session.snapshot,
+        session = self.check_preview(
+            session,
+            method,
+            client_connected=client_connected,
             chat_adapter_available=chat_adapter_available,
             now=now,
         )
-        if session.request.workspace_root not in self._trusted_roots:
-            raise AcpRefusal(AcpRefusalReason.UNTRUSTED_ROOT)
+        if method != ClientCapability.READ_TEXT_FILE:
+            raise AcpRefusal(AcpRefusalReason.PERMISSION_REQUIRED)
+        return session
+
+    def check_preview(
+        self,
+        session: CodingSessionAdmitted,
+        method: str,
+        *,
+        client_connected: bool,
+        chat_adapter_available: bool,
+        now: datetime | None = None,
+    ) -> CodingSessionAdmitted:
+        """Validate a preview only; this never permits an effect or issues a grant."""
+        if not chat_adapter_available:
+            raise AcpRefusal(AcpRefusalReason.CHAT_ADAPTER_UNAVAILABLE)
+        session = self.check_session(session, now=now)
         if not client_connected:
             raise AcpRefusal(AcpRefusalReason.CLIENT_DISCONNECTED)
         if method not in session.request.client_capabilities:
             raise AcpRefusal(AcpRefusalReason.CAPABILITY_NOT_DECLARED)
-        if method != ClientCapability.READ_TEXT_FILE:
-            raise AcpRefusal(AcpRefusalReason.PERMISSION_REQUIRED)
+        return session
+
+    def check_session(
+        self, session: CodingSessionAdmitted, *, now: datetime | None = None
+    ) -> CodingSessionAdmitted:
+        """Validate lifetime and trusted root, without requiring a capability."""
+        snapshot = self._sessions.check_message(
+            session.snapshot, chat_adapter_available=True, now=now
+        )
+        if session.request.workspace_root not in self._trusted_roots:
+            raise AcpRefusal(AcpRefusalReason.UNTRUSTED_ROOT)
         return replace(session, snapshot=snapshot)
