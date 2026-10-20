@@ -18,6 +18,9 @@ class AdmittedClaim:
     work_item_id: str
     claim: Mapping[str, Any]
     active: bool = True
+    context_id: str | None = None
+    owner_ref: str | None = None
+    history_required: bool = False
     adapters: dict[str, Any] = field(default_factory=dict, repr=False)
 
     def require_active(self) -> None:
@@ -41,6 +44,9 @@ def bind_admitted_claim(
     run_id: str,
     work_item_id: str,
     claim: Mapping[str, Any],
+    context_id: str | None = None,
+    owner_ref: str | None = None,
+    history_required: bool = False,
 ) -> Iterator[None]:
     """Bind only from the native admission/claim call path, never request metadata.
 
@@ -60,7 +66,18 @@ def bind_admitted_claim(
     for key in ("lease_epoch", "fencing_token", "lease_expires_at_ms"):
         if type(claim.get(key)) is not int or claim[key] <= 0:
             raise ValueError("claim has no native fence or expiry")
-    binding = AdmittedClaim(engine, session, run_id, work_item_id, dict(claim))
+    if history_required and (not context_id or not owner_ref):
+        raise ValueError("conversation history binding is incomplete")
+    binding = AdmittedClaim(
+        engine,
+        session,
+        run_id,
+        work_item_id,
+        dict(claim),
+        context_id=context_id,
+        owner_ref=owner_ref,
+        history_required=history_required,
+    )
     token = _CURRENT.set(binding)
     try:
         yield

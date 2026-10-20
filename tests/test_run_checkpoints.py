@@ -146,3 +146,41 @@ async def test_independent_port_attempts_do_not_share_idempotency_key(port):
     await other.save("{}")
     assert seen[0]["idempotency_key"] != seen[1]["idempotency_key"]
     assert seen[0]["expected_revision"] == seen[1]["expected_revision"] is None
+
+
+@pytest.mark.asyncio
+async def test_checkpoint_scope_consumes_admission_once(port, monkeypatch):
+    import arbora.run_checkpoints as module
+
+    port.client.get_checkpoint = lambda: None
+    port.client.publish_checkpoint = lambda: None
+    port.binding.engine = SimpleNamespace(
+        graph_compute=SimpleNamespace(
+            for_graph=lambda _: SimpleNamespace(
+                async_client=SimpleNamespace(work_items=port.client)
+            )
+        )
+    )
+    monkeypatch.setattr(module, "current_admitted_claim", lambda _: port.binding)
+    plan = SimpleNamespace(toolsets=(), harness=SimpleNamespace(plan_scaffold="off"))
+    async with module.checkpoint_scope(object(), plan) as active:
+        assert active is not None
+        with pytest.raises(RuntimeError, match="already consumed"):
+            async with module.checkpoint_scope(object(), plan):
+                pytest.fail("second execution admitted")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("toolsets,scaffold", [((), "on"), ((object(),), "off")])
+async def test_unsupported_plan_does_not_gain_checkpoint_capability(
+    port, monkeypatch, toolsets, scaffold
+):
+    import arbora.run_checkpoints as module
+
+    monkeypatch.setattr(module, "current_admitted_claim", lambda _: port.binding)
+    plan = SimpleNamespace(
+        toolsets=toolsets, harness=SimpleNamespace(plan_scaffold=scaffold)
+    )
+    async with module.checkpoint_scope(object(), plan) as active:
+        assert active is None
+    assert not port.binding.adapters

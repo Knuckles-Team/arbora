@@ -114,3 +114,19 @@ def test_publication_registration_requires_optional_host_contract(
         )
     agent_runs.bind_run_ports()
     assert registered == ([publication_scope] if available else [])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status", ["failed", "stopped", "running"])
+async def test_incomplete_run_result_never_projects_success(status):
+    from types import SimpleNamespace
+
+    async def execute(*args, **kwargs):
+        return SimpleNamespace(status=status, error="sensitive provider detail")
+
+    port = agent_runs.AgentRunPort(executor=SimpleNamespace(execute_agent=execute))
+    with pytest.raises(RuntimeError, match="^agent run did not complete$"):
+        await port.execute_agent(
+            AgentExecutionRequest(agent_name="helper", task="work"),
+            session=cast(Any, object()),
+        )

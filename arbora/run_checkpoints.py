@@ -147,7 +147,7 @@ async def checkpoint_scope(
 ) -> AsyncIterator[RunCheckpointPort | None]:
     """Bind only a native capability present in the installed producer."""
     binding = current_admitted_claim(request)
-    if binding is None:
+    if binding is None or plan.toolsets or plan.harness.plan_scaffold != "off":
         yield None
         return
     client = binding.engine.graph_compute.for_graph(

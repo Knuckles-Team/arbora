@@ -390,6 +390,9 @@ class WorkItemA2AAuthority:
         task: str,
         task_id: str = "",
         run_id: str | None = None,
+        context_id: str | None = None,
+        owner_ref: str | None = None,
+        history_required: bool = False,
     ) -> None:
         """Lease the WorkItem, run the agent through the harness, commit the outcome.
 
@@ -423,6 +426,9 @@ class WorkItemA2AAuthority:
                     run_id=run_id,
                     work_item_id=item_id,
                     claim=claim,
+                    context_id=context_id,
+                    owner_ref=owner_ref,
+                    history_required=history_required,
                 )
                 if run_id is not None
                 else contextlib.nullcontext()
@@ -527,6 +533,11 @@ class WorkItemA2AAuthority:
                 task=description,
                 task_id=task_id,
                 run_id=run_id if task_id.startswith("work-item:") else None,
+                context_id=context_id,
+                owner_ref=owner_ref,
+                history_required=bool(
+                    message.context_id and message.context_id.startswith("a2a-context-")
+                ),
             )
             refreshed = await asyncio.to_thread(
                 work_items.get_work_item, work_engine, item_id

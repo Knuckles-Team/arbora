@@ -214,6 +214,9 @@ class AgentRunPort:
         self, request: AgentExecutionRequest, *, session: GraphSession
     ) -> AgentExecutionResult:
         result = await self._executor.execute_agent(request, session=session)
+        status = getattr(result, "status", None)
+        if status is not None and status != "completed":
+            raise RuntimeError("agent run did not complete")
         return AgentExecutionResult(
             run_id=result.run_id,
             output=result.output,
