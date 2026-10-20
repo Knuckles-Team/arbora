@@ -50,3 +50,21 @@ Therefore a request containing `contextBudgetTokens`, or any route decision with
 a non-empty selected-tool set, fails closed before durable admission. Ordinary
 routing to an existing authorized agent remains live. Streaming and push are
 not part of the advertised Agent Card.
+
+## Shared measured usage
+
+`usage.read` accepts an optional `context_id`. With a context, it reads EG's
+caller-owned committed-run session totals through the same authenticated invoke
+path for HTTP and MCP. The response preserves `counts`, `expected_runs`,
+`recorded_runs`, `missing_runs`, `count_coverage` and `inventory_complete` from EG.
+A missing counter is not an observed zero, and incomplete coverage must remain
+visible. The operation does not calculate prices or totals in Arbora. Without a
+context, the existing tenant usage reader remains in use.
+
+A newly executed A2A turn may also return `metadata.arbora.metrics`, bound to its
+run, task and context. Its `measurements` contain AU's client-monotonic run elapsed
+time and bounded model-request samples. Client request duration includes transport
+and provider waiting. Run elapsed time includes plan resolution, tools and retries.
+Neither is provider generation duration, queue time or TTFT, and neither is used
+to calculate generation TPS. Missing measurements stay absent; replay does not
+reconstruct them from response latency.

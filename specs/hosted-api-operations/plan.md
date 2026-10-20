@@ -719,3 +719,14 @@ and sync requests over EG trees for legacy git tools. Mirror push
 goes to the public git hosting mirrors. The repository-manager
 connector owns mirror sync and the connector mapping. arbora serves
 the underlying `source.*` operations.
+
+### Amendment 2026-10-20: shared measured usage and timing
+
+R024.3.1 reuses usage.read and the invoke pipeline's caller-bound EG client to call
+work_items.session_usage. EG owns immutable attribution, committed-run deduplication,
+aggregation and coverage; Arbora validates and projects the result without a local
+store. No-context calls preserve the existing tenant usage_reader port.
+R024.3.2 carries AU client-monotonic observations through AgentExecutionResult and
+the A2A task metadata with distinct run/task/context identities. The separate metrics
+receipt does not alter token-count readers or label elapsed requests as generation
+time, queue wait, TTFT or TPS. Unknown measurements remain absent.

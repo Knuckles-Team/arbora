@@ -307,7 +307,8 @@ class WorkItemA2AAuthority:
         task: str,
         task_id: str = "",
         run_id: str | None = None,
-    ) -> dict[str, int] | None:
+        usage_context_id: str | None = None,
+    ) -> tuple[dict[str, int] | None, dict[str, Any] | None] | None:
         """Lease the WorkItem, run the agent through the harness, commit the outcome.
 
         The run takes the task id as its run id, so its RunEvents name the
@@ -330,6 +331,7 @@ class WorkItemA2AAuthority:
             return None
         outcome, result_ref, error_ref = "succeeded", None, None
         usage = None
+        metrics = None
         try:
             from arbora.host_bindings import FLEET_AGENT_NAME, FLEET_TOOLS
 
@@ -350,6 +352,13 @@ class WorkItemA2AAuthority:
                 "run", result.run_id, namespace="arbora-a2a"
             )
             usage = getattr(result, "usage", None)
+            raw_metrics = getattr(result, "metrics", None)
+            if raw_metrics is not None:
+                from arbora.api.contracts.agent_control_contracts import RunMetrics
+
+                metrics = RunMetrics.model_validate(raw_metrics).model_dump(
+                    mode="json", exclude_none=True
+                )
             remember_task_output(task_id, getattr(result, "output", None))
         except Exception as exc:  # noqa: BLE001 - a failed run is a failed task
             logging.getLogger(__name__).warning(
@@ -359,6 +368,17 @@ class WorkItemA2AAuthority:
             error_ref = persistence_reference(
                 "error", type(exc).__name__, namespace="arbora-a2a"
             )
+        usage_observation = None
+        if (
+            outcome == "succeeded"
+            and usage is not None
+            and usage_context_id is not None
+        ):
+            usage_observation = {
+                "run_id": run_id or task_id,
+                "context_id": usage_context_id,
+                "counts": dict(usage),
+            }
         await asyncio.to_thread(
             work_items.commit_result,
             work_engine,
@@ -367,8 +387,9 @@ class WorkItemA2AAuthority:
             outcome=outcome,
             result_ref=result_ref,
             error_ref=error_ref,
+            usage_observation=usage_observation,
         )
-        return usage
+        return (usage, metrics) if outcome == "succeeded" else None
 
     async def dispatch(
         self,
@@ -422,15 +443,18 @@ class WorkItemA2AAuthority:
             owner_ref=owner_ref,
             request_digest=request_digest,
         )
-        usage = None
+        measurements = None
         if created or item.get("status") not in _TERMINAL:
-            usage = await self._run(
+            measurements = await self._run(
                 work_engine,
                 item_id=item_id,
                 session=session,
                 agent_name=decision.agent_name,
                 task=description,
                 task_id=task_id,
+                usage_context_id=context_id
+                if item_id.startswith("work-item:")
+                else None,
             )
             refreshed = await asyncio.to_thread(
                 work_items.get_work_item, work_engine, item_id
@@ -438,6 +462,7 @@ class WorkItemA2AAuthority:
             if isinstance(refreshed, dict):
                 item = refreshed
         task = self._project(item, task_id=task_id)
+        usage, metrics = measurements or (None, None)
         if usage is not None:
             task.metadata["arbora"]["usage"] = {
                 "runId": task.metadata["arbora"]["runId"],
@@ -445,6 +470,14 @@ class WorkItemA2AAuthority:
                 "contextId": context_id,
                 "scope": "turn",
                 "counts": dict(usage),
+            }
+        if metrics is not None:
+            task.metadata["arbora"]["metrics"] = {
+                "runId": task.metadata["arbora"]["runId"],
+                "taskId": task.id,
+                "contextId": context_id,
+                "scope": "turn",
+                "measurements": metrics,
             }
         return task
 

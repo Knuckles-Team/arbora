@@ -91,8 +91,8 @@
       "verified_by": [
         "tests/test_agent_runs.py:119",
         "tests/test_agent_runs.py:99",
-        "tests/test_agents_run_end_to_end.py:242",
-        "tests/test_agents_run_end_to_end.py:285"
+        "tests/test_agents_run_end_to_end.py:267",
+        "tests/test_agents_run_end_to_end.py:310"
       ],
       "rollup_of": [
         "ARBORA-A2A-R001.1",

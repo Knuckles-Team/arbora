@@ -256,3 +256,6 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R849:** Apply the server-side landing policy with fast and full gate phases.
 - [ ] **ARBORA-OPS-R850:** Stream the virtual checkout endpoint, recursively and resumably.
 - [ ] **ARBORA-OPS-R851:** Serve the git smart-HTTP read bridge over EG trees.
+
+- [ ] **ARBORA-OPS-R024.3.1:** Serve canonical caller-context committed session usage.
+- [ ] **ARBORA-OPS-R024.3.2:** Project bounded AU measured request timing for shared clients.

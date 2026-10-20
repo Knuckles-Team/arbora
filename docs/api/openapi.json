@@ -147,12 +147,6 @@
       "Definitione5b304c2722adb849beeb376352a983b964bf1b970f2562fb7f323c0f6998d92": {
         "$ref": "#/components/schemas/Schemaeda27189feb9fb8e2a62f858582ff3b547da8992f50e88542ff64d6adfe6f67f"
       },
-      "Schema0172f9d1b57eb8c16d49edbc6f9fe19c07ba43b8135cccc2a63f6a6600465d16": {
-        "additionalProperties": false,
-        "properties": {},
-        "title": "UsageReadParams",
-        "type": "object"
-      },
       "Schema032dd68e5cf93a264b9f4bd4f241266fbaa7373550d738da313b55f8a1fd3cc7": {
         "maxLength": 128,
         "minLength": 1,
@@ -660,6 +654,16 @@
       "Schema419baaf5641802ec2a772ec2e7bd19064dff5602ad7da82164cfd75e0c674f85": {
         "title": "Backup Id",
         "type": "string"
+      },
+      "Schema43098d32f1da4387d62455ff1b56481d421be4ecbbb72973b952813b6717ca5a": {
+        "additionalProperties": false,
+        "properties": {
+          "context_id": {
+            "$ref": "#/components/schemas/Schemafd6f5727e3df6b3f5684ff22783bc44c50d5c5ec4d2f537bc0f0be64d53fe5f6"
+          }
+        },
+        "title": "UsageReadParams",
+        "type": "object"
       },
       "Schema45b4c97251e4a6985437f5cbc2d889c6db0940df0dc93664571dbb2a09b2d53a": {
         "additionalProperties": false,
@@ -2357,6 +2361,18 @@
         ],
         "title": "ElevationScope",
         "type": "object"
+      },
+      "Schemafd6f5727e3df6b3f5684ff22783bc44c50d5c5ec4d2f537bc0f0be64d53fe5f6": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema85c1db78d5c7dc29b5e24f13a6d3f86af9075e032e322bfe2f7abd542739b409"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Context Id"
       },
       "Schemafdf8ac961673312b527f5217fe82f35b614112acb130fac4e4b70f9ae583671f": {
         "additionalProperties": false,
@@ -19238,7 +19254,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Schema0172f9d1b57eb8c16d49edbc6f9fe19c07ba43b8135cccc2a63f6a6600465d16"
+                "$ref": "#/components/schemas/Schema43098d32f1da4387d62455ff1b56481d421be4ecbbb72973b952813b6717ca5a"
               }
             }
           },
@@ -19347,5 +19363,5 @@
       }
     }
   },
-  "x-registry-digest": "0bf182064dbebba007b5ac61ef0edcb254d41a465000811eb9ad2d248c3cb6e6"
+  "x-registry-digest": "5ca5672bf9246a7fe3b3570d3dac3424c5cbb05e7cfabbd813b55b5e9de590bd"
 }
