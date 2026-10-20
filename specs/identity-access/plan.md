@@ -269,3 +269,18 @@ qualify persisted native authority or live admitted host startup.
 
 ARBORA-IDENTITY-R005.2 retains the full account lifecycle and served/native
 acceptance. It remains pending independently of the bounded consumer tests.
+
+### Amendment 2026-10-20: process lease renewal containment
+
+ARBORA-IDENTITY-R027 keeps the existing process identity producer and shared lease.
+MCP and gateway renewal check current authority before acquisition and before commit.
+The lease checks expiry and revocation under its update lock.
+Confirmed identity, group or role loss closes that lease permanently.
+Temporary provider failures retain the original expiry and may retry before it.
+A new process must authenticate again and receive a new lease.
+
+Focused tests cover expiry, acquisition races, concurrent refresh and revoked roles.
+They also cover the gateway producer and existing hosted caller refusals.
+These tests do not establish durable restart continuity or human session renewal.
+SessionAuthority currently resolves human sessions but has no qualified renewal producer.
+Human action approvals remain separate, single-use and nonrenewable.
