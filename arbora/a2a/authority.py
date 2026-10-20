@@ -306,7 +306,8 @@ class WorkItemA2AAuthority:
         agent_name: str,
         task: str,
         task_id: str = "",
-    ) -> None:
+        run_id: str | None = None,
+    ) -> dict[str, int] | None:
         """Lease the WorkItem, run the agent through the harness, commit the outcome.
 
         The run takes the task id as its run id, so its RunEvents name the
@@ -326,8 +327,9 @@ class WorkItemA2AAuthority:
             lease_ttl_s=_RUN_LEASE_SECONDS,
         )
         if claim is None:
-            return
+            return None
         outcome, result_ref, error_ref = "succeeded", None, None
+        usage = None
         try:
             from arbora.host_bindings import FLEET_AGENT_NAME, FLEET_TOOLS
 
@@ -335,16 +337,19 @@ class WorkItemA2AAuthority:
                 AgentExecutionRequest(
                     agent_name=agent_name,
                     task=task,
-                    run_id=task_id or None,
+                    run_id=run_id or task_id or None,
                     allowed_tools=(
                         FLEET_TOOLS if agent_name == FLEET_AGENT_NAME else None
                     ),
                 ),
                 session=session,
             )
+            if result.run_id != (run_id or task_id):
+                raise RuntimeError("agent result does not belong to this A2A turn")
             result_ref = persistence_reference(
                 "run", result.run_id, namespace="arbora-a2a"
             )
+            usage = getattr(result, "usage", None)
             remember_task_output(task_id, getattr(result, "output", None))
         except Exception as exc:  # noqa: BLE001 - a failed run is a failed task
             logging.getLogger(__name__).warning(
@@ -363,6 +368,7 @@ class WorkItemA2AAuthority:
             result_ref=result_ref,
             error_ref=error_ref,
         )
+        return usage
 
     async def dispatch(
         self,
@@ -416,8 +422,9 @@ class WorkItemA2AAuthority:
             owner_ref=owner_ref,
             request_digest=request_digest,
         )
+        usage = None
         if created or item.get("status") not in _TERMINAL:
-            await self._run(
+            usage = await self._run(
                 work_engine,
                 item_id=item_id,
                 session=session,
@@ -430,7 +437,16 @@ class WorkItemA2AAuthority:
             )
             if isinstance(refreshed, dict):
                 item = refreshed
-        return self._project(item, task_id=task_id)
+        task = self._project(item, task_id=task_id)
+        if usage is not None:
+            task.metadata["arbora"]["usage"] = {
+                "runId": task.metadata["arbora"]["runId"],
+                "taskId": task.id,
+                "contextId": context_id,
+                "scope": "turn",
+                "counts": dict(usage),
+            }
+        return task
 
     def _authorized_item(self, task_id: str, scope: str) -> dict[str, Any] | None:
         from arbora import work_items
