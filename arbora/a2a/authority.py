@@ -160,6 +160,7 @@ class WorkItemA2AAuthority:
     ) -> None:
         self._engine_provider = engine_provider
         self._executor = executor
+        self._running: set[asyncio.Task[Any]] = set()
 
     @staticmethod
     def _session(scope: str) -> Any:
@@ -394,6 +395,7 @@ class WorkItemA2AAuthority:
         owner_ref: str | None = None,
         history_required: bool = False,
         usage_context_id: str | None = None,
+        streaming: bool = False,
     ) -> tuple[dict[str, int] | None, dict[str, Any] | None] | None:
         """Lease the WorkItem, run the agent through the harness, commit the outcome.
 
@@ -406,6 +408,7 @@ class WorkItemA2AAuthority:
             AgentExecutionRequest,
         )
 
+        streaming = await self._events_enabled(run_id, streaming)
         claim = await asyncio.to_thread(
             work_items.claim_specific,
             work_engine,
@@ -418,6 +421,7 @@ class WorkItemA2AAuthority:
         outcome, result_ref, error_ref = "succeeded", None, None
         usage = None
         metrics = None
+        commit_options: dict[str, Any] = {}
         try:
             from arbora.admitted_run import bind_admitted_claim
             from arbora.host_bindings import FLEET_AGENT_NAME, FLEET_TOOLS
@@ -436,18 +440,23 @@ class WorkItemA2AAuthority:
                 if run_id is not None
                 else contextlib.nullcontext()
             )
-            with binding:
-                result = await self._agent_executor().execute_agent(
-                    AgentExecutionRequest(
-                        agent_name=agent_name,
-                        task=task,
-                        run_id=run_id or task_id or None,
-                        allowed_tools=(
-                            FLEET_TOOLS if agent_name == FLEET_AGENT_NAME else None
+            from arbora.run_events import terminal_event_scope
+
+            with binding as admitted:
+                async with terminal_event_scope(
+                    admitted, enabled=streaming, commit_options=commit_options
+                ):
+                    result = await self._agent_executor().execute_agent(
+                        AgentExecutionRequest(
+                            agent_name=agent_name,
+                            task=task,
+                            run_id=run_id or task_id or None,
+                            allowed_tools=(
+                                FLEET_TOOLS if agent_name == FLEET_AGENT_NAME else None
+                            ),
                         ),
-                    ),
-                    session=session,
-                )
+                        session=session,
+                    )
             if result.run_id != (run_id or task_id):
                 raise RuntimeError("agent result does not belong to this A2A turn")
             result_ref = persistence_reference(
@@ -486,6 +495,7 @@ class WorkItemA2AAuthority:
             result_ref=result_ref,
             error_ref=error_ref,
             usage_observation=usage_observation,
+            **commit_options,
         )
         return (usage, metrics) if outcome == "succeeded" else None
 
@@ -495,7 +505,10 @@ class WorkItemA2AAuthority:
         message: A2AMessage,
         idempotency_key: str,
         decision: A2ARouteDecision,
+        streaming: bool = False,
     ) -> A2ATask:
+        if streaming and not await self.streaming_supported():
+            raise A2AStreamingUnavailable("durable streaming is unavailable")
         if decision.selected_tools:
             # Refuse before durable admission: the current signed AU dispatch
             # carrier cannot enforce this allowlist at execution time.
@@ -546,37 +559,61 @@ class WorkItemA2AAuthority:
             owner_ref=owner_ref,
             request_digest=request_digest,
         )
-        measurements = None
-        if created or item.get("status") not in _TERMINAL:
-            measurements = await self._run(
-                work_engine,
-                item_id=item_id,
-                session=session,
-                agent_name=decision.agent_name,
-                task=description,
-                task_id=task_id,
-                run_id=run_id if task_id.startswith("work-item:") else None,
-                context_id=context_id,
-                owner_ref=owner_ref,
-                history_required=bool(
-                    message.context_id and message.context_id.startswith("a2a-context-")
-                ),
-                usage_context_id=context_id
+        return await self._start_or_replay(
+            work_engine,
+            item,
+            created=created,
+            streaming=streaming,
+            arguments={
+                "item_id": item_id,
+                "usage_context_id": context_id
                 if item_id.startswith("work-item:")
                 else None,
-            )
+                "session": session,
+                "agent_name": decision.agent_name,
+                "task": description,
+                "task_id": task_id,
+                "run_id": run_id if task_id.startswith("work-item:") else None,
+                "context_id": context_id,
+                "owner_ref": owner_ref,
+                "history_required": bool(
+                    message.context_id and message.context_id.startswith("a2a-context-")
+                ),
+            },
+        )
+
+    async def _start_or_replay(
+        self,
+        work_engine: Any,
+        item: dict[str, Any],
+        *,
+        created: bool,
+        streaming: bool,
+        arguments: dict[str, Any],
+    ) -> A2ATask:
+        from arbora import work_items
+
+        measurements = None
+        if created or (not streaming and item.get("status") not in _TERMINAL):
+            execution = self._run(work_engine, streaming=streaming, **arguments)
+            if streaming:
+                worker = asyncio.create_task(execution)
+                self._running.add(worker)
+                worker.add_done_callback(self._execution_done)
+            else:
+                measurements = await execution
             refreshed = await asyncio.to_thread(
-                work_items.get_work_item, work_engine, item_id
+                work_items.get_work_item, work_engine, arguments["item_id"]
             )
             if isinstance(refreshed, dict):
                 item = refreshed
-        task = self._project(item, task_id=task_id)
+        task = self._project(item, task_id=arguments["task_id"])
         usage, metrics = measurements or (None, None)
         if usage is not None:
             task.metadata["arbora"]["usage"] = {
                 "runId": task.metadata["arbora"]["runId"],
                 "taskId": task.id,
-                "contextId": context_id,
+                "contextId": arguments["context_id"],
                 "scope": "turn",
                 "counts": dict(usage),
             }
@@ -584,11 +621,76 @@ class WorkItemA2AAuthority:
             task.metadata["arbora"]["metrics"] = {
                 "runId": task.metadata["arbora"]["runId"],
                 "taskId": task.id,
-                "contextId": context_id,
+                "contextId": arguments["context_id"],
                 "scope": "turn",
                 "measurements": metrics,
             }
         return task
+
+    def _execution_done(self, task: asyncio.Task[Any]) -> None:
+        self._running.discard(task)
+        if not task.cancelled() and task.exception() is not None:
+            logging.getLogger(__name__).warning(
+                "durable A2A execution ended without a confirmed terminal commit"
+            )
+
+    def _event_client(self) -> Any:
+        from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+
+        _engine, work_engine = self._engine()
+        return work_engine.graph_compute.for_graph(
+            CONTROL_GRAPH
+        ).async_client.work_items
+
+    async def _events_enabled(self, run_id: str | None, requested: bool) -> bool:
+        return requested or (run_id is not None and await self.streaming_supported())
+
+    async def streaming_supported(self) -> bool:
+        from agent_utilities import host_ports
+
+        from arbora import work_items
+        from arbora.run_events import events_supported
+
+        if not work_items.supports_run_admission():
+            return False
+        if not callable(
+            getattr(host_ports, "register_durable_run_event_factory", None)
+        ):
+            return False
+        return await events_supported(self._event_client())
+
+    async def read_events(self, task_id: str, cursor: str | None) -> dict[str, Any]:
+        from arbora.run_events import RunEventsUnavailable, validate_page
+
+        session = self._session("kg:read")
+        item = await asyncio.to_thread(self._authorized_item, task_id, "kg:read")
+        if item is None:
+            raise PermissionError("task is unavailable")
+        run_id = item["metadata"].get("a2a_run_id")
+        if not isinstance(run_id, str):
+            raise A2AStreamingUnavailable("durable streaming is unavailable")
+        try:
+            page = await asyncio.wait_for(
+                self._event_client().get_events(
+                    tenant=session.tenant,
+                    work_item_id=item["work_item_id"],
+                    run_id=run_id,
+                    after_cursor=cursor,
+                    limit=128,
+                ),
+                timeout=5.0,
+            )
+        except PermissionError:
+            raise
+        except Exception as exc:
+            raise RunEventsUnavailable("durable run events are unavailable") from exc
+        session.engine_verified_context()
+        return validate_page(
+            page,
+            work_item_id=item["work_item_id"],
+            run_id=run_id,
+            owner_ref=self._owner_ref(session),
+        )
 
     def _authorized_item(self, task_id: str, scope: str) -> dict[str, Any] | None:
         from arbora import work_items
