@@ -488,7 +488,9 @@
       "landed_in": [
         "5f871cd05ba1"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/test_run_events.py:67"
+      ],
       "rollup_of": [
         "ARBORA-A2A-R010.1"
       ]
@@ -795,20 +797,24 @@
     {
       "id": "ARBORA-A2A-R001.3",
       "title": "Served agent keeps and lists caller conversations",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "5f871cd05ba1"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_run_events.py:174"
+      ]
     },
     {
       "id": "ARBORA-A2A-R001.4",
       "title": "Served agent streams turn events or refuses streaming by type",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "5f871cd05ba1"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_run_events.py:154"
+      ]
     },
     {
       "id": "ARBORA-A2A-R001.5",
