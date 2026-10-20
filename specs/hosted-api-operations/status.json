@@ -236,10 +236,10 @@
       ],
       "verified_by": [
         "tests/deployment/test_real_boot_fixture.py:19",
-        "tests/test_real_boot.py:737",
-        "tests/test_real_boot.py:758",
-        "tests/test_real_boot.py:767",
-        "tests/test_real_boot.py:786"
+        "tests/test_real_boot.py:764",
+        "tests/test_real_boot.py:785",
+        "tests/test_real_boot.py:794",
+        "tests/test_real_boot.py:813"
       ]
     },
     {

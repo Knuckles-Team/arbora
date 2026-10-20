@@ -427,7 +427,7 @@ background-task acceptance.
 The native adapter claims only a visible `ready` item and admits only the
 engine's first attempt, with an exact item and payload binding. It never
 reclaims a visible `leased` or `running` item. Native `dead_letter` and
-`cancelled` states do not prove a prior effect outcome: the adapter raises
+`cancelled` states do not prove a prior effect outcome. The adapter raises
 `WorkItemLeaseLost` on those reads, including a read after a refused claim.
 The delivery owner must leave such exceptions unacknowledged. The generic
 worker and restart recovery still need durable owner reconciliation; a
@@ -441,3 +441,14 @@ the native fence adapter. Child `.3` retains served delivery, durable caller
 and request resolution, and reconciliation across uncertain deliveries.
 The pending third child keeps the parent incomplete. Existing unit markers
 and native adapter tests do not establish served recovery.
+
+### Immutable tool-task request transport (ARBORA-A2A-R002.2.2.3)
+
+Persist canonical request bytes in EG's existing content-addressed blob owner.
+The native WorkItem carries only the blob locator and exact request binding;
+it does not carry parameters or credentials. Resolve by exact job id.
+Verify the request digest, current tenant/principal and expected carrier session reference.
+Refuse missing or changed bytes. Pin the native blob holder before publishing its WorkItem.
+No local mapping or process-identity substitution is permitted. This storage
+slice does not establish original-caller credential recovery, queue dispatch, or
+uncertain-effect reconciliation; the parent remains specified.

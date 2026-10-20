@@ -139,7 +139,7 @@ class ToolTaskDispatcher(Protocol):
     """
 
     def resolve(
-        self, request_ref: str, *, tenant: str, session_id: str
+        self, request_ref: str, *, job_id: str, tenant: str, session_id: str
     ) -> ToolTaskRequest: ...
 
     def execute(
@@ -200,7 +200,10 @@ def _resolve(
     if dispatcher is None:
         raise ToolTaskRefused("tool_task_dispatcher_unavailable")
     request = dispatcher.resolve(
-        carrier.payload_ref, tenant=carrier.tenant, session_id=carrier.session_id
+        carrier.payload_ref,
+        job_id=carrier.job_id,
+        tenant=carrier.tenant,
+        session_id=carrier.session_id,
     )
     if not isinstance(request, ToolTaskRequest):
         raise ToolTaskRefused("tool_task_request_unavailable")

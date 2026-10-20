@@ -32,6 +32,7 @@ from .tool_task import (
     run_tool_task,
 )
 from .tool_task_dispatch import EgWorkItemFence
+from .tool_task_requests import EgToolTaskRequestStore
 from .work_items import (
     WorkItemView,
     list_work_item_views,
@@ -58,6 +59,7 @@ __all__ = [
     "A2ATaskNotCancelable",
     "AmbientA2AAuthenticator",
     "EgWorkItemFence",
+    "EgToolTaskRequestStore",
     "OrchestratorA2ARouter",
     "ToolTaskCarrier",
     "ToolTaskDispatcher",
