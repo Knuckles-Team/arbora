@@ -25,6 +25,7 @@ from .models import (
 from .routing import A2AAssemblyUnavailable
 
 __all__ = [
+    "A2AContextUnavailable",
     "A2AIdempotencyConflict",
     "A2AStreamingUnavailable",
     "A2ATransitionHistoryUnavailable",
@@ -82,6 +83,10 @@ _STATE_MAP: dict[str, A2ATaskState] = {
     "cancelled": "canceled",
     "dead_letter": "failed",
 }
+
+
+class A2AContextUnavailable(RuntimeError):
+    """The durable context ownership reader could not supply a bounded answer."""
 
 
 class A2AIdempotencyConflict(RuntimeError):
@@ -207,6 +212,64 @@ class WorkItemA2AAuthority:
             {"tenant": session.tenant, "owner": owner_ref, "context": supplied}
         )
         return f"a2a-context-{digest}"
+
+    def _resolve_context_id(
+        self, session: Any, message: A2AMessage, task_id: str, owner_ref: str
+    ) -> str:
+        """Preserve canonical contexts only after durable caller-owned lookup."""
+        context_id = message.context_id or ""
+        if not context_id.startswith("a2a-context-"):
+            return self._context_id(session, message, task_id, owner_ref)
+        suffix = context_id.removeprefix("a2a-context-")
+        if len(suffix) != 64 or any(char not in "0123456789abcdef" for char in suffix):
+            raise ValueError("A2A context id is invalid")
+        _engine, work_engine = self._engine()
+        match = {
+            "a2a_schema": _A2A_METADATA_SCHEMA,
+            "a2a_owner_ref": owner_ref,
+            "a2a_context_id": context_id,
+        }
+        cursor = None
+        seen: set[str] = set()
+        for _ in range(32):
+            try:
+                page = work_engine.work_items.list(
+                    tenant=session.tenant,
+                    kind="orchestrator_task",
+                    metadata_match=match,
+                    cursor=cursor,
+                    limit=1,
+                )
+            except PermissionError:
+                raise
+            except Exception as exc:
+                raise A2AContextUnavailable(
+                    "durable A2A context lookup is unavailable"
+                ) from exc
+            if not isinstance(page, dict) or not isinstance(page.get("items"), list):
+                raise A2AContextUnavailable("durable A2A context lookup is unavailable")
+            rows = page["items"]
+            if len(rows) > 1:
+                raise A2AContextUnavailable("durable A2A context lookup is unavailable")
+            if rows:
+                row = rows[0]
+                if not (
+                    self._owned(row, owner_ref)
+                    and row["metadata"].get("a2a_context_id") == context_id
+                ):
+                    raise PermissionError("A2A context is unavailable")
+                if self._session("kg:write") != session:
+                    raise PermissionError("A2A caller changed during context lookup")
+                return context_id
+            cursor = page.get("next_cursor")
+            if cursor is None:
+                raise PermissionError("A2A context is unavailable")
+            if not isinstance(cursor, str) or not cursor or cursor in seen:
+                raise A2AContextUnavailable("durable A2A context lookup is unavailable")
+            seen.add(cursor)
+        raise A2AContextUnavailable(
+            "durable A2A context lookup exceeded its page bound"
+        )
 
     @staticmethod
     def _request_digest(
@@ -387,7 +450,9 @@ class WorkItemA2AAuthority:
         _engine, work_engine = self._engine()
         owner_ref = self._owner_ref(session)
         task_id = self._task_id(session.tenant, owner_ref, idempotency_key)
-        context_id = self._context_id(session, message, task_id, owner_ref)
+        context_id = await asyncio.to_thread(
+            self._resolve_context_id, session, message, task_id, owner_ref
+        )
         request_digest = self._request_digest(message, context_id, decision)
         metadata = self._metadata(
             message=message,

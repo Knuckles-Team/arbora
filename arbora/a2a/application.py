@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from arbora.api.http.auth import HTTPAuthenticationError
 
 from .authority import (
+    A2AContextUnavailable,
     A2AIdempotencyConflict,
     A2AStreamingUnavailable,
     A2ATaskNotCancelable,
@@ -269,6 +270,7 @@ async def _invoke_method(
 
 
 _ERROR_CODES: dict[type[Exception], tuple[int, int]] = {
+    A2AContextUnavailable: (-32014, 503),
     A2ATerminalEventUnavailable: (-32013, 503),
     A2AIdempotencyConflict: (-32009, 409),
     A2AAssemblyUnavailable: (-32003, 503),
@@ -412,6 +414,7 @@ async def _unary_request(
     except PermissionError as error:
         return _authentication_error(request_id, error)
     except (
+        A2AContextUnavailable,
         A2ATerminalEventUnavailable,
         A2AIdempotencyConflict,
         A2AAssemblyUnavailable,
