@@ -213,8 +213,10 @@
     {
       "id": "ARBORA-A2A-R002.2.2.3.1",
       "title": "Immutable native request transport",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "7ba15342cbde"
+      ],
       "verified_by": [
         "tests/a2a/test_tool_task_request_native.py:21",
         "tests/a2a/test_tool_task_requests.py:15"
