@@ -169,3 +169,21 @@ def test_refuses_a_tenant_other_than_the_session(session: Any) -> None:
 def test_engine_without_work_items_is_refused(session: Any) -> None:
     with pytest.raises(work_items.NativeWorkItemRequired):
         work_items.get_work_item(object(), "w1")
+
+
+@pytest.mark.parametrize("stream", [None, {"run_id": "run", "expected_index": 7}])
+def test_terminal_stream_intent_forwarded_only_when_present(session, stream):
+    engine = FakeEngine(commit_result={"status": "succeeded"})
+    assert (
+        work_items.commit_result(
+            engine, "w1", _CLAIM, outcome="succeeded", terminal_stream=stream
+        )
+        == "committed"
+    )
+    payload = engine.work_items.calls[0][1]
+    if stream is None:
+        assert "terminal_stream" not in payload
+    else:
+        assert payload["terminal_stream"] == stream
+        assert payload["terminal_stream"] is not stream
+    assert payload["fencing_token"] == _CLAIM["fencing_token"]

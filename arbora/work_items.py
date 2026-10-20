@@ -260,6 +260,7 @@ def commit_result(
     result_ref: str | None = None,
     error_ref: str | None = None,
     retryable: bool = False,
+    terminal_stream: Mapping[str, Any] | None = None,
 ) -> str:
     """Commit an outcome (``CommitWorkItemResult``).
 
@@ -267,6 +268,9 @@ def commit_result(
     WorkItem was already terminal, and the engine status otherwise.
     """
     fence = _fence(claim)
+    extensions = (
+        {} if terminal_stream is None else {"terminal_stream": dict(terminal_stream)}
+    )
     result = _work_items(engine).commit_result(
         work_item_id=item_id,
         idempotency_key=_key("commit", item_id, fence["fencing_token"], outcome),
@@ -275,6 +279,7 @@ def commit_result(
         result_ref=result_ref,
         error_ref=error_ref,
         retryable=retryable,
+        **extensions,
         **fence,
     )
     status = str(result.get("status"))
