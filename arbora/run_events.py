@@ -154,15 +154,21 @@ async def durable_run_event_scope(
     if binding is None:
         yield None
         return
+    yield await _publisher_for_binding(binding)
+
+
+async def _publisher_for_binding(binding: AdmittedClaim) -> RunEventPublisher | None:
+    existing: RunEventPublisher | None = binding.adapters.get("events")
+    if existing is not None:
+        return existing
     client = binding.engine.graph_compute.for_graph(
         CONTROL_GRAPH
     ).async_client.work_items
     if not await events_supported(client):
-        yield None
-        return
-    if "events" not in binding.adapters:
-        binding.adapters["events"] = RunEventPublisher(binding, client)
-    yield binding.adapters["events"]
+        return None
+    publisher = RunEventPublisher(binding, client)
+    binding.adapters["events"] = publisher
+    return publisher
 
 
 async def events_supported(client: Any) -> bool:

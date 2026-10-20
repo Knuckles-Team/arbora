@@ -359,11 +359,13 @@ async def test_native_turn_forwards_counts_under_existing_fence(
 
     class Executor:
         async def execute_agent(self, request: Any, **kwargs: Any) -> Any:
-            return AgentExecutionResult(
-                run_id=request.run_id,
-                output="answer",
-                usage=counts,
-                metrics=RunMetrics.model_validate(measured_metrics()),
+            return AgentExecutionResult.model_validate(
+                {
+                    "run_id": request.run_id,
+                    "output": "answer",
+                    "usage": counts,
+                    "metrics": RunMetrics.model_validate(measured_metrics()),
+                }
             )
 
     monkeypatch.setattr(
