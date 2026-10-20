@@ -14,6 +14,7 @@ from agent_utilities import host_ports
 from agent_utilities.harness.plan import PlanItem, PlanState
 
 from arbora import current_plan_publication as publication
+from arbora.admitted_run import bind_admitted_claim
 from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
 
 pytestmark = pytest.mark.spec("ARBORA-OPS-R021.4.5.1.2")
@@ -72,7 +73,7 @@ async def test_actual_au_revisions_use_exact_claim_and_close(transport: Any) -> 
     session = Session()
     request = SimpleNamespace(run_id="run", metadata={"session": session})
     state = PlanState()
-    with publication.bind_admitted_claim(
+    with bind_admitted_claim(
         engine(),
         session=session,
         run_id="run",
@@ -107,7 +108,7 @@ async def test_retry_preserves_exact_payload_and_binding_expiry(
 ) -> None:
     session = Session()
     request = SimpleNamespace(run_id="run", metadata={"session": session})
-    with publication.bind_admitted_claim(
+    with bind_admitted_claim(
         engine(),
         session=session,
         run_id="run",
@@ -145,7 +146,7 @@ async def test_retry_preserves_exact_payload_and_binding_expiry(
 )
 def test_invalid_claim_never_binds(change: dict[str, Any]) -> None:
     with pytest.raises(ValueError):
-        with publication.bind_admitted_claim(
+        with bind_admitted_claim(
             engine(),
             session=Session(),
             run_id="run",
@@ -165,7 +166,7 @@ async def test_concurrent_bindings_keep_run_and_session_isolated(
     async def run(name: str) -> None:
         session = Session()
         request = SimpleNamespace(run_id=name, metadata={"session": session})
-        with publication.bind_admitted_claim(
+        with bind_admitted_claim(
             engine(),
             session=session,
             run_id=name,
@@ -214,7 +215,7 @@ async def test_copied_task_context_cannot_publish_after_admission_scope_closes(
             async with publication.publication_scope(request):
                 pytest.fail("closed copied binding became active")
 
-    with publication.bind_admitted_claim(
+    with bind_admitted_claim(
         engine(),
         session=session,
         run_id="run",

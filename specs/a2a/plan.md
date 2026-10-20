@@ -438,3 +438,15 @@ active lifecycle streaming, conversation transcripts, or model checkpoint resume
 the Agent Card continues to advertise streaming as unavailable. Missing producer,
 pending tasks and legacy unbound outcomes remain explicitly unavailable. Native
 cursor identity and retention remain EG-owned under the approved R028 contract.
+
+### 2026-10-20 — Admitted checkpoint host composition
+
+The approved checkpoint path shares the actual native admission/claim carrier
+with publication. It never derives checkpoint authority from request metadata.
+EG owns sealed checkpoint content and atomic head/fence validation; AU owns the
+serialized model history and completed/inflight step interpretation. Arbora
+supplies the live claim and revision CAS, checks returned identity/digest, and
+preserves uncertain writes without issuing a changed retry. Missing published
+ports leave ordinary execution unchanged; an installed producer failure does
+not silently fall back after checkpoint execution begins. Full conversation
+history discovery and user-facing resume admission still require qualification.

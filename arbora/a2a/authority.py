@@ -413,7 +413,7 @@ class WorkItemA2AAuthority:
             return
         outcome, result_ref, error_ref = "succeeded", None, None
         try:
-            from arbora.current_plan_publication import bind_admitted_claim
+            from arbora.admitted_run import bind_admitted_claim
             from arbora.host_bindings import FLEET_AGENT_NAME, FLEET_TOOLS
 
             binding = (
