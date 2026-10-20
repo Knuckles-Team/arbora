@@ -595,13 +595,12 @@ class WorkItemA2AAuthority:
 
         measurements = None
         if created or (not streaming and item.get("status") not in _TERMINAL):
-            execution = self._run(work_engine, streaming=streaming, **arguments)
             if streaming:
-                worker = asyncio.create_task(execution)
-                self._running.add(worker)
-                worker.add_done_callback(self._execution_done)
+                await self._start_stream(work_engine, arguments)
             else:
-                measurements = await execution
+                measurements = await self._run(
+                    work_engine, streaming=False, **arguments
+                )
             refreshed = await asyncio.to_thread(
                 work_items.get_work_item, work_engine, arguments["item_id"]
             )
@@ -626,6 +625,15 @@ class WorkItemA2AAuthority:
                 "measurements": metrics,
             }
         return task
+
+    async def _start_stream(self, work_engine: Any, arguments: dict[str, Any]) -> None:
+        # Verify the admitted owner-bound native reader before any execution.
+        await self.read_events(arguments["task_id"], None)
+        worker = asyncio.create_task(
+            self._run(work_engine, streaming=True, **arguments)
+        )
+        self._running.add(worker)
+        worker.add_done_callback(self._execution_done)
 
     def _execution_done(self, task: asyncio.Task[Any]) -> None:
         self._running.discard(task)
@@ -690,6 +698,7 @@ class WorkItemA2AAuthority:
             work_item_id=item["work_item_id"],
             run_id=run_id,
             owner_ref=self._owner_ref(session),
+            after_cursor=cursor,
         )
 
     def _authorized_item(self, task_id: str, scope: str) -> dict[str, Any] | None:

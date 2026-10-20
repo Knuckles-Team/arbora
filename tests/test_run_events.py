@@ -186,6 +186,10 @@ async def test_existing_admission_never_starts_another_stream_execution(
         executions.append(kwargs["item_id"])
         await gate.wait()
 
+    async def read_events(*args: Any) -> Any:
+        return {"events": []}
+
+    monkeypatch.setattr(authority, "read_events", read_events)
     monkeypatch.setattr(authority, "_run", run)
     monkeypatch.setattr(authority, "_project", lambda value, **kwargs: value)
     monkeypatch.setattr(
@@ -258,3 +262,30 @@ def test_committed_usage_rejects_unmeasured_or_invalid_counts(counts):
             ),
             native,
         )
+
+
+@pytest.mark.asyncio
+async def test_native_reader_preflight_failure_starts_no_execution(
+    monkeypatch: Any,
+) -> None:
+    from arbora.a2a.authority import WorkItemA2AAuthority
+
+    authority = WorkItemA2AAuthority(lambda: None)
+
+    async def unavailable(*args: Any) -> Any:
+        raise RunEventsUnavailable("native reader unavailable")
+
+    monkeypatch.setattr(authority, "read_events", unavailable)
+    with pytest.raises(RunEventsUnavailable):
+        await authority._start_stream(None, {"task_id": "work-item:test"})
+    assert authority._running == set()
+
+
+@pytest.mark.parametrize("missing", ["prefix", "tail"])
+def test_reader_refuses_missing_committed_event_coverage(missing: str) -> None:
+    value = page()
+    value["next_index"] = 2
+    if missing == "prefix":
+        value["events"][0]["event_index"] = 2
+    with pytest.raises(RunEventsUnavailable, match="missing"):
+        validate(value)

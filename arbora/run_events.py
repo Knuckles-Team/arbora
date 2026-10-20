@@ -214,7 +214,12 @@ def _validate_entry(entry: Any, previous: int | None, tail: int) -> int:
 
 
 def validate_page(
-    page: Any, *, work_item_id: str, run_id: str, owner_ref: str
+    page: Any,
+    *,
+    work_item_id: str,
+    run_id: str,
+    owner_ref: str,
+    after_cursor: str | None = None,
 ) -> dict[str, Any]:
     if not isinstance(page, dict):
         raise RunEventsUnavailable("durable run events are unavailable")
@@ -237,16 +242,32 @@ def validate_page(
     previous = None
     for entry in events:
         previous = _validate_entry(entry, previous, tail)
-    _validate_page_end(page, events)
+    _validate_page_end(page, events, after_cursor)
     committed_usage(page.get("committed_run_usage"), page["work_item"])
     return page
 
 
-def _validate_page_end(page: dict[str, Any], events: list[Any]) -> None:
+def _validate_page_end(
+    page: dict[str, Any], events: list[Any], after_cursor: str | None
+) -> None:
     if events and page.get("next_cursor") != events[-1]["cursor"]:
         raise RunEventsUnavailable("invalid durable event cursor")
     if page["has_more"] and not events:
         raise RunEventsUnavailable("invalid empty durable event page")
+    _validate_page_coverage(page, events, after_cursor)
+
+
+def _validate_page_coverage(
+    page: dict[str, Any], events: list[Any], after_cursor: str | None
+) -> None:
+    if events and after_cursor is None and events[0]["event_index"] != 1:
+        raise RunEventsUnavailable("durable event prefix is missing")
+    if (
+        events
+        and not page["has_more"]
+        and events[-1]["event_index"] != page["next_index"]
+    ):
+        raise RunEventsUnavailable("durable event tail is missing")
 
 
 def committed_usage(receipt: Any, item: dict[str, Any]) -> dict[str, Any] | None:
