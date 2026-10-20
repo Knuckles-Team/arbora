@@ -195,11 +195,12 @@ def refresh_process_identity(session: Any) -> Any:
         mint_actor_from_token_sync,
     )
 
+    session.ensure_authority_current()
     try:
         session.ensure_authority_current(minimum_ttl_seconds=30)
         return session
     except SessionExpiredError as exc:
-        logger.info("Refreshing expired host session: %s", exc)
+        logger.info("Refreshing host session before expiry: %s", exc)
 
     lease = getattr(getattr(session, "actor", None), "credential_lease", None)
     if lease is None:
@@ -219,10 +220,12 @@ def refresh_process_identity(session: Any) -> Any:
         getattr(session.actor, field, None) != getattr(renewed_actor, field, None)
         for field in identity_fields
     ):
+        lease.revoke("identity_changed")
         raise RuntimeError("Graph host process authority changed during renewal")
     expires_at = getattr(renewed_actor, "credential_expires_at", None)
     if expires_at is None or int(expires_at) <= int(time.time()) + 30:
         raise RuntimeError("Graph host process authority renewal is too short-lived")
+    session.ensure_authority_current()
     lease.renew(int(expires_at))
     session.ensure_authority_current(minimum_ttl_seconds=30)
     return session
