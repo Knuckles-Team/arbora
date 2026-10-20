@@ -141,3 +141,48 @@ def test_fixture_matches_published_eg_caller_view() -> None:
     from epistemic_graph.client import _work_item_view
 
     assert _work_item_view(row()) == row()
+
+
+def test_reader_outage_is_typed_and_privacy_safe(monkeypatch: Any) -> None:
+    from arbora.a2a.application import _application_error
+    from arbora.a2a.authority import A2AContextUnavailable
+
+    authority, _ = reader(monkeypatch, [])
+    with pytest.raises(A2AContextUnavailable) as error:
+        authority._resolve_context_id(SESSION, message(), "task", "owner")
+    assert isinstance(error.value.__cause__, IndexError)
+    response = _application_error("request", error.value)
+    assert response.status_code == 503
+    assert b'"code":-32014' in response.body
+    assert b"pop" not in response.body
+
+
+def test_http_send_maps_context_outage(monkeypatch: Any) -> None:
+    from fastapi.testclient import TestClient
+
+    from arbora.a2a.authority import A2AContextUnavailable
+    from tests.a2a.test_application import _app
+
+    app, _auth, authority = _app()
+
+    async def unavailable(**kwargs: Any) -> Any:
+        raise A2AContextUnavailable("durable A2A context lookup is unavailable")
+
+    monkeypatch.setattr(authority, "dispatch", unavailable)
+    response = TestClient(app).post(
+        "/a2a",
+        headers={"Authorization": "Bearer verified", "Idempotency-Key": "send-key"},
+        json={
+            "jsonrpc": "2.0",
+            "id": "request",
+            "method": "message/send",
+            "params": {
+                "message": message()
+                .model_copy(update={"parts": [A2ATextPart(text="do work")]})
+                .model_dump(by_alias=True)
+            },
+        },
+    )
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == -32014
+    assert "result" not in response.json()

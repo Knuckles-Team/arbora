@@ -25,6 +25,7 @@ from .models import (
 from .routing import A2AAssemblyUnavailable
 
 __all__ = [
+    "A2AContextUnavailable",
     "A2AIdempotencyConflict",
     "A2AStreamingUnavailable",
     "A2ATransitionHistoryUnavailable",
@@ -82,6 +83,10 @@ _STATE_MAP: dict[str, A2ATaskState] = {
     "cancelled": "canceled",
     "dead_letter": "failed",
 }
+
+
+class A2AContextUnavailable(RuntimeError):
+    """The durable context ownership reader could not supply a bounded answer."""
 
 
 class A2AIdempotencyConflict(RuntimeError):
@@ -227,18 +232,25 @@ class WorkItemA2AAuthority:
         cursor = None
         seen: set[str] = set()
         for _ in range(32):
-            page = work_engine.work_items.list(
-                tenant=session.tenant,
-                kind="orchestrator_task",
-                metadata_match=match,
-                cursor=cursor,
-                limit=1,
-            )
+            try:
+                page = work_engine.work_items.list(
+                    tenant=session.tenant,
+                    kind="orchestrator_task",
+                    metadata_match=match,
+                    cursor=cursor,
+                    limit=1,
+                )
+            except PermissionError:
+                raise
+            except Exception as exc:
+                raise A2AContextUnavailable(
+                    "durable A2A context lookup is unavailable"
+                ) from exc
             if not isinstance(page, dict) or not isinstance(page.get("items"), list):
-                raise RuntimeError("durable A2A context lookup is unavailable")
+                raise A2AContextUnavailable("durable A2A context lookup is unavailable")
             rows = page["items"]
             if len(rows) > 1:
-                raise RuntimeError("durable A2A context lookup is unavailable")
+                raise A2AContextUnavailable("durable A2A context lookup is unavailable")
             if rows:
                 row = rows[0]
                 if not (
@@ -253,9 +265,11 @@ class WorkItemA2AAuthority:
             if cursor is None:
                 raise PermissionError("A2A context is unavailable")
             if not isinstance(cursor, str) or not cursor or cursor in seen:
-                raise RuntimeError("durable A2A context lookup is unavailable")
+                raise A2AContextUnavailable("durable A2A context lookup is unavailable")
             seen.add(cursor)
-        raise RuntimeError("durable A2A context lookup exceeded its page bound")
+        raise A2AContextUnavailable(
+            "durable A2A context lookup exceeded its page bound"
+        )
 
     @staticmethod
     def _request_digest(

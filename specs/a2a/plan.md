@@ -422,6 +422,8 @@ record and recheck the caller before admission. Tenant binding comes from the
 verified native reader request; its caller-view record intentionally omits tenant
 and worker authority fields. Follow empty pages with cursors,
 bounded to 32 pages; exhausted bounds fail explicitly. Unknown or foreign
-canonical contexts admit no work. This fixes identity continuity only: historical
+canonical contexts admit no work. Reader failures and page-bound exhaustion
+return JSON-RPC -32014 with HTTP 503 and no producer error details. This fixes
+identity continuity only: historical
 messages, model memory and streaming remain subject to the parent acceptance.
 No additional context store, cache or event log is introduced.
