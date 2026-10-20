@@ -189,3 +189,21 @@ def test_commit_forwards_observed_usage_only_with_native_fence(session: Any) -> 
     assert request["usage_observation"] == observed
     assert request["tenant"] == "t1"
     assert request["fencing_token"] == 7
+
+
+@pytest.mark.parametrize("stream", [None, {"run_id": "run", "expected_index": 7}])
+def test_terminal_stream_intent_forwarded_only_when_present(session, stream):
+    engine = FakeEngine(commit_result={"status": "succeeded"})
+    assert (
+        work_items.commit_result(
+            engine, "w1", _CLAIM, outcome="succeeded", terminal_stream=stream
+        )
+        == "committed"
+    )
+    payload = engine.work_items.calls[0][1]
+    if stream is None:
+        assert "terminal_stream" not in payload
+    else:
+        assert payload["terminal_stream"] == stream
+        assert payload["terminal_stream"] is not stream
+    assert payload["fencing_token"] == _CLAIM["fencing_token"]
