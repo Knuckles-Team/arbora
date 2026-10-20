@@ -109,8 +109,10 @@
     {
       "id": "ARBORA-ACP-R001.9",
       "title": "Serve bounded read and preview duplex sessions",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "1f2196acf6d7"
+      ],
       "verified_by": [
         "tests/acp/test_duplex.py:42",
         "tests/acp/test_duplex.py:60",
