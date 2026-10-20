@@ -64,6 +64,7 @@ def validate(value: Any) -> Any:
     )
 
 
+@pytest.mark.spec("ARBORA-A2A-R010")
 def test_reader_checks_scope_and_integrity() -> None:
     assert validate(page())["next_index"] == 1
     foreign = page()
@@ -150,6 +151,7 @@ def test_model_state_cannot_claim_terminal_before_committed_tail() -> None:
     assert a2a_event("task", native, entry, terminal_index=1)["final"] is False
 
 
+@pytest.mark.spec("ARBORA-A2A-R001.4")
 def test_actual_au_delta_contract_projects_standard_artifact() -> None:
     from arbora.run_events import a2a_event
 
@@ -169,6 +171,7 @@ def test_actual_au_delta_contract_projects_standard_artifact() -> None:
     assert projected["append"] is False
 
 
+@pytest.mark.spec("ARBORA-A2A-R001.3")
 @pytest.mark.asyncio
 async def test_existing_admission_never_starts_another_stream_execution(
     monkeypatch: Any,

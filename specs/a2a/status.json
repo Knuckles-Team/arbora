@@ -480,8 +480,12 @@
       "id": "ARBORA-A2A-R010",
       "title": "WorkItem stream projection, not a shadow log",
       "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": [],
+      "landed_in": [
+        "113986b16d59"
+      ],
+      "verified_by": [
+        "tests/test_run_events.py:67"
+      ],
       "rollup_of": [
         "ARBORA-A2A-R010.1"
       ]
@@ -788,16 +792,24 @@
     {
       "id": "ARBORA-A2A-R001.3",
       "title": "Served agent keeps and lists caller conversations",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "113986b16d59"
+      ],
+      "verified_by": [
+        "tests/test_run_events.py:174"
+      ]
     },
     {
       "id": "ARBORA-A2A-R001.4",
       "title": "Served agent streams turn events or refuses streaming by type",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "113986b16d59"
+      ],
+      "verified_by": [
+        "tests/test_run_events.py:154"
+      ]
     },
     {
       "id": "ARBORA-A2A-R001.5",

@@ -463,3 +463,9 @@ terminal state must come from the committed native WorkItem/event projection.
 The card may advertise streaming only when the native producer contract and AU
 publisher are actually available. Missing producers and malformed projections
 remain typed unavailable; fixture tests alone are not live qualification.
+
+Producer ownership is EG-DURABLE-KERNEL-R028.2 (AppendRunEvent, GetRunEvents,
+and fenced terminal co-commit); checkpoint ownership is R028.1. These native
+requirements and the end-to-end parent rows remain incomplete until actual
+combined-stack acceptance. The bounded adapter tests establish schema, scope,
+retry and admission behavior; they do not establish live persistence by themselves.
