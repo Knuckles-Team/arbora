@@ -14,12 +14,12 @@ served deployment publishes its agent surface. That surface carries `llms.txt`, 
 best-practice resources, and a version-matched product skill export. The agent tooling always
 describes the deployed version.
 
-This answers the Terraform-style cluster plan/apply and Cedar policy-as-code posture of the
-comparator (ModernRelay/omnigraph, surveyed 2026-10-19 at `0a62bb7b`). The stated advantage is
-scope and depth. GraphOS governs a whole fleet deployment. The comparator governs a single
-engine cluster. GraphOS policy carries epistemic conditions. Rules gate mutations on live record
-evidence. Validity windows, provenance confidence, and evidence counts all qualify. A
-Cedar-style static-attribute policy language cannot express those.
+This answers a declarative cluster plan/apply posture. It answers a policy-as-code posture.
+Both are scoped to a single engine cluster. Its policy language is static-attribute. The
+stated advantage is scope and depth. GraphOS governs a whole fleet deployment. Its policy
+carries epistemic conditions. Rules gate mutations on live record evidence. Validity
+windows, provenance confidence, and evidence counts all qualify. A static-attribute policy
+language cannot express those.
 
 ## Requirements
 

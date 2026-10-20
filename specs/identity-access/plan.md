@@ -210,7 +210,7 @@ The protocol-grant binding requires a qualified EG contract; existing graph acce
 No second token store, local grant authority, OAuth manager or access-decision engine is introduced.
 SDK-CONNECTOR-CONTROL-R035/R046 must preserve challenge bindings, typed bounded errors and broker-owned persistence before these host flows become available.
 No runtime security or access configuration changes are authorized by this definition batch.
-No arXiv derivation is claimed; the inputs describe protocol and ownership requirements.
+No external derivation is claimed; the inputs describe protocol and ownership requirements.
 
 
 ## Connector-bound grants and provider token profiles
