@@ -413,14 +413,24 @@ implementation, no registered model operation, no selected-profile success and
 no change to existing default execution. Foreign caller, revocation and atomic
 admission acceptance remain producer work, not satisfied by syntax validation.
 
+## Model preference entry boundary — 2026-10-20
+
+R016.6 requires explicit preferences to fail before routing or task creation when
+profile-use authority is absent. Apply the existing typed preference validator
+and unavailable result at A2AService.send_message, the common application entry.
+An explicit null preference still requests this authority; omitted metadata keeps
+the existing default path. Tests require zero router and dispatch calls for all
+explicit preferences and preserve normal dispatch when the field is absent.
+This closes silent preference loss, not atomic profile admission or models.list.
+The EG owner-participant implementation remains necessary for successful choice.
 
 ## Amendment 2026-10-20: immediate turn usage prerequisite
 
-Under ARBORA-A2A-R001, preserve the AU execution result's measured usage in
+Under ARBORA-A2A-R001, preserve the AU run result's measured usage in
 the authenticated `message/send` response as `metadata.arbora.usage` with
 `runId`, `taskId`, `contextId`, `scope: "turn"` and unchanged `counts`. Bind the result
 run id to the admitted task before projection. Missing producer usage is absent,
-not zero. This projection is limited to the executing response: task reads and
+not zero. This projection is limited to the active response: task reads and
 idempotent completed replays cannot reconstruct counts. Do not add an Arbora
 counter or cache. Durable session totals and restart-safe usage remain dependent
 on the authorized durable event reader; this prerequisite does not close
