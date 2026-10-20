@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Literal, Protocol, runtime_checkable
+from typing import Annotated, Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_validator
 
@@ -140,12 +140,61 @@ class AgentExecutionRequest(_StrictModel):
     grounding: Literal["required", "best_effort", "none"] = "required"
 
 
+SafeObservedInteger = Annotated[int, Field(strict=True, ge=0, le=9_007_199_254_740_991)]
+
+
+class ModelRequestMetrics(_StrictModel):
+    sequence: SafeObservedInteger = Field(ge=1)
+    source: Literal["client_monotonic_clock"]
+    client_request_elapsed_ms: SafeObservedInteger
+    outcome: Literal["completed", "failed"]
+    model_name: str = Field(min_length=1, max_length=512)
+    provider_name: str = Field(min_length=1, max_length=512)
+    provider_response_id: str | None = Field(default=None, max_length=512)
+    input_tokens: SafeObservedInteger | None = None
+    output_tokens: SafeObservedInteger | None = None
+
+
+class RunMetrics(_StrictModel):
+    source: Literal["client_monotonic_clock"]
+    run_elapsed_ms: SafeObservedInteger
+    observed_model_requests: SafeObservedInteger
+    coverage: Literal["complete", "partial"]
+    model_requests: list[ModelRequestMetrics] = Field(max_length=128)
+
+    @model_validator(mode="after")
+    def _coverage_matches_observations(self) -> RunMetrics:
+        sequences = [sample.sequence for sample in self.model_requests]
+        if sequences != list(range(1, len(sequences) + 1)):
+            raise ValueError("request metrics must preserve observation order")
+        if len(sequences) > self.observed_model_requests:
+            raise ValueError("request metrics exceed observed request count")
+        complete = len(sequences) == self.observed_model_requests
+        if (self.coverage == "complete") != complete:
+            raise ValueError("request metrics coverage is inconsistent")
+        return self
+
+
 class AgentExecutionResult(_StrictModel):
     """Typed result returned by the AU-owned agent execution port."""
 
     run_id: str = Field(min_length=1, max_length=512)
     output: str
     execution_mode: Literal["direct", "graph"] | None = None
+    metrics: RunMetrics | None = None
+    usage: (
+        dict[
+            Literal[
+                "requests",
+                "tool_calls",
+                "input_tokens",
+                "output_tokens",
+                "total_tokens",
+            ],
+            Annotated[int, Field(strict=True, ge=0, le=9_007_199_254_740_991)],
+        ]
+        | None
+    ) = None
 
 
 @runtime_checkable

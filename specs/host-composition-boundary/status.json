@@ -264,12 +264,13 @@
       "title": "Arbora binds the run-loop providers at startup",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "25e15e2108e1"
+        "25e15e2108e1",
+        "52ad3952c2c8"
       ],
       "verified_by": [
         "tests/test_agent_runs.py:42",
-        "tests/test_agent_runs.py:60",
-        "tests/test_agent_runs.py:77"
+        "tests/test_agent_runs.py:63",
+        "tests/test_agent_runs.py:80"
       ]
     },
     {

@@ -50,6 +50,9 @@ async def test_agent_run_executes_through_the_harness_with_bound_providers(
     )
 
     assert result.run_id and result.output
+    terminal = json.loads(bound.batches[-1][0]["properties"]["payload"])
+    assert result.usage == terminal["result"]["usage"]
+    assert result.usage and result.usage["requests"] == 1
     kinds = [
         json.loads(batch[0]["properties"]["payload"])["type"] for batch in bound.batches
     ]
@@ -130,3 +133,102 @@ async def test_incomplete_run_result_never_projects_success(status):
             AgentExecutionRequest(agent_name="helper", task="work"),
             session=cast(Any, object()),
         )
+
+
+@pytest.mark.spec("ARBORA-A2A-R001")
+@pytest.mark.parametrize(
+    "usage",
+    [
+        {"input_tokens": -1},
+        {"requests": True},
+        {"cost": 12},
+        {"output_tokens": 1.5},
+        {"input_tokens": 9_007_199_254_740_992},
+    ],
+)
+def test_usage_contract_refuses_unmeasured_or_invalid_counts(usage: Any) -> None:
+    from pydantic import ValidationError
+
+    from arbora.api.contracts.agent_control_contracts import AgentExecutionResult
+
+    with pytest.raises(ValidationError):
+        AgentExecutionResult(run_id="run", output="ok", usage=usage)
+
+
+@pytest.mark.spec("ARBORA-A2A-R001")
+def test_missing_usage_is_not_a_zero_measurement() -> None:
+    from arbora.api.contracts.agent_control_contracts import AgentExecutionResult
+
+    assert AgentExecutionResult(run_id="run", output="ok").usage is None
+
+
+def measured_metrics() -> dict[str, Any]:
+    return {
+        "source": "client_monotonic_clock",
+        "run_elapsed_ms": 45,
+        "observed_model_requests": 1,
+        "coverage": "complete",
+        "model_requests": [
+            {
+                "sequence": 1,
+                "source": "client_monotonic_clock",
+                "client_request_elapsed_ms": 32,
+                "outcome": "completed",
+                "model_name": "fixture",
+                "provider_name": "function",
+                "input_tokens": 3,
+                "output_tokens": 2,
+            }
+        ],
+    }
+
+
+@pytest.mark.spec("ARBORA-OPS-R024.3.2")
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"run_elapsed_ms": True},
+        {"generation_tps": 20},
+        {"coverage": "partial"},
+        {"observed_model_requests": 0},
+        {"run_elapsed_ms": -1},
+    ],
+)
+def test_measured_metrics_reject_inference_and_invalid_coverage(
+    change: dict[str, Any],
+) -> None:
+    from pydantic import ValidationError
+
+    from arbora.api.contracts.agent_control_contracts import AgentExecutionResult
+
+    with pytest.raises(ValidationError):
+        AgentExecutionResult.model_validate(
+            {
+                "run_id": "run",
+                "output": "ok",
+                "metrics": {**measured_metrics(), **change},
+            }
+        )
+
+
+@pytest.mark.spec("ARBORA-OPS-R024.3.2")
+async def test_agent_port_preserves_shared_metrics_without_deriving_tps() -> None:
+    from types import SimpleNamespace
+
+    class Executor:
+        async def execute_agent(self, request: Any, **kwargs: Any) -> Any:
+            return SimpleNamespace(
+                run_id="run",
+                output="ok",
+                execution_mode="graph",
+                usage={"input_tokens": 3},
+                metrics=measured_metrics(),
+            )
+
+    result = await agent_runs.AgentRunPort(Executor()).execute_agent(
+        AgentExecutionRequest(agent_name="helper", task="test"),
+        session=cast(Any, object()),
+    )
+    assert result.metrics is not None
+    assert result.metrics.model_dump(exclude_none=True) == measured_metrics()
+    assert "generation_tps" not in result.metrics.model_dump()

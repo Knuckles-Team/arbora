@@ -263,6 +263,7 @@ def commit_result(
     result_ref: str | None = None,
     error_ref: str | None = None,
     retryable: bool = False,
+    usage_observation: Mapping[str, Any] | None = None,
 ) -> str:
     """Commit an outcome (``CommitWorkItemResult``).
 
@@ -278,6 +279,11 @@ def commit_result(
         result_ref=result_ref,
         error_ref=error_ref,
         retryable=retryable,
+        **(
+            {"usage_observation": dict(usage_observation)}
+            if usage_observation is not None
+            else {}
+        ),
         **fence,
     )
     status = str(result.get("status"))

@@ -723,3 +723,15 @@ the underlying `source.*` operations.
 ### Owner-bound A2A publication
 
 ARBORA-OPS-R021.4.5.1.2 uses the native admission receipt, not task metadata, to bind execution. Native WorkItem IDs are opaque A2A task IDs. The original `a2a-` run ID remains `metadata.arbora.runId`; existing legacy IDs retain their old lookup. Host-managed A2A admission, claim, publication and current-plan reads use the canonical control graph. Other run IDs keep their caller graph. Publication captures the successful claim expiry and never extends it on renewal. The native owner validates every fence. Closing a host binding prevents new dispatch but cannot retract an in-flight write. No retry changes a publication body after an uncertain outcome. Published older contracts retain legacy admission and cannot publish native snapshots. Actual scaffold enablement remains the engine HarnessConfig evaluator responsibility.
+
+
+### Amendment 2026-10-20: shared measured usage and timing
+
+R024.3.1 reuses usage.read and the invoke pipeline's caller-bound EG client to call
+work_items.session_usage. EG owns immutable attribution, committed-run deduplication,
+aggregation and coverage; Arbora validates and projects the result without a local
+store. No-context calls preserve the existing tenant usage_reader port.
+R024.3.2 carries AU client-monotonic observations through AgentExecutionResult and
+the A2A task metadata with distinct run/task/context identities. The separate metrics
+receipt does not alter token-count readers or label elapsed requests as generation
+time, queue wait, TTFT or TPS. Unknown measurements remain absent.

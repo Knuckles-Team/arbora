@@ -161,9 +161,10 @@ def test_served_agents_run_executes_through_a2a_work_items_and_the_harness(
     assert run_events == ["run_started", "node_transition", "graph_complete"]
 
 
-@pytest.mark.spec("ARBORA-HOST-R001.2.2")
+@pytest.mark.spec("ARBORA-HOST-R001.2.2", "ARBORA-OPS-R024.3.2")
+@pytest.mark.parametrize("project_metrics", [False, True])
 def test_served_process_runs_an_agent_over_its_http_a2a_route(
-    engine: FakeEngine, monkeypatch: pytest.MonkeyPatch
+    engine: FakeEngine, monkeypatch: pytest.MonkeyPatch, project_metrics: bool
 ) -> None:
     """Boot the served factory the ``arbora`` entry point runs, then POST A2A."""
     import httpx
@@ -187,6 +188,20 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
         )
 
     monkeypatch.setattr(request_identity, "actor_from_bearer_token", credential_owner)
+    if project_metrics:
+        from arbora.api.contracts.agent_control_contracts import RunMetrics
+        from tests.test_agent_runs import measured_metrics
+
+        execute = agent_runs.AgentRunPort.execute_agent
+
+        async def measured_execute(self: Any, request: Any, **kwargs: Any) -> Any:
+            result = await execute(self, request, **kwargs)
+            return result.model_copy(
+                update={"metrics": RunMetrics.model_validate(measured_metrics())}
+            )
+
+        monkeypatch.setattr(agent_runs.AgentRunPort, "execute_agent", measured_execute)
+
     monkeypatch.setattr(a2a_mcp, "_SERVICE", None)
     _args, mcp, _middlewares = mcp_runtime._build_server(bootstrap=False)
     app = mcp.http_app()
@@ -223,9 +238,154 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
     body = response.json()
     assert "error" not in body, body
     assert body["result"]["status"]["state"] == "completed"
+    terminal = json.loads(engine.events[-1]["properties"]["payload"])
+    assert body["result"]["metadata"]["arbora"]["usage"] == {
+        "runId": body["result"]["metadata"]["arbora"]["runId"],
+        "taskId": body["result"]["id"],
+        "contextId": body["result"]["contextId"],
+        "scope": "turn",
+        "counts": terminal["result"]["usage"],
+    }
+    if project_metrics:
+        assert body["result"]["metadata"]["arbora"]["metrics"] == {
+            "runId": body["result"]["metadata"]["arbora"]["runId"],
+            "taskId": body["result"]["id"],
+            "contextId": body["result"]["contextId"],
+            "scope": "turn",
+            "measurements": measured_metrics(),
+        }
+    else:
+        assert "metrics" not in body["result"]["metadata"]["arbora"]
     assert engine.work_items.outcomes == ["succeeded"]
     assert [
         json.loads(event["properties"]["payload"])["type"]
         for event in engine.events
         if event["node_type"] == "RunEvent"
     ] == ["run_started", "node_transition", "graph_complete"]
+
+
+@pytest.mark.spec("ARBORA-A2A-R001")
+@pytest.mark.asyncio
+async def test_turn_usage_is_correlated_and_not_reconstructed_on_replay(
+    engine: FakeEngine,
+) -> None:
+    from dataclasses import replace
+
+    from arbora.a2a.models import A2AMessage
+    from arbora.api.contracts.session import use_session
+
+    authority = WorkItemA2AAuthority(lambda: engine)
+    service = A2AService(
+        authority=authority, router=OrchestratorA2ARouter(lambda: engine)
+    )
+    message = A2AMessage.model_validate(
+        {
+            "role": "user",
+            "messageId": "usage-turn",
+            "parts": [{"kind": "text", "text": "hello"}],
+            "metadata": {"agent_name": "helper"},
+        }
+    )
+    with use_session(session(frozenset({"kg:read", "kg:write"}))):
+        task = await service.send_message(message=message, idempotency_key="usage-1")
+        replay = await service.send_message(message=message, idempotency_key="usage-1")
+        read = await authority.get(task.id)
+    other = session(frozenset({"kg:read", "kg:write"}))
+    other = replace(other, actor=replace(other.actor, actor_id="person:other"))
+    with use_session(other):
+        assert await authority.get(task.id) is None
+    terminal = json.loads(engine.events[-1]["properties"]["payload"])
+    assert task.metadata["arbora"]["usage"] == {
+        "runId": task.metadata["arbora"]["runId"],
+        "taskId": task.id,
+        "contextId": task.context_id,
+        "scope": "turn",
+        "counts": terminal["result"]["usage"],
+    }
+    assert "usage" not in replay.metadata["arbora"]
+    assert read is not None and "usage" not in read.metadata["arbora"]
+    assert engine.work_items.outcomes == ["succeeded"]
+
+
+@pytest.mark.spec("ARBORA-A2A-R001")
+@pytest.mark.asyncio
+async def test_foreign_run_result_never_projects_usage(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from types import SimpleNamespace
+
+    from arbora import work_items
+
+    outcomes: list[str] = []
+
+    class ForeignExecutor:
+        async def execute_agent(self, request: Any, *, session: Any) -> Any:
+            return SimpleNamespace(
+                run_id="foreign-run", output="private", usage={"input_tokens": 42}
+            )
+
+    monkeypatch.setattr(work_items, "claim_specific", lambda *a, **k: {"claim": 1})
+    monkeypatch.setattr(
+        work_items, "commit_result", lambda *a, **k: outcomes.append(k["outcome"])
+    )
+    authority = WorkItemA2AAuthority(lambda: None, executor=ForeignExecutor())
+    usage = await authority._run(
+        object(),
+        item_id="native-item",
+        session=object(),
+        agent_name="helper",
+        task="hello",
+        task_id="task",
+        run_id="admitted-run",
+    )
+    assert usage is None
+    assert outcomes == ["failed"]
+
+
+@pytest.mark.spec("ARBORA-OPS-R024.3.1", "ARBORA-OPS-R024.3.2")
+@pytest.mark.parametrize("counts", [{"input_tokens": 7}, {}, None])
+async def test_native_turn_forwards_counts_under_existing_fence(
+    monkeypatch: pytest.MonkeyPatch,
+    counts: dict[str, int] | None,
+) -> None:
+    from arbora import work_items
+    from arbora.api.contracts.agent_control_contracts import (
+        AgentExecutionResult,
+        RunMetrics,
+    )
+    from tests.test_agent_runs import measured_metrics
+
+    commits: list[dict[str, Any]] = []
+
+    class Executor:
+        async def execute_agent(self, request: Any, **kwargs: Any) -> Any:
+            return AgentExecutionResult(
+                run_id=request.run_id,
+                output="answer",
+                usage=counts,
+                metrics=RunMetrics.model_validate(measured_metrics()),
+            )
+
+    monkeypatch.setattr(
+        work_items, "claim_specific", lambda *a, **k: {"fencing_token": 3}
+    )
+    monkeypatch.setattr(work_items, "commit_result", lambda *a, **k: commits.append(k))
+    authority = WorkItemA2AAuthority(lambda: None, executor=Executor())
+    observed = await authority._run(
+        object(),
+        item_id="work-item:native",
+        session=object(),
+        agent_name="helper",
+        task="hello",
+        task_id="work-item:native",
+        run_id="admitted-run",
+        usage_context_id="context",
+    )
+    assert observed == (counts, measured_metrics())
+    expected = (
+        {"run_id": "admitted-run", "context_id": "context", "counts": counts}
+        if counts
+        else None
+    )
+    assert commits[0]["usage_observation"] == expected
+    assert commits[0]["outcome"] == "succeeded"

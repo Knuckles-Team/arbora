@@ -393,7 +393,8 @@ class WorkItemA2AAuthority:
         context_id: str | None = None,
         owner_ref: str | None = None,
         history_required: bool = False,
-    ) -> None:
+        usage_context_id: str | None = None,
+    ) -> tuple[dict[str, int] | None, dict[str, Any] | None] | None:
         """Lease the WorkItem, run the agent through the harness, commit the outcome.
 
         Native tasks carry the admitted run id separately from their opaque
@@ -413,8 +414,10 @@ class WorkItemA2AAuthority:
             lease_ttl_s=_RUN_LEASE_SECONDS,
         )
         if claim is None:
-            return
+            return None
         outcome, result_ref, error_ref = "succeeded", None, None
+        usage = None
+        metrics = None
         try:
             from arbora.admitted_run import bind_admitted_claim
             from arbora.host_bindings import FLEET_AGENT_NAME, FLEET_TOOLS
@@ -445,9 +448,19 @@ class WorkItemA2AAuthority:
                     ),
                     session=session,
                 )
+            if result.run_id != (run_id or task_id):
+                raise RuntimeError("agent result does not belong to this A2A turn")
             result_ref = persistence_reference(
                 "run", result.run_id, namespace="arbora-a2a"
             )
+            usage = getattr(result, "usage", None)
+            raw_metrics = getattr(result, "metrics", None)
+            if raw_metrics is not None:
+                from arbora.api.contracts.agent_control_contracts import RunMetrics
+
+                metrics = RunMetrics.model_validate(raw_metrics).model_dump(
+                    mode="json", exclude_none=True
+                )
             remember_task_output(task_id, getattr(result, "output", None))
         except Exception as exc:  # noqa: BLE001 - a failed run is a failed task
             logging.getLogger(__name__).warning(
@@ -457,6 +470,13 @@ class WorkItemA2AAuthority:
             error_ref = persistence_reference(
                 "error", type(exc).__name__, namespace="arbora-a2a"
             )
+        usage_observation = None
+        if outcome == "succeeded" and usage and usage_context_id is not None:
+            usage_observation = {
+                "run_id": run_id or task_id,
+                "context_id": usage_context_id,
+                "counts": dict(usage),
+            }
         await asyncio.to_thread(
             work_items.commit_result,
             work_engine,
@@ -465,7 +485,9 @@ class WorkItemA2AAuthority:
             outcome=outcome,
             result_ref=result_ref,
             error_ref=error_ref,
+            usage_observation=usage_observation,
         )
+        return (usage, metrics) if outcome == "succeeded" else None
 
     async def dispatch(
         self,
@@ -524,8 +546,9 @@ class WorkItemA2AAuthority:
             owner_ref=owner_ref,
             request_digest=request_digest,
         )
+        measurements = None
         if created or item.get("status") not in _TERMINAL:
-            await self._run(
+            measurements = await self._run(
                 work_engine,
                 item_id=item_id,
                 session=session,
@@ -538,13 +561,34 @@ class WorkItemA2AAuthority:
                 history_required=bool(
                     message.context_id and message.context_id.startswith("a2a-context-")
                 ),
+                usage_context_id=context_id
+                if item_id.startswith("work-item:")
+                else None,
             )
             refreshed = await asyncio.to_thread(
                 work_items.get_work_item, work_engine, item_id
             )
             if isinstance(refreshed, dict):
                 item = refreshed
-        return self._project(item, task_id=task_id)
+        task = self._project(item, task_id=task_id)
+        usage, metrics = measurements or (None, None)
+        if usage is not None:
+            task.metadata["arbora"]["usage"] = {
+                "runId": task.metadata["arbora"]["runId"],
+                "taskId": task.id,
+                "contextId": context_id,
+                "scope": "turn",
+                "counts": dict(usage),
+            }
+        if metrics is not None:
+            task.metadata["arbora"]["metrics"] = {
+                "runId": task.metadata["arbora"]["runId"],
+                "taskId": task.id,
+                "contextId": context_id,
+                "scope": "turn",
+                "measurements": metrics,
+            }
+        return task
 
     def _authorized_item(self, task_id: str, scope: str) -> dict[str, Any] | None:
         from arbora import work_items

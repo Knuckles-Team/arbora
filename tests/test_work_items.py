@@ -169,3 +169,23 @@ def test_refuses_a_tenant_other_than_the_session(session: Any) -> None:
 def test_engine_without_work_items_is_refused(session: Any) -> None:
     with pytest.raises(work_items.NativeWorkItemRequired):
         work_items.get_work_item(object(), "w1")
+
+
+@pytest.mark.spec("ARBORA-OPS-R024.3.1")
+def test_commit_forwards_observed_usage_only_with_native_fence(session: Any) -> None:
+    engine = FakeEngine(commit_result={"status": "succeeded"})
+    observed = {"run_id": "run", "context_id": "context", "counts": {"input_tokens": 7}}
+    assert (
+        work_items.commit_result(
+            engine,
+            "native-item",
+            _CLAIM,
+            outcome="succeeded",
+            usage_observation=observed,
+        )
+        == "committed"
+    )
+    request = engine.work_items.calls[0][1]
+    assert request["usage_observation"] == observed
+    assert request["tenant"] == "t1"
+    assert request["fencing_token"] == 7

@@ -258,3 +258,7 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R851:** Serve the git smart-HTTP read bridge over EG trees.
 
 - [ ] **ARBORA-OPS-R021.4.5.1.2:** Compose native run admission, lease-bound scaffold publication and matching graph reads; qualify a real native lifecycle.
+
+
+- [ ] **ARBORA-OPS-R024.3.1:** Serve canonical caller-context committed session usage.
+- [ ] **ARBORA-OPS-R024.3.2:** Project bounded AU measured request timing for shared clients.
