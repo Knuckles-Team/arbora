@@ -221,7 +221,9 @@
     "ARBORA-OPS-R849",
     "ARBORA-OPS-R850",
     "ARBORA-OPS-R851",
-    "ARBORA-OPS-R021.4.5.1.2"
+    "ARBORA-OPS-R021.4.5.1.2",
+    "ARBORA-OPS-R024.3.1",
+    "ARBORA-OPS-R024.3.2"
   ],
   "requirements": [
     {
@@ -994,11 +996,15 @@
     {
       "id": "ARBORA-OPS-R024.3",
       "title": "Usage operations — usage slice",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "4b69b27f1d76"
       ],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R024.3.1",
+        "ARBORA-OPS-R024.3.2"
+      ]
     },
     {
       "id": "ARBORA-OPS-R024.4",
@@ -2333,8 +2339,38 @@
       ],
       "verified_by": [
         "tests/a2a/test_native_run_publication.py:21",
-        "tests/test_agent_runs.py:96",
+        "tests/test_agent_runs.py:99",
         "tests/test_current_plan_publication.py:22"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R024.3.1",
+      "title": "Shared committed session usage",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "933473eb7868",
+        "c67e7155a596"
+      ],
+      "verified_by": [
+        "tests/api/test_session_usage.py:100",
+        "tests/api/test_session_usage.py:119",
+        "tests/api/test_session_usage.py:53",
+        "tests/api/test_session_usage.py:74",
+        "tests/test_agents_run_end_to_end.py:345"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R024.3.2",
+      "title": "Shared measured request timing",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "933473eb7868"
+      ],
+      "verified_by": [
+        "tests/test_agent_runs.py:186",
+        "tests/test_agent_runs.py:214",
+        "tests/test_agents_run_end_to_end.py:164",
+        "tests/test_agents_run_end_to_end.py:345"
       ]
     }
   ]

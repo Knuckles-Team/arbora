@@ -238,6 +238,7 @@ def validate_page(
     for entry in events:
         previous = _validate_entry(entry, previous, tail)
     _validate_page_end(page, events)
+    committed_usage(page.get("committed_run_usage"), page["work_item"])
     return page
 
 
@@ -248,12 +249,43 @@ def _validate_page_end(page: dict[str, Any], events: list[Any]) -> None:
         raise RunEventsUnavailable("invalid empty durable event page")
 
 
+def committed_usage(receipt: Any, item: dict[str, Any]) -> dict[str, Any] | None:
+    """Validate the native owner-checked receipt without exposing its principal."""
+    if receipt is None:
+        return None
+    metadata = item["metadata"]
+    if not isinstance(receipt, dict) or (
+        receipt.get("run_id") != metadata.get("a2a_run_id")
+        or receipt.get("context_id") != metadata.get("a2a_context_id")
+        or not isinstance(receipt.get("tenant"), str)
+        or not isinstance(receipt.get("principal"), str)
+        or not isinstance(receipt.get("counts"), dict)
+    ):
+        raise RunEventsUnavailable("invalid committed usage receipt")
+    from arbora.api.contracts.agent_control_contracts import AgentExecutionResult
+
+    try:
+        validated = AgentExecutionResult(
+            run_id=receipt["run_id"], output="", usage=receipt["counts"]
+        )
+    except ValueError as exc:
+        raise RunEventsUnavailable("invalid committed usage counts") from exc
+    return {
+        "runId": receipt["run_id"],
+        "taskId": item["work_item_id"],
+        "contextId": receipt["context_id"],
+        "scope": "turn",
+        "counts": validated.usage,
+    }
+
+
 def a2a_event(
     task_id: str,
     item: dict[str, Any],
     entry: dict[str, Any],
     *,
     terminal_index: int | None = None,
+    usage_receipt: Any = None,
 ) -> dict[str, Any]:
     """Project native facts into standard A2A events, retaining structured evidence."""
     event = entry["event"]
@@ -300,6 +332,8 @@ def a2a_event(
         and state == item.get("status")
         and entry["event_index"] == terminal_index
     )
+    if final and usage_receipt is not None:
+        metadata["arbora"]["usage"] = committed_usage(usage_receipt, item)
     return {
         **base,
         "kind": "status-update",

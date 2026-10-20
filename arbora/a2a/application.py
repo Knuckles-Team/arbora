@@ -269,6 +269,7 @@ async def _live_stream(
                             page["work_item"],
                             entry,
                             terminal_index=page.get("next_index"),
+                            usage_receipt=page.get("committed_run_usage"),
                         )
                         payload = {"jsonrpc": "2.0", "id": request_id, "result": result}
                         cursor = entry["cursor"]

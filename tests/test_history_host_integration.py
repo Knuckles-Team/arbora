@@ -6,7 +6,6 @@ from types import SimpleNamespace
 import pytest
 from agent_utilities import host_ports
 from agent_utilities.graph import AgentRunExecutor, RunPlan
-from pydantic_ai.messages import ModelResponse, TextPart
 from pydantic_ai.models.function import FunctionModel
 
 from arbora.admitted_run import bind_admitted_claim
@@ -14,13 +13,20 @@ from arbora.agent_runs import AgentRunPort, bind_run_ports
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
 
 
+@pytest.mark.skipif(
+    not hasattr(host_ports, "register_run_history_provider"),
+    reason="requires additive AU history/checkpoint source contracts",
+)
 @pytest.mark.asyncio
 async def test_real_executor_preserves_bound_session_and_completed_history(monkeypatch):
     import arbora.conversation_history as history
     import arbora.run_checkpoints as checkpoints
+    import arbora.run_events as events
 
     monkeypatch.setattr(history, "use_session", lambda _: contextlib.nullcontext())
     monkeypatch.setattr(checkpoints, "use_session", lambda _: contextlib.nullcontext())
+    monkeypatch.setattr(events, "use_session", lambda _: contextlib.nullcontext())
+    stored_events = {}
     snapshots = {}
     rows = {}
     seen = []
@@ -50,7 +56,29 @@ async def test_real_executor_preserves_bound_session_and_completed_history(monke
         assert params["metadata_match"]["a2a_owner_ref"] == "owner"
         return {"items": list(rows.values()), "next_cursor": None}
 
+    async def supported():
+        return True
+
+    async def get_events(**params):
+        item = params["work_item_id"]
+        return {"work_item": rows[item], "next_index": len(stored_events.get(item, []))}
+
+    async def append_event(**params):
+        journal = stored_events.setdefault(params["work_item_id"], [])
+        assert params["expected_index"] == len(journal)
+        journal.append(params["event"])
+        return dict(
+            work_item_id=params["work_item_id"],
+            run_id=params["run_id"],
+            event_index=len(journal),
+            replayed=False,
+            payload_digest=params["event"]["payload_digest"],
+        )
+
     client = SimpleNamespace(
+        run_events_supported=supported,
+        get_events=get_events,
+        append_event=append_event,
         get_checkpoint=get_checkpoint,
         publish_checkpoint=publish_checkpoint,
         list=listing,
@@ -63,11 +91,12 @@ async def test_real_executor_preserves_bound_session_and_completed_history(monke
         )
     )
 
-    def respond(messages, info):
+    async def respond(messages, info):
         seen.append(messages)
-        return ModelResponse(parts=[TextPart("remember blue")])
+        yield "remember "
+        yield "blue"
 
-    model = FunctionModel(respond)
+    model = FunctionModel(stream_function=respond)
 
     def decide(request):
         assert request.metadata["session"] is session
@@ -80,6 +109,7 @@ async def test_real_executor_preserves_bound_session_and_completed_history(monke
         "_SCAFFOLD_PUBLICATION",
         "_CHECKPOINTS",
         "_RUN_HISTORY",
+        "_DURABLE_RUN_EVENTS",
     ):
         monkeypatch.setattr(host_ports, name, getattr(host_ports, name))
     bind_run_ports()
@@ -143,5 +173,26 @@ async def test_real_executor_preserves_bound_session_and_completed_history(monke
         if read["work_item_id"] == "item-first" and "current_claim" not in read
     )
     assert prior_read["run_id"] == "first"
+    import json
+
+    text_events = [
+        event for event in stored_events["item-second"] if event["kind"] == "text_delta"
+    ]
+    assert text_events
+    projected = events.a2a_event(
+        "item-second",
+        rows["item-second"],
+        {
+            "event_index": 1,
+            "event": text_events[0],
+        },
+    )
+    assert (
+        projected["artifact"]["parts"][0]["text"]
+        == json.loads(text_events[0]["content"])["delta"]
+    )
+    before_replay = sum(map(len, stored_events.values()))
     replay = await turn("second", True)
     assert replay.output == second.output and len(seen) == 2
+
+    assert sum(map(len, stored_events.values())) == before_replay

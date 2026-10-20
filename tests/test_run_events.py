@@ -202,3 +202,59 @@ async def test_existing_admission_never_starts_another_stream_execution(
     assert executions == ["work-item:test"]
     gate.set()
     await asyncio.gather(*authority._running)
+
+
+def test_terminal_replay_projects_native_counts_without_owner_fingerprint():
+    from arbora.run_events import a2a_event
+
+    native = item()
+    native["metadata"]["a2a_context_id"] = "context"
+    native["status"] = "succeeded"
+    receipt = dict(
+        run_id="run",
+        context_id="context",
+        tenant="tenant",
+        principal="private-owner",
+        counts={"output_tokens": 0},
+    )
+    entry = {
+        "event_index": 1,
+        "event": {"kind": "state", "content": '{"state":"succeeded"}'},
+    }
+    projected = a2a_event(
+        "work-item:test", native, entry, terminal_index=1, usage_receipt=receipt
+    )
+    assert projected["metadata"]["arbora"]["usage"] == dict(
+        runId="run",
+        taskId="work-item:test",
+        contextId="context",
+        scope="turn",
+        counts={"output_tokens": 0},
+    )
+    assert "private-owner" not in str(projected)
+    receipt["context_id"] = "foreign"
+    with pytest.raises(RunEventsUnavailable):
+        a2a_event(
+            "work-item:test", native, entry, terminal_index=1, usage_receipt=receipt
+        )
+
+
+@pytest.mark.parametrize(
+    "counts", [{"output_tokens": True}, {"output_tokens": -1}, {"cost": 1}]
+)
+def test_committed_usage_rejects_unmeasured_or_invalid_counts(counts):
+    from arbora.run_events import committed_usage
+
+    native = item()
+    native["metadata"]["a2a_context_id"] = "context"
+    with pytest.raises(RunEventsUnavailable):
+        committed_usage(
+            dict(
+                run_id="run",
+                context_id="context",
+                tenant="tenant",
+                principal="owner",
+                counts=counts,
+            ),
+            native,
+        )
