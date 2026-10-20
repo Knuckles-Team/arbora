@@ -89,7 +89,7 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing [spe
 
 ### Existing system and reuse
 
-`arbora.a2a.models.A2AContextBudget` already carries the caller-declared `contextBudgetTokens` wire field, and `arbora.a2a.routing.OrchestratorA2ARouter` already fails closed (`A2AAssemblyUnavailable`) whenever a route request carries a non-null `context_budget_tokens`, with an explicit comment naming both upstream gaps: EG `AgentAssemble` is a refusal stub and the signed AU dispatch carrier cannot carry an allowed-tool subset. `arbora.a2a.authority.WorkItemA2AAuthority._enqueue`/`dispatch` likewise refuse whenever `decision.selected_tools` is non-empty, per `arbora/a2a/authority.py:242,274`. This spec does not replace that router or authority; it factors the admission decision they both need into one typed, independently testable door: `arbora.a2a.admission`.
+`arbora.a2a.models.A2AContextBudget` already carries the caller-declared `contextBudgetTokens` wire field, and `arbora.a2a.routing.OrchestratorA2ARouter` already fails closed (`A2AAssemblyUnavailable`) whenever a route request carries a non-null `context_budget_tokens`, with an explicit comment naming both upstream gaps: EG `AgentAssemble` is a refusal stub and the signed AU dispatch carrier cannot carry an allowed-tool subset. `arbora.a2a.authority.WorkItemA2AAuthority._enqueue`/`dispatch` likewise refuse whenever `decision.selected_tools` is non-empty, per `arbora/a2a/authority.py:242,274`. This spec does not replace that router or authority. It factors their admission decision into one typed, independently testable module: `arbora.a2a.admission`.
 
 ### Architecture
 
@@ -103,7 +103,7 @@ flowchart LR
   A --> X[OrchestratorA2ARouter / WorkItemA2AAuthority dispatch]
 ```
 
-`ToolSubsetAdmissionRequest` and `ToolSubsetAdmissionDecision` (`arbora/a2a/admission.py`) are typed `pydantic` models reusing the existing `_WireModel` base and `A2AContextBudget` type from `arbora.a2a.models`, so the wire shape stays consistent with the rest of the A2A facade. `admit_tool_subset` is a pure function: given a request, it returns a decision. Today it always refuses with `EG_ASSEMBLE_UNAVAILABLE`, matching the existing router/authority behavior exactly, because that is the first upstream gap reached. Once EG `AgentAssemble` is callable, the function gains a dependency-injected EG assembly client and a second refusal path, `ENVELOPE_LACKS_ALLOWED_TOOL_SUBSET`, for the remaining AU gap; once both upstreams land, it returns an admitted decision whose `admitted_tools` and `provenance` trace to one committed EG decision record and one signed AU envelope field.
+`ToolSubsetAdmissionRequest` and `ToolSubsetAdmissionDecision` (`arbora/a2a/admission.py`) are typed `pydantic` models. They reuse the existing `_WireModel` base and `A2AContextBudget` type from `arbora.a2a.models`. This keeps the wire shape consistent with the A2A facade. `admit_tool_subset` is a pure function: given a request, it returns a decision. Today it always refuses with `EG_ASSEMBLE_UNAVAILABLE`, matching the existing router/authority behavior exactly, because that is the first upstream gap reached. Once EG `AgentAssemble` is callable, the function gains a dependency-injected EG assembly client and a second refusal path, `ENVELOPE_LACKS_ALLOWED_TOOL_SUBSET`, for the remaining AU gap; once both upstreams land, it returns an admitted decision whose `admitted_tools` and `provenance` trace to one committed EG decision record and one signed AU envelope field.
 
 `OrchestratorA2ARouter.route` and `WorkItemA2AAuthority._enqueue`/`dispatch` are updated, in a later increment under this spec, to call `admit_tool_subset` instead of inlining their own `A2AAssemblyUnavailable` raises, so there is exactly one admission authority instead of two duplicated fail-closed checks. That wiring is out of scope for the `ARBORA-A2A-R016.1` slice delivered now; it is the open remainder under `ARBORA-A2A-R017`/`R003`.
 
@@ -143,7 +143,7 @@ The admission call attaches in `A2AService.send_message` between `router.route` 
 
 ### One engine round trip
 
-The `HarnessConfigAnswer` already carries the tool subset, because the engine decision reuses its tool-subset selection (the EG-DECISION-ENGINE row for the `HarnessConfig` question). Admission therefore makes one call and takes the subset from `action_space`. It makes no separate `AgentAssemble` call (`ARBORA-A2A-R017.2`). If the engine instead returns the two answers separately, `ARBORA-A2A-R017` still governs the subset source and the decider port gains one more call.
+The `HarnessConfigAnswer` already carries the tool subset, because the engine decision reuses its tool-subset selection (the EG-DECISION-ENGINE row for the `HarnessConfig` question). Admission therefore makes one call and takes the subset from `action_space`. It makes no separate `AgentAssemble` call (`ARBORA-A2A-R017.2`). The engine may instead return the two answers separately. Then `ARBORA-A2A-R017` still governs the subset source, and the decider port gains one more call.
 
 ### Failure and refusal behaviour
 
@@ -412,3 +412,23 @@ unavailable result in the existing admission module. It has no authority port
 implementation, no registered model operation, no selected-profile success and
 no change to existing default execution. Foreign caller, revocation and atomic
 admission acceptance remain producer work, not satisfied by syntax validation.
+
+### Native tool-task lease binding (ARBORA-A2A-R002.2.2)
+
+Bind `WorkItemFence` to the existing `arbora.work_items` methods. The adapter
+projects the native `input_ref`, retains the verified tenant and carries the
+native lease fence through renew and commit. A denied renewal or commit stops
+the worker without acknowledgment. No local WorkItem store is introduced.
+Background dispatch still requires an immutable request resolver and a durable
+original-caller authority reference resolver. A retained HTTP caller alone does
+not satisfy restart admission. Adapter tests are contract evidence, not served
+background-task acceptance.
+
+The native adapter claims only a visible `ready` item and admits only the
+engine's first attempt, with an exact item and payload binding. It never
+reclaims a visible `leased` or `running` item. Native `dead_letter` and
+`cancelled` states do not prove a prior effect outcome: the adapter raises
+`WorkItemLeaseLost` on those reads, including a read after a refused claim.
+The delivery owner must leave such exceptions unacknowledged. The generic
+worker and restart recovery still need durable owner reconciliation; a
+pre-execution refusal on a later attempt cannot settle an earlier effect.
