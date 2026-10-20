@@ -55,7 +55,10 @@ async def test_admission_claim_au_callback_and_native_task_projection(
     monkeypatch.setattr(work_items, "supports_run_admission", lambda: True)
     calls = []
 
-    async def send(client: Any, params: Any, graph: str) -> Any:
+    async def send(
+        client: Any, params: Any, graph: str, *, idempotency_key: str
+    ) -> Any:
+        assert idempotency_key == params["request"]["idempotency_key"]
         calls.append(params["request"])
         return params
 
@@ -66,7 +69,10 @@ async def test_admission_claim_au_callback_and_native_task_projection(
     register_publication_fixture()
     items = NativeItems()
 
-    async def submit(client: Any, params: Any, graph: str) -> Any:
+    async def submit(
+        client: Any, params: Any, graph: str, *, idempotency_key: str
+    ) -> Any:
+        assert idempotency_key == params["request"]["idempotency_key"]
         assert graph == "__control__"
         return items.submit(params["request"])
 
