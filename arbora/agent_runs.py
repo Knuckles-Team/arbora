@@ -213,6 +213,9 @@ class AgentRunPort:
     async def execute_agent(
         self, request: AgentExecutionRequest, *, session: GraphSession
     ) -> AgentExecutionResult:
+        from arbora.conversation_history import require_history_support
+
+        require_history_support(request.run_id, session)
         result = await self._executor.execute_agent(request, session=session)
         status = getattr(result, "status", None)
         if status is not None and status != "completed":
@@ -228,6 +231,7 @@ def bind_run_ports() -> None:
     """Register the run decision, model and run event providers with the harness."""
     from agent_utilities import host_ports
 
+    from arbora.conversation_history import read_conversation_history
     from arbora.current_plan_publication import publication_scope
     from arbora.run_checkpoints import checkpoint_scope
 
@@ -239,6 +243,9 @@ def bind_run_ports() -> None:
     checkpoint_register = getattr(host_ports, "register_run_checkpoint_factory", None)
     if checkpoint_register is not None:
         checkpoint_register(checkpoint_scope)
+    history_register = getattr(host_ports, "register_run_history_provider", None)
+    if history_register is not None:
+        history_register(read_conversation_history)
     host_ports.register_run_decision_provider(decide_run)
     host_ports.register_model_provider(resolve_model)
     host_ports.register_run_event_sink(record_run_event)

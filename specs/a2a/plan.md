@@ -450,3 +450,15 @@ preserves uncertain writes without issuing a changed retry. Missing published
 ports leave ordinary execution unchanged; an installed producer failure does
 not silently fall back after checkpoint execution begins. Full conversation
 history discovery and user-facing resume admission still require qualification.
+
+### 2026-10-20 — Caller-scoped prior-turn checkpoint discovery
+
+New-turn history is read from EG's completed native checkpoint, selected from
+caller/context-filtered native WorkItems. Discovery follows bounded opaque pages,
+selects the newest completed turn, and refuses ambiguous equal timestamps or
+missing required history rather than inventing an empty transcript. The native
+checkpoint response must carry its WorkItem from the same read snapshot so the
+host can revalidate context, owner and run binding. AU decodes ModelMessages and
+imports no previous turn budgets. This adds no transcript store or context-head
+authority; concurrent context linearization and live restart acceptance still
+require native qualification.
