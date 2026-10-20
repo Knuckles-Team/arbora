@@ -101,6 +101,13 @@ def _typed_request_context(
     )
 
 
+def supports_run_admission() -> bool:
+    """Whether the installed public native request includes owner-bound admission."""
+    from epistemic_graph.generated.models import SubmitWorkItemRequest
+
+    return "run_id" in SubmitWorkItemRequest.model_fields
+
+
 def submit_work_item_atomic(
     engine: Any,
     *,
@@ -108,6 +115,7 @@ def submit_work_item_atomic(
     idempotency_key: str,
     tenant: str | None = None,
     work_item_id: str | None = None,
+    run_id: str | None = None,
     queue: str = "",
     resource_class: str = "",
     fairness_group: str = "",
@@ -119,6 +127,11 @@ def submit_work_item_atomic(
     metadata: Mapping[str, Any] | None = None,
 ) -> tuple[str, bool]:
     """Submit one WorkItem (``SubmitWorkItem``); return its id and creation."""
+    if run_id is not None:
+        if work_item_id is not None:
+            raise ValueError("run admission cannot select a WorkItem ID")
+        if not supports_run_admission():
+            raise NativeWorkItemRequired("native run admission is unavailable")
     tenant_id = _tenant(tenant)
     session = _session()
     labels = {
@@ -129,6 +142,8 @@ def submit_work_item_atomic(
     }
     body = {**{k: v for k, v in labels.items() if v}, **dict(metadata or {})}
     command_digest = _key(tenant_id, kind, work_item_id, payload_ref, body)
+    if run_id is not None:
+        command_digest = _key(command_digest, "run", run_id)
     claims = dict(session.engine_verified_context())
     context = _typed_request_context(claims, session, idempotency_key)
     # EG refuses empty digests (``SubmitWorkItem.policy_digest must be a
@@ -156,7 +171,27 @@ def submit_work_item_atomic(
         "provenance_refs": [created_by] if created_by else [],
         "max_tenant_in_flight": _MAX_TENANT_IN_FLIGHT,
     }
-    result = _work_items(engine).submit(request)
+    if run_id is not None:
+        request["run_id"] = run_id
+    if run_id is None:
+        result = _work_items(engine).submit(request)
+    else:
+        from epistemic_graph.generated.coordination import (
+            decode_submit_work_item,
+            send_submit_work_item,
+        )
+
+        from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+        from arbora.mcp_server.served_engine import _run_blocking
+
+        async def submit() -> dict[str, Any]:
+            client = engine.graph_compute.for_graph(CONTROL_GRAPH).async_client
+            response = await send_submit_work_item(
+                client, {"request": request}, CONTROL_GRAPH
+            )
+            return decode_submit_work_item(response).model_dump(mode="json")
+
+        result = _run_blocking(submit)
     return str(result["work_item_id"]), bool(result["created"])
 
 

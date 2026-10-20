@@ -116,6 +116,7 @@ def unregister_harness_host() -> None:
     host.register_remote_toolset_provider(None)
     host.register_tool_client_factory(None)
     host.register_authority_keepalive(None)
+    host.register_scaffold_publication_factory(None)
 
 
 __all__ = [
