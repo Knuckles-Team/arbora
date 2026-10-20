@@ -239,3 +239,13 @@ Test the actual serving-root binding and contextual read path. Cover concurrent 
 | Lesson query | `ARBORA-OPS-R068.2` | `tests/api/test_harness_lessons.py::test_lessons_retrieve_ranks_by_confidence`: The answer order follows the engine confidence ranking. |
 | Evolution report | `ARBORA-OPS-R068.3` | `tests/api/test_harness_evolution.py::test_evolution_report_denial_hides_both`: The denied caller sees the refusal and nothing else. |
 | Adoption | `ARBORA-OPS-R068.4` | `tests/api/test_harness_evolution.py::test_adopt_refuses_human_token`: A human-scoped caller cannot invoke the adoption. |
+
+## ARBORA-OPS-R848 to R851 acceptance
+
+| Case | Row | Proving test and observation |
+|---|---|---|
+| Source reads | `ARBORA-OPS-R848` | `tests/api/test_source_ops.py::test_source_reads_served`: tree, blob, diff, history and blame return the engine content under the caller's path ACL. |
+| Source writes | `ARBORA-OPS-R848` | `tests/api/test_source_ops.py::test_commit_land_revert_admitted`: commit, land and revert admit per principal. A destructive call without an approved plan refuses. |
+| Landing policy | `ARBORA-OPS-R849` | `tests/api/test_source_landing.py::test_fast_gate_refuses_before_land`: a failing fast gate refuses before landing with zero effects. A post-landing failure records the engine bisect and revert decision. |
+| Virtual checkout | `ARBORA-OPS-R850` | `tests/api/test_source_checkout.py::test_checkout_stream_resumable`: directories stream before blobs. A resumed fetch continues from the last acknowledged entry. |
+| Git bridge | `ARBORA-OPS-R851` | `tests/api/test_source_git_bridge.py::test_smart_http_clone_and_fetch`: clone and fetch succeed over the smart-HTTP endpoint. Mirror sync is served by the repository-manager connector. |

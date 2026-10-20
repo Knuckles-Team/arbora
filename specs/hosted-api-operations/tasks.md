@@ -249,3 +249,10 @@ See [design](plan.md) and [tests](test-spec.md).
 
 
 - [ ] **ARBORA-OPS-R021.4.5.1.1:** Compose the stateless native reader and qualify source-level authority/projection checks; retain the installed-EG acceptance blocker.
+
+## Served source operations (R848)
+
+- [ ] **ARBORA-OPS-R848:** Serve the `source.*` operations with read-only and destructive hints.
+- [ ] **ARBORA-OPS-R849:** Apply the server-side landing policy with fast and full gate phases.
+- [ ] **ARBORA-OPS-R850:** Stream the virtual checkout endpoint, recursively and resumably.
+- [ ] **ARBORA-OPS-R851:** Serve the git smart-HTTP read bridge over EG trees.
