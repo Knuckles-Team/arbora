@@ -412,3 +412,18 @@ unavailable result in the existing admission module. It has no authority port
 implementation, no registered model operation, no selected-profile success and
 no change to existing default execution. Foreign caller, revocation and atomic
 admission acceptance remain producer work, not satisfied by syntax validation.
+
+## Amendment 2026-10-20: durable context identity continuation
+
+R001.3 first preserves a returned canonical context identifier at admission.
+Resolve it through EG's existing tenant-scoped ListWorkItems metadata filter
+for the A2A schema, caller owner reference and context. Validate the returned
+record and recheck the caller before admission. Tenant binding comes from the
+verified native reader request; its caller-view record intentionally omits tenant
+and worker authority fields. Follow empty pages with cursors,
+bounded to 32 pages; exhausted bounds fail explicitly. Unknown or foreign
+canonical contexts admit no work. Reader failures and page-bound exhaustion
+return JSON-RPC -32014 with HTTP 503 and no producer error details. This fixes
+identity continuity only: historical
+messages, model memory and streaming remain subject to the parent acceptance.
+No additional context store, cache or event log is introduced.
