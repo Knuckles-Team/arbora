@@ -187,7 +187,10 @@ def submit_work_item_atomic(
         async def submit() -> dict[str, Any]:
             client = engine.graph_compute.for_graph(CONTROL_GRAPH).async_client
             response = await send_submit_work_item(
-                client, {"request": request}, CONTROL_GRAPH
+                client,
+                {"request": request},
+                CONTROL_GRAPH,
+                idempotency_key=idempotency_key,
             )
             return decode_submit_work_item(response).model_dump(mode="json")
 
