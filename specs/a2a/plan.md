@@ -412,3 +412,14 @@ unavailable result in the existing admission module. It has no authority port
 implementation, no registered model operation, no selected-profile success and
 no change to existing default execution. Foreign caller, revocation and atomic
 admission acceptance remain producer work, not satisfied by syntax validation.
+
+## Model preference entry boundary — 2026-10-20
+
+R016.6 requires explicit preferences to fail before routing or task creation when
+profile-use authority is absent. Apply the existing typed preference validator
+and unavailable result at A2AService.send_message, the common application entry.
+An explicit null preference still requests this authority; omitted metadata keeps
+the existing default path. Tests require zero router and dispatch calls for all
+explicit preferences and preserve normal dispatch when the field is absent.
+This closes silent preference loss, not atomic profile admission or models.list.
+The EG owner-participant implementation remains necessary for successful choice.

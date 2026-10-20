@@ -5,9 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 
+from .admission import ModelProfilePreference, refuse_model_profile_preference
 from .authority import A2ATaskAuthority
 from .models import A2AAgentCard, A2AListResult, A2AMessage, A2ASkill, A2ATask
-from .routing import A2ARouter
+from .routing import A2AAssemblyUnavailable, A2ARouter
 from .terminal_event import A2ATerminalEventUnavailable
 
 __all__ = ["A2ACardMetadata", "A2AService"]
@@ -43,6 +44,12 @@ class A2AService:
             if isinstance(message, A2AMessage)
             else A2AMessage.model_validate(message)
         )
+        if "arboraModelProfile" in parsed.metadata:
+            preference = ModelProfilePreference(
+                preferred_profile_ref=parsed.metadata["arboraModelProfile"]
+            )
+            refusal = refuse_model_profile_preference(preference)
+            raise A2AAssemblyUnavailable(refusal.reason)
         decision = await self.router.route(
             parsed, context_budget_tokens=context_budget_tokens
         )
