@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 
+from arbora.core.settings import runtime_config
+
 from .authority import A2ATaskAuthority
 from .models import A2AAgentCard, A2AListResult, A2AMessage, A2ASkill, A2ATask
 from .routing import A2ARouter
@@ -43,6 +45,11 @@ class A2AService:
             if isinstance(message, A2AMessage)
             else A2AMessage.model_validate(message)
         )
+        attachment_size = parsed.attachment_size()
+        if attachment_size:
+            limit = runtime_config.max_upload_size
+            if type(limit) is not int or limit < 1 or attachment_size > limit:
+                raise ValueError("attachments exceed configured upload size")
         decision = await self.router.route(
             parsed, context_budget_tokens=context_budget_tokens
         )

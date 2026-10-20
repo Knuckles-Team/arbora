@@ -412,3 +412,16 @@ unavailable result in the existing admission module. It has no authority port
 implementation, no registered model operation, no selected-profile success and
 no change to existing default execution. Foreign caller, revocation and atomic
 admission acceptance remain producer work, not satisfied by syntax validation.
+
+### Amendment 2026-10-20: bounded inline text attachments
+
+ARBORA-A2A-R001.5 first serves inline base64 `text/plain` files through the
+existing message parser and task-text model input. Require strict UTF-8, at most
+eight files and 65,536 aggregate decoded bytes, further limited by the existing
+MAX_UPLOAD_SIZE setting before routing or task creation. Reject URI parts and
+unsupported media before admission. Filenames are labels, never filesystem paths.
+The existing caller/tenant authorization, redaction and idempotency paths remain
+authoritative. Served transport tests observe decoded content in model input and
+zero tasks for refusals. This bounded text slice does not close R001.5: PNG input
+and revision-bound selected-model media capabilities still require the AU and
+model-authority prerequisites; live acceptance remains separately required.
