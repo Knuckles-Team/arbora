@@ -243,7 +243,6 @@ class WorkItemA2AAuthority:
                 row = rows[0]
                 if not (
                     self._owned(row, owner_ref)
-                    and row.get("tenant") == session.tenant
                     and row["metadata"].get("a2a_context_id") == context_id
                 ):
                     raise PermissionError("A2A context is unavailable")

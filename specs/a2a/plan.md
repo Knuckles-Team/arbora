@@ -418,7 +418,9 @@ admission acceptance remain producer work, not satisfied by syntax validation.
 R001.3 first preserves a returned canonical context identifier at admission.
 Resolve it through EG's existing tenant-scoped ListWorkItems metadata filter
 for the A2A schema, caller owner reference and context. Validate the returned
-record and recheck the caller before admission. Follow empty pages with cursors,
+record and recheck the caller before admission. Tenant binding comes from the
+verified native reader request; its caller-view record intentionally omits tenant
+and worker authority fields. Follow empty pages with cursors,
 bounded to 32 pages; exhausted bounds fail explicitly. Unknown or foreign
 canonical contexts admit no work. This fixes identity continuity only: historical
 messages, model memory and streaming remain subject to the parent acceptance.

@@ -23,7 +23,11 @@ def message(context: str = CONTEXT) -> A2AMessage:
 
 def row() -> dict[str, Any]:
     return {
-        "tenant": "tenant",
+        "work_item_id": "work-item:" + "b" * 64,
+        "status": "succeeded",
+        "input_ref": "input",
+        "version": 1,
+        "updated_at_ms": 1,
         "kind": "orchestrator_task",
         "metadata": {
             "a2a_schema": "arbora-a2a-unary-v1",
@@ -66,9 +70,7 @@ def test_canonical_context_survives_new_authority_and_empty_page(
         assert calls[0]["tenant"] == "tenant"
 
 
-@pytest.mark.parametrize(
-    "field,value", [("tenant", "foreign"), ("kind", "foreign"), ("metadata", {})]
-)
+@pytest.mark.parametrize("field,value", [("kind", "foreign"), ("metadata", {})])
 def test_foreign_record_is_refused(monkeypatch: Any, field: str, value: Any) -> None:
     record = row()
     record[field] = value
@@ -133,3 +135,9 @@ def test_malformed_canonical_context_does_not_read(
     with pytest.raises(ValueError):
         authority._resolve_context_id(SESSION, message(context), "task", "owner")
     assert calls == []
+
+
+def test_fixture_matches_published_eg_caller_view() -> None:
+    from epistemic_graph.client import _work_item_view
+
+    assert _work_item_view(row()) == row()
