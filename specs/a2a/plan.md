@@ -468,3 +468,16 @@ acceptance is still open; this transient metadata is only a prerequisite. Costs 
 
 ARBORA-A2A-R001.5 remains open: the published AU run request currently carries
 text only. File-part parsing alone cannot deliver PNG bytes to model input.
+
+
+### 2026-10-20 — Caller-scoped prior-turn checkpoint discovery
+
+New-turn history is read from EG's completed native checkpoint, selected from
+caller/context-filtered native WorkItems. Discovery follows bounded opaque pages,
+selects the newest completed turn, and refuses ambiguous equal timestamps or
+missing required history rather than inventing an empty transcript. The native
+checkpoint response must carry its WorkItem from the same read snapshot so the
+host can revalidate context, owner and run binding. AU decodes ModelMessages and
+imports no previous turn budgets. This adds no transcript store or context-head
+authority; concurrent context linearization and live restart acceptance still
+require native qualification.
