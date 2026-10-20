@@ -369,11 +369,7 @@ class WorkItemA2AAuthority:
                 "error", type(exc).__name__, namespace="arbora-a2a"
             )
         usage_observation = None
-        if (
-            outcome == "succeeded"
-            and usage is not None
-            and usage_context_id is not None
-        ):
+        if outcome == "succeeded" and usage and usage_context_id is not None:
             usage_observation = {
                 "run_id": run_id or task_id,
                 "context_id": usage_context_id,

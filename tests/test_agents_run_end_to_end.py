@@ -343,8 +343,10 @@ async def test_foreign_run_result_never_projects_usage(
 
 
 @pytest.mark.spec("ARBORA-OPS-R024.3.1", "ARBORA-OPS-R024.3.2")
+@pytest.mark.parametrize("counts", [{"input_tokens": 7}, {}, None])
 async def test_native_turn_forwards_counts_under_existing_fence(
     monkeypatch: pytest.MonkeyPatch,
+    counts: dict[str, int] | None,
 ) -> None:
     from arbora import work_items
     from arbora.api.contracts.agent_control_contracts import (
@@ -360,7 +362,7 @@ async def test_native_turn_forwards_counts_under_existing_fence(
             return AgentExecutionResult(
                 run_id=request.run_id,
                 output="answer",
-                usage={"input_tokens": 7},
+                usage=counts,
                 metrics=RunMetrics.model_validate(measured_metrics()),
             )
 
@@ -379,10 +381,11 @@ async def test_native_turn_forwards_counts_under_existing_fence(
         run_id="admitted-run",
         usage_context_id="context",
     )
-    assert observed == ({"input_tokens": 7}, measured_metrics())
-    assert commits[0]["usage_observation"] == {
-        "run_id": "admitted-run",
-        "context_id": "context",
-        "counts": {"input_tokens": 7},
-    }
+    assert observed == (counts, measured_metrics())
+    expected = (
+        {"run_id": "admitted-run", "context_id": "context", "counts": counts}
+        if counts
+        else None
+    )
+    assert commits[0]["usage_observation"] == expected
     assert commits[0]["outcome"] == "succeeded"
