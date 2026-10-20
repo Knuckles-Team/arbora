@@ -423,3 +423,18 @@ the existing default path. Tests require zero router and dispatch calls for all
 explicit preferences and preserve normal dispatch when the field is absent.
 This closes silent preference loss, not atomic profile admission or models.list.
 The EG owner-participant implementation remains necessary for successful choice.
+
+## Amendment 2026-10-20: durable context identity continuation
+
+R001.3 first preserves a returned canonical context identifier at admission.
+Resolve it through EG's existing tenant-scoped ListWorkItems metadata filter
+for the A2A schema, caller owner reference and context. Validate the returned
+record and recheck the caller before admission. Tenant binding comes from the
+verified native reader request; its caller-view record intentionally omits tenant
+and worker authority fields. Follow empty pages with cursors,
+bounded to 32 pages; exhausted bounds fail explicitly. Unknown or foreign
+canonical contexts admit no work. Reader failures and page-bound exhaustion
+return JSON-RPC -32014 with HTTP 503 and no producer error details. This fixes
+identity continuity only: historical
+messages, model memory and streaming remain subject to the parent acceptance.
+No additional context store, cache or event log is introduced.
