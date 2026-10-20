@@ -413,6 +413,23 @@ implementation, no registered model operation, no selected-profile success and
 no change to existing default execution. Foreign caller, revocation and atomic
 admission acceptance remain producer work, not satisfied by syntax validation.
 
+
+## Amendment 2026-10-20: immediate turn usage prerequisite
+
+Under ARBORA-A2A-R001, preserve the AU execution result's measured usage in
+the authenticated `message/send` response as `metadata.arbora.usage` with
+`runId`, `taskId`, `contextId`, `scope: "turn"` and unchanged `counts`. Bind the result
+run id to the admitted task before projection. Missing producer usage is absent,
+not zero. This projection is limited to the executing response: task reads and
+idempotent completed replays cannot reconstruct counts. Do not add an Arbora
+counter or cache. Durable session totals and restart-safe usage remain dependent
+on the authorized durable event reader; this prerequisite does not close
+TUI-RUNTIME-R012.6. The owning `usage.read` per-turn/session operation
+acceptance is still open; this transient metadata is only a prerequisite. Costs are not supplied by the run result and stay absent.
+
+ARBORA-A2A-R001.5 remains open: the published AU run request currently carries
+text only. File-part parsing alone cannot deliver PNG bytes to model input.
+
 ## Amendment 2026-10-20: durable context identity continuation
 
 R001.3 first preserves a returned canonical context identifier at admission.
