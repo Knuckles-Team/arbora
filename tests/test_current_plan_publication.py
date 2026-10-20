@@ -63,7 +63,10 @@ def transport(monkeypatch: pytest.MonkeyPatch) -> Any:
 
     calls: list[Any] = []
 
-    async def send(client: Any, params: Any, graph: str) -> Any:
+    async def send(
+        client: Any, params: Any, graph: str, *, idempotency_key: str
+    ) -> Any:
+        assert idempotency_key == params["request"]["idempotency_key"]
         assert graph == CONTROL_GRAPH
         calls.append(params["request"])
         return params

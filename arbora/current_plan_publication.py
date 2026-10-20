@@ -70,7 +70,10 @@ class _Publisher:
         self.binding.require_active()
         with use_session(self.binding.session):
             response = await send_publish_current_plan(
-                client, {"request": json.loads(json.dumps(self.payload))}, CONTROL_GRAPH
+                client,
+                {"request": json.loads(json.dumps(self.payload))},
+                CONTROL_GRAPH,
+                idempotency_key=self.payload["idempotency_key"],
             )
         decode_publish_current_plan(response)
 
