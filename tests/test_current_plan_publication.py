@@ -6,6 +6,8 @@ These are source-contract tests, not installed-engine acceptance.
 from __future__ import annotations
 
 import asyncio
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from types import SimpleNamespace
 from typing import Any
 
@@ -34,6 +36,26 @@ def claim(item: str = "work-item:one") -> dict[str, Any]:
     }
 
 
+@asynccontextmanager
+async def admitted_publication_scope(
+    request: Any,
+) -> AsyncIterator[host_ports.ScaffoldPublisher]:
+    """Published AU's required factory is used only with an admitted fixture."""
+    async with publication.publication_scope(request) as publisher:
+        assert publisher is not None
+        yield publisher
+
+
+def register_publication_fixture() -> None:
+    optional = getattr(
+        host_ports, "register_optional_scaffold_publication_factory", None
+    )
+    if optional is None:
+        host_ports.register_scaffold_publication_factory(admitted_publication_scope)
+    else:
+        optional(publication.publication_scope)
+
+
 @pytest.fixture
 def transport(monkeypatch: pytest.MonkeyPatch) -> Any:
     from epistemic_graph.generated import coordination
@@ -50,11 +72,7 @@ def transport(monkeypatch: pytest.MonkeyPatch) -> Any:
         coordination, "decode_publish_current_plan", lambda x: x, raising=False
     )
     monkeypatch.setattr(publication.time, "time_ns", lambda: 1000_000_000)
-    getattr(
-        host_ports,
-        "register_optional_scaffold_publication_factory",
-        host_ports.register_scaffold_publication_factory,
-    )(publication.publication_scope)
+    register_publication_fixture()
     yield calls
     host_ports.register_scaffold_publication_factory(None)
 
