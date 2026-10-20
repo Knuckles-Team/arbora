@@ -220,7 +220,8 @@
     "ARBORA-OPS-R848",
     "ARBORA-OPS-R849",
     "ARBORA-OPS-R850",
-    "ARBORA-OPS-R851"
+    "ARBORA-OPS-R851",
+    "ARBORA-OPS-R021.4.5.1.2"
   ],
   "requirements": [
     {
@@ -853,7 +854,8 @@
         "tests/api/test_runs_ops.py:23"
       ],
       "rollup_of": [
-        "ARBORA-OPS-R021.4.5.1.1"
+        "ARBORA-OPS-R021.4.5.1.1",
+        "ARBORA-OPS-R021.4.5.1.2"
       ]
     },
     {
@@ -2317,6 +2319,20 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R021.4.5.1.2",
+      "title": "Compose owner-bound A2A scaffold publication",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "8322f5a61782",
+        "b40dfa4f4055"
+      ],
+      "verified_by": [
+        "tests/a2a/test_native_run_publication.py:20",
+        "tests/test_agent_runs.py:96",
+        "tests/test_current_plan_publication.py:19"
+      ]
     }
   ]
 }

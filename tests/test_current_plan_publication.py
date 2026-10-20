@@ -115,6 +115,7 @@ async def test_retry_preserves_exact_payload_and_binding_expiry(
         claim=claim(),
     ):
         async with publication.publication_scope(request) as publisher:
+            assert publisher is not None
             await publisher.publish(0, ())
             monkeypatch.setattr(publication.time, "time_ns", lambda: 1500_000_000)
             await publisher.publish(0, ())
@@ -155,7 +156,9 @@ def test_invalid_claim_never_binds(change: dict[str, Any]) -> None:
 
 
 @pytest.mark.asyncio
-async def test_concurrent_bindings_and_copied_context_close(transport: Any) -> None:
+async def test_concurrent_bindings_keep_run_and_session_isolated(
+    transport: Any,
+) -> None:
     entered = asyncio.Event()
     finish = asyncio.Event()
 
@@ -170,6 +173,7 @@ async def test_concurrent_bindings_and_copied_context_close(transport: Any) -> N
             claim=claim(),
         ):
             async with publication.publication_scope(request) as publisher:
+                assert publisher is not None
                 if name == "one":
                     entered.set()
                     await finish.wait()
@@ -194,4 +198,30 @@ async def test_run_without_native_binding_keeps_local_scaffold(transport):
         assert publisher is None
         state.replace_versioned((PlanItem(text="local", status="pending"),))
     assert state.read_versioned()[0] == 1
+    assert transport == []
+
+
+async def test_copied_task_context_cannot_publish_after_admission_scope_closes(
+    transport,
+):
+    released = asyncio.Event()
+    session = Session()
+    request = SimpleNamespace(run_id="run", metadata={"session": session})
+
+    async def delayed():
+        await released.wait()
+        with pytest.raises(RuntimeError, match="closed"):
+            async with publication.publication_scope(request):
+                pytest.fail("closed copied binding became active")
+
+    with publication.bind_admitted_claim(
+        engine(),
+        session=session,
+        run_id="run",
+        work_item_id="work-item:one",
+        claim=claim(),
+    ):
+        child = asyncio.create_task(delayed())
+    released.set()
+    await child
     assert transport == []

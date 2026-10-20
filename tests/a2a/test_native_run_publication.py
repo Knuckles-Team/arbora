@@ -113,7 +113,8 @@ async def test_admission_claim_au_callback_and_native_task_projection(
             assert task.metadata["arbora"]["runId"] == items.run_id
             assert calls[0]["snapshot"]["run_id"] == items.run_id
             assert calls[0]["fencing_token"] == 1
-            assert (await authority.get(NATIVE_ID)).id == NATIVE_ID
+            observed = await authority.get(NATIVE_ID)
+            assert observed is not None and observed.id == NATIVE_ID
             page, cursor = await authority.list(cursor=None, limit=10)
             assert [t.id for t in page] == [NATIVE_ID] and cursor is None
             items.rows[NATIVE_ID]["status"] = "ready"
