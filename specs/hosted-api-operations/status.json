@@ -2329,7 +2329,8 @@
       "title": "Shared committed session usage",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "933473eb7868"
+        "933473eb7868",
+        "c67e7155a596"
       ],
       "verified_by": [
         "tests/api/test_session_usage.py:100",
