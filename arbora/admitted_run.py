@@ -47,7 +47,7 @@ def bind_admitted_claim(
     context_id: str | None = None,
     owner_ref: str | None = None,
     history_required: bool = False,
-) -> Iterator[None]:
+) -> Iterator[AdmittedClaim]:
     """Bind only from the native admission/claim call path, never request metadata.
 
     Closing stops new dispatch, including from copied task contexts. It cannot
@@ -80,20 +80,25 @@ def bind_admitted_claim(
     )
     token = _CURRENT.set(binding)
     try:
-        yield
+        yield binding
     finally:
         binding.active = False
         _CURRENT.reset(token)
 
 
-def current_admitted_claim(request: Any) -> AdmittedClaim | None:
-    """Select only the host-bound claim; request metadata never grants authority."""
+def admitted_claim_for(run_id: str | None, session: Any) -> AdmittedClaim | None:
+    """Select the host binding using explicit execution arguments."""
     binding = _CURRENT.get()
     if binding is None:
         return None
-    if request.run_id != binding.run_id:
+    if run_id != binding.run_id:
         raise RuntimeError("native run admission authority is unavailable")
-    if request.metadata.get("session") is not binding.session:
+    if session is not binding.session:
         raise RuntimeError("native run admission session differs")
     binding.require_active()
     return binding
+
+
+def current_admitted_claim(request: Any) -> AdmittedClaim | None:
+    """Select only the host-bound claim; request metadata never grants authority."""
+    return admitted_claim_for(request.run_id, request.metadata.get("session"))
