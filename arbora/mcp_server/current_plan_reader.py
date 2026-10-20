@@ -88,6 +88,10 @@ class NativeCurrentPlanReader:
         graph = await _caller_dispatch_graph(context)
         if "kg:read" not in context.caller.effective_scopes:
             raise OperationRefused("SCOPE_REQUIRED", {"missing_scopes": ["kg:read"]})
+        if run_id.startswith("a2a-"):
+            from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+
+            graph = CONTROL_GRAPH
         with context.client.use_verified_context(
             claim_values(context.caller.engine_claims)
         ):

@@ -91,3 +91,26 @@ async def test_a_run_without_a_model_fails_closed(
         host_ports.register_run_decision_provider(None)
         host_ports.register_model_provider(None)
         host_ports.register_run_event_sink(None)
+
+
+@pytest.mark.spec("ARBORA-OPS-R021.4.5.1.2")
+@pytest.mark.parametrize("available", [False, True])
+def test_publication_registration_requires_optional_host_contract(
+    monkeypatch, available
+):
+    from arbora.current_plan_publication import publication_scope
+
+    registered = []
+    if available:
+        monkeypatch.setattr(
+            host_ports,
+            "register_optional_scaffold_publication_factory",
+            registered.append,
+            raising=False,
+        )
+    else:
+        monkeypatch.delattr(
+            host_ports, "register_optional_scaffold_publication_factory", raising=False
+        )
+    agent_runs.bind_run_ports()
+    assert registered == ([publication_scope] if available else [])

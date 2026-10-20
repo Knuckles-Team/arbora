@@ -282,3 +282,17 @@ async def test_native_authorization_refusal_is_not_hidden_as_missing_plan(monkey
         await read_current_plan(ctx, "run-a", clock=lambda: NOW)
     assert ctx.client.claims.get() is None
     assert caught.value.code == "ACCESS_DENIED"
+
+
+async def test_host_managed_run_reads_canonical_work_item_graph(monkeypatch):
+    from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+
+    run_id = "a2a-" + "a" * 64
+
+    async def native(bound, *, run_id, tenant, graph):
+        assert graph == CONTROL_GRAPH
+        return snapshot(run_id=run_id)
+
+    monkeypatch.setattr(reader_module, "_native_read", native)
+    result = await read_current_plan(context(), run_id, clock=lambda: NOW)
+    assert result.availability == "available"

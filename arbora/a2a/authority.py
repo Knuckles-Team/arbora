@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import hashlib
 import json
 import logging
@@ -196,6 +197,11 @@ class WorkItemA2AAuthority:
 
     @staticmethod
     def _work_item_id(task_id: str) -> str:
+        if task_id.startswith("work-item:"):
+            suffix = task_id.removeprefix("work-item:")
+            if len(suffix) == 64 and all(c in "0123456789abcdef" for c in suffix):
+                return task_id
+            raise ValueError("A2A task id is invalid")
         suffix = task_id.removeprefix(_TASK_PREFIX)
         if not task_id.startswith(_TASK_PREFIX) or len(suffix) != 64:
             raise ValueError("A2A task id is invalid")
@@ -339,6 +345,19 @@ class WorkItemA2AAuthority:
     ) -> tuple[str, bool]:
         from arbora import work_items
 
+        native = work_items.supports_run_admission()
+        if native:
+            legacy_id = f"{_WORK_ITEM_PREFIX}{task_id}"
+            legacy = work_items.get_work_item(work_engine, legacy_id)
+            if legacy is not None:
+                WorkItemA2AAuthority._validate_existing(
+                    legacy,
+                    session=session,
+                    owner_ref=owner_ref,
+                    request_digest=metadata["a2a_request_digest"],
+                )
+                return legacy_id, False
+            metadata = {**metadata, "a2a_run_id": task_id}
         return work_items.submit_work_item_atomic(
             work_engine,
             kind="orchestrator_task",
@@ -347,7 +366,8 @@ class WorkItemA2AAuthority:
             tenant=session.tenant,
             description=description,
             resource_class="agent_dispatch",
-            work_item_id=f"{_WORK_ITEM_PREFIX}{task_id}",
+            work_item_id=None if native else f"{_WORK_ITEM_PREFIX}{task_id}",
+            run_id=task_id if native else None,
             idempotency_key=task_id,
             created_by=owner_ref,
             metadata=metadata,
@@ -369,11 +389,12 @@ class WorkItemA2AAuthority:
         agent_name: str,
         task: str,
         task_id: str = "",
+        run_id: str | None = None,
     ) -> None:
         """Lease the WorkItem, run the agent through the harness, commit the outcome.
 
-        The run takes the task id as its run id, so its RunEvents name the
-        task. The fleet agent runs with Arbora's own ``find``/``act`` verbs
+        Native tasks carry the admitted run id separately from their opaque
+        WorkItem task id. The fleet agent runs with Arbora's own ``find``/``act`` verbs
         as its tools.
         """
         from arbora import work_items
@@ -392,19 +413,32 @@ class WorkItemA2AAuthority:
             return
         outcome, result_ref, error_ref = "succeeded", None, None
         try:
+            from arbora.current_plan_publication import bind_admitted_claim
             from arbora.host_bindings import FLEET_AGENT_NAME, FLEET_TOOLS
 
-            result = await self._agent_executor().execute_agent(
-                AgentExecutionRequest(
-                    agent_name=agent_name,
-                    task=task,
-                    run_id=task_id or None,
-                    allowed_tools=(
-                        FLEET_TOOLS if agent_name == FLEET_AGENT_NAME else None
-                    ),
-                ),
-                session=session,
+            binding = (
+                bind_admitted_claim(
+                    work_engine,
+                    session=session,
+                    run_id=run_id,
+                    work_item_id=item_id,
+                    claim=claim,
+                )
+                if run_id is not None
+                else contextlib.nullcontext()
             )
+            with binding:
+                result = await self._agent_executor().execute_agent(
+                    AgentExecutionRequest(
+                        agent_name=agent_name,
+                        task=task,
+                        run_id=run_id or task_id or None,
+                        allowed_tools=(
+                            FLEET_TOOLS if agent_name == FLEET_AGENT_NAME else None
+                        ),
+                    ),
+                    session=session,
+                )
             result_ref = persistence_reference(
                 "run", result.run_id, namespace="arbora-a2a"
             )
@@ -467,6 +501,9 @@ class WorkItemA2AAuthority:
             description=description,
             metadata=metadata,
         )
+        run_id = task_id
+        if item_id.startswith("work-item:"):
+            task_id = item_id
         if item_id != self._work_item_id(task_id):
             raise RuntimeError("canonical A2A WorkItem returned an invalid identity")
 
@@ -489,6 +526,7 @@ class WorkItemA2AAuthority:
                 agent_name=decision.agent_name,
                 task=description,
                 task_id=task_id,
+                run_id=run_id if task_id.startswith("work-item:") else None,
             )
             refreshed = await asyncio.to_thread(
                 work_items.get_work_item, work_engine, item_id
@@ -526,21 +564,25 @@ class WorkItemA2AAuthority:
         route = metadata.get("a2a_route")
         public_route = route if isinstance(route, dict) else {}
         public_metadata: dict[str, Any] = {
-            "taskAuthorityRef": f"{_WORK_ITEM_PREFIX}{task_id}",
-            "runId": task_id,
+            "taskAuthorityRef": WorkItemA2AAuthority._work_item_id(task_id),
+            "runId": metadata.get("a2a_run_id", task_id),
             "routing": public_route,
         }
         from arbora.observability.trace_ontology import (
             trace_id as canonical_trace_id,
         )
 
-        public_metadata["runTraceRef"] = canonical_trace_id(task_id)
+        public_metadata["runTraceRef"] = canonical_trace_id(public_metadata["runId"])
         return A2ATask(
             id=task_id,
             context_id=str(metadata.get("a2a_context_id") or ""),
             status=A2ATaskStatus(
                 state=state,
-                timestamp=WorkItemA2AAuthority._timestamp(item.get("updated_at")),
+                timestamp=WorkItemA2AAuthority._timestamp(
+                    item["updated_at_ms"] / 1000
+                    if "updated_at_ms" in item
+                    else item.get("updated_at")
+                ),
             ),
             artifacts=task_output_artifacts(task_id),
             metadata={"arbora": public_metadata},
@@ -561,8 +603,6 @@ class WorkItemA2AAuthority:
             owner_ref = self._owner_ref(original)
             if (
                 current != original
-                or item.get("tenant") != original.tenant
-                or item.get("created_by") != owner_ref
                 or item.get("metadata", {}).get("a2a_owner_ref") != owner_ref
             ):
                 raise PermissionError("A2A caller changed during task read")
@@ -579,7 +619,12 @@ class WorkItemA2AAuthority:
             try:
                 event = await asyncio.wait_for(
                     read_terminal_event(
-                        engine, session=session, task_id=task_id, owner_ref=owner_ref
+                        engine,
+                        session=session,
+                        task_id=task_id,
+                        owner_ref=owner_ref,
+                        work_item_id=self._work_item_id(task_id),
+                        run_id=task.metadata["arbora"]["runId"],
                     ),
                     timeout=5.0,
                 )
@@ -605,80 +650,21 @@ class WorkItemA2AAuthority:
         return task
 
     @staticmethod
-    def _cursor(owner_ref: str, tenant: str, item_id: str) -> str:
-        return f"{_digest({'tenant': tenant, 'owner': owner_ref, 'id': item_id})}.{item_id}"
+    def _cursor(owner_ref: str, tenant: str, cursor: str) -> str:
+        return f"{_digest({'tenant': tenant, 'owner': owner_ref, 'cursor': cursor})}.{cursor}"
 
     @classmethod
-    def _decode_cursor(cls, cursor: str | None, *, owner_ref: str, tenant: str) -> str:
+    def _decode_cursor(
+        cls, cursor: str | None, *, owner_ref: str, tenant: str
+    ) -> str | None:
         if cursor is None:
-            return ""
-        digest, separator, item_id = cursor.partition(".")
+            return None
+        digest, separator, native = cursor.partition(".")
         if not separator or digest != _digest(
-            {"tenant": tenant, "owner": owner_ref, "id": item_id}
+            {"tenant": tenant, "owner": owner_ref, "cursor": native}
         ):
             raise ValueError("A2A task cursor is invalid")
-        cls._work_item_id(item_id.removeprefix(_WORK_ITEM_PREFIX))
-        return item_id
-
-    def _list_rows(self, *, after: str, limit: int, tenant: str, owner_ref: str) -> Any:
-        _engine, work_engine = self._engine()
-        return work_engine.query_cypher(
-            "MATCH (w:WorkItem) "
-            "WHERE w.kind = $kind AND w.tenant = $tenant "
-            "AND w.created_by = $owner AND w.id > $after "
-            "AND w.id STARTS WITH $id_prefix "
-            "RETURN w.id AS id, w.status AS status, w.updated_at AS updated_at, "
-            "w.metadata AS metadata, w.tenant AS tenant, w.created_by AS created_by "
-            "ORDER BY w.id ASC LIMIT $limit",
-            {
-                "kind": "orchestrator_task",
-                "tenant": tenant,
-                "owner": owner_ref,
-                "after": after,
-                "id_prefix": f"{_WORK_ITEM_PREFIX}{_TASK_PREFIX}",
-                "limit": limit + 1,
-            },
-        )
-
-    @staticmethod
-    def _validated_list_rows(rows: Any, limit: int) -> list[Any]:
-        if not isinstance(rows, list) or len(rows) > limit + 1:
-            raise RuntimeError("canonical WorkItem list returned invalid data")
-        return rows
-
-    @classmethod
-    def _project_list_row(cls, row: Any, *, tenant: str, owner_ref: str) -> A2ATask:
-        if not isinstance(row, dict):
-            raise RuntimeError("canonical WorkItem list returned an invalid row")
-        metadata = row.get("metadata")
-        authorized = (
-            row.get("tenant") == tenant
-            and row.get("created_by") == owner_ref
-            and isinstance(metadata, dict)
-            and metadata.get("a2a_schema") == _A2A_METADATA_SCHEMA
-            and metadata.get("a2a_owner_ref") == owner_ref
-        )
-        if not authorized:
-            raise RuntimeError("canonical WorkItem list crossed its authority scope")
-        item_id = str(row.get("id") or "")
-        task_id = item_id.removeprefix(_WORK_ITEM_PREFIX)
-        cls._work_item_id(task_id)
-        return cls._project(row, task_id=task_id)
-
-    @classmethod
-    def _next_cursor(
-        cls,
-        rows: list[Any],
-        tasks: list[A2ATask],
-        *,
-        limit: int,
-        owner_ref: str,
-        tenant: str,
-    ) -> str | None:
-        if len(rows) <= limit or not tasks:
-            return None
-        item_id = str(rows[limit - 1].get("id") or "")
-        return cls._cursor(owner_ref, tenant, item_id)
+        return native
 
     async def list(
         self, *, cursor: str | None, limit: int
@@ -687,30 +673,47 @@ class WorkItemA2AAuthority:
             raise ValueError("A2A task page limit must be between 1 and 100")
         session = self._session("kg:read")
         owner_ref = self._owner_ref(session)
-        after = self._decode_cursor(cursor, owner_ref=owner_ref, tenant=session.tenant)
-        rows = await asyncio.to_thread(
-            self._list_rows,
-            after=after,
-            limit=limit,
-            tenant=session.tenant,
-            owner_ref=owner_ref,
+        native_cursor = self._decode_cursor(
+            cursor, owner_ref=owner_ref, tenant=session.tenant
         )
-        page = self._validated_list_rows(rows, limit)
-        tasks = [
-            self._project_list_row(
-                row,
-                tenant=session.tenant,
-                owner_ref=owner_ref,
-            )
-            for row in page[:limit]
-        ]
-        return tasks, self._next_cursor(
-            page,
-            tasks,
-            limit=limit,
-            owner_ref=owner_ref,
+        _engine, work_engine = self._engine()
+        page = await asyncio.to_thread(
+            work_engine.work_items.list,
             tenant=session.tenant,
+            cursor=native_cursor,
+            limit=limit,
+            kind="orchestrator_task",
+            metadata_match={
+                "a2a_schema": _A2A_METADATA_SCHEMA,
+                "a2a_owner_ref": owner_ref,
+            },
         )
+        if self._session("kg:read") is not session:
+            raise PermissionError("A2A task list caller changed during read")
+        session.engine_verified_context()
+        if (
+            not isinstance(page, dict)
+            or not isinstance(page.get("items"), list)
+            or len(page["items"]) > limit
+        ):
+            raise RuntimeError("canonical WorkItem list returned invalid data")
+        tasks = []
+        for row in page["items"]:
+            if not self._owned(row, owner_ref):
+                raise RuntimeError(
+                    "canonical WorkItem list crossed its authority scope"
+                )
+            item_id = row["work_item_id"]
+            task_id = item_id.removeprefix(_WORK_ITEM_PREFIX)
+            if self._work_item_id(task_id) != item_id:
+                raise RuntimeError("canonical WorkItem list returned invalid identity")
+            tasks.append(self._project(row, task_id=task_id))
+        next_cursor = page.get("next_cursor")
+        if next_cursor is not None and not isinstance(next_cursor, str):
+            raise RuntimeError("canonical WorkItem cursor is invalid")
+        return tasks, self._cursor(
+            owner_ref, session.tenant, next_cursor
+        ) if next_cursor else None
 
     async def cancel(self, task_id: str) -> A2ATask:
         item = await asyncio.to_thread(self._authorized_item, task_id, "kg:write")

@@ -66,7 +66,7 @@ wheels = [
 
 [[package]]
 name = "agent-utilities"
-version = "3.0.1"
+version = "3.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "platformdirs" },
@@ -75,9 +75,9 @@ dependencies = [
     { name = "pydantic-ai-slim" },
     { name = "pydantic-graph" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7e/d2/b40f0b5c9551f6af5920c787c61d99db05eaab2eaff6d78fd83bd3f0a1e1/agent_utilities-3.0.1.tar.gz", hash = "sha256:f8d733c8a1feb6d24b21e277f5016baf802e52a01a0d76b2529d8530f5082d17", size = 63596, upload-time = "2026-10-17T16:04:12.077Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0a/88/a7fb1d6529d76f4d345cadde63250101948c8dacb5a45de3dfa73a9e29f6/agent_utilities-3.0.2.tar.gz", hash = "sha256:f1980d7c3e4c20d21baf80985628af1627230691058912269762cb052ce2956d", size = 70896, upload-time = "2026-10-18T20:43:11.017Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/99/9e/197d56abf9b50339b197cb1b5e33412d6c1e264e5945388fe440be30ee3d/agent_utilities-3.0.1-py3-none-any.whl", hash = "sha256:4c3ea71a9b3279b3a03a269076f898153e20b5f5402650ec9451f5141855003f", size = 61632, upload-time = "2026-10-17T16:04:10.773Z" },
+    { url = "https://files.pythonhosted.org/packages/50/2a/d9a4ccbb900f6f0ebfb71a2e66749576f5198b88928593c46e29884db73e/agent_utilities-3.0.2-py3-none-any.whl", hash = "sha256:1e8b5efdf44acf3b6234c4b3d76259e9e10e905aff06ff7af6d7e44ec4721c41", size = 65469, upload-time = "2026-10-18T20:43:09.742Z" },
 ]
 
 [[package]]
@@ -467,7 +467,7 @@ requires-dist = [
     { name = "agent-connector-sdk", extras = ["a2a", "mcp"], specifier = ">=0.2.2,<0.3.0" },
     { name = "agent-connector-sdk", extras = ["a2a", "mcp"], marker = "extra == 'gateway-widgets'", specifier = ">=0.2.2,<0.3.0" },
     { name = "agent-terminal-ui", marker = "extra == 'test'", specifier = ">=2.3.1" },
-    { name = "agent-utilities", specifier = ">=3.0.1,<4.0.0" },
+    { name = "agent-utilities", specifier = ">=3.0.2,<4.0.0" },
     { name = "agent-webui", marker = "extra == 'webui'", specifier = ">=2.7.1,<3.0.0" },
     { name = "aiohttp", specifier = ">=3.14.5" },
     { name = "anyio", specifier = ">=4.15.1" },

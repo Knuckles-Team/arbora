@@ -256,3 +256,5 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R849:** Apply the server-side landing policy with fast and full gate phases.
 - [ ] **ARBORA-OPS-R850:** Stream the virtual checkout endpoint, recursively and resumably.
 - [ ] **ARBORA-OPS-R851:** Serve the git smart-HTTP read bridge over EG trees.
+
+- [ ] **ARBORA-OPS-R021.4.5.1.2:** Compose native run admission, lease-bound scaffold publication and matching graph reads; qualify a real native lifecycle.

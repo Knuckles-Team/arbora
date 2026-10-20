@@ -6,7 +6,7 @@ Governing [spec](spec.md).
 
 | Test | Requirements | Setup and observation |
 |---|---|---|
-| HO-T01 | HO-01, HO-07 | From a pinned public engine wheel enumerate `is_wire_callable` methods. Compare with curated/generated op bindings and explicit live exclusions; fail on omissions, stale exclusions, duplicate ownership, or an unregistered Arbora route/tool. Regenerate artifacts twice and compare bytes/digest. |
+| HO-T01 | HO-01, HO-07 | From a pinned public engine wheel enumerate `is_wire_callable` methods. Compare with curated/generated op bindings and explicit live exclusions. Reject omissions, stale exclusions, duplicate ownership, or an unregistered Arbora route/tool. Regenerate artifacts twice and compare bytes/digest. |
 | HO-T02 | HO-02 | Table-drive human, service, delegated agent, tenants, exact scopes, and surfaces through `invoke`. Assert same allow/deny code on MCP, HTTP and A2A; extra fields and identity/tenant spoofing fail before a handler call. |
 | HO-T03 | HO-02, HO-08 | A service op with domain scope but no caller subject read fails. Subject-read plus service grant succeeds and creates a caller-owned record. Revoke either permission before deferred dispatch and assert zero effect. Cross-tenant subject always fails. |
 | HO-T04 | HO-03 | Exact idempotent write replays one receipt; a missing key fails. Fuzzy mutation returns preview and creates no effect. Destructive plan is single-use and rejects expired, changed params, actor, tenant, policy revision or registry digest. Console-only admin rejects MCP/A2A confirmation and accepts same-human fresh-MFA console confirmation. |
@@ -249,3 +249,7 @@ Test the actual serving-root binding and contextual read path. Cover concurrent 
 | Landing policy | `ARBORA-OPS-R849` | `tests/api/test_source_landing.py::test_fast_gate_refuses_before_land`: a failing fast gate refuses before landing with zero effects. A post-landing failure records the engine bisect and revert decision. |
 | Virtual checkout | `ARBORA-OPS-R850` | `tests/api/test_source_checkout.py::test_checkout_stream_resumable`: directories stream before blobs. A resumed fetch continues from the last acknowledged entry. |
 | Git bridge | `ARBORA-OPS-R851` | `tests/api/test_source_git_bridge.py::test_smart_http_clone_and_fetch`: clone and fetch succeed over the smart-HTTP endpoint. Mirror sync is served by the repository-manager connector. |
+
+## ARBORA-OPS-R021.4.5.1.2
+
+Verify a native admission returns its opaque task ID with a separate run ID. Reject caller-selected IDs for run admission and preserve legacy submit bytes. Pass exact native claim holder/epoch/fence/expiry to actual AU publication callbacks; refuse mismatched session/run, malformed claims, expiry and closed scopes. Interleave two bindings and prove isolation. Check native get/cancel and terminal/list projection, with legacy persisted IDs retained. Candidate integration must identify the engine commit/artifact and exercise admission, claim, AU revisions, native reads and stale/foreign refusal. A double-based test is source-contract evidence only.
