@@ -427,3 +427,14 @@ return JSON-RPC -32014 with HTTP 503 and no producer error details. This fixes
 identity continuity only: historical
 messages, model memory and streaming remain subject to the parent acceptance.
 No additional context store, cache or event log is introduced.
+
+### 2026-10-20 — Bounded committed-terminal resubscribe
+
+The first replay consumer may serve one EG-committed terminal event, or an empty
+replay when the supplied engine cursor already acknowledges it. It requires the
+native opt-in terminal replay producer, validates caller ownership from the same
+WorkItem snapshot, and performs no admission or execution. This does not deliver
+active lifecycle streaming, conversation transcripts, or model checkpoint resume;
+the Agent Card continues to advertise streaming as unavailable. Missing producer,
+pending tasks and legacy unbound outcomes remain explicitly unavailable. Native
+cursor identity and retention remain EG-owned under the approved R028 contract.

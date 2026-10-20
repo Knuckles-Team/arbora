@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from secrets import token_hex
@@ -9,7 +10,7 @@ from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from arbora.api.http.auth import HTTPAuthenticationError
@@ -190,14 +191,30 @@ async def _get_task(service: A2AService, raw_params: Any, request_id: Any) -> An
     return result or _error(request_id, -32001, "Task not found", 404)
 
 
-def _resubscribe_stub(raw_params: Any) -> Any:
-    # Registered in the method table (ARBORA-A2A-R001) but fail-closed:
-    # durable streaming has no bounded, restart-safe event-cursor backing
-    # yet. Params are still validated so a malformed call is rejected as
-    # invalid, not treated as an unreachable method.
-    _ResubscribeParams.model_validate(raw_params)
-    raise A2AStreamingUnavailable(
-        "durable task streaming and resubscribe are not available yet"
+async def _resubscribe(
+    service: A2AService, request: Request, raw_params: Any, request_id: Any
+) -> Response:
+    params = _ResubscribeParams.model_validate(raw_params)
+    header_cursor = request.headers.get("Last-Event-ID")
+    if (
+        params.cursor is not None
+        and header_cursor is not None
+        and params.cursor != header_cursor
+    ):
+        raise ValueError("conflicting replay cursor")
+    task, cursor = await service.replay_terminal(
+        params.id, params.cursor or header_cursor
+    )
+    body = ""
+    if task is not None:
+        payload = {
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "result": task.model_dump(mode="json", by_alias=True),
+        }
+        body = f"id: {cursor}\ndata: {json.dumps(payload, separators=(',', ':'))}\n\n"
+    return Response(
+        body, media_type="text/event-stream", headers={"Cache-Control": "no-store"}
     )
 
 
@@ -237,7 +254,6 @@ def _plan_confirm_stub(raw_params: Any) -> Any:
 
 _SYNC_METHODS: dict[str, Callable[[Any], Any]] = {
     "message/stream": _stream_stub,
-    "tasks/resubscribe": _resubscribe_stub,
     "arbora.op/invoke": _op_invoke_stub,
     "arbora.plan/confirm": _plan_confirm_stub,
 }
@@ -253,6 +269,8 @@ async def _invoke_method(
     """Validate and invoke one unary method on the shared service."""
     if method == "message/send":
         return await _send_message(service, request, raw_params)
+    if method == "tasks/resubscribe":
+        return await _resubscribe(service, request, raw_params, request_id)
     if method == "tasks/get":
         return await _get_task(service, raw_params, request_id)
     if method == "tasks/list":
@@ -401,7 +419,7 @@ async def _unary_request(
     method: str,
     raw_params: dict[str, Any],
     request_id: Any,
-) -> JSONResponse:
+) -> Response:
     write_methods = {"message/send", "tasks/cancel", "arbora.plan/confirm"}
     scope = "kg:write" if method in write_methods else "kg:read"
     try:
@@ -430,8 +448,8 @@ async def _unary_request(
     return _unary_response(result, request_id)
 
 
-def _unary_response(result: Any, request_id: Any) -> JSONResponse:
-    if isinstance(result, JSONResponse):
+def _unary_response(result: Any, request_id: Any) -> Response:
+    if isinstance(result, Response):
         return result
     payload = result.model_dump(mode="json", by_alias=True)
     return JSONResponse(
@@ -469,7 +487,7 @@ def create_a2a_handlers(
     async def agent_card(request: Request) -> JSONResponse:
         return await _agent_card_request(service, authenticator, request)
 
-    async def json_rpc(request: Request) -> JSONResponse:
+    async def json_rpc(request: Request) -> Response:
         envelope = await _request_envelope(request)
         if isinstance(envelope, JSONResponse):
             return envelope

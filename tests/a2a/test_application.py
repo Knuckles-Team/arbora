@@ -158,12 +158,7 @@ def test_json_rpc_rejects_missing_idempotency_invalid_shape_and_unknown_task() -
 
 @pytest.mark.spec("ARBORA-A2A-R001.1")
 def test_json_rpc_refuses_resubscribe_until_streaming_is_implemented() -> None:
-    """ARBORA-A2A-R001.1: resubscribe is on the method table but fail-closed.
-
-    Durable streaming has no bounded, restart-safe event-cursor backing yet
-    (ARBORA-A2A-R001), so ``tasks/resubscribe`` must refuse distinctly from
-    an unrecognized method, and must still validate its params.
-    """
+    """Missing replay authority refuses distinctly from unknown methods."""
     app, auth, authority = _app()
     client = TestClient(app)
     headers = {"Authorization": "Bearer verified"}
@@ -178,10 +173,10 @@ def test_json_rpc_refuses_resubscribe_until_streaming_is_implemented() -> None:
             "params": {"id": authority.task.id, "cursor": None},
         },
     )
-    assert refused.status_code == 501
+    assert refused.status_code == 503
     assert refused.json()["error"] == {
-        "code": -32010,
-        "message": "durable task streaming and resubscribe are not available yet",
+        "code": -32013,
+        "message": "terminal replay is unavailable",
     }
     assert auth.scopes == ["kg:read"]
 

@@ -63,6 +63,15 @@ class A2AService:
             return await self.authority.get_committed_task(task_id)
         return await self.authority.get(task_id)
 
+    async def replay_terminal(
+        self, task_id: str, cursor: str | None
+    ) -> tuple[A2ATask | None, str]:
+        reader = getattr(self.authority, "replay_terminal", None)
+        if not callable(reader):
+            raise A2ATerminalEventUnavailable("terminal replay is unavailable")
+        result: tuple[A2ATask | None, str] = await reader(task_id, cursor)
+        return result
+
     async def list_tasks(
         self, *, cursor: str | None = None, limit: int = 50
     ) -> A2AListResult:

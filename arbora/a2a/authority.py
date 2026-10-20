@@ -588,6 +588,53 @@ class WorkItemA2AAuthority:
             metadata={"arbora": public_metadata},
         )
 
+    async def replay_terminal(
+        self, task_id: str, cursor: str | None
+    ) -> tuple[A2ATask | None, str]:
+        """Replay only a committed terminal event; never admit or execute work."""
+        from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+
+        from .terminal_event import A2ATerminalEventUnavailable
+        from .terminal_replay import project_replay
+
+        session = self._session("work:read")
+        owner_ref = self._owner_ref(session)
+        item = await asyncio.to_thread(self._authorized_item, task_id, "kg:read")
+        if item is None:
+            raise PermissionError("A2A task unavailable")
+        task = self._project(item, task_id=task_id)
+        engine, _ = self._engine()
+        try:
+            client = engine.graph_compute.for_graph(CONTROL_GRAPH).async_client
+            value = await asyncio.wait_for(
+                client.work_items.replay_terminal(
+                    tenant=session.tenant,
+                    work_item_id=self._work_item_id(task_id),
+                    after_cursor=cursor,
+                ),
+                timeout=5.0,
+            )
+        except (PermissionError, ValueError):
+            raise
+        except Exception as exc:
+            raise A2ATerminalEventUnavailable("terminal replay is unavailable") from exc
+        if self._session("work:read") != session:
+            raise PermissionError("A2A caller changed during terminal replay")
+        replay_item, event, next_cursor = project_replay(
+            value,
+            session=session,
+            task_id=task_id,
+            owner_ref=owner_ref,
+            work_item_id=self._work_item_id(task_id),
+            run_id=task.metadata["arbora"]["runId"],
+            after_cursor=cursor,
+        )
+        if event is None:
+            return None, next_cursor
+        result = self._project(replay_item, task_id=task_id)
+        result.metadata["arbora"]["terminalEvent"] = event
+        return result, next_cursor
+
     async def get_committed_task(self, task_id: str) -> A2ATask | None:
         return await self.get(task_id, include_committed_event=True)
 
