@@ -190,3 +190,18 @@ def test_authenticated_route_serves_sse_and_keeps_streaming_card_false():
     assert response.text.startswith(f"id: {CURSOR}\ndata: ")
     assert calls == [(authority.task.id, None)]
     assert auth.scopes == ["kg:read"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "headers,params",
+    [
+        ([], {"id": TASK, "cursor": ""}),
+        ([(b"last-event-id", b"")], {"id": TASK}),
+        ([(b"last-event-id", b"x" * 1025)], {"id": TASK}),
+    ],
+)
+async def test_invalid_cursor_never_becomes_initial_replay(headers, params):
+    request = Request({"type": "http", "headers": headers})
+    with pytest.raises(ValueError):
+        await _resubscribe(SimpleNamespace(), request, params, 1)

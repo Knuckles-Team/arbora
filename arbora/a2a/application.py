@@ -133,7 +133,7 @@ class _GetTaskParams(_TaskParams):
 
 class _ResubscribeParams(_Params):
     id: str = Field(min_length=1, max_length=80)
-    cursor: str | None = Field(default=None, max_length=1024)
+    cursor: str | None = Field(default=None, min_length=1, max_length=1024)
 
 
 class _ListParams(_Params):
@@ -202,9 +202,9 @@ async def _resubscribe(
         and params.cursor != header_cursor
     ):
         raise ValueError("conflicting replay cursor")
-    task, cursor = await service.replay_terminal(
-        params.id, params.cursor or header_cursor
-    )
+    effective_cursor = params.cursor if params.cursor is not None else header_cursor
+    validated = _ResubscribeParams(id=params.id, cursor=effective_cursor)
+    task, cursor = await service.replay_terminal(params.id, validated.cursor)
     body = ""
     if task is not None:
         payload = {
