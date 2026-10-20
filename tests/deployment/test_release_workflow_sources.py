@@ -538,7 +538,12 @@ def test_generator_scanner_runs_for_main_and_selected_pr_without_publication():
     )
     assert "needs.freeze-gate-source.result == 'success'" in condition
     assert "scanner-scope" in jobs["scanner-quality"]["needs"]
-    assert jobs["build"]["if"] == "github.event_name != 'pull_request'"
+    assert "if" not in jobs["build"]
+    assert jobs["build"]["needs"] == ["gates"]
+    build_commands = "\n".join(step.get("run", "") for step in jobs["build"]["steps"])
+    assert "uv build --wheel --out-dir dist" in build_commands
+    assert "wheel_boot_check.py contents" in build_commands
+    assert jobs["install-smoke"]["if"] == "github.event_name != 'pull_request'"
     assert (
         jobs["publish-pypi"]["if"]
         == "github.ref_type == 'tag' && startsWith(github.ref_name, 'v')"
