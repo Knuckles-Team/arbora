@@ -37,6 +37,7 @@ class A2AService:
         message: A2AMessage | dict[str, Any],
         idempotency_key: str,
         context_budget_tokens: int | None = None,
+        streaming: bool = False,
     ) -> A2ATask:
         parsed = (
             message
@@ -46,11 +47,32 @@ class A2AService:
         decision = await self.router.route(
             parsed, context_budget_tokens=context_budget_tokens
         )
-        return await self.authority.dispatch(
-            message=parsed,
-            idempotency_key=idempotency_key,
-            decision=decision,
-        )
+        return await self._dispatch(parsed, idempotency_key, decision, streaming)
+
+    async def _dispatch(
+        self, message: A2AMessage, key: str, decision: Any, streaming: bool
+    ) -> A2ATask:
+        options: dict[str, Any] = {
+            "message": message,
+            "idempotency_key": key,
+            "decision": decision,
+        }
+        if streaming:
+            options["streaming"] = True
+        return await self.authority.dispatch(**options)
+
+    async def streaming_supported(self) -> bool:
+        probe = getattr(self.authority, "streaming_supported", None)
+        return callable(probe) and await probe() is True
+
+    async def read_events(self, task_id: str, cursor: str | None) -> dict[str, Any]:
+        reader = getattr(self.authority, "read_events", None)
+        if not callable(reader):
+            from .authority import A2AStreamingUnavailable
+
+            raise A2AStreamingUnavailable("durable streaming is unavailable")
+        result: dict[str, Any] = await reader(task_id, cursor)
+        return result
 
     async def get_task(
         self, task_id: str, *, include_committed_event: bool = False

@@ -239,6 +239,15 @@ def bind_run_ports() -> None:
     checkpoint_register = getattr(host_ports, "register_run_checkpoint_factory", None)
     if checkpoint_register is not None:
         checkpoint_register(checkpoint_scope)
+    _bind_event_port(host_ports)
     host_ports.register_run_decision_provider(decide_run)
     host_ports.register_model_provider(resolve_model)
     host_ports.register_run_event_sink(record_run_event)
+
+
+def _bind_event_port(host_ports: Any) -> None:
+    from arbora.run_events import durable_run_event_scope
+
+    register = getattr(host_ports, "register_durable_run_event_factory", None)
+    if register is not None:
+        register(durable_run_event_scope)

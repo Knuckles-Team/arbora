@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
+import time
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from secrets import token_hex
@@ -10,10 +12,11 @@ from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from arbora.api.http.auth import HTTPAuthenticationError
+from arbora.run_events import RunEventsUnavailable, a2a_event
 
 from .authority import (
     A2AContextUnavailable,
@@ -218,6 +221,90 @@ async def _resubscribe(
     )
 
 
+async def _live_stream(
+    service: A2AService,
+    request: Request,
+    raw_params: Any,
+    request_id: Any,
+    caller: VerifiedCaller | None,
+    method: str,
+) -> Response:
+    cursor = request.headers.get("Last-Event-ID")
+    if method == "message/stream":
+        params = _SendParams.model_validate(raw_params)
+        key = request.headers.get("Idempotency-Key", "")
+        if not key:
+            raise ValueError("Idempotency-Key is required")
+        # Validate reconnect cursor before admission; only tasks/resubscribe accepts one.
+        if cursor is not None:
+            raise ValueError("resume with tasks/resubscribe")
+        task = await service.send_message(
+            message=params.message,
+            idempotency_key=key,
+            context_budget_tokens=params.context_budget_tokens,
+            streaming=True,
+        )
+        task_id = task.id
+    else:
+        replay = _ResubscribeParams.model_validate(raw_params)
+        if cursor is not None and replay.cursor is not None and cursor != replay.cursor:
+            raise ValueError("conflicting replay cursor")
+        cursor = replay.cursor if replay.cursor is not None else cursor
+        _ResubscribeParams(id=replay.id, cursor=cursor)
+        task_id = replay.id
+    # Perform ownership/cursor validation before HTTP headers commit.
+    first_page = await service.read_events(task_id, cursor)
+
+    async def generate() -> Any:
+        nonlocal cursor
+        page = first_page
+        deadline = time.monotonic() + 60.0
+        try:
+            while True:
+                await _refresh_unary_caller(caller)
+                with _caller_session_scope(caller):
+                    for entry in page["events"]:
+                        result = a2a_event(
+                            task_id,
+                            page["work_item"],
+                            entry,
+                            terminal_index=page.get("next_index"),
+                        )
+                        payload = {"jsonrpc": "2.0", "id": request_id, "result": result}
+                        cursor = entry["cursor"]
+                        yield f"id: {cursor}\ndata: {json.dumps(payload, separators=(',', ':'))}\n\n"
+                    terminal = page["work_item"].get("status") in {
+                        "succeeded",
+                        "failed",
+                        "cancelled",
+                        "dead_letter",
+                    }
+                    if terminal and not page["has_more"]:
+                        return
+                    if time.monotonic() >= deadline:
+                        return
+                    if not page["has_more"]:
+                        await asyncio.sleep(0.25)
+                    await _refresh_unary_caller(caller)
+                    page = await service.read_events(task_id, cursor)
+        except (PermissionError, RunEventsUnavailable, TimeoutError):
+            payload = {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "error": {
+                    "code": -32015,
+                    "message": "Durable stream unavailable; resume from the last received cursor",
+                },
+            }
+            yield f"data: {json.dumps(payload, separators=(',', ':'))}\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
+    )
+
+
 def _stream_stub(raw_params: Any) -> Any:
     # The card advertises ``streaming: false``. ``message/stream`` is still a
     # known method: it validates its params and refuses as unsupported, so a
@@ -288,6 +375,7 @@ async def _invoke_method(
 
 
 _ERROR_CODES: dict[type[Exception], tuple[int, int]] = {
+    RunEventsUnavailable: (-32015, 503),
     A2AContextUnavailable: (-32014, 503),
     A2ATerminalEventUnavailable: (-32013, 503),
     A2AIdempotencyConflict: (-32009, 409),
@@ -412,6 +500,24 @@ async def _operation_request(
         return _application_error(request_id, error)
 
 
+async def _invoke_scoped(
+    service: A2AService,
+    request: Request,
+    method: str,
+    raw_params: dict[str, Any],
+    request_id: Any,
+    caller: VerifiedCaller | None,
+) -> Any:
+    if (
+        method in {"message/stream", "tasks/resubscribe"}
+        and await service.streaming_supported()
+    ):
+        return await _live_stream(
+            service, request, raw_params, request_id, caller, method
+        )
+    return await _invoke_method(service, request, method, raw_params, request_id)
+
+
 async def _unary_request(
     service: A2AService,
     authenticator: A2AAuthenticator,
@@ -420,18 +526,24 @@ async def _unary_request(
     raw_params: dict[str, Any],
     request_id: Any,
 ) -> Response:
-    write_methods = {"message/send", "tasks/cancel", "arbora.plan/confirm"}
+    write_methods = {
+        "message/send",
+        "message/stream",
+        "tasks/cancel",
+        "arbora.plan/confirm",
+    }
     scope = "kg:write" if method in write_methods else "kg:read"
     try:
         caller = await authenticator.authenticate(request, scope=scope)
         await _refresh_unary_caller(caller)
         with _caller_session_scope(caller):
-            result = await _invoke_method(
-                service, request, method, raw_params, request_id
+            result = await _invoke_scoped(
+                service, request, method, raw_params, request_id, caller
             )
     except PermissionError as error:
         return _authentication_error(request_id, error)
     except (
+        RunEventsUnavailable,
         A2AContextUnavailable,
         A2ATerminalEventUnavailable,
         A2AIdempotencyConflict,
@@ -462,12 +574,17 @@ async def _agent_card_request(
     service: A2AService, authenticator: A2AAuthenticator, request: Request
 ) -> JSONResponse:
     try:
-        await authenticator.authenticate(request, scope="kg:read")
+        caller = await authenticator.authenticate(request, scope="kg:read")
+        await _refresh_unary_caller(caller)
+        with _caller_session_scope(caller):
+            streaming = await service.streaming_supported()
     except PermissionError as error:
         return _authentication_error(None, error)
     endpoint = str(request.url.replace(path="/a2a", query=""))
+    card = service.agent_card(endpoint)
+    card.capabilities.streaming = streaming
     return JSONResponse(
-        service.agent_card(endpoint).model_dump(mode="json", by_alias=True),
+        card.model_dump(mode="json", by_alias=True),
         headers={"Cache-Control": "no-store"},
     )
 

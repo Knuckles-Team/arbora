@@ -450,3 +450,16 @@ preserves uncertain writes without issuing a changed retry. Missing published
 ports leave ordinary execution unchanged; an installed producer failure does
 not silently fall back after checkpoint execution begins. Full conversation
 history discovery and user-facing resume admission still require qualification.
+
+### 2026-10-20 — Native lifecycle event streaming composition
+
+The live transport reads EG's owner-bound lifecycle event pages. AU publishes
+actual model text deltas, tool calls and tool results through a host port backed
+by fenced native append; Arbora does not retain a second event queue or log.
+A stream request admits work once, while resubscribe performs only authorized
+native reads. Disconnecting a reader does not repeat or roll back execution.
+Event identity and cursor acknowledgement are the native commit identity, and
+terminal state must come from the committed native WorkItem/event projection.
+The card may advertise streaming only when the native producer contract and AU
+publisher are actually available. Missing producers and malformed projections
+remain typed unavailable; fixture tests alone are not live qualification.
