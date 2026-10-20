@@ -680,3 +680,42 @@ the adopted harness of EG-ORCH-VOCAB-R802. arbora computes no
 ranking and stores no harness content. The engine is the sole
 authority for versions, contrasts and lessons. The in-run cycle that
 drives these operations belongs to agent-utilities (AU-HARNESS-CYCLE-R001).
+
+## Served source operations (R848)
+
+arbora serves the source operations over the engine source control.
+`source.tree`, `source.blob`, `source.diff`, `source.history` and
+`source.blame` are reads. `source.commit` submits a changeset.
+`source.land` applies the landing policy of R849. `source.revert`
+reverts a landed changeset. Each operation is one typed tool. The
+tools carry read-only and destructive hints. Admission is per
+principal and per path ACL.
+
+The development surface is served through the repository-manager
+connector's tools. repository-manager is the development surface used
+inside arbora MCP. arbora serves the underlying `source.*` operations.
+
+## Server-side landing policy (R849)
+
+`source.land` applies the landing policy on the server. Before
+landing, the fast gates of the pipelines gate standard run against the
+changeset's tree. They are format, hygiene, secrets, types and
+tests-fast. A failing fast gate refuses the landing with a typed
+reason. After landing, the full suite runs. On failure, the engine
+records the bisect and revert decision of EG-SCM-R009. No merge queue
+is kept.
+
+## Virtual checkout endpoint (R850)
+
+The endpoint serves a virtual checkout as a stream. It resolves
+directories, then blobs. Resolution is recursive and resumable. A
+resumed checkout continues from the last acknowledged entry. Clients
+obtain only what they need. The stream honors the caller's path ACL.
+
+## Git bridge (R851)
+
+The bridge serves a git smart-HTTP read endpoint. It accepts clone
+and sync requests over EG trees for legacy git tools. Mirror push
+goes to the public git hosting mirrors. The repository-manager
+connector owns mirror sync and the connector mapping. arbora serves
+the underlying `source.*` operations.

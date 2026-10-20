@@ -216,7 +216,11 @@
     "ARBORA-OPS-R700",
     "ARBORA-OPS-R843",
     "ARBORA-OPS-R843.1",
-    "ARBORA-OPS-R843.2"
+    "ARBORA-OPS-R843.2",
+    "ARBORA-OPS-R848",
+    "ARBORA-OPS-R849",
+    "ARBORA-OPS-R850",
+    "ARBORA-OPS-R851"
   ],
   "requirements": [
     {
@@ -2282,6 +2286,34 @@
     {
       "id": "ARBORA-OPS-R843.2",
       "title": "Modules that are not engine wrappers",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R848",
+      "title": "`source.*` served operations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R849",
+      "title": "Server-side landing policy",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R850",
+      "title": "Virtual checkout endpoint",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R851",
+      "title": "Git bridge",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
