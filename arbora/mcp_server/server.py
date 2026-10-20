@@ -153,6 +153,11 @@ def _served_invocation() -> tuple[HostedInvocation | None, Any]:
     from arbora.mcp_server.backing.server_factory import create_mcp_parser
     from arbora.mcp_server.current_plan_reader import NativeCurrentPlanReader
     from arbora.mcp_server.fleet_composition import LateFleetGateway
+    from arbora.mcp_server.harness_reader import (
+        NativeComponentReader,
+        NativeEvolutionReportReader,
+        NativeLessonRetriever,
+    )
     from arbora.mcp_server.served_invocation import served_invocation_from_settings
 
     args, _unknown = create_mcp_parser().parse_known_args()
@@ -164,6 +169,9 @@ def _served_invocation() -> tuple[HostedInvocation | None, Any]:
             "a2a": a2a_mcp._service(),
             "fleet_gateway": fleet,
             "current_plan_reader": NativeCurrentPlanReader(),
+            "harness_component_reader": NativeComponentReader(),
+            "harness_lesson_retriever": NativeLessonRetriever(),
+            "harness_evolution_report_reader": NativeEvolutionReportReader(),
         },
         fleet_effect=fleet.effect,
     )
