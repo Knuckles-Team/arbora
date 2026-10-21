@@ -9,7 +9,7 @@ from typing import Literal
 
 from arbora.client._schema import _expanded_spec
 
-REGISTRY_DIGEST = "0bf182064dbebba007b5ac61ef0edcb254d41a465000811eb9ad2d248c3cb6e6"
+REGISTRY_DIGEST = "a021d693b86f7b37e94b54fa7253649f3d113c16938abfa39e54b923da4de90b"
 API_VERSION = "1"
 type OperationId = Literal[
     "access.check",
@@ -512,6 +512,10 @@ type OperationId = Literal[
     "rlm.run",
     "runs.current_plan",
     "security.posture.read",
+    "source.blame",
+    "source.blob",
+    "source.history",
+    "source.tree",
     "swarm.topology.read",
     "telemetry.read",
     "usage.read",

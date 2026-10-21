@@ -154,6 +154,7 @@ def _served_invocation() -> tuple[HostedInvocation | None, Any]:
     from arbora.mcp_server.current_plan_reader import NativeCurrentPlanReader
     from arbora.mcp_server.fleet_composition import LateFleetGateway
     from arbora.mcp_server.served_invocation import served_invocation_from_settings
+    from arbora.mcp_server.source_reader import NativeSourceReader
 
     args, _unknown = create_mcp_parser().parse_known_args()
     session = runtime._mint_process_session(str(getattr(args, "transport", "stdio")))
@@ -164,6 +165,7 @@ def _served_invocation() -> tuple[HostedInvocation | None, Any]:
             "a2a": a2a_mcp._service(),
             "fleet_gateway": fleet,
             "current_plan_reader": NativeCurrentPlanReader(),
+            "source_reader": NativeSourceReader(),
         },
         fleet_effect=fleet.effect,
     )

@@ -25292,6 +25292,335 @@
     {
       "audit": "none",
       "binding": {
+        "handler": "arbora.api.ops.source.handle_source_blame",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "what last touched src/app.py on main"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "source.blame",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.source.SourceBlameParams",
+        "schema": {
+          "additionalProperties": false,
+          "description": "Attribute one file to its last-touch revision on one ref.",
+          "properties": {
+            "path": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Path",
+              "type": "string"
+            },
+            "ref": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Ref",
+              "type": "string"
+            },
+            "repository": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Repository",
+              "type": "string"
+            }
+          },
+          "required": [
+            "repository",
+            "ref",
+            "path"
+          ],
+          "title": "SourceBlameParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.source.SourceBlameResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "SourceBlameResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "edge:read",
+        "node:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Attribute one file to its last-touch revision on one ref",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "find"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "handler": "arbora.api.ops.source.handle_source_blob",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "read the file at src/app.py on main"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "source.blob",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.source.SourceBlobParams",
+        "schema": {
+          "additionalProperties": false,
+          "description": "Read one file of one ref.",
+          "properties": {
+            "path": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Path",
+              "type": "string"
+            },
+            "ref": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Ref",
+              "type": "string"
+            },
+            "repository": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Repository",
+              "type": "string"
+            }
+          },
+          "required": [
+            "repository",
+            "ref",
+            "path"
+          ],
+          "title": "SourceBlobParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.source.SourceBlobResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "SourceBlobResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "blob:read",
+        "edge:read",
+        "node:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Read one file of one repository ref",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "find"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "handler": "arbora.api.ops.source.handle_source_history",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "which refs carry src/app.py"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "source.history",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.source.SourceHistoryParams",
+        "schema": {
+          "additionalProperties": false,
+          "description": "List the refs of one repository that carry one path.",
+          "properties": {
+            "path": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Path",
+              "type": "string"
+            },
+            "repository": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Repository",
+              "type": "string"
+            }
+          },
+          "required": [
+            "repository",
+            "path"
+          ],
+          "title": "SourceHistoryParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.source.SourceHistoryResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "SourceHistoryResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "edge:read",
+        "node:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "List the refs of one repository that carry one path",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "find"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "handler": "arbora.api.ops.source.handle_source_tree",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "list the files under src on main"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "source.tree",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.source.SourceTreeParams",
+        "schema": {
+          "additionalProperties": false,
+          "description": "List one directory of one ref; the empty path lists the repository root.",
+          "properties": {
+            "path": {
+              "default": "",
+              "maxLength": 1024,
+              "title": "Path",
+              "type": "string"
+            },
+            "ref": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Ref",
+              "type": "string"
+            },
+            "repository": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Repository",
+              "type": "string"
+            }
+          },
+          "required": [
+            "repository",
+            "ref"
+          ],
+          "title": "SourceTreeParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.source.SourceTreeResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "SourceTreeResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "edge:read",
+        "node:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "List one directory of one repository ref",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "find"
+    },
+    {
+      "audit": "none",
+      "binding": {
         "handler": "arbora.api.ops.swarm.handle_swarm_topology_read",
         "kind": "composite"
       },
@@ -25684,5 +26013,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "0bf182064dbebba007b5ac61ef0edcb254d41a465000811eb9ad2d248c3cb6e6"
+  "registry_digest": "a021d693b86f7b37e94b54fa7253649f3d113c16938abfa39e54b923da4de90b"
 }
