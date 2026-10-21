@@ -15,7 +15,7 @@ from typing import Any
 
 import pytest
 
-from arbora.api.invoke import invoke
+from arbora.api.invoke import OpError, OpResult, invoke
 from arbora.api.invoke.executor import BoundOperationRuntime
 from arbora.api.ops import source as source_ops
 from arbora.api.registry import (
@@ -192,7 +192,7 @@ def test_source_reads_served(op_id: str):
     result = asyncio.run(
         invoke(op_id, dict(PARAMS[op_id]), supplied, Surface.HTTP, services=services)
     )
-    assert result.code == "OK", result
+    assert isinstance(result, OpResult) and result.code == "OK", result
     served = result.value
     assert served["value"]["tenant"] == "tenant:one"
     if "found" in served["value"]:
@@ -223,6 +223,7 @@ def test_uncomposed_reader_refuses_unavailable(op_id: str):
         )
     )
     assert result.code == "UNAVAILABLE"
+    assert isinstance(result, OpError), result
     assert result.details == {"reason": "source reader is not composed"}
     assert result.source == "arbora"
 

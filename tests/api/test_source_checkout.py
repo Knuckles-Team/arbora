@@ -122,10 +122,14 @@ class FakeAuthenticator:
         return False
 
 
+async def _allow(_op: Any, _caller: Any) -> bool:
+    return True
+
+
 def _app(invoke: Any, authenticator: FakeAuthenticator | None = None) -> FastAPI:
     sub = create_api_application(
         services=SimpleNamespace(registry=Registry(source_ops.operations())),
-        visibility=lambda op, _caller: True,
+        visibility=_allow,
         authenticator=authenticator or FakeAuthenticator(),
         invoke=invoke,
     )
