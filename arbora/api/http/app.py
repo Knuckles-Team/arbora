@@ -14,6 +14,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from arbora.api.registry import Invoke
 
 from .auth import HTTPAuthenticationError
+from .checkout import make_checkout_endpoint
 from .openapi import document
 from .routes import _error, make_endpoint
 
@@ -194,4 +195,19 @@ def create_api_application(
                 methods=[str(op.http.method).upper()],
                 include_in_schema=False,
             )
+    # The virtual checkout streams one repository ref as NDJSON by driving
+    # the admitted ``source.tree`` operation through the same invoke
+    # chokepoint (ARBORA-OPS-R850); it is an endpoint, not a registry op,
+    # because a stream has no single JSON envelope.
+    app.add_api_route(
+        "/source/checkout",
+        make_checkout_endpoint(
+            services=services,
+            authenticate=authenticate,
+            invoke=invoke,
+            is_console_request=auth.is_console_request,
+        ),
+        methods=["GET"],
+        include_in_schema=False,
+    )
     return app
