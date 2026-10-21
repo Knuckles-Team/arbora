@@ -33,7 +33,7 @@ flowchart LR
 
 An operation request uses the hosted registry and `invoke` pipeline, not an A2A-specific authorization implementation. The verified A2A adapter supplies actor, tenant, effective scopes, auth mode, policy revision and session provenance. The response carries the hosted API envelope within JSON-RPC `result`; JSON-RPC transport errors remain protocol errors. This preserves the engine/fleet's source error code and a privacy-safe message.
 
-When the orchestrator pauses on a pending effect, Arbora issues a durable plan lease bound to `(task_id, parent_work_item_id, child_work_item_id, pending_call_id, op_id, params_digest, principal, tenant, policy_revision, registry_digest, expiry)`. It sends an `input-required` event with a safe preview. The client obtains a fresh authenticated human signature/grant through the public identity contract; the service never stores the bearer itself. On `arbora.plan/confirm`, Arbora verifies the original human and each bound identity, asks the engine to atomically consume the human grant and plan fence, then dispatches through the common invocation pipeline. If any authority changes, return a stable refusal and preserve zero effect. A console-only admin effect instead returns a URL and is confirmed only on the console surface.
+When the orchestrator pauses on a pending effect, Arbora issues a durable plan lease bound to `(task_id, parent_work_item_id, child_work_item_id, pending_call_id, op_id, params_digest, principal, tenant, policy_revision, registry_digest, expiry)`. It sends an `input-required` event with a safe preview. The client obtains a fresh authenticated human signature/grant through the public identity contract. The service never stores the bearer itself. On `arbora.plan/confirm`, Arbora verifies the original human and each bound identity, asks the engine to atomically consume the human grant and plan fence, then dispatches through the common invocation pipeline. If any authority changes, return a stable refusal and preserve zero effect. A console-only admin effect instead returns a URL and is confirmed only on the console surface.
 
 Pre-effect audit reservation and post-effect outcome linking use the shared hosted-operation service. A two-person approval must prove two distinct qualified humans using the same durable relation. No service or delegated agent can synthesize either participant. All claims are rechecked at resume time. A canceled task cannot be confirmed. A committed effect is not treated as reversible by task cancellation.
 
@@ -413,6 +413,23 @@ implementation, no registered model operation, no selected-profile success and
 no change to existing default execution. Foreign caller, revocation and atomic
 admission acceptance remain producer work, not satisfied by syntax validation.
 
+### Amendment 2026-10-20: bounded inline text attachments
+
+ARBORA-A2A-R001.5 first serves inline base64 `text/plain` files through the
+existing message parser and task-text model input. Require strict UTF-8, at most
+eight files and 65,536 aggregate decoded bytes, further limited by the existing
+MAX_UPLOAD_SIZE setting before routing or task creation. Reject URI parts and
+unsupported media before admission. Filenames are labels, never filesystem paths.
+The existing caller/tenant authorization, redaction and idempotency paths remain
+authoritative. Served transport tests observe decoded content in model input and
+zero tasks for refusals. This bounded text slice does not close R001.5. PNG input and revision-bound selected-model media capabilities still require the AU and model-authority prerequisites.
+Live acceptance remains separately required.
+
+The flattened model task, including text, decoded file content and newline
+separators, must fit the execution contract's 100,000-character bound. Reject
+combined inputs above that bound during message validation, before routing or
+task admission; exact-bound inputs remain accepted.
+
 ### Native tool-task lease binding (ARBORA-A2A-R002.2.2)
 
 Bind `WorkItemFence` to the existing `arbora.work_items` methods. The adapter
@@ -452,3 +469,45 @@ Refuse missing or changed bytes. Pin the native blob holder before publishing it
 No local mapping or process-identity substitution is permitted. This storage
 slice does not establish original-caller credential recovery, queue dispatch, or
 uncertain-effect reconciliation; the parent remains specified.
+
+## Model preference entry boundary — 2026-10-20
+
+R016.6 requires explicit preferences to fail before routing or task creation when
+profile-use authority is absent. Apply the existing typed preference validator
+and unavailable result at A2AService.send_message, the common application entry.
+An explicit null preference still requests this authority; omitted metadata keeps
+the existing default path. Tests require zero router and dispatch calls for all
+explicit preferences and preserve normal dispatch when the field is absent.
+This closes silent preference loss, not atomic profile admission or models.list.
+The EG owner-participant implementation remains necessary for successful choice.
+
+## Amendment 2026-10-20: immediate turn usage prerequisite
+
+Under ARBORA-A2A-R001, preserve the AU run result's measured usage in
+the authenticated `message/send` response as `metadata.arbora.usage` with
+`runId`, `taskId`, `contextId`, `scope: "turn"` and unchanged `counts`. Bind the result
+run id to the admitted task before projection. Missing producer usage is absent,
+not zero. This projection is limited to the active response: task reads and
+idempotent completed replays cannot reconstruct counts. Do not add an Arbora
+counter or cache. Durable session totals and restart-safe usage remain dependent
+on the authorized durable event reader; this prerequisite does not close
+TUI-RUNTIME-R012.6. The owning `usage.read` per-turn/session operation
+acceptance is still open; this transient metadata is only a prerequisite. Costs are not supplied by the run result and stay absent.
+
+ARBORA-A2A-R001.5 remains open: the published AU run request currently carries
+text only. File-part parsing alone cannot deliver PNG bytes to model input.
+
+## Amendment 2026-10-20: durable context identity continuation
+
+R001.3 first preserves a returned canonical context identifier at admission.
+Resolve it through EG's existing tenant-scoped ListWorkItems metadata filter
+for the A2A schema, caller owner reference and context. Validate the returned
+record and recheck the caller before admission. Tenant binding comes from the
+verified native reader request; its caller-view record intentionally omits tenant
+and worker authority fields. Follow empty pages with cursors,
+bounded to 32 pages; exhausted bounds fail explicitly. Unknown or foreign
+canonical contexts admit no work. Reader failures and page-bound exhaustion
+return JSON-RPC -32014 with HTTP 503 and no producer error details. This fixes
+identity continuity only: historical
+messages, model memory and streaming remain subject to the parent acceptance.
+No additional context store, cache or event log is introduced.

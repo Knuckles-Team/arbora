@@ -10,6 +10,7 @@ typed-batch methods only.
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 import time
 from pathlib import Path
@@ -161,9 +162,27 @@ def test_served_agents_run_executes_through_a2a_work_items_and_the_harness(
     assert run_events == ["run_started", "node_transition", "graph_complete"]
 
 
-@pytest.mark.spec("ARBORA-HOST-R001.2.2")
+@pytest.mark.spec("ARBORA-HOST-R001.2.2", "ARBORA-A2A-R001.5.1")
+@pytest.mark.parametrize(
+    "attachment_case",
+    [
+        "none",
+        "text",
+        "oversize",
+        "unsupported",
+        "uri",
+        "invalid_utf8",
+        "configured_limit",
+        "too_many",
+        "aggregate",
+        "invalid_base64",
+        "empty",
+        "combined_limit",
+        "combined_oversize",
+    ],
+)
 def test_served_process_runs_an_agent_over_its_http_a2a_route(
-    engine: FakeEngine, monkeypatch: pytest.MonkeyPatch
+    engine: FakeEngine, monkeypatch: pytest.MonkeyPatch, attachment_case: str
 ) -> None:
     """Boot the served factory the ``arbora`` entry point runs, then POST A2A."""
     import httpx
@@ -187,6 +206,55 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
         )
 
     monkeypatch.setattr(request_identity, "actor_from_bearer_token", credential_owner)
+    from pydantic_ai.messages import ModelResponse, TextPart, UserPromptPart
+    from pydantic_ai.models.function import FunctionModel
+
+    observed: list[Any] = []
+
+    def model(messages: Any, info: Any) -> ModelResponse:
+        observed.extend(
+            part.content
+            for message in messages
+            for part in message.parts
+            if isinstance(part, UserPromptPart)
+        )
+        return ModelResponse(parts=[TextPart("received")])
+
+    host_ports.register_model_provider(lambda _id: FunctionModel(model))
+    parts: list[dict[str, Any]] = [{"kind": "text", "text": "say hello"}]
+    if attachment_case != "none":
+        content = b"attached text: maple"
+        if attachment_case in {"combined_limit", "combined_oversize"}:
+            parts[0]["text"] = "say hello" + "a" * (65_536 - len("say hello"))
+            content = b"b" * (34_463 if attachment_case == "combined_limit" else 34_464)
+        if attachment_case == "oversize":
+            content = b"x" * 65_537
+        elif attachment_case == "invalid_utf8":
+            content = b"\xff"
+        file: dict[str, Any] = {
+            "bytes": base64.b64encode(content).decode("ascii"),
+            "mimeType": "image/png"
+            if attachment_case == "unsupported"
+            else "text/plain",
+            "name": "../../never-read-this.txt",
+        }
+        if attachment_case == "invalid_base64":
+            file["bytes"] = "!!!"
+        elif attachment_case == "empty":
+            file["bytes"] = ""
+        if attachment_case == "uri":
+            file = {"uri": "file:///never-read-this", "mimeType": "text/plain"}
+        if attachment_case == "configured_limit":
+            monkeypatch.setattr(runtime_config, "max_upload_size", 4)
+        if attachment_case == "aggregate":
+            file["bytes"] = base64.b64encode(b"a" * 40_000).decode("ascii")
+        count = (
+            9
+            if attachment_case == "too_many"
+            else (2 if attachment_case == "aggregate" else 1)
+        )
+        parts.extend({"kind": "file", "file": file} for _ in range(count))
+
     monkeypatch.setattr(a2a_mcp, "_SERVICE", None)
     _args, mcp, _middlewares = mcp_runtime._build_server(bootstrap=False)
     app = mcp.http_app()
@@ -210,7 +278,7 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
                         "message": {
                             "role": "user",
                             "messageId": "message-served",
-                            "parts": [{"kind": "text", "text": "say hello"}],
+                            "parts": parts,
                             "metadata": {"agent_name": "helper"},
                         }
                     },
@@ -219,13 +287,107 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
 
     response = asyncio.run(call())
 
+    if attachment_case not in {"none", "text", "combined_limit"}:
+        assert "error" in response.json(), response.text
+        assert engine.work_items.rows == {}
+        assert observed == []
+        return
     assert response.status_code == 200, response.text
+    assert any("say hello" in str(value) for value in observed)
+    if attachment_case == "text":
+        assert any("attached text: maple" in str(value) for value in observed)
     body = response.json()
     assert "error" not in body, body
     assert body["result"]["status"]["state"] == "completed"
+    terminal = json.loads(engine.events[-1]["properties"]["payload"])
+    assert body["result"]["metadata"]["arbora"]["usage"] == {
+        "runId": body["result"]["metadata"]["arbora"]["runId"],
+        "taskId": body["result"]["id"],
+        "contextId": body["result"]["contextId"],
+        "scope": "turn",
+        "counts": terminal["result"]["usage"],
+    }
     assert engine.work_items.outcomes == ["succeeded"]
     assert [
         json.loads(event["properties"]["payload"])["type"]
         for event in engine.events
         if event["node_type"] == "RunEvent"
     ] == ["run_started", "node_transition", "graph_complete"]
+
+
+@pytest.mark.spec("ARBORA-A2A-R001")
+@pytest.mark.asyncio
+async def test_turn_usage_is_correlated_and_not_reconstructed_on_replay(
+    engine: FakeEngine,
+) -> None:
+    from dataclasses import replace
+
+    from arbora.a2a.models import A2AMessage
+    from arbora.api.contracts.session import use_session
+
+    authority = WorkItemA2AAuthority(lambda: engine)
+    service = A2AService(
+        authority=authority, router=OrchestratorA2ARouter(lambda: engine)
+    )
+    message = A2AMessage.model_validate(
+        {
+            "role": "user",
+            "messageId": "usage-turn",
+            "parts": [{"kind": "text", "text": "hello"}],
+            "metadata": {"agent_name": "helper"},
+        }
+    )
+    with use_session(session(frozenset({"kg:read", "kg:write"}))):
+        task = await service.send_message(message=message, idempotency_key="usage-1")
+        replay = await service.send_message(message=message, idempotency_key="usage-1")
+        read = await authority.get(task.id)
+    other = session(frozenset({"kg:read", "kg:write"}))
+    other = replace(other, actor=replace(other.actor, actor_id="person:other"))
+    with use_session(other):
+        assert await authority.get(task.id) is None
+    terminal = json.loads(engine.events[-1]["properties"]["payload"])
+    assert task.metadata["arbora"]["usage"] == {
+        "runId": task.metadata["arbora"]["runId"],
+        "taskId": task.id,
+        "contextId": task.context_id,
+        "scope": "turn",
+        "counts": terminal["result"]["usage"],
+    }
+    assert "usage" not in replay.metadata["arbora"]
+    assert read is not None and "usage" not in read.metadata["arbora"]
+    assert engine.work_items.outcomes == ["succeeded"]
+
+
+@pytest.mark.spec("ARBORA-A2A-R001")
+@pytest.mark.asyncio
+async def test_foreign_run_result_never_projects_usage(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from types import SimpleNamespace
+
+    from arbora import work_items
+
+    outcomes: list[str] = []
+
+    class ForeignExecutor:
+        async def execute_agent(self, request: Any, *, session: Any) -> Any:
+            return SimpleNamespace(
+                run_id="foreign-run", output="private", usage={"input_tokens": 42}
+            )
+
+    monkeypatch.setattr(work_items, "claim_specific", lambda *a, **k: {"claim": 1})
+    monkeypatch.setattr(
+        work_items, "commit_result", lambda *a, **k: outcomes.append(k["outcome"])
+    )
+    authority = WorkItemA2AAuthority(lambda: None, executor=ForeignExecutor())
+    usage = await authority._run(
+        object(),
+        item_id="native-item",
+        session=object(),
+        agent_name="helper",
+        task="hello",
+        task_id="task",
+        run_id="admitted-run",
+    )
+    assert usage is None
+    assert outcomes == ["failed"]

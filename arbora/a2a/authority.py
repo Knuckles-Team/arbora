@@ -25,6 +25,7 @@ from .models import (
 from .routing import A2AAssemblyUnavailable
 
 __all__ = [
+    "A2AContextUnavailable",
     "A2AIdempotencyConflict",
     "A2AStreamingUnavailable",
     "A2ATransitionHistoryUnavailable",
@@ -82,6 +83,10 @@ _STATE_MAP: dict[str, A2ATaskState] = {
     "cancelled": "canceled",
     "dead_letter": "failed",
 }
+
+
+class A2AContextUnavailable(RuntimeError):
+    """The durable context ownership reader could not supply a bounded answer."""
 
 
 class A2AIdempotencyConflict(RuntimeError):
@@ -208,6 +213,64 @@ class WorkItemA2AAuthority:
         )
         return f"a2a-context-{digest}"
 
+    def _resolve_context_id(
+        self, session: Any, message: A2AMessage, task_id: str, owner_ref: str
+    ) -> str:
+        """Preserve canonical contexts only after durable caller-owned lookup."""
+        context_id = message.context_id or ""
+        if not context_id.startswith("a2a-context-"):
+            return self._context_id(session, message, task_id, owner_ref)
+        suffix = context_id.removeprefix("a2a-context-")
+        if len(suffix) != 64 or any(char not in "0123456789abcdef" for char in suffix):
+            raise ValueError("A2A context id is invalid")
+        _engine, work_engine = self._engine()
+        match = {
+            "a2a_schema": _A2A_METADATA_SCHEMA,
+            "a2a_owner_ref": owner_ref,
+            "a2a_context_id": context_id,
+        }
+        cursor = None
+        seen: set[str] = set()
+        for _ in range(32):
+            try:
+                page = work_engine.work_items.list(
+                    tenant=session.tenant,
+                    kind="orchestrator_task",
+                    metadata_match=match,
+                    cursor=cursor,
+                    limit=1,
+                )
+            except PermissionError:
+                raise
+            except Exception as exc:
+                raise A2AContextUnavailable(
+                    "durable A2A context lookup is unavailable"
+                ) from exc
+            if not isinstance(page, dict) or not isinstance(page.get("items"), list):
+                raise A2AContextUnavailable("durable A2A context lookup is unavailable")
+            rows = page["items"]
+            if len(rows) > 1:
+                raise A2AContextUnavailable("durable A2A context lookup is unavailable")
+            if rows:
+                row = rows[0]
+                if not (
+                    self._owned(row, owner_ref)
+                    and row["metadata"].get("a2a_context_id") == context_id
+                ):
+                    raise PermissionError("A2A context is unavailable")
+                if self._session("kg:write") != session:
+                    raise PermissionError("A2A caller changed during context lookup")
+                return context_id
+            cursor = page.get("next_cursor")
+            if cursor is None:
+                raise PermissionError("A2A context is unavailable")
+            if not isinstance(cursor, str) or not cursor or cursor in seen:
+                raise A2AContextUnavailable("durable A2A context lookup is unavailable")
+            seen.add(cursor)
+        raise A2AContextUnavailable(
+            "durable A2A context lookup exceeded its page bound"
+        )
+
     @staticmethod
     def _request_digest(
         message: A2AMessage, context_id: str, decision: A2ARouteDecision
@@ -306,7 +369,8 @@ class WorkItemA2AAuthority:
         agent_name: str,
         task: str,
         task_id: str = "",
-    ) -> None:
+        run_id: str | None = None,
+    ) -> dict[str, int] | None:
         """Lease the WorkItem, run the agent through the harness, commit the outcome.
 
         The run takes the task id as its run id, so its RunEvents name the
@@ -326,8 +390,9 @@ class WorkItemA2AAuthority:
             lease_ttl_s=_RUN_LEASE_SECONDS,
         )
         if claim is None:
-            return
+            return None
         outcome, result_ref, error_ref = "succeeded", None, None
+        usage = None
         try:
             from arbora.host_bindings import FLEET_AGENT_NAME, FLEET_TOOLS
 
@@ -335,16 +400,19 @@ class WorkItemA2AAuthority:
                 AgentExecutionRequest(
                     agent_name=agent_name,
                     task=task,
-                    run_id=task_id or None,
+                    run_id=run_id or task_id or None,
                     allowed_tools=(
                         FLEET_TOOLS if agent_name == FLEET_AGENT_NAME else None
                     ),
                 ),
                 session=session,
             )
+            if result.run_id != (run_id or task_id):
+                raise RuntimeError("agent result does not belong to this A2A turn")
             result_ref = persistence_reference(
                 "run", result.run_id, namespace="arbora-a2a"
             )
+            usage = getattr(result, "usage", None)
             remember_task_output(task_id, getattr(result, "output", None))
         except Exception as exc:  # noqa: BLE001 - a failed run is a failed task
             logging.getLogger(__name__).warning(
@@ -363,6 +431,7 @@ class WorkItemA2AAuthority:
             result_ref=result_ref,
             error_ref=error_ref,
         )
+        return usage
 
     async def dispatch(
         self,
@@ -381,7 +450,9 @@ class WorkItemA2AAuthority:
         _engine, work_engine = self._engine()
         owner_ref = self._owner_ref(session)
         task_id = self._task_id(session.tenant, owner_ref, idempotency_key)
-        context_id = self._context_id(session, message, task_id, owner_ref)
+        context_id = await asyncio.to_thread(
+            self._resolve_context_id, session, message, task_id, owner_ref
+        )
         request_digest = self._request_digest(message, context_id, decision)
         metadata = self._metadata(
             message=message,
@@ -416,8 +487,9 @@ class WorkItemA2AAuthority:
             owner_ref=owner_ref,
             request_digest=request_digest,
         )
+        usage = None
         if created or item.get("status") not in _TERMINAL:
-            await self._run(
+            usage = await self._run(
                 work_engine,
                 item_id=item_id,
                 session=session,
@@ -430,7 +502,16 @@ class WorkItemA2AAuthority:
             )
             if isinstance(refreshed, dict):
                 item = refreshed
-        return self._project(item, task_id=task_id)
+        task = self._project(item, task_id=task_id)
+        if usage is not None:
+            task.metadata["arbora"]["usage"] = {
+                "runId": task.metadata["arbora"]["runId"],
+                "taskId": task.id,
+                "contextId": context_id,
+                "scope": "turn",
+                "counts": dict(usage),
+            }
+        return task
 
     def _authorized_item(self, task_id: str, scope: str) -> dict[str, Any] | None:
         from arbora import work_items

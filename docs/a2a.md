@@ -37,6 +37,17 @@ tenant and task owner.
   <li class="site-flow__step"><span class="site-flow__title">Record</span><span class="site-flow__body">RunTrace and tool-call provenance bind the result to the request.</span></li>
 </ol>
 
+## Inline text files
+
+Messages accept `file` parts with a `file` object containing base64 `bytes`,
+`mimeType: "text/plain"`, and an optional `name`. File content must be nonempty
+UTF-8 text. A message may contain at most eight files and 65,536 total decoded
+file bytes, further bounded by `MAX_UPLOAD_SIZE`. The decoded text follows the
+same routing, redaction, authorization and model-input path as text parts.
+Names are labels only. URI references, invalid encodings and other media types
+are refused before task creation. Image input remains unavailable pending the
+selected model's authoritative media capability contract.
+
 ## Tool-subset assembly status
 
 The intended multiplexer exposure is the smallest authorized tool subset that
