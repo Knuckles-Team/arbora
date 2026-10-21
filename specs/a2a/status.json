@@ -81,6 +81,8 @@
     "ARBORA-A2A-R001.3",
     "ARBORA-A2A-R001.4",
     "ARBORA-A2A-R001.5",
+    "ARBORA-A2A-R001.5.1",
+    "ARBORA-A2A-R001.5.2",
     "ARBORA-A2A-R016.6"
   ],
   "requirements": [
@@ -94,8 +96,8 @@
       "verified_by": [
         "tests/test_agent_runs.py:119",
         "tests/test_agent_runs.py:99",
-        "tests/test_agents_run_end_to_end.py:242",
-        "tests/test_agents_run_end_to_end.py:285"
+        "tests/test_agents_run_end_to_end.py:318",
+        "tests/test_agents_run_end_to_end.py:361"
       ],
       "rollup_of": [
         "ARBORA-A2A-R001.1",
@@ -848,6 +850,29 @@
     {
       "id": "ARBORA-A2A-R001.5",
       "title": "Served agent accepts file parts",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-A2A-R001.5.1",
+        "ARBORA-A2A-R001.5.2"
+      ]
+    },
+    {
+      "id": "ARBORA-A2A-R001.5.1",
+      "title": "Bounded inline text input",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "319e3e4c8516",
+        "6794ac7c41af"
+      ],
+      "verified_by": [
+        "tests/test_agents_run_end_to_end.py:165"
+      ]
+    },
+    {
+      "id": "ARBORA-A2A-R001.5.2",
+      "title": "Selected-model binary input",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

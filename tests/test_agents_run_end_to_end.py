@@ -10,6 +10,7 @@ typed-batch methods only.
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 import time
 from pathlib import Path
@@ -161,9 +162,27 @@ def test_served_agents_run_executes_through_a2a_work_items_and_the_harness(
     assert run_events == ["run_started", "node_transition", "graph_complete"]
 
 
-@pytest.mark.spec("ARBORA-HOST-R001.2.2")
+@pytest.mark.spec("ARBORA-HOST-R001.2.2", "ARBORA-A2A-R001.5.1")
+@pytest.mark.parametrize(
+    "attachment_case",
+    [
+        "none",
+        "text",
+        "oversize",
+        "unsupported",
+        "uri",
+        "invalid_utf8",
+        "configured_limit",
+        "too_many",
+        "aggregate",
+        "invalid_base64",
+        "empty",
+        "combined_limit",
+        "combined_oversize",
+    ],
+)
 def test_served_process_runs_an_agent_over_its_http_a2a_route(
-    engine: FakeEngine, monkeypatch: pytest.MonkeyPatch
+    engine: FakeEngine, monkeypatch: pytest.MonkeyPatch, attachment_case: str
 ) -> None:
     """Boot the served factory the ``arbora`` entry point runs, then POST A2A."""
     import httpx
@@ -187,6 +206,55 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
         )
 
     monkeypatch.setattr(request_identity, "actor_from_bearer_token", credential_owner)
+    from pydantic_ai.messages import ModelResponse, TextPart, UserPromptPart
+    from pydantic_ai.models.function import FunctionModel
+
+    observed: list[Any] = []
+
+    def model(messages: Any, info: Any) -> ModelResponse:
+        observed.extend(
+            part.content
+            for message in messages
+            for part in message.parts
+            if isinstance(part, UserPromptPart)
+        )
+        return ModelResponse(parts=[TextPart("received")])
+
+    host_ports.register_model_provider(lambda _id: FunctionModel(model))
+    parts: list[dict[str, Any]] = [{"kind": "text", "text": "say hello"}]
+    if attachment_case != "none":
+        content = b"attached text: maple"
+        if attachment_case in {"combined_limit", "combined_oversize"}:
+            parts[0]["text"] = "say hello" + "a" * (65_536 - len("say hello"))
+            content = b"b" * (34_463 if attachment_case == "combined_limit" else 34_464)
+        if attachment_case == "oversize":
+            content = b"x" * 65_537
+        elif attachment_case == "invalid_utf8":
+            content = b"\xff"
+        file: dict[str, Any] = {
+            "bytes": base64.b64encode(content).decode("ascii"),
+            "mimeType": "image/png"
+            if attachment_case == "unsupported"
+            else "text/plain",
+            "name": "../../never-read-this.txt",
+        }
+        if attachment_case == "invalid_base64":
+            file["bytes"] = "!!!"
+        elif attachment_case == "empty":
+            file["bytes"] = ""
+        if attachment_case == "uri":
+            file = {"uri": "file:///never-read-this", "mimeType": "text/plain"}
+        if attachment_case == "configured_limit":
+            monkeypatch.setattr(runtime_config, "max_upload_size", 4)
+        if attachment_case == "aggregate":
+            file["bytes"] = base64.b64encode(b"a" * 40_000).decode("ascii")
+        count = (
+            9
+            if attachment_case == "too_many"
+            else (2 if attachment_case == "aggregate" else 1)
+        )
+        parts.extend({"kind": "file", "file": file} for _ in range(count))
+
     monkeypatch.setattr(a2a_mcp, "_SERVICE", None)
     _args, mcp, _middlewares = mcp_runtime._build_server(bootstrap=False)
     app = mcp.http_app()
@@ -210,7 +278,7 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
                         "message": {
                             "role": "user",
                             "messageId": "message-served",
-                            "parts": [{"kind": "text", "text": "say hello"}],
+                            "parts": parts,
                             "metadata": {"agent_name": "helper"},
                         }
                     },
@@ -219,7 +287,15 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
 
     response = asyncio.run(call())
 
+    if attachment_case not in {"none", "text", "combined_limit"}:
+        assert "error" in response.json(), response.text
+        assert engine.work_items.rows == {}
+        assert observed == []
+        return
     assert response.status_code == 200, response.text
+    assert any("say hello" in str(value) for value in observed)
+    if attachment_case == "text":
+        assert any("attached text: maple" in str(value) for value in observed)
     body = response.json()
     assert "error" not in body, body
     assert body["result"]["status"]["state"] == "completed"
