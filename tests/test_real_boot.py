@@ -512,7 +512,34 @@ def _booted_stack(
                 return False
 
         _wait(ready, timeout=BOOT_TIMEOUT_S, what="arbora readiness", logs=gos_logs)
+
+        def restart_engine() -> None:
+            """Reopen this fixture's same durable store, without re-enrollment."""
+            command = processes[0].args
+            _terminate(processes[0])
+            processes[0] = subprocess.Popen(
+                command, env=eg_env, stdout=eg_log, stderr=subprocess.STDOUT
+            )
+
+            def reopened() -> bool:
+                if not eg_up():
+                    return False
+                with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as probe:
+                    try:
+                        probe.connect(str(socket_path))
+                    except OSError:
+                        return False
+                    return True
+
+            _wait(
+                reopened,
+                timeout=60,
+                what="the restarted epistemic-graph socket",
+                logs=lambda: (root / "eg.log").read_text(errors="replace"),
+            )
+
         yield {
+            "restart_engine": restart_engine,
             "socket_path": str(socket_path),
             "secret": secret,
             "base_url": base_url,

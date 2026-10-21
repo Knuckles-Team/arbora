@@ -128,3 +128,13 @@ It tests one invocation using controlled dispatcher and fence ports.
 These cover session expiry, changed scope, exact claims, lease loss and refusal to reclaim started items.
 `ARBORA-A2A-R002.2.2.3` remains pending. Its served tests must exercise durable caller and request resolution, restart and uncertain-effect reconciliation.
 No test for the first two children substitutes for that acceptance.
+
+`ARBORA-A2A-R002.2.2.3.1` binds to `tests/a2a/test_tool_task_requests.py` and
+`tests/a2a/test_tool_task_request_native.py`. Controlled tests reject wrong
+callers, locators, digests, sessions and excessive payloads.
+The native fixture stores through the published EG blob and WorkItem methods, then closes the client.
+It restarts that same temporary engine store without re-enrollment.
+A fresh client resolves the exact request. This proves request-data persistence,
+not durable credential recovery, queue dispatch or execution authorization.
+
+`ARBORA-A2A-R002.2.2.3.2` retains the parent served execution matrix and has no acceptance evidence in this increment.

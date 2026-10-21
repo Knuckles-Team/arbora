@@ -33,7 +33,7 @@ flowchart LR
 
 An operation request uses the hosted registry and `invoke` pipeline, not an A2A-specific authorization implementation. The verified A2A adapter supplies actor, tenant, effective scopes, auth mode, policy revision and session provenance. The response carries the hosted API envelope within JSON-RPC `result`; JSON-RPC transport errors remain protocol errors. This preserves the engine/fleet's source error code and a privacy-safe message.
 
-When the orchestrator pauses on a pending effect, Arbora issues a durable plan lease bound to `(task_id, parent_work_item_id, child_work_item_id, pending_call_id, op_id, params_digest, principal, tenant, policy_revision, registry_digest, expiry)`. It sends an `input-required` event with a safe preview. The client obtains a fresh authenticated human signature/grant through the public identity contract; the service never stores the bearer itself. On `arbora.plan/confirm`, Arbora verifies the original human and each bound identity, asks the engine to atomically consume the human grant and plan fence, then dispatches through the common invocation pipeline. If any authority changes, return a stable refusal and preserve zero effect. A console-only admin effect instead returns a URL and is confirmed only on the console surface.
+When the orchestrator pauses on a pending effect, Arbora issues a durable plan lease bound to `(task_id, parent_work_item_id, child_work_item_id, pending_call_id, op_id, params_digest, principal, tenant, policy_revision, registry_digest, expiry)`. It sends an `input-required` event with a safe preview. The client obtains a fresh authenticated human signature/grant through the public identity contract. The service never stores the bearer itself. On `arbora.plan/confirm`, Arbora verifies the original human and each bound identity, asks the engine to atomically consume the human grant and plan fence, then dispatches through the common invocation pipeline. If any authority changes, return a stable refusal and preserve zero effect. A console-only admin effect instead returns a URL and is confirmed only on the console surface.
 
 Pre-effect audit reservation and post-effect outcome linking use the shared hosted-operation service. A two-person approval must prove two distinct qualified humans using the same durable relation. No service or delegated agent can synthesize either participant. All claims are rechecked at resume time. A canceled task cannot be confirmed. A committed effect is not treated as reversible by task cancellation.
 
@@ -422,9 +422,8 @@ MAX_UPLOAD_SIZE setting before routing or task creation. Reject URI parts and
 unsupported media before admission. Filenames are labels, never filesystem paths.
 The existing caller/tenant authorization, redaction and idempotency paths remain
 authoritative. Served transport tests observe decoded content in model input and
-zero tasks for refusals. This bounded text slice does not close R001.5: PNG input
-and revision-bound selected-model media capabilities still require the AU and
-model-authority prerequisites; live acceptance remains separately required.
+zero tasks for refusals. This bounded text slice does not close R001.5. PNG input and revision-bound selected-model media capabilities still require the AU and model-authority prerequisites.
+Live acceptance remains separately required.
 
 The flattened model task, including text, decoded file content and newline
 separators, must fit the execution contract's 100,000-character bound. Reject
@@ -445,7 +444,7 @@ background-task acceptance.
 The native adapter claims only a visible `ready` item and admits only the
 engine's first attempt, with an exact item and payload binding. It never
 reclaims a visible `leased` or `running` item. Native `dead_letter` and
-`cancelled` states do not prove a prior effect outcome: the adapter raises
+`cancelled` states do not prove a prior effect outcome. The adapter raises
 `WorkItemLeaseLost` on those reads, including a read after a refused claim.
 The delivery owner must leave such exceptions unacknowledged. The generic
 worker and restart recovery still need durable owner reconciliation; a
@@ -459,6 +458,18 @@ the native fence adapter. Child `.3` retains served delivery, durable caller
 and request resolution, and reconciliation across uncertain deliveries.
 The pending third child keeps the parent incomplete. Existing unit markers
 and native adapter tests do not establish served recovery.
+
+### Immutable tool-task request transport (ARBORA-A2A-R002.2.2.3)
+
+Persist canonical request bytes in EG's existing content-addressed blob owner.
+The native WorkItem carries only the blob locator and exact request binding;
+it does not carry parameters or credentials. Resolve by exact job id.
+Verify the request digest, current tenant/principal and expected carrier session reference.
+Refuse missing or changed bytes. Pin the native blob holder before publishing its WorkItem.
+No local mapping or process-identity substitution is permitted. This storage
+slice does not establish original-caller credential recovery, queue dispatch, or
+uncertain-effect reconciliation; the parent remains specified.
+
 ## Model preference entry boundary — 2026-10-20
 
 R016.6 requires explicit preferences to fail before routing or task creation when

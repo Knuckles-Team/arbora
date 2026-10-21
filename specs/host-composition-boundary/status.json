@@ -1466,8 +1466,8 @@
         "d5f69ae59c75"
       ],
       "verified_by": [
-        "tests/test_real_boot.py:585",
-        "tests/test_real_boot.py:615"
+        "tests/test_real_boot.py:612",
+        "tests/test_real_boot.py:642"
       ]
     },
     {

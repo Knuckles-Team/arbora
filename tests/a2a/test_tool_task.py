@@ -96,7 +96,10 @@ class Dispatcher:
         self._execute = execute
         self.executed = 0
 
-    def resolve(self, request_ref: str, *, tenant: str, session_id: str) -> Any:
+    def resolve(
+        self, request_ref: str, *, job_id: str, tenant: str, session_id: str
+    ) -> Any:
+        assert job_id == CARRIER.job_id
         return self.request
 
     def execute(self, request: Any, *, job_id: str, require_current: Any) -> Any:
