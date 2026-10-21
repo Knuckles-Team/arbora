@@ -180,6 +180,15 @@ def _renewed_process_actor(config: Any) -> Any:
         del token
 
 
+def _ensure_renewable_process_session(session: Any, lease: Any) -> None:
+    """Require live authority and preserve a confirmed revocation reason."""
+    if lease.revocation_reason is not None:
+        raise ProcessAuthorityRenewalError(
+            lease.revocation_reason, "Graph process authority changed during renewal"
+        )
+    session.ensure_authority_current()
+
+
 def _refresh_process_authority(session: Any) -> Any:
     """Renew one process lease without replacing captured sessions.
 
@@ -198,6 +207,8 @@ def _refresh_process_authority(session: Any) -> Any:
             "not_renewable", "Graph process authority is not renewable"
         )
     with _PROCESS_SESSION_REFRESH_LOCK:
+        # Headroom exhaustion permits refresh; expired authority never does.
+        _ensure_renewable_process_session(session, lease)
         try:
             session.ensure_authority_current(minimum_ttl_seconds=30)
             return session
@@ -211,6 +222,7 @@ def _refresh_process_authority(session: Any) -> Any:
             ) from exc
         change = _process_authority_change(session.actor, renewed_actor)
         if change is not None:
+            lease.revoke(change)
             raise ProcessAuthorityRenewalError(
                 change, "Graph process authority changed during renewal"
             )
@@ -229,6 +241,7 @@ def _refresh_process_authority(session: Any) -> Any:
             raise ProcessAuthorityRenewalError(
                 "too_short_lived", "Graph process authority renewal is too short-lived"
             )
+        session.ensure_authority_current()
         lease.renew(int(expires_at))
         session.ensure_authority_current(minimum_ttl_seconds=30)
         return session

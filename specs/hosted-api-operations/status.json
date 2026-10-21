@@ -1010,7 +1010,7 @@
         "94724be32c28"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:334"
+        "tests/api/test_registry_factory.py:340"
       ],
       "rollup_of": [
         "ARBORA-OPS-R024.4.1",
@@ -1105,7 +1105,7 @@
         "5f79be652726"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:334"
+        "tests/api/test_registry_factory.py:340"
       ]
     },
     {

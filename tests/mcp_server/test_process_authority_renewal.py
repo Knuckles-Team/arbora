@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import replace
 from typing import Any
 
@@ -173,3 +173,133 @@ def test_identity_change_is_refused(clock: Clock) -> None:
         bootstrap._process_authority_change(left, replace(left, groups=("g",)))
         == "groups_changed"
     )
+
+
+@pytest.mark.spec("ARBORA-IDENTITY-R027")
+@pytest.mark.parametrize("offset", [0, 1])
+def test_expired_authority_never_reacquires(
+    monkeypatch: pytest.MonkeyPatch, clock: Clock, offset: int
+) -> None:
+    session = _session(clock)
+    issued = _issue(monkeypatch, clock, ROLES)
+    clock.now = _lease(session).expires_at + offset
+    with pytest.raises(SessionExpiredError):
+        bootstrap._refresh_process_authority(session)
+    assert issued == []
+
+
+@pytest.mark.spec("ARBORA-IDENTITY-R027")
+def test_acquisition_crossing_expiry_cannot_extend_lease(
+    monkeypatch: pytest.MonkeyPatch, clock: Clock
+) -> None:
+    session = _session(clock)
+    expiry = _lease(session).expires_at
+    clock.now = expiry - 10
+
+    def slow_identity(_config: Any) -> ActorContext:
+        clock.now = expiry
+        return _actor(clock)
+
+    monkeypatch.setattr(bootstrap, "_renewed_process_actor", slow_identity)
+    with pytest.raises(SessionExpiredError):
+        bootstrap._refresh_process_authority(session)
+    assert _lease(session).expires_at == expiry
+
+
+@pytest.mark.spec("ARBORA-IDENTITY-R027")
+def test_revocation_survives_restored_roles_and_new_session(
+    monkeypatch: pytest.MonkeyPatch, clock: Clock
+) -> None:
+    session = _session(clock)
+    clock.now = _lease(session).expires_at - 10
+    _issue(monkeypatch, clock, ROLES[:-1])
+    with pytest.raises(bootstrap.ProcessAuthorityRenewalError):
+        bootstrap._refresh_process_authority(session)
+    issued = _issue(monkeypatch, clock, ROLES)
+    with pytest.raises(bootstrap.ProcessAuthorityRenewalError, match="changed"):
+        bootstrap._refresh_process_authority(session)
+    assert issued == []
+    with pytest.raises(SessionExpiredError):
+        session.ensure_authority_current()
+    # A newly authenticated process gets a new lease, not the revoked object.
+    replacement = _session(clock)
+    replacement.ensure_authority_current()
+    assert _lease(replacement) is not _lease(session)
+
+
+@pytest.mark.spec("ARBORA-IDENTITY-R027")
+def test_shared_lease_rejects_expiry_and_revocation(clock: Clock) -> None:
+    from arbora.security.actor_context import CredentialExpiredError
+
+    expired = CredentialLease(int(clock.now))
+    revoked = CredentialLease(int(clock.now) + 300)
+    revoked.revoke("roles_revoked")
+    for lease in (expired, revoked):
+        with pytest.raises(CredentialExpiredError):
+            lease.renew(int(clock.now) + 600)
+        with pytest.raises(CredentialExpiredError):
+            lease.ensure_current()
+
+
+def _gateway_issuer(
+    monkeypatch: pytest.MonkeyPatch, validated: Callable[[str], ActorContext]
+) -> None:
+    from arbora.security import request_identity
+
+    monkeypatch.setattr(
+        request_identity, "acquire_process_identity_token", lambda _: "fixture"
+    )
+    monkeypatch.setattr(request_identity, "mint_actor_from_token_sync", validated)
+
+
+@pytest.mark.spec("ARBORA-IDENTITY-R027")
+def test_gateway_revalidates_before_lease_commit(
+    monkeypatch: pytest.MonkeyPatch, clock: Clock
+) -> None:
+    from arbora.gateway.daemon import refresh_process_identity
+
+    session = _session(clock)
+    expiry = _lease(session).expires_at
+    clock.now = expiry - 10
+
+    def validated(_token: str) -> ActorContext:
+        clock.now = expiry
+        return _actor(clock)
+
+    _gateway_issuer(monkeypatch, validated)
+    with pytest.raises(SessionExpiredError):
+        refresh_process_identity(session)
+    assert _lease(session).expires_at == expiry
+
+
+@pytest.mark.spec("ARBORA-IDENTITY-R027")
+def test_concurrent_refresh_reuses_current_identity(
+    monkeypatch: pytest.MonkeyPatch, clock: Clock
+) -> None:
+    from concurrent.futures import ThreadPoolExecutor
+
+    session = _session(clock)
+    clock.now = _lease(session).expires_at - 10
+    issued = _issue(monkeypatch, clock, ROLES)
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        results = list(
+            workers.map(bootstrap._refresh_process_authority, [session, session])
+        )
+    assert all(result is session for result in results)
+    assert len(issued) == 1
+
+
+@pytest.mark.spec("ARBORA-IDENTITY-R027")
+def test_gateway_identity_change_closes_original_lease(
+    monkeypatch: pytest.MonkeyPatch, clock: Clock
+) -> None:
+    from arbora.gateway.daemon import refresh_process_identity
+
+    session = _session(clock)
+    clock.now = _lease(session).expires_at - 10
+    _gateway_issuer(monkeypatch, lambda _: replace(_actor(clock), tenant_id="other"))
+    with pytest.raises(RuntimeError, match="changed during renewal"):
+        refresh_process_identity(session)
+    assert _lease(session).revocation_reason == "identity_changed"
+    with pytest.raises(SessionExpiredError):
+        session.ensure_authority_current()

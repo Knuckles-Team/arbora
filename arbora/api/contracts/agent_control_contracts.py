@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Literal, Protocol, runtime_checkable
+from typing import Annotated, Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_validator
 
@@ -146,6 +146,19 @@ class AgentExecutionResult(_StrictModel):
     run_id: str = Field(min_length=1, max_length=512)
     output: str
     execution_mode: Literal["direct", "graph"] | None = None
+    usage: (
+        dict[
+            Literal[
+                "requests",
+                "tool_calls",
+                "input_tokens",
+                "output_tokens",
+                "total_tokens",
+            ],
+            Annotated[int, Field(strict=True, ge=0, le=9_007_199_254_740_991)],
+        ]
+        | None
+    ) = None
 
 
 @runtime_checkable
