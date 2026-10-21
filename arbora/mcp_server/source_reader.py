@@ -83,6 +83,28 @@ def _rows(payload: Any) -> list[Any]:
     raise OperationRefused("UNAVAILABLE", {"reason": "engine result malformed"})
 
 
+def _branch_id_and_props(row: Any) -> tuple[Any, dict[str, Any]] | None:
+    """One ``GetNodesByLabel`` row: ``(id, properties)`` or None when malformed."""
+    if not isinstance(row, (list, tuple)) or len(row) != 2:
+        return None
+    node_id, props = row
+    if not isinstance(props, dict):
+        return None
+    return node_id, props
+
+
+def _is_visible_branch(
+    props: dict[str, Any], *, repository: str, ref: str | None
+) -> bool:
+    """One projection row keeps this repository, this ref, and live state."""
+    if props.get("repository_id") != repository:
+        return False
+    if ref is not None and props.get("ref_name") != ref:
+        return False
+    status = props.get("status")
+    return not isinstance(status, str) or status == "live"
+
+
 async def _branch_nodes(
     context: Any,
     graph: str,
@@ -109,19 +131,12 @@ async def _branch_nodes(
             )
         )
         for row in rows:
-            if not isinstance(row, (list, tuple)) or len(row) != 2:
+            parsed = _branch_id_and_props(row)
+            if parsed is None:
                 continue
-            node_id, props = row
-            if not isinstance(props, dict):
-                continue
-            if props.get("repository_id") != repository:
-                continue
-            if ref is not None and props.get("ref_name") != ref:
-                continue
-            status = props.get("status")
-            if isinstance(status, str) and status != "live":
-                continue
-            found.append((node_id, props))
+            node_id, props = parsed
+            if _is_visible_branch(props, repository=repository, ref=ref):
+                found.append((node_id, props))
         if len(rows) < _PAGE_SIZE:
             return found
         cursor = rows[-1][0]
@@ -157,6 +172,31 @@ async def _live_file_versions(
     return versions
 
 
+def _pair_revisions(
+    blobs: Any,
+    *,
+    source: str,
+    target: str,
+    branch_id: str,
+    revisions: dict[str, dict[str, Any]],
+) -> None:
+    """One (source, target) pair's property blobs into the revision map.
+
+    One property blob per stored edge of the pair (an empty inner list means
+    the edge is absent); the projection stores exactly one membership edge
+    per live file version.
+    """
+    if source != branch_id or not isinstance(blobs, list):
+        return
+    for blob in blobs:
+        props = _decode_properties(blob)
+        if props is None:
+            continue
+        if props.get("relationship") == "hasFileVersion":
+            revisions[target] = props
+            return
+
+
 async def _membership_revisions(
     context: Any,
     graph: str,
@@ -179,19 +219,13 @@ async def _membership_revisions(
         if len(rows) != len(chunk):
             raise OperationRefused("UNAVAILABLE", {"reason": "engine result malformed"})
         for (source, target), blobs in zip(chunk, rows, strict=True):
-            if source != branch_id:
-                continue
-            # One property blob per stored edge of the pair (an empty inner
-            # list means the edge is absent); the projection stores exactly
-            # one membership edge per live file version.
-            for blob in blobs if isinstance(blobs, list) else []:
-                props = _decode_properties(blob)
-                if (
-                    isinstance(props, dict)
-                    and props.get("relationship") == "hasFileVersion"
-                ):
-                    revisions[target] = props
-                    break
+            _pair_revisions(
+                blobs,
+                source=source,
+                target=target,
+                branch_id=branch_id,
+                revisions=revisions,
+            )
     return revisions
 
 
@@ -206,6 +240,111 @@ def _not_found_tree(
         found=False,
         reason=reason,
     )
+
+
+def _revision_of(fv_id: str, revisions: dict[str, dict[str, Any]]) -> str | None:
+    """The membership edge's last-touch revision for one live file version."""
+    membership = revisions.get(fv_id)
+    if not isinstance(membership, dict):
+        return None
+    revision = membership.get("revision_id")
+    return revision if isinstance(revision, str) else None
+
+
+def _directory_child(
+    children: dict[str, SourceTreeEntry], prefix: str, rest: str
+) -> None:
+    child = rest.split("/", 1)[0]
+    if child not in children:
+        children[child] = SourceTreeEntry(path=f"{prefix}{child}", kind="directory")
+
+
+def _file_entry(
+    fv_id: str,
+    file_path: str,
+    props: dict[str, Any],
+    revisions: dict[str, dict[str, Any]],
+) -> SourceTreeEntry:
+    digest = props.get("content_digest")
+    return SourceTreeEntry(
+        path=file_path,
+        kind="file",
+        content_digest=digest if isinstance(digest, str) else None,
+        revision_id=_revision_of(fv_id, revisions),
+    )
+
+
+def _digest_for_path(
+    versions: list[tuple[str, dict[str, Any]]], path: str
+) -> str | None:
+    """The content digest of one path among a branch's live file versions."""
+    for _fv_id, props in versions:
+        if props.get("path") != path:
+            continue
+        candidate = props.get("content_digest")
+        if isinstance(candidate, str) and candidate:
+            return candidate
+        break
+    return None
+
+
+def _blob_fetch_begin(begun: Any) -> tuple[int, int]:
+    """(cursor, chunk count) of one ``BlobFetchBegin`` answer, or a refusal."""
+    if not isinstance(begun, (list, tuple)) or len(begun) != 2:
+        raise OperationRefused("UNAVAILABLE", {"reason": "engine result malformed"})
+    cursor, chunks = begun
+    if not isinstance(cursor, int) or not isinstance(chunks, int):
+        raise OperationRefused("UNAVAILABLE", {"reason": "engine result malformed"})
+    return cursor, chunks
+
+
+async def _blob_chunks(context: Any, graph: str, cursor: int, chunks: int) -> bytes:
+    """Every chunk of one blob, concatenated in engine order."""
+    content = b""
+    for index in range(chunks):
+        part = await _send(
+            context,
+            graph,
+            "BlobChunkGet",
+            {"cursor": cursor, "idx": index},
+        )
+        if isinstance(part, (bytes, bytearray, memoryview)):
+            content += bytes(part)
+    return content
+
+
+async def _entries_for_branch(
+    context: Any,
+    graph: str,
+    branch_id: str,
+    branch_props: dict[str, Any],
+    path: str,
+) -> list[SourceHistoryEntry]:
+    """One branch's last-touch entries for one path, in file-version order."""
+    versions = await _live_file_versions(context, graph, branch_id)
+    matches = [(fv_id, props) for fv_id, props in versions if props.get("path") == path]
+    if not matches:
+        return []
+    revisions = await _membership_revisions(
+        context, graph, branch_id, [fv_id for fv_id, _props in matches]
+    )
+    ref_name = branch_props.get("ref_name")
+    if not isinstance(ref_name, str) or not ref_name:
+        return []
+    entries: list[SourceHistoryEntry] = []
+    for fv_id, props in matches:
+        revision = _revision_of(fv_id, revisions)
+        if not revision:
+            continue
+        digest = props.get("content_digest")
+        entries.append(
+            SourceHistoryEntry(
+                ref=ref_name,
+                revision_id=revision,
+                content_digest=digest if isinstance(digest, str) else None,
+            )
+        )
+    return entries
 
 
 class NativeSourceReader:
@@ -247,25 +386,9 @@ class NativeSourceReader:
             if not rest:
                 continue
             if "/" in rest:
-                child = rest.split("/", 1)[0]
-                if child not in children:
-                    children[child] = SourceTreeEntry(
-                        path=f"{prefix}{child}", kind="directory"
-                    )
+                _directory_child(children, prefix, rest)
             else:
-                membership = revisions.get(fv_id)
-                revision = (
-                    membership.get("revision_id")
-                    if isinstance(membership, dict)
-                    else None
-                )
-                digest = props.get("content_digest")
-                children[file_path] = SourceTreeEntry(
-                    path=file_path,
-                    kind="file",
-                    content_digest=digest if isinstance(digest, str) else None,
-                    revision_id=revision if isinstance(revision, str) else None,
-                )
+                children[file_path] = _file_entry(fv_id, file_path, props, revisions)
         return SourceTreeOutcome(
             tenant=tenant,
             repository=repository,
@@ -299,13 +422,7 @@ class NativeSourceReader:
             )
         branch_id, _branch_props = branches[0]
         versions = await _live_file_versions(context, graph, branch_id)
-        digest: str | None = None
-        for _fv_id, props in versions:
-            if props.get("path") == path:
-                candidate = props.get("content_digest")
-                if isinstance(candidate, str) and candidate:
-                    digest = candidate
-                break
+        digest = _digest_for_path(versions, path)
         if digest is None:
             return SourceBlobOutcome(
                 tenant=tenant,
@@ -316,22 +433,10 @@ class NativeSourceReader:
                 reason="path-not-found",
             )
         begun = _rows(await _send(context, graph, "BlobFetchBegin", {"digest": digest}))
-        if not isinstance(begun, (list, tuple)) or len(begun) != 2:
-            raise OperationRefused("UNAVAILABLE", {"reason": "engine result malformed"})
-        cursor, chunks = begun
-        if not isinstance(cursor, int) or not isinstance(chunks, int):
-            raise OperationRefused("UNAVAILABLE", {"reason": "engine result malformed"})
+        cursor, chunks = _blob_fetch_begin(begun)
         content = b""
         try:
-            for index in range(chunks):
-                part = await _send(
-                    context,
-                    graph,
-                    "BlobChunkGet",
-                    {"cursor": cursor, "idx": index},
-                )
-                if isinstance(part, (bytes, bytearray, memoryview)):
-                    content += bytes(part)
+            content = await _blob_chunks(context, graph, cursor, chunks)
         finally:
             await _send(context, graph, "BlobFetchEnd", {"cursor": cursor})
         return SourceBlobOutcome(
@@ -361,38 +466,9 @@ class NativeSourceReader:
         branches = await _branch_nodes(context, graph, repository=repository)
         entries: list[SourceHistoryEntry] = []
         for branch_id, branch_props in branches:
-            versions = await _live_file_versions(context, graph, branch_id)
-            matches = [
-                (fv_id, props) for fv_id, props in versions if props.get("path") == path
-            ]
-            if not matches:
-                continue
-            revisions = await _membership_revisions(
-                context,
-                graph,
-                branch_id,
-                [fv_id for fv_id, _props in matches],
+            entries.extend(
+                await _entries_for_branch(context, graph, branch_id, branch_props, path)
             )
-            ref_name = branch_props.get("ref_name")
-            if not isinstance(ref_name, str) or not ref_name:
-                continue
-            for fv_id, props in matches:
-                membership = revisions.get(fv_id)
-                revision = (
-                    membership.get("revision_id")
-                    if isinstance(membership, dict)
-                    else None
-                )
-                if not isinstance(revision, str) or not revision:
-                    continue
-                digest = props.get("content_digest")
-                entries.append(
-                    SourceHistoryEntry(
-                        ref=ref_name,
-                        revision_id=revision,
-                        content_digest=digest if isinstance(digest, str) else None,
-                    )
-                )
         entries.sort(key=lambda entry: (entry.ref, entry.revision_id))
         return SourceHistoryOutcome(
             tenant=tenant,
@@ -434,10 +510,6 @@ class NativeSourceReader:
             if props.get("path") != path:
                 continue
             revisions = await _membership_revisions(context, graph, branch_id, [fv_id])
-            membership = revisions.get(fv_id)
-            revision = (
-                membership.get("revision_id") if isinstance(membership, dict) else None
-            )
             digest = props.get("content_digest")
             return SourceBlameOutcome(
                 tenant=tenant,
@@ -445,7 +517,7 @@ class NativeSourceReader:
                 ref=ref,
                 path=path,
                 found=True,
-                revision_id=revision if isinstance(revision, str) else None,
+                revision_id=_revision_of(fv_id, revisions),
                 content_digest=digest if isinstance(digest, str) else None,
             )
         return SourceBlameOutcome(

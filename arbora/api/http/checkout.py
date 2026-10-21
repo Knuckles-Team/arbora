@@ -30,6 +30,8 @@ _TOP_LEVEL_OP = "source.tree"
 MAX_TREE_CALLS = 4096
 MAX_ENTRIES = 100_000
 
+DirectoryFileMap = dict[str, tuple[str | None, str | None]]
+
 
 def _frame(payload: dict[str, Any]) -> bytes:
     """One NDJSON frame; keys are sorted so frames are byte-stable."""
@@ -80,6 +82,134 @@ def _entries(outcome: Any) -> list[dict[str, Any]]:
     return [entry for entry in entries if isinstance(entry, dict)]
 
 
+def _malformed_path(path: str) -> bool:
+    """Absolute, trailing-slash, traversal or doubled-slash path segments."""
+    return (
+        path.startswith("/")
+        or path.endswith("/")
+        or ".." in path.split("/")
+        or "//" in path
+    )
+
+
+def _valid_cursor(after: str) -> bool:
+    return after.startswith("dir:") or after.startswith("file:")
+
+
+def _query_refusal(repo: str, ref: str, path: str, after: str | None) -> str | None:
+    """The refusal code for one query set, or None when it is well-formed."""
+    if not repo or not ref:
+        return "INVALID_ARGUMENT"
+    if path and _malformed_path(path):
+        return "INVALID_ARGUMENT"
+    if after is not None and not _valid_cursor(after):
+        return "INVALID_ARGUMENT"
+    return None
+
+
+def _register_entry(
+    entry: dict[str, Any],
+    directories: list[str],
+    files: DirectoryFileMap,
+) -> str | None:
+    """Record one listing entry; return the directory to descend into next."""
+    kind = entry.get("kind")
+    entry_path = entry.get("path")
+    if not isinstance(entry_path, str) or not entry_path:
+        return None
+    if kind == "directory":
+        # Resolution is recursive: every directory is itself admitted
+        # through the chokepoint before it streams.
+        directories.append(entry_path)
+        return entry_path
+    if kind != "file":
+        return None
+    digest_value = entry.get("content_digest")
+    revision = entry.get("revision_id")
+    files[entry_path] = (
+        digest_value if isinstance(digest_value, str) else None,
+        revision if isinstance(revision, str) else None,
+    )
+    return None
+
+
+async def _collect_entries(
+    *,
+    repo: str,
+    ref: str,
+    path: str,
+    caller: Any,
+    surface: Any,
+    services: Any,
+    invoke: Any,
+) -> tuple[list[str], DirectoryFileMap, tuple[str, str] | None]:
+    """Walk the tree breadth-first; (directories, files) or a refusal pair."""
+    directories: list[str] = []
+    files: DirectoryFileMap = {}
+    worklist: list[str] = [path]
+    calls = 0
+    error: tuple[str, str] | None = None
+    while worklist and error is None:
+        directory = worklist.pop(0)
+        calls += 1
+        if calls > MAX_TREE_CALLS:
+            error = ("UNAVAILABLE", "tree traversal limit exceeded")
+            break
+        listing = await invoke(
+            _TOP_LEVEL_OP,
+            {"repository": repo, "ref": ref, "path": directory},
+            caller,
+            surface,
+            services=services,
+        )
+        if not _admitted(listing):
+            error = (
+                str(listing.code),
+                "a subpath of the checkout is not admitted",
+            )
+            break
+        for entry in _entries(listing):
+            descended = _register_entry(entry, directories, files)
+            if descended is not None:
+                worklist.append(descended)
+    return directories, files, error
+
+
+def _frame_keys(directories: list[str], files: DirectoryFileMap) -> list[str]:
+    """Directories before files; both groups in stable path order."""
+    directory_keys = sorted("dir:" + name for name in directories)
+    file_keys = sorted("file:" + name for name in files)
+    return directory_keys + file_keys
+
+
+def _file_frame(key: str, files: DirectoryFileMap) -> bytes:
+    name = key[len("file:") :]
+    file_digest, revision = files[name]
+    frame: dict[str, Any] = {"kind": "file", "path": name, "cursor": key}
+    if file_digest is not None:
+        frame["digest"] = file_digest
+    if revision is not None:
+        frame["revision"] = revision
+    return _frame(frame)
+
+
+def _end_frame(limited: bool) -> bytes:
+    payload: dict[str, Any] = {"kind": "end", "complete": not limited}
+    if limited:
+        payload["reason"] = "entry-limit"
+    return _frame(payload)
+
+
+def _resume_error_frame() -> bytes:
+    return _frame(
+        {
+            "kind": "error",
+            "code": "INVALID_ARGUMENT",
+            "reason": "unknown resume cursor",
+        }
+    )
+
+
 def make_checkout_endpoint(
     *,
     services: Any,
@@ -99,29 +229,14 @@ def make_checkout_endpoint(
             caller = await authenticate(request)
         except HTTPAuthenticationError:
             return _error("UNAUTHENTICATED", digest=digest, request_id="")
-        repo = request.query_params.get("repo", "").strip()
-        ref = request.query_params.get("ref", "").strip()
-        path = request.query_params.get("path", "").strip()
-        after = request.query_params.get("after")
-        if not repo or not ref:
-            return _error(
-                "INVALID_ARGUMENT", digest=digest, request_id=caller.request_id
-            )
-        if path and (
-            path.startswith("/")
-            or path.endswith("/")
-            or ".." in path.split("/")
-            or "//" in path
-        ):
-            return _error(
-                "INVALID_ARGUMENT", digest=digest, request_id=caller.request_id
-            )
-        if after is not None and not (
-            after.startswith("dir:") or after.startswith("file:")
-        ):
-            return _error(
-                "INVALID_ARGUMENT", digest=digest, request_id=caller.request_id
-            )
+        params = request.query_params
+        repo = params.get("repo", "").strip()
+        ref = params.get("ref", "").strip()
+        path = params.get("path", "").strip()
+        after = params.get("after")
+        code = _query_refusal(repo, ref, path, after)
+        if code is not None:
+            return _error(code, digest=digest, request_id=caller.request_id)
         surface = _surface_for(request, caller, is_console_request)
 
         # The requested subtree root is admitted before any content is sent.
@@ -139,63 +254,23 @@ def make_checkout_endpoint(
 
         async def stream() -> AsyncIterator[bytes]:
             yield _frame({"kind": "start", "repo": repo, "ref": ref, "path": path})
-            directories: list[str] = []
-            files: dict[str, tuple[str | None, str | None]] = {}
-            worklist: list[str] = [path]
-            calls = 0
-            error: tuple[str, str] | None = None
-            while worklist and error is None:
-                directory = worklist.pop(0)
-                calls += 1
-                if calls > MAX_TREE_CALLS:
-                    error = ("UNAVAILABLE", "tree traversal limit exceeded")
-                    break
-                listing = await invoke(
-                    _TOP_LEVEL_OP,
-                    {"repository": repo, "ref": ref, "path": directory},
-                    caller,
-                    surface,
-                    services=services,
-                )
-                if not _admitted(listing):
-                    error = (
-                        str(listing.code),
-                        "a subpath of the checkout is not admitted",
-                    )
-                    break
-                for entry in _entries(listing):
-                    kind = entry.get("kind")
-                    entry_path = entry.get("path")
-                    if not isinstance(entry_path, str) or not entry_path:
-                        continue
-                    if kind == "directory":
-                        # Resolution is recursive: every directory is itself
-                        # admitted through the chokepoint before it streams.
-                        directories.append(entry_path)
-                        worklist.append(entry_path)
-                    elif kind == "file":
-                        digest_value = entry.get("content_digest")
-                        revision = entry.get("revision_id")
-                        files[entry_path] = (
-                            digest_value if isinstance(digest_value, str) else None,
-                            revision if isinstance(revision, str) else None,
-                        )
+            directories, files, error = await _collect_entries(
+                repo=repo,
+                ref=ref,
+                path=path,
+                caller=caller,
+                surface=surface,
+                services=services,
+                invoke=invoke,
+            )
             if error is not None:
                 yield _frame({"kind": "error", "code": error[0], "reason": error[1]})
                 return
-            directory_keys = sorted("dir:" + name for name in directories)
-            file_keys = sorted("file:" + name for name in files)
-            keys = directory_keys + file_keys
+            keys = _frame_keys(directories, files)
             start = 0
             if after is not None:
                 if after not in keys:
-                    yield _frame(
-                        {
-                            "kind": "error",
-                            "code": "INVALID_ARGUMENT",
-                            "reason": "unknown resume cursor",
-                        }
-                    )
+                    yield _resume_error_frame()
                     return
                 start = keys.index(after) + 1
             limited = len(keys) > MAX_ENTRIES
@@ -205,26 +280,10 @@ def make_checkout_endpoint(
                         {"kind": "dir", "path": key[len("dir:") :], "cursor": key}
                     )
                 else:
-                    file_digest, revision = files[key[len("file:") :]]
-                    frame: dict[str, Any] = {
-                        "kind": "file",
-                        "path": key[len("file:") :],
-                        "cursor": key,
-                    }
-                    if file_digest is not None:
-                        frame["digest"] = file_digest
-                    if revision is not None:
-                        frame["revision"] = revision
-                    yield _frame(frame)
+                    yield _file_frame(key, files)
                 if limited and index + start == MAX_ENTRIES:
                     break
-            yield _frame(
-                {
-                    "kind": "end",
-                    "complete": not limited,
-                    **({"reason": "entry-limit"} if limited else {}),
-                }
-            )
+            yield _end_frame(limited)
 
         return StreamingResponse(
             stream(),
