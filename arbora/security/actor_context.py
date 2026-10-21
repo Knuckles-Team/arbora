@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import contextvars
 import threading
+import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -45,14 +46,38 @@ class CredentialLease:
     def __init__(self, expires_at: int) -> None:
         self._lock = threading.Lock()
         self._expires_at = int(expires_at)
+        self._revocation_reason: str | None = None
 
     @property
     def expires_at(self) -> int:
         with self._lock:
             return self._expires_at
 
-    def renew(self, expires_at: int) -> None:
+    @property
+    def revocation_reason(self) -> str | None:
         with self._lock:
+            return self._revocation_reason
+
+    def revoke(self, reason: str) -> None:
+        """Permanently close this lease after verified authority loss."""
+        with self._lock:
+            if self._revocation_reason is None:
+                self._revocation_reason = reason
+
+    def _ensure_current_locked(self) -> None:
+        if self._revocation_reason is not None:
+            raise CredentialExpiredError("Verified actor credential was revoked")
+        if int(time.time()) >= self._expires_at:
+            raise CredentialExpiredError("Verified actor credential has expired")
+
+    def ensure_current(self) -> None:
+        with self._lock:
+            self._ensure_current_locked()
+
+    def renew(self, expires_at: int) -> None:
+        """Update a still-live lease atomically; never resurrect old authority."""
+        with self._lock:
+            self._ensure_current_locked()
             self._expires_at = int(expires_at)
 
 
@@ -93,13 +118,11 @@ class ActorContext:
 
     def ensure_credential_current(self) -> None:
         """Fail closed when this actor's validated credential is no longer live."""
-        import time
+        if self.credential_lease is not None:
+            self.credential_lease.ensure_current()
+            return
 
-        expiry = (
-            self.credential_lease.expires_at
-            if self.credential_lease is not None
-            else self.credential_expires_at
-        )
+        expiry = self.credential_expires_at
         if expiry is None:
             return
         try:

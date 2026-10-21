@@ -28,9 +28,8 @@ name: Release
 # published by this wheel workflow.
 # ─────────────────────────────────────────────────────────────────────────
 
-# Triggers (CI-STANDARD): a pull request runs `gates` only, diff-scoped; a push
-# to main runs the full suite and the builds, never a publish; a version tag or
-# a manual dispatch builds and publishes. Docs/spec-only changes start nothing
+# Triggers (CI-STANDARD): pull requests run diff-scoped gates and a real wheel build.
+# Main pushes run the full suite and builds. Only version tags publish. Docs/spec-only changes start nothing
 # here; .github/workflows/gates-skip.yml reports the `gates` check for them.
 on:
   push:
@@ -426,8 +425,7 @@ jobs:
   build:
     timeout-minutes: ${{ github.event_name == 'pull_request' && 10 || 60 }}
     name: build
-    # Not part of PR CI: main push, tag and dispatch only.
-    if: github.event_name != 'pull_request'
+    # Validate the actual wheel on PRs; publication remains tag-only.
     needs: [gates]
     runs-on: ${{ (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && fromJSON('["self-hosted", "homelab"]') || 'ubuntu-latest' }}
     env:

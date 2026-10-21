@@ -11,6 +11,11 @@
     "ARBORA-A2A-R002.2",
     "ARBORA-A2A-R002.2.1",
     "ARBORA-A2A-R002.2.2",
+    "ARBORA-A2A-R002.2.2.1",
+    "ARBORA-A2A-R002.2.2.2",
+    "ARBORA-A2A-R002.2.2.3",
+    "ARBORA-A2A-R002.2.2.3.1",
+    "ARBORA-A2A-R002.2.2.3.2",
     "ARBORA-A2A-R003",
     "ARBORA-A2A-R004",
     "ARBORA-A2A-R005",
@@ -78,6 +83,8 @@
     "ARBORA-A2A-R001.3",
     "ARBORA-A2A-R001.4",
     "ARBORA-A2A-R001.5",
+    "ARBORA-A2A-R001.5.1",
+    "ARBORA-A2A-R001.5.2",
     "ARBORA-A2A-R016.6"
   ],
   "requirements": [
@@ -88,7 +95,12 @@
       "landed_in": [
         "a8ed61b538e7"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/test_agent_runs.py:119",
+        "tests/test_agent_runs.py:99",
+        "tests/test_agents_run_end_to_end.py:318",
+        "tests/test_agents_run_end_to_end.py:361"
+      ],
       "rollup_of": [
         "ARBORA-A2A-R001.1",
         "ARBORA-A2A-R001.2",
@@ -155,13 +167,74 @@
     {
       "id": "ARBORA-A2A-R002.2.2",
       "title": "Reference-bound single-tool task worker",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
+        "21fa71a87f44",
         "663cc8cad940"
       ],
       "verified_by": [
-        "tests/a2a/test_tool_task.py:20"
+        "tests/a2a/test_tool_task.py:21",
+        "tests/a2a/test_tool_task_dispatch.py:22",
+        "tests/a2a/test_tool_task_native.py:37"
+      ],
+      "rollup_of": [
+        "ARBORA-A2A-R002.2.2.1",
+        "ARBORA-A2A-R002.2.2.2",
+        "ARBORA-A2A-R002.2.2.3"
       ]
+    },
+    {
+      "id": "ARBORA-A2A-R002.2.2.1",
+      "title": "Single-invocation worker contract",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e366dd8159c5"
+      ],
+      "verified_by": [
+        "tests/a2a/test_tool_task.py:22"
+      ]
+    },
+    {
+      "id": "ARBORA-A2A-R002.2.2.2",
+      "title": "Native WorkItem fence binding",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e366dd8159c5"
+      ],
+      "verified_by": [
+        "tests/a2a/test_tool_task_dispatch.py:23",
+        "tests/a2a/test_tool_task_native.py:38"
+      ]
+    },
+    {
+      "id": "ARBORA-A2A-R002.2.2.3",
+      "title": "Served delivery and durable reconciliation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-A2A-R002.2.2.3.1",
+        "ARBORA-A2A-R002.2.2.3.2"
+      ]
+    },
+    {
+      "id": "ARBORA-A2A-R002.2.2.3.1",
+      "title": "Immutable native request transport",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "7ba15342cbde"
+      ],
+      "verified_by": [
+        "tests/a2a/test_tool_task_request_native.py:21",
+        "tests/a2a/test_tool_task_requests.py:15"
+      ]
+    },
+    {
+      "id": "ARBORA-A2A-R002.2.2.3.2",
+      "title": "Served consumer and original-caller recovery",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R003",
@@ -802,6 +875,29 @@
     {
       "id": "ARBORA-A2A-R001.5",
       "title": "Served agent accepts file parts",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-A2A-R001.5.1",
+        "ARBORA-A2A-R001.5.2"
+      ]
+    },
+    {
+      "id": "ARBORA-A2A-R001.5.1",
+      "title": "Bounded inline text input",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "319e3e4c8516",
+        "6794ac7c41af"
+      ],
+      "verified_by": [
+        "tests/test_agents_run_end_to_end.py:165"
+      ]
+    },
+    {
+      "id": "ARBORA-A2A-R001.5.2",
+      "title": "Selected-model binary input",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

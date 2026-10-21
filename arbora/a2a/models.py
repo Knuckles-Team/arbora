@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import base64
+import binascii
+import builtins
 from typing import Any, Literal, Protocol, runtime_checkable
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic.alias_generators import to_camel
 
 __all__ = [
@@ -40,11 +43,37 @@ class A2ATextPart(_WireModel):
     text: str = Field(min_length=1, max_length=65_536)
 
 
+class A2AInlineTextFile(_WireModel):
+    bytes: str = Field(min_length=1, max_length=87_384)
+    mime_type: Literal["text/plain"]
+    name: str | None = Field(default=None, max_length=256)
+
+    @field_validator("bytes")
+    @classmethod
+    def _valid_text(cls, value: str) -> str:
+        try:
+            decoded = base64.b64decode(value, validate=True)
+            decoded.decode("utf-8", errors="strict")
+        except (ValueError, binascii.Error, UnicodeError) as exc:
+            raise ValueError("file must contain base64 UTF-8 text") from exc
+        if not decoded or len(decoded) > 65_536:
+            raise ValueError("file exceeds the inline text size bound")
+        return value
+
+    def decoded_bytes(self) -> builtins.bytes:
+        return base64.b64decode(self.bytes, validate=True)
+
+
+class A2AFilePart(_WireModel):
+    kind: Literal["file"]
+    file: A2AInlineTextFile
+
+
 class A2AMessage(_WireModel):
-    """The text-only input shape truthfully advertised by the Agent Card."""
+    """Text and bounded inline text files advertised as text/plain."""
 
     role: Literal["user"]
-    parts: list[A2ATextPart] = Field(min_length=1, max_length=32)
+    parts: list[A2ATextPart | A2AFilePart] = Field(min_length=1, max_length=32)
     kind: Literal["message"] = "message"
     message_id: str = Field(min_length=1, max_length=512)
     context_id: str | None = Field(default=None, min_length=1, max_length=512)
@@ -57,8 +86,29 @@ class A2AMessage(_WireModel):
             raise ValueError("message metadata has too many fields")
         return value
 
+    @model_validator(mode="after")
+    def _bounded_files(self) -> A2AMessage:
+        files = [part.file for part in self.parts if isinstance(part, A2AFilePart)]
+        if len(files) > 8 or self.attachment_size() > 65_536:
+            raise ValueError("message exceeds inline file bounds")
+        if len(self.task_text()) > 100_000:
+            raise ValueError("message exceeds the execution task size bound")
+        return self
+
+    def attachment_size(self) -> int:
+        return sum(
+            len(part.file.decoded_bytes())
+            for part in self.parts
+            if isinstance(part, A2AFilePart)
+        )
+
     def task_text(self) -> str:
-        return "\n".join(part.text for part in self.parts)
+        return "\n".join(
+            part.text
+            if isinstance(part, A2ATextPart)
+            else part.file.decoded_bytes().decode("utf-8")
+            for part in self.parts
+        )
 
 
 class A2AContextBudget(_WireModel):
