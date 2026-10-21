@@ -138,3 +138,10 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
 
 - [ ] **ARBORA-A2A-R001.5.1:** Serve bounded inline UTF-8 text files.
 - [ ] **ARBORA-A2A-R001.5.2:** Bind binary input to selected-model capabilities and atomic admission.
+
+## Tool-task delivery remainder
+
+- `ARBORA-A2A-R002.2.2.1`: retain the single-invocation worker contract tests.
+- `ARBORA-A2A-R002.2.2.2`: exercise native fence transitions and refusal boundaries.
+- [ ] `ARBORA-A2A-R002.2.2.3`: wire the queue consumer and durable request and caller resolvers.
+- [ ] Prove restart and uncertain-effect reconciliation without repeated execution or premature acknowledgment.

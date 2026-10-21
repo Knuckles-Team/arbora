@@ -17,7 +17,10 @@ from arbora.a2a.tool_task import (
     tool_task_work_item_id,
 )
 
-pytestmark = pytest.mark.spec("ARBORA-A2A-R002.2.2")
+pytestmark = [
+    pytest.mark.spec("ARBORA-A2A-R002.2.2"),
+    pytest.mark.spec("ARBORA-A2A-R002.2.2.1"),
+]
 
 REQUEST = ToolTaskRequest(
     operation_id="graph.query",

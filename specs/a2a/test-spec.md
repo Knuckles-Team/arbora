@@ -119,3 +119,12 @@ R001/R010 durable replay and host receipt/log acceptance remain pending under th
 ### ARBORA-A2A-R010.1
 
 `tests/a2a/test_terminal_event.py` exercises safe projection, producer binding refusals, post-read authority refresh and zero reads for unauthorized tasks. HTTP dispatch and MCP share the same service option. These injected consumer tests do not establish native replay or released dependency compatibility.
+
+## Tool-task evidence boundaries
+
+`ARBORA-A2A-R002.2.2.1` binds to `tests/a2a/test_tool_task.py`.
+It tests one invocation using controlled dispatcher and fence ports.
+`ARBORA-A2A-R002.2.2.2` binds to the native adapter contract and temporary-engine tests.
+These cover session expiry, changed scope, exact claims, lease loss and refusal to reclaim started items.
+`ARBORA-A2A-R002.2.2.3` remains pending. Its served tests must exercise durable caller and request resolution, restart and uncertain-effect reconciliation.
+No test for the first two children substitutes for that acceptance.
