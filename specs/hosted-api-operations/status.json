@@ -2311,6 +2311,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "38d29856a38a",
+        "54ff076e19e1",
         "fc8440890094"
       ],
       "verified_by": [
@@ -2345,10 +2346,11 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "3b92b3c8c215",
+        "54ff076e19e1",
         "fc8440890094"
       ],
       "verified_by": [
-        "tests/api/test_source_checkout.py:152",
+        "tests/api/test_source_checkout.py:156",
         "tests/api/test_source_checkout.py:26"
       ]
     },
