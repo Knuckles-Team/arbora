@@ -50,3 +50,11 @@ without publishing a package.
 Before changing live traffic, validate the resolved configuration, run the
 deployment doctor, and run the release canary described in the
 [deployment guide](deployment.md).
+
+
+An active unary A2A send response includes measured AU run counts, when
+available, under `metadata.arbora.usage`: `runId`, `taskId`, `contextId`,
+`scope: "turn"`, and `counts`. Counts preserve the producer's nonnegative
+integer request, tool-call, input-token, output-token and total-token values.
+Missing usage stays absent. Completed replays and task reads do not reconstruct
+usage; durable per-session usage and cost accounting remain unavailable.

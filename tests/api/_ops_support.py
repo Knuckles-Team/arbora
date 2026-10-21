@@ -1,12 +1,13 @@
 """Shared context builders for the direct-handler ops tests in ``tests/api/``.
 
 Each of ``test_capacity_ops.py``, ``test_work_ops.py``,
-``test_policy_swarm_ops.py``, ``test_telemetry_security_usage_ops.py``, and
-``test_memory_ops.py`` exercises one ops module's handler directly against a
-``SimpleNamespace`` stand-in for the invoke pipeline's request context,
-rather than through the full ``get_registry()`` assembly (that coverage
-lives in ``test_registry_factory.py``). This module factors out the three
-context shapes those tests build, so the shape doesn't drift per module.
+``test_policy_swarm_ops.py``, ``test_telemetry_security_usage_ops.py``,
+``test_memory_ops.py``, and the ``test_harness_*.py`` modules exercises one
+ops module's handler directly against a ``SimpleNamespace`` stand-in for the
+invoke pipeline's request context, rather than through the full
+``get_registry()`` assembly (that coverage lives in
+``test_registry_factory.py``). This module factors out the three context
+shapes those tests build, so the shape doesn't drift per module.
 """
 
 from __future__ import annotations
@@ -51,3 +52,26 @@ def tenant_store_context(
     return SimpleNamespace(
         caller=caller, services=services, idempotency_key=idempotency_key
     )
+
+
+def harness_context(
+    *,
+    services: dict[str, object],
+    scopes: tuple[str, ...] = ("kg:read",),
+    principal_kind: str = "human",
+    tenant: str = "tenant-a",
+) -> SimpleNamespace:
+    """A verified-caller context for the harness surface ops.
+
+    The harness handlers admit on the verified caller's authority (the
+    ``harness_admission`` boundary), so the caller stand-in carries the
+    full authority shape: tenant, principal, principal kind and exact
+    effective scopes.
+    """
+    caller = SimpleNamespace(
+        tenant=tenant,
+        principal="caller-a",
+        principal_kind=principal_kind,
+        effective_scopes=frozenset(scopes),
+    )
+    return SimpleNamespace(caller=caller, services=services, idempotency_key=None)

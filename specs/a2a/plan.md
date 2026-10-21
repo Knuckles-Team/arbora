@@ -430,3 +430,44 @@ The flattened model task, including text, decoded file content and newline
 separators, must fit the execution contract's 100,000-character bound. Reject
 combined inputs above that bound during message validation, before routing or
 task admission; exact-bound inputs remain accepted.
+## Model preference entry boundary — 2026-10-20
+
+R016.6 requires explicit preferences to fail before routing or task creation when
+profile-use authority is absent. Apply the existing typed preference validator
+and unavailable result at A2AService.send_message, the common application entry.
+An explicit null preference still requests this authority; omitted metadata keeps
+the existing default path. Tests require zero router and dispatch calls for all
+explicit preferences and preserve normal dispatch when the field is absent.
+This closes silent preference loss, not atomic profile admission or models.list.
+The EG owner-participant implementation remains necessary for successful choice.
+
+## Amendment 2026-10-20: immediate turn usage prerequisite
+
+Under ARBORA-A2A-R001, preserve the AU run result's measured usage in
+the authenticated `message/send` response as `metadata.arbora.usage` with
+`runId`, `taskId`, `contextId`, `scope: "turn"` and unchanged `counts`. Bind the result
+run id to the admitted task before projection. Missing producer usage is absent,
+not zero. This projection is limited to the active response: task reads and
+idempotent completed replays cannot reconstruct counts. Do not add an Arbora
+counter or cache. Durable session totals and restart-safe usage remain dependent
+on the authorized durable event reader; this prerequisite does not close
+TUI-RUNTIME-R012.6. The owning `usage.read` per-turn/session operation
+acceptance is still open; this transient metadata is only a prerequisite. Costs are not supplied by the run result and stay absent.
+
+ARBORA-A2A-R001.5 remains open: the published AU run request currently carries
+text only. File-part parsing alone cannot deliver PNG bytes to model input.
+
+## Amendment 2026-10-20: durable context identity continuation
+
+R001.3 first preserves a returned canonical context identifier at admission.
+Resolve it through EG's existing tenant-scoped ListWorkItems metadata filter
+for the A2A schema, caller owner reference and context. Validate the returned
+record and recheck the caller before admission. Tenant binding comes from the
+verified native reader request; its caller-view record intentionally omits tenant
+and worker authority fields. Follow empty pages with cursors,
+bounded to 32 pages; exhausted bounds fail explicitly. Unknown or foreign
+canonical contexts admit no work. Reader failures and page-bound exhaustion
+return JSON-RPC -32014 with HTTP 503 and no producer error details. This fixes
+identity continuity only: historical
+messages, model memory and streaming remain subject to the parent acceptance.
+No additional context store, cache or event log is introduced.

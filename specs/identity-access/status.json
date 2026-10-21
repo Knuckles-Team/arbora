@@ -1122,7 +1122,8 @@
         "tests/mcp_server/test_process_authority_renewal.py:101",
         "tests/mcp_server/test_process_authority_renewal.py:123",
         "tests/mcp_server/test_process_authority_renewal.py:161",
-        "tests/mcp_server/test_process_authority_renewal.py:79"
+        "tests/mcp_server/test_process_authority_renewal.py:178",
+        "tests/mcp_server/test_process_authority_renewal.py:191"
       ]
     }
   ]

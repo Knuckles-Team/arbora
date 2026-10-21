@@ -50,6 +50,9 @@ async def test_agent_run_executes_through_the_harness_with_bound_providers(
     )
 
     assert result.run_id and result.output
+    terminal = json.loads(bound.batches[-1][0]["properties"]["payload"])
+    assert result.usage == terminal["result"]["usage"]
+    assert result.usage and result.usage["requests"] == 1
     kinds = [
         json.loads(batch[0]["properties"]["payload"])["type"] for batch in bound.batches
     ]
@@ -91,3 +94,30 @@ async def test_a_run_without_a_model_fails_closed(
         host_ports.register_run_decision_provider(None)
         host_ports.register_model_provider(None)
         host_ports.register_run_event_sink(None)
+
+
+@pytest.mark.spec("ARBORA-A2A-R001")
+@pytest.mark.parametrize(
+    "usage",
+    [
+        {"input_tokens": -1},
+        {"requests": True},
+        {"cost": 12},
+        {"output_tokens": 1.5},
+        {"input_tokens": 9_007_199_254_740_992},
+    ],
+)
+def test_usage_contract_refuses_unmeasured_or_invalid_counts(usage: Any) -> None:
+    from pydantic import ValidationError
+
+    from arbora.api.contracts.agent_control_contracts import AgentExecutionResult
+
+    with pytest.raises(ValidationError):
+        AgentExecutionResult(run_id="run", output="ok", usage=usage)
+
+
+@pytest.mark.spec("ARBORA-A2A-R001")
+def test_missing_usage_is_not_a_zero_measurement() -> None:
+    from arbora.api.contracts.agent_control_contracts import AgentExecutionResult
+
+    assert AgentExecutionResult(run_id="run", output="ok").usage is None
