@@ -167,6 +167,7 @@
       "title": "Reference-bound single-tool task worker",
       "delivery_state": "SPECIFIED",
       "landed_in": [
+        "21fa71a87f44",
         "663cc8cad940"
       ],
       "verified_by": [
@@ -183,8 +184,10 @@
     {
       "id": "ARBORA-A2A-R002.2.2.1",
       "title": "Single-invocation worker contract",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e366dd8159c5"
+      ],
       "verified_by": [
         "tests/a2a/test_tool_task.py:22"
       ]
@@ -192,8 +195,10 @@
     {
       "id": "ARBORA-A2A-R002.2.2.2",
       "title": "Native WorkItem fence binding",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e366dd8159c5"
+      ],
       "verified_by": [
         "tests/a2a/test_tool_task_dispatch.py:23",
         "tests/a2a/test_tool_task_native.py:38"
