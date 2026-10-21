@@ -1116,7 +1116,8 @@
       "title": "The process authority renews for the life of the process",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "0910caeb7e0b"
+        "0910caeb7e0b",
+        "aef3f9286cf8"
       ],
       "verified_by": [
         "tests/mcp_server/test_process_authority_renewal.py:101",
