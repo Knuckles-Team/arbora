@@ -221,9 +221,31 @@
     "ARBORA-OPS-R848.1",
     "ARBORA-OPS-R848.2",
     "ARBORA-OPS-R848.3",
+    "ARBORA-OPS-R848.4",
     "ARBORA-OPS-R849",
     "ARBORA-OPS-R850",
-    "ARBORA-OPS-R851"
+    "ARBORA-OPS-R851",
+    "ARBORA-OPS-R852",
+    "ARBORA-OPS-R852.1",
+    "ARBORA-OPS-R852.2",
+    "ARBORA-OPS-R853",
+    "ARBORA-OPS-R853.1",
+    "ARBORA-OPS-R853.2",
+    "ARBORA-OPS-R854",
+    "ARBORA-OPS-R854.1",
+    "ARBORA-OPS-R854.2",
+    "ARBORA-OPS-R855",
+    "ARBORA-OPS-R855.1",
+    "ARBORA-OPS-R855.2",
+    "ARBORA-OPS-R856",
+    "ARBORA-OPS-R856.1",
+    "ARBORA-OPS-R856.2",
+    "ARBORA-OPS-R857",
+    "ARBORA-OPS-R857.1",
+    "ARBORA-OPS-R857.2",
+    "ARBORA-OPS-R858",
+    "ARBORA-OPS-R858.1",
+    "ARBORA-OPS-R858.2"
   ],
   "requirements": [
     {
@@ -2302,7 +2324,8 @@
       "rollup_of": [
         "ARBORA-OPS-R848.1",
         "ARBORA-OPS-R848.2",
-        "ARBORA-OPS-R848.3"
+        "ARBORA-OPS-R848.3",
+        "ARBORA-OPS-R848.4"
       ]
     },
     {
@@ -2335,6 +2358,13 @@
       "verified_by": []
     },
     {
+      "id": "ARBORA-OPS-R848.4",
+      "title": "Graph-native symbol edits",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
       "id": "ARBORA-OPS-R849",
       "title": "Server-side landing policy",
       "delivery_state": "SPECIFIED",
@@ -2359,6 +2389,181 @@
     {
       "id": "ARBORA-OPS-R851",
       "title": "Git bridge",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R852",
+      "title": "Harness optimize, promote and rollback operations (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R852.1",
+        "ARBORA-OPS-R852.2"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R852.1",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R852.2",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R853",
+      "title": "Lifecycle operations (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R853.1",
+        "ARBORA-OPS-R853.2"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R853.1",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R853.2",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R854",
+      "title": "Context engine operations (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R854.1",
+        "ARBORA-OPS-R854.2"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R854.1",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R854.2",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R855",
+      "title": "Catalog and governance operations (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R855.1",
+        "ARBORA-OPS-R855.2"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R855.1",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R855.2",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R856",
+      "title": "Quality and lineage operations (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R856.1",
+        "ARBORA-OPS-R856.2"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R856.1",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R856.2",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R857",
+      "title": "SPARQL 1.1 protocol endpoint (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R857.1",
+        "ARBORA-OPS-R857.2"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R857.1",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R857.2",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R858",
+      "title": "Outside-reader roles for the row engine (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R858.1",
+        "ARBORA-OPS-R858.2"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R858.1",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R858.2",
+      "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
