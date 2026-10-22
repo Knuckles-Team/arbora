@@ -30,6 +30,8 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R024.1:** Telemetry operations — telemetry slice of `ARBORA-OPS-R024`.
 - [ ] **ARBORA-OPS-R024.2:** Security operations — security slice of `ARBORA-OPS-R024`.
 - [ ] **ARBORA-OPS-R024.3:** Usage operations — usage slice of `ARBORA-OPS-R024`.
+- [ ] **ARBORA-OPS-R024.3.1:** Serve canonical caller-context committed session usage.
+- [ ] **ARBORA-OPS-R024.3.2:** Project bounded AU measured request timing for shared clients.
 - [ ] **ARBORA-OPS-R024.4:** Memory operations — memory slice of `ARBORA-OPS-R024`.
 - [ ] **ARBORA-OPS-R024.5:** Operational admin operations — admin slice of `ARBORA-OPS-R024` (graph/query/search/ontology excluded; owned by `ARBORA-HOST-R026.x`).
 - [ ] **ARBORA-OPS-R026.1:** API-surface drift gate — api-surface slice of `ARBORA-OPS-R026`.
@@ -246,9 +248,11 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R068.2:** Lesson query. Add `harness.lessons.retrieve`.
 - [ ] **ARBORA-OPS-R068.3:** Evolution report. Add `harness.evolution.report`.
 - [ ] **ARBORA-OPS-R068.4:** Adoption. Add the service-only `harness.evolution.adopt`.
+- [ ] **ARBORA-OPS-R068.5:** Registration gate. Keep `harness.*` unregistered until the engine release publishes their senders.
 
 
 - [ ] **ARBORA-OPS-R021.4.5.1.1:** Compose the stateless native reader and qualify source-level authority/projection checks; retain the installed-EG acceptance blocker.
+- [ ] **ARBORA-OPS-R021.4.5.1.2:** Compose native run admission, lease-bound scaffold publication and matching graph reads; qualify a real native lifecycle.
 
 ## Served source operations (R848)
 

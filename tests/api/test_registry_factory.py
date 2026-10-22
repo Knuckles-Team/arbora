@@ -17,9 +17,6 @@ from arbora.api.ops import (
     decide,
     fleet,
     get_registry,
-    harness_components,
-    harness_evolution,
-    harness_lessons,
     ingest,
     memory,
     messaging,
@@ -133,9 +130,6 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *capacity.operations(),
         *decide.operations(),
         *fleet.operations(),
-        *harness_components.operations(),
-        *harness_lessons.operations(),
-        *harness_evolution.operations(),
         *ingest.operations(),
         *memory.operations(),
         *messaging.operations(),
@@ -349,3 +343,25 @@ def test_memory_and_kv_operations_are_registered() -> None:
     ids = {op.id for op in get_registry()}
     assert {"memory.read", "memory.write", "memory.list", "memory.delete"} <= ids
     assert {f"eg.storage.Kv{m}" for m in ("Get", "Put", "Scan", "Delete", "Cas")} <= ids
+
+
+def test_harness_operations_unregistered_until_engine_senders() -> None:
+    """ARBORA-OPS-R068.5: no ``harness.*`` op is served before EG ships its senders."""
+    import importlib
+    import importlib.util
+
+    from arbora.api.ops.registry_factory import get_registry
+
+    module = importlib.util.find_spec("epistemic_graph.generated.orchestration")
+    senders = (
+        "send_list_harness_components",
+        "send_current_harness_component",
+        "send_retrieve_lessons",
+        "send_harness_evolution_report",
+    )
+    published = module is not None and all(
+        hasattr(importlib.import_module("epistemic_graph.generated.orchestration"), s)
+        for s in senders
+    )
+    served = {op.id for op in get_registry() if op.id.startswith("harness.")}
+    assert published or not served

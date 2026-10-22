@@ -61,6 +61,7 @@
     "ARBORA-OPS-R021.4.5",
     "ARBORA-OPS-R021.4.5.1",
     "ARBORA-OPS-R021.4.5.1.1",
+    "ARBORA-OPS-R021.4.5.1.2",
     "ARBORA-OPS-R021.4.6",
     "ARBORA-OPS-R022",
     "ARBORA-OPS-R022.1",
@@ -75,6 +76,8 @@
     "ARBORA-OPS-R024.1",
     "ARBORA-OPS-R024.2",
     "ARBORA-OPS-R024.3",
+    "ARBORA-OPS-R024.3.1",
+    "ARBORA-OPS-R024.3.2",
     "ARBORA-OPS-R024.4",
     "ARBORA-OPS-R024.4.1",
     "ARBORA-OPS-R024.4.2",
@@ -213,6 +216,7 @@
     "ARBORA-OPS-R068.2",
     "ARBORA-OPS-R068.3",
     "ARBORA-OPS-R068.4",
+    "ARBORA-OPS-R068.5",
     "ARBORA-OPS-R700",
     "ARBORA-OPS-R843",
     "ARBORA-OPS-R843.1",
@@ -837,7 +841,7 @@
     {
       "id": "ARBORA-OPS-R021.4.5",
       "title": "Per-run operation",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
@@ -847,7 +851,7 @@
     {
       "id": "ARBORA-OPS-R021.4.5.1",
       "title": "Current-plan read boundary",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "2e9f4b8bc465",
         "663cc8cad940"
@@ -856,7 +860,8 @@
         "tests/api/test_runs_ops.py:23"
       ],
       "rollup_of": [
-        "ARBORA-OPS-R021.4.5.1.1"
+        "ARBORA-OPS-R021.4.5.1.1",
+        "ARBORA-OPS-R021.4.5.1.2"
       ]
     },
     {
@@ -869,6 +874,13 @@
       "verified_by": [
         "tests/mcp_server/test_current_plan_reader.py:22"
       ]
+    },
+    {
+      "id": "ARBORA-OPS-R021.4.5.1.2",
+      "title": "Compose owner-bound A2A scaffold publication",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R021.4.6",
@@ -995,10 +1007,28 @@
     {
       "id": "ARBORA-OPS-R024.3",
       "title": "Usage operations — usage slice",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "4b69b27f1d76"
       ],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R024.3.1",
+        "ARBORA-OPS-R024.3.2"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R024.3.1",
+      "title": "Shared committed session usage",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R024.3.2",
+      "title": "Shared measured request timing",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": []
     },
     {
@@ -1013,7 +1043,7 @@
         "94724be32c28"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:345"
+        "tests/api/test_registry_factory.py:339"
       ],
       "rollup_of": [
         "ARBORA-OPS-R024.4.1",
@@ -1108,7 +1138,7 @@
         "5f79be652726"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:345"
+        "tests/api/test_registry_factory.py:339"
       ]
     },
     {
@@ -2218,7 +2248,8 @@
         "ARBORA-OPS-R068.1",
         "ARBORA-OPS-R068.2",
         "ARBORA-OPS-R068.3",
-        "ARBORA-OPS-R068.4"
+        "ARBORA-OPS-R068.4",
+        "ARBORA-OPS-R068.5"
       ]
     },
     {
@@ -2245,6 +2276,13 @@
     {
       "id": "ARBORA-OPS-R068.4",
       "title": "Adoption (service-only)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R068.5",
+      "title": "Registration gate",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

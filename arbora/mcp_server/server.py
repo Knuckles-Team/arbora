@@ -153,11 +153,6 @@ def _served_invocation() -> tuple[HostedInvocation | None, Any]:
     from arbora.mcp_server.backing.server_factory import create_mcp_parser
     from arbora.mcp_server.current_plan_reader import NativeCurrentPlanReader
     from arbora.mcp_server.fleet_composition import LateFleetGateway
-    from arbora.mcp_server.harness_reader import (
-        NativeComponentReader,
-        NativeEvolutionReportReader,
-        NativeLessonRetriever,
-    )
     from arbora.mcp_server.served_invocation import served_invocation_from_settings
     from arbora.mcp_server.source_reader import NativeSourceReader
 
@@ -171,9 +166,6 @@ def _served_invocation() -> tuple[HostedInvocation | None, Any]:
             "fleet_gateway": fleet,
             "current_plan_reader": NativeCurrentPlanReader(),
             "source_reader": NativeSourceReader(),
-            "harness_component_reader": NativeComponentReader(),
-            "harness_lesson_retriever": NativeLessonRetriever(),
-            "harness_evolution_report_reader": NativeEvolutionReportReader(),
         },
         fleet_effect=fleet.effect,
     )
