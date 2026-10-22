@@ -145,3 +145,69 @@ async def test_backends_use_the_sdk_web_source_contract() -> None:
         research.WEBARCHIVER_SERVER,
         research.ARCHIVEBOX_SERVER,
     }
+
+
+class _Hangs(FakeFleet):
+    """A fleet whose named servers never answer ``web_extract``."""
+
+    def __init__(self, hanging: set[str], **kw: Any) -> None:
+        super().__init__(**kw)
+        self.hanging = hanging
+
+    async def call(
+        self,
+        caller: Any,
+        server: str,
+        tool: str,
+        arguments: dict[str, Any],
+        **kw: Any,
+    ) -> Any:
+        if server in self.hanging and tool == research.WEB_EXTRACT:
+            import asyncio
+
+            self.calls.append((server, tool, dict(arguments)))
+            await asyncio.Event().wait()
+        return await super().call(caller, server, tool, arguments, **kw)
+
+
+@pytest.mark.spec("ARBORA-OPS-R067.9")
+async def test_hanging_archivebox_times_out_and_falls_back(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Acceptance c17: archivebox ``web_extract`` never returned (300 s)."""
+    import asyncio
+
+    monkeypatch.setattr(research, "PAGE_TIMEOUT_S", 0.05)
+    fleet = _Hangs({research.ARCHIVEBOX_SERVER})
+    value, _ = await asyncio.wait_for(
+        _run(fleet, max_pages=1, backend="archivebox"), timeout=5
+    )
+    (doc,) = value["documents"]
+    assert doc["backend"] == "webarchiver"
+    assert doc["fallback_from"] == "timeout"
+
+
+@pytest.mark.spec("ARBORA-OPS-R067.9")
+async def test_both_backends_hanging_skip_within_the_bound(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import asyncio
+
+    monkeypatch.setattr(research, "PAGE_TIMEOUT_S", 0.05)
+    fleet = _Hangs({research.ARCHIVEBOX_SERVER, research.WEBARCHIVER_SERVER})
+    value, _ = await asyncio.wait_for(_run(fleet, max_pages=1), timeout=5)
+    assert value["documents"] == []
+    assert value["skipped"] and all(
+        s["reason"] == "timeout" and s["backend"] == "archivebox"
+        for s in value["skipped"]
+    )
+
+
+@pytest.mark.spec("ARBORA-OPS-R067.9")
+async def test_page_timeout_never_passes_the_deadline() -> None:
+    import asyncio
+
+    loop = asyncio.get_running_loop()
+    assert research._page_timeout(None) == research.PAGE_TIMEOUT_S
+    assert research._page_timeout(loop.time() - 1) == 0.0
+    assert 0 < research._page_timeout(loop.time() + 2) <= 2
