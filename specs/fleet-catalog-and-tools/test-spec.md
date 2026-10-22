@@ -247,3 +247,10 @@ Hot-path proof for `ARBORA-FLEET-R037`: `tests/fleet/test_job_loads_served.py::t
 | Case | Row | Proving test and observation |
 |---|---|---|
 | Evidence | `ARBORA-FLEET-R038` | `tests/fleet/test_protocol_roles.py::test_one_implementation_per_role`: An import-graph test fails when a arbora module implements a connector transport or connector server scaffolding. |
+
+## ARBORA-FLEET-R029.1 acceptance
+
+| Case | Row | Proving test and observation |
+|---|---|---|
+| Refusal | `ARBORA-FLEET-R029.1` | `tests/api/test_fleet_effect.py::test_unscoped_search_without_query_is_invalid_argument`: an empty unscoped search raises `INVALID_ARGUMENT` with `field: query`, mapped to HTTP 400, and the gateway never runs. |
+| Admission | `ARBORA-FLEET-R029.1` | `tests/api/test_fleet_effect.py::test_query_browse_or_server_scope_reaches_the_gateway`: a query, `browse: true` or a `servers` filter reaches the gateway. |

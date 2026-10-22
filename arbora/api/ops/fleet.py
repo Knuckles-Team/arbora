@@ -88,6 +88,13 @@ async def handle_fleet_operation(
         raise RuntimeError("fleet gateway is not bound")
     caller = context.caller
     if op.id == "fleet.catalog.search":
+        # ARBORA-FLEET-R029.1: an unscoped search with no query is a caller
+        # error (HTTP 400), refused before the gateway runs.
+        if not params.get("query") and not params.get("browse"):
+            if not params.get("servers"):
+                from arbora.api.invoke.pipeline import OperationRefused
+
+                raise OperationRefused("INVALID_ARGUMENT", {"field": "query"})
         result = await gateway.search(caller, **params)
     elif op.id == "fleet.catalog.list":
         result = await gateway.list(caller, **params)
