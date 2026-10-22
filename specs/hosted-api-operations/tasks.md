@@ -282,7 +282,7 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R857:** SPARQL 1.1 protocol endpoint (rollup).
 - [ ] **ARBORA-OPS-R857.1:** Wiring.
 - [ ] **ARBORA-OPS-R857.2:** Hot-path proof.
-- [ ] **ARBORA-OPS-R858:** Outside-reader roles for the row engine (rollup).
+- [ ] **ARBORA-OPS-R858:** Outside SQL client identities for the engine wire front end (rollup).
 - [ ] **ARBORA-OPS-R858.1:** Wiring.
 - [ ] **ARBORA-OPS-R858.2:** Hot-path proof.
 
