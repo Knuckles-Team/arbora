@@ -257,7 +257,8 @@
     "ARBORA-OPS-R860.3",
     "ARBORA-OPS-R860.4",
     "ARBORA-OPS-R860.5",
-    "ARBORA-OPS-R860.6"
+    "ARBORA-OPS-R860.6",
+    "ARBORA-OPS-R021.4.7"
   ],
   "requirements": [
     {
@@ -265,18 +266,18 @@
       "title": "Native MCP/REST facade with A2A unary operations then streaming",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "23607181d4af",
         "4ad0c4d2dd78",
+        "5c2eefda3a13",
         "762c7f816fe3",
-        "83aefbad2157",
-        "86a439753d2d",
-        "b6902c2910fe"
+        "83aefbad2157"
       ],
       "verified_by": [
+        "tests/a2a/test_native_run_owner.py:15",
         "tests/deployment/test_real_boot_fixture.py:19",
-        "tests/test_real_boot.py:764",
-        "tests/test_real_boot.py:785",
-        "tests/test_real_boot.py:794",
-        "tests/test_real_boot.py:813"
+        "tests/test_native_run_admission.py:12",
+        "tests/test_native_run_scope.py:14",
+        "tests/test_real_boot.py:764"
       ]
     },
     {
@@ -856,7 +857,8 @@
         "ARBORA-OPS-R021.4.3",
         "ARBORA-OPS-R021.4.4",
         "ARBORA-OPS-R021.4.5",
-        "ARBORA-OPS-R021.4.6"
+        "ARBORA-OPS-R021.4.6",
+        "ARBORA-OPS-R021.4.7"
       ]
     },
     {
@@ -2724,6 +2726,18 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R021.4.7",
+      "title": "Durable, public run replay",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "56b1e4cc8910",
+        "5c2eefda3a13"
+      ],
+      "verified_by": [
+        "tests/api/test_run_replay.py:12"
+      ]
     }
   ]
 }
