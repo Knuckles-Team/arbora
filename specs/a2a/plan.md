@@ -599,5 +599,5 @@ not close session totals, TPS, costs, full streaming or usage.read composition.
 Authenticated served qualification found that a foreign verified principal's
 native control-graph read is correctly denied. However, its typed ACCESS_DENIED error
 escaped the unary task boundary as HTTP 500. Owner lookup must treat only that
-stable native access-denied code as an unavailable task, preserving non-disclosing
-404 reads and noncancelable writes; unrelated engine failures must propagate.
+stable native access-denied code as an unavailable task. This preserves non-disclosing
+404 reads and noncancelable writes. Unrelated engine failures must propagate.

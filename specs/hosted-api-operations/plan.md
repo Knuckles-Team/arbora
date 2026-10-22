@@ -59,7 +59,7 @@ The retirement inventory is a checked artifact produced from the existing host r
 
 Cross-repo IDs: AU-BOUNDARY-R001.2, AU-BOUNDARY-R001.3, AU-BOUNDARY-R001.7 (agent-utilities deletions); ARBORA-HOST-R005. Provenance: agent-utilities commits 0eb67c99c (dashboard router), 902f906ca (Live Artifacts router), 7717d2e62 (genius_agent widget).
 
-Deleted dashboard router (prefix `/api/dashboard`, read capability on every route except `/health`; write capability on mutations; capabilities gateway:read, gateway:write, gateway:admin, admin; API-key callers unrestricted):
+Deleted dashboard router: prefix `/api/dashboard`. Every route except `/health` requires read capability; mutations require write capability. Capabilities: gateway:read, gateway:write, gateway:admin, admin. API-key callers are unrestricted:
 - GET `/layout` and PUT `/layout`: read and persist the dashboard layout (shared YAML, reads always go back to disk).
 - GET `/data`, GET `/data/{service_id}`: widget data for all or one service; the id must match a safe pattern, unknown service returns 404.
 - GET `/full`: layout and data in one call. GET `/data-subset?widget_id=...`: only the named widgets, loaded concurrently, never computing unsubscribed ones.
@@ -97,7 +97,7 @@ Out of scope: moving the Live Artifact store or refresh service from agent-utili
 
 #### D2 Dashboard route parity (CONFIRMED by reading both files)
 
-Compared `git show 0eb67c99c^:agent_utilities/gateway/api.py` (328 lines) with `arbora/gateway/dashboard_api.py` (389 lines). Both define the same 15 REST routes. The only addition is the websocket `/ws/dashboard` (moved from agent-webui; not part of the old router). Shared helpers are line-for-line equal: `_SERVICE_ID_RE`, the read and write capability sets (`gateway:read`, `gateway:write`, `gateway:admin`, `admin`; write excludes `gateway:read`), API-key callers unrestricted, the `/health` exemption in the read dependency, fail-closed 403 when capability resolution raises, and `Cache-Control: no-store` on health. Supporting modules differ only in import paths, a naive-UTC `_naive_utcnow` replacing deprecated `datetime.utcnow` in `models.py` (same value), and a new service-session in `aggregator.py`.
+Compared `git show 0eb67c99c^:agent_utilities/gateway/api.py` (328 lines) with `arbora/gateway/dashboard_api.py` (389 lines). Both define the same 15 REST routes. The only addition is the websocket `/ws/dashboard` (moved from agent-webui; not part of the old router). Shared helpers are line-for-line equal. These include `_SERVICE_ID_RE` and the read and write capability sets (`gateway:read`, `gateway:write`, `gateway:admin`, `admin`; write excludes `gateway:read`). Both leave API-key callers unrestricted and exempt `/health` in the read dependency. Both fail closed with 403 when capability resolution raises and set `Cache-Control: no-store` on health. Supporting modules differ only in import paths, a naive-UTC `_naive_utcnow` replacing deprecated `datetime.utcnow` in `models.py` (same value), and a new service-session in `aggregator.py`.
 
 | Method and path | Auth | Request / response shape | Refusals | Result |
 |---|---|---|---|---|
@@ -225,7 +225,7 @@ Cross-repository: engine memory-write refusal, owner prefix `EG`, contract name 
 
 ## Policy lifecycle operations that guard plans (ARBORA-OPS-R050)
 
-Data flow: `policy.create` over POST /api/v1/ops/{op_id} -> `_base_authority` (arbora/api/invoke/pipeline.py:208) -> `_policy` (:198) -> `PolicyAuthority.authorize` (arbora/control_plane/policy/repository.py:179) -> audit record.
+Data flow starts with `policy.create` over POST /api/v1/ops/{op_id}. It calls `_base_authority` (arbora/api/invoke/pipeline.py:208), then `_policy` (:198). Next, `PolicyAuthority.authorize` (arbora/control_plane/policy/repository.py:179) produces the audit record.
 
 Types: `PolicyEntity`, `ConstitutionSource`, `PolicyChange`. Failure: `POLICY_DENIED` or `POLICY_UNAVAILABLE`, never a partial change.
 
@@ -814,9 +814,7 @@ The TaskPlan proposal is an explicit typed DAG, not semantic decomposition of
 arbitrary prose. EG owns validation/provenance, Arbora admission and AU execution.
 The existing single-step default does not count as graph decomposition.
 
-Replay stabilization preserves each event’s child task identity, refuses repeated
-event IDs and events after a terminal cursor, and retains terminal state on an
-empty subsequent page. Canonical WorkItem lifecycle states project to client
+Replay stabilization preserves each event’s child task identity. It refuses repeated event IDs and events after a terminal cursor. It retains terminal state on an empty subsequent page. Canonical WorkItem lifecycle states project to client
 run states; permission failures are never converted to unavailable history.
 
 A metadata-only census checks at most 10,001 rows before payload pagination.
@@ -830,8 +828,7 @@ Both run reads accept the authoritative root `task_id` separately from `run_id`.
 Authorize that task through the shared WorkItem authority, then match the stored
 `a2a_run_id`. Metadata without that field requires equal task and run IDs.
 Never derive native IDs or scan owners. Event task IDs still identify children.
-Payload hydration uses small bounded batches and stops at the raw page budget;
-this is a memory bound, not a performance qualification.
+Payload hydration uses small bounded batches and stops at the raw page budget. This is a memory bound, not a performance qualification.
 
 
 ### 2026-10-22: native owner boundary decomposition (ARBORA-OPS-R001)
