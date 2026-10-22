@@ -130,6 +130,9 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [x] `ARBORA-IDENTITY-R002.1`: scope registry generated from EG `scopes.json`. Evidence: `tests/security/test_scope_registry.py::test_the_generated_module_is_the_installed_eg_registry`.
 - [x] `ARBORA-IDENTITY-R027`: Process authority renews indefinitely; failures log their cause and readiness names the reason. Evidence: `tests/mcp_server/test_process_authority_renewal.py`.
 - [x] `ARBORA-IDENTITY-R029`: A run renews its caller's authority while active, bounded and audited; stops on end, cancel or revocation; fan-out inherits. Evidence: `tests/mcp_server/test_caller_run_authority.py`.
+- [ ] `ARBORA-IDENTITY-R029.4`: Issued bearers carry the opaque session-reference claim.
+- [ ] `ARBORA-IDENTITY-R029.5`: Logout and session-revocation routes call `revoke_caller`.
+- [ ] `ARBORA-IDENTITY-R029.6`: The renewal loop registers an engine-backed check via `CALLER_REVOCATIONS.add_check` using `EG-TYPED-PACKS-R085.3`.
 
 ## Delegated identity for connector calls (R028)
 
