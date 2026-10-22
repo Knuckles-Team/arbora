@@ -14,6 +14,7 @@ Governing [spec](spec.md). Evidence remains PENDING.
 | T-RL-08 | RL-05 | Fault injection | Later stage fails after prior stage passes | Scheduling stops. Reversible previous digest restored and reprobed, or recovery pending. |
 | T-RL-09 | RL-06 | CI and release | Clean checkout fixture and hosted release job | PR job needs no private service. Release job attaches digest, integration and consumer evidence. |
 | T-RL-10 | RL-07 | Contract | Candidate with fixture secret references and tokens | Receipt has digests, stage order, time and public evidence URL, with no credential or private endpoint. |
+| T-RL-11 | ARBORA-RELEASE-R003.9 | Served | Two-connector fleet fixture: one healthy connector and one stale pack | One PASS and one FAIL with cause `(d) pack stale`. The promotion step refuses. |
 
 ## Verification record
 

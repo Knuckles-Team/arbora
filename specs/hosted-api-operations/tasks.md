@@ -287,3 +287,13 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R858.2:** Hot-path proof.
 
 - [ ] **ARBORA-OPS-R855.3:** Trust flag, curation review and query workspace operations.
+
+## Served program optimization operations (R860)
+
+- [ ] **ARBORA-OPS-R860:** Served program optimization, promotion and rollback operations (rollup).
+- [ ] **ARBORA-OPS-R860.1:** Model.
+- [ ] **ARBORA-OPS-R860.2:** Behavior.
+- [ ] **ARBORA-OPS-R860.3:** Wiring.
+- [ ] **ARBORA-OPS-R860.4:** Refusal.
+- [ ] **ARBORA-OPS-R860.5:** Evidence.
+- [ ] **ARBORA-OPS-R860.6:** Hot-path proof.

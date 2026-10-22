@@ -250,7 +250,14 @@
     "ARBORA-OPS-R857.2",
     "ARBORA-OPS-R858",
     "ARBORA-OPS-R858.1",
-    "ARBORA-OPS-R858.2"
+    "ARBORA-OPS-R858.2",
+    "ARBORA-OPS-R860",
+    "ARBORA-OPS-R860.1",
+    "ARBORA-OPS-R860.2",
+    "ARBORA-OPS-R860.3",
+    "ARBORA-OPS-R860.4",
+    "ARBORA-OPS-R860.5",
+    "ARBORA-OPS-R860.6"
   ],
   "requirements": [
     {
@@ -2615,6 +2622,63 @@
     },
     {
       "id": "ARBORA-OPS-R858.2",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R860",
+      "title": "Served program optimization, promotion and rollback operations (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R860.1",
+        "ARBORA-OPS-R860.2",
+        "ARBORA-OPS-R860.3",
+        "ARBORA-OPS-R860.4",
+        "ARBORA-OPS-R860.5",
+        "ARBORA-OPS-R860.6"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R860.1",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R860.2",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R860.3",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R860.4",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R860.5",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R860.6",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],

@@ -284,3 +284,9 @@ They also cover the gateway producer and existing hosted caller refusals.
 These tests do not establish durable restart continuity or human session renewal.
 SessionAuthority currently resolves human sessions but has no qualified renewal producer.
 Human action approvals remain separate, single-use and nonrenewable.
+
+## Delegated identity for connector calls (R028)
+
+Some connector tools act for a user, not for the platform. The fleet acceptance run of 2026-10-18 showed `keycloak-mcp` and `vector-mcp` refuse such calls with `IdentityRequiredError`. Arbora called them with its process credential only.
+
+R028 adds a delegated identity. The SDK marks each actor-required tool (SDK-CONNECTOR-CONTROL-R902). Arbora exchanges the verified caller token for an audience-bound token by RFC 8693 token exchange. The child binds that actor through the SDK transport. A call with no user caller refuses before any connector call.

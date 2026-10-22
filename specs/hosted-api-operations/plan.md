@@ -788,3 +788,7 @@ holds no rule, role table or policy for any of them.
 Each new module registers in the curated module loop at `arbora/api/ops/registry_factory.py:52`.
 Each handler calls its generated `eg.*` method. The registry then lists the tool with its
 read-only or destructive hint.
+
+## Served program optimization operations (R860)
+
+The engine compiles programs and holds the champion pointer (EG-DECISION-ENGINE-R810, EG-DECISION-ENGINE-R812). arbora serves three thin operations over them. `program.optimize` submits the job. `program.promote` and `program.rollback` need an approved plan and commit through the engine. arbora holds no score, threshold or verdict.
