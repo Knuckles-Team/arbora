@@ -459,7 +459,7 @@ and request resolution, and reconciliation across uncertain deliveries.
 The pending third child keeps the parent incomplete. Existing unit markers
 and native adapter tests do not establish served recovery.
 
-### Immutable tool-task request transport (ARBORA-A2A-R002.2.2.3)
+### Immutable tool-task request transport (ARBORA-A2A-R002.2.3)
 
 Persist canonical request bytes in EG's existing content-addressed blob owner.
 The native WorkItem carries only the blob locator and exact request binding;

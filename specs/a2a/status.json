@@ -13,9 +13,9 @@
     "ARBORA-A2A-R002.2.2",
     "ARBORA-A2A-R002.2.2.1",
     "ARBORA-A2A-R002.2.2.2",
-    "ARBORA-A2A-R002.2.2.3",
-    "ARBORA-A2A-R002.2.2.3.1",
-    "ARBORA-A2A-R002.2.2.3.2",
+    "ARBORA-A2A-R002.2.3",
+    "ARBORA-A2A-R002.2.3.1",
+    "ARBORA-A2A-R002.2.3.2",
     "ARBORA-A2A-R003",
     "ARBORA-A2A-R004",
     "ARBORA-A2A-R005",
@@ -154,7 +154,8 @@
       "verified_by": [],
       "rollup_of": [
         "ARBORA-A2A-R002.2.1",
-        "ARBORA-A2A-R002.2.2"
+        "ARBORA-A2A-R002.2.2",
+        "ARBORA-A2A-R002.2.3"
       ]
     },
     {
@@ -167,7 +168,7 @@
     {
       "id": "ARBORA-A2A-R002.2.2",
       "title": "Reference-bound single-tool task worker",
-      "delivery_state": "SPECIFIED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "21fa71a87f44",
         "663cc8cad940"
@@ -179,8 +180,7 @@
       ],
       "rollup_of": [
         "ARBORA-A2A-R002.2.2.1",
-        "ARBORA-A2A-R002.2.2.2",
-        "ARBORA-A2A-R002.2.2.3"
+        "ARBORA-A2A-R002.2.2.2"
       ]
     },
     {
@@ -207,30 +207,28 @@
       ]
     },
     {
-      "id": "ARBORA-A2A-R002.2.2.3",
+      "id": "ARBORA-A2A-R002.2.3",
       "title": "Served delivery and durable reconciliation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
-        "ARBORA-A2A-R002.2.2.3.1",
-        "ARBORA-A2A-R002.2.2.3.2"
+        "ARBORA-A2A-R002.2.3.1",
+        "ARBORA-A2A-R002.2.3.2"
       ]
     },
     {
-      "id": "ARBORA-A2A-R002.2.2.3.1",
+      "id": "ARBORA-A2A-R002.2.3.1",
       "title": "Immutable native request transport",
-      "delivery_state": "VERIFIED",
-      "landed_in": [
-        "7ba15342cbde"
-      ],
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": [
         "tests/a2a/test_tool_task_request_native.py:21",
         "tests/a2a/test_tool_task_requests.py:15"
       ]
     },
     {
-      "id": "ARBORA-A2A-R002.2.2.3.2",
+      "id": "ARBORA-A2A-R002.2.3.2",
       "title": "Served consumer and original-caller recovery",
       "delivery_state": "SPECIFIED",
       "landed_in": [],

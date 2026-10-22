@@ -18,7 +18,7 @@ from tests.test_real_boot import PROCESS_SUBJECT, TENANT, _booted_stack
 
 pytestmark = [
     pytest.mark.real_boot,
-    pytest.mark.spec("ARBORA-A2A-R002.2.2.3.1"),
+    pytest.mark.spec("ARBORA-A2A-R002.2.3.1"),
 ]
 
 

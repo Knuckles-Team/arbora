@@ -12,7 +12,7 @@ from arbora.a2a.tool_task import ToolTaskRefused, tool_task_work_item_id
 from arbora.a2a.tool_task_requests import EgToolTaskRequestStore
 from tests.a2a.test_tool_task import REQUEST
 
-pytestmark = pytest.mark.spec("ARBORA-A2A-R002.2.2.3.1")
+pytestmark = pytest.mark.spec("ARBORA-A2A-R002.2.3.1")
 
 
 class Blob:
