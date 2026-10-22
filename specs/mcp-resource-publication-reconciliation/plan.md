@@ -5,7 +5,7 @@
 | Existing seam | Role in this design | Change boundary |
 |---|---|---|
 | `arbora/fleet/catalog_reader.py` (`FleetCatalogIntegrityError`, `ReadReceipt`, `_verify_receipt`) | Prior art for a typed, fail-closed receipt check against an exact context/provenance match | Pattern only. Not modified or replaced by this spec |
-| `specs/fleet-catalog-and-tools/` (ARBORA-FLEET-001 R022, PA-12) | Owns the atomic generation-publish state machine this gate will be called from | This spec adds the one pre-swap gate call for the four MCP families (`ARBORA-MCP-RESOURCES-R003`); it does not redesign the reload state machine |
+| `specs/fleet-catalog-and-tools/` (ARBORA-FLEET-001 R022, ARBORA-FLEET-R051) | Owns the atomic generation-publish state machine this gate will be called from | One pre-swap gate call for four MCP families (`ARBORA-MCP-RESOURCES-R003`). Reload state machine unchanged |
 | epistemic-graph `specs/repository-index-and-ingestion` (EG-REPO-INGEST-001) | Produces the durable commit and the reconciliation receipt | Consumed by ID only; this repository defines no EG-side behavior |
 | `docs/status.md`, `docs/fleet.md` | Existing public description of the `reingestion-unreconciled` refusal | Kept truthful by `ARBORA-MCP-RESOURCES-R004`; not restructured |
 

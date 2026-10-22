@@ -1,2 +1,7 @@
 # Retired spec ID prefixes -> canonical prefix (pipelines spec tooling).
 "GRAPHOS-" = "ARBORA-"
+
+# Pre-standard row IDs, renamed to <SPEC>-R<nnn>.
+"PA-12" = "ARBORA-FLEET-R051"
+"PA-12.1" = "ARBORA-FLEET-R051.1"
+"PA-12.2" = "ARBORA-FLEET-R051.2"
