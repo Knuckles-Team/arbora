@@ -822,7 +822,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "1a8d280ab981",
-        "1fbd4cd9607a",
+        "4fabd9b042be",
         "d2b070392ec9",
         "db8d44259c3d"
       ],
@@ -839,7 +839,7 @@
       "title": "Catalog search refuses an empty unscoped request",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "1fbd4cd9607a"
+        "4fabd9b042be"
       ],
       "verified_by": [
         "tests/api/test_fleet_effect.py:543",

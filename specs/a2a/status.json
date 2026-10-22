@@ -85,6 +85,7 @@
     "ARBORA-A2A-R001.3",
     "ARBORA-A2A-R001.4",
     "ARBORA-A2A-R001.5",
+    "ARBORA-A2A-R001.6",
     "ARBORA-A2A-R001.5.1",
     "ARBORA-A2A-R001.5.2",
     "ARBORA-A2A-R016.6"
@@ -108,7 +109,8 @@
         "ARBORA-A2A-R001.2",
         "ARBORA-A2A-R001.3",
         "ARBORA-A2A-R001.4",
-        "ARBORA-A2A-R001.5"
+        "ARBORA-A2A-R001.5",
+        "ARBORA-A2A-R001.6"
       ]
     },
     {
@@ -908,6 +910,19 @@
       "rollup_of": [
         "ARBORA-A2A-R001.5.1",
         "ARBORA-A2A-R001.5.2"
+      ]
+    },
+    {
+      "id": "ARBORA-A2A-R001.6",
+      "title": "Non-blocking `message/send`",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "3cbb61dc1fbc"
+      ],
+      "verified_by": [
+        "tests/a2a/test_nonblocking_send.py:106",
+        "tests/a2a/test_nonblocking_send.py:146",
+        "tests/a2a/test_nonblocking_send.py:173"
       ]
     },
     {
