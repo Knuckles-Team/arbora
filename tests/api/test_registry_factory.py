@@ -345,6 +345,7 @@ def test_memory_and_kv_operations_are_registered() -> None:
     assert {f"eg.storage.Kv{m}" for m in ("Get", "Put", "Scan", "Delete", "Cas")} <= ids
 
 
+@pytest.mark.spec("ARBORA-OPS-R068.5")
 def test_harness_operations_unregistered_until_engine_senders() -> None:
     """ARBORA-OPS-R068.5: no ``harness.*`` op is served before EG ships its senders."""
     import importlib
