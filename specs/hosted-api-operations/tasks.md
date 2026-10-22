@@ -30,6 +30,8 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R024.1:** Telemetry operations — telemetry slice of `ARBORA-OPS-R024`.
 - [ ] **ARBORA-OPS-R024.2:** Security operations — security slice of `ARBORA-OPS-R024`.
 - [ ] **ARBORA-OPS-R024.3:** Usage operations — usage slice of `ARBORA-OPS-R024`.
+- [ ] **ARBORA-OPS-R024.3.1:** Serve canonical caller-context committed session usage.
+- [ ] **ARBORA-OPS-R024.3.2:** Project bounded AU measured request timing for shared clients.
 - [ ] **ARBORA-OPS-R024.4:** Memory operations — memory slice of `ARBORA-OPS-R024`.
 - [ ] **ARBORA-OPS-R024.5:** Operational admin operations — admin slice of `ARBORA-OPS-R024` (graph/query/search/ontology excluded; owned by `ARBORA-HOST-R026.x`).
 - [ ] **ARBORA-OPS-R026.1:** API-surface drift gate — api-surface slice of `ARBORA-OPS-R026`.
@@ -247,9 +249,11 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R068.2:** Lesson query. Add `harness.lessons.retrieve`.
 - [ ] **ARBORA-OPS-R068.3:** Evolution report. Add `harness.evolution.report`.
 - [ ] **ARBORA-OPS-R068.4:** Adoption. Add the service-only `harness.evolution.adopt`.
+- [ ] **ARBORA-OPS-R068.5:** Registration gate. Keep `harness.*` unregistered until the engine release publishes their senders.
 
 
 - [ ] **ARBORA-OPS-R021.4.5.1.1:** Compose the stateless native reader and qualify source-level authority/projection checks; retain the installed-EG acceptance blocker.
+- [ ] **ARBORA-OPS-R021.4.5.1.2:** Compose native run admission, lease-bound scaffold publication and matching graph reads; qualify a real native lifecycle.
 
 ## Served source operations (R848)
 
@@ -259,3 +263,38 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R849:** Apply the server-side landing policy with fast and full gate phases.
 - [x] **ARBORA-OPS-R850:** Stream the virtual checkout endpoint, recursively and resumably.
 - [ ] **ARBORA-OPS-R851:** Serve the git smart-HTTP read bridge over EG trees.
+
+- [ ] **ARBORA-OPS-R848.4:** Graph-native symbol edits.
+- [ ] **ARBORA-OPS-R852:** Harness optimize, promote and rollback operations (rollup).
+- [ ] **ARBORA-OPS-R852.1:** Wiring.
+- [ ] **ARBORA-OPS-R852.2:** Hot-path proof.
+- [ ] **ARBORA-OPS-R853:** Lifecycle operations (rollup).
+- [ ] **ARBORA-OPS-R853.1:** Wiring.
+- [ ] **ARBORA-OPS-R853.2:** Hot-path proof.
+- [ ] **ARBORA-OPS-R854:** Context engine operations (rollup).
+- [ ] **ARBORA-OPS-R854.1:** Wiring.
+- [ ] **ARBORA-OPS-R854.2:** Hot-path proof.
+- [ ] **ARBORA-OPS-R855:** Catalog and governance operations (rollup).
+- [ ] **ARBORA-OPS-R855.1:** Wiring.
+- [ ] **ARBORA-OPS-R855.2:** Hot-path proof.
+- [ ] **ARBORA-OPS-R856:** Quality and lineage operations (rollup).
+- [ ] **ARBORA-OPS-R856.1:** Wiring.
+- [ ] **ARBORA-OPS-R856.2:** Hot-path proof.
+- [ ] **ARBORA-OPS-R857:** SPARQL 1.1 protocol endpoint (rollup).
+- [ ] **ARBORA-OPS-R857.1:** Wiring.
+- [ ] **ARBORA-OPS-R857.2:** Hot-path proof.
+- [ ] **ARBORA-OPS-R858:** Outside SQL client identities for the engine wire front end (rollup).
+- [ ] **ARBORA-OPS-R858.1:** Wiring.
+- [ ] **ARBORA-OPS-R858.2:** Hot-path proof.
+
+- [ ] **ARBORA-OPS-R855.3:** Trust flag, curation review and query workspace operations.
+
+## Served program optimization operations (R860)
+
+- [ ] **ARBORA-OPS-R860:** Served program optimization, promotion and rollback operations (rollup).
+- [ ] **ARBORA-OPS-R860.1:** Model.
+- [ ] **ARBORA-OPS-R860.2:** Behavior.
+- [ ] **ARBORA-OPS-R860.3:** Wiring.
+- [ ] **ARBORA-OPS-R860.4:** Refusal.
+- [ ] **ARBORA-OPS-R860.5:** Evidence.
+- [ ] **ARBORA-OPS-R860.6:** Hot-path proof.

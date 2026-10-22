@@ -249,19 +249,6 @@
         "default": null,
         "title": "Message"
       },
-      "Schema0ab46ba644de533ccec8b1d27b6fcc9f2b4b44b231856f5fe9948a8983ca4b94": {
-        "additionalProperties": false,
-        "properties": {
-          "value": {
-            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
-          }
-        },
-        "required": [
-          "value"
-        ],
-        "title": "ComponentVersionListResult",
-        "type": "object"
-      },
       "Schema0d3bce83b8be7c2fd6a092afaab87eaceb4587fa003cc76b04d535a5fdea3361": {
         "additionalProperties": false,
         "properties": {
@@ -274,18 +261,6 @@
         ],
         "title": "UsageReadResult",
         "type": "object"
-      },
-      "Schema0d4ecbd4c4810303fec166d7080e355e7b49ee42f03eeb15def2af2a432d40a0": {
-        "anyOf": [
-          {
-            "$ref": "#/components/schemas/Schema3cdb2ff0de9162783534b259d476e06c70ae53dfc1601e1142e194ac1ea15598"
-          },
-          {
-            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
-          }
-        ],
-        "default": null,
-        "title": "Cursor"
       },
       "Schema109baa93f8b988b2f1e23eb2154a501587f4c405fbccf71e902b2d9dc45c58eb": {
         "maxLength": 1024,
@@ -315,12 +290,6 @@
         ],
         "title": "ResearchWebResult",
         "type": "object"
-      },
-      "Schema11e6fca97b956898244107e31b4939af5b2d16946b905624b14fde4a5d9c049f": {
-        "maxLength": 512,
-        "minLength": 1,
-        "title": "Deficiency",
-        "type": "string"
       },
       "Schema1201411dfa275e282e9f1dbf5b65995c8b2f58744af2041590aa6936c82d48f1": {
         "additionalProperties": false,
@@ -412,12 +381,6 @@
         "title": "Items",
         "type": "array"
       },
-      "Schema1c58c5d4dcb6a4db803313711591aeb940f8ef4f81b5ec868be5089c433bed5e": {
-        "maxLength": 512,
-        "minLength": 1,
-        "title": "Contrast Ref",
-        "type": "string"
-      },
       "Schema1d94b3ae8ce88d43ac1686464a61940f16a15a81254ceb60f584d0996bea92e8": {
         "description": "Whether a decision is only recorded, or also enforced at admission.",
         "enum": [
@@ -459,12 +422,6 @@
         "maxLength": 1024,
         "minLength": 1,
         "title": "Repository",
-        "type": "string"
-      },
-      "Schema23dbbaa323acbe446d9ef6d4163f41d77d21b344dd5bdf6c18026481c0a497e2": {
-        "maxLength": 256,
-        "minLength": 1,
-        "title": "Task Class",
         "type": "string"
       },
       "Schema2539bfc96b7549989d3181f5442ed91cbf79a788a111deefed4e65dbe651251d": {
@@ -536,12 +493,6 @@
         ],
         "title": "WorkOfferCreateParams",
         "type": "object"
-      },
-      "Schema2b09ada448f459204659d996efb9b9b116201327a092bef1c989abb0a1891a7a": {
-        "maxLength": 512,
-        "minLength": 1,
-        "title": "Task Ref",
-        "type": "string"
       },
       "Schema2b5a8eb8274ac5979e46417be1018eb512e9f30a4604845b59f7d010f5248f96": {
         "additionalProperties": false,
@@ -697,19 +648,6 @@
         "title": "Arguments",
         "type": "object"
       },
-      "Schema3b6086ea23eb989c140f6dd4b1b91e3bcbe768d6af40644b45517b2962c80b78": {
-        "enum": [
-          "system_prompt",
-          "guardrails",
-          "memory",
-          "tool_guidance",
-          "subagent",
-          "skill",
-          "script",
-          "plugin"
-        ],
-        "type": "string"
-      },
       "Schema3bb7340cce05be073c943be46171c4923d4988231ee20e449a560bce208c817e": {
         "additionalProperties": false,
         "properties": {
@@ -739,10 +677,6 @@
         "default": "",
         "maxLength": 4096,
         "title": "Query",
-        "type": "string"
-      },
-      "Schema3cdb2ff0de9162783534b259d476e06c70ae53dfc1601e1142e194ac1ea15598": {
-        "maxLength": 512,
         "type": "string"
       },
       "Schema3d707d2656317bd106cd45297754733e58e9cace5a039104cd95583004a3f58d": {
@@ -850,23 +784,10 @@
         "title": "DoctorReport",
         "type": "object"
       },
-      "Schema4ccf64bc080b1bb6ff78753861401d1f3aa0b9756ecebae5f2a52fc7e53debf5": {
-        "items": {
-          "$ref": "#/components/schemas/Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7"
-        },
-        "maxItems": 64,
-        "minItems": 1,
-        "title": "Component Version Refs",
-        "type": "array"
-      },
       "Schema4cd95db0c20704879ac9bdae7b19e8540a9f557f2f773db900271d011c2aa9ae": {
         "maxLength": 128,
         "minLength": 1,
         "title": "Elevation Id",
-        "type": "string"
-      },
-      "Schema4ce962a64b2810bc91521d55440a1e38eab5e4972bc4bb2c365260593b308248": {
-        "format": "date-time",
         "type": "string"
       },
       "Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83": {
@@ -940,12 +861,6 @@
         "title": "Terms",
         "type": "object"
       },
-      "Schema55e835871d218de38c72f05a336e5c82d677c883fbe485777b8c9a30ade24563": {
-        "maxLength": 512,
-        "minLength": 1,
-        "title": "Agent Ref",
-        "type": "string"
-      },
       "Schema58f3dda18398ba66749ae4fa50093087f8ff8d2faa1d3c738b5287f7761e56ce": {
         "additionalProperties": false,
         "properties": {
@@ -998,40 +913,6 @@
           "agent_id"
         ],
         "title": "AccessCheck",
-        "type": "object"
-      },
-      "Schema65d4fae3cf13b69e2ca1bad1b4eda3537e5470160c82f47b9cbc4310389c3d91": {
-        "additionalProperties": false,
-        "description": "``harness.evolution.adopt``: one engine contrast-decision adoption.\n\n``decision_ref`` names the engine decision record; the adopted\nharness it composes (EG-ORCH-VOCAB-R802) carries the agent, task\nclass, component version references and contrast reference.",
-        "properties": {
-          "adopted_version_ref": {
-            "$ref": "#/components/schemas/Schemadf87b463ccadd853521990cd575a65dc59d458b420c6a70188255092109c7315"
-          },
-          "agent_ref": {
-            "$ref": "#/components/schemas/Schema55e835871d218de38c72f05a336e5c82d677c883fbe485777b8c9a30ade24563"
-          },
-          "component_version_refs": {
-            "$ref": "#/components/schemas/Schema4ccf64bc080b1bb6ff78753861401d1f3aa0b9756ecebae5f2a52fc7e53debf5"
-          },
-          "contrast_ref": {
-            "$ref": "#/components/schemas/Schema1c58c5d4dcb6a4db803313711591aeb940f8ef4f81b5ec868be5089c433bed5e"
-          },
-          "decision_ref": {
-            "$ref": "#/components/schemas/Schemacc930bd04bcaec8edd71a517dc6cda29473ec7d8f9e42bbfb2fd3e3b4c227c6d"
-          },
-          "task_class": {
-            "$ref": "#/components/schemas/Schema23dbbaa323acbe446d9ef6d4163f41d77d21b344dd5bdf6c18026481c0a497e2"
-          }
-        },
-        "required": [
-          "decision_ref",
-          "adopted_version_ref",
-          "agent_ref",
-          "task_class",
-          "component_version_refs",
-          "contrast_ref"
-        ],
-        "title": "HarnessEvolutionAdoptParams",
         "type": "object"
       },
       "Schema65e74a47cb1f443c9d4e6ba3252c1e4e773ee079dfa677835827620f76879501": {
@@ -1185,14 +1066,6 @@
         "additionalProperties": false,
         "properties": {},
         "title": "SwarmTopologyReadParams",
-        "type": "object"
-      },
-      "Schema7430de56393618aa589dad21f7d1a126dffb0489621bb582f9043b5169589af4": {
-        "additionalProperties": {
-          "$ref": "#/components/schemas/Schema80c415b6e27c6ebdf8c60f1b60917cec9ac60695c634197de2c32b96a71b34d9"
-        },
-        "maxProperties": 64,
-        "title": "Trajectory Features",
         "type": "object"
       },
       "Schema747b41258db828a82a58ffba6e56aabddf23c7e871967a322995696f2dc55edb": {
@@ -1373,12 +1246,6 @@
         "title": "SourceTreeParams",
         "type": "object"
       },
-      "Schema7e3e1f8b06794dab350bd39af9bdb0a223b940372491e67fe40e989baf8c5d77": {
-        "maxLength": 512,
-        "minLength": 1,
-        "title": "Component Id",
-        "type": "string"
-      },
       "Schema7f72bf7cfe8ead111c70656a429c4f0d4793524693f91c39c47aa2fcdeef1b08": {
         "additionalProperties": false,
         "properties": {
@@ -1406,22 +1273,6 @@
         "minLength": 1,
         "title": "Server",
         "type": "string"
-      },
-      "Schema80767c9bf25cc835d4fdd8f6725a11bc8eb38dd00805976e7ad8f0bd5ec6e949": {
-        "additionalProperties": false,
-        "properties": {
-          "value": {
-            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
-          }
-        },
-        "required": [
-          "value"
-        ],
-        "title": "LessonRetrievalResult",
-        "type": "object"
-      },
-      "Schema80c415b6e27c6ebdf8c60f1b60917cec9ac60695c634197de2c32b96a71b34d9": {
-        "type": "number"
       },
       "Schema81f9750e985e816e87e369ad37b44d32321db6379bec57de0c850f0de074643f": {
         "additionalProperties": true,
@@ -1485,20 +1336,6 @@
         "default": null,
         "title": "Truncatedalerts"
       },
-      "Schema875cd02066374eeab1dbbae7e1f7fa14b3464a892a6c44897d0f9f28061aa4ff": {
-        "additionalProperties": false,
-        "description": "``harness.evolution.report``: one task's evolution report.",
-        "properties": {
-          "task_ref": {
-            "$ref": "#/components/schemas/Schema2b09ada448f459204659d996efb9b9b116201327a092bef1c989abb0a1891a7a"
-          }
-        },
-        "required": [
-          "task_ref"
-        ],
-        "title": "HarnessEvolutionReportParams",
-        "type": "object"
-      },
       "Schema8786fb046bb05224d1b54c0743e4213aab64e56500a1fa2133b9511de9adb102": {
         "items": {
           "$ref": "#/components/schemas/Definition1ea37e3ece08b56882001f829f80d0f37387ba4d5ca6e012461aca7d1ab9fa08"
@@ -1525,19 +1362,6 @@
         "minimum": 1,
         "title": "Max Pages",
         "type": "integer"
-      },
-      "Schema8927f251eab1eeb213cfcdeea428ce4c4c2bea3357a484acbffde056dac42402": {
-        "additionalProperties": false,
-        "properties": {
-          "value": {
-            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
-          }
-        },
-        "required": [
-          "value"
-        ],
-        "title": "HarnessEvolutionAdoptResult",
-        "type": "object"
       },
       "Schema8c6ee092ab6888335b7e1a23a6d71ebc4af1cde19fbf832d4d6e749fb6f3e2b9": {
         "additionalProperties": true,
@@ -1584,27 +1408,6 @@
           }
         },
         "title": "TenantPage",
-        "type": "object"
-      },
-      "Schema92d439e4bdc199c943c3c282d6b28029b937c2470f93066c873dffc76f9315b5": {
-        "additionalProperties": false,
-        "description": "``harness.lessons.retrieve``: one improvement-library query.",
-        "properties": {
-          "deficiency": {
-            "$ref": "#/components/schemas/Schema11e6fca97b956898244107e31b4939af5b2d16946b905624b14fde4a5d9c049f"
-          },
-          "task_class": {
-            "$ref": "#/components/schemas/Schema23dbbaa323acbe446d9ef6d4163f41d77d21b344dd5bdf6c18026481c0a497e2"
-          },
-          "trajectory_features": {
-            "$ref": "#/components/schemas/Schema7430de56393618aa589dad21f7d1a126dffb0489621bb582f9043b5169589af4"
-          }
-        },
-        "required": [
-          "task_class",
-          "deficiency"
-        ],
-        "title": "HarnessLessonsRetrieveParams",
         "type": "object"
       },
       "Schema92ee39dd91cb175bf744aeeaf20789d996e6f84a97c9b1884383f3309b5d93ba": {
@@ -1864,18 +1667,6 @@
         "title": "MemoryWriteParams",
         "type": "object"
       },
-      "Schemaa0ac1968a43ae5e3c9d5eca645498f4823bfd60390c64f65a21a6301bbc1be2e": {
-        "anyOf": [
-          {
-            "$ref": "#/components/schemas/Schema3b6086ea23eb989c140f6dd4b1b91e3bcbe768d6af40644b45517b2962c80b78"
-          },
-          {
-            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
-          }
-        ],
-        "default": null,
-        "title": "Kind"
-      },
       "Schemaa223f3c5963bf74e09fca8b2439cbc6936927cb90158a63c513a563d04391fba": {
         "additionalProperties": false,
         "properties": {
@@ -1910,18 +1701,6 @@
         "title": "Backend",
         "type": "string"
       },
-      "Schemaa3dfc004188f4f8344eb753b08d40032825db7c8237fd18bfb1bcc5479980874": {
-        "anyOf": [
-          {
-            "$ref": "#/components/schemas/Schema4ce962a64b2810bc91521d55440a1e38eab5e4972bc4bb2c365260593b308248"
-          },
-          {
-            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
-          }
-        ],
-        "default": null,
-        "title": "As Of"
-      },
       "Schemaa40c68b83817c6b07221626e3f15d4ff515bb589633926f33a341d0e87fec93b": {
         "pattern": "^lru$",
         "type": "string"
@@ -1944,23 +1723,6 @@
         ],
         "title": "Scope",
         "type": "string"
-      },
-      "Schemaa88d2c8d63c3bf9b1de87d24808b48c519b55c7a5cd5fc8188ed04e3132d1529": {
-        "additionalProperties": false,
-        "description": "``harness.components.list``: cursor-paged, caller-readable only.",
-        "properties": {
-          "cursor": {
-            "$ref": "#/components/schemas/Schema0d4ecbd4c4810303fec166d7080e355e7b49ee42f03eeb15def2af2a432d40a0"
-          },
-          "kind": {
-            "$ref": "#/components/schemas/Schemaa0ac1968a43ae5e3c9d5eca645498f4823bfd60390c64f65a21a6301bbc1be2e"
-          },
-          "limit": {
-            "$ref": "#/components/schemas/Schemab19b8ba358558a5ae0954297591c93391661cedd7ac627e8aa81bcec9d1c3621"
-          }
-        },
-        "title": "ComponentVersionListParams",
-        "type": "object"
       },
       "Schemaab9c6f751289751cd467757ba716178f3bdac6ac4ea4f500fb3e7060bd045639": {
         "default": [],
@@ -2111,19 +1873,6 @@
         "maxLength": 4000,
         "type": "string"
       },
-      "Schemaba5d44c4e3bc1ed05f8b2dc7bc3e01da44bf318e2c804eb781d86a86ade6a657": {
-        "additionalProperties": false,
-        "properties": {
-          "value": {
-            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
-          }
-        },
-        "required": [
-          "value"
-        ],
-        "title": "ComponentVersionGetResult",
-        "type": "object"
-      },
       "Schemabb7b708c381367f473bd187d93bfb2edbb54bf25f59130dde9c898716df88876": {
         "anyOf": [
           {
@@ -2268,12 +2017,6 @@
         "title": "Mode",
         "type": "string"
       },
-      "Schemacc930bd04bcaec8edd71a517dc6cda29473ec7d8f9e42bbfb2fd3e3b4c227c6d": {
-        "maxLength": 512,
-        "minLength": 1,
-        "title": "Decision Ref",
-        "type": "string"
-      },
       "Schemaccaf437a4d2f3796fc8df7087e95f0521813d43a9f29cea0f760bc425fc1e9aa": {
         "description": "Where the alert went; never the channel credentials.",
         "properties": {
@@ -2316,19 +2059,6 @@
           "$ref": "#/components/schemas/Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7"
         },
         "title": "Value",
-        "type": "object"
-      },
-      "Schemacfb4b9c421c9c415505741a8a2af16a9d9a544d3afe0c10aecdb44adf80fc03c": {
-        "additionalProperties": false,
-        "properties": {
-          "value": {
-            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
-          }
-        },
-        "required": [
-          "value"
-        ],
-        "title": "EvolutionReportResult",
         "type": "object"
       },
       "Schemacfbce84aea566abdb311fb82c555085d95760a65cb9f4a16c8a2cf1ba8cc02d6": {
@@ -2481,12 +2211,6 @@
         "title": "Run Id",
         "type": "string"
       },
-      "Schemadf87b463ccadd853521990cd575a65dc59d458b420c6a70188255092109c7315": {
-        "maxLength": 512,
-        "minLength": 1,
-        "title": "Adopted Version Ref",
-        "type": "string"
-      },
       "Schemadff72b3eabcba53568a4b2baa91f0e8c2048670c2f2d9ad7cd6559b1ad3faa93": {
         "additionalProperties": false,
         "properties": {
@@ -2541,23 +2265,6 @@
       "Schemae2c981fef5e27636eb7789468ab757bf96bc7a09086b15237b992e277a9d7c53": {
         "title": "Grantee",
         "type": "string"
-      },
-      "Schemae2d0f9f791099f2a4d8da736ab4cf53c8b24e583a72c0aa9ebba6f9e11039ff2": {
-        "additionalProperties": false,
-        "description": "``harness.components.get``: one component at an optional instant.",
-        "properties": {
-          "as_of": {
-            "$ref": "#/components/schemas/Schemaa3dfc004188f4f8344eb753b08d40032825db7c8237fd18bfb1bcc5479980874"
-          },
-          "component_id": {
-            "$ref": "#/components/schemas/Schema7e3e1f8b06794dab350bd39af9bdb0a223b940372491e67fe40e989baf8c5d77"
-          }
-        },
-        "required": [
-          "component_id"
-        ],
-        "title": "ComponentVersionGetParams",
-        "type": "object"
       },
       "Schemae5027104f6a9dcd109bf8ed1ae34056cfd824815d788c82abde56b310153d45a": {
         "additionalProperties": false,
@@ -18891,176 +18598,6 @@
         ]
       }
     },
-    "/api/v1/ops/harness.components.get": {
-      "post": {
-        "operationId": "harness.components.get",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Schemae2d0f9f791099f2a4d8da736ab4cf53c8b24e583a72c0aa9ebba6f9e11039ff2"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Schemaba5d44c4e3bc1ed05f8b2dc7bc3e01da44bf318e2c804eb781d86a86ade6a657"
-                }
-              }
-            },
-            "description": "Operation result"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
-          }
-        },
-        "summary": "Read one harness component version at an instant",
-        "tags": [
-          "harness"
-        ]
-      }
-    },
-    "/api/v1/ops/harness.components.list": {
-      "post": {
-        "operationId": "harness.components.list",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Schemaa88d2c8d63c3bf9b1de87d24808b48c519b55c7a5cd5fc8188ed04e3132d1529"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Schema0ab46ba644de533ccec8b1d27b6fcc9f2b4b44b231856f5fe9948a8983ca4b94"
-                }
-              }
-            },
-            "description": "Operation result"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
-          }
-        },
-        "summary": "List the caller's readable harness component versions",
-        "tags": [
-          "harness"
-        ]
-      }
-    },
-    "/api/v1/ops/harness.evolution.adopt": {
-      "post": {
-        "operationId": "harness.evolution.adopt",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Schema65d4fae3cf13b69e2ca1bad1b4eda3537e5470160c82f47b9cbc4310389c3d91"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Schema8927f251eab1eeb213cfcdeea428ce4c4c2bea3357a484acbffde056dac42402"
-                }
-              }
-            },
-            "description": "Operation result"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
-          }
-        },
-        "summary": "Adopt a harness version from an engine contrast decision",
-        "tags": [
-          "harness"
-        ]
-      }
-    },
-    "/api/v1/ops/harness.evolution.report": {
-      "post": {
-        "operationId": "harness.evolution.report",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Schema875cd02066374eeab1dbbae7e1f7fa14b3464a892a6c44897d0f9f28061aa4ff"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Schemacfb4b9c421c9c415505741a8a2af16a9d9a544d3afe0c10aecdb44adf80fc03c"
-                }
-              }
-            },
-            "description": "Operation result"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
-          }
-        },
-        "summary": "Read one task's contrast and adoption decision record",
-        "tags": [
-          "harness"
-        ]
-      }
-    },
-    "/api/v1/ops/harness.lessons.retrieve": {
-      "post": {
-        "operationId": "harness.lessons.retrieve",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Schema92d439e4bdc199c943c3c282d6b28029b937c2470f93066c873dffc76f9315b5"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Schema80767c9bf25cc835d4fdd8f6725a11bc8eb38dd00805976e7ad8f0bd5ec6e949"
-                }
-              }
-            },
-            "description": "Operation result"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
-          }
-        },
-        "summary": "Retrieve ranked improvement lessons for one deficiency",
-        "tags": [
-          "harness"
-        ]
-      }
-    },
     "/api/v1/ops/ingest.jobs.status": {
       "post": {
         "operationId": "ingest.jobs.status",
@@ -20173,5 +19710,5 @@
       }
     }
   },
-  "x-registry-digest": "7066358f44b795e9e216827a30bd809e76980a1db050326e89764614a4aa75af"
+  "x-registry-digest": "27faa04d0cc1cca6fa4581ae6d106f137e0990337c6734e2b5dfbdbd4cc6b71a"
 }

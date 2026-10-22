@@ -14,7 +14,8 @@
     "ARBORA-RELEASE-R003.5",
     "ARBORA-RELEASE-R003.6",
     "ARBORA-RELEASE-R003.7",
-    "ARBORA-RELEASE-R003.8"
+    "ARBORA-RELEASE-R003.8",
+    "ARBORA-RELEASE-R003.9"
   ],
   "requirements": [
     {
@@ -59,7 +60,8 @@
         "ARBORA-RELEASE-R003.5",
         "ARBORA-RELEASE-R003.6",
         "ARBORA-RELEASE-R003.7",
-        "ARBORA-RELEASE-R003.8"
+        "ARBORA-RELEASE-R003.8",
+        "ARBORA-RELEASE-R003.9"
       ]
     },
     {
@@ -121,6 +123,13 @@
     {
       "id": "ARBORA-RELEASE-R003.8",
       "title": "typed-abstention response row",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-RELEASE-R003.9",
+      "title": "Fleet acceptance row",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

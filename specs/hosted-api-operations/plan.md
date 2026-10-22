@@ -768,3 +768,27 @@ and sync requests over EG trees for legacy git tools. Mirror push
 goes to the public git hosting mirrors. The repository-manager
 connector owns mirror sync and the connector mapping. arbora serves
 the underlying `source.*` operations.
+
+## Graph-driven development, context, governance and wire-access operations (R848.4, R852 to R858)
+
+These rows serve engine methods. arbora adds admission, scopes, approvals and tool hints. It
+holds no rule, role table or policy for any of them.
+
+| Row | Operations | Engine owner |
+|---|---|---|
+| R848.4 | `source.edit_symbol` | EG-SCM-R013 |
+| R852 | `harness.optimize`, `harness.promote`, `harness.rollback` | EG-DECISION-ENGINE-R804, R805 |
+| R853 | `defect.*`, `release.record`, `deployment.record`, `spec.status`, `lifecycle.trace` | EG-SDLC-R001 to R006 |
+| R854 | `retrieval.feedback`, `agent.knowledge_scope.set` | EG-FEDERATED-QUERY-R704, R705 |
+| R855 | `glossary.*`, `stewardship.*`, `product.*`, `access_request.*`, `catalog.search` | EG-TYPED-PACKS-R801, R802, R805; EG-UNIFIED-DATA-PLANE-R764 |
+| R856 | `quality.*`, `profile.run`, `lineage.columns` | EG-UNIFIED-DATA-PLANE-R761 to R763 |
+| R857 | SPARQL 1.1 Protocol and Graph Store HTTP Protocol routes | EG-FEDERATED-QUERY-R707 |
+| R858 | `wire_access.grant`, `wire_access.revoke` | EG-ENGINE-PARITY-R007 |
+
+Each new module registers in the curated module loop at `arbora/api/ops/registry_factory.py:52`.
+Each handler calls its generated `eg.*` method. The registry then lists the tool with its
+read-only or destructive hint.
+
+## Served program optimization operations (R860)
+
+The engine compiles programs and holds the champion pointer (EG-DECISION-ENGINE-R810, EG-DECISION-ENGINE-R812). arbora serves three thin operations over them. `program.optimize` submits the job. `program.promote` and `program.rollback` need an approved plan and commit through the engine. arbora holds no score, threshold or verdict.

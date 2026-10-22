@@ -127,3 +127,16 @@ The existing HostStartAdmission accepts the consumer session port directly.
 Controlled owner fixtures check fresh session revocation and reference changes
 before admission returns. They do not qualify create_agent_server or native
 startup. Generated new-metadata decoding remains producer-dependent.
+
+## ARBORA-IDENTITY-R028 acceptance
+
+| Case | Row | Proving test and observation |
+|---|---|---|
+| Model | `ARBORA-IDENTITY-R028.1` | A unit test round-trips the model and reads the actor flag from a fixture manifest. |
+| Behavior | `ARBORA-IDENTITY-R028.2` | Tests cover one exchanged call, one process-credential call and one expired caller token. |
+| Wiring | `ARBORA-IDENTITY-R028.3` | A served test calls an actor-required tool of a fixture connector and observes the bound subject. |
+| Refusal | `ARBORA-IDENTITY-R028.4` | A served test asserts each code and zero child calls. |
+| Evidence | `ARBORA-IDENTITY-R028.5` | A test reads the audit event and asserts the fields and no token. |
+| Hot-path proof | `ARBORA-IDENTITY-R028.6` | `tests/fleet/test_delegated_identity_served.py::test_actor_required_tools_succeed_for_a_user` passes. |
+
+Hot-path proof for `ARBORA-IDENTITY-R028`: `tests/fleet/test_delegated_identity_served.py::test_actor_required_tools_succeed_for_a_user`.

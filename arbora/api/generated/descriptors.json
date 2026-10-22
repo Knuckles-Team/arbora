@@ -5726,66 +5726,6 @@
       "verb": "manage"
     },
     {
-      "domain": "harness",
-      "examples": [
-        "read the current guardrails component version"
-      ],
-      "id": "harness.components.get",
-      "summary": "Read one harness component version at an instant",
-      "tags": [
-        "harness"
-      ],
-      "verb": "find"
-    },
-    {
-      "domain": "harness",
-      "examples": [
-        "what harness component versions can I read"
-      ],
-      "id": "harness.components.list",
-      "summary": "List the caller's readable harness component versions",
-      "tags": [
-        "harness"
-      ],
-      "verb": "find"
-    },
-    {
-      "domain": "harness",
-      "examples": [
-        "adopt this harness version for the task"
-      ],
-      "id": "harness.evolution.adopt",
-      "summary": "Adopt a harness version from an engine contrast decision",
-      "tags": [
-        "harness"
-      ],
-      "verb": "act"
-    },
-    {
-      "domain": "harness",
-      "examples": [
-        "what did the harness evolution decide for this task"
-      ],
-      "id": "harness.evolution.report",
-      "summary": "Read one task's contrast and adoption decision record",
-      "tags": [
-        "harness"
-      ],
-      "verb": "ask"
-    },
-    {
-      "domain": "harness",
-      "examples": [
-        "what lessons improve this kind of task"
-      ],
-      "id": "harness.lessons.retrieve",
-      "summary": "Retrieve ranked improvement lessons for one deficiency",
-      "tags": [
-        "harness"
-      ],
-      "verb": "ask"
-    },
-    {
       "domain": "ingest",
       "examples": [
         "show the status of this ingestion job"
@@ -6210,5 +6150,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "7066358f44b795e9e216827a30bd809e76980a1db050326e89764614a4aa75af"
+  "registry_digest": "27faa04d0cc1cca6fa4581ae6d106f137e0990337c6734e2b5dfbdbd4cc6b71a"
 }

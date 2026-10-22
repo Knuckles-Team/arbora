@@ -143,9 +143,9 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
 
 - `ARBORA-A2A-R002.2.2.1`: retain the single-invocation worker contract tests.
 - `ARBORA-A2A-R002.2.2.2`: exercise native fence transitions and refusal boundaries.
-- [ ] `ARBORA-A2A-R002.2.2.3`: wire the queue consumer and durable request and caller resolvers.
+- [ ] `ARBORA-A2A-R002.2.3`: wire the queue consumer and durable request and caller resolvers.
 - [ ] Prove restart and uncertain-effect reconciliation without repeated execution or premature acknowledgment.
 
-- [x] `ARBORA-A2A-R002.2.2.3.1`: bind canonical request bytes and native WorkItem locators; pass refusal tests and same-store native engine restart reads.
+- [x] `ARBORA-A2A-R002.2.3.1`: bind canonical request bytes and native WorkItem locators; pass refusal tests and same-store native engine restart reads.
 
-- [ ] `ARBORA-A2A-R002.2.2.3.2`: compose and qualify the served queue, original-caller authority recovery and uncertain-effect reconciliation.
+- [ ] `ARBORA-A2A-R002.2.3.2`: compose and qualify the served queue, original-caller authority recovery and uncertain-effect reconciliation.
