@@ -238,6 +238,7 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R067.5:** Refusal. Add the typed refusals.
 - [ ] **ARBORA-OPS-R067.6:** Evidence. Record the trace fields.
 - [ ] **ARBORA-OPS-R067.7:** Hot-path proof. Add the served three-call test.
+- [ ] **ARBORA-OPS-R067.8:** Web-source contract. Call `web_extract` with `{"request": ...}` and read `WebPageResult`/`WebFetchRefusal`.
 
 ## Served harness component and improvement library operations (R068)
 

@@ -50,9 +50,9 @@ from arbora.api.registry import (
 SEARCH_SERVER = "searxng-mcp"
 SEARCH_TOOL = "web_search"
 WEBARCHIVER_SERVER = "webarchiver-mcp"
-WEBARCHIVER_EXTRACT = "web_extract"
+#: The SDK web-source contract tool both backends serve.
+WEB_EXTRACT = "web_extract"
 ARCHIVEBOX_SERVER = "archivebox-mcp"
-ARCHIVEBOX_EXTRACT = "web_extract"
 
 #: The SourceIngest streams pages and chunks are committed under. Each record
 #: is bound to the fleet connector that fetched it, so its mapping reference is
@@ -351,66 +351,55 @@ class FleetCaller:
         )
 
 
-async def fetch_webarchiver(fleet: FleetCaller, hit: SearchHit) -> WebPage:
+async def _fetch_web_source(
+    fleet: FleetCaller, backend: str, server: str, hit: SearchHit
+) -> WebPage:
+    """One page through a connector's SDK web-source contract ``web_extract``.
+
+    The argument is ``{"request": WebFetchRequest}``; the answer is a
+    ``WebPageResult`` (``kind: page``) or a ``WebFetchRefusal`` (``kind:
+    refusal``) of ``agent_connector_sdk.ports.web_source``.
+    """
     try:
-        raw = await fleet.call(
-            WEBARCHIVER_SERVER, WEBARCHIVER_EXTRACT, {"url": hit.url}
-        )
+        raw = await fleet.call(server, WEB_EXTRACT, {"request": {"url": hit.url}})
     except OperationRefused:
         raise
     except Exception as exc:  # noqa: BLE001 - a child that cannot answer is unreachable
-        raise FetchFailed("webarchiver", "unreachable") from exc
+        raise FetchFailed(backend, "unreachable") from exc
     error = _is_error(raw)
-    data = _unwrap(raw)
-    page = data.get("page") if isinstance(data, Mapping) else None
     if error:
-        raise FetchFailed("webarchiver", _reason(error))
-    if not isinstance(page, Mapping) or not page.get("text"):
-        raise FetchFailed("webarchiver", "upstream_failed")
-    return WebPage(
-        url=hit.url,
-        canonical_url=canonical_url(str(page.get("canonical_url") or hit.url)),
-        title=str(page.get("title") or hit.title),
-        text=str(page["text"]),
-        backend="webarchiver",
-        fetched_at=str(data.get("retrieved_at") or _now()),
-        author=str(page.get("author") or ""),
-        published=str(page.get("published") or ""),
-        site_name=str(page.get("site_name") or ""),
-        content_sha256=str(
-            data.get("content_digest") or page.get("content_sha256") or ""
-        ),
-        fetch_mode=str(data.get("fetch_mode") or "http"),
-    )
-
-
-async def fetch_archivebox(fleet: FleetCaller, hit: SearchHit) -> WebPage:
-    try:
-        raw = await fleet.call(ARCHIVEBOX_SERVER, ARCHIVEBOX_EXTRACT, {"url": hit.url})
-    except OperationRefused:
-        raise
-    except Exception as exc:  # noqa: BLE001 - a child that cannot answer is unreachable
-        raise FetchFailed("archivebox", "unreachable") from exc
-    error = _is_error(raw)
+        raise FetchFailed(backend, _reason(error))
     data = _unwrap(raw)
-    text = str(data.get("text") or "") if isinstance(data, Mapping) else ""
-    if error:
-        raise FetchFailed("archivebox", _reason(error))
+    if not isinstance(data, Mapping):
+        raise FetchFailed(backend, "upstream_failed")
+    if data.get("kind") == "refusal":
+        raise FetchFailed(backend, _reason(str(data.get("reason") or "")))
+    text = str(data.get("text_markdown") or "")
     if not text.strip():
-        raise FetchFailed("archivebox", "extract_empty")
+        raise FetchFailed(backend, "extract_empty")
     return WebPage(
         url=hit.url,
-        canonical_url=canonical_url(str(data.get("canonical_url") or hit.url)),
+        canonical_url=canonical_url(
+            str(data.get("canonical_url") or data.get("final_url") or hit.url)
+        ),
         title=str(data.get("title") or hit.title),
         text=text,
-        backend="archivebox",
+        backend=backend,
         fetched_at=str(data.get("retrieved_at") or _now()),
         author=str(data.get("author") or ""),
         published=str(data.get("published_at") or ""),
-        site_name=str(data.get("site_name") or ""),
+        site_name="",
         content_sha256=str(data.get("content_digest") or ""),
-        fetch_mode=str(data.get("extractor") or "archivebox"),
+        fetch_mode=str(data.get("backend") or backend),
     )
+
+
+async def fetch_webarchiver(fleet: FleetCaller, hit: SearchHit) -> WebPage:
+    return await _fetch_web_source(fleet, "webarchiver", WEBARCHIVER_SERVER, hit)
+
+
+async def fetch_archivebox(fleet: FleetCaller, hit: SearchHit) -> WebPage:
+    return await _fetch_web_source(fleet, "archivebox", ARCHIVEBOX_SERVER, hit)
 
 
 async def fetch_page(

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from types import SimpleNamespace
 from typing import Any
 
@@ -61,35 +62,29 @@ class FakeFleet:
                     {"url": "https://d.example/pdb", "title": "D", "engine": "brave"},
                 ]
             }
-        if server == research.WEBARCHIVER_SERVER:
-            if arguments["url"] in self.webarchiver_fails:
-                return {
-                    "isError": True,
-                    "content": f"{self.reason}: {arguments['url']}",
-                }
+        if server in (research.WEBARCHIVER_SERVER, research.ARCHIVEBOX_SERVER):
+            url = arguments["request"]["url"]
+            backend = (
+                "webarchiver" if server == research.WEBARCHIVER_SERVER else "archivebox"
+            )
+            if backend == "webarchiver" and url in self.webarchiver_fails:
+                return {"kind": "refusal", "reason": self.reason, "detail": url}
             return {
-                "backend": "webarchiver",
-                "fetch_mode": "http",
-                "retrieved_at": "2026-10-18T00:00:00+00:00",
-                "page": {
-                    "title": f"Title of {arguments['url']}",
-                    "canonical_url": arguments["url"],
-                    "text": ARTICLE + arguments["url"],
-                    "author": "Ada",
-                    "content_sha256": "",
-                },
-            }
-        if tool == research.ARCHIVEBOX_EXTRACT:
-            return {
-                "backend": "archivebox",
-                "url": arguments["url"],
-                "canonical_url": arguments["url"],
-                "title": f"Title of {arguments['url']}",
+                "kind": "page",
+                "url": url,
+                "canonical_url": url,
+                "final_url": url,
+                "status": 200,
+                "content_type": "text/html",
+                "byte_count": len(ARTICLE),
+                "content_digest": hashlib.sha256(url.encode()).hexdigest(),
+                "retrieved_at": "2026-10-18T00:00:00+00:00"
+                if backend == "webarchiver"
+                else "2026-10-18T00:00:01+00:00",
+                "title": f"Title of {url}",
                 "author": "Ada",
-                "text": ARTICLE + arguments["url"],
-                "retrieved_at": "2026-10-18T00:00:01+00:00",
-                "snapshot_id": "snap-1",
-                "extractor": "readability",
+                "text_markdown": ARTICLE + url,
+                "backend": backend,
             }
         raise AssertionError((server, tool))
 

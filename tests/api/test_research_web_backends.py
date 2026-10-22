@@ -64,7 +64,11 @@ async def test_forced_fallback_run() -> None:
     assert second["backend"] == "webarchiver"
     assert fallback["fallbacks"] == 1
     assert _without_backend(fallback) == _without_backend(primary)
-    retried = [a["url"] for s, _t, a in fleet.calls if s == research.ARCHIVEBOX_SERVER]
+    retried = [
+        a["request"]["url"]
+        for s, _t, a in fleet.calls
+        if s == research.ARCHIVEBOX_SERVER
+    ]
     assert retried == [FIRST]
 
 
@@ -126,3 +130,18 @@ async def test_caller_urls_skip_the_search() -> None:
         research.ResearchWebParams()
     with pytest.raises(ValueError):
         research.ResearchWebParams(query="q", max_pages=33)
+
+
+@pytest.mark.spec("ARBORA-OPS-R067.8")
+async def test_backends_use_the_sdk_web_source_contract() -> None:
+    fleet = FakeFleet(webarchiver_fails={FIRST}, reason="upstream_failed")
+    value, _ = await _run(fleet, max_pages=2)
+    assert value["documents"]
+    fetches = [(s, a) for s, t, a in fleet.calls if t == research.WEB_EXTRACT]
+    assert fetches and all(
+        set(a) == {"request"} and a["request"]["url"] for _s, a in fetches
+    )
+    assert {s for s, _a in fetches} == {
+        research.WEBARCHIVER_SERVER,
+        research.ARCHIVEBOX_SERVER,
+    }

@@ -44,7 +44,11 @@ async def test_research_web_selects_fetches_ingests_and_cites() -> None:
     assert props["search_engine"] == "duckduckgo" and props["backend"] == "webarchiver"
     assert len(embedder.chunks) == sum(d["chunks"] for d in docs)
     # The duplicate canonical URL and the ftp result were never fetched.
-    fetched = [a["url"] for s, _t, a in fleet.calls if s == research.WEBARCHIVER_SERVER]
+    fetched = [
+        a["request"]["url"]
+        for s, _t, a in fleet.calls
+        if s == research.WEBARCHIVER_SERVER
+    ]
     assert fetched == [
         "https://a.example/pdb?utm_source=x",
         "https://b.example/pdb",
