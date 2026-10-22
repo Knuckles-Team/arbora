@@ -917,7 +917,7 @@
       "title": "Non-blocking `message/send`",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "3cbb61dc1fbc"
+        "03988c246133"
       ],
       "verified_by": [
         "tests/a2a/test_nonblocking_send.py:106",
