@@ -603,9 +603,9 @@
       "title": "Typed operations cover agents, browser and fleet calls",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "16f10e29c831",
         "68e31b75248a",
-        "e1d37ca10ef7"
+        "e1d37ca10ef7",
+        "fdd59af317ce"
       ],
       "verified_by": [
         "tests/fleet/test_child_failure_classification.py:17",
@@ -620,7 +620,7 @@
       "title": "Arbora classifies a failed `fleet.call` by its real cause",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "16f10e29c831"
+        "fdd59af317ce"
       ],
       "verified_by": [
         "tests/fleet/test_child_failure_classification.py:17",
