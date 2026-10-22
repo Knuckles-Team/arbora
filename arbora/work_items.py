@@ -16,6 +16,8 @@ import time
 from collections.abc import Mapping
 from typing import Any
 
+from arbora.security.anonymous import session_context
+
 #: The engine's spec row that owns durable WorkItem transitions.
 SPEC_ROW = "EG-INGEST-WORKER-R605"
 
@@ -86,6 +88,7 @@ def _typed_request_context(
 
     return _request_context(
         {
+            "auth_mode": claims.get("auth_mode", "authenticated"),
             "agent_id": claims.get("agent_id") or claims.get("principal"),
             "principal": claims.get("principal"),
             "tenant": claims.get("tenant") or getattr(session, "tenant", ""),
@@ -129,7 +132,7 @@ def submit_work_item_atomic(
     }
     body = {**{k: v for k, v in labels.items() if v}, **dict(metadata or {})}
     command_digest = _key(tenant_id, kind, work_item_id, payload_ref, body)
-    claims = dict(session.engine_verified_context())
+    claims = dict(session_context(session))
     context = _typed_request_context(claims, session, idempotency_key)
     # EG refuses empty digests (``SubmitWorkItem.policy_digest must be a
     # non-empty trimmed string``): bind the policy version, the command and

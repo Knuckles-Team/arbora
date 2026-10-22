@@ -8,6 +8,8 @@ import logging
 from collections.abc import Callable, Iterator, Mapping
 from typing import TYPE_CHECKING, Any
 
+from arbora.security.anonymous import session_context
+
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
@@ -28,29 +30,33 @@ def caller_from_session(
     Credential kind is supplied by that authority, never inferred from actor kind.
     """
     from arbora.api.invoke import VerifiedCaller
+    from arbora.api.invoke.steps import AnonymousCaller
+    from arbora.security.anonymous import admitted_actor
 
     _require_session_ports(session, credential_kind)
     session.ensure_authority_current()
     actor = session.actor
     actor.ensure_credential_current()
     principal_kind = _PRINCIPAL_KINDS.get(str(actor.actor_type or ""))
-    if actor.authenticated is not True or principal_kind is None:
+    anonymous = admitted_actor(actor)
+    if (actor.authenticated is not True and not anonymous) or principal_kind is None:
         raise PermissionError("Verified principal kind required")
-    claims = session.engine_verified_context()
+    claims = session_context(session)
     scopes = session.scopes
     if not _scopes_valid(scopes, claims) or not _claims_match(claims, session, actor):
         raise PermissionError("Verified session authority mismatch")
     if mfa_at_ms is not None and type(mfa_at_ms) is not int:
         raise PermissionError("Verified step-up authority required")
-    return VerifiedCaller(
+    caller_type = AnonymousCaller if anonymous else VerifiedCaller
+    return caller_type(
         principal=actor.actor_id,
         tenant=session.tenant,
         effective_scopes=frozenset(scopes),
         engine_claims=claims,
         principal_kind=principal_kind,
-        authenticated=True,
+        authenticated=not anonymous,
         delegated=bool(claims["delegation"]),
-        credential_kind=credential_kind,
+        credential_kind="none" if anonymous else credential_kind,
         policy_revision=session.policy_version,
         request_id=request_id,
         mfa_at_ms=mfa_at_ms,
@@ -63,6 +69,7 @@ def caller_from_session(
 #: (``arbora.security.request_identity``); it is a service principal. Any other
 #: kind is never inferred and refuses.
 _PRINCIPAL_KINDS: dict[str, str] = {
+    "anonymous": "anonymous",
     "human": "human",
     "service": "service",
     "automated_service": "service",

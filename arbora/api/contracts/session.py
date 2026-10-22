@@ -154,10 +154,19 @@ class GraphSession:
         actor_id = str(getattr(self.actor, "actor_id", "") or "").strip()
         actor_tenant = str(getattr(self.actor, "tenant_id", "") or "").strip()
         tenant = str(self.tenant or "").strip()
-        if not getattr(self.actor, "authenticated", False) or not actor_id:
+        from arbora.security.anonymous import admitted_actor
+
+        if (
+            not getattr(self.actor, "authenticated", False)
+            and not admitted_actor(self.actor)
+        ) or not actor_id:
             raise SessionRequiredError(
                 "GraphSession authority must be minted from verified identity"
             )
+        if admitted_actor(self.actor):
+            from arbora.security.anonymous import validate_session
+
+            validate_session(self)
         if not tenant or not actor_tenant or tenant != actor_tenant:
             raise SessionRequiredError(
                 "GraphSession requires one verified, matching tenant authority"
@@ -368,6 +377,13 @@ class GraphSession:
         OAuth renewal before a new stdio tool call begins.
         """
         import time
+
+        from arbora.security.anonymous import admitted_actor
+
+        if self.actor.authority_mode == "none" and not admitted_actor(self.actor):
+            raise SessionExpiredError(
+                "Anonymous deployment authority is no longer active"
+            )
 
         try:
             self.actor.ensure_credential_current()

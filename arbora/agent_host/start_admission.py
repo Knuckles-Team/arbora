@@ -14,6 +14,7 @@ from arbora.agent_host.start_configuration import (
     HostStartConfiguration,
 )
 from arbora.identity.ports import SessionAuthority, SessionState
+from arbora.security.anonymous import session_context
 
 if TYPE_CHECKING:
     from arbora.api.contracts.session import GraphSession
@@ -161,7 +162,7 @@ class HostStartAdmission:
         self._check_credential(credential)
         if not isinstance(graph_session, GraphSession):
             raise PermissionError("workspace_denied")
-        graph_session.engine_verified_context()
+        session_context(graph_session)
         state = await self._sessions.resolve_session(credential)
         self._check_configuration(request, configuration, runtime)
         if not isinstance(state, SessionState) or state.expires_at_ms <= int(
@@ -187,7 +188,7 @@ class HostStartAdmission:
         )
         if not binding.same_binding(final_binding):
             raise PermissionError("workspace_denied")
-        claims = graph_session.engine_verified_context()
+        claims = session_context(graph_session)
         if any(
             claims.get(key) != state.resolution.request_context[key]
             for key in ("principal", "tenant", "audience", "policy_version")

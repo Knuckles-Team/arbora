@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any
 
 from arbora.api.errors import FleetRefusal, fleet_detail
 from arbora.api.registry import Confirm, Effect, Executor, PrincipalRule
+from arbora.security.anonymous import admitted_actor
 
 if TYPE_CHECKING:
     from arbora.api.invoke import FleetCallDecision
@@ -257,7 +258,7 @@ def oauth_delegated_call_for_mux(mux: Any) -> DelegatedCall:
             raise PermissionError("verified delegated session is required")
         actor = session.actor
         if (
-            actor.authenticated is not True
+            (actor.authenticated is not True and not admitted_actor(actor))
             or str(actor.actor_id) != caller.principal
             or str(actor.tenant_id) != caller.tenant
         ):

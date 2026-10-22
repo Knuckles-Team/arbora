@@ -12,6 +12,8 @@ from collections.abc import AsyncIterator
 from dataclasses import replace
 from typing import Any, cast
 
+from arbora.security.anonymous import session_context
+
 logger = logging.getLogger(__name__)
 
 # Bound by ``runtime`` after this module's definitions load. Keeping the host
@@ -67,6 +69,8 @@ def _mint_process_session(transport: str) -> Any:
     header.
     """
     from arbora.core.settings import runtime_config as config
+    from arbora.security.anonymous import enabled
+    from arbora.security.anonymous import session as anonymous_session
     from arbora.security.request_identity import (
         acquire_process_identity_token,
         local_process_authority_enabled,
@@ -74,6 +78,9 @@ def _mint_process_session(transport: str) -> Any:
         mint_graph_session,
         mint_local_process_session,
     )
+
+    if enabled():
+        return anonymous_session()
 
     if transport == "stdio" and local_process_authority_enabled(config):
         session = mint_local_process_session()
@@ -90,7 +97,7 @@ def _mint_process_session(transport: str) -> Any:
             credential_lease=CredentialLease(int(expires_at)),
         )
         session = mint_graph_session(actor)
-    session.engine_verified_context()
+    session_context(session)
     logger.info("Verified graph process authority minted")
     return session
 

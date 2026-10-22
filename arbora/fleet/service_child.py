@@ -14,6 +14,9 @@ from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, replace
 from typing import Any, Protocol
 
+from arbora.api.invoke.steps import surface_caller_admitted
+from arbora.security.anonymous import admitted_actor
+
 logger = logging.getLogger(__name__)
 
 
@@ -318,13 +321,13 @@ class ServiceChildAdapter:
     @staticmethod
     def _verify_caller(caller: Any, owner_ref: str) -> None:
         session = caller.session
-        if not caller.authenticated or session is None:
+        if not surface_caller_admitted(caller) or session is None:
             raise PermissionError("verified caller session is required")
         session.ensure_authority_current()
         actor = session.actor
         actor.ensure_credential_current()
         if (
-            actor.authenticated is not True
+            (actor.authenticated is not True and not admitted_actor(actor))
             or str(actor.actor_id) != caller.principal
             or str(actor.tenant_id) != caller.tenant
             or str(session.tenant) != caller.tenant

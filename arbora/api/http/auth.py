@@ -82,6 +82,11 @@ class AmbientHTTPAuthenticator:
 
     def _credential_kind(self, request: Request) -> str:
         """Classify the presented credential; refuse ambiguous or malformed ones."""
+        from arbora.security.anonymous import enabled, validate_request
+
+        if enabled():
+            validate_request(request.scope)
+            return "none"
         state = request.scope.get("state") or {}
         cookie = request.cookies.get("__Host-arbora_session")
         admitted = state.get("arbora_session_admitted") is True
@@ -135,6 +140,12 @@ async def verified_bearer_session_for_request(request: Request) -> GraphSession:
     Each resolution verifies the presented credential afresh. Ambient sessions
     and request-state claims cannot establish authority for this request.
     """
+    from arbora.security.anonymous import enabled, validate_request
+    from arbora.security.anonymous import session as anonymous_session
+
+    if enabled():
+        validate_request(request.scope)
+        return anonymous_session()
     scope = request.scope
     headers = tuple(scope.get("headers", ()))
     try:

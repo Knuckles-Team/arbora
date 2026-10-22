@@ -38,6 +38,7 @@ from arbora.api.contracts.agent_control_contracts import (
     WorkItemSubmissionResult,
 )
 from arbora.api.contracts.session import GraphSession, resolve_session
+from arbora.security.anonymous import client_scope, session_context
 from arbora.security.error_surface import public_error_payload
 
 type _RequiredScope = Literal["kg:read", "kg:write"]
@@ -137,7 +138,7 @@ class AgentControlPlane:
         self._signed_dispatch = signed_dispatch
         # Validate eagerly so invalid or expired authority never creates a usable
         # control plane. It is checked again immediately before every call.
-        session.engine_verified_context()
+        session_context(session)
 
     @property
     def operation_descriptors(self) -> tuple[AgentOperationDescriptor, ...]:
@@ -202,13 +203,13 @@ class AgentControlPlane:
         self, required_scope: Literal["kg:read", "kg:write"] | None
     ) -> GraphSession:
         session = resolve_session(self._session, required_scope=required_scope)
-        session.engine_verified_context()
+        session_context(session)
         return session
 
     @contextmanager
     def _verified_client_context(self, session: GraphSession) -> Iterator[None]:
-        claims = session.engine_verified_context()
-        with self._eg_client.use_verified_context(claims):
+        claims = session_context(session)
+        with client_scope(self._eg_client, claims):
             yield
 
     @staticmethod

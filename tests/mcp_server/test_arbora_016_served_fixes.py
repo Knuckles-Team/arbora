@@ -131,3 +131,35 @@ def test_an_unscoped_empty_query_still_needs_browse() -> None:
         asyncio.run(_catalog().search(_CALLER, query=""))
     listed = asyncio.run(_catalog().search(_CALLER, query="", browse=True))
     assert len(listed["items"]) == 2
+
+
+@pytest.mark.spec("ARBORA-A2A-R009.1")
+def test_served_cypher_uses_public_row_decoder(monkeypatch) -> None:
+    """Native rows are MessagePack blobs, not already named dictionaries."""
+    import msgpack
+    from epistemic_graph.client import QueryClient
+
+    from arbora.mcp_server import served_engine as served
+
+    calls = []
+
+    class Client:
+        graph_name = "tenant__local"
+
+        async def _send(self, method, params, graph=None, **kwargs):
+            calls.append((method, params, graph))
+            return {
+                "columns": ["payload"],
+                "rows": [msgpack.packb(['{"reply":"durable"}'], use_bin_type=True)],
+            }
+
+    view = SimpleNamespace(query=QueryClient(Client()))
+    engine = served.ServedEngine.__new__(served.ServedEngine)
+    monkeypatch.setattr(engine, "_session_client", lambda: view, raising=False)
+    assert engine.query_cypher(
+        "MATCH (e) WHERE e.run_id = $run_id RETURN e.payload AS payload",
+        {"run_id": "a2a-proof"},
+    ) == [{"payload": '{"reply":"durable"}'}]
+    assert len(calls) == 1
+    assert calls[0][1]["mode"] == "read"
+    assert "a2a-proof" in calls[0][1]["query"]

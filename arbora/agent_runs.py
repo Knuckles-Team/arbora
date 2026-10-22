@@ -35,8 +35,14 @@ from arbora.api.contracts.session import GraphSession
 
 logger = logging.getLogger(__name__)
 
+# Whole JSON, including escaping and metadata; independent of A2A's text bound.
+MAX_RUN_EVENT_PAYLOAD_BYTES = 1_048_576
+RUN_EVENT_PAYLOAD_ERROR_SCHEMA = "arbora-run-event-payload-error-v1"
+
 __all__ = [
     "AgentRunPort",
+    "MAX_RUN_EVENT_PAYLOAD_BYTES",
+    "RUN_EVENT_PAYLOAD_ERROR_SCHEMA",
     "bind_run_ports",
     "decide_run",
     "record_run_event",
@@ -153,16 +159,59 @@ def record_run_event(event: Mapping[str, Any]) -> None:
     an engine with only the typed-batch seam or ``add_node`` uses that. A failed write is logged, never raised:
     a run does not fail because its trace could not be stored.
     """
+    run_id = event.get("run_id")
+    event_type = event.get("type")
+    step = event.get("step", 0)
+    if not (
+        isinstance(run_id, str)
+        and 0 < len(run_id) <= 512
+        and isinstance(event_type, str)
+        and 0 < len(event_type) <= 64
+        and type(step) is int
+        and 0 <= step <= 2**63 - 1
+    ):
+        logger.warning("run event not persisted: invalid event identity")
+        return
+    payload_error = None
+    try:
+        payload = json.dumps(
+            dict(event), sort_keys=True, default=str, ensure_ascii=True, allow_nan=False
+        )
+    except Exception:  # noqa: BLE001 - retain the event identity when its body fails
+        payload_error = "payload_serialization_failed"
+    else:
+        if len(payload) > MAX_RUN_EVENT_PAYLOAD_BYTES:
+            # ensure_ascii=True makes every character exactly one UTF-8 byte.
+            payload_error = "payload_too_large"
+    if payload_error is not None:
+        marker = {
+            "schema": RUN_EVENT_PAYLOAD_ERROR_SCHEMA,
+            "run_id": run_id,
+            "type": event_type,
+            "step": step,
+            "payload_error": {
+                "code": payload_error,
+                "max_bytes": MAX_RUN_EVENT_PAYLOAD_BYTES,
+            },
+        }
+        status = event.get("status")
+        if isinstance(status, str) and status in (
+            "completed",
+            "stopped",
+            "failed",
+            "running",
+        ):
+            marker["status"] = status
+        payload = json.dumps(marker, sort_keys=True, ensure_ascii=True)
+        logger.warning("run event body unavailable: %s", payload_error)
     engine = _engine()
-    run_id = str(event.get("run_id") or "")
     node_id = f"runevent:{run_id}:{uuid.uuid4().hex}"
     properties = {
         "run_id": run_id,
-        # An A2A run takes its task id as its run id.
         "task_id": run_id,
-        "event_type": str(event.get("type") or ""),
-        "step": int(event.get("step") or 0),
-        "payload": json.dumps(dict(event), sort_keys=True, default=str)[:65_536],
+        "event_type": event_type,
+        "step": step,
+        "payload": payload,
     }
     batch = getattr(engine, "batch_typed_mutations", None)
     create_node = getattr(engine, "create_node", None)

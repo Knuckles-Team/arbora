@@ -12,10 +12,13 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import inspect
 import threading
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass, replace
 from typing import Any, Protocol, Self
+
+from arbora.security.anonymous import client_scope
 
 PLACEMENT_READ_SCOPE = "cluster:placement-read"
 TOPOLOGY_READ_SCOPE = "cluster:topology-read"
@@ -24,6 +27,12 @@ SERVICE_CONTROL_SCOPE = "service:control"
 
 class AuthorityError(PermissionError):
     """Verified actor authority is absent, inconsistent, or insufficient."""
+
+
+class AnonymousClientUnavailableError(RuntimeError):
+    """The selected provider cannot represent explicit anonymous transport."""
+
+    code = "anonymous_client_upgrade_required"
 
 
 class TenantGraphBindingError(AuthorityError):
@@ -94,6 +103,7 @@ class ClientContext:
     delegation: tuple[str, ...] = ()
     priority: str | None = None
     oidc_token: str | None = None
+    auth_mode: str = "authenticated"
 
     def __post_init__(self) -> None:
         for name in ("principal", "tenant", "audience", "agent_id", "policy_version"):
@@ -141,7 +151,10 @@ class ClientContext:
         freshness is checked before any claims are detached from the actor.
         """
 
-        if not getattr(actor, "authenticated", False):
+        from arbora.security.anonymous import admitted_actor
+
+        anonymous = admitted_actor(actor)
+        if not getattr(actor, "authenticated", False) and not anonymous:
             raise AuthorityError(
                 "actor authority was not minted from verified identity"
             )
@@ -158,6 +171,7 @@ class ClientContext:
             )
         effective_agent = agent_id or principal
         return cls(
+            auth_mode="none" if anonymous else "authenticated",
             principal=principal,
             tenant=requested_tenant,
             audience=audience,
@@ -197,6 +211,8 @@ class ClientContext:
             "policy_version": self.policy_version,
             "delegation": list(self.delegation),
         }
+        if self.auth_mode == "none":
+            claims["auth_mode"] = "none"
         if self.priority is not None:
             claims["priority"] = self.priority
         if self.oidc_token is not None:
@@ -293,6 +309,21 @@ class EpistemicClientPool:
             raise ValueError(
                 "graph_name and verified_context are owned by EpistemicClientPool"
             )
+        from arbora.security.anonymous import enabled
+
+        self._auth_mode = "none" if enabled() else "authenticated"
+        if self._auth_mode == "none":
+            parameters = inspect.signature(connect).parameters.values()
+            if not any(
+                parameter.name == "auth_mode"
+                or parameter.kind == inspect.Parameter.VAR_KEYWORD
+                for parameter in parameters
+            ):
+                raise AnonymousClientUnavailableError(
+                    "Explicit anonymous serving requires an epistemic-graph client "
+                    "with connect(auth_mode='none') support; upgrade the matching "
+                    "client and server before selecting ARBORA_AUTH_MODE=none"
+                )
         self._connect = connect
         self._connect_kwargs = dict(connect_kwargs)
         self._clients: dict[str, EpistemicClient] = {}
@@ -310,6 +341,8 @@ class EpistemicClientPool:
         return len(self._clients)
 
     async def _client_for(self, context: ClientContext, graph: str) -> EpistemicClient:
+        if context.auth_mode != self._auth_mode:
+            raise AuthorityError("Client pool authentication mode mismatch")
         target = _non_empty("graph", graph)
         loop = asyncio.get_running_loop()
         with self._lock:
@@ -317,10 +350,13 @@ class EpistemicClientPool:
             existing = self._clients.get(target)
             if existing is not None and self._client_loops.get(target) is loop:
                 return existing
+        authority = (
+            {"auth_mode": "none"}
+            if self._auth_mode == "none"
+            else {"verified_context": context.to_claims()}
+        )
         client = await self._connect(
-            graph_name=target,
-            verified_context=context.to_claims(),
-            **self._connect_kwargs,
+            graph_name=target, **authority, **self._connect_kwargs
         )
         surplus: EpistemicClient | None = None
         refusal: Exception | None = None
@@ -380,7 +416,7 @@ class EpistemicClientPool:
         if required_scope is not None:
             context.require_scope(required_scope)
         client = await self._client_for(context, graph)
-        manager = client.use_verified_context(context.to_claims())
+        manager = client_scope(client, context.to_claims())
         with manager:
             yield client
 

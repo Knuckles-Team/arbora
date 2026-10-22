@@ -89,6 +89,17 @@ class FakeEngine:
         self.events.extend(mutations)
         return True
 
+    def query_cypher(self, query: str, params: dict[str, Any]) -> list[Any]:
+        assert "MATCH (e) WHERE e.type = 'RunEvent'" in query
+        return [
+            {"payload": event["properties"]["payload"]}
+            for event in self.events
+            if event["node_type"] == "RunEvent"
+            and event["properties"]["run_id"] == params["run_id"]
+            and event["properties"]["task_id"] == params["run_id"]
+            and event["properties"]["event_type"] == params["event_type"]
+        ][:2]
+
 
 class ServedRuntime(FixtureRuntime):
     """The fixture identity runtime with the production composite dispatch."""

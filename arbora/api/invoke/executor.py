@@ -22,6 +22,7 @@ from arbora.api.invoke.steps import (
     freeze_claims,
 )
 from arbora.api.registry import Executor, SubjectSource
+from arbora.security.anonymous import client_scope
 
 _logger = logging.getLogger(__name__)
 
@@ -247,7 +248,7 @@ class BoundOperationRuntime:
     @asynccontextmanager
     async def as_caller(self, caller: VerifiedCaller) -> AsyncIterator[Any]:
         client = await self._caller_client(caller.tenant)
-        with client.use_verified_context(claim_values(caller.engine_claims)):
+        with client_scope(client, claim_values(caller.engine_claims)):
             yield client
 
     @asynccontextmanager
@@ -266,7 +267,7 @@ class BoundOperationRuntime:
         ):
             raise PermissionError("verified arbora service authority is unavailable")
         client = await self._service_client(tenant)
-        with client.use_verified_context(claim_values(claims)):
+        with client_scope(client, claim_values(claims)):
             yield client
 
     async def check_subject_access(self, caller: VerifiedCaller, subject: str) -> bool:

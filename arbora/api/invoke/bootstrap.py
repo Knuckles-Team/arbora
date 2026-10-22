@@ -37,6 +37,7 @@ from arbora.api.invoke.steps import (
 from arbora.api.policy.eunomia import PolicyGate
 from arbora.api.registry import EgMethod, Registry
 from arbora.epistemic import ClientContext, EpistemicClientPool, VerifiedActor
+from arbora.security.anonymous import admitted_actor, session_context
 
 __all__ = [
     "SessionRequiredError",
@@ -102,7 +103,7 @@ async def verify_current_from_session(caller: VerifiedCaller) -> VerifiedCaller:
     actor = session.actor
     if actor.actor_id != caller.principal or session.tenant != caller.tenant:
         raise SessionRequiredError("verified session no longer matches this caller")
-    claims = session.engine_verified_context()
+    claims = session_context(session)
     return replace(caller, engine_claims=freeze_claims(claims))
 
 
@@ -176,7 +177,7 @@ async def _caller_dispatch_graph(context: ExecutionContext) -> str:
         raise OperationRefused("UNAUTHENTICATED") from None
     if (
         current != caller
-        or actor.authenticated is not True
+        or (actor.authenticated is not True and not admitted_actor(actor))
         or actor.tenant_id != caller.tenant
     ):
         raise OperationRefused("UNAUTHENTICATED")

@@ -290,3 +290,20 @@ Human action approvals remain separate, single-use and nonrenewable.
 Some connector tools act for a user, not for the platform. The fleet acceptance run of 2026-10-18 showed `keycloak-mcp` and `vector-mcp` refuse such calls with `IdentityRequiredError`. Arbora called them with its process credential only.
 
 R028 adds a delegated identity. The SDK marks each actor-required tool (SDK-CONNECTOR-CONTROL-R902). Arbora exchanges the verified caller token for an audience-bound token by RFC 8693 token exchange. The child binds that actor through the SDK transport. A call with no user caller refuses before any connector call.
+### 2026-10-22 amendment: true tokenless local mode (R004.1)
+
+R004.1 supersedes the earlier planned bootstrap-JWT behavior specifically for
+explicit local `none`: no login, signer, HMAC secret, or credential is generated.
+The boundary records anonymous provenance and uses EG's explicit anonymous
+transport. Scope projection is local mode policy, never evidence of verified
+identity. Authentication remains the default. Human/MFA approval requirements
+are not satisfied by anonymous access. This mode supplies no public-network
+exposure override. EG owns the corresponding native transport/store isolation.
+
+Anonymous runtime contract:
+- `ARBORA_AUTH_MODE=none` is an explicit process-start selection; `external` remains the default. Pair it with transport `--auth-type none` and a literal loopback bind. Mode cannot change through settings reload.
+- Local requests receive the fixed `anonymous` principal in tenant `local`, `authenticated=False`, no roles, no delegation, and no MFA. Local-instance operation scopes exclude approver scopes. Human-only and service-only operation rules continue to refuse this caller.
+- Anonymous graph sessions expose descriptive request metadata separately; `engine_verified_context()` still rejects unauthenticated actors. A mode-captured pool uses EG's explicit `auth_mode='none'` connection and never invokes a verified-context carrier.
+- HTTP peer and Host must be local. Origin, Cookie, Authorization, credential configuration, and reverse-proxy configuration are rejected rather than ignored. Startup logs an unsecured-mode warning and HTTP responses identify `X-Arbora-Auth-Mode: none`.
+- Operation-policy admission accepts only the fully validated anonymous caller variant in explicit local mode. Exact scopes and principal-kind requirements still apply. An enabled embedded or remote policy decision can narrow or refuse anonymous operations and is never bypassed.
+- The backing EG must use its own explicit anonymous mode and a fresh, mode-marked local store. This is not a mechanism to open an existing authenticated store. Plan, policy, effect journaling, schema admission, and approval workflows remain enforced.

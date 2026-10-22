@@ -18,6 +18,7 @@ from arbora.gateway.enhanced_catalog_api import (
     WorkflowCatalogReadPort,
     configure_enhanced_catalog,
 )
+from arbora.security.anonymous import session_context
 from arbora.semantic_content import (
     required_content_connectors,
     verify_semantic_content,
@@ -77,7 +78,7 @@ def _use_process_session(session: Any) -> AbstractContextManager[object]:
 
 
 def _read_context(session: Any) -> ReadContext:
-    claims = session.engine_verified_context()
+    claims = session_context(session)
     return ReadContext(
         tenant_id=str(claims["tenant"]),
         principal_id=str(claims["principal"]),

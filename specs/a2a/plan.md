@@ -511,3 +511,35 @@ return JSON-RPC -32014 with HTTP 503 and no producer error details. This fixes
 identity continuity only: historical
 messages, model memory and streaming remain subject to the parent acceptance.
 No additional context store, cache or event log is introduced.
+
+### 2026-10-22: baseline native task reads
+
+Under ARBORA-A2A-R001, unary listing uses the native tenant-scoped
+`work_items.list` caller view, filtering the A2A schema and owner in metadata.
+Its continuation remains opaque and is bound to the requesting tenant and owner.
+Empty bounded pages may still carry a continuation. Do not query obsolete
+WorkItem graph-node or `created_by` projections. Recheck the caller after reads.
+This is baseline A2A behavior in every authentication mode.
+
+Unary reply recovery first verifies native WorkItem ownership. It then reads
+the existing persisted `RunEvent` terminal payload through the caller's
+graph-authorized query client. Match the persisted `type=RunEvent` property emitted by
+`create_node`, not a graph label that the writer does not set. Missing events mean no artifact; malformed, conflicting,
+or cross-run payloads refuse. The process-local reply cache is not durable
+proof. This point read adds neither a fabricated terminal receipt nor streaming,
+transition history, or an independent task/output store. Native restart acceptance
+must exercise the actual producer; scripted tests alone do not qualify it.
+
+Terminal reply reads share the producer's 1 MiB encoded JSON bound while retaining
+A2ATextPart's independent 65,536-character reply bound. Maximum valid replies,
+including astral Unicode and control characters, are preserved whole. Oversized
+replies are not silently truncated in immediate or durable projections; malformed
+legacy payloads still refuse. Missing events supply no artifact and
+never replace the native WorkItem's authoritative status.
+
+`tasks/get` exposes the payload-error representation as typed `metadata.arbora.reply`
+with `status: unavailable` and reason `payload_too_large` or `payload_serialization_failed`.
+It returns no artifacts and retains the native WorkItem status.
+A valid event containing more than 65,536 reply characters similarly
+reports `reply_too_large`. Marker identity and version must match the requested
+run. Malformed legacy records and forged/cross-run markers remain refusals.

@@ -9,14 +9,21 @@ from __future__ import annotations
 
 import http.server
 import json
+import os
+import re
 import sys
 import time
+from pathlib import Path
 
 REPLY = "Arbora boot reply: see https://example.org/arbora-boot for details."
 MODEL = "boot-model"
+MAX_ASTRAL_TRIGGER = "__arbora_test_max_astral_reply__"
+OVERSIZED_EVENT_TRIGGER = "__arbora_test_oversized_terminal_event__"
+MAX_ASTRAL_REPLY = "😀" * 65_536
+OVERSIZED_EVENT_REPLY = "😀" * 100_000
 
 
-def _completion() -> dict:
+def _completion(reply: str = REPLY) -> dict:
     return {
         "id": "chatcmpl-boot",
         "object": "chat.completion",
@@ -25,7 +32,7 @@ def _completion() -> dict:
         "choices": [
             {
                 "index": 0,
-                "message": {"role": "assistant", "content": REPLY},
+                "message": {"role": "assistant", "content": reply},
                 "finish_reason": "stop",
             }
         ],
@@ -33,7 +40,7 @@ def _completion() -> dict:
     }
 
 
-def _chunks() -> list[dict]:
+def _chunks(reply: str = REPLY) -> list[dict]:
     base = {
         "id": "chatcmpl-boot",
         "object": "chat.completion.chunk",
@@ -46,7 +53,7 @@ def _chunks() -> list[dict]:
             "choices": [
                 {
                     "index": 0,
-                    "delta": {"role": "assistant", "content": REPLY},
+                    "delta": {"role": "assistant", "content": reply},
                     "finish_reason": None,
                 }
             ],
@@ -68,10 +75,27 @@ class _Handler(http.server.BaseHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802 - http.server API
         length = int(self.headers.get("Content-Length") or 0)
         request = json.loads(self.rfile.read(length) or b"{}")
+        messages = json.dumps(request.get("messages", []))
+        nonces = re.findall(r"proof-[0-9a-f]{32}", messages)
+        # Only explicit synthetic test prompts select a large response.
+        if MAX_ASTRAL_TRIGGER in messages:
+            reply = MAX_ASTRAL_REPLY
+        elif OVERSIZED_EVENT_TRIGGER in messages:
+            reply = OVERSIZED_EVENT_REPLY
+        else:
+            reply = REPLY + (" " + nonces[-1] if nonces else "")
+        if receipt_path := os.getenv("BOOT_MODEL_RECEIPTS"):
+            with Path(receipt_path).open("a") as receipts:
+                receipts.write(
+                    json.dumps(
+                        {"nonce": nonces[-1] if nonces else None, "reply": reply}
+                    )
+                    + "\n"
+                )
         if not request.get("stream"):
-            self._send(200, "application/json", json.dumps(_completion()).encode())
+            self._send(200, "application/json", json.dumps(_completion(reply)).encode())
             return
-        frames = "".join(f"data: {json.dumps(chunk)}\n\n" for chunk in _chunks())
+        frames = "".join(f"data: {json.dumps(chunk)}\n\n" for chunk in _chunks(reply))
         self._send(200, "text/event-stream", (frames + "data: [DONE]\n\n").encode())
 
     def _send(self, status: int, content_type: str, body: bytes) -> None:

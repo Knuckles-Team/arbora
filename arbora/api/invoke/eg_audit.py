@@ -93,7 +93,9 @@ class EgAuditAdapter:
         context = getattr(client, "use_verified_context", None)
         if not callable(append) or not callable(context):
             raise RuntimeError("EG audit client is unavailable")
-        with context(claim_values(caller.engine_claims)):
+        from arbora.security.anonymous import client_scope
+
+        with client_scope(client, claim_values(caller.engine_claims)):
             receipt = await append(
                 **fields,
                 status=status,

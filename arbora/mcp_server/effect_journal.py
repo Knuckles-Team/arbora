@@ -28,6 +28,7 @@ from typing import Any
 
 from arbora.api.invoke.audit import EffectReservation
 from arbora.api.invoke.steps import OpError, OpResult
+from arbora.security.anonymous import client_scope
 
 __all__ = ["EFFECT_KIND", "EgEffectJournal", "effect_work_item_id"]
 
@@ -76,7 +77,7 @@ def _decode_outcome(stored: Any) -> OpResult | OpError | None:
 def _request_context(
     claims: Mapping[str, Any], client: Any, key: str
 ) -> dict[str, Any]:
-    """The WorkItem's typed request context, from the verified service claims."""
+    """The WorkItem's typed request context, from the admitted service provenance."""
     now_ms = int(time.time() * 1000)
     graph = getattr(client, "graph_name", None) or getattr(client, "_graph_name", "")
     return {
@@ -88,7 +89,9 @@ def _request_context(
         "policy_version": str(claims["policy_version"]),
         "scopes": list(claims.get("scopes") or ()),
         "graph": str(graph),
-        "authentication_method": "oidc",
+        "authentication_method": "none"
+        if claims.get("auth_mode") == "none"
+        else "oidc",
         "issued_at_ms": now_ms,
         "expires_at_ms": now_ms + _LEASE_MS,
         "request_id": f"arbora-effect:{_sha256(key)[:32]}",
@@ -118,7 +121,7 @@ class EgEffectJournal:
         client, claims = await self._items()
         tenant = str(claims["tenant"])
         item_id = effect_work_item_id(key)
-        with client.use_verified_context(dict(claims)):
+        with client_scope(client, dict(claims)):
             try:
                 submitted = await self._submit(client, claims, item_id, key, binding)
             except Exception as exc:
@@ -210,7 +213,7 @@ class EgEffectJournal:
         fence = json.loads(reference)
         client, claims = await self._items()
         now_ms = int(time.time() * 1000)
-        with client.use_verified_context(dict(claims)):
+        with client_scope(client, dict(claims)):
             item = await client.work_items.get(
                 tenant=fence["tenant"], work_item_id=fence["work_item_id"]
             )

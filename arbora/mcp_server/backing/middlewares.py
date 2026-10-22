@@ -1,3 +1,5 @@
+from arbora.security.anonymous import session_context
+
 #!/usr/bin/python
 """FastMCP Middlewares Module.
 
@@ -211,7 +213,7 @@ class ActorContextMiddleware(Middleware):
         actor = actor_from_claims(claims)
         try:
             session = mint_graph_session(actor)
-            session.engine_verified_context()
+            session_context(session)
         except PermissionError:
             raise PermissionError("Verified graph authority is incomplete") from None
         actor_token = set_actor(actor)

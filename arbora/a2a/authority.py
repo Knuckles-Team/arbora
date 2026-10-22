@@ -16,6 +16,7 @@ from agent_connector_sdk.privacy import persistence_reference
 from .models import (
     A2AArtifact,
     A2AMessage,
+    A2AReplyUnavailable,
     A2ARouteDecision,
     A2ATask,
     A2ATaskState,
@@ -42,7 +43,8 @@ _RUN_LEASE_SECONDS = 600.0
 _TERMINAL = frozenset({"succeeded", "failed", "cancelled", "dead_letter"})
 #: Agent reply text of recent runs, by task id. A WorkItem holds only the
 #: result reference; the durable record is the run's RunEvents in EG. This
-#: bounded process-local view serves the reply on task reads.
+#: bounded process-local view serves immediate dispatch/list projections;
+#: tasks/get reads the durable record rather than trusting this cache.
 _OUTPUTS: OrderedDict[str, str] = OrderedDict()
 _MAX_OUTPUTS = 1024
 _MAX_OUTPUT_CHARS = 65_536
@@ -53,7 +55,10 @@ def remember_task_output(task_id: str, output: Any) -> None:
     if not task_id or output in (None, ""):
         return
     text = output if isinstance(output, str) else json.dumps(output, default=str)
-    _OUTPUTS[task_id] = text[:_MAX_OUTPUT_CHARS]
+    if len(text) > _MAX_OUTPUT_CHARS:
+        _OUTPUTS.pop(task_id, None)
+        return
+    _OUTPUTS[task_id] = text
     _OUTPUTS.move_to_end(task_id)
     while len(_OUTPUTS) > _MAX_OUTPUTS:
         _OUTPUTS.popitem(last=False)
@@ -83,6 +88,12 @@ _STATE_MAP: dict[str, A2ATaskState] = {
     "cancelled": "canceled",
     "dead_letter": "failed",
 }
+
+
+class _ReplyUnavailable(RuntimeError):
+    def __init__(self, reason: Any) -> None:
+        super().__init__("durable A2A reply is unavailable")
+        self.availability = A2AReplyUnavailable(reason=reason)
 
 
 class A2AContextUnavailable(RuntimeError):
@@ -593,11 +604,95 @@ class WorkItemA2AAuthority:
             context_id=str(metadata.get("a2a_context_id") or ""),
             status=A2ATaskStatus(
                 state=state,
-                timestamp=WorkItemA2AAuthority._timestamp(item.get("updated_at")),
+                timestamp=WorkItemA2AAuthority._timestamp(
+                    item["updated_at_ms"] / 1000
+                    if isinstance(item.get("updated_at_ms"), (int, float))
+                    else item.get("updated_at")
+                ),
             ),
             artifacts=task_output_artifacts(task_id),
             metadata={"arbora": public_metadata},
         )
+
+    def _persisted_artifacts(
+        self, task_id: str, *, item: dict[str, Any]
+    ) -> list[A2AArtifact] | None:
+        """Read an existing terminal payload, never reconstruct a receipt."""
+        if item.get("status") != "succeeded":
+            return None
+        engine, _work_engine = self._engine()
+        rows = engine.query_cypher(
+            "MATCH (e) WHERE e.type = 'RunEvent' "
+            "AND e.run_id = $run_id AND e.task_id = $run_id "
+            "AND e.event_type = $event_type "
+            "RETURN e.payload AS payload LIMIT 2",
+            {"run_id": task_id, "event_type": "graph_complete"},
+        )
+        if rows == []:
+            return None
+        if not isinstance(rows, list) or len(rows) != 1:
+            raise RuntimeError("durable A2A reply is unavailable")
+        row = rows[0]
+        payload = row.get("payload") if isinstance(row, dict) else None
+        from arbora.agent_runs import (
+            MAX_RUN_EVENT_PAYLOAD_BYTES,
+            RUN_EVENT_PAYLOAD_ERROR_SCHEMA,
+        )
+
+        if not isinstance(payload, str):
+            raise RuntimeError("durable A2A reply is unavailable")
+        try:
+            if len(payload.encode("utf-8")) > MAX_RUN_EVENT_PAYLOAD_BYTES:
+                raise ValueError("run event exceeds its payload bound")
+            event = json.loads(payload)
+        except (ValueError, UnicodeError) as exc:
+            raise RuntimeError("durable A2A reply is unavailable") from exc
+        if (
+            isinstance(event, dict)
+            and event.get("schema") == RUN_EVENT_PAYLOAD_ERROR_SCHEMA
+        ):
+            error = event.get("payload_error")
+            if not (
+                event.get("type") == "graph_complete"
+                and event.get("run_id") == task_id
+                and set(event)
+                <= {"schema", "type", "run_id", "step", "status", "payload_error"}
+                and type(event.get("step")) is int
+                and 0 <= event["step"] <= 2**63 - 1
+                and isinstance(error, dict)
+                and set(error) == {"code", "max_bytes"}
+                and type(error["max_bytes"]) is int
+                and error["max_bytes"] == MAX_RUN_EVENT_PAYLOAD_BYTES
+                and isinstance(error["code"], str)
+                and event.get("status") in (None, "completed", "stopped")
+                and error["code"]
+                in {"payload_too_large", "payload_serialization_failed"}
+            ):
+                raise RuntimeError("durable A2A reply is unavailable")
+            raise _ReplyUnavailable(error["code"])
+        result = event.get("result") if isinstance(event, dict) else None
+        if not (
+            isinstance(event, dict)
+            and event.get("type") == "graph_complete"
+            and event.get("run_id") == task_id
+            and isinstance(result, dict)
+            and result.get("run_id") == task_id
+            and result.get("status") in {"completed", "stopped"}
+            and isinstance(result.get("output"), str)
+        ):
+            raise RuntimeError("durable A2A reply is unavailable")
+        text = result["output"]
+        if len(text) > _MAX_OUTPUT_CHARS:
+            raise _ReplyUnavailable("reply_too_large")
+        if not text:
+            return None
+        return [
+            A2AArtifact(
+                artifact_id=f"{task_id}:reply",
+                name="reply",
+                parts=[A2ATextPart(text=text)],
+            )
+        ]
 
     async def get_committed_task(self, task_id: str) -> A2ATask | None:
         return await self.get(task_id, include_committed_event=True)
@@ -605,6 +700,7 @@ class WorkItemA2AAuthority:
     async def get(
         self, task_id: str, *, include_committed_event: bool = False
     ) -> A2ATask | None:
+        read_session = self._session("kg:read")
         original = self._session("work:read") if include_committed_event else None
         item = await asyncio.to_thread(self._authorized_item, task_id, "kg:read")
         if item is None:
@@ -614,12 +710,21 @@ class WorkItemA2AAuthority:
             owner_ref = self._owner_ref(original)
             if (
                 current != original
-                or item.get("tenant") != original.tenant
-                or item.get("created_by") != owner_ref
                 or item.get("metadata", {}).get("a2a_owner_ref") != owner_ref
             ):
                 raise PermissionError("A2A caller changed during task read")
+        if self._session("kg:read") != read_session:
+            raise PermissionError("A2A caller changed during task read")
         task = self._project(item, task_id=task_id)
+        try:
+            task.artifacts = await asyncio.to_thread(
+                self._persisted_artifacts, task_id, item=item
+            )
+        except _ReplyUnavailable as exc:
+            task.artifacts = None
+            task.metadata["arbora"]["reply"] = exc.availability.model_dump(mode="json")
+        if self._session("kg:read") != read_session:
+            raise PermissionError("A2A caller changed during reply read")
         if include_committed_event:
             from .terminal_event import (
                 A2ATerminalEventUnavailable,
@@ -658,80 +763,49 @@ class WorkItemA2AAuthority:
         return task
 
     @staticmethod
-    def _cursor(owner_ref: str, tenant: str, item_id: str) -> str:
-        return f"{_digest({'tenant': tenant, 'owner': owner_ref, 'id': item_id})}.{item_id}"
+    def _cursor(owner_ref: str, tenant: str, native_cursor: str) -> str:
+        return f"{_digest({'tenant': tenant, 'owner': owner_ref, 'cursor': native_cursor})}.{native_cursor}"
 
     @classmethod
-    def _decode_cursor(cls, cursor: str | None, *, owner_ref: str, tenant: str) -> str:
+    def _decode_cursor(
+        cls, cursor: str | None, *, owner_ref: str, tenant: str
+    ) -> str | None:
         if cursor is None:
-            return ""
-        digest, separator, item_id = cursor.partition(".")
-        if not separator or digest != _digest(
-            {"tenant": tenant, "owner": owner_ref, "id": item_id}
+            return None
+        digest, separator, native_cursor = cursor.partition(".")
+        if (
+            not separator
+            or not native_cursor
+            or digest
+            != _digest({"tenant": tenant, "owner": owner_ref, "cursor": native_cursor})
         ):
             raise ValueError("A2A task cursor is invalid")
-        cls._work_item_id(item_id.removeprefix(_WORK_ITEM_PREFIX))
-        return item_id
+        return native_cursor
 
-    def _list_rows(self, *, after: str, limit: int, tenant: str, owner_ref: str) -> Any:
+    def _list_rows(
+        self, *, cursor: str | None, limit: int, tenant: str, owner_ref: str
+    ) -> Any:
         _engine, work_engine = self._engine()
-        return work_engine.query_cypher(
-            "MATCH (w:WorkItem) "
-            "WHERE w.kind = $kind AND w.tenant = $tenant "
-            "AND w.created_by = $owner AND w.id > $after "
-            "AND w.id STARTS WITH $id_prefix "
-            "RETURN w.id AS id, w.status AS status, w.updated_at AS updated_at, "
-            "w.metadata AS metadata, w.tenant AS tenant, w.created_by AS created_by "
-            "ORDER BY w.id ASC LIMIT $limit",
-            {
-                "kind": "orchestrator_task",
-                "tenant": tenant,
-                "owner": owner_ref,
-                "after": after,
-                "id_prefix": f"{_WORK_ITEM_PREFIX}{_TASK_PREFIX}",
-                "limit": limit + 1,
+        return work_engine.work_items.list(
+            tenant=tenant,
+            kind="orchestrator_task",
+            metadata_match={
+                "a2a_schema": _A2A_METADATA_SCHEMA,
+                "a2a_owner_ref": owner_ref,
             },
+            cursor=cursor,
+            limit=limit,
         )
-
-    @staticmethod
-    def _validated_list_rows(rows: Any, limit: int) -> list[Any]:
-        if not isinstance(rows, list) or len(rows) > limit + 1:
-            raise RuntimeError("canonical WorkItem list returned invalid data")
-        return rows
 
     @classmethod
-    def _project_list_row(cls, row: Any, *, tenant: str, owner_ref: str) -> A2ATask:
-        if not isinstance(row, dict):
-            raise RuntimeError("canonical WorkItem list returned an invalid row")
-        metadata = row.get("metadata")
-        authorized = (
-            row.get("tenant") == tenant
-            and row.get("created_by") == owner_ref
-            and isinstance(metadata, dict)
-            and metadata.get("a2a_schema") == _A2A_METADATA_SCHEMA
-            and metadata.get("a2a_owner_ref") == owner_ref
-        )
-        if not authorized:
+    def _project_list_row(cls, row: Any, *, owner_ref: str) -> A2ATask:
+        if not cls._owned(row, owner_ref):
             raise RuntimeError("canonical WorkItem list crossed its authority scope")
-        item_id = str(row.get("id") or "")
+        item_id = str(row.get("work_item_id") or "")
         task_id = item_id.removeprefix(_WORK_ITEM_PREFIX)
-        cls._work_item_id(task_id)
+        if cls._work_item_id(task_id) != item_id:
+            raise RuntimeError("canonical WorkItem list returned an invalid identity")
         return cls._project(row, task_id=task_id)
-
-    @classmethod
-    def _next_cursor(
-        cls,
-        rows: list[Any],
-        tasks: list[A2ATask],
-        *,
-        limit: int,
-        owner_ref: str,
-        tenant: str,
-    ) -> str | None:
-        if len(rows) <= limit or not tasks:
-            return None
-        item_id = str(rows[limit - 1].get("id") or "")
-        return cls._cursor(owner_ref, tenant, item_id)
 
     async def list(
         self, *, cursor: str | None, limit: int
@@ -740,30 +814,38 @@ class WorkItemA2AAuthority:
             raise ValueError("A2A task page limit must be between 1 and 100")
         session = self._session("kg:read")
         owner_ref = self._owner_ref(session)
-        after = self._decode_cursor(cursor, owner_ref=owner_ref, tenant=session.tenant)
-        rows = await asyncio.to_thread(
+        native_cursor = self._decode_cursor(
+            cursor, owner_ref=owner_ref, tenant=session.tenant
+        )
+        page = await asyncio.to_thread(
             self._list_rows,
-            after=after,
+            cursor=native_cursor,
             limit=limit,
             tenant=session.tenant,
             owner_ref=owner_ref,
         )
-        page = self._validated_list_rows(rows, limit)
-        tasks = [
-            self._project_list_row(
-                row,
-                tenant=session.tenant,
-                owner_ref=owner_ref,
+        if self._session("kg:read") != session:
+            raise PermissionError("A2A caller changed during task listing")
+        if not isinstance(page, dict) or not isinstance(page.get("items"), list):
+            raise RuntimeError("canonical WorkItem list returned invalid data")
+        rows = page["items"]
+        continuation = page.get("next_cursor")
+        if len(rows) > limit or (
+            continuation is not None
+            and (
+                not isinstance(continuation, str)
+                or not continuation
+                or continuation == native_cursor
             )
-            for row in page[:limit]
-        ]
-        return tasks, self._next_cursor(
-            page,
-            tasks,
-            limit=limit,
-            owner_ref=owner_ref,
-            tenant=session.tenant,
+        ):
+            raise RuntimeError("canonical WorkItem list returned invalid data")
+        tasks = [self._project_list_row(row, owner_ref=owner_ref) for row in rows]
+        next_cursor = (
+            self._cursor(owner_ref, session.tenant, continuation)
+            if continuation is not None
+            else None
         )
+        return tasks, next_cursor
 
     async def cancel(self, task_id: str) -> A2ATask:
         item = await asyncio.to_thread(self._authorized_item, task_id, "kg:write")

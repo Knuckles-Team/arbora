@@ -1,6 +1,6 @@
 """One narrowing policy decision for API operations and fleet catalog items.
 
-Adapters pass verified caller facts and call this gate after exact scopes and
+Adapters pass admitted caller facts and call this gate after exact scopes and
 principal-kind checks. The gate repeats those checks for discovery and loading,
 so an omitted adapter check cannot expose an item. It never grants authority.
 """
@@ -97,10 +97,12 @@ def _caller_value(caller: Any, name: str, default: Any = None) -> Any:
 
 
 def _principal(caller: Any) -> schemas.PrincipalCheck:
+    from arbora.api.invoke.steps import AnonymousCaller
+
     principal = str(_caller_value(caller, "principal", ""))
     tenant = str(_caller_value(caller, "tenant", ""))
     if not principal or not tenant:
-        raise PolicyUnavailable("verified principal and tenant required")
+        raise PolicyUnavailable("admitted principal and tenant required")
     return schemas.PrincipalCheck(
         uri=f"principal:{principal}",
         attributes={
@@ -111,7 +113,12 @@ def _principal(caller: Any) -> schemas.PrincipalCheck:
             "roles": sorted(_caller_value(caller, "roles", ())),
             "scopes": sorted(_caller_value(caller, "effective_scopes", ())),
             "is_admin": "mcp:admin" in _caller_value(caller, "effective_scopes", ()),
-            "auth_mode": _caller_value(caller, "auth_mode", ""),
+            "auth_mode": (
+                "none"
+                if isinstance(caller, AnonymousCaller)
+                else _caller_value(caller, "auth_mode", "")
+            ),
+            "authenticated": _caller_value(caller, "authenticated", True),
             "delegated": bool(_caller_value(caller, "delegated", False)),
         },
     )
@@ -145,10 +152,18 @@ def _required_scopes(item: PolicyItem, action: str) -> frozenset[str]:
 
 
 def _base_authorized(item: PolicyItem, caller: Any, action: str) -> bool:
-    if not _caller_value(caller, "authenticated", True):
-        return False
+    from arbora.api.invoke.steps import AnonymousCaller, authenticate
+
     kind = _caller_value(caller, "principal_kind", "")
-    if kind not in {"human", "service"}:
+    if isinstance(caller, AnonymousCaller):
+        # Anonymous authority is a separate, fully validated local variant,
+        # never an authenticated flag or a human/service impersonation.
+        if authenticate(caller) is not None:
+            return False
+    elif not _caller_value(caller, "authenticated", True) or kind not in {
+        "human",
+        "service",
+    }:
         return False
     if not _principal_matches_rule(item, caller, kind):
         return False

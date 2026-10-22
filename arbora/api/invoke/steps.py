@@ -49,7 +49,7 @@ def claim_values(value: Any) -> Any:
 
 
 @dataclass(frozen=True, slots=True)
-class VerifiedCaller:
+class RequestCaller:
     """Authority supplied by an authenticated surface adapter, never by params."""
 
     principal: str
@@ -68,6 +68,16 @@ class VerifiedCaller:
     def __post_init__(self) -> None:
         object.__setattr__(self, "engine_claims", freeze_claims(self.engine_claims))
         object.__setattr__(self, "effective_scopes", frozenset(self.effective_scopes))
+
+
+@dataclass(frozen=True, slots=True)
+class VerifiedCaller(RequestCaller):
+    """A caller established by credential verification."""
+
+
+@dataclass(frozen=True, slots=True)
+class AnonymousCaller(RequestCaller):
+    """Explicit local admission, with no assertion of authenticated identity."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -166,12 +176,52 @@ def forbidden_path(
     return None
 
 
-def authenticate(caller: VerifiedCaller | None) -> OpError | None:
-    if not isinstance(caller, VerifiedCaller) or caller.authenticated is not True:
+def authenticate(caller: RequestCaller | None) -> OpError | None:
+    if isinstance(caller, AnonymousCaller):
+        from arbora.security.anonymous import (
+            POLICY,
+            PRINCIPAL,
+            TENANT,
+            admitted_actor,
+            session_context,
+        )
+
+        if (
+            caller.authenticated is not False
+            or caller.credential_kind != "none"
+            or caller.principal_kind != "anonymous"
+            or caller.principal != PRINCIPAL
+            or caller.tenant != TENANT
+            or caller.policy_revision != POLICY
+            or caller.delegated is not False
+            or caller.mfa_at_ms is not None
+            or not admitted_actor(getattr(caller.session, "actor", None))
+        ):
+            return OpError("UNAUTHENTICATED")
+        if caller.engine_claims != freeze_claims(session_context(caller.session)):
+            return OpError("UNAUTHENTICATED")
+    elif (
+        not isinstance(caller, VerifiedCaller)
+        or caller.authenticated is not True
+        or caller.principal_kind not in {"human", "service"}
+        or caller.engine_claims.get("auth_mode") == "none"
+    ):
         return OpError("UNAUTHENTICATED")
     if _claims_match(caller) and _identity_fields_valid(caller):
         return None
     return OpError("UNAUTHENTICATED")
+
+
+def surface_caller_admitted(caller: Any) -> bool:
+    """Preserve the verified surface port, admitting only the explicit none variant.
+
+    Full operation authentication remains in ``authenticate``. Anonymous
+    surface callers additionally require its exact local-session invariant;
+    an authenticated flag can never promote that variant to verified.
+    """
+    if isinstance(caller, AnonymousCaller):
+        return authenticate(caller) is None
+    return caller is not None and caller.authenticated is True
 
 
 def _claims_match(caller: VerifiedCaller) -> bool:
@@ -179,6 +229,7 @@ def _claims_match(caller: VerifiedCaller) -> bool:
     if not isinstance(claims, Mapping) or caller.principal_kind not in {
         "human",
         "service",
+        "anonymous",
     }:
         return False
     return (
@@ -216,12 +267,20 @@ def _identity_fields_valid(caller: VerifiedCaller) -> bool:
 def principal_rule(op: Any, caller: VerifiedCaller) -> OpError | None:
     rule = op.principals
     is_service = caller.principal_kind == "service"
+    is_human = caller.principal_kind == "human"
+    if caller.principal_kind == "anonymous" and rule in {
+        PrincipalRule.HUMAN,
+        PrincipalRule.HUMAN_UNDELEGATED,
+        PrincipalRule.SERVICE_ONLY,
+    }:
+        return OpError("PRINCIPAL_NOT_ALLOWED")
     if rule not in set(PrincipalRule):
         return OpError("PRINCIPAL_NOT_ALLOWED")
     denied = (
-        (rule == PrincipalRule.HUMAN and is_service)
+        (rule == PrincipalRule.HUMAN and not is_human)
         or (
-            rule == PrincipalRule.HUMAN_UNDELEGATED and (is_service or caller.delegated)
+            rule == PrincipalRule.HUMAN_UNDELEGATED
+            and (not is_human or caller.delegated)
         )
         or (rule == PrincipalRule.SERVICE_ONLY and not is_service)
     )

@@ -28,6 +28,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, cast
 
+from arbora.security.anonymous import session_context
+
 logger = logging.getLogger(__name__)
 
 #: Renew a registration whose lease lapses within this window.
@@ -284,7 +286,7 @@ class FleetOnboarding:
 
         from arbora.deployment.semantic_provisioning import _bind_session_graph
 
-        tenant_id = str(self.session.engine_verified_context()["tenant"])
+        tenant_id = str(session_context(self.session)["tenant"])
         graph = str(self.session.graph)
         with _bind_session_graph(graph):
             status = await send_connector_pack_status(
