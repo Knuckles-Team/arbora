@@ -18,6 +18,12 @@ from pydantic import ValidationError
 
 from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.ops._common import Params, build_read_op
+from arbora.api.ops.run_replay import (
+    SCHEMA,
+    RunEventsParams,
+    RunReadParams,
+    unavailable,
+)
 from arbora.api.registry import OpSpec
 
 UNAVAILABLE = CurrentPlanRead(availability="unavailable")
@@ -80,6 +86,41 @@ async def handle_runs_current_plan(
     return {"value": read.model_dump(mode="json")}
 
 
+async def handle_runs_get(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    request = RunReadParams.model_validate(dict(params))
+    reader = context.services.get("run_trace_reader")
+    value = (
+        {
+            "schema_version": SCHEMA,
+            "availability": "unavailable",
+            "run_id": request.run_id,
+        }
+        if reader is None
+        else await reader.get(
+            context=context, run_id=request.run_id, task_id=request.task_id
+        )
+    )
+    value["current_plan"] = (
+        await read_current_plan(context, request.run_id)
+    ).model_dump(mode="json")
+    return {"value": value}
+
+
+async def handle_runs_events(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    request = RunEventsParams.model_validate(dict(params))
+    reader = context.services.get("run_trace_reader")
+    value = (
+        unavailable(request.run_id)
+        if reader is None
+        else await reader.events(context=context, request=request)
+    )
+    return {"value": value}
+
+
 def operations() -> tuple[OpSpec, ...]:
     return (
         build_read_op(
@@ -90,6 +131,21 @@ def operations() -> tuple[OpSpec, ...]:
             result=RunsCurrentPlanResult,
             handler="arbora.api.ops.runs.handle_runs_current_plan",
             scope="kg:read",
+        ),
+        *(
+            build_read_op(
+                op_id=f"runs.{action}",
+                summary=summary,
+                examples=(summary,),
+                params=params,
+                result=RunsCurrentPlanResult,
+                handler=f"arbora.api.ops.runs.handle_runs_{action}",
+                scope="kg:read",
+            )
+            for action, summary, params in (
+                ("get", "Read an owned durable run", RunReadParams),
+                ("events", "Replay public events of an owned run", RunEventsParams),
+            )
         ),
     )
 

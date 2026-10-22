@@ -140,3 +140,49 @@ A larger-than-65,536-character output remains intact in the stored event when it
 fits. It never appears as a falsely complete artifact. Failed-run partial output
 and malformed legacy records are not exposed or repaired. These bounded fixture
 checks do not substitute for native-engine restart acceptance.
+
+- `ARBORA-HOST-R001.2.1.1`: `tests/mcp_server/test_task_plan.py` exercises the
+  shared HostedInvocation method with controlled EG transport: scope and PDP
+  refusal, post-response revocation, principal mismatch, immutable host caps,
+  caller authority rejection and unavailable dependency contracts. These tests
+  do not qualify native EG publication or rolling runtime execution.
+
+
+### ARBORA-HOST-R001.2.1.2: executable-plan admission prerequisites
+
+These are pending producer/consumer acceptance requirements, not passing tests:
+- Repeating the same admitted plan and run returns the same durable attachment;
+  a conflicting plan for that run refuses without changing canonical content.
+- Stale, expired or foreign worker/epoch/token, owner, tenant or graph refuses
+  before plan persistence or AU execution. Recheck current caller authority.
+- A persistence failure starts no AU task. Success stores the full canonical
+  tasks, dependencies, output, limits and plan/policy digests atomically.
+- Close and reopen the real engine store; authorized readback returns the same
+  canonical plan and binding. Revoked or foreign callers cannot read it.
+- Enter through the registered run-decision provider. Planner requests consume
+  the operator's run budget; only successfully attached canonical content maps
+  to AU DependencyPlan. No task starts before successful attachment.
+- Preserve default single-step behavior without the operator capability;
+  explicit dependency requests refuse rather than silently execute serially.
+
+Controlled runtime composition evidence now lives in
+`tests/mcp_server/test_task_plan_runtime.py`: the registered run-decision
+provider consumes a zero-tool model proposal, evaluates it through the shared
+HostedInvocation, publishes both canonical plan and host-bounded proposal with
+the private native fence, reads canonical content back, and executes through
+AU's DependencyPlan loop. Publication failure, mismatched readback, exhausted
+planner budget and model-supplied host fields refuse before task dispatch.
+These checks use a real model adapter and AU runtime with controlled EG
+transport; they do not replace real-engine restart and fence acceptance.
+Planner usage is included in Arbora's execution result and deducted from AU's
+remaining limits. AU terminal RunEvents still report execution-only usage until
+AU offers an initial-usage reporting input.
+
+
+`tests/mcp_server/test_task_plan_settings.py` validates the normal settings
+composition path, default-disabled behavior and malformed settings refusal
+before process authority. The current-plan reader accepts the generated
+`task_plan` field but does not project it publicly. Shared receipt verification
+passes raw caller identity to EG, which owns identity hashing. An existing
+attached plan refuses retry rather than replaying a later scaffold as the
+original publication; original receipt recovery is still pending.

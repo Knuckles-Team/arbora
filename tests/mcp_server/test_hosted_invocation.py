@@ -98,7 +98,8 @@ def test_native_a2a_and_gateway_share_authority_and_effect_boundary(
     assert a2a.status_code == response.status_code == (200 if allowed else 403)
     assert all(registry is value.services.registry for registry in admitted)
     # The served MCP surface also mounts the operation API beside /mcp.
-    assert len(admitted) == 5
+    # Each mount admits both the operation API and its legacy run projection.
+    assert len(admitted) == 7
     assert len(effect.calls) == (2 if allowed else 0)
     if allowed:
         assert {event["surface"] for event in audit.events} == {"a2a", "http"}

@@ -211,3 +211,41 @@ def create_api_application(
         include_in_schema=False,
     )
     return app
+
+
+def create_run_compatibility_application(
+    *, services: Any, authenticator: Any, invoke: Invoke
+) -> FastAPI:
+    """Legacy run URLs use the exact registry/auth/invoke path, never a bypass."""
+    app = FastAPI(openapi_url=None, docs_url=None, redoc_url=None)
+
+    def response(outcome: Any, op: Any, request_id: str) -> JSONResponse:
+        if hasattr(outcome, "code") and outcome.code != "OK":
+            return _outcome_response(
+                outcome, op, digest=services.registry.digest, request_id=request_id
+            )
+        value = getattr(outcome, "value", outcome)
+        return JSONResponse(
+            jsonable_encoder(value["value"]), headers={"Cache-Control": "no-store"}
+        )
+
+    operations = {op.id: op for op in services.registry}
+    for action, path in (("get", "/{run_id}"), ("events", "/{run_id}/events")):
+        op = operations.get(f"runs.{action}")
+        if op is None:
+            continue
+        app.add_api_route(
+            path,
+            make_endpoint(
+                op,
+                services=services,
+                authenticate=authenticator.authenticate,
+                invoke=invoke,
+                response=response,
+                generic=False,
+                is_console_request=authenticator.is_console_request,
+            ),
+            methods=["GET"],
+            include_in_schema=False,
+        )
+    return app

@@ -25,10 +25,16 @@ def compose_a2a(
     engine_provider: Callable[[], Any],
     authenticator: A2AAuthenticator,
     card_metadata: A2ACardMetadata | None = None,
+    task_plan_config: Any = None,
+    hosted_invocation: Any = None,
 ) -> A2AComposition:
     """Compose one projection over the existing WorkItem/dispatch authorities."""
     service = A2AService(
-        authority=WorkItemA2AAuthority(engine_provider),
+        authority=WorkItemA2AAuthority(
+            engine_provider,
+            task_plan_config=task_plan_config,
+            hosted_invocation=hosted_invocation,
+        ),
         router=OrchestratorA2ARouter(engine_provider),
         card_metadata=card_metadata or A2ACardMetadata(),
     )

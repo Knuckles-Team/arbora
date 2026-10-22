@@ -297,3 +297,4 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R860.4:** Refusal.
 - [ ] **ARBORA-OPS-R860.5:** Evidence.
 - [ ] **ARBORA-OPS-R860.6:** Hot-path proof.
+- [ ] **ARBORA-OPS-R021.4.7:** Serve owner-scoped durable public replay through shared HTTP/MCP admission; qualify native ordering and bounded cursors.

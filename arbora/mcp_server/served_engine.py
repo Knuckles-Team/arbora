@@ -229,12 +229,17 @@ class ServedEngine:
         self.graph_compute = _GraphCompute(pool)
 
     @property
-    def work_items(self) -> _BlockingWorkItems:
-        """EG WorkItems, held on the tenant's control graph (``__control__``)."""
+    def work_item_graph(self) -> str:
+        """The native graph used by this engine's WorkItem namespace."""
         from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
 
+        return CONTROL_GRAPH
+
+    @property
+    def work_items(self) -> _BlockingWorkItems:
+        """EG WorkItems, held on the tenant's control graph (``__control__``)."""
         return _BlockingWorkItems(
-            self.graph_compute.for_graph(CONTROL_GRAPH).async_client.work_items
+            self.graph_compute.for_graph(self.work_item_graph).async_client.work_items
         )
 
     async def health(self, graph: str) -> Mapping[str, Any]:

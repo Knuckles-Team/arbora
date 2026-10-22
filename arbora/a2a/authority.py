@@ -167,13 +167,20 @@ class WorkItemA2AAuthority:
     """A2A projection over AU's sole durable WorkItem and dispatch authorities."""
 
     def __init__(
-        self, engine_provider: Callable[[], Any], *, executor: Any = None
+        self,
+        engine_provider: Callable[[], Any],
+        *,
+        executor: Any = None,
+        task_plan_config: Any = None,
+        hosted_invocation: Any = None,
     ) -> None:
         self._engine_provider = engine_provider
         self._executor = executor
         # Runs admitted by a non-blocking send (ARBORA-A2A-R001.6). The set
         # holds a reference so a running turn is never garbage collected.
         self._detached: set[asyncio.Task[Any]] = set()
+        self.task_plan_config = task_plan_config
+        self.hosted_invocation = hosted_invocation
 
     @staticmethod
     def _session(scope: str) -> Any:
@@ -211,6 +218,9 @@ class WorkItemA2AAuthority:
 
     @staticmethod
     def _work_item_id(task_id: str) -> str:
+        if task_id.startswith("work-item:") and len(task_id) <= 512:
+            if not any(ord(char) < 32 for char in task_id):
+                return task_id
         suffix = task_id.removeprefix(_TASK_PREFIX)
         if not task_id.startswith(_TASK_PREFIX) or len(suffix) != 64:
             raise ValueError("A2A task id is invalid")
@@ -342,8 +352,8 @@ class WorkItemA2AAuthority:
                 "A2A idempotency key was reused with a different request"
             )
 
-    @staticmethod
     def _submit(
+        self,
         work_engine: Any,
         *,
         task_id: str,
@@ -354,6 +364,13 @@ class WorkItemA2AAuthority:
     ) -> tuple[str, bool]:
         from arbora import work_items
 
+        native = self.task_plan_config is not None
+        if native:
+            from arbora.mcp_server.task_plan import TaskPlanConfig
+
+            if not isinstance(self.task_plan_config, TaskPlanConfig):
+                raise TypeError("trusted TaskPlanConfig is required")
+            metadata = {**metadata, "a2a_run_id": task_id}
         return work_items.submit_work_item_atomic(
             work_engine,
             kind="orchestrator_task",
@@ -362,7 +379,8 @@ class WorkItemA2AAuthority:
             tenant=session.tenant,
             description=description,
             resource_class="agent_dispatch",
-            work_item_id=f"{_WORK_ITEM_PREFIX}{task_id}",
+            work_item_id=None if native else f"{_WORK_ITEM_PREFIX}{task_id}",
+            run_id=task_id if native else None,
             idempotency_key=task_id,
             created_by=owner_ref,
             metadata=metadata,
@@ -375,6 +393,54 @@ class WorkItemA2AAuthority:
             self._executor = AgentRunPort()
         return self._executor
 
+    async def _execute_claimed_run(
+        self,
+        work_engine: Any,
+        *,
+        item_id: str,
+        session: Any,
+        claim: Any,
+        agent_name: str,
+        task: str,
+        task_id: str,
+        context_id: str,
+        run_id: str | None,
+    ) -> Any:
+        """Execute only inside the host's revocable native owner scope."""
+        from arbora import work_items
+        from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
+
+        if self.task_plan_config is not None and self.hosted_invocation is None:
+            raise RuntimeError("UPGRADE_REQUIRED: hosted task-plan invocation")
+        from arbora.agent_runs import native_run_scope
+        from arbora.host_bindings import FLEET_AGENT_NAME, FLEET_TOOLS
+
+        with native_run_scope(
+            run_id=run_id or task_id,
+            task_id=task_id,
+            context_id=context_id,
+            work_item_id=item_id,
+            session=session,
+            claim=claim,
+            owner_graph=(
+                work_items.native_owner_graph(work_engine)
+                if self.task_plan_config is not None
+                else None
+            ),
+            hosted_invocation=self.hosted_invocation,
+        ):
+            return await self._agent_executor().execute_agent(
+                AgentExecutionRequest(
+                    agent_name=agent_name,
+                    task=task,
+                    run_id=run_id or task_id or None,
+                    allowed_tools=(
+                        FLEET_TOOLS if agent_name == FLEET_AGENT_NAME else None
+                    ),
+                ),
+                session=session,
+            )
+
     async def _run(
         self,
         work_engine: Any,
@@ -384,6 +450,7 @@ class WorkItemA2AAuthority:
         agent_name: str,
         task: str,
         task_id: str = "",
+        context_id: str = "",
         run_id: str | None = None,
     ) -> dict[str, int] | None:
         """Lease the WorkItem, run the agent through the harness, commit the outcome.
@@ -393,9 +460,6 @@ class WorkItemA2AAuthority:
         as its tools.
         """
         from arbora import work_items
-        from arbora.api.contracts.agent_control_contracts import (
-            AgentExecutionRequest,
-        )
 
         claim = await asyncio.to_thread(
             work_items.claim_specific,
@@ -409,18 +473,16 @@ class WorkItemA2AAuthority:
         outcome, result_ref, error_ref = "succeeded", None, None
         usage = None
         try:
-            from arbora.host_bindings import FLEET_AGENT_NAME, FLEET_TOOLS
-
-            result = await self._agent_executor().execute_agent(
-                AgentExecutionRequest(
-                    agent_name=agent_name,
-                    task=task,
-                    run_id=run_id or task_id or None,
-                    allowed_tools=(
-                        FLEET_TOOLS if agent_name == FLEET_AGENT_NAME else None
-                    ),
-                ),
+            result = await self._execute_claimed_run(
+                work_engine,
+                item_id=item_id,
                 session=session,
+                claim=claim,
+                agent_name=agent_name,
+                task=task,
+                task_id=task_id,
+                context_id=context_id,
+                run_id=run_id,
             )
             if result.run_id != (run_id or task_id):
                 raise RuntimeError("agent result does not belong to this A2A turn")
@@ -447,6 +509,31 @@ class WorkItemA2AAuthority:
             error_ref=error_ref,
         )
         return usage
+
+    def _validate_admitted_item(
+        self,
+        item: Any,
+        *,
+        session: Any,
+        owner_ref: str,
+        request_digest: str,
+        run_id: str,
+    ) -> dict[str, Any]:
+        """Validate both durable caller ownership and the distinct native run ID."""
+        if not isinstance(item, dict):
+            raise RuntimeError("canonical A2A WorkItem is unavailable after admission")
+        self._validate_existing(
+            item,
+            session=session,
+            owner_ref=owner_ref,
+            request_digest=request_digest,
+        )
+        if (
+            self.task_plan_config is not None
+            and item["metadata"].get("a2a_run_id") != run_id
+        ):
+            raise A2AIdempotencyConflict("A2A native run identity conflicts")
+        return item
 
     async def dispatch(
         self,
@@ -489,19 +576,21 @@ class WorkItemA2AAuthority:
             description=description,
             metadata=metadata,
         )
+        run_id = task_id
+        if self.task_plan_config is not None:
+            task_id = item_id
         if item_id != self._work_item_id(task_id):
             raise RuntimeError("canonical A2A WorkItem returned an invalid identity")
 
         from arbora import work_items
 
         item = await asyncio.to_thread(work_items.get_work_item, work_engine, item_id)
-        if not isinstance(item, dict):
-            raise RuntimeError("canonical A2A WorkItem is unavailable after admission")
-        self._validate_existing(
+        item = self._validate_admitted_item(
             item,
             session=session,
             owner_ref=owner_ref,
             request_digest=request_digest,
+            run_id=run_id,
         )
         usage = None
         if not blocking and (created or item.get("status") not in _TERMINAL):
@@ -517,6 +606,8 @@ class WorkItemA2AAuthority:
                     agent_name=decision.agent_name,
                     task=description,
                     task_id=task_id,
+                    context_id=context_id,
+                    run_id=run_id,
                 ),
                 item_id,
             )
@@ -528,6 +619,8 @@ class WorkItemA2AAuthority:
                 agent_name=decision.agent_name,
                 task=description,
                 task_id=task_id,
+                context_id=context_id,
+                run_id=run_id,
             )
             refreshed = await asyncio.to_thread(
                 work_items.get_work_item, work_engine, item_id
@@ -589,16 +682,19 @@ class WorkItemA2AAuthority:
             raise RuntimeError("canonical WorkItem lacks A2A metadata")
         route = metadata.get("a2a_route")
         public_route = route if isinstance(route, dict) else {}
+        run_id = str(metadata.get("a2a_run_id") or task_id)
         public_metadata: dict[str, Any] = {
-            "taskAuthorityRef": f"{_WORK_ITEM_PREFIX}{task_id}",
-            "runId": task_id,
+            "taskAuthorityRef": str(
+                item.get("work_item_id") or WorkItemA2AAuthority._work_item_id(task_id)
+            ),
+            "runId": run_id,
             "routing": public_route,
         }
         from arbora.observability.trace_ontology import (
             trace_id as canonical_trace_id,
         )
 
-        public_metadata["runTraceRef"] = canonical_trace_id(task_id)
+        public_metadata["runTraceRef"] = canonical_trace_id(run_id)
         return A2ATask(
             id=task_id,
             context_id=str(metadata.get("a2a_context_id") or ""),
@@ -690,13 +786,14 @@ class WorkItemA2AAuthority:
         """Read an existing terminal payload, never reconstruct a receipt."""
         if item.get("status") != "succeeded":
             return None
+        run_id = str(item.get("metadata", {}).get("a2a_run_id") or task_id)
         engine, _work_engine = self._engine()
         rows = engine.query_cypher(
             "MATCH (e) WHERE e.type = 'RunEvent' "
             "AND e.run_id = $run_id AND e.task_id = $run_id "
             "AND e.event_type = $event_type "
             "RETURN e.payload AS payload LIMIT 2",
-            {"run_id": task_id, "event_type": "graph_complete"},
+            {"run_id": run_id, "event_type": "graph_complete"},
         )
         if rows == []:
             return None
@@ -704,8 +801,8 @@ class WorkItemA2AAuthority:
             raise RuntimeError("durable A2A reply is unavailable")
         row = rows[0]
         payload = row.get("payload") if isinstance(row, dict) else None
-        event = self._read_reply_payload(payload, task_id)
-        text = self._reply_text(event, task_id)
+        event = self._read_reply_payload(payload, run_id)
+        text = self._reply_text(event, run_id)
         if len(text) > _MAX_OUTPUT_CHARS:
             raise _ReplyUnavailable("reply_too_large")
         if not text:
@@ -829,7 +926,11 @@ class WorkItemA2AAuthority:
         if not cls._owned(row, owner_ref):
             raise RuntimeError("canonical WorkItem list crossed its authority scope")
         item_id = str(row.get("work_item_id") or "")
-        task_id = item_id.removeprefix(_WORK_ITEM_PREFIX)
+        task_id = (
+            item_id
+            if row["metadata"].get("a2a_run_id")
+            else item_id.removeprefix(_WORK_ITEM_PREFIX)
+        )
         if cls._work_item_id(task_id) != item_id:
             raise RuntimeError("canonical WorkItem list returned an invalid identity")
         return cls._project(row, task_id=task_id)
