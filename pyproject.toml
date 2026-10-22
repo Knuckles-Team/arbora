@@ -53,6 +53,11 @@ dependencies = [
     "epistemic-graph[server]>=2.27.3,<3.0.0",
     "fastapi>=0.143.3",
     "filelock>=4.2.0",
+    # The served source reads (arbora.mcp_server.source_reader) decode the
+    # engine's stored node and edge property blobs, which the pinned
+    # epistemic-graph contract carries as MessagePack `bin`; the engine's own
+    # floor is the same.
+    "msgpack>=1.2.1",
     "prometheus-client>=0.26.0",
     # Matches the agent-connector-sdk floor (agent-utilities allows the 2.14 line).
     "pydantic>=2.14.1,<3.0.0",

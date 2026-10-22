@@ -218,6 +218,9 @@
     "ARBORA-OPS-R843.1",
     "ARBORA-OPS-R843.2",
     "ARBORA-OPS-R848",
+    "ARBORA-OPS-R848.1",
+    "ARBORA-OPS-R848.2",
+    "ARBORA-OPS-R848.3",
     "ARBORA-OPS-R849",
     "ARBORA-OPS-R850",
     "ARBORA-OPS-R851"
@@ -1010,7 +1013,7 @@
         "94724be32c28"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:340"
+        "tests/api/test_registry_factory.py:345"
       ],
       "rollup_of": [
         "ARBORA-OPS-R024.4.1",
@@ -1105,7 +1108,7 @@
         "5f79be652726"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:340"
+        "tests/api/test_registry_factory.py:345"
       ]
     },
     {
@@ -2295,6 +2298,40 @@
       "title": "`source.*` served operations",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R848.1",
+        "ARBORA-OPS-R848.2",
+        "ARBORA-OPS-R848.3"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R848.1",
+      "title": "Source reads",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "38d29856a38a",
+        "54ff076e19e1",
+        "e337b2c2ef83",
+        "fc8440890094"
+      ],
+      "verified_by": [
+        "tests/api/test_source_ops.py:32",
+        "tests/mcp_server/test_source_reader.py:32"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R848.2",
+      "title": "Source writes",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R848.3",
+      "title": "Source diff reads",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": []
     },
     {
@@ -2307,9 +2344,17 @@
     {
       "id": "ARBORA-OPS-R850",
       "title": "Virtual checkout endpoint",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "3b92b3c8c215",
+        "54ff076e19e1",
+        "e337b2c2ef83",
+        "fc8440890094"
+      ],
+      "verified_by": [
+        "tests/api/test_source_checkout.py:156",
+        "tests/api/test_source_checkout.py:26"
+      ]
     },
     {
       "id": "ARBORA-OPS-R851",

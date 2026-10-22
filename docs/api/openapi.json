@@ -231,6 +231,12 @@
       "Schema075c03b9cd39e20d2715d1d32e08519fd970c1e13528fa2016cdbe3891953f82": {
         "title": "Value"
       },
+      "Schema0851fdad2e08689db7c506ac42ca1ae3b51e19636e6f912d35716f6d3ac83ee1": {
+        "default": "",
+        "maxLength": 1024,
+        "title": "Path",
+        "type": "string"
+      },
       "Schema0856cd7a17b302d344469632673bb16599dfcb624e7619f66d68f267fab458f7": {
         "anyOf": [
           {
@@ -462,6 +468,12 @@
         "default": null,
         "title": "Commonannotations"
       },
+      "Schema232cd8554048d4c90289c36e61837e60f8914e4f14d074ced504b87387d9f4f8": {
+        "maxLength": 1024,
+        "minLength": 1,
+        "title": "Repository",
+        "type": "string"
+      },
       "Schema23dbbaa323acbe446d9ef6d4163f41d77d21b344dd5bdf6c18026481c0a497e2": {
         "maxLength": 256,
         "minLength": 1,
@@ -494,6 +506,25 @@
         "title": "CurrentPlanRequest",
         "type": "object"
       },
+      "Schema28231da9eb0febb34d6e9fb72464c2831407686115e09a3138c8284808660e8c": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "SourceBlameResult",
+        "type": "object"
+      },
+      "Schema29c6f82e684cbdda9218918e6620c210f7151ad3073b5d3e17650bdb267fcec0": {
+        "maxLength": 1024,
+        "minLength": 1,
+        "title": "Ref",
+        "type": "string"
+      },
       "Schema2a3346c94061750a81babcb5329ad7ea97272279823e97f893693e79e07c6a7b": {
         "items": {
           "$ref": "#/components/schemas/Schemab697b1595c2d8f9677b6d14572d7a100ee9694279919359d64f493f6cadc3541"
@@ -524,6 +555,24 @@
         "minLength": 1,
         "title": "Task Ref",
         "type": "string"
+      },
+      "Schema2b5a8eb8274ac5979e46417be1018eb512e9f30a4604845b59f7d010f5248f96": {
+        "additionalProperties": false,
+        "description": "List the refs of one repository that carry one path.",
+        "properties": {
+          "path": {
+            "$ref": "#/components/schemas/Schema3a785379f4278e29ff87c871da74d3fcb44ede9dbaaa7373b5d1237ca383f248"
+          },
+          "repository": {
+            "$ref": "#/components/schemas/Schema232cd8554048d4c90289c36e61837e60f8914e4f14d074ced504b87387d9f4f8"
+          }
+        },
+        "required": [
+          "repository",
+          "path"
+        ],
+        "title": "SourceHistoryParams",
+        "type": "object"
       },
       "Schema2db1e0b735a231257bc16ca3f2a2f7b503acca69ba97dc893290c4555197f853": {
         "anyOf": [
@@ -608,6 +657,19 @@
         "default": null,
         "title": "Groupkey"
       },
+      "Schema3835fce31c0bc123510c805585b22edc730cfa78d8e517ba97a6baf2a4f4f70b": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "SourceTreeResult",
+        "type": "object"
+      },
       "Schema384dc6630dcf70abb992e5fafd7ab07c0c3fe4c6476c137033f60db7aa8d739f": {
         "additionalProperties": true,
         "title": "Settings",
@@ -636,6 +698,12 @@
         "maximum": 86400000,
         "title": "Span Ms",
         "type": "integer"
+      },
+      "Schema3a785379f4278e29ff87c871da74d3fcb44ede9dbaaa7373b5d1237ca383f248": {
+        "maxLength": 1024,
+        "minLength": 1,
+        "title": "Path",
+        "type": "string"
       },
       "Schema3aaa47518bf48da8ce5ab4bdb438fc18b4e8bf7fda127dba2b3dfbc372d90e57": {
         "additionalProperties": true,
@@ -1191,6 +1259,28 @@
         "title": "Limit",
         "type": "integer"
       },
+      "Schema76f61fcb04ffe1df55d029bddb5f63b65771465fd8febc047e6d345b0738e9cf": {
+        "additionalProperties": false,
+        "description": "Attribute one file to its last-touch revision on one ref.",
+        "properties": {
+          "path": {
+            "$ref": "#/components/schemas/Schema3a785379f4278e29ff87c871da74d3fcb44ede9dbaaa7373b5d1237ca383f248"
+          },
+          "ref": {
+            "$ref": "#/components/schemas/Schema29c6f82e684cbdda9218918e6620c210f7151ad3073b5d3e17650bdb267fcec0"
+          },
+          "repository": {
+            "$ref": "#/components/schemas/Schema232cd8554048d4c90289c36e61837e60f8914e4f14d074ced504b87387d9f4f8"
+          }
+        },
+        "required": [
+          "repository",
+          "ref",
+          "path"
+        ],
+        "title": "SourceBlameParams",
+        "type": "object"
+      },
       "Schema77293c20a28f15dcde8e5b634e913a3be411a8d6418327b735baf305552cc344": {
         "anyOf": [
           {
@@ -1274,6 +1364,27 @@
         ],
         "default": null,
         "title": "Alerts"
+      },
+      "Schema7c83cecf02db0f080223dfa1674ec902fdfd0ef2b61abdc4c975a148eb4cb659": {
+        "additionalProperties": false,
+        "description": "List one directory of one ref; the empty path lists the repository root.",
+        "properties": {
+          "path": {
+            "$ref": "#/components/schemas/Schema0851fdad2e08689db7c506ac42ca1ae3b51e19636e6f912d35716f6d3ac83ee1"
+          },
+          "ref": {
+            "$ref": "#/components/schemas/Schema29c6f82e684cbdda9218918e6620c210f7151ad3073b5d3e17650bdb267fcec0"
+          },
+          "repository": {
+            "$ref": "#/components/schemas/Schema232cd8554048d4c90289c36e61837e60f8914e4f14d074ced504b87387d9f4f8"
+          }
+        },
+        "required": [
+          "repository",
+          "ref"
+        ],
+        "title": "SourceTreeParams",
+        "type": "object"
       },
       "Schema7e3e1f8b06794dab350bd39af9bdb0a223b940372491e67fe40e989baf8c5d77": {
         "maxLength": 512,
@@ -1881,6 +1992,19 @@
         ],
         "type": "string"
       },
+      "Schemaae060c5d480987a711f4a298cf9abea6d0e471b4bdb1dd7a44e2f7733797a025": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "SourceBlobResult",
+        "type": "object"
+      },
       "Schemaae8bd329d0f3cbc513a787bb7e9fd3f0e82b9ae7eed745cc846349c13cb8ab77": {
         "maxLength": 512,
         "minLength": 1,
@@ -1898,6 +2022,19 @@
           "value"
         ],
         "title": "SwarmTopologyReadResult",
+        "type": "object"
+      },
+      "Schemab191c71eb8e030affbd588331c2a8c07b9fd86a97e6692eb068cd15c627de8c7": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "SourceHistoryResult",
         "type": "object"
       },
       "Schemab19b8ba358558a5ae0954297591c93391661cedd7ac627e8aa81bcec9d1c3621": {
@@ -2304,6 +2441,28 @@
         "additionalProperties": false,
         "properties": {},
         "title": "PolicyReadParams",
+        "type": "object"
+      },
+      "Schemadc9d160664208518c9b779d5970aa09e31e96cfd1671db4fb2f8549be2bbb457": {
+        "additionalProperties": false,
+        "description": "Read one file of one ref.",
+        "properties": {
+          "path": {
+            "$ref": "#/components/schemas/Schema3a785379f4278e29ff87c871da74d3fcb44ede9dbaaa7373b5d1237ca383f248"
+          },
+          "ref": {
+            "$ref": "#/components/schemas/Schema29c6f82e684cbdda9218918e6620c210f7151ad3073b5d3e17650bdb267fcec0"
+          },
+          "repository": {
+            "$ref": "#/components/schemas/Schema232cd8554048d4c90289c36e61837e60f8914e4f14d074ced504b87387d9f4f8"
+          }
+        },
+        "required": [
+          "repository",
+          "ref",
+          "path"
+        ],
+        "title": "SourceBlobParams",
         "type": "object"
       },
       "Schemade6177482fecb4008c482d49b57c689d4d259fd0a9ade91795cd9703c2a7f2f1": {
@@ -19626,6 +19785,142 @@
         ]
       }
     },
+    "/api/v1/ops/source.blame": {
+      "post": {
+        "operationId": "source.blame",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema76f61fcb04ffe1df55d029bddb5f63b65771465fd8febc047e6d345b0738e9cf"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schema28231da9eb0febb34d6e9fb72464c2831407686115e09a3138c8284808660e8c"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Attribute one file to its last-touch revision on one ref",
+        "tags": [
+          "source"
+        ]
+      }
+    },
+    "/api/v1/ops/source.blob": {
+      "post": {
+        "operationId": "source.blob",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schemadc9d160664208518c9b779d5970aa09e31e96cfd1671db4fb2f8549be2bbb457"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schemaae060c5d480987a711f4a298cf9abea6d0e471b4bdb1dd7a44e2f7733797a025"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Read one file of one repository ref",
+        "tags": [
+          "source"
+        ]
+      }
+    },
+    "/api/v1/ops/source.history": {
+      "post": {
+        "operationId": "source.history",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema2b5a8eb8274ac5979e46417be1018eb512e9f30a4604845b59f7d010f5248f96"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schemab191c71eb8e030affbd588331c2a8c07b9fd86a97e6692eb068cd15c627de8c7"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "List the refs of one repository that carry one path",
+        "tags": [
+          "source"
+        ]
+      }
+    },
+    "/api/v1/ops/source.tree": {
+      "post": {
+        "operationId": "source.tree",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema7c83cecf02db0f080223dfa1674ec902fdfd0ef2b61abdc4c975a148eb4cb659"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schema3835fce31c0bc123510c805585b22edc730cfa78d8e517ba97a6baf2a4f4f70b"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "List one directory of one repository ref",
+        "tags": [
+          "source"
+        ]
+      }
+    },
     "/api/v1/ops/swarm.topology.read": {
       "post": {
         "operationId": "swarm.topology.read",
@@ -19810,5 +20105,5 @@
       }
     }
   },
-  "x-registry-digest": "cee1156f67f07c32c81d97f3729b1f81746426366a9dac538a62cbc6080503fe"
+  "x-registry-digest": "e59f1a4ec68f85f0e569a96bc81408eeba4ebeb64ddd06f5e9790f9aa343e333"
 }

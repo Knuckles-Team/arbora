@@ -30,6 +30,7 @@ from arbora.api.ops import (
     retrieval,
     runs,
     security,
+    source,
     swarm,
     telemetry,
     usage,
@@ -88,6 +89,9 @@ def provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Pat
             "work:write",
             "ops:read",
             "ops:admin",
+            "node:read",
+            "edge:read",
+            "blob:read",
         )
     )
     scope_path.write_text(json.dumps(document))
@@ -143,6 +147,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *research.operations(),
         *retrieval.operations(),
         *runs.operations(),
+        *source.operations(),
         *swarm.operations(),
         *work.operations(),
         *ops.operations(),

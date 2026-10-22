@@ -6066,6 +6066,54 @@
       "verb": "ask"
     },
     {
+      "domain": "source",
+      "examples": [
+        "what last touched src/app.py on main"
+      ],
+      "id": "source.blame",
+      "summary": "Attribute one file to its last-touch revision on one ref",
+      "tags": [
+        "source"
+      ],
+      "verb": "find"
+    },
+    {
+      "domain": "source",
+      "examples": [
+        "read the file at src/app.py on main"
+      ],
+      "id": "source.blob",
+      "summary": "Read one file of one repository ref",
+      "tags": [
+        "source"
+      ],
+      "verb": "find"
+    },
+    {
+      "domain": "source",
+      "examples": [
+        "which refs carry src/app.py"
+      ],
+      "id": "source.history",
+      "summary": "List the refs of one repository that carry one path",
+      "tags": [
+        "source"
+      ],
+      "verb": "find"
+    },
+    {
+      "domain": "source",
+      "examples": [
+        "list the files under src on main"
+      ],
+      "id": "source.tree",
+      "summary": "List one directory of one repository ref",
+      "tags": [
+        "source"
+      ],
+      "verb": "find"
+    },
+    {
       "domain": "swarm",
       "examples": [
         "show the current swarm topology"
@@ -6138,5 +6186,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "cee1156f67f07c32c81d97f3729b1f81746426366a9dac538a62cbc6080503fe"
+  "registry_digest": "e59f1a4ec68f85f0e569a96bc81408eeba4ebeb64ddd06f5e9790f9aa343e333"
 }

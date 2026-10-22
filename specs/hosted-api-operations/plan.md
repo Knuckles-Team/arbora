@@ -695,6 +695,55 @@ The development surface is served through the repository-manager
 connector's tools. repository-manager is the development surface used
 inside arbora MCP. arbora serves the underlying `source.*` operations.
 
+### 2026-10-20: R848 decomposition; read delivery on the pinned EG 2.27.3 substrate (R848.1, R850)
+
+R848 splits into `ARBORA-OPS-R848.1` (the source reads -- delivered),
+`ARBORA-OPS-R848.2` (the source writes -- pending the engine changeset
+substrate) and `ARBORA-OPS-R848.3` (the `source.diff` read --
+specified). `ARBORA-OPS-R849` and `ARBORA-OPS-R851` are unchanged.
+
+Op-to-tool mapping: arbora serves the `source.*` operations in its
+operation registry. The development surface inside arbora MCP exposes
+them through the **repository-manager connector's tools**. Those
+tools map onto the served operations. This lane does not build the
+connector. It delivers only the served operations and the typed port
+they bind.
+
+One typed read op per engine read. Each binds to the stateless
+`SourceReader` port. `NativeSourceReader` implements the port.
+Composition happens at the serving root. Each call runs under the
+admitted caller's own engine claims, on the verified session graph. An
+uncomposed reader fails closed with a typed `UNAVAILABLE`.
+
+| Served operation | Engine reads (pinned 2.27.3 contract) | Scopes |
+|---|---|---|
+| `source.tree` | `GetNodesByLabel` (Branch), `GetSuccessors`, `GetNodePropertiesBatch`, `GetEdgePropertiesBatch` | `node:read`, `edge:read` |
+| `source.blob` | the tree reads plus `BlobFetchBegin`/`BlobChunkGet`/`BlobFetchEnd` | `node:read`, `edge:read`, `blob:read` |
+| `source.history` | the tree reads over every live ref of the repository | `node:read`, `edge:read` |
+| `source.blame` | the tree reads (membership-edge last touch) | `node:read`, `edge:read` |
+
+Substrate honesty, reported in the outcomes, never hidden. The
+projection stores no directory nodes. Directories derive from the
+`FileVersion` path prefixes. `source.blame` serves the per-file
+last-touch revision. Its `line_level` is always `false`.
+`source.history` lists the per-ref last touch, without a commit DAG.
+`GetEdgePropertiesBatch` answers one property-blob list per
+`(source, target)` pair. The reader takes the stored `hasFileVersion`
+membership edge per pair. A branch label scan that never sees a short
+page (256 x 256) refuses `UNAVAILABLE`. The answer is unknown, not
+empty.
+
+R850 delivers `GET /api/v1/source/checkout` as an NDJSON stream.
+Directories resolve recursively, then files. Every directory listing
+admits through the single `invoke` chokepoint as the `source.tree`
+operation. The endpoint carries no authority logic of its own.
+Directories stream before files. Every entry frame carries its
+`dir:`/`file:` cursor. A resume continues from the last acknowledged
+cursor. A denied subtree root answers with the JSON error envelope
+before any content. A denied subpath ends the stream with a terminal
+error frame. Traversal and frame counts stay bounded: 4096 tree
+calls, 100000 entries.
+
 ## Server-side landing policy (R849)
 
 `source.land` applies the landing policy on the server. Before
