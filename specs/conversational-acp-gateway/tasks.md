@@ -23,3 +23,4 @@ Governing [spec](spec.md) and [plan](plan.md).
 - [ ] **ARBORA-ACP-R001.6:** Typed refusals for root, capability, permission and client
 - [ ] **ARBORA-ACP-R001.7:** Evidence record for admission and forwarded requests
 - [ ] **ARBORA-ACP-R001.8:** Hot-path proof through `session/new` with a fake client
+- [ ] **ARBORA-ACP-R001.9:** Serve authenticated duplex reads and non-executing previews; qualify with an isolated real client.
