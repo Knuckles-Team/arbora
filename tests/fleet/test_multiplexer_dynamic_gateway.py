@@ -276,54 +276,54 @@ def test_load_catalog_excludes_self_and_disabled(tmp_path):
     assert mux.load_catalog() is catalog
 
 
-def test_load_catalog_admits_explicit_remote_langfuse_entry_via_direct_key_pair(
-    tmp_path, monkeypatch
+@pytest.mark.spec("ARBORA-FLEET-R015.1")
+@pytest.mark.parametrize("with_keys", [True, False])
+def test_load_catalog_admits_remote_langfuse_entry_without_projection(
+    tmp_path, monkeypatch, caplog, with_keys
 ):
-    """Regression test for the arbora fleet-catalog gap.
-
-    An explicit remote (streamable-http) ``langfuse-mcp`` entry ships with no
-    ``env`` block, so credential resolution falls through to the parent
-    process environment. That resolution must accept the direct
-    ``LANGFUSE_PUBLIC_KEY`` / ``LANGFUSE_SECRET_KEY`` pair -- the same names
-    ``langfuse_agent.auth.get_client`` reads for the standalone agent/MCP
-    server -- not only the ``LANGFUSE_PUBLIC_KEY_REF`` / ``LANGFUSE_SECRET_KEY_REF``
-    secret-reference form.
+    """A remote (streamable-http) ``langfuse-mcp`` child holds its own Langfuse
+    credentials in its own deployment. Arbora projects Langfuse settings only
+    into a child it launches (``env`` is never sent over HTTP), so the remote
+    entry is admitted unchanged, with or without Langfuse keys in Arbora's
+    environment. Requiring them disabled a healthy child, and every call to
+    it then came back as an unsettled outcome.
     """
-    config_path = _write_config(
-        tmp_path,
-        {
-            "langfuse-mcp": {
-                "transport": "streamable-http",
-                "url": "http://langfuse-mcp.example.test/mcp",
-                "timeout": 120,
-                "call_timeout": 600,
-                "disabled": False,
-            }
-        },
-    )
-    for name in ("LANGFUSE_PUBLIC_KEY_REF", "LANGFUSE_SECRET_KEY_REF"):
+    entry = {
+        "transport": "streamable-http",
+        "url": "http://langfuse-mcp.example.test/mcp",
+        "timeout": 120,
+        "call_timeout": 600,
+        "disabled": False,
+    }
+    config_path = _write_config(tmp_path, {"langfuse-mcp": dict(entry)})
+    for name in (
+        "LANGFUSE_PUBLIC_KEY_REF",
+        "LANGFUSE_SECRET_KEY_REF",
+        "LANGFUSE_PUBLIC_KEY",
+        "LANGFUSE_SECRET_KEY",
+    ):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("LANGFUSE_HOST", "https://langfuse.example.test")
-    monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-synthetic")
-    monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-synthetic")
+    if with_keys:
+        monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-synthetic")
+        monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-synthetic")
 
     catalog = multiplexer_from_fixture(config_path).load_catalog()
 
-    assert "langfuse-mcp" in catalog
-    assert catalog["langfuse-mcp"]["transport"] == "streamable-http"
-    assert catalog["langfuse-mcp"]["env"]["LANGFUSE_PUBLIC_KEY"] == "pk-lf-synthetic"
-    assert catalog["langfuse-mcp"]["env"]["LANGFUSE_SECRET_KEY"] == "sk-lf-synthetic"
+    assert catalog["langfuse-mcp"]["url"] == entry["url"]
+    assert "env" not in catalog["langfuse-mcp"]
+    assert "langfuse_credentials_missing" not in caplog.text
 
 
-def test_load_catalog_still_rejects_when_neither_ref_nor_direct_key_present(
+def test_load_catalog_still_rejects_local_langfuse_without_credentials(
     tmp_path, monkeypatch, caplog
 ):
     config_path = _write_config(
         tmp_path,
         {
             "langfuse-mcp": {
-                "transport": "streamable-http",
-                "url": "http://langfuse-mcp.example.test/mcp",
+                "command": "langfuse-mcp",
+                "args": [],
                 "disabled": False,
             }
         },
