@@ -17,12 +17,15 @@
       "title": "Typed acceptance-evidence model and freeze-gap checker",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "57cb99978975",
         "a5951682d6da",
+        "f5fc3630a949",
         "f62a4e2e39ed"
       ],
       "verified_by": [
         "tests/test_check_acceptance_evidence.py:177",
-        "tests/test_check_acceptance_evidence.py:83"
+        "tests/test_check_acceptance_evidence.py:83",
+        "tests/test_check_acceptance_evidence.py:99"
       ],
       "rollup_of": [
         "ARBORA-ACCEPTANCE-R001.1"

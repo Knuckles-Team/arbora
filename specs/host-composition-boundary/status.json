@@ -245,7 +245,11 @@
       "title": "Arbora registers the harness host bindings at startup",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "9e7f6499d96f"
+        "192099593cdd",
+        "25e15e2108e1",
+        "52ad3952c2c8",
+        "9e7f6499d96f",
+        "cc6349408a14"
       ],
       "verified_by": [
         "tests/mcp_server/test_harness_host.py:109",
@@ -1928,11 +1932,18 @@
       "title": "Production host log sink",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "191af7948d99"
+        "191af7948d99",
+        "34077185335e",
+        "80f6b7b53f91",
+        "c7208d7d3822",
+        "ceaa3da1bbcc"
       ],
       "verified_by": [
-        "tests/agent_host/test_log_sink.py:2",
-        "tests/agent_host/test_log_sink_terminal.py:6"
+        "tests/agent_host/test_log_access.py:442",
+        "tests/agent_host/test_log_access.py:457",
+        "tests/agent_host/test_log_access.py:484",
+        "tests/agent_host/test_log_metadata.py:2",
+        "tests/agent_host/test_log_replay.py:2"
       ],
       "rollup_of": [
         "ARBORA-HOST-R009.8.1",
@@ -1958,8 +1969,16 @@
       "id": "ARBORA-HOST-R009.8.2",
       "title": "Retain restart acceptance",
       "delivery_state": "VERIFIED",
-      "landed_in": [],
-      "verified_by": [],
+      "landed_in": [
+        "80f6b7b53f91",
+        "c7208d7d3822",
+        "ceaa3da1bbcc"
+      ],
+      "verified_by": [
+        "tests/agent_host/test_log_metadata.py:2",
+        "tests/agent_host/test_log_replay.py:2",
+        "tests/agent_host/test_log_sink_terminal.py:60"
+      ],
       "rollup_of": [
         "ARBORA-HOST-R009.8.2.1",
         "ARBORA-HOST-R009.8.2.2"

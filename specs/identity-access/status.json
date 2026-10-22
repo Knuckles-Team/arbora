@@ -101,6 +101,10 @@
     "ARBORA-IDENTITY-R026.8",
     "ARBORA-IDENTITY-R650",
     "ARBORA-IDENTITY-R027",
+    "ARBORA-IDENTITY-R029",
+    "ARBORA-IDENTITY-R029.1",
+    "ARBORA-IDENTITY-R029.2",
+    "ARBORA-IDENTITY-R029.3",
     "ARBORA-IDENTITY-R028",
     "ARBORA-IDENTITY-R028.1",
     "ARBORA-IDENTITY-R028.2",
@@ -124,11 +128,15 @@
       "title": "Domain scopes consume the generated scope registry",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "9e7f6499d96f",
         "a2212420d6c6",
         "d497f656144a"
       ],
       "verified_by": [
-        "tests/api/test_domain_scopes.py:50"
+        "tests/api/test_domain_scopes.py:50",
+        "tests/security/test_scope_registry.py:26",
+        "tests/security/test_scope_registry.py:35",
+        "tests/security/test_scope_registry.py:45"
       ],
       "rollup_of": [
         "ARBORA-IDENTITY-R002.1"
@@ -162,7 +170,9 @@
       "title": "Rollup",
       "delivery_state": "LANDED",
       "landed_in": [
-        "cd652df8f6c8"
+        "4a3410afa6de",
+        "cd652df8f6c8",
+        "d497f656144a"
       ],
       "verified_by": [],
       "rollup_of": [
@@ -229,6 +239,7 @@
       "title": "Optional MFA with TOTP, WebAuthn, and recovery codes",
       "delivery_state": "LANDED",
       "landed_in": [
+        "4a3410afa6de",
         "cd652df8f6c8"
       ],
       "verified_by": [],
@@ -260,6 +271,7 @@
       "title": "Admin console tabs with mapping dry-run and mode wizard",
       "delivery_state": "LANDED",
       "landed_in": [
+        "4a3410afa6de",
         "cd652df8f6c8"
       ],
       "verified_by": [],
@@ -291,9 +303,17 @@
       "title": "API keys and service accounts replace static MCP tokens",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "8b0005ee65dd",
+        "d45ad779b80c",
         "e74110bb69b5"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/identity/test_api_key_grant.py:20",
+        "tests/identity/test_api_key_grant.py:26",
+        "tests/identity/test_api_key_grant.py:9",
+        "tests/identity/test_api_key_use_time.py:22",
+        "tests/identity/test_api_key_use_time.py:31"
+      ],
       "rollup_of": [
         "ARBORA-IDENTITY-R008.1",
         "ARBORA-IDENTITY-R008.2"
@@ -1132,6 +1152,65 @@
         "tests/mcp_server/test_process_authority_renewal.py:161",
         "tests/mcp_server/test_process_authority_renewal.py:178",
         "tests/mcp_server/test_process_authority_renewal.py:191"
+      ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R029",
+      "title": "A run renews its caller's authority while it is active (rollup)",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "814b7b412321"
+      ],
+      "verified_by": [
+        "tests/mcp_server/test_caller_run_authority.py:120",
+        "tests/mcp_server/test_caller_run_authority.py:140",
+        "tests/mcp_server/test_caller_run_authority.py:153",
+        "tests/mcp_server/test_caller_run_authority.py:177",
+        "tests/mcp_server/test_caller_run_authority.py:201"
+      ],
+      "rollup_of": [
+        "ARBORA-IDENTITY-R029.1",
+        "ARBORA-IDENTITY-R029.2",
+        "ARBORA-IDENTITY-R029.3"
+      ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R029.1",
+      "title": "Run lease renewal",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "814b7b412321"
+      ],
+      "verified_by": [
+        "tests/mcp_server/test_caller_run_authority.py:120",
+        "tests/mcp_server/test_caller_run_authority.py:140",
+        "tests/mcp_server/test_caller_run_authority.py:306"
+      ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R029.2",
+      "title": "Stop conditions",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "814b7b412321"
+      ],
+      "verified_by": [
+        "tests/mcp_server/test_caller_run_authority.py:177",
+        "tests/mcp_server/test_caller_run_authority.py:201",
+        "tests/mcp_server/test_caller_run_authority.py:230",
+        "tests/mcp_server/test_caller_run_authority.py:259"
+      ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R029.3",
+      "title": "Inheritance and audit",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "814b7b412321"
+      ],
+      "verified_by": [
+        "tests/mcp_server/test_caller_run_authority.py:153",
+        "tests/mcp_server/test_caller_run_authority.py:282"
       ]
     },
     {

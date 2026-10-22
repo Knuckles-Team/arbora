@@ -16,7 +16,7 @@ the final release task records served evidence.
 - [ ] T04 — Add `require_reconciled_for_swap()` and `PublicationRefusedError` with refusal tests.
   Cover `ARBORA-MCP-RESOURCES-R003.1`.
 - [ ] T04.1 — Call the guard from the ARBORA-FLEET-001 atomic generation-publish step once
-  `fleet-catalog-and-tools` R022/PA-12 lands. Cover `ARBORA-MCP-RESOURCES-R003.2`.
+  `fleet-catalog-and-tools` R022/ARBORA-FLEET-R051 lands. Cover `ARBORA-MCP-RESOURCES-R003.2`.
 - [ ] T05 — Reconcile `docs/status.md` / `docs/fleet.md` wording against the gate's actual
   status/reason vocabulary. Cover `ARBORA-MCP-RESOURCES-R004`.
 - [ ] T06 — Land reviewed code and record merge commits per slice in `spec.md`; do not mark

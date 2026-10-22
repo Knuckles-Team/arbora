@@ -90,7 +90,9 @@ The boundary is deliberate: Arbora authenticates, composes, routes,
 supervises, and projects. Each sibling remains the source of truth for its own
 domain.
 
-![Knuckles platform runtime architecture](https://raw.githubusercontent.com/Knuckles-Team/epistemic-graph/main/docs/assets/runtime-architecture.svg)
+[![Knuckles platform runtime architecture](https://raw.githubusercontent.com/Knuckles-Team/epistemic-graph/main/docs/assets/runtime-architecture.svg)](https://knuckles-team.github.io/.github/architecture/#arbora)
+
+[Explore the live architecture](https://knuckles-team.github.io/.github/architecture/#arbora)
 
 ## Quick Start
 

@@ -50,12 +50,12 @@
     "ARBORA-FLEET-R020",
     "ARBORA-FLEET-R021",
     "ARBORA-FLEET-R022",
-    "PA-12",
+    "ARBORA-FLEET-R051",
     "ARBORA-FLEET-R023",
     "ARBORA-FLEET-R023.1",
     "ARBORA-FLEET-R024",
-    "PA-12.1",
-    "PA-12.2",
+    "ARBORA-FLEET-R051.1",
+    "ARBORA-FLEET-R051.2",
     "ARBORA-FLEET-R024.1",
     "ARBORA-FLEET-R024.2",
     "ARBORA-FLEET-R024.3",
@@ -690,7 +690,7 @@
       "verified_by": []
     },
     {
-      "id": "PA-12",
+      "id": "ARBORA-FLEET-R051",
       "title": "Catalog reload rejects invalid candidates, proves replica convergence",
       "delivery_state": "LANDED",
       "landed_in": [
@@ -698,8 +698,8 @@
       ],
       "verified_by": [],
       "rollup_of": [
-        "PA-12.1",
-        "PA-12.2"
+        "ARBORA-FLEET-R051.1",
+        "ARBORA-FLEET-R051.2"
       ]
     },
     {
@@ -747,7 +747,7 @@
       ]
     },
     {
-      "id": "PA-12.1",
+      "id": "ARBORA-FLEET-R051.1",
       "title": "Catalog reload rejects invalid candidates",
       "delivery_state": "VERIFIED",
       "landed_in": [
@@ -762,7 +762,7 @@
       ]
     },
     {
-      "id": "PA-12.2",
+      "id": "ARBORA-FLEET-R051.2",
       "title": "Multi-replica convergence is observed by generation and digest",
       "delivery_state": "LANDED",
       "landed_in": [

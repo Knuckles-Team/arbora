@@ -17,8 +17,12 @@
       "id": "ARBORA-MCP-RESOURCES-R001",
       "title": "Publication gate refuses without a valid receipt (rollup)",
       "delivery_state": "VERIFIED",
-      "landed_in": [],
-      "verified_by": [],
+      "landed_in": [
+        "6a19f564d301"
+      ],
+      "verified_by": [
+        "tests/fleet/test_mcp_resource_reconciliation.py:22"
+      ],
       "rollup_of": [
         "ARBORA-MCP-RESOURCES-R001.1"
       ]
@@ -70,7 +74,7 @@
     },
     {
       "id": "ARBORA-MCP-RESOURCES-R003.2",
-      "title": "Call the guard from the publish step (depends on `fleet-catalog-and-tools` R022/PA-12 landing in arbora)",
+      "title": "Call the guard from the publish step (depends on `fleet-catalog-and-tools` R022/ARBORA-FLEET-R051 landing in arbora)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
