@@ -2604,7 +2604,7 @@
     },
     {
       "id": "ARBORA-OPS-R858",
-      "title": "Outside-reader roles for the row engine (rollup)",
+      "title": "Outside SQL client identities for the engine wire front end (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],

@@ -769,7 +769,7 @@ goes to the public git hosting mirrors. The repository-manager
 connector owns mirror sync and the connector mapping. arbora serves
 the underlying `source.*` operations.
 
-## Graph-driven development, context, governance and row-engine operations (R848.4, R852 to R858)
+## Graph-driven development, context, governance and wire-access operations (R848.4, R852 to R858)
 
 These rows serve engine methods. arbora adds admission, scopes, approvals and tool hints. It
 holds no rule, role table or policy for any of them.
@@ -783,7 +783,7 @@ holds no rule, role table or policy for any of them.
 | R855 | `glossary.*`, `stewardship.*`, `product.*`, `access_request.*`, `catalog.search` | EG-TYPED-PACKS-R801, R802, R805; EG-UNIFIED-DATA-PLANE-R764 |
 | R856 | `quality.*`, `profile.run`, `lineage.columns` | EG-UNIFIED-DATA-PLANE-R761 to R763 |
 | R857 | SPARQL 1.1 Protocol and Graph Store HTTP Protocol routes | EG-FEDERATED-QUERY-R707 |
-| R858 | `row_access.grant`, `row_access.revoke` | EG-HYBRID-STORAGE-R017 |
+| R858 | `wire_access.grant`, `wire_access.revoke` | EG-ENGINE-PARITY-R007 |
 
 Each new module registers in the curated module loop at `arbora/api/ops/registry_factory.py:52`.
 Each handler calls its generated `eg.*` method. The registry then lists the tool with its

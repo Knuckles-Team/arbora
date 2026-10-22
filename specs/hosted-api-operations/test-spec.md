@@ -275,8 +275,8 @@ Test the actual serving-root binding and contextual read path. Cover concurrent 
 | `ARBORA-OPS-R857.1` | `tests/api/test_sparql_protocol.py::test_routes_registered` |
 | `ARBORA-OPS-R857.2` | `tests/api/test_sparql_protocol.py::test_protocol_query_and_update` |
 | `ARBORA-OPS-R858` | See each child. |
-| `ARBORA-OPS-R858.1` | `tests/api/test_row_access_ops.py::test_registry_lists_row_access_operations` |
-| `ARBORA-OPS-R858.2` | `tests/api/test_row_access_ops.py::test_grant_read_revoke` |
+| `ARBORA-OPS-R858.1` | `tests/api/test_wire_access_ops.py::test_registry_lists_wire_access_operations` |
+| `ARBORA-OPS-R858.2` | `tests/api/test_wire_access_ops.py::test_grant_read_revoke` |
 
 ## Trust flags, curation review and query workspace operations
 
