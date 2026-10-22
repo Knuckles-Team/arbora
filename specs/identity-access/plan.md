@@ -341,3 +341,12 @@ they do not establish additional native transport acceptance.
 Discovery keeps exact anonymous caller validation ahead of principal, scope and
 policy checks. A focused admission predicate preserves rejection of forged
 anonymous kinds and disabled mode without adding scanner exemptions.
+
+
+### 2026-10-22 amendment: endpoint fixture isolation (R004.3)
+
+Serving-root tests configure engine endpoints through the environment, not a
+mutable override of the live settings proxy. Verify that scoped configuration
+teardown leaves later endpoint reads live. Run serving-root composition before
+anonymous endpoint admission tests to preserve remote-address and hostname
+refusal independently of suite ordering. Production admission is unchanged.

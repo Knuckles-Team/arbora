@@ -193,6 +193,7 @@ async def test_absent_published_method_is_unavailable(monkeypatch):
     assert result.availability == "unavailable"
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R004.3")
 def test_actual_serving_root_composes_stateless_reader(monkeypatch):
     from arbora.a2a import mcp as a2a_mcp
     from arbora.core.settings import runtime_config
@@ -200,9 +201,6 @@ def test_actual_serving_root_composes_stateless_reader(monkeypatch):
     from arbora.mcp_server.backing import server_factory
 
     captured = {}
-    monkeypatch.setattr(
-        runtime_config, "graph_service_endpoints", ["unix:///test-only"]
-    )
     parser = SimpleNamespace(
         parse_known_args=lambda: (SimpleNamespace(transport="stdio"), [])
     )
@@ -217,7 +215,13 @@ def test_actual_serving_root_composes_stateless_reader(monkeypatch):
         return object()
 
     monkeypatch.setattr(served_invocation, "served_invocation_from_settings", compose)
-    invocation, session = server._served_invocation()
+    # Patching a dynamic proxy attribute restores a frozen value at teardown.
+    # Use the real configuration input and verify later reads remain live.
+    with monkeypatch.context() as config_patch:
+        config_patch.setenv("GRAPH_SERVICE_ENDPOINTS", "unix:///test-only")
+        invocation, session = server._served_invocation()
+    monkeypatch.setenv("GRAPH_SERVICE_ENDPOINTS", "tcp://192.0.2.1:80")
+    assert runtime_config.graph_service_endpoints == ["tcp://192.0.2.1:80"]
     assert invocation is not None and session is not None
     assert isinstance(
         captured["bindings"]["current_plan_reader"], NativeCurrentPlanReader
