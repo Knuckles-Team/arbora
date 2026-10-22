@@ -63,6 +63,7 @@
     "ARBORA-FLEET-R025",
     "ARBORA-FLEET-R029",
     "ARBORA-FLEET-R026",
+    "ARBORA-FLEET-R026.1",
     "ARBORA-FLEET-R027",
     "ARBORA-FLEET-R028",
     "ARBORA-FLEET-R030",
@@ -830,12 +831,26 @@
     {
       "id": "ARBORA-FLEET-R026",
       "title": "The catalog admits each server on its own",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "619d25ac8e69",
         "d9015e6d6cda"
       ],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-FLEET-R026.1"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R026.1",
+      "title": "Catalog scale bound",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5ecdfe7fbe9a"
+      ],
+      "verified_by": [
+        "tests/test_fleet_catalog_reader.py:366"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R027",

@@ -10,6 +10,7 @@
     "ARBORA-HOST-R001.2.1",
     "ARBORA-HOST-R001.2.2",
     "ARBORA-HOST-R001.2.3",
+    "ARBORA-HOST-R001.2.4",
     "ARBORA-HOST-R001.3",
     "ARBORA-HOST-R001.4",
     "ARBORA-HOST-R001.5",
@@ -256,7 +257,8 @@
       "rollup_of": [
         "ARBORA-HOST-R001.2.1",
         "ARBORA-HOST-R001.2.2",
-        "ARBORA-HOST-R001.2.3"
+        "ARBORA-HOST-R001.2.3",
+        "ARBORA-HOST-R001.2.4"
       ]
     },
     {
@@ -296,6 +298,17 @@
       "verified_by": [
         "tests/test_served_operation_api.py:206",
         "tests/test_served_operation_api.py:318"
+      ]
+    },
+    {
+      "id": "ARBORA-HOST-R001.2.4",
+      "title": "Tool-call RunEvents are queryable provenance",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "fe6c51770bc3"
+      ],
+      "verified_by": [
+        "tests/mcp_server/test_arbora_016_served_fixes.py:136"
       ]
     },
     {

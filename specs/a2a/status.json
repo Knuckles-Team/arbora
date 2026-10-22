@@ -83,6 +83,7 @@
     "ARBORA-A2A-R001.3",
     "ARBORA-A2A-R001.4",
     "ARBORA-A2A-R001.5",
+    "ARBORA-A2A-R001.6",
     "ARBORA-A2A-R001.5.1",
     "ARBORA-A2A-R001.5.2",
     "ARBORA-A2A-R016.6"
@@ -106,7 +107,8 @@
         "ARBORA-A2A-R001.2",
         "ARBORA-A2A-R001.3",
         "ARBORA-A2A-R001.4",
-        "ARBORA-A2A-R001.5"
+        "ARBORA-A2A-R001.5",
+        "ARBORA-A2A-R001.6"
       ]
     },
     {
@@ -882,6 +884,13 @@
         "ARBORA-A2A-R001.5.1",
         "ARBORA-A2A-R001.5.2"
       ]
+    },
+    {
+      "id": "ARBORA-A2A-R001.6",
+      "title": "Non-blocking `message/send`",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R001.5.1",
