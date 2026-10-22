@@ -283,3 +283,16 @@ Test the actual serving-root binding and contextual read path. Cover concurrent 
 | Row | Proving test |
 |---|---|
 | `ARBORA-OPS-R855.3` | `tests/api/test_governance_ops.py::test_trust_flag_and_proposal_review` |
+
+## ARBORA-OPS-R860 acceptance
+
+| Case | Row | Proving test and observation |
+|---|---|---|
+| Model | `ARBORA-OPS-R860.1` | A unit test round-trips each params model. |
+| Behavior | `ARBORA-OPS-R860.2` | Tests assert the engine calls and no local verdict. |
+| Wiring | `ARBORA-OPS-R860.3` | A served test reaches each handler through `invoke`. |
+| Refusal | `ARBORA-OPS-R860.4` | A served test asserts each code and no engine commit. |
+| Evidence | `ARBORA-OPS-R860.5` | A test reads the audit event. |
+| Hot-path proof | `ARBORA-OPS-R860.6` | `tests/api/test_program_ops_served.py::test_optimize_promote_rollback_served` passes. |
+
+Hot-path proof for `ARBORA-OPS-R860`: `tests/api/test_program_ops_served.py::test_optimize_promote_rollback_served`.

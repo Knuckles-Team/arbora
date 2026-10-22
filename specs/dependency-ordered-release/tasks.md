@@ -19,6 +19,7 @@ Governing [spec](spec.md) and [plan](plan.md).
 - [ ] `ARBORA-RELEASE-R003.6` — write-back receipt row.
 - [ ] `ARBORA-RELEASE-R003.7` — browser-and-identity-provider login probe row.
 - [ ] `ARBORA-RELEASE-R003.8` — typed-abstention response row.
+- [ ] `ARBORA-RELEASE-R003.9` — fleet acceptance row: four checks per connector, reasoned skips only, one FAIL blocks promotion.
 - [ ] A test-suite audit confirms every exit-criteria row resolves to a passing automated test before `ARBORA-RELEASE-R003` itself is marked LANDED.
 ## Decomposition children (tracked)
 
