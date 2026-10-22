@@ -143,13 +143,17 @@ def _work_item_id(task_id: str) -> str:
 
 
 async def read_terminal_event(
-    engine: Any, *, session: Any, task_id: str, owner_ref: str
+    engine: Any, *, session: Any, task_id: str, owner_ref: str, owner_graph: str
 ) -> dict[str, Any]:
-    """Read the committed WorkItem outcome over the session-routed engine client."""
-    if not isinstance(session.graph, str) or not session.graph.strip():
+    """Read the committed outcome over the trusted WorkItem owner graph client."""
+    if (
+        not isinstance(owner_graph, str)
+        or not owner_graph
+        or owner_graph != owner_graph.strip()
+    ):
         raise A2ATerminalEventUnavailable("committed terminal event is unavailable")
     try:
-        client = engine.graph_compute.for_graph(session.graph).async_client
+        client = engine.graph_compute.for_graph(owner_graph).async_client
         value = await client.work_items.get_outcome(
             tenant=session.tenant,
             work_item_id=_work_item_id(task_id),

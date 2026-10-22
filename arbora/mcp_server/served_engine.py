@@ -210,6 +210,13 @@ class _BlockingWorkItems:
     def __init__(self, routed: Any) -> None:
         self._routed = routed
 
+    def get_run(self, *, tenant: str, run_id: str) -> dict[str, Any] | None:
+        """Read immutable run admission through the caller-routed EG client."""
+        from arbora.native_run_admission import require_lookup
+
+        method = require_lookup(self._routed)
+        return _run_blocking(lambda: method(tenant=tenant, run_id=run_id))
+
     def __getattr__(self, name: str) -> Any:
         if name.startswith("_"):
             raise AttributeError(name)

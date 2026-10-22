@@ -532,3 +532,22 @@ Retain the native owner graph, same-caller reauthorization, original budgets,
 immutable publication attempt and paired publication/readback before execution.
 Cancellation during publication or readback revokes the native scope and must
 never dispatch dependency tasks, even when the plan has already been persisted.
+
+### 2026-10-22: Retain measured failed-planning consumption
+
+For ARBORA-HOST-R001.2.1.2, require AU's public RunPlanFailure before
+calling the planner. Carry only this invocation's measured planner usage
+through invalid proposals, admission/publication/readback errors, cancellation
+and timeout. AU owns exact-once terminal accounting; Arbora neither estimates
+unreported provider usage nor post-adds counters. Keep original run bounds.
+Controlled transport tests exercise the actual AU event/result ledger; they
+do not substitute for native-engine durable-event acceptance.
+
+### 2026-10-22: Preserve typed failed A2A usage receipts
+
+ARBORA-HOST-R001.2.1.2 projects AU's exact public RunFailed receipt only
+when its failed result belongs to the admitted run. Copy its aggregate ledger
+once through existing wire validation, without adding planner counters or
+exposing partial output. Foreign or malformed receipts still commit failure
+without usage. Plain errors and cancellation retain their existing semantics.
+The admitted planner requires this public upstream capability before execution.

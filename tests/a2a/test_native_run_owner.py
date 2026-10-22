@@ -81,7 +81,12 @@ async def test_submit_retry_get_list_cancel_use_returned_engine_id(monkeypatch, 
     assert (await authority.get(item_id)).id == item_id
     assert (await authority.list(cursor=None, limit=10))[0][0].id == item_id
     assert (await authority.cancel(item_id)).status.state == "canceled"
+    durable_get = AsyncMock(wraps=authority.get)
+    monkeypatch.setattr(authority, "get", durable_get)
+    run.reset_mock()
     assert (await authority.dispatch(**kwargs)).status.state == "canceled"
+    durable_get.assert_awaited_once_with(item_id)
+    run.assert_not_awaited()
 
 
 def test_old_client_refuses_native_owner_before_submit(monkeypatch):
@@ -163,3 +168,29 @@ def test_durable_reply_uses_native_run_not_public_work_item(payload_run):
         with pytest.raises(RuntimeError, match="reply is unavailable"):
             authority._persisted_artifacts("public-work-item", item=item)
     assert observed == [{"run_id": "native-run", "event_type": "graph_complete"}]
+
+
+@pytest.mark.parametrize("code", ["IDEMPOTENCY_CONFLICT", "UPGRADE_REQUIRED"])
+def test_native_admission_conflict_translates_at_a2a_boundary(monkeypatch, code):
+    from arbora.a2a.authority import A2AIdempotencyConflict
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    def refuse(*args, **kwargs):
+        raise OperationRefused(code)
+
+    monkeypatch.setattr(work_items, "submit_work_item_atomic", refuse)
+    authority = WorkItemA2AAuthority(
+        lambda: object(), task_plan_config=TaskPlanConfig({}, {}, 1, 2)
+    )
+    expected = (
+        A2AIdempotencyConflict if code == "IDEMPOTENCY_CONFLICT" else OperationRefused
+    )
+    with pytest.raises(expected):
+        authority._submit(
+            object(),
+            task_id="run",
+            session=SESSION,
+            owner_ref="owner",
+            description="input",
+            metadata={},
+        )

@@ -310,7 +310,7 @@ R005.2.2 reuses `PlanBinding` and the existing closed confirmation payload. The 
 
 Implement ARBORA-A2A-R010.1 against EG-DURABLE-KERNEL-R028.2 and AU RunClient.outcome. Keep the request opt-in and existing unary behavior unchanged. This point read supplies no lifecycle stream or replay cursor. Native producer qualification and released dependency availability remain separate acceptance conditions.
 
-The bounded projection preserves the actual outcome/tool_call/degraded/reconciled kind and physical scope identity, including its 32-byte digest. Physical storage owner tenant and sanitized graph name are receipt identity, not caller authorization. Routing uses the existing verified session graph transport. The projection caps identifier labels at 512 UTF-8 bytes and result references at 4096 bytes. These presentation bounds may refuse a larger otherwise valid producer record.
+The bounded projection preserves the actual outcome/tool_call/degraded/reconciled kind and physical scope identity, including its 32-byte digest. Physical storage owner tenant and sanitized graph name are receipt identity, not caller authorization. Routing uses the trusted WorkItem engine graph binding through the existing graph transport, never the caller session graph. The projection caps identifier labels at 512 UTF-8 bytes and result references at 4096 bytes. These presentation bounds may refuse a larger otherwise valid producer record.
 
 ## R016.6 profile-use authority boundary (adopted architecture)
 
@@ -560,3 +560,15 @@ suites pass 84 tests. Scoped Ruff lint and format checks pass. These are local
 regressions, not a replacement for hosted CI or native restart acceptance.
 
 Scoped mypy (`--follow-imports=silent`) passes for both changed source files.
+
+### 2026-10-22: committed terminal owner-graph routing
+
+ARBORA-A2A-R010.1 resolves the private owner graph from the actual WorkItem
+engine with native_owner_graph. Missing binding refuses without a session-graph
+fallback. The caller is revalidated before and after the awaited native read.
+The graph capability remains enforced by the native graph client. EG validates
+the receipt scope against its exact storage snapshot; its physical scope tenant
+and sanitized graph are not the logical caller tenant and graph. Arbora retains
+the caller tenant, WorkItem owner, run and outcome checks without inventing a
+physical-to-logical scope mapping. Injected producer tests qualify routing and
+refusals only; producer_unavailable and legacy_unbound remain truthful.

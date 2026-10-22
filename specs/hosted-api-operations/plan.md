@@ -859,3 +859,21 @@ loaded. Scoped Ruff and mypy pass. CCC 1.6.0 reports all 18 functions in the two
 changed modules within cyclomatic 10 and cognitive 15; no limits or exclusions
 changed. This is consumer-side regression evidence, not native producer or
 released-dependency qualification.
+
+### 2026-10-22: immutable native admission recovery (ARBORA-OPS-R001)
+
+Before native submission, read the configured EG owner-bound run admission.
+Compare every original Submit field and context field except issuance and expiry
+timestamps. Matching admissions reuse only the engine-issued identity, never
+resubmit historical context. Recover ambiguous submits with one owner lookup;
+refuse mismatches and unavailable legacy evidence. Lease authority is unchanged.
+
+### 2026-10-22: compose failure recovery through the public runtime facade
+
+ARBORA-OPS-R001 composes immutable admission recovery, authorized completed
+retry reads, planner failure accounting, failed A2A receipts and native owner
+graph terminal reads. New runtime imports use agent-utilities' allowed runtime
+facade and preserve the owning classes. Dispatch returns completed retries
+before execution, so its remaining execution path needs no duplicate terminal
+branch. Source-overlay checks do not qualify released dependencies or native
+terminal production.

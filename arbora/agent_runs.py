@@ -6,7 +6,7 @@ budgets, stop rules). It asks its host for every decision through
 
 * :func:`decide_run` is the run decision provider. The engine serves no run-plan
   decision method today, so it returns the harness's documented default plan
-  (``agent_utilities.graph.default_run_plan``) over the Arbora model registry.
+  (``agent_utilities.runtime.default_run_plan``) over the Arbora model registry.
 * :func:`resolve_model` is the model provider. It builds an OpenAI-compatible
   model for a model id that the Arbora model registry names. Any other id
   passes through, so pydantic-ai resolves it itself.
@@ -229,7 +229,7 @@ def decide_run(request: Any) -> Any:
     The engine serves no run-plan decision method, so this returns the
     harness's documented default plan. A run without a model fails closed.
     """
-    from agent_utilities.graph import default_run_plan
+    from agent_utilities.runtime import default_run_plan
 
     owner = current_native_run(request)
     plan = default_run_plan(request, run_config())
@@ -403,12 +403,32 @@ def record_run_event(event: Mapping[str, Any]) -> None:
         )
 
 
+def failed_run_usage(error: Exception, run_id: str) -> dict[str, int] | None:
+    """Project only AU's validated failed receipt, never exception-shaped data."""
+    from agent_utilities import runtime
+
+    failure_type = getattr(runtime, "RunFailed", None)
+    if failure_type is None or type(error) is not failure_type:
+        return None
+    try:
+        result = cast(Any, failure_type)(cast(Any, error).result).result
+        if result.run_id != run_id or result.status != "failed":
+            return None
+        # Revalidate the public snapshot and enforce the narrower wire bounds.
+        receipt = AgentExecutionResult(
+            run_id=result.run_id, output="", usage=dict(result.usage)
+        )
+        return cast(dict[str, int] | None, receipt.usage)
+    except (AttributeError, TypeError, ValueError):
+        return None
+
+
 class AgentRunPort:
     """``AgentExecutionPort`` over the harness ``AgentRunExecutor``."""
 
     def __init__(self, executor: Any = None) -> None:
         if executor is None:
-            from agent_utilities.graph import AgentRunExecutor
+            from agent_utilities.runtime import AgentRunExecutor
 
             executor = AgentRunExecutor(run_config())
         self._executor = executor

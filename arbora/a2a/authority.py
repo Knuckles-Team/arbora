@@ -371,20 +371,29 @@ class WorkItemA2AAuthority:
             if not isinstance(self.task_plan_config, TaskPlanConfig):
                 raise TypeError("trusted TaskPlanConfig is required")
             metadata = {**metadata, "a2a_run_id": task_id}
-        return work_items.submit_work_item_atomic(
-            work_engine,
-            kind="orchestrator_task",
-            queue="orchestrator_task",
-            payload_ref=task_id,
-            tenant=session.tenant,
-            description=description,
-            resource_class="agent_dispatch",
-            work_item_id=None if native else f"{_WORK_ITEM_PREFIX}{task_id}",
-            run_id=task_id if native else None,
-            idempotency_key=task_id,
-            created_by=owner_ref,
-            metadata=metadata,
-        )
+        from arbora.api.invoke.pipeline import OperationRefused
+
+        try:
+            return work_items.submit_work_item_atomic(
+                work_engine,
+                kind="orchestrator_task",
+                queue="orchestrator_task",
+                payload_ref=task_id,
+                tenant=session.tenant,
+                description=description,
+                resource_class="agent_dispatch",
+                work_item_id=None if native else f"{_WORK_ITEM_PREFIX}{task_id}",
+                run_id=task_id if native else None,
+                idempotency_key=task_id,
+                created_by=owner_ref,
+                metadata=metadata,
+            )
+        except OperationRefused as exc:
+            if exc.code == "IDEMPOTENCY_CONFLICT":
+                raise A2AIdempotencyConflict(
+                    "idempotency key conflicts with admission"
+                ) from exc
+            raise
 
     def _agent_executor(self) -> Any:
         if self._executor is None:
@@ -495,6 +504,9 @@ class WorkItemA2AAuthority:
             logging.getLogger(__name__).warning(
                 "A2A run %s failed: %s: %s", item_id, type(exc).__name__, str(exc)[:300]
             )
+            from arbora.agent_runs import failed_run_usage
+
+            usage = failed_run_usage(exc, run_id or task_id)
             outcome = "failed"
             error_ref = persistence_reference(
                 "error", type(exc).__name__, namespace="arbora-a2a"
@@ -592,8 +604,13 @@ class WorkItemA2AAuthority:
             request_digest=request_digest,
             run_id=run_id,
         )
+        if not created and item.get("status") in _TERMINAL:
+            recovered = await self.get(task_id)
+            if recovered is None:
+                raise RuntimeError("admitted A2A task became unavailable")
+            return recovered
         usage = None
-        if not blocking and (created or item.get("status") not in _TERMINAL):
+        if not blocking:
             # ARBORA-A2A-R001.6: answer with the admitted task now. The run
             # continues under that task; the caller follows it with
             # ``tasks/get``. The detached run inherits the caller's session
@@ -611,7 +628,7 @@ class WorkItemA2AAuthority:
                 ),
                 item_id,
             )
-        elif created or item.get("status") not in _TERMINAL:
+        else:
             usage = await self._run(
                 work_engine,
                 item_id=item_id,
@@ -854,24 +871,41 @@ class WorkItemA2AAuthority:
         self, task: A2ATask, task_id: str, session: Any
     ) -> None:
         """Read and attach a terminal event under the unchanged caller authority."""
+        from arbora import work_items
+
         from .terminal_event import (
             A2ATerminalEventUnavailable,
             read_terminal_event,
         )
 
         owner_ref = self._owner_ref(session)
-        engine, _work_engine = self._engine()
+        self._validate_terminal_caller(session, owner_ref)
+        engine, work_engine = self._engine()
         try:
+            owner_graph = work_items.native_owner_graph(work_engine)
             event = await asyncio.wait_for(
                 read_terminal_event(
-                    engine, session=session, task_id=task_id, owner_ref=owner_ref
+                    engine,
+                    session=session,
+                    task_id=task_id,
+                    owner_ref=owner_ref,
+                    owner_graph=owner_graph,
                 ),
                 timeout=5.0,
             )
-        except TimeoutError as exc:
+        except (TimeoutError, work_items.NativeWorkItemRequired) as exc:
             raise A2ATerminalEventUnavailable(
                 "committed terminal event is unavailable"
             ) from exc
+        self._validate_terminal_caller(session, owner_ref)
+        if event["status"] == "available" and (
+            _STATE_MAP[event["outcome"]] != task.status.state
+        ):
+            raise A2ATerminalEventUnavailable("committed terminal event is unavailable")
+        task.metadata["arbora"]["terminalEvent"] = event
+
+    def _validate_terminal_caller(self, session: Any, owner_ref: str) -> None:
+        """Refuse changed caller authority on either side of a terminal read."""
         current = self._session("work:read")
         if (
             current != session
@@ -880,11 +914,6 @@ class WorkItemA2AAuthority:
             or self._owner_ref(current) != owner_ref
         ):
             raise PermissionError("A2A caller changed during terminal read")
-        if event["status"] == "available" and (
-            _STATE_MAP[event["outcome"]] != task.status.state
-        ):
-            raise A2ATerminalEventUnavailable("committed terminal event is unavailable")
-        task.metadata["arbora"]["terminalEvent"] = event
 
     @staticmethod
     def _cursor(owner_ref: str, tenant: str, native_cursor: str) -> str:

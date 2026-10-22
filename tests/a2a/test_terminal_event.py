@@ -74,6 +74,9 @@ def test_committed_identity_is_projected_without_inventing_cursor() -> None:
         (("commit_sequence",), True),
         (("ordinal",), -1),
         (("payload_digest",), "not-a-digest"),
+        (("scope", "tenant"), ""),
+        (("scope", "scope", "graph"), ""),
+        (("scope", "scope", "kind"), "tenant"),
         (("scope", "identity_digest"), [0] * 31),
         (("scope", "identity_digest"), [True] * 32),
         (("scope", "identity_digest"), [256] * 32),
@@ -113,7 +116,9 @@ def test_missing_and_legacy_producers_are_explicitly_unavailable() -> None:
 
 @pytest.fixture
 def authority(monkeypatch: pytest.MonkeyPatch) -> WorkItemA2AAuthority:
-    instance = WorkItemA2AAuthority(lambda: object())
+    instance = WorkItemA2AAuthority(
+        lambda: SimpleNamespace(work_item_graph="__control__")
+    )
     item = {
         "status": "succeeded",
         "tenant": "tenant",
@@ -143,12 +148,21 @@ async def test_shared_service_opt_in_reads_public_au_run_client(
         return record()
 
     client = SimpleNamespace(work_items=SimpleNamespace(get_outcome=outcome))
+
+    def for_graph(graph: str) -> SimpleNamespace:
+        assert graph == "__control__"
+        assert graph != SESSION.graph
+        return SimpleNamespace(async_client=client)
+
     engine = SimpleNamespace(
-        graph_compute=SimpleNamespace(
-            for_graph=lambda graph: SimpleNamespace(async_client=client)
-        )
+        graph_name="wrong-outer-graph",
+        graph_compute=SimpleNamespace(for_graph=for_graph),
     )
-    monkeypatch.setattr(authority, "_engine", lambda: (engine, engine))
+    monkeypatch.setattr(
+        authority,
+        "_engine",
+        lambda: (engine, SimpleNamespace(work_item_graph="__control__")),
+    )
 
     service = A2AService(
         authority=authority, router=OrchestratorA2ARouter(lambda: object())
@@ -290,3 +304,94 @@ async def test_session_change_during_initial_lookup_makes_zero_producer_reads(
     monkeypatch.setattr(authority, "_engine", lambda: pytest.fail("producer accessed"))
     with pytest.raises(PermissionError):
         await authority.get(TASK, include_committed_event=True)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("binding", [None, "", " bad "])
+async def test_missing_owner_binding_never_falls_back_to_session_graph(
+    authority: WorkItemA2AAuthority, monkeypatch: pytest.MonkeyPatch, binding: Any
+) -> None:
+    engine = SimpleNamespace(
+        graph_name=SESSION.graph,
+        graph_compute=SimpleNamespace(
+            for_graph=lambda _graph: pytest.fail("unbound producer accessed")
+        ),
+    )
+    work_engine = SimpleNamespace(work_item_graph=binding)
+    monkeypatch.setattr(authority, "_engine", lambda: (engine, work_engine))
+    with pytest.raises(A2ATerminalEventUnavailable):
+        await authority.get(TASK, include_committed_event=True)
+
+
+@pytest.mark.asyncio
+async def test_owner_graph_read_preserves_native_capability_refusal(
+    authority: WorkItemA2AAuthority, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def denied(graph: str) -> Any:
+        assert graph == "__control__"
+        raise PermissionError("native graph capability refused")
+
+    engine = SimpleNamespace(graph_compute=SimpleNamespace(for_graph=denied))
+    work_engine = SimpleNamespace(work_item_graph="__control__")
+    monkeypatch.setattr(authority, "_engine", lambda: (engine, work_engine))
+    with pytest.raises(PermissionError, match="native graph capability refused"):
+        await authority.get(TASK, include_committed_event=True)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("field", ["tenant", "graph", "owner"])
+async def test_changed_caller_before_terminal_read_never_calls_producer(
+    authority: WorkItemA2AAuthority, monkeypatch: pytest.MonkeyPatch, field: str
+) -> None:
+    task = await authority.get(TASK)
+    assert task is not None
+    if field == "owner":
+        monkeypatch.setattr(
+            authority,
+            "_owner_ref",
+            lambda session: "new-owner" if session is not SESSION else OWNER,
+        )
+    changed = SimpleNamespace(tenant="tenant", graph="graph")
+    if field != "owner":
+        setattr(changed, field, "foreign")
+    monkeypatch.setattr(authority, "_session", lambda scope: changed)
+    monkeypatch.setattr(authority, "_engine", lambda: pytest.fail("producer accessed"))
+    with pytest.raises(PermissionError):
+        await authority._attach_terminal_event(task, TASK, SESSION)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("field", ["tenant", "graph", "owner"])
+async def test_changed_caller_after_native_await_refuses(
+    authority: WorkItemA2AAuthority, monkeypatch: pytest.MonkeyPatch, field: str
+) -> None:
+    async def outcome(**kwargs: Any) -> dict[str, Any]:
+        changed = SimpleNamespace(tenant="tenant", graph="graph")
+        if field == "owner":
+            monkeypatch.setattr(authority, "_owner_ref", lambda session: "foreign")
+        else:
+            setattr(changed, field, "foreign")
+        monkeypatch.setattr(authority, "_session", lambda scope: changed)
+        return record()
+
+    client = SimpleNamespace(work_items=SimpleNamespace(get_outcome=outcome))
+    engine = SimpleNamespace(
+        graph_compute=SimpleNamespace(
+            for_graph=lambda graph: SimpleNamespace(async_client=client)
+        )
+    )
+    monkeypatch.setattr(
+        authority,
+        "_engine",
+        lambda: (engine, SimpleNamespace(work_item_graph="__control__")),
+    )
+    with pytest.raises(PermissionError):
+        await authority.get(TASK, include_committed_event=True)
+
+
+@pytest.mark.parametrize("key", ["a2a_owner_ref", "a2a_run_id"])
+def test_wrong_owner_or_run_binding_refuses(key: str) -> None:
+    value = record()
+    value["work_item"]["metadata"][key] = "foreign"
+    with pytest.raises(A2ATerminalEventUnavailable):
+        project(value)

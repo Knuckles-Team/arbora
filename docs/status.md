@@ -91,3 +91,11 @@ prompts. A retry that encounters an already attached plan currently refuses
 with `TASK_PLAN_RETRY_REQUIRES_ORIGINAL_PUBLICATION`: the latest mutable
 scaffold is not evidence of the original immutable publication payload.
 Native publication receipt recovery remains an acceptance gate.
+
+
+Completed native admission recovery has passed a local real-engine test with
+simulated model responses: identical retries preserve the completed task and
+reply before and after restarting both services against the same persistent
+store, without additional model requests. Changed input returns the typed
+idempotency conflict, and public event identities survive restart. This does
+not qualify concurrent execution deduplication or active-execution resume.

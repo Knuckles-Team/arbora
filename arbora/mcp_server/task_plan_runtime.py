@@ -35,10 +35,15 @@ class Proposal(BaseModel):
 
 def _contracts() -> tuple[Any, Any]:
     try:
-        au = import_module("agent_utilities.graph")
+        au = import_module("agent_utilities.runtime")
+        runtime = import_module("agent_utilities.runtime")
+        _failure_type = runtime.RunFailed
         eg = import_module("epistemic_graph.generated.coordination")
         models = import_module("epistemic_graph.generated.models")
-        if not all(hasattr(au, name) for name in ("DependencyPlan", "RunTask")):
+        if not all(
+            hasattr(au, name)
+            for name in ("DependencyPlan", "RunTask", "RunPlanFailure", "RunFailed")
+        ):
             raise ImportError("AU dependency runtime")
         if not all(
             name in au.RunPlan.__dataclass_fields__
@@ -218,82 +223,94 @@ async def admitted_run_plan(request: Any, base: Any, owner: Any) -> Any:
     requests, tokens = _planning_limits(config, base.budget)
     started = time.monotonic()
     timeout = min(config.timeout_seconds, base.budget.timeout_seconds)
-    async with asyncio.timeout(timeout):
-        # Text output, no tools/toolsets or structured-output tools, no retries.
-        planner = Agent(
-            resolve_model(base.model),
-            output_type=str,
-            retries=0,
-            instructions="Return only a JSON object with tasks and output_task_id. Each task has task_id, prompt, depends_on. Produce a finite dependency DAG, all tasks contributing to the output. Do not include authority, budgets, policy or limits.",
-            model_settings={"max_tokens": min(tokens, 16384)},
-        )
-        result = await planner.run(
-            request.task,
-            usage_limits=UsageLimits(
-                request_limit=1, tool_calls_limit=0, total_tokens_limit=tokens
-            ),
-        )
-        usage = result.usage
-        owner.planning_usage.update(
-            {
-                key: int(getattr(usage, key, 0))
-                for key in (
-                    "requests",
-                    "tool_calls",
-                    "input_tokens",
-                    "output_tokens",
-                    "total_tokens",
-                )
+    measured_usage = None
+    try:
+        async with asyncio.timeout(timeout):
+            # Text output, no tools/toolsets or structured-output tools, no retries.
+            planner = Agent(
+                resolve_model(base.model),
+                output_type=str,
+                retries=0,
+                instructions="Return only a JSON object with tasks and output_task_id. Each task has task_id, prompt, depends_on. Produce a finite dependency DAG, all tasks contributing to the output. Do not include authority, budgets, policy or limits.",
+                model_settings={"max_tokens": min(tokens, 16384)},
+            )
+            result = await planner.run(
+                request.task,
+                usage_limits=UsageLimits(
+                    request_limit=1, tool_calls_limit=0, total_tokens_limit=tokens
+                ),
+            )
+            measured_usage = usage = result.usage
+            owner.planning_usage.update(
+                {
+                    key: int(getattr(usage, key, 0))
+                    for key in (
+                        "requests",
+                        "tool_calls",
+                        "input_tokens",
+                        "output_tokens",
+                        "total_tokens",
+                    )
+                }
+            )
+            proposal = _decode_proposal(result.output)
+            if len(proposal["tasks"]) > min(config.max_steps, base.stop.max_steps):
+                raise OperationRefused("BUDGET_EXHAUSTED")
+            if owner.planning_usage["total_tokens"] >= tokens:
+                raise OperationRefused("BUDGET_EXHAUSTED")
+            plan = await host.evaluate_task_plan(
+                caller, f"task-plan:{owner.run_id}", proposal
+            )
+            bounded_proposal = {
+                **proposal,
+                "max_concurrency": config.max_concurrency,
+                "max_steps": config.max_steps,
             }
-        )
-        proposal = _decode_proposal(result.output)
-        if len(proposal["tasks"]) > min(config.max_steps, base.stop.max_steps):
-            raise OperationRefused("BUDGET_EXHAUSTED")
-        if owner.planning_usage["total_tokens"] >= tokens:
-            raise OperationRefused("BUDGET_EXHAUSTED")
-        plan = await host.evaluate_task_plan(
-            caller, f"task-plan:{owner.run_id}", proposal
-        )
-        bounded_proposal = {
-            **proposal,
-            "max_concurrency": config.max_concurrency,
-            "max_steps": config.max_steps,
-        }
-        canonical = await _publish(host, caller, owner, plan, bounded_proposal, eg)
-        current_native_run(request)
-        await _admit(host, caller, "agents.run")
-    budget = replace(
-        base.budget,
-        request_limit=requests,
-        total_tokens_limit=tokens,
-        timeout_seconds=timeout,
-        max_concurrent_requests=min(
-            base.budget.max_concurrent_requests, config.max_concurrency
-        ),
-    )
-    return replace(
-        base,
-        steps=(),
-        budget=budget,
-        initial_usage=RunUsage(
-            requests=owner.planning_usage.get("requests", 0),
-            tool_calls=owner.planning_usage.get("tool_calls", 0),
-            input_tokens=owner.planning_usage.get("input_tokens", 0),
-            output_tokens=owner.planning_usage.get("output_tokens", 0),
-        ),
-        initial_elapsed_seconds=time.monotonic() - started,
-        stop=replace(base.stop, max_steps=min(config.max_steps, base.stop.max_steps)),
-        dependency_plan=au.DependencyPlan(
-            tasks=tuple(
-                au.RunTask(
-                    task_id=t["task_id"],
-                    prompt=t["prompt"],
-                    depends_on=tuple(t["depends_on"]),
-                )
-                for t in canonical["tasks"]
+            canonical = await _publish(host, caller, owner, plan, bounded_proposal, eg)
+            current_native_run(request)
+            await _admit(host, caller, "agents.run")
+        budget = replace(
+            base.budget,
+            request_limit=requests,
+            total_tokens_limit=tokens,
+            timeout_seconds=timeout,
+            max_concurrent_requests=min(
+                base.budget.max_concurrent_requests, config.max_concurrency
             ),
-            output_task_id=canonical["output_task_id"],
-            max_concurrency=canonical["max_concurrency"],
-            plan_id=canonical["plan_digest"],
-        ),
-    )
+        )
+        return replace(
+            base,
+            steps=(),
+            budget=budget,
+            initial_usage=RunUsage(
+                requests=owner.planning_usage.get("requests", 0),
+                tool_calls=owner.planning_usage.get("tool_calls", 0),
+                input_tokens=owner.planning_usage.get("input_tokens", 0),
+                output_tokens=owner.planning_usage.get("output_tokens", 0),
+            ),
+            initial_elapsed_seconds=time.monotonic() - started,
+            stop=replace(
+                base.stop, max_steps=min(config.max_steps, base.stop.max_steps)
+            ),
+            dependency_plan=au.DependencyPlan(
+                tasks=tuple(
+                    au.RunTask(
+                        task_id=t["task_id"],
+                        prompt=t["prompt"],
+                        depends_on=tuple(t["depends_on"]),
+                    )
+                    for t in canonical["tasks"]
+                ),
+                output_task_id=canonical["output_task_id"],
+                max_concurrency=canonical["max_concurrency"],
+                plan_id=canonical["plan_digest"],
+            ),
+        )
+    except BaseException as error:
+        if measured_usage is None:
+            raise
+        raise au.RunPlanFailure(
+            error,
+            initial_usage=measured_usage,
+            initial_elapsed_seconds=time.monotonic() - started,
+        ) from error

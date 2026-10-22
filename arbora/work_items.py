@@ -202,6 +202,10 @@ def submit_work_item_atomic(
     }
     if run_id is not None:
         request["run_id"] = run_id
+    if run_id is not None:
+        from arbora.native_run_admission import submit
+
+        return submit(_work_items(engine), request)
     return _submit_request(engine, request, run_id)
 
 
