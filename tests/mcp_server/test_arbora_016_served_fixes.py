@@ -137,16 +137,26 @@ def test_an_unscoped_empty_query_still_needs_browse() -> None:
 def test_served_cypher_uses_public_row_decoder(monkeypatch) -> None:
     """Native rows are MessagePack blobs, not already named dictionaries."""
     import msgpack
-    from epistemic_graph.client import QueryClient
+    from epistemic_graph.client import EpistemicGraphClient, QueryClient
 
     from arbora.mcp_server import served_engine as served
 
-    calls = []
+    calls: list[tuple[str, dict[str, Any], str | None]] = []
 
-    class Client:
-        graph_name = "tenant__local"
+    class Client(EpistemicGraphClient):
+        def __init__(self) -> None:
+            # The query decoder needs only the transport below, not a socket.
+            self._graph_name = "tenant__local"
 
-        async def _send(self, method, params, graph=None, **kwargs):
+        async def _send(
+            self,
+            method: str,
+            params: dict[str, Any] | None = None,
+            graph: str | None = None,
+            *,
+            idempotency_key: str | None = None,
+        ) -> Any:
+            assert params is not None
             calls.append((method, params, graph))
             return {
                 "columns": ["payload"],
