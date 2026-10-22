@@ -134,6 +134,7 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
 - [ ] **ARBORA-A2A-R001.3:** Back the served agent with the durable task store and serve caller-filtered `tasks/list`. Consumer: `TUI-RUNTIME-R012.3`.
 - [ ] **ARBORA-A2A-R001.4:** Refuse `message/stream` by type on the served agent, then serve turn events. Consumer: `TUI-RUNTIME-R012.1`.
 - [ ] **ARBORA-A2A-R001.5:** Accept bounded file parts on the served agent. Consumer: `TUI-RUNTIME-R012.5`.
+- [x] **ARBORA-A2A-R001.6:** Serve non-blocking `message/send` with `configuration.blocking: false`; follow the task with `tasks/get`.
 - [ ] **ARBORA-A2A-R016.6:** Honour an allowed caller model preference and serve `models.list`. Consumer: `TUI-RUNTIME-R012.2`.
 
 - [ ] **ARBORA-A2A-R001.5.1:** Serve bounded inline UTF-8 text files.
