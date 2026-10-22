@@ -411,3 +411,19 @@ async def test_anonymous_policy_preserves_authority_and_narrowing(
 
     monkeypatch.setattr(anonymous, "_ACTIVE_MODE", "external")
     assert await gate.decisions([ordinary], caller, "call") == [False]
+
+
+@pytest.mark.parametrize(
+    "name", ["GRAPH_SERVICE_AUTH_SECRET", "EPISTEMIC_GRAPH_SIGNER_KEYS_JSON"]
+)
+@pytest.mark.parametrize("value", ["", "configured-test-placeholder"])
+def test_engine_credentials_checked_through_settings(
+    local_mode, monkeypatch, name, value
+):
+    monkeypatch.setenv(name, value)
+    args = Namespace(host="127.0.0.1", auth_type="none")
+    if value:
+        with pytest.raises(ValueError, match="must not configure engine secrets"):
+            anonymous.validate_startup(args)
+    else:
+        anonymous.validate_startup(args)

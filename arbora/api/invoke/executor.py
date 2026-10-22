@@ -16,7 +16,7 @@ from typing import Any, Protocol
 from arbora.api.invoke.steps import (
     FORBIDDEN_OWNER,
     OpError,
-    VerifiedCaller,
+    RequestCaller,
     claim_values,
     forbidden_path,
     freeze_claims,
@@ -32,16 +32,16 @@ class OperationRuntime(Protocol):
 
     service_scopes: frozenset[str]
 
-    async def verify_current(self, caller: VerifiedCaller) -> VerifiedCaller: ...
+    async def verify_current(self, caller: RequestCaller) -> RequestCaller: ...
 
-    def as_caller(self, caller: VerifiedCaller) -> AbstractAsyncContextManager[Any]: ...
+    def as_caller(self, caller: RequestCaller) -> AbstractAsyncContextManager[Any]: ...
 
     def as_service(
         self, tenant: str, *, required_scopes: frozenset[str]
     ) -> AbstractAsyncContextManager[Any]: ...
 
     async def check_subject_access(
-        self, caller: VerifiedCaller, subject: str
+        self, caller: RequestCaller, subject: str
     ) -> bool: ...
 
     async def dispatch(
@@ -51,7 +51,7 @@ class OperationRuntime(Protocol):
 
 @dataclass(frozen=True, slots=True)
 class ExecutionContext:
-    caller: VerifiedCaller
+    caller: RequestCaller
     client: Any
     owner: str
     service_identity: bool
@@ -71,7 +71,7 @@ class ExecutionContext:
 
 
 def subject_value(
-    op: Any, params: Mapping[str, Any], caller: VerifiedCaller
+    op: Any, params: Mapping[str, Any], caller: RequestCaller
 ) -> str | None:
     """Resolve a declared subject from params or verified caller authority."""
 
@@ -99,7 +99,7 @@ def subject_value(
 async def prepare_executor(
     op: Any,
     params: Mapping[str, Any],
-    caller: VerifiedCaller,
+    caller: RequestCaller,
     runtime: OperationRuntime,
     verified_subject: str | None = None,
 ) -> OpError | None:
@@ -118,7 +118,7 @@ async def prepare_executor(
 def _service_subject(
     op: Any,
     params: Mapping[str, Any],
-    caller: VerifiedCaller,
+    caller: RequestCaller,
     runtime: OperationRuntime,
     verified_subject: str | None,
 ) -> str | OpError:
@@ -149,7 +149,7 @@ def _service_authority_refusal(op: Any, verified_subject: str | None) -> OpError
 @asynccontextmanager
 async def execution_context(
     op: Any,
-    caller: VerifiedCaller,
+    caller: RequestCaller,
     runtime: OperationRuntime,
     idempotency_key: str | None = None,
     fleet_decision: Any = None,
@@ -187,8 +187,8 @@ async def execution_context(
 
 ClientFactory = Callable[[str], Awaitable[Any]]
 ServiceClaims = Callable[[str, frozenset[str]], Awaitable[Mapping[str, Any]]]
-VerifyCurrent = Callable[[VerifiedCaller], Awaitable[VerifiedCaller]]
-SubjectCheck = Callable[[Any, VerifiedCaller, str], Awaitable[bool]]
+VerifyCurrent = Callable[[RequestCaller], Awaitable[RequestCaller]]
+SubjectCheck = Callable[[Any, RequestCaller, str], Awaitable[bool]]
 EgDispatch = Callable[[Any, Mapping[str, Any], ExecutionContext], Awaitable[Any]]
 
 
@@ -242,11 +242,11 @@ class BoundOperationRuntime:
         """The exact admitted service-name mapping; owner objects retain identity."""
         return self._bindings
 
-    async def verify_current(self, caller: VerifiedCaller) -> VerifiedCaller:
+    async def verify_current(self, caller: RequestCaller) -> RequestCaller:
         return await self._verify_current(caller)
 
     @asynccontextmanager
-    async def as_caller(self, caller: VerifiedCaller) -> AsyncIterator[Any]:
+    async def as_caller(self, caller: RequestCaller) -> AsyncIterator[Any]:
         client = await self._caller_client(caller.tenant)
         with client_scope(client, claim_values(caller.engine_claims)):
             yield client
@@ -270,7 +270,7 @@ class BoundOperationRuntime:
         with client_scope(client, claim_values(claims)):
             yield client
 
-    async def check_subject_access(self, caller: VerifiedCaller, subject: str) -> bool:
+    async def check_subject_access(self, caller: RequestCaller, subject: str) -> bool:
         async with self.as_caller(caller) as client:
             return await self._check_access(client, caller, subject)
 

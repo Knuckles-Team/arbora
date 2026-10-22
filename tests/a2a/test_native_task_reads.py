@@ -107,11 +107,12 @@ def payload() -> str:
 @pytest.mark.asyncio
 async def test_get_reads_durable_reply_on_fresh_authority(monkeypatch: Any) -> None:
     queries: list[Any] = []
-    engine = SimpleNamespace(
-        query_cypher=lambda query, params: (
-            queries.append((query, params)) or [{"payload": payload()}]
-        )
-    )
+
+    def query_cypher(query: str, params: dict[str, Any]) -> list[dict[str, str]]:
+        queries.append((query, params))
+        return [{"payload": payload()}]
+
+    engine = SimpleNamespace(query_cypher=query_cypher)
     for _ in range(2):
         authority = WorkItemA2AAuthority(lambda: engine)
         monkeypatch.setattr(authority, "_session", lambda scope: SESSION)

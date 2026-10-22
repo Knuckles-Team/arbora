@@ -25,8 +25,8 @@ from arbora.api.invoke.plan import PlanBinding, PlanStore, bind_plan, params_dig
 from arbora.api.invoke.steps import (
     OpError,
     OpResult,
+    RequestCaller,
     SchemaValidate,
-    VerifiedCaller,
     authenticate,
     freeze_claims,
     principal_rule,
@@ -51,19 +51,19 @@ _logger = logging.getLogger(__name__)
 DISPATCH_TIMEOUT_SECONDS = 320
 MFA_FRESH_SECONDS = 900
 
-AuditWrite = Callable[[Mapping[str, str], AuditClass, VerifiedCaller], Awaitable[None]]
+AuditWrite = Callable[[Mapping[str, str], AuditClass, RequestCaller], Awaitable[None]]
 AuditPreflight = Callable[
-    [Mapping[str, str], AuditClass, VerifiedCaller], Awaitable[str]
+    [Mapping[str, str], AuditClass, RequestCaller], Awaitable[str]
 ]
 
 
 def _request_caller(
     op: Any,
-    caller: VerifiedCaller,
+    caller: RequestCaller,
     *,
     idempotency_key: str | None,
     plan_ref: str | None,
-) -> VerifiedCaller | OpError:
+) -> RequestCaller | OpError:
     """Use one audit/journal identity for retries of the same authorized call.
 
     The effect owner binds payload and authority digests to this ID, rejecting
@@ -103,7 +103,7 @@ class FleetCallDecision:
 
 
 FleetEffect = Callable[
-    [Any, Mapping[str, Any], VerifiedCaller],
+    [Any, Mapping[str, Any], RequestCaller],
     Awaitable[FleetCallDecision],
 ]
 
@@ -236,7 +236,7 @@ class InvokeServices:
 
 
 async def _policy(
-    op: Any, caller: VerifiedCaller, services: InvokeServices
+    op: Any, caller: RequestCaller, services: InvokeServices
 ) -> OpError | None:
     try:
         allowed = await services.policy_gate.check_op(op, caller)
@@ -246,7 +246,7 @@ async def _policy(
 
 
 async def _base_authority(
-    op: Any, caller: VerifiedCaller, services: InvokeServices
+    op: Any, caller: RequestCaller, services: InvokeServices
 ) -> OpError | None:
     for check in (principal_rule, require_scopes):
         refused = check(op, caller)
@@ -258,7 +258,7 @@ async def _base_authority(
 async def _effect(
     op: Any,
     params: Mapping[str, Any],
-    caller: VerifiedCaller,
+    caller: RequestCaller,
     surface: Surface,
     services: InvokeServices,
     *,
@@ -304,7 +304,7 @@ def _requires_plan(op: Any, resolved_from_intent: bool) -> bool:
     )
 
 
-def _console_ready(caller: VerifiedCaller, surface: Surface) -> bool:
+def _console_ready(caller: RequestCaller, surface: Surface) -> bool:
     if (
         surface != Surface.CONSOLE
         or caller.delegated
@@ -322,7 +322,7 @@ def _console_ready(caller: VerifiedCaller, surface: Surface) -> bool:
 async def _effective_op(
     op: Any,
     params: Mapping[str, Any],
-    caller: VerifiedCaller,
+    caller: RequestCaller,
     services: InvokeServices,
 ) -> tuple[Any, FleetCallDecision | None] | OpError:
     if op.id != "fleet.call":
@@ -411,8 +411,8 @@ def _valid_fleet_decision(op: Any, decision: FleetCallDecision) -> bool:
 
 
 async def _refresh(
-    caller: VerifiedCaller | None, services: InvokeServices
-) -> VerifiedCaller | OpError:
+    caller: RequestCaller | None, services: InvokeServices
+) -> RequestCaller | OpError:
     refused = authenticate(caller)
     if refused is not None:
         return refused
@@ -439,7 +439,7 @@ async def _refresh(
 async def _authorize(
     op: Any,
     params: Mapping[str, Any],
-    caller: VerifiedCaller,
+    caller: RequestCaller,
     services: InvokeServices,
     decision: FleetCallDecision | None,
 ) -> OpError | None:
@@ -461,7 +461,7 @@ async def _authorize(
 async def _recheck(
     op: Any,
     params: Mapping[str, Any],
-    caller: VerifiedCaller,
+    caller: RequestCaller,
     services: InvokeServices,
     decision: FleetCallDecision | None,
 ) -> OpError | None:
@@ -484,7 +484,7 @@ async def _recheck(
 async def _dispatch(
     op: Any,
     params: Mapping[str, Any],
-    caller: VerifiedCaller,
+    caller: RequestCaller,
     services: InvokeServices,
     idempotency_key: str | None,
     decision: FleetCallDecision | None,
@@ -506,7 +506,7 @@ async def _dispatch(
 def _journal_binding(
     op: Any,
     params: Mapping[str, Any],
-    caller: VerifiedCaller,
+    caller: RequestCaller,
     services: InvokeServices,
     decision: FleetCallDecision | None,
 ) -> str:
@@ -530,7 +530,7 @@ class _Call:
 
     op: Any
     arguments: Mapping[str, Any]
-    caller: VerifiedCaller
+    caller: RequestCaller
     surface: Surface
     services: InvokeServices
     decision: FleetCallDecision | None
@@ -622,9 +622,9 @@ def _arguments(
 async def _resolve(
     op: Any,
     arguments: Mapping[str, Any],
-    caller: VerifiedCaller | None,
+    caller: RequestCaller | None,
     services: InvokeServices,
-) -> tuple[Any, VerifiedCaller, FleetCallDecision | None] | OpError:
+) -> tuple[Any, RequestCaller, FleetCallDecision | None] | OpError:
     refreshed = await _refresh(caller, services)
     if isinstance(refreshed, OpError):
         return refreshed
@@ -663,7 +663,7 @@ def _request_refusal(call: _Call) -> OpError | None:
 
 
 def _derived_fleet_key(
-    op: Any, arguments: Mapping[str, Any], caller: VerifiedCaller
+    op: Any, arguments: Mapping[str, Any], caller: RequestCaller
 ) -> str | None:
     """A deterministic key for a keyless write ``fleet.call``, or ``None``.
 
@@ -739,7 +739,7 @@ def _journal_key(call: _Call) -> str | None:
     return call.idempotency_key
 
 
-async def _bind_caller(call: _Call) -> VerifiedCaller | OpError:
+async def _bind_caller(call: _Call) -> RequestCaller | OpError:
     caller = call.caller
     if call.governed:
         bound = _request_caller(
@@ -912,7 +912,7 @@ def _static_refusal(op: Any, surface: Surface) -> OpError | None:
 async def invoke(
     op_id: str,
     params: Mapping[str, Any],
-    caller: VerifiedCaller | None,
+    caller: RequestCaller | None,
     surface: Surface,
     *,
     services: InvokeServices,

@@ -29,7 +29,7 @@ from .terminal_event import A2ATerminalEventUnavailable
 if TYPE_CHECKING:
     from arbora.api.http.auth import AmbientHTTPAuthenticator
     from arbora.api.invoke.pipeline import InvokeServices
-    from arbora.api.invoke.steps import VerifiedCaller
+    from arbora.api.invoke.steps import RequestCaller
 
 __all__ = [
     "A2AAuthenticator",
@@ -43,19 +43,19 @@ __all__ = [
 class A2AAuthenticator(Protocol):
     async def authenticate(
         self, request: Request, *, scope: str
-    ) -> VerifiedCaller | None:
+    ) -> RequestCaller | None:
         """Verify authority; an injected adapter may own its dispatch binding."""
 
 
 class AmbientA2AAuthenticator:
     """Resolve each HTTP request through AU's verified bearer/session flow."""
 
-    async def authenticate(self, request: Request, *, scope: str) -> VerifiedCaller:
+    async def authenticate(self, request: Request, *, scope: str) -> RequestCaller:
         caller = await _request_caller(request)
         return _require_caller_scope(caller, scope)
 
 
-async def _request_caller(request: Request) -> VerifiedCaller:
+async def _request_caller(request: Request) -> RequestCaller:
     from arbora.api.http.auth import (
         AmbientHTTPAuthenticator,
         verified_bearer_session_for_request,
@@ -66,13 +66,13 @@ async def _request_caller(request: Request) -> VerifiedCaller:
     ).authenticate(request)
 
 
-def _require_caller_scope(caller: VerifiedCaller, scope: str) -> VerifiedCaller:
+def _require_caller_scope(caller: RequestCaller, scope: str) -> RequestCaller:
     if scope not in caller.effective_scopes:
         raise PermissionError("Required A2A scope unavailable")
     return caller
 
 
-async def _refresh_unary_caller(caller: VerifiedCaller | None) -> None:
+async def _refresh_unary_caller(caller: RequestCaller | None) -> None:
     """Refuse changed authority before entering the task service's session."""
     if caller is None:
         return
@@ -91,7 +91,7 @@ async def _refresh_unary_caller(caller: VerifiedCaller | None) -> None:
 
 
 @contextmanager
-def _caller_session_scope(caller: VerifiedCaller | None) -> Iterator[None]:
+def _caller_session_scope(caller: RequestCaller | None) -> Iterator[None]:
     """Bind a returned caller through legacy dispatch; never resolve a fallback."""
     if caller is None:
         # Explicit injected authenticators already own their admission/binding.

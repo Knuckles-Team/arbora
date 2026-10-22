@@ -31,7 +31,7 @@ def loopback(value: str) -> bool:
 def validate_startup(args: Any) -> None:
     """Reject unsafe or ambiguous anonymous configuration before minting state."""
     global _ACTIVE_MODE
-    from arbora.core.settings import runtime_config
+    from arbora.core.settings import runtime_config, setting
 
     mode = runtime_config.arbora_auth_mode
     if _ACTIVE_MODE is not None and _ACTIVE_MODE != mode:
@@ -74,10 +74,8 @@ def validate_startup(args: Any) -> None:
     )
     if any(getattr(config, field, None) for field in fields):
         raise ValueError("Anonymous mode conflicts with credential configuration")
-    import os
-
-    if os.environ.get("GRAPH_SERVICE_AUTH_SECRET") or os.environ.get(
-        "EPISTEMIC_GRAPH_SIGNER_KEYS_JSON"
+    if setting("GRAPH_SERVICE_AUTH_SECRET", "") or setting(
+        "EPISTEMIC_GRAPH_SIGNER_KEYS_JSON", ""
     ):
         raise ValueError("Anonymous mode must not configure engine secrets")
     for endpoint in runtime_config.graph_service_endpoints or ():

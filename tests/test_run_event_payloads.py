@@ -72,9 +72,12 @@ def test_maximum_reply_roundtrips_without_mutating_event(
     assert len(payload.encode("utf-8")) <= agent_runs.MAX_RUN_EVENT_PAYLOAD_BYTES
     assert json.loads(payload) == original
     artifacts = read(records)
+    assert artifacts is not None
     assert artifacts[0].parts[0].text == output
     remember_task_output(TASK, output)
-    assert task_output_artifacts(TASK)[0].parts[0].text == output
+    cached_artifacts = task_output_artifacts(TASK)
+    assert cached_artifacts is not None
+    assert cached_artifacts[0].parts[0].text == output
 
 
 def at_limit(extra: int = 0) -> dict[str, Any]:

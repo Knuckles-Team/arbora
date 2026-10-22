@@ -49,7 +49,7 @@ def claim_values(value: Any) -> Any:
 
 
 @dataclass(frozen=True, slots=True)
-class RequestCaller:
+class _CallerFacts:
     """Authority supplied by an authenticated surface adapter, never by params."""
 
     principal: str
@@ -71,13 +71,16 @@ class RequestCaller:
 
 
 @dataclass(frozen=True, slots=True)
-class VerifiedCaller(RequestCaller):
+class VerifiedCaller(_CallerFacts):
     """A caller established by credential verification."""
 
 
 @dataclass(frozen=True, slots=True)
-class AnonymousCaller(RequestCaller):
+class AnonymousCaller(_CallerFacts):
     """Explicit local admission, with no assertion of authenticated identity."""
+
+
+type RequestCaller = VerifiedCaller | AnonymousCaller
 
 
 @dataclass(frozen=True, slots=True)
@@ -224,7 +227,7 @@ def surface_caller_admitted(caller: Any) -> bool:
     return caller is not None and caller.authenticated is True
 
 
-def _claims_match(caller: VerifiedCaller) -> bool:
+def _claims_match(caller: RequestCaller) -> bool:
     claims = caller.engine_claims
     if not isinstance(claims, Mapping) or caller.principal_kind not in {
         "human",
@@ -252,7 +255,7 @@ def _scopes_match(scopes: Any, effective: frozenset[str]) -> bool:
     )
 
 
-def _identity_fields_valid(caller: VerifiedCaller) -> bool:
+def _identity_fields_valid(caller: RequestCaller) -> bool:
     fields = (
         caller.principal,
         caller.tenant,
@@ -264,7 +267,7 @@ def _identity_fields_valid(caller: VerifiedCaller) -> bool:
     )
 
 
-def principal_rule(op: Any, caller: VerifiedCaller) -> OpError | None:
+def principal_rule(op: Any, caller: RequestCaller) -> OpError | None:
     rule = op.principals
     is_service = caller.principal_kind == "service"
     is_human = caller.principal_kind == "human"
@@ -289,6 +292,6 @@ def principal_rule(op: Any, caller: VerifiedCaller) -> OpError | None:
     return None
 
 
-def require_scopes(op: Any, caller: VerifiedCaller) -> OpError | None:
+def require_scopes(op: Any, caller: RequestCaller) -> OpError | None:
     missing = sorted(set(op.scopes) - caller.effective_scopes)
     return OpError("SCOPE_REQUIRED", {"missing_scopes": missing}) if missing else None

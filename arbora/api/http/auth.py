@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from arbora.api.contracts.session import GraphSession
-    from arbora.api.invoke import VerifiedCaller
+    from arbora.api.invoke import RequestCaller
     from arbora.security.request_identity import VerifiedLocalBearer
 
 
@@ -107,7 +107,7 @@ class AmbientHTTPAuthenticator:
             raise HTTPAuthenticationError("Verified browser authority required")
         return await verifier(request, session)
 
-    async def authenticate(self, request: Request) -> VerifiedCaller:
+    async def authenticate(self, request: Request) -> RequestCaller:
         """Resolve the authority already verified and bound to this request.
 
         ``session_for_request`` must reject credentials not verified for this

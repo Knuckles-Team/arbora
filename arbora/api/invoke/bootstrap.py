@@ -29,7 +29,7 @@ from arbora.api.invoke.executor import (
 from arbora.api.invoke.pipeline import InvokeServices, OperationRefused
 from arbora.api.invoke.plan import EgPlanStore
 from arbora.api.invoke.steps import (
-    VerifiedCaller,
+    RequestCaller,
     authenticate,
     claim_values,
     freeze_claims,
@@ -87,7 +87,7 @@ def build_client_factory(
     return _client
 
 
-async def verify_current_from_session(caller: VerifiedCaller) -> VerifiedCaller:
+async def verify_current_from_session(caller: RequestCaller) -> RequestCaller:
     """Reconfirm the caller's session is current; refresh its engine claims.
 
     Mirrors ``arbora.mcp_server.runtime.verified_tool_session_scope``'s own
@@ -138,7 +138,7 @@ def build_service_claims(
 
 
 async def deny_subject_access(
-    _client: Any, _caller: VerifiedCaller, _subject: str
+    _client: Any, _caller: RequestCaller, _subject: str
 ) -> bool:
     """Deny service execution until a subject-access authority is composed."""
 
@@ -231,7 +231,7 @@ def build_operation_runtime(
         pool, graph=graph, connect_context=connect_context
     )
 
-    async def verify_bound_caller(caller: VerifiedCaller) -> VerifiedCaller:
+    async def verify_bound_caller(caller: RequestCaller) -> RequestCaller:
         current = await verify_current_from_session(caller)
         if _session_graph(current.session) != graph:
             raise SessionRequiredError("caller graph differs from the runtime graph")

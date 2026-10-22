@@ -13,7 +13,7 @@ from arbora.security.anonymous import session_context
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from arbora.api.invoke import VerifiedCaller
+    from arbora.api.invoke import RequestCaller
 
 
 def caller_from_session(
@@ -22,7 +22,7 @@ def caller_from_session(
     credential_kind: str,
     request_id: str = "",
     mfa_at_ms: int | None = None,
-) -> VerifiedCaller:
+) -> RequestCaller:
     """Copy verified facts without deriving grants or classifying unknown actors.
 
     The composition root must supply a session resolved by the verified authority
@@ -175,7 +175,7 @@ class VerifiedMCPCaller:
         self._session_for_request = session_for_request
         self._credential_kind_for_request = credential_kind_for_request
 
-    def caller_for_request(self) -> VerifiedCaller | None:
+    def caller_for_request(self) -> RequestCaller | None:
         """Resolve afresh on every discovery or invocation; denial has no caller."""
         try:
             return caller_from_session(
