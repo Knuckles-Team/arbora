@@ -38,7 +38,7 @@ CI may run this probe with local containers/processes and synthetic credentials.
 ## Quality and contribution gates
 
 - Run repository format/lint/type/unit suites, packaged contract regeneration in `--check` mode, and targeted MCP protocol tests from a clean checkout. Pin tools and fixtures in repository manifests; avoid host-only paths and ambient credentials.
-- CCCC: new or changed functions meet the repository's cyclomatic/ABC limits. The target is at most 10; the absolute limit is 15. Split orchestration into small typed steps. KISS limits: at most 35 statements, 8 parameters, 20 locals, depth 5, 8 returns, 1 boolean parameter, 900 lines/file, 40 functions/file unless generated declarations require a documented different check. No skip, xfail, noqa, or type-ignore is used to hide a failure.
+- CCCC: new or changed functions meet the repository's cyclomatic/ABC limits. The target is at most 10; the absolute limit is 15. Split orchestration into small typed steps. KISS limits: at most 35 statements, 8 parameters, 20 locals, depth 5, 8 returns and 1 boolean parameter. A file has at most 900 lines and 40 functions, unless generated declarations need a documented different check. No skip, xfail, noqa, or type-ignore is used to hide a failure.
 - jscpd: zero new duplicate pairs over merge base. Dupehound: zero new clones. Reuse the existing catalog reader, multiplexer, notification, and served composition paths rather than copying them.
 - Static gates check no unregistered surface, no child transport call outside the fleet gateway, all native forwarders call `invoke`, no default-open unknown tool path, exact scope and service-grant registry, and generated artifact parity. Runtime gate checks policy mode matrix and authority parity.
 - Fail a PR only for reproducible source, contract, or fixture failures. Record optional remote dependency or live-environment observations as release evidence, with a provisionable substitute for contributor CI.
@@ -254,3 +254,14 @@ Hot-path proof for `ARBORA-FLEET-R037`: `tests/fleet/test_job_loads_served.py::t
 |---|---|---|
 | Refusal | `ARBORA-FLEET-R029.1` | `tests/api/test_fleet_effect.py::test_unscoped_search_without_query_is_invalid_argument`: an empty unscoped search raises `INVALID_ARGUMENT` with `field: query`, mapped to HTTP 400, and the gateway never runs. |
 | Admission | `ARBORA-FLEET-R029.1` | `tests/api/test_fleet_effect.py::test_query_browse_or_server_scope_reaches_the_gateway`: a query, `browse: true` or a `servers` filter reaches the gateway. |
+
+## ARBORA-FLEET-R015.1 acceptance
+
+| Case | Row | Proving test and observation |
+|---|---|---|
+| Child refusal | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_child_refusal_inside_task_group_keeps_child_message`: a child JSON-RPC error inside a task group answers `CHILD_REFUSED` with the child's message, and the log names the server and cause. |
+| Transport | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_transport_leaf_is_unavailable_not_refused` and `::test_dead_session_signature_is_unavailable`: a transport leaf or a stopped session answers `UNAVAILABLE`. |
+| Redaction | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_credential_text_is_redacted_from_log_and_result`: a credential in the child's text reaches neither the log nor the result. |
+| Unmountable child | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_unmountable_child_answers_unavailable_without_dispatch`: a child absent from the catalog answers `UNAVAILABLE`. |
+| Pipeline unwrap | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_pipeline_unwraps_a_single_grouped_refusal` and `::test_pipeline_keeps_unsettled_for_an_unknown_grouped_cause`. |
+| Remote tracing child | `ARBORA-FLEET-R015.1` | `tests/fleet/test_multiplexer_dynamic_gateway.py::test_load_catalog_admits_remote_langfuse_entry_without_projection`: the catalog keeps a remote tracing-service child unchanged, with or without keys. |
