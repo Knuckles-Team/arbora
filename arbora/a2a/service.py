@@ -40,6 +40,7 @@ class A2AService:
         message: A2AMessage | dict[str, Any],
         idempotency_key: str,
         context_budget_tokens: int | None = None,
+        blocking: bool = True,
     ) -> A2ATask:
         parsed = (
             message
@@ -64,6 +65,7 @@ class A2AService:
             message=parsed,
             idempotency_key=idempotency_key,
             decision=decision,
+            blocking=blocking,
         )
 
     async def get_task(
