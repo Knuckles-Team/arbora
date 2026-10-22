@@ -2369,8 +2369,11 @@
     {
       "id": "ARBORA-OPS-R068.5",
       "title": "Registration gate",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "a11292f08cb2",
+        "d673cd573c77"
+      ],
       "verified_by": [
         "tests/api/test_registry_factory.py:348"
       ]
