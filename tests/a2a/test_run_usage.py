@@ -291,3 +291,36 @@ async def test_cancelled_native_run_is_not_wrapped_or_committed(monkeypatch):
             task_id="task",
             run_id="run",
         )
+
+
+@pytest.mark.parametrize(
+    ("path", "replacement", "error"),
+    [
+        (("admission", "run_id"), "other-run", PermissionError),
+        (("admission", "context", "tenant_id"), "other-tenant", PermissionError),
+        (("admission", "metadata", "a2a_schema"), "other-schema", PermissionError),
+        (("work_item", "work_item_id"), "other-work", PermissionError),
+        (("work_item", "status"), "failed", PermissionError),
+        (("work_item", "kind"), "other-kind", PermissionError),
+        (("work_item", "metadata", "a2a_run_id"), "other-run", PermissionError),
+        (("run_completion", "payload", "outcome"), "failed", ValueError),
+    ],
+)
+def test_completion_validator_preserves_each_scope_refusal(path, replacement, error):
+    value = record()
+    item = deepcopy(value["work_item"])
+    target = value
+    for key in path[:-1]:
+        target = target[key]
+    target[path[-1]] = replacement
+    RunWorkItemView.model_validate_json(json.dumps(value), strict=True)
+    with pytest.raises(error):
+        project(value, item)
+
+
+def test_failed_completion_refuses_result_artifact():
+    value = record("failed")
+    value["run_completion"]["payload"]["result_ref"] = "artifact"
+    RunWorkItemView.model_validate_json(json.dumps(value), strict=True)
+    with pytest.raises(ValueError, match="terminal task"):
+        project(value)

@@ -26,39 +26,14 @@ def project_run_usage(
     view = RunWorkItemView.model_validate_json(json.dumps(value), strict=True)
     admission = view.admission.model_dump(mode="json")
     current = view.work_item.model_dump(mode="json")
-    metadata = admission["metadata"]
-    expected = item["metadata"]
-    run_id = expected["a2a_run_id"]
-    if not (
-        admission["run_id"] == run_id
-        and admission["context"]["tenant_id"] == session.tenant
-        and admission["context"]["graph"] == owner_graph
-        and current["work_item_id"] == item["work_item_id"]
-        and current["status"] == item["status"]
-        and current["kind"] == "orchestrator_task"
-        and metadata.get("a2a_owner_ref") == owner_ref
-        and all(
-            metadata.get(key) == expected.get(key) == current["metadata"].get(key)
-            for key in ("a2a_schema", "a2a_run_id", "a2a_context_id", "a2a_owner_ref")
-        )
-        and metadata.get("a2a_schema") == "arbora-a2a-unary-v1"
-        and metadata.get("a2a_context_id") == task.context_id
-    ):
-        raise PermissionError("native run completion crossed its admission scope")
+    run_id = item["metadata"]["a2a_run_id"]
+    _validate_admission(admission, current, session, item, owner_graph, run_id)
+    _validate_metadata(admission, current, item, task, owner_ref)
     receipt = view.run_completion
     if receipt is None:
         return unavailable
     payload = receipt.payload
-    if not (
-        payload.tenant == session.tenant
-        and payload.work_item_id == item["work_item_id"]
-        and payload.completion.run_id == run_id
-        and payload.completion.schema_version == 1
-        and payload.outcome == item["status"]
-        and payload.outcome in {"succeeded", "failed", "cancelled"}
-        and (payload.outcome == "succeeded" or payload.result_ref is None)
-    ):
-        raise ValueError("native run completion does not match the terminal task")
+    _validate_terminal(payload, session, item, run_id)
     if payload.completion.usage is None:
         return unavailable
     counts = payload.completion.usage.model_dump(mode="json", exclude_none=True)
@@ -72,6 +47,61 @@ def project_run_usage(
         "scope": "turn",
         "counts": validated.usage,
     }
+
+
+def _validate_admission(
+    admission: dict[str, Any],
+    current: dict[str, Any],
+    session: Any,
+    item: dict[str, Any],
+    owner_graph: str,
+    run_id: str,
+) -> None:
+    if not (
+        admission["run_id"] == run_id
+        and admission["context"]["tenant_id"] == session.tenant
+        and admission["context"]["graph"] == owner_graph
+        and current["work_item_id"] == item["work_item_id"]
+        and current["status"] == item["status"]
+        and current["kind"] == "orchestrator_task"
+    ):
+        raise PermissionError("native run completion crossed its admission scope")
+
+
+def _validate_metadata(
+    admission: dict[str, Any],
+    current: dict[str, Any],
+    item: dict[str, Any],
+    task: Any,
+    owner_ref: str,
+) -> None:
+    metadata = admission["metadata"]
+    expected = item["metadata"]
+    if not (
+        metadata.get("a2a_owner_ref") == owner_ref
+        and all(
+            metadata.get(key) == expected.get(key) == current["metadata"].get(key)
+            for key in ("a2a_schema", "a2a_run_id", "a2a_context_id", "a2a_owner_ref")
+        )
+        and metadata.get("a2a_schema") == "arbora-a2a-unary-v1"
+        and metadata.get("a2a_context_id") == task.context_id
+    ):
+        raise PermissionError("native run completion crossed its admission scope")
+
+
+def _validate_terminal(
+    payload: Any, session: Any, item: dict[str, Any], run_id: str
+) -> None:
+    if not (
+        payload.tenant == session.tenant
+        and payload.work_item_id == item["work_item_id"]
+        and payload.completion.run_id == run_id
+        and payload.completion.schema_version == 1
+        and payload.outcome == item["status"]
+        and payload.outcome in {"succeeded", "failed", "cancelled"}
+        and (payload.outcome == "succeeded" or payload.result_ref is None)
+    ):
+        raise ValueError("native run completion does not match the terminal task")
 
 
 async def read_run_usage(
