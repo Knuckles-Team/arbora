@@ -62,6 +62,7 @@
     "ARBORA-FLEET-R024.750",
     "ARBORA-FLEET-R025",
     "ARBORA-FLEET-R029",
+    "ARBORA-FLEET-R029.1",
     "ARBORA-FLEET-R026",
     "ARBORA-FLEET-R027",
     "ARBORA-FLEET-R028",
@@ -818,13 +819,32 @@
     {
       "id": "ARBORA-FLEET-R029",
       "title": "The intent tools are the only MCP surface",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "1a8d280ab981",
+        "1fbd4cd9607a",
         "d2b070392ec9",
         "db8d44259c3d"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_fleet_effect.py:543",
+        "tests/api/test_fleet_effect.py:568"
+      ],
+      "rollup_of": [
+        "ARBORA-FLEET-R029.1"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R029.1",
+      "title": "Catalog search refuses an empty unscoped request",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "1fbd4cd9607a"
+      ],
+      "verified_by": [
+        "tests/api/test_fleet_effect.py:543",
+        "tests/api/test_fleet_effect.py:568"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R026",
