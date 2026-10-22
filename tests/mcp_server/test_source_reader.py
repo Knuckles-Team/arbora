@@ -568,14 +568,11 @@ async def test_invalid_authority_never_reaches_engine(monkeypatch, case):
 
 def test_actual_serving_root_composes_stateless_source_reader(monkeypatch):
     from arbora.a2a import mcp as a2a_mcp
-    from arbora.core.settings import runtime_config
     from arbora.mcp_server import served_invocation, server
     from arbora.mcp_server.backing import server_factory
 
     captured = {}
-    monkeypatch.setattr(
-        runtime_config, "graph_service_endpoints", ["unix:///test-only"]
-    )
+    monkeypatch.setenv("GRAPH_SERVICE_ENDPOINTS", "unix:///test-only")
     parser = SimpleNamespace(
         parse_known_args=lambda: (SimpleNamespace(transport="stdio"), [])
     )
