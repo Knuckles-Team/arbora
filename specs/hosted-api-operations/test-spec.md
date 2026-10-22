@@ -250,3 +250,30 @@ Test the actual serving-root binding and contextual read path. Cover concurrent 
 | Landing policy | `ARBORA-OPS-R849` | `tests/api/test_source_landing.py::test_fast_gate_refuses_before_land`: a failing fast gate refuses before landing with zero effects. A post-landing failure records the engine bisect and revert decision. |
 | Virtual checkout | `ARBORA-OPS-R850` | `tests/api/test_source_checkout.py::test_checkout_stream_resumable`: directories stream before blobs. A resumed fetch continues from the last acknowledged entry. |
 | Git bridge | `ARBORA-OPS-R851` | `tests/api/test_source_git_bridge.py::test_smart_http_clone_and_fetch`: clone and fetch succeed over the smart-HTTP endpoint. Mirror sync is served by the repository-manager connector. |
+
+## Graph-driven development, context, governance and row-engine operations
+
+| Row | Proving test |
+|---|---|
+| `ARBORA-OPS-R848.4` | `tests/api/test_source_ops.py::test_edit_symbol_admitted_and_refusals_pass_through` |
+| `ARBORA-OPS-R852` | See each child. |
+| `ARBORA-OPS-R852.1` | `tests/api/test_harness_promotion_ops.py::test_registry_lists_three_operations` |
+| `ARBORA-OPS-R852.2` | `tests/api/test_harness_promotion_ops.py::test_promote_rollback_round_trip` |
+| `ARBORA-OPS-R853` | See each child. |
+| `ARBORA-OPS-R853.1` | `tests/api/test_lifecycle_ops.py::test_registry_lists_lifecycle_operations` |
+| `ARBORA-OPS-R853.2` | `tests/api/test_lifecycle_ops.py::test_defect_to_deployment_trace` |
+| `ARBORA-OPS-R854` | See each child. |
+| `ARBORA-OPS-R854.1` | `tests/api/test_retrieval_ops.py::test_feedback_and_scope_operations_listed` |
+| `ARBORA-OPS-R854.2` | `tests/api/test_retrieval_ops.py::test_scope_and_feedback_served` |
+| `ARBORA-OPS-R855` | See each child. |
+| `ARBORA-OPS-R855.1` | `tests/api/test_governance_ops.py::test_registry_lists_governance_operations` |
+| `ARBORA-OPS-R855.2` | `tests/api/test_governance_ops.py::test_term_review_and_search` |
+| `ARBORA-OPS-R856` | See each child. |
+| `ARBORA-OPS-R856.1` | `tests/api/test_governance_ops.py::test_registry_lists_quality_operations` |
+| `ARBORA-OPS-R856.2` | `tests/api/test_governance_ops.py::test_quality_incident_served` |
+| `ARBORA-OPS-R857` | See each child. |
+| `ARBORA-OPS-R857.1` | `tests/api/test_sparql_protocol.py::test_routes_registered` |
+| `ARBORA-OPS-R857.2` | `tests/api/test_sparql_protocol.py::test_protocol_query_and_update` |
+| `ARBORA-OPS-R858` | See each child. |
+| `ARBORA-OPS-R858.1` | `tests/api/test_row_access_ops.py::test_registry_lists_row_access_operations` |
+| `ARBORA-OPS-R858.2` | `tests/api/test_row_access_ops.py::test_grant_read_revoke` |

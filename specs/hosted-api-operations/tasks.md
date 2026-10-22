@@ -262,3 +262,26 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R849:** Apply the server-side landing policy with fast and full gate phases.
 - [x] **ARBORA-OPS-R850:** Stream the virtual checkout endpoint, recursively and resumably.
 - [ ] **ARBORA-OPS-R851:** Serve the git smart-HTTP read bridge over EG trees.
+
+- [ ] **ARBORA-OPS-R848.4:** Graph-native symbol edits.
+- [ ] **ARBORA-OPS-R852:** Harness optimize, promote and rollback operations (rollup).
+- [ ] **ARBORA-OPS-R852.1:** Wiring.
+- [ ] **ARBORA-OPS-R852.2:** Hot-path proof.
+- [ ] **ARBORA-OPS-R853:** Lifecycle operations (rollup).
+- [ ] **ARBORA-OPS-R853.1:** Wiring.
+- [ ] **ARBORA-OPS-R853.2:** Hot-path proof.
+- [ ] **ARBORA-OPS-R854:** Context engine operations (rollup).
+- [ ] **ARBORA-OPS-R854.1:** Wiring.
+- [ ] **ARBORA-OPS-R854.2:** Hot-path proof.
+- [ ] **ARBORA-OPS-R855:** Catalog and governance operations (rollup).
+- [ ] **ARBORA-OPS-R855.1:** Wiring.
+- [ ] **ARBORA-OPS-R855.2:** Hot-path proof.
+- [ ] **ARBORA-OPS-R856:** Quality and lineage operations (rollup).
+- [ ] **ARBORA-OPS-R856.1:** Wiring.
+- [ ] **ARBORA-OPS-R856.2:** Hot-path proof.
+- [ ] **ARBORA-OPS-R857:** SPARQL 1.1 protocol endpoint (rollup).
+- [ ] **ARBORA-OPS-R857.1:** Wiring.
+- [ ] **ARBORA-OPS-R857.2:** Hot-path proof.
+- [ ] **ARBORA-OPS-R858:** Outside-reader roles for the row engine (rollup).
+- [ ] **ARBORA-OPS-R858.1:** Wiring.
+- [ ] **ARBORA-OPS-R858.2:** Hot-path proof.
