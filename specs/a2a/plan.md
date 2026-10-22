@@ -601,3 +601,11 @@ native control-graph read is correctly denied. However, its typed ACCESS_DENIED 
 escaped the unary task boundary as HTTP 500. Owner lookup must treat only that
 stable native access-denied code as an unavailable task. This preserves non-disclosing
 404 reads and noncancelable writes. Unrelated engine failures must propagate.
+
+### 2026-10-22: R001 dispatch usage projection boundary
+
+Extract dispatch usage attachment without changing admission or execution order.
+Native planning still uses the caller-bound completion reader and propagates refusals.
+Legacy immediate counts retain their exact snapshot, including an empty snapshot.
+Completed retries still use durable task recovery before dispatch projection.
+This decomposition addresses the dispatch complexity regression, not native provider qualification.

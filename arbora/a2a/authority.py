@@ -654,6 +654,20 @@ class WorkItemA2AAuthority:
             )
             if isinstance(refreshed, dict):
                 item = refreshed
+        return await self._project_dispatch_task(
+            item, task_id=task_id, context_id=context_id, session=session, usage=usage
+        )
+
+    async def _project_dispatch_task(
+        self,
+        item: dict[str, Any],
+        *,
+        task_id: str,
+        context_id: str,
+        session: Any,
+        usage: Any,
+    ) -> A2ATask:
+        """Keep native receipt attachment separate from dispatch control flow."""
         task = self._project(item, task_id=task_id)
         if self.task_plan_config is not None:
             await self._attach_run_usage(task, item, session)
