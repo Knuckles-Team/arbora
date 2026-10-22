@@ -307,3 +307,12 @@ Anonymous runtime contract:
 - HTTP peer and Host must be local. Origin, Cookie, Authorization, credential configuration, and reverse-proxy configuration are rejected rather than ignored. Startup logs an unsecured-mode warning and HTTP responses identify `X-Arbora-Auth-Mode: none`.
 - Operation-policy admission accepts only the fully validated anonymous caller variant in explicit local mode. Exact scopes and principal-kind requirements still apply. An enabled embedded or remote policy decision can narrow or refuse anonymous operations and is never bypassed.
 - The backing EG must use its own explicit anonymous mode and a fresh, mode-marked local store. This is not a mechanism to open an existing authenticated store. Plan, policy, effect journaling, schema admission, and approval workflows remain enforced.
+
+### 2026-10-22 amendment: anonymous discovery parity (R004.3)
+
+HTTP registry, operation descriptors and OpenAPI must expose the same admitted
+anonymous operations as MCP discovery and shared invocation. Registry filtering
+reuses the invocation authority check for the concrete anonymous caller variant.
+Objects claiming an anonymous kind, altered caller facts and disabled local mode
+remain refused. Exact scopes, human/service restrictions and policy narrowing
+continue to apply; clients never invoke an unadvertised operation as a fallback.
