@@ -572,3 +572,32 @@ and sanitized graph are not the logical caller tenant and graph. Arbora retains
 the caller tenant, WorkItem owner, run and outcome checks without inventing a
 physical-to-logical scope mapping. Injected producer tests qualify routing and
 refusals only; producer_unavailable and legacy_unbound remain truthful.
+
+### 2026-10-22 — durable turn usage and ordinary terminal producer dependency
+
+R001 immediate usage and R010.1 terminal read remain incomplete for native
+ordinary A2A runs. The verified failed planner run has 1 request/5 tokens in
+its AU failure result and persisted trace, but tasks/get has no usage and
+GetWorkItemOutcome returns null. Ordinary commit sends no outcome extension;
+the delegated extension requires provenance not present in this admission.
+Do not scrape public replay, cache the initial response, fabricate provenance,
+or present best-effort trace persistence as a fenced terminal receipt.
+
+The next implementation is owned by EG-DURABLE-KERNEL-R028.2's 2026-10-22
+ordinary-run completion amendment: optional measured snapshot on the existing
+fenced commit, atomic native outbox binding, and owner-bound GetRunWorkItem
+readback. Arbora then passes AU's validated success/failure snapshot unchanged
+through work_items.commit_result and projects the same committed result on
+initial dispatch, tasks/get and completed-idempotency recovery. Revalidate
+caller, tenant, owner graph, task/run/context and terminal status. Missing
+producer data stays unavailable; provider-before-ledger `{}` stays unknown,
+not synthetic zero; failed runs never produce answer artifacts. This does
+not close session totals, TPS, costs, full streaming or usage.read composition.
+
+### 2026-10-22 — R001 native owner-read refusal mapping
+
+Authenticated served qualification found that a foreign verified principal's
+native control-graph read is correctly denied, but its typed ACCESS_DENIED error
+escaped the unary task boundary as HTTP 500. Owner lookup must treat only that
+stable native access-denied code as an unavailable task, preserving non-disclosing
+404 reads and noncancelable writes; unrelated engine failures must propagate.
