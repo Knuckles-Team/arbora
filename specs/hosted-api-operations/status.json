@@ -241,6 +241,7 @@
     "ARBORA-OPS-R855",
     "ARBORA-OPS-R855.1",
     "ARBORA-OPS-R855.2",
+    "ARBORA-OPS-R855.3",
     "ARBORA-OPS-R856",
     "ARBORA-OPS-R856.1",
     "ARBORA-OPS-R856.2",
@@ -2519,7 +2520,8 @@
       "verified_by": [],
       "rollup_of": [
         "ARBORA-OPS-R855.1",
-        "ARBORA-OPS-R855.2"
+        "ARBORA-OPS-R855.2",
+        "ARBORA-OPS-R855.3"
       ]
     },
     {
@@ -2532,6 +2534,13 @@
     {
       "id": "ARBORA-OPS-R855.2",
       "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R855.3",
+      "title": "Trust flag, curation review and query workspace operations",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

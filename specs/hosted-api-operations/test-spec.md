@@ -277,3 +277,9 @@ Test the actual serving-root binding and contextual read path. Cover concurrent 
 | `ARBORA-OPS-R858` | See each child. |
 | `ARBORA-OPS-R858.1` | `tests/api/test_row_access_ops.py::test_registry_lists_row_access_operations` |
 | `ARBORA-OPS-R858.2` | `tests/api/test_row_access_ops.py::test_grant_read_revoke` |
+
+## Trust flags, curation review and query workspace operations
+
+| Row | Proving test |
+|---|---|
+| `ARBORA-OPS-R855.3` | `tests/api/test_governance_ops.py::test_trust_flag_and_proposal_review` |

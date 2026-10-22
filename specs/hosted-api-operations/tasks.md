@@ -285,3 +285,5 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R858:** Outside-reader roles for the row engine (rollup).
 - [ ] **ARBORA-OPS-R858.1:** Wiring.
 - [ ] **ARBORA-OPS-R858.2:** Hot-path proof.
+
+- [ ] **ARBORA-OPS-R855.3:** Trust flag, curation review and query workspace operations.
