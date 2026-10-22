@@ -214,6 +214,7 @@
     "ARBORA-OPS-R067.6",
     "ARBORA-OPS-R067.7",
     "ARBORA-OPS-R067.8",
+    "ARBORA-OPS-R067.9",
     "ARBORA-OPS-R068",
     "ARBORA-OPS-R068.1",
     "ARBORA-OPS-R068.2",
@@ -2306,7 +2307,8 @@
         "ARBORA-OPS-R067.5",
         "ARBORA-OPS-R067.6",
         "ARBORA-OPS-R067.7",
-        "ARBORA-OPS-R067.8"
+        "ARBORA-OPS-R067.8",
+        "ARBORA-OPS-R067.9"
       ]
     },
     {
@@ -2328,11 +2330,11 @@
       "title": "Backend choice and fallback",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "0b2c1da6bdb6",
         "1a451cf70043",
         "1c39905dafb3",
         "42084de67928",
-        "5170b8a8edde",
-        "5d03b97e5f40"
+        "5170b8a8edde"
       ],
       "verified_by": [
         "tests/api/test_client_http.py:27",
@@ -2379,6 +2381,19 @@
       ],
       "verified_by": [
         "tests/api/test_research_web_backends.py:135"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R067.9",
+      "title": "Bounded page fetch",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "0b2c1da6bdb6"
+      ],
+      "verified_by": [
+        "tests/api/test_research_web_backends.py:173",
+        "tests/api/test_research_web_backends.py:190",
+        "tests/api/test_research_web_backends.py:206"
       ]
     },
     {
