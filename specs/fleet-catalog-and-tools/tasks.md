@@ -21,7 +21,7 @@ Check a task only after its linked code and tests land. A checked source task is
   - [ ] ARBORA-FLEET-R007.3 (child, consumer of .2, this repo): `arbora/mcp_server/server.py` serves the composed loop end to end + `tests/mcp/test_fastmcp4_native.py`.
 - [x] T05 — Build one filtered catalog for all six item kinds, native per-session mounts, cap/expiry/eviction, queued notifications, fallback calls, and credential delegation. Cover ARBORA-FLEET-R018, ARBORA-FLEET-R001, ARBORA-FLEET-R004.
 - [x] T06 — Install embedded/remote Eunomia policy in arbora. Prove exact scopes and principal rules at discover/load/call and fail-closed outage behavior. Cover ARBORA-FLEET-R019, ARBORA-FLEET-R021.
-- [ ] T07 — Add atomic generation refresh, durable ordered delta receipts, last-known-good fallback, in-flight drain, replay, and replica convergence. Cover ARBORA-FLEET-R022 and PA-12.
+- [ ] T07 — Add atomic generation refresh, durable ordered delta receipts, last-known-good fallback, in-flight drain, replay, and replica convergence. Cover ARBORA-FLEET-R022 and ARBORA-FLEET-R051.
 - [x] T08 — Certify actual connector schemas and annotations; expose typed write-back and sanitized telemetry/security/CI feed metadata through registry ops. Cover ARBORA-FLEET-R002, ARBORA-FLEET-R003, ARBORA-FLEET-R008.
 - [ ] T08 — Certify actual connector schemas and annotations; expose typed write-back and sanitized telemetry/security/CI feed metadata through registry ops. Cover ARBORA-FLEET-R002, ARBORA-FLEET-R003, ARBORA-FLEET-R008.
 - [ ] T09 — Correct generated assembly agent parsing. Cover ARBORA-FLEET-R010. (ARBORA-FLEET-R009 split into T09.1-T09.3 below.)
@@ -131,11 +131,11 @@ beyond an unrelated audit-chain capacity check. None of these is a safe
 
 ## Decomposition children (tracked)
 
-- [ ] **PA-12:** Catalog reload rejects invalid candidates, proves replica convergence
-- [ ] **PA-12.1:** Remaining scope of PA-12 (slice .1): Catalog reload rejects invalid candidates, proves replica convergence
-- [ ] **PA-12.2:** Remaining scope of PA-12 (slice .2): Catalog reload rejects invalid candidates, proves replica convergence
-- [ ] **PA-12.1:** Remaining scope of PA-12 (slice .1): Catalog reload rejects invalid candidates, proves replica convergence (rollup)
-- [ ] **PA-12.2:** Remaining scope of PA-12 (slice .2): Catalog reload rejects invalid candidates, proves replica convergence (rollup)
+- [ ] **ARBORA-FLEET-R051:** Catalog reload rejects invalid candidates, proves replica convergence
+- [ ] **ARBORA-FLEET-R051.1:** Remaining scope of ARBORA-FLEET-R051 (slice .1): Catalog reload rejects invalid candidates, proves replica convergence
+- [ ] **ARBORA-FLEET-R051.2:** Remaining scope of ARBORA-FLEET-R051 (slice .2): Catalog reload rejects invalid candidates, proves replica convergence
+- [ ] **ARBORA-FLEET-R051.1:** Remaining scope of ARBORA-FLEET-R051 (slice .1): Catalog reload rejects invalid candidates, proves replica convergence (rollup)
+- [ ] **ARBORA-FLEET-R051.2:** Remaining scope of ARBORA-FLEET-R051 (slice .2): Catalog reload rejects invalid candidates, proves replica convergence (rollup)
 - [ ] **ARBORA-FLEET-R033:** Fleet-catalog `servers` read owned by arbora.
 - [ ] **ARBORA-FLEET-R033.1:** Define the typed fleet-catalog `servers` reader.
 - [ ] **ARBORA-FLEET-R033.2:** Add refusal tests for the `servers` reader.

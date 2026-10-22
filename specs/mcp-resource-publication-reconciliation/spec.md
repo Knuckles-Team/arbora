@@ -27,11 +27,11 @@ instead of guessing or standing up a second, process-local durability store.
 
 This is a thin contract spec: it defines the reconciliation receipt arbora needs from
 epistemic-graph before it publishes, and the typed refusal it returns until that receipt exists.
-It does not define a new store, a new durability mechanism, or a replacement for the existing
-fleet catalog reload design in
-[`fleet-catalog-and-tools/spec.md`](../fleet-catalog-and-tools/spec.md) (ARBORA-FLEET-001,
-requirements R022 and PA-12), which this spec narrows for the MCP resource/template publication
-step specifically.
+It does not define a new store or a new durability mechanism.
+It does not replace the existing fleet catalog reload design.
+That design lives in [`fleet-catalog-and-tools/spec.md`](../fleet-catalog-and-tools/spec.md).
+It owns ARBORA-FLEET-R022 and ARBORA-FLEET-R051.
+This spec narrows it for the MCP resource/template publication step only.
 
 ## Users and acceptance stories
 
@@ -51,9 +51,9 @@ step specifically.
 | `ARBORA-MCP-RESOURCES-R001` | **Publication gate refuses without a valid receipt (rollup).** arbora's MCP resource/template publication path never claims a candidate generation is published unless a `ReconciliationReceipt` exists, matches that exact candidate, and is fresh; otherwise it returns the typed `reingestion-unreconciled` result. Delivered through its child requirement, producer first. |
 | `ARBORA-MCP-RESOURCES-R001.1` | **Typed `ReconciliationReceipt` model and publication gate (this PR).** `arbora/fleet/mcp_resource_reconciliation.py` defines a frozen `ReconciliationReceipt` (tenant, candidate `catalog_generation`, `snapshot_digest`, acknowledged family set, issue time) and `gate_mcp_resource_publication()`, a pure function returning a typed `PublicationGateResult` whose `status` is `"reconciled"` only for a receipt matching the exact tenant, generation, digest, and all four families within a freshness bound, and `"reingestion-unreconciled"` (with a stable `reason` of `missing`, `stale`, or `invalid`) for every other case. No caller is wired to it yet (`ARBORA-MCP-RESOURCES-R003`, not yet specified in this slice). |
 | `ARBORA-MCP-RESOURCES-R002` | **epistemic-graph is the sole admissible receipt source.** The only receipt the gate may treat as reconciling is one epistemic-graph issues once the durable graph has actually committed the candidate's four-family projection; arbora does not synthesize, cache past expiry, or otherwise locally fabricate a passing receipt. The producing contract is owned by epistemic-graph as [`EG-REPO-INGEST-001`](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/repository-index-and-ingestion/spec.md) (`specs/repository-index-and-ingestion` in that repository); this spec consumes that ID and does not redefine it. |
-| `ARBORA-MCP-RESOURCES-R003` | **Gate wired at the one catalog-publish entry point (rollup).** The fleet catalog's atomic generation-publish step (`fleet-catalog-and-tools` R022/PA-12) calls `gate_mcp_resource_publication()` before swapping the active generation pointer for the four MCP families; only an all-families `"reconciled"` result allows the swap. Split because the publish step it must call is not yet built in arbora (`fleet-catalog-and-tools` R022/PA-12 is still BUILDING, so there is no entry point to wire). Delivered through its children. |
+| `ARBORA-MCP-RESOURCES-R003` | **Gate wired at the one catalog-publish entry point (rollup).** The fleet catalog's atomic generation-publish step (`fleet-catalog-and-tools` R022/ARBORA-FLEET-R051) calls `gate_mcp_resource_publication()` before swapping the active generation pointer for the four MCP families. Only an all-families `"reconciled"` result allows the swap. Split because arbora has not built the publish step yet. No entry point exists to wire (`fleet-catalog-and-tools` R022/ARBORA-FLEET-R051 is still BUILDING). Delivered through its children. |
 | `ARBORA-MCP-RESOURCES-R003.1` | **Swap guard function.** `arbora/fleet/mcp_resource_reconciliation.py` adds `require_reconciled_for_swap()`, which wraps `gate_mcp_resource_publication()` and raises a typed `PublicationRefusedError` carrying the `PublicationGateResult` for any `reingestion-unreconciled` result, and returns the receipt only for `reconciled`. The publish step can then call one function that cannot be bypassed by ignoring a return value. Not built in this slice. |
-| `ARBORA-MCP-RESOURCES-R003.2` | **Call the guard from the publish step (depends on `fleet-catalog-and-tools` R022/PA-12 landing in arbora).** The atomic generation-publish step calls `require_reconciled_for_swap()` before swapping the active generation pointer for the four families, leaves the last-known-good generation active on refusal, and surfaces the typed result in the reload outcome. Not built in this slice. |
+| `ARBORA-MCP-RESOURCES-R003.2` | **Call the guard from the publish step (depends on `fleet-catalog-and-tools` R022/ARBORA-FLEET-R051 landing in arbora).** The atomic generation-publish step calls `require_reconciled_for_swap()` before swapping the active generation pointer for the four families, leaves the last-known-good generation active on refusal, and surfaces the typed result in the reload outcome. Not built in this slice. |
 | `ARBORA-MCP-RESOURCES-R004` | **Status docs are the gate's result, not hand-maintained prose.** `docs/status.md`'s "Explicitly unavailable surfaces" row and `docs/fleet.md`'s reconciliation paragraph describe exactly the `reingestion-unreconciled` result this gate returns. A change to the gate's status/reason vocabulary requires updating both in the same change. Not built in this slice. |
 
 ## Reuse and non-goals

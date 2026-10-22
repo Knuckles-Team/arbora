@@ -5,7 +5,7 @@
 **Owner:** arbora
 
 This specification defines architecture and acceptance; it does not establish deployment or completed acceptance.
-**Scope IDs:** ARBORA-FLEET-R001, ARBORA-FLEET-R002, ARBORA-FLEET-R003, ARBORA-FLEET-R004, ARBORA-FLEET-R005, ARBORA-FLEET-R006, ARBORA-FLEET-R007, ARBORA-FLEET-R008, ARBORA-FLEET-R009, ARBORA-FLEET-R010, ARBORA-FLEET-R011, ARBORA-FLEET-R012, ARBORA-FLEET-R013, ARBORA-FLEET-R014, ARBORA-FLEET-R015, ARBORA-FLEET-R016, ARBORA-FLEET-R017, ARBORA-FLEET-R018, ARBORA-FLEET-R019, ARBORA-FLEET-R020, ARBORA-FLEET-R021, ARBORA-FLEET-R022, PA-12, ARBORA-FLEET-R023, ARBORA-FLEET-R024, ARBORA-FLEET-R025, ARBORA-FLEET-R029, ARBORA-FLEET-R026, ARBORA-FLEET-R027, ARBORA-FLEET-R028, ARBORA-FLEET-R030, ARBORA-FLEET-R031, ARBORA-FLEET-R032, ARBORA-FLEET-R033, ARBORA-FLEET-R034, ARBORA-FLEET-R035.
+**Scope IDs:** ARBORA-FLEET-R001, ARBORA-FLEET-R002, ARBORA-FLEET-R003, ARBORA-FLEET-R004, ARBORA-FLEET-R005, ARBORA-FLEET-R006, ARBORA-FLEET-R007, ARBORA-FLEET-R008, ARBORA-FLEET-R009, ARBORA-FLEET-R010, ARBORA-FLEET-R011, ARBORA-FLEET-R012, ARBORA-FLEET-R013, ARBORA-FLEET-R014, ARBORA-FLEET-R015, ARBORA-FLEET-R016, ARBORA-FLEET-R017, ARBORA-FLEET-R018, ARBORA-FLEET-R019, ARBORA-FLEET-R020, ARBORA-FLEET-R021, ARBORA-FLEET-R022, ARBORA-FLEET-R051, ARBORA-FLEET-R023, ARBORA-FLEET-R024, ARBORA-FLEET-R025, ARBORA-FLEET-R029, ARBORA-FLEET-R026, ARBORA-FLEET-R027, ARBORA-FLEET-R028, ARBORA-FLEET-R030, ARBORA-FLEET-R031, ARBORA-FLEET-R032, ARBORA-FLEET-R033, ARBORA-FLEET-R034, ARBORA-FLEET-R035.
 
 ## Outcome
 
@@ -41,7 +41,7 @@ Record unresolved design decisions and any dependency, owner, and retry conditio
 | Connector and fleet item inputs | ARBORA-FLEET-R001, ARBORA-FLEET-R002, ARBORA-FLEET-R003, ARBORA-FLEET-R004, ARBORA-FLEET-R008 | Real schema pins, pack annotations, typed write-back, sanitized feed metadata |
 | Fleet invocation and safety | ARBORA-FLEET-R015, ARBORA-FLEET-R018, ARBORA-FLEET-R019, ARBORA-FLEET-R020, ARBORA-FLEET-R021, ARBORA-FLEET-R035 | Native load/call, exact scopes, policy, schema-bound child preflight, no bypass, parity |
 | Orchestration correctness | ARBORA-FLEET-R009, ARBORA-FLEET-R010 | Atomic admission, correct generated assembly agents |
-| Reload and acceptance | ARBORA-FLEET-R022, PA-12, ARBORA-FLEET-R017 | Atomic generation swap, re-ingestion, negative cases, replica/served proof |
+| Reload and acceptance | ARBORA-FLEET-R022, ARBORA-FLEET-R051, ARBORA-FLEET-R017 | Atomic generation swap, re-ingestion, negative cases, replica/served proof |
 | Fleet onboarding | ARBORA-FLEET-R026, ARBORA-FLEET-R027, ARBORA-FLEET-R028, ARBORA-FLEET-R030 | Per-server admission, attested import of each child catalog, lease renewal, unapproved access mappings |
 
 The engine owns its durable records and method contract. The connector SDK owns pack and connector certification. Arbora owns serving composition, registry projection, fleet policy, session loading, and reload. A contributor may replace a missing external service with the fixtures and local fake adapters described in [test-spec.md](test-spec.md).

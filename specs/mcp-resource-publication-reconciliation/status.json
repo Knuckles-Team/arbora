@@ -70,7 +70,7 @@
     },
     {
       "id": "ARBORA-MCP-RESOURCES-R003.2",
-      "title": "Call the guard from the publish step (depends on `fleet-catalog-and-tools` R022/PA-12 landing in arbora)",
+      "title": "Call the guard from the publish step (depends on `fleet-catalog-and-tools` R022/ARBORA-FLEET-R051 landing in arbora)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
