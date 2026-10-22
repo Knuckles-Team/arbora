@@ -17,7 +17,9 @@ pytestmark = pytest.mark.spec("ARBORA-OPS-R001")
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("blocking", [True, False])
-async def test_submit_retry_get_list_cancel_use_returned_engine_id(monkeypatch, blocking):
+async def test_submit_retry_get_list_cancel_use_returned_engine_id(
+    monkeypatch, blocking
+):
     rows = {}
     requests = []
     item_id = "work-item:" + "e" * 64
