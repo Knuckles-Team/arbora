@@ -82,6 +82,11 @@ def graph_session_required() -> bool:
     return True
 
 
+def _matching_tenant(tenant: str, actor_tenant: str) -> bool:
+    """Require a nonempty tenant shared by the session and its actor."""
+    return bool(tenant and actor_tenant and tenant == actor_tenant)
+
+
 @dataclass(frozen=True)
 class GraphSession:
     """The one explicit currency for a unit of KG work: who, under what policy,
@@ -167,7 +172,7 @@ class GraphSession:
             from arbora.security.anonymous import validate_session
 
             validate_session(self)
-        if not tenant or not actor_tenant or tenant != actor_tenant:
+        if not _matching_tenant(tenant, actor_tenant):
             raise SessionRequiredError(
                 "GraphSession requires one verified, matching tenant authority"
             )

@@ -316,3 +316,28 @@ reuses the invocation authority check for the concrete anonymous caller variant.
 Objects claiming an anonymous kind, altered caller facts and disabled local mode
 remain refused. Exact scopes, human/service restrictions and policy narrowing
 continue to apply; clients never invoke an unadvertised operation as a fallback.
+
+
+### 2026-10-22 amendment: admission validation decomposition (R004.3)
+
+Anonymous startup, Host parsing, actor authority and caller projection checks
+remain fail closed when decomposed into focused validators. Regression coverage
+includes exact Host cardinality, literal loopback peers and engine endpoints,
+and refusal of roles, credential leases or altered local identity. Principal
+rules use their shared human/service predicates rather than duplicate anonymous
+branches. This refactoring adds no admission exceptions or scanner exemptions.
+### 2026-10-22 amendment: admission predicate decomposition (R004.1)
+
+Keep session construction, MCP caller projection, service-child ownership and
+background authority mode checks behaviorally unchanged while separating their
+tenant, step-up, owner and profile predicates. Preserve validation ordering,
+credential refusal, anonymous-mode admission and authenticated defaults. Focused
+regressions and per-function complexity measurements qualify this refactoring;
+they do not establish additional native transport acceptance.
+
+
+### 2026-10-22 amendment: discovery admission decomposition (R004.3)
+
+Discovery keeps exact anonymous caller validation ahead of principal, scope and
+policy checks. A focused admission predicate preserves rejection of forged
+anonymous kinds and disabled mode without adding scanner exemptions.

@@ -31,7 +31,7 @@ def loopback(value: str) -> bool:
 def validate_startup(args: Any) -> None:
     """Reject unsafe or ambiguous anonymous configuration before minting state."""
     global _ACTIVE_MODE
-    from arbora.core.settings import runtime_config, setting
+    from arbora.core.settings import runtime_config
 
     mode = runtime_config.arbora_auth_mode
     if _ACTIVE_MODE is not None and _ACTIVE_MODE != mode:
@@ -42,6 +42,20 @@ def validate_startup(args: Any) -> None:
     from arbora.security.settings import security_settings
 
     config = security_settings()
+    _validate_transport(args)
+    _validate_credentials(config)
+    _validate_engine_endpoints(runtime_config.graph_service_endpoints or ())
+
+    _ACTIVE_MODE = mode
+    import logging
+
+    logging.getLogger(__name__).warning(
+        "UNSECURED local anonymous mode: no credentials, loopback access only"
+    )
+
+
+def _validate_transport(args: Any) -> None:
+    """Require an unproxied loopback listener without transport credentials."""
     if not loopback(str(getattr(args, "host", ""))):
         raise ValueError("Anonymous mode requires a literal loopback bind")
     if getattr(args, "auth_type", "none") != "none":
@@ -65,6 +79,12 @@ def validate_startup(args: Any) -> None:
         args, "trusted_proxy_cidrs", None
     ):
         raise ValueError("Anonymous mode does not admit reverse-proxy exposure")
+
+
+def _validate_credentials(config: Any) -> None:
+    """Keep configured identity and engine secrets out of tokenless mode."""
+    from arbora.core.settings import setting
+
     fields = (
         "auth_jwt_jwks_uri",
         "auth_jwt_issuer",
@@ -78,7 +98,11 @@ def validate_startup(args: Any) -> None:
         "EPISTEMIC_GRAPH_SIGNER_KEYS_JSON", ""
     ):
         raise ValueError("Anonymous mode must not configure engine secrets")
-    for endpoint in runtime_config.graph_service_endpoints or ():
+
+
+def _validate_engine_endpoints(endpoints: Any) -> None:
+    """Allow only local socket paths and literal loopback engine addresses."""
+    for endpoint in endpoints:
         if str(endpoint).startswith(("unix://", "/")):
             continue
         parsed = urlsplit(
@@ -86,13 +110,6 @@ def validate_startup(args: Any) -> None:
         )
         if not loopback(parsed.hostname or ""):
             raise ValueError("Anonymous mode requires a local engine endpoint")
-
-    _ACTIVE_MODE = mode
-    import logging
-
-    logging.getLogger(__name__).warning(
-        "UNSECURED local anonymous mode: no credentials, loopback access only"
-    )
 
 
 def validate_request(scope: Any) -> None:
@@ -111,10 +128,15 @@ def validate_request(scope: Any) -> None:
     ]
     if len(hosts) != 1:
         raise PermissionError("One loopback Host is required")
-    if any(c in hosts[0] for c in "/@?#\\") or any(c.isspace() for c in hosts[0]):
+    _validate_host(hosts[0])
+
+
+def _validate_host(authority: str) -> None:
+    """Validate Host syntax before accepting its loopback destination."""
+    if any(c in authority for c in "/@?#\\") or any(c.isspace() for c in authority):
         raise PermissionError("Invalid anonymous Host authority")
     try:
-        parsed = urlsplit("http://" + hosts[0])
+        parsed = urlsplit("http://" + authority)
         host = parsed.hostname
         _ = parsed.port
     except ValueError as exc:
@@ -132,7 +154,14 @@ def admitted_actor(actor: Any) -> bool:
         and getattr(actor, "authority_mode", "verified") == "none"
         and actor.authenticated is False
         and actor.actor_type == ActorType.ANONYMOUS
-        and not actor.roles
+        and _local_actor_authority(actor)
+    )
+
+
+def _local_actor_authority(actor: Any) -> bool:
+    """Anonymous authority has fixed identity and no roles or credential lease."""
+    return (
+        not actor.roles
         and not actor.groups
         and actor.actor_id == PRINCIPAL
         and actor.tenant_id == TENANT

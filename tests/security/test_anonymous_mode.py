@@ -270,6 +270,12 @@ def test_explicit_transport_credentials_refused(local_mode, field):
         {"actor_type": "human"},
         {"roles": ("kg:admin",)},
         {"groups": ("administrators",)},
+        {"actor_id": "other"},
+        {"tenant_id": "other"},
+        {"authority_mode": "verified"},
+        {"authenticated": True},
+        {"credential_expires_at": 1234},
+        {"credential_lease": object()},
     ],
 )
 def test_anonymous_actor_cannot_claim_verified_identity_attributes(local_mode, updates):
@@ -427,3 +433,42 @@ def test_engine_credentials_checked_through_settings(
             anonymous.validate_startup(args)
     else:
         anonymous.validate_startup(args)
+
+
+@pytest.mark.parametrize("peer", [None, (), ("192.0.2.1", 1000), ("localhost", 1000)])
+def test_anonymous_requires_literal_loopback_peer(local_mode, peer):
+    with pytest.raises(PermissionError, match="loopback peer"):
+        anonymous.validate_request(
+            {"client": peer, "headers": [(b"host", b"localhost")]}
+        )
+
+
+@pytest.mark.parametrize("hosts", [[], [b"localhost", b"127.0.0.1"]])
+def test_anonymous_requires_exactly_one_host(local_mode, hosts):
+    with pytest.raises(PermissionError, match="One loopback Host"):
+        anonymous.validate_request(
+            {"client": ("::1", 1000), "headers": [(b"host", value) for value in hosts]}
+        )
+
+
+@pytest.mark.parametrize("host", [b"localhost:80", b"127.0.0.1:80", b"[::1]:80"])
+def test_anonymous_accepts_local_host_authorities(local_mode, host):
+    anonymous.validate_request({"client": ("::1", 1000), "headers": [(b"host", host)]})
+
+
+@pytest.mark.parametrize(
+    "endpoint", ["tcp://192.0.2.1:80", "example.com:80", "localhost:80"]
+)
+def test_anonymous_rejects_remote_engine_endpoints(local_mode, monkeypatch, endpoint):
+    monkeypatch.setenv("GRAPH_SERVICE_ENDPOINTS", endpoint)
+    with pytest.raises(ValueError, match="local engine endpoint"):
+        anonymous.validate_startup(Namespace(host="127.0.0.1", auth_type="none"))
+
+
+@pytest.mark.parametrize(
+    "endpoint",
+    ["unix:///tmp/engine.sock", "/tmp/engine.sock", "127.0.0.1:80", "tcp://[::1]:80"],
+)
+def test_anonymous_accepts_local_engine_endpoints(local_mode, monkeypatch, endpoint):
+    monkeypatch.setenv("GRAPH_SERVICE_ENDPOINTS", endpoint)
+    anonymous.validate_startup(Namespace(host="127.0.0.1", auth_type="none"))

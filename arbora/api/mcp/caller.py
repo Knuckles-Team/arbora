@@ -45,8 +45,7 @@ def caller_from_session(
     scopes = session.scopes
     if not _scopes_valid(scopes, claims) or not _claims_match(claims, session, actor):
         raise PermissionError("Verified session authority mismatch")
-    if mfa_at_ms is not None and type(mfa_at_ms) is not int:
-        raise PermissionError("Verified step-up authority required")
+    _require_step_up_authority(mfa_at_ms)
     caller_type = AnonymousCaller if anonymous else VerifiedCaller
     return caller_type(
         principal=actor.actor_id,
@@ -62,6 +61,12 @@ def caller_from_session(
         mfa_at_ms=mfa_at_ms,
         session=session,
     )
+
+
+def _require_step_up_authority(mfa_at_ms: int | None) -> None:
+    """Refuse non-integer timestamps, including booleans, before projection."""
+    if mfa_at_ms is not None and type(mfa_at_ms) is not int:
+        raise PermissionError("Verified step-up authority required")
 
 
 #: Verified actor type -> caller principal kind. The served boundary mints a

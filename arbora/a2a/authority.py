@@ -9,7 +9,7 @@ import logging
 from collections import OrderedDict
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Protocol, cast, runtime_checkable
 
 from agent_connector_sdk.privacy import persistence_reference
 
@@ -614,6 +614,76 @@ class WorkItemA2AAuthority:
             metadata={"arbora": public_metadata},
         )
 
+    @staticmethod
+    def _read_reply_payload(payload: Any, task_id: str) -> Any:
+        """Decode the bounded durable payload before validating its identity."""
+        from arbora.agent_runs import MAX_RUN_EVENT_PAYLOAD_BYTES
+
+        if not isinstance(payload, str):
+            raise RuntimeError("durable A2A reply is unavailable")
+        try:
+            if len(payload.encode("utf-8")) > MAX_RUN_EVENT_PAYLOAD_BYTES:
+                raise ValueError("run event exceeds its payload bound")
+            event = json.loads(payload)
+        except (ValueError, UnicodeError) as exc:
+            raise RuntimeError("durable A2A reply is unavailable") from exc
+        WorkItemA2AAuthority._check_reply_marker(event, task_id)
+        return event
+
+    @staticmethod
+    def _check_reply_marker(event: Any, task_id: str) -> None:
+        """Refuse malformed markers before exposing a typed availability reason."""
+        from arbora.agent_runs import RUN_EVENT_PAYLOAD_ERROR_SCHEMA
+
+        if (
+            isinstance(event, dict)
+            and event.get("schema") == RUN_EVENT_PAYLOAD_ERROR_SCHEMA
+        ):
+            error = event.get("payload_error")
+            if not (
+                event.get("type") == "graph_complete"
+                and event.get("run_id") == task_id
+                and set(event)
+                <= {"schema", "type", "run_id", "step", "status", "payload_error"}
+                and type(event.get("step")) is int
+                and 0 <= event["step"] <= 2**63 - 1
+            ):
+                raise RuntimeError("durable A2A reply is unavailable")
+            WorkItemA2AAuthority._raise_reply_marker(event, error)
+
+    @staticmethod
+    def _raise_reply_marker(event: dict[str, Any], error: Any) -> None:
+        """Validate marker details before raising their typed refusal."""
+        from arbora.agent_runs import MAX_RUN_EVENT_PAYLOAD_BYTES
+
+        if not (
+            isinstance(error, dict)
+            and set(error) == {"code", "max_bytes"}
+            and type(error["max_bytes"]) is int
+            and error["max_bytes"] == MAX_RUN_EVENT_PAYLOAD_BYTES
+            and isinstance(error["code"], str)
+            and event.get("status") in (None, "completed", "stopped")
+            and error["code"] in {"payload_too_large", "payload_serialization_failed"}
+        ):
+            raise RuntimeError("durable A2A reply is unavailable")
+        raise _ReplyUnavailable(error["code"])
+
+    @staticmethod
+    def _reply_text(event: Any, task_id: str) -> str:
+        """Accept output only from the matching successful terminal run."""
+        result = event.get("result") if isinstance(event, dict) else None
+        if not (
+            isinstance(event, dict)
+            and event.get("type") == "graph_complete"
+            and event.get("run_id") == task_id
+            and isinstance(result, dict)
+            and result.get("run_id") == task_id
+            and result.get("status") in {"completed", "stopped"}
+            and isinstance(result.get("output"), str)
+        ):
+            raise RuntimeError("durable A2A reply is unavailable")
+        return cast(str, result["output"])
+
     def _persisted_artifacts(
         self, task_id: str, *, item: dict[str, Any]
     ) -> list[A2AArtifact] | None:
@@ -634,54 +704,8 @@ class WorkItemA2AAuthority:
             raise RuntimeError("durable A2A reply is unavailable")
         row = rows[0]
         payload = row.get("payload") if isinstance(row, dict) else None
-        from arbora.agent_runs import (
-            MAX_RUN_EVENT_PAYLOAD_BYTES,
-            RUN_EVENT_PAYLOAD_ERROR_SCHEMA,
-        )
-
-        if not isinstance(payload, str):
-            raise RuntimeError("durable A2A reply is unavailable")
-        try:
-            if len(payload.encode("utf-8")) > MAX_RUN_EVENT_PAYLOAD_BYTES:
-                raise ValueError("run event exceeds its payload bound")
-            event = json.loads(payload)
-        except (ValueError, UnicodeError) as exc:
-            raise RuntimeError("durable A2A reply is unavailable") from exc
-        if (
-            isinstance(event, dict)
-            and event.get("schema") == RUN_EVENT_PAYLOAD_ERROR_SCHEMA
-        ):
-            error = event.get("payload_error")
-            if not (
-                event.get("type") == "graph_complete"
-                and event.get("run_id") == task_id
-                and set(event)
-                <= {"schema", "type", "run_id", "step", "status", "payload_error"}
-                and type(event.get("step")) is int
-                and 0 <= event["step"] <= 2**63 - 1
-                and isinstance(error, dict)
-                and set(error) == {"code", "max_bytes"}
-                and type(error["max_bytes"]) is int
-                and error["max_bytes"] == MAX_RUN_EVENT_PAYLOAD_BYTES
-                and isinstance(error["code"], str)
-                and event.get("status") in (None, "completed", "stopped")
-                and error["code"]
-                in {"payload_too_large", "payload_serialization_failed"}
-            ):
-                raise RuntimeError("durable A2A reply is unavailable")
-            raise _ReplyUnavailable(error["code"])
-        result = event.get("result") if isinstance(event, dict) else None
-        if not (
-            isinstance(event, dict)
-            and event.get("type") == "graph_complete"
-            and event.get("run_id") == task_id
-            and isinstance(result, dict)
-            and result.get("run_id") == task_id
-            and result.get("status") in {"completed", "stopped"}
-            and isinstance(result.get("output"), str)
-        ):
-            raise RuntimeError("durable A2A reply is unavailable")
-        text = result["output"]
+        event = self._read_reply_payload(payload, task_id)
+        text = self._reply_text(event, task_id)
         if len(text) > _MAX_OUTPUT_CHARS:
             raise _ReplyUnavailable("reply_too_large")
         if not text:
@@ -726,41 +750,44 @@ class WorkItemA2AAuthority:
         if self._session("kg:read") != read_session:
             raise PermissionError("A2A caller changed during reply read")
         if include_committed_event:
-            from .terminal_event import (
-                A2ATerminalEventUnavailable,
-                read_terminal_event,
-            )
-
-            session = original
-            owner_ref = self._owner_ref(session)
-            engine, _work_engine = self._engine()
-            try:
-                event = await asyncio.wait_for(
-                    read_terminal_event(
-                        engine, session=session, task_id=task_id, owner_ref=owner_ref
-                    ),
-                    timeout=5.0,
-                )
-            except TimeoutError as exc:
-                raise A2ATerminalEventUnavailable(
-                    "committed terminal event is unavailable"
-                ) from exc
-            current = self._session("work:read")
-            if (
-                current != session
-                or current.tenant != session.tenant
-                or current.graph != session.graph
-                or self._owner_ref(current) != owner_ref
-            ):
-                raise PermissionError("A2A caller changed during terminal read")
-            if event["status"] == "available" and (
-                _STATE_MAP[event["outcome"]] != task.status.state
-            ):
-                raise A2ATerminalEventUnavailable(
-                    "committed terminal event is unavailable"
-                )
-            task.metadata["arbora"]["terminalEvent"] = event
+            await self._attach_terminal_event(task, task_id, original)
         return task
+
+    async def _attach_terminal_event(
+        self, task: A2ATask, task_id: str, session: Any
+    ) -> None:
+        """Read and attach a terminal event under the unchanged caller authority."""
+        from .terminal_event import (
+            A2ATerminalEventUnavailable,
+            read_terminal_event,
+        )
+
+        owner_ref = self._owner_ref(session)
+        engine, _work_engine = self._engine()
+        try:
+            event = await asyncio.wait_for(
+                read_terminal_event(
+                    engine, session=session, task_id=task_id, owner_ref=owner_ref
+                ),
+                timeout=5.0,
+            )
+        except TimeoutError as exc:
+            raise A2ATerminalEventUnavailable(
+                "committed terminal event is unavailable"
+            ) from exc
+        current = self._session("work:read")
+        if (
+            current != session
+            or current.tenant != session.tenant
+            or current.graph != session.graph
+            or self._owner_ref(current) != owner_ref
+        ):
+            raise PermissionError("A2A caller changed during terminal read")
+        if event["status"] == "available" and (
+            _STATE_MAP[event["outcome"]] != task.status.state
+        ):
+            raise A2ATerminalEventUnavailable("committed terminal event is unavailable")
+        task.metadata["arbora"]["terminalEvent"] = event
 
     @staticmethod
     def _cursor(owner_ref: str, tenant: str, native_cursor: str) -> str:
@@ -807,6 +834,26 @@ class WorkItemA2AAuthority:
             raise RuntimeError("canonical WorkItem list returned an invalid identity")
         return cls._project(row, task_id=task_id)
 
+    @staticmethod
+    def _validated_list_page(
+        page: Any, limit: int, native_cursor: str | None
+    ) -> tuple[list[Any], str | None]:
+        """Validate bounded native rows and forward-only continuation together."""
+        if not isinstance(page, dict) or not isinstance(page.get("items"), list):
+            raise RuntimeError("canonical WorkItem list returned invalid data")
+        rows = page["items"]
+        continuation = page.get("next_cursor")
+        if len(rows) > limit or (
+            continuation is not None
+            and (
+                not isinstance(continuation, str)
+                or not continuation
+                or continuation == native_cursor
+            )
+        ):
+            raise RuntimeError("canonical WorkItem list returned invalid data")
+        return rows, continuation
+
     async def list(
         self, *, cursor: str | None, limit: int
     ) -> tuple[list[A2ATask], str | None]:
@@ -826,19 +873,7 @@ class WorkItemA2AAuthority:
         )
         if self._session("kg:read") != session:
             raise PermissionError("A2A caller changed during task listing")
-        if not isinstance(page, dict) or not isinstance(page.get("items"), list):
-            raise RuntimeError("canonical WorkItem list returned invalid data")
-        rows = page["items"]
-        continuation = page.get("next_cursor")
-        if len(rows) > limit or (
-            continuation is not None
-            and (
-                not isinstance(continuation, str)
-                or not continuation
-                or continuation == native_cursor
-            )
-        ):
-            raise RuntimeError("canonical WorkItem list returned invalid data")
+        rows, continuation = self._validated_list_page(page, limit, native_cursor)
         tasks = [self._project_list_row(row, owner_ref=owner_ref) for row in rows]
         next_cursor = (
             self._cursor(owner_ref, session.tenant, continuation)

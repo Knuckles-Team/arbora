@@ -90,6 +90,20 @@ class ServiceChildTransport(Protocol):
 ToolFor = Callable[[Any, str, str], Awaitable[Any]]
 
 
+def _caller_owner_matches(
+    caller: Any, actor: Any, session: Any, owner_ref: str
+) -> bool:
+    """Match the admitted identity, tenant and request to its durable owner."""
+    return (
+        str(actor.actor_id) == caller.principal
+        and str(actor.tenant_id) == caller.tenant
+        and str(session.tenant) == caller.tenant
+        and isinstance(caller.request_id, str)
+        and bool(caller.request_id)
+        and owner_ref == _owner_ref(caller.principal)
+    )
+
+
 def _digest(value: Any) -> str:
     model_dump = getattr(value, "model_dump", None)
     if callable(model_dump):
@@ -327,14 +341,8 @@ class ServiceChildAdapter:
         actor = session.actor
         actor.ensure_credential_current()
         if (
-            (actor.authenticated is not True and not admitted_actor(actor))
-            or str(actor.actor_id) != caller.principal
-            or str(actor.tenant_id) != caller.tenant
-            or str(session.tenant) != caller.tenant
-            or not isinstance(caller.request_id, str)
-            or not caller.request_id
-            or owner_ref != _owner_ref(caller.principal)
-        ):
+            actor.authenticated is not True and not admitted_actor(actor)
+        ) or not _caller_owner_matches(caller, actor, session, owner_ref):
             raise PermissionError("service child owner is not verified")
 
     @staticmethod

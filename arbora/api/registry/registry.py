@@ -37,14 +37,8 @@ Invoke = Callable[..., Awaitable[Any]]
 def authorized(op: OpSpec, caller: Caller, *, policy: PolicyDecision) -> bool:
     """Apply principal, exact-scope and policy checks before disclosing an op."""
 
-    # Resolve lazily: invocation imports the registry declarations itself.
-    from arbora.api.invoke.steps import AnonymousCaller, authenticate
-
     kind = caller.principal_kind
-    if isinstance(caller, AnonymousCaller):
-        if authenticate(caller) is not None:
-            return False
-    elif kind not in {"human", "service"}:
+    if not _caller_admitted(caller, kind):
         return False
     if op.principals is PrincipalRule.SERVICE_ONLY and kind != "service":
         return False
@@ -61,6 +55,19 @@ def authorized(op: OpSpec, caller: Caller, *, policy: PolicyDecision) -> bool:
         return policy(op, caller) is True
     except Exception:
         return False
+
+
+def _caller_admitted(caller: Caller, kind: str) -> bool:
+    """Admit the exact anonymous variant or a recognized verified kind."""
+    # Resolve lazily: invocation imports the registry declarations itself.
+    from arbora.api.invoke.steps import AnonymousCaller, authenticate
+
+    if isinstance(caller, AnonymousCaller):
+        if authenticate(caller) is not None:
+            return False
+    elif kind not in {"human", "service"}:
+        return False
+    return True
 
 
 class Registry:

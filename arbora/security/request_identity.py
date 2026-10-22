@@ -626,6 +626,21 @@ def _mint_graph_session(
     )
 
 
+def _require_served_profile_authority(transport: str, config: Any) -> None:
+    """Require both audience and policy before activating the served profile."""
+    audience = str(
+        getattr(config, "auth_jwt_audience", None)
+        or getattr(config, "mcp_jwt_audience", None)
+        or ""
+    ).strip()
+    policy_version = str(getattr(config, "kg_policy_version", None) or "").strip()
+    if not audience or not policy_version:
+        raise RuntimeError(
+            f"Refusing to serve arbora over {transport}: verified authority "
+            "requires a configured audience and policy revision."
+        )
+
+
 def apply_served_security_profile(
     transport: str,
     config: Any = None,
@@ -681,17 +696,7 @@ def apply_served_security_profile(
             "(CONCEPT:AU-OS.identity.authenticated-identity-enforcement)"
         )
 
-    audience = str(
-        getattr(config, "auth_jwt_audience", None)
-        or getattr(config, "mcp_jwt_audience", None)
-        or ""
-    ).strip()
-    policy_version = str(getattr(config, "kg_policy_version", None) or "").strip()
-    if not audience or not policy_version:
-        raise RuntimeError(
-            f"Refusing to serve arbora over {transport}: verified authority "
-            "requires a configured audience and policy revision."
-        )
+    _require_served_profile_authority(transport, config)
 
     logger.warning(
         "arbora served profile ACTIVE over %s: verified identity/session, "
@@ -919,6 +924,16 @@ def _session_authority_usable(session: GraphSession) -> bool:
     return True
 
 
+def _require_system_session_mode(session: GraphSession) -> None:
+    """Reject ambient authority belonging to the other deployment mode."""
+    from arbora.security.anonymous import admitted_actor, enabled
+
+    if (enabled() and not admitted_actor(session.actor)) or (
+        not enabled() and getattr(session.actor, "authority_mode", "verified") == "none"
+    ):
+        raise PermissionError("System session authority mode mismatch")
+
+
 def system_write_session(config: Any = None) -> GraphSession:
     """Resolve the verified authority for a background/system-triggered graph write.
 
@@ -986,16 +1001,12 @@ def system_write_session(config: Any = None) -> GraphSession:
         GraphSession,
         SessionRequiredError,
     )
-    from arbora.security.anonymous import admitted_actor, enabled
+    from arbora.security.anonymous import enabled
     from arbora.security.anonymous import session as anonymous_session
 
     try:
         ambient = GraphSession.from_ambient()
-        if (enabled() and not admitted_actor(ambient.actor)) or (
-            not enabled()
-            and getattr(ambient.actor, "authority_mode", "verified") == "none"
-        ):
-            raise PermissionError("System session authority mode mismatch")
+        _require_system_session_mode(ambient)
         return ambient
     except SessionRequiredError:  # noqa: BLE001 — expected control flow: no ambient session bound is the documented signal to fall through to minting this process's own verified system identity below, not a real failure (see docstring above)
         pass

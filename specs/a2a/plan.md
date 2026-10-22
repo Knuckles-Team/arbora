@@ -543,3 +543,20 @@ It returns no artifacts and retains the native WorkItem status.
 A valid event containing more than 65,536 reply characters similarly
 reports `reply_too_large`. Marker identity and version must match the requested
 run. Malformed legacy records and forged/cross-run markers remain refusals.
+
+### 2026-10-22: bounded reply projection decomposition
+
+Under ARBORA-A2A-R001, isolate bounded payload decoding, error-marker
+validation, successful run-output validation, terminal-event attachment and
+native list-page validation. Preserve each existing identity check, size bound,
+short-circuit validation order and fail-closed refusal. No cache fallback or
+new persistence authority is introduced.
+
+CCCC 1.6.0 reports cyclomatic/cognitive complexity reductions for
+`_persisted_artifacts` from 33/18 to 8/7, `get` from 17/20 to 10/12 and `list`
+from 12/10 to 5/4. Every extracted helper remains at or below 10/15.
+The focused payload, agent-run, authority, native-task-read and terminal-event
+suites pass 84 tests. Scoped Ruff lint and format checks pass. These are local
+regressions, not a replacement for hosted CI or native restart acceptance.
+
+Scoped mypy (`--follow-imports=silent`) passes for both changed source files.

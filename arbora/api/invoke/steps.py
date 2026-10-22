@@ -181,27 +181,7 @@ def forbidden_path(
 
 def authenticate(caller: RequestCaller | None) -> OpError | None:
     if isinstance(caller, AnonymousCaller):
-        from arbora.security.anonymous import (
-            POLICY,
-            PRINCIPAL,
-            TENANT,
-            admitted_actor,
-            session_context,
-        )
-
-        if (
-            caller.authenticated is not False
-            or caller.credential_kind != "none"
-            or caller.principal_kind != "anonymous"
-            or caller.principal != PRINCIPAL
-            or caller.tenant != TENANT
-            or caller.policy_revision != POLICY
-            or caller.delegated is not False
-            or caller.mfa_at_ms is not None
-            or not admitted_actor(getattr(caller.session, "actor", None))
-        ):
-            return OpError("UNAUTHENTICATED")
-        if caller.engine_claims != freeze_claims(session_context(caller.session)):
+        if not _anonymous_caller_valid(caller):
             return OpError("UNAUTHENTICATED")
     elif (
         not isinstance(caller, VerifiedCaller)
@@ -213,6 +193,31 @@ def authenticate(caller: RequestCaller | None) -> OpError | None:
     if _claims_match(caller) and _identity_fields_valid(caller):
         return None
     return OpError("UNAUTHENTICATED")
+
+
+def _anonymous_caller_valid(caller: AnonymousCaller) -> bool:
+    """Require exact local caller facts and the admitted session projection."""
+    from arbora.security.anonymous import (
+        POLICY,
+        PRINCIPAL,
+        TENANT,
+        admitted_actor,
+        session_context,
+    )
+
+    if (
+        caller.authenticated is not False
+        or caller.credential_kind != "none"
+        or caller.principal_kind != "anonymous"
+        or caller.principal != PRINCIPAL
+        or caller.tenant != TENANT
+        or caller.policy_revision != POLICY
+        or caller.delegated is not False
+        or caller.mfa_at_ms is not None
+        or not admitted_actor(getattr(caller.session, "actor", None))
+    ):
+        return False
+    return caller.engine_claims == freeze_claims(session_context(caller.session))
 
 
 def surface_caller_admitted(caller: Any) -> bool:
@@ -271,12 +276,6 @@ def principal_rule(op: Any, caller: RequestCaller) -> OpError | None:
     rule = op.principals
     is_service = caller.principal_kind == "service"
     is_human = caller.principal_kind == "human"
-    if caller.principal_kind == "anonymous" and rule in {
-        PrincipalRule.HUMAN,
-        PrincipalRule.HUMAN_UNDELEGATED,
-        PrincipalRule.SERVICE_ONLY,
-    }:
-        return OpError("PRINCIPAL_NOT_ALLOWED")
     if rule not in set(PrincipalRule):
         return OpError("PRINCIPAL_NOT_ALLOWED")
     denied = (

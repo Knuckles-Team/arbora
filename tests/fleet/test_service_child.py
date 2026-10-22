@@ -299,3 +299,37 @@ async def test_mux_service_transport_uses_one_admitted_attempt() -> None:
     }
     assert len(calls) == 1
     assert calls[0][1] == {"x": 1}
+
+
+@pytest.mark.parametrize(
+    ("target", "field", "value"),
+    [
+        ("actor", "actor_id", "other"),
+        ("actor", "tenant_id", "other"),
+        ("session", "tenant", "other"),
+        ("caller", "request_id", ""),
+        ("caller", "request_id", True),
+    ],
+)
+def test_service_child_refuses_owner_fact_drift(target, field, value):
+    caller = _caller()
+    objects = {
+        "caller": caller,
+        "session": caller.session,
+        "actor": caller.session.actor,
+    }
+    setattr(objects[target], field, value)
+    with pytest.raises(PermissionError, match="owner is not verified"):
+        ServiceChildAdapter._verify_caller(caller, _owner_ref())
+
+
+def test_service_child_checks_expiry_before_owner_facts():
+    caller = _caller()
+    caller.request_id = ""
+
+    def expired():
+        raise PermissionError("expired authority")
+
+    caller.session.ensure_authority_current = expired
+    with pytest.raises(PermissionError, match="expired authority"):
+        ServiceChildAdapter._verify_caller(caller, _owner_ref())
