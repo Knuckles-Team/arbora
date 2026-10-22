@@ -96,13 +96,15 @@
       "title": "A2A facade over the engine and agent services",
       "delivery_state": "SPECIFIED",
       "landed_in": [
+        "2763cd78b6bc",
         "a8ed61b538e7"
       ],
       "verified_by": [
+        "tests/a2a/test_native_task_reads.py:14",
         "tests/test_agent_runs.py:119",
         "tests/test_agent_runs.py:99",
-        "tests/test_agents_run_end_to_end.py:318",
-        "tests/test_agents_run_end_to_end.py:361"
+        "tests/test_agents_run_end_to_end.py:329",
+        "tests/test_agents_run_end_to_end.py:372"
       ],
       "rollup_of": [
         "ARBORA-A2A-R001.1",
@@ -550,7 +552,8 @@
       "title": "Advertise only what is wired",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "35257e780f7c"
+        "35257e780f7c",
+        "f4236300caf0"
       ],
       "verified_by": [
         "tests/a2a/test_models.py:38",
@@ -568,7 +571,8 @@
       "title": "Typed Agent Card capability-advertisement model",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "35257e780f7c"
+        "35257e780f7c",
+        "f4236300caf0"
       ],
       "verified_by": [
         "tests/a2a/test_models.py:39",
@@ -917,7 +921,7 @@
       "title": "Non-blocking `message/send`",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "3cbb61dc1fbc"
+        "03988c246133"
       ],
       "verified_by": [
         "tests/a2a/test_nonblocking_send.py:106",
@@ -934,7 +938,7 @@
         "6794ac7c41af"
       ],
       "verified_by": [
-        "tests/test_agents_run_end_to_end.py:165"
+        "tests/test_agents_run_end_to_end.py:176"
       ]
     },
     {
