@@ -466,7 +466,9 @@
       "id": "ARBORA-OPS-R017",
       "title": "Finance and markets operations with tenant isolation",
       "delivery_state": "LANDED",
-      "landed_in": [],
+      "landed_in": [
+        "64a0c091b354"
+      ],
       "verified_by": [],
       "rollup_of": [
         "ARBORA-OPS-R017.1",
@@ -551,7 +553,9 @@
       "id": "ARBORA-OPS-R019",
       "title": "Federation source registration and sharing operations",
       "delivery_state": "LANDED",
-      "landed_in": [],
+      "landed_in": [
+        "64a0c091b354"
+      ],
       "verified_by": [],
       "rollup_of": [
         "ARBORA-OPS-R019.1",
@@ -633,9 +637,17 @@
       "title": "Pack and job management operations",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "16c9b2bddda3",
+        "634a344fade7",
         "822f55d5835d"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/api/test_ingest_ops.py:228",
+        "tests/api/test_ingest_ops.py:240",
+        "tests/api/test_ingest_ops.py:249",
+        "tests/api/test_ingest_ops.py:256",
+        "tests/api/test_ingest_ops.py:266"
+      ],
       "rollup_of": [
         "ARBORA-OPS-R020.3.1"
       ]
@@ -645,9 +657,16 @@
       "title": "Missing ingest.packs.* and ingest.jobs.* ops",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "16c9b2bddda3"
+        "16c9b2bddda3",
+        "634a344fade7"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/api/test_ingest_ops.py:228",
+        "tests/api/test_ingest_ops.py:240",
+        "tests/api/test_ingest_ops.py:249",
+        "tests/api/test_ingest_ops.py:256",
+        "tests/api/test_ingest_ops.py:266"
+      ],
       "rollup_of": [
         "ARBORA-OPS-R020.3.1.1",
         "ARBORA-OPS-R020.3.1.2"
@@ -1185,9 +1204,18 @@
       "title": "Generated registry, OpenAPI, and client artifacts",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "4b83c69e2b41"
+        "144fd029bf2e",
+        "43c5e4b631cb",
+        "4b83c69e2b41",
+        "a247b168fa98"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/api/test_gen_api.py:266",
+        "tests/api/test_gen_api.py:288",
+        "tests/api/test_gen_api.py:303",
+        "tests/api/test_gen_api.py:320",
+        "tests/api/test_gen_api.py:470"
+      ],
       "rollup_of": [
         "ARBORA-OPS-R025.1",
         "ARBORA-OPS-R025.2"
@@ -1228,7 +1256,13 @@
       "landed_in": [
         "4b9d181069e4"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/api/test_backward_compat_drift_gate.py:42",
+        "tests/api/test_backward_compat_drift_gate.py:51",
+        "tests/api/test_backward_compat_drift_gate.py:60",
+        "tests/api/test_backward_compat_drift_gate.py:70",
+        "tests/api/test_backward_compat_drift_gate.py:79"
+      ],
       "rollup_of": [
         "ARBORA-OPS-R026.1",
         "ARBORA-OPS-R026.2"
@@ -1318,7 +1352,10 @@
       "landed_in": [
         "5bc24c262ef0"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/api/test_fleet_tool_parity_inventory.py:33",
+        "tests/api/test_fleet_tool_parity_inventory.py:42"
+      ],
       "rollup_of": [
         "ARBORA-OPS-R031.1"
       ]
@@ -1703,8 +1740,12 @@
       "id": "ARBORA-OPS-R041",
       "title": "Agent summary widget dropped (replaces AU-BOUNDARY-R001.7, commit 7717d2e62)",
       "delivery_state": "VERIFIED",
-      "landed_in": [],
-      "verified_by": [],
+      "landed_in": [
+        "54771db54918"
+      ],
+      "verified_by": [
+        "tests/gateway/test_registry.py:31"
+      ],
       "rollup_of": [
         "ARBORA-OPS-R041.1"
       ]

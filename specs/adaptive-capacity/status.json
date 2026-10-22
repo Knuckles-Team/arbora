@@ -91,8 +91,16 @@
       "id": "ARBORA-CAPACITY-R750",
       "title": "Scaling authority and intent contracts (rollup)",
       "delivery_state": "VERIFIED",
-      "landed_in": [],
-      "verified_by": [],
+      "landed_in": [
+        "43b17c4d919c"
+      ],
+      "verified_by": [
+        "tests/fleet/scaling/test_resource_pool_authority.py:27",
+        "tests/fleet/scaling/test_resource_reservation.py:14",
+        "tests/fleet/scaling/test_scaling_authority_contract.py:21",
+        "tests/fleet/scaling/test_scaling_intent_reconciler.py:25",
+        "tests/fleet/scaling/test_scaling_signal_authority.py:22"
+      ],
       "rollup_of": [
         "ARBORA-CAPACITY-R750.750",
         "ARBORA-CAPACITY-R750.751",
