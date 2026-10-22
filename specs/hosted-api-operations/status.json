@@ -11,6 +11,7 @@
     "ARBORA-OPS-R005",
     "ARBORA-OPS-R006",
     "ARBORA-OPS-R007",
+    "ARBORA-OPS-R007.1",
     "ARBORA-OPS-R008",
     "ARBORA-OPS-R009",
     "ARBORA-OPS-R010",
@@ -208,6 +209,7 @@
     "ARBORA-OPS-R067.5",
     "ARBORA-OPS-R067.6",
     "ARBORA-OPS-R067.7",
+    "ARBORA-OPS-R067.8",
     "ARBORA-OPS-R068",
     "ARBORA-OPS-R068.1",
     "ARBORA-OPS-R068.2",
@@ -315,6 +317,21 @@
       "verified_by": [
         "tests/api/test_api_registry.py:110",
         "tests/api/test_api_registry.py:63"
+      ],
+      "rollup_of": [
+        "ARBORA-OPS-R007.1"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R007.1",
+      "title": "REST request authority",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "8c4eb38f06af"
+      ],
+      "verified_by": [
+        "tests/api/test_http_session_scope.py:31",
+        "tests/api/test_http_session_scope.py:68"
       ]
     },
     {
@@ -2171,7 +2188,8 @@
         "ARBORA-OPS-R067.4",
         "ARBORA-OPS-R067.5",
         "ARBORA-OPS-R067.6",
-        "ARBORA-OPS-R067.7"
+        "ARBORA-OPS-R067.7",
+        "ARBORA-OPS-R067.8"
       ]
     },
     {
@@ -2203,8 +2221,8 @@
         "tests/api/test_client_http.py:27",
         "tests/api/test_client_http.py:46",
         "tests/api/test_research_ops.py:19",
-        "tests/api/test_research_ops.py:55",
-        "tests/api/test_research_ops.py:63"
+        "tests/api/test_research_ops.py:59",
+        "tests/api/test_research_ops.py:67"
       ]
     },
     {
@@ -2234,6 +2252,17 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R067.8",
+      "title": "Web-source contract",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "cef41e50fd0d"
+      ],
+      "verified_by": [
+        "tests/api/test_research_web_backends.py:135"
+      ]
     },
     {
       "id": "ARBORA-OPS-R068",
