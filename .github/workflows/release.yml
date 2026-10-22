@@ -102,8 +102,12 @@ jobs:
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
 
   gates:
-    # PR gates are diff-scoped and install only published wheels.
-    timeout-minutes: ${{ github.event_name == 'pull_request' && 15 || 60 }}
+    # PR gates are diff-scoped and install only published wheels. The
+    # chain measures ~15-17 min (commit hooks, prose lint, locked
+    # environment type check, and the full pytest suite whenever the
+    # pr-test-scope resolves to FULL), so the old 15 min PR cap killed
+    # the job mid-suite on every pull request; PR gets 25.
+    timeout-minutes: ${{ github.event_name == 'pull_request' && 25 || 60 }}
     name: gates
     needs: [freeze-gate-source]
     # Homelab self-hosted runner for same-repo push/PR traffic (the org
