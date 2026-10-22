@@ -566,9 +566,7 @@ Scoped mypy (`--follow-imports=silent`) passes for both changed source files.
 ARBORA-A2A-R010.1 resolves the private owner graph from the actual WorkItem
 engine with native_owner_graph. Missing binding refuses without a session-graph
 fallback. The caller is revalidated before and after the awaited native read.
-The graph capability remains enforced by the native graph client. EG validates
-the receipt scope against its exact storage snapshot; its physical scope tenant
-and sanitized graph are not the logical caller tenant and graph. Arbora retains
+The graph capability remains enforced by the native graph client. EG validates the receipt scope against its exact storage snapshot. Its physical scope tenant and sanitized graph are not the logical caller tenant and graph. Arbora retains
 the caller tenant, WorkItem owner, run and outcome checks without inventing a
 physical-to-logical scope mapping. Injected producer tests qualify routing and
 refusals only; producer_unavailable and legacy_unbound remain truthful.

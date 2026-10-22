@@ -298,9 +298,7 @@ Test the actual serving-root binding and contextual read path. Cover concurrent 
 Hot-path proof for `ARBORA-OPS-R860`: `tests/api/test_program_ops_served.py::test_optimize_promote_rollback_served`.
 ## Durable public run replay (ARBORA-OPS-R021.4.7)
 
-`tests/api/test_run_replay.py` verifies the shared HTTP/MCP invocation path,
-owner-first reads, scope and permission refusals, child task identity, public-only
-payloads, exclusive cursors, duplicate IDs, terminal continuation and status mapping.
+`tests/api/test_run_replay.py` verifies the shared HTTP/MCP invocation path, owner-first reads, scope and permission refusals. It also checks child task identity, public-only payloads, exclusive cursors, duplicate IDs, terminal continuation and status mapping.
 Native EG qualification must exercise the exact property-based `ORDER BY` and
 parameter-bound `LIMIT` query against out-of-order durable RunEvent writes.
 

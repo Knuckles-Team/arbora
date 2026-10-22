@@ -20,7 +20,14 @@ flowchart LR
 
 ## Ports and composition
 
-Define small protocols in `arbora.identity.ports`: `IdentityAuthority` (typed engine identity operations, mode CAS, RBAC decision), `SigningKeyStore` (load/rotate by key ID), `ExternalAuthenticator` (verify and resolve), `SessionStore` (engine-backed opaque session operations), `NotificationPort`, and `Clock`. DTOs carry only redacted public fields and typed error/reason codes. `arbora.access.service` depends on an `AccessAuthority` protocol with request/approve/deny/revoke/check/explain/lease methods. The `mcp_server` serving composition creates the concrete adapters once and injects them into gateway, web host, CLI command factory, and MCP registry. Keep `webui_host` and MCP packages importing ports, not each other. Dependency inversion must clear the configured KISS indirect dependency threshold without increasing that threshold.
+Define small protocols in `arbora.identity.ports`:
+
+- `IdentityAuthority`: typed engine identity operations, mode CAS, RBAC decision.
+- `SigningKeyStore`: load/rotate by key ID.
+- `ExternalAuthenticator`: verify and resolve.
+- `SessionStore`: engine-backed opaque session operations.
+- `NotificationPort` and `Clock`.
+ DTOs carry only redacted public fields and typed error/reason codes. `arbora.access.service` depends on an `AccessAuthority` protocol with request/approve/deny/revoke/check/explain/lease methods. The `mcp_server` serving composition creates the concrete adapters once and injects them into gateway, web host, CLI command factory, and MCP registry. Keep `webui_host` and MCP packages importing ports, not each other. Dependency inversion must clear the configured KISS indirect dependency threshold without increasing that threshold.
 
 When a required engine method is absent, the adapter returns `UNAVAILABLE`, omits the operation from advertised capability discovery where safe, and emits a readiness reason. It never emulates RBAC, lease, or approval locally. The CLI can use the same factory with a local engine fixture. Mock ports support all ordinary PR tests.
 
@@ -322,8 +329,8 @@ continue to apply; clients never invoke an unadvertised operation as a fallback.
 
 Anonymous startup, Host parsing, actor authority and caller projection checks
 remain fail closed when decomposed into focused validators. Regression coverage
-includes exact Host cardinality, literal loopback peers and engine endpoints,
-and refusal of roles, credential leases or altered local identity. Principal
+includes exact Host cardinality, literal loopback peers and engine endpoints.
+It also covers refusal of roles, credential leases or altered local identity. Principal
 rules use their shared human/service predicates rather than duplicate anonymous
 branches. This refactoring adds no admission exceptions or scanner exemptions.
 ### 2026-10-22 amendment: admission predicate decomposition (R004.1)

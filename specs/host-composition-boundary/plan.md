@@ -385,9 +385,7 @@ and diagnostics independently of selected-interface grants.
 Independent architecture review rejects a raw ControlLeaseView-to-HostStartGrant
 adapter. Generic lease:write can issue a caller-chosen kind; principals absent
 from ControlLeaseKindPolicy's restriction map are permitted. ControlLeaseView
-contains no authenticated issuer provenance. host.start is currently the action
-literal required by this host contract, not an enforced scope in the inspected
-EG scope registry. Treating lease:write as host-start issuance introduces a new privilege decision.
+contains no authenticated issuer provenance. host.start is currently the action literal required by this host contract. The inspected EG scope registry does not enforce it as a scope. Treating lease:write as host-start issuance introduces a new privilege decision.
 
 The specific pending decision is which existing access-owner permission may
 issue host-start authority, with an enforceable issuer-to-kind binding. This
@@ -446,11 +444,7 @@ the session and the provider returns the single-step default.
 
 Reuse EG's native `SubmitWorkItemRequest.run_id` owner binding and
 lease-fenced current-plan transaction. `PublishCurrentPlan` / `GetCurrentPlan`
-carry only scaffold text/status, not an executable DAG. The missing producer
-contract must atomically bind and read back canonical tasks, edges, output,
-limits and plan/policy digests under that owner and fence. Do not invent a
-RunCoordinator, encode a DAG in scaffold text, or treat evaluation receipts,
-statistical logs, RunEvents or terminal result references as admission.
+carry only scaffold text/status, not an executable DAG. The missing producer contract must atomically bind and read back canonical content under that owner and fence. This content includes tasks, edges, output, limits and plan/policy digests. Do not invent a RunCoordinator or encode a DAG in scaffold text. Do not treat evaluation receipts, statistical logs, RunEvents or terminal result references as admission.
 Arbora currently submits a chosen WorkItem id without run_id; native run
 admission forbids chosen ids. Preserve A2A replay identity when changing this.
 Then account for planner usage, reauthorize, publish durably before execution,
@@ -460,9 +454,7 @@ remain unavailable; this amendment adds no mode or silent serial fallback.
 
 Producer attachment points are EG's `crates/eg-types/src/current_plan.rs`,
 `src/redb_store/work_item/current_plan.rs::{publish,read_current}`, and
-`src/redb_store/work_item/run_owner.rs::admit_owner`. The native publication
-request carries tenant, worker_id, lease_epoch, fencing_token and
-idempotency_key; authenticated principal and graph come from admission.
+`src/redb_store/work_item/run_owner.rs::admit_owner`. The native publication request carries tenant, worker_id, lease_epoch, fencing_token and idempotency_key. Authenticated principal and graph come from admission.
 `src/server/mutation_batch/commit/work_item.rs` commits through the existing
 locked graph mutation batch. `src/server/handlers/work_item_read.rs` reads
 current-plan owner, lease and payload from the authoritative snapshot.
@@ -480,11 +472,7 @@ attached-plan retries remain fail closed until protected receipt reuse and
 private fence renewal are validated without reconstructing publication times.
 
 Scoped source tests verify original limits, measured initial consumption and
-matching aggregate result/event usage. Native first owner submission and claim
-pass against the rebuilt engine; replay still fails with an idempotency conflict
-because the request context timestamps change. Resolve replay via an EG-owned
-protected lookup by admitted run identity and validate caller, request digest
-and native run binding, not by guessing engine-assigned ids or timestamps.
+matching aggregate result/event usage. Native first owner submission and claim pass against the rebuilt engine. Replay still fails with an idempotency conflict because the request context timestamps change. Resolve replay via an EG-owned protected lookup by admitted run identity. Validate caller, request digest and native run binding. Do not guess engine-assigned ids or timestamps.
 The complete native submit/retry/get/list/cancel proof has not passed.
 
 Initial publication uses EG's required empty revision zero. The controlled
@@ -501,8 +489,7 @@ The 45 focused tests pass with the actual EG strict verifier and a captured
 native response containing eleven premises. Native first dispatch now passes
 evaluation and reaches publication, which refuses `ACCESS_DENIED: current-plan
 owner unavailable`. No plan or child execution was admitted. WorkItem admission
-uses the control graph while publication selects the caller graph; the owner
-graph must be carried through the private run context with existing checks.
+uses the control graph while publication selects the caller graph. Carry the owner graph through the private run context with existing checks.
 
 
 ### 2026-10-22: Native owner graph binding
@@ -530,8 +517,7 @@ ARBORA-HOST-R001.2.1.2 extracts configuration budget validation, publication
 revision/readback validation and strict proposal decoding into bounded helpers.
 Retain the native owner graph, same-caller reauthorization, original budgets,
 immutable publication attempt and paired publication/readback before execution.
-Cancellation during publication or readback revokes the native scope and must
-never dispatch dependency tasks, even when the plan has already been persisted.
+Cancellation during publication or readback revokes the native scope and must never dispatch dependency tasks. This applies even when the plan has already been persisted.
 
 ### 2026-10-22: Retain measured failed-planning consumption
 

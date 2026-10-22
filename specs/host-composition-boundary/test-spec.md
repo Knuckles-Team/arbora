@@ -30,7 +30,7 @@ On a supported Python version, clone this repository, run `uv sync --extra test`
 
 ## Quality and evidence
 
-Run the repository's current CCCC, jscpd differential/census, dupehound changed/census, KISS and language-native gates from `.pre-commit-config.yaml` and the hosted scanner job when code changes. A new duplicate or complexity violation is fixed by reusing the owning module, not by a suppression or baseline reset. Evidence names the exact commit, command, package versions, CI run, artifact hash and representative served receipts; compare the final remote head to that commit. If an optional/live tier is unavailable, keep acceptance pending and report the missing tier precisely.
+When code changes, run the repository's current CCCC, jscpd differential/census, dupehound changed/census, KISS and language-native gates. Use `.pre-commit-config.yaml` and the hosted scanner job. A new duplicate or complexity violation is fixed by reusing the owning module, not by a suppression or baseline reset. Evidence names the exact commit, command, package versions, CI run, artifact hash and representative served receipts. Compare the final remote head to that commit. If an optional/live tier is unavailable, keep acceptance pending and report the missing tier precisely.
 
 ## Served startup configuration acceptance
 
@@ -163,17 +163,12 @@ These are pending producer/consumer acceptance requirements, not passing tests:
   the operator's run budget; only successfully attached canonical content maps
   to AU DependencyPlan. No task starts before successful attachment.
 - Preserve default single-step behavior without the operator capability;
-  explicit dependency requests refuse rather than silently execute serially.
+  explicit dependency requests refuse rather than silently run serially.
 
 Controlled runtime composition evidence now lives in
-`tests/mcp_server/test_task_plan_runtime.py`: the registered run-decision
-provider consumes a zero-tool model proposal, evaluates it through the shared
-HostedInvocation, publishes both canonical plan and host-bounded proposal with
-the private native fence, reads canonical content back, and executes through
-AU's DependencyPlan loop. Publication failure, mismatched readback, exhausted
-planner budget and model-supplied host fields refuse before task dispatch.
-These checks use a real model adapter and AU runtime with controlled EG
-transport; they do not replace real-engine restart and fence acceptance.
+`tests/mcp_server/test_task_plan_runtime.py`. The registered run-decision provider consumes a zero-tool model proposal and evaluates it through the shared HostedInvocation. It publishes both canonical plan and host-bounded proposal with the private native fence. It reads canonical content back and runs through AU's DependencyPlan loop. Publication failure, mismatched readback, exhausted
+planner budget and host fields from the model refuse before task dispatch.
+These checks use a real model adapter and AU runtime with controlled EG transport. They do not replace real-engine restart and fence acceptance.
 Planner usage is included in Arbora's execution result and deducted from AU's
 remaining limits. AU terminal RunEvents still report execution-only usage until
 AU offers an initial-usage reporting input.

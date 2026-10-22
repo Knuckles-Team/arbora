@@ -62,10 +62,7 @@ usage; durable per-session usage and cost accounting remain unavailable.
 Task dependency graph execution has an opt-in shared host composition path.
 It requires a trusted HostedInvocation with TaskPlanConfig, native A2A run
 ownership, and EG's executable-plan publication/readback contract. The selected
-model proposes tasks without tools or authority fields. The host accounts for
-planner requests, tokens and time, evaluates through EG, publishes under the
-native lease fence, reads back canonical content, then invokes AU's existing
-DependencyPlan runtime. Defaults remain single-step. Missing contracts report
+model proposes tasks without tools or authority fields. The host accounts for planner requests, tokens and time. It evaluates through EG and publishes under the native lease fence. It reads back canonical content, then invokes AU's existing DependencyPlan runtime. Defaults remain single-step. Missing contracts report
 `UPGRADE_REQUIRED` rather than silently downgrading.
 
 Controlled transport/model-adapter tests cover this chain; real native-engine
@@ -87,15 +84,10 @@ before process authority is minted. Graph endpoints and compatible EG/AU
 contracts remain required; this setting grants no caller authority.
 
 Public current-plan responses expose scaffold items only, never executable
-prompts. A retry that encounters an already attached plan currently refuses
-with `TASK_PLAN_RETRY_REQUIRES_ORIGINAL_PUBLICATION`: the latest mutable
-scaffold is not evidence of the original immutable publication payload.
+prompts. A retry that encounters an already attached plan currently refuses with `TASK_PLAN_RETRY_REQUIRES_ORIGINAL_PUBLICATION`. The latest mutable scaffold is not evidence of the original immutable publication payload.
 Native publication receipt recovery remains an acceptance gate.
 
 
-Completed native admission recovery has passed a local real-engine test with
-simulated model responses: identical retries preserve the completed task and
-reply before and after restarting both services against the same persistent
-store, without additional model requests. Changed input returns the typed
+Completed native admission recovery has passed a local real-engine test with simulated model responses. Identical retries preserve the completed task and reply without additional model requests. This holds before and after restarting both services against the same persistent store. Changed input returns the typed
 idempotency conflict, and public event identities survive restart. This does
 not qualify concurrent execution deduplication or active-execution resume.
