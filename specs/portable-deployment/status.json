@@ -166,6 +166,8 @@
       "title": "Arbora hosts deployment doctor and skill certification",
       "delivery_state": "LANDED",
       "landed_in": [
+        "9e7f6499d96f",
+        "d6f16cd447e2",
         "fd761d59a171"
       ],
       "verified_by": [],

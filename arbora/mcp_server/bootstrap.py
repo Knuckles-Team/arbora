@@ -200,9 +200,12 @@ def _refresh_process_authority(session: Any) -> Any:
     """
     from arbora.api.contracts.session import SessionExpiredError
     from arbora.core.settings import runtime_config as config
+    from arbora.security.run_authority import RunCredentialLease
 
     lease = getattr(getattr(session, "actor", None), "credential_lease", None)
-    if lease is None:
+    if lease is None or isinstance(lease, RunCredentialLease):
+        # A run lease is the caller's authority, renewed only by its run
+        # (ARBORA-IDENTITY-R029); the process identity must never replace it.
         raise ProcessAuthorityRenewalError(
             "not_renewable", "Graph process authority is not renewable"
         )
@@ -262,10 +265,14 @@ async def _ensure_process_authority_current() -> Any:
         SessionExpiredError,
         current_session,
     )
+    from arbora.security.run_authority import RunCredentialLease
 
     ambient = current_session()
     if ambient is not None:
-        if getattr(getattr(ambient, "actor", None), "credential_lease", None) is None:
+        ambient_lease = getattr(
+            getattr(ambient, "actor", None), "credential_lease", None
+        )
+        if ambient_lease is None or isinstance(ambient_lease, RunCredentialLease):
             # Not server-renewable: unchanged fail-closed behavior, no
             # minimum-TTL headroom requirement — this must never mask a
             # caller's real credential expiry.
@@ -401,7 +408,8 @@ async def authority_keepalive_scope(session: Any | None = None) -> AsyncIterator
 
     lease = getattr(getattr(session, "actor", None), "credential_lease", None)
     if lease is None:
-        yield
+        async with _caller_run_authority_scope(session):
+            yield
         return
 
     guard_token = _AUTHORITY_KEEPALIVE_ACTIVE.set(True)
@@ -412,6 +420,68 @@ async def authority_keepalive_scope(session: Any | None = None) -> AsyncIterator
         keepalive.cancel()
         with contextlib.suppress(asyncio.CancelledError):
             await keepalive
+        _AUTHORITY_KEEPALIVE_ACTIVE.reset(guard_token)
+
+
+@contextlib.asynccontextmanager
+async def _caller_run_authority_scope(session: Any) -> AsyncIterator[None]:
+    """Renew a caller's verified authority for the life of one run.
+
+    ARBORA-IDENTITY-R029: a caller bearer lives 300 s, but a run it starts may
+    run longer. The run gets a :class:`RunCredentialLease` seeded from the
+    verified bearer expiry and becomes the ambient session for the run's body,
+    so every fan-out child created inside it inherits the same lease (a nested
+    scope is a no-op under :data:`_AUTHORITY_KEEPALIVE_ACTIVE`). The renewer
+    extends the lease while the run is active and the caller is not revoked,
+    up to the configured maximum run lifetime. Leaving the scope (run end or
+    cancellation) stops renewal and revokes the lease at once. No token is
+    read, held, logged or forwarded.
+    """
+    from arbora.api.contracts.session import use_session
+    from arbora.security.actor_context import CredentialExpiredError
+    from arbora.security.run_authority import (
+        CALLER_REVOCATIONS,
+        _log_audit,
+        audit_record,
+        caller_run_renewable,
+        keep_run_authority_current,
+        open_run_lease,
+        run_renewal_policy,
+    )
+
+    actor = getattr(session, "actor", None)
+    if actor is None or not caller_run_renewable(actor):
+        yield
+        return
+    policy = run_renewal_policy()
+    try:
+        lease = open_run_lease(actor, policy=policy)
+    except CredentialExpiredError:
+        # Already expired: unchanged fail-closed behavior at the next check.
+        yield
+        return
+    run_actor = replace(actor, credential_lease=lease)
+    run_session = session.with_actor(run_actor)
+    CALLER_REVOCATIONS.register(run_actor, lease)
+    _log_audit(audit_record("started", run_actor, lease))
+    guard_token = _AUTHORITY_KEEPALIVE_ACTIVE.set(True)
+    renewer = asyncio.ensure_future(
+        keep_run_authority_current(run_actor, lease, policy=policy)
+    )
+    ended = "run_ended"
+    try:
+        with use_session(run_session):
+            yield
+    except asyncio.CancelledError:
+        ended = "run_cancelled"
+        raise
+    finally:
+        renewer.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await renewer
+        lease.revoke(ended)
+        CALLER_REVOCATIONS.unregister(run_actor, lease)
+        _log_audit(audit_record(ended, run_actor, lease))
         _AUTHORITY_KEEPALIVE_ACTIVE.reset(guard_token)
 
 

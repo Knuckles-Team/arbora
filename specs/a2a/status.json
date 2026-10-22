@@ -174,11 +174,14 @@
       "landed_in": [
         "21fa71a87f44",
         "3fae52006dfa",
-        "663cc8cad940"
+        "663cc8cad940",
+        "e366dd8159c5"
       ],
       "verified_by": [
         "tests/a2a/test_tool_task.py:21",
+        "tests/a2a/test_tool_task.py:22",
         "tests/a2a/test_tool_task_dispatch.py:22",
+        "tests/a2a/test_tool_task_dispatch.py:23",
         "tests/a2a/test_tool_task_native.py:37"
       ],
       "rollup_of": [
@@ -438,9 +441,14 @@
       "title": "Preserve the verified caller through Arbora A2A authentication",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "013c270081a9",
+        "5fc890ade3ae",
+        "b582a7584de6",
         "cdde0200a54a"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/a2a/test_request_session_authority.py:43"
+      ],
       "rollup_of": [
         "ARBORA-A2A-R006.2.1.1"
       ]
@@ -544,10 +552,10 @@
       ],
       "verified_by": [
         "tests/a2a/test_models.py:38",
+        "tests/a2a/test_models.py:39",
         "tests/a2a/test_models.py:47",
-        "tests/a2a/test_models.py:56",
-        "tests/a2a/test_models.py:67",
-        "tests/a2a/test_models.py:88"
+        "tests/a2a/test_models.py:48",
+        "tests/a2a/test_models.py:56"
       ],
       "rollup_of": [
         "ARBORA-A2A-R009.1"
