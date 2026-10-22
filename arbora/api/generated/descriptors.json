@@ -2404,6 +2404,18 @@
     {
       "domain": "eg",
       "examples": [
+        "GetRunWorkItem coordination"
+      ],
+      "id": "eg.coordination.GetRunWorkItem",
+      "summary": "owner-bound immutable run admission and current caller-safe WorkItem snapshot",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
         "GetWorkItem coordination"
       ],
       "id": "eg.coordination.GetWorkItem",
@@ -6042,6 +6054,30 @@
       "verb": "ask"
     },
     {
+      "domain": "runs",
+      "examples": [
+        "Replay public events of an owned run"
+      ],
+      "id": "runs.events",
+      "summary": "Replay public events of an owned run",
+      "tags": [
+        "runs"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "runs",
+      "examples": [
+        "Read an owned durable run"
+      ],
+      "id": "runs.get",
+      "summary": "Read an owned durable run",
+      "tags": [
+        "runs"
+      ],
+      "verb": "ask"
+    },
+    {
       "domain": "security",
       "examples": [
         "show the current security posture"
@@ -6174,5 +6210,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "4c8786750a3bacd340f0bed370a956bcc595381c0a619d0cb301697650aadb93"
+  "registry_digest": "09772bb62b5555de80637ad1c2cc13e76e850a1084cb67b1bf1efe110c411e73"
 }

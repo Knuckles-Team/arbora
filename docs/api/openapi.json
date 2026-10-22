@@ -46,6 +46,16 @@
       "Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e": {
         "description": "Arbora error envelope"
       },
+      "Shared4001bbddeb48be8bc0b74bc5559d9e75199681b3dda7a8d0ced61180e1e81b91": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Schema69af923f0300139d0b548d5a981145b615e86624534985c6597f08d5db15c466"
+            }
+          }
+        },
+        "description": "Operation result"
+      },
       "Shared453a4e3ac543fa587a9d581a42f37eb521106d830c51a0e75fd4f2c604cd4e09": {
         "content": {
           "application/json": {
@@ -248,6 +258,28 @@
         ],
         "default": null,
         "title": "Message"
+      },
+      "Schema0afee644338ef96d72e5f00bbf0b44e61cd8f2402adb7b034d215113c06a86f9": {
+        "additionalProperties": false,
+        "properties": {
+          "after": {
+            "$ref": "#/components/schemas/Schema65cad14bbb3646c08579cdfbe008061f7d5f15ea916f92eb0e89a7d22f2fb13a"
+          },
+          "limit": {
+            "$ref": "#/components/schemas/Schemadac6bea8f7c7632f24f2c15d3c0d5d30b9f9048c8b65ba438ebe101e1660969c"
+          },
+          "run_id": {
+            "$ref": "#/components/schemas/Schemadf135e01e5998bd761bf3770ae512003d9a8a935e6f90722820e930ca4b97338"
+          },
+          "task_id": {
+            "$ref": "#/components/schemas/Schemaeb1f11cc6fde0c4462c9b4658efce96448e24082c8e128b7c4e24d9c2c4511f3"
+          }
+        },
+        "required": [
+          "run_id"
+        ],
+        "title": "RunEventsParams",
+        "type": "object"
       },
       "Schema0d3bce83b8be7c2fd6a092afaab87eaceb4587fa003cc76b04d535a5fdea3361": {
         "additionalProperties": false,
@@ -928,6 +960,13 @@
         "title": "AccessCheck",
         "type": "object"
       },
+      "Schema65cad14bbb3646c08579cdfbe008061f7d5f15ea916f92eb0e89a7d22f2fb13a": {
+        "default": 0,
+        "maximum": 9223372036854775807,
+        "minimum": 0,
+        "title": "After",
+        "type": "integer"
+      },
       "Schema65e74a47cb1f443c9d4e6ba3252c1e4e773ee079dfa677835827620f76879501": {
         "additionalProperties": false,
         "properties": {
@@ -1375,6 +1414,22 @@
         "minimum": 1,
         "title": "Max Pages",
         "type": "integer"
+      },
+      "Schema89c1e5b5b9d72faa4c7f9ff2fdab574e4d51261f5e8ea517a9ed5b92e5ee23e8": {
+        "additionalProperties": false,
+        "properties": {
+          "run_id": {
+            "$ref": "#/components/schemas/Schemadf135e01e5998bd761bf3770ae512003d9a8a935e6f90722820e930ca4b97338"
+          },
+          "task_id": {
+            "$ref": "#/components/schemas/Schemaeb1f11cc6fde0c4462c9b4658efce96448e24082c8e128b7c4e24d9c2c4511f3"
+          }
+        },
+        "required": [
+          "run_id"
+        ],
+        "title": "RunReadParams",
+        "type": "object"
       },
       "Schema8c6ee092ab6888335b7e1a23a6d71ebc4af1cde19fbf832d4d6e749fb6f3e2b9": {
         "additionalProperties": true,
@@ -2167,6 +2222,13 @@
         "title": "FleetResult",
         "type": "object"
       },
+      "Schemadac6bea8f7c7632f24f2c15d3c0d5d30b9f9048c8b65ba438ebe101e1660969c": {
+        "default": 1000,
+        "maximum": 1000,
+        "minimum": 1,
+        "title": "Limit",
+        "type": "integer"
+      },
       "Schemadbdad2e06ba1b9a1d3f68d5b15cb0a2224adcd31714bf255f1454e946cea3b30": {
         "additionalProperties": false,
         "properties": {},
@@ -2330,6 +2392,18 @@
         },
         "title": "ResearchWebParams",
         "type": "object"
+      },
+      "Schemaeb1f11cc6fde0c4462c9b4658efce96448e24082c8e128b7c4e24d9c2c4511f3": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema85c1db78d5c7dc29b5e24f13a6d3f86af9075e032e322bfe2f7abd542739b409"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Task Id"
       },
       "Schemaebfd7f24843456b3e02e97bd2085f819c39ef62a20398d74626160b410a732b5": {
         "title": "Child",
@@ -9278,6 +9352,40 @@
           }
         },
         "summary": "authoritative owner-bound current plan and live lease snapshot",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.coordination.GetRunWorkItem": {
+      "post": {
+        "operationId": "eg.coordination.GetRunWorkItem",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/GetRunWorkItem"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.coordination.json#/methods/GetRunWorkItem"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "owner-bound immutable run admission and current caller-safe WorkItem snapshot",
         "tags": [
           "eg"
         ]
@@ -19405,20 +19513,67 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Schema69af923f0300139d0b548d5a981145b615e86624534985c6597f08d5db15c466"
-                }
-              }
-            },
-            "description": "Operation result"
+            "$ref": "#/components/responses/Shared4001bbddeb48be8bc0b74bc5559d9e75199681b3dda7a8d0ced61180e1e81b91"
           },
           "default": {
             "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
           }
         },
         "summary": "Read the current plan of one run",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/ops/runs.events": {
+      "post": {
+        "operationId": "runs.events",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema0afee644338ef96d72e5f00bbf0b44e61cd8f2402adb7b034d215113c06a86f9"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Shared4001bbddeb48be8bc0b74bc5559d9e75199681b3dda7a8d0ced61180e1e81b91"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Replay public events of an owned run",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/ops/runs.get": {
+      "post": {
+        "operationId": "runs.get",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema89c1e5b5b9d72faa4c7f9ff2fdab574e4d51261f5e8ea517a9ed5b92e5ee23e8"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Shared4001bbddeb48be8bc0b74bc5559d9e75199681b3dda7a8d0ced61180e1e81b91"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Read an owned durable run",
         "tags": [
           "runs"
         ]
@@ -19778,5 +19933,5 @@
       }
     }
   },
-  "x-registry-digest": "4c8786750a3bacd340f0bed370a956bcc595381c0a619d0cb301697650aadb93"
+  "x-registry-digest": "09772bb62b5555de80637ad1c2cc13e76e850a1084cb67b1bf1efe110c411e73"
 }

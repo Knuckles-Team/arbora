@@ -1,7 +1,7 @@
 """Generated engine error contract. Do not edit."""
 
-REGISTRY_DIGEST = "4c8786750a3bacd340f0bed370a956bcc595381c0a619d0cb301697650aadb93"
-EG_RECEIPT_DIGEST = "b9f4d9905c27789a92db899490c05dad70179a4e6468cd399cfa2b4c5937d52f"
+REGISTRY_DIGEST = "09772bb62b5555de80637ad1c2cc13e76e850a1084cb67b1bf1efe110c411e73"
+EG_RECEIPT_DIGEST = "0c4bf003ed5add70fdc50f971a5b684a5d5ff2189b241bbf3d12eec31fdc77f2"
 ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "ABORTED_ATOMIC_GRAPH_BATCH": (400, False),
     "ACCESS_DENIED": (403, False),
@@ -203,6 +203,7 @@ ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "RESERVED_COMPONENT_ID": (400, False),
     "RESERVED_GRAPH_NAME": (400, False),
     "RESULT_TOO_LARGE": (400, False),
+    "RUN_ADMISSION_UNAVAILABLE": (409, False),
     "SCHEMA_APPROVAL_MISMATCH": (400, False),
     "SCHEMA_APPROVAL_REQUIRED": (400, False),
     "SCHEMA_INCONSISTENT": (409, False),
