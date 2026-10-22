@@ -48,6 +48,7 @@
     "ARBORA-OPS-R020.6.4",
     "ARBORA-OPS-R020.6.5",
     "ARBORA-OPS-R020.6.6",
+    "ARBORA-OPS-R020.6.7",
     "ARBORA-OPS-R021",
     "ARBORA-OPS-R021.1",
     "ARBORA-OPS-R021.2",
@@ -346,11 +347,14 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "4b83c69e2b41",
+        "8c4eb38f06af",
         "97061e59c412"
       ],
       "verified_by": [
         "tests/api/test_api_registry.py:110",
-        "tests/api/test_api_registry.py:63"
+        "tests/api/test_api_registry.py:63",
+        "tests/api/test_http_session_scope.py:31",
+        "tests/api/test_http_session_scope.py:68"
       ],
       "rollup_of": [
         "ARBORA-OPS-R007.1"
@@ -626,8 +630,8 @@
         "cc90ee37583f"
       ],
       "verified_by": [
-        "tests/api/test_ingest_ops.py:105",
-        "tests/api/test_ingest_ops.py:124"
+        "tests/api/test_ingest_ops.py:107",
+        "tests/api/test_ingest_ops.py:126"
       ]
     },
     {
@@ -642,11 +646,11 @@
         "cc90ee37583f"
       ],
       "verified_by": [
-        "tests/api/test_ingest_ops.py:146",
-        "tests/api/test_ingest_ops.py:162",
-        "tests/api/test_ingest_ops.py:176",
-        "tests/api/test_ingest_ops.py:189",
-        "tests/api/test_ingest_ops.py:199"
+        "tests/api/test_ingest_ops.py:148",
+        "tests/api/test_ingest_ops.py:164",
+        "tests/api/test_ingest_ops.py:178",
+        "tests/api/test_ingest_ops.py:191",
+        "tests/api/test_ingest_ops.py:201"
       ]
     },
     {
@@ -659,11 +663,11 @@
         "822f55d5835d"
       ],
       "verified_by": [
-        "tests/api/test_ingest_ops.py:228",
-        "tests/api/test_ingest_ops.py:240",
-        "tests/api/test_ingest_ops.py:249",
-        "tests/api/test_ingest_ops.py:256",
-        "tests/api/test_ingest_ops.py:266"
+        "tests/api/test_ingest_ops.py:238",
+        "tests/api/test_ingest_ops.py:250",
+        "tests/api/test_ingest_ops.py:259",
+        "tests/api/test_ingest_ops.py:266",
+        "tests/api/test_ingest_ops.py:276"
       ],
       "rollup_of": [
         "ARBORA-OPS-R020.3.1"
@@ -678,11 +682,11 @@
         "634a344fade7"
       ],
       "verified_by": [
-        "tests/api/test_ingest_ops.py:228",
-        "tests/api/test_ingest_ops.py:240",
-        "tests/api/test_ingest_ops.py:249",
-        "tests/api/test_ingest_ops.py:256",
-        "tests/api/test_ingest_ops.py:266"
+        "tests/api/test_ingest_ops.py:238",
+        "tests/api/test_ingest_ops.py:250",
+        "tests/api/test_ingest_ops.py:259",
+        "tests/api/test_ingest_ops.py:266",
+        "tests/api/test_ingest_ops.py:276"
       ],
       "rollup_of": [
         "ARBORA-OPS-R020.3.1.1",
@@ -697,9 +701,9 @@
         "16c9b2bddda3"
       ],
       "verified_by": [
-        "tests/api/test_ingest_ops.py:236",
-        "tests/api/test_ingest_ops.py:248",
-        "tests/api/test_ingest_ops.py:257"
+        "tests/api/test_ingest_ops.py:238",
+        "tests/api/test_ingest_ops.py:250",
+        "tests/api/test_ingest_ops.py:259"
       ]
     },
     {
@@ -710,9 +714,9 @@
         "634a344fade7"
       ],
       "verified_by": [
-        "tests/api/test_ingest_ops.py:264",
-        "tests/api/test_ingest_ops.py:274",
-        "tests/api/test_ingest_ops.py:283"
+        "tests/api/test_ingest_ops.py:266",
+        "tests/api/test_ingest_ops.py:276",
+        "tests/api/test_ingest_ops.py:285"
       ]
     },
     {
@@ -745,7 +749,8 @@
         "ARBORA-OPS-R020.6.3",
         "ARBORA-OPS-R020.6.4",
         "ARBORA-OPS-R020.6.5",
-        "ARBORA-OPS-R020.6.6"
+        "ARBORA-OPS-R020.6.6",
+        "ARBORA-OPS-R020.6.7"
       ]
     },
     {
@@ -781,7 +786,7 @@
         "2ad164bd5414"
       ],
       "verified_by": [
-        "tests/ingest/test_connector_sources.py:208"
+        "tests/ingest/test_connector_sources.py:228"
       ]
     },
     {
@@ -792,7 +797,7 @@
         "2ad164bd5414"
       ],
       "verified_by": [
-        "tests/ingest/test_connector_sources.py:220"
+        "tests/ingest/test_connector_sources.py:240"
       ]
     },
     {
@@ -805,7 +810,7 @@
         "ceb80658531e"
       ],
       "verified_by": [
-        "tests/ingest/test_connector_sources.py:245"
+        "tests/ingest/test_connector_sources.py:265"
       ]
     },
     {
@@ -815,6 +820,17 @@
       "landed_in": [],
       "verified_by": [
         "tests/test_real_boot.py:843"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R020.6.7",
+      "title": "Pack inventory",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "9052ea9458e5"
+      ],
+      "verified_by": [
+        "tests/ingest/test_connector_sources.py:208"
       ]
     },
     {

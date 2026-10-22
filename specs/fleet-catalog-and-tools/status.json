@@ -833,10 +833,13 @@
       "title": "The catalog admits each server on its own",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "5ecdfe7fbe9a",
         "619d25ac8e69",
         "d9015e6d6cda"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/test_fleet_catalog_reader.py:366"
+      ],
       "rollup_of": [
         "ARBORA-FLEET-R026.1"
       ]

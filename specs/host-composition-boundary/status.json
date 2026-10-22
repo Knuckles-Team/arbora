@@ -252,11 +252,11 @@
         "cc6349408a14"
       ],
       "verified_by": [
+        "tests/mcp_server/test_arbora_016_served_fixes.py:136",
         "tests/mcp_server/test_harness_host.py:109",
         "tests/mcp_server/test_harness_host.py:141",
         "tests/mcp_server/test_harness_host.py:29",
-        "tests/mcp_server/test_harness_host.py:37",
-        "tests/mcp_server/test_harness_host.py:76"
+        "tests/mcp_server/test_harness_host.py:37"
       ],
       "rollup_of": [
         "ARBORA-HOST-R001.2.1",
