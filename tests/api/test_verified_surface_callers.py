@@ -120,6 +120,9 @@ class SessionFixture:
         }
         self.revoked = False
 
+    def __post_init__(self):
+        """GraphSession revalidates at the ambient boundary; the fixture is fixed."""
+
     def ensure_authority_current(self):
         if self.revoked:
             raise PermissionError("fixture revoked")

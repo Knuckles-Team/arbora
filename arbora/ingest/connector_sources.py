@@ -15,6 +15,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import inspect
+import logging
 import uuid
 from collections.abc import Awaitable, Callable, Iterator, Mapping
 from contextlib import contextmanager
@@ -49,6 +50,8 @@ _CATALOG_PAGE = 100
 _MAX_CATALOG_PAGES = 50
 
 ClientFactory = Callable[[str], Awaitable[Any]]
+
+logger = logging.getLogger(__name__)
 
 
 @contextmanager
@@ -326,6 +329,9 @@ class ConnectorIngestRunner:
         try:
             report = await runner.sync(spec, mode=mode, job_id=item_id)
         except SourceSyncError as exc:
+            # The receipt carries only the reason code; keep the cause visible
+            # (tool name and exception type, never arguments or results).
+            logger.warning("source sync %s failed: %s: %s", source_id, exc.reason, exc)
             await _seam(
                 work_items.commit_result,
                 control,
