@@ -2392,6 +2392,18 @@
     {
       "domain": "eg",
       "examples": [
+        "GetCurrentPlan coordination"
+      ],
+      "id": "eg.coordination.GetCurrentPlan",
+      "summary": "authoritative owner-bound current plan and live lease snapshot",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
         "GetWorkItem coordination"
       ],
       "id": "eg.coordination.GetWorkItem",
@@ -2480,6 +2492,18 @@
       ],
       "id": "eg.coordination.ObserveDevelopmentLane",
       "summary": "monotonic retained-footprint observation replaces the prior native charge; now_ms is authority-normalized",
+      "tags": [
+        "eg"
+      ],
+      "verb": "write"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "PublishCurrentPlan coordination"
+      ],
+      "id": "eg.coordination.PublishCurrentPlan",
+      "summary": "immutable owner and live fence bind revisioned current-plan publication",
       "tags": [
         "eg"
       ],
@@ -3532,6 +3556,18 @@
     {
       "domain": "eg",
       "examples": [
+        "EnrichDocument ingestion"
+      ],
+      "id": "eg.ingestion.EnrichDocument",
+      "summary": "EG-UNIFIED-DATA-PLANE-R651.7: chunks one RLS-visible held Document and embeds the chunks. Chunk nodes, chunkOf edges, vectors and one enrichment record commit as one ChangeEnvelope. An enriched digest replays; a new digest supersedes the earlier chunks",
+      "tags": [
+        "eg"
+      ],
+      "verb": "write"
+    },
+    {
+      "domain": "eg",
+      "examples": [
         "IndexRepository ingestion"
       ],
       "id": "eg.ingestion.IndexRepository",
@@ -4472,6 +4508,18 @@
       ],
       "id": "eg.query.ResolveConflict",
       "summary": "EPI-P3-7 (gap-fill) standalone Dung argumentation (grounded/preferred/stable) conflict resolution over a BeliefGraph snapshot; handler additionally gated `epistemic-tms`",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "SelectWebPages query"
+      ],
+      "id": "eg.query.SelectWebPages",
+      "summary": "EG-DECISION-ENGINE-R802: deterministic web page selection over search candidates. It dedupes by canonical URL and digest against held Documents and enforces a budget. It commits nothing and runs no model",
       "tags": [
         "eg"
       ],
@@ -6126,5 +6174,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "a021d693b86f7b37e94b54fa7253649f3d113c16938abfa39e54b923da4de90b"
+  "registry_digest": "4c8786750a3bacd340f0bed370a956bcc595381c0a619d0cb301697650aadb93"
 }

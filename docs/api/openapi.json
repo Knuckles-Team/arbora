@@ -9249,6 +9249,40 @@
         ]
       }
     },
+    "/api/v1/ops/eg.coordination.GetCurrentPlan": {
+      "post": {
+        "operationId": "eg.coordination.GetCurrentPlan",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/GetCurrentPlan"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.coordination.json#/methods/GetCurrentPlan"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "authoritative owner-bound current plan and live lease snapshot",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.coordination.GetWorkItem": {
       "post": {
         "operationId": "eg.coordination.GetWorkItem",
@@ -9516,6 +9550,40 @@
           }
         },
         "summary": "monotonic retained-footprint observation replaces the prior native charge; now_ms is authority-normalized",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.coordination.PublishCurrentPlan": {
+      "post": {
+        "operationId": "eg.coordination.PublishCurrentPlan",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/PublishCurrentPlan"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.coordination.json#/methods/PublishCurrentPlan"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "immutable owner and live fence bind revisioned current-plan publication",
         "tags": [
           "eg"
         ]
@@ -12479,6 +12547,40 @@
         ]
       }
     },
+    "/api/v1/ops/eg.ingestion.EnrichDocument": {
+      "post": {
+        "operationId": "eg.ingestion.EnrichDocument",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/EnrichDocument"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.ingestion.json#/methods/EnrichDocument"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "EG-UNIFIED-DATA-PLANE-R651.7: chunks one RLS-visible held Document and embeds the chunks. Chunk nodes, chunkOf edges, vectors and one enrichment record commit as one ChangeEnvelope. An enriched digest replays; a new digest supersedes the earlier chunks",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.ingestion.IndexRepository": {
       "post": {
         "operationId": "eg.ingestion.IndexRepository",
@@ -15160,6 +15262,40 @@
           }
         },
         "summary": "EPI-P3-7 (gap-fill) standalone Dung argumentation (grounded/preferred/stable) conflict resolution over a BeliefGraph snapshot; handler additionally gated `epistemic-tms`",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.query.SelectWebPages": {
+      "post": {
+        "operationId": "eg.query.SelectWebPages",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/SelectWebPages"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.query.json#/methods/SelectWebPages"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "EG-DECISION-ENGINE-R802: deterministic web page selection over search candidates. It dedupes by canonical URL and digest against held Documents and enforces a budget. It commits nothing and runs no model",
         "tags": [
           "eg"
         ]
@@ -19642,5 +19778,5 @@
       }
     }
   },
-  "x-registry-digest": "a021d693b86f7b37e94b54fa7253649f3d113c16938abfa39e54b923da4de90b"
+  "x-registry-digest": "4c8786750a3bacd340f0bed370a956bcc595381c0a619d0cb301697650aadb93"
 }
