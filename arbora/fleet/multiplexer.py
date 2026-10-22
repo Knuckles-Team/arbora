@@ -655,6 +655,70 @@ def _child_error_result(text: str) -> _typing.Any:
     )
 
 
+def _classified_child_error(code: str, message: str) -> _typing.Any:
+    """One ``isError`` CallToolResult carrying a typed code and the child's message.
+
+    The gateway reads ``structuredContent.error.code`` as the refusal code and
+    redacts and bounds ``message`` (``fleet_detail``) before any caller sees it.
+    """
+
+    return mcp_types.CallToolResult.model_validate(
+        {
+            "content": [mcp_types.TextContent(type="text", text=message)],
+            "structuredContent": {"error": {"code": code, "message": message}},
+            "isError": True,
+        }
+    )
+
+
+def _child_failure_result(
+    server_name: str, original_name: str, exc: BaseException
+) -> _typing.Any:
+    """Classify a failed one-shot child call by its real cause (ARBORA-FLEET-R015.1).
+
+    The MCP client runs each session inside an anyio task group, so any failure
+    (including the child's own JSON-RPC error answer) reaches this point wrapped
+    in an ``ExceptionGroup`` whose text is only "unhandled errors in a
+    TaskGroup". The leaves are the cause:
+
+    * a child protocol error from a live child that is not a dead-session
+      signature means the child ran and refused: ``CHILD_REFUSED`` with the
+      child's own message;
+    * a transport leaf or a dead-session signature means the child could not
+      be reached or dropped the session: ``UNAVAILABLE``;
+    * anything else keeps the opaque, correlation-tracked public error.
+
+    The leaf classes and the child's bounded, redacted message are logged so an
+    operator sees the cause; credential-shaped text is redacted first.
+    """
+    from arbora.api.errors import fleet_detail
+
+    leaves = _child_resilience._exc_leaves(exc)
+    rendered = "; ".join(
+        f"{type(leaf).__name__}: {fleet_detail(str(leaf)) or ''}".rstrip(": ")
+        for leaf in leaves
+    )
+    logger.warning(
+        "fleet child call failed (server=%s tool=%s causes=%s)",
+        server_name,
+        original_name,
+        rendered or type(exc).__name__,
+    )
+    if any(
+        _child_resilience.is_session_dead(leaf)
+        or isinstance(leaf, _child_resilience.TRANSPORT_EXCEPTIONS)
+        for leaf in leaves
+    ):
+        return _classified_child_error(
+            "UNAVAILABLE", fleet_detail(rendered) or "child transport failed"
+        )
+    refusals = [leaf for leaf in leaves if isinstance(leaf, _child_resilience.MCPError)]
+    if refusals:
+        message = fleet_detail(str(refusals[0])) or "child refused the call"
+        return _classified_child_error("CHILD_REFUSED", message)
+    return _child_error_result(public_error_text(exc))
+
+
 def _child_required_scopes(
     child_config: _collections_abc.Mapping[str, _typing.Any],
 ) -> list[str]:
@@ -2952,7 +3016,14 @@ class MCPMultiplexer:
     ) -> MCPCallToolResult:
         _require_fleet_capability("delegate")
         cfg = self.load_catalog().get(server_name)
-        if cfg is None or _oauth_gated(cfg):
+        if cfg is None:
+            # Nothing was sent to the child, so the outcome is certain: the
+            # child is not mountable (disabled, or refused at catalog
+            # admission). Answer UNAVAILABLE, never an unsettled outcome.
+            return _classified_child_error(
+                "UNAVAILABLE", "child is not mountable in the current catalog"
+            )
+        if _oauth_gated(cfg):
             raise _fastmcp_exceptions.ToolError(
                 "Server is not a configured service-credential MCP child"
             )
@@ -2973,7 +3044,7 @@ class MCPMultiplexer:
         except TimeoutError:
             return _child_error_result("MCPChildTimeout")
         except Exception as e:
-            return _child_error_result(public_error_text(e))
+            return _child_failure_result(server_name, original_name, e)
 
     async def call_oauth_gated_tool(
         self,
@@ -3035,7 +3106,7 @@ class MCPMultiplexer:
         except TimeoutError:
             return _child_error_result("MCPChildTimeout")
         except Exception as e:
-            return _child_error_result(public_error_text(e))
+            return _child_failure_result(server_name, original_name, e)
 
     async def _assert_oauth_tool_admitted(
         self,
@@ -4169,7 +4240,11 @@ class MCPMultiplexer:
             except RuntimeError:
                 logger.error("MCP child disabled: credential policy violation")
                 return None
-        if not is_langfuse_server(str(server_name), cfg):
+        if not is_langfuse_server(str(server_name), cfg) or not cfg.get("command"):
+            # Only a child Arbora launches itself receives projected Langfuse
+            # settings. A remote child (``url``, no ``command``) holds its own
+            # credentials in its own deployment; Arbora has nothing to project
+            # into it, so requiring Langfuse keys here disabled a healthy child.
             return cfg
         try:
             if not runtime_materialized:
