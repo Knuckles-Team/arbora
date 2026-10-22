@@ -83,7 +83,9 @@ class _FakeRunner:
         self.status_calls.append((tenant, source_id))
         return IngestSourceRecord(source_id=source_id, tenant=tenant, state="active")
 
-    async def list_packs(self, *, tenant: str) -> IngestPackInventory:
+    async def list_packs(
+        self, *, tenant: str, caller: object = None
+    ) -> IngestPackInventory:
         self.pack_calls.append(tenant)
         return IngestPackInventory(
             packs=(IngestPackRecord(pack_id="pack-1", tenant=tenant, state="active"),)

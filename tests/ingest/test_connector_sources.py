@@ -205,6 +205,26 @@ async def test_list_sync_status_compose_runner(wired: Any) -> None:
     assert again["status"] == "completed" and len(wired.ingest.batches) == 1
 
 
+@pytest.mark.spec("ARBORA-OPS-R020.6.7")
+async def test_packs_list_serves_one_pack_per_declaring_connector(wired: Any) -> None:
+    """Acceptance c18: ``ingest.packs.list`` answered 503 "not composed"."""
+    runner = wired.build(_Fleet())
+    listed = (await service.list_packs(_context(runner), {}, None))["value"]
+    assert listed == {
+        "packs": [{"pack_id": "fixture", "tenant": "tenant-a", "state": "active"}]
+    }
+    failing = wired.build(_Fleet(fail_tool=True))
+    params = {"source_id": "fixture/items", "mode": "full"}
+    assert (await service.sync_source(_context(failing), params, None))["value"][
+        "status"
+    ] == "failed"
+    (pack,) = (await service.list_packs(_context(failing), {}, None))["value"]["packs"]
+    assert pack["state"] == "error"
+    with pytest.raises(OperationRefused) as unbound:
+        await service.list_packs(SimpleNamespace(caller=None, services={}), {}, None)
+    assert unbound.value.code == "UNAVAILABLE"
+
+
 @pytest.mark.spec("ARBORA-OPS-R020.6.3")
 def test_served_invocation_binds_ingest_runner() -> None:
     from arbora.mcp_server.served_invocation import _with_ingest_runner

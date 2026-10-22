@@ -33,6 +33,8 @@ from agent_connector_sdk.ingest.transport import EpistemicGraphIngestTransport
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.ingest.service import (
     IngestJobRecord,
+    IngestPackInventory,
+    IngestPackRecord,
     IngestSourceInventory,
     IngestSourceRecord,
     IngestSyncReceipt,
@@ -371,10 +373,29 @@ class ConnectorIngestRunner:
             "UNAVAILABLE", {"reason": "repository indexing is not composed"}
         )
 
-    async def list_packs(self, **_: Any) -> Any:
-        raise OperationRefused(
-            "UNAVAILABLE", {"reason": "pack listing is not composed"}
-        )
+    async def list_packs(
+        self, *, tenant: str, caller: Any = None
+    ) -> IngestPackInventory:
+        """One pack per connector server that declares ingest sources.
+
+        A pack is in ``error`` when any of its sources is, else ``active``.
+        """
+        declarations = await self._declarations(caller)
+        packs = []
+        for server, declaration in sorted(declarations.items()):
+            records = [
+                await self._record(tenant, server, declaration, spec)
+                for spec in declaration.sources
+            ]
+            failed = any(record.state == "error" for record in records)
+            packs.append(
+                IngestPackRecord(
+                    pack_id=server,
+                    tenant=tenant,
+                    state="error" if failed else "active",
+                )
+            )
+        return IngestPackInventory(packs=tuple(packs))
 
     async def get_job_status(
         self, *, tenant: str, job_id: str, caller: Any = None

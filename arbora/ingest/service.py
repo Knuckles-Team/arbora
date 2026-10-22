@@ -135,7 +135,9 @@ class IngestRunner(Protocol):
         self, *, tenant: str, source_id: str, caller: Any = None
     ) -> IngestSourceRecord: ...
 
-    async def list_packs(self, *, tenant: str) -> IngestPackInventory: ...
+    async def list_packs(
+        self, *, tenant: str, caller: Any = None
+    ) -> IngestPackInventory: ...
 
     async def get_job_status(self, *, tenant: str, job_id: str) -> IngestJobRecord: ...
 
@@ -201,7 +203,9 @@ async def get_source_status(context: Any, params: Mapping[str, Any], op: Any) ->
 async def list_packs(context: Any, params: Mapping[str, Any], op: Any) -> Any:
     """List this tenant's ingestion packs through the composed runner."""
     runner = _bound_runner(context)
-    inventory = await runner.list_packs(tenant=context.caller.tenant)
+    inventory = await runner.list_packs(
+        tenant=context.caller.tenant, caller=context.caller
+    )
     return {"value": inventory.model_dump(mode="json")}
 
 

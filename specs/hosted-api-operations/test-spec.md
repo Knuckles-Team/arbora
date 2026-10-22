@@ -205,13 +205,14 @@ Hot-path proof for `ARBORA-OPS-R067`: `tests/gateway/test_research_web_served.py
 
 | Requirement | Case | Required assertion |
 |---|---|---|
-| `ARBORA-OPS-R020.6` | Connector sources served through the composed SDK sync runner | The rollup closes when `ARBORA-OPS-R020.6.1` through `ARBORA-OPS-R020.6.6` pass their proving tests. |
+| `ARBORA-OPS-R020.6` | Connector sources served through the composed SDK sync runner | The rollup closes when `ARBORA-OPS-R020.6.1` through `ARBORA-OPS-R020.6.7` pass their proving tests. |
 | `ARBORA-OPS-R020.6.1` | Model | `tests/ingest/test_connector_sources.py::test_source_record_shape` validates the record and refuses a malformed source ID. |
 | `ARBORA-OPS-R020.6.2` | Behavior | `tests/ingest/test_connector_sources.py::test_list_sync_status_compose_runner` drives the three operations over a fake gateway and engine. |
 | `ARBORA-OPS-R020.6.3` | Wiring | `tests/ingest/test_connector_sources.py::test_served_invocation_binds_ingest_runner` finds the composed runner in the operation runtime bindings. |
 | `ARBORA-OPS-R020.6.4` | Refusal | `tests/ingest/test_connector_sources.py::test_refusals_fail_closed` covers each refusal and the failed WorkItem commit. |
 | `ARBORA-OPS-R020.6.5` | Evidence | `tests/ingest/test_connector_sources.py::test_receipt_binds_work_item` compares the receipt job ID with the committed WorkItem. |
 | `ARBORA-OPS-R020.6.6` | Hot-path proof | The test observes the declared source, a succeeded WorkItem and the ingested nodes with provenance. |
+| `ARBORA-OPS-R020.6.7` | Pack inventory | The test lists one pack per declaring connector, reports `error` after a failed sync and refuses an unbound runner. |
 
 ## Refusal causes and replay owners (ARBORA-OPS-R009.2, R009.3)
 
