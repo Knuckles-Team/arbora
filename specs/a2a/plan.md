@@ -69,7 +69,7 @@ flowchart LR
   PN --> OB["EG durable outbox (EG-DURABLE-KERNEL-R001)"]
 ```
 
-`A2AAgentCapabilities.from_wired_authorities` is the single seam composition calls; it is pure and has no I/O, so advertised capabilities can be tested without a live AU/EG stack. The actual streaming and history projections are separate runtime paths that call the AU/EG public ports directly — the Agent Card's `true`/`false` is a property of what composition wired, and the test-spec's acceptance (A2A-H07) cross-checks the two never drift apart.
+`A2AAgentCapabilities.from_wired_authorities` is the single seam composition calls. It is pure and has no I/O. Advertised capabilities can therefore be tested without a live AU/EG stack. The actual streaming and history projections are separate runtime paths that call the AU/EG public ports directly — the Agent Card's `true`/`false` is a property of what composition wired, and the test-spec's acceptance (A2A-H07) cross-checks the two never drift apart.
 
 ### Implementation sequence
 
@@ -326,7 +326,7 @@ caller preferences, distinct from catalog visibility. There is no implicit
 profile grant from kg:read, roles, CHAT_MODELS, MODEL_REGISTRY_PATH or provider
 availability. Until the owner implements that authorization, the
 profile authority is unavailable. Existing default-agent behavior is unchanged. Calls that explicitly request a
-profile preference, or use models.list, require the new authority; absence must
+profile preference, or use models.list, require the new authority. Its absence must
 not turn a preference-enabled request into an existing default-agent call.
 The issuer and storage schema are owner work, not inferred by this boundary.
 
@@ -365,7 +365,7 @@ Revalidate after asynchronous reads. The proposed owner operation
 ProfileAuthority.admit_for_dispatch(decision, session, task_admission_ref) must
 atomically revalidate current session, profile-use grant and capability revision
 with task admission, or return a typed refusal. Its EG public operation and
-transaction contract are not implemented; a separate resolve-then-check sequence
+transaction contract are not implemented. A separate resolve-then-check sequence
 cannot substitute for it or authorize dispatch. Add a revocation-between-resolution-
 and-admission test requiring zero queued tasks. Changed
 capability/profile digests require fresh assembly/admission, never mutation of
@@ -567,7 +567,7 @@ ARBORA-A2A-R010.1 resolves the private owner graph from the actual WorkItem
 engine with native_owner_graph. Missing binding refuses without a session-graph
 fallback. The caller is revalidated before and after the awaited native read.
 The graph capability remains enforced by the native graph client. EG validates
-the receipt scope against its exact storage snapshot; its physical scope tenant
+the receipt scope against its exact storage snapshot. Its physical scope tenant
 and sanitized graph are not the logical caller tenant and graph. Arbora retains
 the caller tenant, WorkItem owner, run and outcome checks without inventing a
 physical-to-logical scope mapping. Injected producer tests qualify routing and
@@ -587,7 +587,7 @@ The next implementation is owned by EG-DURABLE-KERNEL-R028.2's 2026-10-22
 ordinary-run completion amendment: optional measured snapshot on the existing
 fenced commit, atomic native outbox binding, and owner-bound GetRunWorkItem
 readback. Arbora then passes AU's validated success/failure snapshot unchanged
-through work_items.commit_result and projects the same committed result on
+through work_items.commit_result. It projects the same committed result on
 initial dispatch, tasks/get and completed-idempotency recovery. Revalidate
 caller, tenant, owner graph, task/run/context and terminal status. Missing
 producer data stays unavailable; provider-before-ledger `{}` stays unknown,
@@ -597,7 +597,7 @@ not close session totals, TPS, costs, full streaming or usage.read composition.
 ### 2026-10-22 — R001 native owner-read refusal mapping
 
 Authenticated served qualification found that a foreign verified principal's
-native control-graph read is correctly denied, but its typed ACCESS_DENIED error
+native control-graph read is correctly denied. However, its typed ACCESS_DENIED error
 escaped the unary task boundary as HTTP 500. Owner lookup must treat only that
 stable native access-denied code as an unavailable task, preserving non-disclosing
 404 reads and noncancelable writes; unrelated engine failures must propagate.
