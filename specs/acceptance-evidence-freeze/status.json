@@ -33,7 +33,8 @@
       "title": "implement the typed EvidenceRecord/RequirementGap model and gaps_for_status/load_status functions plus the standalone CLI entry point in scripts/check_acceptanc",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "57cb99978975"
+        "57cb99978975",
+        "f5fc3630a949"
       ],
       "verified_by": [
         "tests/test_check_acceptance_evidence.py:99"

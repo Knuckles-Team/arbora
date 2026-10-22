@@ -231,9 +231,11 @@
       "title": "Native MCP/REST facade with A2A unary operations then streaming",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "4ad0c4d2dd78",
         "762c7f816fe3",
         "83aefbad2157",
-        "deb2b45bf83d"
+        "86a439753d2d",
+        "b6902c2910fe"
       ],
       "verified_by": [
         "tests/deployment/test_real_boot_fixture.py:19",
@@ -862,7 +864,7 @@
     {
       "id": "ARBORA-OPS-R021.4.5",
       "title": "Per-run operation",
-      "delivery_state": "SPECIFIED",
+      "delivery_state": "VERIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
@@ -872,7 +874,7 @@
     {
       "id": "ARBORA-OPS-R021.4.5.1",
       "title": "Current-plan read boundary",
-      "delivery_state": "SPECIFIED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "2e9f4b8bc465",
         "663cc8cad940"
@@ -887,8 +889,10 @@
     {
       "id": "ARBORA-OPS-R021.4.5.1.1",
       "title": "Native contextual reader composition",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "f4ae1be895a1"
+      ],
       "verified_by": [
         "tests/mcp_server/test_current_plan_reader.py:22"
       ]
@@ -1519,8 +1523,10 @@
     {
       "id": "ARBORA-OPS-R039.3",
       "title": "Add one test in tests/gateway/test_dashboard_api.py asserting GET /health returns 200 without a capability and sets Cache-Control no-store",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "527856a2832b"
+      ],
       "verified_by": [
         "tests/gateway/test_dashboard_api.py:99"
       ]
@@ -1556,8 +1562,10 @@
     {
       "id": "ARBORA-OPS-R039.8",
       "title": "Add one test in tests/gateway/test_registry.py asserting GET /widgets returns every widget type of the deleted registry module map except `genius_agent`, with the same field set",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "bb8060f1c1bf"
+      ],
       "verified_by": [
         "tests/gateway/test_registry.py:40"
       ]
@@ -1661,7 +1669,7 @@
     {
       "id": "ARBORA-OPS-R041",
       "title": "Agent summary widget dropped (replaces AU-BOUNDARY-R001.7, commit 7717d2e62)",
-      "delivery_state": "SPECIFIED",
+      "delivery_state": "VERIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
@@ -1671,8 +1679,10 @@
     {
       "id": "ARBORA-OPS-R041.1",
       "title": "Add one test in tests/gateway/test_registry.py asserting genius_agent is absent from the widget registry and no fixed-value widget is registered",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "54771db54918"
+      ],
       "verified_by": [
         "tests/gateway/test_registry.py:31"
       ]
@@ -2325,8 +2335,13 @@
     {
       "id": "ARBORA-OPS-R848.1",
       "title": "Source reads",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "38d29856a38a",
+        "54ff076e19e1",
+        "e337b2c2ef83",
+        "fc8440890094"
+      ],
       "verified_by": [
         "tests/api/test_source_ops.py:32",
         "tests/mcp_server/test_source_reader.py:32"
@@ -2356,8 +2371,13 @@
     {
       "id": "ARBORA-OPS-R850",
       "title": "Virtual checkout endpoint",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "3b92b3c8c215",
+        "54ff076e19e1",
+        "e337b2c2ef83",
+        "fc8440890094"
+      ],
       "verified_by": [
         "tests/api/test_source_checkout.py:156",
         "tests/api/test_source_checkout.py:26"

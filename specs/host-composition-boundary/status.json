@@ -264,7 +264,8 @@
       "title": "Arbora binds the run-loop providers at startup",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "25e15e2108e1"
+        "25e15e2108e1",
+        "52ad3952c2c8"
       ],
       "verified_by": [
         "tests/test_agent_runs.py:42",
@@ -1691,7 +1692,8 @@
       "title": "Check injected startup admission",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "aee6cfa29204"
+        "aee6cfa29204",
+        "d8f76638c57b"
       ],
       "verified_by": [
         "tests/agent_host/test_start_admission.py:113",
@@ -1870,8 +1872,11 @@
     {
       "id": "ARBORA-HOST-R033",
       "title": "Unique records are created, not upserted",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "3d0f79273e9d",
+        "f3580eb0f5d0"
+      ],
       "verified_by": [
         "tests/messaging/test_inbox.py:129",
         "tests/test_unique_records.py:114",
@@ -2039,7 +2044,8 @@
       "title": "Attest runtime ownership",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "bbc699652d50"
+        "bbc699652d50",
+        "f261d4f80861"
       ],
       "verified_by": [
         "tests/agent_host/test_runtime_binding.py:2"
@@ -2059,8 +2065,12 @@
     {
       "id": "ARBORA-HOST-R010.7.2.2.2.1",
       "title": "Revalidate borrowed runtime at ASGI startup",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "929134f25886",
+        "bbeaf1147f83",
+        "d8f76638c57b"
+      ],
       "verified_by": [
         "tests/agent_host/test_runtime_lifespan.py:111",
         "tests/agent_host/test_runtime_lifespan.py:142",
