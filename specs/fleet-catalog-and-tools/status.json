@@ -43,6 +43,7 @@
     "ARBORA-FLEET-R013",
     "ARBORA-FLEET-R014",
     "ARBORA-FLEET-R015",
+    "ARBORA-FLEET-R015.1",
     "ARBORA-FLEET-R016",
     "ARBORA-FLEET-R017",
     "ARBORA-FLEET-R018",
@@ -600,12 +601,31 @@
     {
       "id": "ARBORA-FLEET-R015",
       "title": "Typed operations cover agents, browser and fleet calls",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "68e31b75248a",
-        "e1d37ca10ef7"
+        "e1d37ca10ef7",
+        "fdd59af317ce"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/fleet/test_child_failure_classification.py:17",
+        "tests/fleet/test_multiplexer_dynamic_gateway.py:279"
+      ],
+      "rollup_of": [
+        "ARBORA-FLEET-R015.1"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R015.1",
+      "title": "Arbora classifies a failed `fleet.call` by its real cause",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "fdd59af317ce"
+      ],
+      "verified_by": [
+        "tests/fleet/test_child_failure_classification.py:17",
+        "tests/fleet/test_multiplexer_dynamic_gateway.py:279"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R016",
