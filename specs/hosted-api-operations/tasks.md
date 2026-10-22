@@ -238,3 +238,23 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R067.5:** Refusal. Add the typed refusals.
 - [ ] **ARBORA-OPS-R067.6:** Evidence. Record the trace fields.
 - [ ] **ARBORA-OPS-R067.7:** Hot-path proof. Add the served three-call test.
+
+## Served harness component and improvement library operations (R068)
+
+- [ ] **ARBORA-OPS-R068:** Serve the harness component and improvement library operations.
+- [ ] **ARBORA-OPS-R068.1:** Component reads. Add `harness.components.list` and `harness.components.get`.
+- [ ] **ARBORA-OPS-R068.2:** Lesson query. Add `harness.lessons.retrieve`.
+- [ ] **ARBORA-OPS-R068.3:** Evolution report. Add `harness.evolution.report`.
+- [ ] **ARBORA-OPS-R068.4:** Adoption. Add the service-only `harness.evolution.adopt`.
+
+
+- [ ] **ARBORA-OPS-R021.4.5.1.1:** Compose the stateless native reader and qualify source-level authority/projection checks; retain the installed-EG acceptance blocker.
+
+## Served source operations (R848)
+
+- [x] **ARBORA-OPS-R848.1:** Serve the source reads: `source.tree`, `source.blob`, `source.history` and `source.blame` through the typed `SourceReader` port under the caller's engine scopes.
+- [ ] **ARBORA-OPS-R848.2:** Serve the source writes: `source.commit`, `source.land` and `source.revert` with destructive hints (pending the engine changeset substrate).
+- [ ] **ARBORA-OPS-R848.3:** Serve the `source.diff` read.
+- [ ] **ARBORA-OPS-R849:** Apply the server-side landing policy with fast and full gate phases.
+- [x] **ARBORA-OPS-R850:** Stream the virtual checkout endpoint, recursively and resumably.
+- [ ] **ARBORA-OPS-R851:** Serve the git smart-HTTP read bridge over EG trees.

@@ -94,6 +94,7 @@ Missing receipt fields or public consumer exports block positive served acceptan
 - `ARBORA-HOST-R022.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-HOST-R010.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-HOST-R032`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-HOST-R033`: Unit tests drive the action policy and the served engine with recording doubles. They prove a create never reaches `AddNode`, including an add-only binding with an existing answered inbox record: capability detection refuses it and a direct create leaves the record and write count unchanged. These helper tests do not qualify older-store onboarding.
 
 ## Unsupported interface refusal
 
@@ -110,3 +111,18 @@ These checks do not prove authorized host logs or terminal startup.
 - R009.8.2.2: Real retained-file restart through HTTP version two preserves
   source generation, sequence, request, timestamp and severity. Version one
   remains unchanged. Unsupported versions and malformed metadata refuse.
+
+The R010.7.2.2.1 launcher attachment accepts an explicit borrowed runtime bundle.
+It rejects conflicting legacy resource arguments and absent admission before
+owner calls. Actual create_agent_server revalidates the exact bundle through
+check_runtime. Changed owner bindings refuse. Successful admission still refuses
+client startup while interface authority and lifecycle composition are unavailable.
+These controlled tests establish no native or served-client qualification.
+
+## R010.7.2.2.2.1 ASGI readiness
+
+`tests/agent_host/test_runtime_lifespan.py` uses real ASGI lifespan handling with
+controlled existing owners. It tests expiry, revocation, changed revisions,
+resource replacement, cancellation and borrowed ownership. Missing runtime facts
+refuse before readiness. These fixtures grant no deployed access and do not
+qualify native session evidence, continuous request authorization or UI launch.

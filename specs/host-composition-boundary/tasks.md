@@ -139,6 +139,7 @@ Status vocabulary is defined in [spec.md](spec.md). Check a task only after its 
 - [ ] `ARBORA-HOST-R022.1`: Deliver every requirement in requirements.md.
 - [ ] `ARBORA-HOST-R010.8`: Deliver every requirement in requirements.md.
 - [ ] `ARBORA-HOST-R032`: Deliver every requirement in requirements.md.
+- [x] `ARBORA-HOST-R033`: Route every unique-id record write through `create_record` (EG `CreateNodeIfAbsent`).
 
 - [x] `ARBORA-HOST-R010.9`: Refuse unsupported explicit interfaces before workspace, graph or listener effects.
 

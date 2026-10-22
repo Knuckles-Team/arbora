@@ -30,7 +30,7 @@ docs = "MkDocs source for the public GitHub Pages documentation site"
 
 [files]
 "AGENTS.md" = "agent-facing repository architecture, commands, quality gates, and safe-development contract"
-"CHANGELOG.md" = "release changelog, updated by the bump2version release flow"
+"CHANGELOG.md" = "release changelog, updated by the bump-my-version release flow"
 "CONTRIBUTING.md" = "contributor setup (scripts/bootstrap.sh), gate behaviour, and the branch and pull-request flow"
 "CLAUDE.md" = "Claude Code project instructions (@AGENTS.md import)"
 "LICENSE" = "MIT license text included in source distributions and wheels"
@@ -43,6 +43,6 @@ docs = "MkDocs source for the public GitHub Pages documentation site"
 
 [dotfiles]
 ".python-version" = "the environment interpreter (3.14) that uv, bootstrap and CI use"
-".bumpversion.cfg" = "bump2version release configuration"
+".bumpversion.toml" = "bump-my-version release configuration"
 ".gitignore" = "git exclusion patterns (carries the fleet-shared REQUIRED set)"
 ".pre-commit-config.yaml" = "the combined pre-commit and pre-push suite, including the pinned shared hooks"

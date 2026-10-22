@@ -33,7 +33,7 @@ flowchart LR
 
 An operation request uses the hosted registry and `invoke` pipeline, not an A2A-specific authorization implementation. The verified A2A adapter supplies actor, tenant, effective scopes, auth mode, policy revision and session provenance. The response carries the hosted API envelope within JSON-RPC `result`; JSON-RPC transport errors remain protocol errors. This preserves the engine/fleet's source error code and a privacy-safe message.
 
-When the orchestrator pauses on a pending effect, Arbora issues a durable plan lease bound to `(task_id, parent_work_item_id, child_work_item_id, pending_call_id, op_id, params_digest, principal, tenant, policy_revision, registry_digest, expiry)`. It sends an `input-required` event with a safe preview. The client obtains a fresh authenticated human signature/grant through the public identity contract; the service never stores the bearer itself. On `arbora.plan/confirm`, Arbora verifies the original human and each bound identity, asks the engine to atomically consume the human grant and plan fence, then dispatches through the common invocation pipeline. If any authority changes, return a stable refusal and preserve zero effect. A console-only admin effect instead returns a URL and is confirmed only on the console surface.
+When the orchestrator pauses on a pending effect, Arbora issues a durable plan lease bound to `(task_id, parent_work_item_id, child_work_item_id, pending_call_id, op_id, params_digest, principal, tenant, policy_revision, registry_digest, expiry)`. It sends an `input-required` event with a safe preview. The client obtains a fresh authenticated human signature/grant through the public identity contract. The service never stores the bearer itself. On `arbora.plan/confirm`, Arbora verifies the original human and each bound identity, asks the engine to atomically consume the human grant and plan fence, then dispatches through the common invocation pipeline. If any authority changes, return a stable refusal and preserve zero effect. A console-only admin effect instead returns a URL and is confirmed only on the console surface.
 
 Pre-effect audit reservation and post-effect outcome linking use the shared hosted-operation service. A two-person approval must prove two distinct qualified humans using the same durable relation. No service or delegated agent can synthesize either participant. All claims are rechecked at resume time. A canceled task cannot be confirmed. A committed effect is not treated as reversible by task cancellation.
 
@@ -89,7 +89,7 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing [spe
 
 ### Existing system and reuse
 
-`arbora.a2a.models.A2AContextBudget` already carries the caller-declared `contextBudgetTokens` wire field, and `arbora.a2a.routing.OrchestratorA2ARouter` already fails closed (`A2AAssemblyUnavailable`) whenever a route request carries a non-null `context_budget_tokens`, with an explicit comment naming both upstream gaps: EG `AgentAssemble` is a refusal stub and the signed AU dispatch carrier cannot carry an allowed-tool subset. `arbora.a2a.authority.WorkItemA2AAuthority._enqueue`/`dispatch` likewise refuse whenever `decision.selected_tools` is non-empty, per `arbora/a2a/authority.py:242,274`. This spec does not replace that router or authority; it factors the admission decision they both need into one typed, independently testable door: `arbora.a2a.admission`.
+`arbora.a2a.models.A2AContextBudget` already carries the caller-declared `contextBudgetTokens` wire field, and `arbora.a2a.routing.OrchestratorA2ARouter` already fails closed (`A2AAssemblyUnavailable`) whenever a route request carries a non-null `context_budget_tokens`, with an explicit comment naming both upstream gaps: EG `AgentAssemble` is a refusal stub and the signed AU dispatch carrier cannot carry an allowed-tool subset. `arbora.a2a.authority.WorkItemA2AAuthority._enqueue`/`dispatch` likewise refuse whenever `decision.selected_tools` is non-empty, per `arbora/a2a/authority.py:242,274`. This spec does not replace that router or authority. It factors their admission decision into one typed, independently testable module: `arbora.a2a.admission`.
 
 ### Architecture
 
@@ -103,7 +103,7 @@ flowchart LR
   A --> X[OrchestratorA2ARouter / WorkItemA2AAuthority dispatch]
 ```
 
-`ToolSubsetAdmissionRequest` and `ToolSubsetAdmissionDecision` (`arbora/a2a/admission.py`) are typed `pydantic` models reusing the existing `_WireModel` base and `A2AContextBudget` type from `arbora.a2a.models`, so the wire shape stays consistent with the rest of the A2A facade. `admit_tool_subset` is a pure function: given a request, it returns a decision. Today it always refuses with `EG_ASSEMBLE_UNAVAILABLE`, matching the existing router/authority behavior exactly, because that is the first upstream gap reached. Once EG `AgentAssemble` is callable, the function gains a dependency-injected EG assembly client and a second refusal path, `ENVELOPE_LACKS_ALLOWED_TOOL_SUBSET`, for the remaining AU gap; once both upstreams land, it returns an admitted decision whose `admitted_tools` and `provenance` trace to one committed EG decision record and one signed AU envelope field.
+`ToolSubsetAdmissionRequest` and `ToolSubsetAdmissionDecision` (`arbora/a2a/admission.py`) are typed `pydantic` models. They reuse the existing `_WireModel` base and `A2AContextBudget` type from `arbora.a2a.models`. This keeps the wire shape consistent with the A2A facade. `admit_tool_subset` is a pure function: given a request, it returns a decision. Today it always refuses with `EG_ASSEMBLE_UNAVAILABLE`, matching the existing router/authority behavior exactly, because that is the first upstream gap reached. Once EG `AgentAssemble` is callable, the function gains a dependency-injected EG assembly client and a second refusal path, `ENVELOPE_LACKS_ALLOWED_TOOL_SUBSET`, for the remaining AU gap; once both upstreams land, it returns an admitted decision whose `admitted_tools` and `provenance` trace to one committed EG decision record and one signed AU envelope field.
 
 `OrchestratorA2ARouter.route` and `WorkItemA2AAuthority._enqueue`/`dispatch` are updated, in a later increment under this spec, to call `admit_tool_subset` instead of inlining their own `A2AAssemblyUnavailable` raises, so there is exactly one admission authority instead of two duplicated fail-closed checks. That wiring is out of scope for the `ARBORA-A2A-R016.1` slice delivered now; it is the open remainder under `ARBORA-A2A-R017`/`R003`.
 
@@ -143,7 +143,7 @@ The admission call attaches in `A2AService.send_message` between `router.route` 
 
 ### One engine round trip
 
-The `HarnessConfigAnswer` already carries the tool subset, because the engine decision reuses its tool-subset selection (the EG-DECISION-ENGINE row for the `HarnessConfig` question). Admission therefore makes one call and takes the subset from `action_space`. It makes no separate `AgentAssemble` call (`ARBORA-A2A-R017.2`). If the engine instead returns the two answers separately, `ARBORA-A2A-R017` still governs the subset source and the decider port gains one more call.
+The `HarnessConfigAnswer` already carries the tool subset, because the engine decision reuses its tool-subset selection (the EG-DECISION-ENGINE row for the `HarnessConfig` question). Admission therefore makes one call and takes the subset from `action_space`. It makes no separate `AgentAssemble` call (`ARBORA-A2A-R017.2`). The engine may instead return the two answers separately. Then `ARBORA-A2A-R017` still governs the subset source, and the decider port gains one more call.
 
 ### Failure and refusal behaviour
 
@@ -220,11 +220,6 @@ Cross-repository: `EG-` rows for the held proposal, the verification record, the
 - Keep the output-release gate at `arbora/a2a/application.py:_send_message` separate from recipient selection in `arbora/a2a/routing.py:OrchestratorA2ARouter.route`.
 - Require the typed AU checklist/questions and an EG verdict bound to the same output. Use the held-item contract in `ARBORA-A2A-R006.3` through `.8`, with verified-caller and signed-authority prerequisites in `ARBORA-A2A-R006.2.1` and `.5`.
 - Routing success cannot satisfy critique acceptance. Keep release unavailable until AU and EG producer contracts are published. Do not add another approval authority.
-### References
-
-- arXiv:2606.17929 — Li, "PreAct: Computer-Using Agents that Get Faster on Repeated Tasks" (2026)
-
-Research citations above describe inspiration only. The engine and transport contracts, verified authority boundaries and served acceptance requirements define the architecture.
 
 ## Additional owner requirements
 
@@ -417,3 +412,102 @@ unavailable result in the existing admission module. It has no authority port
 implementation, no registered model operation, no selected-profile success and
 no change to existing default execution. Foreign caller, revocation and atomic
 admission acceptance remain producer work, not satisfied by syntax validation.
+
+### Amendment 2026-10-20: bounded inline text attachments
+
+ARBORA-A2A-R001.5 first serves inline base64 `text/plain` files through the
+existing message parser and task-text model input. Require strict UTF-8, at most
+eight files and 65,536 aggregate decoded bytes, further limited by the existing
+MAX_UPLOAD_SIZE setting before routing or task creation. Reject URI parts and
+unsupported media before admission. Filenames are labels, never filesystem paths.
+The existing caller/tenant authorization, redaction and idempotency paths remain
+authoritative. Served transport tests observe decoded content in model input and
+zero tasks for refusals. This bounded text slice does not close R001.5. PNG input and revision-bound selected-model media capabilities still require the AU and model-authority prerequisites.
+Live acceptance remains separately required.
+
+The flattened model task, including text, decoded file content and newline
+separators, must fit the execution contract's 100,000-character bound. Reject
+combined inputs above that bound during message validation, before routing or
+task admission; exact-bound inputs remain accepted.
+
+### Native tool-task lease binding (ARBORA-A2A-R002.2.2)
+
+Bind `WorkItemFence` to the existing `arbora.work_items` methods. The adapter
+projects the native `input_ref`, retains the verified tenant and carries the
+native lease fence through renew and commit. A denied renewal or commit stops
+the worker without acknowledgment. No local WorkItem store is introduced.
+Background dispatch still requires an immutable request resolver and a durable
+original-caller authority reference resolver. A retained HTTP caller alone does
+not satisfy restart admission. Adapter tests are contract evidence, not served
+background-task acceptance.
+
+The native adapter claims only a visible `ready` item and admits only the
+engine's first attempt, with an exact item and payload binding. It never
+reclaims a visible `leased` or `running` item. Native `dead_letter` and
+`cancelled` states do not prove a prior effect outcome. The adapter raises
+`WorkItemLeaseLost` on those reads, including a read after a refused claim.
+The delivery owner must leave such exceptions unacknowledged. The generic
+worker and restart recovery still need durable owner reconciliation; a
+pre-execution refusal on a later attempt cannot settle an earlier effect.
+
+### Tool-task evidence decomposition
+
+Keep `ARBORA-A2A-R002.2.2` unchanged as the complete worker requirement.
+Child `.1` covers a single invocation with controlled ports. Child `.2` covers
+the native fence adapter. Child `.3` retains served delivery, durable caller
+and request resolution, and reconciliation across uncertain deliveries.
+The pending third child keeps the parent incomplete. Existing unit markers
+and native adapter tests do not establish served recovery.
+
+### Immutable tool-task request transport (ARBORA-A2A-R002.2.2.3)
+
+Persist canonical request bytes in EG's existing content-addressed blob owner.
+The native WorkItem carries only the blob locator and exact request binding;
+it does not carry parameters or credentials. Resolve by exact job id.
+Verify the request digest, current tenant/principal and expected carrier session reference.
+Refuse missing or changed bytes. Pin the native blob holder before publishing its WorkItem.
+No local mapping or process-identity substitution is permitted. This storage
+slice does not establish original-caller credential recovery, queue dispatch, or
+uncertain-effect reconciliation; the parent remains specified.
+
+## Model preference entry boundary — 2026-10-20
+
+R016.6 requires explicit preferences to fail before routing or task creation when
+profile-use authority is absent. Apply the existing typed preference validator
+and unavailable result at A2AService.send_message, the common application entry.
+An explicit null preference still requests this authority; omitted metadata keeps
+the existing default path. Tests require zero router and dispatch calls for all
+explicit preferences and preserve normal dispatch when the field is absent.
+This closes silent preference loss, not atomic profile admission or models.list.
+The EG owner-participant implementation remains necessary for successful choice.
+
+## Amendment 2026-10-20: immediate turn usage prerequisite
+
+Under ARBORA-A2A-R001, preserve the AU run result's measured usage in
+the authenticated `message/send` response as `metadata.arbora.usage` with
+`runId`, `taskId`, `contextId`, `scope: "turn"` and unchanged `counts`. Bind the result
+run id to the admitted task before projection. Missing producer usage is absent,
+not zero. This projection is limited to the active response: task reads and
+idempotent completed replays cannot reconstruct counts. Do not add an Arbora
+counter or cache. Durable session totals and restart-safe usage remain dependent
+on the authorized durable event reader; this prerequisite does not close
+TUI-RUNTIME-R012.6. The owning `usage.read` per-turn/session operation
+acceptance is still open; this transient metadata is only a prerequisite. Costs are not supplied by the run result and stay absent.
+
+ARBORA-A2A-R001.5 remains open: the published AU run request currently carries
+text only. File-part parsing alone cannot deliver PNG bytes to model input.
+
+## Amendment 2026-10-20: durable context identity continuation
+
+R001.3 first preserves a returned canonical context identifier at admission.
+Resolve it through EG's existing tenant-scoped ListWorkItems metadata filter
+for the A2A schema, caller owner reference and context. Validate the returned
+record and recheck the caller before admission. Tenant binding comes from the
+verified native reader request; its caller-view record intentionally omits tenant
+and worker authority fields. Follow empty pages with cursors,
+bounded to 32 pages; exhausted bounds fail explicitly. Unknown or foreign
+canonical contexts admit no work. Reader failures and page-bound exhaustion
+return JSON-RPC -32014 with HTTP 503 and no producer error details. This fixes
+identity continuity only: historical
+messages, model memory and streaming remain subject to the parent acceptance.
+No additional context store, cache or event log is introduced.

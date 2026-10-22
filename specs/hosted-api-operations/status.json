@@ -60,6 +60,7 @@
     "ARBORA-OPS-R021.4.4",
     "ARBORA-OPS-R021.4.5",
     "ARBORA-OPS-R021.4.5.1",
+    "ARBORA-OPS-R021.4.5.1.1",
     "ARBORA-OPS-R021.4.6",
     "ARBORA-OPS-R022",
     "ARBORA-OPS-R022.1",
@@ -207,10 +208,22 @@
     "ARBORA-OPS-R067.5",
     "ARBORA-OPS-R067.6",
     "ARBORA-OPS-R067.7",
+    "ARBORA-OPS-R068",
+    "ARBORA-OPS-R068.1",
+    "ARBORA-OPS-R068.2",
+    "ARBORA-OPS-R068.3",
+    "ARBORA-OPS-R068.4",
     "ARBORA-OPS-R700",
     "ARBORA-OPS-R843",
     "ARBORA-OPS-R843.1",
-    "ARBORA-OPS-R843.2"
+    "ARBORA-OPS-R843.2",
+    "ARBORA-OPS-R848",
+    "ARBORA-OPS-R848.1",
+    "ARBORA-OPS-R848.2",
+    "ARBORA-OPS-R848.3",
+    "ARBORA-OPS-R849",
+    "ARBORA-OPS-R850",
+    "ARBORA-OPS-R851"
   ],
   "requirements": [
     {
@@ -223,10 +236,11 @@
         "deb2b45bf83d"
       ],
       "verified_by": [
-        "tests/test_real_boot.py:853",
-        "tests/test_real_boot.py:874",
-        "tests/test_real_boot.py:883",
-        "tests/test_real_boot.py:902"
+        "tests/deployment/test_real_boot_fixture.py:19",
+        "tests/test_real_boot.py:899",
+        "tests/test_real_boot.py:920",
+        "tests/test_real_boot.py:929",
+        "tests/test_real_boot.py:948"
       ]
     },
     {
@@ -728,7 +742,7 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [
-        "tests/test_real_boot.py:797"
+        "tests/test_real_boot.py:843"
       ]
     },
     {
@@ -848,7 +862,7 @@
     {
       "id": "ARBORA-OPS-R021.4.5",
       "title": "Per-run operation",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
@@ -858,13 +872,25 @@
     {
       "id": "ARBORA-OPS-R021.4.5.1",
       "title": "Current-plan read boundary",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "2e9f4b8bc465",
         "663cc8cad940"
       ],
       "verified_by": [
         "tests/api/test_runs_ops.py:23"
+      ],
+      "rollup_of": [
+        "ARBORA-OPS-R021.4.5.1.1"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R021.4.5.1.1",
+      "title": "Native contextual reader composition",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/mcp_server/test_current_plan_reader.py:22"
       ]
     },
     {
@@ -1010,7 +1036,7 @@
         "94724be32c28"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:334"
+        "tests/api/test_registry_factory.py:345"
       ],
       "rollup_of": [
         "ARBORA-OPS-R024.4.1",
@@ -1105,7 +1131,7 @@
         "5f79be652726"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:334"
+        "tests/api/test_registry_factory.py:345"
       ]
     },
     {
@@ -1495,7 +1521,9 @@
       "title": "Add one test in tests/gateway/test_dashboard_api.py asserting GET /health returns 200 without a capability and sets Cache-Control no-store",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/gateway/test_dashboard_api.py:99"
+      ]
     },
     {
       "id": "ARBORA-OPS-R039.4",
@@ -1530,7 +1558,9 @@
       "title": "Add one test in tests/gateway/test_registry.py asserting GET /widgets returns every widget type of the deleted registry module map except `genius_agent`, with the same field set",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/gateway/test_registry.py:40"
+      ]
     },
     {
       "id": "ARBORA-OPS-R039.9",
@@ -1643,7 +1673,9 @@
       "title": "Add one test in tests/gateway/test_registry.py asserting genius_agent is absent from the widget registry and no fixed-value widget is registered",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/gateway/test_registry.py:31"
+      ]
     },
     {
       "id": "ARBORA-OPS-R042",
@@ -2194,6 +2226,47 @@
       "verified_by": []
     },
     {
+      "id": "ARBORA-OPS-R068",
+      "title": "Served harness component and improvement library operations (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R068.1",
+        "ARBORA-OPS-R068.2",
+        "ARBORA-OPS-R068.3",
+        "ARBORA-OPS-R068.4"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R068.1",
+      "title": "Component reads",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R068.2",
+      "title": "Lesson query",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R068.3",
+      "title": "Evolution report",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R068.4",
+      "title": "Adoption (service-only)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
       "id": "ARBORA-OPS-R700",
       "title": "Readiness snapshot joins independent probes",
       "delivery_state": "VERIFIED",
@@ -2233,6 +2306,66 @@
     {
       "id": "ARBORA-OPS-R843.2",
       "title": "Modules that are not engine wrappers",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R848",
+      "title": "`source.*` served operations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R848.1",
+        "ARBORA-OPS-R848.2",
+        "ARBORA-OPS-R848.3"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R848.1",
+      "title": "Source reads",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/api/test_source_ops.py:32",
+        "tests/mcp_server/test_source_reader.py:32"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R848.2",
+      "title": "Source writes",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R848.3",
+      "title": "Source diff reads",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R849",
+      "title": "Server-side landing policy",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R850",
+      "title": "Virtual checkout endpoint",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/api/test_source_checkout.py:156",
+        "tests/api/test_source_checkout.py:26"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R851",
+      "title": "Git bridge",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

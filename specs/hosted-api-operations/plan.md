@@ -223,9 +223,6 @@ Decision: one screen inside the single pipeline boundary. Rejected alternative: 
 
 Cross-repository: engine memory-write refusal, owner prefix `EG`, contract name memory write origin.
 
-### References
-
-- no-arXiv: AI Agent Traps (Franklin et al., SSRN 6372438, 2026).
 ## Policy lifecycle operations that guard plans (ARBORA-OPS-R050)
 
 Data flow: `policy.create` over POST /api/v1/ops/{op_id} -> `_base_authority` (arbora/api/invoke/pipeline.py:208) -> `_policy` (:198) -> `PolicyAuthority.authorize` (arbora/control_plane/policy/repository.py:179) -> audit record.
@@ -245,9 +242,6 @@ Types: `EvaluationGoal`, `EvaluationCatalog`, `EvaluationScope`, `Finding`. Fail
 Existing code: arbora/security/security_policy_middleware.py:52; arbora/api/ops/registry_factory.py. Reachable today: no. Search terms used: red team, attack, scorer, jailbreak, target scope.
 
 Decision: EG owns catalog facts, selection and probe verdicts (EG-DECISION-ENGINE-R001/R138); AU executes the selected probes; Arbora admits by scope and serves the result. Reuse this R051 consumer instead of adding another security-evaluation rollup. Missing engine ports remain unavailable.
-
-References:
-- arXiv:2605.04019 — Dheekonda et al., "Redefining AI Red Teaming in the Agentic Era: From Weeks to Hours" (2026)
 
 ## Authorization-segmented virtual schema projections (ARBORA-OPS-R052)
 
@@ -270,11 +264,6 @@ Types: `InteractionSpace`, `CorpusBoundary`, `QueryDirectory`. Failure: `LOAD_CA
 Existing code: arbora/api/ops/retrieval.py:60, :77; arbora/control_plane/retrieval/service.py:37, :61. Reachable today: no for the governed retriever; yes for `retrieval.search`. Search terms used: bm25, top_k, interaction space, working dir, corpus.
 
 Decision: the engine ranks and Arbora bounds the space. Rejected: returning ranked snippets only. Cross-repository: EG-FEDERATED-QUERY-R001 supplies query results, EG-DECISION-ENGINE-R029 chooses retrieval plans, EG-DECISION-ENGINE-R137 supplies context limits, and SDK-CONNECTOR-CONTROL-R005 supplies connector ingestion. AU executes engine-directed exploration.
-
-References:
-- arXiv:2606.06880 — Zhuang, Ni, Fun, Lin, Ma, "Towards Retrieving Interaction Spaces for Agentic Search" (2026)
-
-Research citations above describe inspiration only. The engine and transport contracts, verified authority boundaries and served acceptance requirements define the architecture.
 
 ## Versioned memory files (ARBORA-OPS-R024.4)
 
@@ -654,3 +643,128 @@ Call path for `ingest.sources.sync`: `invoke` → `sync_source` (`arbora/ingest/
 `ingest.sources.list` reads the configured fleet servers. For each server it calls the read-only `<prefix>_ingest_sources` tool. A server without the tool contributes no source. `ingest.sources.status` reads the shared KV checkpoint `ingest-source/<connector>/<source>`.
 
 A sync is resumable. The KV checkpoint keeps the cursor and the record digests after each accepted batch. A later sync with a new idempotency key resumes from that checkpoint.
+
+### 2026-10-18 installed-wheel model fixture correction (ARBORA-OPS-R001)
+
+The unary A2A boot check copies its local model server into the isolated test directory. It waits for that subprocess to listen before starting Arbora. A missing or exited fixture must report its startup log rather than surface as a later model connection error. Qualification covers actual loopback completions and the workflow fixture bundle. TUI qualification requires a published client with the current A2A contract. The published ACP client is not compatible evidence. This correction grants no host authority and makes no streaming or production-model claim.
+
+### 2026-10-18 published TUI qualification dependency (ARBORA-OPS-R001)
+
+The test extra must install the published A2A-capable TUI client. The wheel boot job exports this extra with hashes. It runs the existing headless prompt test against the authenticated local stack and model fixture. Passing requires the expected model reply and no skipped tests. Source checkouts do not replace this package qualification.
+
+The published client must include its Textual stylesheets. Mounted-terminal acceptance consumes the same locked wheel as headless acceptance; neither may rely on assets from a source checkout.
+
+
+The native reader is stateless and receives ExecutionContext for each call. It reuses caller-bound EG dispatch authority checks and binds exact caller claims. The serving root composes it without retaining request identity. Publication still needs real native run admission and a live lease from A2A; no producer or harness decision is invented. EG 2.27.5 installed acceptance remains pending.
+
+
+The remaining producer uses EG-DURABLE-KERNEL-R028.4 for native run-owner admission
+and R028.5 for the exact live fence and snapshot transaction. A2A currently
+passes the verified session to execution but does not carry its native claim.
+That is missing integration, not an unresolved authority policy.
+EG-DECISION-ENGINE-R128.3 and R128.6 define the harness answer and scaffold rule.
+Successful served evaluation remains an owner implementation prerequisite; a
+test-supplied decision cannot stand in for it. No additional user policy decision
+is identified for this reader slice.
+
+## Served harness component and improvement library operations (R068)
+
+arbora serves the reads and the adoption of the versioned harness
+substrate. The component reads bind to the engine query of
+EG-ORCH-VOCAB-R801 under `kg:read`. The lesson query binds to
+EG-ORCH-VOCAB-R802.3. The report reads the contrast and the decision
+record of EG-DECISION-ENGINE-R803. The adoption commits only a
+decision record that names the engine decision. It routes through the
+service executor only, per the ARBORA-OPS-R021.1 pattern. It writes
+the adopted harness of EG-ORCH-VOCAB-R802. arbora computes no
+ranking and stores no harness content. The engine is the sole
+authority for versions, contrasts and lessons. The in-run cycle that
+drives these operations belongs to agent-utilities (AU-HARNESS-CYCLE-R001).
+
+## Served source operations (R848)
+
+arbora serves the source operations over the engine source control.
+`source.tree`, `source.blob`, `source.diff`, `source.history` and
+`source.blame` are reads. `source.commit` submits a changeset.
+`source.land` applies the landing policy of R849. `source.revert`
+reverts a landed changeset. Each operation is one typed tool. The
+tools carry read-only and destructive hints. Admission is per
+principal and per path ACL.
+
+The development surface is served through the repository-manager
+connector's tools. repository-manager is the development surface used
+inside arbora MCP. arbora serves the underlying `source.*` operations.
+
+### 2026-10-20: R848 decomposition; read delivery on the pinned EG 2.27.3 substrate (R848.1, R850)
+
+R848 splits into `ARBORA-OPS-R848.1` (the source reads -- delivered),
+`ARBORA-OPS-R848.2` (the source writes -- pending the engine changeset
+substrate) and `ARBORA-OPS-R848.3` (the `source.diff` read --
+specified). `ARBORA-OPS-R849` and `ARBORA-OPS-R851` are unchanged.
+
+Op-to-tool mapping: arbora serves the `source.*` operations in its
+operation registry. The development surface inside arbora MCP exposes
+them through the **repository-manager connector's tools**. Those
+tools map onto the served operations. This lane does not build the
+connector. It delivers only the served operations and the typed port
+they bind.
+
+One typed read op per engine read. Each binds to the stateless
+`SourceReader` port. `NativeSourceReader` implements the port.
+Composition happens at the serving root. Each call runs under the
+admitted caller's own engine claims, on the verified session graph. An
+uncomposed reader fails closed with a typed `UNAVAILABLE`.
+
+| Served operation | Engine reads (pinned 2.27.3 contract) | Scopes |
+|---|---|---|
+| `source.tree` | `GetNodesByLabel` (Branch), `GetSuccessors`, `GetNodePropertiesBatch`, `GetEdgePropertiesBatch` | `node:read`, `edge:read` |
+| `source.blob` | the tree reads plus `BlobFetchBegin`/`BlobChunkGet`/`BlobFetchEnd` | `node:read`, `edge:read`, `blob:read` |
+| `source.history` | the tree reads over every live ref of the repository | `node:read`, `edge:read` |
+| `source.blame` | the tree reads (membership-edge last touch) | `node:read`, `edge:read` |
+
+Substrate honesty, reported in the outcomes, never hidden. The
+projection stores no directory nodes. Directories derive from the
+`FileVersion` path prefixes. `source.blame` serves the per-file
+last-touch revision. Its `line_level` is always `false`.
+`source.history` lists the per-ref last touch, without a commit DAG.
+`GetEdgePropertiesBatch` answers one property-blob list per
+`(source, target)` pair. The reader takes the stored `hasFileVersion`
+membership edge per pair. A branch label scan that never sees a short
+page (256 x 256) refuses `UNAVAILABLE`. The answer is unknown, not
+empty.
+
+R850 delivers `GET /api/v1/source/checkout` as an NDJSON stream.
+Directories resolve recursively, then files. Every directory listing
+admits through the single `invoke` chokepoint as the `source.tree`
+operation. The endpoint carries no authority logic of its own.
+Directories stream before files. Every entry frame carries its
+`dir:`/`file:` cursor. A resume continues from the last acknowledged
+cursor. A denied subtree root answers with the JSON error envelope
+before any content. A denied subpath ends the stream with a terminal
+error frame. Traversal and frame counts stay bounded: 4096 tree
+calls, 100000 entries.
+
+## Server-side landing policy (R849)
+
+`source.land` applies the landing policy on the server. Before
+landing, the fast gates of the pipelines gate standard run against the
+changeset's tree. They are format, hygiene, secrets, types and
+tests-fast. A failing fast gate refuses the landing with a typed
+reason. After landing, the full suite runs. On failure, the engine
+records the bisect and revert decision of EG-SCM-R009. No merge queue
+is kept.
+
+## Virtual checkout endpoint (R850)
+
+The endpoint serves a virtual checkout as a stream. It resolves
+directories, then blobs. Resolution is recursive and resumable. A
+resumed checkout continues from the last acknowledged entry. Clients
+obtain only what they need. The stream honors the caller's path ACL.
+
+## Git bridge (R851)
+
+The bridge serves a git smart-HTTP read endpoint. It accepts clone
+and sync requests over EG trees for legacy git tools. Mirror push
+goes to the public git hosting mirrors. The repository-manager
+connector owns mirror sync and the connector mapping. arbora serves
+the underlying `source.*` operations.

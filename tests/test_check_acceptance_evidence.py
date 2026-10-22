@@ -96,6 +96,46 @@ def test_landed_requirement_missing_test_and_operational_is_reported() -> None:
     assert gaps == [RequirementGap("FIX-R002", COMMIT_A, ("test", "operational"))]
 
 
+@pytest.mark.spec("ARBORA-ACCEPTANCE-R001.1")
+def test_landed_requirement_reports_exact_missing_test_kind_and_refusal_raises(
+    tmp_path: Path,
+) -> None:
+    """ARBORA-ACCEPTANCE-R001.1: exact gapped row plus refusal on bad input."""
+    data = _status(
+        [
+            {
+                "id": "FIX-R007",
+                "title": "Fully evidenced",
+                "delivery_state": "LANDED",
+                "evidence": [
+                    _evidence("merged_head", COMMIT_A),
+                    _evidence("test", COMMIT_A),
+                    _evidence("consumer", COMMIT_A),
+                ],
+            },
+            {
+                "id": "FIX-R008",
+                "title": "Merged with operational evidence only",
+                "delivery_state": "LANDED",
+                "evidence": [
+                    _evidence("merged_head", COMMIT_A),
+                    _evidence("consumer", COMMIT_A),
+                ],
+            },
+        ]
+    )
+    gaps = gaps_for_status(data)
+    assert gaps == [RequirementGap("FIX-R008", COMMIT_A, ("test",))]
+
+    malformed = tmp_path / "status.json"
+    malformed.write_text("{not valid json", encoding="utf-8")
+    with pytest.raises(AcceptanceEvidenceError):
+        load_status(malformed)
+    missing = tmp_path / "does-not-exist" / "status.json"
+    with pytest.raises(AcceptanceEvidenceError):
+        load_status(missing)
+
+
 @pytest.mark.spec("ARBORA-ACCEPTANCE-R004")
 def test_stale_operational_evidence_against_newer_merged_head_is_missing() -> None:
     data = _status(

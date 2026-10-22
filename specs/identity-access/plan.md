@@ -210,7 +210,7 @@ The protocol-grant binding requires a qualified EG contract; existing graph acce
 No second token store, local grant authority, OAuth manager or access-decision engine is introduced.
 SDK-CONNECTOR-CONTROL-R035/R046 must preserve challenge bindings, typed bounded errors and broker-owned persistence before these host flows become available.
 No runtime security or access configuration changes are authorized by this definition batch.
-No arXiv derivation is claimed; the inputs describe protocol and ownership requirements.
+No external derivation is claimed; the inputs describe protocol and ownership requirements.
 
 
 ## Connector-bound grants and provider token profiles
@@ -256,3 +256,31 @@ These shared typed refusals stop persistence readiness and operation continuatio
 ## Additional owner requirements
 
 - `ARBORA-IDENTITY-R026.8`: Plan the owner work and dependencies defined in requirements.md.
+
+### Atomic session record consumption
+
+ARBORA-IDENTITY-R005.1 consumes EG-TYPED-PACKS-R085.1 through the existing
+Session.Resolve operation. EG projects committed record identity, tenant and
+expiry facts under the same storage transaction. Arbora retains authentication
+and admission through its existing SessionAuthority and identity composition.
+The consumer adds no credential issuer, grant, record store or operation.
+Missing producer metadata stays unavailable. Controlled wire fixtures do not
+qualify persisted native authority or live admitted host startup.
+
+ARBORA-IDENTITY-R005.2 retains the full account lifecycle and served/native
+acceptance. It remains pending independently of the bounded consumer tests.
+
+### Amendment 2026-10-20: process lease renewal containment
+
+ARBORA-IDENTITY-R027 keeps the existing process identity producer and shared lease.
+MCP and gateway renewal check current authority before acquisition and before commit.
+The lease checks expiry and revocation under its update lock.
+Confirmed identity, group or role loss closes that lease permanently.
+Temporary provider failures retain the original expiry and may retry before it.
+A new process must authenticate again and receive a new lease.
+
+Focused tests cover expiry, acquisition races, concurrent refresh and revoked roles.
+They also cover the gateway producer and existing hosted caller refusals.
+These tests do not establish durable restart continuity or human session renewal.
+SessionAuthority currently resolves human sessions but has no qualified renewal producer.
+Human action approvals remain separate, single-use and nonrenewable.

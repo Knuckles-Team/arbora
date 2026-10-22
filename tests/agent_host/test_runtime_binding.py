@@ -237,3 +237,74 @@ def test_final_session_refresh_cannot_change_authority(
     owner = ChangingOwner(tmp_path)
     with pytest.raises(PermissionError):
         owner.context().check_runtime(owner.configuration, owner.resources)
+
+
+def launch_supplied(owner, **overrides):
+    import arbora.agent_host as host
+
+    arguments = {
+        "workspace": owner.configuration.workspace,
+        "tag_prompts": owner.configuration.tag_prompts,
+        "enable_terminal_ui": True,
+        "host_start": owner.context(),
+        "host_runtime": owner.resources,
+    }
+    arguments.update(overrides)
+    host.create_agent_server(**arguments)
+
+
+def test_public_launcher_revalidates_bundle_without_starting(tmp_path, monkeypatch):
+    from unittest.mock import Mock
+
+    import uvicorn
+
+    import arbora.agent_host as host
+
+    owner = ConstructionOwner(tmp_path)
+    forbidden = Mock(side_effect=AssertionError("must not construct or listen"))
+    monkeypatch.setattr(host, "build_agent_host_app", forbidden)
+    monkeypatch.setattr(uvicorn, "run", forbidden)
+    with pytest.raises(host.HostInterfaceUnavailable):
+        launch_supplied(owner, graph=owner.resources.graph)
+    assert owner.attestations == 3
+    assert owner.calls == 1
+    forbidden.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["graph", "graph_config", "executor", "host_logs", "host_log_runtime", "debug"],
+)
+def test_public_launcher_refuses_conflicting_alias_before_owner(tmp_path, field):
+    owner = ConstructionOwner(tmp_path)
+    with pytest.raises(PermissionError, match="configuration_unavailable"):
+        launch_supplied(owner, **{field: object()})
+    assert owner.attestations == owner.calls == 0
+
+
+@pytest.mark.parametrize(
+    ("change", "reason"),
+    [
+        ({"configuration_revision": "changed"}, "workspace_denied"),
+        ({"runtime": None}, "configuration_unavailable"),
+    ],
+)
+def test_public_launcher_refuses_changed_owner_binding(tmp_path, change, reason):
+    owner = ConstructionOwner(tmp_path)
+    owner.change = change
+    with pytest.raises(PermissionError, match=reason):
+        launch_supplied(owner)
+
+
+def test_public_launcher_never_treats_bundle_as_authority(tmp_path):
+    owner = ConstructionOwner(tmp_path)
+    with pytest.raises(PermissionError, match="configuration_unavailable"):
+        launch_supplied(owner, host_start=None)
+    assert owner.attestations == owner.calls == 0
+
+
+def test_public_launcher_rejects_bundle_on_legacy_path(tmp_path):
+    owner = ConstructionOwner(tmp_path)
+    with pytest.raises(ValueError, match="runtime_requires_selected_interface"):
+        launch_supplied(owner, enable_terminal_ui=False)
+    assert owner.attestations == owner.calls == 0

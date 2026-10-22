@@ -15,6 +15,8 @@ from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from typing import Any
 
+from arbora.unique_records import create_record, has_record_writer
+
 logger = logging.getLogger(__name__)
 
 MAX_ATTEMPTS = 4
@@ -49,15 +51,15 @@ def record_inbound(
     row never enters the live reply-retry reaper's ``pending`` scan (see
     :func:`pending_unanswered`) and preserves the fact it is historical, not a fresh turn.
     """
-    add_node = getattr(engine, "add_node", None) if engine is not None else None
-    if not callable(add_node):
+    if not has_record_writer(engine):
         return None
     iid = _inbox_id(platform, channel_id, message_id, text or "")
     try:
-        add_node(
-            node_id=iid,
-            node_type="InboundMessage",
-            properties={
+        create_record(
+            engine,
+            iid,
+            "InboundMessage",
+            {
                 "id": iid,
                 "platform": str(platform),
                 "channel_id": str(channel_id),
@@ -80,11 +82,7 @@ def _set(engine: Any, inbox_id: str, props: dict[str, Any]) -> None:
     if not callable(add_node) or not inbox_id:
         return
     try:
-        add_node(
-            node_id=inbox_id,
-            node_type="InboundMessage",
-            properties={"id": inbox_id, **props},
-        )
+        add_node(inbox_id, "InboundMessage", properties={"id": inbox_id, **props})
     except Exception as e:  # callers only invoke _set to record status AFTER the guarded action already succeeded/failed (mark_answered is called only when the reply actually sent, attempts/dead_letter only after a real retry outcome); a failed persist here just leaves the prior "pending" row in place, so the reaper retries — worst case a harmless duplicate resend, never a silently lost message
         logger.debug("[ECO-4.83] inbox update failed: %s", e)
 

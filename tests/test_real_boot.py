@@ -104,6 +104,7 @@ def _server_binary() -> str:
 
 def _listening(port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+        probe.settimeout(1)
         return probe.connect_ex(("127.0.0.1", port)) == 0
 
 
@@ -205,6 +206,23 @@ def _wait(predicate: Any, *, timeout: float, what: str, logs: Any = None) -> Non
         time.sleep(0.25)
     detail = logs() if callable(logs) else ""
     raise AssertionError(f"timed out waiting for {what}\n{detail}")
+
+
+def _wait_for_model(process: subprocess.Popen[Any], port: int, log_path: Path) -> None:
+    def ready() -> bool:
+        if process.poll() is not None:
+            raise AssertionError(
+                "model fixture exited during startup\n"
+                + log_path.read_text(errors="replace")[-4000:]
+            )
+        return _listening(port)
+
+    _wait(
+        ready,
+        timeout=10,
+        what="the model fixture",
+        logs=lambda: log_path.read_text(errors="replace")[-4000:],
+    )
 
 
 def _terminate(process: subprocess.Popen[Any]) -> None:
@@ -310,6 +328,7 @@ def _booted_stack(
                 stderr=subprocess.STDOUT,
             )
         )
+        _wait_for_model(processes[-1], model_port, root / "eg.log")
         config_dir = root / "config"
         config_dir.mkdir()
         (config_dir / "config.json").write_text(
@@ -514,7 +533,34 @@ def _booted_stack(
                 return False
 
         _wait(ready, timeout=BOOT_TIMEOUT_S, what="arbora readiness", logs=gos_logs)
+
+        def restart_engine() -> None:
+            """Reopen this fixture's same durable store, without re-enrollment."""
+            command = processes[0].args
+            _terminate(processes[0])
+            processes[0] = subprocess.Popen(
+                command, env=eg_env, stdout=eg_log, stderr=subprocess.STDOUT
+            )
+
+            def reopened() -> bool:
+                if not eg_up():
+                    return False
+                with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as probe:
+                    try:
+                        probe.connect(str(socket_path))
+                    except OSError:
+                        return False
+                    return True
+
+            _wait(
+                reopened,
+                timeout=60,
+                what="the restarted epistemic-graph socket",
+                logs=lambda: (root / "eg.log").read_text(errors="replace"),
+            )
+
         yield {
+            "restart_engine": restart_engine,
             "socket_path": str(socket_path),
             "secret": secret,
             "base_url": base_url,
@@ -901,11 +947,9 @@ def test_a2a_message_send_completes_through_the_model(stack: dict[str, Any]) -> 
 
 @pytest.mark.spec("ARBORA-OPS-R001")
 def test_the_tui_headless_prompt_completes(stack: dict[str, Any]) -> None:
-    """The TUI's own ``--headless --prompt`` path, end to end, when installed."""
+    """The installed test dependency completes its headless prompt end to end."""
     exe = shutil.which("agent-terminal-ui", path=str(Path(sys.executable).parent))
-    if exe is None:
-        pytest.skip("agent-terminal-ui is not installed in this environment")
-    assert exe is not None
+    assert exe is not None, "install the locked test extra for TUI acceptance"
     env = {
         **{k: v for k, v in os.environ.items() if k in _INHERITED_ENV},
         "AGENT_URL": stack["base_url"],

@@ -218,6 +218,7 @@ class AgentRunPort:
             run_id=result.run_id,
             output=result.output,
             execution_mode=result.execution_mode,
+            usage=getattr(result, "usage", None),
         )
 
 

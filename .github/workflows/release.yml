@@ -28,9 +28,8 @@ name: Release
 # published by this wheel workflow.
 # ─────────────────────────────────────────────────────────────────────────
 
-# Triggers (CI-STANDARD): a pull request runs `gates` only, diff-scoped; a push
-# to main runs the full suite and the builds, never a publish; a version tag or
-# a manual dispatch builds and publishes. Docs/spec-only changes start nothing
+# Triggers (CI-STANDARD): pull requests run diff-scoped gates and a real wheel build.
+# Main pushes run the full suite and builds. Only version tags publish. Docs/spec-only changes start nothing
 # here; .github/workflows/gates-skip.yml reports the `gates` check for them.
 on:
   push:
@@ -103,8 +102,12 @@ jobs:
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
 
   gates:
-    # PR gates are diff-scoped and install only published wheels.
-    timeout-minutes: ${{ github.event_name == 'pull_request' && 15 || 60 }}
+    # PR gates are diff-scoped and install only published wheels. The
+    # chain measures ~15-17 min (commit hooks, prose lint, locked
+    # environment type check, and the full pytest suite whenever the
+    # pr-test-scope resolves to FULL), so the old 15 min PR cap killed
+    # the job mid-suite on every pull request; PR gets 25.
+    timeout-minutes: ${{ github.event_name == 'pull_request' && 25 || 60 }}
     name: gates
     needs: [freeze-gate-source]
     # Homelab self-hosted runner for same-repo push/PR traffic (the org
@@ -426,8 +429,7 @@ jobs:
   build:
     timeout-minutes: ${{ github.event_name == 'pull_request' && 10 || 60 }}
     name: build
-    # Not part of PR CI: main push, tag and dispatch only.
-    if: github.event_name != 'pull_request'
+    # Validate the actual wheel on PRs; publication remains tag-only.
     needs: [gates]
     runs-on: ${{ (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && fromJSON('["self-hosted", "homelab"]') || 'ubuntu-latest' }}
     env:
@@ -557,7 +559,7 @@ jobs:
             --index-url https://pypi.org/simple -r "$RUNNER_TEMP/locked-test.txt"
           boot="$RUNNER_TEMP/real-boot"
           mkdir -p "$boot"
-          cp tests/test_real_boot.py tests/_boot_connector.py tests/conftest.py "$boot/"
+          cp tests/test_real_boot.py tests/_boot_connector.py tests/_boot_model.py tests/conftest.py "$boot/"
           printf '%s\n' '[pytest]' 'asyncio_mode = auto' 'markers =' \
             '    spec: binds a test to a spec requirement ID' \
             '    real_boot: boots a real arbora process against a real EG server' \

@@ -29,6 +29,7 @@ from typing import Any
 from fastmcp.server.extensions import ServerExtension
 
 from arbora.core.settings import setting
+from arbora.unique_records import create_record, has_record_writer
 
 __all__ = [
     "A2A_PATH",
@@ -116,8 +117,7 @@ def action_gate(request: Mapping[str, str], engine: Any) -> SendDecision:
 
 async def outbound_mirror(message: Any, engine: Any) -> None:
     """Record one sent message as an ``OutboundMessage`` node in the engine."""
-    add_node = getattr(engine, "add_node", None) if engine is not None else None
-    if not callable(add_node):
+    if not has_record_writer(engine):
         return
     platform = str(getattr(message, "platform", ""))
     channel = str(getattr(message, "channel_id", ""))
@@ -126,10 +126,11 @@ async def outbound_mirror(message: Any, engine: Any) -> None:
         f"{platform}\x00{channel}\x00{content}".encode()
     ).hexdigest()
     await asyncio.to_thread(
-        add_node,
+        create_record,
+        engine,
         f"outbound:{digest[:32]}",
         "OutboundMessage",
-        properties={
+        {
             "platform": platform,
             "channel_id": channel,
             "text": content,

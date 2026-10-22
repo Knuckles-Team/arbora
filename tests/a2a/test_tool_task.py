@@ -17,7 +17,10 @@ from arbora.a2a.tool_task import (
     tool_task_work_item_id,
 )
 
-pytestmark = pytest.mark.spec("ARBORA-A2A-R002.2.2")
+pytestmark = [
+    pytest.mark.spec("ARBORA-A2A-R002.2.2"),
+    pytest.mark.spec("ARBORA-A2A-R002.2.2.1"),
+]
 
 REQUEST = ToolTaskRequest(
     operation_id="graph.query",
@@ -93,7 +96,10 @@ class Dispatcher:
         self._execute = execute
         self.executed = 0
 
-    def resolve(self, request_ref: str, *, tenant: str, session_id: str) -> Any:
+    def resolve(
+        self, request_ref: str, *, job_id: str, tenant: str, session_id: str
+    ) -> Any:
+        assert job_id == CARRIER.job_id
         return self.request
 
     def execute(self, request: Any, *, job_id: str, require_current: Any) -> Any:

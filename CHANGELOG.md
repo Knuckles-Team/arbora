@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-10-18
+
+- Creates unique records through the atomic create operation and refuses bindings that only support upsert.
+- Preserves answered inbox state, retry attempts, and original timestamps when inbound messages are replayed.
+- Corrects the inbox node-label call shape. The older-store producer refusal remains under investigation; this release does not qualify fleet onboarding.
+
+## [0.1.6] - 2026-10-18
+
+- Corrects A2A bearer refusal and unsupported-stream responses, and preserves process authority across supported token renewal.
+- Updates served HTTP client operations, memory operations, channel adapters, and alert intake.
+- Bundles the local model fixture for wheel qualification and requires the published TUI client for headless acceptance.
+- Repairs the release version configuration and preserves package-index dependency installation.
+
 ## [0.1.5] - 2026-10-18
 - Fixed `fleet.call` from an MCP client sending a child no arguments, and a
   read-only child tool resolving as a write. The served catalog took a tool's

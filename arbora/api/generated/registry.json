@@ -23290,6 +23290,455 @@
     {
       "audit": "none",
       "binding": {
+        "handler": "arbora.api.ops.harness_components.handle_harness_components_get",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "read the current guardrails component version"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "harness.components.get",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.harness_components.ComponentVersionGetParams",
+        "schema": {
+          "additionalProperties": false,
+          "description": "``harness.components.get``: one component at an optional instant.",
+          "properties": {
+            "as_of": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "As Of"
+            },
+            "component_id": {
+              "maxLength": 512,
+              "minLength": 1,
+              "title": "Component Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "component_id"
+          ],
+          "title": "ComponentVersionGetParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.harness_components.ComponentVersionGetResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "ComponentVersionGetResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "kg:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Read one harness component version at an instant",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "find"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "handler": "arbora.api.ops.harness_components.handle_harness_components_list",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "what harness component versions can I read"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "harness.components.list",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.harness_components.ComponentVersionListParams",
+        "schema": {
+          "additionalProperties": false,
+          "description": "``harness.components.list``: cursor-paged, caller-readable only.",
+          "properties": {
+            "cursor": {
+              "anyOf": [
+                {
+                  "maxLength": 512,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Cursor"
+            },
+            "kind": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "system_prompt",
+                    "guardrails",
+                    "memory",
+                    "tool_guidance",
+                    "subagent",
+                    "skill",
+                    "script",
+                    "plugin"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Kind"
+            },
+            "limit": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          "title": "ComponentVersionListParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.harness_components.ComponentVersionListResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "ComponentVersionListResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "kg:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "List the caller's readable harness component versions",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "find"
+    },
+    {
+      "audit": "event",
+      "binding": {
+        "handler": "arbora.api.ops.harness_evolution.handle_harness_evolution_adopt",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "write",
+      "examples": [
+        "adopt this harness version for the task"
+      ],
+      "executor": "service",
+      "executor_scopes": [
+        "decide:commit"
+      ],
+      "http": null,
+      "id": "harness.evolution.adopt",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.harness_evolution.HarnessEvolutionAdoptParams",
+        "schema": {
+          "additionalProperties": false,
+          "description": "``harness.evolution.adopt``: one engine contrast-decision adoption.\n\n``decision_ref`` names the engine decision record; the adopted\nharness it composes (EG-ORCH-VOCAB-R802) carries the agent, task\nclass, component version references and contrast reference.",
+          "properties": {
+            "adopted_version_ref": {
+              "maxLength": 512,
+              "minLength": 1,
+              "title": "Adopted Version Ref",
+              "type": "string"
+            },
+            "agent_ref": {
+              "maxLength": 512,
+              "minLength": 1,
+              "title": "Agent Ref",
+              "type": "string"
+            },
+            "component_version_refs": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 64,
+              "minItems": 1,
+              "title": "Component Version Refs",
+              "type": "array"
+            },
+            "contrast_ref": {
+              "maxLength": 512,
+              "minLength": 1,
+              "title": "Contrast Ref",
+              "type": "string"
+            },
+            "decision_ref": {
+              "maxLength": 512,
+              "minLength": 1,
+              "title": "Decision Ref",
+              "type": "string"
+            },
+            "task_class": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Task Class",
+              "type": "string"
+            }
+          },
+          "required": [
+            "decision_ref",
+            "adopted_version_ref",
+            "agent_ref",
+            "task_class",
+            "component_version_refs",
+            "contrast_ref"
+          ],
+          "title": "HarnessEvolutionAdoptParams",
+          "type": "object"
+        }
+      },
+      "principals": "service_only",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.harness_evolution.HarnessEvolutionAdoptResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "HarnessEvolutionAdoptResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "decide:commit"
+      ],
+      "stability": "stable",
+      "subject": {
+        "path": null,
+        "source": "caller_tenant"
+      },
+      "summary": "Adopt a harness version from an engine contrast decision",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "act"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "handler": "arbora.api.ops.harness_evolution.handle_harness_evolution_report",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "what did the harness evolution decide for this task"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "harness.evolution.report",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.harness_evolution.HarnessEvolutionReportParams",
+        "schema": {
+          "additionalProperties": false,
+          "description": "``harness.evolution.report``: one task's evolution report.",
+          "properties": {
+            "task_ref": {
+              "maxLength": 512,
+              "minLength": 1,
+              "title": "Task Ref",
+              "type": "string"
+            }
+          },
+          "required": [
+            "task_ref"
+          ],
+          "title": "HarnessEvolutionReportParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.harness_evolution.EvolutionReportResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "EvolutionReportResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "kg:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Read one task's contrast and adoption decision record",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "ask"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "handler": "arbora.api.ops.harness_lessons.handle_harness_lessons_retrieve",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "what lessons improve this kind of task"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "harness.lessons.retrieve",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.harness_lessons.HarnessLessonsRetrieveParams",
+        "schema": {
+          "additionalProperties": false,
+          "description": "``harness.lessons.retrieve``: one improvement-library query.",
+          "properties": {
+            "deficiency": {
+              "maxLength": 512,
+              "minLength": 1,
+              "title": "Deficiency",
+              "type": "string"
+            },
+            "task_class": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Task Class",
+              "type": "string"
+            },
+            "trajectory_features": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "maxProperties": 64,
+              "title": "Trajectory Features",
+              "type": "object"
+            }
+          },
+          "required": [
+            "task_class",
+            "deficiency"
+          ],
+          "title": "HarnessLessonsRetrieveParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.harness_lessons.LessonRetrievalResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "LessonRetrievalResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "kg:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Retrieve ranked improvement lessons for one deficiency",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "ask"
+    },
+    {
+      "audit": "none",
+      "binding": {
         "handler": "arbora.api.ops.ingest.get_job_status",
         "kind": "composite"
       },
@@ -25382,6 +25831,335 @@
     {
       "audit": "none",
       "binding": {
+        "handler": "arbora.api.ops.source.handle_source_blame",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "what last touched src/app.py on main"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "source.blame",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.source.SourceBlameParams",
+        "schema": {
+          "additionalProperties": false,
+          "description": "Attribute one file to its last-touch revision on one ref.",
+          "properties": {
+            "path": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Path",
+              "type": "string"
+            },
+            "ref": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Ref",
+              "type": "string"
+            },
+            "repository": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Repository",
+              "type": "string"
+            }
+          },
+          "required": [
+            "repository",
+            "ref",
+            "path"
+          ],
+          "title": "SourceBlameParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.source.SourceBlameResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "SourceBlameResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "edge:read",
+        "node:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Attribute one file to its last-touch revision on one ref",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "find"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "handler": "arbora.api.ops.source.handle_source_blob",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "read the file at src/app.py on main"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "source.blob",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.source.SourceBlobParams",
+        "schema": {
+          "additionalProperties": false,
+          "description": "Read one file of one ref.",
+          "properties": {
+            "path": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Path",
+              "type": "string"
+            },
+            "ref": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Ref",
+              "type": "string"
+            },
+            "repository": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Repository",
+              "type": "string"
+            }
+          },
+          "required": [
+            "repository",
+            "ref",
+            "path"
+          ],
+          "title": "SourceBlobParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.source.SourceBlobResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "SourceBlobResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "blob:read",
+        "edge:read",
+        "node:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Read one file of one repository ref",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "find"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "handler": "arbora.api.ops.source.handle_source_history",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "which refs carry src/app.py"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "source.history",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.source.SourceHistoryParams",
+        "schema": {
+          "additionalProperties": false,
+          "description": "List the refs of one repository that carry one path.",
+          "properties": {
+            "path": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Path",
+              "type": "string"
+            },
+            "repository": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Repository",
+              "type": "string"
+            }
+          },
+          "required": [
+            "repository",
+            "path"
+          ],
+          "title": "SourceHistoryParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.source.SourceHistoryResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "SourceHistoryResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "edge:read",
+        "node:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "List the refs of one repository that carry one path",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "find"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "handler": "arbora.api.ops.source.handle_source_tree",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "list the files under src on main"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "source.tree",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.source.SourceTreeParams",
+        "schema": {
+          "additionalProperties": false,
+          "description": "List one directory of one ref; the empty path lists the repository root.",
+          "properties": {
+            "path": {
+              "default": "",
+              "maxLength": 1024,
+              "title": "Path",
+              "type": "string"
+            },
+            "ref": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Ref",
+              "type": "string"
+            },
+            "repository": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Repository",
+              "type": "string"
+            }
+          },
+          "required": [
+            "repository",
+            "ref"
+          ],
+          "title": "SourceTreeParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.source.SourceTreeResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "SourceTreeResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "edge:read",
+        "node:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "List one directory of one repository ref",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "find"
+    },
+    {
+      "audit": "none",
+      "binding": {
         "handler": "arbora.api.ops.swarm.handle_swarm_topology_read",
         "kind": "composite"
       },
@@ -25774,5 +26552,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "826d2c98ffda35a9443711f503790cad06533dd4a41f911c8b3c2f9b085b34b1"
+  "registry_digest": "7066358f44b795e9e216827a30bd809e76980a1db050326e89764614a4aa75af"
 }

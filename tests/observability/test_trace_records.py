@@ -21,8 +21,11 @@ class _Engine:
         self.rows = rows
         self.fail = fail
 
-    def add_node(self, node_id, label, properties):
+    def create_node(self, node_id, label, properties):
+        if node_id in self.nodes:
+            return False
         self.nodes[node_id] = (label, properties)
+        return True
 
     def link_nodes(self, *_args):
         return None

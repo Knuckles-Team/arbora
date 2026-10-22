@@ -185,6 +185,7 @@
     "ARBORA-HOST-R022.1",
     "ARBORA-HOST-R010.8",
     "ARBORA-HOST-R032",
+    "ARBORA-HOST-R033",
     "ARBORA-HOST-R010.9",
     "ARBORA-HOST-R009.7",
     "ARBORA-HOST-R009.8",
@@ -202,7 +203,9 @@
     "ARBORA-HOST-R008.1007",
     "ARBORA-HOST-R008.1008",
     "ARBORA-HOST-R010.7.2.2.1",
-    "ARBORA-HOST-R010.7.2.2.2"
+    "ARBORA-HOST-R010.7.2.2.2",
+    "ARBORA-HOST-R010.7.2.2.2.1",
+    "ARBORA-HOST-R010.7.2.2.2.2"
   ],
   "requirements": [
     {
@@ -265,8 +268,8 @@
       ],
       "verified_by": [
         "tests/test_agent_runs.py:42",
-        "tests/test_agent_runs.py:60",
-        "tests/test_agent_runs.py:77"
+        "tests/test_agent_runs.py:63",
+        "tests/test_agent_runs.py:80"
       ]
     },
     {
@@ -278,8 +281,8 @@
         "d3d50ac5d766"
       ],
       "verified_by": [
-        "tests/test_agents_run_end_to_end.py:117",
-        "tests/test_agents_run_end_to_end.py:164"
+        "tests/test_agents_run_end_to_end.py:118",
+        "tests/test_agents_run_end_to_end.py:165"
       ]
     },
     {
@@ -1462,8 +1465,8 @@
         "d5f69ae59c75"
       ],
       "verified_by": [
-        "tests/test_real_boot.py:587",
-        "tests/test_real_boot.py:617"
+        "tests/test_real_boot.py:633",
+        "tests/test_real_boot.py:663"
       ]
     },
     {
@@ -1865,6 +1868,19 @@
       "verified_by": []
     },
     {
+      "id": "ARBORA-HOST-R033",
+      "title": "Unique records are created, not upserted",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/messaging/test_inbox.py:129",
+        "tests/test_unique_records.py:114",
+        "tests/test_unique_records.py:133",
+        "tests/test_unique_records.py:37",
+        "tests/test_unique_records.py:67"
+      ]
+    },
+    {
       "id": "ARBORA-HOST-R010.9",
       "title": "Refuse unsupported client interfaces before host effects",
       "delivery_state": "VERIFIED",
@@ -2032,6 +2048,30 @@
     {
       "id": "ARBORA-HOST-R010.7.2.2.2",
       "title": "Serve admitted clients",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-HOST-R010.7.2.2.2.1",
+        "ARBORA-HOST-R010.7.2.2.2.2"
+      ]
+    },
+    {
+      "id": "ARBORA-HOST-R010.7.2.2.2.1",
+      "title": "Revalidate borrowed runtime at ASGI startup",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/agent_host/test_runtime_lifespan.py:111",
+        "tests/agent_host/test_runtime_lifespan.py:142",
+        "tests/agent_host/test_runtime_lifespan.py:27",
+        "tests/agent_host/test_runtime_lifespan.py:45",
+        "tests/agent_host/test_runtime_lifespan.py:73"
+      ]
+    },
+    {
+      "id": "ARBORA-HOST-R010.7.2.2.2.2",
+      "title": "Complete live client activation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

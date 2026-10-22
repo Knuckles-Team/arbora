@@ -96,6 +96,7 @@ def test_full_returns_layout_and_data(client: TestClient) -> None:
     assert set(body["data"]) == {"alpha", "beta"}
 
 
+@pytest.mark.spec("ARBORA-OPS-R039.3")
 def test_health_is_served_without_capabilities(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:

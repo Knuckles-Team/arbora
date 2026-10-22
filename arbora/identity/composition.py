@@ -56,3 +56,13 @@ def build_identity_ports(
         raise IdentityUnavailable("authoritative identity sources required")
     runtime = _CheckedRuntime(runtime_factory(credentials, sessions))
     return IdentityPorts(credentials=runtime, sessions=runtime)
+
+
+def build_engine_identity_ports(client: object, *, graph: str) -> IdentityPorts:
+    """Construct one session runtime over the composition-owned engine client."""
+    from .engine_ports import EngineSessionAuthority
+
+    owner = EngineSessionAuthority(client, graph=graph)
+    return build_identity_ports(
+        owner, owner, runtime_factory=lambda _credentials, sessions: sessions
+    )

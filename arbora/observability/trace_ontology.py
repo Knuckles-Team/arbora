@@ -24,6 +24,8 @@ from typing import Any
 from agent_connector_sdk.privacy import PersistencePrivacyGuard
 from agent_connector_sdk.privacy_reference import persistence_reference
 
+from arbora.unique_records import create_record
+
 TRACE_SCHEMA_VERSION = 1
 TRACE_NODE_LABEL = "RunTrace"
 TOOL_CALL_NODE_LABEL = "ToolCall"
@@ -147,13 +149,11 @@ def save_trace_cursor(
         try:
             # The checkpoint is immutable and sequence-addressed, so concurrent
             # writers cannot regress the greatest persisted sequence.
-            engine.add_node(
+            create_record(
+                engine,
                 _cursor_checkpoint_id(consumer, completed.event_sequence),
                 TRACE_CURSOR_NODE_LABEL,
-                properties={
-                    **properties,
-                    "cursor_kind": "checkpoint",
-                },
+                {**properties, "cursor_kind": "checkpoint"},
             )
         except Exception as exc:
             raise RuntimeError(

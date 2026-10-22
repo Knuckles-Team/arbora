@@ -135,3 +135,17 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
 - [ ] **ARBORA-A2A-R001.4:** Refuse `message/stream` by type on the served agent, then serve turn events. Consumer: `TUI-RUNTIME-R012.1`.
 - [ ] **ARBORA-A2A-R001.5:** Accept bounded file parts on the served agent. Consumer: `TUI-RUNTIME-R012.5`.
 - [ ] **ARBORA-A2A-R016.6:** Honour an allowed caller model preference and serve `models.list`. Consumer: `TUI-RUNTIME-R012.2`.
+
+- [ ] **ARBORA-A2A-R001.5.1:** Serve bounded inline UTF-8 text files.
+- [ ] **ARBORA-A2A-R001.5.2:** Bind binary input to selected-model capabilities and atomic admission.
+
+## Tool-task delivery remainder
+
+- `ARBORA-A2A-R002.2.2.1`: retain the single-invocation worker contract tests.
+- `ARBORA-A2A-R002.2.2.2`: exercise native fence transitions and refusal boundaries.
+- [ ] `ARBORA-A2A-R002.2.2.3`: wire the queue consumer and durable request and caller resolvers.
+- [ ] Prove restart and uncertain-effect reconciliation without repeated execution or premature acknowledgment.
+
+- [x] `ARBORA-A2A-R002.2.2.3.1`: bind canonical request bytes and native WorkItem locators; pass refusal tests and same-store native engine restart reads.
+
+- [ ] `ARBORA-A2A-R002.2.2.3.2`: compose and qualify the served queue, original-caller authority recovery and uncertain-effect reconciliation.

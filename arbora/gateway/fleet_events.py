@@ -42,6 +42,8 @@ from typing import Any
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from arbora.unique_records import create_record
+
 logger = logging.getLogger(__name__)
 
 # Canonical severity vocabulary (normalized from each sender's own wording).
@@ -305,7 +307,7 @@ def persist_event(engine: Any, event: FleetEvent) -> str:
         "triage_status": "pending",
     }
     properties.update(_correlation_stamp())
-    engine.add_node(event_id, "FleetEvent", properties=properties)
+    create_record(engine, event_id, "FleetEvent", properties)
     return event_id
 
 

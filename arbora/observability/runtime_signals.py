@@ -1,6 +1,8 @@
 #!/usr/bin/python
 from __future__ import annotations
 
+from arbora.unique_records import create_record
+
 """Runtime-reliability signal recording — the EMIT stage of the detect→gap→heal loop.
 
 CONCEPT:AU-OS.observability.runtime-reliability-signal — the missing intake for a class
@@ -325,10 +327,8 @@ def persist_runtime_signals(engine: Any, signals: list[dict[str, Any]]) -> int:
     written = 0
     for mutation in mutations:
         try:
-            engine.add_node(
-                mutation["id"],
-                RUNTIME_SIGNAL_LABEL,
-                properties=mutation["properties"],
+            create_record(
+                engine, mutation["id"], RUNTIME_SIGNAL_LABEL, mutation["properties"]
             )
             written += 1
         except Exception as e:  # noqa: BLE001 — fallback is best-effort, per-signal isolated
