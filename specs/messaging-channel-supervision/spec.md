@@ -39,7 +39,7 @@ Agent-utilities owns messaging adapters and inbound message models, including Me
 | ARBORA-MESSAGING-R007 | Served channel gateway: intake in the served host, fail-closed sender admission |
 | ARBORA-MESSAGING-R007.1 | Per-sender identity: inbound turns run under the sender's exchanged principal session |
 | ARBORA-MESSAGING-R008 | Alert intake operation over the served API, delivered through the adapter or the mattermost connector |
-| ARBORA-MESSAGING-R009, ARBORA-MESSAGING-R009.1–R009.21 | Channel platform parity: one adapter per platform the reference frameworks support and Arbora lacks |
+| ARBORA-MESSAGING-R009, ARBORA-MESSAGING-R009.1–R009.21 | Additional channel platforms: one adapter per named platform that Arbora lacks |
 
 ARBORA-HOST-R011 remains the broader host-ownership contract; this specification provides messaging-supervision details without replacing its other obligations.
 
