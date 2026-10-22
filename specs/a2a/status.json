@@ -99,15 +99,15 @@
         "23607181d4af",
         "262568133fad",
         "2763cd78b6bc",
-        "5c2eefda3a13",
-        "6d6902bdb3e7"
+        "53b5f0a217e1",
+        "5c2eefda3a13"
       ],
       "verified_by": [
+        "tests/a2a/test_dispatch_usage_projection.py:11",
         "tests/a2a/test_native_task_reads.py:14",
         "tests/a2a/test_run_usage.py:18",
         "tests/test_agent_runs.py:119",
-        "tests/test_agent_runs.py:99",
-        "tests/test_agents_run_end_to_end.py:329"
+        "tests/test_agent_runs.py:99"
       ],
       "rollup_of": [
         "ARBORA-A2A-R001.1",
