@@ -95,10 +95,7 @@ class _Binding:
         client = self.engine.graph_compute.for_graph(self.owner_graph).async_client
         await _admit(self, "eg.coordination.PublishCurrentPlan")
         self.require_active()
-        with (
-            use_session(self.session),
-            client_scope(client, session_context(self.session)),
-        ):
+        with _session_client_scope(client, self.session):
             response = await send_publish_current_plan(
                 client,
                 {"request": json.loads(json.dumps(self.payload))},
@@ -198,10 +195,7 @@ async def _initialize(binding: _Binding) -> None:
     client = binding.engine.graph_compute.for_graph(binding.owner_graph).async_client
     await _admit(binding, "eg.coordination.GetCurrentPlan")
     binding.require_active()
-    with (
-        use_session(binding.session),
-        client_scope(client, session_context(binding.session)),
-    ):
+    with _session_client_scope(client, binding.session):
         previous = decode_get_current_plan(
             await send_get_current_plan(
                 client,
@@ -233,3 +227,22 @@ async def _admit(binding: _Binding, operation: str) -> None:
     caller = caller_from_session(binding.session, credential_kind="session")
     await admit_operation(binding.hosted_invocation, caller, operation)
     binding.require_active()
+
+
+@contextlib.contextmanager
+def _session_client_scope(client: Any, session: Any) -> Iterator[None]:
+    """Bind routed views at dispatch; bind raw transports through their carrier.
+
+    SessionRoutedClient is not a transport: its _send resolves the exact ambient
+    session and applies client_scope to the real pooled client for each request.
+    Treating its deferred attributes as raw-client flags or context managers is
+    invalid. Other clients still require the explicit verified/anonymous carrier.
+    """
+    from arbora.mcp_server.served_engine import SessionRoutedClient
+
+    with use_session(session):
+        if isinstance(client, SessionRoutedClient):
+            yield
+        else:
+            with client_scope(client, session_context(session)):
+                yield

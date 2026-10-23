@@ -515,3 +515,86 @@ async def test_lease_expiry_during_policy_await_stops_dispatch(transport, monkey
             ):
                 pytest.fail("expired publication accepted")
     assert transport == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("anonymous_mode", [False, True])
+@pytest.mark.parametrize("wrong_transport", [False, True])
+async def test_served_client_view_binds_real_transport_not_view(
+    transport, monkeypatch, anonymous_mode, wrong_transport
+):
+    from contextlib import contextmanager
+
+    from epistemic_graph.generated import coordination
+
+    from arbora.api.contracts.session import current_session
+    from arbora.mcp_server.served_engine import SessionRoutedClient
+    from arbora.security import anonymous
+
+    monkeypatch.setattr(
+        anonymous, "_ACTIVE_MODE", "none" if anonymous_mode else "authenticated"
+    )
+    session = anonymous.session() if anonymous_mode else Session()
+    requests = []
+    contexts = []
+
+    class RawClient:
+        authenticated = anonymous_mode if wrong_transport else not anonymous_mode
+
+        @contextmanager
+        def use_verified_context(self, context):
+            assert not anonymous_mode
+            contexts.append(context)
+            yield
+
+        async def _send(self, method, params, graph, **kwargs):
+            assert current_session() is session
+            assert graph == CONTROL_GRAPH
+            requests.append(method)
+            return None if method == "GetCurrentPlan" else params
+
+    async def connect(context, graph):
+        assert context.tenant == session.tenant
+        assert context.principal == session.actor.actor_id
+        assert context.auth_mode == ("none" if anonymous_mode else "authenticated")
+        assert graph == CONTROL_GRAPH
+        return RawClient()
+
+    view = SessionRoutedClient(SimpleNamespace(connected_client=connect), CONTROL_GRAPH)
+    served = SimpleNamespace(
+        graph_compute=SimpleNamespace(
+            for_graph=lambda graph: SimpleNamespace(async_client=view)
+        )
+    )
+
+    async def read(client, params, graph):
+        return await client._send("GetCurrentPlan", params, graph)
+
+    async def publish(client, params, graph, **kwargs):
+        return await client._send("PublishCurrentPlan", params, graph, **kwargs)
+
+    monkeypatch.setattr(coordination, "send_get_current_plan", read)
+    monkeypatch.setattr(coordination, "send_publish_current_plan", publish)
+    with publication.bind_admitted_claim(
+        served,
+        hosted_invocation=object(),
+        session=session,
+        run_id="run",
+        work_item_id="work-item:one",
+        claim={**claim(), "tenant": session.tenant},
+    ):
+        expected = (
+            pytest.raises(RuntimeError, match="scaffold publication binding failed")
+            if wrong_transport
+            else nullcontext()
+        )
+        with expected:
+            async with host_ports.scaffold_publication_scope(
+                SimpleNamespace(run_id="run", metadata={"session": session}),
+                PlanState(),
+            ):
+                pass
+    assert requests == (
+        [] if wrong_transport else ["GetCurrentPlan", "PublishCurrentPlan"]
+    )
+    assert len(contexts) == (0 if anonymous_mode or wrong_transport else 2)
