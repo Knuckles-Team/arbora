@@ -631,7 +631,6 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "68e31b75248a",
-        "a2d20bed16b5",
         "e1d37ca10ef7",
         "fdd59af317ce"
       ],
@@ -648,7 +647,6 @@
       "title": "Arbora classifies a failed `fleet.call` by its real cause",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "a2d20bed16b5",
         "fdd59af317ce"
       ],
       "verified_by": [
