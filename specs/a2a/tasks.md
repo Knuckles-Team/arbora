@@ -154,3 +154,5 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
 - `ARBORA-A2A-R005.2.3`: define and test the supplied-owner snapshot evaluator. Keep real key/reference producers and full signed confirmation pending.
 
 - R005.2.4: implement generated native facts adapters and explicit registration proof verification. Qualify native producer compatibility separately before claiming served acceptance.
+
+- [ ] **ARBORA-A2A-R005.2.5:** Qualify the installed native producers and full served signed-approval effect chain. Preserve atomic grant and plan consumption, restart, concurrency and the parent refusal matrix. Keep confirmation unavailable until complete.

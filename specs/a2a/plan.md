@@ -523,3 +523,5 @@ For R005.2.4, use generated identity validation for session-reference and key re
 ## 2026-10-20 unpublished native approval naming
 
 Align the draft adapter with the unpublished native key contract. Use purpose `signed_approval` and attestation `broker_verified_ed25519`. Keep the signature domain, length encoding, field order and verification unchanged. No deployed key format or credential is migrated. Native durable and served qualification remain pending.
+
+R005.2.5 retains the full native and served effect-chain obligation after the snapshot and registration source slices land. It requires atomic grant and plan consumption with actual installed producers. Keep it open until the complete request-to-effect and refusal matrix passes; do not infer it from a passing source fixture.

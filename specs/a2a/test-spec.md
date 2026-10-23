@@ -163,3 +163,5 @@ methods may refuse these new operations; that refusal is not integration
 success. Local unit fixtures qualify only their injected snapshot and proof
 fixtures. Native producer, durable CAS, installed consumer and served signed
 approval acceptance remain open until exact-source evidence is available.
+
+`ARBORA-A2A-R005.2.5` owns the remaining full-chain acceptance, not the snapshot or registration fixtures. Run the actual installed native and served path from pending call through signed approval to one effect. Include restart and concurrent replay, changed parameters, foreign human or tenant, expiry, revocation and intervening authority changes. No test in this increment supplies that proof. The row remains open and confirmation stays refused.
