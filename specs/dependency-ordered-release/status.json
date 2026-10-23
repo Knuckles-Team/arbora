@@ -191,8 +191,10 @@
     {
       "id": "ARBORA-RELEASE-R003.4.5",
       "title": "Governed fleet tools in plan steps",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "8fbcc8d9caf0"
+      ],
       "verified_by": [
         "tests/api/test_plan_run_ops.py:432",
         "tests/api/test_plan_run_ops.py:450",
