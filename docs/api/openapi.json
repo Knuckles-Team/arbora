@@ -129,6 +129,9 @@
       "Definition1ea37e3ece08b56882001f829f80d0f37387ba4d5ca6e012461aca7d1ab9fa08": {
         "$ref": "#/components/schemas/Schema9db2a7e151e69a0e0ae9739c5a0847202964c9b69c94c9344245fd7c77e9cbf8"
       },
+      "Definition2410bb35a5212044a26a7f1b62271a9b079d5b33e442b127dab54e178bedaa6e": {
+        "$ref": "#/components/schemas/Schemab65f8cf83520abcc81339392269e3bb61520bd1bf0b290070d109a32ac0f9159"
+      },
       "Definition3095487226d7f5a7824a8e27bc0adbbc1a3495fb74611bd5ac71a10af1bd2a1e": {
         "$ref": "#/components/schemas/Schema920ab8a90fbf04dba04c9a05b8edc0cb0df7b76c972aa26afdcbd5adb6758dc1"
       },
@@ -419,6 +422,12 @@
         "title": "Scopes",
         "type": "array"
       },
+      "Schema1f41649ce50447ba6cf1b97df439bd4311184b4929657b6c60f16bf1c551f5d9": {
+        "maxLength": 512,
+        "minLength": 1,
+        "title": "Worker Id",
+        "type": "string"
+      },
       "Schema2035a3bece3f75f1a84b2ec1aa9401dab8f9b633c8f2e2d62c4d70344f6fdc60": {
         "anyOf": [
           {
@@ -490,6 +499,19 @@
         "minItems": 1,
         "title": "Plan",
         "type": "array"
+      },
+      "Schema2a68eb6b5bff781e0956eeb20d502c69a5c361607b67656ebfd5ee6a2abc9b3d": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "PlanRunResult",
+        "type": "object"
       },
       "Schema2a9b6e96a0ade414d0e89ee3647b6b5313127a252e46b4d76d4d20e6d8187818": {
         "additionalProperties": false,
@@ -1376,6 +1398,23 @@
         "title": "Max Pages",
         "type": "integer"
       },
+      "Schema8a6d4aea8e97f36d37471c5cedd1bdb78c7669c9d03dc3f94cef567cbc23a5eb": {
+        "additionalProperties": false,
+        "description": "Explicit caller claims. The engine owns graph validity and bounds.",
+        "properties": {
+          "plan": {
+            "$ref": "#/components/schemas/Schemac3b5d7513505aea2230123e535ee3971582b40f12e7e7192cfda51ae26378841"
+          },
+          "work_item": {
+            "$ref": "#/components/schemas/Schemadcf5732766a1fdca89e43c8191813be229f10d4d1f838c5e0fc47562e727ca67"
+          }
+        },
+        "required": [
+          "plan"
+        ],
+        "title": "PlanRunParams",
+        "type": "object"
+      },
       "Schema8c6ee092ab6888335b7e1a23a6d71ebc4af1cde19fbf832d4d6e749fb6f3e2b9": {
         "additionalProperties": true,
         "title": "JsonResult",
@@ -1505,6 +1544,11 @@
         },
         "title": "TaskListParams",
         "type": "object"
+      },
+      "Schema98a62f6658e6760e881bddfa844d14f439b0a93966c3456b3f14419df8eb575c": {
+        "minimum": 0,
+        "title": "Lease Epoch",
+        "type": "integer"
       },
       "Schema98dc3299c790a50960c20713290429c4de3145295b6a16deda970a22fe9c49bc": {
         "additionalProperties": false,
@@ -1737,6 +1781,12 @@
         "title": "Scope",
         "type": "string"
       },
+      "Schemaa83a3f564a1a1974290872fa10944b4530eecaf8212c39a32969ae5589f694bd": {
+        "default": 0,
+        "minimum": 0,
+        "title": "Revision",
+        "type": "integer"
+      },
       "Schemaab9c6f751289751cd467757ba716178f3bdac6ac4ea4f500fb3e7060bd045639": {
         "default": [],
         "items": {
@@ -1843,6 +1893,35 @@
         "title": "Source Id",
         "type": "string"
       },
+      "Schemab65f8cf83520abcc81339392269e3bb61520bd1bf0b290070d109a32ac0f9159": {
+        "additionalProperties": false,
+        "description": "The work-item lease a plan is attached to. The engine checks the fence.",
+        "properties": {
+          "fencing_token": {
+            "$ref": "#/components/schemas/Schemac2f0bb6a1ce2284d3053a7c196828b80f25e15c0343173872e2af782e6e55ca2"
+          },
+          "lease_epoch": {
+            "$ref": "#/components/schemas/Schema98a62f6658e6760e881bddfa844d14f439b0a93966c3456b3f14419df8eb575c"
+          },
+          "revision": {
+            "$ref": "#/components/schemas/Schemaa83a3f564a1a1974290872fa10944b4530eecaf8212c39a32969ae5589f694bd"
+          },
+          "run_id": {
+            "$ref": "#/components/schemas/Schemadf135e01e5998bd761bf3770ae512003d9a8a935e6f90722820e930ca4b97338"
+          },
+          "worker_id": {
+            "$ref": "#/components/schemas/Schema1f41649ce50447ba6cf1b97df439bd4311184b4929657b6c60f16bf1c551f5d9"
+          }
+        },
+        "required": [
+          "run_id",
+          "worker_id",
+          "lease_epoch",
+          "fencing_token"
+        ],
+        "title": "WorkItemLease",
+        "type": "object"
+      },
       "Schemab697b1595c2d8f9677b6d14572d7a100ee9694279919359d64f493f6cadc3541": {
         "additionalProperties": true,
         "type": "object"
@@ -1919,6 +1998,11 @@
         "title": "Action",
         "type": "string"
       },
+      "Schemac2f0bb6a1ce2284d3053a7c196828b80f25e15c0343173872e2af782e6e55ca2": {
+        "minimum": 0,
+        "title": "Fencing Token",
+        "type": "integer"
+      },
       "Schemac2f8666ba2e77391ba9d6d474839cd5b918e44560d1ce4ee2327313556def869": {
         "additionalProperties": false,
         "properties": {
@@ -1930,6 +2014,12 @@
           "lease_id"
         ],
         "title": "LeaseGet",
+        "type": "object"
+      },
+      "Schemac3b5d7513505aea2230123e535ee3971582b40f12e7e7192cfda51ae26378841": {
+        "additionalProperties": true,
+        "description": "TaskPlanProposal: tasks [{task_id, prompt, depends_on}], output_task_id, max_concurrency, max_steps.",
+        "title": "Plan",
         "type": "object"
       },
       "Schemac408a319a676c4ac14605fd87cc6ba5f0d2b90d65e415b88abf88ec878b4932f": {
@@ -2194,6 +2284,17 @@
         ],
         "title": "SourceBlobParams",
         "type": "object"
+      },
+      "Schemadcf5732766a1fdca89e43c8191813be229f10d4d1f838c5e0fc47562e727ca67": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Definition2410bb35a5212044a26a7f1b62271a9b079d5b33e442b127dab54e178bedaa6e"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null
       },
       "Schemade6177482fecb4008c482d49b57c689d4d259fd0a9ade91795cd9703c2a7f2f1": {
         "title": "Tenant",
@@ -2859,6 +2960,45 @@
         "summary": "List tenant control leases",
         "tags": [
           "access"
+        ]
+      }
+    },
+    "/api/v1/ops/agents.plan_run": {
+      "post": {
+        "operationId": "agents.plan_run",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$defs": {
+                  "WorkItemLease": {
+                    "$ref": "#/components/schemas/Definition2410bb35a5212044a26a7f1b62271a9b079d5b33e442b127dab54e178bedaa6e"
+                  }
+                },
+                "$ref": "#/components/schemas/Schema8a6d4aea8e97f36d37471c5cedd1bdb78c7669c9d03dc3f94cef567cbc23a5eb"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schema2a68eb6b5bff781e0956eeb20d502c69a5c361607b67656ebfd5ee6a2abc9b3d"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Run an engine-decided task plan of dependent agent tasks",
+        "tags": [
+          "agents"
         ]
       }
     },
@@ -19642,5 +19782,5 @@
       }
     }
   },
-  "x-registry-digest": "a021d693b86f7b37e94b54fa7253649f3d113c16938abfa39e54b923da4de90b"
+  "x-registry-digest": "de6ff7b96e56c50f6ee3fa44cef97d52b79958f49e9cb021a83da3308d7ab78d"
 }
