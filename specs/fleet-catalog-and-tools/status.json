@@ -144,7 +144,8 @@
     "ARBORA-FLEET-R039.3",
     "ARBORA-FLEET-R039.4",
     "ARBORA-FLEET-R039.5",
-    "ARBORA-FLEET-R039.6"
+    "ARBORA-FLEET-R039.6",
+    "ARBORA-FLEET-R040"
   ],
   "requirements": [
     {
@@ -1516,6 +1517,13 @@
     {
       "id": "ARBORA-FLEET-R039.6",
       "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R040",
+      "title": "arbora serves and reports the prompts, skills and resources of each connector",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
