@@ -44,7 +44,7 @@ from urllib.parse import urlsplit
 import fastmcp.exceptions as _fastmcp_exceptions
 import fastmcp.tools as _fastmcp_tools
 import mcp as _mcp
-from mcp.client.session import ClientSession
+from mcp.client.session import ClientSession, IncomingMessage, MessageHandlerFnT
 
 from arbora.fleet.protocol_compat import mcp_types_module
 
@@ -4076,7 +4076,7 @@ class MCPMultiplexer:
 
     def _child_message_handler(
         self, server_name: str, holder: list[_typing.Any]
-    ) -> _typing.Callable[[_typing.Any], _typing.Awaitable[None]]:
+    ) -> MessageHandlerFnT:
         """Re-capture a child whose lists change (ARBORA-FLEET-R041.8).
 
         A server that advertises ``listChanged`` sends tool, prompt or resource
@@ -4084,11 +4084,11 @@ class MCPMultiplexer:
         one onboarding pass to run again. A server that sends none is covered
         by the next handshake.
         """
-        changed = {
-            "ToolListChangedNotification",
-            "PromptListChangedNotification",
-            "ResourceListChangedNotification",
-        }
+        changed = (
+            mcp_types.ToolListChangedNotification,
+            mcp_types.PromptListChangedNotification,
+            mcp_types.ResourceListChangedNotification,
+        )
 
         async def refresh() -> None:
             session = holder[0] if holder else None
@@ -4105,8 +4105,8 @@ class MCPMultiplexer:
                 return
             await self._announce_handshake(server_name, session, tools, "list_changed")
 
-        async def handler(message: _typing.Any) -> None:
-            if type(message).__name__ in changed:
+        async def handler(message: IncomingMessage) -> None:
+            if isinstance(message, changed):
                 task = asyncio.ensure_future(refresh())
                 self._list_changed_tasks.add(task)
                 task.add_done_callback(self._list_changed_tasks.discard)

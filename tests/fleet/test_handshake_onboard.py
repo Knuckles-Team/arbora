@@ -232,12 +232,11 @@ def test_list_changed_notification_recaptures_through_the_one_pass() -> None:
         cast(Any, mux), "alpha-mcp", [session]
     )
 
-    class PromptListChangedNotification:
-        pass
+    from mcp_types import PromptListChangedNotification
 
     async def drive() -> None:
         await handler(PromptListChangedNotification())
-        await handler(object())  # not a list change: ignored
+        await handler(RuntimeError("transport fault"))  # not a list change: ignored
         await asyncio.gather(*mux._list_changed_tasks)
 
     asyncio.run(drive())
