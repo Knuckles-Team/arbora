@@ -222,3 +222,25 @@ Preserve all existing R003 tasks and receipts. These added runtime cases have no
 - [ ] **ARBORA-FLEET-R037.5 (Evidence):** Emit the evidence.
 - [ ] **ARBORA-FLEET-R037.6 (Hot-path proof):** Add the served hot-path test.
 - [ ] **ARBORA-FLEET-R038:** One protocol stack with one implementation per role.
+
+- [ ] **ARBORA-FLEET-R041:** Registering a connector imports its full pack with no manual step (rollup).
+- [ ] **ARBORA-FLEET-R041.1:** Model.
+- [ ] **ARBORA-FLEET-R041.2:** Behavior.
+- [ ] **ARBORA-FLEET-R041.3:** Wiring.
+- [ ] **ARBORA-FLEET-R041.4:** Refusal.
+- [ ] **ARBORA-FLEET-R041.5:** Evidence.
+- [ ] **ARBORA-FLEET-R041.6:** Hot-path proof.
+- [ ] **ARBORA-FLEET-R042:** arbora registers connector data resources as virtual-graph sources by policy (rollup).
+- [ ] **ARBORA-FLEET-R042.1:** Model.
+- [ ] **ARBORA-FLEET-R042.2:** Behavior.
+- [ ] **ARBORA-FLEET-R042.3:** Wiring.
+- [ ] **ARBORA-FLEET-R042.4:** Refusal.
+- [ ] **ARBORA-FLEET-R042.5:** Evidence.
+- [ ] **ARBORA-FLEET-R042.6:** Hot-path proof.
+- [ ] **ARBORA-FLEET-R043:** arbora serves virtual-graph queries over connector data through the one door (rollup).
+- [ ] **ARBORA-FLEET-R043.1:** Model.
+- [ ] **ARBORA-FLEET-R043.2:** Behavior.
+- [ ] **ARBORA-FLEET-R043.3:** Wiring.
+- [ ] **ARBORA-FLEET-R043.4:** Refusal.
+- [ ] **ARBORA-FLEET-R043.5:** Evidence.
+- [ ] **ARBORA-FLEET-R043.6:** Hot-path proof.
