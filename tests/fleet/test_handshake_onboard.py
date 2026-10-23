@@ -12,7 +12,7 @@ from __future__ import annotations
 import functools
 import threading
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -108,7 +108,7 @@ def _handshake(
     session = _Session(version, prompts, declaration, tools)
     asyncio.run(
         MCPMultiplexer._announce_handshake(
-            mux, name, session, tools or _tools("lookup")
+            cast(Any, mux), name, session, tools or _tools("lookup")
         )
     )
 
@@ -223,9 +223,13 @@ def test_list_changed_notification_recaptures_through_the_one_pass() -> None:
         _handshake_listener=lambda name, **kw: seen.append({"name": name, **kw}),
         _list_changed_tasks=set(),
     )
-    mux._announce_handshake = functools.partial(MCPMultiplexer._announce_handshake, mux)
+    mux._announce_handshake = functools.partial(
+        MCPMultiplexer._announce_handshake, cast(Any, mux)
+    )
     session = _Session(prompts=[])
-    handler = MCPMultiplexer._child_message_handler(mux, "alpha-mcp", [session])
+    handler = MCPMultiplexer._child_message_handler(
+        cast(Any, mux), "alpha-mcp", [session]
+    )
 
     class PromptListChangedNotification:
         pass
