@@ -633,11 +633,12 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "68e31b75248a",
+        "a2d20bed16b5",
         "e1d37ca10ef7",
         "fdd59af317ce"
       ],
       "verified_by": [
-        "tests/fleet/test_child_failure_classification.py:17",
+        "tests/fleet/test_child_failure_classification.py:18",
         "tests/fleet/test_multiplexer_dynamic_gateway.py:279"
       ],
       "rollup_of": [
@@ -649,10 +650,11 @@
       "title": "Arbora classifies a failed `fleet.call` by its real cause",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "a2d20bed16b5",
         "fdd59af317ce"
       ],
       "verified_by": [
-        "tests/fleet/test_child_failure_classification.py:17",
+        "tests/fleet/test_child_failure_classification.py:18",
         "tests/fleet/test_multiplexer_dynamic_gateway.py:279"
       ]
     },
@@ -1657,10 +1659,8 @@
     {
       "id": "ARBORA-FLEET-R041.7",
       "title": "Handshake trigger",
-      "delivery_state": "VERIFIED",
-      "landed_in": [
-        "5698f24224fa"
-      ],
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": [
         "tests/fleet/test_handshake_onboard.py:226",
         "tests/fleet/test_handshake_onboard.py:98"
@@ -1669,10 +1669,8 @@
     {
       "id": "ARBORA-FLEET-R041.8",
       "title": "Reconnect compare",
-      "delivery_state": "VERIFIED",
-      "landed_in": [
-        "5698f24224fa"
-      ],
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": [
         "tests/fleet/test_handshake_onboard.py:118",
         "tests/fleet/test_handshake_onboard.py:155"
@@ -1681,10 +1679,8 @@
     {
       "id": "ARBORA-FLEET-R041.9",
       "title": "Serving never blocks",
-      "delivery_state": "VERIFIED",
-      "landed_in": [
-        "5698f24224fa"
-      ],
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": [
         "tests/fleet/test_handshake_onboard.py:172",
         "tests/fleet/test_handshake_onboard.py:206",
@@ -1694,10 +1690,8 @@
     {
       "id": "ARBORA-FLEET-R041.10",
       "title": "Rules unchanged",
-      "delivery_state": "VERIFIED",
-      "landed_in": [
-        "5698f24224fa"
-      ],
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": [
         "tests/fleet/test_handshake_onboard.py:251"
       ]
@@ -1785,10 +1779,8 @@
     {
       "id": "ARBORA-FLEET-R043.2",
       "title": "Behavior",
-      "delivery_state": "VERIFIED",
-      "landed_in": [
-        "d32bf1d14023"
-      ],
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": [
         "tests/api/test_resolve.py:193"
       ]
@@ -1824,10 +1816,8 @@
     {
       "id": "ARBORA-FLEET-R043.7",
       "title": "Source executor",
-      "delivery_state": "VERIFIED",
-      "landed_in": [
-        "d32bf1d14023"
-      ],
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": [
         "tests/fleet/test_source_executor.py:32"
       ]
