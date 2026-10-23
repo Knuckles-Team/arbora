@@ -422,6 +422,25 @@ Controlled tests do not qualify deployed issuance or atomic reservation across s
 They also do not qualify terminal or WebUI runtime handoff.
 Human renewal remains with the identity owner and cannot widen this grant.
 
+### 2026-10-20 — Owner-attested web application serving
+
+R010.7.2.2.2.1 permits web-only foreground serving of an owner-attested ASGI application.
+The runtime binding includes exact application identity, authenticated request handling and engine/configuration binding.
+The owner also attests exclusive lifespan ownership.
+A callable alone is not WebUI or identity proof.
+The application must preserve borrowed resources during shutdown.
+Arbora selects no default application or session policy.
+Terminal/both modes and web logs remain unavailable in this slice.
+
+An external ASGI wrapper revalidates admission before forwarding lifespan startup.
+Uvicorn requires lifespan support. Denial sends startup failure, never readiness.
+Each restart revalidates admission.
+The application owns its messages, cancellation and shutdown.
+Controlled ASGI tests establish this composition behavior only.
+They do not qualify deployed WebUI, native issuance or live identity.
+
 ## Current-main native host-start reconciliation
 
 This source retains the dedicated native issuer adapter and admission checks without replacing current caller credentials or process refusals. The issuer prerequisite is EG694's exact-source host-start contract and fresh generated bindings. Older generated artifacts and controlled owner fixtures cannot qualify that dependency. Native issuer policy, installed consumer composition and actual host startup remain open. No credentials, grants or infrastructure starts are created by this source reconciliation.
+
+The separate web-only slice retains owner-attested borrowed ASGI resources and revalidates admission at lifespan startup. Its controlled application fixtures do not qualify a deployed WebUI factory or native issuer. R010.7.2.2.2.2 retains live client activation, terminal, combined interfaces and logs acceptance. No listener is started outside bounded local fixtures.
