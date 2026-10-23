@@ -298,3 +298,16 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R860.5:** Evidence.
 - [ ] **ARBORA-OPS-R860.6:** Hot-path proof.
 - [ ] **ARBORA-OPS-R021.4.7:** Serve owner-scoped durable public replay through shared HTTP/MCP admission; qualify native ordering and bounded cursors.
+
+## Served dashboard operations (R861)
+
+- [ ] **ARBORA-OPS-R861:** Served dashboard operations (rollup). (rollup)
+- [ ] **ARBORA-OPS-R861.1:** Model.
+- [ ] **ARBORA-OPS-R861.2:** Save.
+- [ ] **ARBORA-OPS-R861.3:** Validation and size cap.
+- [ ] **ARBORA-OPS-R861.4:** Read.
+- [ ] **ARBORA-OPS-R861.5:** Delete.
+- [ ] **ARBORA-OPS-R861.6:** Share.
+- [ ] **ARBORA-OPS-R861.7:** Scope and audit.
+- [ ] **ARBORA-OPS-R861.8:** Wiring.
+- [ ] **ARBORA-OPS-R861.9:** Hot-path proof.
