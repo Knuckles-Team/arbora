@@ -671,6 +671,16 @@ def _classified_child_error(code: str, message: str) -> _typing.Any:
     )
 
 
+def _render_child_failure_leaves(leaves: list[BaseException]) -> str:
+    """Render ordered cause labels with credential-shaped details redacted."""
+    from arbora.api.errors import fleet_detail
+
+    return "; ".join(
+        f"{type(leaf).__name__}: {fleet_detail(str(leaf)) or ''}".rstrip(": ")
+        for leaf in leaves
+    )
+
+
 def _child_failure_result(
     server_name: str, original_name: str, exc: BaseException
 ) -> _typing.Any:
@@ -694,10 +704,7 @@ def _child_failure_result(
     from arbora.api.errors import fleet_detail
 
     leaves = _child_resilience._exc_leaves(exc)
-    rendered = "; ".join(
-        f"{type(leaf).__name__}: {fleet_detail(str(leaf)) or ''}".rstrip(": ")
-        for leaf in leaves
-    )
+    rendered = _render_child_failure_leaves(leaves)
     logger.warning(
         "fleet child call failed (server=%s tool=%s causes=%s)",
         server_name,

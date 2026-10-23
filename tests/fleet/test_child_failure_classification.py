@@ -119,3 +119,66 @@ def test_pipeline_keeps_unsettled_for_an_unknown_grouped_cause():
         pipeline._cause_classes(_group(OSError("a"), ValueError("b")))
         == "OSError,ValueError"
     )
+
+
+@pytest.mark.parametrize("transport_first", [False, True])
+def test_transport_precedes_nested_refusal_and_redacts_every_leaf(
+    caplog, transport_first
+):
+    caplog.set_level(logging.WARNING, logger="mcp_multiplexer")
+    refusal = _mcp_error(-32603, "refused password=refusal-synthetic")
+    transport = ConnectionRefusedError("lost password=transport-synthetic")
+    leaves = [transport, refusal] if transport_first else [refusal, transport]
+    exc = _group(_group(leaves[0]), leaves[1])
+
+    result = mux_module._child_failure_result("s", "t", exc)
+
+    text = gateway_ops._child_error_text(result)
+    assert gateway_ops._child_error_code(result) == "UNAVAILABLE"
+    for secret in ("refusal-synthetic", "transport-synthetic"):
+        assert secret not in text
+        assert secret not in caplog.text
+    assert caplog.text.index(type(leaves[0]).__name__) < caplog.text.index(
+        type(leaves[1]).__name__
+    )
+
+
+def test_nested_refusals_keep_first_leaf_message():
+    exc = _group(
+        ValueError("opaque"),
+        _group(_mcp_error(-32603, "first refusal")),
+        _mcp_error(-32603, "second refusal"),
+    )
+
+    result = mux_module._child_failure_result("s", "t", exc)
+
+    assert gateway_ops._child_error_code(result) == "CHILD_REFUSED"
+    assert "first refusal" in gateway_ops._child_error_text(result)
+    assert "second refusal" not in gateway_ops._child_error_text(result)
+    assert "opaque" not in gateway_ops._child_error_text(result)
+
+
+def test_empty_unknown_leaf_logs_class_without_separator(caplog):
+    caplog.set_level(logging.WARNING, logger="mcp_multiplexer")
+
+    result = mux_module._child_failure_result("s", "t", ValueError())
+
+    assert "causes=ValueError)" in caplog.text
+    assert "ValueError:" not in caplog.text
+    assert gateway_ops._child_error_code(result) == "CHILD_REFUSED"
+
+
+async def test_caller_cancellation_is_not_classified(monkeypatch):
+    import asyncio
+
+    mux = mux_module.MCPMultiplexer.__new__(mux_module.MCPMultiplexer)
+    mux._catalog_epoch = 0
+    monkeypatch.setattr(mux_module, "_require_fleet_capability", lambda *a, **k: None)
+    monkeypatch.setattr(type(mux), "load_catalog", lambda self: {"s": {}})
+
+    async def cancelled(*args):
+        raise asyncio.CancelledError()
+
+    monkeypatch.setattr(mux, "_call_ephemeral_child_session", cancelled)
+    with pytest.raises(asyncio.CancelledError):
+        await mux._call_service_child_once("s", "t", {}, timeout=1.0)
