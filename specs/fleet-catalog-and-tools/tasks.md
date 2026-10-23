@@ -248,3 +248,4 @@ Preserve all existing R003 tasks and receipts. These added runtime cases have no
 - [ ] **ARBORA-FLEET-R043.4:** Refusal.
 - [ ] **ARBORA-FLEET-R043.5:** Evidence.
 - [ ] **ARBORA-FLEET-R043.6:** Hot-path proof.
+- [ ] **ARBORA-FLEET-R043.7:** Source executor.
