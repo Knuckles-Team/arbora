@@ -1721,7 +1721,7 @@
       "landed_in": [],
       "verified_by": [
         "tests/fleet/test_handshake_onboard.py:142",
-        "tests/fleet/test_handshake_onboard.py:319"
+        "tests/fleet/test_handshake_onboard.py:318"
       ]
     },
     {
@@ -1733,7 +1733,7 @@
       ],
       "verified_by": [
         "tests/fleet/test_handshake_onboard.py:162",
-        "tests/fleet/test_handshake_onboard.py:248"
+        "tests/fleet/test_handshake_onboard.py:247"
       ]
     },
     {
@@ -1742,9 +1742,9 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [
-        "tests/fleet/test_handshake_onboard.py:265",
-        "tests/fleet/test_handshake_onboard.py:299",
-        "tests/fleet/test_handshake_onboard.py:333"
+        "tests/fleet/test_handshake_onboard.py:264",
+        "tests/fleet/test_handshake_onboard.py:298",
+        "tests/fleet/test_handshake_onboard.py:332"
       ]
     },
     {
@@ -1755,7 +1755,7 @@
         "a31aba1d54a2"
       ],
       "verified_by": [
-        "tests/fleet/test_handshake_onboard.py:344"
+        "tests/fleet/test_handshake_onboard.py:343"
       ]
     },
     {
@@ -1802,7 +1802,8 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "0107a5642a07",
-        "245143bf3650"
+        "245143bf3650",
+        "c092e243dcd4"
       ],
       "verified_by": [
         "tests/fleet/test_handshake_onboard.py:163",
