@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any, cast
 
 import pytest
 from agent_connector_sdk.artifacts.resources import ResourceArtifactKind
@@ -44,7 +45,7 @@ async def test_resources_declaration_is_not_parsed_as_the_manifest() -> None:
     )
     kind = ResourceArtifactKind()
     server = ServerIdentity(name="fixture-mcp", version="1.0.0")
-    entries = await kind.list_entries(session, server)
+    entries = await kind.list_entries(cast(Any, session), server)
     for entry in entries:
         kind.validate(entry)  # the capture validates every resource body
     assert sorted(e.uri for e in entries) == [
