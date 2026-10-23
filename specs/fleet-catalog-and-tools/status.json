@@ -163,6 +163,7 @@
     "ARBORA-FLEET-R041.9",
     "ARBORA-FLEET-R041.10",
     "ARBORA-FLEET-R041.11",
+    "ARBORA-FLEET-R041.12",
     "ARBORA-FLEET-R042",
     "ARBORA-FLEET-R042.1",
     "ARBORA-FLEET-R042.2",
@@ -1660,7 +1661,8 @@
         "ARBORA-FLEET-R041.8",
         "ARBORA-FLEET-R041.9",
         "ARBORA-FLEET-R041.10",
-        "ARBORA-FLEET-R041.11"
+        "ARBORA-FLEET-R041.11",
+        "ARBORA-FLEET-R041.12"
       ]
     },
     {
@@ -1752,10 +1754,22 @@
       "title": "A connector that declares its data resources still onboards",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "3eb7a4fcbd85",
         "7a16782597c9"
       ],
       "verified_by": [
-        "tests/fleet/test_resources_manifest_capture.py:32"
+        "tests/fleet/test_resources_manifest_capture.py:33"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R041.12",
+      "title": "The pack capture stays under the connector rate limit",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "3eb7a4fcbd85"
+      ],
+      "verified_by": [
+        "tests/fleet/test_paced_capture.py:23"
       ]
     },
     {
