@@ -3,4 +3,4 @@
 Updated only by `bump-my-version` (see `.bumpversion.toml`) — never hand-edited.
 """
 
-__version__ = "0.1.8.dev1"
+__version__ = "0.1.8.dev2"
