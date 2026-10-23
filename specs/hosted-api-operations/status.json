@@ -427,8 +427,8 @@
       "title": "Closed error enum and one response envelope",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "4b83c69e2b41",
-        "db96f0d22223"
+        "32570fcda576",
+        "4b83c69e2b41"
       ],
       "verified_by": [
         "tests/api/test_errors.py:396"
