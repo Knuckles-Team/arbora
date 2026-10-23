@@ -180,9 +180,19 @@ async def test_concurrent_runs_do_not_share_claims() -> None:
 async def test_a2a_binds_actual_engine_graph_not_caller_default(
     monkeypatch: Any,
 ) -> None:
-    from arbora.mcp_server.task_plan import TaskPlanConfig
+    import time
 
-    monkeypatch.setattr(work_items, "claim_specific", lambda *a, **k: dict(CLAIM))
+    from arbora.mcp_server.task_plan import TaskPlanConfig
+    from tests.a2a.test_operation_bridge import session as publication_session
+
+    actual_session = publication_session()
+    actual_claim = {
+        **CLAIM,
+        "tenant": actual_session.tenant,
+        "work_item_id": "work",
+        "lease_expires_at_ms": int(time.time() * 1000) + 60000,
+    }
+    monkeypatch.setattr(work_items, "claim_specific", lambda *a, **k: actual_claim)
     monkeypatch.setattr(work_items, "commit_result", lambda *a, **k: None)
     seen = []
 
@@ -190,7 +200,7 @@ async def test_a2a_binds_actual_engine_graph_not_caller_default(
         owner = agent_runs.current_native_run(request)
         assert owner is not None
         seen.append(owner.owner_graph)
-        assert owner.session.graph == "graph"
+        assert owner.session.graph == actual_session.graph
         return SimpleNamespace(run_id="run", output="done", usage={})
 
     authority = WorkItemA2AAuthority(
@@ -204,7 +214,7 @@ async def test_a2a_binds_actual_engine_graph_not_caller_default(
     await authority._run(
         SimpleNamespace(work_item_graph="owner-graph"),
         item_id="work",
-        session=SESSION,
+        session=actual_session,
         agent_name="helper",
         task="hello",
         task_id="task",

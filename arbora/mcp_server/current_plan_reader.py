@@ -88,6 +88,10 @@ class NativeCurrentPlanReader:
     async def read(self, *, run_id: str, context: ExecutionContext) -> CurrentPlanRead:
         # Reuse the same session/owner/graph checks as caller-bound EG dispatch.
         graph = await _caller_dispatch_graph(context)
+        if run_id.startswith("a2a-"):
+            from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+
+            graph = CONTROL_GRAPH
         if "kg:read" not in context.caller.effective_scopes:
             raise OperationRefused("SCOPE_REQUIRED", {"missing_scopes": ["kg:read"]})
         with client_scope(context.client, claim_values(context.caller.engine_claims)):

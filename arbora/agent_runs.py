@@ -455,3 +455,6 @@ def bind_run_ports() -> None:
     host_ports.register_run_decision_provider(decide_run)
     host_ports.register_model_provider(resolve_model)
     host_ports.register_run_event_sink(record_run_event)
+    from arbora.current_plan_publication import publication_scope
+
+    host_ports.register_optional_scaffold_publication_factory(publication_scope)
