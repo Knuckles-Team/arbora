@@ -42,6 +42,7 @@
     "ARBORA-FLEET-R012",
     "ARBORA-FLEET-R013",
     "ARBORA-FLEET-R014",
+    "ARBORA-FLEET-R014.1",
     "ARBORA-FLEET-R015",
     "ARBORA-FLEET-R015.1",
     "ARBORA-FLEET-R016",
@@ -616,7 +617,7 @@
     {
       "id": "ARBORA-FLEET-R014",
       "title": "Resolver ranks catalog items with partitioned feedback",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "43db6b7ac49b",
         "a2f74cb9621d"
@@ -625,6 +626,21 @@
         "tests/api/test_resolve.py:114",
         "tests/api/test_resolve.py:161",
         "tests/api/test_resolve.py:170"
+      ],
+      "rollup_of": [
+        "ARBORA-FLEET-R014.1"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R014.1",
+      "title": "`ask` does not route a plain question to an op it cannot run",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/api/test_resolve.py:259",
+        "tests/api/test_resolve.py:273",
+        "tests/api/test_resolve.py:288",
+        "tests/api/test_resolve.py:303"
       ]
     },
     {
@@ -633,7 +649,6 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "68e31b75248a",
-        "a2d20bed16b5",
         "e1d37ca10ef7",
         "fdd59af317ce"
       ],
@@ -650,7 +665,6 @@
       "title": "Arbora classifies a failed `fleet.call` by its real cause",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "a2d20bed16b5",
         "fdd59af317ce"
       ],
       "verified_by": [
