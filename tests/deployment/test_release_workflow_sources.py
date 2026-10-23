@@ -572,3 +572,11 @@ def test_tag_publishes_wheel_and_sdist() -> None:
         step["run"] for step in publish["steps"] if "uv publish" in step.get("run", "")
     )
     assert "dist/arbora-*.whl" in command and "dist/arbora-*.tar.gz" in command
+
+
+# spec: ARBORA-RELEASE-R001.1
+def test_prerelease_tag_is_never_the_latest_github_release() -> None:
+    steps = _workflow()["jobs"]["github-release"]["steps"]
+    run = next(s["run"] for s in steps if "gh release create" in s.get("run", ""))
+    assert "*dev*" in run and "--prerelease" in run
+    assert "--latest \\" not in run

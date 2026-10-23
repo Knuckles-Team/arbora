@@ -659,10 +659,13 @@ jobs:
       - name: Create or update the GitHub release
         run: |
           set -euo pipefail
+          # A pre-release tag (v0.1.8.dev1, v0.1.8rc1) never becomes the latest release.
+          kind=--latest
+          case "$TAG" in *dev*|*rc*|*a[0-9]*|*b[0-9]*) kind=--prerelease ;; esac
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --latest \
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" "$kind" \
               --notes-file "$RUNNER_TEMP/notes.md"
           else
-            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --latest \
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag "$kind" \
               --title "Release $TAG" --notes-file "$RUNNER_TEMP/notes.md"
           fi
