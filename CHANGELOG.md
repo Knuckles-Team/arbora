@@ -2,9 +2,10 @@
 
 ## [Unreleased]
 
+- Requires agent-connector-sdk 0.4.0, a hard cutover. Onboarding reads `connector://resources` over MCP. Change detection uses content digests and `list_changed`. No manifest file is read (ARBORA-FLEET-R041.11, R041.13, R041.14).
+
 ## [0.1.8.dev2] - 2026-10-23
 
-- Requires agent-connector-sdk 0.3.19. A connector that serves its data-resource declaration at `manifest://connector/resources` now onboards (ARBORA-FLEET-R041.11).
 - `fleet.prompts.list`, `fleet.prompts.get`, `fleet.resources.list` and `fleet.resources.read` work on the served gateway (ARBORA-FLEET-R040.1).
 - Request verbs such as "show" no longer route a question to an op (ARBORA-FLEET-R014.2).
 - Pack capture paces its requests under the connector rate limit, so a large pack onboards (ARBORA-FLEET-R041.12).
