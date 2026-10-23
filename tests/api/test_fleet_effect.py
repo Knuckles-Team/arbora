@@ -254,6 +254,10 @@ def test_fleet_ops_are_distinct_and_loading_is_mcp_only() -> None:
         "fleet.tools.load",
         "fleet.tools.unload",
         "fleet.status",
+        "fleet.prompts.list",
+        "fleet.prompts.get",
+        "fleet.resources.list",
+        "fleet.resources.read",
     }
     assert registry["fleet.catalog.search"].scopes == frozenset({"mcp:discover"})
     assert registry["fleet.tools.load"].surfaces == frozenset({Surface.MCP})

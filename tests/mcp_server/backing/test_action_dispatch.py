@@ -228,3 +228,110 @@ def test_dispatch_async_denies_headless_destructive_invocation():
     result = anyio.run(dispatch_async, _DeleteClient(), "delete_record")
 
     assert result == {"cancelled": True, "operation": "delete_record"}
+
+
+@pytest.mark.parametrize(
+    ("target", "args", "kwargs", "expected"),
+    [
+        (lambda data=None: None, (1,), {"field": 2}, None),
+        (lambda data=None: None, (), {}, None),
+        (lambda data=None, **extras: None, (), {"field": 2}, None),
+        (lambda item=None: None, (), {"field": 2}, None),
+        (lambda data=None, payload=None: None, (), {"field": 2}, None),
+        (lambda data=None: None, (), {"data": None, "field": 2}, None),
+        (lambda item=None, data=None: None, (), {"item": 1}, None),
+        (
+            lambda item=None, data=None: None,
+            (),
+            {"item": 1, "field": 2},
+            {"item": 1, "data": {"field": 2}},
+        ),
+        (
+            lambda *, item=None, payload=None: None,
+            (),
+            {"item": 1, "field": 2},
+            {"item": 1, "payload": {"field": 2}},
+        ),
+        (lambda body=None: None, (), {"field": 2}, {"body": {"field": 2}}),
+        (lambda data=None, /: None, (), {"field": 2}, {"data": {"field": 2}}),
+        (lambda item=None, /, data=None: None, (), {"item": 1}, {"data": {"item": 1}}),
+        (lambda *items, data=None: None, (), {"items": 1}, {"data": {"items": 1}}),
+    ],
+)
+def test_body_normalization_characterization(target, args, kwargs, expected):
+    from arbora.mcp_server.backing.concurrency import _wrap_data_kwargs
+
+    original = kwargs.copy()
+    result = _wrap_data_kwargs(target, args, kwargs)
+    assert kwargs == original
+    if expected is None:
+        assert result is kwargs
+    else:
+        assert result == expected
+        assert result is not kwargs
+
+
+@pytest.mark.parametrize("error", [TypeError, ValueError])
+def test_body_normalization_uninspectable_callable_is_noop(monkeypatch, error):
+    from arbora.mcp_server.backing import concurrency
+
+    def unavailable(_):
+        raise error("uninspectable")
+
+    monkeypatch.setattr(concurrency.inspect, "signature", unavailable)
+    kwargs = {"field": object()}
+    assert concurrency._wrap_data_kwargs(object(), (), kwargs) is kwargs
+
+
+def test_body_normalization_short_circuits_before_signature(monkeypatch):
+    from arbora.mcp_server.backing import concurrency
+
+    def unexpected(_):
+        raise AssertionError("signature inspected before positional/empty guard")
+
+    monkeypatch.setattr(concurrency.inspect, "signature", unexpected)
+    kwargs = {"field": object()}
+    assert concurrency._wrap_data_kwargs(object(), (1,), kwargs) is kwargs
+    empty = {}
+    assert concurrency._wrap_data_kwargs(object(), (), empty) is empty
+
+
+@pytest.mark.parametrize("native_async", [False, True])
+def test_body_normalization_dispatch_alias_and_value_identity(native_async):
+    class Client:
+        def get_record(self, *, item, payload):
+            return item, payload
+
+    class AsyncClient:
+        async def get_record(self, *, item, payload):
+            return item, payload
+
+    value = object()
+    kwargs = {"item": 7, "field": value}
+    aliases = {"record": "get_record"}
+
+    async def run():
+        client = AsyncClient() if native_async else Client()
+        return await dispatch_async(client, "record", kwargs, aliases=aliases)
+
+    result = anyio.run(run)
+    assert result == (7, {"field": value})
+    assert result[1]["field"] is value
+    assert dispatch(Client(), "record", kwargs, aliases=aliases) == result
+    assert kwargs == {"item": 7, "field": value}
+
+
+@pytest.mark.parametrize("asynchronous", [False, True])
+def test_body_normalization_keeps_explicit_body_typeerror(asynchronous):
+    class Client:
+        def get_record(self, payload=None):
+            raise AssertionError("invalid arguments must refuse before invocation")
+
+    async def run():
+        return await dispatch_async(Client(), "get_record", {"payload": {}, "stray": 1})
+
+    with pytest.raises(TypeError, match="unexpected keyword argument 'stray'"):
+        if asynchronous:
+            anyio.run(run)
+        else:
+            dispatch(Client(), "get_record", {"payload": {}, "stray": 1})

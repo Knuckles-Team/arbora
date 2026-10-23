@@ -100,6 +100,18 @@
     {
       "domain": "agents",
       "examples": [
+        "plan and run agents that triage the latest incidents and cross-check related issues"
+      ],
+      "id": "agents.plan_run",
+      "summary": "Run an engine-decided task plan of dependent agent tasks",
+      "tags": [
+        "agents"
+      ],
+      "verb": "act"
+    },
+    {
+      "domain": "agents",
+      "examples": [
         "run an agent to investigate this issue"
       ],
       "id": "agents.run",
@@ -5728,6 +5740,54 @@
     {
       "domain": "fleet",
       "examples": [
+        "get this connector prompt"
+      ],
+      "id": "fleet.prompts.get",
+      "summary": "Render one connector prompt (prompts/get relay)",
+      "tags": [
+        "fleet"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "fleet",
+      "examples": [
+        "list the prompts a connector serves"
+      ],
+      "id": "fleet.prompts.list",
+      "summary": "List caller-visible connector prompts (prompts/list relay)",
+      "tags": [
+        "fleet"
+      ],
+      "verb": "find"
+    },
+    {
+      "domain": "fleet",
+      "examples": [
+        "list the resources and ontologies a connector serves"
+      ],
+      "id": "fleet.resources.list",
+      "summary": "List caller-visible connector resources, skill:// included (resources/list relay)",
+      "tags": [
+        "fleet"
+      ],
+      "verb": "find"
+    },
+    {
+      "domain": "fleet",
+      "examples": [
+        "read this connector ontology resource"
+      ],
+      "id": "fleet.resources.read",
+      "summary": "Read one connector resource, such as a skill:// or ontology:// URI (resources/read relay)",
+      "tags": [
+        "fleet"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "fleet",
+      "examples": [
         "show my fleet multiplexer status"
       ],
       "id": "fleet.status",
@@ -6210,5 +6270,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "09772bb62b5555de80637ad1c2cc13e76e850a1084cb67b1bf1efe110c411e73"
+  "registry_digest": "2e056baa5406e927200d3b28bbe560554a5486cf6ff3e1cc4384b4dfa947bb9d"
 }

@@ -90,6 +90,7 @@ def test_stopped_has_no_incoming_self_loop() -> None:
     )
 
 
+# spec: ARBORA-MESSAGING-R002
 @pytest.mark.asyncio
 async def test_router_promotes_connected_backend_to_running_then_drains_to_stopped() -> (
     None
@@ -110,6 +111,7 @@ async def test_router_promotes_connected_backend_to_running_then_drains_to_stopp
     await asyncio.wait_for(start_task, timeout=1)
 
 
+# spec: ARBORA-MESSAGING-R002
 @pytest.mark.asyncio
 async def test_router_never_promotes_an_unconnected_backend_to_running() -> None:
     """ARBORA-MESSAGING-R002: an unconnected backend is skipped, not RUNNING."""

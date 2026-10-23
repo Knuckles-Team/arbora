@@ -144,7 +144,29 @@
     "ARBORA-FLEET-R039.3",
     "ARBORA-FLEET-R039.4",
     "ARBORA-FLEET-R039.5",
-    "ARBORA-FLEET-R039.6"
+    "ARBORA-FLEET-R039.6",
+    "ARBORA-FLEET-R040",
+    "ARBORA-FLEET-R041",
+    "ARBORA-FLEET-R041.1",
+    "ARBORA-FLEET-R041.2",
+    "ARBORA-FLEET-R041.3",
+    "ARBORA-FLEET-R041.4",
+    "ARBORA-FLEET-R041.5",
+    "ARBORA-FLEET-R041.6",
+    "ARBORA-FLEET-R042",
+    "ARBORA-FLEET-R042.1",
+    "ARBORA-FLEET-R042.2",
+    "ARBORA-FLEET-R042.3",
+    "ARBORA-FLEET-R042.4",
+    "ARBORA-FLEET-R042.5",
+    "ARBORA-FLEET-R042.6",
+    "ARBORA-FLEET-R043",
+    "ARBORA-FLEET-R043.1",
+    "ARBORA-FLEET-R043.2",
+    "ARBORA-FLEET-R043.3",
+    "ARBORA-FLEET-R043.4",
+    "ARBORA-FLEET-R043.5",
+    "ARBORA-FLEET-R043.6"
   ],
   "requirements": [
     {
@@ -847,8 +869,8 @@
         "db8d44259c3d"
       ],
       "verified_by": [
-        "tests/api/test_fleet_effect.py:543",
-        "tests/api/test_fleet_effect.py:568"
+        "tests/api/test_fleet_effect.py:547",
+        "tests/api/test_fleet_effect.py:572"
       ],
       "rollup_of": [
         "ARBORA-FLEET-R029.1"
@@ -862,8 +884,8 @@
         "4fabd9b042be"
       ],
       "verified_by": [
-        "tests/api/test_fleet_effect.py:543",
-        "tests/api/test_fleet_effect.py:568"
+        "tests/api/test_fleet_effect.py:547",
+        "tests/api/test_fleet_effect.py:572"
       ]
     },
     {
@@ -1515,6 +1537,192 @@
     },
     {
       "id": "ARBORA-FLEET-R039.6",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R040",
+      "title": "arbora serves and reports the prompts, skills and resources of each connector",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "abaee0920e29"
+      ],
+      "verified_by": [
+        "tests/fleet/test_connector_surfaces.py:133",
+        "tests/fleet/test_connector_surfaces.py:143",
+        "tests/fleet/test_connector_surfaces.py:153",
+        "tests/fleet/test_connector_surfaces.py:187",
+        "tests/fleet/test_connector_surfaces.py:221"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R041",
+      "title": "Registering a connector imports its full pack with no manual step (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-FLEET-R041.1",
+        "ARBORA-FLEET-R041.2",
+        "ARBORA-FLEET-R041.3",
+        "ARBORA-FLEET-R041.4",
+        "ARBORA-FLEET-R041.5",
+        "ARBORA-FLEET-R041.6"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R041.1",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R041.2",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R041.3",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R041.4",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R041.5",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R041.6",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R042",
+      "title": "arbora registers connector data resources as virtual-graph sources by policy (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-FLEET-R042.1",
+        "ARBORA-FLEET-R042.2",
+        "ARBORA-FLEET-R042.3",
+        "ARBORA-FLEET-R042.4",
+        "ARBORA-FLEET-R042.5",
+        "ARBORA-FLEET-R042.6"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R042.1",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R042.2",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R042.3",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R042.4",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R042.5",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R042.6",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R043",
+      "title": "arbora serves virtual-graph queries over connector data through the one door (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-FLEET-R043.1",
+        "ARBORA-FLEET-R043.2",
+        "ARBORA-FLEET-R043.3",
+        "ARBORA-FLEET-R043.4",
+        "ARBORA-FLEET-R043.5",
+        "ARBORA-FLEET-R043.6"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R043.1",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R043.2",
+      "title": "Behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R043.3",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R043.4",
+      "title": "Refusal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R043.5",
+      "title": "Evidence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R043.6",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],

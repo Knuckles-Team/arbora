@@ -288,6 +288,7 @@ def test_route_module_has_no_webui_or_au_gateway_fallback() -> None:
     assert "agent_utilities.gateway" not in text
 
 
+# spec: ARBORA-HOST-R018
 def test_catalog_reads_run_under_the_configured_process_authority(
     monkeypatch: Any,
 ) -> None:

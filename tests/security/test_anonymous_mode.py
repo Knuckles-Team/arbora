@@ -472,3 +472,120 @@ def test_anonymous_rejects_remote_engine_endpoints(local_mode, monkeypatch, endp
 def test_anonymous_accepts_local_engine_endpoints(local_mode, monkeypatch, endpoint):
     monkeypatch.setenv("GRAPH_SERVICE_ENDPOINTS", endpoint)
     anonymous.validate_startup(Namespace(host="127.0.0.1", auth_type="none"))
+
+
+@pytest.mark.asyncio
+async def test_admitted_anonymous_tool_delegation_remains_supported(local_mode):
+    from arbora.api.mcp.caller import caller_from_session
+    from arbora.fleet.gateway_ops import oauth_delegated_call_for_mux
+
+    calls = []
+
+    class Mux:
+        async def call_admitted_child_once(self, *args):
+            calls.append(args)
+            return SimpleNamespace(is_error=False, model_dump=lambda **_: {"ok": True})
+
+    caller = caller_from_session(anonymous.session(), credential_kind="none")
+    assert await oauth_delegated_call_for_mux(Mux())("server", "tool", {}, caller) == {
+        "ok": True
+    }
+    assert calls == [("server", "tool", {})]
+
+
+@pytest.mark.parametrize("change", ["principal", "tenant", "session", "unadmitted"])
+@pytest.mark.asyncio
+async def test_anonymous_tool_delegation_rejects_identity_drift(local_mode, change):
+    from arbora.api.mcp.caller import caller_from_session
+    from arbora.fleet.gateway_ops import oauth_delegated_call_for_mux
+
+    class Mux:
+        async def call_admitted_child_once(self, *_):
+            pytest.fail("invalid caller reached child")
+
+    caller = caller_from_session(anonymous.session(), credential_kind="none")
+    if change == "unadmitted":
+        caller = replace(
+            caller,
+            session=SimpleNamespace(
+                actor=replace(caller.session.actor, authority_mode="verified")
+            ),
+        )
+    else:
+        caller = replace(caller, **{change: None if change == "session" else "foreign"})
+    with pytest.raises(PermissionError):
+        await oauth_delegated_call_for_mux(Mux())("server", "tool", {}, caller)
+
+
+def test_new_surface_delegation_does_not_opt_into_anonymous(local_mode):
+    from arbora.api.mcp.caller import caller_from_session
+    from arbora.fleet.gateway_ops import _verified_delegation
+
+    caller = caller_from_session(anonymous.session(), credential_kind="none")
+    with pytest.raises(PermissionError):
+        with _verified_delegation(caller):
+            pytest.fail("new surface widened anonymous admission")
+
+
+@pytest.mark.parametrize("surface", ["prompt", "resource"])
+@pytest.mark.asyncio
+async def test_new_surface_relays_refuse_anonymous_before_child(local_mode, surface):
+    from arbora.api.mcp.caller import caller_from_session
+    from arbora.fleet.gateway_ops import FleetGateway
+
+    async def allowed(*args):
+        return None
+
+    async def forbidden(**kwargs):
+        pytest.fail("anonymous surface relay reached child")
+
+    gateway = FleetGateway(
+        tool_for=allowed,
+        policy_check=allowed,
+        delegated_call=allowed,
+        catalog_ops=SimpleNamespace(admitted_surface_item=allowed),
+        surface_mux=SimpleNamespace(
+            get_server_prompt=forbidden, read_server_resource=forbidden
+        ),
+    )
+    caller = caller_from_session(anonymous.session(), credential_kind="none")
+    with pytest.raises(PermissionError, match="does not match"):
+        if surface == "prompt":
+            await gateway.prompts_get(caller, server="server", name="prompt")
+        else:
+            await gateway.resources_read(
+                caller, server="server", uri="resource://example"
+            )
+
+
+@pytest.mark.parametrize("fail", [False, True])
+def test_delegation_restores_context_on_success_and_error(local_mode, fail):
+    from arbora.api.contracts.session import current_session, use_session
+    from arbora.api.mcp.caller import caller_from_session
+    from arbora.fleet.gateway_ops import _verified_delegation
+    from arbora.security.actor_context import current_actor, use_actor
+
+    prior = anonymous.session()
+    caller = caller_from_session(anonymous.session(), credential_kind="none")
+    with use_actor(prior.actor), use_session(prior):
+        try:
+            with _verified_delegation(caller, allow_admitted_anonymous=True):
+                assert current_actor() is caller.session.actor
+                assert current_session() is caller.session
+                if fail:
+                    raise ValueError("child failed")
+        except ValueError:
+            assert fail
+        assert current_actor() is prior.actor
+        assert current_session() is prior
+
+
+def test_delegation_revalidates_malformed_anonymous_session(local_mode):
+    from arbora.api.mcp.caller import caller_from_session
+    from arbora.fleet.gateway_ops import _verified_delegation
+
+    caller = caller_from_session(anonymous.session(), credential_kind="none")
+    object.__setattr__(caller.session, "policy_version", "foreign")
+    with pytest.raises(PermissionError):
+        with _verified_delegation(caller, allow_admitted_anonymous=True):
+            pytest.fail("malformed session admitted")

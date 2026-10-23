@@ -1,7 +1,7 @@
 """Generated engine error contract. Do not edit."""
 
-REGISTRY_DIGEST = "09772bb62b5555de80637ad1c2cc13e76e850a1084cb67b1bf1efe110c411e73"
-EG_RECEIPT_DIGEST = "0c4bf003ed5add70fdc50f971a5b684a5d5ff2189b241bbf3d12eec31fdc77f2"
+REGISTRY_DIGEST = "2e056baa5406e927200d3b28bbe560554a5486cf6ff3e1cc4384b4dfa947bb9d"
+EG_RECEIPT_DIGEST = "4f6fdb7ba37b6cb9f3a2f0a33f78c4fb6a3b3fb29e63d6e9f221ec80bb7acd0d"
 ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "ABORTED_ATOMIC_GRAPH_BATCH": (400, False),
     "ACCESS_DENIED": (403, False),
@@ -27,8 +27,11 @@ ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "AUDIT_WRITER_UNAVAILABLE": (400, False),
     "AUTHENTICATION_REQUIRED": (401, False),
     "AUTH_AUDIENCE_MISMATCH": (403, False),
+    "AUTH_BAD_SIGNATURE": (401, False),
+    "AUTH_EXPIRED": (401, False),
     "AUTH_POLICY_VERSION_MISMATCH": (403, False),
     "AUTH_TENANT_MISMATCH": (403, False),
+    "AUTH_UNKNOWN_PRINCIPAL": (401, False),
     "BODY_DIGEST_MISMATCH": (400, False),
     "BODY_MISSING": (400, False),
     "BUSY": (429, True),
