@@ -906,6 +906,7 @@
       "landed_in": [
         "2e9f4b8bc465",
         "663cc8cad940",
+        "86cf9312c7c6",
         "8e7324a40961",
         "f4ae1be895a1"
       ],
@@ -914,7 +915,7 @@
         "tests/api/test_runs_ops.py:23",
         "tests/mcp_server/test_current_plan_reader.py:22",
         "tests/mcp_server/test_current_plan_reader.py:300",
-        "tests/test_current_plan_publication.py:23"
+        "tests/mcp_server/test_task_plan.py:232"
       ],
       "rollup_of": [
         "ARBORA-OPS-R021.4.5.1"
@@ -927,6 +928,7 @@
       "landed_in": [
         "2e9f4b8bc465",
         "663cc8cad940",
+        "86cf9312c7c6",
         "8e7324a40961",
         "f4ae1be895a1"
       ],
@@ -935,7 +937,7 @@
         "tests/api/test_runs_ops.py:23",
         "tests/mcp_server/test_current_plan_reader.py:22",
         "tests/mcp_server/test_current_plan_reader.py:300",
-        "tests/test_current_plan_publication.py:23"
+        "tests/mcp_server/test_task_plan.py:232"
       ],
       "rollup_of": [
         "ARBORA-OPS-R021.4.5.1.1",
@@ -958,12 +960,15 @@
       "title": "Compose owner-bound A2A scaffold publication",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "86cf9312c7c6",
         "8e7324a40961"
       ],
       "verified_by": [
         "tests/a2a/test_native_run_publication.py:16",
         "tests/mcp_server/test_current_plan_reader.py:300",
-        "tests/test_current_plan_publication.py:23"
+        "tests/mcp_server/test_task_plan.py:232",
+        "tests/mcp_server/test_task_plan.py:239",
+        "tests/mcp_server/test_task_plan_runtime.py:413"
       ]
     },
     {
