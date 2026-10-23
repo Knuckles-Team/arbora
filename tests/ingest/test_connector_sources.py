@@ -54,7 +54,7 @@ class _Fleet:
                 {
                     "kind": "resource",
                     "server": "fixture",
-                    "name": "connector-resources",
+                    "name": "connector://resources",
                     "uri": "connector://resources",
                 },
                 {
@@ -67,6 +67,8 @@ class _Fleet:
         }
 
     async def resources_list(self, caller: Any, **params: Any) -> dict[str, Any]:
+        # The relay fixes ``kinds`` itself; a caller-passed ``kinds`` is a TypeError.
+        assert "kinds" not in params
         return await self.list(caller, **params)
 
     async def resources_read(

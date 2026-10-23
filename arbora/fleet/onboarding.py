@@ -28,6 +28,7 @@ import threading
 from collections.abc import Callable, Collection, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Literal, cast
 
 from arbora.fleet.declarations import RESOURCES_URI, parse_declaration, remember
@@ -170,11 +171,26 @@ class _PackResourceSession:
     async def list_resources(self) -> list[Any]:
         from agent_connector_sdk.artifacts.resources import _RESOURCE_SCHEMES
 
-        return [
+        listed = await self._session.list_resources()
+        kept = [
             resource
-            for resource in await self._session.list_resources()
+            for resource in listed
             if _resource_scheme(resource) in _RESOURCE_SCHEMES
             or str(getattr(resource, "uri", "")) == RESOURCES_URI
+        ]
+        # The catalog names a resource by its pack entry name and reads it by
+        # that name. The declaration is served as ``connector-resources``; name
+        # it by its URI so the relays read it by URI like every other resource.
+        return [
+            SimpleNamespace(
+                uri=resource.uri,
+                name=str(resource.uri),
+                mimeType=getattr(resource, "mimeType", None),
+                annotations=getattr(resource, "annotations", None),
+            )
+            if str(getattr(resource, "uri", "")) == RESOURCES_URI
+            else resource
+            for resource in kept
         ]
 
     async def read_resource(self, uri: str) -> str:
