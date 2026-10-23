@@ -179,6 +179,65 @@ def test_deterministic_uql_visibility_does_not_authorize_nl_fallback() -> None:
     assert resolution.fallback is False
 
 
+_UQL_DESCRIPTOR = Descriptor(id="query.uql", verb="ask", summary="Execute a UQL query")
+_LOOKALIKE = Descriptor(
+    id="deploy.owner_status",
+    verb="ask",
+    summary="who owns the deploy catalog status lineage",
+    examples=("who owns these assets",),
+)
+
+
+@pytest.mark.spec("ARBORA-OPS-R855.1")
+@pytest.mark.spec("ARBORA-OPS-R855.4")
+@pytest.mark.spec("ARBORA-FLEET-R043.2")
+@pytest.mark.parametrize(
+    "question",
+    [
+        "which catalog assets mention customers",
+        "who owns the orders table",
+        "show the lineage of the revenue report",
+        "what does the glossary say about churn",
+        "which connector prompts are system-prompt candidates",
+        "which data sources can I query",
+    ],
+)
+def test_catalog_class_ask_routes_to_the_engine_planner_ahead_of_ranking(
+    question: str,
+) -> None:
+    resolution = IntentResolver().resolve(
+        "ask", question, (_LOOKALIKE, _UQL_DESCRIPTOR, _NL_DESCRIPTOR), scope_ref=None
+    )
+
+    assert resolution.op == "query.nl"
+    assert resolution.params == {"text": question}
+    assert resolution.preview is False
+    assert resolution.alternatives == ("query.uql",)
+
+
+@pytest.mark.spec("ARBORA-OPS-R855.5")
+def test_find_for_catalog_assets_points_at_the_graph_query_ops_first() -> None:
+    resolution = IntentResolver().resolve(
+        "find",
+        "find catalog assets about customers",
+        (*_DESCRIPTORS, _NL_DESCRIPTOR, _UQL_DESCRIPTOR),
+        scope_ref=None,
+    )
+
+    assert resolution.op is None
+    assert resolution.alternatives[:2] == ("query.nl", "query.uql")
+
+
+@pytest.mark.spec("ARBORA-OPS-R855.6")
+def test_catalog_question_is_not_routed_without_a_visible_nl_planner() -> None:
+    resolution = IntentResolver().resolve(
+        "ask", "show the lineage of the revenue report", _DESCRIPTORS, scope_ref=None
+    )
+
+    assert resolution.op is None
+    assert resolution.fallback is False
+
+
 _ASK_DESCRIPTORS = (
     Descriptor(
         id="agents.tasks.get",

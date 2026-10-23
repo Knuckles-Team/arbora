@@ -780,7 +780,7 @@ holds no rule, role table or policy for any of them.
 | R852 | `harness.optimize`, `harness.promote`, `harness.rollback` | EG-DECISION-ENGINE-R804, R805 |
 | R853 | `defect.*`, `release.record`, `deployment.record`, `spec.status`, `lifecycle.trace` | EG-SDLC-R001 to R006 |
 | R854 | `retrieval.feedback`, `agent.knowledge_scope.set` | EG-FEDERATED-QUERY-R704, R705 |
-| R855 | `glossary.*`, `stewardship.*`, `product.*`, `access_request.*`, `catalog.search` | EG-TYPED-PACKS-R801, R802, R805; EG-UNIFIED-DATA-PLANE-R764 |
+| R855 | `product.*`, `access_request.*` (catalog reads are intent-routed graph queries) | EG-TYPED-PACKS-R801, R802, R805; EG-UNIFIED-DATA-PLANE-R764 |
 | R856 | `quality.*`, `profile.run`, `lineage.columns` | EG-UNIFIED-DATA-PLANE-R761 to R763 |
 | R857 | SPARQL 1.1 Protocol and Graph Store HTTP Protocol routes | EG-FEDERATED-QUERY-R707 |
 | R858 | `wire_access.grant`, `wire_access.revoke` | EG-ENGINE-PARITY-R007 |

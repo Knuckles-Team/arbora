@@ -268,7 +268,7 @@ Test the actual serving-root binding and contextual read path. Cover concurrent 
 | `ARBORA-OPS-R854.1` | `tests/api/test_retrieval_ops.py::test_feedback_and_scope_operations_listed` |
 | `ARBORA-OPS-R854.2` | `tests/api/test_retrieval_ops.py::test_scope_and_feedback_served` |
 | `ARBORA-OPS-R855` | See each child. |
-| `ARBORA-OPS-R855.1` | `tests/api/test_governance_ops.py::test_registry_lists_governance_operations` |
+| `ARBORA-OPS-R855.1` | `tests/api/test_resolve.py::test_catalog_class_ask_routes_to_the_engine_planner_ahead_of_ranking` |
 | `ARBORA-OPS-R855.2` | `tests/api/test_governance_ops.py::test_term_review_and_search` |
 | `ARBORA-OPS-R856` | See each child. |
 | `ARBORA-OPS-R856.1` | `tests/api/test_governance_ops.py::test_registry_lists_quality_operations` |
@@ -285,6 +285,9 @@ Test the actual serving-root binding and contextual read path. Cover concurrent 
 | Row | Proving test |
 |---|---|
 | `ARBORA-OPS-R855.3` | `tests/api/test_governance_ops.py::test_trust_flag_and_proposal_review` |
+| `ARBORA-OPS-R855.4` | `tests/api/test_resolve.py::test_catalog_class_ask_routes_to_the_engine_planner_ahead_of_ranking` |
+| `ARBORA-OPS-R855.5` | `tests/api/test_resolve.py::test_find_for_catalog_assets_points_at_the_graph_query_ops_first` |
+| `ARBORA-OPS-R855.6` | `tests/api/test_resolve.py::test_catalog_question_is_not_routed_without_a_visible_nl_planner` |
 
 ## ARBORA-OPS-R860 acceptance
 
