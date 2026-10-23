@@ -653,7 +653,7 @@
       "title": "A request verb is not evidence for an op",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "b71e36444f67"
+        "3597c590c8c9"
       ],
       "verified_by": [
         "tests/api/test_resolve.py:314",
@@ -1616,9 +1616,9 @@
       "title": "arbora serves and reports the prompts, skills and resources of each connector",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "61bb886d0ce3",
-        "abaee0920e29",
-        "b71e36444f67"
+        "3597c590c8c9",
+        "6815715c27d8",
+        "abaee0920e29"
       ],
       "verified_by": [
         "tests/fleet/test_connector_surfaces.py:133",
@@ -1636,8 +1636,8 @@
       "title": "The served gateway forwards the relay ops",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "61bb886d0ce3",
-        "b71e36444f67"
+        "3597c590c8c9",
+        "6815715c27d8"
       ],
       "verified_by": [
         "tests/mcp_server/test_late_gateway_parity.py:29",
@@ -1754,8 +1754,8 @@
       "title": "A connector that declares its data resources still onboards",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "3eb7a4fcbd85",
-        "7a16782597c9"
+        "846e2eb35dff",
+        "963a7d457622"
       ],
       "verified_by": [
         "tests/fleet/test_resources_manifest_capture.py:33"
@@ -1766,7 +1766,7 @@
       "title": "The pack capture stays under the connector rate limit",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "3eb7a4fcbd85"
+        "963a7d457622"
       ],
       "verified_by": [
         "tests/fleet/test_paced_capture.py:23"
