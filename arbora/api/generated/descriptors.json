@@ -2404,6 +2404,30 @@
     {
       "domain": "eg",
       "examples": [
+        "GetCurrentPlan coordination"
+      ],
+      "id": "eg.coordination.GetCurrentPlan",
+      "summary": "authoritative owner-bound current plan and live lease snapshot",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "GetRunWorkItem coordination"
+      ],
+      "id": "eg.coordination.GetRunWorkItem",
+      "summary": "owner-bound immutable run admission and current caller-safe WorkItem snapshot",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
         "GetWorkItem coordination"
       ],
       "id": "eg.coordination.GetWorkItem",
@@ -2492,6 +2516,18 @@
       ],
       "id": "eg.coordination.ObserveDevelopmentLane",
       "summary": "monotonic retained-footprint observation replaces the prior native charge; now_ms is authority-normalized",
+      "tags": [
+        "eg"
+      ],
+      "verb": "write"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "PublishCurrentPlan coordination"
+      ],
+      "id": "eg.coordination.PublishCurrentPlan",
+      "summary": "immutable owner and live fence bind revisioned current-plan publication",
       "tags": [
         "eg"
       ],
@@ -6210,5 +6246,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "3bbae9d1d5b7b376fb6bb74d3c75a7e0f97d94f8d5cde9ab739927686b00dda5"
+  "registry_digest": "0d815ecc757df7970292c7351707af550aedb7559ebe541252bcc16e34a1143a"
 }

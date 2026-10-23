@@ -3,7 +3,7 @@
   "body": null,
   "component_id": "arbora.agents.plan_run.feature_schema",
   "content_digest": null,
-  "engine_version": "2.27.4",
+  "engine_version": "2.27.5",
   "export": null,
   "kind": "feature_schema",
   "schema_version": null
