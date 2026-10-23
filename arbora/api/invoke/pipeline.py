@@ -331,7 +331,12 @@ async def _effective_op(
         return OpError("UNAVAILABLE", {"reason": "fleet effect authority unavailable"})
     try:
         resolved = await services.fleet_effect(op, params, caller)
-    except Exception:
+    except Exception as exc:  # noqa: BLE001 - refused closed; the cause is logged
+        _logger.warning(
+            "fleet effect authority refused fleet.call: %s: %s",
+            type(exc).__name__,
+            exc,
+        )
         return OpError("UNAVAILABLE", {"reason": "fleet effect authority unavailable"})
     if isinstance(resolved, FleetCallDecision):
         if not _valid_fleet_decision(op, resolved):

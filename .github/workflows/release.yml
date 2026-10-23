@@ -106,8 +106,10 @@ jobs:
     # chain measures ~15-17 min (commit hooks, prose lint, locked
     # environment type check, and the full pytest suite whenever the
     # pr-test-scope resolves to FULL), so the old 15 min PR cap killed
-    # the job mid-suite on every pull request; PR gets 25.
-    timeout-minutes: ${{ github.event_name == 'pull_request' && 25 || 60 }}
+    # the job mid-suite on every pull request. Measured 2026-10-23 on the
+    # #358 train: 25 min elapsed with 4543 tests passed in 16 min, and
+    # the job was cancelled at the 25 min cap during teardown; PR gets 35.
+    timeout-minutes: ${{ github.event_name == 'pull_request' && 35 || 60 }}
     name: gates
     needs: [freeze-gate-source]
     # Homelab self-hosted runner for same-repo push/PR traffic (the org
@@ -438,8 +440,8 @@ jobs:
       - *release-checkout
       - *release-uv
 
-      - name: Build wheel
-        run: uv build --wheel --out-dir dist
+      - name: Build wheel and sdist
+        run: uv build --out-dir dist
 
       # Release-blocking: every non-Python file tracked under arbora/ must be
       # package data. Source-tree tests cannot see a file the wheel leaves out
@@ -450,7 +452,9 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: arbora-wheel
-          path: dist/arbora-*.whl
+          path: |
+            dist/arbora-*.whl
+            dist/arbora-*.tar.gz
           if-no-files-found: error
           retention-days: 7
 
@@ -559,7 +563,7 @@ jobs:
             --index-url https://pypi.org/simple -r "$RUNNER_TEMP/locked-test.txt"
           boot="$RUNNER_TEMP/real-boot"
           mkdir -p "$boot"
-          cp tests/test_real_boot.py tests/_boot_connector.py tests/_boot_model.py tests/conftest.py "$boot/"
+          cp tests/test_real_boot.py tests/_boot_connector.py tests/_boot_model.py tests/_boot_ingest_connector.py tests/_boot_ingest_manifest.yml tests/conftest.py "$boot/"
           printf '%s\n' '[pytest]' 'asyncio_mode = auto' 'markers =' \
             '    spec: binds a test to a spec requirement ID' \
             '    real_boot: boots a real arbora process against a real EG server' \
@@ -617,10 +621,10 @@ jobs:
         with:
           version: '0.13.1'
 
-      - name: Publish wheel
+      - name: Publish wheel and sdist
         env:
           UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-        run: uv publish --check-url https://pypi.org/simple dist/arbora-*.whl
+        run: uv publish --check-url https://pypi.org/simple dist/arbora-*.whl dist/arbora-*.tar.gz
 
   github-release:
     name: github-release
@@ -657,10 +661,13 @@ jobs:
       - name: Create or update the GitHub release
         run: |
           set -euo pipefail
+          # A pre-release tag (v0.1.8.dev1, v0.1.8rc1) never becomes the latest release.
+          kind=--latest
+          case "$TAG" in *dev*|*rc*|*a[0-9]*|*b[0-9]*) kind=--prerelease ;; esac
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --latest \
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" "$kind" \
               --notes-file "$RUNNER_TEMP/notes.md"
           else
-            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --latest \
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag "$kind" \
               --title "Release $TAG" --notes-file "$RUNNER_TEMP/notes.md"
           fi

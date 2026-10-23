@@ -222,6 +222,7 @@ Preserve all existing R003 tasks and receipts. These added runtime cases have no
 - [ ] **ARBORA-FLEET-R037.5 (Evidence):** Emit the evidence.
 - [ ] **ARBORA-FLEET-R037.6 (Hot-path proof):** Add the served hot-path test.
 - [ ] **ARBORA-FLEET-R038:** One protocol stack with one implementation per role.
+- [x] `ARBORA-FLEET-R027.8` — `onboard-fleet --allow-mass-withdrawal` passes the operator's decision to the pack import.
 
 - [ ] **ARBORA-FLEET-R041:** Registering a connector imports its full pack with no manual step (rollup).
 - [ ] **ARBORA-FLEET-R041.1:** Model.

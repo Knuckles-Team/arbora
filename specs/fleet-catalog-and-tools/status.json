@@ -42,6 +42,7 @@
     "ARBORA-FLEET-R012",
     "ARBORA-FLEET-R013",
     "ARBORA-FLEET-R014",
+    "ARBORA-FLEET-R014.1",
     "ARBORA-FLEET-R015",
     "ARBORA-FLEET-R015.1",
     "ARBORA-FLEET-R016",
@@ -65,6 +66,7 @@
     "ARBORA-FLEET-R029",
     "ARBORA-FLEET-R029.1",
     "ARBORA-FLEET-R026",
+    "ARBORA-FLEET-R026.1",
     "ARBORA-FLEET-R027",
     "ARBORA-FLEET-R028",
     "ARBORA-FLEET-R030",
@@ -110,6 +112,7 @@
     "ARBORA-FLEET-R019.2",
     "ARBORA-FLEET-R021.2",
     "ARBORA-FLEET-R027.7",
+    "ARBORA-FLEET-R027.8",
     "ARBORA-FLEET-R003.4",
     "ARBORA-FLEET-R003.5",
     "ARBORA-FLEET-R003.6",
@@ -614,7 +617,7 @@
     {
       "id": "ARBORA-FLEET-R014",
       "title": "Resolver ranks catalog items with partitioned feedback",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "43db6b7ac49b",
         "a2f74cb9621d"
@@ -623,6 +626,21 @@
         "tests/api/test_resolve.py:114",
         "tests/api/test_resolve.py:161",
         "tests/api/test_resolve.py:170"
+      ],
+      "rollup_of": [
+        "ARBORA-FLEET-R014.1"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R014.1",
+      "title": "`ask` does not route a plain question to an op it cannot run",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/api/test_resolve.py:259",
+        "tests/api/test_resolve.py:273",
+        "tests/api/test_resolve.py:288",
+        "tests/api/test_resolve.py:303"
       ]
     },
     {
@@ -631,7 +649,6 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "68e31b75248a",
-        "a2d20bed16b5",
         "e1d37ca10ef7",
         "fdd59af317ce"
       ],
@@ -648,7 +665,6 @@
       "title": "Arbora classifies a failed `fleet.call` by its real cause",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "a2d20bed16b5",
         "fdd59af317ce"
       ],
       "verified_by": [
@@ -898,12 +914,29 @@
     {
       "id": "ARBORA-FLEET-R026",
       "title": "The catalog admits each server on its own",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "5ecdfe7fbe9a",
         "619d25ac8e69",
         "d9015e6d6cda"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_fleet_catalog_reader.py:366"
+      ],
+      "rollup_of": [
+        "ARBORA-FLEET-R026.1"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R026.1",
+      "title": "Catalog scale bound",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5ecdfe7fbe9a"
+      ],
+      "verified_by": [
+        "tests/test_fleet_catalog_reader.py:366"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R027",
@@ -924,7 +957,8 @@
         "ARBORA-FLEET-R027.4",
         "ARBORA-FLEET-R027.5",
         "ARBORA-FLEET-R027.6",
-        "ARBORA-FLEET-R027.7"
+        "ARBORA-FLEET-R027.7",
+        "ARBORA-FLEET-R027.8"
       ]
     },
     {
@@ -1267,6 +1301,17 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R027.8",
+      "title": "Operator-approved mass withdrawal",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "524b0ceaaf9c"
+      ],
+      "verified_by": [
+        "tests/fleet/test_fleet_access_contracts.py:226"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R003.4",
@@ -1659,8 +1704,10 @@
     {
       "id": "ARBORA-FLEET-R041.10",
       "title": "Rules unchanged",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "a31aba1d54a2"
+      ],
       "verified_by": [
         "tests/fleet/test_handshake_onboard.py:251"
       ]

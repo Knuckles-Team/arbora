@@ -9,6 +9,10 @@ Governing [spec](spec.md) and [plan](plan.md).
 - [ ] Run every T-RL positive/negative fixture in portable CI and release-only hosted qualification at the exact candidate digest.
 - [ ] Publish public receipt and operator instructions; change status only when landed and acceptance evidence independently exists.
 
+## ARBORA-RELEASE-R001
+
+- [x] `ARBORA-RELEASE-R001.1` — a version tag publishes the wheel and the sdist to PyPI with no manual approval.
+
 ## ARBORA-RELEASE-R003 (split 2026-10-09: net-new, 7 readiness-obligation code roots)
 
 - [ ] `ARBORA-RELEASE-R003.1` — typed `ExitCriterionRow`/`ExitCriteriaMatrix` model plus `read_exit_criteria_matrix` validation, with refusal tests for a duplicate obligation ID, an empty matrix, and a malformed test-ID reference.
@@ -18,6 +22,7 @@ Governing [spec](spec.md) and [plan](plan.md).
 - [x] `ARBORA-RELEASE-R003.4.1` — served `agents.plan_run`: engine `TaskPlan` decision, checked receipt, harness `DependencyPlan` execution, engine refusals unchanged (c22, c21).
 - [x] `ARBORA-RELEASE-R003.4.2` — publish the plan to the work item through `PublishCurrentPlan` for replay.
 - [ ] `ARBORA-RELEASE-R003.4.3` — raise the engine floor to `epistemic-graph[server]>=2.27.5` once it is on the package index (agent-utilities 3.1.0 floor done); then rerun the served tests on the real engine facade.
+- [ ] `ARBORA-RELEASE-R003.4.4` — pin the exported schema body with `gen_api`, check it at start-up and publish it once per tenant. After EG 2.27.5, confirm the export module, raise the floor and regenerate.
 - [ ] `ARBORA-RELEASE-R003.5` — connector-certification row.
 - [ ] `ARBORA-RELEASE-R003.6` — write-back receipt row.
 - [ ] `ARBORA-RELEASE-R003.7` — browser-and-identity-provider login probe row.

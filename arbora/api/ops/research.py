@@ -28,6 +28,7 @@ from __future__ import annotations
 import asyncio
 import datetime as _dt
 import hashlib
+import logging
 import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -47,12 +48,14 @@ from arbora.api.registry import (
     Verb,
 )
 
+logger = logging.getLogger(__name__)
+
 SEARCH_SERVER = "searxng-mcp"
 SEARCH_TOOL = "web_search"
 WEBARCHIVER_SERVER = "webarchiver-mcp"
-WEBARCHIVER_EXTRACT = "web_extract"
+#: The SDK web-source contract tool both backends serve.
+WEB_EXTRACT = "web_extract"
 ARCHIVEBOX_SERVER = "archivebox-mcp"
-ARCHIVEBOX_EXTRACT = "web_extract"
 
 #: The SourceIngest streams pages and chunks are committed under. Each record
 #: is bound to the fleet connector that fetched it, so its mapping reference is
@@ -69,7 +72,12 @@ _CHUNK_OVERLAP = 150
 
 #: webarchiver failures that are retried once through ArchiveBox; every other
 #: refusal (robots_disallowed, policy_refused, egress_denied, ...) is final.
-FALLBACK_REASONS = frozenset({"upstream_failed", "unreachable"})
+FALLBACK_REASONS = frozenset({"upstream_failed", "unreachable", "timeout"})
+#: The bound on one backend's ``web_extract`` call (ARBORA-OPS-R067.9). A
+#: backend that does not answer in time is a ``timeout`` failure, never a hang.
+PAGE_TIMEOUT_S = 30.0
+#: The other backend tried once after a fallback-eligible failure.
+_FALLBACK_BACKEND = {"webarchiver": "archivebox", "archivebox": "webarchiver"}
 
 
 class ResearchWebParams(Params):
@@ -351,85 +359,110 @@ class FleetCaller:
         )
 
 
-async def fetch_webarchiver(fleet: FleetCaller, hit: SearchHit) -> WebPage:
+async def _fetch_web_source(
+    fleet: FleetCaller,
+    backend: str,
+    server: str,
+    hit: SearchHit,
+    timeout_s: float = PAGE_TIMEOUT_S,
+) -> WebPage:
+    """One page through a connector's SDK web-source contract ``web_extract``.
+
+    The argument is ``{"request": WebFetchRequest}``; the answer is a
+    ``WebPageResult`` (``kind: page``) or a ``WebFetchRefusal`` (``kind:
+    refusal``) of ``agent_connector_sdk.ports.web_source``.
+    """
+    if timeout_s <= 0:
+        raise FetchFailed(backend, "timeout")
     try:
-        raw = await fleet.call(
-            WEBARCHIVER_SERVER, WEBARCHIVER_EXTRACT, {"url": hit.url}
+        raw = await asyncio.wait_for(
+            fleet.call(server, WEB_EXTRACT, {"request": {"url": hit.url}}),
+            timeout=timeout_s,
         )
     except OperationRefused:
         raise
+    except TimeoutError as exc:
+        logger.warning("research.web %s web_extract timed out", backend)
+        raise FetchFailed(backend, "timeout") from exc
     except Exception as exc:  # noqa: BLE001 - a child that cannot answer is unreachable
-        raise FetchFailed("webarchiver", "unreachable") from exc
+        raise FetchFailed(backend, "unreachable") from exc
     error = _is_error(raw)
-    data = _unwrap(raw)
-    page = data.get("page") if isinstance(data, Mapping) else None
     if error:
-        raise FetchFailed("webarchiver", _reason(error))
-    if not isinstance(page, Mapping) or not page.get("text"):
-        raise FetchFailed("webarchiver", "upstream_failed")
-    return WebPage(
-        url=hit.url,
-        canonical_url=canonical_url(str(page.get("canonical_url") or hit.url)),
-        title=str(page.get("title") or hit.title),
-        text=str(page["text"]),
-        backend="webarchiver",
-        fetched_at=str(data.get("retrieved_at") or _now()),
-        author=str(page.get("author") or ""),
-        published=str(page.get("published") or ""),
-        site_name=str(page.get("site_name") or ""),
-        content_sha256=str(
-            data.get("content_digest") or page.get("content_sha256") or ""
-        ),
-        fetch_mode=str(data.get("fetch_mode") or "http"),
-    )
-
-
-async def fetch_archivebox(fleet: FleetCaller, hit: SearchHit) -> WebPage:
-    try:
-        raw = await fleet.call(ARCHIVEBOX_SERVER, ARCHIVEBOX_EXTRACT, {"url": hit.url})
-    except OperationRefused:
-        raise
-    except Exception as exc:  # noqa: BLE001 - a child that cannot answer is unreachable
-        raise FetchFailed("archivebox", "unreachable") from exc
-    error = _is_error(raw)
+        raise FetchFailed(backend, _reason(error))
     data = _unwrap(raw)
-    text = str(data.get("text") or "") if isinstance(data, Mapping) else ""
-    if error:
-        raise FetchFailed("archivebox", _reason(error))
+    if not isinstance(data, Mapping):
+        raise FetchFailed(backend, "upstream_failed")
+    if data.get("kind") == "refusal":
+        raise FetchFailed(backend, _reason(str(data.get("reason") or "")))
+    text = str(data.get("text_markdown") or "")
     if not text.strip():
-        raise FetchFailed("archivebox", "extract_empty")
+        raise FetchFailed(backend, "extract_empty")
     return WebPage(
         url=hit.url,
-        canonical_url=canonical_url(str(data.get("canonical_url") or hit.url)),
+        canonical_url=canonical_url(
+            str(data.get("canonical_url") or data.get("final_url") or hit.url)
+        ),
         title=str(data.get("title") or hit.title),
         text=text,
-        backend="archivebox",
+        backend=backend,
         fetched_at=str(data.get("retrieved_at") or _now()),
         author=str(data.get("author") or ""),
         published=str(data.get("published_at") or ""),
-        site_name=str(data.get("site_name") or ""),
+        site_name="",
         content_sha256=str(data.get("content_digest") or ""),
-        fetch_mode=str(data.get("extractor") or "archivebox"),
+        fetch_mode=str(data.get("backend") or backend),
     )
 
 
+async def fetch_webarchiver(
+    fleet: FleetCaller, hit: SearchHit, timeout_s: float = PAGE_TIMEOUT_S
+) -> WebPage:
+    return await _fetch_web_source(
+        fleet, "webarchiver", WEBARCHIVER_SERVER, hit, timeout_s
+    )
+
+
+async def fetch_archivebox(
+    fleet: FleetCaller, hit: SearchHit, timeout_s: float = PAGE_TIMEOUT_S
+) -> WebPage:
+    return await _fetch_web_source(
+        fleet, "archivebox", ARCHIVEBOX_SERVER, hit, timeout_s
+    )
+
+
+def _page_timeout(deadline: float | None) -> float:
+    """The page bound, never past the operation deadline."""
+    if deadline is None:
+        return PAGE_TIMEOUT_S
+    remaining = deadline - asyncio.get_running_loop().time()
+    return min(PAGE_TIMEOUT_S, max(0.0, remaining))
+
+
 async def fetch_page(
-    fleet: FleetCaller, hit: SearchHit, params: Mapping[str, Any]
+    fleet: FleetCaller,
+    hit: SearchHit,
+    params: Mapping[str, Any],
+    deadline: float | None = None,
 ) -> tuple[WebPage, str]:
     """Fetch through the chosen backend (ARBORA-OPS-R067.3).
 
-    webarchiver is primary. A page it fails on upstream (unreachable, timeout,
-    HTTP or render failure) is fetched once more through ArchiveBox; a policy
-    refusal such as ``robots_disallowed`` is final and never retried.
+    webarchiver is primary. A page the chosen backend fails on upstream
+    (unreachable, a ``web_extract`` call past ``PAGE_TIMEOUT_S``, HTTP or
+    render failure) is fetched once more through the other backend; a policy
+    refusal such as ``robots_disallowed`` is final and never retried. Every
+    call is bounded by the page timeout and the operation deadline
+    (ARBORA-OPS-R067.9).
     """
-    if params["backend"] == "archivebox":
-        return await fetch_archivebox(fleet, hit), ""
+    fetchers = {"webarchiver": fetch_webarchiver, "archivebox": fetch_archivebox}
+    chosen = str(params["backend"])
     try:
-        return await fetch_webarchiver(fleet, hit), ""
+        return await fetchers[chosen](fleet, hit, _page_timeout(deadline)), ""
     except FetchFailed as failed:
         if failed.reason not in FALLBACK_REASONS:
             raise
-        return await fetch_archivebox(fleet, hit), failed.reason
+        other = _FALLBACK_BACKEND[chosen]
+        page = await fetchers[other](fleet, hit, _page_timeout(deadline))
+        return page, failed.reason
 
 
 # ------------------------------------------------------------ ingest / enrich
@@ -651,7 +684,7 @@ async def handle_research_web(
             timed_out = True
             break
         try:
-            page, fallback_from = await fetch_page(fleet, hit, params)
+            page, fallback_from = await fetch_page(fleet, hit, params, deadline)
         except FetchFailed as failed:
             skipped.append(
                 {"url": hit.url, "backend": failed.backend, "reason": failed.reason}

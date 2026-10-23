@@ -138,7 +138,10 @@ class _RecordingSink:
     def __init__(self, _client: Any, authority: Any) -> None:
         self._authority = authority
 
-    async def import_pack(self, pack: Any) -> Any:
+    async def import_pack(
+        self, pack: Any, *, allow_mass_withdrawal: bool = False
+    ) -> Any:
+        del allow_mass_withdrawal
         binding, _context = await self._authority(pack.connector)
         _RecordingSink.imported.append((pack.connector, binding))
         return SimpleNamespace(result="imported")

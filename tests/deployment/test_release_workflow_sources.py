@@ -541,10 +541,42 @@ def test_generator_scanner_runs_for_main_and_selected_pr_without_publication():
     assert "if" not in jobs["build"]
     assert jobs["build"]["needs"] == ["gates"]
     build_commands = "\n".join(step.get("run", "") for step in jobs["build"]["steps"])
-    assert "uv build --wheel --out-dir dist" in build_commands
+    assert "uv build --out-dir dist" in build_commands
     assert "wheel_boot_check.py contents" in build_commands
     assert jobs["install-smoke"]["if"] == "github.event_name != 'pull_request'"
     assert (
         jobs["publish-pypi"]["if"]
         == "github.ref_type == 'tag' && startsWith(github.ref_name, 'v')"
     )
+
+
+# spec: ARBORA-RELEASE-R001.1
+def test_tag_publishes_wheel_and_sdist() -> None:
+    jobs = _workflow()["jobs"]
+    build_runs = [step.get("run", "") for step in jobs["build"]["steps"]]
+    assert any(
+        run.startswith("uv build") and "--wheel" not in run and "--sdist" not in run
+        for run in build_runs
+    ), "build must make both the wheel and the sdist"
+    upload = next(
+        step
+        for step in jobs["build"]["steps"]
+        if str(step.get("uses", "")).startswith("actions/upload-artifact")
+        and step["with"]["name"] == "arbora-wheel"
+    )
+    assert "dist/arbora-*.whl" in upload["with"]["path"]
+    assert "dist/arbora-*.tar.gz" in upload["with"]["path"]
+    publish = jobs["publish-pypi"]
+    assert "github.ref_type == 'tag'" in publish["if"]
+    command = next(
+        step["run"] for step in publish["steps"] if "uv publish" in step.get("run", "")
+    )
+    assert "dist/arbora-*.whl" in command and "dist/arbora-*.tar.gz" in command
+
+
+# spec: ARBORA-RELEASE-R001.1
+def test_prerelease_tag_is_never_the_latest_github_release() -> None:
+    steps = _workflow()["jobs"]["github-release"]["steps"]
+    run = next(s["run"] for s in steps if "gh release create" in s.get("run", ""))
+    assert "*dev*" in run and "--prerelease" in run
+    assert "--latest \\" not in run

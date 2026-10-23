@@ -9,7 +9,7 @@ from typing import Literal
 
 from arbora.client._schema import _expanded_spec
 
-REGISTRY_DIGEST = "04d459d0fbbfe7c67af34adf3a746fc406d79225a563cfb2c41748892709291b"
+REGISTRY_DIGEST = "0d815ecc757df7970292c7351707af550aedb7559ebe541252bcc16e34a1143a"
 API_VERSION = "1"
 type OperationId = Literal[
     "access.check",
@@ -212,6 +212,8 @@ type OperationId = Literal[
     "eg.coordination.GapTransition",
     "eg.coordination.GapUpsert",
     "eg.coordination.GetControlLease",
+    "eg.coordination.GetCurrentPlan",
+    "eg.coordination.GetRunWorkItem",
     "eg.coordination.GetWorkItem",
     "eg.coordination.GetWorkItemOutcome",
     "eg.coordination.IssueControlLease",
@@ -220,6 +222,7 @@ type OperationId = Literal[
     "eg.coordination.ListWorkItems",
     "eg.coordination.MintWorkItemClaimCapability",
     "eg.coordination.ObserveDevelopmentLane",
+    "eg.coordination.PublishCurrentPlan",
     "eg.coordination.QueryDevelopmentLane",
     "eg.coordination.QueryWorkItemReservation",
     "eg.coordination.ReclaimExpiredCapacity",
@@ -307,6 +310,7 @@ type OperationId = Literal[
     "eg.ingestion.AddEmbedding",
     "eg.ingestion.Asr",
     "eg.ingestion.Discover",
+    "eg.ingestion.EnrichDocument",
     "eg.ingestion.IndexRepository",
     "eg.ingestion.ObserveScreen",
     "eg.ingestion.ParseFile",
@@ -386,6 +390,7 @@ type OperationId = Literal[
     "eg.query.RankByProvenance",
     "eg.query.RecomputeMaterialization",
     "eg.query.ResolveConflict",
+    "eg.query.SelectWebPages",
     "eg.query.Sql",
     "eg.query.StaleMaterializations",
     "eg.query.TxnUnifiedQuery",

@@ -236,3 +236,76 @@ def test_catalog_question_is_not_routed_without_a_visible_nl_planner() -> None:
 
     assert resolution.op is None
     assert resolution.fallback is False
+
+
+_ASK_DESCRIPTORS = (
+    Descriptor(
+        id="agents.tasks.get",
+        verb="ask",
+        summary="Show one agent task",
+        examples=("show the task",),
+        params_schema={"required": ["task_id"]},
+    ),
+    Descriptor(
+        id="fleet.status",
+        verb="ask",
+        summary="Show fleet health",
+        examples=("show fleet status",),
+        params_schema={},
+    ),
+)
+
+
+@pytest.mark.spec("ARBORA-FLEET-R014.1")
+def test_ask_match_needing_a_required_param_yields_to_nl_planner() -> None:
+    resolver = IntentResolver()
+    question = "Show open issues across GitHub, GitLab and Plane"
+    resolution = resolver.resolve(
+        "ask", question, (_ASK_DESCRIPTORS[0], _NL_DESCRIPTOR), scope_ref=None
+    )
+
+    assert resolution.op == "query.nl"
+    assert resolution.fallback is True
+    assert resolution.params == {"text": question}
+    assert "agents.tasks.get" in resolution.alternatives
+
+
+@pytest.mark.spec("ARBORA-FLEET-R014.1")
+def test_ask_prefers_the_next_runnable_match_over_one_missing_params() -> None:
+    resolver = IntentResolver()
+    resolution = resolver.resolve(
+        "ask",
+        "show the task fleet status",
+        (*_ASK_DESCRIPTORS, _NL_DESCRIPTOR),
+        scope_ref=None,
+    )
+
+    assert resolution.op == "fleet.status"
+    assert resolution.missing_required == ()
+    assert resolution.fallback is False
+
+
+@pytest.mark.spec("ARBORA-FLEET-R014.1")
+def test_ask_match_with_its_required_param_supplied_still_wins() -> None:
+    resolver = IntentResolver()
+    resolution = resolver.resolve(
+        "ask",
+        "show the task",
+        (*_ASK_DESCRIPTORS, _NL_DESCRIPTOR),
+        scope_ref=None,
+        params={"task_id": "t1"},
+    )
+
+    assert resolution.op == "agents.tasks.get"
+    assert resolution.missing_required == ()
+
+
+@pytest.mark.spec("ARBORA-FLEET-R014.1")
+def test_ask_without_nl_keeps_the_missing_params_preview() -> None:
+    resolver = IntentResolver()
+    resolution = resolver.resolve(
+        "ask", "show the task", (_ASK_DESCRIPTORS[0],), scope_ref=None
+    )
+
+    assert resolution.op == "agents.tasks.get"
+    assert resolution.missing_required == ("task_id",)

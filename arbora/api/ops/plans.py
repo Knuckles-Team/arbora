@@ -273,20 +273,38 @@ def _plan_model(context: Any) -> Any:
     return resolve_model(model_id)
 
 
+async def _feature_schema(context: Any, tenant: str) -> Mapping[str, Any]:
+    """The tenant's published task-plan schema pin (ARBORA-RELEASE-R003.4.4)."""
+    fixed = context.services.get("task_plan_feature_schema")
+    if isinstance(fixed, Mapping):
+        return fixed
+    pins = context.services.get("task_plan_schema_pins")
+    publish = context.services.get("task_plan_schema_publish")
+    if pins is None or publish is None:
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": "no verified task-plan schema pin"}
+        )
+    try:
+        return await pins.for_tenant(tenant, publish)
+    except OperationRefused:
+        raise
+    except Exception as exc:
+        raise OperationRefused(
+            "UNAVAILABLE",
+            {"reason": f"task-plan schema publish failed: {type(exc).__name__}"},
+        ) from exc
+
+
 async def handle_plan_run(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Decide, verify, attach and execute one task plan for the verified caller."""
     parsed = PlanRunParams.model_validate(dict(params))
-    feature_schema = context.services.get("task_plan_feature_schema")
-    if not isinstance(feature_schema, Mapping):
-        raise OperationRefused(
-            "UNAVAILABLE", {"reason": "no published task-plan feature schema pin"}
-        )
+    caller = context.caller
+    feature_schema = await _feature_schema(context, str(caller.tenant))
     engine = context.services.get("task_plan_engine") or engine_task_plan(
         context.client
     )
-    caller = context.caller
     plan, record = await decide_task_plan(
         engine,
         parsed.plan,
