@@ -106,6 +106,7 @@ def run_web_ui(
     *,
     host: str | None = None,
     port: int | None = None,
+    session_boundary: Any = None,
 ) -> None:
     """Serve the WebUI dashboard until ``stop_event`` is set.
 
@@ -213,11 +214,17 @@ def run_web_ui(
         lambda operation: invoke_governed_helper(operation, deadline=10.0),
         session_revalidator=revalidate_browser_control_session,
     )
+    from arbora.webui_host.session_boundary import identity_factory_kwargs
+
+    identity_kwargs = identity_factory_kwargs(
+        config.webui_auth_mode, session_boundary, factory=create_agent_web_app
+    )
     app = create_agent_web_app(
         agent,
         workspace_helpers=helpers,
         listener_host=bind_host,
         application_composer=compose_web_application,
+        **identity_kwargs,
         **contact_kwargs,
         **browser_control_kwargs,
     )

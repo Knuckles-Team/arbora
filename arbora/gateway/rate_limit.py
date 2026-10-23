@@ -105,16 +105,37 @@ class GatewayRateLimitMiddleware:
     # ------------------------------------------------------------------
     def _bucket_key(self) -> str:
         actor = current_actor()
-        if actor.tenant_id:
-            raw = f"tenant:{actor.tenant_id}"
-        elif actor.authenticated and actor.actor_id:
-            raw = f"actor:{actor.actor_id}"
+        return self._identity_bucket_key(
+            actor.tenant_id, actor.actor_id, actor.authenticated
+        )
+
+    def _identity_bucket_key(
+        self, tenant: str | None, principal: str | None, authenticated: bool
+    ) -> str:
+        if tenant:
+            raw = f"tenant:{tenant}"
+        elif authenticated and principal:
+            raw = f"actor:{principal}"
         else:
             raw = "anonymous"
         digest = hashlib.blake2s(
             raw.encode("utf-8"), key=self._privacy_key, digest_size=12
         ).hexdigest()
         return f"bucket_{digest}"
+
+    def consume_verified_caller(self, caller: Any) -> tuple[bool, float]:
+        """Use explicit verified operation authority, not ambient process identity."""
+        from arbora.api.invoke.steps import VerifiedCaller
+
+        if not isinstance(caller, VerifiedCaller) or not caller.authenticated:
+            raise PermissionError("verified caller required for browser rate policy")
+        if self.rate <= 0:
+            return True, 0.0
+        key = self._identity_bucket_key(caller.tenant, caller.principal, True)
+        decision = self._consume(key)
+        if not decision[0]:
+            GATEWAY_RATE_LIMITED.labels(tenant=key).inc()
+        return decision
 
     def _consume(self, key: str) -> tuple[bool, float]:
         now = time.monotonic()

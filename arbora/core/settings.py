@@ -279,6 +279,11 @@ class ArboraConfig(BaseModel):
     )
     enable_otel: bool = Field(default=False, alias="ENABLE_OTEL", description="")
     enable_web_ui: bool = Field(default=False, alias="ENABLE_WEB_UI", description="")
+    webui_auth_mode: Literal["required", "none", "eg", "oidc"] = Field(
+        default="required",
+        alias="WEBUI_AUTH_MODE",
+        description="Explicit WebUI identity mode; no-auth is never a verifier fallback.",
+    )
     engine_tls_profile: str | None = Field(
         default=None, alias="ENGINE_TLS_PROFILE", description=""
     )
