@@ -78,30 +78,40 @@ def test_overflow_revision_refused_before_registration(signed):
         replace(signed[0], expected_revision=2**64 - 1)
 
 
-@pytest.mark.asyncio
-async def test_published_contract_refuses_unknown_reference_before_transport():
-    class Transport:
-        async def _send(self, *args, **kwargs):
-            pytest.fail("unsupported operation reached transport")
+class _FailingTransport:
+    """Records each engine request, then fails the call (fail-closed check)."""
 
+    def __init__(self) -> None:
+        self.requests: list[tuple[tuple, dict]] = []
+
+    async def _send(self, *args, **kwargs):
+        self.requests.append((args, kwargs))
+        raise ConnectionError("engine unreachable")
+
+
+@pytest.mark.asyncio
+async def test_published_contract_sends_reference_inspection_and_fails_closed():
+    # epistemic-graph 2.27.5 publishes session.inspect_reference (EG #695), so
+    # the request reaches the transport; a failed call still refuses.
+    transport = _FailingTransport()
     resolver = EngineOriginalSessionResolver(
-        Transport(), graph="identity", tenant="tenant:one"
+        transport, graph="identity", tenant="tenant:one"
     )
     with pytest.raises(IdentityUnavailable):
         await resolver.resolve_original_session("session:original")
+    assert transport.requests, "inspect_reference never reached the transport"
 
 
 @pytest.mark.asyncio
-async def test_published_contract_refuses_non_touch_before_transport():
+async def test_published_contract_sends_non_touch_resolve_and_fails_closed():
     from arbora.identity.engine_ports import EngineSessionAuthority
 
-    class Transport:
-        async def _send(self, *args, **kwargs):
-            pytest.fail("unsupported non-touch request reached transport")
-
-    authority = EngineSessionAuthority(Transport(), graph="identity", refresh=False)
+    # epistemic-graph 2.27.5 publishes the non-touch (refresh=false) resolve.
+    transport = _FailingTransport()
+    authority = EngineSessionAuthority(transport, graph="identity", refresh=False)
     with pytest.raises(IdentityUnavailable):
         await authority.resolve_session("synthetic-credential")
+    assert transport.requests, "non-touch resolve never reached the transport"
 
 
 @pytest.mark.asyncio
