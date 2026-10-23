@@ -2591,10 +2591,8 @@
     {
       "id": "ARBORA-OPS-R855.1",
       "title": "Routing",
-      "delivery_state": "VERIFIED",
-      "landed_in": [
-        "d32bf1d14023"
-      ],
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": [
         "tests/api/test_resolve.py:191"
       ]
@@ -2616,10 +2614,8 @@
     {
       "id": "ARBORA-OPS-R855.4",
       "title": "Ask answers from the graph",
-      "delivery_state": "VERIFIED",
-      "landed_in": [
-        "d32bf1d14023"
-      ],
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": [
         "tests/api/test_resolve.py:192"
       ]
@@ -2627,10 +2623,8 @@
     {
       "id": "ARBORA-OPS-R855.5",
       "title": "Find surfaces catalog assets",
-      "delivery_state": "VERIFIED",
-      "landed_in": [
-        "d32bf1d14023"
-      ],
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": [
         "tests/api/test_resolve.py:218"
       ]
@@ -2638,10 +2632,8 @@
     {
       "id": "ARBORA-OPS-R855.6",
       "title": "Governed routing only",
-      "delivery_state": "VERIFIED",
-      "landed_in": [
-        "d32bf1d14023"
-      ],
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": [
         "tests/api/test_resolve.py:231"
       ]
