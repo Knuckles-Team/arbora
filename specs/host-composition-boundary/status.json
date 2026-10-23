@@ -1920,10 +1920,10 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "191af7948d99",
+        "28cc061c8f06",
         "34077185335e",
         "80f6b7b53f91",
-        "c7208d7d3822",
-        "ceaa3da1bbcc"
+        "c7208d7d3822"
       ],
       "verified_by": [
         "tests/agent_host/test_log_access.py:442",
@@ -1957,6 +1957,7 @@
       "title": "Retain restart acceptance",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "28cc061c8f06",
         "80f6b7b53f91",
         "c7208d7d3822",
         "ceaa3da1bbcc"
@@ -1988,6 +1989,7 @@
       "title": "Complete consumer metadata presentation",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "28cc061c8f06",
         "ceaa3da1bbcc"
       ],
       "verified_by": [

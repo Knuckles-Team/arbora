@@ -59,8 +59,11 @@ async def test_production_sink_over_http_into_mounted_terminal(tmp_path: Path) -
 
 # spec: ARBORA-HOST-R009.8.2.2
 @pytest.mark.asyncio
+@pytest.mark.parametrize("write_delay", [0, 0.04])
 async def test_restarted_source_metadata_and_rotation_gap_in_terminal(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    write_delay: float,
 ) -> None:
     import time
     from dataclasses import replace
@@ -82,6 +85,13 @@ async def test_restarted_source_metadata_and_rotation_gap_in_terminal(
     )
     sink.close()
     sink = WorkspaceLogSink(str(tmp_path), "host-2", max_bytes=1024)
+    original_emit = sink._emit
+
+    def delayed_emit(*args):
+        time.sleep(write_delay)
+        return original_emit(*args)
+
+    monkeypatch.setattr(sink, "_emit", delayed_emit)
     agent = AsyncMock()
     agent.list_capabilities = AsyncMock(
         side_effect=RuntimeError("fixture catalog unavailable")
@@ -102,10 +112,21 @@ async def test_restarted_source_metadata_and_rotation_gap_in_terminal(
                     text = "".join(line.text for line in log.lines)
                     assert "host=host-1 seq=1 request=original-request" in text
                     assert "retained-message" in text
+                    # Test replay after a pause, not the sink's separate busy-I/O
+                    # refusal. A live poll racing fsync may correctly refuse.
+                    subscription = app.host_log_subscription
+                    assert subscription is not None
+                    cursor = subscription._cursor
+                    assert cursor is not None
+                    await subscription.stop()
+                    assert subscription._cursor == cursor
+                    assert reader.accepts(receipt)
                     for index in range(30):
                         await sink.emit(
                             tenant="tenant-a", request_id=str(index), message="x" * 400
                         )
+                    subscription.start()
+                    assert subscription._cursor == cursor
                     await pilot.pause(0.5)
                     text = "".join(line.text for line in log.lines)
                     assert "resume position is no longer retained" in text
