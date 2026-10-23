@@ -511,3 +511,15 @@ return JSON-RPC -32014 with HTTP 503 and no producer error details. This fixes
 identity continuity only: historical
 messages, model memory and streaming remain subject to the parent acceptance.
 No additional context store, cache or event log is introduced.
+
+## Human authority snapshot contract
+
+`ARBORA-A2A-R005.2.3` adds `arbora.identity.approval` as an injected owner contract and evaluator. It verifies the transient caller credential through `SessionAuthority`. A separate reference owner returns durable facts, scopes and the global authority revision. Those facts cannot issue credential authority. References contain no credential. The key owner must attest approval purpose and human ownership. Published EG session resolution takes a credential, not an opaque original-session reference. Its WebAuthn views provide MFA keys, not approval-purpose key authority. Both required producers remain unavailable.
+
+The evaluator reads both owners twice and compares their snapshots. This detects observed changes; a later mutation can still race the result. It is not an atomic fence or one-time consumption. There is no cached authority, fallback, automatic enrollment or renewal method. Recreating the evaluator requires the same qualified owners again. The detached signature verifier and served confirmation remain unchanged.
+
+For R005.2.4, use generated identity validation for session-reference and key reads. Verify registration proof before sending broker attestation. Credential resolution may touch idle time and change the global authority revision. The snapshot evaluator retains exact revision checks; successful integration requires a binding lifecycle that accounts for that mutation. Do not relax the comparison or infer credential authority from reference facts.
+
+## 2026-10-20 unpublished native approval naming
+
+Align the draft adapter with the unpublished native key contract. Use purpose `signed_approval` and attestation `broker_verified_ed25519`. Keep the signature domain, length encoding, field order and verification unchanged. No deployed key format or credential is migrated. Native durable and served qualification remain pending.

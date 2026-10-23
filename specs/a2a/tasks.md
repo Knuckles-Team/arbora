@@ -150,3 +150,7 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
 - [x] `ARBORA-A2A-R002.2.3.1`: bind canonical request bytes and native WorkItem locators; pass refusal tests and same-store native engine restart reads.
 
 - [ ] `ARBORA-A2A-R002.2.3.2`: compose and qualify the served queue, original-caller authority recovery and uncertain-effect reconciliation.
+
+- `ARBORA-A2A-R005.2.3`: define and test the supplied-owner snapshot evaluator. Keep real key/reference producers and full signed confirmation pending.
+
+- R005.2.4: implement generated native facts adapters and explicit registration proof verification. Qualify native producer compatibility separately before claiming served acceptance.
