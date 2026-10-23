@@ -22,7 +22,7 @@ wheels = [
 
 [[package]]
 name = "agent-connector-sdk"
-version = "0.3.8"
+version = "0.3.18"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -34,9 +34,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6a/c8/f392605c879d9891f014201cae08bd3397ce84b4998a1d89a782d628a3ac/agent_connector_sdk-0.3.8.tar.gz", hash = "sha256:614461e19825e3da7195d40603889d0f5b24df240ec9c59ed63577a3c1a1ded9", size = 740201, upload-time = "2026-10-18T15:41:31.772Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9b/12/0a8cc16e76872f16520143ac925e2989ce57ffd36ce9f27e079c2cbecdd3/agent_connector_sdk-0.3.18.tar.gz", hash = "sha256:86a912ee476f6e56329e34081e831634d40f07a083ca9b5291a1d4f57aaeb9e2", size = 757450, upload-time = "2026-10-23T03:38:51.862Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f1/74/51b74dbb28910c65229f12bc76eb411b88e7060a0fd0d4dc0734d151ae93/agent_connector_sdk-0.3.8-py3-none-any.whl", hash = "sha256:45baeeb0303918dbc9b7a0d3f08fe4c91dc44c9cac675f523d21f7e59e5db2ab", size = 740624, upload-time = "2026-10-18T15:41:29.819Z" },
+    { url = "https://files.pythonhosted.org/packages/9d/9c/542f187c014e50cf24171a33d10ed4959c4616fa62a08477981b649407b0/agent_connector_sdk-0.3.18-py3-none-any.whl", hash = "sha256:7ee79bb2680490e047d25eaa6349b8778f427e2a09870aab6f342b7c8f677eec", size = 750933, upload-time = "2026-10-23T03:38:50.403Z" },
 ]
 
 [package.optional-dependencies]
@@ -67,7 +67,7 @@ wheels = [
 
 [[package]]
 name = "agent-utilities"
-version = "3.0.1"
+version = "3.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "platformdirs" },
@@ -76,9 +76,9 @@ dependencies = [
     { name = "pydantic-ai-slim" },
     { name = "pydantic-graph" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7e/d2/b40f0b5c9551f6af5920c787c61d99db05eaab2eaff6d78fd83bd3f0a1e1/agent_utilities-3.0.1.tar.gz", hash = "sha256:f8d733c8a1feb6d24b21e277f5016baf802e52a01a0d76b2529d8530f5082d17", size = 63596, upload-time = "2026-10-17T16:04:12.077Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/01/42/c856d3973b3155a41ca184a55fb72fea7d90535954c2bb7b0c18d4f98470/agent_utilities-3.1.0.tar.gz", hash = "sha256:1539cbd00bbb34c24aa6e300d72749f98fdd258684ba5de70ad2b3d999bdf4b7", size = 119319, upload-time = "2026-10-22T19:49:00.716Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/99/9e/197d56abf9b50339b197cb1b5e33412d6c1e264e5945388fe440be30ee3d/agent_utilities-3.0.1-py3-none-any.whl", hash = "sha256:4c3ea71a9b3279b3a03a269076f898153e20b5f5402650ec9451f5141855003f", size = 61632, upload-time = "2026-10-17T16:04:10.773Z" },
+    { url = "https://files.pythonhosted.org/packages/df/b8/129fe9a03496cead1106f07f25e6d59efe593ca5a506f6c34f613f24c518/agent_utilities-3.1.0-py3-none-any.whl", hash = "sha256:b8969b4c7ff5260ef498f32a16945e4d2a033a181e9a82347cb5cbf335429fd7", size = 89951, upload-time = "2026-10-22T19:48:59.676Z" },
 ]
 
 [[package]]
@@ -466,10 +466,10 @@ webui = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], specifier = ">=0.3.7,<0.4.0" },
-    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], marker = "extra == 'gateway-widgets'", specifier = ">=0.3.7,<0.4.0" },
+    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], specifier = ">=0.3.18,<0.4.0" },
+    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], marker = "extra == 'gateway-widgets'", specifier = ">=0.3.18,<0.4.0" },
     { name = "agent-terminal-ui", marker = "extra == 'test'", specifier = ">=2.3.1" },
-    { name = "agent-utilities", specifier = ">=3.0.1,<4.0.0" },
+    { name = "agent-utilities", specifier = ">=3.1.0,<4.0.0" },
     { name = "agent-webui", marker = "extra == 'webui'", specifier = ">=2.7.1,<3.0.0" },
     { name = "aiohttp", specifier = ">=3.14.5" },
     { name = "anyio", specifier = ">=4.15.1" },

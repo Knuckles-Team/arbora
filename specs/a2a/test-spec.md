@@ -84,6 +84,12 @@ The served confirm fixture rejects missing, unknown and mixed confirmation_kind 
 
 - `tests/a2a/test_application.py::test_send_message_holds_output_until_bound_critique_passes` and `tests/a2a/test_application.py::test_send_message_rejects_untyped_preflight_and_failed_critique`: traverse held-item admission with a verified caller. Bind critique to the exact output. Missing, mismatched, rejected, or abstained verdicts leave output held. Routing alone cannot satisfy critique acceptance. These are proposed tests; no execution is claimed.
 
+## Non-blocking `message/send` (ARBORA-A2A-R001.6)
+
+- `tests/a2a/test_nonblocking_send.py::test_non_blocking_send_outlives_the_client_read_timeout`: a 31 s turn over the served HTTP route answers in under 5 s and `tasks/get` follows it to `completed`.
+- `tests/a2a/test_nonblocking_send.py::test_send_without_blocking_false_keeps_blocking`: absent, empty and `blocking: true` configurations answer completed.
+- `tests/a2a/test_nonblocking_send.py::test_unknown_send_configuration_is_refused_before_admission`: an unknown configuration field creates zero tasks.
+
 ## Additional owner requirements
 
 - `ARBORA-A2A-R001.2`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.

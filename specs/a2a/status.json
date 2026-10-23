@@ -915,9 +915,15 @@
     {
       "id": "ARBORA-A2A-R001.6",
       "title": "Non-blocking `message/send`",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "03988c246133"
+      ],
+      "verified_by": [
+        "tests/a2a/test_nonblocking_send.py:106",
+        "tests/a2a/test_nonblocking_send.py:146",
+        "tests/a2a/test_nonblocking_send.py:173"
+      ]
     },
     {
       "id": "ARBORA-A2A-R001.5.1",

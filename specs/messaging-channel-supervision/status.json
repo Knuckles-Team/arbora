@@ -74,11 +74,15 @@
     {
       "id": "ARBORA-MESSAGING-R002",
       "title": "Health-gated start",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "63a66f60915a"
+        "63a66f60915a",
+        "bc26d7b669bc"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/messaging/test_supervision.py:114",
+        "tests/messaging/test_supervision.py:93"
+      ]
     },
     {
       "id": "ARBORA-MESSAGING-R003",
@@ -88,8 +92,8 @@
         "29a592980f26"
       ],
       "verified_by": [
-        "tests/messaging/test_supervision.py:154",
-        "tests/messaging/test_supervision.py:188"
+        "tests/messaging/test_supervision.py:156",
+        "tests/messaging/test_supervision.py:190"
       ]
     },
     {
@@ -100,7 +104,7 @@
         "29a592980f26"
       ],
       "verified_by": [
-        "tests/messaging/test_supervision.py:223"
+        "tests/messaging/test_supervision.py:225"
       ]
     },
     {
@@ -386,9 +390,14 @@
     {
       "id": "ARBORA-MESSAGING-R800.2",
       "title": "Behavior",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "bc26d7b669bc"
+      ],
+      "verified_by": [
+        "tests/messaging/test_primitives.py:67",
+        "tests/messaging/test_primitives.py:79"
+      ]
     },
     {
       "id": "ARBORA-MESSAGING-R800.3",
@@ -400,9 +409,14 @@
     {
       "id": "ARBORA-MESSAGING-R800.4",
       "title": "Refusal",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "bc26d7b669bc"
+      ],
+      "verified_by": [
+        "tests/messaging/test_primitives.py:57",
+        "tests/messaging/test_primitives.py:79"
+      ]
     },
     {
       "id": "ARBORA-MESSAGING-R800.5",
@@ -448,9 +462,13 @@
     {
       "id": "ARBORA-MESSAGING-R800.1002",
       "title": "Refusal",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "bc26d7b669bc"
+      ],
+      "verified_by": [
+        "tests/messaging/test_lease.py:105"
+      ]
     }
   ]
 }

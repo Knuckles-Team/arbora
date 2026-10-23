@@ -129,6 +129,7 @@ class A2ATaskAuthority(Protocol):
         message: A2AMessage,
         idempotency_key: str,
         decision: A2ARouteDecision,
+        blocking: bool = True,
     ) -> A2ATask: ...
 
     async def get(self, task_id: str) -> A2ATask | None: ...
@@ -159,6 +160,9 @@ class WorkItemA2AAuthority:
     ) -> None:
         self._engine_provider = engine_provider
         self._executor = executor
+        # Runs admitted by a non-blocking send (ARBORA-A2A-R001.6). The set
+        # holds a reference so a running turn is never garbage collected.
+        self._detached: set[asyncio.Task[Any]] = set()
 
     @staticmethod
     def _session(scope: str) -> Any:
@@ -439,6 +443,7 @@ class WorkItemA2AAuthority:
         message: A2AMessage,
         idempotency_key: str,
         decision: A2ARouteDecision,
+        blocking: bool = True,
     ) -> A2ATask:
         if decision.selected_tools:
             # Refuse before durable admission: the current signed AU dispatch
@@ -488,7 +493,23 @@ class WorkItemA2AAuthority:
             request_digest=request_digest,
         )
         usage = None
-        if created or item.get("status") not in _TERMINAL:
+        if not blocking and (created or item.get("status") not in _TERMINAL):
+            # ARBORA-A2A-R001.6: answer with the admitted task now. The run
+            # continues under that task; the caller follows it with
+            # ``tasks/get``. The detached run inherits the caller's session
+            # through the copied context.
+            self._detach(
+                self._run(
+                    work_engine,
+                    item_id=item_id,
+                    session=session,
+                    agent_name=decision.agent_name,
+                    task=description,
+                    task_id=task_id,
+                ),
+                item_id,
+            )
+        elif created or item.get("status") not in _TERMINAL:
             usage = await self._run(
                 work_engine,
                 item_id=item_id,
@@ -512,6 +533,22 @@ class WorkItemA2AAuthority:
                 "counts": dict(usage),
             }
         return task
+
+    def _detach(self, run: Any, item_id: str) -> None:
+        """Keep one non-blocking run alive until it commits its outcome."""
+
+        def _done(finished: asyncio.Task[Any]) -> None:
+            self._detached.discard(finished)
+            if not finished.cancelled() and finished.exception() is not None:
+                logging.getLogger(__name__).warning(
+                    "A2A detached run %s failed: %s",
+                    item_id,
+                    type(finished.exception()).__name__,
+                )
+
+        task = asyncio.get_running_loop().create_task(run)
+        self._detached.add(task)
+        task.add_done_callback(_done)
 
     def _authorized_item(self, task_id: str, scope: str) -> dict[str, Any] | None:
         from arbora import work_items

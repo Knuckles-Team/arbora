@@ -67,6 +67,9 @@ evidence return. These preserve the earlier cookie and effective-route probes.
 | ARBORA-IDENTITY-R029.1 | `tests/mcp_server/test_caller_run_authority.py` | A run spanning more than 3x TTL stays authorized under a fake clock. |
 | ARBORA-IDENTITY-R029.2 | `tests/mcp_server/test_caller_run_authority.py` | Revocation, cancellation and the maximum lifetime stop renewal. |
 | ARBORA-IDENTITY-R029.3 | `tests/mcp_server/test_caller_run_authority.py` | Fan-out children inherit the parent's renewal; audit carries no token. |
+| ARBORA-IDENTITY-R029.4 | `tests/security/test_session_reference_claim.py` | Session-backed bearers carry the reference claim without token text. |
+| ARBORA-IDENTITY-R029.5 | `tests/api/test_session_revocation_routes.py` | Logout and revocation routes call `revoke_caller` and audit. |
+| ARBORA-IDENTITY-R029.6 | `tests/mcp_server/test_caller_run_authority.py` | An engine-revoked session stops renewal; engine failure never renews. |
 
 
 ## Served credential and resource authority acceptance

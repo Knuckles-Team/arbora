@@ -254,6 +254,10 @@ def test_fleet_ops_are_distinct_and_loading_is_mcp_only() -> None:
         "fleet.tools.load",
         "fleet.tools.unload",
         "fleet.status",
+        "fleet.prompts.list",
+        "fleet.prompts.get",
+        "fleet.resources.list",
+        "fleet.resources.read",
     }
     assert registry["fleet.catalog.search"].scopes == frozenset({"mcp:discover"})
     assert registry["fleet.tools.load"].surfaces == frozenset({Surface.MCP})
@@ -538,3 +542,47 @@ def test_gateway_composition_requires_all_authorities() -> None:
 
     with pytest.raises(ValueError, match="authorities are required"):
         compose_fleet_gateway(ops=None, mux=object(), policy_check=policy_check)
+
+
+@pytest.mark.spec("ARBORA-FLEET-R029.1")
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "params", [{}, {"query": ""}, {"query": "", "kinds": ("tool",)}]
+)
+async def test_unscoped_search_without_query_is_invalid_argument(
+    params: dict[str, Any],
+) -> None:
+    """Acceptance c18: an empty ``fleet.catalog.search`` answered HTTP 500."""
+    from arbora.api.errors import _ARBORA_STATUS, ArboraErrorCode
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    class Gateway:
+        async def search(self, *_args: object, **_params: object) -> object:
+            raise AssertionError("an invalid search must not reach the gateway")
+
+    context = SimpleNamespace(caller=object(), services={"fleet_gateway": Gateway()})
+    op = next(op for op in fleet.specs() if op.id == "fleet.catalog.search")
+    with pytest.raises(OperationRefused) as refused:
+        await fleet.handle_fleet_operation(context, params, op)
+    assert refused.value.code == "INVALID_ARGUMENT"
+    assert refused.value.details == {"field": "query"}
+    assert _ARBORA_STATUS[ArboraErrorCode.INVALID_ARGUMENT] == 400
+
+
+@pytest.mark.spec("ARBORA-FLEET-R029.1")
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "params", [{"query": "web"}, {"browse": True}, {"servers": ("searxng-mcp",)}]
+)
+async def test_query_browse_or_server_scope_reaches_the_gateway(
+    params: dict[str, Any],
+) -> None:
+    class Gateway:
+        async def search(self, *_args: object, **_params: object) -> object:
+            return {"items": [], "next_cursor": None}
+
+    context = SimpleNamespace(caller=object(), services={"fleet_gateway": Gateway()})
+    op = next(op for op in fleet.specs() if op.id == "fleet.catalog.search")
+    assert await fleet.handle_fleet_operation(context, params, op) == {
+        "value": {"items": [], "next_cursor": None}
+    }

@@ -21,6 +21,7 @@ from arbora.api.ops import (
     memory,
     messaging,
     ops,
+    plans,
     policy,
     query,
     research,
@@ -145,6 +146,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *swarm.operations(),
         *work.operations(),
         *ops.operations(),
+        *plans.operations(),
     )
     assert {op.id for op in first} == {op.id for op in declared} | {
         "eg.query.Read",

@@ -103,3 +103,4 @@ Requirement IDs are defined in [requirements.md](requirements.md); delivery stat
 - `ARBORA-OPS-R064`: Owner scope and complete acceptance are defined in requirements.md.
 - `ARBORA-OPS-R065`: Owner scope and complete acceptance are defined in requirements.md.
 - `ARBORA-OPS-R066`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-OPS-R861`: Owner scope and complete acceptance are defined in requirements.md.

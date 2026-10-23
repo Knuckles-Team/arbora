@@ -113,8 +113,19 @@ class _Params(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="forbid")
 
 
+class _SendConfiguration(_Params):
+    """The A2A ``MessageSendConfiguration`` fields arbora serves."""
+
+    blocking: bool | None = None
+    accepted_output_modes: list[str] | None = Field(
+        default=None, alias="acceptedOutputModes"
+    )
+    history_length: int | None = Field(default=None, alias="historyLength", ge=0)
+
+
 class _SendParams(_Params):
     message: A2AMessage
+    configuration: _SendConfiguration | None = None
     context_budget_tokens: int | None = Field(
         default=None, alias="contextBudgetTokens", ge=256, le=1_000_000
     )
@@ -175,10 +186,15 @@ async def _send_message(service: A2AService, request: Request, raw_params: Any) 
     key = request.headers.get("Idempotency-Key", "")
     if not key:
         raise ValueError("Idempotency-Key is required")
+    configuration = send_params.configuration
+    # ARBORA-A2A-R001.6: ``blocking: false`` answers with the admitted task at
+    # once; an absent ``blocking`` keeps the blocking behavior.
+    blocking = configuration is None or configuration.blocking is not False
     return await service.send_message(
         message=send_params.message,
         idempotency_key=key,
         context_budget_tokens=send_params.context_budget_tokens,
+        blocking=blocking,
     )
 
 

@@ -298,3 +298,19 @@ Test the actual serving-root binding and contextual read path. Cover concurrent 
 | Hot-path proof | `ARBORA-OPS-R860.6` | `tests/api/test_program_ops_served.py::test_optimize_promote_rollback_served` passes. |
 
 Hot-path proof for `ARBORA-OPS-R860`: `tests/api/test_program_ops_served.py::test_optimize_promote_rollback_served`.
+
+## ARBORA-OPS-R861 acceptance
+
+| Check | Row | Proof |
+|---|---|---|
+| Model | `ARBORA-OPS-R861.1` | A unit test round-trips the document and rejects an unknown field. |
+| Save | `ARBORA-OPS-R861.2` | A served test saves, updates, then replays a stale revision and sees the conflict. |
+| Refusal | `ARBORA-OPS-R861.3` | Tests assert each refusal, no engine write, and zero query executions. |
+| Read | `ARBORA-OPS-R861.4` | A served test lists owned and shared entries and gets one by id. |
+| Preview | `ARBORA-OPS-R861.5` | A served test asserts the preview, `APPROVAL_REQUIRED` without a plan, and the effect after approval. |
+| Share | `ARBORA-OPS-R861.6` | A served test grants, revokes and refuses a reader caller. |
+| Evidence | `ARBORA-OPS-R861.7` | Tests assert cross-tenant isolation, non-disclosure and the audit event. |
+| Wiring | `ARBORA-OPS-R861.8` | A served test reaches each handler through `invoke` over HTTP and MCP. |
+| Hot-path proof | `ARBORA-OPS-R861.9` | `tests/api/test_dashboard_ops_served.py::test_save_share_list_conflict_delete_served` passes. |
+
+Hot-path proof for `ARBORA-OPS-R861`: `tests/api/test_dashboard_ops_served.py::test_save_share_list_conflict_delete_served`.

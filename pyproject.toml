@@ -26,7 +26,7 @@ dependencies = [
     # server/ or api/ packages. arbora owns the MCP/REST serving surface
     # (arbora/mcp_server/backing, arbora/api/contracts), so the former
     # `[mcp]` extra's requirements are declared directly below.
-    "agent-utilities>=3.0.1,<4.0.0",
+    "agent-utilities>=3.1.0,<4.0.0",
     "eunomia-core>=0.3.10",
     "httpx>=0.28.1",
     "pyjwt>=2.15.1",
@@ -37,7 +37,7 @@ dependencies = [
     # SDK owns source transport and runner construction; Arbora supplies its
     # authenticated epistemic-graph client through the SDK's public injection
     # seam and never imports connector implementations.
-    "agent-connector-sdk[a2a,mcp]>=0.3.7,<0.4.0",
+    "agent-connector-sdk[a2a,mcp]>=0.3.18,<0.4.0",
     # The messaging channel layer's HTTP alert intake (arbora/messaging/alert_intake.py)
     # imports aiohttp.web directly for its small webhook listener; platform-agnostic,
     # so unlike the chat-platform SDKs below this is not conditioned on a messaging extra.
@@ -50,6 +50,8 @@ dependencies = [
     # surface directly; AU's transitive requirement is not enough for this
     # package's own imports. The root source override below aligns AU and SDK
     # on the Arbora-compatible revision without changing the published floor.
+    # TODO(ARBORA-RELEASE-R003.4.3): raise to >=2.27.5 once EG 2.27.5 is on PyPI
+    # (STALE_VERSION fix EG #702 and the published task-plan schema).
     "epistemic-graph[server]>=2.27.4,<3.0.0",
     "fastapi>=0.143.3",
     "filelock>=4.2.0",
@@ -123,7 +125,7 @@ webui = [
 # IDs: specs/portable-deployment/requirements.md,
 # specs/host-composition-boundary/requirements.md.
 gateway-widgets = [
-    "agent-connector-sdk[a2a,mcp]>=0.3.7,<0.4.0",
+    "agent-connector-sdk[a2a,mcp]>=0.3.18,<0.4.0",
 ]
 # Messaging channel adapters (CONCEPT:AU-ECO.messaging.native-backend-abstraction):
 # each chat platform SDK is its own extra so importing arbora.messaging never
@@ -197,6 +199,7 @@ service = "arbora.messaging.reach:service_port"
 [tool.uv]
 # A dependency's own git pin of the engine never applies here.
 override-dependencies = [
+    # TODO(ARBORA-RELEASE-R003.4.3): raise to >=2.27.5 with the dependency floor above.
     "epistemic-graph[server]>=2.27.4,<3.0.0",
 ]
 # The engine installs from its published wheels only; its sdist (a Rust

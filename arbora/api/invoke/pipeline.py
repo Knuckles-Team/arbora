@@ -867,28 +867,64 @@ async def _dispatch_outcome(call: _Call, audit_ref: str) -> OpResult | OpError:
             ),
             timeout=DISPATCH_TIMEOUT_SECONDS,
         )
-    except OperationRefused as exc:
-        return OpError(exc.code, exc.details)
-    except EngineRefusal as exc:
-        # Error envelope validates against canonical generated evidence. No
-        # handwritten code table or import-time generated metadata fallback.
-        return OpError(exc.code, source="engine")
-    except FleetRefusal as exc:
-        details = {"server": exc.server, "tool": exc.tool}
-        if exc.detail is not None:
-            details["detail"] = exc.detail
-        return OpError(exc.code, details, source="fleet")
+    except (OperationRefused, EngineRefusal, FleetRefusal) as exc:
+        return _typed_refusal(exc)
     except TimeoutError:
         return _unsettled(call, audit_ref, "TIMEOUT")
-    except Exception:
+    except Exception as exc:
+        refused = _grouped_refusal(exc)
+        if refused is not None:
+            return refused
         _logger.warning(
-            "operation %s dispatch failed (%s)",
+            "operation %s dispatch failed (%s): causes=%s",
             call.op.id,
             call.caller.request_id,
+            _cause_classes(exc),
             exc_info=True,
         )
         return _unsettled(call, audit_ref, "INTERNAL")
     return OpResult(value=value)
+
+
+def _leaves(exc: BaseException) -> list[BaseException]:
+    if isinstance(exc, BaseExceptionGroup):
+        return [leaf for sub in exc.exceptions for leaf in _leaves(sub)]
+    return [exc]
+
+
+def _cause_classes(exc: BaseException) -> str:
+    """Leaf exception classes only: a task-group wrapper hides its cause in str()."""
+    return ",".join(dict.fromkeys(type(leaf).__name__ for leaf in _leaves(exc)))
+
+
+def _grouped_refusal(exc: BaseException) -> OpError | None:
+    """A typed refusal the transport task group wrapped is still that refusal.
+
+    An ``ExceptionGroup`` whose leaves are exactly one typed refusal answers
+    with that refusal's code (ARBORA-FLEET-R015.1) instead of an unsettled
+    outcome: the refusal is certain, only the wrapper made it look unknown.
+    """
+    if not isinstance(exc, BaseExceptionGroup):
+        return None
+    leaves = _leaves(exc)
+    if len(leaves) != 1:
+        return None
+    if isinstance(leaves[0], (OperationRefused, EngineRefusal, FleetRefusal)):
+        return _typed_refusal(leaves[0])
+    return None
+
+
+def _typed_refusal(exc: OperationRefused | EngineRefusal | FleetRefusal) -> OpError:
+    if isinstance(exc, OperationRefused):
+        return OpError(exc.code, exc.details)
+    if isinstance(exc, EngineRefusal):
+        # Error envelope validates against canonical generated evidence. No
+        # handwritten code table or import-time generated metadata fallback.
+        return OpError(exc.code, source="engine")
+    details = {"server": exc.server, "tool": exc.tool}
+    if exc.detail is not None:
+        details["detail"] = exc.detail
+    return OpError(exc.code, details, source="fleet")
 
 
 async def _execute(

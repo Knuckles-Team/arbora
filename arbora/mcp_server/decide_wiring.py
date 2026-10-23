@@ -165,7 +165,17 @@ def _install_planner(
     session: Any,
     engine: Any,
 ) -> None:
-    raise not_served("decide.consumers.task_planner", "EG-CQ-ORCH-R001")
+    """Bind the served task planner to the engine's ``TaskPlan`` decision.
+
+    Arbora holds no planner (EG-CQ-ORCH-R001). ``agents.plan_run`` asks the
+    engine for each plan over the caller's own authenticated client and
+    verifies the receipt before running it (ARBORA-RELEASE-R003.4.1). This
+    step only proves the installed engine facade serves ``TaskPlan``; an engine
+    release without it refuses here, so the consumer is logged as skipped.
+    """
+    from arbora.api.ops.plans import engine_task_plan
+
+    engine_task_plan(eg_client)
 
 
 def _ontology_provider(eg_client: Any) -> Any:

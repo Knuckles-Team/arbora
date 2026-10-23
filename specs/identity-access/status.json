@@ -105,6 +105,9 @@
     "ARBORA-IDENTITY-R029.1",
     "ARBORA-IDENTITY-R029.2",
     "ARBORA-IDENTITY-R029.3",
+    "ARBORA-IDENTITY-R029.4",
+    "ARBORA-IDENTITY-R029.5",
+    "ARBORA-IDENTITY-R029.6",
     "ARBORA-IDENTITY-R028",
     "ARBORA-IDENTITY-R028.1",
     "ARBORA-IDENTITY-R028.2",
@@ -1157,21 +1160,18 @@
     {
       "id": "ARBORA-IDENTITY-R029",
       "title": "A run renews its caller's authority while it is active (rollup)",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "fc207e2a1847"
       ],
-      "verified_by": [
-        "tests/mcp_server/test_caller_run_authority.py:120",
-        "tests/mcp_server/test_caller_run_authority.py:140",
-        "tests/mcp_server/test_caller_run_authority.py:153",
-        "tests/mcp_server/test_caller_run_authority.py:177",
-        "tests/mcp_server/test_caller_run_authority.py:201"
-      ],
+      "verified_by": [],
       "rollup_of": [
         "ARBORA-IDENTITY-R029.1",
         "ARBORA-IDENTITY-R029.2",
-        "ARBORA-IDENTITY-R029.3"
+        "ARBORA-IDENTITY-R029.3",
+        "ARBORA-IDENTITY-R029.4",
+        "ARBORA-IDENTITY-R029.5",
+        "ARBORA-IDENTITY-R029.6"
       ]
     },
     {
@@ -1212,6 +1212,27 @@
         "tests/mcp_server/test_caller_run_authority.py:153",
         "tests/mcp_server/test_caller_run_authority.py:282"
       ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R029.4",
+      "title": "Issued bearers carry the session reference",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R029.5",
+      "title": "Logout and session revocation routes",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R029.6",
+      "title": "Renewal consults the engine's session liveness",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R028",

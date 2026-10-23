@@ -43,6 +43,31 @@ def _require_discover_scope(caller: Any) -> None:
         raise PermissionError("mcp:discover is required")
 
 
+#: Catalog kinds that each relayed MCP list family covers.
+RELAY_KINDS: dict[str, tuple[ItemKind, ...]] = {
+    "prompts": ("prompt",),
+    "resources": ("resource", "resource_template", "skill"),
+}
+_SKILL_SCHEME = "skill://"
+_SKILL_MAIN = "/SKILL.md"
+
+
+def resource_uri(kind: str, name: str) -> str:
+    """The MCP resource URI a catalog resource or skill item is read by."""
+    if kind == "skill":
+        return f"{_SKILL_SCHEME}{name}{_SKILL_MAIN}"
+    return name
+
+
+def _surface_item_id(family: str, server: str, ident: str) -> str:
+    if family == "prompts":
+        return f"fleet:prompt:{server}/{ident}"
+    if ident.startswith(_SKILL_SCHEME) and ident.endswith(_SKILL_MAIN):
+        name = ident[len(_SKILL_SCHEME) : -len(_SKILL_MAIN)]
+        return f"fleet:skill:{server}/{name}"
+    return f"fleet:resource:{server}/{ident}"
+
+
 class MultiplexerOps:
     """Discover, mount and track items under injected caller authority.
 
@@ -105,6 +130,48 @@ class MultiplexerOps:
         ):
             raise PermissionError("fleet call denied by policy")
         return item
+
+    async def admitted_surface_item(
+        self, caller: Any, family: str, server: str, ident: str
+    ) -> CatalogItem:
+        """Return one prompt, resource or skill the caller may read.
+
+        ``ident`` is a prompt name or a resource URI. The item must be in the
+        admitted catalog, visible to the caller and loadable under current
+        policy; anything else is the same refusal, so a missing item and a
+        hidden one cannot be told apart (ARBORA-FLEET-R040).
+        """
+        _require_delegate_scope(caller)
+        await self._prime((server,))
+        item = await self.catalog.get(_surface_item_id(family, server, ident), caller)
+        if (
+            item is None
+            or item.kind not in RELAY_KINDS[family]
+            or item.kind == "resource_template"
+            or item.server != server
+            or not item.required_scopes.issubset(caller.effective_scopes)
+            or not await self._loadable(item, caller)
+        ):
+            raise PermissionError("fleet item is unavailable")
+        return item
+
+    async def relay_list(
+        self, caller: Any, family: str, **params: Any
+    ) -> dict[str, Any]:
+        """List a connector's prompts or resources through the catalog.
+
+        The result keeps each item's fleet server name and carries the
+        per-connector surface report, so a missing surface reads ``not
+        served``.
+        """
+        _require_discover_scope(caller)
+        result = await self.find_tools(
+            caller, kinds=RELAY_KINDS[family], browse=True, **params
+        )
+        for row in result["items"]:
+            if family == "resources":
+                row["uri"] = resource_uri(row["kind"], row["name"])
+        return result
 
     def _session_key(self, caller: Any) -> str:
         key = self._session_key_for(caller)

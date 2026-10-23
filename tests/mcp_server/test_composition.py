@@ -81,6 +81,7 @@ def test_webui_co_service_uses_arbora_host(monkeypatch: pytest.MonkeyPatch) -> N
     assert started[0][1].__module__ == "arbora.webui_host.webui_co_service"
 
 
+# spec: ARBORA-HOST-R011
 def test_messaging_co_service_reaches_arbora_owned_intake(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
