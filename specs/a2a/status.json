@@ -356,7 +356,8 @@
       "title": "Native facts adapters and registration proof",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "2ddd787cf31d"
+        "2ddd787cf31d",
+        "67cfee453bf5"
       ],
       "verified_by": [
         "tests/identity/test_approval_authority.py:329",

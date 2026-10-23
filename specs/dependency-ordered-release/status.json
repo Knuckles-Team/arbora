@@ -31,6 +31,7 @@
         "0d34328f1114",
         "4510e0b854aa",
         "9a2f7532daaa",
+        "9ce8b11a5785",
         "eacc29a1952e"
       ],
       "verified_by": [
@@ -48,7 +49,8 @@
       "landed_in": [
         "0d34328f1114",
         "4510e0b854aa",
-        "9a2f7532daaa"
+        "9a2f7532daaa",
+        "9ce8b11a5785"
       ],
       "verified_by": [
         "tests/deployment/test_release_workflow_sources.py:553",
