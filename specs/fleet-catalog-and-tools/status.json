@@ -848,8 +848,8 @@
         "db8d44259c3d"
       ],
       "verified_by": [
-        "tests/api/test_fleet_effect.py:543",
-        "tests/api/test_fleet_effect.py:568"
+        "tests/api/test_fleet_effect.py:547",
+        "tests/api/test_fleet_effect.py:572"
       ],
       "rollup_of": [
         "ARBORA-FLEET-R029.1"
@@ -863,8 +863,8 @@
         "4fabd9b042be"
       ],
       "verified_by": [
-        "tests/api/test_fleet_effect.py:543",
-        "tests/api/test_fleet_effect.py:568"
+        "tests/api/test_fleet_effect.py:547",
+        "tests/api/test_fleet_effect.py:572"
       ]
     },
     {
@@ -1524,9 +1524,17 @@
     {
       "id": "ARBORA-FLEET-R040",
       "title": "arbora serves and reports the prompts, skills and resources of each connector",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "abaee0920e29"
+      ],
+      "verified_by": [
+        "tests/fleet/test_connector_surfaces.py:133",
+        "tests/fleet/test_connector_surfaces.py:143",
+        "tests/fleet/test_connector_surfaces.py:153",
+        "tests/fleet/test_connector_surfaces.py:187",
+        "tests/fleet/test_connector_surfaces.py:221"
+      ]
     }
   ]
 }
