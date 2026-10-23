@@ -15,7 +15,6 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import inspect
-import json
 import logging
 import uuid
 from collections.abc import Awaitable, Callable, Iterator, Mapping
@@ -32,7 +31,7 @@ from agent_connector_sdk.ingest.sources import IngestSourceDeclaration
 from agent_connector_sdk.ingest.transport import EpistemicGraphIngestTransport
 
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.fleet.declarations import RESOURCES_URI
+from arbora.fleet.declarations import RESOURCES_URI, parse_declaration
 from arbora.ingest.service import (
     IngestJobRecord,
     IngestPackInventory,
@@ -191,7 +190,7 @@ class ConnectorIngestRunner:
         items: list[Mapping[str, Any]] = []
         cursor: str | None = None
         for _ in range(_MAX_CATALOG_PAGES):
-            params: dict[str, Any] = {"kinds": ("resource",), "limit": _CATALOG_PAGE}
+            params: dict[str, Any] = {"limit": _CATALOG_PAGE}
             if cursor:
                 params["cursor"] = cursor
             found = await self._fleet.resources_list(caller, **params)
@@ -211,7 +210,7 @@ class ConnectorIngestRunner:
             read = await self._fleet.resources_read(
                 caller, server=server, uri=RESOURCES_URI
             )
-            payload = json.loads(str(_payload(read).get("text") or "{}"))
+            payload = parse_declaration(str(_payload(read).get("text") or "{}"))
             declarations[server] = IngestSourceDeclaration.model_validate(payload)
         return declarations
 

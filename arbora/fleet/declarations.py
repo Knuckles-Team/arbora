@@ -15,7 +15,13 @@ from typing import Any
 
 from agent_connector_sdk.artifacts.resource_descriptor import RESOURCES_URI
 
-__all__ = ["RESOURCES_URI", "declared_mapping", "parse_declaration", "remember"]
+__all__ = [
+    "RESOURCES_URI",
+    "declaration_of",
+    "declared_mapping",
+    "parse_declaration",
+    "remember",
+]
 
 _LOCK = threading.Lock()
 _DECLARATIONS: dict[str, Mapping[str, Any]] = {}
