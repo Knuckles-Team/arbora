@@ -5,6 +5,7 @@
   "delivery_state": "SPECIFIED",
   "requirement_ids": [
     "ARBORA-RELEASE-R001",
+    "ARBORA-RELEASE-R001.1",
     "ARBORA-RELEASE-R002",
     "ARBORA-RELEASE-R003",
     "ARBORA-RELEASE-R003.1",
@@ -25,11 +26,28 @@
     {
       "id": "ARBORA-RELEASE-R001",
       "title": "Dependency-ordered, digest-verified release promotion",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "0d34328f1114",
         "eacc29a1952e"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/deployment/test_release_workflow_sources.py:553"
+      ],
+      "rollup_of": [
+        "ARBORA-RELEASE-R001.1"
+      ]
+    },
+    {
+      "id": "ARBORA-RELEASE-R001.1",
+      "title": "A version tag publishes the wheel and the sdist",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "0d34328f1114"
+      ],
+      "verified_by": [
+        "tests/deployment/test_release_workflow_sources.py:553"
+      ]
     },
     {
       "id": "ARBORA-RELEASE-R002",
