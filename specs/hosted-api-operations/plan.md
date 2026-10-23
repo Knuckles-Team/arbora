@@ -834,9 +834,8 @@ Payload hydration uses small bounded batches and stops at the raw page budget. T
 ### 2026-10-22: native owner boundary decomposition (ARBORA-OPS-R001)
 
 Factor native claim validation, scoped execution, admitted identity validation,
-and WorkItem submission into bounded helpers without changing authority or
-ledger routing. Preserve exact owner graph, separate WorkItem/run identities,
-revocation, lease fences, usage, and fail-closed unsupported-owner behavior.
+and WorkItem submission into bounded helpers. Preserve authority and ledger routing. Preserve the exact owner graph and separate WorkItem/run identities.
+Retain revocation, lease fences, usage, and fail-closed unsupported-owner behavior.
 Run-event ordering and terminal record validation retain existing semantics.
 The committed terminal reader still routes via session.graph; a separate
 owner-routing slice must bind the trusted WorkItem engine graph and test
@@ -882,3 +881,34 @@ No spec owned user-saved assets. The search `git grep -n -i "dashboard\|catalog 
 The engine stores each dashboard as a catalog asset with an owner, grants and a revision. arbora serves the operations and holds no store. The engine catalog asset rows do not exist yet. An epistemic-graph row must define the asset type, the owner and grant facts, and compare-and-set on the revision. R861.8 depends on that row. Until it lands, the operations stay SPECIFIED.
 
 Call path: the served `invoke` receives the call and resolves the caller principal and tenant. It validates params. It then calls the engine through the client in `arbora/api/ops/dashboard.py`. `dashboard.delete` follows the existing `Confirm.PLAN` pattern of R860.3. `dashboard.list` and `dashboard.get` are reads. `dashboard.save` and `dashboard.share` are writes. Panel queries remain opaque strings. A later `query` call, made by the viewer under the viewer principal, runs them.
+
+### Owner-bound scaffold publication qualification
+
+For `ARBORA-OPS-R021.4.5.1.2`, the optional AU publication factory binds only
+inside configured native A2A admission, after its successful native claim.
+Legacy execution keeps local scaffolds without implying native availability.
+The host rechecks the GetCurrentPlan and PublishCurrentPlan operation policy,
+exact session, native owner graph, and fixed claim expiry around native awaits.
+Anonymous mode retains its explicit anonymous client boundary.
+
+AU scaffold revision zero follows an existing executable TaskPlan publication:
+read the native baseline once and pin its next revision. Subsequent consecutive
+scaffold revisions retain exact attempted payloads across uncertain retries.
+Concurrent native advancement conflicts; no retry silently rereads or rebases.
+EG atomically validates the live fence and increasing revision and retains the
+executable attachment when a scaffold-only request omits it.
+
+Source tests exercise real AU callback scopes with controlled EG transport.
+They cover native-versus-legacy binding and policy refusal before and after awaits.
+They also cover fixed expiry, concurrent scope initialization/isolation, and copied-context closure.
+Other cases verify canonical graph reads and preservation/conflict of an existing TaskPlan.
+These tests are not published-provider or live native-lifecycle acceptance.
+The task remains open until released EG contracts support a real native lifecycle.
+Acceptance must qualify admission, publication, reads, and restart.
+
+The existing ARBORA_TASK_PLAN operator object accepts `plan_scaffold: "on"`
+to enable AU scaffolds for admitted native runs. The default remains `"off"`.
+This explicit trusted option changes only the matching harness field.
+It does not infer a HarnessConfig decision or accept authority from request metadata.
+A disabled run may publish its executable TaskPlan without any scaffold updates.
+That result is not scaffold acceptance; enabled mode requires native revision evidence.

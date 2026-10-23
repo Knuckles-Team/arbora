@@ -321,3 +321,14 @@ checks preserve ACCESS_DENIED from owner lookup, metadata census and payload rea
 | Hot-path proof | `ARBORA-OPS-R861.9` | `tests/api/test_dashboard_ops_served.py::test_save_share_list_conflict_delete_served` passes. |
 
 Hot-path proof for `ARBORA-OPS-R861`: `tests/api/test_dashboard_ops_served.py::test_save_share_list_conflict_delete_served`.
+
+### Trusted scaffold configuration (ARBORA-OPS-R021.4.5.1.2)
+
+The existing operator-owned task-plan configuration accepts only
+`plan_scaffold: "on"` or `plan_scaffold: "off"`; omission means off.
+Client metadata and model proposals cannot enable scaffolds.
+Tests run the actual AU callback and update_plan tool for trusted on.
+Trusted off must leave the publisher unused. Other harness settings remain unchanged.
+Real native acceptance must observe the initial scaffold and tool-driven revisions.
+It must retain the executable TaskPlan and exact owner/fence/expiry binding.
+Record disabled-mode results separately; revision zero alone does not prove scaffold publication.

@@ -295,3 +295,19 @@ def test_private_executable_plan_is_not_projected():
     assert result.availability == "available"
     assert "private executable prompt" not in result.model_dump_json()
     assert "task_plan" not in result.model_dump_json()
+
+
+@pytest.mark.spec("ARBORA-OPS-R021.4.5.1.2")
+async def test_native_a2a_reader_uses_canonical_graph_after_caller_checks(monkeypatch):
+    calls = []
+
+    async def native(client, *, run_id, tenant, graph):
+        calls.append((run_id, tenant, graph, client.claims.get()["principal"]))
+        return snapshot(run_id=run_id)
+
+    monkeypatch.setattr(reader_module, "_native_read", native)
+    result = await NativeCurrentPlanReader().read(
+        run_id="a2a-native", context=context()
+    )
+    assert result.availability == "available"
+    assert calls == [("a2a-native", "tenant-a", "__control__", "caller-a")]
