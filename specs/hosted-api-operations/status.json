@@ -78,6 +78,10 @@
     "ARBORA-OPS-R024.3",
     "ARBORA-OPS-R024.3.1",
     "ARBORA-OPS-R024.3.2",
+    "ARBORA-OPS-R024.3.1.1",
+    "ARBORA-OPS-R024.3.1.2",
+    "ARBORA-OPS-R024.3.2.1",
+    "ARBORA-OPS-R024.3.2.2",
     "ARBORA-OPS-R024.4",
     "ARBORA-OPS-R024.4.1",
     "ARBORA-OPS-R024.4.2",
@@ -1083,11 +1087,63 @@
       "title": "Shared committed session usage",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R024.3.1.1",
+        "ARBORA-OPS-R024.3.1.2"
+      ]
     },
     {
       "id": "ARBORA-OPS-R024.3.2",
       "title": "Shared measured request timing",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R024.3.2.1",
+        "ARBORA-OPS-R024.3.2.2"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R024.3.1.1",
+      "title": "Validate the caller-bound session usage projection",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "3435c1ad0e9d"
+      ],
+      "verified_by": [
+        "tests/api/test_session_usage.py:105",
+        "tests/api/test_session_usage.py:132",
+        "tests/api/test_session_usage.py:151",
+        "tests/api/test_session_usage.py:194",
+        "tests/api/test_session_usage.py:233"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R024.3.1.2",
+      "title": "Qualify durable session usage on the served native stack",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R024.3.2.1",
+      "title": "Project measured AU timing without changing completion",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "3435c1ad0e9d"
+      ],
+      "verified_by": [
+        "tests/a2a/test_run_usage.py:417",
+        "tests/test_agent_runs.py:151",
+        "tests/test_agent_runs.py:184",
+        "tests/test_agent_runs.py:207",
+        "tests/test_agent_runs.py:225"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R024.3.2.2",
+      "title": "Qualify shared timing through installed served clients",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
