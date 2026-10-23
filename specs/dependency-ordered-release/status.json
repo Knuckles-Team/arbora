@@ -16,6 +16,7 @@
     "ARBORA-RELEASE-R003.4.2",
     "ARBORA-RELEASE-R003.4.3",
     "ARBORA-RELEASE-R003.4.4",
+    "ARBORA-RELEASE-R003.4.5",
     "ARBORA-RELEASE-R003.5",
     "ARBORA-RELEASE-R003.6",
     "ARBORA-RELEASE-R003.7",
@@ -133,7 +134,8 @@
         "ARBORA-RELEASE-R003.4.1",
         "ARBORA-RELEASE-R003.4.2",
         "ARBORA-RELEASE-R003.4.3",
-        "ARBORA-RELEASE-R003.4.4"
+        "ARBORA-RELEASE-R003.4.4",
+        "ARBORA-RELEASE-R003.4.5"
       ]
     },
     {
@@ -184,6 +186,18 @@
         "tests/api/test_task_plan_schema_pin.py:225",
         "tests/api/test_task_plan_schema_pin.py:246",
         "tests/api/test_task_plan_schema_pin.py:254"
+      ]
+    },
+    {
+      "id": "ARBORA-RELEASE-R003.4.5",
+      "title": "Governed fleet tools in plan steps",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/api/test_plan_run_ops.py:432",
+        "tests/api/test_plan_run_ops.py:450",
+        "tests/api/test_plan_run_ops.py:461",
+        "tests/api/test_plan_run_ops.py:469"
       ]
     },
     {
