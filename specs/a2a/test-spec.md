@@ -165,3 +165,12 @@ complete valid reply. Otherwise, both must agree on native completion, a version
 payload-error marker, and a typed unavailable reply. Unique model receipts bind each request to its
 response. Only the model is simulated; this gate must not replace graph storage,
 authentication, provisioning or A2A authority. An unselected binary skips honestly.
+
+## Concurrent task completion reads
+
+ARBORA-A2A-R001 binds `tests/a2a/test_run_usage.py`.
+A newer same-owner snapshot yields unavailable usage on the earlier task.
+Cover running-to-success, running-to-failure and ready-to-running transitions.
+A later poll returns coherent terminal state and counters.
+Foreign metadata, a changed terminal state or a nonadvancing version refuses.
+No later terminal artifact or counters appear on the earlier working task.

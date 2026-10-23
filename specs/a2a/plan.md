@@ -609,3 +609,13 @@ Native planning still uses the caller-bound completion reader and propagates ref
 Legacy immediate counts retain their exact snapshot, including an empty snapshot.
 Completed retries still use durable task recovery before dispatch projection.
 This decomposition addresses the dispatch complexity regression, not native provider qualification.
+
+## Amendment: coherent usage snapshots (2026-10-23)
+
+ARBORA-A2A-R001 preserves the earlier task state when a later native snapshot
+advances during a read. Usage is unavailable with reason `snapshot_changed`.
+No counters from that later snapshot are attached to the earlier task.
+Validate immutable owner, run, tenant, graph and receipt bindings first.
+Require a newer native version and a nonterminal earlier state.
+An inconsistent terminal transition still refuses. A later poll can read the
+completed task and its receipt together. This is not an authority failure.

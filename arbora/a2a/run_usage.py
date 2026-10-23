@@ -30,10 +30,13 @@ def project_run_usage(
     _validate_admission(admission, current, session, item, owner_graph, run_id)
     _validate_metadata(admission, current, item, task, owner_ref)
     receipt = view.run_completion
+    if receipt is not None:
+        _validate_terminal(receipt.payload, session, current, run_id)
+    if _snapshot_changed(current, item):
+        return {"status": "unavailable", "reason": "snapshot_changed"}
     if receipt is None:
         return unavailable
     payload = receipt.payload
-    _validate_terminal(payload, session, item, run_id)
     if payload.completion.usage is None:
         return unavailable
     counts = payload.completion.usage.model_dump(mode="json", exclude_none=True)
@@ -49,6 +52,18 @@ def project_run_usage(
     }
 
 
+def _snapshot_changed(current: dict[str, Any], earlier: dict[str, Any]) -> bool:
+    """Keep a coherent earlier task projection while a later read advances."""
+    if current["status"] == earlier["status"]:
+        return False
+    if (
+        earlier["status"] not in {"submitted", "ready", "leased", "running"}
+        or current["version"] <= earlier["version"]
+    ):
+        raise ValueError("native run snapshot changed inconsistently")
+    return True
+
+
 def _validate_admission(
     admission: dict[str, Any],
     current: dict[str, Any],
@@ -62,7 +77,6 @@ def _validate_admission(
         and admission["context"]["tenant_id"] == session.tenant
         and admission["context"]["graph"] == owner_graph
         and current["work_item_id"] == item["work_item_id"]
-        and current["status"] == item["status"]
         and current["kind"] == "orchestrator_task"
     ):
         raise PermissionError("native run completion crossed its admission scope")

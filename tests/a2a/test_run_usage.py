@@ -300,7 +300,7 @@ async def test_cancelled_native_run_is_not_wrapped_or_committed(monkeypatch):
         (("admission", "context", "tenant_id"), "other-tenant", PermissionError),
         (("admission", "metadata", "a2a_schema"), "other-schema", PermissionError),
         (("work_item", "work_item_id"), "other-work", PermissionError),
-        (("work_item", "status"), "failed", PermissionError),
+        (("work_item", "status"), "failed", ValueError),
         (("work_item", "kind"), "other-kind", PermissionError),
         (("work_item", "metadata", "a2a_run_id"), "other-run", PermissionError),
         (("run_completion", "payload", "outcome"), "failed", ValueError),
@@ -324,3 +324,82 @@ def test_failed_completion_refuses_result_artifact():
     RunWorkItemView.model_validate_json(json.dumps(value), strict=True)
     with pytest.raises(ValueError, match="terminal task"):
         project(value)
+
+
+@pytest.mark.parametrize("outcome", ["succeeded", "failed"])
+def test_completion_between_snapshot_reads_is_not_an_authority_failure(outcome):
+    value = record(outcome)
+    earlier = deepcopy(value["work_item"])
+    earlier["status"] = "running"
+    earlier["version"] = 1
+    assert project(value, earlier) == {
+        "status": "unavailable",
+        "reason": "snapshot_changed",
+    }
+
+
+def test_nonterminal_snapshot_advance_has_no_counters():
+    value = record("running")
+    value["run_completion"] = None
+    earlier = deepcopy(value["work_item"])
+    earlier.update(status="ready", version=1)
+    assert project(value, earlier) == {
+        "status": "unavailable",
+        "reason": "snapshot_changed",
+    }
+
+
+@pytest.mark.parametrize("field", ["a2a_owner_ref", "a2a_run_id", "a2a_context_id"])
+def test_status_advance_never_hides_foreign_metadata(field):
+    value = record()
+    earlier = deepcopy(value["work_item"])
+    earlier.update(status="running", version=1)
+    value["admission"]["metadata"][field] = "foreign"
+    with pytest.raises(PermissionError):
+        project(value, earlier)
+
+
+@pytest.mark.parametrize("old_status,old_version", [("failed", 1), ("running", 2)])
+def test_terminal_or_nonadvancing_snapshot_mismatch_refuses(old_status, old_version):
+    value = record()
+    earlier = deepcopy(value["work_item"])
+    earlier.update(status=old_status, version=old_version)
+    with pytest.raises(ValueError, match="snapshot changed inconsistently"):
+        project(value, earlier)
+
+
+@pytest.mark.asyncio
+async def test_polled_task_does_not_mix_later_receipt_or_artifact(monkeypatch):
+    from arbora import work_items
+
+    value = record("failed")
+    earlier = deepcopy(value["work_item"])
+    earlier.update(status="running", version=1)
+    lookup = AsyncMock(return_value=value)
+    client = SimpleNamespace(work_items=SimpleNamespace(get_run=lookup))
+    engine = SimpleNamespace(
+        graph_compute=SimpleNamespace(
+            for_graph=lambda graph: SimpleNamespace(async_client=client)
+        )
+    )
+    session = SimpleNamespace(tenant="tenant")
+    authority = WorkItemA2AAuthority(lambda: engine)
+    monkeypatch.setattr(authority, "_session", lambda scope: session)
+    monkeypatch.setattr(authority, "_owner_ref", lambda session: "owner")
+    monkeypatch.setattr(authority, "_engine", lambda: (engine, object()))
+    items = iter([earlier, value["work_item"]])
+    monkeypatch.setattr(authority, "_authorized_item", lambda *args: next(items))
+    monkeypatch.setattr(
+        work_items, "native_owner_graph", lambda engine: "private-owner"
+    )
+    first = await authority.get(earlier["work_item_id"])
+    assert first.status.state == "working"
+    assert first.artifacts is None
+    assert first.metadata["arbora"]["usage"] == {
+        "status": "unavailable",
+        "reason": "snapshot_changed",
+    }
+    second = await authority.get(earlier["work_item_id"])
+    assert second.status.state == "failed"
+    assert second.artifacts is None
+    assert second.metadata["arbora"]["usage"]["counts"] == COUNTS
