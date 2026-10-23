@@ -257,7 +257,17 @@
     "ARBORA-OPS-R860.3",
     "ARBORA-OPS-R860.4",
     "ARBORA-OPS-R860.5",
-    "ARBORA-OPS-R860.6"
+    "ARBORA-OPS-R860.6",
+    "ARBORA-OPS-R861",
+    "ARBORA-OPS-R861.1",
+    "ARBORA-OPS-R861.2",
+    "ARBORA-OPS-R861.3",
+    "ARBORA-OPS-R861.4",
+    "ARBORA-OPS-R861.5",
+    "ARBORA-OPS-R861.6",
+    "ARBORA-OPS-R861.7",
+    "ARBORA-OPS-R861.8",
+    "ARBORA-OPS-R861.9"
   ],
   "requirements": [
     {
@@ -1092,7 +1102,7 @@
         "94724be32c28"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:339"
+        "tests/api/test_registry_factory.py:341"
       ],
       "rollup_of": [
         "ARBORA-OPS-R024.4.1",
@@ -1187,7 +1197,7 @@
         "5f79be652726"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:339"
+        "tests/api/test_registry_factory.py:341"
       ]
     },
     {
@@ -2360,7 +2370,7 @@
         "d673cd573c77"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:348"
+        "tests/api/test_registry_factory.py:350"
       ]
     },
     {
@@ -2720,6 +2730,87 @@
     },
     {
       "id": "ARBORA-OPS-R860.6",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R861",
+      "title": "Served dashboard operations (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R861.1",
+        "ARBORA-OPS-R861.2",
+        "ARBORA-OPS-R861.3",
+        "ARBORA-OPS-R861.4",
+        "ARBORA-OPS-R861.5",
+        "ARBORA-OPS-R861.6",
+        "ARBORA-OPS-R861.7",
+        "ARBORA-OPS-R861.8",
+        "ARBORA-OPS-R861.9"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R861.1",
+      "title": "Model",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R861.2",
+      "title": "Save",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R861.3",
+      "title": "Validation and size cap",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R861.4",
+      "title": "Read",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R861.5",
+      "title": "Delete",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R861.6",
+      "title": "Share",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R861.7",
+      "title": "Scope and audit",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R861.8",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R861.9",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],

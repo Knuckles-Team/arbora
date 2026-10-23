@@ -265,3 +265,25 @@ Hot-path proof for `ARBORA-FLEET-R037`: `tests/fleet/test_job_loads_served.py::t
 | Unmountable child | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_unmountable_child_answers_unavailable_without_dispatch`: a child absent from the catalog answers `UNAVAILABLE`. |
 | Pipeline unwrap | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_pipeline_unwraps_a_single_grouped_refusal` and `::test_pipeline_keeps_unsettled_for_an_unknown_grouped_cause`. |
 | Remote tracing child | `ARBORA-FLEET-R015.1` | `tests/fleet/test_multiplexer_dynamic_gateway.py::test_load_catalog_admits_remote_langfuse_entry_without_projection`: the catalog keeps a remote tracing-service child unchanged, with or without keys. |
+
+- `ARBORA-FLEET-R041`: See each child.
+- `ARBORA-FLEET-R041.1`: `tests/fleet/test_auto_onboard.py::test_trigger_and_counts_round_trip` stores and reads a record.
+- `ARBORA-FLEET-R041.2`: `tests/fleet/test_auto_onboard.py::test_registration_and_release_start_one_pass_each` registers a fixture, then bumps its manifest digest.
+- `ARBORA-FLEET-R041.3`: `tests/fleet/test_auto_onboard.py::test_every_trigger_reaches_the_one_onboard_function` patches `onboard` and drives each trigger.
+- `ARBORA-FLEET-R041.4`: `tests/fleet/test_auto_onboard.py::test_orphan_refusal_marks_contract_rejected_and_admits_no_tools`.
+- `ARBORA-FLEET-R041.5`: `tests/fleet/test_auto_onboard.py::test_status_reports_counts_digests_receipt_and_reason`.
+- `ARBORA-FLEET-R041.6`: `tests/fleet/test_auto_onboard_served.py::test_register_then_release_serves_all_surfaces_without_manual_step`.
+- `ARBORA-FLEET-R042`: See each child.
+- `ARBORA-FLEET-R042.1`: `tests/fleet/test_source_approval.py::test_decision_round_trips`.
+- `ARBORA-FLEET-R042.2`: `tests/fleet/test_source_approval.py::test_read_only_admitted_contract_is_approved_and_write_contract_is_held`.
+- `ARBORA-FLEET-R042.3`: `tests/fleet/test_source_approval.py::test_onboard_calls_policy_and_engine_registry_once`.
+- `ARBORA-FLEET-R042.4`: `tests/fleet/test_source_approval.py::test_secret_unknown_kind_write_and_outage_hold_the_mapping`.
+- `ARBORA-FLEET-R042.5`: `tests/fleet/test_source_approval.py::test_catalog_reports_approved_and_held_counts_with_reason`.
+- `ARBORA-FLEET-R042.6`: `tests/fleet/test_source_approval_served.py::test_onboarded_read_contract_serves_rows_and_held_contract_serves_none`.
+- `ARBORA-FLEET-R043`: See each child.
+- `ARBORA-FLEET-R043.1`: `tests/api/test_query_federation.py::test_view_names_connector_contract_and_mapping`.
+- `ARBORA-FLEET-R043.2`: `tests/api/test_query_federation.py::test_query_reports_virtual_sources_and_sources_op_lists_granted_ones`.
+- `ARBORA-FLEET-R043.3`: `tests/api/test_query_federation.py::test_rest_and_mcp_project_the_same_sources_operation`.
+- `ARBORA-FLEET-R043.4`: `tests/api/test_query_federation.py::test_ungranted_held_and_over_budget_sources_refuse_with_typed_codes`.
+- `ARBORA-FLEET-R043.5`: `tests/api/test_query_federation.py::test_audit_line_names_sources_and_holds_no_rows`.
+- `ARBORA-FLEET-R043.6`: `tests/api/test_query_federation_served.py::test_nl_question_spans_native_facts_and_live_connector_rows`.

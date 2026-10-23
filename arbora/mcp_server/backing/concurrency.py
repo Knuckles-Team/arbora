@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import functools
 import inspect
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Mapping
 from typing import TypeVar, cast
 
 import anyio
@@ -58,13 +58,28 @@ def _wrap_data_kwargs[T](func: Callable[..., T], args: tuple, kwargs: dict) -> d
         params = inspect.signature(func).parameters
     except (TypeError, ValueError):
         return kwargs
+    body_param = _body_parameter(params, kwargs)
+    if body_param is None:
+        return kwargs
+    return _fold_body_fields(params, body_param, kwargs)
+
+
+def _body_parameter(
+    params: Mapping[str, inspect.Parameter], kwargs: dict
+) -> str | None:
+    """Choose a single absent body parameter without changing signature rules."""
     if any(p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values()):
-        return kwargs
-    body_params = [n for n in _BODY_PARAM_NAMES if n in params]
-    # Only act when the body param is unambiguous and wasn't already supplied.
+        return None
+    body_params = [name for name in _BODY_PARAM_NAMES if name in params]
     if len(body_params) != 1 or body_params[0] in kwargs:
-        return kwargs
-    body_param = body_params[0]
+        return None
+    return body_params[0]
+
+
+def _fold_body_fields(
+    params: Mapping[str, inspect.Parameter], body_param: str, kwargs: dict
+) -> dict:
+    """Preserve named arguments and collect only unmatched fields in the body."""
     named = {
         name
         for name, p in params.items()

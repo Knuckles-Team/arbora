@@ -792,3 +792,11 @@ read-only or destructive hint.
 ## Served program optimization operations (R860)
 
 The engine compiles programs and holds the champion pointer (EG-DECISION-ENGINE-R810, EG-DECISION-ENGINE-R812). arbora serves three thin operations over them. `program.optimize` submits the job. `program.promote` and `program.rollback` need an approved plan and commit through the engine. arbora holds no score, threshold or verdict.
+
+## Served dashboard operations (R861)
+
+No spec owned user-saved assets. The search `git grep -n -i "dashboard\|catalog asset\|saved query" -- specs` found only the gateway layout router (R039) and the fleet catalog operations. Neither stores a user document. R861 extends this spec because it owns served operations. The consumer is WEBUI-DASH-R010 in agent-webui.
+
+The engine stores each dashboard as a catalog asset with an owner, grants and a revision. arbora serves the operations and holds no store. The engine catalog asset rows do not exist yet. An epistemic-graph row must define the asset type, the owner and grant facts, and compare-and-set on the revision. R861.8 depends on that row. Until it lands, the operations stay SPECIFIED.
+
+Call path: the served `invoke` receives the call and resolves the caller principal and tenant. It validates params. It then calls the engine through the client in `arbora/api/ops/dashboard.py`. `dashboard.delete` follows the existing `Confirm.PLAN` pattern of R860.3. `dashboard.list` and `dashboard.get` are reads. `dashboard.save` and `dashboard.share` are writes. Panel queries remain opaque strings. A later `query` call, made by the viewer under the viewer principal, runs them.

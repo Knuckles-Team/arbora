@@ -1,7 +1,7 @@
 """Generated engine error contract. Do not edit."""
 
-REGISTRY_DIGEST = "4c8786750a3bacd340f0bed370a956bcc595381c0a619d0cb301697650aadb93"
-EG_RECEIPT_DIGEST = "b9f4d9905c27789a92db899490c05dad70179a4e6468cd399cfa2b4c5937d52f"
+REGISTRY_DIGEST = "7ca753af86f5c4c29f6eedd6f0de741faab38e0a4c81e337ecb5dc6a2fcec0f4"
+EG_RECEIPT_DIGEST = "4f6fdb7ba37b6cb9f3a2f0a33f78c4fb6a3b3fb29e63d6e9f221ec80bb7acd0d"
 ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "ABORTED_ATOMIC_GRAPH_BATCH": (400, False),
     "ACCESS_DENIED": (403, False),
@@ -27,8 +27,11 @@ ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "AUDIT_WRITER_UNAVAILABLE": (400, False),
     "AUTHENTICATION_REQUIRED": (401, False),
     "AUTH_AUDIENCE_MISMATCH": (403, False),
+    "AUTH_BAD_SIGNATURE": (401, False),
+    "AUTH_EXPIRED": (401, False),
     "AUTH_POLICY_VERSION_MISMATCH": (403, False),
     "AUTH_TENANT_MISMATCH": (403, False),
+    "AUTH_UNKNOWN_PRINCIPAL": (401, False),
     "BODY_DIGEST_MISMATCH": (400, False),
     "BODY_MISSING": (400, False),
     "BUSY": (429, True),
@@ -203,6 +206,7 @@ ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "RESERVED_COMPONENT_ID": (400, False),
     "RESERVED_GRAPH_NAME": (400, False),
     "RESULT_TOO_LARGE": (400, False),
+    "RUN_ADMISSION_UNAVAILABLE": (409, False),
     "SCHEMA_APPROVAL_MISMATCH": (400, False),
     "SCHEMA_APPROVAL_REQUIRED": (400, False),
     "SCHEMA_INCONSISTENT": (409, False),
