@@ -53,6 +53,18 @@ the native status and return no artifacts plus `metadata.arbora.reply` with
 or `reply_too_large`. Missing events yield no artifact; malformed or conflicting
 stored payloads refuse. A local cache is not evidence of durable recovery.
 
+## Measured timing
+
+The blocking response for a completed turn can include `metadata.arbora.metrics` with
+`runId`, `taskId`, `contextId`, `scope: "turn"`, and `measurements`. AU supplies
+client-monotonic run and request elapsed milliseconds. The bounded request list
+preserves its observed count and complete or partial coverage. These are not
+provider generation time, queue time, TTFT, TPS or cost estimates.
+
+Timing is ephemeral: task reads, restart recovery, completed replay and
+nonblocking responses do not reconstruct it. Native completion continues to
+store usage counts, not timing. Missing measurements remain absent.
+
 ## Inline text files
 
 Messages accept `file` parts with a `file` object containing base64 `bytes`,

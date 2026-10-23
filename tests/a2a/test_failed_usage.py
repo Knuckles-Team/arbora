@@ -43,7 +43,7 @@ async def invoke(monkeypatch, execute, *, commit_error=False):
         {"outcome": "failed", "result_ref": None, "error_ref": commits[0]["error_ref"]}
     ]
     assert task_output_artifacts("failed-task") is None
-    return usage
+    return usage[0]
 
 
 @pytest.mark.asyncio

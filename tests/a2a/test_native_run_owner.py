@@ -60,7 +60,7 @@ async def test_submit_retry_get_list_cancel_use_returned_engine_id(
     )
     monkeypatch.setattr(authority, "_session", lambda scope: SESSION)
     monkeypatch.setattr(authority, "_owner_ref", lambda session: "owner")
-    run = AsyncMock(return_value=None)
+    run = AsyncMock(return_value=(None, None))
     monkeypatch.setattr(authority, "_run", run)
     message = A2AMessage(
         role="user",

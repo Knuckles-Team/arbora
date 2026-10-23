@@ -136,7 +136,16 @@ async def test_snapshot_is_committed_once(monkeypatch, failed, counts):
     from tests.a2a.test_failed_usage import failure
 
     authority = WorkItemA2AAuthority(lambda: None, task_plan_config=object())
-    result = AgentExecutionResult(run_id="run", output="answer", usage=counts)
+    from tests.test_agent_runs import measured_metrics
+
+    result = AgentExecutionResult.model_validate(
+        {
+            "run_id": "run",
+            "output": "answer",
+            "usage": counts,
+            "metrics": measured_metrics(),
+        }
+    )
     execute = AsyncMock(return_value=result)
     if failed:
         remember_task_output("task", "stale answer")
@@ -403,3 +412,49 @@ async def test_polled_task_does_not_mix_later_receipt_or_artifact(monkeypatch):
     assert second.status.state == "failed"
     assert second.artifacts is None
     assert second.metadata["arbora"]["usage"]["counts"] == COUNTS
+
+
+@pytest.mark.spec("ARBORA-OPS-R024.3.2.1")
+@pytest.mark.parametrize("commit_status", ["committed", "noop", "missing", "fenced"])
+async def test_ephemeral_metrics_require_winning_completion(monkeypatch, commit_status):
+    from arbora import work_items
+    from tests.test_agent_runs import measured_metrics
+
+    authority = WorkItemA2AAuthority(lambda: None, task_plan_config=object())
+    result = AgentExecutionResult.model_validate(
+        {
+            "run_id": "run",
+            "output": "answer",
+            "usage": COUNTS,
+            "metrics": measured_metrics(),
+        }
+    )
+    monkeypatch.setattr(
+        authority, "_execute_claimed_run", AsyncMock(return_value=result)
+    )
+    monkeypatch.setattr(work_items, "claim_specific", lambda *a, **k: CLAIM)
+    commits = []
+
+    def commit(*args, **kwargs):
+        commits.append(kwargs)
+        return commit_status
+
+    monkeypatch.setattr(work_items, "commit_result", commit)
+    usage, metrics = await authority._run(
+        object(),
+        item_id="work",
+        session=SESSION,
+        agent_name="helper",
+        task="question",
+        task_id="task",
+        run_id="run",
+    )
+    assert usage == COUNTS
+    assert metrics == (measured_metrics() if commit_status == "committed" else None)
+    assert len(commits) == 1
+    assert commits[0]["run_completion"] == {
+        "schema_version": 1,
+        "run_id": "run",
+        "usage": COUNTS,
+    }
+    assert "usage_observation" not in commits[0]

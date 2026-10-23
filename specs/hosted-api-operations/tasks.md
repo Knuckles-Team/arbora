@@ -311,3 +311,8 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R861.7:** Scope and audit.
 - [ ] **ARBORA-OPS-R861.8:** Wiring.
 - [ ] **ARBORA-OPS-R861.9:** Hot-path proof.
+
+- [x] **ARBORA-OPS-R024.3.1.1:** Validate the caller-bound session usage projection.
+- [ ] **ARBORA-OPS-R024.3.1.2:** Qualify durable session usage on the served native stack.
+- [x] **ARBORA-OPS-R024.3.2.1:** Project measured AU timing without changing completion.
+- [ ] **ARBORA-OPS-R024.3.2.2:** Qualify shared timing through installed served clients.
