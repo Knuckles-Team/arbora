@@ -1615,6 +1615,7 @@
       "title": "arbora serves and reports the prompts, skills and resources of each connector",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "61bb886d0ce3",
         "abaee0920e29",
         "b71e36444f67"
       ],
@@ -1634,11 +1635,12 @@
       "title": "The served gateway forwards the relay ops",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "61bb886d0ce3",
         "b71e36444f67"
       ],
       "verified_by": [
-        "tests/mcp_server/test_late_gateway_parity.py:30",
-        "tests/mcp_server/test_late_gateway_parity.py:38"
+        "tests/mcp_server/test_late_gateway_parity.py:29",
+        "tests/mcp_server/test_late_gateway_parity.py:37"
       ]
     },
     {
