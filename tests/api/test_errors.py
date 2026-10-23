@@ -55,6 +55,7 @@ def test_every_arbora_code_has_one_envelope() -> None:
     [
         (ArboraErrorCode.UNAUTHENTICATED, 401, False),
         (ArboraErrorCode.SCOPE_REQUIRED, 403, False),
+        (ArboraErrorCode.NOT_FOUND, 404, False),
         (ArboraErrorCode.CONFIRMATION_REQUIRED, 428, False),
         (ArboraErrorCode.POLICY_UNAVAILABLE, 503, True),
         (ArboraErrorCode.INDETERMINATE, 500, False),
@@ -390,3 +391,13 @@ def test_generated_engine_table_controls_envelope(monkeypatch, retryable):
     assert a2a_error_status(refusal.code, source="engine") == (-32000, 409)
     with pytest.raises(EgContractError):
         to_envelope(EngineRefusal("UNKNOWN"), **CONTEXT)
+
+
+# spec: ARBORA-OPS-R010
+def test_not_found_is_in_the_closed_enum_for_every_projection() -> None:
+    status, envelope = to_envelope(
+        InvokeError("NOT_FOUND", {"reason": "fleet item is unavailable"}), **CONTEXT
+    )
+    assert status == 404
+    assert envelope["error"]["code"] == "NOT_FOUND"
+    assert a2a_error_status("NOT_FOUND") == (-32002, 404)
