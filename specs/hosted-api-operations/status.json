@@ -242,6 +242,9 @@
     "ARBORA-OPS-R855.1",
     "ARBORA-OPS-R855.2",
     "ARBORA-OPS-R855.3",
+    "ARBORA-OPS-R855.4",
+    "ARBORA-OPS-R855.5",
+    "ARBORA-OPS-R855.6",
     "ARBORA-OPS-R856",
     "ARBORA-OPS-R856.1",
     "ARBORA-OPS-R856.2",
@@ -2572,21 +2575,29 @@
     },
     {
       "id": "ARBORA-OPS-R855",
-      "title": "Catalog and governance operations (rollup)",
+      "title": "Catalog and governance reads are intent-routed graph queries (rollup)",
       "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "landed_in": [
+        "9d154db4f8d9"
+      ],
       "verified_by": [],
       "rollup_of": [
         "ARBORA-OPS-R855.1",
         "ARBORA-OPS-R855.2",
-        "ARBORA-OPS-R855.3"
+        "ARBORA-OPS-R855.3",
+        "ARBORA-OPS-R855.4",
+        "ARBORA-OPS-R855.5",
+        "ARBORA-OPS-R855.6"
       ]
     },
     {
       "id": "ARBORA-OPS-R855.1",
-      "title": "Wiring",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "title": "Routing",
+      "delivery_state": "LANDED",
+      "landed_in": [
+        "78ff6ab06a98",
+        "9d154db4f8d9"
+      ],
       "verified_by": []
     },
     {
@@ -2602,6 +2613,42 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R855.4",
+      "title": "Ask answers from the graph",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "78ff6ab06a98",
+        "9d154db4f8d9"
+      ],
+      "verified_by": [
+        "tests/api/test_resolve.py:191"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R855.5",
+      "title": "Find surfaces catalog assets",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "78ff6ab06a98",
+        "9d154db4f8d9"
+      ],
+      "verified_by": [
+        "tests/api/test_resolve.py:216"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R855.6",
+      "title": "Governed routing only",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "78ff6ab06a98",
+        "9d154db4f8d9"
+      ],
+      "verified_by": [
+        "tests/api/test_resolve.py:229"
+      ]
     },
     {
       "id": "ARBORA-OPS-R856",

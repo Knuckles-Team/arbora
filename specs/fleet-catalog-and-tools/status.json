@@ -170,7 +170,8 @@
     "ARBORA-FLEET-R043.3",
     "ARBORA-FLEET-R043.4",
     "ARBORA-FLEET-R043.5",
-    "ARBORA-FLEET-R043.6"
+    "ARBORA-FLEET-R043.6",
+    "ARBORA-FLEET-R043.7"
   ],
   "requirements": [
     {
@@ -1719,7 +1720,8 @@
         "ARBORA-FLEET-R043.3",
         "ARBORA-FLEET-R043.4",
         "ARBORA-FLEET-R043.5",
-        "ARBORA-FLEET-R043.6"
+        "ARBORA-FLEET-R043.6",
+        "ARBORA-FLEET-R043.7"
       ]
     },
     {
@@ -1732,8 +1734,11 @@
     {
       "id": "ARBORA-FLEET-R043.2",
       "title": "Behavior",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "LANDED",
+      "landed_in": [
+        "78ff6ab06a98",
+        "9d154db4f8d9"
+      ],
       "verified_by": []
     },
     {
@@ -1763,6 +1768,18 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R043.7",
+      "title": "Source executor",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "78ff6ab06a98",
+        "9d154db4f8d9"
+      ],
+      "verified_by": [
+        "tests/fleet/test_source_executor.py:32"
+      ]
     }
   ]
 }

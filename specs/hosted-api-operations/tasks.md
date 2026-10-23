@@ -274,7 +274,7 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R854.1:** Wiring.
 - [ ] **ARBORA-OPS-R854.2:** Hot-path proof.
 - [ ] **ARBORA-OPS-R855:** Catalog and governance operations (rollup).
-- [ ] **ARBORA-OPS-R855.1:** Wiring.
+- [ ] **ARBORA-OPS-R855.1:** Routing.
 - [ ] **ARBORA-OPS-R855.2:** Hot-path proof.
 - [ ] **ARBORA-OPS-R856:** Quality and lineage operations (rollup).
 - [ ] **ARBORA-OPS-R856.1:** Wiring.
@@ -287,6 +287,9 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R858.2:** Hot-path proof.
 
 - [ ] **ARBORA-OPS-R855.3:** Trust flag, curation review and query workspace operations.
+- [ ] **ARBORA-OPS-R855.4:** Ask answers from the graph.
+- [ ] **ARBORA-OPS-R855.5:** Find surfaces catalog assets.
+- [ ] **ARBORA-OPS-R855.6:** Governed routing only.
 
 ## Served program optimization operations (R860)
 
