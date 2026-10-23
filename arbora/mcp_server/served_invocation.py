@@ -199,6 +199,24 @@ def _with_ingest_runner(
     return {**bindings, "ingest_runner": runner}
 
 
+def _with_task_plan_schema(
+    bindings: Mapping[str, Any] | None,
+) -> Mapping[str, Any] | None:
+    """Bind the verified task-plan schema pin (ARBORA-RELEASE-R003.4.4).
+
+    The committed pin binds only when it matches the installed engine and is
+    final; otherwise ``agents.plan_run`` keeps refusing with ``UNAVAILABLE``.
+    """
+    if bindings is None or "task_plan_feature_schema" in bindings:
+        return bindings
+    from arbora.api.task_plan_schema import startup_feature_schema
+
+    pin = startup_feature_schema()
+    if pin is None:
+        return bindings
+    return {**bindings, "task_plan_feature_schema": pin}
+
+
 def compose_served_invocation(
     *,
     pool: Any,
@@ -243,6 +261,7 @@ def compose_served_invocation(
 
     minted = session()
     bindings = _with_ingest_runner(bindings, pool, graph, connect_context)
+    bindings = _with_task_plan_schema(bindings)
 
     async def service_client() -> Any:
         return await pool.connected_client(connect_context(session().tenant), graph)

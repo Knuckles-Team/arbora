@@ -18,6 +18,7 @@ Governing [spec](spec.md) and [plan](plan.md).
 - [x] `ARBORA-RELEASE-R003.4.1` — served `agents.plan_run`: engine `TaskPlan` decision, checked receipt, harness `DependencyPlan` execution, engine refusals unchanged (c22, c21).
 - [x] `ARBORA-RELEASE-R003.4.2` — publish the plan to the work item through `PublishCurrentPlan` for replay.
 - [ ] `ARBORA-RELEASE-R003.4.3` — raise the engine floor to `epistemic-graph[server]>=2.27.5` once it is on the package index (agent-utilities 3.1.0 floor done); then rerun the served tests on the real engine facade.
+- [ ] `ARBORA-RELEASE-R003.4.4` — generate the task-plan schema pin with `gen_api` and check it at start-up. Then take the definition digest from the EG 2.27.5 schema.
 - [ ] `ARBORA-RELEASE-R003.5` — connector-certification row.
 - [ ] `ARBORA-RELEASE-R003.6` — write-back receipt row.
 - [ ] `ARBORA-RELEASE-R003.7` — browser-and-identity-provider login probe row.
