@@ -1725,16 +1725,16 @@ async def _question_route(
 ) -> dict[str, Any] | None:
     """Route an unpinned ``ask`` that is a planning or cross-source question.
 
-    "How can I ...", "what steps ..." and "which agents should ..." go to the
-    task planner (AU-CONTROL-R028). A question whose ontology concepts span
-    two or more installed virtual sources goes to the cross-source report
-    (AU-CONTROL-R029). Both answers are read-only and carry provenance. Any
-    hint (a pinned tool, an action or structured arguments) keeps the
-    caller's declared route.
+    Arbora holds no planner and never derives a plan from free text
+    (EG-CQ-ORCH-R001). A plan is the engine's ``TaskPlan`` decision over
+    explicit tasks, served and executed by the registry operation
+    ``agents.plan_run`` (ARBORA-RELEASE-R003.4.1), which capability ranking
+    resolves like any other operation. So a bare ``ask`` is not intercepted
+    here: it returns ``None`` and proceeds to ranking. Any hint (a pinned
+    tool, an action or structured arguments) keeps the caller's declared
+    route.
     """
-    if verb != "ask" or raw_hints:
-        return None
-    raise not_served("decide.consumers.task_planner", "EG-CQ-ORCH-R001")
+    return None
 
 
 async def dispatch_intent(

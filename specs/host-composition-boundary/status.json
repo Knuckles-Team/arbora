@@ -1329,14 +1329,17 @@
     {
       "id": "ARBORA-HOST-R011",
       "title": "Arbora serves the messaging channel and routing layer",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "63a66f60915a",
         "afefd425c905",
+        "bc26d7b669bc",
         "bc2b6941077e",
         "c467b28d2385"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/mcp_server/test_composition.py:84"
+      ]
     },
     {
       "id": "ARBORA-HOST-R012",
@@ -1400,12 +1403,15 @@
     {
       "id": "ARBORA-HOST-R018",
       "title": "Browser catalog reads run under the process authority",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "3b2c6ac9d864",
-        "a4928a7047e1"
+        "a4928a7047e1",
+        "bc26d7b669bc"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/gateway/test_enhanced_catalog_api.py:291"
+      ]
     },
     {
       "id": "ARBORA-HOST-R019",
@@ -1931,10 +1937,10 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "191af7948d99",
+        "28cc061c8f06",
         "34077185335e",
         "80f6b7b53f91",
-        "c7208d7d3822",
-        "ceaa3da1bbcc"
+        "c7208d7d3822"
       ],
       "verified_by": [
         "tests/agent_host/test_log_access.py:442",
@@ -1968,6 +1974,7 @@
       "title": "Retain restart acceptance",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "28cc061c8f06",
         "80f6b7b53f91",
         "c7208d7d3822",
         "ceaa3da1bbcc"
@@ -1999,6 +2006,7 @@
       "title": "Complete consumer metadata presentation",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "28cc061c8f06",
         "ceaa3da1bbcc"
       ],
       "verified_by": [
