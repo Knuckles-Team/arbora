@@ -106,8 +106,10 @@ jobs:
     # chain measures ~15-17 min (commit hooks, prose lint, locked
     # environment type check, and the full pytest suite whenever the
     # pr-test-scope resolves to FULL), so the old 15 min PR cap killed
-    # the job mid-suite on every pull request; PR gets 25.
-    timeout-minutes: ${{ github.event_name == 'pull_request' && 25 || 60 }}
+    # the job mid-suite on every pull request. Measured 2026-10-23 on the
+    # #358 train: 25 min elapsed with 4543 tests passed in 16 min, and
+    # the job was cancelled at the 25 min cap during teardown; PR gets 35.
+    timeout-minutes: ${{ github.event_name == 'pull_request' && 35 || 60 }}
     name: gates
     needs: [freeze-gate-source]
     # Homelab self-hosted runner for same-repo push/PR traffic (the org
