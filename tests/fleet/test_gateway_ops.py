@@ -326,6 +326,7 @@ async def test_composition_binds_verified_reader_without_starting_probe() -> Non
     assert await ops.find_tools(caller, browse=True) == {
         "items": [],
         "next_cursor": None,
+        "servers": {},
     }
     assert ops.multiplexer_status("session")["children"]["s"]["healthy"] is True
 

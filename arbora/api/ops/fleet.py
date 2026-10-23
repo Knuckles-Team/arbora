@@ -52,6 +52,24 @@ class FleetCatalogParams(_Params):
     context_budget_tokens: int | None = Field(default=None, ge=256, le=1_000_000)
 
 
+class FleetSurfaceListParams(_Params):
+    query: str = Field(default="", max_length=4_096)
+    servers: tuple[str, ...] = ()
+    cursor: str | None = Field(default=None, max_length=1_024)
+    limit: int = Field(default=50, ge=1, le=100)
+
+
+class FleetPromptGetParams(_Params):
+    server: str = Field(min_length=1, max_length=128)
+    name: str = Field(min_length=1, max_length=1_024)
+    arguments: dict[str, str] = Field(default_factory=dict)
+
+
+class FleetResourceReadParams(_Params):
+    server: str = Field(min_length=1, max_length=128)
+    uri: str = Field(min_length=1, max_length=8_192)
+
+
 class FleetStatusParams(_Params):
     servers: tuple[str, ...] = ()
 
@@ -102,6 +120,14 @@ async def handle_fleet_operation(
         result = await gateway.load(caller, **params)
     elif op.id == "fleet.tools.unload":
         result = await gateway.unload(caller, **params)
+    elif op.id == "fleet.prompts.list":
+        result = await gateway.prompts_list(caller, **params)
+    elif op.id == "fleet.prompts.get":
+        result = await gateway.prompts_get(caller, **params)
+    elif op.id == "fleet.resources.list":
+        result = await gateway.resources_list(caller, **params)
+    elif op.id == "fleet.resources.read":
+        result = await gateway.resources_read(caller, **params)
     elif op.id == "fleet.status":
         result = await gateway.status(caller, **params)
     else:
@@ -205,6 +231,66 @@ def operations() -> tuple[OpSpec, ...]:
                 ),
             )
         ),
+        *(
+            OpSpec(
+                id=f"fleet.{family}.{action}",
+                verb=verb,
+                summary=summary,
+                examples=(example,),
+                params=params_cls,
+                result=FleetResult,
+                binding=Composite(
+                    handler="arbora.api.ops.fleet.handle_fleet_operation"
+                ),
+                scopes=frozenset({scope}),
+                effect=Effect.READ,
+                audit=audit,
+            )
+            for family, action, verb, params_cls, scope, audit, summary, example in (
+                (
+                    "prompts",
+                    "list",
+                    Verb.FIND,
+                    FleetSurfaceListParams,
+                    "mcp:discover",
+                    AuditClass.NONE,
+                    "List caller-visible connector prompts (prompts/list relay)",
+                    "list the prompts a connector serves",
+                ),
+                (
+                    "prompts",
+                    "get",
+                    Verb.ASK,
+                    FleetPromptGetParams,
+                    "mcp:delegate",
+                    AuditClass.EVENT,
+                    "Render one connector prompt (prompts/get relay)",
+                    "get this connector prompt",
+                ),
+                (
+                    "resources",
+                    "list",
+                    Verb.FIND,
+                    FleetSurfaceListParams,
+                    "mcp:discover",
+                    AuditClass.NONE,
+                    "List caller-visible connector resources, skill:// included "
+                    "(resources/list relay)",
+                    "list the resources and ontologies a connector serves",
+                ),
+                (
+                    "resources",
+                    "read",
+                    Verb.ASK,
+                    FleetResourceReadParams,
+                    "mcp:delegate",
+                    AuditClass.EVENT,
+                    "Read one connector resource, such as a skill:// or "
+                    "ontology:// URI (resources/read relay)",
+                    "read this connector ontology resource",
+                ),
+            )
+        ),
         OpSpec(
             id="fleet.status",
             verb=Verb.ASK,
@@ -226,8 +312,11 @@ __all__ = [
     "FleetCallParams",
     "FleetCatalogParams",
     "FleetLoadParams",
+    "FleetPromptGetParams",
+    "FleetResourceReadParams",
     "FleetResult",
     "FleetStatusParams",
+    "FleetSurfaceListParams",
     "FleetUnloadParams",
     "ServiceChildOutcomeUnknown",
     "handle_fleet_call",

@@ -4923,6 +4923,40 @@ class MCPMultiplexer:
         )
         return {"uri": uri, "text": text, "mimeType": str(mime_type or "text/plain")}
 
+    async def get_server_prompt(
+        self,
+        *,
+        server_name: str,
+        name: str,
+        arguments: dict[str, str],
+        timeout: float,
+    ) -> dict[str, _typing.Any]:
+        """Render one child prompt through this served child connection."""
+        _require_fleet_capability("delegate")
+        if not name or len(name.encode("utf-8")) > 1_024:
+            raise _fastmcp_exceptions.ToolError("MCP prompt name is invalid")
+        _assert_bounded_delegated_value(arguments)
+        await self.mount_child(server_name)
+        session = self._live_primary_session(server_name)
+        result = await asyncio.wait_for(
+            session.get_prompt(name, arguments), timeout=timeout
+        )
+        messages: list[dict[str, str]] = []
+        for message in getattr(result, "messages", ()) or ():
+            content = getattr(message, "content", None)
+            text = getattr(content, "text", None)
+            if isinstance(text, str):
+                messages.append({"role": str(message.role), "text": text})
+        if sum(len(m["text"].encode("utf-8")) for m in messages) > (
+            _MAX_DELEGATED_VALUE_BYTES
+        ):
+            raise _fastmcp_exceptions.ToolError("MCP prompt exceeds the size boundary")
+        return {
+            "name": name,
+            "description": str(getattr(result, "description", "") or ""),
+            "messages": messages,
+        }
+
     def prefixed_tools_for_server(self, server_name: str) -> list[MCPTool]:
         """All aggregated prefixed tools currently owned by ``server_name``."""
         names = {
