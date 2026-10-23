@@ -2577,9 +2577,7 @@
       "id": "ARBORA-OPS-R855",
       "title": "Catalog and governance reads are intent-routed graph queries (rollup)",
       "delivery_state": "SPECIFIED",
-      "landed_in": [
-        "9d154db4f8d9"
-      ],
+      "landed_in": [],
       "verified_by": [],
       "rollup_of": [
         "ARBORA-OPS-R855.1",
@@ -2593,12 +2591,13 @@
     {
       "id": "ARBORA-OPS-R855.1",
       "title": "Routing",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "78ff6ab06a98",
-        "9d154db4f8d9"
+        "d32bf1d14023"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_resolve.py:191"
+      ]
     },
     {
       "id": "ARBORA-OPS-R855.2",
@@ -2619,11 +2618,10 @@
       "title": "Ask answers from the graph",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "78ff6ab06a98",
-        "9d154db4f8d9"
+        "d32bf1d14023"
       ],
       "verified_by": [
-        "tests/api/test_resolve.py:191"
+        "tests/api/test_resolve.py:192"
       ]
     },
     {
@@ -2631,11 +2629,10 @@
       "title": "Find surfaces catalog assets",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "78ff6ab06a98",
-        "9d154db4f8d9"
+        "d32bf1d14023"
       ],
       "verified_by": [
-        "tests/api/test_resolve.py:216"
+        "tests/api/test_resolve.py:218"
       ]
     },
     {
@@ -2643,11 +2640,10 @@
       "title": "Governed routing only",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "78ff6ab06a98",
-        "9d154db4f8d9"
+        "d32bf1d14023"
       ],
       "verified_by": [
-        "tests/api/test_resolve.py:229"
+        "tests/api/test_resolve.py:231"
       ]
     },
     {
