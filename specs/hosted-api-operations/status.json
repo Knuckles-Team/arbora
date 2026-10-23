@@ -340,7 +340,7 @@
       "verified_by": [
         "tests/api/test_contract_admission.py:120",
         "tests/api/test_contract_admission.py:70",
-        "tests/api/test_errors.py:285"
+        "tests/api/test_errors.py:286"
       ]
     },
     {
@@ -425,11 +425,14 @@
     {
       "id": "ARBORA-OPS-R010",
       "title": "Closed error enum and one response envelope",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "4b83c69e2b41"
+        "4b83c69e2b41",
+        "db96f0d22223"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_errors.py:396"
+      ]
     },
     {
       "id": "ARBORA-OPS-R011",

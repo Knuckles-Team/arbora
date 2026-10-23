@@ -1620,14 +1620,15 @@
       "landed_in": [
         "3597c590c8c9",
         "6815715c27d8",
-        "abaee0920e29"
+        "abaee0920e29",
+        "db96f0d22223"
       ],
       "verified_by": [
-        "tests/fleet/test_connector_surfaces.py:133",
-        "tests/fleet/test_connector_surfaces.py:143",
-        "tests/fleet/test_connector_surfaces.py:153",
-        "tests/fleet/test_connector_surfaces.py:187",
-        "tests/fleet/test_connector_surfaces.py:221"
+        "tests/fleet/test_connector_surfaces.py:134",
+        "tests/fleet/test_connector_surfaces.py:144",
+        "tests/fleet/test_connector_surfaces.py:154",
+        "tests/fleet/test_connector_surfaces.py:188",
+        "tests/fleet/test_connector_surfaces.py:222"
       ],
       "rollup_of": [
         "ARBORA-FLEET-R040.1"
@@ -1639,9 +1640,11 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "3597c590c8c9",
-        "6815715c27d8"
+        "6815715c27d8",
+        "db96f0d22223"
       ],
       "verified_by": [
+        "tests/fleet/test_connector_surfaces.py:267",
         "tests/mcp_server/test_late_gateway_parity.py:29",
         "tests/mcp_server/test_late_gateway_parity.py:37"
       ]
