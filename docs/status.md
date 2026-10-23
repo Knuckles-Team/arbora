@@ -56,8 +56,13 @@ An active unary A2A send response includes measured AU run counts, when
 available, under `metadata.arbora.usage`: `runId`, `taskId`, `contextId`,
 `scope: "turn"`, and `counts`. Counts preserve the producer's nonnegative
 integer request, tool-call, input-token, output-token and total-token values.
-Missing usage stays absent. Completed replays and task reads do not reconstruct
-usage; durable per-session usage and cost accounting remain unavailable.
+Missing usage stays absent. Native task reads use immutable completion receipts
+when available; legacy reads do not reconstruct usage. The shared `usage.read`
+operation accepts a context identifier only when EG supplies its caller-bound
+session reader. It preserves missing runs and partial inventory without local
+aggregation. Native and installed served qualification remains open. Cost
+accounting remains unavailable. [Measured timing](a2a.md#measured-timing) is
+separate from durable counts and is never reconstructed on replay.
 
 Task dependency graph execution has an opt-in shared host composition path.
 It requires a trusted HostedInvocation with TaskPlanConfig, native A2A run

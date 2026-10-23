@@ -229,7 +229,8 @@ Data flow starts with `policy.create` over POST /api/v1/ops/{op_id}. It calls `_
 
 Types: `PolicyEntity`, `ConstitutionSource`, `PolicyChange`. Failure: `POLICY_DENIED` or `POLICY_UNAVAILABLE`, never a partial change.
 
-Existing code: arbora/control_plane/policy/repository.py:100, :117, :129, :179; arbora/control_plane/policy/models.py:203; arbora/api/ops/policy.py:36; arbora/api/invoke/pipeline.py:198, :208, :218. Reachable today: no. `PolicyAuthority` has no production constructor.
+Existing policy code: arbora/control_plane/policy/repository.py:100, :117, :129, :179; arbora/control_plane/policy/models.py:203.
+Existing operation code: arbora/api/ops/policy.py:36; arbora/api/invoke/pipeline.py:198, :208, :218. Reachable today: no. `PolicyAuthority` has no production constructor.
 
 Decision: Arbora serves the operation and admits plans, and the engine decides violation. Rejected: a policy evaluator inside Arbora, which duplicates engine decisions. Cross-repository: EG-DECISION-ENGINE-R001 owns policy decisions; Arbora owns authenticated operation admission and transport. Clause interpretation requires a published engine producer contract, not an AU policy evaluator.
 
@@ -882,3 +883,16 @@ No spec owned user-saved assets. The search `git grep -n -i "dashboard\|catalog 
 The engine stores each dashboard as a catalog asset with an owner, grants and a revision. arbora serves the operations and holds no store. The engine catalog asset rows do not exist yet. An epistemic-graph row must define the asset type, the owner and grant facts, and compare-and-set on the revision. R861.8 depends on that row. Until it lands, the operations stay SPECIFIED.
 
 Call path: the served `invoke` receives the call and resolves the caller principal and tenant. It validates params. It then calls the engine through the client in `arbora/api/ops/dashboard.py`. `dashboard.delete` follows the existing `Confirm.PLAN` pattern of R860.3. `dashboard.list` and `dashboard.get` are reads. `dashboard.save` and `dashboard.share` are writes. Panel queries remain opaque strings. A later `query` call, made by the viewer under the viewer principal, runs them.
+
+### 2026-10-23: shared usage and timing boundary
+
+R024.3.1.1 and R024.3.2.1 reconcile only the served reader and immediate
+measurement projection. EG owns session aggregation over immutable native
+admission and completion. AU owns client-monotonic measurements. Arbora
+validates and forwards them without a local ledger or a second usage write.
+Native run admission, failed and successful completion, and replay remain intact.
+
+R024.3.1.2 and R024.3.2.2 retain the full native and installed served
+qualification. A source fixture is not durable producer or release evidence.
+Timing is present only on the blocking response that executed the turn; it is
+not reconstructed on replay, restart, task reads or nonblocking responses.

@@ -174,6 +174,7 @@ def test_served_agents_run_executes_through_a2a_work_items_and_the_harness(
 
 
 @pytest.mark.spec("ARBORA-HOST-R001.2.2", "ARBORA-A2A-R001.5.1")
+@pytest.mark.spec("ARBORA-OPS-R024.3.2.1")
 @pytest.mark.parametrize(
     "attachment_case",
     [
@@ -318,6 +319,16 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
         "scope": "turn",
         "counts": terminal["result"]["usage"],
     }
+    metrics = body["result"]["metadata"]["arbora"]["metrics"]
+    assert metrics == {
+        "runId": body["result"]["metadata"]["arbora"]["runId"],
+        "taskId": body["result"]["id"],
+        "contextId": body["result"]["contextId"],
+        "scope": "turn",
+        "measurements": terminal["result"]["metrics"],
+    }
+    assert metrics["measurements"]["observed_model_requests"] == 1
+    assert metrics["measurements"]["model_requests"][0]["provider_name"] == "function"
     assert engine.work_items.outcomes == ["succeeded"]
     assert [
         json.loads(event["properties"]["payload"])["type"]
@@ -364,6 +375,13 @@ async def test_turn_usage_is_correlated_and_not_reconstructed_on_replay(
         "scope": "turn",
         "counts": terminal["result"]["usage"],
     }
+    assert (
+        task.metadata["arbora"]["metrics"]["measurements"]
+        == terminal["result"]["metrics"]
+    )
+    assert "metrics" not in replay.metadata["arbora"]
+    assert read is not None
+    assert "metrics" not in read.metadata["arbora"]
     assert "usage" not in replay.metadata["arbora"]
     assert read is not None and "usage" not in read.metadata["arbora"]
     assert engine.work_items.outcomes == ["succeeded"]
@@ -400,5 +418,5 @@ async def test_foreign_run_result_never_projects_usage(
         task_id="task",
         run_id="admitted-run",
     )
-    assert usage is None
+    assert usage == (None, None)
     assert outcomes == ["failed"]

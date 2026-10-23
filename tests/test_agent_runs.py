@@ -41,6 +41,7 @@ def bound(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Engine]:
 
 @pytest.mark.spec("ARBORA-HOST-R001.2.1")
 @pytest.mark.asyncio
+@pytest.mark.spec("ARBORA-OPS-R024.3.2.1")
 async def test_agent_run_executes_through_the_harness_with_bound_providers(
     bound: _Engine,
 ) -> None:
@@ -53,6 +54,9 @@ async def test_agent_run_executes_through_the_harness_with_bound_providers(
     terminal = json.loads(bound.batches[-1][0]["properties"]["payload"])
     assert result.usage == terminal["result"]["usage"]
     assert result.usage and result.usage["requests"] == 1
+    assert result.metrics is not None
+    assert result.metrics.model_dump(exclude_none=True) == terminal["result"]["metrics"]
+    assert result.metrics.observed_model_requests == 1
     kinds = [
         json.loads(batch[0]["properties"]["payload"])["type"] for batch in bound.batches
     ]
@@ -121,3 +125,144 @@ def test_missing_usage_is_not_a_zero_measurement() -> None:
     from arbora.api.contracts.agent_control_contracts import AgentExecutionResult
 
     assert AgentExecutionResult(run_id="run", output="ok").usage is None
+
+
+def measured_metrics() -> dict[str, Any]:
+    return {
+        "source": "client_monotonic_clock",
+        "run_elapsed_ms": 45,
+        "observed_model_requests": 1,
+        "coverage": "complete",
+        "model_requests": [
+            {
+                "sequence": 1,
+                "source": "client_monotonic_clock",
+                "client_request_elapsed_ms": 32,
+                "outcome": "completed",
+                "model_name": "fixture",
+                "provider_name": "function",
+                "input_tokens": 3,
+                "output_tokens": 2,
+            }
+        ],
+    }
+
+
+@pytest.mark.spec("ARBORA-OPS-R024.3.2.1")
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"run_elapsed_ms": True},
+        {"generation_tps": 20},
+        {"coverage": "partial"},
+        {"observed_model_requests": 0},
+        {"run_elapsed_ms": -1},
+        {"run_elapsed_ms": 9_007_199_254_740_992},
+        {"run_elapsed_ms": "45"},
+        {"run_elapsed_ms": 1.5},
+        {"ttft_ms": 1},
+        {"cost": 1},
+    ],
+)
+def test_measured_metrics_reject_inference_and_invalid_coverage(
+    change: dict[str, Any],
+) -> None:
+    from pydantic import ValidationError
+
+    from arbora.api.contracts.agent_control_contracts import AgentExecutionResult
+
+    with pytest.raises(ValidationError):
+        AgentExecutionResult.model_validate(
+            {
+                "run_id": "run",
+                "output": "ok",
+                "metrics": {**measured_metrics(), **change},
+            }
+        )
+
+
+@pytest.mark.spec("ARBORA-OPS-R024.3.2.1")
+async def test_agent_port_preserves_shared_metrics_without_deriving_tps() -> None:
+    from types import SimpleNamespace
+
+    class Executor:
+        async def execute_agent(self, request: Any, **kwargs: Any) -> Any:
+            return SimpleNamespace(
+                run_id="run",
+                output="ok",
+                execution_mode="graph",
+                usage={"input_tokens": 3},
+                metrics=measured_metrics(),
+            )
+
+    result = await agent_runs.AgentRunPort(Executor()).execute_agent(
+        AgentExecutionRequest(agent_name="helper", task="test"),
+        session=cast(Any, object()),
+    )
+    assert result.metrics is not None
+    assert result.metrics.model_dump(exclude_none=True) == measured_metrics()
+    assert "generation_tps" not in result.metrics.model_dump()
+
+
+@pytest.mark.spec("ARBORA-OPS-R024.3.2.1")
+@pytest.mark.parametrize(
+    "field", ["sequence", "client_request_elapsed_ms", "input_tokens", "output_tokens"]
+)
+@pytest.mark.parametrize("value", [True, -1, 1.5, "1", 9_007_199_254_740_992])
+def test_request_measurements_preserve_safe_integer_precision(
+    field: str, value: Any
+) -> None:
+    from pydantic import ValidationError
+
+    from arbora.api.contracts.agent_control_contracts import RunMetrics
+
+    metrics = measured_metrics()
+    metrics["model_requests"][0][field] = value
+    with pytest.raises(ValidationError):
+        RunMetrics.model_validate(metrics)
+
+
+@pytest.mark.spec("ARBORA-OPS-R024.3.2.1")
+def test_missing_and_zero_metrics_are_not_conflated() -> None:
+    from arbora.api.contracts.agent_control_contracts import AgentExecutionResult
+
+    assert AgentExecutionResult(run_id="run", output="ok").metrics is None
+    value = {
+        "source": "client_monotonic_clock",
+        "run_elapsed_ms": 0,
+        "observed_model_requests": 0,
+        "coverage": "complete",
+        "model_requests": [],
+    }
+    result = AgentExecutionResult.model_validate(
+        {"run_id": "run", "output": "ok", "metrics": value}
+    )
+    assert result.metrics is not None
+    assert result.metrics.model_dump(exclude_none=True) == value
+
+
+@pytest.mark.spec("ARBORA-OPS-R024.3.2.1")
+def test_bounded_metrics_preserve_partial_coverage_and_observation_order() -> None:
+    from pydantic import ValidationError
+
+    from arbora.api.contracts.agent_control_contracts import RunMetrics
+
+    value = measured_metrics()
+    sample = value["model_requests"][0]
+    value.update(
+        observed_model_requests=129,
+        coverage="partial",
+        model_requests=[{**sample, "sequence": index} for index in range(1, 129)],
+    )
+    assert len(RunMetrics.model_validate(value).model_requests) == 128
+    with pytest.raises(ValidationError):
+        RunMetrics.model_validate(
+            {
+                **value,
+                "model_requests": value["model_requests"]
+                + [{**sample, "sequence": 129}],
+            }
+        )
+    value["model_requests"][1]["sequence"] = 1
+    with pytest.raises(ValidationError):
+        RunMetrics.model_validate(value)

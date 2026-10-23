@@ -321,3 +321,10 @@ checks preserve ACCESS_DENIED from owner lookup, metadata census and payload rea
 | Hot-path proof | `ARBORA-OPS-R861.9` | `tests/api/test_dashboard_ops_served.py::test_save_share_list_conflict_delete_served` passes. |
 
 Hot-path proof for `ARBORA-OPS-R861`: `tests/api/test_dashboard_ops_served.py::test_save_share_list_conflict_delete_served`.
+
+## Shared usage and timing acceptance boundaries
+
+- `ARBORA-OPS-R024.3.1.1`: Controlled HTTP/MCP invoke tests cover caller and tenant binding, scope refusal and typed engine denial. They also cover missing readers, malformed coverage, safe integer bounds and legacy tenant totals.
+- `ARBORA-OPS-R024.3.1.2`: A native served test must distinguish measured zero from absent or empty usage. Foreign owners reveal nothing. Tenant mismatch must refuse, and each terminal run contributes once. Controlled reader fixtures do not satisfy this row.
+- `ARBORA-OPS-R024.3.2.1`: Run the actual AU executor with a controlled model through the served A2A route. Validate strict integer bounds, ordered coverage, absent measurements and unchanged native completion payloads.
+- `ARBORA-OPS-R024.3.2.2`: Installed native HTTP/MCP client journeys must cover replay, restart and nonblocking delivery. Source fixtures do not qualify dependency availability or native persistence.

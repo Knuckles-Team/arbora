@@ -461,7 +461,7 @@ class WorkItemA2AAuthority:
         task_id: str = "",
         context_id: str = "",
         run_id: str | None = None,
-    ) -> dict[str, int] | None:
+    ) -> tuple[dict[str, int] | None, dict[str, Any] | None]:
         """Lease the WorkItem, run the agent through the harness, commit the outcome.
 
         The run takes the task id as its run id, so its RunEvents name the
@@ -478,9 +478,10 @@ class WorkItemA2AAuthority:
             lease_ttl_s=_RUN_LEASE_SECONDS,
         )
         if claim is None:
-            return None
+            return None, None
         outcome, result_ref, error_ref = "succeeded", None, None
         usage = None
+        metrics = None
         try:
             result = await self._execute_claimed_run(
                 work_engine,
@@ -499,6 +500,7 @@ class WorkItemA2AAuthority:
                 "run", result.run_id, namespace="arbora-a2a"
             )
             usage = getattr(result, "usage", None)
+            metrics = self._observed_metrics(result)
             remember_task_output(task_id, getattr(result, "output", None))
         except Exception as exc:  # noqa: BLE001 - a failed run is a failed task
             logging.getLogger(__name__).warning(
@@ -506,6 +508,7 @@ class WorkItemA2AAuthority:
             )
             from arbora.agent_runs import failed_run_usage
 
+            metrics = None
             usage = failed_run_usage(exc, run_id or task_id)
             outcome = "failed"
             result_ref = None
@@ -520,7 +523,7 @@ class WorkItemA2AAuthority:
                 "run_id": run_id or task_id,
                 **({"usage": usage} if usage is not None else {}),
             }
-        await asyncio.to_thread(
+        commit_status = await asyncio.to_thread(
             work_items.commit_result,
             work_engine,
             item_id,
@@ -530,7 +533,7 @@ class WorkItemA2AAuthority:
             error_ref=error_ref,
             **completion_kwargs,
         )
-        return usage
+        return usage, self._accepted_metrics(metrics, commit_status)
 
     def _validate_admitted_item(
         self,
@@ -619,7 +622,7 @@ class WorkItemA2AAuthority:
             if recovered is None:
                 raise RuntimeError("admitted A2A task became unavailable")
             return recovered
-        usage = None
+        measurements: tuple[dict[str, int] | None, dict[str, Any] | None] = (None, None)
         if not blocking:
             # ARBORA-A2A-R001.6: answer with the admitted task now. The run
             # continues under that task; the caller follows it with
@@ -639,7 +642,7 @@ class WorkItemA2AAuthority:
                 item_id,
             )
         else:
-            usage = await self._run(
+            measurements = await self._run(
                 work_engine,
                 item_id=item_id,
                 session=session,
@@ -654,8 +657,14 @@ class WorkItemA2AAuthority:
             )
             if isinstance(refreshed, dict):
                 item = refreshed
+        usage, metrics = measurements
         return await self._project_dispatch_task(
-            item, task_id=task_id, context_id=context_id, session=session, usage=usage
+            item,
+            task_id=task_id,
+            context_id=context_id,
+            session=session,
+            usage=usage,
+            metrics=metrics,
         )
 
     async def _project_dispatch_task(
@@ -666,6 +675,7 @@ class WorkItemA2AAuthority:
         context_id: str,
         session: Any,
         usage: Any,
+        metrics: dict[str, Any] | None = None,
     ) -> A2ATask:
         """Keep native receipt attachment separate from dispatch control flow."""
         task = self._project(item, task_id=task_id)
@@ -679,7 +689,40 @@ class WorkItemA2AAuthority:
                 "scope": "turn",
                 "counts": dict(usage),
             }
+        self._attach_metrics(task, context_id, metrics)
         return task
+
+    @staticmethod
+    def _accepted_metrics(
+        metrics: dict[str, Any] | None, commit_status: str
+    ) -> dict[str, Any] | None:
+        """A losing attempt must not label another attempt's accepted task."""
+        return metrics if commit_status == "committed" else None
+
+    @staticmethod
+    def _observed_metrics(result: Any) -> dict[str, Any] | None:
+        """Validate the AU snapshot without adding it to durable completion."""
+        from arbora.api.contracts.agent_control_contracts import RunMetrics
+
+        raw = getattr(result, "metrics", None)
+        if raw is None:
+            return None
+        return RunMetrics.model_validate(raw).model_dump(mode="json", exclude_none=True)
+
+    @staticmethod
+    def _attach_metrics(
+        task: A2ATask, context_id: str, metrics: dict[str, Any] | None
+    ) -> None:
+        """Only the executing blocking response owns this timing observation."""
+        if metrics is None:
+            return
+        task.metadata["arbora"]["metrics"] = {
+            "runId": task.metadata["arbora"]["runId"],
+            "taskId": task.id,
+            "contextId": context_id,
+            "scope": "turn",
+            "measurements": metrics,
+        }
 
     def _detach(self, run: Any, item_id: str) -> None:
         """Keep one non-blocking run alive until it commits its outcome."""
