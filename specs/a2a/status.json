@@ -25,6 +25,7 @@
     "ARBORA-A2A-R005.2.2",
     "ARBORA-A2A-R005.2.3",
     "ARBORA-A2A-R005.2.4",
+    "ARBORA-A2A-R005.2.5",
     "ARBORA-A2A-R005.3",
     "ARBORA-A2A-R005.4",
     "ARBORA-A2A-R005.5",
@@ -308,6 +309,7 @@
       "title": "Full signed human approval chain and input-required task emission",
       "delivery_state": "SPECIFIED",
       "landed_in": [
+        "c935d6686ef5",
         "cdde0200a54a"
       ],
       "verified_by": [],
@@ -315,7 +317,8 @@
         "ARBORA-A2A-R005.2.1",
         "ARBORA-A2A-R005.2.2",
         "ARBORA-A2A-R005.2.3",
-        "ARBORA-A2A-R005.2.4"
+        "ARBORA-A2A-R005.2.4",
+        "ARBORA-A2A-R005.2.5"
       ]
     },
     {
@@ -341,13 +344,32 @@
     {
       "id": "ARBORA-A2A-R005.2.3",
       "title": "Human authority snapshot evaluation",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "2ddd787cf31d"
+      ],
+      "verified_by": [
+        "tests/identity/test_approval_authority.py:20"
+      ]
     },
     {
       "id": "ARBORA-A2A-R005.2.4",
       "title": "Native facts adapters and registration proof",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "2ddd787cf31d",
+        "67cfee453bf5"
+      ],
+      "verified_by": [
+        "tests/identity/test_approval_authority.py:329",
+        "tests/identity/test_approval_authority.py:359",
+        "tests/identity/test_approval_authority.py:421",
+        "tests/identity/test_approval_registration.py:16"
+      ]
+    },
+    {
+      "id": "ARBORA-A2A-R005.2.5",
+      "title": "Native and served full-chain qualification remains open",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

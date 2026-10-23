@@ -5,6 +5,7 @@
   "delivery_state": "SPECIFIED",
   "requirement_ids": [
     "ARBORA-RELEASE-R001",
+    "ARBORA-RELEASE-R001.1",
     "ARBORA-RELEASE-R002",
     "ARBORA-RELEASE-R003",
     "ARBORA-RELEASE-R003.1",
@@ -14,6 +15,7 @@
     "ARBORA-RELEASE-R003.4.1",
     "ARBORA-RELEASE-R003.4.2",
     "ARBORA-RELEASE-R003.4.3",
+    "ARBORA-RELEASE-R003.4.4",
     "ARBORA-RELEASE-R003.5",
     "ARBORA-RELEASE-R003.6",
     "ARBORA-RELEASE-R003.7",
@@ -24,11 +26,37 @@
     {
       "id": "ARBORA-RELEASE-R001",
       "title": "Dependency-ordered, digest-verified release promotion",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "eacc29a1952e"
+        "0d34328f1114",
+        "3fe9b5ec74fc",
+        "4510e0b854aa",
+        "9a2f7532daaa",
+        "9ce8b11a5785"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/deployment/test_release_workflow_sources.py:553",
+        "tests/deployment/test_release_workflow_sources.py:577"
+      ],
+      "rollup_of": [
+        "ARBORA-RELEASE-R001.1"
+      ]
+    },
+    {
+      "id": "ARBORA-RELEASE-R001.1",
+      "title": "A version tag publishes the wheel and the sdist",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "0d34328f1114",
+        "3fe9b5ec74fc",
+        "4510e0b854aa",
+        "9a2f7532daaa",
+        "9ce8b11a5785"
+      ],
+      "verified_by": [
+        "tests/deployment/test_release_workflow_sources.py:553",
+        "tests/deployment/test_release_workflow_sources.py:577"
+      ]
     },
     {
       "id": "ARBORA-RELEASE-R002",
@@ -104,7 +132,8 @@
       "rollup_of": [
         "ARBORA-RELEASE-R003.4.1",
         "ARBORA-RELEASE-R003.4.2",
-        "ARBORA-RELEASE-R003.4.3"
+        "ARBORA-RELEASE-R003.4.3",
+        "ARBORA-RELEASE-R003.4.4"
       ]
     },
     {
@@ -139,6 +168,23 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-RELEASE-R003.4.4",
+      "title": "Published task-plan schema pin",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "6d39a589385a",
+        "c92fbf05fbb5",
+        "f2224467f07c"
+      ],
+      "verified_by": [
+        "tests/api/test_task_plan_schema_pin.py:112",
+        "tests/api/test_task_plan_schema_pin.py:182",
+        "tests/api/test_task_plan_schema_pin.py:225",
+        "tests/api/test_task_plan_schema_pin.py:246",
+        "tests/api/test_task_plan_schema_pin.py:254"
+      ]
     },
     {
       "id": "ARBORA-RELEASE-R003.5",

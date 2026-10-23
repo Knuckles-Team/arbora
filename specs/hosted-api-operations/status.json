@@ -11,6 +11,7 @@
     "ARBORA-OPS-R005",
     "ARBORA-OPS-R006",
     "ARBORA-OPS-R007",
+    "ARBORA-OPS-R007.1",
     "ARBORA-OPS-R008",
     "ARBORA-OPS-R009",
     "ARBORA-OPS-R010",
@@ -47,6 +48,7 @@
     "ARBORA-OPS-R020.6.4",
     "ARBORA-OPS-R020.6.5",
     "ARBORA-OPS-R020.6.6",
+    "ARBORA-OPS-R020.6.7",
     "ARBORA-OPS-R021",
     "ARBORA-OPS-R021.1",
     "ARBORA-OPS-R021.2",
@@ -211,6 +213,8 @@
     "ARBORA-OPS-R067.5",
     "ARBORA-OPS-R067.6",
     "ARBORA-OPS-R067.7",
+    "ARBORA-OPS-R067.8",
+    "ARBORA-OPS-R067.9",
     "ARBORA-OPS-R068",
     "ARBORA-OPS-R068.1",
     "ARBORA-OPS-R068.2",
@@ -242,6 +246,9 @@
     "ARBORA-OPS-R855.1",
     "ARBORA-OPS-R855.2",
     "ARBORA-OPS-R855.3",
+    "ARBORA-OPS-R855.4",
+    "ARBORA-OPS-R855.5",
+    "ARBORA-OPS-R855.6",
     "ARBORA-OPS-R856",
     "ARBORA-OPS-R856.1",
     "ARBORA-OPS-R856.2",
@@ -283,10 +290,10 @@
       ],
       "verified_by": [
         "tests/deployment/test_real_boot_fixture.py:19",
-        "tests/test_real_boot.py:764",
-        "tests/test_real_boot.py:785",
-        "tests/test_real_boot.py:794",
-        "tests/test_real_boot.py:813"
+        "tests/test_real_boot.py:899",
+        "tests/test_real_boot.py:920",
+        "tests/test_real_boot.py:929",
+        "tests/test_real_boot.py:948"
       ]
     },
     {
@@ -354,11 +361,29 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "4b83c69e2b41",
+        "8c4eb38f06af",
         "97061e59c412"
       ],
       "verified_by": [
         "tests/api/test_api_registry.py:110",
-        "tests/api/test_api_registry.py:63"
+        "tests/api/test_api_registry.py:63",
+        "tests/api/test_http_session_scope.py:31",
+        "tests/api/test_http_session_scope.py:68"
+      ],
+      "rollup_of": [
+        "ARBORA-OPS-R007.1"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R007.1",
+      "title": "REST request authority",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "8c4eb38f06af"
+      ],
+      "verified_by": [
+        "tests/api/test_http_session_scope.py:31",
+        "tests/api/test_http_session_scope.py:68"
       ]
     },
     {
@@ -593,9 +618,13 @@
     {
       "id": "ARBORA-OPS-R020",
       "title": "Ingest operations through a typed SDK runner facade",
-      "delivery_state": "SPECIFIED",
+      "delivery_state": "LANDED",
       "landed_in": [
-        "e990e195ab42"
+        "06d8baf844a1",
+        "094c8adb6318",
+        "16c9b2bddda3",
+        "23be3a8e9dd6",
+        "2ad164bd5414"
       ],
       "verified_by": [],
       "rollup_of": [
@@ -619,8 +648,8 @@
         "cc90ee37583f"
       ],
       "verified_by": [
-        "tests/api/test_ingest_ops.py:116",
-        "tests/api/test_ingest_ops.py:97"
+        "tests/api/test_ingest_ops.py:107",
+        "tests/api/test_ingest_ops.py:126"
       ]
     },
     {
@@ -635,11 +664,11 @@
         "cc90ee37583f"
       ],
       "verified_by": [
-        "tests/api/test_ingest_ops.py:138",
-        "tests/api/test_ingest_ops.py:154",
-        "tests/api/test_ingest_ops.py:168",
-        "tests/api/test_ingest_ops.py:181",
-        "tests/api/test_ingest_ops.py:191"
+        "tests/api/test_ingest_ops.py:148",
+        "tests/api/test_ingest_ops.py:164",
+        "tests/api/test_ingest_ops.py:178",
+        "tests/api/test_ingest_ops.py:191",
+        "tests/api/test_ingest_ops.py:201"
       ]
     },
     {
@@ -652,11 +681,11 @@
         "822f55d5835d"
       ],
       "verified_by": [
-        "tests/api/test_ingest_ops.py:228",
-        "tests/api/test_ingest_ops.py:240",
-        "tests/api/test_ingest_ops.py:249",
-        "tests/api/test_ingest_ops.py:256",
-        "tests/api/test_ingest_ops.py:266"
+        "tests/api/test_ingest_ops.py:238",
+        "tests/api/test_ingest_ops.py:250",
+        "tests/api/test_ingest_ops.py:259",
+        "tests/api/test_ingest_ops.py:266",
+        "tests/api/test_ingest_ops.py:276"
       ],
       "rollup_of": [
         "ARBORA-OPS-R020.3.1"
@@ -671,11 +700,11 @@
         "634a344fade7"
       ],
       "verified_by": [
-        "tests/api/test_ingest_ops.py:228",
-        "tests/api/test_ingest_ops.py:240",
-        "tests/api/test_ingest_ops.py:249",
-        "tests/api/test_ingest_ops.py:256",
-        "tests/api/test_ingest_ops.py:266"
+        "tests/api/test_ingest_ops.py:238",
+        "tests/api/test_ingest_ops.py:250",
+        "tests/api/test_ingest_ops.py:259",
+        "tests/api/test_ingest_ops.py:266",
+        "tests/api/test_ingest_ops.py:276"
       ],
       "rollup_of": [
         "ARBORA-OPS-R020.3.1.1",
@@ -690,9 +719,9 @@
         "16c9b2bddda3"
       ],
       "verified_by": [
-        "tests/api/test_ingest_ops.py:228",
-        "tests/api/test_ingest_ops.py:240",
-        "tests/api/test_ingest_ops.py:249"
+        "tests/api/test_ingest_ops.py:238",
+        "tests/api/test_ingest_ops.py:250",
+        "tests/api/test_ingest_ops.py:259"
       ]
     },
     {
@@ -703,9 +732,9 @@
         "634a344fade7"
       ],
       "verified_by": [
-        "tests/api/test_ingest_ops.py:256",
         "tests/api/test_ingest_ops.py:266",
-        "tests/api/test_ingest_ops.py:275"
+        "tests/api/test_ingest_ops.py:276",
+        "tests/api/test_ingest_ops.py:285"
       ]
     },
     {
@@ -729,59 +758,112 @@
     {
       "id": "ARBORA-OPS-R020.6",
       "title": "Connector sources served through the composed SDK sync runner",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "06d8baf844a1",
+        "094c8adb6318",
+        "23be3a8e9dd6",
+        "2ad164bd5414",
+        "9052ea9458e5"
+      ],
+      "verified_by": [
+        "tests/ingest/test_connector_sources.py:169",
+        "tests/ingest/test_connector_sources.py:179",
+        "tests/ingest/test_connector_sources.py:208",
+        "tests/ingest/test_connector_sources.py:228",
+        "tests/ingest/test_connector_sources.py:240"
+      ],
       "rollup_of": [
         "ARBORA-OPS-R020.6.1",
         "ARBORA-OPS-R020.6.2",
         "ARBORA-OPS-R020.6.3",
         "ARBORA-OPS-R020.6.4",
         "ARBORA-OPS-R020.6.5",
-        "ARBORA-OPS-R020.6.6"
+        "ARBORA-OPS-R020.6.6",
+        "ARBORA-OPS-R020.6.7"
       ]
     },
     {
       "id": "ARBORA-OPS-R020.6.1",
       "title": "Model",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "2ad164bd5414"
+      ],
+      "verified_by": [
+        "tests/ingest/test_connector_sources.py:169"
+      ]
     },
     {
       "id": "ARBORA-OPS-R020.6.2",
       "title": "Behavior",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "23be3a8e9dd6",
+        "2ad164bd5414"
+      ],
+      "verified_by": [
+        "tests/ingest/test_connector_sources.py:179"
+      ]
     },
     {
       "id": "ARBORA-OPS-R020.6.3",
       "title": "Wiring",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "06d8baf844a1",
+        "094c8adb6318",
+        "2ad164bd5414"
+      ],
+      "verified_by": [
+        "tests/ingest/test_connector_sources.py:228"
+      ]
     },
     {
       "id": "ARBORA-OPS-R020.6.4",
       "title": "Refusal",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "2ad164bd5414"
+      ],
+      "verified_by": [
+        "tests/ingest/test_connector_sources.py:240"
+      ]
     },
     {
       "id": "ARBORA-OPS-R020.6.5",
       "title": "Evidence",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "23be3a8e9dd6",
+        "2ad164bd5414",
+        "ceb80658531e"
+      ],
+      "verified_by": [
+        "tests/ingest/test_connector_sources.py:265"
+      ]
     },
     {
       "id": "ARBORA-OPS-R020.6.6",
       "title": "Hot-path proof",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "dd8cbebf32c4"
+      ],
+      "verified_by": [
+        "tests/test_real_boot.py:843"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R020.6.7",
+      "title": "Pack inventory",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "9052ea9458e5"
+      ],
+      "verified_by": [
+        "tests/ingest/test_connector_sources.py:208"
+      ]
     },
     {
       "id": "ARBORA-OPS-R021",
@@ -2255,7 +2337,9 @@
         "ARBORA-OPS-R067.4",
         "ARBORA-OPS-R067.5",
         "ARBORA-OPS-R067.6",
-        "ARBORA-OPS-R067.7"
+        "ARBORA-OPS-R067.7",
+        "ARBORA-OPS-R067.8",
+        "ARBORA-OPS-R067.9"
       ]
     },
     {
@@ -2277,18 +2361,18 @@
       "title": "Backend choice and fallback",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "0b2c1da6bdb6",
         "1a451cf70043",
         "1c39905dafb3",
         "42084de67928",
-        "5170b8a8edde",
-        "5d03b97e5f40"
+        "5170b8a8edde"
       ],
       "verified_by": [
         "tests/api/test_client_http.py:27",
         "tests/api/test_client_http.py:46",
         "tests/api/test_research_ops.py:19",
-        "tests/api/test_research_ops.py:55",
-        "tests/api/test_research_ops.py:63"
+        "tests/api/test_research_ops.py:59",
+        "tests/api/test_research_ops.py:67"
       ]
     },
     {
@@ -2318,6 +2402,30 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R067.8",
+      "title": "Web-source contract",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "cef41e50fd0d"
+      ],
+      "verified_by": [
+        "tests/api/test_research_web_backends.py:135"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R067.9",
+      "title": "Bounded page fetch",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "0b2c1da6bdb6"
+      ],
+      "verified_by": [
+        "tests/api/test_research_web_backends.py:173",
+        "tests/api/test_research_web_backends.py:190",
+        "tests/api/test_research_web_backends.py:206"
+      ]
     },
     {
       "id": "ARBORA-OPS-R068",
@@ -2572,22 +2680,27 @@
     },
     {
       "id": "ARBORA-OPS-R855",
-      "title": "Catalog and governance operations (rollup)",
+      "title": "Catalog and governance reads are intent-routed graph queries (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
         "ARBORA-OPS-R855.1",
         "ARBORA-OPS-R855.2",
-        "ARBORA-OPS-R855.3"
+        "ARBORA-OPS-R855.3",
+        "ARBORA-OPS-R855.4",
+        "ARBORA-OPS-R855.5",
+        "ARBORA-OPS-R855.6"
       ]
     },
     {
       "id": "ARBORA-OPS-R855.1",
-      "title": "Wiring",
+      "title": "Routing",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_resolve.py:191"
+      ]
     },
     {
       "id": "ARBORA-OPS-R855.2",
@@ -2602,6 +2715,33 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R855.4",
+      "title": "Ask answers from the graph",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/api/test_resolve.py:192"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R855.5",
+      "title": "Find surfaces catalog assets",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/api/test_resolve.py:218"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R855.6",
+      "title": "Governed routing only",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/api/test_resolve.py:231"
+      ]
     },
     {
       "id": "ARBORA-OPS-R856",
