@@ -17,6 +17,7 @@ import pytest
 from arbora.deployment import doctor as D
 
 
+# spec: ARBORA-DEPLOY-R015
 def test_cpu_has_avx2_detects_flag_from_synthetic_cpuinfo_text():
     """ARBORA-DEPLOY-R015: validates the feature-detection parser against
     synthetic fixture text only -- it never reads or asserts on the real

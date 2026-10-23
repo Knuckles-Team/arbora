@@ -359,11 +359,14 @@
     {
       "id": "ARBORA-DEPLOY-R015",
       "title": "AVX2 guard test runs on any hosted runner",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "67a387e5dbed"
+        "67a387e5dbed",
+        "bc26d7b669bc"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/deployment/test_doctor_lakehouse.py:20"
+      ]
     },
     {
       "id": "ARBORA-DEPLOY-R016",
