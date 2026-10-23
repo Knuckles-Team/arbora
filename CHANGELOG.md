@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-- Requires agent-connector-sdk 0.4.2, a hard cutover. Onboarding reads the connector resources declaration over MCP. Change detection uses content digests and `list_changed`. No manifest file is read (ARBORA-FLEET-R041.11, R041.13, R041.14).
+- Requires agent-connector-sdk 0.4.2, a hard cutover. Onboarding reads the connector resources declaration over MCP. Change detection uses content digests and `list_changed`. No manifest file is read (ARBORA-FLEET-R041.11, ARBORA-FLEET-R041.13, ARBORA-FLEET-R041.14).
 
 ## [0.1.8.dev2] - 2026-10-23
 
