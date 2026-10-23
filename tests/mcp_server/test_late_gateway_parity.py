@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import ast
 import asyncio
-import inspect
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -16,7 +15,7 @@ from arbora.mcp_server.fleet_composition import LateFleetGateway
 
 
 def _called_gateway_methods() -> set[str]:
-    tree = ast.parse(Path(inspect.getsourcefile(fleet_ops)).read_text("utf-8"))
+    tree = ast.parse(Path(fleet_ops.__file__).read_text("utf-8"))
     return {
         node.func.attr
         for node in ast.walk(tree)
