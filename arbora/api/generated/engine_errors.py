@@ -1,6 +1,6 @@
 """Generated engine error contract. Do not edit."""
 
-REGISTRY_DIGEST = "de6ff7b96e56c50f6ee3fa44cef97d52b79958f49e9cb021a83da3308d7ab78d"
+REGISTRY_DIGEST = "04d459d0fbbfe7c67af34adf3a746fc406d79225a563cfb2c41748892709291b"
 EG_RECEIPT_DIGEST = "5fca0e152c0ab168e65f9e5df6e0d47657d5d49e47006ac451c055ba0ed93c44"
 ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "ABORTED_ATOMIC_GRAPH_BATCH": (400, False),

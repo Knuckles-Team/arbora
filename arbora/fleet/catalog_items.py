@@ -8,6 +8,8 @@ from collections.abc import Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
+from arbora.fleet.surfaces import count_items, surface_report
+
 ItemKind = Literal[
     "tool", "prompt", "resource", "resource_template", "skill", "connector_item"
 ]
@@ -153,7 +155,45 @@ class FleetCatalog:
         if context_budget_tokens is not None:
             limit = min(limit, max(1, context_budget_tokens // 80))
         page, next_cursor = _paginate(items, cursor, limit)
-        return {"items": [item.public() for item in page], "next_cursor": next_cursor}
+        return {
+            "items": [item.public() for item in page],
+            "next_cursor": next_cursor,
+            "servers": await self._server_surfaces(caller, matched, servers, page),
+        }
+
+    async def _server_surfaces(
+        self,
+        caller: Any,
+        matched: Mapping[str, CatalogItem],
+        servers: Iterable[str],
+        page: Iterable[CatalogItem],
+    ) -> dict[str, Any]:
+        """Per-connector surface counts for the named or listed servers.
+
+        Counts cover every caller-visible item of a server, not only this
+        page or kind. A surface with no items reads ``not served``, never a
+        silent zero (ARBORA-FLEET-R040).
+        """
+        wanted = set(servers) | {item.server for item in page if item.server}
+        visible: dict[str, CatalogItem] = {
+            item_id: item for item_id, item in matched.items() if item.server in wanted
+        }
+        if wanted:
+            for source in self._sources:
+                for item in await source():
+                    if (
+                        item.server in wanted
+                        and item.id not in visible
+                        and await self._authorized(item, caller)
+                    ):
+                        visible[item.id] = item
+        by_server: dict[str, list[tuple[str, str]]] = {name: [] for name in wanted}
+        for item in visible.values():
+            by_server[str(item.server)].append((item.kind, item.name))
+        return {
+            name: surface_report(count_items(pairs))
+            for name, pairs in sorted(by_server.items())
+        }
 
     async def _matching_items(
         self,

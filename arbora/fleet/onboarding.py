@@ -28,6 +28,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, cast
 
+from arbora.fleet.surfaces import pack_surface_report
+
 logger = logging.getLogger(__name__)
 
 #: Renew a registration whose lease lapses within this window.
@@ -54,6 +56,8 @@ class OnboardingReport:
     renewed: list[str] = field(default_factory=list)
     onboarded: list[str] = field(default_factory=list)
     failed: dict[str, str] = field(default_factory=dict)
+    #: Per-connector surface counts and ``surface_gap`` entries (R040).
+    surfaces: dict[str, dict[str, Any]] = field(default_factory=dict)
 
     def as_dict(self, *, private: bool = False) -> dict[str, Any]:
         """Render the report; ``private`` keeps only each failure's error type."""
@@ -66,6 +70,7 @@ class OnboardingReport:
             "renewed": sorted(self.renewed),
             "onboarded": sorted(self.onboarded),
             "failed": failed,
+            "surfaces": {name: self.surfaces[name] for name in sorted(self.surfaces)},
         }
 
 
@@ -205,6 +210,8 @@ class FleetOnboarding:
     capture: Any = None
     #: The virtual catalog that access contracts register into.
     virtual_catalog: Any = None
+    #: The last captured surface report per connector, read by the pass.
+    surfaces: dict[str, dict[str, Any]] = field(default_factory=dict)
 
     @property
     def tenant_client(self) -> Any:
@@ -254,6 +261,7 @@ class FleetOnboarding:
 
         capture = self.capture or capture_server_pack
         pack = await capture(endpoint, auth=auth)
+        self.surfaces[endpoint.name] = pack_surface_report(pack)
         changed = not await self.pack_unchanged(endpoint, pack)
         if changed:
             await import_attested_pack(
@@ -368,6 +376,9 @@ async def _onboard_all(
             logger.warning("fleet onboarding of %s failed: %s", endpoint.name, exc)
         else:
             (report.onboarded if changed else report.renewed).append(endpoint.name)
+            surfaces = onboarding.surfaces.get(endpoint.name)
+            if surfaces is not None:
+                report.surfaces[endpoint.name] = surfaces
 
 
 async def onboard_fleet(
