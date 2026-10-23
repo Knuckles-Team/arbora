@@ -355,3 +355,119 @@ def test_engine_without_task_plan_refuses_unavailable(monkeypatch):
         plans.engine_task_plan(object())
     assert refused.value.code == "UNAVAILABLE"
     assert refused.value.details["spec"] == "EG-CQ-ORCH-R001"
+
+
+class FakeGateway:
+    """The governed fleet gateway: effect decision, then the child call."""
+
+    def __init__(self, confirm: str = "none") -> None:
+        self.calls: list[tuple[str, str, dict[str, Any]]] = []
+        self.confirm = confirm
+
+    async def effect(self, op, params, caller):
+        from arbora.api.registry import Confirm
+
+        return SimpleNamespace(
+            effect=op.effect,
+            confirm=Confirm(self.confirm),
+            required_scopes=frozenset(),
+        )
+
+    async def call(self, caller, server, tool, arguments, **kwargs):
+        self.calls.append((server, tool, dict(arguments)))
+        return {"number": "INC0001", "echo": dict(arguments)}
+
+
+def _fleet_model(prompts: list[str]) -> FunctionModel:
+    """Step ``make`` calls fleet_call; step ``use`` reads its dependency's output."""
+    from pydantic_ai.messages import ToolCallPart, ToolReturnPart
+
+    async def respond(messages: Any, info: Any) -> ModelResponse:
+        parts = [p for m in messages for p in getattr(m, "parts", ())]
+        prompt = str(next(p.content for p in parts if p.part_kind == "user-prompt"))
+        prompts.append(prompt)
+        returned = [p for p in parts if isinstance(p, ToolReturnPart)]
+        if prompt.startswith("make::") and not returned:
+            args = {
+                "server": "servicenow-mcp",
+                "tool": "servicenow_create_incident",
+                "arguments": {"data": {"short_description": "from gitlab"}},
+            }
+            return ModelResponse(parts=[ToolCallPart("fleet_call", args)])
+        if prompt.startswith("make::"):
+            return ModelResponse(parts=[TextPart(content="INC0001")])
+        if prompt.startswith("deny::") and not returned:
+            args = {"server": "other", "tool": "t", "arguments": {}}
+            return ModelResponse(parts=[ToolCallPart("fleet_call", args)])
+        return ModelResponse(parts=[TextPart(content="finished")])
+
+    return FunctionModel(respond)
+
+
+async def _serve_fleet(plan, gateway, prompts, **extra):
+    engine = FakeEngine()
+    context = _context(engine, RecordingModel())
+    context.services["task_plan_model"] = _fleet_model(prompts)
+    context.services["fleet_gateway"] = gateway
+    context.caller = SimpleNamespace(
+        principal=PRINCIPAL, tenant=TENANT, effective_scopes=frozenset()
+    )
+    context.service_identity = False
+    context.owner = PRINCIPAL
+    context.registry_digest = ""
+    (op,) = plans.operations()
+    result = await plans.handle_plan_run(context, {"plan": plan, **extra}, op)
+    return result["value"]["run"]
+
+
+FLEET_DAG = {
+    "tasks": [_task("make"), _task("use", "make")],
+    "output_task_id": "use",
+    "max_concurrency": 1,
+    "max_steps": 2,
+}
+SN_TOOL = {"server": "servicenow-mcp", "tool": "servicenow_create_incident"}
+
+
+# spec: ARBORA-RELEASE-R003.4.5
+async def test_step_calls_a_named_fleet_tool_and_the_next_step_reads_its_output():
+    gateway, prompts = FakeGateway(), []
+    run = await _serve_fleet(FLEET_DAG, gateway, prompts, fleet_tools=[SN_TOOL])
+    assert run["status"] == "completed"
+    assert gateway.calls == [
+        (
+            "servicenow-mcp",
+            "servicenow_create_incident",
+            {"data": {"short_description": "from gitlab"}},
+        )
+    ]
+    (entry,) = run["fleet_calls"]
+    assert entry["ok"] is True and entry["result"]["number"] == "INC0001"
+    use_prompt = next(p for p in prompts if p.startswith("use::"))
+    assert "Dependency outputs" in use_prompt and "INC0001" in use_prompt
+
+
+# spec: ARBORA-RELEASE-R003.4.5
+async def test_a_tool_the_caller_did_not_name_is_refused_as_data():
+    gateway, prompts = FakeGateway(), []
+    plan = {**FLEET_DAG, "tasks": [_task("deny"), _task("use", "deny")]}
+    run = await _serve_fleet(plan, gateway, prompts, fleet_tools=[SN_TOOL])
+    assert gateway.calls == []
+    assert run["fleet_calls"][0]["ok"] is False
+    assert run["fleet_calls"][0]["error"] == "SCOPE_DENIED"
+    assert run["status"] == "completed"
+
+
+# spec: ARBORA-RELEASE-R003.4.5
+async def test_a_tool_needing_confirmation_is_not_run():
+    gateway, prompts = FakeGateway(confirm="plan"), []
+    run = await _serve_fleet(FLEET_DAG, gateway, prompts, fleet_tools=[SN_TOOL])
+    assert gateway.calls == []
+    assert run["fleet_calls"][0]["error"] == "CONFIRMATION_REQUIRED"
+
+
+# spec: ARBORA-RELEASE-R003.4.5
+async def test_without_fleet_tools_a_step_has_no_fleet_call():
+    gateway, prompts = FakeGateway(), []
+    run = await _serve_fleet(FLEET_DAG, gateway, prompts)
+    assert gateway.calls == [] and run["fleet_calls"] == []

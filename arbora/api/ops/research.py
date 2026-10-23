@@ -328,7 +328,8 @@ class FleetCaller:
 
     context: Any
 
-    async def call(self, server: str, tool: str, arguments: dict[str, Any]) -> Any:
+    async def decision(self, server: str, tool: str, arguments: dict[str, Any]) -> Any:
+        """The caller-scope-checked effect decision for one fleet tool call."""
         from arbora.api.ops import fleet
 
         gateway = self.context.services.get("fleet_gateway")
@@ -345,7 +346,12 @@ class FleetCaller:
             raise OperationRefused(
                 "SCOPE_DENIED", {"server": server, "missing": sorted(missing)}
             )
-        return await gateway.call(
+        return decision
+
+    async def call(self, server: str, tool: str, arguments: dict[str, Any]) -> Any:
+        decision = await self.decision(server, tool, arguments)
+        caller = self.context.caller
+        return await self.context.services["fleet_gateway"].call(
             caller,
             server,
             tool,

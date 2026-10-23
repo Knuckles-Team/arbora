@@ -20,13 +20,21 @@ EG-DECISION-ENGINE-R134.111). One served call does this:
    so every child task inherits the caller-credential renewal.
 
 Arbora does not add, drop, reorder or re-validate tasks.
+
+A task is an agent step, so it can call a governed fleet tool only when the
+caller names the tool in ``fleet_tools`` (ARBORA-RELEASE-R003.4.5). The step's
+tool is ``fleet_call``. It runs with the caller's own authority and refuses
+any tool the caller did not name. Dependency outputs reach a dependent task as
+data in its prompt (the harness appends them), and every fleet call, with its
+arguments and result, is recorded in ``run.fleet_calls``.
 """
 
 from __future__ import annotations
 
+import json
 import time
 from collections.abc import Awaitable, Callable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from pydantic import Field
@@ -60,6 +68,13 @@ class WorkItemLease(Params):
     revision: int = Field(default=0, ge=0)
 
 
+class FleetToolRef(Params):
+    """One fleet tool a plan's agent steps may call."""
+
+    server: str = Field(min_length=1, max_length=128)
+    tool: str = Field(min_length=1, max_length=128)
+
+
 class PlanRunParams(Params):
     """Explicit caller claims. The engine owns graph validity and bounds."""
 
@@ -70,6 +85,14 @@ class PlanRunParams(Params):
         )
     )
     work_item: WorkItemLease | None = None
+    fleet_tools: list[FleetToolRef] = Field(
+        default_factory=list,
+        max_length=16,
+        description=(
+            "Fleet tools the plan's agent steps may call through fleet_call, "
+            "under the caller's authority. Empty means no step has a tool."
+        ),
+    )
 
 
 class PlanRunResult(Params):
@@ -195,7 +218,7 @@ def publish_request(
     }
 
 
-def run_plan_for(plan: Mapping[str, Any], model: Any) -> Any:
+def run_plan_for(plan: Mapping[str, Any], model: Any, toolsets: tuple = ()) -> Any:
     """The harness ``RunPlan`` for an engine plan: same tasks, edges and limits."""
     from agent_utilities.graph import (
         DependencyPlan,
@@ -221,13 +244,90 @@ def run_plan_for(plan: Mapping[str, Any], model: Any) -> Any:
     return RunPlan(
         model=model,
         dependency_plan=graph,
+        toolsets=tuple(toolsets),
         stop=StopRule(max_steps=int(plan["max_steps"])),
         budget=RunBudget(max_concurrent_requests=int(plan["max_concurrency"])),
     )
 
 
+@dataclass
+class FleetStepTools:
+    """The governed fleet tool an agent step may call (ARBORA-RELEASE-R003.4.5).
+
+    Every call is admitted by the same effect authority ``fleet.call`` uses,
+    under the verified caller's scopes. A tool the caller did not name, a tool
+    that needs a plan confirmation or a console step-up, and a tool whose
+    scopes the caller lacks are refused as data for the step, never run.
+    """
+
+    context: Any
+    allowed: frozenset[tuple[str, str]]
+    ledger: list[dict[str, Any]] = field(default_factory=list)
+
+    async def call(
+        self, server: str, tool: str, arguments: dict[str, Any]
+    ) -> dict[str, Any]:
+        from arbora.api.ops.research import FleetCaller
+        from arbora.api.registry import Confirm
+
+        entry: dict[str, Any] = {
+            "sequence": len(self.ledger) + 1,
+            "server": server,
+            "tool": tool,
+            "arguments": arguments,
+        }
+        self.ledger.append(entry)
+        try:
+            if (server, tool) not in self.allowed:
+                raise OperationRefused(
+                    "SCOPE_DENIED", {"reason": "tool is not named in fleet_tools"}
+                )
+            gateway = self.context.services.get("fleet_gateway")
+            if gateway is None:
+                raise OperationRefused(
+                    "UNAVAILABLE", {"reason": "fleet gateway is not bound"}
+                )
+            caller = FleetCaller(self.context)
+            decision = await caller.decision(server, tool, arguments)
+            if decision.confirm != Confirm.NONE:
+                raise OperationRefused(
+                    "CONFIRMATION_REQUIRED",
+                    {"reason": "the tool needs a human-confirmed plan"},
+                )
+            result = await caller.call(server, tool, arguments)
+            entry["result"] = json.loads(json.dumps(result, default=str))
+            entry["ok"] = True
+            return {"ok": True, "result": entry["result"]}
+        except OperationRefused as exc:
+            entry.update(ok=False, error=exc.code, details=exc.details)
+        except Exception as exc:  # noqa: BLE001 - the step sees the failure as data
+            entry.update(ok=False, error=type(exc).__name__)
+        return {"ok": False, "error": entry["error"]}
+
+    def toolset(self) -> Any:
+        from pydantic_ai.toolsets import FunctionToolset
+
+        async def fleet_call(
+            server: str, tool: str, arguments: dict[str, Any]
+        ) -> dict[str, Any]:
+            """Call one governed fleet tool. Returns {ok, result} or {ok, error}."""
+            return await self.call(server, tool, arguments)
+
+        return FunctionToolset([fleet_call])
+
+
+def _fleet_step_tools(context: Any, refs: list[FleetToolRef]) -> FleetStepTools | None:
+    if not refs:
+        return None
+    return FleetStepTools(context, frozenset((r.server, r.tool) for r in refs))
+
+
 async def execute_task_plan(
-    plan: Mapping[str, Any], model: Any, *, run_id: str
+    plan: Mapping[str, Any],
+    model: Any,
+    *,
+    run_id: str,
+    fleet: FleetStepTools | None = None,
 ) -> dict[str, Any]:
     """Run the plan in the harness and collect every task's terminal result."""
     from agent_utilities.graph import RunRequest, iterate_run
@@ -236,7 +336,9 @@ async def execute_task_plan(
     tasks: dict[str, dict[str, Any]] = {}
     started: list[str] = []
     terminal: dict[str, Any] = {}
-    async for event in iterate_run(request, {}, plan=run_plan_for(plan, model)):
+    toolsets = (fleet.toolset(),) if fleet is not None else ()
+    run_plan = run_plan_for(plan, model, toolsets)
+    async for event in iterate_run(request, {}, plan=run_plan):
         kind = event.get("type")
         task_id = event.get("task_id")
         if kind == "task_started" and task_id:
@@ -256,6 +358,7 @@ async def execute_task_plan(
         "output": (tasks.get(output_task) or {}).get("output"),
         "started_order": started,
         "tasks": tasks,
+        "fleet_calls": list(fleet.ledger) if fleet is not None else [],
     }
 
 
@@ -327,7 +430,12 @@ async def handle_plan_run(
         if parsed.work_item is not None
         else plan["plan_digest"].removeprefix("sha256:")[:32]
     )
-    run = await execute_task_plan(plan, _plan_model(context), run_id=run_id)
+    run = await execute_task_plan(
+        plan,
+        _plan_model(context),
+        run_id=run_id,
+        fleet=_fleet_step_tools(context, parsed.fleet_tools),
+    )
     return {
         "value": {
             "record_id": record.get("record_id"),
@@ -363,6 +471,8 @@ def operations() -> tuple[OpSpec, ...]:
 specs = operations
 
 __all__ = [
+    "FleetStepTools",
+    "FleetToolRef",
     "TASK_PLAN_ENGINE_RELEASE",
     "PlanRunParams",
     "PlanRunResult",
