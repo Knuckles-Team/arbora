@@ -1111,6 +1111,130 @@
     {
       "audit": "event",
       "binding": {
+        "handler": "arbora.api.ops.plans.handle_plan_run",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "write",
+      "examples": [
+        "plan and run agents that triage the latest incidents and cross-check related issues"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "agents.plan_run",
+      "idempotency": "key_required",
+      "params": {
+        "model": "arbora.api.ops.plans.PlanRunParams",
+        "schema": {
+          "$defs": {
+            "WorkItemLease": {
+              "additionalProperties": false,
+              "description": "The work-item lease a plan is attached to. The engine checks the fence.",
+              "properties": {
+                "fencing_token": {
+                  "minimum": 0,
+                  "title": "Fencing Token",
+                  "type": "integer"
+                },
+                "lease_epoch": {
+                  "minimum": 0,
+                  "title": "Lease Epoch",
+                  "type": "integer"
+                },
+                "revision": {
+                  "default": 0,
+                  "minimum": 0,
+                  "title": "Revision",
+                  "type": "integer"
+                },
+                "run_id": {
+                  "maxLength": 512,
+                  "minLength": 1,
+                  "title": "Run Id",
+                  "type": "string"
+                },
+                "worker_id": {
+                  "maxLength": 512,
+                  "minLength": 1,
+                  "title": "Worker Id",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "run_id",
+                "worker_id",
+                "lease_epoch",
+                "fencing_token"
+              ],
+              "title": "WorkItemLease",
+              "type": "object"
+            }
+          },
+          "additionalProperties": false,
+          "description": "Explicit caller claims. The engine owns graph validity and bounds.",
+          "properties": {
+            "plan": {
+              "additionalProperties": true,
+              "description": "TaskPlanProposal: tasks [{task_id, prompt, depends_on}], output_task_id, max_concurrency, max_steps.",
+              "title": "Plan",
+              "type": "object"
+            },
+            "work_item": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/WorkItemLease"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "plan"
+          ],
+          "title": "PlanRunParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.plans.PlanRunResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "PlanRunResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "kg:write"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Run an engine-decided task plan of dependent agent tasks",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "act"
+    },
+    {
+      "audit": "event",
+      "binding": {
         "handler": "arbora.api.ops.agents.handle_agent",
         "kind": "composite"
       },
@@ -26421,5 +26545,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "2a985cb117d8d6451f381e1ba4a80f5c824b2b483a1266b65f1e54760a0bd93a"
+  "registry_digest": "6a31856ea65dc2fb7799d44c07e0404c39056d4e1729151528b44367a71d4c46"
 }

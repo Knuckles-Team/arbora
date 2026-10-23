@@ -100,6 +100,18 @@
     {
       "domain": "agents",
       "examples": [
+        "plan and run agents that triage the latest incidents and cross-check related issues"
+      ],
+      "id": "agents.plan_run",
+      "summary": "Run an engine-decided task plan of dependent agent tasks",
+      "tags": [
+        "agents"
+      ],
+      "verb": "act"
+    },
+    {
+      "domain": "agents",
+      "examples": [
         "run an agent to investigate this issue"
       ],
       "id": "agents.run",
@@ -6210,5 +6222,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "2a985cb117d8d6451f381e1ba4a80f5c824b2b483a1266b65f1e54760a0bd93a"
+  "registry_digest": "6a31856ea65dc2fb7799d44c07e0404c39056d4e1729151528b44367a71d4c46"
 }
