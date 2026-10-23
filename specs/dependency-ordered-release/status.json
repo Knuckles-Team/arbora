@@ -112,7 +112,7 @@
       "title": "Served task-plan run (validation checks c22 and c21)",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "7231491bac86"
+        "02140e1c7a78"
       ],
       "verified_by": [
         "tests/api/test_plan_run_ops.py:238",
@@ -127,7 +127,7 @@
       "title": "Plan attached to the work item",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "7231491bac86"
+        "02140e1c7a78"
       ],
       "verified_by": [
         "tests/api/test_plan_run_ops.py:333"
