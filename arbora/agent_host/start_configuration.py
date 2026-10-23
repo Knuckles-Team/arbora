@@ -88,6 +88,9 @@ def check_start_configuration(
 class HostRuntimeResources:
     """Exact borrowed resources; only the construction owner can attest them.
 
+    A web application requires owner attestation of its authenticated request
+    boundary, exact engine/configuration, and exclusive lifespan ownership.
+    Its shutdown must preserve borrowed resources; a callable is not proof.
     Freezing this descriptor does not freeze an engine or execution dictionary.
     The owner must reject mutations or advance its attested configuration revision.
     """
@@ -98,6 +101,7 @@ class HostRuntimeResources:
     executor: object | None = None
     host_logs: object | None = None
     host_log_runtime: object | None = None
+    web_application: object | None = None
 
     def __post_init__(self) -> None:
         if self.graph is None or self.engine is None or self.graph_config is None:
