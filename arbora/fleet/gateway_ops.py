@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from arbora.api.errors import FleetRefusal, fleet_detail
+from arbora.api.invoke.steps import claim_values
 from arbora.api.registry import Confirm, Effect, Executor, PrincipalRule
 
 if TYPE_CHECKING:
@@ -505,6 +506,10 @@ class FleetGateway:
         fleet_decision: Any = None,
         registry_digest: str = "",
     ) -> Any:
+        # The pipeline freezes arguments (nested objects are read-only
+        # mappings, arrays are tuples). Children take plain JSON, so thaw once
+        # here, the single hand-off to every child transport.
+        arguments = claim_values(arguments)
         try:
             descriptor = await self._admitted_tool(caller, server, tool)
         except RuntimeError as exc:

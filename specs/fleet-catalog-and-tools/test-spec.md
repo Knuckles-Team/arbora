@@ -259,11 +259,13 @@ Hot-path proof for `ARBORA-FLEET-R037`: `tests/fleet/test_job_loads_served.py::t
 
 | Case | Row | Proving test and observation |
 |---|---|---|
-| Child refusal | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_child_refusal_inside_task_group_keeps_child_message`: a child JSON-RPC error inside a task group answers `CHILD_REFUSED` with the child's message, and the log names the server and cause. |
+| Child refusal | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_child_refusal_inside_task_group_keeps_child_message`: a child JSON-RPC error inside a task group answers `CHILD_REFUSED` with the child's message. The log names the server and cause. |
 | Transport | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_transport_leaf_is_unavailable_not_refused` and `::test_dead_session_signature_is_unavailable`: a transport leaf or a stopped session answers `UNAVAILABLE`. |
 | Redaction | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_credential_text_is_redacted_from_log_and_result`: a credential in the child's text reaches neither the log nor the result. |
 | Unmountable child | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_unmountable_child_answers_unavailable_without_dispatch`: a child absent from the catalog answers `UNAVAILABLE`. |
 | Pipeline unwrap | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_pipeline_unwraps_a_single_grouped_refusal` and `::test_pipeline_keeps_unsettled_for_an_unknown_grouped_cause`. |
+| Nested object arguments | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_governed_call_hands_children_plain_json_for_nested_objects`: a frozen nested object and array argument reaches the child as plain `dict` and `list`; `::test_delegated_bound_check_rejects_frozen_mapping` pins why the thaw is needed. |
+| Unsettled outcome | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_indeterminate_message_states_unknown_outcome` and `::test_unacquired_reservation_and_timeout_log_their_cause`: `INDETERMINATE` says the outcome is unknown, and the pipeline logs the unsettled cause. |
 | Remote tracing child | `ARBORA-FLEET-R015.1` | `tests/fleet/test_multiplexer_dynamic_gateway.py::test_load_catalog_admits_remote_langfuse_entry_without_projection`: the catalog keeps a remote tracing-service child unchanged, with or without keys. |
 
 - `ARBORA-FLEET-R041`: See each child.
