@@ -438,8 +438,8 @@ jobs:
       - *release-checkout
       - *release-uv
 
-      - name: Build wheel
-        run: uv build --wheel --out-dir dist
+      - name: Build wheel and sdist
+        run: uv build --out-dir dist
 
       # Release-blocking: every non-Python file tracked under arbora/ must be
       # package data. Source-tree tests cannot see a file the wheel leaves out
@@ -450,7 +450,9 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: arbora-wheel
-          path: dist/arbora-*.whl
+          path: |
+            dist/arbora-*.whl
+            dist/arbora-*.tar.gz
           if-no-files-found: error
           retention-days: 7
 
@@ -617,10 +619,10 @@ jobs:
         with:
           version: '0.13.1'
 
-      - name: Publish wheel
+      - name: Publish wheel and sdist
         env:
           UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-        run: uv publish --check-url https://pypi.org/simple dist/arbora-*.whl
+        run: uv publish --check-url https://pypi.org/simple dist/arbora-*.whl dist/arbora-*.tar.gz
 
   github-release:
     name: github-release

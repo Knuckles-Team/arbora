@@ -9,6 +9,10 @@ Governing [spec](spec.md) and [plan](plan.md).
 - [ ] Run every T-RL positive/negative fixture in portable CI and release-only hosted qualification at the exact candidate digest.
 - [ ] Publish public receipt and operator instructions; change status only when landed and acceptance evidence independently exists.
 
+## ARBORA-RELEASE-R001
+
+- [x] `ARBORA-RELEASE-R001.1` — a version tag publishes the wheel and the sdist to PyPI with no manual approval.
+
 ## ARBORA-RELEASE-R003 (split 2026-10-09: net-new, 7 readiness-obligation code roots)
 
 - [ ] `ARBORA-RELEASE-R003.1` — typed `ExitCriterionRow`/`ExitCriteriaMatrix` model plus `read_exit_criteria_matrix` validation, with refusal tests for a duplicate obligation ID, an empty matrix, and a malformed test-ID reference.
