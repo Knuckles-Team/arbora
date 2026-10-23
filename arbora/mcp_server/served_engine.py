@@ -190,13 +190,19 @@ def _run_blocking(coroutine_factory: Any) -> Any:
     loop; the request then runs on a worker thread with its own loop, under a
     copy of the caller's context so the ambient session still authorizes it.
     """
+    from arbora.epistemic import temporary_client_scope
+
+    async def request() -> Any:
+        async with temporary_client_scope():
+            return await coroutine_factory()
+
     try:
         asyncio.get_running_loop()
     except RuntimeError:
-        return asyncio.run(coroutine_factory())
+        return asyncio.run(request())
     context = contextvars.copy_context()
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as worker:
-        return worker.submit(context.run, asyncio.run, coroutine_factory()).result()
+        return worker.submit(context.run, asyncio.run, request()).result()
 
 
 class _BlockingWorkItems:

@@ -537,3 +537,11 @@ once through existing wire validation, without adding planner counters or
 exposing partial output. Foreign or malformed receipts still commit failure
 without usage. Plain errors and cancellation retain their existing semantics.
 The admitted planner requires this public upstream capability before execution.
+
+## Amendment: temporary request-loop clients (2026-10-23)
+
+ARBORA-HOST-R001.2.3 keeps serving-loop clients separate from temporary
+request-loop clients. The synchronous bridge owns each temporary client.
+It closes that client on its own loop before the loop exits. Repeated calls,
+failed requests and cancellation must not displace a serving-loop reader.
+The lifecycle tests check reader completion and repeated close behavior.
