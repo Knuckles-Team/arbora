@@ -169,14 +169,15 @@
       "title": "Published task-plan schema pin",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "6d39a589385a",
         "c92fbf05fbb5"
       ],
       "verified_by": [
-        "tests/api/test_task_plan_schema_pin.py:100",
-        "tests/api/test_task_plan_schema_pin.py:107",
-        "tests/api/test_task_plan_schema_pin.py:115",
-        "tests/api/test_task_plan_schema_pin.py:130",
-        "tests/api/test_task_plan_schema_pin.py:65"
+        "tests/api/test_task_plan_schema_pin.py:112",
+        "tests/api/test_task_plan_schema_pin.py:182",
+        "tests/api/test_task_plan_schema_pin.py:232",
+        "tests/api/test_task_plan_schema_pin.py:253",
+        "tests/api/test_task_plan_schema_pin.py:58"
       ]
     },
     {
