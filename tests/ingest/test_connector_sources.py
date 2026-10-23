@@ -8,6 +8,7 @@ declared connector), the engine KV and WorkItem methods, and the ingest submit.
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping
 from types import SimpleNamespace
 from typing import Any
@@ -44,19 +45,39 @@ ITEMS = [{"id": i, "updated": f"2026-01-0{i}"} for i in (1, 2, 3)]
 class _Fleet:
     def __init__(self, *, fail_tool: bool = False) -> None:
         self.calls: list[tuple[str, str, Any]] = []
+        self.reads: list[tuple[str, str]] = []
         self.fail_tool = fail_tool
 
     async def list(self, caller: Any, **params: Any) -> dict[str, Any]:
         return {
             "items": [
                 {
-                    "kind": "fleet",
+                    "kind": "resource",
                     "server": "fixture",
-                    "name": "fixture_ingest_sources",
+                    "name": "connector-resources",
+                    "uri": "connector://resources",
                 },
-                {"kind": "fleet", "server": "fixture", "name": "fixture_list_items"},
-                {"kind": "fleet", "server": "other", "name": "other_echo"},
+                {
+                    "kind": "resource",
+                    "server": "other",
+                    "name": "ontology",
+                    "uri": "ontology://other",
+                },
             ]
+        }
+
+    async def resources_list(self, caller: Any, **params: Any) -> dict[str, Any]:
+        return await self.list(caller, **params)
+
+    async def resources_read(
+        self, caller: Any, *, server: str, uri: str
+    ) -> dict[str, Any]:
+        self.reads.append((server, uri))
+        assert (server, uri) == ("fixture", "connector://resources")
+        return {
+            "uri": uri,
+            "text": json.dumps(DECLARATION),
+            "mimeType": "application/json",
         }
 
     async def call(
@@ -69,8 +90,6 @@ class _Fleet:
         expected_effect: Any,
     ) -> Any:
         self.calls.append((server, tool, expected_effect))
-        if tool == "fixture_ingest_sources":
-            return {"structured_content": DECLARATION}
         if self.fail_tool:
             raise PermissionError("fleet call denied by policy")
         return {"data": ITEMS}
@@ -192,6 +211,7 @@ async def test_list_sync_status_compose_runner(wired: Any) -> None:
     from arbora.api.registry import Effect
 
     assert all(effect is Effect.READ for _, _, effect in fleet.calls)
+    assert set(fleet.reads) == {("fixture", "connector://resources")}
     status = (
         await service.get_source_status(
             _context(runner), {"source_id": "fixture/items"}, None
