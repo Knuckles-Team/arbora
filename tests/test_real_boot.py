@@ -840,6 +840,24 @@ async def _pack_status(stack: dict[str, Any], connector: str) -> Any:
         await client.close()
 
 
+def _engine_before(release: tuple[int, ...]) -> bool:
+    from importlib.metadata import version
+
+    installed = tuple(int(part) for part in version("epistemic-graph").split(".")[:3])
+    return installed < release
+
+
+#: Needs unreleased EG: the EG #702 STALE_VERSION fix is on EG main and ships
+#: in epistemic-graph 2.27.5. Strict, so the mark fails once the fix is
+#: installed; remove it with the ARBORA-RELEASE-R003.4.3 floor raise.
+NEEDS_EG_2275 = pytest.mark.xfail(
+    _engine_before((2, 27, 5)),
+    reason="EG #702: ApplyChangeEnvelope STALE_VERSION; fixed in epistemic-graph 2.27.5",
+    strict=True,
+)
+
+
+@NEEDS_EG_2275
 @pytest.mark.spec("ARBORA-OPS-R020.6.6")
 def test_ingest_sources_list_sync_status(stack: dict[str, Any]) -> None:
     """A declared connector source lists, syncs as a WorkItem, and lands in EG."""
