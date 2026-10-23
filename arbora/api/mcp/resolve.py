@@ -21,6 +21,8 @@ from typing import Any
 _WORDS = re.compile(r"[a-z0-9]+")
 _STOP = frozenset(
     "a an the of for to in on with and or is are be do what how why my me i you your please".split()
+    # ARBORA-FLEET-R014.2: request verbs say how to answer, not what to run.
+    + "show display tell give across".split()
 )
 _READ_VERBS = frozenset({"ask", "why", "find"})
 _VERBS = _READ_VERBS | {"write", "act", "manage"}

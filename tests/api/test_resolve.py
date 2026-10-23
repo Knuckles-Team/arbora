@@ -259,7 +259,7 @@ _ASK_DESCRIPTORS = (
 @pytest.mark.spec("ARBORA-FLEET-R014.1")
 def test_ask_match_needing_a_required_param_yields_to_nl_planner() -> None:
     resolver = IntentResolver()
-    question = "Show open issues across GitHub, GitLab and Plane"
+    question = "Which task tracks the open issues?"
     resolution = resolver.resolve(
         "ask", question, (_ASK_DESCRIPTORS[0], _NL_DESCRIPTOR), scope_ref=None
     )
@@ -309,3 +309,28 @@ def test_ask_without_nl_keeps_the_missing_params_preview() -> None:
 
     assert resolution.op == "agents.tasks.get"
     assert resolution.missing_required == ("task_id",)
+
+
+@pytest.mark.spec("ARBORA-FLEET-R014.2")
+def test_a_request_verb_alone_is_not_evidence_for_an_ask_op() -> None:
+    resolver = IntentResolver()
+    question = "Show open issues across GitHub, GitLab and Plane"
+    resolution = resolver.resolve(
+        "ask", question, (_ASK_DESCRIPTORS[1], _NL_DESCRIPTOR), scope_ref=None
+    )
+
+    assert resolution.op == "query.nl"
+    assert resolution.fallback is True
+
+
+@pytest.mark.spec("ARBORA-FLEET-R014.2")
+def test_a_named_op_still_matches_after_a_request_verb() -> None:
+    resolver = IntentResolver()
+    resolution = resolver.resolve(
+        "ask",
+        "show the fleet status",
+        (_ASK_DESCRIPTORS[1], _NL_DESCRIPTOR),
+        scope_ref=None,
+    )
+
+    assert resolution.op == "fleet.status"
