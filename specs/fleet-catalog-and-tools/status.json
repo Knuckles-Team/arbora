@@ -43,6 +43,7 @@
     "ARBORA-FLEET-R013",
     "ARBORA-FLEET-R014",
     "ARBORA-FLEET-R014.1",
+    "ARBORA-FLEET-R014.2",
     "ARBORA-FLEET-R015",
     "ARBORA-FLEET-R015.1",
     "ARBORA-FLEET-R016",
@@ -149,6 +150,7 @@
     "ARBORA-FLEET-R039.5",
     "ARBORA-FLEET-R039.6",
     "ARBORA-FLEET-R040",
+    "ARBORA-FLEET-R040.1",
     "ARBORA-FLEET-R041",
     "ARBORA-FLEET-R041.1",
     "ARBORA-FLEET-R041.2",
@@ -160,6 +162,7 @@
     "ARBORA-FLEET-R041.8",
     "ARBORA-FLEET-R041.9",
     "ARBORA-FLEET-R041.10",
+    "ARBORA-FLEET-R041.11",
     "ARBORA-FLEET-R042",
     "ARBORA-FLEET-R042.1",
     "ARBORA-FLEET-R042.2",
@@ -628,7 +631,8 @@
         "tests/api/test_resolve.py:170"
       ],
       "rollup_of": [
-        "ARBORA-FLEET-R014.1"
+        "ARBORA-FLEET-R014.1",
+        "ARBORA-FLEET-R014.2"
       ]
     },
     {
@@ -641,6 +645,18 @@
         "tests/api/test_resolve.py:273",
         "tests/api/test_resolve.py:288",
         "tests/api/test_resolve.py:303"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R014.2",
+      "title": "A request verb is not evidence for an op",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "b71e36444f67"
+      ],
+      "verified_by": [
+        "tests/api/test_resolve.py:314",
+        "tests/api/test_resolve.py:326"
       ]
     },
     {
@@ -1599,7 +1615,8 @@
       "title": "arbora serves and reports the prompts, skills and resources of each connector",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "abaee0920e29"
+        "abaee0920e29",
+        "b71e36444f67"
       ],
       "verified_by": [
         "tests/fleet/test_connector_surfaces.py:133",
@@ -1607,6 +1624,21 @@
         "tests/fleet/test_connector_surfaces.py:153",
         "tests/fleet/test_connector_surfaces.py:187",
         "tests/fleet/test_connector_surfaces.py:221"
+      ],
+      "rollup_of": [
+        "ARBORA-FLEET-R040.1"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R040.1",
+      "title": "The served gateway forwards the relay ops",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "b71e36444f67"
+      ],
+      "verified_by": [
+        "tests/mcp_server/test_late_gateway_parity.py:30",
+        "tests/mcp_server/test_late_gateway_parity.py:38"
       ]
     },
     {
@@ -1625,7 +1657,8 @@
         "ARBORA-FLEET-R041.7",
         "ARBORA-FLEET-R041.8",
         "ARBORA-FLEET-R041.9",
-        "ARBORA-FLEET-R041.10"
+        "ARBORA-FLEET-R041.10",
+        "ARBORA-FLEET-R041.11"
       ]
     },
     {
@@ -1710,6 +1743,17 @@
       ],
       "verified_by": [
         "tests/fleet/test_handshake_onboard.py:251"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R041.11",
+      "title": "A connector that declares its data resources still onboards",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "7a16782597c9"
+      ],
+      "verified_by": [
+        "tests/fleet/test_resources_manifest_capture.py:32"
       ]
     },
     {
