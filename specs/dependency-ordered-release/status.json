@@ -29,10 +29,12 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "0d34328f1114",
+        "9a2f7532daaa",
         "eacc29a1952e"
       ],
       "verified_by": [
-        "tests/deployment/test_release_workflow_sources.py:553"
+        "tests/deployment/test_release_workflow_sources.py:553",
+        "tests/deployment/test_release_workflow_sources.py:577"
       ],
       "rollup_of": [
         "ARBORA-RELEASE-R001.1"
@@ -43,10 +45,12 @@
       "title": "A version tag publishes the wheel and the sdist",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "0d34328f1114"
+        "0d34328f1114",
+        "9a2f7532daaa"
       ],
       "verified_by": [
-        "tests/deployment/test_release_workflow_sources.py:553"
+        "tests/deployment/test_release_workflow_sources.py:553",
+        "tests/deployment/test_release_workflow_sources.py:577"
       ]
     },
     {
