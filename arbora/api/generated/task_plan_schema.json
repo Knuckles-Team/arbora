@@ -1,9 +1,10 @@
 {
+  "available": false,
+  "body": null,
   "component_id": "arbora.agents.plan_run.feature_schema",
-  "content_digest": "sha256:229166261734beeec27c4170c7de45f4a83e95dce71e6bac923f36ab74189109",
-  "definition_digest": null,
+  "content_digest": null,
   "engine_version": "2.27.4",
-  "final": false,
+  "export": null,
   "kind": "feature_schema",
-  "schema_version": 1
+  "schema_version": null
 }
