@@ -259,11 +259,13 @@ Hot-path proof for `ARBORA-FLEET-R037`: `tests/fleet/test_job_loads_served.py::t
 
 | Case | Row | Proving test and observation |
 |---|---|---|
-| Child refusal | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_child_refusal_inside_task_group_keeps_child_message`: a child JSON-RPC error inside a task group answers `CHILD_REFUSED` with the child's message, and the log names the server and cause. |
+| Child refusal | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_child_refusal_inside_task_group_keeps_child_message`: a child JSON-RPC error inside a task group answers `CHILD_REFUSED` with the child's message. The log names the server and cause. |
 | Transport | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_transport_leaf_is_unavailable_not_refused` and `::test_dead_session_signature_is_unavailable`: a transport leaf or a stopped session answers `UNAVAILABLE`. |
 | Redaction | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_credential_text_is_redacted_from_log_and_result`: a credential in the child's text reaches neither the log nor the result. |
 | Unmountable child | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_unmountable_child_answers_unavailable_without_dispatch`: a child absent from the catalog answers `UNAVAILABLE`. |
 | Pipeline unwrap | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_pipeline_unwraps_a_single_grouped_refusal` and `::test_pipeline_keeps_unsettled_for_an_unknown_grouped_cause`. |
+| Nested object arguments | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_governed_call_hands_children_plain_json_for_nested_objects`: a frozen nested object and array argument reaches the child as plain `dict` and `list`; `::test_delegated_bound_check_rejects_frozen_mapping` pins why the thaw is needed. |
+| Unsettled outcome | `ARBORA-FLEET-R015.1` | `tests/fleet/test_child_failure_classification.py::test_indeterminate_message_states_unknown_outcome` and `::test_unacquired_reservation_and_timeout_log_their_cause`: `INDETERMINATE` says the outcome is unknown, and the pipeline logs the unsettled cause. |
 | Remote tracing child | `ARBORA-FLEET-R015.1` | `tests/fleet/test_multiplexer_dynamic_gateway.py::test_load_catalog_admits_remote_langfuse_entry_without_projection`: the catalog keeps a remote tracing-service child unchanged, with or without keys. |
 
 - `ARBORA-FLEET-R041`: See each child.
@@ -273,6 +275,10 @@ Hot-path proof for `ARBORA-FLEET-R037`: `tests/fleet/test_job_loads_served.py::t
 - `ARBORA-FLEET-R041.4`: `tests/fleet/test_auto_onboard.py::test_orphan_refusal_marks_contract_rejected_and_admits_no_tools`.
 - `ARBORA-FLEET-R041.5`: `tests/fleet/test_auto_onboard.py::test_status_reports_counts_digests_receipt_and_reason`.
 - `ARBORA-FLEET-R041.6`: `tests/fleet/test_auto_onboard_served.py::test_register_then_release_serves_all_surfaces_without_manual_step`.
+- `ARBORA-FLEET-R041.7`: `tests/fleet/test_handshake_onboard.py::test_completed_handshake_starts_one_pass_and_imports_full_pack` connects a fixture connector and calls nothing else.
+- `ARBORA-FLEET-R041.8`: `tests/fleet/test_handshake_onboard.py::test_reconnect_recaptures_only_on_version_or_digest_change` reconnects unchanged, then with a new digest.
+- `ARBORA-FLEET-R041.9`: `tests/fleet/test_handshake_onboard.py::test_failed_capture_serves_tools_reports_gap_and_retries_with_backoff`.
+- `ARBORA-FLEET-R041.10`: `tests/fleet/test_handshake_onboard.py::test_large_shrink_on_handshake_waits_for_mass_withdrawal_approval`.
 - `ARBORA-FLEET-R042`: See each child.
 - `ARBORA-FLEET-R042.1`: `tests/fleet/test_source_approval.py::test_decision_round_trips`.
 - `ARBORA-FLEET-R042.2`: `tests/fleet/test_source_approval.py::test_read_only_admitted_contract_is_approved_and_write_contract_is_held`.
@@ -287,3 +293,4 @@ Hot-path proof for `ARBORA-FLEET-R037`: `tests/fleet/test_job_loads_served.py::t
 - `ARBORA-FLEET-R043.4`: `tests/api/test_query_federation.py::test_ungranted_held_and_over_budget_sources_refuse_with_typed_codes`.
 - `ARBORA-FLEET-R043.5`: `tests/api/test_query_federation.py::test_audit_line_names_sources_and_holds_no_rows`.
 - `ARBORA-FLEET-R043.6`: `tests/api/test_query_federation_served.py::test_nl_question_spans_native_facts_and_live_connector_rows`.
+- `ARBORA-FLEET-R043.7`: `tests/fleet/test_source_executor.py::test_reads_page_through_fleet_call_with_caller_delegation_and_per_source_errors`.

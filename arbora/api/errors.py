@@ -146,6 +146,12 @@ class OpErrorLike(Protocol):
     details: Mapping[str, Any]
 
 
+_INDETERMINATE_MESSAGE = (
+    "Outcome unknown: the request may or may not have taken effect; "
+    "verify the target before retrying, using the audit reference"
+)
+
+
 def _public_message(default: str) -> str:
     """Only contract-owned static messages reach callers; dynamic text stays private.
 
@@ -447,7 +453,9 @@ def to_envelope(
         "fleet": "Fleet call refused",
         "engine": "Engine request refused",
     }
-    message = _public_message(defaults[source])
+    message = _public_message(
+        _INDETERMINATE_MESSAGE if code == "INDETERMINATE" else defaults[source]
+    )
     envelope = {
         "ok": False,
         "error": {

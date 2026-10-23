@@ -331,7 +331,12 @@ async def _effective_op(
         return OpError("UNAVAILABLE", {"reason": "fleet effect authority unavailable"})
     try:
         resolved = await services.fleet_effect(op, params, caller)
-    except Exception:
+    except Exception as exc:  # noqa: BLE001 - refused closed; the cause is logged
+        _logger.warning(
+            "fleet effect authority refused fleet.call: %s: %s",
+            type(exc).__name__,
+            exc,
+        )
         return OpError("UNAVAILABLE", {"reason": "fleet effect authority unavailable"})
     if isinstance(resolved, FleetCallDecision):
         if not _valid_fleet_decision(op, resolved):
@@ -836,6 +841,12 @@ async def _reserve(call: _Call) -> Reserved | OpResult | OpError:
     ):
         return await _replay_completed(call, audit_ref, reservation.outcome)
     if reservation.state != "acquired":
+        _logger.warning(
+            "operation %s effect not acquired: state=%s (%s)",
+            call.op.id,
+            reservation.state,
+            call.caller.request_id,
+        )
         code = "INDETERMINATE" if reservation.state == "pending" else "INVALID_ARGUMENT"
         return OpError(code, {"audit_ref": audit_ref})
     return audit_ref, reservation
@@ -865,6 +876,12 @@ async def _dispatch_outcome(call: _Call, audit_ref: str) -> OpResult | OpError:
     except (OperationRefused, EngineRefusal, FleetRefusal) as exc:
         return _typed_refusal(exc)
     except TimeoutError:
+        _logger.warning(
+            "operation %s dispatch timed out after %ss (%s)",
+            call.op.id,
+            DISPATCH_TIMEOUT_SECONDS,
+            call.caller.request_id,
+        )
         return _unsettled(call, audit_ref, "TIMEOUT")
     except Exception as exc:
         refused = _grouped_refusal(exc)

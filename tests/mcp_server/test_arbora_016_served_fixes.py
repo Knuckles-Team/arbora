@@ -173,3 +173,45 @@ def test_served_cypher_uses_public_row_decoder(monkeypatch) -> None:
     assert len(calls) == 1
     assert calls[0][1]["mode"] == "read"
     assert "a2a-proof" in calls[0][1]["query"]
+
+
+@pytest.mark.spec("ARBORA-HOST-R001.2.4")
+def test_tool_call_run_events_carry_queryable_tool_provenance(monkeypatch) -> None:
+    from arbora import agent_runs
+
+    created: list[dict[str, Any]] = []
+
+    class _Engine:
+        def create_node(self, node_id: str, label: str, properties: Any) -> bool:
+            created.append(dict(properties))
+            return True
+
+    monkeypatch.setattr(agent_runs, "_engine", _Engine)
+    agent_runs.record_run_event(
+        {
+            "type": "tool_call",
+            "run_id": "a2a-1",
+            "step": 1,
+            "tool_name": "act",
+            "op": "fleet.call",
+            "server": "searxng-mcp",
+            "tool": "web_search",
+            "ok": True,
+        }
+    )
+    agent_runs.record_run_event({"type": "run_started", "run_id": "a2a-1"})
+    call, started = created
+    assert (
+        call["tool_name"],
+        call["op"],
+        call["server"],
+        call["tool"],
+        call["ok"],
+    ) == (
+        "act",
+        "fleet.call",
+        "searxng-mcp",
+        "web_search",
+        True,
+    )
+    assert "server" not in started and "tool" not in started

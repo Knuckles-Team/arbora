@@ -226,6 +226,12 @@ def record_run_event(event: Mapping[str, Any]) -> None:
         "step": step,
         "payload": payload,
     }
+    if properties["event_type"] == "tool_call":
+        # Queryable provenance: which governed verb and connector tool the run
+        # used (UQL filters on properties; the payload is an opaque string).
+        for key in ("tool_name", "op", "server", "tool"):
+            properties[key] = str(event.get(key) or "")[:256]
+        properties["ok"] = bool(event.get("ok"))
     batch = getattr(engine, "batch_typed_mutations", None)
     create_node = getattr(engine, "create_node", None)
     add_node = getattr(engine, "add_node", None)

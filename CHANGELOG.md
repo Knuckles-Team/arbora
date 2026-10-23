@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+## [0.1.8.dev2] - 2026-10-23
+
+- Requires agent-connector-sdk 0.3.19. A connector that serves its data-resource declaration at `manifest://connector/resources` now onboards (ARBORA-FLEET-R041.11).
+- `fleet.prompts.list`, `fleet.prompts.get`, `fleet.resources.list` and `fleet.resources.read` work on the served gateway (ARBORA-FLEET-R040.1).
+- Request verbs such as "show" no longer route a question to an op (ARBORA-FLEET-R014.2).
+- Pack capture paces its requests under the connector rate limit, so a large pack onboards (ARBORA-FLEET-R041.12).
+
+## [0.1.8.dev1] - 2026-10-23
+
+Pre-release for acceptance on the fresh-store `platform/arbora-prerelease` Deployment.
+
+- Requires epistemic-graph 2.27.5. Connector sources declared by a connector list, sync through the SDK sync runner as a WorkItem, and land in EG (ARBORA-OPS-R020.6).
+- `ask` no longer routes a plain question to an operation that needs a missing parameter. It falls back to the engine natural-language planner (ARBORA-FLEET-R014.1).
+- Catalog, lineage and source questions route through `ask` to the engine planner, and a governed source executor serves virtual-graph reads (#432).
+- A connector onboards when its MCP handshake completes (#433).
+- Object-valued arguments to a governed `fleet.call` write no longer end INDETERMINATE (#434).
+
 ## [0.1.7] - 2026-10-18
 
 - Creates unique records through the atomic create operation and refuses bindings that only support upsert.

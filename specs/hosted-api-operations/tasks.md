@@ -73,6 +73,7 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R020.6.4:** Refusal
 - [ ] **ARBORA-OPS-R020.6.5:** Evidence
 - [ ] **ARBORA-OPS-R020.6.6:** Hot-path proof
+- [ ] **ARBORA-OPS-R020.6.7:** Pack inventory
 - [ ] **ARBORA-OPS-R020.3.1:** Remaining scope of ARBORA-OPS-R020.3 (slice .1): Pack and job management operations
 - [ ] **ARBORA-OPS-R022.2.1:** `evolution.loops.status` op
 - [ ] **ARBORA-OPS-R022.2.2:** `evolution.schedules.list` op
@@ -240,6 +241,8 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R067.5:** Refusal. Add the typed refusals.
 - [ ] **ARBORA-OPS-R067.6:** Evidence. Record the trace fields.
 - [ ] **ARBORA-OPS-R067.7:** Hot-path proof. Add the served three-call test.
+- [ ] **ARBORA-OPS-R067.8:** Web-source contract. Call `web_extract` with `{"request": ...}` and read `WebPageResult`/`WebFetchRefusal`.
+- [ ] **ARBORA-OPS-R067.9:** Bounded page fetch. Bound each `web_extract` call and fall back on `timeout`.
 
 ## Served harness component and improvement library operations (R068)
 
@@ -274,7 +277,7 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R854.1:** Wiring.
 - [ ] **ARBORA-OPS-R854.2:** Hot-path proof.
 - [ ] **ARBORA-OPS-R855:** Catalog and governance operations (rollup).
-- [ ] **ARBORA-OPS-R855.1:** Wiring.
+- [ ] **ARBORA-OPS-R855.1:** Routing.
 - [ ] **ARBORA-OPS-R855.2:** Hot-path proof.
 - [ ] **ARBORA-OPS-R856:** Quality and lineage operations (rollup).
 - [ ] **ARBORA-OPS-R856.1:** Wiring.
@@ -287,6 +290,9 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R858.2:** Hot-path proof.
 
 - [ ] **ARBORA-OPS-R855.3:** Trust flag, curation review and query workspace operations.
+- [ ] **ARBORA-OPS-R855.4:** Ask answers from the graph.
+- [ ] **ARBORA-OPS-R855.5:** Find surfaces catalog assets.
+- [ ] **ARBORA-OPS-R855.6:** Governed routing only.
 
 ## Served program optimization operations (R860)
 

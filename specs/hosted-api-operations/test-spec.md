@@ -198,6 +198,7 @@ packages and exercise both schema lookup and invocation.
 | Refusal | `ARBORA-OPS-R067.5` | `tests/api/test_research_web.py::test_research_web_refusals`: Each case returns its code and enqueues nothing. |
 | Evidence | `ARBORA-OPS-R067.6` | `tests/api/test_research_web.py::test_trace_names_decision_and_backends`: The trace holds the fields and no page text. |
 | Hot-path proof | `ARBORA-OPS-R067.7` | `tests/gateway/test_research_web_served.py::test_research_web_default_archivebox_and_fallback`: Three served calls store equal Documents and cite the backend. |
+| Bound | `ARBORA-OPS-R067.9` | `tests/api/test_research_web_backends.py::test_hanging_archivebox_times_out_and_falls_back`: A backend that never answers fails with `timeout` and the other backend serves the page. |
 
 Hot-path proof for `ARBORA-OPS-R067`: `tests/gateway/test_research_web_served.py::test_research_web_default_archivebox_and_fallback`.
 
@@ -205,13 +206,14 @@ Hot-path proof for `ARBORA-OPS-R067`: `tests/gateway/test_research_web_served.py
 
 | Requirement | Case | Required assertion |
 |---|---|---|
-| `ARBORA-OPS-R020.6` | Connector sources served through the composed SDK sync runner | The rollup closes when `ARBORA-OPS-R020.6.1` through `ARBORA-OPS-R020.6.6` pass their proving tests. |
+| `ARBORA-OPS-R020.6` | Connector sources served through the composed SDK sync runner | The rollup closes when `ARBORA-OPS-R020.6.1` through `ARBORA-OPS-R020.6.7` pass their proving tests. |
 | `ARBORA-OPS-R020.6.1` | Model | `tests/ingest/test_connector_sources.py::test_source_record_shape` validates the record and refuses a malformed source ID. |
 | `ARBORA-OPS-R020.6.2` | Behavior | `tests/ingest/test_connector_sources.py::test_list_sync_status_compose_runner` drives the three operations over a fake gateway and engine. |
 | `ARBORA-OPS-R020.6.3` | Wiring | `tests/ingest/test_connector_sources.py::test_served_invocation_binds_ingest_runner` finds the composed runner in the operation runtime bindings. |
 | `ARBORA-OPS-R020.6.4` | Refusal | `tests/ingest/test_connector_sources.py::test_refusals_fail_closed` covers each refusal and the failed WorkItem commit. |
 | `ARBORA-OPS-R020.6.5` | Evidence | `tests/ingest/test_connector_sources.py::test_receipt_binds_work_item` compares the receipt job ID with the committed WorkItem. |
 | `ARBORA-OPS-R020.6.6` | Hot-path proof | The test observes the declared source, a succeeded WorkItem and the ingested nodes with provenance. |
+| `ARBORA-OPS-R020.6.7` | Pack inventory | The test lists one pack per declaring connector, reports `error` after a failed sync and refuses an unbound runner. |
 
 ## Refusal causes and replay owners (ARBORA-OPS-R009.2, R009.3)
 
@@ -266,7 +268,7 @@ Test the actual serving-root binding and contextual read path. Cover concurrent 
 | `ARBORA-OPS-R854.1` | `tests/api/test_retrieval_ops.py::test_feedback_and_scope_operations_listed` |
 | `ARBORA-OPS-R854.2` | `tests/api/test_retrieval_ops.py::test_scope_and_feedback_served` |
 | `ARBORA-OPS-R855` | See each child. |
-| `ARBORA-OPS-R855.1` | `tests/api/test_governance_ops.py::test_registry_lists_governance_operations` |
+| `ARBORA-OPS-R855.1` | `tests/api/test_resolve.py::test_catalog_class_ask_routes_to_the_engine_planner_ahead_of_ranking` |
 | `ARBORA-OPS-R855.2` | `tests/api/test_governance_ops.py::test_term_review_and_search` |
 | `ARBORA-OPS-R856` | See each child. |
 | `ARBORA-OPS-R856.1` | `tests/api/test_governance_ops.py::test_registry_lists_quality_operations` |
@@ -283,6 +285,9 @@ Test the actual serving-root binding and contextual read path. Cover concurrent 
 | Row | Proving test |
 |---|---|
 | `ARBORA-OPS-R855.3` | `tests/api/test_governance_ops.py::test_trust_flag_and_proposal_review` |
+| `ARBORA-OPS-R855.4` | `tests/api/test_resolve.py::test_catalog_class_ask_routes_to_the_engine_planner_ahead_of_ranking` |
+| `ARBORA-OPS-R855.5` | `tests/api/test_resolve.py::test_find_for_catalog_assets_points_at_the_graph_query_ops_first` |
+| `ARBORA-OPS-R855.6` | `tests/api/test_resolve.py::test_catalog_question_is_not_routed_without_a_visible_nl_planner` |
 
 ## ARBORA-OPS-R860 acceptance
 

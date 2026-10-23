@@ -22,7 +22,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from arbora.api.errors import to_envelope
 
 from .auth import HTTPAuthenticationError
-from .routes import _surface_for
+from .routes import _surface_for, caller_session_scope
 
 #: The top-level directory listing is admitted before any frame is sent.
 _TOP_LEVEL_OP = "source.tree"
@@ -47,9 +47,10 @@ def _error(code: str, *, digest: str, request_id: str) -> JSONResponse:
         request_id=request_id or token_hex(12),
         registry_digest=digest,
     )
-    return JSONResponse(
-        envelope, status_code=status, headers={"Cache-Control": "no-store"}
-    )
+    headers = {"Cache-Control": "no-store"}
+    if status == 401:
+        headers["WWW-Authenticate"] = "Bearer"
+    return JSONResponse(envelope, status_code=status, headers=headers)
 
 
 def _refusal_response(outcome: Any, *, digest: str, request_id: str) -> JSONResponse:
@@ -60,9 +61,10 @@ def _refusal_response(outcome: Any, *, digest: str, request_id: str) -> JSONResp
         request_id=request_id or token_hex(12),
         registry_digest=digest,
     )
-    return JSONResponse(
-        envelope, status_code=status, headers={"Cache-Control": "no-store"}
-    )
+    headers = {"Cache-Control": "no-store"}
+    if status == 401:
+        headers["WWW-Authenticate"] = "Bearer"
+    return JSONResponse(envelope, status_code=status, headers=headers)
 
 
 def _admitted(outcome: Any) -> bool:
@@ -240,13 +242,14 @@ def make_checkout_endpoint(
         surface = _surface_for(request, caller, is_console_request)
 
         # The requested subtree root is admitted before any content is sent.
-        outcome = await invoke(
-            _TOP_LEVEL_OP,
-            {"repository": repo, "ref": ref, "path": path},
-            caller,
-            surface,
-            services=services,
-        )
+        with caller_session_scope(caller):
+            outcome = await invoke(
+                _TOP_LEVEL_OP,
+                {"repository": repo, "ref": ref, "path": path},
+                caller,
+                surface,
+                services=services,
+            )
         if not _admitted(outcome):
             return _refusal_response(
                 outcome, digest=digest, request_id=caller.request_id
@@ -254,15 +257,16 @@ def make_checkout_endpoint(
 
         async def stream() -> AsyncIterator[bytes]:
             yield _frame({"kind": "start", "repo": repo, "ref": ref, "path": path})
-            directories, files, error = await _collect_entries(
-                repo=repo,
-                ref=ref,
-                path=path,
-                caller=caller,
-                surface=surface,
-                services=services,
-                invoke=invoke,
-            )
+            with caller_session_scope(caller):
+                directories, files, error = await _collect_entries(
+                    repo=repo,
+                    ref=ref,
+                    path=path,
+                    caller=caller,
+                    surface=surface,
+                    services=services,
+                    invoke=invoke,
+                )
             if error is not None:
                 yield _frame({"kind": "error", "code": error[0], "reason": error[1]})
                 return

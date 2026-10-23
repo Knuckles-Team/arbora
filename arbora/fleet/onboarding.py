@@ -21,12 +21,14 @@ share it.
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import json
 import logging
 import threading
-from collections.abc import Collection, Iterator, Mapping, Sequence
+from collections.abc import Callable, Collection, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from arbora.fleet.surfaces import pack_surface_report
 from arbora.security.anonymous import session_context
@@ -40,6 +42,27 @@ PASS_INTERVAL_S = 1800.0
 #: The per-request timeout of one child catalog capture.
 CAPTURE_TIMEOUT_S = 60.0
 _HTTP_TRANSPORTS = frozenset({"", "http", "streamable-http"})
+#: A burst of handshakes for one connector inside this window is one pass.
+HANDSHAKE_DEBOUNCE_S = 2.0
+#: Retry delays double from the base up to the cap, for at most this many tries.
+RETRY_BASE_S = 5.0
+RETRY_CAP_S = 300.0
+RETRY_MAX_ATTEMPTS = 6
+#: The engine code that holds a large pack shrink for operator approval.
+MASS_WITHDRAWAL_CODE = "PACK_MASS_WITHDRAWAL"
+
+TriggerReason = Literal[
+    "registered", "config_pass", "release_changed", "list_changed", "handshake"
+]
+
+
+@dataclass(frozen=True, slots=True)
+class OnboardingTrigger:
+    """Why one onboarding pass runs for one connector (ARBORA-FLEET-R041)."""
+
+    connector: str
+    reason: TriggerReason
+    release_digest: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -156,6 +179,46 @@ class _PackResourceSession:
         return await self._session.read_resource(uri)
 
 
+#: Seconds between capture requests to one connector. The connector SDK's
+#: default per-caller limit is 10 requests/s with a burst of 20, and a pack
+#: capture makes one request per skill, prompt and resource, so an unpaced
+#: capture of a large pack is throttled mid-way (ARBORA-FLEET-R041.12).
+CAPTURE_REQUEST_INTERVAL_S = 0.125
+
+
+class _PacedSession:
+    """Spaces the capture's MCP requests so a connector never throttles them."""
+
+    def __init__(
+        self, session: Any, interval_s: float = CAPTURE_REQUEST_INTERVAL_S
+    ) -> None:
+        import asyncio
+
+        self._session = session
+        self._interval_s = interval_s
+        self._lock = asyncio.Lock()
+        self._last = float("-inf")
+
+    def __getattr__(self, name: str) -> Any:
+        import asyncio
+        import inspect
+        import time
+
+        target = getattr(self._session, name)
+        if not inspect.iscoroutinefunction(target):
+            return target
+
+        async def paced(*args: Any, **kwargs: Any) -> Any:
+            async with self._lock:
+                wait = self._last + self._interval_s - time.monotonic()
+                if wait > 0:
+                    await asyncio.sleep(wait)
+                self._last = time.monotonic()
+            return await target(*args, **kwargs)
+
+        return paced
+
+
 def _capture_kinds() -> tuple[Any, ...]:
     from agent_connector_sdk.artifacts.prompts import PromptArtifactKind
     from agent_connector_sdk.artifacts.resources import ResourceArtifactKind
@@ -197,7 +260,9 @@ async def capture_server_pack(endpoint: FleetEndpoint, *, auth: Any = None) -> A
     )
     async with McpTransport().session(transport_endpoint) as session:
         return await build_content_pack(
-            session, connector=endpoint.name, kinds=_capture_kinds()
+            cast(Any, _PacedSession(session)),
+            connector=endpoint.name,
+            kinds=_capture_kinds(),
         )
 
 
@@ -211,8 +276,15 @@ class FleetOnboarding:
     capture: Any = None
     #: The virtual catalog that access contracts register into.
     virtual_catalog: Any = None
+    #: Servers whose next import the operator approved to withdraw more than
+    #: half of the published surface (a move to one tool per operation).
+    allow_mass_withdrawal: frozenset[str] = frozenset()
     #: The last captured surface report per connector, read by the pass.
     surfaces: dict[str, dict[str, Any]] = field(default_factory=dict)
+    #: The ``(server version, catalog digest)`` last onboarded per connector.
+    seen: dict[str, tuple[str, str]] = field(default_factory=dict)
+    #: The handshake pass record per connector (state, attempts, last error).
+    handshake: dict[str, dict[str, Any]] = field(default_factory=dict)
 
     @property
     def tenant_client(self) -> Any:
@@ -243,7 +315,13 @@ class FleetOnboarding:
                 now_ms=now_ms,
             )
 
-    async def onboard(self, endpoint: FleetEndpoint, *, auth: Any) -> bool:
+    async def onboard(
+        self,
+        endpoint: FleetEndpoint,
+        *,
+        auth: Any,
+        trigger: OnboardingTrigger | None = None,
+    ) -> bool:
         """Capture one server's catalog; attest and import only when it changed.
 
         Returns whether EG's catalog actually changed. A server already
@@ -260,6 +338,8 @@ class FleetOnboarding:
 
         from arbora.deployment.semantic_provisioning import import_attested_pack
 
+        if trigger is not None:
+            logger.info("%s: onboarding pass (%s)", endpoint.name, trigger.reason)
         capture = self.capture or capture_server_pack
         pack = await capture(endpoint, auth=auth)
         self.surfaces[endpoint.name] = pack_surface_report(pack)
@@ -271,11 +351,37 @@ class FleetOnboarding:
                 client=self.tenant_client,
                 commons=self.commons_client,
                 pack=pack,
+                allow_mass_withdrawal=endpoint.name in self.allow_mass_withdrawal,
             )
         else:
             await self.renew({endpoint.name: endpoint.url})
         self.register_contracts(endpoint, pack)
         return changed
+
+    async def handshake_pass(
+        self,
+        endpoint: FleetEndpoint,
+        *,
+        auth: Any,
+        trigger: OnboardingTrigger,
+        server_version: str,
+    ) -> str:
+        """Run one handshake-triggered pass; return ``onboarded`` or ``renewed``.
+
+        A reconnect that shows the same ``serverInfo`` version and catalog
+        digest as the last onboarded pack captures nothing and only renews
+        the lease (ARBORA-FLEET-R041.8). Any other handshake goes through the
+        one :meth:`onboard`, which still compares with the pack EG holds.
+        """
+
+        key = (server_version, trigger.release_digest)
+        # An import needs a live registration: renew first (margin-gated).
+        await self.renew({endpoint.name: endpoint.url})
+        if self.seen.get(endpoint.name) == key:
+            return "renewed"
+        changed = await self.onboard(endpoint, auth=auth, trigger=trigger)
+        self.seen[endpoint.name] = key
+        return "onboarded" if changed else "renewed"
 
     async def pack_unchanged(self, endpoint: FleetEndpoint, pack: Any) -> bool:
         """True when EG already holds ``pack`` unchanged under its current head.
@@ -377,9 +483,9 @@ async def _onboard_all(
             logger.warning("fleet onboarding of %s failed: %s", endpoint.name, exc)
         else:
             (report.onboarded if changed else report.renewed).append(endpoint.name)
-            surfaces = onboarding.surfaces.get(endpoint.name)
-            if surfaces is not None:
-                report.surfaces[endpoint.name] = surfaces
+        surfaces = onboarding.surfaces.get(endpoint.name)
+        if surfaces is not None:
+            report.surfaces[endpoint.name] = surfaces
 
 
 async def onboard_fleet(
@@ -457,7 +563,9 @@ class FleetOnboardingService:
         )
         fleet = [item.name for item in endpoints]
         await refresh_serving_catalog(self.multiplexer, report, fleet)
-        self.multiplexer._fleet_onboarding = report.as_dict()
+        self.multiplexer._fleet_onboarding = merge_handshake_records(
+            report.as_dict(), self.onboarding.handshake
+        )
         logger.info("fleet onboarding pass: %s", report.as_dict())
         return report
 
@@ -491,6 +599,199 @@ class FleetOnboardingService:
         return thread
 
 
+def merge_handshake_records(
+    snapshot: dict[str, Any], records: Mapping[str, dict[str, Any]]
+) -> dict[str, Any]:
+    """Add each connector's handshake record to its R040 surface entry."""
+
+    surfaces = dict(snapshot.get("surfaces", {}))
+    for name, record in records.items():
+        surfaces[name] = {**surfaces.get(name, {}), "onboarding": dict(record)}
+    return {**snapshot, "surfaces": surfaces}
+
+
+def handshake_catalog_digest(tools: Sequence[Any]) -> str:
+    """A stable digest of the tool list a handshake returned."""
+
+    rows = sorted(
+        (
+            str(getattr(tool, "name", "")),
+            json.dumps(getattr(tool, "inputSchema", None), sort_keys=True, default=str),
+        )
+        for tool in tools
+    )
+    return hashlib.sha256(json.dumps(rows).encode()).hexdigest()
+
+
+@dataclass(slots=True)
+class _Handshake:
+    seq: int
+    server_version: str
+    digest: str
+
+
+@dataclass(slots=True)
+class HandshakeOnboarder:
+    """Schedules one onboarding pass per completed connector handshake.
+
+    ``notify`` is called by the multiplexer after ``initialize`` and the list
+    calls. It only records the handshake and starts (or joins) a worker
+    thread, so it never blocks the session or tool serving (R041.7). A burst
+    of handshakes for one connector coalesces into one pass. A failed pass is
+    logged, recorded per connector, shown in the surface report and retried
+    with bounded exponential backoff that resets on success (R041.9). A pass
+    held for the mass-withdrawal approval is not retried (R041.10).
+    """
+
+    onboarding: FleetOnboarding
+    multiplexer: Any
+    endpoints: Callable[[], Sequence[FleetEndpoint]]
+    debounce_s: float = HANDSHAKE_DEBOUNCE_S
+    retry_base_s: float = RETRY_BASE_S
+    retry_cap_s: float = RETRY_CAP_S
+    max_attempts: int = RETRY_MAX_ATTEMPTS
+    stop: threading.Event = field(default_factory=threading.Event)
+    #: Waits ``seconds`` and returns True when stopped; replaced in tests.
+    wait: Callable[[float], bool] | None = None
+    passes_run: int = 0
+    _lock: threading.Lock = field(default_factory=threading.Lock)
+    _latest: dict[str, _Handshake] = field(default_factory=dict)
+    _active: dict[str, threading.Thread] = field(default_factory=dict)
+    _seq: int = 0
+
+    def notify(self, connector: str, *, server_version: str, digest: str) -> None:
+        """Record a completed handshake and schedule one pass; never raises."""
+
+        try:
+            with self._lock:
+                self._seq += 1
+                self._latest[connector] = _Handshake(self._seq, server_version, digest)
+                if connector in self._active:
+                    return
+                thread = threading.Thread(
+                    target=self._work,
+                    args=(connector,),
+                    name=f"handshake-onboard-{connector}",
+                    daemon=True,
+                )
+                self._active[connector] = thread
+            thread.start()
+        except Exception as exc:  # serving must outlive any onboarding fault
+            logger.warning(
+                "handshake onboarding of %s not scheduled: %s", connector, exc
+            )
+
+    def drain(self, timeout: float = 10.0) -> None:
+        """Join every running worker; for shutdown and tests."""
+
+        for thread in list(self._active.values()):
+            thread.join(timeout)
+
+    def _sleep(self, seconds: float) -> bool:
+        return (self.wait or self.stop.wait)(seconds)
+
+    def _work(self, connector: str) -> None:
+        try:
+            self._loop(connector)
+        except Exception as exc:  # pragma: no cover - last-resort guard
+            logger.warning("handshake onboarding of %s crashed: %s", connector, exc)
+        finally:
+            with self._lock:
+                self._active.pop(connector, None)
+
+    def _loop(self, connector: str) -> None:
+        attempts = 0
+        fresh = True
+        while True:
+            if fresh and self._sleep(self.debounce_s):
+                return
+            fresh = False
+            with self._lock:
+                info = self._latest[connector]
+            endpoint = next((e for e in self.endpoints() if e.name == connector), None)
+            if endpoint is None:
+                return  # not a fleet endpoint: nothing to onboard
+            status, error = self._attempt(endpoint, info)
+            self.passes_run += 1
+            if status == "ok":
+                with self._lock:
+                    if self._latest[connector].seq == info.seq:
+                        self._active.pop(connector, None)
+                        return
+                attempts = 0  # a newer handshake arrived mid-pass: run again
+                fresh = True
+                continue
+            attempts += 1
+            if status == "held":
+                self._record(connector, info, "awaiting_approval", attempts, error)
+                return
+            if attempts >= self.max_attempts:
+                self._record(connector, info, "failed", attempts, error)
+                return
+            delay = min(self.retry_cap_s, self.retry_base_s * 2 ** (attempts - 1))
+            self._record(connector, info, "failed", attempts, error, delay)
+            if self._sleep(delay):
+                return
+
+    def _attempt(self, endpoint: FleetEndpoint, info: _Handshake) -> tuple[str, str]:
+        """Run one pass; return ``("ok", outcome)``, ``("held", e)`` or ``("error", e)``."""
+
+        from arbora.api.contracts.session import use_session
+        from arbora.security.actor_context import use_actor
+
+        session = self.onboarding.session
+        trigger = OnboardingTrigger(endpoint.name, "handshake", info.digest)
+        try:
+            with use_actor(session.actor), use_session(session):
+                outcome = asyncio.run(self._pass(endpoint, info, trigger))
+        except Exception as exc:
+            if MASS_WITHDRAWAL_CODE in str(exc):
+                logger.warning(
+                    "%s: handshake pass awaits mass-withdrawal approval", endpoint.name
+                )
+                return "held", _failure(exc)
+            logger.warning("%s: handshake onboarding failed: %s", endpoint.name, exc)
+            return "error", _failure(exc)
+        self._record(endpoint.name, info, outcome, 0, "")
+        return "ok", outcome
+
+    async def _pass(
+        self, endpoint: FleetEndpoint, info: _Handshake, trigger: OnboardingTrigger
+    ) -> str:
+        return await self.onboarding.handshake_pass(
+            endpoint,
+            auth=_child_auth(),
+            trigger=trigger,
+            server_version=info.server_version,
+        )
+
+    def _record(
+        self,
+        connector: str,
+        info: _Handshake,
+        state: str,
+        attempts: int,
+        error: str,
+        retry_in_s: float | None = None,
+    ) -> None:
+        record: dict[str, Any] = {
+            "reason": "handshake",
+            "state": state,
+            "attempts": attempts,
+            "server_version": info.server_version,
+            "catalog_digest": info.digest,
+        }
+        if error:
+            record["error"] = error
+        if retry_in_s is not None:
+            record["retry_in_s"] = retry_in_s
+        self.onboarding.handshake[connector] = record
+        current = self.multiplexer._fleet_onboarding
+        self.multiplexer._fleet_onboarding = merge_handshake_records(
+            dict(current or {}), {connector: record}
+        )
+
+
 def configured_served_url() -> str:
     """The MCP URL Arbora serves at, from ``ARBORA_SERVED_MCP_URL``."""
 
@@ -516,6 +817,14 @@ def start_fleet_onboarding(
         multiplexer=multiplexer,
         served_url=configured_served_url() if served_url is None else served_url,
     )
+    onboarder = HandshakeOnboarder(
+        onboarding=service.onboarding,
+        multiplexer=multiplexer,
+        endpoints=service.endpoints,
+    )
+    setter = getattr(multiplexer, "set_handshake_listener", None)
+    if setter is not None:
+        setter(onboarder.notify)
     return service.start()
 
 
@@ -523,7 +832,9 @@ __all__ = [
     "FleetEndpoint",
     "FleetOnboarding",
     "FleetOnboardingService",
+    "HandshakeOnboarder",
     "OnboardingReport",
+    "OnboardingTrigger",
     "capture_server_pack",
     "configured_fleet_endpoints",
     "fleet_endpoints",

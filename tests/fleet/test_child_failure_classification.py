@@ -7,6 +7,7 @@ import logging
 
 import mcp.types
 import pytest
+from fastmcp.exceptions import ToolError
 
 from arbora.api.errors import FleetRefusal
 from arbora.api.invoke import pipeline
@@ -182,3 +183,96 @@ async def test_caller_cancellation_is_not_classified(monkeypatch):
     monkeypatch.setattr(mux, "_call_ephemeral_child_session", cancelled)
     with pytest.raises(asyncio.CancelledError):
         await mux._call_service_child_once("s", "t", {}, timeout=1.0)
+
+
+def _frozen_nested_arguments():
+    from arbora.api.invoke.steps import freeze_claims
+
+    return freeze_claims(
+        {
+            "project_id": 7,
+            "api_parameters": {"issue_type": "incident", "labels": ["a", "b"]},
+        }
+    )
+
+
+@pytest.mark.asyncio
+async def test_governed_call_hands_children_plain_json_for_nested_objects(
+    monkeypatch,
+):
+    """A pipeline-frozen object argument must reach the child as plain JSON."""
+    import contextlib
+
+    seen = {}
+
+    def delegated(caller, *, allow_admitted_anonymous=False):
+        assert allow_admitted_anonymous is True
+        return contextlib.nullcontext()
+
+    monkeypatch.setattr(gateway_ops, "_verified_delegation", delegated)
+    monkeypatch.setattr(gateway_ops, "commit_native_dispatch", lambda *a: None)
+
+    class Mux:
+        async def call_admitted_child_once(self, server, tool, arguments):
+            mux_module._assert_bounded_delegated_value(arguments)
+            seen["arguments"] = arguments
+            return mcp.types.CallToolResult(content=[], isError=False)
+
+    delegated = gateway_ops.oauth_delegated_call_for_mux(Mux())
+    gateway = object.__new__(gateway_ops.FleetGateway)
+    gateway._delegated_call = delegated
+    gateway._service_call = None
+
+    async def admitted(_caller, _server, _tool):
+        from types import SimpleNamespace
+
+        from arbora.api.registry import Effect
+
+        return SimpleNamespace(
+            annotations={},
+            effect_override=Effect.WRITE,
+            credential_mode="delegated",
+        )
+
+    gateway._admitted_tool = admitted
+    caller = type("C", (), {"principal": "p", "tenant": "t", "request_id": "r"})()
+    from arbora.api.registry import Effect
+
+    await gateway.call(
+        caller,
+        "gitlab",
+        "gitlab_update_issue",
+        _frozen_nested_arguments(),
+        expected_effect=Effect.WRITE,
+    )
+    assert seen["arguments"] == {
+        "project_id": 7,
+        "api_parameters": {"issue_type": "incident", "labels": ["a", "b"]},
+    }
+    assert type(seen["arguments"]["api_parameters"]) is dict
+    assert type(seen["arguments"]["api_parameters"]["labels"]) is list
+
+
+def test_delegated_bound_check_rejects_frozen_mapping():
+    """The child-argument bound is for plain JSON; frozen arguments need thawing."""
+    with pytest.raises(ToolError):
+        mux_module._assert_bounded_delegated_value(_frozen_nested_arguments())
+
+
+def test_indeterminate_message_states_unknown_outcome():
+    from arbora.api.errors import to_envelope
+    from arbora.api.invoke.steps import OpError
+
+    _status, envelope = to_envelope(
+        OpError("INDETERMINATE", {"audit_ref": ""}),
+        op="fleet.call",
+        request_id="r",
+        registry_digest="d",
+    )
+    message = envelope["error"]["message"]
+    assert message != "Request refused" and "unknown" in message.lower()
+
+
+def test_unacquired_reservation_and_timeout_log_their_cause(caplog):
+    source = inspect.getsource(pipeline)
+    assert "effect not acquired" in source and "dispatch timed out" in source

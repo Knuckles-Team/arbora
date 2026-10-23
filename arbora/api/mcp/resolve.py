@@ -15,15 +15,27 @@ import re
 import secrets
 from collections import Counter, OrderedDict
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 _WORDS = re.compile(r"[a-z0-9]+")
 _STOP = frozenset(
     "a an the of for to in on with and or is are be do what how why my me i you your please".split()
+    # ARBORA-FLEET-R014.2: request verbs say how to answer, not what to run.
+    + "show display tell give across".split()
 )
 _READ_VERBS = frozenset({"ask", "why", "find"})
 _VERBS = _READ_VERBS | {"write", "act", "manage"}
+#: Catalog, glossary, stewardship, lineage, prompt-candidate and virtual-graph
+#: source questions. The engine models these as graph entities
+#: (EG-TYPED-PACKS-R106/R108, EG-DECISION-ENGINE-R814, EG-FEDERATED-QUERY-R722)
+#: and answers them through its query planner (ARBORA-OPS-R855.4).
+_GRAPH_QUESTION = re.compile(
+    r"\b(catalog|glossary|steward\w*|lineage|upstream|downstream|virtual[ -]graph"
+    r"|who owns|owner of|(connector|data) sources?|prompt candidates?"
+    r"|system[ -]prompt candidates?)\b"
+)
+_GRAPH_OPS = ("query.nl", "query.uql")
 _CACHE_LIMIT = 256
 _OUTCOME_LIMIT = 4096
 _REWARD_WEIGHT = 0.2
@@ -197,18 +209,54 @@ class IntentResolver:
             semantic_scores=semantic_scores,
         )
         supplied = dict(params or {})
+        graph_question = bool(_GRAPH_QUESTION.search(intent.lower()))
         if verb == "find":
+            ids = tuple(candidate.descriptor.id for candidate in ranked)
+            if graph_question:
+                visible = {_coerce(item).id for item in descriptors}
+                first = tuple(op for op in _GRAPH_OPS if op in visible)
+                ids = (*first, *(i for i in ids if i not in first))
             return Resolution(
                 None,
                 supplied,
                 False,
                 (),
-                tuple(candidate.descriptor.id for candidate in ranked),
+                ids,
                 "Discovery results; no operation executed",
             )
+        if verb == "ask" and graph_question and "text" not in supplied:
+            routed = _graph_question_route(intent, supplied, descriptors)
+            if routed is not None:
+                return routed
         winner = ranked[0] if ranked else None
         if winner is None or winner.score < _MIN_EVIDENCE:
             return _ask_fallback(verb, intent, supplied, descriptors)
+        if verb == "ask" and _missing_required(
+            winner.descriptor.params_schema, supplied
+        ):
+            # ARBORA-FLEET-R014.1: a plain question cannot fill a required
+            # parameter, so an op that needs one does not win `ask`. The next
+            # runnable match does; with none, the NL planner answers.
+            runnable = next(
+                (
+                    candidate
+                    for candidate in ranked
+                    if candidate.score >= _MIN_EVIDENCE
+                    and not _missing_required(
+                        candidate.descriptor.params_schema, supplied
+                    )
+                ),
+                None,
+            )
+            if runnable is None:
+                fallback = _ask_fallback(verb, intent, supplied, descriptors)
+                if fallback.op is not None:
+                    return replace(
+                        fallback,
+                        alternatives=tuple(c.descriptor.id for c in ranked),
+                    )
+            else:
+                winner = runnable
         selected = winner.descriptor
         missing = _missing_required(selected.params_schema, supplied)
         return Resolution(
@@ -216,7 +264,11 @@ class IntentResolver:
             params=supplied,
             preview=verb not in _READ_VERBS,
             missing_required=missing,
-            alternatives=tuple(candidate.descriptor.id for candidate in ranked[1:]),
+            alternatives=tuple(
+                candidate.descriptor.id
+                for candidate in ranked
+                if candidate.descriptor.id != selected.id
+            ),
             why=f"Matched {', '.join(winner.matched_terms) or 'semantic similarity'}",
         )
 
@@ -311,6 +363,30 @@ def _missing_required(
 ) -> tuple[str, ...]:
     required = schema.get("required", ())
     return tuple(sorted(str(name) for name in required if name not in params))
+
+
+def _graph_question_route(
+    intent: str,
+    params: Mapping[str, Any],
+    descriptors: Sequence[Descriptor | Mapping[str, Any]],
+) -> Resolution | None:
+    """Route a catalog-class question to the engine planner, ahead of ranking.
+
+    Only the authorized ``query.nl`` the caller can see qualifies, so scope and
+    policy filtering already happened. The text goes through unchanged and the
+    engine binds tenant, row caps and provenance (ARBORA-OPS-R855.4).
+    """
+    visible = tuple(_coerce(item) for item in descriptors)
+    if not any(item.id == "query.nl" and item.verb == "ask" for item in visible):
+        return None
+    return Resolution(
+        "query.nl",
+        {**params, "text": intent},
+        False,
+        (),
+        tuple(i.id for i in visible if i.id == "query.uql"),
+        "Catalog, lineage or virtual-graph question: answered by the engine planner over its ontology",
+    )
 
 
 def _ask_fallback(

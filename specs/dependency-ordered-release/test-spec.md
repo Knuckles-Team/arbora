@@ -19,3 +19,5 @@ Governing [spec](spec.md). Evidence remains PENDING.
 ## Verification record
 
 For each command and served probe, record exact source commit, candidate manifest digest, artifact digest, environment class, timestamp, CI URL and pass/fail. Run focused manifest/order/rollback tests, full applicable Python checks, cccc/KISS/Dupehound/jscpd gates, build/wheel smoke, and release-only hosted probes. A missing fixture or unavailable hosted environment leaves acceptance open; it does not create a pass.
+
+`ARBORA-RELEASE-R003.4.4`: Warmup without a running loop records the cause. Publication waits for the first served request.

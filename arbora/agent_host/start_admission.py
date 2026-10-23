@@ -7,7 +7,7 @@ import re
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, Protocol
+from typing import TYPE_CHECKING, Any, Literal, Protocol
 
 from arbora.agent_host.start_configuration import (
     HostRuntimeResources,
@@ -146,6 +146,64 @@ class HostStartAdmission:
         bindings: HostSessionBindingProvider,
     ) -> None:
         self._sessions, self._grants, self._bindings = sessions, grants, bindings
+
+    @classmethod
+    def from_native_grant(
+        cls,
+        sessions: SessionAuthority,
+        bindings: HostSessionBindingProvider,
+        client: Any,
+        *,
+        lease_id: str,
+        issuer_ref: str,
+    ) -> HostStartAdmission:
+        """Compose a borrowed native reader with the existing admission checks.
+
+        The access owner supplies the authenticated client and trusted issuer.
+        This does not issue a grant, change fleet policy, or select a default
+        session/construction authority when either owner is unavailable.
+        """
+        from arbora.access.host_start import NativeHostStartGrants
+
+        return cls(
+            sessions,
+            NativeHostStartGrants(client, lease_id=lease_id, issuer_ref=issuer_ref),
+            bindings,
+        )
+
+    @classmethod
+    async def issue_native_grant(
+        cls,
+        sessions: SessionAuthority,
+        bindings: HostSessionBindingProvider,
+        client: Any,
+        credential: str,
+        request: HostStartRequest,
+        *,
+        lease_id: str,
+        issuer_ref: str,
+        expires_at_ms: int,
+        idempotency_key: str,
+    ) -> HostStartAdmission:
+        """Access-owner entrypoint; native issuer privilege is still mandatory.
+
+        Call only after the existing owner policy authorizes this exact start.
+        This does not turn a connector result or caller-controlled lease into a
+        grant, and never retries an uncertain issue. Returned admission retains
+        all construction/session checks at the actual launch boundary.
+        """
+        from arbora.access.host_start import NativeHostStartIssuer
+
+        await NativeHostStartIssuer(client, sessions, issuer_ref=issuer_ref).issue(
+            credential,
+            request,
+            lease_id=lease_id,
+            expires_at_ms=expires_at_ms,
+            idempotency_key=idempotency_key,
+        )
+        return cls.from_native_grant(
+            sessions, bindings, client, lease_id=lease_id, issuer_ref=issuer_ref
+        )
 
     async def admit(
         self,

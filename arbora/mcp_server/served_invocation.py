@@ -169,6 +169,108 @@ def engine_endpoint(endpoints: Any) -> dict[str, str]:
     return {"tcp_addr": endpoint.removeprefix("tcp://")}
 
 
+def _with_ingest_runner(
+    bindings: Mapping[str, Any] | None,
+    pool: Any,
+    graph: str,
+    connect_context: Callable[[str], Any],
+) -> Mapping[str, Any] | None:
+    """Bind the connector-source ``ingest_runner`` over the fleet gateway.
+
+    ARBORA-OPS-R020.6.3: the runner reaches connectors through the governed
+    ``fleet_gateway`` binding and the engine through the served pool.
+    """
+    if not bindings or "fleet_gateway" not in bindings or "ingest_runner" in bindings:
+        return bindings
+    from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+    from arbora.ingest.connector_sources import ConnectorIngestRunner
+
+    async def data_client(tenant: str) -> Any:
+        return await pool.connected_client(connect_context(tenant), graph)
+
+    async def control_client(tenant: str) -> Any:
+        return await pool.connected_client(connect_context(tenant), CONTROL_GRAPH)
+
+    runner = ConnectorIngestRunner(
+        fleet=bindings["fleet_gateway"],
+        data_client=data_client,
+        control_client=control_client,
+    )
+    return {**bindings, "ingest_runner": runner}
+
+
+def _with_task_plan_schema(
+    bindings: Mapping[str, Any] | None,
+    pool: Any,
+    graph: str,
+    connect_context: Callable[[str], Any],
+    session: Callable[[], Any],
+) -> Mapping[str, Any] | None:
+    """Bind the verified task-plan schema pin (ARBORA-RELEASE-R003.4.4).
+
+    The committed body binds only when its digest matches the installed
+    engine's export. It is then published to the Agent Library once per
+    tenant under the process authority, starting with the process tenant.
+    Otherwise ``agents.plan_run`` keeps refusing with ``UNAVAILABLE``.
+    """
+    if bindings is None or "task_plan_schema_pins" in bindings:
+        return bindings
+    from arbora.api.task_plan_schema import PURPOSE_ID, engine_publish, startup_pins
+    from arbora.mcp_server.decide_wiring import _mutation_context
+
+    pins = startup_pins()
+    if pins is None:
+        return bindings
+
+    async def client_for(tenant: str) -> Any:
+        return await pool.connected_client(connect_context(tenant), graph)
+
+    def context_for(tenant: str) -> dict[str, Any]:
+        return {**_mutation_context(session(), PURPOSE_ID), "tenant_id": tenant}
+
+    publish = engine_publish(client_for, context_for, graph)
+    _warm_task_plan_schema(pins, publish, str(session().tenant))
+    return {
+        **bindings,
+        "task_plan_schema_pins": pins,
+        "task_plan_schema_publish": publish,
+    }
+
+
+def _warm_task_plan_schema(pins: Any, publish: Any, tenant: str) -> None:
+    """Publish the process tenant's pin at start-up when a loop is running.
+
+    Without a running loop the first ``agents.plan_run`` publishes it.
+    """
+    import asyncio
+    import logging
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError as exc:
+        logging.getLogger(__name__).warning(
+            "task-plan schema warmup deferred to first use: %s", exc
+        )
+        return
+
+    async def warm() -> None:
+        try:
+            await pins.for_tenant(tenant, publish)
+        except Exception as exc:
+            logging.getLogger(__name__).warning(
+                "task-plan schema publish for %s deferred to first use: %s",
+                tenant,
+                exc,
+            )
+
+    task = loop.create_task(warm())
+    _WARM_TASKS.add(task)
+    task.add_done_callback(_WARM_TASKS.discard)
+
+
+_WARM_TASKS: set[Any] = set()
+
+
 def compose_served_invocation(
     *,
     pool: Any,
@@ -212,6 +314,8 @@ def compose_served_invocation(
         )
 
     minted = session()
+    bindings = _with_ingest_runner(bindings, pool, graph, connect_context)
+    bindings = _with_task_plan_schema(bindings, pool, graph, connect_context, session)
 
     async def service_client() -> Any:
         return await pool.connected_client(connect_context(session().tenant), graph)

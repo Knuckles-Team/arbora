@@ -85,6 +85,22 @@ class LateFleetGateway:
         with _caller_session(caller):
             return await self._bound().unload(caller, **params)
 
+    async def prompts_list(self, caller: Any, **params: Any) -> Any:
+        with _caller_session(caller):
+            return await self._bound().prompts_list(caller, **params)
+
+    async def prompts_get(self, caller: Any, **params: Any) -> Any:
+        with _caller_session(caller):
+            return await self._bound().prompts_get(caller, **params)
+
+    async def resources_list(self, caller: Any, **params: Any) -> Any:
+        with _caller_session(caller):
+            return await self._bound().resources_list(caller, **params)
+
+    async def resources_read(self, caller: Any, **params: Any) -> Any:
+        with _caller_session(caller):
+            return await self._bound().resources_read(caller, **params)
+
     async def effect(self, op: Any, params: Mapping[str, Any], caller: Any) -> Any:
         with _caller_session(caller):
             return await self._bound().effect(op, params, caller)

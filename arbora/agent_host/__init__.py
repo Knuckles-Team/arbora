@@ -340,7 +340,7 @@ def create_agent_server(
         )
         resources = (graph, graph_config, executor, host_logs, host_log_runtime)
         if host_runtime is not None:
-            check_runtime_configuration(
+            checked = check_runtime_configuration(
                 host_start,
                 configuration,
                 host_runtime,
@@ -361,6 +361,31 @@ def create_agent_server(
                 web=enable_web_ui,
                 web_logs=enable_web_logs,
             )
+        if (
+            host_runtime is not None
+            and host_start is not None
+            and enable_web_ui is True
+            and not enable_terminal_ui
+            and not enable_web_logs
+            and callable(host_runtime.web_application)
+            and host_runtime.host_logs is None
+            and host_runtime.host_log_runtime is None
+        ):
+            import uvicorn
+
+            from arbora.agent_host.managed_web import ManagedWebApplication
+
+            managed_app = ManagedWebApplication(
+                host_start, checked, configuration, host_runtime
+            )
+            uvicorn.run(
+                managed_app,
+                host=host if host is not None else "127.0.0.1",
+                port=port if port is not None else 9000,
+                lifespan="on",
+                access_log=False,
+            )
+            return
         raise HostInterfaceUnavailable("client_unavailable")
 
     if graph is None or graph_config is None:
