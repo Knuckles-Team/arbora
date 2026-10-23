@@ -905,3 +905,10 @@ Other cases verify canonical graph reads and preservation/conflict of an existin
 These tests are not published-provider or live native-lifecycle acceptance.
 The task remains open until released EG contracts support a real native lifecycle.
 Acceptance must qualify admission, publication, reads, and restart.
+
+The existing ARBORA_TASK_PLAN operator object accepts `plan_scaffold: "on"`
+to enable AU scaffolds for admitted native runs. The default remains `"off"`.
+This explicit trusted option changes only the matching harness field.
+It does not infer a HarnessConfig decision or accept authority from request metadata.
+A disabled run may publish its executable TaskPlan without any scaffold updates.
+That result is not scaffold acceptance; enabled mode requires native revision evidence.
