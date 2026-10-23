@@ -27,7 +27,7 @@ class _Listing:
         ]
 
 
-@pytest.mark.spec("ARBORA-FLEET-R041.13")
+@pytest.mark.spec("ARBORA-FLEET-R041.11")
 def test_capture_lists_the_declaration_and_not_a_manifest() -> None:
     listed = asyncio.run(_PackResourceSession(_Listing()).list_resources())
     assert [r.uri for r in listed] == ["connector://resources", "ontology://x"]

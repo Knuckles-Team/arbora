@@ -160,6 +160,7 @@ def test_completed_handshake_starts_one_pass_and_imports_full_pack(
 
 
 # spec: ARBORA-FLEET-R041.8
+# spec: ARBORA-FLEET-R041.14
 def test_reconnect_recaptures_only_on_content_digest_change(
     eg: _Registry,
 ) -> None:
@@ -212,7 +213,7 @@ def test_reconnect_recaptures_only_on_content_digest_change(
     )
 
 
-# spec: ARBORA-FLEET-R041.8
+# spec: ARBORA-FLEET-R041.14
 def test_list_changed_notification_recaptures_through_the_one_pass() -> None:
     """A list_changed notification re-digests the child and notifies the listener."""
 
