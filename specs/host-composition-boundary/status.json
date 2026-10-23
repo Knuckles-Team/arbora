@@ -1716,14 +1716,15 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "aee6cfa29204",
-        "d8f76638c57b"
+        "d8f76638c57b",
+        "effb1096d829"
       ],
       "verified_by": [
+        "tests/agent_host/test_native_start_grant.py:2",
         "tests/agent_host/test_start_admission.py:113",
         "tests/agent_host/test_start_admission.py:126",
         "tests/agent_host/test_start_admission.py:158",
-        "tests/agent_host/test_start_admission.py:169",
-        "tests/agent_host/test_start_admission.py:184"
+        "tests/agent_host/test_start_admission.py:169"
       ]
     },
     {
@@ -2107,16 +2108,17 @@
       "title": "Revalidate borrowed runtime at ASGI startup",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "01e3a4d8d835",
         "929134f25886",
         "bbeaf1147f83",
         "d8f76638c57b"
       ],
       "verified_by": [
+        "tests/agent_host/test_managed_web.py:2",
         "tests/agent_host/test_runtime_lifespan.py:111",
         "tests/agent_host/test_runtime_lifespan.py:142",
         "tests/agent_host/test_runtime_lifespan.py:27",
-        "tests/agent_host/test_runtime_lifespan.py:45",
-        "tests/agent_host/test_runtime_lifespan.py:73"
+        "tests/agent_host/test_runtime_lifespan.py:45"
       ]
     },
     {

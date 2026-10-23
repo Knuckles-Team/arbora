@@ -29,7 +29,7 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED** except `ARBORA-
 | A2A-HT05 | A2A-H03 | With a scripted EG durable-kernel fixture, `tasks/get` with history requested returns exactly the fixture's transition ledger. (Open — depends on `ARBORA-A2A`.) |
 | A2A-HT06 | A2A-H04 | No `A2ATransitionHistoryAuthority` wired, or the wired fixture authority raises on call: `tasks/get` history returns `A2ATransitionHistoryUnavailable` with a privacy-safe message and no history data. (Open.) |
 | A2A-HT07 | A2A-H05 | Push target fails once then recovers: delivered once via the durable outbox, surviving a simulated process restart. A target that fails repeatedly past the outbox's configured attempt budget is dead-lettered and reported. (Open.) |
-| A2A-HT08 | A2A-H06 | With the `ARBORA-A2A` dependency flag unset, composition refuses to wire a real streaming/push/history authority; capability fields stay false regardless of attempted wiring. (Open.) |
+| A2A-HT08 | A2A-H06 | With the `ARBORA-A2A` dependency flag unset, composition refuses to wire a real streaming/push/history authority. Capability fields stay false regardless of attempted wiring. (Open.) |
 | A2A-HT09 | A2A-H07 | Integration fixture exercises a chosen subset of streaming/push/history. A contract test asserts the Agent Card's advertised subset at that revision exactly matches what the fixture actually exercises. (Open.) |
 
 Run `uv run pytest tests/a2a`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy arbora`, and `uvx --from pre-commit==4.6.0 pre-commit run --files <changed>` for this PR's `ARBORA-A2A-R009.1` slice (A2A-HT01–HT03). The remaining rows (A2A-HT04–HT09) require `ARBORA-A2A` and live AU/EG fixtures and stay open until implemented. Capture exact commit, command, versions and result in a local `evidence.md` before changing delivery to `ACCEPTED`.
@@ -144,3 +144,24 @@ A fresh client resolves the exact request. This proves request-data persistence,
 not durable credential recovery, queue dispatch or execution authorization.
 
 `ARBORA-A2A-R002.2.3.2` retains the parent served execution matrix and has no acceptance evidence in this increment.
+
+- `ARBORA-A2A-R005.2.3`: exercise exact human, tenant, session and key ownership. Cover expiry, revocation, revision races, source renewal without approval extension and absent owners after evaluator reconstruction. Assert only snapshot evidence results. No test claims atomic consumption or production authority.
+
+- `ARBORA-A2A-R005.2.4`: use real ephemeral Ed25519 signatures to test registration bytes and field tampering. Prove that invalid proof cannot reach registration. Exercise unsupported published methods through the real generated validator. These tests do not prove native producer integration or served approval.
+
+
+## 2026-10-23 current-main approval reconciliation
+
+The original approval snapshot evaluator and explicit registration adapter are
+rebased without replacing current-main caller-run credential lease or process
+expiry/revocation refusal behavior. Snapshot evidence is never execution
+authority; atomic pending approval consumption remains unimplemented.
+
+The producer prerequisite is the reconciled EG identity source with its
+Human-owner guard and freshly generated contract. Existing installed generated
+methods may refuse these new operations; that refusal is not integration
+success. Local unit fixtures qualify only their injected snapshot and proof
+fixtures. Native producer, durable CAS, installed consumer and served signed
+approval acceptance remain open until exact-source evidence is available.
+
+`ARBORA-A2A-R005.2.5` owns the remaining full-chain acceptance, not the snapshot or registration fixtures. Run the actual installed native and served path from pending call through signed approval to one effect. Include restart and concurrent replay, changed parameters, foreign human or tenant, expiry, revocation and intervening authority changes. No test in this increment supplies that proof. The row remains open and confirmation stays refused.

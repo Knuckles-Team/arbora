@@ -17,9 +17,12 @@ class UnavailableIdentityAuthority:
 class EngineSessionAuthority:
     """Use an injected trusted broker client; never create or elevate credentials."""
 
-    def __init__(self, client: object, *, graph: str) -> None:
+    def __init__(self, client: object, *, graph: str, refresh: bool = True) -> None:
         from .engine import _text
 
+        if type(refresh) is not bool:
+            raise ValueError("session refresh must be boolean")
+        self._refresh = refresh
         self._graph = _text(graph)
         if not callable(getattr(client, "_send", None)):
             raise IdentityUnavailable("trusted generated engine client required")
@@ -54,7 +57,10 @@ class EngineSessionAuthority:
                         "op": {
                             "family": "session",
                             "op": "resolve",
-                            "request": {"session_token": credential},
+                            "request": {
+                                "session_token": credential,
+                                **({"refresh": False} if not self._refresh else {}),
+                            },
                         }
                     },
                     self._graph,
