@@ -287,10 +287,10 @@
       ],
       "verified_by": [
         "tests/deployment/test_real_boot_fixture.py:19",
-        "tests/test_real_boot.py:899",
-        "tests/test_real_boot.py:920",
-        "tests/test_real_boot.py:929",
-        "tests/test_real_boot.py:948"
+        "tests/test_real_boot.py:917",
+        "tests/test_real_boot.py:938",
+        "tests/test_real_boot.py:947",
+        "tests/test_real_boot.py:966"
       ]
     },
     {
@@ -615,9 +615,13 @@
     {
       "id": "ARBORA-OPS-R020",
       "title": "Ingest operations through a typed SDK runner facade",
-      "delivery_state": "SPECIFIED",
+      "delivery_state": "LANDED",
       "landed_in": [
-        "e990e195ab42"
+        "06d8baf844a1",
+        "094c8adb6318",
+        "16c9b2bddda3",
+        "23be3a8e9dd6",
+        "2ad164bd5414"
       ],
       "verified_by": [],
       "rollup_of": [
@@ -751,9 +755,21 @@
     {
       "id": "ARBORA-OPS-R020.6",
       "title": "Connector sources served through the composed SDK sync runner",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "06d8baf844a1",
+        "094c8adb6318",
+        "23be3a8e9dd6",
+        "2ad164bd5414",
+        "9052ea9458e5"
+      ],
+      "verified_by": [
+        "tests/ingest/test_connector_sources.py:169",
+        "tests/ingest/test_connector_sources.py:179",
+        "tests/ingest/test_connector_sources.py:208",
+        "tests/ingest/test_connector_sources.py:228",
+        "tests/ingest/test_connector_sources.py:240"
+      ],
       "rollup_of": [
         "ARBORA-OPS-R020.6.1",
         "ARBORA-OPS-R020.6.2",
@@ -827,10 +843,12 @@
     {
       "id": "ARBORA-OPS-R020.6.6",
       "title": "Hot-path proof",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "dd8cbebf32c4"
+      ],
       "verified_by": [
-        "tests/test_real_boot.py:843"
+        "tests/test_real_boot.py:861"
       ]
     },
     {

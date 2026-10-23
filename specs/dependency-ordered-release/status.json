@@ -14,6 +14,7 @@
     "ARBORA-RELEASE-R003.4.1",
     "ARBORA-RELEASE-R003.4.2",
     "ARBORA-RELEASE-R003.4.3",
+    "ARBORA-RELEASE-R003.4.4",
     "ARBORA-RELEASE-R003.5",
     "ARBORA-RELEASE-R003.6",
     "ARBORA-RELEASE-R003.7",
@@ -104,7 +105,8 @@
       "rollup_of": [
         "ARBORA-RELEASE-R003.4.1",
         "ARBORA-RELEASE-R003.4.2",
-        "ARBORA-RELEASE-R003.4.3"
+        "ARBORA-RELEASE-R003.4.3",
+        "ARBORA-RELEASE-R003.4.4"
       ]
     },
     {
@@ -139,6 +141,21 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-RELEASE-R003.4.4",
+      "title": "Published task-plan schema pin",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "c92fbf05fbb5"
+      ],
+      "verified_by": [
+        "tests/api/test_task_plan_schema_pin.py:100",
+        "tests/api/test_task_plan_schema_pin.py:107",
+        "tests/api/test_task_plan_schema_pin.py:115",
+        "tests/api/test_task_plan_schema_pin.py:130",
+        "tests/api/test_task_plan_schema_pin.py:65"
+      ]
     },
     {
       "id": "ARBORA-RELEASE-R003.5",
