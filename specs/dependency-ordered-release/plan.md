@@ -44,3 +44,11 @@ stand in for this validation. Platform install qualification remains a release
 job; package publication still requires a version tag. This changes no release
 credential, approval or deployment boundary. Workflow tests preserve these
 conditions and the existing build command.
+
+## Amendment 2026-10-23: typed tool steps in served plan runs
+
+`agents.plan_run` runs a caller-supplied DAG. A task may now be a typed tool step (`ARBORA-RELEASE-R003.4.6`). Its arguments bind to prerequisite outputs by path. Cross-connector data then flows by resolution, not by a model copying a value.
+
+Call path: `handle_plan_run` (`arbora/api/ops/plans.py:298`) asks the engine for the `TaskPlan` decision. The engine validates and digests calls and bindings (`EG-DECISION-ENGINE-R134.111.8` to `.13`). The harness runs a `DependencyPlan` with tool steps. It resolves bindings and calls an injected caller (`AU-BOUNDARY-R043.6.1` to `.7`). That caller is the governed fleet caller (`ARBORA-RELEASE-R003.4.7`). It uses the invoke pipeline (`ARBORA-OPS-R009`) to reach the connector.
+
+Arbora validates no binding and holds no planner. It supplies the one authority path. The idempotency key `plan-call:<record>:<task_id>:<call_digest>` makes a replay return the recorded result. The reply returns the harness record per step (`ARBORA-RELEASE-R003.4.8`).
