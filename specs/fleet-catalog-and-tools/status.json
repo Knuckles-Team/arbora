@@ -1704,8 +1704,10 @@
     {
       "id": "ARBORA-FLEET-R041.10",
       "title": "Rules unchanged",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "a31aba1d54a2"
+      ],
       "verified_by": [
         "tests/fleet/test_handshake_onboard.py:251"
       ]
