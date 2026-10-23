@@ -29,10 +29,10 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "0d34328f1114",
+        "3fe9b5ec74fc",
         "4510e0b854aa",
         "9a2f7532daaa",
-        "9ce8b11a5785",
-        "a551ffaad764"
+        "9ce8b11a5785"
       ],
       "verified_by": [
         "tests/deployment/test_release_workflow_sources.py:553",
@@ -48,10 +48,10 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "0d34328f1114",
+        "3fe9b5ec74fc",
         "4510e0b854aa",
         "9a2f7532daaa",
-        "9ce8b11a5785",
-        "a551ffaad764"
+        "9ce8b11a5785"
       ],
       "verified_by": [
         "tests/deployment/test_release_workflow_sources.py:553",
