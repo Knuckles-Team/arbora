@@ -273,6 +273,10 @@ Hot-path proof for `ARBORA-FLEET-R037`: `tests/fleet/test_job_loads_served.py::t
 - `ARBORA-FLEET-R041.4`: `tests/fleet/test_auto_onboard.py::test_orphan_refusal_marks_contract_rejected_and_admits_no_tools`.
 - `ARBORA-FLEET-R041.5`: `tests/fleet/test_auto_onboard.py::test_status_reports_counts_digests_receipt_and_reason`.
 - `ARBORA-FLEET-R041.6`: `tests/fleet/test_auto_onboard_served.py::test_register_then_release_serves_all_surfaces_without_manual_step`.
+- `ARBORA-FLEET-R041.7`: `tests/fleet/test_handshake_onboard.py::test_completed_handshake_starts_one_pass_and_imports_full_pack` connects a fixture connector and calls nothing else.
+- `ARBORA-FLEET-R041.8`: `tests/fleet/test_handshake_onboard.py::test_reconnect_recaptures_only_on_version_or_digest_change` reconnects unchanged, then with a new digest.
+- `ARBORA-FLEET-R041.9`: `tests/fleet/test_handshake_onboard.py::test_failed_capture_serves_tools_reports_gap_and_retries_with_backoff`.
+- `ARBORA-FLEET-R041.10`: `tests/fleet/test_handshake_onboard.py::test_large_shrink_on_handshake_waits_for_mass_withdrawal_approval`.
 - `ARBORA-FLEET-R042`: See each child.
 - `ARBORA-FLEET-R042.1`: `tests/fleet/test_source_approval.py::test_decision_round_trips`.
 - `ARBORA-FLEET-R042.2`: `tests/fleet/test_source_approval.py::test_read_only_admitted_contract_is_approved_and_write_contract_is_held`.

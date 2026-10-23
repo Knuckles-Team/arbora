@@ -2336,6 +2336,8 @@ class MCPMultiplexer:
         self._fleet_catalog_loaded_at: float | None = None
         # The last background onboarding pass (arbora.fleet.onboarding).
         self._fleet_onboarding: dict[str, _typing.Any] | None = None
+        # Called once per completed child handshake (ARBORA-FLEET-R041.7).
+        self._handshake_listener: _typing.Callable[..., None] | None = None
         self.exit_stack = contextlib.AsyncExitStack()
         self.sessions: dict[str, ClientSession] = {}
         # Per-child hardening layer (CONCEPT:AU-ECO.mcp.profile-differences-from-client): concurrency limits and
@@ -4022,6 +4024,40 @@ class MCPMultiplexer:
         self._verify_child_runtime_policy_before_spawn(runtime_policy)
         return await self._open_stdio_child_transport(server_params, stack)
 
+    def set_handshake_listener(
+        self, listener: _typing.Callable[..., None] | None
+    ) -> None:
+        """Install the callback that schedules onboarding after a handshake."""
+        self._handshake_listener = listener
+
+    def _announce_handshake(
+        self, server_name: str, session: _typing.Any, tools: list[_typing.Any]
+    ) -> None:
+        """Tell the listener a child handshake completed; never raises.
+
+        Runs after ``initialize`` and ``tools/list``. The listener only
+        schedules work off this path, so serving is never delayed or failed
+        by onboarding (ARBORA-FLEET-R041.7, R041.9).
+        """
+        listener = self._handshake_listener
+        if listener is None:
+            return
+        try:
+            from arbora.fleet.onboarding import handshake_catalog_digest
+
+            info = getattr(
+                getattr(session, "initialize_result", None), "serverInfo", None
+            )
+            listener(
+                server_name,
+                server_version=str(getattr(info, "version", "") or ""),
+                digest=handshake_catalog_digest(tools),
+            )
+        except Exception as exc:
+            logger.warning(
+                "handshake onboarding not scheduled: %s", redact_for_log(exc)
+            )
+
     async def _open_one_session(
         self,
         server_name: str,
@@ -4137,6 +4173,7 @@ class MCPMultiplexer:
             tools_result = await sessions[0].list_tools()
             _bounded_tool_catalog(tools_result.tools)
             tools = list(tools_result.tools)
+            self._announce_handshake(server_name, sessions[0], tools)
             if runtime_policy is not None:
                 tools = self._admit_runtime_policy_tools(
                     server_name,

@@ -155,6 +155,10 @@
     "ARBORA-FLEET-R041.4",
     "ARBORA-FLEET-R041.5",
     "ARBORA-FLEET-R041.6",
+    "ARBORA-FLEET-R041.7",
+    "ARBORA-FLEET-R041.8",
+    "ARBORA-FLEET-R041.9",
+    "ARBORA-FLEET-R041.10",
     "ARBORA-FLEET-R042",
     "ARBORA-FLEET-R042.1",
     "ARBORA-FLEET-R042.2",
@@ -1600,7 +1604,11 @@
         "ARBORA-FLEET-R041.3",
         "ARBORA-FLEET-R041.4",
         "ARBORA-FLEET-R041.5",
-        "ARBORA-FLEET-R041.6"
+        "ARBORA-FLEET-R041.6",
+        "ARBORA-FLEET-R041.7",
+        "ARBORA-FLEET-R041.8",
+        "ARBORA-FLEET-R041.9",
+        "ARBORA-FLEET-R041.10"
       ]
     },
     {
@@ -1644,6 +1652,54 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R041.7",
+      "title": "Handshake trigger",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5698f24224fa"
+      ],
+      "verified_by": [
+        "tests/fleet/test_handshake_onboard.py:226",
+        "tests/fleet/test_handshake_onboard.py:98"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R041.8",
+      "title": "Reconnect compare",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5698f24224fa"
+      ],
+      "verified_by": [
+        "tests/fleet/test_handshake_onboard.py:118",
+        "tests/fleet/test_handshake_onboard.py:155"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R041.9",
+      "title": "Serving never blocks",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5698f24224fa"
+      ],
+      "verified_by": [
+        "tests/fleet/test_handshake_onboard.py:172",
+        "tests/fleet/test_handshake_onboard.py:206",
+        "tests/fleet/test_handshake_onboard.py:240"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R041.10",
+      "title": "Rules unchanged",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5698f24224fa"
+      ],
+      "verified_by": [
+        "tests/fleet/test_handshake_onboard.py:251"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R042",
