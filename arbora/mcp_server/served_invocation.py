@@ -316,6 +316,12 @@ def compose_served_invocation(
     minted = session()
     bindings = _with_ingest_runner(bindings, pool, graph, connect_context)
     bindings = _with_task_plan_schema(bindings, pool, graph, connect_context, session)
+    step_invoke = None
+    if bindings is not None and "plan_step_invoke" not in bindings:
+        from arbora.api.ops.plans import LateStepInvoke
+
+        step_invoke = LateStepInvoke()
+        bindings = {**bindings, "plan_step_invoke": step_invoke}
 
     async def service_client() -> Any:
         return await pool.connected_client(connect_context(session().tenant), graph)
@@ -375,6 +381,8 @@ def compose_served_invocation(
         audit_client_factory=audit_client,
         **changes,
     )
+    if step_invoke is not None:
+        step_invoke.bind(services)
     return HostedInvocation(
         services=services,
         authenticator=AmbientHTTPAuthenticator(

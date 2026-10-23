@@ -38,6 +38,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from pydantic import Field
+from pydantic_ai import RunContext
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params
@@ -250,28 +251,77 @@ def run_plan_for(plan: Mapping[str, Any], model: Any, toolsets: tuple = ()) -> A
     )
 
 
+class LateStepInvoke:
+    """The served invoke pipeline, bound once the invocation services exist."""
+
+    def __init__(self) -> None:
+        self._services: Any = None
+
+    def bind(self, services: Any) -> None:
+        if self._services is not None:
+            raise RuntimeError("the step invoke pipeline is already bound")
+        self._services = services
+
+    async def __call__(
+        self, op_id: str, params: Mapping[str, Any], caller: Any, key: str
+    ) -> Any:
+        from arbora.api.invoke.pipeline import invoke
+        from arbora.api.registry import Surface
+
+        if self._services is None:
+            raise OperationRefused(
+                "UNAVAILABLE", {"reason": "the invoke pipeline is not bound"}
+            )
+        return await invoke(
+            op_id,
+            params,
+            caller,
+            Surface.MCP,
+            services=self._services,
+            idempotency_key=key,
+        )
+
+
+def step_idempotency_key(record_id: str, task_id: str, index: int) -> str:
+    """The key of one step call: the plan record, the task and the call index.
+
+    A replay of the same plan record makes the same calls with the same keys,
+    so the effect journal returns the recorded outcome and runs no second effect.
+    """
+    return f"plan-step:{record_id}:{task_id}:{index}"
+
+
 @dataclass
 class FleetStepTools:
     """The governed fleet tool an agent step may call (ARBORA-RELEASE-R003.4.5).
 
-    Every call is admitted by the same effect authority ``fleet.call`` uses,
-    under the verified caller's scopes. A tool the caller did not name, a tool
-    that needs a plan confirmation or a console step-up, and a tool whose
-    scopes the caller lacks are refused as data for the step, never run.
+    Each call goes through the invoke pipeline as ``fleet.call``: the same
+    effect authority, audit reservation and effect journal as any other
+    governed write. A tool the caller did not name, a tool that needs a plan
+    confirmation or a console step-up, and a tool whose scopes the caller lacks
+    are refused as data for the step, never run.
     """
 
     context: Any
     allowed: frozenset[tuple[str, str]]
+    record_id: str = ""
     ledger: list[dict[str, Any]] = field(default_factory=list)
+    _counts: dict[str, int] = field(default_factory=dict)
 
     async def call(
-        self, server: str, tool: str, arguments: dict[str, Any]
+        self, task_id: str, server: str, tool: str, arguments: dict[str, Any]
     ) -> dict[str, Any]:
+        from arbora.api.invoke.steps import OpError
         from arbora.api.ops.research import FleetCaller
         from arbora.api.registry import Confirm
 
+        index = self._counts[task_id] = self._counts.get(task_id, 0) + 1
+        key = step_idempotency_key(self.record_id, task_id, index)
         entry: dict[str, Any] = {
             "sequence": len(self.ledger) + 1,
+            "task_id": task_id,
+            "index": index,
+            "idempotency_key": key,
             "server": server,
             "tool": tool,
             "arguments": arguments,
@@ -282,19 +332,30 @@ class FleetStepTools:
                 raise OperationRefused(
                     "SCOPE_DENIED", {"reason": "tool is not named in fleet_tools"}
                 )
-            gateway = self.context.services.get("fleet_gateway")
-            if gateway is None:
+            step_invoke = self.context.services.get("plan_step_invoke")
+            if step_invoke is None:
                 raise OperationRefused(
-                    "UNAVAILABLE", {"reason": "fleet gateway is not bound"}
+                    "UNAVAILABLE", {"reason": "the invoke pipeline is not bound"}
                 )
-            caller = FleetCaller(self.context)
-            decision = await caller.decision(server, tool, arguments)
+            decision = await FleetCaller(self.context).decision(server, tool, arguments)
             if decision.confirm != Confirm.NONE:
                 raise OperationRefused(
                     "CONFIRMATION_REQUIRED",
                     {"reason": "the tool needs a human-confirmed plan"},
                 )
-            result = await caller.call(server, tool, arguments)
+            outcome = await step_invoke(
+                "fleet.call",
+                {"server": server, "tool": tool, "arguments": arguments},
+                self.context.caller,
+                key,
+            )
+            if isinstance(outcome, OpError) or outcome.code != "OK":
+                entry.update(
+                    ok=False, error=outcome.code, details=dict(outcome.details)
+                )
+                return {"ok": False, "error": outcome.code}
+            value = outcome.value
+            result = value.get("value") if isinstance(value, Mapping) else value
             entry["result"] = json.loads(json.dumps(result, default=str))
             entry["ok"] = True
             return {"ok": True, "result": entry["result"]}
@@ -308,18 +369,23 @@ class FleetStepTools:
         from pydantic_ai.toolsets import FunctionToolset
 
         async def fleet_call(
-            server: str, tool: str, arguments: dict[str, Any]
+            ctx: RunContext[Any], server: str, tool: str, arguments: dict[str, Any]
         ) -> dict[str, Any]:
             """Call one governed fleet tool. Returns {ok, result} or {ok, error}."""
-            return await self.call(server, tool, arguments)
+            task_id = str(getattr(ctx.deps, "task_id", None) or "task")
+            return await self.call(task_id, server, tool, arguments)
 
         return FunctionToolset([fleet_call])
 
 
-def _fleet_step_tools(context: Any, refs: list[FleetToolRef]) -> FleetStepTools | None:
+def _fleet_step_tools(
+    context: Any, refs: list[FleetToolRef], record_id: str
+) -> FleetStepTools | None:
     if not refs:
         return None
-    return FleetStepTools(context, frozenset((r.server, r.tool) for r in refs))
+    return FleetStepTools(
+        context, frozenset((r.server, r.tool) for r in refs), record_id
+    )
 
 
 async def execute_task_plan(
@@ -434,7 +500,9 @@ async def handle_plan_run(
         plan,
         _plan_model(context),
         run_id=run_id,
-        fleet=_fleet_step_tools(context, parsed.fleet_tools),
+        fleet=_fleet_step_tools(
+            context, parsed.fleet_tools, str(record.get("record_id") or "")
+        ),
     )
     return {
         "value": {
@@ -473,6 +541,7 @@ specs = operations
 __all__ = [
     "FleetStepTools",
     "FleetToolRef",
+    "LateStepInvoke",
     "TASK_PLAN_ENGINE_RELEASE",
     "PlanRunParams",
     "PlanRunResult",
