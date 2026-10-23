@@ -153,6 +153,10 @@
     "ARBORA-FLEET-R041.4",
     "ARBORA-FLEET-R041.5",
     "ARBORA-FLEET-R041.6",
+    "ARBORA-FLEET-R041.7",
+    "ARBORA-FLEET-R041.8",
+    "ARBORA-FLEET-R041.9",
+    "ARBORA-FLEET-R041.10",
     "ARBORA-FLEET-R042",
     "ARBORA-FLEET-R042.1",
     "ARBORA-FLEET-R042.2",
@@ -1569,7 +1573,11 @@
         "ARBORA-FLEET-R041.3",
         "ARBORA-FLEET-R041.4",
         "ARBORA-FLEET-R041.5",
-        "ARBORA-FLEET-R041.6"
+        "ARBORA-FLEET-R041.6",
+        "ARBORA-FLEET-R041.7",
+        "ARBORA-FLEET-R041.8",
+        "ARBORA-FLEET-R041.9",
+        "ARBORA-FLEET-R041.10"
       ]
     },
     {
@@ -1610,6 +1618,34 @@
     {
       "id": "ARBORA-FLEET-R041.6",
       "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R041.7",
+      "title": "Handshake trigger",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R041.8",
+      "title": "Reconnect compare",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R041.9",
+      "title": "Serving never blocks",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R041.10",
+      "title": "Rules unchanged",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
