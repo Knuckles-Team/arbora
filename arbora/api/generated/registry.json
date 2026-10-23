@@ -23319,6 +23319,337 @@
       "verb": "find"
     },
     {
+      "audit": "event",
+      "binding": {
+        "handler": "arbora.api.ops.fleet.handle_fleet_operation",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "get this connector prompt"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "fleet.prompts.get",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.fleet.FleetPromptGetParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "arguments": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "title": "Arguments",
+              "type": "object"
+            },
+            "name": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Name",
+              "type": "string"
+            },
+            "server": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Server",
+              "type": "string"
+            }
+          },
+          "required": [
+            "server",
+            "name"
+          ],
+          "title": "FleetPromptGetParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.fleet.FleetResult",
+        "schema": {
+          "properties": {
+            "value": {
+              "title": "Value"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "FleetResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "mcp:delegate"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Render one connector prompt (prompts/get relay)",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "ask"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "handler": "arbora.api.ops.fleet.handle_fleet_operation",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "list the prompts a connector serves"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "fleet.prompts.list",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.fleet.FleetSurfaceListParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "cursor": {
+              "anyOf": [
+                {
+                  "maxLength": 1024,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Cursor"
+            },
+            "limit": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            },
+            "query": {
+              "default": "",
+              "maxLength": 4096,
+              "title": "Query",
+              "type": "string"
+            },
+            "servers": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Servers",
+              "type": "array"
+            }
+          },
+          "title": "FleetSurfaceListParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.fleet.FleetResult",
+        "schema": {
+          "properties": {
+            "value": {
+              "title": "Value"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "FleetResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "mcp:discover"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "List caller-visible connector prompts (prompts/list relay)",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "find"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "handler": "arbora.api.ops.fleet.handle_fleet_operation",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "list the resources and ontologies a connector serves"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "fleet.resources.list",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.fleet.FleetSurfaceListParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "cursor": {
+              "anyOf": [
+                {
+                  "maxLength": 1024,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Cursor"
+            },
+            "limit": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            },
+            "query": {
+              "default": "",
+              "maxLength": 4096,
+              "title": "Query",
+              "type": "string"
+            },
+            "servers": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Servers",
+              "type": "array"
+            }
+          },
+          "title": "FleetSurfaceListParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.fleet.FleetResult",
+        "schema": {
+          "properties": {
+            "value": {
+              "title": "Value"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "FleetResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "mcp:discover"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "List caller-visible connector resources, skill:// included (resources/list relay)",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "find"
+    },
+    {
+      "audit": "event",
+      "binding": {
+        "handler": "arbora.api.ops.fleet.handle_fleet_operation",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "read this connector ontology resource"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "fleet.resources.read",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.fleet.FleetResourceReadParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "server": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Server",
+              "type": "string"
+            },
+            "uri": {
+              "maxLength": 8192,
+              "minLength": 1,
+              "title": "Uri",
+              "type": "string"
+            }
+          },
+          "required": [
+            "server",
+            "uri"
+          ],
+          "title": "FleetResourceReadParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.fleet.FleetResult",
+        "schema": {
+          "properties": {
+            "value": {
+              "title": "Value"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "FleetResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "mcp:delegate"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Read one connector resource, such as a skill:// or ontology:// URI (resources/read relay)",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "ask"
+    },
+    {
       "audit": "none",
       "binding": {
         "handler": "arbora.api.ops.fleet.handle_fleet_operation",
@@ -26545,5 +26876,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "6a31856ea65dc2fb7799d44c07e0404c39056d4e1729151528b44367a71d4c46"
+  "registry_digest": "2e056baa5406e927200d3b28bbe560554a5486cf6ff3e1cc4384b4dfa947bb9d"
 }

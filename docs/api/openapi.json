@@ -31,6 +31,16 @@
         },
         "required": true
       },
+      "Sharedbccbdabe0cfb412331ebfae37a79b1309fcf218e493136b2b93d592cd31a7795": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Schemaaaa072f559df071defa233e77b46cf4af427a0fd5801ed9ca1d1561e73cbf5a7"
+            }
+          }
+        },
+        "required": true
+      },
       "Sharedca64b012a7200934408aa32c8d01ce6039f26ee41b0fde04d40fca1d5eaee096": {
         "content": {
           "application/json": {
@@ -283,6 +293,12 @@
         ],
         "title": "RunEventsParams",
         "type": "object"
+      },
+      "Schema0cf045aeb7f5a65f4e35ee7f604234ca74de2d02df68a390cf953eb741561563": {
+        "maxLength": 8192,
+        "minLength": 1,
+        "title": "Uri",
+        "type": "string"
       },
       "Schema0d3bce83b8be7c2fd6a092afaab87eaceb4587fa003cc76b04d535a5fdea3361": {
         "additionalProperties": false,
@@ -595,6 +611,23 @@
         "default": false,
         "title": "Own",
         "type": "boolean"
+      },
+      "Schema2fa69d63e25c0de023f6fea9dccc30607afabee2f15ef4554fb8cc6cb47c964a": {
+        "additionalProperties": false,
+        "properties": {
+          "server": {
+            "$ref": "#/components/schemas/Schema804615f2fc8e5941afa78d08df857b2973ca89304e9f61715c43548c801d9ff6"
+          },
+          "uri": {
+            "$ref": "#/components/schemas/Schema0cf045aeb7f5a65f4e35ee7f604234ca74de2d02df68a390cf953eb741561563"
+          }
+        },
+        "required": [
+          "server",
+          "uri"
+        ],
+        "title": "FleetResourceReadParams",
+        "type": "object"
       },
       "Schema301ec8242bf2781b88c446d8878caf84a26f47852e285cc5cbd06437211b45e2": {
         "default": false,
@@ -1320,6 +1353,26 @@
         "title": "SourceTreeParams",
         "type": "object"
       },
+      "Schema7ef30d916ee9fd6b941cedb3b0fddf2ccfbea017ab0abde66af49536c454b6ce": {
+        "additionalProperties": false,
+        "properties": {
+          "arguments": {
+            "$ref": "#/components/schemas/Schemad41aa532591003fa28e8907695f26ba6369421d697111b9a123a2b5e00b525a6"
+          },
+          "name": {
+            "$ref": "#/components/schemas/Schema93b4c9aa04e9f6006705acbf7d2bf1645079aab7fe30219aa5b9bb8cd46ff59b"
+          },
+          "server": {
+            "$ref": "#/components/schemas/Schema804615f2fc8e5941afa78d08df857b2973ca89304e9f61715c43548c801d9ff6"
+          }
+        },
+        "required": [
+          "server",
+          "name"
+        ],
+        "title": "FleetPromptGetParams",
+        "type": "object"
+      },
       "Schema7f72bf7cfe8ead111c70656a429c4f0d4793524693f91c39c47aa2fcdeef1b08": {
         "additionalProperties": false,
         "properties": {
@@ -1556,6 +1609,12 @@
         },
         "title": "FleetCatalogParams",
         "type": "object"
+      },
+      "Schema93b4c9aa04e9f6006705acbf7d2bf1645079aab7fe30219aa5b9bb8cd46ff59b": {
+        "maxLength": 1024,
+        "minLength": 1,
+        "title": "Name",
+        "type": "string"
       },
       "Schema93d9eb2127456b98d4fc20282432fd1c159cebb3cc85c76b4989e2f35732f561": {
         "default": [],
@@ -1841,6 +1900,25 @@
         "minimum": 0,
         "title": "Revision",
         "type": "integer"
+      },
+      "Schemaaaa072f559df071defa233e77b46cf4af427a0fd5801ed9ca1d1561e73cbf5a7": {
+        "additionalProperties": false,
+        "properties": {
+          "cursor": {
+            "$ref": "#/components/schemas/Schema799118f85d2fe64421b089ab99b62659db00584b52f9a6df8185148f2cd3a096"
+          },
+          "limit": {
+            "$ref": "#/components/schemas/Schema76952d8e68e95459f7f755aff3c03b8aca5fd6f35ca6a7d995fa700520f5926d"
+          },
+          "query": {
+            "$ref": "#/components/schemas/Schema3bc73bc3a3e344d912f152a5ba206404c8f3e23b244b14cc5004391affddb847"
+          },
+          "servers": {
+            "$ref": "#/components/schemas/Schemaab9c6f751289751cd467757ba716178f3bdac6ac4ea4f500fb3e7060bd045639"
+          }
+        },
+        "title": "FleetSurfaceListParams",
+        "type": "object"
       },
       "Schemaab9c6f751289751cd467757ba716178f3bdac6ac4ea4f500fb3e7060bd045639": {
         "default": [],
@@ -2246,6 +2324,13 @@
           "value"
         ],
         "title": "IngestSourceListResult",
+        "type": "object"
+      },
+      "Schemad41aa532591003fa28e8907695f26ba6369421d697111b9a123a2b5e00b525a6": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7"
+        },
+        "title": "Arguments",
         "type": "object"
       },
       "Schemad56b2365dc0728a1120781d622c7d26a8aba18910c2500b60e3be35f357a80c6": {
@@ -18833,6 +18918,100 @@
         ]
       }
     },
+    "/api/v1/ops/fleet.prompts.get": {
+      "post": {
+        "operationId": "fleet.prompts.get",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema7ef30d916ee9fd6b941cedb3b0fddf2ccfbea017ab0abde66af49536c454b6ce"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Sharede63424086cbb3c1f1d3258190383e94dac96998cb05c8af2269aa9790f54a1fd"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Render one connector prompt (prompts/get relay)",
+        "tags": [
+          "fleet"
+        ]
+      }
+    },
+    "/api/v1/ops/fleet.prompts.list": {
+      "post": {
+        "operationId": "fleet.prompts.list",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Sharedbccbdabe0cfb412331ebfae37a79b1309fcf218e493136b2b93d592cd31a7795"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Sharede63424086cbb3c1f1d3258190383e94dac96998cb05c8af2269aa9790f54a1fd"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "List caller-visible connector prompts (prompts/list relay)",
+        "tags": [
+          "fleet"
+        ]
+      }
+    },
+    "/api/v1/ops/fleet.resources.list": {
+      "post": {
+        "operationId": "fleet.resources.list",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Sharedbccbdabe0cfb412331ebfae37a79b1309fcf218e493136b2b93d592cd31a7795"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Sharede63424086cbb3c1f1d3258190383e94dac96998cb05c8af2269aa9790f54a1fd"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "List caller-visible connector resources, skill:// included (resources/list relay)",
+        "tags": [
+          "fleet"
+        ]
+      }
+    },
+    "/api/v1/ops/fleet.resources.read": {
+      "post": {
+        "operationId": "fleet.resources.read",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema2fa69d63e25c0de023f6fea9dccc30607afabee2f15ef4554fb8cc6cb47c964a"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Sharede63424086cbb3c1f1d3258190383e94dac96998cb05c8af2269aa9790f54a1fd"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Read one connector resource, such as a skill:// or ontology:// URI (resources/read relay)",
+        "tags": [
+          "fleet"
+        ]
+      }
+    },
     "/api/v1/ops/fleet.status": {
       "post": {
         "operationId": "fleet.status",
@@ -20073,5 +20252,5 @@
       }
     }
   },
-  "x-registry-digest": "6a31856ea65dc2fb7799d44c07e0404c39056d4e1729151528b44367a71d4c46"
+  "x-registry-digest": "2e056baa5406e927200d3b28bbe560554a5486cf6ff3e1cc4384b4dfa947bb9d"
 }

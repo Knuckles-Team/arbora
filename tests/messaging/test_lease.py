@@ -102,6 +102,7 @@ def test_two_contenders_cannot_both_own_intake():
     assert len(work_items.rows) == 1
 
 
+# spec: ARBORA-MESSAGING-R800.1002
 @pytest.mark.parametrize(
     ("engine", "session"),
     [

@@ -240,6 +240,35 @@ def tool_for_multiplexer_ops(ops: Any) -> ToolFor:
     return tool_for
 
 
+#: One relayed prompt get or resource read may take at most this long.
+SURFACE_RELAY_TIMEOUT_S = 30.0
+
+
+@contextmanager
+def _verified_delegation(
+    caller: Any, *, allow_admitted_anonymous: bool = False
+) -> Iterator[None]:
+    """Bind the caller's verified actor and session for one child request."""
+    from arbora.api.contracts import use_session
+    from arbora.security.actor_context import use_actor
+
+    session = caller.session
+    if session is None:
+        raise PermissionError("verified delegated session is required")
+    actor = session.actor
+    if (
+        (
+            actor.authenticated is not True
+            and not (allow_admitted_anonymous and admitted_actor(actor))
+        )
+        or str(actor.actor_id) != caller.principal
+        or str(actor.tenant_id) != caller.tenant
+    ):
+        raise PermissionError("delegated caller does not match verified session")
+    with use_actor(actor), use_session(session):
+        yield
+
+
 def oauth_delegated_call_for_mux(mux: Any) -> DelegatedCall:
     """Use one dedicated child session per call; never the shared pool.
 
@@ -250,20 +279,7 @@ def oauth_delegated_call_for_mux(mux: Any) -> DelegatedCall:
     async def delegated(
         server: str, tool: str, arguments: Mapping[str, Any], caller: Any
     ) -> Any:
-        from arbora.api.contracts import use_session
-        from arbora.security.actor_context import use_actor
-
-        session = caller.session
-        if session is None:
-            raise PermissionError("verified delegated session is required")
-        actor = session.actor
-        if (
-            (actor.authenticated is not True and not admitted_actor(actor))
-            or str(actor.actor_id) != caller.principal
-            or str(actor.tenant_id) != caller.tenant
-        ):
-            raise PermissionError("delegated caller does not match verified session")
-        with use_actor(actor), use_session(session):
+        with _verified_delegation(caller, allow_admitted_anonymous=True):
             result = await mux.call_admitted_child_once(server, tool, dict(arguments))
         if bool(getattr(result, "is_error", getattr(result, "isError", False))):
             raise FleetRefusal(
@@ -353,7 +369,9 @@ class FleetGateway:
         delegated_call: DelegatedCall,
         catalog_ops: Any | None = None,
         service_call: ServiceCall | None = None,
+        surface_mux: Any | None = None,
     ) -> None:
+        self._surface_mux = surface_mux
         self._tool_for = tool_for
         self._policy_check = policy_check
         self._delegated_call = delegated_call
@@ -376,6 +394,49 @@ class FleetGateway:
 
     async def list(self, caller: Any, **params: Any) -> Any:
         return await self._catalog(caller, "mcp:discover").list(caller, **params)
+
+    async def prompts_list(self, caller: Any, **params: Any) -> Any:
+        return await self._catalog(caller, "mcp:discover").relay_list(
+            caller, "prompts", **params
+        )
+
+    async def resources_list(self, caller: Any, **params: Any) -> Any:
+        return await self._catalog(caller, "mcp:discover").relay_list(
+            caller, "resources", **params
+        )
+
+    def _relay_mux(self) -> Any:
+        if self._surface_mux is None:
+            raise RuntimeError("fleet surface relay is not bound")
+        return self._surface_mux
+
+    async def prompts_get(
+        self,
+        caller: Any,
+        *,
+        server: str,
+        name: str,
+        arguments: Mapping[str, str] | None = None,
+    ) -> Any:
+        ops = self._catalog(caller, "mcp:delegate")
+        mux = self._relay_mux()
+        await ops.admitted_surface_item(caller, "prompts", server, name)
+        with _verified_delegation(caller):
+            return await mux.get_server_prompt(
+                server_name=server,
+                name=name,
+                arguments=dict(arguments or {}),
+                timeout=SURFACE_RELAY_TIMEOUT_S,
+            )
+
+    async def resources_read(self, caller: Any, *, server: str, uri: str) -> Any:
+        ops = self._catalog(caller, "mcp:delegate")
+        mux = self._relay_mux()
+        await ops.admitted_surface_item(caller, "resources", server, uri)
+        with _verified_delegation(caller):
+            return await mux.read_server_resource(
+                server_name=server, uri=uri, timeout=SURFACE_RELAY_TIMEOUT_S
+            )
 
     async def status(self, caller: Any, **params: Any) -> Any:
         return await self._catalog(caller, "mcp:discover").status(caller, **params)
@@ -504,6 +565,7 @@ def compose_fleet_gateway(
         # Static child credentials stay unavailable until an owner-stamped,
         # typed service-child adapter is explicitly supplied.
         service_call=service_call,
+        surface_mux=mux,
     )
 
 

@@ -54,6 +54,7 @@ def test_render_structure_leaks_no_markdown_markers():
     assert not any(m in out for m in ("##", "\n- ", "```"))
 
 
+# spec: ARBORA-MESSAGING-R800.4
 def test_command_specs_match_registry_and_filter_by_surface():
     assert {s["command"] for s in command_specs()} == {c.name for c in COMMANDS}
     messaging = {s["command"] for s in command_specs("messaging")}
@@ -63,6 +64,7 @@ def test_command_specs_match_registry_and_filter_by_surface():
     assert describe("/goal") == describe("goal") and describe("nope") is None
 
 
+# spec: ARBORA-MESSAGING-R800.2
 @pytest.mark.asyncio
 async def test_builtin_commands_answer_locally():
     help_reply = await handle_command("/help@SomeBot", service=_Svc())
@@ -74,6 +76,7 @@ async def test_builtin_commands_answer_locally():
     assert "on demand" in await handle_command("/tools", service=_Svc())
 
 
+# spec: ARBORA-MESSAGING-R800.2, ARBORA-MESSAGING-R800.4
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "text", ["hello", "/claude do x", "/skill foo", "/unknown", ""]

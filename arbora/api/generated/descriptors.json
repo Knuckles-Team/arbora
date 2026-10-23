@@ -5740,6 +5740,54 @@
     {
       "domain": "fleet",
       "examples": [
+        "get this connector prompt"
+      ],
+      "id": "fleet.prompts.get",
+      "summary": "Render one connector prompt (prompts/get relay)",
+      "tags": [
+        "fleet"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "fleet",
+      "examples": [
+        "list the prompts a connector serves"
+      ],
+      "id": "fleet.prompts.list",
+      "summary": "List caller-visible connector prompts (prompts/list relay)",
+      "tags": [
+        "fleet"
+      ],
+      "verb": "find"
+    },
+    {
+      "domain": "fleet",
+      "examples": [
+        "list the resources and ontologies a connector serves"
+      ],
+      "id": "fleet.resources.list",
+      "summary": "List caller-visible connector resources, skill:// included (resources/list relay)",
+      "tags": [
+        "fleet"
+      ],
+      "verb": "find"
+    },
+    {
+      "domain": "fleet",
+      "examples": [
+        "read this connector ontology resource"
+      ],
+      "id": "fleet.resources.read",
+      "summary": "Read one connector resource, such as a skill:// or ontology:// URI (resources/read relay)",
+      "tags": [
+        "fleet"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "fleet",
+      "examples": [
         "show my fleet multiplexer status"
       ],
       "id": "fleet.status",
@@ -6222,5 +6270,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "6a31856ea65dc2fb7799d44c07e0404c39056d4e1729151528b44367a71d4c46"
+  "registry_digest": "2e056baa5406e927200d3b28bbe560554a5486cf6ff3e1cc4384b4dfa947bb9d"
 }
