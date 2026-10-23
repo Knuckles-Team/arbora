@@ -164,6 +164,8 @@
     "ARBORA-FLEET-R041.10",
     "ARBORA-FLEET-R041.11",
     "ARBORA-FLEET-R041.12",
+    "ARBORA-FLEET-R041.13",
+    "ARBORA-FLEET-R041.14",
     "ARBORA-FLEET-R042",
     "ARBORA-FLEET-R042.1",
     "ARBORA-FLEET-R042.2",
@@ -1662,7 +1664,9 @@
         "ARBORA-FLEET-R041.9",
         "ARBORA-FLEET-R041.10",
         "ARBORA-FLEET-R041.11",
-        "ARBORA-FLEET-R041.12"
+        "ARBORA-FLEET-R041.12",
+        "ARBORA-FLEET-R041.13",
+        "ARBORA-FLEET-R041.14"
       ]
     },
     {
@@ -1713,8 +1717,8 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [
-        "tests/fleet/test_handshake_onboard.py:226",
-        "tests/fleet/test_handshake_onboard.py:98"
+        "tests/fleet/test_handshake_onboard.py:142",
+        "tests/fleet/test_handshake_onboard.py:314"
       ]
     },
     {
@@ -1723,8 +1727,9 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [
-        "tests/fleet/test_handshake_onboard.py:118",
-        "tests/fleet/test_handshake_onboard.py:155"
+        "tests/fleet/test_handshake_onboard.py:162",
+        "tests/fleet/test_handshake_onboard.py:215",
+        "tests/fleet/test_handshake_onboard.py:243"
       ]
     },
     {
@@ -1733,9 +1738,9 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [
-        "tests/fleet/test_handshake_onboard.py:172",
-        "tests/fleet/test_handshake_onboard.py:206",
-        "tests/fleet/test_handshake_onboard.py:240"
+        "tests/fleet/test_handshake_onboard.py:260",
+        "tests/fleet/test_handshake_onboard.py:294",
+        "tests/fleet/test_handshake_onboard.py:328"
       ]
     },
     {
@@ -1746,20 +1751,18 @@
         "a31aba1d54a2"
       ],
       "verified_by": [
-        "tests/fleet/test_handshake_onboard.py:251"
+        "tests/fleet/test_handshake_onboard.py:339"
       ]
     },
     {
       "id": "ARBORA-FLEET-R041.11",
-      "title": "A connector that declares its data resources still onboards",
-      "delivery_state": "VERIFIED",
+      "title": "A connector's declaration is captured as a pack resource",
+      "delivery_state": "LANDED",
       "landed_in": [
         "846e2eb35dff",
         "963a7d457622"
       ],
-      "verified_by": [
-        "tests/fleet/test_resources_manifest_capture.py:33"
-      ]
+      "verified_by": []
     },
     {
       "id": "ARBORA-FLEET-R041.12",
@@ -1771,6 +1774,23 @@
       "verified_by": [
         "tests/fleet/test_paced_capture.py:23"
       ]
+    },
+    {
+      "id": "ARBORA-FLEET-R041.13",
+      "title": "Mappings come from the captured declaration only",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/fleet/test_declarations.py:30",
+        "tests/fleet/test_declarations.py:41"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R041.14",
+      "title": "Onboarding follows discovery and list changes",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     },
     {
       "id": "ARBORA-FLEET-R042",

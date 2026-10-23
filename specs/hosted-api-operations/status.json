@@ -767,11 +767,11 @@
         "9052ea9458e5"
       ],
       "verified_by": [
-        "tests/ingest/test_connector_sources.py:169",
-        "tests/ingest/test_connector_sources.py:179",
-        "tests/ingest/test_connector_sources.py:208",
+        "tests/ingest/test_connector_sources.py:188",
+        "tests/ingest/test_connector_sources.py:198",
         "tests/ingest/test_connector_sources.py:228",
-        "tests/ingest/test_connector_sources.py:240"
+        "tests/ingest/test_connector_sources.py:248",
+        "tests/ingest/test_connector_sources.py:260"
       ],
       "rollup_of": [
         "ARBORA-OPS-R020.6.1",
@@ -791,7 +791,7 @@
         "2ad164bd5414"
       ],
       "verified_by": [
-        "tests/ingest/test_connector_sources.py:169"
+        "tests/ingest/test_connector_sources.py:188"
       ]
     },
     {
@@ -803,7 +803,7 @@
         "2ad164bd5414"
       ],
       "verified_by": [
-        "tests/ingest/test_connector_sources.py:179"
+        "tests/ingest/test_connector_sources.py:198"
       ]
     },
     {
@@ -816,7 +816,7 @@
         "2ad164bd5414"
       ],
       "verified_by": [
-        "tests/ingest/test_connector_sources.py:228"
+        "tests/ingest/test_connector_sources.py:248"
       ]
     },
     {
@@ -827,7 +827,7 @@
         "2ad164bd5414"
       ],
       "verified_by": [
-        "tests/ingest/test_connector_sources.py:240"
+        "tests/ingest/test_connector_sources.py:260"
       ]
     },
     {
@@ -840,7 +840,7 @@
         "ceb80658531e"
       ],
       "verified_by": [
-        "tests/ingest/test_connector_sources.py:265"
+        "tests/ingest/test_connector_sources.py:285"
       ]
     },
     {
@@ -862,7 +862,7 @@
         "9052ea9458e5"
       ],
       "verified_by": [
-        "tests/ingest/test_connector_sources.py:208"
+        "tests/ingest/test_connector_sources.py:228"
       ]
     },
     {
