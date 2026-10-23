@@ -21,7 +21,7 @@ import asyncio
 import importlib
 import json
 import logging
-from collections.abc import Awaitable, Callable, Mapping, Sequence
+from collections.abc import Awaitable, Callable, Coroutine, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -44,7 +44,7 @@ EXPORT_MODULES = (
 #: informational: a newer engine that exports the same body keeps the pin.
 VERIFIED_FIELDS = ("component_id", "kind", "schema_version", "content_digest")
 
-Publish = Callable[[str, Mapping[str, Any]], Awaitable[str]]
+Publish = Callable[[str, Mapping[str, Any]], Coroutine[Any, Any, str]]
 
 
 def _stat() -> Any:
@@ -263,7 +263,7 @@ def engine_publish(
             graph,
             idempotency_key=idempotency_key(pin, tenant),
         )
-        payload = getattr(result, "payload", result)
+        payload: Any = getattr(result, "payload", result)
         return str(payload["component"]["definition_digest"])
 
     return publish

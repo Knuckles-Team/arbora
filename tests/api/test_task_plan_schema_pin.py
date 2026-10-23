@@ -181,7 +181,7 @@ class _Engine:
 
 # spec: ARBORA-RELEASE-R003.4.4
 def test_engine_publish_sends_a_valid_request_and_reuses_a_current_entry(
-    engine_export: ModuleType,
+    engine_export: ModuleType, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     pytest.importorskip("epistemic_graph.generated.storage")
     pin = _pin()
@@ -214,18 +214,11 @@ def test_engine_publish_sends_a_valid_request_and_reuses_a_current_entry(
 
     from epistemic_graph.generated import storage
 
-    original = storage.send_agent_component_current
-
     async def current(client: Any, request: Any, graph: Any = None, **_: Any) -> Any:
         return client.current
 
-    storage.send_agent_component_current = current  # type: ignore[assignment]
-    try:
-        digest = asyncio.run(
-            pins_module.engine_publish(reuse_client, _context)("t", pin)
-        )
-    finally:
-        storage.send_agent_component_current = original  # type: ignore[assignment]
+    monkeypatch.setattr(storage, "send_agent_component_current", current)
+    digest = asyncio.run(pins_module.engine_publish(reuse_client, _context)("t", pin))
     assert digest == "sha256:" + "c" * 64 and reuse.sent == []
 
 
