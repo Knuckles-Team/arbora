@@ -398,3 +398,30 @@ permission is selected here.
 The existing provider protocol now states fresh exact-read/provenance duties
 and requires lease identity plus revision for continuity. Adversarial fixtures reject generic lease maps even when every caller-provided field matches.
 ASGI lifespan fixtures reject changed grant revision, session, configuration or expiry before readiness. They do not qualify a production issuer or consumer adapter.
+
+### 2026-10-20 — Dedicated managed-start provenance
+
+R010.7.1 uses the native ControlLease owner through `IssueHostStartGrant`, guarded
+by `host:issue-start`. The engine records issuer provenance outside caller JSON.
+Generic lease issuance cannot create a qualifying `host.start` record.
+The issuer reference is the existing native caller fingerprint, not a raw principal name.
+Arbora accepts only an active grant from its configured issuer.
+It binds the qualified session, principal, tenant, workspace, interfaces, policy and configuration digest.
+Existing session and construction checks run before and after reads.
+Lease identity and revision both participate in continuity.
+
+The access owner invokes the dedicated issuer under its existing policy.
+Unknown dispatch outcomes require reconciliation by lease identity; they never trigger an automatic retry.
+Cancellation preserves its semantics and carries that reconciliation identity.
+Existing systems-manager and container-manager policy remains unchanged.
+This adds no launcher, issuer enrollment or manual approval requirement.
+Container output never establishes authority.
+
+The native producer and generated client remain deployment prerequisites.
+Controlled tests do not qualify deployed issuance or atomic reservation across stores.
+They also do not qualify terminal or WebUI runtime handoff.
+Human renewal remains with the identity owner and cannot widen this grant.
+
+## Current-main native host-start reconciliation
+
+This source retains the dedicated native issuer adapter and admission checks without replacing current caller credentials or process refusals. The issuer prerequisite is EG694's exact-source host-start contract and fresh generated bindings. Older generated artifacts and controlled owner fixtures cannot qualify that dependency. Native issuer policy, installed consumer composition and actual host startup remain open. No credentials, grants or infrastructure starts are created by this source reconciliation.
