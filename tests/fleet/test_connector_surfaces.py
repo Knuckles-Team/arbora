@@ -7,6 +7,7 @@ from typing import Any
 
 import pytest
 
+from arbora.api.invoke.pipeline import OperationRefused
 from arbora.fleet import onboarding as onboarding_module
 from arbora.fleet.catalog_items import CatalogItem, FleetCatalog
 from arbora.fleet.gateway_ops import FleetGateway
@@ -263,6 +264,7 @@ async def test_prompt_get_and_resource_reads_relay_to_the_named_connector(
 
 
 # spec: ARBORA-FLEET-R040
+# spec: ARBORA-FLEET-R040.1
 @pytest.mark.asyncio
 async def test_relay_refuses_unadmitted_hidden_and_unscoped_requests(
     monkeypatch: pytest.MonkeyPatch,
@@ -276,8 +278,9 @@ async def test_relay_refuses_unadmitted_hidden_and_unscoped_requests(
         gateway.resources_read(caller, server=BARE, uri=ONTOLOGY_URI),
         gateway.prompts_get(caller, server=FULL, name="missing"),
     ):
-        with pytest.raises(PermissionError, match="unavailable"):
+        with pytest.raises(OperationRefused) as refused:
             await call
+        assert refused.value.code == "NOT_FOUND"
     with pytest.raises(PermissionError, match="mcp:delegate"):
         await gateway.resources_read(
             _caller("mcp:discover"), server=FULL, uri=ONTOLOGY_URI

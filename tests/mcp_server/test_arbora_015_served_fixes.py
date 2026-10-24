@@ -72,6 +72,27 @@ def test_primer_does_not_retry_a_failed_probe_inside_its_window() -> None:
     assert mux.probed == ["github-mcp", "github-mcp"]
 
 
+@pytest.mark.spec("ARBORA-OPS-R020.6.6")
+def test_primer_reprobes_a_cached_probe_that_a_schema_refresh_dropped() -> None:
+    """A child remount drops its cached probe; the next request re-primes it.
+
+    The retry window throttles failed probes only. Before, a source sync that
+    remounted its child lost the cached probe, the window blocked the
+    re-probe, and the read-only list tool resolved as a write (``tool_failed``).
+    """
+    from arbora.fleet.catalog_composition import probe_primer
+
+    now = [0.0]
+    mux = _Mux()
+    prime = probe_primer(mux, retry_s=60.0, clock=lambda: now[0])
+    asyncio.run(prime(["boot-ingest"]))
+    mux._probe_cache.pop("boot-ingest")
+    now[0] = 1.0
+    asyncio.run(prime(["boot-ingest"]))
+    assert mux.probed == ["boot-ingest", "boot-ingest"]
+    assert "boot-ingest" in mux._probe_cache
+
+
 def test_primed_probe_gives_the_catalog_item_its_schema_and_read_effect() -> None:
     from arbora.api.registry import Effect
     from arbora.fleet.catalog_items import CatalogItem, items_from_child_probe
@@ -306,17 +327,30 @@ def test_the_a2a_run_uses_the_task_id_and_the_fleet_tools(
         authority_mod.WorkItemA2AAuthority
     )
     auth._executor = _Executor()
+    auth.task_plan_config = None
+    auth.hosted_invocation = None
+    auth._detached = set()
     task_id = "a2a-" + "a" * 64
 
     import arbora.work_items as work_items
 
-    monkeypatch.setattr(work_items, "claim_specific", lambda *a, **k: {"t": 1})
+    monkeypatch.setattr(
+        work_items,
+        "claim_specific",
+        lambda *a, **k: {
+            "claimed": True,
+            "tenant": "t",
+            "lease_holder_ref": "holder",
+            "lease_epoch": 1,
+            "fencing_token": 1,
+        },
+    )
     monkeypatch.setattr(work_items, "commit_result", lambda *a, **k: "committed")
     asyncio.run(
         auth._run(
             object(),
             item_id="workitem:orchestrator:" + task_id,
-            session=object(),
+            session=SimpleNamespace(tenant="t"),
             agent_name=agent_name,
             task="search",
             task_id=task_id,

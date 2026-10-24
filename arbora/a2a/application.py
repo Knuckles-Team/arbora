@@ -299,6 +299,10 @@ _ERROR_CODES: dict[type[Exception], tuple[int, int]] = {
 
 def _application_error(request_id: Any, error: Exception) -> JSONResponse:
     """Translate known service failures without echoing caller input."""
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    if isinstance(error, OperationRefused) and error.code == "UPGRADE_REQUIRED":
+        return _error(request_id, -32013, "UPGRADE_REQUIRED: native run ownership", 501)
     mapped = _ERROR_CODES.get(type(error))
     if mapped is not None:
         code, status = mapped

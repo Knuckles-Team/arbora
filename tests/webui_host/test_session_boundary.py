@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from arbora.identity.browser import session_from_scope
 from arbora.identity.engine import IdentityUnavailable
 from arbora.webui_host.session_boundary import (
     BrowserSessionMiddleware,
@@ -57,7 +58,10 @@ def test_admission_failure_does_not_forward_or_reflect_details(error, status):
         calls.append(scope)
 
     middleware = BrowserSessionMiddleware(
-        app, admission=SimpleNamespace(request=refuse), auth_app=app
+        app,
+        admission=SimpleNamespace(request=refuse),
+        auth_app=app,
+        read_session=session_from_scope,
     )
     scope = {
         "type": "http",
@@ -91,7 +95,9 @@ def test_exact_auth_namespace_owned_and_bearer_requests_stay_with_identity_gate(
     async def auth(scope, receive, send):
         calls.append("auth")
 
-    middleware = BrowserSessionMiddleware(app, admission=None, auth_app=auth)
+    middleware = BrowserSessionMiddleware(
+        app, admission=None, auth_app=auth, read_session=session_from_scope
+    )
 
     async def scenario():
         for path in ("/auth", "/auth/login", "/authentication", "/api/tasks"):
@@ -119,7 +125,10 @@ def test_admitted_scope_lifetime_and_failure_cleanup():
         raise RuntimeError("fixture downstream failure")
 
     middleware = BrowserSessionMiddleware(
-        app, admission=SimpleNamespace(request=admit), auth_app=app
+        app,
+        admission=SimpleNamespace(request=admit),
+        auth_app=app,
+        read_session=session_from_scope,
     )
     scope = {
         "type": "http",
@@ -147,6 +156,38 @@ def test_incomplete_shared_caller_contract_cannot_activate_boundary():
     boundary = object.__new__(WebUISessionBoundary)
     with pytest.raises(IdentityUnavailable, match="invocation fence"):
         boundary(None)
+
+
+@pytest.mark.spec("ARBORA-IDENTITY-R004.4.1")
+@pytest.mark.spec("ARBORA-OPS-R032.1")
+def test_composition_root_refuses_a_non_qualifying_admission():
+    """The root checks the concrete admission before it builds the boundary.
+
+    ``arbora.webui_host`` holds only the identity port, so the qualification
+    moved to ``create_webui_session_boundary``. An object that merely looks
+    like an admission never yields a boundary, even with a matching fence.
+    """
+    from arbora.api.http.browser_app import (
+        BrowserOperationApplication,
+        create_webui_session_boundary,
+    )
+
+    @asynccontextmanager
+    async def admit(scope):
+        yield scope
+
+    lookalike = SimpleNamespace(request=admit)
+    operations = object.__new__(BrowserOperationApplication)
+    operations.admission = lookalike
+
+    async def auth_app(scope, receive, send):
+        pass
+
+    for admission in (lookalike, None, object()):
+        with pytest.raises(IdentityUnavailable, match="qualified browser admission"):
+            create_webui_session_boundary(
+                admission=admission, auth_app=auth_app, operations=operations
+            )
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R004.7.1")

@@ -6,7 +6,7 @@ budgets, stop rules). It asks its host for every decision through
 
 * :func:`decide_run` is the run decision provider. The engine serves no run-plan
   decision method today, so it returns the harness's documented default plan
-  (``agent_utilities.graph.default_run_plan``) over the Arbora model registry.
+  (``agent_utilities.runtime.default_run_plan``) over the Arbora model registry.
 * :func:`resolve_model` is the model provider. It builds an OpenAI-compatible
   model for a model id that the Arbora model registry names. Any other id
   passes through, so pydantic-ai resolves it itself.
@@ -19,12 +19,17 @@ budgets, stop rules). It asks its host for every decision through
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
 import uuid
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
+from contextlib import contextmanager
+from contextvars import ContextVar
+from dataclasses import dataclass, field
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, cast
 
 from arbora.api.contracts.agent_control_contracts import (
@@ -49,6 +54,112 @@ __all__ = [
     "resolve_model",
     "run_config",
 ]
+
+
+@dataclass(frozen=True)
+class NativeRunContext:
+    """Host-only bindings, never a run request field or an execution grant.
+
+    Publication must still verify native run-owner admission and the live fence.
+    A legacy WorkItem claim alone does not establish that admission.
+    """
+
+    run_id: str
+    task_id: str
+    context_id: str
+    work_item_id: str
+    session: GraphSession = field(repr=False)
+    claim: Mapping[str, Any] = field(repr=False)
+    owner_graph: str | None = field(default=None, repr=False)
+    hosted_invocation: Any = field(default=None, repr=False)
+    planning_usage: dict[str, int] = field(default_factory=dict, repr=False)
+
+
+@dataclass
+class _NativeRunScope:
+    ownership: NativeRunContext = field(repr=False)
+    active: bool = True
+
+
+_NATIVE_RUN: ContextVar[_NativeRunScope | None] = ContextVar(
+    "arbora_native_run", default=None
+)
+
+
+def _valid_owner_graph(graph: str | None) -> bool:
+    """An optional host routing binding must be exact, never normalized."""
+    return graph is None or (
+        isinstance(graph, str) and bool(graph) and graph == graph.strip()
+    )
+
+
+def _valid_native_claim(claim: Mapping[str, Any], session: GraphSession) -> bool:
+    """Check the native lease holder, tenant, and positive integer fence."""
+    return (
+        claim.get("claimed") is True
+        and claim.get("tenant") == session.tenant
+        and isinstance(claim.get("lease_holder_ref"), str)
+        and bool(claim["lease_holder_ref"].strip())
+        and all(
+            type(claim.get(key)) is int and claim[key] >= 1
+            for key in ("lease_epoch", "fencing_token")
+        )
+    )
+
+
+@contextmanager
+def native_run_scope(
+    *,
+    run_id: str,
+    task_id: str,
+    context_id: str,
+    work_item_id: str,
+    session: GraphSession,
+    claim: Mapping[str, Any],
+    owner_graph: str | None = None,
+    hosted_invocation: Any = None,
+) -> Iterator[None]:
+    """Bind only a claim obtained by the trusted A2A authority for this run."""
+    if not _valid_owner_graph(owner_graph) or not _valid_native_claim(claim, session):
+        raise RuntimeError("native run claim is invalid")
+    if not run_id or not task_id or not work_item_id:
+        raise RuntimeError("native run claim is invalid")
+    scope = _NativeRunScope(
+        NativeRunContext(
+            run_id,
+            task_id,
+            context_id,
+            work_item_id,
+            session,
+            MappingProxyType(dict(claim)),
+            owner_graph,
+            hosted_invocation,
+        )
+    )
+    token = _NATIVE_RUN.set(scope)
+    try:
+        yield
+    finally:
+        # Context copies in child tasks share revocation, not an everlasting fence.
+        scope.active = False
+        _NATIVE_RUN.reset(token)
+
+
+def current_native_run(request: Any) -> NativeRunContext | None:
+    """Read the exact trusted binding; never recover authority from metadata."""
+    scope = _NATIVE_RUN.get()
+    if scope is None:
+        return None
+    if not scope.active:
+        raise RuntimeError("native run scope is closed")
+    owner = scope.ownership
+    if getattr(request, "run_id", None) != owner.run_id:
+        raise RuntimeError("native run identity does not match the host scope")
+    metadata = getattr(request, "metadata", {})
+    if isinstance(metadata, Mapping) and "session" in metadata:
+        if metadata["session"] != owner.session:
+            raise RuntimeError("native run session does not match the host scope")
+    return owner
 
 
 def _chat_models_registry(raw: Any) -> dict[str, Any]:
@@ -118,9 +229,15 @@ def decide_run(request: Any) -> Any:
     The engine serves no run-plan decision method, so this returns the
     harness's documented default plan. A run without a model fails closed.
     """
-    from agent_utilities.graph import default_run_plan
+    from agent_utilities.runtime import default_run_plan
 
-    return default_run_plan(request, run_config())
+    owner = current_native_run(request)
+    plan = default_run_plan(request, run_config())
+    if owner is not None and owner.hosted_invocation is not None:
+        from arbora.mcp_server.task_plan_runtime import admitted_run_plan
+
+        return admitted_run_plan(request, plan, owner)
+    return plan
 
 
 def resolve_model(model_id: str) -> Any:
@@ -203,6 +320,23 @@ def _valid_event_identity(run_id: Any, event_type: Any, step: Any) -> bool:
     )
 
 
+def _ordered_event(event_id: Any, sequence: Any) -> bool:
+    """Only bounded event identities qualify for deterministic persistence."""
+    return (
+        isinstance(event_id, str)
+        and 0 < len(event_id) <= 1024
+        and type(sequence) is int
+        and 0 < sequence <= 2**63 - 1
+    )
+
+
+def _event_suffix(event_id: Any, ordered: bool) -> str:
+    """Keep legacy unsequenced events distinct, ordered retries idempotent."""
+    if ordered and isinstance(event_id, str):
+        return hashlib.sha256(event_id.encode()).hexdigest()
+    return uuid.uuid4().hex
+
+
 def record_run_event(event: Mapping[str, Any]) -> None:
     """Write one run event to the engine as a ``RunEvent`` node.
 
@@ -218,14 +352,22 @@ def record_run_event(event: Mapping[str, Any]) -> None:
         return
     payload = _run_event_payload(event, cast(str, run_id), cast(str, event_type), step)
     engine = _engine()
-    node_id = f"runevent:{run_id}:{uuid.uuid4().hex}"
+    event_id = event.get("event_id")
+    sequence = event.get("sequence")
+    ordered = _ordered_event(event_id, sequence)
+    suffix = _event_suffix(event_id, ordered)
+    node_id = f"runevent:{run_id}:{suffix}"
     properties = {
         "run_id": run_id,
-        "task_id": run_id,
+        "task_id": event.get("task_id", run_id),
         "event_type": event_type,
         "step": step,
         "payload": payload,
     }
+    if ordered:
+        properties["sequence"] = sequence
+        properties["event_id"] = event_id
+
     if properties["event_type"] == "tool_call":
         # Queryable provenance: which governed verb and connector tool the run
         # used (UQL filters on properties; the payload is an opaque string).
@@ -268,12 +410,32 @@ def record_run_event(event: Mapping[str, Any]) -> None:
         )
 
 
+def failed_run_usage(error: Exception, run_id: str) -> dict[str, int] | None:
+    """Project only AU's validated failed receipt, never exception-shaped data."""
+    from agent_utilities import runtime
+
+    failure_type = getattr(runtime, "RunFailed", None)
+    if failure_type is None or type(error) is not failure_type:
+        return None
+    try:
+        result = cast(Any, failure_type)(cast(Any, error).result).result
+        if result.run_id != run_id or result.status != "failed":
+            return None
+        # Revalidate the public snapshot and enforce the narrower wire bounds.
+        receipt = AgentExecutionResult(
+            run_id=result.run_id, output="", usage=dict(result.usage)
+        )
+        return cast(dict[str, int] | None, receipt.usage)
+    except (AttributeError, TypeError, ValueError):
+        return None
+
+
 class AgentRunPort:
     """``AgentExecutionPort`` over the harness ``AgentRunExecutor``."""
 
     def __init__(self, executor: Any = None) -> None:
         if executor is None:
-            from agent_utilities.graph import AgentRunExecutor
+            from agent_utilities.runtime import AgentRunExecutor
 
             executor = AgentRunExecutor(run_config())
         self._executor = executor
@@ -283,6 +445,9 @@ class AgentRunPort:
     ) -> AgentExecutionResult:
         from arbora.run_origin import agent_run_origin_scope
 
+        ownership = current_native_run(request)
+        if ownership is not None and ownership.session != session:
+            raise RuntimeError("native run session does not match the host scope")
         with agent_run_origin_scope(session, request.agent_name, request.run_id):
             result = await self._executor.execute_agent(request, session=session)
         return AgentExecutionResult(

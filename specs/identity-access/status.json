@@ -126,7 +126,11 @@
     "ARBORA-IDENTITY-R004.4.2",
     "ARBORA-IDENTITY-R004.5.1",
     "ARBORA-IDENTITY-R004.5.2",
-    "ARBORA-IDENTITY-R004.5.3"
+    "ARBORA-IDENTITY-R004.5.3",
+    "ARBORA-IDENTITY-R004.8",
+    "ARBORA-IDENTITY-R004.8.1",
+    "ARBORA-IDENTITY-R004.8.2",
+    "ARBORA-IDENTITY-R004.8.3"
   ],
   "requirements": [
     {
@@ -195,7 +199,8 @@
         "ARBORA-IDENTITY-R004.7",
         "ARBORA-IDENTITY-R004.4",
         "ARBORA-IDENTITY-R004.5",
-        "ARBORA-IDENTITY-R004.6"
+        "ARBORA-IDENTITY-R004.6",
+        "ARBORA-IDENTITY-R004.8"
       ]
     },
     {
@@ -233,7 +238,7 @@
         "5e42e0ab38ce"
       ],
       "verified_by": [
-        "tests/mcp_server/test_current_plan_reader.py:196",
+        "tests/mcp_server/test_current_plan_reader.py:197",
         "tests/mcp_server/test_source_reader_anonymous.py:17",
         "tests/security/test_anonymous_discovery.py:28",
         "tests/security/test_anonymous_mode.py:11",
@@ -998,7 +1003,8 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "2c70abad2b68",
-        "336f9faf3f21"
+        "336f9faf3f21",
+        "68c58c6e80df"
       ],
       "verified_by": [
         "tests/identity/test_identity_ports_boundary.py:105",
@@ -1014,10 +1020,10 @@
         "76d418e32221"
       ],
       "verified_by": [
-        "tests/fleet/test_multiplexer_dynamic_gateway.py:1550",
-        "tests/fleet/test_multiplexer_dynamic_gateway.py:1761",
-        "tests/fleet/test_multiplexer_dynamic_gateway.py:1806",
-        "tests/fleet/test_multiplexer_dynamic_gateway.py:1824"
+        "tests/fleet/test_multiplexer_dynamic_gateway.py:1576",
+        "tests/fleet/test_multiplexer_dynamic_gateway.py:1787",
+        "tests/fleet/test_multiplexer_dynamic_gateway.py:1832",
+        "tests/fleet/test_multiplexer_dynamic_gateway.py:1850"
       ]
     },
     {
@@ -1365,7 +1371,9 @@
       "title": "Explicit anonymous effect migration",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/browser_control/test_local_attended_contract_guards.py:21"
+      ]
     },
     {
       "id": "ARBORA-IDENTITY-R004.7.1",
@@ -1375,10 +1383,10 @@
         "d4ae6fb9949c"
       ],
       "verified_by": [
-        "tests/webui_host/test_session_boundary.py:152",
-        "tests/webui_host/test_session_boundary.py:163",
-        "tests/webui_host/test_session_boundary.py:17",
-        "tests/webui_host/test_session_boundary.py:30",
+        "tests/webui_host/test_session_boundary.py:18",
+        "tests/webui_host/test_session_boundary.py:193",
+        "tests/webui_host/test_session_boundary.py:204",
+        "tests/webui_host/test_session_boundary.py:31",
         "tests/webui_host/test_webui_contact_delivery.py:41"
       ]
     },
@@ -1394,13 +1402,15 @@
       "title": "Bound HTTP adapter source contract",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "68c58c6e80df",
         "d4ae6fb9949c"
       ],
       "verified_by": [
-        "tests/webui_host/test_session_boundary.py:104",
-        "tests/webui_host/test_session_boundary.py:141",
-        "tests/webui_host/test_session_boundary.py:47",
-        "tests/webui_host/test_session_boundary.py:84"
+        "tests/webui_host/test_session_boundary.py:110",
+        "tests/webui_host/test_session_boundary.py:150",
+        "tests/webui_host/test_session_boundary.py:161",
+        "tests/webui_host/test_session_boundary.py:48",
+        "tests/webui_host/test_session_boundary.py:88"
       ]
     },
     {
@@ -1442,6 +1452,47 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.8",
+      "title": "Anonymous task access (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-IDENTITY-R004.8.1",
+        "ARBORA-IDENTITY-R004.8.2",
+        "ARBORA-IDENTITY-R004.8.3"
+      ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.8.1",
+      "title": "Served read contract",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "236058622cf1"
+      ],
+      "verified_by": [
+        "tests/a2a/test_anonymous_reads.py:22"
+      ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.8.2",
+      "title": "Native anonymous task ownership",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.8.3",
+      "title": "Native client source adapter",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "236058622cf1"
+      ],
+      "verified_by": [
+        "tests/a2a/test_anonymous_native_reads.py:12"
+      ]
     }
   ]
 }

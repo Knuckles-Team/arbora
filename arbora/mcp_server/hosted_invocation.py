@@ -1,11 +1,14 @@
 """Explicit shared invocation dependencies for the native serving lifecycle."""
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
 from arbora.api.http.auth import AmbientHTTPAuthenticator
-from arbora.api.invoke.pipeline import InvokeServices, invoke
+from arbora.api.invoke.pipeline import InvokeServices, OperationRefused, invoke
+from arbora.api.invoke.steps import RequestCaller
 from arbora.api.registry.contract_admission import validate_contract_admission
+from arbora.mcp_server.task_plan import TaskPlanConfig, evaluate_task_plan
 
 
 @dataclass(frozen=True)
@@ -18,17 +21,33 @@ class HostedInvocation:
 
     services: InvokeServices
     authenticator: AmbientHTTPAuthenticator
+    task_plan_config: TaskPlanConfig | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.services, InvokeServices) or not isinstance(
             self.authenticator, AmbientHTTPAuthenticator
         ):
             raise TypeError("shared services and request authenticator are required")
+        if self.task_plan_config is not None and not isinstance(
+            self.task_plan_config, TaskPlanConfig
+        ):
+            raise TypeError("task plan configuration must be trusted TaskPlanConfig")
         self.validate()
 
     def validate(self) -> None:
         """Recheck provider admission before each surface is mounted."""
         validate_contract_admission(self.services.registry)
+
+    async def evaluate_task_plan(
+        self, caller: RequestCaller, question_id: str, proposal: Mapping[str, Any]
+    ) -> Mapping[str, Any]:
+        """Shared backend evaluation; durable execution admission is separate."""
+        if self.task_plan_config is None:
+            raise OperationRefused("UNAVAILABLE", {"capability": "task_plan"})
+        self.validate()
+        return await evaluate_task_plan(
+            self.services, self.task_plan_config, caller, question_id, proposal
+        )
 
     def http_application(self) -> Any:
         """The operation-invoke API application over these shared services."""
@@ -42,8 +61,20 @@ class HostedInvocation:
             invoke=invoke,
         )
 
+    def run_compatibility_application(self) -> Any:
+        from arbora.api.http.app import create_run_compatibility_application
+
+        self.validate()
+        return create_run_compatibility_application(
+            services=self.services, authenticator=self.authenticator, invoke=invoke
+        )
+
     def mount_http(self, app: Any, *, prefix: str) -> None:
         app.mount((prefix.rstrip("/") or "/api") + "/v1", self.http_application())
+        app.mount(
+            (prefix.rstrip("/") or "/api") + "/runs",
+            self.run_compatibility_application(),
+        )
 
     def mount_on_mcp(self, mcp: Any, *, prefix: str = "/api") -> None:
         """Serve the API beside the MCP endpoint of the served HTTP transport.
@@ -56,3 +87,9 @@ class HostedInvocation:
 
         path = (prefix.rstrip("/") or "/api") + "/v1"
         mcp._additional_http_routes.append(Mount(path, app=self.http_application()))
+        mcp._additional_http_routes.append(
+            Mount(
+                (prefix.rstrip("/") or "/api") + "/runs",
+                app=self.run_compatibility_application(),
+            )
+        )

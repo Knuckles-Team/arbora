@@ -190,13 +190,19 @@ def _run_blocking(coroutine_factory: Any) -> Any:
     loop; the request then runs on a worker thread with its own loop, under a
     copy of the caller's context so the ambient session still authorizes it.
     """
+    from arbora.epistemic import temporary_client_scope
+
+    async def request() -> Any:
+        async with temporary_client_scope():
+            return await coroutine_factory()
+
     try:
         asyncio.get_running_loop()
     except RuntimeError:
-        return asyncio.run(coroutine_factory())
+        return asyncio.run(request())
     context = contextvars.copy_context()
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as worker:
-        return worker.submit(context.run, asyncio.run, coroutine_factory()).result()
+        return worker.submit(context.run, asyncio.run, request()).result()
 
 
 class _BlockingWorkItems:
@@ -209,6 +215,13 @@ class _BlockingWorkItems:
 
     def __init__(self, routed: Any) -> None:
         self._routed = routed
+
+    def get_run(self, *, tenant: str, run_id: str) -> dict[str, Any] | None:
+        """Read immutable run admission through the caller-routed EG client."""
+        from arbora.native_run_admission import require_lookup
+
+        method = require_lookup(self._routed)
+        return _run_blocking(lambda: method(tenant=tenant, run_id=run_id))
 
     def __getattr__(self, name: str) -> Any:
         if name.startswith("_"):
@@ -244,12 +257,17 @@ class ServedEngine:
         )
 
     @property
-    def work_items(self) -> _BlockingWorkItems:
-        """EG WorkItems, held on the tenant's control graph (``__control__``)."""
+    def work_item_graph(self) -> str:
+        """The native graph used by this engine's WorkItem namespace."""
         from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
 
+        return CONTROL_GRAPH
+
+    @property
+    def work_items(self) -> _BlockingWorkItems:
+        """EG WorkItems, held on the tenant's control graph (``__control__``)."""
         return _BlockingWorkItems(
-            self.graph_compute.for_graph(CONTROL_GRAPH).async_client.work_items
+            self.graph_compute.for_graph(self.work_item_graph).async_client.work_items
         )
 
     async def health(self, graph: str) -> Mapping[str, Any]:

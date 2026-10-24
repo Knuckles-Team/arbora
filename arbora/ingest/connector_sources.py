@@ -2,7 +2,7 @@
 
 :class:`ConnectorIngestRunner` is the ``ingest_runner`` service for connector
 sources. It lists each fleet server's declared sources through that server's
-read-only ``<prefix>_ingest_sources`` tool (the fleet catalog plus the
+``connector://resources`` resource (the fleet catalog plus the
 connector's own declaration, no engine listing method), and syncs one source
 as one engine WorkItem: submit, claim, run
 :class:`~agent_connector_sdk.ingest.source_sync.SourceSyncRunner` with every
@@ -31,6 +31,7 @@ from agent_connector_sdk.ingest.sources import IngestSourceDeclaration
 from agent_connector_sdk.ingest.transport import EpistemicGraphIngestTransport
 
 from arbora.api.invoke.pipeline import OperationRefused
+from arbora.fleet.declarations import RESOURCES_URI, parse_declaration
 from arbora.ingest.service import (
     IngestJobRecord,
     IngestPackInventory,
@@ -44,7 +45,6 @@ __all__ = ["SOURCE_SYNC_KIND", "ConnectorIngestRunner", "FleetSourceSession"]
 
 #: The engine WorkItem kind of one connector source sync.
 SOURCE_SYNC_KIND = "arbora.ingest.source_sync"
-_DECLARATION_SUFFIX = "_ingest_sources"
 _LEASE_S = 600.0
 _SEAM_TIMEOUT_S = 60.0
 #: The fleet catalog page size (its maximum) and page bound for one listing.
@@ -186,29 +186,31 @@ class ConnectorIngestRunner:
         self._ingest_for = ingest_for or _knowledge_ingest
 
     async def _declarations(self, caller: Any) -> dict[str, IngestSourceDeclaration]:
+        """Each fleet server's declaration, read from ``connector://resources``."""
         items: list[Mapping[str, Any]] = []
         cursor: str | None = None
         for _ in range(_MAX_CATALOG_PAGES):
-            params: dict[str, Any] = {"kinds": ("tool",), "limit": _CATALOG_PAGE}
+            params: dict[str, Any] = {"limit": _CATALOG_PAGE}
             if cursor:
                 params["cursor"] = cursor
-            found = await self._fleet.list(caller, **params)
+            found = await self._fleet.resources_list(caller, **params)
             items.extend(found.get("items", ()))
             cursor = found.get("next_cursor")
             if not cursor:
                 break
         servers = sorted(
             {
-                (str(item.get("server")), str(item.get("name")))
+                str(item.get("server"))
                 for item in items
-                if str(item.get("name", "")).endswith(_DECLARATION_SUFFIX)
-                and item.get("server")
+                if item.get("uri") == RESOURCES_URI and item.get("server")
             }
         )
         declarations: dict[str, IngestSourceDeclaration] = {}
-        for server, tool in servers:
-            session = FleetSourceSession(self._fleet, caller, server)
-            payload = await session.call_tool(tool, {})
+        for server in servers:
+            read = await self._fleet.resources_read(
+                caller, server=server, uri=RESOURCES_URI
+            )
+            payload = parse_declaration(str(_payload(read).get("text") or "{}"))
             declarations[server] = IngestSourceDeclaration.model_validate(payload)
         return declarations
 

@@ -28,8 +28,10 @@ import threading
 from collections.abc import Callable, Collection, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Literal, cast
 
+from arbora.fleet.declarations import RESOURCES_URI, parse_declaration, remember
 from arbora.fleet.surfaces import pack_surface_report
 from arbora.security.anonymous import session_context
 
@@ -169,10 +171,26 @@ class _PackResourceSession:
     async def list_resources(self) -> list[Any]:
         from agent_connector_sdk.artifacts.resources import _RESOURCE_SCHEMES
 
-        return [
+        listed = await self._session.list_resources()
+        kept = [
             resource
-            for resource in await self._session.list_resources()
+            for resource in listed
             if _resource_scheme(resource) in _RESOURCE_SCHEMES
+            or str(getattr(resource, "uri", "")) == RESOURCES_URI
+        ]
+        # The catalog names a resource by its pack entry name and reads it by
+        # that name. The declaration is served as ``connector-resources``; name
+        # it by its URI so the relays read it by URI like every other resource.
+        return [
+            SimpleNamespace(
+                uri=resource.uri,
+                name=str(resource.uri),
+                mimeType=getattr(resource, "mimeType", None),
+                annotations=getattr(resource, "annotations", None),
+            )
+            if str(getattr(resource, "uri", "")) == RESOURCES_URI
+            else resource
+            for resource in kept
         ]
 
     async def read_resource(self, uri: str) -> str:
@@ -239,6 +257,20 @@ def _capture_kinds() -> tuple[Any, ...]:
     )
 
 
+def _remember_declaration(connector: str, pack: Any) -> None:
+    """Keep the pack's ``connector://resources`` declaration; absent clears it."""
+
+    declaration = None
+    for entry in pack.archive.entries:
+        if str(getattr(entry, "uri", "")) == RESOURCES_URI:
+            try:
+                declaration = parse_declaration(entry.body)
+            except (ValueError, TypeError) as exc:
+                logger.warning("%s: unreadable %s: %s", connector, RESOURCES_URI, exc)
+            break
+    remember(connector, declaration)
+
+
 def _child_auth() -> Any:
     """Arbora's service credential for a child, as the multiplexer sends it."""
 
@@ -281,8 +313,8 @@ class FleetOnboarding:
     allow_mass_withdrawal: frozenset[str] = frozenset()
     #: The last captured surface report per connector, read by the pass.
     surfaces: dict[str, dict[str, Any]] = field(default_factory=dict)
-    #: The ``(server version, catalog digest)`` last onboarded per connector.
-    seen: dict[str, tuple[str, str]] = field(default_factory=dict)
+    #: The ``(content digest,)`` last onboarded per connector.
+    seen: dict[str, tuple[str, ...]] = field(default_factory=dict)
     #: The handshake pass record per connector (state, attempts, last error).
     handshake: dict[str, dict[str, Any]] = field(default_factory=dict)
 
@@ -343,6 +375,7 @@ class FleetOnboarding:
         capture = self.capture or capture_server_pack
         pack = await capture(endpoint, auth=auth)
         self.surfaces[endpoint.name] = pack_surface_report(pack)
+        _remember_declaration(endpoint.name, pack)
         changed = not await self.pack_unchanged(endpoint, pack)
         if changed:
             await import_attested_pack(
@@ -368,13 +401,14 @@ class FleetOnboarding:
     ) -> str:
         """Run one handshake-triggered pass; return ``onboarded`` or ``renewed``.
 
-        A reconnect that shows the same ``serverInfo`` version and catalog
-        digest as the last onboarded pack captures nothing and only renews
-        the lease (ARBORA-FLEET-R041.8). Any other handshake goes through the
-        one :meth:`onboard`, which still compares with the pack EG holds.
+        A reconnect that shows the same content digest of the served lists and
+        resources as the last onboarded pack captures nothing and only renews
+        the lease (ARBORA-FLEET-R041.8). The ``serverInfo`` version is
+        recorded, never compared. Any other handshake goes through the one
+        :meth:`onboard`, which still compares with the pack EG holds.
         """
 
-        key = (server_version, trigger.release_digest)
+        key = (trigger.release_digest,)
         # An import needs a live registration: renew first (margin-gated).
         await self.renew({endpoint.name: endpoint.url})
         if self.seen.get(endpoint.name) == key:
@@ -610,17 +644,73 @@ def merge_handshake_records(
     return {**snapshot, "surfaces": surfaces}
 
 
-def handshake_catalog_digest(tools: Sequence[Any]) -> str:
-    """A stable digest of the tool list a handshake returned."""
+def _digest_rows(rows: Any) -> str:
+    return hashlib.sha256(
+        json.dumps(rows, sort_keys=True, default=str).encode()
+    ).hexdigest()
 
-    rows = sorted(
-        (
-            str(getattr(tool, "name", "")),
-            json.dumps(getattr(tool, "inputSchema", None), sort_keys=True, default=str),
-        )
-        for tool in tools
+
+def handshake_catalog_digest(
+    tools: Sequence[Any],
+    prompts: Sequence[Any] = (),
+    resources: Sequence[Any] = (),
+    declaration: str = "",
+) -> str:
+    """A content digest of the served lists and the data-source declaration.
+
+    Covers each tool (name and input schema), prompt (name, description,
+    arguments, tags, meta) and resource (uri, mime type) the server lists, plus
+    the body of ``connector://resources``. The ``serverInfo`` version is not an
+    input: a release that changes nothing served changes nothing here.
+    """
+
+    def dump(item: Any) -> Any:
+        if hasattr(item, "model_dump"):
+            return item.model_dump(mode="json", by_alias=True, exclude_none=True)
+        return str(item)
+
+    return _digest_rows(
+        {
+            "tools": sorted(
+                (
+                    str(getattr(t, "name", "")),
+                    getattr(t, "inputSchema", None),
+                    getattr(t, "meta", None) or getattr(t, "_meta", None),
+                )
+                for t in tools
+            ),
+            "prompts": sorted(_digest_rows(dump(p)) for p in prompts),
+            "resources": sorted(_digest_rows(dump(r)) for r in resources),
+            "declaration": declaration,
+        }
     )
-    return hashlib.sha256(json.dumps(rows).encode()).hexdigest()
+
+
+async def served_catalog_digest(session: Any, tools: Sequence[Any]) -> str:
+    """Digest the lists and resources a live session serves (R041.8).
+
+    A list or read the server does not support counts as empty; that never
+    fails the handshake.
+    """
+
+    async def optional(call: Any, attr: str) -> list[Any]:
+        try:
+            return list(getattr(await call(), attr))
+        except Exception:
+            return []
+
+    prompts = await optional(session.list_prompts, "prompts")
+    resources = await optional(session.list_resources, "resources")
+    declaration = ""
+    if any(str(getattr(r, "uri", "")) == RESOURCES_URI for r in resources):
+        try:
+            result = await session.read_resource(RESOURCES_URI)
+            declaration = "".join(
+                str(getattr(c, "text", "") or "") for c in result.contents
+            )
+        except Exception:
+            declaration = ""
+    return handshake_catalog_digest(tools, prompts, resources, declaration)
 
 
 @dataclass(slots=True)
@@ -628,6 +718,7 @@ class _Handshake:
     seq: int
     server_version: str
     digest: str
+    reason: TriggerReason = "handshake"
 
 
 @dataclass(slots=True)
@@ -659,13 +750,22 @@ class HandshakeOnboarder:
     _active: dict[str, threading.Thread] = field(default_factory=dict)
     _seq: int = 0
 
-    def notify(self, connector: str, *, server_version: str, digest: str) -> None:
+    def notify(
+        self,
+        connector: str,
+        *,
+        server_version: str,
+        digest: str,
+        reason: TriggerReason = "handshake",
+    ) -> None:
         """Record a completed handshake and schedule one pass; never raises."""
 
         try:
             with self._lock:
                 self._seq += 1
-                self._latest[connector] = _Handshake(self._seq, server_version, digest)
+                self._latest[connector] = _Handshake(
+                    self._seq, server_version, digest, reason
+                )
                 if connector in self._active:
                     return
                 thread = threading.Thread(
@@ -740,7 +840,7 @@ class HandshakeOnboarder:
         from arbora.security.actor_context import use_actor
 
         session = self.onboarding.session
-        trigger = OnboardingTrigger(endpoint.name, "handshake", info.digest)
+        trigger = OnboardingTrigger(endpoint.name, info.reason, info.digest)
         try:
             with use_actor(session.actor), use_session(session):
                 outcome = asyncio.run(self._pass(endpoint, info, trigger))
@@ -775,7 +875,7 @@ class HandshakeOnboarder:
         retry_in_s: float | None = None,
     ) -> None:
         record: dict[str, Any] = {
-            "reason": "handshake",
+            "reason": info.reason,
             "state": state,
             "attempts": attempts,
             "server_version": info.server_version,

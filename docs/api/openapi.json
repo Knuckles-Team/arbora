@@ -56,6 +56,16 @@
       "Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e": {
         "description": "Arbora error envelope"
       },
+      "Shared4001bbddeb48be8bc0b74bc5559d9e75199681b3dda7a8d0ced61180e1e81b91": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Schema69af923f0300139d0b548d5a981145b615e86624534985c6597f08d5db15c466"
+            }
+          }
+        },
+        "description": "Operation result"
+      },
       "Shared453a4e3ac543fa587a9d581a42f37eb521106d830c51a0e75fd4f2c604cd4e09": {
         "content": {
           "application/json": {
@@ -157,6 +167,9 @@
       "Definition75bed9b568e1d24830330f762cddd1d424aa469009ab167e481229bd9953ca29": {
         "$ref": "#/components/schemas/Schema78ccdcbd70b51432be83cc6b15ed6cac5e05a0ed13e3cee8ca3ecd4c29a46284"
       },
+      "Definitiona50f88e2dc179775a9bc68e8f0f6160b3e2622272696626b220f08abb6242d76": {
+        "$ref": "#/components/schemas/Schema01780fddb8b8e2051161fa957167280dc27d5e79e023439a1114651c354eec5c"
+      },
       "Definitionae1b8a29e07c26df95489a53fc7d896f999a99829ed2d84b52491ed5cfaffa4e": {
         "$ref": "#/components/schemas/Schema4cc5fb01b4eff0f49b5d0349071f1346bbd6ce26f9df8cfdc51a65772486fbdf"
       },
@@ -182,6 +195,24 @@
         "additionalProperties": false,
         "properties": {},
         "title": "UsageReadParams",
+        "type": "object"
+      },
+      "Schema01780fddb8b8e2051161fa957167280dc27d5e79e023439a1114651c354eec5c": {
+        "additionalProperties": false,
+        "description": "One fleet tool a plan's agent steps may call.",
+        "properties": {
+          "server": {
+            "$ref": "#/components/schemas/Schema804615f2fc8e5941afa78d08df857b2973ca89304e9f61715c43548c801d9ff6"
+          },
+          "tool": {
+            "$ref": "#/components/schemas/Schemaa23d4d6dc3ddc37dc2818f4b303fdb6aa83d92c60bee700ea385b8db235c0b40"
+          }
+        },
+        "required": [
+          "server",
+          "tool"
+        ],
+        "title": "FleetToolRef",
         "type": "object"
       },
       "Schema032dd68e5cf93a264b9f4bd4f241266fbaa7373550d738da313b55f8a1fd3cc7": {
@@ -279,6 +310,28 @@
         ],
         "default": null,
         "title": "Message"
+      },
+      "Schema0afee644338ef96d72e5f00bbf0b44e61cd8f2402adb7b034d215113c06a86f9": {
+        "additionalProperties": false,
+        "properties": {
+          "after": {
+            "$ref": "#/components/schemas/Schema65cad14bbb3646c08579cdfbe008061f7d5f15ea916f92eb0e89a7d22f2fb13a"
+          },
+          "limit": {
+            "$ref": "#/components/schemas/Schemadac6bea8f7c7632f24f2c15d3c0d5d30b9f9048c8b65ba438ebe101e1660969c"
+          },
+          "run_id": {
+            "$ref": "#/components/schemas/Schemadf135e01e5998bd761bf3770ae512003d9a8a935e6f90722820e930ca4b97338"
+          },
+          "task_id": {
+            "$ref": "#/components/schemas/Schemaeb1f11cc6fde0c4462c9b4658efce96448e24082c8e128b7c4e24d9c2c4511f3"
+          }
+        },
+        "required": [
+          "run_id"
+        ],
+        "title": "RunEventsParams",
+        "type": "object"
       },
       "Schema0cf045aeb7f5a65f4e35ee7f604234ca74de2d02df68a390cf953eb741561563": {
         "maxLength": 8192,
@@ -1002,6 +1055,13 @@
         "title": "AccessCheck",
         "type": "object"
       },
+      "Schema65cad14bbb3646c08579cdfbe008061f7d5f15ea916f92eb0e89a7d22f2fb13a": {
+        "default": 0,
+        "maximum": 9223372036854775807,
+        "minimum": 0,
+        "title": "After",
+        "type": "integer"
+      },
       "Schema65e74a47cb1f443c9d4e6ba3252c1e4e773ee079dfa677835827620f76879501": {
         "additionalProperties": false,
         "properties": {
@@ -1470,22 +1530,30 @@
         "title": "Max Pages",
         "type": "integer"
       },
-      "Schema8a6d4aea8e97f36d37471c5cedd1bdb78c7669c9d03dc3f94cef567cbc23a5eb": {
+      "Schema89c1e5b5b9d72faa4c7f9ff2fdab574e4d51261f5e8ea517a9ed5b92e5ee23e8": {
         "additionalProperties": false,
-        "description": "Explicit caller claims. The engine owns graph validity and bounds.",
         "properties": {
-          "plan": {
-            "$ref": "#/components/schemas/Schemac3b5d7513505aea2230123e535ee3971582b40f12e7e7192cfda51ae26378841"
+          "run_id": {
+            "$ref": "#/components/schemas/Schemadf135e01e5998bd761bf3770ae512003d9a8a935e6f90722820e930ca4b97338"
           },
-          "work_item": {
-            "$ref": "#/components/schemas/Schemadcf5732766a1fdca89e43c8191813be229f10d4d1f838c5e0fc47562e727ca67"
+          "task_id": {
+            "$ref": "#/components/schemas/Schemaeb1f11cc6fde0c4462c9b4658efce96448e24082c8e128b7c4e24d9c2c4511f3"
           }
         },
         "required": [
-          "plan"
+          "run_id"
         ],
-        "title": "PlanRunParams",
+        "title": "RunReadParams",
         "type": "object"
+      },
+      "Schema8bf923a0616cd26131b6e2646161c4bcd88c1155481e14e34e4792721ac54aec": {
+        "description": "Fleet tools the plan's agent steps may call through fleet_call, under the caller's authority. Empty means no step has a tool.",
+        "items": {
+          "$ref": "#/components/schemas/Definitiona50f88e2dc179775a9bc68e8f0f6160b3e2622272696626b220f08abb6242d76"
+        },
+        "maxItems": 16,
+        "title": "Fleet Tools",
+        "type": "array"
       },
       "Schema8c6ee092ab6888335b7e1a23a6d71ebc4af1cde19fbf832d4d6e749fb6f3e2b9": {
         "additionalProperties": true,
@@ -1506,6 +1574,26 @@
       "Schema90198d00c8266e2f9c1ecae782c17f0710bf99d23e97e8a3dd26e0e7176ad0b1": {
         "title": "Revision",
         "type": "integer"
+      },
+      "Schema9056ae48b2c13a0bacc5578d74369d4d37807a3f34432c81dbc022e672ce1918": {
+        "additionalProperties": false,
+        "description": "Explicit caller claims. The engine owns graph validity and bounds.",
+        "properties": {
+          "fleet_tools": {
+            "$ref": "#/components/schemas/Schema8bf923a0616cd26131b6e2646161c4bcd88c1155481e14e34e4792721ac54aec"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/Schemac3b5d7513505aea2230123e535ee3971582b40f12e7e7192cfda51ae26378841"
+          },
+          "work_item": {
+            "$ref": "#/components/schemas/Schemadcf5732766a1fdca89e43c8191813be229f10d4d1f838c5e0fc47562e727ca67"
+          }
+        },
+        "required": [
+          "plan"
+        ],
+        "title": "PlanRunParams",
+        "type": "object"
       },
       "Schema905870712697c5033de203e9970c73bcd2c6ec3112b28fa127fe1807b1a832ed": {
         "description": "A live registration already admitted by the existing channel authority.",
@@ -2407,6 +2495,13 @@
         "title": "FleetResult",
         "type": "object"
       },
+      "Schemadac6bea8f7c7632f24f2c15d3c0d5d30b9f9048c8b65ba438ebe101e1660969c": {
+        "default": 1000,
+        "maximum": 1000,
+        "minimum": 1,
+        "title": "Limit",
+        "type": "integer"
+      },
       "Schemadbdad2e06ba1b9a1d3f68d5b15cb0a2224adcd31714bf255f1454e946cea3b30": {
         "additionalProperties": false,
         "properties": {},
@@ -2608,6 +2703,18 @@
         },
         "title": "ResearchWebParams",
         "type": "object"
+      },
+      "Schemaeb1f11cc6fde0c4462c9b4658efce96448e24082c8e128b7c4e24d9c2c4511f3": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema85c1db78d5c7dc29b5e24f13a6d3f86af9075e032e322bfe2f7abd542739b409"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Task Id"
       },
       "Schemaebfd7f24843456b3e02e97bd2085f819c39ef62a20398d74626160b410a732b5": {
         "title": "Child",
@@ -3148,11 +3255,14 @@
             "application/json": {
               "schema": {
                 "$defs": {
+                  "FleetToolRef": {
+                    "$ref": "#/components/schemas/Definitiona50f88e2dc179775a9bc68e8f0f6160b3e2622272696626b220f08abb6242d76"
+                  },
                   "WorkItemLease": {
                     "$ref": "#/components/schemas/Definition2410bb35a5212044a26a7f1b62271a9b079d5b33e442b127dab54e178bedaa6e"
                   }
                 },
-                "$ref": "#/components/schemas/Schema8a6d4aea8e97f36d37471c5cedd1bdb78c7669c9d03dc3f94cef567cbc23a5eb"
+                "$ref": "#/components/schemas/Schema9056ae48b2c13a0bacc5578d74369d4d37807a3f34432c81dbc022e672ce1918"
               }
             }
           },
@@ -15537,6 +15647,40 @@
         ]
       }
     },
+    "/api/v1/ops/eg.query.NlQueryExplain": {
+      "post": {
+        "operationId": "eg.query.NlQueryExplain",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/NlQueryExplain"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.query.json#/methods/NlQueryExplain"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "EG-FEDERATED-QUERY-R058.2.2.1: NlQuery plus the executed UQL text. It shares the planner, budget, authority and refusals of NlQuery",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.query.QueryForeignColumns": {
       "post": {
         "operationId": "eg.query.QueryForeignColumns",
@@ -19905,20 +20049,67 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Schema69af923f0300139d0b548d5a981145b615e86624534985c6597f08d5db15c466"
-                }
-              }
-            },
-            "description": "Operation result"
+            "$ref": "#/components/responses/Shared4001bbddeb48be8bc0b74bc5559d9e75199681b3dda7a8d0ced61180e1e81b91"
           },
           "default": {
             "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
           }
         },
         "summary": "Read the current plan of one run",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/ops/runs.events": {
+      "post": {
+        "operationId": "runs.events",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema0afee644338ef96d72e5f00bbf0b44e61cd8f2402adb7b034d215113c06a86f9"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Shared4001bbddeb48be8bc0b74bc5559d9e75199681b3dda7a8d0ced61180e1e81b91"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Replay public events of an owned run",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/ops/runs.get": {
+      "post": {
+        "operationId": "runs.get",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema89c1e5b5b9d72faa4c7f9ff2fdab574e4d51261f5e8ea517a9ed5b92e5ee23e8"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Shared4001bbddeb48be8bc0b74bc5559d9e75199681b3dda7a8d0ced61180e1e81b91"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Read an owned durable run",
         "tags": [
           "runs"
         ]
@@ -20278,5 +20469,5 @@
       }
     }
   },
-  "x-registry-digest": "be39189babc1ee1a494aaf19447b36474145beabb231a3d5a95690be58cb10aa"
+  "x-registry-digest": "bea61b1dae6b57e480727d04c03e9b827d4f0e7a1b3c6230a7a2d801961b5bda"
 }
