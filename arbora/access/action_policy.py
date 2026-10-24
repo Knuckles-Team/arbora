@@ -618,6 +618,12 @@ class ActionPolicy:
 
         return qualified_policy_source(self).revision
 
+    async def qualified_source_revision_async(self) -> str:
+        """Capture source evidence without switching the native client loop."""
+        from arbora.access.action_policy_source import qualified_policy_source_async
+
+        return (await qualified_policy_source_async(self)).revision
+
     # ── policy loading ──────────────────────────────────────────────
 
     def _load_file_policy(self) -> dict[str, Any]:

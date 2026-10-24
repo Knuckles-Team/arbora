@@ -1373,6 +1373,7 @@
       "landed_in": [],
       "verified_by": [
         "tests/access/test_action_policy_source.py:9",
+        "tests/access/test_action_policy_source_async.py:11",
         "tests/browser_control/test_local_attended_contract_guards.py:21",
         "tests/browser_control/test_local_browser_boundary_contract.py:9",
         "tests/browser_control/test_local_browser_transport.py:8"

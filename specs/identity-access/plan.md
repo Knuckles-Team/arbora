@@ -504,3 +504,14 @@ Qualified policy-source failures expose only a generic unavailable error.
 Parser, file, and override exceptions must not survive in its exception chain.
 This prevents malformed policy values from entering ordinary error tracebacks.
 Failure remains refusal; legacy policy evaluation is unchanged.
+
+### R004.6 same-loop source prerequisite
+
+An additive async source read uses the same validators, rule order and normalizer.
+It captures the configured path, option, engine and caller before awaiting work.
+Public native queries recheck that caller after connection and read awaits.
+Cancellation retains the exact file worker until completion and prevents later native work.
+The browser owner must retain its capacity slot until that task completes.
+This avoids loop switching on this path, not the shared pool's inherited limitation.
+Concurrent legacy synchronous consumers and stalled file latency remain unqualified.
+This prerequisite adds no factory admission or operation authority.
