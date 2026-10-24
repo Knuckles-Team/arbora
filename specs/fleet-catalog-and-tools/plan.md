@@ -435,3 +435,11 @@ After authorizing the WorkItem, cancellation revokes its canonical a2a_run_id.
 Legacy tasks retain their task identifier as the run identifier.
 Both new cancellation and already-cancelled replay withdraw the same live origin.
 The native task identifier must not leave a pending attended proposal live.
+
+### R015 native node-label producer mapping
+
+ServedEngine writes the public engine's node_type label property.
+Keep the existing type property for consumers that read it as ordinary metadata.
+Native read-by-label and ActionPolicy ledger readback must verify the mapping.
+Existing type-only records are not rewritten or treated as labeled receipts.
+Historical data repair requires separate migration review and evidence.

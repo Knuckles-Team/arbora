@@ -318,3 +318,11 @@ Served effect ownership: `tests/fleet/test_attended_proposal_effect_owner.py` ex
 Reproduce the composed journey with `uv run --no-sync pytest tests/fleet/test_attended_proposal_agent_journey.py`. This test owns real startup and shutdown, with synthetic model, engine and browser ports. It checks consent, separate mutation confirmation, completed replay, cancellation and cross-run refusal.
 
 `tests/webui_host/attended_admission.md` documents the independent admission probe and required auth-owner interfaces. The probe records middleware behavior; it does not prove login or rendered-browser execution.
+
+## Native served node-label readback (R015)
+
+`tests/test_served_engine_native_labels.py` uses the actual ServedEngine pool and
+an explicitly selected matching released server in an isolated anonymous store.
+It covers create/add read-by-label and canonical ActionPolicy ledger readback.
+Legacy type-only records stay unchanged and do not become labeled receipts.
+An absent native binary skips explicitly; these tests do not qualify browser admission.

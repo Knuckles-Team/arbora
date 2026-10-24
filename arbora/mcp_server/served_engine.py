@@ -287,7 +287,7 @@ class ServedEngine:
         from epistemic_graph.generated.graph import send_add_node
 
         client = self._session_client()
-        body = {**dict(properties or {}), "type": label}
+        body = {**dict(properties or {}), "type": label, "node_type": label}
         params = {
             "node_id": node_id,
             "properties_msgpack": msgpack.packb(body, use_bin_type=True),
@@ -321,7 +321,7 @@ class ServedEngine:
         from epistemic_graph.generated.graph import send_create_node_if_absent
 
         client = self._session_client()
-        body = {**dict(properties or {}), "type": label}
+        body = {**dict(properties or {}), "type": label, "node_type": label}
         params = {
             "node_id": node_id,
             "properties_msgpack": msgpack.packb(body, use_bin_type=True),
