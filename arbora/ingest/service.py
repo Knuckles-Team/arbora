@@ -35,6 +35,11 @@ class IngestSyncReceipt(BaseModel):
     tenant: str
     mode: IngestSyncMode
     status: IngestJobStatus
+    #: Why a failed sync failed: the SDK reason code, never a payload
+    #: (ARBORA-OPS-R020.6.8).
+    reason: str | None = None
+    #: The engine refusal code when ``reason`` is ``ingest_refused``.
+    engine_code: str | None = None
 
 
 class IngestIndexReceipt(BaseModel):
@@ -101,6 +106,9 @@ class IngestJobRecord(BaseModel):
     job_id: str
     tenant: str
     status: IngestJobStatus
+    #: The failure cause the job recorded (ARBORA-OPS-R020.6.8).
+    reason: str | None = None
+    engine_code: str | None = None
 
 
 @runtime_checkable
@@ -163,7 +171,7 @@ async def sync_source(context: Any, params: Mapping[str, Any], op: Any) -> Any:
         idempotency_key=context.idempotency_key,
         caller=context.caller,
     )
-    return {"value": receipt.model_dump(mode="json")}
+    return {"value": receipt.model_dump(mode="json", exclude_none=True)}
 
 
 async def index_repository(context: Any, params: Mapping[str, Any], op: Any) -> Any:
@@ -215,4 +223,4 @@ async def get_job_status(context: Any, params: Mapping[str, Any], op: Any) -> An
     record = await runner.get_job_status(
         tenant=context.caller.tenant, job_id=params["job_id"]
     )
-    return {"value": record.model_dump(mode="json")}
+    return {"value": record.model_dump(mode="json", exclude_none=True)}

@@ -295,7 +295,11 @@ class BoundOperationRuntime:
                     exc.code,
                     (exc.detail or "")[:300],
                 )
-                raise EngineRefusal(exc.code) from exc
+                from arbora.api.errors import engine_reason_details
+
+                raise EngineRefusal(
+                    exc.code, details=engine_reason_details(exc.detail)
+                ) from exc
         if getattr(binding, "kind", None) != "composite":
             raise RuntimeError("operation has no executable binding")
         module_name, function_name = binding.handler.rsplit(".", 1)

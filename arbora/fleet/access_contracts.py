@@ -13,10 +13,11 @@ module, onboarding skips contracts and logs at debug level.
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from arbora.api.errors import not_served
+from arbora.fleet.declarations import entry_bytes
 
 logger = logging.getLogger(__name__)
 
@@ -43,25 +44,17 @@ def fleet_virtual_catalog() -> Any:
     return _CATALOG[0]
 
 
-def _text(body: object) -> str:
-    return body.decode("utf-8") if isinstance(body, bytes) else str(body)
-
-
-def _entries(pack: Any) -> Iterable[Any]:
-    entries = getattr(pack, "entries", None)
-    if entries is None:
-        entries = getattr(getattr(pack, "archive", None), "entries", ())
-    found = entries() if callable(entries) else entries
-    return tuple(found or ())
-
-
 def pack_ontology_resources(pack: Any) -> tuple[tuple[str, str], ...]:
-    """The ``(uri, body)`` pair of every ``ontology://`` entry in a pack."""
+    """The ``(uri, body)`` pair of every ``ontology://`` entry in a captured pack.
 
+    Each body is read from the pack archive by its section (SDK 0.5).
+    """
+
+    archive = pack.archive
     return tuple(
-        (str(getattr(entry, "uri", "")), _text(getattr(entry, "body", "")))
-        for entry in _entries(pack)
-        if str(getattr(entry, "uri", "")).startswith("ontology://")
+        (str(entry.uri), entry_bytes(archive, entry).decode("utf-8"))
+        for entry in archive.entries
+        if str(entry.uri).startswith("ontology://")
     )
 
 

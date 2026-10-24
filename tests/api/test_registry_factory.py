@@ -90,6 +90,7 @@ def provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Pat
             "node:read",
             "edge:read",
             "blob:read",
+            "agent:pack-control",
         )
     )
     scope_path.write_text(json.dumps(document))
