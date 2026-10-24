@@ -214,3 +214,8 @@ A duplicate action must not produce another prompt or effect.
 Mutations must still require separate exact confirmation.
 A local proof must never satisfy an OIDC proof or create authenticated identity.
 These future acceptance tests require the owner implementation; current refusal fixtures do not qualify them.
+
+| Anonymous task access | `ARBORA-IDENTITY-R004.8` | All children pass. Synthetic evidence does not complete native qualification. |
+| Served read contract | `ARBORA-IDENTITY-R004.8.1` | `tests/a2a/test_anonymous_reads.py` tests exact owner, request, task and target binding. It tests host/origin/credential refusal, deadlines, cancellation, bounded input and no cached output disclosure. |
+| Native anonymous ownership | `ARBORA-IDENTITY-R004.8.2` | Installed engine tests distinguish anonymous and authenticated task owners. They prove native namespace enforcement, restart reads and credential rejection. This acceptance remains open. |
+| Native client source adapter | `ARBORA-IDENTITY-R004.8.3` | `tests/a2a/test_anonymous_native_reads.py` uses the actual public client and codec with a synthetic response transport. It checks method negotiation, immutable target binding, mode changes and no generic read fallback. |
