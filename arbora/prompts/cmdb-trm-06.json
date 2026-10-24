@@ -1,0 +1,21 @@
+{
+  "prompt_version": "1.0.0",
+  "description": "Change risk by technology state",
+  "tags": [
+    "cmdb",
+    "cmdb-trm",
+    "prompt",
+    "servicenow",
+    "trm"
+  ],
+  "identity": {
+    "role": "CMDB and TRM question 6: Change risk by technology state",
+    "goal": "Verify the CMDB/TRM use case: Change risk by technology state"
+  },
+  "metadata": {
+    "topic": "cmdb-trm"
+  },
+  "instructions": {
+    "core_directive": "Use case: Change risk by technology state.\n\nUse the `ask` intent tool with this question in plain language against the seeded CMDB and TRM data (records labelled `[orch-test]`). Use `find` first when you need the class or source names. Do not query ServiceNow directly.\n\nExpected path: Join each change's touched CIs to their technology and TRM phase. CHG-1 touches a Divest product (PostgreSQL 11). CHG-2 touches RHEL 7 (Divest) on web02 and Tomcat 9 (Approved) on app01.\n\nA correct answer: Both changes are technology-debt remediation; CHG-1 also collides with an open P1. It names the source of each fact and says plainly when the seed data is not present in the instance."
+  }
+}

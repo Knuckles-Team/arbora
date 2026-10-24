@@ -67,11 +67,10 @@ dependencies = [
     "mcp>=2.3.0,<3.0.0",
     "opentelemetry-api>=1.45.1",
     "pydantic-ai-slim[openai]==2.57.0",
-    # Installed so its ``agent_utilities.skill_providers`` entry point (once
-    # declared in universal-skills' own package) resolves in THIS process,
-    # the same way agent-utilities', epistemic-graph's, and arbora's own
-    # skills already do — see arbora/fleet/local_skill_catalog.py. No
-    # transitive dependencies of its own.
+    # Installed so its ``agent_connector_sdk.connector`` declaration (a
+    # content-only connector) resolves in THIS process through
+    # ``installed_connectors()`` — see arbora/core/providers.py. The floor
+    # moves to the first release that declares it once that release ships.
     "universal-skills>=1.3.11,<2.0.0",
 ]
 
@@ -167,9 +166,6 @@ arbora-connector-count-pins = "arbora.fleet.connector_count_pins:main"
 arbora-check-import-boundaries = "arbora.architecture.boundary_census:main"
 arbora-hosting-config = "arbora.deployment.host_config:main"
 arbora-capability-layers = "arbora.architecture.capability_layers:main"
-
-[project.entry-points."agent_connector_sdk.skill_providers"]
-arbora = "arbora.skills"
 
 [project.entry-points."agent_utilities.messaging"]
 telegram = "arbora.messaging.backends.telegram:TelegramBackend"

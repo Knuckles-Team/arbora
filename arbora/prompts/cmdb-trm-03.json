@@ -1,0 +1,21 @@
+{
+  "prompt_version": "1.0.0",
+  "description": "Services that depend on retire or prohibited technology and have open incidents",
+  "tags": [
+    "cmdb",
+    "cmdb-trm",
+    "prompt",
+    "servicenow",
+    "trm"
+  ],
+  "identity": {
+    "role": "CMDB and TRM question 3: Services that depend on retire or prohibited technology and have open incidents",
+    "goal": "Verify the CMDB/TRM use case: Services that depend on retire or prohibited technology and have open incidents"
+  },
+  "metadata": {
+    "topic": "cmdb-trm"
+  },
+  "instructions": {
+    "core_directive": "Use case: Services that depend on retire or prohibited technology and have open incidents.\n\nUse the `ask` intent tool with this question in plain language against the seeded CMDB and TRM data (records labelled `[orch-test]`). Use `find` first when you need the class or source names. Do not query ServiceNow directly.\n\nExpected path: Retire or prohibited technology is on db01, web02, app02 and batch01; the applications on them are Billing Engine, Payments and Reporting; the services are Customer Billing, Online Ordering and Supply Chain.\n\nA correct answer: Open incidents A (db01), B (app02) and D (batch01) are returned. Customer Support is clean and is excluded; incident F is resolved and is excluded. It names the source of each fact and says plainly when the seed data is not present in the instance."
+  }
+}
