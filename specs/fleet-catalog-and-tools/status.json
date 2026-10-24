@@ -666,16 +666,17 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "68e31b75248a",
+        "760ec8539a13",
         "ccce23e31ee8",
         "e1d37ca10ef7",
         "fdd59af317ce"
       ],
       "verified_by": [
+        "tests/access/test_legacy_policy_history.py:11",
         "tests/browser_control/test_browser_proposals.py:37",
         "tests/fleet/test_attended_proposal_agent_journey.py:62",
         "tests/fleet/test_attended_proposal_effect_owner.py:36",
-        "tests/fleet/test_child_failure_classification.py:18",
-        "tests/fleet/test_multiplexer_dynamic_gateway.py:279"
+        "tests/fleet/test_child_failure_classification.py:18"
       ],
       "rollup_of": [
         "ARBORA-FLEET-R015.1"
