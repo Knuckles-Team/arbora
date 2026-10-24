@@ -233,3 +233,9 @@ strict configured-source revision. It covers normalization, absent/fallback and
 incomplete sources, same-snapshot evaluation, and source changes during audit or
 caller waits. Exact policy requests bind the revision into their existing digest.
 These prerequisite tests do not qualify the full attended browser path.
+
+`tests/access/test_action_policy_source_async.py` checks same-loop source reads.
+Released-native checks compare revisions and exercise public query decoding.
+Cancellation checks require file-worker completion before task completion.
+Source substitution, caller liveness and redacted failures must refuse.
+These tests do not qualify factory admission, effects or shared-pool coexistence.

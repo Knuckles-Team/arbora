@@ -5,6 +5,8 @@ best-effort policy loading remains unchanged; opted-in boundaries use this
 stricter source contract before requesting an exact canonical decision.
 """
 
+import asyncio
+import contextvars
 import hashlib
 import json
 from dataclasses import asdict, dataclass, field
@@ -53,6 +55,10 @@ def _override_rules(engine: Any) -> list[Any]:
     rows = engine.query_cypher(
         "MATCH (r:governance_rule {scope: 'action_policy'}) RETURN r LIMIT 101"
     )
+    return _rules_from_rows(rows)
+
+
+def _rules_from_rows(rows: Any) -> list[Any]:
     if not isinstance(rows, list) or len(rows) > _MAX_OVERRIDE_RULES:
         raise RuntimeError("Complete bounded policy overrides required")
     rules = []
@@ -95,40 +101,115 @@ def _validate_rule(raw: Any) -> None:
         raise RuntimeError("Unknown configured policy tier")
 
 
-def qualified_policy_source(policy: Any) -> _QualifiedPolicySource:
-    """Capture complete source evidence without changing decisions or state."""
-    from arbora.access.action_policy import _canonical_policy_value, _coerce_rule
+def _validated_document(path: Path | None) -> dict[str, Any]:
+    from arbora.access.action_policy import _coerce_rule
 
-    try:
-        document = _configured_document(policy.policy_path)
-        for raw in document["rules"]:
-            _validate_rule(raw)
-            if _coerce_rule(raw, origin="file") is None:
-                raise RuntimeError("Malformed configured policy rule")
-        overrides = _override_rules(policy.engine)
-        normalized = json.dumps(
-            _canonical_policy_value(
-                {
-                    "schema": "action-policy-source.v1",
-                    "configuration_origin": "configured_file",
-                    "file": document,
-                    "graph_overrides": [asdict(rule) for rule in overrides],
-                    "irreversibility_aversion": policy._irreversibility_aversion,
-                }
-            ),
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-            allow_nan=False,
-        )
-        revision = "sha256:" + hashlib.sha256(normalized.encode("utf-8")).hexdigest()
-    except Exception:  # noqa: BLE001 - redact source failures before refusal
-        normalized = None
-    if normalized is None:
-        # Raise outside the handler: even __context__ must not retain policy data.
-        raise RuntimeError("Qualified configured action policy unavailable")
+    document = _configured_document(path)
+    for raw in document["rules"]:
+        _validate_rule(raw)
+        if _coerce_rule(raw, origin="file") is None:
+            raise RuntimeError("Malformed configured policy rule")
+    return document
+
+
+def _source_from_inputs(
+    document: dict[str, Any], overrides: list[Any], aversion: bool
+) -> _QualifiedPolicySource:
+    from arbora.access.action_policy import _canonical_policy_value
+
+    normalized = json.dumps(
+        _canonical_policy_value(
+            {
+                "schema": "action-policy-source.v1",
+                "configuration_origin": "configured_file",
+                "file": document,
+                "graph_overrides": [asdict(rule) for rule in overrides],
+                "irreversibility_aversion": aversion,
+            }
+        ),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    )
     return _QualifiedPolicySource(
-        revision=revision,
+        revision="sha256:" + hashlib.sha256(normalized.encode("utf-8")).hexdigest(),
         configuration_origin="configured_file",
         normalized_document=normalized,
     )
+
+
+def qualified_policy_source(policy: Any) -> _QualifiedPolicySource:
+    """Capture complete source evidence without changing decisions or state."""
+    try:
+        source = _source_from_inputs(
+            _validated_document(policy.policy_path),
+            _override_rules(policy.engine),
+            policy._irreversibility_aversion,
+        )
+    except Exception:  # noqa: BLE001 - redact source failures before refusal
+        source = None
+    if source is None:
+        raise RuntimeError("Qualified configured action policy unavailable")
+    return source
+
+
+async def _retained_file_document(path: Path | None) -> dict[str, Any]:
+    """Cancellation retains this task until its exact file worker completes."""
+    context = contextvars.copy_context()
+    worker = asyncio.get_running_loop().run_in_executor(
+        None, context.run, _validated_document, path
+    )
+    cancelled = None
+    while not worker.done():
+        try:
+            await asyncio.shield(worker)
+        except asyncio.CancelledError as error:
+            cancelled = error
+        except Exception:  # noqa: BLE001 - retrieve and redact in source owner
+            break
+    if cancelled is not None:
+        # Retrieve any failure without leaking it through the cancellation chain.
+        if not worker.cancelled():
+            worker.exception()
+        raise cancelled
+    return worker.result()
+
+
+def _check_selection(policy: Any, engine: Any, path: Any, aversion: bool) -> None:
+    if (
+        policy.engine is not engine
+        or policy.policy_path != path
+        or policy._irreversibility_aversion != aversion
+    ):
+        raise RuntimeError("Configured policy selection changed")
+
+
+async def qualified_policy_source_async(policy: Any) -> _QualifiedPolicySource:
+    """Use one captured caller and source selection; issue no effect authority.
+
+    Callers must retain capacity until this task completes, even if cancelled.
+    A stalled file worker therefore denies capacity rather than accumulating
+    detached workers. File latency and parsing CPU are not wall-clock bounded.
+    """
+    from arbora.api.contracts.session import resolve_session
+
+    try:
+        engine, path = policy.engine, policy.policy_path
+        aversion = policy._irreversibility_aversion
+        caller = resolve_session(None, required_scope="kg:read")
+        document = await _retained_file_document(path)
+        _check_selection(policy, engine, path, aversion)
+        resolve_session(caller, required_scope="kg:read")
+        rows = await engine.query_cypher_async(
+            "MATCH (r:governance_rule {scope: 'action_policy'}) RETURN r LIMIT 101",
+            session=caller,
+        )
+        _check_selection(policy, engine, path, aversion)
+        resolve_session(caller, required_scope="kg:read")
+        source = _source_from_inputs(document, _rules_from_rows(rows), aversion)
+    except Exception:  # noqa: BLE001 - redact source failures before refusal
+        source = None
+    if source is None:
+        raise RuntimeError("Qualified configured action policy unavailable")
+    return source
