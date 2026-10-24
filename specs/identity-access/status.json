@@ -1365,7 +1365,9 @@
       "title": "Explicit anonymous effect migration",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/browser_control/test_local_attended_contract_guards.py:21"
+      ]
     },
     {
       "id": "ARBORA-IDENTITY-R004.7.1",

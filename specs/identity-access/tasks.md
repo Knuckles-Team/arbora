@@ -169,3 +169,6 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] Validate real native EG persistence, effect journaling, real served Arbora and actual TUI with only the model simulated.
 - [ ] Validate separate fresh authenticated stack and missing-token refusal after anonymous acceptance.
 - [ ] Complete independent review and upstream CI before merge.
+
+- [ ] ARBORA-IDENTITY-R004.6: Qualify the separate local browser transport and discriminated attended proof before runtime wiring.
+- [ ] ARBORA-IDENTITY-R004.6: Prove policy, gesture, exact action binding, revocation and separate mutation confirmation without an identity upgrade.

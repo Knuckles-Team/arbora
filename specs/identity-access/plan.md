@@ -439,3 +439,29 @@ anonymous endpoint admission tests to preserve remote-address and hostname
 refusal independently of suite ordering. Production admission is unchanged.
 
 The WebUI configuration requirement uses R004.7 so the existing tokenless local-serving R004.3 keeps its own meaning. Canonical browser invocation retains caller-session scope around the shared pipeline after same-owner use-time revalidation. Synthetic session fixtures run the existing GraphSession validation at that ambient boundary. This is source integration evidence; live Keycloak/Okta and installed EG acceptance remain open.
+
+### R004.6 local attended browser admission contract
+
+This is a proposed contract, not runtime qualification.
+The owner explicitly configures a local browser transport for anonymous mode.
+It checks the exact configured origin, Host and loopback peer for each request.
+It does not weaken `anonymous.validate_request` or synthesize an authenticated cookie.
+
+Evidence distinguishes verified OIDC from local operator admission.
+Only the configured admission owner can produce its private binding.
+The local variant retains anonymous identity and contains no issuer, ACR or authentication timestamp.
+It binds the document, route, registration generation, catalog and tool-schema scope.
+It also binds the operator policy revision, canonical operation, target and action digest.
+Expiry and revocation checks apply after authority-changing awaits and before dispatch.
+
+Registration grants no operation authority, including read authority.
+Every proposal requires configured local policy and a trusted attended gesture.
+Mutations retain separate exact confirmation through the existing journal and invocation path.
+Missing policy, changed bindings and unavailable authority refuse by default.
+No new credential, durable store or identity upgrade follows from this proposal.
+
+The current anonymous transport rejects browser Origin headers.
+The current attended binding requires OIDC evidence.
+These are deliberate refusal boundaries until the owner qualifies the separate browser contract.
+Use the existing `AnonymousCaller`, `PolicyGate.check_op`, `bind_plan` and effect journal.
+Policy receives the canonical operation; exact parameters and target need the existing binding and effect fences too.
