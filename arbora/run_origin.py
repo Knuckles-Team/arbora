@@ -109,8 +109,7 @@ def native_call_origin_scope(run_id: str) -> Iterator[None]:
     parent = _run.get()
     origin = None
 
-    def unsubscribe() -> None:
-        pass
+    unsubscribe: Callable[[], None] | None = None
 
     if parent is not None and parent.run_id == run_id and parent.is_live():
         resolve_session(parent.session)
@@ -125,7 +124,8 @@ def native_call_origin_scope(run_id: str) -> Iterator[None]:
     finally:
         if origin is not None:
             origin.close()
-        unsubscribe()
+        if unsubscribe is not None:
+            unsubscribe()
         _call.reset(token)
 
 
