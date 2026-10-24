@@ -215,3 +215,103 @@ async def test_served_proposal_replay_and_cancellation_do_not_redispatch(
             else:
                 assert isinstance(replay, OpResult) and replay.value == result.value
             await connection.disconnect("test_finished")
+
+
+@pytest.mark.parametrize(
+    "change", ["absent", "run", "session", "journal_retirement", "audit_retirement"]
+)
+async def test_completed_browser_replay_requires_same_live_run_and_session(
+    monkeypatch: pytest.MonkeyPatch, change: str
+) -> None:
+    from contextlib import ExitStack
+    from dataclasses import replace
+
+    from arbora.run_origin import require_native_call_origin
+
+    session, client, services = _composed_authority(monkeypatch)
+    with use_actor(session.actor), use_session(session):
+        service, connection, engine, sent, tool = await _setup(session)
+        payload = {"payload": _request(session, tool).model_dump(mode="json")}
+        caller = caller_from_session(
+            session, credential_kind="bearer", request_id="replay-boundary"
+        )
+
+        async def initial() -> Any:
+            with agent_run_origin_scope(session, "webui-assistant", "original-run"):
+                with native_call_origin_scope("original-run"):
+                    return await invoke(
+                        "browser.request_call",
+                        payload,
+                        caller,
+                        Surface.MCP,
+                        services=services,
+                        idempotency_key="bound-replay",
+                    )
+
+        with _registered(service):
+            pending = asyncio.create_task(initial())
+            await _wait_for_messages(sent, 1)
+            await connection.receive(_response(sent[0]))
+            await _wait_for_messages(sent, 2)
+            await connection.receive(
+                ControlResultMessage(
+                    call_id=sent[1].call_id, status="succeeded", result={"ok": True}
+                )
+            )
+            assert isinstance(await pending, OpResult)
+            message_count = len(sent)
+            replay_session = (
+                replace(session, trace_context="different-session")
+                if change == "session"
+                else session
+            )
+            replay_caller = caller_from_session(
+                replay_session, credential_kind="bearer", request_id="replay-boundary"
+            )
+            run_id = "another-run" if change == "run" else "original-run"
+            with use_session(replay_session), ExitStack() as stack:
+                if change != "absent":
+                    stack.enter_context(
+                        agent_run_origin_scope(
+                            replay_session, "webui-assistant", run_id
+                        )
+                    )
+                    stack.enter_context(native_call_origin_scope(run_id))
+                if change == "journal_retirement":
+                    original_reserve = services.effects.reserve
+
+                    async def retired_reserve(*args: Any) -> Any:
+                        result = await original_reserve(*args)
+                        assert result.state == "completed"
+                        require_native_call_origin().close()
+                        return result
+
+                    monkeypatch.setattr(services.effects, "reserve", retired_reserve)
+                if change == "audit_retirement":
+                    original_write = services.audit_write
+
+                    async def retired_write(*args: Any) -> Any:
+                        result = await original_write(*args)
+                        require_native_call_origin().close()
+                        return result
+
+                    services = replace(services, audit_write=retired_write)
+                replay = await invoke(
+                    "browser.request_call",
+                    payload,
+                    replay_caller,
+                    Surface.MCP,
+                    services=services,
+                    idempotency_key="bound-replay",
+                )
+            assert isinstance(replay, OpError)
+            expected = {
+                "absent": "UNAUTHENTICATED",
+                "run": "INVALID_ARGUMENT",
+                "session": "INVALID_ARGUMENT",
+            }
+            assert replay.code == expected.get(change, "UNAUTHENTICATED")
+            assert len(sent) == message_count
+            assert client.effect_items.claims == 1
+            assert engine._work_item_engine.claim_count == 1
+            await connection.disconnect("test_finished")

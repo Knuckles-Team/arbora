@@ -152,3 +152,41 @@ def revoke_run_origins(session: GraphSession, run_id: str) -> None:
         ]
     for origin in matches:
         origin.close()
+
+
+def browser_request_origin_binding(session: GraphSession | None) -> str:
+    """Bind journal replay to the live native run and unchanged session authority.
+
+    Match GraphSession authority comparison: transaction handles and renewable
+    credential lease objects are not authority identity and are never serialized.
+    Only the digest leaves this boundary; no credential material is persisted.
+    """
+    import hashlib
+    import json
+    from dataclasses import fields
+
+    origin = require_native_call_origin()
+    if session is None:
+        raise PermissionError("browser replay requires its admitted caller session")
+    resolve_session(session)
+    authority = {
+        field.name: getattr(origin.session, field.name)
+        for field in fields(origin.session)
+        if field.name not in {"actor", "txn", "scopes"}
+    }
+    authority["scopes"] = sorted(origin.session.scopes)
+    authority["actor"] = {
+        field.name: getattr(origin.session.actor, field.name)
+        for field in fields(origin.session.actor)
+        if field.compare
+    }
+    material = {
+        "session": authority,
+        "agent_name": origin.agent_name,
+        "run_id": origin.run_id,
+    }
+    return hashlib.sha256(
+        json.dumps(
+            material, sort_keys=True, separators=(",", ":"), allow_nan=False
+        ).encode()
+    ).hexdigest()
