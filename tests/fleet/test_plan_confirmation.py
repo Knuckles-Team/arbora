@@ -206,8 +206,8 @@ def test_a_non_destructive_or_keyed_call_is_never_marked() -> None:
     from arbora.api.ops.fleet import _plan_confirmed
     from arbora.api.registry import Effect
 
-    write = SimpleNamespace(effect=Effect.WRITE)
-    destructive = SimpleNamespace(effect=Effect.DESTRUCTIVE)
+    write: Any = SimpleNamespace(effect=Effect.WRITE)
+    destructive: Any = SimpleNamespace(effect=Effect.DESTRUCTIVE)
     assert not _plan_confirmed(SimpleNamespace(idempotency_key="plan:x"), write)
     assert not _plan_confirmed(SimpleNamespace(idempotency_key="k"), destructive)
     assert _plan_confirmed(SimpleNamespace(idempotency_key="plan:x"), destructive)
