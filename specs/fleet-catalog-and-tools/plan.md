@@ -435,3 +435,12 @@ Keep the existing type property for consumers that read it as ordinary metadata.
 Native read-by-label and ActionPolicy ledger readback must verify the mapping.
 Existing type-only records are not rewritten or treated as labeled receipts.
 Historical data repair requires separate migration review and evidence.
+
+### R015 unqualified historical policy accounting
+
+Type-only ActionDecision candidates are not trusted ledger entries.
+When such candidates exist for the requested action kind, accounting is unavailable.
+Existing rate-limit and blast-radius checks then refuse to infer unused budget.
+No old record is promoted, rewritten or migrated by this guard.
+The refusal lasts until a separate reviewed historical-data repair removes the ambiguity.
+Kinds without such candidates retain the normal labeled ledger path.

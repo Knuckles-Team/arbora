@@ -318,3 +318,11 @@ an explicitly selected matching released server in an isolated anonymous store.
 It covers create/add read-by-label and canonical ActionPolicy ledger readback.
 Legacy type-only records stay unchanged and do not become labeled receipts.
 An absent native binary skips explicitly; these tests do not qualify browser admission.
+
+## Unqualified historical policy accounting (R015)
+
+`tests/access/test_legacy_policy_history.py` reproduces type-only audit history
+against the released native server. Such candidates make requested-kind accounting
+unavailable. Existing rate and blast checks then refuse unused-budget assumptions.
+The test verifies that the old record remains unchanged and unrelated kinds still work.
+This is safe refusal, not historical migration or receipt qualification.

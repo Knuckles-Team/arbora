@@ -721,6 +721,13 @@ class ActionPolicy:
         if self.engine is None:
             return []
         try:
+            legacy = self.engine.query_cypher(
+                "MATCH (d {type: 'ActionDecision', kind: $kind}) "
+                "WHERE d.node_type IS NULL RETURN d.id AS id LIMIT 1",
+                {"kind": kind},
+            )
+            if legacy:
+                return None
             rows = self.engine.query_cypher(
                 "MATCH (d:ActionDecision {kind: $kind}) "
                 "RETURN d.id AS id, d.target AS target, d.decision AS decision, "
