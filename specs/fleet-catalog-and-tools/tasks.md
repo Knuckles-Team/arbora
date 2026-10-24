@@ -250,6 +250,12 @@ Preserve all existing R003 tasks and receipts. These added runtime cases have no
 - [ ] **ARBORA-FLEET-R043.5:** Evidence.
 - [ ] **ARBORA-FLEET-R043.6:** Hot-path proof.
 - [ ] **ARBORA-FLEET-R043.7:** Source executor.
+- [x] **ARBORA-FLEET-R044:** dev4 content surface.
+- [x] **ARBORA-FLEET-R044.1:** dev4 content surface.
+- [x] **ARBORA-FLEET-R044.2:** dev4 content surface.
+- [x] **ARBORA-FLEET-R044.3:** dev4 content surface.
+- [x] **ARBORA-FLEET-R044.4:** dev4 content surface.
+- [x] **ARBORA-FLEET-R044.5:** dev4 content surface.
 
 ### R015/R029 WebUI bridge integration evidence
 

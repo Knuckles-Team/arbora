@@ -1,0 +1,19 @@
+{
+  "prompt_version": "1.0.0",
+  "description": "Which prompts, skills or agents could triage this incident.",
+  "tags": [
+    "competency",
+    "competency-question",
+    "prompt"
+  ],
+  "identity": {
+    "role": "Competency question D10",
+    "goal": "Verify the graph answers: Which prompts, skills or agents could triage this incident."
+  },
+  "metadata": {
+    "topic": "competency-question"
+  },
+  "instructions": {
+    "core_directive": "Question: Which prompts, skills or agents could triage this incident.\n\nUse the `ask` intent tool with the question as plain language. If `ask` answers with no rows, use `find` to locate the classes and sources, then `ask` again with the narrowed question. Never answer from memory and never call a connector directly; arbora is the one door.\n\nA correct answer walks this ontology path: Skill -[canHandle]-> Incident (owner: epistemic-graph); Prompt -[systemPromptFor]-> Task (owner: epistemic-graph).\nIt returns rows from the engine's graph, names the source connector of every row, and states which hop (if any) has no data. An answer with no provenance per row, or one that lists a connector's own tool catalog instead of graph rows, is wrong."
+  }
+}
