@@ -1383,8 +1383,10 @@
     {
       "id": "ARBORA-IDENTITY-R004.8.1",
       "title": "Source text send",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "4894c8b19399"
+      ],
       "verified_by": [
         "tests/a2a/test_anonymous_send.py:24"
       ]
@@ -1410,8 +1412,10 @@
     {
       "id": "ARBORA-IDENTITY-R004.8.3.1",
       "title": "Source answer storage",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "4894c8b19399"
+      ],
       "verified_by": [
         "tests/a2a/test_anonymous_send.py:25"
       ]
