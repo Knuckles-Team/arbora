@@ -1944,9 +1944,9 @@
       "landed_in": [
         "191af7948d99",
         "28cc061c8f06",
+        "302124f44ccc",
         "34077185335e",
-        "80f6b7b53f91",
-        "c7208d7d3822"
+        "80f6b7b53f91"
       ],
       "verified_by": [
         "tests/agent_host/test_log_access.py:442",
