@@ -35,7 +35,7 @@ class StepEvidence(Params):
 
 
 class ExecutionStep(Params):
-    key: str = Field(min_length=1, max_length=8192)
+    key: str = Field(min_length=1, max_length=16384)
     kind: Literal["plan_step"] = "plan_step"
     task_id: str = Field(min_length=1, max_length=512)
     status: StepStatus = "unobserved"
@@ -44,8 +44,8 @@ class ExecutionStep(Params):
 
 class ExecutionDependency(Params):
     kind: Literal["depends_on"] = "depends_on"
-    source: str = Field(min_length=1, max_length=8192)
-    target: str = Field(min_length=1, max_length=8192)
+    source: str = Field(min_length=1, max_length=16384)
+    target: str = Field(min_length=1, max_length=16384)
 
 
 class ExecutionGraphSnapshot(Params):
@@ -156,11 +156,7 @@ def project_graph(
     snapshot = ExecutionGraphSnapshot(
         plan_digest=digest,
         nodes=list(nodes.values()),
-        edges=[
-            ExecutionDependency(source=nodes[dep].key, target=nodes[task_id].key)
-            for task_id, dependencies in tasks.items()
-            for dep in dependencies
-        ],
+        edges=_bounded_edges(nodes, tasks),
         covered_after=page["next_after"],
         has_more=page["has_more"],
     )
@@ -173,6 +169,32 @@ def project_graph(
     if len(json.dumps(result).encode()) > MAX_PAGE_BYTES:
         raise ValueError("execution graph exceeds byte bound")
     return result
+
+
+def _bounded_edges(
+    nodes: dict[str, ExecutionStep], tasks: dict[str, list[str]]
+) -> list[ExecutionDependency]:
+    """Bound contributions before allocating a whole serialized dense graph."""
+    size = 0
+    for node in nodes.values():
+        size = _bounded_contribution(node, size)
+    edges = []
+    for task_id, dependencies in tasks.items():
+        for dependency in dependencies:
+            edge = ExecutionDependency(
+                source=nodes[dependency].key, target=nodes[task_id].key
+            )
+            size = _bounded_contribution(edge, size)
+            edges.append(edge)
+    return edges
+
+
+def _bounded_contribution(value: Params, size: int) -> int:
+    # Summed members are a lower bound; the final exact check includes framing.
+    size += len(json.dumps(value.model_dump(mode="json")).encode())
+    if size > MAX_PAGE_BYTES:
+        raise ValueError("execution graph exceeds byte bound")
+    return size
 
 
 def _apply_evidence(

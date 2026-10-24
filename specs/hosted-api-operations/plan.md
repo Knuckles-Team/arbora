@@ -971,3 +971,7 @@ must not widen the values that existing callers must handle. In comparisons
 with a boolean, an empty object schema means true. Existing dictionary-to-dictionary
 checks and provider-digest review requirements remain unchanged. Invalid schema
 types fail closed. Tests include the installed provider's unconstrained result.
+
+The flat projection permits canonical keys for the full run/step ID bounds,
+including non-BMP Unicode. It counts serialized node and edge contributions
+before whole-snapshot serialization, then checks the exact final byte size.

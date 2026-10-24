@@ -1382,7 +1382,8 @@
       "title": "API surface and compatibility drift gates",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "4b9d181069e4"
+        "4b9d181069e4",
+        "6c6f9d9f357d"
       ],
       "verified_by": [
         "tests/api/test_backward_compat_drift_gate.py:42",
@@ -1416,7 +1417,8 @@
       "title": "Backward-compatibility drift gate — backward-compat slice",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "4b9d181069e4"
+        "4b9d181069e4",
+        "6c6f9d9f357d"
       ],
       "verified_by": [
         "tests/api/test_backward_compat_drift_gate.py:42",

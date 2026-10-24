@@ -528,3 +528,64 @@ async def test_lookahead_does_not_advance_the_covered_lifecycle(monkeypatch):
     assert snapshot["covered_after"] == 1000 and snapshot["has_more"] is True
     assert snapshot["nodes"][0]["status"] == "unobserved"
     assert snapshot["nodes"][0]["evidence"] is None
+
+
+def test_maximum_non_bmp_id_keys_fit_all_key_fields():
+    run_id = "😀" * 512
+    ids = ["🧪" * 512, "🚀" * 512]
+    raw = native_plan(
+        task_plan={
+            "plan_digest": "unicode-plan",
+            "total_tasks": 2,
+            "output_task_id": ids[1],
+            "tasks": [
+                {"task_id": ids[0], "depends_on": []},
+                {"task_id": ids[1], "depends_on": [ids[0]]},
+            ],
+        }
+    )
+    data = rows(event(run_id=run_id))
+    page = project_page(data, RunEventsParams(run_id=run_id))
+    value = project_graph(request(run_id=run_id), declared_topology(raw), data, page)
+    snapshot = value["snapshot"]
+    keys = [node["key"] for node in snapshot["nodes"]]
+    assert all(8192 < len(key) <= 16384 for key in keys)
+    assert [json.loads(key) for key in keys] == [
+        [run_id, "plan_step", task] for task in ids
+    ]
+    assert snapshot["edges"] == [
+        {"kind": "depends_on", "source": keys[0], "target": keys[1]}
+    ]
+
+
+def test_dense_graph_preflight_stops_before_whole_snapshot_serialization(monkeypatch):
+    from arbora.api.ops import run_graph
+
+    original = json.dumps
+    largest_member = 0
+
+    def bounded_dumps(value, *args, **kwargs):
+        nonlocal largest_member
+        assert not (isinstance(value, dict) and "snapshot" in value)
+        encoded = original(value, *args, **kwargs)
+        largest_member = max(largest_member, len(encoded))
+        return encoded
+
+    ids = [str(n) + "😀" * 500 for n in range(64)]
+    raw = native_plan(
+        task_plan={
+            "plan_digest": "dense-plan",
+            "total_tasks": 64,
+            "output_task_id": ids[-1],
+            "tasks": [
+                {"task_id": key, "depends_on": ids[:index]}
+                for index, key in enumerate(ids)
+            ],
+        }
+    )
+    data = rows(event())
+    page = project_page(data, RunEventsParams(run_id="run-one"))
+    monkeypatch.setattr(run_graph.json, "dumps", bounded_dumps)
+    with pytest.raises(ValueError, match="byte bound"):
+        project_graph(request(), declared_topology(raw), data, page)
+    assert largest_member < 65536
