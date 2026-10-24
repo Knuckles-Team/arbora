@@ -61,6 +61,7 @@ def test_the_served_engine_creates_through_create_node_if_absent(monkeypatch) ->
     assert msgpack.unpackb(params["properties_msgpack"]) == {
         "run_id": "r",
         "type": "RunEvent",
+        "node_type": "RunEvent",
     }
 
 
