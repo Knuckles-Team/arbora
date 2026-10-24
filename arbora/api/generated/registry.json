@@ -23521,6 +23521,71 @@
       "verb": "find"
     },
     {
+      "audit": "none",
+      "binding": {
+        "handler": "arbora.api.ops.fleet.handle_pack_status",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "show the connector pack status of gitlab-mcp"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "fleet.packs.status",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.fleet.FleetPackStatusParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "connector": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Connector",
+              "type": "string"
+            }
+          },
+          "required": [
+            "connector"
+          ],
+          "title": "FleetPackStatusParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.fleet.FleetResult",
+        "schema": {
+          "properties": {
+            "value": {
+              "title": "Value"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "FleetResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "agent:pack-control"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Show one connector's durable pack status in the engine",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "ask"
+    },
+    {
       "audit": "event",
       "binding": {
         "handler": "arbora.api.ops.fleet.handle_fleet_operation",
@@ -27076,5 +27141,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "71ecacbf75cb3d9ae7a799e5da7507e965ff3d2a2302786b229e8a4d617fcd11"
+  "registry_digest": "ce35e3e02b0e24a6eb88cbeed77b44089efeb313f408e9579e2e15ceb38627a2"
 }

@@ -61,7 +61,7 @@ def validate_provider_schema(
     Raises :class:`ValueError` for a non-conforming input; the invoke pipeline
     maps that to ``INVALID_ARGUMENT``.
     """
-    from jsonschema import Draft202012Validator, ValidationError
+    from jsonschema import Draft202012Validator
     from referencing import Registry, Resource
     from referencing.jsonschema import DRAFT202012
 
@@ -85,11 +85,73 @@ def validate_provider_schema(
         {"$ref": f"{uri}#{pointer}"},
         registry=Registry().with_resource(uri, resource),
     )
-    try:
-        validator.validate(dict(params))
-    except ValidationError as exc:
-        raise ValueError("operation input does not match its EG schema") from exc
+    errors = sorted(
+        validator.iter_errors(dict(params)), key=lambda error: list(error.path)
+    )
+    if errors:
+        raise SchemaMismatch(_mismatch_details(errors)) from errors[0]
     return dict(params)
+
+
+class SchemaMismatch(ValueError):
+    """An input that does not match its EG schema, named by field only.
+
+    ARBORA-OPS-R009.4: ``details`` names the unexpected, missing and invalid
+    fields and the schema keyword each failed. It never carries an input value.
+    """
+
+    def __init__(self, details: Mapping[str, Any]) -> None:
+        super().__init__("operation input does not match its EG schema")
+        self.details = dict(details)
+
+
+def _field(path: Any, name: str | None = None) -> str:
+    parts = [str(part) for part in path]
+    if name is not None:
+        parts.append(name)
+    return ".".join(parts) or "$"
+
+
+def _unexpected(error: Any) -> list[str]:
+    allowed = set((error.schema.get("properties") or {}).keys())
+    return [
+        _field(error.path, str(key)) for key in error.instance if key not in allowed
+    ]
+
+
+def _missing(error: Any) -> list[str]:
+    return [
+        _field(error.path, str(key))
+        for key in error.validator_value
+        if key not in error.instance
+    ]
+
+
+#: Schema keyword -> (details key, the field names it reports).
+_NAMED_ERRORS = {
+    "additionalProperties": ("unexpected", _unexpected),
+    "required": ("missing", _missing),
+}
+
+
+def _classified(error: Any) -> tuple[str, list[str]]:
+    named = _NAMED_ERRORS.get(error.validator)
+    if named is not None and isinstance(error.instance, Mapping):
+        key, names = named
+        return key, names(error)
+    return "invalid", [f"{_field(error.path)} ({error.validator})"]
+
+
+def _mismatch_details(errors: list[Any]) -> dict[str, Any]:
+    found: dict[str, set[str]] = {}
+    for error in errors:
+        key, names = _classified(error)
+        found.setdefault(key, set()).update(names)
+    details: dict[str, Any] = {"reason": "input does not match the operation schema"}
+    for key in ("unexpected", "missing", "invalid"):
+        if found.get(key):
+            details[key] = sorted(found[key])[:16]
+    return details
 
 
 def _selected(document: Mapping[str, Any], pointer: str) -> Any:

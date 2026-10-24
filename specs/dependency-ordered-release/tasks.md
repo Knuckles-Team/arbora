@@ -28,6 +28,7 @@ Governing [spec](spec.md) and [plan](plan.md).
 - [ ] `ARBORA-RELEASE-R003.4.8` — Return resolved arguments, results and outcome per step.
 - [ ] `ARBORA-RELEASE-R003.4.9` — Wire `handle_plan_run` to the engine calls, the caller and the step records.
 - [ ] `ARBORA-RELEASE-R003.4.10` — Prove cross-connector data passing through the served operation.
+- [x] `ARBORA-RELEASE-R003.4.11` — served plan runs have a replay owner (step effects keyed from the bound request identity).
 - [ ] `ARBORA-RELEASE-R003.5` — connector-certification row.
 - [ ] `ARBORA-RELEASE-R003.6` — write-back receipt row.
 - [ ] `ARBORA-RELEASE-R003.7` — browser-and-identity-provider login probe row.
