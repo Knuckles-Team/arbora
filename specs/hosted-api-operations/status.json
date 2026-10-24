@@ -983,7 +983,9 @@
       "id": "ARBORA-OPS-R021.4.5",
       "title": "Per-run operation",
       "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "landed_in": [
+        "28183eae667a"
+      ],
       "verified_by": [
         "tests/api/test_run_summary_ops.py:12"
       ],
