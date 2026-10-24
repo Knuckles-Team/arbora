@@ -52,7 +52,7 @@ import threading
 import time
 import uuid
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import StrEnum
 from pathlib import Path
 from typing import Any, ClassVar
@@ -612,6 +612,12 @@ class ActionPolicy:
             setting("ACTION_IRREVERSIBILITY_AVERSION", False, cast=bool)
         )
 
+    def qualified_source_revision(self) -> str:
+        """Read explicit source evidence; this revision grants no action."""
+        from arbora.access.action_policy_source import qualified_policy_source
+
+        return qualified_policy_source(self).revision
+
     # ── policy loading ──────────────────────────────────────────────
 
     def _load_file_policy(self) -> dict[str, Any]:
@@ -686,14 +692,22 @@ class ActionPolicy:
         rules.sort(key=lambda r: -r.priority)
         return rules
 
-    def _match(self, request: ActionRequest) -> tuple[ActionRule, dict[str, Any]]:
+    def _rule_inputs(self, source: Any) -> tuple[dict[str, Any], list[ActionRule]]:
+        """Select live policy inputs or the already captured qualified snapshot."""
+        if source is None:
+            return self._load_file_policy(), self._kg_rules()
+        return source.inputs()
+
+    def _match(
+        self, request: ActionRequest, *, source: Any = None
+    ) -> tuple[ActionRule, dict[str, Any]]:
         """First matching rule — KG overrides first, then file order — plus defaults."""
-        data = self._load_file_policy()
+        data, graph_rules = self._rule_inputs(source)
         raw_defaults = data.get("defaults")
         defaults: dict[str, Any] = (
             raw_defaults if isinstance(raw_defaults, dict) else {}
         )
-        for rule in self._kg_rules():
+        for rule in graph_rules:
             if rule.matches(request):
                 return rule, defaults
         for raw in data.get("rules") or []:
@@ -777,7 +791,7 @@ class ActionPolicy:
 
     # ── assurance verifier (CONCEPT:AU-OS.governance.assurance-state-machine-verifier) ──
 
-    def _verify(self, request: ActionRequest):
+    def _verify(self, request: ActionRequest, *, source: Any = None):
         """Run the deterministic invariant verifier for ``request``.
 
         The reference-existence check (invariant 4) is best-effort: it only
@@ -785,8 +799,14 @@ class ActionPolicy:
         ``known_tools``/``known_targets`` registries (empty/absent ⇒ skipped,
         never a false deny — CONCEPT:AU-OS.governance.fail-closed-claim-check).
         """
-        known_tools = self.option("known_tools")
-        known_targets = self.option("known_targets")
+        if source is None:
+            known_tools = self.option("known_tools")
+            known_targets = self.option("known_targets")
+        else:
+            document, _rules = source.inputs()
+            options = document.get("options") or {}
+            known_tools = options.get("known_tools")
+            known_targets = options.get("known_targets")
         return verify_action(
             request,
             known_tools=frozenset(known_tools) if known_tools else None,
@@ -930,6 +950,58 @@ class ActionPolicy:
                 reason=f"policy unavailable (fail closed): {e}",
                 rule_origin="unavailable",
             )
+        return self._finish_decision(decision)
+
+    def decide_qualified(
+        self, request: ActionRequest, *, expected_revision: str
+    ) -> ActionDecision:
+        """Evaluate one explicit source snapshot through the shared evaluator.
+
+        The exact request must bind its source revision. Source evidence is
+        rechecked after evaluation and audit, never inferred from shipped
+        defaults. The browser owner must still recheck after its own awaits.
+        """
+        from arbora.access.action_policy_source import qualified_policy_source
+
+        try:
+            digest = request.digest()
+            captured = replace(request, params=_canonical_policy_value(request.params))
+            source = qualified_policy_source(self)
+            if (
+                source.revision != expected_revision
+                or request.params.get("policy_source_revision") != expected_revision
+            ):
+                raise RuntimeError("Policy source revision changed")
+            self._check_qualified_request(request, captured, digest)
+            decision = self._decide_inner(captured, source=source)
+            self._check_qualified_request(request, captured, digest)
+            if self.qualified_source_revision() != expected_revision:
+                raise RuntimeError("Policy source changed during evaluation")
+            decision = self._finish_decision(decision)
+            if self.qualified_source_revision() != expected_revision:
+                raise RuntimeError("Policy source changed during audit")
+            self._check_qualified_request(request, captured, digest)
+            return decision
+        except Exception:  # noqa: BLE001 - qualified source absence never widens authority
+            return self._bind_decision_receipt(
+                ActionDecision(
+                    decision=DECISION_UNAVAILABLE,
+                    tier=TIER_FORBIDDEN,
+                    request=request,
+                    reason="qualified policy source unavailable or changed",
+                    rule_origin="unavailable",
+                )
+            )
+
+    @staticmethod
+    def _check_qualified_request(
+        request: ActionRequest, captured: ActionRequest, digest: str
+    ) -> None:
+        if request.digest() != digest or captured.digest() != digest:
+            raise RuntimeError("Qualified action request changed")
+
+    def _finish_decision(self, decision: ActionDecision) -> ActionDecision:
+        request = decision.request
         decision = self._bind_decision_receipt(decision)
         if decision.decision == DECISION_ALLOW_NOTIFY:
             self._notify(
@@ -981,13 +1053,27 @@ class ActionPolicy:
             return self._hold(base, "tier requires human approval")
         return None
 
-    def _decide_inner(self, request: ActionRequest) -> ActionDecision:
+    def _verify_selected_source(self, request: ActionRequest, source: Any):
+        """Preserve the legacy verifier call unless a snapshot was selected."""
+        if source is None:
+            return self._verify(request)
+        return self._verify(request, source=source)
+
+    def _selected_irreversibility_aversion(self, source: Any) -> bool:
+        """Read the selected setting only when evaluation reaches this guard."""
+        if source is None:
+            return self._irreversibility_aversion
+        return source.irreversibility_aversion
+
+    def _decide_inner(
+        self, request: ActionRequest, *, source: Any = None
+    ) -> ActionDecision:
         # CONCEPT:AU-OS.governance.assurance-state-machine-verifier — the deterministic
         # invariant verifier runs BEFORE the rule/tier pipeline: a payload that fails
         # role/schema/precondition/reference checks is denied outright (fail-closed),
         # regardless of what tier its kind/target would otherwise match. This is the
         # enforced half of the gate — the caller's action genuinely does not execute.
-        verify = self._verify(request)
+        verify = self._verify_selected_source(request, source)
         if not verify.ok:
             return ActionDecision(
                 decision=DECISION_DENY,
@@ -999,7 +1085,7 @@ class ActionPolicy:
                 verify_ms=verify.latency_ms,
             )
 
-        rule, defaults = self._match(request)
+        rule, defaults = self._match(request, source=source)
         base = ActionDecision(
             decision=DECISION_DENY,
             tier=rule.tier,
@@ -1033,7 +1119,8 @@ class ActionPolicy:
         # CONCEPT:AU-OS.safety.irreversibility-aversion — irreversibility aversion (opt-in). An irreversible
         # action that would otherwise auto-execute is routed to a human, since
         # policy-gating alone is brittle as autonomy rises.
-        if self._irreversibility_aversion:
+        aversion = self._selected_irreversibility_aversion(source)
+        if aversion:
             if is_irreversible(request.kind):
                 return self._hold(
                     base, "irreversible action — queued for approval (SAFE-1.5)"
