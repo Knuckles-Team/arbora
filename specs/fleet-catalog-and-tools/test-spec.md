@@ -300,3 +300,5 @@ Hot-path proof for `ARBORA-FLEET-R037`: `tests/fleet/test_job_loads_served.py::t
 The WebUI bridge is configured by the host and discovered through the existing preloaded `find` tool. Browser API support and active per-session registrations are separate facts. No preload grants identity, attended consent, execution permission or a browser session. Boot, discovery, owner isolation and teardown regression checks are required; full web-agent execution acceptance remains open.
 
 Discovery retirement regression: controlled verification interleavings cover disconnect and same-reference channel replacement. The final locked snapshot excludes retired or replaced candidates without changing caller authority. Full composed frontend/backend and delegated web-agent execution acceptance remain open.
+
+Served intent integration regression: native harness and WebUI inventories include the served intent registry as well as backing tools. Real FastMCP calls preserve two synthetic owner/tenant sessions and refuse unregistered host tools. This proves the preload inventory path, not attended agent execution.
