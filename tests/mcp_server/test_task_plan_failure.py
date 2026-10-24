@@ -1,7 +1,7 @@
 """Actual AU terminal accounting with a controlled model and EG transport."""
 
 import asyncio
-from dataclasses import asdict, replace
+from dataclasses import asdict
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -84,20 +84,33 @@ async def test_failed_plan_terminal_ledger_exactly_once(chain, monkeypatch, phas
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("kind", ["cancel", "timeout"])
-async def test_interrupted_plan_preserves_measured_usage(chain, kind):
+async def test_interrupted_plan_preserves_measured_usage(chain, kind, monkeypatch):
     host, _, calls = chain
     _, eg = task_plan_runtime._contracts()
     reached = asyncio.Event()
+    planning_deadlines = []
+
+    class RecordingAsyncio:
+        """Expose the planning deadline so the test expires it, not a clock."""
+
+        def __getattr__(self, name):
+            return getattr(asyncio, name)
+
+        @staticmethod
+        def timeout(delay):
+            planning_deadlines.append(asyncio.timeout(delay))
+            return planning_deadlines[-1]
 
     async def pause(*args):
         reached.set()
+        if kind == "timeout":
+            # Expire the deadline only once planning reached the awaited
+            # publication, so host load cannot expire it earlier.
+            planning_deadlines[0].reschedule(asyncio.get_running_loop().time())
         await asyncio.Future()
 
     eg.send_publish_current_plan = pause
-    if kind == "timeout":
-        host = replace(
-            host, task_plan_config=replace(host.task_plan_config, timeout_seconds=0.05)
-        )
+    monkeypatch.setattr(task_plan_runtime, "asyncio", RecordingAsyncio())
     events = []
     host_ports.register_run_event_sink(events.append)
 
