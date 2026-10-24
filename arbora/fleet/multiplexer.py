@@ -5174,6 +5174,12 @@ class MCPMultiplexer:
             meta = getattr(tobj, "meta", None) if tobj else None
             if meta:
                 entry["meta"] = meta
+            # The catalog classifies a tool's effect from its annotations; a
+            # live-child probe without them turns every read-only tool into
+            # a write, so a governed READ call is refused.
+            annotations = _bounded_tool_annotations(tobj) if tobj else None
+            if annotations is not None:
+                entry["annotations"] = annotations
             out.append(entry)
         return out
 

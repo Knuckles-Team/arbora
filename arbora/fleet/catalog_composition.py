@@ -40,8 +40,9 @@ async def _cached_protocol(mux: CachedProbe) -> Mapping[str, Mapping[str, Any]]:
     return dict(mux._probe_cache)
 
 
-#: A primed server is not re-probed before this many seconds, even when its
-#: probe failed or is never cached (an OAuth-gated child).
+#: A server whose probe failed or is never cached (an OAuth-gated child) is
+#: not re-probed before this many seconds. A cached probe that is later
+#: invalidated is re-probed on the next request.
 PRIME_RETRY_S = 60.0
 #: One server's priming probe may take at most this long.
 PRIME_TIMEOUT_S = 20.0
@@ -89,6 +90,13 @@ def probe_primer(
                         server,
                         type(exc).__name__,
                     )
+                    continue
+                if server in mux._probe_cache:
+                    # The window throttles failed and never-cached probes only.
+                    # A cached probe that a later schema refresh drops must be
+                    # re-primed on the next request, or its tools lose their
+                    # annotations and a read-only tool resolves as a write.
+                    attempted.pop(server, None)
 
     return prime
 
