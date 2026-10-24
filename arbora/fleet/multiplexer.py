@@ -44,7 +44,7 @@ from urllib.parse import urlsplit
 import fastmcp.exceptions as _fastmcp_exceptions
 import fastmcp.tools as _fastmcp_tools
 import mcp as _mcp
-from mcp.client.session import ClientSession
+from mcp.client.session import ClientSession, IncomingMessage, MessageHandlerFnT
 
 from arbora.fleet.protocol_compat import mcp_types_module
 
@@ -788,6 +788,29 @@ def _bounded_tool_annotations(tool: _typing.Any) -> dict | None:
     if not isinstance(dumped, dict):
         raise RuntimeError("MCP child tool catalog is invalid")
     return dumped
+
+
+def _live_tool_entry(original: str, tobj: _typing.Any) -> dict[str, _typing.Any]:
+    """One mounted tool's probe row: name, description, schema, meta, annotations.
+
+    The catalog classifies a tool's effect from its annotations; a live-child
+    probe without them turns every read-only tool into a write, so a governed
+    READ call is refused.
+    """
+    if tobj is None:
+        return {"name": original, "description": "", "inputSchema": {}}
+    entry: dict[str, _typing.Any] = {
+        "name": original,
+        "description": tobj.description or "",
+        "inputSchema": tobj.input_schema or {},
+    }
+    meta = getattr(tobj, "meta", None)
+    if meta:
+        entry["meta"] = meta
+    annotations = _bounded_tool_annotations(tobj)
+    if annotations is not None:
+        entry["annotations"] = annotations
+    return entry
 
 
 def _bounded_tool_schemas(tool: _typing.Any) -> dict[str, _typing.Any]:
@@ -2345,6 +2368,7 @@ class MCPMultiplexer:
         self._fleet_onboarding: dict[str, _typing.Any] | None = None
         # Called once per completed child handshake (ARBORA-FLEET-R041.7).
         self._handshake_listener: _typing.Callable[..., None] | None = None
+        self._list_changed_tasks: set[_typing.Any] = set()
         self.exit_stack = contextlib.AsyncExitStack()
         self.sessions: dict[str, ClientSession] = {}
         # Per-child hardening layer (CONCEPT:AU-ECO.mcp.profile-differences-from-client): concurrency limits and
@@ -4037,33 +4061,80 @@ class MCPMultiplexer:
         """Install the callback that schedules onboarding after a handshake."""
         self._handshake_listener = listener
 
-    def _announce_handshake(
-        self, server_name: str, session: _typing.Any, tools: list[_typing.Any]
+    async def _announce_handshake(
+        self,
+        server_name: str,
+        session: _typing.Any,
+        tools: list[_typing.Any],
+        reason: str = "handshake",
     ) -> None:
         """Tell the listener a child handshake completed; never raises.
 
-        Runs after ``initialize`` and ``tools/list``. The listener only
-        schedules work off this path, so serving is never delayed or failed
-        by onboarding (ARBORA-FLEET-R041.7, R041.9).
+        Runs after ``initialize`` or ``server/discover`` and ``tools/list``.
+        The change signal is a content digest of the served tool, prompt and
+        resource lists and of ``connector://resources``, never the serverInfo
+        version (ARBORA-FLEET-R041.8). The listener only schedules work off
+        this path, so serving is never delayed or failed by onboarding
+        (ARBORA-FLEET-R041.7, R041.9).
         """
         listener = self._handshake_listener
         if listener is None:
             return
         try:
-            from arbora.fleet.onboarding import handshake_catalog_digest
+            from arbora.fleet.onboarding import served_catalog_digest
 
-            info = getattr(
-                getattr(session, "initialize_result", None), "serverInfo", None
-            )
+            # ``server_info`` is set by both an initialize and a discover
+            # session; ``initialize_result`` is empty on a discover session.
+            info = getattr(session, "server_info", None)
             listener(
                 server_name,
                 server_version=str(getattr(info, "version", "") or ""),
-                digest=handshake_catalog_digest(tools),
+                digest=await served_catalog_digest(session, tools),
+                reason=reason,
             )
         except Exception as exc:
             logger.warning(
                 "handshake onboarding not scheduled: %s", redact_for_log(exc)
             )
+
+    def _child_message_handler(
+        self, server_name: str, holder: list[_typing.Any]
+    ) -> MessageHandlerFnT:
+        """Re-capture a child whose lists change (ARBORA-FLEET-R041.8).
+
+        A server that advertises ``listChanged`` sends tool, prompt or resource
+        list-changed notifications; each one re-digests the child and asks the
+        one onboarding pass to run again. A server that sends none is covered
+        by the next handshake.
+        """
+        changed = (
+            mcp_types.ToolListChangedNotification,
+            mcp_types.PromptListChangedNotification,
+            mcp_types.ResourceListChangedNotification,
+        )
+
+        async def refresh() -> None:
+            session = holder[0] if holder else None
+            if session is None:
+                return
+            try:
+                tools = list((await session.list_tools()).tools)
+            except Exception as exc:
+                logger.warning(
+                    "list_changed refresh of %s failed: %s",
+                    server_name,
+                    redact_for_log(exc),
+                )
+                return
+            await self._announce_handshake(server_name, session, tools, "list_changed")
+
+        async def handler(message: IncomingMessage) -> None:
+            if isinstance(message, changed):
+                task = asyncio.ensure_future(refresh())
+                self._list_changed_tasks.add(task)
+                task.add_done_callback(self._list_changed_tasks.discard)
+
+        return handler
 
     async def _open_one_session(
         self,
@@ -4102,9 +4173,15 @@ class MCPMultiplexer:
                 stack,
             )
 
+        holder: list[_typing.Any] = []
         session = await stack.enter_async_context(
-            ClientSession(read_stream, write_stream)
+            ClientSession(
+                read_stream,
+                write_stream,
+                message_handler=self._child_message_handler(server_name, holder),
+            )
         )
+        holder.append(session)
         # Cold starts can legitimately exceed 30 seconds on constrained hosts
         # (for example, a Python MCP child importing from a WSL-mounted volume).
         # Keep the handshake bounded, but honor the same per-child connect
@@ -4180,7 +4257,7 @@ class MCPMultiplexer:
             tools_result = await sessions[0].list_tools()
             _bounded_tool_catalog(tools_result.tools)
             tools = list(tools_result.tools)
-            self._announce_handshake(server_name, sessions[0], tools)
+            await self._announce_handshake(server_name, sessions[0], tools)
             if runtime_policy is not None:
                 tools = self._admit_runtime_policy_tools(
                     server_name,
@@ -5111,16 +5188,7 @@ class MCPMultiplexer:
         for prefixed, (srv, original) in self.tool_to_server.items():
             if srv != server_name:
                 continue
-            tobj = self.tool_object(prefixed)
-            entry: dict[str, _typing.Any] = {
-                "name": original,
-                "description": (tobj.description if tobj else "") or "",
-                "inputSchema": (tobj.input_schema if tobj else {}) or {},
-            }
-            meta = getattr(tobj, "meta", None) if tobj else None
-            if meta:
-                entry["meta"] = meta
-            out.append(entry)
+            out.append(_live_tool_entry(original, self.tool_object(prefixed)))
         return out
 
     def _cache_probe(self, server_name: str, info: dict) -> dict:

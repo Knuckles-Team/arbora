@@ -75,6 +75,7 @@ def context(principal="caller-a", tenant="tenant-a", client=None):
 
 def snapshot(**changes):
     return {
+        "task_plan": None,
         "run_id": "run-a",
         "revision": 2,
         "observed_at_ms": NOW_MS,
@@ -286,3 +287,11 @@ async def test_native_authorization_refusal_is_not_hidden_as_missing_plan(monkey
         await read_current_plan(ctx, "run-a", clock=lambda: NOW)
     assert ctx.client.claims.get() is None
     assert caught.value.code == "ACCESS_DENIED"
+
+
+def test_private_executable_plan_is_not_projected():
+    raw = snapshot(task_plan={"tasks": [{"prompt": "private executable prompt"}]})
+    result = reader_module._project(raw)
+    assert result.availability == "available"
+    assert "private executable prompt" not in result.model_dump_json()
+    assert "task_plan" not in result.model_dump_json()

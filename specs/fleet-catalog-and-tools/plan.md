@@ -428,6 +428,14 @@ WebUI startup already injects the one browser-control service. Bind its owner lo
 
 This source batch does not widen the human-only browser execution operations to MCP or delegation. Agent execution authority, served installed-provider acceptance remain open. The default WebUI profile `webui-assistant` now selects the same governed `find`/`act` toolset as the fleet profile at the existing A2A run boundary. This changes requested tool inventory only; the existing executor receives the original admitted session. Other profiles retain their existing inventory.
 
+### R015 native run identity during attended cancellation
+
+Native A2A task identifiers may differ from the dispatched run identifier.
+After authorizing the WorkItem, cancellation revokes its canonical a2a_run_id.
+Legacy tasks retain their task identifier as the run identifier.
+Both new cancellation and already-cancelled replay withdraw the same live origin.
+The native task identifier must not leave a pending attended proposal live.
+
 ### R015 native node-label producer mapping
 
 ServedEngine writes the public engine's node_type label property.

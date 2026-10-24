@@ -138,7 +138,7 @@ class MultiplexerOps:
 
         ``ident`` is a prompt name or a resource URI. The item must be in the
         admitted catalog, visible to the caller and loadable under current
-        policy; anything else is the same refusal, so a missing item and a
+        policy; anything else is the same ``NOT_FOUND`` refusal, so a missing item and a
         hidden one cannot be told apart (ARBORA-FLEET-R040).
         """
         _require_delegate_scope(caller)
@@ -152,7 +152,9 @@ class MultiplexerOps:
             or not item.required_scopes.issubset(caller.effective_scopes)
             or not await self._loadable(item, caller)
         ):
-            raise PermissionError("fleet item is unavailable")
+            from arbora.api.invoke.pipeline import OperationRefused
+
+            raise OperationRefused("NOT_FOUND", {"reason": "fleet item is unavailable"})
         return item
 
     async def relay_list(

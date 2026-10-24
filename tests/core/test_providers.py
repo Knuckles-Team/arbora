@@ -217,7 +217,7 @@ def test_source_connector_group_resolves_bounded_data_dirs(
 ) -> None:
     owned = tmp_path / "pkg" / "connectors"
     owned.mkdir(parents=True)
-    (owned / "mcp_source_presets.json").write_text("{}", encoding="utf-8")
+    (owned / "data.json").write_text("{}", encoding="utf-8")
     _serve_entries(monkeypatch, _entry(tmp_path, target="pkg.connectors"))
 
     assert providers.iter_provider_dirs(providers.SOURCE_CONNECTOR_PROVIDER_GROUP) == [

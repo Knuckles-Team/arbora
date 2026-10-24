@@ -208,3 +208,13 @@ def use_actor(ctx: ActorContext) -> Iterator[ActorContext]:
         yield ctx
     finally:
         _current.reset(token)
+
+
+@contextmanager
+def suspend_actor() -> Iterator[None]:
+    """Remove ambient identity at an explicitly anonymous boundary."""
+    token = _current.set(None)
+    try:
+        yield None
+    finally:
+        _current.reset(token)

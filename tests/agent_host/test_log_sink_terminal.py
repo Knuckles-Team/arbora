@@ -127,8 +127,8 @@ async def test_restarted_source_metadata_and_rotation_gap_in_terminal(
                 app = AgentApp(client=agent, host_receipt=receipt, log_reader=reader)
                 async with app.run_test(size=(150, 40)) as pilot:
                     await app._cmd_processor.cmd_logs("")
-                    await pilot.pause(0.1)
                     log = app.screen.query_one("#server-log", RichLog)
+                    await wait_for_log(pilot, log, "retained-message")
                     text = "".join(line.text for line in log.lines)
                     assert "host=host-1 seq=1 request=original-request" in text
                     assert "retained-message" in text
@@ -147,8 +147,9 @@ async def test_restarted_source_metadata_and_rotation_gap_in_terminal(
                         )
                     subscription.start()
                     assert subscription._cursor == cursor
-                    await pilot.pause(0.5)
-                    text = "".join(line.text for line in log.lines)
+                    text = await wait_for_log(
+                        pilot, log, "resume position is no longer retained"
+                    )
                     assert "resume position is no longer retained" in text
                     assert "retained-message" not in text
                     assert not reader.accepts(receipt)

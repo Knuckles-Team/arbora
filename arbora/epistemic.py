@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import contextvars
 import inspect
 import threading
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterable, Mapping
@@ -294,6 +295,48 @@ class ClusterTopology:
             ) from exc
 
 
+# A blocking bridge creates a short-lived event loop. Its clients must not
+# replace the process pool's serving-loop clients or outlive that short loop.
+_temporary_clients: contextvars.ContextVar[
+    dict[object, dict[str, EpistemicClient]] | None
+] = contextvars.ContextVar("arbora_temporary_clients", default=None)
+
+
+async def _close_temporary_clients(
+    owned: dict[object, dict[str, EpistemicClient]],
+) -> None:
+    failures: list[Exception] = []
+    for clients in owned.values():
+        for client in clients.values():
+            try:
+                await client.close()
+            except Exception as exc:  # Close all owned transports before reporting.
+                failures.append(exc)
+    if failures:
+        raise ExceptionGroup("temporary client cleanup failed", failures)
+
+
+@contextlib.asynccontextmanager
+async def temporary_client_scope() -> AsyncIterator[None]:
+    """Own request-loop transports until their readers have been joined."""
+    owned: dict[object, dict[str, EpistemicClient]] = {}
+    token = _temporary_clients.set(owned)
+    try:
+        yield
+    finally:
+        _temporary_clients.reset(token)
+        cleanup = asyncio.create_task(_close_temporary_clients(owned))
+        cancelled = False
+        while not cleanup.done():
+            try:
+                await asyncio.shield(cleanup)
+            except asyncio.CancelledError:
+                cancelled = True
+        cleanup.result()  # A close failure must remain visible.
+        if cancelled:
+            raise asyncio.CancelledError
+
+
 class EpistemicClientPool:
     """Own exactly one long-lived EG transport client per named graph.
 
@@ -345,10 +388,11 @@ class EpistemicClientPool:
             raise AuthorityError("Client pool authentication mode mismatch")
         target = _non_empty("graph", graph)
         loop = asyncio.get_running_loop()
+        temporary = _temporary_clients.get()
+        clients = self._clients if temporary is None else temporary.setdefault(self, {})
         with self._lock:
-            self._check_binding(target, context)
-            existing = self._clients.get(target)
-            if existing is not None and self._client_loops.get(target) is loop:
+            existing = self._cached_client(context, target, clients, loop)
+            if existing is not None:
                 return existing
         authority = (
             {"auth_mode": "none"}
@@ -362,22 +406,40 @@ class EpistemicClientPool:
         refusal: Exception | None = None
         with self._lock:
             try:
-                self._check_binding(target, context)
+                current = self._cached_client(context, target, clients, loop)
             except Exception as exc:  # noqa: BLE001 - re-raised after closing the transport
                 refusal, surplus = exc, client
             else:
-                current = self._clients.get(target)
-                if current is not None and self._client_loops.get(target) is loop:
+                if current is not None:
                     surplus, client = client, current
                 else:
                     self._graph_tenants[target] = context.tenant
-                    self._clients[target] = client
-                    self._client_loops[target] = loop
+                    clients[target] = client
+                    if temporary is None:
+                        self._client_loops[target] = loop
         if surplus is not None:
             await surplus.close()
         if refusal is not None:
             raise refusal
         return client
+
+    def _cached_client(
+        self,
+        context: ClientContext,
+        target: str,
+        clients: dict[str, EpistemicClient],
+        loop: asyncio.AbstractEventLoop,
+    ) -> EpistemicClient | None:
+        """Resolve an owned client while the pool lock protects admission."""
+        self._check_binding(target, context)
+        current = clients.get(target)
+        if current is None:
+            return None
+        if clients is not self._clients or self._client_loops.get(target) is loop:
+            return current
+        if self._client_loops[target].is_running():
+            raise RuntimeError("live client belongs to another event loop")
+        return None
 
     def _check_binding(self, target: str, context: ClientContext) -> None:
         if self._closed:

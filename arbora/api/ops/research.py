@@ -58,9 +58,9 @@ WEB_EXTRACT = "web_extract"
 ARCHIVEBOX_SERVER = "archivebox-mcp"
 
 #: The SourceIngest streams pages and chunks are committed under. Each record
-#: is bound to the fleet connector that fetched it, so its mapping reference is
-#: ``manifest:<fleet server>#schema_mappings/<Document|Chunk>`` in the pack
-#: Arbora's fleet onboarding imported for that server.
+#: is bound to the fleet connector that fetched it. The Document and Chunk
+#: record types resolve against the ``connector://resources`` declaration that
+#: connector served and Arbora's fleet onboarding captured (ARBORA-FLEET-R041.13).
 PAGE_STREAM = "web_page"
 CHUNK_STREAM = "web_chunk"
 BACKEND_SERVERS = {"webarchiver": WEBARCHIVER_SERVER, "archivebox": ARCHIVEBOX_SERVER}
@@ -328,7 +328,8 @@ class FleetCaller:
 
     context: Any
 
-    async def call(self, server: str, tool: str, arguments: dict[str, Any]) -> Any:
+    async def decision(self, server: str, tool: str, arguments: dict[str, Any]) -> Any:
+        """The caller-scope-checked effect decision for one fleet tool call."""
         from arbora.api.ops import fleet
 
         gateway = self.context.services.get("fleet_gateway")
@@ -345,7 +346,12 @@ class FleetCaller:
             raise OperationRefused(
                 "SCOPE_DENIED", {"server": server, "missing": sorted(missing)}
             )
-        return await gateway.call(
+        return decision
+
+    async def call(self, server: str, tool: str, arguments: dict[str, Any]) -> Any:
+        decision = await self.decision(server, tool, arguments)
+        caller = self.context.caller
+        return await self.context.services["fleet_gateway"].call(
             caller,
             server,
             tool,
@@ -490,6 +496,7 @@ class SourceIngestWriter:
         for backend in sorted({doc.page.backend for doc in documents}):
             batch = [doc for doc in documents if doc.page.backend == backend]
             connector = BACKEND_SERVERS[backend]
+            _require_declared_mappings(connector)
             for binding, records in (
                 (
                     IngestBinding(connector=connector, stream=PAGE_STREAM),
@@ -514,6 +521,29 @@ class SourceIngestWriter:
                 affected += receipt.affected_count
                 relationships += receipt.relationship_count
         return {"affected": affected, "relationships": relationships}
+
+
+def _require_declared_mappings(connector: str) -> None:
+    """Refuse when a captured declaration lacks the Document or Chunk mapping.
+
+    The mapping comes from the connector's own ``connector://resources``
+    declaration. A connector whose declaration was not captured yet is left to
+    the engine, which refuses an unknown mapping itself.
+    """
+    from arbora.fleet.declarations import declaration_of, declared_mapping
+
+    if declaration_of(connector) is None:
+        return
+    missing = [
+        record_type
+        for record_type in ("Document", "Chunk")
+        if declared_mapping(connector, record_type) is None
+    ]
+    if missing:
+        raise OperationRefused(
+            "MAPPING_UNDECLARED",
+            {"connector": connector, "record_types": missing},
+        )
 
 
 def _page_document(document_cls: Any, doc: IngestedDocument) -> Any:

@@ -280,6 +280,7 @@ def compose_served_invocation(
     plan_seal_key: bytes | None = None,
     bindings: Mapping[str, Any] | None = None,
     fleet_effect: Any = None,
+    task_plan_config: Any = None,
 ) -> Any:
     """One admitted :class:`HostedInvocation` over the served EG pool."""
     from arbora.api.http.auth import (
@@ -316,6 +317,12 @@ def compose_served_invocation(
     minted = session()
     bindings = _with_ingest_runner(bindings, pool, graph, connect_context)
     bindings = _with_task_plan_schema(bindings, pool, graph, connect_context, session)
+    step_invoke = None
+    if bindings is not None and "plan_step_invoke" not in bindings:
+        from arbora.api.ops.plans import LateStepInvoke
+
+        step_invoke = LateStepInvoke()
+        bindings = {**bindings, "plan_step_invoke": step_invoke}
 
     async def service_client() -> Any:
         return await pool.connected_client(connect_context(session().tenant), graph)
@@ -377,8 +384,11 @@ def compose_served_invocation(
         audit_client_factory=audit_client,
         **changes,
     )
+    if step_invoke is not None:
+        step_invoke.bind(services)
     return HostedInvocation(
         services=services,
+        task_plan_config=task_plan_config,
         authenticator=AmbientHTTPAuthenticator(
             session_for_request=verified_bearer_session_for_request
         ),
@@ -408,8 +418,12 @@ def served_invocation_from_settings(
     """
     from arbora.core.settings import runtime_config, setting
     from arbora.mcp_server.served_engine import process_engine_pool
+    from arbora.mcp_server.task_plan import configured_task_plan
 
+    task_plan_config = configured_task_plan()
     if not runtime_config.graph_service_endpoints:
+        if task_plan_config is not None:
+            raise ValueError("task planning requires graph service endpoints")
         return None
     # The one process pool: startup composition reads EG through it too.
     pool = process_engine_pool()
@@ -425,4 +439,5 @@ def served_invocation_from_settings(
         plan_seal_key=bytes.fromhex(raw_key) if raw_key else None,
         bindings=bindings,
         fleet_effect=fleet_effect,
+        task_plan_config=task_plan_config,
     )

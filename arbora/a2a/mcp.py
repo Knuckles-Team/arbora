@@ -55,12 +55,18 @@ def register_a2a_tools(
     tools: Any = None,
     operation_services: InvokeServices | None = None,
     operation_authenticator: AmbientHTTPAuthenticator | None = None,
+    task_plan_config: Any = None,
+    hosted_invocation: Any = None,
 ) -> None:
     """Register one action router and the protocol-native unary routes.
 
     The ``graph_a2a`` operation registers on ``tools`` (arbora's backing
     server, reached through ``act``) and the HTTP routes on the served ``mcp``.
     """
+    authority = _service().authority
+    if isinstance(authority, WorkItemA2AAuthority):
+        authority.task_plan_config = task_plan_config
+        authority.hosted_invocation = hosted_invocation
     card_handler, rpc_handler = _admitted_handlers(
         operation_services, operation_authenticator
     )

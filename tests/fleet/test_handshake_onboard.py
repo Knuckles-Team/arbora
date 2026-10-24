@@ -9,9 +9,10 @@ one ``FleetOnboarding.onboard`` function. EG is faked at the transport, as in
 
 from __future__ import annotations
 
+import functools
 import threading
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -58,15 +59,58 @@ def _tools(*names: str) -> list[Any]:
     return [SimpleNamespace(name=n, inputSchema={"type": "object"}) for n in names]
 
 
-def _handshake(
-    mux: Any, name: str = "alpha-mcp", version: str = "1.0.0", tools: Any = None
-) -> None:
-    """Announce a completed handshake through the multiplexer's own hook."""
+class _Session:
+    """A child session: a discover session has no ``initialize_result``."""
 
-    session = SimpleNamespace(
-        initialize_result=SimpleNamespace(serverInfo=SimpleNamespace(version=version))
+    def __init__(
+        self,
+        version: str = "1.0.0",
+        prompts: Any = (),
+        declaration: str = "",
+        tools: Any = None,
+    ) -> None:
+        self.server_info = SimpleNamespace(version=version)
+        self.initialize_result = None  # server/discover, not initialize
+        self._prompts = list(prompts)
+        self._declaration = declaration
+        self._tools = tools
+
+    async def list_tools(self) -> Any:
+        return SimpleNamespace(tools=self._tools or _tools("lookup"))
+
+    async def list_prompts(self) -> Any:
+        return SimpleNamespace(prompts=self._prompts)
+
+    async def list_resources(self) -> Any:
+        listed = (
+            [SimpleNamespace(uri="connector://resources", mimeType="application/json")]
+            if self._declaration
+            else []
+        )
+        return SimpleNamespace(resources=listed)
+
+    async def read_resource(self, uri: str) -> Any:
+        return SimpleNamespace(contents=[SimpleNamespace(text=self._declaration)])
+
+
+def _handshake(
+    mux: Any,
+    name: str = "alpha-mcp",
+    version: str = "1.0.0",
+    tools: Any = None,
+    prompts: Any = (),
+    declaration: str = "",
+) -> None:
+    """Announce a completed discover handshake through the multiplexer's hook."""
+
+    import asyncio
+
+    session = _Session(version, prompts, declaration, tools)
+    asyncio.run(
+        MCPMultiplexer._announce_handshake(
+            cast(Any, mux), name, session, tools or _tools("lookup")
+        )
     )
-    MCPMultiplexer._announce_handshake(mux, name, session, tools or _tools("lookup"))
 
 
 def _setup(
@@ -116,7 +160,8 @@ def test_completed_handshake_starts_one_pass_and_imports_full_pack(
 
 
 # spec: ARBORA-FLEET-R041.8
-def test_reconnect_recaptures_only_on_version_or_digest_change(
+# spec: ARBORA-FLEET-R041.14
+def test_reconnect_recaptures_only_on_content_digest_change(
     eg: _Registry,
 ) -> None:
     """ARBORA-FLEET-R041.8: unchanged reconnect renews; a change re-captures."""
@@ -140,16 +185,63 @@ def test_reconnect_recaptures_only_on_version_or_digest_change(
     assert len(eg.registers) >= registers  # the lease was renewed, not re-imported
     assert eg.attested == ["alpha-mcp"]
 
-    _handshake(mux, version="1.1.0")  # new serverInfo version
+    _handshake(mux, version="9.9.9")  # new serverInfo version, same content
+    onboarder.drain()
+    assert len(captured) == 1  # the version is never a change signal
+
+    _handshake(mux, tools=_tools("lookup", "extra"))  # a served tool changed
     onboarder.drain()
     assert len(captured) == 2
 
-    _handshake(mux, version="1.1.0", tools=_tools("lookup", "extra"))  # new digest
+    _handshake(mux, tools=_tools("lookup", "extra"), declaration='{"sources": []}')
     onboarder.drain()
-    assert len(captured) == 3
-    assert _record(mux)["catalog_digest"] == handshake_catalog_digest(
+    assert len(captured) == 3  # connector://resources changed
+
+    prompt = SimpleNamespace(
+        model_dump=lambda **_k: {"name": "p", "_meta": {"team.knuckles/prompt": {}}}
+    )
+    _handshake(
+        mux,
+        tools=_tools("lookup", "extra"),
+        declaration='{"sources": []}',
+        prompts=[prompt],
+    )
+    onboarder.drain()
+    assert len(captured) == 4  # a prompt changed
+    assert _record(mux)["catalog_digest"] != handshake_catalog_digest(
         _tools("lookup", "extra")
     )
+
+
+# spec: ARBORA-FLEET-R041.14
+def test_list_changed_notification_recaptures_through_the_one_pass() -> None:
+    """A list_changed notification re-digests the child and notifies the listener."""
+
+    import asyncio
+
+    seen: list[dict[str, Any]] = []
+    mux = SimpleNamespace(
+        _handshake_listener=lambda name, **kw: seen.append({"name": name, **kw}),
+        _list_changed_tasks=set(),
+    )
+    mux._announce_handshake = functools.partial(
+        MCPMultiplexer._announce_handshake, cast(Any, mux)
+    )
+    session = _Session(prompts=[])
+    handler = MCPMultiplexer._child_message_handler(
+        cast(Any, mux), "alpha-mcp", [session]
+    )
+
+    from mcp_types import PromptListChangedNotification
+
+    async def drive() -> None:
+        await handler(PromptListChangedNotification())
+        await handler(RuntimeError("transport fault"))  # not a list change: ignored
+        await asyncio.gather(*mux._list_changed_tasks)
+
+    asyncio.run(drive())
+    assert [item["reason"] for item in seen] == ["list_changed"]
+    assert seen[0]["name"] == "alpha-mcp"
 
 
 # spec: ARBORA-FLEET-R041.8
