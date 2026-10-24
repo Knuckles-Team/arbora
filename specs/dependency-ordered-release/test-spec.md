@@ -33,4 +33,4 @@ unchanged, and outer metadata ordering must be deterministic. Startup rejects
 body corruption or reordering even when the declared digest matches the engine.
 The startup publisher sends the roundtripped body through the public generated
 AgentComponent adapter and retains only the returned definition digest. The
-transport in this contract test is recorded, not a durable native-storage proof.
+contract test records the transport. It does not prove durable native storage.

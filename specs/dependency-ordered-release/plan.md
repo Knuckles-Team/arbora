@@ -69,9 +69,9 @@ missing from the list. It also fails when the workflow stops adding the list.
 
 For `ARBORA-RELEASE-R003.4.4`, pin-file serialization must preserve the engine
 export's nested key order because the released body codec hashes that order.
-Only outer pin metadata may be sorted. Startup must recompute the deserialized
+Arbora sorts only outer pin metadata. Startup must recompute the deserialized
 body's digest before binding a publisher, not trust its declared digest alone.
-Regenerate the existing pin through its owning generator; do not change the
+Regenerate the existing pin through its owning generator. Do not change the
 engine codec, invent a digest or substitute another body at serving time.
 Roundtrip and public-initializer checks qualify this bounded repair, not full
 run execution, durable usage, deployment or release acceptance.
