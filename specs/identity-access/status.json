@@ -203,6 +203,7 @@
       "title": "Typed bootstrap-principal model",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "2763cd78b6bc",
         "cd652df8f6c8",
         "d497f656144a"
       ],
@@ -223,8 +224,14 @@
     {
       "id": "ARBORA-IDENTITY-R004.3",
       "title": "Explicit tokenless local mode",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "08385f86486e",
+        "2763cd78b6bc",
+        "450b841e85a2",
+        "4faeec842add",
+        "5e42e0ab38ce"
+      ],
       "verified_by": [
         "tests/mcp_server/test_current_plan_reader.py:196",
         "tests/mcp_server/test_source_reader_anonymous.py:17",
@@ -1363,8 +1370,10 @@
     {
       "id": "ARBORA-IDENTITY-R004.7.1",
       "title": "Host mode configuration source contract",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "d4ae6fb9949c"
+      ],
       "verified_by": [
         "tests/webui_host/test_session_boundary.py:151",
         "tests/webui_host/test_session_boundary.py:16",
@@ -1407,11 +1416,11 @@
         "d4ae6fb9949c"
       ],
       "verified_by": [
-        "tests/api/test_browser_invocation_fence.py:113",
-        "tests/api/test_browser_invocation_fence.py:140",
-        "tests/api/test_browser_invocation_fence.py:170",
-        "tests/api/test_browser_invocation_fence.py:220",
-        "tests/api/test_browser_invocation_fence.py:251"
+        "tests/api/test_browser_invocation_fence.py:118",
+        "tests/api/test_browser_invocation_fence.py:145",
+        "tests/api/test_browser_invocation_fence.py:175",
+        "tests/api/test_browser_invocation_fence.py:225",
+        "tests/api/test_browser_invocation_fence.py:256"
       ]
     },
     {
