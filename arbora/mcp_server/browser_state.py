@@ -20,21 +20,32 @@ class ServedBrowserState:
         required_scope: str,
         session: GraphSession | None = None,
     ) -> Any:
-        from arbora.mcp_server.served_engine import _run_blocking, _session_context
+        from arbora.mcp_server.served_engine import _run_blocking
 
         caller = resolve_session(session, required_scope=required_scope)
+        return _run_blocking(
+            lambda: self._call_async(
+                operation, required_scope=required_scope, session=caller
+            )
+        )
 
-        async def run():
-            resolve_session(caller, required_scope=required_scope)
-            context = _session_context(caller)
-            client = await self._pool.connected_client(context, caller.graph)
-            resolve_session(caller, required_scope=required_scope)
-            with client_scope(client, context.to_claims()):
-                result = await operation(client)
-            resolve_session(caller, required_scope=required_scope)
-            return result
+    async def _call_async(
+        self,
+        operation: Callable[..., Any],
+        *,
+        required_scope: str,
+        session: GraphSession | None = None,
+    ) -> Any:
+        from arbora.mcp_server.served_engine import _session_context
 
-        return _run_blocking(run)
+        caller = resolve_session(session, required_scope=required_scope)
+        context = _session_context(caller)
+        client = await self._pool.connected_client(context, caller.graph)
+        resolve_session(caller, required_scope=required_scope)
+        with client_scope(client, context.to_claims()):
+            result = await operation(client)
+        resolve_session(caller, required_scope=required_scope)
+        return result
 
     def query_cypher(
         self, query: str, params: Mapping[str, Any] | None = None

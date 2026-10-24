@@ -515,3 +515,13 @@ The browser owner must retain its capacity slot until that task completes.
 This avoids loop switching on this path, not the shared pool's inherited limitation.
 Concurrent legacy synchronous consumers and stalled file latency remain unqualified.
 This prerequisite adds no factory admission or operation authority.
+
+### R004.6 zero-effect socket owner prototype
+
+An isolated owner prototype binds private membership to the exact live socket task.
+It reuses canonical async source reads and public native control leases.
+A copied socket, native lease document or caller JSON grants no membership.
+Cancellation invalidates membership immediately while unfinished file work retains capacity.
+Native retirement failures remain explicit unresolved outcomes, never restored authority.
+The prototype grants no operations and is not wired into the application factory.
+Actual WebUI handshake and effect admission remain separate acceptance gates.
