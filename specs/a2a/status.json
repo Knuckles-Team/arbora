@@ -98,8 +98,8 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "2763cd78b6bc",
-        "a8ed61b538e7",
-        "bb02f83b8728"
+        "9bd22960a7ea",
+        "a8ed61b538e7"
       ],
       "verified_by": [
         "tests/a2a/test_native_task_reads.py:14",
@@ -610,7 +610,7 @@
       "title": "WorkItem stream projection, not a shadow log",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "bb02f83b8728"
+        "9bd22960a7ea"
       ],
       "verified_by": [
         "tests/a2a/test_terminal_event.py:59"
@@ -914,7 +914,7 @@
       "title": "Opt-in committed terminal point read",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "bb02f83b8728"
+        "9bd22960a7ea"
       ],
       "verified_by": [
         "tests/a2a/test_terminal_event.py:59"

@@ -287,7 +287,7 @@
         "762c7f816fe3",
         "83aefbad2157",
         "86a439753d2d",
-        "b6902c2910fe"
+        "9bd22960a7ea"
       ],
       "verified_by": [
         "tests/a2a/test_native_run_owner.py:15",
@@ -2893,7 +2893,7 @@
       "title": "Durable, public run replay",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "bb02f83b8728"
+        "9bd22960a7ea"
       ],
       "verified_by": [
         "tests/api/test_run_replay.py:12"

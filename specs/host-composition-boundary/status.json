@@ -251,7 +251,7 @@
         "25e15e2108e1",
         "2763cd78b6bc",
         "52ad3952c2c8",
-        "9e7f6499d96f"
+        "9bd22960a7ea"
       ],
       "verified_by": [
         "tests/a2a/test_failed_usage.py:18",
@@ -275,7 +275,7 @@
         "25e15e2108e1",
         "2763cd78b6bc",
         "52ad3952c2c8",
-        "bb02f83b8728"
+        "9bd22960a7ea"
       ],
       "verified_by": [
         "tests/a2a/test_failed_usage.py:18",
@@ -2143,7 +2143,7 @@
       "title": "Shared TaskPlan evaluation admission",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "bb02f83b8728"
+        "9bd22960a7ea"
       ],
       "verified_by": [
         "tests/mcp_server/test_task_plan.py:16"
@@ -2154,7 +2154,7 @@
       "title": "Durable TaskPlan execution bridge",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "bb02f83b8728"
+        "9bd22960a7ea"
       ],
       "verified_by": [
         "tests/a2a/test_failed_usage.py:18",
