@@ -265,6 +265,7 @@
     "ARBORA-OPS-R860.4",
     "ARBORA-OPS-R860.5",
     "ARBORA-OPS-R860.6",
+    "ARBORA-OPS-R021.4.7",
     "ARBORA-OPS-R861",
     "ARBORA-OPS-R861.1",
     "ARBORA-OPS-R861.2",
@@ -289,11 +290,11 @@
         "b6902c2910fe"
       ],
       "verified_by": [
+        "tests/a2a/test_native_run_owner.py:15",
         "tests/deployment/test_real_boot_fixture.py:19",
-        "tests/test_real_boot.py:906",
-        "tests/test_real_boot.py:927",
-        "tests/test_real_boot.py:936",
-        "tests/test_real_boot.py:955"
+        "tests/test_native_run_admission.py:12",
+        "tests/test_native_run_scope.py:14",
+        "tests/test_real_boot.py:906"
       ]
     },
     {
@@ -957,7 +958,8 @@
         "ARBORA-OPS-R021.4.3",
         "ARBORA-OPS-R021.4.4",
         "ARBORA-OPS-R021.4.5",
-        "ARBORA-OPS-R021.4.6"
+        "ARBORA-OPS-R021.4.6",
+        "ARBORA-OPS-R021.4.7"
       ]
     },
     {
@@ -2885,6 +2887,17 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R021.4.7",
+      "title": "Durable, public run replay",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "bb02f83b8728"
+      ],
+      "verified_by": [
+        "tests/api/test_run_replay.py:12"
+      ]
     },
     {
       "id": "ARBORA-OPS-R861",
