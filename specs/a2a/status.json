@@ -116,8 +116,7 @@
         "ARBORA-A2A-R001.4",
         "ARBORA-A2A-R001.5",
         "ARBORA-A2A-R001.6"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-A2A-R001.1",
@@ -143,8 +142,7 @@
       "rollup_of": [
         "ARBORA-A2A-R002.1",
         "ARBORA-A2A-R002.2"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-A2A-R002.1",
@@ -167,16 +165,14 @@
         "ARBORA-A2A-R002.2.1",
         "ARBORA-A2A-R002.2.2",
         "ARBORA-A2A-R002.2.3"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-A2A-R002.2.1",
       "title": "Owner-blocked: AU carried, enforced tool-subset field",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R002.2.2",
@@ -232,8 +228,7 @@
       "rollup_of": [
         "ARBORA-A2A-R002.2.3.1",
         "ARBORA-A2A-R002.2.3.2"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-A2A-R002.2.3.1",
@@ -252,8 +247,7 @@
       "title": "Served consumer and original-caller recovery",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R003",
@@ -299,8 +293,7 @@
         "ARBORA-A2A-R005.6",
         "ARBORA-A2A-R005.7",
         "ARBORA-A2A-R005.8"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-A2A-R005.1",
@@ -328,8 +321,7 @@
         "ARBORA-A2A-R005.2.3",
         "ARBORA-A2A-R005.2.4",
         "ARBORA-A2A-R005.2.5"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-A2A-R005.2.1",
@@ -382,56 +374,49 @@
       "title": "Native and served full-chain qualification remains open",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R005.3",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R005.4",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R005.5",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R005.6",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R005.7",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R005.8",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R006",
@@ -450,8 +435,7 @@
         "ARBORA-A2A-R006.6",
         "ARBORA-A2A-R006.7",
         "ARBORA-A2A-R006.8"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-A2A-R006.1",
@@ -478,8 +462,7 @@
       "rollup_of": [
         "ARBORA-A2A-R006.2.1",
         "ARBORA-A2A-R006.2.2"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-A2A-R006.2.1",
@@ -518,56 +501,49 @@
       "landed_in": [],
       "verified_by": [
         "tests/mcp_server/test_hosted_invocation.py:25"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-A2A-R006.3",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R006.4",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R006.5",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R006.6",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R006.7",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R006.8",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R007",
@@ -650,8 +626,7 @@
       "title": "Transition history is read-through to epistemic-graph",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R012",
@@ -663,8 +638,7 @@
         "ARBORA-A2A-R012.1",
         "ARBORA-A2A-R012.2",
         "ARBORA-A2A-R012.3"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-A2A-R012.1",
@@ -693,16 +667,14 @@
       "title": "Blocked: wire `tasks/get`'s typed refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R013",
       "title": "Push notifications are best-effort over a durable outbox",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R014",
@@ -712,24 +684,21 @@
       "verified_by": [],
       "rollup_of": [
         "ARBORA-A2A-R014.1"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-A2A-R014.1",
       "title": "Card advertises no harness capability before it works",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R015",
       "title": "Caller-visible card matches served behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R016",
@@ -748,8 +717,7 @@
         "ARBORA-A2A-R016.4",
         "ARBORA-A2A-R016.5",
         "ARBORA-A2A-R016.6"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-A2A-R016.1",
@@ -767,32 +735,28 @@
       "title": "Admission request carries model profile and task class",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R016.3",
       "title": "Admission decision carries the committed harness answer",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R016.4",
       "title": "Refusal enum gains the harness reasons",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R016.5",
       "title": "Routing decision carries model profile and task class",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R017",
@@ -807,56 +771,49 @@
         "ARBORA-A2A-R017.4",
         "ARBORA-A2A-R017.5",
         "ARBORA-A2A-R017.6"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-A2A-R017.1",
       "title": "Engine decision port for HarnessConfig",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R017.2",
       "title": "Admission is async and calls the decider once",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R017.3",
       "title": "Priority comes from the principal class",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R017.4",
       "title": "Missing budget refuses",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R017.5",
       "title": "Wire admission into the send path",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R017.6",
       "title": "End-to-end admitted task",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R018",
@@ -867,24 +824,21 @@
       "rollup_of": [
         "ARBORA-A2A-R018.1",
         "ARBORA-A2A-R018.2"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-A2A-R018.1",
       "title": "Envelope carries harness_config",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R018.2",
       "title": "Envelope without the field refuses",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R019",
@@ -898,16 +852,14 @@
       ],
       "rollup_of": [
         "ARBORA-A2A-R019.1"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-A2A-R019.1",
       "title": "Provenance names the harness decision",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R020",
@@ -922,48 +874,42 @@
       "rollup_of": [
         "ARBORA-A2A-R020.1",
         "ARBORA-A2A-R020.2"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-A2A-R020.1",
       "title": "Abstention refuses and records the named default",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R020.2",
       "title": "Unavailable, stale, or partial answers refuse",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R021",
       "title": "Fresh checkout",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R022",
       "title": "Critique-gated output release",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R001.2",
       "title": "AU:21 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R010.1",
@@ -982,16 +928,14 @@
       "title": "Served agent keeps and lists caller conversations",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R001.4",
       "title": "Served agent streams turn events or refuses streaming by type",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R001.5",
@@ -1002,8 +946,7 @@
       "rollup_of": [
         "ARBORA-A2A-R001.5.1",
         "ARBORA-A2A-R001.5.2"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-A2A-R001.6",
@@ -1035,106 +978,14 @@
       "title": "Selected-model binary input",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R016.6",
       "title": "Caller model preference",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     }
-  ],
-  "frontier": [
-    "ARBORA-A2A-R002.2.1",
-    "ARBORA-A2A-R002.2.3.2",
-    "ARBORA-A2A-R005.2.5",
-    "ARBORA-A2A-R005.3",
-    "ARBORA-A2A-R005.4",
-    "ARBORA-A2A-R005.5",
-    "ARBORA-A2A-R005.6",
-    "ARBORA-A2A-R005.7",
-    "ARBORA-A2A-R005.8",
-    "ARBORA-A2A-R006.2.2",
-    "ARBORA-A2A-R006.3",
-    "ARBORA-A2A-R006.4",
-    "ARBORA-A2A-R006.5",
-    "ARBORA-A2A-R006.6",
-    "ARBORA-A2A-R006.7",
-    "ARBORA-A2A-R006.8",
-    "ARBORA-A2A-R011",
-    "ARBORA-A2A-R012.3",
-    "ARBORA-A2A-R013",
-    "ARBORA-A2A-R014.1",
-    "ARBORA-A2A-R015",
-    "ARBORA-A2A-R016.2",
-    "ARBORA-A2A-R016.3",
-    "ARBORA-A2A-R016.4",
-    "ARBORA-A2A-R016.5",
-    "ARBORA-A2A-R017.1",
-    "ARBORA-A2A-R017.2",
-    "ARBORA-A2A-R017.3",
-    "ARBORA-A2A-R017.4",
-    "ARBORA-A2A-R017.5",
-    "ARBORA-A2A-R017.6",
-    "ARBORA-A2A-R018.1",
-    "ARBORA-A2A-R018.2",
-    "ARBORA-A2A-R019.1",
-    "ARBORA-A2A-R020.1",
-    "ARBORA-A2A-R020.2",
-    "ARBORA-A2A-R021",
-    "ARBORA-A2A-R022",
-    "ARBORA-A2A-R001.2",
-    "ARBORA-A2A-R001.3",
-    "ARBORA-A2A-R001.4",
-    "ARBORA-A2A-R001.5.2",
-    "ARBORA-A2A-R016.6"
-  ],
-  "unserved": [
-    "ARBORA-A2A-R002.2.1",
-    "ARBORA-A2A-R002.2.3.2",
-    "ARBORA-A2A-R005.2.5",
-    "ARBORA-A2A-R005.3",
-    "ARBORA-A2A-R005.4",
-    "ARBORA-A2A-R005.5",
-    "ARBORA-A2A-R005.6",
-    "ARBORA-A2A-R005.7",
-    "ARBORA-A2A-R005.8",
-    "ARBORA-A2A-R006.2.2",
-    "ARBORA-A2A-R006.3",
-    "ARBORA-A2A-R006.4",
-    "ARBORA-A2A-R006.5",
-    "ARBORA-A2A-R006.6",
-    "ARBORA-A2A-R006.7",
-    "ARBORA-A2A-R006.8",
-    "ARBORA-A2A-R011",
-    "ARBORA-A2A-R012.3",
-    "ARBORA-A2A-R013",
-    "ARBORA-A2A-R014.1",
-    "ARBORA-A2A-R015",
-    "ARBORA-A2A-R016.2",
-    "ARBORA-A2A-R016.3",
-    "ARBORA-A2A-R016.4",
-    "ARBORA-A2A-R016.5",
-    "ARBORA-A2A-R017.1",
-    "ARBORA-A2A-R017.2",
-    "ARBORA-A2A-R017.3",
-    "ARBORA-A2A-R017.4",
-    "ARBORA-A2A-R017.5",
-    "ARBORA-A2A-R017.6",
-    "ARBORA-A2A-R018.1",
-    "ARBORA-A2A-R018.2",
-    "ARBORA-A2A-R019.1",
-    "ARBORA-A2A-R020.1",
-    "ARBORA-A2A-R020.2",
-    "ARBORA-A2A-R021",
-    "ARBORA-A2A-R022",
-    "ARBORA-A2A-R001.2",
-    "ARBORA-A2A-R001.3",
-    "ARBORA-A2A-R001.4",
-    "ARBORA-A2A-R001.5.2",
-    "ARBORA-A2A-R016.6"
   ]
 }

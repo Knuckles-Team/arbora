@@ -287,3 +287,81 @@ def test_qualified_request_substitution_during_audit_refuses(tmp_path):
 
     policy.engine.create_node = substitute
     assert not policy.decide_qualified(request, expected_revision=revision).allowed
+
+
+def test_legacy_verifier_retains_one_argument_call(tmp_path, monkeypatch):
+    policy = _policy(tmp_path, engine=_Ledger())
+    original = policy._verify
+    seen = []
+
+    def legacy_verify(request):
+        seen.append(request)
+        return original(request)
+
+    monkeypatch.setattr(policy, "_verify", legacy_verify)
+    request = _request("")
+    assert policy._decide_inner(request).decision == "allow"
+    assert seen == [request]
+
+
+@pytest.mark.parametrize("qualified", [False, True])
+@pytest.mark.parametrize("tier", ["auto", "forbidden"])
+def test_source_selection_preserves_evaluator_order(
+    tmp_path, monkeypatch, qualified, tier
+):
+    from arbora.access.action_policy_source import qualified_policy_source
+
+    policy = _policy(
+        tmp_path,
+        content={"rules": [{"kind": "observe", "tier": tier}]},
+        engine=_Ledger(),
+    )
+    source = qualified_policy_source(policy) if qualified else None
+    events = []
+    verify, inputs = policy._verify, policy._rule_inputs
+    aversion = policy._selected_irreversibility_aversion
+
+    def record_verify(request, **kwargs):
+        assert kwargs == ({"source": source} if qualified else {})
+        events.append("verify")
+        return verify(request, **kwargs)
+
+    def record_inputs(selected):
+        assert selected is source
+        events.append("inputs")
+        return inputs(selected)
+
+    def record_aversion(selected):
+        assert selected is source
+        events.append("aversion")
+        return aversion(selected)
+
+    monkeypatch.setattr(policy, "_verify", record_verify)
+    monkeypatch.setattr(policy, "_rule_inputs", record_inputs)
+    monkeypatch.setattr(policy, "_selected_irreversibility_aversion", record_aversion)
+    decision = policy._decide_inner(_request(""), source=source)
+    assert (decision.decision == "allow") == (tier == "auto")
+    assert events == (
+        ["verify", "inputs", "aversion"] if tier == "auto" else ["verify", "inputs"]
+    )
+
+
+def test_live_rule_input_selection_keeps_file_before_graph(tmp_path, monkeypatch):
+    policy = _policy(tmp_path)
+    events = []
+    document, rules = {"rules": []}, []
+
+    def load_file():
+        events.append("file")
+        return document
+
+    def load_graph():
+        events.append("graph")
+        return rules
+
+    monkeypatch.setattr(policy, "_load_file_policy", load_file)
+    monkeypatch.setattr(policy, "_kg_rules", load_graph)
+    selected_document, selected_rules = policy._rule_inputs(None)
+    assert selected_document is document
+    assert selected_rules is rules
+    assert events == ["file", "graph"]
