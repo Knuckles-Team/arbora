@@ -433,7 +433,12 @@ from .engine_errors import EG_RECEIPT_DIGEST, ENGINE_ERRORS, REGISTRY_DIGEST
 __all__ = ["EG_RECEIPT_DIGEST", "ENGINE_ERRORS", "REGISTRY_DIGEST"]
 ''',
         ROOT / "docs/api/openapi.json": _json_bytes(_openapi(registry)),
-        ROOT / "arbora/client/__init__.py": b'"""Generated Arbora client surface."""\n',
+        ROOT / "arbora/client/__init__.py": b'''"""Generated Arbora client surface."""
+
+from .browser_boundary import LOCAL_BROWSER_PATH, LocalBrowserBoundary
+
+__all__ = ["LOCAL_BROWSER_PATH", "LocalBrowserBoundary"]
+''',
         ROOT / "arbora/client/_generated_models.py": _client_models(registry),
         ROOT / "docs/api/generated.ts": _ts_client(registry),
     }
