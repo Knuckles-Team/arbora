@@ -506,9 +506,18 @@ class WorkItemA2AAuthority:
 
             usage = failed_run_usage(exc, run_id or task_id)
             outcome = "failed"
+            result_ref = None
+            _OUTPUTS.pop(task_id, None)
             error_ref = persistence_reference(
                 "error", type(exc).__name__, namespace="arbora-a2a"
             )
+        completion_kwargs: dict[str, Any] = {}
+        if self.task_plan_config is not None:
+            completion_kwargs["run_completion"] = {
+                "schema_version": 1,
+                "run_id": run_id or task_id,
+                **({"usage": usage} if usage is not None else {}),
+            }
         await asyncio.to_thread(
             work_items.commit_result,
             work_engine,
@@ -517,6 +526,7 @@ class WorkItemA2AAuthority:
             outcome=outcome,
             result_ref=result_ref,
             error_ref=error_ref,
+            **completion_kwargs,
         )
         return usage
 
@@ -642,8 +652,24 @@ class WorkItemA2AAuthority:
             )
             if isinstance(refreshed, dict):
                 item = refreshed
+        return await self._project_dispatch_task(
+            item, task_id=task_id, context_id=context_id, session=session, usage=usage
+        )
+
+    async def _project_dispatch_task(
+        self,
+        item: dict[str, Any],
+        *,
+        task_id: str,
+        context_id: str,
+        session: Any,
+        usage: Any,
+    ) -> A2ATask:
+        """Keep native receipt attachment separate from dispatch control flow."""
         task = self._project(item, task_id=task_id)
-        if usage is not None:
+        if self.task_plan_config is not None:
+            await self._attach_run_usage(task, item, session)
+        elif usage is not None:
             task.metadata["arbora"]["usage"] = {
                 "runId": task.metadata["arbora"]["runId"],
                 "taskId": task.id,
@@ -674,7 +700,14 @@ class WorkItemA2AAuthority:
 
         session = self._session(scope)
         _engine, work_engine = self._engine()
-        item = work_items.get_work_item(work_engine, self._work_item_id(task_id))
+        from epistemic_graph import EngineResponseError
+
+        try:
+            item = work_items.get_work_item(work_engine, self._work_item_id(task_id))
+        except EngineResponseError as exc:
+            if exc.code != "ACCESS_DENIED":
+                raise
+            return None
         return item if self._owned(item, self._owner_ref(session)) else None
 
     @staticmethod
@@ -721,7 +754,9 @@ class WorkItemA2AAuthority:
                     else item.get("updated_at")
                 ),
             ),
-            artifacts=task_output_artifacts(task_id),
+            artifacts=task_output_artifacts(task_id)
+            if raw_state == "succeeded"
+            else None,
             metadata={"arbora": public_metadata},
         )
 
@@ -852,6 +887,7 @@ class WorkItemA2AAuthority:
         if self._session("kg:read") != read_session:
             raise PermissionError("A2A caller changed during task read")
         task = self._project(item, task_id=task_id)
+        await self._attach_run_usage(task, item, read_session)
         try:
             task.artifacts = await asyncio.to_thread(
                 self._persisted_artifacts, task_id, item=item
@@ -864,6 +900,31 @@ class WorkItemA2AAuthority:
         if include_committed_event:
             await self._attach_terminal_event(task, task_id, original)
         return task
+
+    async def _attach_run_usage(
+        self, task: A2ATask, item: dict[str, Any], session: Any
+    ) -> None:
+        """Project only caller-bound native completion, never trace counters."""
+        from arbora import work_items
+
+        from .run_usage import read_run_usage
+
+        if not item.get("metadata", {}).get("a2a_run_id"):
+            return
+        if self._session("kg:read") != session:
+            raise PermissionError("A2A caller changed during usage read")
+        engine, work_engine = self._engine()
+        usage = await read_run_usage(
+            engine,
+            session=session,
+            task=task,
+            item=item,
+            owner_ref=self._owner_ref(session),
+            owner_graph=work_items.native_owner_graph(work_engine),
+        )
+        if self._session("kg:read") != session:
+            raise PermissionError("A2A caller changed during usage read")
+        task.metadata["arbora"]["usage"] = usage
 
     async def _attach_terminal_event(
         self, task: A2ATask, task_id: str, session: Any

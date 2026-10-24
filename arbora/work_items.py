@@ -291,12 +291,20 @@ def commit_result(
     result_ref: str | None = None,
     error_ref: str | None = None,
     retryable: bool = False,
+    run_completion: Mapping[str, Any] | None = None,
 ) -> str:
     """Commit an outcome (``CommitWorkItemResult``).
 
     Return ``committed`` when the requested outcome applied, ``noop`` when the
     WorkItem was already terminal, and the engine status otherwise.
     """
+    completion = {}
+    if run_completion is not None:
+        from epistemic_graph.generated.models import RunCompletionInput
+
+        completion["run_completion"] = RunCompletionInput.model_validate_json(
+            json.dumps(dict(run_completion)), strict=True
+        ).model_dump(mode="json", exclude_none=True)
     fence = _fence(claim)
     result = _work_items(engine).commit_result(
         work_item_id=item_id,
@@ -306,6 +314,7 @@ def commit_result(
         result_ref=result_ref,
         error_ref=error_ref,
         retryable=retryable,
+        **completion,
         **fence,
     )
     status = str(result.get("status"))
