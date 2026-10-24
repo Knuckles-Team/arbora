@@ -206,7 +206,9 @@
     "ARBORA-HOST-R010.7.2.2.1",
     "ARBORA-HOST-R010.7.2.2.2",
     "ARBORA-HOST-R010.7.2.2.2.1",
-    "ARBORA-HOST-R010.7.2.2.2.2"
+    "ARBORA-HOST-R010.7.2.2.2.2",
+    "ARBORA-HOST-R001.2.1.1",
+    "ARBORA-HOST-R001.2.1.2"
   ],
   "requirements": [
     {
@@ -246,17 +248,17 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "192099593cdd",
+        "23607181d4af",
         "25e15e2108e1",
         "2763cd78b6bc",
-        "52ad3952c2c8",
-        "9e7f6499d96f"
+        "52ad3952c2c8"
       ],
       "verified_by": [
+        "tests/a2a/test_failed_usage.py:18",
         "tests/mcp_server/test_arbora_016_served_fixes.py:178",
         "tests/mcp_server/test_harness_host.py:110",
         "tests/mcp_server/test_harness_host.py:142",
-        "tests/mcp_server/test_harness_host.py:29",
-        "tests/mcp_server/test_harness_host.py:37"
+        "tests/mcp_server/test_harness_host.py:29"
       ],
       "rollup_of": [
         "ARBORA-HOST-R001.2.1",
@@ -270,16 +272,22 @@
       "title": "Arbora binds the run-loop providers at startup",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "23607181d4af",
         "25e15e2108e1",
         "2763cd78b6bc",
-        "52ad3952c2c8"
+        "52ad3952c2c8",
+        "5c2eefda3a13"
       ],
       "verified_by": [
-        "tests/test_agent_runs.py:42",
-        "tests/test_agent_runs.py:63",
-        "tests/test_agent_runs.py:80",
-        "tests/test_real_anonymous_boot.py:325",
-        "tests/test_run_event_payloads.py:19"
+        "tests/a2a/test_failed_usage.py:18",
+        "tests/mcp_server/test_task_plan.py:16",
+        "tests/mcp_server/test_task_plan_failure.py:18",
+        "tests/mcp_server/test_task_plan_runtime.py:26",
+        "tests/mcp_server/test_task_plan_settings.py:12"
+      ],
+      "rollup_of": [
+        "ARBORA-HOST-R001.2.1.1",
+        "ARBORA-HOST-R001.2.1.2"
       ]
     },
     {
@@ -2130,6 +2138,33 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-HOST-R001.2.1.1",
+      "title": "Shared TaskPlan evaluation admission",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5c2eefda3a13",
+        "bde194b9f1cb"
+      ],
+      "verified_by": [
+        "tests/mcp_server/test_task_plan.py:16"
+      ]
+    },
+    {
+      "id": "ARBORA-HOST-R001.2.1.2",
+      "title": "Durable TaskPlan execution bridge",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "23607181d4af",
+        "5c2eefda3a13"
+      ],
+      "verified_by": [
+        "tests/a2a/test_failed_usage.py:18",
+        "tests/mcp_server/test_task_plan_failure.py:18",
+        "tests/mcp_server/test_task_plan_runtime.py:26",
+        "tests/mcp_server/test_task_plan_settings.py:12"
+      ]
     }
   ]
 }

@@ -60,6 +60,16 @@ def _work_items(engine: Any) -> Any:
     return namespace
 
 
+def native_owner_graph(engine: Any) -> str:
+    """Read routing only from the engine that submits and claims the WorkItem."""
+    graph = getattr(engine, "work_item_graph", None)
+    if graph is None:
+        graph = getattr(engine, "graph_name", None)
+    if not isinstance(graph, str) or not graph or graph != graph.strip():
+        raise NativeWorkItemRequired("native WorkItem graph binding is unavailable")
+    return graph
+
+
 def _now_ms(now: float | None = None) -> int:
     return int((time.time() if now is None else now) * 1000)
 
@@ -69,8 +79,22 @@ def _key(*parts: object) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
+def _authority_context(claims: Mapping[str, Any], session: Any) -> dict[str, Any]:
+    """Fill missing authority claims from the verified session only."""
+    return {
+        "auth_mode": claims.get("auth_mode", "authenticated"),
+        "agent_id": claims.get("agent_id") or claims.get("principal"),
+        "principal": claims.get("principal"),
+        "tenant": claims.get("tenant") or getattr(session, "tenant", ""),
+        "audience": claims.get("audience") or getattr(session, "audience", ""),
+        "policy_version": claims.get("policy_version")
+        or getattr(session, "policy_version", ""),
+        "scopes": list(claims.get("scopes") or getattr(session, "scopes", ()) or ()),
+    }
+
+
 def _typed_request_context(
-    claims: Mapping[str, Any], session: Any, key: str
+    claims: Mapping[str, Any], session: Any, key: str, graph: str | None = None
 ) -> dict[str, Any]:
     """EG's typed ``RequestContext`` (v2) for one WorkItem request.
 
@@ -79,29 +103,43 @@ def _typed_request_context(
     WorkItems.
     """
     if "tenant_id" in claims:
+        if graph is not None and claims.get("graph") != graph:
+            raise NativeWorkItemRequired("native WorkItem context graph mismatch")
         return dict(claims)  # already EG's typed context
     from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
     from arbora.mcp_server.effect_journal import _request_context
 
     class _Graph:
-        graph_name = CONTROL_GRAPH
+        graph_name = graph if graph is not None else CONTROL_GRAPH
 
     return _request_context(
-        {
-            "auth_mode": claims.get("auth_mode", "authenticated"),
-            "agent_id": claims.get("agent_id") or claims.get("principal"),
-            "principal": claims.get("principal"),
-            "tenant": claims.get("tenant") or getattr(session, "tenant", ""),
-            "audience": claims.get("audience") or getattr(session, "audience", ""),
-            "policy_version": claims.get("policy_version")
-            or getattr(session, "policy_version", ""),
-            "scopes": list(
-                claims.get("scopes") or getattr(session, "scopes", ()) or ()
-            ),
-        },
+        _authority_context(claims, session),
         _Graph(),
         key,
     )
+
+
+def _require_native_submission(run_id: str | None, work_item_id: str | None) -> None:
+    """Refuse native ownership before admission unless the contract supports it."""
+    if run_id is not None:
+        from epistemic_graph.generated.models import SubmitWorkItemRequest
+
+        from arbora.api.invoke.pipeline import OperationRefused
+
+        if "run_id" not in SubmitWorkItemRequest.model_fields:
+            raise OperationRefused(
+                "UPGRADE_REQUIRED", {"capability": "native_run_owner"}
+            )
+        if work_item_id is not None:
+            raise ValueError("native run ownership requires engine-assigned identity")
+
+
+def _policy_digest(claims: Mapping[str, Any], session: Any) -> str:
+    """Bind a nonempty policy digest, matching the effect journal default."""
+    version = str(
+        claims.get("policy_version") or getattr(session, "policy_version", "") or "none"
+    )
+    return hashlib.sha256(version.encode()).hexdigest()
 
 
 def submit_work_item_atomic(
@@ -111,6 +149,7 @@ def submit_work_item_atomic(
     idempotency_key: str,
     tenant: str | None = None,
     work_item_id: str | None = None,
+    run_id: str | None = None,
     queue: str = "",
     resource_class: str = "",
     fairness_group: str = "",
@@ -122,6 +161,7 @@ def submit_work_item_atomic(
     metadata: Mapping[str, Any] | None = None,
 ) -> tuple[str, bool]:
     """Submit one WorkItem (``SubmitWorkItem``); return its id and creation."""
+    _require_native_submission(run_id, work_item_id)
     tenant_id = _tenant(tenant)
     session = _session()
     labels = {
@@ -132,13 +172,14 @@ def submit_work_item_atomic(
     }
     body = {**{k: v for k, v in labels.items() if v}, **dict(metadata or {})}
     command_digest = _key(tenant_id, kind, work_item_id, payload_ref, body)
+    if run_id is not None:
+        command_digest = _key(command_digest, run_id)
     claims = dict(session_context(session))
-    context = _typed_request_context(claims, session, idempotency_key)
-    # EG refuses empty digests (``SubmitWorkItem.policy_digest must be a
-    # non-empty trimmed string``): bind the policy version, the command and
-    # "none" for a WorkItem that pins no model, as the effect journal does.
-    policy_version = str(
-        claims.get("policy_version") or getattr(session, "policy_version", "") or "none"
+    context = _typed_request_context(
+        claims,
+        session,
+        idempotency_key,
+        native_owner_graph(engine) if run_id is not None else None,
     )
     request = {
         "schema_version": "1",
@@ -150,7 +191,7 @@ def submit_work_item_atomic(
         "priority": int(priority),
         "depends_on": [],
         "input_ref": payload_ref or f"arbora-work-item:{command_digest}",
-        "policy_digest": hashlib.sha256(policy_version.encode()).hexdigest(),
+        "policy_digest": _policy_digest(claims, session),
         "catalog_digest": command_digest,
         "model_digest": "none",
         "max_attempts": int(max_attempts),
@@ -159,7 +200,29 @@ def submit_work_item_atomic(
         "provenance_refs": [created_by] if created_by else [],
         "max_tenant_in_flight": _MAX_TENANT_IN_FLIGHT,
     }
-    result = _work_items(engine).submit(request)
+    if run_id is not None:
+        request["run_id"] = run_id
+    if run_id is not None:
+        from arbora.native_run_admission import submit
+
+        return submit(_work_items(engine), request)
+    return _submit_request(engine, request, run_id)
+
+
+def _submit_request(
+    engine: Any, request: dict[str, Any], run_id: str | None
+) -> tuple[str, bool]:
+    """Translate an older producer's native-owner refusal without fallback."""
+    try:
+        result = _work_items(engine).submit(request)
+    except ValueError as exc:
+        if run_id is not None and "unsupported fields: run_id" in str(exc):
+            from arbora.api.invoke.pipeline import OperationRefused
+
+            raise OperationRefused(
+                "UPGRADE_REQUIRED", {"capability": "native_run_owner"}
+            ) from exc
+        raise
     return str(result["work_item_id"]), bool(result["created"])
 
 

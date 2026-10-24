@@ -26119,6 +26119,184 @@
     {
       "audit": "none",
       "binding": {
+        "handler": "arbora.api.ops.runs.handle_runs_events",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "Replay public events of an owned run"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "runs.events",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.run_replay.RunEventsParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "after": {
+              "default": 0,
+              "maximum": 9223372036854775807,
+              "minimum": 0,
+              "title": "After",
+              "type": "integer"
+            },
+            "limit": {
+              "default": 1000,
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            },
+            "run_id": {
+              "maxLength": 512,
+              "minLength": 1,
+              "title": "Run Id",
+              "type": "string"
+            },
+            "task_id": {
+              "anyOf": [
+                {
+                  "maxLength": 512,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Task Id"
+            }
+          },
+          "required": [
+            "run_id"
+          ],
+          "title": "RunEventsParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.runs.RunsCurrentPlanResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "RunsCurrentPlanResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "kg:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Replay public events of an owned run",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "ask"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "handler": "arbora.api.ops.runs.handle_runs_get",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "Read an owned durable run"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "runs.get",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.run_replay.RunReadParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "run_id": {
+              "maxLength": 512,
+              "minLength": 1,
+              "title": "Run Id",
+              "type": "string"
+            },
+            "task_id": {
+              "anyOf": [
+                {
+                  "maxLength": 512,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Task Id"
+            }
+          },
+          "required": [
+            "run_id"
+          ],
+          "title": "RunReadParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.runs.RunsCurrentPlanResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "RunsCurrentPlanResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "kg:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Read an owned durable run",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "ask"
+    },
+    {
+      "audit": "none",
+      "binding": {
         "handler": "arbora.api.ops.security.handle_security_posture_read",
         "kind": "composite"
       },
@@ -26898,5 +27076,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "280a4081232f7c90562b0a74652ffc583061e83ee0801bee1da0825e62de59a8"
+  "registry_digest": "71ecacbf75cb3d9ae7a799e5da7507e965ff3d2a2302786b229e8a4d617fcd11"
 }

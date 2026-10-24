@@ -138,6 +138,24 @@ class ArboraConfig(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
 
+    task_plan: dict[str, Any] | None = Field(
+        default=None,
+        alias="ARBORA_TASK_PLAN",
+        description="Trusted JSON task-plan configuration. Unset disables dependency planning.",
+    )
+
+    @field_validator("task_plan")
+    @classmethod
+    def _validate_task_plan(cls, value: Any) -> Any:
+        if value is not None:
+            from arbora.mcp_server.task_plan import TaskPlanConfig
+
+            try:
+                TaskPlanConfig(**value)
+            except TypeError as exc:
+                raise ValueError("invalid task plan configuration fields") from exc
+        return value
+
     agent_dispatch_claim_ttl_s: float = Field(
         default=120.0,
         alias="AGENT_DISPATCH_CLAIM_TTL_S",
@@ -991,6 +1009,9 @@ def read_field(name: str) -> Any:
     if raw is None or raw == "":
         return info.get_default(call_default_factory=True)
     value = _structured_text(info.annotation, raw)
+    if name == "task_plan":
+        # Explicit invalid authority configuration must never silently disable itself.
+        return ArboraConfig(task_plan=value).task_plan
     try:
         return _adapter(name).validate_python(value)
     except ValueError:
