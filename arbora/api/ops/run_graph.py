@@ -116,11 +116,15 @@ def declared_topology(raw: dict[str, Any]) -> tuple[str, dict[str, list[str]]]:
         raise ValueError("incomplete topology")
     if plan.get("output_task_id") not in topology:
         raise ValueError("unknown output task")
+    _validate_predecessors(topology)
+    return digest, topology
+
+
+def _validate_predecessors(topology: dict[str, list[str]]) -> None:
     if any(dep not in topology for deps in topology.values() for dep in deps):
         raise ValueError("unknown predecessor")
     # Native admission owns planning; malformed read projections fail closed.
     tuple(TopologicalSorter(topology).static_order())
-    return digest, topology
 
 
 def _add_task(topology: dict[str, list[str]], task: Any) -> None:
@@ -218,13 +222,17 @@ def _apply_evidence(
     ):
         raise ValueError("conflicting lifecycle binding")
     node = nodes[task_id]
-    if node.status != "unobserved" and (
-        node.status != "running" or kind in {"task_started", "task_blocked"}
+    _validate_transition(node.status, kind)
+    node.status = TASK_STATES[kind]
+    node.evidence = StepEvidence(event_id=event["event_id"], sequence=event["sequence"])
+
+
+def _validate_transition(status: StepStatus, kind: str) -> None:
+    if status != "unobserved" and (
+        status != "running" or kind in {"task_started", "task_blocked"}
     ):
         raise ValueError("conflicting lifecycle transition")
     if kind in {"task_completed", "task_failed", "task_cancelled"} and (
-        node.status != "running"
+        status != "running"
     ):
         raise ValueError("missing start evidence")
-    node.status = TASK_STATES[kind]
-    node.evidence = StepEvidence(event_id=event["event_id"], sequence=event["sequence"])

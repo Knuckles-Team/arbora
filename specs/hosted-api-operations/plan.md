@@ -975,3 +975,10 @@ types fail closed. Tests include the installed provider's unconstrained result.
 The flat projection permits canonical keys for the full run/step ID bounds,
 including non-BMP Unicode. It counts serialized node and edge contributions
 before whole-snapshot serialization, then checks the exact final byte size.
+
+### 2026-10-24: bounded graph validation functions
+
+R021.4.8.1 separates predecessor validation and lifecycle transition validation.
+The extraction preserves validation order, identity checks, bounds and refusal
+messages. Source tests cover every step-state and task-event pair. This does not
+expand the projection or qualify the parent requirement.

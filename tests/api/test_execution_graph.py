@@ -589,3 +589,52 @@ def test_dense_graph_preflight_stops_before_whole_snapshot_serialization(monkeyp
     with pytest.raises(ValueError, match="byte bound"):
         project_graph(request(), declared_topology(raw), data, page)
     assert largest_member < 65536
+
+
+@pytest.mark.parametrize(
+    "initial,history",
+    [
+        ("unobserved", ()),
+        ("running", ("running",)),
+        ("completed", ("running", "completed")),
+        ("failed", ("running", "failed")),
+        ("cancelled", ("running", "cancelled")),
+        ("blocked", ("blocked",)),
+    ],
+)
+@pytest.mark.parametrize(
+    "next_status", ["running", "completed", "failed", "cancelled", "blocked"]
+)
+def test_projection_lifecycle_transition_matrix(initial, history, next_status):
+    kinds = {
+        "running": "task_started",
+        "completed": "task_completed",
+        "failed": "task_failed",
+        "cancelled": "task_cancelled",
+        "blocked": "task_blocked",
+    }
+    prefix = [event()] + [
+        step_event(sequence, type=kinds[status], status=status)
+        for sequence, status in enumerate(history, start=2)
+    ]
+    assert graph(*prefix)["snapshot"]["nodes"][0]["status"] == initial
+    following = step_event(len(prefix) + 1, type=kinds[next_status], status=next_status)
+    allowed = {
+        "unobserved": {"running", "blocked"},
+        "running": {"completed", "failed", "cancelled"},
+    }
+    if next_status not in allowed.get(initial, set()):
+        message = (
+            "missing start evidence"
+            if initial == "unobserved"
+            else "conflicting lifecycle transition"
+        )
+        with pytest.raises(ValueError, match=message):
+            graph(*prefix, following)
+        return
+    node = graph(*prefix, following)["snapshot"]["nodes"][0]
+    assert node["status"] == next_status
+    assert node["evidence"] == {
+        "event_id": f"event-{len(prefix) + 1}",
+        "sequence": len(prefix) + 1,
+    }

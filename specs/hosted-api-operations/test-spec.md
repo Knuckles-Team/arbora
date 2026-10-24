@@ -351,3 +351,7 @@ R026.2 tests in `tests/api/test_gen_api.py` cover boolean input narrowing and
 result widening, empty-schema equivalence and nested properties. They preserve
 the dictionary comparison policy and provider-digest review. An installed
 provider regression compares its unconstrained PlanMatViewGet result with itself.
+
+The R021.4.8.1 transition matrix covers all six step states against five task events.
+It checks each allowed transition and exact refusal through the public projection.
+Unknown and cyclic predecessor tests retain their fail-closed expectations.
