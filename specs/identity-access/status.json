@@ -1375,9 +1375,10 @@
         "d4ae6fb9949c"
       ],
       "verified_by": [
-        "tests/webui_host/test_session_boundary.py:151",
-        "tests/webui_host/test_session_boundary.py:16",
-        "tests/webui_host/test_session_boundary.py:29",
+        "tests/webui_host/test_session_boundary.py:152",
+        "tests/webui_host/test_session_boundary.py:163",
+        "tests/webui_host/test_session_boundary.py:17",
+        "tests/webui_host/test_session_boundary.py:30",
         "tests/webui_host/test_webui_contact_delivery.py:41"
       ]
     },
@@ -1396,10 +1397,10 @@
         "d4ae6fb9949c"
       ],
       "verified_by": [
-        "tests/webui_host/test_session_boundary.py:103",
-        "tests/webui_host/test_session_boundary.py:140",
-        "tests/webui_host/test_session_boundary.py:46",
-        "tests/webui_host/test_session_boundary.py:83"
+        "tests/webui_host/test_session_boundary.py:104",
+        "tests/webui_host/test_session_boundary.py:141",
+        "tests/webui_host/test_session_boundary.py:47",
+        "tests/webui_host/test_session_boundary.py:84"
       ]
     },
     {
@@ -1432,7 +1433,7 @@
         "d4ae6fb9949c"
       ],
       "verified_by": [
-        "tests/webui_host/test_canonical_browser_composition.py:45"
+        "tests/webui_host/test_canonical_browser_composition.py:50"
       ]
     },
     {

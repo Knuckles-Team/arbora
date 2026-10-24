@@ -1,6 +1,7 @@
 """Actual WebUI factory with synthetic issuer facts; no live auth deployment."""
 
 import asyncio
+import inspect
 from types import SimpleNamespace
 
 import pytest
@@ -8,7 +9,10 @@ import pytest
 from arbora.api.http.browser_app import create_browser_api_application
 from arbora.identity.admission import BrowserAdmission
 from arbora.identity.issuer import LocalIssuer
-from arbora.webui_host.session_boundary import WebUISessionBoundary
+from arbora.webui_host.session_boundary import (
+    WebUISessionBoundary,
+    identity_factory_kwargs,
+)
 from tests.api._support import identity_read_op
 from tests.identity.test_console_admission import CallerFixture, OwnersFixture
 from tests.identity.test_modes_and_browser import ORIGIN, request_scope
@@ -42,9 +46,10 @@ from tests.identity.test_modes_and_browser import ORIGIN, request_scope
         "cancel-capacity",
     ],
 )
+@pytest.mark.parametrize("auth_mode", ["required", "eg"])
 @pytest.mark.spec("ARBORA-IDENTITY-R004.5.2")
 def test_actual_webui_factory_dispatches_only_canonical_bound_operations(
-    monkeypatch, transition
+    monkeypatch, transition, auth_mode
 ):
     from agent_webui import oidc_session
     from agent_webui.host import config
@@ -166,14 +171,28 @@ def test_actual_webui_factory_dispatches_only_canonical_bound_operations(
             max_in_flight=1,
         )
         boundary = WebUISessionBoundary(admission, auth_app, operations=operations)
+        if (
+            auth_mode == "eg"
+            and "auth_mode" not in inspect.signature(create_agent_web_app).parameters
+        ):
+            from arbora.identity.engine import IdentityUnavailable
+
+            with pytest.raises(IdentityUnavailable, match="lacks explicit"):
+                identity_factory_kwargs(
+                    auth_mode, boundary, factory=create_agent_web_app
+                )
+            assert issued == [] and calls == []
+            return
+
         app = create_agent_web_app(
             Agent(TestModel()),
             {"get_path": lambda value: value},
             listener_host="0.0.0.0"
             if transition == "remote-default-rate"
             else "127.0.0.1",
-            auth_mode="eg",
-            session_boundary=boundary,
+            **identity_factory_kwargs(
+                auth_mode, boundary, factory=create_agent_web_app
+            ),
         )
         scope = request_scope()
         path = "/api/v1/ops/fixture.read"

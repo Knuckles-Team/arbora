@@ -1,6 +1,7 @@
 """Composition fixtures, not deployed login or signed credential qualification."""
 
 import asyncio
+import inspect
 from contextlib import asynccontextmanager
 from types import SimpleNamespace
 
@@ -156,3 +157,22 @@ def test_old_installed_factory_refuses_explicit_modes_without_downgrade():
     assert identity_factory_kwargs("required", None, factory=old_factory) == {}
     with pytest.raises(IdentityUnavailable, match="lacks explicit"):
         identity_factory_kwargs("none", None, factory=old_factory)
+
+
+@pytest.mark.parametrize("mode", ["none", "eg", "oidc"])
+@pytest.mark.spec("ARBORA-IDENTITY-R004.7.1")
+def test_installed_factory_explicit_mode_contract(mode):
+    from agent_webui.server import create_agent_web_app
+
+    from arbora.webui_host.session_boundary import WebUISessionBoundary
+
+    # Inspect configuration compatibility only; this object never admits a request.
+    boundary = object.__new__(WebUISessionBoundary) if mode == "eg" else None
+    if "auth_mode" not in inspect.signature(create_agent_web_app).parameters:
+        with pytest.raises(IdentityUnavailable, match="lacks explicit"):
+            identity_factory_kwargs(mode, boundary, factory=create_agent_web_app)
+    else:
+        values = identity_factory_kwargs(mode, boundary, factory=create_agent_web_app)
+        assert values["auth_mode"] == mode
+        if boundary is not None:
+            assert values["session_boundary"] is boundary
