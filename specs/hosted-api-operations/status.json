@@ -427,8 +427,8 @@
       "title": "Closed error enum and one response envelope",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "405459d8245e",
-        "4b83c69e2b41"
+        "4b83c69e2b41",
+        "f5c799c91830"
       ],
       "verified_by": [
         "tests/api/test_errors.py:396"
@@ -767,7 +767,7 @@
         "094c8adb6318",
         "23be3a8e9dd6",
         "2ad164bd5414",
-        "2dce8c5a3d8d"
+        "32dbf63ade7f"
       ],
       "verified_by": [
         "tests/fleet/test_multiplexer_dynamic_gateway.py:1164",
@@ -851,11 +851,11 @@
       "title": "Hot-path proof",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "2dce8c5a3d8d",
-        "4f898415bc1e",
-        "abb6768211d5",
-        "dd8cbebf32c4",
-        "f18c6f2b6d97"
+        "32dbf63ade7f",
+        "423c0070bb30",
+        "afa759bc9a8a",
+        "c6fca2d86b50",
+        "dd8cbebf32c4"
       ],
       "verified_by": [
         "tests/fleet/test_multiplexer_dynamic_gateway.py:1164",
