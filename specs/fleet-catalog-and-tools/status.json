@@ -1792,10 +1792,11 @@
         "245143bf3650",
         "42571b188ddc",
         "49e63b613b3e",
-        "f9dcc9819fd3"
+        "f46ccfd74580"
       ],
       "verified_by": [
-        "tests/fleet/test_declarations.py:41"
+        "tests/fleet/test_declarations.py:41",
+        "tests/ingest/test_connector_sources.py:306"
       ]
     },
     {
