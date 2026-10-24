@@ -44,8 +44,10 @@
     "ARBORA-FLEET-R014",
     "ARBORA-FLEET-R014.1",
     "ARBORA-FLEET-R014.2",
+    "ARBORA-FLEET-R014.3",
     "ARBORA-FLEET-R015",
     "ARBORA-FLEET-R015.1",
+    "ARBORA-FLEET-R015.2",
     "ARBORA-FLEET-R016",
     "ARBORA-FLEET-R017",
     "ARBORA-FLEET-R018",
@@ -151,6 +153,7 @@
     "ARBORA-FLEET-R039.6",
     "ARBORA-FLEET-R040",
     "ARBORA-FLEET-R040.1",
+    "ARBORA-FLEET-R040.2",
     "ARBORA-FLEET-R041",
     "ARBORA-FLEET-R041.1",
     "ARBORA-FLEET-R041.2",
@@ -166,6 +169,8 @@
     "ARBORA-FLEET-R041.12",
     "ARBORA-FLEET-R041.13",
     "ARBORA-FLEET-R041.14",
+    "ARBORA-FLEET-R041.15",
+    "ARBORA-FLEET-R041.16",
     "ARBORA-FLEET-R042",
     "ARBORA-FLEET-R042.1",
     "ARBORA-FLEET-R042.2",
@@ -641,7 +646,8 @@
       ],
       "rollup_of": [
         "ARBORA-FLEET-R014.1",
-        "ARBORA-FLEET-R014.2"
+        "ARBORA-FLEET-R014.2",
+        "ARBORA-FLEET-R014.3"
       ]
     },
     {
@@ -669,13 +675,30 @@
       ]
     },
     {
+      "id": "ARBORA-FLEET-R014.3",
+      "title": "A plain question goes to the engine planner unless an op names it",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "96b68a9b5e5c",
+        "b2a301657802"
+      ],
+      "verified_by": [
+        "tests/api/test_ask_routing_table.py:108",
+        "tests/api/test_ask_routing_table.py:127",
+        "tests/api/test_ask_routing_table.py:141",
+        "tests/api/test_ask_routing_table.py:96"
+      ]
+    },
+    {
       "id": "ARBORA-FLEET-R015",
       "title": "Typed operations cover agents, browser and fleet calls",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "54834624dbb4",
         "68e31b75248a",
-        "e1d37ca10ef7",
-        "fdd59af317ce"
+        "9532a0c5f38f",
+        "c5fac0da232e",
+        "e1d37ca10ef7"
       ],
       "verified_by": [
         "tests/browser_control/test_browser_proposals.py:37",
@@ -685,7 +708,8 @@
         "tests/fleet/test_multiplexer_dynamic_gateway.py:279"
       ],
       "rollup_of": [
-        "ARBORA-FLEET-R015.1"
+        "ARBORA-FLEET-R015.1",
+        "ARBORA-FLEET-R015.2"
       ]
     },
     {
@@ -698,6 +722,19 @@
       "verified_by": [
         "tests/fleet/test_child_failure_classification.py:18",
         "tests/fleet/test_multiplexer_dynamic_gateway.py:279"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R015.2",
+      "title": "A plan-confirmed destructive relay answers the connector's confirmation",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "54834624dbb4",
+        "9532a0c5f38f",
+        "c5fac0da232e"
+      ],
+      "verified_by": [
+        "tests/fleet/test_plan_confirmation.py:22"
       ]
     },
     {
@@ -922,8 +959,8 @@
         "db8d44259c3d"
       ],
       "verified_by": [
-        "tests/api/test_fleet_effect.py:547",
-        "tests/api/test_fleet_effect.py:572"
+        "tests/api/test_fleet_effect.py:548",
+        "tests/api/test_fleet_effect.py:573"
       ],
       "rollup_of": [
         "ARBORA-FLEET-R029.1"
@@ -937,8 +974,8 @@
         "4fabd9b042be"
       ],
       "verified_by": [
-        "tests/api/test_fleet_effect.py:547",
-        "tests/api/test_fleet_effect.py:572"
+        "tests/api/test_fleet_effect.py:548",
+        "tests/api/test_fleet_effect.py:573"
       ]
     },
     {
@@ -1340,7 +1377,7 @@
         "524b0ceaaf9c"
       ],
       "verified_by": [
-        "tests/fleet/test_fleet_access_contracts.py:226"
+        "tests/fleet/test_fleet_access_contracts.py:252"
       ]
     },
     {
@@ -1629,10 +1666,11 @@
       "title": "arbora serves and reports the prompts, skills and resources of each connector",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "25c198540020",
         "3597c590c8c9",
         "6815715c27d8",
-        "abaee0920e29",
-        "f5c799c91830"
+        "96b68a9b5e5c",
+        "abaee0920e29"
       ],
       "verified_by": [
         "tests/fleet/test_connector_surfaces.py:134",
@@ -1642,7 +1680,8 @@
         "tests/fleet/test_connector_surfaces.py:222"
       ],
       "rollup_of": [
-        "ARBORA-FLEET-R040.1"
+        "ARBORA-FLEET-R040.1",
+        "ARBORA-FLEET-R040.2"
       ]
     },
     {
@@ -1658,6 +1697,19 @@
         "tests/fleet/test_connector_surfaces.py:267",
         "tests/mcp_server/test_late_gateway_parity.py:29",
         "tests/mcp_server/test_late_gateway_parity.py:37"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R040.2",
+      "title": "A relay read survives a child restart",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "25c198540020",
+        "96b68a9b5e5c",
+        "e68f7006d5a2"
+      ],
+      "verified_by": [
+        "tests/fleet/test_relay_session_recovery.py:24"
       ]
     },
     {
@@ -1680,7 +1732,9 @@
         "ARBORA-FLEET-R041.11",
         "ARBORA-FLEET-R041.12",
         "ARBORA-FLEET-R041.13",
-        "ARBORA-FLEET-R041.14"
+        "ARBORA-FLEET-R041.14",
+        "ARBORA-FLEET-R041.15",
+        "ARBORA-FLEET-R041.16"
       ]
     },
     {
@@ -1780,7 +1834,7 @@
         "fd0f5f810481"
       ],
       "verified_by": [
-        "tests/fleet/test_declarations.py:30"
+        "tests/fleet/test_declarations.py:31"
       ]
     },
     {
@@ -1806,7 +1860,7 @@
         "95234018d50f"
       ],
       "verified_by": [
-        "tests/fleet/test_declarations.py:41",
+        "tests/fleet/test_declarations.py:94",
         "tests/ingest/test_connector_sources.py:306"
       ]
     },
@@ -1822,6 +1876,35 @@
       "verified_by": [
         "tests/fleet/test_handshake_onboard.py:163",
         "tests/fleet/test_handshake_onboard.py:216"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R041.15",
+      "title": "Captured pack bodies are read from the archive section",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "25c198540020",
+        "54834624dbb4",
+        "6721ef2b00df",
+        "96b68a9b5e5c"
+      ],
+      "verified_by": [
+        "tests/fleet/test_declarations.py:108",
+        "tests/fleet/test_declarations.py:66",
+        "tests/fleet/test_declarations.py:83"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R041.16",
+      "title": "Connector pack status is a served read",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "96b68a9b5e5c",
+        "d0f2716ab3ea"
+      ],
+      "verified_by": [
+        "tests/api/test_served_replay_owners.py:113",
+        "tests/api/test_served_replay_owners.py:96"
       ]
     },
     {

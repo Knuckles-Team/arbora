@@ -229,7 +229,8 @@
         "ARBORA-HOST-R001.8",
         "ARBORA-HOST-R001.9",
         "ARBORA-HOST-R001.10"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R001.1",
@@ -343,9 +344,9 @@
       "title": "Content is found by convention; no provider entry-point group exists",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "785473594e96",
-        "9e7f6499d96f",
-        "b50db19d9836"
+        "7d6d317b490a",
+        "8e5b4ec2b3fc",
+        "9e7f6499d96f"
       ],
       "verified_by": [
         "tests/deployment/test_arbora_deploy_artifacts.py:103"
@@ -403,7 +404,8 @@
       "rollup_of": [
         "ARBORA-HOST-R001.9.1",
         "ARBORA-HOST-R001.9.2"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R001.9.1",
@@ -412,14 +414,16 @@
       "landed_in": [],
       "verified_by": [
         "tests/deployment/test_small_profile_footprint.py:34"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R001.9.2",
       "title": "The tiny profile serves the graph with zero containers",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R001.10",
@@ -427,10 +431,12 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "3f7190f32493",
-        "785473594e96",
-        "b50db19d9836"
+        "7d6d317b490a",
+        "8e5b4ec2b3fc",
+        "fa15da95f51d"
       ],
       "verified_by": [
+        "tests/core/test_providers.py:15",
         "tests/test_installed_content.py:101",
         "tests/test_installed_content.py:93"
       ]
@@ -440,7 +446,8 @@
       "title": "Graph engine client exposes the session/discovery surface",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R003",
@@ -476,7 +483,8 @@
       "rollup_of": [
         "ARBORA-HOST-R005.1",
         "ARBORA-HOST-R005.2"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R005.1",
@@ -508,7 +516,8 @@
         "ARBORA-HOST-R005.2.6",
         "ARBORA-HOST-R005.2.7",
         "ARBORA-HOST-R005.2.8"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R005.2.1",
@@ -522,49 +531,56 @@
         "ARBORA-HOST-R005.2.1.3",
         "ARBORA-HOST-R005.2.1.4",
         "ARBORA-HOST-R005.2.1.5"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R005.2.1.1",
       "title": "Add arbora operation for code navigation actions",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R005.2.1.2",
       "title": "Add arbora operation for impact actions",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R005.2.1.3",
       "title": "Add arbora operation for `similar_code` and the remaining `graph_analyze` actions",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R005.2.1.4",
       "title": "Add arbora operation for `process_writeback`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R005.2.1.5",
       "title": "Approve the analyze mappings",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R005.2.2",
       "title": "Approved mapping for the configure action family",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R005.2.3",
@@ -581,7 +597,8 @@
         "ARBORA-HOST-R005.2.3.6",
         "ARBORA-HOST-R005.2.3.7",
         "ARBORA-HOST-R005.2.3.8"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R005.2.3.1",
@@ -599,84 +616,100 @@
       "title": "Add arbora operation for ingest submission actions",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R005.2.3.3",
       "title": "Add arbora operation for `corpus`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R005.2.3.4",
       "title": "Add arbora operation for job lifecycle actions",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R005.2.3.5",
       "title": "Add arbora operation for `rebuild_indexes` and `observe`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R005.2.3.6",
       "title": "Add arbora operation for `materialize` and `materialize_source`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R005.2.3.7",
       "title": "Add arbora operation for `reflect` and `agent_toolkit`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R005.2.3.8",
       "title": "Approve the ingest mappings",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R005.2.4",
       "title": "Approved mapping for the query-memory action family",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R005.2.5",
       "title": "Approved mapping for the orchestrate action family",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R005.2.6",
       "title": "Approved mapping for the mine-learn action family",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R005.2.7",
       "title": "Approved mapping for the governance-ops action family",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R005.2.8",
       "title": "Parity test over the full legacy action surface",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "depends_on": [
+        "ARBORA-HOST-R005.2.2.1",
+        "ARBORA-HOST-R005.2.2.7"
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R006",
@@ -689,7 +722,8 @@
       "rollup_of": [
         "ARBORA-HOST-R006.1",
         "ARBORA-HOST-R006.2"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007",
@@ -702,14 +736,16 @@
       "rollup_of": [
         "ARBORA-HOST-R007.1",
         "ARBORA-HOST-R007.2"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.1",
       "title": "Landed: none of the fence exists yet",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2",
@@ -787,490 +823,560 @@
         "ARBORA-HOST-R007.2.67",
         "ARBORA-HOST-R007.2.68",
         "ARBORA-HOST-R007.2.69"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.1",
       "title": "Rewire `arbora/a2a/authority.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.2",
       "title": "Rewire `arbora/a2a/routing.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.3",
       "title": "Rewire `arbora/access/service.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.4",
       "title": "Rewire `arbora/agent_host/__init__.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.5",
       "title": "Rewire `arbora/api/http/auth.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.6",
       "title": "Rewire `arbora/api/mcp/serving.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.7",
       "title": "Rewire `arbora/api/ops/access.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.8",
       "title": "Rewire `arbora/api/policy/pdp_remote.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.9",
       "title": "Rewire `arbora/browser_control/browser_control_binding.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.10",
       "title": "Rewire `arbora/browser_control/browser_control_dispatch.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.11",
       "title": "Rewire `arbora/browser_control/browser_control_durability.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.12",
       "title": "Rewire `arbora/browser_control/browser_control_outcome.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.13",
       "title": "Rewire `arbora/browser_control/browser_control_policy.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.14",
       "title": "Rewire `arbora/browser_control/browser_control_provenance.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.15",
       "title": "Rewire `arbora/browser_control/browser_control_service.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.16",
       "title": "Rewire `arbora/browser_control/browser_control_state.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.17",
       "title": "Rewire `arbora/browser_control/trace_bundle.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.18",
       "title": "Rewire `arbora/deployment/cli.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.19",
       "title": "Rewire `arbora/deployment/config_generator.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.20",
       "title": "Rewire `arbora/deployment/doctor_certification.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.21",
       "title": "Rewire `arbora/deployment/doctor_coverage.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.22",
       "title": "Rewire `arbora/deployment/doctor_lakehouse.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.23",
       "title": "Rewire `arbora/deployment/doctor_observability.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.24",
       "title": "Rewire `arbora/deployment/doctor.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.25",
       "title": "Rewire `arbora/deployment/genesis_environments.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.26",
       "title": "Rewire `arbora/deployment/preflight.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.27",
       "title": "Rewire `arbora/deployment/production_ops.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.28",
       "title": "Rewire `arbora/deployment/release_canary.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.29",
       "title": "Rewire `arbora/deployment/release_candidate.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.30",
       "title": "Rewire `arbora/deployment/self_deploy.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.31",
       "title": "Rewire `arbora/fleet/access_contracts.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.32",
       "title": "Rewire `arbora/fleet/child_resilience.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.33",
       "title": "Rewire `arbora/fleet/gateway_ops.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.34",
       "title": "Rewire `arbora/fleet/local_skill_catalog.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.35",
       "title": "Rewire `arbora/fleet/multiplexer.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.36",
       "title": "Rewire `arbora/fleet/onboarding.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.37",
       "title": "Rewire `arbora/gateway/aggregator.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.38",
       "title": "Rewire `arbora/gateway/config.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.39",
       "title": "Rewire `arbora/gateway/daemon.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.40",
       "title": "Rewire `arbora/gateway/dashboard_api.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.41",
       "title": "Rewire `arbora/gateway/fleet_events.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.42",
       "title": "Rewire `arbora/gateway/fleet.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.43",
       "title": "Rewire `arbora/gateway/graph_api.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.44",
       "title": "Rewire `arbora/gateway/rate_limit.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.45",
       "title": "Rewire `arbora/gateway/remote_oauth_api.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.46",
       "title": "Rewire `arbora/gateway/schemas/graph_core.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.47",
       "title": "Rewire `arbora/gateway/usage_api.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.48",
       "title": "Rewire `arbora/gateway/widgets/base.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.49",
       "title": "Rewire `arbora/gateway/widgets/ollama.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.50",
       "title": "Rewire `arbora/gateway/widgets/vector_db.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.51",
       "title": "Rewire `arbora/mcp_server/bootstrap.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.52",
       "title": "Rewire `arbora/mcp_server/composition.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.53",
       "title": "Rewire `arbora/mcp_server/decide_wiring.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.54",
       "title": "Rewire `arbora/mcp_server/runtime.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.55",
       "title": "Rewire `arbora/mcp_server/server.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.56",
       "title": "Rewire `arbora/messaging/alert_intake.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.57",
       "title": "Rewire `arbora/messaging/backends/mattermost.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.58",
       "title": "Rewire `arbora/messaging/backends/telegram.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.59",
       "title": "Rewire `arbora/messaging/governed_send.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.60",
       "title": "Rewire `arbora/messaging/lease.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.61",
       "title": "Rewire `arbora/messaging/polling.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.62",
       "title": "Rewire `arbora/messaging/reach.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.63",
       "title": "Rewire `arbora/messaging/registry.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.64",
       "title": "Rewire `arbora/messaging/router.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.65",
       "title": "Rewire `arbora/messaging/service.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.66",
       "title": "Rewire `arbora/observability/gateway_health.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.67",
       "title": "Rewire `arbora/semantic_content.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.68",
       "title": "Rewire `arbora/webui_host/webui_co_service.py` off agent-runtime internals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R007.2.69",
       "title": "Add the `agent_utilities.api`-only import-fence test",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R008",
@@ -1300,7 +1406,8 @@
         "ARBORA-HOST-R008.1006",
         "ARBORA-HOST-R008.1007",
         "ARBORA-HOST-R008.1008"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R009",
@@ -1319,7 +1426,8 @@
         "ARBORA-HOST-R009.6",
         "ARBORA-HOST-R009.7",
         "ARBORA-HOST-R009.8"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R010",
@@ -1343,7 +1451,8 @@
         "ARBORA-HOST-R010.7",
         "ARBORA-HOST-R010.8",
         "ARBORA-HOST-R010.9"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R011",
@@ -1475,7 +1584,8 @@
       "verified_by": [],
       "rollup_of": [
         "ARBORA-HOST-R022.1"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R023",
@@ -1493,7 +1603,8 @@
         "ARBORA-HOST-R023.1",
         "ARBORA-HOST-R023.2",
         "ARBORA-HOST-R023.3"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R024",
@@ -1534,42 +1645,48 @@
         "ARBORA-HOST-R026.4",
         "ARBORA-HOST-R026.5",
         "ARBORA-HOST-R026.6"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R026.1",
       "title": "Define the typed A2A task-store port",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R026.2",
       "title": "Implement the engine-backed A2A task store",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R026.3",
       "title": "Wire the hosted A2A app to the task store, fail-closed when absent",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R026.4",
       "title": "Add the doctor check for A2A task persistence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R026.5",
       "title": "Point the `g34-a2a` certification gate at arbora tests",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R027",
@@ -1581,140 +1698,160 @@
         "ARBORA-HOST-R027.1",
         "ARBORA-HOST-R027.2",
         "ARBORA-HOST-R027.3"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R027.1",
       "title": "Add the loopback OIDC authority owner module for skill certification",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R027.2",
       "title": "Add the loopback OIDC authority test fixture",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R027.3",
       "title": "Add the loopback OIDC authority script",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R028",
       "title": "Bump the pinned agent-utilities source for the new `agent_utilities.api.*` export modules",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R029",
       "title": "Tenant-bound native desktop actions",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R030",
       "title": "Run-bound visual state",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R031",
       "title": "Coding-agent discovery and sandbox handoff",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R010.1",
       "title": "Preserve configuration ownership",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R010.2",
       "title": "Declare every consumed environment name",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R010.3",
       "title": "Validate before any service starts",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R010.4",
       "title": "Keep conditional configuration precise",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R010.5",
       "title": "Bind environment guidance to declarations",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R010.6",
       "title": "Prove startup validation through the launcher",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R008.1",
       "title": "Preserve every boundary module",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R008.2",
       "title": "Detect installed harnesses without effects",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R008.3",
       "title": "Bind exact harness configuration changes",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R008.4",
       "title": "Apply harness edits without overwriting unrelated content",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R008.5",
       "title": "Prove detected-harness installation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R009.1",
       "title": "Preserve hosted protocols and task authority",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R010.7",
@@ -1725,7 +1862,8 @@
       "rollup_of": [
         "ARBORA-HOST-R010.7.1",
         "ARBORA-HOST-R010.7.2"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R010.7.1",
@@ -1753,7 +1891,8 @@
       "rollup_of": [
         "ARBORA-HOST-R010.7.2.1",
         "ARBORA-HOST-R010.7.2.2"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R010.7.2.1",
@@ -1779,21 +1918,24 @@
       "rollup_of": [
         "ARBORA-HOST-R010.7.2.2.1",
         "ARBORA-HOST-R010.7.2.2.2"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R009.2",
       "title": "Run terminal-mode HTTP in a supervised background thread",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R009.3",
       "title": "Project scoped workspace logs",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R009.4",
@@ -1804,7 +1946,8 @@
       "rollup_of": [
         "ARBORA-HOST-R009.4.1",
         "ARBORA-HOST-R009.4.2"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R009.4.1",
@@ -1824,91 +1967,104 @@
       "title": "Integrate delivery and terminal shutdown",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R009.5",
       "title": "Publish the terminal log-consumer handoff",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R009.6",
       "title": "Prove start and logs through real processes",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R006.1",
       "title": "Preserve the sole multiplexer owner",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R006.2",
       "title": "Use one standard transport scaffold",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R023.1",
       "title": "Preserve the entire intent surface",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R023.2",
       "title": "Prove transport parity on the served surface",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R023.3",
       "title": "AU:20 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R008.6",
       "title": "AU:96 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R026.6",
       "title": "AU:112 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R022.1",
       "title": "AU:97 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R010.8",
       "title": "ARBORA:9 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R032",
       "title": "Remote workbench compatibility manifest and admission",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R033",
@@ -2039,63 +2195,72 @@
       "title": "Startup bindings for messaging, A2A and readiness",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R008.1001",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R008.1002",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R008.1003",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R008.1004",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R008.1005",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R008.1006",
       "title": "Hosted observability, ecosystem and deployment modules",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R008.1007",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R008.1008",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R010.7.2.2.1",
@@ -2118,7 +2283,8 @@
       "rollup_of": [
         "ARBORA-HOST-R010.7.2.2.2.1",
         "ARBORA-HOST-R010.7.2.2.2.2"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R010.7.2.2.2.1",
@@ -2143,7 +2309,8 @@
       "title": "Complete live client activation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-HOST-R001.2.1.1",
@@ -2171,5 +2338,288 @@
         "tests/mcp_server/test_task_plan_settings.py:12"
       ]
     }
+  ],
+  "frontier": [
+    "ARBORA-HOST-R001.9.1",
+    "ARBORA-HOST-R001.9.2",
+    "ARBORA-HOST-R002",
+    "ARBORA-HOST-R005.2.1.1",
+    "ARBORA-HOST-R005.2.1.2",
+    "ARBORA-HOST-R005.2.1.3",
+    "ARBORA-HOST-R005.2.1.4",
+    "ARBORA-HOST-R005.2.1.5",
+    "ARBORA-HOST-R005.2.2",
+    "ARBORA-HOST-R005.2.3.2",
+    "ARBORA-HOST-R005.2.3.3",
+    "ARBORA-HOST-R005.2.3.4",
+    "ARBORA-HOST-R005.2.3.5",
+    "ARBORA-HOST-R005.2.3.6",
+    "ARBORA-HOST-R005.2.3.7",
+    "ARBORA-HOST-R005.2.3.8",
+    "ARBORA-HOST-R005.2.4",
+    "ARBORA-HOST-R005.2.5",
+    "ARBORA-HOST-R005.2.6",
+    "ARBORA-HOST-R005.2.7",
+    "ARBORA-HOST-R007.1",
+    "ARBORA-HOST-R007.2.1",
+    "ARBORA-HOST-R007.2.2",
+    "ARBORA-HOST-R007.2.3",
+    "ARBORA-HOST-R007.2.4",
+    "ARBORA-HOST-R007.2.5",
+    "ARBORA-HOST-R007.2.6",
+    "ARBORA-HOST-R007.2.7",
+    "ARBORA-HOST-R007.2.8",
+    "ARBORA-HOST-R007.2.9",
+    "ARBORA-HOST-R007.2.10",
+    "ARBORA-HOST-R007.2.11",
+    "ARBORA-HOST-R007.2.12",
+    "ARBORA-HOST-R007.2.13",
+    "ARBORA-HOST-R007.2.14",
+    "ARBORA-HOST-R007.2.15",
+    "ARBORA-HOST-R007.2.16",
+    "ARBORA-HOST-R007.2.17",
+    "ARBORA-HOST-R007.2.18",
+    "ARBORA-HOST-R007.2.19",
+    "ARBORA-HOST-R007.2.20",
+    "ARBORA-HOST-R007.2.21",
+    "ARBORA-HOST-R007.2.22",
+    "ARBORA-HOST-R007.2.23",
+    "ARBORA-HOST-R007.2.24",
+    "ARBORA-HOST-R007.2.25",
+    "ARBORA-HOST-R007.2.26",
+    "ARBORA-HOST-R007.2.27",
+    "ARBORA-HOST-R007.2.28",
+    "ARBORA-HOST-R007.2.29",
+    "ARBORA-HOST-R007.2.30",
+    "ARBORA-HOST-R007.2.31",
+    "ARBORA-HOST-R007.2.32",
+    "ARBORA-HOST-R007.2.33",
+    "ARBORA-HOST-R007.2.34",
+    "ARBORA-HOST-R007.2.35",
+    "ARBORA-HOST-R007.2.36",
+    "ARBORA-HOST-R007.2.37",
+    "ARBORA-HOST-R007.2.38",
+    "ARBORA-HOST-R007.2.39",
+    "ARBORA-HOST-R007.2.40",
+    "ARBORA-HOST-R007.2.41",
+    "ARBORA-HOST-R007.2.42",
+    "ARBORA-HOST-R007.2.43",
+    "ARBORA-HOST-R007.2.44",
+    "ARBORA-HOST-R007.2.45",
+    "ARBORA-HOST-R007.2.46",
+    "ARBORA-HOST-R007.2.47",
+    "ARBORA-HOST-R007.2.48",
+    "ARBORA-HOST-R007.2.49",
+    "ARBORA-HOST-R007.2.50",
+    "ARBORA-HOST-R007.2.51",
+    "ARBORA-HOST-R007.2.52",
+    "ARBORA-HOST-R007.2.53",
+    "ARBORA-HOST-R007.2.54",
+    "ARBORA-HOST-R007.2.55",
+    "ARBORA-HOST-R007.2.56",
+    "ARBORA-HOST-R007.2.57",
+    "ARBORA-HOST-R007.2.58",
+    "ARBORA-HOST-R007.2.59",
+    "ARBORA-HOST-R007.2.60",
+    "ARBORA-HOST-R007.2.61",
+    "ARBORA-HOST-R007.2.62",
+    "ARBORA-HOST-R007.2.63",
+    "ARBORA-HOST-R007.2.64",
+    "ARBORA-HOST-R007.2.65",
+    "ARBORA-HOST-R007.2.66",
+    "ARBORA-HOST-R007.2.67",
+    "ARBORA-HOST-R007.2.68",
+    "ARBORA-HOST-R007.2.69",
+    "ARBORA-HOST-R026.1",
+    "ARBORA-HOST-R026.2",
+    "ARBORA-HOST-R026.3",
+    "ARBORA-HOST-R026.4",
+    "ARBORA-HOST-R026.5",
+    "ARBORA-HOST-R027.1",
+    "ARBORA-HOST-R027.2",
+    "ARBORA-HOST-R027.3",
+    "ARBORA-HOST-R028",
+    "ARBORA-HOST-R029",
+    "ARBORA-HOST-R030",
+    "ARBORA-HOST-R031",
+    "ARBORA-HOST-R010.1",
+    "ARBORA-HOST-R010.2",
+    "ARBORA-HOST-R010.3",
+    "ARBORA-HOST-R010.4",
+    "ARBORA-HOST-R010.5",
+    "ARBORA-HOST-R010.6",
+    "ARBORA-HOST-R008.1",
+    "ARBORA-HOST-R008.2",
+    "ARBORA-HOST-R008.3",
+    "ARBORA-HOST-R008.4",
+    "ARBORA-HOST-R008.5",
+    "ARBORA-HOST-R009.1",
+    "ARBORA-HOST-R009.2",
+    "ARBORA-HOST-R009.3",
+    "ARBORA-HOST-R009.4.2",
+    "ARBORA-HOST-R009.5",
+    "ARBORA-HOST-R009.6",
+    "ARBORA-HOST-R006.1",
+    "ARBORA-HOST-R006.2",
+    "ARBORA-HOST-R023.1",
+    "ARBORA-HOST-R023.2",
+    "ARBORA-HOST-R023.3",
+    "ARBORA-HOST-R008.6",
+    "ARBORA-HOST-R026.6",
+    "ARBORA-HOST-R022.1",
+    "ARBORA-HOST-R010.8",
+    "ARBORA-HOST-R032",
+    "ARBORA-HOST-R008.1000",
+    "ARBORA-HOST-R008.1001",
+    "ARBORA-HOST-R008.1002",
+    "ARBORA-HOST-R008.1003",
+    "ARBORA-HOST-R008.1004",
+    "ARBORA-HOST-R008.1005",
+    "ARBORA-HOST-R008.1006",
+    "ARBORA-HOST-R008.1007",
+    "ARBORA-HOST-R008.1008",
+    "ARBORA-HOST-R010.7.2.2.2.2"
+  ],
+  "unserved": [
+    "ARBORA-HOST-R001.9.1",
+    "ARBORA-HOST-R001.9.2",
+    "ARBORA-HOST-R002",
+    "ARBORA-HOST-R005.2.1.1",
+    "ARBORA-HOST-R005.2.1.2",
+    "ARBORA-HOST-R005.2.1.3",
+    "ARBORA-HOST-R005.2.1.4",
+    "ARBORA-HOST-R005.2.1.5",
+    "ARBORA-HOST-R005.2.2",
+    "ARBORA-HOST-R005.2.3.2",
+    "ARBORA-HOST-R005.2.3.3",
+    "ARBORA-HOST-R005.2.3.4",
+    "ARBORA-HOST-R005.2.3.5",
+    "ARBORA-HOST-R005.2.3.6",
+    "ARBORA-HOST-R005.2.3.7",
+    "ARBORA-HOST-R005.2.3.8",
+    "ARBORA-HOST-R005.2.4",
+    "ARBORA-HOST-R005.2.5",
+    "ARBORA-HOST-R005.2.6",
+    "ARBORA-HOST-R005.2.7",
+    "ARBORA-HOST-R005.2.8",
+    "ARBORA-HOST-R007.1",
+    "ARBORA-HOST-R007.2.1",
+    "ARBORA-HOST-R007.2.2",
+    "ARBORA-HOST-R007.2.3",
+    "ARBORA-HOST-R007.2.4",
+    "ARBORA-HOST-R007.2.5",
+    "ARBORA-HOST-R007.2.6",
+    "ARBORA-HOST-R007.2.7",
+    "ARBORA-HOST-R007.2.8",
+    "ARBORA-HOST-R007.2.9",
+    "ARBORA-HOST-R007.2.10",
+    "ARBORA-HOST-R007.2.11",
+    "ARBORA-HOST-R007.2.12",
+    "ARBORA-HOST-R007.2.13",
+    "ARBORA-HOST-R007.2.14",
+    "ARBORA-HOST-R007.2.15",
+    "ARBORA-HOST-R007.2.16",
+    "ARBORA-HOST-R007.2.17",
+    "ARBORA-HOST-R007.2.18",
+    "ARBORA-HOST-R007.2.19",
+    "ARBORA-HOST-R007.2.20",
+    "ARBORA-HOST-R007.2.21",
+    "ARBORA-HOST-R007.2.22",
+    "ARBORA-HOST-R007.2.23",
+    "ARBORA-HOST-R007.2.24",
+    "ARBORA-HOST-R007.2.25",
+    "ARBORA-HOST-R007.2.26",
+    "ARBORA-HOST-R007.2.27",
+    "ARBORA-HOST-R007.2.28",
+    "ARBORA-HOST-R007.2.29",
+    "ARBORA-HOST-R007.2.30",
+    "ARBORA-HOST-R007.2.31",
+    "ARBORA-HOST-R007.2.32",
+    "ARBORA-HOST-R007.2.33",
+    "ARBORA-HOST-R007.2.34",
+    "ARBORA-HOST-R007.2.35",
+    "ARBORA-HOST-R007.2.36",
+    "ARBORA-HOST-R007.2.37",
+    "ARBORA-HOST-R007.2.38",
+    "ARBORA-HOST-R007.2.39",
+    "ARBORA-HOST-R007.2.40",
+    "ARBORA-HOST-R007.2.41",
+    "ARBORA-HOST-R007.2.42",
+    "ARBORA-HOST-R007.2.43",
+    "ARBORA-HOST-R007.2.44",
+    "ARBORA-HOST-R007.2.45",
+    "ARBORA-HOST-R007.2.46",
+    "ARBORA-HOST-R007.2.47",
+    "ARBORA-HOST-R007.2.48",
+    "ARBORA-HOST-R007.2.49",
+    "ARBORA-HOST-R007.2.50",
+    "ARBORA-HOST-R007.2.51",
+    "ARBORA-HOST-R007.2.52",
+    "ARBORA-HOST-R007.2.53",
+    "ARBORA-HOST-R007.2.54",
+    "ARBORA-HOST-R007.2.55",
+    "ARBORA-HOST-R007.2.56",
+    "ARBORA-HOST-R007.2.57",
+    "ARBORA-HOST-R007.2.58",
+    "ARBORA-HOST-R007.2.59",
+    "ARBORA-HOST-R007.2.60",
+    "ARBORA-HOST-R007.2.61",
+    "ARBORA-HOST-R007.2.62",
+    "ARBORA-HOST-R007.2.63",
+    "ARBORA-HOST-R007.2.64",
+    "ARBORA-HOST-R007.2.65",
+    "ARBORA-HOST-R007.2.66",
+    "ARBORA-HOST-R007.2.67",
+    "ARBORA-HOST-R007.2.68",
+    "ARBORA-HOST-R007.2.69",
+    "ARBORA-HOST-R026.1",
+    "ARBORA-HOST-R026.2",
+    "ARBORA-HOST-R026.3",
+    "ARBORA-HOST-R026.4",
+    "ARBORA-HOST-R026.5",
+    "ARBORA-HOST-R027.1",
+    "ARBORA-HOST-R027.2",
+    "ARBORA-HOST-R027.3",
+    "ARBORA-HOST-R028",
+    "ARBORA-HOST-R029",
+    "ARBORA-HOST-R030",
+    "ARBORA-HOST-R031",
+    "ARBORA-HOST-R010.1",
+    "ARBORA-HOST-R010.2",
+    "ARBORA-HOST-R010.3",
+    "ARBORA-HOST-R010.4",
+    "ARBORA-HOST-R010.5",
+    "ARBORA-HOST-R010.6",
+    "ARBORA-HOST-R008.1",
+    "ARBORA-HOST-R008.2",
+    "ARBORA-HOST-R008.3",
+    "ARBORA-HOST-R008.4",
+    "ARBORA-HOST-R008.5",
+    "ARBORA-HOST-R009.1",
+    "ARBORA-HOST-R009.2",
+    "ARBORA-HOST-R009.3",
+    "ARBORA-HOST-R009.4.2",
+    "ARBORA-HOST-R009.5",
+    "ARBORA-HOST-R009.6",
+    "ARBORA-HOST-R006.1",
+    "ARBORA-HOST-R006.2",
+    "ARBORA-HOST-R023.1",
+    "ARBORA-HOST-R023.2",
+    "ARBORA-HOST-R023.3",
+    "ARBORA-HOST-R008.6",
+    "ARBORA-HOST-R026.6",
+    "ARBORA-HOST-R022.1",
+    "ARBORA-HOST-R010.8",
+    "ARBORA-HOST-R032",
+    "ARBORA-HOST-R008.1000",
+    "ARBORA-HOST-R008.1001",
+    "ARBORA-HOST-R008.1002",
+    "ARBORA-HOST-R008.1003",
+    "ARBORA-HOST-R008.1004",
+    "ARBORA-HOST-R008.1005",
+    "ARBORA-HOST-R008.1006",
+    "ARBORA-HOST-R008.1007",
+    "ARBORA-HOST-R008.1008",
+    "ARBORA-HOST-R010.7.2.2.2.2"
   ]
 }

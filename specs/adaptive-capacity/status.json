@@ -32,7 +32,8 @@
         "ARBORA-CAPACITY-R001.1",
         "ARBORA-CAPACITY-R001.2",
         "ARBORA-CAPACITY-R001.3"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-CAPACITY-R001.1",
@@ -64,28 +65,32 @@
       "title": "AU:26 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-CAPACITY-R003",
       "title": "AU:70 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-CAPACITY-R004",
       "title": "AU:122 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-CAPACITY-R001.3",
       "title": "EG:9 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-CAPACITY-R750",
@@ -176,5 +181,17 @@
         "tests/fleet/scaling/test_resource_reservation.py:14"
       ]
     }
+  ],
+  "frontier": [
+    "ARBORA-CAPACITY-R001.2",
+    "ARBORA-CAPACITY-R003",
+    "ARBORA-CAPACITY-R004",
+    "ARBORA-CAPACITY-R001.3"
+  ],
+  "unserved": [
+    "ARBORA-CAPACITY-R001.2",
+    "ARBORA-CAPACITY-R003",
+    "ARBORA-CAPACITY-R004",
+    "ARBORA-CAPACITY-R001.3"
   ]
 }

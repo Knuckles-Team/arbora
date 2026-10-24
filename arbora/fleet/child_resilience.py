@@ -65,6 +65,7 @@ from typing import Any
 
 import anyio
 
+from arbora.fleet.plan_confirmation import armed
 from arbora.fleet.protocol_compat import mcp_protocol_error
 from arbora.observability.gateway_metrics import (
     MCP_CHILD_BREAKER_STATE,
@@ -180,11 +181,15 @@ TRANSPORT_EXCEPTIONS: tuple[type[BaseException], ...] = (
 # The MCP SDK translates a closed stdio dispatcher into this protocol-error
 # sentinel before the child runtime sees it. Keep the match exact: an arbitrary
 # MCPError remains an application failure and must not trigger replay.
+#: A restarted streamable-http child no longer knows the session id and
+#: answers 404 with the JSON-RPC body ``INVALID_REQUEST "Session not found"``;
+#: the current MCP client surfaces that body as is (ARBORA-FLEET-R040.2).
 _SESSION_DEAD_SIGNATURES = frozenset(
     {
         (-32000, "connection closed"),
         (-32600, "session terminated"),
         (32600, "session terminated"),
+        (-32600, "session not found"),
     }
 )
 
@@ -669,8 +674,14 @@ class ChildRuntime:
     def _report_first_failure(
         self, first: asyncio.Future | None, exc: BaseException
     ) -> bool:
-        """Report a boot failure to ``start`` and distinguish it from recovery."""
-        if first is None:
+        """Report a boot failure to ``start`` and distinguish it from recovery.
+
+        ARBORA-FLEET-R040.2: once the boot generation has answered ``start``,
+        its future is done. A later generation failure is a recovery, never a
+        second boot report; reporting it would raise ``InvalidStateError`` and
+        end the supervisor, so the child would never reconnect.
+        """
+        if first is None or first.done():
             return False
         self._set_state("failed")
         first.set_exception(exc)
@@ -769,6 +780,24 @@ class ChildRuntime:
         self._ready.clear()
         if self._stop_generation is not None:
             self._stop_generation.set()
+
+    async def recover(self, reason: str) -> bool:
+        """Re-establish a dead session once, waiting a bounded time for it.
+
+        Returns ``True`` when a fresh generation is ready. A runtime without a
+        supervisor (externally owned sessions) cannot reconnect and returns
+        ``False`` at once, so the caller raises the original failure.
+        """
+        if self._closed or self._supervisor is None:
+            return False
+        generation = self._generation
+        self.request_restart(reason=reason)
+        with contextlib.suppress(TimeoutError):
+            await asyncio.wait_for(
+                self._ready.wait(),
+                timeout=min(self.connect_timeout, _RECOVERY_WAIT),
+            )
+        return self._ready.is_set() and self._generation != generation
 
     def request_recycle(self) -> None:
         """Tear down + reconnect for a PLANNED token refresh (supervised only).
@@ -1207,7 +1236,10 @@ class ChildRuntime:
                 ),
                 probe_claimed,
             )
-            return await session.call_tool(original_name, arguments)
+            # ARBORA-FLEET-R015.2: a plan-confirmed destructive call arms this
+            # session to answer the connector's confirmation request.
+            async with armed(session, original_name):
+                return await session.call_tool(original_name, arguments)
 
         inner = asyncio.ensure_future(invoke())
         inner.add_done_callback(self._finish_call)
