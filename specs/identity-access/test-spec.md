@@ -4,7 +4,7 @@ These integration tests have not run for this spec. No pass is inferred from pri
 
 ## Portable fixture
 
-Use an ephemeral engine process or in-memory contract fixture implementing the public identity/access methods, a generated local signing key, deterministic clock, mock OIDC issuer/JWKS, mock LDAP directory, SCIM client, mock SMTP port and browser test server. The ordinary PR suite must provision its own dependencies and data; it must not depend on an operator's live identity provider, host inventory, secret backend, network address or sibling checkout. A missing optional live adapter is a recorded skip in a separate deployment profile, never a reason to skip the local contract fixture. Secrets remain fixture-only.
+Use an ephemeral engine process or in-memory contract fixture implementing the public identity/access methods, a generated local signing key, deterministic clock, mock OIDC issuer/JWKS, mock LDAP directory, SCIM client, mock SMTP port and browser test server. The ordinary PR suite must provision its own dependencies and data; it must not depend on an operator's live identity provider, host inventory, secret backend, network address or sibling checkout. Record a missing optional live adapter as a skip in a separate deployment profile. Never skip the local contract fixture for that reason. Secrets remain fixture-only.
 
 | Test | Requirements | Level and fixture | Positive result | Negative / boundary result |
 |---|---|---|---|---|
@@ -18,10 +18,10 @@ Use an ephemeral engine process or in-memory contract fixture implementing the p
 | IT-08 | IA-09 | Mock TLS LDAP, SCIM client, OIDC SAML broker | Escaped query returns bounded nested memberships. SCIM PATCH deprovisions and revokes session/key while preserving owned data. Brokered SAML yields verified OIDC identity. | Plain LDAP, filter injection, disabled AD account, SCIM token for another provider, malformed PATCH, SCIM restore without policy, and raw unverified SAML assertion deny. |
 | IT-09 | IA-10, IA-15 | CLI/doctor and fake SMTP | Claim/link/transition/rotate produce typed result. Doctor reports exposure and optional SMTP. Configured SMTP sends a one-use reset. | Token not printed twice or logged. Absent SMTP hides email-only option. Exposed demo and automatic service secret cause diagnostic failure. |
 | IT-10 | IA-11 | Shared YAML decision table on `none`, `local`, `external` with mock OIDC + LDAP | For each `(principal,scope,action,resource)`, effective claims digest, allow/deny and reason code match. `none→local→external→local→none→local` leaves principals, owners and grants unchanged. | Deliberate role/scope divergence fails oracle; stale mode token fails after transition; concurrent flip conflicts. |
-| IT-11 | IA-12 | Engine access contract + REST/MCP | Request/approve/deny/revoke, approval list, lease, check and explain return engine decision and audit receipt; route and MCP twin agree. | Self approval, delegated approval, expired lease, unavailable engine, missing exact scope and graph-only privilege shortcut deny; no local fallback receipt. |
+| IT-11 | IA-12 | Engine access contract + REST/MCP | Each operation returns the engine decision and audit receipt. Cover request/approve/deny/revoke, approval list, lease, check and explain. Route and MCP twin agree. | Self approval, delegated approval, expired lease, unavailable engine, missing exact scope and graph-only privilege shortcut deny. No local fallback receipt. |
 | IT-12 | IA-13 | Registry and dispatch property tests | Every advertised operation has an exact registered scope/class. Domain registry export matches engine source. Fleet operation passes with exact fleet grant. | `admin`, `kg:admin`, stdio transport, unknown tool and omitted registry entry never grant fleet/MCP access. |
 | IT-13 | IA-14 | Import graph + composition test | One server/issuer/session implementation is constructed and injected through ports. REST/MCP/web host share it. | Import cycle, orphan implementation, duplicate authority or direct web-host import of MCP implementation fails. |
-| IT-14 | IA-16 | Served engine verifier plus each Arbora client entry point | Bootstrap, REST, MCP, A2A, CLI and background service requests carry an accepted signed local-issuer or permitted service token, with expected allow and deny decisions. | Missing/expired/wrong-audience tokens and explicit engine denial produce a typed error. The client never retries unsigned or uses fallback credentials or auth-opt-out branches. An old client fails closed after engine opt-out removal. |
+| IT-14 | IA-16 | Served engine verifier plus each Arbora client entry point | Bootstrap, REST, MCP, A2A, CLI and background service requests carry an accepted signed local-issuer or permitted service token. Check expected allow and deny decisions. | Missing/expired/wrong-audience tokens and explicit engine denial produce a typed error. The client never retries unsigned or uses fallback credentials or auth-opt-out branches. An old client fails closed after engine opt-out removal. |
 
 ## Acceptance evidence and release checks
 
@@ -36,15 +36,15 @@ No pass on an unrelated branch, unmerged patch or earlier commit qualifies the e
 Focused source tests cover malformed/missing authority fields, immutable copied
 resolution/context sets, direct-only delegation, exact scope narrowing and
 source-expiry-bounded local claim preparation. Browser tests cover duplicate or
-invalid cookies, exact configured Origin, mutation CSRF, cookie lifetime,
-private credential digests and request/session-instance substitution, including
+invalid cookies, exact configured Origin, mutation CSRF, cookie lifetime and
+private credential digests. They cover request/session-instance substitution, including
 mutation across an await. Source fixtures do not qualify the EG producer, local
 signing keys, session persistence, installed generated bindings or mounted
 HTTP/MCP/WebUI serving. Those acceptance requirements remain outstanding.
 
 Additional source tests verify RS256 signatures using ephemeral in-memory test
-keys read through the injected existing key-store port, refusal without key
-provisioning, and current-authority changes during issuance. Request-lifecycle
+keys read through the injected existing key-store port. They check refusal without key
+provisioning and current-authority changes during issuance. Request-lifecycle
 fixtures exercise the actual WebUI evidence/export class with synthetic backend
 and token-verifier owners: same caller-instance resolution, after-await request
 mutation, rotation/revocation, refresh invalidation, cancellation cleanup and
@@ -146,6 +146,47 @@ startup. Generated new-metadata decoding remains producer-dependent.
 | Hot-path proof | `ARBORA-IDENTITY-R028.6` | `tests/fleet/test_delegated_identity_served.py::test_actor_required_tools_succeed_for_a_user` passes. |
 
 Hot-path proof for `ARBORA-IDENTITY-R028`: `tests/fleet/test_delegated_identity_served.py::test_actor_required_tools_succeed_for_a_user`.
+
+## WebUI mode and host-admission composition
+
+ARBORA-IDENTITY-R004.7 and ARBORA-IDENTITY-R004.4: source checks live in
+`tests/webui_host/test_session_boundary.py`. They cover protected defaults,
+invalid/missing composition refusal, exact auth namespace routing and no
+forwarding on synthetic revocation/unavailability. Required acceptance also
+includes real installed startup, EG session revocation/rotation, caller binding
+cleanup/cancellation, full browser login/logout/renewal, and WebSocket identity.
+No source fixture or no-op factory callback satisfies those remaining checks.
+
+### ARBORA-IDENTITY-R004.5: same-owner dispatch source tests
+
+`tests/api/test_browser_invocation_fence.py` uses the real browser authority owner with synthetic session facts. It proves bounded HTTP dispatch, body-await revocation/scope narrowing/session rotation/expiry/MFA removal refusal, private caller/task identity, duplicate-use refusal, cancellation cleanup, registry visibility race refusal, and preservation of post-invocation failure semantics. Browser checkout returns unavailable rather than leaking authority across a streaming task. These tests do not establish a live issuer, installed WebUI composition or native effect-boundary qualification.
+
+### ARBORA-IDENTITY-R004.6: anonymous effect migration acceptance
+
+Test direct enhanced file read/write/removal and configuration handlers remain inaccessible without a migrated explicit policy. For each migrated operation test canonical parameter/target/action-digest binding and containment. Test duplicate consumption and required confirmation at the real effect boundary. UI and WebMCP decisions must match. Never substitute an authenticated identity or fabricated grant for an anonymous caller.
+
+The mounted primitive tests also run actual FastAPI routing and real BrowserAdmission/ArboraBrowserAuthority with a synthetic issuer. It returns a fixture string, not a generated credential. They verify exact original session preservation, successful same-task dispatch and revocation during body receipt. They check ambiguity refusal before issuer use, cleanup and propagation of post-dispatch errors. Outer admission before a mount refuses because the immutable routing context changes. A fresh live issuer and installed WebUI remain untested.
+
+`tests/webui_host/test_canonical_browser_composition.py` exercises the actual WebUI application factory with the guarded host boundary and real admission owner, using a TestModel, synthetic issuer facts and synthetic native runtime. One read traverses the real shared invocation pipeline; forged authority parameters are rejected by its existing validation. Other cases cover body-await revocation, absent cookie/CSRF, wrong origin, legacy effect and prefix-confusion refusal, host-owned auth routing and liveness. No WebUI grant is minted. Source acceptance does not establish deployed security or complete identity-mode features.
+
+Canonical actual-factory negative cases cover oversized chunked and understated-length bodies stopping at the first over-limit chunk. They cover declared oversize and ambiguous framing before issuance or body receipt. They check provider HTTP and validation-detail masking and configured rate rejection with Retry-After. They verify capacity overflow without issuance and cancellation releasing capacity. Re-run these with installed qualified dependencies before activation; source tests use synthetic issuer/runtime facts only.
+
+A non-loopback factory case with no explicit rate verifies the canonical rate and burst equal WebUI's positive resolved defaults even while Arbora's separate setting remains zero. Configuration changes are test-local monkeypatches; no listener or production security settings are modified.
+
+## Exact source test bindings
+
+| Child | Source evidence or remaining acceptance |
+|---|---|
+| ARBORA-IDENTITY-R004.7.1 | Mode settings and factory refusal tests in `tests/webui_host/test_session_boundary.py`. |
+| ARBORA-IDENTITY-R004.7.2 | Installed startup with real providers remains open. |
+| ARBORA-IDENTITY-R004.4.1 | Routing, admission refusal and cleanup tests in `tests/webui_host/test_session_boundary.py`. |
+| ARBORA-IDENTITY-R004.4.2 | Real installed browser lifecycle and WebSocket identity remain open. |
+| ARBORA-IDENTITY-R004.5.1 | Private caller, mounted dispatch and race tests in `tests/api/test_browser_invocation_fence.py`. |
+| ARBORA-IDENTITY-R004.5.2 | Actual-factory safety tests in `tests/webui_host/test_canonical_browser_composition.py`. |
+| ARBORA-IDENTITY-R004.5.3 | Installed providers, native effect journals and streaming qualification remain open. |
+
+Only the four source children have test markers in this candidate. Broad parents and installed/native siblings have no new delivery markers.
+
 ## Explicit tokenless local admission (ARBORA-IDENTITY-R004.3)
 
 `tests/security/test_anonymous_mode.py` exercises the public ASGI identity boundary and canonical HTTP caller projection. It covers immutable mode activation, strict bind/Host/Origin/credential admission, and graph-pool mode isolation. It tests verified carrier API rejection, exact anonymous caller invariants, human/service operation refusal, and honest effect-journal provenance. These focused tests do not substitute for native EG or actual TUI acceptance.
@@ -155,3 +196,7 @@ Native acceptance must also provision a fresh none-mode store through the offici
 `tests/test_real_anonymous_boot.py` is the native, credential-free real serving gate. Set `ARBORA_NOAUTH_TEST_ENGINE_BINARY` to a built engine whose embedded contract matches the installed EG client and generated Arbora descriptors. It uses official first-start provisioning and checks REST, MCP, forbidden credentials/origins, and actual installed TUI A2A chat. The simulated model echoes a unique prompt nonce; separate model receipts and persisted task artifacts must match the TUI-rendered response. An unselected binary skips explicitly, not a success claim. Fullscreen native/Python PTY, restart, and authenticated-mode acceptance remain additional release gates.
 
 PolicyGate regression coverage admits an exact anonymous caller for an ordinary scoped operation. It refuses forged objects, disabled mode, human/service rules, and missing scopes. An enabled PDP denial remains a denial; successful real REST and MCP queries must exercise this gate rather than only the A2A chat path.
+
+The co-service fixture in `tests/webui_host/test_webui_contact_delivery.py` preserves both composition paths after browser discovery integration. It checks explicit mode forwarding to a synthetic WebUI factory and the exact browser service's owner-loop binding before serving. Existing runtime tests check binding cleanup on shutdown. These checks do not qualify installed authentication providers.
+
+Canonical factory safety tests both the verifier-required host-bound entry point and explicit EG selection. The installed factory exercises every required-mode dispatch case. It must refuse unsupported explicit EG requests before issuance or dispatch. Separate mode-compatibility tests verify explicit none/EG/OIDC forwarding with the companion factory and refusal with an older installed factory. Unsupported explicit modes stay unavailable; this is not a production fallback.

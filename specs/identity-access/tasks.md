@@ -144,6 +144,23 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] `ARBORA-IDENTITY-R028.5`: Evidence.
 - [ ] `ARBORA-IDENTITY-R028.6`: Hot-path proof.
 
+## WebUI mode composition extension
+
+- [ ] ARBORA-IDENTITY-R004.7: qualify explicit mode configuration with installed WebUI in none, EG and external OIDC modes. Source mode tests are not release qualification.
+- [ ] ARBORA-IDENTITY-R004.4: qualify host admission middleware with a configured issuer/auth route owner, current EG session checks, renewal and WebSocket support. Current HTTP adapter deliberately refuses unsupported cookie WebSocket admission.
+- [ ] ARBORA-IDENTITY-R004.5: finish and qualify same-owner HTTP dispatch composition. Source tests cover the bounded non-streaming fence; installed WebUI integration and real effect boundaries remain open. Keep browser streaming unavailable until a task-safe lifetime contract is qualified.
+- [ ] ARBORA-IDENTITY-R004.6: migrate explicit anonymous effects through existing governed operations, preserve canonical action binding and containment/confirmation, and prove UI/WebMCP equivalence. Read-only safety scaffolding is not full no-auth support.
+
+## Source-only delivery and open integration children
+
+- [ ] ARBORA-IDENTITY-R004.7.1: Host mode configuration source contract. Source tests exercise typed settings, factory arguments and refusal with an older incompatible WebUI factory.
+- [ ] ARBORA-IDENTITY-R004.7.2: Installed identity-mode startup. Installed package startup, provider failure and mode-change probes remain required.
+- [ ] ARBORA-IDENTITY-R004.4.1: Bound HTTP adapter source contract. Source fixtures prove routing, cleanup, redaction and refusal; they do not prove deployed login.
+- [ ] ARBORA-IDENTITY-R004.4.2: Installed browser identity lifecycle. Real issuer/session and browser lifecycle probes remain required.
+- [ ] ARBORA-IDENTITY-R004.5.1: Private same-owner dispatch source contract. Synthetic-owner tests prove bounded non-streaming dispatch, mounted routing, races and cancellation without claiming native effects.
+- [ ] ARBORA-IDENTITY-R004.5.2: Canonical WebUI factory safety source contract. Factory source tests use synthetic issuer/runtime facts and one shared-pipeline read. Cover malformed bodies, redaction, rate and capacity refusal.
+- [ ] ARBORA-IDENTITY-R004.5.3: Installed and native dispatch qualification. Real effect-boundary, installed provider and streaming qualification remain open.
+
 ### Explicit anonymous local mode amendment
 
 - [ ] Add explicit process-selected mode, separate anonymous caller/session provenance, and unsigned EG client composition.

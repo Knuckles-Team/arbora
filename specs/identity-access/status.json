@@ -115,7 +115,18 @@
     "ARBORA-IDENTITY-R028.3",
     "ARBORA-IDENTITY-R028.4",
     "ARBORA-IDENTITY-R028.5",
-    "ARBORA-IDENTITY-R028.6"
+    "ARBORA-IDENTITY-R028.6",
+    "ARBORA-IDENTITY-R004.7",
+    "ARBORA-IDENTITY-R004.4",
+    "ARBORA-IDENTITY-R004.5",
+    "ARBORA-IDENTITY-R004.6",
+    "ARBORA-IDENTITY-R004.7.1",
+    "ARBORA-IDENTITY-R004.7.2",
+    "ARBORA-IDENTITY-R004.4.1",
+    "ARBORA-IDENTITY-R004.4.2",
+    "ARBORA-IDENTITY-R004.5.1",
+    "ARBORA-IDENTITY-R004.5.2",
+    "ARBORA-IDENTITY-R004.5.3"
   ],
   "requirements": [
     {
@@ -172,19 +183,19 @@
     {
       "id": "ARBORA-IDENTITY-R004",
       "title": "Rollup",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
-        "08385f86486e",
-        "2763cd78b6bc",
-        "450b841e85a2",
-        "4a3410afa6de",
-        "4faeec842add"
+        "4a3410afa6de"
       ],
       "verified_by": [],
       "rollup_of": [
         "ARBORA-IDENTITY-R004.1",
         "ARBORA-IDENTITY-R004.2",
-        "ARBORA-IDENTITY-R004.3"
+        "ARBORA-IDENTITY-R004.3",
+        "ARBORA-IDENTITY-R004.7",
+        "ARBORA-IDENTITY-R004.4",
+        "ARBORA-IDENTITY-R004.5",
+        "ARBORA-IDENTITY-R004.6"
       ]
     },
     {
@@ -1311,6 +1322,123 @@
     {
       "id": "ARBORA-IDENTITY-R028.6",
       "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.7",
+      "title": "Explicit WebUI identity-mode composition",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-IDENTITY-R004.7.1",
+        "ARBORA-IDENTITY-R004.7.2"
+      ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.4",
+      "title": "Host browser-session adapter",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-IDENTITY-R004.4.1",
+        "ARBORA-IDENTITY-R004.4.2"
+      ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.5",
+      "title": "Same-owner HTTP dispatch fence",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-IDENTITY-R004.5.1",
+        "ARBORA-IDENTITY-R004.5.2",
+        "ARBORA-IDENTITY-R004.5.3"
+      ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.6",
+      "title": "Explicit anonymous effect migration",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.7.1",
+      "title": "Host mode configuration source contract",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "d4ae6fb9949c"
+      ],
+      "verified_by": [
+        "tests/webui_host/test_session_boundary.py:152",
+        "tests/webui_host/test_session_boundary.py:163",
+        "tests/webui_host/test_session_boundary.py:17",
+        "tests/webui_host/test_session_boundary.py:30",
+        "tests/webui_host/test_webui_contact_delivery.py:41"
+      ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.7.2",
+      "title": "Installed identity-mode startup",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.4.1",
+      "title": "Bound HTTP adapter source contract",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "d4ae6fb9949c"
+      ],
+      "verified_by": [
+        "tests/webui_host/test_session_boundary.py:104",
+        "tests/webui_host/test_session_boundary.py:141",
+        "tests/webui_host/test_session_boundary.py:47",
+        "tests/webui_host/test_session_boundary.py:84"
+      ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.4.2",
+      "title": "Installed browser identity lifecycle",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.5.1",
+      "title": "Private same-owner dispatch source contract",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "d4ae6fb9949c"
+      ],
+      "verified_by": [
+        "tests/api/test_browser_invocation_fence.py:118",
+        "tests/api/test_browser_invocation_fence.py:145",
+        "tests/api/test_browser_invocation_fence.py:175",
+        "tests/api/test_browser_invocation_fence.py:225",
+        "tests/api/test_browser_invocation_fence.py:256"
+      ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.5.2",
+      "title": "Canonical WebUI factory safety source contract",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "d4ae6fb9949c"
+      ],
+      "verified_by": [
+        "tests/webui_host/test_canonical_browser_composition.py:50"
+      ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.5.3",
+      "title": "Installed and native dispatch qualification",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

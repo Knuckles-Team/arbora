@@ -2,7 +2,7 @@
 
 ## Current seam and implementation boundary
 
-This checkout's `arbora/mcp_server/server.py` and `runtime.py` compose the one FastMCP server and verified tool session; `bootstrap.py` keeps process authority alive. `arbora/gateway/graph_api.py` installs the existing actor identity middleware. `arbora/gateway/remote_oauth_api.py` already narrows delegated provider scopes. `arbora/deployment/cli.py`, `config_generator.py` and `doctor.py` own deployment commands and diagnostics. `arbora/webui_host/webui_co_service.py` hosts the browser co-service. `arbora/a2a/authority.py` is the A2A authority boundary. Reuse these. The proposed `arbora/identity/`, `arbora/access/`, and `arbora/api/ops/` packages are **not in this checkout**; implementation must add them and wire them into the serving root before marking an operation available.
+This checkout's `arbora/mcp_server/server.py` and `runtime.py` compose the one FastMCP server and verified tool session; `bootstrap.py` keeps process authority alive. `arbora/gateway/graph_api.py` installs the existing actor identity middleware. `arbora/gateway/remote_oauth_api.py` already narrows delegated provider scopes. `arbora/deployment/cli.py`, `config_generator.py` and `doctor.py` own deployment commands and diagnostics. `arbora/webui_host/webui_co_service.py` hosts the browser co-service. `arbora/a2a/authority.py` is the A2A authority boundary. Reuse these. The proposed `arbora/identity/`, `arbora/access/`, and `arbora/api/ops/` packages are **not in this checkout**. Implementation must add them and wire them into the serving root before marking an operation available.
 
 The engine is the durable identity and access authority. Arbora adapters call its typed public methods; they do not write a local identity SQL store. Use the existing gateway session resolution and MCP authority scope, then expose the same application service through REST/MCP/CLI. `stdio` is a transport, not an authorization exemption.
 
@@ -39,7 +39,7 @@ The engine's reserved identity catalog contains `identity_config` (`mode`, `loca
 
 Allowed transitions: `none→local` requires an administrator with local credential. `none/local→external` requires an enabled provider and linked administrator; `external→local` requires local credentials for every administrator; `any→none` requires loopback bind, explicit acknowledgment, `identity:admin`, and fresh MFA. The engine checks each precondition and epoch atomically. Transition rotates issuer/session keys, revokes browser and refresh sessions, and preserves users, links, grants and owned data. Leaving `none` removes the previous signing key immediately; other rotations may retain old public keys for at most one access-token lifetime. Configuration seeds initial mode only; durable mode wins thereafter and doctor reports drift.
 
-In `none`, bootstrap principal is a normal engine principal with scoped admin grants but no approver/live-order membership. Every request still carries a valid signed token into engine RBAC. Network exposure requires an explicit acknowledgment, exact Host allowlist, and Origin check for cookie mutations. Show mode in session/status/MCP initialize and doctor. Local mode uses 256-bit opaque server-side session IDs stored only by hash, `__Host-arbora_session` with Secure/HttpOnly/SameSite=Lax/Path=/, CSRF token, fixation rotation, idle/absolute expiry and revocation. Access tokens live at most five minutes. Password candidates and recovery codes go only to engine verification methods; Arbora never logs them. Privileged console mutation requires `identity:admin`, operator-console origin, and MFA age at most 15 minutes. MFA enrollment itself is optional unless a group policy requires it.
+In `none`, bootstrap principal is a normal engine principal with scoped admin grants but no approver/live-order membership. Every request still carries a valid signed token into engine RBAC. Network exposure requires an explicit acknowledgment, exact Host allowlist, and Origin check for cookie mutations. Show mode in session/status/MCP initialize and doctor. Local mode uses 256-bit opaque server-side session IDs stored only by hash. Use `__Host-arbora_session` with Secure/HttpOnly/SameSite=Lax/Path=/, CSRF token, fixation rotation, idle/absolute expiry and revocation. Access tokens live at most five minutes. Password candidates and recovery codes go only to engine verification methods; Arbora never logs them. Privileged console mutation requires `identity:admin`, operator-console origin, and MFA age at most 15 minutes. MFA enrollment itself is optional unless a group policy requires it.
 
 ## Public interface contract
 
@@ -63,7 +63,7 @@ OIDC validates discovery metadata, issuer/audience/signature, `state`/`nonce`, P
 
 ## Decisions, failure modes, and observability
 
-One engine-backed authority eliminates local/engine disagreement. Unavailable engine or secrets store means login/identity mutation fail closed. Bad signing key, unknown `kid`, wrong tenant/audience, stale epoch, revoked credential, denied scope, and unavailable external IdP produce distinct internal reason codes but safe public messages. Emit metrics for issuance, login failures, mode transitions, denied access and adapter availability. Those metrics carry no subject, token, password or raw IP labels. Audit all privileged identity/access changes and sampled denials through engine authority. No readiness gate needs an existing external provider; optional live-provider qualification is a separate deployment exercise.
+One engine-backed authority eliminates local/engine disagreement. Unavailable engine or secrets store means login/identity mutation fail closed. Use distinct internal reason codes but safe public messages. Cover bad signing key, unknown `kid`, wrong tenant/audience, stale epoch, revoked credential, denied scope, and unavailable external IdP. Emit metrics for issuance, login failures, mode transitions, denied access and adapter availability. Those metrics carry no subject, token, password or raw IP labels. Audit all privileged identity/access changes and sampled denials through engine authority. No readiness gate needs an existing external provider; optional live-provider qualification is a separate deployment exercise.
 
 ## Implementation order
 
@@ -77,7 +77,7 @@ One engine-backed authority eliminates local/engine disagreement. Unavailable en
 ## Bounded producer implementation
 
 `identity.engine` parses and freezes the authoritative response shape;
-`identity.issuer` prepares consistent local claims and narrowed context and
+`identity.issuer` prepares consistent local claims and narrowed context. It
 signs through the existing read-only secret-backed key-ring port. Its injected
 credential authority is checked before signing and again before returning the
 token. It never generates, writes or rotates a deployment key or grants broker
@@ -110,9 +110,8 @@ these are not new EG wire fields or a replacement WebUI evidence DTO.
 `UnavailableIdentityAuthority` explicitly refuses until qualified EG adapters
 supply those facts. `ArboraBrowserAuthority` implements the existing WebUI port
 using a private per-request registry, exact caller-session instance, original
-credential and forwarded-token pairing. It checks snapshots after awaited
-owner calls, rechecks current authority before exporting evidence, and removes
-bindings on rotation/refusal/cancellation or context-manager exit. Refresh must
+credential and forwarded-token pairing. It checks snapshots after awaited owner calls and rechecks authority before exporting evidence.
+It removes bindings on rotation, refusal, cancellation or context-manager exit. Refresh must
 invalidate the old binding before establishing a new one.
 
 E owns the integration sequence: enter `BrowserAdmission.request` with the
@@ -297,6 +296,87 @@ Human action approvals remain separate, single-use and nonrenewable.
 Some connector tools act for a user, not for the platform. The fleet acceptance run of 2026-10-18 showed `keycloak-mcp` and `vector-mcp` refuse such calls with `IdentityRequiredError`. Arbora called them with its process credential only.
 
 R028 adds a delegated identity. The SDK marks each actor-required tool (SDK-CONNECTOR-CONTROL-R902). Arbora exchanges the verified caller token for an audience-bound token by RFC 8693 token exchange. The child binds that actor through the SDK transport. A call with no user caller refuses before any connector call.
+
+## Amendment: 2026-10-23 WebUI deployment identity composition
+
+Extend ARBORA-IDENTITY-R004 and R003 with explicit operator-selected WebUI
+`none`, `eg` and `oidc` host composition. No-auth is a conscious loopback-only
+mode, not a fallback for failed authentication. Preserve the host's existing
+session authority and invoke policy; never manufacture credentials or grants.
+Pass the selected mode and qualified session boundary through the WebUI public
+factory. Installed-package startup and full authenticated browser acceptance
+remain open until configured identity owners and compatible releases exist.
+
+### Remaining shared admission and invocation contract
+
+The host must expose a public request-admission port and an invocation fence.
+`request(scope)` owns one exact caller instance and its immutable mode/provenance
+for the request lifetime. `before_invocation(scope, caller, operation_id,
+effect, confirmation_reference)` consults the same owner immediately before
+an effect. It must recheck current session/credential expiry, revocation,
+rotation and scope narrowing after provider/JWT awaits. A cached claims mapping
+or a newly minted frontend grant cannot substitute for the admitted caller.
+Cancellation and errors remove the binding; no request inherits process grants.
+
+In `none`, the explicit operator anonymous policy selects canonical operation
+IDs and effect bounds. It grants no named identity, MFA or attended-human proof.
+Containment and confirmation apply to configured effects just as they do to
+signed-in callers. UI controls and WebMCP calls invoke the same operation and
+policy check. Unconfigured operations and unknown effects refuse. Direct
+frontend filesystem/configuration handlers must migrate through that dispatcher
+or stay unavailable to anonymous callers. The current exact read-route policy
+is a deliberately restricted interim slice, not full no-auth acceptance.
+
+In `eg` and `oidc`, provider-specific login resolves into the same host-owned
+caller. OIDC mode must not accept an EG-only boundary merely because a callback
+exists. WebSocket admission needs a separate handshake/message contract with
+bounded revalidation; relabeling a handshake as HTTP is forbidden. Existing
+BrowserAdmission HTTP bindings and WebUI's local RequestGrant are not yet a
+qualified shared caller, so the adapter must not be enabled as complete.
+
+Security review qualifications: the admitted caller is an opaque, private,
+request/task-bound handle from one owner, never a browser/request-state DTO.
+Admission and invocation callbacks must come from that same owner instance.
+Bind the decision and confirmation to canonical validated parameters, target
+tenant/graph/resource and immutable action digest, not only operation name or
+an unverified confirmation string. Recheck after authority-changing awaits and
+at the true effect boundary. A pre-dispatch check cannot replace engine-native
+CAS or consume-once fences. Reuse `AmbientHTTPAuthenticator`,
+`BoundBrowserVerifier`, the existing single API invocation chokepoint and
+`ArboraBrowserAuthority.before_invocation`; do not introduce a parallel policy
+engine. Acceptance covers streaming lifetime, cancellation, duplicate calls,
+task hops and revocation/scope narrowing during verifier awaits.
+
+### Separate delivery slices
+
+1. Safety scaffold (R004.7/R004.4): explicit mode selection and refusal of unsupported composition. No deployed security changes.
+2. Dispatch seam (R004.5): `BoundBrowserHTTPAuthenticator` supplies both resolver and revalidation from one authority owner, with private scope/task/caller lifetime and one-use fencing at existing HTTP invocation and registry visibility. Keep the WebUI adapter disabled pending successful installed composition and independent security review. Streaming remains unavailable until its own lifetime contract is qualified.
+3. Effect migration (R004.6): move direct WebUI effects to governed operation dispatch with explicit anonymous operator policy and native effect fencing. This is a separate open implementation, not implied by either prior slice.
+
+Keep these slices separately reviewable. Regenerate status from actual committed history as the final publication step. Source tests alone cannot mark deployment or complete-mode acceptance delivered.
+
+The inactive `create_browser_api_application` composition primitive derives the resolver/fence owner and trusted origin from one `BrowserAdmission`. Mount routing must finish before admission snapshots the request: changing `root_path` afterward correctly invalidates the binding. Real ASGI source tests demonstrate mounted success with synthetic issuer facts and rejection when admission occurs outside the mount. This primitive does not install itself into WebUI, exempt any existing identity middleware, or make helper/executor task hops safe.
+
+### Guarded WebUI canonical-path candidate
+
+A host may explicitly supply a typed canonical operation application to the WebUI session boundary. Both must share the exact same BrowserAdmission. This candidate routes only the canonical `/api/v1` namespace through mount-local admission and shared invocation; `/auth` stays host-owned. Unmigrated dynamic WebUI routes remain unavailable, including direct filesystem/configuration routes and non-API endpoints. Only the existing static-shell decision and fixed GET/HEAD liveness paths continue through the original gate. The default boundary without that application still refuses. No existing deployment is switched to this path.
+
+Actual factory source tests cover a canonical synthetic read through the real invoke pipeline and parameter validation. They also cover host-auth routing, liveness, revocation and transport proof refusals. They do not qualify a real issuer, native effects, frontend route migration, streaming, or OIDC provider integration. Verify every applicable outer host/security/capacity control and obtain independent review before activation.
+
+### Canonical transport-control repairs
+
+Canonical operation requests now validate framing and declared byte limits before issuance, and enforce a same-task streaming byte cap before buffering or invocation. They retain their own HTTP/validation privacy handlers because nested FastAPI handlers otherwise bypass WebUI masking. Unexpected post-invocation errors retain their outcome status rather than becoming authentication refusals; arbitrary exception details and headers are not reflected. Only the host-generated rate-limit exception may supply bounded retry metadata.
+
+Rate policy reuses the gateway's configured rate/burst and hashed tenant/principal bucket implementation. It keys from the exact verified caller rather than ambient process identity. The canonical app separately bounds in-flight requests (explicit 1..1024, default16), rejects excess work without issuing credentials or queueing, and releases capacity on success, failure and cancellation. This is a separate asynchronous request bound, not a claim that legacy synchronous helper capacity was inherited. No legacy helper/executor is used by this path.
+
+Body, privacy, rate and capacity equivalence remain activation gates until independent rereview accepts these repairs. Installed/native/live qualification and real anonymous effect policy remain open.
+
+The WebUI boundary passes its already-resolved effective listener rate/burst into the canonical authenticator before serving. It must not reread Arbora's separate settings, which may still be zero when the WebUI selected non-loopback defaults. Reconfiguration after the first operation starts and nonfinite/negative policies refuse. The actual-factory remote-default case verifies this without starting a listener or changing deployed settings.
+
+### Source delivery boundaries
+
+R004.7, R004.4 and R004.5 retain their full acceptance as rollups. Source delivery binds only R004.7.1, R004.4.1, R004.5.1 and R004.5.2. Their installed/provider/native siblings remain open. R004.6 remains wholly open; direct-handler refusal does not deliver anonymous effects. No source marker or delivery trailer claims an installed provider, native effect or activation.
+
 ### 2026-10-22 amendment: true tokenless local mode (R004.1)
 
 R004.1 supersedes the earlier planned bootstrap-JWT behavior specifically for
@@ -357,3 +437,5 @@ mutable override of the live settings proxy. Verify that scoped configuration
 teardown leaves later endpoint reads live. Run serving-root composition before
 anonymous endpoint admission tests to preserve remote-address and hostname
 refusal independently of suite ordering. Production admission is unchanged.
+
+The WebUI configuration requirement uses R004.7 so the existing tokenless local-serving R004.3 keeps its own meaning. Canonical browser invocation retains caller-session scope around the shared pipeline after same-owner use-time revalidation. Synthetic session fixtures run the existing GraphSession validation at that ambient boundary. This is source integration evidence; live Keycloak/Okta and installed EG acceptance remain open.

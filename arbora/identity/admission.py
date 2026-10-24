@@ -40,6 +40,16 @@ class BrowserAdmission:
         self._session_for_token = session_for_token
         self._trusted_origin = trusted_origin
 
+    @property
+    def browser_authority(self) -> ArboraBrowserAuthority:
+        """The composition-owned resolver and fence for admitted requests."""
+        return self._browser
+
+    @property
+    def trusted_origin(self) -> str:
+        """The configured origin, never derived from an incoming request."""
+        return self._trusted_origin
+
     @asynccontextmanager
     async def request(self, scope: Mapping[str, Any]) -> AsyncIterator[dict[str, Any]]:
         """Own normalization and private binding for this request's whole lifetime."""
