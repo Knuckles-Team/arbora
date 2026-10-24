@@ -22,7 +22,7 @@ wheels = [
 
 [[package]]
 name = "agent-connector-sdk"
-version = "0.5.4"
+version = "0.5.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -34,9 +34,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/30/b4/e5258b6239c7b3abb2a2d000d1eaa9b4145588733eb94335e84998fb21d7/agent_connector_sdk-0.5.4.tar.gz", hash = "sha256:691cf9bde80ae856f1f0a7d0088f0f17fb5acfcb6e0c94b51cfd0e582e76a2c9", size = 794041, upload-time = "2026-10-24T08:54:16.4Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2d/a0/882c0b0f681f4b56f9243e88ff44ae25725de2da0ccd4f43ecd6095afdd0/agent_connector_sdk-0.5.5.tar.gz", hash = "sha256:5990f2468ce0d293a94b069160b97faf5dcaad267b7354f94189fb50747ebe0c", size = 797176, upload-time = "2026-10-24T15:32:54.234Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/57/d0/1da4865ca3be3e454866d582c5b97a0f902a5cbfdac8866499a76e3d4701/agent_connector_sdk-0.5.4-py3-none-any.whl", hash = "sha256:d9a35dbbeec3cb50baa6bcd28a8f2d691fef23206532e86340d9c8d0fb617603", size = 783615, upload-time = "2026-10-24T08:54:14.886Z" },
+    { url = "https://files.pythonhosted.org/packages/0b/47/b1c5b60927f76dd28143fd21af5092d1fe02e633ef3e68209d414315c9dd/agent_connector_sdk-0.5.5-py3-none-any.whl", hash = "sha256:061c6615b00a4694ee91a60b3fc7911ca41e95c69755de42faf41477d45d6acc", size = 784912, upload-time = "2026-10-24T15:32:55.459Z" },
 ]
 
 [package.optional-dependencies]
@@ -466,8 +466,8 @@ webui = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], specifier = ">=0.5.4,<0.6.0" },
-    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], marker = "extra == 'gateway-widgets'", specifier = ">=0.5.4,<0.6.0" },
+    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], specifier = ">=0.5.5,<0.6.0" },
+    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], marker = "extra == 'gateway-widgets'", specifier = ">=0.5.5,<0.6.0" },
     { name = "agent-terminal-ui", marker = "extra == 'test'", specifier = ">=2.3.1" },
     { name = "agent-utilities", specifier = ">=3.1.0,<4.0.0" },
     { name = "agent-webui", marker = "extra == 'webui'", specifier = ">=2.8.2,<3.0.0" },

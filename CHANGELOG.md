@@ -6,6 +6,8 @@
 
 Fixes the gaps found by the 0.1.8.dev3 validation run.
 
+- Requires agent-connector-sdk 0.5.5, which declares edges on declared sources (ARBORA-FLEET-R041.15).
+- A destructive `fleet.call` under a confirmed plan answers the connector's confirmation request, so the delete runs. An unconfirmed call still fails closed (ARBORA-FLEET-R015.2).
 - `agents.plan_run` has a replay owner and reaches dispatch. Its step keys `plan-step:<record>:<task>:<idx>` derive from the run's own idempotency key, so a replay repeats no step effect (ARBORA-RELEASE-R003.4.11).
 - `fleet.packs.status` reads a connector's engine pack status as a read (ARBORA-FLEET-R041.16).
 - Explicit onboarding reads the `connector://resources` declaration and `ontology://` bodies from the SDK 0.5 pack archive. Connectors then register their ingest sources and access contracts (ARBORA-FLEET-R041.15).
