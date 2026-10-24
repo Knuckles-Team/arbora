@@ -999,7 +999,7 @@
       "landed_in": [
         "2c70abad2b68",
         "336f9faf3f21",
-        "6d0b52e03cfb"
+        "68c58c6e80df"
       ],
       "verified_by": [
         "tests/identity/test_identity_ports_boundary.py:105",
@@ -1397,7 +1397,7 @@
       "title": "Bound HTTP adapter source contract",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "6d0b52e03cfb",
+        "68c58c6e80df",
         "d4ae6fb9949c"
       ],
       "verified_by": [
