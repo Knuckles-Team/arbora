@@ -27,6 +27,14 @@ For each command and served probe, record exact source commit, candidate manifes
 
 `ARBORA-RELEASE-R003.4.4`: Warmup without a running loop records the cause. Publication waits for the first served request.
 
+The pin serialization regression uses the released engine codec on the actual
+export after generation, file serialization and parsing. Its digest must stay
+unchanged, and outer metadata ordering must be deterministic. Startup rejects
+body corruption or reordering even when the declared digest matches the engine.
+The startup publisher sends the roundtripped body through the public generated
+AgentComponent adapter and retains only the returned definition digest. The
+contract test records the transport. It does not prove durable native storage.
+
 ## Child interaction acceptance (pending)
 
 - `ARBORA-RELEASE-R003.4.12`: exercise the served invoke path with exact child targeting, duplicate keys, conflicting content, stale lifecycle, completion/cancellation race and queued-versus-applied receipts. Observe one safe-boundary delivery, no new root, no authority widening and no budget reset.

@@ -65,6 +65,17 @@ them when the mapped scope is empty too. A full-suite scope stays as it was.
 `tests/deployment/test_pr_static_scope.py` fails when a source-scanning test is
 missing from the list. It also fails when the workflow stops adding the list.
 
+## Amendment 2026-10-24: preserve the engine-owned schema body digest
+
+For `ARBORA-RELEASE-R003.4.4`, pin-file serialization must preserve the engine
+export's nested key order because the released body codec hashes that order.
+Arbora sorts only outer pin metadata. Startup must recompute the deserialized
+body's digest before binding a publisher, not trust its declared digest alone.
+Regenerate the existing pin through its owning generator. Do not change the
+engine codec, invent a digest or substitute another body at serving time.
+Roundtrip and public-initializer checks qualify this bounded repair, not full
+run execution, durable usage, deployment or release acceptance.
+
 ### 2026-10-24: explicit child interaction after read-only exploration
 
 `ARBORA-RELEASE-R003.4.12` and `.13` extend the served plan-run owner without
