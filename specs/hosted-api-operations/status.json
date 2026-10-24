@@ -277,7 +277,9 @@
     "ARBORA-OPS-R861.6",
     "ARBORA-OPS-R861.7",
     "ARBORA-OPS-R861.8",
-    "ARBORA-OPS-R861.9"
+    "ARBORA-OPS-R861.9",
+    "ARBORA-OPS-R021.4.8",
+    "ARBORA-OPS-R021.4.9"
   ],
   "requirements": [
     {
@@ -978,7 +980,9 @@
         "ARBORA-OPS-R021.4.4",
         "ARBORA-OPS-R021.4.5",
         "ARBORA-OPS-R021.4.6",
-        "ARBORA-OPS-R021.4.7"
+        "ARBORA-OPS-R021.4.7",
+        "ARBORA-OPS-R021.4.8",
+        "ARBORA-OPS-R021.4.9"
       ]
     },
     {
@@ -1709,7 +1713,7 @@
     },
     {
       "id": "ARBORA-OPS-R039.2",
-      "title": "Add one test in tests/gateway/test_dashboard_api.py asserting read-capability callers get 403 on PUT /layout, POST /daemon/start, POST /hydrate and POST /hydrate/{source}, while API-key callers pass",
+      "title": "Add one test in tests/gateway/test_dashboard_api.py. Assert read-capability callers get 403 on PUT /layout, POST /daemon/start, POST /hydrate and POST /hydrate/{source}. Assert API-key callers pass",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -3011,6 +3015,20 @@
     {
       "id": "ARBORA-OPS-R861.9",
       "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R021.4.8",
+      "title": "Project an admitted execution graph",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R021.4.9",
+      "title": "Project permitted node records and capabilities",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

@@ -241,7 +241,7 @@ Types: `EvaluationGoal`, `EvaluationCatalog`, `EvaluationScope`, `Finding`. Fail
 
 Existing code: arbora/security/security_policy_middleware.py:52; arbora/api/ops/registry_factory.py. Reachable today: no. Search terms used: red team, attack, scorer, jailbreak, target scope.
 
-Decision: EG owns catalog facts, selection and probe verdicts (EG-DECISION-ENGINE-R001/R138); AU executes the selected probes; Arbora admits by scope and serves the result. Reuse this R051 consumer instead of adding another security-evaluation rollup. Missing engine ports remain unavailable.
+Decision: EG owns catalog facts, selection and probe verdicts (EG-DECISION-ENGINE-R001/R138). AU executes the selected probes. Arbora admits by scope and serves the result. Reuse this R051 consumer instead of adding another security-evaluation rollup. Missing engine ports remain unavailable.
 
 ## Authorization-segmented virtual schema projections (ARBORA-OPS-R052)
 
@@ -664,8 +664,8 @@ passes its verified session and exact native claim through a private, revocable
 host scope while AU executes. The scope binds canonical task, context and run
 identities without adding authority to model input, client metadata or events.
 Trusted TaskPlanConfig opts A2A admission into native run ownership. EG assigns
-the WorkItem ID, returned directly as Task.id; get/list/cancel use that ID and
-the authoritative metadata preserves the original run correlation. No alias
+the WorkItem ID, returned directly as Task.id. Get/list/cancel use that ID.
+The authoritative metadata preserves the original run correlation. No alias
 store or copied engine identity algorithm is used. Legacy admission remains the
 default. Durable TaskPlan publication and planner/dispatch integration remain
 missing; native admission alone does not enable dependency execution.
@@ -834,8 +834,7 @@ Payload hydration uses small bounded batches and stops at the raw page budget. T
 ### 2026-10-22: native owner boundary decomposition (ARBORA-OPS-R001)
 
 Factor native claim validation, scoped execution, admitted identity validation,
-and WorkItem submission into bounded helpers without changing authority or
-ledger routing. Preserve exact owner graph, separate WorkItem/run identities,
+and WorkItem submission into bounded helpers. Preserve authority and ledger routing. Preserve exact owner graph, separate WorkItem/run identities,
 revocation, lease fences, usage, and fail-closed unsupported-owner behavior.
 Run-event ordering and terminal record validation retain existing semantics.
 The committed terminal reader still routes via session.graph; a separate
@@ -882,3 +881,56 @@ No spec owned user-saved assets. The search `git grep -n -i "dashboard\|catalog 
 The engine stores each dashboard as a catalog asset with an owner, grants and a revision. arbora serves the operations and holds no store. The engine catalog asset rows do not exist yet. An epistemic-graph row must define the asset type, the owner and grant facts, and compare-and-set on the revision. R861.8 depends on that row. Until it lands, the operations stay SPECIFIED.
 
 Call path: the served `invoke` receives the call and resolves the caller principal and tenant. It validates params. It then calls the engine through the client in `arbora/api/ops/dashboard.py`. `dashboard.delete` follows the existing `Confirm.PLAN` pattern of R860.3. `dashboard.list` and `dashboard.get` are reads. `dashboard.save` and `dashboard.share` are writes. Panel queries remain opaque strings. A later `query` call, made by the viewer under the viewer principal, runs them.
+
+### 2026-10-24: shared execution explorer, without a parallel graph service
+
+`ARBORA-OPS-R021.4.8` and `ARBORA-OPS-R021.4.9` extend the existing
+`runs.get` / `runs.events`, RunTraceReader and public projection. They do not
+introduce another store, event bus or authority. AU supplies execution facts;
+Arbora admits and projects them; the native owner remains authoritative.
+Both terminal implementations, agent-webui and geniusbot consume this contract.
+
+Preserve public replay v1 semantics and its existing consumers. Version or
+capability-negotiate new graph, lineage and transcript projections; unsupported
+versions return an explicit refusal. Never reinterpret an old event's `task_id`
+or relax existing decoder invariants to admit a new projection.
+
+Identity fields have different meanings: request `task_id` is the root WorkItem
+or A2A task; `run_id` is execution identity; event `task_id` is a run-local step;
+`context_id`, when owner-issued, is conversation identity. A graph node has a
+stable structured key `(run_id, node_kind, local_id)`, plus its separately
+validated root owner binding. A real nested run carries its own run identity
+and an explicit spawning-node reference. An AU plan step without a conversation
+is still a useful selectable node, but it is not a message destination.
+
+The snapshot includes its root binding, version, nodes, typed edges, event
+cursor and completeness/continuation metadata. At a recorded cursor it describes
+only known state, including pending declared plan steps. Each edge has stable
+endpoints and a kind: `spawned_child` means containment; `depends_on` means a
+scheduling prerequisite, including fan-in. Never synthesize either from display
+names, depth, temporal order or trace parentage. The dependency subgraph remains
+a DAG; malformed or inaccessible topology is reported, not repaired by a client.
+
+Updates reuse persisted RunEvent IDs and per-run sequence. Multi-run views carry
+one cursor per authorized run, not a fabricated global order. Discovery of a new
+nested run requires its explicit owner binding and its own snapshot/cursor.
+Reconnect resumes exclusively after the cursor; an exact duplicate is harmless,
+a conflicting duplicate or gap requires unavailable state and a fresh read.
+Snapshot/update reconciliation must use a consistent covered cursor. Page/node,
+edge, depth and byte bounds are explicit; truncation never appears complete.
+
+Node detail reads reuse the same owner-first access path. Public summaries are
+explicit producer-authored summaries, not hidden chain of thought. Raw tool
+arguments/results are not automatically public. A record carries source event,
+record kind and visibility; fields not allowed by the existing public projection
+remain omitted or redacted. Transcript availability requires actual authorized
+user/assistant history, not a reconstruction from traces. Capabilities are
+computed from the current authorized lifecycle and installed producer contracts.
+
+First slice: read-only flat dependency-plan snapshot and lifecycle updates using
+already supported owner-bound reads, with every write capability false. Next:
+producer-declared nested lineage and permitted detail records. Last: the separate
+active-message and completed-continuation admission contracts in
+`ARBORA-RELEASE-R003.4.12` / `.13`. Installed producer and served acceptance are
+required before any client advertises an interaction. No EG changes or new native
+authority work are part of this specification change.
