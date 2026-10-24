@@ -97,7 +97,9 @@
       "title": "A2A facade over the engine and agent services",
       "delivery_state": "SPECIFIED",
       "landed_in": [
+        "23607181d4af",
         "2763cd78b6bc",
+        "5c2eefda3a13",
         "a8ed61b538e7"
       ],
       "verified_by": [
@@ -607,9 +609,13 @@
     {
       "id": "ARBORA-A2A-R010",
       "title": "WorkItem stream projection, not a shadow log",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "23607181d4af"
+      ],
+      "verified_by": [
+        "tests/a2a/test_terminal_event.py:59"
+      ],
       "rollup_of": [
         "ARBORA-A2A-R010.1"
       ]
@@ -907,8 +913,10 @@
     {
       "id": "ARBORA-A2A-R010.1",
       "title": "Opt-in committed terminal point read",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "23607181d4af"
+      ],
       "verified_by": [
         "tests/a2a/test_terminal_event.py:59"
       ]

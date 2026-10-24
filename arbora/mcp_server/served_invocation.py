@@ -280,6 +280,7 @@ def compose_served_invocation(
     plan_seal_key: bytes | None = None,
     bindings: Mapping[str, Any] | None = None,
     fleet_effect: Any = None,
+    task_plan_config: Any = None,
 ) -> Any:
     """One admitted :class:`HostedInvocation` over the served EG pool."""
     from arbora.api.http.auth import (
@@ -385,6 +386,7 @@ def compose_served_invocation(
         step_invoke.bind(services)
     return HostedInvocation(
         services=services,
+        task_plan_config=task_plan_config,
         authenticator=AmbientHTTPAuthenticator(
             session_for_request=verified_bearer_session_for_request
         ),
@@ -414,8 +416,12 @@ def served_invocation_from_settings(
     """
     from arbora.core.settings import runtime_config, setting
     from arbora.mcp_server.served_engine import process_engine_pool
+    from arbora.mcp_server.task_plan import configured_task_plan
 
+    task_plan_config = configured_task_plan()
     if not runtime_config.graph_service_endpoints:
+        if task_plan_config is not None:
+            raise ValueError("task planning requires graph service endpoints")
         return None
     # The one process pool: startup composition reads EG through it too.
     pool = process_engine_pool()
@@ -431,4 +437,5 @@ def served_invocation_from_settings(
         plan_seal_key=bytes.fromhex(raw_key) if raw_key else None,
         bindings=bindings,
         fleet_effect=fleet_effect,
+        task_plan_config=task_plan_config,
     )

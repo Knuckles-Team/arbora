@@ -327,17 +327,30 @@ def test_the_a2a_run_uses_the_task_id_and_the_fleet_tools(
         authority_mod.WorkItemA2AAuthority
     )
     auth._executor = _Executor()
+    auth.task_plan_config = None
+    auth.hosted_invocation = None
+    auth._detached = set()
     task_id = "a2a-" + "a" * 64
 
     import arbora.work_items as work_items
 
-    monkeypatch.setattr(work_items, "claim_specific", lambda *a, **k: {"t": 1})
+    monkeypatch.setattr(
+        work_items,
+        "claim_specific",
+        lambda *a, **k: {
+            "claimed": True,
+            "tenant": "t",
+            "lease_holder_ref": "holder",
+            "lease_epoch": 1,
+            "fencing_token": 1,
+        },
+    )
     monkeypatch.setattr(work_items, "commit_result", lambda *a, **k: "committed")
     asyncio.run(
         auth._run(
             object(),
             item_id="workitem:orchestrator:" + task_id,
-            session=object(),
+            session=SimpleNamespace(tenant="t"),
             agent_name=agent_name,
             task="search",
             task_id=task_id,

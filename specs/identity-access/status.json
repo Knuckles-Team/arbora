@@ -233,7 +233,7 @@
         "5e42e0ab38ce"
       ],
       "verified_by": [
-        "tests/mcp_server/test_current_plan_reader.py:196",
+        "tests/mcp_server/test_current_plan_reader.py:197",
         "tests/mcp_server/test_source_reader_anonymous.py:17",
         "tests/security/test_anonymous_discovery.py:28",
         "tests/security/test_anonymous_mode.py:11",

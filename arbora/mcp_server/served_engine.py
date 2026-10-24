@@ -210,6 +210,13 @@ class _BlockingWorkItems:
     def __init__(self, routed: Any) -> None:
         self._routed = routed
 
+    def get_run(self, *, tenant: str, run_id: str) -> dict[str, Any] | None:
+        """Read immutable run admission through the caller-routed EG client."""
+        from arbora.native_run_admission import require_lookup
+
+        method = require_lookup(self._routed)
+        return _run_blocking(lambda: method(tenant=tenant, run_id=run_id))
+
     def __getattr__(self, name: str) -> Any:
         if name.startswith("_"):
             raise AttributeError(name)
@@ -229,12 +236,17 @@ class ServedEngine:
         self.graph_compute = _GraphCompute(pool)
 
     @property
-    def work_items(self) -> _BlockingWorkItems:
-        """EG WorkItems, held on the tenant's control graph (``__control__``)."""
+    def work_item_graph(self) -> str:
+        """The native graph used by this engine's WorkItem namespace."""
         from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
 
+        return CONTROL_GRAPH
+
+    @property
+    def work_items(self) -> _BlockingWorkItems:
+        """EG WorkItems, held on the tenant's control graph (``__control__``)."""
         return _BlockingWorkItems(
-            self.graph_compute.for_graph(CONTROL_GRAPH).async_client.work_items
+            self.graph_compute.for_graph(self.work_item_graph).async_client.work_items
         )
 
     async def health(self, graph: str) -> Mapping[str, Any]:

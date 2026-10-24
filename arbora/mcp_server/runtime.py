@@ -924,6 +924,8 @@ def _register_graph_tool_surface(
             tools=backing,
             operation_services=invocation.services,
             operation_authenticator=invocation.authenticator,
+            task_plan_config=invocation.task_plan_config,
+            hosted_invocation=invocation if invocation.task_plan_config else None,
         )
     mount_sdk_a2a(mcp)
 
