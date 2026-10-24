@@ -41,3 +41,10 @@ Out of scope: a particular CI vendor, image builder, registry, orchestrator, clo
 | RL-07 | ARBORA-RELEASE-R001 | [Evidence](plan.md#candidate-manifest-and-compatibility) | T-RL-10 | redacted receipt |
 
 Requirement IDs are defined in [requirements.md](requirements.md); delivery state per ID is in `status.json`.
+
+## Child interaction boundary
+
+`ARBORA-RELEASE-R003.4.12` and `.13` specify separate active-child messaging and
+completed-child continuation after the shared read-only explorer. They do not
+extend the delivery claim of the flat plan-run row R003.4.1. Missing native
+identity, history or receipt contracts keep interaction unavailable.
