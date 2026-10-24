@@ -242,6 +242,21 @@ class ServedEngine:
         self.graph_compute = _GraphCompute(pool)
 
     @property
+    def browser_control_state(self) -> Any:
+        """Browser records through public EG methods under the current caller."""
+        from arbora.mcp_server.browser_state import ServedBrowserState
+
+        return ServedBrowserState(self.pool)
+
+    def batch_typed_mutations(
+        self, mutations: list[dict[str, Any]], *, session: Any
+    ) -> bool:
+        """Atomically persist a typed browser trace under its exact caller."""
+        return self.browser_control_state.batch_typed_mutations(
+            mutations, session=session
+        )
+
+    @property
     def work_item_graph(self) -> str:
         """The native graph used by this engine's WorkItem namespace."""
         from arbora.deployment.semantic_provisioning import CONTROL_GRAPH

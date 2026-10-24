@@ -694,18 +694,18 @@
       "title": "Typed operations cover agents, browser and fleet calls",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "0248fc5f595a",
         "54834624dbb4",
         "68e31b75248a",
         "760ec8539a13",
-        "9532a0c5f38f",
-        "c5fac0da232e"
+        "9532a0c5f38f"
       ],
       "verified_by": [
         "tests/access/test_legacy_policy_history.py:11",
+        "tests/browser_control/test_browser_control_service.py:2098",
         "tests/browser_control/test_browser_proposals.py:37",
-        "tests/fleet/test_attended_proposal_agent_journey.py:62",
-        "tests/fleet/test_attended_proposal_effect_owner.py:36",
-        "tests/fleet/test_child_failure_classification.py:18"
+        "tests/browser_control/test_served_browser_authority.py:10",
+        "tests/fleet/test_attended_proposal_agent_journey.py:62"
       ],
       "rollup_of": [
         "ARBORA-FLEET-R015.1",
