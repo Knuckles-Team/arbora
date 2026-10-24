@@ -115,7 +115,11 @@
     "ARBORA-IDENTITY-R028.3",
     "ARBORA-IDENTITY-R028.4",
     "ARBORA-IDENTITY-R028.5",
-    "ARBORA-IDENTITY-R028.6"
+    "ARBORA-IDENTITY-R028.6",
+    "ARBORA-IDENTITY-R004.7",
+    "ARBORA-IDENTITY-R004.7.1",
+    "ARBORA-IDENTITY-R004.7.2",
+    "ARBORA-IDENTITY-R004.7.3"
   ],
   "requirements": [
     {
@@ -172,7 +176,7 @@
     {
       "id": "ARBORA-IDENTITY-R004",
       "title": "Rollup",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "08385f86486e",
         "2763cd78b6bc",
@@ -184,7 +188,8 @@
       "rollup_of": [
         "ARBORA-IDENTITY-R004.1",
         "ARBORA-IDENTITY-R004.2",
-        "ARBORA-IDENTITY-R004.3"
+        "ARBORA-IDENTITY-R004.3",
+        "ARBORA-IDENTITY-R004.7"
       ]
     },
     {
@@ -1314,6 +1319,43 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.7",
+      "title": "Anonymous task access (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-IDENTITY-R004.7.1",
+        "ARBORA-IDENTITY-R004.7.2",
+        "ARBORA-IDENTITY-R004.7.3"
+      ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.7.1",
+      "title": "Served read contract",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/a2a/test_anonymous_reads.py:22"
+      ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.7.2",
+      "title": "Native anonymous task ownership",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.7.3",
+      "title": "Native client source adapter",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/a2a/test_anonymous_native_reads.py:12"
+      ]
     }
   ]
 }

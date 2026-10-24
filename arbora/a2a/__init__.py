@@ -1,5 +1,14 @@
 """First-party Arbora unary A2A facade."""
 
+from .anonymous import (
+    AnonymousCaller,
+    AnonymousNativeReadPort,
+    AnonymousReadPolicy,
+    AnonymousTaskReadOwner,
+    AnonymousTaskStatus,
+    create_anonymous_a2a_application,
+)
+from .anonymous_native import EgAnonymousTaskReadPort
 from .application import (
     A2AAuthenticator,
     AmbientA2AAuthenticator,
@@ -41,6 +50,13 @@ from .work_items import (
 )
 
 __all__ = [
+    "EgAnonymousTaskReadPort",
+    "AnonymousCaller",
+    "AnonymousNativeReadPort",
+    "AnonymousReadPolicy",
+    "AnonymousTaskReadOwner",
+    "AnonymousTaskStatus",
+    "create_anonymous_a2a_application",
     "AdmittedA2AApp",
     "create_admitted_a2a_app",
     "A2AAgentCard",

@@ -152,3 +152,8 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] Validate real native EG persistence, effect journaling, real served Arbora and actual TUI with only the model simulated.
 - [ ] Validate separate fresh authenticated stack and missing-token refusal after anonymous acceptance.
 - [ ] Complete independent review and upstream CI before merge.
+
+- [ ] `ARBORA-IDENTITY-R004.7`: Complete all anonymous task access children.
+- [ ] `ARBORA-IDENTITY-R004.7.1`: Implement and test the served read contract with synthetic native evidence.
+- [ ] `ARBORA-IDENTITY-R004.7.2`: Reconcile native anonymous ownership and qualify installed reads before activation.
+- [ ] `ARBORA-IDENTITY-R004.7.3`: Qualify the existing public native client adapter with synthetic transport tests.
