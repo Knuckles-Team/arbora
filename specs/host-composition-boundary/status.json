@@ -308,7 +308,8 @@
       "title": "The served process mounts the operation-invoke API",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "192099593cdd"
+        "192099593cdd",
+        "fbb146fbae97"
       ],
       "verified_by": [
         "tests/test_served_operation_api.py:206",
