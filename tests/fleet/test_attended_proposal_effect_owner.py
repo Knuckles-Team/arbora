@@ -209,7 +209,7 @@ async def test_served_proposal_replay_and_cancellation_do_not_redispatch(
             message_count = len(sent)
             replay = await call()
             assert len(sent) == message_count and client.effect_items.claims == 1
-            assert engine._work_item_engine.claim_count == (0 if cancel else 1)
+            assert engine.browser_control_state.claim_count == (0 if cancel else 1)
             if cancel:
                 assert isinstance(replay, OpError) and replay.code == "INDETERMINATE"
             else:
@@ -313,5 +313,5 @@ async def test_completed_browser_replay_requires_same_live_run_and_session(
             assert replay.code == expected.get(change, "UNAUTHENTICATED")
             assert len(sent) == message_count
             assert client.effect_items.claims == 1
-            assert engine._work_item_engine.claim_count == 1
+            assert engine.browser_control_state.claim_count == 1
             await connection.disconnect("test_finished")

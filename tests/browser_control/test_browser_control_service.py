@@ -210,8 +210,8 @@ class _WorkItems:
 
 class _Engine:
     def __init__(self) -> None:
-        self._work_item_engine = _Authority()
-        self.work_items = _WorkItems(self._work_item_engine)
+        self.browser_control_state = _Authority()
+        self.work_items = _WorkItems(self.browser_control_state)
         self.trace_batches: list[list[dict[str, Any]]] = []
         self.fail_audit = False
 
@@ -224,7 +224,7 @@ class _Engine:
         for mutation in mutations:
             if mutation.get("kind") == "node":
                 node_id = str(mutation["id"])
-                self._work_item_engine.nodes[node_id] = {
+                self.browser_control_state.nodes[node_id] = {
                     "id": node_id,
                     "node_type": mutation["node_type"],
                     **mutation["properties"],
@@ -234,7 +234,7 @@ class _Engine:
     def query_cypher(
         self, query: str, params: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
-        return self._work_item_engine.query_cypher(query, params)
+        return self.browser_control_state.query_cypher(query, params)
 
 
 class _Policy:
@@ -480,7 +480,7 @@ async def test_read_call_is_audited_and_claimed_before_one_dispatch(
         assert sent[0].authorization == "read"
         assert sent[0].confirmation_digest is None
         assert engine.trace_batches, "pending audit must precede dispatch"
-        assert engine._work_item_engine.claim_count == 1
+        assert engine.browser_control_state.claim_count == 1
         await connection.receive(
             ControlResultMessage(
                 call_id=sent[0].call_id, status="succeeded", result={"ok": True}
@@ -523,7 +523,7 @@ async def test_cancelled_caller_terminalizes_claimed_work_item(
             await execution
     call_items = [
         node
-        for node in engine._work_item_engine.nodes.values()
+        for node in engine.browser_control_state.nodes.values()
         if node.get("kind") == "browser.control.call"
     ]
     assert call_items[0]["status"] == "cancelled"
@@ -543,7 +543,7 @@ async def test_ambiguous_fence_admission_recovers_only_owned_work_item(
 
     def fail_first_read_after_create(engine: Any, item_id: str) -> Any:
         nonlocal failed_after_create
-        if not failed_after_create and item_id in engine._work_item_engine.nodes:
+        if not failed_after_create and item_id in engine.browser_control_state.nodes:
             failed_after_create = True
             raise RuntimeError("injected post-admission read failure")
         return original_get(engine, item_id)
@@ -566,7 +566,7 @@ async def test_ambiguous_fence_admission_recovers_only_owned_work_item(
         for _ in range(100):
             rows = [
                 node
-                for node in engine._work_item_engine.nodes.values()
+                for node in engine.browser_control_state.nodes.values()
                 if node.get("kind") == "browser.control.call"
             ]
             if rows and rows[0].get("status") == "cancelled":
@@ -574,7 +574,7 @@ async def test_ambiguous_fence_admission_recovers_only_owned_work_item(
             await asyncio.sleep(0)
     call_items = [
         node
-        for node in engine._work_item_engine.nodes.values()
+        for node in engine.browser_control_state.nodes.values()
         if node.get("kind") == "browser.control.call"
     ]
     assert failed_after_create
@@ -603,7 +603,7 @@ async def test_mutation_waits_for_durable_exact_confirmation(
         await _wait_for_messages(sent, 1)
         prompt = sent[0]
         assert prompt.type == "control.confirmation_request"
-        assert engine._work_item_engine.claim_count == 0
+        assert engine.browser_control_state.claim_count == 0
         await connection.receive(
             ControlConfirmMessage(
                 call_id=prompt.call_id,
@@ -615,7 +615,7 @@ async def test_mutation_waits_for_durable_exact_confirmation(
         assert call.type == "control.call"
         assert call.authorization == "confirmed_mutation"
         assert call.confirmation_digest == prompt.confirmation_digest
-        assert engine._work_item_engine.claim_count == 1
+        assert engine.browser_control_state.claim_count == 1
         assert any(
             mutation["properties"].get("status") == "confirmed"
             for batch in engine.trace_batches
@@ -652,7 +652,7 @@ async def test_audit_failure_prevents_dispatch_and_reaps_owned_fence(
                     arguments={"value": "safe"},
                 )
             )
-        original_cancel = engine._work_item_engine.cancel_work_item
+        original_cancel = engine.browser_control_state.cancel_work_item
         cancel_attempts = 0
 
         def fail_first_cancel(request: dict[str, Any]) -> dict[str, Any]:
@@ -663,20 +663,20 @@ async def test_audit_failure_prevents_dispatch_and_reaps_owned_fence(
             return original_cancel(request)
 
         monkeypatch.setattr(
-            engine._work_item_engine, "cancel_work_item", fail_first_cancel
+            engine.browser_control_state, "cancel_work_item", fail_first_cancel
         )
         engine.fail_audit = False
         for _ in range(100):
             rows = [
                 node
-                for node in engine._work_item_engine.nodes.values()
+                for node in engine.browser_control_state.nodes.values()
                 if node.get("kind") == "browser.control.call"
             ]
             if rows and rows[0].get("status") == "cancelled":
                 break
             await asyncio.sleep(0)
     assert sent == []
-    assert engine._work_item_engine.claim_count == 0
+    assert engine.browser_control_state.claim_count == 0
     assert cancel_attempts == 2
     assert rows[0]["status"] == "cancelled"
     assert service._active_calls == {}
@@ -717,7 +717,7 @@ async def test_terminal_audit_failure_schedules_durable_reconciliation(
         await asyncio.gather(active.reaper_task, return_exceptions=True)
     assert receipt.status == "unknown"
     assert receipt.error_code == "durable_outcome_unavailable"
-    assert engine._work_item_engine.claim_count == 1
+    assert engine.browser_control_state.claim_count == 1
 
 
 @pytest.mark.asyncio
@@ -748,12 +748,12 @@ async def test_disconnect_durably_retires_current_registration(
         await connection.disconnect("browser_navigation")
     registration = next(
         node
-        for node in engine._work_item_engine.nodes.values()
+        for node in engine.browser_control_state.nodes.values()
         if node.get("node_type") == "BrowserControlRegistration"
     )
     arm = next(
         node
-        for node in engine._work_item_engine.nodes.values()
+        for node in engine.browser_control_state.nodes.values()
         if node.get("node_type") == "AttendedArmReceipt"
     )
     assert registration["status"] == "retired"
@@ -798,7 +798,7 @@ async def test_registration_recomputes_metadata_digest_before_authority(
             )
     assert not any(
         node.get("node_type") == "BrowserControlRegistration"
-        for node in engine._work_item_engine.nodes.values()
+        for node in engine.browser_control_state.nodes.values()
     )
 
 
@@ -898,7 +898,7 @@ async def test_finalize_rejects_pre_redirect_route_snapshot(
     with use_session(session):
         with pytest.raises(PermissionError, match="final binding"):
             await service.finalize_attended_arm(stale_grant, binding)
-    assert engine._work_item_engine.nodes == {}
+    assert engine.browser_control_state.nodes == {}
 
 
 @pytest.mark.asyncio
@@ -991,7 +991,7 @@ async def test_stale_generation_and_identity_are_refused(session: GraphSession) 
         lease = await _lease(service, _binding(session), tool)
         document = next(
             node
-            for node in engine._work_item_engine.nodes.values()
+            for node in engine.browser_control_state.nodes.values()
             if node.get("node_type") == "BrowserControlDocument"
         )
         document["registration_generation"] = 2
@@ -1121,7 +1121,7 @@ async def test_browser_event_revalidates_live_generation(session: GraphSession) 
         await _wait_for_messages(sent, 1)
         document = next(
             node
-            for node in engine._work_item_engine.nodes.values()
+            for node in engine.browser_control_state.nodes.values()
             if node.get("node_type") == "BrowserControlDocument"
         )
         document["registration_generation"] = 2
@@ -1164,7 +1164,7 @@ async def test_unconfirmed_cancel_reports_none_and_never_dispatches(
     assert receipt.effect is CancellationEffect.NONE
     assert receipt.status == "cancelled"
     assert execute_receipt == receipt
-    assert engine._work_item_engine.claim_count == 0
+    assert engine.browser_control_state.claim_count == 0
     assert [message.type for message in sent] == ["control.confirmation_request"]
 
 
@@ -1277,7 +1277,7 @@ async def test_claim_is_followed_by_immediate_live_revalidation(
         lease = await _lease(service, _binding(session), tool)
         session_status = _SessionStatus()
 
-        original_claim = engine._work_item_engine.claim_work_item
+        original_claim = engine.browser_control_state.claim_work_item
 
         def expire_after_claim(request: Any) -> dict[str, Any]:
             claim = original_claim(request)
@@ -1286,7 +1286,7 @@ async def test_claim_is_followed_by_immediate_live_revalidation(
 
         service._session_revalidator = session_status
         monkeypatch.setattr(
-            engine._work_item_engine, "claim_work_item", expire_after_claim
+            engine.browser_control_state, "claim_work_item", expire_after_claim
         )
         receipt = await service.execute_call(
             BrowserCallRequest(
@@ -1321,7 +1321,7 @@ async def test_policy_denial_is_audited_without_fence_or_dispatch(
     assert receipt.status == "denied"
     assert receipt.error_code == "policy_denied"
     assert sent == []
-    assert engine._work_item_engine.claim_count == 0
+    assert engine.browser_control_state.claim_count == 0
     assert any(
         mutation["properties"].get("status") == "denied"
         for batch in engine.trace_batches
@@ -1347,7 +1347,7 @@ async def test_duplicate_delivery_never_dispatches_twice(session: GraphSession) 
         replay = await service.execute_call(request)
         assert replay.status == "dispatched"
         assert len(sent) == 1
-        assert engine._work_item_engine.claim_count == 1
+        assert engine.browser_control_state.claim_count == 1
         await connection.receive(
             ControlResultMessage(
                 call_id=sent[0].call_id,
@@ -1527,7 +1527,7 @@ async def test_expired_arm_expires_lease_before_call(session: GraphSession) -> N
                     arguments={"value": "safe"},
                 )
             )
-    assert engine._work_item_engine.nodes[lease.lease_id]["status"] == "expired"
+    assert engine.browser_control_state.nodes[lease.lease_id]["status"] == "expired"
     assert sent == []
 
 
@@ -1583,7 +1583,7 @@ async def test_claim_lifetime_is_capped_to_remaining_authority(
         service, connection, engine, sent, tool = await _setup(session)
         binding = _binding(session)
         lease = await _lease(service, binding, tool)
-        lease_node = engine._work_item_engine.nodes[lease.lease_id]
+        lease_node = engine.browser_control_state.nodes[lease.lease_id]
         lease_node["expires_at"] = time.time() + 1.0
         execution = asyncio.create_task(
             service.execute_call(
@@ -1598,7 +1598,7 @@ async def test_claim_lifetime_is_capped_to_remaining_authority(
             )
         )
         await _wait_for_messages(sent, 1)
-        assert engine._work_item_engine.claim_requests[0].lease_ms <= 1_000
+        assert engine.browser_control_state.claim_requests[0].lease_ms <= 1_000
         await connection.receive(
             ControlResultMessage(
                 call_id=sent[0].call_id,
@@ -1697,7 +1697,7 @@ async def test_claimed_cancellation_commits_native_cancelled_outcome(
         receipt = await cancellation
         assert await execution == receipt
     assert receipt.status == "cancelled"
-    assert engine._work_item_engine.commit_outcomes[-1] == "cancelled"
+    assert engine.browser_control_state.commit_outcomes[-1] == "cancelled"
 
 
 @pytest.mark.asyncio
@@ -1784,7 +1784,7 @@ async def test_replay_rejects_changed_work_item_envelope(
         await _wait_for_messages(sent, 1)
         work_item = next(
             node
-            for node in engine._work_item_engine.nodes.values()
+            for node in engine.browser_control_state.nodes.values()
             if node.get("kind") == "browser.control.call"
         )
         work_item["metadata"]["queue"] = "changed"
@@ -1841,7 +1841,7 @@ async def test_unknown_call_is_reaped_after_durable_reconciliation_audit(
     assert reaped.call_id not in service._active_calls
     call_items = [
         node
-        for node in engine._work_item_engine.nodes.values()
+        for node in engine.browser_control_state.nodes.values()
         if node.get("kind") == "browser.control.call"
     ]
     assert len(call_items) == 1
@@ -1865,11 +1865,11 @@ def test_new_registration_retires_prior_document_generation(
         registration_generation=2,
         attended_arm_ref=_ref("attended", "second-arm"),
     )
-    register_catalog(engine._work_item_engine, binding_references(first), (tool,))
-    register_catalog(engine._work_item_engine, binding_references(second), (tool,))
+    register_catalog(engine.browser_control_state, binding_references(first), (tool,))
+    register_catalog(engine.browser_control_state, binding_references(second), (tool,))
     registrations = [
         node
-        for node in engine._work_item_engine.nodes.values()
+        for node in engine.browser_control_state.nodes.values()
         if node.get("node_type") == "BrowserControlRegistration"
     ]
     assert len(registrations) == 2
@@ -2007,12 +2007,12 @@ async def test_disconnect_retries_transient_registration_retirement(
         await connection.disconnect("test_disconnect")
     registrations = [
         node
-        for node in engine._work_item_engine.nodes.values()
+        for node in engine.browser_control_state.nodes.values()
         if node.get("node_type") == "BrowserControlRegistration"
     ]
     arms = [
         node
-        for node in engine._work_item_engine.nodes.values()
+        for node in engine.browser_control_state.nodes.values()
         if node.get("node_type") == "AttendedArmReceipt"
     ]
     assert attempts == 2
