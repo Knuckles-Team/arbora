@@ -21,6 +21,7 @@
     "ARBORA-RELEASE-R003.4.8",
     "ARBORA-RELEASE-R003.4.9",
     "ARBORA-RELEASE-R003.4.10",
+    "ARBORA-RELEASE-R003.4.11",
     "ARBORA-RELEASE-R003.5",
     "ARBORA-RELEASE-R003.6",
     "ARBORA-RELEASE-R003.7",
@@ -144,7 +145,8 @@
         "ARBORA-RELEASE-R003.4.6",
         "ARBORA-RELEASE-R003.4.8",
         "ARBORA-RELEASE-R003.4.9",
-        "ARBORA-RELEASE-R003.4.10"
+        "ARBORA-RELEASE-R003.4.10",
+        "ARBORA-RELEASE-R003.4.11"
       ]
     },
     {
@@ -208,11 +210,11 @@
         "b0b90565cb9e"
       ],
       "verified_by": [
-        "tests/api/test_plan_run_ops.py:455",
-        "tests/api/test_plan_run_ops.py:473",
-        "tests/api/test_plan_run_ops.py:484",
+        "tests/api/test_plan_run_ops.py:463",
+        "tests/api/test_plan_run_ops.py:481",
         "tests/api/test_plan_run_ops.py:492",
-        "tests/api/test_plan_run_ops.py:499"
+        "tests/api/test_plan_run_ops.py:500",
+        "tests/api/test_plan_run_ops.py:507"
       ]
     },
     {
@@ -242,6 +244,21 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-RELEASE-R003.4.11",
+      "title": "Served plan runs have a replay owner",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "96b68a9b5e5c",
+        "d0f2716ab3ea"
+      ],
+      "verified_by": [
+        "tests/api/test_plan_run_ops.py:520",
+        "tests/api/test_plan_run_ops.py:532",
+        "tests/api/test_served_replay_owners.py:55",
+        "tests/api/test_served_replay_owners.py:76"
+      ]
     },
     {
       "id": "ARBORA-RELEASE-R003.5",
