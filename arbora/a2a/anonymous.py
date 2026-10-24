@@ -246,6 +246,10 @@ class AnonymousTaskReadOwner:
             self._active -= 1
 
     def _validate_request(self, request: Request) -> None:
+        self._validate_ingress(request, self.policy.origin)
+
+    @staticmethod
+    def _validate_ingress(request: Request, origin: str) -> None:
         scope = request.scope
         try:
             local = ipaddress.ip_address(scope["client"][0]).is_loopback
@@ -260,13 +264,13 @@ class AnonymousTaskReadOwner:
             "x-forwarded-for",
             "x-forwarded-proto",
         }
-        expected = urlsplit(self.policy.origin)
+        expected = urlsplit(origin)
         if (
             not local
             or scope.get("scheme") != expected.scheme
             or any(name in headers for name in forbidden)
             or headers.getlist("host") != [expected.netloc]
-            or headers.getlist("origin") != [self.policy.origin]
+            or headers.getlist("origin") != [origin]
             or headers.getlist("x-arbora-anonymous") != ["1"]
             or headers.getlist("content-type") != ["application/json"]
         ):
