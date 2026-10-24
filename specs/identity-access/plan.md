@@ -369,6 +369,12 @@ Message send, cancellation, tools, global budgets, provider enforcement and brow
 
 The concrete source adapter uses the public generated GetRunWorkItem sender and decoder. It supplies the trusted graph before the read, even if the client default differs. The engine binds that method to its server-created anonymous principal and immutable run owner. Context subject, agent and scopes remain provenance, not client authority. Full ingress-to-client tests use synthetic native responses; they are not live engine tests.
 
+## Local anonymous text send
+
+The host composes explicit local admission with `AU-BOUNDARY-R043.13.1`, the received text-only execution constraint. EG owns run admission, idempotency, the exact lease and terminal state. The source slice stores a bounded terminal event with existing native node methods. It checks readback, then commits its opaque content reference. Replay reads that committed reference only after owner-bound run lookup. A usage receipt alone never becomes answer text. Installed proof and durable answer recovery remain separate open children. Native in-flight limits and finite per-run bounds do not claim a cumulative spending quota. No live security setting changes are part of this source work.
+
+Cancellation currently covers the run deadline and explicit policy withdrawal, with native terminal cleanup after the provider drains. Browser disconnect alone does not promise immediate cancellation; the finite deadline still applies. Failed or uncertain submit, claim or cleanup requires native reconciliation, never automatic model re-execution. A native deadline is not a promise of automatic capacity reclamation.
+
 The general none-mode middleware rejects Origin headers. These browser-specific
 factories require an exact configured Origin. Host composition must reconcile
 those policies before serving them together; standalone tests do not prove that
