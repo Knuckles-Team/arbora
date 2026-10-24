@@ -244,13 +244,14 @@ def startup_pins(path: Path = PIN_PATH) -> TaskPlanSchemaPins | None:
 
 def engine_publish(
     client_for: Callable[[str], Awaitable[Any]],
-    context_for: Callable[[str], Mapping[str, Any]],
+    context_for: Callable[[str, Mapping[str, Any]], Awaitable[Mapping[str, Any]]],
     graph: str | None = None,
 ) -> Publish:
     """Publish through the engine; reuse a current entry with the same body.
 
     A restart reads the current entry first, so a re-publish never collides
     with the earlier publish under a fresh mutation context.
+    Only a new write resolves the async authority provider for this exact pin.
     """
 
     async def publish(tenant: str, pin: Mapping[str, Any]) -> str:
@@ -272,7 +273,7 @@ def engine_publish(
             return str(current.definition_digest)
         result = await send_agent_component(
             client,
-            publication(pin, tenant, context_for(tenant)),
+            publication(pin, tenant, await context_for(tenant, pin)),
             graph,
             idempotency_key=idempotency_key(pin, tenant),
         )
