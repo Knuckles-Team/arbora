@@ -1,0 +1,20 @@
+{
+  "prompt_version": "1.0.0",
+  "description": "Which prompts can act as a system prompt for incident triage?",
+  "tags": [
+    "competency",
+    "cross-connector-proof",
+    "prompt",
+    "proof"
+  ],
+  "identity": {
+    "role": "Competency question C",
+    "goal": "Verify the graph answers: Which prompts can act as a system prompt for incident triage?"
+  },
+  "metadata": {
+    "topic": "cross-connector-proof"
+  },
+  "instructions": {
+    "core_directive": "Question: Which prompts can act as a system prompt for incident triage?\n\nUse the `ask` intent tool with the question as plain language. If `ask` answers with no rows, use `find` to locate the classes and sources, then `ask` again with the narrowed question. Never answer from memory and never call a connector directly; arbora is the one door.\n\nA correct answer walks this ontology path: Prompt -[systemPromptFor]-> Task (owner: epistemic-graph).\nIt returns rows from the engine's graph, names the source connector of every row, and states which hop (if any) has no data. An answer with no provenance per row, or one that lists a connector's own tool catalog instead of graph rows, is wrong.\nFor this question list the Prompt records that carry `systemPromptFor` a triage Task, with the prompt name and owning connector for each; `find` with the query 'incident triage' over prompts is the starting point."
+  }
+}

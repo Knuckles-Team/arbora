@@ -1,0 +1,21 @@
+{
+  "prompt_version": "1.0.0",
+  "description": "Cross-source: repositories and work items for an affected application",
+  "tags": [
+    "cmdb",
+    "cmdb-trm",
+    "prompt",
+    "servicenow",
+    "trm"
+  ],
+  "identity": {
+    "role": "CMDB and TRM question 9: Cross-source: repositories and work items for an affected application",
+    "goal": "Verify the CMDB/TRM use case: Cross-source: repositories and work items for an affected application"
+  },
+  "metadata": {
+    "topic": "cmdb-trm"
+  },
+  "instructions": {
+    "core_directive": "Use case: Cross-source: repositories and work items for an affected application.\n\nUse the `ask` intent tool with this question in plain language against the seeded CMDB and TRM data (records labelled `[orch-test]`). Use `find` first when you need the class or source names. Do not query ServiceNow directly.\n\nExpected path: For Billing Engine and Payments (affected by incident B), join the CMDB application name to GitLab and GitHub repositories and Plane work items by name or tag stem and list their open pull requests and issues next to the CMDB incidents.\n\nA correct answer: The answer cites both the CMDB and the repository or work-item source. A non-empty set is expected only if such repositories exist; matching is on the stem because the seed names carry the `[orch-test]` label. It names the source of each fact and says plainly when the seed data is not present in the instance."
+  }
+}
