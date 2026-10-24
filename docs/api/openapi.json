@@ -15553,6 +15553,40 @@
         ]
       }
     },
+    "/api/v1/ops/eg.query.NlQueryExplain": {
+      "post": {
+        "operationId": "eg.query.NlQueryExplain",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/NlQueryExplain"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.query.json#/methods/NlQueryExplain"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "EG-FEDERATED-QUERY-R058.2.2.1: NlQuery plus the executed UQL text. It shares the planner, budget, authority and refusals of NlQuery",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.query.QueryForeignColumns": {
       "post": {
         "operationId": "eg.query.QueryForeignColumns",
@@ -20294,5 +20328,5 @@
       }
     }
   },
-  "x-registry-digest": "ba4a79990a0c9c5f1a898e5b0b66301d8b9db428ae7782eccd756fb25c1a0168"
+  "x-registry-digest": "280a4081232f7c90562b0a74652ffc583061e83ee0801bee1da0825e62de59a8"
 }
