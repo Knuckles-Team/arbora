@@ -3042,8 +3042,10 @@
     {
       "id": "ARBORA-OPS-R021.4.8.1",
       "title": "Negotiated flat execution snapshot",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "7f9af1e43c02"
+      ],
       "verified_by": [
         "tests/api/test_execution_graph.py:27"
       ]

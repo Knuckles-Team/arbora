@@ -346,3 +346,8 @@ spawned children, transcript access, interaction or the full parent requirement.
 
 R021.4.8.2 retains the installed root-child-grandchild and snapshot/update
 reconciliation matrix above. No test in the flat slice claims this acceptance.
+
+R026.2 tests in `tests/api/test_gen_api.py` cover boolean input narrowing and
+result widening, empty-schema equivalence and nested properties. They preserve
+the dictionary comparison policy and provider-digest review. An installed
+provider regression compares its unconstrained PlanMatViewGet result with itself.

@@ -469,16 +469,22 @@ def _shared_schema_outputs(registry: dict[str, Any]) -> dict[Path, bytes]:
     return outputs
 
 
-def _shape(spec: dict[str, Any], *, result: bool) -> dict[str, Any]:
+def _shape(spec: dict[str, Any], *, result: bool) -> dict[str, Any] | bool:
     shape = spec.get("schema", spec.get("schema_snapshot", {}))
-    if result and "bodies" in shape:
+    if result and isinstance(shape, dict) and "bodies" in shape:
         return shape.get("bodies", {}).get("result", {}).get("schema", {})
     return shape
 
 
 def _shape_breaks(
-    old: dict[str, Any], new: dict[str, Any], *, path: str, result: bool
+    old: dict[str, Any] | bool,
+    new: dict[str, Any] | bool,
+    *,
+    path: str,
+    result: bool,
 ) -> list[str]:
+    if not isinstance(old, dict) or not isinstance(new, dict):
+        return _boolean_shape_breaks(old, new, path=path, result=result)
     changes: list[str] = []
     required = set(new.get("required", [])) - set(old.get("required", []))
     if not result and required:
@@ -506,6 +512,29 @@ def _shape_breaks(
             )
         )
     return changes
+
+
+def _boolean_shape_breaks(
+    old: dict[str, Any] | bool,
+    new: dict[str, Any] | bool,
+    *,
+    path: str,
+    result: bool,
+) -> list[str]:
+    """Handle boolean boundaries without changing dictionary comparison policy."""
+    if not isinstance(old, (dict, bool)) or not isinstance(new, (dict, bool)):
+        raise ValueError("compatibility requires object or boolean JSON Schema")
+    old = True if old == {} else old
+    new = True if new == {} else new
+    if old == new:
+        return []
+    compatible = (
+        (old is True or new is False) if result else (old is False or new is True)
+    )
+    if compatible:
+        return []
+    change = "widened result schema" if result else "narrowed params schema"
+    return [f"{change} {path}"]
 
 
 def _breaking_changes(before: dict[str, Any], after: dict[str, Any]) -> list[str]:

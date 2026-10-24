@@ -962,3 +962,12 @@ parent row. Native-service acceptance is not claimed by source fixtures.
 R021.4.8.2 retains the parent row's nested production and snapshot/update proof.
 It remains open after the flat slice passes its source checks. The parent row
 cannot close from the flat slice alone.
+
+### 2026-10-24: boolean schemas in the compatibility gate
+
+R026.2 compares legitimate JSON Schema booleans before dictionary traversal.
+An input schema must not narrow the previously accepted values. A result schema
+must not widen the values that existing callers must handle. In comparisons
+with a boolean, an empty object schema means true. Existing dictionary-to-dictionary
+checks and provider-digest review requirements remain unchanged. Invalid schema
+types fail closed. Tests include the installed provider's unconstrained result.
