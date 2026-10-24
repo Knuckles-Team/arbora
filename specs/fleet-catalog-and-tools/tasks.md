@@ -236,6 +236,7 @@ Preserve all existing R003 tasks and receipts. These added runtime cases have no
 - [ ] **ARBORA-FLEET-R041.9:** Serving never blocks: log, report in the surface report, retry with backoff.
 - [ ] **ARBORA-FLEET-R041.10:** Rules unchanged: keep mass-withdrawal approval; keep `onboard-fleet` as manual or bulk re-sync.
 - [ ] **ARBORA-FLEET-R041.15:** Read captured pack bodies from the SDK 0.5 archive section.
+- [ ] **ARBORA-FLEET-R041.16:** Serve connector pack status as a read (`fleet.packs.status`).
 - [ ] **ARBORA-FLEET-R042:** arbora registers connector data resources as virtual-graph sources by policy (rollup).
 - [ ] **ARBORA-FLEET-R042.1:** Model.
 - [ ] **ARBORA-FLEET-R042.2:** Behavior.

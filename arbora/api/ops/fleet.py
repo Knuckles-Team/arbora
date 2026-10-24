@@ -93,8 +93,51 @@ class FleetCallParams(_Params):
     arguments: dict[str, Any] = Field(default_factory=dict)
 
 
+class FleetPackStatusParams(_Params):
+    connector: str = Field(min_length=1, max_length=128)
+
+
 class FleetResult(BaseModel):
     value: Any
+
+
+#: The engine method that holds connector packs. Its ``status`` variant is an
+#: authenticated, tenant-bound read; every other variant is a governed write
+#: served as ``eg.storage.ConnectorPack``.
+_CONNECTOR_PACK = "ConnectorPack"
+
+
+async def handle_pack_status(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Read one connector's durable pack status for the verified caller's tenant.
+
+    ARBORA-FLEET-R041.16: the read is the engine's ``ConnectorPack`` ``status``
+    variant, sent as a read. The tenant is the verified caller's, never a
+    request field.
+    """
+    from epistemic_graph import EngineResponseError
+
+    from arbora.api.errors import EngineRefusal
+    from arbora.api.invoke.bootstrap import dispatch_eg_method
+    from arbora.api.registry import EgMethod
+
+    request = {
+        "connector": params["connector"],
+        "tenant_id": str(context.caller.tenant),
+    }
+    try:
+        result = await dispatch_eg_method(
+            EgMethod(service=_CONNECTOR_PACK, op=_CONNECTOR_PACK),
+            {"op": {"op": "status", "request": request}},
+            context,
+        )
+    except EngineResponseError as exc:
+        raise EngineRefusal(exc.code) from exc
+    value = getattr(result, "payload", result)
+    if hasattr(value, "model_dump"):
+        value = value.model_dump(mode="json")
+    return {"value": value}
 
 
 async def handle_fleet_operation(
@@ -292,6 +335,17 @@ def operations() -> tuple[OpSpec, ...]:
             )
         ),
         OpSpec(
+            id="fleet.packs.status",
+            verb=Verb.ASK,
+            summary="Show one connector's durable pack status in the engine",
+            examples=("show the connector pack status of gitlab-mcp",),
+            params=FleetPackStatusParams,
+            result=FleetResult,
+            binding=Composite(handler="arbora.api.ops.fleet.handle_pack_status"),
+            scopes=frozenset({"agent:pack-control"}),
+            effect=Effect.READ,
+        ),
+        OpSpec(
             id="fleet.status",
             verb=Verb.ASK,
             summary="Show child fleet health and this session's loaded items",
@@ -312,6 +366,7 @@ __all__ = [
     "FleetCallParams",
     "FleetCatalogParams",
     "FleetLoadParams",
+    "FleetPackStatusParams",
     "FleetPromptGetParams",
     "FleetResourceReadParams",
     "FleetResult",
@@ -321,6 +376,7 @@ __all__ = [
     "ServiceChildOutcomeUnknown",
     "handle_fleet_call",
     "handle_fleet_operation",
+    "handle_pack_status",
     "operations",
     "specs",
 ]
