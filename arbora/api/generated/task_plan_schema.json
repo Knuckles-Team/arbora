@@ -1,10 +1,24 @@
 {
-  "available": false,
-  "body": null,
+  "available": true,
+  "body": {
+    "features": [
+      {
+        "kind": {
+          "feature": "number",
+          "key": "task_position"
+        },
+        "missing": {
+          "missing": "abstain"
+        },
+        "name": "task_position"
+      }
+    ],
+    "schema_version": 1
+  },
   "component_id": "arbora.agents.plan_run.feature_schema",
-  "content_digest": null,
-  "engine_version": "2.27.5",
-  "export": null,
+  "content_digest": "sha256:7a1a4e4b524072521a937e2f797f0a8eba33f3cca5fb5bd373b65f77b15184d1",
+  "engine_version": "2.27.6",
+  "export": "epistemic_graph.decision_client.TASK_PLAN_FEATURE_SCHEMA",
   "kind": "feature_schema",
-  "schema_version": null
+  "schema_version": 1
 }
