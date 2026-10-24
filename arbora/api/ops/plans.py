@@ -283,12 +283,41 @@ class LateStepInvoke:
 
 
 def step_idempotency_key(record_id: str, task_id: str, index: int) -> str:
-    """The key of one step call: the plan record, the task and the call index.
+    """The key of one step call: the plan run's replay record, task and index.
 
-    A replay of the same plan record makes the same calls with the same keys,
-    so the effect journal returns the recorded outcome and runs no second effect.
+    ``record_id`` is the run's replay record (:func:`replay_record`). A replay
+    of the same served call makes the same calls with the same keys, so the
+    effect journal returns the recorded outcome and runs no second effect.
     """
     return f"plan-step:{record_id}:{task_id}:{index}"
+
+
+def replay_record(caller: Any) -> str:
+    """The plan run's replay record: the pipeline-bound request identity.
+
+    The invoke pipeline binds a governed call's ``request_id`` to the tenant,
+    the principal, the operation and the caller's idempotency key, so a replay
+    of the same served call carries the same value. The engine decision record
+    id is not stable: each ``Decide`` stamps its own ``created_at_ms``.
+    """
+    request_id = getattr(caller, "request_id", None)
+    if not isinstance(request_id, str) or not request_id:
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": "the plan run has no bound replay identity"}
+        )
+    return f"run-{request_id[:32]}"
+
+
+#: The replay owner of a served plan run (ARBORA-RELEASE-R003.4.11). A run's only
+#: external effects are its step ``fleet.call`` effects; each is reserved in the
+#: EG effect journal under ``plan-step:<record>:<task>:<idx>``, where
+#: ``<record>`` derives from the run's own idempotency key. The engine
+#: ``TaskPlan`` decision is evaluate-only, and ``PublishCurrentPlan`` is keyed by
+#: the run and the plan digest. A replayed run therefore returns each recorded
+#: step outcome and starts no second effect.
+NATIVE_IDEMPOTENCY: dict[str, str] = {
+    "agents.plan_run": "arbora.mcp_server.effect_journal:EgEffectJournal",
+}
 
 
 @dataclass
@@ -510,7 +539,9 @@ async def handle_plan_run(
         _plan_model(context),
         run_id=run_id,
         fleet=_fleet_step_tools(
-            context, parsed.fleet_tools, str(record.get("record_id") or "")
+            context,
+            parsed.fleet_tools,
+            replay_record(caller) if parsed.fleet_tools else "",
         ),
     )
     return {
@@ -548,6 +579,7 @@ def operations() -> tuple[OpSpec, ...]:
 specs = operations
 
 __all__ = [
+    "NATIVE_IDEMPOTENCY",
     "FleetStepTools",
     "FleetToolRef",
     "LateStepInvoke",
@@ -562,6 +594,7 @@ __all__ = [
     "handle_plan_run",
     "operations",
     "publish_request",
+    "replay_record",
     "run_plan_for",
     "specs",
 ]

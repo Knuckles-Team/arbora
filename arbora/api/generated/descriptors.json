@@ -5776,6 +5776,18 @@
     {
       "domain": "fleet",
       "examples": [
+        "show the connector pack status of gitlab-mcp"
+      ],
+      "id": "fleet.packs.status",
+      "summary": "Show one connector's durable pack status in the engine",
+      "tags": [
+        "fleet"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "fleet",
+      "examples": [
         "get this connector prompt"
       ],
       "id": "fleet.prompts.get",
@@ -6306,5 +6318,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "bea61b1dae6b57e480727d04c03e9b827d4f0e7a1b3c6230a7a2d801961b5bda"
+  "registry_digest": "63103c17f0570775f14aa03c1eac4a4db10666859b4e819fda32ddf2fd4a9dcd"
 }

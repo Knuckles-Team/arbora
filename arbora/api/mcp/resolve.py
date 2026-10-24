@@ -23,6 +23,9 @@ _STOP = frozenset(
     "a an the of for to in on with and or is are be do what how why my me i you your please".split()
     # ARBORA-FLEET-R014.2: request verbs say how to answer, not what to run.
     + "show display tell give across".split()
+    # ARBORA-FLEET-R014.3: question and function words name no operation.
+    + "which who whom whose where when there that this these those it its as at by"
+    " from into no any can could should would does did has have".split()
 )
 _READ_VERBS = frozenset({"ask", "why", "find"})
 _VERBS = _READ_VERBS | {"write", "act", "manage"}
@@ -36,6 +39,9 @@ _GRAPH_QUESTION = re.compile(
     r"|system[ -]prompt candidates?)\b"
 )
 _GRAPH_OPS = ("query.nl", "query.uql")
+#: The share of a plain question's content terms an op must match to answer it
+#: instead of the engine planner (ARBORA-FLEET-R014.3).
+_PLAIN_QUESTION_COVERAGE = 0.5
 _CACHE_LIMIT = 256
 _OUTCOME_LIMIT = 4096
 _REWARD_WEIGHT = 0.2
@@ -228,6 +234,14 @@ class IntentResolver:
             routed = _graph_question_route(intent, supplied, descriptors)
             if routed is not None:
                 return routed
+        if verb == "ask" and not supplied and _nl_visible(descriptors):
+            answering = _plain_question_answers(ranked, intent)
+            if not answering:
+                return replace(
+                    _ask_fallback(verb, intent, supplied, descriptors),
+                    alternatives=tuple(c.descriptor.id for c in ranked),
+                )
+            ranked = answering
         winner = ranked[0] if ranked else None
         if winner is None or winner.score < _MIN_EVIDENCE:
             return _ask_fallback(verb, intent, supplied, descriptors)
@@ -363,6 +377,41 @@ def _missing_required(
 ) -> tuple[str, ...]:
     required = schema.get("required", ())
     return tuple(sorted(str(name) for name in required if name not in params))
+
+
+def _nl_visible(descriptors: Sequence[Descriptor | Mapping[str, Any]]) -> bool:
+    return any(
+        item.id == "query.nl" and item.verb == "ask"
+        for item in (_coerce(entry) for entry in descriptors)
+    )
+
+
+def _engine_method(item: Descriptor) -> bool:
+    """A generated engine method op: structured params, never a text answer."""
+    return item.domain == "eg" or item.id.startswith("eg.")
+
+
+def _plain_question_answers(
+    ranked: Sequence[Candidate], intent: str
+) -> tuple[Candidate, ...]:
+    """The ranked ops that may answer a plain question, in rank order.
+
+    ARBORA-FLEET-R014.3: a question with no parameters is a data, catalog,
+    lineage or ownership question for the engine planner unless an op names
+    it. A generated engine method needs structured parameters, so it never
+    answers one. Another op answers only when it matches at least half of the
+    question's content terms; one shared word ("agents", "request") is not
+    evidence.
+    """
+    terms = set(_tokens(intent))
+    if not terms:
+        return ()
+    return tuple(
+        candidate
+        for candidate in ranked
+        if not _engine_method(candidate.descriptor)
+        and len(set(candidate.matched_terms)) >= _PLAIN_QUESTION_COVERAGE * len(terms)
+    )
 
 
 def _graph_question_route(
