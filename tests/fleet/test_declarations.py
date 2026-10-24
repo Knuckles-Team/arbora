@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 from types import SimpleNamespace
+from typing import Any
 
 import pytest
 
@@ -33,7 +34,7 @@ def test_capture_lists_the_declaration_and_not_a_manifest() -> None:
     assert [r.uri for r in listed] == ["connector://resources", "ontology://x"]
 
 
-async def _capture(declaration: object) -> object:
+async def _capture(declaration: object) -> Any:
     """Capture a live in-process MCP server through the real SDK 0.5 pack path."""
     from agent_connector_sdk.artifacts.pack import build_content_pack
     from agent_connector_sdk.ports.session import TransportEndpoint
@@ -58,7 +59,7 @@ async def _capture(declaration: object) -> object:
         )
 
 
-def _pack(body: object) -> object:
+def _pack(body: object) -> Any:
     return asyncio.run(_capture(body))
 
 

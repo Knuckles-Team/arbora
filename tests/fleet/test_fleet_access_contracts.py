@@ -96,7 +96,7 @@ def fake_sdk(monkeypatch):
     return seen
 
 
-def _pack() -> _Pack:
+def _pack() -> types.SimpleNamespace:
     return _Pack(
         entries=(
             _Entry("ontology://tickets", TTL.encode()),

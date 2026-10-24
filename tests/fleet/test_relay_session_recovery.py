@@ -14,6 +14,7 @@ import socket
 import subprocess
 import sys
 import time
+from typing import Any, cast
 
 import pytest
 
@@ -104,8 +105,9 @@ async def _mounted(tmp_path, port: int):
         },
     )
     assert started is not None
-    payload, tools, cfg = started[1], [], {"url": f"http://127.0.0.1:{port}/mcp"}
-    mux._register_child_result("relay-child", payload, tools, cfg)
+    payload = started[1]
+    cfg = {"url": f"http://127.0.0.1:{port}/mcp"}
+    mux._register_child_result("relay-child", payload, [], cfg)
     return mux, payload
 
 
@@ -186,10 +188,12 @@ async def test_a_prompt_called_without_its_arguments_is_a_typed_refusal(
                 lambda session: session.get_prompt("create_branch_prompt", {}),
                 10.0,
             )
-        refusal = _prompt_refusal(raised.value, "relay-child", "create_branch_prompt")
+        refusal = _prompt_refusal(
+            cast(Exception, raised.value), "relay-child", "create_branch_prompt"
+        )
         assert isinstance(refusal, OperationRefused)
         _, envelope = to_envelope(
-            _typed_refusal(refusal),
+            cast(Any, _typed_refusal(refusal)),
             op="fleet.prompts.get",
             request_id="r",
             registry_digest="d" * 64,
@@ -212,7 +216,9 @@ def test_declared_required_prompt_arguments_are_checked_before_the_child() -> No
         _require_prompt_arguments(item, {"branch": "b"})
     assert refused.value.details["missing"] == ["project_id"]
     _require_prompt_arguments(item, {"branch": "b", "project_id": "p"})
-    other = _prompt_refusal(
-        child_resilience.MCPError(-32603, "renderer exploded"), "s", "p"
+    other: Any = _prompt_refusal(
+        cast(Exception, child_resilience.MCPError(-32603, "renderer exploded")),
+        "s",
+        "p",
     )
     assert type(other).__name__ == "FleetRefusal" and other.code == "CHILD_REFUSED"
