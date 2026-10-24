@@ -32,6 +32,67 @@ _NATIVE_DISPATCH: ContextVar[NativeDispatchFence | None] = ContextVar(
 )
 
 
+_MISSING_PROMPT_ARGUMENTS = re.compile(
+    r"[Mm]issing required arguments?:\s*\{([^}]{0,2000})\}"
+)
+
+
+def _argument_names(text: str) -> list[str]:
+    names = (part.strip().strip("'\"") for part in text.split(","))
+    return sorted(
+        {name for name in names if re.fullmatch(r"[A-Za-z_][\w.-]{0,127}", name)}
+    )
+
+
+def _require_prompt_arguments(item: Any, supplied: Mapping[str, Any]) -> None:
+    """Refuse a prompt call that omits an argument the prompt declares required.
+
+    ARBORA-OPS-R009.4 (gap G10): the refusal names the missing arguments, and
+    nothing is sent to the child.
+    """
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    schema = getattr(item, "schema", None) or {}
+    required = schema.get("required") if isinstance(schema, Mapping) else None
+    declared = [str(name) for name in required or () if isinstance(name, str)]
+    missing = sorted(name for name in declared if name not in supplied)
+    if missing:
+        raise OperationRefused(
+            "INVALID_ARGUMENT",
+            {"reason": "the prompt needs these arguments", "missing": missing},
+        )
+
+
+def _prompt_refusal(exc: Exception, server: str, name: str) -> Exception:
+    """The typed refusal for a child's failure to render one prompt.
+
+    A child that reports missing arguments (FastMCP answers them as an internal
+    error) is ``INVALID_ARGUMENT`` naming them. A refusal that is already typed
+    passes through. Any other child error is the child's own ``CHILD_REFUSED``
+    with its redacted detail, never ``INTERNAL``.
+    """
+    from arbora.api.errors import EngineRefusal
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.fleet.child_resilience import MCPError, is_transient_child_death
+
+    if isinstance(exc, (OperationRefused, FleetRefusal, EngineRefusal)):
+        return exc
+    if not isinstance(exc, MCPError) or is_transient_child_death(exc):
+        return exc
+    text = str(getattr(getattr(exc, "error", None), "message", "") or exc)
+    found = _MISSING_PROMPT_ARGUMENTS.search(text)
+    if found is not None:
+        missing = _argument_names(found.group(1))
+        if missing:
+            return OperationRefused(
+                "INVALID_ARGUMENT",
+                {"reason": "the prompt needs these arguments", "missing": missing},
+            )
+    return FleetRefusal(
+        code="CHILD_REFUSED", server=server, tool=name, detail=fleet_detail(text)
+    )
+
+
 @contextmanager
 def native_dispatch_scope(fence: NativeDispatchFence) -> Iterator[None]:
     """Carry the existing session owner's grant only for this native invocation."""
@@ -421,14 +482,19 @@ class FleetGateway:
     ) -> Any:
         ops = self._catalog(caller, "mcp:delegate")
         mux = self._relay_mux()
-        await ops.admitted_surface_item(caller, "prompts", server, name)
+        item = await ops.admitted_surface_item(caller, "prompts", server, name)
+        supplied = dict(arguments or {})
+        _require_prompt_arguments(item, supplied)
         with _verified_delegation(caller):
-            return await mux.get_server_prompt(
-                server_name=server,
-                name=name,
-                arguments=dict(arguments or {}),
-                timeout=SURFACE_RELAY_TIMEOUT_S,
-            )
+            try:
+                return await mux.get_server_prompt(
+                    server_name=server,
+                    name=name,
+                    arguments=supplied,
+                    timeout=SURFACE_RELAY_TIMEOUT_S,
+                )
+            except Exception as exc:
+                raise _prompt_refusal(exc, server, name) from exc
 
     async def resources_read(self, caller: Any, *, server: str, uri: str) -> Any:
         ops = self._catalog(caller, "mcp:delegate")

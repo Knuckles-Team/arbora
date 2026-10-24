@@ -59,7 +59,8 @@
         "ARBORA-DATA-MARKET-R003.4",
         "ARBORA-DATA-MARKET-R003.5",
         "ARBORA-DATA-MARKET-R003.6"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-DATA-MARKET-R004",
@@ -105,91 +106,132 @@
         "ARBORA-DATA-MARKET-R007.4",
         "ARBORA-DATA-MARKET-R007.5",
         "ARBORA-DATA-MARKET-R007.6"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-DATA-MARKET-R007.1",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-DATA-MARKET-R007.2",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-DATA-MARKET-R007.3",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-DATA-MARKET-R007.4",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-DATA-MARKET-R007.5",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-DATA-MARKET-R007.6",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-DATA-MARKET-R003.1",
       "title": "Market list/search/get",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-DATA-MARKET-R003.2",
       "title": "Event list/search/get",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-DATA-MARKET-R003.3",
       "title": "Order list/search/get",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-DATA-MARKET-R003.4",
       "title": "Stable JSON projections",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-DATA-MARKET-R003.5",
       "title": "Authority before provider calls",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-DATA-MARKET-R003.6",
       "title": "Producer port, registration, and read/effect separation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     }
+  ],
+  "frontier": [
+    "ARBORA-DATA-MARKET-R007.1",
+    "ARBORA-DATA-MARKET-R007.2",
+    "ARBORA-DATA-MARKET-R007.3",
+    "ARBORA-DATA-MARKET-R007.4",
+    "ARBORA-DATA-MARKET-R007.5",
+    "ARBORA-DATA-MARKET-R007.6",
+    "ARBORA-DATA-MARKET-R003.1",
+    "ARBORA-DATA-MARKET-R003.2",
+    "ARBORA-DATA-MARKET-R003.3",
+    "ARBORA-DATA-MARKET-R003.4",
+    "ARBORA-DATA-MARKET-R003.5",
+    "ARBORA-DATA-MARKET-R003.6"
+  ],
+  "unserved": [
+    "ARBORA-DATA-MARKET-R007.1",
+    "ARBORA-DATA-MARKET-R007.2",
+    "ARBORA-DATA-MARKET-R007.3",
+    "ARBORA-DATA-MARKET-R007.4",
+    "ARBORA-DATA-MARKET-R007.5",
+    "ARBORA-DATA-MARKET-R007.6",
+    "ARBORA-DATA-MARKET-R003.1",
+    "ARBORA-DATA-MARKET-R003.2",
+    "ARBORA-DATA-MARKET-R003.3",
+    "ARBORA-DATA-MARKET-R003.4",
+    "ARBORA-DATA-MARKET-R003.5",
+    "ARBORA-DATA-MARKET-R003.6"
   ]
 }

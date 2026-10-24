@@ -257,6 +257,19 @@
         "title": "DecideCommitParams",
         "type": "object"
       },
+      "Schema068c9d7898c8dd20a3d1715096dc613955025a517a7f2e81b54ceade432105eb": {
+        "additionalProperties": false,
+        "properties": {
+          "connector": {
+            "$ref": "#/components/schemas/Schemae7980f190ba942c4e5e15c7d367afd0e10b739075fe809ae16398de25f0138f7"
+          }
+        },
+        "required": [
+          "connector"
+        ],
+        "title": "FleetPackStatusParams",
+        "type": "object"
+      },
       "Schema06bc3ccba4c32ad24fac398ce43f76467e22a079b069843a147730f8e2dd75da": {
         "additionalProperties": false,
         "properties": {
@@ -2673,6 +2686,12 @@
         ],
         "default": null,
         "title": "Status"
+      },
+      "Schemae7980f190ba942c4e5e15c7d367afd0e10b739075fe809ae16398de25f0138f7": {
+        "maxLength": 128,
+        "minLength": 1,
+        "title": "Connector",
+        "type": "string"
       },
       "Schemae7b1d9d5bb077683e08815772a13fe1b250034c6427d363cf723911c26b7c081": {
         "default": false,
@@ -19135,6 +19154,33 @@
         ]
       }
     },
+    "/api/v1/ops/fleet.packs.status": {
+      "post": {
+        "operationId": "fleet.packs.status",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema068c9d7898c8dd20a3d1715096dc613955025a517a7f2e81b54ceade432105eb"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Sharede63424086cbb3c1f1d3258190383e94dac96998cb05c8af2269aa9790f54a1fd"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Show one connector's durable pack status in the engine",
+        "tags": [
+          "fleet"
+        ]
+      }
+    },
     "/api/v1/ops/fleet.prompts.get": {
       "post": {
         "operationId": "fleet.prompts.get",
@@ -20469,5 +20515,5 @@
       }
     }
   },
-  "x-registry-digest": "bea61b1dae6b57e480727d04c03e9b827d4f0e7a1b3c6230a7a2d801961b5bda"
+  "x-registry-digest": "63103c17f0570775f14aa03c1eac4a4db10666859b4e819fda32ddf2fd4a9dcd"
 }
