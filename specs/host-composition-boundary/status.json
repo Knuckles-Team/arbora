@@ -340,10 +340,12 @@
     },
     {
       "id": "ARBORA-HOST-R001.4",
-      "title": "Provider plugin entry-point groups use the connector SDK namespace",
+      "title": "Content is found by convention; no provider entry-point group exists",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "9e7f6499d96f"
+        "785473594e96",
+        "9e7f6499d96f",
+        "b50db19d9836"
       ],
       "verified_by": [
         "tests/deployment/test_arbora_deploy_artifacts.py:103"
@@ -421,13 +423,16 @@
     },
     {
       "id": "ARBORA-HOST-R001.10",
-      "title": "Arbora owns provider discovery over the connector SDK groups",
+      "title": "Arbora discovers all installed content through `installed_connectors()`",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "3f7190f32493"
+        "3f7190f32493",
+        "785473594e96",
+        "b50db19d9836"
       ],
       "verified_by": [
-        "tests/core/test_providers.py:24"
+        "tests/test_installed_content.py:101",
+        "tests/test_installed_content.py:93"
       ]
     },
     {
