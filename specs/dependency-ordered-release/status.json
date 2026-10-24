@@ -100,8 +100,7 @@
         "ARBORA-RELEASE-R003.7",
         "ARBORA-RELEASE-R003.8",
         "ARBORA-RELEASE-R003.9"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-RELEASE-R003.1",
@@ -122,16 +121,14 @@
       "title": "Full exit-criteria matrix closes green across all seven obligations",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-RELEASE-R003.3",
       "title": "SPARQL and natural-language query-proof rows",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-RELEASE-R003.4",
@@ -150,8 +147,7 @@
         "ARBORA-RELEASE-R003.4.9",
         "ARBORA-RELEASE-R003.4.10",
         "ARBORA-RELEASE-R003.4.11"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-RELEASE-R003.4.1",
@@ -184,8 +180,7 @@
       "title": "Dependency floors for served task plans",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-RELEASE-R003.4.4",
@@ -197,11 +192,11 @@
         "f2224467f07c"
       ],
       "verified_by": [
-        "tests/api/test_task_plan_schema_pin.py:112",
-        "tests/api/test_task_plan_schema_pin.py:182",
-        "tests/api/test_task_plan_schema_pin.py:225",
-        "tests/api/test_task_plan_schema_pin.py:246",
-        "tests/api/test_task_plan_schema_pin.py:254"
+        "tests/api/test_task_plan_schema_pin.py:141",
+        "tests/api/test_task_plan_schema_pin.py:153",
+        "tests/api/test_task_plan_schema_pin.py:169",
+        "tests/api/test_task_plan_schema_pin.py:185",
+        "tests/api/test_task_plan_schema_pin.py:284"
       ]
     },
     {
@@ -227,32 +222,28 @@
       "title": "Plan run accepts typed tool steps",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-RELEASE-R003.4.8",
       "title": "Run reply lists resolved arguments",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-RELEASE-R003.4.9",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-RELEASE-R003.4.10",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-RELEASE-R003.4.11",
@@ -274,68 +265,35 @@
       "title": "connector-certification row",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-RELEASE-R003.6",
       "title": "write-back receipt row",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-RELEASE-R003.7",
       "title": "browser-and-identity-provider login probe row",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-RELEASE-R003.8",
       "title": "typed-abstention response row",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-RELEASE-R003.9",
       "title": "Fleet acceptance row",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     }
-  ],
-  "frontier": [
-    "ARBORA-RELEASE-R003.2",
-    "ARBORA-RELEASE-R003.3",
-    "ARBORA-RELEASE-R003.4.3",
-    "ARBORA-RELEASE-R003.4.6",
-    "ARBORA-RELEASE-R003.4.8",
-    "ARBORA-RELEASE-R003.4.9",
-    "ARBORA-RELEASE-R003.4.10",
-    "ARBORA-RELEASE-R003.5",
-    "ARBORA-RELEASE-R003.6",
-    "ARBORA-RELEASE-R003.7",
-    "ARBORA-RELEASE-R003.8",
-    "ARBORA-RELEASE-R003.9"
-  ],
-  "unserved": [
-    "ARBORA-RELEASE-R003.2",
-    "ARBORA-RELEASE-R003.3",
-    "ARBORA-RELEASE-R003.4.3",
-    "ARBORA-RELEASE-R003.4.6",
-    "ARBORA-RELEASE-R003.4.8",
-    "ARBORA-RELEASE-R003.4.9",
-    "ARBORA-RELEASE-R003.4.10",
-    "ARBORA-RELEASE-R003.5",
-    "ARBORA-RELEASE-R003.6",
-    "ARBORA-RELEASE-R003.7",
-    "ARBORA-RELEASE-R003.8",
-    "ARBORA-RELEASE-R003.9"
   ]
 }
