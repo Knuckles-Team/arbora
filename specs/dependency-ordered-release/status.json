@@ -32,8 +32,8 @@
         "0d34328f1114",
         "3fe9b5ec74fc",
         "4510e0b854aa",
-        "9a2f7532daaa",
-        "9ce8b11a5785"
+        "5e8c86c5245c",
+        "90fe6544fcf7"
       ],
       "verified_by": [
         "tests/deployment/test_release_workflow_sources.py:553",
@@ -51,8 +51,8 @@
         "0d34328f1114",
         "3fe9b5ec74fc",
         "4510e0b854aa",
-        "9a2f7532daaa",
-        "9ce8b11a5785"
+        "5e8c86c5245c",
+        "90fe6544fcf7"
       ],
       "verified_by": [
         "tests/deployment/test_release_workflow_sources.py:553",

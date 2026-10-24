@@ -1618,10 +1618,10 @@
       "title": "arbora serves and reports the prompts, skills and resources of each connector",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "32570fcda576",
         "3597c590c8c9",
         "6815715c27d8",
-        "abaee0920e29"
+        "abaee0920e29",
+        "f15c7fb5ec62"
       ],
       "verified_by": [
         "tests/fleet/test_connector_surfaces.py:134",
@@ -1639,9 +1639,9 @@
       "title": "The served gateway forwards the relay ops",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "32570fcda576",
         "3597c590c8c9",
-        "6815715c27d8"
+        "6815715c27d8",
+        "f15c7fb5ec62"
       ],
       "verified_by": [
         "tests/fleet/test_connector_surfaces.py:267",
@@ -1729,7 +1729,7 @@
       "title": "Reconnect compare",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "245143bf3650"
+        "c511e882c222"
       ],
       "verified_by": [
         "tests/fleet/test_handshake_onboard.py:162",
@@ -1763,10 +1763,10 @@
       "title": "A connector's declaration is captured as a pack resource",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "0107a5642a07",
-        "245143bf3650",
+        "2661ffc6aac1",
         "846e2eb35dff",
-        "963a7d457622"
+        "963a7d457622",
+        "c511e882c222"
       ],
       "verified_by": [
         "tests/fleet/test_declarations.py:30"
@@ -1788,11 +1788,11 @@
       "title": "Mappings come from the captured declaration only",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "0eeabeb66893",
-        "245143bf3650",
-        "42571b188ddc",
-        "49e63b613b3e",
-        "f46ccfd74580"
+        "369a1e91e7a2",
+        "44797b514902",
+        "77dde3d15ad3",
+        "8ba0a38628c2",
+        "a047b148556f"
       ],
       "verified_by": [
         "tests/fleet/test_declarations.py:41",
@@ -1804,9 +1804,9 @@
       "title": "Onboarding follows discovery and list changes",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "0107a5642a07",
-        "245143bf3650",
-        "c092e243dcd4"
+        "2661ffc6aac1",
+        "9b62015d07bb",
+        "c511e882c222"
       ],
       "verified_by": [
         "tests/fleet/test_handshake_onboard.py:163",
