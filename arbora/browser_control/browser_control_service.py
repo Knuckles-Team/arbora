@@ -94,14 +94,18 @@ class BrowserControlService(
         del request
         async with self._lock:
             references = tuple(self._channels)
-        documents = []
+        verified = []
         for reference in references:
             try:
                 channel = await self._channel_for_document(reference)
                 await self._verify_registration(channel)
             except (PermissionError, RuntimeError, ValueError):
                 continue
-            documents.append(
+            verified.append((reference, channel))
+        # Verification yields. Retirements during any document's verification
+        # must withdraw earlier candidates too, at one final snapshot boundary.
+        async with self._lock:
+            documents = [
                 {
                     "document_ref": reference,
                     "registration_generation": channel.refs.registration_generation,
@@ -110,10 +114,12 @@ class BrowserControlService(
                         for tool in channel.catalog.values()
                     ],
                 }
+                for reference, channel in verified
+                if self._channels.get(reference) is channel and not channel.closed
+            ]
+            return BrowserDiscoveryReceipt.model_validate(
+                {"bridge_available": True, "documents": documents}
             )
-        return BrowserDiscoveryReceipt.model_validate(
-            {"bridge_available": True, "documents": documents}
-        )
 
     async def _validate_binding_authority(self, binding: BrowserChannelBinding) -> None:
         """Revalidate local session, expiries, and the configured IdP backchannel."""

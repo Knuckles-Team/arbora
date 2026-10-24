@@ -298,3 +298,5 @@ Hot-path proof for `ARBORA-FLEET-R037`: `tests/fleet/test_job_loads_served.py::t
 ### R015/R029 WebUI bridge integration evidence
 
 The WebUI bridge is configured by the host and discovered through the existing preloaded `find` tool. Browser API support and active per-session registrations are separate facts. No preload grants identity, attended consent, execution permission or a browser session. Boot, discovery, owner isolation and teardown regression checks are required; full web-agent execution acceptance remains open.
+
+Discovery retirement regression: controlled verification interleavings cover disconnect and same-reference channel replacement. The final locked snapshot excludes retired or replaced candidates without changing caller authority. Full composed frontend/backend and delegated web-agent execution acceptance remain open.

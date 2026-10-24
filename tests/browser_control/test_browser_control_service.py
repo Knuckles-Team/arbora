@@ -2055,3 +2055,40 @@ async def test_discovery_reuses_owner_checks_and_withdraws_disconnected_catalog(
         assert (await service.discover(BrowserDiscoveryRequest())).documents
         await connection.disconnect("test complete")
         assert (await service.discover(BrowserDiscoveryRequest())).documents == ()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("retirement", ["disconnect", "replacement"])
+async def test_discovery_withdraws_channel_retired_during_verification(
+    session: GraphSession,
+    monkeypatch: pytest.MonkeyPatch,
+    retirement: str,
+) -> None:
+    from arbora.browser_control.browser_control_api import BrowserDiscoveryRequest
+
+    verified = asyncio.Event()
+    resume = asyncio.Event()
+    with use_session(session):
+        service, connection, _engine, _sent, _tool_value = await _setup(session)
+        original = service._verify_registration
+
+        async def paused_verification(channel: Any) -> None:
+            await original(channel)
+            verified.set()
+            await resume.wait()
+
+        monkeypatch.setattr(service, "_verify_registration", paused_verification)
+        discovery = asyncio.create_task(service.discover(BrowserDiscoveryRequest()))
+        await verified.wait()
+        if retirement == "disconnect":
+            await connection.disconnect("retired during discovery")
+        else:
+            # A distinct channel object must not inherit verification of the old
+            # registration, even when the document reference is reused.
+            async with service._lock:
+                reference = next(iter(service._channels))
+                service._channels[reference] = replace(service._channels[reference])
+        resume.set()
+        receipt = await discovery
+        assert receipt.bridge_available is True
+        assert receipt.documents == ()
