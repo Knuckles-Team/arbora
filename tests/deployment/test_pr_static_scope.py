@@ -8,6 +8,8 @@ tests pin that the release workflow adds the static set to every non-full scope.
 from __future__ import annotations
 
 import importlib.util
+import os
+import subprocess
 from pathlib import Path
 from types import ModuleType
 
@@ -85,3 +87,46 @@ def test_workflow_adds_the_static_set_to_every_non_full_scope() -> None:
     assert '"${static_tests[@]}"' in mapped
     # A diff with no mapped test must still run the static set, never skip pytest.
     assert "skipping pytest" not in run
+
+
+@pytest.mark.parametrize("scope", ["NONE", "tests/mapped/test_user.py", "FULL"])
+@pytest.mark.parametrize("producer_exit", [0, 7])
+def test_static_scope_producer_failure_blocks_pytest(
+    tmp_path: Path, scope: str, producer_exit: int
+) -> None:
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "pr_static_scope.py").write_text(
+        'print("tests/static/test_one.py")\n'
+        'print("tests/static/test_two.py")\n'
+        f"raise SystemExit({producer_exit})\n",
+        encoding="utf-8",
+    )
+    hook = scripts / "local_hook.sh"
+    hook.write_text('#!/bin/bash\nprintf "%s\\n" "$@" > "$CAPTURE"\n', encoding="utf-8")
+    hook.chmod(0o700)
+    capture = tmp_path / "pytest-arguments"
+    result = subprocess.run(
+        ["bash", "-c", _fast_subset_run()],
+        cwd=tmp_path,
+        env={
+            "PATH": os.environ["PATH"],
+            "RUNNER_TEMP": str(tmp_path),
+            "SCOPE": scope,
+            "CAPTURE": str(capture),
+        },
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=5,
+    )
+    assert result.returncode == producer_exit, result.stderr
+    if producer_exit:
+        assert not capture.exists()
+        return
+    expected = ["pytest"]
+    if scope != "FULL":
+        if scope != "NONE":
+            expected.append(scope)
+        expected.extend(["tests/static/test_one.py", "tests/static/test_two.py"])
+    assert capture.read_text(encoding="utf-8").splitlines() == expected

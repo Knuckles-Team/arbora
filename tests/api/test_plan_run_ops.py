@@ -426,14 +426,22 @@ def _fleet_model(prompts: list[str]) -> FunctionModel:
     return FunctionModel(respond)
 
 
-async def _serve_fleet(plan, gateway, prompts, invoke=None, **extra):
+BOUND_REQUEST = "a" * 64
+
+
+async def _serve_fleet(
+    plan, gateway, prompts, invoke=None, request_id=BOUND_REQUEST, **extra
+):
     engine = FakeEngine()
     context = _context(engine, RecordingModel())
     context.services["task_plan_model"] = _fleet_model(prompts)
     context.services["fleet_gateway"] = gateway
     context.services["plan_step_invoke"] = invoke or FakeInvoke()
     context.caller = SimpleNamespace(
-        principal=PRINCIPAL, tenant=TENANT, effective_scopes=frozenset()
+        principal=PRINCIPAL,
+        tenant=TENANT,
+        effective_scopes=frozenset(),
+        request_id=request_id,
     )
     context.service_identity = False
     context.owner = PRINCIPAL
@@ -501,12 +509,35 @@ async def test_replayed_plan_returns_the_recorded_outcome_without_a_second_effec
     gateway, invoke = FakeGateway(), FakeInvoke()
     first = await _serve_fleet(FLEET_DAG, gateway, [], invoke, fleet_tools=[SN_TOOL])
     again = await _serve_fleet(FLEET_DAG, gateway, [], invoke, fleet_tools=[SN_TOOL])
-    # The key is the plan record, the task and the call index.
-    record_id = "decision:" + "3" * 64
-    assert invoke.keys == [f"plan-step:{record_id}:make:1"] * 2
+    # The key is the run's replay record, the task and the call index.
+    record = "run-" + BOUND_REQUEST[:32]
+    assert invoke.keys == [f"plan-step:{record}:make:1"] * 2
     assert len(invoke.effects) == 1
     assert first["fleet_calls"][0]["result"] == again["fleet_calls"][0]["result"]
     assert again["fleet_calls"][0]["idempotency_key"] == invoke.keys[0]
+
+
+# spec: ARBORA-RELEASE-R003.4.11
+async def test_a_new_run_key_is_a_new_effect_and_the_decision_record_is_not_the_key():
+    """G2: the decision record id changes per Decide; the replay record does not."""
+    gateway, invoke = FakeGateway(), FakeInvoke()
+    await _serve_fleet(FLEET_DAG, gateway, [], invoke, fleet_tools=[SN_TOOL])
+    await _serve_fleet(
+        FLEET_DAG, gateway, [], invoke, request_id="b" * 64, fleet_tools=[SN_TOOL]
+    )
+    assert len(invoke.effects) == 2
+    assert all("decision:" not in key for key in invoke.keys)
+
+
+# spec: ARBORA-RELEASE-R003.4.11
+async def test_a_fleet_run_without_a_bound_request_identity_runs_nothing():
+    gateway, invoke = FakeGateway(), FakeInvoke()
+    with pytest.raises(plans.OperationRefused) as refused:
+        await _serve_fleet(
+            FLEET_DAG, gateway, [], invoke, request_id=None, fleet_tools=[SN_TOOL]
+        )
+    assert refused.value.code == "UNAVAILABLE"
+    assert invoke.effects == []
 
 
 # spec: ARBORA-RELEASE-R003.4.5
@@ -519,7 +550,10 @@ async def test_an_unbound_invoke_pipeline_runs_no_effect():
         task_plan_model=_fleet_model(prompts), fleet_gateway=gateway
     )
     context.caller = SimpleNamespace(
-        principal=PRINCIPAL, tenant=TENANT, effective_scopes=frozenset()
+        principal=PRINCIPAL,
+        tenant=TENANT,
+        effective_scopes=frozenset(),
+        request_id=BOUND_REQUEST,
     )
     (op,) = plans.operations()
     result = await plans.handle_plan_run(

@@ -49,6 +49,7 @@
     "ARBORA-OPS-R020.6.5",
     "ARBORA-OPS-R020.6.6",
     "ARBORA-OPS-R020.6.7",
+    "ARBORA-OPS-R020.6.8",
     "ARBORA-OPS-R021",
     "ARBORA-OPS-R021.1",
     "ARBORA-OPS-R021.2",
@@ -198,6 +199,7 @@
     "ARBORA-OPS-R009.1",
     "ARBORA-OPS-R009.2",
     "ARBORA-OPS-R009.3",
+    "ARBORA-OPS-R009.4",
     "ARBORA-OPS-R053.8",
     "ARBORA-OPS-R059",
     "ARBORA-OPS-R060",
@@ -420,7 +422,8 @@
       "rollup_of": [
         "ARBORA-OPS-R009.1",
         "ARBORA-OPS-R009.2",
-        "ARBORA-OPS-R009.3"
+        "ARBORA-OPS-R009.3",
+        "ARBORA-OPS-R009.4"
       ]
     },
     {
@@ -625,10 +628,10 @@
       "delivery_state": "LANDED",
       "landed_in": [
         "06d8baf844a1",
+        "07d7b3ce0fe8",
         "094c8adb6318",
         "16c9b2bddda3",
-        "23be3a8e9dd6",
-        "2ad164bd5414"
+        "23be3a8e9dd6"
       ],
       "verified_by": [],
       "rollup_of": [
@@ -765,17 +768,17 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "06d8baf844a1",
+        "07d7b3ce0fe8",
         "094c8adb6318",
         "23be3a8e9dd6",
-        "2ad164bd5414",
-        "32dbf63ade7f"
+        "2ad164bd5414"
       ],
       "verified_by": [
+        "tests/fleet/test_child_large_results.py:16",
         "tests/fleet/test_multiplexer_dynamic_gateway.py:1164",
         "tests/ingest/test_connector_sources.py:190",
         "tests/ingest/test_connector_sources.py:200",
-        "tests/ingest/test_connector_sources.py:230",
-        "tests/ingest/test_connector_sources.py:250"
+        "tests/ingest/test_connector_sources.py:230"
       ],
       "rollup_of": [
         "ARBORA-OPS-R020.6.1",
@@ -784,7 +787,8 @@
         "ARBORA-OPS-R020.6.4",
         "ARBORA-OPS-R020.6.5",
         "ARBORA-OPS-R020.6.6",
-        "ARBORA-OPS-R020.6.7"
+        "ARBORA-OPS-R020.6.7",
+        "ARBORA-OPS-R020.6.8"
       ]
     },
     {
@@ -873,6 +877,21 @@
       ],
       "verified_by": [
         "tests/ingest/test_connector_sources.py:230"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R020.6.8",
+      "title": "A failed sync names its cause",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "07d7b3ce0fe8",
+        "658958f17d11",
+        "96b68a9b5e5c"
+      ],
+      "verified_by": [
+        "tests/fleet/test_child_large_results.py:16",
+        "tests/ingest/test_connector_sources.py:342",
+        "tests/ingest/test_connector_sources.py:362"
       ]
     },
     {
@@ -1195,7 +1214,7 @@
         "94724be32c28"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:341"
+        "tests/api/test_registry_factory.py:342"
       ],
       "rollup_of": [
         "ARBORA-OPS-R024.4.1",
@@ -1290,7 +1309,7 @@
         "5f79be652726"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:341"
+        "tests/api/test_registry_factory.py:342"
       ]
     },
     {
@@ -2289,6 +2308,22 @@
       ]
     },
     {
+      "id": "ARBORA-OPS-R009.4",
+      "title": "A typed refusal names its reason, never its input",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "25c198540020",
+        "66869917498c",
+        "96b68a9b5e5c",
+        "ccf85099e9da"
+      ],
+      "verified_by": [
+        "tests/api/test_typed_refusal_details.py:17",
+        "tests/fleet/test_relay_session_recovery.py:173",
+        "tests/fleet/test_relay_session_recovery.py:207"
+      ]
+    },
+    {
       "id": "ARBORA-OPS-R053.8",
       "title": "ARBORA:25 Arbora definition slice",
       "delivery_state": "SPECIFIED",
@@ -2491,7 +2526,7 @@
         "d673cd573c77"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:350"
+        "tests/api/test_registry_factory.py:351"
       ]
     },
     {

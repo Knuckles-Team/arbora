@@ -337,3 +337,31 @@ async def test_for_each_fan_out_passes_through_the_declaration(wired: Any) -> No
         "item_id",
         "id",
     )
+
+
+@pytest.mark.spec("ARBORA-OPS-R020.6.8")
+async def test_a_failed_sync_carries_its_cause_to_the_receipt_and_job(
+    wired: Any, caplog: pytest.LogCaptureFixture
+) -> None:
+    """G13: a failed job names why, never with a payload."""
+    runner = wired.build(_Fleet(fail_tool=True))
+    params = {"source_id": "fixture/items", "mode": "full"}
+    with caplog.at_level("WARNING", logger="arbora.ingest.connector_sources"):
+        receipt = (await service.sync_source(_context(runner), params, None))["value"]
+    assert receipt["status"] == "failed"
+    assert receipt["reason"] == "tool_failed"
+    assert "fixture/items" in caplog.text and "tool_failed" in caplog.text
+    (item_id,) = wired.engine.items
+    job = (await service.get_job_status(_context(runner), {"job_id": item_id}, None))[
+        "value"
+    ]
+    assert job["status"] == "failed" and job["reason"] == "tool_failed"
+    assert "2026-01-0" not in str(job) + str(receipt)
+
+
+@pytest.mark.spec("ARBORA-OPS-R020.6.8")
+async def test_a_completed_sync_has_no_reason(wired: Any) -> None:
+    runner = wired.build(_Fleet())
+    params = {"source_id": "fixture/items", "mode": "full"}
+    receipt = (await service.sync_source(_context(runner), params, None))["value"]
+    assert receipt["status"] == "completed" and receipt.get("reason") is None

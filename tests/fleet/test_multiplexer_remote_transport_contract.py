@@ -89,7 +89,9 @@ async def test_remote_child_uses_v2_http_client_keyword(recorded_http, tmp_path)
     assert len(recorded_http) == 1
     call = recorded_http[0]
     assert call["args"] == ("http://fleet.example/mcp",)
-    assert set(call["kwargs"]) == {"http_client"}
+    assert set(call["kwargs"]) == {"http_client", "max_sse_event_size"}
+    # ARBORA-OPS-R020.6.8: a child event may hold twice the delegated value bound.
+    assert call["kwargs"]["max_sse_event_size"] == mod._MAX_CHILD_SSE_EVENT_BYTES
     # v1-only keywords must not be resurrected — SDK v2 rejects them.
     assert "httpx_client_factory" not in call["kwargs"]
 

@@ -141,7 +141,11 @@ def _validate_provider(
             model,
             (str(exc).splitlines() or [type(exc).__name__])[0][:_LOG_DETAIL_CHARS],
         )
-        return OpError("INVALID_ARGUMENT")
+        # ARBORA-OPS-R009.4: name the fields, never the values.
+        details = getattr(exc, "details", None)
+        return OpError(
+            "INVALID_ARGUMENT", dict(details) if isinstance(details, Mapping) else {}
+        )
     except Exception:
         _logger.warning("provider schema %s is unavailable", model, exc_info=True)
         return OpError("UNAVAILABLE", {"reason": "schema authority unavailable"})
