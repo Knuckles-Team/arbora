@@ -319,3 +319,8 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R861.7:** Scope and audit.
 - [ ] **ARBORA-OPS-R861.8:** Wiring.
 - [ ] **ARBORA-OPS-R861.9:** Hot-path proof.
+
+## Shared execution explorer
+
+- [ ] `ARBORA-OPS-R021.4.8` — Add cursor-bound graph projection to existing run reads; qualify the read-only flat-plan slice before nested lineage.
+- [ ] `ARBORA-OPS-R021.4.9` — Add owner-bound public node records and separate capability flags; keep unsupported interaction unavailable.
