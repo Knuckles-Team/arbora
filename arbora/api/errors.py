@@ -32,6 +32,7 @@ class ArboraErrorCode(StrEnum):
     POLICY_UNAVAILABLE = "POLICY_UNAVAILABLE"
     LOAD_CAP_EXCEEDED = "LOAD_CAP_EXCEEDED"
     UNKNOWN_TOOL = "UNKNOWN_TOOL"
+    NOT_FOUND = "NOT_FOUND"
     UNAVAILABLE = "UNAVAILABLE"
     TIMEOUT = "TIMEOUT"
     INDETERMINATE = "INDETERMINATE"
@@ -58,6 +59,7 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.POLICY_UNAVAILABLE: 503,
     ArboraErrorCode.LOAD_CAP_EXCEEDED: 409,
     ArboraErrorCode.UNKNOWN_TOOL: 404,
+    ArboraErrorCode.NOT_FOUND: 404,
     ArboraErrorCode.UNAVAILABLE: 503,
     ArboraErrorCode.TIMEOUT: 504,
     ArboraErrorCode.INDETERMINATE: 500,
@@ -398,6 +400,7 @@ _RPC_CODES: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.POLICY_UNAVAILABLE: -32050,
     ArboraErrorCode.LOAD_CAP_EXCEEDED: -32009,
     ArboraErrorCode.UNKNOWN_TOOL: -32601,
+    ArboraErrorCode.NOT_FOUND: -32002,
     ArboraErrorCode.UNAVAILABLE: -32050,
     ArboraErrorCode.TIMEOUT: -32051,
     ArboraErrorCode.INDETERMINATE: -32052,

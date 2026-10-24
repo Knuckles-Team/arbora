@@ -9,7 +9,7 @@ from typing import Literal
 
 from arbora.client._schema import _expanded_spec
 
-REGISTRY_DIGEST = "be39189babc1ee1a494aaf19447b36474145beabb231a3d5a95690be58cb10aa"
+REGISTRY_DIGEST = "bea61b1dae6b57e480727d04c03e9b827d4f0e7a1b3c6230a7a2d801961b5bda"
 API_VERSION = "1"
 type OperationId = Literal[
     "access.check",
@@ -388,6 +388,7 @@ type OperationId = Literal[
     "eg.query.GraphQl",
     "eg.query.KnowledgeStream",
     "eg.query.MaterializationStatus",
+    "eg.query.NlQueryExplain",
     "eg.query.QueryForeignColumns",
     "eg.query.RankByProvenance",
     "eg.query.RecomputeMaterialization",
@@ -523,6 +524,8 @@ type OperationId = Literal[
     "retrieval.search",
     "rlm.run",
     "runs.current_plan",
+    "runs.events",
+    "runs.get",
     "security.posture.read",
     "source.blame",
     "source.blob",

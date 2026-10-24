@@ -863,12 +863,19 @@ def test_ingest_sources_list_sync_status(stack: dict[str, Any]) -> None:
     assert receipt["status"] == "completed", (receipt, record, stack["logs"]())
     assert record["records"] == 3, record
 
+    # Records land as the declared mapping's ontology class, each pointing
+    # back at the connector's FixtureItem mapping.
     nodes = _post_op(
-        stack, "eg.graph.GetNodesByLabel", {"label": "FixtureItem", "limit": 10}
+        stack, "eg.graph.GetNodesByLabel", {"label": "Document", "limit": 10}
     )
-    encoded = json.dumps(nodes)
-    assert nodes["ok"] is True and encoded.count("item-") >= 3, encoded[:3000]
-    assert INGEST_CONNECTOR in encoded, encoded[:3000]
+    assert nodes["ok"] is True, nodes
+    mapped = {
+        props["source_record_id"]
+        for _node_id, props in nodes["result"]
+        if props.get("source_mapping_reference")
+        == f"connector:{INGEST_CONNECTOR}#mappings/FixtureItem"
+    }
+    assert mapped == {"item-1", "item-2", "item-3"}, json.dumps(nodes)[:3000]
 
 
 # ── A2A: the TUI's transport ─────────────────────────────────────────────────

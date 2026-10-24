@@ -439,3 +439,44 @@ anonymous endpoint admission tests to preserve remote-address and hostname
 refusal independently of suite ordering. Production admission is unchanged.
 
 The WebUI configuration requirement uses R004.7 so the existing tokenless local-serving R004.3 keeps its own meaning. Canonical browser invocation retains caller-session scope around the shared pipeline after same-owner use-time revalidation. Synthetic session fixtures run the existing GraphSession validation at that ambient boundary. This is source integration evidence; live Keycloak/Okta and installed EG acceptance remain open.
+
+### R004.6 local attended browser admission contract
+
+This is a proposed contract, not runtime qualification.
+The owner explicitly configures a local browser transport for anonymous mode.
+It checks the exact configured origin, Host and loopback peer for each request.
+It does not weaken `anonymous.validate_request` or synthesize an authenticated cookie.
+
+Evidence distinguishes verified OIDC from local operator admission.
+Only the configured admission owner can produce its private binding.
+The local variant retains anonymous identity and contains no issuer, ACR or authentication timestamp.
+It binds the document, route, registration generation, catalog and tool-schema scope.
+It also binds the operator policy revision, canonical operation, target and action digest.
+Expiry and revocation checks apply after authority-changing awaits and before dispatch.
+
+Registration grants no operation authority, including read authority.
+Every proposal requires configured local policy and a trusted attended gesture.
+Mutations retain separate exact confirmation through the existing journal and invocation path.
+Missing policy, changed bindings and unavailable authority refuse by default.
+No new credential, durable store or identity upgrade follows from this proposal.
+
+The current anonymous transport rejects browser Origin headers.
+The current attended binding requires OIDC evidence.
+These are deliberate refusal boundaries until the owner qualifies the separate browser contract.
+Use the existing `AnonymousCaller`, `PolicyGate.check_op`, `bind_plan` and effect journal.
+Policy receives the canonical operation; exact parameters and target need the existing binding and effect fences too.
+
+## Explicit anonymous task reads
+
+R004.8.1 adds a separate opt-in factory, not a fallback in the verified app. Its policy is empty by default. It uses the existing A2AService read path and a distinct caller. No GraphSession or authenticated claim is created. Source tests bind a synthetic native port and a concrete public-client adapter. It does not provision or start a service.
+
+R004.8.2 owns the remaining native integration. The existing EG GetWorkItem view is tenant-bound and omits ownership evidence. It must not be converted to anonymous evidence by copying fields from the request. The engine already supplies an owner-bound GetRunWorkItem path. Its server-created anonymous authority uses the same immutable owner binding. R004.8.3 consumes that existing method without adding a protocol. Native installation, restart and cross-owner tests remain required.
+
+Message send, cancellation, tools, global budgets, provider enforcement and browser mutation policy remain outside this read-only slice. They need their existing upstream implementations and acceptance tests. R004.8.1 and R004.8.3 have source test markers. Neither marker completes installed native acceptance.
+
+The concrete source adapter uses the public generated GetRunWorkItem sender and decoder. It supplies the trusted graph before the read, even if the client default differs. The engine binds that method to its server-created anonymous principal and immutable run owner. Context subject, agent and scopes remain provenance, not client authority. Full ingress-to-client tests use synthetic native responses; they are not live engine tests.
+
+The general none-mode middleware rejects Origin headers. These browser-specific
+factories require an exact configured Origin. Host composition must reconcile
+those policies before serving them together; standalone tests do not prove that
+integration. Do not relax the general middleware or infer browser admission.

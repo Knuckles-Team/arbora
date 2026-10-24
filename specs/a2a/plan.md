@@ -69,7 +69,7 @@ flowchart LR
   PN --> OB["EG durable outbox (EG-DURABLE-KERNEL-R001)"]
 ```
 
-`A2AAgentCapabilities.from_wired_authorities` is the single seam composition calls; it is pure and has no I/O, so advertised capabilities can be tested without a live AU/EG stack. The actual streaming and history projections are separate runtime paths that call the AU/EG public ports directly — the Agent Card's `true`/`false` is a property of what composition wired, and the test-spec's acceptance (A2A-H07) cross-checks the two never drift apart.
+`A2AAgentCapabilities.from_wired_authorities` is the single seam composition calls. It is pure and has no I/O. Advertised capabilities can therefore be tested without a live AU/EG stack. The actual streaming and history projections are separate runtime paths that call the AU/EG public ports directly — the Agent Card's `true`/`false` is a property of what composition wired, and the test-spec's acceptance (A2A-H07) cross-checks the two never drift apart.
 
 ### Implementation sequence
 
@@ -310,7 +310,7 @@ R005.2.2 reuses `PlanBinding` and the existing closed confirmation payload. The 
 
 Implement ARBORA-A2A-R010.1 against EG-DURABLE-KERNEL-R028.2 and AU RunClient.outcome. Keep the request opt-in and existing unary behavior unchanged. This point read supplies no lifecycle stream or replay cursor. Native producer qualification and released dependency availability remain separate acceptance conditions.
 
-The bounded projection preserves the actual outcome/tool_call/degraded/reconciled kind and physical scope identity, including its 32-byte digest. Physical storage owner tenant and sanitized graph name are receipt identity, not caller authorization. Routing uses the existing verified session graph transport. The projection caps identifier labels at 512 UTF-8 bytes and result references at 4096 bytes. These presentation bounds may refuse a larger otherwise valid producer record.
+The bounded projection preserves the actual outcome/tool_call/degraded/reconciled kind and physical scope identity, including its 32-byte digest. Physical storage owner tenant and sanitized graph name are receipt identity, not caller authorization. Routing uses the trusted WorkItem engine graph binding through the existing graph transport, never the caller session graph. The projection caps identifier labels at 512 UTF-8 bytes and result references at 4096 bytes. These presentation bounds may refuse a larger otherwise valid producer record.
 
 ## R016.6 profile-use authority boundary (adopted architecture)
 
@@ -326,7 +326,7 @@ caller preferences, distinct from catalog visibility. There is no implicit
 profile grant from kg:read, roles, CHAT_MODELS, MODEL_REGISTRY_PATH or provider
 availability. Until the owner implements that authorization, the
 profile authority is unavailable. Existing default-agent behavior is unchanged. Calls that explicitly request a
-profile preference, or use models.list, require the new authority; absence must
+profile preference, or use models.list, require the new authority. Its absence must
 not turn a preference-enabled request into an existing default-agent call.
 The issuer and storage schema are owner work, not inferred by this boundary.
 
@@ -365,7 +365,7 @@ Revalidate after asynchronous reads. The proposed owner operation
 ProfileAuthority.admit_for_dispatch(decision, session, task_admission_ref) must
 atomically revalidate current session, profile-use grant and capability revision
 with task admission, or return a typed refusal. Its EG public operation and
-transaction contract are not implemented; a separate resolve-then-check sequence
+transaction contract are not implemented. A separate resolve-then-check sequence
 cannot substitute for it or authorize dispatch. Add a revocation-between-resolution-
 and-admission test requiring zero queued tasks. Changed
 capability/profile digests require fresh assembly/admission, never mutation of

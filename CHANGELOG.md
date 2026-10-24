@@ -2,9 +2,17 @@
 
 ## [Unreleased]
 
+## [0.1.8.dev3] - 2026-10-24
+
+Pre-release for the validation deploy.
+
+- Requires epistemic-graph 2.27.6 (and its server 2.27.6), agent-connector-sdk 0.5.4 and, for the `webui` extra, agent-webui 2.8.2.
+- `agents.plan_run` steps call named governed fleet tools through the invoke pipeline, with the idempotency key `plan-step:<record>:<task>:<idx>` (ARBORA-RELEASE-R003.4.5).
+- The version configuration parses `.devN` pre-release versions, so the documented bump command works on a pre-release.
+- Requires the agent-connector-sdk connector resources cutover. Onboarding reads the connector resources declaration over MCP. Change detection uses content digests and `list_changed`. No manifest file is read (ARBORA-FLEET-R041.11, ARBORA-FLEET-R041.13, ARBORA-FLEET-R041.14).
+
 ## [0.1.8.dev2] - 2026-10-23
 
-- Requires agent-connector-sdk 0.3.19. A connector that serves its data-resource declaration at `manifest://connector/resources` now onboards (ARBORA-FLEET-R041.11).
 - `fleet.prompts.list`, `fleet.prompts.get`, `fleet.resources.list` and `fleet.resources.read` work on the served gateway (ARBORA-FLEET-R040.1).
 - Request verbs such as "show" no longer route a question to an op (ARBORA-FLEET-R014.2).
 - Pack capture paces its requests under the connector rate limit, so a large pack onboards (ARBORA-FLEET-R041.12).

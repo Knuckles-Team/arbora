@@ -151,3 +151,27 @@ def create_browser_api_application(
         max_in_flight=max_in_flight,
         authenticator=auth,
     )
+
+
+def create_webui_session_boundary(
+    *, admission: BrowserAdmission, auth_app: Any, operations: Any
+) -> Any:
+    """Build the WebUI host session boundary from a qualified admission.
+
+    This is the composition root for the boundary: it checks the concrete
+    :class:`BrowserAdmission` type here, because ``arbora.webui_host`` holds
+    only the identity port and never imports the concrete runtime. Anything
+    else refuses to build. The boundary itself still refuses to install
+    unless ``operations`` carries this same admission object.
+    """
+    if not isinstance(admission, BrowserAdmission):
+        raise IdentityUnavailable("qualified browser admission required")
+    if not isinstance(operations, BrowserOperationApplication) or (
+        operations.admission is not admission
+    ):
+        raise IdentityUnavailable(
+            "WebUI shared caller and invocation fence are not qualified"
+        )
+    from arbora.webui_host.session_boundary import WebUISessionBoundary
+
+    return WebUISessionBoundary(admission, auth_app, operations=operations)

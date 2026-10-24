@@ -58,3 +58,36 @@ available, under `metadata.arbora.usage`: `runId`, `taskId`, `contextId`,
 integer request, tool-call, input-token, output-token and total-token values.
 Missing usage stays absent. Completed replays and task reads do not reconstruct
 usage; durable per-session usage and cost accounting remain unavailable.
+
+Task dependency graph execution has an opt-in shared host composition path.
+It requires a trusted HostedInvocation with TaskPlanConfig, native A2A run
+ownership, and EG's executable-plan publication/readback contract. The selected
+model proposes tasks without tools or authority fields. The host accounts for planner requests, tokens and time. It evaluates through EG and publishes under the native lease fence. It reads back canonical content, then invokes AU's existing DependencyPlan runtime. Defaults remain single-step. Missing contracts report
+`UPGRADE_REQUIRED` rather than silently downgrading.
+
+Controlled transport/model-adapter tests cover this chain; real native-engine
+restart/fencing acceptance remains unqualified. Operator startup configuration
+is covered by focused source tests. Planner usage is included in the Arbora execution result, but AU
+terminal RunEvents currently report execution-only usage.
+
+
+Operators opt in through `ARBORA_TASK_PLAN` in the existing
+`~/.config/arbora/config.json` settings document. The value is JSON text, not a
+client request field. Unset disables graph planning. Supply `feature_schema`
+with the actual published EG `component_id`, `definition_digest` and
+`kind: "feature_schema"`; `policy` is EG's `{"policy":"default"}` or a pinned
+decision-policy reference. Required positive bounds are `max_concurrency`
+(1–8) and `max_steps` (1–64). Optional `request_limit` (50),
+`total_tokens_limit` (100000) and `timeout_seconds` (600) bound the entire run.
+Unknown fields, malformed JSON, invalid pins and invalid limits refuse startup
+before process authority is minted. Graph endpoints and compatible EG/AU
+contracts remain required; this setting grants no caller authority.
+
+Public current-plan responses expose scaffold items only, never executable
+prompts. A retry that encounters an already attached plan currently refuses with `TASK_PLAN_RETRY_REQUIRES_ORIGINAL_PUBLICATION`. The latest mutable scaffold is not evidence of the original immutable publication payload.
+Native publication receipt recovery remains an acceptance gate.
+
+
+Completed native admission recovery has passed a local real-engine test with simulated model responses. Identical retries preserve the completed task and reply without additional model requests. This holds before and after restarting both services against the same persistent store. Changed input returns the typed
+idempotency conflict, and public event identities survive restart. This does
+not qualify concurrent execution deduplication or active-execution resume.
