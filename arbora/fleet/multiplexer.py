@@ -2442,7 +2442,7 @@ class MCPMultiplexer:
         # cached like the probe cache above: every skill resolved from a
         # provider installed in THIS process (arbora's own, agent-utilities'
         # own, and any sibling package declaring the same
-        # ``agent_connector_sdk.skill_providers`` entry point), filed under the
+        # ``agent_connector_sdk.connector`` declaration), filed under the
         # pseudo-server ``LOCAL_SKILLS_SERVER`` so it rides the SAME
         # find_tools/list_catalog path as a fleet-harvested skill.
         self._local_skill_probe_cache: dict[str, _typing.Any] | None = None
@@ -6526,8 +6526,8 @@ class MCPMultiplexer:
         "Local" means every skill ``arbora.core.providers.
         resolve_skill_provider_dirs()`` resolves in THIS process — arbora's
         own skills, agent-utilities' own, and any sibling package installed
-        alongside arbora that declares the ``agent_connector_sdk.skill_providers``
-        entry point (CONCEPT:AU-KG.retrieval.unified-capability-contract). An
+        alongside arbora that declares ``agent_connector_sdk.connector``
+        (CONCEPT:AU-KG.retrieval.unified-capability-contract). An
         individually unreadable/malformed skill, and a core-pack name no
         installed provider resolves, are reported loudly here (never fatal,
         never silent) the one time this cache is built.

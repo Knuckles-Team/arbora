@@ -13,7 +13,7 @@ from agent_connector_sdk.runner.provisioning import (
     provision_connector_content,
 )
 
-from arbora.content import connector_content
+from arbora.content import content_providers
 
 ContentProvider = Callable[[], ConnectorContent]
 type AttachPack[T] = Callable[[str], Awaitable[T]]
@@ -37,7 +37,7 @@ class SemanticProvisionReceipt[ReprojectReceiptT, AttachReceiptT]:
 def default_content_providers() -> tuple[ContentProvider, ...]:
     """Return the independently owned providers in this deployment."""
 
-    return (connector_content,)
+    return content_providers()
 
 
 def required_content_connectors() -> tuple[str, ...]:

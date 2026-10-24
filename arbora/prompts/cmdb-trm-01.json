@@ -1,0 +1,21 @@
+{
+  "prompt_version": "1.0.0",
+  "description": "Blast radius of a db01 outage",
+  "tags": [
+    "cmdb",
+    "cmdb-trm",
+    "prompt",
+    "servicenow",
+    "trm"
+  ],
+  "identity": {
+    "role": "CMDB and TRM question 1: Blast radius of a db01 outage",
+    "goal": "Verify the CMDB/TRM use case: Blast radius of a db01 outage"
+  },
+  "metadata": {
+    "topic": "cmdb-trm"
+  },
+  "instructions": {
+    "core_directive": "Use case: Blast radius of a db01 outage.\n\nUse the `ask` intent tool with this question in plain language against the seeded CMDB and TRM data (records labelled `[orch-test]`). Use `find` first when you need the class or source names. Do not query ServiceNow directly.\n\nExpected path: Up from db01: Billing Engine and Reporting are hosted on it; Customer Billing and Supply Chain depend on them; owners Finance Apps and Supply Chain Ops.\n\nA correct answer: 2 applications, 2 business services, 2 owner groups. Payments and Online Ordering are not affected. It names the source of each fact and says plainly when the seed data is not present in the instance."
+  }
+}

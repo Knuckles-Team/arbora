@@ -1,30 +1,19 @@
 #!/usr/bin/env python
 """Skills served from THIS process's own installed packages.
 
-``arbora.mcp_server.backing.server_factory._register_skill_providers`` already wires
-every package that declares the ``agent_connector_sdk.skill_providers`` entry
-point (arbora's own skills, agent-utilities' own skills, and any sibling
-package installed alongside arbora that declares the same entry point --
-currently epistemic-graph and agent-webui) onto Arbora's own served FastMCP
-instance as ``skill://{name}/SKILL.md`` resources, through
-``arbora.core.providers.resolve_skill_provider_dirs()``. Those
-resources are reachable by a client that already knows to read them, but the
-multiplexer's ``find_tools``/``discover_tools`` ranking (CONCEPT:AU-KG.
-retrieval.unified-capability-contract) only ever considered FLEET-harvested
-``skill://`` resources read back from a probed CHILD server -- never
-Arbora's own self-registered set. This module closes exactly that gap by
-projecting the SAME resolution into the SAME catalog entry shape the fleet
-harvest produces (``name``/``uri``/``description``/``instructions``), so
-``arbora.fleet.multiplexer`` can fold it into one probed "server" entry and
-rank it with fleet tools and fleet-harvested skills alike.
+Every installed package that declares ``agent_connector_sdk.connector`` (arbora
+itself, the skills packages and any content-only connector) is found by
+``arbora.core.providers.resolve_skill_provider_dirs()`` and served as
+``skill://{name}/SKILL.md`` by ``arbora.content.register_installed_content``.
+This module projects the SAME resolution into the SAME catalog entry shape the
+fleet harvest produces (``name``/``uri``/``description``/``instructions``), so
+``arbora.fleet.multiplexer`` folds it into one probed "server" entry and ranks
+it with fleet tools and fleet-harvested skills alike, and onboarding imports it
+the same way (``ARBORA-FLEET-R025``).
 
-Nothing here re-scans installed packages or re-implements provider
-precedence: ``resolve_skill_provider_dirs()`` already deduplicates by skill
-identity across providers (alphabetical by provider name, with
-"agent-utilities" always first) and is the SAME resolution
-``_register_skill_providers`` uses to build the wire resources in the first
-place. Writing a second scanner here would be exactly the parallel registry
-``AGENTS.md`` asks contributors not to add.
+Nothing here re-scans installed packages: ``resolve_skill_provider_dirs()``
+deduplicates by skill identity across packages and is the one resolution the
+wire resources use too.
 """
 
 from __future__ import annotations
@@ -150,8 +139,8 @@ def build_local_skill_catalog(
 ) -> tuple[list[dict[str, str]], list[str]]:
     """Every current skill resolved from a provider installed in THIS process.
 
-    ``provider_dirs`` defaults to :func:`_default_provider_dirs` (agent-
-    utilities' real ``resolve_skill_provider_dirs``); a test injects a fixture
+    ``provider_dirs`` defaults to :func:`_default_provider_dirs` (arbora's
+    ``resolve_skill_provider_dirs``); a test injects a fixture
     resolver instead, so this stays hermetic without agent-utilities installed.
 
     Returns ``(entries, problems)``: ``entries`` in the exact shape

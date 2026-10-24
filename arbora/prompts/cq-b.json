@@ -1,0 +1,20 @@
+{
+  "prompt_version": "1.0.0",
+  "description": "Show open issues across GitHub, GitLab and Plane.",
+  "tags": [
+    "competency",
+    "cross-connector-proof",
+    "prompt",
+    "proof"
+  ],
+  "identity": {
+    "role": "Competency question B",
+    "goal": "Verify the graph answers: Show open issues across GitHub, GitLab and Plane."
+  },
+  "metadata": {
+    "topic": "cross-connector-proof"
+  },
+  "instructions": {
+    "core_directive": "Question: Show open issues across GitHub, GitLab and Plane.\n\nUse the `ask` intent tool with the question as plain language. If `ask` answers with no rows, use `find` to locate the classes and sources, then `ask` again with the narrowed question. Never answer from memory and never call a connector directly; arbora is the one door.\n\nA correct answer walks this ontology path: Issue shared across [github-agent:Issue, gitlab-api:Issue, plane-agent:Issue] on property state.\nIt returns rows from the engine's graph, names the source connector of every row, and states which hop (if any) has no data. An answer with no provenance per row, or one that lists a connector's own tool catalog instead of graph rows, is wrong."
+  }
+}
