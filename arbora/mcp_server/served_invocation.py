@@ -112,36 +112,45 @@ def _field(path: Any, name: str | None = None) -> str:
     return ".".join(parts) or "$"
 
 
+def _unexpected(error: Any) -> list[str]:
+    allowed = set((error.schema.get("properties") or {}).keys())
+    return [
+        _field(error.path, str(key)) for key in error.instance if key not in allowed
+    ]
+
+
+def _missing(error: Any) -> list[str]:
+    return [
+        _field(error.path, str(key))
+        for key in error.validator_value
+        if key not in error.instance
+    ]
+
+
+#: Schema keyword -> (details key, the field names it reports).
+_NAMED_ERRORS = {
+    "additionalProperties": ("unexpected", _unexpected),
+    "required": ("missing", _missing),
+}
+
+
+def _classified(error: Any) -> tuple[str, list[str]]:
+    named = _NAMED_ERRORS.get(error.validator)
+    if named is not None and isinstance(error.instance, Mapping):
+        key, names = named
+        return key, names(error)
+    return "invalid", [f"{_field(error.path)} ({error.validator})"]
+
+
 def _mismatch_details(errors: list[Any]) -> dict[str, Any]:
-    unexpected: list[str] = []
-    missing: list[str] = []
-    invalid: list[str] = []
+    found: dict[str, set[str]] = {}
     for error in errors:
-        if error.validator == "additionalProperties" and isinstance(
-            error.instance, Mapping
-        ):
-            allowed = set((error.schema.get("properties") or {}).keys())
-            unexpected += [
-                _field(error.path, str(key))
-                for key in error.instance
-                if key not in allowed
-            ]
-        elif error.validator == "required" and isinstance(error.instance, Mapping):
-            missing += [
-                _field(error.path, str(key))
-                for key in error.validator_value
-                if key not in error.instance
-            ]
-        else:
-            invalid.append(f"{_field(error.path)} ({error.validator})")
+        key, names = _classified(error)
+        found.setdefault(key, set()).update(names)
     details: dict[str, Any] = {"reason": "input does not match the operation schema"}
-    for name, values in (
-        ("unexpected", unexpected),
-        ("missing", missing),
-        ("invalid", invalid),
-    ):
-        if values:
-            details[name] = sorted(set(values))[:16]
+    for key in ("unexpected", "missing", "invalid"):
+        if found.get(key):
+            details[key] = sorted(found[key])[:16]
     return details
 
 
