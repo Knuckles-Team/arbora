@@ -340,5 +340,13 @@ Factory installation grants no channel, attended proof or operation authority.
 
 `tests/browser_control/test_browser_control_service.py::test_disconnect_reports_terminal_retirement_authority_loss`
 verifies expired, missing, and scope-lost authority stop cleanup with an error.
-The local channel is removed; durable registration remains unresolved.
+The local channel is absent; durable registration remains unresolved.
 The existing transient-retirement regression still requires a successful retry.
+
+## Unqualified historical policy accounting (R015)
+
+`tests/access/test_legacy_policy_history.py` reproduces type-only audit history
+against the released native server. Such candidates make requested-kind accounting
+unavailable. Existing rate and blast checks then refuse unused-budget assumptions.
+The test verifies that the old record remains unchanged and unrelated kinds still work.
+This is safe refusal, not historical migration or receipt qualification.

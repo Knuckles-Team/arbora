@@ -459,3 +459,12 @@ An expired or unavailable caller session cannot authorize a cleanup retry.
 Report that refusal to the caller, and leave durable retirement unresolved.
 Do not borrow process authority or claim that durable records were retired.
 Transient storage failures retain the existing retry behavior.
+
+### R015 unqualified historical policy accounting
+
+Type-only ActionDecision candidates are not trusted ledger entries.
+When such candidates exist for the requested action kind, accounting is unavailable.
+Existing rate-limit and blast-radius checks then refuse to infer unused budget.
+No old record is promoted, rewritten or migrated by this guard.
+The refusal lasts until a separate reviewed historical-data repair removes the ambiguity.
+Kinds without such candidates retain the normal labeled ledger path.
