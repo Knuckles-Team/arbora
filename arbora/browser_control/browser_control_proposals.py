@@ -274,14 +274,7 @@ class BrowserProposalMixin(BrowserControlMixinState):
             first = not pending.closed
             task = pending.task
             if first:
-                pending.closed = True
-                self._proposals.pop(pending.proposal_id, None)
-                if pending.unsubscribe is not None:
-                    pending.unsubscribe()
-                if not pending.result.done():
-                    pending.result.cancel()
-                if task is not None and not task.done() and not within_execution:
-                    task.cancel()
+                self._close_proposal(pending, within_execution=within_execution)
         # External callers join the same execution cleanup, including the requester
         # awakened by cancellation from an origin-close callback.
         if task is not None and not within_execution:
@@ -300,6 +293,20 @@ class BrowserProposalMixin(BrowserControlMixinState):
                     "browser proposal withdrawal transport unavailable: %s",
                     type(exc).__name__,
                 )
+
+    def _close_proposal(
+        self, pending: PendingBrowserProposal, *, within_execution: bool
+    ) -> None:
+        """Retire admission under the caller's service lock."""
+        pending.closed = True
+        self._proposals.pop(pending.proposal_id, None)
+        if pending.unsubscribe is not None:
+            pending.unsubscribe()
+        if not pending.result.done():
+            pending.result.cancel()
+        task = pending.task
+        if task is not None and not task.done() and not within_execution:
+            task.cancel()
 
     async def _withdraw_channel_proposals(self, channel: _ChannelState) -> None:
         for pending in tuple(self._proposals.values()):
