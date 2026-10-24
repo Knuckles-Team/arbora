@@ -324,3 +324,5 @@ See [design](plan.md) and [tests](test-spec.md).
 
 - [ ] `ARBORA-OPS-R021.4.8` — Add cursor-bound graph projection to existing run reads; qualify the read-only flat-plan slice before nested lineage.
 - [ ] `ARBORA-OPS-R021.4.9` — Add owner-bound public node records and separate capability flags; keep unsupported interaction unavailable.
+- [ ] `ARBORA-OPS-R021.4.8.1` — Qualify the negotiated prompt-free flat snapshot with pure, served-source and generated-contract checks; native-service acceptance remains separate.
+- [ ] `ARBORA-OPS-R021.4.8.2` — Qualify producer-declared nested lineage and snapshot/update reconciliation through installed owners and both transports; retain all parent acceptance.

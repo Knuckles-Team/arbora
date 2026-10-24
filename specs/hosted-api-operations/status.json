@@ -279,7 +279,9 @@
     "ARBORA-OPS-R861.8",
     "ARBORA-OPS-R861.9",
     "ARBORA-OPS-R021.4.8",
-    "ARBORA-OPS-R021.4.9"
+    "ARBORA-OPS-R021.4.9",
+    "ARBORA-OPS-R021.4.8.1",
+    "ARBORA-OPS-R021.4.8.2"
   ],
   "requirements": [
     {
@@ -1380,6 +1382,7 @@
       "title": "API surface and compatibility drift gates",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "20ec6b79a02b",
         "4b9d181069e4"
       ],
       "verified_by": [
@@ -1414,6 +1417,7 @@
       "title": "Backward-compatibility drift gate — backward-compat slice",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "20ec6b79a02b",
         "4b9d181069e4"
       ],
       "verified_by": [
@@ -3024,11 +3028,35 @@
       "title": "Project an admitted execution graph",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R021.4.8.1",
+        "ARBORA-OPS-R021.4.8.2"
+      ]
     },
     {
       "id": "ARBORA-OPS-R021.4.9",
       "title": "Project permitted node records and capabilities",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R021.4.8.1",
+      "title": "Negotiated flat execution snapshot",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "2e09ba70eba9",
+        "6268c79436c9",
+        "951e55158d8a"
+      ],
+      "verified_by": [
+        "tests/api/test_execution_graph.py:27"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R021.4.8.2",
+      "title": "Nested lineage and snapshot/update reconciliation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

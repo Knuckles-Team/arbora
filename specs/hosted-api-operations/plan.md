@@ -922,7 +922,7 @@ edge, depth and byte bounds are explicit; truncation never appears complete.
 Node detail reads reuse the same owner-first access path. Public summaries are
 explicit producer-authored summaries, not hidden chain of thought. Raw tool
 arguments/results are not automatically public. A record carries source event,
-record kind and visibility; fields not allowed by the existing public projection
+record kind and visibility. Fields outside the existing public projection
 remain omitted or redacted. Transcript availability requires actual authorized
 user/assistant history, not a reconstruction from traces. Capabilities are
 computed from the current authorized lifecycle and installed producer contracts.
@@ -934,3 +934,51 @@ active-message and completed-continuation admission contracts in
 `ARBORA-RELEASE-R003.4.12` / `.13`. Installed producer and served acceptance are
 required before any client advertises an interaction. No EG changes or new native
 authority work are part of this specification change.
+
+### 2026-10-24: bounded flat read extension
+
+R021.4.8.1 is the first bounded slice, not a replacement for R021.4.8.
+`runs.execution_graph` negotiates a new projection with a required schema version
+and operation discovery. Existing `runs.get` and `runs.events` are unchanged.
+The shared NativeRunReader first resolves the canonical root WorkItem/run pair.
+It reads the native current-plan snapshot under the same verified caller, then
+uses the existing ordered event census and bounded hydration. It checks the
+native plan again before returning, refusing a changed binding or expiry.
+
+The projection contains the full declared flat topology, never prompts or
+outputs. It keeps at most 1,000 events within the existing one-MiB page bound;
+the full metadata census retains its 10,000-event cap. Lifecycle evidence names
+the original event ID and sequence and must match the run and plan digest.
+Missing task events mean unobserved state, not pending or completed. Lifecycle
+coverage remains explicitly incomplete even when there are no further observed
+events or the root is terminal. A terminal root never completes its steps.
+Expired or absent current-plan publication cannot support historical topology.
+Unsequenced tool-call records remain unsupported, never silently filtered.
+
+This slice has no spawned children, transcript, message target or continuation.
+Nested production and snapshot/update reconciliation remain required by the
+parent row. Native-service acceptance is not claimed by source fixtures.
+
+R021.4.8.2 retains the parent row's nested production and snapshot/update proof.
+It remains open after the flat slice passes its source checks. The parent row
+cannot close from the flat slice alone.
+
+### 2026-10-24: boolean schemas in the compatibility gate
+
+R026.2 compares legitimate JSON Schema booleans before dictionary traversal.
+An input schema must not narrow the previously accepted values. A result schema
+must not widen the values that existing callers must handle. In comparisons
+with a boolean, an empty object schema means true. Existing dictionary-to-dictionary
+checks and provider-digest review requirements remain unchanged. Invalid schema
+types fail closed. Tests include the installed provider's unconstrained result.
+
+The flat projection permits canonical keys for the full run/step ID bounds,
+including non-BMP Unicode. It counts serialized node and edge contributions
+before whole-snapshot serialization, then checks the exact final byte size.
+
+### 2026-10-24: bounded graph validation functions
+
+R021.4.8.1 separates predecessor validation and lifecycle transition validation.
+The extraction preserves validation order, identity checks, bounds and refusal
+messages. Source tests cover every step-state and task-event pair. This does not
+expand the projection or qualify the parent requirement.

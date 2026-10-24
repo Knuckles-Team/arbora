@@ -6,7 +6,7 @@ Governing [spec](spec.md).
 
 | Test | Requirements | Setup and observation |
 |---|---|---|
-| HO-T01 | HO-01, HO-07 | From a pinned public engine wheel enumerate `is_wire_callable` methods. Compare with curated/generated op bindings and explicit live exclusions; fail on omissions, stale exclusions, duplicate ownership, or an unregistered Arbora route/tool. Regenerate artifacts twice and compare bytes/digest. |
+| HO-T01 | HO-01, HO-07 | From a pinned public engine wheel enumerate `is_wire_callable` methods. Compare with curated/generated op bindings and explicit live exclusions. Fail on omissions, stale exclusions, duplicate ownership, or an unregistered Arbora route/tool. Regenerate artifacts twice and compare bytes/digest. |
 | HO-T02 | HO-02 | Table-drive human, service, delegated agent, tenants, exact scopes, and surfaces through `invoke`. Assert same allow/deny code on MCP, HTTP and A2A; extra fields and identity/tenant spoofing fail before a handler call. |
 | HO-T03 | HO-02, HO-08 | A service op with domain scope but no caller subject read fails. Subject-read plus service grant succeeds and creates a caller-owned record. Revoke either permission before deferred dispatch and assert zero effect. Cross-tenant subject always fails. |
 | HO-T04 | HO-03 | Exact idempotent write replays one receipt; a missing key fails. Fuzzy mutation returns preview and creates no effect. Destructive plan is single-use and rejects expired, changed params, actor, tenant, policy revision or registry digest. Console-only admin rejects MCP/A2A confirmation and accepts same-human fresh-MFA console confirmation. |
@@ -333,3 +333,25 @@ Hot-path proof for `ARBORA-OPS-R861`: `tests/api/test_dashboard_ops_served.py::t
 
 - `ARBORA-OPS-R021.4.8`: preserve replay v1 fixtures and decoder refusals unchanged. Unsupported projection versions refuse explicitly. Use a root with two independent steps and a join, then a declared child/grandchild run. Assert stable keys despite repeated local names and distinct spawn/dependency edges. Compare cursor-aligned snapshot/replay; test duplicates, gaps, pagination, missing lineage, bounds and denied owners before hydration. The flat fixture does not prove recursive production.
 - `ARBORA-OPS-R021.4.9`: read a permitted public summary, redacted tool event and separately authorized transcript. Assert missing transcript is unavailable, never empty success. Forge each owner/node/context binding; no payload leaks. Verify all interaction flags remain false for trace-only nodes and equivalent MCP/HTTP refusals.
+
+### Flat execution snapshot source qualification
+
+`tests/api/test_execution_graph.py` targets R021.4.8.1. It exercises the registered
+read through HTTP and MCP. It checks canonical owner/run admission before protected reads
+and plan binding rechecks. It also covers schema negotiation, edge direction,
+run-qualified identities, private-field omission and bounded event evidence.
+It preserves the existing replay v1 cases in `tests/api/test_run_replay.py`.
+These tests use injected native responses and do not qualify a native service,
+spawned children, transcript access, interaction or the full parent requirement.
+
+R021.4.8.2 retains the installed root-child-grandchild and snapshot/update
+reconciliation matrix above. No test in the flat slice claims this acceptance.
+
+R026.2 tests in `tests/api/test_gen_api.py` cover boolean input narrowing and
+result widening, empty-schema equivalence and nested properties. They preserve
+the dictionary comparison policy and provider-digest review. An installed
+provider regression compares its unconstrained PlanMatViewGet result with itself.
+
+The R021.4.8.1 transition matrix covers all six step states against five task events.
+It checks each allowed transition and exact refusal through the public projection.
+Unknown and cyclic predecessor tests retain their fail-closed expectations.
