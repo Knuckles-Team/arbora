@@ -1,0 +1,19 @@
+{
+  "prompt_version": "1.0.0",
+  "description": "Orphan and isolated CIs: servers that host no application.",
+  "tags": [
+    "competency",
+    "competency-question",
+    "prompt"
+  ],
+  "identity": {
+    "role": "Competency question D8",
+    "goal": "Verify the graph answers: Orphan and isolated CIs: servers that host no application."
+  },
+  "metadata": {
+    "topic": "competency-question"
+  },
+  "instructions": {
+    "core_directive": "Question: Orphan and isolated CIs: servers that host no application.\n\nUse the `ask` intent tool with the question as plain language. If `ask` answers with no rows, use `find` to locate the classes and sources, then `ask` again with the narrowed question. Never answer from memory and never call a connector directly; arbora is the one door.\n\nA correct answer walks this ontology path: Application -[hostedOn/runsOn]-> Server (owner: servicenow-api); ConfigurationItem -[usesTechnology]-> TRMStandard (owner: servicenow-api).\nIt returns rows from the engine's graph, names the source connector of every row, and states which hop (if any) has no data. An answer with no provenance per row, or one that lists a connector's own tool catalog instead of graph rows, is wrong."
+  }
+}
