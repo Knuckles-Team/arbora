@@ -1480,10 +1480,12 @@
       "title": "Static identity-ports import boundary",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "6d0b52e03cfb",
         "b97b75e763ed"
       ],
       "verified_by": [
-        "tests/architecture/test_identity_ports_boundary.py:51"
+        "tests/architecture/test_identity_ports_boundary.py:51",
+        "tests/webui_host/test_session_boundary.py:162"
       ]
     },
     {

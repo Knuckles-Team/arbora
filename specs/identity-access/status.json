@@ -998,7 +998,8 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "2c70abad2b68",
-        "336f9faf3f21"
+        "336f9faf3f21",
+        "6d0b52e03cfb"
       ],
       "verified_by": [
         "tests/identity/test_identity_ports_boundary.py:105",
@@ -1377,10 +1378,10 @@
         "d4ae6fb9949c"
       ],
       "verified_by": [
-        "tests/webui_host/test_session_boundary.py:152",
-        "tests/webui_host/test_session_boundary.py:163",
-        "tests/webui_host/test_session_boundary.py:17",
-        "tests/webui_host/test_session_boundary.py:30",
+        "tests/webui_host/test_session_boundary.py:18",
+        "tests/webui_host/test_session_boundary.py:193",
+        "tests/webui_host/test_session_boundary.py:204",
+        "tests/webui_host/test_session_boundary.py:31",
         "tests/webui_host/test_webui_contact_delivery.py:41"
       ]
     },
@@ -1396,13 +1397,15 @@
       "title": "Bound HTTP adapter source contract",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "6d0b52e03cfb",
         "d4ae6fb9949c"
       ],
       "verified_by": [
-        "tests/webui_host/test_session_boundary.py:104",
-        "tests/webui_host/test_session_boundary.py:141",
-        "tests/webui_host/test_session_boundary.py:47",
-        "tests/webui_host/test_session_boundary.py:84"
+        "tests/webui_host/test_session_boundary.py:110",
+        "tests/webui_host/test_session_boundary.py:150",
+        "tests/webui_host/test_session_boundary.py:161",
+        "tests/webui_host/test_session_boundary.py:48",
+        "tests/webui_host/test_session_boundary.py:88"
       ]
     },
     {
