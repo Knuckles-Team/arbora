@@ -1,0 +1,19 @@
+{
+  "prompt_version": "1.0.0",
+  "description": "Fan-out of four returns every result",
+  "tags": [
+    "delegation",
+    "orchestration",
+    "prompt"
+  ],
+  "identity": {
+    "role": "Fan-out of four returns every result",
+    "goal": "Prove delegation through data: Fan-out of four returns every result"
+  },
+  "metadata": {
+    "topic": "delegation"
+  },
+  "instructions": {
+    "core_directive": "Delegation use case: Fan-out of four returns every result.\n\nUse the `agents.plan_run` operation (through the `act` intent tool; find its exact input shape with `find agents.plan_run`). Call `agents.plan_run` with four independent tasks that each call one read-only fleet tool, and one join task that depends on all four.\n\nA correct answer: All four results are present in the join task's input and in the answer; none is dropped, and a failing branch is reported by name instead of hiding the others."
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "prompt_version": "1.0.0",
+  "description": "A cyclic plan is refused with the engine's code",
+  "tags": [
+    "delegation",
+    "orchestration",
+    "prompt"
+  ],
+  "identity": {
+    "role": "A cyclic plan is refused with the engine's code",
+    "goal": "Prove delegation through data: A cyclic plan is refused with the engine's code"
+  },
+  "metadata": {
+    "topic": "delegation"
+  },
+  "instructions": {
+    "core_directive": "Delegation use case: A cyclic plan is refused with the engine's code.\n\nUse the `agents.plan_run` operation (through the `act` intent tool; find its exact input shape with `find agents.plan_run`). Call `agents.plan_run` with tasks that depend on each other in a cycle.\n\nA correct answer: The request is refused before any task runs, with the engine's `plan_cycle` code, and no fleet tool is called."
+  }
+}

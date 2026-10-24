@@ -1,0 +1,19 @@
+{
+  "prompt_version": "1.0.0",
+  "description": "GitLab issue to ServiceNow incident to Plane work item",
+  "tags": [
+    "delegation",
+    "orchestration",
+    "prompt"
+  ],
+  "identity": {
+    "role": "GitLab issue to ServiceNow incident to Plane work item",
+    "goal": "Prove delegation through data: GitLab issue to ServiceNow incident to Plane work item"
+  },
+  "metadata": {
+    "topic": "delegation"
+  },
+  "instructions": {
+    "core_directive": "Delegation use case: GitLab issue to ServiceNow incident to Plane work item.\n\nUse the `agents.plan_run` operation (through the `act` intent tool; find its exact input shape with `find agents.plan_run`). Run a three-task DAG with `agents.plan_run`. Supply the DAG yourself: task `gitlab` (no dependencies) reads the GitLab issue through `fleet_call`; task `servicenow` (depends on `gitlab`) creates an incident whose short description is the issue title and whose description holds the issue text; task `plane` (depends on `servicenow`) creates a Plane work item that carries the incident number and the GitLab URL. Set `fleet_tools` to the three tools and `output_task_id` to `plane`. The engine receipts the DAG; it never invents tasks.\n\nA correct answer: Facts come from the run's `fleet_calls` (real tool results), never the model's prose. A correct run shows the three calls in order, the ServiceNow call carrying the GitLab title, and the Plane call carrying the incident number and the GitLab URL. A step that failed to bind its input is a failure."
+  }
+}

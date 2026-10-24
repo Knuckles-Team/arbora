@@ -8,9 +8,9 @@ import os
 import sys
 from typing import Any
 
-from agent_connector_sdk.mcp.content import register_connector_content
 from agent_connector_sdk.mcp.network import build_network_serving_config
 
+from arbora.content import register_installed_content
 from arbora.core.settings import setting
 from arbora.mcp_server import runtime
 from arbora.mcp_server.composition import (
@@ -31,8 +31,7 @@ def _register_semantic_content(mcp: Any) -> None:
     Arbora deliberately performs no local shape parsing or attachment.
     """
 
-    for provider in default_content_providers():
-        register_connector_content(mcp, provider())
+    register_installed_content(mcp, default_content_providers())
 
 
 def _configure_arbora_otel() -> None:

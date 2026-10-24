@@ -1,0 +1,21 @@
+{
+  "prompt_version": "1.0.0",
+  "description": "Technologies in use that have an open TRM request, and where",
+  "tags": [
+    "cmdb",
+    "cmdb-trm",
+    "prompt",
+    "servicenow",
+    "trm"
+  ],
+  "identity": {
+    "role": "CMDB and TRM question 4: Technologies in use that have an open TRM request, and where",
+    "goal": "Verify the CMDB/TRM use case: Technologies in use that have an open TRM request, and where"
+  },
+  "metadata": {
+    "topic": "cmdb-trm"
+  },
+  "instructions": {
+    "core_directive": "Use case: Technologies in use that have an open TRM request, and where.\n\nUse the `ask` intent tool with this question in plain language against the seeded CMDB and TRM data (records labelled `[orch-test]`). Use `find` first when you need the class or source names. Do not query ServiceNow directly.\n\nExpected path: PostgreSQL 16 (db02, backs Inventory, so Supply Chain) and Nginx 1.18 (web01 and web02; web01 serves Orders Portal, so Online Ordering).\n\nA correct answer: Kafka 3.7 and Java 21 are new and have no deployments, so they are not in the in-use set. Java 21 is flagged as the migration target for Java 8 on app02 and batch01. It names the source of each fact and says plainly when the seed data is not present in the instance."
+  }
+}
