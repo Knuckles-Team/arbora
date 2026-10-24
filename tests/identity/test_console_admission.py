@@ -41,6 +41,11 @@ class CallerFixture:
         self.policy_version = resolution.request_context["policy_version"]
         self.context = dict(resolution.request_context)
 
+    def __post_init__(self):
+        from arbora.api.contracts.session import GraphSession
+
+        GraphSession.__post_init__(self)
+
     def ensure_authority_current(self):
         pass
 

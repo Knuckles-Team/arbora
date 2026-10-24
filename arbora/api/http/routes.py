@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from secrets import token_hex
 from typing import Any
 
-from fastapi import Request
+from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from arbora.api.registry import Invoke
@@ -65,10 +65,12 @@ async def _json_body_params(request: Request) -> dict[str, Any]:
         raise ValueError("JSON content type required")
     length = request.headers.get("content-length")
     if length is not None and int(length) > MAX_BODY_BYTES:
-        raise ValueError("Body too large")
-    raw = await request.body()
-    if len(raw) > MAX_BODY_BYTES:
-        raise ValueError("Body too large")
+        raise HTTPException(status_code=413, detail="Request rejected")
+    raw = bytearray()
+    async for chunk in request.stream():
+        if len(raw) + len(chunk) > MAX_BODY_BYTES:
+            raise HTTPException(status_code=413, detail="Request rejected")
+        raw.extend(chunk)
     import json
 
     parsed = json.loads(raw)
@@ -126,6 +128,7 @@ def make_endpoint(
     response: Callable[[Any, Any, str], JSONResponse],
     generic: bool,
     is_console_request: Callable[[Request, Any], bool] | None = None,
+    operation_authority: Any = None,
 ) -> Callable[[Request], Awaitable[JSONResponse]]:
     """Return the single handler used by every registered HTTP operation.
 
@@ -134,12 +137,8 @@ def make_endpoint(
     directly so it does not need that pipeline to exist to be importable.
     """
 
-    async def endpoint(request: Request) -> JSONResponse:
+    async def invoke_for_caller(request: Request, caller: Any) -> JSONResponse:
         digest = services.registry.digest
-        try:
-            caller = await authenticate(request)
-        except HTTPAuthenticationError:
-            return _error("UNAUTHENTICATED", digest=digest, op=op.id)
         try:
             params = await _params(request, generic=generic)
         except (ValueError, TypeError):
@@ -148,6 +147,15 @@ def make_endpoint(
         plan_ref = request.headers.get("arbora-plan-ref")
         if _invalid_header(key) or _invalid_header(plan_ref):
             return _error("INVALID_ARGUMENT", digest=digest, op=op.id)
+        if operation_authority is not None:
+            from arbora.identity.engine import IdentityUnavailable
+
+            try:
+                await operation_authority.before_invocation(request, caller)
+            except HTTPAuthenticationError:
+                return _error("UNAUTHENTICATED", digest=digest, op=op.id)
+            except IdentityUnavailable:
+                return _error("UNAVAILABLE", digest=digest, op=op.id)
         with caller_session_scope(caller):
             outcome = await invoke(
                 op.id,
@@ -159,6 +167,28 @@ def make_endpoint(
                 idempotency_key=key,
             )
         return response(outcome, op, caller.request_id)
+
+    async def endpoint(request: Request) -> JSONResponse:
+        from contextlib import AsyncExitStack
+
+        from arbora.identity.engine import IdentityUnavailable
+
+        async with AsyncExitStack() as lifetime:
+            try:
+                if operation_authority is not None:
+                    caller = await lifetime.enter_async_context(
+                        operation_authority.operation_scope(request)
+                    )
+                else:
+                    caller = await authenticate(request)
+            except HTTPAuthenticationError:
+                return _error(
+                    "UNAUTHENTICATED", digest=services.registry.digest, op=op.id
+                )
+            except IdentityUnavailable:
+                return _error("UNAVAILABLE", digest=services.registry.digest, op=op.id)
+            # Never reinterpret an invocation failure as pre-dispatch refusal.
+            return await invoke_for_caller(request, caller)
 
     endpoint.__name__ = f"http_{op.id.replace('.', '_')}"
     return endpoint

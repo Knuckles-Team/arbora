@@ -77,13 +77,43 @@ def create_api_application(
     registry = services.registry
     auth = authenticator
     authenticate = auth.authenticate
-    app = FastAPI(openapi_url=None, docs_url=None, redoc_url=None)
+    from .browser_auth import BoundBrowserHTTPAuthenticator, BrowserRateLimited
 
-    async def visible(request: Request) -> tuple[Any, ...] | JSONResponse:
-        try:
-            caller = await authenticate(request)
-        except HTTPAuthenticationError:
-            return _error("UNAUTHENTICATED", digest=registry.digest, op="api.registry")
+    operation_authority = (
+        auth if isinstance(auth, BoundBrowserHTTPAuthenticator) else None
+    )
+    app = FastAPI(openapi_url=None, docs_url=None, redoc_url=None)
+    from fastapi.exceptions import RequestValidationError
+    from starlette.exceptions import HTTPException
+
+    @app.exception_handler(HTTPException)
+    async def private_http_error(request: Request, exc: HTTPException) -> JSONResponse:
+        # A post-dispatch failure keeps its HTTP status, never becomes an auth
+        # refusal. Do not reflect provider details or arbitrary response headers.
+        headers = {"Cache-Control": "no-store"}
+        if isinstance(exc, BrowserRateLimited):
+            headers["Retry-After"] = str(exc.retry_after_seconds)
+        return JSONResponse(
+            {
+                "detail": "Request failed"
+                if exc.status_code < 500
+                else "Internal request failed"
+            },
+            status_code=exc.status_code,
+            headers=headers,
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def private_validation_error(
+        request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
+        return JSONResponse(
+            {"detail": "Request validation failed"},
+            status_code=422,
+            headers={"Cache-Control": "no-store"},
+        )
+
+    async def visible_for(request: Request, caller: Any) -> tuple[Any, ...]:
         allowed: dict[str, bool] = {}
         for op in registry:
             try:
@@ -99,6 +129,21 @@ def create_api_application(
             ),
             policy=lambda op, _: allowed.get(op.id, False),
         )
+
+    async def visible(request: Request) -> tuple[Any, ...] | JSONResponse:
+        from arbora.identity.engine import IdentityUnavailable
+
+        try:
+            if operation_authority is not None:
+                async with operation_authority.operation_scope(request) as caller:
+                    result = await visible_for(request, caller)
+                    await operation_authority.before_invocation(request, caller)
+                    return result
+            return await visible_for(request, await authenticate(request))
+        except HTTPAuthenticationError:
+            return _error("UNAUTHENTICATED", digest=registry.digest, op="api.registry")
+        except IdentityUnavailable:
+            return _error("UNAVAILABLE", digest=registry.digest, op="api.registry")
 
     @app.get("/registry", include_in_schema=False)
     async def registry_route(request: Request) -> JSONResponse:
@@ -171,6 +216,7 @@ def create_api_application(
                 ),
                 generic=True,
                 is_console_request=auth.is_console_request,
+                operation_authority=operation_authority,
             ),
             methods=["POST"],
             include_in_schema=False,
@@ -191,17 +237,26 @@ def create_api_application(
                     ),
                     generic=False,
                     is_console_request=auth.is_console_request,
+                    operation_authority=operation_authority,
                 ),
                 methods=[str(op.http.method).upper()],
                 include_in_schema=False,
             )
+
     # The virtual checkout streams one repository ref as NDJSON by driving
     # the admitted ``source.tree`` operation through the same invoke
     # chokepoint (ARBORA-OPS-R850); it is an endpoint, not a registry op,
     # because a stream has no single JSON envelope.
+    async def browser_checkout_unavailable(request: Request) -> JSONResponse:
+        # A StreamingResponse executes outside the endpoint's task/lifetime.
+        # Do not reuse HTTP-bound authority until a streaming contract exists.
+        return _error("UNAVAILABLE", digest=registry.digest, op="source.checkout")
+
     app.add_api_route(
         "/source/checkout",
-        make_checkout_endpoint(
+        browser_checkout_unavailable
+        if operation_authority is not None
+        else make_checkout_endpoint(
             services=services,
             authenticate=authenticate,
             invoke=invoke,

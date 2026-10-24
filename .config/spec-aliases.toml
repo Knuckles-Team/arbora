@@ -5,3 +5,7 @@
 "PA-12" = "ARBORA-FLEET-R051"
 "PA-12.1" = "ARBORA-FLEET-R051.1"
 "PA-12.2" = "ARBORA-FLEET-R051.2"
+
+# WebUI composition draft children collided with tokenless serving's parent ID.
+"ARBORA-IDENTITY-R004.3.1" = "ARBORA-IDENTITY-R004.7.1"
+"ARBORA-IDENTITY-R004.3.2" = "ARBORA-IDENTITY-R004.7.2"

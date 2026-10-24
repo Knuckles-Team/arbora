@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import asyncio
 import importlib
 import os
 import sys
 import types
 from typing import Any, cast
+
+import pytest
 
 
 def _package(name: str) -> types.ModuleType:
@@ -34,8 +37,11 @@ def test_webui_host_import_is_lazy() -> None:
     assert callable(module.run_web_ui)
 
 
+@pytest.mark.parametrize("auth_mode", ["required", "none", "oidc"])
+@pytest.mark.spec("ARBORA-IDENTITY-R004.7.1")
 def test_run_web_ui_builds_the_live_contact_delivery_path(
     monkeypatch: Any,
+    auth_mode: str,
 ) -> None:
     """Exercise the moved host seam through app construction and shutdown.
 
@@ -66,6 +72,11 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
             calls["server"] = self
 
         async def serve(self) -> None:
+            from arbora.browser_control.browser_control_runtime import (
+                _registered_authority,
+            )
+
+            assert _registered_authority() == (service, asyncio.get_running_loop())
             calls["served"] = True
             stop_event.set()
 
@@ -79,6 +90,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
 
     monkeypatch.setattr(runtime_config, "host", "127.0.0.1")
     monkeypatch.setattr(runtime_config, "port", 8000)
+    monkeypatch.setattr(runtime_config, "webui_auth_mode", auth_mode)
 
     governance = types.ModuleType("arbora.webui_host.contact_governance")
 
@@ -168,6 +180,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         application_composer: object,
         contact_delivery: object | None = None,
         browser_control: object | None = None,
+        auth_mode: str = "required",
     ) -> object:
         calls["app"] = {
             "agent": agent,
@@ -176,6 +189,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
             "application_composer": application_composer,
             "contact_delivery": contact_delivery,
             "browser_control": browser_control,
+            "auth_mode": auth_mode,
         }
         return "webui-app"
 
@@ -228,6 +242,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         "application_composer": module.compose_web_application,
         "contact_delivery": "governed-contact-delivery",
         "browser_control": service,
+        "auth_mode": auth_mode,
     }
     assert calls["contact_factory"] is create_agent_web_app
     assert callable(calls["contact_runner"])
