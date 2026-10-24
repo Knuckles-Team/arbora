@@ -76,6 +76,18 @@ engine codec, invent a digest or substitute another body at serving time.
 Roundtrip and public-initializer checks qualify this bounded repair, not full
 run execution, durable usage, deployment or release acceptance.
 
+### Task-plan publication receipt boundary
+
+The bounded follow-up to `ARBORA-RELEASE-R003.4.4` must obtain a new receipt
+from Arbora's existing action-policy owner before publishing a schema. Bind
+the request to the exact pin, tenant, graph and verified session. Preserve
+read-only reuse of an existing matching component. Unknown actions still need
+approval under the unchanged default policy. A denied, held, stale or missing
+receipt must stop publication. This does not qualify the separate approval
+grant loop, native context admission, run completion or durable usage replay.
+The existing action-policy owner must not issue a new decision receipt when
+its atomic audit create returns false. An existing ID is not new evidence.
+
 ### 2026-10-24: explicit child interaction after read-only exploration
 
 `ARBORA-RELEASE-R003.4.12` and `.13` extend the served plan-run owner without
