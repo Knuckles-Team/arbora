@@ -104,3 +104,10 @@ Requirement IDs are defined in [requirements.md](requirements.md); delivery stat
 - `ARBORA-OPS-R065`: Owner scope and complete acceptance are defined in requirements.md.
 - `ARBORA-OPS-R066`: Owner scope and complete acceptance are defined in requirements.md.
 - `ARBORA-OPS-R861`: Owner scope and complete acceptance are defined in requirements.md.
+
+## Shared execution explorer
+
+The bounded read-only graph and public node-record contracts are specified in
+`ARBORA-OPS-R021.4.8` and `ARBORA-OPS-R021.4.9`. They extend run replay without
+changing the accepted scope of `ARBORA-OPS-R021.4.7`. Nested lineage, transcript
+availability and child interaction are not implied by existing flat events.
