@@ -16,7 +16,7 @@ Governing [spec](spec.md). Evidence remains PENDING.
 | T-RL-10 | RL-07 | Contract | Candidate with fixture secret references and tokens | Receipt has digests, stage order, time and public evidence URL, with no credential or private endpoint. |
 | T-RL-11 | ARBORA-RELEASE-R003.9 | Served | Two-connector fleet fixture: one healthy connector and one stale pack | One PASS and one FAIL with cause `(d) pack stale`. The promotion step refuses. |
 | T-RL-12 | ARBORA-RELEASE-R003.4.6 | Served | Mixed plan, then a call against an old pin | Calls reach the engine unchanged. Engine refusals pass through. The old pin refuses `UNAVAILABLE`. |
-| T-RL-13 | ARBORA-RELEASE-R003.4.7 | Served | A permitted tool, an unscoped tool and a replayed record | The pipeline runs under caller authority. Refusal is typed. The replay repeats no effect. Each call has one audit event. |
+| T-RL-13 | ARBORA-RELEASE-R003.4.5 | Served | A permitted tool, an unscoped tool and a replayed record | The pipeline runs under caller authority. Refusal is typed. The replay repeats no effect. Each call has one audit event. |
 | T-RL-14 | ARBORA-RELEASE-R003.4.8 | Served | Four step outcomes and a secret argument | Each step lists arguments, result, outcome, key and audit reference. The secret is masked. |
 | T-RL-15 | ARBORA-RELEASE-R003.4.9 | Integration | `handle_plan_run` over the registry | The governed caller is bound to the invoke pipeline. No direct gateway call happens. |
 | T-RL-16 | ARBORA-RELEASE-R003.4.10 | Served | Prompt step, then two tool steps on two fixture connectors, bound by path | Data passes by binding. A missing path fails the step with no model retry. |
