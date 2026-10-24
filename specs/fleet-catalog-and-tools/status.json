@@ -47,6 +47,7 @@
     "ARBORA-FLEET-R014.3",
     "ARBORA-FLEET-R015",
     "ARBORA-FLEET-R015.1",
+    "ARBORA-FLEET-R015.2",
     "ARBORA-FLEET-R016",
     "ARBORA-FLEET-R017",
     "ARBORA-FLEET-R018",
@@ -712,16 +713,20 @@
       "title": "Typed operations cover agents, browser and fleet calls",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "54834624dbb4",
         "68e31b75248a",
-        "e1d37ca10ef7",
-        "fdd59af317ce"
+        "9532a0c5f38f",
+        "c5fac0da232e",
+        "e1d37ca10ef7"
       ],
       "verified_by": [
         "tests/fleet/test_child_failure_classification.py:18",
-        "tests/fleet/test_multiplexer_dynamic_gateway.py:279"
+        "tests/fleet/test_multiplexer_dynamic_gateway.py:279",
+        "tests/fleet/test_plan_confirmation.py:22"
       ],
       "rollup_of": [
-        "ARBORA-FLEET-R015.1"
+        "ARBORA-FLEET-R015.1",
+        "ARBORA-FLEET-R015.2"
       ]
     },
     {
@@ -734,6 +739,19 @@
       "verified_by": [
         "tests/fleet/test_child_failure_classification.py:18",
         "tests/fleet/test_multiplexer_dynamic_gateway.py:279"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R015.2",
+      "title": "A plan-confirmed destructive relay answers the connector's confirmation",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "54834624dbb4",
+        "9532a0c5f38f",
+        "c5fac0da232e"
+      ],
+      "verified_by": [
+        "tests/fleet/test_plan_confirmation.py:22"
       ]
     },
     {
@@ -1975,6 +1993,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "25c198540020",
+        "54834624dbb4",
         "6721ef2b00df",
         "96b68a9b5e5c"
       ],

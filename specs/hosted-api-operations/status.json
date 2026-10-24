@@ -2474,7 +2474,8 @@
       "landed_in": [
         "25c198540020",
         "66869917498c",
-        "96b68a9b5e5c"
+        "96b68a9b5e5c",
+        "ccf85099e9da"
       ],
       "verified_by": [
         "tests/api/test_typed_refusal_details.py:17",
