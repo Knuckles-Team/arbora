@@ -1396,8 +1396,8 @@
         "tests/fleet/test_multiplexer_boundary.py:275",
         "tests/fleet/test_multiplexer_boundary.py:283",
         "tests/fleet/test_multiplexer_boundary.py:296",
-        "tests/fleet/test_multiplexer_dynamic_gateway.py:1842",
-        "tests/fleet/test_multiplexer_dynamic_gateway.py:1859"
+        "tests/fleet/test_multiplexer_dynamic_gateway.py:1868",
+        "tests/fleet/test_multiplexer_dynamic_gateway.py:1885"
       ]
     },
     {

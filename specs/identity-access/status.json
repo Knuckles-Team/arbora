@@ -1015,10 +1015,10 @@
         "76d418e32221"
       ],
       "verified_by": [
-        "tests/fleet/test_multiplexer_dynamic_gateway.py:1550",
-        "tests/fleet/test_multiplexer_dynamic_gateway.py:1761",
-        "tests/fleet/test_multiplexer_dynamic_gateway.py:1806",
-        "tests/fleet/test_multiplexer_dynamic_gateway.py:1824"
+        "tests/fleet/test_multiplexer_dynamic_gateway.py:1576",
+        "tests/fleet/test_multiplexer_dynamic_gateway.py:1787",
+        "tests/fleet/test_multiplexer_dynamic_gateway.py:1832",
+        "tests/fleet/test_multiplexer_dynamic_gateway.py:1850"
       ]
     },
     {

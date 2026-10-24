@@ -290,10 +290,10 @@
       ],
       "verified_by": [
         "tests/deployment/test_real_boot_fixture.py:19",
-        "tests/test_real_boot.py:899",
-        "tests/test_real_boot.py:920",
-        "tests/test_real_boot.py:929",
-        "tests/test_real_boot.py:948"
+        "tests/test_real_boot.py:906",
+        "tests/test_real_boot.py:927",
+        "tests/test_real_boot.py:936",
+        "tests/test_real_boot.py:955"
       ]
     },
     {
@@ -767,14 +767,14 @@
         "094c8adb6318",
         "23be3a8e9dd6",
         "2ad164bd5414",
-        "9052ea9458e5"
+        "89e037bb8f1d"
       ],
       "verified_by": [
+        "tests/fleet/test_multiplexer_dynamic_gateway.py:1164",
         "tests/ingest/test_connector_sources.py:190",
         "tests/ingest/test_connector_sources.py:200",
         "tests/ingest/test_connector_sources.py:230",
-        "tests/ingest/test_connector_sources.py:250",
-        "tests/ingest/test_connector_sources.py:262"
+        "tests/ingest/test_connector_sources.py:250"
       ],
       "rollup_of": [
         "ARBORA-OPS-R020.6.1",
@@ -851,9 +851,13 @@
       "title": "Hot-path proof",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "dd8cbebf32c4"
+        "89e037bb8f1d",
+        "dd8cbebf32c4",
+        "ef421d22f615"
       ],
       "verified_by": [
+        "tests/fleet/test_multiplexer_dynamic_gateway.py:1164",
+        "tests/mcp_server/test_arbora_015_served_fixes.py:75",
         "tests/test_real_boot.py:843"
       ]
     },
