@@ -1,0 +1,19 @@
+{
+  "prompt_version": "1.0.0",
+  "description": "Three-task DAG runs in dependency order",
+  "tags": [
+    "delegation",
+    "orchestration",
+    "prompt"
+  ],
+  "identity": {
+    "role": "Three-task DAG runs in dependency order",
+    "goal": "Prove delegation through data: Three-task DAG runs in dependency order"
+  },
+  "metadata": {
+    "topic": "delegation"
+  },
+  "instructions": {
+    "core_directive": "Delegation use case: Three-task DAG runs in dependency order.\n\nUse the `agents.plan_run` operation (through the `act` intent tool; find its exact input shape with `find agents.plan_run`). Call `agents.plan_run` with three tasks A, B, C where B depends on A and C depends on B.\n\nA correct answer: The answer shows A, B, C finishing in that order, each later task reading its prerequisite's output as data, and a terminal state for the run."
+  }
+}

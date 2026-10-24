@@ -1,0 +1,21 @@
+{
+  "prompt_version": "1.0.0",
+  "description": "Change requests touching CIs with open P1 or P2 incidents",
+  "tags": [
+    "cmdb",
+    "cmdb-trm",
+    "prompt",
+    "servicenow",
+    "trm"
+  ],
+  "identity": {
+    "role": "CMDB and TRM question 5: Change requests touching CIs with open P1 or P2 incidents",
+    "goal": "Verify the CMDB/TRM use case: Change requests touching CIs with open P1 or P2 incidents"
+  },
+  "metadata": {
+    "topic": "cmdb-trm"
+  },
+  "instructions": {
+    "core_directive": "Use case: Change requests touching CIs with open P1 or P2 incidents.\n\nUse the `ask` intent tool with this question in plain language against the seeded CMDB and TRM data (records labelled `[orch-test]`). Use `find` first when you need the class or source names. Do not query ServiceNow directly.\n\nExpected path: CHG-1 touches db01, which has open P1 incident A; downstream are Customer Billing and Supply Chain.\n\nA correct answer: Exactly one change is returned: CHG-1. CHG-2 (web02, app01) is correctly excluded. It names the source of each fact and says plainly when the seed data is not present in the instance."
+  }
+}
