@@ -51,8 +51,8 @@ async def _served(native_engine, tmp_path, monkeypatch, *, enabled=True):
 
     from arbora.access.action_policy import ActionPolicy
     from arbora.identity.local_browser import LocalBrowserTransport
-    from arbora.identity.local_browser_boundary import local_browser_boundary
-    from arbora.identity.local_browser_channel import LocalBrowserChannelOwner
+    from arbora.local_browser_boundary import local_browser_boundary
+    from arbora.local_browser_channel import LocalBrowserChannelOwner
     from tests.test_real_boot import _free_port
 
     engine, session = native_engine
@@ -264,10 +264,10 @@ def test_secondary_send_failure_does_not_chain_private_boundary_error(
 
     from arbora.access.action_policy import ActionPolicy
     from arbora.identity.local_browser import LocalBrowserTransport
-    from arbora.identity.local_browser_channel import LocalBrowserChannelOwner
+    from arbora.local_browser_channel import LocalBrowserChannelOwner
     from arbora.mcp_server.served_engine import ServedEngine
 
-    module = importlib.import_module("arbora.identity.local_browser_boundary")
+    module = importlib.import_module("arbora.local_browser_boundary")
     engine = ServedEngine(None)
     policy = ActionPolicy(engine, policy_path=tmp_path / "unused.json")
     owner = LocalBrowserChannelOwner(
@@ -294,8 +294,8 @@ def test_synthetic_handshake_await_change_cannot_advertise_ready(
     import asyncio
 
     from arbora.access.action_policy import ActionPolicy
-    from arbora.identity.local_browser_boundary import local_browser_boundary
-    from arbora.identity.local_browser_channel import LocalBrowserChannelOwner
+    from arbora.local_browser_boundary import local_browser_boundary
+    from arbora.local_browser_channel import LocalBrowserChannelOwner
     from tests.browser_control.test_local_browser_channel import _socket
     from tests.browser_control.test_local_browser_transport import _transport
 

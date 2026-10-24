@@ -11,7 +11,7 @@ from arbora.client.browser_boundary import (
     LocalBrowserBoundary,
     _issue_local_browser_boundary,
 )
-from arbora.identity.local_browser_channel import LocalBrowserChannelOwner
+from arbora.local_browser_channel import LocalBrowserChannelOwner
 from arbora.security import anonymous
 
 _LOG = logging.getLogger(__name__)

@@ -5,7 +5,7 @@ import asyncio
 import pytest
 
 from arbora.access.action_policy import ActionPolicy
-from arbora.identity.local_browser_channel import LocalBrowserChannelOwner
+from arbora.local_browser_channel import LocalBrowserChannelOwner
 from tests.browser_control.test_local_browser_transport import _scope, _transport
 from tests.security.test_anonymous_mode import local_mode as local_mode
 from tests.test_served_engine_native_labels import native_engine as native_engine
@@ -160,7 +160,7 @@ def test_native_issuance_collision_is_not_adopted(native_engine, tmp_path, monke
 
     first, second = _owner(engine, tmp_path), _owner(engine, tmp_path)
     monkeypatch.setattr(
-        "arbora.identity.local_browser_channel.secrets.token_hex", lambda _n: "c" * 48
+        "arbora.local_browser_channel.secrets.token_hex", lambda _n: "c" * 48
     )
 
     async def run():
@@ -462,9 +462,7 @@ def test_idle_channel_deadline_closes_private_and_native_lifetime(
 ):
     engine, session = native_engine
     owner, scope = _owner(engine, tmp_path), _socket()
-    monkeypatch.setattr(
-        "arbora.identity.local_browser_channel._CHANNEL_LIFETIME_SECONDS", 1
-    )
+    monkeypatch.setattr("arbora.local_browser_channel._CHANNEL_LIFETIME_SECONDS", 1)
 
     async def run():
         record = None

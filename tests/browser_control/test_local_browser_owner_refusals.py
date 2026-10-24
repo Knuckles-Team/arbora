@@ -6,7 +6,7 @@ import pytest
 
 from arbora.access.action_policy import ActionPolicy
 from arbora.api.contracts.session import use_session
-from arbora.identity.local_browser_channel import LocalBrowserChannelOwner
+from arbora.local_browser_channel import LocalBrowserChannelOwner
 from arbora.mcp_server.served_engine import ServedEngine
 from arbora.security import anonymous
 from tests.browser_control.test_local_browser_channel import _socket
