@@ -701,9 +701,11 @@
         "e1d37ca10ef7"
       ],
       "verified_by": [
+        "tests/browser_control/test_browser_proposals.py:37",
+        "tests/fleet/test_attended_proposal_agent_journey.py:62",
+        "tests/fleet/test_attended_proposal_effect_owner.py:36",
         "tests/fleet/test_child_failure_classification.py:18",
-        "tests/fleet/test_multiplexer_dynamic_gateway.py:279",
-        "tests/fleet/test_plan_confirmation.py:22"
+        "tests/fleet/test_multiplexer_dynamic_gateway.py:279"
       ],
       "rollup_of": [
         "ARBORA-FLEET-R015.1",

@@ -429,9 +429,11 @@ def compose_served_invocation(
         )
         # An alert send is an external effect too: the same journal holds it
         # at most once per idempotency key (ARBORA-MESSAGING-R008).
+        # Awaited attended proposals share that owner; replay never sends a
+        # second browser prompt or repeats a human-approved execution.
         changes["external_effect_operations"] = frozenset(
             op_id
-            for op_id in ("fleet.call", "messaging.alert")
+            for op_id in ("fleet.call", "messaging.alert", "browser.request_call")
             if registry.get(op_id) is not None
         )
     services = build_invoke_services(

@@ -195,6 +195,8 @@ class BrowserDispatchMixin(BrowserControlMixinState):
         async with active.dispatch_lock:
             async with self._lock:
                 document_ref = active.channel.binding.document_ref
+                if not self._proposal_dispatch_current(active):
+                    return False
                 if active.cancellation_requested or active.terminal_future.done():
                     return False
                 if (
@@ -215,6 +217,13 @@ class BrowserDispatchMixin(BrowserControlMixinState):
                 )
                 active.dispatched = True
         return True
+
+    def _proposal_dispatch_current(self, active: _ActiveCall) -> bool:
+        if active.proposal_guard is not None and not active.proposal_guard():
+            return False
+        return (
+            active.proposal_deadline is None or self._clock() < active.proposal_deadline
+        )
 
     async def _await_result(
         self, active: _ActiveCall, timeout: float

@@ -9,8 +9,10 @@ import pytest
 from arbora import work_items
 from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.a2a.models import A2AMessage, A2ARouteDecision, A2ATextPart
+from arbora.api.contracts.session import use_session
 from arbora.mcp_server.task_plan import TaskPlanConfig
 from tests.a2a.test_context_continuation import SESSION
+from tests.a2a.test_operation_bridge import session as graph_session
 
 pytestmark = pytest.mark.spec("ARBORA-OPS-R001")
 
@@ -58,7 +60,8 @@ async def test_submit_retry_get_list_cancel_use_returned_engine_id(
     authority = WorkItemA2AAuthority(
         lambda: engine, task_plan_config=TaskPlanConfig({}, {}, 1, 2)
     )
-    monkeypatch.setattr(authority, "_session", lambda scope: SESSION)
+    admitted = graph_session(frozenset({"kg:read", "kg:write"}))
+    monkeypatch.setattr(authority, "_session", lambda scope: admitted)
     monkeypatch.setattr(authority, "_owner_ref", lambda session: "owner")
     run = AsyncMock(return_value=None)
     monkeypatch.setattr(authority, "_run", run)
@@ -90,7 +93,8 @@ async def test_submit_retry_get_list_cancel_use_returned_engine_id(
     assert "native_claim" not in requests[0]["metadata"]
     assert (await authority.get(item_id)).id == item_id
     assert (await authority.list(cursor=None, limit=10))[0][0].id == item_id
-    assert (await authority.cancel(item_id)).status.state == "canceled"
+    with use_session(admitted):
+        assert (await authority.cancel(item_id)).status.state == "canceled"
     durable_get = AsyncMock(wraps=authority.get)
     monkeypatch.setattr(authority, "get", durable_get)
     run.reset_mock()

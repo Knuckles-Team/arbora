@@ -1953,6 +1953,70 @@
       "confirm": "none",
       "effect": "write",
       "examples": [
+        "ask the attended browser owner to navigate"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "browser.request_call",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.browser.BrowserParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "payload": {
+              "additionalProperties": true,
+              "title": "Payload",
+              "type": "object"
+            }
+          },
+          "required": [
+            "payload"
+          ],
+          "title": "BrowserParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.browser.BrowserResult",
+        "schema": {
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "BrowserResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "kg:write"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Propose an exact browser action for attended human acceptance",
+      "surfaces": [
+        "mcp"
+      ],
+      "verb": "act"
+    },
+    {
+      "audit": "event",
+      "binding": {
+        "handler": "arbora.api.ops.browser.handle_browser",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "write",
+      "examples": [
         "revoke lease for my attended browser"
       ],
       "executor": "caller",
@@ -27141,5 +27205,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "ce35e3e02b0e24a6eb88cbeed77b44089efeb313f408e9579e2e15ceb38627a2"
+  "registry_digest": "63103c17f0570775f14aa03c1eac4a4db10666859b4e819fda32ddf2fd4a9dcd"
 }

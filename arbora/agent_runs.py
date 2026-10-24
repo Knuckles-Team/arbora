@@ -443,10 +443,13 @@ class AgentRunPort:
     async def execute_agent(
         self, request: AgentExecutionRequest, *, session: GraphSession
     ) -> AgentExecutionResult:
+        from arbora.run_origin import agent_run_origin_scope
+
         ownership = current_native_run(request)
         if ownership is not None and ownership.session != session:
             raise RuntimeError("native run session does not match the host scope")
-        result = await self._executor.execute_agent(request, session=session)
+        with agent_run_origin_scope(session, request.agent_name, request.run_id):
+            result = await self._executor.execute_agent(request, session=session)
         return AgentExecutionResult(
             run_id=result.run_id,
             output=result.output,

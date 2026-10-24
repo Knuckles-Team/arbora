@@ -516,6 +516,7 @@ def _journal_binding(
     decision: FleetCallDecision | None,
 ) -> str:
     binding = bind_plan(op, params, caller, services.registry.digest).as_grant()
+    _bind_browser_origin(binding, op, caller)
     binding["authority"] = params_digest(
         {
             "scopes": sorted(caller.effective_scopes),
@@ -527,6 +528,16 @@ def _journal_binding(
         }
     )
     return params_digest(binding)
+
+
+def _bind_browser_origin(
+    binding: dict[str, str], op: Any, caller: RequestCaller
+) -> None:
+    """Extend only attended browser journal identity with its trusted origin."""
+    if op.id == "browser.request_call":
+        from arbora.run_origin import browser_request_origin_binding
+
+        binding["browser_origin"] = browser_request_origin_binding(caller.session)
 
 
 @dataclass(frozen=True, slots=True)
@@ -787,6 +798,15 @@ async def _audit_preflight(call: _Call) -> str | OpError:
 
 
 async def _reserve_effect(call: _Call) -> EffectReservation | OpError:
+    """Revalidate native origin after audit I/O, before accessing the journal."""
+    refused = _browser_replay_refusal(call)
+    if refused is not None:
+        return refused
+    return await _reserve_journal_entry(call)
+
+
+async def _reserve_journal_entry(call: _Call) -> EffectReservation | OpError:
+    """Acquire or read the effect owner's durable reservation."""
     services = call.services
     assert services.effects is not None
     unavailable = OpError("UNAVAILABLE", {"reason": "effect reservation unavailable"})
@@ -810,6 +830,18 @@ async def _reserve_effect(call: _Call) -> EffectReservation | OpError:
     return reservation
 
 
+def _browser_replay_refusal(call: _Call) -> OpError | None:
+    if call.op.id != "browser.request_call":
+        return None
+    from arbora.run_origin import browser_request_origin_binding
+
+    try:
+        browser_request_origin_binding(call.caller.session)
+    except PermissionError:
+        return OpError("UNAUTHENTICATED")
+    return None
+
+
 async def _replay_completed(
     call: _Call, audit_ref: str, outcome: OpResult | OpError
 ) -> OpResult | OpError:
@@ -818,7 +850,19 @@ async def _replay_completed(
     )
     if refused is not None:
         return refused
-    return await _record(call, audit_ref, None, outcome)
+    return await _record_authorized_replay(call, audit_ref, outcome)
+
+
+async def _record_authorized_replay(
+    call: _Call, audit_ref: str, outcome: OpResult | OpError
+) -> OpResult | OpError:
+    """Keep origin live across the audit write before releasing a cached result."""
+    refused = _browser_replay_refusal(call)
+    if refused is not None:
+        return refused
+    recorded = await _record(call, audit_ref, None, outcome)
+    # Audit writes may await I/O while the originating call is revoked.
+    return _browser_replay_refusal(call) or recorded
 
 
 Reserved = tuple[str, EffectReservation | None]
@@ -826,6 +870,14 @@ Reserved = tuple[str, EffectReservation | None]
 
 async def _reserve(call: _Call) -> Reserved | OpResult | OpError:
     """Reserve durable audit and effect ownership, or replay a completed effect."""
+    refused = _browser_replay_refusal(call)
+    if refused is not None:
+        return refused
+    return await _reserve_authorized_call(call)
+
+
+async def _reserve_authorized_call(call: _Call) -> Reserved | OpResult | OpError:
+    """Reserve audit, then acquire the effect or return its authorized replay."""
     if not call.governed:
         return "", None
     audit_ref = await _audit_preflight(call)

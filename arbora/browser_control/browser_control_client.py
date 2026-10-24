@@ -58,6 +58,13 @@ class ControlConfirmMessage(_WireMessage):
     confirmation_digest: _Digest
 
 
+class ControlProposalResponseMessage(_WireMessage):
+    type: Literal["control.proposal_response"] = "control.proposal_response"
+    proposal_id: _Identifier
+    proposal_digest: _Digest
+    accepted: bool = Field(strict=True)
+
+
 class ControlResultMessage(_WireMessage):
     type: Literal["control.result"] = "control.result"
     call_id: _Identifier
@@ -83,12 +90,14 @@ class ControlCancelledMessage(_WireMessage):
 BrowserClientMessage = (
     CatalogRegisterMessage
     | ControlConfirmMessage
+    | ControlProposalResponseMessage
     | ControlResultMessage
     | ControlCancelledMessage
 )
 
 
 __all__ = [
+    "ControlProposalResponseMessage",
     "BrowserClientMessage",
     "CatalogRegisterMessage",
     "ControlCancelledMessage",

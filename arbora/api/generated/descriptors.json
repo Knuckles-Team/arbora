@@ -220,6 +220,18 @@
     {
       "domain": "browser",
       "examples": [
+        "ask the attended browser owner to navigate"
+      ],
+      "id": "browser.request_call",
+      "summary": "Propose an exact browser action for attended human acceptance",
+      "tags": [
+        "browser"
+      ],
+      "verb": "act"
+    },
+    {
+      "domain": "browser",
+      "examples": [
         "revoke lease for my attended browser"
       ],
       "id": "browser.revoke_lease",
@@ -6306,5 +6318,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "ce35e3e02b0e24a6eb88cbeed77b44089efeb313f408e9579e2e15ceb38627a2"
+  "registry_digest": "63103c17f0570775f14aa03c1eac4a4db10666859b4e819fda32ddf2fd4a9dcd"
 }
