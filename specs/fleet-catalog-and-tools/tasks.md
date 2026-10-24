@@ -235,6 +235,7 @@ Preserve all existing R003 tasks and receipts. These added runtime cases have no
 - [ ] **ARBORA-FLEET-R041.8:** Reconnect compare: re-capture only on a changed `serverInfo` version or manifest digest; renew otherwise.
 - [ ] **ARBORA-FLEET-R041.9:** Serving never blocks: log, report in the surface report, retry with backoff.
 - [ ] **ARBORA-FLEET-R041.10:** Rules unchanged: keep mass-withdrawal approval; keep `onboard-fleet` as manual or bulk re-sync.
+- [x] **ARBORA-FLEET-R041.15:** Write the agent-library catalog nodes into EG on each onboarding pass.
 - [ ] **ARBORA-FLEET-R042:** arbora registers connector data resources as virtual-graph sources by policy (rollup).
 - [ ] **ARBORA-FLEET-R042.1:** Model.
 - [ ] **ARBORA-FLEET-R042.2:** Behavior.

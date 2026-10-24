@@ -389,7 +389,35 @@ class FleetOnboarding:
         else:
             await self.renew({endpoint.name: endpoint.url})
         self.register_contracts(endpoint, pack)
+        await self.write_catalog(endpoint, pack)
         return changed
+
+    async def write_catalog(self, endpoint: FleetEndpoint, pack: Any) -> None:
+        """Write the pack's agent-library catalog nodes (ARBORA-FLEET-R041.15).
+
+        Runs on every pass, imported or renewed: ``AddTriples`` of the same
+        set is idempotent, and a store that predates the catalog gains it on
+        the next pass. A failed write never fails onboarding; it is reported
+        as a ``catalog`` surface gap.
+        """
+
+        from arbora.deployment.semantic_provisioning import _bind_session_graph
+        from arbora.fleet.catalog_graph import write_catalog
+
+        graph = str(self.session.graph)
+        report = self.surfaces.setdefault(endpoint.name, {})
+        try:
+            with _bind_session_graph(graph):
+                count = await write_catalog(
+                    self.tenant_client, graph, endpoint.name, pack
+                )
+        except Exception as exc:  # noqa: BLE001 - reported, never fatal
+            logger.warning("%s: catalog write failed: %s", endpoint.name, exc)
+            if isinstance(report, dict):
+                report["catalog_error"] = _failure(exc)
+            return
+        if isinstance(report, dict):
+            report["catalog_triples"] = count
 
     async def handshake_pass(
         self,
