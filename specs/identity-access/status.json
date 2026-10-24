@@ -1470,7 +1470,7 @@
       "title": "Served read contract",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "dd390fe9567b"
+        "236058622cf1"
       ],
       "verified_by": [
         "tests/a2a/test_anonymous_reads.py:22"
@@ -1488,7 +1488,7 @@
       "title": "Native client source adapter",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "dd390fe9567b"
+        "236058622cf1"
       ],
       "verified_by": [
         "tests/a2a/test_anonymous_native_reads.py:12"
