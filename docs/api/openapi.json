@@ -157,6 +157,9 @@
       "Definition75bed9b568e1d24830330f762cddd1d424aa469009ab167e481229bd9953ca29": {
         "$ref": "#/components/schemas/Schema78ccdcbd70b51432be83cc6b15ed6cac5e05a0ed13e3cee8ca3ecd4c29a46284"
       },
+      "Definitiona50f88e2dc179775a9bc68e8f0f6160b3e2622272696626b220f08abb6242d76": {
+        "$ref": "#/components/schemas/Schema01780fddb8b8e2051161fa957167280dc27d5e79e023439a1114651c354eec5c"
+      },
       "Definitionae1b8a29e07c26df95489a53fc7d896f999a99829ed2d84b52491ed5cfaffa4e": {
         "$ref": "#/components/schemas/Schema4cc5fb01b4eff0f49b5d0349071f1346bbd6ce26f9df8cfdc51a65772486fbdf"
       },
@@ -182,6 +185,24 @@
         "additionalProperties": false,
         "properties": {},
         "title": "UsageReadParams",
+        "type": "object"
+      },
+      "Schema01780fddb8b8e2051161fa957167280dc27d5e79e023439a1114651c354eec5c": {
+        "additionalProperties": false,
+        "description": "One fleet tool a plan's agent steps may call.",
+        "properties": {
+          "server": {
+            "$ref": "#/components/schemas/Schema804615f2fc8e5941afa78d08df857b2973ca89304e9f61715c43548c801d9ff6"
+          },
+          "tool": {
+            "$ref": "#/components/schemas/Schemaa23d4d6dc3ddc37dc2818f4b303fdb6aa83d92c60bee700ea385b8db235c0b40"
+          }
+        },
+        "required": [
+          "server",
+          "tool"
+        ],
+        "title": "FleetToolRef",
         "type": "object"
       },
       "Schema032dd68e5cf93a264b9f4bd4f241266fbaa7373550d738da313b55f8a1fd3cc7": {
@@ -1470,22 +1491,14 @@
         "title": "Max Pages",
         "type": "integer"
       },
-      "Schema8a6d4aea8e97f36d37471c5cedd1bdb78c7669c9d03dc3f94cef567cbc23a5eb": {
-        "additionalProperties": false,
-        "description": "Explicit caller claims. The engine owns graph validity and bounds.",
-        "properties": {
-          "plan": {
-            "$ref": "#/components/schemas/Schemac3b5d7513505aea2230123e535ee3971582b40f12e7e7192cfda51ae26378841"
-          },
-          "work_item": {
-            "$ref": "#/components/schemas/Schemadcf5732766a1fdca89e43c8191813be229f10d4d1f838c5e0fc47562e727ca67"
-          }
+      "Schema8bf923a0616cd26131b6e2646161c4bcd88c1155481e14e34e4792721ac54aec": {
+        "description": "Fleet tools the plan's agent steps may call through fleet_call, under the caller's authority. Empty means no step has a tool.",
+        "items": {
+          "$ref": "#/components/schemas/Definitiona50f88e2dc179775a9bc68e8f0f6160b3e2622272696626b220f08abb6242d76"
         },
-        "required": [
-          "plan"
-        ],
-        "title": "PlanRunParams",
-        "type": "object"
+        "maxItems": 16,
+        "title": "Fleet Tools",
+        "type": "array"
       },
       "Schema8c6ee092ab6888335b7e1a23a6d71ebc4af1cde19fbf832d4d6e749fb6f3e2b9": {
         "additionalProperties": true,
@@ -1506,6 +1519,26 @@
       "Schema90198d00c8266e2f9c1ecae782c17f0710bf99d23e97e8a3dd26e0e7176ad0b1": {
         "title": "Revision",
         "type": "integer"
+      },
+      "Schema9056ae48b2c13a0bacc5578d74369d4d37807a3f34432c81dbc022e672ce1918": {
+        "additionalProperties": false,
+        "description": "Explicit caller claims. The engine owns graph validity and bounds.",
+        "properties": {
+          "fleet_tools": {
+            "$ref": "#/components/schemas/Schema8bf923a0616cd26131b6e2646161c4bcd88c1155481e14e34e4792721ac54aec"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/Schemac3b5d7513505aea2230123e535ee3971582b40f12e7e7192cfda51ae26378841"
+          },
+          "work_item": {
+            "$ref": "#/components/schemas/Schemadcf5732766a1fdca89e43c8191813be229f10d4d1f838c5e0fc47562e727ca67"
+          }
+        },
+        "required": [
+          "plan"
+        ],
+        "title": "PlanRunParams",
+        "type": "object"
       },
       "Schema905870712697c5033de203e9970c73bcd2c6ec3112b28fa127fe1807b1a832ed": {
         "description": "A live registration already admitted by the existing channel authority.",
@@ -3148,11 +3181,14 @@
             "application/json": {
               "schema": {
                 "$defs": {
+                  "FleetToolRef": {
+                    "$ref": "#/components/schemas/Definitiona50f88e2dc179775a9bc68e8f0f6160b3e2622272696626b220f08abb6242d76"
+                  },
                   "WorkItemLease": {
                     "$ref": "#/components/schemas/Definition2410bb35a5212044a26a7f1b62271a9b079d5b33e442b127dab54e178bedaa6e"
                   }
                 },
-                "$ref": "#/components/schemas/Schema8a6d4aea8e97f36d37471c5cedd1bdb78c7669c9d03dc3f94cef567cbc23a5eb"
+                "$ref": "#/components/schemas/Schema9056ae48b2c13a0bacc5578d74369d4d37807a3f34432c81dbc022e672ce1918"
               }
             }
           },
@@ -20258,5 +20294,5 @@
       }
     }
   },
-  "x-registry-digest": "83506943e5b2152df8809f7df2b29a0fd7fd362c5f3f406a34e03fe96706655c"
+  "x-registry-digest": "ba4a79990a0c9c5f1a898e5b0b66301d8b9db428ae7782eccd756fb25c1a0168"
 }

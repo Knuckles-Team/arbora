@@ -1128,6 +1128,30 @@
         "model": "arbora.api.ops.plans.PlanRunParams",
         "schema": {
           "$defs": {
+            "FleetToolRef": {
+              "additionalProperties": false,
+              "description": "One fleet tool a plan's agent steps may call.",
+              "properties": {
+                "server": {
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "title": "Server",
+                  "type": "string"
+                },
+                "tool": {
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "title": "Tool",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "server",
+                "tool"
+              ],
+              "title": "FleetToolRef",
+              "type": "object"
+            },
             "WorkItemLease": {
               "additionalProperties": false,
               "description": "The work-item lease a plan is attached to. The engine checks the fence.",
@@ -1174,6 +1198,15 @@
           "additionalProperties": false,
           "description": "Explicit caller claims. The engine owns graph validity and bounds.",
           "properties": {
+            "fleet_tools": {
+              "description": "Fleet tools the plan's agent steps may call through fleet_call, under the caller's authority. Empty means no step has a tool.",
+              "items": {
+                "$ref": "#/$defs/FleetToolRef"
+              },
+              "maxItems": 16,
+              "title": "Fleet Tools",
+              "type": "array"
+            },
             "plan": {
               "additionalProperties": true,
               "description": "TaskPlanProposal: tasks [{task_id, prompt, depends_on}], output_task_id, max_concurrency, max_steps.",
@@ -26819,5 +26852,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "83506943e5b2152df8809f7df2b29a0fd7fd362c5f3f406a34e03fe96706655c"
+  "registry_digest": "ba4a79990a0c9c5f1a898e5b0b66301d8b9db428ae7782eccd756fb25c1a0168"
 }
