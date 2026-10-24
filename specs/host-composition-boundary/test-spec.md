@@ -185,3 +185,11 @@ before process authority. The current-plan reader accepts the generated
 passes raw caller identity to EG, which owns identity hashing. An existing
 attached plan refuses retry rather than replaying a later scaffold as the
 original publication; original receipt recovery is still pending.
+
+## Temporary request-loop ownership
+
+ARBORA-HOST-R001.2.3 binds `tests/test_epistemic_loop_lifecycle.py`.
+The tests require temporary clients to close before their loop exits.
+They preserve the serving reader across repeated requests and enforce tenant isolation.
+Failed requests, cancellation during cleanup and repeated close keep deterministic outcomes.
+A cleanup failure remains visible after the remaining clients close.

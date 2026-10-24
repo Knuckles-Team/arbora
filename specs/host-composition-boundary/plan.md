@@ -511,6 +511,14 @@ payload, agent-run and A2A read suites pass 84 tests; scoped Ruff checks pass.
 
 Scoped mypy (`--follow-imports=silent`) passes for both changed source files.
 
+## Amendment: temporary request-loop clients (2026-10-23)
+
+ARBORA-HOST-R001.2.3 keeps serving-loop clients separate from temporary
+request-loop clients. The synchronous bridge owns each temporary client.
+It closes that client on its own loop before the loop exits. Repeated calls,
+failed requests and cancellation must not displace a serving-loop reader.
+The lifecycle tests check reader completion and repeated close behavior.
+
 ### 2026-10-20 — Dedicated managed-start provenance
 
 R010.7.1 uses the native ControlLease owner through `IssueHostStartGrant`, guarded
