@@ -1619,9 +1619,9 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "3597c590c8c9",
+        "405459d8245e",
         "6815715c27d8",
-        "abaee0920e29",
-        "f15c7fb5ec62"
+        "abaee0920e29"
       ],
       "verified_by": [
         "tests/fleet/test_connector_surfaces.py:134",
@@ -1640,8 +1640,8 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "3597c590c8c9",
-        "6815715c27d8",
-        "f15c7fb5ec62"
+        "405459d8245e",
+        "6815715c27d8"
       ],
       "verified_by": [
         "tests/fleet/test_connector_surfaces.py:267",
@@ -1729,7 +1729,7 @@
       "title": "Reconnect compare",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "c511e882c222"
+        "308e21d2a143"
       ],
       "verified_by": [
         "tests/fleet/test_handshake_onboard.py:162",
@@ -1763,10 +1763,10 @@
       "title": "A connector's declaration is captured as a pack resource",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "2661ffc6aac1",
+        "308e21d2a143",
         "846e2eb35dff",
         "963a7d457622",
-        "c511e882c222"
+        "aece07f5a10f"
       ],
       "verified_by": [
         "tests/fleet/test_declarations.py:30"
@@ -1788,11 +1788,11 @@
       "title": "Mappings come from the captured declaration only",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "369a1e91e7a2",
-        "44797b514902",
-        "77dde3d15ad3",
-        "8ba0a38628c2",
-        "a047b148556f"
+        "308e21d2a143",
+        "67118f698207",
+        "8080f3564309",
+        "a865ed561b89",
+        "e490a70e653d"
       ],
       "verified_by": [
         "tests/fleet/test_declarations.py:41",
@@ -1804,9 +1804,9 @@
       "title": "Onboarding follows discovery and list changes",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "2661ffc6aac1",
-        "9b62015d07bb",
-        "c511e882c222"
+        "2cf1a71f03aa",
+        "308e21d2a143",
+        "aece07f5a10f"
       ],
       "verified_by": [
         "tests/fleet/test_handshake_onboard.py:163",
