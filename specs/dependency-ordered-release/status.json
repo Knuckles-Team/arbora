@@ -193,10 +193,10 @@
       "title": "Governed fleet tools in plan steps",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "02ccb541ec6f",
-        "7c6a6febcc08",
-        "a6777d89ba7b",
-        "ccec0299a2bc"
+        "39537773ab6c",
+        "5b24d7657890",
+        "7faa685b3ee9",
+        "b0b90565cb9e"
       ],
       "verified_by": [
         "tests/api/test_plan_run_ops.py:455",
