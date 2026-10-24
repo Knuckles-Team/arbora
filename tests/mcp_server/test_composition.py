@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -178,16 +178,19 @@ def test_arbora_runtime_shapes_use_connector_content_contract() -> None:
 
     The public ``arbora-development``, ``arbora-deployment`` and
     ``arbora-genesis`` skills ship under ``arbora/skills`` (package data
-    plus the ``agent_connector_sdk.skill_providers`` entry point), so the SDK
+    found by the SDK directory convention), so the SDK
     registers exactly one skills-directory provider rooted there and nothing
-    else: no prompts, and one runtime shapes resource.
+    else: 29 prompts, and one runtime shapes resource.
     """
     import anyio
-    from agent_connector_sdk.mcp.content import register_connector_content
+    from agent_connector_sdk.mcp.content import (
+        ConnectorContent,
+        register_connector_content,
+    )
     from fastmcp.server.providers.skills import SkillsDirectoryProvider
 
     import arbora.skills
-    from arbora.content import connector_content
+    from arbora.core.providers import own_content
 
     class Mcp:
         def __init__(self) -> None:
@@ -203,12 +206,22 @@ def test_arbora_runtime_shapes_use_connector_content_contract() -> None:
         def add_prompt(self, prompt: Any) -> None:
             raise AssertionError("Arbora does not package an SDK prompt")
 
-    mcp = Mcp()
-    registration = register_connector_content(mcp, connector_content())
+    class Mcp2(Mcp):
+        def add_prompt(self, prompt: Any) -> None:
+            self.prompts = [*getattr(self, "prompts", []), prompt]
+
+    mcp = Mcp2()
+    own = own_content()
+    registration = register_connector_content(
+        mcp,
+        ConnectorContent(
+            connector=own.name, package_root=own.dirs.root, package_version=own.version
+        ),
+    )
 
     assert (registration.skills, registration.prompts, registration.resources) == (
         15,
-        0,
+        29,
         1,
     )
     assert len(mcp.providers) == 1
@@ -280,7 +293,7 @@ def test_arbora_runtime_shapes_use_connector_content_contract() -> None:
     )
 
 
-def test_public_mcp_registers_each_declared_provider_without_relabelling(
+def test_public_mcp_serves_every_declared_provider_without_relabelling(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     arbora = object()
@@ -292,10 +305,12 @@ def test_public_mcp_registers_each_declared_provider_without_relabelling(
         lambda: (lambda: arbora, lambda: au),
     )
     monkeypatch.setattr(
-        "arbora.mcp_server.server.register_connector_content",
-        lambda target, content: calls.append((target, content)),
+        "arbora.mcp_server.server.register_installed_content",
+        lambda target, providers: calls.append((target, providers)),
     )
 
     _register_semantic_content(mcp)
 
-    assert calls == [(mcp, arbora), (mcp, au)]
+    assert len(calls) == 1
+    assert calls[0][0] is mcp
+    assert [provider() for provider in cast(Any, calls[0][1])] == [arbora, au]
