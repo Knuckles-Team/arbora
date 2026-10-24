@@ -98,15 +98,16 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "2763cd78b6bc",
+        "289771d1de0c",
         "9bd22960a7ea",
         "a8ed61b538e7"
       ],
       "verified_by": [
+        "tests/a2a/test_dispatch_usage_projection.py:11",
         "tests/a2a/test_native_task_reads.py:14",
+        "tests/a2a/test_run_usage.py:18",
         "tests/test_agent_runs.py:119",
-        "tests/test_agent_runs.py:99",
-        "tests/test_agents_run_end_to_end.py:329",
-        "tests/test_agents_run_end_to_end.py:372"
+        "tests/test_agent_runs.py:99"
       ],
       "rollup_of": [
         "ARBORA-A2A-R001.1",
@@ -610,6 +611,7 @@
       "title": "WorkItem stream projection, not a shadow log",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "289771d1de0c",
         "9bd22960a7ea"
       ],
       "verified_by": [
@@ -914,6 +916,7 @@
       "title": "Opt-in committed terminal point read",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "289771d1de0c",
         "9bd22960a7ea"
       ],
       "verified_by": [
