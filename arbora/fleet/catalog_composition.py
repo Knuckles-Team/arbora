@@ -66,11 +66,13 @@ def probe_primer(
     locks: dict[str, asyncio.Lock] = {}
     probe = getattr(mux, "probe_server", None)
 
-    async def probe_once(server: str) -> None:
+    async def probe_once(
+        run_probe: Callable[[str], Awaitable[Any]], server: str
+    ) -> None:
         """Probe one server; a cached result clears its retry window."""
         attempted[server] = clock()
         try:
-            await asyncio.wait_for(probe(server), timeout=timeout_s)
+            await asyncio.wait_for(run_probe(server), timeout=timeout_s)
         except Exception as exc:  # noqa: BLE001 - priming is best-effort
             logger.warning(
                 "fleet probe of %s for catalog schema failed: %s",
@@ -101,7 +103,7 @@ def probe_primer(
             async with lock:
                 if server in mux._probe_cache or throttled(server):
                     continue
-                await probe_once(server)
+                await probe_once(probe, server)
 
     return prime
 
