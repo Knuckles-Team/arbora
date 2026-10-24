@@ -1945,8 +1945,8 @@
         "191af7948d99",
         "28cc061c8f06",
         "34077185335e",
-        "80f6b7b53f91",
-        "c7208d7d3822"
+        "37f265dde58d",
+        "80f6b7b53f91"
       ],
       "verified_by": [
         "tests/agent_host/test_log_access.py:442",
@@ -1988,7 +1988,7 @@
       "verified_by": [
         "tests/agent_host/test_log_metadata.py:2",
         "tests/agent_host/test_log_replay.py:2",
-        "tests/agent_host/test_log_sink_terminal.py:60"
+        "tests/agent_host/test_log_sink_terminal.py:80"
       ],
       "rollup_of": [
         "ARBORA-HOST-R009.8.2.1",
@@ -2017,7 +2017,7 @@
       ],
       "verified_by": [
         "tests/agent_host/test_log_metadata.py:2",
-        "tests/agent_host/test_log_sink_terminal.py:60"
+        "tests/agent_host/test_log_sink_terminal.py:80"
       ]
     },
     {
