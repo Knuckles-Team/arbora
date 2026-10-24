@@ -469,17 +469,52 @@ def _shared_schema_outputs(registry: dict[str, Any]) -> dict[Path, bytes]:
     return outputs
 
 
-def _shape(spec: dict[str, Any], *, result: bool) -> dict[str, Any]:
+def _shape(spec: dict[str, Any], *, result: bool) -> dict[str, Any] | bool:
     shape = spec.get("schema", spec.get("schema_snapshot", {}))
-    if result and "bodies" in shape:
+    return _result_shape(shape) if result else shape
+
+
+def _result_shape(shape: dict[str, Any] | bool) -> dict[str, Any] | bool:
+    if isinstance(shape, bool):
+        return shape
+    if "bodies" in shape:
         return shape.get("bodies", {}).get("result", {}).get("schema", {})
     return shape
 
 
 def _shape_breaks(
+    old: dict[str, Any] | bool,
+    new: dict[str, Any] | bool,
+    *,
+    path: str,
+    result: bool,
+) -> list[str]:
+    # JSON Schema permits boolean schemas at every subschema position.
+    # Inputs may widen and outputs may narrow without breaking callers.
+    if isinstance(old, bool) or isinstance(new, bool):
+        return _boolean_shape_breaks(old, new, path=path, result=result)
+    return _object_shape_breaks(old, new, path=path, result=result)
+
+
+def _boolean_shape_breaks(
+    old: dict[str, Any] | bool,
+    new: dict[str, Any] | bool,
+    *,
+    path: str,
+    result: bool,
+) -> list[str]:
+    if old == new:
+        return []
+    compatible = (
+        (old is True or new is False) if result else (old is False or new is True)
+    )
+    return [] if compatible else [f"changed boolean schema {path}"]
+
+
+def _object_shape_breaks(
     old: dict[str, Any], new: dict[str, Any], *, path: str, result: bool
 ) -> list[str]:
-    changes: list[str] = []
+    changes = _constraint_breaks(old, new, path=path, result=result)
     required = set(new.get("required", [])) - set(old.get("required", []))
     if not result and required:
         changes.append(f"new required params {path}: {sorted(required)}")
@@ -489,6 +524,19 @@ def _shape_breaks(
     if removed:
         kind = "result fields" if result else "params"
         changes.append(f"removed {kind} {path}: {sorted(removed)}")
+    for name in old_props.keys() & new_props.keys():
+        changes.extend(
+            _shape_breaks(
+                old_props[name], new_props[name], path=f"{path}.{name}", result=result
+            )
+        )
+    return changes
+
+
+def _constraint_breaks(
+    old: dict[str, Any], new: dict[str, Any], *, path: str, result: bool
+) -> list[str]:
+    changes: list[str] = []
     old_enum, new_enum = old.get("enum"), new.get("enum")
     if old_enum and new_enum and not set(old_enum) <= set(new_enum):
         changes.append(f"narrowed enum {path}")
@@ -499,12 +547,6 @@ def _shape_breaks(
     )
     if old_type != new_type and not allows_numeric_widening:
         changes.append(f"changed type {path}")
-    for name in old_props.keys() & new_props.keys():
-        changes.extend(
-            _shape_breaks(
-                old_props[name], new_props[name], path=f"{path}.{name}", result=result
-            )
-        )
     return changes
 
 

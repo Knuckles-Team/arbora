@@ -9,23 +9,3 @@
 # Do not add an entry to force the dupehound gate green; add one only when
 # dupehound genuinely reports a structurally-identical, semantically-unrelated
 # pair that manual review confirms should not be consolidated.
-
-[[pair]]
-left_file = "arbora/api/ops/ops.py"
-left_name = "handle_ops_backup"
-left_digest = "sha256:45c3c0f2eee8f4c05853ccaec342df3bc671999af4efc1fb95d53c4d8043855c"
-right_file = "arbora/ingest/service.py"
-right_name = "sync_source"
-right_digest = "sha256:b7c66e72b9b99861d0fd2536e5901126563e5bf9586a9076ece11a2ad2b3cdec"
-reason = "Both are independent typed write handlers in unrelated domains (operational-admin backup vs ingestion source sync) that deliberately share the one mandated guard-bind-await-return write-handler shape documented in both modules; consolidating would couple the ops-admin and ingest ports."
-reviewed_on = "2026-10-09"
-
-[[pair]]
-left_file = "arbora/api/ops/ops.py"
-left_name = "handle_ops_restore"
-left_digest = "sha256:454100fc2006aedf1c4106142bb6c804b8b0e588370240e2af6fa7eebbd3da58"
-right_file = "arbora/ingest/service.py"
-right_name = "sync_source"
-right_digest = "sha256:b7c66e72b9b99861d0fd2536e5901126563e5bf9586a9076ece11a2ad2b3cdec"
-reason = "Both are independent typed write handlers in unrelated domains (operational-admin restore vs ingestion source sync) that deliberately share the one mandated guard-bind-await-return write-handler shape documented in both modules; consolidating would couple the ops-admin and ingest ports."
-reviewed_on = "2026-10-09"

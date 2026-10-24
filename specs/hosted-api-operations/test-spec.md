@@ -337,7 +337,19 @@ Rows `ARBORA-OPS-R021.4.1` through `.6` remain open; this preparation closes non
 Local preparation checks: 66 focused tests pass, including registry and generated-schema validation.
 The API generation drift check, focused mypy check and wheel build pass.
 The all-files commit gate passes.
-Pre-push checking finds two stale clone-review entries in unchanged backup/restore code.
-API compatibility checking raises `AttributeError` on a boolean schema.
-The documentation build lacks its inherited `.pipeline-theme` configuration.
-Full-suite completion and native acceptance are not established by these checks.
+The obsolete clone exemptions were removed; the unchanged clone detector passes without them.
+Boolean schema compatibility now has regression tests and the API compatibility check passes.
+The strict documentation build passes with the shared theme and pinned Pages dependencies.
+The full suite completed with 35 failures, all caused by missing Helm.
+CI pins Helm v4.3.1 and its archive digest; all 35 failed tests pass after local setup using those pins.
+Native acceptance remains pending for the owner dependencies below.
+
+At [EG main 4a1780082fbe6bf7756718316e4997ec23712eb8](https://github.com/Knuckles-Team/epistemic-graph/tree/4a1780082fbe6bf7756718316e4997ec23712eb8),
+R009.1 through .3, .8, .9 and .15 through .17 remain SPECIFIED with no implementation evidence.
+The orchestration ontology lacks the five required properties.
+The named `crates/eg-core/tests/run_trace_ingest.rs` acceptance file is absent.
+The public `RunCompletionInput` carries run ID and usage counters.
+Its committed payload adds outcome and result/error references, but no required harness projection.
+Arbora cannot infer the missing trace or configuration link from those values.
+The EG-owned validated ingestion/readback contract must exist before native adapter acceptance.
+No native reader is bound, and no TUI migration or requirement closure is claimed.
