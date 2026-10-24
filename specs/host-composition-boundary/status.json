@@ -432,9 +432,11 @@
       "landed_in": [
         "3f7190f32493",
         "7d6d317b490a",
-        "8e5b4ec2b3fc"
+        "8e5b4ec2b3fc",
+        "fa15da95f51d"
       ],
       "verified_by": [
+        "tests/core/test_providers.py:15",
         "tests/test_installed_content.py:101",
         "tests/test_installed_content.py:93"
       ]
