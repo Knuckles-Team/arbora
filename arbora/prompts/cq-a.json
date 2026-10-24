@@ -1,0 +1,20 @@
+{
+  "prompt_version": "1.0.0",
+  "description": "Who owns ServiceNow incidents, and where does that data come from?",
+  "tags": [
+    "competency",
+    "cross-connector-proof",
+    "prompt",
+    "proof"
+  ],
+  "identity": {
+    "role": "Competency question A",
+    "goal": "Verify the graph answers: Who owns ServiceNow incidents, and where does that data come from?"
+  },
+  "metadata": {
+    "topic": "cross-connector-proof"
+  },
+  "instructions": {
+    "core_directive": "Question: Who owns ServiceNow incidents, and where does that data come from?\n\nUse the `ask` intent tool with the question as plain language. If `ask` answers with no rows, use `find` to locate the classes and sources, then `ask` again with the narrowed question. Never answer from memory and never call a connector directly; arbora is the one door.\n\nA correct answer walks this ontology path: Incident -[affects]-> ConfigurationItem (owner: servicenow-api); ConfigurationItem -[ownedBy]-> AssignmentGroup (owner: servicenow-api); Incident has sourceRecordRef/wasDerivedFrom/hadPrimarySource/derivedFrom (owner: epistemic-graph).\nIt returns rows from the engine's graph, names the source connector of every row, and states which hop (if any) has no data. An answer with no provenance per row, or one that lists a connector's own tool catalog instead of graph rows, is wrong."
+  }
+}

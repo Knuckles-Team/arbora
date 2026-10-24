@@ -20,7 +20,6 @@ import os
 import re
 import sys
 from collections.abc import Callable
-from pathlib import Path
 from typing import Any, cast
 from urllib.parse import urlsplit
 
@@ -2373,7 +2372,6 @@ def create_mcp_server(
     *,
     lifespan_extension: Callable[[Any], Any] | None = None,
     manage_engine_shutdown: bool = True,
-    skill_owner: str | None = None,
 ):
     """Initialize a FastMCP server with a standard middleware and auth stack.
 
@@ -2395,8 +2393,6 @@ def create_mcp_server(
         manage_engine_shutdown: Whether this factory context owns the active
             engine drain/close.  Public composition surfaces set this false
             and perform the gated finalization themselves.
-        skill_owner: Package whose skills this server serves as ``skill://``
-            resources. Defaults to the calling module's top-level package.
 
     Returns:
         A tuple containing:
@@ -2573,181 +2569,4 @@ def create_mcp_server(
             type(exc).__name__,
         )
 
-    _register_skill_providers(mcp, owner=skill_owner or _caller_package())
-    _register_prompt_providers(mcp)
-    from arbora.mcp_server.backing.content_resources import (
-        register_ontology_providers,
-    )
-
-    register_ontology_providers(mcp)
-
     return args, mcp, middlewares
-
-
-def _caller_package(stacklevel: int = 1) -> str:
-    """Return the top-level package of the module ``stacklevel`` frames up."""
-    frame = sys._getframe(stacklevel + 1)
-    module = str(frame.f_globals.get("__name__", ""))
-    return module.split(".", 1)[0]
-
-
-def _normalize_package(name: str) -> str:
-    return name.strip().casefold().replace("-", "_").replace(".", "_")
-
-
-def _owned_skill_dirs(
-    provider_dirs: list[tuple[str, Path]], owner: str | None
-) -> list[tuple[str, Path]]:
-    """Keep only the skill directories the owning package contributes.
-
-    A fleet server serves its OWN package's skills only. Every fleet pod
-    installs every package, so an unscoped sweep advertised other packages'
-    skills, which the engine's ConnectorPack import rejects. ``agent-utilities``
-    hub servers (and an unknown owner) keep the full catalogue.
-    """
-    if not owner or _normalize_package(owner) in {"agent_utilities", "__main__"}:
-        return provider_dirs
-    wanted = _normalize_package(owner)
-    return [
-        (provider, root)
-        for provider, root in provider_dirs
-        if _normalize_package(provider) == wanted
-    ]
-
-
-def _register_skill_providers(mcp: Any, owner: str | None = None) -> None:
-    """Expose this server's skills as ``skill://`` MCP resources (CONCEPT:AU-ECO.mcp.skills-over-mcp-provider).
-
-    Wires FastMCP-4's Skills-over-MCP ``SkillProvider`` onto the just-built
-    server for every directory :func:`resolve_skill_provider_dirs` already
-    resolves (fleet-contributed + this package's own skills) — the SAME
-    discovery the in-loop ``SkillsToolset``/``agent-utilities install`` use, so
-    a skill has one discovery path with two projections (in-loop execution vs
-    wire distribution), not a second registry to keep in sync.
-
-    Every server built here gains ``skill://{name}/SKILL.md``,
-    ``skill://{name}/_manifest``, and ``skill://{name}/{path*}`` resources that
-    an mcp/fastmcp-3 client can already read.
-
-    LIVE ON THE DEFAULT INSTALL. The ``[mcp]`` extra floors on
-    ``fastmcp>=4.0.0b1``, so ``SkillProvider``/``add_provider`` are always
-    present and this registration always runs — the earlier
-    ``hasattr(mcp, "add_provider")`` gate that made the whole server-side half
-    inert (D-W15-7/D-W15-8 in ``reports/deferred/waves1-5-gate.md``) is gone
-    with the fastmcp-3 default it guarded. Exercised end to end by
-    ``tests/integration/mcp/test_skill_provider_live_path.py``.
-
-    Never raises: a single unreadable provider directory logs a ``WARNING`` and
-    is skipped, and any other failure degrades to one ``WARNING`` — serving
-    skills over the wire must never stop a server being built.
-    """
-    try:
-        from fastmcp.server.providers.skills import SkillProvider
-
-        from arbora.core.providers import resolve_skill_provider_dirs
-
-        registered = 0
-        owned = _owned_skill_dirs(resolve_skill_provider_dirs(), owner)
-        for provider_name, root_dir in owned:
-            try:
-                mcp.add_provider(SkillProvider(root_dir))
-                registered += 1
-            except Exception as exc:  # noqa: BLE001 - one unreadable provider
-                # directory must not sink the whole sweep. The exception TYPE
-                # is logged so a systematically broken provider is diagnosable.
-                logger.warning(
-                    "Could not register skill provider %s: %s",
-                    provider_name,
-                    type(exc).__name__,
-                )
-        logger.info(
-            "Registered %d skill-over-MCP provider(s) as skill:// resources",
-            registered,
-        )
-    except Exception as exc:  # noqa: BLE001 - server-side skill:// support is
-        # optional (see the INERT note above); its absence must never stop a
-        # server being built. The exception TYPE is logged.
-        logger.warning(
-            "Could not register skill-over-MCP providers: %s", type(exc).__name__
-        )
-
-
-def _register_prompt_providers(mcp: Any) -> None:
-    """Expose this server's own prompts as ``prompt://`` MCP resources
-    (CONCEPT:AU-ECO.mcp.cross-process-prompt-harvest — the ``prompt://``
-    sibling of :func:`_register_skill_providers`'s ``skill://`` wiring).
-
-    Wires one static :class:`~fastmcp.resources.FileResource` per
-    ``*.json`` file under every directory :func:`resolve_prompt_provider_dirs`
-    resolves **in this server's own process** — which, run inside a fleet
-    child's own venv, is exactly that child's own ``prompts/`` directory
-    (its own package is always installed in its own venv, even though it is
-    deliberately NOT co-installed in arbora's). arbora cannot see these
-    files by importing this package (``AGENTS.md`` "Dependency discipline"),
-    but it already holds a live probe session to this server, so it reads
-    each ``prompt://{provider}/{stem}`` resource body back over that session
-    (:meth:`~arbora.fleet.multiplexer.MCPMultiplexer._harvest_prompt_bodies`)
-    and promotes it through the SAME ``PromptNode`` primitive the packaged
-    base sweep uses
-    (:func:`agent_utilities.knowledge_graph.ingestion.fleet_prompt_harvest.promote_harvested_prompts`).
-    One discovery-and-write path server-side, two projections (local
-    ``ingest_prompts_to_graph`` for what's co-installed, cross-process
-    harvest for what's not).
-
-    Never raises: a single unreadable provider directory or prompt file logs
-    a ``WARNING`` and is skipped, and any other failure degrades to one
-    ``WARNING`` — serving prompts over the wire must never stop a server
-    being built.
-    """
-    try:
-        from fastmcp.resources import FileResource
-        from pydantic import AnyUrl
-
-        from arbora.core.providers import resolve_prompt_provider_dirs
-
-        registered = 0
-        for provider_name, root_dir in resolve_prompt_provider_dirs():
-            try:
-                json_files = sorted(root_dir.glob("*.json"))
-            except OSError as exc:  # noqa: BLE001 - one unreadable provider
-                # directory must not sink the whole sweep. The exception TYPE
-                # is logged so a systematically broken provider is diagnosable.
-                logger.warning(
-                    "Could not list prompt provider %s: %s",
-                    provider_name,
-                    type(exc).__name__,
-                )
-                continue
-            for json_file in json_files:
-                if json_file.name.startswith("_"):
-                    continue
-                try:
-                    mcp.add_resource(
-                        FileResource(
-                            uri=AnyUrl(f"prompt://{provider_name}/{json_file.stem}"),
-                            path=json_file,
-                            name=json_file.stem,
-                            mime_type="application/json",
-                        )
-                    )
-                    registered += 1
-                except Exception as exc:  # noqa: BLE001 - one unreadable
-                    # prompt file must not sink the whole sweep. The exception
-                    # TYPE is logged so a systematically broken file is
-                    # diagnosable.
-                    logger.warning(
-                        "Could not register prompt resource %s/%s: %s",
-                        provider_name,
-                        json_file.stem,
-                        type(exc).__name__,
-                    )
-        logger.info(
-            "Registered %d prompt-over-MCP resource(s) as prompt:// resources",
-            registered,
-        )
-    except Exception as exc:  # noqa: BLE001 - server-side prompt:// support
-        # is optional; its absence must never stop a server being built. The
-        # exception TYPE is logged.
-        logger.warning(
-            "Could not register prompt-over-MCP providers: %s", type(exc).__name__
-        )
