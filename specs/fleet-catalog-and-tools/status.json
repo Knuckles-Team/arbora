@@ -670,8 +670,10 @@
         "fdd59af317ce"
       ],
       "verified_by": [
+        "tests/browser_control/test_browser_proposals.py:37",
         "tests/fleet/test_child_failure_classification.py:18",
-        "tests/fleet/test_multiplexer_dynamic_gateway.py:279"
+        "tests/fleet/test_multiplexer_dynamic_gateway.py:279",
+        "tests/test_run_origin.py:19"
       ],
       "rollup_of": [
         "ARBORA-FLEET-R015.1"
