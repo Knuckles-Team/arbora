@@ -327,3 +327,10 @@ released server and isolated anonymous store from the node-label fixture.
 They cover node create/read/CAS, typed atomic trace edges, caller scope and graph mismatch.
 They also cover absent ambient authority and revocation across the client-pool await.
 Factory installation grants no channel, attended proof or operation authority.
+
+### R015 terminal channel-retirement authority loss
+
+`tests/browser_control/test_browser_control_service.py::test_disconnect_reports_terminal_retirement_authority_loss`
+verifies expired, missing, and scope-lost authority stop cleanup with an error.
+The local channel is removed; durable registration remains unresolved.
+The existing transient-retirement regression still requires a successful retry.

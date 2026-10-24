@@ -2092,3 +2092,43 @@ async def test_discovery_withdraws_channel_retired_during_verification(
         receipt = await discovery
         assert receipt.bridge_available is True
         assert receipt.documents == ()
+
+
+@pytest.mark.asyncio
+@pytest.mark.spec("ARBORA-FLEET-R015")
+@pytest.mark.parametrize("authority_error", ["expired", "missing", "scope"])
+async def test_disconnect_reports_terminal_retirement_authority_loss(
+    session: GraphSession, monkeypatch: pytest.MonkeyPatch, authority_error: str
+) -> None:
+    from arbora.api.contracts.session import (
+        ScopeError,
+        SessionExpiredError,
+        SessionRequiredError,
+    )
+    from arbora.browser_control import browser_control_channel as channel_module
+
+    error_type = {
+        "expired": SessionExpiredError,
+        "missing": SessionRequiredError,
+        "scope": ScopeError,
+    }[authority_error]
+    attempts = 0
+
+    def refuse_retirement(*args: Any, **kwargs: Any) -> None:
+        nonlocal attempts
+        attempts += 1
+        raise error_type("caller authority is no longer available")
+
+    with use_session(session):
+        service, connection, engine, _sent, _tool = await _setup(session)
+        monkeypatch.setattr(channel_module, "retire_catalog", refuse_retirement)
+        with pytest.raises(error_type):
+            await asyncio.wait_for(connection.disconnect("authority lost"), 0.1)
+    assert attempts == 1
+    assert not service._channels
+    registrations = [
+        node
+        for node in engine.browser_control_state.nodes.values()
+        if node.get("node_type") == "BrowserControlRegistration"
+    ]
+    assert registrations[0]["status"] == "published"

@@ -444,3 +444,10 @@ It never falls back to process authority or a private engine implementation.
 Use public node create/CAS and atomic batch operations for existing browser records.
 Keep WorkItem effects on the existing served WorkItem namespace.
 Factory installation is not attended admission or browser execution acceptance.
+
+Channel retirement must stop on terminal caller-authority loss.
+Disconnect still closes and removes the local channel before durable cleanup.
+An expired or unavailable caller session cannot authorize a cleanup retry.
+Report that refusal to the caller, and leave durable retirement unresolved.
+Do not borrow process authority or claim that durable records were retired.
+Transient storage failures retain the existing retry behavior.
