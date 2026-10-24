@@ -82,16 +82,19 @@ def _project(raw: Any) -> CurrentPlanRead:
     return CurrentPlanRead(availability="available", snapshot=snapshot)
 
 
+async def read_native_snapshot(context: ExecutionContext, run_id: str) -> Any:
+    """Read the native snapshot without widening the current caller's authority."""
+    graph = await _caller_dispatch_graph(context)
+    if "kg:read" not in context.caller.effective_scopes:
+        raise OperationRefused("SCOPE_REQUIRED", {"missing_scopes": ["kg:read"]})
+    with client_scope(context.client, claim_values(context.caller.engine_claims)):
+        return await _native_read(
+            context.client, run_id=run_id, tenant=context.caller.tenant, graph=graph
+        )
+
+
 class NativeCurrentPlanReader:
     """One stateless reader shared by the serving root, bound afresh per call."""
 
     async def read(self, *, run_id: str, context: ExecutionContext) -> CurrentPlanRead:
-        # Reuse the same session/owner/graph checks as caller-bound EG dispatch.
-        graph = await _caller_dispatch_graph(context)
-        if "kg:read" not in context.caller.effective_scopes:
-            raise OperationRefused("SCOPE_REQUIRED", {"missing_scopes": ["kg:read"]})
-        with client_scope(context.client, claim_values(context.caller.engine_claims)):
-            raw = await _native_read(
-                context.client, run_id=run_id, tenant=context.caller.tenant, graph=graph
-            )
-        return _project(raw)
+        return _project(await read_native_snapshot(context, run_id))

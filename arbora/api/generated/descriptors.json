@@ -6164,6 +6164,18 @@
     {
       "domain": "runs",
       "examples": [
+        "show the declared steps and evidenced lifecycle of this run"
+      ],
+      "id": "runs.execution_graph",
+      "summary": "Read a bounded flat execution graph of an owned run",
+      "tags": [
+        "runs"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "runs",
+      "examples": [
         "Read an owned durable run"
       ],
       "id": "runs.get",
@@ -6306,5 +6318,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "ce35e3e02b0e24a6eb88cbeed77b44089efeb313f408e9579e2e15ceb38627a2"
+  "registry_digest": "497d39550a4a1755103b406c9c372d861a373c21fa04541e6f1d353a9cb5d24f"
 }

@@ -18,6 +18,11 @@ from pydantic import ValidationError
 
 from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.ops._common import Params, build_read_op
+from arbora.api.ops.run_graph import (
+    ExecutionGraphParams,
+    ExecutionGraphResult,
+    unavailable_graph,
+)
 from arbora.api.ops.run_replay import (
     SCHEMA,
     RunEventsParams,
@@ -121,6 +126,19 @@ async def handle_runs_events(
     return {"value": value}
 
 
+async def handle_runs_execution_graph(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    request = ExecutionGraphParams.model_validate(dict(params))
+    reader = context.services.get("run_trace_reader")
+    value = (
+        unavailable_graph(request)
+        if reader is None
+        else await reader.execution_graph(context=context, request=request)
+    )
+    return {"value": value}
+
+
 def operations() -> tuple[OpSpec, ...]:
     return (
         build_read_op(
@@ -146,6 +164,15 @@ def operations() -> tuple[OpSpec, ...]:
                 ("get", "Read an owned durable run", RunReadParams),
                 ("events", "Replay public events of an owned run", RunEventsParams),
             )
+        ),
+        build_read_op(
+            op_id="runs.execution_graph",
+            summary="Read a bounded flat execution graph of an owned run",
+            examples=("show the declared steps and evidenced lifecycle of this run",),
+            params=ExecutionGraphParams,
+            result=ExecutionGraphResult,
+            handler="arbora.api.ops.runs.handle_runs_execution_graph",
+            scope="kg:read",
         ),
     )
 

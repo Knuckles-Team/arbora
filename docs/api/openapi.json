@@ -143,6 +143,9 @@
       }
     },
     "schemas": {
+      "Definition10e13a5be5b9a369012d3f0598bcc052eb9cf1e5d4da0bfddcaee1e02b4f58cc": {
+        "$ref": "#/components/schemas/Schema162e8c35d44ae2782c789703a6438db1b71498714defe178d7f049b7f590035e"
+      },
       "Definition1638cff4afae4652d1e1272a58fc6981e98700fb4ec39feefa96e170c75f5de1": {
         "$ref": "#/components/schemas/Schema905870712697c5033de203e9970c73bcd2c6ec3112b28fa127fe1807b1a832ed"
       },
@@ -161,14 +164,23 @@
       "Definition4872098e9468c4edd077e4058e8a31a8bbda3cae3fbc5a3e0cd2cc8834149c85": {
         "$ref": "#/components/schemas/Schemae044460d95109795c687c33aeecfe463503a08e13a3fe1ad29f8ad22745a3ab2"
       },
+      "Definition5b898f512d98140d47fd839fcaa4d5defa6c37a1109db5ec2a67f49ef0eccb8c": {
+        "$ref": "#/components/schemas/Schema73aee21f8961fe90381e58d18c48a364f97920bbe53aa811d1467e54111bb867"
+      },
       "Definition5b9ce03c9f077b89cb597ce0377b8192731720e40d52957756822770f589a905": {
         "$ref": "#/components/schemas/Schema461ca204e766f2aab4db33300ca288c50942031318ed9c2f6f157cc8ec141641"
       },
       "Definition75bed9b568e1d24830330f762cddd1d424aa469009ab167e481229bd9953ca29": {
         "$ref": "#/components/schemas/Schema78ccdcbd70b51432be83cc6b15ed6cac5e05a0ed13e3cee8ca3ecd4c29a46284"
       },
+      "Definition99f4200c8bfba9c741b960080155f549cc0589555b6bf79bce53aef9737a3bfe": {
+        "$ref": "#/components/schemas/Schema517c3dc9ab244c1c561516d09b4e3765f0855f46b874b6477ca74e4d1deb9d93"
+      },
       "Definitiona50f88e2dc179775a9bc68e8f0f6160b3e2622272696626b220f08abb6242d76": {
         "$ref": "#/components/schemas/Schema01780fddb8b8e2051161fa957167280dc27d5e79e023439a1114651c354eec5c"
+      },
+      "Definitiona907c76a82c558ce859863ae4116965eedb19155a5c56ce65723e0924461b98e": {
+        "$ref": "#/components/schemas/Schemab6258159e60aca72d31af0e17dcbeeb8fed6d0876b8a0e77c9f5d688d6627dbe"
       },
       "Definitionae1b8a29e07c26df95489a53fc7d896f999a99829ed2d84b52491ed5cfaffa4e": {
         "$ref": "#/components/schemas/Schema4cc5fb01b4eff0f49b5d0349071f1346bbd6ce26f9df8cfdc51a65772486fbdf"
@@ -178,6 +190,9 @@
       },
       "Definitione5b304c2722adb849beeb376352a983b964bf1b970f2562fb7f323c0f6998d92": {
         "$ref": "#/components/schemas/Schemaeda27189feb9fb8e2a62f858582ff3b547da8992f50e88542ff64d6adfe6f67f"
+      },
+      "Definitione982db1a4ac1ee125b8c4845433b9320ec7006fcf4d88eb1b2a7aa660eeda15a": {
+        "$ref": "#/components/schemas/Schemaf2068454c968a5ebcf29a2a06fe750f45c81a91941482c68c42d77a5c7de771e"
       },
       "Schema0004c1dad1dbe418005c6b4ecdf0e2002238aa1aa13515bc44f3204ffecf2ee9": {
         "properties": {
@@ -189,6 +204,19 @@
           "value"
         ],
         "title": "BrowserDiscoveryResult",
+        "type": "object"
+      },
+      "Schema016af5288058abbc8add6159772ffcdce98f1bf3a6a7f1711182d1a3a42ece2d": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Definition10e13a5be5b9a369012d3f0598bcc052eb9cf1e5d4da0bfddcaee1e02b4f58cc"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "ExecutionGraphResult",
         "type": "object"
       },
       "Schema0172f9d1b57eb8c16d49edbc6f9fe19c07ba43b8135cccc2a63f6a6600465d16": {
@@ -226,6 +254,10 @@
         "title": "Reason",
         "type": "string"
       },
+      "Schema03f92615757def463e073dda18e9824a16a5ceb29f916e33a28a2a7537302b4d": {
+        "title": "Has More",
+        "type": "boolean"
+      },
       "Schema043865138c978065efae41ddaeb3fe12ba28ceb5218183f7c181814da57b1ed5": {
         "additionalProperties": false,
         "description": "The engine graph is supplied by the verified session, never the request.",
@@ -256,6 +288,12 @@
         ],
         "title": "DecideCommitParams",
         "type": "object"
+      },
+      "Schema05eec9978e328be9bb82677ce56fb5afee03ebadf1e3082cf1ca8d99c3907859": {
+        "maxLength": 512,
+        "minLength": 1,
+        "title": "Plan Digest",
+        "type": "string"
       },
       "Schema068c9d7898c8dd20a3d1715096dc613955025a517a7f2e81b54ceade432105eb": {
         "additionalProperties": false,
@@ -305,6 +343,14 @@
       },
       "Schema075c03b9cd39e20d2715d1d32e08519fd970c1e13528fa2016cdbe3891953f82": {
         "title": "Value"
+      },
+      "Schema0800c682ed951269a2c0a7e589303e9af45a50c2c676aafb6b0c78b584c7d86f": {
+        "enum": [
+          "available",
+          "unavailable"
+        ],
+        "title": "Availability",
+        "type": "string"
       },
       "Schema0851fdad2e08689db7c506ac42ca1ae3b51e19636e6f912d35716f6d3ac83ee1": {
         "default": "",
@@ -364,6 +410,11 @@
         ],
         "title": "UsageReadResult",
         "type": "object"
+      },
+      "Schema0d597b9e947f06c3eea71bc63bd3f2d86f4f091c6f5039d1c94e3eab79430dd5": {
+        "const": "arbora-execution-graph-v1",
+        "title": "Schema Version",
+        "type": "string"
       },
       "Schema109baa93f8b988b2f1e23eb2154a501587f4c405fbccf71e902b2d9dc45c58eb": {
         "maxLength": 1024,
@@ -431,6 +482,33 @@
         "title": "FleetCallParams",
         "type": "object"
       },
+      "Schema162e8c35d44ae2782c789703a6438db1b71498714defe178d7f049b7f590035e": {
+        "additionalProperties": false,
+        "properties": {
+          "availability": {
+            "$ref": "#/components/schemas/Schema0800c682ed951269a2c0a7e589303e9af45a50c2c676aafb6b0c78b584c7d86f"
+          },
+          "run_id": {
+            "$ref": "#/components/schemas/Schemadf135e01e5998bd761bf3770ae512003d9a8a935e6f90722820e930ca4b97338"
+          },
+          "schema_version": {
+            "$ref": "#/components/schemas/Schema7273feb8efebce4abce6ebbc933d57143b8f8aace34186752322f736e1a6dccd"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/Schema7ce9ee06a83befa2d21cdd396864acbe7d70954e671ff1504578ae94190f4341"
+          },
+          "task_id": {
+            "$ref": "#/components/schemas/Schema98006a51abee6257ae597d21388c798707513c128d6c11ee7b5741aadc43b1d9"
+          }
+        },
+        "required": [
+          "availability",
+          "run_id",
+          "task_id"
+        ],
+        "title": "ExecutionGraphRead",
+        "type": "object"
+      },
       "Schema1871ecd8d81a41f1dce41dd92b0a2f10d5b7c78f93061455de8f8e940013d06a": {
         "additionalProperties": false,
         "properties": {
@@ -466,6 +544,12 @@
         },
         "maxItems": 100,
         "type": "array"
+      },
+      "Schema18fd1a4ebcbafed84f5724eff15465bb93def294352d9af35feb329955fad968": {
+        "const": false,
+        "default": false,
+        "title": "Can Continue Completed",
+        "type": "boolean"
       },
       "Schema1a854e7bc957b0a9c4fd033b720beb925579c4ff264117cc58f07a4736f807f9": {
         "default": [],
@@ -535,6 +619,12 @@
         "default": null,
         "title": "Commonannotations"
       },
+      "Schema22703ed1c23373f95abce83763af8991820a9026570c1a5aea274e4cf253c2f4": {
+        "const": false,
+        "default": false,
+        "title": "Supports Spawned Children",
+        "type": "boolean"
+      },
       "Schema232cd8554048d4c90289c36e61837e60f8914e4f14d074ced504b87387d9f4f8": {
         "maxLength": 1024,
         "minLength": 1,
@@ -552,6 +642,14 @@
         ],
         "default": null,
         "title": "Receiver"
+      },
+      "Schema2585b062a0507aec745ea238c8d25a0d9c6a39af0ed7f38932d0764066f1edac": {
+        "items": {
+          "$ref": "#/components/schemas/Definitiona907c76a82c558ce859863ae4116965eedb19155a5c56ce65723e0924461b98e"
+        },
+        "maxItems": 2016,
+        "title": "Edges",
+        "type": "array"
       },
       "Schema27fd10f3083b3fe243fb903b0248aee255e0d2dc67b473e91b2ec4113b40884e": {
         "additionalProperties": false,
@@ -681,6 +779,12 @@
         "title": "Browse",
         "type": "boolean"
       },
+      "Schema32476afa85e2c25d4095f317c9aa89dee9a44d2a0939e2817dba4e2052e26aeb": {
+        "const": "observed_prefix_only",
+        "default": "observed_prefix_only",
+        "title": "Lifecycle Reason",
+        "type": "string"
+      },
       "Schema3378ec22b14005381a0f00d4da380c95ac6eced62b6a2adfd8d8042d254b3708": {
         "anyOf": [
           {
@@ -759,6 +863,12 @@
         "additionalProperties": true,
         "title": "Settings",
         "type": "object"
+      },
+      "Schema386afa8d706e9cba64451ac86869d60600776707993934b6f4ec8d1d50dd5d11": {
+        "const": false,
+        "default": false,
+        "title": "Can Message Active",
+        "type": "boolean"
       },
       "Schema393356cdde7bb9b8d1649761996c760bc8af3666924ccca282f6391d20189e2c": {
         "maximum": 1000000,
@@ -858,6 +968,26 @@
       "Schema3fe6bbcbfa375d9b8081dc59f036f6ef5762d6ea7da9f1a259ff573cfdb35f73": {
         "title": "Request Digest",
         "type": "string"
+      },
+      "Schema410526b4fca6fab93fd3fbfcc09e1cc30c7fe89eeae7b54d003c234288fb01cf": {
+        "additionalProperties": false,
+        "properties": {
+          "run_id": {
+            "$ref": "#/components/schemas/Schemadf135e01e5998bd761bf3770ae512003d9a8a935e6f90722820e930ca4b97338"
+          },
+          "schema_version": {
+            "$ref": "#/components/schemas/Schema0d597b9e947f06c3eea71bc63bd3f2d86f4f091c6f5039d1c94e3eab79430dd5"
+          },
+          "task_id": {
+            "$ref": "#/components/schemas/Schemaeb1f11cc6fde0c4462c9b4658efce96448e24082c8e128b7c4e24d9c2c4511f3"
+          }
+        },
+        "required": [
+          "run_id",
+          "schema_version"
+        ],
+        "title": "ExecutionGraphParams",
+        "type": "object"
       },
       "Schema419baaf5641802ec2a772ec2e7bd19064dff5602ad7da82164cfd75e0c674f85": {
         "title": "Backup Id",
@@ -975,6 +1105,56 @@
         "title": "Payload",
         "type": "object"
       },
+      "Schema517c3dc9ab244c1c561516d09b4e3765f0855f46b874b6477ca74e4d1deb9d93": {
+        "additionalProperties": false,
+        "properties": {
+          "can_continue_completed": {
+            "$ref": "#/components/schemas/Schema18fd1a4ebcbafed84f5724eff15465bb93def294352d9af35feb329955fad968"
+          },
+          "can_message_active": {
+            "$ref": "#/components/schemas/Schema386afa8d706e9cba64451ac86869d60600776707993934b6f4ec8d1d50dd5d11"
+          },
+          "can_read_transcript": {
+            "$ref": "#/components/schemas/Schema831211d0abf630f57f7ccce1fbfaa34544a31e2893704e2f6632774688e48704"
+          },
+          "covered_after": {
+            "$ref": "#/components/schemas/Schema67cc022e2b35466cf053b0573800fe50187597c0969eba4455b835aac6dc9d81"
+          },
+          "edges": {
+            "$ref": "#/components/schemas/Schema2585b062a0507aec745ea238c8d25a0d9c6a39af0ed7f38932d0764066f1edac"
+          },
+          "has_more": {
+            "$ref": "#/components/schemas/Schema03f92615757def463e073dda18e9824a16a5ceb29f916e33a28a2a7537302b4d"
+          },
+          "lifecycle_completeness": {
+            "$ref": "#/components/schemas/Schemad696246baf4e87f96d559d536ded69597bc798f5b51691686eaa68c2ea4c6772"
+          },
+          "lifecycle_reason": {
+            "$ref": "#/components/schemas/Schema32476afa85e2c25d4095f317c9aa89dee9a44d2a0939e2817dba4e2052e26aeb"
+          },
+          "nodes": {
+            "$ref": "#/components/schemas/Schema63b8842252830dfc8b5e6b34cc0b09c9a6cb1ef977183b5ec3a59ee9aa66fd31"
+          },
+          "plan_digest": {
+            "$ref": "#/components/schemas/Schema05eec9978e328be9bb82677ce56fb5afee03ebadf1e3082cf1ca8d99c3907859"
+          },
+          "supports_spawned_children": {
+            "$ref": "#/components/schemas/Schema22703ed1c23373f95abce83763af8991820a9026570c1a5aea274e4cf253c2f4"
+          },
+          "topology_completeness": {
+            "$ref": "#/components/schemas/Schemaeed1526deb1c08699c1a1638d9c440b44db67cdd0ac652f9252ef59f56ba339e"
+          }
+        },
+        "required": [
+          "plan_digest",
+          "nodes",
+          "edges",
+          "covered_after",
+          "has_more"
+        ],
+        "title": "ExecutionGraphSnapshot",
+        "type": "object"
+      },
       "Schema54df3248e9f2f6600f5c80d12369033755b7fd29aeccd62cb3ce1af7f2c533a4": {
         "anyOf": [
           {
@@ -1042,6 +1222,17 @@
         "title": "Span Ms",
         "type": "integer"
       },
+      "Schema5def6f7ebd8caff55804b9d5df8e7349172fa53c62fde29a680ac539255a7d28": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Definitione982db1a4ac1ee125b8c4845433b9320ec7006fcf4d88eb1b2a7aa660eeda15a"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null
+      },
       "Schema5fe52441a29accdd7a067e6b34a95713e222cd89cdb03b3901e3655523f3b3ad": {
         "additionalProperties": false,
         "properties": {},
@@ -1067,6 +1258,15 @@
         ],
         "title": "AccessCheck",
         "type": "object"
+      },
+      "Schema63b8842252830dfc8b5e6b34cc0b09c9a6cb1ef977183b5ec3a59ee9aa66fd31": {
+        "items": {
+          "$ref": "#/components/schemas/Definition5b898f512d98140d47fd839fcaa4d5defa6c37a1109db5ec2a67f49ef0eccb8c"
+        },
+        "maxItems": 64,
+        "minItems": 1,
+        "title": "Nodes",
+        "type": "array"
       },
       "Schema65cad14bbb3646c08579cdfbe008061f7d5f15ea916f92eb0e89a7d22f2fb13a": {
         "default": 0,
@@ -1112,6 +1312,12 @@
         ],
         "title": "WorkResult",
         "type": "object"
+      },
+      "Schema67cc022e2b35466cf053b0573800fe50187597c0969eba4455b835aac6dc9d81": {
+        "maximum": 1000,
+        "minimum": 0,
+        "title": "Covered After",
+        "type": "integer"
       },
       "Schema6888b91d862d53905c53fe288c511fce2c2b2511377c824b89ea6b1dd21e0622": {
         "additionalProperties": false,
@@ -1222,10 +1428,42 @@
         "title": "MemoryListParams",
         "type": "object"
       },
+      "Schema7273feb8efebce4abce6ebbc933d57143b8f8aace34186752322f736e1a6dccd": {
+        "const": "arbora-execution-graph-v1",
+        "default": "arbora-execution-graph-v1",
+        "title": "Schema Version",
+        "type": "string"
+      },
       "Schema736e486dd9acaffcc1e210aa8fda9026a9b36cb48e9ec1089933b18a63577365": {
         "additionalProperties": false,
         "properties": {},
         "title": "SwarmTopologyReadParams",
+        "type": "object"
+      },
+      "Schema73aee21f8961fe90381e58d18c48a364f97920bbe53aa811d1467e54111bb867": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence": {
+            "$ref": "#/components/schemas/Schema5def6f7ebd8caff55804b9d5df8e7349172fa53c62fde29a680ac539255a7d28"
+          },
+          "key": {
+            "$ref": "#/components/schemas/Schemaf2bb403ffd698521e1ffaeaf35d95480f75fbc03701246b14afdb248b0e99887"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/Schemaf82b72b697de51f1102373f3c17eeea11411ffa94f9f04846bcd3c9534a2e0c5"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Schema8223037a60b3416eba6af7ed8c594648fe03eb2d0605cb88717f34367a34f2e1"
+          },
+          "task_id": {
+            "$ref": "#/components/schemas/Schema98006a51abee6257ae597d21388c798707513c128d6c11ee7b5741aadc43b1d9"
+          }
+        },
+        "required": [
+          "key",
+          "task_id"
+        ],
+        "title": "ExecutionStep",
         "type": "object"
       },
       "Schema747b41258db828a82a58ffba6e56aabddf23c7e871967a322995696f2dc55edb": {
@@ -1406,6 +1644,17 @@
         "title": "SourceTreeParams",
         "type": "object"
       },
+      "Schema7ce9ee06a83befa2d21cdd396864acbe7d70954e671ff1504578ae94190f4341": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Definition99f4200c8bfba9c741b960080155f549cc0589555b6bf79bce53aef9737a3bfe"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null
+      },
       "Schema7ef30d916ee9fd6b941cedb3b0fddf2ccfbea017ab0abde66af49536c454b6ce": {
         "additionalProperties": false,
         "properties": {
@@ -1459,6 +1708,25 @@
         "minProperties": 0,
         "title": "Request",
         "type": "object"
+      },
+      "Schema8223037a60b3416eba6af7ed8c594648fe03eb2d0605cb88717f34367a34f2e1": {
+        "default": "unobserved",
+        "enum": [
+          "unobserved",
+          "running",
+          "completed",
+          "failed",
+          "cancelled",
+          "blocked"
+        ],
+        "title": "Status",
+        "type": "string"
+      },
+      "Schema831211d0abf630f57f7ccce1fbfaa34544a31e2893704e2f6632774688e48704": {
+        "const": false,
+        "default": false,
+        "title": "Can Read Transcript",
+        "type": "boolean"
       },
       "Schema841a72c12e87a0fc9b3446ca1dc75070ff8ea3adde3de043d40b051f5ae28d8f": {
         "maxLength": 80,
@@ -1737,6 +2005,12 @@
         "title": "Allowed",
         "type": "boolean"
       },
+      "Schema98006a51abee6257ae597d21388c798707513c128d6c11ee7b5741aadc43b1d9": {
+        "maxLength": 512,
+        "minLength": 1,
+        "title": "Task Id",
+        "type": "string"
+      },
       "Schema98489c5b6ee06cd7b2d6e657d1b2cf875631e1d7cb1ba3e07710563567f7cbc8": {
         "additionalProperties": false,
         "properties": {
@@ -1891,6 +2165,12 @@
         "title": "OpsDoctorResult",
         "type": "object"
       },
+      "Schema9ebcc659ac1a7a213f1114d9dbb246fb6987f3571658becc61342f26b99fe017": {
+        "maximum": 9223372036854775807,
+        "minimum": 1,
+        "title": "Sequence",
+        "type": "integer"
+      },
       "Schema9f61a7ec03c21c9f017ed0d88eea2e595fbda44ae6d60dddf600f21628c27b1e": {
         "additionalProperties": false,
         "properties": {
@@ -1984,6 +2264,12 @@
           "shared"
         ],
         "title": "Scope",
+        "type": "string"
+      },
+      "Schemaa7df18cd93aac098d2f46ec69337b55b7b218384dfd9a776b31c8a89a25dd15c": {
+        "const": "depends_on",
+        "default": "depends_on",
+        "title": "Kind",
         "type": "string"
       },
       "Schemaa83a3f564a1a1974290872fa10944b4530eecaf8212c39a32969ae5589f694bd": {
@@ -2129,6 +2415,26 @@
         "minLength": 1,
         "title": "Source Id",
         "type": "string"
+      },
+      "Schemab6258159e60aca72d31af0e17dcbeeb8fed6d0876b8a0e77c9f5d688d6627dbe": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/Schemaa7df18cd93aac098d2f46ec69337b55b7b218384dfd9a776b31c8a89a25dd15c"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Schemacb8d3d85daa20971c3055c1ca8f322c61ec4cb71fd35a87d2c179be2c0e9e807"
+          },
+          "target": {
+            "$ref": "#/components/schemas/Schemad1277a41badcf67743d7f158a20e20d519e87f58ffe635b3d7f73ce625c14367"
+          }
+        },
+        "required": [
+          "source",
+          "target"
+        ],
+        "title": "ExecutionDependency",
+        "type": "object"
       },
       "Schemab65f8cf83520abcc81339392269e3bb61520bd1bf0b290070d109a32ac0f9159": {
         "additionalProperties": false,
@@ -2351,6 +2657,12 @@
         "title": "Mode",
         "type": "string"
       },
+      "Schemacb8d3d85daa20971c3055c1ca8f322c61ec4cb71fd35a87d2c179be2c0e9e807": {
+        "maxLength": 8192,
+        "minLength": 1,
+        "title": "Source",
+        "type": "string"
+      },
       "Schemaccaf437a4d2f3796fc8df7087e95f0521813d43a9f29cea0f760bc425fc1e9aa": {
         "description": "Where the alert went; never the channel credentials.",
         "properties": {
@@ -2398,6 +2710,18 @@
       "Schemacfbce84aea566abdb311fb82c555085d95760a65cb9f4a16c8a2cf1ba8cc02d6": {
         "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:@-]{0,127}$",
         "title": "Key",
+        "type": "string"
+      },
+      "Schemacfee170f5e47c2fd58c67d7d859e37e2eee2b86abc5c1ec8762676b7ce46e779": {
+        "maxLength": 1024,
+        "minLength": 1,
+        "title": "Event Id",
+        "type": "string"
+      },
+      "Schemad1277a41badcf67743d7f158a20e20d519e87f58ffe635b3d7f73ce625c14367": {
+        "maxLength": 8192,
+        "minLength": 1,
+        "title": "Target",
         "type": "string"
       },
       "Schemad20c4af0ddeca947da3945fcfbab9e9c3fad42bd28a49e2aae1791145f905dbc": {
@@ -2460,6 +2784,12 @@
         ],
         "title": "TaskRefParams",
         "type": "object"
+      },
+      "Schemad696246baf4e87f96d559d536ded69597bc798f5b51691686eaa68c2ea4c6772": {
+        "const": "incomplete",
+        "default": "incomplete",
+        "title": "Lifecycle Completeness",
+        "type": "string"
       },
       "Schemad6ecf338edc453edc6458382e4c15393c4452faffe708b04210f28897c055fdf": {
         "default": 100,
@@ -2787,6 +3117,12 @@
         "title": "RetrievalFreshnessParams",
         "type": "object"
       },
+      "Schemaeed1526deb1c08699c1a1638d9c440b44db67cdd0ac652f9252ef59f56ba339e": {
+        "const": "complete",
+        "default": "complete",
+        "title": "Topology Completeness",
+        "type": "string"
+      },
       "Schemaef02735e9a1b94f7b656d346cca8ea094a203cec8e0ae574f010596312433abc": {
         "additionalProperties": false,
         "properties": {
@@ -2824,6 +3160,29 @@
       },
       "Schemaf1deff8504bbc0a3b1886d947e0186af87f24cbc280362f57f7201d46a86e3be": {
         "maxLength": 256,
+        "type": "string"
+      },
+      "Schemaf2068454c968a5ebcf29a2a06fe750f45c81a91941482c68c42d77a5c7de771e": {
+        "additionalProperties": false,
+        "properties": {
+          "event_id": {
+            "$ref": "#/components/schemas/Schemacfee170f5e47c2fd58c67d7d859e37e2eee2b86abc5c1ec8762676b7ce46e779"
+          },
+          "sequence": {
+            "$ref": "#/components/schemas/Schema9ebcc659ac1a7a213f1114d9dbb246fb6987f3571658becc61342f26b99fe017"
+          }
+        },
+        "required": [
+          "event_id",
+          "sequence"
+        ],
+        "title": "StepEvidence",
+        "type": "object"
+      },
+      "Schemaf2bb403ffd698521e1ffaeaf35d95480f75fbc03701246b14afdb248b0e99887": {
+        "maxLength": 8192,
+        "minLength": 1,
+        "title": "Key",
         "type": "string"
       },
       "Schemaf2becb12f209b039bc22b1f47579b594876f9d971aaa0f1b70fd09fba813aae3": {
@@ -2891,6 +3250,12 @@
         ],
         "title": "PolicyExplain",
         "type": "object"
+      },
+      "Schemaf82b72b697de51f1102373f3c17eeea11411ffa94f9f04846bcd3c9534a2e0c5": {
+        "const": "plan_step",
+        "default": "plan_step",
+        "title": "Kind",
+        "type": "string"
       },
       "Schemaf9dc517ae1de981c6ec75b9eeef87a8f7750cc487c591961e000cc918273c329": {
         "default": 0,
@@ -20114,6 +20479,57 @@
         ]
       }
     },
+    "/api/v1/ops/runs.execution_graph": {
+      "post": {
+        "operationId": "runs.execution_graph",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema410526b4fca6fab93fd3fbfcc09e1cc30c7fe89eeae7b54d003c234288fb01cf"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$defs": {
+                    "ExecutionDependency": {
+                      "$ref": "#/components/schemas/Definitiona907c76a82c558ce859863ae4116965eedb19155a5c56ce65723e0924461b98e"
+                    },
+                    "ExecutionGraphRead": {
+                      "$ref": "#/components/schemas/Definition10e13a5be5b9a369012d3f0598bcc052eb9cf1e5d4da0bfddcaee1e02b4f58cc"
+                    },
+                    "ExecutionGraphSnapshot": {
+                      "$ref": "#/components/schemas/Definition99f4200c8bfba9c741b960080155f549cc0589555b6bf79bce53aef9737a3bfe"
+                    },
+                    "ExecutionStep": {
+                      "$ref": "#/components/schemas/Definition5b898f512d98140d47fd839fcaa4d5defa6c37a1109db5ec2a67f49ef0eccb8c"
+                    },
+                    "StepEvidence": {
+                      "$ref": "#/components/schemas/Definitione982db1a4ac1ee125b8c4845433b9320ec7006fcf4d88eb1b2a7aa660eeda15a"
+                    }
+                  },
+                  "$ref": "#/components/schemas/Schema016af5288058abbc8add6159772ffcdce98f1bf3a6a7f1711182d1a3a42ece2d"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Read a bounded flat execution graph of an owned run",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
     "/api/v1/ops/runs.get": {
       "post": {
         "operationId": "runs.get",
@@ -20495,5 +20911,5 @@
       }
     }
   },
-  "x-registry-digest": "ce35e3e02b0e24a6eb88cbeed77b44089efeb313f408e9579e2e15ceb38627a2"
+  "x-registry-digest": "497d39550a4a1755103b406c9c372d861a373c21fa04541e6f1d353a9cb5d24f"
 }

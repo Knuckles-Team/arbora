@@ -279,7 +279,9 @@
     "ARBORA-OPS-R861.8",
     "ARBORA-OPS-R861.9",
     "ARBORA-OPS-R021.4.8",
-    "ARBORA-OPS-R021.4.9"
+    "ARBORA-OPS-R021.4.9",
+    "ARBORA-OPS-R021.4.8.1",
+    "ARBORA-OPS-R021.4.8.2"
   ],
   "requirements": [
     {
@@ -3024,11 +3026,31 @@
       "title": "Project an admitted execution graph",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R021.4.8.1",
+        "ARBORA-OPS-R021.4.8.2"
+      ]
     },
     {
       "id": "ARBORA-OPS-R021.4.9",
       "title": "Project permitted node records and capabilities",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R021.4.8.1",
+      "title": "Negotiated flat execution snapshot",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/api/test_execution_graph.py:27"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R021.4.8.2",
+      "title": "Nested lineage and snapshot/update reconciliation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
