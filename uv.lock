@@ -83,7 +83,7 @@ wheels = [
 
 [[package]]
 name = "agent-webui"
-version = "2.7.1"
+version = "2.8.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "agent-connector-sdk" },
@@ -101,9 +101,9 @@ dependencies = [
     { name = "uvicorn" },
     { name = "watchfiles" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d8/0c/b22a0c1d04e38d7a258fcf92fd6480cb099a90dd0c24b228cc5cec1f83fc/agent_webui-2.7.1.tar.gz", hash = "sha256:ee917d0723a07c68a767fbbb8f5c7a6432f7e7a0b383cb0159a4ea3bb3acd772", size = 2235120, upload-time = "2026-10-17T17:03:16.609Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a1/b1/4bd8efea241620086ab076fe8abe3bbc5aec7ce86b72f0fe8a8cfd189cd8/agent_webui-2.8.0.tar.gz", hash = "sha256:20e4cb3b9eed163121f283c5034c082cf9e0ae82747226d7fc256359f8b530cb", size = 2272751, upload-time = "2026-10-24T01:06:53.851Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8f/43/76271bc99acaa9b4c10c6b9454d81f963c043854d0f025eb12aabfb21396/agent_webui-2.7.1-py3-none-any.whl", hash = "sha256:cd70b5c8259c0a7bea8b74b28a5cac9ea021fa823dac285536de554f606cdbe3", size = 2308904, upload-time = "2026-10-17T17:03:14.054Z" },
+    { url = "https://files.pythonhosted.org/packages/cd/4a/1339f2f9b3191637c08dfccb51b0aabf6acff3f322b34dae71736f721d8e/agent_webui-2.8.0-py3-none-any.whl", hash = "sha256:394c37770d76dcc18f7b45d48688005cb86f4de42c2f215a66e2aea07ae0c6ba", size = 2351245, upload-time = "2026-10-24T01:06:50.97Z" },
 ]
 
 [[package]]
@@ -470,7 +470,7 @@ requires-dist = [
     { name = "agent-connector-sdk", extras = ["a2a", "mcp"], marker = "extra == 'gateway-widgets'", specifier = ">=0.4.2,<0.5.0" },
     { name = "agent-terminal-ui", marker = "extra == 'test'", specifier = ">=2.3.1" },
     { name = "agent-utilities", specifier = ">=3.1.0,<4.0.0" },
-    { name = "agent-webui", marker = "extra == 'webui'", specifier = ">=2.7.1,<3.0.0" },
+    { name = "agent-webui", marker = "extra == 'webui'", specifier = ">=2.8.0,<3.0.0" },
     { name = "aiohttp", specifier = ">=3.14.5" },
     { name = "anyio", specifier = ">=4.15.1" },
     { name = "arbora", extras = ["messaging-discord", "messaging-googlechat", "messaging-googlemeet", "messaging-irc", "messaging-line", "messaging-matrix", "messaging-mattermost", "messaging-nextcloud", "messaging-signal", "messaging-slack", "messaging-synology", "messaging-teams", "messaging-telegram", "messaging-twitch", "messaging-voicecall", "messaging-whatsapp"], marker = "extra == 'messaging'" },

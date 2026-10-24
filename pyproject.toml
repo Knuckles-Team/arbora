@@ -106,7 +106,7 @@ test = [
     "setuptools>=84.0.0",
 ]
 webui = [
-    "agent-webui>=2.7.1,<3.0.0",
+    "agent-webui>=2.8.0,<3.0.0",
     "uvicorn>=0.54.0",
 ]
 # portable-deployment spec, gateway-widgets extra requirement: arbora/gateway/widgets/*.py
