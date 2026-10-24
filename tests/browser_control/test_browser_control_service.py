@@ -2026,3 +2026,69 @@ async def _wait_for_messages(sent: list[Any], count: int) -> None:
             return
         await asyncio.sleep(0)
     raise AssertionError(f"expected {count} browser messages, received {len(sent)}")
+
+
+@pytest.mark.asyncio
+async def test_discovery_reuses_owner_checks_and_withdraws_disconnected_catalog(
+    session,
+):
+    from arbora.browser_control.browser_control_api import BrowserDiscoveryRequest
+
+    with use_session(session):
+        service, connection, _engine, sent, tool = await _setup(session)
+        before = len(sent)
+        receipt = await service.discover(BrowserDiscoveryRequest())
+        assert receipt.bridge_available is True
+        assert receipt.documents[0].tools[0]["tool_id"] == tool.tool_id
+        assert len(sent) == before  # Discovery neither arms nor dispatches.
+    foreign = replace(session, actor=replace(session.actor, actor_id="other-owner"))
+    with use_session(foreign):
+        assert (await service.discover(BrowserDiscoveryRequest())).documents == ()
+    other_tenant = replace(
+        session,
+        tenant="tenant-other",
+        actor=replace(session.actor, tenant_id="tenant-other"),
+    )
+    with use_session(other_tenant):
+        assert (await service.discover(BrowserDiscoveryRequest())).documents == ()
+    with use_session(session):
+        assert (await service.discover(BrowserDiscoveryRequest())).documents
+        await connection.disconnect("test complete")
+        assert (await service.discover(BrowserDiscoveryRequest())).documents == ()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("retirement", ["disconnect", "replacement"])
+async def test_discovery_withdraws_channel_retired_during_verification(
+    session: GraphSession,
+    monkeypatch: pytest.MonkeyPatch,
+    retirement: str,
+) -> None:
+    from arbora.browser_control.browser_control_api import BrowserDiscoveryRequest
+
+    verified = asyncio.Event()
+    resume = asyncio.Event()
+    with use_session(session):
+        service, connection, _engine, _sent, _tool_value = await _setup(session)
+        original = service._verify_registration
+
+        async def paused_verification(channel: Any) -> None:
+            await original(channel)
+            verified.set()
+            await resume.wait()
+
+        monkeypatch.setattr(service, "_verify_registration", paused_verification)
+        discovery = asyncio.create_task(service.discover(BrowserDiscoveryRequest()))
+        await verified.wait()
+        if retirement == "disconnect":
+            await connection.disconnect("retired during discovery")
+        else:
+            # A distinct channel object must not inherit verification of the old
+            # registration, even when the document reference is reused.
+            async with service._lock:
+                reference = next(iter(service._channels))
+                service._channels[reference] = replace(service._channels[reference])
+        resume.set()
+        receipt = await discovery
+        assert receipt.bridge_available is True
+        assert receipt.documents == ()

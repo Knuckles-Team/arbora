@@ -133,6 +133,9 @@
       }
     },
     "schemas": {
+      "Definition1638cff4afae4652d1e1272a58fc6981e98700fb4ec39feefa96e170c75f5de1": {
+        "$ref": "#/components/schemas/Schema905870712697c5033de203e9970c73bcd2c6ec3112b28fa127fe1807b1a832ed"
+      },
       "Definition1d94b3ae8ce88d43ac1686464a61940f16a15a81254ceb60f584d0996bea92e8": {
         "$ref": "#/components/schemas/Schema1d94b3ae8ce88d43ac1686464a61940f16a15a81254ceb60f584d0996bea92e8"
       },
@@ -144,6 +147,9 @@
       },
       "Definition3095487226d7f5a7824a8e27bc0adbbc1a3495fb74611bd5ac71a10af1bd2a1e": {
         "$ref": "#/components/schemas/Schema920ab8a90fbf04dba04c9a05b8edc0cb0df7b76c972aa26afdcbd5adb6758dc1"
+      },
+      "Definition4872098e9468c4edd077e4058e8a31a8bbda3cae3fbc5a3e0cd2cc8834149c85": {
+        "$ref": "#/components/schemas/Schemae044460d95109795c687c33aeecfe463503a08e13a3fe1ad29f8ad22745a3ab2"
       },
       "Definition5b9ce03c9f077b89cb597ce0377b8192731720e40d52957756822770f589a905": {
         "$ref": "#/components/schemas/Schema461ca204e766f2aab4db33300ca288c50942031318ed9c2f6f157cc8ec141641"
@@ -159,6 +165,18 @@
       },
       "Definitione5b304c2722adb849beeb376352a983b964bf1b970f2562fb7f323c0f6998d92": {
         "$ref": "#/components/schemas/Schemaeda27189feb9fb8e2a62f858582ff3b547da8992f50e88542ff64d6adfe6f67f"
+      },
+      "Schema0004c1dad1dbe418005c6b4ecdf0e2002238aa1aa13515bc44f3204ffecf2ee9": {
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Definition4872098e9468c4edd077e4058e8a31a8bbda3cae3fbc5a3e0cd2cc8834149c85"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "BrowserDiscoveryResult",
+        "type": "object"
       },
       "Schema0172f9d1b57eb8c16d49edbc6f9fe19c07ba43b8135cccc2a63f6a6600465d16": {
         "additionalProperties": false,
@@ -381,6 +399,14 @@
           "$ref": "#/components/schemas/Schemab697b1595c2d8f9677b6d14572d7a100ee9694279919359d64f493f6cadc3541"
         },
         "maxItems": 100,
+        "type": "array"
+      },
+      "Schema1a854e7bc957b0a9c4fd033b720beb925579c4ff264117cc58f07a4736f807f9": {
+        "default": [],
+        "items": {
+          "$ref": "#/components/schemas/Definition1638cff4afae4652d1e1272a58fc6981e98700fb4ec39feefa96e170c75f5de1"
+        },
+        "title": "Documents",
         "type": "array"
       },
       "Schema1acc67e49d84b0d66be3e6187ce3a6b1674c9d47c7230b9f298b2f2e117ab25b": {
@@ -817,6 +843,12 @@
         "properties": {},
         "title": "OpsConfigParams",
         "type": "object"
+      },
+      "Schema4bcad71d9def2d7fdd16a5e5a932b4a6c0e2d3ebff350a7bb46da2fa39e99763": {
+        "const": "not_attested",
+        "default": "not_attested",
+        "title": "Browser Api",
+        "type": "string"
       },
       "Schema4cc5fb01b4eff0f49b5d0349071f1346bbd6ce26f9df8cfdc51a65772486fbdf": {
         "additionalProperties": false,
@@ -1475,6 +1507,27 @@
         "title": "Revision",
         "type": "integer"
       },
+      "Schema905870712697c5033de203e9970c73bcd2c6ec3112b28fa127fe1807b1a832ed": {
+        "description": "A live registration already admitted by the existing channel authority.",
+        "properties": {
+          "document_ref": {
+            "$ref": "#/components/schemas/Schemae4653cc2ec018f03ec4fcaea76ce12619fa91b938a05b7b0f5e4783416deab0c"
+          },
+          "registration_generation": {
+            "$ref": "#/components/schemas/Schema92b00b40db403c3aefe1346945ce35e7bdd6d6415c51c8f399c5df8d296abf92"
+          },
+          "tools": {
+            "$ref": "#/components/schemas/Schemaca8f60d0cef719b220d7f687763bb1ee1b4a0d0c576a8301983f393cd9306eed"
+          }
+        },
+        "required": [
+          "document_ref",
+          "registration_generation",
+          "tools"
+        ],
+        "title": "BrowserDocumentCatalog",
+        "type": "object"
+      },
       "Schema9170d54be70d2cc7125168f0e82859a66a10119882e0623c4b05560dd6113fef": {
         "additionalProperties": false,
         "properties": {
@@ -1501,6 +1554,11 @@
         },
         "title": "TenantPage",
         "type": "object"
+      },
+      "Schema92b00b40db403c3aefe1346945ce35e7bdd6d6415c51c8f399c5df8d296abf92": {
+        "minimum": 1,
+        "title": "Registration Generation",
+        "type": "integer"
       },
       "Schema92ee39dd91cb175bf744aeeaf20789d996e6f84a97c9b1884383f3309b5d93ba": {
         "anyOf": [
@@ -2181,6 +2239,13 @@
         "default": null,
         "title": "Msg"
       },
+      "Schemaca8f60d0cef719b220d7f687763bb1ee1b4a0d0c576a8301983f393cd9306eed": {
+        "items": {
+          "$ref": "#/components/schemas/Schemab697b1595c2d8f9677b6d14572d7a100ee9694279919359d64f493f6cadc3541"
+        },
+        "title": "Tools",
+        "type": "array"
+      },
       "Schemacac9b06c3ec93a7fc8bde8feaeb94be496804f70091072f05fe0a117f04fb850": {
         "title": "Mode",
         "type": "string"
@@ -2348,6 +2413,10 @@
         "title": "PolicyReadParams",
         "type": "object"
       },
+      "Schemadc9bedede45217466245e14d60cb1c2b7585095fc9e5d70bd5c4c1cb5a686f3b": {
+        "title": "Bridge Available",
+        "type": "boolean"
+      },
       "Schemadc9d160664208518c9b779d5970aa09e31e96cfd1671db4fb2f8549be2bbb457": {
         "additionalProperties": false,
         "description": "Read one file of one ref.",
@@ -2418,6 +2487,25 @@
         "title": "Kinds",
         "type": "array"
       },
+      "Schemae044460d95109795c687c33aeecfe463503a08e13a3fe1ad29f8ad22745a3ab2": {
+        "description": "Bridge readiness does not attest the browser's native API support.",
+        "properties": {
+          "bridge_available": {
+            "$ref": "#/components/schemas/Schemadc9bedede45217466245e14d60cb1c2b7585095fc9e5d70bd5c4c1cb5a686f3b"
+          },
+          "browser_api": {
+            "$ref": "#/components/schemas/Schema4bcad71d9def2d7fdd16a5e5a932b4a6c0e2d3ebff350a7bb46da2fa39e99763"
+          },
+          "documents": {
+            "$ref": "#/components/schemas/Schema1a854e7bc957b0a9c4fd033b720beb925579c4ff264117cc58f07a4736f807f9"
+          }
+        },
+        "required": [
+          "bridge_available"
+        ],
+        "title": "BrowserDiscoveryReceipt",
+        "type": "object"
+      },
       "Schemae0b1e0d86759ae9fb55f6c0b1ccd214031b9b8d2a007d6660e82953ceee36f4b": {
         "default": "default",
         "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:@-]{0,127}$",
@@ -2450,6 +2538,10 @@
       },
       "Schemae2c981fef5e27636eb7789468ab757bf96bc7a09086b15237b992e277a9d7c53": {
         "title": "Grantee",
+        "type": "string"
+      },
+      "Schemae4653cc2ec018f03ec4fcaea76ce12619fa91b938a05b7b0f5e4783416deab0c": {
+        "title": "Document Ref",
         "type": "string"
       },
       "Schemae5027104f6a9dcd109bf8ed1ae34056cfd824815d788c82abde56b310153d45a": {
@@ -3196,6 +3288,41 @@
           }
         },
         "summary": "Cancel call an attended browser call",
+        "tags": [
+          "browser"
+        ]
+      }
+    },
+    "/api/v1/ops/browser.discover": {
+      "post": {
+        "operationId": "browser.discover",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Shared7a394c4291f70ad5cbb6f2016ce2f32d6808772d7a3c087f0f83a29babe1bc42"
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$defs": {
+                    "BrowserDiscoveryReceipt": {
+                      "$ref": "#/components/schemas/Definition4872098e9468c4edd077e4058e8a31a8bbda3cae3fbc5a3e0cd2cc8834149c85"
+                    },
+                    "BrowserDocumentCatalog": {
+                      "$ref": "#/components/schemas/Definition1638cff4afae4652d1e1272a58fc6981e98700fb4ec39feefa96e170c75f5de1"
+                    }
+                  },
+                  "$ref": "#/components/schemas/Schema0004c1dad1dbe418005c6b4ecdf0e2002238aa1aa13515bc44f3204ffecf2ee9"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Discover my attended WebUI registrations and bridge availability",
         "tags": [
           "browser"
         ]
@@ -20131,5 +20258,5 @@
       }
     }
   },
-  "x-registry-digest": "0d815ecc757df7970292c7351707af550aedb7559ebe541252bcc16e34a1143a"
+  "x-registry-digest": "83506943e5b2152df8809f7df2b29a0fd7fd362c5f3f406a34e03fe96706655c"
 }

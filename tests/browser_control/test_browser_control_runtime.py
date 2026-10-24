@@ -156,3 +156,85 @@ def test_both_production_webui_compositions_inject_the_same_authority() -> None:
     assert "**browser_control_kwargs" in source
     assert "register_browser_control_service(" in source
     assert "unregister_browser_control_service(" in source
+
+
+@pytest.mark.asyncio
+async def test_discovery_reports_unavailable_without_granting_a_session(session):
+    from types import SimpleNamespace
+
+    from arbora.browser_control.browser_control_runtime import (
+        dispatch_browser_operation,
+    )
+
+    with pytest.raises(PermissionError):
+        await dispatch_browser_control("discover", {})
+    with use_session(session):
+        receipt = await dispatch_browser_operation(
+            "discover", {}, SimpleNamespace(session=session)
+        )
+        assert receipt.bridge_available is False
+        assert receipt.documents == ()
+        with pytest.raises(ValueError):
+            await dispatch_browser_control("discover", {"tenant": "other"})
+
+
+@pytest.mark.asyncio
+async def test_discovery_tracks_binding_and_teardown(session):
+    from arbora.browser_control.browser_control_api import BrowserDiscoveryReceipt
+
+    class DiscoveryService:
+        async def discover(self, request):
+            assert current_session() == session
+            return BrowserDiscoveryReceipt(bridge_available=True)
+
+    service = DiscoveryService()
+    register_browser_control_service(service)
+    try:
+        bind_browser_control_owner(service)
+        with use_session(session):
+            receipt = await dispatch_browser_control("discover", {})
+            assert receipt.bridge_available is True
+            assert receipt.documents == ()
+    finally:
+        unregister_browser_control_service(service)
+    with use_session(session):
+        assert (
+            await dispatch_browser_control("discover", {})
+        ).bridge_available is False
+
+
+@pytest.mark.asyncio
+async def test_webui_start_binds_bridge_before_first_browser_and_clears_on_stop(
+    session,
+):
+    from arbora.browser_control.browser_control_api import BrowserDiscoveryReceipt
+    from arbora.webui_host.webui_co_service import _serve_until_stopped
+
+    stop = threading.Event()
+    seen = []
+
+    class Service:
+        async def discover(self, request):
+            return BrowserDiscoveryReceipt(bridge_available=True)
+
+    class Server:
+        should_exit = False
+
+        async def serve(self):
+            with use_session(session):
+                seen.append(await dispatch_browser_control("discover", {}))
+            stop.set()
+
+    await _serve_until_stopped(
+        Server(),
+        stop,
+        Service(),
+        register_browser_control_service,
+        unregister_browser_control_service,
+    )
+    assert seen[0].bridge_available is True
+    assert seen[0].documents == ()
+    with use_session(session):
+        assert (
+            await dispatch_browser_control("discover", {})
+        ).bridge_available is False

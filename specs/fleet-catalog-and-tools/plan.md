@@ -421,3 +421,9 @@ The engine chooses. arbora applies the answer within the session cap of `ARBORA-
 | A2A consuming | SDK | A connector treats an external agent as a data source | `SDK-CONNECTOR-CONTROL-R041`, `SDK-CONNECTOR-CONTROL-R069` |
 
 The harness reaches other agents only through arbora. Engine planning over the consuming roles is `EG-FEDERATED-QUERY-R073.2`.
+
+## WebUI bridge discovery and preload integration (R015/R029)
+
+WebUI startup already injects the one browser-control service. Bind its owner loop at startup, before a browser connects, and expose read-only `browser.discover` through the existing `find` intent tool. The fleet agent already preloads `find` and `act`; do not copy browser-local tools into another client catalog. Bind the browser operation adapter in the served invocation services. Discovery distinguishes an unavailable bridge from an available bridge without caller-owned attended registrations. Every listed registration reuses existing owner, tenant, live-session, attended-arm and registration checks. Discovery grants no lease and performs no action. Explicit no-auth serving retains its existing identity contract; it does not invent authenticated browser sessions.
+
+This source batch does not widen the human-only browser execution operations to MCP or delegation. Agent execution authority, served installed-provider acceptance remain open. The default WebUI profile `webui-assistant` now selects the same governed `find`/`act` toolset as the fleet profile at the existing A2A run boundary. This changes requested tool inventory only; the existing executor receives the original admitted session. Other profiles retain their existing inventory.

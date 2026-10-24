@@ -39,7 +39,10 @@ def _runtime() -> Any:
 
 
 def _available_tools() -> tuple[str, ...]:
-    return tuple(sorted(_runtime().REGISTERED_TOOLS))
+    runtime = _runtime()
+    return tuple(
+        sorted(runtime.REGISTERED_TOOLS.keys() | runtime.NATIVE_INTENT_TOOLS.keys())
+    )
 
 
 def _build_toolset(tool_names: list[str], toolset_id: str) -> Any:

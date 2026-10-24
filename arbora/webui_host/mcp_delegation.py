@@ -51,7 +51,7 @@ async def _native_server_tools(mux: MCPMultiplexer) -> list[dict[str, Any]]:
             "inputSchema": getattr(tool, "parameters", None) or {},
         }
         for name, tool in sorted(_provider_tools(host).items())
-        if name in runtime.REGISTERED_TOOLS
+        if name in runtime.REGISTERED_TOOLS or name in runtime.NATIVE_INTENT_TOOLS
     ]
 
 
@@ -86,7 +86,9 @@ async def _call_native_tool(
     if current_session() is None:
         raise ToolError("Verified caller session required")
     host = mux._host_mcp
-    if host is None or tool_name not in runtime.REGISTERED_TOOLS:
+    if host is None or tool_name not in (
+        runtime.REGISTERED_TOOLS.keys() | runtime.NATIVE_INTENT_TOOLS.keys()
+    ):
         raise ToolError("Native Arbora tool is unavailable")
     with runtime.verified_tool_session_scope():
         result = await asyncio.wait_for(
