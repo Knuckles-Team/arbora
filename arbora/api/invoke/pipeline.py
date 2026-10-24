@@ -984,7 +984,7 @@ def _typed_refusal(exc: OperationRefused | EngineRefusal | FleetRefusal) -> OpEr
     if isinstance(exc, EngineRefusal):
         # Error envelope validates against canonical generated evidence. No
         # handwritten code table or import-time generated metadata fallback.
-        return OpError(exc.code, source="engine")
+        return OpError(exc.code, dict(exc.details), source="engine")
     details = {"server": exc.server, "tool": exc.tool}
     if exc.detail is not None:
         details["detail"] = exc.detail

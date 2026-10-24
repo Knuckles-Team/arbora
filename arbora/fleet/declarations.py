@@ -19,12 +19,34 @@ __all__ = [
     "RESOURCES_URI",
     "declaration_of",
     "declared_mapping",
+    "entry_bytes",
     "parse_declaration",
     "remember",
 ]
 
 _LOCK = threading.Lock()
 _DECLARATIONS: dict[str, Mapping[str, Any]] = {}
+
+
+def entry_bytes(archive: Any, entry: Any) -> bytes:
+    """The bytes of one captured pack entry's body, read from its archive.
+
+    A captured ConnectorPack (agent-connector-sdk 0.5) holds every body in one
+    archive blob; ``entry.body`` is the ``PackSection`` (offset, length,
+    sha256) that locates it. A section outside the archive or whose bytes do
+    not hash to its digest is refused, never read as content.
+    """
+    import hashlib
+
+    section = entry.body
+    data = archive.data
+    start, length = int(section.offset), int(section.length)
+    if start < 0 or length < 0 or start + length > len(data):
+        raise ValueError(f"{entry.uri}: body section lies outside the archive")
+    body = bytes(data[start : start + length])
+    if hashlib.sha256(body).hexdigest() != str(section.sha256):
+        raise ValueError(f"{entry.uri}: body section digest mismatch")
+    return body
 
 
 def parse_declaration(body: str | bytes) -> Mapping[str, Any]:

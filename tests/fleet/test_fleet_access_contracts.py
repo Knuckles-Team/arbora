@@ -5,7 +5,7 @@ from __future__ import annotations
 import builtins
 import sys
 import types
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import pytest
 
@@ -24,9 +24,35 @@ class _Entry:
     body: bytes
 
 
-@dataclass(frozen=True)
-class _Pack:
-    entries: tuple[_Entry, ...] = field(default_factory=tuple)
+def _Pack(entries: tuple[_Entry, ...] = ()) -> types.SimpleNamespace:  # noqa: N802
+    """A real SDK 0.5 captured pack: bodies live in the archive, by section."""
+    from epistemic_graph.connector_pack import (
+        ConnectorPackArchiveBuilder,
+        ConnectorPackEntryContent,
+    )
+    from epistemic_graph.generated.connector_pack import PackEntryKind
+
+    def content(
+        kind: PackEntryKind, uri: str, body: bytes
+    ) -> ConnectorPackEntryContent:
+        return ConnectorPackEntryContent(
+            kind=kind, uri=uri, name=uri, media_type="text/turtle", body=body
+        )
+
+    archive = ConnectorPackArchiveBuilder.build(
+        content(PackEntryKind.MCP_SERVER, "mcp-server://t", b"{}"),
+        tuple(
+            content(
+                PackEntryKind.ONTOLOGY
+                if e.uri.startswith("ontology://")
+                else PackEntryKind.SHAPES,
+                e.uri,
+                e.body,
+            )
+            for e in entries
+        ),
+    )
+    return types.SimpleNamespace(archive=archive)
 
 
 @dataclass(frozen=True)
@@ -70,7 +96,7 @@ def fake_sdk(monkeypatch):
     return seen
 
 
-def _pack() -> _Pack:
+def _pack() -> types.SimpleNamespace:
     return _Pack(
         entries=(
             _Entry("ontology://tickets", TTL.encode()),

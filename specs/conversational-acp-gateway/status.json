@@ -35,7 +35,8 @@
         "ARBORA-ACP-R001.7",
         "ARBORA-ACP-R001.8",
         "ARBORA-ACP-R001.9"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-ACP-R001.1",
@@ -76,42 +77,64 @@
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-ACP-R001.5",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-ACP-R001.6",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-ACP-R001.7",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-ACP-R001.8",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-ACP-R001.9",
       "title": "Serve bounded read and preview duplex sessions",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     }
+  ],
+  "frontier": [
+    "ARBORA-ACP-R001.4",
+    "ARBORA-ACP-R001.5",
+    "ARBORA-ACP-R001.6",
+    "ARBORA-ACP-R001.7",
+    "ARBORA-ACP-R001.8",
+    "ARBORA-ACP-R001.9"
+  ],
+  "unserved": [
+    "ARBORA-ACP-R001.4",
+    "ARBORA-ACP-R001.5",
+    "ARBORA-ACP-R001.6",
+    "ARBORA-ACP-R001.7",
+    "ARBORA-ACP-R001.8",
+    "ARBORA-ACP-R001.9"
   ]
 }
