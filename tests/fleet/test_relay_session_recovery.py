@@ -41,6 +41,11 @@ def big_page(size: int) -> dict:
     return {"result": [{"sys_id": str(i), "text": "x" * 1000} for i in range(size)]}
 
 
+@mcp.prompt(name="create_branch_prompt")
+def create_branch_prompt(project_id: str, branch: str) -> str:
+    return "create " + branch + " in " + project_id
+
+
 @mcp.prompt(name="triage")
 def triage() -> str:
     return "triage from generation " + generation
@@ -161,3 +166,53 @@ async def test_a_child_that_stays_down_fails_after_one_bounded_retry(
         assert time.monotonic() - started < 30
     finally:
         await runtime.aclose()
+
+
+@pytest.mark.spec("ARBORA-OPS-R009.4")
+async def test_a_prompt_called_without_its_arguments_is_a_typed_refusal(
+    tmp_path, child_port
+) -> None:
+    """G10: the child answers -32603 "Missing required arguments"; arbora names them."""
+    from arbora.api.errors import to_envelope
+    from arbora.api.invoke.pipeline import OperationRefused, _typed_refusal
+    from arbora.fleet.gateway_ops import _prompt_refusal
+
+    port, _ = child_port
+    mux, runtime = await _mounted(tmp_path, port)
+    try:
+        with pytest.raises(child_resilience.MCPError) as raised:
+            await mux._relay_read(
+                "relay-child",
+                lambda session: session.get_prompt("create_branch_prompt", {}),
+                10.0,
+            )
+        refusal = _prompt_refusal(raised.value, "relay-child", "create_branch_prompt")
+        assert isinstance(refusal, OperationRefused)
+        _, envelope = to_envelope(
+            _typed_refusal(refusal),
+            op="fleet.prompts.get",
+            request_id="r",
+            registry_digest="d" * 64,
+        )
+        assert envelope["error"]["code"] == "INVALID_ARGUMENT"
+        assert envelope["error"]["details"]["missing"] == ["branch", "project_id"]
+    finally:
+        await runtime.aclose()
+
+
+@pytest.mark.spec("ARBORA-OPS-R009.4")
+def test_declared_required_prompt_arguments_are_checked_before_the_child() -> None:
+    from types import SimpleNamespace
+
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.fleet.gateway_ops import _prompt_refusal, _require_prompt_arguments
+
+    item = SimpleNamespace(schema={"required": ["project_id", "branch"]})
+    with pytest.raises(OperationRefused) as refused:
+        _require_prompt_arguments(item, {"branch": "b"})
+    assert refused.value.details["missing"] == ["project_id"]
+    _require_prompt_arguments(item, {"branch": "b", "project_id": "p"})
+    other = _prompt_refusal(
+        child_resilience.MCPError(-32603, "renderer exploded"), "s", "p"
+    )
+    assert type(other).__name__ == "FleetRefusal" and other.code == "CHILD_REFUSED"

@@ -170,6 +170,7 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] `ARBORA-OPS-R009.1`: Deliver every requirement in requirements.md.
 - [ ] **ARBORA-OPS-R009.2:** Refusal causes are logged
 - [ ] **ARBORA-OPS-R009.3:** Declared replay owners
+- [ ] **ARBORA-OPS-R009.4:** Typed refusal details (fields, engine reason code, prompt arguments)
 - [ ] `ARBORA-OPS-R053.8`: Deliver every requirement in requirements.md.
 - [ ] `ARBORA-OPS-R059`: Resolve the producer contracts named in plan.md. Then implement the existing registry attachment and its served proof. Preserve each specified refusal.
 - [ ] `ARBORA-OPS-R060`: Resolve the producer contracts named in plan.md. Then implement the existing registry attachment and its served proof. Preserve each specified refusal.
