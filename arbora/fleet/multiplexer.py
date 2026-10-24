@@ -5028,8 +5028,9 @@ class MCPMultiplexer:
         if not uri or len(uri.encode("utf-8")) > 8_192:
             raise _fastmcp_exceptions.ToolError("MCP resource URI is invalid")
         await self.mount_child(server_name)
-        session = self._live_primary_session(server_name)
-        result = await asyncio.wait_for(session.read_resource(uri), timeout=timeout)
+        result = await self._relay_read(
+            server_name, lambda session: session.read_resource(uri), timeout
+        )
         contents = getattr(result, "contents", result)
         first = next(iter(contents or ()), None)
         text = getattr(first, "text", None)
@@ -5058,9 +5059,8 @@ class MCPMultiplexer:
             raise _fastmcp_exceptions.ToolError("MCP prompt name is invalid")
         _assert_bounded_delegated_value(arguments)
         await self.mount_child(server_name)
-        session = self._live_primary_session(server_name)
-        result = await asyncio.wait_for(
-            session.get_prompt(name, arguments), timeout=timeout
+        result = await self._relay_read(
+            server_name, lambda session: session.get_prompt(name, arguments), timeout
         )
         messages: list[dict[str, str]] = []
         for message in getattr(result, "messages", ()) or ():
@@ -5421,6 +5421,34 @@ class MCPMultiplexer:
             server_name, result, _tenant_local_discovery_binding()
         )
         return result
+
+    async def _relay_read(
+        self,
+        server_name: str,
+        read: _typing.Callable[[_typing.Any], _typing.Awaitable[_typing.Any]],
+        timeout: float,
+    ) -> _typing.Any:
+        """Run one idempotent relay read on the child's live primary session.
+
+        ARBORA-FLEET-R040.2: a child that restarted no longer knows the session.
+        That failure tears the generation down, waits a bounded time for the
+        supervisor to reconnect, and retries the read once on the new session.
+        Any other failure, or a second dead session, propagates unchanged.
+        """
+        session = self._live_primary_session(server_name)
+        try:
+            return await asyncio.wait_for(read(session), timeout=timeout)
+        except Exception as exc:
+            runtime = self.children.get(server_name)
+            if runtime is None or not _child_resilience.is_transient_child_death(exc):
+                raise
+            if not await runtime.recover("relay_read_dead_session"):
+                raise
+            logger.info(
+                "MCP child %s session re-established for a relay read", server_name
+            )
+        session = self._live_primary_session(server_name)
+        return await asyncio.wait_for(read(session), timeout=timeout)
 
     def _live_primary_session(self, server_name: str) -> _typing.Any:
         session = self.sessions.get(server_name)
