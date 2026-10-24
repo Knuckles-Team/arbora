@@ -193,7 +193,7 @@ class A2ATaskStatus(_WireModel):
 
 
 class A2ATask(_WireModel):
-    id: str = Field(pattern=r"^a2a-[0-9a-f]{64}$")
+    id: str = Field(pattern=r"^(?:a2a-|work-item:)[0-9a-f]{64}$")
     context_id: str = Field(pattern=r"^a2a-context-[0-9a-f]{64}$")
     kind: Literal["task"] = "task"
     status: A2ATaskStatus

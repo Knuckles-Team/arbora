@@ -16,6 +16,11 @@
     "ARBORA-RELEASE-R003.4.2",
     "ARBORA-RELEASE-R003.4.3",
     "ARBORA-RELEASE-R003.4.4",
+    "ARBORA-RELEASE-R003.4.5",
+    "ARBORA-RELEASE-R003.4.6",
+    "ARBORA-RELEASE-R003.4.8",
+    "ARBORA-RELEASE-R003.4.9",
+    "ARBORA-RELEASE-R003.4.10",
     "ARBORA-RELEASE-R003.5",
     "ARBORA-RELEASE-R003.6",
     "ARBORA-RELEASE-R003.7",
@@ -29,10 +34,10 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "0d34328f1114",
+        "1766bb2b39d8",
         "3fe9b5ec74fc",
         "4510e0b854aa",
-        "9a2f7532daaa",
-        "9ce8b11a5785"
+        "8b0cb0d81469"
       ],
       "verified_by": [
         "tests/deployment/test_release_workflow_sources.py:553",
@@ -48,10 +53,10 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "0d34328f1114",
+        "1766bb2b39d8",
         "3fe9b5ec74fc",
         "4510e0b854aa",
-        "9a2f7532daaa",
-        "9ce8b11a5785"
+        "8b0cb0d81469"
       ],
       "verified_by": [
         "tests/deployment/test_release_workflow_sources.py:553",
@@ -133,7 +138,12 @@
         "ARBORA-RELEASE-R003.4.1",
         "ARBORA-RELEASE-R003.4.2",
         "ARBORA-RELEASE-R003.4.3",
-        "ARBORA-RELEASE-R003.4.4"
+        "ARBORA-RELEASE-R003.4.4",
+        "ARBORA-RELEASE-R003.4.5",
+        "ARBORA-RELEASE-R003.4.6",
+        "ARBORA-RELEASE-R003.4.8",
+        "ARBORA-RELEASE-R003.4.9",
+        "ARBORA-RELEASE-R003.4.10"
       ]
     },
     {
@@ -185,6 +195,52 @@
         "tests/api/test_task_plan_schema_pin.py:246",
         "tests/api/test_task_plan_schema_pin.py:254"
       ]
+    },
+    {
+      "id": "ARBORA-RELEASE-R003.4.5",
+      "title": "Governed fleet tools and caller in plan steps",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "39537773ab6c",
+        "5b24d7657890",
+        "7faa685b3ee9",
+        "b0b90565cb9e"
+      ],
+      "verified_by": [
+        "tests/api/test_plan_run_ops.py:455",
+        "tests/api/test_plan_run_ops.py:473",
+        "tests/api/test_plan_run_ops.py:484",
+        "tests/api/test_plan_run_ops.py:492",
+        "tests/api/test_plan_run_ops.py:499"
+      ]
+    },
+    {
+      "id": "ARBORA-RELEASE-R003.4.6",
+      "title": "Plan run accepts typed tool steps",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-RELEASE-R003.4.8",
+      "title": "Run reply lists resolved arguments",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-RELEASE-R003.4.9",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-RELEASE-R003.4.10",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     },
     {
       "id": "ARBORA-RELEASE-R003.5",

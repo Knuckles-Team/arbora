@@ -65,6 +65,7 @@ def _project(raw: Any) -> CurrentPlanRead:
             "observed_at_ms",
             "expires_at_ms",
             "items",
+            "task_plan",
         }:
             return UNAVAILABLE
         if not isinstance(raw["items"], list):

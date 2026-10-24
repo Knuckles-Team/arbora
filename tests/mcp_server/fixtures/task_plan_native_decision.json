@@ -1,0 +1,253 @@
+{
+  "schema_version": 2,
+  "inputs_digest": "sha256:6a74796749038dd56b8cfb5297671b62dd1e55e1b392d3d3b026bd7b8c58d966",
+  "records": [
+    {
+      "schema_version": 2,
+      "record_id": "decision:6a74796749038dd56b8cfb5297671b62dd1e55e1b392d3d3b026bd7b8c58d966",
+      "tenant_id": "local",
+      "caller_principal": "principal:sha256:2f183a4e64493af3f377f745eda502363cd3e7ef6e4d266d444758de0a85fcc8",
+      "created_at_ms": 1792650126752,
+      "question": {
+        "question_id": "task-plan:a2a-15b5abb7f17db4ad981f888b5d77a2a3f0ae9634a8e9bba3fe7cb009988f7869",
+        "kind": "task_plan",
+        "safety": "ordinary"
+      },
+      "candidate_source": {
+        "source": "declared",
+        "options_digest": "sha256:982dc1b805967ea98bd02031a33466ef260ec4147f2872fcf0464f63122b25d9"
+      },
+      "inputs": {
+        "feature_schema": {
+          "component_id": "rolling-schema-ace4603da44e4e99929aa926562625fc",
+          "kind": "feature_schema",
+          "definition_digest": "sha256:c802a728fe1059505924ebe28533cc588b5f3488c71bb7184ccad3f705b2503f"
+        },
+        "head": null,
+        "policy": {
+          "policy": "default"
+        },
+        "policy_digest": "sha256:7f5b46402082d1169d80cf7968c1c5548e809d2af135ad5202723cdffec55c77",
+        "params": [
+          {
+            "name": "task_plan",
+            "value": {
+              "type": "task_plan",
+              "value": {
+                "tasks": [
+                  {
+                    "task_id": "A",
+                    "prompt": "EXECUTE_A",
+                    "depends_on": []
+                  },
+                  {
+                    "task_id": "B",
+                    "prompt": "EXECUTE_B",
+                    "depends_on": []
+                  },
+                  {
+                    "task_id": "C",
+                    "prompt": "EXECUTE_C",
+                    "depends_on": [
+                      "B"
+                    ]
+                  },
+                  {
+                    "task_id": "JOIN",
+                    "prompt": "EXECUTE_JOIN",
+                    "depends_on": [
+                      "A",
+                      "C"
+                    ]
+                  }
+                ],
+                "output_task_id": "JOIN",
+                "max_concurrency": 2,
+                "max_steps": 4
+              }
+            }
+          }
+        ],
+        "classification_rules": null,
+        "feature_matrix": {
+          "matrix": "inline",
+          "candidate_ids": [
+            "A",
+            "B",
+            "C",
+            "JOIN"
+          ],
+          "feature_names": [
+            "text",
+            "coverage"
+          ],
+          "scale": "q32",
+          "values": []
+        },
+        "shortlist": {
+          "ann_recall_mode": null,
+          "now_ms": 1792650126752,
+          "embedder_model_digest": null
+        },
+        "exploration": null
+      },
+      "inputs_digest": "sha256:6a74796749038dd56b8cfb5297671b62dd1e55e1b392d3d3b026bd7b8c58d966",
+      "resolution_kind": "constraint",
+      "evidence_class": "claim",
+      "trace_fidelity": {
+        "fidelity": "full_step"
+      },
+      "premises": [
+        {
+          "subject": "rolling-schema-ace4603da44e4e99929aa926562625fc",
+          "fact": "feature_schema",
+          "class": "definition",
+          "provenance": {
+            "provenance": "publisher",
+            "component_id": "rolling-schema-ace4603da44e4e99929aa926562625fc",
+            "definition_digest": "sha256:c802a728fe1059505924ebe28533cc588b5f3488c71bb7184ccad3f705b2503f"
+          }
+        },
+        {
+          "subject": "policy",
+          "fact": "decision_policy",
+          "class": "definition",
+          "provenance": {
+            "provenance": "policy",
+            "policy_digest": "sha256:7f5b46402082d1169d80cf7968c1c5548e809d2af135ad5202723cdffec55c77"
+          }
+        },
+        {
+          "subject": "A",
+          "fact": "declared_option",
+          "class": "claim",
+          "provenance": {
+            "provenance": "request",
+            "field": "candidates.options"
+          }
+        },
+        {
+          "subject": "B",
+          "fact": "declared_option",
+          "class": "claim",
+          "provenance": {
+            "provenance": "request",
+            "field": "candidates.options"
+          }
+        },
+        {
+          "subject": "C",
+          "fact": "declared_option",
+          "class": "claim",
+          "provenance": {
+            "provenance": "request",
+            "field": "candidates.options"
+          }
+        },
+        {
+          "subject": "JOIN",
+          "fact": "declared_option",
+          "class": "claim",
+          "provenance": {
+            "provenance": "request",
+            "field": "candidates.options"
+          }
+        },
+        {
+          "subject": "A",
+          "fact": "task_plan_claim:dependencies=;prompt_digest=sha256:0f51797a93ce18d982e36c5897d0873f2faed01537b40badaf808248a382ac87",
+          "class": "claim",
+          "provenance": {
+            "provenance": "request",
+            "field": "params.task_plan.tasks"
+          }
+        },
+        {
+          "subject": "B",
+          "fact": "task_plan_claim:dependencies=;prompt_digest=sha256:0bb33f1bbbb1013b770d9f8b0234a6330ebc7e9d3d26caa4fedac0c92602b18f",
+          "class": "claim",
+          "provenance": {
+            "provenance": "request",
+            "field": "params.task_plan.tasks"
+          }
+        },
+        {
+          "subject": "C",
+          "fact": "task_plan_claim:dependencies=B;prompt_digest=sha256:71c3e23f4099518b804d620aa4c46ca9f2924190fb84ee2b9dd8d31840f33b25",
+          "class": "claim",
+          "provenance": {
+            "provenance": "request",
+            "field": "params.task_plan.tasks"
+          }
+        },
+        {
+          "subject": "JOIN",
+          "fact": "task_plan_claim:dependencies=A,C;prompt_digest=sha256:a083b0932b43df13e3affe5be6b23b26e0e5106cfcd7377cf50272fe3a1c7e55",
+          "class": "claim",
+          "provenance": {
+            "provenance": "request",
+            "field": "params.task_plan.tasks"
+          }
+        },
+        {
+          "subject": "bounded-explicit-dag-v1",
+          "fact": "bounded_explicit_dag:max_steps=4;max_concurrency=2;plan_digest=sha256:084edc417aeace65eeb66f570199d6f46d1b2be7ae25e28fe2157703c29f12db",
+          "class": "definition",
+          "provenance": {
+            "provenance": "policy",
+            "policy_digest": "sha256:d1d62f424ffbe609df32d6e4639c4b83b2b5cfd462b450146f25bb49d8b9da85"
+          }
+        }
+      ],
+      "outcome": {
+        "outcome": "advisory",
+        "scores": [],
+        "calibrated": false
+      },
+      "task_plan": {
+        "tasks": [
+          {
+            "task_id": "A",
+            "prompt": "EXECUTE_A",
+            "depends_on": []
+          },
+          {
+            "task_id": "B",
+            "prompt": "EXECUTE_B",
+            "depends_on": []
+          },
+          {
+            "task_id": "C",
+            "prompt": "EXECUTE_C",
+            "depends_on": [
+              "B"
+            ]
+          },
+          {
+            "task_id": "JOIN",
+            "prompt": "EXECUTE_JOIN",
+            "depends_on": [
+              "A",
+              "C"
+            ]
+          }
+        ],
+        "output_task_id": "JOIN",
+        "max_concurrency": 2,
+        "max_steps": 4,
+        "total_tasks": 4,
+        "policy_revision": "bounded-explicit-dag-v1",
+        "policy_digest": "sha256:d1d62f424ffbe609df32d6e4639c4b83b2b5cfd462b450146f25bb49d8b9da85",
+        "input_digest": "sha256:8e500fa456a49c334317f866ef6d72a9026edffd7ef43227b3a7a881e7ab481e",
+        "plan_digest": "sha256:084edc417aeace65eeb66f570199d6f46d1b2be7ae25e28fe2157703c29f12db"
+      },
+      "calibration": null,
+      "explanation": null,
+      "audit": null,
+      "logging_propensities": [],
+      "nl_binding": null,
+      "synthetic_evidence": false,
+      "record_digest": "sha256:b27b97a5c4364c670735ace48b31d7f7e572816735bd71baf29a81ac423cfb85"
+    }
+  ]
+}

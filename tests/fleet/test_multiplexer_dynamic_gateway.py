@@ -1161,6 +1161,32 @@ async def test_probe_server_preserves_an_mcp_apps_tool_descriptor_meta(tmp_path)
     assert info["tools"][0]["meta"] == ui_meta
 
 
+@pytest.mark.spec("ARBORA-OPS-R020.6.6")
+async def test_probe_server_keeps_a_mounted_tools_annotations(tmp_path):
+    """A mounted child's probe carries each tool's annotations.
+
+    The catalog classifies a tool's effect from them. Without them a read-only
+    source tool resolved as a write after its child remounted, and the source
+    sync's governed READ call was refused.
+    """
+    from mcp.types import ToolAnnotations
+
+    mux = _mux_with_children(tmp_path, {CNT: [(CNT_TOOL, "containers")]})
+
+    async def fake_start_child(server_name, cfg):
+        tool = _fake_tool(CNT_TOOL, "containers")
+        tool.annotations = ToolAnnotations(read_only_hint=True)
+        return server_name, AsyncMock(), [tool], cfg
+
+    mux._start_child = AsyncMock(side_effect=fake_start_child)
+    await mux.mount_child(CNT)
+    mux._open_one_session = AsyncMock(side_effect=AssertionError("must not reconnect"))
+
+    info = await mux.probe_server(CNT)
+
+    assert info["tools"][0]["annotations"]["read_only_hint"] is True
+
+
 async def test_live_tools_for_server_omits_meta_key_when_absent(tmp_path):
     """An ordinary (non-Apps) tool's dict shape is unchanged (BUG-071 is additive)."""
     mux = _mux_with_children(tmp_path, {CNT: [(CNT_TOOL, "containers")]})

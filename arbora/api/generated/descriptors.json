@@ -4516,6 +4516,18 @@
     {
       "domain": "eg",
       "examples": [
+        "NlQueryExplain query"
+      ],
+      "id": "eg.query.NlQueryExplain",
+      "summary": "EG-FEDERATED-QUERY-R058.2.2.1: NlQuery plus the executed UQL text. It shares the planner, budget, authority and refusals of NlQuery",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
         "QueryForeignColumns query"
       ],
       "id": "eg.query.QueryForeignColumns",
@@ -6138,6 +6150,30 @@
       "verb": "ask"
     },
     {
+      "domain": "runs",
+      "examples": [
+        "Replay public events of an owned run"
+      ],
+      "id": "runs.events",
+      "summary": "Replay public events of an owned run",
+      "tags": [
+        "runs"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "runs",
+      "examples": [
+        "Read an owned durable run"
+      ],
+      "id": "runs.get",
+      "summary": "Read an owned durable run",
+      "tags": [
+        "runs"
+      ],
+      "verb": "ask"
+    },
+    {
       "domain": "security",
       "examples": [
         "show the current security posture"
@@ -6270,5 +6306,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "be39189babc1ee1a494aaf19447b36474145beabb231a3d5a95690be58cb10aa"
+  "registry_digest": "bea61b1dae6b57e480727d04c03e9b827d4f0e7a1b3c6230a7a2d801961b5bda"
 }

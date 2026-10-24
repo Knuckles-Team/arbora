@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import replace
 from types import SimpleNamespace
+from typing import Any
 
 import pytest
 
@@ -122,22 +123,27 @@ async def test_native_call_cancel_closes_origin_and_unsubscribes() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("native", [False, True])
+@pytest.mark.parametrize("status", ["running", "cancelled"])
 async def test_a2a_durable_cancel_revokes_real_pending_native_call(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, native: bool, status: str
 ) -> None:
     admitted = session()
-    task_id = "a2a-" + "a" * 64
+    run_id = "a2a-" + "a" * 64
+    task_id = "work-item:" + "b" * 64 if native else run_id
     ready = asyncio.Event()
     captured = []
-    durable = {"status": "running"}
+    durable = {"status": status}
     authority = WorkItemA2AAuthority(lambda: object())
-    item = {
+    item: dict[str, Any] = {
         "kind": "orchestrator_task",
         "metadata": {
             "a2a_schema": "arbora-a2a-unary-v1",
             "a2a_owner_ref": authority._owner_ref(admitted),
         },
     }
+    if native:
+        item["metadata"]["a2a_run_id"] = run_id
     monkeypatch.setattr(work_items, "get_work_item", lambda *_: {**item, **durable})
     monkeypatch.setattr(authority, "_project", lambda value, **_: value)
 
@@ -172,9 +178,7 @@ async def test_a2a_durable_cancel_revokes_real_pending_native_call(
     with use_session(admitted):
         pending = asyncio.create_task(
             AgentRunPort(Executor()).execute_agent(
-                AgentExecutionRequest(
-                    agent_name="web", task="navigate", run_id=task_id
-                ),
+                AgentExecutionRequest(agent_name="web", task="navigate", run_id=run_id),
                 session=admitted,
             )
         )
@@ -219,7 +223,7 @@ async def test_refused_a2a_cancel_does_not_revoke_origin(
     admitted = session()
     task_id = "a2a-" + "b" * 64
     authority = WorkItemA2AAuthority(lambda: object())
-    item = {
+    item: dict[str, Any] = {
         "kind": "orchestrator_task",
         "status": "running",
         "metadata": {

@@ -6,13 +6,13 @@ from types import SimpleNamespace
 
 import pytest
 
-from arbora.api.http.browser_app import create_browser_api_application
+from arbora.api.http.browser_app import (
+    create_browser_api_application,
+    create_webui_session_boundary,
+)
 from arbora.identity.admission import BrowserAdmission
 from arbora.identity.issuer import LocalIssuer
-from arbora.webui_host.session_boundary import (
-    WebUISessionBoundary,
-    identity_factory_kwargs,
-)
+from arbora.webui_host.session_boundary import identity_factory_kwargs
 from tests.api._support import identity_read_op
 from tests.identity.test_console_admission import CallerFixture, OwnersFixture
 from tests.identity.test_modes_and_browser import ORIGIN, request_scope
@@ -170,7 +170,9 @@ def test_actual_webui_factory_dispatches_only_canonical_bound_operations(
             invoke=invoke,
             max_in_flight=1,
         )
-        boundary = WebUISessionBoundary(admission, auth_app, operations=operations)
+        boundary = create_webui_session_boundary(
+            admission=admission, auth_app=auth_app, operations=operations
+        )
         if (
             auth_mode == "eg"
             and "auth_mode" not in inspect.signature(create_agent_web_app).parameters

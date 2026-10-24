@@ -23,6 +23,11 @@ Governing [spec](spec.md) and [plan](plan.md).
 - [x] `ARBORA-RELEASE-R003.4.2` — publish the plan to the work item through `PublishCurrentPlan` for replay.
 - [ ] `ARBORA-RELEASE-R003.4.3` — raise the engine floor to `epistemic-graph[server]>=2.27.5` once it is on the package index (agent-utilities 3.1.0 floor done); then rerun the served tests on the real engine facade.
 - [ ] `ARBORA-RELEASE-R003.4.4` — pin the exported schema body with `gen_api`, check it at start-up and publish it once per tenant. After EG 2.27.5, confirm the export module, raise the floor and regenerate.
+- [ ] `ARBORA-RELEASE-R003.4.5` — governed fleet tools and caller in plan steps. Done: `fleet_tools`, `fleet_call`, `run.fleet_calls`. Open: supply the governed `ToolCaller` for typed tool steps. Key it by record, task and call. Write one audit event per call.
+- [ ] `ARBORA-RELEASE-R003.4.6` — Accept typed tool steps in `agents.plan_run`; pass engine refusals through.
+- [ ] `ARBORA-RELEASE-R003.4.8` — Return resolved arguments, results and outcome per step.
+- [ ] `ARBORA-RELEASE-R003.4.9` — Wire `handle_plan_run` to the engine calls, the caller and the step records.
+- [ ] `ARBORA-RELEASE-R003.4.10` — Prove cross-connector data passing through the served operation.
 - [ ] `ARBORA-RELEASE-R003.5` — connector-certification row.
 - [ ] `ARBORA-RELEASE-R003.6` — write-back receipt row.
 - [ ] `ARBORA-RELEASE-R003.7` — browser-and-identity-provider login probe row.
