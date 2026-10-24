@@ -40,9 +40,17 @@ async def test_submit_retry_get_list_cancel_use_returned_engine_id(
         return True
 
     engine = SimpleNamespace(
+        work_item_graph="private-owner",
+        graph_compute=SimpleNamespace(
+            for_graph=lambda graph: SimpleNamespace(
+                async_client=SimpleNamespace(
+                    work_items=SimpleNamespace(get_run=AsyncMock(return_value=None))
+                )
+            )
+        ),
         work_items=SimpleNamespace(
             list=lambda **kw: {"items": list(rows.values()), "next_cursor": None}
-        )
+        ),
     )
     monkeypatch.setattr(work_items, "submit_work_item_atomic", submit)
     monkeypatch.setattr(work_items, "get_work_item", lambda engine, key: rows.get(key))
@@ -196,3 +204,37 @@ def test_native_admission_conflict_translates_at_a2a_boundary(monkeypatch, code)
             description="input",
             metadata={},
         )
+
+
+@pytest.mark.asyncio
+async def test_native_access_denied_is_unavailable_to_foreign_owner(monkeypatch):
+    from epistemic_graph import EngineResponseError
+
+    from arbora.a2a.authority import A2ATaskNotCancelable
+
+    authority = WorkItemA2AAuthority(lambda: object())
+    monkeypatch.setattr(authority, "_session", lambda scope: SESSION)
+    monkeypatch.setattr(authority, "_engine", lambda: (object(), object()))
+
+    def denied(*args):
+        raise EngineResponseError("ACCESS_DENIED", "private native graph detail")
+
+    monkeypatch.setattr(work_items, "get_work_item", denied)
+    assert await authority.get("work-item:" + "e" * 64) is None
+    with pytest.raises(A2ATaskNotCancelable):
+        await authority.cancel("work-item:" + "e" * 64)
+
+
+def test_owner_lookup_does_not_hide_other_native_failures(monkeypatch):
+    from epistemic_graph import EngineResponseError
+
+    authority = WorkItemA2AAuthority(lambda: object())
+    monkeypatch.setattr(authority, "_session", lambda scope: SESSION)
+    monkeypatch.setattr(authority, "_engine", lambda: (object(), object()))
+
+    def unavailable(*args):
+        raise EngineResponseError("INTERNAL", "native failure")
+
+    monkeypatch.setattr(work_items, "get_work_item", unavailable)
+    with pytest.raises(EngineResponseError, match="INTERNAL"):
+        authority._authorized_item("work-item:" + "e" * 64, "kg:read")
