@@ -238,6 +238,7 @@ Preserve all existing R003 tasks and receipts. These added runtime cases have no
 - [ ] **ARBORA-FLEET-R015.2:** Answer a connector's destructive confirmation from a consumed plan; decline everything else.
 - [ ] **ARBORA-FLEET-R041.15:** Read captured pack bodies from the SDK 0.5 archive section.
 - [ ] **ARBORA-FLEET-R041.16:** Serve connector pack status as a read (`fleet.packs.status`).
+- [x] **ARBORA-FLEET-R041.17:** Write the agent-library catalog nodes into EG on each onboarding pass.
 - [ ] **ARBORA-FLEET-R042:** arbora registers connector data resources as virtual-graph sources by policy (rollup).
 - [ ] **ARBORA-FLEET-R042.1:** Model.
 - [ ] **ARBORA-FLEET-R042.2:** Behavior.
