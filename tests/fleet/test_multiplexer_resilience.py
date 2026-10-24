@@ -191,7 +191,7 @@ async def test_multiplexer_opens_pool_size_connections_for_http_child(
     connects: list[str] = []
 
     @contextlib.asynccontextmanager
-    async def fake_http(url, *, http_client=None):
+    async def fake_http(url, *, http_client=None, max_sse_event_size=None):
         # MCP SDK v2 signature: (url, *, http_client, terminate_on_close), and
         # it yields (read, write) — no third get_session_id element.
         connects.append(url)

@@ -218,6 +218,70 @@ def _fleet_details(code: str, details: Mapping[str, Any]) -> dict[str, str]:
     return projected
 
 
+#: Field-name lists an ``INVALID_ARGUMENT`` refusal may name (ARBORA-OPS-R009.4).
+_ARGUMENT_LISTS = ("fields", "unexpected", "missing", "invalid", "required")
+_ENGINE_REASON = re.compile(r"\b[A-Z][A-Z0-9]+(?:_[A-Z0-9]+)+\b")
+_ENGINE_AT = re.compile(r"\bat (\d{1,6}:\d{1,6})\b")
+
+
+def _short_names(values: Any) -> list[str] | None:
+    if not isinstance(values, (list, tuple)) or not values or len(values) > 64:
+        return None
+    if any(not isinstance(item, str) or len(item) > 128 for item in values):
+        return None
+    return list(values)
+
+
+def _argument_details(details: Mapping[str, Any]) -> dict[str, Any]:
+    """The field names an argument refusal names, never an input value.
+
+    ARBORA-OPS-R009.4: the public envelope keeps ``field``, the field-name
+    lists and an Arbora-authored ``reason``. Each is bounded; anything else is
+    dropped.
+    """
+    public: dict[str, Any] = {}
+    field_name = details.get("field")
+    if isinstance(field_name, str) and 0 < len(field_name) <= 128:
+        public["field"] = field_name
+    for key in _ARGUMENT_LISTS:
+        names = _short_names(details.get(key))
+        if names is not None:
+            public[key] = names
+    reason = details.get("reason")
+    if isinstance(reason, str) and 0 < len(reason) <= 200:
+        public["reason"] = reason
+    return public
+
+
+def engine_reason_details(detail: str | None) -> dict[str, str]:
+    """The engine's own reason code and source position, from its detail text.
+
+    ARBORA-OPS-R009.4: the engine detail stays in the operator log. The public
+    envelope gets only the first upper-snake reason code (``UQL_TRAILING_TOKENS``)
+    and an ``at line:column`` position. Neither carries query data.
+    """
+    text = (detail or "")[:2_000]
+    found = _ENGINE_REASON.search(text)
+    if found is None:
+        return {}
+    public = {"reason_code": found.group(0)[:64]}
+    position = _ENGINE_AT.search(text)
+    if position is not None:
+        public["at"] = position.group(1)
+    return public
+
+
+def _engine_details(details: Mapping[str, Any]) -> dict[str, Any]:
+    public: dict[str, Any] = {}
+    code = details.get("reason_code")
+    if isinstance(code, str) and _ENGINE_REASON.fullmatch(code) and len(code) <= 64:
+        public["reason_code"] = code
+        at = details.get("at")
+        if isinstance(at, str) and re.fullmatch(r"\d{1,6}:\d{1,6}", at):
+            public["at"] = at
+    return public
+
+
 def _public_details(
     code: ArboraErrorCode, details: Mapping[str, Any]
 ) -> dict[str, Any]:
@@ -230,6 +294,8 @@ def _public_details(
         return _confirmation_details(code, details)
     if code == ArboraErrorCode.INDETERMINATE:
         return _indeterminate_details(details)
+    if code == ArboraErrorCode.INVALID_ARGUMENT:
+        return _argument_details(details)
     allowed = {
         ArboraErrorCode.SCOPE_REQUIRED: "missing_scopes",
         ArboraErrorCode.LOAD_CAP_EXCEEDED: "loaded_items",
@@ -364,7 +430,8 @@ def _classify_op_error(
     source = getattr(error, "source", "arbora")
     if source == "engine":
         status, retryable = _engine_error(error.code)
-        return error.code, "engine", status, retryable, {}
+        details = _engine_details(getattr(error, "details", None) or {})
+        return error.code, "engine", status, retryable, details
     if source == "fleet":
         return _classify_fleet_code(error.code, retryable=False, details=error.details)
     if source != "arbora":
