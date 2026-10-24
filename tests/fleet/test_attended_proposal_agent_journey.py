@@ -141,6 +141,10 @@ async def _served(
         await mux.aclose()
 
 
+def _succeeded(content: object) -> bool:
+    return isinstance(content, dict) and content.get("ok") is True
+
+
 @dataclass
 class _Model:
     payload: dict[str, Any]
@@ -157,7 +161,7 @@ class _Model:
         ]
         self.observed.extend(part.content for part in returns)
         if not returns or (
-            self.repeat and len(returns) == 1 and returns[-1].content.get("ok") is True
+            self.repeat and len(returns) == 1 and _succeeded(returns[-1].content)
         ):
             return ModelResponse(
                 parts=[
