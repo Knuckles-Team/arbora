@@ -438,7 +438,15 @@ __all__ = ["EG_RECEIPT_DIGEST", "ENGINE_ERRORS", "REGISTRY_DIGEST"]
         ROOT / "docs/api/generated.ts": _ts_client(registry),
     }
     outputs.update(_shared_schema_outputs(registry))
+    outputs[GENERATED / "task_plan_schema.json"] = _task_plan_schema_pin()
     return outputs
+
+
+def _task_plan_schema_pin() -> bytes:
+    """The task-plan feature-schema pin from the installed engine (R003.4.4)."""
+    from arbora.api import task_plan_schema
+
+    return task_plan_schema.pin_bytes(task_plan_schema.generate_pin())
 
 
 def _shared_schema_outputs(registry: dict[str, Any]) -> dict[Path, bytes]:

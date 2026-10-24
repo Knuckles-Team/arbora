@@ -376,19 +376,6 @@
         "title": "CapacitySetModeParams",
         "type": "object"
       },
-      "Schema18ac9ddd6db535265f68136dbc8adf3281c24b3db640dd19a5fd79c99dc35887": {
-        "additionalProperties": false,
-        "properties": {
-          "value": {
-            "$ref": "#/components/schemas/Schemacf39ffc76907695a68d495a9c1e411fd37da742cfa5f8b9f90231effff240e3c"
-          }
-        },
-        "required": [
-          "value"
-        ],
-        "title": "IngestSourceStatusResult",
-        "type": "object"
-      },
       "Schema18e842c4d42e22675d17aa948633de272a4c2d551e05a3b676728e22afc1f55b": {
         "items": {
           "$ref": "#/components/schemas/Schemab697b1595c2d8f9677b6d14572d7a100ee9694279919359d64f493f6cadc3541"
@@ -1956,6 +1943,19 @@
           }
         },
         "title": "FleetUnloadParams",
+        "type": "object"
+      },
+      "Schemab2e631b4636bd6bbe796db78f5f0efafe42402deb58b8bc7828ce6ee8e61274a": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "IngestSourceStatusResult",
         "type": "object"
       },
       "Schemab3f000c70ab02110b0c2096d32ea30c2b17fe66b750ffbbf1cb5aed4fc0290fa": {
@@ -9474,6 +9474,74 @@
         ]
       }
     },
+    "/api/v1/ops/eg.coordination.GetCurrentPlan": {
+      "post": {
+        "operationId": "eg.coordination.GetCurrentPlan",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/GetCurrentPlan"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.coordination.json#/methods/GetCurrentPlan"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "authoritative owner-bound current plan and live lease snapshot",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.coordination.GetRunWorkItem": {
+      "post": {
+        "operationId": "eg.coordination.GetRunWorkItem",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/GetRunWorkItem"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.coordination.json#/methods/GetRunWorkItem"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "owner-bound immutable run admission and current caller-safe WorkItem snapshot",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.coordination.GetWorkItem": {
       "post": {
         "operationId": "eg.coordination.GetWorkItem",
@@ -9741,6 +9809,40 @@
           }
         },
         "summary": "monotonic retained-footprint observation replaces the prior native charge; now_ms is authority-normalized",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.coordination.PublishCurrentPlan": {
+      "post": {
+        "operationId": "eg.coordination.PublishCurrentPlan",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/PublishCurrentPlan"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.coordination.json#/methods/PublishCurrentPlan"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "immutable owner and live fence bind revisioned current-plan publication",
         "tags": [
           "eg"
         ]
@@ -12704,6 +12806,40 @@
         ]
       }
     },
+    "/api/v1/ops/eg.ingestion.EnrichDocument": {
+      "post": {
+        "operationId": "eg.ingestion.EnrichDocument",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/EnrichDocument"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.ingestion.json#/methods/EnrichDocument"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "EG-UNIFIED-DATA-PLANE-R651.7: chunks one RLS-visible held Document and embeds the chunks. Chunk nodes, chunkOf edges, vectors and one enrichment record commit as one ChangeEnvelope. An enriched digest replays; a new digest supersedes the earlier chunks",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.ingestion.IndexRepository": {
       "post": {
         "operationId": "eg.ingestion.IndexRepository",
@@ -15385,6 +15521,40 @@
           }
         },
         "summary": "EPI-P3-7 (gap-fill) standalone Dung argumentation (grounded/preferred/stable) conflict resolution over a BeliefGraph snapshot; handler additionally gated `epistemic-tms`",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.query.SelectWebPages": {
+      "post": {
+        "operationId": "eg.query.SelectWebPages",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/SelectWebPages"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.query.json#/methods/SelectWebPages"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "EG-DECISION-ENGINE-R802: deterministic web page selection over search candidates. It dedupes by canonical URL and digest against held Documents and enforces a budget. It commits nothing and runs no model",
         "tags": [
           "eg"
         ]
@@ -19003,7 +19173,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Schema18ac9ddd6db535265f68136dbc8adf3281c24b3db640dd19a5fd79c99dc35887"
+                  "$ref": "#/components/schemas/Schemab2e631b4636bd6bbe796db78f5f0efafe42402deb58b8bc7828ce6ee8e61274a"
                 }
               }
             },
@@ -19961,5 +20131,5 @@
       }
     }
   },
-  "x-registry-digest": "04d459d0fbbfe7c67af34adf3a746fc406d79225a563cfb2c41748892709291b"
+  "x-registry-digest": "0d815ecc757df7970292c7351707af550aedb7559ebe541252bcc16e34a1143a"
 }

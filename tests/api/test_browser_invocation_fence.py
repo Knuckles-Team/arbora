@@ -60,6 +60,11 @@ def test_body_await_transition_is_fenced_before_existing_invoke(transition):
         request = Request(scope, receive)
 
         async def invoke(*args, **kwargs):
+            from arbora.api.contracts.session import current_session
+            from arbora.security.actor_context import current_actor
+
+            assert current_session() is session
+            assert current_actor() is session.actor
             calls.append(args)
             return {"ok": True}
 

@@ -20,6 +20,7 @@ __all__ = [
     "A2AOperationInvokeParams",
     "A2APlanConfirmParams",
     "A2ARouteDecision",
+    "A2AReplyUnavailable",
     "A2ASkill",
     "A2AStreamingAuthority",
     "A2ATask",
@@ -175,6 +176,15 @@ class A2AArtifact(_WireModel):
     artifact_id: str = Field(min_length=1, max_length=512)
     name: str | None = Field(default=None, max_length=256)
     parts: list[A2ATextPart] = Field(min_length=1, max_length=32)
+
+
+class A2AReplyUnavailable(_WireModel):
+    """A completed task can have an explicitly unavailable reply artifact."""
+
+    status: Literal["unavailable"] = "unavailable"
+    reason: Literal[
+        "payload_too_large", "payload_serialization_failed", "reply_too_large"
+    ]
 
 
 class A2ATaskStatus(_WireModel):

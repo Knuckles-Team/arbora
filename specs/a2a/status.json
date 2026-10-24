@@ -97,13 +97,15 @@
       "title": "A2A facade over the engine and agent services",
       "delivery_state": "SPECIFIED",
       "landed_in": [
+        "2763cd78b6bc",
         "a8ed61b538e7"
       ],
       "verified_by": [
+        "tests/a2a/test_native_task_reads.py:14",
         "tests/test_agent_runs.py:119",
         "tests/test_agent_runs.py:99",
-        "tests/test_agents_run_end_to_end.py:318",
-        "tests/test_agents_run_end_to_end.py:361"
+        "tests/test_agents_run_end_to_end.py:329",
+        "tests/test_agents_run_end_to_end.py:372"
       ],
       "rollup_of": [
         "ARBORA-A2A-R001.1",
@@ -307,7 +309,6 @@
       "title": "Full signed human approval chain and input-required task emission",
       "delivery_state": "SPECIFIED",
       "landed_in": [
-        "2ddd787cf31d",
         "c935d6686ef5",
         "cdde0200a54a"
       ],
@@ -356,7 +357,8 @@
       "title": "Native facts adapters and registration proof",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "2ddd787cf31d"
+        "2ddd787cf31d",
+        "67cfee453bf5"
       ],
       "verified_by": [
         "tests/identity/test_approval_authority.py:329",
@@ -572,7 +574,8 @@
       "title": "Advertise only what is wired",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "35257e780f7c"
+        "35257e780f7c",
+        "f4236300caf0"
       ],
       "verified_by": [
         "tests/a2a/test_models.py:38",
@@ -590,7 +593,8 @@
       "title": "Typed Agent Card capability-advertisement model",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "35257e780f7c"
+        "35257e780f7c",
+        "f4236300caf0"
       ],
       "verified_by": [
         "tests/a2a/test_models.py:39",
@@ -956,7 +960,7 @@
         "6794ac7c41af"
       ],
       "verified_by": [
-        "tests/test_agents_run_end_to_end.py:165"
+        "tests/test_agents_run_end_to_end.py:176"
       ]
     },
     {

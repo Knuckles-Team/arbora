@@ -361,3 +361,28 @@ def test_reader_without_a_ttl_reads_eg_every_time() -> None:
 def test_reader_rejects_a_negative_ttl() -> None:
     with pytest.raises(ValueError, match="snapshot_ttl_s"):
         FleetCatalogReader(FakeFleetCatalogPort(), snapshot_ttl_s=-1)
+
+
+@pytest.mark.spec("ARBORA-FLEET-R026.1")
+def test_default_bound_reads_a_fleet_above_8192_components() -> None:
+    pages = 100  # beyond the old 64-page default, within 256
+
+    class ManyPages:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        async def search_components(
+            self, request: ComponentSearchRequest
+        ) -> ComponentPage:
+            self.calls += 1
+            assert request.limit == 256
+            more = f"c{self.calls}" if self.calls < pages else None
+            return component_page(cursor=more)
+
+    port = ManyPages()
+    reader = FleetCatalogReader(port)  # type: ignore[arg-type]
+
+    async def drain() -> int:
+        return len([page async for page in reader._component_pages(CONTEXT, ())])
+
+    assert asyncio.run(drain()) == pages

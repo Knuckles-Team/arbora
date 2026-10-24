@@ -406,8 +406,14 @@ async def _provision_semantic_content(served_url: str) -> dict[str, Any]:
     return {"operation": "provision-semantic-content", "ok": True, **report}
 
 
-async def _onboard_fleet(served_url: str) -> dict[str, Any]:
-    """Run one full fleet onboarding pass under Arbora's process session."""
+async def _onboard_fleet(
+    served_url: str, allow_mass_withdrawal: frozenset[str] = frozenset()
+) -> dict[str, Any]:
+    """Run one full fleet onboarding pass under Arbora's process session.
+
+    ``allow_mass_withdrawal`` names the servers whose import the operator
+    approved to withdraw more than half of the published pack surface.
+    """
 
     from arbora.api.contracts.session import use_session
     from arbora.fleet.onboarding import (
@@ -424,7 +430,11 @@ async def _onboard_fleet(served_url: str) -> dict[str, Any]:
         engine = runtime._get_engine()
         bootstrap._wait_for_engine_materialization(engine)
         report = await onboard_fleet(
-            FleetOnboarding(engine=engine, session=session),
+            FleetOnboarding(
+                engine=engine,
+                session=session,
+                allow_mass_withdrawal=allow_mass_withdrawal,
+            ),
             configured_fleet_endpoints(exclude=self_served_connectors()),
             served_url=served_url,
         )
@@ -434,6 +444,13 @@ async def _onboard_fleet(served_url: str) -> dict[str, Any]:
         "ok": not report.failed,
         **report.as_dict(private=True),
     }
+
+
+def _server_names(values: list[str]) -> frozenset[str]:
+    """Repeatable, comma-separated server names as one set."""
+    return frozenset(
+        name.strip() for value in values for name in value.split(",") if name.strip()
+    )
 
 
 def _served_url_argument(parser: argparse.ArgumentParser, help_text: str) -> None:
@@ -456,9 +473,19 @@ def _parser() -> argparse.ArgumentParser:
         subparsers.add_parser("provision-semantic-content"),
         "MCP URL Arbora serves its content at (registered when absent).",
     )
+    onboard = subparsers.add_parser("onboard-fleet")
     _served_url_argument(
-        subparsers.add_parser("onboard-fleet"),
-        "MCP URL Arbora serves at; renews its own registrations when set.",
+        onboard, "MCP URL Arbora serves at; renews its own registrations when set."
+    )
+    onboard.add_argument(
+        "--allow-mass-withdrawal",
+        action="append",
+        default=[],
+        metavar="SERVER",
+        help=(
+            "Approve this server's pack import even when it withdraws more than"
+            " half of the published surface (repeatable, or comma-separated)."
+        ),
     )
     return parser
 
@@ -477,7 +504,9 @@ _OPERATIONS: dict[str, Any] = {
         _restore_validate(args.archive_root, args.scratch_root)
     ),
     "provision-semantic-content": _provision,
-    "onboard-fleet": lambda args: asyncio.run(_onboard_fleet(args.served_url)),
+    "onboard-fleet": lambda args: asyncio.run(
+        _onboard_fleet(args.served_url, _server_names(args.allow_mass_withdrawal))
+    ),
 }
 
 
@@ -498,6 +527,20 @@ def main(argv: list[str] | None = None) -> int:
     try:
         # The same shared config.json the served process reads.
         load_config()
+        from arbora.core.settings import runtime_config
+
+        if runtime_config.arbora_auth_mode == "none":
+            from argparse import Namespace
+            from urllib.parse import urlsplit
+
+            from arbora.security.anonymous import validate_startup
+
+            endpoint = urlsplit(getattr(args, "served_url", "") or "")
+            if endpoint.scheme != "http" or endpoint.username or endpoint.password:
+                raise ValueError(
+                    "Anonymous provisioning requires a local HTTP served URL"
+                )
+            validate_startup(Namespace(host=endpoint.hostname, auth_type="none"))
         report = _run(args)
     except Exception as exc:  # noqa: BLE001 - CLI returns one privacy-safe failure
         report = {

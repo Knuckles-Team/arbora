@@ -106,6 +106,10 @@ These checks do not prove authorized host logs or terminal startup.
 
 - `ARBORA-HOST-R009.7`: Exercise the real host routes with controlled session, grant and record owners over loopback HTTP. Check tenant/session isolation, denial, revocation during a read, expiry and record bounds. No deployed grant configuration is claimed.
 
+- `ARBORA-HOST-R009.8`: Mounted terminal checks await observed log and refusal states with a finite deadline.
+  A delayed real HTTP reader exercises scheduling beyond the old fixed sleep.
+  Revocation still clears previously shown records.
+
 - `ARBORA-HOST-R009.8`: Use real temporary files and loopback HTTP to test private projections, redaction, rotation, unsafe links and disabled viewing. Keep deployed policy and restart replay pending.
 
 - R009.8.2.2: Real retained-file restart through HTTP version two preserves
@@ -126,3 +130,17 @@ controlled existing owners. It tests expiry, revocation, changed revisions,
 resource replacement, cancellation and borrowed ownership. Missing runtime facts
 refuse before readiness. These fixtures grant no deployed access and do not
 qualify native session evidence, continuous request authorization or UI launch.
+
+## Bounded RunEvent JSON
+
+`tests/test_run_event_payloads.py` binds ARBORA-HOST-R001.2.1 and ARBORA-A2A-R001.
+Maximum ASCII, BMP, control, quote and astral-Unicode replies round-trip through
+the actual sink and reply projection for completed/stopped runs.
+The event mapping stays unchanged. Exactly 1 MiB of serialized JSON is accepted.
+One byte more becomes a bounded payload-error record retaining event identity and type.
+Serialization failures emit no private values. Task reads return typed unavailable
+reply metadata while preserving native completion status.
+A larger-than-65,536-character output remains intact in the stored event when it
+fits. It never appears as a falsely complete artifact. Failed-run partial output
+and malformed legacy records are not exposed or repaired. These bounded fixture
+checks do not substitute for native-engine restart acceptance.

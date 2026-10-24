@@ -30,6 +30,7 @@ from arbora.api.ops.source import (
     SourceTreeEntry,
     SourceTreeOutcome,
 )
+from arbora.security.anonymous import client_scope
 
 #: Keyset page size for label scans and engine batch reads.
 _PAGE_SIZE = 256
@@ -62,15 +63,13 @@ def _decode_properties(payload: Any) -> dict[str, Any] | None:
 
 
 async def _send(context: Any, graph: str, method: str, params: dict[str, Any]) -> Any:
-    """One admitted engine read under the caller's verified graph and claims."""
+    """One admitted engine read with the matching caller transport authority."""
     from epistemic_graph import EngineResponseError
     from epistemic_graph.generated import send_by_id
 
     from arbora.api.errors import EngineRefusal
 
-    with context.client.use_verified_context(
-        claim_values(context.caller.engine_claims)
-    ):
+    with client_scope(context.client, claim_values(context.caller.engine_claims)):
         try:
             return await send_by_id(context.client, method, params, graph)
         except EngineResponseError as exc:

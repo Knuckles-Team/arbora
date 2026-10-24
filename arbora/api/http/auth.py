@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from arbora.api.contracts.session import GraphSession
-    from arbora.api.invoke import VerifiedCaller
+    from arbora.api.invoke import RequestCaller
     from arbora.security.request_identity import VerifiedLocalBearer
 
 
@@ -82,6 +82,11 @@ class AmbientHTTPAuthenticator:
 
     def _credential_kind(self, request: Request) -> str:
         """Classify the presented credential; refuse ambiguous or malformed ones."""
+        from arbora.security.anonymous import enabled, validate_request
+
+        if enabled():
+            validate_request(request.scope)
+            return "none"
         state = request.scope.get("state") or {}
         cookie = request.cookies.get("__Host-arbora_session")
         admitted = state.get("arbora_session_admitted") is True
@@ -102,7 +107,7 @@ class AmbientHTTPAuthenticator:
             raise HTTPAuthenticationError("Verified browser authority required")
         return await verifier(request, session)
 
-    async def authenticate(self, request: Request) -> VerifiedCaller:
+    async def authenticate(self, request: Request) -> RequestCaller:
         """Resolve the authority already verified and bound to this request.
 
         ``session_for_request`` must reject credentials not verified for this
@@ -135,6 +140,12 @@ async def verified_bearer_session_for_request(request: Request) -> GraphSession:
     Each resolution verifies the presented credential afresh. Ambient sessions
     and request-state claims cannot establish authority for this request.
     """
+    from arbora.security.anonymous import enabled, validate_request
+    from arbora.security.anonymous import session as anonymous_session
+
+    if enabled():
+        validate_request(request.scope)
+        return anonymous_session()
     scope = request.scope
     headers = tuple(scope.get("headers", ()))
     try:

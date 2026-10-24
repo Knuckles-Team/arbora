@@ -131,3 +131,87 @@ def test_an_unscoped_empty_query_still_needs_browse() -> None:
         asyncio.run(_catalog().search(_CALLER, query=""))
     listed = asyncio.run(_catalog().search(_CALLER, query="", browse=True))
     assert len(listed["items"]) == 2
+
+
+@pytest.mark.spec("ARBORA-A2A-R009.1")
+def test_served_cypher_uses_public_row_decoder(monkeypatch) -> None:
+    """Native rows are MessagePack blobs, not already named dictionaries."""
+    import msgpack
+    from epistemic_graph.client import EpistemicGraphClient, QueryClient
+
+    from arbora.mcp_server import served_engine as served
+
+    calls: list[tuple[str, dict[str, Any], str | None]] = []
+
+    class Client(EpistemicGraphClient):
+        def __init__(self) -> None:
+            # The query decoder needs only the transport below, not a socket.
+            self._graph_name = "tenant__local"
+
+        async def _send(
+            self,
+            method: str,
+            params: dict[str, Any] | None = None,
+            graph: str | None = None,
+            *,
+            idempotency_key: str | None = None,
+        ) -> Any:
+            assert params is not None
+            calls.append((method, params, graph))
+            return {
+                "columns": ["payload"],
+                "rows": [msgpack.packb(['{"reply":"durable"}'], use_bin_type=True)],
+            }
+
+    view = SimpleNamespace(query=QueryClient(Client()))
+    engine = served.ServedEngine.__new__(served.ServedEngine)
+    monkeypatch.setattr(engine, "_session_client", lambda: view, raising=False)
+    assert engine.query_cypher(
+        "MATCH (e) WHERE e.run_id = $run_id RETURN e.payload AS payload",
+        {"run_id": "a2a-proof"},
+    ) == [{"payload": '{"reply":"durable"}'}]
+    assert len(calls) == 1
+    assert calls[0][1]["mode"] == "read"
+    assert "a2a-proof" in calls[0][1]["query"]
+
+
+@pytest.mark.spec("ARBORA-HOST-R001.2.4")
+def test_tool_call_run_events_carry_queryable_tool_provenance(monkeypatch) -> None:
+    from arbora import agent_runs
+
+    created: list[dict[str, Any]] = []
+
+    class _Engine:
+        def create_node(self, node_id: str, label: str, properties: Any) -> bool:
+            created.append(dict(properties))
+            return True
+
+    monkeypatch.setattr(agent_runs, "_engine", _Engine)
+    agent_runs.record_run_event(
+        {
+            "type": "tool_call",
+            "run_id": "a2a-1",
+            "step": 1,
+            "tool_name": "act",
+            "op": "fleet.call",
+            "server": "searxng-mcp",
+            "tool": "web_search",
+            "ok": True,
+        }
+    )
+    agent_runs.record_run_event({"type": "run_started", "run_id": "a2a-1"})
+    call, started = created
+    assert (
+        call["tool_name"],
+        call["op"],
+        call["server"],
+        call["tool"],
+        call["ok"],
+    ) == (
+        "act",
+        "fleet.call",
+        "searxng-mcp",
+        "web_search",
+        True,
+    )
+    assert "server" not in started and "tool" not in started

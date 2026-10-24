@@ -29,7 +29,7 @@ from arbora.api.invoke.executor import (
 from arbora.api.invoke.pipeline import InvokeServices, OperationRefused
 from arbora.api.invoke.plan import EgPlanStore
 from arbora.api.invoke.steps import (
-    VerifiedCaller,
+    RequestCaller,
     authenticate,
     claim_values,
     freeze_claims,
@@ -37,6 +37,7 @@ from arbora.api.invoke.steps import (
 from arbora.api.policy.eunomia import PolicyGate
 from arbora.api.registry import EgMethod, Registry
 from arbora.epistemic import ClientContext, EpistemicClientPool, VerifiedActor
+from arbora.security.anonymous import admitted_actor, session_context
 
 __all__ = [
     "SessionRequiredError",
@@ -86,7 +87,7 @@ def build_client_factory(
     return _client
 
 
-async def verify_current_from_session(caller: VerifiedCaller) -> VerifiedCaller:
+async def verify_current_from_session(caller: RequestCaller) -> RequestCaller:
     """Reconfirm the caller's session is current; refresh its engine claims.
 
     Mirrors ``arbora.mcp_server.runtime.verified_tool_session_scope``'s own
@@ -102,7 +103,7 @@ async def verify_current_from_session(caller: VerifiedCaller) -> VerifiedCaller:
     actor = session.actor
     if actor.actor_id != caller.principal or session.tenant != caller.tenant:
         raise SessionRequiredError("verified session no longer matches this caller")
-    claims = session.engine_verified_context()
+    claims = session_context(session)
     return replace(caller, engine_claims=freeze_claims(claims))
 
 
@@ -137,7 +138,7 @@ def build_service_claims(
 
 
 async def deny_subject_access(
-    _client: Any, _caller: VerifiedCaller, _subject: str
+    _client: Any, _caller: RequestCaller, _subject: str
 ) -> bool:
     """Deny service execution until a subject-access authority is composed."""
 
@@ -176,7 +177,7 @@ async def _caller_dispatch_graph(context: ExecutionContext) -> str:
         raise OperationRefused("UNAUTHENTICATED") from None
     if (
         current != caller
-        or actor.authenticated is not True
+        or (actor.authenticated is not True and not admitted_actor(actor))
         or actor.tenant_id != caller.tenant
     ):
         raise OperationRefused("UNAUTHENTICATED")
@@ -230,7 +231,7 @@ def build_operation_runtime(
         pool, graph=graph, connect_context=connect_context
     )
 
-    async def verify_bound_caller(caller: VerifiedCaller) -> VerifiedCaller:
+    async def verify_bound_caller(caller: RequestCaller) -> RequestCaller:
         current = await verify_current_from_session(caller)
         if _session_graph(current.session) != graph:
             raise SessionRequiredError("caller graph differs from the runtime graph")

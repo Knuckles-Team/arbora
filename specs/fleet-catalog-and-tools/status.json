@@ -42,6 +42,8 @@
     "ARBORA-FLEET-R012",
     "ARBORA-FLEET-R013",
     "ARBORA-FLEET-R014",
+    "ARBORA-FLEET-R014.1",
+    "ARBORA-FLEET-R014.2",
     "ARBORA-FLEET-R015",
     "ARBORA-FLEET-R015.1",
     "ARBORA-FLEET-R016",
@@ -65,6 +67,7 @@
     "ARBORA-FLEET-R029",
     "ARBORA-FLEET-R029.1",
     "ARBORA-FLEET-R026",
+    "ARBORA-FLEET-R026.1",
     "ARBORA-FLEET-R027",
     "ARBORA-FLEET-R028",
     "ARBORA-FLEET-R030",
@@ -110,6 +113,7 @@
     "ARBORA-FLEET-R019.2",
     "ARBORA-FLEET-R021.2",
     "ARBORA-FLEET-R027.7",
+    "ARBORA-FLEET-R027.8",
     "ARBORA-FLEET-R003.4",
     "ARBORA-FLEET-R003.5",
     "ARBORA-FLEET-R003.6",
@@ -146,6 +150,7 @@
     "ARBORA-FLEET-R039.5",
     "ARBORA-FLEET-R039.6",
     "ARBORA-FLEET-R040",
+    "ARBORA-FLEET-R040.1",
     "ARBORA-FLEET-R041",
     "ARBORA-FLEET-R041.1",
     "ARBORA-FLEET-R041.2",
@@ -157,6 +162,8 @@
     "ARBORA-FLEET-R041.8",
     "ARBORA-FLEET-R041.9",
     "ARBORA-FLEET-R041.10",
+    "ARBORA-FLEET-R041.11",
+    "ARBORA-FLEET-R041.12",
     "ARBORA-FLEET-R042",
     "ARBORA-FLEET-R042.1",
     "ARBORA-FLEET-R042.2",
@@ -614,7 +621,7 @@
     {
       "id": "ARBORA-FLEET-R014",
       "title": "Resolver ranks catalog items with partitioned feedback",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "43db6b7ac49b",
         "a2f74cb9621d"
@@ -623,6 +630,34 @@
         "tests/api/test_resolve.py:114",
         "tests/api/test_resolve.py:161",
         "tests/api/test_resolve.py:170"
+      ],
+      "rollup_of": [
+        "ARBORA-FLEET-R014.1",
+        "ARBORA-FLEET-R014.2"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R014.1",
+      "title": "`ask` does not route a plain question to an op it cannot run",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/api/test_resolve.py:259",
+        "tests/api/test_resolve.py:273",
+        "tests/api/test_resolve.py:288",
+        "tests/api/test_resolve.py:303"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R014.2",
+      "title": "A request verb is not evidence for an op",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "3597c590c8c9"
+      ],
+      "verified_by": [
+        "tests/api/test_resolve.py:314",
+        "tests/api/test_resolve.py:326"
       ]
     },
     {
@@ -896,12 +931,29 @@
     {
       "id": "ARBORA-FLEET-R026",
       "title": "The catalog admits each server on its own",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "5ecdfe7fbe9a",
         "619d25ac8e69",
         "d9015e6d6cda"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_fleet_catalog_reader.py:366"
+      ],
+      "rollup_of": [
+        "ARBORA-FLEET-R026.1"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R026.1",
+      "title": "Catalog scale bound",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5ecdfe7fbe9a"
+      ],
+      "verified_by": [
+        "tests/test_fleet_catalog_reader.py:366"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R027",
@@ -922,7 +974,8 @@
         "ARBORA-FLEET-R027.4",
         "ARBORA-FLEET-R027.5",
         "ARBORA-FLEET-R027.6",
-        "ARBORA-FLEET-R027.7"
+        "ARBORA-FLEET-R027.7",
+        "ARBORA-FLEET-R027.8"
       ]
     },
     {
@@ -1267,6 +1320,17 @@
       "verified_by": []
     },
     {
+      "id": "ARBORA-FLEET-R027.8",
+      "title": "Operator-approved mass withdrawal",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "524b0ceaaf9c"
+      ],
+      "verified_by": [
+        "tests/fleet/test_fleet_access_contracts.py:226"
+      ]
+    },
+    {
       "id": "ARBORA-FLEET-R003.4",
       "title": "Original writable-fleet acceptance residual",
       "delivery_state": "SPECIFIED",
@@ -1552,6 +1616,8 @@
       "title": "arbora serves and reports the prompts, skills and resources of each connector",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "3597c590c8c9",
+        "6815715c27d8",
         "abaee0920e29"
       ],
       "verified_by": [
@@ -1560,6 +1626,22 @@
         "tests/fleet/test_connector_surfaces.py:153",
         "tests/fleet/test_connector_surfaces.py:187",
         "tests/fleet/test_connector_surfaces.py:221"
+      ],
+      "rollup_of": [
+        "ARBORA-FLEET-R040.1"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R040.1",
+      "title": "The served gateway forwards the relay ops",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "3597c590c8c9",
+        "6815715c27d8"
+      ],
+      "verified_by": [
+        "tests/mcp_server/test_late_gateway_parity.py:29",
+        "tests/mcp_server/test_late_gateway_parity.py:37"
       ]
     },
     {
@@ -1578,7 +1660,9 @@
         "ARBORA-FLEET-R041.7",
         "ARBORA-FLEET-R041.8",
         "ARBORA-FLEET-R041.9",
-        "ARBORA-FLEET-R041.10"
+        "ARBORA-FLEET-R041.10",
+        "ARBORA-FLEET-R041.11",
+        "ARBORA-FLEET-R041.12"
       ]
     },
     {
@@ -1657,10 +1741,35 @@
     {
       "id": "ARBORA-FLEET-R041.10",
       "title": "Rules unchanged",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "a31aba1d54a2"
+      ],
       "verified_by": [
         "tests/fleet/test_handshake_onboard.py:251"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R041.11",
+      "title": "A connector that declares its data resources still onboards",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "846e2eb35dff",
+        "963a7d457622"
+      ],
+      "verified_by": [
+        "tests/fleet/test_resources_manifest_capture.py:33"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R041.12",
+      "title": "The pack capture stays under the connector rate limit",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "963a7d457622"
+      ],
+      "verified_by": [
+        "tests/fleet/test_paced_capture.py:23"
       ]
     },
     {

@@ -233,6 +233,11 @@ class ArboraConfig(BaseModel):
     certification_mode: Literal["disabled", "production"] = Field(
         default="disabled", alias="CERTIFICATION_MODE", description=""
     )
+    arbora_auth_mode: Literal["external", "none"] = Field(
+        default="external",
+        alias="ARBORA_AUTH_MODE",
+        description="Explicit tokenless local mode; external retains credential authentication.",
+    )
     chat_models: Any = Field(
         default_factory=lambda: [], alias="CHAT_MODELS", description=""
     )

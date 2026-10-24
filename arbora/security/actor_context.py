@@ -23,6 +23,7 @@ from enum import StrEnum
 class ActorType(StrEnum):
     """Provenance classification for a verified actor; it never grants access."""
 
+    ANONYMOUS = "anonymous"
     HUMAN = "human"
     AI_AGENT = "ai_agent"
     AUTOMATED_SERVICE = "automated_service"
@@ -90,8 +91,9 @@ class ActorContext:
 
     ``authenticated`` is True only when the identity was minted server-side
     from a validated credential (JWT via the gateway middleware or a validated
-    configured process credential). Caller-supplied identities remain
-    unauthenticated and therefore cannot authorize graph access.
+    configured process credential). Caller-supplied identities cannot authorize
+    graph access. Explicit local anonymous admission is separately represented
+    by ``authority_mode=none`` and never sets ``authenticated=True``.
     """
 
     actor_id: str = "system"
@@ -99,6 +101,7 @@ class ActorContext:
     roles: tuple[str, ...] = field(default_factory=tuple)
     tenant_id: str = ""
     authenticated: bool = False
+    authority_mode: str = "verified"
     # Raw IdP group memberships (Okta ``groups`` / Keycloak group mapper),
     # provider-normalized. ``roles`` is the effective *capability* set (roles ∪
     # scopes ∪ group-derived capabilities) that ACL checks read; ``groups`` is

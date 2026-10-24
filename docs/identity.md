@@ -1,5 +1,12 @@
 # Identity and authentication
 
+For the current explicit credentialless local instance, follow
+[the anonymous deployment runbook](deployment.md#explicit-local-anonymous-mode).
+That path has a fixed anonymous principal, no bootstrap user or claim token,
+and a separate anonymous graph store. It cannot be converted in place by the
+identity-broker transition commands described below. Those commands describe
+the separately released broker-managed account lifecycle.
+
 > The identity broker, local users, and mode transitions are available from the identity-broker release. Check the installed release and [capability status](status.md) before following this runbook. Earlier releases use the external OIDC configuration described in [deployment](deployment.md).
 
 Arbora keeps identity state in the engine and serves browser sign-in from its own identity broker. The durable mode is `none`, `local`, or `external`. `ARBORA_AUTH_MODE` seeds only a fresh store; a later environment edit does not change the stored mode. Use `arbora-identity transition` to change it. The engine still applies the same scopes and RBAC decisions in each mode.

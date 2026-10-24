@@ -1486,6 +1486,13 @@ def _request_capabilities() -> frozenset[str]:
     Either path (stdio or HTTP) must resolve to a concrete, authenticated
     capability set: there is no longer a transport that bypasses this check.
     """
+    from arbora.api.contracts.session import current_session
+    from arbora.security.anonymous import admitted_actor
+
+    session = current_session()
+    if session is not None and admitted_actor(session.actor):
+        session.ensure_authority_current()
+        return frozenset(session.scopes)
     try:
         from fastmcp.server.dependencies import get_access_token, get_http_request
 

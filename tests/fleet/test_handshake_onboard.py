@@ -256,8 +256,9 @@ def test_large_shrink_on_handshake_waits_for_mass_withdrawal_approval(
 
     imports = 0
 
-    async def held(self: Any, pack: Any) -> Any:
+    async def held(self: Any, pack: Any, *, allow_mass_withdrawal: bool = False) -> Any:
         nonlocal imports
+        assert allow_mass_withdrawal is False  # no operator approval on a handshake
         imports += 1
         violation = SimpleNamespace(
             code=SimpleNamespace(value="PACK_MASS_WITHDRAWAL"),

@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Iterator
+from contextlib import contextmanager
 from secrets import token_hex
 from typing import Any
 
@@ -12,6 +13,27 @@ from fastapi.responses import JSONResponse
 from arbora.api.registry import Invoke
 
 from .auth import HTTPAuthenticationError
+
+
+@contextmanager
+def caller_session_scope(caller: Any) -> Iterator[None]:
+    """Bind the authenticated caller's own verified session for one request.
+
+    Handlers that reach the engine through the served client read the ambient
+    ``GraphSession`` and actor, which the MCP transport binds per tool call.
+    The REST surface binds the same authority here, from the session the
+    request's bearer verified to -- never a process or synthesized one.
+    """
+    session = getattr(caller, "session", None)
+    if session is None:
+        yield None
+        return
+    from arbora.api.contracts.session import use_session
+    from arbora.security.actor_context import use_actor
+
+    with use_actor(session.actor), use_session(session):
+        yield None
+
 
 MAX_BODY_BYTES = 1_048_576
 MAX_KEY_LENGTH = 256
@@ -26,9 +48,11 @@ def _error(code: str, *, digest: str, op: str, request_id: str = "") -> JSONResp
         request_id=request_id or token_hex(12),
         registry_digest=digest,
     )
-    return JSONResponse(
-        envelope, status_code=status, headers={"Cache-Control": "no-store"}
-    )
+    headers = {"Cache-Control": "no-store"}
+    if status == 401:
+        # RFC 6750 section 3: a 401 names the scheme, as the MCP endpoint does.
+        headers["WWW-Authenticate"] = "Bearer"
+    return JSONResponse(envelope, status_code=status, headers=headers)
 
 
 async def _json_body_params(request: Request) -> dict[str, Any]:
@@ -132,15 +156,16 @@ def make_endpoint(
                 return _error("UNAUTHENTICATED", digest=digest, op=op.id)
             except IdentityUnavailable:
                 return _error("UNAVAILABLE", digest=digest, op=op.id)
-        outcome = await invoke(
-            op.id,
-            params,
-            caller,
-            _surface_for(request, caller, is_console_request),
-            services=services,
-            plan_ref=plan_ref,
-            idempotency_key=key,
-        )
+        with caller_session_scope(caller):
+            outcome = await invoke(
+                op.id,
+                params,
+                caller,
+                _surface_for(request, caller, is_console_request),
+                services=services,
+                plan_ref=plan_ref,
+                idempotency_key=key,
+            )
         return response(outcome, op, caller.request_id)
 
     async def endpoint(request: Request) -> JSONResponse:

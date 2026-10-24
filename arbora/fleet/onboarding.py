@@ -31,6 +31,7 @@ from pathlib import Path
 from typing import Any, Literal, cast
 
 from arbora.fleet.surfaces import pack_surface_report
+from arbora.security.anonymous import session_context
 
 logger = logging.getLogger(__name__)
 
@@ -178,6 +179,46 @@ class _PackResourceSession:
         return await self._session.read_resource(uri)
 
 
+#: Seconds between capture requests to one connector. The connector SDK's
+#: default per-caller limit is 10 requests/s with a burst of 20, and a pack
+#: capture makes one request per skill, prompt and resource, so an unpaced
+#: capture of a large pack is throttled mid-way (ARBORA-FLEET-R041.12).
+CAPTURE_REQUEST_INTERVAL_S = 0.125
+
+
+class _PacedSession:
+    """Spaces the capture's MCP requests so a connector never throttles them."""
+
+    def __init__(
+        self, session: Any, interval_s: float = CAPTURE_REQUEST_INTERVAL_S
+    ) -> None:
+        import asyncio
+
+        self._session = session
+        self._interval_s = interval_s
+        self._lock = asyncio.Lock()
+        self._last = float("-inf")
+
+    def __getattr__(self, name: str) -> Any:
+        import asyncio
+        import inspect
+        import time
+
+        target = getattr(self._session, name)
+        if not inspect.iscoroutinefunction(target):
+            return target
+
+        async def paced(*args: Any, **kwargs: Any) -> Any:
+            async with self._lock:
+                wait = self._last + self._interval_s - time.monotonic()
+                if wait > 0:
+                    await asyncio.sleep(wait)
+                self._last = time.monotonic()
+            return await target(*args, **kwargs)
+
+        return paced
+
+
 def _capture_kinds() -> tuple[Any, ...]:
     from agent_connector_sdk.artifacts.prompts import PromptArtifactKind
     from agent_connector_sdk.artifacts.resources import ResourceArtifactKind
@@ -219,7 +260,9 @@ async def capture_server_pack(endpoint: FleetEndpoint, *, auth: Any = None) -> A
     )
     async with McpTransport().session(transport_endpoint) as session:
         return await build_content_pack(
-            session, connector=endpoint.name, kinds=_capture_kinds()
+            cast(Any, _PacedSession(session)),
+            connector=endpoint.name,
+            kinds=_capture_kinds(),
         )
 
 
@@ -233,6 +276,9 @@ class FleetOnboarding:
     capture: Any = None
     #: The virtual catalog that access contracts register into.
     virtual_catalog: Any = None
+    #: Servers whose next import the operator approved to withdraw more than
+    #: half of the published surface (a move to one tool per operation).
+    allow_mass_withdrawal: frozenset[str] = frozenset()
     #: The last captured surface report per connector, read by the pass.
     surfaces: dict[str, dict[str, Any]] = field(default_factory=dict)
     #: The ``(server version, catalog digest)`` last onboarded per connector.
@@ -305,6 +351,7 @@ class FleetOnboarding:
                 client=self.tenant_client,
                 commons=self.commons_client,
                 pack=pack,
+                allow_mass_withdrawal=endpoint.name in self.allow_mass_withdrawal,
             )
         else:
             await self.renew({endpoint.name: endpoint.url})
@@ -352,7 +399,7 @@ class FleetOnboarding:
 
         from arbora.deployment.semantic_provisioning import _bind_session_graph
 
-        tenant_id = str(self.session.engine_verified_context()["tenant"])
+        tenant_id = str(session_context(self.session)["tenant"])
         graph = str(self.session.graph)
         with _bind_session_graph(graph):
             status = await send_connector_pack_status(

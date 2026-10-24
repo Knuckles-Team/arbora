@@ -128,6 +128,55 @@ can also name its own host in `allowed_private_hosts`.
 
 `tests/test_real_boot.py` runs these steps against a real engine.
 
+## Explicit local anonymous mode
+
+Authenticated serving remains the default. For an isolated local instance,
+`ARBORA_AUTH_MODE=none` selects true tokenless admission, not a generated
+bootstrap JWT. Use a matching EG provider/server with explicit anonymous-mode
+support and a new anonymous store. An existing authenticated store is not
+eligible. Install a matching anonymous-capable EG client and server before enabling this
+mode. The existing minimum dependency still serves authenticated deployments;
+older clients receive `AnonymousClientUnavailableError` with an upgrade
+instruction rather than a fallback. Older engines are not silently downgraded. The native build must include
+`graph,server,security,redb,query,cypher,epistemic,blob,shacl` for official
+provisioning and serving. Cypher supports the action-policy ledger, while blob
+and SHACL support semantic-pack projection. A missing capability is an error,
+not permission to bypass its policy or schema verification.
+
+```bash
+# In separate terminals, using the same isolated configuration and loopback:
+# Explicitly admit only Arbora's own content pack, not unrelated connectors.
+export EPISTEMIC_GRAPH_CONNECTOR_PACK_IMPORTERS="arbora=principal:sha256:2f183a4e64493af3f377f745eda502363cd3e7ef6e4d266d444758de0a85fcc8"
+epistemic-graph-server --auth-mode none --tcp-only \
+  --tcp-addr 127.0.0.1:19100 --persist-dir ./anonymous-store
+
+export ARBORA_AUTH_MODE=none
+export GRAPH_SERVICE_ENDPOINTS=tcp://127.0.0.1:19100
+arbora-production-ops provision-semantic-content \
+  --served-url http://127.0.0.1:18765/mcp
+arbora-production-ops onboard-fleet \
+  --served-url http://127.0.0.1:18765/mcp
+arbora --transport streamable-http --host 127.0.0.1 --port 18765 --auth-type none
+```
+
+Do not configure JWT/OAuth credentials, engine signing secrets, static tokens,
+or a reverse proxy for this mode. Arbora refuses nonliteral/nonloopback binds,
+nonloopback request peers or Host values, and Origin, Cookie, or Authorization
+headers. A startup warning and `X-Arbora-Auth-Mode: none` identify the unsecured
+local instance. Changing modes requires a new serving process and a separately
+provisioned store; settings reload cannot change authority on live connections.
+
+Requests retain `authenticated=False`, the fixed principal `anonymous`, and
+tenant `local`. The isolated instance grants its documented operation scopes
+except approver scopes. It does not create human, service, MFA, delegation, or
+verified-credential evidence. Existing operation policies, approval requirements,
+PLAN seals, audit/effect journaling, and schema admission still apply. The
+non-secret importer mapping above is an explicit local-instance policy binding
+for Arbora's own semantic pack. Omission or a different connector remains
+refused. It is not an authentication token or a wildcard approval. External
+services such as OAuth-protected connectors and delegated Trino do not become
+credential-free merely because the local graph is anonymous.
+
 ## Local MCP transport
 
 Use `stdio` when an MCP client launches Arbora as a child process:

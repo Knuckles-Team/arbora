@@ -229,8 +229,11 @@ class FleetCatalogReader:
         self,
         port: FleetCatalogReadPort,
         *,
-        page_size: int = 128,
-        max_pages: int = 64,
+        # The bound stops a non-terminating cursor, not a large fleet: one tool
+        # per API operation puts a real fleet above 8,192 components, so the
+        # default admits the validated maximum of 256 x 256 (ARBORA-FLEET-R026.1).
+        page_size: int = 256,
+        max_pages: int = 256,
         snapshot_ttl_s: float = 0.0,
     ) -> None:
         if page_size < 1 or page_size > 256:

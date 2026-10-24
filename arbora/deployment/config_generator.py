@@ -350,6 +350,15 @@ PROCESS_IDENTITY_ROLES: tuple[str, ...] = (
     "mcp:delegate",
     "query:unified",
     "node:read",
+    # Connector-source ingest (ARBORA-OPS-R020.6): the served operations, the
+    # engine SourceIngest method and the shared-scope KV source checkpoints.
+    "ingest:read",
+    "ingest:write",
+    "source:ingest",
+    "kv:read",
+    "kv:write",
+    "kv:shared:read",
+    "kv:shared:write",
 )
 
 

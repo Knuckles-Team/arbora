@@ -470,7 +470,13 @@ def _require_catalog_authority(
     actor = session.actor
     tenant = str(session.tenant or actor.tenant_id or "").strip()
     principal = str(actor.actor_id or "").strip()
-    if not tenant or not principal or not actor.authenticated:
+    from arbora.security.anonymous import admitted_actor
+
+    if (
+        not tenant
+        or not principal
+        or (not actor.authenticated and not admitted_actor(actor))
+    ):
         raise PermissionError("registry authority is unavailable")
     grant_digests: tuple[str, ...] = ()
     if require_discovery_binding:

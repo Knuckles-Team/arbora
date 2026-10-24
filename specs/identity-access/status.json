@@ -11,6 +11,7 @@
     "ARBORA-IDENTITY-R004",
     "ARBORA-IDENTITY-R004.1",
     "ARBORA-IDENTITY-R004.2",
+    "ARBORA-IDENTITY-R004.3",
     "ARBORA-IDENTITY-R005",
     "ARBORA-IDENTITY-R005.1",
     "ARBORA-IDENTITY-R005.2",
@@ -115,12 +116,12 @@
     "ARBORA-IDENTITY-R028.4",
     "ARBORA-IDENTITY-R028.5",
     "ARBORA-IDENTITY-R028.6",
-    "ARBORA-IDENTITY-R004.3",
+    "ARBORA-IDENTITY-R004.7",
     "ARBORA-IDENTITY-R004.4",
     "ARBORA-IDENTITY-R004.5",
     "ARBORA-IDENTITY-R004.6",
-    "ARBORA-IDENTITY-R004.3.1",
-    "ARBORA-IDENTITY-R004.3.2",
+    "ARBORA-IDENTITY-R004.7.1",
+    "ARBORA-IDENTITY-R004.7.2",
     "ARBORA-IDENTITY-R004.4.1",
     "ARBORA-IDENTITY-R004.4.2",
     "ARBORA-IDENTITY-R004.5.1",
@@ -184,15 +185,14 @@
       "title": "Rollup",
       "delivery_state": "SPECIFIED",
       "landed_in": [
-        "4a3410afa6de",
-        "cd652df8f6c8",
-        "d497f656144a"
+        "4a3410afa6de"
       ],
       "verified_by": [],
       "rollup_of": [
         "ARBORA-IDENTITY-R004.1",
         "ARBORA-IDENTITY-R004.2",
         "ARBORA-IDENTITY-R004.3",
+        "ARBORA-IDENTITY-R004.7",
         "ARBORA-IDENTITY-R004.4",
         "ARBORA-IDENTITY-R004.5",
         "ARBORA-IDENTITY-R004.6"
@@ -219,6 +219,19 @@
         "4a3410afa6de"
       ],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.3",
+      "title": "Explicit tokenless local mode",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/mcp_server/test_current_plan_reader.py:196",
+        "tests/mcp_server/test_source_reader_anonymous.py:17",
+        "tests/security/test_anonymous_discovery.py:28",
+        "tests/security/test_anonymous_mode.py:11",
+        "tests/test_real_anonymous_boot.py:25"
+      ]
     },
     {
       "id": "ARBORA-IDENTITY-R005",
@@ -1307,14 +1320,14 @@
       "verified_by": []
     },
     {
-      "id": "ARBORA-IDENTITY-R004.3",
+      "id": "ARBORA-IDENTITY-R004.7",
       "title": "Explicit WebUI identity-mode composition",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
       "rollup_of": [
-        "ARBORA-IDENTITY-R004.3.1",
-        "ARBORA-IDENTITY-R004.3.2"
+        "ARBORA-IDENTITY-R004.7.1",
+        "ARBORA-IDENTITY-R004.7.2"
       ]
     },
     {
@@ -1348,12 +1361,10 @@
       "verified_by": []
     },
     {
-      "id": "ARBORA-IDENTITY-R004.3.1",
+      "id": "ARBORA-IDENTITY-R004.7.1",
       "title": "Host mode configuration source contract",
-      "delivery_state": "VERIFIED",
-      "landed_in": [
-        "d4ae6fb9949c"
-      ],
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": [
         "tests/webui_host/test_session_boundary.py:151",
         "tests/webui_host/test_session_boundary.py:16",
@@ -1361,7 +1372,7 @@
       ]
     },
     {
-      "id": "ARBORA-IDENTITY-R004.3.2",
+      "id": "ARBORA-IDENTITY-R004.7.2",
       "title": "Installed identity-mode startup",
       "delivery_state": "SPECIFIED",
       "landed_in": [],

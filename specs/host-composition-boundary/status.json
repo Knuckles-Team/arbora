@@ -10,6 +10,7 @@
     "ARBORA-HOST-R001.2.1",
     "ARBORA-HOST-R001.2.2",
     "ARBORA-HOST-R001.2.3",
+    "ARBORA-HOST-R001.2.4",
     "ARBORA-HOST-R001.3",
     "ARBORA-HOST-R001.4",
     "ARBORA-HOST-R001.5",
@@ -246,21 +247,22 @@
       "landed_in": [
         "192099593cdd",
         "25e15e2108e1",
+        "2763cd78b6bc",
         "52ad3952c2c8",
-        "9e7f6499d96f",
-        "cc6349408a14"
+        "9e7f6499d96f"
       ],
       "verified_by": [
+        "tests/mcp_server/test_arbora_016_served_fixes.py:178",
         "tests/mcp_server/test_harness_host.py:109",
         "tests/mcp_server/test_harness_host.py:141",
         "tests/mcp_server/test_harness_host.py:29",
-        "tests/mcp_server/test_harness_host.py:37",
-        "tests/mcp_server/test_harness_host.py:76"
+        "tests/mcp_server/test_harness_host.py:37"
       ],
       "rollup_of": [
         "ARBORA-HOST-R001.2.1",
         "ARBORA-HOST-R001.2.2",
-        "ARBORA-HOST-R001.2.3"
+        "ARBORA-HOST-R001.2.3",
+        "ARBORA-HOST-R001.2.4"
       ]
     },
     {
@@ -269,12 +271,15 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "25e15e2108e1",
+        "2763cd78b6bc",
         "52ad3952c2c8"
       ],
       "verified_by": [
         "tests/test_agent_runs.py:42",
         "tests/test_agent_runs.py:63",
-        "tests/test_agent_runs.py:80"
+        "tests/test_agent_runs.py:80",
+        "tests/test_real_anonymous_boot.py:325",
+        "tests/test_run_event_payloads.py:19"
       ]
     },
     {
@@ -286,8 +291,8 @@
         "d3d50ac5d766"
       ],
       "verified_by": [
-        "tests/test_agents_run_end_to_end.py:118",
-        "tests/test_agents_run_end_to_end.py:165"
+        "tests/test_agents_run_end_to_end.py:129",
+        "tests/test_agents_run_end_to_end.py:176"
       ]
     },
     {
@@ -300,6 +305,17 @@
       "verified_by": [
         "tests/test_served_operation_api.py:206",
         "tests/test_served_operation_api.py:318"
+      ]
+    },
+    {
+      "id": "ARBORA-HOST-R001.2.4",
+      "title": "Tool-call RunEvents are queryable provenance",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "fe6c51770bc3"
+      ],
+      "verified_by": [
+        "tests/mcp_server/test_arbora_016_served_fixes.py:178"
       ]
     },
     {
@@ -1476,8 +1492,8 @@
         "d5f69ae59c75"
       ],
       "verified_by": [
-        "tests/test_real_boot.py:612",
-        "tests/test_real_boot.py:642"
+        "tests/test_real_boot.py:633",
+        "tests/test_real_boot.py:663"
       ]
     },
     {
@@ -1929,8 +1945,8 @@
         "191af7948d99",
         "28cc061c8f06",
         "34077185335e",
-        "80f6b7b53f91",
-        "c7208d7d3822"
+        "37f265dde58d",
+        "80f6b7b53f91"
       ],
       "verified_by": [
         "tests/agent_host/test_log_access.py:442",
@@ -1972,7 +1988,7 @@
       "verified_by": [
         "tests/agent_host/test_log_metadata.py:2",
         "tests/agent_host/test_log_replay.py:2",
-        "tests/agent_host/test_log_sink_terminal.py:60"
+        "tests/agent_host/test_log_sink_terminal.py:80"
       ],
       "rollup_of": [
         "ARBORA-HOST-R009.8.2.1",
@@ -2001,7 +2017,7 @@
       ],
       "verified_by": [
         "tests/agent_host/test_log_metadata.py:2",
-        "tests/agent_host/test_log_sink_terminal.py:60"
+        "tests/agent_host/test_log_sink_terminal.py:80"
       ]
     },
     {

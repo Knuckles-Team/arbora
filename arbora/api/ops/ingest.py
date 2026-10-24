@@ -39,6 +39,7 @@ from arbora.ingest.service import (
 #: though the implementation lives in the service layer
 #: (``arbora.ingest.service``).
 __all__ = [
+    "NATIVE_IDEMPOTENCY",
     "operations",
     "get_job_status",
     "get_source_status",
@@ -47,6 +48,14 @@ __all__ = [
     "list_sources",
     "sync_source",
 ]
+
+
+#: Operations whose idempotency the engine WorkItem authority owns
+#: (ARBORA-OPS-R020.6.2): the sync's WorkItem is keyed by the caller's
+#: idempotency key, so a replay returns the same durable job.
+NATIVE_IDEMPOTENCY: dict[str, str] = {
+    "ingest.sources.sync": "arbora.ingest.connector_sources:ConnectorIngestRunner",
+}
 
 
 class _Params(BaseModel):
@@ -83,7 +92,7 @@ class IngestSourceStatusParams(_Params):
 
 
 class IngestSourceStatusResult(_Params):
-    value: dict[str, str]
+    value: dict[str, object]
 
 
 class IngestPacksListParams(_Params):

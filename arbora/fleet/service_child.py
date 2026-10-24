@@ -14,6 +14,9 @@ from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, replace
 from typing import Any, Protocol
 
+from arbora.api.invoke.steps import surface_caller_admitted
+from arbora.security.anonymous import admitted_actor
+
 logger = logging.getLogger(__name__)
 
 
@@ -85,6 +88,20 @@ class ServiceChildTransport(Protocol):
 
 
 ToolFor = Callable[[Any, str, str], Awaitable[Any]]
+
+
+def _caller_owner_matches(
+    caller: Any, actor: Any, session: Any, owner_ref: str
+) -> bool:
+    """Match the admitted identity, tenant and request to its durable owner."""
+    return (
+        str(actor.actor_id) == caller.principal
+        and str(actor.tenant_id) == caller.tenant
+        and str(session.tenant) == caller.tenant
+        and isinstance(caller.request_id, str)
+        and bool(caller.request_id)
+        and owner_ref == _owner_ref(caller.principal)
+    )
 
 
 def _digest(value: Any) -> str:
@@ -318,20 +335,14 @@ class ServiceChildAdapter:
     @staticmethod
     def _verify_caller(caller: Any, owner_ref: str) -> None:
         session = caller.session
-        if not caller.authenticated or session is None:
+        if not surface_caller_admitted(caller) or session is None:
             raise PermissionError("verified caller session is required")
         session.ensure_authority_current()
         actor = session.actor
         actor.ensure_credential_current()
         if (
-            actor.authenticated is not True
-            or str(actor.actor_id) != caller.principal
-            or str(actor.tenant_id) != caller.tenant
-            or str(session.tenant) != caller.tenant
-            or not isinstance(caller.request_id, str)
-            or not caller.request_id
-            or owner_ref != _owner_ref(caller.principal)
-        ):
+            actor.authenticated is not True and not admitted_actor(actor)
+        ) or not _caller_owner_matches(caller, actor, session, owner_ref):
             raise PermissionError("service child owner is not verified")
 
     @staticmethod

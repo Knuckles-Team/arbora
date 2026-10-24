@@ -444,8 +444,10 @@ def _authenticate_request(request: Request, cfg: Any) -> JSONResponse | None:
     else:
         try:
             from arbora.security.actor_context import current_actor
+            from arbora.security.anonymous import admitted_actor
 
-            authenticated = current_actor().authenticated
+            actor = current_actor()
+            authenticated = actor.authenticated or admitted_actor(actor)
         except Exception as exc:
             logger.warning("fleet-events identity context unavailable: %s", exc)
             authenticated = False

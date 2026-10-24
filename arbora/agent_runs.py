@@ -25,7 +25,7 @@ import os
 import uuid
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from arbora.api.contracts.agent_control_contracts import (
     AgentExecutionRequest,
@@ -35,8 +35,14 @@ from arbora.api.contracts.session import GraphSession
 
 logger = logging.getLogger(__name__)
 
+# Whole JSON, including escaping and metadata; independent of A2A's text bound.
+MAX_RUN_EVENT_PAYLOAD_BYTES = 1_048_576
+RUN_EVENT_PAYLOAD_ERROR_SCHEMA = "arbora-run-event-payload-error-v1"
+
 __all__ = [
     "AgentRunPort",
+    "MAX_RUN_EVENT_PAYLOAD_BYTES",
+    "RUN_EVENT_PAYLOAD_ERROR_SCHEMA",
     "bind_run_ports",
     "decide_run",
     "record_run_event",
@@ -146,6 +152,57 @@ def _engine() -> Any:
         return None
 
 
+def _run_event_payload(
+    event: Mapping[str, Any], run_id: str, event_type: str, step: int
+) -> str:
+    """Serialize a bounded event or preserve its identity in an error marker."""
+    payload_error = None
+    try:
+        payload = json.dumps(
+            dict(event), sort_keys=True, default=str, ensure_ascii=True, allow_nan=False
+        )
+    except Exception:  # noqa: BLE001 - retain the event identity when its body fails
+        payload_error = "payload_serialization_failed"
+    else:
+        if len(payload) > MAX_RUN_EVENT_PAYLOAD_BYTES:
+            # ensure_ascii=True makes every character exactly one UTF-8 byte.
+            payload_error = "payload_too_large"
+    if payload_error is not None:
+        marker = {
+            "schema": RUN_EVENT_PAYLOAD_ERROR_SCHEMA,
+            "run_id": run_id,
+            "type": event_type,
+            "step": step,
+            "payload_error": {
+                "code": payload_error,
+                "max_bytes": MAX_RUN_EVENT_PAYLOAD_BYTES,
+            },
+        }
+        status = event.get("status")
+        if isinstance(status, str) and status in (
+            "completed",
+            "stopped",
+            "failed",
+            "running",
+        ):
+            marker["status"] = status
+        payload = json.dumps(marker, sort_keys=True, ensure_ascii=True)
+        logger.warning("run event body unavailable: %s", payload_error)
+    return payload
+
+
+def _valid_event_identity(run_id: Any, event_type: Any, step: Any) -> bool:
+    """Keep event identifiers bounded before persistence or marker encoding."""
+    return (
+        isinstance(run_id, str)
+        and 0 < len(run_id) <= 512
+        and isinstance(event_type, str)
+        and 0 < len(event_type) <= 64
+        and type(step) is int
+        and 0 <= step <= 2**63 - 1
+    )
+
+
 def record_run_event(event: Mapping[str, Any]) -> None:
     """Write one run event to the engine as a ``RunEvent`` node.
 
@@ -153,17 +210,28 @@ def record_run_event(event: Mapping[str, Any]) -> None:
     an engine with only the typed-batch seam or ``add_node`` uses that. A failed write is logged, never raised:
     a run does not fail because its trace could not be stored.
     """
+    run_id = event.get("run_id")
+    event_type = event.get("type")
+    step = event.get("step", 0)
+    if not _valid_event_identity(run_id, event_type, step):
+        logger.warning("run event not persisted: invalid event identity")
+        return
+    payload = _run_event_payload(event, cast(str, run_id), cast(str, event_type), step)
     engine = _engine()
-    run_id = str(event.get("run_id") or "")
     node_id = f"runevent:{run_id}:{uuid.uuid4().hex}"
     properties = {
         "run_id": run_id,
-        # An A2A run takes its task id as its run id.
         "task_id": run_id,
-        "event_type": str(event.get("type") or ""),
-        "step": int(event.get("step") or 0),
-        "payload": json.dumps(dict(event), sort_keys=True, default=str)[:65_536],
+        "event_type": event_type,
+        "step": step,
+        "payload": payload,
     }
+    if properties["event_type"] == "tool_call":
+        # Queryable provenance: which governed verb and connector tool the run
+        # used (UQL filters on properties; the payload is an opaque string).
+        for key in ("tool_name", "op", "server", "tool"):
+            properties[key] = str(event.get(key) or "")[:256]
+        properties["ok"] = bool(event.get("ok"))
     batch = getattr(engine, "batch_typed_mutations", None)
     create_node = getattr(engine, "create_node", None)
     add_node = getattr(engine, "add_node", None)

@@ -19,6 +19,7 @@ from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.steps import claim_values
 from arbora.api.ops.runs import UNAVAILABLE
+from arbora.security.anonymous import client_scope
 
 
 async def _native_read(client: Any, *, run_id: str, tenant: str, graph: str) -> Any:
@@ -88,9 +89,7 @@ class NativeCurrentPlanReader:
         graph = await _caller_dispatch_graph(context)
         if "kg:read" not in context.caller.effective_scopes:
             raise OperationRefused("SCOPE_REQUIRED", {"missing_scopes": ["kg:read"]})
-        with context.client.use_verified_context(
-            claim_values(context.caller.engine_claims)
-        ):
+        with client_scope(context.client, claim_values(context.caller.engine_claims)):
             raw = await _native_read(
                 context.client, run_id=run_id, tenant=context.caller.tenant, graph=graph
             )

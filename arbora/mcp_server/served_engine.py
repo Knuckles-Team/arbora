@@ -26,6 +26,8 @@ import threading
 from collections.abc import Mapping
 from typing import Any, cast
 
+from arbora.security.anonymous import client_scope, session_context
+
 __all__ = [
     "ServedEngine",
     "SessionRoutedClient",
@@ -43,8 +45,9 @@ def _session_context(session: Any) -> Any:
     """The pool's :class:`ClientContext` for one verified session."""
     from arbora.epistemic import ClientContext
 
-    claims: Mapping[str, Any] = session.engine_verified_context()
+    claims: Mapping[str, Any] = session_context(session)
     return ClientContext(
+        auth_mode=str(claims.get("auth_mode", "authenticated")),
         principal=str(claims["principal"]),
         tenant=str(claims["tenant"]),
         audience=str(claims["audience"]),
@@ -99,7 +102,7 @@ class SessionRoutedClient:
         idempotency_key: str | None = None,
     ) -> Any:
         client, context = await self._bound()
-        with client.use_verified_context(context.to_claims()):
+        with client_scope(client, context.to_claims()):
             return await client._send(
                 method,
                 params,
@@ -130,7 +133,7 @@ class _RoutedAttribute:
         target: Any = client
         for part in self._path:
             target = getattr(target, part)
-        with client.use_verified_context(context.to_claims()):
+        with client_scope(client, context.to_claims()):
             return await target(*args, **kwargs)
 
 
@@ -245,21 +248,15 @@ class ServedEngine:
         self, query: str, params: Mapping[str, Any] | None = None
     ) -> list[Any]:
         """Run one read-only Cypher query on the session graph through EG."""
-        from epistemic_graph.generated.query import send_cypher_query
-
         client = self._session_client()
         bound = _bind_parameters(query, params)
 
         async def run() -> Any:
-            return await send_cypher_query(
-                client, {"mode": "read", "query": bound}, client.graph_name
-            )
+            # The public client owns decoding columns plus MessagePack row
+            # blobs. Returning raw generated payload rows loses their names.
+            return await client.query.cypher_read(bound)
 
-        result = _run_blocking(run)
-        rows = getattr(result, "payload", result)
-        if isinstance(rows, Mapping):
-            rows = rows.get("rows", rows.get("results", []))
-        return list(rows or [])
+        return list(_run_blocking(run))
 
     def add_node(
         self,

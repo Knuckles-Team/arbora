@@ -13,6 +13,7 @@ from fastmcp.tools import FunctionTool, ToolResult
 from mcp.types import TextContent
 
 from arbora.api.errors import FleetRefusal
+from arbora.api.invoke.steps import surface_caller_admitted
 from arbora.api.mcp.resources import register_resources
 from arbora.api.mcp.verbs import (
     VERBS,
@@ -101,7 +102,7 @@ class FleetMCPBinding:
 
     def request_context(self) -> tuple[Any, str]:
         caller = self.projection.caller_for_request()
-        if caller is None or caller.authenticated is not True:
+        if not surface_caller_admitted(caller):
             raise ToolError("UNAUTHENTICATED")
         key = self.session_key_for(caller)
         if not isinstance(key, str) or not key:

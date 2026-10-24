@@ -20,7 +20,14 @@ flowchart LR
 
 ## Ports and composition
 
-Define small protocols in `arbora.identity.ports`. `IdentityAuthority` covers typed engine identity operations, mode CAS and RBAC decisions. `SigningKeyStore` loads or rotates by key ID. `ExternalAuthenticator` verifies and resolves. `SessionStore` covers engine-backed opaque session operations. Also define `NotificationPort` and `Clock`. DTOs carry only redacted public fields and typed error/reason codes. `arbora.access.service` depends on an `AccessAuthority` protocol with request/approve/deny/revoke/check/explain/lease methods. The `mcp_server` serving composition creates the concrete adapters once. It injects them into gateway, web host, CLI command factory, and MCP registry. Keep `webui_host` and MCP packages importing ports, not each other. Dependency inversion must clear the configured KISS indirect dependency threshold without increasing that threshold.
+Define small protocols in `arbora.identity.ports`:
+
+- `IdentityAuthority`: typed engine identity operations, mode CAS, RBAC decision.
+- `SigningKeyStore`: load/rotate by key ID.
+- `ExternalAuthenticator`: verify and resolve.
+- `SessionStore`: engine-backed opaque session operations.
+- `NotificationPort` and `Clock`.
+ DTOs carry only redacted public fields and typed error/reason codes. `arbora.access.service` depends on an `AccessAuthority` protocol with request/approve/deny/revoke/check/explain/lease methods. The `mcp_server` serving composition creates the concrete adapters once and injects them into gateway, web host, CLI command factory, and MCP registry. Keep `webui_host` and MCP packages importing ports, not each other. Dependency inversion must clear the configured KISS indirect dependency threshold without increasing that threshold.
 
 When a required engine method is absent, the adapter returns `UNAVAILABLE`, omits the operation from advertised capability discovery where safe, and emits a readiness reason. It never emulates RBAC, lease, or approval locally. The CLI can use the same factory with a local engine fixture. Mock ports support all ordinary PR tests.
 
@@ -103,9 +110,8 @@ these are not new EG wire fields or a replacement WebUI evidence DTO.
 `UnavailableIdentityAuthority` explicitly refuses until qualified EG adapters
 supply those facts. `ArboraBrowserAuthority` implements the existing WebUI port
 using a private per-request registry, exact caller-session instance, original
-credential and forwarded-token pairing. It checks snapshots after awaited
-owner calls, rechecks current authority before exporting evidence, and removes
-bindings on rotation/refusal/cancellation or context-manager exit. Refresh must
+credential and forwarded-token pairing. It checks snapshots after awaited owner calls and rechecks authority before exporting evidence.
+It removes bindings on rotation, refusal, cancellation or context-manager exit. Refresh must
 invalidate the old binding before establishing a new one.
 
 E owns the integration sequence: enter `BrowserAdmission.request` with the
@@ -343,7 +349,7 @@ task hops and revocation/scope narrowing during verifier awaits.
 
 ### Separate delivery slices
 
-1. Safety scaffold (R004.3/R004.4): explicit mode selection and refusal of unsupported composition. No deployed security changes.
+1. Safety scaffold (R004.7/R004.4): explicit mode selection and refusal of unsupported composition. No deployed security changes.
 2. Dispatch seam (R004.5): `BoundBrowserHTTPAuthenticator` supplies both resolver and revalidation from one authority owner, with private scope/task/caller lifetime and one-use fencing at existing HTTP invocation and registry visibility. Keep the WebUI adapter disabled pending successful installed composition and independent security review. Streaming remains unavailable until its own lifetime contract is qualified.
 3. Effect migration (R004.6): move direct WebUI effects to governed operation dispatch with explicit anonymous operator policy and native effect fencing. This is a separate open implementation, not implied by either prior slice.
 
@@ -369,4 +375,67 @@ The WebUI boundary passes its already-resolved effective listener rate/burst int
 
 ### Source delivery boundaries
 
-R004.3, R004.4 and R004.5 retain their full acceptance as rollups. Source delivery binds only R004.3.1, R004.4.1, R004.5.1 and R004.5.2. Their installed/provider/native siblings remain open. R004.6 remains wholly open; direct-handler refusal does not deliver anonymous effects. No source marker or delivery trailer claims an installed provider, native effect or activation.
+R004.7, R004.4 and R004.5 retain their full acceptance as rollups. Source delivery binds only R004.7.1, R004.4.1, R004.5.1 and R004.5.2. Their installed/provider/native siblings remain open. R004.6 remains wholly open; direct-handler refusal does not deliver anonymous effects. No source marker or delivery trailer claims an installed provider, native effect or activation.
+
+### 2026-10-22 amendment: true tokenless local mode (R004.1)
+
+R004.1 supersedes the earlier planned bootstrap-JWT behavior specifically for
+explicit local `none`: no login, signer, HMAC secret, or credential is generated.
+The boundary records anonymous provenance and uses EG's explicit anonymous
+transport. Scope projection is local mode policy, never evidence of verified
+identity. Authentication remains the default. Human/MFA approval requirements
+are not satisfied by anonymous access. This mode supplies no public-network
+exposure override. EG owns the corresponding native transport/store isolation.
+
+Anonymous runtime contract:
+- `ARBORA_AUTH_MODE=none` is an explicit process-start selection; `external` remains the default. Pair it with transport `--auth-type none` and a literal loopback bind. Mode cannot change through settings reload.
+- Local requests receive the fixed `anonymous` principal in tenant `local`, `authenticated=False`, no roles, no delegation, and no MFA. Local-instance operation scopes exclude approver scopes. Human-only and service-only operation rules continue to refuse this caller.
+- Anonymous graph sessions expose descriptive request metadata separately; `engine_verified_context()` still rejects unauthenticated actors. A mode-captured pool uses EG's explicit `auth_mode='none'` connection and never invokes a verified-context carrier.
+- HTTP peer and Host must be local. Origin, Cookie, Authorization, credential configuration, and reverse-proxy configuration are rejected rather than ignored. Startup logs an unsecured-mode warning and HTTP responses identify `X-Arbora-Auth-Mode: none`.
+- Operation-policy admission accepts only the fully validated anonymous caller variant in explicit local mode. Exact scopes and principal-kind requirements still apply. An enabled embedded or remote policy decision can narrow or refuse anonymous operations and is never bypassed.
+- The backing EG must use its own explicit anonymous mode and a fresh, mode-marked local store. This is not a mechanism to open an existing authenticated store. Plan, policy, effect journaling, schema admission, and approval workflows remain enforced.
+
+### 2026-10-22 amendment: anonymous discovery parity (R004.3)
+
+HTTP registry, operation descriptors and OpenAPI must expose the same admitted
+anonymous operations as MCP discovery and shared invocation. Registry filtering
+reuses the invocation authority check for the concrete anonymous caller variant.
+Objects claiming an anonymous kind, altered caller facts and disabled local mode
+remain refused. Exact scopes, human/service restrictions and policy narrowing
+continue to apply; clients never invoke an unadvertised operation as a fallback.
+
+
+### 2026-10-22 amendment: admission validation decomposition (R004.3)
+
+Anonymous startup, Host parsing, actor authority and caller projection checks
+remain fail closed when decomposed into focused validators. Regression coverage
+includes exact Host cardinality, literal loopback peers and engine endpoints.
+It also covers refusal of roles, credential leases or altered local identity. Principal
+rules use their shared human/service predicates rather than duplicate anonymous
+branches. This refactoring adds no admission exceptions or scanner exemptions.
+### 2026-10-22 amendment: admission predicate decomposition (R004.1)
+
+Keep session construction, MCP caller projection, service-child ownership and
+background authority mode checks behaviorally unchanged while separating their
+tenant, step-up, owner and profile predicates. Preserve validation ordering,
+credential refusal, anonymous-mode admission and authenticated defaults. Focused
+regressions and per-function complexity measurements qualify this refactoring;
+they do not establish additional native transport acceptance.
+
+
+### 2026-10-22 amendment: discovery admission decomposition (R004.3)
+
+Discovery keeps exact anonymous caller validation ahead of principal, scope and
+policy checks. A focused admission predicate preserves rejection of forged
+anonymous kinds and disabled mode without adding scanner exemptions.
+
+
+### 2026-10-22 amendment: endpoint fixture isolation (R004.3)
+
+Serving-root tests configure engine endpoints through the environment, not a
+mutable override of the live settings proxy. Verify that scoped configuration
+teardown leaves later endpoint reads live. Run serving-root composition before
+anonymous endpoint admission tests to preserve remote-address and hostname
+refusal independently of suite ordering. Production admission is unchanged.
+
+The WebUI configuration requirement uses R004.7 so the existing tokenless local-serving R004.3 keeps its own meaning. Canonical browser invocation retains caller-session scope around the shared pipeline after same-owner use-time revalidation. Synthetic session fixtures run the existing GraphSession validation at that ambient boundary. This is source integration evidence; live Keycloak/Okta and installed EG acceptance remain open.

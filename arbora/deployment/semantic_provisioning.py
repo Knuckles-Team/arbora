@@ -26,6 +26,7 @@ from collections.abc import Callable, Mapping, Sequence
 from contextlib import AbstractContextManager
 from typing import Any
 
+from arbora.security.anonymous import session_context
 from arbora.semantic_content import (
     ContentProvider,
     default_content_providers,
@@ -321,18 +322,22 @@ async def import_attested_pack(
     commons: Any,
     pack: Any,
     bind_graph: GraphBinder = _bind_session_graph,
+    allow_mass_withdrawal: bool = False,
 ) -> Any:
     """Attest ``pack``'s catalog with EG, then import it under EG's binding.
 
     The caller owns projection and schema attachment. A rejected import
     raises :class:`SemanticProvisioningError` with every EG violation.
+    ``allow_mass_withdrawal`` is the operator's decision to publish a pack
+    that withdraws more than half of the published surface; EG then
+    requires ``admin:connector-pack``.
     """
 
     from agent_connector_sdk.sinks.epistemic_graph import EpistemicGraphSink
 
     from arbora.api.contracts import pack_import_authority
 
-    tenant_id = str(session.engine_verified_context()["tenant"])
+    tenant_id = str(session_context(session)["tenant"])
     graph = str(session.graph)
     binding = await attest_self_served_catalog(
         client,
@@ -355,7 +360,9 @@ async def import_attested_pack(
                 serving_principal=lambda: owner,
             ),
         )
-        result = await sink.import_pack(pack)
+        result = await sink.import_pack(
+            pack, allow_mass_withdrawal=allow_mass_withdrawal
+        )
     rejection = _rejection(result, pack.connector)
     if rejection is not None:
         raise rejection
@@ -474,7 +481,7 @@ async def provision_semantic_content(
 
     from agent_connector_sdk.artifacts.pack import build_connector_content_pack
 
-    tenant_id = str(session.engine_verified_context()["tenant"])
+    tenant_id = str(session_context(session)["tenant"])
     graph = str(session.graph)
     compute = engine.graph_compute
     client = compute.for_graph(graph).async_client

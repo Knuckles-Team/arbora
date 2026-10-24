@@ -15,12 +15,14 @@ import re
 import secrets
 from collections import Counter, OrderedDict
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 _WORDS = re.compile(r"[a-z0-9]+")
 _STOP = frozenset(
     "a an the of for to in on with and or is are be do what how why my me i you your please".split()
+    # ARBORA-FLEET-R014.2: request verbs say how to answer, not what to run.
+    + "show display tell give across".split()
 )
 _READ_VERBS = frozenset({"ask", "why", "find"})
 _VERBS = _READ_VERBS | {"write", "act", "manage"}
@@ -229,6 +231,32 @@ class IntentResolver:
         winner = ranked[0] if ranked else None
         if winner is None or winner.score < _MIN_EVIDENCE:
             return _ask_fallback(verb, intent, supplied, descriptors)
+        if verb == "ask" and _missing_required(
+            winner.descriptor.params_schema, supplied
+        ):
+            # ARBORA-FLEET-R014.1: a plain question cannot fill a required
+            # parameter, so an op that needs one does not win `ask`. The next
+            # runnable match does; with none, the NL planner answers.
+            runnable = next(
+                (
+                    candidate
+                    for candidate in ranked
+                    if candidate.score >= _MIN_EVIDENCE
+                    and not _missing_required(
+                        candidate.descriptor.params_schema, supplied
+                    )
+                ),
+                None,
+            )
+            if runnable is None:
+                fallback = _ask_fallback(verb, intent, supplied, descriptors)
+                if fallback.op is not None:
+                    return replace(
+                        fallback,
+                        alternatives=tuple(c.descriptor.id for c in ranked),
+                    )
+            else:
+                winner = runnable
         selected = winner.descriptor
         missing = _missing_required(selected.params_schema, supplied)
         return Resolution(
@@ -236,7 +264,11 @@ class IntentResolver:
             params=supplied,
             preview=verb not in _READ_VERBS,
             missing_required=missing,
-            alternatives=tuple(candidate.descriptor.id for candidate in ranked[1:]),
+            alternatives=tuple(
+                candidate.descriptor.id
+                for candidate in ranked
+                if candidate.descriptor.id != selected.id
+            ),
             why=f"Matched {', '.join(winner.matched_terms) or 'semantic similarity'}",
         )
 

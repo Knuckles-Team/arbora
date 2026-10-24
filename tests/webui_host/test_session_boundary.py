@@ -13,7 +13,7 @@ from arbora.webui_host.session_boundary import (
 )
 
 
-@pytest.mark.spec("ARBORA-IDENTITY-R004.3.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R004.7.1")
 def test_explicit_mode_composition_never_falls_back():
     for mode in ("required", "none", "oidc"):
         assert identity_factory_kwargs(mode, None) == (
@@ -26,7 +26,7 @@ def test_explicit_mode_composition_never_falls_back():
         identity_factory_kwargs("none", lambda app: None)
 
 
-@pytest.mark.spec("ARBORA-IDENTITY-R004.3.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R004.7.1")
 def test_webui_mode_is_typed_and_protected_by_default():
     from arbora.core.settings import ArboraConfig
 
@@ -148,7 +148,7 @@ def test_incomplete_shared_caller_contract_cannot_activate_boundary():
         boundary(None)
 
 
-@pytest.mark.spec("ARBORA-IDENTITY-R004.3.1")
+@pytest.mark.spec("ARBORA-IDENTITY-R004.7.1")
 def test_old_installed_factory_refuses_explicit_modes_without_downgrade():
     def old_factory(agent, *, session_boundary=None):
         pass

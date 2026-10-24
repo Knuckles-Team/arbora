@@ -149,7 +149,7 @@ Hot-path proof for `ARBORA-IDENTITY-R028`: `tests/fleet/test_delegated_identity_
 
 ## WebUI mode and host-admission composition
 
-ARBORA-IDENTITY-R004.3 and ARBORA-IDENTITY-R004.4: source checks live in
+ARBORA-IDENTITY-R004.7 and ARBORA-IDENTITY-R004.4: source checks live in
 `tests/webui_host/test_session_boundary.py`. They cover protected defaults,
 invalid/missing composition refusal, exact auth namespace routing and no
 forwarding on synthetic revocation/unavailability. Required acceptance also
@@ -177,8 +177,8 @@ A non-loopback factory case with no explicit rate verifies the canonical rate an
 
 | Child | Source evidence or remaining acceptance |
 |---|---|
-| ARBORA-IDENTITY-R004.3.1 | Mode settings and factory refusal tests in `tests/webui_host/test_session_boundary.py`. |
-| ARBORA-IDENTITY-R004.3.2 | Installed startup with real providers remains open. |
+| ARBORA-IDENTITY-R004.7.1 | Mode settings and factory refusal tests in `tests/webui_host/test_session_boundary.py`. |
+| ARBORA-IDENTITY-R004.7.2 | Installed startup with real providers remains open. |
 | ARBORA-IDENTITY-R004.4.1 | Routing, admission refusal and cleanup tests in `tests/webui_host/test_session_boundary.py`. |
 | ARBORA-IDENTITY-R004.4.2 | Real installed browser lifecycle and WebSocket identity remain open. |
 | ARBORA-IDENTITY-R004.5.1 | Private caller, mounted dispatch and race tests in `tests/api/test_browser_invocation_fence.py`. |
@@ -186,3 +186,13 @@ A non-loopback factory case with no explicit rate verifies the canonical rate an
 | ARBORA-IDENTITY-R004.5.3 | Installed providers, native effect journals and streaming qualification remain open. |
 
 Only the four source children have test markers in this candidate. Broad parents and installed/native siblings have no new delivery markers.
+
+## Explicit tokenless local admission (ARBORA-IDENTITY-R004.3)
+
+`tests/security/test_anonymous_mode.py` exercises the public ASGI identity boundary and canonical HTTP caller projection. It covers immutable mode activation, strict bind/Host/Origin/credential admission, and graph-pool mode isolation. It tests verified carrier API rejection, exact anonymous caller invariants, human/service operation refusal, and honest effect-journal provenance. These focused tests do not substitute for native EG or actual TUI acceptance.
+
+Native acceptance must also provision a fresh none-mode store through the official CLI and serve actual MCP/REST/A2A requests through Arbora. It must persist and restart graph state and preserve effect idempotency. It must run the real TUI against a deterministic local model. A separately provisioned authenticated store must then pass corresponding operations and reject missing credentials. Neither suite may bypass contract admission or operation approvals.
+
+`tests/test_real_anonymous_boot.py` is the native, credential-free real serving gate. Set `ARBORA_NOAUTH_TEST_ENGINE_BINARY` to a built engine whose embedded contract matches the installed EG client and generated Arbora descriptors. It uses official first-start provisioning and checks REST, MCP, forbidden credentials/origins, and actual installed TUI A2A chat. The simulated model echoes a unique prompt nonce; separate model receipts and persisted task artifacts must match the TUI-rendered response. An unselected binary skips explicitly, not a success claim. Fullscreen native/Python PTY, restart, and authenticated-mode acceptance remain additional release gates.
+
+PolicyGate regression coverage admits an exact anonymous caller for an ordinary scoped operation. It refuses forged objects, disabled mode, human/service rules, and missing scopes. An enabled PDP denial remains a denial; successful real REST and MCP queries must exercise this gate rather than only the A2A chat path.
