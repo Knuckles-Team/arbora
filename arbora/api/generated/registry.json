@@ -1594,6 +1594,129 @@
       "verb": "act"
     },
     {
+      "audit": "none",
+      "binding": {
+        "handler": "arbora.api.ops.browser.handle_browser",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "find my WebMCP browser tools"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "browser.discover",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.browser.BrowserParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "payload": {
+              "additionalProperties": true,
+              "title": "Payload",
+              "type": "object"
+            }
+          },
+          "required": [
+            "payload"
+          ],
+          "title": "BrowserParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.browser.BrowserDiscoveryResult",
+        "schema": {
+          "$defs": {
+            "BrowserDiscoveryReceipt": {
+              "description": "Bridge readiness does not attest the browser's native API support.",
+              "properties": {
+                "bridge_available": {
+                  "title": "Bridge Available",
+                  "type": "boolean"
+                },
+                "browser_api": {
+                  "const": "not_attested",
+                  "default": "not_attested",
+                  "title": "Browser Api",
+                  "type": "string"
+                },
+                "documents": {
+                  "default": [],
+                  "items": {
+                    "$ref": "#/$defs/BrowserDocumentCatalog"
+                  },
+                  "title": "Documents",
+                  "type": "array"
+                }
+              },
+              "required": [
+                "bridge_available"
+              ],
+              "title": "BrowserDiscoveryReceipt",
+              "type": "object"
+            },
+            "BrowserDocumentCatalog": {
+              "description": "A live registration already admitted by the existing channel authority.",
+              "properties": {
+                "document_ref": {
+                  "title": "Document Ref",
+                  "type": "string"
+                },
+                "registration_generation": {
+                  "minimum": 1,
+                  "title": "Registration Generation",
+                  "type": "integer"
+                },
+                "tools": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Tools",
+                  "type": "array"
+                }
+              },
+              "required": [
+                "document_ref",
+                "registration_generation",
+                "tools"
+              ],
+              "title": "BrowserDocumentCatalog",
+              "type": "object"
+            }
+          },
+          "properties": {
+            "value": {
+              "$ref": "#/$defs/BrowserDiscoveryReceipt"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "BrowserDiscoveryResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "kg:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Discover my attended WebUI registrations and bridge availability",
+      "surfaces": [
+        "console",
+        "http",
+        "mcp"
+      ],
+      "verb": "find"
+    },
+    {
       "audit": "event",
       "binding": {
         "handler": "arbora.api.ops.browser.handle_browser",
@@ -26696,5 +26819,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "0d815ecc757df7970292c7351707af550aedb7559ebe541252bcc16e34a1143a"
+  "registry_digest": "83506943e5b2152df8809f7df2b29a0fd7fd362c5f3f406a34e03fe96706655c"
 }

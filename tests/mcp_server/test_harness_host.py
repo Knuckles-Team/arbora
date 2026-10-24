@@ -38,6 +38,7 @@ def test_without_arbora_the_harness_fails_closed():
 def test_registration_binds_native_tools_fleet_and_keepalive(monkeypatch):
     built = []
     monkeypatch.setitem(runtime.REGISTERED_TOOLS, "graph_query", lambda: None)
+    monkeypatch.setitem(runtime.NATIVE_INTENT_TOOLS, "find", lambda: None)
     monkeypatch.setattr(
         runtime,
         "build_native_arbora_toolset",
@@ -54,7 +55,7 @@ def test_registration_binds_native_tools_fleet_and_keepalive(monkeypatch):
 
     harness_host.register_harness_host(_Mux())
 
-    assert "graph_query" in host.native_tool_names()
+    assert {"graph_query", "find"} <= host.native_tool_names()
     assert host.build_native_toolset(["graph_query"], toolset_id="t1") == "ts"
     assert built == [(["graph_query"], "t1")]
     fleet = host.fleet_catalog()

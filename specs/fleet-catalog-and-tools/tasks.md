@@ -250,3 +250,7 @@ Preserve all existing R003 tasks and receipts. These added runtime cases have no
 - [ ] **ARBORA-FLEET-R043.5:** Evidence.
 - [ ] **ARBORA-FLEET-R043.6:** Hot-path proof.
 - [ ] **ARBORA-FLEET-R043.7:** Source executor.
+
+### R015/R029 WebUI bridge integration evidence
+
+The WebUI bridge is configured by the host and discovered through the existing preloaded `find` tool. Browser API support and active per-session registrations are separate facts. No preload grants identity, attended consent, execution permission or a browser session. Boot, discovery, owner isolation and teardown regression checks are required; full web-agent execution acceptance remains open.

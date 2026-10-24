@@ -16,6 +16,7 @@ from arbora.api.registry import (
     Surface,
     Verb,
 )
+from arbora.browser_control.browser_control_api import BrowserDiscoveryReceipt
 
 
 class BrowserParams(BaseModel):
@@ -25,6 +26,10 @@ class BrowserParams(BaseModel):
 
 class BrowserResult(BaseModel):
     value: dict[str, Any]
+
+
+class BrowserDiscoveryResult(BaseModel):
+    value: BrowserDiscoveryReceipt
 
 
 async def handle_browser(
@@ -48,28 +53,43 @@ async def handle_browser(
 
 def operations() -> tuple[OpSpec, ...]:
     handler = Composite(handler="arbora.api.ops.browser.handle_browser")
-    return tuple(
-        OpSpec(
-            id=f"browser.{action}",
-            verb=Verb.ACT,
-            summary=f"{action.replace('_', ' ').capitalize()} an attended browser call",
-            examples=(f"{action.replace('_', ' ')} for my attended browser",),
-            params=BrowserParams,
-            result=BrowserResult,
-            binding=handler,
-            scopes=frozenset({"kg:write"}),
-            effect=Effect.WRITE,
-            principals=PrincipalRule.HUMAN_UNDELEGATED,
-            surfaces=frozenset({Surface.HTTP, Surface.CONSOLE}),
-            audit=AuditClass.EVENT,
-        )
-        for action in (
-            "issue_lease",
-            "execute_call",
-            "cancel_call",
-            "reconcile_call",
-            "revoke_lease",
-        )
+    discovery = OpSpec(
+        id="browser.discover",
+        verb=Verb.FIND,
+        summary="Discover my attended WebUI registrations and bridge availability",
+        examples=("find my WebMCP browser tools",),
+        params=BrowserParams,
+        result=BrowserDiscoveryResult,
+        binding=handler,
+        scopes=frozenset({"kg:read"}),
+        effect=Effect.READ,
+        surfaces=frozenset({Surface.MCP, Surface.HTTP, Surface.CONSOLE}),
+    )
+    return (
+        discovery,
+        *tuple(
+            OpSpec(
+                id=f"browser.{action}",
+                verb=Verb.ACT,
+                summary=f"{action.replace('_', ' ').capitalize()} an attended browser call",
+                examples=(f"{action.replace('_', ' ')} for my attended browser",),
+                params=BrowserParams,
+                result=BrowserResult,
+                binding=handler,
+                scopes=frozenset({"kg:write"}),
+                effect=Effect.WRITE,
+                principals=PrincipalRule.HUMAN_UNDELEGATED,
+                surfaces=frozenset({Surface.HTTP, Surface.CONSOLE}),
+                audit=AuditClass.EVENT,
+            )
+            for action in (
+                "issue_lease",
+                "execute_call",
+                "cancel_call",
+                "reconcile_call",
+                "revoke_lease",
+            )
+        ),
     )
 
 

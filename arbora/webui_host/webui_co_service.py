@@ -88,6 +88,11 @@ async def _serve_until_stopped(
 
     if browser_control_service is not None:
         register_browser_control_service(browser_control_service)
+        from arbora.browser_control.browser_control_runtime import (
+            bind_browser_control_owner,
+        )
+
+        bind_browser_control_owner(browser_control_service)
     task = asyncio.ensure_future(server.serve())
     try:
         while not stop_event.is_set() and not task.done():

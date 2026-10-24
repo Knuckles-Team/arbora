@@ -1377,7 +1377,8 @@
       "verified_by": [
         "tests/webui_host/test_session_boundary.py:151",
         "tests/webui_host/test_session_boundary.py:16",
-        "tests/webui_host/test_session_boundary.py:29"
+        "tests/webui_host/test_session_boundary.py:29",
+        "tests/webui_host/test_webui_contact_delivery.py:41"
       ]
     },
     {

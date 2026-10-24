@@ -172,6 +172,18 @@
     {
       "domain": "browser",
       "examples": [
+        "find my WebMCP browser tools"
+      ],
+      "id": "browser.discover",
+      "summary": "Discover my attended WebUI registrations and bridge availability",
+      "tags": [
+        "browser"
+      ],
+      "verb": "find"
+    },
+    {
+      "domain": "browser",
+      "examples": [
         "execute call for my attended browser"
       ],
       "id": "browser.execute_call",
@@ -6246,5 +6258,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "0d815ecc757df7970292c7351707af550aedb7559ebe541252bcc16e34a1143a"
+  "registry_digest": "83506943e5b2152df8809f7df2b29a0fd7fd362c5f3f406a34e03fe96706655c"
 }

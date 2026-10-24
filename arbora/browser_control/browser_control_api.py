@@ -237,3 +237,25 @@ __all__ = [
     "RenewLeaseRequest",
     "RevokeLeaseRequest",
 ]
+
+
+class BrowserDiscoveryRequest(BaseModel):
+    """No caller-supplied owner or tenant selectors are accepted."""
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class BrowserDocumentCatalog(BaseModel):
+    """A live registration already admitted by the existing channel authority."""
+
+    document_ref: _OpaqueReference
+    registration_generation: int = Field(ge=1)
+    tools: tuple[dict[str, Any], ...]
+
+
+class BrowserDiscoveryReceipt(BaseModel):
+    """Bridge readiness does not attest the browser's native API support."""
+
+    bridge_available: bool
+    browser_api: Literal["not_attested"] = "not_attested"
+    documents: tuple[BrowserDocumentCatalog, ...] = ()

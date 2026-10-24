@@ -409,16 +409,14 @@ class WorkItemA2AAuthority:
         outcome, result_ref, error_ref = "succeeded", None, None
         usage = None
         try:
-            from arbora.host_bindings import FLEET_AGENT_NAME, FLEET_TOOLS
+            from arbora.host_bindings import preloaded_agent_tools
 
             result = await self._agent_executor().execute_agent(
                 AgentExecutionRequest(
                     agent_name=agent_name,
                     task=task,
                     run_id=run_id or task_id or None,
-                    allowed_tools=(
-                        FLEET_TOOLS if agent_name == FLEET_AGENT_NAME else None
-                    ),
+                    allowed_tools=preloaded_agent_tools(agent_name),
                 ),
                 session=session,
             )

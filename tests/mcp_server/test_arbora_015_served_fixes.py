@@ -285,10 +285,13 @@ def test_a_failed_run_event_write_never_fails_the_run(monkeypatch) -> None:
     agent_runs.record_run_event({"type": "error", "run_id": "a2a-1"})
 
 
-def test_the_a2a_run_uses_the_task_id_and_the_fleet_tools(monkeypatch) -> None:
+@pytest.mark.parametrize("agent_name", ["arbora", "webui-assistant", "unrelated-agent"])
+def test_the_a2a_run_uses_the_task_id_and_the_fleet_tools(
+    monkeypatch, agent_name
+) -> None:
     """The run's RunEvents name the task; the fleet agent gets find/act."""
     from arbora.a2a import authority as authority_mod
-    from arbora.host_bindings import FLEET_AGENT_NAME, FLEET_TOOLS
+    from arbora.host_bindings import FLEET_TOOLS
 
     seen: list[Any] = []
 
@@ -314,13 +317,15 @@ def test_the_a2a_run_uses_the_task_id_and_the_fleet_tools(monkeypatch) -> None:
             object(),
             item_id="workitem:orchestrator:" + task_id,
             session=object(),
-            agent_name=FLEET_AGENT_NAME,
+            agent_name=agent_name,
             task="search",
             task_id=task_id,
         )
     )
     assert seen[0].run_id == task_id
-    assert seen[0].allowed_tools == FLEET_TOOLS
+    assert seen[0].allowed_tools == (
+        FLEET_TOOLS if agent_name != "unrelated-agent" else None
+    )
     artifacts = authority_mod.task_output_artifacts(task_id)
     assert artifacts is not None
     assert artifacts[0].parts[0].text == "see https://x.example"

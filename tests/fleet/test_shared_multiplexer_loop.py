@@ -202,3 +202,63 @@ async def test_native_delegation_uses_served_probe_child_pool_and_bounds(
     }
     mux.mount_child.assert_awaited()
     mux.call_proxied_tool.assert_awaited_once_with("docs__search", {"q": "graph"})
+
+
+@pytest.mark.asyncio
+async def test_served_intent_inventory_and_call_preserve_caller_session(
+    tmp_path: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from fastmcp import FastMCP
+    from fastmcp.exceptions import ToolError
+
+    from arbora.api.contracts.session import GraphSession, current_session, use_session
+    from arbora.mcp_server import runtime
+    from arbora.security.actor_context import ActorContext, ActorType, use_actor
+
+    host = FastMCP("served-intent-regression")
+
+    @host.tool()
+    async def find() -> dict[str, str]:
+        session = current_session()
+        assert session is not None
+        return {"owner": session.actor.actor_id, "tenant": session.tenant}
+
+    @host.tool()
+    async def unregistered() -> str:
+        raise AssertionError("unregistered tool must never execute")
+
+    monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {})
+    monkeypatch.setattr(runtime, "NATIVE_INTENT_TOOLS", {"find": find})
+    config = tmp_path / "mcp.json"
+    config.write_text('{"mcpServers": {}}', encoding="utf-8")
+    mux = attach_multiplexer_from_fixture(host, config)
+    helpers = webui_mcp_delegation_helpers()
+    try:
+        async with host._lifespan_manager():
+            for owner, tenant in (("owner-a", "tenant-a"), ("owner-b", "tenant-b")):
+                actor = ActorContext(
+                    actor_id=owner,
+                    actor_type=ActorType.HUMAN,
+                    tenant_id=tenant,
+                    roles=("mcp:discover", "mcp:delegate"),
+                    authenticated=True,
+                )
+                session = GraphSession(
+                    actor=actor,
+                    tenant=tenant,
+                    scopes=frozenset({"mcp:discover", "mcp:delegate"}),
+                    policy_version="test",
+                    audience="test",
+                )
+                with use_actor(actor), use_session(session):
+                    tools = await helpers["list_mcp_server_tools"](server_name="arbora")
+                    assert [tool["name"] for tool in tools] == ["find"]
+                    assert await helpers["call_mcp_tool"](
+                        server_name="arbora", tool_name="find", arguments={}
+                    ) == {"owner": owner, "tenant": tenant}
+                    with pytest.raises(ToolError, match="unavailable"):
+                        await helpers["call_mcp_tool"](
+                            server_name="arbora", tool_name="unregistered", arguments={}
+                        )
+    finally:
+        await mux.aclose()
