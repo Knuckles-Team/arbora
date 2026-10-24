@@ -22,6 +22,7 @@ from arbora.browser_control.browser_control_client import (
     CatalogRegisterMessage,
     ControlCancelledMessage,
     ControlConfirmMessage,
+    ControlProposalResponseMessage,
     ControlResultMessage,
 )
 from arbora.browser_control.browser_control_port import BrowserControlConnection
@@ -147,6 +148,8 @@ class BrowserChannelMixin(BrowserControlMixinState):
         await self._revalidate_channel_authority(state)
         if isinstance(message, CatalogRegisterMessage):
             return await self._register(state, message)
+        elif isinstance(message, ControlProposalResponseMessage):
+            await self._receive_proposal(state, message)
         elif isinstance(message, ControlConfirmMessage):
             await self._receive_confirmation(state, message)
         elif isinstance(message, ControlResultMessage):
@@ -269,6 +272,7 @@ class BrowserChannelMixin(BrowserControlMixinState):
             if self._channels.get(state.binding.document_ref) is state:
                 del self._channels[state.binding.document_ref]
         try:
+            await self._withdraw_channel_proposals(state)
             for active in list(self._active_calls.values()):
                 if active.channel is state:
                     await self._cancel_active(active, "browser_channel_disconnected")

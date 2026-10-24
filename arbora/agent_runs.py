@@ -281,7 +281,10 @@ class AgentRunPort:
     async def execute_agent(
         self, request: AgentExecutionRequest, *, session: GraphSession
     ) -> AgentExecutionResult:
-        result = await self._executor.execute_agent(request, session=session)
+        from arbora.run_origin import agent_run_origin_scope
+
+        with agent_run_origin_scope(session, request.agent_name, request.run_id):
+            result = await self._executor.execute_agent(request, session=session)
         return AgentExecutionResult(
             run_id=result.run_id,
             output=result.output,

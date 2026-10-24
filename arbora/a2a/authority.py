@@ -881,10 +881,14 @@ class WorkItemA2AAuthority:
         return tasks, next_cursor
 
     async def cancel(self, task_id: str) -> A2ATask:
+        from arbora.run_origin import revoke_run_origins
+
+        cancellation_session = self._session("kg:write")
         item = await asyncio.to_thread(self._authorized_item, task_id, "kg:write")
         if item is None:
             raise A2ATaskNotCancelable("A2A task is not cancelable")
         if item.get("status") == "cancelled":
+            revoke_run_origins(cancellation_session, task_id)
             return self._project(item, task_id=task_id)
         if item.get("status") in _TERMINAL:
             raise A2ATaskNotCancelable("A2A task is not cancelable")
@@ -896,6 +900,7 @@ class WorkItemA2AAuthority:
             work_items.cancel_work_item, work_engine, item_id
         ):
             raise A2ATaskNotCancelable("A2A task is not cancelable")
+        revoke_run_origins(cancellation_session, task_id)
         current = await asyncio.to_thread(
             work_items.get_work_item, work_engine, item_id
         )

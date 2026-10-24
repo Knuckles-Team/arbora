@@ -195,6 +195,13 @@ class BrowserDispatchMixin(BrowserControlMixinState):
         async with active.dispatch_lock:
             async with self._lock:
                 document_ref = active.channel.binding.document_ref
+                if (
+                    active.proposal_guard is not None and not active.proposal_guard()
+                ) or (
+                    active.proposal_deadline is not None
+                    and self._clock() >= active.proposal_deadline
+                ):
+                    return False
                 if active.cancellation_requested or active.terminal_future.done():
                     return False
                 if (

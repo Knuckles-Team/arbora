@@ -208,3 +208,5 @@ All original R003 clauses and R003.1 through R003.3 remain mandatory alongside R
 ### R015/R029 WebUI bridge integration evidence
 
 The WebUI bridge is configured by the host and discovered through the existing preloaded `find` tool. Browser API support and active per-session registrations are separate facts. No preload grants identity, attended consent, execution permission or a browser session. Boot, discovery, owner isolation and teardown regression checks are required; full web-agent execution acceptance remains open.
+
+Live agent browser requests must carry host-bound agent/run provenance for the lifetime of the awaited native tool call. They may only propose an exact operation on the same admitted session and current attended browser generation. A trusted human response on that channel precedes lease issuance and normal execution; mutation confirmation remains separate. Cancellation, timeout, retirement and run revocation withdraw pending requests. No proposal survives restart or grants a browser session.

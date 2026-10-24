@@ -254,3 +254,5 @@ Preserve all existing R003 tasks and receipts. These added runtime cases have no
 ### R015/R029 WebUI bridge integration evidence
 
 The WebUI bridge is configured by the host and discovered through the existing preloaded `find` tool. Browser API support and active per-session registrations are separate facts. No preload grants identity, attended consent, execution permission or a browser session. Boot, discovery, owner isolation and teardown regression checks are required; full web-agent execution acceptance remains open.
+
+- [ ] Qualify R015/R029 live agent-to-attended-browser proposals end to end, including exact session, human acceptance, native run cancellation and existing mutation confirmation.

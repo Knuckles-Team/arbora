@@ -53,6 +53,7 @@ _BOUND_TRACE_NAMES = (
 def _bound_trace_attributes(active: _ActiveCall) -> dict[str, Any]:
     refs = active.channel.refs
     return {
+        **active.proposal_provenance,
         "actor_reference": refs.actor_reference,
         "attended_arm_reference": refs.attended_arm_reference,
         "attended_arm_expires_at": refs.attended_arm_expires_at,

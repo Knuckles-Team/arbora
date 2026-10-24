@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import secrets
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -138,6 +139,9 @@ class _ActiveCall:
     confirm_future: asyncio.Future[None]
     cancel_future: asyncio.Future[CancellationEffect]
     terminal_future: asyncio.Future[BrowserCallReceipt]
+    proposal_guard: Callable[[], bool] | None = None
+    proposal_deadline: float | None = None
+    proposal_provenance: dict[str, str] = field(default_factory=dict)
     claim: dict[str, Any] | None = None
     dispatched: bool = False
     timed_out: bool = False
@@ -161,6 +165,11 @@ def new_active_call(
 ) -> _ActiveCall:
     """Create one event-loop-bound volatile call state."""
 
+    from arbora.browser_control.browser_control_proposals import (
+        accepted_browser_proposal,
+    )
+
+    proposal = accepted_browser_proposal()
     loop = asyncio.get_running_loop()
     return _ActiveCall(
         channel=channel,
@@ -179,6 +188,18 @@ def new_active_call(
         confirm_future=loop.create_future(),
         cancel_future=loop.create_future(),
         terminal_future=loop.create_future(),
+        proposal_guard=proposal.live if proposal is not None else None,
+        proposal_deadline=proposal.deadline if proposal is not None else None,
+        proposal_provenance=(
+            {
+                "proposal_reference": proposal.proposal_id,
+                "proposal_digest": proposal.digest,
+                "requester_agent": proposal.origin.agent_name,
+                "requester_run_reference": proposal.run_ref,
+            }
+            if proposal is not None
+            else {}
+        ),
     )
 
 

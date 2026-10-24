@@ -449,7 +449,12 @@ async def _call_native_intent(
     _reject_caller_authority(kwargs)
     params = kwargs.get("params")
     params = params if isinstance(params, dict) else {}
-    with use_request_ref(f"run:{run_id or '-'}:{_uuid.uuid4().hex}"):
+    from arbora.run_origin import native_call_origin_scope
+
+    with (
+        use_request_ref(f"run:{run_id or '-'}:{_uuid.uuid4().hex}"),
+        native_call_origin_scope(run_id),
+    ):
         payload = await verb(**kwargs)
     if run_id:
         from agent_utilities import host_ports

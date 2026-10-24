@@ -1920,6 +1920,70 @@
       "confirm": "none",
       "effect": "write",
       "examples": [
+        "ask the attended browser owner to navigate"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "browser.request_call",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.browser.BrowserParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "payload": {
+              "additionalProperties": true,
+              "title": "Payload",
+              "type": "object"
+            }
+          },
+          "required": [
+            "payload"
+          ],
+          "title": "BrowserParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.browser.BrowserResult",
+        "schema": {
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "BrowserResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "kg:write"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Propose an exact browser action for attended human acceptance",
+      "surfaces": [
+        "mcp"
+      ],
+      "verb": "act"
+    },
+    {
+      "audit": "event",
+      "binding": {
+        "handler": "arbora.api.ops.browser.handle_browser",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "write",
+      "examples": [
         "revoke lease for my attended browser"
       ],
       "executor": "caller",
@@ -26819,5 +26883,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "83506943e5b2152df8809f7df2b29a0fd7fd362c5f3f406a34e03fe96706655c"
+  "registry_digest": "be39189babc1ee1a494aaf19447b36474145beabb231a3d5a95690be58cb10aa"
 }
