@@ -301,3 +301,39 @@ async def test_receipt_binds_work_item(wired: Any) -> None:
     assert "2026-01-01" not in str(receipt)
     job = await runner.get_job_status(tenant="tenant-a", job_id=item_id)
     assert job.status == "completed"
+
+
+# spec: ARBORA-FLEET-R041.13
+@pytest.mark.asyncio
+async def test_for_each_fan_out_passes_through_the_declaration(wired: Any) -> None:
+    """A source's ``for_each`` reaches the SDK runner as the connector declared it."""
+    declaration = {
+        **DECLARATION,
+        "sources": [
+            *DECLARATION["sources"],
+            {
+                "source_id": "details",
+                "record_type": "FixtureDetail",
+                "tools": ["fixture_get_item"],
+                "records_path": "data",
+                "id_field": "id",
+                "for_each": {"source": "items", "argument": "item_id"},
+            },
+        ],
+    }
+    fleet = _Fleet()
+    declarations_read = json.dumps(declaration)
+
+    async def read(caller: Any, *, server: str, uri: str) -> dict[str, Any]:
+        return {"uri": uri, "text": declarations_read, "mimeType": "application/json"}
+
+    fleet.resources_read = read  # type: ignore[method-assign]
+    runner = wired.build(fleet)
+    parsed = (await runner._declarations(None))["fixture"]
+    child = parsed.source("details")
+    assert child is not None and child.for_each is not None
+    assert (child.for_each.source, child.for_each.argument, child.for_each.field) == (
+        "items",
+        "item_id",
+        "id",
+    )
