@@ -158,12 +158,17 @@ def _served_invocation() -> tuple[HostedInvocation | None, Any]:
 
     args, _unknown = create_mcp_parser().parse_known_args()
     session = runtime._mint_process_session(str(getattr(args, "transport", "stdio")))
+    from arbora.browser_control.browser_control_runtime import (
+        dispatch_browser_operation,
+    )
+
     fleet = LateFleetGateway()
     invocation = served_invocation_from_settings(
         process_session=lambda: session,
         bindings={
             "a2a": a2a_mcp._service(),
             "fleet_gateway": fleet,
+            "browser_control": dispatch_browser_operation,
             "current_plan_reader": NativeCurrentPlanReader(),
             "source_reader": NativeSourceReader(),
         },

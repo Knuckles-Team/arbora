@@ -22,7 +22,9 @@ def _context(**services: object) -> SimpleNamespace:
 
 def test_agent_and_browser_ops_have_unique_ids_and_surface_limits() -> None:
     registry = Registry((*agents.operations(), *browser.operations()))
-    assert len(registry) == 10
+    assert len(registry) == len(
+        {op.id for op in (*agents.operations(), *browser.operations())}
+    )
     assert registry["agents.run"].effect is Effect.WRITE
     assert (
         registry["browser.execute_call"].principals is PrincipalRule.HUMAN_UNDELEGATED
@@ -88,3 +90,16 @@ async def test_browser_op_uses_the_registered_authority(
     )
     assert result == {"value": {"status": "accepted"}}
     assert called == [("execute_call", {"call_id": "c1"})]
+
+
+def test_browser_discovery_uses_preloaded_find_without_widening_execution():
+    from arbora.api.registry import Effect, Surface, Verb
+    from arbora.host_bindings import FLEET_TOOLS
+
+    operations = {op.id: op for op in browser.operations()}
+    discovery = operations["browser.discover"]
+    assert discovery.verb is Verb.FIND
+    assert discovery.verb.value in FLEET_TOOLS
+    assert discovery.effect is Effect.READ
+    assert Surface.MCP in discovery.surfaces
+    assert Surface.MCP not in operations["browser.execute_call"].surfaces

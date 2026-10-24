@@ -51,6 +51,15 @@ FLEET_TOOLS = ("find", "act")
 #: The fleet's default agent: an A2A message or ``agents.run`` that names no
 #: ``metadata.agent_name`` runs on it.
 FLEET_AGENT_NAME = "arbora"
+#: The default profile requested by agent-webui's orchestrator model.
+WEBUI_AGENT_NAME = "webui-assistant"
+
+
+def preloaded_agent_tools(agent_name: str) -> tuple[str, ...] | None:
+    """Select hosted intent tools; caller/session admission remains unchanged."""
+    return FLEET_TOOLS if agent_name in {FLEET_AGENT_NAME, WEBUI_AGENT_NAME} else None
+
+
 #: The model of the fleet agent, as a pydantic-ai model name.
 MODEL_SETTING = "ARBORA_AGENT_MODEL"
 #: The scopes that admit an outbound message send; each is an engine scope.
