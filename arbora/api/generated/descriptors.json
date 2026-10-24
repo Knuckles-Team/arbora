@@ -6114,6 +6114,18 @@
       "verb": "ask"
     },
     {
+      "domain": "runs",
+      "examples": [
+        "show this run's recorded context and cost"
+      ],
+      "id": "runs.get",
+      "summary": "Read recorded fields of one run",
+      "tags": [
+        "runs"
+      ],
+      "verb": "ask"
+    },
+    {
       "domain": "security",
       "examples": [
         "show the current security posture"
@@ -6246,5 +6258,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "0d815ecc757df7970292c7351707af550aedb7559ebe541252bcc16e34a1143a"
+  "registry_digest": "1704090402da6d4afe2279752b9518379da32f5659e5e56d4295a7ec55d39281"
 }

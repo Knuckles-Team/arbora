@@ -23,7 +23,7 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R021.4.2:** Engine adapter for run traces.
 - [ ] **ARBORA-OPS-R021.4.3:** `runs.metrics` models.
 - [ ] **ARBORA-OPS-R021.4.4:** `runs.metrics` operation.
-- [ ] **ARBORA-OPS-R021.4.5:** `runs.get` operation.
+- [ ] **ARBORA-OPS-R021.4.5:** `runs.get` operation. Source projection and handler prepared; native adapter and served acceptance remain pending.
 - [ ] **ARBORA-OPS-R021.4.6:** Registration and generated artifacts.
 - [ ] **ARBORA-OPS-R022.1:** Work-item and offer operations — work slice of `ARBORA-OPS-R022`.
 - [ ] **ARBORA-OPS-R022.2:** Evolution loop, schedule, and proposal operations — evolution slice of `ARBORA-OPS-R022`.

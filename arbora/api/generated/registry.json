@@ -25917,6 +25917,728 @@
     {
       "audit": "none",
       "binding": {
+        "handler": "arbora.api.ops.runs.handle_runs_get",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "show this run's recorded context and cost"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "runs.get",
+      "idempotency": "none",
+      "params": {
+        "model": "agent_connector_sdk.current_plan.CurrentPlanRequest",
+        "schema": {
+          "additionalProperties": false,
+          "description": "Select a run; caller authority is never a request field.",
+          "properties": {
+            "run_id": {
+              "maxLength": 512,
+              "minLength": 1,
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "run_id"
+          ],
+          "title": "CurrentPlanRequest",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.runs.RunsGetResult",
+        "schema": {
+          "$defs": {
+            "ActionSpace": {
+              "enum": [
+                "tool_set",
+                "shell_only"
+              ],
+              "title": "ActionSpace",
+              "type": "string"
+            },
+            "ContextPolicy": {
+              "enum": [
+                "none",
+                "elide",
+                "elide_then_summarize"
+              ],
+              "title": "ContextPolicy",
+              "type": "string"
+            },
+            "CurrentPlanRead": {
+              "additionalProperties": false,
+              "description": "An available plan (possibly empty) or an unavailable read with no items.",
+              "properties": {
+                "availability": {
+                  "enum": [
+                    "available",
+                    "unavailable"
+                  ],
+                  "title": "Availability",
+                  "type": "string"
+                },
+                "snapshot": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/CurrentPlanSnapshot"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "availability"
+              ],
+              "title": "CurrentPlanRead",
+              "type": "object"
+            },
+            "CurrentPlanSnapshot": {
+              "additionalProperties": false,
+              "description": "Immutable plan content and its producer validity interval.",
+              "properties": {
+                "expires_at": {
+                  "format": "date-time",
+                  "title": "Expires At",
+                  "type": "string"
+                },
+                "items": {
+                  "items": {
+                    "$ref": "#/$defs/PlanItem"
+                  },
+                  "title": "Items",
+                  "type": "array"
+                },
+                "observed_at": {
+                  "format": "date-time",
+                  "title": "Observed At",
+                  "type": "string"
+                },
+                "revision": {
+                  "minimum": 0,
+                  "title": "Revision",
+                  "type": "integer"
+                },
+                "run_id": {
+                  "maxLength": 512,
+                  "minLength": 1,
+                  "title": "Run Id",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "run_id",
+                "revision",
+                "observed_at",
+                "expires_at",
+                "items"
+              ],
+              "title": "CurrentPlanSnapshot",
+              "type": "object"
+            },
+            "HarnessConfigAnswer": {
+              "additionalProperties": false,
+              "properties": {
+                "action_space": {
+                  "discriminator": {
+                    "mapping": {
+                      "abstained": "#/$defs/HarnessPart_ActionSpaceAbstained",
+                      "decided": "#/$defs/HarnessPart_ActionSpaceDecided"
+                    },
+                    "propertyName": "status"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/HarnessPart_ActionSpaceDecided"
+                    },
+                    {
+                      "$ref": "#/$defs/HarnessPart_ActionSpaceAbstained"
+                    }
+                  ],
+                  "title": "Action Space"
+                },
+                "context_policy": {
+                  "discriminator": {
+                    "mapping": {
+                      "abstained": "#/$defs/HarnessPart_ContextPolicyAbstained",
+                      "decided": "#/$defs/HarnessPart_ContextPolicyDecided"
+                    },
+                    "propertyName": "status"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/HarnessPart_ContextPolicyDecided"
+                    },
+                    {
+                      "$ref": "#/$defs/HarnessPart_ContextPolicyAbstained"
+                    }
+                  ],
+                  "title": "Context Policy"
+                },
+                "hard_threshold": {
+                  "discriminator": {
+                    "mapping": {
+                      "abstained": "#/$defs/HarnessPart_UnitRationalWireAbstained",
+                      "decided": "#/$defs/HarnessPart_UnitRationalWireDecided"
+                    },
+                    "propertyName": "status"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/HarnessPart_UnitRationalWireDecided"
+                    },
+                    {
+                      "$ref": "#/$defs/HarnessPart_UnitRationalWireAbstained"
+                    }
+                  ],
+                  "title": "Hard Threshold"
+                },
+                "plan_scaffold": {
+                  "discriminator": {
+                    "mapping": {
+                      "abstained": "#/$defs/HarnessPart_PlanScaffoldAbstained",
+                      "decided": "#/$defs/HarnessPart_PlanScaffoldDecided"
+                    },
+                    "propertyName": "status"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/HarnessPart_PlanScaffoldDecided"
+                    },
+                    {
+                      "$ref": "#/$defs/HarnessPart_PlanScaffoldAbstained"
+                    }
+                  ],
+                  "title": "Plan Scaffold"
+                },
+                "recent_window_fraction": {
+                  "discriminator": {
+                    "mapping": {
+                      "abstained": "#/$defs/HarnessPart_UnitRationalWireAbstained",
+                      "decided": "#/$defs/HarnessPart_UnitRationalWireDecided"
+                    },
+                    "propertyName": "status"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/HarnessPart_UnitRationalWireDecided"
+                    },
+                    {
+                      "$ref": "#/$defs/HarnessPart_UnitRationalWireAbstained"
+                    }
+                  ],
+                  "title": "Recent Window Fraction"
+                },
+                "soft_threshold": {
+                  "discriminator": {
+                    "mapping": {
+                      "abstained": "#/$defs/HarnessPart_UnitRationalWireAbstained",
+                      "decided": "#/$defs/HarnessPart_UnitRationalWireDecided"
+                    },
+                    "propertyName": "status"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/HarnessPart_UnitRationalWireDecided"
+                    },
+                    {
+                      "$ref": "#/$defs/HarnessPart_UnitRationalWireAbstained"
+                    }
+                  ],
+                  "title": "Soft Threshold"
+                },
+                "tool_subset": {
+                  "discriminator": {
+                    "mapping": {
+                      "abstained": "#/$defs/HarnessPart_BoundedVec_string_256Abstained",
+                      "decided": "#/$defs/HarnessPart_BoundedVec_string_256Decided"
+                    },
+                    "propertyName": "status"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/HarnessPart_BoundedVec_string_256Decided"
+                    },
+                    {
+                      "$ref": "#/$defs/HarnessPart_BoundedVec_string_256Abstained"
+                    }
+                  ],
+                  "title": "Tool Subset"
+                }
+              },
+              "required": [
+                "action_space",
+                "context_policy",
+                "hard_threshold",
+                "plan_scaffold",
+                "recent_window_fraction",
+                "soft_threshold",
+                "tool_subset"
+              ],
+              "title": "HarnessConfigAnswer",
+              "type": "object"
+            },
+            "HarnessPart_ActionSpaceAbstained": {
+              "additionalProperties": false,
+              "properties": {
+                "conservative_default": {
+                  "$ref": "#/$defs/ActionSpace"
+                },
+                "missing_fact": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 64,
+                  "title": "Missing Fact",
+                  "type": "array"
+                },
+                "status": {
+                  "const": "abstained",
+                  "title": "Status",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "conservative_default",
+                "missing_fact",
+                "status"
+              ],
+              "title": "HarnessPart_ActionSpaceAbstained",
+              "type": "object"
+            },
+            "HarnessPart_ActionSpaceDecided": {
+              "additionalProperties": false,
+              "properties": {
+                "status": {
+                  "const": "decided",
+                  "title": "Status",
+                  "type": "string"
+                },
+                "value": {
+                  "$ref": "#/$defs/ActionSpace"
+                }
+              },
+              "required": [
+                "status",
+                "value"
+              ],
+              "title": "HarnessPart_ActionSpaceDecided",
+              "type": "object"
+            },
+            "HarnessPart_BoundedVec_string_256Abstained": {
+              "additionalProperties": false,
+              "properties": {
+                "conservative_default": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 256,
+                  "title": "Conservative Default",
+                  "type": "array"
+                },
+                "missing_fact": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 64,
+                  "title": "Missing Fact",
+                  "type": "array"
+                },
+                "status": {
+                  "const": "abstained",
+                  "title": "Status",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "conservative_default",
+                "missing_fact",
+                "status"
+              ],
+              "title": "HarnessPart_BoundedVec_string_256Abstained",
+              "type": "object"
+            },
+            "HarnessPart_BoundedVec_string_256Decided": {
+              "additionalProperties": false,
+              "properties": {
+                "status": {
+                  "const": "decided",
+                  "title": "Status",
+                  "type": "string"
+                },
+                "value": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 256,
+                  "title": "Value",
+                  "type": "array"
+                }
+              },
+              "required": [
+                "status",
+                "value"
+              ],
+              "title": "HarnessPart_BoundedVec_string_256Decided",
+              "type": "object"
+            },
+            "HarnessPart_ContextPolicyAbstained": {
+              "additionalProperties": false,
+              "properties": {
+                "conservative_default": {
+                  "$ref": "#/$defs/ContextPolicy"
+                },
+                "missing_fact": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 64,
+                  "title": "Missing Fact",
+                  "type": "array"
+                },
+                "status": {
+                  "const": "abstained",
+                  "title": "Status",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "conservative_default",
+                "missing_fact",
+                "status"
+              ],
+              "title": "HarnessPart_ContextPolicyAbstained",
+              "type": "object"
+            },
+            "HarnessPart_ContextPolicyDecided": {
+              "additionalProperties": false,
+              "properties": {
+                "status": {
+                  "const": "decided",
+                  "title": "Status",
+                  "type": "string"
+                },
+                "value": {
+                  "$ref": "#/$defs/ContextPolicy"
+                }
+              },
+              "required": [
+                "status",
+                "value"
+              ],
+              "title": "HarnessPart_ContextPolicyDecided",
+              "type": "object"
+            },
+            "HarnessPart_PlanScaffoldAbstained": {
+              "additionalProperties": false,
+              "properties": {
+                "conservative_default": {
+                  "$ref": "#/$defs/PlanScaffold"
+                },
+                "missing_fact": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 64,
+                  "title": "Missing Fact",
+                  "type": "array"
+                },
+                "status": {
+                  "const": "abstained",
+                  "title": "Status",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "conservative_default",
+                "missing_fact",
+                "status"
+              ],
+              "title": "HarnessPart_PlanScaffoldAbstained",
+              "type": "object"
+            },
+            "HarnessPart_PlanScaffoldDecided": {
+              "additionalProperties": false,
+              "properties": {
+                "status": {
+                  "const": "decided",
+                  "title": "Status",
+                  "type": "string"
+                },
+                "value": {
+                  "$ref": "#/$defs/PlanScaffold"
+                }
+              },
+              "required": [
+                "status",
+                "value"
+              ],
+              "title": "HarnessPart_PlanScaffoldDecided",
+              "type": "object"
+            },
+            "HarnessPart_UnitRationalWireAbstained": {
+              "additionalProperties": false,
+              "properties": {
+                "conservative_default": {
+                  "$ref": "#/$defs/UnitRationalWire"
+                },
+                "missing_fact": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 64,
+                  "title": "Missing Fact",
+                  "type": "array"
+                },
+                "status": {
+                  "const": "abstained",
+                  "title": "Status",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "conservative_default",
+                "missing_fact",
+                "status"
+              ],
+              "title": "HarnessPart_UnitRationalWireAbstained",
+              "type": "object"
+            },
+            "HarnessPart_UnitRationalWireDecided": {
+              "additionalProperties": false,
+              "properties": {
+                "status": {
+                  "const": "decided",
+                  "title": "Status",
+                  "type": "string"
+                },
+                "value": {
+                  "$ref": "#/$defs/UnitRationalWire"
+                }
+              },
+              "required": [
+                "status",
+                "value"
+              ],
+              "title": "HarnessPart_UnitRationalWireDecided",
+              "type": "object"
+            },
+            "PlanItem": {
+              "additionalProperties": false,
+              "description": "One immutable plan item, in producer order.",
+              "properties": {
+                "status": {
+                  "enum": [
+                    "pending",
+                    "in_progress",
+                    "done"
+                  ],
+                  "title": "Status",
+                  "type": "string"
+                },
+                "text": {
+                  "minLength": 1,
+                  "title": "Text",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "text",
+                "status"
+              ],
+              "title": "PlanItem",
+              "type": "object"
+            },
+            "PlanScaffold": {
+              "enum": [
+                "on",
+                "off"
+              ],
+              "title": "PlanScaffold",
+              "type": "string"
+            },
+            "RunSummary": {
+              "additionalProperties": false,
+              "description": "Recorded run fields; null means the producer supplied no measurement.\n\nConfiguration is the recorded EG decision answer, including its abstentions.\nIt is never resolved by asking for the caller's current configuration.",
+              "properties": {
+                "context_budget_tokens": {
+                  "anyOf": [
+                    {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Context Budget Tokens"
+                },
+                "cost_usd": {
+                  "anyOf": [
+                    {
+                      "minimum": 0,
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Cost Usd"
+                },
+                "current_plan": {
+                  "$ref": "#/$defs/CurrentPlanRead",
+                  "default": {
+                    "availability": "unavailable",
+                    "snapshot": null
+                  }
+                },
+                "harness_config": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/HarnessConfigAnswer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "harness_config_ref": {
+                  "anyOf": [
+                    {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Harness Config Ref"
+                },
+                "peak_context_tokens": {
+                  "anyOf": [
+                    {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Peak Context Tokens"
+                },
+                "run_id": {
+                  "minLength": 1,
+                  "title": "Run Id",
+                  "type": "string"
+                },
+                "termination_reason": {
+                  "anyOf": [
+                    {
+                      "enum": [
+                        "final_answer",
+                        "context_overflow",
+                        "stuck",
+                        "step_budget",
+                        "error"
+                      ],
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Termination Reason"
+                }
+              },
+              "required": [
+                "run_id"
+              ],
+              "title": "RunSummary",
+              "type": "object"
+            },
+            "UnitRationalWire": {
+              "additionalProperties": false,
+              "properties": {
+                "denominator": {
+                  "minimum": 0,
+                  "title": "Denominator",
+                  "type": "integer"
+                },
+                "numerator": {
+                  "minimum": 0,
+                  "title": "Numerator",
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "denominator",
+                "numerator"
+              ],
+              "title": "UnitRationalWire",
+              "type": "object"
+            }
+          },
+          "additionalProperties": false,
+          "properties": {
+            "availability": {
+              "enum": [
+                "available",
+                "unavailable"
+              ],
+              "title": "Availability",
+              "type": "string"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/RunSummary"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "availability",
+            "value"
+          ],
+          "title": "RunsGetResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "kg:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Read recorded fields of one run",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "ask"
+    },
+    {
+      "audit": "none",
+      "binding": {
         "handler": "arbora.api.ops.security.handle_security_posture_read",
         "kind": "composite"
       },
@@ -26696,5 +27418,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "0d815ecc757df7970292c7351707af550aedb7559ebe541252bcc16e34a1143a"
+  "registry_digest": "1704090402da6d4afe2279752b9518379da32f5659e5e56d4295a7ec55d39281"
 }

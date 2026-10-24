@@ -317,3 +317,39 @@ Hot-path proof for `ARBORA-OPS-R860`: `tests/api/test_program_ops_served.py::tes
 | Hot-path proof | `ARBORA-OPS-R861.9` | `tests/api/test_dashboard_ops_served.py::test_save_share_list_conflict_delete_served` passes. |
 
 Hot-path proof for `ARBORA-OPS-R861`: `tests/api/test_dashboard_ops_served.py::test_save_share_list_conflict_delete_served`.
+
+## Run summary source preparation
+
+`tests/api/test_run_summary_ops.py` covers part of `ARBORA-OPS-R021.4.5`.
+It checks caller forwarding, measured zeros, absent fields and the missing-reader refusal.
+It also rejects injected authority, invalid measurements and mismatched run IDs.
+These are handler tests with a supplied reader, not native or served acceptance.
+
+The isolated source adds `runs.get` and regenerates its client and API schemas.
+No native run-trace reader is bound yet.
+EG 2.27.5 exposes `GetRunWorkItem`, with admission, work-item state and optional committed completion.
+That result does not define the required trace or applied-configuration link.
+No inference from work-item status to termination reason is allowed.
+The adapter, recorded configuration resolution, per-field availability metadata and REST/MCP acceptance remain pending.
+The full metrics port and aggregate operations also remain pending.
+Rows `ARBORA-OPS-R021.4.1` through `.6` remain open; this preparation closes none.
+
+Local preparation checks: 66 focused tests pass, including registry and generated-schema validation.
+The API generation drift check, focused mypy check and wheel build pass.
+The all-files commit gate passes.
+The obsolete clone exemptions were removed; the unchanged clone detector passes without them.
+Boolean schema compatibility now has regression tests and the API compatibility check passes.
+The strict documentation build passes with the shared theme and pinned Pages dependencies.
+The full suite completed with 35 failures, all caused by missing Helm.
+CI pins Helm v4.3.1 and its archive digest; all 35 failed tests pass after local setup using those pins.
+Native acceptance remains pending for the owner dependencies below.
+
+At [EG main 4a1780082fbe6bf7756718316e4997ec23712eb8](https://github.com/Knuckles-Team/epistemic-graph/tree/4a1780082fbe6bf7756718316e4997ec23712eb8),
+R009.1 through .3, .8, .9 and .15 through .17 remain SPECIFIED with no implementation evidence.
+The orchestration ontology lacks the five required properties.
+The named `crates/eg-core/tests/run_trace_ingest.rs` acceptance file is absent.
+The public `RunCompletionInput` carries run ID and usage counters.
+Its committed payload adds outcome and result/error references, but no required harness projection.
+Arbora cannot infer the missing trace or configuration link from those values.
+The EG-owned validated ingestion/readback contract must exist before native adapter acceptance.
+No native reader is bound, and no TUI migration or requirement closure is claimed.

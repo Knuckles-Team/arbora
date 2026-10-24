@@ -1,6 +1,16 @@
 {
   "components": {
     "requestBodies": {
+      "Shared0955cb27947a018b4eb23730a1eeff4d03f8dec4fb83a350accacca77b4e326b": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Schema27fd10f3083b3fe243fb903b0248aee255e0d2dc67b473e91b2ec4113b40884e"
+            }
+          }
+        },
+        "required": true
+      },
       "Shared3c2f19487f197f7ca8aff79102755aa8ceb5ae59fc562bda0602d50f1cfc7f66": {
         "content": {
           "application/json": {
@@ -133,29 +143,86 @@
       }
     },
     "schemas": {
+      "Definition05c304a7d241cab08d66ba4e420a967e19567718d3add8c26062b81cde93ee6b": {
+        "$ref": "#/components/schemas/Schemaf11f2bfbdc4cbb1240b4c85fe07834a8af5a6183b4791a30542e239f86b940d8"
+      },
+      "Definition0a41ca8d490febd2830afbadefb7bb6d764efdf239f29839f0ffc7d2ae001825": {
+        "$ref": "#/components/schemas/Schema8c2ba8019cf10f9ad7ffdfd82a9afbadee5f15f8d6aa4231fbb68264081d7bcf"
+      },
+      "Definition0ca37baa135ea04746b1b723400cfc9937f575435410225219a0a2d7c04d81cd": {
+        "$ref": "#/components/schemas/Schema0ca37baa135ea04746b1b723400cfc9937f575435410225219a0a2d7c04d81cd"
+      },
+      "Definition162216b626bfb8eb709965b9c404aa4385a5381cec2351b56fb059fc792bffb5": {
+        "$ref": "#/components/schemas/Schemaa974a70665330da9451843fc420f2b22f2dcfff7a7d15c70bb0ea7985d8be526"
+      },
+      "Definition1908f7f574b8eb716822777dc2ffeda3d54b10ed089928b944f847a3c7ac8b5e": {
+        "$ref": "#/components/schemas/Schema2247f0b3a4e41448e14355162209da55db610defb201e963ee709e487f42540d"
+      },
+      "Definition1d527cf7e4d250b31d6563c6f8a261d50f606c1040bd78288d0708b58077f1b1": {
+        "$ref": "#/components/schemas/Schemaeaeb8dace710b2e7bccab6156f5e4a78a57bc99c989f18eee7d5363bd41ae564"
+      },
       "Definition1d94b3ae8ce88d43ac1686464a61940f16a15a81254ceb60f584d0996bea92e8": {
         "$ref": "#/components/schemas/Schema1d94b3ae8ce88d43ac1686464a61940f16a15a81254ceb60f584d0996bea92e8"
       },
       "Definition1ea37e3ece08b56882001f829f80d0f37387ba4d5ca6e012461aca7d1ab9fa08": {
         "$ref": "#/components/schemas/Schema9db2a7e151e69a0e0ae9739c5a0847202964c9b69c94c9344245fd7c77e9cbf8"
       },
+      "Definition2149a28a0fbb6b6b05fbb9f369b7c44202d5502437d1b529eae90b4af6498ac7": {
+        "$ref": "#/components/schemas/Schema82a69f336f648b153b6e072d1f1faa2e844e2551c9df9ffb1b9bf9c56841a031"
+      },
       "Definition2410bb35a5212044a26a7f1b62271a9b079d5b33e442b127dab54e178bedaa6e": {
         "$ref": "#/components/schemas/Schemab65f8cf83520abcc81339392269e3bb61520bd1bf0b290070d109a32ac0f9159"
+      },
+      "Definition2968cb60e133e136454d9515707b9384e0753df4583497068ea667e79e64a078": {
+        "$ref": "#/components/schemas/Schemaa5c62b74e7cf2eb21f3ca934124e44c2a9232394a75d0355f5467b4fa5c0823d"
       },
       "Definition3095487226d7f5a7824a8e27bc0adbbc1a3495fb74611bd5ac71a10af1bd2a1e": {
         "$ref": "#/components/schemas/Schema920ab8a90fbf04dba04c9a05b8edc0cb0df7b76c972aa26afdcbd5adb6758dc1"
       },
+      "Definition3a1ca1547497e81fb2ab1338a12fcc1b452b5a3e34399f72513c30848bfd4b80": {
+        "$ref": "#/components/schemas/Schema68947ee964ee84babc58900c665ab49afdadaf5057ed1551b5750027ec90c693"
+      },
+      "Definition4b611c9b542bfe688eb61aff7258108def1a0d80d264075bfa68b0a8ce4b0a6f": {
+        "$ref": "#/components/schemas/Schema2734b25467efa909475c170b026c3a1014085ab37e41875c1a886f6db5da9cf1"
+      },
       "Definition5b9ce03c9f077b89cb597ce0377b8192731720e40d52957756822770f589a905": {
         "$ref": "#/components/schemas/Schema461ca204e766f2aab4db33300ca288c50942031318ed9c2f6f157cc8ec141641"
+      },
+      "Definition62ff8c49d38c4a524a35f94b5719b9d5e9f5e235a74b907c3ab985cbca0a1123": {
+        "$ref": "#/components/schemas/Schemae6712a071e36c5fbfc295eda353df58dcdbff060979894ca5de1d212b66ec11c"
       },
       "Definition75bed9b568e1d24830330f762cddd1d424aa469009ab167e481229bd9953ca29": {
         "$ref": "#/components/schemas/Schema78ccdcbd70b51432be83cc6b15ed6cac5e05a0ed13e3cee8ca3ecd4c29a46284"
       },
+      "Definition81bdf31a09ef5d671681a1f548aafca09c4c7d0ca2a72da81f01cb01d30946e8": {
+        "$ref": "#/components/schemas/Schema81bdf31a09ef5d671681a1f548aafca09c4c7d0ca2a72da81f01cb01d30946e8"
+      },
+      "Definition8725406647dde66fcdd8fea07f8b986d6634b0aa8bd24ee93dacd912c16b1420": {
+        "$ref": "#/components/schemas/Schemaf5d4723b808416f2d7abbdadb65b261e8134f6ac060d436b0a23c4c7c571d373"
+      },
+      "Definition960399c68f2aaa3f4c4e08d04ca9e166e1dcf63afc998206a15d390c7ec277ae": {
+        "$ref": "#/components/schemas/Schema2d2d5ea064acc161a0aa2350e4c74a407ab7c8e51c4217bb46f305ccd79ac12e"
+      },
       "Definitionae1b8a29e07c26df95489a53fc7d896f999a99829ed2d84b52491ed5cfaffa4e": {
         "$ref": "#/components/schemas/Schema4cc5fb01b4eff0f49b5d0349071f1346bbd6ce26f9df8cfdc51a65772486fbdf"
       },
+      "Definitionb122f594c149ace026b9f5fe3ee78405066261c1c091436c4a4e615e2a4bb7a5": {
+        "$ref": "#/components/schemas/Schema2fd388d1ae8239e789ce34511dc490221df9f271b5cd3719eba053a9c5dc8d17"
+      },
+      "Definitionc6733816e19cb912066ad95d63ab0577ac4cf3821d3787654e6bc3bdf76c4c10": {
+        "$ref": "#/components/schemas/Schemac6733816e19cb912066ad95d63ab0577ac4cf3821d3787654e6bc3bdf76c4c10"
+      },
+      "Definitionda66511810cf6cd26796f251eca0ff0213883a0fa648e3a117badb02f0b26c4e": {
+        "$ref": "#/components/schemas/Schemac4d1c4659edcdacb3517a35d30ca05b9be9e6e021a0219947d5552327266b042"
+      },
       "Definitionda935471d1a4b0239d7591cb066897a8442219998fa78e1f825fd5698d277a33": {
         "$ref": "#/components/schemas/Schemafd0e5294fb798d7acd41f0ad0147df8db96695d44e295daa0ebfc2d4db76b117"
+      },
+      "Definitiondac531511b1523cc38e0a8c2bbf475f2db94d45cd1cb6afbea07750392aa89bd": {
+        "$ref": "#/components/schemas/Schema01c46de0b57e1dd69a4d742a02fd54e7f12378b57c73e3dc1c5bfee216512117"
+      },
+      "Definitione3b28ac44c7ded4ae0ec60db7ae8ce199c87b543c4ced0159888da768242d166": {
+        "$ref": "#/components/schemas/Schema36f7d36dab1fecd62ec240745fc1cfc7d4b1861317bdd3b4d32699742cb947ba"
       },
       "Definitione5b304c2722adb849beeb376352a983b964bf1b970f2562fb7f323c0f6998d92": {
         "$ref": "#/components/schemas/Schemaeda27189feb9fb8e2a62f858582ff3b547da8992f50e88542ff64d6adfe6f67f"
@@ -165,6 +232,49 @@
         "properties": {},
         "title": "UsageReadParams",
         "type": "object"
+      },
+      "Schema01c46de0b57e1dd69a4d742a02fd54e7f12378b57c73e3dc1c5bfee216512117": {
+        "additionalProperties": false,
+        "properties": {
+          "conservative_default": {
+            "$ref": "#/components/schemas/Definition0ca37baa135ea04746b1b723400cfc9937f575435410225219a0a2d7c04d81cd"
+          },
+          "missing_fact": {
+            "$ref": "#/components/schemas/Schema6afd4affe1f8bc17bf2c9bec12af7a61ba88514e3cfe0cafa3d95c225f085ed7"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Schema15b6eb15a0f50fa0e8b9bbb03ef35a781af7f0ea4873f6fc059ef96660c3f888"
+          }
+        },
+        "required": [
+          "conservative_default",
+          "missing_fact",
+          "status"
+        ],
+        "title": "HarnessPart_ContextPolicyAbstained",
+        "type": "object"
+      },
+      "Schema01e98ae03174db7f421b6a6dcd94014ada15548f16db7aed7750afff0210a022": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Definition4b611c9b542bfe688eb61aff7258108def1a0d80d264075bfa68b0a8ce4b0a6f"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ]
+      },
+      "Schema02035de148b6915cfb5a0e296ddd4b65860476c67aea0b1535335cad33df3464": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schemaf696f11685898ba70b3cb0d2df11127ae78f524d277408e36b5d6f7a6a1c79b4"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Cost Usd"
       },
       "Schema032dd68e5cf93a264b9f4bd4f241266fbaa7373550d738da313b55f8a1fd3cc7": {
         "maxLength": 128,
@@ -176,6 +286,14 @@
       "Schema03a4150494ecf69e0818800bd0f0e7cc5eeba9613c1a00afa79deb923dc3ce5a": {
         "title": "Reason",
         "type": "string"
+      },
+      "Schema0425fbcb2e6501fc8fc7caf68f38390428bd0bbbdc39a655a4ebeaa313a44aac": {
+        "items": {
+          "$ref": "#/components/schemas/Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7"
+        },
+        "maxItems": 256,
+        "title": "Conservative Default",
+        "type": "array"
       },
       "Schema043865138c978065efae41ddaeb3fe12ba28ceb5218183f7c181814da57b1ed5": {
         "additionalProperties": false,
@@ -207,6 +325,16 @@
         ],
         "title": "DecideCommitParams",
         "type": "object"
+      },
+      "Schema05ab9ca58feec2b8516cda4cebf7a470eae7ed6b739adad840e54c0d00b8f9d0": {
+        "enum": [
+          "final_answer",
+          "context_overflow",
+          "stuck",
+          "step_budget",
+          "error"
+        ],
+        "type": "string"
       },
       "Schema06bc3ccba4c32ad24fac398ce43f76467e22a079b069843a147730f8e2dd75da": {
         "additionalProperties": false,
@@ -244,6 +372,14 @@
       "Schema075c03b9cd39e20d2715d1d32e08519fd970c1e13528fa2016cdbe3891953f82": {
         "title": "Value"
       },
+      "Schema0800c682ed951269a2c0a7e589303e9af45a50c2c676aafb6b0c78b584c7d86f": {
+        "enum": [
+          "available",
+          "unavailable"
+        ],
+        "title": "Availability",
+        "type": "string"
+      },
       "Schema0851fdad2e08689db7c506ac42ca1ae3b51e19636e6f912d35716f6d3ac83ee1": {
         "default": "",
         "maxLength": 1024,
@@ -261,6 +397,20 @@
         ],
         "default": null,
         "title": "Message"
+      },
+      "Schema0ca37baa135ea04746b1b723400cfc9937f575435410225219a0a2d7c04d81cd": {
+        "enum": [
+          "none",
+          "elide",
+          "elide_then_summarize"
+        ],
+        "title": "ContextPolicy",
+        "type": "string"
+      },
+      "Schema0cb120b8330e2ffb999756fdce00c12a99ec9f8559d565184bd70e15eb9bd850": {
+        "minimum": 0,
+        "title": "Revision",
+        "type": "integer"
       },
       "Schema0cf045aeb7f5a65f4e35ee7f604234ca74de2d02df68a390cf953eb741561563": {
         "maxLength": 8192,
@@ -310,6 +460,26 @@
         "title": "ResearchWebResult",
         "type": "object"
       },
+      "Schema1128dfa74ebd845cdfaec8f331e59239864c6ad421a638825ca3cca33dd7bcba": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema36fea325bf1aca70851177c691a140409803c229577a49ba5976d714a5fdb168"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Harness Config Ref"
+      },
+      "Schema117b96a6a6a65fba8c2996b6b2852a43f1efffe31c9e77f21fe77f2057da091b": {
+        "items": {
+          "$ref": "#/components/schemas/Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7"
+        },
+        "maxItems": 256,
+        "title": "Value",
+        "type": "array"
+      },
       "Schema1201411dfa275e282e9f1dbf5b65995c8b2f58744af2041590aa6936c82d48f1": {
         "additionalProperties": false,
         "properties": {
@@ -347,6 +517,11 @@
         "title": "FleetCallParams",
         "type": "object"
       },
+      "Schema15b6eb15a0f50fa0e8b9bbb03ef35a781af7f0ea4873f6fc059ef96660c3f888": {
+        "const": "abstained",
+        "title": "Status",
+        "type": "string"
+      },
       "Schema1871ecd8d81a41f1dce41dd92b0a2f10d5b7c78f93061455de8f8e940013d06a": {
         "additionalProperties": false,
         "properties": {
@@ -382,6 +557,17 @@
         },
         "maxItems": 100,
         "type": "array"
+      },
+      "Schema1a7324ca8dad2a8278180e4c60e4ce26de5bd28f5c739964f554f769f658bfad": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Definition62ff8c49d38c4a524a35f94b5719b9d5e9f5e235a74b907c3ab985cbca0a1123"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null
       },
       "Schema1acc67e49d84b0d66be3e6187ce3a6b1674c9d47c7230b9f298b2f2e117ab25b": {
         "minLength": 1,
@@ -443,6 +629,27 @@
         "default": null,
         "title": "Commonannotations"
       },
+      "Schema2247f0b3a4e41448e14355162209da55db610defb201e963ee709e487f42540d": {
+        "additionalProperties": false,
+        "properties": {
+          "conservative_default": {
+            "$ref": "#/components/schemas/Definition81bdf31a09ef5d671681a1f548aafca09c4c7d0ca2a72da81f01cb01d30946e8"
+          },
+          "missing_fact": {
+            "$ref": "#/components/schemas/Schema6afd4affe1f8bc17bf2c9bec12af7a61ba88514e3cfe0cafa3d95c225f085ed7"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Schema15b6eb15a0f50fa0e8b9bbb03ef35a781af7f0ea4873f6fc059ef96660c3f888"
+          }
+        },
+        "required": [
+          "conservative_default",
+          "missing_fact",
+          "status"
+        ],
+        "title": "HarnessPart_PlanScaffoldAbstained",
+        "type": "object"
+      },
       "Schema232cd8554048d4c90289c36e61837e60f8914e4f14d074ced504b87387d9f4f8": {
         "maxLength": 1024,
         "minLength": 1,
@@ -460,6 +667,41 @@
         ],
         "default": null,
         "title": "Receiver"
+      },
+      "Schema2734b25467efa909475c170b026c3a1014085ab37e41875c1a886f6db5da9cf1": {
+        "additionalProperties": false,
+        "description": "Recorded run fields; null means the producer supplied no measurement.\n\nConfiguration is the recorded EG decision answer, including its abstentions.\nIt is never resolved by asking for the caller's current configuration.",
+        "properties": {
+          "context_budget_tokens": {
+            "$ref": "#/components/schemas/Schema391c11d1bf3d1e53e3d36cfa2d6cd8146b393ab3a4afbc49bcdb32ff0af193db"
+          },
+          "cost_usd": {
+            "$ref": "#/components/schemas/Schema02035de148b6915cfb5a0e296ddd4b65860476c67aea0b1535335cad33df3464"
+          },
+          "current_plan": {
+            "$ref": "#/components/schemas/Schemae0f167cda2293625724faf292010114067db876828c795228d6053ddef37647b"
+          },
+          "harness_config": {
+            "$ref": "#/components/schemas/Schema1a7324ca8dad2a8278180e4c60e4ce26de5bd28f5c739964f554f769f658bfad"
+          },
+          "harness_config_ref": {
+            "$ref": "#/components/schemas/Schema1128dfa74ebd845cdfaec8f331e59239864c6ad421a638825ca3cca33dd7bcba"
+          },
+          "peak_context_tokens": {
+            "$ref": "#/components/schemas/Schema4b4eaed1ec4ea68f1417f111496686d966c6710d7cc30f7a617a4eba434d0748"
+          },
+          "run_id": {
+            "$ref": "#/components/schemas/Schemaf753f845d689cc8b08587dc33224cf5550929b6d3992feae3d617fb0eb671f13"
+          },
+          "termination_reason": {
+            "$ref": "#/components/schemas/Schemaeda07bb2a74242edfb0b520e9c221967afebe5a90e722ea827165132808ac537"
+          }
+        },
+        "required": [
+          "run_id"
+        ],
+        "title": "RunSummary",
+        "type": "object"
       },
       "Schema27fd10f3083b3fe243fb903b0248aee255e0d2dc67b473e91b2ec4113b40884e": {
         "additionalProperties": false,
@@ -550,6 +792,23 @@
         "title": "SourceHistoryParams",
         "type": "object"
       },
+      "Schema2d2d5ea064acc161a0aa2350e4c74a407ab7c8e51c4217bb46f305ccd79ac12e": {
+        "additionalProperties": false,
+        "properties": {
+          "denominator": {
+            "$ref": "#/components/schemas/Schemac6dcc0f41283f1f577029dc1d6a9bbcb283f9be219d2cdbbb6b9f5313554f0ee"
+          },
+          "numerator": {
+            "$ref": "#/components/schemas/Schemaa342047ca782e2854d6ed5c534da74752ec69d3f6698f59164d2a7d497743425"
+          }
+        },
+        "required": [
+          "denominator",
+          "numerator"
+        ],
+        "title": "UnitRationalWire",
+        "type": "object"
+      },
       "Schema2db1e0b735a231257bc16ca3f2a2f7b503acca69ba97dc893290c4555197f853": {
         "anyOf": [
           {
@@ -584,10 +843,49 @@
         "title": "FleetResourceReadParams",
         "type": "object"
       },
+      "Schema2fd388d1ae8239e789ce34511dc490221df9f271b5cd3719eba053a9c5dc8d17": {
+        "additionalProperties": false,
+        "properties": {
+          "conservative_default": {
+            "$ref": "#/components/schemas/Definition960399c68f2aaa3f4c4e08d04ca9e166e1dcf63afc998206a15d390c7ec277ae"
+          },
+          "missing_fact": {
+            "$ref": "#/components/schemas/Schema6afd4affe1f8bc17bf2c9bec12af7a61ba88514e3cfe0cafa3d95c225f085ed7"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Schema15b6eb15a0f50fa0e8b9bbb03ef35a781af7f0ea4873f6fc059ef96660c3f888"
+          }
+        },
+        "required": [
+          "conservative_default",
+          "missing_fact",
+          "status"
+        ],
+        "title": "HarnessPart_UnitRationalWireAbstained",
+        "type": "object"
+      },
       "Schema301ec8242bf2781b88c446d8878caf84a26f47852e285cc5cbd06437211b45e2": {
         "default": false,
         "title": "Browse",
         "type": "boolean"
+      },
+      "Schema32cd479fbb1c2458f70f20c5f287bb28b2b6c2f59e79348d796dee5d283c3f9f": {
+        "discriminator": {
+          "mapping": {
+            "abstained": "#/$defs/HarnessPart_ContextPolicyAbstained",
+            "decided": "#/$defs/HarnessPart_ContextPolicyDecided"
+          },
+          "propertyName": "status"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/Definition0a41ca8d490febd2830afbadefb7bb6d764efdf239f29839f0ffc7d2ae001825"
+          },
+          {
+            "$ref": "#/components/schemas/Definitiondac531511b1523cc38e0a8c2bbf475f2db94d45cd1cb6afbea07750392aa89bd"
+          }
+        ],
+        "title": "Context Policy"
       },
       "Schema3378ec22b14005381a0f00d4da380c95ac6eced62b6a2adfd8d8042d254b3708": {
         "anyOf": [
@@ -626,6 +924,31 @@
         "title": "MemoryResult",
         "type": "object"
       },
+      "Schema36f7d36dab1fecd62ec240745fc1cfc7d4b1861317bdd3b4d32699742cb947ba": {
+        "additionalProperties": false,
+        "properties": {
+          "conservative_default": {
+            "$ref": "#/components/schemas/Schema0425fbcb2e6501fc8fc7caf68f38390428bd0bbbdc39a655a4ebeaa313a44aac"
+          },
+          "missing_fact": {
+            "$ref": "#/components/schemas/Schema6afd4affe1f8bc17bf2c9bec12af7a61ba88514e3cfe0cafa3d95c225f085ed7"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Schema15b6eb15a0f50fa0e8b9bbb03ef35a781af7f0ea4873f6fc059ef96660c3f888"
+          }
+        },
+        "required": [
+          "conservative_default",
+          "missing_fact",
+          "status"
+        ],
+        "title": "HarnessPart_BoundedVec_string_256Abstained",
+        "type": "object"
+      },
+      "Schema36fea325bf1aca70851177c691a140409803c229577a49ba5976d714a5fdb168": {
+        "minLength": 1,
+        "type": "string"
+      },
       "Schema3716eaac209c05e4c44c45701aaa4c23e334eff4b07f3e1b9ba0b0ca57a50c38": {
         "properties": {
           "value": {
@@ -650,6 +973,23 @@
         "default": null,
         "title": "Groupkey"
       },
+      "Schema37b02699a6e2a2b8563108071f9a0bf1cddf9a717079e4ab66694166895cb6c9": {
+        "additionalProperties": false,
+        "properties": {
+          "availability": {
+            "$ref": "#/components/schemas/Schema0800c682ed951269a2c0a7e589303e9af45a50c2c676aafb6b0c78b584c7d86f"
+          },
+          "value": {
+            "$ref": "#/components/schemas/Schema01e98ae03174db7f421b6a6dcd94014ada15548f16db7aed7750afff0210a022"
+          }
+        },
+        "required": [
+          "availability",
+          "value"
+        ],
+        "title": "RunsGetResult",
+        "type": "object"
+      },
       "Schema3835fce31c0bc123510c805585b22edc730cfa78d8e517ba97a6baf2a4f4f70b": {
         "additionalProperties": false,
         "properties": {
@@ -667,6 +1007,18 @@
         "additionalProperties": true,
         "title": "Settings",
         "type": "object"
+      },
+      "Schema391c11d1bf3d1e53e3d36cfa2d6cd8146b393ab3a4afbc49bcdb32ff0af193db": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema6fa303fdbf080b52d9a1cdb8d6078fd9708fd34676ceb919344043b3971e1790"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Context Budget Tokens"
       },
       "Schema393356cdde7bb9b8d1649761996c760bc8af3666924ccca282f6391d20189e2c": {
         "maximum": 1000000,
@@ -767,6 +1119,33 @@
         "title": "Request Digest",
         "type": "string"
       },
+      "Schema40b30487725f25e3dc44968dde35dd3490bc4aeb95675fa5150e9505402e2062": {
+        "enum": [
+          "pending",
+          "in_progress",
+          "done"
+        ],
+        "title": "Status",
+        "type": "string"
+      },
+      "Schema40d2b79a2aecc6cecfe1753e0a099481e826324b91d79ca08f39ddb51b1a919b": {
+        "discriminator": {
+          "mapping": {
+            "abstained": "#/$defs/HarnessPart_UnitRationalWireAbstained",
+            "decided": "#/$defs/HarnessPart_UnitRationalWireDecided"
+          },
+          "propertyName": "status"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/Definition2968cb60e133e136454d9515707b9384e0753df4583497068ea667e79e64a078"
+          },
+          {
+            "$ref": "#/components/schemas/Definitionb122f594c149ace026b9f5fe3ee78405066261c1c091436c4a4e615e2a4bb7a5"
+          }
+        ],
+        "title": "Hard Threshold"
+      },
       "Schema419baaf5641802ec2a772ec2e7bd19064dff5602ad7da82164cfd75e0c674f85": {
         "title": "Backup Id",
         "type": "string"
@@ -818,6 +1197,18 @@
         "title": "OpsConfigParams",
         "type": "object"
       },
+      "Schema4b4eaed1ec4ea68f1417f111496686d966c6710d7cc30f7a617a4eba434d0748": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema6fa303fdbf080b52d9a1cdb8d6078fd9708fd34676ceb919344043b3971e1790"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Peak Context Tokens"
+      },
       "Schema4cc5fb01b4eff0f49b5d0349071f1346bbd6ce26f9df8cfdc51a65772486fbdf": {
         "additionalProperties": false,
         "description": "One tenant-scoped diagnostic report; the store owns its exact shape.",
@@ -844,6 +1235,24 @@
         "minLength": 1,
         "title": "Elevation Id",
         "type": "string"
+      },
+      "Schema4cdc25b77f8af922cdef2f691506aeec6054f096bd57c482d09d00debc6757b1": {
+        "discriminator": {
+          "mapping": {
+            "abstained": "#/$defs/HarnessPart_ActionSpaceAbstained",
+            "decided": "#/$defs/HarnessPart_ActionSpaceDecided"
+          },
+          "propertyName": "status"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/Definition162216b626bfb8eb709965b9c404aa4385a5381cec2351b56fb059fc792bffb5"
+          },
+          {
+            "$ref": "#/components/schemas/Definition05c304a7d241cab08d66ba4e420a967e19567718d3add8c26062b81cde93ee6b"
+          }
+        ],
+        "title": "Action Space"
       },
       "Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83": {
         "additionalProperties": true,
@@ -916,6 +1325,31 @@
         "title": "Terms",
         "type": "object"
       },
+      "Schema57c88be0b7819228d1b577e6bacddd99636c963793b3bdfe54accd0cf8892757": {
+        "items": {
+          "$ref": "#/components/schemas/Definition1d527cf7e4d250b31d6563c6f8a261d50f606c1040bd78288d0708b58077f1b1"
+        },
+        "title": "Items",
+        "type": "array"
+      },
+      "Schema57dcf97b330d6c15358f7944529c50986d33106b503da64e5a2a67e1c3a3a356": {
+        "discriminator": {
+          "mapping": {
+            "abstained": "#/$defs/HarnessPart_PlanScaffoldAbstained",
+            "decided": "#/$defs/HarnessPart_PlanScaffoldDecided"
+          },
+          "propertyName": "status"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/Definition8725406647dde66fcdd8fea07f8b986d6634b0aa8bd24ee93dacd912c16b1420"
+          },
+          {
+            "$ref": "#/components/schemas/Definition1908f7f574b8eb716822777dc2ffeda3d54b10ed089928b944f847a3c7ac8b5e"
+          }
+        ],
+        "title": "Plan Scaffold"
+      },
       "Schema58f3dda18398ba66749ae4fa50093087f8ff8d2faa1d3c738b5287f7761e56ce": {
         "additionalProperties": false,
         "properties": {
@@ -939,6 +1373,11 @@
         "additionalProperties": true,
         "title": "Message",
         "type": "object"
+      },
+      "Schema5a85f91d3a5bf390bae93af04df2c8ed8b3d0a9ab5e278475de852c7d499355c": {
+        "format": "date-time",
+        "title": "Observed At",
+        "type": "string"
       },
       "Schema5b4c597a777298eea97b2ba174f2c7b2733bbc43b04857a3b32b6c20c7c3f4cf": {
         "title": "Span Ms",
@@ -1021,6 +1460,36 @@
         "title": "OpsBackupParams",
         "type": "object"
       },
+      "Schema68947ee964ee84babc58900c665ab49afdadaf5057ed1551b5750027ec90c693": {
+        "additionalProperties": false,
+        "description": "Immutable plan content and its producer validity interval.",
+        "properties": {
+          "expires_at": {
+            "$ref": "#/components/schemas/Schemac69c12b3400ab96dda78139b73c3f058ecb2d20b9f44704561b73bed163885a2"
+          },
+          "items": {
+            "$ref": "#/components/schemas/Schema57c88be0b7819228d1b577e6bacddd99636c963793b3bdfe54accd0cf8892757"
+          },
+          "observed_at": {
+            "$ref": "#/components/schemas/Schema5a85f91d3a5bf390bae93af04df2c8ed8b3d0a9ab5e278475de852c7d499355c"
+          },
+          "revision": {
+            "$ref": "#/components/schemas/Schema0cb120b8330e2ffb999756fdce00c12a99ec9f8559d565184bd70e15eb9bd850"
+          },
+          "run_id": {
+            "$ref": "#/components/schemas/Schemadf135e01e5998bd761bf3770ae512003d9a8a935e6f90722820e930ca4b97338"
+          }
+        },
+        "required": [
+          "run_id",
+          "revision",
+          "observed_at",
+          "expires_at",
+          "items"
+        ],
+        "title": "CurrentPlanSnapshot",
+        "type": "object"
+      },
       "Schema696db2ea1789ae41ea22108195eb30a6f45892997d2e9591b50de90c69884a00": {
         "additionalProperties": false,
         "properties": {
@@ -1046,6 +1515,14 @@
         ],
         "title": "RunsCurrentPlanResult",
         "type": "object"
+      },
+      "Schema6afd4affe1f8bc17bf2c9bec12af7a61ba88514e3cfe0cafa3d95c225f085ed7": {
+        "items": {
+          "$ref": "#/components/schemas/Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7"
+        },
+        "maxItems": 64,
+        "title": "Missing Fact",
+        "type": "array"
       },
       "Schema6d52c56bffdc072fd3bc7e8ea87b1c6c8d9a90fdd5080fd4e52c34fc3aea72ba": {
         "anyOf": [
@@ -1349,10 +1826,46 @@
         "title": "Server",
         "type": "string"
       },
+      "Schema814e85e133f196b6bfd9fa80a3e3dec4a59be05b5cd502bd6b4a79fd9df6e994": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Definition3a1ca1547497e81fb2ab1338a12fcc1b452b5a3e34399f72513c30848bfd4b80"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null
+      },
+      "Schema81bdf31a09ef5d671681a1f548aafca09c4c7d0ca2a72da81f01cb01d30946e8": {
+        "enum": [
+          "on",
+          "off"
+        ],
+        "title": "PlanScaffold",
+        "type": "string"
+      },
       "Schema81f9750e985e816e87e369ad37b44d32321db6379bec57de0c850f0de074643f": {
         "additionalProperties": true,
         "minProperties": 0,
         "title": "Request",
+        "type": "object"
+      },
+      "Schema82a69f336f648b153b6e072d1f1faa2e844e2551c9df9ffb1b9bf9c56841a031": {
+        "additionalProperties": false,
+        "description": "An available plan (possibly empty) or an unavailable read with no items.",
+        "properties": {
+          "availability": {
+            "$ref": "#/components/schemas/Schema0800c682ed951269a2c0a7e589303e9af45a50c2c676aafb6b0c78b584c7d86f"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/Schema814e85e133f196b6bfd9fa80a3e3dec4a59be05b5cd502bd6b4a79fd9df6e994"
+          }
+        },
+        "required": [
+          "availability"
+        ],
+        "title": "CurrentPlanRead",
         "type": "object"
       },
       "Schema841a72c12e87a0fc9b3446ca1dc75070ff8ea3adde3de043d40b051f5ae28d8f": {
@@ -1398,6 +1911,24 @@
         "maxLength": 512,
         "minLength": 1,
         "type": "string"
+      },
+      "Schema86b3862cfe46c27bda759e3a259e508c94b58fabdf3d90f875f49014dc3bbba1": {
+        "discriminator": {
+          "mapping": {
+            "abstained": "#/$defs/HarnessPart_UnitRationalWireAbstained",
+            "decided": "#/$defs/HarnessPart_UnitRationalWireDecided"
+          },
+          "propertyName": "status"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/Definition2968cb60e133e136454d9515707b9384e0753df4583497068ea667e79e64a078"
+          },
+          {
+            "$ref": "#/components/schemas/Definitionb122f594c149ace026b9f5fe3ee78405066261c1c091436c4a4e615e2a4bb7a5"
+          }
+        ],
+        "title": "Soft Threshold"
       },
       "Schema86f8372f67406241d10d1fe63810cba3bc6213e1eb849e3b4ea38c0cee3902de": {
         "anyOf": [
@@ -1453,6 +1984,23 @@
           "plan"
         ],
         "title": "PlanRunParams",
+        "type": "object"
+      },
+      "Schema8c2ba8019cf10f9ad7ffdfd82a9afbadee5f15f8d6aa4231fbb68264081d7bcf": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Schemab6ee92d89d3a1046008f7e709c15cd7a13c59d0181f302863badedc4f6591f2f"
+          },
+          "value": {
+            "$ref": "#/components/schemas/Definition0ca37baa135ea04746b1b723400cfc9937f575435410225219a0a2d7c04d81cd"
+          }
+        },
+        "required": [
+          "status",
+          "value"
+        ],
+        "title": "HarnessPart_ContextPolicyDecided",
         "type": "object"
       },
       "Schema8c6ee092ab6888335b7e1a23a6d71ebc4af1cde19fbf832d4d6e749fb6f3e2b9": {
@@ -1795,6 +2343,11 @@
         "title": "Tool",
         "type": "string"
       },
+      "Schemaa342047ca782e2854d6ed5c534da74752ec69d3f6698f59164d2a7d497743425": {
+        "minimum": 0,
+        "title": "Numerator",
+        "type": "integer"
+      },
       "Schemaa3ae4a490ad058ba1b38691fea5d1ea3d982d1379cda16248110870d46360787": {
         "default": "webarchiver",
         "enum": [
@@ -1811,6 +2364,23 @@
       "Schemaa5af9fa380f11a11430012f77d4294c4d1d74f645cb0c41fcf6d80e977251297": {
         "maxLength": 2048,
         "type": "string"
+      },
+      "Schemaa5c62b74e7cf2eb21f3ca934124e44c2a9232394a75d0355f5467b4fa5c0823d": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Schemab6ee92d89d3a1046008f7e709c15cd7a13c59d0181f302863badedc4f6591f2f"
+          },
+          "value": {
+            "$ref": "#/components/schemas/Definition960399c68f2aaa3f4c4e08d04ca9e166e1dcf63afc998206a15d390c7ec277ae"
+          }
+        },
+        "required": [
+          "status",
+          "value"
+        ],
+        "title": "HarnessPart_UnitRationalWireDecided",
+        "type": "object"
       },
       "Schemaa77e0e91946b253a1aa77a1d10470e0bde5e90820d3c269e987219bf80525367": {
         "default": "",
@@ -1832,6 +2402,23 @@
         "minimum": 0,
         "title": "Revision",
         "type": "integer"
+      },
+      "Schemaa974a70665330da9451843fc420f2b22f2dcfff7a7d15c70bb0ea7985d8be526": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Schemab6ee92d89d3a1046008f7e709c15cd7a13c59d0181f302863badedc4f6591f2f"
+          },
+          "value": {
+            "$ref": "#/components/schemas/Definitionc6733816e19cb912066ad95d63ab0577ac4cf3821d3787654e6bc3bdf76c4c10"
+          }
+        },
+        "required": [
+          "status",
+          "value"
+        ],
+        "title": "HarnessPart_ActionSpaceDecided",
+        "type": "object"
       },
       "Schemaaaa072f559df071defa233e77b46cf4af427a0fd5801ed9ca1d1561e73cbf5a7": {
         "additionalProperties": false,
@@ -2004,6 +2591,11 @@
         "additionalProperties": true,
         "type": "object"
       },
+      "Schemab6ee92d89d3a1046008f7e709c15cd7a13c59d0181f302863badedc4f6591f2f": {
+        "const": "decided",
+        "title": "Status",
+        "type": "string"
+      },
       "Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb": {
         "type": "null"
       },
@@ -2063,6 +2655,24 @@
         "maxItems": 32,
         "title": "Urls",
         "type": "array"
+      },
+      "Schemabbf805d68f1310d02af252f454653b2826d001adebcf4c7c6fe8b2d8effcb5e9": {
+        "discriminator": {
+          "mapping": {
+            "abstained": "#/$defs/HarnessPart_BoundedVec_string_256Abstained",
+            "decided": "#/$defs/HarnessPart_BoundedVec_string_256Decided"
+          },
+          "propertyName": "status"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/Definitionda66511810cf6cd26796f251eca0ff0213883a0fa648e3a117badb02f0b26c4e"
+          },
+          {
+            "$ref": "#/components/schemas/Definitione3b28ac44c7ded4ae0ec60db7ae8ce199c87b543c4ced0159888da768242d166"
+          }
+        ],
+        "title": "Tool Subset"
       },
       "Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7": {
         "type": "string"
@@ -2163,11 +2773,46 @@
         "title": "MessagingAlertParams",
         "type": "object"
       },
+      "Schemac4d1c4659edcdacb3517a35d30ca05b9be9e6e021a0219947d5552327266b042": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Schemab6ee92d89d3a1046008f7e709c15cd7a13c59d0181f302863badedc4f6591f2f"
+          },
+          "value": {
+            "$ref": "#/components/schemas/Schema117b96a6a6a65fba8c2996b6b2852a43f1efffe31c9e77f21fe77f2057da091b"
+          }
+        },
+        "required": [
+          "status",
+          "value"
+        ],
+        "title": "HarnessPart_BoundedVec_string_256Decided",
+        "type": "object"
+      },
       "Schemac5431461e4ddc283228014546f09a948ceab0646a9f9d49e05c50225e3a46df9": {
         "additionalProperties": {
           "$ref": "#/components/schemas/Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7"
         },
         "type": "object"
+      },
+      "Schemac6733816e19cb912066ad95d63ab0577ac4cf3821d3787654e6bc3bdf76c4c10": {
+        "enum": [
+          "tool_set",
+          "shell_only"
+        ],
+        "title": "ActionSpace",
+        "type": "string"
+      },
+      "Schemac69c12b3400ab96dda78139b73c3f058ecb2d20b9f44704561b73bed163885a2": {
+        "format": "date-time",
+        "title": "Expires At",
+        "type": "string"
+      },
+      "Schemac6dcc0f41283f1f577029dc1d6a9bbcb283f9be219d2cdbbb6b9f5313554f0ee": {
+        "minimum": 0,
+        "title": "Denominator",
+        "type": "integer"
       },
       "Schemac8988ac0c133eee1d37a57c7873fc8e2d0d2270106728130e931394b807f0e53": {
         "anyOf": [
@@ -2424,6 +3069,13 @@
         "title": "Namespace",
         "type": "string"
       },
+      "Schemae0f167cda2293625724faf292010114067db876828c795228d6053ddef37647b": {
+        "$ref": "#/components/schemas/Definition2149a28a0fbb6b6b05fbb9f369b7c44202d5502437d1b529eae90b4af6498ac7",
+        "default": {
+          "availability": "unavailable",
+          "snapshot": null
+        }
+      },
       "Schemae140ed0f270039f4d118d2542811b7110cf6e27c2fa27e987a8cca2e9fac939e": {
         "additionalProperties": false,
         "description": "Approve the request whose digest the approver saw.",
@@ -2487,6 +3139,43 @@
         "default": null,
         "title": "Status"
       },
+      "Schemae6712a071e36c5fbfc295eda353df58dcdbff060979894ca5de1d212b66ec11c": {
+        "additionalProperties": false,
+        "properties": {
+          "action_space": {
+            "$ref": "#/components/schemas/Schema4cdc25b77f8af922cdef2f691506aeec6054f096bd57c482d09d00debc6757b1"
+          },
+          "context_policy": {
+            "$ref": "#/components/schemas/Schema32cd479fbb1c2458f70f20c5f287bb28b2b6c2f59e79348d796dee5d283c3f9f"
+          },
+          "hard_threshold": {
+            "$ref": "#/components/schemas/Schema40d2b79a2aecc6cecfe1753e0a099481e826324b91d79ca08f39ddb51b1a919b"
+          },
+          "plan_scaffold": {
+            "$ref": "#/components/schemas/Schema57dcf97b330d6c15358f7944529c50986d33106b503da64e5a2a67e1c3a3a356"
+          },
+          "recent_window_fraction": {
+            "$ref": "#/components/schemas/Schemaebac1a502fcc9fb44cff853069d6fa0af8de7c96618a6884f97f0e00515626c3"
+          },
+          "soft_threshold": {
+            "$ref": "#/components/schemas/Schema86b3862cfe46c27bda759e3a259e508c94b58fabdf3d90f875f49014dc3bbba1"
+          },
+          "tool_subset": {
+            "$ref": "#/components/schemas/Schemabbf805d68f1310d02af252f454653b2826d001adebcf4c7c6fe8b2d8effcb5e9"
+          }
+        },
+        "required": [
+          "action_space",
+          "context_policy",
+          "hard_threshold",
+          "plan_scaffold",
+          "recent_window_fraction",
+          "soft_threshold",
+          "tool_subset"
+        ],
+        "title": "HarnessConfigAnswer",
+        "type": "object"
+      },
       "Schemae7b1d9d5bb077683e08815772a13fe1b250034c6427d363cf723911c26b7c081": {
         "default": false,
         "title": "All Items",
@@ -2517,6 +3206,42 @@
         "title": "ResearchWebParams",
         "type": "object"
       },
+      "Schemaeaeb8dace710b2e7bccab6156f5e4a78a57bc99c989f18eee7d5363bd41ae564": {
+        "additionalProperties": false,
+        "description": "One immutable plan item, in producer order.",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Schema40b30487725f25e3dc44968dde35dd3490bc4aeb95675fa5150e9505402e2062"
+          },
+          "text": {
+            "$ref": "#/components/schemas/Schema1acc67e49d84b0d66be3e6187ce3a6b1674c9d47c7230b9f298b2f2e117ab25b"
+          }
+        },
+        "required": [
+          "text",
+          "status"
+        ],
+        "title": "PlanItem",
+        "type": "object"
+      },
+      "Schemaebac1a502fcc9fb44cff853069d6fa0af8de7c96618a6884f97f0e00515626c3": {
+        "discriminator": {
+          "mapping": {
+            "abstained": "#/$defs/HarnessPart_UnitRationalWireAbstained",
+            "decided": "#/$defs/HarnessPart_UnitRationalWireDecided"
+          },
+          "propertyName": "status"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/Definition2968cb60e133e136454d9515707b9384e0753df4583497068ea667e79e64a078"
+          },
+          {
+            "$ref": "#/components/schemas/Definitionb122f594c149ace026b9f5fe3ee78405066261c1c091436c4a4e615e2a4bb7a5"
+          }
+        ],
+        "title": "Recent Window Fraction"
+      },
       "Schemaebfd7f24843456b3e02e97bd2085f819c39ef62a20398d74626160b410a732b5": {
         "title": "Child",
         "type": "string"
@@ -2539,6 +3264,18 @@
         },
         "title": "OpsTenantsParams",
         "type": "object"
+      },
+      "Schemaeda07bb2a74242edfb0b520e9c221967afebe5a90e722ea827165132808ac537": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema05ab9ca58feec2b8516cda4cebf7a470eae7ed6b739adad840e54c0d00b8f9d0"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Termination Reason"
       },
       "Schemaeda27189feb9fb8e2a62f858582ff3b547da8992f50e88542ff64d6adfe6f67f": {
         "additionalProperties": false,
@@ -2604,6 +3341,27 @@
         "title": "SecurityPostureReadParams",
         "type": "object"
       },
+      "Schemaf11f2bfbdc4cbb1240b4c85fe07834a8af5a6183b4791a30542e239f86b940d8": {
+        "additionalProperties": false,
+        "properties": {
+          "conservative_default": {
+            "$ref": "#/components/schemas/Definitionc6733816e19cb912066ad95d63ab0577ac4cf3821d3787654e6bc3bdf76c4c10"
+          },
+          "missing_fact": {
+            "$ref": "#/components/schemas/Schema6afd4affe1f8bc17bf2c9bec12af7a61ba88514e3cfe0cafa3d95c225f085ed7"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Schema15b6eb15a0f50fa0e8b9bbb03ef35a781af7f0ea4873f6fc059ef96660c3f888"
+          }
+        },
+        "required": [
+          "conservative_default",
+          "missing_fact",
+          "status"
+        ],
+        "title": "HarnessPart_ActionSpaceAbstained",
+        "type": "object"
+      },
       "Schemaf1deff8504bbc0a3b1886d947e0186af87f24cbc280362f57f7201d46a86e3be": {
         "maxLength": 256,
         "type": "string"
@@ -2644,6 +3402,23 @@
         "default": null,
         "title": "Context Budget Tokens"
       },
+      "Schemaf5d4723b808416f2d7abbdadb65b261e8134f6ac060d436b0a23c4c7c571d373": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Schemab6ee92d89d3a1046008f7e709c15cd7a13c59d0181f302863badedc4f6591f2f"
+          },
+          "value": {
+            "$ref": "#/components/schemas/Definition81bdf31a09ef5d671681a1f548aafca09c4c7d0ca2a72da81f01cb01d30946e8"
+          }
+        },
+        "required": [
+          "status",
+          "value"
+        ],
+        "title": "HarnessPart_PlanScaffoldDecided",
+        "type": "object"
+      },
       "Schemaf6654efd6dd35fe5b59f219f420b6674b7da14f5b10fe53a1bc37bfc18b6b552": {
         "additionalProperties": false,
         "properties": {
@@ -2657,8 +3432,17 @@
         "title": "IngestSyncResult",
         "type": "object"
       },
+      "Schemaf696f11685898ba70b3cb0d2df11127ae78f524d277408e36b5d6f7a6a1c79b4": {
+        "minimum": 0,
+        "type": "number"
+      },
       "Schemaf6e676698ceaf9b61eee8dda6475a61968a6ea4a86790a408f0fb8248bef69eb": {
         "title": "Operation Class",
+        "type": "string"
+      },
+      "Schemaf753f845d689cc8b08587dc33224cf5550929b6d3992feae3d617fb0eb671f13": {
+        "minLength": 1,
+        "title": "Run Id",
         "type": "string"
       },
       "Schemaf75f7ca1934f39dea8e531bc7b14b68d4a2bc82390fbe1af4e6a56acd3ae9436": {
@@ -19747,14 +20531,7 @@
       "post": {
         "operationId": "runs.current_plan",
         "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Schema27fd10f3083b3fe243fb903b0248aee255e0d2dc67b473e91b2ec4113b40884e"
-              }
-            }
-          },
-          "required": true
+          "$ref": "#/components/requestBodies/Shared0955cb27947a018b4eb23730a1eeff4d03f8dec4fb83a350accacca77b4e326b"
         },
         "responses": {
           "200": {
@@ -19772,6 +20549,92 @@
           }
         },
         "summary": "Read the current plan of one run",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/ops/runs.get": {
+      "post": {
+        "operationId": "runs.get",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Shared0955cb27947a018b4eb23730a1eeff4d03f8dec4fb83a350accacca77b4e326b"
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$defs": {
+                    "ActionSpace": {
+                      "$ref": "#/components/schemas/Definitionc6733816e19cb912066ad95d63ab0577ac4cf3821d3787654e6bc3bdf76c4c10"
+                    },
+                    "ContextPolicy": {
+                      "$ref": "#/components/schemas/Definition0ca37baa135ea04746b1b723400cfc9937f575435410225219a0a2d7c04d81cd"
+                    },
+                    "CurrentPlanRead": {
+                      "$ref": "#/components/schemas/Definition2149a28a0fbb6b6b05fbb9f369b7c44202d5502437d1b529eae90b4af6498ac7"
+                    },
+                    "CurrentPlanSnapshot": {
+                      "$ref": "#/components/schemas/Definition3a1ca1547497e81fb2ab1338a12fcc1b452b5a3e34399f72513c30848bfd4b80"
+                    },
+                    "HarnessConfigAnswer": {
+                      "$ref": "#/components/schemas/Definition62ff8c49d38c4a524a35f94b5719b9d5e9f5e235a74b907c3ab985cbca0a1123"
+                    },
+                    "HarnessPart_ActionSpaceAbstained": {
+                      "$ref": "#/components/schemas/Definition05c304a7d241cab08d66ba4e420a967e19567718d3add8c26062b81cde93ee6b"
+                    },
+                    "HarnessPart_ActionSpaceDecided": {
+                      "$ref": "#/components/schemas/Definition162216b626bfb8eb709965b9c404aa4385a5381cec2351b56fb059fc792bffb5"
+                    },
+                    "HarnessPart_BoundedVec_string_256Abstained": {
+                      "$ref": "#/components/schemas/Definitione3b28ac44c7ded4ae0ec60db7ae8ce199c87b543c4ced0159888da768242d166"
+                    },
+                    "HarnessPart_BoundedVec_string_256Decided": {
+                      "$ref": "#/components/schemas/Definitionda66511810cf6cd26796f251eca0ff0213883a0fa648e3a117badb02f0b26c4e"
+                    },
+                    "HarnessPart_ContextPolicyAbstained": {
+                      "$ref": "#/components/schemas/Definitiondac531511b1523cc38e0a8c2bbf475f2db94d45cd1cb6afbea07750392aa89bd"
+                    },
+                    "HarnessPart_ContextPolicyDecided": {
+                      "$ref": "#/components/schemas/Definition0a41ca8d490febd2830afbadefb7bb6d764efdf239f29839f0ffc7d2ae001825"
+                    },
+                    "HarnessPart_PlanScaffoldAbstained": {
+                      "$ref": "#/components/schemas/Definition1908f7f574b8eb716822777dc2ffeda3d54b10ed089928b944f847a3c7ac8b5e"
+                    },
+                    "HarnessPart_PlanScaffoldDecided": {
+                      "$ref": "#/components/schemas/Definition8725406647dde66fcdd8fea07f8b986d6634b0aa8bd24ee93dacd912c16b1420"
+                    },
+                    "HarnessPart_UnitRationalWireAbstained": {
+                      "$ref": "#/components/schemas/Definitionb122f594c149ace026b9f5fe3ee78405066261c1c091436c4a4e615e2a4bb7a5"
+                    },
+                    "HarnessPart_UnitRationalWireDecided": {
+                      "$ref": "#/components/schemas/Definition2968cb60e133e136454d9515707b9384e0753df4583497068ea667e79e64a078"
+                    },
+                    "PlanItem": {
+                      "$ref": "#/components/schemas/Definition1d527cf7e4d250b31d6563c6f8a261d50f606c1040bd78288d0708b58077f1b1"
+                    },
+                    "PlanScaffold": {
+                      "$ref": "#/components/schemas/Definition81bdf31a09ef5d671681a1f548aafca09c4c7d0ca2a72da81f01cb01d30946e8"
+                    },
+                    "RunSummary": {
+                      "$ref": "#/components/schemas/Definition4b611c9b542bfe688eb61aff7258108def1a0d80d264075bfa68b0a8ce4b0a6f"
+                    },
+                    "UnitRationalWire": {
+                      "$ref": "#/components/schemas/Definition960399c68f2aaa3f4c4e08d04ca9e166e1dcf63afc998206a15d390c7ec277ae"
+                    }
+                  },
+                  "$ref": "#/components/schemas/Schema37b02699a6e2a2b8563108071f9a0bf1cddf9a717079e4ab66694166895cb6c9"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Read recorded fields of one run",
         "tags": [
           "runs"
         ]
@@ -20131,5 +20994,5 @@
       }
     }
   },
-  "x-registry-digest": "0d815ecc757df7970292c7351707af550aedb7559ebe541252bcc16e34a1143a"
+  "x-registry-digest": "1704090402da6d4afe2279752b9518379da32f5659e5e56d4295a7ec55d39281"
 }

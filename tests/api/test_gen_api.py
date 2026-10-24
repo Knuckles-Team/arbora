@@ -546,3 +546,32 @@ def test_openapi_rewrites_nested_schema_positions_and_refuses_scoped_ids(positio
     schema[position] = {"$id": "relative-scope", "type": "string"}
     with pytest.raises(ValueError, match="cannot be hoisted"):
         gen_api._openapi(registry)
+
+
+@pytest.mark.parametrize(
+    "old,new,result,breaks",
+    [
+        (True, True, False, False),
+        (False, False, True, False),
+        (True, {"type": "string"}, False, True),
+        (True, {"type": "string"}, True, False),
+        ({"type": "string"}, True, False, False),
+        ({"type": "string"}, True, True, True),
+        (False, {"type": "string"}, False, False),
+        (False, {"type": "string"}, True, True),
+        ({"type": "string"}, False, False, True),
+        ({"type": "string"}, False, True, False),
+    ],
+)
+def test_boolean_property_schema_compatibility(old, new, result, breaks):
+    before = {"type": "object", "properties": {"value": old}}
+    after = {"type": "object", "properties": {"value": new}}
+    assert (
+        bool(gen_api._shape_breaks(before, after, path="shape", result=result))
+        is breaks
+    )
+
+
+@pytest.mark.parametrize("shape", [True, False])
+def test_top_level_boolean_result_schema(shape):
+    assert gen_api._shape({"schema": shape}, result=True) is shape

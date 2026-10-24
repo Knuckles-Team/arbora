@@ -983,8 +983,12 @@
       "id": "ARBORA-OPS-R021.4.5",
       "title": "Per-run operation",
       "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": [],
+      "landed_in": [
+        "28183eae667a"
+      ],
+      "verified_by": [
+        "tests/api/test_run_summary_ops.py:12"
+      ],
       "rollup_of": [
         "ARBORA-OPS-R021.4.5.1"
       ]
@@ -1299,6 +1303,7 @@
         "144fd029bf2e",
         "43c5e4b631cb",
         "4b83c69e2b41",
+        "9f5fe3eeb28c",
         "a247b168fa98"
       ],
       "verified_by": [
@@ -1332,6 +1337,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "43c5e4b631cb",
+        "9f5fe3eeb28c",
         "a247b168fa98"
       ],
       "verified_by": [
