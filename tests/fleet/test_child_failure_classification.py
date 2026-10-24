@@ -204,7 +204,12 @@ async def test_governed_call_hands_children_plain_json_for_nested_objects(
     import contextlib
 
     seen = {}
-    monkeypatch.setattr(gateway_ops, "_verified_delegation", contextlib.nullcontext)
+
+    def delegated(caller, *, allow_admitted_anonymous=False):
+        assert allow_admitted_anonymous is True
+        return contextlib.nullcontext()
+
+    monkeypatch.setattr(gateway_ops, "_verified_delegation", delegated)
     monkeypatch.setattr(gateway_ops, "commit_native_dispatch", lambda *a: None)
 
     class Mux:

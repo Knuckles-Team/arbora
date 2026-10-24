@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, Any
 from arbora.api.errors import FleetRefusal, fleet_detail
 from arbora.api.invoke.steps import claim_values
 from arbora.api.registry import Confirm, Effect, Executor, PrincipalRule
+from arbora.security.anonymous import admitted_actor
 
 if TYPE_CHECKING:
     from arbora.api.invoke import FleetCallDecision
@@ -245,7 +246,9 @@ SURFACE_RELAY_TIMEOUT_S = 30.0
 
 
 @contextmanager
-def _verified_delegation(caller: Any) -> Iterator[None]:
+def _verified_delegation(
+    caller: Any, *, allow_admitted_anonymous: bool = False
+) -> Iterator[None]:
     """Bind the caller's verified actor and session for one child request."""
     from arbora.api.contracts import use_session
     from arbora.security.actor_context import use_actor
@@ -255,7 +258,10 @@ def _verified_delegation(caller: Any) -> Iterator[None]:
         raise PermissionError("verified delegated session is required")
     actor = session.actor
     if (
-        actor.authenticated is not True
+        (
+            actor.authenticated is not True
+            and not (allow_admitted_anonymous and admitted_actor(actor))
+        )
         or str(actor.actor_id) != caller.principal
         or str(actor.tenant_id) != caller.tenant
     ):
@@ -274,7 +280,7 @@ def oauth_delegated_call_for_mux(mux: Any) -> DelegatedCall:
     async def delegated(
         server: str, tool: str, arguments: Mapping[str, Any], caller: Any
     ) -> Any:
-        with _verified_delegation(caller):
+        with _verified_delegation(caller, allow_admitted_anonymous=True):
             result = await mux.call_admitted_child_once(server, tool, dict(arguments))
         if bool(getattr(result, "is_error", getattr(result, "isError", False))):
             raise FleetRefusal(

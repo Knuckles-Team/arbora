@@ -626,6 +626,21 @@ def _mint_graph_session(
     )
 
 
+def _require_served_profile_authority(transport: str, config: Any) -> None:
+    """Require both audience and policy before activating the served profile."""
+    audience = str(
+        getattr(config, "auth_jwt_audience", None)
+        or getattr(config, "mcp_jwt_audience", None)
+        or ""
+    ).strip()
+    policy_version = str(getattr(config, "kg_policy_version", None) or "").strip()
+    if not audience or not policy_version:
+        raise RuntimeError(
+            f"Refusing to serve arbora over {transport}: verified authority "
+            "requires a configured audience and policy revision."
+        )
+
+
 def apply_served_security_profile(
     transport: str,
     config: Any = None,
@@ -664,6 +679,13 @@ def apply_served_security_profile(
 
         config = _config
 
+    from arbora.security.anonymous import enabled
+
+    if enabled():
+        if transport_auth_configured:
+            raise RuntimeError("Anonymous mode conflicts with transport authentication")
+        return
+
     if not transport_auth_configured:
         raise RuntimeError(
             f"Refusing to serve arbora over {transport}: no transport "
@@ -674,17 +696,7 @@ def apply_served_security_profile(
             "(CONCEPT:AU-OS.identity.authenticated-identity-enforcement)"
         )
 
-    audience = str(
-        getattr(config, "auth_jwt_audience", None)
-        or getattr(config, "mcp_jwt_audience", None)
-        or ""
-    ).strip()
-    policy_version = str(getattr(config, "kg_policy_version", None) or "").strip()
-    if not audience or not policy_version:
-        raise RuntimeError(
-            f"Refusing to serve arbora over {transport}: verified authority "
-            "requires a configured audience and policy revision."
-        )
+    _require_served_profile_authority(transport, config)
 
     logger.warning(
         "arbora served profile ACTIVE over %s: verified identity/session, "
@@ -912,6 +924,16 @@ def _session_authority_usable(session: GraphSession) -> bool:
     return True
 
 
+def _require_system_session_mode(session: GraphSession) -> None:
+    """Reject ambient authority belonging to the other deployment mode."""
+    from arbora.security.anonymous import admitted_actor, enabled
+
+    if (enabled() and not admitted_actor(session.actor)) or (
+        not enabled() and getattr(session.actor, "authority_mode", "verified") == "none"
+    ):
+        raise PermissionError("System session authority mode mismatch")
+
+
 def system_write_session(config: Any = None) -> GraphSession:
     """Resolve the verified authority for a background/system-triggered graph write.
 
@@ -979,11 +1001,18 @@ def system_write_session(config: Any = None) -> GraphSession:
         GraphSession,
         SessionRequiredError,
     )
+    from arbora.security.anonymous import enabled
+    from arbora.security.anonymous import session as anonymous_session
 
     try:
-        return GraphSession.from_ambient()
+        ambient = GraphSession.from_ambient()
+        _require_system_session_mode(ambient)
+        return ambient
     except SessionRequiredError:  # noqa: BLE001 — expected control flow: no ambient session bound is the documented signal to fall through to minting this process's own verified system identity below, not a real failure (see docstring above)
         pass
+
+    if enabled():
+        return anonymous_session()
 
     global _system_write_session
     with _system_write_session_lock:
@@ -1428,7 +1457,40 @@ class ActorIdentityMiddleware:
 
         config = security_settings()
 
+        from arbora.security.anonymous import enabled, validate_request
+        from arbora.security.anonymous import session as anonymous_session
+
         from .auth import parse_bearer_authorization
+
+        if enabled():
+            try:
+                validate_request(scope)
+                local_session = anonymous_session()
+            except (PermissionError, ValueError, UnicodeError):
+                await _send_json(
+                    send, 403, {"error": "Anonymous local request refused"}
+                )
+                return
+
+            async def anonymous_send(message: Any) -> None:
+                if message.get("type") == "http.response.start":
+                    message = {
+                        **message,
+                        "headers": [
+                            *(
+                                (key, value)
+                                for key, value in message.get("headers", ())
+                                if key.lower() != b"x-arbora-auth-mode"
+                            ),
+                            (b"x-arbora-auth-mode", b"none"),
+                        ],
+                    }
+                await send(message)
+
+            await self._dispatch_authenticated(
+                scope, receive, anonymous_send, local_session.actor, local_session
+            )
+            return
 
         path = scope.get("path", "")
         prevalidated = _extract_prevalidated_claims(scope)

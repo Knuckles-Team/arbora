@@ -207,6 +207,11 @@ def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
     from arbora.core.settings import load_config
 
     load_config()  # resolve settings through the one shared XDG config.json
+    from arbora.mcp_server.backing.server_factory import create_mcp_parser
+    from arbora.security.anonymous import validate_startup
+
+    startup_args, _unknown = create_mcp_parser().parse_known_args()
+    validate_startup(startup_args)
     early_session = None
     if invocation is None:
         invocation, early_session = _served_invocation()
@@ -231,6 +236,9 @@ def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
         args, mcp, middlewares = runtime._build_server()
     else:
         args, mcp, middlewares = runtime._build_server(invocation=invocation)
+    from arbora.security.anonymous import validate_startup
+
+    validate_startup(args)
     _register_semantic_content(mcp)
     from arbora.fleet.catalog_reader import DeferredFleetCatalogReader
 
@@ -398,11 +406,13 @@ def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
         elif transport == "streamable-http":
             if network_serving is None:
                 raise RuntimeError("network serving configuration is required")
+            from arbora.security.anonymous import network_run_kwargs
+
             mcp.run(
                 transport="streamable-http",
                 host=host,
                 port=port,
-                **network_serving.fastmcp_run_kwargs(),
+                **network_run_kwargs(network_serving.fastmcp_run_kwargs()),
             )
         else:
             raise ValueError("arbora transport must be 'stdio' or 'streamable-http'")

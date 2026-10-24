@@ -399,6 +399,46 @@ The existing provider protocol now states fresh exact-read/provenance duties
 and requires lease identity plus revision for continuity. Adversarial fixtures reject generic lease maps even when every caller-provided field matches.
 ASGI lifespan fixtures reject changed grant revision, session, configuration or expiry before readiness. They do not qualify a production issuer or consumer adapter.
 
+### 2026-10-22: bounded valid RunEvent JSON
+
+Under ARBORA-HOST-R001.2.1, the run-event sink preserves each complete event
+mapping in valid JSON with a shared 1 MiB serialized payload ceiling. It never
+cuts encoded JSON or rewrites arbitrary event fields. ASCII escaping preserves
+Unicode exactly and gives the sink and reader a byte-exact limit. Events that
+cannot serialize as valid JSON or exceed the bound persist an explicit bounded
+payload-error representation with a privacy-safe diagnostic. They never persist partial JSON. Engine write
+refusals remain visible as missing durable output, never a local substitute.
+
+The A2A reply projection retains its independent 65,536-character bound. The
+1 MiB envelope admits the worst-case escaped representation of every reply
+within that bound plus normal terminal metadata. Larger replies are unavailable
+as artifacts rather than silently shown as complete prefixes. This change does
+not add another event store or qualify streaming, terminal receipts or history.
+
+#### Explicit payload-error amendment
+
+The 1 MiB bound does not discard an oversized or unserializable event. Persist a
+versioned `arbora-run-event-payload-error-v1` JSON representation with the original
+`type`, `run_id`, `step`, optional bounded terminal `status`, and
+`payload_error: {code, max_bytes}`. The code is `payload_too_large` or
+`payload_serialization_failed`; `max_bytes` is 1,048,576. No `result`, output prefix,
+or invented execution outcome is included. Canonical identity fields must be
+nonempty bounded strings (run ID 512 characters, type 64); invalid identities
+refuse instead of being shortened. This marker records an observed event whose
+body is unavailable, not a replacement AU event or native terminal receipt.
+
+### 2026-10-22: bounded run-event writer decomposition
+
+Under ARBORA-HOST-R001.2.1, extract the unchanged event identity validation and
+bounded JSON/error-marker encoding from the persistence dispatcher. Preserve
+engine selection precedence, diagnostic behavior, the 1 MiB bound and the
+versioned payload-error representation. CCCC 1.6.0 reports
+`record_run_event` cyclomatic/cognitive complexity reduced from 16/13 to 6/6;
+the identity and encoding helpers measure 6/1 and 6/6 respectively. The focused
+payload, agent-run and A2A read suites pass 84 tests; scoped Ruff checks pass.
+
+Scoped mypy (`--follow-imports=silent`) passes for both changed source files.
+
 ### 2026-10-20 — Dedicated managed-start provenance
 
 R010.7.1 uses the native ControlLease owner through `IssueHostStartGrant`, guarded

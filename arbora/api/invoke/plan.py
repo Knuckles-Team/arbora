@@ -15,7 +15,7 @@ from typing import Any, Protocol
 from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-from arbora.api.invoke.steps import OpError, VerifiedCaller, claim_values
+from arbora.api.invoke.steps import OpError, RequestCaller, claim_values
 
 PLAN_TTL_MS = 600_000
 MAX_SEALED_PLAN_BYTES = 16_384
@@ -48,7 +48,7 @@ class PlanBinding:
 
 
 def bind_plan(
-    op: Any, params: Mapping[str, Any], caller: VerifiedCaller, registry_digest: str
+    op: Any, params: Mapping[str, Any], caller: RequestCaller, registry_digest: str
 ) -> PlanBinding:
     return PlanBinding(
         op.id,
@@ -129,7 +129,7 @@ class EgPlanStore:
         return plan_ref
 
     async def get_console_plan(
-        self, plan_ref: str, caller: VerifiedCaller, registry_digest: str
+        self, plan_ref: str, caller: RequestCaller, registry_digest: str
     ) -> tuple[dict[str, Any] | None, OpError | None]:
         """Read only this caller's live, sealed plan for attended review."""
 
@@ -203,7 +203,7 @@ def _live_lease_refusal(lease: Any, lease_kind: str) -> OpError | None:
 
 
 def _console_grant_refusal(
-    grant: Any, caller: VerifiedCaller, registry_digest: str
+    grant: Any, caller: RequestCaller, registry_digest: str
 ) -> OpError | None:
     if not isinstance(grant, Mapping) or grant.get("confirm") != "console":
         return OpError("PLAN_MISMATCH")

@@ -31,6 +31,7 @@ from pathlib import Path
 from typing import Any, Literal, cast
 
 from arbora.fleet.surfaces import pack_surface_report
+from arbora.security.anonymous import session_context
 
 logger = logging.getLogger(__name__)
 
@@ -398,7 +399,7 @@ class FleetOnboarding:
 
         from arbora.deployment.semantic_provisioning import _bind_session_graph
 
-        tenant_id = str(self.session.engine_verified_context()["tenant"])
+        tenant_id = str(session_context(self.session)["tenant"])
         graph = str(self.session.graph)
         with _bind_session_graph(graph):
             status = await send_connector_pack_status(

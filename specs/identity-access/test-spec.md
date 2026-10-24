@@ -146,3 +146,12 @@ startup. Generated new-metadata decoding remains producer-dependent.
 | Hot-path proof | `ARBORA-IDENTITY-R028.6` | `tests/fleet/test_delegated_identity_served.py::test_actor_required_tools_succeed_for_a_user` passes. |
 
 Hot-path proof for `ARBORA-IDENTITY-R028`: `tests/fleet/test_delegated_identity_served.py::test_actor_required_tools_succeed_for_a_user`.
+## Explicit tokenless local admission (ARBORA-IDENTITY-R004.3)
+
+`tests/security/test_anonymous_mode.py` exercises the public ASGI identity boundary and canonical HTTP caller projection. It covers immutable mode activation, strict bind/Host/Origin/credential admission, and graph-pool mode isolation. It tests verified carrier API rejection, exact anonymous caller invariants, human/service operation refusal, and honest effect-journal provenance. These focused tests do not substitute for native EG or actual TUI acceptance.
+
+Native acceptance must also provision a fresh none-mode store through the official CLI and serve actual MCP/REST/A2A requests through Arbora. It must persist and restart graph state and preserve effect idempotency. It must run the real TUI against a deterministic local model. A separately provisioned authenticated store must then pass corresponding operations and reject missing credentials. Neither suite may bypass contract admission or operation approvals.
+
+`tests/test_real_anonymous_boot.py` is the native, credential-free real serving gate. Set `ARBORA_NOAUTH_TEST_ENGINE_BINARY` to a built engine whose embedded contract matches the installed EG client and generated Arbora descriptors. It uses official first-start provisioning and checks REST, MCP, forbidden credentials/origins, and actual installed TUI A2A chat. The simulated model echoes a unique prompt nonce; separate model receipts and persisted task artifacts must match the TUI-rendered response. An unselected binary skips explicitly, not a success claim. Fullscreen native/Python PTY, restart, and authenticated-mode acceptance remain additional release gates.
+
+PolicyGate regression coverage admits an exact anonymous caller for an ordinary scoped operation. It refuses forged objects, disabled mode, human/service rules, and missing scopes. An enabled PDP denial remains a denial; successful real REST and MCP queries must exercise this gate rather than only the A2A chat path.

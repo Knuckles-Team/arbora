@@ -37,6 +37,22 @@ tenant and task owner.
   <li class="site-flow__step"><span class="site-flow__title">Record</span><span class="site-flow__body">RunTrace and tool-call provenance bind the result to the request.</span></li>
 </ol>
 
+## Reply persistence and bounds
+
+Reply artifacts contain at most 65,536 characters. Larger replies are unavailable
+as artifacts, not silently shortened and presented as complete. A task's native
+WorkItem status remains authoritative independently of artifact availability.
+
+`tasks/get` reads complete terminal RunEvent JSON from the caller-authorized
+graph after verifying task ownership. The event payload is bounded at 1 MiB,
+including Unicode escaping and metadata. Events exceeding that bound or failing
+serialization retain their original identity and completion type in an explicit
+payload-error record. This record never contains partial JSON or fabricated output. Task reads preserve
+the native status and return no artifacts plus `metadata.arbora.reply` with
+`status: unavailable` and reason `payload_too_large`, `payload_serialization_failed`,
+or `reply_too_large`. Missing events yield no artifact; malformed or conflicting
+stored payloads refuse. A local cache is not evidence of durable recovery.
+
 ## Inline text files
 
 Messages accept `file` parts with a `file` object containing base64 `bytes`,

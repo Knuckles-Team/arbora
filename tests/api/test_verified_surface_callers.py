@@ -776,3 +776,17 @@ def test_actual_browser_producer_to_c_conversion_lifecycle(browser_producer_path
         assert "arbora_session_admitted" not in incoming.get("state", {})
 
     asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("mfa", [True, "2000000", 2_000_000.0])
+def test_caller_projection_checks_claims_before_stepup(mfa):
+    from arbora.api.mcp.caller import caller_from_session
+
+    session = SessionFixture()
+    session.claims["tenant"] = "other-tenant"
+    with pytest.raises(PermissionError, match="session authority mismatch"):
+        caller_from_session(session, credential_kind="bearer", mfa_at_ms=mfa)
+
+    session.claims["tenant"] = session.tenant
+    with pytest.raises(PermissionError, match="step-up authority"):
+        caller_from_session(session, credential_kind="bearer", mfa_at_ms=mfa)

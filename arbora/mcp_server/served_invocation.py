@@ -247,7 +247,10 @@ def _warm_task_plan_schema(pins: Any, publish: Any, tenant: str) -> None:
 
     try:
         loop = asyncio.get_running_loop()
-    except RuntimeError:
+    except RuntimeError as exc:
+        logging.getLogger(__name__).warning(
+            "task-plan schema warmup deferred to first use: %s", exc
+        )
         return
 
     async def warm() -> None:

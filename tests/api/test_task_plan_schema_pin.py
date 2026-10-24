@@ -249,3 +249,12 @@ def test_committed_pin_matches_the_installed_engine() -> None:
     installed = pins_module.generate_pin()
     assert pins_module.drift(committed, installed) == []
     assert committed["available"] == installed["available"]
+
+
+@pytest.mark.spec("ARBORA-RELEASE-R003.4.4")
+def test_schema_warmup_without_loop_reports_deferred_cause(caplog):
+    from arbora.mcp_server.served_invocation import _warm_task_plan_schema
+
+    _warm_task_plan_schema(object(), object(), "tenant")
+    assert "task-plan schema warmup deferred to first use" in caplog.text
+    assert "no running event loop" in caplog.text

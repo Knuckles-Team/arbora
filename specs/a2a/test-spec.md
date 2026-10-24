@@ -145,6 +145,27 @@ not durable credential recovery, queue dispatch or execution authorization.
 
 `ARBORA-A2A-R002.2.3.2` retains the parent served execution matrix and has no acceptance evidence in this increment.
 
+
+## Baseline native unary reads
+
+`tests/a2a/test_native_task_reads.py` binds ARBORA-A2A-R001 to the native
+WorkItem caller view. It covers owner/schema filters, bounded empty pages with opaque
+continuations, and tenant/owner cursor fences. It also covers malformed and foreign-row refusals
+and native millisecond timestamps. A fresh authority recovers replies from
+existing terminal RunEvent payloads only after task authorization; wrong-run,
+truncated and ambiguous payloads refuse. Terminal-receipt fixtures isolate their
+separate opt-in reader. The real serving gate must also prove listing and reply
+recovery after both EG and Arbora restart. Each authentication mode requires this proof.
+
+Native bounded-output acceptance extends `test_real_anonymous_boot.py` through
+explicit simulator-only prompt triggers. One emits exactly 65,536 astral Unicode
+characters; another emits enough astral characters for terminal event JSON to
+exceed 1 MiB. Actual A2A send/get and the native EG caller query must agree on the
+complete valid reply. Otherwise, both must agree on native completion, a versioned
+payload-error marker, and a typed unavailable reply. Unique model receipts bind each request to its
+response. Only the model is simulated; this gate must not replace graph storage,
+authentication, provisioning or A2A authority. An unselected binary skips honestly.
+
 - `ARBORA-A2A-R005.2.3`: exercise exact human, tenant, session and key ownership. Cover expiry, revocation, revision races, source renewal without approval extension and absent owners after evaluator reconstruction. Assert only snapshot evidence results. No test claims atomic consumption or production authority.
 
 - `ARBORA-A2A-R005.2.4`: use real ephemeral Ed25519 signatures to test registration bytes and field tampering. Prove that invalid proof cannot reach registration. Exercise unsupported published methods through the real generated validator. These tests do not prove native producer integration or served approval.

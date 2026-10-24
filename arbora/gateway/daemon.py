@@ -23,6 +23,7 @@ from typing import Any
 
 from arbora.api.errors import not_served
 from arbora.core.settings import setting
+from arbora.security.anonymous import session_context
 from arbora.security.error_surface import public_error_payload
 from arbora.security.log_redaction import redact_for_log
 
@@ -176,7 +177,7 @@ def mint_process_identity() -> Any:
     )
     session = mint_graph_session(actor)
     session.ensure_authority_current(minimum_ttl_seconds=30)
-    session.engine_verified_context()
+    session_context(session)
     logger.info("Verified graph host process authority minted")
     return session
 

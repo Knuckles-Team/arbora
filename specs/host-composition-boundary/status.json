@@ -247,12 +247,12 @@
       "landed_in": [
         "192099593cdd",
         "25e15e2108e1",
+        "2763cd78b6bc",
         "52ad3952c2c8",
-        "9e7f6499d96f",
-        "cc6349408a14"
+        "9e7f6499d96f"
       ],
       "verified_by": [
-        "tests/mcp_server/test_arbora_016_served_fixes.py:136",
+        "tests/mcp_server/test_arbora_016_served_fixes.py:178",
         "tests/mcp_server/test_harness_host.py:109",
         "tests/mcp_server/test_harness_host.py:141",
         "tests/mcp_server/test_harness_host.py:29",
@@ -271,12 +271,15 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "25e15e2108e1",
+        "2763cd78b6bc",
         "52ad3952c2c8"
       ],
       "verified_by": [
         "tests/test_agent_runs.py:42",
         "tests/test_agent_runs.py:63",
-        "tests/test_agent_runs.py:80"
+        "tests/test_agent_runs.py:80",
+        "tests/test_real_anonymous_boot.py:325",
+        "tests/test_run_event_payloads.py:19"
       ]
     },
     {
@@ -288,8 +291,8 @@
         "d3d50ac5d766"
       ],
       "verified_by": [
-        "tests/test_agents_run_end_to_end.py:118",
-        "tests/test_agents_run_end_to_end.py:165"
+        "tests/test_agents_run_end_to_end.py:129",
+        "tests/test_agents_run_end_to_end.py:176"
       ]
     },
     {
@@ -312,7 +315,7 @@
         "fe6c51770bc3"
       ],
       "verified_by": [
-        "tests/mcp_server/test_arbora_016_served_fixes.py:136"
+        "tests/mcp_server/test_arbora_016_served_fixes.py:178"
       ]
     },
     {

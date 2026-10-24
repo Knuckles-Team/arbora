@@ -126,3 +126,17 @@ controlled existing owners. It tests expiry, revocation, changed revisions,
 resource replacement, cancellation and borrowed ownership. Missing runtime facts
 refuse before readiness. These fixtures grant no deployed access and do not
 qualify native session evidence, continuous request authorization or UI launch.
+
+## Bounded RunEvent JSON
+
+`tests/test_run_event_payloads.py` binds ARBORA-HOST-R001.2.1 and ARBORA-A2A-R001.
+Maximum ASCII, BMP, control, quote and astral-Unicode replies round-trip through
+the actual sink and reply projection for completed/stopped runs.
+The event mapping stays unchanged. Exactly 1 MiB of serialized JSON is accepted.
+One byte more becomes a bounded payload-error record retaining event identity and type.
+Serialization failures emit no private values. Task reads return typed unavailable
+reply metadata while preserving native completion status.
+A larger-than-65,536-character output remains intact in the stored event when it
+fits. It never appears as a falsely complete artifact. Failed-run partial output
+and malformed legacy records are not exposed or repaired. These bounded fixture
+checks do not substitute for native-engine restart acceptance.

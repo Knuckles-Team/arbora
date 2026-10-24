@@ -143,3 +143,12 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] `ARBORA-IDENTITY-R028.4`: Refusal.
 - [ ] `ARBORA-IDENTITY-R028.5`: Evidence.
 - [ ] `ARBORA-IDENTITY-R028.6`: Hot-path proof.
+
+### Explicit anonymous local mode amendment
+
+- [ ] Add explicit process-selected mode, separate anonymous caller/session provenance, and unsigned EG client composition.
+- [ ] Preserve verified carrier rejection, human/service rules, approval scopes, and authenticated-default behavior.
+- [ ] Add focused mode/provenance/ASGI/transport tests, including malformed identity and nonlocal/credential request refusals.
+- [ ] Validate real native EG persistence, effect journaling, real served Arbora and actual TUI with only the model simulated.
+- [ ] Validate separate fresh authenticated stack and missing-token refusal after anonymous acceptance.
+- [ ] Complete independent review and upstream CI before merge.

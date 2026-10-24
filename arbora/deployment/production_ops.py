@@ -527,6 +527,20 @@ def main(argv: list[str] | None = None) -> int:
     try:
         # The same shared config.json the served process reads.
         load_config()
+        from arbora.core.settings import runtime_config
+
+        if runtime_config.arbora_auth_mode == "none":
+            from argparse import Namespace
+            from urllib.parse import urlsplit
+
+            from arbora.security.anonymous import validate_startup
+
+            endpoint = urlsplit(getattr(args, "served_url", "") or "")
+            if endpoint.scheme != "http" or endpoint.username or endpoint.password:
+                raise ValueError(
+                    "Anonymous provisioning requires a local HTTP served URL"
+                )
+            validate_startup(Namespace(host=endpoint.hostname, auth_type="none"))
         report = _run(args)
     except Exception as exc:  # noqa: BLE001 - CLI returns one privacy-safe failure
         report = {

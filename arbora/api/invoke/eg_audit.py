@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from arbora.api.invoke.executor import ClientFactory
-from arbora.api.invoke.steps import VerifiedCaller, claim_values
+from arbora.api.invoke.steps import RequestCaller, claim_values
 from arbora.api.registry import AuditClass
 
 _REQUEST_ID = re.compile(r"[A-Za-z0-9._:/-]{1,128}\Z")
@@ -50,7 +50,7 @@ class EgAuditAdapter:
             raise ValueError("EG audit contract is unavailable")
 
     @staticmethod
-    def _request_id(event: Mapping[str, str], caller: VerifiedCaller) -> str:
+    def _request_id(event: Mapping[str, str], caller: RequestCaller) -> str:
         # AuditAppend binds surface into its fingerprint. Keep its reservation
         # distinct per surface while the effect owner's key remains shared.
         return hashlib.sha256(
@@ -58,7 +58,7 @@ class EgAuditAdapter:
         ).hexdigest()
 
     @staticmethod
-    def _fields(event: Mapping[str, str], caller: VerifiedCaller) -> dict[str, str]:
+    def _fields(event: Mapping[str, str], caller: RequestCaller) -> dict[str, str]:
         if (
             event.get("tenant") != caller.tenant
             or event.get("principal") != caller.principal
@@ -81,7 +81,7 @@ class EgAuditAdapter:
         self,
         event: Mapping[str, str],
         audit_class: AuditClass,
-        caller: VerifiedCaller,
+        caller: RequestCaller,
         *,
         status: str,
     ) -> Mapping[str, Any]:
@@ -93,7 +93,9 @@ class EgAuditAdapter:
         context = getattr(client, "use_verified_context", None)
         if not callable(append) or not callable(context):
             raise RuntimeError("EG audit client is unavailable")
-        with context(claim_values(caller.engine_claims)):
+        from arbora.security.anonymous import client_scope
+
+        with client_scope(client, claim_values(caller.engine_claims)):
             receipt = await append(
                 **fields,
                 status=status,
@@ -111,7 +113,7 @@ class EgAuditAdapter:
         return receipt
 
     async def preflight(
-        self, event: Mapping[str, str], audit_class: AuditClass, caller: VerifiedCaller
+        self, event: Mapping[str, str], audit_class: AuditClass, caller: RequestCaller
     ) -> str:
         receipt = await self._append(event, audit_class, caller, status="reserved")
         return json.dumps(
@@ -119,7 +121,7 @@ class EgAuditAdapter:
             separators=(",", ":"),
         )
 
-    def _reservation_seq(self, event: Mapping[str, str], caller: VerifiedCaller) -> int:
+    def _reservation_seq(self, event: Mapping[str, str], caller: RequestCaller) -> int:
         try:
             reference = json.loads(event.get("audit_ref", ""))
         except (TypeError, ValueError) as exc:
@@ -134,7 +136,7 @@ class EgAuditAdapter:
         return int(reference[1])
 
     async def write(
-        self, event: Mapping[str, str], audit_class: AuditClass, caller: VerifiedCaller
+        self, event: Mapping[str, str], audit_class: AuditClass, caller: RequestCaller
     ) -> None:
         reservation_seq = self._reservation_seq(event, caller)
         code = event.get("result_status", "")

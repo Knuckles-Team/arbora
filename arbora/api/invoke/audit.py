@@ -7,13 +7,13 @@ from dataclasses import dataclass
 from typing import Any, Literal, Protocol
 
 from arbora.api.invoke.plan import params_digest
-from arbora.api.invoke.steps import OpError, OpResult, VerifiedCaller
+from arbora.api.invoke.steps import OpError, OpResult, RequestCaller
 
 
 def audit_event(
     op: Any,
     params: Mapping[str, Any],
-    caller: VerifiedCaller,
+    caller: RequestCaller,
     surface: Any,
     status: str,
     audit_ref: str = "",

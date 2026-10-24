@@ -57,6 +57,7 @@ from arbora.mcp_server.legacy_action_mapping import (
     APPROVED_ACTION_MAPPING,
     validate_served_actions,
 )
+from arbora.security.anonymous import session_context
 
 logger = logging.getLogger(__name__)
 
@@ -185,7 +186,7 @@ def _resolve_verified_scope_actor(session):
         actor = current_actor()
     except IdentityRequiredError:
         return None
-    if actor is not None and actor.authenticated and actor != session.actor:
+    if actor is not None and actor != session.actor:
         raise PermissionError("Verified actor and GraphSession authority differ")
     return actor
 
@@ -209,7 +210,7 @@ def verified_tool_session_scope():
     if session is None:
         raise PermissionError("Verified GraphSession required")
     try:
-        session.engine_verified_context()
+        session_context(session)
     except PermissionError:
         raise PermissionError("Verified GraphSession authority is incomplete") from None
 
@@ -940,7 +941,11 @@ def _served_caller_session() -> Any:
 
 def _served_credential_kind() -> str:
     from arbora.api.contracts.session import current_session
+    from arbora.security.anonymous import admitted_actor
 
+    session = current_session() or _PROCESS_SESSION
+    if session is not None and admitted_actor(session.actor):
+        return "none"
     return "bearer" if current_session() is not None else "process"
 
 

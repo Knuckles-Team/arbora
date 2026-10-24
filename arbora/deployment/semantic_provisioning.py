@@ -26,6 +26,7 @@ from collections.abc import Callable, Mapping, Sequence
 from contextlib import AbstractContextManager
 from typing import Any
 
+from arbora.security.anonymous import session_context
 from arbora.semantic_content import (
     ContentProvider,
     default_content_providers,
@@ -336,7 +337,7 @@ async def import_attested_pack(
 
     from arbora.api.contracts import pack_import_authority
 
-    tenant_id = str(session.engine_verified_context()["tenant"])
+    tenant_id = str(session_context(session)["tenant"])
     graph = str(session.graph)
     binding = await attest_self_served_catalog(
         client,
@@ -480,7 +481,7 @@ async def provision_semantic_content(
 
     from agent_connector_sdk.artifacts.pack import build_connector_content_pack
 
-    tenant_id = str(session.engine_verified_context()["tenant"])
+    tenant_id = str(session_context(session)["tenant"])
     graph = str(session.graph)
     compute = engine.graph_compute
     client = compute.for_graph(graph).async_client

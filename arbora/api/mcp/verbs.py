@@ -7,6 +7,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
+from arbora.api.invoke.steps import surface_caller_admitted
 from arbora.api.mcp.discovery import (
     FleetSearch,
     describe_op,
@@ -107,7 +108,7 @@ def _authenticated_arguments(
     if verb not in VERBS:
         raise ValueError("unknown MCP intent verb")
     caller = projection.caller_for_request()
-    if caller is None or not caller.authenticated:
+    if not surface_caller_admitted(caller):
         return caller, {}, _refusal("UNAUTHENTICATED", projection, caller, op or verb)
     arguments = params or {}
     if not isinstance(arguments, Mapping):
