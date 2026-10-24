@@ -192,6 +192,38 @@ async def handle_fleet_call(
     gateway = context.services.get("fleet_gateway")
     if gateway is None:
         raise RuntimeError("fleet gateway is not bound")
+    with _plan_confirmation(context, params, op):
+        return await _gateway_call(gateway, context, params, op)
+
+
+def _plan_confirmed(context: Any, op: OpSpec) -> bool:
+    """A destructive call the pipeline dispatches under a consumed plan.
+
+    The pipeline dispatches a plan-confirmed call with the key ``plan:<ref>``
+    only after it validated and consumed that plan; an expired or mismatched
+    ``plan_ref`` never reaches dispatch.
+    """
+    key = getattr(context, "idempotency_key", None)
+    return (
+        op.effect == Effect.DESTRUCTIVE
+        and isinstance(key, str)
+        and key.startswith("plan:")
+    )
+
+
+def _plan_confirmation(context: Any, params: Mapping[str, Any], op: OpSpec) -> Any:
+    import contextlib
+
+    from arbora.fleet.plan_confirmation import confirmed_plan_call
+
+    if _plan_confirmed(context, op):
+        return confirmed_plan_call(str(params["tool"]))
+    return contextlib.nullcontext()
+
+
+async def _gateway_call(
+    gateway: Any, context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
     result = await gateway.call(
         context.caller,
         params["server"],

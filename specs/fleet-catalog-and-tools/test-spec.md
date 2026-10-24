@@ -279,6 +279,7 @@ Hot-path proof for `ARBORA-FLEET-R037`: `tests/fleet/test_job_loads_served.py::t
 - `ARBORA-FLEET-R041.8`: `tests/fleet/test_handshake_onboard.py::test_reconnect_recaptures_only_on_version_or_digest_change` reconnects unchanged, then with a new digest.
 - `ARBORA-FLEET-R041.9`: `tests/fleet/test_handshake_onboard.py::test_failed_capture_serves_tools_reports_gap_and_retries_with_backoff`.
 - `ARBORA-FLEET-R041.10`: `tests/fleet/test_handshake_onboard.py::test_large_shrink_on_handshake_waits_for_mass_withdrawal_approval`.
+- `ARBORA-FLEET-R015.2`: `tests/fleet/test_plan_confirmation.py` (real SDK-guarded child: confirmed delete runs; unconfirmed and other-tool plans are cancelled; expired, mismatched and unknown plans dispatch nothing).
 - `ARBORA-FLEET-R041.15`: `tests/fleet/test_declarations.py::test_sdk_pack_declaration_is_read_from_its_archive_section`, `::test_a_section_that_does_not_match_its_digest_is_refused`, `::test_sdk_pack_ontology_bodies_are_read_from_the_archive`.
 - `ARBORA-FLEET-R041.16`: `tests/api/test_served_replay_owners.py::test_served_pack_status_is_a_read_and_reaches_dispatch_without_a_key`, `::test_pack_status_tenant_comes_from_the_caller_not_the_request`.
 - `ARBORA-FLEET-R042`: See each child.

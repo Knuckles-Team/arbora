@@ -95,6 +95,7 @@ from arbora.fleet.local_skill_catalog import (
     build_local_skill_catalog,
     missing_core_pack_names,
 )
+from arbora.fleet.plan_confirmation import answer_elicitation
 from arbora.fleet.session_notifications import SessionCatalogNotifications
 from arbora.security.error_surface import public_error_text
 from arbora.security.log_redaction import redact_for_log
@@ -4189,6 +4190,8 @@ class MCPMultiplexer:
                 read_stream,
                 write_stream,
                 message_handler=self._child_message_handler(server_name, holder),
+                # ARBORA-FLEET-R015.2: confirm only a plan-confirmed armed call.
+                elicitation_callback=answer_elicitation,
             )
         )
         holder.append(session)
