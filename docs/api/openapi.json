@@ -3882,6 +3882,26 @@
         ]
       }
     },
+    "/api/v1/ops/browser.request_call": {
+      "post": {
+        "operationId": "browser.request_call",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Shared7a394c4291f70ad5cbb6f2016ce2f32d6808772d7a3c087f0f83a29babe1bc42"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Shared865d59d006d8d5dea4ea318c1635dd3dd58fa19747a79bc68bee97f0858fe4dd"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Propose an exact browser action for attended human acceptance",
+        "tags": [
+          "browser"
+        ]
+      }
+    },
     "/api/v1/ops/browser.revoke_lease": {
       "post": {
         "operationId": "browser.revoke_lease",
@@ -20911,5 +20931,5 @@
       }
     }
   },
-  "x-registry-digest": "a44e71c9864b008c97dbdeb1da3cd4cc3427b9347495fc69b9040a72bf8f48ba"
+  "x-registry-digest": "27b9f48df91b04f699c016125c221c290c42ff651cbecf5b00c44e9136f55506"
 }

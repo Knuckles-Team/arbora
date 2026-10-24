@@ -104,7 +104,8 @@ Absent adapters or qualified EG producer fields remain explicit acceptance block
 
 Extend the existing named served credential/PKCE tests through actual REST/MCP ingress, connector dispatch and controlled provider exchanges.
 Grant connector A and prove its authorized call succeeds. Keep tenant, principal/client, provider, audience and scopes unchanged, then target connector B.
-Caller-forged connector A metadata on B and a genuine B identity with only A's grant both refuse before secret resolution or exchange.
+Caller-forged connector A metadata on B refuses before secret resolution or exchange.
+A genuine B identity with only A's grant also refuses before those steps.
 An explicit B grant permits B without changing A's authority. Assert challenge, vault receipt and transport evidence contain the admitted connector.
 Use an OIDC provider returning a signed ID token plus opaque access and refresh tokens; the declared mixed profile must succeed.
 Separately prove the JWT access-token profile succeeds with valid signatures, audiences, expiry and resource bindings.
@@ -219,3 +220,28 @@ These future acceptance tests require the owner implementation; current refusal 
 | Served read contract | `ARBORA-IDENTITY-R004.8.1` | `tests/a2a/test_anonymous_reads.py` tests exact owner, request, task and target binding. It tests host/origin/credential refusal, deadlines, cancellation, bounded input and no cached output disclosure. |
 | Native anonymous ownership | `ARBORA-IDENTITY-R004.8.2` | Installed engine tests distinguish anonymous and authenticated task owners. They prove native namespace enforcement, restart reads and credential rejection. This acceptance remains open. |
 | Native client source adapter | `ARBORA-IDENTITY-R004.8.3` | `tests/a2a/test_anonymous_native_reads.py` uses the actual public client and codec with a synthetic response transport. It checks method negotiation, immutable target binding, mode changes and no generic read fallback. |
+
+## Local browser admission prerequisites (R004.6)
+
+`tests/browser_control/test_local_browser_transport.py` checks the distinct,
+explicitly configured transport. It preserves canonical anonymous identity and
+raw Origin refusal. It covers exact Origin/Host, loopback peers, schemes,
+credential/proxy refusal and mode checks on every request. It grants no authority.
+
+`tests/access/test_action_policy_source.py` checks the canonical policy owner's
+strict configured-source revision. It covers normalization, absent/fallback and
+incomplete sources, same-snapshot evaluation, and source changes during audit or
+caller waits. Exact policy requests bind the revision into their existing digest.
+These prerequisite tests do not qualify the full attended browser path.
+
+`tests/access/test_action_policy_source_async.py` checks same-loop source reads.
+Released-native checks compare revisions and exercise public query decoding.
+Cancellation checks require file-worker completion before task completion.
+Source substitution, caller liveness and redacted failures must refuse.
+These tests do not qualify factory admission, effects or shared-pool coexistence.
+
+The isolated owner tests exercise genuine native lease issue, read and retirement.
+They check scope/task substitution, cancellation, source changes and native revocation.
+Retained file work must preserve all occupied capacity slots through cancellation.
+Repeated same-loop owner checks must not reproduce pending-reader warnings.
+No fixture or native lease JSON establishes factory or operation authority.

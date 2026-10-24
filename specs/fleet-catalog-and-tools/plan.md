@@ -427,3 +427,44 @@ The harness reaches other agents only through arbora. Engine planning over the c
 WebUI startup already injects the one browser-control service. Bind its owner loop at startup, before a browser connects, and expose read-only `browser.discover` through the existing `find` intent tool. The fleet agent already preloads `find` and `act`; do not copy browser-local tools into another client catalog. Bind the browser operation adapter in the served invocation services. Discovery distinguishes an unavailable bridge from an available bridge without caller-owned attended registrations. Every listed registration reuses existing owner, tenant, live-session, attended-arm and registration checks. Discovery grants no lease and performs no action. Explicit no-auth serving retains its existing identity contract; it does not invent authenticated browser sessions.
 
 This source batch does not widen the human-only browser execution operations to MCP or delegation. Agent execution authority, served installed-provider acceptance remain open. The default WebUI profile `webui-assistant` now selects the same governed `find`/`act` toolset as the fleet profile at the existing A2A run boundary. This changes requested tool inventory only; the existing executor receives the original admitted session. Other profiles retain their existing inventory.
+
+### R015 native run identity during attended cancellation
+
+Native A2A task identifiers may differ from the dispatched run identifier.
+After authorizing the WorkItem, cancellation revokes its canonical a2a_run_id.
+Legacy tasks retain their task identifier as the run identifier.
+Both new cancellation and already-cancelled replay withdraw the same live origin.
+The native task identifier must not leave a pending attended proposal live.
+
+### R015 native node-label producer mapping
+
+ServedEngine writes the public engine's node_type label property.
+Keep the existing type property for consumers that read it as ordinary metadata.
+Native read-by-label and ActionPolicy ledger readback must verify the mapping.
+Existing type-only records are not rewritten or treated as labeled receipts.
+Historical data repair requires separate migration review and evidence.
+
+### R015 served browser authority composition
+
+Browser state uses the served process's existing public EG client pool.
+It requires the current caller's GraphSession for every read and mutation.
+It never falls back to process authority or a private engine implementation.
+Use public node create/CAS and atomic batch operations for existing browser records.
+Keep WorkItem effects on the existing served WorkItem namespace.
+Factory installation is not attended admission or browser execution acceptance.
+
+Channel retirement must stop on terminal caller-authority loss.
+Disconnect still closes and removes the local channel before durable cleanup.
+An expired or unavailable caller session cannot authorize a cleanup retry.
+Report that refusal to the caller, and leave durable retirement unresolved.
+Do not borrow process authority or claim that durable records were retired.
+Transient storage failures retain the existing retry behavior.
+
+### R015 unqualified historical policy accounting
+
+Type-only ActionDecision candidates are not trusted ledger entries.
+When such candidates exist for the requested action kind, accounting is unavailable.
+Existing rate-limit and blast-radius checks then refuse to infer unused budget.
+No old record is promoted, rewritten or migrated by this guard.
+The refusal lasts until a separate reviewed historical-data repair removes the ambiguity.
+Kinds without such candidates retain the normal labeled ledger path.

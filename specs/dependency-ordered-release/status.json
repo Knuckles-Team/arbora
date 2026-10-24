@@ -196,11 +196,11 @@
         "f2224467f07c"
       ],
       "verified_by": [
-        "tests/api/test_task_plan_schema_pin.py:112",
-        "tests/api/test_task_plan_schema_pin.py:182",
-        "tests/api/test_task_plan_schema_pin.py:225",
-        "tests/api/test_task_plan_schema_pin.py:246",
-        "tests/api/test_task_plan_schema_pin.py:254"
+        "tests/api/test_task_plan_schema_pin.py:141",
+        "tests/api/test_task_plan_schema_pin.py:153",
+        "tests/api/test_task_plan_schema_pin.py:169",
+        "tests/api/test_task_plan_schema_pin.py:185",
+        "tests/api/test_task_plan_schema_pin.py:288"
       ]
     },
     {

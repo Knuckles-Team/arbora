@@ -191,8 +191,36 @@ class A2AAppExtension(ServerExtension):
 
     @asynccontextmanager
     async def lifespan(self) -> AsyncIterator[None]:
+        # FastMCP shields extension teardown in its task. Keep the SDK's AnyIO
+        # scopes in their own owner task so they exit in the scope that entered
+        # them, while TaskGroup propagates failures and joins every shutdown.
+        ready = asyncio.Event()
+        stop = asyncio.Event()
+        async with asyncio.TaskGroup() as tasks:
+            tasks.create_task(self._run_lifespan(ready, stop))
+            await ready.wait()
+            try:
+                yield
+            finally:
+                stop.set()
+
+    async def _run_lifespan(self, ready: asyncio.Event, stop: asyncio.Event) -> None:
+        owner = asyncio.create_task(self._own_lifespan(ready, stop))
+        try:
+            await asyncio.shield(owner)
+        except asyncio.CancelledError:
+            stop.set()
+            if not ready.is_set():
+                owner.cancel()
+            # Once started, cancellation requests orderly SDK shutdown rather
+            # than interrupting its cleanup awaits. Always join the owner.
+            await owner
+            raise
+
+    async def _own_lifespan(self, ready: asyncio.Event, stop: asyncio.Event) -> None:
         async with self._app.router.lifespan_context(self._app):
-            yield
+            ready.set()
+            await stop.wait()
 
 
 def mount_sdk_a2a(mcp: Any) -> Any:

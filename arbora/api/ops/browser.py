@@ -67,6 +67,19 @@ def operations() -> tuple[OpSpec, ...]:
     )
     return (
         discovery,
+        OpSpec(
+            id="browser.request_call",
+            verb=Verb.ACT,
+            summary="Propose an exact browser action for attended human acceptance",
+            examples=("ask the attended browser owner to navigate",),
+            params=BrowserParams,
+            result=BrowserResult,
+            binding=handler,
+            scopes=frozenset({"kg:write"}),
+            effect=Effect.WRITE,
+            surfaces=frozenset({Surface.MCP}),
+            audit=AuditClass.EVENT,
+        ),
         *tuple(
             OpSpec(
                 id=f"browser.{action}",

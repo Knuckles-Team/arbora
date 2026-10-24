@@ -242,6 +242,21 @@ class ServedEngine:
         self.graph_compute = _GraphCompute(pool)
 
     @property
+    def browser_control_state(self) -> Any:
+        """Browser records through public EG methods under the current caller."""
+        from arbora.mcp_server.browser_state import ServedBrowserState
+
+        return ServedBrowserState(self.pool)
+
+    def batch_typed_mutations(
+        self, mutations: list[dict[str, Any]], *, session: Any
+    ) -> bool:
+        """Atomically persist a typed browser trace under its exact caller."""
+        return self.browser_control_state.batch_typed_mutations(
+            mutations, session=session
+        )
+
+    @property
     def work_item_graph(self) -> str:
         """The native graph used by this engine's WorkItem namespace."""
         from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
@@ -276,6 +291,26 @@ class ServedEngine:
 
         return list(_run_blocking(run))
 
+    async def query_cypher_async(
+        self,
+        query: str,
+        params: Mapping[str, Any] | None = None,
+        *,
+        session: Any = None,
+    ) -> list[Any]:
+        """Read through the public client on this loop under one exact caller."""
+        from arbora.api.contracts.session import resolve_session
+
+        caller = resolve_session(session, required_scope="kg:read")
+        bound = _bind_parameters(query, params)
+        async with self.pool.bind(
+            _session_context(caller), caller.graph, required_scope="kg:read"
+        ) as client:
+            resolve_session(caller, required_scope="kg:read")
+            result = await client.query.cypher_read(bound)
+            resolve_session(caller, required_scope="kg:read")
+            return list(result)
+
     def add_node(
         self,
         node_id: str,
@@ -287,7 +322,7 @@ class ServedEngine:
         from epistemic_graph.generated.graph import send_add_node
 
         client = self._session_client()
-        body = {**dict(properties or {}), "type": label}
+        body = {**dict(properties or {}), "type": label, "node_type": label}
         params = {
             "node_id": node_id,
             "properties_msgpack": msgpack.packb(body, use_bin_type=True),
@@ -321,7 +356,7 @@ class ServedEngine:
         from epistemic_graph.generated.graph import send_create_node_if_absent
 
         client = self._session_client()
-        body = {**dict(properties or {}), "type": label}
+        body = {**dict(properties or {}), "type": label, "node_type": label}
         params = {
             "node_id": node_id,
             "properties_msgpack": msgpack.packb(body, use_bin_type=True),

@@ -193,3 +193,10 @@ The tests require temporary clients to close before their loop exits.
 They preserve the serving reader across repeated requests and enforce tenant isolation.
 Failed requests, cancellation during cleanup and repeated close keep deterministic outcomes.
 A cleanup failure remains visible after the remaining clients close.
+
+## Unique action-decision audit refusal
+
+For `ARBORA-HOST-R033`, the schema receipt tests force a fixed audit ID collision
+and a write exception through the real action-policy owner. Neither may produce
+an effect-authorizing receipt or call the schema publisher. The audit backend
+records fixture operations only; no native persistence acceptance is claimed.

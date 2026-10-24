@@ -34,6 +34,10 @@ from arbora.observability.trace_ontology import (
 _ATTRIBUTE_NAME = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
 _ALLOWED_ATTRIBUTES = frozenset(
     {
+        "proposal_reference",
+        "proposal_digest",
+        "requester_agent",
+        "requester_run_reference",
         "actor_reference",
         "tenant_reference",
         "login_session_reference",
@@ -98,6 +102,13 @@ def _validated_attributes(attributes: Mapping[str, Any]) -> dict[str, Any]:
 def _validated_attribute(key: str, value: Any) -> Any:
     if _ATTRIBUTE_NAME.fullmatch(key) is None:
         raise ValueError("trace bundle attribute name is invalid")
+    if key in {
+        "requester_agent",
+        "proposal_reference",
+        "requester_run_reference",
+        "proposal_digest",
+    }:
+        return _validated_proposal_attribute(key, value)
     if key == "registration_generation" and isinstance(value, int):
         return _validated_generation(value)
     if key in {
@@ -108,6 +119,28 @@ def _validated_attribute(key: str, value: Any) -> Any:
     }:
         return _validated_timestamp(value)
     return _validated_reference(value)
+
+
+def _validated_proposal_attribute(key: str, value: Any) -> str:
+    if key == "requester_agent":
+        if not isinstance(value, str) or not 1 <= len(value) <= 512:
+            raise ValueError("requester agent must be a bounded host name")
+        return value
+    if key == "proposal_reference":
+        from arbora.browser_control.browser_control_common import _identifier
+
+        return _identifier(_validated_reference(value))
+    if key == "requester_run_reference":
+        from arbora.browser_control.browser_control_common import _opaque_ref
+
+        return _opaque_ref(_validated_reference(value))
+    if key == "proposal_digest":
+        from arbora.browser_control.browser_control_common import _DIGEST
+
+        if not isinstance(value, str) or _DIGEST.fullmatch(value) is None:
+            raise ValueError("proposal digest must be SHA-256")
+        return value
+    raise ValueError("unsupported proposal trace attribute")
 
 
 def _validated_generation(value: int) -> int:

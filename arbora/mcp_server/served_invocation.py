@@ -261,6 +261,85 @@ def _with_ingest_runner(
     return {**bindings, "ingest_runner": runner}
 
 
+def _schema_action(session: Any, graph: str, pin: Mapping[str, Any]) -> Any:
+    """The exact schema intent considered by the existing action-policy owner."""
+    from arbora.api.contracts import ActionRequest
+    from arbora.api.task_plan_schema import COMPONENT_VERSION, PURPOSE_ID
+
+    return ActionRequest(
+        kind=PURPOSE_ID,
+        target=pin["component_id"],
+        params={
+            "component_kind": pin["kind"],
+            "component_version": COMPONENT_VERSION,
+            "schema_version": pin["schema_version"],
+            "content_digest": pin["content_digest"],
+            "engine_version": pin["engine_version"],
+            "tenant_id": session.tenant,
+            "graph": graph,
+            "policy_revision": str(session.policy_version),
+        },
+        source="arbora",
+        reason="authorize the pinned task-plan feature schema publication",
+        actor_id=str(session.actor.actor_id),
+    )
+
+
+def _schema_session(session: Callable[[], Any], tenant: str, graph: str) -> Any:
+    from arbora.api.contracts.session import resolve_session
+
+    verified = resolve_session(
+        session(), graph=graph, required_scope="admin:decision-catalog"
+    )
+    if verified.tenant != tenant or not str(verified.policy_version).strip():
+        raise PermissionError(
+            "schema publication needs its verified tenant and revision"
+        )
+    return verified
+
+
+async def _schema_publish_context(
+    engine: Any,
+    session: Callable[[], Any],
+    graph: str,
+    tenant: str,
+    pin: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Require a new durable receipt; default policy still holds this action."""
+    import asyncio
+
+    from arbora.api.contracts import PolicyDisposition, PolicyReceipt, get_action_policy
+    from arbora.api.task_plan_schema import PURPOSE_ID
+    from arbora.mcp_server.decide_wiring import _mutation_context
+
+    request = _schema_action(_schema_session(session, tenant, graph), graph, pin)
+    digest = request.digest()
+    decision = await asyncio.to_thread(get_action_policy(engine).decide, request)
+    verified = _schema_session(session, tenant, graph)
+    if _schema_action(verified, graph, pin).digest() != digest:
+        raise PermissionError(
+            "schema publication intent changed during policy decision"
+        )
+    receipt = decision.receipt
+    if not (
+        decision.allowed
+        and decision.disposition is PolicyDisposition.APPROVE
+        and isinstance(receipt, PolicyReceipt)
+        and receipt.authorizes_effect
+        and receipt.receipt_id == decision.audit_id
+        and receipt.request_digest == digest
+        and decision.request.digest() == digest
+    ):
+        raise PermissionError(
+            "schema publication has no exact effect-authorizing receipt"
+        )
+    return {
+        **_mutation_context(verified, PURPOSE_ID),
+        "policy_digest": f"sha256:{receipt.request_digest}",
+        "policy_decision_id": receipt.receipt_id,
+    }
+
+
 def _with_task_plan_schema(
     bindings: Mapping[str, Any] | None,
     pool: Any,
@@ -277,8 +356,13 @@ def _with_task_plan_schema(
     """
     if bindings is None or "task_plan_schema_pins" in bindings:
         return bindings
-    from arbora.api.task_plan_schema import PURPOSE_ID, engine_publish, startup_pins
-    from arbora.mcp_server.decide_wiring import _mutation_context
+    from arbora.api.contracts.session import (
+        current_session,
+        resolve_session,
+        use_session,
+    )
+    from arbora.api.task_plan_schema import engine_publish, startup_pins
+    from arbora.mcp_server.served_engine import ServedEngine
 
     pins = startup_pins()
     if pins is None:
@@ -287,10 +371,23 @@ def _with_task_plan_schema(
     async def client_for(tenant: str) -> Any:
         return await pool.connected_client(connect_context(tenant), graph)
 
-    def context_for(tenant: str) -> dict[str, Any]:
-        return {**_mutation_context(session(), PURPOSE_ID), "tenant_id": tenant}
+    engine = ServedEngine(pool)
 
-    publish = engine_publish(client_for, context_for, graph)
+    async def context_for(tenant: str, pin: Mapping[str, Any]) -> dict[str, Any]:
+        return await _schema_publish_context(engine, session, graph, tenant, pin)
+
+    publisher = engine_publish(client_for, context_for, graph)
+
+    async def publish(tenant: str, pin: Mapping[str, Any]) -> str:
+        bound = session()
+        if current_session() is not None:
+            resolve_session(bound, graph=graph)
+        with use_session(bound):
+            verified = resolve_session(bound, graph=graph)
+            if verified.tenant != tenant:
+                raise PermissionError("schema publication cannot retarget its tenant")
+            return await publisher(tenant, pin)
+
     _warm_task_plan_schema(pins, publish, str(session().tenant))
     return {
         **bindings,
@@ -429,9 +526,11 @@ def compose_served_invocation(
         )
         # An alert send is an external effect too: the same journal holds it
         # at most once per idempotency key (ARBORA-MESSAGING-R008).
+        # Awaited attended proposals share that owner; replay never sends a
+        # second browser prompt or repeats a human-approved execution.
         changes["external_effect_operations"] = frozenset(
             op_id
-            for op_id in ("fleet.call", "messaging.alert")
+            for op_id in ("fleet.call", "messaging.alert", "browser.request_call")
             if registry.get(op_id) is not None
         )
     services = build_invoke_services(

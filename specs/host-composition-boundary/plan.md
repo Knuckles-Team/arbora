@@ -564,3 +564,11 @@ They do not qualify deployed WebUI, native issuance or live identity.
 This source retains the dedicated native issuer adapter and admission checks without replacing current caller credentials or process refusals. The issuer prerequisite is EG694's exact-source host-start contract and fresh generated bindings. Older generated artifacts and controlled owner fixtures cannot qualify that dependency. Native issuer policy, installed consumer composition and actual host startup remain open. No credentials, grants or infrastructure starts are created by this source reconciliation.
 
 The separate web-only slice retains owner-attested borrowed ASGI resources and revalidates admission at lifespan startup. Its controlled application fixtures do not qualify a deployed WebUI factory or native issuer. R010.7.2.2.2.2 retains live client activation, terminal, combined interfaces and logs acceptance. No listener is started outside bounded local fixtures.
+
+## Unique action-decision audit refusal
+
+For `ARBORA-HOST-R033`, a false atomic-create result means the unique ID already
+exists. The action-policy owner must not treat that ID as a new decision receipt.
+Both a collision and a write exception leave the action without effect authority.
+This bounded refusal repair does not qualify native audit persistence or the
+separate approval-grant flow.

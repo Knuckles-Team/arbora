@@ -296,7 +296,7 @@
         "9bd22960a7ea"
       ],
       "verified_by": [
-        "tests/a2a/test_native_run_owner.py:15",
+        "tests/a2a/test_native_run_owner.py:17",
         "tests/deployment/test_real_boot_fixture.py:19",
         "tests/test_native_run_admission.py:12",
         "tests/test_native_run_scope.py:14",

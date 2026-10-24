@@ -24,6 +24,10 @@ from arbora.browser_control.browser_control_dispatch import BrowserDispatchMixin
 from arbora.browser_control.browser_control_lease import BrowserLeaseMixin
 from arbora.browser_control.browser_control_outcome import BrowserOutcomeMixin
 from arbora.browser_control.browser_control_policy import BrowserPolicyMixin
+from arbora.browser_control.browser_control_proposals import (
+    BrowserProposalMixin,
+    PendingBrowserProposal,
+)
 from arbora.browser_control.browser_control_provenance import BrowserProvenanceMixin
 from arbora.browser_control.browser_control_state import _ActiveCall, _ChannelState
 from arbora.observability.langfuse_exporter import get_langfuse_exporter
@@ -33,6 +37,7 @@ SessionRevalidator = Callable[[BrowserChannelBinding], Awaitable[bool]]
 
 
 class BrowserControlService(
+    BrowserProposalMixin,
     BrowserAttendanceMixin,
     BrowserChannelMixin,
     BrowserLeaseMixin,
@@ -80,6 +85,7 @@ class BrowserControlService(
         )
         self._clock = clock
         self._channels: dict[str, _ChannelState] = {}
+        self._proposals: dict[str, PendingBrowserProposal] = {}
         self._active_calls: dict[str, _ActiveCall] = {}
         self._completed: OrderedDict[str, BrowserCallReceipt] = OrderedDict()
         self._completed_authority: dict[str, tuple[_ChannelState, str]] = {}

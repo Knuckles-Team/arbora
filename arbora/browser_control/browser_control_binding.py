@@ -15,9 +15,6 @@ _CONTROL_CAPABILITIES = (
     "query_cypher",
     "create_node_if_absent",
     "compare_and_set_node_fields",
-    "claim_work_item",
-    "commit_work_item_result",
-    "cancel_work_item",
 )
 
 
@@ -53,13 +50,19 @@ BINDING_PROPERTY_NAMES = tuple(
 def control_authority(engine: Any) -> Any | None:
     """Return the complete native browser-control state authority."""
 
-    authority = getattr(engine, "_work_item_engine", None)
+    authority = getattr(engine, "browser_control_state", None)
     if authority is None or not all(
         callable(getattr(authority, name, None)) for name in _CONTROL_CAPABILITIES
     ):
         return None
     if not callable(getattr(engine, "batch_typed_mutations", None)) or not callable(
         getattr(engine, "query_cypher", None)
+    ):
+        return None
+    work_items = getattr(engine, "work_items", None)
+    if work_items is None or not all(
+        callable(getattr(work_items, name, None))
+        for name in ("submit", "get", "claim", "commit_result", "cancel")
     ):
         return None
     return authority

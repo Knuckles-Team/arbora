@@ -447,27 +447,38 @@ async def _call_native_intent(
     from arbora.api.mcp.caller import use_request_ref
 
     _reject_caller_authority(kwargs)
-    params = kwargs.get("params")
-    params = params if isinstance(params, dict) else {}
-    with use_request_ref(f"run:{run_id or '-'}:{_uuid.uuid4().hex}"):
+    from arbora.run_origin import native_call_origin_scope
+
+    with (
+        use_request_ref(f"run:{run_id or '-'}:{_uuid.uuid4().hex}"),
+        native_call_origin_scope(run_id),
+    ):
         payload = await verb(**kwargs)
     if run_id:
-        from agent_utilities import host_ports
-
-        error = payload.get("error") if isinstance(payload, dict) else None
-        host_ports.emit_run_event(
-            {
-                "type": "tool_call",
-                "run_id": run_id,
-                "tool_name": name,
-                "op": kwargs.get("op") or "",
-                "server": params.get("server") or "",
-                "tool": params.get("tool") or "",
-                "ok": bool(isinstance(payload, dict) and payload.get("ok")),
-                "error": (error or {}).get("code") if isinstance(error, dict) else None,
-            }
-        )
+        _emit_native_intent_event(name, run_id, kwargs, payload)
     return payload
+
+
+def _emit_native_intent_event(
+    name: str, run_id: str, kwargs: dict[str, Any], payload: Any
+) -> None:
+    params = kwargs.get("params")
+    params = params if isinstance(params, dict) else {}
+    from agent_utilities import host_ports
+
+    error = payload.get("error") if isinstance(payload, dict) else None
+    host_ports.emit_run_event(
+        {
+            "type": "tool_call",
+            "run_id": run_id,
+            "tool_name": name,
+            "op": kwargs.get("op") or "",
+            "server": params.get("server") or "",
+            "tool": params.get("tool") or "",
+            "ok": bool(isinstance(payload, dict) and payload.get("ok")),
+            "error": (error or {}).get("code") if isinstance(error, dict) else None,
+        }
+    )
 
 
 def safe_json_load(s: Any) -> Any:

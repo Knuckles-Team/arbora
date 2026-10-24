@@ -9,6 +9,7 @@ own helpers and request model, so only the export itself is a fixture.
 from __future__ import annotations
 
 import asyncio
+import json
 import sys
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
@@ -63,6 +64,78 @@ def test_gen_pins_the_exported_body_and_its_digest(engine_export: ModuleType) ->
     assert pin["body"] == _body()
     assert pin["content_digest"] == ds.encode_body(_body())[0]
     assert pins_module.verify(pin, _pin(engine_version="2.27.6")) is None
+
+
+def test_released_export_survives_pin_file_roundtrip() -> None:
+    pin = _GENERATE()
+    restored = json.loads(pins_module.pin_bytes(pin))
+    assert ds.encode_body(restored["body"])[0] == pin["content_digest"]
+    assert ds.canonical_body_bytes(restored["body"]) == ds.canonical_body_bytes(
+        pin["body"]
+    )
+
+
+def test_outer_pin_metadata_order_does_not_change_serialized_bytes(
+    engine_export: ModuleType,
+) -> None:
+    pin = _pin()
+    assert pins_module.pin_bytes(pin) == pins_module.pin_bytes(
+        dict(reversed(list(pin.items())))
+    )
+
+
+@pytest.mark.parametrize("change", ["reorder", "corrupt"])
+def test_startup_rejects_body_drift_with_unchanged_declared_digest(
+    engine_export: ModuleType,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    change: str,
+) -> None:
+    pin = _pin()
+    damaged = json.loads(pins_module.pin_bytes(pin))
+    if change == "reorder":
+        damaged["body"] = dict(reversed(list(pin["body"].items())))
+    else:
+        damaged["body"]["schema_version"] += 1
+    assert damaged["content_digest"] == pin["content_digest"]
+    path = tmp_path / "task_plan_schema.json"
+    path.write_text(json.dumps(damaged))
+    monkeypatch.setattr(pins_module, "generate_pin", lambda: pin)
+    assert pins_module.startup_pins(path) is None
+    assert "body" in caplog.text and "digest" in caplog.text
+    assert "UNAVAILABLE" in caplog.text
+
+
+@pytest.mark.parametrize("change", ["missing", "non-object", "non-json", "non-finite"])
+def test_verify_returns_a_reason_for_malformed_committed_body(
+    engine_export: ModuleType, change: str
+) -> None:
+    installed = _pin()
+    damaged = dict(installed)
+    if change == "missing":
+        del damaged["body"]
+    else:
+        damaged["body"] = {
+            "non-object": [],
+            "non-json": {"feature": object()},
+            "non-finite": {"feature": float("nan")},
+        }[change]
+    reason = pins_module.verify(damaged, installed)
+    assert isinstance(reason, str) and "body" in reason
+
+
+def test_verify_does_not_mask_an_unrelated_engine_import_failure(
+    engine_export: ModuleType, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pin = _pin()
+
+    def unavailable() -> Any:
+        raise ImportError("engine codec unavailable")
+
+    monkeypatch.setattr(pins_module, "_stat", unavailable)
+    with pytest.raises(ImportError, match="engine codec unavailable"):
+        pins_module.verify(pin, pin)
 
 
 # spec: ARBORA-RELEASE-R003.4.4
@@ -157,6 +230,10 @@ def _context(tenant: str) -> dict[str, Any]:
     }
 
 
+async def _publication_context(tenant: str, _pin: Any) -> dict[str, Any]:
+    return _context(tenant)
+
+
 class _Engine:
     """The two AgentComponent calls the publisher sends, recorded."""
 
@@ -179,6 +256,35 @@ class _Engine:
         return {"component": {"definition_digest": DEFINITION}}
 
 
+def test_startup_publisher_preserves_released_export_and_returned_definition(
+    tmp_path: Path,
+) -> None:
+    pin = _GENERATE()
+    path = tmp_path / "task_plan_schema.json"
+    path.write_bytes(pins_module.pin_bytes(pin))
+    pins = pins_module.startup_pins(path)
+    assert pins is not None
+    engine = _Engine()
+
+    async def client_for(_tenant: str) -> Any:
+        return engine
+
+    publisher = pins_module.engine_publish(client_for, _publication_context)
+
+    async def scenario() -> None:
+        first = await pins.for_tenant("tenant-a", publisher)
+        assert first["definition_digest"] == DEFINITION
+        assert await pins.for_tenant("tenant-a", publisher) == first
+
+    asyncio.run(scenario())
+    ((params, _key),) = engine.sent
+    component = params["op"]["request"]["component"]
+    assert component["content_digest"] == pin["content_digest"]
+    assert ds.canonical_body_bytes(
+        ds.decode_body(component["content_digest"], component["attributes"])
+    ) == ds.canonical_body_bytes(pin["body"])
+
+
 # spec: ARBORA-RELEASE-R003.4.4
 def test_engine_publish_sends_a_valid_request_and_reuses_a_current_entry(
     engine_export: ModuleType, monkeypatch: pytest.MonkeyPatch
@@ -190,7 +296,7 @@ def test_engine_publish_sends_a_valid_request_and_reuses_a_current_entry(
     async def client_for(_tenant: str) -> Any:
         return engine
 
-    publish = pins_module.engine_publish(client_for, _context)
+    publish = pins_module.engine_publish(client_for, _publication_context)
     assert asyncio.run(publish("tenant-a", pin)) == DEFINITION
     ((params, key),) = engine.sent
     component = params["op"]["request"]["component"]
@@ -218,7 +324,9 @@ def test_engine_publish_sends_a_valid_request_and_reuses_a_current_entry(
         return client.current
 
     monkeypatch.setattr(storage, "send_agent_component_current", current)
-    digest = asyncio.run(pins_module.engine_publish(reuse_client, _context)("t", pin))
+    digest = asyncio.run(
+        pins_module.engine_publish(reuse_client, _publication_context)("t", pin)
+    )
     assert digest == "sha256:" + "c" * 64 and reuse.sent == []
 
 
@@ -249,6 +357,7 @@ def test_committed_pin_matches_the_installed_engine() -> None:
     installed = pins_module.generate_pin()
     assert pins_module.drift(committed, installed) == []
     assert committed["available"] == installed["available"]
+    assert pins_module.verify(committed, installed) is None
 
 
 @pytest.mark.spec("ARBORA-RELEASE-R003.4.4")

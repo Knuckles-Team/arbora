@@ -190,6 +190,19 @@ class BrowserCallRequest(BaseModel):
     timeout_seconds: float = Field(default=30.0, gt=0.0, le=120.0)
 
 
+class BrowserProposalRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    document_ref: _OpaqueReference
+    registration_generation: int = Field(ge=1, le=9_007_199_254_740_991, strict=True)
+    tool_id: _Identifier
+    schema_digest: _Digest
+    arguments: Annotated[
+        dict[str, Any], AfterValidator(lambda value: _bounded_json(value, limit=8192))
+    ]
+    timeout_seconds: float = Field(default=30.0, gt=0.0, le=120.0)
+
+
 class CancelCallRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 

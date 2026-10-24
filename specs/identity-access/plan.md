@@ -480,3 +480,48 @@ The general none-mode middleware rejects Origin headers. These browser-specific
 factories require an exact configured Origin. Host composition must reconcile
 those policies before serving them together; standalone tests do not prove that
 integration. Do not relax the general middleware or infer browser admission.
+
+### R004.6 local browser transport qualification
+
+The first runtime component only validates the separate local browser transport.
+Explicit origin configuration is required while canonical anonymous mode is active.
+Each HTTP or WebSocket request must retain the exact origin, Host and loopback peer.
+Credentials, proxy headers and duplicate authority headers refuse.
+The component returns no binding, session grant or effect authority.
+Native lease liveness and the composed attended flow remain separate acceptance gates.
+
+### R004.6 configured policy source evidence
+
+Arbora's existing ActionPolicy owns configured-source qualification.
+Its additive snapshot API normalizes the explicit file and effective graph overrides.
+The revision also covers the irreversibility option used by that owner.
+Missing, invalid, unavailable or incomplete sources refuse qualification.
+Shipped defaults and fallback rules cannot produce configured-source evidence.
+A revision alone grants no action; existing policy decisions remain unchanged.
+The composed local path must evaluate and recheck the same qualified source before dispatch.
+
+Qualified policy-source failures expose only a generic unavailable error.
+Parser, file, and override exceptions must not survive in its exception chain.
+This prevents malformed policy values from entering ordinary error tracebacks.
+Failure remains refusal; legacy policy evaluation is unchanged.
+
+### R004.6 same-loop source prerequisite
+
+An additive async source read uses the same validators, rule order and normalizer.
+It captures the configured path, option, engine and caller before awaiting work.
+Public native queries recheck that caller after connection and read awaits.
+Cancellation retains the exact file worker until completion and prevents later native work.
+The browser owner must retain its capacity slot until that task completes.
+This avoids loop switching on this path, not the shared pool's inherited limitation.
+Concurrent legacy synchronous consumers and stalled file latency remain unqualified.
+This prerequisite adds no factory admission or operation authority.
+
+### R004.6 zero-effect socket owner prototype
+
+An isolated owner prototype binds private membership to the exact live socket task.
+It reuses canonical async source reads and public native control leases.
+A copied socket, native lease document or caller JSON grants no membership.
+Cancellation invalidates membership immediately while unfinished file work retains capacity.
+Native retirement failures remain explicit unresolved outcomes, never restored authority.
+The prototype grants no operations and is not wired into the application factory.
+Actual WebUI handshake and effect admission remain separate acceptance gates.

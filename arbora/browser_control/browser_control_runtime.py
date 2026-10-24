@@ -13,6 +13,7 @@ from arbora.browser_control.browser_control_api import (
     BrowserCallRequest,
     BrowserDiscoveryReceipt,
     BrowserDiscoveryRequest,
+    BrowserProposalRequest,
     CancelCallRequest,
     IssueLeaseRequest,
     ReconcileCallRequest,
@@ -21,6 +22,7 @@ from arbora.browser_control.browser_control_api import (
 
 BrowserControlAction = Literal[
     "discover",
+    "request_call",
     "issue_lease",
     "execute_call",
     "cancel_call",
@@ -120,6 +122,7 @@ async def dispatch_browser_control(
             return BrowserDiscoveryReceipt(bridge_available=False)
         return await _invoke("discover", discovery_request)
     contracts: dict[str, tuple[type[BaseModel], str]] = {
+        "request_call": (BrowserProposalRequest, "request_call"),
         "issue_lease": (IssueLeaseRequest, "issue_lease"),
         "execute_call": (BrowserCallRequest, "execute_call"),
         "cancel_call": (CancelCallRequest, "cancel_call"),

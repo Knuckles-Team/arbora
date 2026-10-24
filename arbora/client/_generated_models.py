@@ -9,7 +9,7 @@ from typing import Literal
 
 from arbora.client._schema import _expanded_spec
 
-REGISTRY_DIGEST = "a44e71c9864b008c97dbdeb1da3cd4cc3427b9347495fc69b9040a72bf8f48ba"
+REGISTRY_DIGEST = "27b9f48df91b04f699c016125c221c290c42ff651cbecf5b00c44e9136f55506"
 API_VERSION = "1"
 type OperationId = Literal[
     "access.check",
@@ -30,6 +30,7 @@ type OperationId = Literal[
     "browser.execute_call",
     "browser.issue_lease",
     "browser.reconcile_call",
+    "browser.request_call",
     "browser.revoke_lease",
     "capacity.throttle.set_mode",
     "capacity.throttle.status",

@@ -310,3 +310,43 @@ The WebUI bridge is configured by the host and discovered through the existing p
 Discovery retirement regression: controlled verification interleavings cover disconnect and same-reference channel replacement. The final locked snapshot excludes retired or replaced candidates without changing caller authority. Full composed frontend/backend and delegated web-agent execution acceptance remain open.
 
 Served intent integration regression: native harness and WebUI inventories include the served intent registry as well as backing tools. Real FastMCP calls preserve two synthetic owner/tenant sessions and refuse unregistered host tools. This proves the preload inventory path, not attended agent execution.
+
+Live proposal tests cover missing origins, exact acceptance, mutation confirmation, replay refusal and disconnect. Controlled cancellations cover lease issuance, cleanup and same-process origin closure. Payload and provenance validation reject invalid data. Full acceptance remains open for authenticated session continuity and distributed cancellation. Cancellation before origin registration or in another worker does not yet revoke the local origin. The shared browser consumer and served agent path require separate composed acceptance.
+
+Served effect ownership: `tests/fleet/test_attended_proposal_effect_owner.py` exercises the production `EgEffectJournal` over synthetic WorkItem and audit ports. Concurrent requests and same-run completed replay emit no duplicate proposal or execution. Cancellation leaves retry indeterminate without redispatch. Missing, foreign-run, foreign-session and retired origins cannot recover cached browser results. Checks include retirement during journal or audit reads. `tests/test_a2a_extension_lifespan.py` covers SDK scope ownership under real FastMCP. It tests startup, background and teardown failures, plus joined cancellation cleanup. The composed default AgentRunExecutor and multiplexer with synthetic identities reach read acceptance and separate mutation confirmation. Authenticated rendered-browser acceptance remains open. Synthetic ports and browser responders do not prove login, attended receipt or WebSocket session continuity.
+
+Reproduce the composed journey with `uv run --no-sync pytest tests/fleet/test_attended_proposal_agent_journey.py`. This test owns real startup and shutdown, with synthetic model, engine and browser ports. It checks consent, separate mutation confirmation, completed replay, cancellation and cross-run refusal.
+
+`tests/webui_host/attended_admission.md` documents the independent admission probe and required auth-owner interfaces. The probe records middleware behavior; it does not prove login or rendered-browser execution.
+
+## Native served node-label readback (R015)
+
+`tests/test_served_engine_native_labels.py` uses the actual ServedEngine pool and
+an explicitly selected matching released server in an isolated anonymous store.
+It covers create/add read-by-label and canonical ActionPolicy ledger readback.
+Legacy type-only records stay unchanged and do not become labeled receipts.
+An absent native binary skips explicitly; these tests do not qualify browser admission.
+
+## Caller-bound served browser state (R015)
+
+`tests/browser_control/test_served_browser_authority.py` exercises the actual
+ServedEngine and WebUI factory contract. Native cases use the explicitly selected
+released server and isolated anonymous store from the node-label fixture.
+They cover node create/read/CAS, typed atomic trace edges, caller scope and graph mismatch.
+They also cover absent ambient authority and revocation across the client-pool await.
+Factory installation grants no channel, attended proof or operation authority.
+
+### R015 terminal channel-retirement authority loss
+
+`tests/browser_control/test_browser_control_service.py::test_disconnect_reports_terminal_retirement_authority_loss`
+verifies expired, missing, and scope-lost authority stop cleanup with an error.
+The local channel is absent; durable registration remains unresolved.
+The existing transient-retirement regression still requires a successful retry.
+
+## Unqualified historical policy accounting (R015)
+
+`tests/access/test_legacy_policy_history.py` reproduces type-only audit history
+against the released native server. Such candidates make requested-kind accounting
+unavailable. Existing rate and blast checks then refuse unused-budget assumptions.
+The test verifies that the old record remains unchanged and unrelated kinds still work.
+This is safe refusal, not historical migration or receipt qualification.
