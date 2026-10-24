@@ -214,6 +214,7 @@ Hot-path proof for `ARBORA-OPS-R067`: `tests/gateway/test_research_web_served.py
 | `ARBORA-OPS-R020.6.5` | Evidence | `tests/ingest/test_connector_sources.py::test_receipt_binds_work_item` compares the receipt job ID with the committed WorkItem. |
 | `ARBORA-OPS-R020.6.6` | Hot-path proof | The test observes the declared source, a succeeded WorkItem and the ingested nodes with provenance. |
 | `ARBORA-OPS-R020.6.7` | Pack inventory | The test lists one pack per declaring connector, reports `error` after a failed sync and refuses an unbound runner. |
+| `ARBORA-OPS-R020.6.8` | Failure cause | `tests/ingest/test_connector_sources.py::test_a_failed_sync_carries_its_cause_to_the_receipt_and_job`, `::test_a_completed_sync_has_no_reason`; `tests/fleet/test_child_large_results.py::test_a_two_mib_child_result_reaches_arbora`. |
 
 ## Refusal causes and replay owners (ARBORA-OPS-R009.2, R009.3)
 

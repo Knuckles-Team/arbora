@@ -35,6 +35,12 @@ def ontology() -> str:
     return "generation " + generation
 
 
+@mcp.tool(annotations={"readOnlyHint": True})
+def big_page(size: int) -> dict:
+    # One result page larger than the MCP client default SSE event bound.
+    return {"result": [{"sys_id": str(i), "text": "x" * 1000} for i in range(size)]}
+
+
 @mcp.prompt(name="triage")
 def triage() -> str:
     return "triage from generation " + generation

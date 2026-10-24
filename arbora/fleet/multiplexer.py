@@ -129,6 +129,12 @@ _ENGINE_CONFIG_FIELDS = frozenset(
     }
 )
 _MAX_DELEGATED_VALUE_BYTES = 4 * 1024 * 1024
+#: The largest single SSE event arbora reads from a streamable-http child
+#: (ARBORA-OPS-R020.6.8). One event carries one whole JSON-RPC result, whose
+#: text content is the tool's JSON escaped once more, so the bound is twice the
+#: delegated value bound. The MCP client default (1 MiB) is below arbora's own
+#: value bound and failed every 50-record ServiceNow page.
+_MAX_CHILD_SSE_EVENT_BYTES = 2 * _MAX_DELEGATED_VALUE_BYTES
 _MAX_DELEGATED_NODES = 16_384
 _MAX_DELEGATED_DEPTH = 32
 _MAX_DISCOVERED_TOOLS = 2_048
@@ -3868,7 +3874,11 @@ class MCPMultiplexer:
             # deliberately does not close a caller-provided client.
             http_client = _secure_httpx_factory(headers=headers, auth=_svc_auth)
             await stack.enter_async_context(http_client)
-            transport = streamable_http_client(url, http_client=http_client)
+            transport = streamable_http_client(
+                url,
+                http_client=http_client,
+                max_sse_event_size=_MAX_CHILD_SSE_EVENT_BYTES,
+            )
         # streamable-http and sse both yield (read, write); SDK v2 dropped
         # streamable-http's third `get_session_id` element. Take the first
         # two streams either way.
