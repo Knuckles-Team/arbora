@@ -291,6 +291,26 @@ class ServedEngine:
 
         return list(_run_blocking(run))
 
+    async def query_cypher_async(
+        self,
+        query: str,
+        params: Mapping[str, Any] | None = None,
+        *,
+        session: Any = None,
+    ) -> list[Any]:
+        """Read through the public client on this loop under one exact caller."""
+        from arbora.api.contracts.session import resolve_session
+
+        caller = resolve_session(session, required_scope="kg:read")
+        bound = _bind_parameters(query, params)
+        async with self.pool.bind(
+            _session_context(caller), caller.graph, required_scope="kg:read"
+        ) as client:
+            resolve_session(caller, required_scope="kg:read")
+            result = await client.query.cypher_read(bound)
+            resolve_session(caller, required_scope="kg:read")
+            return list(result)
+
     def add_node(
         self,
         node_id: str,
