@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any, cast
 
+from arbora.api.contracts.session import ScopeError, SessionRequiredError
 from arbora.browser_control.browser_control_api import (
     BrowserCallReceipt,
     BrowserChannelBinding,
@@ -78,6 +79,9 @@ async def _retire_channel_authority(service: Any, state: _ChannelState) -> None:
             )
             return
         except asyncio.CancelledError:
+            raise
+        except (SessionRequiredError, ScopeError):
+            # This task cannot renew its caller authority. Retirement is unresolved.
             raise
         except Exception:  # noqa: BLE001 - retain authority until recovery
             await asyncio.sleep(delay)

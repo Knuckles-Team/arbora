@@ -83,7 +83,7 @@ def _response(
 def _leases(engine: Any) -> list[Any]:
     return [
         row
-        for row in engine._work_item_engine.nodes.values()
+        for row in engine.browser_control_state.nodes.values()
         if row.get("node_type") == "BrowserControlLease"
     ]
 
@@ -104,7 +104,7 @@ async def test_proposal_refuses_missing_native_origin(session: GraphSession) -> 
         with pytest.raises(PermissionError, match="origin"):
             await service.request_call(_request(session, tool))
         assert not sent and not _leases(engine)
-        assert engine._work_item_engine.claim_count == 0
+        assert engine.browser_control_state.claim_count == 0
 
 
 @pytest.mark.parametrize("routed", [False, True])
@@ -122,12 +122,12 @@ async def test_read_executes_only_after_human_acceptance(
             assert prompt.type == "control.proposal_request"
             assert prompt.requester_agent == "web" and prompt.requester_run_ref
             assert not _leases(engine)
-            assert engine._work_item_engine.claim_count == 0
+            assert engine.browser_control_state.claim_count == 0
             await connection.receive(_response(prompt))
             await _wait_for_messages(sent, 2)
             call = sent[1]
             assert call.type == "control.call" and call.authorization == "read"
-            assert _leases(engine) and engine._work_item_engine.claim_count == 1
+            assert _leases(engine) and engine.browser_control_state.claim_count == 1
             await connection.receive(
                 ControlResultMessage(
                     call_id=call.call_id, status="succeeded", result={"ok": True}
@@ -150,7 +150,7 @@ async def test_read_executes_only_after_human_acceptance(
             )
             with pytest.raises(PermissionError):
                 await connection.receive(_response(prompt))
-            assert engine._work_item_engine.claim_count == 1
+            assert engine.browser_control_state.claim_count == 1
 
 
 async def test_mutation_requires_separate_exact_confirmation(
@@ -165,7 +165,7 @@ async def test_mutation_requires_separate_exact_confirmation(
         await _wait_for_messages(sent, 2)
         confirmation = sent[1]
         assert confirmation.type == "control.confirmation_request"
-        assert engine._work_item_engine.claim_count == 0
+        assert engine.browser_control_state.claim_count == 0
         with pytest.raises(PermissionError):
             await connection.receive(
                 ControlConfirmMessage(
@@ -209,7 +209,7 @@ async def test_denial_and_wrong_digest_cannot_issue_lease(
         await connection.receive(_response(prompt, accepted=False))
         with pytest.raises(PermissionError, match="declined"):
             await asyncio.wait_for(task, 2)
-        assert not _leases(engine) and engine._work_item_engine.claim_count == 0
+        assert not _leases(engine) and engine.browser_control_state.claim_count == 0
         assert not service._proposals
 
 
@@ -233,7 +233,7 @@ async def test_pending_proposal_is_withdrawn_on_authority_loss(
             task.cancel()
         with pytest.raises(asyncio.CancelledError):
             await asyncio.wait_for(task, 2)
-        assert not _leases(engine) and engine._work_item_engine.claim_count == 0
+        assert not _leases(engine) and engine.browser_control_state.claim_count == 0
         assert not service._proposals
         with pytest.raises((PermissionError, RuntimeError)):
             await connection.receive(_response(prompt))
@@ -259,7 +259,7 @@ async def test_accepted_mutation_is_revoked_before_confirmation(
         with pytest.raises(asyncio.CancelledError):
             await asyncio.wait_for(task, 2)
         assert not any(message.type == "control.call" for message in sent)
-        assert engine._work_item_engine.claim_count == 0
+        assert engine.browser_control_state.claim_count == 0
         assert all(row["status"] == "revoked" for row in _leases(engine))
         assert not service._proposals
 
@@ -335,7 +335,7 @@ async def test_cancellation_during_lease_issuance_recovers_and_revokes_receipt(
             await asyncio.wait_for(task, 2)
         assert all(row["status"] == "revoked" for row in _leases(engine))
         assert not any(message.type == "control.call" for message in sent)
-        assert engine._work_item_engine.claim_count == 0
+        assert engine.browser_control_state.claim_count == 0
 
 
 async def test_proposal_rejects_oversized_arguments_and_caller_provenance(
@@ -416,7 +416,7 @@ async def test_foreign_authority_cannot_propose_or_accept(
         task.cancel()
         with pytest.raises(asyncio.CancelledError):
             await asyncio.wait_for(task, 2)
-        assert engine._work_item_engine.claim_count == 0
+        assert engine.browser_control_state.claim_count == 0
 
 
 @pytest.mark.parametrize(
@@ -435,7 +435,7 @@ async def test_stale_proposal_registration_is_refused_before_prompt(
         with pytest.raises(PermissionError, match="registration changed"):
             await _propose(service, request, session)
         assert not sent and not _leases(engine) and not service._proposals
-        assert engine._work_item_engine.claim_count == 0
+        assert engine.browser_control_state.claim_count == 0
 
 
 async def test_unanswered_proposal_times_out_and_rejects_late_acceptance(
@@ -453,7 +453,7 @@ async def test_unanswered_proposal_times_out_and_rejects_late_acceptance(
         assert any(message.type == "control.proposal_withdrawn" for message in sent)
         with pytest.raises(PermissionError):
             await connection.receive(_response(prompt))
-        assert engine._work_item_engine.claim_count == 0
+        assert engine.browser_control_state.claim_count == 0
 
 
 async def test_one_pending_proposal_per_document_preserves_first_request(
@@ -469,7 +469,7 @@ async def test_one_pending_proposal_per_document_preserves_first_request(
             await _propose(service, request, session)
         assert len(sent) == 1 and not first.done()
         assert list(service._proposals) == [prompt.proposal_id]
-        assert not _leases(engine) and engine._work_item_engine.claim_count == 0
+        assert not _leases(engine) and engine.browser_control_state.claim_count == 0
         await connection.receive(_response(prompt, accepted=False))
         with pytest.raises(PermissionError, match="declined"):
             await asyncio.wait_for(first, 2)

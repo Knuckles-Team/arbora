@@ -326,3 +326,19 @@ an explicitly selected matching released server in an isolated anonymous store.
 It covers create/add read-by-label and canonical ActionPolicy ledger readback.
 Legacy type-only records stay unchanged and do not become labeled receipts.
 An absent native binary skips explicitly; these tests do not qualify browser admission.
+
+## Caller-bound served browser state (R015)
+
+`tests/browser_control/test_served_browser_authority.py` exercises the actual
+ServedEngine and WebUI factory contract. Native cases use the explicitly selected
+released server and isolated anonymous store from the node-label fixture.
+They cover node create/read/CAS, typed atomic trace edges, caller scope and graph mismatch.
+They also cover absent ambient authority and revocation across the client-pool await.
+Factory installation grants no channel, attended proof or operation authority.
+
+### R015 terminal channel-retirement authority loss
+
+`tests/browser_control/test_browser_control_service.py::test_disconnect_reports_terminal_retirement_authority_loss`
+verifies expired, missing, and scope-lost authority stop cleanup with an error.
+The local channel is removed; durable registration remains unresolved.
+The existing transient-retirement regression still requires a successful retry.

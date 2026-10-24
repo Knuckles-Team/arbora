@@ -260,7 +260,7 @@ async def _journey(session: Any, label: str, mutation: bool, cancel: bool) -> No
             else:
                 await _human_accepts(connection, sent, task, mutation)
             await _assert_replays(session, run_id, model, sent, cancel)
-            assert engine._work_item_engine.claim_count == (0 if cancel else 1)
+            assert engine.browser_control_state.claim_count == (0 if cancel else 1)
             assert sent[-1].type == "control.proposal_withdrawn"
         finally:
             if not task.done():
