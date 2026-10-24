@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+## [0.1.8.dev4] - 2026-10-24
+
+Fixes the gaps found by the 0.1.8.dev3 validation run.
+
+- Requires agent-connector-sdk 0.5.5, which declares edges on declared sources (ARBORA-FLEET-R041.15).
+- A destructive `fleet.call` under a confirmed plan answers the connector's confirmation request, so the delete runs. An unconfirmed call still fails closed (ARBORA-FLEET-R015.2).
+- `agents.plan_run` has a replay owner and reaches dispatch. Its step keys `plan-step:<record>:<task>:<idx>` derive from the run's own idempotency key, so a replay repeats no step effect (ARBORA-RELEASE-R003.4.11).
+- `fleet.packs.status` reads a connector's engine pack status as a read (ARBORA-FLEET-R041.16).
+- Explicit onboarding reads the `connector://resources` declaration and `ontology://` bodies from the SDK 0.5 pack archive. Connectors then register their ingest sources and access contracts (ARBORA-FLEET-R041.15).
+- `ask` routes plain data, catalog, lineage and ownership questions to the engine planner. A raw engine method or an op that shares one word no longer wins (ARBORA-FLEET-R014.3).
+- A relay read re-establishes a child session after the child restarts. The child supervisor keeps reconnecting after its first generation dies (ARBORA-FLEET-R040.2).
+- A failed ingest job names its cause on the receipt, the job status and the log. A child result may be one SSE event of up to 8 MiB (ARBORA-OPS-R020.6.8).
+- An `INVALID_ARGUMENT` refusal names its fields, and an engine refusal names its reason code. A prompt called without its arguments gets a refusal that names them, not `INTERNAL` (ARBORA-OPS-R009.4).
+
 ## [0.1.8.dev3] - 2026-10-24
 
 Pre-release for the validation deploy.

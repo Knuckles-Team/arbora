@@ -43,6 +43,26 @@ from arbora.ingest.service import (
 
 __all__ = ["SOURCE_SYNC_KIND", "ConnectorIngestRunner", "FleetSourceSession"]
 
+#: The prefix of a failed sync's WorkItem ``error_ref``.
+_ERROR_REF = "ingest-source-error"
+
+
+def _error_ref(reason: str | None, engine_code: str | None) -> str | None:
+    """The WorkItem ``error_ref`` of a failed sync: its reason and engine code."""
+    if not reason:
+        return None
+    return f"{_ERROR_REF}:{reason}" + (f":{engine_code}" if engine_code else "")
+
+
+def _parse_error_ref(value: Any) -> tuple[str | None, str | None]:
+    """The reason and engine code a job's ``error_ref`` carries."""
+    if not isinstance(value, str) or not value.startswith(_ERROR_REF + ":"):
+        return None, None
+    _, _, rest = value.partition(":")
+    reason, _, engine_code = rest.partition(":")
+    return reason or None, engine_code or None
+
+
 #: The engine WorkItem kind of one connector source sync.
 SOURCE_SYNC_KIND = "arbora.ingest.source_sync"
 _LEASE_S = 600.0
@@ -342,10 +362,21 @@ class ConnectorIngestRunner:
                 item_id,
                 claim,
                 outcome="failed",
-                error_ref=exc.reason,
+                error_ref=_error_ref(exc.reason, None),
             )
-            return self._receipt(item_id, source_id, tenant, mode, "failed")
+            return self._receipt(
+                item_id, source_id, tenant, mode, "failed", reason=exc.reason
+            )
         outcome = "failed" if report.state == "failed" else "succeeded"
+        if outcome == "failed":
+            # ARBORA-OPS-R020.6.8: a failed run names its cause, never a payload.
+            logger.warning(
+                "source sync %s failed: reason=%s engine_code=%s records_seen=%d",
+                source_id,
+                report.reason,
+                report.engine_code,
+                report.records_seen,
+            )
         await _seam(
             work_items.commit_result,
             control,
@@ -353,13 +384,28 @@ class ConnectorIngestRunner:
             claim,
             outcome=outcome,
             result_ref=f"ingest-source:{report.state}:{report.submitted}",
-            error_ref=report.reason,
+            error_ref=_error_ref(report.reason, report.engine_code),
         )
-        return self._receipt(item_id, source_id, tenant, mode, outcome)
+        return self._receipt(
+            item_id,
+            source_id,
+            tenant,
+            mode,
+            outcome,
+            reason=report.reason,
+            engine_code=report.engine_code,
+        )
 
     @staticmethod
     def _receipt(
-        item_id: str, source_id: str, tenant: str, mode: str, status: Any
+        item_id: str,
+        source_id: str,
+        tenant: str,
+        mode: str,
+        status: Any,
+        *,
+        reason: str | None = None,
+        engine_code: str | None = None,
     ) -> IngestSyncReceipt:
         mapped = {"succeeded": "completed", "failed": "failed", "running": "running"}
         return IngestSyncReceipt(
@@ -368,6 +414,8 @@ class ConnectorIngestRunner:
             tenant=tenant,
             mode="full" if mode == "full" else "incremental",
             status=mapped.get(str(status), "queued"),  # type: ignore[arg-type]
+            reason=reason,
+            engine_code=engine_code,
         )
 
     async def index_repository(self, **_: Any) -> Any:
@@ -412,8 +460,11 @@ class ConnectorIngestRunner:
         if item is None:
             raise OperationRefused("NOT_FOUND", {"reason": "job is not known"})
         mapped = {"succeeded": "completed", "failed": "failed", "leased": "running"}
+        reason, engine_code = _parse_error_ref(item.get("error_ref"))
         return IngestJobRecord(
             job_id=job_id,
             tenant=tenant,
             status=mapped.get(str(item.get("status")), "queued"),  # type: ignore[arg-type]
+            reason=reason,
+            engine_code=engine_code,
         )

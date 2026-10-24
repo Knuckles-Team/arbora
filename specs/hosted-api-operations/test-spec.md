@@ -214,6 +214,7 @@ Hot-path proof for `ARBORA-OPS-R067`: `tests/gateway/test_research_web_served.py
 | `ARBORA-OPS-R020.6.5` | Evidence | `tests/ingest/test_connector_sources.py::test_receipt_binds_work_item` compares the receipt job ID with the committed WorkItem. |
 | `ARBORA-OPS-R020.6.6` | Hot-path proof | The test observes the declared source, a succeeded WorkItem and the ingested nodes with provenance. |
 | `ARBORA-OPS-R020.6.7` | Pack inventory | The test lists one pack per declaring connector, reports `error` after a failed sync and refuses an unbound runner. |
+| `ARBORA-OPS-R020.6.8` | Failure cause | `tests/ingest/test_connector_sources.py::test_a_failed_sync_carries_its_cause_to_the_receipt_and_job`, `::test_a_completed_sync_has_no_reason`; `tests/fleet/test_child_large_results.py::test_a_two_mib_child_result_reaches_arbora`. |
 
 ## Refusal causes and replay owners (ARBORA-OPS-R009.2, R009.3)
 
@@ -221,6 +222,7 @@ Hot-path proof for `ARBORA-OPS-R067`: `tests/gateway/test_research_web_served.py
 |---|---|---|
 | `ARBORA-OPS-R009.2` | Refusal causes are logged | `tests/api/test_refusal_causes.py::test_refusal_cause_is_logged_with_request_id` observes the logged cause and the redacted envelope. |
 | `ARBORA-OPS-R009.3` | Declared replay owners | `tests/api/test_refusal_causes.py::test_ops_modules_declare_replay_owners` finds `agents.run` and a test module's declaration. |
+| `ARBORA-OPS-R009.4` | Typed refusal details | `tests/api/test_typed_refusal_details.py`; `tests/fleet/test_relay_session_recovery.py::test_a_prompt_called_without_its_arguments_is_a_typed_refusal`, `::test_declared_required_prompt_arguments_are_checked_before_the_child`. |
 
 ### ARBORA-OPS-R001 installed-wheel fixture acceptance
 

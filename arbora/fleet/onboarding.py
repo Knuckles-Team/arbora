@@ -31,7 +31,12 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Literal, cast
 
-from arbora.fleet.declarations import RESOURCES_URI, parse_declaration, remember
+from arbora.fleet.declarations import (
+    RESOURCES_URI,
+    entry_bytes,
+    parse_declaration,
+    remember,
+)
 from arbora.fleet.surfaces import pack_surface_report
 from arbora.security.anonymous import session_context
 
@@ -264,7 +269,7 @@ def _remember_declaration(connector: str, pack: Any) -> None:
     for entry in pack.archive.entries:
         if str(getattr(entry, "uri", "")) == RESOURCES_URI:
             try:
-                declaration = parse_declaration(entry.body)
+                declaration = parse_declaration(entry_bytes(pack.archive, entry))
             except (ValueError, TypeError) as exc:
                 logger.warning("%s: unreadable %s: %s", connector, RESOURCES_URI, exc)
             break

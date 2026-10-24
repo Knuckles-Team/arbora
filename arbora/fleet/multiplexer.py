@@ -95,6 +95,7 @@ from arbora.fleet.local_skill_catalog import (
     build_local_skill_catalog,
     missing_core_pack_names,
 )
+from arbora.fleet.plan_confirmation import answer_elicitation
 from arbora.fleet.session_notifications import SessionCatalogNotifications
 from arbora.security.error_surface import public_error_text
 from arbora.security.log_redaction import redact_for_log
@@ -129,6 +130,12 @@ _ENGINE_CONFIG_FIELDS = frozenset(
     }
 )
 _MAX_DELEGATED_VALUE_BYTES = 4 * 1024 * 1024
+#: The largest single SSE event arbora reads from a streamable-http child
+#: (ARBORA-OPS-R020.6.8). One event carries one whole JSON-RPC result, whose
+#: text content is the tool's JSON escaped once more, so the bound is twice the
+#: delegated value bound. The MCP client default (1 MiB) is below arbora's own
+#: value bound and failed every 50-record ServiceNow page.
+_MAX_CHILD_SSE_EVENT_BYTES = 2 * _MAX_DELEGATED_VALUE_BYTES
 _MAX_DELEGATED_NODES = 16_384
 _MAX_DELEGATED_DEPTH = 32
 _MAX_DISCOVERED_TOOLS = 2_048
@@ -3868,7 +3875,11 @@ class MCPMultiplexer:
             # deliberately does not close a caller-provided client.
             http_client = _secure_httpx_factory(headers=headers, auth=_svc_auth)
             await stack.enter_async_context(http_client)
-            transport = streamable_http_client(url, http_client=http_client)
+            transport = streamable_http_client(
+                url,
+                http_client=http_client,
+                max_sse_event_size=_MAX_CHILD_SSE_EVENT_BYTES,
+            )
         # streamable-http and sse both yield (read, write); SDK v2 dropped
         # streamable-http's third `get_session_id` element. Take the first
         # two streams either way.
@@ -4179,6 +4190,8 @@ class MCPMultiplexer:
                 read_stream,
                 write_stream,
                 message_handler=self._child_message_handler(server_name, holder),
+                # ARBORA-FLEET-R015.2: confirm only a plan-confirmed armed call.
+                elicitation_callback=answer_elicitation,
             )
         )
         holder.append(session)
@@ -5028,8 +5041,9 @@ class MCPMultiplexer:
         if not uri or len(uri.encode("utf-8")) > 8_192:
             raise _fastmcp_exceptions.ToolError("MCP resource URI is invalid")
         await self.mount_child(server_name)
-        session = self._live_primary_session(server_name)
-        result = await asyncio.wait_for(session.read_resource(uri), timeout=timeout)
+        result = await self._relay_read(
+            server_name, lambda session: session.read_resource(uri), timeout
+        )
         contents = getattr(result, "contents", result)
         first = next(iter(contents or ()), None)
         text = getattr(first, "text", None)
@@ -5058,9 +5072,8 @@ class MCPMultiplexer:
             raise _fastmcp_exceptions.ToolError("MCP prompt name is invalid")
         _assert_bounded_delegated_value(arguments)
         await self.mount_child(server_name)
-        session = self._live_primary_session(server_name)
-        result = await asyncio.wait_for(
-            session.get_prompt(name, arguments), timeout=timeout
+        result = await self._relay_read(
+            server_name, lambda session: session.get_prompt(name, arguments), timeout
         )
         messages: list[dict[str, str]] = []
         for message in getattr(result, "messages", ()) or ():
@@ -5421,6 +5434,34 @@ class MCPMultiplexer:
             server_name, result, _tenant_local_discovery_binding()
         )
         return result
+
+    async def _relay_read(
+        self,
+        server_name: str,
+        read: _typing.Callable[[_typing.Any], _typing.Awaitable[_typing.Any]],
+        timeout: float,
+    ) -> _typing.Any:
+        """Run one idempotent relay read on the child's live primary session.
+
+        ARBORA-FLEET-R040.2: a child that restarted no longer knows the session.
+        That failure tears the generation down, waits a bounded time for the
+        supervisor to reconnect, and retries the read once on the new session.
+        Any other failure, or a second dead session, propagates unchanged.
+        """
+        session = self._live_primary_session(server_name)
+        try:
+            return await asyncio.wait_for(read(session), timeout=timeout)
+        except Exception as exc:
+            runtime = self.children.get(server_name)
+            if runtime is None or not _child_resilience.is_transient_child_death(exc):
+                raise
+            if not await runtime.recover("relay_read_dead_session"):
+                raise
+            logger.info(
+                "MCP child %s session re-established for a relay read", server_name
+            )
+        session = self._live_primary_session(server_name)
+        return await asyncio.wait_for(read(session), timeout=timeout)
 
     def _live_primary_session(self, server_name: str) -> _typing.Any:
         session = self.sessions.get(server_name)

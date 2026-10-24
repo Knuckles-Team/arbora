@@ -44,8 +44,10 @@
     "ARBORA-FLEET-R014",
     "ARBORA-FLEET-R014.1",
     "ARBORA-FLEET-R014.2",
+    "ARBORA-FLEET-R014.3",
     "ARBORA-FLEET-R015",
     "ARBORA-FLEET-R015.1",
+    "ARBORA-FLEET-R015.2",
     "ARBORA-FLEET-R016",
     "ARBORA-FLEET-R017",
     "ARBORA-FLEET-R018",
@@ -151,6 +153,7 @@
     "ARBORA-FLEET-R039.6",
     "ARBORA-FLEET-R040",
     "ARBORA-FLEET-R040.1",
+    "ARBORA-FLEET-R040.2",
     "ARBORA-FLEET-R041",
     "ARBORA-FLEET-R041.1",
     "ARBORA-FLEET-R041.2",
@@ -166,6 +169,8 @@
     "ARBORA-FLEET-R041.12",
     "ARBORA-FLEET-R041.13",
     "ARBORA-FLEET-R041.14",
+    "ARBORA-FLEET-R041.15",
+    "ARBORA-FLEET-R041.16",
     "ARBORA-FLEET-R042",
     "ARBORA-FLEET-R042.1",
     "ARBORA-FLEET-R042.2",
@@ -222,7 +227,8 @@
         "ARBORA-FLEET-R002.7",
         "ARBORA-FLEET-R002.8",
         "ARBORA-FLEET-R002.9"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R002.1",
@@ -268,7 +274,8 @@
         "ARBORA-FLEET-R003.8",
         "ARBORA-FLEET-R003.9",
         "ARBORA-FLEET-R003.10"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R003.1",
@@ -323,7 +330,8 @@
         "ARBORA-FLEET-R005.1",
         "ARBORA-FLEET-R005.2",
         "ARBORA-FLEET-R005.3"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R005.1",
@@ -364,7 +372,8 @@
         "ARBORA-FLEET-R006.3",
         "ARBORA-FLEET-R006.4",
         "ARBORA-FLEET-R006.5"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R007",
@@ -378,7 +387,8 @@
         "ARBORA-FLEET-R007.1",
         "ARBORA-FLEET-R007.2",
         "ARBORA-FLEET-R007.3"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R008",
@@ -391,7 +401,8 @@
       "rollup_of": [
         "ARBORA-FLEET-R008.1",
         "ARBORA-FLEET-R008.2"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R008.1",
@@ -414,7 +425,8 @@
       "title": "Live feed ingestion wired into the catalog",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R009",
@@ -480,7 +492,8 @@
       "title": "Write-back idempotency and preview gating survive a service restart",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R006.1",
@@ -522,7 +535,8 @@
         "ARBORA-FLEET-R006.3.2",
         "ARBORA-FLEET-R006.3.3",
         "ARBORA-FLEET-R006.3.4"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R006.3.1",
@@ -541,56 +555,64 @@
       "title": "Non-admitted fallback and `_harvest_resource_bodies` deleted",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R006.3.3",
       "title": "Deadline and error-reason helpers deleted",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R006.3.4",
       "title": "Harvest specs deleted",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R006.4",
       "title": "Residual `_harvest`-named symbol renamed off the removed path",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R006.5",
       "title": "Closing audit: no harvest or hydration code remains",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R007.1",
       "title": "agent-connector-sdk's FastMCP instance gains native prompt/resource/template registration (cross-repo, owner: agent-connector-sdk)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R007.2",
       "title": "agent-utilities' arbora bridge surface gains native prompt/resource/template registration (cross-repo, owner: agent-utilities)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R007.3",
       "title": "arbora's served bridge exercises native prompts, resources and templates end to end",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R011",
@@ -641,8 +663,10 @@
       ],
       "rollup_of": [
         "ARBORA-FLEET-R014.1",
-        "ARBORA-FLEET-R014.2"
-      ]
+        "ARBORA-FLEET-R014.2",
+        "ARBORA-FLEET-R014.3"
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R014.1",
@@ -654,7 +678,8 @@
         "tests/api/test_resolve.py:273",
         "tests/api/test_resolve.py:288",
         "tests/api/test_resolve.py:303"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R014.2",
@@ -669,20 +694,39 @@
       ]
     },
     {
+      "id": "ARBORA-FLEET-R014.3",
+      "title": "A plain question goes to the engine planner unless an op names it",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "96b68a9b5e5c",
+        "b2a301657802"
+      ],
+      "verified_by": [
+        "tests/api/test_ask_routing_table.py:108",
+        "tests/api/test_ask_routing_table.py:127",
+        "tests/api/test_ask_routing_table.py:141",
+        "tests/api/test_ask_routing_table.py:96"
+      ]
+    },
+    {
       "id": "ARBORA-FLEET-R015",
       "title": "Typed operations cover agents, browser and fleet calls",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "54834624dbb4",
         "68e31b75248a",
-        "e1d37ca10ef7",
-        "fdd59af317ce"
+        "9532a0c5f38f",
+        "c5fac0da232e",
+        "e1d37ca10ef7"
       ],
       "verified_by": [
         "tests/fleet/test_child_failure_classification.py:18",
-        "tests/fleet/test_multiplexer_dynamic_gateway.py:279"
+        "tests/fleet/test_multiplexer_dynamic_gateway.py:279",
+        "tests/fleet/test_plan_confirmation.py:22"
       ],
       "rollup_of": [
-        "ARBORA-FLEET-R015.1"
+        "ARBORA-FLEET-R015.1",
+        "ARBORA-FLEET-R015.2"
       ]
     },
     {
@@ -695,6 +739,19 @@
       "verified_by": [
         "tests/fleet/test_child_failure_classification.py:18",
         "tests/fleet/test_multiplexer_dynamic_gateway.py:279"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R015.2",
+      "title": "A plan-confirmed destructive relay answers the connector's confirmation",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "54834624dbb4",
+        "9532a0c5f38f",
+        "c5fac0da232e"
+      ],
+      "verified_by": [
+        "tests/fleet/test_plan_confirmation.py:22"
       ]
     },
     {
@@ -740,7 +797,8 @@
       "rollup_of": [
         "ARBORA-FLEET-R019.1",
         "ARBORA-FLEET-R019.2"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R020",
@@ -767,7 +825,8 @@
       "rollup_of": [
         "ARBORA-FLEET-R021.1",
         "ARBORA-FLEET-R021.2"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R022",
@@ -833,7 +892,8 @@
         "ARBORA-FLEET-R024.9",
         "ARBORA-FLEET-R024.10",
         "ARBORA-FLEET-R024.11"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R051.1",
@@ -873,14 +933,16 @@
       "title": "Remaining fleet reconciler, autoscaler, scaling-authority and deploy-watch scheduling behavior is served by Arbora",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R024.3",
       "title": "Agent runtime no longer ships the superseded fleet modules (cross-repo)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R024.750",
@@ -899,7 +961,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "3f7190f32493",
-        "785473594e96",
+        "7d6d317b490a",
         "d16472d4df1d"
       ],
       "verified_by": [
@@ -919,8 +981,8 @@
         "db8d44259c3d"
       ],
       "verified_by": [
-        "tests/api/test_fleet_effect.py:547",
-        "tests/api/test_fleet_effect.py:572"
+        "tests/api/test_fleet_effect.py:548",
+        "tests/api/test_fleet_effect.py:573"
       ],
       "rollup_of": [
         "ARBORA-FLEET-R029.1"
@@ -934,8 +996,8 @@
         "4fabd9b042be"
       ],
       "verified_by": [
-        "tests/api/test_fleet_effect.py:547",
-        "tests/api/test_fleet_effect.py:572"
+        "tests/api/test_fleet_effect.py:548",
+        "tests/api/test_fleet_effect.py:573"
       ]
     },
     {
@@ -986,7 +1048,8 @@
         "ARBORA-FLEET-R027.6",
         "ARBORA-FLEET-R027.7",
         "ARBORA-FLEET-R027.8"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R028",
@@ -1038,21 +1101,24 @@
       "rollup_of": [
         "ARBORA-FLEET-R033.1",
         "ARBORA-FLEET-R033.2"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R033.1",
       "title": "Define the typed fleet-catalog `servers` reader",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R033.2",
       "title": "Add refusal tests for the `servers` reader",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R034",
@@ -1075,259 +1141,296 @@
         "ARBORA-FLEET-R034.12",
         "ARBORA-FLEET-R034.13",
         "ARBORA-FLEET-R034.14"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R034.1",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R034.2",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R034.3",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R034.4",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R034.5",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R034.6",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R034.7",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R034.8",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R034.9",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R034.10",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R034.11",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R034.12",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R024.4",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R024.5",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R024.6",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R024.7",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R024.8",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R024.9",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R002.3",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R002.4",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R002.5",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R002.6",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R002.7",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R002.8",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R027.1",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R027.2",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R027.3",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R027.4",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R027.5",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R027.6",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R019.1",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R021.1",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R005.3",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R019.2",
       "title": "Original policy contract",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R021.2",
       "title": "Original fleet authority contract",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R027.7",
       "title": "Original fleet onboarding contract",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R027.8",
@@ -1337,7 +1440,7 @@
         "524b0ceaaf9c"
       ],
       "verified_by": [
-        "tests/fleet/test_fleet_access_contracts.py:226"
+        "tests/fleet/test_fleet_access_contracts.py:252"
       ]
     },
     {
@@ -1345,49 +1448,56 @@
       "title": "Original writable-fleet acceptance residual",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R003.5",
       "title": "Complete repository request binding",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R003.6",
       "title": "Trusted composition through shared invoke",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R003.7",
       "title": "Preview and approval bind the commit operation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R003.8",
       "title": "Served effect and independent readback evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R003.9",
       "title": "Zero-effect refusal parity",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R003.10",
       "title": "Durable replay across host and connector restart",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R035",
@@ -1413,35 +1523,40 @@
       "title": "AU:29 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R024.11",
       "title": "AU:30 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R002.9",
       "title": "AU:52 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R034.13",
       "title": "AU:98 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R034.14",
       "title": "ARBORA:8 Arbora definition slice",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R036",
@@ -1456,49 +1571,56 @@
         "ARBORA-FLEET-R036.4",
         "ARBORA-FLEET-R036.5",
         "ARBORA-FLEET-R036.6"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R036.1",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R036.2",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R036.3",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R036.4",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R036.5",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R036.6",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R037",
@@ -1513,56 +1635,64 @@
         "ARBORA-FLEET-R037.4",
         "ARBORA-FLEET-R037.5",
         "ARBORA-FLEET-R037.6"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R037.1",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R037.2",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R037.3",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R037.4",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R037.5",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R037.6",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R038",
       "title": "One protocol stack with one implementation per role",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R039",
@@ -1577,59 +1707,67 @@
         "ARBORA-FLEET-R039.4",
         "ARBORA-FLEET-R039.5",
         "ARBORA-FLEET-R039.6"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R039.1",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R039.2",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R039.3",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R039.4",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R039.5",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R039.6",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R040",
       "title": "arbora serves and reports the prompts, skills and resources of each connector",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "25c198540020",
         "3597c590c8c9",
         "6815715c27d8",
-        "abaee0920e29",
-        "f5c799c91830"
+        "96b68a9b5e5c",
+        "abaee0920e29"
       ],
       "verified_by": [
         "tests/fleet/test_connector_surfaces.py:134",
@@ -1639,7 +1777,8 @@
         "tests/fleet/test_connector_surfaces.py:222"
       ],
       "rollup_of": [
-        "ARBORA-FLEET-R040.1"
+        "ARBORA-FLEET-R040.1",
+        "ARBORA-FLEET-R040.2"
       ]
     },
     {
@@ -1658,11 +1797,27 @@
       ]
     },
     {
+      "id": "ARBORA-FLEET-R040.2",
+      "title": "A relay read survives a child restart",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "25c198540020",
+        "96b68a9b5e5c",
+        "e68f7006d5a2"
+      ],
+      "verified_by": [
+        "tests/fleet/test_relay_session_recovery.py:24"
+      ]
+    },
+    {
       "id": "ARBORA-FLEET-R041",
       "title": "Registering a connector imports its full pack with no manual step (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
+      "depends_on": [
+        "ARBORA-FLEET-R040"
+      ],
       "rollup_of": [
         "ARBORA-FLEET-R041.1",
         "ARBORA-FLEET-R041.2",
@@ -1677,50 +1832,59 @@
         "ARBORA-FLEET-R041.11",
         "ARBORA-FLEET-R041.12",
         "ARBORA-FLEET-R041.13",
-        "ARBORA-FLEET-R041.14"
-      ]
+        "ARBORA-FLEET-R041.14",
+        "ARBORA-FLEET-R041.15",
+        "ARBORA-FLEET-R041.16"
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R041.1",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R041.2",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R041.3",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R041.4",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R041.5",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R041.6",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R041.7",
@@ -1730,7 +1894,8 @@
       "verified_by": [
         "tests/fleet/test_handshake_onboard.py:142",
         "tests/fleet/test_handshake_onboard.py:318"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R041.8",
@@ -1753,7 +1918,8 @@
         "tests/fleet/test_handshake_onboard.py:264",
         "tests/fleet/test_handshake_onboard.py:298",
         "tests/fleet/test_handshake_onboard.py:332"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R041.10",
@@ -1777,7 +1943,7 @@
         "fd0f5f810481"
       ],
       "verified_by": [
-        "tests/fleet/test_declarations.py:30"
+        "tests/fleet/test_declarations.py:31"
       ]
     },
     {
@@ -1803,7 +1969,7 @@
         "95234018d50f"
       ],
       "verified_by": [
-        "tests/fleet/test_declarations.py:41",
+        "tests/fleet/test_declarations.py:94",
         "tests/ingest/test_connector_sources.py:306"
       ]
     },
@@ -1822,6 +1988,35 @@
       ]
     },
     {
+      "id": "ARBORA-FLEET-R041.15",
+      "title": "Captured pack bodies are read from the archive section",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "25c198540020",
+        "54834624dbb4",
+        "6721ef2b00df",
+        "96b68a9b5e5c"
+      ],
+      "verified_by": [
+        "tests/fleet/test_declarations.py:108",
+        "tests/fleet/test_declarations.py:66",
+        "tests/fleet/test_declarations.py:83"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R041.16",
+      "title": "Connector pack status is a served read",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "96b68a9b5e5c",
+        "d0f2716ab3ea"
+      ],
+      "verified_by": [
+        "tests/api/test_served_replay_owners.py:113",
+        "tests/api/test_served_replay_owners.py:96"
+      ]
+    },
+    {
       "id": "ARBORA-FLEET-R042",
       "title": "arbora registers connector data resources as virtual-graph sources by policy (rollup)",
       "delivery_state": "SPECIFIED",
@@ -1834,49 +2029,56 @@
         "ARBORA-FLEET-R042.4",
         "ARBORA-FLEET-R042.5",
         "ARBORA-FLEET-R042.6"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R042.1",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R042.2",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R042.3",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R042.4",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R042.5",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R042.6",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R043",
@@ -1892,14 +2094,16 @@
         "ARBORA-FLEET-R043.5",
         "ARBORA-FLEET-R043.6",
         "ARBORA-FLEET-R043.7"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R043.1",
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R043.2",
@@ -1908,35 +2112,40 @@
       "landed_in": [],
       "verified_by": [
         "tests/api/test_resolve.py:193"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R043.3",
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R043.4",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R043.5",
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R043.6",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R043.7",
@@ -1945,14 +2154,15 @@
       "landed_in": [],
       "verified_by": [
         "tests/fleet/test_source_executor.py:32"
-      ]
+      ],
+      "priority": 0
     },
     {
       "id": "ARBORA-FLEET-R044",
       "title": "arbora serves all installed content as native MCP primitives, declared the same as every connector (rollup)",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "785473594e96"
+        "7d6d317b490a"
       ],
       "verified_by": [
         "tests/test_installed_content.py:124",
@@ -1974,7 +2184,7 @@
       "title": "Skills as `skill://`",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "785473594e96"
+        "7d6d317b490a"
       ],
       "verified_by": [
         "tests/test_installed_content.py:124"
@@ -1985,7 +2195,7 @@
       "title": "Prompts as fastmcp prompts",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "785473594e96"
+        "7d6d317b490a"
       ],
       "verified_by": [
         "tests/test_installed_content.py:125",
@@ -1997,7 +2207,7 @@
       "title": "Engine core ontology",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "785473594e96"
+        "7d6d317b490a"
       ],
       "verified_by": [
         "tests/test_installed_content.py:154",
@@ -2009,7 +2219,7 @@
       "title": "arbora's own prompts",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "785473594e96"
+        "7d6d317b490a"
       ],
       "verified_by": [
         "tests/test_installed_content.py:194"
@@ -2020,11 +2230,221 @@
       "title": "Package content onboards like connector content",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "785473594e96"
+        "7d6d317b490a"
       ],
       "verified_by": [
         "tests/test_installed_content.py:146"
       ]
     }
+  ],
+  "frontier": [
+    "ARBORA-FLEET-R008.2",
+    "ARBORA-FLEET-R003.3",
+    "ARBORA-FLEET-R006.3.2",
+    "ARBORA-FLEET-R006.3.3",
+    "ARBORA-FLEET-R006.3.4",
+    "ARBORA-FLEET-R006.4",
+    "ARBORA-FLEET-R006.5",
+    "ARBORA-FLEET-R007.1",
+    "ARBORA-FLEET-R007.2",
+    "ARBORA-FLEET-R007.3",
+    "ARBORA-FLEET-R014.1",
+    "ARBORA-FLEET-R024.2",
+    "ARBORA-FLEET-R024.3",
+    "ARBORA-FLEET-R033.1",
+    "ARBORA-FLEET-R033.2",
+    "ARBORA-FLEET-R034.1",
+    "ARBORA-FLEET-R034.2",
+    "ARBORA-FLEET-R034.3",
+    "ARBORA-FLEET-R034.4",
+    "ARBORA-FLEET-R034.5",
+    "ARBORA-FLEET-R034.6",
+    "ARBORA-FLEET-R034.7",
+    "ARBORA-FLEET-R034.8",
+    "ARBORA-FLEET-R034.9",
+    "ARBORA-FLEET-R034.10",
+    "ARBORA-FLEET-R034.11",
+    "ARBORA-FLEET-R034.12",
+    "ARBORA-FLEET-R024.4",
+    "ARBORA-FLEET-R024.5",
+    "ARBORA-FLEET-R024.6",
+    "ARBORA-FLEET-R024.7",
+    "ARBORA-FLEET-R024.8",
+    "ARBORA-FLEET-R024.9",
+    "ARBORA-FLEET-R002.3",
+    "ARBORA-FLEET-R002.4",
+    "ARBORA-FLEET-R002.5",
+    "ARBORA-FLEET-R002.6",
+    "ARBORA-FLEET-R002.7",
+    "ARBORA-FLEET-R002.8",
+    "ARBORA-FLEET-R027.1",
+    "ARBORA-FLEET-R027.2",
+    "ARBORA-FLEET-R027.3",
+    "ARBORA-FLEET-R027.4",
+    "ARBORA-FLEET-R027.5",
+    "ARBORA-FLEET-R027.6",
+    "ARBORA-FLEET-R019.1",
+    "ARBORA-FLEET-R021.1",
+    "ARBORA-FLEET-R005.3",
+    "ARBORA-FLEET-R019.2",
+    "ARBORA-FLEET-R021.2",
+    "ARBORA-FLEET-R027.7",
+    "ARBORA-FLEET-R003.4",
+    "ARBORA-FLEET-R003.5",
+    "ARBORA-FLEET-R003.6",
+    "ARBORA-FLEET-R003.7",
+    "ARBORA-FLEET-R003.8",
+    "ARBORA-FLEET-R003.9",
+    "ARBORA-FLEET-R003.10",
+    "ARBORA-FLEET-R024.10",
+    "ARBORA-FLEET-R024.11",
+    "ARBORA-FLEET-R002.9",
+    "ARBORA-FLEET-R034.13",
+    "ARBORA-FLEET-R034.14",
+    "ARBORA-FLEET-R036.1",
+    "ARBORA-FLEET-R036.2",
+    "ARBORA-FLEET-R036.3",
+    "ARBORA-FLEET-R036.4",
+    "ARBORA-FLEET-R036.5",
+    "ARBORA-FLEET-R036.6",
+    "ARBORA-FLEET-R037.1",
+    "ARBORA-FLEET-R037.2",
+    "ARBORA-FLEET-R037.3",
+    "ARBORA-FLEET-R037.4",
+    "ARBORA-FLEET-R037.5",
+    "ARBORA-FLEET-R037.6",
+    "ARBORA-FLEET-R038",
+    "ARBORA-FLEET-R039.1",
+    "ARBORA-FLEET-R039.2",
+    "ARBORA-FLEET-R039.3",
+    "ARBORA-FLEET-R039.4",
+    "ARBORA-FLEET-R039.5",
+    "ARBORA-FLEET-R039.6",
+    "ARBORA-FLEET-R041.1",
+    "ARBORA-FLEET-R041.2",
+    "ARBORA-FLEET-R041.3",
+    "ARBORA-FLEET-R041.4",
+    "ARBORA-FLEET-R041.5",
+    "ARBORA-FLEET-R041.6",
+    "ARBORA-FLEET-R041.7",
+    "ARBORA-FLEET-R041.9",
+    "ARBORA-FLEET-R042.1",
+    "ARBORA-FLEET-R042.2",
+    "ARBORA-FLEET-R042.3",
+    "ARBORA-FLEET-R042.4",
+    "ARBORA-FLEET-R042.5",
+    "ARBORA-FLEET-R042.6",
+    "ARBORA-FLEET-R043.1",
+    "ARBORA-FLEET-R043.2",
+    "ARBORA-FLEET-R043.3",
+    "ARBORA-FLEET-R043.4",
+    "ARBORA-FLEET-R043.5",
+    "ARBORA-FLEET-R043.6",
+    "ARBORA-FLEET-R043.7"
+  ],
+  "unserved": [
+    "ARBORA-FLEET-R008.2",
+    "ARBORA-FLEET-R003.3",
+    "ARBORA-FLEET-R006.3.2",
+    "ARBORA-FLEET-R006.3.3",
+    "ARBORA-FLEET-R006.3.4",
+    "ARBORA-FLEET-R006.4",
+    "ARBORA-FLEET-R006.5",
+    "ARBORA-FLEET-R007.1",
+    "ARBORA-FLEET-R007.2",
+    "ARBORA-FLEET-R007.3",
+    "ARBORA-FLEET-R014.1",
+    "ARBORA-FLEET-R024.2",
+    "ARBORA-FLEET-R024.3",
+    "ARBORA-FLEET-R033.1",
+    "ARBORA-FLEET-R033.2",
+    "ARBORA-FLEET-R034.1",
+    "ARBORA-FLEET-R034.2",
+    "ARBORA-FLEET-R034.3",
+    "ARBORA-FLEET-R034.4",
+    "ARBORA-FLEET-R034.5",
+    "ARBORA-FLEET-R034.6",
+    "ARBORA-FLEET-R034.7",
+    "ARBORA-FLEET-R034.8",
+    "ARBORA-FLEET-R034.9",
+    "ARBORA-FLEET-R034.10",
+    "ARBORA-FLEET-R034.11",
+    "ARBORA-FLEET-R034.12",
+    "ARBORA-FLEET-R024.4",
+    "ARBORA-FLEET-R024.5",
+    "ARBORA-FLEET-R024.6",
+    "ARBORA-FLEET-R024.7",
+    "ARBORA-FLEET-R024.8",
+    "ARBORA-FLEET-R024.9",
+    "ARBORA-FLEET-R002.3",
+    "ARBORA-FLEET-R002.4",
+    "ARBORA-FLEET-R002.5",
+    "ARBORA-FLEET-R002.6",
+    "ARBORA-FLEET-R002.7",
+    "ARBORA-FLEET-R002.8",
+    "ARBORA-FLEET-R027.1",
+    "ARBORA-FLEET-R027.2",
+    "ARBORA-FLEET-R027.3",
+    "ARBORA-FLEET-R027.4",
+    "ARBORA-FLEET-R027.5",
+    "ARBORA-FLEET-R027.6",
+    "ARBORA-FLEET-R019.1",
+    "ARBORA-FLEET-R021.1",
+    "ARBORA-FLEET-R005.3",
+    "ARBORA-FLEET-R019.2",
+    "ARBORA-FLEET-R021.2",
+    "ARBORA-FLEET-R027.7",
+    "ARBORA-FLEET-R003.4",
+    "ARBORA-FLEET-R003.5",
+    "ARBORA-FLEET-R003.6",
+    "ARBORA-FLEET-R003.7",
+    "ARBORA-FLEET-R003.8",
+    "ARBORA-FLEET-R003.9",
+    "ARBORA-FLEET-R003.10",
+    "ARBORA-FLEET-R024.10",
+    "ARBORA-FLEET-R024.11",
+    "ARBORA-FLEET-R002.9",
+    "ARBORA-FLEET-R034.13",
+    "ARBORA-FLEET-R034.14",
+    "ARBORA-FLEET-R036.1",
+    "ARBORA-FLEET-R036.2",
+    "ARBORA-FLEET-R036.3",
+    "ARBORA-FLEET-R036.4",
+    "ARBORA-FLEET-R036.5",
+    "ARBORA-FLEET-R036.6",
+    "ARBORA-FLEET-R037.1",
+    "ARBORA-FLEET-R037.2",
+    "ARBORA-FLEET-R037.3",
+    "ARBORA-FLEET-R037.4",
+    "ARBORA-FLEET-R037.5",
+    "ARBORA-FLEET-R037.6",
+    "ARBORA-FLEET-R038",
+    "ARBORA-FLEET-R039.1",
+    "ARBORA-FLEET-R039.2",
+    "ARBORA-FLEET-R039.3",
+    "ARBORA-FLEET-R039.4",
+    "ARBORA-FLEET-R039.5",
+    "ARBORA-FLEET-R039.6",
+    "ARBORA-FLEET-R041.1",
+    "ARBORA-FLEET-R041.2",
+    "ARBORA-FLEET-R041.3",
+    "ARBORA-FLEET-R041.4",
+    "ARBORA-FLEET-R041.5",
+    "ARBORA-FLEET-R041.6",
+    "ARBORA-FLEET-R041.7",
+    "ARBORA-FLEET-R041.9",
+    "ARBORA-FLEET-R042.1",
+    "ARBORA-FLEET-R042.2",
+    "ARBORA-FLEET-R042.3",
+    "ARBORA-FLEET-R042.4",
+    "ARBORA-FLEET-R042.5",
+    "ARBORA-FLEET-R042.6",
+    "ARBORA-FLEET-R043.1",
+    "ARBORA-FLEET-R043.2",
+    "ARBORA-FLEET-R043.3",
+    "ARBORA-FLEET-R043.4",
+    "ARBORA-FLEET-R043.5",
+    "ARBORA-FLEET-R043.6",
+    "ARBORA-FLEET-R043.7"
   ]
 }
