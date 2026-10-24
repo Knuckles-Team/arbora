@@ -166,6 +166,7 @@
     "ARBORA-FLEET-R041.12",
     "ARBORA-FLEET-R041.13",
     "ARBORA-FLEET-R041.14",
+    "ARBORA-FLEET-R041.15",
     "ARBORA-FLEET-R042",
     "ARBORA-FLEET-R042.1",
     "ARBORA-FLEET-R042.2",
@@ -899,7 +900,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "3f7190f32493",
-        "785473594e96",
+        "7d6d317b490a",
         "d16472d4df1d"
       ],
       "verified_by": [
@@ -1677,7 +1678,8 @@
         "ARBORA-FLEET-R041.11",
         "ARBORA-FLEET-R041.12",
         "ARBORA-FLEET-R041.13",
-        "ARBORA-FLEET-R041.14"
+        "ARBORA-FLEET-R041.14",
+        "ARBORA-FLEET-R041.15"
       ]
     },
     {
@@ -1822,6 +1824,19 @@
       ]
     },
     {
+      "id": "ARBORA-FLEET-R041.15",
+      "title": "Onboarding writes the agent-library catalog into EG",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "50a570061b49"
+      ],
+      "verified_by": [
+        "tests/fleet/test_catalog_graph.py:118",
+        "tests/fleet/test_catalog_graph.py:133",
+        "tests/fleet/test_catalog_graph.py:89"
+      ]
+    },
+    {
       "id": "ARBORA-FLEET-R042",
       "title": "arbora registers connector data resources as virtual-graph sources by policy (rollup)",
       "delivery_state": "SPECIFIED",
@@ -1952,7 +1967,7 @@
       "title": "arbora serves all installed content as native MCP primitives, declared the same as every connector (rollup)",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "785473594e96"
+        "7d6d317b490a"
       ],
       "verified_by": [
         "tests/test_installed_content.py:124",
@@ -1974,7 +1989,7 @@
       "title": "Skills as `skill://`",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "785473594e96"
+        "7d6d317b490a"
       ],
       "verified_by": [
         "tests/test_installed_content.py:124"
@@ -1985,7 +2000,7 @@
       "title": "Prompts as fastmcp prompts",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "785473594e96"
+        "7d6d317b490a"
       ],
       "verified_by": [
         "tests/test_installed_content.py:125",
@@ -1997,7 +2012,7 @@
       "title": "Engine core ontology",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "785473594e96"
+        "7d6d317b490a"
       ],
       "verified_by": [
         "tests/test_installed_content.py:154",
@@ -2009,7 +2024,7 @@
       "title": "arbora's own prompts",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "785473594e96"
+        "7d6d317b490a"
       ],
       "verified_by": [
         "tests/test_installed_content.py:194"
@@ -2020,7 +2035,7 @@
       "title": "Package content onboards like connector content",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "785473594e96"
+        "7d6d317b490a"
       ],
       "verified_by": [
         "tests/test_installed_content.py:146"

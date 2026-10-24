@@ -343,9 +343,9 @@
       "title": "Content is found by convention; no provider entry-point group exists",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "785473594e96",
-        "9e7f6499d96f",
-        "b50db19d9836"
+        "7d6d317b490a",
+        "8e5b4ec2b3fc",
+        "9e7f6499d96f"
       ],
       "verified_by": [
         "tests/deployment/test_arbora_deploy_artifacts.py:103"
@@ -427,8 +427,8 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "3f7190f32493",
-        "785473594e96",
-        "b50db19d9836"
+        "7d6d317b490a",
+        "8e5b4ec2b3fc"
       ],
       "verified_by": [
         "tests/test_installed_content.py:101",

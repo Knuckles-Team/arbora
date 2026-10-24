@@ -279,6 +279,7 @@ Hot-path proof for `ARBORA-FLEET-R037`: `tests/fleet/test_job_loads_served.py::t
 - `ARBORA-FLEET-R041.8`: `tests/fleet/test_handshake_onboard.py::test_reconnect_recaptures_only_on_version_or_digest_change` reconnects unchanged, then with a new digest.
 - `ARBORA-FLEET-R041.9`: `tests/fleet/test_handshake_onboard.py::test_failed_capture_serves_tools_reports_gap_and_retries_with_backoff`.
 - `ARBORA-FLEET-R041.10`: `tests/fleet/test_handshake_onboard.py::test_large_shrink_on_handshake_waits_for_mass_withdrawal_approval`.
+- `ARBORA-FLEET-R041.15`: `tests/fleet/test_catalog_graph.py::test_pack_becomes_typed_assets_candidates_and_lineage`, `tests/fleet/test_catalog_graph.py::test_ntriples_escape_literals_and_dedupe`, `tests/fleet/test_catalog_graph.py::test_onboarding_writes_the_catalog_and_never_fails_on_a_refusal`.
 - `ARBORA-FLEET-R042`: See each child.
 - `ARBORA-FLEET-R042.1`: `tests/fleet/test_source_approval.py::test_decision_round_trips`.
 - `ARBORA-FLEET-R042.2`: `tests/fleet/test_source_approval.py::test_read_only_admitted_contract_is_approved_and_write_contract_is_held`.
