@@ -239,3 +239,9 @@ Released-native checks compare revisions and exercise public query decoding.
 Cancellation checks require file-worker completion before task completion.
 Source substitution, caller liveness and redacted failures must refuse.
 These tests do not qualify factory admission, effects or shared-pool coexistence.
+
+The isolated owner tests exercise genuine native lease issue, read and retirement.
+They check scope/task substitution, cancellation, source changes and native revocation.
+Retained file work must preserve all occupied capacity slots through cancellation.
+Repeated same-loop owner checks must not reproduce pending-reader warnings.
+No fixture or native lease JSON establishes factory or operation authority.
