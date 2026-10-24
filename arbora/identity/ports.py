@@ -7,6 +7,7 @@ unavailable. No port is selected from request headers or ASGI state.
 
 import re
 from collections.abc import Awaitable, Callable, Mapping
+from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -81,3 +82,23 @@ class VerifiedToken(Protocol):
 
 
 VerifyToken = Callable[[str], Awaitable[VerifiedToken]]
+
+
+class BrowserAdmissionPort(Protocol):
+    """One browser request's admission, as served code may hold it.
+
+    The composition root qualifies the concrete admission before it hands this
+    port to a served package; served code never checks or builds the concrete
+    type itself.
+    """
+
+    def request(
+        self, scope: Mapping[str, Any]
+    ) -> AbstractAsyncContextManager[Mapping[str, Any]]:
+        """Admit ``scope`` and yield the forwarded scope for its whole lifetime."""
+        ...
+
+
+#: Read the browser session cookie from an ASGI scope: ``None`` when absent,
+#: :class:`PermissionError` when a presented cookie is invalid or ambiguous.
+SessionCookieReader = Callable[[Mapping[str, Any]], str | None]

@@ -4,9 +4,11 @@ import inspect
 from collections.abc import Callable
 from typing import Any
 
-from arbora.identity.admission import BrowserAdmission
-from arbora.identity.browser import session_from_scope
-from arbora.identity.engine import IdentityUnavailable
+from arbora.identity.ports import (
+    BrowserAdmissionPort,
+    IdentityUnavailable,
+    SessionCookieReader,
+)
 
 
 class WebUISessionBoundary:
@@ -14,20 +16,25 @@ class WebUISessionBoundary:
 
     The injected auth application owns login/logout and issuance. This adapter
     never creates keys, tokens, session records, identities or permission grants.
-    BrowserAdmission preserves the exact live cookie-to-caller binding while
-    the downstream WebUI independently verifies its forwarded bearer.
+    The admission preserves the exact live cookie-to-caller binding while the
+    downstream WebUI independently verifies its forwarded bearer.
+
+    Build it with the composition root's
+    :func:`arbora.api.http.browser_app.create_webui_session_boundary`, which
+    refuses any admission that is not the qualified concrete one. This package
+    holds only the :class:`~arbora.identity.ports.BrowserAdmissionPort`.
     """
 
     identity_mode = "eg"
 
     def __init__(
         self,
-        admission: BrowserAdmission,
+        admission: BrowserAdmissionPort,
         auth_app: Callable[..., Any],
         *,
         operations: Any = None,
     ):
-        if not isinstance(admission, BrowserAdmission) or not callable(auth_app):
+        if not callable(getattr(admission, "request", None)) or not callable(auth_app):
             raise IdentityUnavailable("qualified admission and auth routes required")
         self.admission = admission
         self.auth_app = auth_app
@@ -117,8 +124,18 @@ class CanonicalWebUIBoundaryMiddleware:
 class BrowserSessionMiddleware:
     """Own /auth and wrap cookie requests without ambient authority fallback."""
 
-    def __init__(self, app: Any, *, admission: BrowserAdmission, auth_app: Any):
+    def __init__(
+        self,
+        app: Any,
+        *,
+        admission: BrowserAdmissionPort,
+        auth_app: Any,
+        read_session: SessionCookieReader,
+    ):
+        if not callable(read_session):
+            raise IdentityUnavailable("injected session cookie reader required")
         self.app, self.admission, self.auth_app = app, admission, auth_app
+        self.read_session = read_session
 
     async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
         kind = scope.get("type")
@@ -138,11 +155,11 @@ class BrowserSessionMiddleware:
             await send(message)
 
         try:
-            cookie = session_from_scope(scope)
+            cookie = self.read_session(scope)
             if cookie is None:
                 await self.app(scope, receive, tracked_send)
                 return
-            # The current qualified BrowserAdmission contract accepts HTTP,
+            # The current qualified browser admission contract accepts HTTP,
             # not websocket handshake scopes. Refuse rather than relabel one.
             if kind == "websocket":
                 raise PermissionError("browser websocket admission unavailable")
