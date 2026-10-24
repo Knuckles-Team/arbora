@@ -5,6 +5,7 @@ Arbora-only validation skips this receipt rather than claiming terminal proof.
 """
 # spec: ARBORA-HOST-R009.8
 
+import asyncio
 from pathlib import Path
 from unittest.mock import AsyncMock
 
@@ -16,14 +17,33 @@ pytest.importorskip(
 )
 from agent_terminal_ui.app import AgentApp
 from agent_terminal_ui.host_logs import AuthenticatedHostLogReader
+from textual.pilot import Pilot
 from textual.widgets import RichLog
 
 from tests.agent_host.test_log_access import ControlledOwners, serve
 from tests.agent_host.test_log_sink import runtime_for
 
 
+async def wait_for_log(pilot: Pilot, log: RichLog, expected: str) -> str:
+    """Wait for observed rendering, not an assumed HTTP/scheduler latency."""
+    async with asyncio.timeout(5):
+        while expected not in (text := "".join(line.text for line in log.lines)):
+            await pilot.pause(0.05)
+    return text
+
+
 @pytest.mark.asyncio
-async def test_production_sink_over_http_into_mounted_terminal(tmp_path: Path) -> None:
+@pytest.mark.parametrize("read_delay", [0, 0.6])
+async def test_production_sink_over_http_into_mounted_terminal(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, read_delay: float
+) -> None:
+    original_read = AuthenticatedHostLogReader.read
+
+    async def delayed_read(self, *args, **kwargs):
+        await asyncio.sleep(read_delay)
+        return await original_read(self, *args, **kwargs)
+
+    monkeypatch.setattr(AuthenticatedHostLogReader, "read", delayed_read)
     owners = ControlledOwners()
     runtime = runtime_for(owners, tmp_path, True)
     agent = AsyncMock()
@@ -41,14 +61,14 @@ async def test_production_sink_over_http_into_mounted_terminal(tmp_path: Path) -
                 app = AgentApp(client=agent, host_receipt=receipt, log_reader=reader)
                 async with app.run_test(size=(120, 40)) as pilot:
                     await app._cmd_processor.cmd_logs("")
-                    await pilot.pause(0.4)
                     log = app.screen.query_one("#server-log", RichLog)
-                    assert "Authenticated host request received" in "".join(
-                        line.text for line in log.lines
+                    await wait_for_log(
+                        pilot, log, "Authenticated host request received"
                     )
                     owners.allowed = False
-                    await pilot.pause(0.4)
-                    text = "".join(line.text for line in log.lines)
+                    text = await wait_for_log(
+                        pilot, log, "authenticated host reader is required"
+                    )
                     assert "Authenticated host request received" not in text
                     assert "authenticated host reader is required" in text
                 agent.close.assert_not_awaited()

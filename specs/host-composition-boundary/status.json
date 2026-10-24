@@ -1988,7 +1988,7 @@
       "verified_by": [
         "tests/agent_host/test_log_metadata.py:2",
         "tests/agent_host/test_log_replay.py:2",
-        "tests/agent_host/test_log_sink_terminal.py:60"
+        "tests/agent_host/test_log_sink_terminal.py:80"
       ],
       "rollup_of": [
         "ARBORA-HOST-R009.8.2.1",
@@ -2017,7 +2017,7 @@
       ],
       "verified_by": [
         "tests/agent_host/test_log_metadata.py:2",
-        "tests/agent_host/test_log_sink_terminal.py:60"
+        "tests/agent_host/test_log_sink_terminal.py:80"
       ]
     },
     {
