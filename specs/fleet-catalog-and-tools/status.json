@@ -180,7 +180,13 @@
     "ARBORA-FLEET-R043.4",
     "ARBORA-FLEET-R043.5",
     "ARBORA-FLEET-R043.6",
-    "ARBORA-FLEET-R043.7"
+    "ARBORA-FLEET-R043.7",
+    "ARBORA-FLEET-R044",
+    "ARBORA-FLEET-R044.1",
+    "ARBORA-FLEET-R044.2",
+    "ARBORA-FLEET-R044.3",
+    "ARBORA-FLEET-R044.4",
+    "ARBORA-FLEET-R044.5"
   ],
   "requirements": [
     {
@@ -920,11 +926,13 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "3f7190f32493",
+        "7d6d317b490a",
         "d16472d4df1d"
       ],
       "verified_by": [
         "tests/fleet/test_local_skill_discovery.py:145",
-        "tests/fleet/test_local_skill_discovery.py:32"
+        "tests/fleet/test_local_skill_discovery.py:32",
+        "tests/test_installed_content.py:115"
       ]
     },
     {
@@ -2067,6 +2075,85 @@
         "tests/fleet/test_source_executor.py:32"
       ],
       "priority": 0
+    },
+    {
+      "id": "ARBORA-FLEET-R044",
+      "title": "arbora serves all installed content as native MCP primitives, declared the same as every connector (rollup)",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "7d6d317b490a"
+      ],
+      "verified_by": [
+        "tests/test_installed_content.py:124",
+        "tests/test_installed_content.py:125",
+        "tests/test_installed_content.py:146",
+        "tests/test_installed_content.py:154",
+        "tests/test_installed_content.py:173"
+      ],
+      "rollup_of": [
+        "ARBORA-FLEET-R044.1",
+        "ARBORA-FLEET-R044.2",
+        "ARBORA-FLEET-R044.3",
+        "ARBORA-FLEET-R044.4",
+        "ARBORA-FLEET-R044.5"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R044.1",
+      "title": "Skills as `skill://`",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "7d6d317b490a"
+      ],
+      "verified_by": [
+        "tests/test_installed_content.py:124"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R044.2",
+      "title": "Prompts as fastmcp prompts",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "7d6d317b490a"
+      ],
+      "verified_by": [
+        "tests/test_installed_content.py:125",
+        "tests/test_installed_content.py:212"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R044.3",
+      "title": "Engine core ontology",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "7d6d317b490a"
+      ],
+      "verified_by": [
+        "tests/test_installed_content.py:154",
+        "tests/test_installed_content.py:173"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R044.4",
+      "title": "arbora's own prompts",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "7d6d317b490a"
+      ],
+      "verified_by": [
+        "tests/test_installed_content.py:194"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R044.5",
+      "title": "Package content onboards like connector content",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "7d6d317b490a"
+      ],
+      "verified_by": [
+        "tests/test_installed_content.py:146"
+      ]
     }
   ],
   "frontier": [
