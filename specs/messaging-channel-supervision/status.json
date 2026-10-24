@@ -121,24 +121,21 @@
       ],
       "rollup_of": [
         "ARBORA-MESSAGING-R005.1"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-MESSAGING-R005.1",
       "title": "Typed adapter degradation and configuration-aware health",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R006",
       "title": "Supervision/adapter ownership boundary",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R007",
@@ -155,16 +152,14 @@
       ],
       "rollup_of": [
         "ARBORA-MESSAGING-R007.1"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-MESSAGING-R007.1",
       "title": "Per-sender identity for inbound turns",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R008",
@@ -211,176 +206,154 @@
         "ARBORA-MESSAGING-R009.19",
         "ARBORA-MESSAGING-R009.20",
         "ARBORA-MESSAGING-R009.21"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-MESSAGING-R009.1",
       "title": "BlueBubbles iMessage relay channel (`bluebubbles`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R009.2",
       "title": "Buzz community relay channel (`buzz`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R009.3",
       "title": "DingTalk channel (`dingtalk`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R009.4",
       "title": "email channel (`email`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R009.5",
       "title": "Feishu and Lark channel (`feishu`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R009.6",
       "title": "Nostr channel (`nostr`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R009.7",
       "title": "ntfy push topics channel (`ntfy`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R009.8",
       "title": "Photon Spectrum channel (`photon`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R009.9",
       "title": "QQ Bot channel (`qqbot`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R009.10",
       "title": "Raft workspace channel (`raft`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R009.11",
       "title": "Reef encrypted channel channel (`reef`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R009.12",
       "title": "SimpleX Chat channel (`simplex`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R009.13",
       "title": "SMS channel (`sms`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R009.14",
       "title": "Tlon (Urbit) channel (`tlon`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R009.15",
       "title": "generic webhook channel (`webhook`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R009.16",
       "title": "WeCom channel (`wecom`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R009.17",
       "title": "Weixin channel (`weixin`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R009.18",
       "title": "X mentions channel (`x`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R009.19",
       "title": "Yuanbao channel (`yuanbao`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R009.20",
       "title": "Zalo Official Account channel (`zalo`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R009.21",
       "title": "Zalo personal account channel (`zalouser`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R800",
@@ -402,8 +375,7 @@
         "ARBORA-MESSAGING-R800.1000",
         "ARBORA-MESSAGING-R800.1001",
         "ARBORA-MESSAGING-R800.1002"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-MESSAGING-R800.1",
@@ -413,8 +385,7 @@
       "verified_by": [
         "tests/messaging/test_alert_operation.py:322",
         "tests/messaging/test_all_backends.py:138"
-      ],
-      "priority": 0
+      ]
     },
     {
       "id": "ARBORA-MESSAGING-R800.2",
@@ -433,8 +404,7 @@
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R800.4",
@@ -453,16 +423,14 @@
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R800.6",
       "title": "Hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R700",
@@ -482,16 +450,14 @@
       "title": "Intake lease on the engine WorkItem methods",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R800.1001",
       "title": "Behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
-      "priority": 0
+      "verified_by": []
     },
     {
       "id": "ARBORA-MESSAGING-R800.1002",
@@ -504,69 +470,5 @@
         "tests/messaging/test_lease.py:105"
       ]
     }
-  ],
-  "frontier": [
-    "ARBORA-MESSAGING-R005.1",
-    "ARBORA-MESSAGING-R006",
-    "ARBORA-MESSAGING-R007.1",
-    "ARBORA-MESSAGING-R009.1",
-    "ARBORA-MESSAGING-R009.2",
-    "ARBORA-MESSAGING-R009.3",
-    "ARBORA-MESSAGING-R009.4",
-    "ARBORA-MESSAGING-R009.5",
-    "ARBORA-MESSAGING-R009.6",
-    "ARBORA-MESSAGING-R009.7",
-    "ARBORA-MESSAGING-R009.8",
-    "ARBORA-MESSAGING-R009.9",
-    "ARBORA-MESSAGING-R009.10",
-    "ARBORA-MESSAGING-R009.11",
-    "ARBORA-MESSAGING-R009.12",
-    "ARBORA-MESSAGING-R009.13",
-    "ARBORA-MESSAGING-R009.14",
-    "ARBORA-MESSAGING-R009.15",
-    "ARBORA-MESSAGING-R009.16",
-    "ARBORA-MESSAGING-R009.17",
-    "ARBORA-MESSAGING-R009.18",
-    "ARBORA-MESSAGING-R009.19",
-    "ARBORA-MESSAGING-R009.20",
-    "ARBORA-MESSAGING-R009.21",
-    "ARBORA-MESSAGING-R800.1",
-    "ARBORA-MESSAGING-R800.3",
-    "ARBORA-MESSAGING-R800.5",
-    "ARBORA-MESSAGING-R800.6",
-    "ARBORA-MESSAGING-R800.1000",
-    "ARBORA-MESSAGING-R800.1001"
-  ],
-  "unserved": [
-    "ARBORA-MESSAGING-R005.1",
-    "ARBORA-MESSAGING-R006",
-    "ARBORA-MESSAGING-R007.1",
-    "ARBORA-MESSAGING-R009.1",
-    "ARBORA-MESSAGING-R009.2",
-    "ARBORA-MESSAGING-R009.3",
-    "ARBORA-MESSAGING-R009.4",
-    "ARBORA-MESSAGING-R009.5",
-    "ARBORA-MESSAGING-R009.6",
-    "ARBORA-MESSAGING-R009.7",
-    "ARBORA-MESSAGING-R009.8",
-    "ARBORA-MESSAGING-R009.9",
-    "ARBORA-MESSAGING-R009.10",
-    "ARBORA-MESSAGING-R009.11",
-    "ARBORA-MESSAGING-R009.12",
-    "ARBORA-MESSAGING-R009.13",
-    "ARBORA-MESSAGING-R009.14",
-    "ARBORA-MESSAGING-R009.15",
-    "ARBORA-MESSAGING-R009.16",
-    "ARBORA-MESSAGING-R009.17",
-    "ARBORA-MESSAGING-R009.18",
-    "ARBORA-MESSAGING-R009.19",
-    "ARBORA-MESSAGING-R009.20",
-    "ARBORA-MESSAGING-R009.21",
-    "ARBORA-MESSAGING-R800.1",
-    "ARBORA-MESSAGING-R800.3",
-    "ARBORA-MESSAGING-R800.5",
-    "ARBORA-MESSAGING-R800.6",
-    "ARBORA-MESSAGING-R800.1000",
-    "ARBORA-MESSAGING-R800.1001"
   ]
 }
