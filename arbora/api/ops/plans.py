@@ -388,6 +388,16 @@ def _fleet_step_tools(
     )
 
 
+def _step_toolsets(fleet: FleetStepTools | None) -> tuple:
+    """The toolsets a plan's agent steps run with: the fleet tools, or none."""
+    return (fleet.toolset(),) if fleet is not None else ()
+
+
+def _fleet_calls(fleet: FleetStepTools | None) -> list[dict[str, Any]]:
+    """The recorded fleet calls of one plan run, in call order."""
+    return list(fleet.ledger) if fleet is not None else []
+
+
 async def execute_task_plan(
     plan: Mapping[str, Any],
     model: Any,
@@ -402,8 +412,7 @@ async def execute_task_plan(
     tasks: dict[str, dict[str, Any]] = {}
     started: list[str] = []
     terminal: dict[str, Any] = {}
-    toolsets = (fleet.toolset(),) if fleet is not None else ()
-    run_plan = run_plan_for(plan, model, toolsets)
+    run_plan = run_plan_for(plan, model, _step_toolsets(fleet))
     async for event in iterate_run(request, {}, plan=run_plan):
         kind = event.get("type")
         task_id = event.get("task_id")
@@ -424,7 +433,7 @@ async def execute_task_plan(
         "output": (tasks.get(output_task) or {}).get("output"),
         "started_order": started,
         "tasks": tasks,
-        "fleet_calls": list(fleet.ledger) if fleet is not None else [],
+        "fleet_calls": _fleet_calls(fleet),
     }
 
 
