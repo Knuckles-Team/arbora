@@ -167,6 +167,8 @@ def test_native_entry_hands_same_bundle_to_both_compositions(monkeypatch):
 
     monkeypatch.setattr(runtime, "_build_server", build)
     monkeypatch.setenv("IS_KG_SERVER", "")
+    # The entry point parses sys.argv; the test must not inherit pytest's.
+    monkeypatch.setattr("sys.argv", ["arbora"])
     with pytest.raises(BoundaryReached):
         server.mcp_server(invocation=value)
     assert installed == [value]

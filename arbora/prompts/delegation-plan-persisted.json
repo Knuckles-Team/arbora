@@ -1,0 +1,19 @@
+{
+  "prompt_version": "1.0.0",
+  "description": "The run's plan is persisted",
+  "tags": [
+    "delegation",
+    "orchestration",
+    "prompt"
+  ],
+  "identity": {
+    "role": "The run's plan is persisted",
+    "goal": "Prove delegation through data: The run's plan is persisted"
+  },
+  "metadata": {
+    "topic": "delegation"
+  },
+  "instructions": {
+    "core_directive": "Delegation use case: The run's plan is persisted.\n\nUse the `agents.plan_run` operation (through the `act` intent tool; find its exact input shape with `find agents.plan_run`). Call `agents.plan_run` with a small DAG, then read the run back with `agents.tasks.get` and the run's current plan.\n\nA correct answer: The persisted plan equals the canonical plan the engine receipted: same task ids, same dependencies, same output task."
+  }
+}

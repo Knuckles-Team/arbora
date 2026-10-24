@@ -294,6 +294,11 @@ Hot-path proof for `ARBORA-FLEET-R037`: `tests/fleet/test_job_loads_served.py::t
 - `ARBORA-FLEET-R043.5`: `tests/api/test_query_federation.py::test_audit_line_names_sources_and_holds_no_rows`.
 - `ARBORA-FLEET-R043.6`: `tests/api/test_query_federation_served.py::test_nl_question_spans_native_facts_and_live_connector_rows`.
 - `ARBORA-FLEET-R043.7`: `tests/fleet/test_source_executor.py::test_reads_page_through_fleet_call_with_caller_delegation_and_per_source_errors`.
+- `ARBORA-FLEET-R044.1`: `tests/test_installed_content.py`.
+- `ARBORA-FLEET-R044.2`: `tests/test_installed_content.py`.
+- `ARBORA-FLEET-R044.3`: `tests/test_installed_content.py`.
+- `ARBORA-FLEET-R044.4`: `tests/test_installed_content.py`.
+- `ARBORA-FLEET-R044.5`: `tests/test_installed_content.py`.
 
 ### R015/R029 WebUI bridge integration evidence
 

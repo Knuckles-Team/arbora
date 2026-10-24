@@ -52,3 +52,15 @@ conditions and the existing build command.
 Call path: `handle_plan_run` (`arbora/api/ops/plans.py:298`) asks the engine for the `TaskPlan` decision. The engine validates and digests calls and bindings (`EG-DECISION-ENGINE-R134.111.8` to `.13`). The harness runs a `DependencyPlan` with tool steps. It resolves bindings and calls an injected caller (`AU-BOUNDARY-R043.6.1` to `.7`). That caller is the governed fleet caller (`ARBORA-RELEASE-R003.4.5`). It uses the invoke pipeline (`ARBORA-OPS-R009`) to reach the connector.
 
 Arbora validates no binding and holds no planner. It supplies the one authority path. The idempotency key `plan-call:<record>:<task_id>:<call_digest>` makes a replay return the recorded result. The reply returns the harness record per step (`ARBORA-RELEASE-R003.4.8`).
+
+## Amendment 2026-10-24: static architecture tests run on every pull request
+
+The pull-request fast subset runs only the tests a diff maps to. A change to
+one file can therefore break a repository-wide import or boundary rule, merge,
+and leave main red. `scripts/pr_static_scope.py` lists the static tests: all of
+`tests/architecture`, plus every test that parses or walks repository source.
+Together they take about one minute (measured: 52 seconds). The release
+workflow runs them on every pull request next to the mapped tests. It runs
+them when the mapped scope is empty too. A full-suite scope stays as it was.
+`tests/deployment/test_pr_static_scope.py` fails when a source-scanning test is
+missing from the list. It also fails when the workflow stops adding the list.
