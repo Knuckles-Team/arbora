@@ -22,7 +22,7 @@ wheels = [
 
 [[package]]
 name = "agent-connector-sdk"
-version = "0.5.3"
+version = "0.5.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -34,9 +34,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/1e/3d/1efe0141e0e16a31cada15f5540d8425b97ea6d4397a733243a949d91a09/agent_connector_sdk-0.5.3.tar.gz", hash = "sha256:f5869d07ae83eeb782ac08e7e32dfb9af02d20af0b4a41fdac55fc692a36e04a", size = 793110, upload-time = "2026-10-24T06:17:26.353Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/30/b4/e5258b6239c7b3abb2a2d000d1eaa9b4145588733eb94335e84998fb21d7/agent_connector_sdk-0.5.4.tar.gz", hash = "sha256:691cf9bde80ae856f1f0a7d0088f0f17fb5acfcb6e0c94b51cfd0e582e76a2c9", size = 794041, upload-time = "2026-10-24T08:54:16.4Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2b/b7/74976a6f2861f36a6777ce623e31842bb8ee15c9086bc83ab48c330d7c8d/agent_connector_sdk-0.5.3-py3-none-any.whl", hash = "sha256:af2e5532e9d7206625e1ab2dc472198d369ecc59d8771a701a2a495f13dd22d8", size = 783633, upload-time = "2026-10-24T06:17:24.493Z" },
+    { url = "https://files.pythonhosted.org/packages/57/d0/1da4865ca3be3e454866d582c5b97a0f902a5cbfdac8866499a76e3d4701/agent_connector_sdk-0.5.4-py3-none-any.whl", hash = "sha256:d9a35dbbeec3cb50baa6bcd28a8f2d691fef23206532e86340d9c8d0fb617603", size = 783615, upload-time = "2026-10-24T08:54:14.886Z" },
 ]
 
 [package.optional-dependencies]
@@ -466,8 +466,8 @@ webui = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], specifier = ">=0.5.3,<0.6.0" },
-    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], marker = "extra == 'gateway-widgets'", specifier = ">=0.5.3,<0.6.0" },
+    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], specifier = ">=0.5.4,<0.6.0" },
+    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], marker = "extra == 'gateway-widgets'", specifier = ">=0.5.4,<0.6.0" },
     { name = "agent-terminal-ui", marker = "extra == 'test'", specifier = ">=2.3.1" },
     { name = "agent-utilities", specifier = ">=3.1.0,<4.0.0" },
     { name = "agent-webui", marker = "extra == 'webui'", specifier = ">=2.8.2,<3.0.0" },
@@ -1325,7 +1325,10 @@ name = "epistemic-graph-server"
 version = "2.27.6"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
+    { url = "https://files.pythonhosted.org/packages/19/44/c4aa6cdd3cb541452fe022802ea4bb1bc0d04d031359110ab0d1aca2ad37/epistemic_graph_server-2.27.6-py3-none-macosx_11_0_arm64.whl", hash = "sha256:5a1bcfd1395f38cceca3bb8b8c7589ca54279b672a30069df1404a96bc9940b3", size = 71626388, upload-time = "2026-10-24T08:24:26.489Z" },
+    { url = "https://files.pythonhosted.org/packages/bd/fc/fbc370a653bd41e62f43faf70b4d957a751e0e03461a6de060f7ce6be529/epistemic_graph_server-2.27.6-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:0fe94593ee75e5779fc9c21298ee7394f09a94d716d525b6d3163d0cfc27dc40", size = 66038998, upload-time = "2026-10-24T08:47:21.838Z" },
     { url = "https://files.pythonhosted.org/packages/ba/0b/eaa5b2db88ef0fc632d1a1c651e7c178e0ec6be7a6a8f5ce7fadd729aa19/epistemic_graph_server-2.27.6-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:1a711f76a58605776ff78229f263d851a6d83475fd40a30d2480ad81be668334", size = 62992737, upload-time = "2026-10-24T08:05:20.005Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/b8/a8ff144c4476d255480cb934342d05c6b97cec1fa3b43663ee95120f9929/epistemic_graph_server-2.27.6-py3-none-win_amd64.whl", hash = "sha256:b8a8535e5fe8da4fdabfa380f345ce4f0d2ec70dd51d38a9b7706c7e24c08f28", size = 66577516, upload-time = "2026-10-24T09:02:35.404Z" },
 ]
 
 [[package]]
