@@ -119,7 +119,13 @@
     "ARBORA-IDENTITY-R004.7",
     "ARBORA-IDENTITY-R004.7.1",
     "ARBORA-IDENTITY-R004.7.2",
-    "ARBORA-IDENTITY-R004.7.3"
+    "ARBORA-IDENTITY-R004.7.3",
+    "ARBORA-IDENTITY-R004.8",
+    "ARBORA-IDENTITY-R004.8.1",
+    "ARBORA-IDENTITY-R004.8.2",
+    "ARBORA-IDENTITY-R004.8.3",
+    "ARBORA-IDENTITY-R004.8.3.1",
+    "ARBORA-IDENTITY-R004.8.3.2"
   ],
   "requirements": [
     {
@@ -189,7 +195,8 @@
         "ARBORA-IDENTITY-R004.1",
         "ARBORA-IDENTITY-R004.2",
         "ARBORA-IDENTITY-R004.3",
-        "ARBORA-IDENTITY-R004.7"
+        "ARBORA-IDENTITY-R004.7",
+        "ARBORA-IDENTITY-R004.8"
       ]
     },
     {
@@ -1360,6 +1367,61 @@
       "verified_by": [
         "tests/a2a/test_anonymous_native_reads.py:12"
       ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.8",
+      "title": "Local anonymous text execution (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-IDENTITY-R004.8.1",
+        "ARBORA-IDENTITY-R004.8.2",
+        "ARBORA-IDENTITY-R004.8.3"
+      ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.8.1",
+      "title": "Source text send",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/a2a/test_anonymous_send.py:24"
+      ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.8.2",
+      "title": "Installed local execution",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.8.3",
+      "title": "Durable answer recovery (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-IDENTITY-R004.8.3.1",
+        "ARBORA-IDENTITY-R004.8.3.2"
+      ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.8.3.1",
+      "title": "Source answer storage",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/a2a/test_anonymous_send.py:25"
+      ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R004.8.3.2",
+      "title": "Installed answer recovery",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     }
   ]
 }

@@ -161,3 +161,13 @@ PolicyGate regression coverage admits an exact anonymous caller for an ordinary 
 | Served read contract | `ARBORA-IDENTITY-R004.7.1` | `tests/a2a/test_anonymous_reads.py` tests exact owner, request, task and target binding. It tests host/origin/credential refusal, deadlines, cancellation, bounded input and no cached output disclosure. |
 | Native anonymous ownership | `ARBORA-IDENTITY-R004.7.2` | Installed engine tests distinguish anonymous and authenticated task owners. They prove native namespace enforcement, restart reads and credential rejection. This acceptance remains open. |
 | Native client source adapter | `ARBORA-IDENTITY-R004.7.3` | `tests/a2a/test_anonymous_native_reads.py` uses the actual public client and codec with a synthetic response transport. It checks method negotiation, immutable target binding, mode changes and no generic read fallback. |
+
+## Local anonymous text execution
+
+- `ARBORA-IDENTITY-R004.8`: Verify all source, installed and recovery children.
+- `ARBORA-IDENTITY-R004.8.1`: Use the public native client and actual constrained harness with simulated transports. Assert one model request for duplicate sends and conflict on changed input. Check no tools, no inherited session and exact graph and lease binding. Require native completion proof before success.
+- `ARBORA-IDENTITY-R004.8.2`: Run the served local transport against the installed native engine. Exercise concurrent sends, restart, cancellation, policy withdrawal and authenticated regression.
+- `ARBORA-IDENTITY-R004.8.3`: Recover the exact answer from supported owner-bound storage after restart. A usage receipt and a digest alone must not become answer text.
+
+- `ARBORA-IDENTITY-R004.8.3.1`: Recreate the service over stored native fixtures. Return the same committed answer without a second model request. Refuse altered content and malformed references. Exercise encoded and map property results.
+- `ARBORA-IDENTITY-R004.8.3.2`: Repeat restart recovery with installed native processes and the constrained sender. Source fixtures are not installed proof.
