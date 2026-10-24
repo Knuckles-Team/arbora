@@ -140,7 +140,7 @@ Because the AU resolver already re-runs `source_query`, ARBORA-OPS-R040.8 wires 
 ### Model and owner boundaries
 
 `ARBORA-OPS-R021.4.1` through `.6` define the producer contract for both clients.
-The `runs` module, models, adapter and registry entries do not exist in current main.
+The `runs` module serves current-plan reads. Per-run summary source is prepared; the native trace adapter remains pending.
 Arbora must authenticate, route and project reads. It must not collect counters, select configuration or compute aggregates.
 
 [EG orchestration vocabulary](https://github.com/Knuckles-Team/epistemic-graph/tree/main/specs/orchestration-vocabulary) owns the trace and query contracts.

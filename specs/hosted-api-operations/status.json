@@ -984,7 +984,9 @@
       "title": "Per-run operation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": [],
+      "verified_by": [
+        "tests/api/test_run_summary_ops.py:12"
+      ],
       "rollup_of": [
         "ARBORA-OPS-R021.4.5.1"
       ]

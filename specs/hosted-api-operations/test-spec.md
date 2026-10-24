@@ -317,3 +317,27 @@ Hot-path proof for `ARBORA-OPS-R860`: `tests/api/test_program_ops_served.py::tes
 | Hot-path proof | `ARBORA-OPS-R861.9` | `tests/api/test_dashboard_ops_served.py::test_save_share_list_conflict_delete_served` passes. |
 
 Hot-path proof for `ARBORA-OPS-R861`: `tests/api/test_dashboard_ops_served.py::test_save_share_list_conflict_delete_served`.
+
+## Run summary source preparation
+
+`tests/api/test_run_summary_ops.py` covers part of `ARBORA-OPS-R021.4.5`.
+It checks caller forwarding, measured zeros, absent fields and the missing-reader refusal.
+It also rejects injected authority, invalid measurements and mismatched run IDs.
+These are handler tests with a supplied reader, not native or served acceptance.
+
+The isolated source adds `runs.get` and regenerates its client and API schemas.
+No native run-trace reader is bound yet.
+EG 2.27.5 exposes `GetRunWorkItem`, with admission, work-item state and optional committed completion.
+That result does not define the required trace or applied-configuration link.
+No inference from work-item status to termination reason is allowed.
+The adapter, recorded configuration resolution, per-field availability metadata and REST/MCP acceptance remain pending.
+The full metrics port and aggregate operations also remain pending.
+Rows `ARBORA-OPS-R021.4.1` through `.6` remain open; this preparation closes none.
+
+Local preparation checks: 66 focused tests pass, including registry and generated-schema validation.
+The API generation drift check, focused mypy check and wheel build pass.
+The all-files commit gate passes.
+Pre-push checking finds two stale clone-review entries in unchanged backup/restore code.
+API compatibility checking raises `AttributeError` on a boolean schema.
+The documentation build lacks its inherited `.pipeline-theme` configuration.
+Full-suite completion and native acceptance are not established by these checks.

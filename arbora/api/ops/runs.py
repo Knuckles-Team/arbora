@@ -1,4 +1,4 @@
-"""Run read operations: the current-plan read boundary (ARBORA-OPS-R021.4.5.1).
+"""Run summary and current-plan read boundaries (ARBORA-OPS-R021.4.5).
 
 ``runs.current_plan`` serves the ``current_plan`` projection of one run. The
 run harness owns the plan scaffold; Arbora owns admission and the served
@@ -11,16 +11,85 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
-from typing import Any, Protocol, runtime_checkable
+from typing import Annotated, Any, Literal, Protocol, runtime_checkable
 
 from agent_connector_sdk.current_plan import CurrentPlanRead, CurrentPlanRequest
-from pydantic import ValidationError
+from epistemic_graph.generated.models import HarnessConfigAnswer
+from pydantic import Field, ValidationError
 
 from arbora.api.invoke.executor import ExecutionContext
-from arbora.api.ops._common import Params, build_read_op
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops._common import FrozenState, Params, bound_service, build_read_op
 from arbora.api.registry import OpSpec
 
 UNAVAILABLE = CurrentPlanRead(availability="unavailable")
+
+
+class RunSummary(FrozenState):
+    """Recorded run fields; null means the producer supplied no measurement.
+
+    Configuration is the recorded EG decision answer, including its abstentions.
+    It is never resolved by asking for the caller's current configuration.
+    """
+
+    run_id: Annotated[str, Field(strict=True, min_length=1)]
+    termination_reason: (
+        Literal["final_answer", "context_overflow", "stuck", "step_budget", "error"]
+        | None
+    ) = None
+    peak_context_tokens: Annotated[int, Field(strict=True, ge=0)] | None = None
+    context_budget_tokens: Annotated[int, Field(strict=True, ge=0)] | None = None
+    cost_usd: Annotated[float, Field(strict=True, ge=0, allow_inf_nan=False)] | None = (
+        None
+    )
+    harness_config_ref: Annotated[str, Field(strict=True, min_length=1)] | None = None
+    harness_config: HarnessConfigAnswer | None = None
+    current_plan: CurrentPlanRead = UNAVAILABLE
+
+
+class RunsGetResult(Params):
+    availability: Literal["available", "unavailable"]
+    value: RunSummary | None
+
+
+@runtime_checkable
+class RunTraceReader(Protocol):
+    """Per-run portion of the host's caller-bound durable trace reader."""
+
+    async def get(
+        self, *, run_id: str, context: ExecutionContext
+    ) -> RunSummary | None: ...
+
+
+async def handle_runs_get(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Read recorded values without reconstructing counters or decisions."""
+    run_id = CurrentPlanRequest.model_validate(dict(params)).run_id
+    reader = bound_service(context, "run_trace_reader", reason="run reader unavailable")
+    raw = await reader.get(run_id=run_id, context=context)
+    if raw is None:
+        return RunsGetResult(availability="unavailable", value=None).model_dump(
+            mode="json"
+        )
+    if not isinstance(raw, RunSummary):
+        raise OperationRefused("UNAVAILABLE", {"reason": "invalid run projection"})
+    try:
+        summary = RunSummary.model_validate(raw.model_dump())
+    except ValidationError as exc:
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": "invalid run projection"}
+        ) from exc
+    if summary.run_id != run_id or (
+        summary.harness_config is not None and summary.harness_config_ref is None
+    ):
+        raise OperationRefused("UNAVAILABLE", {"reason": "invalid run projection"})
+    return RunsGetResult(
+        availability="available",
+        value=summary.model_copy(
+            update={"current_plan": await read_current_plan(context, run_id)}
+        ),
+    ).model_dump(mode="json")
 
 
 class RunsCurrentPlanResult(Params):
@@ -83,6 +152,15 @@ async def handle_runs_current_plan(
 def operations() -> tuple[OpSpec, ...]:
     return (
         build_read_op(
+            op_id="runs.get",
+            summary="Read recorded fields of one run",
+            examples=("show this run's recorded context and cost",),
+            params=CurrentPlanRequest,
+            result=RunsGetResult,
+            handler="arbora.api.ops.runs.handle_runs_get",
+            scope="kg:read",
+        ),
+        build_read_op(
             op_id="runs.current_plan",
             summary="Read the current plan of one run",
             examples=("what is the current plan of this run",),
@@ -101,7 +179,11 @@ __all__ = [
     "CurrentPlanRead",
     "CurrentPlanReader",
     "CurrentPlanRequest",
+    "RunSummary",
+    "RunTraceReader",
+    "RunsGetResult",
     "RunsCurrentPlanResult",
+    "handle_runs_get",
     "handle_runs_current_plan",
     "operations",
     "project_current_plan",
