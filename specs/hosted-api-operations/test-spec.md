@@ -328,3 +328,8 @@ checks preserve ACCESS_DENIED from owner lookup, metadata census and payload rea
 | Hot-path proof | `ARBORA-OPS-R861.9` | `tests/api/test_dashboard_ops_served.py::test_save_share_list_conflict_delete_served` passes. |
 
 Hot-path proof for `ARBORA-OPS-R861`: `tests/api/test_dashboard_ops_served.py::test_save_share_list_conflict_delete_served`.
+
+## Shared execution explorer acceptance (pending)
+
+- `ARBORA-OPS-R021.4.8`: preserve replay v1 fixtures and decoder refusals unchanged. Unsupported projection versions refuse explicitly. Use a root with two independent steps and a join, then a declared child/grandchild run. Assert stable keys despite repeated local names and distinct spawn/dependency edges. Compare cursor-aligned snapshot/replay; test duplicates, gaps, pagination, missing lineage, bounds and denied owners before hydration. The flat fixture does not prove recursive production.
+- `ARBORA-OPS-R021.4.9`: read a permitted public summary, redacted tool event and separately authorized transcript. Assert missing transcript is unavailable, never empty success. Forge each owner/node/context binding; no payload leaks. Verify all interaction flags remain false for trace-only nodes and equivalent MCP/HTTP refusals.
