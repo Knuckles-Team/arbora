@@ -1382,8 +1382,8 @@
       "title": "API surface and compatibility drift gates",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "4b9d181069e4",
-        "6c6f9d9f357d"
+        "20ec6b79a02b",
+        "4b9d181069e4"
       ],
       "verified_by": [
         "tests/api/test_backward_compat_drift_gate.py:42",
@@ -1417,8 +1417,8 @@
       "title": "Backward-compatibility drift gate — backward-compat slice",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "4b9d181069e4",
-        "6c6f9d9f357d"
+        "20ec6b79a02b",
+        "4b9d181069e4"
       ],
       "verified_by": [
         "tests/api/test_backward_compat_drift_gate.py:42",
@@ -3046,7 +3046,8 @@
       "title": "Negotiated flat execution snapshot",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "7f9af1e43c02"
+        "2e09ba70eba9",
+        "951e55158d8a"
       ],
       "verified_by": [
         "tests/api/test_execution_graph.py:27"
