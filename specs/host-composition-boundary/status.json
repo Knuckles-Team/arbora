@@ -247,11 +247,11 @@
       "title": "Arbora registers the harness host bindings at startup",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "120446dcdd0c",
         "192099593cdd",
         "25e15e2108e1",
         "2763cd78b6bc",
-        "52ad3952c2c8",
-        "9bd22960a7ea"
+        "52ad3952c2c8"
       ],
       "verified_by": [
         "tests/a2a/test_failed_usage.py:18",
@@ -308,8 +308,8 @@
       "title": "The served process mounts the operation-invoke API",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "192099593cdd",
-        "fbb146fbae97"
+        "120446dcdd0c",
+        "192099593cdd"
       ],
       "verified_by": [
         "tests/test_served_operation_api.py:206",
