@@ -230,6 +230,10 @@ def _context(tenant: str) -> dict[str, Any]:
     }
 
 
+async def _publication_context(tenant: str, _pin: Any) -> dict[str, Any]:
+    return _context(tenant)
+
+
 class _Engine:
     """The two AgentComponent calls the publisher sends, recorded."""
 
@@ -265,7 +269,7 @@ def test_startup_publisher_preserves_released_export_and_returned_definition(
     async def client_for(_tenant: str) -> Any:
         return engine
 
-    publisher = pins_module.engine_publish(client_for, _context)
+    publisher = pins_module.engine_publish(client_for, _publication_context)
 
     async def scenario() -> None:
         first = await pins.for_tenant("tenant-a", publisher)
@@ -292,7 +296,7 @@ def test_engine_publish_sends_a_valid_request_and_reuses_a_current_entry(
     async def client_for(_tenant: str) -> Any:
         return engine
 
-    publish = pins_module.engine_publish(client_for, _context)
+    publish = pins_module.engine_publish(client_for, _publication_context)
     assert asyncio.run(publish("tenant-a", pin)) == DEFINITION
     ((params, key),) = engine.sent
     component = params["op"]["request"]["component"]
@@ -320,7 +324,9 @@ def test_engine_publish_sends_a_valid_request_and_reuses_a_current_entry(
         return client.current
 
     monkeypatch.setattr(storage, "send_agent_component_current", current)
-    digest = asyncio.run(pins_module.engine_publish(reuse_client, _context)("t", pin))
+    digest = asyncio.run(
+        pins_module.engine_publish(reuse_client, _publication_context)("t", pin)
+    )
     assert digest == "sha256:" + "c" * 64 and reuse.sent == []
 
 

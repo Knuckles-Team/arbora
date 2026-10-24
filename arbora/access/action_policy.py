@@ -1144,7 +1144,7 @@ class ActionPolicy:
         audit_id = f"action_decision:{uuid.uuid4().hex}"
         req = decision.request
         try:
-            create_record(
+            created = create_record(
                 self.engine,
                 audit_id,
                 "ActionDecision",
@@ -1164,10 +1164,10 @@ class ActionPolicy:
                     "decided_unix": _now(),
                 },
             )
-        except Exception as e:  # noqa: BLE001 — audit is best-effort, decision stands
+        except Exception as e:  # noqa: BLE001 — missing audit evidence cannot authorize
             logger.debug("action_policy: audit write failed: %s", e)
             return None
-        return audit_id
+        return audit_id if created else None
 
     def _notify(self, message: str) -> None:
         """Send ``message`` to the bound operator notifier, else log it."""
