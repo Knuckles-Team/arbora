@@ -474,3 +474,61 @@ async def test_one_pending_proposal_per_document_preserves_first_request(
         with pytest.raises(PermissionError, match="declined"):
             await asyncio.wait_for(first, 2)
         assert not service._proposals
+
+
+async def test_expired_authority_during_cleanup_does_not_join_own_parent(
+    session: GraphSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    with use_session(session):
+        service, connection, engine, sent, tool = await _setup(session)
+        original = service.revoke_lease
+
+        async def expired_cleanup(request: Any) -> Any:
+            now = service._clock()
+            monkeypatch.setattr(service, "_clock", lambda: now + 1000)
+            return await original(request)
+
+        monkeypatch.setattr(service, "revoke_lease", expired_cleanup)
+        task = asyncio.create_task(_propose(service, _request(session, tool), session))
+        await _wait_for_messages(sent, 1)
+        pending = service._proposals[sent[0].proposal_id]
+        await connection.receive(_response(sent[0]))
+        await _wait_for_messages(sent, 2)
+        call = sent[1]
+        assert call.type == "control.call"
+        await connection.receive(
+            ControlResultMessage(
+                call_id=call.call_id, status="succeeded", result={"ok": True}
+            )
+        )
+        with pytest.raises(asyncio.CancelledError):
+            await asyncio.wait_for(task, 2)
+        assert pending.task is not None and pending.task.done()
+        assert not service._proposals and not service._channels
+        assert all(row["status"] == "expired" for row in _leases(engine))
+
+
+async def test_failed_authority_during_lease_issue_does_not_join_own_parent(
+    session: GraphSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    with use_session(session):
+        service, connection, engine, sent, tool = await _setup(session)
+        original = service.issue_lease
+
+        async def revoked_session(_binding: Any) -> bool:
+            return False
+
+        async def revoked_issue(request: Any) -> Any:
+            monkeypatch.setattr(service, "_session_revalidator", revoked_session)
+            return await original(request)
+
+        monkeypatch.setattr(service, "issue_lease", revoked_issue)
+        task = asyncio.create_task(_propose(service, _request(session, tool), session))
+        await _wait_for_messages(sent, 1)
+        pending = service._proposals[sent[0].proposal_id]
+        await connection.receive(_response(sent[0]))
+        with pytest.raises(asyncio.CancelledError):
+            await asyncio.wait_for(task, 2)
+        assert pending.task is not None and pending.task.done()
+        assert not service._proposals and not service._channels and not _leases(engine)
+        assert not any(message.type == "control.call" for message in sent)

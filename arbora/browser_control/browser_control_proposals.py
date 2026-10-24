@@ -267,6 +267,9 @@ class BrowserProposalMixin(BrowserControlMixinState):
     async def _withdraw_proposal(
         self, pending: PendingBrowserProposal, reason: str
     ) -> None:
+        # Authority checks and cleanup run in execution child tasks. They must
+        # withdraw admission without cancelling/joining the parent awaiting them.
+        within_execution = accepted_browser_proposal() is pending
         async with self._lock:
             first = not pending.closed
             task = pending.task
@@ -277,11 +280,11 @@ class BrowserProposalMixin(BrowserControlMixinState):
                     pending.unsubscribe()
                 if not pending.result.done():
                     pending.result.cancel()
-                if task is not None and not task.done():
+                if task is not None and not task.done() and not within_execution:
                     task.cancel()
-        # Every caller joins the same execution cleanup, including the requester
+        # External callers join the same execution cleanup, including the requester
         # awakened by cancellation from an origin-close callback.
-        if task is not None:
+        if task is not None and not within_execution:
             await asyncio.gather(task, return_exceptions=True)
         if not first:
             return

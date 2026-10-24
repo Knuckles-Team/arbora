@@ -152,7 +152,11 @@ async def test_a2a_durable_cancel_revokes_real_pending_native_call(
         captured.append(origin)
         current = asyncio.current_task()
         assert current is not None
-        unsubscribe = origin.subscribe_close(current.cancel)
+
+        def cancel_current() -> None:
+            current.cancel()
+
+        unsubscribe = origin.subscribe_close(cancel_current)
         ready.set()
         try:
             await asyncio.Event().wait()
