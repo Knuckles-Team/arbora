@@ -316,7 +316,8 @@ jobs:
           # The static architecture and import-scan tests run on every pull
           # request whatever the diff touches (scripts/pr_static_scope.py);
           # the mapped subset only narrows the rest.
-          mapfile -t static_tests < <(python3 scripts/pr_static_scope.py)
+          python3 scripts/pr_static_scope.py > "$RUNNER_TEMP/pr-static-tests.txt"
+          mapfile -t static_tests < "$RUNNER_TEMP/pr-static-tests.txt"
           if [ "$SCOPE" = "FULL" ]; then
             echo "pr-test-scope: unmapped source change (or an unreadable diff); running the full suite"
             scripts/local_hook.sh pytest
