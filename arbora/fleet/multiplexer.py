@@ -790,6 +790,29 @@ def _bounded_tool_annotations(tool: _typing.Any) -> dict | None:
     return dumped
 
 
+def _live_tool_entry(original: str, tobj: _typing.Any) -> dict[str, _typing.Any]:
+    """One mounted tool's probe row: name, description, schema, meta, annotations.
+
+    The catalog classifies a tool's effect from its annotations; a live-child
+    probe without them turns every read-only tool into a write, so a governed
+    READ call is refused.
+    """
+    if tobj is None:
+        return {"name": original, "description": "", "inputSchema": {}}
+    entry: dict[str, _typing.Any] = {
+        "name": original,
+        "description": tobj.description or "",
+        "inputSchema": tobj.input_schema or {},
+    }
+    meta = getattr(tobj, "meta", None)
+    if meta:
+        entry["meta"] = meta
+    annotations = _bounded_tool_annotations(tobj)
+    if annotations is not None:
+        entry["annotations"] = annotations
+    return entry
+
+
 def _bounded_tool_schemas(tool: _typing.Any) -> dict[str, _typing.Any]:
     """Project typed schemas before the catalog's shared size/depth validation."""
     input_schema = getattr(tool, "input_schema", None) or {}
@@ -5165,22 +5188,7 @@ class MCPMultiplexer:
         for prefixed, (srv, original) in self.tool_to_server.items():
             if srv != server_name:
                 continue
-            tobj = self.tool_object(prefixed)
-            entry: dict[str, _typing.Any] = {
-                "name": original,
-                "description": (tobj.description if tobj else "") or "",
-                "inputSchema": (tobj.input_schema if tobj else {}) or {},
-            }
-            meta = getattr(tobj, "meta", None) if tobj else None
-            if meta:
-                entry["meta"] = meta
-            # The catalog classifies a tool's effect from its annotations; a
-            # live-child probe without them turns every read-only tool into
-            # a write, so a governed READ call is refused.
-            annotations = _bounded_tool_annotations(tobj) if tobj else None
-            if annotations is not None:
-                entry["annotations"] = annotations
-            out.append(entry)
+            out.append(_live_tool_entry(original, self.tool_object(prefixed)))
         return out
 
     def _cache_probe(self, server_name: str, info: dict) -> dict:
