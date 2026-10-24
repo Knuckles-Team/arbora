@@ -698,15 +698,17 @@ class ActionPolicy:
         rules.sort(key=lambda r: -r.priority)
         return rules
 
+    def _rule_inputs(self, source: Any) -> tuple[dict[str, Any], list[ActionRule]]:
+        """Select live policy inputs or the already captured qualified snapshot."""
+        if source is None:
+            return self._load_file_policy(), self._kg_rules()
+        return source.inputs()
+
     def _match(
         self, request: ActionRequest, *, source: Any = None
     ) -> tuple[ActionRule, dict[str, Any]]:
         """First matching rule — KG overrides first, then file order — plus defaults."""
-        data, graph_rules = (
-            (self._load_file_policy(), self._kg_rules())
-            if source is None
-            else source.inputs()
-        )
+        data, graph_rules = self._rule_inputs(source)
         raw_defaults = data.get("defaults")
         defaults: dict[str, Any] = (
             raw_defaults if isinstance(raw_defaults, dict) else {}
@@ -1057,6 +1059,18 @@ class ActionPolicy:
             return self._hold(base, "tier requires human approval")
         return None
 
+    def _verify_selected_source(self, request: ActionRequest, source: Any):
+        """Preserve the legacy verifier call unless a snapshot was selected."""
+        if source is None:
+            return self._verify(request)
+        return self._verify(request, source=source)
+
+    def _selected_irreversibility_aversion(self, source: Any) -> bool:
+        """Read the selected setting only when evaluation reaches this guard."""
+        if source is None:
+            return self._irreversibility_aversion
+        return source.irreversibility_aversion
+
     def _decide_inner(
         self, request: ActionRequest, *, source: Any = None
     ) -> ActionDecision:
@@ -1065,11 +1079,7 @@ class ActionPolicy:
         # role/schema/precondition/reference checks is denied outright (fail-closed),
         # regardless of what tier its kind/target would otherwise match. This is the
         # enforced half of the gate — the caller's action genuinely does not execute.
-        verify = (
-            self._verify(request)
-            if source is None
-            else self._verify(request, source=source)
-        )
+        verify = self._verify_selected_source(request, source)
         if not verify.ok:
             return ActionDecision(
                 decision=DECISION_DENY,
@@ -1115,11 +1125,7 @@ class ActionPolicy:
         # CONCEPT:AU-OS.safety.irreversibility-aversion — irreversibility aversion (opt-in). An irreversible
         # action that would otherwise auto-execute is routed to a human, since
         # policy-gating alone is brittle as autonomy rises.
-        aversion = (
-            self._irreversibility_aversion
-            if source is None
-            else source.irreversibility_aversion
-        )
+        aversion = self._selected_irreversibility_aversion(source)
         if aversion:
             if is_irreversible(request.kind):
                 return self._hold(

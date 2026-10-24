@@ -40,3 +40,8 @@ Governing [spec](spec.md) and [plan](plan.md).
 - [ ] **ARBORA-RELEASE-R003:** Exit-criteria matrix maps readiness to tests
 - [ ] **ARBORA-RELEASE-R003.1:** Remaining scope of ARBORA-RELEASE-R003 (slice .1): Exit-criteria matrix maps readiness to tests
 - [ ] **ARBORA-RELEASE-R003.2:** Remaining scope of ARBORA-RELEASE-R003 (slice .2): Exit-criteria matrix maps readiness to tests
+
+## Explicit child interaction
+
+- [ ] `ARBORA-RELEASE-R003.4.12` — Bind idempotent active-child input to real owner targets, lifecycle and durable delivery receipts; retain unavailable state until upstream support exists.
+- [ ] `ARBORA-RELEASE-R003.4.13` — Admit completed-child continuation with authorized history, fresh turn budgets and installed end-to-end evidence.
