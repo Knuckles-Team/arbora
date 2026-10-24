@@ -8,12 +8,12 @@ Governing [spec](spec.md). Evidence remains PENDING.
 | T-RL-02 | RL-01 | Negative | Mutable tag, malformed digest, bad signature, duplicate component | Refusal before apply with stable error code and no target mutation. |
 | T-RL-03 | RL-02 | Unit | Engine → Arbora → WebUI and optional connector edges | Stable topological order; disabled optional component excluded. |
 | T-RL-04 | RL-02 | Negative | Missing required predecessor or cycle | Refusal identifies offending edge; no partial rollout. |
-| T-RL-05 | RL-03 | Integration | Disposable target with matching predecessor digests and probes | Each dependent starts only after predecessor readiness and function pass. |
+| T-RL-05 | RL-03 | Integration | Disposable target with matching predecessor digests and probes. | Each dependent starts only after predecessor readiness and function pass. |
 | T-RL-06 | RL-03 | Negative | Stale image, incompatible API, failing function or timeout | Dependent not started; exact stage failure receipt. |
 | T-RL-07 | RL-04 | Served | Installed wheel, engine binary, local identity fixture, MCP/REST | Local canary and separate authenticated/denied served receipts tied to candidate. |
 | T-RL-08 | RL-05 | Fault injection | Later stage fails after prior stage passes | Scheduling stops. Reversible previous digest restored and reprobed, or recovery pending. |
 | T-RL-09 | RL-06 | CI and release | Clean checkout fixture and hosted release job | PR job needs no private service. Release job attaches digest, integration and consumer evidence. |
-| T-RL-10 | RL-07 | Contract | Candidate with fixture secret references and tokens | Receipt has digests, stage order, time and public evidence URL, with no credential or private endpoint. |
+| T-RL-10 | RL-07 | Contract | Candidate with fixture secret references and tokens. | Receipt has digests, stage order, time and public evidence URL. It has no credential or private endpoint. |
 | T-RL-11 | ARBORA-RELEASE-R003.9 | Served | Two-connector fleet fixture: one healthy connector and one stale pack | One PASS and one FAIL with cause `(d) pack stale`. The promotion step refuses. |
 | T-RL-12 | ARBORA-RELEASE-R003.4.6 | Served | Mixed plan, then a call against an old pin | Calls reach the engine unchanged. Engine refusals pass through. The old pin refuses `UNAVAILABLE`. |
 | T-RL-13 | ARBORA-RELEASE-R003.4.5 | Served | A permitted tool, an unscoped tool and a replayed record | The pipeline runs under caller authority. Refusal is typed. The replay repeats no effect. Each call has one audit event. |
@@ -34,3 +34,8 @@ body corruption or reordering even when the declared digest matches the engine.
 The startup publisher sends the roundtripped body through the public generated
 AgentComponent adapter and retains only the returned definition digest. The
 contract test records the transport. It does not prove durable native storage.
+
+## Child interaction acceptance (pending)
+
+- `ARBORA-RELEASE-R003.4.12`: exercise the served invoke path with exact child targeting, duplicate keys, conflicting content, stale lifecycle, completion/cancellation race and queued-versus-applied receipts. Observe one safe-boundary delivery, no new root, no authority widening and no budget reset.
+- `ARBORA-RELEASE-R003.4.13`: continue a completed grandchild through installed owner history and AU; assert one new run, explicit predecessor, correct child-only history, fresh turn counters and enclosing ceilings. A fake context ID, foreign child, failed/cancelled state, unsupported checkpoint or mismatched history revision produces no model/tool effect.

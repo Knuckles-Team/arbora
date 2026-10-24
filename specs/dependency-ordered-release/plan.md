@@ -2,11 +2,11 @@
 
 ## Existing system and reuse
 
-`arbora.deployment.genesis_environments` already validates closed release inputs and rejects non-digest-pinned production profiles. `profile_summary` provides a reviewable, secret-free representation. `arbora.deployment.release_canary` checks the installed Arbora entrypoints, engine binary and numeric kernel without starting services. `arbora.deployment.production_ops` owns bounded production operations. `arbora.deployment.self_deploy` has dry-run, health-gated and rollback-advice semantics. `doctor_certification` checks signed release manifest and compatibility inputs. Reuse these owners; do not introduce a second release manager or copy the pipeline's image builder into Arbora. `arbora.deployment.release_candidate` now fills the candidate-manifest and dependency-ordering part of that gap: typed, closed `Artifact`/`Stage`/`Profile`/`Candidate` models, a trusted-digest reader (`read_candidate`), and a deterministic topological `_order` that refuses a cycle, an unknown or disabled predecessor, and an incompatible API/schema edge. The remaining gap is stage-by-stage served proof (apply, readiness/functional probes) and rollback.
+`arbora.deployment.genesis_environments` already validates closed release inputs and rejects non-digest-pinned production profiles. `profile_summary` provides a reviewable, secret-free representation. `arbora.deployment.release_canary` checks the installed Arbora entrypoints, engine binary and numeric kernel without starting services. `arbora.deployment.production_ops` owns bounded production operations. `arbora.deployment.self_deploy` has dry-run, health-gated and rollback-advice semantics. `doctor_certification` checks signed release manifest and compatibility inputs. Reuse these owners; do not introduce a second release manager or copy the pipeline's image builder into Arbora. `arbora.deployment.release_candidate` now fills the candidate-manifest and dependency-ordering part of that gap. It provides typed, closed `Artifact`/`Stage`/`Profile`/`Candidate` models and a trusted-digest reader (`read_candidate`). Its deterministic topological `_order` refuses a cycle, an unknown or disabled predecessor, and an incompatible API/schema edge. The remaining gap is stage-by-stage served proof (apply, readiness/functional probes) and rollback.
 
 ## Candidate manifest and compatibility
 
-A versioned candidate contains `candidate_id`, `created_at`, `source_revisions`, `artifacts`, `profiles`, `compatibility`, `stages`, and `evidence`. Each artifact has a stable component ID, source repository and full commit SHA, immutable `sha256` image or wheel digest, and public build receipt. A stage names required predecessors and a probe contract. A Arbora profile refers to the Arbora artifact digest and its exact profile digest. The manifest signature or trusted provenance is validated before reading deployment inputs. Canonicalize and hash the manifest; record the digest in each stage receipt. Reject duplicate IDs, cycles, missing required edges, unsupported schema, omitted digests, tag-only references and incompatible API/schema ranges. Do not accept a same-tag image as equivalent to a digest.
+A versioned candidate contains `candidate_id`, `created_at`, `source_revisions`, `artifacts`, `profiles`, `compatibility`, `stages`, and `evidence`. Each artifact has a stable component ID, source repository and full commit SHA. It has an immutable `sha256` image or wheel digest and public build receipt. A stage names required predecessors and a probe contract. A Arbora profile refers to the Arbora artifact digest and its exact profile digest. The manifest signature or trusted provenance is validated before reading deployment inputs. Canonicalize and hash the manifest; record the digest in each stage receipt. Reject duplicate IDs, cycles, missing required edges, unsupported schema, omitted digests, tag-only references and incompatible API/schema ranges. Do not accept a same-tag image as equivalent to a digest.
 
 The pipeline owner produces artifact attestations and the dependency metadata; Arbora consumes and verifies them. If another owner has not published an exact compatible receipt, Arbora reports `dependency_unqualified` and leaves the current release active. A local fixture can supply test signatures and fake digests without accessing any external registry.
 
@@ -75,3 +75,41 @@ Regenerate the existing pin through its owning generator. Do not change the
 engine codec, invent a digest or substitute another body at serving time.
 Roundtrip and public-initializer checks qualify this bounded repair, not full
 run execution, durable usage, deployment or release acceptance.
+
+### 2026-10-24: explicit child interaction after read-only exploration
+
+`ARBORA-RELEASE-R003.4.12` and `.13` extend the served plan-run owner without
+claiming the existing flat `agents.plan_run` creates child conversations. Current
+`agents.run` admits a root; A2A `contextId` alone is not a child mailbox and
+`ARBORA-A2A-R001.3` does not establish completed history hydration. No client may
+retarget those calls using a trace or local step ID.
+
+The admitted action names its mode: message active child or continue completed child.
+It carries the root owner, owner-issued target, lifecycle/history revision, content and idempotency key. The public target is a binding, not an authority
+claim: admission re-resolves caller/tenant ownership and current lifecycle.
+Reuse native WorkItem/session/history and keyed receipt mechanisms; Arbora holds
+no mailbox, history store or authority table. Installed owners must supply the binding, atomic lifecycle check and durable receipt.
+Otherwise the capability is false and the action refuses. This document does not assign or implement EG work.
+
+Active input is queued for an AU model-turn boundary, never injected into an
+in-flight request. Completion or cancellation before application makes the
+receipt terminal and not applied; it does not spawn anything. Replays return the
+same durable receipt, including queued or uncertain outcomes. The receipt binds
+the exact action, message ID, target, accepted revision, outcome and applied event
+when known, without echoing private content. An acknowledgement is not proof of
+model consumption. Existing shared budgets and drain-before-terminal rules apply.
+
+Continuation is a new execution from an explicitly completed child's permitted
+history, not resumption of a running or uncertain checkpoint. Its receipt names
+both predecessor and new execution/conversation bindings. AU
+`AU-BOUNDARY-R043.16` consumes only host-selected history; existing
+`AU-BOUNDARY-R043.8` and `.9.2.2` remain required for genuine checkpoint support.
+Fresh turn limits never reset enclosing session/parent ceilings. Unsupported
+history refuses; a new blank root is never substituted.
+
+Delivery order: qualify read-only OPS-R021.4.8/.9 first; then installed child
+identity/history/receipt support, AU safe-boundary input and continuation;
+finally a served root-child-grandchild acceptance with duplicate delivery,
+completion/cancellation races, foreign targets and enforced budget ceilings.
+Each client consumes the same results. No new operation or authority is
+implemented by this spec-only change; all new rows remain SPECIFIED.
