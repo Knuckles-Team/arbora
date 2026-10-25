@@ -12,7 +12,7 @@ Arbora supports Python 3.12 through 3.14.
 python -m pip install arbora
 ```
 
-Add the optional Agent WebUI host integration when the same process will serve
+Add the optional Overstory host integration when the same process will serve
 the UI:
 
 ```bash

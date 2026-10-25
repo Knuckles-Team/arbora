@@ -1,7 +1,7 @@
 # Start Arbora
 
 Arbora is the process the operator runs when clients need the Knuckles platform over MCP,
-REST, A2A, or Agent WebUI. The `tiny` profile provides the smallest complete
+REST, A2A, or Overstory. The `tiny` profile provides the smallest complete
 local composition and keeps its generated configuration in the standard XDG
 location.
 
@@ -40,7 +40,7 @@ For another MCP client, configure the same launcher directly:
 arbora --transport stdio
 ```
 
-When Arbora hosts HTTP routes or Agent WebUI, those surfaces use the same
+When Arbora hosts HTTP routes or Overstory, those surfaces use the same
 composed services rather than starting another Arbora instance.
 
 Continue with [Deployment and configuration](deployment.md) for authenticated
