@@ -123,6 +123,7 @@ class HostedACPAgent:
         client_info: schema.Implementation | None = None,
         **kwargs: Any,
     ) -> schema.InitializeResponse:
+        del client_info  # Client display metadata conveys no authority or capability.
         if self._initialized:
             raise acp.RequestError.invalid_request({"reason": "already_initialized"})
         if self._principal() is None:
