@@ -409,9 +409,9 @@ class FleetOnboarding:
         from arbora.deployment.semantic_provisioning import _bind_session_graph
         from arbora.fleet.catalog_graph import write_catalog
 
-        graph = str(self.session.graph)
         report = self.surfaces.setdefault(endpoint.name, {})
         try:
+            graph = str(self.session.graph)
             with _bind_session_graph(graph):
                 count = await write_catalog(
                     self.tenant_client, graph, endpoint.name, pack
