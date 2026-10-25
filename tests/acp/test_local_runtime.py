@@ -180,6 +180,7 @@ async def test_real_local_composition_success_history_cancel_and_close(tmp_path)
                     session_id=session.session_id, prompt=[acp.text_block("hello")]
                 )
             ).stop_reason == "end_turn"
+            await client.wait_for_text("local answer")
             assert "".join(u.content.text for u in client.updates) == "local answer"
             client.updates.clear()
             assert (
@@ -187,6 +188,7 @@ async def test_real_local_composition_success_history_cancel_and_close(tmp_path)
                     session_id=session.session_id, prompt=[acp.text_block("history")]
                 )
             ).stop_reason == "end_turn"
+            await client.wait_for_text(json.dumps(["hello", "history"]))
             assert json.loads("".join(u.content.text for u in client.updates)) == [
                 "hello",
                 "history",
@@ -204,6 +206,7 @@ async def test_real_local_composition_success_history_cancel_and_close(tmp_path)
             await conn.prompt(
                 session_id=session.session_id, prompt=[acp.text_block("history")]
             )
+            await client.wait_for_text(json.dumps(["hello", "history", "history"]))
             assert json.loads("".join(u.content.text for u in client.updates)) == [
                 "hello",
                 "history",
