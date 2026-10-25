@@ -192,10 +192,10 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "46c93f5103b1",
+        "614795d10268",
         "6d39a589385a",
         "af8ceeb6941a",
-        "c92fbf05fbb5",
-        "f2224467f07c"
+        "c92fbf05fbb5"
       ],
       "verified_by": [
         "tests/api/test_task_plan_schema_pin.py:143",
