@@ -174,6 +174,7 @@
     "ARBORA-FLEET-R041.15",
     "ARBORA-FLEET-R041.16",
     "ARBORA-FLEET-R041.17",
+    "ARBORA-FLEET-R041.18",
     "ARBORA-FLEET-R042",
     "ARBORA-FLEET-R042.1",
     "ARBORA-FLEET-R042.2",
@@ -1760,7 +1761,8 @@
         "ARBORA-FLEET-R041.14",
         "ARBORA-FLEET-R041.15",
         "ARBORA-FLEET-R041.16",
-        "ARBORA-FLEET-R041.17"
+        "ARBORA-FLEET-R041.17",
+        "ARBORA-FLEET-R041.18"
       ]
     },
     {
@@ -1811,8 +1813,8 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [
-        "tests/fleet/test_handshake_onboard.py:142",
-        "tests/fleet/test_handshake_onboard.py:318"
+        "tests/fleet/test_handshake_onboard.py:143",
+        "tests/fleet/test_handshake_onboard.py:319"
       ]
     },
     {
@@ -1823,8 +1825,8 @@
         "dab2f894b5d6"
       ],
       "verified_by": [
-        "tests/fleet/test_handshake_onboard.py:162",
-        "tests/fleet/test_handshake_onboard.py:247"
+        "tests/fleet/test_handshake_onboard.py:163",
+        "tests/fleet/test_handshake_onboard.py:248"
       ]
     },
     {
@@ -1833,9 +1835,9 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [
-        "tests/fleet/test_handshake_onboard.py:264",
-        "tests/fleet/test_handshake_onboard.py:298",
-        "tests/fleet/test_handshake_onboard.py:332"
+        "tests/fleet/test_handshake_onboard.py:265",
+        "tests/fleet/test_handshake_onboard.py:299",
+        "tests/fleet/test_handshake_onboard.py:333"
       ]
     },
     {
@@ -1846,7 +1848,7 @@
         "a31aba1d54a2"
       ],
       "verified_by": [
-        "tests/fleet/test_handshake_onboard.py:343"
+        "tests/fleet/test_handshake_onboard.py:344"
       ]
     },
     {
@@ -1900,8 +1902,8 @@
         "fd0f5f810481"
       ],
       "verified_by": [
-        "tests/fleet/test_handshake_onboard.py:163",
-        "tests/fleet/test_handshake_onboard.py:216"
+        "tests/fleet/test_handshake_onboard.py:164",
+        "tests/fleet/test_handshake_onboard.py:217"
       ]
     },
     {
@@ -1945,6 +1947,17 @@
         "tests/fleet/test_catalog_graph.py:118",
         "tests/fleet/test_catalog_graph.py:133",
         "tests/fleet/test_catalog_graph.py:89"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R041.18",
+      "title": "Off-loop passes own temporary EG transports",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "58eace7440eb"
+      ],
+      "verified_by": [
+        "tests/fleet/test_handshake_onboard.py:376"
       ]
     },
     {
