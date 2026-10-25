@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import json
 import time
+from contextlib import asynccontextmanager
 from dataclasses import replace
 from types import SimpleNamespace
 from typing import Any
@@ -25,6 +26,7 @@ from arbora.api.contracts.session import (  # noqa: E402
     resolve_session,
     use_session,
 )
+from arbora.epistemic import ClientContext  # noqa: E402
 from arbora.mcp_server import served_engine, served_invocation  # noqa: E402
 from arbora.security.actor_context import (  # noqa: E402
     ActorContext,
@@ -80,11 +82,18 @@ class _Pool:
         self.sent: list[dict[str, Any]] = []
         self.sessions: list[GraphSession] = []
 
-    async def connected_client(self, tenant: str, graph: str) -> Any:
+    async def connected_client(self, context: ClientContext, graph: str) -> Any:
         bound = resolve_session(graph=graph)
-        assert bound.tenant == tenant
+        assert bound.tenant == context.tenant
         self.sessions.append(bound)
         return self
+
+    @asynccontextmanager
+    async def bind(self, context: ClientContext, graph: str):
+        bound = resolve_session(graph=graph)
+        assert bound.tenant == context.tenant
+        self.sessions.append(bound)
+        yield self
 
     async def _send(self, method: str, params: Any, *_: Any, **__: Any) -> Any:
         assert method == "AgentComponent"
@@ -118,7 +127,19 @@ def fixture(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> Any:
     sessions = [_session()]
     monkeypatch.setattr(served_engine, "ServedEngine", lambda _pool: audit)
     bindings = served_invocation._with_task_plan_schema(
-        {}, pool, "tenant-a", lambda tenant: tenant, lambda: sessions[0]
+        {},
+        pool,
+        "tenant-a",
+        lambda tenant: ClientContext(
+            principal=str(sessions[0].actor.actor_id),
+            tenant=tenant,
+            audience=str(sessions[0].audience),
+            agent_id=str(sessions[0].actor.actor_id),
+            roles=tuple(str(role) for role in sessions[0].actor.roles),
+            scopes=tuple(str(scope) for scope in sessions[0].scopes),
+            policy_version=str(sessions[0].policy_version),
+        ),
+        lambda: sessions[0],
     )
     assert bindings is not None
     yield SimpleNamespace(
