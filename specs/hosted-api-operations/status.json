@@ -1018,9 +1018,20 @@
     {
       "id": "ARBORA-OPS-R021.4.5",
       "title": "Per-run operation",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "2e9f4b8bc465",
+        "663cc8cad940",
+        "9f41ea82883d",
+        "f4ae1be895a1"
+      ],
+      "verified_by": [
+        "tests/a2a/test_native_run_publication.py:16",
+        "tests/api/test_runs_ops.py:23",
+        "tests/mcp_server/test_current_plan_reader.py:22",
+        "tests/mcp_server/test_task_plan.py:232",
+        "tests/mcp_server/test_task_plan.py:239"
+      ],
       "rollup_of": [
         "ARBORA-OPS-R021.4.5.1"
       ]
@@ -1028,13 +1039,19 @@
     {
       "id": "ARBORA-OPS-R021.4.5.1",
       "title": "Current-plan read boundary",
-      "delivery_state": "SPECIFIED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "2e9f4b8bc465",
-        "663cc8cad940"
+        "663cc8cad940",
+        "9f41ea82883d",
+        "f4ae1be895a1"
       ],
       "verified_by": [
-        "tests/api/test_runs_ops.py:23"
+        "tests/a2a/test_native_run_publication.py:16",
+        "tests/api/test_runs_ops.py:23",
+        "tests/mcp_server/test_current_plan_reader.py:22",
+        "tests/mcp_server/test_task_plan.py:232",
+        "tests/mcp_server/test_task_plan.py:239"
       ],
       "rollup_of": [
         "ARBORA-OPS-R021.4.5.1.1",
@@ -1055,9 +1072,17 @@
     {
       "id": "ARBORA-OPS-R021.4.5.1.2",
       "title": "Compose owner-bound A2A scaffold publication",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "9f41ea82883d"
+      ],
+      "verified_by": [
+        "tests/a2a/test_native_run_publication.py:16",
+        "tests/mcp_server/test_task_plan.py:232",
+        "tests/mcp_server/test_task_plan.py:239",
+        "tests/mcp_server/test_task_plan_runtime.py:413",
+        "tests/mcp_server/test_task_plan_runtime.py:492"
+      ]
     },
     {
       "id": "ARBORA-OPS-R021.4.6",
