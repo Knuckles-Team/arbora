@@ -344,6 +344,17 @@ It preserves the existing replay v1 cases in `tests/api/test_run_replay.py`.
 These tests use injected native responses and do not qualify a native service,
 spawned children, transcript access, interaction or the full parent requirement.
 
+### Trusted scaffold configuration (ARBORA-OPS-R021.4.5.1.2)
+
+The existing operator-owned task-plan configuration accepts only
+`plan_scaffold: "on"` or `plan_scaffold: "off"`; omission means off.
+Client metadata and model proposals cannot enable scaffolds.
+Tests run the actual AU callback and update_plan tool for trusted on.
+Trusted off must leave the publisher unused. Other harness settings remain unchanged.
+Real native acceptance must observe the initial scaffold and tool-driven revisions.
+It must retain the executable TaskPlan and exact owner/fence/expiry binding.
+Record disabled-mode results separately; revision zero alone does not prove scaffold publication.
+
 R021.4.8.2 retains the installed root-child-grandchild and snapshot/update
 reconciliation matrix above. No test in the flat slice claims this acceptance.
 

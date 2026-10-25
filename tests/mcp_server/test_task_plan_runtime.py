@@ -408,3 +408,121 @@ async def test_cancellation_revokes_scope_without_dispatching_children(chain, ph
         contexts[0].run(
             agent_runs.current_native_run, RunRequest(task="question", run_id="run")
         )
+
+
+@pytest.mark.spec("ARBORA-OPS-R021.4.5.1.2")
+@pytest.mark.parametrize("setting", ["on", "off"])
+async def test_trusted_scaffold_option_reaches_actual_au_callback(
+    chain, setting, monkeypatch
+):
+    from contextlib import asynccontextmanager
+
+    host, state, calls = chain
+    host = replace(
+        host, task_plan_config=replace(host.task_plan_config, plan_scaffold=setting)
+    )
+    published = []
+
+    def scaffold_model(messages, info):
+        from pydantic_ai.messages import ToolCallPart
+
+        calls.append((messages, info))
+        if len(calls) == 1:
+            assert not info.function_tools
+            return ModelResponse(parts=[TextPart(json.dumps(PROPOSAL))])
+        assert [tool.name for tool in info.function_tools] == (
+            ["update_plan"] if setting == "on" else []
+        )
+        if setting == "on" and len(calls) == 2:
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "update_plan",
+                        {"items": [{"text": "inspect", "status": "done"}]},
+                        tool_call_id="plan-update",
+                    )
+                ]
+            )
+        return ModelResponse(parts=[TextPart("done")])
+
+    model = FunctionModel(scaffold_model)
+    monkeypatch.setattr(agent_runs, "resolve_model", lambda name: model)
+    host_ports.register_model_provider(lambda name: model)
+
+    class Publisher:
+        async def publish(self, revision, items):
+            published.append((revision, items))
+
+    @asynccontextmanager
+    async def factory(request):
+        assert request.metadata["session"] is SESSION
+        assert state["published"][0]["snapshot"]["task_plan"]["plan_digest"] == "digest"
+        yield Publisher()
+
+    host_ports.register_optional_scaffold_publication_factory(factory)
+    try:
+        with agent_runs.native_run_scope(
+            run_id="run",
+            task_id="task",
+            context_id="context",
+            work_item_id="work",
+            session=SESSION,
+            claim=CLAIM,
+            owner_graph="owner-graph",
+            hosted_invocation=host,
+        ):
+            result = await agent_runs.AgentRunPort().execute_agent(
+                AgentExecutionRequest(
+                    agent_name="helper", task="question", run_id="run"
+                ),
+                session=SESSION,
+            )
+        assert result.output == "done"
+        assert len(calls) == (3 if setting == "on" else 2)
+        assert [revision for revision, _ in published] == (
+            [0, 1] if setting == "on" else []
+        )
+        if setting == "on":
+            assert published[0][1] == ()
+            assert published[1][1][0].text == "inspect"
+    finally:
+        host_ports.register_optional_scaffold_publication_factory(None)
+
+
+@pytest.mark.spec("ARBORA-OPS-R021.4.5.1.2")
+@pytest.mark.parametrize("setting, untrusted", [("off", "on"), ("on", "off")])
+async def test_only_operator_scaffold_field_changes_base_harness(
+    chain, setting, untrusted
+):
+    from agent_utilities.runtime import default_run_plan
+
+    host, _, _ = chain
+    host = replace(
+        host, task_plan_config=replace(host.task_plan_config, plan_scaffold=setting)
+    )
+    request = RunRequest(
+        task="question", run_id="run", metadata={"plan_scaffold": untrusted}
+    )
+    base = default_run_plan(request, {"agent_model": "test"})
+    base = replace(
+        base,
+        harness=replace(
+            base.harness,
+            retries=2,
+            response_format="json",
+            model_settings={"temperature": 0.123},
+        ),
+    )
+    with agent_runs.native_run_scope(
+        run_id="run",
+        task_id="task",
+        context_id="context",
+        work_item_id="work",
+        session=SESSION,
+        claim=CLAIM,
+        owner_graph="owner-graph",
+        hosted_invocation=host,
+    ):
+        owner = agent_runs.current_native_run(request)
+        plan = await task_plan_runtime.admitted_run_plan(request, base, owner)
+    assert plan.harness == replace(base.harness, plan_scaffold=setting)
