@@ -82,7 +82,7 @@ then use the task-oriented references:
 | Axil Desk | Desktop GUI | Uses the governed Arbora gateway for its primary panels. |
 | Messaging channels | Chat and voice entrypoints | Arbora hosts and supervises them; agent-utilities owns adapters and routing. |
 | **Arbora** | MCP, REST, A2A, identity policy, fleet supervision | The running process and public door. |
-| [Trellis](https://knuckles-team.github.io/agent-utilities/) | In-run execution harness | Arbora supplies run plans through typed harness contracts. |
+| [Meristem](https://knuckles-team.github.io/agent-utilities/) | In-run execution harness | Arbora supplies run plans through typed harness contracts. |
 | [epistemic-graph](https://knuckles-team.github.io/epistemic-graph/) | Durable graph, SQL, RDF, vector, time, reasoning, and provenance | Arbora uses its generated client contracts. |
 | [Scion SDK](https://knuckles-team.github.io/agent-connector-sdk/) | Connector servers, source synchronization, and governed effects | Arbora discovers and routes SDK-based connector services. |
 

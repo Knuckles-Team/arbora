@@ -57,7 +57,7 @@
     </div>
     <div class="site-ownership__item">
       <span class="site-ownership__label">Arbora delegates</span>
-      <span class="site-ownership__value">In-run execution to Trellis, durable state and reasoning to epistemic-graph, source effects to connector services, and presentation to Overstory.</span>
+      <span class="site-ownership__value">In-run execution to Meristem, durable state and reasoning to epistemic-graph, source effects to connector services, and presentation to Overstory.</span>
     </div>
   </div>
 </div>
@@ -92,7 +92,7 @@ explicitly.
 | If the operator must… | Go to… |
 |---|---|
 | Run MCP, REST, A2A, WebUI, or fleet supervision | **Arbora** — the operator are here |
-| Build agents, workflows, evaluations, or skills | [Trellis](https://knuckles-team.github.io/agent-utilities/) |
+| Build agents, workflows, evaluations, or skills | [Meristem](https://knuckles-team.github.io/agent-utilities/) |
 | Store, query, reason over, or prove durable knowledge | [epistemic-graph](https://knuckles-team.github.io/epistemic-graph/) |
 | Build and certify a source connector | [Scion SDK](https://knuckles-team.github.io/agent-connector-sdk/) |
 | Use the platform in a browser | [Overstory](https://knuckles-team.github.io/agent-webui/) |
