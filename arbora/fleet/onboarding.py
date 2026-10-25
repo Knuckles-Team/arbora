@@ -654,9 +654,18 @@ class FleetOnboardingService:
 
     def _run_pass_safely(self) -> None:
         try:
-            asyncio.run(self.run_pass())
+            asyncio.run(self._run_pass_scoped())
         except Exception as exc:  # serving must outlive any onboarding fault
             logger.warning("fleet onboarding pass failed: %s", exc)
+
+    async def _run_pass_scoped(self) -> OnboardingReport:
+        from arbora.epistemic import temporary_client_scope
+
+        # The pass runs on a short-lived loop in this worker thread. Its EG
+        # transports are scoped to it, so they never displace the serving
+        # loop's pool clients or outlive the loop (ARBORA-FLEET-R041.18).
+        async with temporary_client_scope():
+            return await self.run_pass()
 
     def start(self) -> threading.Thread:
         thread = threading.Thread(
@@ -891,12 +900,19 @@ class HandshakeOnboarder:
     async def _pass(
         self, endpoint: FleetEndpoint, info: _Handshake, trigger: OnboardingTrigger
     ) -> str:
-        return await self.onboarding.handshake_pass(
-            endpoint,
-            auth=_child_auth(),
-            trigger=trigger,
-            server_version=info.server_version,
-        )
+        from arbora.epistemic import temporary_client_scope
+
+        # The pass runs on a fresh ``asyncio.run`` loop in this worker thread,
+        # not the serving loop. Its EG transports are scoped to that loop, so
+        # a pack-changing handshake never displaces, or fails on, the serving
+        # loop's live pool clients (ARBORA-FLEET-R041.18).
+        async with temporary_client_scope():
+            return await self.onboarding.handshake_pass(
+                endpoint,
+                auth=_child_auth(),
+                trigger=trigger,
+                server_version=info.server_version,
+            )
 
     def _record(
         self,

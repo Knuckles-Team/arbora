@@ -239,6 +239,7 @@ Preserve all existing R003 tasks and receipts. These added runtime cases have no
 - [ ] **ARBORA-FLEET-R041.15:** Read captured pack bodies from the SDK 0.5 archive section.
 - [ ] **ARBORA-FLEET-R041.16:** Serve connector pack status as a read (`fleet.packs.status`).
 - [x] **ARBORA-FLEET-R041.17:** Write the agent-library catalog nodes into EG on each onboarding pass.
+- [x] **ARBORA-FLEET-R041.18:** Run the off-loop onboarding passes under the temporary client scope.
 - [ ] **ARBORA-FLEET-R042:** arbora registers connector data resources as virtual-graph sources by policy (rollup).
 - [ ] **ARBORA-FLEET-R042.1:** Model.
 - [ ] **ARBORA-FLEET-R042.2:** Behavior.
