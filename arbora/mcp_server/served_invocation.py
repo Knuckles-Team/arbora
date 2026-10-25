@@ -23,6 +23,7 @@ import importlib.resources
 import json
 from collections.abc import AsyncIterator, Callable, Mapping
 from contextlib import asynccontextmanager
+from dataclasses import replace
 from functools import cache
 from pathlib import Path
 from typing import Any
@@ -390,10 +391,22 @@ def _with_task_plan_schema(
 
     async def publish(tenant: str, pin: Mapping[str, Any]) -> str:
         bound = session()
-        if current_session() is not None:
-            resolve_session(bound, graph=graph)
+        request = current_session()
+        if request is not None:
+            # HTTP/MCP admission binds the caller's verified request session,
+            # while schema publication deliberately uses the separately
+            # verified process authority.  Compare every authority field
+            # before switching context; only the request-local trace may
+            # differ between these two verified sessions.
+            resolve_session(
+                replace(bound, trace_context=request.trace_context), graph=graph
+            )
+            if request.tenant != tenant:
+                raise PermissionError(
+                    "schema publication cannot retarget its request tenant"
+                )
         with use_session(bound):
-            verified = resolve_session(bound, graph=graph)
+            verified = resolve_session(graph=graph)
             if verified.tenant != tenant:
                 raise PermissionError("schema publication cannot retarget its tenant")
             return await publisher(tenant, pin)
