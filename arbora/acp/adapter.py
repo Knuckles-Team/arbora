@@ -50,6 +50,39 @@ class _Session:
     output_bytes: int = 0
 
 
+def _validate_session_options(
+    cwd: str, additional_directories: list[str] | None, mcp_servers: list[Any] | None
+) -> None:
+    if not cwd.startswith("/") or "\\" in cwd or "\x00" in cwd:
+        raise acp.RequestError.invalid_params({"reason": "unsupported_workspace_path"})
+    if mcp_servers or additional_directories:
+        raise acp.RequestError.invalid_params(
+            {"reason": "unsupported_session_capability"}
+        )
+
+
+def _prompt_text(prompt: list[Any], max_bytes: int) -> str:
+    if not prompt or any(
+        not isinstance(part, schema.TextContentBlock) for part in prompt
+    ):
+        raise acp.RequestError.invalid_params({"reason": "text_prompt_required"})
+    text = "\n".join(part.text for part in prompt)
+    if len(text.encode()) > max_bytes:
+        raise acp.RequestError.invalid_params({"reason": "prompt_limit"})
+    return text
+
+
+def _normalize_read_path(params: dict[str, Any], root: str) -> None:
+    if "path" in params:
+        path = params["path"]
+        if not isinstance(path, str) or not path or "\\" in path or "\x00" in path:
+            raise ClientCapabilityRefused("permission_denied")
+        absolute = posixpath.normpath(posixpath.join(root, path))
+        if posixpath.commonpath((root, absolute)) != root:
+            raise ClientCapabilityRefused("permission_denied")
+        params["path"] = absolute
+
+
 class HostedACPAgent:
     """Connection-local protocol state, never an agent loop or durable store.
 
@@ -158,14 +191,7 @@ class HostedACPAgent:
     ) -> schema.NewSessionResponse:
         if not self._initialized or self._client is None or self._closing:
             raise acp.RequestError.invalid_request({"reason": "not_initialized"})
-        if not cwd.startswith("/") or "\\" in cwd or "\x00" in cwd:
-            raise acp.RequestError.invalid_params(
-                {"reason": "unsupported_workspace_path"}
-            )
-        if mcp_servers or additional_directories:
-            raise acp.RequestError.invalid_params(
-                {"reason": "unsupported_session_capability"}
-            )
+        _validate_session_options(cwd, additional_directories, mcp_servers)
         if len(self._sessions) >= self._max_sessions:
             raise acp.RequestError(-32001, "Session limit reached")
         try:
@@ -217,13 +243,7 @@ class HostedACPAgent:
         session = self._session(session_id, touch=False)
         if session.active is not None:
             raise acp.RequestError(-32001, "Session already running")
-        if not prompt or any(
-            not isinstance(part, schema.TextContentBlock) for part in prompt
-        ):
-            raise acp.RequestError.invalid_params({"reason": "text_prompt_required"})
-        text = "\n".join(part.text for part in prompt)
-        if len(text.encode()) > self._max_prompt_bytes:
-            raise acp.RequestError.invalid_params({"reason": "prompt_limit"})
+        text = _prompt_text(prompt, self._max_prompt_bytes)
         self._session(session_id)
         session.output_bytes = 0
         session.active = asyncio.create_task(self._run(session_id, session, text))
@@ -379,15 +399,7 @@ class _ReadTransport:
         agent = self._agent
         session = agent._session(self._session_id)
         params = dict(params)
-        if "path" in params:
-            path = params["path"]
-            root = session.admission.request.workspace_root
-            if not isinstance(path, str) or not path or "\\" in path or "\x00" in path:
-                raise ClientCapabilityRefused("permission_denied")
-            absolute = posixpath.normpath(posixpath.join(root, path))
-            if posixpath.commonpath((root, absolute)) != root:
-                raise ClientCapabilityRefused("permission_denied")
-            params["path"] = absolute
+        _normalize_read_path(params, session.admission.request.workspace_root)
         try:
             session.admission = agent._admission.check_capability(
                 session.admission,

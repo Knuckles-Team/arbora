@@ -101,9 +101,9 @@ def compose_local(args: argparse.Namespace) -> Any:
     )
 
 
-def main(argv: list[str] | None = None) -> int:
-    arguments = parser()
-    args = arguments.parse_args(argv)
+def _validate_arguments(
+    arguments: argparse.ArgumentParser, args: argparse.Namespace
+) -> None:
     if not args.local:
         arguments.error(
             "local execution requires --local; select central Arbora in tuig otherwise"
@@ -118,6 +118,12 @@ def main(argv: list[str] | None = None) -> int:
         or args.timeout_seconds <= 0
     ):
         arguments.error("run limits must be positive and finite")
+
+
+def main(argv: list[str] | None = None) -> int:
+    arguments = parser()
+    args = arguments.parse_args(argv)
+    _validate_arguments(arguments, args)
     try:
         from .adapter import serve_acp_stdio
 

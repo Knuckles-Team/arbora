@@ -23,6 +23,30 @@ from .adapter import HostedACPAgent
 from .session_policy import AcpSessionPolicy, PrincipalContext
 
 
+def _committed_answer(result: Any, receipt: Any) -> str:
+    value = A2ATask.model_validate(_task(result))
+    if receipt is None or value.id != receipt.task_id:
+        raise RuntimeError("Central ACP task identity unavailable")
+    if value.metadata.get("arbora", {}).get("runId") != receipt.run_id:
+        raise RuntimeError("Central ACP run identity unavailable")
+    if value.status.state != "completed":
+        raise acp.RequestError(
+            -32001,
+            "Central task is not complete",
+            {"task_id": value.id, "state": value.status.state},
+        )
+    if not value.artifacts:
+        raise acp.RequestError(
+            -32001, "Committed answer unavailable", {"task_id": value.id}
+        )
+    # Only the owner-confirmed terminal answer, never intermediate
+    # dependency-node messages or private native model events.
+    answer = "\n".join(
+        part.text for artifact in value.artifacts for part in artifact.parts
+    )
+    return answer
+
+
 class CentralACPFactory:
     """Own bounded invocation tasks, not an agent loop, history or admission.
 
@@ -167,26 +191,7 @@ class CentralACPFactory:
                     (operation, waiting), return_when=asyncio.FIRST_COMPLETED
                 )
                 result = await operation
-                value = A2ATask.model_validate(_task(result))
-                if receipt is None or value.id != receipt.task_id:
-                    raise RuntimeError("Central ACP task identity unavailable")
-                if value.metadata.get("arbora", {}).get("runId") != receipt.run_id:
-                    raise RuntimeError("Central ACP run identity unavailable")
-                if value.status.state != "completed":
-                    raise acp.RequestError(
-                        -32001,
-                        "Central task is not complete",
-                        {"task_id": value.id, "state": value.status.state},
-                    )
-                if not value.artifacts:
-                    raise acp.RequestError(
-                        -32001, "Committed answer unavailable", {"task_id": value.id}
-                    )
-                # Only the owner-confirmed terminal answer, never intermediate
-                # dependency-node messages or private native model events.
-                answer = "\n".join(
-                    part.text for artifact in value.artifacts for part in artifact.parts
-                )
+                answer = _committed_answer(result, receipt)
                 current().session.ensure_authority_current()
                 await observe(PartStartEvent(index=0, part=TextPart(answer)))
             except asyncio.CancelledError:

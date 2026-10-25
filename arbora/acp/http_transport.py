@@ -243,6 +243,20 @@ async def _body(request: Request, limit: int, timeout: float) -> bytes:
     return bytes(body)
 
 
+def _hosted_agent_type() -> type[Any]:
+    try:
+        from .adapter import HostedACPAgent
+    except ModuleNotFoundError as exc:
+        if exc.name not in {
+            "acp",
+            "pydantic_ai_harness",
+            "pydantic_ai_harness.experimental.acp",
+        }:
+            raise
+        raise _CarrierRefusal("chat_adapter_unavailable", 503) from None
+    return HostedACPAgent
+
+
 def _decode_frame(body: bytes) -> dict[str, Any]:
     if b"\n" in body or b"\r" in body:
         raise _CarrierRefusal("single_frame_required")
@@ -250,6 +264,10 @@ def _decode_frame(body: bytes) -> dict[str, Any]:
         message = json.loads(body.decode("utf-8"))
     except (ValueError, UnicodeDecodeError, RecursionError):
         raise _CarrierRefusal("invalid_frame") from None
+    return _validate_frame(message)
+
+
+def _validate_frame(message: Any) -> dict[str, Any]:
     if not isinstance(message, dict) or message.get("jsonrpc") != "2.0":
         raise _CarrierRefusal("invalid_frame")
     if "id" in message and type(message["id"]) not in (str, int):
@@ -337,16 +355,7 @@ class _Gateway:
         # No await between final capacity check and insertion.
         if len(self.connections) >= self.limits.connections:
             raise _CarrierRefusal("connection_limit", 429)
-        try:
-            from .adapter import HostedACPAgent
-        except ModuleNotFoundError as exc:
-            if exc.name not in {
-                "acp",
-                "pydantic_ai_harness",
-                "pydantic_ai_harness.experimental.acp",
-            }:
-                raise
-            raise _CarrierRefusal("chat_adapter_unavailable", 503) from None
+        agent_type = _hosted_agent_type()
         authority_ref = [authority]
         profile = _authorization_profile(authority)
         try:
@@ -362,7 +371,7 @@ class _Gateway:
                 raise PermissionError("Connection authorization profile changed")
         except Exception:
             raise _CarrierRefusal("chat_adapter_unavailable", 503) from None
-        if not isinstance(agent, HostedACPAgent):
+        if not isinstance(agent, agent_type):
             raise _CarrierRefusal("chat_adapter_unavailable", 503)
         # Async host authentication may yield; capacity must be checked again.
         if len(self.connections) >= self.limits.connections:

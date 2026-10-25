@@ -149,6 +149,19 @@ def native_stream_protocol() -> str | None:
     return scope.protocol if scope is not None and scope.active else None
 
 
+def _validate_admission_identity(receipt: NativeRunAdmission) -> None:
+    if not all(
+        isinstance(value, str) and value
+        for value in (
+            receipt.task_id,
+            receipt.run_id,
+            receipt.context_id,
+            receipt.work_item_id,
+        )
+    ):
+        raise RuntimeError("native admission identity unavailable")
+
+
 def notify_native_admission(session: GraphSession, receipt: NativeRunAdmission) -> None:
     """Notify the awaiting host after durable validation and before execution.
 
@@ -163,20 +176,25 @@ def notify_native_admission(session: GraphSession, receipt: NativeRunAdmission) 
         return
     if not scope.active or scope.session != session or scope.admission is not None:
         raise RuntimeError("native admission observer binding refused")
-    if not all(
-        isinstance(value, str) and value
-        for value in (
-            receipt.task_id,
-            receipt.run_id,
-            receipt.context_id,
-            receipt.work_item_id,
-        )
-    ):
-        raise RuntimeError("native admission identity unavailable")
+    _validate_admission_identity(receipt)
     session.ensure_authority_current()
     scope.admission = receipt
     if scope.on_admitted is not None:
         scope.on_admitted(receipt)
+
+
+def _separately_admitted_child(
+    scope: _NativeStreamScope, owner: NativeRunContext | None
+) -> bool:
+    if scope.admission is not None and owner is not None:
+        if owner.run_id != scope.admission.run_id:
+            return True
+    # A separately admitted child run keeps its ordinary execution authority,
+    # but never inherits the parent's observation channel. The exact same run
+    # cannot bind twice, even when called from a copied task context.
+    if scope.run_id is not None and owner is not None and owner.run_id != scope.run_id:
+        return True
+    return False
 
 
 def _bind_native_stream(
@@ -187,13 +205,7 @@ def _bind_native_stream(
     scope = _NATIVE_STREAM.get()
     if scope is None:
         return None
-    if scope.admission is not None and owner is not None:
-        if owner.run_id != scope.admission.run_id:
-            return None
-    # A separately admitted child run keeps its ordinary execution authority,
-    # but never inherits the parent's observation channel. The exact same run
-    # cannot bind twice, even when called from a copied task context.
-    if scope.run_id is not None and owner is not None and owner.run_id != scope.run_id:
+    if _separately_admitted_child(scope, owner):
         return None
     if (
         not scope.active
