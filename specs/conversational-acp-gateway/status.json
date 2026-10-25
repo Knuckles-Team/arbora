@@ -114,7 +114,8 @@
       "title": "Serve bounded read and preview duplex sessions",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "1d09ef1c3109"
+        "1d09ef1c3109",
+        "1fa25a22c11b"
       ],
       "verified_by": [
         "tests/acp/test_adapter.py:12",
@@ -134,7 +135,8 @@
       "title": "Project admitted AU runs through the ACP SDK",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "1d09ef1c3109"
+        "1d09ef1c3109",
+        "1fa25a22c11b"
       ],
       "verified_by": [
         "tests/acp/test_adapter.py:12",
