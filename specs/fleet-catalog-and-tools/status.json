@@ -115,6 +115,8 @@
     "ARBORA-FLEET-R019.2",
     "ARBORA-FLEET-R021.2",
     "ARBORA-FLEET-R027.7",
+    "ARBORA-FLEET-R027.7.1",
+    "ARBORA-FLEET-R027.7.2",
     "ARBORA-FLEET-R027.8",
     "ARBORA-FLEET-R003.4",
     "ARBORA-FLEET-R003.5",
@@ -1365,6 +1367,26 @@
     {
       "id": "ARBORA-FLEET-R027.7",
       "title": "Original fleet onboarding contract",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-FLEET-R027.7.1",
+        "ARBORA-FLEET-R027.7.2"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R027.7.1",
+      "title": "Production CLI report stream",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/deployment/test_production_ops.py:121"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R027.7.2",
+      "title": "Remaining original onboarding acceptance",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
