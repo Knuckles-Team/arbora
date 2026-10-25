@@ -50,7 +50,7 @@ dependencies = [
     # surface directly; AU's transitive requirement is not enough for this
     # package's own imports. The root source override below aligns AU and SDK
     # on the Arbora-compatible revision without changing the published floor.
-    "epistemic-graph[server]>=2.27.6,<3.0.0",
+    "epistemic-graph[server]>=2.27.7,<3.0.0",
     "fastapi>=0.143.3",
     "filelock>=4.2.0",
     # The served source reads (arbora.mcp_server.source_reader) decode the
@@ -193,7 +193,7 @@ service = "arbora.messaging.reach:service_port"
 [tool.uv]
 # A dependency's own git pin of the engine never applies here.
 override-dependencies = [
-    "epistemic-graph[server]>=2.27.6,<3.0.0",
+    "epistemic-graph[server]>=2.27.7,<3.0.0",
 ]
 # The engine installs from its published wheels only; its sdist (a Rust
 # build) is never a candidate.

@@ -257,7 +257,7 @@ See [design](plan.md) and [tests](test-spec.md).
 
 
 - [ ] **ARBORA-OPS-R021.4.5.1.1:** Compose the stateless native reader and qualify source-level authority/projection checks; retain the installed-EG acceptance blocker.
-- [ ] **ARBORA-OPS-R021.4.5.1.2:** Compose native run admission, lease-bound scaffold publication and matching graph reads; qualify a real native lifecycle.
+- [ ] **ARBORA-OPS-R021.4.5.1.2:** Compose native run admission, lease-bound scaffold publication and matching graph reads. Add explicit trusted scaffold on/off configuration, default off. Qualify both modes through the actual AU callback and real native lifecycle.
 
 ## Served source operations (R848)
 

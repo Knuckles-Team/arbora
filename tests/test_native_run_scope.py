@@ -12,13 +12,28 @@ from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.core.settings import runtime_config
 
 pytestmark = pytest.mark.spec("ARBORA-OPS-R001")
-SESSION = SimpleNamespace(tenant="tenant", graph="graph")
+SESSION = SimpleNamespace(
+    tenant="tenant",
+    graph="graph",
+    engine_verified_context=lambda: {
+        "principal": "test-principal",
+        "tenant": "tenant",
+        "audience": "test-audience",
+        "agent_id": "test-principal",
+        "roles": [],
+        "scopes": ["kg:read", "kg:write"],
+        "policy_version": "test-policy",
+        "delegation": [],
+    },
+)
 CLAIM = {
     "claimed": True,
     "tenant": "tenant",
+    "work_item_id": "work",
     "lease_holder_ref": "private-native-worker",
     "lease_epoch": 4,
     "fencing_token": 938491,
+    "lease_expires_at_ms": 2**63 - 1,
 }
 
 

@@ -227,3 +227,18 @@ async def test_native_typed_receipt_preserves_premise_wire_aliases(bridge, monke
         {key: proposal[key] for key in ("tasks", "output_task_id")},
     )
     assert result["plan_digest"] == wire["task_plan"]["plan_digest"]
+
+
+@pytest.mark.spec("ARBORA-OPS-R021.4.5.1.2")
+@pytest.mark.parametrize("value", [True, False, None, 1, "enabled", "ON", " on"])
+def test_scaffold_requires_exact_trusted_operator_option(value):
+    with pytest.raises(ValueError, match="plan_scaffold"):
+        task_plan.TaskPlanConfig({}, {}, 1, 2, plan_scaffold=value)
+
+
+@pytest.mark.spec("ARBORA-OPS-R021.4.5.1.2")
+def test_scaffold_defaults_off_and_accepts_explicit_on():
+    assert task_plan.TaskPlanConfig({}, {}, 1, 2).plan_scaffold == "off"
+    assert (
+        task_plan.TaskPlanConfig({}, {}, 1, 2, plan_scaffold="on").plan_scaffold == "on"
+    )
