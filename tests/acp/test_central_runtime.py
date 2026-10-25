@@ -1,6 +1,7 @@
 """Actual governed ACP path; model and EG/effect owners are controlled test ports."""
 
 import asyncio
+import time
 from dataclasses import replace
 from types import MethodType, SimpleNamespace
 from unittest.mock import AsyncMock
@@ -113,9 +114,12 @@ async def central(http_server, chain, monkeypatch):
         return item_id, True
 
     def claim(engine, item_id, **kwargs):
+        assert rows[item_id]["work_item_id"] == item_id
         rows[item_id]["status"] = "leased"
         return {
             "claimed": True,
+            "work_item_id": item_id,
+            "lease_expires_at_ms": int(time.time() * 1000) + 60_000,
             "tenant": "tenant",
             "lease_holder_ref": "test-worker",
             "lease_epoch": 1,
@@ -310,6 +314,27 @@ async def test_central_unclaimed_task_is_not_reported_complete(central, monkeypa
         assert not client.updates and not calls and not commits
         assert not publication["published"]
         assert next(iter(rows.values()))["status"] == "ready"
+
+
+@pytest.mark.parametrize("http_server", ["jwt"], indirect=True)
+async def test_central_claim_for_another_work_item_never_executes(central, monkeypatch):
+    http, root, rows, commits, calls, _, _, _, publication = central
+    claim = work_items.claim_specific
+
+    def mismatched_claim(engine, item_id, **kwargs):
+        return {**claim(engine, item_id, **kwargs), "work_item_id": "work-item:other"}
+
+    monkeypatch.setattr(work_items, "claim_specific", mismatched_claim)
+    async with connected(http, root) as (conn, client, path):
+        session = await conn.new_session(cwd=str(root))
+        with pytest.raises(acp.RequestError) as caught:
+            await conn.prompt(
+                session_id=session.session_id, prompt=[acp.text_block("help")]
+            )
+        assert caught.value.data["state"] == "failed"
+        assert not client.updates and not calls and not publication["published"]
+        assert commits[-1]["outcome"] == "failed"
+        assert next(iter(rows.values()))["status"] == "failed"
 
 
 @pytest.mark.parametrize("http_server", ["jwt"], indirect=True)
