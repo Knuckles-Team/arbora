@@ -70,7 +70,13 @@ def transport(monkeypatch: pytest.MonkeyPatch) -> Any:
 
     monkeypatch.setattr(coordination, "send_publish_current_plan", send, raising=False)
     monkeypatch.setattr(
-        coordination, "decode_publish_current_plan", lambda x: x, raising=False
+        coordination,
+        "decode_publish_current_plan",
+        lambda result: SimpleNamespace(
+            run_id=(result.get("request") or result)["snapshot"]["run_id"],
+            revision=(result.get("request") or result)["snapshot"]["revision"],
+        ),
+        raising=False,
     )
     monkeypatch.setattr(publication.time, "time_ns", lambda: 1000_000_000)
 
@@ -349,6 +355,45 @@ async def test_uncertain_write_retries_exact_mapped_payload(transport, monkeypat
             await publisher.publish(0, ())
             assert attempts[0] == attempts[1]
             assert attempts[1]["request"]["snapshot"]["expires_at_ms"] == 2000
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("field", ["run_id", "revision"])
+async def test_valid_publish_receipt_must_match_bound_request(
+    transport, monkeypatch, field
+):
+    from epistemic_graph.generated import coordination
+    from epistemic_graph.generated.models import CurrentPlanPublished
+
+    def mismatched(result):
+        request = result["request"]
+        receipt = CurrentPlanPublished(
+            changed_work_item_ids=[],
+            payload_digest="sha256:test",
+            revision=request["snapshot"]["revision"],
+            run_id=request["snapshot"]["run_id"],
+        )
+        if field == "run_id":
+            return receipt.model_copy(update={"run_id": "foreign-run"})
+        return receipt.model_copy(update={"revision": receipt.revision + 1})
+
+    monkeypatch.setattr(coordination, "decode_publish_current_plan", mismatched)
+    session = Session()
+    with publication.bind_admitted_claim(
+        engine(),
+        hosted_invocation=object(),
+        session=session,
+        run_id="run",
+        work_item_id="work-item:one",
+        claim=claim(),
+    ):
+        async with publication.publication_scope(
+            SimpleNamespace(run_id="run", metadata={"session": session})
+        ) as publisher:
+            assert publisher is not None
+            with pytest.raises(RuntimeError, match="receipt (run|revision) mismatch"):
+                await publisher.publish(0, ())
+    assert len(transport) == 1
 
 
 @pytest.mark.asyncio

@@ -104,7 +104,11 @@ class _Binding:
             )
         await _admit(self, "eg.coordination.PublishCurrentPlan")
         self.require_active()
-        decode_publish_current_plan(response)
+        receipt = decode_publish_current_plan(response)
+        if receipt.run_id != self.run_id:
+            raise RuntimeError("current-plan publication receipt run mismatch")
+        if receipt.revision != self.payload["snapshot"]["revision"]:
+            raise RuntimeError("current-plan publication receipt revision mismatch")
 
 
 _CURRENT: contextvars.ContextVar[_Binding | None] = contextvars.ContextVar(
