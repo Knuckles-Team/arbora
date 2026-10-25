@@ -203,3 +203,18 @@ pins the trusted JWT verifier configuration. Token expiry and request IDs may
 rotate; authorization changes refuse. Renewal does not extend absolute
 connection limits or revive a closed session. Changed authority still refuses.
 Central token streaming, continuation and installed-wheel acceptance remain open.
+
+### Released baseline qualification — 2026-10-25
+
+AU 3.2.0 is the released minimum for admitted requests, hosted observers and
+history composition. The consumer requires `>=3.2.0,<4.0.0` and resolves the
+official PyPI wheel through its normal lock. The separate AU 4.0 release
+promotion is not a prerequisite for this existing 3.2 contract. Central final
+answers do not require the later optional native-executor observer change.
+
+Qualification uses installed AU, SDK and EG wheels, not sibling source overlays.
+An Arbora candidate wheel also runs outside its source tree with the
+production native client. FunctionModel controls only model responses; local
+identity, planning, history, cancellation and cleanup retain their real owners.
+This local reuse of installed dependencies is not a complete frozen install.
+Hosted wheel-only gates and installed-client qualification remain required before merge.
