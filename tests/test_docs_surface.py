@@ -36,6 +36,7 @@ def test_architecture_names_each_supported_ecosystem_entrypoint() -> None:
         "Tuig",
         "Axil",
         "Meristem",
+        "Medulla",
         "Messaging channels",
         "MCP",
         "REST",
