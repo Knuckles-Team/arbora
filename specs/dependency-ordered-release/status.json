@@ -43,8 +43,8 @@
         "8b0cb0d81469"
       ],
       "verified_by": [
-        "tests/deployment/test_release_workflow_sources.py:553",
-        "tests/deployment/test_release_workflow_sources.py:577"
+        "tests/deployment/test_release_workflow_sources.py:556",
+        "tests/deployment/test_release_workflow_sources.py:580"
       ],
       "rollup_of": [
         "ARBORA-RELEASE-R001.1"
@@ -62,8 +62,8 @@
         "8b0cb0d81469"
       ],
       "verified_by": [
-        "tests/deployment/test_release_workflow_sources.py:553",
-        "tests/deployment/test_release_workflow_sources.py:577"
+        "tests/deployment/test_release_workflow_sources.py:556",
+        "tests/deployment/test_release_workflow_sources.py:580"
       ]
     },
     {
