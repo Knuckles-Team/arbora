@@ -116,13 +116,13 @@
       "landed_in": [
         "1d09ef1c3109",
         "1fa25a22c11b",
+        "22e9d05f8292",
         "63fdf0fb0545",
-        "6718f48d0520",
-        "6e22275807ca"
+        "6718f48d0520"
       ],
       "verified_by": [
         "tests/acp/test_adapter.py:12",
-        "tests/acp/test_central_runtime.py:35",
+        "tests/acp/test_central_runtime.py:36",
         "tests/acp/test_http_transport.py:28",
         "tests/acp/test_local_history.py:13",
         "tests/acp/test_local_runtime.py:12"
@@ -169,11 +169,12 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "1d09ef1c3109",
+        "22e9d05f8292",
         "63fdf0fb0545",
         "df0d500bbd64"
       ],
       "verified_by": [
-        "tests/acp/test_central_runtime.py:35"
+        "tests/acp/test_central_runtime.py:36"
       ]
     }
   ]
