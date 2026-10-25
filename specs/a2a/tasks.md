@@ -156,3 +156,6 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
 - R005.2.4: implement generated native facts adapters and explicit registration proof verification. Qualify native producer compatibility separately before claiming served acceptance.
 
 - [ ] **ARBORA-A2A-R005.2.5:** Qualify the installed native producers and full served signed-approval effect chain. Preserve atomic grant and plan consumption, restart, concurrency and the parent refusal matrix. Keep confirmation unavailable until complete.
+
+- [ ] `ARBORA-A2A-R001.3.1` — Carry typed host conversation admission through the existing native submission and recovery seam; qualify separately from served history.
+- [ ] `ARBORA-A2A-R001.3.2` — Preserve and prove the parent served history and restart acceptance after the typed foundation.
