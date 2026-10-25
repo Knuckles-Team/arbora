@@ -1024,7 +1024,7 @@
         "5aed3058d14b",
         "663cc8cad940",
         "9f41ea82883d",
-        "f4ae1be895a1"
+        "a33b4ad326fb"
       ],
       "verified_by": [
         "tests/a2a/test_native_run_publication.py:16",
@@ -1046,7 +1046,7 @@
         "5aed3058d14b",
         "663cc8cad940",
         "9f41ea82883d",
-        "f4ae1be895a1"
+        "a33b4ad326fb"
       ],
       "verified_by": [
         "tests/a2a/test_native_run_publication.py:16",
@@ -1065,6 +1065,7 @@
       "title": "Native contextual reader composition",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "a33b4ad326fb",
         "f4ae1be895a1"
       ],
       "verified_by": [
