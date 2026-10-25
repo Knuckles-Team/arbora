@@ -388,3 +388,13 @@ This case does not qualify positive flat topology or native task-plan production
 It excludes process restart, nested lineage, UI stale-state clearing and central continuation.
 ARBORA-OPS-R021.4.8.2 remains open. Runtime evidence requires a hosted run of the installed candidate
 with the exact locked published dependencies.
+
+### Native current-plan owner routing (ARBORA-OPS-R021.4.5.1.1)
+
+The served reader verifies the caller before resolving native admission.
+It calls owner-bound GetRunWorkItem on the host's WorkItem graph with unchanged caller claims.
+It validates the immutable run, tenant, subject and graph before reading plan payloads.
+Missing or malformed admission yields unavailable. A foreign owner or tenant cannot expose a snapshot.
+Native authorization refusals retain their codes. Neither request fields nor mutable metadata may select another graph.
+Tests reject forged graph fields, identity drift and added scopes.
+The failing real-boot assertion remains unchanged until the hosted serving path passes.

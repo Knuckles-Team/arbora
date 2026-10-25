@@ -1029,7 +1029,7 @@
       "verified_by": [
         "tests/a2a/test_native_run_publication.py:16",
         "tests/api/test_runs_ops.py:23",
-        "tests/mcp_server/test_current_plan_reader.py:22",
+        "tests/mcp_server/test_current_plan_reader.py:24",
         "tests/mcp_server/test_task_plan.py:232",
         "tests/mcp_server/test_task_plan.py:239"
       ],
@@ -1051,7 +1051,7 @@
       "verified_by": [
         "tests/a2a/test_native_run_publication.py:16",
         "tests/api/test_runs_ops.py:23",
-        "tests/mcp_server/test_current_plan_reader.py:22",
+        "tests/mcp_server/test_current_plan_reader.py:24",
         "tests/mcp_server/test_task_plan.py:232",
         "tests/mcp_server/test_task_plan.py:239"
       ],
@@ -1068,7 +1068,7 @@
         "f4ae1be895a1"
       ],
       "verified_by": [
-        "tests/mcp_server/test_current_plan_reader.py:22"
+        "tests/mcp_server/test_current_plan_reader.py:24"
       ]
     },
     {
