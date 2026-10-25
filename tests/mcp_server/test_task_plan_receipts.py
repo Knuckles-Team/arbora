@@ -22,6 +22,7 @@ from arbora.access import action_policy  # noqa: E402
 from arbora.api import task_plan_schema  # noqa: E402
 from arbora.api.contracts.session import (  # noqa: E402
     GraphSession,
+    SessionExpiredError,
     current_session,
     resolve_session,
     use_session,
@@ -198,6 +199,120 @@ def test_schema_publication_separates_request_trace_from_process_authority(
 
     assert current_session() is None
     assert fixture.pool.sessions == [process]
+
+
+def test_schema_publication_accepts_rotated_request_credential_expiry(
+    fixture: Any,
+) -> None:
+    """Separate verified JWTs may have different expiry claims.
+
+    The process authority and request authority still need matching actor,
+    tenant, scopes, graph, policy, audience, and routing fields.  Only the
+    per-token expiry and request trace differ, and both leases are validated
+    at their respective ambient boundaries.
+    """
+    process_expiry = int(time.time()) + 600
+    request_expiry = process_expiry + 300
+    process_actor = replace(
+        fixture.sessions[0].actor,
+        credential_expires_at=process_expiry,
+        credential_lease=CredentialLease(process_expiry),
+    )
+    process = replace(fixture.sessions[0], actor=process_actor)
+    fixture.sessions[0] = process
+    request_actor = replace(
+        process.actor,
+        credential_expires_at=request_expiry,
+        credential_lease=CredentialLease(request_expiry),
+    )
+    request = replace(
+        process,
+        actor=request_actor,
+        trace_context="request-rotated-credential",
+    )
+
+    with use_session(request):
+        assert _publish(fixture) == "sha256:" + "d" * 64
+        assert current_session() is request
+    assert current_session() is None
+    assert fixture.pool.sessions == [process]
+
+
+def test_schema_publication_rejects_expired_request_authority(fixture: Any) -> None:
+    process = fixture.sessions[0]
+    expired = int(time.time()) - 1
+    request_actor = replace(
+        process.actor,
+        credential_expires_at=expired,
+        credential_lease=CredentialLease(expired),
+    )
+    request = replace(
+        process,
+        actor=request_actor,
+        trace_context="request-expired",
+    )
+
+    with pytest.raises(SessionExpiredError):
+        with use_session(request):
+            _publish(fixture)
+    assert fixture.pool.sent == []
+    assert fixture.audit.records == []
+
+
+def test_schema_publication_rejects_expired_process_authority(fixture: Any) -> None:
+    process = fixture.sessions[0]
+    expired = int(time.time()) - 1
+    expired_process = replace(
+        process,
+        actor=replace(
+            process.actor,
+            credential_expires_at=expired,
+            credential_lease=CredentialLease(expired),
+        ),
+    )
+    fixture.sessions[0] = expired_process
+    request = replace(process, trace_context="request-valid")
+
+    with use_session(request):
+        with pytest.raises(SessionExpiredError):
+            _publish(fixture)
+    assert fixture.pool.sent == []
+    assert fixture.audit.records == []
+
+
+@pytest.mark.parametrize(
+    "defect", ["actor", "tenant", "roles", "scope", "graph", "policy"]
+)
+def test_schema_publication_rejects_mismatched_request_authority(
+    fixture: Any, defect: str
+) -> None:
+    process = fixture.sessions[0]
+    request = replace(process, trace_context=f"request-{defect}")
+    if defect == "actor":
+        request = replace(
+            request, actor=replace(request.actor, actor_id="service:other")
+        )
+    elif defect == "tenant":
+        request = replace(
+            request,
+            tenant="tenant-other",
+            graph="tenant-other",
+            actor=replace(request.actor, tenant_id="tenant-other"),
+        )
+    elif defect == "roles":
+        request = replace(request, actor=replace(request.actor, roles=("role:other",)))
+    elif defect == "scope":
+        request = replace(request, scopes=frozenset({"agent:component-read"}))
+    elif defect == "graph":
+        request = replace(request, graph="other-graph")
+    else:
+        request = replace(request, policy_version="policy-other")
+
+    with use_session(request):
+        with pytest.raises(PermissionError):
+            _publish(fixture)
+    assert fixture.pool.sent == []
+    assert fixture.audit.records == []
 
 
 def test_schema_publication_keeps_concurrent_request_sessions_isolated(
