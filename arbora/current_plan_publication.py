@@ -116,6 +116,56 @@ _CURRENT: contextvars.ContextVar[_Binding | None] = contextvars.ContextVar(
 )
 
 
+def _validate_claim_identity(
+    session: Any,
+    work_item_id: str,
+    claim: Mapping[str, Any],
+) -> None:
+    if claim.get("tenant") != session.tenant:
+        raise ValueError("invalid admitted run claim")
+    if claim.get("claimed") is not True:
+        raise ValueError("invalid admitted run claim")
+    if claim.get("work_item_id") != work_item_id:
+        raise ValueError("claim does not name the admitted WorkItem")
+
+
+def _validate_claim_holder(claim: Mapping[str, Any]) -> None:
+    holder = claim.get("lease_holder_ref")
+    if not isinstance(holder, str):
+        raise ValueError("claim has no native holder")
+    if not holder.strip():
+        raise ValueError("claim has no native holder")
+
+
+def _validate_claim_fence(claim: Mapping[str, Any]) -> None:
+    for key in ("lease_epoch", "fencing_token", "lease_expires_at_ms"):
+        value = claim.get(key)
+        if type(value) is not int:
+            raise ValueError("claim has no native fence or expiry")
+        if value <= 0:
+            raise ValueError("claim has no native fence or expiry")
+
+
+def _validate_binding(
+    *,
+    session: Any,
+    work_item_id: str,
+    claim: Mapping[str, Any],
+    hosted_invocation: Any,
+    owner_graph: str,
+) -> None:
+    if hosted_invocation is None:
+        raise ValueError("trusted publication host is required")
+    session_context(session)
+    if not owner_graph:
+        raise ValueError("invalid native owner graph")
+    if owner_graph != owner_graph.strip():
+        raise ValueError("invalid native owner graph")
+    _validate_claim_identity(session, work_item_id, claim)
+    _validate_claim_holder(claim)
+    _validate_claim_fence(claim)
+
+
 @contextlib.contextmanager
 def bind_admitted_claim(
     engine: Any,
@@ -132,23 +182,13 @@ def bind_admitted_claim(
     Closing stops new dispatch, including from copied task contexts. It cannot
     retract an in-flight native write; EG remains the lease/owner authority.
     """
-    if hosted_invocation is None:
-        raise ValueError("trusted publication host is required")
-    session_context(session)
-    if not owner_graph or owner_graph != owner_graph.strip():
-        raise ValueError("invalid native owner graph")
-    if claim.get("tenant") != session.tenant or claim.get("claimed") is not True:
-        raise ValueError("invalid admitted run claim")
-    if claim.get("work_item_id") != work_item_id:
-        raise ValueError("claim does not name the admitted WorkItem")
-    if (
-        not isinstance(claim.get("lease_holder_ref"), str)
-        or not claim["lease_holder_ref"].strip()
-    ):
-        raise ValueError("claim has no native holder")
-    for key in ("lease_epoch", "fencing_token", "lease_expires_at_ms"):
-        if type(claim.get(key)) is not int or claim[key] <= 0:
-            raise ValueError("claim has no native fence or expiry")
+    _validate_binding(
+        session=session,
+        work_item_id=work_item_id,
+        claim=claim,
+        hosted_invocation=hosted_invocation,
+        owner_graph=owner_graph,
+    )
     binding = _Binding(
         engine,
         session,
