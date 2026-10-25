@@ -92,10 +92,10 @@ explicitly.
 | If the operator must… | Go to… |
 |---|---|
 | Run MCP, REST, A2A, WebUI, or fleet supervision | **Arbora** — the operator are here |
-| Build agents, workflows, evaluations, or skills | [Meristem](https://knuckles-team.github.io/agent-utilities/) |
-| Store, query, reason over, or prove durable knowledge | [Medulla](https://knuckles-team.github.io/epistemic-graph/) |
-| Build and certify a source connector | [Scion SDK](https://knuckles-team.github.io/agent-connector-sdk/) |
-| Use the platform in a browser | [Overstory](https://knuckles-team.github.io/agent-webui/) |
+| Build agents, workflows, evaluations, or skills | [Meristem](https://knuckles-team.github.io/meristem/) |
+| Store, query, reason over, or prove durable knowledge | [Medulla](https://knuckles-team.github.io/medulla/) |
+| Build and certify a source connector | [Scion SDK](https://knuckles-team.github.io/scion-sdk/) |
+| Use the platform in a browser | [Overstory](https://knuckles-team.github.io/overstory/) |
 
 The [capability status](status.md) is the exact account of the surfaces shipped
 by this package.

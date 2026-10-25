@@ -17,14 +17,14 @@ repository URLs are unchanged. The Tuig executable remains `tuig`.
 
 | Layer | Owns | Arbora relationship |
 |---|---|---|
-| [Overstory](https://knuckles-team.github.io/agent-webui/) | Browser interaction, chat presentation, and local UI state | Hosted by Arbora with an injected application composer. |
+| [Overstory](https://knuckles-team.github.io/overstory/) | Browser interaction, chat presentation, and local UI state | Hosted by Arbora with an injected application composer. |
 | Tuig | Terminal and headless operation | Uses Arbora REST today; conversational ACP chat remains an explicit contract gap. |
 | Axil | Desktop GUI for chat, graph, fleet, and health | Uses the governed Arbora gateway for its primary panels. |
 | Messaging channels | Chat and voice entrypoints | Hosted and supervised by Arbora; adapters and the inbound router remain owned by agent-utilities. |
 | **Arbora** | MCP, REST, A2A, request policy, fleet supervision, and process lifecycle | Authenticates, composes, routes, supervises, and projects. |
-| [Meristem](https://knuckles-team.github.io/agent-utilities/) | In-run execution harness | Applies run plans supplied by Arbora through typed harness contracts. |
-| [Medulla](https://knuckles-team.github.io/epistemic-graph/) | Durable multimodal state, RDF/OWL/SHACL reasoning, queries, and provenance | Provides generated storage and reasoning contracts. |
-| [Scion SDK](https://knuckles-team.github.io/agent-connector-sdk/) | Connector servers, source synchronization, and governed source effects | Defines the services admitted into the Arbora fleet. |
+| [Meristem](https://knuckles-team.github.io/meristem/) | In-run execution harness | Applies run plans supplied by Arbora through typed harness contracts. |
+| [Medulla](https://knuckles-team.github.io/medulla/) | Durable multimodal state, RDF/OWL/SHACL reasoning, queries, and provenance | Provides generated storage and reasoning contracts. |
+| [Scion SDK](https://knuckles-team.github.io/scion-sdk/) | Connector servers, source synchronization, and governed source effects | Defines the services admitted into the Arbora fleet. |
 
 ## Runtime flow
 

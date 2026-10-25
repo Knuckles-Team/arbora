@@ -77,14 +77,14 @@ then use the task-oriented references:
 
 | Layer | Authority | Relationship to Arbora |
 |---|---|---|
-| [Overstory](https://knuckles-team.github.io/agent-webui/) | Browser experience and local interaction state | Arbora hosts it and supplies governed application routes. |
+| [Overstory](https://knuckles-team.github.io/overstory/) | Browser experience and local interaction state | Arbora hosts it and supplies governed application routes. |
 | Tuig | Terminal and headless interaction | Uses the governed Arbora REST interface. |
 | Axil | Desktop GUI | Uses the governed Arbora gateway for its primary panels. |
 | Messaging channels | Chat and voice entrypoints | Arbora hosts and supervises them; agent-utilities owns adapters and routing. |
 | **Arbora** | MCP, REST, A2A, identity policy, fleet supervision | The running process and public door. |
-| [Meristem](https://knuckles-team.github.io/agent-utilities/) | In-run execution harness | Arbora supplies run plans through typed harness contracts. |
-| [Medulla](https://knuckles-team.github.io/epistemic-graph/) | Durable graph, SQL, RDF, vector, time, reasoning, and provenance | Arbora uses its generated client contracts. |
-| [Scion SDK](https://knuckles-team.github.io/agent-connector-sdk/) | Connector servers, source synchronization, and governed effects | Arbora discovers and routes SDK-based connector services. |
+| [Meristem](https://knuckles-team.github.io/meristem/) | In-run execution harness | Arbora supplies run plans through typed harness contracts. |
+| [Medulla](https://knuckles-team.github.io/medulla/) | Durable graph, SQL, RDF, vector, time, reasoning, and provenance | Arbora uses its generated client contracts. |
+| [Scion SDK](https://knuckles-team.github.io/scion-sdk/) | Connector servers, source synchronization, and governed effects | Arbora discovers and routes SDK-based connector services. |
 
 The boundary is deliberate: Arbora authenticates, composes, routes,
 supervises, and projects. Each sibling remains the source of truth for its own
