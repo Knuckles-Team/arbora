@@ -117,8 +117,8 @@
         "1d09ef1c3109",
         "1fa25a22c11b",
         "63fdf0fb0545",
-        "6e22275807ca",
-        "df0d500bbd64"
+        "6718f48d0520",
+        "6e22275807ca"
       ],
       "verified_by": [
         "tests/acp/test_adapter.py:12",
@@ -141,8 +141,8 @@
         "1d09ef1c3109",
         "1fa25a22c11b",
         "63fdf0fb0545",
-        "6e22275807ca",
-        "df0d500bbd64"
+        "6718f48d0520",
+        "6e22275807ca"
       ],
       "verified_by": [
         "tests/acp/test_adapter.py:12",
