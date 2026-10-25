@@ -300,8 +300,12 @@ class WorkItemA2AAuthority:
     def _request_digest(
         message: A2AMessage, context_id: str, decision: A2ARouteDecision
     ) -> str:
+        from arbora.agent_runs import native_stream_protocol
+
+        protocol = native_stream_protocol()
         return _digest(
             {
+                **({"host_transport_protocol": protocol} if protocol else {}),
                 "context_id": context_id,
                 "decision": decision.model_dump(mode="json"),
                 "message": message.model_dump(mode="json", by_alias=True),
@@ -317,7 +321,11 @@ class WorkItemA2AAuthority:
         request_digest: str,
         decision: A2ARouteDecision,
     ) -> dict[str, Any]:
+        from arbora.agent_runs import native_stream_protocol
+
+        protocol = native_stream_protocol()
         return {
+            **({"host_transport_protocol": protocol} if protocol else {}),
             "a2a_schema": _A2A_METADATA_SCHEMA,
             "a2a_context_id": context_id,
             "a2a_message_ref": persistence_reference(
@@ -555,6 +563,39 @@ class WorkItemA2AAuthority:
             raise A2AIdempotencyConflict("A2A native run identity conflicts")
         return item
 
+    async def _notify_admission_or_settle(
+        self, session: Any, *, task_id: str, run_id: str, context_id: str, item_id: str
+    ) -> None:
+        """Settle only notification failures, never rerun or undo admission."""
+        from arbora.agent_runs import NativeRunAdmission, notify_native_admission
+
+        try:
+            notify_native_admission(
+                session, NativeRunAdmission(task_id, run_id, context_id, item_id)
+            )
+        except (Exception, asyncio.CancelledError) as failure:
+            try:
+                async with asyncio.timeout(5):
+                    cancelled = await self.cancel(task_id)
+                    readback = await asyncio.to_thread(
+                        self._authorized_item, task_id, "kg:write"
+                    )
+                    if (
+                        cancelled.status.state != "canceled"
+                        or not isinstance(readback, dict)
+                        or readback.get("status") != "cancelled"
+                    ):
+                        raise RuntimeError("cancellation not confirmed")
+            except (Exception, asyncio.CancelledError):
+                raise RuntimeError(
+                    "native admission notification failed: settlement unavailable"
+                ) from None
+            if isinstance(failure, asyncio.CancelledError):
+                raise
+            raise RuntimeError(
+                "native admission notification failed: admitted task canceled"
+            ) from None
+
     async def dispatch(
         self,
         *,
@@ -611,6 +652,13 @@ class WorkItemA2AAuthority:
             owner_ref=owner_ref,
             request_digest=request_digest,
             run_id=run_id,
+        )
+        await self._notify_admission_or_settle(
+            session,
+            task_id=task_id,
+            run_id=run_id,
+            context_id=context_id,
+            item_id=item_id,
         )
         if not created and item.get("status") in _TERMINAL:
             recovered = await self.get(task_id)

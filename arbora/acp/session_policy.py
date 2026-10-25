@@ -22,6 +22,7 @@ class AcpRefusalReason(enum.Enum):
     """Exact, typed reasons an ACP session is refused."""
 
     UNAUTHENTICATED = "unauthenticated"
+    PRINCIPAL_MISMATCH = "principal_mismatch"
     IDLE_EXPIRED = "idle_expired"
     ABSOLUTE_EXPIRED = "absolute_expired"
     CHAT_ADAPTER_UNAVAILABLE = "chat_adapter_unavailable"
@@ -137,3 +138,27 @@ class AcpSessionAdmission:
         if moment - session.last_activity_at >= self._policy.idle_limit:
             raise AcpRefusal(AcpRefusalReason.IDLE_EXPIRED)
         return session.touched(moment)
+
+    def check_bound_message(
+        self,
+        session: AcpSessionSnapshot,
+        principal: PrincipalContext | None,
+        *,
+        chat_adapter_available: bool,
+        now: datetime | None = None,
+    ) -> AcpSessionSnapshot:
+        """Require this message's verified authority before touching the session.
+
+        The host supplies the identity resolved for the current request, never
+        identity fields from the ACP payload. Even narrowed scopes require a
+        new session: the admitted binding is immutable and cannot be reassigned.
+        """
+        if not chat_adapter_available:
+            raise AcpRefusal(AcpRefusalReason.CHAT_ADAPTER_UNAVAILABLE)
+        if principal is None:
+            raise AcpRefusal(AcpRefusalReason.UNAUTHENTICATED)
+        if principal != session.principal:
+            raise AcpRefusal(AcpRefusalReason.PRINCIPAL_MISMATCH)
+        return self.check_message(
+            session, chat_adapter_available=chat_adapter_available, now=now
+        )

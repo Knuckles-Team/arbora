@@ -79,10 +79,13 @@ name = "Repository Maintainers"
 email = "maintainers@knuckles.team"
 
 [project.optional-dependencies]
+# Experimental ACP wire/presenter API: qualify together before changing pins.
+acp = ["agent-client-protocol==0.11.0", "pydantic-ai-harness[acp]==0.57.0"]
 # Test-only, real tooling versions matched to agent-utilities' floors
 # (agent-packages/agent-utilities/pyproject.toml `[project.optional-dependencies].test`)
 # so a lockstep upgrade there is easy to mirror here later.
 test = [
+    "agent-client-protocol==0.11.0",
     "agent-terminal-ui>=2.3.1",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
@@ -156,6 +159,7 @@ messaging = [
 [project.scripts]
 arbora = "arbora.mcp_server.server:mcp_server"
 arbora-daemon = "arbora.gateway.daemon:main"
+arbora-acp = "arbora.acp.local_runtime:main"
 arbora-release-canary = "arbora.deployment.release_canary:main"
 arbora-production-ops = "arbora.deployment.production_ops:main"
 setup-config = "arbora.deployment.cli:main"
