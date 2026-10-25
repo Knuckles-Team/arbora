@@ -37,6 +37,7 @@ same multiplexer owned by the serving loop.
 | Durable four-family MCP resource/template reconciliation | `reingestion-unreconciled`; Arbora does not claim publication |
 | Context-budget-selected A2A tool subsets | Refused before admission because the signed request does not bind an enforceable subset |
 | A2A streaming, push notifications, and transition history | Not advertised by the Agent Card |
+| Agent Client Protocol (ACP) | Experimental source stdio and authenticated HTTP/SSE. Opt-in central first-turn answer; unconfigured 503. Central continuation and installed pairing pending. |
 
 Ordinary authenticated unary A2A routing to an authorized agent remains
 available.

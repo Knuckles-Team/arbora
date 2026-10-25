@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.15'",
@@ -18,6 +18,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/07/e9/8b283567c1fef7c24d1f390b37daede8b61593d8cdaffb8e95d571699e83/aenum-3.1.17.tar.gz", hash = "sha256:a969a4516b194895de72c875ece355f17c0d272146f7fda346ef74f93cf4d5ba", size = 137648, upload-time = "2026-03-20T20:43:29.846Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/48/8d/1fe30c6fd8999b9d462547c4a1bb6690bda24af38f2913c4bec7decb81f2/aenum-3.1.17-py3-none-any.whl", hash = "sha256:8b883a37a04e74cc838ac442bdd28c266eae5bbf13e1342c7ef123ed25230139", size = 165560, upload-time = "2026-03-20T20:43:27.681Z" },
+]
+
+[[package]]
+name = "agent-client-protocol"
+version = "0.11.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6c/93/396d02c91b387b2678f23081869ca47bd495fc6c78789022c683180cf5f1/agent_client_protocol-0.11.0.tar.gz", hash = "sha256:8920a3b27bdcc852fd7c73066f47ab53257dbfbe57b505e20a40c69f80a5391c", size = 87402, upload-time = "2026-07-05T17:07:56.803Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a0/48/a1367dded7765f5489f9840389949d5aeac53a73aeb1b4e6c0ab61e1617a/agent_client_protocol-0.11.0-py3-none-any.whl", hash = "sha256:2d8570cd4911f8af9fbab4808f7b05f09204a756f346c7409ecdcae3f37cdb2f", size = 68089, upload-time = "2026-07-05T17:07:55.518Z" },
 ]
 
 [[package]]
@@ -67,7 +79,7 @@ wheels = [
 
 [[package]]
 name = "agent-utilities"
-version = "3.1.0"
+version = "3.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "platformdirs" },
@@ -76,9 +88,9 @@ dependencies = [
     { name = "pydantic-ai-slim" },
     { name = "pydantic-graph" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/01/42/c856d3973b3155a41ca184a55fb72fea7d90535954c2bb7b0c18d4f98470/agent_utilities-3.1.0.tar.gz", hash = "sha256:1539cbd00bbb34c24aa6e300d72749f98fdd258684ba5de70ad2b3d999bdf4b7", size = 119319, upload-time = "2026-10-22T19:49:00.716Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/70/e5/5111160cf14e14f2a2c06d1ed254830d776f11624f1307d65d822754ed91/agent_utilities-3.2.0.tar.gz", hash = "sha256:990f48991034947e3b310f0cbfc181e0ae2719d9febbe02a1af41c5a00b92311", size = 129019, upload-time = "2026-10-25T10:05:17.127Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/df/b8/129fe9a03496cead1106f07f25e6d59efe593ca5a506f6c34f613f24c518/agent_utilities-3.1.0-py3-none-any.whl", hash = "sha256:b8969b4c7ff5260ef498f32a16945e4d2a033a181e9a82347cb5cbf335429fd7", size = 89951, upload-time = "2026-10-22T19:48:59.676Z" },
+    { url = "https://files.pythonhosted.org/packages/f7/52/7ae1268c7f348de1542fe7a5f48b8d7b15d91b9c742e5f0de81e9cf4f05e/agent_utilities-3.2.0-py3-none-any.whl", hash = "sha256:06279c63151cb822c10598adbc1216ba271b2e8b375eb046fbe84c9b63d4e97a", size = 94519, upload-time = "2026-10-25T10:05:15.752Z" },
 ]
 
 [[package]]
@@ -376,6 +388,10 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+acp = [
+    { name = "agent-client-protocol" },
+    { name = "pydantic-ai-harness", extra = ["acp"] },
+]
 gateway-widgets = [
     { name = "agent-connector-sdk", extra = ["a2a", "mcp"] },
 ]
@@ -444,6 +460,7 @@ messaging-whatsapp = [
     { name = "neonize" },
 ]
 test = [
+    { name = "agent-client-protocol" },
     { name = "agent-terminal-ui" },
     { name = "mypy" },
     { name = "pytest" },
@@ -466,10 +483,12 @@ webui = [
 
 [package.metadata]
 requires-dist = [
+    { name = "agent-client-protocol", marker = "extra == 'acp'", specifier = "==0.11.0" },
+    { name = "agent-client-protocol", marker = "extra == 'test'", specifier = "==0.11.0" },
     { name = "agent-connector-sdk", extras = ["a2a", "mcp"], specifier = ">=0.5.5,<0.6.0" },
     { name = "agent-connector-sdk", extras = ["a2a", "mcp"], marker = "extra == 'gateway-widgets'", specifier = ">=0.5.5,<0.6.0" },
     { name = "agent-terminal-ui", marker = "extra == 'test'", specifier = ">=2.3.1" },
-    { name = "agent-utilities", specifier = ">=3.1.0,<4.0.0" },
+    { name = "agent-utilities", specifier = ">=3.2.0,<4.0.0" },
     { name = "agent-webui", marker = "extra == 'webui'", specifier = ">=2.8.2,<3.0.0" },
     { name = "aiohttp", specifier = ">=3.14.5" },
     { name = "anyio", specifier = ">=4.15.1" },
@@ -502,6 +521,7 @@ requires-dist = [
     { name = "opentelemetry-api", specifier = ">=1.45.1" },
     { name = "prometheus-client", specifier = ">=0.26.0" },
     { name = "pydantic", specifier = ">=2.14.1,<3.0.0" },
+    { name = "pydantic-ai-harness", extras = ["acp"], marker = "extra == 'acp'", specifier = "==0.57.0" },
     { name = "pydantic-ai-slim", extras = ["openai"], specifier = "==2.57.0" },
     { name = "pyjwt", specifier = ">=2.15.1" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=9.1.1" },
@@ -523,7 +543,7 @@ requires-dist = [
     { name = "universal-skills", specifier = ">=1.3.11,<2.0.0" },
     { name = "uvicorn", marker = "extra == 'webui'", specifier = ">=0.54.0" },
 ]
-provides-extras = ["test", "webui", "gateway-widgets", "vault", "messaging-telegram", "messaging-mattermost", "messaging-discord", "messaging-slack", "messaging-whatsapp", "messaging-teams", "messaging-googlechat", "messaging-googlemeet", "messaging-matrix", "messaging-irc", "messaging-signal", "messaging-imessage", "messaging-line", "messaging-twitch", "messaging-synology", "messaging-voicecall", "messaging-nextcloud", "messaging"]
+provides-extras = ["acp", "test", "webui", "gateway-widgets", "vault", "messaging-telegram", "messaging-mattermost", "messaging-discord", "messaging-slack", "messaging-whatsapp", "messaging-teams", "messaging-googlechat", "messaging-googlemeet", "messaging-matrix", "messaging-irc", "messaging-signal", "messaging-imessage", "messaging-line", "messaging-twitch", "messaging-synology", "messaging-voicecall", "messaging-nextcloud", "messaging"]
 
 [[package]]
 name = "asgiref"
@@ -3405,6 +3425,11 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/4b/5a/a62d50d750b29e678d8e9ad1445e3b4157b8e67648a8894154351c05583b/pydantic_ai_harness-0.57.0.tar.gz", hash = "sha256:c2f62ea4b531c418021deb534ec3ed1cbde796c6a93a716823828554f16ddc5f", size = 1085536, upload-time = "2026-10-16T03:51:11.538Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c4/54/7b28a10b6cfa28b13c3f98205aaf800d8f3bf5606530e840a706f0213219/pydantic_ai_harness-0.57.0-py3-none-any.whl", hash = "sha256:88f32fdedf2377b9187f364c10f7cdb9f00f9e076c3fb0492d6b7bcf2d6dcc38", size = 1348115, upload-time = "2026-10-16T03:50:57.818Z" },
+]
+
+[package.optional-dependencies]
+acp = [
+    { name = "agent-client-protocol" },
 ]
 
 [[package]]

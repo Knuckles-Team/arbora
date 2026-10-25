@@ -479,7 +479,7 @@ jobs:
   install-smoke:
     name: install ${{ matrix.name }}
     needs: [build]
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     continue-on-error: ${{ matrix.optional || false }}
@@ -565,7 +565,7 @@ jobs:
         if: matrix.name == 'linux-x86_64'
         run: |
           set -euo pipefail
-          uv export --frozen --no-emit-project --no-dev --extra webui --extra test \
+          uv export --frozen --no-emit-project --no-dev --extra webui --extra test --extra acp \
             --format requirements.txt --output-file "$RUNNER_TEMP/locked-test.txt"
           uv pip install --no-config --python "$SMOKE_PYTHON" --require-hashes --no-deps \
             --index-url https://pypi.org/simple -r "$RUNNER_TEMP/locked-test.txt"
@@ -586,6 +586,39 @@ jobs:
           failed = int(suite.get("failures")) + int(suite.get("errors"))
           assert tests > 0 and skipped == 0 and failed == 0, (tests, skipped, failed)
           print(f"real boot: {tests} passed against the installed wheel")
+          '
+
+      # Reuse the existing real SDK/local composition tests outside the source
+      # tree. Only model responses are controlled; runtime owners stay real.
+      - name: Installed ACP local composition (linux x86_64)
+        if: matrix.name == 'linux-x86_64'
+        run: |
+          set -euo pipefail
+          boot="$RUNNER_TEMP/acp-wheel-boot"
+          mkdir -p "$boot/tests/acp/fixtures"
+          touch "$boot/tests/__init__.py" "$boot/tests/acp/__init__.py"
+          cp tests/acp/test_local_runtime.py tests/acp/test_adapter.py "$boot/tests/acp/"
+          cp tests/acp/fixtures/local_composed_host.py "$boot/tests/acp/fixtures/"
+          printf '%s\n' '[pytest]' 'asyncio_mode = auto' 'markers =' \
+            '    spec: binds a test to a spec requirement ID' > "$boot/pytest.ini"
+          cd "$boot"
+          "$SMOKE_PYTHON" -I -c '
+          import acp, arbora, agent_utilities, sys
+          from pathlib import Path
+          for module in (acp, arbora, agent_utilities):
+              path = Path(module.__file__).resolve()
+              assert Path(sys.prefix).resolve() in path.parents, path
+              print(module.__name__, path)
+          '
+          "$(dirname "$SMOKE_PYTHON")/arbora-acp" --help
+          "$SMOKE_PYTHON" -I -m pytest -p no:cacheprovider -rA --junitxml=acp-boot.xml tests/acp/test_local_runtime.py
+          "$SMOKE_PYTHON" -I -c '
+          import xml.etree.ElementTree as ET
+          suite = ET.parse("acp-boot.xml").getroot().find("testsuite")
+          tests, skipped = int(suite.get("tests")), int(suite.get("skipped"))
+          failed = int(suite.get("failures")) + int(suite.get("errors"))
+          assert tests > 0 and skipped == 0 and failed == 0, (tests, skipped, failed)
+          print(f"installed ACP local composition: {tests} passed")
           '
 
   backward-python:

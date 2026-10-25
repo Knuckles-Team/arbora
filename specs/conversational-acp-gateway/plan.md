@@ -66,3 +66,155 @@ undeclared methods. They also cover disconnect, adapter loss and both expiry lim
 They establish no served acceptance. Permission forwarding, standing grant
 issuance, routes, traces and the hot path remain open under R001.4 through
 R001.8. No local file/process execution or alternative transport is introduced.
+
+## Amendment 2026-10-25: one harness, two host profiles
+
+Extend R001.5 and R001.9, not a second terminal agent. The default native
+`tuig` client connects to central Arbora. An optional local runtime uses the
+same Arbora admission and AU harness composition over ACP stdio; it must not
+start an AU listener or copy an agent loop into the UI. AU-BOUNDARY-R015 owns
+the host boundary, R043.11 owns client tools, and R043.9.1/R043.9.2 own
+completed-history composition. The former AU-CONTROL links above are historical
+routing references, not proof that a served adapter exists.
+
+The audited producer baseline is Pydantic AI 2.57.0 and harness 0.57.0.
+The [Pydantic ACP adapter](https://pydantic.dev/docs/ai/harness/acp/) lives
+under `pydantic_ai_harness.experimental.acp` and can change or disappear without
+deprecation. Its ACP extra requires `agent-client-protocol>=0.11,<0.12`.
+Integration must qualify an exact version before enabling a host profile.
+Calling its `Agent` directly is not an acceptable replacement for AU's
+`RunRequest`, received limits, run events and history composition.
+
+[ACP v1 transports](https://agentclientprotocol.com/protocol/v1/transports)
+define newline-delimited stdio; Streamable HTTP is still a draft. R001.9's
+JSON-RPC/SSE profile is therefore an explicitly experimental custom transport,
+not a claim of standardized ACP HTTP conformance. A remote connection inherits
+Arbora's verified identity and configured transport security. A local subprocess
+is an explicit launch choice, never fallback after remote auth or transport
+failure. Diagnostics never enter protocol stdout.
+
+Before each remote message, compare the newly verified principal, tenant and
+scope snapshot with the admitted snapshot. Missing authority and any changed
+binding refuse without touching the session clock. This supplements the
+existing immutable admission snapshot; immutability alone does not authenticate
+later requests. `AcpSessionAdmission.check_bound_message` is the shared guard
+for R001.9. It creates no credential or grant.
+
+Acceptance remains pending until real subprocess stdio and authenticated remote
+transport tests cover initialization, session identity, streamed updates,
+permissions, cancellation, disconnect and malformed/duplicate messages.
+Scripted model responses are permitted in those transport tests but must be
+identified as such. In-process policy tests are not transport evidence.
+Session reopening requires an admitted host-authorized history producer;
+transient connection IDs and Pydantic's in-memory session store are not durable
+recovery, effect replay, or restart-safe cursor evidence. No new store is added.
+
+### R001.5/R001.9 bounded protocol projection
+
+Use the ACP SDK's JSON-RPC codec and `Agent` interface with one Arbora-owned
+protocol projection over AU `iterate_client_run`. Do not use Pydantic's
+autonomous `PydanticAIACPAgent` run loop: it would bypass AU's received plans,
+budgets and host-authorized history. Reuse Pydantic native stream event types
+and harness presentation helpers, filtering out private reasoning and raw
+model/tool data before client publication.
+
+The first projection is text prompts and declared client reads only. Workspace
+admission, immutable identity, session limits and typed refusals reuse the
+existing policy. An injected trusted request factory supplies the admitted
+`RunRequest` for every prompt; no factory means adapter unavailable. Session
+IDs identify only a bounded, connection-local map, not durable conversations.
+No implicit prior history is reconstructed; a factory must bind supported history
+through the existing AU host contract. Unimplemented permission/effect dispatch,
+MCP attachment, model switching, session loading and resume refuse explicitly.
+The SDK stdio server delegates all execution to AU and closes active runs on
+connection teardown. Network registration remains a separate authenticated
+custom-transport slice; this projection alone does not enable a remote route.
+
+
+### Explicit lightweight local profile
+
+`arbora-acp` is an internal subprocess backend for the one user-facing `tuig`
+CLI, not another terminal UI. It requires explicit local selection, model and
+workspace root. It reuses `mint_local_process_session` and AU's received-plan
+run, starts no engine, fleet or network listener, and never retries a remote
+authentication failure locally. No credential or permission setting is changed.
+The profile enables only explicitly selected client reads. Completed text
+turns use the existing Pydantic `InMemorySessionStore` and `StoredSession`, one
+bounded store per admitted session. An async completion hook saves the actual
+AU terminal result before acknowledging success. The existing AU completed-text
+codec receives the actual predecessor run ID; budgets remain fresh. Failed or
+cancelled turns do not update history. Save failure blocks continuation rather
+than replaying execution or guessing whether history committed. Close and
+process teardown release the store. Session, turn and encoded-byte limits
+refuse instead of truncating messages. This is process-local user/assistant text
+only, not retained tool state, durable recovery or session/load support.
+Installed-wheel and native-client qualification remain open.
+
+
+The pinned SDK's experimental `session/close` is explicitly enabled and tested
+on both stdio and HTTP/SSE. Other unsupported unstable methods still refuse in
+the projection. This is not a durable session recovery or stable ACP extension
+promise; EOF/disconnect remains connection teardown.
+
+### Governed central final-answer projection
+
+Central ACP must invoke the existing `agents.run` operation/HostedInvocation and
+native owner/claim authority, preserving server tools and policies. The local
+client-only runner is not a central substitute. `native_stream_scope` is trusted,
+context-local observation of one verified session and one admitted native run;
+it grants neither execution nor client tools. Copied contexts share revocation.
+The central profile does not attach a native event observer. It preserves the
+configured dependency plan and server tools, then projects only the committed
+final answer. Central history remains absent: neither event rows nor transport
+session IDs are continuation history. A second prompt refuses explicitly.
+
+The existing task authority notifies an optional synchronous host callback after
+it validates durable admission and before execution. The receipt contains the
+actual task, run, context and work-item IDs. Client metadata cannot supply these
+IDs. Callback failure blocks execution and uses the existing owner cancellation path.
+The host allows five seconds for cancellation and checks owner-authorized readback.
+It reports settlement unavailable if it cannot confirm the canceled state.
+This never undoes admission or replays work. The central projection must also
+handle cancellation during admission, before a receipt exists.
+
+
+Generated status rows link source commits and test bindings. They do not prove
+installed release compatibility or prove live owner storage and provider behavior.
+The client-workspace preview profile does not replace central server tools.
+
+`HostedInvocation.configure_acp` installs the opt-in central factory with explicit
+trusted roots and the existing configured native owner. Without it the route
+returns 503. No deployment settings or identity rules change. The factory invokes
+`agents.run` through the existing authenticated operation path and retains its
+actual task/run receipt. Nonterminal tasks return their state, not a completed
+answer. Cancellation requires owner cancellation and readback; an unknown outcome
+returns a distinct refusal, never a successful cancellation response. Capacity and
+shutdown waits are bounded. Unresolved shutdown reports uncertainty without
+canceling the pending admission callback. Process termination cannot prove
+settlement. Late admission after disconnect requests settlement
+before execution, with no replay.
+
+Each HTTP message authenticates through the existing HostedInvocation authority.
+A renewed token with the same verified authorization profile updates the
+connection's current caller. Subsequent prompts and cancellation use that caller,
+not headers retained from connection creation. The profile retains actor kind,
+roles, groups, graph, audience, policy and verified operation claims. It also
+pins the trusted JWT verifier configuration. Token expiry and request IDs may
+rotate; authorization changes refuse. Renewal does not extend absolute
+connection limits or revive a closed session. Changed authority still refuses.
+Central token streaming, continuation and installed-wheel acceptance remain open.
+
+### Released baseline qualification — 2026-10-25
+
+AU 3.2.0 is the released minimum for admitted requests, hosted observers and
+history composition. The consumer requires `>=3.2.0,<4.0.0` and resolves the
+official PyPI wheel through its normal lock. The separate AU 4.0 release
+promotion is not a prerequisite for this existing 3.2 contract. Central final
+answers do not require the later optional native-executor observer change.
+
+Qualification uses installed AU, SDK and EG wheels, not sibling source overlays.
+An Arbora candidate wheel also runs outside its source tree with the
+production native client. FunctionModel controls only model responses; local
+identity, planning, history, cancellation and cleanup retain their real owners.
+This local reuse of installed dependencies is not a complete frozen install.
+Hosted wheel-only gates and installed-client qualification remain required before merge.

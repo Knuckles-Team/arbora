@@ -543,7 +543,10 @@ def test_generator_scanner_runs_for_main_and_selected_pr_without_publication():
     build_commands = "\n".join(step.get("run", "") for step in jobs["build"]["steps"])
     assert "uv build --out-dir dist" in build_commands
     assert "wheel_boot_check.py contents" in build_commands
-    assert jobs["install-smoke"]["if"] == "github.event_name != 'pull_request'"
+    assert jobs["install-smoke"]["if"] == (
+        "github.event_name != 'pull_request' || "
+        "github.event.pull_request.head.repo.full_name == github.repository"
+    )
     assert (
         jobs["publish-pypi"]["if"]
         == "github.ref_type == 'tag' && startsWith(github.ref_name, 'v')"
