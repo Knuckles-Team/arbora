@@ -282,6 +282,7 @@ Hot-path proof for `ARBORA-FLEET-R037`: `tests/fleet/test_job_loads_served.py::t
 - `ARBORA-FLEET-R015.2`: `tests/fleet/test_plan_confirmation.py` (real SDK-guarded child: confirmed delete runs; unconfirmed and other-tool plans are cancelled; expired, mismatched and unknown plans dispatch nothing).
 - `ARBORA-FLEET-R041.15`: `tests/fleet/test_declarations.py::test_sdk_pack_declaration_is_read_from_its_archive_section`, `::test_a_section_that_does_not_match_its_digest_is_refused`, `::test_sdk_pack_ontology_bodies_are_read_from_the_archive`.
 - `ARBORA-FLEET-R041.16`: `tests/api/test_served_replay_owners.py::test_served_pack_status_is_a_read_and_reaches_dispatch_without_a_key`, `::test_pack_status_tenant_comes_from_the_caller_not_the_request`.
+- `ARBORA-FLEET-R041.17`: `tests/fleet/test_catalog_graph.py::test_pack_becomes_typed_assets_candidates_and_lineage`, `tests/fleet/test_catalog_graph.py::test_ntriples_escape_literals_and_dedupe`, `tests/fleet/test_catalog_graph.py::test_onboarding_writes_the_catalog_and_never_fails_on_a_refusal`.
 - `ARBORA-FLEET-R042`: See each child.
 - `ARBORA-FLEET-R042.1`: `tests/fleet/test_source_approval.py::test_decision_round_trips`.
 - `ARBORA-FLEET-R042.2`: `tests/fleet/test_source_approval.py::test_read_only_admitted_contract_is_approved_and_write_contract_is_held`.

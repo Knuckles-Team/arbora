@@ -173,6 +173,7 @@
     "ARBORA-FLEET-R041.14",
     "ARBORA-FLEET-R041.15",
     "ARBORA-FLEET-R041.16",
+    "ARBORA-FLEET-R041.17",
     "ARBORA-FLEET-R042",
     "ARBORA-FLEET-R042.1",
     "ARBORA-FLEET-R042.2",
@@ -1758,7 +1759,8 @@
         "ARBORA-FLEET-R041.13",
         "ARBORA-FLEET-R041.14",
         "ARBORA-FLEET-R041.15",
-        "ARBORA-FLEET-R041.16"
+        "ARBORA-FLEET-R041.16",
+        "ARBORA-FLEET-R041.17"
       ]
     },
     {
@@ -1929,6 +1931,20 @@
       "verified_by": [
         "tests/api/test_served_replay_owners.py:113",
         "tests/api/test_served_replay_owners.py:96"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R041.17",
+      "title": "Onboarding writes the agent-library catalog into EG",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "3ffdccaea68b",
+        "76c14ffa5264"
+      ],
+      "verified_by": [
+        "tests/fleet/test_catalog_graph.py:118",
+        "tests/fleet/test_catalog_graph.py:133",
+        "tests/fleet/test_catalog_graph.py:89"
       ]
     },
     {
