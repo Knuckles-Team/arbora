@@ -34,7 +34,7 @@ def test_architecture_names_each_supported_ecosystem_entrypoint() -> None:
     for entrypoint in (
         "Overstory",
         "Tuig",
-        "Axil Desk",
+        "Axil",
         "Meristem",
         "Messaging channels",
         "MCP",

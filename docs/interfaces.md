@@ -13,6 +13,6 @@ remain part of the request lifecycle.
 | Browser users | Hosted Overstory and attended browser control | [Browser control](browser-control-service.md) |
 | Operators | Health, readiness, and fleet surfaces | [Capability status](status.md) |
 
-Overstory, Tuig, Axil Desk, and messaging channels are client
+Overstory, Tuig, Axil, and messaging channels are client
 experiences at this boundary. Arbora owns their governed gateway; each client
 owns its presentation and local interaction state.
