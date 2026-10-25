@@ -9,6 +9,7 @@ own helpers and request model, so only the export itself is a fixture.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import sys
 from pathlib import Path
@@ -23,6 +24,7 @@ from epistemic_graph import decision_stat as ds  # noqa: E402
 from arbora.api import task_plan_schema as pins_module  # noqa: E402
 from arbora.api.invoke.pipeline import OperationRefused  # noqa: E402
 from arbora.api.ops import plans  # noqa: E402
+from arbora.epistemic import ClientContext, EpistemicClientPool  # noqa: E402
 
 FIXTURE_MODULE = "arbora_test_fixture_eg_task_plan"
 DEFINITION = "sha256:" + "d" * 64
@@ -256,6 +258,58 @@ class _Engine:
         return {"component": {"definition_digest": DEFINITION}}
 
 
+class _ScopedEngine(_Engine):
+    """Raw transport that refuses generated sends without client_scope."""
+
+    authenticated = True
+
+    def __init__(self, *, fail_publish: bool = False) -> None:
+        super().__init__()
+        self.context: dict[str, Any] | None = None
+        self.seen_contexts: list[dict[str, Any]] = []
+        self.fail_publish = fail_publish
+
+    @contextlib.contextmanager
+    def use_verified_context(self, context: dict[str, Any]):
+        previous = self.context
+        self.context = context
+        try:
+            yield self
+        finally:
+            self.context = previous
+
+    async def _send(
+        self,
+        method: str,
+        params: Any,
+        graph: Any = None,
+        *,
+        idempotency_key: Any = None,
+    ) -> Any:
+        if self.context is None:
+            from arbora.api.contracts.session import SessionRequiredError
+
+            raise SessionRequiredError("a verified client context is required")
+        self.seen_contexts.append(dict(self.context))
+        if params["op"]["op"] == "publish" and self.fail_publish:
+            raise RuntimeError("schema publication transport failed")
+        return await super()._send(
+            method, params, graph, idempotency_key=idempotency_key
+        )
+
+
+def _client_context(tenant: str, principal: str) -> ClientContext:
+    return ClientContext(
+        principal=principal,
+        tenant=tenant,
+        audience="epistemic-graph",
+        agent_id=principal,
+        roles=(),
+        scopes=("agent:pack-control",),
+        policy_version="policy:test",
+    )
+
+
 def test_startup_publisher_preserves_released_export_and_returned_definition(
     tmp_path: Path,
 ) -> None:
@@ -328,6 +382,77 @@ def test_engine_publish_sends_a_valid_request_and_reuses_a_current_entry(
         pins_module.engine_publish(reuse_client, _publication_context)("t", pin)
     )
     assert digest == "sha256:" + "c" * 64 and reuse.sent == []
+
+
+@pytest.mark.spec("ARBORA-RELEASE-R003.4.4")
+def test_engine_publish_binds_concurrent_tenants_and_restores_after_failure(
+    engine_export: ModuleType,
+) -> None:
+    pin = _pin()
+    contexts = {
+        "tenant-a": _client_context("tenant-a", "service:a"),
+        "tenant-b": _client_context("tenant-b", "service:b"),
+    }
+    clients: dict[str, _ScopedEngine] = {}
+
+    async def connect(**kwargs: Any) -> Any:
+        client = _ScopedEngine()
+        clients[kwargs["graph_name"]] = client
+        return client
+
+    async def no_unbound_client(_tenant: str) -> Any:
+        raise AssertionError("publisher used the unbound client path")
+
+    pool = EpistemicClientPool(connect, auth_secret="test-secret")
+
+    def binder(graph: str):
+        @contextlib.asynccontextmanager
+        async def bind(tenant: str):
+            async with pool.bind(contexts[tenant], graph) as client:
+                yield client
+
+        return bind
+
+    publish_a = pins_module.engine_publish(
+        no_unbound_client,
+        _publication_context,
+        "tenant-a:graph",
+        bind_client=binder("tenant-a:graph"),
+    )
+    publish_b = pins_module.engine_publish(
+        no_unbound_client,
+        _publication_context,
+        "tenant-b:graph",
+        bind_client=binder("tenant-b:graph"),
+    )
+
+    async def scenario() -> None:
+        assert await asyncio.gather(
+            publish_a("tenant-a", pin), publish_b("tenant-b", pin)
+        ) == [DEFINITION, DEFINITION]
+        assert all(
+            seen["tenant"] == "tenant-a"
+            for seen in clients["tenant-a:graph"].seen_contexts
+        )
+        assert all(
+            seen["tenant"] == "tenant-b"
+            for seen in clients["tenant-b:graph"].seen_contexts
+        )
+        assert all(
+            seen["principal"] == "service:a"
+            for seen in clients["tenant-a:graph"].seen_contexts
+        )
+        assert all(
+            seen["principal"] == "service:b"
+            for seen in clients["tenant-b:graph"].seen_contexts
+        )
+        clients["tenant-a:graph"].fail_publish = True
+        with pytest.raises(RuntimeError, match="transport failed"):
+            await publish_a("tenant-a", pin)
+        assert clients["tenant-a:graph"].context is None
+        assert clients["tenant-b:graph"].context is None
+
+    asyncio.run(scenario())
 
 
 # spec: ARBORA-RELEASE-R003.4.4

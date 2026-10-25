@@ -21,7 +21,8 @@ from __future__ import annotations
 
 import importlib.resources
 import json
-from collections.abc import Callable, Mapping
+from collections.abc import AsyncIterator, Callable, Mapping
+from contextlib import asynccontextmanager
 from functools import cache
 from pathlib import Path
 from typing import Any
@@ -376,7 +377,16 @@ def _with_task_plan_schema(
     async def context_for(tenant: str, pin: Mapping[str, Any]) -> dict[str, Any]:
         return await _schema_publish_context(engine, session, graph, tenant, pin)
 
-    publisher = engine_publish(client_for, context_for, graph)
+    @asynccontextmanager
+    async def bind_client(tenant: str) -> AsyncIterator[Any]:
+        # AgentComponent's generated senders operate on the raw EG transport.
+        # Bind the process authority for the exact tenant/graph around both the
+        # current read and the publish so client_scope is restored per request
+        # and concurrent tenants cannot inherit one another's claims.
+        async with pool.bind(connect_context(tenant), graph) as client:
+            yield client
+
+    publisher = engine_publish(client_for, context_for, graph, bind_client=bind_client)
 
     async def publish(tenant: str, pin: Mapping[str, Any]) -> str:
         bound = session()

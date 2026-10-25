@@ -22,6 +22,7 @@ import importlib
 import json
 import logging
 from collections.abc import Awaitable, Callable, Coroutine, Mapping, Sequence
+from contextlib import AbstractAsyncContextManager
 from pathlib import Path
 from typing import Any
 
@@ -45,6 +46,7 @@ EXPORT_MODULES = (
 VERIFIED_FIELDS = ("component_id", "kind", "schema_version", "content_digest")
 
 Publish = Callable[[str, Mapping[str, Any]], Coroutine[Any, Any, str]]
+BindClient = Callable[[str], AbstractAsyncContextManager[Any]]
 
 
 def _stat() -> Any:
@@ -246,6 +248,8 @@ def engine_publish(
     client_for: Callable[[str], Awaitable[Any]],
     context_for: Callable[[str, Mapping[str, Any]], Awaitable[Mapping[str, Any]]],
     graph: str | None = None,
+    *,
+    bind_client: BindClient | None = None,
 ) -> Publish:
     """Publish through the engine; reuse a current entry with the same body.
 
@@ -254,14 +258,13 @@ def engine_publish(
     Only a new write resolves the async authority provider for this exact pin.
     """
 
-    async def publish(tenant: str, pin: Mapping[str, Any]) -> str:
+    async def _publish(client: Any, tenant: str, pin: Mapping[str, Any]) -> str:
         from epistemic_graph.generated.agent_component import AgentComponentOpCurrent
         from epistemic_graph.generated.storage import (
             send_agent_component,
             send_agent_component_current,
         )
 
-        client = await client_for(tenant)
         current = await send_agent_component_current(
             client,
             AgentComponentOpCurrent(
@@ -279,6 +282,12 @@ def engine_publish(
         )
         payload: Any = getattr(result, "payload", result)
         return str(payload["component"]["definition_digest"])
+
+    async def publish(tenant: str, pin: Mapping[str, Any]) -> str:
+        if bind_client is None:
+            return await _publish(await client_for(tenant), tenant, pin)
+        async with bind_client(tenant) as client:
+            return await _publish(client, tenant, pin)
 
     return publish
 
