@@ -15,6 +15,7 @@ pytestmark = pytest.mark.spec("ARBORA-ACP-R001.9.1")
 class Client:
     def __init__(self):
         self.updates = []
+        self.updated = asyncio.Event()
         self.reads = []
         self.waiting = asyncio.Event()
         self.read_started = asyncio.Event()
@@ -22,8 +23,24 @@ class Client:
 
     async def session_update(self, session_id, update, **kwargs):
         self.updates.append(update)
+        self.updated.set()
         if getattr(getattr(update, "content", None), "text", None) == "waiting":
             self.waiting.set()
+
+    async def wait_for_text(self, expected: str) -> None:
+        # SDK notification callbacks may finish after the prompt response.
+        # Wait for the exact observable text, without weakening its assertion.
+        async with asyncio.timeout(3):
+            while True:
+                self.updated.clear()
+                text = "".join(
+                    update.content.text
+                    for update in self.updates
+                    if update.session_update == "agent_message_chunk"
+                )
+                if text == expected:
+                    return
+                await self.updated.wait()
 
     async def read_text_file(self, session_id, path, **kwargs):
         self.reads.append(path)
@@ -66,6 +83,7 @@ async def test_real_stdio_streams_au_text_and_reads_client(connected):
         session_id=session.session_id, prompt=[acp.text_block("hello")]
     )
     assert result.stop_reason == "end_turn"
+    await client.wait_for_text("hello client")
     assert (
         "".join(
             u.content.text
@@ -79,6 +97,7 @@ async def test_real_stdio_streams_au_text_and_reads_client(connected):
         session_id=session.session_id, prompt=[acp.text_block("read")]
     )
     assert result.stop_reason == "end_turn"
+    await client.wait_for_text("client file text")
     assert client.reads == [str(Path(root) / "test.txt")]
     assert (
         "".join(

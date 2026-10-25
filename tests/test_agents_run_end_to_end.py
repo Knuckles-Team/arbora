@@ -116,7 +116,7 @@ class ServedRuntime(FixtureRuntime):
 def engine(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     registry = tmp_path / "models.json"
     registry.write_text(json.dumps({"default": "test"}), encoding="utf-8")
-    monkeypatch.setattr(runtime_config, "model_registry_path", str(registry))
+    monkeypatch.setitem(runtime_config._overrides, "model_registry_path", str(registry))
     fake = FakeEngine()
     monkeypatch.setattr(mcp_runtime, "_get_engine", lambda: fake)
     agent_runs.bind_run_ports()
@@ -202,8 +202,12 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
     from arbora.security import request_identity
     from arbora.security.actor_context import ActorContext, ActorType
 
-    monkeypatch.setattr(runtime_config, "auth_jwt_audience", "arbora-fixture")
-    monkeypatch.setattr(runtime_config, "kg_policy_version", "policy:fixture")
+    monkeypatch.setitem(
+        runtime_config._overrides, "auth_jwt_audience", "arbora-fixture"
+    )
+    monkeypatch.setitem(
+        runtime_config._overrides, "kg_policy_version", "policy:fixture"
+    )
 
     async def credential_owner(credential: str) -> ActorContext:
         assert credential == "fixture-verified"  # sanitizer:ignore - synthetic
@@ -256,7 +260,7 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
         if attachment_case == "uri":
             file = {"uri": "file:///never-read-this", "mimeType": "text/plain"}
         if attachment_case == "configured_limit":
-            monkeypatch.setattr(runtime_config, "max_upload_size", 4)
+            monkeypatch.setitem(runtime_config._overrides, "max_upload_size", 4)
         if attachment_case == "aggregate":
             file["bytes"] = base64.b64encode(b"a" * 40_000).decode("ascii")
         count = (
