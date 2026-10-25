@@ -11,7 +11,7 @@ a static catalog, process-local durable store, or fabricated success receipt.
 | MCP composition | Available | One FastMCP lifecycle with `stdio` and authenticated `streamable-http` transports |
 | REST gateway | Available | The same application services used by MCP, projected through Arbora routes |
 | Fleet gateway | Available with a checked catalog | Child lifecycle, health, OAuth admission, collision-safe naming, and per-session discovery |
-| Agent WebUI host | Available through the `webui` extra | Co-service supervision with an injected Arbora application composer |
+| Overstory host | Available through the `webui` extra | Co-service supervision with an injected Arbora application composer |
 | Unary A2A | Available | Authenticated Agent Card plus send, get, list, and cancel over durable WorkItems |
 | Browser control | Available when attended identity is configured | Catalog, lease, policy, dispatch, cancellation, and provenance orchestration |
 | Deployment operations | Available | Configuration, diagnostics, release canary, managed environments, backup, and restore validation |
@@ -27,7 +27,7 @@ same multiplexer owned by the serving loop.
 | EG-backed fleet catalog | Generated server-registration and AgentComponent clients. Matching agent-utilities read ports | Startup refuses readiness; no static catalog is selected |
 | Connector runner | Generated ConnectorPack and SourceIngest clients, SDK runner, and live policy resolver | Connector execution is refused |
 | Semantic content packs | Provisioned `arbora` and `agent-utilities` packs attached through GraphSchema | Content checks report the missing or stale attachment |
-| WebUI application routes | Agent WebUI installed with its application-composer seam | Arbora runs without the optional WebUI co-service |
+| WebUI application routes | Overstory installed with its application-composer seam | Arbora runs without the optional WebUI co-service |
 | Attended browser control | WebUI identity validation, backchannel revalidation, and engine mutation authorities | Browser control remains unavailable |
 
 ## Explicitly unavailable surfaces
