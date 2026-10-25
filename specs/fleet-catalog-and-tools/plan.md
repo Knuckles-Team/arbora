@@ -468,3 +468,9 @@ Existing rate-limit and blast-radius checks then refuse to infer unused budget.
 No old record is promoted, rewritten or migrated by this guard.
 The refusal lasts until a separate reviewed historical-data repair removes the ambiguity.
 Kinds without such candidates retain the normal labeled ledger path.
+
+## Production CLI diagnostic streams
+
+The synchronous production CLI reserves stdout for its single JSON report. Configuration and operation diagnostics go to stderr while the operation runs; stdout is restored before success or opaque failure output. This boundary does not redirect prebound descriptors or background work after the CLI operation returns.
+
+R027.7.1 is the bounded CLI stream repair. R027.7.2 retains the original onboarding acceptance matrix; the parent remains open until it is qualified.

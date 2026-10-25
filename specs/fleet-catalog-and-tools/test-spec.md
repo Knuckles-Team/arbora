@@ -350,3 +350,9 @@ against the released native server. Such candidates make requested-kind accounti
 unavailable. Existing rate and blast checks then refuse unused-budget assumptions.
 The test verifies that the old record remains unchanged and unrelated kinds still work.
 This is safe refusal, not historical migration or receipt qualification.
+
+## Production CLI diagnostic streams
+
+ARBORA-FLEET-R027.7.1: test_cli_retains_diagnostics_on_stderr_and_one_json_report covers successful, partial and exceptional results. It checks retained stderr diagnostics, exact JSON decoding and stdout restoration. The ordered test imports the served-browser factory before provisioning and onboarding. It retains their original JSON assertions against released WebUI2.8.2. This is process-composition evidence, not a package release or live fleet acceptance.
+
+ARBORA-FLEET-R027.7.2 remains planned: qualify the complete original onboarding matrix through installed providers. The stream tests do not discharge registration, capture, attestation, import or boot acceptance.
