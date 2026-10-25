@@ -27,6 +27,7 @@ from arbora.fleet.onboarding import (
 from tests.fleet.test_fleet_onboarding import (
     _HEAD_CATALOG,
     ALPHA,
+    GRAPH,
     _head_digest,
     _onboarding,
     _RecordingSink,
@@ -370,3 +371,120 @@ def test_large_shrink_on_handshake_waits_for_mass_withdrawal_approval(
     assert _record(mux)["state"] == "awaiting_approval"
     assert "PACK_MASS_WITHDRAWAL" in _record(mux)["error"]
     assert isinstance(onboarder.onboarding, FleetOnboarding)
+
+
+# spec: ARBORA-FLEET-R041.18
+def test_handshake_pass_scopes_its_loop_transports(
+    eg: _Registry, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """ARBORA-FLEET-R041.18: a pack-changing handshake on the fresh loop.
+
+    The serving loop holds the pool's tenant client while the worker thread's
+    ``asyncio.run`` loop runs the pass. Before the scope existed, the pass
+    refused with ``live client belongs to another event loop``. The pass now
+    owns temporary transports, closes them on exit and leaves the serving
+    client in place.
+    """
+
+    import asyncio
+    import contextlib
+
+    from arbora.epistemic import EpistemicClient, EpistemicClientPool
+    from arbora.mcp_server.served_engine import (
+        SessionRoutedClient,
+        _session_context,
+    )
+    from tests.fleet.test_fleet_onboarding import _session
+
+    class _LoopClient(EpistemicClient):
+        """A pooled transport client bound to the loop that connected it."""
+
+        placement: Any = None
+        cluster_topology: Any = None
+
+        def __init__(self, **kwargs: Any) -> None:
+            self.graph = kwargs["graph_name"]
+            self.context = kwargs.get("verified_context")
+            self.loop = asyncio.get_running_loop()
+            self.reader = asyncio.create_task(asyncio.Event().wait())
+            self.closed = False
+            self.close_count = 0
+
+        async def health(self) -> dict[str, Any]:
+            return {"status": "ok"}
+
+        @contextlib.contextmanager
+        def use_verified_context(self, context: Any) -> Any:
+            previous = self.context
+            self.context = context
+            try:
+                yield self
+            finally:
+                self.context = previous
+
+        async def _send(
+            self,
+            method: str,
+            params: Any,
+            graph: Any,
+            *,
+            idempotency_key: Any = None,
+        ) -> Any:
+            return await eg._send(
+                method, params, graph, idempotency_key=idempotency_key
+            )
+
+        async def close(self) -> None:
+            assert asyncio.get_running_loop() is self.loop
+            self.close_count += 1
+            self.reader.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self.reader
+            self.closed = True
+
+    clients: list[_LoopClient] = []
+    monkeypatch.setattr(
+        eg, "_on_AddTriples", lambda _params, _key: {"triples": 1}, raising=False
+    )
+
+    async def connect(**kwargs: Any) -> _LoopClient:
+        client = _LoopClient(**kwargs)
+        clients.append(client)
+        return client
+
+    pool = EpistemicClientPool(connect)
+    monkeypatch.setattr(
+        eg,
+        "for_graph",
+        lambda graph: SimpleNamespace(async_client=SessionRoutedClient(pool, graph)),
+    )
+    # One tenant for serving and the pass, as in the served process.
+    caller = _session_context(_session())
+
+    async def serving() -> None:
+        serving_client = await pool.connected_client(caller, GRAPH)
+
+        onboarder, mux, clock = _setup(eg)
+        # announce the completed handshake (alpha-mcp has no seen digest: the
+        # pass imports); notify is the synchronous scheduling step
+        onboarder.notify(
+            ALPHA.name,
+            server_version="1.0.0",
+            digest=handshake_catalog_digest(_tools("lookup")),
+        )
+        clock.gate.set()
+        onboarder.drain()  # join the worker's asyncio.run loop
+
+        assert _record(mux)["state"] == "onboarded"
+        assert eg.attested == ["alpha-mcp"]
+        assert [name for name, _b in _RecordingSink.imported] == ["alpha-mcp"]
+        for client in clients:
+            if client is serving_client:
+                continue
+            assert client.closed and client.close_count == 1
+            assert client.loop is not asyncio.get_running_loop()
+        assert pool.graph_count == 1
+        assert await pool.connected_client(caller, GRAPH) is serving_client
+        await pool.close()
+
+    asyncio.run(serving())
