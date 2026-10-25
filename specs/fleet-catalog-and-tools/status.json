@@ -1378,8 +1378,10 @@
     {
       "id": "ARBORA-FLEET-R027.7.1",
       "title": "Production CLI report stream",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "1ac397d110e6"
+      ],
       "verified_by": [
         "tests/deployment/test_production_ops.py:121"
       ]
