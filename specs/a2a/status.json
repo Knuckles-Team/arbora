@@ -996,8 +996,10 @@
     {
       "id": "ARBORA-A2A-R001.3.1",
       "title": "Typed native conversation admission handoff",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "c4c0956fe7b3"
+      ],
       "verified_by": [
         "tests/test_conversation_admission.py:15"
       ]
