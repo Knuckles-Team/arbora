@@ -32,7 +32,7 @@ import time
 import uuid
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -139,11 +139,18 @@ class _Issuer:
         self._thread = threading.Thread(target=self._server.serve_forever, daemon=True)
         self._thread.start()
 
-    def token(self, subject: str, *, ttl: int = 3600, email: bool = True) -> str:
+    def token(
+        self,
+        subject: str,
+        *,
+        ttl: int = 3600,
+        email: bool = True,
+        roles: tuple[str, ...] | None = None,
+    ) -> str:
         from joserfc import jwt
 
         now = int(time.time())
-        roles = list(ROLES)
+        effective_roles = tuple(ROLES if roles is None else roles)
         # A Keycloak client-credentials token carries no email: arbora mints it
         # as an automated_service (service) principal.
         identity = {"email": f"{subject}@boot.example"} if email else {}
@@ -155,8 +162,8 @@ class _Issuer:
                 "sub": subject,
                 **identity,
                 "tenant_id": TENANT,
-                "roles": roles,
-                "scope": " ".join(roles),
+                "roles": list(effective_roles),
+                "scope": " ".join(effective_roles),
                 "iat": now,
                 "nbf": now - 5,
                 "exp": now + ttl,
@@ -239,6 +246,7 @@ def _terminate(process: subprocess.Popen[Any]) -> None:
 def _booted_stack(
     extra_config: dict[str, str] | None = None,
     extra_env: dict[str, str] | None = None,
+    extra_token_roles: tuple[str, ...] = (),
 ) -> Iterator[dict[str, Any]]:
     root = Path(tempfile.mkdtemp(prefix="gos-boot-", dir="/tmp"))
     issuer = _Issuer()
@@ -424,11 +432,14 @@ def _booted_stack(
                 }
             )
         )
+        token_roles = tuple(dict.fromkeys((*ROLES, *extra_token_roles)))
+        process_token = issuer.token(PROCESS_SUBJECT, ttl=7200)
+        service_token = issuer.token(PROCESS_SUBJECT, ttl=7200, email=False)
         gos_env = {
             **base_env,
             "ARBORA_CONFIG_DIR": str(config_dir),
             "GRAPH_SERVICE_AUTH_SECRET": secret,
-            "ARBORA_BOOT_PROCESS_TOKEN": issuer.token(PROCESS_SUBJECT, ttl=7200),
+            "ARBORA_BOOT_PROCESS_TOKEN": process_token,
             "ARBORA_BOOT_MODEL_KEY": "boot-model-key",  # sanitizer:ignore - synthetic
             "XDG_CONFIG_HOME": str(root / "xdg-config"),
             "XDG_DATA_HOME": str(root / "xdg-data"),
@@ -564,8 +575,9 @@ def _booted_stack(
             "socket_path": str(socket_path),
             "secret": secret,
             "base_url": base_url,
-            "token": issuer.token(OPERATOR_SUBJECT),
-            "service_token": issuer.token(OPERATOR_SUBJECT, email=False),
+            "token": issuer.token(OPERATOR_SUBJECT, roles=token_roles),
+            "service_token": service_token,
+            "issuer_jwks_uri": issuer.jwks_uri,
             "logs": gos_logs,
         }
     finally:
@@ -755,6 +767,153 @@ async def test_mcp_act_calls_the_connector_tool(stack: dict[str, Any]) -> None:
     effect = await _effect_items(stack)
     assert [item["status"] for item in effect] == ["succeeded"], effect
     assert "echo:boot" in effect[0]["metadata"]["outcome"], effect
+
+
+@pytest.mark.spec("ARBORA-OPS-R021.4.5.1.2")
+def test_native_current_plan_lifecycle_uses_installed_engine(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The released EG lifecycle carries one native submit/claim into the
+    admitted publication and reads it back through the composed operation port.
+
+    The extra work scopes belong only to this ephemeral issuer/token. The
+    production process role declaration remains the least privilege fixture
+    used by the rest of the boot suite.
+    """
+    from types import SimpleNamespace
+
+    from agent_connector_sdk.current_plan import PlanItem
+    from epistemic_graph import EpistemicGraphClient
+
+    from arbora import current_plan_publication, work_items
+    from arbora.api.contracts.session import use_session
+    from arbora.api.invoke.pipeline import invoke
+    from arbora.api.invoke.steps import OpResult
+    from arbora.api.mcp.caller import caller_from_session
+    from arbora.api.registry import Surface
+    from arbora.core.settings import runtime_config
+    from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+    from arbora.epistemic import ConnectClient, EpistemicClientPool
+    from arbora.mcp_server.current_plan_reader import NativeCurrentPlanReader
+    from arbora.mcp_server.served_engine import ServedEngine
+    from arbora.mcp_server.served_invocation import (
+        compose_served_invocation,
+        refused_fleet_effect,
+    )
+    from arbora.security.request_identity import (
+        actor_from_bearer_token,
+        mint_graph_session,
+    )
+
+    with _booted_stack(
+        extra_token_roles=("work:read", "work:write"),
+    ) as stack:
+        monkeypatch.setattr(
+            runtime_config, "auth_jwt_jwks_uri", stack["issuer_jwks_uri"]
+        )
+        monkeypatch.setattr(runtime_config, "auth_jwt_issuer", ISSUER)
+        monkeypatch.setattr(runtime_config, "auth_jwt_audience", AUDIENCE)
+        monkeypatch.setattr(runtime_config, "kg_policy_version", POLICY_VERSION)
+        actor = asyncio.run(actor_from_bearer_token(stack["token"]))
+        session = mint_graph_session(actor).with_graph(CONTROL_GRAPH)
+        pool = EpistemicClientPool(
+            cast(ConnectClient, EpistemicGraphClient.connect),
+            socket_path=stack["socket_path"],
+            auth_secret=stack["secret"],
+        )
+        engine = ServedEngine(pool)
+        invocation = compose_served_invocation(
+            pool=pool,
+            graph=CONTROL_GRAPH,
+            process_session=lambda: session,
+            bindings={"current_plan_reader": NativeCurrentPlanReader()},
+            fleet_effect=refused_fleet_effect,
+        )
+        run_id = f"native-current-plan-{uuid.uuid4().hex}"
+
+        async def exercise() -> None:
+            with use_session(session):
+                item_id, created = work_items.submit_work_item_atomic(
+                    engine,
+                    kind="orchestrator_task",
+                    queue="orchestrator_task",
+                    resource_class="agent_dispatch",
+                    tenant=TENANT,
+                    run_id=run_id,
+                    idempotency_key=run_id,
+                    payload_ref=run_id,
+                    description="installed current-plan lifecycle acceptance",
+                    created_by=PROCESS_SUBJECT,
+                )
+                assert created is True
+                claim = work_items.claim_specific(
+                    engine,
+                    item_id,
+                    token=f"native-current-plan-worker:{run_id}",
+                    lease_ttl_s=600,
+                )
+                assert claim is not None
+                request = SimpleNamespace(
+                    run_id=run_id,
+                    metadata={"session": session},
+                )
+                with current_plan_publication.bind_admitted_claim(
+                    engine,
+                    session=session,
+                    run_id=run_id,
+                    work_item_id=item_id,
+                    claim=claim,
+                    hosted_invocation=invocation,
+                    owner_graph=CONTROL_GRAPH,
+                ):
+                    async with current_plan_publication.publication_scope(
+                        request
+                    ) as publisher:
+                        assert publisher is not None
+                        await publisher.publish(0, ())
+                        await publisher.publish(
+                            1,
+                            (PlanItem(text="inspect", status="in_progress"),),
+                        )
+
+                caller = caller_from_session(
+                    session,
+                    credential_kind="session",
+                    request_id=f"current-plan-read:{run_id}",
+                )
+                result = await invoke(
+                    "runs.current_plan",
+                    {"run_id": run_id},
+                    caller,
+                    Surface.HTTP,
+                    services=invocation.services,
+                )
+                assert isinstance(result, OpResult), result
+                assert result.code == "OK", result
+                value = result.value["value"]
+                assert value["availability"] == "available"
+                assert value["snapshot"]["run_id"] == run_id
+                assert value["snapshot"]["items"] == [
+                    {"text": "inspect", "status": "in_progress"}
+                ]
+                assert (
+                    work_items.commit_result(
+                        engine,
+                        item_id,
+                        claim,
+                        outcome="succeeded",
+                        result_ref=f"run:{run_id}",
+                    )
+                    == "committed"
+                )
+            await pool.close()
+
+        try:
+            asyncio.run(exercise())
+        except Exception as exc:
+            raise AssertionError(
+                "native current-plan lifecycle failed\n" + stack["logs"]()
+            ) from exc
 
 
 def _post_op_keyed(stack: dict[str, Any], op_id: str, params: dict[str, Any]) -> Any:

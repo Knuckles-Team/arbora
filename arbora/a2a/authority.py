@@ -429,22 +429,40 @@ class WorkItemA2AAuthority:
 
         if self.task_plan_config is not None and self.hosted_invocation is None:
             raise RuntimeError("UPGRADE_REQUIRED: hosted task-plan invocation")
+        from contextlib import nullcontext
+
         from arbora.agent_runs import native_run_scope
+        from arbora.current_plan_publication import bind_admitted_claim
         from arbora.host_bindings import preloaded_agent_tools
 
-        with native_run_scope(
-            run_id=run_id or task_id,
-            task_id=task_id,
-            context_id=context_id,
-            work_item_id=item_id,
-            session=session,
-            claim=claim,
-            owner_graph=(
-                work_items.native_owner_graph(work_engine)
-                if self.task_plan_config is not None
-                else None
+        with (
+            native_run_scope(
+                run_id=run_id or task_id,
+                task_id=task_id,
+                context_id=context_id,
+                work_item_id=item_id,
+                session=session,
+                claim=claim,
+                owner_graph=(
+                    work_items.native_owner_graph(work_engine)
+                    if self.task_plan_config is not None
+                    else None
+                ),
+                hosted_invocation=self.hosted_invocation,
             ),
-            hosted_invocation=self.hosted_invocation,
+            (
+                bind_admitted_claim(
+                    work_engine,
+                    session=session,
+                    run_id=run_id or task_id,
+                    work_item_id=item_id,
+                    claim=claim,
+                    hosted_invocation=self.hosted_invocation,
+                    owner_graph=work_items.native_owner_graph(work_engine),
+                )
+                if self.task_plan_config is not None
+                else nullcontext()
+            ),
         ):
             return await self._agent_executor().execute_agent(
                 AgentExecutionRequest(

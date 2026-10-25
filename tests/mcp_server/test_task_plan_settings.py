@@ -27,10 +27,15 @@ def test_default_disabled(monkeypatch):
     assert configured_task_plan() is None
 
 
-def test_config_json_setting_reaches_trusted_composition(monkeypatch):
+@pytest.mark.spec("ARBORA-OPS-R021.4.5.1.2")
+@pytest.mark.parametrize(
+    "extra, expected",
+    [({}, "off"), ({"plan_scaffold": "off"}, "off"), ({"plan_scaffold": "on"}, "on")],
+)
+def test_config_json_setting_reaches_trusted_composition(monkeypatch, extra, expected):
     from arbora.mcp_server import served_engine, served_invocation
 
-    monkeypatch.setenv("ARBORA_TASK_PLAN", json.dumps(CONFIG))
+    monkeypatch.setenv("ARBORA_TASK_PLAN", json.dumps({**CONFIG, **extra}))
     monkeypatch.setitem(
         runtime_config._overrides, "graph_service_endpoints", ["unix:///fixture"]
     )
@@ -43,6 +48,7 @@ def test_config_json_setting_reaches_trusted_composition(monkeypatch):
         fleet_effect=None,
     )
     trusted = compose.call_args.kwargs["task_plan_config"]
+    assert trusted.plan_scaffold == expected
     assert trusted.max_steps == 4
     assert trusted.feature_schema["kind"] == "feature_schema"
 
@@ -58,6 +64,9 @@ def test_config_json_setting_reaches_trusted_composition(monkeypatch):
         {"model": "injected"},
         {"client": "injected"},
         {"policy": []},
+        {"plan_scaffold": True},
+        {"plan_scaffold": "ON"},
+        {"plan_scaffold": None},
     ],
 )
 def test_malformed_settings_fail_closed(monkeypatch, change):

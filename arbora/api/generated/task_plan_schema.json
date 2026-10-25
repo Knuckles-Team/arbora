@@ -17,7 +17,7 @@
   },
   "component_id": "arbora.agents.plan_run.feature_schema",
   "content_digest": "sha256:7a1a4e4b524072521a937e2f797f0a8eba33f3cca5fb5bd373b65f77b15184d1",
-  "engine_version": "2.27.6",
+  "engine_version": "2.27.7",
   "export": "epistemic_graph.decision_client.TASK_PLAN_FEATURE_SCHEMA",
   "kind": "feature_schema",
   "schema_version": 1
