@@ -1021,6 +1021,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "2e9f4b8bc465",
+        "5aed3058d14b",
         "663cc8cad940",
         "9f41ea82883d",
         "f4ae1be895a1"
@@ -1042,6 +1043,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "2e9f4b8bc465",
+        "5aed3058d14b",
         "663cc8cad940",
         "9f41ea82883d",
         "f4ae1be895a1"
@@ -1074,6 +1076,7 @@
       "title": "Compose owner-bound A2A scaffold publication",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "5aed3058d14b",
         "9f41ea82883d"
       ],
       "verified_by": [
@@ -2961,10 +2964,12 @@
       "title": "Durable, public run replay",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "5aed3058d14b",
         "9bd22960a7ea"
       ],
       "verified_by": [
-        "tests/api/test_run_replay.py:12"
+        "tests/api/test_run_replay.py:12",
+        "tests/test_real_boot_read_assertions.py:7"
       ]
     },
     {
@@ -3072,6 +3077,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "2e09ba70eba9",
+        "5aed3058d14b",
         "6268c79436c9",
         "951e55158d8a"
       ],
