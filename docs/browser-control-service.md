@@ -1,7 +1,7 @@
 # Governed browser control
 
 `BrowserControlService` is Arbora's single authority for remote calls to the
-small browser-local WebMCP catalog. Agent WebUI provides an authenticated
+small browser-local WebMCP catalog. Overstory provides an authenticated
 document channel and renders confirmation UI. It does not authorize calls,
 mint leases, own replay state, or persist outcomes.
 
@@ -36,7 +36,7 @@ adapter invokes it without exposing the token to Arbora. The attended arm
 cannot outlive the access token, and every lease is capped by both expiries.
 
 <ol class="site-flow" aria-label="Attended browser-control flow">
-  <li class="site-flow__step"><span class="site-flow__title">Step up</span><span class="site-flow__body">Agent WebUI verifies OIDC evidence and seals a one-use recent-auth grant.</span></li>
+  <li class="site-flow__step"><span class="site-flow__title">Step up</span><span class="site-flow__body">Overstory verifies OIDC evidence and seals a one-use recent-auth grant.</span></li>
   <li class="site-flow__step"><span class="site-flow__title">Bind</span><span class="site-flow__body">Arbora finalizes and CAS-consumes the exact attended document binding.</span></li>
   <li class="site-flow__step"><span class="site-flow__title">Register</span><span class="site-flow__body">The browser publishes a bounded catalog whose digests are recomputed and persisted.</span></li>
   <li class="site-flow__step"><span class="site-flow__title">Lease</span><span class="site-flow__body">ActionPolicy authorizes the exact capability set and Arbora persists the capped lease.</span></li>
