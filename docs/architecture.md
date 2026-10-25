@@ -10,6 +10,11 @@ capabilities through one governed surface.
 
 ## One request, five clear owners
 
+Product display names map to existing repositories: Overstory (`agent-webui`),
+Tuig (`agent-terminal-ui`), Scion SDK (`agent-connector-sdk`), Trellis
+(`agent-utilities`) and Axil Desk (`geniusbot`). Package/import names and
+repository URLs are unchanged. The Tuig executable remains `tuig`.
+
 | Layer | Owns | Arbora relationship |
 |---|---|---|
 | [Overstory](https://knuckles-team.github.io/agent-webui/) | Browser interaction, chat presentation, and local UI state | Hosted by Arbora with an injected application composer. |
