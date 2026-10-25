@@ -178,6 +178,70 @@ def test_schema_publication_uses_new_exact_durable_policy_receipt(fixture: Any) 
         assert context["policy_revision"] == "policy-revision-test"
 
 
+def test_schema_publication_separates_request_trace_from_process_authority(
+    fixture: Any,
+) -> None:
+    """A served request may publish through the verified process session.
+
+    HTTP/MCP admission gives the request its own trace context.  The schema
+    publisher is intentionally process-owned, so comparing the two complete
+    ``GraphSession`` values would reject a valid first request before the
+    engine sees it.  The request authority must remain ambient after the
+    process-owned publication scope exits.
+    """
+    process = fixture.sessions[0]
+    request = replace(process, trace_context="request-trace")
+
+    with use_session(request):
+        assert _publish(fixture) == "sha256:" + "d" * 64
+        assert current_session() is request
+
+    assert current_session() is None
+    assert fixture.pool.sessions == [process]
+
+
+def test_schema_publication_keeps_concurrent_request_sessions_isolated(
+    fixture: Any,
+) -> None:
+    process = fixture.sessions[0]
+    requests = [
+        replace(process, trace_context=f"request-{index}") for index in range(2)
+    ]
+
+    async def publish_from(request: GraphSession) -> str:
+        with use_session(request):
+            result = await fixture.publish("tenant-a", fixture.pin)
+            assert current_session() is request
+            return result
+
+    async def scenario() -> list[str]:
+        return await asyncio.gather(*(publish_from(request) for request in requests))
+
+    assert asyncio.run(scenario()) == ["sha256:" + "d" * 64] * 2
+    assert current_session() is None
+    assert fixture.pool.sessions == [process, process]
+
+
+def test_schema_publication_restores_request_session_after_engine_failure(
+    fixture: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    process = fixture.sessions[0]
+    request = replace(process, trace_context="request-failure")
+    original_send = fixture.pool._send
+
+    async def fail_publish(method: str, params: Any, *args: Any, **kwargs: Any) -> Any:
+        if params["op"]["op"] == "publish":
+            raise RuntimeError("fixture engine publication failed")
+        return await original_send(method, params, *args, **kwargs)
+
+    monkeypatch.setattr(fixture.pool, "_send", fail_publish)
+    with use_session(request):
+        with pytest.raises(RuntimeError, match="engine publication failed"):
+            _publish(fixture)
+        assert current_session() is request
+    assert current_session() is None
+
+
 @pytest.mark.parametrize("defect", ["digest", "action", "missing", "empty_id"])
 def test_schema_refuses_wrong_receipt_before_publication(
     fixture: Any, monkeypatch: pytest.MonkeyPatch, defect: str
