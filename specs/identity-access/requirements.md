@@ -163,7 +163,22 @@ cookie is present; it fabricates no principal or grant. Invalid or revoked cooki
 return 401. Only trusted transport/origin checks permit cookie clearing. Login returns
 `outcome: ok`. IdP listing, password reset, and MFA ceremonies remain unavailable.
 
-The configured runtime broker must already hold direct `identity:authenticate`;
-`identity:admin` or `kg:admin` never substitutes. Composition checks this existing
-prerequisite and each broker call repeats it after connection awaits, while native
-identity authorization remains authoritative. No broker grant is created here.
+The configured runtime broker must be an existing native-managed service principal
+with direct `identity:authenticate`;
+`identity:admin` or `kg:admin` never substitutes. Composition validates the existing
+secret reference. Each broker call verifies its authority after connection awaits;
+native identity authorization remains authoritative. This code creates no broker grant.
+
+The console process root injects one browser factory through the serving lifecycle.
+Concrete constructors stay in the identity composition package. Served modules use
+only the identity port contract. Direct EG startup without the injected factory
+refuses; static help/version and non-EG startup remain unchanged.
+
+EG browser deployment also requires `WEBUI_BROKER_TOKEN_REF`, an existing SDK
+secret reference to a distinct native-managed service broker. The System process
+cannot become this broker through Identity takeover. Each Identity call resolves
+and verifies the configured credential after connection awaits. Exact service kind,
+tenant, audience, nondelegation and `identity:authenticate` must match. Native
+current-role checks remain authoritative. Missing or invalid inputs refuse without
+a process-authority fallback. This composition never writes broker credentials or
+grants. Reference contents, resolved tokens and secret-adapter errors stay private.

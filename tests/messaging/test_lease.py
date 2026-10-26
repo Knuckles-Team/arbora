@@ -80,6 +80,7 @@ def _lease(platform: str) -> intake_lease.IntakeLease:
     )
 
 
+@pytest.mark.spec("ARBORA-MESSAGING-R800.1001")
 def test_two_contenders_cannot_both_own_intake():
     work_items = FakeWorkItems()
     engine = _engine(work_items)

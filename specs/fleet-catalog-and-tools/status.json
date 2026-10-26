@@ -638,15 +638,20 @@
     {
       "id": "ARBORA-FLEET-R014",
       "title": "Resolver ranks catalog items with partitioned feedback",
-      "delivery_state": "SPECIFIED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "3597c590c8c9",
         "43db6b7ac49b",
-        "a2f74cb9621d"
+        "96b68a9b5e5c",
+        "a2f74cb9621d",
+        "b2a301657802"
       ],
       "verified_by": [
-        "tests/api/test_resolve.py:114",
-        "tests/api/test_resolve.py:161",
-        "tests/api/test_resolve.py:170"
+        "tests/api/test_ask_routing_table.py:108",
+        "tests/api/test_ask_routing_table.py:127",
+        "tests/api/test_ask_routing_table.py:141",
+        "tests/api/test_ask_routing_table.py:96",
+        "tests/api/test_resolve.py:114"
       ],
       "rollup_of": [
         "ARBORA-FLEET-R014.1",
@@ -657,8 +662,10 @@
     {
       "id": "ARBORA-FLEET-R014.1",
       "title": "`ask` does not route a plain question to an op it cannot run",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e755549375e6"
+      ],
       "verified_by": [
         "tests/api/test_resolve.py:259",
         "tests/api/test_resolve.py:273",
@@ -1832,8 +1839,10 @@
     {
       "id": "ARBORA-FLEET-R041.9",
       "title": "Serving never blocks",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e755549375e6"
+      ],
       "verified_by": [
         "tests/fleet/test_handshake_onboard.py:265",
         "tests/fleet/test_handshake_onboard.py:299",
@@ -2080,10 +2089,14 @@
     {
       "id": "ARBORA-FLEET-R043.7",
       "title": "Source executor",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e755549375e6"
+      ],
       "verified_by": [
-        "tests/fleet/test_source_executor.py:32"
+        "tests/fleet/test_source_executor.py:123",
+        "tests/fleet/test_source_executor.py:62",
+        "tests/fleet/test_source_executor.py:99"
       ]
     },
     {

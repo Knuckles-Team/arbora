@@ -103,3 +103,17 @@ class BrowserAdmissionPort(Protocol):
 #: Read the browser session cookie from an ASGI scope: ``None`` when absent,
 #: :class:`PermissionError` when a presented cookie is invalid or ambiguous.
 SessionCookieReader = Callable[[Mapping[str, Any]], str | None]
+
+
+class BrowserBoundaryFactory(Protocol):
+    """Trusted process-root constructor, never selected by request input."""
+
+    def __call__(
+        self,
+        invocation: Any,
+        client_factory: Callable[[], Awaitable[Any]],
+        *,
+        graph: str,
+        tenant: str,
+        broker_claims: Callable[[], Mapping[str, Any]],
+    ) -> Any: ...

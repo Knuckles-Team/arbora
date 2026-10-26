@@ -15,18 +15,27 @@ class _IdentityClient:
 
     async def _send(self, *args: Any, **kwargs: Any) -> Any:
         client = await self._client_factory()
-        from arbora.security.anonymous import client_scope
-
         # Read after connection awaits; neither the first connection snapshot
         # nor an ambient browser caller supplies broker identity authority.
-        claims = self._claims()
+        import inspect
+
+        from arbora.security.anonymous import client_scope
+
+        supplied = self._claims()
+        claims = await supplied if inspect.isawaitable(supplied) else supplied
         _require_broker_claims(claims)
         with client_scope(client, claims):
             return await client._send(*args, **kwargs)
 
 
 def configured_browser_boundary(
-    invocation: Any, client_factory: Any, *, graph: str, tenant: str, broker_claims: Any
+    invocation: Any,
+    client_factory: Any,
+    *,
+    graph: str,
+    tenant: str,
+    broker_claims: Any,
+    request_dispatch: Any,
 ) -> Any:
     """Require explicit existing deployment inputs, never provision defaults."""
     from arbora.core.settings import runtime_config, setting
@@ -56,18 +65,26 @@ def configured_browser_boundary(
         raise IdentityUnavailable(
             "EG browser requires configured HTTPS origin, JWT verifier and signing store"
         )
-    _require_broker_claims(broker_claims())
+    from .browser_broker import ConfiguredBrowserBroker
+
+    broker = ConfiguredBrowserBroker(
+        runtime_config.webui_broker_token_ref or "",
+        tenant=tenant,
+        audience=config.auth_jwt_audience,
+        process_claims=broker_claims,
+    )
     from arbora.security.secrets import create_secrets_client
 
     return build_browser_boundary(
         invocation,
-        _IdentityClient(client_factory, broker_claims),
+        _IdentityClient(client_factory, broker),
         graph=graph,
         tenant=tenant,
         origin=origin,
         issuer=config.auth_jwt_issuer,
         audience=config.auth_jwt_audience,
         store=create_secrets_client().backend,
+        request_dispatch=request_dispatch,
     )
 
 
@@ -81,6 +98,7 @@ def build_browser_boundary(
     issuer: str,
     audience: str,
     store: Any,
+    request_dispatch: Any,
 ) -> Any:
     """One runtime, issuer and exact caller fence around the shared pipeline."""
     from arbora.api.http.browser_app import (
@@ -96,7 +114,6 @@ def build_browser_boundary(
     )
     from arbora.identity.composition import build_engine_identity_ports
     from arbora.identity.issuer import IssuerSettings, LocalIssuer
-    from arbora.mcp_server.browser_dispatch import dispatch_browser_request
     from arbora.security.request_identity import verify_local_bearer_token
 
     invocation.validate()
@@ -125,7 +142,7 @@ def build_browser_boundary(
     return create_webui_session_boundary(
         admission=admission,
         operations=operations,
-        request_dispatch=dispatch_browser_request,
+        request_dispatch=request_dispatch,
         auth_app=BrowserAuthApplication(
             client,
             ports.sessions,

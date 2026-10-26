@@ -6,6 +6,7 @@ Check a task only after its linked code and tests land. A checked source task is
 - [x] T02 — Define frozen `OpSpec`, stable IDs, exact scope/effect metadata, canonical digest, reviewed engine exclusions, and generator checks. Cover ARBORA-FLEET-R011, ARBORA-FLEET-R012, ARBORA-FLEET-R016.
 - [x] T03 — Implement typed `invoke` with caller validation, narrowing policy, service executor, effect plans, audit, and stable errors. Move child dispatch behind one fleet gateway. Cover ARBORA-FLEET-R015, ARBORA-FLEET-R021, ARBORA-FLEET-R003.
 - [x] T04 — Project the six intent verbs and four resident fleet tools, generated schemas/resources, cross-surface discovery, and bounded resolver. Remove obsolete harvest and granular registration in the same cutover. Cover ARBORA-FLEET-R013, ARBORA-FLEET-R014, ARBORA-FLEET-R005, ARBORA-FLEET-R006, ARBORA-FLEET-R007, ARBORA-FLEET-R020. ARBORA-FLEET-R006 is now a rollup over ARBORA-FLEET-R006.1-.5; ARBORA-FLEET-R007 is now a rollup over ARBORA-FLEET-R007.1-.3.
+  - [x] **ARBORA-FLEET-R014.1:** `ask` does not route a plain question to an operation it cannot run. Evidence: `tests/api/test_resolve.py`.
   - [x] ARBORA-FLEET-R005.1 (child, producer): `arbora/a2a/work_items.py` (`WorkItemView`, `work_item_view`, `parse_work_item_view`, `list_work_item_views`) + `tests/a2a/test_work_items.py`.
   - [ ] ARBORA-FLEET-R006.1 (child, producer): `tests/fleet/test_harvest_inventory.py` pins the current harvest call-site baseline in `arbora/fleet/multiplexer.py`.
   - [ ] ARBORA-FLEET-R006.2 (child, consumer of .1): cut `_probe_skills`/`_probe_prompts` over to the resident `build_local_skill_catalog` path for an already-admitted child, keeping fallback for a non-admitted one.
@@ -233,7 +234,7 @@ Preserve all existing R003 tasks and receipts. These added runtime cases have no
 - [ ] **ARBORA-FLEET-R041.6:** Hot-path proof.
 - [ ] **ARBORA-FLEET-R041.7:** Handshake trigger: start one `onboard` pass when the multiplexer completes the handshake.
 - [ ] **ARBORA-FLEET-R041.8:** Reconnect compare: re-capture only on a changed `serverInfo` version or manifest digest; renew otherwise.
-- [ ] **ARBORA-FLEET-R041.9:** Serving never blocks: log, report in the surface report, retry with backoff.
+- [x] **ARBORA-FLEET-R041.9:** Serving never blocks: log, report in the surface report, retry with backoff. Evidence: `tests/fleet/test_handshake_onboard.py::test_failed_capture_serves_tools_reports_gap_and_retries_with_backoff`.
 - [ ] **ARBORA-FLEET-R041.10:** Rules unchanged: keep mass-withdrawal approval; keep `onboard-fleet` as manual or bulk re-sync.
 - [ ] **ARBORA-FLEET-R015.2:** Answer a connector's destructive confirmation from a consumed plan; decline everything else.
 - [ ] **ARBORA-FLEET-R041.15:** Read captured pack bodies from the SDK 0.5 archive section.
@@ -254,7 +255,7 @@ Preserve all existing R003 tasks and receipts. These added runtime cases have no
 - [ ] **ARBORA-FLEET-R043.4:** Refusal.
 - [ ] **ARBORA-FLEET-R043.5:** Evidence.
 - [ ] **ARBORA-FLEET-R043.6:** Hot-path proof.
-- [ ] **ARBORA-FLEET-R043.7:** Source executor.
+- [x] **ARBORA-FLEET-R043.7:** Source executor. Evidence: `tests/fleet/test_source_executor.py`.
 - [x] **ARBORA-FLEET-R044:** dev4 content surface.
 - [x] **ARBORA-FLEET-R044.1:** dev4 content surface.
 - [x] **ARBORA-FLEET-R044.2:** dev4 content surface.

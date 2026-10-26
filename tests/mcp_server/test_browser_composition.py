@@ -4,8 +4,8 @@ from types import SimpleNamespace
 
 import pytest
 
+from arbora.identity.browser_composition import configured_browser_boundary
 from arbora.identity.engine import IdentityUnavailable
-from arbora.mcp_server.browser_composition import configured_browser_boundary
 
 pytestmark = pytest.mark.spec("ARBORA-IDENTITY-R004.5.2")
 
@@ -21,11 +21,10 @@ pytestmark = pytest.mark.spec("ARBORA-IDENTITY-R004.5.2")
     ],
 )
 def test_missing_secure_deployment_prerequisites_refuse(monkeypatch, origin):
-    from arbora.core.settings import runtime_config
 
-    monkeypatch.setattr(runtime_config, "enable_web_ui", True)
-    monkeypatch.setattr(runtime_config, "webui_auth_mode", "eg")
-    monkeypatch.setattr(runtime_config, "webui_origin", origin)
+    monkeypatch.setenv("ENABLE_WEB_UI", "true")
+    monkeypatch.setenv("WEBUI_AUTH_MODE", "eg")
+    monkeypatch.setenv("WEBUI_ORIGIN", origin or "")
     with pytest.raises(IdentityUnavailable):
         configured_browser_boundary(
             object(),
@@ -33,6 +32,7 @@ def test_missing_secure_deployment_prerequisites_refuse(monkeypatch, origin):
             graph="fixture-graph",
             tenant="fixture-tenant",
             broker_claims=lambda: {},
+            request_dispatch=object(),
         )
 
 
@@ -67,7 +67,7 @@ def test_supervisor_receives_exact_boundary(monkeypatch):
     [[], ["identity:admin"], ["kg:admin"], ["identity:*"], "identity:authenticate"],
 )
 def test_broker_exact_scope_is_never_implied(scopes):
-    from arbora.mcp_server.browser_composition import _require_broker_claims
+    from arbora.identity.browser_composition import _require_broker_claims
 
     with pytest.raises(PermissionError):
         _require_broker_claims({"scopes": scopes, "delegation": []})
@@ -76,7 +76,7 @@ def test_broker_exact_scope_is_never_implied(scopes):
 def test_broker_scope_revocation_after_connection_await_stops_dispatch():
     import asyncio
 
-    from arbora.mcp_server.browser_composition import _IdentityClient
+    from arbora.identity.browser_composition import _IdentityClient
 
     async def scenario():
         claims = {"scopes": ["identity:authenticate"], "delegation": []}
@@ -90,3 +90,86 @@ def test_broker_scope_revocation_after_connection_await_stops_dispatch():
             await _IdentityClient(connect, lambda: claims)._send("Identity")
 
     asyncio.run(scenario())
+
+
+def test_packaged_console_injects_exact_identity_factory(monkeypatch):
+    import importlib
+    import sys
+    import tomllib
+    from pathlib import Path
+
+    from arbora.identity import browser_composition
+    from arbora.mcp_server import server
+
+    calls = []
+    monkeypatch.setattr(sys, "argv", ["arbora", "--transport", "stdio"])
+    monkeypatch.setattr(server, "mcp_server", lambda **kw: calls.append(kw))
+    manifest = tomllib.loads((Path(__file__).parents[2] / "pyproject.toml").read_text())
+    module, name = manifest["project"]["scripts"]["arbora"].split(":")
+    getattr(importlib.import_module(module), name)()
+    from arbora.mcp_server.browser_dispatch import dispatch_browser_request
+
+    assert len(calls) == 1
+    factory = calls[0]["browser_boundary_factory"]
+    assert factory.func is browser_composition.configured_browser_boundary
+    assert factory.keywords == {"request_dispatch": dispatch_browser_request}
+
+
+@pytest.mark.parametrize("flag", ["--help", "--version"])
+def test_console_static_answers_do_not_compose_identity(monkeypatch, capsys, flag):
+    import sys
+
+    from agent_connector_sdk.credentials import runtime_references
+
+    from arbora.console import main
+    from arbora.core import settings
+    from arbora.mcp_server import server
+
+    monkeypatch.setattr(
+        settings, "load_config", lambda: pytest.fail("static answer loaded config")
+    )
+    monkeypatch.setattr(
+        runtime_references,
+        "resolve_runtime_secret_reference",
+        lambda *a: pytest.fail("static answer resolved secret"),
+    )
+    monkeypatch.setattr(sys, "argv", ["arbora", flag])
+    monkeypatch.setattr(
+        server, "mcp_server", lambda **kw: pytest.fail("static answer entered serving")
+    )
+    main()
+    assert "arbora" in capsys.readouterr().out
+
+
+def test_direct_unconfigured_eg_server_refuses_before_serving(monkeypatch):
+    import sys
+
+    from arbora.core import settings
+    from arbora.mcp_server import server
+
+    monkeypatch.setattr(sys, "argv", ["arbora"])
+    monkeypatch.setattr(settings, "load_config", lambda: None)
+    monkeypatch.setenv("ENABLE_WEB_UI", "true")
+    monkeypatch.setenv("WEBUI_AUTH_MODE", "eg")
+    with pytest.raises(RuntimeError, match="process-root identity factory"):
+        server.mcp_server()
+
+
+def test_settings_composition_forwards_factory_without_constructing_it(monkeypatch):
+    from arbora.mcp_server import served_engine, served_invocation, task_plan
+
+    factory, pool, calls = object(), object(), []
+    monkeypatch.setenv("GRAPH_SERVICE_ENDPOINTS", "unix:///fixture")
+    monkeypatch.setattr(task_plan, "configured_task_plan", lambda: None)
+    monkeypatch.setattr(served_engine, "process_engine_pool", lambda: pool)
+    monkeypatch.setattr(
+        served_invocation, "compose_served_invocation", lambda **kw: calls.append(kw)
+    )
+    served_invocation.served_invocation_from_settings(
+        process_session=lambda: SimpleNamespace(graph="fixture-graph"),
+        bindings={},
+        fleet_effect=None,
+        browser_boundary_factory=factory,
+    )
+    assert calls[0]["browser_boundary_factory"] is factory
+    assert calls[0]["pool"] is pool

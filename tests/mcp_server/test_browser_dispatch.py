@@ -8,7 +8,7 @@ from contextlib import contextmanager
 import pytest
 
 from arbora.epistemic import ClientContext, EpistemicClientPool
-from arbora.mcp_server.browser_composition import _IdentityClient
+from arbora.identity.browser_composition import _IdentityClient
 from arbora.mcp_server.browser_dispatch import _on_owner
 
 pytestmark = pytest.mark.spec("ARBORA-IDENTITY-R004.5.2")
@@ -81,7 +81,12 @@ def test_real_pool_requires_owner_loop_and_fresh_broker_claims(owner_loop):
         async def client():
             return await pool.connected_client(context(policy[0]), "fixture-graph")
 
-        broker = _IdentityClient(client, lambda: context(policy[0]).to_claims())
+        async def claims():
+            await asyncio.sleep(0)
+            assert asyncio.get_running_loop() is owner_loop
+            return context(policy[0]).to_claims()
+
+        broker = _IdentityClient(client, claims)
 
         async def app(scope, receive, send):
             await receive()

@@ -2782,8 +2782,10 @@
     {
       "id": "ARBORA-OPS-R855.1",
       "title": "Routing",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e755549375e6"
+      ],
       "verified_by": [
         "tests/api/test_resolve.py:191"
       ]
@@ -2814,8 +2816,10 @@
     {
       "id": "ARBORA-OPS-R855.5",
       "title": "Find surfaces catalog assets",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e755549375e6"
+      ],
       "verified_by": [
         "tests/api/test_resolve.py:218"
       ]

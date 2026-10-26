@@ -12,6 +12,7 @@ from agent_connector_sdk.mcp.network import build_network_serving_config
 
 from arbora.content import register_installed_content
 from arbora.core.settings import setting
+from arbora.identity.ports import BrowserBoundaryFactory
 from arbora.mcp_server import runtime
 from arbora.mcp_server.composition import (
     install_gateway_application,
@@ -137,7 +138,10 @@ def _attach_fleet_runtime(mcp: Any, fleet_catalog_reader: Any) -> Any:
         ) from exc
 
 
-def _served_invocation() -> tuple[HostedInvocation | None, Any]:
+def _served_invocation(
+    *,
+    browser_boundary_factory: BrowserBoundaryFactory | None = None,
+) -> tuple[HostedInvocation | None, Any]:
     """Compose the operation-invoke API when an engine endpoint is configured.
 
     The process authority is minted first because the invoke runtime's service
@@ -178,6 +182,7 @@ def _served_invocation() -> tuple[HostedInvocation | None, Any]:
             "run_trace_reader": NativeRunReader(runtime._get_engine),
         },
         fleet_effect=fleet.effect,
+        browser_boundary_factory=browser_boundary_factory,
     )
     return invocation, session
 
@@ -200,7 +205,11 @@ def _bind_served_fleet(
         )
 
 
-def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
+def mcp_server(
+    *,
+    invocation: HostedInvocation | None = None,
+    browser_boundary_factory: BrowserBoundaryFactory | None = None,
+) -> None:
     """``arbora`` MCP server entry point (registered as console_scripts).
 
     Thin FastMCP wrapper following the standard ``mcp_server.py`` template: it
@@ -217,6 +226,15 @@ def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
     from arbora.core.settings import load_config
 
     load_config()  # resolve settings through the one shared XDG config.json
+    from arbora.core.settings import runtime_config
+
+    if (
+        runtime_config.enable_web_ui
+        and runtime_config.webui_auth_mode == "eg"
+        and browser_boundary_factory is None
+        and invocation is None
+    ):
+        raise RuntimeError("EG browser requires the process-root identity factory")
     from arbora.mcp_server.backing.server_factory import create_mcp_parser
     from arbora.security.anonymous import validate_startup
 
@@ -224,7 +242,11 @@ def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
     validate_startup(startup_args)
     early_session = None
     if invocation is None:
-        invocation, early_session = _served_invocation()
+        invocation, early_session = (
+            _served_invocation(browser_boundary_factory=browser_boundary_factory)
+            if browser_boundary_factory is not None
+            else _served_invocation()
+        )
     if invocation is None:
         install_gateway_application()
     else:
