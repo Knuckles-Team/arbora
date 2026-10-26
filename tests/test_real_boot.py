@@ -1301,8 +1301,8 @@ def test_a2a_message_send_completes_through_the_model(stack: dict[str, Any]) -> 
 @pytest.mark.spec("ARBORA-OPS-R001")
 def test_the_tui_headless_prompt_completes(stack: dict[str, Any]) -> None:
     """The installed test dependency completes its headless prompt end to end."""
-    exe = shutil.which("agent-terminal-ui", path=str(Path(sys.executable).parent))
-    assert exe is not None, "install the locked test extra for TUI acceptance"
+    exe = shutil.which("tuig", path=str(Path(sys.executable).parent))
+    assert exe is not None, "install the locked Tuig test extra for TUI acceptance"
     env = {
         **{k: v for k, v in os.environ.items() if k in _INHERITED_ENV},
         "AGENT_URL": stack["base_url"],
