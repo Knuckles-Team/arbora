@@ -45,41 +45,6 @@ CONTRACT_MARKERS = (
 )
 _CATALOG: list[Any] = []
 
-# The contract language currently carries the operation name rather than a
-# second client-side effect enum.  These are the conservative write verbs used
-# by the connector SDK's operation names.  An explicit ``read_only`` or
-# ``read_only_hint`` field, when a newer SDK supplies one, always wins.
-_WRITE_OPERATION_WORDS = frozenset(
-    {
-        "add",
-        "approve",
-        "cancel",
-        "create",
-        "delete",
-        "disable",
-        "drop",
-        "edit",
-        "execute",
-        "grant",
-        "insert",
-        "merge",
-        "move",
-        "patch",
-        "post",
-        "publish",
-        "put",
-        "remove",
-        "replace",
-        "revoke",
-        "run",
-        "send",
-        "set",
-        "submit",
-        "trigger",
-        "update",
-        "write",
-    }
-)
 _CREDENTIAL_REFERENCE_PREFIXES = ("env://", "openbao://")
 
 
@@ -276,13 +241,6 @@ def _explicit_read_only(contract: Any) -> bool | None:
     return None
 
 
-def _looks_write_operation(operation: Any) -> bool:
-    if not isinstance(operation, str) or not operation.strip():
-        return True
-    words = {word for word in operation.replace("-", "_").split("_") if word}
-    return bool(words & _WRITE_OPERATION_WORDS)
-
-
 def source_approval_policy(
     contract: Any,
     *,
@@ -318,11 +276,14 @@ def source_approval_policy(
     if access_kind not in _SOURCE_KIND_BY_ACCESS:
         return held("access kind is not an approved read source kind")
     explicit = _explicit_read_only(contract)
-    if explicit is False or (
-        explicit is None
-        and _looks_write_operation(getattr(contract, "operation", None))
-    ):
+    if explicit is False:
         return held("source operation is not declared read-only")
+    if explicit is None:
+        # Operation names are connector-owned strings and cannot establish
+        # effect semantics.  An unknown operation is held until the producer
+        # supplies its typed read-only fact; guessing from verbs such as
+        # ``list`` or ``get`` would make a mutator readable by accident.
+        return held("source operation effect is not declared read-only")
     if not _credential_reference(getattr(contract, "auth_ref", None)):
         return held(
             "source requires a credential reference, never a literal credential"
@@ -555,6 +516,9 @@ def _add_mappings(catalog: Any, contracts: Sequence[Any]) -> int:
                 for index, item in enumerate(catalog.mappings)
                 if item.mapping_id == mapping.mapping_id
             )
+            invalidate = getattr(catalog, "invalidate_binding", None)
+            if callable(invalidate):
+                invalidate(mapping.mapping_id)
             catalog.mappings[index] = mapping
             existing[mapping.mapping_id] = mapping
             added += 1
@@ -573,6 +537,7 @@ def bind_approved_mapping(
     connector: str,
     resource_uri: str,
     policy_id: str = "eg.connector-pack.source-approval",
+    scope: tuple[str, str] | None = None,
 ) -> SourceApprovalDecision:
     """Apply an EG-approved receipt to one existing catalog candidate.
 
@@ -617,7 +582,29 @@ def bind_approved_mapping(
                 policy_id=policy_id,
                 reason="catalog mapping does not match the approved contract",
             )
-        catalog.mappings[index] = replace(mapping, approved=True)
+        approved_mapping = replace(mapping, approved=True)
+        catalog.mappings[index] = approved_mapping
+        record = getattr(catalog, "record_approved_source", None)
+        if callable(record):
+            try:
+                record(
+                    approved_mapping,
+                    contract,
+                    receipt,
+                    connector=connector,
+                    resource_uri=resource_uri,
+                    scope=scope,
+                )
+            except (LookupError, ValueError) as exc:
+                catalog.mappings[index] = mapping
+                return SourceApprovalDecision(
+                    connector=connector,
+                    contract_iri=mapping_id,
+                    mapping_iri=mapping_id,
+                    outcome="held",
+                    policy_id=policy_id,
+                    reason=f"catalog source binding refused: {exc}",
+                )
         return decision
     return SourceApprovalDecision(
         connector=connector,

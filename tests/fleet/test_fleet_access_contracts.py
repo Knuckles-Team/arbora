@@ -184,6 +184,12 @@ def test_approved_receipt_binds_existing_mapping_without_binding_adapter(fake_sd
     )
     assert decision.outcome == "approved"
     assert catalog.mappings[0].approved
+    bound = catalog.approved_source_for("tickets")
+    assert bound.mapping is catalog.mappings[0]
+    assert bound.contract is contract
+    assert bound.receipt == _approved_receipt(contract)
+    assert bound.connector == "tickets-mcp"
+    assert bound.resource_uri == "ontology://tickets"
     # The projection controls selection only; direct catalog fetch remains
     # fail-closed until the governed FleetSourceExecutor is used.
     with pytest.raises(LookupError, match="no governed live binding"):
@@ -191,6 +197,30 @@ def test_approved_receipt_binds_existing_mapping_without_binding_adapter(fake_sd
         import asyncio
 
         asyncio.run(awaitable)
+
+
+def test_approved_source_binding_is_scoped_to_the_process_graph(fake_sdk):
+    catalog = VirtualCatalog()
+    catalog.bind_scope("tenant-a", "graph-a")
+    ac.register_access_contracts(_pack(), connector="tickets-mcp", catalog=catalog)
+    contract = _Contract("urn:ac:1")
+    decision = ac.bind_approved_mapping(
+        catalog,
+        contract,
+        _approved_receipt(contract),
+        connector="tickets-mcp",
+        resource_uri="ontology://tickets",
+        scope=("tenant-a", "graph-a"),
+    )
+    assert decision.outcome == "approved"
+    assert (
+        catalog.approved_source_for(
+            "tickets", scope=("tenant-a", "graph-a")
+        ).mapping.mapping_id
+        == contract.contract_iri
+    )
+    with pytest.raises(LookupError, match="scope"):
+        catalog.approved_source_for("tickets", scope=("tenant-b", "graph-a"))
 
 
 def test_repeated_registration_preserves_eg_approval(fake_sdk):
@@ -225,6 +255,7 @@ def test_source_policy_requires_admitted_read_reference() -> None:
         contract_iri="urn:ac:read",
         access_kind="mcp_tool",
         operation="list_tickets",
+        effect="read",
         auth_ref="env://TICKETS_TOKEN",
     )
     approved = ac.source_approval_policy(read, connector="tickets-mcp", admitted=True)
@@ -236,6 +267,7 @@ def test_source_policy_requires_admitted_read_reference() -> None:
                 contract_iri="urn:ac:write",
                 access_kind="mcp_tool",
                 operation="delete_ticket",
+                effect="write",
                 auth_ref="env://TICKETS_TOKEN",
             ),
             "read-only",
@@ -245,6 +277,7 @@ def test_source_policy_requires_admitted_read_reference() -> None:
                 contract_iri="urn:ac:literal",
                 access_kind="mcp_tool",
                 operation="list_tickets",
+                effect="read",
                 auth_ref="sk-live-secret",
             ),
             "credential reference",
@@ -273,6 +306,7 @@ def test_policy_approval_does_not_select_a_mapping_without_engine_receipt(
         key_field="id",
         access_kind="mcp_tool",
         operation="list_tickets",
+        effect="read",
         auth_ref="env://TICKETS_TOKEN",
         predicates=(),
         virtual_mapping_fields=lambda: {
@@ -304,6 +338,20 @@ def test_policy_approval_does_not_select_a_mapping_without_engine_receipt(
     )
     assert decisions[0].outcome == "approved"
     assert catalog.mappings[0].approved is False
+
+
+def test_unknown_operation_effect_is_held_before_engine_approval() -> None:
+    contract = types.SimpleNamespace(
+        contract_iri="urn:ac:unknown-effect",
+        access_kind="mcp_tool",
+        operation="list_tickets",
+        auth_ref="env://TICKETS_TOKEN",
+    )
+
+    held = ac.source_approval_policy(contract, connector="tickets-mcp", admitted=True)
+
+    assert held.outcome == "held"
+    assert "effect is not declared" in held.reason
 
 
 def test_missing_sdk_module_skips(monkeypatch) -> None:

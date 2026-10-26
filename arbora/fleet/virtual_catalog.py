@@ -87,6 +87,24 @@ class VirtualMapping:
         return dict(self.predicates).get(predicate)
 
 
+@dataclass(frozen=True, slots=True)
+class ApprovedSourceBinding:
+    """One native approval bound to the exact local mapping projection.
+
+    The receipt remains the EG authority.  This record only keeps the
+    producer contract, resource identity and receipt together so an internal
+    query caller cannot accidentally pair a mapping with another source's
+    approval.  ``VirtualCatalog`` rejects a caller whose tenant/graph scope
+    differs from the process-owned catalog scope before returning this record.
+    """
+
+    mapping: VirtualMapping
+    contract: Any
+    receipt: Any
+    connector: str
+    resource_uri: str
+
+
 def check_mapping(mapping: VirtualMapping, contract: MetadataContract) -> None:
     """Reject mappings that name metadata the connector never declared."""
 
@@ -134,6 +152,19 @@ class VirtualCatalog:
     contracts: dict[str, MetadataContract] = field(default_factory=dict)
     adapters: dict[str, Any] = field(default_factory=dict)
     mappings: list[VirtualMapping] = field(default_factory=list)
+    approved_sources: dict[str, ApprovedSourceBinding] = field(default_factory=dict)
+    #: The process catalog is projected for one admitted tenant graph only.
+    scope: tuple[str, str] | None = None
+
+    def bind_scope(self, tenant: str, graph: str) -> None:
+        """Bind the projection to the startup session's tenant and graph."""
+
+        candidate = (str(tenant).strip(), str(graph).strip())
+        if not all(candidate):
+            raise ValueError("virtual catalog scope needs tenant and graph")
+        if self.scope is not None and self.scope != candidate:
+            raise ValueError("virtual catalog is bound to another tenant graph")
+        self.scope = candidate
 
     def register(
         self,
@@ -154,6 +185,70 @@ class VirtualCatalog:
         check_mapping(mapping, contract)
         self.mappings.append(mapping)
 
+    def invalidate_binding(self, mapping_id: str) -> None:
+        """Drop a receipt projection when its contract shape changes."""
+
+        self.approved_sources.pop(mapping_id, None)
+
+    def record_approved_source(
+        self,
+        mapping: VirtualMapping,
+        contract: Any,
+        receipt: Any,
+        *,
+        connector: str,
+        resource_uri: str,
+        scope: tuple[str, str] | None = None,
+    ) -> None:
+        """Remember one validated EG receipt for an approved mapping.
+
+        This method stores no authority of its own.  Callers must have already
+        validated the receipt and set the mapping's approved projection; every
+        live read still sends the exact receipt back to EG for revalidation.
+        """
+
+        if scope is not None:
+            self.bind_scope(*scope)
+        if self.scope is None and scope is not None:
+            raise ValueError("virtual catalog scope was not established")
+        current = next(
+            (item for item in self.mappings if item.mapping_id == mapping.mapping_id),
+            None,
+        )
+        if current is None or current != mapping or not mapping.approved:
+            raise ValueError("approved source does not match the catalog mapping")
+        if not connector or not resource_uri:
+            raise ValueError("approved source needs connector and resource URI")
+        self.approved_sources[mapping.mapping_id] = ApprovedSourceBinding(
+            mapping=mapping,
+            contract=contract,
+            receipt=receipt,
+            connector=connector,
+            resource_uri=resource_uri,
+        )
+
+    def approved_source_for(
+        self,
+        source_id: str,
+        *,
+        scope: tuple[str, str] | None = None,
+    ) -> ApprovedSourceBinding:
+        """Resolve one uniquely approved source for an internal query caller."""
+
+        if scope is not None and self.scope != scope:
+            raise LookupError("approved source catalog scope is unavailable")
+        matches = tuple(
+            binding
+            for binding in self.approved_sources.values()
+            if binding.mapping.source_id == source_id
+            or binding.mapping.mapping_id == source_id
+        )
+        if not matches:
+            raise LookupError("approved source is unavailable")
+        if len(matches) != 1:
+            raise LookupError("approved source is ambiguous")
+        return matches[0]
+
     def mapping_for(
         self, class_iri: str, _ontology: Any | None = None
     ) -> VirtualMapping | None:
@@ -170,6 +265,7 @@ class VirtualCatalog:
 
 
 __all__ = [
+    "ApprovedSourceBinding",
     "DiscoveredEntity",
     "MetadataContract",
     "OperationAdapter",

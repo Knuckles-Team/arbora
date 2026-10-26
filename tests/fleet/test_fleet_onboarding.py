@@ -570,6 +570,7 @@ def test_bootstrap_passes_the_process_virtual_catalog_to_onboarding(
     assert len(seen) == 1
     assert isinstance(seen[0], VirtualCatalog)
     assert access_contracts.fleet_virtual_catalog() is seen[0]
+    assert seen[0].scope == (TENANT, GRAPH)
 
 
 @pytest.mark.asyncio

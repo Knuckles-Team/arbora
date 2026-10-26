@@ -298,7 +298,45 @@ def _with_fleet_source_executor(
             overall_timeout_s=overall_timeout_s,
         )
 
-    return {**bindings, "fleet_source_executor": source_executor_for}
+    def source_binding_for(
+        caller: Any,
+        source_id: str,
+        *,
+        overall_timeout_s: float = 60.0,
+    ) -> Any:
+        """Resolve one approved source in the caller's startup scope.
+
+        Resolution is deliberately lazy: fleet onboarding binds the process
+        catalog after invocation composition.  The caller's verified tenant
+        and graph are required to match that catalog before a source binding
+        is returned; no request field can select another tenant projection.
+        """
+
+        from arbora.fleet.access_contracts import fleet_virtual_catalog
+        from arbora.fleet.source_executor import FleetSourceBinding
+
+        catalog = bindings.get("fleet_virtual_catalog")
+        if catalog is None:
+            catalog = fleet_virtual_catalog()
+        tenant = getattr(caller, "tenant", None)
+        session = getattr(caller, "session", None)
+        caller_graph = getattr(session, "graph", None)
+        if not isinstance(tenant, str) or not isinstance(caller_graph, str):
+            raise LookupError("verified caller scope is unavailable")
+        source = catalog.approved_source_for(
+            source_id,
+            scope=(tenant, caller_graph),
+        )
+        return FleetSourceBinding(
+            executor=source_executor_for(caller, overall_timeout_s=overall_timeout_s),
+            source=source,
+        )
+
+    return {
+        **bindings,
+        "fleet_source_executor": source_executor_for,
+        "fleet_source_binding": source_binding_for,
+    }
 
 
 def _schema_action(session: Any, graph: str, pin: Mapping[str, Any]) -> Any:

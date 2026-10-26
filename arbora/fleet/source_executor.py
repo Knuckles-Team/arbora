@@ -589,7 +589,98 @@ class FleetSourceExecutor:
         return tuple(out)
 
 
+@dataclass(frozen=True, slots=True)
+class FleetSourceBinding:
+    """Caller-bound reader for one approved virtual source.
+
+    The query caller supplies only the engine's plan/query digests, limits and
+    connector arguments.  Connector, operation, mapping, resource URI and
+    receipt all come from the process catalog's validated approval binding.
+    ``read_approved`` still sends the receipt to EG, so this object is a
+    selection seam rather than a second authority.
+    """
+
+    executor: FleetSourceExecutor
+    source: Any
+
+    def request(
+        self,
+        *,
+        plan_digest: str,
+        query_digest: str,
+        limits: Any,
+        arguments: Mapping[str, Any] | None = None,
+        rows_key: str = "items",
+        cursor_key: str = "next_cursor",
+        cursor_arg: str = "cursor",
+        max_pages: int = 5,
+        max_rows: int = 1000,
+        timeout_s: float = 30.0,
+    ) -> ForeignReadSourceRequest:
+        from arbora.fleet.access_contracts import approved_source_id
+
+        source_name = approved_source_id(self.source.receipt)
+        operation = getattr(self.source.contract, "operation", None)
+        if not isinstance(source_name, str) or not source_name:
+            raise LookupError("approved source has no native source identity")
+        if not isinstance(operation, str) or not operation:
+            raise LookupError("approved source has no declared read operation")
+        return ForeignReadSourceRequest(
+            source_id=self.source.mapping.source_id,
+            connector=self.source.connector,
+            tool=operation,
+            source_name=source_name,
+            contract=self.source.contract,
+            approval=self.source.receipt,
+            plan_digest=plan_digest,
+            query_digest=query_digest,
+            limits=limits,
+            arguments=dict(arguments or {}),
+            rows_key=rows_key,
+            cursor_key=cursor_key,
+            cursor_arg=cursor_arg,
+            max_pages=max_pages,
+            max_rows=max_rows,
+            timeout_s=timeout_s,
+        )
+
+    async def read(
+        self,
+        *,
+        plan_digest: str,
+        query_digest: str,
+        limits: Any,
+        arguments: Mapping[str, Any] | None = None,
+        rows_key: str = "items",
+        cursor_key: str = "next_cursor",
+        cursor_arg: str = "cursor",
+        max_pages: int = 5,
+        max_rows: int = 1000,
+        timeout_s: float = 30.0,
+        correlate: Callable[[Any], Awaitable[Any]] | None = None,
+    ) -> ForeignReadResult:
+        request = self.request(
+            plan_digest=plan_digest,
+            query_digest=query_digest,
+            limits=limits,
+            arguments=arguments,
+            rows_key=rows_key,
+            cursor_key=cursor_key,
+            cursor_arg=cursor_arg,
+            max_pages=max_pages,
+            max_rows=max_rows,
+            timeout_s=timeout_s,
+        )
+        return await self.executor.read_approved(
+            request,
+            mapping=self.source.mapping,
+            resource_uri=self.source.resource_uri,
+            correlate=correlate,
+        )
+
+
 __all__ = [
+    "FleetSourceBinding",
     "ForeignReadResult",
     "ForeignReadSourceRequest",
     "FleetSourceExecutor",

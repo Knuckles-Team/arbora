@@ -683,6 +683,7 @@ class FleetOnboarding:
                     connector=endpoint.name,
                     resource_uri=resource_uri,
                     policy_id=decision.policy_id,
+                    scope=(tenant_id, graph),
                 )
                 if bound.outcome == "approved":
                     receipts.append(receipt)
@@ -1217,6 +1218,9 @@ def start_fleet_onboarding(
         from arbora.fleet.access_contracts import bootstrap_fleet_virtual_catalog
 
         virtual_catalog = bootstrap_fleet_virtual_catalog()
+    bind_scope = getattr(virtual_catalog, "bind_scope", None)
+    if callable(bind_scope):
+        bind_scope(str(session.tenant), str(session.graph))
     service = FleetOnboardingService(
         onboarding=FleetOnboarding(
             engine=engine, session=session, virtual_catalog=virtual_catalog

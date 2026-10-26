@@ -10,6 +10,7 @@ import pytest
 
 from arbora.api.registry import Effect
 from arbora.fleet.source_executor import (
+    FleetSourceBinding,
     FleetSourceExecutor,
     ForeignReadSourceRequest,
     SourceReadRequest,
@@ -424,6 +425,60 @@ def test_from_engine_composes_the_graph_scoped_sdk_adapter() -> None:
         executor._foreign_client._transport,
         foreign_read.NativeRequestResponseAdapter,
     )
+
+
+@pytest.mark.asyncio
+async def test_approved_source_binding_builds_request_from_catalog_identity() -> None:
+    request = _foreign_request()
+    mapping = SimpleNamespace(
+        source_id="issues", mapping_id=request.contract.contract_iri
+    )
+    source = SimpleNamespace(
+        mapping=mapping,
+        contract=request.contract,
+        receipt=request.approval,
+        connector="github-mcp",
+        resource_uri="ontology://issues",
+    )
+    seen: dict[str, Any] = {}
+
+    class StubExecutor:
+        async def read_approved(self, built, *, mapping, resource_uri, correlate):
+            seen.update(
+                request=built,
+                mapping=mapping,
+                resource_uri=resource_uri,
+                correlate=correlate,
+            )
+            return "result"
+
+    binding = FleetSourceBinding(StubExecutor(), source)  # type: ignore[arg-type]
+    correlate = object()
+    result = await binding.read(
+        plan_digest="d" * 64,
+        query_digest="e" * 64,
+        limits={
+            "max_rows": 10,
+            "max_bytes": 1000,
+            "chunk_rows": 2,
+            "chunk_bytes": 500,
+            "deadline_ms": 1000,
+        },
+        arguments={"state": "open"},
+        correlate=correlate,  # type: ignore[arg-type]
+    )
+
+    assert result == "result"
+    built = seen["request"]
+    assert built.source_name == "issues"
+    assert built.source_id == "issues"
+    assert built.connector == "github-mcp"
+    assert built.tool == "list_issues"
+    assert built.arguments == {"state": "open"}
+    assert built.approval is request.approval
+    assert seen["mapping"] is mapping
+    assert seen["resource_uri"] == "ontology://issues"
+    assert seen["correlate"] is correlate
 
 
 @pytest.mark.spec("ARBORA-FLEET-R043.7")
