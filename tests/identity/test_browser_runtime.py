@@ -442,3 +442,46 @@ def test_generated_contract_login_session_logout_with_ephemeral_signing_key(
         assert operations.count("authenticate") == operations.count("revoke") == 1
 
     asyncio.run(scenario())
+
+
+def test_verified_claim_snapshot_without_optional_hook_keeps_freshness_checks():
+    from arbora.security.request_identity import VerifiedLocalBearer
+
+    from .test_console_admission import CallerFixture, OwnersFixture
+
+    backend = OwnersFixture()
+    claims = claims_for(
+        backend.resolution,
+        SETTINGS,
+        source_expires_at_ms=backend.state.expires_at_ms,
+        now_ms=backend.now * 1000,
+    )
+    verified = VerifiedLocalBearer(claims, SETTINGS.issuer, SETTINGS.audience)
+    assert not hasattr(verified, "ensure_current")
+    owner = backend.producer()
+    caller = CallerFixture(backend.resolution)
+    owner._facts(backend.state, caller, verified)
+    expired = replace(backend.state, expires_at_ms=int(time.time() - 1) * 1000)
+    with pytest.raises(PermissionError, match="expired"):
+        owner._facts(expired, caller, verified)
+    claims["tenant_id"] = "other-tenant"
+    with pytest.raises(PermissionError, match="binding"):
+        owner._facts(backend.state, caller, verified)
+
+
+def test_optional_live_token_hook_remains_enforced():
+    from .test_console_admission import CallerFixture, OwnersFixture
+
+    backend = OwnersFixture()
+    calls = []
+
+    def ensure_current():
+        calls.append(True)
+        raise PermissionError("fixture token revoked")
+
+    verified = SimpleNamespace(claims={}, ensure_current=ensure_current)
+    with pytest.raises(PermissionError, match="token revoked"):
+        backend.producer()._facts(
+            backend.state, CallerFixture(backend.resolution), verified
+        )
+    assert calls == [True]

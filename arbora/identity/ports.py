@@ -76,9 +76,10 @@ class SigningKeyStore(Protocol):
 
 
 class VerifiedToken(Protocol):
-    claims: Mapping[str, Any]
+    """Verified claim snapshot; live revalidation is an optional owner feature."""
 
-    def ensure_current(self) -> None: ...
+    @property
+    def claims(self) -> Mapping[str, Any]: ...
 
 
 VerifyToken = Callable[[str], Awaitable[VerifiedToken]]
