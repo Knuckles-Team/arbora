@@ -23,6 +23,7 @@ import { randomUUID } from "node:crypto";
 import { chromium, expect } from "@playwright/test";
 
 import { createDiagnostics } from "./browser_diagnostics.mjs";
+import { observeLoginResponse } from "./browser_login.mjs";
 
 const diagnostics = createDiagnostics();
 let phase = "preflight";
@@ -114,22 +115,19 @@ async function login(page, expected, credentials, denied = false) {
   await page.getByLabel("Username", { exact: true }).fill(credentials.username);
   diagnostics.stage("password-field");
   await page.getByLabel("Password", { exact: true }).fill(credentials.password);
-  const loggedIn = page
-    .waitForResponse(
-      (response) =>
-        new URL(response.url()).pathname === "/auth/login" &&
-        response.request().method() === "POST",
-    )
-    .catch(() => null);
+  const loggedIn = observeLoginResponse(page);
   diagnostics.stage("login-submit");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   diagnostics.stage("login-response");
   const response = await loggedIn;
-  diagnostics.status("login", response?.status());
-  requireCondition(response !== null);
-  requireCondition(
-    response.status() === 200 && (await response.json()).outcome === "ok",
-  );
+  diagnostics.status("login", response.status);
+  requireCondition(response.observed);
+  diagnostics.stage("login-response-body");
+  diagnostics.flag("login_body_read", response.body_read);
+  requireCondition(response.body_read);
+  diagnostics.stage("login-outcome");
+  diagnostics.flag("login_outcome_ok", response.outcome_ok);
+  requireCondition(response.status === 200 && response.outcome_ok);
   diagnostics.stage("login-form-clearing");
   await expect(page.getByLabel("Password", { exact: true })).toHaveCount(0, {
     timeout,

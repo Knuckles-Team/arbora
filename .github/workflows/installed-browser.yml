@@ -85,6 +85,7 @@ jobs:
           printf '%s\n' '[pytest]' 'addopts =' 'markers =' '    spec: acceptance requirement binding' '    real_boot: native process fixture' > "$RUNNER_TEMP/browser-code/pytest.ini"
           cp tests/qualification/browser/browser.mjs candidate-overstory/browser-qualification.mjs
           cp tests/qualification/browser/browser_diagnostics.mjs candidate-overstory/browser_diagnostics.mjs
+          cp tests/qualification/browser/browser_login.mjs candidate-overstory/browser_login.mjs
           "$py" -I -c 'import arbora,agent_webui,epistemic_graph,sys; from pathlib import Path; root=Path(sys.prefix).resolve(); assert all(root in Path(m.__file__).resolve().parents for m in (arbora,agent_webui,epistemic_graph)); dist=Path(agent_webui.__file__).parent/"dist"; assert (dist/"index.html").is_file() and list((dist/"assets").glob("*.js"))'
       - name: Fetch checksum-pinned disposable Vault tool
         shell: bash

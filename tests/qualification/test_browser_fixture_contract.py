@@ -784,3 +784,121 @@ console.log(JSON.stringify({failed, throwing, reads}));
             "error_class": "Error",
             "observations": {},
         }
+
+
+def test_login_response_is_consumed_before_form_reload_retires_body():
+    """Deterministic response lifetime test; not a Chromium/native proof."""
+    module = Path(__file__).parent / "browser/browser_login.mjs"
+    script = r"""
+const {observeLoginResponse} = await import(process.argv[1]);
+function fixture() {
+  let resolveResponse;
+  let retired = false;
+  const response = {
+    url: () => 'https://fixture.invalid/auth/login',
+    request: () => ({method: () => 'POST'}),
+    status: () => 200,
+    json: async () => {
+      if (retired) throw new Error('Response body retired');
+      return {outcome: 'ok', extra: 'private-payload'};
+    },
+  };
+  const pending = new Promise(resolve => { resolveResponse = resolve; });
+  return {
+    page: {waitForResponse: () => pending},
+    click: async () => {
+      resolveResponse(response);
+      await Promise.resolve();
+      await Promise.resolve();
+      retired = true;
+    },
+  };
+}
+const old = fixture();
+const waited = old.page.waitForResponse();
+await old.click();
+let oldFailed = false;
+try { await (await waited).json(); } catch { oldFailed = true; }
+const current = fixture();
+const captured = observeLoginResponse(current.page);
+await current.click();
+console.log(JSON.stringify({oldFailed, reply: await captured}));
+"""
+    result = subprocess.run(
+        ["node", "--input-type=module", "-e", script, module.resolve().as_uri()],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert "private" not in result.stdout
+    assert json.loads(result.stdout) == {
+        "oldFailed": True,
+        "reply": {
+            "observed": True,
+            "status": 200,
+            "body_read": True,
+            "outcome_ok": True,
+        },
+    }
+
+
+def test_login_observer_keeps_failure_and_outcome_checks_strict():
+    module = Path(__file__).parent / "browser/browser_login.mjs"
+    script = r"""
+const {observeLoginResponse} = await import(process.argv[1]);
+const results = [];
+for (const kind of ['missing', 'body-error', 'wrong-outcome', 'refused']) {
+  const page = {waitForResponse: async predicate => {
+    if (kind === 'missing') throw new Error('private-message');
+    const response = {
+      url: () => 'https://fixture.invalid/auth/login',
+      request: () => ({method: () => 'POST'}),
+      status: () => kind === 'refused' ? 401 : 200,
+      json: async () => {
+        if (kind === 'body-error') throw new Error('private-message');
+        return {outcome: kind === 'wrong-outcome' ? 'private-outcome' : 'ok'};
+      },
+    };
+    if (!predicate(response)) throw new Error('Predicate mismatch');
+    return response;
+  }};
+  results.push(await observeLoginResponse(page));
+}
+console.log(JSON.stringify(results));
+"""
+    result = subprocess.run(
+        ["node", "--input-type=module", "-e", script, module.resolve().as_uri()],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert "private" not in result.stdout
+    missing, body_error, wrong_outcome, refused = json.loads(result.stdout)
+    assert missing == {
+        "observed": False,
+        "status": None,
+        "body_read": False,
+        "outcome_ok": False,
+    }
+    assert body_error == {
+        "observed": True,
+        "status": 200,
+        "body_read": False,
+        "outcome_ok": False,
+    }
+    assert wrong_outcome == {
+        "observed": True,
+        "status": 200,
+        "body_read": True,
+        "outcome_ok": False,
+    }
+    assert refused["status"] == 401
+    probe = (module.parent / "browser.mjs").read_text()
+    assert "requireCondition(response.body_read)" in probe
+    assert "response.status === 200 && response.outcome_ok" in probe
+    assert "current.value.authenticated === true" in probe
+    assert "await assertReads(page, expected, identity)" in probe
+    workflow = (
+        Path(__file__).resolve().parents[2] / ".github/workflows/installed-browser.yml"
+    ).read_text()
+    assert "cp tests/qualification/browser/browser_login.mjs " in workflow

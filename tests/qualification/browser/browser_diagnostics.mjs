@@ -8,6 +8,8 @@ const stages = new Set([
   "password-field",
   "login-submit",
   "login-response",
+  "login-response-body",
+  "login-outcome",
   "login-form-clearing",
   "authenticated-session",
   "authenticated-role-binding",
@@ -58,6 +60,8 @@ const journeys = new Set([
 const statuses = new Set(["navigation", "session", "login", "operation"]);
 const flags = new Set([
   "signed_out_local",
+  "login_body_read",
+  "login_outcome_ok",
   "authenticated",
   "page_error",
   "asset_request_failed",
