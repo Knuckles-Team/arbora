@@ -221,7 +221,8 @@ def configure_signer(client: Any, private_jwk: dict[str, Any]) -> str:
     )
     client.sys.create_or_update_policy(
         "browser-signer-reader",
-        f'path "secret/data/{path}" {{ capabilities = ["read"] }}',
+        f'path "secret/data/{path}" {{ capabilities = ["read"] }}\n'
+        'path "auth/token/lookup-self" { capabilities = ["read"] }',
     )
     return client.auth.token.create(
         policies=["browser-signer-reader"],

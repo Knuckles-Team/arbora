@@ -23,9 +23,9 @@ jobs:
   installed-browser:
     runs-on: ubuntu-24.04
     timeout-minutes: 35
-    env:
-      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/qualification-playwright
     steps:
+      - name: Set disposable browser asset location
+        run: echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/qualification-playwright" >> "$GITHUB_ENV"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
@@ -82,6 +82,7 @@ jobs:
           cp tests/test_real_boot.py tests/_boot_connector.py tests/_boot_model.py \
             tests/_boot_ingest_connector.py "$RUNNER_TEMP/browser-code/"
           cp tests/qualification/browser/*.py "$RUNNER_TEMP/browser-code/"
+          printf '%s\n' '[pytest]' 'addopts =' 'markers =' '    spec: acceptance requirement binding' > "$RUNNER_TEMP/browser-code/pytest.ini"
           cp tests/qualification/browser/browser.mjs candidate-overstory/browser-qualification.mjs
           "$py" -I -c 'import arbora,agent_webui,epistemic_graph,sys; from pathlib import Path; root=Path(sys.prefix).resolve(); assert all(root in Path(m.__file__).resolve().parents for m in (arbora,agent_webui,epistemic_graph)); dist=Path(agent_webui.__file__).parent/"dist"; assert (dist/"index.html").is_file() and list((dist/"assets").glob("*.js"))'
       - name: Fetch checksum-pinned disposable Vault tool
@@ -97,6 +98,9 @@ jobs:
       - name: Qualify installed native human browser lifecycle
         shell: bash
         env:
+          ARBORA_BROWSER_QUALIFICATION: '1'
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+          PYTEST_ADDOPTS: ''
           QUALIFICATION_ARBORA_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
           QUALIFICATION_OVERSTORY_COMMIT: 0ccc3aa2c0019d2fb1aaab37b2acc99927f75669
           QUALIFICATION_VAULT_BINARY: ${{ runner.temp }}/browser-bin/vault
@@ -105,13 +109,21 @@ jobs:
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP/browser-code"
-          "$RUNNER_TEMP/browser-env/bin/python" -I qualify.py
+          "$RUNNER_TEMP/browser-env/bin/python" -I -m pytest -o addopts='' -p no:cacheprovider --tb=short \
+            --junitxml="$RUNNER_TEMP/browser-private-results.xml" test_installed_native_browser.py
+          "$RUNNER_TEMP/browser-env/bin/python" -I -c '
+          import xml.etree.ElementTree as ET, os
+          suite = ET.parse(os.environ["RUNNER_TEMP"] + "/browser-private-results.xml").getroot().find("testsuite")
+          assert int(suite.get("tests")) == 1 and all(int(suite.get(k)) == 0 for k in ("skipped", "failures", "errors"))
+          '
+
       - name: Remove disposable private fixture state
         if: always()
         shell: bash
         run: |
           # No logs, HAR, trace, credential, JWT, cookie or private key uploads.
           rm -rf "$RUNNER_TEMP/browser-private"
+          rm -f "$RUNNER_TEMP/browser-private-results.xml"
       - name: Upload allowlisted public qualification evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
