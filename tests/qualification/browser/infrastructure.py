@@ -147,8 +147,30 @@ def browser_ca(root: Path) -> tuple[Path, Path, Path]:
     return ca_path, cert_path, key_path
 
 
+def proxy_failure_category(exc: BaseException) -> str:
+    """Fixed transport categories only; never include exception text or paths."""
+    if isinstance(exc, ConnectionRefusedError):
+        return "connection-refused"
+    if isinstance(exc, TimeoutError):
+        return "timeout"
+    if isinstance(exc, http.client.HTTPException):
+        return "http-error"
+    if isinstance(exc, OSError):
+        return "os-error"
+    if isinstance(exc, ValueError):
+        return "invalid-response"
+    return "unknown"
+
+
 @contextlib.contextmanager
-def https_origin(port: int, upstream_port: int, cert: Path, key: Path) -> Iterator[str]:
+def https_origin(
+    port: int,
+    upstream_port: int,
+    cert: Path,
+    key: Path,
+    *,
+    diagnostics: dict[str, Any] | None = None,
+) -> Iterator[str]:
     """Loopback-only TLS terminator, no forwarding-header trust from the browser.
 
     Uses Uvicorn's existing default loopback proxy admission, without widening
@@ -193,7 +215,9 @@ def https_origin(port: int, upstream_port: int, cert: Path, key: Path) -> Iterat
                     self.end_headers()
                     if self.command != "HEAD":
                         self.wfile.write(body)
-            except (OSError, ValueError, http.client.HTTPException):
+            except (OSError, ValueError, http.client.HTTPException) as exc:
+                if diagnostics is not None:
+                    diagnostics["proxy_failure"] = proxy_failure_category(exc)
                 self.send_error(502)
 
         do_GET = do_POST = do_HEAD = do_OPTIONS = dispatch

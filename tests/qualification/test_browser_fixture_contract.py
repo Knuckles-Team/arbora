@@ -212,7 +212,9 @@ def test_prepare_failure_stage_reaches_public_receipt(
 
     monkeypatch.setattr(controller, "vault", infrastructure)
     monkeypatch.setattr(
-        controller, "https_origin", lambda *args: nullcontext("https://fixture.invalid")
+        controller,
+        "https_origin",
+        lambda *args, **kwargs: nullcontext("https://fixture.invalid"),
     )
     monkeypatch.setattr(controller, "prepare", refused)
     monkeypatch.setattr(controller.boot, "_free_port", lambda: 12345, raising=False)
@@ -590,3 +592,65 @@ def test_fixture_certificate_profile_is_constrained(tls_fixture):
         ipaddress.ip_address("127.0.0.1")
     ]
     assert key_path.stat().st_mode & 0o777 == 0o600
+
+
+@pytest.mark.parametrize(
+    "kind, expected",
+    [
+        ("refused", "connection-refused"),
+        ("timeout", "timeout"),
+        ("http", "http-error"),
+        ("os", "os-error"),
+        ("value", "invalid-response"),
+        ("other", "unknown"),
+    ],
+)
+def test_proxy_diagnostic_is_fixed_category(controller, kind, expected):
+    import http.client
+
+    import infrastructure
+
+    errors = {
+        "refused": ConnectionRefusedError("private-detail"),
+        "timeout": TimeoutError("private-detail"),
+        "http": http.client.RemoteDisconnected("private-detail"),
+        "os": OSError("private-detail"),
+        "value": ValueError("private-detail"),
+        "other": RuntimeError("private-detail"),
+    }
+    assert infrastructure.proxy_failure_category(errors[kind]) == expected
+
+
+def test_startup_facts_never_copy_private_log_content(
+    controller, monkeypatch, tmp_path
+):
+    monkeypatch.setattr(
+        controller.boot, "_listening", lambda port: False, raising=False
+    )
+    (tmp_path / "arbora.log").write_text(
+        "private-prefix co-service agent-webui started\n"
+        "private-prefix co-service agent-webui crashed\n"
+        "ImportError: private-credential-and-path\n"
+        "PrivateException: private-credential-and-path\n"
+    )
+    result = controller.webui_startup_facts({"root": tmp_path}, 12345)
+    assert result == {
+        "listening": False,
+        "log_available": True,
+        "thread_started": True,
+        "crashed": True,
+        "restart_bound": False,
+        "listener_announced": False,
+        "exception_classes": ["ImportError"],
+    }
+    assert "private" not in json.dumps(result).lower()
+
+
+def test_startup_facts_missing_log_has_no_path(controller, monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        controller.boot, "_listening", lambda port: False, raising=False
+    )
+    assert controller.webui_startup_facts({"root": tmp_path}, 12345) == {
+        "listening": False,
+        "log_available": False,
+    }

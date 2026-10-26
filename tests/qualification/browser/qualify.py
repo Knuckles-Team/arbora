@@ -387,6 +387,46 @@ def https_presentation_ready(
     return False
 
 
+def webui_startup_facts(context: dict[str, Any], upstream: int) -> dict[str, Any]:
+    """Inspect private fixture output without copying any raw diagnostic text."""
+    observed: dict[str, Any] = {"listening": boot._listening(upstream)}
+    try:
+        with (context["root"] / "arbora.log").open("rb") as stream:
+            stream.seek(0, 2)
+            stream.seek(max(0, stream.tell() - 65536))
+            tail = stream.read(65536).decode("utf-8", errors="replace")
+    except (OSError, KeyError, TypeError):
+        observed["log_available"] = False
+        return observed
+    observed["log_available"] = True
+    for name, marker in {
+        "thread_started": "co-service agent-webui started",
+        "crashed": "co-service agent-webui crashed",
+        "restart_bound": "co-service agent-webui exceeded its restart bound",
+        "listener_announced": "agent-webui co-service serving in-process on",
+    }.items():
+        observed[name] = marker in tail
+    allowed = {
+        "ImportError",
+        "ModuleNotFoundError",
+        "AttributeError",
+        "TypeError",
+        "ValueError",
+        "RuntimeError",
+        "PermissionError",
+        "OSError",
+        "arbora.identity.engine.IdentityUnavailable",
+    }
+    observed["exception_classes"] = sorted(
+        {
+            line.partition(":")[0]
+            for line in tail.splitlines()
+            if line.partition(":")[0] in allowed
+        }
+    )
+    return observed
+
+
 def main() -> None:
     versions = native.require_installed()
     private = Path(os.environ["RUNNER_TEMP"]) / "browser-private"
@@ -410,7 +450,7 @@ def main() -> None:
                 Path(os.environ["QUALIFICATION_VAULT_BINARY"]),
                 boot._free_port(),
             ) as vault_client,
-            https_origin(0, upstream, cert, key) as origin,
+            https_origin(0, upstream, cert, key, diagnostics=context) as origin,
         ):
 
             def before_serve(value: dict[str, Any]) -> None:
@@ -458,6 +498,9 @@ def main() -> None:
                     if https_presentation_ready(origin, tls, context):
                         break
                     if time.monotonic() >= ready_deadline:
+                        context["webui_startup"] = webui_startup_facts(
+                            context, upstream
+                        )
                         raise TimeoutError("Trusted HTTPS sign-in readiness")
                     time.sleep(0.2)
                 private_write(
@@ -545,6 +588,8 @@ def main() -> None:
                     "fixture_step": context.get("fixture_step"),
                     "native_method": context.get("native_method"),
                     "https_readiness": context.get("https_readiness"),
+                    "proxy_failure": context.get("proxy_failure"),
+                    "webui_startup": context.get("webui_startup"),
                 }
             )
             + "\n"
