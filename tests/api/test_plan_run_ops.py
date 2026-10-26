@@ -21,8 +21,10 @@ from agent_utilities.graph import DependencyPlan  # noqa: E402
 from pydantic_ai.messages import ModelResponse, TextPart  # noqa: E402
 from pydantic_ai.models.function import FunctionModel  # noqa: E402
 
+from arbora.api.contracts.session import GraphSession  # noqa: E402
 from arbora.api.invoke.pipeline import OperationRefused  # noqa: E402
 from arbora.api.ops import plans  # noqa: E402
+from arbora.security.actor_context import ActorContext, ActorType  # noqa: E402
 
 PRINCIPAL = "user:alice"
 TENANT = "tenant-a"
@@ -411,6 +413,203 @@ async def test_work_item_run_publishes_the_same_plan_for_replay():
     # A replay of the same proposal reads the same plan digest.
     again, _, _ = await _serve(TRIAGE_DAG, work_item=lease)
     assert again["plan_digest"] == value["plan_digest"]
+
+
+def _native_session() -> GraphSession:
+    actor = ActorContext(
+        actor_id=PRINCIPAL,
+        actor_type=ActorType.HUMAN,
+        tenant_id=TENANT,
+        authenticated=True,
+    )
+    return GraphSession(
+        actor=actor,
+        tenant=TENANT,
+        graph=TENANT,
+        scopes=frozenset({"kg:write"}),
+        audience="arbora",
+        policy_version="test-policy",
+    )
+
+
+def _native_plan_context(engine: FakeEngine) -> Any:
+    context = _context(engine, RecordingModel())
+    context.caller = SimpleNamespace(
+        principal=PRINCIPAL,
+        tenant=TENANT,
+        session=_native_session(),
+    )
+    context.services["task_plan_work_engine"] = object()
+    return context
+
+
+@pytest.mark.asyncio
+async def test_native_plan_admission_uses_engine_identity_and_claim(monkeypatch):
+    from arbora import work_items
+    from arbora.a2a.authority import WorkItemA2AAuthority
+
+    item_id = "work-item:" + "a" * 64
+    context = _native_plan_context(FakeEngine())
+    owner = WorkItemA2AAuthority._owner_ref(context.caller.session)
+    run_id = "b" * 32
+    plan = {"plan_digest": "sha256:" + run_id + ("c" * 32)}
+    seen: dict[str, Any] = {}
+    item = {
+        "kind": "orchestrator_task",
+        "status": "ready",
+        "metadata": {
+            "a2a_schema": "arbora-a2a-unary-v1",
+            "a2a_owner_ref": owner,
+            "a2a_run_id": run_id,
+            "a2a_request_digest": plan["plan_digest"],
+        },
+    }
+
+    def submit(_engine, **kwargs):
+        seen["submit"] = kwargs
+        return item_id, True
+
+    def get(_engine, requested):
+        assert requested == item_id
+        return item
+
+    def claim(_engine, requested, *, token, lease_ttl_s):
+        assert requested == item_id
+        assert token == f"arbora-a2a:{item_id}"
+        assert lease_ttl_s == 600.0
+        return {
+            "claimed": True,
+            "tenant": TENANT,
+            "lease_holder_ref": token,
+            "lease_epoch": 2,
+            "fencing_token": 9,
+        }
+
+    monkeypatch.setattr(work_items, "submit_work_item_atomic", submit)
+    monkeypatch.setattr(work_items, "get_work_item", get)
+    monkeypatch.setattr(work_items, "claim_specific", claim)
+    admission = await plans._admit_native_plan_run(context, plan)
+
+    assert admission.item_id == item_id
+    assert admission.lease is not None
+    assert admission.lease.run_id == run_id
+    assert admission.lease.worker_id == f"arbora-a2a:{item_id}"
+    assert (admission.lease.lease_epoch, admission.lease.fencing_token) == (2, 9)
+    assert seen["submit"]["work_item_id"] is None
+    assert seen["submit"]["run_id"] == run_id
+    assert seen["submit"]["metadata"]["a2a_owner_ref"] == owner
+
+
+@pytest.mark.asyncio
+async def test_native_plan_replay_does_not_reclaim_terminal_item(monkeypatch):
+    from arbora import work_items
+    from arbora.a2a.authority import WorkItemA2AAuthority
+
+    item_id = "work-item:" + "d" * 64
+    context = _native_plan_context(FakeEngine())
+    owner = WorkItemA2AAuthority._owner_ref(context.caller.session)
+    run_id = "e" * 32
+    plan = {"plan_digest": "sha256:" + run_id + ("f" * 32)}
+    item = {
+        "kind": "orchestrator_task",
+        "status": "succeeded",
+        "metadata": {
+            "a2a_schema": "arbora-a2a-unary-v1",
+            "a2a_owner_ref": owner,
+            "a2a_run_id": run_id,
+            "a2a_request_digest": plan["plan_digest"],
+        },
+    }
+
+    monkeypatch.setattr(
+        work_items,
+        "submit_work_item_atomic",
+        lambda _engine, **_kwargs: (item_id, False),
+    )
+    monkeypatch.setattr(work_items, "get_work_item", lambda _engine, _id: item)
+
+    def must_not_claim(*_args, **_kwargs):
+        raise AssertionError("terminal native replay must not claim again")
+
+    monkeypatch.setattr(work_items, "claim_specific", must_not_claim)
+    admission = await plans._admit_native_plan_run(context, plan)
+    assert admission.terminal_status == "succeeded"
+    assert admission.claim is None
+    assert admission.lease is None
+
+
+@pytest.mark.asyncio
+async def test_native_plan_commits_success_and_failed_terminal_results(monkeypatch):
+    context = _native_plan_context(FakeEngine())
+    admission = plans._NativePlanAdmission(
+        item_id="work-item:" + "1" * 64,
+        run_id="2" * 32,
+        lease=plans.WorkItemLease(
+            run_id="2" * 32,
+            worker_id="worker",
+            lease_epoch=1,
+            fencing_token=3,
+        ),
+        claim={
+            "claimed": True,
+            "tenant": TENANT,
+            "lease_holder_ref": "worker",
+            "lease_epoch": 1,
+            "fencing_token": 3,
+        },
+    )
+    commits: list[tuple[str, bool]] = []
+
+    async def admit(_context, _plan):
+        return admission
+
+    async def commit(_context, _admission, *, outcome, error=False):
+        commits.append((outcome, error))
+        return "committed"
+
+    monkeypatch.setattr(plans, "_admit_native_plan_run", admit)
+    monkeypatch.setattr(plans, "_commit_native_plan_run", commit)
+    (op,) = plans.operations()
+    context.services["task_plan_work_engine"] = object()
+    value = await plans.handle_plan_run(context, {"plan": TRIAGE_DAG}, op)
+    assert value["value"]["task_id"] == admission.item_id
+    assert commits == [("succeeded", False)]
+
+    async def failed(*_args, **_kwargs):
+        return {
+            "status": "failed",
+            "error": "bounded failure",
+            "output": None,
+            "started_order": [],
+            "tasks": {},
+            "fleet_calls": [],
+        }
+
+    monkeypatch.setattr(plans, "execute_task_plan", failed)
+    await plans.handle_plan_run(context, {"plan": TRIAGE_DAG}, op)
+    assert commits[-1] == ("failed", True)
+
+    async def cancelled(*_args, **_kwargs):
+        return {
+            "status": "cancelled",
+            "error": None,
+            "output": None,
+            "started_order": [],
+            "tasks": {},
+            "fleet_calls": [],
+        }
+
+    monkeypatch.setattr(plans, "execute_task_plan", cancelled)
+    await plans.handle_plan_run(context, {"plan": TRIAGE_DAG}, op)
+    assert commits[-1] == ("cancelled", False)
+
+    async def exploding(*_args, **_kwargs):
+        raise RuntimeError("execution failed")
+
+    monkeypatch.setattr(plans, "execute_task_plan", exploding)
+    with pytest.raises(RuntimeError, match="execution failed"):
+        await plans.handle_plan_run(context, {"plan": TRIAGE_DAG}, op)
+    assert commits[-1] == ("failed", True)
 
 
 # spec: ARBORA-RELEASE-R003.4.1
