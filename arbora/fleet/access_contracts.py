@@ -114,21 +114,130 @@ def _by_source(contracts: Sequence[Any]) -> dict[str, list[Any]]:
 
 
 def _entity(contract: Any) -> Any:
-    raise not_served("knowledge_graph.virtual_graph", "EG-UNIFIED-DATA-PLANE-R037")
+    """Translate one SDK contract into the AU discovery metadata shape.
+
+    Registration records only the fields declared by the connector pack.  It
+    does not infer fields from a live response, which keeps the catalog useful
+    for later approval while ensuring an unapproved contract cannot serve a
+    row accidentally.
+    """
+
+    from agent_utilities.knowledge_graph.virtual_graph import DiscoveredEntity
+
+    name = getattr(contract, "entity", None)
+    key = getattr(contract, "key_field", None)
+    operation = getattr(contract, "operation", None)
+    predicates = getattr(contract, "predicates", ())
+    if not isinstance(name, str) or not name:
+        raise ValueError("access contract has no stable entity, key or operation")
+    if not isinstance(key, str) or not key:
+        raise ValueError("access contract has no stable entity, key or operation")
+    if not isinstance(operation, str) or not operation:
+        raise ValueError("access contract has no stable entity, key or operation")
+
+    fields: list[str] = []
+    for binding in predicates:
+        if isinstance(binding, (str, bytes)) or not isinstance(binding, Sequence):
+            raise ValueError("access contract predicate is malformed")
+        if len(binding) != 2:
+            raise ValueError("access contract predicate is malformed")
+        _property_iri, source_field = binding
+        if not isinstance(source_field, str) or not source_field:
+            raise ValueError("access contract predicate field is malformed")
+        if source_field not in fields:
+            fields.append(source_field)
+    return DiscoveredEntity(
+        name=name,
+        key=key,
+        fields=tuple(fields),
+        operation=operation,
+    )
 
 
-def _unwired_call(operation: str, arguments: Mapping[str, Any]) -> Any:
-    raise LookupError(f"no live binding for {operation!r} yet")
+async def _unwired_call(operation: str, arguments: Mapping[str, Any]) -> Any:
+    """Keep the metadata adapter fail-closed until a governed reader binds it.
+
+    The live source executor owns the authenticated ``fleet.call`` path.  The
+    virtual-graph adapter is still registered here so selection and approval
+    can reason over metadata, but a direct catalog fetch must never become an
+    ungoverned connector call.
+    """
+
+    del arguments
+    raise LookupError(f"no governed live binding for {operation!r}")
 
 
 def _register_source(
     catalog: Any, connector: str, source_id: str, contracts: Sequence[Any]
 ) -> None:
-    raise not_served("knowledge_graph.virtual_graph", "EG-UNIFIED-DATA-PLANE-R037")
+    try:
+        from agent_utilities.knowledge_graph.virtual_graph import (
+            MetadataContract,
+            OperationAdapter,
+            SourceConnection,
+        )
+    except ImportError:
+        raise not_served(
+            "knowledge_graph.virtual_graph", "EG-UNIFIED-DATA-PLANE-R037"
+        ) from None
+
+    if not contracts:
+        raise ValueError("a source needs at least one access contract")
+    source_kinds: list[str] = []
+    for contract in contracts:
+        access_kind = getattr(contract, "access_kind", None)
+        if not isinstance(access_kind, str):
+            raise ValueError("access contracts for one source must share a known kind")
+        source_kind = SOURCE_KIND_BY_ACCESS.get(access_kind)
+        if source_kind is None:
+            raise ValueError("access contracts for one source must share a known kind")
+        source_kinds.append(source_kind)
+    if len(set(source_kinds)) != 1:
+        raise ValueError("access contracts for one source must share a known kind")
+    kind = source_kinds[0]
+    entities = tuple(_entity(contract) for contract in contracts)
+    metadata = MetadataContract(
+        source_id=source_id,
+        schema_version="1",
+        entities=entities,
+    )
+    connection = SourceConnection(
+        source_id=source_id,
+        kind=kind,
+        endpoint_ref=f"fleet://{connector}",
+    )
+    adapter = OperationAdapter(connection, metadata, _unwired_call)
+    catalog.register(connection, metadata, adapter)
 
 
 def _add_mappings(catalog: Any, contracts: Sequence[Any]) -> int:
-    raise not_served("knowledge_graph.virtual_graph", "EG-UNIFIED-DATA-PLANE-R037")
+    try:
+        from agent_utilities.knowledge_graph.virtual_graph import VirtualMapping
+    except ImportError:
+        raise not_served(
+            "knowledge_graph.virtual_graph", "EG-UNIFIED-DATA-PLANE-R037"
+        ) from None
+
+    existing = {mapping.mapping_id: mapping for mapping in catalog.mappings}
+    added = 0
+    for contract in contracts:
+        fields = dict(contract.virtual_mapping_fields())
+        # A pack declaration is evidence for a candidate mapping only.  The
+        # approval decision belongs to the governed EG source-registration
+        # path and must never be smuggled in through connector metadata.
+        fields["approved"] = False
+        mapping = VirtualMapping(**fields)
+        previous = existing.get(mapping.mapping_id)
+        if previous is not None:
+            if previous != mapping:
+                raise ValueError(
+                    f"mapping {mapping.mapping_id!r} changed during registration"
+                )
+            continue
+        catalog.add_mapping(mapping)
+        existing[mapping.mapping_id] = mapping
+        added += 1
+    return added
 
 
 def register_access_contracts(pack: Any, *, connector: str, catalog: Any = None) -> int:

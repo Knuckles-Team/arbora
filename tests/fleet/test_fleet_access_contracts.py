@@ -120,6 +120,17 @@ def test_registers_unapproved_mappings(fake_sdk) -> None:
     assert catalog.mapping_for(CLS, ontology) is None
 
 
+@pytest.mark.asyncio
+async def test_registered_adapter_refuses_until_governed_reader_is_bound(
+    fake_sdk,
+) -> None:
+    catalog = VirtualCatalog()
+    ac.register_access_contracts(_pack(), connector="tickets-mcp", catalog=catalog)
+
+    with pytest.raises(LookupError, match="no governed live binding"):
+        await catalog.adapters["tickets"].fetch(catalog.mappings[0])
+
+
 def test_repeat_pass_adds_no_duplicate(fake_sdk) -> None:
     catalog = VirtualCatalog()
     ac.register_access_contracts(_pack(), connector="t", catalog=catalog)
