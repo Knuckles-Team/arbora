@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+import sys
 import threading
 import time
+import types
 from types import SimpleNamespace
 from typing import Any
 
@@ -542,6 +544,68 @@ def test_boot_without_an_engine_starts_no_thread() -> None:
     )
 
     assert started is None
+
+
+def test_bootstrap_passes_the_process_virtual_catalog_to_onboarding(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from arbora.fleet import access_contracts
+    from arbora.fleet.virtual_catalog import VirtualCatalog
+
+    monkeypatch.setattr(access_contracts, "_CATALOG", [])
+    seen: list[object] = []
+
+    def start(self: FleetOnboardingService) -> object:
+        seen.append(self.onboarding.virtual_catalog)
+        return object()
+
+    monkeypatch.setattr(FleetOnboardingService, "start", start)
+    started = start_fleet_onboarding(
+        engine=SimpleNamespace(graph_compute=object()),
+        session=_session(),
+        multiplexer=_Mux({}),
+    )
+
+    assert started is not None
+    assert len(seen) == 1
+    assert isinstance(seen[0], VirtualCatalog)
+    assert access_contracts.fleet_virtual_catalog() is seen[0]
+    assert seen[0].scope == (TENANT, GRAPH)
+
+
+@pytest.mark.asyncio
+async def test_native_source_approval_missing_stays_pending(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for name in (
+        "epistemic_graph.generated.connector_pack",
+        "epistemic_graph.generated.models",
+        "epistemic_graph.generated.storage",
+    ):
+        monkeypatch.setitem(sys.modules, name, types.ModuleType(name))
+
+    from arbora.fleet.access_contracts import SourceApprovalDecision
+
+    onboarding = FleetOnboarding(
+        engine=None,
+        session=None,
+        surfaces={"tickets-mcp": {}},
+    )
+    decision = SourceApprovalDecision(
+        connector="tickets-mcp",
+        contract_iri="urn:ac:read",
+        mapping_iri="urn:ac:read",
+        outcome="approved",
+        policy_id="test.policy",
+        reason="test policy intent",
+    )
+
+    await onboarding.approve_contracts(
+        FleetEndpoint("tickets-mcp", "http://tickets/mcp"), object(), (decision,)
+    )
+
+    assert onboarding.source_receipts["tickets-mcp"] == ()
+    assert "approve_source" in onboarding.surfaces["tickets-mcp"]["sources_pending"]
 
 
 def test_cli_runs_one_full_pass_and_fails_on_any_server(
