@@ -350,3 +350,57 @@ def test_native_detail_mapping_is_exact_and_redacted(controller, detail):
         if detail == "verified principal lacks Read access to graph '__control__'"
         else "unknown"
     )
+
+
+@pytest.mark.parametrize("denied", [False, True])
+def test_only_seed_human_gets_explicit_sdk_negotiation_scope(
+    controller, monkeypatch, denied
+):
+    operations = []
+
+    async def operation(client, graph, request, kind):
+        operations.append(request)
+        if kind == "principal":
+            return {"principal_id": "synthetic-human"}
+        if kind == "user":
+            return {
+                "principal_id": "synthetic-human",
+                "kind": "human",
+                "is_bootstrap": False,
+                "has_password": True,
+            }
+        return None
+
+    monkeypatch.setattr(controller.native, "identity_operation", operation)
+    asyncio.run(
+        controller.native.provision_human(
+            object(),
+            "__control__",
+            username="synthetic",
+            password="synthetic",
+            tenant_graph="tenant__synthetic",
+            seed_permissions=not denied,
+            denied=denied,
+        )
+    )
+    role = operations[0]["request"]
+    if denied:
+        assert role["scopes"] == ["identity:self"] and role["graph_grants"] == []
+        assert any(
+            op["op"] == "change_user_role" and op["request"]["change"] == "remove"
+            for op in operations
+        )
+    else:
+        assert set(role["scopes"]) == {
+            "kg:read",
+            "work:read",
+            "work:submit",
+            "work:claim",
+            "work:write",
+            "service:control",
+        }
+        assert all(
+            grant["resource"]
+            in ({"Graph": "__control__"}, {"Graph": "tenant__synthetic"})
+            for grant in role["graph_grants"]
+        )

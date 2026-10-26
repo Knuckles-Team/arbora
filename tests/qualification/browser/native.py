@@ -225,7 +225,10 @@ async def provision_human(
     scopes = ["kg:read", "work:read"]
     if seed_permissions:
         # Exact registered native capabilities; work:write implies neither submit nor claim.
-        scopes.extend(["work:submit", "work:claim", "work:write"])
+        scopes.extend(["work:submit", "work:claim", "work:write", "service:control"])
+        # The installed SDK's submit negotiation calls Health. service:control
+        # is User-class but also covers other control reads/cancellation; this
+        # disposable seed principal is deliberately not read-only.
         grants.append(
             {"resource": {"Graph": graph}, "action": "Write", "effect": "Allow"}
         )
@@ -351,7 +354,14 @@ async def authenticate_seed_session(
         or session.actor.actor_type != ActorType.HUMAN
     ):
         raise RuntimeError("Fixture human session mismatch")
-    required = {"kg:read", "work:read", "work:submit", "work:claim", "work:write"}
+    required = {
+        "kg:read",
+        "work:read",
+        "work:submit",
+        "work:claim",
+        "work:write",
+        "service:control",
+    }
     if denied:
         if set(session.scopes) != {"identity:self"}:
             raise RuntimeError("Denied human has unexpected native authority")

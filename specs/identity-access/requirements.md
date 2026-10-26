@@ -187,6 +187,10 @@ Installed qualification preparation for R004.4.2/R004.5.3 uses only disposable C
 state and exact installed candidate wheels. A distinct managed service broker and
 native-created human exercise the same configured production path. The human keeps
 explicit seed-and-read scopes; this does not prove a read-only principal can seed.
+The disposable primary human also retains `service:control`, because the locked
+native client's submission negotiation uses Health. This User-class capability
+also covers Ping, cancellation and control reads; it is not a Health-only grant.
+The separate denied human and production broker receive no such capability.
 A separate principal has no protected-read scopes. The browser uses normal TLS
 verification with a CA trusted only by its temporary profile. Cleanup covers
 failures and cancellation. Only redacted receipts, wheel/lock digests and a cropped

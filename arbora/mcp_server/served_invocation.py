@@ -542,6 +542,14 @@ def compose_served_invocation(
     minted = session()
     bindings = _with_ingest_runner(bindings, pool, graph, connect_context)
     bindings = _with_task_plan_schema(bindings, pool, graph, connect_context, session)
+    if (
+        bindings is not None
+        and task_plan_config is not None
+        and "task_plan_config" not in bindings
+    ):
+        # Native plan publication reuses the existing verified runtime path;
+        # the config is trusted composition data, never request metadata.
+        bindings = {**bindings, "task_plan_config": task_plan_config}
     if bindings is not None and "task_plan_work_engine" not in bindings:
         # ``agents.plan_run`` attaches to the same engine-owned WorkItem
         # authority used by A2A.  The adapter assigns the opaque item id and

@@ -76,12 +76,15 @@ async def observed_client(
     send = client._send
 
     async def observed(method: str, *args: Any, **options: Any) -> Any:
+        if method == "Health":
+            context["human_health_probed"] = True
         if method in {
             "GetRunWorkItem",
             "SubmitWorkItem",
             "ClaimWorkItem",
             "GetCurrentPlan",
             "PublishCurrentPlan",
+            "Health",
         }:
             context["native_method"] = method
         else:
@@ -332,6 +335,7 @@ def safe_failure_reason(exc: BaseException) -> str:
         "verified principal lacks Write access to graph '__control__'": "control-graph-write-refused",
         "verified request context lacks required scope 'work:read'": "work-read-scope-refused",
         "verified request context lacks required scope 'work:submit'": "work-submit-scope-refused",
+        "verified request context lacks required scope 'service:control'": "service-control-scope-refused",
         "SubmitWorkItem context does not match verified request authority": "submit-context-mismatch",
     }
     detail = getattr(exc, "detail", None)
@@ -478,6 +482,9 @@ def main() -> None:
                     "arbora_commit": os.environ["QUALIFICATION_ARBORA_COMMIT"],
                     "overstory_commit": os.environ["QUALIFICATION_OVERSTORY_COMMIT"],
                     "fixture_human_has_seed_permissions": True,
+                    "fixture_human_health_negotiation": context.get(
+                        "human_health_probed", False
+                    ),
                     "human_scopes": context["human_scopes"],
                     "human_roles": context["human_roles"],
                     "denied_scopes": context["denied_scopes"],
