@@ -485,3 +485,108 @@ def test_readiness_timeout_tag_requires_exact_constant(controller):
         )
         == "unknown"
     )
+
+
+@pytest.fixture
+def tls_fixture(controller, monkeypatch, tmp_path):
+    import tempfile
+
+    import infrastructure
+
+    # No NSS/system trust changes: only test the emitted certificate profile.
+    monkeypatch.setattr(infrastructure.subprocess, "run", lambda *a, **k: None)
+    with tempfile.TemporaryDirectory(dir=tmp_path) as directory:
+        yield controller.browser_ca(Path(directory))
+
+
+def _strict_memory_handshake(paths, *, trusted=True, hostname="localhost"):
+    import ssl
+
+    ca, cert, key = paths
+    server_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    server_context.load_cert_chain(cert, key)
+    client_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    client_context.verify_flags |= ssl.VERIFY_X509_STRICT
+    if trusted:
+        client_context.load_verify_locations(cafile=str(ca))
+    assert client_context.verify_mode == ssl.CERT_REQUIRED
+    assert client_context.check_hostname
+    client_in, client_out, server_in, server_out = (ssl.MemoryBIO() for _ in range(4))
+    client = client_context.wrap_bio(client_in, client_out, server_hostname=hostname)
+    server = server_context.wrap_bio(server_in, server_out, server_side=True)
+    completed = set()
+    for _ in range(20):
+        for name, connection in (("client", client), ("server", server)):
+            if name not in completed:
+                try:
+                    connection.do_handshake()
+                    completed.add(name)
+                except ssl.SSLWantReadError:
+                    pass
+        client_in.write(server_out.read())
+        server_in.write(client_out.read())
+        if len(completed) == 2:
+            return
+    raise AssertionError("In-memory TLS handshake did not complete")
+
+
+@pytest.mark.parametrize("hostname", ["localhost", "127.0.0.1"])
+def test_fixture_certificates_pass_strict_tls(tls_fixture, hostname):
+    _strict_memory_handshake(tls_fixture, hostname=hostname)
+
+
+@pytest.mark.parametrize(
+    "trusted, hostname", [(False, "localhost"), (True, "wrong.invalid")]
+)
+def test_fixture_tls_still_refuses_untrusted_or_wrong_hostname(
+    tls_fixture, trusted, hostname
+):
+    import ssl
+
+    with pytest.raises(ssl.SSLCertVerificationError):
+        _strict_memory_handshake(tls_fixture, trusted=trusted, hostname=hostname)
+
+
+def test_fixture_certificate_profile_is_constrained(tls_fixture):
+    import ipaddress
+
+    from cryptography import x509
+    from cryptography.x509.oid import ExtendedKeyUsageOID
+
+    ca_path, leaf_path, key_path = tls_fixture
+    ca = x509.load_pem_x509_certificate(ca_path.read_bytes())
+    leaf = x509.load_pem_x509_certificate(leaf_path.read_bytes())
+    for certificate in (ca, leaf):
+        assert certificate.extensions.get_extension_for_class(
+            x509.BasicConstraints
+        ).critical
+        assert certificate.extensions.get_extension_for_class(x509.KeyUsage).critical
+        assert not certificate.extensions.get_extension_for_class(
+            x509.SubjectKeyIdentifier
+        ).critical
+        assert not certificate.extensions.get_extension_for_class(
+            x509.AuthorityKeyIdentifier
+        ).critical
+    ca_constraints = ca.extensions.get_extension_for_class(x509.BasicConstraints).value
+    assert ca_constraints.ca and ca_constraints.path_length == 0
+    assert not leaf.extensions.get_extension_for_class(x509.BasicConstraints).value.ca
+    ca_usage = ca.extensions.get_extension_for_class(x509.KeyUsage).value
+    leaf_usage = leaf.extensions.get_extension_for_class(x509.KeyUsage).value
+    assert ca_usage.key_cert_sign and ca_usage.crl_sign
+    assert leaf_usage.digital_signature and leaf_usage.key_encipherment
+    assert not leaf_usage.key_cert_sign and not leaf_usage.crl_sign
+    assert list(
+        leaf.extensions.get_extension_for_class(x509.ExtendedKeyUsage).value
+    ) == [ExtendedKeyUsageOID.SERVER_AUTH]
+    assert (
+        leaf.extensions.get_extension_for_class(
+            x509.AuthorityKeyIdentifier
+        ).value.key_identifier
+        == ca.extensions.get_extension_for_class(x509.SubjectKeyIdentifier).value.digest
+    )
+    san = leaf.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
+    assert san.get_values_for_type(x509.DNSName) == ["localhost"]
+    assert san.get_values_for_type(x509.IPAddress) == [
+        ipaddress.ip_address("127.0.0.1")
+    ]
+    assert key_path.stat().st_mode & 0o777 == 0o600
