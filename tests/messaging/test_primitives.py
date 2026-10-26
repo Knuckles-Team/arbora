@@ -46,6 +46,7 @@ def test_render_inline_forms(markdown, expected):
     assert render(markdown) == expected
 
 
+@pytest.mark.spec("ARBORA-MESSAGING-R800.5")
 def test_render_structure_leaks_no_markdown_markers():
     out = render("## Stacks\n- `arbora` - up\n- *db*\n```python\n1 < 2\n```")
     assert "<b>Stacks</b>" in out

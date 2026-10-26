@@ -2076,7 +2076,9 @@
       "title": "Evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_host_bindings.py:68"
+      ]
     },
     {
       "id": "ARBORA-HOST-R008.1006",
