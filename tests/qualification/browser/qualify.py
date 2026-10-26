@@ -241,6 +241,29 @@ def cleanup(private: Path, browser: subprocess.Popen[Any] | None) -> None:
         shutil.rmtree(private, ignore_errors=False)
 
 
+def safe_refusal_code(exc: BaseException) -> str | None:
+    """Only fixed public wire categories; never return detail or arbitrary codes."""
+    code = getattr(exc, "code", None)
+    allowed = {
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "ACCESS_DENIED",
+        "PERMISSION_DENIED",
+        "INVALID_REQUEST",
+        "INVALID_ARGUMENT",
+        "VALIDATION_ERROR",
+        "NOT_FOUND",
+        "NOT_READY",
+        "INTERNAL_ERROR",
+        "INTERNAL",
+        "AUTHENTICATION_FAILED",
+        "AUTHORIZATION_DENIED",
+        "POLICY_DENIED",
+        "SECURITY_ERROR",
+    }
+    return code if isinstance(code, str) and code in allowed else None
+
+
 def main() -> None:
     versions = native.require_installed()
     private = Path(os.environ["RUNNER_TEMP"]) / "browser-private"
@@ -299,6 +322,7 @@ def main() -> None:
             with boot._booted_stack(
                 private_root=private,
                 before_serve=before_serve,
+                boot_stage=lambda stage: context.update(fixture_step=stage),
                 process_token_email=False,
                 process_token_roles=boot.ROLES,
             ):
@@ -398,6 +422,7 @@ def main() -> None:
                     "status": "failed",
                     "phase": phase,
                     "error_class": type(exc).__name__,
+                    "refusal_code": safe_refusal_code(exc),
                     "fixture_step": context.get("fixture_step"),
                 }
             )

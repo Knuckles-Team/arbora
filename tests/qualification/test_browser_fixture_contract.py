@@ -158,3 +158,12 @@ def test_native_runtime_version_is_exact(controller, version):
     else:
         with pytest.raises(RuntimeError, match="Native runtime version"):
             asyncio.run(controller.native.require_native_version(client))
+
+
+@pytest.mark.parametrize("code", ["FORBIDDEN", "private-token-value", None])
+def test_refusal_metadata_never_copies_unknown_codes_or_details(controller, code):
+    exc = RuntimeError("private diagnostic detail")
+    exc.code = code
+    assert controller.safe_refusal_code(exc) == (
+        "FORBIDDEN" if code == "FORBIDDEN" else None
+    )

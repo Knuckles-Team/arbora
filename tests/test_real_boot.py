@@ -252,6 +252,7 @@ def _booted_stack(
     process_token_email: bool = True,
     private_root: Path | None = None,
     before_serve: Any = None,
+    boot_stage: Any = None,
 ) -> Iterator[dict[str, Any]]:
     root = Path(tempfile.mkdtemp(prefix="gos-boot-", dir=private_root or "/tmp"))
     issuer = _Issuer()
@@ -326,6 +327,8 @@ def _booted_stack(
 
         # The operator's one provisioning step on a fresh engine: admit the
         # arbora process principal as the system identity, signing as itself.
+        if boot_stage is not None:
+            boot_stage("native_system_bootstrap")
         asyncio.run(_admit_process_identity(socket_path, secret, signer_key))
 
         model_port = _free_port()
@@ -462,6 +465,8 @@ def _booted_stack(
         served_url = f"http://127.0.0.1:{port}/mcp"
         # The documented operator step on a fresh store: provision Arbora's
         # semantic packs under its own process identity before first serve.
+        if boot_stage is not None:
+            boot_stage("semantic_provisioning")
         provision = subprocess.run(
             [
                 shutil.which("arbora-production-ops", path=bindir)
@@ -485,6 +490,8 @@ def _booted_stack(
             what="the connector fixture",
             logs=lambda: gos_log_path.read_text(errors="replace"),
         )
+        if boot_stage is not None:
+            boot_stage("connector_onboarding")
         onboard = subprocess.run(
             [
                 shutil.which("arbora-production-ops", path=bindir)
