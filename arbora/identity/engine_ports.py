@@ -45,26 +45,35 @@ class EngineSessionAuthority:
         ):
             raise PermissionError("invalid session credential")
         try:
+            from epistemic_graph.client import EngineResponseError
             from epistemic_graph.generated.security import (
                 decode_identity,
                 send_identity,
             )
 
             async with asyncio.timeout(1):
-                response = await send_identity(
-                    self._client,
-                    {
-                        "op": {
-                            "family": "session",
-                            "op": "resolve",
-                            "request": {
-                                "session_token": credential,
-                                **({"refresh": False} if not self._refresh else {}),
-                            },
-                        }
-                    },
-                    self._graph,
-                )
+                try:
+                    response = await send_identity(
+                        self._client,
+                        {
+                            "op": {
+                                "family": "session",
+                                "op": "resolve",
+                                "request": {
+                                    "session_token": credential,
+                                    **({"refresh": False} if not self._refresh else {}),
+                                },
+                            }
+                        },
+                        self._graph,
+                    )
+                except EngineResponseError as error:
+                    # Only the presented session's authoritative absence is a
+                    # credential refusal. Broker/policy/transport failures are
+                    # unavailable, and diagnostic detail is never authority.
+                    if error.code == "IDENTITY_NOT_FOUND":
+                        raise PermissionError("session authority refused") from None
+                    raise
                 decode_identity(response)
                 # The generated model validates the contract, but may coerce
                 # values. Preserve original wire types for authority parsing.

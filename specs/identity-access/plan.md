@@ -525,3 +525,14 @@ Cancellation invalidates membership immediately while unfinished file work retai
 Native retirement failures remain explicit unresolved outcomes, never restored authority.
 The prototype grants no operations and is not wired into the application factory.
 Actual WebUI handshake and effect admission remain separate acceptance gates.
+
+### R005.1 / R004.4.1 typed session refusal amendment (2026-10-26)
+
+During generated `session.resolve`, the published client's typed
+`IDENTITY_NOT_FOUND` refusal means the presented session is absent, expired or
+revoked and must use the existing unauthenticated response path. Match only the
+structured code, never diagnostic text. Broker authorization, tenant/policy,
+transport and malformed-response failures remain unavailable. Preserve all
+identity binding checks and refuse before effects. Consumer regressions and a
+synthetic login/logout replay cover this classification; the installed browser
+replay gate still requires HTTP 401 and remains unqualified until it passes.

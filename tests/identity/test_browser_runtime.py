@@ -364,6 +364,7 @@ def test_generated_contract_login_session_logout_with_ephemeral_signing_key(
     synthetic_signing_key,
 ):
     """Real decoder/signature/owners; synthetic wire, NOT a native EG deployment."""
+    from epistemic_graph.client import EngineResponseError
     from joserfc import jwt
     from joserfc.jwk import RSAKey
 
@@ -391,7 +392,7 @@ def test_generated_contract_login_session_logout_with_ephemeral_signing_key(
                     return {"kind": "done", "value": {"changed": True}}
                 assert op["request"]["refresh"] is False
                 if credential not in live:
-                    raise PermissionError("revoked fixture")
+                    raise EngineResponseError("IDENTITY_NOT_FOUND", "revoked fixture")
                 return reply_value()
 
         wire = Wire()
