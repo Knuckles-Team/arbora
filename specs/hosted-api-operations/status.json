@@ -1030,8 +1030,8 @@
         "tests/a2a/test_native_run_publication.py:16",
         "tests/api/test_runs_ops.py:23",
         "tests/mcp_server/test_current_plan_reader.py:24",
-        "tests/mcp_server/test_task_plan.py:232",
-        "tests/mcp_server/test_task_plan.py:239"
+        "tests/mcp_server/test_task_plan.py:293",
+        "tests/mcp_server/test_task_plan.py:300"
       ],
       "rollup_of": [
         "ARBORA-OPS-R021.4.5.1"
@@ -1052,8 +1052,8 @@
         "tests/a2a/test_native_run_publication.py:16",
         "tests/api/test_runs_ops.py:23",
         "tests/mcp_server/test_current_plan_reader.py:24",
-        "tests/mcp_server/test_task_plan.py:232",
-        "tests/mcp_server/test_task_plan.py:239"
+        "tests/mcp_server/test_task_plan.py:293",
+        "tests/mcp_server/test_task_plan.py:300"
       ],
       "rollup_of": [
         "ARBORA-OPS-R021.4.5.1.1",
@@ -1085,8 +1085,8 @@
       ],
       "verified_by": [
         "tests/a2a/test_native_run_publication.py:16",
-        "tests/mcp_server/test_task_plan.py:232",
-        "tests/mcp_server/test_task_plan.py:239",
+        "tests/mcp_server/test_task_plan.py:293",
+        "tests/mcp_server/test_task_plan.py:300",
         "tests/mcp_server/test_task_plan_runtime.py:580",
         "tests/mcp_server/test_task_plan_runtime.py:659"
       ]

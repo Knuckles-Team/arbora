@@ -11,11 +11,6 @@ from arbora.mcp_server.task_plan import configured_task_plan
 
 pytestmark = pytest.mark.spec("ARBORA-HOST-R001.2.1.2")
 CONFIG = {
-    "feature_schema": {
-        "component_id": "fixture-schema",
-        "definition_digest": "fixture-digest",
-        "kind": "feature_schema",
-    },
     "policy": {"policy": "default"},
     "max_concurrency": 2,
     "max_steps": 4,
@@ -25,6 +20,12 @@ CONFIG = {
 def test_default_disabled(monkeypatch):
     monkeypatch.delenv("ARBORA_TASK_PLAN", raising=False)
     assert configured_task_plan() is None
+
+
+def test_config_model_accepts_missing_static_schema_pin():
+    config = ArboraConfig(ARBORA_TASK_PLAN=json.dumps(CONFIG))
+    assert config.task_plan is not None
+    assert "feature_schema" not in config.task_plan
 
 
 @pytest.mark.spec("ARBORA-OPS-R021.4.5.1.2")
@@ -50,7 +51,7 @@ def test_config_json_setting_reaches_trusted_composition(monkeypatch, extra, exp
     trusted = compose.call_args.kwargs["task_plan_config"]
     assert trusted.plan_scaffold == expected
     assert trusted.max_steps == 4
-    assert trusted.feature_schema["kind"] == "feature_schema"
+    assert trusted.feature_schema == {}
 
 
 @pytest.mark.parametrize(
@@ -84,12 +85,24 @@ def test_bad_json_never_silently_disables_feature(monkeypatch, raw):
         configured_task_plan()
 
 
-def test_invalid_pin_refuses_before_process_authority(monkeypatch):
+def test_content_digest_pin_refuses_before_process_authority(monkeypatch):
     from arbora.mcp_server import server
 
-    monkeypatch.setenv("ARBORA_TASK_PLAN", json.dumps({**CONFIG, "feature_schema": {}}))
+    monkeypatch.setenv(
+        "ARBORA_TASK_PLAN",
+        json.dumps(
+            {
+                **CONFIG,
+                "feature_schema": {
+                    "component_id": "arbora.agents.plan_run.feature_schema",
+                    "definition_digest": "sha256:7a1a4e4b524072521a937e2f797f0a8eba33f3cca5fb5bd373b65f77b15184d1",
+                    "kind": "feature_schema",
+                },
+            }
+        ),
+    )
     mint = Mock(side_effect=AssertionError("must not mint"))
     monkeypatch.setattr(server.runtime, "_mint_process_session", mint)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="content digest"):
         server._served_invocation()
     mint.assert_not_called()
