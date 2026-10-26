@@ -76,6 +76,17 @@ async def _native_owner_graph(
         view = decode_get_run_work_item(result)
     except (ContractViolation, ValueError):
         return None
+    return _owned_admission_graph(
+        view, run_id=run_id, tenant=tenant, principal=principal
+    )
+
+
+def _owned_admission_graph(
+    view: Any, *, run_id: str, tenant: str, principal: str
+) -> str | None:
+    """Validate the decoded native admission without changing caller authority."""
+    from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+
     if view is None:
         return None
     admission = view.admission

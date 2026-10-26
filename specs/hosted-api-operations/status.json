@@ -1021,10 +1021,10 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "2e9f4b8bc465",
+        "3c29d23cad88",
         "5aed3058d14b",
         "663cc8cad940",
-        "9f41ea82883d",
-        "a33b4ad326fb"
+        "9f41ea82883d"
       ],
       "verified_by": [
         "tests/a2a/test_native_run_publication.py:16",
@@ -1043,10 +1043,10 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "2e9f4b8bc465",
+        "3c29d23cad88",
         "5aed3058d14b",
         "663cc8cad940",
-        "9f41ea82883d",
-        "a33b4ad326fb"
+        "9f41ea82883d"
       ],
       "verified_by": [
         "tests/a2a/test_native_run_publication.py:16",
@@ -1077,6 +1077,7 @@
       "title": "Compose owner-bound A2A scaffold publication",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "3c29d23cad88",
         "5aed3058d14b",
         "9f41ea82883d"
       ],
