@@ -1372,10 +1372,10 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "00cab715f4c1",
+        "0576aba148b3",
         "0e0a8c76ed09",
         "12ff74a18e52",
-        "1a76cab78c60",
-        "2cc5d2e6cacb"
+        "1a76cab78c60"
       ],
       "verified_by": [
         "tests/api/test_browser_invocation_fence.py:118",
@@ -1480,10 +1480,10 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "00cab715f4c1",
+        "0576aba148b3",
         "12ff74a18e52",
         "35fa530493d9",
-        "37985a140709",
-        "45c5bf3ab96a"
+        "37985a140709"
       ],
       "verified_by": [
         "tests/identity/test_browser_broker.py:14",
