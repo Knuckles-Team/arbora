@@ -1481,9 +1481,9 @@
       "landed_in": [
         "00cab715f4c1",
         "12ff74a18e52",
+        "35fa530493d9",
         "37985a140709",
-        "45c5bf3ab96a",
-        "857cf7b1e7bd"
+        "45c5bf3ab96a"
       ],
       "verified_by": [
         "tests/identity/test_browser_broker.py:14",
