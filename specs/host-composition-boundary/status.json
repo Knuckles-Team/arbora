@@ -2000,13 +2000,14 @@
       "landed_in": [
         "28cc061c8f06",
         "80f6b7b53f91",
+        "9b59c6fa17df",
         "c7208d7d3822",
         "ceaa3da1bbcc"
       ],
       "verified_by": [
         "tests/agent_host/test_log_metadata.py:2",
         "tests/agent_host/test_log_replay.py:2",
-        "tests/agent_host/test_log_sink_terminal.py:80"
+        "tests/agent_host/test_log_sink_terminal.py:10"
       ],
       "rollup_of": [
         "ARBORA-HOST-R009.8.2.1",
@@ -2031,11 +2032,12 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "28cc061c8f06",
+        "9b59c6fa17df",
         "ceaa3da1bbcc"
       ],
       "verified_by": [
         "tests/agent_host/test_log_metadata.py:2",
-        "tests/agent_host/test_log_sink_terminal.py:80"
+        "tests/agent_host/test_log_sink_terminal.py:10"
       ]
     },
     {
