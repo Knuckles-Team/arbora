@@ -339,6 +339,41 @@ def _with_fleet_source_executor(
     }
 
 
+def _with_nl_federation_planner(
+    bindings: Mapping[str, Any] | None,
+) -> Mapping[str, Any] | None:
+    """Register the native, read-only NL preparation port when available.
+
+    ``NlQueryPlan`` is generated from the Medulla/EG contract.  A process
+    built without that producer artifact remains unbound and therefore cannot
+    accidentally fall back to ``NlQueryExplain`` or an Arbora-side planner.
+    The source binding is composed first so the later dispatcher can resolve
+    the exact owner-scoped catalog entry before opening a foreign read.
+    """
+
+    if not bindings or "fleet_source_binding" not in bindings:
+        return bindings
+    if "nl_federation_planner" in bindings:
+        return bindings
+    try:
+        from epistemic_graph.generated import METHOD_IDS
+        from epistemic_graph.generated import query as generated_query
+    except (ImportError, ModuleNotFoundError):
+        return bindings
+    if "NlQueryPlan" not in METHOD_IDS:
+        return bindings
+    send_plan = getattr(generated_query, "send_nl_query_plan", None)
+    decode_plan = getattr(generated_query, "decode_nl_query_plan", None)
+    if not callable(send_plan) or not callable(decode_plan):
+        return bindings
+    from arbora.api.ops.query_federation import NativeNlQueryPlanPlanner
+
+    return {
+        **bindings,
+        "nl_federation_planner": NativeNlQueryPlanPlanner(send_plan, decode_plan),
+    }
+
+
 def _schema_action(session: Any, graph: str, pin: Mapping[str, Any]) -> Any:
     """The exact schema intent considered by the existing action-policy owner."""
     from arbora.api.contracts import ActionRequest
@@ -616,6 +651,7 @@ def compose_served_invocation(
     minted = session()
     bindings = _with_ingest_runner(bindings, pool, graph, connect_context)
     bindings = _with_fleet_source_executor(bindings, pool, graph)
+    bindings = _with_nl_federation_planner(bindings)
     bindings = _with_task_plan_schema(bindings, pool, graph, connect_context, session)
     if (
         bindings is not None

@@ -1054,8 +1054,6 @@
       "title": "Fleet onboarding registers connector access contracts unapproved",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "42778c2bc5a3",
-        "7848a4aec75d",
         "7e0cc536c81a",
         "9095a5cefabe",
         "f2284b64b6b3"
@@ -2005,10 +2003,8 @@
     {
       "id": "ARBORA-FLEET-R042.3",
       "title": "Wiring",
-      "delivery_state": "VERIFIED",
-      "landed_in": [
-        "ae05d8ba1acb"
-      ],
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": [
         "tests/fleet/test_fleet_access_contracts.py:374"
       ]
@@ -2055,7 +2051,10 @@
       "title": "Model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_query_federation.py:148",
+        "tests/api/test_query_federation.py:72"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R043.2",
@@ -2063,6 +2062,8 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [
+        "tests/api/test_query_federation.py:148",
+        "tests/api/test_query_federation.py:95",
         "tests/api/test_resolve.py:193"
       ]
     },
@@ -2071,14 +2072,19 @@
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_query_federation_served.py:171"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R043.4",
       "title": "Refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_query_federation.py:221",
+        "tests/api/test_query_federation.py:272"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R043.5",
@@ -2090,20 +2096,20 @@
     {
       "id": "ARBORA-FLEET-R043.6",
       "title": "Hot-path proof",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "bcf518b2a110"
+      ],
+      "verified_by": [
+        "tests/api/test_query_federation.py:23"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R043.7",
       "title": "Source executor",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "148bbb851601",
-        "18ce44dc31bd",
-        "2d2fe39a58ce",
-        "c2d6f6b1281b",
-        "d1d90feed9f3"
+        "e755549375e6"
       ],
       "verified_by": [
         "tests/fleet/test_source_executor.py:196",
