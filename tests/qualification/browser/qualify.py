@@ -58,6 +58,16 @@ async def connect(context: dict[str, Any], scope: str) -> Any:
     )
 
 
+async def verify_runtime(context: dict[str, Any]) -> str:
+    """Use only Health's exact fixture capability, never the identity broker."""
+    context["fixture_step"] = "native_runtime_version"
+    client = await connect(context, "service:control")
+    try:
+        return await native.require_native_version(client)
+    finally:
+        await client.close()
+
+
 async def prepare(
     context: dict[str, Any], backend: Any, credentials: dict, denied: dict
 ) -> dict[str, str]:
@@ -87,6 +97,7 @@ async def prepare(
     runtime_config.auth_jwt_issuer = boot.ISSUER
     runtime_config.auth_jwt_audience = boot.AUDIENCE
     runtime_config.kg_policy_version = boot.POLICY_VERSION
+    context["native_runtime_version"] = await verify_runtime(context)
     context["fixture_step"] = "fixture_admin_connect"
     admin = await connect(context, "identity:admin")
     pool = EpistemicClientPool(
@@ -95,8 +106,6 @@ async def prepare(
         auth_secret=context["secret"],
     )
     try:
-        context["fixture_step"] = "native_runtime_version"
-        context["native_runtime_version"] = await native.require_native_version(admin)
         context["fixture_step"] = "native_identity_initialize"
         await native.initialize_local_identity(
             admin,

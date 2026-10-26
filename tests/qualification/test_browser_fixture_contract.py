@@ -224,3 +224,31 @@ def test_prepare_failure_stage_reaches_public_receipt(
     assert receipt["fixture_step"] == "native_fixture_refusal"
     assert "private diagnostic" not in json.dumps(receipt)
     assert not (tmp_path / "browser-private").exists()
+
+
+@pytest.mark.parametrize("refuse", [False, True])
+def test_runtime_attestation_uses_separate_exact_capability(
+    controller, monkeypatch, refuse
+):
+    calls = []
+
+    async def health():
+        calls.append("health")
+        if refuse:
+            raise RuntimeError("synthetic refusal")
+        return {"version": "2.27.7"}
+
+    async def close():
+        calls.append("close")
+
+    async def connect(context, scope):
+        calls.append(scope)
+        return SimpleNamespace(health=health, close=close)
+
+    monkeypatch.setattr(controller, "connect", connect)
+    if refuse:
+        with pytest.raises(RuntimeError):
+            asyncio.run(controller.verify_runtime({}))
+    else:
+        assert asyncio.run(controller.verify_runtime({})) == "2.27.7"
+    assert calls == ["service:control", "health", "close"]
