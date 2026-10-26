@@ -290,10 +290,10 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "4ad0c4d2dd78",
-        "4e957775af08",
         "762c7f816fe3",
         "83aefbad2157",
-        "86a439753d2d"
+        "86a439753d2d",
+        "9bd22960a7ea"
       ],
       "verified_by": [
         "tests/a2a/test_native_run_owner.py:17",
@@ -585,7 +585,8 @@
         "a2f74cb9621d"
       ],
       "verified_by": [
-        "tests/api/test_query_ops.py:58"
+        "tests/api/test_query_federation_served.py:211",
+        "tests/api/test_query_ops.py:59"
       ]
     },
     {
