@@ -54,7 +54,7 @@ def _tuig_binary() -> Path:
     configured = os.environ.get("TUIG_BIN")
     candidate = Path(configured) if configured else shutil.which("tuig")
     if candidate is None:
-        pytest.fail(
+        raise AssertionError(
             "a reviewed native Tuig executable is required; install the published "
             "native artifact or set TUIG_BIN when running against a reviewed build"
         )
@@ -101,9 +101,9 @@ class _TerminalScreen:
 
     @staticmethod
     def _parameters(value: str) -> list[int]:
-        value = value.lstrip("?").split(";", 1)
+        parts = value.lstrip("?").split(";", 1)
         values: list[int] = []
-        for item in value:
+        for item in parts:
             try:
                 values.append(int(item or "0"))
             except ValueError:
