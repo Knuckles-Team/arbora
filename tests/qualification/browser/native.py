@@ -364,6 +364,7 @@ async def seed_owned_run(
     engine: Any,
     session: Any,
     invocation: Any,
+    stage: Callable[[str], None],
 ) -> dict[str, str]:
     """Persist a native human-owned WorkItem and current plan, never fake reads.
 
@@ -387,6 +388,7 @@ async def seed_owned_run(
     run_id = f"browser-qualification-{uuid.uuid4().hex}"
     context_id = "a2a-context-" + secrets.token_hex(32)
     with use_session(session):
+        stage("native_work_submit")
         item_id, created = work_items.submit_work_item_atomic(
             engine,
             kind="orchestrator_task",
@@ -407,6 +409,7 @@ async def seed_owned_run(
         )
         if created is not True:
             raise RuntimeError("Native fixture WorkItem was not freshly admitted")
+        stage("native_work_claim")
         claim = work_items.claim_specific(
             engine,
             item_id,
@@ -415,6 +418,7 @@ async def seed_owned_run(
         )
         if claim is None:
             raise RuntimeError("Native fixture claim refused")
+        stage("native_plan_binding")
         request = SimpleNamespace(run_id=run_id, metadata={"session": session})
         with current_plan_publication.bind_admitted_claim(
             engine,
@@ -425,10 +429,13 @@ async def seed_owned_run(
             hosted_invocation=invocation,
             owner_graph=CONTROL_GRAPH,
         ):
+            stage("native_plan_initialization")
             async with current_plan_publication.publication_scope(request) as publisher:
                 if publisher is None:
                     raise RuntimeError("Native current-plan publisher unavailable")
+                stage("native_plan_publish_empty")
                 await publisher.publish(0, ())
+                stage("native_plan_publish_inspect")
                 await publisher.publish(
                     1,
                     (

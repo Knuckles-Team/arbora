@@ -196,7 +196,12 @@ async def prepare(
             fleet_effect=refused_fleet_effect,
         )
         context["fixture_step"] = "native_work_and_plan_seed"
-        result = await native.seed_owned_run(engine, session, invocation)
+        result = await native.seed_owned_run(
+            engine,
+            session,
+            invocation,
+            stage=lambda stage: context.update(fixture_step=stage),
+        )
         context["fixture_step"] = "installed_arbora_startup"
         # Do not expose the seed credential; revoke_all later includes it.
         del credential
