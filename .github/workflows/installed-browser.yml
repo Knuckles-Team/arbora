@@ -1,0 +1,127 @@
+# Disposable test fixtures only; no deployed accounts, keys or system trust changes.
+name: Installed canonical browser qualification
+on:
+  pull_request:
+    paths:
+      - 'arbora/identity/**'
+      - 'arbora/mcp_server/browser_*.py'
+      - 'arbora/mcp_server/server.py'
+      - 'arbora/mcp_server/served_invocation.py'
+      - 'arbora/console.py'
+      - 'arbora/security/request_identity.py'
+      - 'arbora/webui_host/**'
+      - 'tests/test_real_boot.py'
+      - 'tests/qualification/browser/**'
+      - '.github/workflows/installed-browser.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: installed-browser-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  installed-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/qualification-playwright
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: Knuckles-Team/overstory
+          ref: 0ccc3aa2c0019d2fb1aaab37b2acc99927f75669
+          path: candidate-overstory
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+        with:
+          version: '0.13.1'
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22'
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        with:
+          package_json_file: candidate-overstory/package.json
+      - name: Build exact candidate wheels and locked browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv build --wheel --out-dir "$RUNNER_TEMP/arbora-wheel"
+          cd candidate-overstory
+          pnpm install --frozen-lockfile
+          NODE_OPTIONS=--max-old-space-size=4096 pnpm run build
+          uv build --wheel --out-dir "$RUNNER_TEMP/overstory-wheel"
+          pnpm exec playwright install --with-deps chromium
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libnss3-tools
+      - name: Install locked dependencies and exact candidate wheels
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv venv --python 3.14 "$RUNNER_TEMP/browser-env"
+          py="$RUNNER_TEMP/browser-env/bin/python"
+          uv export --frozen --no-emit-project --no-emit-package agent-webui --no-dev \
+            --extra webui --extra test --extra acp --extra vault \
+            --format requirements.txt --output-file "$RUNNER_TEMP/browser-locked.txt"
+          uv pip install --no-config --python "$py" --require-hashes --no-deps --only-binary :all: \
+            --index-url https://pypi.org/simple -r "$RUNNER_TEMP/browser-locked.txt"
+          uv pip install --no-config --python "$py" --no-deps \
+            "$RUNNER_TEMP"/arbora-wheel/*.whl "$RUNNER_TEMP"/overstory-wheel/*.whl
+          uv pip check --python "$py"
+          sha256sum uv.lock candidate-overstory/pnpm-lock.yaml > "$RUNNER_TEMP/browser-lock-sha256.txt"
+          mkdir -p "$RUNNER_TEMP/browser-public" "$RUNNER_TEMP/browser-code" "$RUNNER_TEMP/browser-bin"
+          cp "$RUNNER_TEMP/browser-lock-sha256.txt" "$RUNNER_TEMP/browser-public/lock-sha256.txt"
+          uv --version > "$RUNNER_TEMP/browser-public/tool-versions.txt"
+          node --version >> "$RUNNER_TEMP/browser-public/tool-versions.txt"
+          pnpm --version >> "$RUNNER_TEMP/browser-public/tool-versions.txt"
+          sha256sum "$RUNNER_TEMP"/arbora-wheel/*.whl "$RUNNER_TEMP"/overstory-wheel/*.whl \
+            > "$RUNNER_TEMP/browser-public/wheel-sha256.txt"
+          cp tests/test_real_boot.py tests/_boot_connector.py tests/_boot_model.py \
+            tests/_boot_ingest_connector.py "$RUNNER_TEMP/browser-code/"
+          cp tests/qualification/browser/*.py "$RUNNER_TEMP/browser-code/"
+          cp tests/qualification/browser/browser.mjs candidate-overstory/browser-qualification.mjs
+          "$py" -I -c 'import arbora,agent_webui,epistemic_graph,sys; from pathlib import Path; root=Path(sys.prefix).resolve(); assert all(root in Path(m.__file__).resolve().parents for m in (arbora,agent_webui,epistemic_graph)); dist=Path(agent_webui.__file__).parent/"dist"; assert (dist/"index.html").is_file() and list((dist/"assets").glob("*.js"))'
+      - name: Fetch checksum-pinned disposable Vault tool
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/browser-bin"
+          curl --fail --silent --show-error --location --proto '=https' --tlsv1.2 \
+            https://releases.hashicorp.com/vault/1.20.4/vault_1.20.4_linux_amd64.zip -o vault.zip
+          echo 'fc5fb5d01d192f1216b139fb5c6af17e3af742aaeffc289fd861920ec55f2c9c  vault.zip' | sha256sum -c -
+          unzip -q vault.zip vault
+          rm vault.zip
+      - name: Qualify installed native human browser lifecycle
+        shell: bash
+        env:
+          QUALIFICATION_ARBORA_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+          QUALIFICATION_OVERSTORY_COMMIT: 0ccc3aa2c0019d2fb1aaab37b2acc99927f75669
+          QUALIFICATION_VAULT_BINARY: ${{ runner.temp }}/browser-bin/vault
+          QUALIFICATION_BROWSER_SCRIPT: ${{ github.workspace }}/candidate-overstory/browser-qualification.mjs
+          QUALIFICATION_OUTPUT: ${{ runner.temp }}/browser-public
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/browser-code"
+          "$RUNNER_TEMP/browser-env/bin/python" -I qualify.py
+      - name: Remove disposable private fixture state
+        if: always()
+        shell: bash
+        run: |
+          # No logs, HAR, trace, credential, JWT, cookie or private key uploads.
+          rm -rf "$RUNNER_TEMP/browser-private"
+      - name: Upload allowlisted public qualification evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: installed-browser-public-evidence
+          path: |
+            ${{ runner.temp }}/browser-public/wheel-sha256.txt
+            ${{ runner.temp }}/browser-public/lock-sha256.txt
+            ${{ runner.temp }}/browser-public/tool-versions.txt
+            ${{ runner.temp }}/browser-public/receipt.json
+            ${{ runner.temp }}/browser-public/browser-result.json
+            ${{ runner.temp }}/browser-public/installed-current-plan.png
+          if-no-files-found: error

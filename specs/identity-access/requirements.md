@@ -182,3 +182,15 @@ tenant, audience, nondelegation and `identity:authenticate` must match. Native
 current-role checks remain authoritative. Missing or invalid inputs refuse without
 a process-authority fallback. This composition never writes broker credentials or
 grants. Reference contents, resolved tokens and secret-adapter errors stay private.
+
+Installed qualification preparation for R004.4.2/R004.5.3 uses only disposable CI
+state and exact installed candidate wheels. A distinct managed service broker and
+native-created human exercise the same configured production path. The human keeps
+explicit seed-and-read scopes; this does not prove a read-only principal can seed.
+A separate principal has no protected-read scopes. The browser uses normal TLS
+verification with a CA trusted only by its temporary profile. Cleanup covers
+failures and cancellation. Only redacted receipts, wheel/lock digests and a cropped
+signed-in plan image can become artifacts. Source helpers and syntax checks never
+replace a successful installed/native job; renewal and WebSockets remain separate.
+
+Hard-crash or SIGKILL process reaping remains unqualified by this job.

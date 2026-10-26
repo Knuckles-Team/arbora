@@ -248,8 +248,12 @@ def _booted_stack(
     extra_config: dict[str, str] | None = None,
     extra_env: dict[str, str] | None = None,
     extra_token_roles: tuple[str, ...] = (),
+    process_token_roles: tuple[str, ...] | None = None,
+    process_token_email: bool = True,
+    private_root: Path | None = None,
+    before_serve: Any = None,
 ) -> Iterator[dict[str, Any]]:
-    root = Path(tempfile.mkdtemp(prefix="gos-boot-", dir="/tmp"))
+    root = Path(tempfile.mkdtemp(prefix="gos-boot-", dir=private_root or "/tmp"))
     issuer = _Issuer()
     processes: list[subprocess.Popen[Any]] = []
     secret = uuid.uuid4().hex
@@ -434,7 +438,12 @@ def _booted_stack(
             )
         )
         token_roles = tuple(dict.fromkeys((*ROLES, *extra_token_roles)))
-        process_token = issuer.token(PROCESS_SUBJECT, ttl=7200)
+        process_token = issuer.token(
+            PROCESS_SUBJECT,
+            ttl=7200,
+            roles=process_token_roles,
+            email=process_token_email,
+        )
         service_token = issuer.token(PROCESS_SUBJECT, ttl=7200, email=False)
         gos_env = {
             **base_env,
@@ -493,6 +502,20 @@ def _booted_stack(
         assert onboard.returncode == 0, (
             f"fleet onboarding failed\n{onboard.stdout}\n{onboard.stderr}"
         )
+        if before_serve is not None:
+            # Test-only private setup seam: no production authority override.
+            before_serve(
+                {
+                    "socket_path": str(socket_path),
+                    "secret": secret,
+                    "issuer": issuer,
+                    "process_token": process_token,
+                    "root": root,
+                    "config_dir": config_dir,
+                    "env": gos_env,
+                    "base_url": f"http://127.0.0.1:{port}",
+                }
+            )
         entry = shutil.which("arbora", path=bindir)
         command = [entry] if entry else [sys.executable, "-m", "arbora.mcp_server"]
         processes.append(
