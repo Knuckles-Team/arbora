@@ -540,6 +540,14 @@ def compose_served_invocation(
     minted = session()
     bindings = _with_ingest_runner(bindings, pool, graph, connect_context)
     bindings = _with_task_plan_schema(bindings, pool, graph, connect_context, session)
+    if bindings is not None and "task_plan_work_engine" not in bindings:
+        # ``agents.plan_run`` attaches to the same engine-owned WorkItem
+        # authority used by A2A.  The adapter assigns the opaque item id and
+        # owns submit/claim/fence transitions; plan-run never accepts a caller
+        # selected native id or synthesizes a lease.
+        from arbora.mcp_server.served_engine import ServedEngine
+
+        bindings = {**bindings, "task_plan_work_engine": ServedEngine(pool)}
     step_invoke = None
     if bindings is not None and "plan_step_invoke" not in bindings:
         from arbora.api.ops.plans import LateStepInvoke
