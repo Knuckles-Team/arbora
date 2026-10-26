@@ -1352,7 +1352,7 @@
         "68c58c6e80df",
         "8d43b529468a",
         "a58a59bc4525",
-        "d4ae6fb9949c"
+        "ce7a7b10da68"
       ],
       "verified_by": [
         "tests/identity/test_browser_runtime.py:25",
@@ -1375,7 +1375,7 @@
         "45c5bf3ab96a",
         "8d43b529468a",
         "a58a59bc4525",
-        "d4ae6fb9949c"
+        "ce7a7b10da68"
       ],
       "verified_by": [
         "tests/api/test_browser_invocation_fence.py:118",
@@ -1449,7 +1449,8 @@
       "title": "Installed browser identity lifecycle",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "a58a59bc4525"
+        "a58a59bc4525",
+        "ce7a7b10da68"
       ],
       "verified_by": [
         "tests/qualification/browser/test_installed_native_browser.py:11"
@@ -1485,7 +1486,7 @@
         "tests/identity/test_browser_broker.py:14",
         "tests/mcp_server/test_browser_composition.py:10",
         "tests/mcp_server/test_browser_dispatch.py:14",
-        "tests/qualification/test_browser_fixture_contract.py:12",
+        "tests/qualification/test_browser_fixture_contract.py:15",
         "tests/webui_host/test_canonical_browser_composition.py:50"
       ]
     },
@@ -1494,7 +1495,8 @@
       "title": "Installed and native dispatch qualification",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "a58a59bc4525"
+        "a58a59bc4525",
+        "ce7a7b10da68"
       ],
       "verified_by": [
         "tests/qualification/browser/test_installed_native_browser.py:12"
