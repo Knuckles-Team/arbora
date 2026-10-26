@@ -14,8 +14,11 @@ from pydantic_ai.usage import RequestUsage
 
 from arbora import agent_runs
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
+from arbora.api.contracts.session import GraphSession
+from arbora.api.ops import plans
 from arbora.api.registry import Effect, Registry
 from arbora.mcp_server import task_plan, task_plan_runtime
+from arbora.security.actor_context import ActorContext, ActorType
 from tests.api.test_invoke_contract import operation
 from tests.mcp_server import test_task_plan as fixtures
 from tests.test_native_run_scope import CLAIM, SESSION
@@ -159,6 +162,103 @@ async def test_registered_provider_executes_only_durable_plan(chain):
 
 
 @pytest.mark.asyncio
+async def test_native_plan_helper_wires_real_publication_and_owner_scopes(
+    chain, monkeypatch
+):
+    """Exercise the served helper through canonical publication and scopes."""
+    host, state, _ = chain
+    principal = fixtures.caller(
+        effective_scopes=frozenset({"kg:write", "query:decide"})
+    )
+    session = GraphSession(
+        actor=ActorContext(
+            actor_id=principal.principal,
+            actor_type=ActorType.HUMAN,
+            tenant_id=principal.tenant,
+            authenticated=True,
+        ),
+        tenant=principal.tenant,
+        graph="owner-graph",
+        scopes=principal.effective_scopes,
+        audience="arbora",
+        policy_version=principal.policy_revision,
+    )
+    caller = replace(principal, request_id="request:native-helper", session=session)
+    claim = {
+        **CLAIM,
+        "tenant": session.tenant,
+        "work_item_id": "work",
+        "lease_expires_at_ms": 2**63 - 1,
+    }
+    admission = plans._NativePlanAdmission(
+        item_id="work",
+        run_id="run",
+        lease=plans.WorkItemLease(
+            run_id="run",
+            worker_id=claim["lease_holder_ref"],
+            lease_epoch=4,
+            fencing_token=938491,
+        ),
+        claim=claim,
+        context_id="a2a-context-" + "a" * 64,
+        owner_graph="owner-graph",
+    )
+    work_engine = SimpleNamespace(graph_name="owner-graph")
+    context = SimpleNamespace(
+        caller=caller,
+        services={
+            "task_plan_config": host.task_plan_config,
+            "task_plan_work_engine": work_engine,
+            "task_plan_model": object(),
+        },
+        operation_services=host.services,
+    )
+    plan = {
+        **PROPOSAL,
+        "max_concurrency": 2,
+        "max_steps": 4,
+        "plan_digest": "digest",
+        "input_digest": "input",
+        "policy_digest": "policy",
+        "policy_revision": "1",
+        "total_tasks": 1,
+    }
+    parsed = plans.PlanRunParams.model_validate({"plan": PROPOSAL})
+    _, eg = task_plan_runtime._contracts()
+
+    async def execute(*_args, **_kwargs):
+        owner = agent_runs.current_native_run(
+            SimpleNamespace(run_id="run", metadata={"session": session})
+        )
+        assert owner is not None
+        assert owner.work_item_id == "work"
+        assert owner.owner_graph == "owner-graph"
+        return {
+            "status": "completed",
+            "error": None,
+            "output": "done",
+            "started_order": ["answer"],
+            "tasks": {"answer": {"status": "completed", "output": "done"}},
+            "fleet_calls": [],
+        }
+
+    monkeypatch.setattr(plans, "execute_task_plan", execute)
+    monkeypatch.setattr(
+        plans,
+        "import_module",
+        lambda name: eg if name == "epistemic_graph.generated.coordination" else None,
+    )
+    published, run = await plans._publish_and_execute_native_plan(
+        context, admission, plan, PROPOSAL, parsed
+    )
+    assert published == plan
+    assert run["status"] == "completed"
+    assert len(state["published"]) == 1
+    assert state["published"][0]["snapshot"]["run_id"] == "run"
+    assert state["published"][0]["snapshot"]["task_plan"] == plan
+
+
+@pytest.mark.asyncio
 async def test_exhausted_budget_does_not_call_model(chain):
     host, state, calls = chain
     host = replace(
@@ -246,6 +346,73 @@ async def test_readback_mismatch_starts_no_dependency_task(chain):
                 session=SESSION,
             )
     assert len(calls) == 1
+
+
+@pytest.mark.asyncio
+async def test_publication_receipt_for_another_run_is_refused(chain):
+    host, state, calls = chain
+    _, eg = task_plan_runtime._contracts()
+    publish = eg.send_publish_current_plan
+
+    async def wrong_run(*args):
+        response = await publish(*args)
+        return SimpleNamespace(
+            run_id="different-run",
+            revision=response.revision,
+        )
+
+    eg.send_publish_current_plan = wrong_run
+    with agent_runs.native_run_scope(
+        run_id="run",
+        task_id="task",
+        context_id="context",
+        work_item_id="work",
+        session=SESSION,
+        claim=CLAIM,
+        owner_graph="owner-graph",
+        hosted_invocation=host,
+    ):
+        with pytest.raises(RuntimeError, match="INVALID_TASK_PLAN_RECEIPT"):
+            await agent_runs.AgentRunPort().execute_agent(
+                AgentExecutionRequest(
+                    agent_name="helper", task="question", run_id="run"
+                ),
+                session=SESSION,
+            )
+    assert len(calls) == 1
+    assert state["published"]
+
+
+@pytest.mark.asyncio
+async def test_publication_receipt_for_another_revision_is_refused(chain):
+    host, state, calls = chain
+    _, eg = task_plan_runtime._contracts()
+    publish = eg.send_publish_current_plan
+
+    async def wrong_revision(*args):
+        response = await publish(*args)
+        return SimpleNamespace(run_id="run", revision=response.revision + 1)
+
+    eg.send_publish_current_plan = wrong_revision
+    with agent_runs.native_run_scope(
+        run_id="run",
+        task_id="task",
+        context_id="context",
+        work_item_id="work",
+        session=SESSION,
+        claim=CLAIM,
+        owner_graph="owner-graph",
+        hosted_invocation=host,
+    ):
+        with pytest.raises(RuntimeError, match="INVALID_TASK_PLAN_RECEIPT"):
+            await agent_runs.AgentRunPort().execute_agent(
+                AgentExecutionRequest(
+                    agent_name="helper", task="question", run_id="run"
+                ),
+                session=SESSION,
+            )
+    assert len(calls) == 1
+    assert state["published"]
 
 
 @pytest.mark.asyncio
