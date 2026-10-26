@@ -505,6 +505,10 @@ async def _dispatch(
         refused = await _recheck(op, params, caller, services, decision)
         if refused is not None:
             raise OperationRefused(refused.code, refused.details)
+        # Keep the verified invocation bundle attached to the context.  This
+        # is deliberately added after the recheck so a composite cannot reuse
+        # an unverified or stale services object as authority.
+        context = replace(context, operation_services=services)
         return await services.runtime.dispatch(op, params, context)
 
 

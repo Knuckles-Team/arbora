@@ -129,7 +129,7 @@ async def _publish(
         )
         await _admit(host, caller, publish)
         await _admit(host, caller, read)
-        if receipt.run_id != owner.run_id:
+        if receipt.run_id != owner.run_id or receipt.revision != snapshot["revision"]:
             raise OperationRefused("INVALID_TASK_PLAN_RECEIPT")
         stored = eg.decode_get_current_plan(
             await eg.send_get_current_plan(
