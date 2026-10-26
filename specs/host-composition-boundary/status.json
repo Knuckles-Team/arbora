@@ -1964,7 +1964,7 @@
         "28cc061c8f06",
         "34077185335e",
         "37f265dde58d",
-        "80f6b7b53f91"
+        "71227bbdf7f4"
       ],
       "verified_by": [
         "tests/agent_host/test_log_access.py:493",
@@ -1999,8 +1999,8 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "28cc061c8f06",
+        "71227bbdf7f4",
         "80f6b7b53f91",
-        "9b59c6fa17df",
         "c7208d7d3822",
         "ceaa3da1bbcc"
       ],
@@ -2032,7 +2032,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "28cc061c8f06",
-        "9b59c6fa17df",
+        "71227bbdf7f4",
         "ceaa3da1bbcc"
       ],
       "verified_by": [
