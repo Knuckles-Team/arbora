@@ -654,3 +654,133 @@ def test_startup_facts_missing_log_has_no_path(controller, monkeypatch, tmp_path
         "listening": False,
         "log_available": False,
     }
+
+
+def test_browser_diagnostic_module_rejects_untrusted_values():
+    """Execute the real pure JS recorder, without a browser or credentials."""
+    module = Path(__file__).parent / "browser" / "browser_diagnostics.mjs"
+    script = r"""
+const {createDiagnostics} = await import(process.argv[1]);
+const d = createDiagnostics();
+d.stage('username-field');
+d.status('navigation', 200);
+d.flag('page_error', true);
+d.stage('private-stage-token');
+d.status('private-key', 401);
+d.status('login', 'private-body-token');
+d.status('operation', 600);
+d.status('session', {secret: 'private-body-token'});
+d.flag('authenticated', 'private-cookie-token');
+d.flag('private-key', true);
+const first = d.snapshot({name:'private-error-token', message:'private-message-token'});
+d.stage('canonical-task-get');
+d.status('operation', 403);
+d.flag('authenticated', false);
+const second = d.snapshot({name:'TimeoutError', message:'private-message-token'});
+console.log(JSON.stringify([first, second]));
+"""
+    result = subprocess.run(
+        ["node", "--input-type=module", "-e", script, module.resolve().as_uri()],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert result.stderr == ""
+    assert "private" not in result.stdout
+    first, second = json.loads(result.stdout)
+    assert first == {
+        "stage": "username-field",
+        "journey": "preflight",
+        "error_class": "Error",
+        "observations": {"navigation": 200, "page_error": True},
+    }
+    assert second == {
+        "stage": "canonical-task-get",
+        "journey": "preflight",
+        "error_class": "TimeoutError",
+        "observations": {
+            "navigation": 200,
+            "page_error": True,
+            "operation": 403,
+            "authenticated": False,
+        },
+    }
+
+
+def test_browser_diagnostic_artifact_and_module_are_explicitly_allowlisted():
+    root = Path(__file__).resolve().parents[2]
+    workflow = (root / ".github/workflows/installed-browser.yml").read_text()
+    assert "cp tests/qualification/browser/browser_diagnostics.mjs " in workflow
+    assert "browser-public/browser-diagnostics.json" in workflow
+    browser = (Path(__file__).parent / "browser/browser.mjs").read_text()
+    assert 'from "./browser_diagnostics.mjs"' in browser
+    assert "diagnostics.snapshot(error, phase)" in browser
+    assert "${safe.stage} (${safe.error_class})" in browser
+    assert "${error?.name" not in browser
+
+
+def test_browser_action_stages_are_recognized_by_the_real_recorder():
+    import re
+
+    directory = Path(__file__).parent / "browser"
+    probe = (directory / "browser.mjs").read_text()
+    stages = re.findall(r'diagnostics\.stage\("([a-z-]+)"\)', probe)
+    assert len(set(stages)) >= 35
+    script = r"""
+const {createDiagnostics} = await import(process.argv[1]);
+const d = createDiagnostics();
+const stages = JSON.parse(process.argv[2]);
+console.log(JSON.stringify(stages.map(stage => {
+  d.stage(stage);
+  return d.snapshot(new Error()).stage === stage;
+})));
+"""
+    result = subprocess.run(
+        [
+            "node",
+            "--input-type=module",
+            "-e",
+            script,
+            (directory / "browser_diagnostics.mjs").resolve().as_uri(),
+            json.dumps(stages),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert all(json.loads(result.stdout))
+
+
+def test_browser_diagnostics_reset_attempts_and_read_error_name_once():
+    module = Path(__file__).parent / "browser/browser_diagnostics.mjs"
+    script = r"""
+const {createDiagnostics} = await import(process.argv[1]);
+const d = createDiagnostics();
+d.stage('authenticated-session');
+d.status('login', 200);
+d.status('session', 200);
+d.flag('authenticated', true);
+d.reset();
+d.stage('login-navigation');
+let reads = 0;
+const error = {get name() { return ++reads === 1 ? 'Error' : 'private-token'; }};
+const failed = d.snapshot(error, 'private-journey');
+const throwing = d.snapshot({get name() { throw new Error('private-token'); }});
+console.log(JSON.stringify({failed, throwing, reads}));
+"""
+    result = subprocess.run(
+        ["node", "--input-type=module", "-e", script, module.resolve().as_uri()],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert "private" not in result.stdout
+    parsed = json.loads(result.stdout)
+    assert parsed["reads"] == 1
+    for key in ("failed", "throwing"):
+        assert parsed[key] == {
+            "stage": "login-navigation",
+            "journey": "preflight",
+            "error_class": "Error",
+            "observations": {},
+        }
