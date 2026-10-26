@@ -467,14 +467,32 @@ def _test_issuer(monkeypatch):
     from joserfc import jwt
     from joserfc.jwk import RSAKey
 
+    from arbora.core.settings import runtime_config
     from arbora.security import auth
 
     key = RSAKey.generate_key(2048, parameters={"kid": "test-only"})
-    monkeypatch.setenv("AUTH_JWT_JWKS_URI", "https://issuer.invalid/jwks")
-    monkeypatch.setenv("AUTH_JWT_ISSUER", "https://issuer.invalid")
-    monkeypatch.setenv("AUTH_JWT_AUDIENCE", "arbora-test")
+    jwks_uri = "https://issuer.invalid/jwks"
+    issuer = "https://issuer.invalid"
+    audience = "arbora-test"
+    policy_version = "test-policy"
+    monkeypatch.setenv("AUTH_JWT_JWKS_URI", jwks_uri)
+    monkeypatch.setenv("AUTH_JWT_ISSUER", issuer)
+    monkeypatch.setenv("AUTH_JWT_AUDIENCE", audience)
     monkeypatch.setenv("AUTH_JWT_ALGORITHMS", "RS256")
-    monkeypatch.setenv("KG_POLICY_VERSION", "test-policy")
+    monkeypatch.setenv("KG_POLICY_VERSION", policy_version)
+    # This fixture is imported by the central-runtime tests alongside other
+    # settings-heavy fixtures.  Remove any earlier process overrides for the
+    # values this issuer owns so the live environment is authoritative.  The
+    # override layer is restored by pytest's monkeypatch fixture after each
+    # server fixture; later drift checks can therefore change the environment
+    # and exercise the real profile comparison rather than a pinned override.
+    for name in (
+        "auth_jwt_jwks_uri",
+        "auth_jwt_issuer",
+        "auth_jwt_audience",
+        "kg_policy_version",
+    ):
+        monkeypatch.delitem(runtime_config._overrides, name, raising=False)
 
     async def fetch(uri):
         assert uri == "https://issuer.invalid/jwks"
@@ -487,8 +505,8 @@ def _test_issuer(monkeypatch):
             "sub": "alice",
             "tenant_id": "tenant",
             "scope": "kg:write",
-            "iss": "https://issuer.invalid",
-            "aud": "arbora-test",
+            "iss": issuer,
+            "aud": audience,
             "exp": int(time.time()) + 120,
         }
         claims.update(overrides)

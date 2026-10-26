@@ -157,7 +157,8 @@
       "title": "Mount the authenticated experimental HTTP/SSE profile",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "1d09ef1c3109"
+        "1d09ef1c3109",
+        "9804cd670fac"
       ],
       "verified_by": [
         "tests/acp/test_http_transport.py:28"
