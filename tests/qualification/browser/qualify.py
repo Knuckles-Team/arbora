@@ -17,7 +17,7 @@ import sys
 import time
 import urllib.request
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 # -I excludes the script directory. Add only copied fixture helpers, never source.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -68,13 +68,37 @@ async def verify_runtime(context: dict[str, Any]) -> str:
         await client.close()
 
 
+async def observed_client(
+    context: dict[str, Any], connector: Any, **kwargs: Any
+) -> Any:
+    """Observe only fixed method names on the real transport, forwarding unchanged."""
+    client = await connector(**kwargs)
+    send = client._send
+
+    async def observed(method: str, *args: Any, **options: Any) -> Any:
+        if method in {
+            "GetRunWorkItem",
+            "SubmitWorkItem",
+            "ClaimWorkItem",
+            "GetCurrentPlan",
+            "PublishCurrentPlan",
+        }:
+            context["native_method"] = method
+        else:
+            context["native_method"] = "other"
+        return await send(method, *args, **options)
+
+    client._send = observed
+    return client
+
+
 async def prepare(
     context: dict[str, Any], backend: Any, credentials: dict, denied: dict
 ) -> dict[str, str]:
     from epistemic_graph import EpistemicGraphClient
 
     from arbora.core.settings import runtime_config
-    from arbora.epistemic import EpistemicClientPool
+    from arbora.epistemic import EpistemicClient, EpistemicClientPool
     from arbora.identity.browser_broker import ConfiguredBrowserBroker
     from arbora.identity.browser_composition import _IdentityClient
     from arbora.identity.browser_runtime import BrowserCallerResolver
@@ -100,8 +124,16 @@ async def prepare(
     context["native_runtime_version"] = await verify_runtime(context)
     context["fixture_step"] = "fixture_admin_connect"
     admin = await connect(context, "identity:admin")
+
+    async def connect_observed(**kwargs: Any) -> EpistemicClient:
+        # Same explicit SDK-to-port binding used by process_engine_pool.
+        return cast(
+            EpistemicClient,
+            await observed_client(context, EpistemicGraphClient.connect, **kwargs),
+        )
+
     pool = EpistemicClientPool(
-        EpistemicGraphClient.connect,
+        connect_observed,
         socket_path=context["socket_path"],
         auth_secret=context["secret"],
     )
@@ -292,7 +324,18 @@ def safe_failure_reason(exc: BaseException) -> str:
         "resolution deployment binding disagrees": "resolution-deployment-mismatch",
         "qualified credential source expiry unavailable": "credential-expiry-unavailable",
     }
-    return known.get(str(exc), "unknown")
+    if str(exc) in known:
+        return known[str(exc)]
+    # Fixed source-authored refusal strings for this fixture's public graph.
+    details = {
+        "verified principal lacks Read access to graph '__control__'": "control-graph-read-refused",
+        "verified principal lacks Write access to graph '__control__'": "control-graph-write-refused",
+        "verified request context lacks required scope 'work:read'": "work-read-scope-refused",
+        "verified request context lacks required scope 'work:submit'": "work-submit-scope-refused",
+        "SubmitWorkItem context does not match verified request authority": "submit-context-mismatch",
+    }
+    detail = getattr(exc, "detail", None)
+    return details.get(detail, "unknown") if isinstance(detail, str) else "unknown"
 
 
 def main() -> None:
@@ -457,6 +500,7 @@ def main() -> None:
                     "refusal_code": safe_refusal_code(exc),
                     "reason": safe_failure_reason(exc),
                     "fixture_step": context.get("fixture_step"),
+                    "native_method": context.get("native_method"),
                 }
             )
             + "\n"

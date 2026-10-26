@@ -306,3 +306,47 @@ def test_fixture_signer_exports_actual_private_key_for_production_issuer(control
     assert (
         jwt.decode(token, key, algorithms=["RS256"]).claims["sub"] == "synthetic-human"
     )
+
+
+def test_method_observation_forwards_arguments_without_recording_them(controller):
+    context = {}
+    payload = {"private": "synthetic-secret"}
+    seen = []
+
+    async def send(*args, **kwargs):
+        seen.append((args, kwargs))
+        return payload
+
+    async def connector(**kwargs):
+        return SimpleNamespace(_send=send)
+
+    async def run():
+        client = await controller.observed_client(context, connector)
+        assert (
+            await client._send("GetRunWorkItem", payload, graph="__control__")
+            is payload
+        )
+        assert context == {"native_method": "GetRunWorkItem"}
+        await client._send("private-method-name", payload)
+        assert context == {"native_method": "other"}
+
+    asyncio.run(run())
+    assert seen[0] == (("GetRunWorkItem", payload), {"graph": "__control__"})
+
+
+@pytest.mark.parametrize(
+    "detail",
+    [
+        "verified principal lacks Read access to graph '__control__'",
+        "verified principal lacks Read access to graph 'private-secret'",
+        "private-secret",
+    ],
+)
+def test_native_detail_mapping_is_exact_and_redacted(controller, detail):
+    exc = RuntimeError("private-secret")
+    exc.detail = detail
+    assert controller.safe_failure_reason(exc) == (
+        "control-graph-read-refused"
+        if detail == "verified principal lacks Read access to graph '__control__'"
+        else "unknown"
+    )
