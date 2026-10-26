@@ -108,10 +108,21 @@ def _listening(port: int) -> bool:
         return probe.connect_ex(("127.0.0.1", port)) == 0
 
 
+def _free_ports(count: int) -> tuple[int, ...]:
+    """Choose distinct fixture ports while all allocation sockets remain bound."""
+    with contextlib.ExitStack() as stack:
+        ports = []
+        for _ in range(count):
+            probe = stack.enter_context(
+                socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            )
+            probe.bind(("127.0.0.1", 0))
+            ports.append(int(probe.getsockname()[1]))
+        return tuple(ports)
+
+
 def _free_port() -> int:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
-        probe.bind(("127.0.0.1", 0))
-        return int(probe.getsockname()[1])
+    return _free_ports(1)[0]
 
 
 class _Issuer:
@@ -396,8 +407,7 @@ def _booted_stack(
         }
         policy_path = config_dir / "action_policy.json"
         policy_path.write_text(json.dumps(policy))
-        port = _free_port()
-        connector_port = _free_port()
+        port, connector_port, ingest_port = _free_ports(3)
         processes.append(
             subprocess.Popen(
                 [
@@ -410,7 +420,6 @@ def _booted_stack(
                 stderr=subprocess.STDOUT,
             )
         )
-        ingest_port = _free_port()
         processes.append(
             subprocess.Popen(
                 [
