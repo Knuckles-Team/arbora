@@ -670,8 +670,10 @@
     {
       "id": "ARBORA-DEPLOY-R009.2.1",
       "title": "Small-profile import footprint",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e755549375e6"
+      ],
       "verified_by": [
         "tests/deployment/test_small_profile_footprint.py:32"
       ]

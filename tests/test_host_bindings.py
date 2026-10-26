@@ -65,6 +65,7 @@ def test_outbound_mirror_records_one_node_per_message():
     assert properties["text"] == "hi"
 
 
+@pytest.mark.spec("ARBORA-HOST-R008.1005")
 @pytest.mark.parametrize(
     ("path", "inner"),
     [
