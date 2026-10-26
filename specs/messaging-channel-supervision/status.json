@@ -421,8 +421,10 @@
     {
       "id": "ARBORA-MESSAGING-R800.5",
       "title": "Evidence",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e755549375e6"
+      ],
       "verified_by": [
         "tests/messaging/test_primitives.py:49"
       ]
@@ -457,8 +459,10 @@
     {
       "id": "ARBORA-MESSAGING-R800.1001",
       "title": "Behavior",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e755549375e6"
+      ],
       "verified_by": [
         "tests/messaging/test_lease.py:83"
       ]

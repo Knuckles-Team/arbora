@@ -408,8 +408,10 @@
     {
       "id": "ARBORA-HOST-R001.9.1",
       "title": "The served surface imports no external-service driver",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e755549375e6"
+      ],
       "verified_by": [
         "tests/deployment/test_small_profile_footprint.py:34"
       ]
@@ -2074,8 +2076,10 @@
     {
       "id": "ARBORA-HOST-R008.1005",
       "title": "Evidence",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e755549375e6"
+      ],
       "verified_by": [
         "tests/test_host_bindings.py:68"
       ]
