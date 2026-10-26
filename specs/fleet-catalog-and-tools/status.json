@@ -1054,8 +1054,6 @@
       "title": "Fleet onboarding registers connector access contracts unapproved",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "42778c2bc5a3",
-        "7848a4aec75d",
         "7e0cc536c81a",
         "9095a5cefabe",
         "f2284b64b6b3"
@@ -2005,10 +2003,8 @@
     {
       "id": "ARBORA-FLEET-R042.3",
       "title": "Wiring",
-      "delivery_state": "VERIFIED",
-      "landed_in": [
-        "ae05d8ba1acb"
-      ],
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": [
         "tests/fleet/test_fleet_access_contracts.py:374"
       ]
@@ -2099,11 +2095,7 @@
       "title": "Source executor",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "148bbb851601",
-        "18ce44dc31bd",
-        "2d2fe39a58ce",
-        "c2d6f6b1281b",
-        "d1d90feed9f3"
+        "e755549375e6"
       ],
       "verified_by": [
         "tests/fleet/test_source_executor.py:196",
