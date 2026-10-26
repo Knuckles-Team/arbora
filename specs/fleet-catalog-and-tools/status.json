@@ -1413,7 +1413,7 @@
         "524b0ceaaf9c"
       ],
       "verified_by": [
-        "tests/fleet/test_fleet_access_contracts.py:264"
+        "tests/fleet/test_fleet_access_contracts.py:339"
       ]
     },
     {
@@ -2097,14 +2097,15 @@
         "18ce44dc31bd",
         "2d2fe39a58ce",
         "d1d90feed9f3",
-        "e755549375e6"
+        "e755549375e6",
+        "efc7fdb1328d"
       ],
       "verified_by": [
-        "tests/fleet/test_source_executor.py:174",
-        "tests/fleet/test_source_executor.py:211",
-        "tests/fleet/test_source_executor.py:235",
-        "tests/fleet/test_source_executor.py:261",
-        "tests/fleet/test_source_executor.py:299"
+        "tests/fleet/test_source_executor.py:195",
+        "tests/fleet/test_source_executor.py:232",
+        "tests/fleet/test_source_executor.py:256",
+        "tests/fleet/test_source_executor.py:282",
+        "tests/fleet/test_source_executor.py:320"
       ]
     },
     {

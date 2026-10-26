@@ -504,6 +504,60 @@ class FleetSourceExecutor:
                 truncated=truncated,
             )
 
+    async def read_approved(
+        self,
+        request: ForeignReadSourceRequest,
+        *,
+        mapping: Any,
+        resource_uri: str,
+        correlate: Callable[[Any], Awaitable[Any]] | None = None,
+    ) -> ForeignReadResult:
+        """Read one catalog mapping after an EG approval/owner check.
+
+        The caller supplies the mapping selected by the existing virtual
+        catalog and the exact ontology resource URI used for the EG approval
+        CAS.  This method only projects an already-approved receipt; it never
+        calls ``ConnectorPack`` or ``RegisterForeignSource``.  EG's native
+        ``ForeignReadOpen``/phase handlers remain the authority and recheck
+        the durable receipt and owner catalog.
+        """
+
+        from arbora.fleet.access_contracts import (
+            approved_source_id,
+            source_approval_decision,
+        )
+
+        if not bool(getattr(mapping, "approved", False)):
+            return _foreign_failure(
+                request,
+                "SOURCE_HELD",
+                "the catalog mapping has no current EG approval",
+            )
+        decision = source_approval_decision(
+            request.contract,
+            request.approval,
+            connector=request.connector,
+            resource_uri=resource_uri,
+        )
+        if decision.outcome != "approved":
+            return _foreign_failure(request, "SOURCE_HELD", decision.reason)
+        if approved_source_id(request.approval) != request.source_name:
+            return _foreign_failure(
+                request,
+                "SOURCE_HELD",
+                "the source name is not the approved owner-catalog entry",
+            )
+        if getattr(mapping, "mapping_id", None) != decision.mapping_iri or any(
+            getattr(mapping, field, None) != getattr(request.contract, field, None)
+            for field in ("source_id", "entity", "class_iri", "key_field", "predicates")
+        ):
+            return _foreign_failure(
+                request,
+                "SOURCE_HELD",
+                "the catalog mapping is not the approved contract",
+            )
+        return await self.read_foreign(request, correlate=correlate)
+
     async def read_all(
         self, requests: Sequence[SourceReadRequest]
     ) -> tuple[SourceReadResult, ...]:

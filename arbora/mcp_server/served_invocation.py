@@ -263,6 +263,44 @@ def _with_ingest_runner(
     return {**bindings, "ingest_runner": runner}
 
 
+def _with_fleet_source_executor(
+    bindings: Mapping[str, Any] | None,
+    pool: Any,
+    graph: str,
+) -> Mapping[str, Any] | None:
+    """Expose the governed foreign-source reader to internal query paths.
+
+    The binding is a factory because a source executor carries the verified
+    caller for its fleet gateway calls.  It does not register or approve a
+    source; those writes belong to EG's owner-scoped ConnectorPack and
+    RegisterForeignSource methods.  Query code receives the same graph-routed
+    ``ServedEngine`` and must supply the EG approval receipt and approved
+    catalog mapping before calling ``read_approved``.
+    """
+
+    if not bindings or "fleet_gateway" not in bindings:
+        return bindings
+    if "fleet_source_executor" in bindings:
+        return bindings
+    from arbora.fleet.source_executor import FleetSourceExecutor
+    from arbora.mcp_server.served_engine import ServedEngine
+
+    engine = ServedEngine(pool)
+
+    def source_executor_for(
+        caller: Any, *, overall_timeout_s: float = 60.0
+    ) -> FleetSourceExecutor:
+        return FleetSourceExecutor.from_engine(
+            bindings["fleet_gateway"],
+            caller,
+            engine,
+            graph=graph,
+            overall_timeout_s=overall_timeout_s,
+        )
+
+    return {**bindings, "fleet_source_executor": source_executor_for}
+
+
 def _schema_action(session: Any, graph: str, pin: Mapping[str, Any]) -> Any:
     """The exact schema intent considered by the existing action-policy owner."""
     from arbora.api.contracts import ActionRequest
@@ -539,6 +577,7 @@ def compose_served_invocation(
 
     minted = session()
     bindings = _with_ingest_runner(bindings, pool, graph, connect_context)
+    bindings = _with_fleet_source_executor(bindings, pool, graph)
     bindings = _with_task_plan_schema(bindings, pool, graph, connect_context, session)
     if (
         bindings is not None

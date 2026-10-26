@@ -132,6 +132,81 @@ async def test_registered_adapter_refuses_until_governed_reader_is_bound(
         await catalog.adapters["tickets"].fetch(catalog.mappings[0])
 
 
+def _approved_receipt(
+    contract: _Contract, *, resource_uri: str = "ontology://tickets"
+) -> dict[str, object]:
+    return {
+        "connector": "tickets-mcp",
+        "contract_digest": "a" * 64,
+        "tenant_id": "tenant-a",
+        "registration": {
+            "approval": "approved",
+            "class_iri": contract.class_iri,
+            "connector": "tickets-mcp",
+            "contract_iri": contract.contract_iri,
+            "entity": contract.entity,
+            "key_field": contract.key_field,
+            "operation": contract.operation,
+            "resource_uri": resource_uri,
+            "source_id": contract.source_id,
+            "source_kind": "mcp_tool",
+        },
+    }
+
+
+def test_engine_receipt_projects_approval_only_when_registration_matches(fake_sdk):
+    contract = _Contract("urn:ac:1")
+    approved = ac.source_approval_decision(
+        contract,
+        _approved_receipt(contract),
+        connector="tickets-mcp",
+        resource_uri="ontology://tickets",
+    )
+    assert approved.outcome == "approved"
+    assert approved.mapping_iri == contract.contract_iri
+
+    held = ac.source_approval_decision(
+        contract,
+        _approved_receipt(contract, resource_uri="ontology://other"),
+        connector="tickets-mcp",
+        resource_uri="ontology://tickets",
+    )
+    assert held.outcome == "held"
+    assert "does not match" in held.reason
+
+
+def test_approved_receipt_binds_existing_mapping_without_binding_adapter(fake_sdk):
+    catalog = VirtualCatalog()
+    ac.register_access_contracts(_pack(), connector="tickets-mcp", catalog=catalog)
+    contract = _Contract("urn:ac:1")
+    decision = ac.bind_approved_mapping(
+        catalog,
+        contract,
+        _approved_receipt(contract),
+        connector="tickets-mcp",
+        resource_uri="ontology://tickets",
+    )
+    assert decision.outcome == "approved"
+    assert catalog.mappings[0].approved
+    # The projection controls selection only; direct catalog fetch remains
+    # fail-closed until the governed FleetSourceExecutor is used.
+    with pytest.raises(LookupError, match="no governed live binding"):
+        awaitable = catalog.adapters["tickets"].fetch(catalog.mappings[0])
+        import asyncio
+
+        asyncio.run(awaitable)
+
+
+def test_repeated_registration_preserves_eg_approval(fake_sdk):
+    from dataclasses import replace
+
+    catalog = VirtualCatalog()
+    ac.register_access_contracts(_pack(), connector="tickets-mcp", catalog=catalog)
+    catalog.mappings[0] = replace(catalog.mappings[0], approved=True)
+    ac.register_access_contracts(_pack(), connector="tickets-mcp", catalog=catalog)
+    assert catalog.mappings[0].approved
+
+
 def test_repeat_pass_adds_no_duplicate(fake_sdk) -> None:
     catalog = VirtualCatalog()
     ac.register_access_contracts(_pack(), connector="t", catalog=catalog)

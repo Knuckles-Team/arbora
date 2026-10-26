@@ -14,7 +14,8 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping, Sequence
-from typing import Any
+from dataclasses import dataclass, replace
+from typing import Any, Literal
 
 from arbora.api.errors import not_served
 from arbora.fleet.declarations import entry_bytes
@@ -34,6 +35,149 @@ CONTRACT_MARKERS = (
     "AccessContract",
 )
 _CATALOG: list[Any] = []
+
+
+@dataclass(frozen=True, slots=True)
+class SourceApprovalDecision:
+    """The result of checking an EG source-approval receipt.
+
+    This is a local projection of a producer decision.  Arbora never treats
+    this record as authority: the EG foreign-read phases revalidate the
+    durable approval and owner catalog before binding a source.
+    """
+
+    connector: str
+    contract_iri: str
+    mapping_iri: str
+    outcome: Literal["approved", "held"]
+    policy_id: str
+    reason: str
+
+
+_SOURCE_KIND_BY_ACCESS = {
+    "mcp_tool": "mcp_tool",
+    "http_endpoint": "http_endpoint",
+    "graphql_query": "graphql_query",
+    "a2a_skill": "a2a_skill",
+}
+
+
+def _mapping(value: Any) -> Mapping[str, Any] | None:
+    """Read a generated Pydantic DTO without importing the engine package."""
+
+    if isinstance(value, Mapping):
+        return value
+    dump = getattr(value, "model_dump", None)
+    if not callable(dump):
+        return None
+    try:
+        result = dump(mode="json")
+    except (TypeError, ValueError):
+        return None
+    return result if isinstance(result, Mapping) else None
+
+
+def _receipt_registration(
+    receipt: Any,
+) -> tuple[Mapping[str, Any], Mapping[str, Any]] | None:
+    body = _mapping(receipt)
+    if body is None:
+        return None
+    registration = _mapping(body.get("registration"))
+    return (body, registration) if registration is not None else None
+
+
+def _text(value: Any) -> str:
+    return value if isinstance(value, str) else ""
+
+
+def source_approval_decision(
+    contract: Any,
+    receipt: Any,
+    *,
+    connector: str,
+    resource_uri: str,
+    policy_id: str = "eg.connector-pack.source-approval",
+) -> SourceApprovalDecision:
+    """Project one *existing* EG approval receipt onto a parsed contract.
+
+    ``receipt`` must be the generated ``ConnectorPackSourceApprovalResult``
+    returned by EG after its current-head/body-digest CAS.  This helper does
+    no write and accepts no local boolean as an approval substitute.  A
+    missing, held or mismatched receipt is a held decision.
+    """
+
+    contract_iri = _text(getattr(contract, "contract_iri", ""))
+    decision = SourceApprovalDecision(
+        connector=connector,
+        contract_iri=contract_iri,
+        mapping_iri=contract_iri,
+        outcome="held",
+        policy_id=policy_id,
+        reason="engine source approval receipt is absent or malformed",
+    )
+    parsed = _receipt_registration(receipt)
+    if parsed is None:
+        return decision
+    body, registration = parsed
+    approval = registration.get("approval")
+    if hasattr(approval, "value"):
+        approval = approval.value
+    expected_kind = _SOURCE_KIND_BY_ACCESS.get(
+        str(getattr(contract, "access_kind", ""))
+    )
+    expected = {
+        "connector": connector,
+        "contract_iri": contract_iri,
+        "resource_uri": resource_uri,
+        "source_id": _text(getattr(contract, "source_id", "")),
+        "entity": _text(getattr(contract, "entity", "")),
+        "class_iri": _text(getattr(contract, "class_iri", "")),
+        "key_field": _text(getattr(contract, "key_field", "")),
+        "operation": _text(getattr(contract, "operation", "")),
+        "source_kind": expected_kind,
+    }
+    if (
+        approval != "approved"
+        or body.get("connector") != connector
+        or not contract_iri
+        or expected_kind is None
+        or any(not value for key, value in expected.items() if key != "source_kind")
+        or any(registration.get(key) != value for key, value in expected.items())
+        or not isinstance(body.get("contract_digest"), str)
+        or len(body["contract_digest"]) != 64
+        or any(
+            character not in "0123456789abcdef" for character in body["contract_digest"]
+        )
+        or not isinstance(body.get("tenant_id"), str)
+        or not body["tenant_id"]
+    ):
+        return SourceApprovalDecision(
+            connector=connector,
+            contract_iri=contract_iri,
+            mapping_iri=contract_iri,
+            outcome="held",
+            policy_id=policy_id,
+            reason="engine source approval registration does not match the contract",
+        )
+    return SourceApprovalDecision(
+        connector=connector,
+        contract_iri=contract_iri,
+        mapping_iri=contract_iri,
+        outcome="approved",
+        policy_id=policy_id,
+        reason="EG durable source approval receipt accepted for binding",
+    )
+
+
+def approved_source_id(receipt: Any) -> str | None:
+    """Return the EG registration name from a generated approval receipt."""
+
+    parsed = _receipt_registration(receipt)
+    if parsed is None:
+        return None
+    value = parsed[1].get("source_id")
+    return value if isinstance(value, str) and value else None
 
 
 def fleet_virtual_catalog() -> Any:
@@ -229,15 +373,101 @@ def _add_mappings(catalog: Any, contracts: Sequence[Any]) -> int:
         mapping = VirtualMapping(**fields)
         previous = existing.get(mapping.mapping_id)
         if previous is not None:
-            if previous != mapping:
-                raise ValueError(
-                    f"mapping {mapping.mapping_id!r} changed during registration"
+            # A renewal must not turn an already EG-approved projection back
+            # into a held one.  Conversely, changed contract fields replace
+            # the old row with a held candidate so stale data can never keep
+            # serving after a connector release.
+            same_shape = all(
+                getattr(previous, name) == getattr(mapping, name)
+                for name in (
+                    "mapping_id",
+                    "source_id",
+                    "entity",
+                    "class_iri",
+                    "key_field",
+                    "predicates",
+                    "version",
                 )
+            )
+            if same_shape:
+                continue
+            index = next(
+                index
+                for index, item in enumerate(catalog.mappings)
+                if item.mapping_id == mapping.mapping_id
+            )
+            catalog.mappings[index] = mapping
+            existing[mapping.mapping_id] = mapping
+            added += 1
             continue
         catalog.add_mapping(mapping)
         existing[mapping.mapping_id] = mapping
         added += 1
     return added
+
+
+def bind_approved_mapping(
+    catalog: Any,
+    contract: Any,
+    receipt: Any,
+    *,
+    connector: str,
+    resource_uri: str,
+    policy_id: str = "eg.connector-pack.source-approval",
+) -> SourceApprovalDecision:
+    """Apply an EG-approved receipt to one existing catalog candidate.
+
+    The local ``approved`` bit is only a selection projection.  The foreign
+    read adapter still sends the EG receipt, and EG rechecks its durable
+    approval, owner catalog and current source registration on every phase.
+    No receipt means no local approval and no source read.
+    """
+
+    decision = source_approval_decision(
+        contract,
+        receipt,
+        connector=connector,
+        resource_uri=resource_uri,
+        policy_id=policy_id,
+    )
+    if decision.outcome != "approved":
+        return decision
+    mapping_id = str(getattr(contract, "contract_iri", ""))
+    for index, mapping in enumerate(catalog.mappings):
+        if mapping.mapping_id != mapping_id:
+            continue
+        fields = dict(contract.virtual_mapping_fields())
+        candidate = type(mapping)(**fields, approved=False)
+        if any(
+            getattr(mapping, name) != getattr(candidate, name)
+            for name in (
+                "mapping_id",
+                "source_id",
+                "entity",
+                "class_iri",
+                "key_field",
+                "predicates",
+                "version",
+            )
+        ):
+            return SourceApprovalDecision(
+                connector=connector,
+                contract_iri=mapping_id,
+                mapping_iri=mapping_id,
+                outcome="held",
+                policy_id=policy_id,
+                reason="catalog mapping does not match the approved contract",
+            )
+        catalog.mappings[index] = replace(mapping, approved=True)
+        return decision
+    return SourceApprovalDecision(
+        connector=connector,
+        contract_iri=mapping_id,
+        mapping_iri=mapping_id,
+        outcome="held",
+        policy_id=policy_id,
+        reason="approved contract has no registered catalog mapping",
+    )
 
 
 def register_access_contracts(pack: Any, *, connector: str, catalog: Any = None) -> int:
@@ -256,11 +486,15 @@ def register_access_contracts(pack: Any, *, connector: str, catalog: Any = None)
 
 __all__ = [
     "CONTRACT_MARKERS",
+    "SourceApprovalDecision",
     "SOURCE_KIND_BY_ACCESS",
+    "approved_source_id",
+    "bind_approved_mapping",
     "declares_contracts",
     "fleet_virtual_catalog",
     "pack_ontologies",
     "pack_ontology_resources",
     "parse_pack_contracts",
     "register_access_contracts",
+    "source_approval_decision",
 ]
