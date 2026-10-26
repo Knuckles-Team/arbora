@@ -158,7 +158,7 @@ messaging = [
 ]
 
 [project.scripts]
-arbora = "arbora.mcp_server.server:mcp_server"
+arbora = "arbora.console:main"
 arbora-daemon = "arbora.gateway.daemon:main"
 arbora-acp = "arbora.acp.local_runtime:main"
 arbora-release-canary = "arbora.deployment.release_canary:main"

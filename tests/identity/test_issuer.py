@@ -305,7 +305,7 @@ def test_admission_owns_exact_cookie_token_and_caller_pairing(
         )
         sessions = []
 
-        async def session_for_token(token):
+        async def session_for_token(token, credential):
             await verified(token)
             session = CallerFixture(backend.resolution)
             sessions.append(session)
@@ -350,7 +350,7 @@ def test_admission_rejects_incoming_cookie_bearer_before_issuing(synthetic_signi
         authority = CredentialFixture()
         issuer = LocalIssuer(store, SETTINGS, authority, clock=lambda: 100)
 
-        async def factory(token):
+        async def factory(token, credential):
             pytest.fail("ambiguous credentials reached caller conversion")
 
         admission = BrowserAdmission(

@@ -1035,7 +1035,9 @@ def system_write_session(config: Any = None) -> GraphSession:
         return session
 
 
-async def actor_from_bearer_token(token: str) -> ActorContext:
+async def actor_from_bearer_token(
+    token: str, *, require_direct_service: bool = False
+) -> ActorContext:
     """Validate ``token`` against the configured JWKS and mint the actor.
 
     Raises :class:`~arbora.security.auth.TokenValidationError` (401) on any validation failure, and
@@ -1063,7 +1065,16 @@ async def actor_from_bearer_token(token: str) -> ActorContext:
         issuer=config.auth_jwt_issuer,
         audience=config.auth_jwt_audience,
     )
-    return actor_from_claims(claims)
+    actor = actor_from_claims(claims)
+    if require_direct_service and (
+        "act" in claims
+        or claims.get("aud") != config.auth_jwt_audience
+        or claims.get("delegation", []) not in ([], ())
+        or claims.get("principal_kind", "service") != "service"
+        or actor.actor_type != ActorType.AUTOMATED_SERVICE
+    ):
+        raise PermissionError("direct service bearer required")
+    return actor
 
 
 async def verify_local_bearer_token(token: str) -> VerifiedLocalBearer:

@@ -699,7 +699,7 @@ def browser_producer_path(monkeypatch):
 
     owner = ArboraBrowserAuthority(backend, verify, trusted_origin=ORIGIN)
 
-    async def session_for_token(token):
+    async def session_for_token(token, credential):
         await verify(token)
         return session
 

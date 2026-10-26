@@ -307,6 +307,16 @@ class ArboraConfig(BaseModel):
         alias="WEBUI_AUTH_MODE",
         description="Explicit WebUI identity mode; no-auth is never a verifier fallback.",
     )
+    webui_broker_token_ref: str | None = Field(
+        default=None,
+        alias="WEBUI_BROKER_TOKEN_REF",
+        description="Existing secret reference for a distinct native-managed browser service broker; never token material.",
+    )
+    webui_origin: str | None = Field(
+        default=None,
+        alias="WEBUI_ORIGIN",
+        description="Exact HTTPS origin for EG browser login and session admission.",
+    )
     engine_tls_profile: str | None = Field(
         default=None, alias="ENGINE_TLS_PROFILE", description=""
     )

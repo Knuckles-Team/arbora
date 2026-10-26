@@ -110,7 +110,7 @@ def test_actual_webui_factory_dispatches_only_canonical_bound_operations(
                 issued.append(True)
                 return "fixture-local-token"
 
-        async def resolve(token):
+        async def resolve(token, credential):
             assert token == "fixture-local-token"
             return session
 
