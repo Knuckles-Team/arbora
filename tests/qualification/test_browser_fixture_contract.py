@@ -377,7 +377,7 @@ def test_only_seed_human_gets_explicit_sdk_negotiation_scope(
             object(),
             "__control__",
             username="synthetic",
-            password="synthetic",
+            password="synthetic",  # sanitizer:ignore - inert fake-operation test input, never authenticates
             tenant_graph="tenant__synthetic",
             seed_permissions=not denied,
             denied=denied,
@@ -404,3 +404,84 @@ def test_only_seed_human_gets_explicit_sdk_negotiation_scope(
             in ({"Graph": "__control__"}, {"Graph": "tenant__synthetic"})
             for grant in role["graph_grants"]
         )
+
+
+@pytest.mark.parametrize(
+    "presentation, expected",
+    [
+        ({"authenticated": False, "mode": "local", "private": "never-copy"}, True),
+        ({"authenticated": True, "mode": "local"}, False),
+        ({"authenticated": False, "mode": "other"}, False),
+        (["never-copy"], False),
+    ],
+)
+def test_https_readiness_copies_only_boolean_facts(
+    controller, monkeypatch, presentation, expected
+):
+    import io
+
+    response = io.StringIO(json.dumps(presentation))
+    response.status = 200
+    monkeypatch.setattr(controller.urllib.request, "urlopen", lambda *a, **k: response)
+    context = {}
+    assert (
+        controller.https_presentation_ready(
+            "https://fixture.invalid", object(), context
+        )
+        is expected
+    )
+    observed = context["https_readiness"]
+    assert set(observed) == {"outcome", "status", "signed_out", "local_mode"}
+    assert observed["outcome"] == "response"
+    assert "never-copy" not in json.dumps(context)
+
+
+@pytest.mark.parametrize(
+    "kind, expected",
+    [
+        ("http", "http-error"),
+        ("url", "url-error"),
+        ("tls", "tls-error"),
+        ("timeout", "timeout"),
+        ("json", "invalid-json"),
+    ],
+)
+def test_https_readiness_error_details_never_escape(
+    controller, monkeypatch, kind, expected
+):
+    errors = {
+        "http": controller.urllib.error.HTTPError(
+            "https://private.invalid", 503, "private-secret", {}, None
+        ),
+        "url": controller.urllib.error.URLError("private-secret"),
+        "tls": controller.urllib.error.URLError(
+            controller.ssl.SSLError("private-secret")
+        ),
+        "timeout": TimeoutError("private-secret"),
+        "json": ValueError("private-secret"),
+    }
+
+    def refused(*args, **kwargs):
+        raise errors[kind]
+
+    monkeypatch.setattr(controller.urllib.request, "urlopen", refused)
+    context = {}
+    assert not controller.https_presentation_ready(
+        "https://private.invalid", object(), context
+    )
+    assert context["https_readiness"]["outcome"] == expected
+    assert "private" not in json.dumps(context)
+    assert set(context["https_readiness"]) <= {"outcome", "status"}
+
+
+def test_readiness_timeout_tag_requires_exact_constant(controller):
+    assert (
+        controller.safe_failure_reason(TimeoutError("Trusted HTTPS sign-in readiness"))
+        == "https-signin-readiness-timeout"
+    )
+    assert (
+        controller.safe_failure_reason(
+            TimeoutError("Trusted HTTPS sign-in readiness private-secret")
+        )
+        == "unknown"
+    )

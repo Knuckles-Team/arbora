@@ -15,6 +15,7 @@ import ssl
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any, cast
@@ -326,6 +327,8 @@ def safe_failure_reason(exc: BaseException) -> str:
         "configured issuer signing key invalid": "issuer-key-invalid",
         "resolution deployment binding disagrees": "resolution-deployment-mismatch",
         "qualified credential source expiry unavailable": "credential-expiry-unavailable",
+        "Trusted HTTPS sign-in readiness": "https-signin-readiness-timeout",
+        "Browser phase deadline": "browser-lifecycle-timeout",
     }
     if str(exc) in known:
         return known[str(exc)]
@@ -340,6 +343,48 @@ def safe_failure_reason(exc: BaseException) -> str:
     }
     detail = getattr(exc, "detail", None)
     return details.get(detail, "unknown") if isinstance(detail, str) else "unknown"
+
+
+def https_presentation_ready(
+    origin: str, tls: ssl.SSLContext, context: dict[str, Any]
+) -> bool:
+    """One genuine probe; retain only fixed public diagnostic categories."""
+    observation: dict[str, Any] = {"outcome": "unavailable"}
+    context["https_readiness"] = observation
+    try:
+        with urllib.request.urlopen(
+            origin + "/auth/session", context=tls, timeout=3
+        ) as response:
+            status = response.status
+            observation["status"] = (
+                status if type(status) is int and 100 <= status <= 599 else None
+            )
+            presentation = json.load(response)
+            mapping = isinstance(presentation, dict)
+            signed_out = mapping and presentation.get("authenticated") is False
+            local = mapping and presentation.get("mode") == "local"
+            observation.update(
+                outcome="response", signed_out=signed_out, local_mode=local
+            )
+            return status == 200 and signed_out and local
+    except urllib.error.HTTPError as exc:
+        observation["outcome"] = "http-error"
+        observation["status"] = (
+            exc.code if type(exc.code) is int and 100 <= exc.code <= 599 else None
+        )
+    except urllib.error.URLError as exc:
+        observation["outcome"] = (
+            "tls-error" if isinstance(exc.reason, ssl.SSLError) else "url-error"
+        )
+    except ssl.SSLError:
+        observation["outcome"] = "tls-error"
+    except TimeoutError:
+        observation["outcome"] = "timeout"
+    except OSError:
+        observation["outcome"] = "os-error"
+    except ValueError:
+        observation["outcome"] = "invalid-json"
+    return False
 
 
 def main() -> None:
@@ -408,20 +453,10 @@ def main() -> None:
                 phase = "installed-browser-lifecycle"
                 tls = ssl.create_default_context(cafile=str(ca))
                 ready_deadline = time.monotonic() + 90
+                context["fixture_step"] = "trusted_https_signin_readiness"
                 while True:
-                    try:
-                        with urllib.request.urlopen(
-                            origin + "/auth/session", context=tls, timeout=3
-                        ) as response:
-                            presentation = json.load(response)
-                            if (
-                                response.status == 200
-                                and presentation.get("authenticated") is False
-                                and presentation.get("mode") == "local"
-                            ):
-                                break
-                    except (OSError, ValueError):
-                        pass
+                    if https_presentation_ready(origin, tls, context):
+                        break
                     if time.monotonic() >= ready_deadline:
                         raise TimeoutError("Trusted HTTPS sign-in readiness")
                     time.sleep(0.2)
@@ -429,6 +464,7 @@ def main() -> None:
                     private / "ready.json",
                     json.dumps({"origin": origin, **public}).encode(),
                 )
+                context["fixture_step"] = "chromium_browser_lifecycle"
                 env = browser_environment(private, ca)
                 browser = subprocess.Popen(
                     [
@@ -508,6 +544,7 @@ def main() -> None:
                     "reason": safe_failure_reason(exc),
                     "fixture_step": context.get("fixture_step"),
                     "native_method": context.get("native_method"),
+                    "https_readiness": context.get("https_readiness"),
                 }
             )
             + "\n"
