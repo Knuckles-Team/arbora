@@ -1087,8 +1087,8 @@
         "tests/a2a/test_native_run_publication.py:16",
         "tests/mcp_server/test_task_plan.py:293",
         "tests/mcp_server/test_task_plan.py:300",
-        "tests/mcp_server/test_task_plan_runtime.py:580",
-        "tests/mcp_server/test_task_plan_runtime.py:659"
+        "tests/mcp_server/test_task_plan_runtime.py:626",
+        "tests/mcp_server/test_task_plan_runtime.py:705"
       ]
     },
     {
