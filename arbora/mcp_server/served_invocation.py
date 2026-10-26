@@ -288,11 +288,19 @@ def _schema_action(session: Any, graph: str, pin: Mapping[str, Any]) -> Any:
 
 
 def _schema_session(session: Callable[[], Any], tenant: str, graph: str) -> Any:
-    from arbora.api.contracts.session import resolve_session
+    from arbora.api.contracts.session import ScopeError, resolve_session
 
-    verified = resolve_session(
-        session(), graph=graph, required_scope="admin:decision-catalog"
-    )
+    verified = resolve_session(session(), graph=graph)
+    try:
+        # EG's FeatureSchema publisher classifies this as the exact
+        # admin:decision-catalog action.  A service identity carrying that
+        # exact capability may use it directly; EG also explicitly treats
+        # kg:admin as the aggregate grant for every admin action.  Keep the
+        # aggregate fallback here rather than lowering publication to the
+        # ordinary kg:write capability (which EG deliberately refuses).
+        verified.require_scope("admin:decision-catalog")
+    except ScopeError:
+        verified.require_scope("kg:admin")
     if verified.tenant != tenant or not str(verified.policy_version).strip():
         raise PermissionError(
             "schema publication needs its verified tenant and revision"
@@ -311,6 +319,7 @@ async def _schema_publish_context(
     import asyncio
 
     from arbora.api.contracts import PolicyDisposition, PolicyReceipt, get_action_policy
+    from arbora.api.contracts.provisioning import _opaque_principal
     from arbora.api.task_plan_schema import PURPOSE_ID
     from arbora.mcp_server.decide_wiring import _mutation_context
 
@@ -335,8 +344,20 @@ async def _schema_publish_context(
         raise PermissionError(
             "schema publication has no exact effect-authorizing receipt"
         )
+    context = _mutation_context(verified, PURPOSE_ID)
+    # AgentComponent validates the caller-shaped mutation context before EG's
+    # admitted-context binder replaces its policy and process-owner fields.
+    # Use the same canonical opaque principal derivation as connector-pack
+    # provisioning; the native binder still authenticates and replaces the
+    # authoritative carrier, tenant, and policy values.
+    opaque_principal = _opaque_principal(str(verified.actor.actor_id))
+    context.update(
+        principal=opaque_principal,
+        caller_principal=opaque_principal,
+        actor_scope=opaque_principal,
+    )
     return {
-        **_mutation_context(verified, PURPOSE_ID),
+        **context,
         "policy_digest": f"sha256:{receipt.request_digest}",
         "policy_decision_id": receipt.receipt_id,
     }
