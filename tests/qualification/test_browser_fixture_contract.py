@@ -1,5 +1,8 @@
 """Pure hygiene contracts only; these do not execute installed/native fixtures."""
 
+import asyncio
+import base64
+import hashlib
 import importlib.util
 import signal
 import subprocess
@@ -101,3 +104,57 @@ def test_missing_process_group_is_safe(controller, monkeypatch):
 
     monkeypatch.setattr(controller.os, "killpg", absent)
     controller.terminate(SimpleNamespace(pid=123, wait=lambda **kw: 0))
+
+
+@pytest.mark.parametrize(
+    "fault",
+    [None, "missing", "duplicate", "algorithm", "hash", "size", "no_hash", "no_size"],
+)
+def test_native_executable_must_match_wheel_record(controller, tmp_path, fault):
+    binary = tmp_path / "server"
+    binary.write_bytes(b"synthetic executable bytes")
+    digest = hashlib.sha256(binary.read_bytes()).digest()
+    entry = SimpleNamespace(
+        hash=SimpleNamespace(
+            mode="sha256", value=base64.urlsafe_b64encode(digest).rstrip(b"=").decode()
+        ),
+        size=binary.stat().st_size,
+    )
+    if fault == "algorithm":
+        entry.hash.mode = "md5"
+    elif fault == "hash":
+        entry.hash.value = "mismatch"
+    elif fault == "size":
+        entry.size += 1
+    elif fault == "no_hash":
+        entry.hash = None
+    elif fault == "no_size":
+        entry.size = None
+    files = (
+        []
+        if fault == "missing"
+        else [entry, entry]
+        if fault == "duplicate"
+        else [entry]
+    )
+    distribution = SimpleNamespace(files=files, locate_file=lambda item: binary)
+    if fault is None:
+        assert (
+            controller.native.verify_server_record(binary, distribution) == digest.hex()
+        )
+    else:
+        with pytest.raises(RuntimeError, match="Native server wheel"):
+            controller.native.verify_server_record(binary, distribution)
+
+
+@pytest.mark.parametrize("version", ["2.27.7", "2.27.6", None])
+def test_native_runtime_version_is_exact(controller, version):
+    async def health():
+        return {"version": version}
+
+    client = SimpleNamespace(health=health)
+    if version == "2.27.7":
+        assert asyncio.run(controller.native.require_native_version(client)) == version
+    else:
+        with pytest.raises(RuntimeError, match="Native runtime version"):
+            asyncio.run(controller.native.require_native_version(client))

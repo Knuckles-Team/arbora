@@ -7,15 +7,36 @@ No fixture result or exception may be copied verbatim to public artifacts.
 from __future__ import annotations
 
 import asyncio
+import base64
+import hashlib
 import importlib
 import importlib.metadata
 import secrets
-import subprocess
 import sys
 import time
 import uuid
 from pathlib import Path
 from typing import Any
+
+
+def verify_server_record(binary: Path, distribution: Any) -> str:
+    """Bind the executable bytes to the installed, hash-locked server wheel."""
+    matches = [
+        entry
+        for entry in distribution.files or ()
+        if Path(distribution.locate_file(entry)).resolve() == binary
+    ]
+    if len(matches) != 1:
+        raise RuntimeError("Native server wheel ownership verification failed")
+    entry = matches[0]
+    if entry.hash is None or entry.hash.mode != "sha256" or entry.size is None:
+        raise RuntimeError("Native server wheel digest is unavailable")
+    with binary.open("rb") as stream:
+        digest = hashlib.file_digest(stream, "sha256").digest()
+    encoded = base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
+    if encoded != entry.hash.value or binary.stat().st_size != entry.size:
+        raise RuntimeError("Native server wheel digest verification failed")
+    return digest.hex()
 
 
 def require_installed() -> dict[str, str]:
@@ -31,7 +52,8 @@ def require_installed() -> dict[str, str]:
         ("agent-webui", "agent_webui", None),
     ):
         loaded = importlib.import_module(module)
-        if prefix not in Path(loaded.__file__).resolve().parents:
+        location = loaded.__file__
+        if location is None or prefix not in Path(location).resolve().parents:
             raise RuntimeError("Qualification requires installed package imports")
         version = importlib.metadata.version(package)
         if expected is not None and version != expected:
@@ -47,16 +69,21 @@ def require_installed() -> dict[str, str]:
     binary = Path(resolve_server_binary()).resolve()
     if prefix not in binary.parents:
         raise RuntimeError("Native server must come from the installed environment")
-    result = subprocess.run(
-        [str(binary), "--version"],
-        capture_output=True,
-        text=True,
-        timeout=10,
-        check=False,
+    # EG 2.27.7 does not implement --version. Verify the actual executable
+    # against the exact installed wheel's RECORD, not an unsupported CLI flag.
+    versions["native-server-sha256"] = verify_server_record(
+        binary, importlib.metadata.distribution("epistemic-graph-server")
     )
-    if result.returncode != 0 or "2.27.7" not in result.stdout.split():
-        raise RuntimeError("Native server version verification failed")
     return versions
+
+
+async def require_native_version(client: Any) -> str:
+    """Attest the running executable before creating fixture identities."""
+    async with asyncio.timeout(15):
+        health = await client.health()
+    if not isinstance(health, dict) or health.get("version") != "2.27.7":
+        raise RuntimeError("Native runtime version verification failed")
+    return health["version"]
 
 
 async def identity_operation(

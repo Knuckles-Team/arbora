@@ -94,6 +94,8 @@ async def prepare(
         auth_secret=context["secret"],
     )
     try:
+        context["fixture_step"] = "native_runtime_version"
+        context["native_runtime_version"] = await native.require_native_version(admin)
         context["fixture_step"] = "native_identity_initialize"
         await native.initialize_local_identity(
             admin,
@@ -372,6 +374,7 @@ def main() -> None:
                 receipt = {
                     "status": "passed",
                     "versions": versions,
+                    "native_runtime_version": context["native_runtime_version"],
                     "native_human": public["principal_id"],
                     "arbora_commit": os.environ["QUALIFICATION_ARBORA_COMMIT"],
                     "overstory_commit": os.environ["QUALIFICATION_OVERSTORY_COMMIT"],
