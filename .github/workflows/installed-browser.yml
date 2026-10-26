@@ -87,6 +87,7 @@ jobs:
           cp tests/qualification/browser/browser_diagnostics.mjs candidate-overstory/browser_diagnostics.mjs
           cp tests/qualification/browser/browser_login.mjs candidate-overstory/browser_login.mjs
           cp tests/qualification/browser/browser_cdp.mjs candidate-overstory/browser_cdp.mjs
+          cp tests/qualification/browser/browser_csrf.mjs candidate-overstory/browser_csrf.mjs
           "$py" -I -c 'import arbora,agent_webui,epistemic_graph,sys; from pathlib import Path; root=Path(sys.prefix).resolve(); assert all(root in Path(m.__file__).resolve().parents for m in (arbora,agent_webui,epistemic_graph)); dist=Path(agent_webui.__file__).parent/"dist"; assert (dist/"index.html").is_file() and list((dist/"assets").glob("*.js"))'
       - name: Fetch checksum-pinned disposable Vault tool
         shell: bash

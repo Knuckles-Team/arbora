@@ -61,6 +61,9 @@ const journeys = new Set([
 const statuses = new Set(["navigation", "session", "login", "operation"]);
 const flags = new Set([
   "signed_out_local",
+  "csrf_request_observed",
+  "csrf_header_present",
+  "csrf_header_expected",
   "login_body_read",
   "login_outcome_ok",
   "authenticated",

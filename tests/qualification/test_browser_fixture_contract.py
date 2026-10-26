@@ -1135,3 +1135,66 @@ console.log(JSON.stringify(results));
             "Network.configureDurableMessages",
             "Network.disable",
         ]
+
+
+def test_negative_csrf_transport_uses_browser_xhr_and_observes_wire_header():
+    module = Path(__file__).parent / "browser/browser_csrf.mjs"
+    script = r"""
+const {invokeWithoutCsrfWrapper} = await import(process.argv[1]);
+let fetchCalls=0;
+globalThis.fetch=()=>{fetchCalls++;throw new Error('Production wrapper must remain unused');};
+const output=[];
+for(const kind of ['missing','wrong','injected','header-failure','network']) {
+  let requestResolve,predicate,details;
+  const pending=new Promise(resolve=>requestResolve=resolve);
+  globalThis.XMLHttpRequest=class {
+    headers={};
+    open(method,path){this.method=method;this.path=path;}
+    setRequestHeader(name,value){this.headers[name]=value;}
+    send(){
+      if(kind==='injected')this.headers['X-CSRF-Token']='private-unexpected';
+      const xhr=this;
+      const request={url:()=>`https://fixture.invalid${this.path}`,method:()=>this.method,
+        headerValue:async()=>{if(kind==='header-failure')throw new Error('private-message');return xhr.headers['X-CSRF-Token']??null;}};
+      if(!predicate(request) || predicate({url:()=>`https://foreign.invalid${this.path}`,method:()=>this.method}) || predicate({url:()=>request.url(),method:()=> 'GET'}))throw new Error('Predicate binding');
+      requestResolve(request);
+      details={credentials:this.withCredentials,timeout:this.timeout,responseType:this.responseType,headerNames:Object.keys(this.headers)};
+      if(kind==='network'){this.onerror();return;}
+      this.status=401;this.response={ok:false,error:{code:'UNAUTHENTICATED',op:'api.browser'}};
+      this.onload();
+    }
+  };
+  try {
+    const reply=await invokeWithoutCsrfWrapper({waitForRequest:fn=>{predicate=fn;return pending;},evaluate:(fn,arg)=>fn(arg)},'https://fixture.invalid','agents.tasks.get',{task_id:'fixture'},kind==='wrong'?'private-wrong-value':undefined);
+    output.push({kind,reply,details});
+  }catch(error){output.push({kind,fixedError:error.message==='Negative browser request failed'});}
+}
+console.log(JSON.stringify({fetchCalls,output}));
+"""
+    result = subprocess.run(
+        ["node", "--input-type=module", "-e", script, module.resolve().as_uri()],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert "private" not in result.stdout + result.stderr
+    data = json.loads(result.stdout)
+    assert data["fetchCalls"] == 0
+    cases = {case["kind"]: case for case in data["output"]}
+    for kind in ("missing", "wrong"):
+        assert cases[kind]["reply"]["request_observed"] is True
+        assert cases[kind]["reply"]["csrf_header_expected"] is True
+        assert cases[kind]["reply"]["status"] == 401
+        assert cases[kind]["details"]["credentials"] is True
+        assert cases[kind]["details"]["timeout"] == 20000
+        assert cases[kind]["details"]["responseType"] == "json"
+    assert cases["missing"]["reply"]["csrf_header_present"] is False
+    assert cases["wrong"]["reply"]["csrf_header_present"] is True
+    assert cases["injected"]["reply"]["csrf_header_expected"] is False
+    assert cases["header-failure"]["reply"]["request_observed"] is False
+    assert cases["network"]["fixedError"] is True
+    assert cases["missing"]["details"]["headerNames"] == ["Content-Type"]
+    assert cases["wrong"]["details"]["headerNames"] == ["Content-Type", "X-CSRF-Token"]
+    probe = (module.parent / "browser.mjs").read_text()
+    assert 'requireCondition(refused.value.error?.op === "api.browser")' in probe
+    assert "requireCondition([401, 403].includes(refused.status))" in probe

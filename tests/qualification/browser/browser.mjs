@@ -24,6 +24,7 @@ import { chromium, expect } from "@playwright/test";
 
 import { createDiagnostics } from "./browser_diagnostics.mjs";
 import { captureLoginResponse } from "./browser_cdp.mjs";
+import { invokeWithoutCsrfWrapper } from "./browser_csrf.mjs";
 
 const diagnostics = createDiagnostics();
 let phase = "preflight";
@@ -205,13 +206,21 @@ async function assertCsrfRefused(page, expected) {
     diagnostics.stage(
       csrf === undefined ? "missing-csrf-refusal" : "wrong-csrf-refusal",
     );
-    const refused = await invoke(
+    const refused = await invokeWithoutCsrfWrapper(
       page,
+      expected.origin,
       "agents.tasks.get",
       { task_id: expected.task_id },
       csrf,
     );
+    diagnostics.status("operation", refused.status);
+    diagnostics.flag("csrf_request_observed", refused.request_observed);
+    diagnostics.flag("csrf_header_present", refused.csrf_header_present);
+    diagnostics.flag("csrf_header_expected", refused.csrf_header_expected);
+    requireCondition(refused.request_observed && refused.csrf_header_expected);
+    requireCondition(refused.csrf_header_present === (csrf !== undefined));
     requireCondition([401, 403].includes(refused.status));
+    requireCondition(refused.value.error?.op === "api.browser");
     assertForbidden(refused);
     diagnostics.stage("csrf-retained-identity");
     const retained = await session(page);
