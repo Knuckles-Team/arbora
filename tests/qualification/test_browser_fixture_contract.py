@@ -252,3 +252,20 @@ def test_runtime_attestation_uses_separate_exact_capability(
     else:
         assert asyncio.run(controller.verify_runtime({})) == "2.27.7"
     assert calls == ["service:control", "health", "close"]
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "private-token-secret",
+        "configured issuer signing key unavailable: private-token-secret",
+        "configured issuer signing key unavailable",
+    ],
+)
+def test_failure_reason_only_accepts_exact_constant(controller, message):
+    reason = controller.safe_failure_reason(RuntimeError(message))
+    assert reason == (
+        "issuer-key-unavailable"
+        if message == "configured issuer signing key unavailable"
+        else "unknown"
+    )

@@ -15,6 +15,7 @@ import secrets
 import sys
 import time
 import uuid
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -310,6 +311,7 @@ async def authenticate_seed_session(
     issuer: Any,
     caller: Any,
     denied: bool = False,
+    stage: Callable[[str], None] | None = None,
 ) -> tuple[Any, str]:
     """Use actual native password authority and production issuer/resolver.
 
@@ -317,6 +319,8 @@ async def authenticate_seed_session(
     teardown; it is not the browser cookie or an operator/process identity.
     """
     credential = secrets.token_urlsafe(32)
+    if stage is not None:
+        stage("native_credential_authenticate")
     result = await identity_operation(
         broker_client,
         graph,
@@ -334,7 +338,11 @@ async def authenticate_seed_session(
     )
     if result.get("outcome") != "ok" or result.get("principal_id") != principal_id:
         raise RuntimeError("Native fixture authentication incomplete")
+    if stage is not None:
+        stage("native_local_issuer")
     token = await issuer.issue(credential)
+    if stage is not None:
+        stage("native_browser_caller")
     session = await caller(token, credential)
     from arbora.security.actor_context import ActorType
 

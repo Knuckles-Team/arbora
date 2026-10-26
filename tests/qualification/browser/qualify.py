@@ -134,15 +134,15 @@ async def prepare(
         async def borrowed_client():
             return admin
 
-        broker = _IdentityClient(
-            borrowed_client,
-            ConfiguredBrowserBroker(
-                "env://QUALIFICATION_BROKER_TOKEN",
-                tenant=boot.TENANT,
-                audience=boot.AUDIENCE,
-                process_claims=process_session.engine_verified_context,
-            ),
+        broker_authority = ConfiguredBrowserBroker(
+            "env://QUALIFICATION_BROKER_TOKEN",
+            tenant=boot.TENANT,
+            audience=boot.AUDIENCE,
+            process_claims=process_session.engine_verified_context,
         )
+        context["fixture_step"] = "configured_broker_verification"
+        await broker_authority()
+        broker = _IdentityClient(borrowed_client, broker_authority)
         context["fixture_step"] = "native_primary_human"
         principal = await native.provision_human(
             admin,
@@ -170,6 +170,7 @@ async def prepare(
             principal_id=principal,
             issuer=issuer,
             caller=caller,
+            stage=lambda stage: context.update(fixture_step=stage),
         )
         context["human_scopes"] = sorted(session.scopes)
         context["human_roles"] = sorted(session.actor.roles)
@@ -182,6 +183,7 @@ async def prepare(
             issuer=issuer,
             caller=caller,
             denied=True,
+            stage=lambda stage: context.update(fixture_step="denied_" + stage),
         )
         context["denied_scopes"] = sorted(denied_session.scopes)
         del denied_credential
@@ -272,6 +274,20 @@ def safe_refusal_code(exc: BaseException) -> str | None:
         "SECURITY_ERROR",
     }
     return code if isinstance(code, str) and code in allowed else None
+
+
+def safe_failure_reason(exc: BaseException) -> str:
+    """Fixture diagnostics only: exact constant equality, never a raw fallback."""
+    known = {
+        "configured browser broker authority unavailable": "broker-verification-unavailable",
+        "qualified engine session unavailable": "native-session-unavailable",
+        "persisted session evidence unavailable": "persisted-session-unavailable",
+        "configured issuer signing key unavailable": "issuer-key-unavailable",
+        "configured issuer signing key invalid": "issuer-key-invalid",
+        "resolution deployment binding disagrees": "resolution-deployment-mismatch",
+        "qualified credential source expiry unavailable": "credential-expiry-unavailable",
+    }
+    return known.get(str(exc), "unknown")
 
 
 def main() -> None:
@@ -436,6 +452,7 @@ def main() -> None:
                     "phase": phase,
                     "error_class": type(exc).__name__,
                     "refusal_code": safe_refusal_code(exc),
+                    "reason": safe_failure_reason(exc),
                     "fixture_step": context.get("fixture_step"),
                 }
             )
