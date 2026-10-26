@@ -10,10 +10,7 @@ from dataclasses import dataclass
 import pytest
 
 from arbora.fleet import access_contracts as ac
-
-vg = pytest.importorskip("agent_utilities.knowledge_graph.virtual_graph")
-VirtualCatalog = vg.VirtualCatalog
-TripleOntology = vg.TripleOntology
+from arbora.fleet.virtual_catalog import VirtualCatalog
 
 CLS = "https://example.org/onto#Ticket"
 
@@ -117,8 +114,7 @@ def test_registers_unapproved_mappings(fake_sdk) -> None:
     assert connection.kind == "mcp"
     assert connection.endpoint_ref == "fleet://tickets-mcp"
     assert [m.approved for m in catalog.mappings] == [False, False]
-    ontology = TripleOntology([])
-    assert catalog.mapping_for(CLS, ontology) is None
+    assert catalog.mapping_for(CLS) is None
 
 
 @pytest.mark.asyncio

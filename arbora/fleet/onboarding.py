@@ -508,7 +508,7 @@ class FleetOnboarding:
             # the process composition root.  Give that isolated pass its own
             # metadata projection; only ``start_fleet_onboarding`` installs
             # the process singleton used by the served server.
-            from agent_utilities.knowledge_graph.virtual_graph import VirtualCatalog
+            from arbora.fleet.virtual_catalog import VirtualCatalog
 
             catalog = VirtualCatalog()
             object.__setattr__(self, "virtual_catalog", catalog)

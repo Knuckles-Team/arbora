@@ -549,9 +549,8 @@ def test_boot_without_an_engine_starts_no_thread() -> None:
 def test_bootstrap_passes_the_process_virtual_catalog_to_onboarding(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from agent_utilities.knowledge_graph.virtual_graph import VirtualCatalog
-
     from arbora.fleet import access_contracts
+    from arbora.fleet.virtual_catalog import VirtualCatalog
 
     monkeypatch.setattr(access_contracts, "_CATALOG", [])
     seen: list[object] = []

@@ -20,6 +20,14 @@ from typing import Any, Literal
 
 from arbora.api.errors import not_served
 from arbora.fleet.declarations import entry_bytes
+from arbora.fleet.virtual_catalog import (
+    DiscoveredEntity,
+    MetadataContract,
+    OperationAdapter,
+    SourceConnection,
+    VirtualCatalog,
+    VirtualMapping,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -224,7 +232,7 @@ def approved_source_id(receipt: Any) -> str | None:
 
 
 def bootstrap_fleet_virtual_catalog(catalog: Any = None) -> Any:
-    """Install the one process-owned AU ``VirtualCatalog``.
+    """Install the one process-owned Arbora ``VirtualCatalog``.
 
     The catalog is a metadata/selection projection; it is not an authority.
     New mappings are held until an EG approval receipt is projected through
@@ -234,12 +242,6 @@ def bootstrap_fleet_virtual_catalog(catalog: Any = None) -> Any:
     """
 
     if catalog is None:
-        try:
-            from agent_utilities.knowledge_graph.virtual_graph import VirtualCatalog
-        except ImportError:
-            raise not_served(
-                "knowledge_graph.virtual_graph", "EG-UNIFIED-DATA-PLANE-R037"
-            ) from None
         catalog = VirtualCatalog()
     if _CATALOG:
         if _CATALOG[0] is not catalog:
@@ -361,7 +363,7 @@ def fleet_virtual_catalog() -> Any:
     """The process virtual catalog that fleet onboarding registers into."""
 
     if not _CATALOG:
-        raise not_served("knowledge_graph.virtual_graph", "EG-UNIFIED-DATA-PLANE-R037")
+        raise not_served("arbora.fleet.virtual_catalog", "EG-UNIFIED-DATA-PLANE-R037")
     return _CATALOG[0]
 
 
@@ -435,15 +437,13 @@ def _by_source(contracts: Sequence[Any]) -> dict[str, list[Any]]:
 
 
 def _entity(contract: Any) -> Any:
-    """Translate one SDK contract into the AU discovery metadata shape.
+    """Translate one SDK contract into Arbora discovery metadata.
 
     Registration records only the fields declared by the connector pack.  It
     does not infer fields from a live response, which keeps the catalog useful
     for later approval while ensuring an unapproved contract cannot serve a
     row accidentally.
     """
-
-    from agent_utilities.knowledge_graph.virtual_graph import DiscoveredEntity
 
     name = getattr(contract, "entity", None)
     key = getattr(contract, "key_field", None)
@@ -491,17 +491,6 @@ async def _unwired_call(operation: str, arguments: Mapping[str, Any]) -> Any:
 def _register_source(
     catalog: Any, connector: str, source_id: str, contracts: Sequence[Any]
 ) -> None:
-    try:
-        from agent_utilities.knowledge_graph.virtual_graph import (
-            MetadataContract,
-            OperationAdapter,
-            SourceConnection,
-        )
-    except ImportError:
-        raise not_served(
-            "knowledge_graph.virtual_graph", "EG-UNIFIED-DATA-PLANE-R037"
-        ) from None
-
     if not contracts:
         raise ValueError("a source needs at least one access contract")
     source_kinds: list[str] = []
@@ -532,13 +521,6 @@ def _register_source(
 
 
 def _add_mappings(catalog: Any, contracts: Sequence[Any]) -> int:
-    try:
-        from agent_utilities.knowledge_graph.virtual_graph import VirtualMapping
-    except ImportError:
-        raise not_served(
-            "knowledge_graph.virtual_graph", "EG-UNIFIED-DATA-PLANE-R037"
-        ) from None
-
     existing = {mapping.mapping_id: mapping for mapping in catalog.mappings}
     added = 0
     for contract in contracts:
