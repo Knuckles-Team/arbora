@@ -263,6 +263,7 @@
       "title": "Consume exact persisted session facts",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "120406d2f86f",
         "753803845a64",
         "82a546bed3d3"
       ],
@@ -1349,10 +1350,10 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "0e0a8c76ed09",
+        "120406d2f86f",
         "12ff74a18e52",
         "1a76cab78c60",
-        "2cc5d2e6cacb",
-        "3376d3f037cc"
+        "2cc5d2e6cacb"
       ],
       "verified_by": [
         "tests/identity/test_browser_runtime.py:25",
@@ -1430,11 +1431,11 @@
       "title": "Bound HTTP adapter source contract",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "120406d2f86f",
         "12ff74a18e52",
         "68c58c6e80df",
         "8d43b529468a",
-        "d4ae6fb9949c",
-        "dbc73f183bd8"
+        "d4ae6fb9949c"
       ],
       "verified_by": [
         "tests/identity/test_browser_runtime.py:25",
