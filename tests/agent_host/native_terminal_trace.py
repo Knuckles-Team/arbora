@@ -7,7 +7,19 @@ from collections import deque
 from collections.abc import Awaitable, Callable
 from typing import Literal, TypeVar
 
+import httpx
+
 T = TypeVar("T")
+
+
+def is_log_unavailable_response(response: httpx.Response) -> bool:
+    """Classify one fixed wire code without exposing arbitrary response content."""
+    if len(response.content) > 4096:
+        return False
+    try:
+        return response.json() == {"detail": "log_unavailable"}
+    except ValueError:
+        return False
 
 
 class NativeTransportTrace:
@@ -17,9 +29,11 @@ class NativeTransportTrace:
         self.events: deque[dict[str, str | float]] = deque(maxlen=64)
 
     async def observe(
-        self, stage: Literal["bind", "read"], action: Callable[[], Awaitable[T]]
+        self,
+        stage: Literal["bind", "read", "session", "emit"],
+        action: Callable[[], Awaitable[T]],
     ) -> T:
-        if stage not in {"bind", "read"}:
+        if stage not in {"bind", "read", "session", "emit"}:
             raise ValueError("Unsupported diagnostic stage")
         started = time.monotonic()
         self.events.append({"stage": stage, "status": "started", "elapsed_ms": 0.0})

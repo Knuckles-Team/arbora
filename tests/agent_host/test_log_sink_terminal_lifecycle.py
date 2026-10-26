@@ -12,9 +12,13 @@ from typing import Any
 import pytest
 
 from arbora.agent_host.log_access import HostLogAccess, HostLogBatch
+from arbora.agent_host.log_runtime import HostLogRuntime
 from arbora.agent_host.log_sink import WorkspaceLogSink
 from tests.agent_host.native_terminal import NativeTerminal
-from tests.agent_host.native_terminal_trace import NativeTransportTrace
+from tests.agent_host.native_terminal_trace import (
+    NativeTransportTrace,
+    is_log_unavailable_response,
+)
 from tests.agent_host.test_log_access import ControlledOwners, serve
 from tests.agent_host.test_log_replay import access_for
 from tests.agent_host.test_log_sink import runtime_for
@@ -47,6 +51,24 @@ def track_reads(
     return calls
 
 
+def track_admission(
+    runtime: HostLogRuntime,
+    monkeypatch: pytest.MonkeyPatch,
+    trace: NativeTransportTrace,
+) -> None:
+    original_session = runtime.sessions.resolve_session
+    original_emit = runtime.sink.emit
+
+    async def session(credential: str) -> Any:
+        return await trace.observe("session", lambda: original_session(credential))
+
+    async def emit(**kwargs: Any) -> None:
+        await trace.observe("emit", lambda: original_emit(**kwargs))
+
+    monkeypatch.setattr(runtime.sessions, "resolve_session", session)
+    monkeypatch.setattr(runtime.sink, "emit", emit)
+
+
 def assert_stopped(
     terminal: NativeTerminal, calls: list[tuple[str, str | None]]
 ) -> None:
@@ -66,6 +88,7 @@ async def test_production_sink_over_http_into_mounted_terminal(
     runtime = runtime_for(owners, tmp_path, True)
     trace = NativeTransportTrace()
     calls = track_reads(runtime.access, monkeypatch, trace)
+    track_admission(runtime, monkeypatch, trace)
     original_read = runtime.sink.read
 
     async def delayed_read(**kwargs: Any) -> HostLogBatch:
@@ -75,9 +98,12 @@ async def test_production_sink_over_http_into_mounted_terminal(
     monkeypatch.setattr(runtime.sink, "read", delayed_read)
     try:
         with serve(None, runtime) as server:
-            assert server.get(
-                "health", headers={"Authorization": "Bearer a"}
-            ).is_success
+            response = server.get("health", headers={"Authorization": "Bearer a"})
+            assert response.is_success, (
+                f"Health status={response.status_code}; "
+                f"log_unavailable={is_log_unavailable_response(response)}; "
+                f"transport={trace.summary()}"
+            )
             terminal = NativeTerminal(str(server.base_url), trace.summary)
             try:
                 terminal.open_logs()
