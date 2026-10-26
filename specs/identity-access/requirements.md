@@ -135,3 +135,30 @@
 | `ARBORA-IDENTITY-R004.8.1` | **Served read contract.** An opt-in A2A factory shares A2AService with its exact anonymous owner. Policy defaults to no methods and permits only tasks/get. The caller has no authenticated identity or GraphSession. Bind request, task, target and policy until the read ends. Reject credentials, host or origin changes, duplicate JSON, oversized bodies and expired requests. Hold capacity until cancellation unwinds. Return only native-bound status and context references. | Source tests use an explicit synthetic native port. They prove refusal, one-use binding, task isolation, cancellation, timeout, namespace checks and no cache disclosure. No deployment or native producer is qualified by this child. |
 | `ARBORA-IDENTITY-R004.8.2` | **Native anonymous task ownership.** Bind the reader to the engine's explicit local anonymous authority. Use native ownership checks, not metadata or fields copied from a request. Reject signed-client substitution, wrong namespaces and wrong run owners. Preserve authenticated operations. Qualify installed native reads and restart behavior before enabling the factory. | A native test creates distinct anonymous and authenticated tasks. It proves shared-local anonymous reads only, wrong-owner refusal and no credential fallback. Until then, the native port remains unavailable. |
 | `ARBORA-IDENTITY-R004.8.3` | **Native client source adapter.** Use the existing owner-bound GetRunWorkItem method on an exact public EG client in explicit none mode. Negotiate support and check mode before and after awaits. Bind the trusted graph through the public generated sender before the read. Check immutable admission graph, local tenant and run identity. Never use generic GetWorkItem, caller context claims or mutable metadata as owner authority. | Real public client and decoder tests use a synthetic transport. They prove exact method use, missing or wrong-owner refusal, graph mismatch and mode changes. Installed native ownership remains R004.8.2. |
+
+### Production browser composition amendment
+
+`ARBORA-IDENTITY-R004.4.1` and `ARBORA-IDENTITY-R004.5.2`: explicit EG mode
+composes native human password login and session revocation, an existing configured
+signing store, verified local JWTs paired with current credential-derived EG
+resolution, and the same hosted invocation services and policy. The supervisor
+passes this exact boundary to the public WebUI factory. Missing deployment inputs,
+non-human, bootstrap, delegated, and incomplete MFA authority refuse. Login may
+create only an opaque native session after existing credentials authenticate; no
+principal, key, role or grant is provisioned. The installed login/logout and native
+policy acceptance in R004.4.2/R004.5.3 remains required; source fixtures are not
+deployment evidence.
+
+This bounded slice does not renew browser sessions: verification uses native
+`refresh=false` and the cookie retains its initial effective idle/absolute deadline.
+A future explicit CSRF-protected renewal ceremony must qualify fresh cookie
+bounds separately; GET `/auth/session` never extends authority. Full canonical
+requests run on the existing FastMCP serving loop, with bounded cross-loop ASGI
+I/O and cancellation cleanup; no second pool is created. Lost authentication or
+response delivery triggers best-effort exact-token revocation. Unavailable cleanup
+is an unknown outcome, not a rollback guarantee.
+
+The existing local sign-in form receives only signed-out mode metadata when no
+cookie is present; no principal or grant is fabricated. Invalid or revoked cookies
+return 401 and are cleared only after trusted transport/origin checks. Login returns
+`outcome: ok`. IdP listing, password reset, and MFA ceremonies remain unavailable.

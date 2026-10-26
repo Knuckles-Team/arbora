@@ -609,13 +609,31 @@ def compose_served_invocation(
     )
     if step_invoke is not None:
         step_invoke.bind(services)
-    return HostedInvocation(
+    invocation = HostedInvocation(
         services=services,
         task_plan_config=task_plan_config,
         authenticator=AmbientHTTPAuthenticator(
             session_for_request=verified_bearer_session_for_request
         ),
     )
+
+    from dataclasses import replace
+
+    from arbora.mcp_server.browser_composition import configured_browser_boundary
+
+    def browser_broker_claims() -> Any:
+        current = session()
+        current.ensure_authority_current()
+        return connect_context(current.tenant).to_claims()
+
+    boundary = configured_browser_boundary(
+        invocation,
+        service_client,
+        graph=graph,
+        tenant=minted.tenant,
+        broker_claims=browser_broker_claims,
+    )
+    return replace(invocation, browser_boundary=boundary)
 
 
 class _LeaseClient:

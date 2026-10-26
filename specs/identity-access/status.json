@@ -1410,11 +1410,11 @@
         "d4ae6fb9949c"
       ],
       "verified_by": [
+        "tests/identity/test_browser_runtime.py:25",
         "tests/webui_host/test_session_boundary.py:110",
         "tests/webui_host/test_session_boundary.py:150",
         "tests/webui_host/test_session_boundary.py:161",
-        "tests/webui_host/test_session_boundary.py:48",
-        "tests/webui_host/test_session_boundary.py:88"
+        "tests/webui_host/test_session_boundary.py:48"
       ]
     },
     {
@@ -1447,6 +1447,8 @@
         "d4ae6fb9949c"
       ],
       "verified_by": [
+        "tests/mcp_server/test_browser_composition.py:10",
+        "tests/mcp_server/test_browser_dispatch.py:14",
         "tests/webui_host/test_canonical_browser_composition.py:50"
       ]
     },
