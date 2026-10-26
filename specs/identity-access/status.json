@@ -1448,11 +1448,13 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "12ff74a18e52",
+        "45c5bf3ab96a",
         "8d43b529468a",
         "d4ae6fb9949c",
         "dbc73f183bd8"
       ],
       "verified_by": [
+        "tests/identity/test_browser_broker.py:14",
         "tests/mcp_server/test_browser_composition.py:10",
         "tests/mcp_server/test_browser_dispatch.py:14",
         "tests/webui_host/test_canonical_browser_composition.py:50"
