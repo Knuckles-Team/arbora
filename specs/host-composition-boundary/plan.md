@@ -587,3 +587,8 @@ No source checkout or private consumer implementation replaces that wheel.
 The four cases retain real sink, restart, rotation, delayed reads and writes, and clearing
 checks with controlled identity/grant owners. They do not establish deployed
 grant issuance, complete host startup or Overstory acceptance (R009.8.2.2.2).
+
+The log lifecycle fixture waits for the native startup task request to finish
+before opening logs. A visible first-frame footer is not a completion signal.
+Opening logs during a pending sink write remains a separate fail-closed storage-contention
+case, not a passing lifecycle journey. Keep the busy-storage refusal tests unchanged.

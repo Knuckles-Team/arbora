@@ -105,6 +105,9 @@ class NativeTerminal:
 
     def open_logs(self) -> None:
         self.wait_for("l: host logs")
+        # The deliberately unavailable fixture task emits through this same
+        # sink. Its first frame is not a completed startup request.
+        self.wait_for("Arbora task read refused or unavailable")
         self.send(b"l")
 
     @contextmanager

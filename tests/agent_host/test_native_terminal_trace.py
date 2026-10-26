@@ -5,6 +5,7 @@ import json
 
 import pytest
 
+from tests.agent_host.native_terminal import NativeTerminal
 from tests.agent_host.native_terminal_trace import NativeTransportTrace
 
 
@@ -52,3 +53,18 @@ async def test_result_is_unchanged_and_trace_is_bounded() -> None:
     assert len(events) == 64
     assert events[-1]["status"] == "completed"
     assert "private" not in trace.summary()
+
+
+def test_log_open_waits_for_fixture_task_completion(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    terminal = NativeTerminal.__new__(NativeTerminal)
+    steps: list[str | bytes] = []
+    monkeypatch.setattr(terminal, "wait_for", lambda text: steps.append(text))
+    monkeypatch.setattr(terminal, "send", lambda keys: steps.append(keys))
+    terminal.open_logs()
+    assert steps == [
+        "l: host logs",
+        "Arbora task read refused or unavailable",
+        b"l",
+    ]
