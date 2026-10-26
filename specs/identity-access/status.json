@@ -1406,6 +1406,7 @@
       "title": "Bound HTTP adapter source contract",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "12ff74a18e52",
         "68c58c6e80df",
         "d4ae6fb9949c"
       ],
@@ -1444,6 +1445,7 @@
       "title": "Canonical WebUI factory safety source contract",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "12ff74a18e52",
         "d4ae6fb9949c"
       ],
       "verified_by": [
