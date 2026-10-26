@@ -1346,9 +1346,21 @@
     {
       "id": "ARBORA-IDENTITY-R004.4",
       "title": "Host browser-session adapter",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "12ff74a18e52",
+        "68c58c6e80df",
+        "8d43b529468a",
+        "a58a59bc4525",
+        "d4ae6fb9949c"
+      ],
+      "verified_by": [
+        "tests/identity/test_browser_runtime.py:25",
+        "tests/qualification/browser/test_installed_native_browser.py:11",
+        "tests/webui_host/test_session_boundary.py:110",
+        "tests/webui_host/test_session_boundary.py:150",
+        "tests/webui_host/test_session_boundary.py:161"
+      ],
       "rollup_of": [
         "ARBORA-IDENTITY-R004.4.1",
         "ARBORA-IDENTITY-R004.4.2"
@@ -1357,9 +1369,21 @@
     {
       "id": "ARBORA-IDENTITY-R004.5",
       "title": "Same-owner HTTP dispatch fence",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "12ff74a18e52",
+        "45c5bf3ab96a",
+        "8d43b529468a",
+        "a58a59bc4525",
+        "d4ae6fb9949c"
+      ],
+      "verified_by": [
+        "tests/api/test_browser_invocation_fence.py:118",
+        "tests/api/test_browser_invocation_fence.py:145",
+        "tests/api/test_browser_invocation_fence.py:175",
+        "tests/api/test_browser_invocation_fence.py:225",
+        "tests/api/test_browser_invocation_fence.py:256"
+      ],
       "rollup_of": [
         "ARBORA-IDENTITY-R004.5.1",
         "ARBORA-IDENTITY-R004.5.2",
@@ -1423,9 +1447,13 @@
     {
       "id": "ARBORA-IDENTITY-R004.4.2",
       "title": "Installed browser identity lifecycle",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "a58a59bc4525"
+      ],
+      "verified_by": [
+        "tests/qualification/browser/test_installed_native_browser.py:11"
+      ]
     },
     {
       "id": "ARBORA-IDENTITY-R004.5.1",
@@ -1464,9 +1492,13 @@
     {
       "id": "ARBORA-IDENTITY-R004.5.3",
       "title": "Installed and native dispatch qualification",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "a58a59bc4525"
+      ],
+      "verified_by": [
+        "tests/qualification/browser/test_installed_native_browser.py:12"
+      ]
     },
     {
       "id": "ARBORA-IDENTITY-R004.8",
