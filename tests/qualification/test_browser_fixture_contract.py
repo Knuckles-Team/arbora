@@ -4,9 +4,11 @@ import asyncio
 import base64
 import hashlib
 import importlib.util
+import json
 import signal
 import subprocess
 import sys
+from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -167,3 +169,58 @@ def test_refusal_metadata_never_copies_unknown_codes_or_details(controller, code
     assert controller.safe_refusal_code(exc) == (
         "FORBIDDEN" if code == "FORBIDDEN" else None
     )
+
+
+def test_prepare_failure_stage_reaches_public_receipt(
+    controller, monkeypatch, tmp_path
+):
+    monkeypatch.setenv("RUNNER_TEMP", str(tmp_path))
+    monkeypatch.setenv("QUALIFICATION_OUTPUT", str(tmp_path / "public"))
+    monkeypatch.setenv("QUALIFICATION_VAULT_BINARY", "/unused-fixture-tool")
+    monkeypatch.setattr(controller.native, "require_installed", lambda: {})
+    monkeypatch.setattr(controller, "browser_ca", lambda path: (path, path, path))
+    monkeypatch.setattr(controller, "configure_signer", lambda *args: "synthetic")
+    monkeypatch.setitem(
+        sys.modules,
+        "arbora.security.secrets",
+        SimpleNamespace(VaultBackend=lambda **kw: object()),
+    )
+
+    @contextmanager
+    def infrastructure(*args):
+        yield SimpleNamespace(url="https://fixture.invalid")
+
+    @contextmanager
+    def boot(**kwargs):
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        (config_dir / "config.json").write_text("{}")
+        kwargs["before_serve"](
+            {
+                "env": {},
+                "config_dir": config_dir,
+                "issuer": SimpleNamespace(
+                    _key=SimpleNamespace(as_dict=lambda **kw: {})
+                ),
+            }
+        )
+        yield
+
+    async def refused(context, *args):
+        context["fixture_step"] = "native_fixture_refusal"
+        raise RuntimeError("private diagnostic must not escape")
+
+    monkeypatch.setattr(controller, "vault", infrastructure)
+    monkeypatch.setattr(
+        controller, "https_origin", lambda *args: nullcontext("https://fixture.invalid")
+    )
+    monkeypatch.setattr(controller, "prepare", refused)
+    monkeypatch.setattr(controller.boot, "_free_port", lambda: 12345, raising=False)
+    monkeypatch.setattr(controller.boot, "ROLES", (), raising=False)
+    monkeypatch.setattr(controller.boot, "_booted_stack", boot, raising=False)
+    with pytest.raises(RuntimeError, match="Qualification failed"):
+        controller.main()
+    receipt = json.loads((tmp_path / "public" / "receipt.json").read_text())
+    assert receipt["fixture_step"] == "native_fixture_refusal"
+    assert "private diagnostic" not in json.dumps(receipt)
+    assert not (tmp_path / "browser-private").exists()

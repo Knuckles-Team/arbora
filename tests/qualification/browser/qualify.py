@@ -87,6 +87,7 @@ async def prepare(
     runtime_config.auth_jwt_issuer = boot.ISSUER
     runtime_config.auth_jwt_audience = boot.AUDIENCE
     runtime_config.kg_policy_version = boot.POLICY_VERSION
+    context["fixture_step"] = "fixture_admin_connect"
     admin = await connect(context, "identity:admin")
     pool = EpistemicClientPool(
         EpistemicGraphClient.connect,
@@ -294,6 +295,7 @@ def main() -> None:
                 from arbora.security.secrets import VaultBackend
 
                 context.update(value)
+                context["fixture_step"] = "before_serve_hook_entered"
                 token = configure_signer(
                     vault_client, value["issuer"]._key.as_dict(is_private=True)
                 )
@@ -316,7 +318,9 @@ def main() -> None:
                 backend = VaultBackend(
                     url=vault_client.url, token=token, auth_method="token"
                 )
-                public.update(asyncio.run(prepare(value, backend, credentials, denied)))
+                public.update(
+                    asyncio.run(prepare(context, backend, credentials, denied))
+                )
 
             phase = "native-setup-and-installed-arbora-boot"
             with boot._booted_stack(
