@@ -158,14 +158,15 @@
       "title": "Served task-plan run (validation checks c22 and c21)",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "02140e1c7a78"
+        "02140e1c7a78",
+        "ab79b6f75be5"
       ],
       "verified_by": [
-        "tests/api/test_plan_run_ops.py:238",
-        "tests/api/test_plan_run_ops.py:258",
-        "tests/api/test_plan_run_ops.py:277",
-        "tests/api/test_plan_run_ops.py:290",
-        "tests/api/test_plan_run_ops.py:302"
+        "tests/api/test_plan_run_ops.py:233",
+        "tests/api/test_plan_run_ops.py:305",
+        "tests/api/test_plan_run_ops.py:325",
+        "tests/api/test_plan_run_ops.py:344",
+        "tests/api/test_plan_run_ops.py:357"
       ]
     },
     {
@@ -176,7 +177,7 @@
         "02140e1c7a78"
       ],
       "verified_by": [
-        "tests/api/test_plan_run_ops.py:333"
+        "tests/api/test_plan_run_ops.py:400"
       ]
     },
     {
@@ -216,11 +217,11 @@
         "b0b90565cb9e"
       ],
       "verified_by": [
-        "tests/api/test_plan_run_ops.py:463",
-        "tests/api/test_plan_run_ops.py:481",
-        "tests/api/test_plan_run_ops.py:492",
-        "tests/api/test_plan_run_ops.py:500",
-        "tests/api/test_plan_run_ops.py:507"
+        "tests/api/test_plan_run_ops.py:530",
+        "tests/api/test_plan_run_ops.py:548",
+        "tests/api/test_plan_run_ops.py:559",
+        "tests/api/test_plan_run_ops.py:567",
+        "tests/api/test_plan_run_ops.py:574"
       ]
     },
     {
@@ -260,8 +261,8 @@
         "d0f2716ab3ea"
       ],
       "verified_by": [
-        "tests/api/test_plan_run_ops.py:520",
-        "tests/api/test_plan_run_ops.py:532",
+        "tests/api/test_plan_run_ops.py:587",
+        "tests/api/test_plan_run_ops.py:599",
         "tests/api/test_served_replay_owners.py:55",
         "tests/api/test_served_replay_owners.py:76"
       ]

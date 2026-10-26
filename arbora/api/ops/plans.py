@@ -41,6 +41,7 @@ from pydantic import Field
 from pydantic_ai import RunContext
 
 from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.invoke.steps import claim_values
 from arbora.api.ops._common import Params
 from arbora.api.registry import (
     AuditClass,
@@ -507,6 +508,13 @@ async def handle_plan_run(
 ) -> dict[str, Any]:
     """Decide, verify, attach and execute one task plan for the verified caller."""
     parsed = PlanRunParams.model_validate(dict(params))
+    # The shared invocation boundary freezes all nested caller arguments before
+    # dispatch.  The engine's strict TaskPlan DTO is a JSON boundary and
+    # requires fresh lists and dictionaries; thaw only this proposal at that
+    # boundary, retaining the frozen invocation arguments and caller claims.
+    proposal = claim_values(parsed.plan)
+    if not isinstance(proposal, dict):
+        raise OperationRefused("INVALID_ARGUMENT", {"field": "plan"})
     caller = context.caller
     feature_schema = await _feature_schema(context, str(caller.tenant))
     engine = context.services.get("task_plan_engine") or engine_task_plan(
@@ -514,7 +522,7 @@ async def handle_plan_run(
     )
     plan, record = await decide_task_plan(
         engine,
-        parsed.plan,
+        proposal,
         tenant=caller.tenant,
         principal=caller.principal,
         feature_schema=feature_schema,
@@ -524,7 +532,7 @@ async def handle_plan_run(
         request = publish_request(
             caller.tenant,
             plan,
-            parsed.plan,
+            proposal,
             parsed.work_item,
             now_ms=int(time.time() * 1000),
         )
