@@ -393,13 +393,33 @@ def _with_task_plan_schema(
         bound = session()
         request = current_session()
         if request is not None:
+            # Validate the request authority on its own before comparing it
+            # with the separately minted process authority.  A served request
+            # normally carries a fresh JWT, so its credential expiry can
+            # differ from the process token's expiry even when every identity,
+            # tenant, scope, graph, policy, and routing field is identical.
+            resolve_session(request, graph=graph)
+            request_actor = request.actor
+            bound_actor = replace(
+                bound.actor,
+                # ``credential_expires_at`` is the one per-token ActorContext
+                # field.  The process actor's lease and expiry are still
+                # validated below when the real process session is installed.
+                credential_expires_at=request_actor.credential_expires_at,
+            )
             # HTTP/MCP admission binds the caller's verified request session,
             # while schema publication deliberately uses the separately
             # verified process authority.  Compare every authority field
-            # before switching context; only the request-local trace may
-            # differ between these two verified sessions.
+            # before switching context; only the request-local trace and the
+            # per-token credential expiry may differ between these two
+            # verified sessions.
             resolve_session(
-                replace(bound, trace_context=request.trace_context), graph=graph
+                replace(
+                    bound,
+                    actor=bound_actor,
+                    trace_context=request.trace_context,
+                ),
+                graph=graph,
             )
             if request.tenant != tenant:
                 raise PermissionError(
