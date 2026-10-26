@@ -19,7 +19,9 @@ class _IdentityClient:
 
         # Read after connection awaits; neither the first connection snapshot
         # nor an ambient browser caller supplies broker identity authority.
-        with client_scope(client, self._claims()):
+        claims = self._claims()
+        _require_broker_claims(claims)
+        with client_scope(client, claims):
             return await client._send(*args, **kwargs)
 
 
@@ -54,6 +56,7 @@ def configured_browser_boundary(
         raise IdentityUnavailable(
             "EG browser requires configured HTTPS origin, JWT verifier and signing store"
         )
+    _require_broker_claims(broker_claims())
     from arbora.security.secrets import create_secrets_client
 
     return build_browser_boundary(
@@ -132,3 +135,18 @@ def build_browser_boundary(
             caller=caller,
         ),
     )
+
+
+def _require_broker_claims(claims: Any) -> None:
+    """Check existing exact broker scope; admin and graph roles never imply it."""
+    from collections.abc import Mapping
+
+    if not isinstance(claims, Mapping):
+        raise IdentityUnavailable("qualified browser broker authority required")
+    scopes = claims.get("scopes")
+    if (
+        not isinstance(scopes, (tuple, list, set, frozenset))
+        or "identity:authenticate" not in scopes
+        or claims.get("delegation") not in ([], ())
+    ):
+        raise PermissionError("direct identity:authenticate browser broker required")

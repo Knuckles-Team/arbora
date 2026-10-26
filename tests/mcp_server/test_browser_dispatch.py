@@ -39,8 +39,8 @@ def context(policy="one", tenant="fixture-tenant"):
         tenant=tenant,
         audience="fixture",
         agent_id="broker",
-        roles=("identity:admin",),
-        scopes=("identity:admin",),
+        roles=("identity:authenticate",),
+        scopes=("identity:authenticate",),
         policy_version=policy,
     )
 

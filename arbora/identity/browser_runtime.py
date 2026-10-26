@@ -5,9 +5,17 @@ import threading
 import time
 from typing import Any
 
+from starlette.responses import JSONResponse
+
 from .engine import IdentityUnavailable
 from .issuer import require_token_binding
 from .ports import SessionState
+
+
+class _LoginResponse(JSONResponse):
+    """Retain only this newly issued cookie for failed-delivery cleanup."""
+
+    _created_session: str
 
 
 class BrowserCallerResolver:
@@ -179,8 +187,6 @@ class BrowserAuthApplication:
     async def _login(self, scope: Any, body: dict[str, str]) -> Any:
         import secrets
 
-        from starlette.responses import JSONResponse
-
         from .approval_engine import identity_value
         from .browser import csrf_token_for, session_cookie_header
 
@@ -209,7 +215,7 @@ class BrowserAuthApplication:
             state = await self.authority.resolve_session(credential)
             if not isinstance(state, SessionState) or state.resolution.kind != "human":
                 raise PermissionError("human browser session required")
-            response = JSONResponse(
+            response = _LoginResponse(
                 {"outcome": "ok", "csrf_token": csrf_token_for(credential)}
             )
             response.headers["Set-Cookie"] = session_cookie_header(

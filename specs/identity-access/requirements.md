@@ -139,13 +139,13 @@
 ### Production browser composition amendment
 
 `ARBORA-IDENTITY-R004.4.1` and `ARBORA-IDENTITY-R004.5.2`: explicit EG mode
-composes native human password login and session revocation, an existing configured
-signing store, verified local JWTs paired with current credential-derived EG
-resolution, and the same hosted invocation services and policy. The supervisor
+composes native human password login and session revocation with an existing signing
+store. Verified local JWTs require current credential-derived EG resolution.
+The composition uses the same hosted invocation services and policy. The supervisor
 passes this exact boundary to the public WebUI factory. Missing deployment inputs,
 non-human, bootstrap, delegated, and incomplete MFA authority refuse. Login may
-create only an opaque native session after existing credentials authenticate; no
-principal, key, role or grant is provisioned. The installed login/logout and native
+create only an opaque native session after existing credentials authenticate. The
+composition creates no principal, key, role or grant. The installed login/logout and native
 policy acceptance in R004.4.2/R004.5.3 remains required; source fixtures are not
 deployment evidence.
 
@@ -154,11 +154,16 @@ This bounded slice does not renew browser sessions: verification uses native
 A future explicit CSRF-protected renewal ceremony must qualify fresh cookie
 bounds separately; GET `/auth/session` never extends authority. Full canonical
 requests run on the existing FastMCP serving loop, with bounded cross-loop ASGI
-I/O and cancellation cleanup; no second pool is created. Lost authentication or
+input, output and cancellation cleanup; it creates no second pool. Lost authentication or
 response delivery triggers best-effort exact-token revocation. Unavailable cleanup
 is an unknown outcome, not a rollback guarantee.
 
 The existing local sign-in form receives only signed-out mode metadata when no
-cookie is present; no principal or grant is fabricated. Invalid or revoked cookies
-return 401 and are cleared only after trusted transport/origin checks. Login returns
+cookie is present; it fabricates no principal or grant. Invalid or revoked cookies
+return 401. Only trusted transport/origin checks permit cookie clearing. Login returns
 `outcome: ok`. IdP listing, password reset, and MFA ceremonies remain unavailable.
+
+The configured runtime broker must already hold direct `identity:authenticate`;
+`identity:admin` or `kg:admin` never substitutes. Composition checks this existing
+prerequisite and each broker call repeats it after connection awaits, while native
+identity authorization remains authoritative. No broker grant is created here.

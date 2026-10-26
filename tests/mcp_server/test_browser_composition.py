@@ -60,3 +60,33 @@ def test_supervisor_receives_exact_boundary(monkeypatch):
     )
     composition.start_composed_services(object(), object(), session_boundary=boundary)
     assert calls == [("fixture-stop", {"session_boundary": boundary})]
+
+
+@pytest.mark.parametrize(
+    "scopes",
+    [[], ["identity:admin"], ["kg:admin"], ["identity:*"], "identity:authenticate"],
+)
+def test_broker_exact_scope_is_never_implied(scopes):
+    from arbora.mcp_server.browser_composition import _require_broker_claims
+
+    with pytest.raises(PermissionError):
+        _require_broker_claims({"scopes": scopes, "delegation": []})
+
+
+def test_broker_scope_revocation_after_connection_await_stops_dispatch():
+    import asyncio
+
+    from arbora.mcp_server.browser_composition import _IdentityClient
+
+    async def scenario():
+        claims = {"scopes": ["identity:authenticate"], "delegation": []}
+
+        async def connect():
+            await asyncio.sleep(0)
+            claims["scopes"] = ["identity:admin"]
+            return object()
+
+        with pytest.raises(PermissionError, match="identity:authenticate"):
+            await _IdentityClient(connect, lambda: claims)._send("Identity")
+
+    asyncio.run(scenario())
