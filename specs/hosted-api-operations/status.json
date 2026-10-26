@@ -1080,7 +1080,8 @@
         "3c29d23cad88",
         "5aed3058d14b",
         "9f41ea82883d",
-        "a104142b3725"
+        "a104142b3725",
+        "cb510b4bf880"
       ],
       "verified_by": [
         "tests/a2a/test_native_run_publication.py:16",
