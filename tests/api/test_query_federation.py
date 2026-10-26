@@ -20,8 +20,6 @@ from arbora.api.ops.query_federation import (
 from tests._support import Actor
 from tests.api.test_invoke_bootstrap import FakeSession, _caller
 
-pytestmark = pytest.mark.spec("ARBORA-FLEET-R043.6")
-
 _DIGEST = "0" * 64
 
 
