@@ -14,6 +14,7 @@ import pytest
 from arbora.agent_host.log_access import HostLogAccess, HostLogBatch
 from arbora.agent_host.log_sink import WorkspaceLogSink
 from tests.agent_host.native_terminal import NativeTerminal
+from tests.agent_host.native_terminal_trace import NativeTransportTrace
 from tests.agent_host.test_log_access import ControlledOwners, serve
 from tests.agent_host.test_log_replay import access_for
 from tests.agent_host.test_log_sink import runtime_for
@@ -25,7 +26,7 @@ pytestmark = pytest.mark.skipif(
 
 
 def track_reads(
-    access: HostLogAccess, monkeypatch: pytest.MonkeyPatch
+    access: HostLogAccess, monkeypatch: pytest.MonkeyPatch, trace: NativeTransportTrace
 ) -> list[tuple[str, str | None]]:
     """Observe the real adapter; never replace its authority or response."""
     calls: list[tuple[str, str | None]] = []
@@ -33,11 +34,13 @@ def track_reads(
 
     async def reference(credential: str) -> str:
         calls.append(("bind", None))
-        return await original_reference(credential)
+        return await trace.observe("bind", lambda: original_reference(credential))
 
     async def read(credential: str, reference: str, **kwargs: Any) -> HostLogBatch:
         calls.append(("read", kwargs["cursor"]))
-        return await original_read(credential, reference, **kwargs)
+        return await trace.observe(
+            "read", lambda: original_read(credential, reference, **kwargs)
+        )
 
     monkeypatch.setattr(access, "reference", reference)
     monkeypatch.setattr(access, "read", read)
@@ -61,7 +64,8 @@ async def test_production_sink_over_http_into_mounted_terminal(
 ) -> None:
     owners = ControlledOwners()
     runtime = runtime_for(owners, tmp_path, True)
-    calls = track_reads(runtime.access, monkeypatch)
+    trace = NativeTransportTrace()
+    calls = track_reads(runtime.access, monkeypatch, trace)
     original_read = runtime.sink.read
 
     async def delayed_read(**kwargs: Any) -> HostLogBatch:
@@ -74,7 +78,7 @@ async def test_production_sink_over_http_into_mounted_terminal(
             assert server.get(
                 "health", headers={"Authorization": "Bearer a"}
             ).is_success
-            terminal = NativeTerminal(str(server.base_url))
+            terminal = NativeTerminal(str(server.base_url), trace.summary)
             try:
                 terminal.open_logs()
                 terminal.wait_for("Authenticated host request received")
@@ -118,10 +122,11 @@ async def test_restarted_source_metadata_and_rotation_gap_in_terminal(
 
     monkeypatch.setattr(sink, "_emit", delayed_emit)
     access = access_for(sink, owners)
-    calls = track_reads(access, monkeypatch)
+    trace = NativeTransportTrace()
+    calls = track_reads(access, monkeypatch, trace)
     try:
         with serve(access) as server:
-            terminal = NativeTerminal(str(server.base_url))
+            terminal = NativeTerminal(str(server.base_url), trace.summary)
             try:
                 terminal.open_logs()
                 text = terminal.wait_for("retained-message")

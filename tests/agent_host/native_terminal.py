@@ -44,7 +44,8 @@ def installed_tuig() -> Path:
 class NativeTerminal:
     """Read rendered terminal cells with finite deadlines and owned cleanup."""
 
-    def __init__(self, endpoint: str) -> None:
+    def __init__(self, endpoint: str, diagnostics: Callable[[], str]) -> None:
+        self.diagnostics = diagnostics
         binary = installed_tuig()
         self.master, slave = pty.openpty()
         termios.tcsetwinsize(slave, (40, 150))
@@ -93,7 +94,10 @@ class NativeTerminal:
                 if b"\x1b[6n" in raw:
                     self.send(b"\x1b[1;1R")
                 self.stream.feed(self.decoder.decode(raw))
-        raise AssertionError(f"Terminal expectation timed out:\n{self.shown()}")
+        raise AssertionError(
+            f"Terminal expectation timed out:\n{self.shown()}"
+            f"\nTransport metadata: {self.diagnostics()}"
+        )
 
     def wait_for(self, text: str) -> str:
         self.wait_until(lambda: text in self.shown())
