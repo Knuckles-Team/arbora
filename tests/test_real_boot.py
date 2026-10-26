@@ -146,6 +146,7 @@ class _Issuer:
         ttl: int = 3600,
         email: bool = True,
         roles: tuple[str, ...] | None = None,
+        tenant: str = TENANT,
     ) -> str:
         from joserfc import jwt
 
@@ -161,7 +162,7 @@ class _Issuer:
                 "aud": AUDIENCE,
                 "sub": subject,
                 **identity,
-                "tenant_id": TENANT,
+                "tenant_id": tenant,
                 "roles": list(effective_roles),
                 "scope": " ".join(effective_roles),
                 "iat": now,
@@ -576,6 +577,9 @@ def _booted_stack(
             "secret": secret,
             "base_url": base_url,
             "token": issuer.token(OPERATOR_SUBJECT, roles=token_roles),
+            "foreign_token": issuer.token(
+                OPERATOR_SUBJECT, roles=token_roles, tenant="foreign-boot"
+            ),
             "service_token": service_token,
             "issuer_jwks_uri": issuer.jwks_uri,
             "logs": gos_logs,
@@ -769,12 +773,15 @@ async def test_mcp_act_calls_the_connector_tool(stack: dict[str, Any]) -> None:
     assert "echo:boot" in effect[0]["metadata"]["outcome"], effect
 
 
-@pytest.mark.spec("ARBORA-OPS-R021.4.5.1.2")
+@pytest.mark.spec(
+    "ARBORA-OPS-R021.4.5.1.2", "ARBORA-OPS-R021.4.7", "ARBORA-OPS-R021.4.8.1"
+)
 def test_native_current_plan_lifecycle_uses_installed_engine(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """The released EG lifecycle carries one native submit/claim into the
-    admitted publication and reads it back through the composed operation port.
+    admitted publication and reads it through the real HTTP/MCP serving root.
+    Replayed events below are controlled durable fixtures, not an AU run.
 
     The extra work scopes belong only to this ephemeral issuer/token. The
     production process role declaration remains the least privilege fixture
@@ -786,6 +793,7 @@ def test_native_current_plan_lifecycle_uses_installed_engine(
     from epistemic_graph import EpistemicGraphClient
 
     from arbora import current_plan_publication, work_items
+    from arbora.a2a.authority import WorkItemA2AAuthority
     from arbora.api.contracts.session import use_session
     from arbora.api.invoke.pipeline import invoke
     from arbora.api.invoke.steps import OpResult
@@ -844,6 +852,11 @@ def test_native_current_plan_lifecycle_uses_installed_engine(
                     payload_ref=run_id,
                     description="installed current-plan lifecycle acceptance",
                     created_by=PROCESS_SUBJECT,
+                    metadata={
+                        "a2a_schema": "arbora-a2a-unary-v1",
+                        "a2a_owner_ref": WorkItemA2AAuthority._owner_ref(session),
+                        "a2a_run_id": run_id,
+                    },
                 )
                 assert created is True
                 claim = work_items.claim_specific(
@@ -896,6 +909,10 @@ def test_native_current_plan_lifecycle_uses_installed_engine(
                 assert value["snapshot"]["items"] == [
                     {"text": "inspect", "status": "in_progress"}
                 ]
+                # Replay is stored on the caller graph, as in the served run.
+                with use_session(session.with_graph(TENANT_GRAPH)):
+                    _seed_native_read_events(engine, run_id)
+                await _check_served_native_reads(stack, run_id, item_id)
                 assert (
                     work_items.commit_result(
                         engine,
@@ -906,6 +923,10 @@ def test_native_current_plan_lifecycle_uses_installed_engine(
                     )
                     == "committed"
                 )
+                completed = await _read_native_surfaces(
+                    stack, {"runs.get": {"run_id": run_id, "task_id": item_id}}
+                )
+                assert completed["runs.get"]["status"] == "completed", completed
             await pool.close()
 
         try:
@@ -914,6 +935,172 @@ def test_native_current_plan_lifecycle_uses_installed_engine(
             raise AssertionError(
                 "native current-plan lifecycle failed\n" + stack["logs"]()
             ) from exc
+
+
+def _seed_native_read_events(engine: Any, run_id: str) -> None:
+    """Controlled durable rows; no producer or executable-plan claim."""
+    for sequence, kind in enumerate(
+        ("run_started", "public_summary", "graph_complete"), 1
+    ):
+        event_id = f"{run_id}:{sequence}"
+        event = {
+            "run_id": run_id,
+            "event_id": event_id,
+            "sequence": sequence,
+            "type": kind,
+            "summary": "Checked the installed read boundary",
+            "reasoning": "PRIVATE READ FIXTURE",
+        }
+        assert engine.create_node(
+            f"runevent:{event_id}",
+            "RunEvent",
+            {
+                "run_id": run_id,
+                "sequence": sequence,
+                "event_id": event_id,
+                "event_type": kind,
+                "payload": json.dumps(event),
+            },
+        )
+
+
+async def _paced_native_read(
+    client: Any,
+    operation: str,
+    params: dict[str, Any],
+    *,
+    raise_on_error: bool = True,
+) -> Any:
+    # The installed MCP middleware allows 10 requests/s with a burst of 20,
+    # including session handshakes. Keep this read journey at <=5 calls/s
+    # without changing the production budget or retrying a refused request.
+    await asyncio.sleep(0.2)
+    return await client.call_tool(
+        "ask", {"op": operation, "params": params}, raise_on_error=raise_on_error
+    )
+
+
+async def _read_native_surfaces(
+    stack: dict[str, Any], requests: dict[str, dict[str, Any]]
+) -> dict[str, Any]:
+    """Every call enters the installed process; no injected read bindings."""
+    values = {}
+    async with await _mcp_session(stack) as client:
+        for operation, params in requests.items():
+            http = await asyncio.to_thread(_post_op, stack, operation, params)
+            mcp = _structured(await _paced_native_read(client, operation, params))
+            assert http["ok"] is True and mcp["ok"] is True, (http, mcp)
+            assert http["result"] == mcp["result"], (http, mcp)
+            values[operation] = http["result"]["value"]
+    return values
+
+
+async def _check_served_native_reads(
+    stack: dict[str, Any], run_id: str, item_id: str
+) -> None:
+    pair = {"run_id": run_id, "task_id": item_id}
+    requests: dict[str, dict[str, Any]] = {
+        "runs.current_plan": {"run_id": run_id},
+        "runs.get": pair,
+        "runs.events": {**pair, "limit": 2},
+        "runs.execution_graph": {**pair, "schema_version": "arbora-execution-graph-v1"},
+    }
+    first = await _read_native_surfaces(stack, requests)
+    assert first["runs.current_plan"]["availability"] == "available", first
+    assert first["runs.current_plan"]["snapshot"]["items"] == [
+        {"text": "inspect", "status": "in_progress"}
+    ]
+    assert first["runs.get"]["status"] == "running", first
+    assert first["runs.get"]["public_summary"] == {"availability": "unavailable"}
+    assert first["runs.get"]["task_plan"] == {"availability": "unavailable"}
+    page = first["runs.events"]
+    assert page["availability"] == "available" and page["has_more"] is True, page
+    assert [event["sequence"] for event in page["events"]] == [1, 2]
+    assert page["events"][1]["payload"] == {
+        "summary": "Checked the installed read boundary"
+    }
+    assert "PRIVATE" not in json.dumps(first)
+    assert first["runs.execution_graph"]["availability"] == "unavailable"
+    # A fresh MCP session must return the identical persisted projection.
+    assert await _read_native_surfaces(stack, requests) == first
+    resumed = await _read_native_surfaces(
+        stack, {"runs.events": {**pair, "after": page["next_after"]}}
+    )
+    tail = resumed["runs.events"]
+    assert [event["sequence"] for event in tail["events"]] == [3]
+    assert tail["terminal"] is True and tail["has_more"] is False
+    await _check_foreign_native_reads(stack, requests)
+
+
+def _assert_native_read_refusal(value: dict[str, Any]) -> None:
+    """A broken backend or unknown operation is not isolation evidence."""
+    if value.get("ok") is True:
+        assert value["result"]["value"]["availability"] == "unavailable", value
+    else:
+        assert value.get("ok") is False, value
+        assert value["error"]["code"] in {
+            "UNAUTHENTICATED",
+            "ACCESS_DENIED",
+            "SUBJECT_ACCESS_DENIED",
+            "PRINCIPAL_NOT_ALLOWED",
+            "SCOPE_REQUIRED",
+            "POLICY_DENIED",
+        }, value
+    _assert_no_native_read_payload(json.dumps(value))
+
+
+def _assert_no_native_read_payload(encoded: str) -> None:
+    assert "Checked the installed read boundary" not in encoded
+    assert '"text": "inspect"' not in encoded
+    assert "PRIVATE" not in encoded
+
+
+async def _check_foreign_native_reads(
+    stack: dict[str, Any], requests: dict[str, dict[str, Any]]
+) -> None:
+    import httpx
+
+    foreign = {**stack, "token": stack["foreign_token"]}
+    async with httpx.AsyncClient() as http:
+        for operation, params in requests.items():
+            response = await http.post(
+                f"{stack['base_url']}/api/v1/ops/{operation}",
+                json=params,
+                headers={"Authorization": f"Bearer {foreign['token']}"},
+                timeout=30,
+            )
+            assert response.status_code in (200, 401, 403), response.text
+            _assert_no_native_read_payload(response.text)
+            value = response.json()
+            # HTTP middleware may reject authentication before an op envelope.
+            if response.status_code == 200 or "ok" in value:
+                _assert_native_read_refusal(value)
+    await _check_foreign_native_mcp(foreign, requests)
+
+
+async def _check_foreign_native_mcp(
+    foreign: dict[str, Any], requests: dict[str, dict[str, Any]]
+) -> None:
+    import httpx2
+
+    async with contextlib.AsyncExitStack() as contexts:
+        try:
+            client = await contexts.enter_async_context(await _mcp_session(foreign))
+        except httpx2.HTTPStatusError as exc:
+            # Locked FastMCP 4.1 passes httpx2.HTTPStatusError through its
+            # _connection_failure boundary. Only handshake 401/403 qualifies;
+            # timeouts, connection failures and server errors must fail this test.
+            assert exc.response.status_code in (401, 403), exc.response
+            await exc.response.aread()
+            _assert_no_native_read_payload(exc.response.text)
+            return
+        for operation, params in requests.items():
+            result = _structured(
+                await _paced_native_read(
+                    client, operation, params, raise_on_error=False
+                )
+            )
+            _assert_native_read_refusal(result)
 
 
 def _post_op_keyed(stack: dict[str, Any], op_id: str, params: dict[str, Any]) -> Any:

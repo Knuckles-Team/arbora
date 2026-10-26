@@ -366,3 +366,35 @@ provider regression compares its unconstrained PlanMatViewGet result with itself
 The R021.4.8.1 transition matrix covers all six step states against five task events.
 It checks each allowed transition and exact refusal through the public projection.
 Unknown and cyclic predecessor tests retain their fail-closed expectations.
+
+### Installed native read boundary (2026-10-25 qualification extension)
+
+Extend the existing Linux installed-wheel real-boot case, not a second host.
+After a native WorkItem claim and checklist publication, call the actual HTTP
+and MCP `runs.current_plan`, `runs.get`, `runs.events` and
+`runs.execution_graph` registrations. Use controlled durable public-event
+fixtures, explicitly not installed AU producer evidence. Compare transport
+projections, reconnect with a fresh MCP client, and resume the exclusive event
+cursor. A separately signed foreign-tenant credential must expose neither the
+checklist nor replay. Only explicit unavailable results, known authority refusal
+codes, or HTTP/MCP authentication 401/403 qualify. Backend errors and transport
+failures never count as tenant-isolation evidence. Source tests exercise these
+guards, not the native service. The fixture admits only one actor, so this case
+does not claim same-tenant different-owner isolation.
+No graph override may hide default serving-root routing.
+
+Without an admitted executable TaskPlan, the flat graph must remain unavailable.
+This case does not qualify positive flat topology or native task-plan production.
+It excludes process restart, nested lineage, UI stale-state clearing and central continuation.
+ARBORA-OPS-R021.4.8.2 remains open. Runtime evidence requires a hosted run of the installed candidate
+with the exact locked published dependencies.
+
+### Native current-plan owner routing (ARBORA-OPS-R021.4.5.1.1)
+
+The served reader verifies the caller before resolving native admission.
+It calls owner-bound GetRunWorkItem on the host's WorkItem graph with unchanged caller claims.
+It validates the immutable run, tenant, subject and graph before reading plan payloads.
+Missing or malformed admission yields unavailable. A foreign owner or tenant cannot expose a snapshot.
+Native authorization refusals retain their codes. Neither request fields nor mutable metadata may select another graph.
+Tests reject forged graph fields, identity drift and added scopes.
+The failing real-boot assertion remains unchanged until the hosted serving path passes.
