@@ -336,3 +336,79 @@ async def test_foreign_read_aborts_on_bad_source_row_without_leaking_payload() -
     )
     assert [name for name, _ in foreign.calls] == ["open", "abort"]
     assert "missing-id" not in (result.error_reason or "")
+
+
+@pytest.mark.spec("ARBORA-FLEET-R043.7")
+@pytest.mark.asyncio
+async def test_foreign_read_timeout_covers_open_and_aborts_after_open() -> None:
+    models = pytest.importorskip("agent_connector_sdk.adapters.foreign_read")
+
+    class SlowOpen(RecordingForeignClient):
+        async def open(self, request):
+            self.calls.append(("open", request))
+            await asyncio.sleep(1)
+            return await super().open(request)
+
+    slow_open = SlowOpen(models)
+    opened_result = await FleetSourceExecutor(
+        ForeignGateway(), object(), foreign_client=slow_open
+    ).read_foreign(_foreign_request_for_timeout())
+    assert opened_result.error_code == "SOURCE_TIMEOUT"
+    # No server handle was returned, so there is no safe remote abort to send.
+    assert [name for name, _ in slow_open.calls] == ["open"]
+
+    class SlowChunk(RecordingForeignClient):
+        def __init__(self, models):
+            super().__init__(models)
+            self.started = asyncio.Event()
+
+        async def chunk(self, request):
+            self.calls.append(("chunk", request))
+            self.started.set()
+            await asyncio.sleep(1)
+            return await super().chunk(request)
+
+    slow_chunk = SlowChunk(models)
+    chunk_result = await FleetSourceExecutor(
+        ForeignGateway(), object(), foreign_client=slow_chunk
+    ).read_foreign(_foreign_request_for_timeout())
+    assert chunk_result.error_code == "SOURCE_TIMEOUT"
+    assert [name for name, _ in slow_chunk.calls] == ["open", "chunk", "abort"]
+
+
+def _foreign_request_for_timeout() -> ForeignReadSourceRequest:
+    request = _foreign_request()
+    return ForeignReadSourceRequest(
+        **{
+            **request.__dict__,
+            "timeout_s": 0.01,
+        }
+    )
+
+
+@pytest.mark.spec("ARBORA-FLEET-R043.7")
+@pytest.mark.asyncio
+async def test_foreign_read_cancellation_sends_remote_abort_before_reraising() -> None:
+    models = pytest.importorskip("agent_connector_sdk.adapters.foreign_read")
+
+    class BlockingChunk(RecordingForeignClient):
+        def __init__(self, models):
+            super().__init__(models)
+            self.started = asyncio.Event()
+
+        async def chunk(self, request):
+            self.calls.append(("chunk", request))
+            self.started.set()
+            await asyncio.Event().wait()
+
+    foreign = BlockingChunk(models)
+    task = asyncio.create_task(
+        FleetSourceExecutor(
+            ForeignGateway(), object(), foreign_client=foreign
+        ).read_foreign(_foreign_request())
+    )
+    await foreign.started.wait()
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert [name for name, _ in foreign.calls] == ["open", "chunk", "abort"]

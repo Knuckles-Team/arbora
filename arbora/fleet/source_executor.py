@@ -24,6 +24,7 @@ MAX_PAGES_CAP = 20
 MAX_ROWS_CAP = 10_000
 MAX_SOURCES = 32
 MAX_CONCURRENCY = 8
+_FOREIGN_ABORT_CLEANUP_TIMEOUT_S = 1.0
 
 
 @dataclass(frozen=True)
@@ -223,6 +224,24 @@ def _foreign_error(exc: BaseException) -> tuple[str, str]:
     )
 
 
+async def _abort_foreign(
+    client: Any,
+    abort_request: Any,
+) -> None:
+    """Best-effort bounded remote abort that preserves the original failure."""
+    task = asyncio.create_task(client.abort(abort_request))
+    try:
+        async with asyncio.timeout(_FOREIGN_ABORT_CLEANUP_TIMEOUT_S):
+            await asyncio.shield(task)
+    except BaseException:
+        # A caller cancellation must not leave the abort task detached, and an
+        # abort failure must never replace the source read's closed error.
+        if not task.done():
+            task.cancel()
+        with contextlib.suppress(BaseException):
+            await task
+
+
 class FleetSourceExecutor:
     """Run source reads for one verified caller through ``fleet.call``'s gateway."""
 
@@ -383,22 +402,22 @@ class FleetSourceExecutor:
         truncated = False
         try:
             limits = ForeignReadLimits.model_validate(request.limits)
-            opened = await self._foreign_client.open(
-                OpenRequest(
-                    schema_version=1,
-                    source_name=request.source_name,
-                    approval=request.approval,
-                    plan_digest=request.plan_digest,
-                    query_digest=request.query_digest,
-                    limits=limits,
-                )
-            )
-            execution = opened.execution
-            sequence = opened.next_sequence
-            cursor: str | None = None
-            page_cap = max(1, min(request.max_pages, MAX_PAGES_CAP))
-            row_cap = max(1, min(request.max_rows, limits.max_rows, MAX_ROWS_CAP))
             async with asyncio.timeout(request.timeout_s):
+                opened = await self._foreign_client.open(
+                    OpenRequest(
+                        schema_version=1,
+                        source_name=request.source_name,
+                        approval=request.approval,
+                        plan_digest=request.plan_digest,
+                        query_digest=request.query_digest,
+                        limits=limits,
+                    )
+                )
+                execution = opened.execution
+                sequence = opened.next_sequence
+                cursor: str | None = None
+                page_cap = max(1, min(request.max_pages, MAX_PAGES_CAP))
+                row_cap = max(1, min(request.max_rows, limits.max_rows, MAX_ROWS_CAP))
                 while pages < page_cap and rows < row_cap:
                     arguments = dict(request.arguments)
                     if cursor:
@@ -451,18 +470,27 @@ class FleetSourceExecutor:
                 query_result=query_result,
             )
         except asyncio.CancelledError:
+            if execution is not None and sequence is not None:
+                await _abort_foreign(
+                    self._foreign_client,
+                    AbortRequest(
+                        execution=execution,
+                        sequence=sequence,
+                        reason="cancelled",
+                    ),
+                )
             raise
         except Exception as exc:
             code, reason = _foreign_error(exc)
             if execution is not None and sequence is not None:
-                with contextlib.suppress(Exception):
-                    await self._foreign_client.abort(
-                        AbortRequest(
-                            execution=execution,
-                            sequence=sequence,
-                            reason="source_failed",
-                        )
-                    )
+                await _abort_foreign(
+                    self._foreign_client,
+                    AbortRequest(
+                        execution=execution,
+                        sequence=sequence,
+                        reason="source_failed",
+                    ),
+                )
             return _foreign_failure(
                 request,
                 code,
@@ -488,9 +516,12 @@ class FleetSourceExecutor:
         tasks = [asyncio.ensure_future(one(r)) for r in requests]
         _, pending = await asyncio.wait(tasks, timeout=self._overall)
         out: list[SourceReadResult] = []
+        for task in pending:
+            task.cancel()
+        if pending:
+            await asyncio.gather(*pending, return_exceptions=True)
         for request, task in zip(requests, tasks, strict=True):
             if task in pending:
-                task.cancel()
                 out.append(
                     _failure(
                         request, "SOURCE_TIMEOUT", "the overall read deadline passed"
