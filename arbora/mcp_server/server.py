@@ -364,12 +364,14 @@ def mcp_server(*, invocation: HostedInvocation | None = None) -> None:
             # Onboard the configured fleet in the background: register, attest
             # and import each child catalog, then renew leases. A fault logs
             # and retries; it never blocks or stops serving.
+            from arbora.fleet.access_contracts import bootstrap_fleet_virtual_catalog
             from arbora.fleet.onboarding import start_fleet_onboarding
 
             start_fleet_onboarding(
                 engine=runtime._get_engine(),
                 session=bootstrap_session,
                 multiplexer=fleet_mux,
+                virtual_catalog=bootstrap_fleet_virtual_catalog(),
             )
 
             from arbora.mcp_server.agent_control import register_graph_rlm

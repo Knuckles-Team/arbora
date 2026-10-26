@@ -418,6 +418,7 @@ async def _onboard_fleet(
     """
 
     from arbora.api.contracts.session import use_session
+    from arbora.fleet.access_contracts import bootstrap_fleet_virtual_catalog
     from arbora.fleet.onboarding import (
         FleetOnboarding,
         configured_fleet_endpoints,
@@ -435,6 +436,7 @@ async def _onboard_fleet(
             FleetOnboarding(
                 engine=engine,
                 session=session,
+                virtual_catalog=bootstrap_fleet_virtual_catalog(),
                 allow_mass_withdrawal=allow_mass_withdrawal,
             ),
             configured_fleet_endpoints(exclude=self_served_connectors()),

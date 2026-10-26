@@ -12,6 +12,7 @@ module, onboarding skips contracts and logs at debug level.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
@@ -36,6 +37,43 @@ CONTRACT_MARKERS = (
 )
 _CATALOG: list[Any] = []
 
+# The contract language currently carries the operation name rather than a
+# second client-side effect enum.  These are the conservative write verbs used
+# by the connector SDK's operation names.  An explicit ``read_only`` or
+# ``read_only_hint`` field, when a newer SDK supplies one, always wins.
+_WRITE_OPERATION_WORDS = frozenset(
+    {
+        "add",
+        "approve",
+        "cancel",
+        "create",
+        "delete",
+        "disable",
+        "drop",
+        "edit",
+        "execute",
+        "grant",
+        "insert",
+        "merge",
+        "move",
+        "patch",
+        "post",
+        "publish",
+        "put",
+        "remove",
+        "replace",
+        "revoke",
+        "run",
+        "send",
+        "set",
+        "submit",
+        "trigger",
+        "update",
+        "write",
+    }
+)
+_CREDENTIAL_REFERENCE_PREFIXES = ("env://", "openbao://")
+
 
 @dataclass(frozen=True, slots=True)
 class SourceApprovalDecision:
@@ -52,6 +90,10 @@ class SourceApprovalDecision:
     outcome: Literal["approved", "held"]
     policy_id: str
     reason: str
+    #: The exact source-contract body digest, when one was available.
+    contract_digest: str | None = None
+    #: The native EG receipt projected by :func:`bind_approved_mapping`.
+    receipt: Any = None
 
 
 _SOURCE_KIND_BY_ACCESS = {
@@ -179,6 +221,140 @@ def approved_source_id(receipt: Any) -> str | None:
         return None
     value = parsed[1].get("source_id")
     return value if isinstance(value, str) and value else None
+
+
+def bootstrap_fleet_virtual_catalog(catalog: Any = None) -> Any:
+    """Install the one process-owned AU ``VirtualCatalog``.
+
+    The catalog is a metadata/selection projection; it is not an authority.
+    New mappings are held until an EG approval receipt is projected through
+    :func:`bind_approved_mapping`.  Keeping the process singleton explicit
+    prevents onboarding from silently creating a second, disconnected catalog
+    and makes a tenant-mixing replacement fail closed.
+    """
+
+    if catalog is None:
+        try:
+            from agent_utilities.knowledge_graph.virtual_graph import VirtualCatalog
+        except ImportError:
+            raise not_served(
+                "knowledge_graph.virtual_graph", "EG-UNIFIED-DATA-PLANE-R037"
+            ) from None
+        catalog = VirtualCatalog()
+    if _CATALOG:
+        if _CATALOG[0] is not catalog:
+            raise RuntimeError("fleet virtual catalog is already bound")
+        return _CATALOG[0]
+    _CATALOG.append(catalog)
+    return catalog
+
+
+def _credential_reference(value: Any) -> bool:
+    return isinstance(value, str) and any(
+        value.startswith(prefix) and len(value) > len(prefix)
+        for prefix in _CREDENTIAL_REFERENCE_PREFIXES
+    )
+
+
+def _explicit_read_only(contract: Any) -> bool | None:
+    for name in ("read_only", "read_only_hint"):
+        value = getattr(contract, name, None)
+        if value is not None:
+            return value is True
+    annotations = getattr(contract, "annotations", None)
+    if isinstance(annotations, Mapping):
+        for name in ("readOnlyHint", "read_only_hint", "read_only"):
+            if name in annotations:
+                return annotations[name] is True
+    effect = getattr(contract, "effect", None)
+    if effect is not None:
+        value = getattr(effect, "value", effect)
+        if isinstance(value, str):
+            return value.lower() in {"read", "readonly", "read_only"}
+    return None
+
+
+def _looks_write_operation(operation: Any) -> bool:
+    if not isinstance(operation, str) or not operation.strip():
+        return True
+    words = {word for word in operation.replace("-", "_").split("_") if word}
+    return bool(words & _WRITE_OPERATION_WORDS)
+
+
+def source_approval_policy(
+    contract: Any,
+    *,
+    connector: str,
+    admitted: bool,
+    policy_id: str = "arbora.fleet.source-approval.read-only-admitted.v1",
+) -> SourceApprovalDecision:
+    """Evaluate the local admission policy without manufacturing authority.
+
+    A positive result is only permission to ask EG's owner-scoped
+    ``ConnectorPack.approve_source`` operation for a receipt.  It never sets a
+    catalog mapping's ``approved`` bit.  The native receipt remains the sole
+    source of read authority.
+    """
+
+    contract_iri = _text(getattr(contract, "contract_iri", ""))
+
+    def held(reason: str) -> SourceApprovalDecision:
+        return SourceApprovalDecision(
+            connector=connector,
+            contract_iri=contract_iri,
+            mapping_iri=contract_iri,
+            outcome="held",
+            policy_id=policy_id,
+            reason=reason,
+        )
+
+    if not admitted:
+        return held("connector is not admitted by the fleet registry")
+    if not contract_iri:
+        return held("contract has no stable identity")
+    access_kind = getattr(contract, "access_kind", None)
+    if access_kind not in _SOURCE_KIND_BY_ACCESS:
+        return held("access kind is not an approved read source kind")
+    explicit = _explicit_read_only(contract)
+    if explicit is False or (
+        explicit is None
+        and _looks_write_operation(getattr(contract, "operation", None))
+    ):
+        return held("source operation is not declared read-only")
+    if not _credential_reference(getattr(contract, "auth_ref", None)):
+        return held(
+            "source requires a credential reference, never a literal credential"
+        )
+    return SourceApprovalDecision(
+        connector=connector,
+        contract_iri=contract_iri,
+        mapping_iri=contract_iri,
+        outcome="approved",
+        policy_id=policy_id,
+        reason="admitted read-only contract may request native EG approval",
+    )
+
+
+def pack_contract_resources(pack: Any) -> tuple[tuple[Any, str, str], ...]:
+    """Return ``(contract, ontology URI, body SHA-256)`` tuples from a pack.
+
+    The digest is computed over the captured ontology body.  It is a selector
+    for EG's current-head CAS, not a local approval or a substitute for the
+    receipt returned by EG.
+    """
+
+    parse = _parser()
+    if parse is None:
+        return ()
+    found: list[tuple[Any, str, str]] = []
+    for uri, text in pack_ontology_resources(pack):
+        if not declares_contracts(text):
+            continue
+        for contract in _parse_one(parse, text, uri):
+            found.append(
+                (contract, uri, hashlib.sha256(text.encode("utf-8")).hexdigest())
+            )
+    return tuple(found)
 
 
 def fleet_virtual_catalog() -> Any:
@@ -471,12 +647,30 @@ def bind_approved_mapping(
     )
 
 
-def register_access_contracts(pack: Any, *, connector: str, catalog: Any = None) -> int:
-    """Register a pack's access contracts unapproved; return mappings added."""
+def register_access_contracts(
+    pack: Any,
+    *,
+    connector: str,
+    catalog: Any = None,
+    admitted: bool = False,
+    decisions: list[SourceApprovalDecision] | None = None,
+) -> int:
+    """Register a pack's contracts as candidates; return mappings added.
+
+    ``admitted`` is only the local fleet-registry input to the policy.  Even an
+    ``approved`` policy decision remains held in the virtual catalog until a
+    native EG approval receipt is supplied to :func:`bind_approved_mapping`.
+    ``decisions`` is an optional evidence sink for the onboarding report.
+    """
 
     contracts = parse_pack_contracts(pack)
     if not contracts:
         return 0
+    if decisions is not None:
+        decisions.extend(
+            source_approval_policy(contract, connector=connector, admitted=admitted)
+            for contract in contracts
+        )
     target = catalog if catalog is not None else fleet_virtual_catalog()
     added = 0
     for source_id, items in _by_source(contracts).items():
@@ -495,7 +689,10 @@ __all__ = [
     "fleet_virtual_catalog",
     "pack_ontologies",
     "pack_ontology_resources",
+    "pack_contract_resources",
     "parse_pack_contracts",
     "register_access_contracts",
+    "bootstrap_fleet_virtual_catalog",
+    "source_approval_policy",
     "source_approval_decision",
 ]
