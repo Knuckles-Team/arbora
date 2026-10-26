@@ -7,6 +7,7 @@ not authorize native storage or qualify the separate approval-grant flow.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import time
 from contextlib import asynccontextmanager
@@ -116,7 +117,10 @@ def fixture(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> Any:
                     {
                         "kind": task_plan_schema.PURPOSE_ID,
                         "target": task_plan_schema.COMPONENT_ID,
-                        "tier": "auto",
+                        # The deployment may opt in this one internal,
+                        # digest-bound publication action.  The embedded
+                        # default remains approval_required below.
+                        "tier": "auto_notify",
                     }
                 ],
             }
@@ -170,13 +174,66 @@ def test_schema_publication_uses_new_exact_durable_policy_receipt(fixture: Any) 
         request = sent["op"]["request"]
         context = request["context"]
         intent = served_invocation._schema_action(bound, "tenant-a", fixture.pin)
-        assert label == "ActionDecision" and record["decision"] == "allow"
+        assert (
+            label == "ActionDecision"
+            and record["decision"] == action_policy.DECISION_ALLOW_NOTIFY
+        )
         assert bound is fixture.sessions[0]
         assert record["request_digest"] == intent.digest()
         assert context["policy_digest"] == f"sha256:{intent.digest()}"
         assert request["component"]["policy_digest"] == context["policy_digest"]
         assert context["policy_decision_id"] == identity
         assert context["policy_revision"] == "policy-revision-test"
+
+
+@pytest.mark.spec("ARBORA-RELEASE-R003.4.4")
+def test_schema_publication_uses_native_opaque_principal_shape(
+    fixture: Any,
+) -> None:
+    """The pre-admission context uses EG's canonical principal encoding."""
+    _publish(fixture)
+    context = fixture.pool.sent[0]["op"]["request"]["context"]
+    expected = "principal:sha256:" + hashlib.sha256(b"service:schema-test").hexdigest()
+    assert context["principal"] == expected
+    assert context["caller_principal"] == expected
+    assert context["actor_scope"] == expected
+    assert context["principal"].startswith("principal:sha256:")
+    assert len(context["principal"].removeprefix("principal:sha256:")) == 64
+
+
+def test_schema_policy_override_is_exact_kind_and_target(fixture: Any) -> None:
+    """The deployment opt-in cannot widen to neighboring publication targets."""
+    policy = action_policy.get_action_policy(fixture.audit)
+    intent = served_invocation._schema_action(
+        fixture.sessions[0], "tenant-a", fixture.pin
+    )
+
+    assert policy.classify(intent) == action_policy.TIER_AUTO_NOTIFY
+    assert policy.classify(replace(intent, target="arbora.agents.plan_run.other")) == (
+        action_policy.TIER_APPROVAL
+    )
+
+
+def test_schema_publication_accepts_eg_admin_aggregate_scope(fixture: Any) -> None:
+    """The live service principal's ``kg:admin`` satisfies EG's admin action."""
+    bound = fixture.sessions[0]
+    fixture.sessions[0] = replace(
+        bound,
+        scopes=frozenset({"agent:component-read", "kg:admin"}),
+    )
+    assert _publish(fixture) == "sha256:" + "d" * 64
+
+
+def test_schema_publication_rejects_coarse_writer_without_admin(fixture: Any) -> None:
+    """A normal graph writer cannot publish EG's admin-only FeatureSchema."""
+    bound = fixture.sessions[0]
+    fixture.sessions[0] = replace(
+        bound,
+        scopes=frozenset({"agent:component-read", "kg:write"}),
+    )
+    with pytest.raises(PermissionError):
+        _publish(fixture)
+    assert fixture.pool.sent == fixture.audit.records == []
 
 
 def test_schema_publication_separates_request_trace_from_process_authority(

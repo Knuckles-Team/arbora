@@ -333,6 +333,7 @@ def test_startup_publisher_preserves_released_export_and_returned_definition(
     asyncio.run(scenario())
     ((params, _key),) = engine.sent
     component = params["op"]["request"]["component"]
+    assert params["op"]["request"]["context"]["expected_revision"] == 0
     assert component["content_digest"] == pin["content_digest"]
     assert ds.canonical_body_bytes(
         ds.decode_body(component["content_digest"], component["attributes"])
@@ -382,6 +383,24 @@ def test_engine_publish_sends_a_valid_request_and_reuses_a_current_entry(
         pins_module.engine_publish(reuse_client, _publication_context)("t", pin)
     )
     assert digest == "sha256:" + "c" * 64 and reuse.sent == []
+
+    stale = _Engine(
+        current=SimpleNamespace(
+            content_digest="sha256:" + "e" * 64,
+            definition_digest="sha256:" + "f" * 64,
+            entry_revision=7,
+        )
+    )
+
+    async def stale_client(_tenant: str) -> Any:
+        return stale
+
+    digest = asyncio.run(
+        pins_module.engine_publish(stale_client, _publication_context)("t", pin)
+    )
+    assert digest == DEFINITION
+    ((stale_params, _stale_key),) = stale.sent
+    assert stale_params["op"]["request"]["context"]["expected_revision"] == 7
 
 
 @pytest.mark.spec("ARBORA-RELEASE-R003.4.4")

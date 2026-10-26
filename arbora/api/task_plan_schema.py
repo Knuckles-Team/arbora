@@ -274,9 +274,20 @@ def engine_publish(
         )
         if current is not None and current.content_digest == pin["content_digest"]:
             return str(current.definition_digest)
+        # Agent Library publishes are compare-and-swapped by the native
+        # ``expected_revision`` in the mutation context.  The current read is
+        # authoritative for this tenant: a missing head names revision zero,
+        # while a mismatching head must be published against the exact
+        # revision we observed.  The native write then refuses a concurrent
+        # change instead of allowing this bootstrap to overwrite it.
+        expected_revision = 0 if current is None else int(current.entry_revision)
+        if expected_revision < 0:
+            raise ValueError("AgentComponent current entry revision cannot be negative")
+        context = dict(await context_for(tenant, pin))
+        context["expected_revision"] = expected_revision
         result = await send_agent_component(
             client,
-            publication(pin, tenant, await context_for(tenant, pin)),
+            publication(pin, tenant, context),
             graph,
             idempotency_key=idempotency_key(pin, tenant),
         )
