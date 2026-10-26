@@ -1967,9 +1967,9 @@
         "80f6b7b53f91"
       ],
       "verified_by": [
-        "tests/agent_host/test_log_access.py:442",
-        "tests/agent_host/test_log_access.py:457",
-        "tests/agent_host/test_log_access.py:484",
+        "tests/agent_host/test_log_access.py:493",
+        "tests/agent_host/test_log_access.py:508",
+        "tests/agent_host/test_log_access.py:535",
         "tests/agent_host/test_log_metadata.py:2",
         "tests/agent_host/test_log_replay.py:2"
       ],
@@ -1987,9 +1987,9 @@
         "ee476c64b37f"
       ],
       "verified_by": [
-        "tests/agent_host/test_log_access.py:442",
-        "tests/agent_host/test_log_access.py:457",
-        "tests/agent_host/test_log_access.py:484",
+        "tests/agent_host/test_log_access.py:493",
+        "tests/agent_host/test_log_access.py:508",
+        "tests/agent_host/test_log_access.py:535",
         "tests/agent_host/test_log_sink.py:225"
       ]
     },

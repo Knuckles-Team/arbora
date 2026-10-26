@@ -1,7 +1,9 @@
 """Optional host-log HTTP adapter; absent qualified composition denies reads."""
 
 import asyncio
+import ipaddress
 import math
+from urllib.parse import urlsplit
 
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
@@ -10,8 +12,11 @@ from arbora.agent_host.log_access import (
     HostLogAccess,
     HostLogRecord,
     HostLogRetentionGap,
+    _normalize_endpoint,
 )
+from arbora.deployment.host_config import load_hosting_deployment_settings
 from arbora.identity.engine import IdentityUnavailable
+from arbora.security.http_boundary import normalize_host_authorities
 
 
 class LogReadRequest(BaseModel):
@@ -34,6 +39,78 @@ def host_log_credential(request: Request) -> str:
     return token
 
 
+_FORWARDED_HEADERS = (
+    "forwarded",
+    "x-forwarded-for",
+    "x-forwarded-host",
+    "x-forwarded-port",
+    "x-forwarded-proto",
+)
+
+
+def _loopback_host(value: str) -> bool:
+    rendered = str(value or "").strip().strip("[]").split("%", 1)[0]
+    if rendered.casefold() in {"localhost", "localhost."}:
+        return True
+    try:
+        return ipaddress.ip_address(rendered).is_loopback
+    except ValueError:
+        return False
+
+
+def _configured_public_endpoint(request: Request) -> str | None:
+    """Read only server-owned endpoint context, never request headers."""
+    value = getattr(request.app.state, "public_base_url", None)
+    if value is None:
+        try:
+            value = load_hosting_deployment_settings().public_base_url
+        except (TypeError, ValueError):
+            return ""
+    if type(value) is not str or not value.strip():
+        return None
+    return value
+
+
+def _trusted_request_origin(request: Request) -> str:
+    """Return the exact origin a TUI receipt may bind to.
+
+    A configured public endpoint is authoritative. Without one, only a
+    loopback request may derive an origin from its single Host header. The
+    host application's Uvicorn boundary deliberately does not trust forwarded
+    headers, so accepting them here would create a second, weaker proxy path.
+    """
+    if any(request.headers.getlist(name) for name in _FORWARDED_HEADERS):
+        raise HTTPException(403, "workspace_denied")
+    hosts = request.headers.getlist("host")
+    if len(hosts) != 1:
+        raise HTTPException(403, "workspace_denied")
+
+    configured = _configured_public_endpoint(request)
+    if configured is not None:
+        try:
+            endpoint = _normalize_endpoint(configured)
+            parsed = urlsplit(endpoint)
+            expected_authority = next(iter(normalize_host_authorities([parsed.netloc])))
+            observed_authority = next(iter(normalize_host_authorities(hosts)))
+            observed = _normalize_endpoint(f"{parsed.scheme}://{observed_authority}/")
+        except (StopIteration, TypeError, ValueError):
+            raise HTTPException(503, "log_unavailable") from None
+        if observed != endpoint or observed_authority != expected_authority:
+            raise HTTPException(403, "workspace_denied")
+        return endpoint
+
+    peer = request.client
+    if peer is None or not _loopback_host(peer.host):
+        raise HTTPException(403, "workspace_denied")
+    try:
+        endpoint = _normalize_endpoint(str(request.base_url))
+        if not _loopback_host(urlsplit(endpoint).hostname or ""):
+            raise ValueError("non-loopback host")
+    except (TypeError, ValueError):
+        raise HTTPException(403, "workspace_denied") from None
+    return endpoint
+
+
 def register_host_log_routes(app: FastAPI, access: HostLogAccess | None) -> None:
     """Attach the same optional read authority to the existing connector host."""
 
@@ -45,6 +122,7 @@ def register_host_log_routes(app: FastAPI, access: HostLogAccess | None) -> None
     @app.post("/host/logs/reference")
     async def reference(request: Request) -> dict:
         service = available()
+        endpoint = _trusted_request_origin(request)
         credential = host_log_credential(request)
         try:
             async with asyncio.timeout(1):
@@ -55,7 +133,10 @@ def register_host_log_routes(app: FastAPI, access: HostLogAccess | None) -> None
             raise HTTPException(503, "log_unavailable") from None
         except Exception:  # noqa: BLE001 - owner failures must not expose log material
             raise HTTPException(503, "log_unavailable") from None
-        return service.reference_binding(value)
+        try:
+            return service.reference_binding(value, endpoint=endpoint)
+        except (KeyError, ValueError):
+            raise HTTPException(503, "log_unavailable") from None
 
     @app.post("/host/logs/read")
     async def read(request: Request, body: LogReadRequest) -> dict:
