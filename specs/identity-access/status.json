@@ -1482,8 +1482,8 @@
         "12ff74a18e52",
         "37985a140709",
         "45c5bf3ab96a",
-        "8d43b529468a",
-        "d4ae6fb9949c"
+        "857cf7b1e7bd",
+        "8d43b529468a"
       ],
       "verified_by": [
         "tests/identity/test_browser_broker.py:14",
