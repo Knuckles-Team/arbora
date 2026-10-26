@@ -228,7 +228,12 @@ def run_web_ui(
         agent,
         workspace_helpers=helpers,
         listener_host=bind_host,
-        application_composer=compose_web_application,
+        # The qualified EG boundary already owns /auth and /api/v1. Adding
+        # legacy REST here installs a second app-wide bearer gate that blocks
+        # the public sign-in shell. Other identity modes keep their composer.
+        application_composer=None
+        if identity_kwargs.get("auth_mode") == "eg"
+        else compose_web_application,
         **identity_kwargs,
         **contact_kwargs,
         **browser_control_kwargs,

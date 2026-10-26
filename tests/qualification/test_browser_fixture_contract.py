@@ -669,7 +669,7 @@ d.stage('private-stage-token');
 d.status('private-key', 401);
 d.status('login', 'private-body-token');
 d.status('operation', 600);
-d.status('session', {secret: 'private-body-token'});
+d.status('session', {secret: 'private-body-token'}); // # sanitizer:ignore - inert diagnostic test object, never authenticates
 d.flag('authenticated', 'private-cookie-token');
 d.flag('private-key', true);
 const first = d.snapshot({name:'private-error-token', message:'private-message-token'});
