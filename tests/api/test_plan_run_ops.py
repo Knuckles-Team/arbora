@@ -221,6 +221,73 @@ async def _serve(plan: dict[str, Any], **extra: Any) -> tuple[dict, FakeEngine, 
     return result["value"], engine, model
 
 
+class StrictFakeEngine(FakeEngine):
+    """Apply the released engine DTO at the real invocation boundary."""
+
+    def build_request(self, tenant, question_id, proposal, feature_schema):
+        from epistemic_graph.decision_client import task_plan_request
+
+        return task_plan_request(tenant, question_id, proposal, feature_schema)
+
+
+# spec: ARBORA-RELEASE-R003.4.1
+@pytest.mark.asyncio
+async def test_invoke_thaws_frozen_plan_before_strict_engine_dto():
+    """The public invoke path preserves frozen arguments and strict JSON DTOs."""
+    from copy import deepcopy
+
+    from arbora.api.invoke import OpResult, invoke
+    from arbora.api.registry import Surface
+    from tests.api._support import make_verified_caller
+    from tests.api.test_invoke_contract import setup_services
+
+    (op,) = plans.operations()
+    services, runtime, _, _, _ = setup_services(op)
+    engine, model = StrictFakeEngine(), RecordingModel()
+    runtime.bindings = {
+        "task_plan_engine": engine,
+        "task_plan_model": model.model,
+        "task_plan_feature_schema": SCHEMA_PIN,
+    }
+
+    async def dispatch() -> Any:
+        dispatched_op, dispatched_params, context = runtime.calls[-1]
+        return await plans.handle_plan_run(context, dispatched_params, dispatched_op)
+
+    runtime.on_dispatch = dispatch
+    supplied = make_verified_caller("kg:write")(
+        principal=PRINCIPAL,
+        tenant=TENANT,
+        request_id="request:strict-plan",
+    )
+    original = deepcopy(TRIAGE_DAG)
+
+    result = await invoke(
+        op.id,
+        {"plan": TRIAGE_DAG},
+        supplied,
+        Surface.MCP,
+        services=services,
+        idempotency_key="strict-plan:good",
+    )
+
+    assert isinstance(result, OpResult)
+    assert result.value["value"]["plan_digest"]
+    assert TRIAGE_DAG == original
+    assert engine.requests[0]["params"][0]["value"]["value"] == TRIAGE_DAG
+
+    bad = await invoke(
+        op.id,
+        {"plan": {**TRIAGE_DAG, "authorize": True}},
+        supplied,
+        Surface.MCP,
+        services=services,
+        idempotency_key="strict-plan:bad",
+    )
+    assert bad.code == "INVALID_ARGUMENT"
+    assert len(engine.requests) == 1
+
+
 TRIAGE_DAG = {
     "tasks": [
         _task("report", "triage", "crosscheck"),
