@@ -108,3 +108,32 @@ async def test_mcp_transport_failure_is_not_swallowed(monkeypatch):
     monkeypatch.setattr(boot, "_mcp_session", session)
     with pytest.raises(httpx2.ConnectError):
         await boot._check_foreign_native_mcp({}, {})
+
+
+@pytest.mark.parametrize("raise_on_error", [True, False])
+async def test_native_read_paces_before_send_without_retry(monkeypatch, raise_on_error):
+    from tests import test_real_boot as boot
+
+    calls = []
+
+    async def delay(seconds):
+        calls.append(("delay", seconds))
+
+    class Client:
+        async def call_tool(self, name, arguments, **options):
+            calls.append((name, arguments, options))
+            raise RuntimeError("original failure")
+
+    monkeypatch.setattr(boot.asyncio, "sleep", delay)
+    with pytest.raises(RuntimeError, match="original failure"):
+        await boot._paced_native_read(
+            Client(), "runs.get", {"run_id": "run"}, raise_on_error=raise_on_error
+        )
+    assert calls == [
+        ("delay", 0.2),
+        (
+            "ask",
+            {"op": "runs.get", "params": {"run_id": "run"}},
+            {"raise_on_error": raise_on_error},
+        ),
+    ]

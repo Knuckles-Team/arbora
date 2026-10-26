@@ -964,6 +964,22 @@ def _seed_native_read_events(engine: Any, run_id: str) -> None:
         )
 
 
+async def _paced_native_read(
+    client: Any,
+    operation: str,
+    params: dict[str, Any],
+    *,
+    raise_on_error: bool = True,
+) -> Any:
+    # The installed MCP middleware allows 10 requests/s with a burst of 20,
+    # including session handshakes. Keep this read journey at <=5 calls/s
+    # without changing the production budget or retrying a refused request.
+    await asyncio.sleep(0.2)
+    return await client.call_tool(
+        "ask", {"op": operation, "params": params}, raise_on_error=raise_on_error
+    )
+
+
 async def _read_native_surfaces(
     stack: dict[str, Any], requests: dict[str, dict[str, Any]]
 ) -> dict[str, Any]:
@@ -972,9 +988,7 @@ async def _read_native_surfaces(
     async with await _mcp_session(stack) as client:
         for operation, params in requests.items():
             http = await asyncio.to_thread(_post_op, stack, operation, params)
-            mcp = _structured(
-                await client.call_tool("ask", {"op": operation, "params": params})
-            )
+            mcp = _structured(await _paced_native_read(client, operation, params))
             assert http["ok"] is True and mcp["ok"] is True, (http, mcp)
             assert http["result"] == mcp["result"], (http, mcp)
             values[operation] = http["result"]["value"]
@@ -1082,8 +1096,8 @@ async def _check_foreign_native_mcp(
             return
         for operation, params in requests.items():
             result = _structured(
-                await client.call_tool(
-                    "ask", {"op": operation, "params": params}, raise_on_error=False
+                await _paced_native_read(
+                    client, operation, params, raise_on_error=False
                 )
             )
             _assert_native_read_refusal(result)
