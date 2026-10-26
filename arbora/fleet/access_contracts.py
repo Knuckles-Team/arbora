@@ -120,9 +120,10 @@ def source_approval_decision(
     if parsed is None:
         return decision
     body, registration = parsed
-    approval = registration.get("approval")
-    if hasattr(approval, "value"):
-        approval = approval.value
+    approval_raw = registration.get("approval")
+    approval = approval_raw
+    if approval_raw is not None:
+        approval = getattr(approval_raw, "value", approval_raw)
     expected_kind = _SOURCE_KIND_BY_ACCESS.get(
         str(getattr(contract, "access_kind", ""))
     )
