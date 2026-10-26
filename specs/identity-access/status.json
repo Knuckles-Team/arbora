@@ -1371,11 +1371,11 @@
       "title": "Same-owner HTTP dispatch fence",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "00cab715f4c1",
         "0e0a8c76ed09",
         "12ff74a18e52",
         "1a76cab78c60",
-        "2cc5d2e6cacb",
-        "3376d3f037cc"
+        "2cc5d2e6cacb"
       ],
       "verified_by": [
         "tests/api/test_browser_invocation_fence.py:118",
@@ -1479,11 +1479,11 @@
       "title": "Canonical WebUI factory safety source contract",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "00cab715f4c1",
         "12ff74a18e52",
         "37985a140709",
         "45c5bf3ab96a",
-        "857cf7b1e7bd",
-        "8d43b529468a"
+        "857cf7b1e7bd"
       ],
       "verified_by": [
         "tests/identity/test_browser_broker.py:14",
