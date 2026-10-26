@@ -321,9 +321,7 @@ def main() -> None:
 
                 context.update(value)
                 context["fixture_step"] = "before_serve_hook_entered"
-                token = configure_signer(
-                    vault_client, value["issuer"]._key.as_dict(is_private=True)
-                )
+                token = configure_signer(vault_client, value["issuer"]._key)
                 value["env"]["VAULT_TOKEN"] = token
                 config_path = value["config_dir"] / "config.json"
                 config = json.loads(config_path.read_text())

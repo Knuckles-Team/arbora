@@ -212,10 +212,10 @@ def vault(root: Path, binary: Path, port: int) -> Iterator[Any]:
             process.wait(timeout=5)
 
 
-def configure_signer(client: Any, private_jwk: dict[str, Any]) -> str:
+def configure_signer(client: Any, signing_key: Any) -> str:
     """Fixture admin writes once; runtime receives read-only exact-path token."""
     path = "arbora/identity/issuer-signing-keys"
-    jwk = {**private_jwk, "alg": "RS256", "use": "sig"}
+    jwk = {**signing_key.as_dict(private=True), "alg": "RS256", "use": "sig"}
     client.secrets.kv.v2.create_or_update_secret(
         path=path, secret={"value": json.dumps({"active": jwk})}, mount_point="secret"
     )

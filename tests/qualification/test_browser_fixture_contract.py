@@ -269,3 +269,40 @@ def test_failure_reason_only_accepts_exact_constant(controller, message):
         if message == "configured issuer signing key unavailable"
         else "unknown"
     )
+
+
+def test_fixture_signer_exports_actual_private_key_for_production_issuer(controller):
+    from joserfc import jwt
+    from joserfc.jwk import RSAKey
+
+    from arbora.identity.issuer import IssuerSettings, LocalIssuer
+
+    stored = {}
+    key = RSAKey.generate_key(2048, parameters={"kid": "ephemeral-test"})
+    client = SimpleNamespace(
+        secrets=SimpleNamespace(
+            kv=SimpleNamespace(
+                v2=SimpleNamespace(
+                    create_or_update_secret=lambda **kw: stored.update(kw["secret"])
+                )
+            )
+        ),
+        sys=SimpleNamespace(create_or_update_policy=lambda *args: None),
+        auth=SimpleNamespace(
+            token=SimpleNamespace(
+                create=lambda **kw: {"auth": {"client_token": "synthetic"}}
+            )
+        ),
+    )
+    controller.configure_signer(client, key)
+    active = json.loads(stored["value"])["active"]
+    assert active.get("d") and "is_private" not in active
+    issuer = LocalIssuer(
+        SimpleNamespace(get=lambda path: stored["value"]),
+        IssuerSettings("https://fixture.invalid", "arbora", "fixture"),
+        SimpleNamespace(resolve_credential=lambda value: None),
+    )
+    token = issuer._sign({"sub": "synthetic-human"})
+    assert (
+        jwt.decode(token, key, algorithms=["RS256"]).claims["sub"] == "synthetic-human"
+    )
