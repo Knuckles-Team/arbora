@@ -1413,7 +1413,7 @@
         "524b0ceaaf9c"
       ],
       "verified_by": [
-        "tests/fleet/test_fleet_access_contracts.py:435"
+        "tests/fleet/test_fleet_access_contracts.py:436"
       ]
     },
     {
@@ -2004,9 +2004,13 @@
     {
       "id": "ARBORA-FLEET-R042.3",
       "title": "Wiring",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "ae05d8ba1acb"
+      ],
+      "verified_by": [
+        "tests/fleet/test_fleet_access_contracts.py:330"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R042.4",
