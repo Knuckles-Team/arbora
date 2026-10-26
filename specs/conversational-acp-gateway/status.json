@@ -117,8 +117,8 @@
         "1d09ef1c3109",
         "1fa25a22c11b",
         "22e9d05f8292",
-        "63fdf0fb0545",
-        "6718f48d0520"
+        "552743f1bd41",
+        "63fdf0fb0545"
       ],
       "verified_by": [
         "tests/acp/test_adapter.py:12",
@@ -158,7 +158,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "1d09ef1c3109",
-        "9804cd670fac"
+        "552743f1bd41"
       ],
       "verified_by": [
         "tests/acp/test_http_transport.py:28"
