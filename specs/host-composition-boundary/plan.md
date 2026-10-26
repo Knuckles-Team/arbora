@@ -572,3 +572,23 @@ exists. The action-policy owner must not treat that ID as a new decision receipt
 Both a collision and a write exception leave the action without effect authority.
 This bounded refusal repair does not qualify native audit persistence or the
 separate approval-grant flow.
+
+## 2026-10-26: Native terminal acceptance migration
+
+R009.8.2.2.1 replaces the retired Python/Textual test consumer with released
+Tuig 2.3.6, released from `4f53111e53f6179312995883f4f62c8bb584d502`.
+The native executable consumes the existing authenticated HTTP contract and
+renders it in a real PTY. This supersedes the Python terminal adapter examples
+above; it does not restore another TUI implementation.
+
+Keep exact endpoint and source-generation receipt bindings. The test extra
+selects the published Linux x86_64/aarch64 wheels and a terminal-cell decoder.
+No source checkout or private consumer implementation replaces that wheel.
+The four cases retain real sink, restart, rotation, delayed reads and writes, and clearing
+checks with controlled identity/grant owners. They do not establish deployed
+grant issuance, complete host startup or Overstory acceptance (R009.8.2.2.2).
+
+The log lifecycle fixture waits for the native startup task request to finish
+before opening logs. A visible first-frame footer is not a completion signal.
+Opening logs during a pending sink write remains a separate fail-closed storage-contention
+case, not a passing lifecycle journey. Keep the busy-storage refusal tests unchanged.

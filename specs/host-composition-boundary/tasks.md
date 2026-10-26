@@ -146,3 +146,5 @@ Status vocabulary is defined in [spec.md](spec.md). Check a task only after its 
 - [ ] `ARBORA-HOST-R009.7`: Inject and verify bounded host log authority.
 
 - [ ] `ARBORA-HOST-R009.8`: Record authenticated requests through the production sink.
+- [ ] `ARBORA-HOST-R009.8.2.2.1`: Qualify all four real native terminal cases against the pinned released wheel.
+- [ ] `ARBORA-HOST-R009.8.2.2.2`: Qualify retained metadata and gap clearing in installed Overstory.
