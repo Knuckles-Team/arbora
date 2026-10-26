@@ -2097,8 +2097,8 @@
         "148bbb851601",
         "18ce44dc31bd",
         "2d2fe39a58ce",
-        "d1d90feed9f3",
-        "e755549375e6"
+        "c2d6f6b1281b",
+        "d1d90feed9f3"
       ],
       "verified_by": [
         "tests/fleet/test_source_executor.py:195",
