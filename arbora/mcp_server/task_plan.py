@@ -8,7 +8,7 @@ consumption. Public scaffold projection never carries executable prompts.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from importlib import import_module
 from typing import Any, Literal
 
@@ -22,10 +22,12 @@ from arbora.api.invoke.steps import OpError, RequestCaller, claim_values, freeze
 class TaskPlanConfig:
     """Trusted composition settings, never fields of a model proposal."""
 
-    feature_schema: Mapping[str, Any]
-    policy: Mapping[str, Any]
-    max_concurrency: int
-    max_steps: int
+    # The schema is published per tenant at request time.  Keep the field for
+    # positional/config compatibility, but an operator may omit it entirely.
+    feature_schema: Mapping[str, Any] = field(default_factory=dict)
+    policy: Mapping[str, Any] = field(default_factory=dict)
+    max_concurrency: int = 0
+    max_steps: int = 0
     request_limit: int = 50
     total_tokens_limit: int = 100_000
     timeout_seconds: float = 600.0
@@ -104,6 +106,34 @@ async def _admit(services: InvokeServices, caller: RequestCaller) -> Any:
     return selected
 
 
+async def _published_feature_schema(
+    services: InvokeServices, caller: RequestCaller
+) -> Mapping[str, Any]:
+    """Resolve the caller's tenant-bound schema through the served publisher.
+
+    ``TaskPlanConfig.feature_schema`` is operator configuration, not a durable
+    AgentComponent revision.  The engine mints the definition digest when the
+    schema body is published for a tenant, so nested planning must use the same
+    verified publisher binding as ``agents.plan_run``.
+    """
+    bindings = getattr(services.runtime, "bindings", {})
+    pins = bindings.get("task_plan_schema_pins")
+    publish = bindings.get("task_plan_schema_publish")
+    if pins is None or publish is None:
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": "no verified task-plan schema pin"}
+        )
+    try:
+        return await pins.for_tenant(str(caller.tenant), publish)
+    except OperationRefused:
+        raise
+    except Exception as exc:
+        raise OperationRefused(
+            "UNAVAILABLE",
+            {"reason": f"task-plan schema publish failed: {type(exc).__name__}"},
+        ) from exc
+
+
 async def evaluate_task_plan(
     services: InvokeServices,
     config: TaskPlanConfig,
@@ -119,6 +149,7 @@ async def evaluate_task_plan(
         raise OperationRefused("INVALID_ARGUMENT", {"field": "task_plan"})
     request_builder, verify, send, decode = _contract()
     op = await _admit(services, caller)
+    feature_schema = await _published_feature_schema(services, caller)
     try:
         request = request_builder(
             caller.tenant,
@@ -128,7 +159,7 @@ async def evaluate_task_plan(
                 "max_concurrency": config.max_concurrency,
                 "max_steps": config.max_steps,
             },
-            claim_values(config.feature_schema),
+            claim_values(feature_schema),
             policy=claim_values(config.policy),
         )
     except (TypeError, ValueError) as exc:
@@ -159,17 +190,34 @@ def configured_task_plan() -> TaskPlanConfig | None:
     raw = runtime_config.task_plan
     if raw is None:
         return None
+    # The schema body is published and resolved per tenant at request time.
+    # Keep an empty value as a migration path for older callers that still
+    # construct the trusted config positionally; never require an operator to
+    # invent a tenant-bound definition digest in this process setting.
+    raw = dict(raw)
+    raw.setdefault("feature_schema", {})
     config = TaskPlanConfig(**raw)
     _contract()
     from epistemic_graph.generated.models import ComponentDependency, DecisionPolicyRef
 
-    ComponentDependency.model_validate_json(
-        json.dumps(claim_values(config.feature_schema)), strict=True
-    )
+    if config.feature_schema:
+        installed = import_module(
+            "epistemic_graph.decision_client"
+        ).TASK_PLAN_FEATURE_SCHEMA
+        if config.feature_schema.get("definition_digest") == installed.get(
+            "content_digest"
+        ):
+            raise ValueError(
+                "task plan feature_schema.definition_digest is an export content "
+                "digest; omit the static schema pin"
+            )
+        ComponentDependency.model_validate_json(
+            json.dumps(claim_values(config.feature_schema)), strict=True
+        )
     TypeAdapter(DecisionPolicyRef).validate_json(
         json.dumps(claim_values(config.policy)), strict=True
     )
-    if config.feature_schema["kind"] != "feature_schema":
+    if config.feature_schema and config.feature_schema["kind"] != "feature_schema":
         raise ValueError("task plan schema pin must name a feature_schema")
     if (
         config.policy["policy"] == "pinned"
