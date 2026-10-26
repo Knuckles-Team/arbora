@@ -259,6 +259,52 @@ async def test_native_plan_helper_wires_real_publication_and_owner_scopes(
 
 
 @pytest.mark.asyncio
+async def test_native_plan_publication_caps_expiry_at_claim_lease(chain, monkeypatch):
+    host, state, _ = chain
+    _, eg = task_plan_runtime._contracts()
+    principal = fixtures.caller(
+        effective_scopes=frozenset({"kg:write", "query:decide"})
+    )
+    owner = SimpleNamespace(
+        run_id="run",
+        claim={**CLAIM, "lease_expires_at_ms": 1_200},
+        owner_graph="owner-graph",
+    )
+    monkeypatch.setattr(task_plan_runtime.time, "time", lambda: 1.0)
+
+    await task_plan_runtime._publish(
+        host, principal, owner, {"plan_digest": "digest"}, PROPOSAL, eg
+    )
+
+    assert state["published"][0]["snapshot"]["observed_at_ms"] == 1_000
+    assert state["published"][0]["snapshot"]["expires_at_ms"] == 1_200
+
+
+@pytest.mark.asyncio
+async def test_native_plan_publication_refuses_expired_claim_before_read(
+    chain, monkeypatch
+):
+    host, state, _ = chain
+    _, eg = task_plan_runtime._contracts()
+    principal = fixtures.caller(
+        effective_scopes=frozenset({"kg:write", "query:decide"})
+    )
+    owner = SimpleNamespace(
+        run_id="run",
+        claim={**CLAIM, "lease_expires_at_ms": 1_000},
+        owner_graph="owner-graph",
+    )
+    monkeypatch.setattr(task_plan_runtime.time, "time", lambda: 1.0)
+
+    with pytest.raises(task_plan_runtime.OperationRefused, match="UNAVAILABLE"):
+        await task_plan_runtime._publish(
+            host, principal, owner, {"plan_digest": "digest"}, PROPOSAL, eg
+        )
+
+    assert state["published"] == []
+
+
+@pytest.mark.asyncio
 async def test_exhausted_budget_does_not_call_model(chain):
     host, state, calls = chain
     host = replace(
