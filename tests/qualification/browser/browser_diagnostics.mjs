@@ -7,6 +7,7 @@ const stages = new Set([
   "username-field",
   "password-field",
   "login-submit",
+  "login-observer-setup",
   "login-response",
   "login-response-body",
   "login-outcome",
@@ -111,6 +112,9 @@ export function createDiagnostics() {
         [
           "unobserved",
           "metadata",
+          "redirect",
+          "network",
+          "timeout",
           "retrieval",
           "oversize",
           "utf8",

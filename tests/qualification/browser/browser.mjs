@@ -23,7 +23,7 @@ import { randomUUID } from "node:crypto";
 import { chromium, expect } from "@playwright/test";
 
 import { createDiagnostics } from "./browser_diagnostics.mjs";
-import { observeLoginResponse } from "./browser_login.mjs";
+import { captureLoginResponse } from "./browser_cdp.mjs";
 
 const diagnostics = createDiagnostics();
 let phase = "preflight";
@@ -115,11 +115,12 @@ async function login(page, expected, credentials, denied = false) {
   await page.getByLabel("Username", { exact: true }).fill(credentials.username);
   diagnostics.stage("password-field");
   await page.getByLabel("Password", { exact: true }).fill(credentials.password);
-  const loggedIn = observeLoginResponse(page);
-  diagnostics.stage("login-submit");
-  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  diagnostics.stage("login-observer-setup");
+  const response = await captureLoginResponse(page, expected.origin, () => {
+    diagnostics.stage("login-submit");
+    return page.getByRole("button", { name: "Sign in", exact: true }).click();
+  });
   diagnostics.stage("login-response");
-  const response = await loggedIn;
   diagnostics.status("login", response.status);
   requireCondition(response.observed);
   diagnostics.stage("login-response-body");

@@ -1029,3 +1029,109 @@ console.log(JSON.stringify({unhandled,replies, sync:await sync,predicate:await p
         "none",
     ]
     assert data["replies"][-1]["status"] is None
+
+
+def test_durable_login_observer_binding_lifecycle_and_strict_failures():
+    module = Path(__file__).parent / "browser/browser_cdp.mjs"
+    script = r"""
+import {EventEmitter} from 'node:events';
+const {captureLoginResponse} = await import(process.argv[1]);
+const results=[];
+for(const kind of ['valid','base64','json','utf8','oversize','retrieval','redirect','network','timeout','unrelated','ordering','unsupported','setup-timeout','click-error','cleanup-error','duplicate','response-mismatch','refused','wrong-outcome']) {
+  const calls=[];
+  let detached=false;
+  const client=new EventEmitter();
+  client.send=async(method,params)=>{
+    calls.push({method,params});
+    if(kind==='setup-timeout' && method==='Network.configureDurableMessages' && params.maxTotalBufferSize) return new Promise(()=>{});
+    if(kind==='unsupported' && method==='Network.configureDurableMessages' && params.maxTotalBufferSize) throw new Error('private-message');
+    if(kind==='cleanup-error' && (method==='Network.disable' || method==='Network.configureDurableMessages' && !params.maxTotalBufferSize)) throw new Error('private-message');
+    if(method==='Network.getResponseBody') {
+      if(kind==='retrieval') throw new Error('private-message');
+      if(kind==='json') return {body:'private-invalid-json',base64Encoded:false};
+      if(kind==='utf8') return {body:Buffer.from([255]).toString('base64'),base64Encoded:true};
+      if(kind==='oversize') return {body:'x'.repeat(4097),base64Encoded:false};
+      const body=JSON.stringify({outcome:kind==='wrong-outcome'?'denied':'ok',csrf_token:'private-value'});
+      return {body:kind==='base64'?Buffer.from(body).toString('base64'):body,base64Encoded:kind==='base64'};
+    }
+    return {};
+  };
+  client.detach=async()=>{detached=true;};
+  let clicked=false;
+  const emitRequest=(id,url='https://fixture.invalid/auth/login',method='POST',redirectResponse)=>client.emit('Network.requestWillBeSent',{requestId:id,request:{url,method},redirectResponse});
+  const emitResponse=(id,status=200)=>client.emit('Network.responseReceived',{requestId:id,response:{url:'https://fixture.invalid/auth/login',status,headers:{'Content-Type':'application/json; private-param'}}});
+  let reply,error=false;
+  try {
+    reply=await captureLoginResponse({context:()=>({newCDPSession:async()=>client})},'https://fixture.invalid',async()=>{
+      clicked=true;
+      if(kind==='click-error') throw new Error('private-message');
+      if(kind==='timeout') return;
+      if(kind==='unrelated') {
+        emitRequest('foreign','https://other.invalid/auth/login');
+        emitResponse('foreign'); client.emit('Network.loadingFinished',{requestId:'foreign'});
+        emitRequest('get','https://fixture.invalid/auth/login','GET');
+        emitRequest('query','https://fixture.invalid/auth/login?other');
+      }
+      emitRequest('selected');
+      if(kind==='redirect') {emitRequest('selected','https://fixture.invalid/elsewhere','GET',{});return;}
+      if(kind==='network') {client.emit('Network.loadingFailed',{requestId:'selected',errorText:'private-message'});return;}
+      if(kind==='ordering') {client.emit('Network.loadingFinished',{requestId:'selected'});return;}
+      if(kind==='duplicate') {emitRequest('second');return;}
+      if(kind==='response-mismatch') {client.emit('Network.responseReceived',{requestId:'selected',response:{url:'https://other.invalid/auth/login',status:200,headers:{}}});return;}
+      emitResponse('selected',kind==='refused'?401:200);
+      client.emit('Network.loadingFinished',{requestId:'selected'});
+      client.emit('Network.loadingFinished',{requestId:'selected'});
+      await Promise.resolve(); // Simulate navigation retiring the renderer.
+    },10);
+  } catch(e) { error=e.message==='Login observation failed'; }
+  if(!detached || client.eventNames().length) throw new Error('Cleanup assertion');
+  const reads=calls.filter(c=>c.method==='Network.getResponseBody');
+  if(reads.some(c=>c.params.requestId!=='selected')) throw new Error('Binding assertion');
+  if(reads.length>1) throw new Error('Duplicate retrieval');
+  results.push({kind,reply,error,clicked,reads:reads.length,commands:calls.map(c=>c.method),enable:calls[0].params});
+}
+console.log(JSON.stringify(results));
+"""
+    result = subprocess.run(
+        ["node", "--input-type=module", "-e", script, module.resolve().as_uri()],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert "private" not in result.stdout + result.stderr
+    cases = {case["kind"]: case for case in json.loads(result.stdout)}
+    for kind in ("valid", "base64", "unrelated", "cleanup-error"):
+        assert cases[kind]["reply"]["outcome_ok"] is True
+        assert cases[kind]["reply"]["body_read"] is True
+        assert cases[kind]["reads"] == 1
+    for kind, category in {
+        "json": "json",
+        "utf8": "utf8",
+        "oversize": "oversize",
+        "retrieval": "retrieval",
+        "redirect": "redirect",
+        "network": "network",
+        "timeout": "timeout",
+        "ordering": "metadata",
+        "duplicate": "redirect",
+        "response-mismatch": "redirect",
+    }.items():
+        assert cases[kind]["reply"]["body_failure"] == category
+        assert cases[kind]["reply"]["body_read"] is False
+    assert cases["unsupported"]["error"] is True
+    assert cases["unsupported"]["clicked"] is False
+    assert cases["click-error"]["error"] is True
+    assert cases["setup-timeout"]["error"] is True
+    assert cases["setup-timeout"]["clicked"] is False
+    assert cases["refused"]["reply"]["status"] == 401
+    assert cases["wrong-outcome"]["reply"]["outcome_ok"] is False
+    for case in cases.values():
+        assert case["enable"] == {
+            "maxTotalBufferSize": 4194304,
+            "maxResourceBufferSize": 65536,
+            "maxPostDataSize": 0,
+        }
+        assert case["commands"][-2:] == [
+            "Network.configureDurableMessages",
+            "Network.disable",
+        ]
