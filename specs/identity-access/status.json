@@ -1453,7 +1453,7 @@
         "3376d3f037cc",
         "4450cc04420f",
         "a58a59bc4525",
-        "ce7a7b10da68"
+        "b97c97ea80d0"
       ],
       "verified_by": [
         "tests/qualification/browser/test_installed_native_browser.py:11"
@@ -1502,7 +1502,7 @@
         "3376d3f037cc",
         "4450cc04420f",
         "a58a59bc4525",
-        "ce7a7b10da68"
+        "b97c97ea80d0"
       ],
       "verified_by": [
         "tests/qualification/browser/test_installed_native_browser.py:12"
