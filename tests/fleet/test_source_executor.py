@@ -3,11 +3,17 @@
 from __future__ import annotations
 
 import asyncio
+from types import SimpleNamespace
+from typing import Any
 
 import pytest
 
 from arbora.api.registry import Effect
-from arbora.fleet.source_executor import FleetSourceExecutor, SourceReadRequest
+from arbora.fleet.source_executor import (
+    FleetSourceExecutor,
+    ForeignReadSourceRequest,
+    SourceReadRequest,
+)
 
 
 class FakeGateway:
@@ -57,6 +63,105 @@ class CappedGateway:
             }
         finally:
             self.active -= 1
+
+
+class ForeignGateway:
+    def __init__(self) -> None:
+        self.calls: list[tuple[object, ...]] = []
+
+    async def call(self, caller, server, tool, arguments, *, expected_effect):
+        self.calls.append((caller, server, tool, dict(arguments), expected_effect))
+        page = int(arguments.get("cursor", "0"))
+        payload = {
+            "value": {
+                "items": [
+                    {"id": f"issue-{page}-a", "name": "Ada", "state": "open"},
+                    {"id": f"issue-{page}-b", "name": "Bea", "state": "closed"},
+                ],
+            }
+        }
+        if page == 0:
+            payload["value"]["next_cursor"] = "1"
+        return payload
+
+
+class RecordingForeignClient:
+    def __init__(self, models) -> None:
+        self.models = models
+        self.calls: list[tuple[str, Any]] = []
+        self.execution = models.ForeignReadExecutionRef(
+            execution_id=41, query_digest="a" * 64
+        )
+        self.total_rows = 0
+        self.total_bytes = 0
+
+    async def open(self, request):
+        self.calls.append(("open", request))
+        return self.models.ForeignReadOpenResult(
+            schema_version=1,
+            execution=self.execution,
+            expires_at_ms=4_000_000_000_000,
+            next_sequence=0,
+        )
+
+    async def chunk(self, request):
+        self.calls.append(("chunk", request))
+        self.total_rows += len(request.rows)
+        self.total_bytes += 100
+        return self.models.ForeignReadChunkResult(
+            execution=self.execution,
+            sequence=request.sequence,
+            accepted_rows=len(request.rows),
+            total_rows=self.total_rows,
+            total_bytes=self.total_bytes,
+            next_sequence=request.sequence + 1,
+        )
+
+    async def complete(self, request):
+        self.calls.append(("complete", request))
+        return self.models.ForeignReadCompleteResult(
+            execution=self.execution,
+            sequence=request.sequence,
+            total_rows=self.total_rows,
+            total_bytes=self.total_bytes,
+        )
+
+    async def abort(self, request):
+        self.calls.append(("abort", request))
+        return self.models.ForeignReadAbortResult(
+            execution=self.execution,
+            sequence=request.sequence,
+            reason=request.reason,
+        )
+
+
+def _foreign_request() -> ForeignReadSourceRequest:
+    return ForeignReadSourceRequest(
+        source_id="issues",
+        connector="github-mcp",
+        tool="list_issues",
+        source_name="github/issues",
+        contract=SimpleNamespace(
+            contract_iri="https://example.invalid/contracts/issues",
+            key_field="id",
+            predicates=(
+                ("https://example.invalid/name", "name"),
+                ("https://example.invalid/state", "state"),
+            ),
+        ),
+        approval={"generated": "approval"},
+        plan_digest="b" * 64,
+        query_digest="a" * 64,
+        limits={
+            "max_rows": 100,
+            "max_bytes": 4096,
+            "chunk_rows": 2,
+            "chunk_bytes": 1024,
+            "deadline_ms": 10_000,
+        },
+        max_pages=3,
+        max_rows=10,
+    )
 
 
 @pytest.mark.spec("ARBORA-FLEET-R043.7")
@@ -144,3 +249,90 @@ async def test_query_source_count_concurrency_and_deadline_caps_are_enforced() -
     assert all(result.error_code == "SOURCE_TIMEOUT" for result in results)
     await asyncio.sleep(0)
     assert slow.active == 0
+
+
+@pytest.mark.spec("ARBORA-FLEET-R043.7")
+@pytest.mark.asyncio
+async def test_foreign_read_maps_contract_columns_and_correlates_after_complete() -> (
+    None
+):
+    models = pytest.importorskip("agent_connector_sdk.adapters.foreign_read")
+    gateway, caller = ForeignGateway(), object()
+    foreign = RecordingForeignClient(models)
+    executor = FleetSourceExecutor(gateway, caller, foreign_client=foreign)
+    correlated: list[object] = []
+
+    async def correlate(execution: object) -> dict[str, object]:
+        correlated.append(execution)
+        return {"query": "completed"}
+
+    result = await executor.read_foreign(_foreign_request(), correlate=correlate)
+
+    assert result.ok and result.rows == 4 and result.pages == 2
+    assert result.query_result == {"query": "completed"}
+    assert correlated == [foreign.execution]
+    assert [name for name, _ in foreign.calls] == [
+        "open",
+        "chunk",
+        "chunk",
+        "complete",
+    ]
+    first_chunk = foreign.calls[1][1]
+    assert [row.id for row in first_chunk.rows] == ["issue-0-a", "issue-0-b"]
+    assert first_chunk.rows[0].columns == {"name": "Ada", "state": "open"}
+    assert first_chunk.rows[0].provenance == [
+        "connector:github-mcp",
+        "contract:https://example.invalid/contracts/issues",
+        "source:issues",
+    ]
+    assert all(call[0] is caller and call[4] is Effect.READ for call in gateway.calls)
+
+
+@pytest.mark.spec("ARBORA-FLEET-R043.7")
+def test_from_engine_composes_the_graph_scoped_sdk_adapter() -> None:
+    foreign_read = pytest.importorskip("agent_connector_sdk.adapters.foreign_read")
+    seen: list[str] = []
+    client = object()
+
+    class GraphCompute:
+        def for_graph(self, graph: str):
+            seen.append(graph)
+            return SimpleNamespace(async_client=client)
+
+    engine = SimpleNamespace(graph_compute=GraphCompute())
+    executor = FleetSourceExecutor.from_engine(
+        object(), object(), engine, graph="tenant:g"
+    )
+
+    assert seen == ["tenant:g"]
+    assert isinstance(executor._foreign_client, foreign_read.ForeignReadClient)
+    assert isinstance(
+        executor._foreign_client._transport,
+        foreign_read.NativeRequestResponseAdapter,
+    )
+
+
+@pytest.mark.spec("ARBORA-FLEET-R043.7")
+@pytest.mark.asyncio
+async def test_foreign_read_aborts_on_bad_source_row_without_leaking_payload() -> None:
+    models = pytest.importorskip("agent_connector_sdk.adapters.foreign_read")
+
+    class BadGateway(ForeignGateway):
+        async def call(self, *args, **kwargs):
+            self.calls.append(
+                (args[1], args[2], dict(args[3]), kwargs["expected_effect"])
+            )
+            return {"value": {"items": [{"name": "missing-id"}]}}
+
+    foreign = RecordingForeignClient(models)
+    result = await FleetSourceExecutor(
+        BadGateway(), object(), foreign_client=foreign
+    ).read_foreign(_foreign_request())
+
+    assert not result.ok
+    assert (result.error_code, result.error_reason) == (
+        "SOURCE_BAD_RESPONSE",
+        "the source row or foreign-read request was invalid",
+    )
+    assert [name for name, _ in foreign.calls] == ["open", "abort"]
+    assert "missing-id" not in (result.error_reason or "")
