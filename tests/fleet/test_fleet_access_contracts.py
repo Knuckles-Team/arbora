@@ -105,6 +105,7 @@ def _pack() -> types.SimpleNamespace:
     )
 
 
+@pytest.mark.spec("ARBORA-FLEET-R030")
 def test_registers_unapproved_mappings(fake_sdk) -> None:
     catalog = VirtualCatalog()
     added = ac.register_access_contracts(

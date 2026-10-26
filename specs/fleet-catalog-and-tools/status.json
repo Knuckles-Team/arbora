@@ -1052,13 +1052,16 @@
     {
       "id": "ARBORA-FLEET-R030",
       "title": "Fleet onboarding registers connector access contracts unapproved",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "42778c2bc5a3",
         "7e0cc536c81a",
         "9095a5cefabe",
         "f2284b64b6b3"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/fleet/test_fleet_access_contracts.py:108"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R031",
@@ -1410,7 +1413,7 @@
         "524b0ceaaf9c"
       ],
       "verified_by": [
-        "tests/fleet/test_fleet_access_contracts.py:252"
+        "tests/fleet/test_fleet_access_contracts.py:264"
       ]
     },
     {
