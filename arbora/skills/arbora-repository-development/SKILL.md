@@ -122,7 +122,7 @@ The package publishes these operator commands:
 | `arbora-release-canary` | Check a candidate release and catalog |
 | `arbora-production-ops` | Run guarded backup, restore, and production checks |
 
-The `arbora` entrypoint is `arbora.mcp_server.server:mcp_server`.
+The `arbora` entrypoint is `arbora.console:main`.
 
 After `scripts/bootstrap.sh`, run focused development checks with:
 

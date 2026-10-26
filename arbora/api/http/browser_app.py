@@ -1,4 +1,4 @@
-"""Inactive composition primitive: admit after ASGI mount routing settles."""
+"""Canonical browser operations: admit after ASGI mount routing settles."""
 
 from typing import Any
 
@@ -154,7 +154,11 @@ def create_browser_api_application(
 
 
 def create_webui_session_boundary(
-    *, admission: BrowserAdmission, auth_app: Any, operations: Any
+    *,
+    admission: BrowserAdmission,
+    auth_app: Any,
+    operations: Any,
+    request_dispatch: Any = None,
 ) -> Any:
     """Build the WebUI host session boundary from a qualified admission.
 
@@ -174,4 +178,6 @@ def create_webui_session_boundary(
         )
     from arbora.webui_host.session_boundary import WebUISessionBoundary
 
-    return WebUISessionBoundary(admission, auth_app, operations=operations)
+    return WebUISessionBoundary(
+        admission, auth_app, operations=operations, request_dispatch=request_dispatch
+    )

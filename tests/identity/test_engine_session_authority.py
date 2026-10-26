@@ -246,3 +246,62 @@ async def test_consumer_drives_existing_host_start_admission(
         with pytest.raises(PermissionError):
             await admission.admit("exact-credential", owner.request, owner.graph)
     assert len(client.calls) == 3
+
+
+@pytest.mark.parametrize("refresh", [True, False])
+@pytest.mark.parametrize("entrypoint", ["resolve_session", "resolve_credential"])
+def test_typed_session_absence_is_a_credential_refusal(refresh, entrypoint):
+    import asyncio
+
+    from epistemic_graph.client import EngineResponseError
+
+    from arbora.identity.engine_ports import EngineSessionAuthority
+
+    client = Client(EngineResponseError("IDENTITY_NOT_FOUND", "private-detail"))
+    authority = EngineSessionAuthority(
+        client, graph="identity-fixture", refresh=refresh
+    )
+    with pytest.raises(PermissionError, match="^session authority refused$"):
+        asyncio.run(getattr(authority, entrypoint)("opaque-fixture-session"))
+    assert len(client.calls) == 1
+
+
+@pytest.mark.parametrize(
+    "code",
+    [
+        "ACCESS_DENIED",
+        "IDENTITY_NOT_AUTHORIZED",
+        "AUTH_TENANT_MISMATCH",
+        "AUTH_POLICY_VERSION_MISMATCH",
+        "IDENTITY_NOT_INITIALIZED",
+        "INTERNAL",
+        "ENGINE_UNAVAILABLE",
+        "IDENTITY_NOT_FOUND: forged",
+    ],
+)
+def test_other_engine_codes_do_not_become_credential_refusals(code):
+    import asyncio
+
+    from epistemic_graph.client import EngineResponseError
+
+    from arbora.identity.engine_ports import EngineSessionAuthority
+
+    client = Client(EngineResponseError(code, "IDENTITY_NOT_FOUND"))
+    authority = EngineSessionAuthority(client, graph="identity-fixture", refresh=False)
+    with pytest.raises(
+        IdentityUnavailable, match="^qualified engine session unavailable$"
+    ):
+        asyncio.run(authority.resolve_session("opaque-fixture-session"))
+    assert len(client.calls) == 1
+
+
+@pytest.mark.parametrize("failure", [ConnectionError, TimeoutError, RuntimeError])
+def test_transport_and_untyped_text_remain_unavailable(failure):
+    import asyncio
+
+    from arbora.identity.engine_ports import EngineSessionAuthority
+
+    client = Client(failure("IDENTITY_NOT_FOUND"))
+    authority = EngineSessionAuthority(client, graph="identity-fixture", refresh=False)
+    with pytest.raises(IdentityUnavailable):
+        asyncio.run(authority.resolve_session("opaque-fixture-session"))

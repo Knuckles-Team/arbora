@@ -58,11 +58,13 @@ def build_identity_ports(
     return IdentityPorts(credentials=runtime, sessions=runtime)
 
 
-def build_engine_identity_ports(client: object, *, graph: str) -> IdentityPorts:
+def build_engine_identity_ports(
+    client: object, *, graph: str, refresh: bool = True
+) -> IdentityPorts:
     """Construct one session runtime over the composition-owned engine client."""
     from .engine_ports import EngineSessionAuthority
 
-    owner = EngineSessionAuthority(client, graph=graph)
+    owner = EngineSessionAuthority(client, graph=graph, refresh=refresh)
     return build_identity_ports(
         owner, owner, runtime_factory=lambda _credentials, sessions: sessions
     )

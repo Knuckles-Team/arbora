@@ -23,7 +23,7 @@ from typing import Any
 _ENTRY_POINTS = {
     # Certify the native serving composition, not the removed informational
     # shell and never an AU compatibility alias.
-    "arbora": "arbora.mcp_server.server:mcp_server",
+    "arbora": "arbora.console:main",
     "agent-utilities-doctor": "arbora.deployment.doctor:main",
 }
 

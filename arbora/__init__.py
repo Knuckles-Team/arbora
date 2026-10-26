@@ -16,7 +16,7 @@ The live package layout is:
 - `arbora.deployment` — configuration, diagnostics, canaries, and operations.
 
 The ``arbora`` console command serves
-``arbora.mcp_server.server:mcp_server`` over stdio or authenticated
+``arbora.console:main`` over stdio or authenticated
 streamable HTTP. Capability limits that depend on unfinished upstream
 contracts are documented in ``docs/status.md`` and fail closed; no legacy
 fallback is implied by this package description.

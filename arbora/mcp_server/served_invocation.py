@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import Any
 
 from arbora.api.registry import EgSchemaRef
+from arbora.identity.ports import BrowserBoundaryFactory
 
 __all__ = [
     "PoolLeases",
@@ -580,6 +581,7 @@ def compose_served_invocation(
     bindings: Mapping[str, Any] | None = None,
     fleet_effect: Any = None,
     task_plan_config: Any = None,
+    browser_boundary_factory: BrowserBoundaryFactory | None = None,
 ) -> Any:
     """One admitted :class:`HostedInvocation` over the served EG pool."""
     from arbora.api.http.auth import (
@@ -702,13 +704,36 @@ def compose_served_invocation(
     )
     if step_invoke is not None:
         step_invoke.bind(services)
-    return HostedInvocation(
+    invocation = HostedInvocation(
         services=services,
         task_plan_config=task_plan_config,
         authenticator=AmbientHTTPAuthenticator(
             session_for_request=verified_bearer_session_for_request
         ),
     )
+
+    from dataclasses import replace
+
+    from arbora.core.settings import runtime_config
+
+    if browser_boundary_factory is None:
+        if runtime_config.enable_web_ui and runtime_config.webui_auth_mode == "eg":
+            raise RuntimeError("EG browser requires the process-root identity factory")
+        return invocation
+
+    def browser_broker_claims() -> Any:
+        current = session()
+        current.ensure_authority_current()
+        return connect_context(current.tenant).to_claims()
+
+    boundary = browser_boundary_factory(
+        invocation,
+        service_client,
+        graph=graph,
+        tenant=minted.tenant,
+        broker_claims=browser_broker_claims,
+    )
+    return replace(invocation, browser_boundary=boundary)
 
 
 class _LeaseClient:
@@ -726,6 +751,7 @@ def served_invocation_from_settings(
     process_session: Callable[[], Any],
     bindings: Mapping[str, Any],
     fleet_effect: Any,
+    browser_boundary_factory: BrowserBoundaryFactory | None = None,
 ) -> Any:
     """The served invocation from the deployment settings, or ``None``.
 
@@ -756,4 +782,5 @@ def served_invocation_from_settings(
         bindings=bindings,
         fleet_effect=fleet_effect,
         task_plan_config=task_plan_config,
+        browser_boundary_factory=browser_boundary_factory,
     )
