@@ -585,7 +585,7 @@
         "a2f74cb9621d"
       ],
       "verified_by": [
-        "tests/api/test_query_ops.py:57"
+        "tests/api/test_query_ops.py:58"
       ]
     },
     {
@@ -1066,6 +1066,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "a33b4ad326fb",
+        "d850655d672c",
         "f4ae1be895a1"
       ],
       "verified_by": [

@@ -16,6 +16,7 @@ from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops.query import NaturalLanguageParams, operations
 from arbora.api.registry import EgMethod, EgSchemaRef
+from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
 from tests._support import Actor
 from tests.api.test_invoke_bootstrap import FakeSession, _caller
 
@@ -169,7 +170,7 @@ def test_owner_read_dispatch_binds_wire_tenant_to_verified_caller(
         )
         == 47
     )
-    assert client.sent[0][:3] == ("GetRunWorkItem", payload, "tenant:bound")
+    assert client.sent[0][:3] == ("GetRunWorkItem", payload, CONTROL_GRAPH)
 
 
 def test_nl_planner_unavailable_propagates_without_uql_fallback() -> None:
