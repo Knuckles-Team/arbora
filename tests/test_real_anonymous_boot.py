@@ -195,7 +195,7 @@ def test_real_tokenless_read_and_http_admission(anonymous_stack):
 
 
 def test_actual_tui_completes_tokenless_chat(anonymous_stack):
-    entry = shutil.which("agent-terminal-ui", path=str(Path(sys.executable).parent))
+    entry = shutil.which("tuig", path=str(Path(sys.executable).parent))
     assert entry is not None
     nonce = "proof-" + uuid.uuid4().hex
     result = subprocess.run(

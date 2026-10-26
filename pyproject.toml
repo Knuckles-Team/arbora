@@ -86,7 +86,8 @@ acp = ["agent-client-protocol==0.11.0", "pydantic-ai-harness[acp]==0.57.0"]
 # so a lockstep upgrade there is easy to mirror here later.
 test = [
     "agent-client-protocol==0.11.0",
-    "agent-terminal-ui>=2.3.1",
+    "tuig==2.3.6; sys_platform == 'linux' and (platform_machine == 'x86_64' or platform_machine == 'aarch64')",
+    "pyte==0.8.2",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",

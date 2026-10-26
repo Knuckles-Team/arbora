@@ -24,6 +24,7 @@ from arbora.api.registry import (
     AuditClass,
     Composite,
     Effect,
+    EgMethod,
     EgSchemaRef,
     Executor,
     Idempotency,
@@ -350,6 +351,43 @@ def test_provider_schema_requires_authority_and_validation(tmp_path):
     assert run(services, params={"value": 2}, idempotency_key="key").value == {
         "value": 2
     }
+
+
+def test_native_owner_read_accepts_eg_wire_tenant_after_contract_validation():
+    """GetRunWorkItem's required tenant is a checked correlation field."""
+    op = operation(
+        id="eg.coordination.GetRunWorkItem",
+        verb=Verb.ASK,
+        params=EgSchemaRef(
+            path="contract/schemas/method.request.json#/methods/GetRunWorkItem"
+        ),
+        binding=EgMethod(service="GetRunWorkItem", op="GetRunWorkItem"),
+        scopes=frozenset({"work:read"}),
+        effect=Effect.READ,
+        audit=AuditClass.NONE,
+        idempotency=Idempotency.NATURAL,
+    )
+
+    def validate(_schema, params):
+        assert set(params) == {"tenant", "run_id"}
+        return params
+
+    services, runtime, _audit, _journal, _leases = setup_services(
+        op,
+        schema_validate=validate,
+    )
+
+    async def dispatch():
+        return {"owner_read": True}
+
+    runtime.on_dispatch = dispatch
+    result = run(
+        services,
+        op_id=op.id,
+        supplied=caller(effective_scopes=frozenset({"work:read"})),
+        params={"tenant": "tenant:one", "run_id": "run:one"},
+    )
+    assert result.value == {"owner_read": True}
 
 
 def test_claims_are_deeply_owned_and_authentication_has_no_default():

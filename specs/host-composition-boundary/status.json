@@ -194,6 +194,8 @@
     "ARBORA-HOST-R009.8.2",
     "ARBORA-HOST-R009.8.2.1",
     "ARBORA-HOST-R009.8.2.2",
+    "ARBORA-HOST-R009.8.2.2.1",
+    "ARBORA-HOST-R009.8.2.2.2",
     "ARBORA-HOST-R008.1000",
     "ARBORA-HOST-R008.1001",
     "ARBORA-HOST-R008.1002",
@@ -280,7 +282,7 @@
       ],
       "verified_by": [
         "tests/a2a/test_failed_usage.py:18",
-        "tests/mcp_server/test_task_plan.py:16",
+        "tests/mcp_server/test_task_plan.py:17",
         "tests/mcp_server/test_task_plan_failure.py:18",
         "tests/mcp_server/test_task_plan_runtime.py:29",
         "tests/mcp_server/test_task_plan_settings.py:12"
@@ -1959,20 +1961,16 @@
     {
       "id": "ARBORA-HOST-R009.8",
       "title": "Production host log sink",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "191af7948d99",
         "28cc061c8f06",
         "34077185335e",
         "37f265dde58d",
-        "80f6b7b53f91"
+        "71227bbdf7f4"
       ],
       "verified_by": [
-        "tests/agent_host/test_log_access.py:442",
-        "tests/agent_host/test_log_access.py:457",
-        "tests/agent_host/test_log_access.py:484",
-        "tests/agent_host/test_log_metadata.py:2",
-        "tests/agent_host/test_log_replay.py:2"
+        "tests/agent_host/test_log_sink.py:2"
       ],
       "rollup_of": [
         "ARBORA-HOST-R009.8.1",
@@ -1988,27 +1986,24 @@
         "ee476c64b37f"
       ],
       "verified_by": [
-        "tests/agent_host/test_log_access.py:442",
-        "tests/agent_host/test_log_access.py:457",
-        "tests/agent_host/test_log_access.py:484",
+        "tests/agent_host/test_log_access.py:493",
+        "tests/agent_host/test_log_access.py:508",
+        "tests/agent_host/test_log_access.py:535",
         "tests/agent_host/test_log_sink.py:225"
       ]
     },
     {
       "id": "ARBORA-HOST-R009.8.2",
       "title": "Retain restart acceptance",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "28cc061c8f06",
+        "71227bbdf7f4",
         "80f6b7b53f91",
         "c7208d7d3822",
         "ceaa3da1bbcc"
       ],
-      "verified_by": [
-        "tests/agent_host/test_log_metadata.py:2",
-        "tests/agent_host/test_log_replay.py:2",
-        "tests/agent_host/test_log_sink_terminal.py:80"
-      ],
+      "verified_by": [],
       "rollup_of": [
         "ARBORA-HOST-R009.8.2.1",
         "ARBORA-HOST-R009.8.2.2"
@@ -2029,15 +2024,38 @@
     {
       "id": "ARBORA-HOST-R009.8.2.2",
       "title": "Complete consumer metadata presentation",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "28cc061c8f06",
+        "71227bbdf7f4",
         "ceaa3da1bbcc"
       ],
       "verified_by": [
         "tests/agent_host/test_log_metadata.py:2",
-        "tests/agent_host/test_log_sink_terminal.py:80"
+        "tests/agent_host/test_log_sink_terminal.py:10"
+      ],
+      "rollup_of": [
+        "ARBORA-HOST-R009.8.2.2.1",
+        "ARBORA-HOST-R009.8.2.2.2"
       ]
+    },
+    {
+      "id": "ARBORA-HOST-R009.8.2.2.1",
+      "title": "Qualify the released native terminal",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "c9be06d6eaf2"
+      ],
+      "verified_by": [
+        "tests/agent_host/test_log_sink_terminal_lifecycle.py:2"
+      ]
+    },
+    {
+      "id": "ARBORA-HOST-R009.8.2.2.2",
+      "title": "Retain Overstory metadata acceptance",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     },
     {
       "id": "ARBORA-HOST-R008.1000",
@@ -2162,7 +2180,7 @@
         "9bd22960a7ea"
       ],
       "verified_by": [
-        "tests/mcp_server/test_task_plan.py:16"
+        "tests/mcp_server/test_task_plan.py:17"
       ]
     },
     {

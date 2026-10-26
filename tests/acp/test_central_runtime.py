@@ -78,7 +78,10 @@ async def central(http_server, chain, monkeypatch):
     )
     service = A2AService(authority, OrchestratorA2ARouter(lambda: engine))
     runtime = SessionRuntime()
-    runtime.bindings = {"a2a": service}
+    runtime.bindings = {
+        **getattr(host.services.runtime, "bindings", {}),
+        "a2a": service,
+    }
     runtime.dispatch = MethodType(BoundOperationRuntime.dispatch, runtime)
     registry = Registry(
         tuple(

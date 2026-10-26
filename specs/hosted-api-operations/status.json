@@ -419,7 +419,7 @@
       "verified_by": [
         "tests/a2a/test_eg_dispatch.py:39",
         "tests/api/test_invoke_bootstrap.py:161",
-        "tests/api/test_invoke_contract.py:238",
+        "tests/api/test_invoke_contract.py:239",
         "tests/api/test_invoke_governance.py:193",
         "tests/api/test_invoke_governance.py:250"
       ],
@@ -585,7 +585,7 @@
         "a2f74cb9621d"
       ],
       "verified_by": [
-        "tests/api/test_query_ops.py:57"
+        "tests/api/test_query_ops.py:58"
       ]
     },
     {
@@ -1030,8 +1030,8 @@
         "tests/a2a/test_native_run_publication.py:16",
         "tests/api/test_runs_ops.py:23",
         "tests/mcp_server/test_current_plan_reader.py:24",
-        "tests/mcp_server/test_task_plan.py:232",
-        "tests/mcp_server/test_task_plan.py:239"
+        "tests/mcp_server/test_task_plan.py:293",
+        "tests/mcp_server/test_task_plan.py:300"
       ],
       "rollup_of": [
         "ARBORA-OPS-R021.4.5.1"
@@ -1052,8 +1052,8 @@
         "tests/a2a/test_native_run_publication.py:16",
         "tests/api/test_runs_ops.py:23",
         "tests/mcp_server/test_current_plan_reader.py:24",
-        "tests/mcp_server/test_task_plan.py:232",
-        "tests/mcp_server/test_task_plan.py:239"
+        "tests/mcp_server/test_task_plan.py:293",
+        "tests/mcp_server/test_task_plan.py:300"
       ],
       "rollup_of": [
         "ARBORA-OPS-R021.4.5.1.1",
@@ -1066,6 +1066,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "a33b4ad326fb",
+        "d850655d672c",
         "f4ae1be895a1"
       ],
       "verified_by": [
@@ -1085,10 +1086,10 @@
       ],
       "verified_by": [
         "tests/a2a/test_native_run_publication.py:16",
-        "tests/mcp_server/test_task_plan.py:232",
-        "tests/mcp_server/test_task_plan.py:239",
-        "tests/mcp_server/test_task_plan_runtime.py:580",
-        "tests/mcp_server/test_task_plan_runtime.py:659"
+        "tests/mcp_server/test_task_plan.py:293",
+        "tests/mcp_server/test_task_plan.py:300",
+        "tests/mcp_server/test_task_plan_runtime.py:626",
+        "tests/mcp_server/test_task_plan_runtime.py:705"
       ]
     },
     {

@@ -556,7 +556,7 @@
         "c2a6ab839fd3"
       ],
       "verified_by": [
-        "tests/api/test_invoke_contract.py:435",
+        "tests/api/test_invoke_contract.py:473",
         "tests/api/test_invoke_governance.py:443"
       ]
     },
