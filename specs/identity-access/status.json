@@ -1457,6 +1457,7 @@
         "tests/identity/test_browser_broker.py:14",
         "tests/mcp_server/test_browser_composition.py:10",
         "tests/mcp_server/test_browser_dispatch.py:14",
+        "tests/qualification/test_browser_fixture_contract.py:12",
         "tests/webui_host/test_canonical_browser_composition.py:50"
       ]
     },
