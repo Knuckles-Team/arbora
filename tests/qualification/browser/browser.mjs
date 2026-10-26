@@ -124,6 +124,7 @@ async function login(page, expected, credentials, denied = false) {
   requireCondition(response.observed);
   diagnostics.stage("login-response-body");
   diagnostics.flag("login_body_read", response.body_read);
+  diagnostics.loginBody(response);
   requireCondition(response.body_read);
   diagnostics.stage("login-outcome");
   diagnostics.flag("login_outcome_ok", response.outcome_ok);

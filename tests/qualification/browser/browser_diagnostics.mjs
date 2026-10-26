@@ -98,6 +98,32 @@ export function createDiagnostics() {
       if (flags.has(key) && typeof value === "boolean")
         observations[key] = value;
     },
+    loginBody(result) {
+      let failure, type, length;
+      try {
+        failure = result.body_failure;
+        type = result.content_type;
+        length = result.body_length;
+      } catch {
+        return;
+      }
+      if (
+        [
+          "unobserved",
+          "metadata",
+          "retrieval",
+          "oversize",
+          "utf8",
+          "json",
+          "none",
+        ].includes(failure)
+      )
+        observations.login_body_failure = failure;
+      if (["missing", "json", "other"].includes(type))
+        observations.login_content_type = type;
+      if (Number.isInteger(length) && length >= 0 && length <= 4096)
+        observations.login_body_length = length;
+    },
     snapshot(error, journey = "preflight") {
       let name;
       try {

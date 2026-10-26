@@ -798,9 +798,10 @@ function fixture() {
     url: () => 'https://fixture.invalid/auth/login',
     request: () => ({method: () => 'POST'}),
     status: () => 200,
-    json: async () => {
+    headers: () => ({'content-type': 'application/json'}),
+    body: async () => {
       if (retired) throw new Error('Response body retired');
-      return {outcome: 'ok', extra: 'private-payload'};
+      return Buffer.from(JSON.stringify({outcome: 'ok', extra: 'private-payload'}));
     },
   };
   const pending = new Promise(resolve => { resolveResponse = resolve; });
@@ -818,7 +819,7 @@ const old = fixture();
 const waited = old.page.waitForResponse();
 await old.click();
 let oldFailed = false;
-try { await (await waited).json(); } catch { oldFailed = true; }
+try { await (await waited).body(); } catch { oldFailed = true; }
 const current = fixture();
 const captured = observeLoginResponse(current.page);
 await current.click();
@@ -838,6 +839,9 @@ console.log(JSON.stringify({oldFailed, reply: await captured}));
             "status": 200,
             "body_read": True,
             "outcome_ok": True,
+            "body_failure": "none",
+            "body_length": 42,
+            "content_type": "json",
         },
     }
 
@@ -854,9 +858,10 @@ for (const kind of ['missing', 'body-error', 'wrong-outcome', 'refused']) {
       url: () => 'https://fixture.invalid/auth/login',
       request: () => ({method: () => 'POST'}),
       status: () => kind === 'refused' ? 401 : 200,
-      json: async () => {
+      headers: () => ({'content-type': 'application/json; private-param'}),
+      body: async () => {
         if (kind === 'body-error') throw new Error('private-message');
-        return {outcome: kind === 'wrong-outcome' ? 'private-outcome' : 'ok'};
+        return Buffer.from(JSON.stringify({outcome: kind === 'wrong-outcome' ? 'private-outcome' : 'ok'}));
       },
     };
     if (!predicate(response)) throw new Error('Predicate mismatch');
@@ -879,18 +884,27 @@ console.log(JSON.stringify(results));
         "status": None,
         "body_read": False,
         "outcome_ok": False,
+        "body_failure": "unobserved",
+        "body_length": None,
+        "content_type": "missing",
     }
     assert body_error == {
         "observed": True,
         "status": 200,
         "body_read": False,
         "outcome_ok": False,
+        "body_failure": "retrieval",
+        "body_length": None,
+        "content_type": "json",
     }
     assert wrong_outcome == {
         "observed": True,
         "status": 200,
         "body_read": True,
         "outcome_ok": False,
+        "body_failure": "none",
+        "body_length": 29,
+        "content_type": "json",
     }
     assert refused["status"] == 401
     probe = (module.parent / "browser.mjs").read_text()
@@ -902,3 +916,116 @@ console.log(JSON.stringify(results));
         Path(__file__).resolve().parents[2] / ".github/workflows/installed-browser.yml"
     ).read_text()
     assert "cp tests/qualification/browser/browser_login.mjs " in workflow
+
+
+def test_login_body_diagnostics_distinguish_retrieval_decode_and_parse():
+    module = Path(__file__).parent / "browser/browser_login.mjs"
+    script = r"""
+const {observeLoginResponse} = await import(process.argv[1]);
+const {createDiagnostics} = await import(new URL('./browser_diagnostics.mjs', process.argv[1]));
+const output = [];
+for (const kind of ['retrieval', 'json', 'utf8', 'oversize', 'empty', 'valid']) {
+  const response = {
+    status: () => 200,
+    headers: () => ({'content-type': 'application/json; private-param'}),
+    body: async () => {
+      if (kind === 'retrieval') throw new Error('private-exception');
+      if (kind === 'utf8') return Buffer.from([255]);
+      if (kind === 'oversize') return Buffer.alloc(4097, 65);
+      if (kind === 'empty') return Buffer.alloc(0);
+      if (kind === 'json') return Buffer.from('private-invalid-json');
+      return Buffer.from(JSON.stringify({outcome:'ok', csrf_token:'private-value'}));
+    }
+  };
+  const reply = await observeLoginResponse({waitForResponse: async () => response});
+  const diagnostics = createDiagnostics();
+  diagnostics.loginBody(reply);
+  output.push({reply, observations: diagnostics.snapshot().observations});
+}
+const rejected = createDiagnostics();
+rejected.loginBody({body_failure:'private-value',content_type:'private-value',body_length:4097});
+output.push(rejected.snapshot().observations);
+let reads = 0;
+rejected.loginBody({get body_failure() { return reads++ ? 'private-value' : 'json'; }, content_type:'other',body_length:0});
+output.push(rejected.snapshot().observations);
+rejected.reset();
+rejected.loginBody({get body_failure() { throw new Error('private-value'); }});
+output.push(rejected.snapshot().observations);
+console.log(JSON.stringify(output));
+"""
+    result = subprocess.run(
+        ["node", "--input-type=module", "-e", script, module.resolve().as_uri()],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert "private" not in result.stdout
+    *cases, rejected, changing, throwing = json.loads(result.stdout)
+    assert rejected == throwing == {}
+    assert changing == {
+        "login_body_failure": "json",
+        "login_content_type": "other",
+        "login_body_length": 0,
+    }
+    assert [case["reply"]["body_failure"] for case in cases] == [
+        "retrieval",
+        "json",
+        "utf8",
+        "oversize",
+        "json",
+        "none",
+    ]
+    assert [case["reply"]["body_read"] for case in cases] == [False] * 5 + [True]
+    assert cases[0]["reply"]["body_length"] is None
+    assert cases[3]["reply"]["body_length"] is None
+    assert cases[4]["reply"]["body_length"] == 0
+    assert all(case["reply"]["content_type"] == "json" for case in cases)
+    assert cases[-1]["reply"]["outcome_ok"] is True
+
+
+def test_login_metadata_failure_never_rejects_during_pending_click():
+    module = Path(__file__).parent / "browser/browser_login.mjs"
+    script = r"""
+const {observeLoginResponse} = await import(process.argv[1]);
+const replies=[];
+let unhandled = false;
+process.on('unhandledRejection', () => { unhandled = true; });
+for (const kind of ['status','headers','length','changing','bad-status']) {
+  let reads=0;
+  const response={
+    status: () => { if(kind==='status') throw new Error('private-message'); return kind==='bad-status'?'private-value':200; },
+    headers: () => { if(kind==='headers') throw new Error('private-message'); return {'content-type':'application/json; private-value'}; },
+    body: async () => {
+      if(kind==='length') return {get length(){throw new Error('private-message');}};
+      if(kind==='changing') return {get length(){return reads++ ? 'private-value' : 0;}};
+      return Buffer.from('{}');
+    }
+  };
+  const pending=observeLoginResponse({waitForResponse:async()=>response});
+  await new Promise(resolve=>setImmediate(resolve)); // click remains pending
+  replies.push(await pending);
+}
+const sync=observeLoginResponse({waitForResponse(){throw new Error('private-message');}});
+const predicate=observeLoginResponse({waitForResponse(predicate){return Promise.resolve().then(()=>predicate({get url(){throw new Error('private-message');}}));}});
+await new Promise(resolve=>setImmediate(resolve));
+console.log(JSON.stringify({unhandled,replies, sync:await sync,predicate:await predicate}));
+"""
+    result = subprocess.run(
+        ["node", "--input-type=module", "-e", script, module.resolve().as_uri()],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert "private" not in result.stdout + result.stderr
+    data = json.loads(result.stdout)
+    assert data["unhandled"] is False
+    assert data["sync"]["body_failure"] == "unobserved"
+    assert data["predicate"]["body_failure"] == "unobserved"
+    assert [reply["body_failure"] for reply in data["replies"]] == [
+        "metadata",
+        "metadata",
+        "retrieval",
+        "utf8",
+        "none",
+    ]
+    assert data["replies"][-1]["status"] is None
