@@ -92,6 +92,12 @@ class RecordingForeignClient:
         self.execution = models.ForeignReadExecutionRef(
             execution_id=41, query_digest="a" * 64
         )
+        self.source_identity = models.ForeignReadSourceIdentity(
+            source_ref="mcp://connector/issues",
+            source_revision=7,
+            schema_digest="b" * 64,
+            snapshot_ref="c" * 64,
+        )
         self.total_rows = 0
         self.total_bytes = 0
 
@@ -102,6 +108,7 @@ class RecordingForeignClient:
             execution=self.execution,
             expires_at_ms=4_000_000_000_000,
             next_sequence=0,
+            source_identity=self.source_identity,
         )
 
     async def chunk(self, request):
@@ -278,6 +285,7 @@ async def test_foreign_read_maps_contract_columns_and_correlates_after_complete(
         "complete",
     ]
     first_chunk = foreign.calls[1][1]
+    assert first_chunk.source_identity == foreign.source_identity
     assert [row.id for row in first_chunk.rows] == ["issue-0-a", "issue-0-b"]
     assert first_chunk.rows[0].columns == {"name": "Ada", "state": "open"}
     assert first_chunk.rows[0].provenance == [

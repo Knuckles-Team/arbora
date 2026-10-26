@@ -387,6 +387,7 @@ class FleetSourceExecutor:
                 ChunkRequest,
                 CompleteRequest,
                 ForeignReadLimits,
+                ForeignReadRow,
                 OpenRequest,
             )
         except ImportError:
@@ -439,7 +440,8 @@ class FleetSourceExecutor:
                     elif next_cursor is not None and len(source_rows) + rows >= row_cap:
                         truncated = True
                     mapped = [
-                        _foreign_row(source_row, request) for source_row in source_rows
+                        ForeignReadRow.model_validate(_foreign_row(source_row, request))
+                        for source_row in source_rows
                     ]
                     for offset in range(0, len(mapped), limits.chunk_rows):
                         chunk_rows = mapped[offset : offset + limits.chunk_rows]
@@ -447,6 +449,7 @@ class FleetSourceExecutor:
                             ChunkRequest(
                                 execution=execution,
                                 sequence=sequence,
+                                source_identity=opened.source_identity,
                                 rows=chunk_rows,
                             )
                         )
