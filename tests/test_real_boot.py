@@ -37,6 +37,7 @@ from typing import Any, cast
 import pytest
 
 from arbora.deployment.config_generator import PROCESS_IDENTITY_ROLES
+from tests._boot_diagnostics import BootDiagnostics
 
 pytestmark = [
     pytest.mark.real_boot,
@@ -268,6 +269,7 @@ def _booted_stack(
     root = Path(tempfile.mkdtemp(prefix="gos-boot-", dir=private_root or "/tmp"))
     issuer = _Issuer()
     processes: list[subprocess.Popen[Any]] = []
+    diagnostics = BootDiagnostics(root, processes)
     secret = uuid.uuid4().hex
     signer_key = uuid.uuid4().hex
     socket_path = root / "eg.sock"
@@ -329,12 +331,13 @@ def _booted_stack(
                 )
             return socket_path.exists()
 
-        _wait(
-            eg_up,
-            timeout=60,
-            what="the epistemic-graph socket",
-            logs=lambda: (root / "eg.log").read_text(errors="replace"),
-        )
+        with diagnostics.phase("engine_socket"):
+            _wait(
+                eg_up,
+                timeout=60,
+                what="the epistemic-graph socket",
+                logs=lambda: (root / "eg.log").read_text(errors="replace"),
+            )
 
         # The operator's one provisioning step on a fresh engine: admit the
         # arbora process principal as the system identity, signing as itself.
@@ -603,14 +606,16 @@ def _booted_stack(
                         return False
                     return True
 
-            _wait(
-                reopened,
-                timeout=60,
-                what="the restarted epistemic-graph socket",
-                logs=lambda: (root / "eg.log").read_text(errors="replace"),
-            )
+            with diagnostics.phase("engine_restart_socket"):
+                _wait(
+                    reopened,
+                    timeout=60,
+                    what="the restarted epistemic-graph socket",
+                    logs=lambda: (root / "eg.log").read_text(errors="replace"),
+                )
 
         yield {
+            "diagnostics": diagnostics,
             "restart_engine": restart_engine,
             "socket_path": str(socket_path),
             "secret": secret,
@@ -641,12 +646,13 @@ def stack() -> Iterator[dict[str, Any]]:
 def _post_op(stack: dict[str, Any], op_id: str, params: dict[str, Any]) -> Any:
     import httpx
 
-    response = httpx.post(
-        f"{stack['base_url']}/api/v1/ops/{op_id}",
-        json=params,
-        headers={"Authorization": f"Bearer {stack['token']}"},
-        timeout=30,
-    )
+    with stack["diagnostics"].phase("http_operation"):
+        response = httpx.post(
+            f"{stack['base_url']}/api/v1/ops/{op_id}",
+            json=params,
+            headers={"Authorization": f"Bearer {stack['token']}"},
+            timeout=30,
+        )
     assert response.status_code == 200, (
         f"{op_id} answered {response.status_code}: {response.text}\n{stack['logs']()}"
     )
