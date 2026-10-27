@@ -383,22 +383,38 @@ async def test_foreign_run_result_never_projects_usage(
     from arbora import work_items
 
     outcomes: list[str] = []
+    requests: list[Any] = []
+    owner = session(frozenset({"kg:write"}))
 
     class ForeignExecutor:
         async def execute_agent(self, request: Any, *, session: Any) -> Any:
+            requests.append(request)
             return SimpleNamespace(
                 run_id="foreign-run", output="private", usage={"input_tokens": 42}
             )
 
-    monkeypatch.setattr(work_items, "claim_specific", lambda *a, **k: {"claim": 1})
     monkeypatch.setattr(
-        work_items, "commit_result", lambda *a, **k: outcomes.append(k["outcome"])
+        work_items,
+        "claim_specific",
+        lambda *a, **k: {
+            "claimed": True,
+            "tenant": owner.tenant,
+            "lease_holder_ref": "test-worker",
+            "lease_epoch": 1,
+            "fencing_token": 1,
+        },
     )
+
+    def committed(*args: Any, **kwargs: Any) -> str:
+        outcomes.append(kwargs["outcome"])
+        return "committed"
+
+    monkeypatch.setattr(work_items, "commit_result", committed)
     authority = WorkItemA2AAuthority(lambda: None, executor=ForeignExecutor())
     usage = await authority._run(
         object(),
         item_id="native-item",
-        session=object(),
+        session=owner,
         agent_name="helper",
         task="hello",
         task_id="task",
@@ -406,3 +422,8 @@ async def test_foreign_run_result_never_projects_usage(
     )
     assert usage is None
     assert outcomes == ["failed"]
+    assert len(requests) == 1
+    assert requests[0].run_id == "admitted-run"
+    from arbora.a2a.authority import task_output_artifacts
+
+    assert task_output_artifacts("task") is None
