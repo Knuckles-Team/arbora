@@ -1002,8 +1002,10 @@
     {
       "id": "ARBORA-A2A-R001.3.1",
       "title": "Typed native conversation admission handoff",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "c4c0956fe7b3"
+      ],
       "verified_by": [
         "tests/test_conversation_admission.py:15"
       ]
@@ -1020,8 +1022,10 @@
     {
       "id": "ARBORA-A2A-R001.3.3",
       "title": "Bind opt-in native completed-text history before execution",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "d4937e42ad1d"
+      ],
       "verified_by": [
         "tests/a2a/test_native_history_admission.py:18",
         "tests/a2a/test_native_history_selection.py:17",
