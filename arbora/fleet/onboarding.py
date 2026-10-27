@@ -945,6 +945,7 @@ def handshake_catalog_digest(
     prompts: Sequence[Any] = (),
     resources: Sequence[Any] = (),
     declaration: str = "",
+    failures: Sequence[str] = (),
 ) -> str:
     """A content digest of the served lists and the data-source declaration.
 
@@ -972,6 +973,10 @@ def handshake_catalog_digest(
             "prompts": sorted(_digest_rows(dump(p)) for p in prompts),
             "resources": sorted(_digest_rows(dump(r)) for r in resources),
             "declaration": declaration,
+            # A failed optional discovery call is distinct from an empty
+            # surface.  Keep only bounded exception type markers: the digest
+            # must never carry transport text, credentials, or endpoint data.
+            "failures": sorted(set(str(marker)[:80] for marker in failures)),
         }
     )
 
@@ -979,18 +984,25 @@ def handshake_catalog_digest(
 async def served_catalog_digest(session: Any, tools: Sequence[Any]) -> str:
     """Digest the lists and resources a live session serves (R041.8).
 
-    A list or read the server does not support counts as empty; that never
-    fails the handshake.
+    A list or read the server does not support still counts as an empty
+    surface, while its failed discovery is retained in the content digest so
+    a transient failure cannot masquerade as an unchanged empty surface.
     """
 
-    async def optional(call: Any, attr: str) -> list[Any]:
+    failures: list[str] = []
+
+    async def optional(call: Any, attr: str, surface: str) -> list[Any]:
         try:
             return list(getattr(await call(), attr))
         except Exception:
+            # Do not let a transient discovery/read error masquerade as an
+            # empty, unchanged surface.  The next handshake must produce a
+            # different digest and drive the existing recapture path.
+            failures.append(f"{surface}:discovery_failed")
             return []
 
-    prompts = await optional(session.list_prompts, "prompts")
-    resources = await optional(session.list_resources, "resources")
+    prompts = await optional(session.list_prompts, "prompts", "prompts")
+    resources = await optional(session.list_resources, "resources", "resources")
     declaration = ""
     if any(str(getattr(r, "uri", "")) == RESOURCES_URI for r in resources):
         try:
@@ -999,8 +1011,11 @@ async def served_catalog_digest(session: Any, tools: Sequence[Any]) -> str:
                 str(getattr(c, "text", "") or "") for c in result.contents
             )
         except Exception:
+            failures.append("declaration:read_failed")
             declaration = ""
-    return handshake_catalog_digest(tools, prompts, resources, declaration)
+    return handshake_catalog_digest(
+        tools, prompts, resources, declaration, failures=failures
+    )
 
 
 @dataclass(slots=True)
