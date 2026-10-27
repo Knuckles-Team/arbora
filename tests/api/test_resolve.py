@@ -190,7 +190,6 @@ _LOOKALIKE = Descriptor(
 
 @pytest.mark.spec("ARBORA-OPS-R855.1")
 @pytest.mark.spec("ARBORA-OPS-R855.4")
-@pytest.mark.spec("ARBORA-FLEET-R043.2")
 @pytest.mark.parametrize(
     "question",
     [
