@@ -170,7 +170,7 @@ def test_gateway_adapter_uses_native_oauth_binding_source(
 
 def test_console_script_targets_native_serving_entrypoint() -> None:
     pyproject = Path(__file__).parents[2] / "pyproject.toml"
-    assert 'arbora = "arbora.mcp_server.server:mcp_server"' in pyproject.read_text()
+    assert 'arbora = "arbora.console:main"' in pyproject.read_text()
 
 
 def test_arbora_runtime_shapes_use_connector_content_contract() -> None:

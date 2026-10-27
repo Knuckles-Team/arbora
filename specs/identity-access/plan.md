@@ -29,7 +29,7 @@ Define small protocols in `arbora.identity.ports`:
 - `NotificationPort` and `Clock`.
  DTOs carry only redacted public fields and typed error/reason codes. `arbora.access.service` depends on an `AccessAuthority` protocol with request/approve/deny/revoke/check/explain/lease methods. The `mcp_server` serving composition creates the concrete adapters once and injects them into gateway, web host, CLI command factory, and MCP registry. Keep `webui_host` and MCP packages importing ports, not each other. Dependency inversion must clear the configured KISS indirect dependency threshold without increasing that threshold.
 
-When a required engine method is absent, the adapter returns `UNAVAILABLE`, omits the operation from advertised capability discovery where safe, and emits a readiness reason. It never emulates RBAC, lease, or approval locally. The CLI can use the same factory with a local engine fixture. Mock ports support all ordinary PR tests.
+The adapter returns `UNAVAILABLE` when an engine method is absent. Where safe, it omits the operation from advertised capability discovery. It also emits a readiness reason. It never emulates RBAC, lease, or approval locally. The CLI can use the same factory with a local engine fixture. Mock ports support all ordinary PR tests.
 
 The authentication cutover is ordered: construct a signed local-issuer token at the serving root. Carry it through every engine client path, including bootstrap, REST, MCP, A2A, CLI and background service calls. Prove authorized and denied behavior with the engine verifier. Then remove the engine's unauthenticated opt-out. Arbora must never retry an unsigned envelope after a token error or denial. During rolling deployment, an old client that cannot supply a token fails closed and reports a readiness error. It does not silently switch transport or bypass verification.
 
@@ -133,8 +133,8 @@ verification likewise ends its awaited owner calls with live session
 resolution; request snapshot, token lifetime, current caller facts and rotation
 are then checked synchronously before return. A refusal removes the private
 binding immediately, before the request context exits. The qualified EG
-adapter must uphold its live-resolution consistency contract; this ordering is
-not a distributed transaction or a substitute for final engine authorization.
+adapter must uphold its live-resolution consistency contract.
+This ordering is not a distributed transaction. Final engine authorization remains required.
 
 ## ARBORA-IDENTITY-R026 client attribution and segmentation
 
@@ -525,3 +525,14 @@ Cancellation invalidates membership immediately while unfinished file work retai
 Native retirement failures remain explicit unresolved outcomes, never restored authority.
 The prototype grants no operations and is not wired into the application factory.
 Actual WebUI handshake and effect admission remain separate acceptance gates.
+
+### R005.1 / R004.4.1 typed session refusal amendment (2026-10-26)
+
+During generated `session.resolve`, the published client's typed
+`IDENTITY_NOT_FOUND` refusal means the presented session is absent, expired or
+revoked and must use the existing unauthenticated response path. Match only the
+structured code, never diagnostic text. Broker authorization, tenant/policy,
+transport and malformed-response failures remain unavailable. Preserve all
+identity binding checks and refuse before effects. Consumer regressions and a
+synthetic login/logout replay cover this classification; the installed browser
+replay gate still requires HTTP 401 and remains unqualified until it passes.
