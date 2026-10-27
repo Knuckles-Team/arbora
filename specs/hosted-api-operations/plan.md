@@ -624,6 +624,30 @@ The consumer stays on the SDK 0.2 release line for this change. SDK 0.3 changes 
 
 `research.web` is one served operation. It composes owners; it decides nothing. The engine answers the search as a virtual source (`EG-UNIFIED-DATA-PLANE-R038.7.7`). The engine selects the pages (`EG-DECISION-ENGINE-R802`). A connector reads each page through the SDK contract (`SDK-SOURCE-INGEST-R005.40`). The engine ingests and enriches each page (`EG-UNIFIED-DATA-PLANE-R651.7`).
 
+### Web-source conformance admission (R067.10)
+
+The existing `FleetCaller` obtains an effect decision from `fleet_gateway`.
+The gateway resolves the admitted item again at call time. That decision path
+must require the EG evidence record. Its owner is
+[EG-TYPED-PACKS-R110](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/typed-packs-and-catalog/requirements.md).
+No Arbora certification store or operator pass flag grants admission.
+
+The resolved record binds tenant, connector, package revision and pack digest.
+It also binds the input/output fingerprints of `web_fetch` and `web_extract`,
+the SDK kit revision, complete obligation results, evidence digest and issuer.
+It carries issue time, expiry, revocation state and an EG record reference.
+Arbora checks it against the active connector and the current fleet decision.
+It rechecks the binding at dispatch, including the existing registry digest.
+The live catalog currently exposes only an input schema fingerprint. Its
+admitted tool value does not carry that fingerprint or a package revision.
+Those verified identity and schema producers remain missing prerequisites.
+
+The authorized evidence issuer and deployed-revision producer are unresolved.
+The SDK's local fixture report is not an authority. Until EG and the host
+bind those producers, `research.web` cannot claim this admission guarantee.
+Missing, stale, revoked, wrong-tenant or mismatched evidence refuses before any
+child call. A policy refusal never triggers fallback to another connector.
+
 Call path: served route -> `invoke` (`arbora/api/invoke/pipeline.py:863`) -> `research.web` handler (`arbora/api/ops/research.py`) -> engine query -> engine `Decide` -> engine work item of kind `WebPage` -> SDK ingest worker -> connector `web_extract` -> engine `SourceIngest`.
 
 Backends: `webarchiver` (`CONN-WEBARCHIVER-WEB-SOURCE`) is primary. `archivebox` (`CONN-ARCHIVEBOX-API-WEB-SOURCE`) is secondary and the fallback for `upstream_failed` or an unreachable primary. A policy refusal never falls back. Both backends produce the same Document; only the recorded backend differs.

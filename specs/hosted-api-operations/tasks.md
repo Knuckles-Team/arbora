@@ -245,6 +245,7 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R067.7:** Hot-path proof. Add the served three-call test.
 - [ ] **ARBORA-OPS-R067.8:** Web-source contract. Call `web_extract` with `{"request": ...}` and read `WebPageResult`/`WebFetchRefusal`.
 - [ ] **ARBORA-OPS-R067.9:** Bounded page fetch. Bound each `web_extract` call and fall back on `timeout`.
+- [ ] **ARBORA-OPS-R067.10:** Bind EG web conformance evidence to the existing fleet decision and live revision before dispatch.
 
 ## Served harness component and improvement library operations (R068)
 
