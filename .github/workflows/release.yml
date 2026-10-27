@@ -580,6 +580,7 @@ jobs:
           boot="$RUNNER_TEMP/real-boot"
           mkdir -p "$boot"
           cp tests/test_real_boot.py tests/_boot_connector.py tests/_boot_model.py tests/_boot_ingest_connector.py tests/conftest.py "$boot/"
+          mkdir -p "$boot/tests"; cp tests/__init__.py tests/_boot_diagnostics.py "$boot/tests/"
           printf '%s\n' '[pytest]' 'asyncio_mode = auto' 'markers =' \
             '    spec: binds a test to a spec requirement ID' \
             '    real_boot: boots a real arbora process against a real EG server' \

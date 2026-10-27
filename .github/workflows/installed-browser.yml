@@ -11,6 +11,7 @@ on:
       - 'arbora/security/request_identity.py'
       - 'arbora/webui_host/**'
       - 'tests/test_real_boot.py'
+      - 'tests/_boot_diagnostics.py'
       - 'tests/qualification/browser/**'
       - '.github/workflows/installed-browser.yml'
   workflow_dispatch:
@@ -81,6 +82,7 @@ jobs:
             > "$RUNNER_TEMP/browser-public/wheel-sha256.txt"
           cp tests/test_real_boot.py tests/_boot_connector.py tests/_boot_model.py \
             tests/_boot_ingest_connector.py "$RUNNER_TEMP/browser-code/"
+          mkdir -p "$RUNNER_TEMP/browser-code/tests"; cp tests/__init__.py tests/_boot_diagnostics.py "$RUNNER_TEMP/browser-code/tests/"
           cp tests/qualification/browser/*.py "$RUNNER_TEMP/browser-code/"
           printf '%s\n' '[pytest]' 'addopts =' 'markers =' '    spec: acceptance requirement binding' '    real_boot: native process fixture' > "$RUNNER_TEMP/browser-code/pytest.ini"
           cp tests/qualification/browser/browser.mjs candidate-overstory/browser-qualification.mjs

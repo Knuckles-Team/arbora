@@ -94,3 +94,57 @@ def test_missing_model_helper_reports_startup_failure(tmp_path: Path):
             assert "missing_model.py" in str(exc.value)
         finally:
             _terminate(process)
+
+
+@pytest.mark.parametrize(
+    ("workflow_name", "job", "destination"),
+    [
+        ("release.yml", "install-smoke", "real-boot"),
+        ("installed-browser.yml", "installed-browser", "browser-code"),
+    ],
+)
+def test_staged_boot_fixture_imports_without_the_source_checkout(
+    tmp_path: Path, workflow_name: str, job: str, destination: str
+):
+    workflow = yaml.safe_load((ROOT / ".github/workflows" / workflow_name).read_text())
+    script = next(
+        step["run"]
+        for step in workflow["jobs"][job]["steps"]
+        if "cp tests/test_real_boot.py" in step.get("run", "")
+    )
+    bundle = tmp_path / destination
+    bundle.mkdir()
+    lines = script.replace("\\\n", "").splitlines()
+    copy_commands = [
+        line.strip()
+        for line in lines
+        if "cp tests/test_real_boot.py" in line or "cp tests/__init__.py" in line
+    ]
+    assert len(copy_commands) == 2
+    subprocess.run(
+        ["bash", "-c", "\n".join(copy_commands)],
+        cwd=ROOT,
+        env={**os.environ, "boot": str(bundle), "RUNNER_TEMP": str(tmp_path)},
+        check=True,
+        timeout=10,
+    )
+    unrelated = tmp_path / "unrelated"
+    unrelated.mkdir()
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            "-c",
+            "import sys; from pathlib import Path; "
+            "root=Path(sys.argv[1]); sys.path.insert(0,str(root)); "
+            "import test_real_boot; from tests import _boot_diagnostics; "
+            "assert Path(test_real_boot.__file__).parent == root; "
+            "assert Path(_boot_diagnostics.__file__).parent == root/'tests'",
+            str(bundle),
+        ],
+        cwd=unrelated,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, result.stderr
