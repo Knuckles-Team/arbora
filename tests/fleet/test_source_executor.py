@@ -10,6 +10,7 @@ import pytest
 
 from arbora.api.registry import Effect
 from arbora.fleet.source_executor import (
+    FleetSourceBinding,
     FleetSourceExecutor,
     ForeignReadSourceRequest,
     SourceReadRequest,
@@ -92,6 +93,12 @@ class RecordingForeignClient:
         self.execution = models.ForeignReadExecutionRef(
             execution_id=41, query_digest="a" * 64
         )
+        self.source_identity = models.ForeignReadSourceIdentity(
+            source_ref="mcp://connector/issues",
+            source_revision=7,
+            schema_digest="b" * 64,
+            snapshot_ref="c" * 64,
+        )
         self.total_rows = 0
         self.total_bytes = 0
 
@@ -102,6 +109,7 @@ class RecordingForeignClient:
             execution=self.execution,
             expires_at_ms=4_000_000_000_000,
             next_sequence=0,
+            source_identity=self.source_identity,
         )
 
     async def chunk(self, request):
@@ -140,16 +148,37 @@ def _foreign_request() -> ForeignReadSourceRequest:
         source_id="issues",
         connector="github-mcp",
         tool="list_issues",
-        source_name="github/issues",
+        source_name="issues",
         contract=SimpleNamespace(
             contract_iri="https://example.invalid/contracts/issues",
+            source_id="issues",
+            entity="issue",
+            class_iri="https://example.invalid/Issue",
             key_field="id",
+            access_kind="mcp_tool",
+            operation="list_issues",
             predicates=(
                 ("https://example.invalid/name", "name"),
                 ("https://example.invalid/state", "state"),
             ),
         ),
-        approval={"generated": "approval"},
+        approval={
+            "connector": "github-mcp",
+            "contract_digest": "a" * 64,
+            "tenant_id": "tenant-a",
+            "registration": {
+                "approval": "approved",
+                "class_iri": "https://example.invalid/Issue",
+                "connector": "github-mcp",
+                "contract_iri": "https://example.invalid/contracts/issues",
+                "entity": "issue",
+                "key_field": "id",
+                "operation": "list_issues",
+                "resource_uri": "ontology://issues",
+                "source_id": "issues",
+                "source_kind": "mcp_tool",
+            },
+        },
         plan_digest="b" * 64,
         query_digest="a" * 64,
         limits={
@@ -278,6 +307,7 @@ async def test_foreign_read_maps_contract_columns_and_correlates_after_complete(
         "complete",
     ]
     first_chunk = foreign.calls[1][1]
+    assert first_chunk.source_identity == foreign.source_identity
     assert [row.id for row in first_chunk.rows] == ["issue-0-a", "issue-0-b"]
     assert first_chunk.rows[0].columns == {"name": "Ada", "state": "open"}
     assert first_chunk.rows[0].provenance == [
@@ -286,6 +316,91 @@ async def test_foreign_read_maps_contract_columns_and_correlates_after_complete(
         "source:issues",
     ]
     assert all(call[0] is caller and call[4] is Effect.READ for call in gateway.calls)
+
+
+@pytest.mark.spec("ARBORA-FLEET-R043.7")
+@pytest.mark.asyncio
+async def test_read_approved_requires_catalog_projection_and_owner_source_name() -> (
+    None
+):
+    models = pytest.importorskip("agent_connector_sdk.adapters.foreign_read")
+    gateway, caller = ForeignGateway(), object()
+    foreign = RecordingForeignClient(models)
+    request = _foreign_request()
+    mapping = SimpleNamespace(
+        mapping_id=request.contract.contract_iri,
+        approved=True,
+        source_id=request.contract.source_id,
+        entity=request.contract.entity,
+        class_iri=request.contract.class_iri,
+        key_field=request.contract.key_field,
+        predicates=request.contract.predicates,
+    )
+    result = await FleetSourceExecutor(
+        gateway, caller, foreign_client=foreign
+    ).read_approved(
+        request,
+        mapping=mapping,
+        resource_uri="ontology://issues",
+    )
+    assert result.ok and result.rows == 4
+
+    held = await FleetSourceExecutor(
+        gateway, caller, foreign_client=foreign
+    ).read_approved(
+        request,
+        mapping=SimpleNamespace(
+            mapping_id=request.contract.contract_iri,
+            approved=False,
+            source_id=request.contract.source_id,
+            entity=request.contract.entity,
+            class_iri=request.contract.class_iri,
+            key_field=request.contract.key_field,
+            predicates=request.contract.predicates,
+        ),
+        resource_uri="ontology://issues",
+    )
+    assert held.error_code == "SOURCE_HELD"
+
+
+@pytest.mark.spec("ARBORA-FLEET-R043.7")
+@pytest.mark.asyncio
+async def test_read_approved_refuses_receipt_resource_or_owner_name_mismatch() -> None:
+    models = pytest.importorskip("agent_connector_sdk.adapters.foreign_read")
+    gateway, caller = ForeignGateway(), object()
+    foreign = RecordingForeignClient(models)
+    request = _foreign_request()
+    mapping = SimpleNamespace(
+        mapping_id=request.contract.contract_iri,
+        approved=True,
+        source_id=request.contract.source_id,
+        entity=request.contract.entity,
+        class_iri=request.contract.class_iri,
+        key_field=request.contract.key_field,
+        predicates=request.contract.predicates,
+    )
+    mismatch = await FleetSourceExecutor(
+        gateway, caller, foreign_client=foreign
+    ).read_approved(
+        request,
+        mapping=mapping,
+        resource_uri="ontology://wrong",
+    )
+    assert mismatch.error_code == "SOURCE_HELD"
+    assert [name for name, _ in foreign.calls] == []
+
+    wrong_name = ForeignReadSourceRequest(
+        **{**request.__dict__, "source_name": "other-owner/issues"}
+    )
+    mismatch = await FleetSourceExecutor(
+        gateway, caller, foreign_client=foreign
+    ).read_approved(
+        wrong_name,
+        mapping=mapping,
+        resource_uri="ontology://issues",
+    )
+    assert mismatch.error_code == "SOURCE_HELD"
+    assert [name for name, _ in foreign.calls] == []
 
 
 @pytest.mark.spec("ARBORA-FLEET-R043.7")
@@ -310,6 +425,60 @@ def test_from_engine_composes_the_graph_scoped_sdk_adapter() -> None:
         executor._foreign_client._transport,
         foreign_read.NativeRequestResponseAdapter,
     )
+
+
+@pytest.mark.asyncio
+async def test_approved_source_binding_builds_request_from_catalog_identity() -> None:
+    request = _foreign_request()
+    mapping = SimpleNamespace(
+        source_id="issues", mapping_id=request.contract.contract_iri
+    )
+    source = SimpleNamespace(
+        mapping=mapping,
+        contract=request.contract,
+        receipt=request.approval,
+        connector="github-mcp",
+        resource_uri="ontology://issues",
+    )
+    seen: dict[str, Any] = {}
+
+    class StubExecutor:
+        async def read_approved(self, built, *, mapping, resource_uri, correlate):
+            seen.update(
+                request=built,
+                mapping=mapping,
+                resource_uri=resource_uri,
+                correlate=correlate,
+            )
+            return "result"
+
+    binding = FleetSourceBinding(StubExecutor(), source)  # type: ignore[arg-type]
+    correlate = object()
+    result = await binding.read(
+        plan_digest="d" * 64,
+        query_digest="e" * 64,
+        limits={
+            "max_rows": 10,
+            "max_bytes": 1000,
+            "chunk_rows": 2,
+            "chunk_bytes": 500,
+            "deadline_ms": 1000,
+        },
+        arguments={"state": "open"},
+        correlate=correlate,  # type: ignore[arg-type]
+    )
+
+    assert result == "result"
+    built = seen["request"]
+    assert built.source_name == "issues"
+    assert built.source_id == "issues"
+    assert built.connector == "github-mcp"
+    assert built.tool == "list_issues"
+    assert built.arguments == {"state": "open"}
+    assert built.approval is request.approval
+    assert seen["mapping"] is mapping
+    assert seen["resource_uri"] == "ontology://issues"
+    assert seen["correlate"] is correlate
 
 
 @pytest.mark.spec("ARBORA-FLEET-R043.7")

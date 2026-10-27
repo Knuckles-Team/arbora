@@ -194,12 +194,27 @@ def _session_graph(session: Any) -> str:
 async def dispatch_eg_method(
     binding: EgMethod, params: Mapping[str, Any], context: ExecutionContext
 ) -> Any:
-    """Send one admitted method under its current caller's verified graph."""
+    """Send one admitted method under its verified graph authority.
+
+    Owner-bound run reads are stored on the fixed control graph.  They still
+    use the caller's verified claims, but must not follow the caller's content
+    graph or expose a graph selector in the request.
+    """
     from epistemic_graph.generated import send_by_id
 
     method = _eg_method_id(binding)
     graph = await _caller_dispatch_graph(context)
     payload = claim_values(params)
+    if method == "GetRunWorkItem":
+        # EG's stable owner-read wire contract requires ``tenant``.  Treat it
+        # as a correlation field only after the caller session has been
+        # revalidated above; a request naming another tenant must never reach
+        # the provider.
+        if payload.get("tenant") != context.caller.tenant:
+            raise OperationRefused("INVALID_ARGUMENT", {"field": "tenant"})
+        from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+
+        graph = CONTROL_GRAPH
     if method == "NlQuery":
         if "graph" in payload:
             raise OperationRefused("INVALID_ARGUMENT", {"field": "graph"})

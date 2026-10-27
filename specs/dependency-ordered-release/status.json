@@ -195,8 +195,8 @@
         "46c93f5103b1",
         "614795d10268",
         "6d39a589385a",
-        "af8ceeb6941a",
-        "c92fbf05fbb5"
+        "a31b9d959b3a",
+        "af8ceeb6941a"
       ],
       "verified_by": [
         "tests/api/test_task_plan_schema_pin.py:143",

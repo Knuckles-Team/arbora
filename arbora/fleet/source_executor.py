@@ -387,6 +387,7 @@ class FleetSourceExecutor:
                 ChunkRequest,
                 CompleteRequest,
                 ForeignReadLimits,
+                ForeignReadRow,
                 OpenRequest,
             )
         except ImportError:
@@ -439,7 +440,8 @@ class FleetSourceExecutor:
                     elif next_cursor is not None and len(source_rows) + rows >= row_cap:
                         truncated = True
                     mapped = [
-                        _foreign_row(source_row, request) for source_row in source_rows
+                        ForeignReadRow.model_validate(_foreign_row(source_row, request))
+                        for source_row in source_rows
                     ]
                     for offset in range(0, len(mapped), limits.chunk_rows):
                         chunk_rows = mapped[offset : offset + limits.chunk_rows]
@@ -447,6 +449,7 @@ class FleetSourceExecutor:
                             ChunkRequest(
                                 execution=execution,
                                 sequence=sequence,
+                                source_identity=opened.source_identity,
                                 rows=chunk_rows,
                             )
                         )
@@ -501,6 +504,60 @@ class FleetSourceExecutor:
                 truncated=truncated,
             )
 
+    async def read_approved(
+        self,
+        request: ForeignReadSourceRequest,
+        *,
+        mapping: Any,
+        resource_uri: str,
+        correlate: Callable[[Any], Awaitable[Any]] | None = None,
+    ) -> ForeignReadResult:
+        """Read one catalog mapping after an EG approval/owner check.
+
+        The caller supplies the mapping selected by the existing virtual
+        catalog and the exact ontology resource URI used for the EG approval
+        CAS.  This method only projects an already-approved receipt; it never
+        calls ``ConnectorPack`` or ``RegisterForeignSource``.  EG's native
+        ``ForeignReadOpen``/phase handlers remain the authority and recheck
+        the durable receipt and owner catalog.
+        """
+
+        from arbora.fleet.access_contracts import (
+            approved_source_id,
+            source_approval_decision,
+        )
+
+        if not bool(getattr(mapping, "approved", False)):
+            return _foreign_failure(
+                request,
+                "SOURCE_HELD",
+                "the catalog mapping has no current EG approval",
+            )
+        decision = source_approval_decision(
+            request.contract,
+            request.approval,
+            connector=request.connector,
+            resource_uri=resource_uri,
+        )
+        if decision.outcome != "approved":
+            return _foreign_failure(request, "SOURCE_HELD", decision.reason)
+        if approved_source_id(request.approval) != request.source_name:
+            return _foreign_failure(
+                request,
+                "SOURCE_HELD",
+                "the source name is not the approved owner-catalog entry",
+            )
+        if getattr(mapping, "mapping_id", None) != decision.mapping_iri or any(
+            getattr(mapping, field, None) != getattr(request.contract, field, None)
+            for field in ("source_id", "entity", "class_iri", "key_field", "predicates")
+        ):
+            return _foreign_failure(
+                request,
+                "SOURCE_HELD",
+                "the catalog mapping is not the approved contract",
+            )
+        return await self.read_foreign(request, correlate=correlate)
+
     async def read_all(
         self, requests: Sequence[SourceReadRequest]
     ) -> tuple[SourceReadResult, ...]:
@@ -532,7 +589,98 @@ class FleetSourceExecutor:
         return tuple(out)
 
 
+@dataclass(frozen=True, slots=True)
+class FleetSourceBinding:
+    """Caller-bound reader for one approved virtual source.
+
+    The query caller supplies only the engine's plan/query digests, limits and
+    connector arguments.  Connector, operation, mapping, resource URI and
+    receipt all come from the process catalog's validated approval binding.
+    ``read_approved`` still sends the receipt to EG, so this object is a
+    selection seam rather than a second authority.
+    """
+
+    executor: FleetSourceExecutor
+    source: Any
+
+    def request(
+        self,
+        *,
+        plan_digest: str,
+        query_digest: str,
+        limits: Any,
+        arguments: Mapping[str, Any] | None = None,
+        rows_key: str = "items",
+        cursor_key: str = "next_cursor",
+        cursor_arg: str = "cursor",
+        max_pages: int = 5,
+        max_rows: int = 1000,
+        timeout_s: float = 30.0,
+    ) -> ForeignReadSourceRequest:
+        from arbora.fleet.access_contracts import approved_source_id
+
+        source_name = approved_source_id(self.source.receipt)
+        operation = getattr(self.source.contract, "operation", None)
+        if not isinstance(source_name, str) or not source_name:
+            raise LookupError("approved source has no native source identity")
+        if not isinstance(operation, str) or not operation:
+            raise LookupError("approved source has no declared read operation")
+        return ForeignReadSourceRequest(
+            source_id=self.source.mapping.source_id,
+            connector=self.source.connector,
+            tool=operation,
+            source_name=source_name,
+            contract=self.source.contract,
+            approval=self.source.receipt,
+            plan_digest=plan_digest,
+            query_digest=query_digest,
+            limits=limits,
+            arguments=dict(arguments or {}),
+            rows_key=rows_key,
+            cursor_key=cursor_key,
+            cursor_arg=cursor_arg,
+            max_pages=max_pages,
+            max_rows=max_rows,
+            timeout_s=timeout_s,
+        )
+
+    async def read(
+        self,
+        *,
+        plan_digest: str,
+        query_digest: str,
+        limits: Any,
+        arguments: Mapping[str, Any] | None = None,
+        rows_key: str = "items",
+        cursor_key: str = "next_cursor",
+        cursor_arg: str = "cursor",
+        max_pages: int = 5,
+        max_rows: int = 1000,
+        timeout_s: float = 30.0,
+        correlate: Callable[[Any], Awaitable[Any]] | None = None,
+    ) -> ForeignReadResult:
+        request = self.request(
+            plan_digest=plan_digest,
+            query_digest=query_digest,
+            limits=limits,
+            arguments=arguments,
+            rows_key=rows_key,
+            cursor_key=cursor_key,
+            cursor_arg=cursor_arg,
+            max_pages=max_pages,
+            max_rows=max_rows,
+            timeout_s=timeout_s,
+        )
+        return await self.executor.read_approved(
+            request,
+            mapping=self.source.mapping,
+            resource_uri=self.source.resource_uri,
+            correlate=correlate,
+        )
+
+
 __all__ = [
+    "FleetSourceBinding",
     "ForeignReadResult",
     "ForeignReadSourceRequest",
     "FleetSourceExecutor",

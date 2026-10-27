@@ -667,10 +667,10 @@
         "e755549375e6"
       ],
       "verified_by": [
-        "tests/api/test_resolve.py:259",
-        "tests/api/test_resolve.py:273",
-        "tests/api/test_resolve.py:288",
-        "tests/api/test_resolve.py:303"
+        "tests/api/test_resolve.py:258",
+        "tests/api/test_resolve.py:272",
+        "tests/api/test_resolve.py:287",
+        "tests/api/test_resolve.py:302"
       ]
     },
     {
@@ -681,8 +681,8 @@
         "3597c590c8c9"
       ],
       "verified_by": [
-        "tests/api/test_resolve.py:314",
-        "tests/api/test_resolve.py:326"
+        "tests/api/test_resolve.py:313",
+        "tests/api/test_resolve.py:325"
       ]
     },
     {
@@ -728,6 +728,7 @@
       "title": "Arbora classifies a failed `fleet.call` by its real cause",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "d9181280937b",
         "fdd59af317ce"
       ],
       "verified_by": [
@@ -1052,13 +1053,15 @@
     {
       "id": "ARBORA-FLEET-R030",
       "title": "Fleet onboarding registers connector access contracts unapproved",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "7e0cc536c81a",
         "9095a5cefabe",
         "f2284b64b6b3"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/fleet/test_fleet_access_contracts.py:105"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R031",
@@ -1410,7 +1413,7 @@
         "524b0ceaaf9c"
       ],
       "verified_by": [
-        "tests/fleet/test_fleet_access_contracts.py:252"
+        "tests/fleet/test_fleet_access_contracts.py:480"
       ]
     },
     {
@@ -1817,11 +1820,13 @@
     {
       "id": "ARBORA-FLEET-R041.7",
       "title": "Handshake trigger",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "f832448cf411"
+      ],
       "verified_by": [
-        "tests/fleet/test_handshake_onboard.py:143",
-        "tests/fleet/test_handshake_onboard.py:319"
+        "tests/fleet/test_handshake_onboard.py:146",
+        "tests/fleet/test_handshake_onboard.py:360"
       ]
     },
     {
@@ -1829,11 +1834,14 @@
       "title": "Reconnect compare",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "dab2f894b5d6"
+        "6e797f51cc30",
+        "dab2f894b5d6",
+        "f832448cf411"
       ],
       "verified_by": [
-        "tests/fleet/test_handshake_onboard.py:163",
-        "tests/fleet/test_handshake_onboard.py:248"
+        "tests/fleet/test_handshake_onboard.py:166",
+        "tests/fleet/test_handshake_onboard.py:204",
+        "tests/fleet/test_handshake_onboard.py:289"
       ]
     },
     {
@@ -1841,12 +1849,13 @@
       "title": "Serving never blocks",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "e755549375e6"
+        "e755549375e6",
+        "f832448cf411"
       ],
       "verified_by": [
-        "tests/fleet/test_handshake_onboard.py:265",
-        "tests/fleet/test_handshake_onboard.py:299",
-        "tests/fleet/test_handshake_onboard.py:333"
+        "tests/fleet/test_handshake_onboard.py:306",
+        "tests/fleet/test_handshake_onboard.py:340",
+        "tests/fleet/test_handshake_onboard.py:374"
       ]
     },
     {
@@ -1854,10 +1863,11 @@
       "title": "Rules unchanged",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "a31aba1d54a2"
+        "a31aba1d54a2",
+        "f832448cf411"
       ],
       "verified_by": [
-        "tests/fleet/test_handshake_onboard.py:344"
+        "tests/fleet/test_handshake_onboard.py:385"
       ]
     },
     {
@@ -1911,8 +1921,8 @@
         "fd0f5f810481"
       ],
       "verified_by": [
-        "tests/fleet/test_handshake_onboard.py:164",
-        "tests/fleet/test_handshake_onboard.py:217"
+        "tests/fleet/test_handshake_onboard.py:205",
+        "tests/fleet/test_handshake_onboard.py:258"
       ]
     },
     {
@@ -1966,7 +1976,7 @@
         "58eace7440eb"
       ],
       "verified_by": [
-        "tests/fleet/test_handshake_onboard.py:376"
+        "tests/fleet/test_handshake_onboard.py:417"
       ]
     },
     {
@@ -2003,7 +2013,9 @@
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/fleet/test_fleet_access_contracts.py:374"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R042.4",
@@ -2052,11 +2064,11 @@
     {
       "id": "ARBORA-FLEET-R043.2",
       "title": "Behavior",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": [
-        "tests/api/test_resolve.py:193"
-      ]
+      "delivery_state": "LANDED",
+      "landed_in": [
+        "c135fd8a6f4a"
+      ],
+      "verified_by": []
     },
     {
       "id": "ARBORA-FLEET-R043.3",
@@ -2091,16 +2103,20 @@
       "title": "Source executor",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "c135fd8a6f4a",
+        "e755549375e6",
         "18ce44dc31bd",
-        "2d2fe39a58ce",
-        "e755549375e6"
+        "2d2fe39a58ce"
       ],
       "verified_by": [
-        "tests/fleet/test_source_executor.py:167",
-        "tests/fleet/test_source_executor.py:204",
-        "tests/fleet/test_source_executor.py:228",
-        "tests/fleet/test_source_executor.py:254",
-        "tests/fleet/test_source_executor.py:291"
+        "tests/fleet/test_source_executor.py:285",
+        "tests/fleet/test_source_executor.py:323",
+        "tests/fleet/test_source_executor.py:368",
+        "tests/fleet/test_source_executor.py:407",
+        "tests/fleet/test_source_executor.py:431",
+        "tests/fleet/test_source_executor.py:486",
+        "tests/fleet/test_source_executor.py:512",
+        "tests/fleet/test_source_executor.py:560"
       ]
     },
     {

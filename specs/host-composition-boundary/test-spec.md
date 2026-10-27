@@ -116,6 +116,16 @@ These checks do not prove authorized host logs or terminal startup.
   source generation, sequence, request, timestamp and severity. Version one
   remains unchanged. Unsupported versions and malformed metadata refuse.
 
+- R009.8.2.2.1: Run all four cases in `tests/agent_host/test_log_sink_terminal_lifecycle.py`
+  against the installed `tuig==2.3.6` native wheel. Check the installed binary
+  against its distribution record. Drive the real terminal through a PTY and
+  inspect rendered cells. Keep the 0/0.6-second read delays and 0/0.04-second
+  sink-write delays. Pause the consumer while rotating retained files, then
+  resume its original cursor. Revocation and retention gaps clear old text and
+  do not trigger renewed admission. Missing native tooling fails required Linux
+  acceptance. Other platforms and deployed grant owners remain unqualified.
+- R009.8.2.2.2: Installed Overstory metadata and gap acceptance remain open.
+
 The R010.7.2.2.1 launcher attachment accepts an explicit borrowed runtime bundle.
 It rejects conflicting legacy resource arguments and absent admission before
 owner calls. Actual create_agent_server revalidates the exact bundle through

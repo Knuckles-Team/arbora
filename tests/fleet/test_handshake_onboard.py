@@ -9,6 +9,7 @@ one ``FleetOnboarding.onboard`` function. EG is faked at the transport, as in
 
 from __future__ import annotations
 
+import asyncio
 import functools
 import threading
 from types import SimpleNamespace
@@ -18,11 +19,13 @@ import pytest
 
 from arbora.fleet.multiplexer import MCPMultiplexer
 from arbora.fleet.onboarding import (
+    RESOURCES_URI,
     FleetEndpoint,
     FleetOnboarding,
     HandshakeOnboarder,
     OnboardingTrigger,
     handshake_catalog_digest,
+    served_catalog_digest,
 )
 from tests.fleet.test_fleet_onboarding import (
     _HEAD_CATALOG,
@@ -158,6 +161,44 @@ def test_completed_handshake_starts_one_pass_and_imports_full_pack(
     assert _record(mux)["reason"] == "handshake"
     trigger = OnboardingTrigger("alpha-mcp", "handshake")
     assert trigger.reason == "handshake"
+
+
+@pytest.mark.spec("ARBORA-FLEET-R041.8")
+def test_discovery_failure_changes_digest_until_the_surface_is_read() -> None:
+    """R041.8: a failed optional read must trigger a later recapture."""
+
+    class _FailedPrompts:
+        async def list_prompts(self) -> Any:
+            raise RuntimeError("synthetic transport failure")
+
+        async def list_resources(self) -> Any:
+            return SimpleNamespace(resources=[])
+
+    class _EmptySurfaces:
+        async def list_prompts(self) -> Any:
+            return SimpleNamespace(prompts=[])
+
+        async def list_resources(self) -> Any:
+            return SimpleNamespace(resources=[])
+
+    class _FailedDeclaration:
+        async def list_prompts(self) -> Any:
+            return SimpleNamespace(prompts=[])
+
+        async def list_resources(self) -> Any:
+            return SimpleNamespace(resources=[SimpleNamespace(uri=RESOURCES_URI)])
+
+        async def read_resource(self, _uri: str) -> Any:
+            raise RuntimeError("synthetic secret endpoint failure")
+
+    failed = asyncio.run(served_catalog_digest(_FailedPrompts(), _tools("lookup")))
+    empty = asyncio.run(served_catalog_digest(_EmptySurfaces(), _tools("lookup")))
+    failed_declaration = asyncio.run(
+        served_catalog_digest(_FailedDeclaration(), _tools("lookup"))
+    )
+
+    assert failed != empty
+    assert failed_declaration != empty
 
 
 # spec: ARBORA-FLEET-R041.8

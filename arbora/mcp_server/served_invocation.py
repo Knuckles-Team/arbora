@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import Any
 
 from arbora.api.registry import EgSchemaRef
+from arbora.identity.ports import BrowserBoundaryFactory
 
 __all__ = [
     "PoolLeases",
@@ -261,6 +262,82 @@ def _with_ingest_runner(
         control_client=control_client,
     )
     return {**bindings, "ingest_runner": runner}
+
+
+def _with_fleet_source_executor(
+    bindings: Mapping[str, Any] | None,
+    pool: Any,
+    graph: str,
+) -> Mapping[str, Any] | None:
+    """Expose the governed foreign-source reader to internal query paths.
+
+    The binding is a factory because a source executor carries the verified
+    caller for its fleet gateway calls.  It does not register or approve a
+    source; those writes belong to EG's owner-scoped ConnectorPack and
+    RegisterForeignSource methods.  Query code receives the same graph-routed
+    ``ServedEngine`` and must supply the EG approval receipt and approved
+    catalog mapping before calling ``read_approved``.
+    """
+
+    if not bindings or "fleet_gateway" not in bindings:
+        return bindings
+    if "fleet_source_executor" in bindings:
+        return bindings
+    from arbora.fleet.source_executor import FleetSourceExecutor
+    from arbora.mcp_server.served_engine import ServedEngine
+
+    engine = ServedEngine(pool)
+
+    def source_executor_for(
+        caller: Any, *, overall_timeout_s: float = 60.0
+    ) -> FleetSourceExecutor:
+        return FleetSourceExecutor.from_engine(
+            bindings["fleet_gateway"],
+            caller,
+            engine,
+            graph=graph,
+            overall_timeout_s=overall_timeout_s,
+        )
+
+    def source_binding_for(
+        caller: Any,
+        source_id: str,
+        *,
+        overall_timeout_s: float = 60.0,
+    ) -> Any:
+        """Resolve one approved source in the caller's startup scope.
+
+        Resolution is deliberately lazy: fleet onboarding binds the process
+        catalog after invocation composition.  The caller's verified tenant
+        and graph are required to match that catalog before a source binding
+        is returned; no request field can select another tenant projection.
+        """
+
+        from arbora.fleet.access_contracts import fleet_virtual_catalog
+        from arbora.fleet.source_executor import FleetSourceBinding
+
+        catalog = bindings.get("fleet_virtual_catalog")
+        if catalog is None:
+            catalog = fleet_virtual_catalog()
+        tenant = getattr(caller, "tenant", None)
+        session = getattr(caller, "session", None)
+        caller_graph = getattr(session, "graph", None)
+        if not isinstance(tenant, str) or not isinstance(caller_graph, str):
+            raise LookupError("verified caller scope is unavailable")
+        source = catalog.approved_source_for(
+            source_id,
+            scope=(tenant, caller_graph),
+        )
+        return FleetSourceBinding(
+            executor=source_executor_for(caller, overall_timeout_s=overall_timeout_s),
+            source=source,
+        )
+
+    return {
+        **bindings,
+        "fleet_source_executor": source_executor_for,
+        "fleet_source_binding": source_binding_for,
+    }
 
 
 def _schema_action(session: Any, graph: str, pin: Mapping[str, Any]) -> Any:
@@ -504,6 +581,7 @@ def compose_served_invocation(
     bindings: Mapping[str, Any] | None = None,
     fleet_effect: Any = None,
     task_plan_config: Any = None,
+    browser_boundary_factory: BrowserBoundaryFactory | None = None,
 ) -> Any:
     """One admitted :class:`HostedInvocation` over the served EG pool."""
     from arbora.api.http.auth import (
@@ -539,6 +617,7 @@ def compose_served_invocation(
 
     minted = session()
     bindings = _with_ingest_runner(bindings, pool, graph, connect_context)
+    bindings = _with_fleet_source_executor(bindings, pool, graph)
     bindings = _with_task_plan_schema(bindings, pool, graph, connect_context, session)
     if (
         bindings is not None
@@ -625,13 +704,36 @@ def compose_served_invocation(
     )
     if step_invoke is not None:
         step_invoke.bind(services)
-    return HostedInvocation(
+    invocation = HostedInvocation(
         services=services,
         task_plan_config=task_plan_config,
         authenticator=AmbientHTTPAuthenticator(
             session_for_request=verified_bearer_session_for_request
         ),
     )
+
+    from dataclasses import replace
+
+    from arbora.core.settings import runtime_config
+
+    if browser_boundary_factory is None:
+        if runtime_config.enable_web_ui and runtime_config.webui_auth_mode == "eg":
+            raise RuntimeError("EG browser requires the process-root identity factory")
+        return invocation
+
+    def browser_broker_claims() -> Any:
+        current = session()
+        current.ensure_authority_current()
+        return connect_context(current.tenant).to_claims()
+
+    boundary = browser_boundary_factory(
+        invocation,
+        service_client,
+        graph=graph,
+        tenant=minted.tenant,
+        broker_claims=browser_broker_claims,
+    )
+    return replace(invocation, browser_boundary=boundary)
 
 
 class _LeaseClient:
@@ -649,6 +751,7 @@ def served_invocation_from_settings(
     process_session: Callable[[], Any],
     bindings: Mapping[str, Any],
     fleet_effect: Any,
+    browser_boundary_factory: BrowserBoundaryFactory | None = None,
 ) -> Any:
     """The served invocation from the deployment settings, or ``None``.
 
@@ -679,4 +782,5 @@ def served_invocation_from_settings(
         bindings=bindings,
         fleet_effect=fleet_effect,
         task_plan_config=task_plan_config,
+        browser_boundary_factory=browser_boundary_factory,
     )

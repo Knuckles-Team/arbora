@@ -6,12 +6,14 @@ must supply qualified owners; the default host exposes no log data.
 
 from __future__ import annotations
 
+import ipaddress
 import secrets
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Literal, Protocol
+from urllib.parse import urlsplit
 
 from arbora.identity.ports import SessionAuthority, SessionState
 
@@ -54,6 +56,51 @@ def valid_generations(values: tuple[str, ...]) -> bool:
         )
         and len(set(values)) == len(values)
     )
+
+
+def _normalize_endpoint(value: str) -> str:
+    """Render the server-owned HTTP origin exactly as the TUI client does."""
+    if type(value) is not str or not value.strip() or len(value.encode()) > 2048:
+        raise ValueError("invalid_endpoint")
+    try:
+        rendered = value.strip()
+        if any(character.isspace() or ord(character) < 32 for character in rendered):
+            raise ValueError("invalid_endpoint")
+        parsed = urlsplit(rendered)
+        if (
+            parsed.scheme.casefold() not in {"http", "https"}
+            or not parsed.hostname
+            or parsed.username is not None
+            or parsed.password is not None
+            or parsed.path not in {"", "/"}
+            or parsed.query
+            or parsed.fragment
+        ):
+            raise ValueError("invalid_endpoint")
+        host = parsed.hostname.casefold().rstrip(".")
+        if not host:
+            raise ValueError("invalid_endpoint")
+        try:
+            address = ipaddress.ip_address(host)
+        except ValueError:
+            rendered_host = host.encode("idna").decode("ascii")
+        else:
+            rendered_host = (
+                f"[{address.compressed}]"
+                if isinstance(address, ipaddress.IPv6Address)
+                else address.compressed
+            )
+        port = parsed.port
+    except (UnicodeError, ValueError):
+        raise ValueError("invalid_endpoint") from None
+    if port == 0:
+        raise ValueError("invalid_endpoint")
+    default_port = 443 if parsed.scheme.casefold() == "https" else 80
+    authority = (
+        rendered_host if port in {None, default_port} else f"{rendered_host}:{port}"
+    )
+    origin = f"{parsed.scheme.casefold()}://{authority}"
+    return f"{origin}/"
 
 
 class WorkspaceGrantProvider(Protocol):
@@ -199,7 +246,7 @@ class HostLogAccess:
         self._references[reference] = _Reference(grant, state.expires_at_ms)
         return reference
 
-    def reference_binding(self, reference: str) -> dict:
+    def reference_binding(self, reference: str, *, endpoint: str) -> dict:
         """Describe a just-issued reference for the authenticated HTTP handoff."""
         bound = self._references[reference]
         grant = bound.grant
@@ -207,6 +254,7 @@ class HostLogAccess:
             "version": 1,
             "log_ref": reference,
             "host_instance": self._host,
+            "endpoint": _normalize_endpoint(endpoint),
             "workspace": grant.workspace,
             "tenant": grant.tenant,
             "principal": grant.principal,
@@ -217,6 +265,7 @@ class HostLogAccess:
             "interface_mode": self._interface_mode,
             "web_logs": self._web_logs,
             "ready": True,
+            "source_generations": list(grant.source_generations),
         }
 
     async def _bound(self, credential: str, reference: str) -> WorkspaceLogGrant:

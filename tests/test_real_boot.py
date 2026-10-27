@@ -108,10 +108,21 @@ def _listening(port: int) -> bool:
         return probe.connect_ex(("127.0.0.1", port)) == 0
 
 
+def _free_ports(count: int) -> tuple[int, ...]:
+    """Choose distinct fixture ports while all allocation sockets remain bound."""
+    with contextlib.ExitStack() as stack:
+        ports = []
+        for _ in range(count):
+            probe = stack.enter_context(
+                socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            )
+            probe.bind(("127.0.0.1", 0))
+            ports.append(int(probe.getsockname()[1]))
+        return tuple(ports)
+
+
 def _free_port() -> int:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
-        probe.bind(("127.0.0.1", 0))
-        return int(probe.getsockname()[1])
+    return _free_ports(1)[0]
 
 
 class _Issuer:
@@ -248,8 +259,13 @@ def _booted_stack(
     extra_config: dict[str, str] | None = None,
     extra_env: dict[str, str] | None = None,
     extra_token_roles: tuple[str, ...] = (),
+    process_token_roles: tuple[str, ...] | None = None,
+    process_token_email: bool = True,
+    private_root: Path | None = None,
+    before_serve: Any = None,
+    boot_stage: Any = None,
 ) -> Iterator[dict[str, Any]]:
-    root = Path(tempfile.mkdtemp(prefix="gos-boot-", dir="/tmp"))
+    root = Path(tempfile.mkdtemp(prefix="gos-boot-", dir=private_root or "/tmp"))
     issuer = _Issuer()
     processes: list[subprocess.Popen[Any]] = []
     secret = uuid.uuid4().hex
@@ -322,6 +338,8 @@ def _booted_stack(
 
         # The operator's one provisioning step on a fresh engine: admit the
         # arbora process principal as the system identity, signing as itself.
+        if boot_stage is not None:
+            boot_stage("native_system_bootstrap")
         asyncio.run(_admit_process_identity(socket_path, secret, signer_key))
 
         model_port = _free_port()
@@ -389,8 +407,7 @@ def _booted_stack(
         }
         policy_path = config_dir / "action_policy.json"
         policy_path.write_text(json.dumps(policy))
-        port = _free_port()
-        connector_port = _free_port()
+        port, connector_port, ingest_port = _free_ports(3)
         processes.append(
             subprocess.Popen(
                 [
@@ -403,7 +420,6 @@ def _booted_stack(
                 stderr=subprocess.STDOUT,
             )
         )
-        ingest_port = _free_port()
         processes.append(
             subprocess.Popen(
                 [
@@ -434,7 +450,12 @@ def _booted_stack(
             )
         )
         token_roles = tuple(dict.fromkeys((*ROLES, *extra_token_roles)))
-        process_token = issuer.token(PROCESS_SUBJECT, ttl=7200)
+        process_token = issuer.token(
+            PROCESS_SUBJECT,
+            ttl=7200,
+            roles=process_token_roles,
+            email=process_token_email,
+        )
         service_token = issuer.token(PROCESS_SUBJECT, ttl=7200, email=False)
         gos_env = {
             **base_env,
@@ -453,6 +474,8 @@ def _booted_stack(
         served_url = f"http://127.0.0.1:{port}/mcp"
         # The documented operator step on a fresh store: provision Arbora's
         # semantic packs under its own process identity before first serve.
+        if boot_stage is not None:
+            boot_stage("semantic_provisioning")
         provision = subprocess.run(
             [
                 shutil.which("arbora-production-ops", path=bindir)
@@ -476,6 +499,8 @@ def _booted_stack(
             what="the connector fixture",
             logs=lambda: gos_log_path.read_text(errors="replace"),
         )
+        if boot_stage is not None:
+            boot_stage("connector_onboarding")
         onboard = subprocess.run(
             [
                 shutil.which("arbora-production-ops", path=bindir)
@@ -493,6 +518,20 @@ def _booted_stack(
         assert onboard.returncode == 0, (
             f"fleet onboarding failed\n{onboard.stdout}\n{onboard.stderr}"
         )
+        if before_serve is not None:
+            # Test-only private setup seam: no production authority override.
+            before_serve(
+                {
+                    "socket_path": str(socket_path),
+                    "secret": secret,
+                    "issuer": issuer,
+                    "process_token": process_token,
+                    "root": root,
+                    "config_dir": config_dir,
+                    "env": gos_env,
+                    "base_url": f"http://127.0.0.1:{port}",
+                }
+            )
         entry = shutil.which("arbora", path=bindir)
         command = [entry] if entry else [sys.executable, "-m", "arbora.mcp_server"]
         processes.append(
@@ -1301,8 +1340,8 @@ def test_a2a_message_send_completes_through_the_model(stack: dict[str, Any]) -> 
 @pytest.mark.spec("ARBORA-OPS-R001")
 def test_the_tui_headless_prompt_completes(stack: dict[str, Any]) -> None:
     """The installed test dependency completes its headless prompt end to end."""
-    exe = shutil.which("agent-terminal-ui", path=str(Path(sys.executable).parent))
-    assert exe is not None, "install the locked test extra for TUI acceptance"
+    exe = shutil.which("tuig", path=str(Path(sys.executable).parent))
+    assert exe is not None, "install the locked Tuig test extra for TUI acceptance"
     env = {
         **{k: v for k, v in os.environ.items() if k in _INHERITED_ENV},
         "AGENT_URL": stack["base_url"],

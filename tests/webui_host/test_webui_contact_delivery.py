@@ -37,7 +37,7 @@ def test_webui_host_import_is_lazy() -> None:
     assert callable(module.run_web_ui)
 
 
-@pytest.mark.parametrize("auth_mode", ["required", "none", "oidc"])
+@pytest.mark.parametrize("auth_mode", ["required", "none", "oidc", "eg"])
 @pytest.mark.spec("ARBORA-IDENTITY-R004.7.1")
 def test_run_web_ui_builds_the_live_contact_delivery_path(
     monkeypatch: Any,
@@ -181,6 +181,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         contact_delivery: object | None = None,
         browser_control: object | None = None,
         auth_mode: str = "required",
+        session_boundary: object | None = None,
     ) -> object:
         calls["app"] = {
             "agent": agent,
@@ -190,6 +191,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
             "contact_delivery": contact_delivery,
             "browser_control": browser_control,
             "auth_mode": auth_mode,
+            "session_boundary": session_boundary,
         }
         return "webui-app"
 
@@ -227,7 +229,12 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
     monkeypatch.setattr(pydantic_ai, "Agent", _agent)
 
     monkeypatch.delenv(module.ACCESS_LOG_POLICY_ENV, raising=False)
-    module.run_web_ui(stop_event, host="0.0.0.0", port=8181)
+    from arbora.webui_host.session_boundary import WebUISessionBoundary
+
+    # This startup seam captures arguments only; the real factory/boundary
+    # route tests separately exercise admission and operation ownership.
+    boundary = object.__new__(WebUISessionBoundary) if auth_mode == "eg" else None
+    module.run_web_ui(stop_event, host="0.0.0.0", port=8181, session_boundary=boundary)
 
     assert os.environ[module.ACCESS_LOG_POLICY_ENV] == "disabled"
     assert calls["engine_getter"] == "bounded-engine"
@@ -239,10 +246,13 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
             "transcribe_voice": "voice-helper",
         },
         "listener_host": "0.0.0.0",
-        "application_composer": module.compose_web_application,
+        "application_composer": None
+        if auth_mode == "eg"
+        else module.compose_web_application,
         "contact_delivery": "governed-contact-delivery",
         "browser_control": service,
         "auth_mode": auth_mode,
+        "session_boundary": boundary,
     }
     assert calls["contact_factory"] is create_agent_web_app
     assert callable(calls["contact_runner"])

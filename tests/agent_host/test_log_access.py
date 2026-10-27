@@ -131,6 +131,7 @@ def serve(access: HostLogAccess | None, runtime: Any = None) -> Iterator[httpx.C
     )
     with socket.socket() as listener:
         listener.bind(("127.0.0.1", 0))
+        app.state.public_base_url = f"http://127.0.0.1:{listener.getsockname()[1]}"
         server = uvicorn.Server(
             uvicorn.Config(app, log_level="critical", lifespan="off")
         )
@@ -175,6 +176,56 @@ def reference(client: httpx.Client, credential: str = "a") -> str:
     )
     assert response.status_code == 200, response.text
     return str(response.json()["log_ref"])
+
+
+def test_reference_receipt_binds_request_origin_and_generations(
+    setup: tuple[ControlledOwners, HostLogAccess],
+) -> None:
+    owners, access = setup
+    with serve(access) as client:
+        response = client.post(
+            "/host/logs/reference", headers={"Authorization": "Bearer a"}
+        )
+        assert response.status_code == 200, response.text
+        payload = response.json()
+        assert payload["endpoint"] == f"{client.base_url!s}".rstrip("/") + "/"
+        assert payload["source_generations"] == ["host-1"]
+        assert payload["ready"] is True
+    assert owners.calls == 0
+
+
+def test_reference_receipt_refuses_host_spoof_before_grant(
+    setup: tuple[ControlledOwners, HostLogAccess],
+) -> None:
+    owners, access = setup
+    with serve(access) as client:
+        response = client.post(
+            "/host/logs/reference",
+            headers={
+                "Authorization": "Bearer a",
+                "Host": "untrusted.example",
+            },
+        )
+        assert response.status_code == 403
+        assert response.json() == {"detail": "workspace_denied"}
+    assert owners.calls == 0
+
+
+def test_reference_receipt_refuses_untrusted_forwarded_origin(
+    setup: tuple[ControlledOwners, HostLogAccess],
+) -> None:
+    owners, access = setup
+    with serve(access) as client:
+        response = client.post(
+            "/host/logs/reference",
+            headers={
+                "Authorization": "Bearer a",
+                "X-Forwarded-Host": "untrusted.example",
+            },
+        )
+        assert response.status_code == 403
+        assert response.json() == {"detail": "workspace_denied"}
+    assert owners.calls == 0
 
 
 def read(

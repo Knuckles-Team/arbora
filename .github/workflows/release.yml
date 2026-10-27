@@ -282,6 +282,14 @@ jobs:
       - name: Locked-environment type check (manual-stage hook, always full)
         run: uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" mypy-env --hook-stage manual --all-files
 
+      - name: Required released-native host log journeys
+        env:
+          HOST_LOG_RESULTS: ${{ runner.temp }}/native-host-log-results.xml
+        run: |
+          set -euo pipefail
+          uv run --frozen --no-sync python -m pytest tests/agent_host/test_log_sink_terminal.py tests/agent_host/test_log_sink_terminal_lifecycle.py -q -rP --junitxml="$HOST_LOG_RESULTS"
+          uv run --frozen --no-sync python -c 'import os, xml.etree.ElementTree as ET; cases = ET.parse(os.environ["HOST_LOG_RESULTS"]).findall(".//testcase"); assert len(cases) == 5 and all(case.find(tag) is None for case in cases for tag in ("skipped", "failure", "error")), "All five released-native host log cases must pass without skips"; print("Five released-native host log cases passed without skips")'
+
       # Operator decision (2026-10-09): PR gates run a fast subset so a PR
       # auto-merges within minutes -- lint and the spec check already ran
       # full above (the commit-stage pre-commit step), the type check just

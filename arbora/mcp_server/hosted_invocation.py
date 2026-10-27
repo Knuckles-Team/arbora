@@ -22,6 +22,7 @@ class HostedInvocation:
     services: InvokeServices
     authenticator: AmbientHTTPAuthenticator
     task_plan_config: TaskPlanConfig | None = None
+    browser_boundary: Any = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.services, InvokeServices) or not isinstance(

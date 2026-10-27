@@ -10,10 +10,7 @@ from dataclasses import dataclass
 import pytest
 
 from arbora.fleet import access_contracts as ac
-
-vg = pytest.importorskip("agent_utilities.knowledge_graph.virtual_graph")
-VirtualCatalog = vg.VirtualCatalog
-TripleOntology = vg.TripleOntology
+from arbora.fleet.virtual_catalog import VirtualCatalog
 
 CLS = "https://example.org/onto#Ticket"
 
@@ -105,6 +102,7 @@ def _pack() -> types.SimpleNamespace:
     )
 
 
+@pytest.mark.spec("ARBORA-FLEET-R030")
 def test_registers_unapproved_mappings(fake_sdk) -> None:
     catalog = VirtualCatalog()
     added = ac.register_access_contracts(
@@ -116,8 +114,123 @@ def test_registers_unapproved_mappings(fake_sdk) -> None:
     assert connection.kind == "mcp"
     assert connection.endpoint_ref == "fleet://tickets-mcp"
     assert [m.approved for m in catalog.mappings] == [False, False]
-    ontology = TripleOntology([])
-    assert catalog.mapping_for(CLS, ontology) is None
+    assert catalog.mapping_for(CLS) is None
+
+
+@pytest.mark.asyncio
+async def test_registered_adapter_refuses_until_governed_reader_is_bound(
+    fake_sdk,
+) -> None:
+    catalog = VirtualCatalog()
+    ac.register_access_contracts(_pack(), connector="tickets-mcp", catalog=catalog)
+
+    with pytest.raises(LookupError, match="no governed live binding"):
+        await catalog.adapters["tickets"].fetch(catalog.mappings[0])
+
+
+def _approved_receipt(
+    contract: _Contract, *, resource_uri: str = "ontology://tickets"
+) -> dict[str, object]:
+    return {
+        "connector": "tickets-mcp",
+        "contract_digest": "a" * 64,
+        "tenant_id": "tenant-a",
+        "registration": {
+            "approval": "approved",
+            "class_iri": contract.class_iri,
+            "connector": "tickets-mcp",
+            "contract_iri": contract.contract_iri,
+            "entity": contract.entity,
+            "key_field": contract.key_field,
+            "operation": contract.operation,
+            "resource_uri": resource_uri,
+            "source_id": contract.source_id,
+            "source_kind": "mcp_tool",
+        },
+    }
+
+
+def test_engine_receipt_projects_approval_only_when_registration_matches(fake_sdk):
+    contract = _Contract("urn:ac:1")
+    approved = ac.source_approval_decision(
+        contract,
+        _approved_receipt(contract),
+        connector="tickets-mcp",
+        resource_uri="ontology://tickets",
+    )
+    assert approved.outcome == "approved"
+    assert approved.mapping_iri == contract.contract_iri
+
+    held = ac.source_approval_decision(
+        contract,
+        _approved_receipt(contract, resource_uri="ontology://other"),
+        connector="tickets-mcp",
+        resource_uri="ontology://tickets",
+    )
+    assert held.outcome == "held"
+    assert "does not match" in held.reason
+
+
+def test_approved_receipt_binds_existing_mapping_without_binding_adapter(fake_sdk):
+    catalog = VirtualCatalog()
+    ac.register_access_contracts(_pack(), connector="tickets-mcp", catalog=catalog)
+    contract = _Contract("urn:ac:1")
+    decision = ac.bind_approved_mapping(
+        catalog,
+        contract,
+        _approved_receipt(contract),
+        connector="tickets-mcp",
+        resource_uri="ontology://tickets",
+    )
+    assert decision.outcome == "approved"
+    assert catalog.mappings[0].approved
+    bound = catalog.approved_source_for("tickets")
+    assert bound.mapping is catalog.mappings[0]
+    assert bound.contract is contract
+    assert bound.receipt == _approved_receipt(contract)
+    assert bound.connector == "tickets-mcp"
+    assert bound.resource_uri == "ontology://tickets"
+    # The projection controls selection only; direct catalog fetch remains
+    # fail-closed until the governed FleetSourceExecutor is used.
+    with pytest.raises(LookupError, match="no governed live binding"):
+        awaitable = catalog.adapters["tickets"].fetch(catalog.mappings[0])
+        import asyncio
+
+        asyncio.run(awaitable)
+
+
+def test_approved_source_binding_is_scoped_to_the_process_graph(fake_sdk):
+    catalog = VirtualCatalog()
+    catalog.bind_scope("tenant-a", "graph-a")
+    ac.register_access_contracts(_pack(), connector="tickets-mcp", catalog=catalog)
+    contract = _Contract("urn:ac:1")
+    decision = ac.bind_approved_mapping(
+        catalog,
+        contract,
+        _approved_receipt(contract),
+        connector="tickets-mcp",
+        resource_uri="ontology://tickets",
+        scope=("tenant-a", "graph-a"),
+    )
+    assert decision.outcome == "approved"
+    assert (
+        catalog.approved_source_for(
+            "tickets", scope=("tenant-a", "graph-a")
+        ).mapping.mapping_id
+        == contract.contract_iri
+    )
+    with pytest.raises(LookupError, match="scope"):
+        catalog.approved_source_for("tickets", scope=("tenant-b", "graph-a"))
+
+
+def test_repeated_registration_preserves_eg_approval(fake_sdk):
+    from dataclasses import replace
+
+    catalog = VirtualCatalog()
+    ac.register_access_contracts(_pack(), connector="tickets-mcp", catalog=catalog)
+    catalog.mappings[0] = replace(catalog.mappings[0], approved=True)
+    ac.register_access_contracts(_pack(), connector="tickets-mcp", catalog=catalog)
+    assert catalog.mappings[0].approved
 
 
 def test_repeat_pass_adds_no_duplicate(fake_sdk) -> None:
@@ -125,6 +238,120 @@ def test_repeat_pass_adds_no_duplicate(fake_sdk) -> None:
     ac.register_access_contracts(_pack(), connector="t", catalog=catalog)
     assert ac.register_access_contracts(_pack(), connector="t", catalog=catalog) == 0
     assert len(catalog.mappings) == 2
+
+
+def test_process_catalog_bootstrap_is_explicit_and_singleton(monkeypatch) -> None:
+    catalog = VirtualCatalog()
+    monkeypatch.setattr(ac, "_CATALOG", [])
+
+    assert ac.bootstrap_fleet_virtual_catalog(catalog) is catalog
+    assert ac.fleet_virtual_catalog() is catalog
+    with pytest.raises(RuntimeError, match="already bound"):
+        ac.bootstrap_fleet_virtual_catalog(VirtualCatalog())
+
+
+def test_source_policy_requires_admitted_read_reference() -> None:
+    read = types.SimpleNamespace(
+        contract_iri="urn:ac:read",
+        access_kind="mcp_tool",
+        operation="list_tickets",
+        effect="read",
+        auth_ref="env://TICKETS_TOKEN",
+    )
+    approved = ac.source_approval_policy(read, connector="tickets-mcp", admitted=True)
+    assert approved.outcome == "approved"
+
+    for contract, reason in (
+        (
+            types.SimpleNamespace(
+                contract_iri="urn:ac:write",
+                access_kind="mcp_tool",
+                operation="delete_ticket",
+                effect="write",
+                auth_ref="env://TICKETS_TOKEN",
+            ),
+            "read-only",
+        ),
+        (
+            types.SimpleNamespace(
+                contract_iri="urn:ac:literal",
+                access_kind="mcp_tool",
+                operation="list_tickets",
+                effect="read",
+                auth_ref="sk-live-secret",
+            ),
+            "credential reference",
+        ),
+    ):
+        held = ac.source_approval_policy(
+            contract, connector="tickets-mcp", admitted=True
+        )
+        assert held.outcome == "held"
+        assert reason in held.reason
+
+    held = ac.source_approval_policy(read, connector="tickets-mcp", admitted=False)
+    assert held.outcome == "held"
+    assert "not admitted" in held.reason
+
+
+def test_policy_approval_does_not_select_a_mapping_without_engine_receipt(
+    fake_sdk,
+    monkeypatch,
+) -> None:
+    contract = types.SimpleNamespace(
+        contract_iri="urn:ac:read",
+        source_id="tickets",
+        entity="ticket",
+        class_iri=CLS,
+        key_field="id",
+        access_kind="mcp_tool",
+        operation="list_tickets",
+        effect="read",
+        auth_ref="env://TICKETS_TOKEN",
+        predicates=(),
+        virtual_mapping_fields=lambda: {
+            "mapping_id": "urn:ac:read",
+            "source_id": "tickets",
+            "entity": "ticket",
+            "class_iri": CLS,
+            "key_field": "id",
+            "predicates": (),
+        },
+    )
+    monkeypatch.setattr(
+        sys.modules["agent_connector_sdk.access_contract"],
+        "parse_access_contracts",
+        lambda _text: (contract,),
+    )
+    catalog = VirtualCatalog()
+    decisions: list[ac.SourceApprovalDecision] = []
+
+    assert (
+        ac.register_access_contracts(
+            _pack(),
+            connector="tickets-mcp",
+            catalog=catalog,
+            admitted=True,
+            decisions=decisions,
+        )
+        == 1
+    )
+    assert decisions[0].outcome == "approved"
+    assert catalog.mappings[0].approved is False
+
+
+def test_unknown_operation_effect_is_held_before_engine_approval() -> None:
+    contract = types.SimpleNamespace(
+        contract_iri="urn:ac:unknown-effect",
+        access_kind="mcp_tool",
+        operation="list_tickets",
+        auth_ref="env://TICKETS_TOKEN",
+    )
+
+    held = ac.source_approval_policy(contract, connector="tickets-mcp", admitted=True)
+
+    assert held.outcome == "held"
+    assert "effect is not declared" in held.reason
 
 
 def test_missing_sdk_module_skips(monkeypatch) -> None:
@@ -144,6 +371,7 @@ def test_missing_sdk_module_skips(monkeypatch) -> None:
     assert catalog.mappings == []
 
 
+@pytest.mark.spec("ARBORA-FLEET-R042.3")
 def test_onboarding_registers_after_import(fake_sdk, monkeypatch) -> None:
     import asyncio
 

@@ -27,3 +27,22 @@ def print_usage_or_version(argv: list[str]) -> bool:
         parser.print_help()
         return True
     return False
+
+
+def main() -> None:
+    """Process composition root: inject concrete browser identity exactly once."""
+    import sys
+
+    if print_usage_or_version(sys.argv[1:]):
+        return
+    from functools import partial
+
+    from arbora.identity.browser_composition import configured_browser_boundary
+    from arbora.mcp_server.browser_dispatch import dispatch_browser_request
+    from arbora.mcp_server.server import mcp_server
+
+    mcp_server(
+        browser_boundary_factory=partial(
+            configured_browser_boundary, request_dispatch=dispatch_browser_request
+        )
+    )
