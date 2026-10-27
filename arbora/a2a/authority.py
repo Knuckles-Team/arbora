@@ -255,6 +255,12 @@ class WorkItemA2AAuthority:
         suffix = context_id.removeprefix("a2a-context-")
         if len(suffix) != 64 or any(char not in "0123456789abcdef" for char in suffix):
             raise ValueError("A2A context id is invalid")
+        if not self._context_exists(session, context_id, owner_ref):
+            raise PermissionError("A2A context is unavailable")
+        return context_id
+
+    def _context_exists(self, session: Any, context_id: str, owner_ref: str) -> bool:
+        """Read caller-owned membership only, never infer predecessor order."""
         _engine, work_engine = self._engine()
         match = {
             "a2a_schema": _A2A_METADATA_SCHEMA,
@@ -292,10 +298,12 @@ class WorkItemA2AAuthority:
                     raise PermissionError("A2A context is unavailable")
                 if self._session("kg:write") != session:
                     raise PermissionError("A2A caller changed during context lookup")
-                return context_id
+                return True
             cursor = page.get("next_cursor")
             if cursor is None:
-                raise PermissionError("A2A context is unavailable")
+                if self._session("kg:write") != session:
+                    raise PermissionError("A2A caller changed during context lookup")
+                return False
             if not isinstance(cursor, str) or not cursor or cursor in seen:
                 raise A2AContextUnavailable("durable A2A context lookup is unavailable")
             seen.add(cursor)

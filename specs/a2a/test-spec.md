@@ -219,3 +219,8 @@ Only a successful native terminal commit can publish reply text. A private
 owner-only point read supplies historical reply text after restart; public event
 markers cannot substitute. Installed native close/reopen, actual model-input
 capture and no repeated effects remain required by R001.3.2.
+
+Source cases cover a first browser label and its repeated use with a native head.
+They also cover foreign head bindings, absent canonical heads and legacy task
+membership without a native head. Each refusal occurs before new admission.
+These fixtures do not prove an installed browser restart journey.

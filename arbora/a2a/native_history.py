@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import time
@@ -356,7 +357,7 @@ async def prepare_admission(
     )
     if authority._session("kg:write") != session:
         raise unavailable()
-    if resume:
+    if head is not None:
         if (
             not isinstance(head, dict)
             or type(head.get("version")) is not int
@@ -371,7 +372,14 @@ async def prepare_admission(
             raise unavailable()
         revision, predecessor = head["revision"], head["run_id"]
     else:
-        if head is not None:
+        if resume or await asyncio.to_thread(
+            authority._context_exists,
+            session,
+            context_id,
+            authority._owner_ref(session),
+        ):
+            raise unavailable()
+        if authority._session("kg:write") != session:
             raise unavailable()
         revision, predecessor = 0, None
     if (

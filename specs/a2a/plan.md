@@ -626,3 +626,12 @@ without operator scope. Consumer configuration grants no native authorization.
 Anonymous callers and ordinary write or submit scopes cannot enable this profile.
 All destructive graph and migration lifecycle remains held while profile state
 exists; qualification must use an explicitly enabled, dedicated retained graph.
+
+Stable browser labels use the native head when it exists, just like canonical
+context locators. The existing owner-bound task reader is used only to reject
+legacy contexts that have no native head. It never supplies predecessor order.
+Missing canonical continuation locators still refuse. Native admission retains
+the head comparison and refuses a stale candidate without an automatic retry.
+The membership read is not atomic with concurrent legacy submissions. It detects
+existing legacy contexts only. This draft does not qualify mixed legacy and
+profile writers; exclusion of that race requires native admission policy.

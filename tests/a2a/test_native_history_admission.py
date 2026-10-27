@@ -37,7 +37,10 @@ async def test_old_generated_model_refuses_before_read(bound, monkeypatch):
     monkeypatch.setattr(models, "ConversationTurnAdmission", ConversationTurnAdmission)
     _, owner, _, _, read = bound
     authority = SimpleNamespace(
-        _session=lambda _: owner.session, hosted_invocation=object()
+        _session=lambda _: owner.session,
+        hosted_invocation=object(),
+        _context_exists=lambda *args: False,
+        _owner_ref=lambda _: "owner",
     )
     with pytest.raises(OperationRefused) as error:
         await history.prepare_admission(
@@ -71,7 +74,10 @@ async def test_new_turn_uses_only_native_head_candidate(bound, monkeypatch, resu
     }
     read.side_effect = [None, head if resume else None]
     authority = SimpleNamespace(
-        _session=lambda _: owner.session, hosted_invocation=object()
+        _session=lambda _: owner.session,
+        hosted_invocation=object(),
+        _context_exists=lambda *args: False,
+        _owner_ref=lambda _: "owner",
     )
     candidate = await history.prepare_admission(
         authority,
@@ -102,7 +108,10 @@ async def test_absent_continuation_head_never_creates_replacement(bound, monkeyp
     _, owner, _, _, read = bound
     read.side_effect = [None, None]
     authority = SimpleNamespace(
-        _session=lambda _: owner.session, hosted_invocation=object()
+        _session=lambda _: owner.session,
+        hosted_invocation=object(),
+        _context_exists=lambda *args: False,
+        _owner_ref=lambda _: "owner",
     )
     with pytest.raises(OperationRefused):
         await history.prepare_admission(
@@ -129,7 +138,10 @@ async def test_retry_reuses_original_admission_without_reading_new_head(
     view["admission"]["metadata"] = {"a2a_request_digest": "request"}
     view["admission"]["conversation"]["schema_version"] = "1"
     authority = SimpleNamespace(
-        _session=lambda _: owner.session, hosted_invocation=object()
+        _session=lambda _: owner.session,
+        hosted_invocation=object(),
+        _context_exists=lambda *args: False,
+        _owner_ref=lambda _: "owner",
     )
     candidate = await history.prepare_admission(
         authority,
@@ -254,3 +266,177 @@ async def test_dispatch_keeps_profile_prompt_out_of_public_submission(
     assert prompt not in str(submissions[0])
     assert prepare.await_args.kwargs["user_text"] == prompt
     assert execute.await_args.kwargs["task"] == prompt
+
+
+@pytest.fixture
+def browser_context(bound, monkeypatch, request):
+    from unittest.mock import Mock
+
+    from arbora.a2a.models import A2AMessage, A2ATextPart
+
+    monkeypatch.setattr(native_models, "ConversationTurnAdmission", CandidateAdmission)
+    _, owner, _, view, read = bound
+    rows = Mock(return_value={"items": [], "next_cursor": None})
+    engine = SimpleNamespace(
+        work_item_graph="private", work_items=SimpleNamespace(list=rows)
+    )
+    authority = WorkItemA2AAuthority(
+        lambda: engine, completed_text_history=True, hosted_invocation=object()
+    )
+    monkeypatch.setattr(authority, "_session", lambda _: owner.session)
+    message = A2AMessage(
+        role="user",
+        message_id="first",
+        context_id=getattr(request, "param", "webui:/V1StGXR8_Z5jdHi6B-myT"),
+        parts=[A2ATextPart(text="first")],
+    )
+    context = authority._resolve_context_id(
+        owner.session, message, "first-run", authority._owner_ref(owner.session)
+    )
+    head = {
+        "version": 1,
+        "context_id": context,
+        "revision": 1,
+        "run_id": "first-run",
+        "scope": view["checkpoint_selection"]["scope"],
+    }
+    return authority, engine, owner.session, message, context, head, read, rows
+
+
+async def browser_candidate(fixture, *, run="next-run", resume=False):
+    authority, engine, owner, _, context, _, _, _ = fixture
+    return await history.prepare_admission(
+        authority,
+        engine,
+        engine,
+        session=owner,
+        run_id=run,
+        context_id=context,
+        request_digest=run,
+        user_text="next",
+        resume=resume,
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "browser_context", ["webui:c1", "webui:/V1StGXR8_Z5jdHi6B-myT"], indirect=True
+)
+async def test_overstory_repeated_label_uses_native_head(browser_context):
+    authority, _, owner, message, context, head, read, rows = browser_context
+    read.side_effect = [None, None]
+    first = await browser_candidate(browser_context, run="first-run")
+    assert first.expected_revision == 0 and first.predecessor_run_id is None
+    second_message = message.model_copy(update={"message_id": "second"})
+    assert (
+        authority._resolve_context_id(
+            owner, second_message, "next-run", authority._owner_ref(owner)
+        )
+        == context
+    )
+    read.side_effect = [None, head]
+    second = await browser_candidate(browser_context)
+    assert second.expected_revision == 1
+    assert second.predecessor_run_id == "first-run"
+    rows.assert_called_once()
+    assert rows.call_args.kwargs["metadata_match"]["a2a_context_id"] == context
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "field,value", [("context_id", "foreign-context"), ("scope", {"tenant": "foreign"})]
+)
+async def test_label_refuses_foreign_native_head(browser_context, field, value):
+    *_, head, read, rows = browser_context
+    head[field] = value
+    read.side_effect = [None, head]
+    with pytest.raises(OperationRefused):
+        await browser_candidate(browser_context)
+    rows.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_label_with_legacy_membership_and_no_native_head_refuses(browser_context):
+    authority, _, owner, _, context, _, read, rows = browser_context
+    rows.return_value = {
+        "items": [
+            {
+                "kind": "orchestrator_task",
+                "metadata": {
+                    "a2a_schema": "arbora-a2a-unary-v1",
+                    "a2a_context_id": context,
+                    "a2a_owner_ref": authority._owner_ref(owner),
+                },
+            }
+        ],
+        "next_cursor": None,
+    }
+    read.side_effect = [None, None]
+    with pytest.raises(OperationRefused):
+        await browser_candidate(browser_context)
+    rows.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_canonical_locator_without_native_head_still_refuses(browser_context):
+    *_, read, rows = browser_context
+    read.side_effect = [None, None]
+    with pytest.raises(OperationRefused):
+        await browser_candidate(browser_context, resume=True)
+    rows.assert_not_called()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure", ["outage", "malformed", "cycle", "foreign"])
+async def test_label_membership_lookup_refuses_uncertainty(browser_context, failure):
+    from arbora.a2a.authority import A2AContextUnavailable
+
+    _, _, _, _, context, _, read, rows = browser_context
+    read.side_effect = [None, None]
+    if failure == "outage":
+        rows.side_effect = RuntimeError("private backend details")
+    elif failure == "malformed":
+        rows.return_value = {"items": None}
+    elif failure == "cycle":
+        rows.return_value = {"items": [], "next_cursor": "same"}
+    else:
+        rows.return_value = {
+            "items": [
+                {
+                    "kind": "orchestrator_task",
+                    "metadata": {
+                        "a2a_schema": "arbora-a2a-unary-v1",
+                        "a2a_context_id": context,
+                        "a2a_owner_ref": "foreign",
+                    },
+                }
+            ]
+        }
+    with pytest.raises((A2AContextUnavailable, PermissionError)):
+        await browser_candidate(browser_context)
+
+
+@pytest.mark.asyncio
+async def test_label_membership_searches_past_empty_page(browser_context):
+    authority, _, owner, _, context, _, read, rows = browser_context
+    read.side_effect = [None, None]
+    rows.side_effect = [
+        {"items": [], "next_cursor": "next"},
+        {
+            "items": [
+                {
+                    "kind": "orchestrator_task",
+                    "metadata": {
+                        "a2a_schema": "arbora-a2a-unary-v1",
+                        "a2a_context_id": context,
+                        "a2a_owner_ref": authority._owner_ref(owner),
+                    },
+                }
+            ],
+            "next_cursor": None,
+        },
+    ]
+    with pytest.raises(OperationRefused):
+        await browser_candidate(browser_context)
+    assert rows.call_count == 2
+    assert rows.call_args.kwargs["cursor"] == "next"

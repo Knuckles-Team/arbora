@@ -323,13 +323,8 @@ def test_the_a2a_run_uses_the_task_id_and_the_fleet_tools(
                 run_id=request.run_id, output="see https://x.example"
             )
 
-    auth = authority_mod.WorkItemA2AAuthority.__new__(
-        authority_mod.WorkItemA2AAuthority
-    )
-    auth._executor = _Executor()
-    auth.task_plan_config = None
-    auth.hosted_invocation = None
-    auth._detached = set()
+    auth = authority_mod.WorkItemA2AAuthority(lambda: None, executor=_Executor())
+    assert auth.completed_text_history is False
     task_id = "a2a-" + "a" * 64
 
     import arbora.work_items as work_items
