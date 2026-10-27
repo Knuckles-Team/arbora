@@ -2,14 +2,33 @@
 
 import asyncio
 import json
+from typing import Literal
 
+import httpx
 import pytest
 
 from tests.agent_host.native_terminal import NativeTerminal
-from tests.agent_host.native_terminal_trace import NativeTransportTrace
+from tests.agent_host.native_terminal_trace import (
+    NativeTransportTrace,
+    is_log_unavailable_response,
+)
+
+
+@pytest.mark.parametrize(
+    ("body", "expected"),
+    [
+        (b'{"detail":"log_unavailable"}', True),
+        (b'{"detail":"private-value"}', False),
+        (b"not-json private-value", False),
+        (b"x" * 4097, False),
+    ],
+)
+def test_health_error_classification_is_bounded(body: bytes, expected: bool) -> None:
+    assert is_log_unavailable_response(httpx.Response(503, content=body)) is expected
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("stage", ["read", "session", "emit"])
 @pytest.mark.parametrize(
     ("error_type", "category"),
     [
@@ -20,7 +39,9 @@ from tests.agent_host.native_terminal_trace import NativeTransportTrace
     ],
 )
 async def test_exception_metadata_never_contains_exception_text(
-    error_type: type[BaseException], category: str
+    error_type: type[BaseException],
+    category: str,
+    stage: Literal["read", "session", "emit"],
 ) -> None:
     trace = NativeTransportTrace()
     error = error_type("credential=private-value /private/path session=private-id")
@@ -29,7 +50,7 @@ async def test_exception_metadata_never_contains_exception_text(
         raise error
 
     with pytest.raises(error_type) as raised:
-        await trace.observe("read", denied)
+        await trace.observe(stage, denied)
     assert raised.value is error
     events = json.loads(trace.summary())
     assert events[-1]["status"] == category
