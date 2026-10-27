@@ -217,6 +217,7 @@
     "ARBORA-OPS-R067.7",
     "ARBORA-OPS-R067.8",
     "ARBORA-OPS-R067.9",
+    "ARBORA-OPS-R067.10",
     "ARBORA-OPS-R068",
     "ARBORA-OPS-R068.1",
     "ARBORA-OPS-R068.2",
@@ -2428,7 +2429,8 @@
         "ARBORA-OPS-R067.6",
         "ARBORA-OPS-R067.7",
         "ARBORA-OPS-R067.8",
-        "ARBORA-OPS-R067.9"
+        "ARBORA-OPS-R067.9",
+        "ARBORA-OPS-R067.10"
       ]
     },
     {
@@ -2515,6 +2517,13 @@
         "tests/api/test_research_web_backends.py:190",
         "tests/api/test_research_web_backends.py:206"
       ]
+    },
+    {
+      "id": "ARBORA-OPS-R067.10",
+      "title": "Admit revision-bound web-source conformance",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R068",
