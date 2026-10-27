@@ -728,6 +728,7 @@
       "title": "Arbora classifies a failed `fleet.call` by its real cause",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "d9181280937b",
         "fdd59af317ce"
       ],
       "verified_by": [
@@ -1819,8 +1820,10 @@
     {
       "id": "ARBORA-FLEET-R041.7",
       "title": "Handshake trigger",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "f832448cf411"
+      ],
       "verified_by": [
         "tests/fleet/test_handshake_onboard.py:146",
         "tests/fleet/test_handshake_onboard.py:360"
@@ -1832,7 +1835,8 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "6e797f51cc30",
-        "dab2f894b5d6"
+        "dab2f894b5d6",
+        "f832448cf411"
       ],
       "verified_by": [
         "tests/fleet/test_handshake_onboard.py:166",
@@ -1845,7 +1849,8 @@
       "title": "Serving never blocks",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "e755549375e6"
+        "e755549375e6",
+        "f832448cf411"
       ],
       "verified_by": [
         "tests/fleet/test_handshake_onboard.py:306",
@@ -1858,7 +1863,8 @@
       "title": "Rules unchanged",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "a31aba1d54a2"
+        "a31aba1d54a2",
+        "f832448cf411"
       ],
       "verified_by": [
         "tests/fleet/test_handshake_onboard.py:385"
@@ -2058,8 +2064,10 @@
     {
       "id": "ARBORA-FLEET-R043.2",
       "title": "Behavior",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "c135fd8a6f4a"
+      ],
       "verified_by": [
         "tests/api/test_resolve.py:193"
       ]
@@ -2097,6 +2105,7 @@
       "title": "Source executor",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "c135fd8a6f4a",
         "e755549375e6"
       ],
       "verified_by": [
