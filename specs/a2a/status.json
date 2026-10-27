@@ -1025,12 +1025,14 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "542a8bac1071",
+        "a2d662ec0e33",
         "d4937e42ad1d"
       ],
       "verified_by": [
         "tests/a2a/test_native_history_admission.py:18",
         "tests/a2a/test_native_history_selection.py:17",
-        "tests/api/test_query_ops.py:216"
+        "tests/api/test_query_ops.py:216",
+        "tests/mcp_server/test_graph_tool_surface.py:12"
       ]
     }
   ]
