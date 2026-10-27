@@ -1024,6 +1024,7 @@
       "title": "Bind opt-in native completed-text history before execution",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "542a8bac1071",
         "d4937e42ad1d"
       ],
       "verified_by": [
