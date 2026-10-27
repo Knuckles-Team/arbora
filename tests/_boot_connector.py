@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import json
+import os
 import sys
+from pathlib import Path
 
 from fastmcp import FastMCP
 
@@ -12,6 +15,9 @@ connector = FastMCP("boot-echo")
 @connector.tool(annotations={"readOnlyHint": True})
 def echo(text: str) -> str:
     """Return the given text unchanged, prefixed with ``echo:``."""
+    if path := os.getenv("BOOT_EFFECT_RECEIPTS"):
+        with Path(path).open("a") as receipts:
+            receipts.write(json.dumps({"tool": "echo", "text": text}) + "\n")
     return f"echo:{text}"
 
 

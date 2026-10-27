@@ -144,6 +144,7 @@ class A2ATaskAuthority(Protocol):
         idempotency_key: str,
         decision: A2ARouteDecision,
         blocking: bool = True,
+        require_completed_text_history: bool = False,
     ) -> A2ATask: ...
 
     async def get(self, task_id: str) -> A2ATask | None: ...
@@ -188,6 +189,15 @@ class WorkItemA2AAuthority:
         if type(completed_text_history) is not bool:
             raise TypeError("completed history flag must be a trusted boolean")
         self.completed_text_history = completed_text_history
+
+    def supports_completed_text_history(self) -> bool:
+        from .history_capability import native_history_contract_available
+
+        return (
+            self.completed_text_history is True
+            and self.task_plan_config is not None
+            and native_history_contract_available(self.hosted_invocation)
+        )
 
     @staticmethod
     def _session(scope: str) -> Any:
@@ -503,6 +513,7 @@ class WorkItemA2AAuthority:
         task_id: str = "",
         context_id: str = "",
         run_id: str | None = None,
+        require_completed_text_history: bool = False,
     ) -> dict[str, int] | None:
         """Lease the WorkItem, run the agent through the harness, commit the outcome.
 
@@ -512,12 +523,18 @@ class WorkItemA2AAuthority:
         """
         from arbora import work_items
 
+        if (
+            require_completed_text_history
+            and not self.supports_completed_text_history()
+        ):
+            raise A2AAssemblyUnavailable("completed-text history is unavailable")
         claim = await asyncio.to_thread(
             work_items.claim_specific,
             work_engine,
             item_id,
             token=f"arbora-a2a:{item_id}",
             lease_ttl_s=_RUN_LEASE_SECONDS,
+            **({"completed_text_history": True} if self.completed_text_history else {}),
         )
         if claim is None:
             return None
@@ -670,7 +687,13 @@ class WorkItemA2AAuthority:
         idempotency_key: str,
         decision: A2ARouteDecision,
         blocking: bool = True,
+        require_completed_text_history: bool = False,
     ) -> A2ATask:
+        if (
+            require_completed_text_history
+            and not self.supports_completed_text_history()
+        ):
+            raise A2AAssemblyUnavailable("completed-text history is unavailable")
         if decision.selected_tools:
             # Refuse before durable admission: the current signed AU dispatch
             # carrier cannot enforce this allowlist at execution time.
@@ -776,6 +799,7 @@ class WorkItemA2AAuthority:
                     task_id=task_id,
                     context_id=context_id,
                     run_id=run_id,
+                    require_completed_text_history=require_completed_text_history,
                 ),
                 item_id,
             )
@@ -789,6 +813,7 @@ class WorkItemA2AAuthority:
                 task_id=task_id,
                 context_id=context_id,
                 run_id=run_id,
+                require_completed_text_history=require_completed_text_history,
             )
             refreshed = await asyncio.to_thread(
                 work_items.get_work_item, work_engine, item_id
@@ -1080,6 +1105,7 @@ class WorkItemA2AAuthority:
             item=item,
             owner_ref=self._owner_ref(session),
             owner_graph=work_items.native_owner_graph(work_engine),
+            completed_text_history=self.completed_text_history,
         )
         if self._session("kg:read") != session:
             raise PermissionError("A2A caller changed during usage read")

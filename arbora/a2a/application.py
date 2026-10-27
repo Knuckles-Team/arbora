@@ -181,7 +181,17 @@ async def _request_envelope(
     return request_id, method, params
 
 
+def _requested_history(request: Request) -> bool:
+    from .history_capability import EXTENSION_HEADER, requested_history
+
+    values = request.headers.getlist(EXTENSION_HEADER)
+    if len(values) > 1:
+        raise ValueError("repeated extension header")
+    return requested_history(values[0] if values else None)
+
+
 async def _send_message(service: A2AService, request: Request, raw_params: Any) -> Any:
+    required_history = _requested_history(request)
     send_params = _SendParams.model_validate(raw_params)
     key = request.headers.get("Idempotency-Key", "")
     if not key:
@@ -195,6 +205,7 @@ async def _send_message(service: A2AService, request: Request, raw_params: Any) 
         idempotency_key=key,
         context_budget_tokens=send_params.context_budget_tokens,
         blocking=blocking,
+        require_completed_text_history=required_history,
     )
 
 
@@ -447,7 +458,15 @@ async def _unary_request(
         ValueError,
     ) as error:
         return _application_error(request_id, error)
-    return _unary_response(result, request_id)
+    response = _unary_response(result, request_id)
+    from .history_capability import (
+        EXTENSION_HEADER,
+        HISTORY_EXTENSION,
+    )
+
+    if method == "message/send" and _requested_history(request):
+        response.headers[EXTENSION_HEADER] = HISTORY_EXTENSION
+    return response
 
 
 def _unary_response(result: Any, request_id: Any) -> JSONResponse:

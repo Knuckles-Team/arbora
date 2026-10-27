@@ -342,8 +342,8 @@ read through HTTP and MCP. It checks canonical owner/run admission before protec
 and plan binding rechecks. It also covers schema negotiation, edge direction,
 run-qualified identities, private-field omission and bounded event evidence.
 It preserves the existing replay v1 cases in `tests/api/test_run_replay.py`.
-These tests use injected native responses and do not qualify a native service,
-spawned children, transcript access, interaction or the full parent requirement.
+These tests use injected native responses.
+They do not qualify a native service, spawned children, transcript access, interaction or the full parent requirement.
 
 ### Trusted scaffold configuration (ARBORA-OPS-R021.4.5.1.2)
 
@@ -399,3 +399,11 @@ Missing or malformed admission yields unavailable. A foreign owner or tenant can
 Native authorization refusals retain their codes. Neither request fields nor mutable metadata may select another graph.
 Tests reject forged graph fields, identity drift and added scopes.
 The failing real-boot assertion remains unchanged until the hosted serving path passes.
+
+R026.2 exact digest-review tests in `tests/api/test_gen_api.py` accept only a
+reviewed operation/field with exact old/new document and equal expanded-schema
+hashes. They refuse absent approval, stale hashes, wrong operations or fields,
+duplicates, malformed records, unused entries, changed unions, optional result
+extensions and required-input narrowing. An integration test verifies provider
+bytes before applying the ledger. These source tests do not qualify native
+profile response negotiation or an installed producer release.

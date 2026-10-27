@@ -446,9 +446,8 @@ engine's first attempt, with an exact item and payload binding. It never
 reclaims a visible `leased` or `running` item. Native `dead_letter` and
 `cancelled` states do not prove a prior effect outcome. The adapter raises
 `WorkItemLeaseLost` on those reads, including a read after a refused claim.
-The delivery owner must leave such exceptions unacknowledged. The generic
-worker and restart recovery still need durable owner reconciliation; a
-pre-execution refusal on a later attempt cannot settle an earlier effect.
+The delivery owner must leave such exceptions unacknowledged. The generic worker and restart recovery still need durable owner reconciliation.
+A pre-execution refusal on a later attempt cannot settle an earlier effect.
 
 ### Tool-task evidence decomposition
 
@@ -635,3 +634,40 @@ the head comparison and refuses a stale candidate without an automatic retry.
 The membership read is not atomic with concurrent legacy submissions. It detects
 existing legacy contexts only. This draft does not qualify mixed legacy and
 profile writers; exclusion of that race requires native admission policy.
+
+
+### Completed-text extension negotiation (2026-10-27)
+
+`ARBORA-A2A-R001.3.3` uses the existing authenticated A2A 0.3 Agent Card
+`capabilities.extensions` and `X-A2A-Extensions` activation header. The owned URI
+is `https://knuckles-team.github.io/arbora/extensions/completed-text-history/v1`.
+It is optional (`required: false`) and absent by default. Advertisement means that the strict completed-text path is selected or refuses.
+It never promises operator graph enablement, storage availability, context ownership, native release qualification, or interrupted-task restoration. Missing enabled
+configuration, generated schema, provider lifecycle binding or hosted operations
+prevents advertisement. Native owner/head/profile/fence checks remain authoritative.
+
+Activation is invocation-local, checked before routing and admission, carried
+into detached execution, and rechecked before claiming. Successful negotiated responses echo the URI. Malformed activation and unknown owned versions refuse;
+there is no silent legacy grouping fallback. Legacy clients retain the original
+card shape when support is absent. This completed-text profile is separate from
+`stateTransitionHistory` (task state history) and from the harness-admission
+extension barred by R014.1; it does not relax either acceptance gate.
+
+A client must re-read the authenticated card before continuation and require
+the recognized URI. A missing activation echo or changed context after sending
+is an uncertain result, never permission to retry execution. A2A 0.3 permits
+old servers to ignore unknown extensions, so preflight cannot prove no effects
+across a heterogeneous or changed server deployment. The real native restart
+and caller-isolation acceptance remains mandatory.
+
+### Paired restart qualification preparation (2026-10-27)
+
+The R001.3.3 acceptance harness in `tests/qualification/test_native_history_restart.py` provisions real native producer and Arbora processes.
+It restarts both against the same store and captures the model's actual input after continuation. A controlled model requests the
+existing governed fleet echo tool; connector calls and native effect receipt
+identities must not repeat. It uses installed artifacts without source overlays.
+The browser-label case is wire-contract coverage, not a real browser journey;
+the second case invokes the actual native Tuig candidate. Both remain unexecuted
+pending matching generated client/server and candidate Arbora artifacts. Source
+fixture and route tests do not satisfy this gate. Same-tenant distinct-owner and
+actual Overstory browser qualification remain additional required evidence.

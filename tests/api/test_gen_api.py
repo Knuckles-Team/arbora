@@ -432,6 +432,8 @@ def test_compat_reads_baseline_schema_resources_from_same_git_ref(
 ):
     from types import SimpleNamespace
 
+    # Synthetic registries must not load the repository's real review ledger.
+    monkeypatch.setattr(gen_api, "ROOT", tmp_path)
     before_root = tmp_path / "before"
     after_root = tmp_path / "after"
     before = _eg_compat_registry(
@@ -627,3 +629,246 @@ def test_installed_provider_boolean_result_is_self_compatible():
     assert "review required" in " ".join(
         gen_api._breaking_changes(baseline, changed_digest)
     )
+
+
+def _digest_review_case(tmp_path):
+    before = _eg_compat_registry(
+        tmp_path / "contract/schemas", required_limit=False, answer=True
+    )
+    after = json.loads(json.dumps(before))
+    after["ops"][0]["params"]["schema_sha256"] = "f" * 64
+    entry = {
+        **gen_api._review_identity(
+            before["ops"][0]["id"],
+            "params",
+            before["ops"][0]["params"],
+            after["ops"][0]["params"],
+        ),
+        "reviewer": "API contract owner",
+        "rationale": "Only unreachable provider definitions changed.",
+        "evidence": ["review/selected-schema-comparison.json"],
+    }
+    return before, after, entry
+
+
+def _review_ledger(tmp_path, reviews):
+    path = tmp_path / "reviews.json"
+    path.write_text(json.dumps({"version": 1, "reviews": reviews}))
+    return path
+
+
+@pytest.mark.spec("ARBORA-OPS-R026.2")
+def test_digest_review_accepts_exact_unchanged_reachable_schema(tmp_path):
+    before, after, entry = _digest_review_case(tmp_path)
+    assert gen_api._breaking_changes(before, after)
+    reviewed = gen_api._reviewed_digest_pairs(
+        before, after, _review_ledger(tmp_path, [entry])
+    )
+    assert reviewed == frozenset({(before["ops"][0]["id"], "params")})
+    assert gen_api._breaking_changes(before, after, reviewed) == []
+
+
+@pytest.mark.spec("ARBORA-OPS-R026.2")
+@pytest.mark.parametrize(
+    "key",
+    [
+        "old_document_sha256",
+        "new_document_sha256",
+        "old_reachable_sha256",
+        "new_reachable_sha256",
+    ],
+)
+def test_digest_review_refuses_stale_identity(tmp_path, key):
+    before, after, entry = _digest_review_case(tmp_path)
+    entry[key] = "0" * 64
+    with pytest.raises(ValueError, match="stale"):
+        gen_api._reviewed_digest_pairs(before, after, _review_ledger(tmp_path, [entry]))
+
+
+@pytest.mark.spec("ARBORA-OPS-R026.2")
+@pytest.mark.parametrize("change", ["optional_result", "required_param", "union"])
+def test_digest_review_cannot_accept_changed_reachable_schema(tmp_path, change):
+    before, after, entry = _digest_review_case(tmp_path)
+    field = "result" if change == "optional_result" else "params"
+    spec = after["ops"][0][field]
+    spec["schema_sha256"] = "e" * 64
+    shape = gen_api._shape(spec, result=field == "result")
+    if change == "required_param":
+        shape["properties"]["params"]["required"] = ["text", "limit"]
+    elif change == "union":
+        shape["anyOf"] = [{"type": "string"}, {"type": "null"}]
+    else:
+        shape["properties"]["optional_extension"] = {"type": "string"}
+    entry.update(
+        gen_api._review_identity(
+            before["ops"][0]["id"],
+            field,
+            before["ops"][0][field],
+            spec,
+        )
+    )
+    with pytest.raises(ValueError, match="changed reachable"):
+        gen_api._reviewed_digest_pairs(before, after, _review_ledger(tmp_path, [entry]))
+
+
+@pytest.mark.spec("ARBORA-OPS-R026.2")
+def test_digest_review_never_suppresses_structural_break(tmp_path):
+    before, after, _ = _digest_review_case(tmp_path)
+    after["ops"][0]["params"]["schema_snapshot"]["properties"]["params"]["required"] = [
+        "text",
+        "limit",
+    ]
+    findings = gen_api._breaking_changes(
+        before, after, frozenset({(before["ops"][0]["id"], "params")})
+    )
+    assert any("new required params" in finding for finding in findings)
+
+
+@pytest.mark.spec("ARBORA-OPS-R026.2")
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "duplicate",
+        "unknown_operation",
+        "wrong_field",
+        "unchanged_digest",
+        "wildcard",
+        "empty_evidence",
+        "empty_reviewer",
+        "empty_rationale",
+        "extra_key",
+    ],
+)
+def test_digest_review_refuses_invalid_or_unused_entries(tmp_path, mutation):
+    before, after, entry = _digest_review_case(tmp_path)
+    entries = [entry]
+    if mutation == "duplicate":
+        entries.append(dict(entry))
+    elif mutation == "unknown_operation":
+        entry["operation"] = "eg.unknown.Operation"
+    elif mutation == "wrong_field":
+        entry["field"] = "result"
+    elif mutation == "unchanged_digest":
+        after = json.loads(json.dumps(before))
+        entry["new_document_sha256"] = entry["old_document_sha256"]
+    elif mutation == "wildcard":
+        entry["operation"] = "eg.*"
+    elif mutation == "empty_evidence":
+        entry["evidence"] = []
+    elif mutation == "empty_reviewer":
+        entry["reviewer"] = " "
+    elif mutation == "empty_rationale":
+        entry["rationale"] = ""
+    else:
+        entry["allow_additive"] = True
+    with pytest.raises(ValueError):
+        gen_api._reviewed_digest_pairs(before, after, _review_ledger(tmp_path, entries))
+
+
+@pytest.mark.spec("ARBORA-OPS-R026.2")
+def test_digest_review_missing_ledger_keeps_existing_gate(tmp_path):
+    before, after, _ = _digest_review_case(tmp_path)
+    reviewed = gen_api._reviewed_digest_pairs(before, after, tmp_path / "absent.json")
+    assert not reviewed
+    assert "review required" in " ".join(
+        gen_api._breaking_changes(before, after, reviewed)
+    )
+
+
+@pytest.mark.spec("ARBORA-OPS-R026.2")
+@pytest.mark.parametrize(
+    "ledger",
+    [
+        [],
+        {"version": True, "reviews": []},
+        {"version": 2, "reviews": []},
+        {"version": 1, "reviews": {}},
+        {"version": 1, "reviews": [None]},
+    ],
+)
+def test_digest_review_refuses_malformed_ledger(tmp_path, ledger):
+    before, after, _ = _digest_review_case(tmp_path)
+    path = tmp_path / "reviews.json"
+    path.write_text(json.dumps(ledger))
+    with pytest.raises(ValueError):
+        gen_api._reviewed_digest_pairs(before, after, path)
+
+
+@pytest.mark.spec("ARBORA-OPS-R026.2")
+def test_compat_uses_exact_review_after_verifying_provider_documents(
+    tmp_path, monkeypatch
+):
+    from types import SimpleNamespace
+
+    before_root = tmp_path / "before"
+    after_root = tmp_path / "after"
+    before = _eg_compat_registry(
+        before_root / "schemas", required_limit=False, answer=True, references=True
+    )
+    after = _eg_compat_registry(
+        after_root / "contract/schemas",
+        required_limit=False,
+        answer=True,
+        references=True,
+    )
+    path = after_root / "contract/schemas/method.request.json"
+    document = json.loads(path.read_text())
+    document["$defs"]["Unreachable"] = {"type": "string"}
+    path.write_text(json.dumps(document))
+    after["ops"][0]["params"]["schema_sha256"] = hashlib.sha256(
+        json.dumps(document, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    expanded_before = gen_api._expand_registry(
+        before, lambda name: (before_root / name).read_bytes()
+    )
+    expanded_after = gen_api._expand_registry(
+        after, lambda name: (after_root / "contract" / name).read_bytes()
+    )
+    entry = {
+        **gen_api._review_identity(
+            before["ops"][0]["id"],
+            "params",
+            expanded_before["ops"][0]["params"],
+            expanded_after["ops"][0]["params"],
+        ),
+        "reviewer": "Contract owner",
+        "rationale": "Unreachable definition only",
+        "evidence": ["review/exact-provider-diff.json"],
+    }
+    review_path = tmp_path / "docs/api/schema-digest-reviews.json"
+    review_path.parent.mkdir(parents=True)
+    review_path.write_text(json.dumps({"version": 1, "reviews": [entry]}))
+
+    def git_call(argv, **kwargs):
+        if argv[1] == "rev-parse":
+            return SimpleNamespace(returncode=0, stdout=b"baseline")
+        relative = argv[2].removeprefix("baseline:arbora/api/generated/")
+        payload = (
+            json.dumps(before).encode()
+            if relative == "registry.json"
+            else (before_root / relative).read_bytes()
+        )
+        return SimpleNamespace(returncode=0, stdout=payload)
+
+    monkeypatch.setattr(gen_api, "ROOT", tmp_path)
+    monkeypatch.setattr(gen_api.shutil, "which", lambda name: "/usr/bin/git")
+    monkeypatch.setattr(gen_api.subprocess, "run", git_call)
+    monkeypatch.setattr(gen_api.importlib.resources, "files", lambda name: after_root)
+    assert gen_api._check_compat(after, "baseline") == 0
+    review_path.unlink()
+    assert gen_api._check_compat(after, "baseline") == 1
+    path.write_text(json.dumps({**document, "title": "unreviewed provider mutation"}))
+    with pytest.raises(ValueError, match="digest mismatch"):
+        gen_api._check_compat(after, "baseline")
+
+
+@pytest.mark.spec("ARBORA-OPS-R026.2")
+def test_digest_review_does_not_approve_another_field(tmp_path):
+    before, after, entry = _digest_review_case(tmp_path)
+    after["ops"][0]["result"]["schema_sha256"] = "e" * 64
+    reviewed = gen_api._reviewed_digest_pairs(
+        before, after, _review_ledger(tmp_path, [entry])
+    )
+    findings = gen_api._breaking_changes(before, after, reviewed)
+    assert len(findings) == 1
+    assert "result schema changed; review required" in findings[0]

@@ -112,11 +112,26 @@ async def read_run_usage(
     item: dict[str, Any],
     owner_ref: str,
     owner_graph: str,
+    completed_text_history: bool = False,
 ) -> dict[str, Any]:
     """Use the existing owner graph's caller-bound GetRunWorkItem surface."""
+    if type(completed_text_history) is not bool:
+        raise TypeError("completed history opt-in must be boolean")
+    options = {}
+    if completed_text_history:
+        from .native_history import unavailable
+
+        try:
+            from epistemic_graph.generated.models import MethodGetRunWorkItemParams
+
+            if "completed_text_history" not in MethodGetRunWorkItemParams.model_fields:
+                raise AttributeError("completed history read opt-in")
+        except (ImportError, AttributeError) as exc:
+            raise unavailable() from exc
+        options["completed_text_history"] = True
     client = engine.graph_compute.for_graph(owner_graph).async_client
     value = await client.work_items.get_run(
-        tenant=session.tenant, run_id=item["metadata"]["a2a_run_id"]
+        tenant=session.tenant, run_id=item["metadata"]["a2a_run_id"], **options
     )
     usage = project_run_usage(
         value,

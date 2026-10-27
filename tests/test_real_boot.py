@@ -264,6 +264,8 @@ def _booted_stack(
     private_root: Path | None = None,
     before_serve: Any = None,
     boot_stage: Any = None,
+    model_fixture_env: dict[str, str] | None = None,
+    connector_fixture_env: dict[str, str] | None = None,
 ) -> Iterator[dict[str, Any]]:
     root = Path(tempfile.mkdtemp(prefix="gos-boot-", dir=private_root or "/tmp"))
     issuer = _Issuer()
@@ -350,7 +352,7 @@ def _booted_stack(
                     str(Path(__file__).with_name("_boot_model.py")),
                     str(model_port),
                 ],
-                env=base_env,
+                env={**base_env, **(model_fixture_env or {})},
                 stdout=eg_log,
                 stderr=subprocess.STDOUT,
             )
@@ -415,7 +417,7 @@ def _booted_stack(
                     str(Path(__file__).with_name("_boot_connector.py")),
                     str(connector_port),
                 ],
-                env=base_env,
+                env={**base_env, **(connector_fixture_env or {})},
                 stdout=gos_log,
                 stderr=subprocess.STDOUT,
             )
@@ -610,7 +612,28 @@ def _booted_stack(
                 logs=lambda: (root / "eg.log").read_text(errors="replace"),
             )
 
+        def restart_stack() -> dict[str, tuple[int, int]]:
+            """Stop both serving processes and reopen the same native store."""
+            old_engine, old_arbora = processes[0].pid, processes[-1].pid
+            command = processes[-1].args
+            _terminate(processes[-1])
+            restart_engine()
+            processes[-1] = subprocess.Popen(
+                command, env=gos_env, stdout=gos_log, stderr=subprocess.STDOUT
+            )
+            _wait(
+                ready,
+                timeout=BOOT_TIMEOUT_S,
+                what="restarted arbora readiness",
+                logs=gos_logs,
+            )
+            return {
+                "engine": (old_engine, processes[0].pid),
+                "arbora": (old_arbora, processes[-1].pid),
+            }
+
         yield {
+            "restart_stack": restart_stack,
             "restart_engine": restart_engine,
             "socket_path": str(socket_path),
             "secret": secret,

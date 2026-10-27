@@ -1,7 +1,7 @@
 """Generated engine error contract. Do not edit."""
 
-REGISTRY_DIGEST = "27b9f48df91b04f699c016125c221c290c42ff651cbecf5b00c44e9136f55506"
-EG_RECEIPT_DIGEST = "5bd7b375a923a5832a8cf493826fdba369916a0cfc4163e5cd9be7a4303d19bc"
+REGISTRY_DIGEST = "9fa5a9f2a059da5da3b3b9622f14e2055d1db310c7f3f4a6c463844491a6eddf"
+EG_RECEIPT_DIGEST = "452ba556ae4b1e80f6ec35a63fc627cb9cfa4aa4c7e8d6fcb9aefdd23064a20d"
 ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "ABORTED_ATOMIC_GRAPH_BATCH": (400, False),
     "ACCESS_DENIED": (403, False),
@@ -32,6 +32,7 @@ ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "AUTH_POLICY_VERSION_MISMATCH": (403, False),
     "AUTH_TENANT_MISMATCH": (403, False),
     "AUTH_UNKNOWN_PRINCIPAL": (401, False),
+    "AdoptedHarnessNoDecision": (400, False),
     "BODY_DIGEST_MISMATCH": (400, False),
     "BODY_MISSING": (400, False),
     "BUSY": (429, True),
@@ -73,6 +74,7 @@ ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "CORRUPT_MUTATION_LEDGER": (400, False),
     "CORRUPT_OUTBOX": (400, False),
     "CORRUPT_WRITE_BACK": (400, False),
+    "ContrastConditionsMismatch": (400, False),
     "DATASET_INVALID": (400, False),
     "DECISIONS": (503, False),
     "DECISION_CLAUSE_IN_UQL": (400, False),
@@ -126,7 +128,24 @@ ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "GOVERNED_UNKNOWN_KIND": (400, False),
     "GRAPH_NOT_FOUND": (404, False),
     "GUARDRAIL_SCOPE_TOO_LARGE": (413, False),
+    "HARNESS_COMPONENT_VERSION_UNKNOWN": (400, False),
+    "HARNESS_CONTRAST_MIN_CANDIDATES": (400, False),
+    "HARNESS_CONTRAST_TOO_MANY_CANDIDATES": (400, False),
+    "HARNESS_CONTRAST_TRACE_MISMATCH": (400, False),
     "HEAD_INVALID": (400, False),
+    "HarnessConfidenceInvalid": (400, False),
+    "HarnessContentDigestMismatch": (400, False),
+    "HarnessIdentityMissing": (400, False),
+    "HarnessKindUnknown": (400, False),
+    "HarnessRecordImmutable": (400, False),
+    "HarnessRecordMalformed": (400, False),
+    "HarnessRecordWithoutStamp": (400, False),
+    "HarnessSupersessionStale": (400, False),
+    "HarnessSupersessionUnknown": (400, False),
+    "HarnessValidIntervalInverted": (400, False),
+    "HarnessVersionImmutable": (400, False),
+    "HarnessVersionWithoutEvidence": (400, False),
+    "HarnessVersionWithoutStamp": (400, False),
     "IDEMPOTENCY_CONFLICT": (409, False),
     "IDENTITY_ALREADY_INITIALIZED": (400, False),
     "IDENTITY_BAD_CREDENTIAL": (400, False),
@@ -162,6 +181,9 @@ ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "INVALID_RETIREMENT": (400, False),
     "JOB_NOT_FOUND": (400, False),
     "LOOK_AHEAD": (400, False),
+    "LessonConfidenceInvalid": (400, False),
+    "LessonWithoutEvidence": (400, False),
+    "LessonWithoutImprovement": (400, False),
     "MALFORMED_BODY": (400, False),
     "MALFORMED_GUARDRAIL_RULE": (400, False),
     "MALFORMED_INDEX": (400, False),
@@ -169,6 +191,7 @@ ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "NODE_MISMATCH": (403, False),
     "NO_ADMISSIBLE_LABELS": (400, False),
     "NUMERIC_REFUSED": (400, False),
+    "NoLessons": (400, False),
     "ONTOLOGY_INCONSISTENT": (400, False),
     "ONTOLOGY_INVALID": (400, False),
     "OPERATION_REDIRECTED": (307, True),

@@ -91,11 +91,18 @@ async def native_read(
 
         send = getattr(coordination, f"send_{method}")
         decode = getattr(coordination, f"decode_{method}")
-        if method == "get_run_work_item" and "selection" in args:
-            from epistemic_graph.generated.models import RunWorkItemView
+        if method == "get_run_work_item":
+            from epistemic_graph.generated.models import (
+                MethodGetRunWorkItemParams,
+                RunWorkItemView,
+            )
 
-            if "checkpoint_selection" not in RunWorkItemView.model_fields:
-                raise AttributeError("checkpoint selection")
+            if (
+                "completed_text_history" not in MethodGetRunWorkItemParams.model_fields
+                or "checkpoint_selection" not in RunWorkItemView.model_fields
+            ):
+                raise AttributeError("completed history read opt-in")
+            args = {**args, "completed_text_history": True}
     except (ImportError, AttributeError) as exc:
         raise OperationRefused(
             "UPGRADE_REQUIRED", {"capability": "completed_text_history"}

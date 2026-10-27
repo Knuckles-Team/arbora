@@ -2428,6 +2428,18 @@
     {
       "domain": "eg",
       "examples": [
+        "GetConversationHead coordination"
+      ],
+      "id": "eg.coordination.GetConversationHead",
+      "summary": "owner-bound ordered conversation head snapshot",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
         "GetCurrentPlan coordination"
       ],
       "id": "eg.coordination.GetCurrentPlan",
@@ -6330,5 +6342,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "27b9f48df91b04f699c016125c221c290c42ff651cbecf5b00c44e9136f55506"
+  "registry_digest": "9fa5a9f2a059da5da3b3b9622f14e2055d1db310c7f3f4a6c463844491a6eddf"
 }

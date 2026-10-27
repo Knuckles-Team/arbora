@@ -30,6 +30,12 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 logger = logging.getLogger(__name__)
+_CHECKPOINT_PROVIDER_ACTIVE = False
+
+
+def checkpoint_provider_active() -> bool:
+    """Report this host lifecycle binding, not native storage readiness."""
+    return _CHECKPOINT_PROVIDER_ACTIVE
 
 
 def _runtime() -> Any:
@@ -93,6 +99,8 @@ def fleet_catalog_view(multiplexer: Any) -> Callable[[], Mapping[str, Any]]:
 
 def register_harness_host(multiplexer: Any | None = None) -> None:
     """Install arbora's native, remote, client, catalog and keepalive bindings."""
+    global _CHECKPOINT_PROVIDER_ACTIVE
+    _CHECKPOINT_PROVIDER_ACTIVE = False
     from agent_utilities import host_ports as host
 
     from arbora.fleet import client_toolsets
@@ -111,10 +119,13 @@ def register_harness_host(multiplexer: Any | None = None) -> None:
     from arbora.a2a.native_history import select_run_history
 
     host.register_run_checkpoint_provider(select_run_history)
+    _CHECKPOINT_PROVIDER_ACTIVE = True
 
 
 def unregister_harness_host() -> None:
     """Clear every binding arbora installed."""
+    global _CHECKPOINT_PROVIDER_ACTIVE
+    _CHECKPOINT_PROVIDER_ACTIVE = False
     from agent_utilities import host_ports as host
 
     host.register_native_toolset_provider(None)

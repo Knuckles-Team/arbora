@@ -277,8 +277,23 @@ def claim_specific(
     token: str,
     lease_ttl_s: float,
     now: float | None = None,
+    completed_text_history: bool = False,
 ) -> dict[str, Any] | None:
     """Lease one WorkItem (``ClaimWorkItem``); ``None`` when not granted."""
+    if type(completed_text_history) is not bool:
+        raise TypeError("completed history opt-in must be boolean")
+    options = {}
+    if completed_text_history:
+        try:
+            from epistemic_graph.generated.models import MethodClaimWorkItemParams
+
+            if "completed_text_history" not in MethodClaimWorkItemParams.model_fields:
+                raise AttributeError("completed history claim opt-in")
+        except (ImportError, AttributeError) as exc:
+            raise NativeWorkItemRequired(
+                "completed history claim schema unavailable"
+            ) from exc
+        options["completed_text_history"] = True
     tenant_id = _tenant()
     answer = _work_items(engine).claim(
         {
@@ -292,7 +307,8 @@ def claim_specific(
             "now_ms": _now_ms(now),
             "lease_ms": max(1, int(lease_ttl_s * 1000)),
             "max_tenant_in_flight": _MAX_TENANT_IN_FLIGHT,
-        }
+        },
+        **options,
     )
     if not answer.get("claimed"):
         return None

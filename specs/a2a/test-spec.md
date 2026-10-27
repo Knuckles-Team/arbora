@@ -224,3 +224,18 @@ Source cases cover a first browser label and its repeated use with a native head
 They also cover foreign head bindings, absent canonical heads and legacy task
 membership without a native head. Each refusal occurs before new admission.
 These fixtures do not prove an installed browser restart journey.
+
+
+Completed-text negotiation evidence for `ARBORA-A2A-R001.3.3`:
+`tests/a2a/test_history_capability.py` verifies absent/off compatibility, activation binding, stale-card refusal and success-only echo.
+It also verifies malformed or unknown version refusal and the guards before admission/claim. These are source transport
+fixtures, not native process restart or operator graph enablement evidence.
+
+Paired restart gate preparation: `tests/qualification/NATIVE_HISTORY.md` records
+exact provisioning requirements and the explicit opt-in command. Require both native cases to pass without skips.
+Verify persisted replies after restarting both processes and idempotent first-message replay without model calls.
+Verify foreign read refusal and newest-prompt-only continuation with prior user/assistant turns in captured model input.
+Verify unchanged connector invocation counts and native effect identities.
+`test_history_model_fixture.py` validates only the synthetic model fixture;
+`test_mcp_discovery_routes.py` validates the real FastMCP root/mounted card route
+parity and authentication. Neither substitutes for native acceptance.
