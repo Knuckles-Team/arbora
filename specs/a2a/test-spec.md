@@ -186,3 +186,11 @@ fixtures. Native producer, durable CAS, installed consumer and served signed
 approval acceptance remain open until exact-source evidence is available.
 
 `ARBORA-A2A-R005.2.5` owns the remaining full-chain acceptance, not the snapshot or registration fixtures. Run the actual installed native and served path from pending call through signed approval to one effect. Include restart and concurrent replay, changed parameters, foreign human or tenant, expiry, revocation and intervening authority changes. No test in this increment supplies that proof. The row remains open and confirmation stays refused.
+
+## Typed conversation admission foundation
+
+R001.3.1: tests/test_conversation_admission.py covers unchanged generated conversation fields and command identity binding. It covers rejection of untyped and non-native carriers, exact-request conflicts on each conversation identity field, and lost-response readback. Existing work-item and native-admission tests guard legacy behavior. These source tests do not prove native ordering, served preview or history replay.
+
+R001.3.2 retains the served restart, next-turn history, caller context listing and foreign-context refusal fixtures of R001.3. It remains open until actual composed history tests pass.
+
+Internal prefix projection coverage under ARBORA-A2A-R001.3.2 uses `tests/a2a/test_conversation_preview.py`. It covers immutable input selection, explicit predecessor order, prefix-only completion, caller changes, changed displayed text and unrelated later appends. Foreign, missing, legacy, incomplete and oversized histories must refuse. This does not qualify branch submission, AU consumption, served routes or native restart.

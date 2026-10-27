@@ -9,7 +9,7 @@ import logging
 from collections import OrderedDict
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Any, Protocol, cast, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, cast, runtime_checkable
 
 from agent_connector_sdk.privacy import persistence_reference
 
@@ -24,6 +24,9 @@ from .models import (
     A2ATextPart,
 )
 from .routing import A2AAssemblyUnavailable
+
+if TYPE_CHECKING:
+    from .conversation_history import ConversationPreview
 
 __all__ = [
     "A2AContextUnavailable",
@@ -930,6 +933,18 @@ class WorkItemA2AAuthority:
                 parts=[A2ATextPart(text=text)],
             )
         ]
+
+    async def preview_conversation(
+        self, *, run_id: str, expected_revision: int
+    ) -> ConversationPreview:
+        """Internal owner-bound prefix projection; no branch admission yet."""
+        from .conversation_history import preview_completed_prefix
+
+        if type(expected_revision) is not int or expected_revision < 0 or not run_id:
+            raise ValueError("invalid selected conversation turn")
+        return await preview_completed_prefix(
+            self, run_id=run_id, expected_revision=expected_revision
+        )
 
     async def get_committed_task(self, task_id: str) -> A2ATask | None:
         return await self.get(task_id, include_committed_event=True)

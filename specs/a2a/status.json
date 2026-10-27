@@ -89,7 +89,9 @@
     "ARBORA-A2A-R001.6",
     "ARBORA-A2A-R001.5.1",
     "ARBORA-A2A-R001.5.2",
-    "ARBORA-A2A-R016.6"
+    "ARBORA-A2A-R016.6",
+    "ARBORA-A2A-R001.3.1",
+    "ARBORA-A2A-R001.3.2"
   ],
   "requirements": [
     {
@@ -930,7 +932,11 @@
       "title": "Served agent keeps and lists caller conversations",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-A2A-R001.3.1",
+        "ARBORA-A2A-R001.3.2"
+      ]
     },
     {
       "id": "ARBORA-A2A-R001.4",
@@ -988,6 +994,26 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-A2A-R001.3.1",
+      "title": "Typed native conversation admission handoff",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "c4c0956fe7b3"
+      ],
+      "verified_by": [
+        "tests/test_conversation_admission.py:15"
+      ]
+    },
+    {
+      "id": "ARBORA-A2A-R001.3.2",
+      "title": "Remaining served conversation history acceptance",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/a2a/test_conversation_preview.py:13"
+      ]
     }
   ]
 }

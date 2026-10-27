@@ -574,3 +574,13 @@ For R005.2.4, use generated identity validation for session-reference and key re
 Align the draft adapter with the unpublished native key contract. Use purpose `signed_approval` and attestation `broker_verified_ed25519`. Keep the signature domain, length encoding, field order and verification unchanged. No deployed key format or credential is migrated. Native durable and served qualification remain pending.
 
 R005.2.5 retains the full native and served effect-chain obligation after the snapshot and registration source slices land. It requires atomic grant and plan consumption with actual installed producers. Keep it open until the complete request-to-effect and refusal matrix passes; do not infer it from a passing source fixture.
+
+## Amendment: typed conversation handoff (2026-10-25)
+
+R001.3.1 reuses work_items.submit_work_item_atomic and native_run_admission. The host may supply the generated EG ConversationTurnAdmission for native runs only. The original admission and command digest bind it; no parallel store or EG endpoint is introduced. R001.3 still needs owner-authorized ordered prefix projection, preview digest revalidation, bounded immutable snapshot admission, and AU completed-history selection. Reuse AU-BOUNDARY-R043.9.1 and R043.9.2.1 and ARBORA-RELEASE-R003.4.13 for subsequent composition. A fresh edit branch has revision zero and no predecessor; source lineage is separate metadata. Legacy unordered contexts stay unsupported for editing, without changing ordinary task sends.
+
+### Owner-bound prefix preview slice (2026-10-25)
+
+R001.3.2 adds an internal authority reader for explicit native predecessor chains. Each read validates immutable admission ownership, context and revision before projecting completed text. Run and revision identify the selected own turn. The preview contains only earlier completed pairs and the selected input. A canonical digest binds the preview; previews over 64 KiB refuse. This is not a client contract or branch admission. Continuation dispatch, immutable child snapshots, AU history binding and served restart acceptance remain open.
+
+Ordinary dispatch stays unchanged in this slice. Adding a revision-zero conversation to a retry of an older no-context admission changes its exact request identity. A later ordered-admission path must explicitly preserve this compatibility boundary; timestamps and browser order cannot establish a predecessor.
