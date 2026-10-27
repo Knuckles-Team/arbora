@@ -667,10 +667,10 @@
         "e755549375e6"
       ],
       "verified_by": [
-        "tests/api/test_resolve.py:259",
-        "tests/api/test_resolve.py:273",
-        "tests/api/test_resolve.py:288",
-        "tests/api/test_resolve.py:303"
+        "tests/api/test_resolve.py:258",
+        "tests/api/test_resolve.py:272",
+        "tests/api/test_resolve.py:287",
+        "tests/api/test_resolve.py:302"
       ]
     },
     {
@@ -681,8 +681,8 @@
         "3597c590c8c9"
       ],
       "verified_by": [
-        "tests/api/test_resolve.py:314",
-        "tests/api/test_resolve.py:326"
+        "tests/api/test_resolve.py:313",
+        "tests/api/test_resolve.py:325"
       ]
     },
     {
@@ -2064,13 +2064,11 @@
     {
       "id": "ARBORA-FLEET-R043.2",
       "title": "Behavior",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "LANDED",
       "landed_in": [
         "c135fd8a6f4a"
       ],
-      "verified_by": [
-        "tests/api/test_resolve.py:193"
-      ]
+      "verified_by": []
     },
     {
       "id": "ARBORA-FLEET-R043.3",

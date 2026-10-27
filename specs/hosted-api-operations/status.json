@@ -2828,7 +2828,7 @@
         "e755549375e6"
       ],
       "verified_by": [
-        "tests/api/test_resolve.py:218"
+        "tests/api/test_resolve.py:217"
       ]
     },
     {
@@ -2839,7 +2839,7 @@
         "c135fd8a6f4a"
       ],
       "verified_by": [
-        "tests/api/test_resolve.py:231"
+        "tests/api/test_resolve.py:230"
       ]
     },
     {
