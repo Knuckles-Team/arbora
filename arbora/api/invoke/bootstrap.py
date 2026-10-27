@@ -205,7 +205,7 @@ async def dispatch_eg_method(
     method = _eg_method_id(binding)
     graph = await _caller_dispatch_graph(context)
     payload = claim_values(params)
-    if method == "GetRunWorkItem":
+    if method in {"GetRunWorkItem", "GetConversationHead"}:
         # EG's stable owner-read wire contract requires ``tenant``.  Treat it
         # as a correlation field only after the caller session has been
         # revalidated above; a request naming another tenant must never reach

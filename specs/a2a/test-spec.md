@@ -194,3 +194,28 @@ R001.3.1: tests/test_conversation_admission.py covers unchanged generated conver
 R001.3.2 retains the served restart, next-turn history, caller context listing and foreign-context refusal fixtures of R001.3. It remains open until actual composed history tests pass.
 
 Internal prefix projection coverage under ARBORA-A2A-R001.3.2 uses `tests/a2a/test_conversation_preview.py`. It covers immutable input selection, explicit predecessor order, prefix-only completion, caller changes, changed displayed text and unrelated later appends. Foreign, missing, legacy, incomplete and oversized histories must refuse. This does not qualify branch submission, AU consumption, served routes or native restart.
+
+## Reply cache follows terminal commit (2026-10-27)
+
+Under R001.3, `test_terminal_reply_commit.py` captures the reply cache while the
+native terminal commit runs and after that commit raises. Neither observation
+may expose an uncommitted reply. A successful executor must run exactly once;
+commit failure must propagate without automatic execution replay. A working task
+must remain working without artifacts. These source regressions verify the terminal commit boundary independently of
+the storage profile. Only an explicit committed acknowledgement publishes the
+reply. An uncertain, refused or unrecognized result leaves no cached reply.
+They do not prove native persistence or restart acceptance.
+
+## Terminal-only completed-text consumer (R001.3.3)
+
+Use generated native producer contracts for final integration. Source fixtures
+exercise owner, tenant, graph, revision, first-attempt grant and prompt-digest
+binding. Refuse malformed history and any current checkpoint before model calls.
+Test copied and lost asynchronous context: private transcript content must not
+fall back to generic RunEvent persistence. Preserve disabled legacy behavior.
+Test exact replay of admission without choosing a newer predecessor, and refuse
+missing continuation heads rather than creating replacement conversations.
+Only a successful native terminal commit can publish reply text. A private
+owner-only point read supplies historical reply text after restart; public event
+markers cannot substitute. Installed native close/reopen, actual model-input
+capture and no repeated effects remain required by R001.3.2.

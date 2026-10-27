@@ -102,10 +102,9 @@ SchemaValidate = Callable[[EgSchemaRef, Mapping[str, Any]], Mapping[str, Any]]
 
 def _allows_owner_read_tenant(op: Any) -> bool:
     binding = getattr(op, "binding", None)
-    return (
-        getattr(binding, "kind", None) == "eg"
-        and getattr(binding, "service", None) == "GetRunWorkItem"
-    )
+    return getattr(binding, "kind", None) == "eg" and getattr(
+        binding, "service", None
+    ) in {"GetRunWorkItem", "GetConversationHead"}
 
 
 def validate_params(

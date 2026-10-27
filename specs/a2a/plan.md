@@ -417,8 +417,8 @@ admission acceptance remain producer work, not satisfied by syntax validation.
 
 ARBORA-A2A-R001.5 first serves inline base64 `text/plain` files through the
 existing message parser and task-text model input. Require strict UTF-8, at most
-eight files and 65,536 aggregate decoded bytes, further limited by the existing
-MAX_UPLOAD_SIZE setting before routing or task creation. Reject URI parts and
+eight files and 65,536 aggregate decoded bytes. The existing MAX_UPLOAD_SIZE
+setting further limits input before routing or task creation. Reject URI parts and
 unsupported media before admission. Filenames are labels, never filesystem paths.
 The existing caller/tenant authorization, redaction and idempotency paths remain
 authoritative. Served transport tests observe decoded content in model input and
@@ -584,3 +584,45 @@ R001.3.1 reuses work_items.submit_work_item_atomic and native_run_admission. The
 R001.3.2 adds an internal authority reader for explicit native predecessor chains. Each read validates immutable admission ownership, context and revision before projecting completed text. Run and revision identify the selected own turn. The preview contains only earlier completed pairs and the selected input. A canonical digest binds the preview; previews over 64 KiB refuse. This is not a client contract or branch admission. Continuation dispatch, immutable child snapshots, AU history binding and served restart acceptance remain open.
 
 Ordinary dispatch stays unchanged in this slice. Adding a revision-zero conversation to a retry of an older no-context admission changes its exact request identity. A later ordered-admission path must explicitly preserve this compatibility boundary; timestamps and browser order cannot establish a predecessor.
+
+### Terminal reply publication boundary (2026-10-27)
+
+For R001.3, retain a successful model reply locally until the existing native
+terminal commit returns its explicit committed acknowledgement. Clear stale
+cache state when a new claim starts. An exception, cancellation, timeout, noop or
+unrecognized acknowledgement publishes no reply and triggers no execution retry.
+This prevents premature cache publication; it does not establish durable
+restart replay protection or the pending completed-history producer contract.
+
+### Opt-in terminal-only native history binding (2026-10-27)
+
+R001.3.3 composes the reviewed native terminal-only profile. The existing
+GetRunWorkItem selection reads current admission and prior committed text in one
+native snapshot. GetConversationHead supplies only a candidate for the existing
+SubmitWorkItem CAS. Preserve immutable admission on retries. Completion writes
+own-turn text through CommitWorkItemResult, never through events or a frontend
+store. AU 3.2 already owns the strict completed-text decoder and current-checkpoint
+precedence. Broader checkpoint restore, memory synchronization and served restart
+qualification remain open. Native generated contracts are required; unavailable
+versions refuse rather than silently disabling an enabled profile.
+
+Private trace redaction is deliberately monotonic within a serving process once
+an admitted private profile has run. A later configuration toggle or lost async
+context cannot restore permission to persist raw transcripts. A fresh process
+with the feature disabled retains the legacy trace behavior. Copied scopes that
+have closed refuse delayed persistence. Existing native outcome receipts remain
+the authority; redacted public markers are not transcript or completion evidence.
+
+The initial native profile supports continuation only within a stable owner graph.
+Its private admission-presence marker makes graph retirement, reset and restore
+refuse while profile state exists. Deletion and recreation, quota reclamation and
+cross-incarnation continuation are not supported by this draft. The consumer does
+not treat a scope digest or repeated ledger version as an incarnation witness.
+
+The first native profile admission requires authenticated operator authorization
+through the existing `kg:admin` or global `*` scope. The native transaction records
+that enablement privately; later valid owner and tenant admissions can continue
+without operator scope. Consumer configuration grants no native authorization.
+Anonymous callers and ordinary write or submit scopes cannot enable this profile.
+All destructive graph and migration lifecycle remains held while profile state
+exists; qualification must use an explicitly enabled, dedicated retained graph.

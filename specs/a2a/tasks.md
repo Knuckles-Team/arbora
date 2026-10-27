@@ -159,3 +159,4 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
 
 - [ ] `ARBORA-A2A-R001.3.1` — Carry typed host conversation admission through the existing native submission and recovery seam; qualify separately from served history.
 - [ ] `ARBORA-A2A-R001.3.2` — Preserve and prove the parent served history and restart acceptance after the typed foundation.
+- [ ] **ARBORA-A2A-R001.3.3:** Qualify the opt-in terminal-only native admission, fresh-claim witness, private completed-text capture and single-snapshot history adapter. Keep source fixtures distinct from installed native and process-restart acceptance.

@@ -27,6 +27,7 @@ def compose_a2a(
     card_metadata: A2ACardMetadata | None = None,
     task_plan_config: Any = None,
     hosted_invocation: Any = None,
+    completed_text_history: bool = False,
 ) -> A2AComposition:
     """Compose one projection over the existing WorkItem/dispatch authorities."""
     service = A2AService(
@@ -34,6 +35,7 @@ def compose_a2a(
             engine_provider,
             task_plan_config=task_plan_config,
             hosted_invocation=hosted_invocation,
+            completed_text_history=completed_text_history,
         ),
         router=OrchestratorA2ARouter(engine_provider),
         card_metadata=card_metadata or A2ACardMetadata(),

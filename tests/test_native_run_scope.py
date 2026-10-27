@@ -62,9 +62,12 @@ async def test_real_a2a_run_exposes_claim_only_to_host_planning(
     monkeypatch.setattr(runtime_config, "chat_models", [])
     monkeypatch.setattr(agent_runs, "run_config", lambda: {"agent_model": "test"})
     monkeypatch.setattr(work_items, "claim_specific", lambda *a, **k: dict(CLAIM))
-    monkeypatch.setattr(
-        work_items, "commit_result", lambda *a, **k: commits.append((a, k))
-    )
+
+    def commit(*args: Any, **kwargs: Any) -> str:
+        commits.append((args, kwargs))
+        return "committed"
+
+    monkeypatch.setattr(work_items, "commit_result", commit)
 
     def decide(request: Any) -> Any:
         owner = agent_runs.current_native_run(request)
@@ -198,7 +201,7 @@ async def test_a2a_binds_actual_engine_graph_not_caller_default(
     from arbora.mcp_server.task_plan import TaskPlanConfig
 
     monkeypatch.setattr(work_items, "claim_specific", lambda *a, **k: dict(CLAIM))
-    monkeypatch.setattr(work_items, "commit_result", lambda *a, **k: None)
+    monkeypatch.setattr(work_items, "commit_result", lambda *a, **k: "committed")
     seen = []
 
     async def execute(request: Any, **kwargs: Any) -> Any:

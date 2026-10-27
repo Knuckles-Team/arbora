@@ -927,8 +927,14 @@ def _register_graph_tool_surface(
     else:
         backing = register_arbora_surface(mcp, canonical=canonical)
     register_browser_control_tools(backing)
+    from arbora.core.settings import runtime_config
+
     if invocation is None:
-        register_a2a_tools(mcp, tools=backing)
+        register_a2a_tools(
+            mcp,
+            tools=backing,
+            completed_text_history=runtime_config.completed_text_history,
+        )
     else:
         register_a2a_tools(
             mcp,
@@ -937,6 +943,7 @@ def _register_graph_tool_surface(
             operation_authenticator=invocation.authenticator,
             task_plan_config=invocation.task_plan_config,
             hosted_invocation=invocation if invocation.task_plan_config else None,
+            completed_text_history=runtime_config.completed_text_history,
         )
     mount_sdk_a2a(mcp)
 

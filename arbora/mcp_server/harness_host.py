@@ -108,6 +108,9 @@ def register_harness_host(multiplexer: Any | None = None) -> None:
     host.register_remote_toolset_provider(client_toolsets.remote_toolset_provider())
     host.register_tool_client_factory(client_toolsets.open_tool_client)
     host.register_authority_keepalive(_keepalive)
+    from arbora.a2a.native_history import select_run_history
+
+    host.register_run_checkpoint_provider(select_run_history)
 
 
 def unregister_harness_host() -> None:
@@ -119,6 +122,7 @@ def unregister_harness_host() -> None:
     host.register_remote_toolset_provider(None)
     host.register_tool_client_factory(None)
     host.register_authority_keepalive(None)
+    host.register_run_checkpoint_provider(None)
 
 
 __all__ = [

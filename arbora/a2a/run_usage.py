@@ -118,7 +118,7 @@ async def read_run_usage(
     value = await client.work_items.get_run(
         tenant=session.tenant, run_id=item["metadata"]["a2a_run_id"]
     )
-    return project_run_usage(
+    usage = project_run_usage(
         value,
         session=session,
         task=task,
@@ -126,3 +126,12 @@ async def read_run_usage(
         owner_ref=owner_ref,
         owner_graph=owner_graph,
     )
+    if item.get("metadata", {}).get("a2a_history_profile") == "completed-text-v1":
+        task.artifacts = None
+        if item.get("status") == "succeeded":
+            from .native_history import completed_reply
+
+            task.artifacts = completed_reply(
+                value, session=session, task=task, item=item, owner_graph=owner_graph
+            )
+    return usage

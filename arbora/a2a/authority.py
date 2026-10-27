@@ -176,6 +176,7 @@ class WorkItemA2AAuthority:
         executor: Any = None,
         task_plan_config: Any = None,
         hosted_invocation: Any = None,
+        completed_text_history: bool = False,
     ) -> None:
         self._engine_provider = engine_provider
         self._executor = executor
@@ -184,6 +185,9 @@ class WorkItemA2AAuthority:
         self._detached: set[asyncio.Task[Any]] = set()
         self.task_plan_config = task_plan_config
         self.hosted_invocation = hosted_invocation
+        if type(completed_text_history) is not bool:
+            raise TypeError("completed history flag must be a trusted boolean")
+        self.completed_text_history = completed_text_history
 
     @staticmethod
     def _session(scope: str) -> Any:
@@ -372,6 +376,7 @@ class WorkItemA2AAuthority:
         owner_ref: str,
         description: str,
         metadata: dict[str, Any],
+        conversation: Any = None,
     ) -> tuple[str, bool]:
         from arbora import work_items
 
@@ -398,6 +403,7 @@ class WorkItemA2AAuthority:
                 idempotency_key=task_id,
                 created_by=owner_ref,
                 metadata=metadata,
+                conversation=conversation,
             )
         except OperationRefused as exc:
             if exc.code == "IDEMPOTENCY_CONFLICT":
@@ -452,6 +458,7 @@ class WorkItemA2AAuthority:
                     else None
                 ),
                 hosted_invocation=self.hosted_invocation,
+                completed_text_history=self.completed_text_history,
             ),
             (
                 bind_admitted_claim(
@@ -506,7 +513,18 @@ class WorkItemA2AAuthority:
         )
         if claim is None:
             return None
+        if (
+            self.completed_text_history
+            and claim.get("fresh_execution_grant") is not True
+        ):
+            from .native_history import unavailable
+
+            raise unavailable()
+        # A new claimed attempt must not publish an earlier uncommitted reply.
+        _OUTPUTS.pop(task_id, None)
         outcome, result_ref, error_ref = "succeeded", None, None
+        output = None
+        checkpoint = None
         usage = None
         try:
             result = await self._execute_claimed_run(
@@ -526,10 +544,21 @@ class WorkItemA2AAuthority:
                 "run", result.run_id, namespace="arbora-a2a"
             )
             usage = getattr(result, "usage", None)
-            remember_task_output(task_id, getattr(result, "output", None))
+            output = getattr(result, "output", None)
+            if self.completed_text_history:
+                from .native_history import completed_checkpoint, unavailable
+
+                if not isinstance(output, str):
+                    raise unavailable()
+                checkpoint = completed_checkpoint(run_id or task_id, task, output)
         except Exception as exc:  # noqa: BLE001 - a failed run is a failed task
             logging.getLogger(__name__).warning(
-                "A2A run %s failed: %s: %s", item_id, type(exc).__name__, str(exc)[:300]
+                "A2A run %s failed: %s: %s",
+                item_id,
+                type(exc).__name__,
+                "private completed-text failure"
+                if self.completed_text_history
+                else str(exc)[:300],
             )
             from arbora.agent_runs import failed_run_usage
 
@@ -546,8 +575,13 @@ class WorkItemA2AAuthority:
                 "schema_version": 1,
                 "run_id": run_id or task_id,
                 **({"usage": usage} if usage is not None else {}),
+                **(
+                    {"completed_checkpoint": checkpoint}
+                    if checkpoint is not None
+                    else {}
+                ),
             }
-        await asyncio.to_thread(
+        committed = await asyncio.to_thread(
             work_items.commit_result,
             work_engine,
             item_id,
@@ -557,6 +591,10 @@ class WorkItemA2AAuthority:
             error_ref=error_ref,
             **completion_kwargs,
         )
+        if committed != "committed":
+            raise RuntimeError("A2A terminal completion is not committed")
+        if outcome == "succeeded":
+            remember_task_output(task_id, output)
         return usage
 
     def _validate_admitted_item(
@@ -648,15 +686,43 @@ class WorkItemA2AAuthority:
         )
         from arbora.access.task_guard import screen_and_redact_agent_task
 
+        if self.completed_text_history:
+            metadata["a2a_history_profile"] = "completed-text-v1"
         description = screen_and_redact_agent_task(message.task_text())
+        submission: dict[str, Any] = {}
+        if self.completed_text_history:
+            if self.task_plan_config is None or self.hosted_invocation is None:
+                raise RuntimeError(
+                    "native completed history requires admitted task planning"
+                )
+            from .native_history import prepare_admission
+
+            submission["conversation"] = await prepare_admission(
+                self,
+                _engine,
+                work_engine,
+                session=session,
+                run_id=task_id,
+                context_id=context_id,
+                request_digest=request_digest,
+                user_text=description,
+                resume=bool(
+                    message.context_id and message.context_id.startswith("a2a-context-")
+                ),
+            )
         item_id, created = await asyncio.to_thread(
             self._submit,
             work_engine,
             task_id=task_id,
             session=session,
             owner_ref=owner_ref,
-            description=description,
+            description=(
+                "Completed-text conversation turn"
+                if self.completed_text_history
+                else description
+            ),
             metadata=metadata,
+            **submission,
         )
         run_id = task_id
         if self.task_plan_config is not None:
@@ -970,9 +1036,13 @@ class WorkItemA2AAuthority:
         task = self._project(item, task_id=task_id)
         await self._attach_run_usage(task, item, read_session)
         try:
-            task.artifacts = await asyncio.to_thread(
-                self._persisted_artifacts, task_id, item=item
-            )
+            if (
+                item.get("metadata", {}).get("a2a_history_profile")
+                != "completed-text-v1"
+            ):
+                task.artifacts = await asyncio.to_thread(
+                    self._persisted_artifacts, task_id, item=item
+                )
         except _ReplyUnavailable as exc:
             task.artifacts = None
             task.metadata["arbora"]["reply"] = exc.availability.model_dump(mode="json")
