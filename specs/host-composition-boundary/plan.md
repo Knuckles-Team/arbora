@@ -592,3 +592,14 @@ The log lifecycle fixture waits for the native startup task request to finish
 before opening logs. A visible first-frame footer is not a completion signal.
 Opening logs during a pending sink write remains a separate fail-closed storage-contention
 case, not a passing lifecycle journey. Keep the busy-storage refusal tests unchanged.
+
+## Loopback skill-certification authority
+
+`ARBORA-HOST-R027` restores the lifecycle-owned certification issuer under
+`arbora.certification.oidc`. It reuses the former harness authority's bounded
+HTTPS request parser, one-run CA, client-credentials token issuer and cleanup.
+The server accepts only the loopback bind and clients verify the run-specific CA.
+The certification script reports only the issuer and public CA, handles SIGINT
+and SIGTERM, and owns shutdown. The fixture and tests use the real TLS endpoint
+and verify the issued token with its served JWKS. This is an ephemeral
+certification tool, not a general identity provider or persistent credential store.
