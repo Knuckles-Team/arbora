@@ -40,6 +40,32 @@ _NAME_MAX = 1024
 _PATH_MAX = 1024
 
 
+def _decode_blob_content(content: Any, encoding: str, *, explicit: bool) -> Any:
+    if isinstance(content, bytearray):
+        content = bytes(content)
+    if isinstance(content, str) and encoding == "base64":
+        try:
+            return base64.b64decode(content, validate=True)
+        except (ValueError, UnicodeEncodeError) as exc:
+            raise ValueError("invalid base64 source content") from exc
+    if isinstance(content, str):
+        return content.encode("utf-8")
+    if isinstance(content, bytes) and encoding == "utf-8" and explicit:
+        try:
+            content.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise ValueError("invalid UTF-8 source content") from exc
+    return content
+
+
+def _blob_content_encoding(content: bytes) -> Literal["utf-8", "base64"]:
+    try:
+        content.decode("utf-8")
+    except UnicodeDecodeError:
+        return "base64"
+    return "utf-8"
+
+
 def _portable_path(value: str) -> str:
     """Refuse paths that cannot name a repository file portably."""
     if value and (
@@ -145,35 +171,14 @@ class SourceBlobOutcome(BaseModel):
             return value
         value = dict(value)
         encoding = value.get("content_encoding", "utf-8")
-        content = value.get("content", b"")
         if not isinstance(encoding, str) or encoding not in {"utf-8", "base64"}:
             raise ValueError("unknown source content encoding")
-        if isinstance(content, bytearray):
-            content = bytes(content)
-        if isinstance(content, str) and encoding == "base64":
-            try:
-                content = base64.b64decode(content, validate=True)
-            except (ValueError, UnicodeEncodeError) as exc:
-                raise ValueError("invalid base64 source content") from exc
-        elif isinstance(content, str):
-            content = content.encode("utf-8")
-        elif (
-            isinstance(content, bytes)
-            and encoding == "utf-8"
-            and "content_encoding" in value
-        ):
-            try:
-                content.decode("utf-8")
-            except UnicodeDecodeError as exc:
-                raise ValueError("invalid UTF-8 source content") from exc
+        content = _decode_blob_content(
+            value.get("content", b""), encoding, explicit="content_encoding" in value
+        )
         if isinstance(content, bytes):
             value["content"] = content
-            try:
-                content.decode("utf-8")
-            except UnicodeDecodeError:
-                value["content_encoding"] = "base64"
-            else:
-                value["content_encoding"] = "utf-8"
+            value["content_encoding"] = _blob_content_encoding(content)
         return value
 
     @field_serializer("content", when_used="json")
