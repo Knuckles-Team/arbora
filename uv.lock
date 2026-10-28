@@ -9,7 +9,10 @@ resolution-markers = [
 ]
 
 [manifest]
-overrides = [{ name = "epistemic-graph", extras = ["server"], specifier = ">=2.27.7,<3.0.0", index = "https://pypi.org/simple" }]
+overrides = [
+    { name = "agent-utilities", marker = "python_version < '0'" },
+    { name = "epistemic-graph", extras = ["server"], specifier = ">=2.27.7,<3.0.0", index = "https://pypi.org/simple" },
+]
 
 [[package]]
 name = "aenum"
@@ -51,39 +54,12 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/0b/47/b1c5b60927f76dd28143fd21af5092d1fe02e633ef3e68209d414315c9dd/agent_connector_sdk-0.5.5-py3-none-any.whl", hash = "sha256:061c6615b00a4694ee91a60b3fc7911ca41e95c69755de42faf41477d45d6acc", size = 784912, upload-time = "2026-10-24T15:32:55.459Z" },
 ]
 
-[package.optional-dependencies]
-a2a = [
-    { name = "fasta2a", extra = ["pydantic-ai"] },
-    { name = "starlette" },
-]
-mcp = [
-    { name = "fastmcp" },
-    { name = "mcp" },
-]
-
-[[package]]
-name = "agent-utilities"
-version = "3.2.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "platformdirs" },
-    { name = "pydantic" },
-    { name = "pydantic-ai-harness" },
-    { name = "pydantic-ai-slim" },
-    { name = "pydantic-graph" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/70/e5/5111160cf14e14f2a2c06d1ed254830d776f11624f1307d65d822754ed91/agent_utilities-3.2.0.tar.gz", hash = "sha256:990f48991034947e3b310f0cbfc181e0ae2719d9febbe02a1af41c5a00b92311", size = 129019, upload-time = "2026-10-25T10:05:17.127Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f7/52/7ae1268c7f348de1542fe7a5f48b8d7b15d91b9c742e5f0de81e9cf4f05e/agent_utilities-3.2.0-py3-none-any.whl", hash = "sha256:06279c63151cb822c10598adbc1216ba271b2e8b375eb046fbe84c9b63d4e97a", size = 94519, upload-time = "2026-10-25T10:05:15.752Z" },
-]
-
 [[package]]
 name = "agent-webui"
 version = "2.8.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "agent-connector-sdk" },
-    { name = "agent-utilities" },
     { name = "fastapi" },
     { name = "httpx" },
     { name = "joserfc" },
@@ -347,8 +323,6 @@ wheels = [
 name = "arbora"
 source = { editable = "." }
 dependencies = [
-    { name = "agent-connector-sdk", extra = ["a2a", "mcp"] },
-    { name = "agent-utilities" },
     { name = "aiohttp" },
     { name = "anyio" },
     { name = "epistemic-graph", extra = ["server"] },
@@ -359,6 +333,7 @@ dependencies = [
     { name = "httpx" },
     { name = "joserfc" },
     { name = "mcp" },
+    { name = "meristem" },
     { name = "msgpack" },
     { name = "opentelemetry-api" },
     { name = "prometheus-client" },
@@ -367,6 +342,7 @@ dependencies = [
     { name = "pyjwt" },
     { name = "python-multipart" },
     { name = "pyyaml" },
+    { name = "scion-sdk", extra = ["a2a", "mcp"] },
     { name = "starlette" },
     { name = "universal-skills" },
 ]
@@ -377,7 +353,7 @@ acp = [
     { name = "pydantic-ai-harness", extra = ["acp"] },
 ]
 gateway-widgets = [
-    { name = "agent-connector-sdk", extra = ["a2a", "mcp"] },
+    { name = "scion-sdk", extra = ["a2a", "mcp"] },
 ]
 messaging = [
     { name = "botbuilder-core" },
@@ -470,9 +446,6 @@ webui = [
 requires-dist = [
     { name = "agent-client-protocol", marker = "extra == 'acp'", specifier = "==0.11.0" },
     { name = "agent-client-protocol", marker = "extra == 'test'", specifier = "==0.11.0" },
-    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], specifier = ">=0.5.5,<0.6.0" },
-    { name = "agent-connector-sdk", extras = ["a2a", "mcp"], marker = "extra == 'gateway-widgets'", specifier = ">=0.5.5,<0.6.0" },
-    { name = "agent-utilities", specifier = ">=3.2.0,<4.0.0" },
     { name = "agent-webui", marker = "extra == 'webui'", specifier = ">=2.8.2,<3.0.0" },
     { name = "aiohttp", specifier = ">=3.14.5" },
     { name = "anyio", specifier = ">=4.15.1" },
@@ -499,6 +472,7 @@ requires-dist = [
     { name = "matrix-nio", marker = "extra == 'messaging-matrix'", specifier = ">=0.26.0" },
     { name = "mattermostdriver", marker = "extra == 'messaging-mattermost'", specifier = ">=7.3.2" },
     { name = "mcp", specifier = ">=2.3.0,<3.0.0" },
+    { name = "meristem", specifier = ">=4.0.0,<5.0.0" },
     { name = "msgpack", specifier = ">=1.2.1" },
     { name = "mypy", marker = "extra == 'test'", specifier = ">=2.4.0" },
     { name = "neonize", marker = "extra == 'messaging-whatsapp'", specifier = ">=0.5.2" },
@@ -519,6 +493,8 @@ requires-dist = [
     { name = "python-telegram-bot", marker = "extra == 'test'", specifier = ">=22.8" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "ruff", marker = "extra == 'test'", specifier = "==0.17.1" },
+    { name = "scion-sdk", extras = ["a2a", "mcp"], specifier = ">=0.5.6,<0.6.0" },
+    { name = "scion-sdk", extras = ["a2a", "mcp"], marker = "extra == 'gateway-widgets'", specifier = ">=0.5.6,<0.6.0" },
     { name = "setuptools", marker = "extra == 'test'", specifier = ">=84.0.0" },
     { name = "slack-bolt", marker = "extra == 'messaging-slack'", specifier = ">=1.30.0" },
     { name = "starlette", specifier = ">=1.8.0" },
@@ -2428,6 +2404,22 @@ wheels = [
 ]
 
 [[package]]
+name = "meristem"
+version = "4.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "platformdirs" },
+    { name = "pydantic" },
+    { name = "pydantic-ai-harness" },
+    { name = "pydantic-ai-slim" },
+    { name = "pydantic-graph" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0e/86/e8606ea4949fa5bd174899e914a2c15848801447867d30a7c1bab4dfac5f/meristem-4.0.0.tar.gz", hash = "sha256:fdfa2dea19f4a370667198260e378616192f249fd21461694468c97f75fb6899", size = 130753, upload-time = "2026-10-25T20:44:54.319Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5f/30/3029674f77a01f8fba1359d373f165fbb6e45e50f95bab84f134c659ad1b/meristem-4.0.0-py3-none-any.whl", hash = "sha256:9b5996ebef27c304d6e643c4509827c7d29cc09c589be4838a85e4fb466d8c12", size = 94597, upload-time = "2026-10-25T20:44:52.79Z" },
+]
+
+[[package]]
 name = "more-itertools"
 version = "11.2.1"
 source = { registry = "https://pypi.org/simple" }
@@ -4164,6 +4156,35 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/0a/e8/1e186578076aff7a80735f625005fde678412ab609cd323ed182eb7d6b87/ruff-0.17.1-py3-none-win32.whl", hash = "sha256:1de0030a8aa78c65c5fecb84b2e5c390ac684c0452875a02afc7c083d49a496a", size = 9895093, upload-time = "2026-10-15T15:23:10.582Z" },
     { url = "https://files.pythonhosted.org/packages/6a/2e/da3d9589bae8e8b58f3a48bd5bc0b980232fb14a83bf02c3be7660f87c1b/ruff-0.17.1-py3-none-win_amd64.whl", hash = "sha256:5df76f16580fab58d0f6c98a3ac254a4abceb7b2489b8b678335869cff77b3d7", size = 10097955, upload-time = "2026-10-15T15:23:13.309Z" },
     { url = "https://files.pythonhosted.org/packages/df/c9/0f2a4dea06a5e12c1191ee3d96b1e1233797d0d5e18f97a2b909a95a9836/ruff-0.17.1-py3-none-win_arm64.whl", hash = "sha256:42400b9a6ff8515ff27796f07f92e0195be011c86e81e381606f58ea5502fef4", size = 9853542, upload-time = "2026-10-15T15:23:16.05Z" },
+]
+
+[[package]]
+name = "scion-sdk"
+version = "0.5.8"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anyio" },
+    { name = "cryptography" },
+    { name = "epistemic-graph", extra = ["server"] },
+    { name = "httpx" },
+    { name = "httpx2" },
+    { name = "mcp-types" },
+    { name = "pydantic" },
+    { name = "pyyaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b0/a5/15948c5e51f6a5d9a8efe8c9112cd140c778032de7bc375ebb453d52b735/scion_sdk-0.5.8.tar.gz", hash = "sha256:c8cf8a8bd36983db68afc78915720a511052cf9be4198ce1eed5f717e8717fd9", size = 807075, upload-time = "2026-10-27T00:33:18.895Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4a/79/8107af19a35b9d95365805cd52f851c82bd4daef6d4e8d893dcc1011fd4a/scion_sdk-0.5.8-py3-none-any.whl", hash = "sha256:a129100a8f609aeeb5c97c934e1f8afd4da93022af507333cabf3733be5c40d1", size = 789504, upload-time = "2026-10-27T00:33:17.355Z" },
+]
+
+[package.optional-dependencies]
+a2a = [
+    { name = "fasta2a", extra = ["pydantic-ai"] },
+    { name = "starlette" },
+]
+mcp = [
+    { name = "fastmcp" },
+    { name = "mcp" },
 ]
 
 [[package]]

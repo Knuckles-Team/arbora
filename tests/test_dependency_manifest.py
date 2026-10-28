@@ -25,8 +25,8 @@ PYPROJECT = Path(__file__).resolve().parents[1] / "pyproject.toml"
 
 # The repositories the former combined agent-runtime source tree split into.
 SPLIT_PACKAGES = (
-    "agent-utilities",
-    "agent-connector-sdk",
+    "meristem",
+    "scion-sdk",
     "epistemic-graph",
     "agent-webui",
 )
