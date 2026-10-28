@@ -195,7 +195,20 @@
     "ARBORA-FLEET-R044.2",
     "ARBORA-FLEET-R044.3",
     "ARBORA-FLEET-R044.4",
-    "ARBORA-FLEET-R044.5"
+    "ARBORA-FLEET-R044.5",
+    "ARBORA-FLEET-R052",
+    "ARBORA-FLEET-R052.1",
+    "ARBORA-FLEET-R052.2",
+    "ARBORA-FLEET-R052.3",
+    "ARBORA-FLEET-R052.4",
+    "ARBORA-FLEET-R052.4.1",
+    "ARBORA-FLEET-R052.4.2",
+    "ARBORA-FLEET-R052.4.3",
+    "ARBORA-FLEET-R052.4.4",
+    "ARBORA-FLEET-R052.4.5",
+    "ARBORA-FLEET-R052.4.6",
+    "ARBORA-FLEET-R045",
+    "ARBORA-FLEET-R034.15"
   ],
   "requirements": [
     {
@@ -1128,7 +1141,8 @@
         "ARBORA-FLEET-R034.11",
         "ARBORA-FLEET-R034.12",
         "ARBORA-FLEET-R034.13",
-        "ARBORA-FLEET-R034.14"
+        "ARBORA-FLEET-R034.14",
+        "ARBORA-FLEET-R034.15"
       ]
     },
     {
@@ -2192,6 +2206,111 @@
       "verified_by": [
         "tests/test_installed_content.py:146"
       ]
+    },
+    {
+      "id": "ARBORA-FLEET-R052",
+      "title": "Medulla competency questions served through the intent tools (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-FLEET-R052.1",
+        "ARBORA-FLEET-R052.2",
+        "ARBORA-FLEET-R052.3",
+        "ARBORA-FLEET-R052.4"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R052.1",
+      "title": "Serve the supply-chain impact report through one intent operation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R052.2",
+      "title": "Connected-source list and abstentions in the live acceptance run",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R052.3",
+      "title": "Print the sources-used-and-why block in the served tool result",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R052.4",
+      "title": "Orchestration probe questions through the intent surface (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-FLEET-R052.4.1",
+        "ARBORA-FLEET-R052.4.2",
+        "ARBORA-FLEET-R052.4.3",
+        "ARBORA-FLEET-R052.4.4",
+        "ARBORA-FLEET-R052.4.5",
+        "ARBORA-FLEET-R052.4.6"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R052.4.1",
+      "title": "Probe: \"How many nodes does the graph hold, by label?\"",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R052.4.2",
+      "title": "Probe: \"How can I deploy a container with container-manager?\"",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R052.4.3",
+      "title": "Probe: \"Which agents are in the Agent Library?\"",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R052.4.4",
+      "title": "Probe: \"Why does Arbora use the intent surface?\"",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R052.4.5",
+      "title": "Probe: \"Find a tool that lists Docker containers.\"",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R052.4.6",
+      "title": "Probe: \"Delegate: list running containers.\"",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R045",
+      "title": "Host and supervise the ingest worker; surface its health",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R034.15",
+      "title": "Cross-link: DecisionEval attestation consumption proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     }
   ]
 }

@@ -1013,3 +1013,11 @@ R021.4.8.1 separates predecessor validation and lifecycle transition validation.
 The extraction preserves validation order, identity checks, bounds and refusal
 messages. Source tests cover every step-state and task-event pair. This does not
 expand the projection or qualify the parent requirement.
+
+## Medulla companion rows (2026-10-28)
+
+- `ARBORA-OPS-R069`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+- `ARBORA-OPS-R070`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+- `ARBORA-OPS-R071`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+- `ARBORA-OPS-R072`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+- `ARBORA-OPS-R073`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.

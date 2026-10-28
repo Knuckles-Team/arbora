@@ -282,7 +282,12 @@
     "ARBORA-OPS-R021.4.8",
     "ARBORA-OPS-R021.4.9",
     "ARBORA-OPS-R021.4.8.1",
-    "ARBORA-OPS-R021.4.8.2"
+    "ARBORA-OPS-R021.4.8.2",
+    "ARBORA-OPS-R069",
+    "ARBORA-OPS-R070",
+    "ARBORA-OPS-R071",
+    "ARBORA-OPS-R072",
+    "ARBORA-OPS-R073"
   ],
   "requirements": [
     {
@@ -3113,6 +3118,41 @@
     {
       "id": "ARBORA-OPS-R021.4.8.2",
       "title": "Nested lineage and snapshot/update reconciliation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R069",
+      "title": "No local incident authority; call the served incident methods",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R070",
+      "title": "Order-proposal confirmation operation and receipt",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R071",
+      "title": "Review-receipt producer for reviewed repository policy",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R072",
+      "title": "Paper-shortfall maintenance operation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R073",
+      "title": "Host resource-grant binding for incremental indexing",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
