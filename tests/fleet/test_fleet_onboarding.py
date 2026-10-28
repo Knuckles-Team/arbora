@@ -228,6 +228,22 @@ def test_endpoints_keep_only_enabled_streamable_http_servers() -> None:
     )
 
 
+def test_configured_fleet_reads_the_active_arbora_directory(
+    tmp_path, monkeypatch
+) -> None:
+    active = tmp_path / "active"
+    active.mkdir()
+    (active / "mcp_config.json").write_text(
+        json.dumps({"mcpServers": {"alpha-mcp": {"url": "https://alpha/mcp"}}})
+    )
+    monkeypatch.setenv("ARBORA_CONFIG_DIR", f"  {active}  ")
+    monkeypatch.setenv("AGENT_UTILITIES_CONFIG_DIR", str(tmp_path / "legacy"))
+
+    assert onboarding.configured_fleet_endpoints() == (
+        FleetEndpoint("alpha-mcp", "https://alpha/mcp"),
+    )
+
+
 def test_renewal_reregisters_only_lapsing_or_absent_leases() -> None:
     registry = _Registry(
         leases={

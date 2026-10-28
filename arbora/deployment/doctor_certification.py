@@ -57,8 +57,7 @@ def _validate_skill_certification_profile(
     configuration_path: Any, configuration: bytes, profile: bytes
 ) -> None:
     """Bind the runtime profile to the *active* configuration; raise otherwise."""
-    from agent_utilities.core.paths import config_dir
-
+    from arbora.core.settings import config_dir
     from arbora.deployment.certification_assets import (
         _configuration_proof,
         _identity_authority_configuration,
