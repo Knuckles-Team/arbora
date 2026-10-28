@@ -320,6 +320,31 @@ async def test_foreign_read_maps_contract_columns_and_correlates_after_complete(
 
 @pytest.mark.spec("ARBORA-FLEET-R043.7")
 @pytest.mark.asyncio
+@pytest.mark.parametrize("limits", [{"max_pages": 1}, {"max_rows": 1}])
+async def test_incomplete_foreign_read_aborts_before_query(
+    limits: dict[str, int],
+) -> None:
+    models = pytest.importorskip("agent_connector_sdk.adapters.foreign_read")
+    foreign = RecordingForeignClient(models)
+    original = _foreign_request()
+    request = ForeignReadSourceRequest(**{**original.__dict__, **limits})
+    correlated: list[object] = []
+
+    async def correlate(execution: object) -> None:
+        correlated.append(execution)
+
+    result = await FleetSourceExecutor(
+        ForeignGateway(), object(), foreign_client=foreign
+    ).read_foreign(request, correlate=correlate)
+
+    assert result.error_code == "SOURCE_BAD_RESPONSE" and result.truncated
+    assert [name for name, _ in foreign.calls][-1] == "abort"
+    assert all(name != "complete" for name, _ in foreign.calls)
+    assert correlated == []
+
+
+@pytest.mark.spec("ARBORA-FLEET-R043.7")
+@pytest.mark.asyncio
 async def test_read_approved_requires_catalog_projection_and_owner_source_name() -> (
     None
 ):
@@ -388,6 +413,19 @@ async def test_read_approved_refuses_receipt_resource_or_owner_name_mismatch() -
     )
     assert mismatch.error_code == "SOURCE_HELD"
     assert [name for name, _ in foreign.calls] == []
+
+    wrong_tool = ForeignReadSourceRequest(
+        **{**request.__dict__, "tool": "unapproved_operation"}
+    )
+    mismatch = await FleetSourceExecutor(
+        gateway, caller, foreign_client=foreign
+    ).read_approved(
+        wrong_tool,
+        mapping=mapping,
+        resource_uri="ontology://issues",
+    )
+    assert mismatch.error_code == "SOURCE_HELD"
+    assert foreign.calls == [] and gateway.calls == []
 
     wrong_name = ForeignReadSourceRequest(
         **{**request.__dict__, "source_name": "other-owner/issues"}
