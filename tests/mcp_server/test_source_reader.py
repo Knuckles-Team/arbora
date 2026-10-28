@@ -386,6 +386,10 @@ async def test_blob_streams_chunks_and_ends_fetch(monkeypatch):
     assert outcome.found is True
     assert outcome.content == b"def main():\n    return 1\n"
     assert outcome.content_digest == "digest:app"
+    assert (
+        outcome.content_sha256
+        == "13e9ae3486a224c96a589306cbfdf9dafd96593694e3b4632548f2999cf2299f"
+    )
     assert outcome.size == 25
     assert methods(engine) == [
         "GetNodesByLabel",
@@ -435,6 +439,7 @@ async def test_blob_path_not_found(monkeypatch):
     )
     assert outcome.found is False and outcome.reason == "path-not-found"
     assert outcome.content == b"" and outcome.content_digest is None
+    assert outcome.content_sha256 is None
     assert not any(method.startswith("Blob") for method in methods(engine))
 
 

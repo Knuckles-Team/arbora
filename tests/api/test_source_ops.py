@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import hashlib
 from typing import Any
 
 import pytest
@@ -71,6 +72,7 @@ class FakeReader:
     def __init__(self) -> None:
         self.calls: list[tuple[str, dict[str, str]]] = []
         self.seen_claims: list[Any] = []
+        self.blob_content = b"print('hello')\n"
 
     def _record(self, method: str, context: Any, **fields: str) -> None:
         self.calls.append((method, fields))
@@ -96,7 +98,7 @@ class FakeReader:
 
     async def blob(self, *, repository: str, ref: str, path: str, context: Any):
         self._record("blob", context, repository=repository, ref=ref, path=path)
-        content = b"print('hello')\n"
+        content = self.blob_content
         return source_ops.SourceBlobOutcome(
             tenant=context.caller.tenant,
             repository=repository,
@@ -104,6 +106,7 @@ class FakeReader:
             path=path,
             found=True,
             content_digest="digest:one",
+            content_sha256=hashlib.sha256(content).hexdigest(),
             content=content,
             size=len(content),
         )
@@ -184,13 +187,14 @@ def _services(reader: Any | None) -> tuple[Any, Any, _ClaimsClient]:
 
 
 @pytest.mark.parametrize("op_id", sorted(EXPECTED_SCOPES))
-def test_source_reads_served(op_id: str):
+@pytest.mark.parametrize("surface", [Surface.HTTP, Surface.MCP])
+def test_source_reads_served(op_id: str, surface: Surface):
     reader = FakeReader()
     services, _runtime, client = _services(reader)
     # Per-principal admission: the caller holds exactly the op's engine scopes.
     supplied = caller(effective_scopes=EXPECTED_SCOPES[op_id])
     result = asyncio.run(
-        invoke(op_id, dict(PARAMS[op_id]), supplied, Surface.HTTP, services=services)
+        invoke(op_id, dict(PARAMS[op_id]), supplied, surface, services=services)
     )
     assert isinstance(result, OpResult) and result.code == "OK", result
     served = result.value
@@ -208,6 +212,72 @@ def test_source_reads_served(op_id: str):
     assert set(seen["scopes"]) == EXPECTED_SCOPES[op_id]
     # The outcome is the reader's own model, nested for the result envelope.
     assert served["value"]["repository"] == "repo-a"
+    if op_id == "source.blob":
+        assert (
+            served["value"]["content_sha256"]
+            == hashlib.sha256(b"print('hello')\n").hexdigest()
+        )
+        assert served["value"]["content_encoding"] == "utf-8"
+
+
+@pytest.mark.parametrize("surface", [Surface.HTTP, Surface.MCP])
+def test_source_blob_binary_round_trips(surface: Surface):
+    reader = FakeReader()
+    reader.blob_content = b"\xff\x00"
+    services, _runtime, _client = _services(reader)
+    result = asyncio.run(
+        invoke(
+            "source.blob",
+            dict(PARAMS["source.blob"]),
+            caller(effective_scopes=FULL_SCOPES),
+            surface,
+            services=services,
+        )
+    )
+    assert isinstance(result, OpResult) and result.code == "OK", result
+    value = result.value["value"]
+    assert value["content"] == "/wA=" and value["content_encoding"] == "base64"
+    assert value["content_sha256"] == hashlib.sha256(reader.blob_content).hexdigest()
+    assert (
+        source_ops.SourceBlobOutcome.model_validate(value).content
+        == reader.blob_content
+    )
+
+
+@pytest.mark.parametrize(
+    ("encoding", "content"),
+    [("base64", "%%%"), ("utf-8", b"\xff"), ("unknown", "data"), ([], "data")],
+)
+def test_source_blob_rejects_invalid_wire_content(
+    encoding: object, content: str | bytes
+):
+    with pytest.raises(ValueError):
+        source_ops.SourceBlobOutcome.model_validate(
+            {
+                "tenant": "t",
+                "repository": "r",
+                "ref": "main",
+                "path": "p",
+                "found": True,
+                "content": content,
+                "content_encoding": encoding,
+            }
+        )
+
+
+def test_source_blob_encodes_binary_bytearray():
+    outcome = source_ops.SourceBlobOutcome.model_validate(
+        {
+            "tenant": "t",
+            "repository": "r",
+            "ref": "main",
+            "path": "p",
+            "found": True,
+            "content": bytearray(b"\xff"),
+        }
+    )
+    value = outcome.model_dump(mode="json")
+    assert value["content"] == "/w==" and value["content_encoding"] == "base64"
 
 
 @pytest.mark.parametrize("op_id", sorted(EXPECTED_SCOPES))
