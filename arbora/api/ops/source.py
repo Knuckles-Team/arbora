@@ -12,10 +12,18 @@ requested path). An uncomposed reader fails closed with a typed
 
 from __future__ import annotations
 
+import base64
 from collections.abc import Mapping
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Literal, Protocol, runtime_checkable
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 
 from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.ops._common import Params, bound_service
@@ -114,7 +122,7 @@ class SourceTreeOutcome(BaseModel):
 
 
 class SourceBlobOutcome(BaseModel):
-    """One file's content plus its content identity."""
+    """One file's content, CAS manifest reference, and returned-byte hash."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -125,8 +133,54 @@ class SourceBlobOutcome(BaseModel):
     found: bool
     reason: str | None = None
     content_digest: str | None = None
+    content_sha256: str | None = None
     content: bytes = b""
+    content_encoding: Literal["utf-8", "base64"] = "utf-8"
     size: int = 0
+
+    @model_validator(mode="before")
+    @classmethod
+    def decode_wire_content(cls, value: Any) -> Any:
+        if not isinstance(value, dict):
+            return value
+        value = dict(value)
+        encoding = value.get("content_encoding", "utf-8")
+        content = value.get("content", b"")
+        if not isinstance(encoding, str) or encoding not in {"utf-8", "base64"}:
+            raise ValueError("unknown source content encoding")
+        if isinstance(content, bytearray):
+            content = bytes(content)
+        if isinstance(content, str) and encoding == "base64":
+            try:
+                content = base64.b64decode(content, validate=True)
+            except (ValueError, UnicodeEncodeError) as exc:
+                raise ValueError("invalid base64 source content") from exc
+        elif isinstance(content, str):
+            content = content.encode("utf-8")
+        elif (
+            isinstance(content, bytes)
+            and encoding == "utf-8"
+            and "content_encoding" in value
+        ):
+            try:
+                content.decode("utf-8")
+            except UnicodeDecodeError as exc:
+                raise ValueError("invalid UTF-8 source content") from exc
+        if isinstance(content, bytes):
+            value["content"] = content
+            try:
+                content.decode("utf-8")
+            except UnicodeDecodeError:
+                value["content_encoding"] = "base64"
+            else:
+                value["content_encoding"] = "utf-8"
+        return value
+
+    @field_serializer("content", when_used="json")
+    def serialize_content(self, content: bytes) -> str:
+        if self.content_encoding == "base64":
+            return base64.b64encode(content).decode("ascii")
+        return content.decode("utf-8")
 
 
 class SourceHistoryEntry(BaseModel):
