@@ -327,3 +327,11 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] `ARBORA-OPS-R021.4.9` — Add owner-bound public node records and separate capability flags; keep unsupported interaction unavailable.
 - [ ] `ARBORA-OPS-R021.4.8.1` — Qualify the negotiated prompt-free flat snapshot with pure, served-source and generated-contract checks; native-service acceptance remains separate.
 - [ ] `ARBORA-OPS-R021.4.8.2` — Qualify producer-declared nested lineage and snapshot/update reconciliation through installed owners and both transports; retain all parent acceptance.
+
+## Medulla companion rows (2026-10-28)
+
+- [ ] `ARBORA-OPS-R069`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-OPS-R070`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-OPS-R071`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-OPS-R072`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-OPS-R073`: Deliver the requirement in requirements.md.

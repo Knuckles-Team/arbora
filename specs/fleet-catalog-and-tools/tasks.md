@@ -268,3 +268,19 @@ Preserve all existing R003 tasks and receipts. These added runtime cases have no
 The WebUI bridge is configured by the host and discovered through the existing preloaded `find` tool. Browser API support and active per-session registrations are separate facts. No preload grants identity, attended consent, execution permission or a browser session. Boot, discovery, owner isolation and teardown regression checks are required; full web-agent execution acceptance remains open.
 
 - [ ] Qualify R015/R029 live agent-to-attended-browser proposals end to end, including exact session, human acceptance, native run cancellation and existing mutation confirmation.
+
+## Medulla companion rows (2026-10-28)
+
+- [ ] `ARBORA-FLEET-R052`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-FLEET-R052.1`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-FLEET-R052.2`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-FLEET-R052.3`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-FLEET-R052.4`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-FLEET-R052.4.1`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-FLEET-R052.4.2`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-FLEET-R052.4.3`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-FLEET-R052.4.4`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-FLEET-R052.4.5`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-FLEET-R052.4.6`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-FLEET-R045`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-FLEET-R034.15`: Deliver the requirement in requirements.md.

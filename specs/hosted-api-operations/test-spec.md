@@ -399,3 +399,11 @@ Missing or malformed admission yields unavailable. A foreign owner or tenant can
 Native authorization refusals retain their codes. Neither request fields nor mutable metadata may select another graph.
 Tests reject forged graph fields, identity drift and added scopes.
 The failing real-boot assertion remains unchanged until the hosted serving path passes.
+
+## Medulla companion rows (2026-10-28)
+
+- `ARBORA-OPS-R069`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-OPS-R070`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-OPS-R071`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-OPS-R072`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-OPS-R073`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.

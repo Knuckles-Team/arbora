@@ -231,3 +231,7 @@ Order: R017.1 (placement), R017.2 to R017.5 (assembly, view, confirm, refusal), 
 - [ ] `ARBORA-DEPLOY-R009.3`: Deliver every requirement in requirements.md.
 - [ ] `ARBORA-DEPLOY-R013.7`: Deliver every requirement in requirements.md.
 - [ ] `ARBORA-DEPLOY-R010.4`: Deliver every requirement in requirements.md.
+
+## Medulla companion rows (2026-10-28)
+
+- [ ] `ARBORA-DEPLOY-R017.17`: Deliver the requirement in requirements.md.

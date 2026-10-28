@@ -358,3 +358,19 @@ This is safe refusal, not historical migration or receipt qualification.
 ARBORA-FLEET-R027.7.1: test_cli_retains_diagnostics_on_stderr_and_one_json_report covers successful, partial and exceptional results. It checks retained stderr diagnostics, exact JSON decoding and stdout restoration. The ordered test imports the served-browser factory before provisioning and onboarding. It retains their original JSON assertions against released WebUI2.8.2. This is process-composition evidence, not a package release or live fleet acceptance.
 
 ARBORA-FLEET-R027.7.2 remains planned: qualify the complete original onboarding matrix through installed providers. The stream tests do not discharge registration, capture, attestation, import or boot acceptance.
+
+## Medulla companion rows (2026-10-28)
+
+- `ARBORA-FLEET-R052`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-FLEET-R052.1`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-FLEET-R052.2`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-FLEET-R052.3`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-FLEET-R052.4`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-FLEET-R052.4.1`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-FLEET-R052.4.2`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-FLEET-R052.4.3`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-FLEET-R052.4.4`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-FLEET-R052.4.5`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-FLEET-R052.4.6`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-FLEET-R045`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-FLEET-R034.15`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.

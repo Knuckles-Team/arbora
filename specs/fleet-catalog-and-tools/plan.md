@@ -474,3 +474,19 @@ Kinds without such candidates retain the normal labeled ledger path.
 The synchronous production CLI reserves stdout for its single JSON report. Configuration and operation diagnostics go to stderr while the operation runs; stdout is restored before success or opaque failure output. This boundary does not redirect prebound descriptors or background work after the CLI operation returns.
 
 R027.7.1 is the bounded CLI stream repair. R027.7.2 retains the original onboarding acceptance matrix; the parent remains open until it is qualified.
+
+## Medulla companion rows (2026-10-28)
+
+- `ARBORA-FLEET-R052`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+- `ARBORA-FLEET-R052.1`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+- `ARBORA-FLEET-R052.2`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+- `ARBORA-FLEET-R052.3`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+- `ARBORA-FLEET-R052.4`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+- `ARBORA-FLEET-R052.4.1`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+- `ARBORA-FLEET-R052.4.2`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+- `ARBORA-FLEET-R052.4.3`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+- `ARBORA-FLEET-R052.4.4`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+- `ARBORA-FLEET-R052.4.5`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+- `ARBORA-FLEET-R052.4.6`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+- `ARBORA-FLEET-R045`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+- `ARBORA-FLEET-R034.15`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.

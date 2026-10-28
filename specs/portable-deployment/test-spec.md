@@ -77,3 +77,7 @@ Missing deployment producers or target runtimes leave their scenarios unexecuted
 - `ARBORA-DEPLOY-R009.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-DEPLOY-R013.7`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-DEPLOY-R010.4`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+
+## Medulla companion rows (2026-10-28)
+
+- `ARBORA-DEPLOY-R017.17`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
