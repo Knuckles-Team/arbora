@@ -256,6 +256,48 @@ def test_renewal_reregisters_only_lapsing_or_absent_leases() -> None:
     assert all(params["ttl_secs"] == 86_400 for params, _key in registry.registers)
 
 
+def test_provision_reregistration_issues_a_fresh_key_per_call() -> None:
+    """A (re)registration outside a renewal window is a fresh issue.
+
+    Reusing the idempotency key of an earlier, already committed issue is
+    refused by the engine as IDEMPOTENCY_CONFLICT (the lease is re-derived
+    server-side on every RegisterServer, so the new issue is not a byte
+    identical replay of the old receipt). A live lease is still left
+    untouched.
+    """
+    registry = _Registry(leases={})
+    endpoints = {"absent-mcp": "http://absent/mcp"}
+
+    renewed = asyncio.run(
+        ensure_server_registrations(registry, endpoints, now_ms=NOW_MS)
+    )
+    assert renewed == ("absent-mcp",)
+    first_key = registry.registers[0][1]
+    assert first_key.startswith("arbora:register-server:absent-mcp:http://absent/mcp:")
+
+    # The lease the first issue minted is live: no re-issue.
+    registry.registers.clear()
+    renewed = asyncio.run(
+        ensure_server_registrations(registry, endpoints, now_ms=NOW_MS)
+    )
+    assert renewed == ()
+    assert registry.registers == []
+
+    # After the lease lapses, the engine's reaper drops the :Server row (EG
+    # lists only live registrations) -- emulate that, then re-issue.
+    registry.registers.clear()
+    registry.leases.pop("absent-mcp", None)
+    renewed = asyncio.run(
+        ensure_server_registrations(
+            registry, endpoints, now_ms=NOW_MS + 86_400 * 1_000 + 1
+        )
+    )
+    assert renewed == ("absent-mcp",)
+    second_key = registry.registers[0][1]
+    assert second_key.startswith("arbora:register-server:absent-mcp:http://absent/mcp:")
+    assert second_key != first_key
+
+
 def test_fresh_store_pass_registers_attests_and_imports_each_server(
     eg: _Registry,
 ) -> None:

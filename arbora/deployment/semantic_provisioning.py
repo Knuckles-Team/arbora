@@ -169,8 +169,13 @@ async def ensure_server_registrations(
 
     EG lists only live registrations. With ``renew_margin_ms`` zero, any
     listed registration is left untouched. A positive margin re-registers a
-    lease that lapses within that window. Each renewal window carries its own
-    idempotency key, so a renewal never replays an earlier receipt.
+    lease that lapses within that window.
+
+    Idempotency keys are per-issue, never per-server: the engine re-derives
+    the lease server-side on every RegisterServer, and it refuses a key
+    whose receipt was already committed by an earlier issue
+    (IDEMPOTENCY_CONFLICT). Each renewal window therefore carries its own
+    key, and every other (re)registration gets a fresh one.
     """
 
     from epistemic_graph.generated.cluster import send_register_server
@@ -186,9 +191,14 @@ async def ensure_server_registrations(
             not renew_margin_ms or leases[name] > now + renew_margin_ms
         ):
             continue
-        key = f"arbora:register-server:{name}:{url}"
         if renew_margin_ms:
-            key += f":{now // renew_margin_ms}"
+            key = f"arbora:register-server:{name}:{url}:{now // renew_margin_ms}"
+        else:
+            # A fresh key per issue: reusing the key of an earlier, already
+            # committed issue is refused as IDEMPOTENCY_CONFLICT, and a
+            # first-start (re)registration after a lease lapse is a new
+            # operation, not a replay of the old receipt.
+            key = f"arbora:register-server:{name}:{url}:{secrets.token_hex(8)}"
         await send_register_server(
             commons,
             {
