@@ -144,7 +144,9 @@ async def test_snapshot_is_committed_once(monkeypatch, failed, counts):
     monkeypatch.setattr(authority, "_execute_claimed_run", execute)
     monkeypatch.setattr(work_items, "claim_specific", lambda *a, **k: CLAIM)
     commits = []
-    monkeypatch.setattr(work_items, "commit_result", lambda *a, **k: commits.append(k))
+    monkeypatch.setattr(
+        work_items, "commit_result", lambda *a, **k: commits.append(k) or "committed"
+    )
     await authority._run(
         object(),
         item_id="work",

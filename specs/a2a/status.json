@@ -89,7 +89,10 @@
     "ARBORA-A2A-R001.6",
     "ARBORA-A2A-R001.5.1",
     "ARBORA-A2A-R001.5.2",
-    "ARBORA-A2A-R016.6"
+    "ARBORA-A2A-R016.6",
+    "ARBORA-A2A-R001.3.1",
+    "ARBORA-A2A-R001.3.2",
+    "ARBORA-A2A-R001.3.3"
   ],
   "requirements": [
     {
@@ -930,7 +933,14 @@
       "title": "Served agent keeps and lists caller conversations",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/a2a/test_terminal_reply_commit.py:13"
+      ],
+      "rollup_of": [
+        "ARBORA-A2A-R001.3.1",
+        "ARBORA-A2A-R001.3.2",
+        "ARBORA-A2A-R001.3.3"
+      ]
     },
     {
       "id": "ARBORA-A2A-R001.4",
@@ -988,6 +998,44 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-A2A-R001.3.1",
+      "title": "Typed native conversation admission handoff",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "c4c0956fe7b3"
+      ],
+      "verified_by": [
+        "tests/test_conversation_admission.py:15"
+      ]
+    },
+    {
+      "id": "ARBORA-A2A-R001.3.2",
+      "title": "Remaining served conversation history acceptance",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/a2a/test_conversation_preview.py:13"
+      ]
+    },
+    {
+      "id": "ARBORA-A2A-R001.3.3",
+      "title": "Bind opt-in native completed-text history before execution",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "542a8bac1071",
+        "779fca4bf266",
+        "a2d662ec0e33",
+        "d4937e42ad1d"
+      ],
+      "verified_by": [
+        "tests/a2a/test_history_capability.py:18",
+        "tests/a2a/test_mcp_discovery_routes.py:13",
+        "tests/a2a/test_native_history_admission.py:18",
+        "tests/a2a/test_native_history_selection.py:17",
+        "tests/a2a/test_native_profile_optin.py:13"
+      ]
     }
   ]
 }

@@ -1,0 +1,54 @@
+{
+  "status": "PREPARED_OFFICIAL_PRODUCER_PAIR_AVAILABLE_CONSUMER_COMMITS_UNPUBLISHED",
+  "producer": {
+    "repository": "Knuckles-Team/medulla",
+    "head": "ad8b80cdb63715309834bb05d82d6415450d0e74",
+    "tested_revision": "fbb395f750c8b4f8007f6c0e94db4320171f7cc2",
+    "tree": "cc64e09495d76356a728be3e728a419f9c751174",
+    "client_artifact_id": 12845675105,
+    "client_wheel_sha256": "14fa066baac32b7410d0ee91db59bb69d61b4589fa41eecaf7b291c64b2a8832",
+    "server_wheel_sha256": "fc6053593549e6c04113211722e9170124e22098154de9769648a4892a77171b",
+    "server_wheel_artifact_id": 12846386627,
+    "run_id": 40750992097,
+    "server_binary_sha256": "f14bd7cbc79fb45189e1cb01b84c9062884d2be73600ac4034b6d3baf6f252da"
+  },
+  "scion": {
+    "repository": "Knuckles-Team/scion-sdk",
+    "base_commit": "644c6ce2973d56596a61c32469840a246ba0a2d8",
+    "candidate_commit": null,
+    "patch_sha256": "dc00561d31300ccc9eb9257c89a3e8d80f95f8f4850aba5538cc536ece37c168",
+    "local_wheel_sha256": "085eade1ca46bfc64f24c694c0d599e19b4b8afb1f2e27858b211d68f21b7506"
+  },
+  "arbora": {
+    "repository": "Knuckles-Team/arbora",
+    "parents": [
+      "a5ecf6f8f87b5686a85479283c0eb8a240207f46",
+      "0e89e4d9ba9cd9603b184691d8129edc9cb0921e"
+    ],
+    "candidate_commit": null,
+    "previous_local_wheel_sha256": "5e1c5080b4c05c97d0d44f7268b1c61ad58e3b0a9d4e57fd67c27138fa08fa78",
+    "note": "Rebuilt local candidate after exact554ledger refresh. Unpublished, not release qualified.",
+    "local_patch_from525_sha256": "3e34ad5efdc80e9547374371a069c7a253af62a4dc0dc07e138fc36dd7e82114",
+    "local_wheel_sha256": "541576b545ac0e3ef3532ad5208172861c5c51573b4573c760b3b07347a80008"
+  },
+  "meristem": {
+    "distribution": "meristem",
+    "version": "4.0.0",
+    "wheel_sha256": "9b5996ebef27c304d6e643c4509827c7d29cc09c589be4838a85e4fb466d8c12"
+  },
+  "tuig": {
+    "repository": "Knuckles-Team/tuig",
+    "candidate_commit": "614e033b6ce0bd1e6ee7f7129750c78e2b80e314",
+    "binary_sha256": "ddbe1e522bbc0391218275f0d470dd8a0555c09bf4b2686518530d40d4c5e833",
+    "verification_note": "Local binary hash matched supplied prior qualification hash; --help includes --continue. Retained source receipt names be006433; git diff be006433..614e033 native subtree is empty. No rebuild performed.",
+    "binary_path": "/workspace/scratch/e4ef2ca48ba5/tuig-continuation-tmp/tuig-validated",
+    "validated_source": "be006433efc8adddf646ef0e12122dea753857c0",
+    "validation_receipt_sha256": "d51de09fcc25f15723990ba53d961873cc6df576b2dee8ae10f76668c77daa84"
+  },
+  "compatibility": {
+    "approved_exact_identity_count": 554,
+    "blocked_closure_count": 35,
+    "reviewed_manifest_sha256": "3e0d93b54f35f186713b8c3947a5acbb8beaf7971c71f710c6e1921ee71981d9"
+  },
+  "restart_bundle_manifest_sha256": "232f909cbaff64e9eb83d0f10ed1b04c62981026fc8f772b1426b52080a3f3e7"
+}

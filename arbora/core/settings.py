@@ -138,6 +138,12 @@ class ArboraConfig(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
 
+    completed_text_history: bool = Field(
+        default=False,
+        alias="ARBORA_COMPLETED_TEXT_HISTORY",
+        description="Opt in to native terminal-only completed-text conversations.",
+    )
+
     task_plan: dict[str, Any] | None = Field(
         default=None,
         alias="ARBORA_TASK_PLAN",

@@ -511,3 +511,38 @@ def test_schema_warmup_without_loop_reports_deferred_cause(caplog):
     _warm_task_plan_schema(object(), object(), "tenant")
     assert "task-plan schema warmup deferred to first use" in caplog.text
     assert "no running event loop" in caplog.text
+
+
+# spec: ARBORA-RELEASE-R003.4.4
+def test_generated_pin_uses_medulla_distribution_metadata(
+    monkeypatch: pytest.MonkeyPatch, engine_export: ModuleType
+) -> None:
+    import importlib.metadata
+
+    calls: list[str] = []
+
+    def installed_version(name: str) -> str:
+        calls.append(name)
+        assert name == "medulla"
+        return "2.27.10"
+
+    monkeypatch.setattr(importlib.metadata, "version", installed_version)
+    pin = _GENERATE(modules=(FIXTURE_MODULE,))
+    assert pin["engine_version"] == "2.27.10"
+    assert pin["available"] is True
+    assert calls == ["medulla"]
+
+
+# spec: ARBORA-RELEASE-R003.4.4
+def test_generated_pin_refuses_missing_medulla_metadata(
+    monkeypatch: pytest.MonkeyPatch, engine_export: ModuleType
+) -> None:
+    import importlib.metadata
+
+    def absent_version(name: str) -> str:
+        assert name == "medulla"
+        raise importlib.metadata.PackageNotFoundError(name)
+
+    monkeypatch.setattr(importlib.metadata, "version", absent_version)
+    with pytest.raises(importlib.metadata.PackageNotFoundError):
+        _GENERATE(modules=(FIXTURE_MODULE,))

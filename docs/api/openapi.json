@@ -5077,7 +5077,7 @@
             "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
           }
         },
-        "summary": "VIZ-1: GET expand(graph, cluster_id) -- a level-1 cluster's member nodes/edges read live off the graph",
+        "summary": "VIZ-1: GET expand(graph, cluster_id). Read the level-1 cluster members directly from the graph",
         "tags": [
           "eg"
         ]
@@ -10115,6 +10115,40 @@
         ]
       }
     },
+    "/api/v1/ops/eg.coordination.GetConversationHead": {
+      "post": {
+        "operationId": "eg.coordination.GetConversationHead",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/GetConversationHead"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.coordination.json#/methods/GetConversationHead"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "owner-bound ordered conversation head snapshot",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.coordination.GetCurrentPlan": {
       "post": {
         "operationId": "eg.coordination.GetCurrentPlan",
@@ -10149,6 +10183,40 @@
         ]
       }
     },
+    "/api/v1/ops/eg.coordination.GetRunCheckpoint": {
+      "post": {
+        "operationId": "eg.coordination.GetRunCheckpoint",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/GetRunCheckpoint"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.coordination.json#/methods/GetRunCheckpoint"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "private owner-bound checkpoint and same-snapshot WorkItem view",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.coordination.GetRunWorkItem": {
       "post": {
         "operationId": "eg.coordination.GetRunWorkItem",
@@ -10178,6 +10246,40 @@
           }
         },
         "summary": "owner-bound immutable run admission and current caller-safe WorkItem snapshot",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.coordination.GetSessionUsage": {
+      "post": {
+        "operationId": "eg.coordination.GetSessionUsage",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/GetSessionUsage"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.coordination.json#/methods/GetSessionUsage"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "bounded caller-context committed usage",
         "tags": [
           "eg"
         ]
@@ -10280,6 +10382,40 @@
           }
         },
         "summary": "tenant-bound immutable grant record in the WorkItem MutationBatch; an existing id is a collision, never an overwrite",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.coordination.IssueHostStartGrant": {
+      "post": {
+        "operationId": "eg.coordination.IssueHostStartGrant",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/IssueHostStartGrant"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.coordination.json#/methods/IssueHostStartGrant"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "bounded immutable host-start assertions with native issuer provenance; application session/execution admission remains with Arbora",
         "tags": [
           "eg"
         ]
@@ -10484,6 +10620,40 @@
           }
         },
         "summary": "immutable owner and live fence bind revisioned current-plan publication",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.coordination.PublishRunCheckpoint": {
+      "post": {
+        "operationId": "eg.coordination.PublishRunCheckpoint",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/PublishRunCheckpoint"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.coordination.json#/methods/PublishRunCheckpoint"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "owner and live fence atomically bind an immutable private checkpoint and WorkItem head",
         "tags": [
           "eg"
         ]
@@ -15793,6 +15963,142 @@
         ]
       }
     },
+    "/api/v1/ops/eg.query.ForeignReadAbort": {
+      "post": {
+        "operationId": "eg.query.ForeignReadAbort",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/ForeignReadAbort"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.query.json#/methods/ForeignReadAbort"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "One terminal abort",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.query.ForeignReadChunk": {
+      "post": {
+        "operationId": "eg.query.ForeignReadChunk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/ForeignReadChunk"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.query.json#/methods/ForeignReadChunk"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Monotone bounded page append",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.query.ForeignReadComplete": {
+      "post": {
+        "operationId": "eg.query.ForeignReadComplete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/ForeignReadComplete"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.query.json#/methods/ForeignReadComplete"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "One terminal completion before correlated query",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.query.ForeignReadOpen": {
+      "post": {
+        "operationId": "eg.query.ForeignReadOpen",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/ForeignReadOpen"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.query.json#/methods/ForeignReadOpen"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Host-driven bounded source execution; durable approval and current catalog are re-read before binding",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.query.GetChangeCursor": {
       "post": {
         "operationId": "eg.query.GetChangeCursor",
@@ -16060,6 +16366,40 @@
           }
         },
         "summary": "EG-FEDERATED-QUERY-R058.2.2.1: NlQuery plus the executed UQL text. It shares the planner, budget, authority and refusals of NlQuery",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.query.NlQueryPlan": {
+      "post": {
+        "operationId": "eg.query.NlQueryPlan",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/NlQueryPlan"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.query.json#/methods/NlQueryPlan"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "EG-FEDERATED-QUERY-R058.2.2.2: typed plan-only UQL candidate and pins; no graph/source data read or authority claim",
         "tags": [
           "eg"
         ]
@@ -20931,5 +21271,5 @@
       }
     }
   },
-  "x-registry-digest": "27b9f48df91b04f699c016125c221c290c42ff651cbecf5b00c44e9136f55506"
+  "x-registry-digest": "c4afa6b9f547e34cb1be24aea0ef68fa3f739aadb8ed00fdedca352ffae1b6dc"
 }

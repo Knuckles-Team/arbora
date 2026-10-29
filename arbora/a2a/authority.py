@@ -9,7 +9,7 @@ import logging
 from collections import OrderedDict
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Any, Protocol, cast, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, cast, runtime_checkable
 
 from agent_connector_sdk.privacy import persistence_reference
 
@@ -24,6 +24,9 @@ from .models import (
     A2ATextPart,
 )
 from .routing import A2AAssemblyUnavailable
+
+if TYPE_CHECKING:
+    from .conversation_history import ConversationPreview
 
 __all__ = [
     "A2AContextUnavailable",
@@ -141,6 +144,7 @@ class A2ATaskAuthority(Protocol):
         idempotency_key: str,
         decision: A2ARouteDecision,
         blocking: bool = True,
+        require_completed_text_history: bool = False,
     ) -> A2ATask: ...
 
     async def get(self, task_id: str) -> A2ATask | None: ...
@@ -173,6 +177,7 @@ class WorkItemA2AAuthority:
         executor: Any = None,
         task_plan_config: Any = None,
         hosted_invocation: Any = None,
+        completed_text_history: bool = False,
     ) -> None:
         self._engine_provider = engine_provider
         self._executor = executor
@@ -181,6 +186,18 @@ class WorkItemA2AAuthority:
         self._detached: set[asyncio.Task[Any]] = set()
         self.task_plan_config = task_plan_config
         self.hosted_invocation = hosted_invocation
+        if type(completed_text_history) is not bool:
+            raise TypeError("completed history flag must be a trusted boolean")
+        self.completed_text_history = completed_text_history
+
+    def supports_completed_text_history(self) -> bool:
+        from .history_capability import native_history_contract_available
+
+        return (
+            self.completed_text_history is True
+            and self.task_plan_config is not None
+            and native_history_contract_available(self.hosted_invocation)
+        )
 
     @staticmethod
     def _session(scope: str) -> Any:
@@ -248,6 +265,12 @@ class WorkItemA2AAuthority:
         suffix = context_id.removeprefix("a2a-context-")
         if len(suffix) != 64 or any(char not in "0123456789abcdef" for char in suffix):
             raise ValueError("A2A context id is invalid")
+        if not self._context_exists(session, context_id, owner_ref):
+            raise PermissionError("A2A context is unavailable")
+        return context_id
+
+    def _context_exists(self, session: Any, context_id: str, owner_ref: str) -> bool:
+        """Read caller-owned membership only, never infer predecessor order."""
         _engine, work_engine = self._engine()
         match = {
             "a2a_schema": _A2A_METADATA_SCHEMA,
@@ -257,44 +280,62 @@ class WorkItemA2AAuthority:
         cursor = None
         seen: set[str] = set()
         for _ in range(32):
-            try:
-                page = work_engine.work_items.list(
-                    tenant=session.tenant,
-                    kind="orchestrator_task",
-                    metadata_match=match,
-                    cursor=cursor,
-                    limit=1,
-                )
-            except PermissionError:
-                raise
-            except Exception as exc:
-                raise A2AContextUnavailable(
-                    "durable A2A context lookup is unavailable"
-                ) from exc
-            if not isinstance(page, dict) or not isinstance(page.get("items"), list):
-                raise A2AContextUnavailable("durable A2A context lookup is unavailable")
-            rows = page["items"]
-            if len(rows) > 1:
-                raise A2AContextUnavailable("durable A2A context lookup is unavailable")
+            rows, next_cursor = self._context_membership_page(
+                work_engine, session, match, cursor
+            )
             if rows:
                 row = rows[0]
-                if not (
-                    self._owned(row, owner_ref)
-                    and row["metadata"].get("a2a_context_id") == context_id
-                ):
-                    raise PermissionError("A2A context is unavailable")
+                self._validate_context_member(row, owner_ref, context_id, session)
+                return True
+            cursor = next_cursor
+            if cursor is None:
                 if self._session("kg:write") != session:
                     raise PermissionError("A2A caller changed during context lookup")
-                return context_id
-            cursor = page.get("next_cursor")
-            if cursor is None:
-                raise PermissionError("A2A context is unavailable")
+                return False
             if not isinstance(cursor, str) or not cursor or cursor in seen:
                 raise A2AContextUnavailable("durable A2A context lookup is unavailable")
             seen.add(cursor)
         raise A2AContextUnavailable(
             "durable A2A context lookup exceeded its page bound"
         )
+
+    @staticmethod
+    def _context_membership_page(
+        work_engine: Any, session: Any, match: dict[str, str], cursor: str | None
+    ) -> tuple[list[Any], Any]:
+        """Read one bounded membership page; failures cannot imply an empty context."""
+        try:
+            page = work_engine.work_items.list(
+                tenant=session.tenant,
+                kind="orchestrator_task",
+                metadata_match=match,
+                cursor=cursor,
+                limit=1,
+            )
+        except PermissionError:
+            raise
+        except Exception as exc:
+            raise A2AContextUnavailable(
+                "durable A2A context lookup is unavailable"
+            ) from exc
+        if not isinstance(page, dict) or not isinstance(page.get("items"), list):
+            raise A2AContextUnavailable("durable A2A context lookup is unavailable")
+        rows = page["items"]
+        if len(rows) > 1:
+            raise A2AContextUnavailable("durable A2A context lookup is unavailable")
+        return rows, page.get("next_cursor")
+
+    def _validate_context_member(
+        self, row: Any, owner_ref: str, context_id: str, session: Any
+    ) -> None:
+        """Validate ownership and unchanged caller before confirming membership."""
+        if not (
+            self._owned(row, owner_ref)
+            and row["metadata"].get("a2a_context_id") == context_id
+        ):
+            raise PermissionError("A2A context is unavailable")
+        if self._session("kg:write") != session:
+            raise PermissionError("A2A caller changed during context lookup")
 
     @staticmethod
     def _request_digest(
@@ -369,6 +410,7 @@ class WorkItemA2AAuthority:
         owner_ref: str,
         description: str,
         metadata: dict[str, Any],
+        conversation: Any = None,
     ) -> tuple[str, bool]:
         from arbora import work_items
 
@@ -395,6 +437,7 @@ class WorkItemA2AAuthority:
                 idempotency_key=task_id,
                 created_by=owner_ref,
                 metadata=metadata,
+                conversation=conversation,
             )
         except OperationRefused as exc:
             if exc.code == "IDEMPOTENCY_CONFLICT":
@@ -449,6 +492,7 @@ class WorkItemA2AAuthority:
                     else None
                 ),
                 hosted_invocation=self.hosted_invocation,
+                completed_text_history=self.completed_text_history,
             ),
             (
                 bind_admitted_claim(
@@ -474,6 +518,64 @@ class WorkItemA2AAuthority:
                 session=session,
             )
 
+    async def _claim_run(
+        self, work_engine: Any, item_id: str, require_completed_text_history: bool
+    ) -> Any:
+        """Acquire exactly one native attempt after capability checks; never retry."""
+        from arbora import work_items
+
+        if (
+            require_completed_text_history
+            and not self.supports_completed_text_history()
+        ):
+            raise A2AAssemblyUnavailable("completed-text history is unavailable")
+        claim = await asyncio.to_thread(
+            work_items.claim_specific,
+            work_engine,
+            item_id,
+            token=f"arbora-a2a:{item_id}",
+            lease_ttl_s=_RUN_LEASE_SECONDS,
+            **({"completed_text_history": True} if self.completed_text_history else {}),
+        )
+        if claim is None:
+            return None
+        if (
+            self.completed_text_history
+            and claim.get("fresh_execution_grant") is not True
+        ):
+            from .native_history import unavailable
+
+            raise unavailable()
+        return claim
+
+    def _run_checkpoint(self, run_id: str, task: str, output: Any) -> Any:
+        """Prepare the own-turn checkpoint only after result values are assigned."""
+        if not self.completed_text_history:
+            return None
+        from .native_history import completed_checkpoint, unavailable
+
+        if not isinstance(output, str):
+            raise unavailable()
+        return completed_checkpoint(run_id, task, output)
+
+    def _completion_arguments(
+        self, run_id: str, usage: Any, checkpoint: Any
+    ) -> dict[str, Any]:
+        """Build optional completion payload without changing legacy commit shape."""
+        completion_kwargs: dict[str, Any] = {}
+        if self.task_plan_config is not None:
+            completion_kwargs["run_completion"] = {
+                "schema_version": 1,
+                "run_id": run_id,
+                **({"usage": usage} if usage is not None else {}),
+                **(
+                    {"completed_checkpoint": checkpoint}
+                    if checkpoint is not None
+                    else {}
+                ),
+            }
+        return completion_kwargs
+
     async def _run(
         self,
         work_engine: Any,
@@ -485,6 +587,7 @@ class WorkItemA2AAuthority:
         task_id: str = "",
         context_id: str = "",
         run_id: str | None = None,
+        require_completed_text_history: bool = False,
     ) -> dict[str, int] | None:
         """Lease the WorkItem, run the agent through the harness, commit the outcome.
 
@@ -494,16 +597,17 @@ class WorkItemA2AAuthority:
         """
         from arbora import work_items
 
-        claim = await asyncio.to_thread(
-            work_items.claim_specific,
-            work_engine,
-            item_id,
-            token=f"arbora-a2a:{item_id}",
-            lease_ttl_s=_RUN_LEASE_SECONDS,
+        claim = await self._claim_run(
+            work_engine, item_id, require_completed_text_history
         )
         if claim is None:
             return None
+        # A new claimed attempt must not publish an earlier uncommitted reply.
+        _OUTPUTS.pop(task_id, None)
+        effective_run_id = run_id or task_id
         outcome, result_ref, error_ref = "succeeded", None, None
+        output = None
+        checkpoint = None
         usage = None
         try:
             result = await self._execute_claimed_run(
@@ -517,34 +621,36 @@ class WorkItemA2AAuthority:
                 context_id=context_id,
                 run_id=run_id,
             )
-            if result.run_id != (run_id or task_id):
+            if result.run_id != effective_run_id:
                 raise RuntimeError("agent result does not belong to this A2A turn")
             result_ref = persistence_reference(
                 "run", result.run_id, namespace="arbora-a2a"
             )
             usage = getattr(result, "usage", None)
-            remember_task_output(task_id, getattr(result, "output", None))
+            output = getattr(result, "output", None)
+            checkpoint = self._run_checkpoint(effective_run_id, task, output)
         except Exception as exc:  # noqa: BLE001 - a failed run is a failed task
             logging.getLogger(__name__).warning(
-                "A2A run %s failed: %s: %s", item_id, type(exc).__name__, str(exc)[:300]
+                "A2A run %s failed: %s: %s",
+                item_id,
+                type(exc).__name__,
+                "private completed-text failure"
+                if self.completed_text_history
+                else str(exc)[:300],
             )
             from arbora.agent_runs import failed_run_usage
 
-            usage = failed_run_usage(exc, run_id or task_id)
+            usage = failed_run_usage(exc, effective_run_id)
             outcome = "failed"
             result_ref = None
             _OUTPUTS.pop(task_id, None)
             error_ref = persistence_reference(
                 "error", type(exc).__name__, namespace="arbora-a2a"
             )
-        completion_kwargs: dict[str, Any] = {}
-        if self.task_plan_config is not None:
-            completion_kwargs["run_completion"] = {
-                "schema_version": 1,
-                "run_id": run_id or task_id,
-                **({"usage": usage} if usage is not None else {}),
-            }
-        await asyncio.to_thread(
+        completion_kwargs = self._completion_arguments(
+            effective_run_id, usage, checkpoint
+        )
+        committed = await asyncio.to_thread(
             work_items.commit_result,
             work_engine,
             item_id,
@@ -554,6 +660,10 @@ class WorkItemA2AAuthority:
             error_ref=error_ref,
             **completion_kwargs,
         )
+        if committed != "committed":
+            raise RuntimeError("A2A terminal completion is not committed")
+        if outcome == "succeeded":
+            remember_task_output(task_id, output)
         return usage
 
     def _validate_admitted_item(
@@ -614,6 +724,58 @@ class WorkItemA2AAuthority:
                 "native admission notification failed: admitted task canceled"
             ) from None
 
+    async def _conversation_submission(
+        self,
+        engine: Any,
+        work_engine: Any,
+        *,
+        session: Any,
+        task_id: str,
+        context_id: str,
+        request_digest: str,
+        description: str,
+        message: A2AMessage,
+    ) -> dict[str, Any]:
+        """Prepare only the opt-in ordered admission before the atomic submit."""
+        submission: dict[str, Any] = {}
+        if self.completed_text_history:
+            if self.task_plan_config is None or self.hosted_invocation is None:
+                raise RuntimeError(
+                    "native completed history requires admitted task planning"
+                )
+            from .native_history import prepare_admission
+
+            submission["conversation"] = await prepare_admission(
+                self,
+                engine,
+                work_engine,
+                session=session,
+                run_id=task_id,
+                context_id=context_id,
+                request_digest=request_digest,
+                user_text=description,
+                resume=bool(
+                    message.context_id and message.context_id.startswith("a2a-context-")
+                ),
+            )
+        return submission
+
+    def _require_dispatch_capability(
+        self, decision: A2ARouteDecision, require_completed_text_history: bool
+    ) -> None:
+        """Refuse unsupported invocation contracts before any durable admission."""
+        if (
+            require_completed_text_history
+            and not self.supports_completed_text_history()
+        ):
+            raise A2AAssemblyUnavailable("completed-text history is unavailable")
+        if decision.selected_tools:
+            # Refuse before durable admission: the current signed AU dispatch
+            # carrier cannot enforce this allowlist at execution time.
+            raise A2AAssemblyUnavailable(
+                "canonical agent dispatch cannot yet enforce an assembled tool subset"
+            )
+
     async def dispatch(
         self,
         *,
@@ -621,13 +783,9 @@ class WorkItemA2AAuthority:
         idempotency_key: str,
         decision: A2ARouteDecision,
         blocking: bool = True,
+        require_completed_text_history: bool = False,
     ) -> A2ATask:
-        if decision.selected_tools:
-            # Refuse before durable admission: the current signed AU dispatch
-            # carrier cannot enforce this allowlist at execution time.
-            raise A2AAssemblyUnavailable(
-                "canonical agent dispatch cannot yet enforce an assembled tool subset"
-            )
+        self._require_dispatch_capability(decision, require_completed_text_history)
         session = self._session("kg:write")
         _engine, work_engine = self._engine()
         owner_ref = self._owner_ref(session)
@@ -645,15 +803,32 @@ class WorkItemA2AAuthority:
         )
         from arbora.access.task_guard import screen_and_redact_agent_task
 
+        if self.completed_text_history:
+            metadata["a2a_history_profile"] = "completed-text-v1"
         description = screen_and_redact_agent_task(message.task_text())
+        submission = await self._conversation_submission(
+            _engine,
+            work_engine,
+            session=session,
+            task_id=task_id,
+            context_id=context_id,
+            request_digest=request_digest,
+            description=description,
+            message=message,
+        )
         item_id, created = await asyncio.to_thread(
             self._submit,
             work_engine,
             task_id=task_id,
             session=session,
             owner_ref=owner_ref,
-            description=description,
+            description=(
+                "Completed-text conversation turn"
+                if self.completed_text_history
+                else description
+            ),
             metadata=metadata,
+            **submission,
         )
         run_id = task_id
         if self.task_plan_config is not None:
@@ -699,6 +874,7 @@ class WorkItemA2AAuthority:
                     task_id=task_id,
                     context_id=context_id,
                     run_id=run_id,
+                    require_completed_text_history=require_completed_text_history,
                 ),
                 item_id,
             )
@@ -712,6 +888,7 @@ class WorkItemA2AAuthority:
                 task_id=task_id,
                 context_id=context_id,
                 run_id=run_id,
+                require_completed_text_history=require_completed_text_history,
             )
             refreshed = await asyncio.to_thread(
                 work_items.get_work_item, work_engine, item_id
@@ -931,6 +1108,18 @@ class WorkItemA2AAuthority:
             )
         ]
 
+    async def preview_conversation(
+        self, *, run_id: str, expected_revision: int
+    ) -> ConversationPreview:
+        """Internal owner-bound prefix projection; no branch admission yet."""
+        from .conversation_history import preview_completed_prefix
+
+        if type(expected_revision) is not int or expected_revision < 0 or not run_id:
+            raise ValueError("invalid selected conversation turn")
+        return await preview_completed_prefix(
+            self, run_id=run_id, expected_revision=expected_revision
+        )
+
     async def get_committed_task(self, task_id: str) -> A2ATask | None:
         return await self.get(task_id, include_committed_event=True)
 
@@ -954,18 +1143,28 @@ class WorkItemA2AAuthority:
             raise PermissionError("A2A caller changed during task read")
         task = self._project(item, task_id=task_id)
         await self._attach_run_usage(task, item, read_session)
-        try:
-            task.artifacts = await asyncio.to_thread(
-                self._persisted_artifacts, task_id, item=item
-            )
-        except _ReplyUnavailable as exc:
-            task.artifacts = None
-            task.metadata["arbora"]["reply"] = exc.availability.model_dump(mode="json")
+        await self._attach_legacy_reply(task, task_id, item)
         if self._session("kg:read") != read_session:
             raise PermissionError("A2A caller changed during reply read")
         if include_committed_event:
             await self._attach_terminal_event(task, task_id, original)
         return task
+
+    async def _attach_legacy_reply(
+        self, task: A2ATask, task_id: str, item: dict[str, Any]
+    ) -> None:
+        """Use trace replies only for legacy tasks, never as private-history fallback."""
+        try:
+            if (
+                item.get("metadata", {}).get("a2a_history_profile")
+                != "completed-text-v1"
+            ):
+                task.artifacts = await asyncio.to_thread(
+                    self._persisted_artifacts, task_id, item=item
+                )
+        except _ReplyUnavailable as exc:
+            task.artifacts = None
+            task.metadata["arbora"]["reply"] = exc.availability.model_dump(mode="json")
 
     async def _attach_run_usage(
         self, task: A2ATask, item: dict[str, Any], session: Any
@@ -987,6 +1186,7 @@ class WorkItemA2AAuthority:
             item=item,
             owner_ref=self._owner_ref(session),
             owner_graph=work_items.native_owner_graph(work_engine),
+            completed_text_history=self.completed_text_history,
         )
         if self._session("kg:read") != session:
             raise PermissionError("A2A caller changed during usage read")

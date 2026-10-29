@@ -211,3 +211,28 @@ def test_nl_invocation_requires_its_distinct_permission(
     )
     assert result.code == ("OK" if allowed else "SCOPE_REQUIRED")
     assert bool(runtime.calls) is allowed
+
+
+@pytest.mark.spec("ARBORA-A2A-R001.3.3")
+@pytest.mark.parametrize("tenant", [None, "tenant:foreign"])
+def test_conversation_head_rejects_foreign_tenant_before_native_send(
+    tenant, monkeypatch
+):
+    # Source routing fixture: native generated registry availability is a separate gate.
+    monkeypatch.setattr(
+        "arbora.api.invoke.bootstrap._eg_method_id", lambda binding: binding.op
+    )
+    client = RecordingClient()
+    payload = {"context_id": "context"}
+    if tenant is not None:
+        payload["tenant"] = tenant
+    with pytest.raises(OperationRefused) as error:
+        asyncio.run(
+            dispatch_eg_method(
+                EgMethod(service="GetConversationHead", op="GetConversationHead"),
+                payload,
+                context(client),
+            )
+        )
+    assert error.value.code == "INVALID_ARGUMENT"
+    assert client.sent == []

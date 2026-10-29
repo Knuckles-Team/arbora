@@ -125,3 +125,13 @@ finally a served root-child-grandchild acceptance with duplicate delivery,
 completion/cancellation races, foreign targets and enforced budget ceilings.
 Each client consumes the same results. No new operation or authority is
 implemented by this spec-only change; all new rows remain SPECIFIED.
+
+
+### 2026-10-28: installed Medulla distribution identity
+
+ARBORA-RELEASE-R003.4.4 reads informational engine-version metadata from the
+`medulla` distribution. The Python import namespace remains `epistemic_graph`.
+Missing distribution metadata still refuses generation; no retired metadata
+alias or fabricated version is created. Canonical schema and receipt validation
+remain unchanged. This local migration does not qualify the dependency closure,
+changed wire contracts or paired restart acceptance.

@@ -40,6 +40,8 @@ from arbora.api.contracts.agent_control_contracts import (
 from arbora.api.contracts.session import GraphSession
 
 logger = logging.getLogger(__name__)
+# Once a trusted private profile runs, lost async context must not restore raw traces.
+_PRIVATE_TRACE_POLICY = False
 
 # Whole JSON, including escaping and metadata; independent of A2A's text bound.
 MAX_RUN_EVENT_PAYLOAD_BYTES = 1_048_576
@@ -74,12 +76,14 @@ class NativeRunContext:
     owner_graph: str | None = field(default=None, repr=False)
     hosted_invocation: Any = field(default=None, repr=False)
     planning_usage: dict[str, int] = field(default_factory=dict, repr=False)
+    completed_text_history: bool = False
 
 
 @dataclass
 class _NativeRunScope:
     ownership: NativeRunContext = field(repr=False)
     active: bool = True
+    history_consumed: bool = False
 
 
 _NATIVE_RUN: ContextVar[_NativeRunScope | None] = ContextVar(
@@ -261,12 +265,18 @@ def native_run_scope(
     claim: Mapping[str, Any],
     owner_graph: str | None = None,
     hosted_invocation: Any = None,
+    completed_text_history: bool = False,
 ) -> Iterator[None]:
     """Bind only a claim obtained by the trusted A2A authority for this run."""
+    global _PRIVATE_TRACE_POLICY
+    if type(completed_text_history) is not bool:
+        raise TypeError("completed history requires a trusted boolean")
     if not _valid_owner_graph(owner_graph) or not _valid_native_claim(claim, session):
         raise RuntimeError("native run claim is invalid")
     if not run_id or not task_id or not work_item_id:
         raise RuntimeError("native run claim is invalid")
+    if completed_text_history:
+        _PRIVATE_TRACE_POLICY = True
     scope = _NativeRunScope(
         NativeRunContext(
             run_id,
@@ -277,6 +287,7 @@ def native_run_scope(
             MappingProxyType(dict(claim)),
             owner_graph,
             hosted_invocation,
+            completed_text_history=completed_text_history,
         )
     )
     token = _NATIVE_RUN.set(scope)
@@ -303,6 +314,15 @@ def current_native_run(request: Any) -> NativeRunContext | None:
         if metadata["session"] != owner.session:
             raise RuntimeError("native run session does not match the host scope")
     return owner
+
+
+def consume_native_history(request: Any) -> None:
+    """Use an actual native claim once, never a copied request grant."""
+    owner = current_native_run(request)
+    scope = _NATIVE_RUN.get()
+    if owner is None or scope is None or scope.history_consumed:
+        raise RuntimeError("native history selection already used or unavailable")
+    scope.history_consumed = True
 
 
 def _chat_models_registry(raw: Any) -> dict[str, Any]:
@@ -480,6 +500,50 @@ def _event_suffix(event_id: Any, ordered: bool) -> str:
     return uuid.uuid4().hex
 
 
+def _private_event_policy(scope: _NativeRunScope | None) -> bool:
+    """A lost context must not downgrade a process that enabled private traces."""
+    from arbora.core.settings import runtime_config
+
+    return (
+        _PRIVATE_TRACE_POLICY
+        or runtime_config.completed_text_history
+        or (scope is not None and scope.ownership.completed_text_history)
+    )
+
+
+def _private_event_projection(
+    event: Mapping[str, Any], scope: _NativeRunScope | None
+) -> Mapping[str, Any] | None:
+    """Strip transcript content before any public persistence or delayed callback."""
+    run_id = event.get("run_id")
+    event_type = event.get("type")
+    step = event.get("step", 0)
+    if scope is not None and (not scope.active or run_id != scope.ownership.run_id):
+        logger.warning("private run event not persisted: inactive or mismatched scope")
+        return None
+    return {
+        "schema": "arbora-private-run-event-v1",
+        "run_id": run_id,
+        "task_id": scope.ownership.task_id if scope is not None else run_id,
+        "type": event_type,
+        "step": step,
+        "content_omitted": True,
+        **(
+            {"status": event["status"]}
+            if event.get("status") in ("completed", "stopped", "failed", "running")
+            else {}
+        ),
+        **(
+            {
+                "event_id": hashlib.sha256(str(event["event_id"]).encode()).hexdigest(),
+                "sequence": event["sequence"],
+            }
+            if _ordered_event(event.get("event_id"), event.get("sequence"))
+            else {}
+        ),
+    }
+
+
 def record_run_event(event: Mapping[str, Any]) -> None:
     """Write one run event to the engine as a ``RunEvent`` node.
 
@@ -493,6 +557,13 @@ def record_run_event(event: Mapping[str, Any]) -> None:
     if not _valid_event_identity(run_id, event_type, step):
         logger.warning("run event not persisted: invalid event identity")
         return
+    scope = _NATIVE_RUN.get()
+    private_history = _private_event_policy(scope)
+    if private_history:
+        sanitized = _private_event_projection(event, scope)
+        if sanitized is None:
+            return
+        event = sanitized
     payload = _run_event_payload(event, cast(str, run_id), cast(str, event_type), step)
     engine = _engine()
     event_id = event.get("event_id")
@@ -511,12 +582,19 @@ def record_run_event(event: Mapping[str, Any]) -> None:
         properties["sequence"] = sequence
         properties["event_id"] = event_id
 
-    if properties["event_type"] == "tool_call":
+    if properties["event_type"] == "tool_call" and not private_history:
         # Queryable provenance: which governed verb and connector tool the run
         # used (UQL filters on properties; the payload is an opaque string).
         for key in ("tool_name", "op", "server", "tool"):
             properties[key] = str(event.get(key) or "")[:256]
         properties["ok"] = bool(event.get("ok"))
+    _persist_run_event(engine, node_id, properties, run_id)
+
+
+def _persist_run_event(
+    engine: Any, node_id: str, properties: dict[str, Any], run_id: Any
+) -> None:
+    """Persist an already projected trace; failures never rerun or fail the agent."""
     batch = getattr(engine, "batch_typed_mutations", None)
     create_node = getattr(engine, "create_node", None)
     add_node = getattr(engine, "add_node", None)

@@ -938,8 +938,9 @@ a DAG; malformed or inaccessible topology is reported, not repaired by a client.
 Updates reuse persisted RunEvent IDs and per-run sequence. Multi-run views carry
 one cursor per authorized run, not a fabricated global order. Discovery of a new
 nested run requires its explicit owner binding and its own snapshot/cursor.
-Reconnect resumes exclusively after the cursor; an exact duplicate is harmless,
-a conflicting duplicate or gap requires unavailable state and a fresh read.
+Reconnect resumes exclusively after the cursor.
+An exact duplicate is harmless.
+A conflicting duplicate or gap requires unavailable state and a fresh read.
 Snapshot/update reconciliation must use a consistent covered cursor. Page/node,
 edge, depth and byte bounds are explicit; truncation never appears complete.
 
@@ -1021,3 +1022,26 @@ expand the projection or qualify the parent requirement.
 - `ARBORA-OPS-R071`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
 - `ARBORA-OPS-R072`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
 - `ARBORA-OPS-R073`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+
+### 2026-10-27: exact provider-document digest review
+
+R026.2 may accept reviewed provider-document churn only when the full selected
+schema is unchanged after verified local reference expansion. The optional
+`docs/api/schema-digest-reviews.json` ledger has version `1` and a `reviews` list.
+Each entry names `operation`, `field` (`params` or `result`),
+`old_document_sha256`, `new_document_sha256`, `old_reachable_sha256`,
+`new_reachable_sha256`, `reviewer`, `rationale`, and a nonempty `evidence` list.
+Reachable hashes cover canonical JSON of the full expanded selected snapshot,
+including result body selectors, encodings and nested schemas, not just the
+shape heuristic. Both reachable hashes must match. Provider document hashes
+remain verified against their exact baseline and candidate bytes.
+
+The API contract owner reviews each exact operation and field before adding an
+entry. Source provenance and the comparison evidence belong in that review.
+Unknown, duplicate, malformed, stale or unused entries fail closed. A changed
+base requires review or removal of its obsolete entries; this is not a permanent
+allowlist. No wildcard, unreviewed pair, changed reachable schema, optional-result
+extension or structural break is accepted by this ledger. It does not replace
+native, installed-package or response compatibility evidence. Genuine breaking
+changes retain HO-06 version and migration requirements. No digest entries are
+approved by the introduction of this mechanism.

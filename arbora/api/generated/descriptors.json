@@ -643,7 +643,7 @@
         "ClusterHierarchyExpand compute"
       ],
       "id": "eg.compute.ClusterHierarchyExpand",
-      "summary": "VIZ-1: GET expand(graph, cluster_id) -- a level-1 cluster's member nodes/edges read live off the graph",
+      "summary": "VIZ-1: GET expand(graph, cluster_id). Read the level-1 cluster members directly from the graph",
       "tags": [
         "eg"
       ],
@@ -2428,6 +2428,18 @@
     {
       "domain": "eg",
       "examples": [
+        "GetConversationHead coordination"
+      ],
+      "id": "eg.coordination.GetConversationHead",
+      "summary": "owner-bound ordered conversation head snapshot",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
         "GetCurrentPlan coordination"
       ],
       "id": "eg.coordination.GetCurrentPlan",
@@ -2440,10 +2452,34 @@
     {
       "domain": "eg",
       "examples": [
+        "GetRunCheckpoint coordination"
+      ],
+      "id": "eg.coordination.GetRunCheckpoint",
+      "summary": "private owner-bound checkpoint and same-snapshot WorkItem view",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
         "GetRunWorkItem coordination"
       ],
       "id": "eg.coordination.GetRunWorkItem",
       "summary": "owner-bound immutable run admission and current caller-safe WorkItem snapshot",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "GetSessionUsage coordination"
+      ],
+      "id": "eg.coordination.GetSessionUsage",
+      "summary": "bounded caller-context committed usage",
       "tags": [
         "eg"
       ],
@@ -2480,6 +2516,18 @@
       ],
       "id": "eg.coordination.IssueControlLease",
       "summary": "tenant-bound immutable grant record in the WorkItem MutationBatch; an existing id is a collision, never an overwrite",
+      "tags": [
+        "eg"
+      ],
+      "verb": "write"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "IssueHostStartGrant coordination"
+      ],
+      "id": "eg.coordination.IssueHostStartGrant",
+      "summary": "bounded immutable host-start assertions with native issuer provenance; application session/execution admission remains with Arbora",
       "tags": [
         "eg"
       ],
@@ -2552,6 +2600,18 @@
       ],
       "id": "eg.coordination.PublishCurrentPlan",
       "summary": "immutable owner and live fence bind revisioned current-plan publication",
+      "tags": [
+        "eg"
+      ],
+      "verb": "write"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "PublishRunCheckpoint coordination"
+      ],
+      "id": "eg.coordination.PublishRunCheckpoint",
+      "summary": "owner and live fence atomically bind an immutable private checkpoint and WorkItem head",
       "tags": [
         "eg"
       ],
@@ -4432,6 +4492,54 @@
     {
       "domain": "eg",
       "examples": [
+        "ForeignReadAbort query"
+      ],
+      "id": "eg.query.ForeignReadAbort",
+      "summary": "One terminal abort",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "ForeignReadChunk query"
+      ],
+      "id": "eg.query.ForeignReadChunk",
+      "summary": "Monotone bounded page append",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "ForeignReadComplete query"
+      ],
+      "id": "eg.query.ForeignReadComplete",
+      "summary": "One terminal completion before correlated query",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "ForeignReadOpen query"
+      ],
+      "id": "eg.query.ForeignReadOpen",
+      "summary": "Host-driven bounded source execution; durable approval and current catalog are re-read before binding",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
         "GetChangeCursor query"
       ],
       "id": "eg.query.GetChangeCursor",
@@ -4520,6 +4628,18 @@
       ],
       "id": "eg.query.NlQueryExplain",
       "summary": "EG-FEDERATED-QUERY-R058.2.2.1: NlQuery plus the executed UQL text. It shares the planner, budget, authority and refusals of NlQuery",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "NlQueryPlan query"
+      ],
+      "id": "eg.query.NlQueryPlan",
+      "summary": "EG-FEDERATED-QUERY-R058.2.2.2: typed plan-only UQL candidate and pins; no graph/source data read or authority claim",
       "tags": [
         "eg"
       ],
@@ -6330,5 +6450,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "27b9f48df91b04f699c016125c221c290c42ff651cbecf5b00c44e9136f55506"
+  "registry_digest": "c4afa6b9f547e34cb1be24aea0ef68fa3f739aadb8ed00fdedca352ffae1b6dc"
 }

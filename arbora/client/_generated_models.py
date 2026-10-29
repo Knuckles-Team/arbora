@@ -9,7 +9,7 @@ from typing import Literal
 
 from arbora.client._schema import _expanded_spec
 
-REGISTRY_DIGEST = "27b9f48df91b04f699c016125c221c290c42ff651cbecf5b00c44e9136f55506"
+REGISTRY_DIGEST = "c4afa6b9f547e34cb1be24aea0ef68fa3f739aadb8ed00fdedca352ffae1b6dc"
 API_VERSION = "1"
 type OperationId = Literal[
     "access.check",
@@ -214,17 +214,22 @@ type OperationId = Literal[
     "eg.coordination.GapTransition",
     "eg.coordination.GapUpsert",
     "eg.coordination.GetControlLease",
+    "eg.coordination.GetConversationHead",
     "eg.coordination.GetCurrentPlan",
+    "eg.coordination.GetRunCheckpoint",
     "eg.coordination.GetRunWorkItem",
+    "eg.coordination.GetSessionUsage",
     "eg.coordination.GetWorkItem",
     "eg.coordination.GetWorkItemOutcome",
     "eg.coordination.IssueControlLease",
+    "eg.coordination.IssueHostStartGrant",
     "eg.coordination.KgDelegate",
     "eg.coordination.ListControlLeases",
     "eg.coordination.ListWorkItems",
     "eg.coordination.MintWorkItemClaimCapability",
     "eg.coordination.ObserveDevelopmentLane",
     "eg.coordination.PublishCurrentPlan",
+    "eg.coordination.PublishRunCheckpoint",
     "eg.coordination.QueryDevelopmentLane",
     "eg.coordination.QueryWorkItemReservation",
     "eg.coordination.ReclaimExpiredCapacity",
@@ -381,6 +386,10 @@ type OperationId = Literal[
     "eg.query.ExplainPolicy",
     "eg.query.ExplainProvenance",
     "eg.query.ExplainProvenanceByIds",
+    "eg.query.ForeignReadAbort",
+    "eg.query.ForeignReadChunk",
+    "eg.query.ForeignReadComplete",
+    "eg.query.ForeignReadOpen",
     "eg.query.GetChangeCursor",
     "eg.query.GetChangeEnvelope",
     "eg.query.GetContentVersion",
@@ -389,6 +398,7 @@ type OperationId = Literal[
     "eg.query.KnowledgeStream",
     "eg.query.MaterializationStatus",
     "eg.query.NlQueryExplain",
+    "eg.query.NlQueryPlan",
     "eg.query.QueryForeignColumns",
     "eg.query.RankByProvenance",
     "eg.query.RecomputeMaterialization",

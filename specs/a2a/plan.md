@@ -74,7 +74,7 @@ flowchart LR
 ### Implementation sequence
 
 1. **`ARBORA-A2A-R009.1` (this PR):** typed capability model and protocols in `arbora/a2a/models.py`, with unit tests proving default-false, selective-true and non-conforming-object refusal. No wiring yet — `A2AAgentCard`'s default factory still produces all-false, matching current truthful behavior.
-2. Depend on `ARBORA-A2A` landing (context-budget subset) before implementing the actual streaming cursor and push-trigger wiring, since both reuse its bounded-cursor machinery rather than duplicating it.
+2. Wait for `ARBORA-A2A` (context-budget subset) before wiring streaming cursors and push triggers. Both reuse its bounded-cursor machinery.
 3. Publish the AU task-event reader contract before wiring `message/stream`. Its requirement ID and public export remain unassigned. Return typed `UNAVAILABLE` for a projection gap.
 4. Implement `tasks/get` history read-through to EG's durable kernel (`EG-DURABLE-KERNEL`); on an absent/unreachable authority, return the new `A2ATransitionHistoryUnavailable` (A2A-H04).
 5. Implement push-notification delivery over EG's durable outbox (`EG-DURABLE-KERNEL-R001`) with dead-letter reporting.
@@ -390,15 +390,15 @@ Acceptance matrix (all pending implementation):
 8. Actual SDK A2A entry and operation dispatch use the same composed authority;
    old-router-only tests do not establish served model preference.
 
-Expected implementation ownership after policy acceptance: Arbora owns the
-application port, list operation, A2A projection and trusted composition; EG owns
-profile-use grants and sealed agent/component admission. Coordinate registry
+After policy acceptance, Arbora owns the application port, list operation, A2A
+projection and trusted composition. EG owns profile-use grants and sealed
+agent/component admission. Coordinate registry
 regeneration with its current owner. TUI consumes only the accepted generated
 operation and task metadata; no consumer-selected permission table is added.
 
-Existing owner mapping: ARBORA-A2A-R016.6 owns preference and catalog admission;
-R016.5 owns routed profile and task-class evidence; R017 and R017.1 own committed
-engine assembly/decision consumption; R019.1 owns decision provenance. EG-
+ARBORA-A2A-R016.6 owns preference and catalog admission. R016.5 owns routed
+profile and task-class evidence. R017 and R017.1 own committed engine
+assembly/decision consumption. R019.1 owns decision provenance. EG-
 IDENTITY-R004 owns exact published scope classification, not implicit grants.
 EG-DECISION-ENGINE-R036 owns assembly and pinned components; R126.2.1 owns
 visibility-filtered capability coverage. These existing rows do not yet specify
@@ -417,8 +417,8 @@ admission acceptance remain producer work, not satisfied by syntax validation.
 
 ARBORA-A2A-R001.5 first serves inline base64 `text/plain` files through the
 existing message parser and task-text model input. Require strict UTF-8, at most
-eight files and 65,536 aggregate decoded bytes, further limited by the existing
-MAX_UPLOAD_SIZE setting before routing or task creation. Reject URI parts and
+eight files and 65,536 aggregate decoded bytes. The existing MAX_UPLOAD_SIZE
+setting further limits input before routing or task creation. Reject URI parts and
 unsupported media before admission. Filenames are labels, never filesystem paths.
 The existing caller/tenant authorization, redaction and idempotency paths remain
 authoritative. Served transport tests observe decoded content in model input and
@@ -446,9 +446,8 @@ engine's first attempt, with an exact item and payload binding. It never
 reclaims a visible `leased` or `running` item. Native `dead_letter` and
 `cancelled` states do not prove a prior effect outcome. The adapter raises
 `WorkItemLeaseLost` on those reads, including a read after a refused claim.
-The delivery owner must leave such exceptions unacknowledged. The generic
-worker and restart recovery still need durable owner reconciliation; a
-pre-execution refusal on a later attempt cannot settle an earlier effect.
+The delivery owner must leave such exceptions unacknowledged. The generic worker and restart recovery still need durable owner reconciliation.
+A pre-execution refusal on a later attempt cannot settle an earlier effect.
 
 ### Tool-task evidence decomposition
 
@@ -574,3 +573,134 @@ For R005.2.4, use generated identity validation for session-reference and key re
 Align the draft adapter with the unpublished native key contract. Use purpose `signed_approval` and attestation `broker_verified_ed25519`. Keep the signature domain, length encoding, field order and verification unchanged. No deployed key format or credential is migrated. Native durable and served qualification remain pending.
 
 R005.2.5 retains the full native and served effect-chain obligation after the snapshot and registration source slices land. It requires atomic grant and plan consumption with actual installed producers. Keep it open until the complete request-to-effect and refusal matrix passes; do not infer it from a passing source fixture.
+
+## Amendment: typed conversation handoff (2026-10-25)
+
+R001.3.1 reuses work_items.submit_work_item_atomic and native_run_admission. The host may supply the generated EG ConversationTurnAdmission for native runs only. The original admission and command digest bind it; no parallel store or EG endpoint is introduced. R001.3 still needs owner-authorized ordered prefix projection, preview digest revalidation, bounded immutable snapshot admission, and AU completed-history selection. Reuse AU-BOUNDARY-R043.9.1 and R043.9.2.1 and ARBORA-RELEASE-R003.4.13 for subsequent composition. A fresh edit branch has revision zero and no predecessor; source lineage is separate metadata. Legacy unordered contexts stay unsupported for editing, without changing ordinary task sends.
+
+### Owner-bound prefix preview slice (2026-10-25)
+
+R001.3.2 adds an internal authority reader for explicit native predecessor chains. Each read validates immutable admission ownership, context and revision before projecting completed text. Run and revision identify the selected own turn. The preview contains only earlier completed pairs and the selected input. A canonical digest binds the preview; previews over 64 KiB refuse. This is not a client contract or branch admission. Continuation dispatch, immutable child snapshots, AU history binding and served restart acceptance remain open.
+
+Ordinary dispatch stays unchanged in this slice. Adding a revision-zero conversation to a retry of an older no-context admission changes its exact request identity. A later ordered-admission path must explicitly preserve this compatibility boundary; timestamps and browser order cannot establish a predecessor.
+
+### Terminal reply publication boundary (2026-10-27)
+
+For R001.3, retain a successful model reply locally until the existing native
+terminal commit returns its explicit committed acknowledgement. Clear stale
+cache state when a new claim starts. An exception, cancellation, timeout, noop or
+unrecognized acknowledgement publishes no reply and triggers no execution retry.
+This prevents premature cache publication; it does not establish durable
+restart replay protection or the pending completed-history producer contract.
+
+### Opt-in terminal-only native history binding (2026-10-27)
+
+R001.3.3 composes the reviewed native terminal-only profile. The existing
+GetRunWorkItem selection reads current admission and prior committed text in one
+native snapshot. GetConversationHead supplies only a candidate for the existing
+SubmitWorkItem CAS. Preserve immutable admission on retries. Completion writes
+own-turn text through CommitWorkItemResult, never through events or a frontend
+store. AU 3.2 already owns the strict completed-text decoder and current-checkpoint
+precedence. Broader checkpoint restore, memory synchronization and served restart
+qualification remain open. Native generated contracts are required; unavailable
+versions refuse rather than silently disabling an enabled profile.
+
+Private trace redaction is deliberately monotonic within a serving process once
+an admitted private profile has run. A later configuration toggle or lost async
+context cannot restore permission to persist raw transcripts. A fresh process
+with the feature disabled retains the legacy trace behavior. Copied scopes that
+have closed refuse delayed persistence. Existing native outcome receipts remain
+the authority; redacted public markers are not transcript or completion evidence.
+
+The initial native profile supports continuation only within a stable owner graph.
+Its private admission-presence marker makes graph retirement, reset and restore
+refuse while profile state exists. Deletion and recreation, quota reclamation and
+cross-incarnation continuation are not supported by this draft. The consumer does
+not treat a scope digest or repeated ledger version as an incarnation witness.
+
+The first native profile admission requires authenticated operator authorization
+through the existing `kg:admin` or global `*` scope. The native transaction records
+that enablement privately; later valid owner and tenant admissions can continue
+without operator scope. Consumer configuration grants no native authorization.
+Anonymous callers and ordinary write or submit scopes cannot enable this profile.
+Destructive graph and migration operations remain held while profile state
+exists. Qualification requires an explicitly enabled, dedicated retained graph.
+
+Stable browser labels use the native head when it exists, just like canonical
+context locators. The existing owner-bound task reader is used only to reject
+legacy contexts that have no native head. It never supplies predecessor order.
+Missing canonical continuation locators still refuse. Native admission retains
+the head comparison and refuses a stale candidate without an automatic retry.
+The membership read is not atomic with concurrent legacy submissions. It detects
+existing legacy contexts only. This draft does not qualify mixed legacy and
+profile writers; exclusion of that race requires native admission policy.
+
+
+### Completed-text extension negotiation (2026-10-27)
+
+`ARBORA-A2A-R001.3.3` uses the existing authenticated A2A 0.3 Agent Card
+`capabilities.extensions` and `X-A2A-Extensions` activation header. The owned URI
+is `https://knuckles-team.github.io/arbora/extensions/completed-text-history/v1`.
+It is optional (`required: false`) and absent by default. Advertisement means that the strict completed-text path is selected or refuses.
+It never promises operator graph enablement, storage availability, context ownership, native release qualification, or interrupted-task restoration. Missing enabled
+configuration, generated schema, provider lifecycle binding or hosted operations
+prevents advertisement. Native owner/head/profile/fence checks remain authoritative.
+
+Activation is invocation-local, checked before routing and admission, carried
+into detached execution, and rechecked before claiming. Successful negotiated responses echo the URI. Malformed activation and unknown owned versions refuse;
+there is no silent legacy grouping fallback. Legacy clients retain the original
+card shape when support is absent. This completed-text profile is separate from
+`stateTransitionHistory` (task state history) and from the harness-admission
+extension barred by R014.1; it does not relax either acceptance gate.
+
+A client must re-read the authenticated card before continuation and require
+the recognized URI. A missing activation echo or changed context after sending
+is an uncertain result, never permission to retry execution. A2A 0.3 permits
+old servers to ignore unknown extensions, so preflight cannot prove no effects
+across a heterogeneous or changed server deployment. The real native restart
+and caller-isolation acceptance remains mandatory.
+
+### Paired restart qualification preparation (2026-10-27)
+
+The R001.3.3 acceptance harness in `tests/qualification/test_native_history_restart.py` provisions real native producer and Arbora processes.
+It restarts both against the same store and captures the model's actual input after continuation. A controlled model requests the
+existing governed fleet echo tool; connector calls and native effect receipt
+identities must not repeat. It uses installed artifacts without source overlays.
+The browser-label case is wire-contract coverage, not a real browser journey;
+the second case invokes the actual native Tuig candidate. Both remain unexecuted
+pending matching generated client/server and candidate Arbora artifacts. Source
+fixture and route tests do not satisfy this gate. Same-tenant distinct-owner and
+actual Overstory browser qualification remain additional required evidence.
+
+### Hosted source-quality correction (2026-10-27)
+
+The blocked candidate's hosted complexity census reported 111 over-cap
+functions. Comparing exact function bodies against its integrated main base
+identified 98 unchanged functions and 13 new or changed functions in this
+branch, including inherited conversation-admission work. The branch-owned correction separates caller ownership, immutable admission
+and snapshot selection. Separate validation boundaries also govern receipt-bound
+reply projection and private trace persistence. It does not change thresholds, ordering guarantees,
+atomic producer calls, or the requirement to pass actual hosted scanners.
+Source refactoring and fixture tests do not resolve the 22 changed-schema
+compatibility refusals or qualify installed continuation/restart.
+
+### Same-run installed candidate qualification (2026-10-28)
+
+R001.3.3 remains blocked until both real-process restart journeys pass against a
+coherent installed package closure. An Arbora-owned reusable workflow can be
+called by Medulla's opt-in native candidate lane after the official client and
+Stem wheels finish. It uses the caller's same-run artifacts with read-only
+contents permission; no cross-repository token, new secret or permission grant.
+Connector, composition and terminal checkouts are immutable. Consumer wheel
+hashes bind to clean source trees. The runtime receipt is distinct from prior
+candidate evidence. The exact helper manifest, installed module origins and
+actual server/binary hashes are checked before the two no-skip restart cases.
+No runtime logs or model/effect payloads are uploaded indiscriminately.
+
+The 554 reviewed exact identities do not approve the 35 changed closures.
+Passing this opt-in probe supplies evidence only; it does not waive the normal
+compatibility gate, qualify actual Overstory browser journeys, or approve a
+release. Consumer source SHAs must replace deliberate pending values after
+reviewed publication before the producer caller job is enabled. Fresh release
+locks, full hosted source gates and exact installed restart evidence remain
+required separately from candidate-wheel dependency resolution.

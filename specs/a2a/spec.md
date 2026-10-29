@@ -142,3 +142,7 @@ The synthetic session probe proves compatibility only; it is not deployed accept
 R005.2 still requires the full signed human approval chain.
 R001 and R010 still require a durable task-event producer and streaming implementation.
 Host receipt and log projections remain separately governed by the host spec.
+
+## Conversation admission foundation
+
+R001.3.1 supplies a typed native admission handoff for future ordered history and edit branches. It does not advertise editable history or prove served continuation. WEBUI-APPS-R051 and TUI-RUNTIME-R012.10 remain consumer acceptance work.

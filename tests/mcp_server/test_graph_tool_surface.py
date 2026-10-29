@@ -9,8 +9,11 @@ import pytest
 from arbora.mcp_server import runtime
 
 
+@pytest.mark.spec("ARBORA-A2A-R001.3.3")
+@pytest.mark.parametrize("completed_text_history", [False, True])
 def test_surface_serves_intent_contract_and_registers_host_operations(
     monkeypatch: pytest.MonkeyPatch,
+    completed_text_history: bool,
 ) -> None:
     from arbora.a2a import mcp as a2a_mcp
     from arbora.browser_control import mcp as browser_mcp
@@ -19,6 +22,12 @@ def test_surface_serves_intent_contract_and_registers_host_operations(
     served = object()
     backing = object()
     calls: list[tuple[str, Any, Any]] = []
+    profiles: list[bool] = []
+    from arbora.core.settings import runtime_config
+
+    monkeypatch.setattr(
+        runtime_config, "completed_text_history", completed_text_history
+    )
 
     def surface(mcp: Any, **_: Any) -> Any:
         calls.append(("surface", mcp, None))
@@ -31,11 +40,12 @@ def test_surface_serves_intent_contract_and_registers_host_operations(
         "register_browser_control_tools",
         lambda target: calls.append(("browser", target, None)),
     )
-    monkeypatch.setattr(
-        a2a_mcp,
-        "register_a2a_tools",
-        lambda mcp, *, tools=None: calls.append(("a2a", mcp, tools)),
-    )
+
+    def register_a2a(mcp: Any, *, tools: Any, completed_text_history: bool) -> None:
+        calls.append(("a2a", mcp, tools))
+        profiles.append(completed_text_history)
+
+    monkeypatch.setattr(a2a_mcp, "register_a2a_tools", register_a2a)
     from arbora import host_bindings
 
     monkeypatch.setattr(
@@ -54,5 +64,6 @@ def test_surface_serves_intent_contract_and_registers_host_operations(
         ("a2a", served, backing),
         ("sdk_a2a", served, None),
     ]
+    assert profiles == [completed_text_history]
     # REST dispatches exactly what the intent tools route to.
     assert "graph_query" in runtime.REGISTERED_TOOLS

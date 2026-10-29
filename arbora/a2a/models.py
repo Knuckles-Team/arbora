@@ -233,6 +233,12 @@ class A2ATransitionHistoryAuthority(Protocol):
     def transition_history(self, task_id: str) -> Any: ...
 
 
+class A2AAgentExtension(_WireModel):
+    uri: str
+    required: bool = False
+    description: str
+
+
 class A2AAgentCapabilities(_WireModel):
     """Capabilities advertised on the Agent Card.
 
@@ -243,6 +249,9 @@ class A2AAgentCapabilities(_WireModel):
     than Arbora can actually serve.
     """
 
+    extensions: list[A2AAgentExtension] = Field(
+        default_factory=list, exclude_if=lambda value: not value
+    )
     streaming: bool = False
     push_notifications: bool = False
     state_transition_history: bool = False

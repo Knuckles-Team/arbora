@@ -542,7 +542,11 @@ def _boolean_shape_breaks(
     return [f"{change} {path}"]
 
 
-def _breaking_changes(before: dict[str, Any], after: dict[str, Any]) -> list[str]:
+def _breaking_changes(
+    before: dict[str, Any],
+    after: dict[str, Any],
+    reviewed: frozenset[tuple[str, str]] = frozenset(),
+) -> list[str]:
     """Identify contract changes that existing stable callers cannot absorb."""
     current = {op["id"]: op for op in after["ops"]}
     changes: list[str] = []
@@ -567,11 +571,109 @@ def _breaking_changes(before: dict[str, Any], after: dict[str, Any]) -> list[str
                 new_spec.get("schema_sha256"),
             )
             if (old_hash is not None or new_hash is not None) and old_hash != new_hash:
-                if not findings:
+                if not findings and (op_id, field) not in reviewed:
                     changes.append(
                         f"{op_id}: EG {field} schema changed; review required"
                     )
     return changes
+
+
+def _reachable_digest(spec: dict[str, Any]) -> str:
+    """Hash the full selected schema after verified local reference expansion."""
+    snapshot = spec.get("schema_snapshot")
+    if not isinstance(snapshot, (dict, bool)):
+        raise ValueError("digest review requires an expanded provider schema")
+    if isinstance(snapshot, dict) and "$ref" in snapshot:
+        raise ValueError("digest review requires an expanded provider schema")
+    canonical = json.dumps(snapshot, sort_keys=True, separators=(",", ":")).encode()
+    return hashlib.sha256(canonical).hexdigest()
+
+
+def _review_identity(op_id: str, field: str, old: dict, new: dict) -> dict:
+    return {
+        "operation": op_id,
+        "field": field,
+        "old_document_sha256": old.get("schema_sha256"),
+        "new_document_sha256": new.get("schema_sha256"),
+        "old_reachable_sha256": _reachable_digest(old),
+        "new_reachable_sha256": _reachable_digest(new),
+    }
+
+
+def _validate_digest_review(entry: Any) -> None:
+    identity = {
+        "operation",
+        "field",
+        "old_document_sha256",
+        "new_document_sha256",
+        "old_reachable_sha256",
+        "new_reachable_sha256",
+    }
+    if not isinstance(entry, dict) or set(entry) != identity | {
+        "reviewer",
+        "rationale",
+        "evidence",
+    }:
+        raise ValueError("invalid digest review fields")
+    for key in identity - {"operation", "field"}:
+        value = entry[key]
+        if (
+            not isinstance(value, str)
+            or len(value) != 64
+            or any(char not in "0123456789abcdef" for char in value)
+        ):
+            raise ValueError("invalid digest review SHA-256")
+    for key in ("operation", "reviewer", "rationale"):
+        if not isinstance(entry[key], str) or not entry[key].strip():
+            raise ValueError("digest review requires exact identity and attribution")
+    if "*" in entry["operation"] or entry["field"] not in ("params", "result"):
+        raise ValueError("digest review requires an exact operation and field")
+    evidence = entry["evidence"]
+    if (
+        not isinstance(evidence, list)
+        or not evidence
+        or any(not isinstance(value, str) or not value.strip() for value in evidence)
+    ):
+        raise ValueError("digest review requires evidence")
+
+
+def _reviewed_digest_pairs(before: dict, after: dict, path: Path) -> frozenset:
+    """Accept only exact reviewed document churn with unchanged reachable schemas.
+
+    The ledger applies to this comparison, not all future comparisons. Unused or
+    stale entries fail closed and must be removed or reviewed for the new base.
+    It cannot accept changed reachable schemas or override structural findings.
+    """
+    if not path.exists():
+        return frozenset()
+    ledger = json.loads(path.read_text())
+    if not isinstance(ledger, dict) or set(ledger) != {"version", "reviews"}:
+        raise ValueError("invalid digest review ledger")
+    if type(ledger["version"]) is not int or ledger["version"] != 1:
+        raise ValueError("unsupported digest review ledger version")
+    if not isinstance(ledger["reviews"], list):
+        raise ValueError("invalid digest review list")
+    old_ops = {op["id"]: op for op in before["ops"]}
+    new_ops = {op["id"]: op for op in after["ops"]}
+    reviewed: set[tuple[str, str]] = set()
+    for entry in ledger["reviews"]:
+        _validate_digest_review(entry)
+        key = (entry["operation"], entry["field"])
+        if key in reviewed:
+            raise ValueError("duplicate digest review")
+        previous, current = old_ops.get(key[0]), new_ops.get(key[0])
+        if previous is None or current is None or previous.get("stability") != "stable":
+            raise ValueError("unused digest review")
+        old_spec, new_spec = previous[key[1]], current[key[1]]
+        expected = _review_identity(*key, old_spec, new_spec)
+        if any(entry[name] != value for name, value in expected.items()):
+            raise ValueError("stale digest review")
+        if expected["old_document_sha256"] == expected["new_document_sha256"]:
+            raise ValueError("unused digest review")
+        if expected["old_reachable_sha256"] != expected["new_reachable_sha256"]:
+            raise ValueError("digest review cannot accept changed reachable schemas")
+        reviewed.add(key)
+    return frozenset(reviewed)
 
 
 def _check_compat(registry: dict[str, Any], base_ref: str) -> int:
@@ -612,7 +714,10 @@ def _check_compat(registry: dict[str, Any], base_ref: str) -> int:
     current = _expand_registry(
         registry, lambda name: provider.joinpath(name).read_bytes()
     )
-    changes = _breaking_changes(previous, current)
+    reviewed = _reviewed_digest_pairs(
+        previous, current, ROOT / "docs/api/schema-digest-reviews.json"
+    )
+    changes = _breaking_changes(previous, current, reviewed)
     if not changes:
         return 0
     old_major = int(str(previous["api_version"]).split(".", 1)[0])

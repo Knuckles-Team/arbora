@@ -26,6 +26,7 @@ async def invoke(monkeypatch, execute, *, commit_error=False):
         commits.append(kwargs)
         if commit_error:
             raise RuntimeError("native commit failed")
+        return "committed"
 
     monkeypatch.setattr(work_items, "commit_result", commit)
     authority = WorkItemA2AAuthority(lambda: None)

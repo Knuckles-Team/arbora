@@ -14,9 +14,12 @@ import hashlib
 import json
 import time
 from collections.abc import Mapping
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from arbora.security.anonymous import session_context
+
+if TYPE_CHECKING:
+    from epistemic_graph.generated.models import ConversationTurnAdmission
 
 #: The engine's spec row that owns durable WorkItem transitions.
 SPEC_ROW = "EG-INGEST-WORKER-R605"
@@ -142,6 +145,54 @@ def _policy_digest(claims: Mapping[str, Any], session: Any) -> str:
     return hashlib.sha256(version.encode()).hexdigest()
 
 
+def _conversation_admission(
+    conversation: ConversationTurnAdmission | None, run_id: str | None
+) -> dict[str, Any] | None:
+    """Validate a host-supplied native carrier without inventing conversation order."""
+    if conversation is None:
+        return None
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    try:
+        from epistemic_graph.generated.models import (
+            ConversationTurnAdmission,
+            SubmitWorkItemRequest,
+        )
+    except ImportError as exc:
+        raise OperationRefused(
+            "UPGRADE_REQUIRED", {"capability": "conversation_admission"}
+        ) from exc
+    if "conversation" not in SubmitWorkItemRequest.model_fields:
+        raise OperationRefused(
+            "UPGRADE_REQUIRED", {"capability": "conversation_admission"}
+        )
+    if run_id is None:
+        raise ValueError("conversation admission requires native run ownership")
+    if not isinstance(conversation, ConversationTurnAdmission):
+        raise TypeError("generated ConversationTurnAdmission is required")
+    return ConversationTurnAdmission.model_validate_json(
+        conversation.model_dump_json(), strict=True
+    ).model_dump(mode="json")
+
+
+def _submission_digest(
+    tenant_id: str,
+    kind: str,
+    work_item_id: str | None,
+    payload_ref: str,
+    body: Mapping[str, Any],
+    run_id: str | None,
+    turn: Any,
+) -> str:
+    """Bind optional native identity and immutable conversation into the command."""
+    command_digest = _key(tenant_id, kind, work_item_id, payload_ref, body)
+    if run_id is not None:
+        command_digest = _key(command_digest, run_id)
+    if turn is not None:
+        command_digest = _key(command_digest, turn)
+    return command_digest
+
+
 def submit_work_item_atomic(
     engine: Any,
     *,
@@ -159,9 +210,11 @@ def submit_work_item_atomic(
     description: str = "",
     created_by: str = "",
     metadata: Mapping[str, Any] | None = None,
+    conversation: ConversationTurnAdmission | None = None,
 ) -> tuple[str, bool]:
     """Submit one WorkItem (``SubmitWorkItem``); return its id and creation."""
     _require_native_submission(run_id, work_item_id)
+    turn = _conversation_admission(conversation, run_id)
     tenant_id = _tenant(tenant)
     session = _session()
     labels = {
@@ -171,9 +224,9 @@ def submit_work_item_atomic(
         "description": description,
     }
     body = {**{k: v for k, v in labels.items() if v}, **dict(metadata or {})}
-    command_digest = _key(tenant_id, kind, work_item_id, payload_ref, body)
-    if run_id is not None:
-        command_digest = _key(command_digest, run_id)
+    command_digest = _submission_digest(
+        tenant_id, kind, work_item_id, payload_ref, body, run_id, turn
+    )
     claims = dict(session_context(session))
     context = _typed_request_context(
         claims,
@@ -200,6 +253,8 @@ def submit_work_item_atomic(
         "provenance_refs": [created_by] if created_by else [],
         "max_tenant_in_flight": _MAX_TENANT_IN_FLIGHT,
     }
+    if turn is not None:
+        request["conversation"] = turn
     if run_id is not None:
         request["run_id"] = run_id
     if run_id is not None:
@@ -238,8 +293,23 @@ def claim_specific(
     token: str,
     lease_ttl_s: float,
     now: float | None = None,
+    completed_text_history: bool = False,
 ) -> dict[str, Any] | None:
     """Lease one WorkItem (``ClaimWorkItem``); ``None`` when not granted."""
+    if type(completed_text_history) is not bool:
+        raise TypeError("completed history opt-in must be boolean")
+    options = {}
+    if completed_text_history:
+        try:
+            from epistemic_graph.generated.models import MethodClaimWorkItemParams
+
+            if "completed_text_history" not in MethodClaimWorkItemParams.model_fields:
+                raise AttributeError("completed history claim opt-in")
+        except (ImportError, AttributeError) as exc:
+            raise NativeWorkItemRequired(
+                "completed history claim schema unavailable"
+            ) from exc
+        options["completed_text_history"] = True
     tenant_id = _tenant()
     answer = _work_items(engine).claim(
         {
@@ -253,7 +323,8 @@ def claim_specific(
             "now_ms": _now_ms(now),
             "lease_ms": max(1, int(lease_ttl_s * 1000)),
             "max_tenant_in_flight": _MAX_TENANT_IN_FLIGHT,
-        }
+        },
+        **options,
     )
     if not answer.get("claimed"):
         return None

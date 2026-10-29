@@ -9,7 +9,16 @@ from arbora.core.settings import runtime_config
 
 from .admission import ModelProfilePreference, refuse_model_profile_preference
 from .authority import A2ATaskAuthority
-from .models import A2AAgentCard, A2AListResult, A2AMessage, A2ASkill, A2ATask
+from .history_capability import HISTORY_EXTENSION
+from .models import (
+    A2AAgentCapabilities,
+    A2AAgentCard,
+    A2AAgentExtension,
+    A2AListResult,
+    A2AMessage,
+    A2ASkill,
+    A2ATask,
+)
 from .routing import A2AAssemblyUnavailable, A2ARouter
 from .terminal_event import A2ATerminalEventUnavailable
 
@@ -34,6 +43,10 @@ class A2AService:
     router: A2ARouter
     card_metadata: A2ACardMetadata = A2ACardMetadata()
 
+    def supports_completed_text_history(self) -> bool:
+        probe = getattr(self.authority, "supports_completed_text_history", None)
+        return callable(probe) and probe() is True
+
     async def send_message(
         self,
         *,
@@ -41,7 +54,13 @@ class A2AService:
         idempotency_key: str,
         context_budget_tokens: int | None = None,
         blocking: bool = True,
+        require_completed_text_history: bool = False,
     ) -> A2ATask:
+        if (
+            require_completed_text_history
+            and not self.supports_completed_text_history()
+        ):
+            raise A2AAssemblyUnavailable("completed-text history is unavailable")
         parsed = (
             message
             if isinstance(message, A2AMessage)
@@ -61,11 +80,17 @@ class A2AService:
         decision = await self.router.route(
             parsed, context_budget_tokens=context_budget_tokens
         )
+        requirements = (
+            {"require_completed_text_history": True}
+            if require_completed_text_history
+            else {}
+        )
         return await self.authority.dispatch(
             message=parsed,
             idempotency_key=idempotency_key,
             decision=decision,
             blocking=blocking,
+            **requirements,
         )
 
     async def get_task(
@@ -95,6 +120,16 @@ class A2AService:
             description=metadata.description,
             version=metadata.version,
             url=endpoint_url,
+            capabilities=A2AAgentCapabilities(
+                extensions=[
+                    A2AAgentExtension(
+                        uri=HISTORY_EXTENSION,
+                        description="Strict completed-text continuation or refusal; stable retained graphs only.",
+                    )
+                ]
+                if self.supports_completed_text_history()
+                else []
+            ),
             skills=[
                 A2ASkill(
                     id="arbora-delegate",

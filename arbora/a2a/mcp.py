@@ -57,6 +57,7 @@ def register_a2a_tools(
     operation_authenticator: AmbientHTTPAuthenticator | None = None,
     task_plan_config: Any = None,
     hosted_invocation: Any = None,
+    completed_text_history: bool = False,
 ) -> None:
     """Register one action router and the protocol-native unary routes.
 
@@ -67,6 +68,13 @@ def register_a2a_tools(
     if isinstance(authority, WorkItemA2AAuthority):
         authority.task_plan_config = task_plan_config
         authority.hosted_invocation = hosted_invocation
+        if type(completed_text_history) is not bool:
+            raise TypeError("completed history flag must be a trusted boolean")
+        if completed_text_history and (
+            task_plan_config is None or hosted_invocation is None
+        ):
+            raise ValueError("completed history requires native task-plan admission")
+        authority.completed_text_history = completed_text_history
     card_handler, rpc_handler = _admitted_handlers(
         operation_services, operation_authenticator
     )
