@@ -569,8 +569,8 @@
       ],
       "verified_by": [
         "tests/a2a/test_first_party_facade.py:53",
-        "tests/a2a/test_first_party_facade.py:68",
-        "tests/a2a/test_first_party_facade.py:86"
+        "tests/a2a/test_first_party_facade.py:67",
+        "tests/a2a/test_first_party_facade.py:85"
       ]
     },
     {
