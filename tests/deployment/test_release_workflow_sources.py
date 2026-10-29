@@ -458,9 +458,7 @@ def test_github_release_links_the_published_pypi_version() -> None:
 
 def test_release_eg_resolves_from_the_package_index_as_wheels() -> None:
     locked = tomllib.loads((ROOT / "uv.lock").read_text(encoding="utf-8"))
-    eg = next(
-        package for package in locked["package"] if package["name"] == "medulla"
-    )
+    eg = next(package for package in locked["package"] if package["name"] == "medulla")
     assert eg["source"] == {"registry": "https://pypi.org/simple"}
     assert eg.get("wheels")
     # EG 2.27.3 also publishes an sdist; the lock records it, but uv never

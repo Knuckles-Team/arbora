@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: Knuckles-Team/overstory
-          ref: 6ae019e8ac027c12d7a164d02eaa2ae15038210f
+          ref: f9a1b6b2bb46d558aac3ebf5420f11d07945f9b8
           path: candidate-overstory
           persist-credentials: false
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
@@ -108,7 +108,7 @@ jobs:
           PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
           PYTEST_ADDOPTS: ''
           QUALIFICATION_ARBORA_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
-          QUALIFICATION_OVERSTORY_COMMIT: 6ae019e8ac027c12d7a164d02eaa2ae15038210f
+          QUALIFICATION_OVERSTORY_COMMIT: f9a1b6b2bb46d558aac3ebf5420f11d07945f9b8
           QUALIFICATION_VAULT_BINARY: ${{ runner.temp }}/browser-bin/vault
           QUALIFICATION_BROWSER_SCRIPT: ${{ github.workspace }}/candidate-overstory/browser-qualification.mjs
           QUALIFICATION_OUTPUT: ${{ runner.temp }}/browser-public

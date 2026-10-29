@@ -56,8 +56,7 @@ def test_no_declared_dependency_is_a_vendored_a2a_implementation() -> None:
         dependency
         for dependency in _declared_dependencies()
         # The connector SDK is first-party; its a2a extra is the protocol library.
-        if "a2a" in dependency.lower()
-        and not dependency.startswith("scion-sdk[")
+        if "a2a" in dependency.lower() and not dependency.startswith("scion-sdk[")
     ]
     assert not offenders, (
         "arbora declares a dependency on what looks like a vendored A2A "
