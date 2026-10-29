@@ -151,3 +151,61 @@ async def test_failed_initial_refresh_aborts_startup_without_static_fallback(
     # The EG reader is installed, but startup propagates the failed proof and
     # never reaches the serving loop or a static MCP_CONFIG declaration.
     assert deferred._reader is not None
+
+
+class RetargetableSession(Session):
+    def __init__(self, graph: str = Session.graph) -> None:
+        self.graph = graph
+
+    def with_graph(self, graph: str) -> RetargetableSession:
+        return RetargetableSession(graph)
+
+
+@pytest.mark.spec("ARBORA-FLEET-R026.2")
+@pytest.mark.asyncio
+async def test_fleet_catalog_reads_bind_the_process_session_not_the_caller(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Every fleet catalog engine read runs as the process, re-targeted per graph.
+
+    A caller's own session cannot see the process-owned registry rows, so the
+    default binder must never resolve the ambient (caller) session.
+    """
+    from arbora.api.contracts import session as session_module
+
+    process = RetargetableSession()
+    bound: list[tuple[Any, str]] = []
+
+    @contextlib.contextmanager
+    def use_session(value: Any) -> Iterator[Any]:
+        bound.append((value, value.graph))
+        yield value
+
+    def ambient_is_forbidden(*_args: Any, **_kwargs: Any) -> Any:
+        raise AssertionError("the fleet catalog must not read the caller session")
+
+    monkeypatch.setattr(session_module, "use_session", use_session)
+    monkeypatch.setattr(session_module, "resolve_session", ambient_is_forbidden)
+    monkeypatch.setattr(
+        composition, "configure_enhanced_catalog", lambda value, **_: None
+    )
+
+    async def verified(**kwargs: Any) -> None:
+        return None
+
+    monkeypatch.setattr(composition, "verify_semantic_content", verified)
+    monkeypatch.setattr(composition, "required_content_connectors", lambda: ())
+    deferred = DeferredFleetCatalogReader()
+    await composition.compose_catalog_authorities(
+        engine=SimpleNamespace(graph_compute=GraphCompute()),
+        session=process,
+        deferred_fleet=deferred,
+        multiplexer=Multiplexer(),
+        catalog_ports_factory=lambda engine, session: cast(Any, (object(), object())),
+    )
+    port = deferred._reader._port  # type: ignore[union-attr]
+    with port._bind_graph("__commons__"):
+        pass
+
+    assert [graph for _, graph in bound] == [Session.graph, "__commons__"]
+    assert all(isinstance(value, RetargetableSession) for value, _ in bound)
