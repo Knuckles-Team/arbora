@@ -61,16 +61,16 @@ def test_gateway_widgets_pins_the_connector_sdk_floor() -> None:
         req.name: req
         for req in (Requirement(raw) for raw in _extra_requirements(data["project"]))
     }
-    assert "agent-connector-sdk" in requirements
+    assert "scion-sdk" in requirements
     # Every fleet connector package is built on this SDK; pinning it here
     # (matching the base-dependency floor) is the module-layout compatibility
     # guarantee R006 asks for, honest to today's zero-direct-import widgets.
     base = next(
         Requirement(raw)
         for raw in data["project"]["dependencies"]
-        if Requirement(raw).name == "agent-connector-sdk"
+        if Requirement(raw).name == "scion-sdk"
     )
-    assert str(requirements["agent-connector-sdk"].specifier) == str(base.specifier)
+    assert str(requirements["scion-sdk"].specifier) == str(base.specifier)
 
 
 def test_build_backend_metadata_matches_the_raw_manifest() -> None:
