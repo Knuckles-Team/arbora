@@ -203,7 +203,7 @@ async def test_fleet_catalog_reads_bind_the_process_session_not_the_caller(
         multiplexer=Multiplexer(),
         catalog_ports_factory=lambda engine, session: cast(Any, (object(), object())),
     )
-    port = deferred._reader._port  # type: ignore[union-attr]
+    port: Any = cast(Any, deferred._reader)._port
     with port._bind_graph("__commons__"):
         pass
 
