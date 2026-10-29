@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.1.8.dev6] - 2026-10-29
+
+- Fleet catalog engine reads run under the Arbora process authority, so operator callers see the admitted fleet and `fleet.call` resolves its tools (ARBORA-FLEET-R026.2).
+- Depends on medulla, meristem and scion-sdk 0.5.9 in place of epistemic-graph, agent-utilities and agent-connector-sdk.
+
 ## [0.1.8.dev5] - 2026-10-25
 
 ## [0.1.8.dev4] - 2026-10-24
