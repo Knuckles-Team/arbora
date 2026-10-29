@@ -24,7 +24,7 @@ record. Summary:
   credentials."
 * ``filesystem.runtime_paths`` binds every one of :data:`RUNTIME_PATH_ENV_VARS`
   (``HOME``, the three XDG dirs, ``XDG_STATE_HOME``, and
-  ``AGENT_UTILITIES_DATA_DIR``) to an explicit path anchored under a declared
+  ``MERISTEM_DATA_DIR``) to an explicit path anchored under a declared
   ``filesystem.writable_paths`` mount — the fix for BUG-ROFS-1, where the
   served process's real home (``/tmp``, not the image's nominal ``app`` user
   home) had to be rediscovered by reading a live container's ``/etc/passwd``. See
@@ -88,7 +88,7 @@ RUNTIME_PATH_ENV_VARS = frozenset(
         "XDG_CONFIG_HOME",
         "XDG_DATA_HOME",
         "XDG_STATE_HOME",
-        "AGENT_UTILITIES_DATA_DIR",
+        "MERISTEM_DATA_DIR",
     }
 )
 
@@ -173,7 +173,7 @@ class WritablePath:
 class RuntimePathBinding:
     """One runtime env-var -> path binding for the served process's home layout.
 
-    Makes ``$HOME``, the XDG dirs, and ``AGENT_UTILITIES_DATA_DIR`` explicit,
+    Makes ``$HOME``, the XDG dirs, and ``MERISTEM_DATA_DIR`` explicit,
     reviewable profile inputs instead of an image-baked default or a literal
     hand-typed into a k8s manifest's ``env:`` list — the exact gap that forced
     BUG-ROFS-1's fix to be discovered empirically (reading a live container's

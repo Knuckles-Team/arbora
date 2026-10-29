@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Genesis environments and fleet child processes set `MERISTEM_DATA_DIR` and `MERISTEM_CACHE_DIR` in place of `AGENT_UTILITIES_DATA_DIR` and `AGENT_UTILITIES_CACHE_DIR`, matching meristem's renamed directory overrides.
+
 ## [0.1.8.dev6] - 2026-10-29
 
 - Fleet catalog engine reads run under the Arbora process authority, so operator callers see the admitted fleet and `fleet.call` resolves its tools (ARBORA-FLEET-R026.2).
