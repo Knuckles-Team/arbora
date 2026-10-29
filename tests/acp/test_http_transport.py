@@ -404,15 +404,19 @@ async def test_inbound_message_count_and_malformed_frames_are_bounded(http_serve
 async def test_connection_lifetime_cancels_without_further_messages(http_server):
     http, root, ended, _ = http_server
     async with connected(http, root) as (conn, client, path):
-        session = await conn.new_session(cwd=str(root))
-        pending = asyncio.create_task(
-            conn.prompt(session_id=session.session_id, prompt=[acp.text_block("wait")])
-        )
-        await client.waiting.wait()
-        async with asyncio.timeout(2):
-            await ended.wait()
+        # The lifetime clock starts at connection creation, so on a slow runner
+        # it can expire before the prompt reaches the model.  Either way the
+        # caller must see the connection end, bounded; never wait for the
+        # model to start, which it may not have.
+        async with asyncio.timeout(10):
             with pytest.raises(ConnectionError):
-                await pending
+                session = await conn.new_session(cwd=str(root))
+                await conn.prompt(
+                    session_id=session.session_id, prompt=[acp.text_block("wait")]
+                )
+        if client.waiting.is_set():
+            async with asyncio.timeout(2):
+                await ended.wait()
         assert (await http.get(path)).status_code in {404, 410}
 
 

@@ -260,6 +260,9 @@ warn_unused_ignores = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+# A hung test fails with its name and stack instead of stalling the gate to
+# the job cap (the full suite stalled at 8% for 24 minutes, no test failing).
+timeout = 300
 asyncio_mode = "auto"
 markers = [
     "spec: binds a test to a spec requirement ID",
