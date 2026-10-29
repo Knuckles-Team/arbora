@@ -250,7 +250,7 @@ _RESTART_REQUIRED: frozenset[str] = frozenset(
         "EPISTEMIC_GRAPH_STARTUP_TIMEOUT_SECS",
         "KG_DAEMON_ROLE",
         "TASK_QUEUE_BACKEND",
-        "AGENT_UTILITIES_CONFIG_DIR",
+        "ARBORA_CONFIG_DIR",
     }
 )
 

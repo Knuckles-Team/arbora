@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Removed
+- The configuration resolver no longer falls back to `GRAPH_OS_CONFIG_DIR`, `AGENT_UTILITIES_CONFIG_DIR`, `~/.config/graph-os` or `~/.config/agent-utilities`, and the deprecation warning is gone. Configuration lives under `ARBORA_CONFIG_DIR` / `~/.config/arbora` only; move any files still under the old directories. The multiplexer sandbox and child-environment allowlist pass `ARBORA_CONFIG_DIR`, the venv auto-sync queue lives under `~/.local/state/arbora`, and the Genesis seed paths and environment profiles point at `~/.config/arbora` and the `meristem` data directory.
+
 ## [0.1.8.dev6] - 2026-10-29
 
 - Fleet catalog engine reads run under the Arbora process authority, so operator callers see the admitted fleet and `fleet.call` resolves its tools (ARBORA-FLEET-R026.2).
