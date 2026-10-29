@@ -91,7 +91,7 @@ def _tenant_scope(dialect: str) -> tuple[str, list[Any]]:
     caller sees only its own sessions/agents; a verified platform admin sees
     the whole fleet. Missing or tenantless identity fails closed.
     """
-    exc = not_served("knowledge_graph.core.tenant_sharing", "EG-IDENTITY-R610")
+    exc = not_served("knowledge_graph.core.tenant_sharing", "MEDULLA-IDENTITY-R610")
     raise PermissionError("Fleet supervision authority is unavailable") from exc
 
 

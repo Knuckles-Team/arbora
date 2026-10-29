@@ -28,7 +28,7 @@ A co-service runs on ``_authorized_background_thread``, inheriting the arbora
 process's verified actor and ``GraphSession`` for its whole lifetime. arbora
 is the principal the engine's signer registry already trusts, so a WebUI
 request handled here can sign engine admission **as itself**
-(the engine's admission authority, EG-IDENTITY-R950)
+(the engine's admission authority, MEDULLA-IDENTITY-R950)
 — which is the only pairing the engine accepts
 (``verify_register_identity_signature`` requires ``signer == principal``). Run
 as a separate deployment, agent-webui holds no signer entry at all, which is

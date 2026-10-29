@@ -132,7 +132,7 @@ Requirement IDs are defined in [requirements.md](requirements.md); delivery stat
 
 ## Wallet verification boundary
 
-ARBORA-DATA-MARKET-R007 consumes SDK-GOVERNED-WRITEBACK-R001.1 through R001.6 for wallet signature verification.
+ARBORA-DATA-MARKET-R007 consumes SCION-GOVERNED-WRITEBACK-R001.1 through R001.6 for wallet signature verification.
 EG owns authorization decisions. Arbora authenticates, serves explicit confirmation and enforces the matching producer result.
 Neither a valid signature nor confirmation alone authorizes a source effect. Unavailable trust or durable proof binding refuses.
 

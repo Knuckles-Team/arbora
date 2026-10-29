@@ -52,7 +52,7 @@ The proposed installer and terminal journeys have not been run.
 
 ## Authenticated terminal log handoff
 
-ARBORA-HOST-R009.5, R009.6 and R010.7 bind the effective strict web_logs boolean into the proposed HostLaunchReceipt v1. Authenticate it with host, workspace, tenant, principal and session scope. Retain generation and expiry. Consume through TUI-RUNTIME-R002.2 through R002.6 using run_host_terminal and HostLogReader.read as specified in plan.md. Only terminal/both with true permits reads. Disabled, absent or invalid preference and web mode yield zero TUI reads while preserving the required host sink. Runtime receipt and adapter availability remain explicit prerequisites. This definition adds no implementation or served receipt.
+ARBORA-HOST-R009.5, R009.6 and R010.7 bind the effective strict web_logs boolean into the proposed HostLaunchReceipt v1. Authenticate it with host, workspace, tenant, principal and session scope. Retain generation and expiry. Consume through TUIG-RUNTIME-R002.2 through R002.6 using run_host_terminal and HostLogReader.read as specified in plan.md. Only terminal/both with true permits reads. Disabled, absent or invalid preference and web mode yield zero TUI reads while preserving the required host sink. Runtime receipt and adapter availability remain explicit prerequisites. This definition adds no implementation or served receipt.
 
 ## Additional owner requirements
 

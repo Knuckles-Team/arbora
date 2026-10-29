@@ -24,7 +24,7 @@ surface this function could fail to find.
 
 ARBORA-HOST-R008 NOTE: this module now lives in arbora, but the surface it
 introspects (``arbora/mcp_server/backing/tools/query_tools/py``) has not moved yet
-(AU-BOUNDARY-R003, a different seed group). ``QUERY_TOOLS_MODULE`` is
+(MERISTEM-BOUNDARY-R003, a different seed group). ``QUERY_TOOLS_MODULE`` is
 therefore resolved through agent-utilities' INSTALLED package location
 (``importlib.util.find_spec``) rather than a same-repo relative path — the
 one necessary adaptation for a cross-repo port, not a behavior change: it

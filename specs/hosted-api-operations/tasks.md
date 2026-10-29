@@ -105,7 +105,7 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R039.9:** Replace the `agent_utilities
 - [ ] **ARBORA-OPS-R040:** Live Artifacts routes
 - [ ] **ARBORA-OPS-R040.1:** Cross-repo prerequisite
-- [ ] **ARBORA-OPS-R040.9:** Cross-repo prerequisite (owner: agent-utilities): add the proposed `AU-BOUNDARY-R013
+- [ ] **ARBORA-OPS-R040.9:** Cross-repo prerequisite (owner: agent-utilities): add the proposed `MERISTEM-BOUNDARY-R013
 - [ ] **ARBORA-OPS-R040.10:** Add one test in tests/gateway/test_artifacts_route_mount
 - [ ] **ARBORA-OPS-R041:** Agent summary widget dropped
 - [ ] **ARBORA-OPS-R050:** Policy lifecycle operations that guard plans.
@@ -148,7 +148,7 @@ See [design](plan.md) and [tests](test-spec.md).
 
 ## Owner-bound projections (ARBORA-OPS-R054–R058, R061, R063)
 
-- [ ] **R054:** Resolve the AU-INTEGRATION-R014 producer operation and receipt; keep generic RLM benchmarking separate.
+- [ ] **R054:** Resolve the MERISTEM-INTEGRATION-R014 producer operation and receipt; keep generic RLM benchmarking separate.
 - [ ] **R055:** Resolve AU liveness/proposal contracts before exposing remediation; preserve explicit run/process approval.
 - [ ] **R056:** Resolve the EG/AU review operation, finding schema, and impact-filter contract; leave `decide.commit` unchanged.
 - [ ] **R057:** Resolve EG R094 and SDK source-effect/receipt contracts before defining the Arbora serializer or difference oracle.

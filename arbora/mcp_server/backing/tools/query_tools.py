@@ -1396,7 +1396,8 @@ _GRAPH_SEARCH_RESULTS_MODES = frozenset(
 def _graph_search_rerank(engine: Any, session: Any, *, query: str, top_k: int) -> Any:
     # Semantic-retrieval hybrid re-scoring of a candidate set.
     raise not_served(
-        "knowledge_graph.retrieval.semantic_retrieval_engine", "EG-FEDERATED-QUERY-R652"
+        "knowledge_graph.retrieval.semantic_retrieval_engine",
+        "MEDULLA-FEDERATED-QUERY-R652",
     )
 
 
@@ -1419,12 +1420,13 @@ def _graph_search_produce_results_extended(
     if mode == "latent":
         # KG-2.3 — route through the latent topology hierarchy.
         raise not_served(
-            "knowledge_graph.retrieval.latent_topology_rag", "EG-FEDERATED-QUERY-R652"
+            "knowledge_graph.retrieval.latent_topology_rag",
+            "MEDULLA-FEDERATED-QUERY-R652",
         )
     if mode == "sira":
         # Single-shot SIRA: hybrid-retrieve, then sparsity-align the set.
         raise not_served(
-            "knowledge_graph.retrieval.single_shot_sira", "EG-FEDERATED-QUERY-R652"
+            "knowledge_graph.retrieval.single_shot_sira", "MEDULLA-FEDERATED-QUERY-R652"
         )
     # Only "rerank" remains among `_GRAPH_SEARCH_RESULTS_MODES` at this point —
     # the caller has already dispatched hyde/deep/hybrid/concept/analogy above,
@@ -1470,7 +1472,7 @@ def _graph_search_produce_results(
 def _graph_search_hard_negatives(engine: Any, query: str) -> str:
     # KG-2.3 — mine hard negatives via the engine's hybrid retriever.
     raise not_served(
-        "knowledge_graph.retrieval.hard_negative_miner", "EG-FEDERATED-QUERY-R008"
+        "knowledge_graph.retrieval.hard_negative_miner", "MEDULLA-FEDERATED-QUERY-R008"
     )
 
 
@@ -1485,7 +1487,7 @@ def _graph_search_compiled(
     # replacing the plain relevance-sorted concat the shared formatter performs
     # for every other mode.
     raise not_served(
-        "knowledge_graph.retrieval.context_compiler", "EG-FEDERATED-QUERY-R650"
+        "knowledge_graph.retrieval.context_compiler", "MEDULLA-FEDERATED-QUERY-R650"
     )
 
 
@@ -2574,7 +2576,8 @@ def register_query_tools(mcp):
         sql: str = Field(description="A non-empty read-only SQL statement."),
     ) -> EvidenceBundle:
         raise not_served(
-            "knowledge_graph.core.tabular_query_service", "EG-UNIFIED-DATA-PLANE-R612"
+            "knowledge_graph.core.tabular_query_service",
+            "MEDULLA-UNIFIED-DATA-PLANE-R612",
         )
 
     runtime.REGISTERED_TOOLS["tabular_query"] = tabular_query
@@ -2802,7 +2805,9 @@ def register_query_tools(mcp):
             default=False, description="Drop+recreate the table first (ingest/rows)."
         ),
     ) -> str:
-        raise not_served("knowledge_graph.core.table_ingest", "EG-INGEST-WORKER-R606")
+        raise not_served(
+            "knowledge_graph.core.table_ingest", "MEDULLA-INGEST-WORKER-R606"
+        )
 
     runtime.REGISTERED_TOOLS["graph_table"] = graph_table
 
@@ -3172,7 +3177,7 @@ def register_query_tools(mcp):
     ) -> str:
         """Shortcut-resistant search-task synthesis and realized-difficulty diagnosis."""
 
-        raise not_served("graph.training_signals", "EG-DECISION-ENGINE-R751")
+        raise not_served("graph.training_signals", "MEDULLA-DECISION-ENGINE-R751")
 
     runtime.REGISTERED_TOOLS["graph_search_synthesis"] = graph_search_synthesis
 
@@ -3279,19 +3284,19 @@ def register_query_tools(mcp):
         engine: Any,
     ) -> str:
         raise not_served(
-            "knowledge_graph.ontology.document_processing", "EG-REPO-INGEST-R652"
+            "knowledge_graph.ontology.document_processing", "MEDULLA-REPO-INGEST-R652"
         )
 
     def _graph_document_tree_structure(document_id: str, engine: Any) -> str:
         raise not_served(
             "knowledge_graph.retrieval.hierarchical_document_retriever",
-            "EG-FEDERATED-QUERY-R653",
+            "MEDULLA-FEDERATED-QUERY-R653",
         )
 
     def _graph_document_tree_content(document_id: str, ranges: str, engine: Any) -> str:
         raise not_served(
             "knowledge_graph.retrieval.hierarchical_document_retriever",
-            "EG-FEDERATED-QUERY-R653",
+            "MEDULLA-FEDERATED-QUERY-R653",
         )
 
     def _graph_document_tree_retrieve(
@@ -3303,14 +3308,14 @@ def register_query_tools(mcp):
         engine: Any,
     ) -> str:
         raise not_served(
-            "knowledge_graph.ontology.document_processing", "EG-REPO-INGEST-R652"
+            "knowledge_graph.ontology.document_processing", "MEDULLA-REPO-INGEST-R652"
         )
 
     def _graph_document_tree_spine_resolve(
         engine: Any, action: str, text: str, artifact_id: str, document_id: str
     ) -> tuple[Sequence[Any], str, str | None]:
         raise not_served(
-            "knowledge_graph.ingestion.evidence_spine", "EG-REPO-INGEST-R002"
+            "knowledge_graph.ingestion.evidence_spine", "MEDULLA-REPO-INGEST-R002"
         )
 
     def _graph_document_tree_spine_cite(
@@ -3320,7 +3325,7 @@ def register_query_tools(mcp):
         content_hash: str,
     ) -> str:
         raise not_served(
-            "knowledge_graph.ingestion.evidence_spine", "EG-REPO-INGEST-R002"
+            "knowledge_graph.ingestion.evidence_spine", "MEDULLA-REPO-INGEST-R002"
         )
 
     def _graph_document_tree_spine_fragments(

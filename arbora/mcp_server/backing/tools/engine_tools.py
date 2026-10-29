@@ -232,7 +232,7 @@ def _get_client_pool() -> Any:
         with _CLIENT_POOL_LOCK:
             if _CLIENT_POOL is None:
                 raise not_served(
-                    "knowledge_graph.core.tenant_engine_pool", "EG-PLACEMENT-R611"
+                    "knowledge_graph.core.tenant_engine_pool", "MEDULLA-PLACEMENT-R611"
                 )
     return _CLIENT_POOL
 

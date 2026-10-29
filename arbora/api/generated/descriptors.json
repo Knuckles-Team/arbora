@@ -3607,7 +3607,7 @@
         "EnrichDocument ingestion"
       ],
       "id": "eg.ingestion.EnrichDocument",
-      "summary": "EG-UNIFIED-DATA-PLANE-R651.7: chunks one RLS-visible held Document and embeds the chunks. Chunk nodes, chunkOf edges, vectors and one enrichment record commit as one ChangeEnvelope. An enriched digest replays; a new digest supersedes the earlier chunks",
+      "summary": "MEDULLA-UNIFIED-DATA-PLANE-R651.7: chunks one RLS-visible held Document and embeds the chunks. Chunk nodes, chunkOf edges, vectors and one enrichment record commit as one ChangeEnvelope. An enriched digest replays; a new digest supersedes the earlier chunks",
       "tags": [
         "eg"
       ],
@@ -4519,7 +4519,7 @@
         "NlQueryExplain query"
       ],
       "id": "eg.query.NlQueryExplain",
-      "summary": "EG-FEDERATED-QUERY-R058.2.2.1: NlQuery plus the executed UQL text. It shares the planner, budget, authority and refusals of NlQuery",
+      "summary": "MEDULLA-FEDERATED-QUERY-R058.2.2.1: NlQuery plus the executed UQL text. It shares the planner, budget, authority and refusals of NlQuery",
       "tags": [
         "eg"
       ],
@@ -4579,7 +4579,7 @@
         "SelectWebPages query"
       ],
       "id": "eg.query.SelectWebPages",
-      "summary": "EG-DECISION-ENGINE-R802: deterministic web page selection over search candidates. It dedupes by canonical URL and digest against held Documents and enforces a budget. It commits nothing and runs no model",
+      "summary": "MEDULLA-DECISION-ENGINE-R802: deterministic web page selection over search candidates. It dedupes by canonical URL and digest against held Documents and enforces a budget. It commits nothing and runs no model",
       "tags": [
         "eg"
       ],
@@ -5155,7 +5155,7 @@
         "CapabilityCoverage storage"
       ],
       "id": "eg.storage.CapabilityCoverage",
-      "summary": "EG-DECISION-ENGINE-R126.2.1. Reads ONE tenant-bound agent_library.redb snapshot and answers which visible components and A2A cards cover each capability of a task closure; ranks nothing, commits nothing",
+      "summary": "MEDULLA-DECISION-ENGINE-R126.2.1. Reads ONE tenant-bound agent_library.redb snapshot and answers which visible components and A2A cards cover each capability of a task closure; ranks nothing, commits nothing",
       "tags": [
         "eg"
       ],
@@ -5227,7 +5227,7 @@
         "GuardrailEntailment storage"
       ],
       "id": "eg.storage.GuardrailEntailment",
-      "summary": "EG-DECISION-ENGINE-R127.2.2. Reads ONE tenant-bound agent_library.redb snapshot of published rule heads and returns advisory ontology entailment paths and source generations; commits nothing and does not authorize execution",
+      "summary": "MEDULLA-DECISION-ENGINE-R127.2.2. Reads ONE tenant-bound agent_library.redb snapshot of published rule heads and returns advisory ontology entailment paths and source generations; commits nothing and does not authorize execution",
       "tags": [
         "eg"
       ],
@@ -5275,7 +5275,7 @@
         "KvGet storage"
       ],
       "id": "eg.storage.KvGet",
-      "summary": "EG-DURABLE-KERNEL-R102. The key is scoped by verified tenant, principal (unless shared), request graph and namespace. It answers the value and its commit version",
+      "summary": "MEDULLA-DURABLE-KERNEL-R102. The key is scoped by verified tenant, principal (unless shared), request graph and namespace. It answers the value and its commit version",
       "tags": [
         "eg"
       ],

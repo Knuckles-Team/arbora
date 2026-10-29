@@ -2,7 +2,7 @@
 
 The source is declared in the read tool's ``meta`` and served live at
 ``connector://resources``, so fleet onboarding captures the
-``FixtureItem`` mapping the engine admits records under (SDK-CONNECTOR-CONTROL-R075).
+``FixtureItem`` mapping the engine admits records under (SCION-CONNECTOR-CONTROL-R075).
 """
 
 from __future__ import annotations

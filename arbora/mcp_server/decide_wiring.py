@@ -68,15 +68,15 @@ def _publish_context(session: Any) -> Callable[[Mapping[str, Any]], Any]:
 def _install_assembler(
     eg_client: Any, session: Any, engine: Any, run: Callable[[Any], Any]
 ) -> Any:
-    raise not_served("decide.consumers.assembly", "EG-DECISION-ENGINE-R036")
+    raise not_served("decide.consumers.assembly", "MEDULLA-DECISION-ENGINE-R036")
 
 
 def _published_templates() -> list[dict[str, Any]]:
-    raise not_served("decide.topology.templates", "EG-DECISION-ENGINE-R105")
+    raise not_served("decide.topology.templates", "MEDULLA-DECISION-ENGINE-R105")
 
 
 def _install_topology(assembler: Any, run: Callable[[Any], Any]) -> None:
-    raise not_served("decide.consumers.topology", "EG-DECISION-ENGINE-R036")
+    raise not_served("decide.consumers.topology", "MEDULLA-DECISION-ENGINE-R036")
 
 
 async def _search_agent_cards(eg_client: Any, session: Any) -> Any:
@@ -125,7 +125,7 @@ def _capability_search(eg_client: Any, session: Any) -> Callable[[Sequence[str]]
 
 def _guardrail_source(engine: Any) -> Callable[[Sequence[str]], Any]:
     """The planner's policy rules: one side-effect-free AU action-policy
-    verdict per task (never raises; fails closed -- AU-CONTROL-R017)."""
+    verdict per task (never raises; fails closed -- MERISTEM-CONTROL-R017)."""
     from arbora.access.action_policy import (
         ActionRequest,
         get_action_policy,
@@ -142,7 +142,7 @@ def _guardrail_source(engine: Any) -> Callable[[Sequence[str]], Any]:
             rows.append(
                 {
                     "id": f"action-policy:{task}",
-                    "requirement": "AU-CONTROL-R017",
+                    "requirement": "MERISTEM-CONTROL-R017",
                     "rule": f"{decision.decision} at tier {decision.tier} "
                     f"({decision.reason})",
                 }
@@ -155,7 +155,7 @@ def _guardrail_source(engine: Any) -> Callable[[Sequence[str]], Any]:
 def _workflow_lookup(engine: Any) -> Callable[[Sequence[str]], Any]:
     """The planner's compiled-workflow lookup: the registered graph workflow
     store's semantic match over the planned tasks."""
-    raise not_served("knowledge_graph.workflow_store", "EG-CQ-ORCH-R700")
+    raise not_served("knowledge_graph.workflow_store", "MEDULLA-CQ-ORCH-R700")
 
 
 def _install_planner(
@@ -167,7 +167,7 @@ def _install_planner(
 ) -> None:
     """Bind the served task planner to the engine's ``TaskPlan`` decision.
 
-    Arbora holds no planner (EG-CQ-ORCH-R001). ``agents.plan_run`` asks the
+    Arbora holds no planner (MEDULLA-CQ-ORCH-R001). ``agents.plan_run`` asks the
     engine for each plan over the caller's own authenticated client and
     verifies the receipt before running it (ARBORA-RELEASE-R003.4.1). This
     step only proves the installed engine facade serves ``TaskPlan``; an engine
@@ -183,13 +183,13 @@ def _ontology_provider(eg_client: Any) -> Any:
     if not callable(sparql):
         return None
     raise not_served(
-        "knowledge_graph.virtual_graph.ontology", "EG-UNIFIED-DATA-PLANE-R037"
+        "knowledge_graph.virtual_graph.ontology", "MEDULLA-UNIFIED-DATA-PLANE-R037"
     )
 
 
 def _install_cross_source(eg_client: Any) -> bool:
     raise not_served(
-        "knowledge_graph.virtual_graph.federation", "EG-UNIFIED-DATA-PLANE-R037"
+        "knowledge_graph.virtual_graph.federation", "MEDULLA-UNIFIED-DATA-PLANE-R037"
     )
 
 

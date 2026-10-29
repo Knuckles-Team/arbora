@@ -1,12 +1,12 @@
 """Public port over AU's retained action-policy decision point.
 
-CONCEPT:AU-ECO.boundary.public-api-widening — AU-BOUNDARY-R013
+CONCEPT:AU-ECO.boundary.public-api-widening — MERISTEM-BOUNDARY-R013
 
 ``arbora`` and other out-of-process callers must reach Agent Utilities only
-through ``arbora.api.contracts`` (AU-BOUNDARY-R013); they may not import
+through ``arbora.api.contracts`` (MERISTEM-BOUNDARY-R013); they may not import
 ``arbora.access.action_policy`` directly. This module is that
 sanctioned port for the one piece of ``messaging``-adjacent authority AU keeps
-after the messaging split (AU-BOUNDARY-R017): agent presence, subscriptions
+after the messaging split (MERISTEM-BOUNDARY-R017): agent presence, subscriptions
 and command/planning decisions stay AU-side as ``ActionPolicy``, while channel
 adapters, the listener, and durable append/cursor authority move to arbora
 and the epistemic graph respectively.
