@@ -37,7 +37,7 @@ def _scope_module() -> ModuleType:
 
 def _fast_subset_run() -> str:
     workflow = yaml.safe_load(
-        (ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
+        (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
     )
     steps = workflow["jobs"]["gates"]["steps"]
     return next(

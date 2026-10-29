@@ -148,10 +148,11 @@ def test_gates_run_the_repository_pre_commit_configuration() -> None:
     steps = _gate_steps()
     commands = "\n".join(step.get("run", "") for step in steps)
 
-    # Pull requests are diff-scoped, main and tags run every file.
+    # Main, nightly and tags run every file; ci.yml's pull-request gates are
+    # diff-scoped (tests/deployment/test_ci_workflow.py).
     assert f"{PRE_COMMIT_RUN} $range --show-diff-on-failure" in commands
     assert f"{PRE_COMMIT_RUN} $range --hook-stage pre-push" in commands
-    assert "--from-ref $PRE_COMMIT_FROM_REF --to-ref HEAD" in commands
+    assert "--from-ref" not in commands
     assert 'range="--all-files"' in commands
     assert {"pytest", "mypy-env"} <= _manual_hooks_named(commands)
     # The full suite runs only after the environment it needs is synced.
@@ -373,9 +374,12 @@ def test_scanner_cache_identity_fails_closed_without_a_compiler(
 def test_only_superseded_pull_request_runs_are_cancelled() -> None:
     concurrency = _workflow()["concurrency"]
     group = concurrency["group"]
-    assert "format('pr-{0}-{1}'" in group and "pull_request.number" in group
-    assert "format('main-{0}'" in group and "format('release-{0}-{1}'" in group
-    # Superseded PR and main runs cancel; only tag publishes are preserved.
+    # release.yml never runs on a pull request; ci.yml owns the PR group.
+    assert "pull_request" not in group
+    assert (
+        "format('release-run-{0}-{1}'" in group and "format('release-{0}-{1}'" in group
+    )
+    # Superseded main and nightly calls cancel; only tag publishes are preserved.
     assert concurrency["cancel-in-progress"] == "${{ github.ref_type != 'tag' }}"
 
 
@@ -481,72 +485,21 @@ def test_installed_sdk_contains_schema_disclosure_contract() -> None:
     assert {"SchemaManifest", "reconstruct_schema"} <= names
 
 
-@pytest.mark.parametrize(
-    ("path", "required"),
-    [
-        ("scripts/gen_api.py", "true"),
-        (".github/workflows/release.yml", "true"),
-        ("scripts/install_scanners.sh", "true"),
-        ("arbora/client/invoke.py", "true"),
-        ("arbora/api/generated/registry.json", "true"),
-        ("docs/api/openapi.json", "true"),
-        ("arbora/a2a/application.py", "false"),
-    ],
-)
-def test_scanner_scope_executes_only_for_generated_contract_changes(
-    tmp_path, path, required
-):
-    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
-    source = tmp_path / path
-    source.parent.mkdir(parents=True, exist_ok=True)
-    source.write_text("before\n")
-    subprocess.run(["git", "add", path], cwd=tmp_path, check=True)
-    commit = [
-        "git",
-        "-c",
-        "user.name=Test",
-        "-c",
-        "user.email=test@example.test",
-        "commit",
-        "-qm",
-    ]
-    subprocess.run([*commit, "base"], cwd=tmp_path, check=True)
-    base = subprocess.check_output(
-        ["git", "rev-parse", "HEAD"], cwd=tmp_path, text=True
-    ).strip()
-    source.write_text("after\n")
-    subprocess.run(["git", "add", path], cwd=tmp_path, check=True)
-    subprocess.run([*commit, "change"], cwd=tmp_path, check=True)
-    output = tmp_path / "scope-output"
-    script = _workflow()["jobs"]["scanner-scope"]["steps"][1]["run"]
-    subprocess.run(
-        ["bash", "-c", script],
-        cwd=tmp_path,
-        env={**os.environ, "BASE_SHA": base, "GITHUB_OUTPUT": str(output)},
-        check=True,
-    )
-    assert output.read_text() == f"required={required}\n"
-
-
-def test_generator_scanner_runs_for_main_and_selected_pr_without_publication():
-    jobs = _workflow()["jobs"]
-    condition = jobs["scanner-quality"]["if"]
-    assert "github.event_name == 'push' && github.ref_type == 'branch'" in condition
-    assert (
-        "github.event_name == 'pull_request' && needs.scanner-scope.outputs.required == 'true'"
-        in condition
-    )
-    assert "needs.freeze-gate-source.result == 'success'" in condition
-    assert "scanner-scope" in jobs["scanner-quality"]["needs"]
+def test_scanner_runs_on_branches_and_release_never_runs_on_pull_requests():
+    workflow = _workflow()
+    jobs = workflow["jobs"]
+    assert "pull_request" not in workflow[True]
+    assert set(workflow[True]) == {"push", "workflow_dispatch", "workflow_call"}
+    assert workflow[True]["push"] == {"tags": ["v*"]}
+    assert "scanner-scope" not in jobs
+    assert jobs["scanner-quality"]["if"] == "github.ref_type == 'branch'"
+    assert jobs["scanner-quality"]["continue-on-error"] is True
     assert "if" not in jobs["build"]
     assert jobs["build"]["needs"] == ["gates"]
     build_commands = "\n".join(step.get("run", "") for step in jobs["build"]["steps"])
     assert "uv build --out-dir dist" in build_commands
     assert "wheel_boot_check.py contents" in build_commands
-    assert jobs["install-smoke"]["if"] == (
-        "github.event_name != 'pull_request' || "
-        "github.event.pull_request.head.repo.full_name == github.repository"
-    )
+    assert "if" not in jobs["install-smoke"]
     assert (
         jobs["publish-pypi"]["if"]
         == "github.ref_type == 'tag' && startsWith(github.ref_name, 'v')"

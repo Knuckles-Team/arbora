@@ -28,33 +28,22 @@ name: Release
 # published by this wheel workflow.
 # ─────────────────────────────────────────────────────────────────────────
 
-# Triggers (CI-STANDARD): pull requests run diff-scoped gates and a real wheel build.
-# Main pushes run the full suite and builds. Only version tags publish. Docs/spec-only changes start nothing
-# here; .github/workflows/gates-skip.yml reports the `gates` check for them.
+# Triggers (CI-STANDARD): a v* tag or a manual dispatch publishes. ci.yml calls
+# this workflow (workflow_call) on a push to main and nightly for the full
+# gates, wheel build, six-platform install smoke, 3.12 backward leg and advisory
+# scanners; publish and github-release run only for a tag. A pull request never
+# reaches this workflow: ci.yml runs the fast pull-request jobs.
 on:
   push:
-    branches:
-      - 'main'
-    paths-ignore:
-      - 'specs/**'
-      - 'docs/**'
-      - '**/*.md'
-      - 'plans/**'
-      - 'LICENSE'
     tags:
       - 'v*'
-  pull_request:
-    paths-ignore:
-      - 'specs/**'
-      - 'docs/**'
-      - '**/*.md'
-      - 'plans/**'
-      - 'LICENSE'
   workflow_dispatch: {}
+  workflow_call: {}
 
 concurrency:
-  # PR and main runs cancel superseded work; a tag/dispatch publish never cancels.
-  group: ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}', github.workflow, github.event.pull_request.number) || (github.ref_type == 'tag' && format('release-{0}-{1}', github.workflow, github.ref) || format('main-{0}', github.workflow)) }}
+  # Tag runs never cancel a publish; a call from ci.yml (push or nightly) uses its
+  # own group so it cannot collide with the caller's concurrency group.
+  group: ${{ github.ref_type == 'tag' && format('release-{0}-{1}', github.workflow, github.ref) || format('release-run-{0}-{1}', github.event_name, github.ref) }}
   cancel-in-progress: ${{ github.ref_type != 'tag' }}
 
 permissions:
@@ -102,14 +91,9 @@ jobs:
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
 
   gates:
-    # PR gates are diff-scoped and install only published wheels. The
-    # chain measures ~15-17 min (commit hooks, prose lint, locked
-    # environment type check, and the full pytest suite whenever the
-    # pr-test-scope resolves to FULL), so the old 15 min PR cap killed
-    # the job mid-suite on every pull request. Measured 2026-10-23 on the
-    # #358 train: 25 min elapsed with 4543 tests passed in 16 min, and
-    # the job was cancelled at the 25 min cap during teardown; PR gets 35.
-    timeout-minutes: ${{ github.event_name == 'pull_request' && 35 || 60 }}
+    # Full gates over every file and the full suite (main, nightly, tag). The
+    # fast diff-scoped pull-request gates live in ci.yml.
+    timeout-minutes: 60
     name: gates
     needs: [freeze-gate-source]
     # Homelab self-hosted runner for same-repo push/PR traffic (the org
@@ -117,7 +101,7 @@ jobs:
     # repo never matches `github.repository`, so it always lands on the
     # GitHub-hosted runner -- self-hosted capacity is never offered to an
     # untrusted fork without the separate first-run approval gate.
-    runs-on: ${{ (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && fromJSON('["self-hosted", "homelab"]') || 'ubuntu-latest' }}
+    runs-on: [self-hosted, homelab]
     env:
       PIPELINES_REF: ${{ needs.freeze-gate-source.outputs.sha }}
       # The homelab self-hosted runner is itself an RKE2 pod, so Kubernetes
@@ -150,10 +134,7 @@ jobs:
           python-version: '3.14'
           enable-cache: true
           cache-dependency-glob: uv.lock
-          # A pull request restores the cache but never saves it: saving tars
-          # the self-hosted runner's whole uv cache, which ran a green PR
-          # gates job past its 15-minute budget. Main and tags still save.
-          save-cache: ${{ github.event_name != 'pull_request' }}
+          save-cache: true
 
       - name: Provision pinned Helm for deployment render tests
         env:
@@ -179,7 +160,7 @@ jobs:
         name: Resolve the published base
         run: |
           set -euo pipefail
-          BASE="${{ github.event.pull_request.base.sha || github.event.before }}"
+          BASE="${{ github.event.before }}"
           if [ -z "${BASE:-}" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$BASE" 2>/dev/null; then
             BASE="$(git rev-list --max-parents=0 HEAD)"
           fi
@@ -202,17 +183,11 @@ jobs:
           # runs it, so it never blocks a merge or a release.
           SKIP="${SKIP:+$SKIP,}ste-staged"
           export SKIP
-          # Pull requests check the diff only (--from-ref/--to-ref); main and
-          # tags check every file at both stages.
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            range="--from-ref $PRE_COMMIT_FROM_REF --to-ref HEAD"
-          else
-            range="--all-files"
-            # Trailers belong to pull request commits; a squash merge does
-            # not carry the Spec: trailer, so push and tag runs skip the hook.
-            SKIP="${SKIP:+$SKIP,}spec-trailers"
-            export SKIP
-          fi
+          range="--all-files"
+          # Trailers belong to pull request commits; a squash merge does
+          # not carry the Spec: trailer, so push and tag runs skip the hook.
+          SKIP="${SKIP:+$SKIP,}spec-trailers"
+          export SKIP
           uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" $range --show-diff-on-failure
           uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" $range --hook-stage pre-push --show-diff-on-failure
 
@@ -220,12 +195,7 @@ jobs:
         continue-on-error: true
         run: |
           set -euo pipefail
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            range="--from-ref $PRE_COMMIT_FROM_REF --to-ref HEAD"
-          else
-            range="--all-files"
-          fi
-          uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" ste-staged $range
+          uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" ste-staged --all-files
 
       # External-index availability is a release boundary, not a PR/push
       # boundary. Repository-manager's one readiness primitive checks the
@@ -290,94 +260,18 @@ jobs:
           uv run --frozen --no-sync python -m pytest tests/agent_host/test_log_sink_terminal.py tests/agent_host/test_log_sink_terminal_lifecycle.py -q -rP --junitxml="$HOST_LOG_RESULTS"
           uv run --frozen --no-sync python -c 'import os, xml.etree.ElementTree as ET; cases = ET.parse(os.environ["HOST_LOG_RESULTS"]).findall(".//testcase"); assert len(cases) == 5 and all(case.find(tag) is None for case in cases for tag in ("skipped", "failure", "error")), "All five released-native host log cases must pass without skips"; print("Five released-native host log cases passed without skips")'
 
-      # Operator decision (2026-10-09): PR gates run a fast subset so a PR
-      # auto-merges within minutes -- lint and the spec check already ran
-      # full above (the commit-stage pre-commit step), the type check just
-      # ran full too, and only the test matrix narrows here. `push` to main
-      # and a release tag are never `pull_request` and keep running the full
-      # suite unchanged via the manual-stage `pytest` hook, exactly as before.
-      - name: Resolve pull-request test scope
-        if: github.event_name == 'pull_request'
-        id: pr-test-scope
-        run: |
-          set -euo pipefail
-          uvx --from "git+https://github.com/Knuckles-Team/pipelines@${PIPELINES_REF}" \
-            pipelines-hook pr-test-scope --base-ref "$PRE_COMMIT_FROM_REF" \
-            --src-root arbora --tests-root tests > "$RUNNER_TEMP/pr-test-scope.txt"
-          cat "$RUNNER_TEMP/pr-test-scope.txt"
-          {
-            echo "scope<<PR_TEST_SCOPE_EOF"
-            cat "$RUNNER_TEMP/pr-test-scope.txt"
-            echo "PR_TEST_SCOPE_EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Full test suite (push to main / release tag; manual-stage hook)
-        if: github.event_name != 'pull_request'
+      - name: Full test suite (main, nightly, release tag; manual-stage hook)
         run: uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" pytest --hook-stage manual --all-files
-
-      - name: Test suite -- pull request fast subset
-        if: github.event_name == 'pull_request'
-        env:
-          SCOPE: ${{ steps.pr-test-scope.outputs.scope }}
-        run: |
-          set -euo pipefail
-          # The static architecture and import-scan tests run on every pull
-          # request whatever the diff touches (scripts/pr_static_scope.py);
-          # the mapped subset only narrows the rest.
-          python3 scripts/pr_static_scope.py > "$RUNNER_TEMP/pr-static-tests.txt"
-          mapfile -t static_tests < "$RUNNER_TEMP/pr-static-tests.txt"
-          if [ "$SCOPE" = "FULL" ]; then
-            echo "pr-test-scope: unmapped source change (or an unreadable diff); running the full suite"
-            scripts/local_hook.sh pytest
-          else
-            if [ "$SCOPE" = "NONE" ]; then
-              echo "pr-test-scope: no arbora/tests change in this diff; running only the static architecture tests"
-              SCOPE=""
-            else
-              echo "pr-test-scope: running only the tests this diff affects, plus the static architecture tests:"
-              echo "$SCOPE"
-            fi
-            # pytest 9 drops a conftest.py's fixtures for a directory whose
-            # files are interleaved with another directory's in the argument
-            # list ("fixture 'stdio_fleet_authority' not found"); the scope
-            # arrives in arbitrary order, so group each directory's files.
-            mapfile -t affected_tests < <({ printf '%s\n' "$SCOPE"; printf '%s\n' "${static_tests[@]}"; } | sed '/^$/d' | sort -u | awk -F/ '{d=$0; sub(/\/[^\/]*$/, "", d); print d "\t" $0}' | sort | cut -f2)
-            scripts/local_hook.sh pytest "${affected_tests[@]}"
-          fi
-
-  scanner-scope:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      required: ${{ steps.scope.outputs.required }}
-    steps:
-      - *release-checkout
-      - id: scope
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          set -euo pipefail
-          if git diff --quiet "$BASE_SHA...HEAD" -- scripts/gen_api.py arbora/client arbora/api/generated docs/api .github/workflows/release.yml scripts/install_scanners.sh; then
-            echo "required=false" >> "$GITHUB_OUTPUT"
-          else
-            result=$?
-            [ "$result" -eq 1 ] || exit "$result"
-            echo "required=true" >> "$GITHUB_OUTPUT"
-          fi
 
   # Scanners (complexity, KISS, cccc, dupehound, jscpd) are advisory: they
   # report on every run and never block a merge or a release (operator
   # direction, 2026-10-17).
   scanner-quality:
-    if: >-
-      always() && needs.freeze-gate-source.result == 'success' &&
-      ((github.event_name == 'push' && github.ref_type == 'branch') ||
-      (github.event_name == 'pull_request' && needs.scanner-scope.outputs.required == 'true'))
+    if: github.ref_type == 'branch'
     timeout-minutes: 60
     continue-on-error: true
     name: Scanner quality (cccc, KISS, dupehound, jscpd)
-    needs: [freeze-gate-source, scanner-scope]
+    needs: [freeze-gate-source]
     runs-on: ubuntu-latest
     env:
       PIPELINES_REF: ${{ needs.freeze-gate-source.outputs.sha }}
@@ -445,11 +339,11 @@ jobs:
           key: ${{ steps.scanner-cache-identity.outputs.key }}
 
   build:
-    timeout-minutes: ${{ github.event_name == 'pull_request' && 10 || 60 }}
+    timeout-minutes: 60
     name: build
-    # Validate the actual wheel on PRs; publication remains tag-only.
+    # Publication remains tag-only.
     needs: [gates]
-    runs-on: ${{ (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && fromJSON('["self-hosted", "homelab"]') || 'ubuntu-latest' }}
+    runs-on: [self-hosted, homelab]
     env:
       SOURCE_DATE_EPOCH: "0"
     steps:
@@ -487,7 +381,6 @@ jobs:
   install-smoke:
     name: install ${{ matrix.name }}
     needs: [build]
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     continue-on-error: ${{ matrix.optional || false }}
@@ -651,7 +544,7 @@ jobs:
           uv run --frozen --no-sync pytest -q tests/fleet
 
   publish-pypi:
-    timeout-minutes: ${{ github.event_name == 'pull_request' && 10 || 60 }}
+    timeout-minutes: 60
     name: publish
     needs: [build, install-smoke]
     if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
