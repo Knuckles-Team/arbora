@@ -82,7 +82,7 @@ async def require_native_version(client: Any) -> str:
     """Attest the running executable before creating fixture identities."""
     async with asyncio.timeout(15):
         health = await client.health()
-    if not isinstance(health, dict) or health.get("version") != "2.27.7":
+    if not isinstance(health, dict) or health.get("version") != "2.27.10":
         raise RuntimeError("Native runtime version verification failed")
     return health["version"]
 
