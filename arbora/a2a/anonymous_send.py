@@ -302,7 +302,7 @@ class AnonymousTextService:
             ),
         )
         now = int(time.time() * 1000)
-        request = {
+        request: dict[str, Any] = {
             "schema_version": "1",
             "run_id": run_id,
             "work_item_id": None,
@@ -548,14 +548,16 @@ class AnonymousTextService:
         if await self._client.supports(name) is not True:
             raise RuntimeError("Native reply storage unavailable")
         self._check()
-        sender = {
-            "CreateNodeIfAbsent": native_graph.send_create_node_if_absent,
-            "GetNodeProperties": native_graph.send_get_node_properties,
-        }[name]
-        result = await sender(self._client, params, graph=self.policy.graph)
-        self._check()
         if name == "CreateNodeIfAbsent":
-            return result
+            created = await native_graph.send_create_node_if_absent(
+                self._client, params, graph=self.policy.graph
+            )
+            self._check()
+            return created
+        result = await native_graph.send_get_node_properties(
+            self._client, params, graph=self.policy.graph
+        )
+        self._check()
         value = result.payload
         if isinstance(value, (bytes, bytearray)):
             if len(value) > 300000:
