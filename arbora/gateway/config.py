@@ -2,11 +2,10 @@
 
 CONCEPT:AU-OS.config.gateway-service-dashboard — Gateway Service Dashboard
 
-Loads dashboard layout from ``~/.config/agent-utilities/services.yaml``
+Loads dashboard layout from ``~/.config/arbora/services.yaml``
 and auto-discovers available services from ``mcp_config.json``.
 
-Uses ``agent_utilities.core.paths`` for all path resolution — no
-duplicate XDG logic.
+Uses Arbora's configuration owner for host configuration paths.
 """
 
 from __future__ import annotations
@@ -20,9 +19,9 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from agent_utilities.core.paths import config_dir, data_dir, mcp_config_path
+from agent_utilities.core.paths import data_dir
 
-from arbora.core.settings import setting
+from arbora.core.settings import config_dir, mcp_config_path, setting
 from arbora.gateway.models import (
     DashboardLayout,
     ServiceCategory,
@@ -438,7 +437,7 @@ class ConfigManager:
     """Manages service dashboard configuration.
 
     Loads from YAML and can auto-discover services from mcp_config.json.
-    Uses ``agent_utilities.core.paths`` for all path resolution.
+    Uses Arbora's configuration owner for host configuration paths.
     """
 
     def __init__(self, config_path: Path | str | None = None):

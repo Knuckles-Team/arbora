@@ -4,7 +4,7 @@ Arbora is the platform edge and composition root. It is the running process
 that receives requests, establishes authority, and projects independently owned
 capabilities through one governed surface.
 
-[![Knuckles platform runtime architecture](https://raw.githubusercontent.com/Knuckles-Team/epistemic-graph/main/docs/assets/runtime-architecture.svg)](https://knuckles-team.github.io/.github/architecture/#arbora)
+[![Knuckles platform runtime architecture](https://raw.githubusercontent.com/Knuckles-Team/medulla/main/docs/assets/runtime-architecture.svg)](https://knuckles-team.github.io/.github/architecture/#arbora)
 
 [Explore the live architecture](https://knuckles-team.github.io/.github/architecture/#arbora)
 

@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.15'",
@@ -325,6 +325,7 @@ source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
     { name = "anyio" },
+    { name = "cryptography" },
     { name = "epistemic-graph", extra = ["server"] },
     { name = "eunomia-core" },
     { name = "fastapi" },
@@ -451,6 +452,7 @@ requires-dist = [
     { name = "anyio", specifier = ">=4.15.1" },
     { name = "arbora", extras = ["messaging-discord", "messaging-googlechat", "messaging-googlemeet", "messaging-irc", "messaging-line", "messaging-matrix", "messaging-mattermost", "messaging-nextcloud", "messaging-signal", "messaging-slack", "messaging-synology", "messaging-teams", "messaging-telegram", "messaging-twitch", "messaging-voicecall", "messaging-whatsapp"], marker = "extra == 'messaging'" },
     { name = "botbuilder-core", marker = "extra == 'messaging-teams'", specifier = ">=4.17.1" },
+    { name = "cryptography", specifier = ">=50.0.2" },
     { name = "discord-py", marker = "extra == 'messaging-discord'", specifier = ">=2.7.1" },
     { name = "epistemic-graph", extras = ["server"], specifier = ">=2.27.7,<3.0.0", index = "https://pypi.org/simple" },
     { name = "eunomia-core", specifier = ">=0.3.10" },

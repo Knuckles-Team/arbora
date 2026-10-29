@@ -2071,32 +2071,50 @@
     {
       "id": "ARBORA-FLEET-R043.1",
       "title": "Model",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5704a6e6e655"
+      ],
+      "verified_by": [
+        "tests/api/test_query_federation.py:146",
+        "tests/api/test_query_federation.py:70"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R043.2",
       "title": "Behavior",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "5704a6e6e655",
         "c135fd8a6f4a"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_query_federation.py:146",
+        "tests/api/test_query_federation.py:93"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R043.3",
       "title": "Wiring",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5704a6e6e655"
+      ],
+      "verified_by": [
+        "tests/api/test_query_federation_served.py:171"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R043.4",
       "title": "Refusal",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5704a6e6e655"
+      ],
+      "verified_by": [
+        "tests/api/test_query_federation.py:219",
+        "tests/api/test_query_federation.py:270"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R043.5",
@@ -2117,6 +2135,8 @@
       "title": "Source executor",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "18ce44dc31bd",
+        "2d2fe39a58ce",
         "c135fd8a6f4a",
         "e755549375e6"
       ],

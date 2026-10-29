@@ -72,6 +72,7 @@ dependencies = [
     # ``installed_connectors()`` — see arbora/core/providers.py. The floor
     # moves to the first release that declares it once that release ships.
     "universal-skills>=1.3.11,<2.0.0",
+    "cryptography>=50.0.2",
 ]
 
 [[project.authors]]

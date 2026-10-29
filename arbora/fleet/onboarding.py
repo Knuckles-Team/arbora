@@ -144,7 +144,7 @@ def configured_fleet_endpoints(
 ) -> tuple[FleetEndpoint, ...]:
     """Read the deployment's MCP config; an absent file has no fleet."""
 
-    from agent_utilities.core.paths import mcp_config_path
+    from arbora.core.settings import mcp_config_path
 
     config = path or mcp_config_path()
     if not config.is_file():

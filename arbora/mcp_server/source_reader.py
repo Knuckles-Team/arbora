@@ -14,6 +14,8 @@ membership edge. Both limits are reported in the outcome, never hidden.
 
 from __future__ import annotations
 
+import asyncio
+import hashlib
 from typing import Any
 
 import msgpack
@@ -438,6 +440,7 @@ class NativeSourceReader:
             content = await _blob_chunks(context, graph, cursor, chunks)
         finally:
             await _send(context, graph, "BlobFetchEnd", {"cursor": cursor})
+        content_sha256 = (await asyncio.to_thread(hashlib.sha256, content)).hexdigest()
         return SourceBlobOutcome(
             tenant=tenant,
             repository=repository,
@@ -445,6 +448,7 @@ class NativeSourceReader:
             path=path,
             found=True,
             content_digest=digest,
+            content_sha256=content_sha256,
             content=content,
             size=len(content),
         )

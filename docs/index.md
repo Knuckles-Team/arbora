@@ -14,7 +14,7 @@
 </section>
 
 <figure class="site-architecture" markdown>
-  [![Knuckles platform runtime architecture](https://raw.githubusercontent.com/Knuckles-Team/epistemic-graph/main/docs/assets/runtime-architecture.svg)](https://knuckles-team.github.io/.github/architecture/#arbora)
+  [![Knuckles platform runtime architecture](https://raw.githubusercontent.com/Knuckles-Team/medulla/main/docs/assets/runtime-architecture.svg)](https://knuckles-team.github.io/.github/architecture/#arbora)
 
   [Explore the live architecture](https://knuckles-team.github.io/.github/architecture/#arbora)
   <figcaption>One request path, five deliberately separate authorities.</figcaption>
