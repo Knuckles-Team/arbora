@@ -1921,7 +1921,7 @@
         "95234018d50f"
       ],
       "verified_by": [
-        "tests/fleet/test_declarations.py:94",
+        "tests/fleet/test_declarations.py:99",
         "tests/ingest/test_connector_sources.py:306"
       ]
     },
@@ -1950,9 +1950,9 @@
         "96b68a9b5e5c"
       ],
       "verified_by": [
-        "tests/fleet/test_declarations.py:108",
-        "tests/fleet/test_declarations.py:66",
-        "tests/fleet/test_declarations.py:83"
+        "tests/fleet/test_declarations.py:113",
+        "tests/fleet/test_declarations.py:71",
+        "tests/fleet/test_declarations.py:88"
       ]
     },
     {
