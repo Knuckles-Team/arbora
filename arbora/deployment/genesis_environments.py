@@ -47,7 +47,8 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from agent_utilities.core.paths import config_dir
+
+from arbora.core.settings import config_dir
 
 from .config_generator import _is_secret
 
