@@ -4,8 +4,9 @@ name: CI
 # runs the diff-scoped `gates` job (Python 3.14, affected tests) and a real wheel
 # `build`; docs and spec-only diffs skip both. The caller aggregate `CI required`
 # is the one required status check. A push to main and the nightly schedule call
-# release.yml for the full gates, wheel build, six-platform install smoke, the
-# Python 3.12 backward leg and the advisory scanners; only a v* tag publishes.
+# the read-only checks.yml for the full gates, wheel build, six-platform install
+# smoke, the Python 3.12 backward leg and the advisory scanners. This workflow
+# never calls release.yml and holds no write permission: only a v* tag publishes.
 
 on:
   pull_request:
@@ -191,7 +192,7 @@ jobs:
 
       # Operator decision (2026-10-09): PR gates run a fast subset so a PR
       # auto-merges within minutes. Main, nightly and tags run the full suite
-      # through release.yml.
+      # through checks.yml.
       - name: Resolve pull-request test scope
         id: pr-test-scope
         run: |
@@ -236,7 +237,7 @@ jobs:
 
   build:
     # A real wheel build and data-file check; the six-platform install smoke
-    # runs on main and nightly through release.yml.
+    # runs on main and nightly through checks.yml.
     name: build
     needs: [changes]
     if: needs.changes.outputs.code == 'true'
@@ -261,12 +262,12 @@ jobs:
       - name: Wheel carries every data file
         run: uv run --no-project python -I scripts/wheel_boot_check.py contents dist/arbora-*.whl
 
-  # Push to main and nightly: the full release graph without publication.
+  # Push to main and nightly: the full read-only checks, no publication.
   main-checks:
     if: github.event_name != 'pull_request'
     permissions:
-      contents: write
-    uses: ./.github/workflows/release.yml
+      contents: read
+    uses: ./.github/workflows/checks.yml
 
   ci-required:
     name: CI required

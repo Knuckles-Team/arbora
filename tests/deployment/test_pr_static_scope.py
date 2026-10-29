@@ -2,7 +2,8 @@
 
 The mapped subset narrows the suite to the tests a diff affects, so a rule that
 scans the whole repository is only checked when its own test is mapped. These
-tests pin that the release workflow adds the static set to every non-full scope.
+tests pin that the pull-request workflow adds the static set to every
+non-full scope.
 """
 
 from __future__ import annotations

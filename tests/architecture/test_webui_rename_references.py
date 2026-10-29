@@ -17,6 +17,6 @@ def test_webui_extra_source_and_release_checkout_reference_agent_webui() -> None
     assert any(dep.startswith("agent-webui") for dep in extra)
     # The web UI resolves from the package index like every other dependency.
     assert "agent-webui" not in data["tool"]["uv"]["sources"]
-    workflow = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
+    workflow = (ROOT / ".github/workflows/checks.yml").read_text(encoding="utf-8")
     # The release installs it from PyPI; no web UI source is checked out.
     assert "repository: Knuckles-Team/agent-webui" not in workflow

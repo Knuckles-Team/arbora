@@ -23,7 +23,14 @@ SHA = re.compile(r"[0-9a-f]{40}")
 PRE_COMMIT_RUN = 'pre-commit run --config "$PINNED_PRECOMMIT"'
 
 
-def _workflow() -> dict[str, Any]:
+def _workflow() -> dict[Any, Any]:
+    """The read-only checks (gates, build, install smoke, scanners)."""
+    path = ROOT / ".github" / "workflows" / "checks.yml"
+    return yaml.safe_load(path.read_text(encoding="utf-8"))
+
+
+def _release() -> dict[Any, Any]:
+    """The tag-only publish workflow that calls the checks first."""
     path = ROOT / ".github" / "workflows" / "release.yml"
     return yaml.safe_load(path.read_text(encoding="utf-8"))
 
@@ -90,7 +97,7 @@ def test_release_builds_from_this_repository_and_pypi_only() -> None:
         not in (None, "Knuckles-Team/repository-manager")
     ]
     assert product_checkouts == []
-    text = (ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
+    text = (ROOT / ".github" / "workflows" / "checks.yml").read_text(encoding="utf-8")
     for retired in (
         "agent-utilities",
         "agent-connector-sdk",
@@ -225,8 +232,10 @@ def test_scanner_versions_receive_distinct_argv_and_the_job_is_advisory() -> Non
     assert "pipelines-hook scanner-versions cccc kiss dupehound jscpd" in command
     assert "['cccc'" not in command
     assert scanner["continue-on-error"] is True
-    for job in ("build", "install-smoke", "publish-pypi", "github-release"):
+    for job in ("build", "install-smoke"):
         assert "scanner-quality" not in _workflow()["jobs"][job].get("needs", [])
+    for job in ("checks", "publish-pypi", "github-release"):
+        assert "scanner-quality" not in _release()["jobs"][job].get("needs", [])
 
 
 def _scanner_step(name: str) -> dict[str, Any]:
@@ -371,16 +380,14 @@ def test_scanner_cache_identity_fails_closed_without_a_compiler(
     ) == (23, "")
 
 
-def test_only_superseded_pull_request_runs_are_cancelled() -> None:
-    concurrency = _workflow()["concurrency"]
-    group = concurrency["group"]
-    # release.yml never runs on a pull request; ci.yml owns the PR group.
-    assert "pull_request" not in group
-    assert (
-        "format('release-run-{0}-{1}'" in group and "format('release-{0}-{1}'" in group
-    )
-    # Superseded main and nightly calls cancel; only tag publishes are preserved.
-    assert concurrency["cancel-in-progress"] == "${{ github.ref_type != 'tag' }}"
+def test_checks_leave_concurrency_to_the_caller_and_a_publish_is_never_cancelled() -> (
+    None
+):
+    # A called workflow that sets the caller's group would deadlock the call.
+    assert "concurrency" not in _workflow()
+    concurrency = _release()["concurrency"]
+    assert "pull_request" not in concurrency["group"]
+    assert concurrency["cancel-in-progress"] is False
 
 
 _SMOKE_PLATFORMS = {
@@ -429,7 +436,7 @@ def test_install_smoke_covers_every_os_and_architecture_before_publish() -> None
         assert _locked_wheel_platforms(package) == _REQUIRED_SMOKE_PLATFORMS
     assert smoke["strategy"]["fail-fast"] is False
     assert smoke["needs"] == ["build"]
-    assert jobs["publish-pypi"]["needs"] == ["build", "install-smoke"]
+    assert _release()["jobs"]["publish-pypi"]["needs"] == ["checks"]
 
     commands = "\n".join(step.get("run", "") for step in smoke["steps"])
     assert "uv export --frozen" in commands
@@ -440,7 +447,7 @@ def test_install_smoke_covers_every_os_and_architecture_before_publish() -> None
 
 
 def test_github_release_links_the_published_pypi_version() -> None:
-    release = _workflow()["jobs"]["github-release"]
+    release = _release()["jobs"]["github-release"]
     assert release["needs"] == ["publish-pypi"]
     notes = next(
         step for step in release["steps"] if step["name"] == "Write release notes"
@@ -485,12 +492,12 @@ def test_installed_sdk_contains_schema_disclosure_contract() -> None:
     assert {"SchemaManifest", "reconstruct_schema"} <= names
 
 
-def test_scanner_runs_on_branches_and_release_never_runs_on_pull_requests():
+def test_scanner_runs_on_branches_and_checks_never_run_on_pull_requests():
     workflow = _workflow()
     jobs = workflow["jobs"]
-    assert "pull_request" not in workflow[True]
-    assert set(workflow[True]) == {"push", "workflow_dispatch", "workflow_call"}
-    assert workflow[True]["push"] == {"tags": ["v*"]}
+    # checks.yml is only ever called; it has no trigger of its own.
+    assert set(workflow[True]) == {"workflow_call"}
+    assert workflow["permissions"] == {"contents": "read"}
     assert "scanner-scope" not in jobs
     assert jobs["scanner-quality"]["if"] == "github.ref_type == 'branch'"
     assert jobs["scanner-quality"]["continue-on-error"] is True
@@ -500,15 +507,37 @@ def test_scanner_runs_on_branches_and_release_never_runs_on_pull_requests():
     assert "uv build --out-dir dist" in build_commands
     assert "wheel_boot_check.py contents" in build_commands
     assert "if" not in jobs["install-smoke"]
+    # Nothing in the read-only checks can publish or write.
+    text = (ROOT / ".github" / "workflows" / "checks.yml").read_text(encoding="utf-8")
+    assert "uv publish" not in text and "secrets." not in text
+    assert "write" not in yaml.safe_dump(
+        [workflow["permissions"], *(job.get("permissions") for job in jobs.values())]
+    )
+    assert not {"publish-pypi", "github-release"} & set(jobs)
+
+
+def test_only_a_v_tag_or_manual_dispatch_publishes() -> None:
+    release = _release()
+    jobs = release["jobs"]
+    assert set(release[True]) == {"push", "workflow_dispatch"}
+    assert release[True]["push"] == {"tags": ["v*"]}
+    assert release["permissions"] == {"contents": "read"}
+    assert jobs["checks"]["uses"] == "./.github/workflows/checks.yml"
+    assert jobs["checks"]["permissions"] == {"contents": "read"}
     assert (
         jobs["publish-pypi"]["if"]
         == "github.ref_type == 'tag' && startsWith(github.ref_name, 'v')"
     )
+    assert jobs["github-release"]["if"] == jobs["publish-pypi"]["if"]
+    assert jobs["github-release"]["permissions"] == {"contents": "write"}
+    # Only the release job holds write; publish-pypi does not.
+    assert "permissions" not in jobs["publish-pypi"]
 
 
 # spec: ARBORA-RELEASE-R001.1
 def test_tag_publishes_wheel_and_sdist() -> None:
     jobs = _workflow()["jobs"]
+    release_jobs = _release()["jobs"]
     build_runs = [step.get("run", "") for step in jobs["build"]["steps"]]
     assert any(
         run.startswith("uv build") and "--wheel" not in run and "--sdist" not in run
@@ -522,7 +551,7 @@ def test_tag_publishes_wheel_and_sdist() -> None:
     )
     assert "dist/arbora-*.whl" in upload["with"]["path"]
     assert "dist/arbora-*.tar.gz" in upload["with"]["path"]
-    publish = jobs["publish-pypi"]
+    publish = release_jobs["publish-pypi"]
     assert "github.ref_type == 'tag'" in publish["if"]
     command = next(
         step["run"] for step in publish["steps"] if "uv publish" in step.get("run", "")
@@ -532,7 +561,7 @@ def test_tag_publishes_wheel_and_sdist() -> None:
 
 # spec: ARBORA-RELEASE-R001.1
 def test_prerelease_tag_is_never_the_latest_github_release() -> None:
-    steps = _workflow()["jobs"]["github-release"]["steps"]
+    steps = _release()["jobs"]["github-release"]["steps"]
     run = next(s["run"] for s in steps if "gh release create" in s.get("run", ""))
     assert "*dev*" in run and "--prerelease" in run
     assert "--latest \\" not in run
