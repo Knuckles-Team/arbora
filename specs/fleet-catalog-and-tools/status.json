@@ -1011,6 +1011,7 @@
       "landed_in": [
         "5ecdfe7fbe9a",
         "619d25ac8e69",
+        "cef285464d04",
         "d4804307c79b",
         "d9015e6d6cda"
       ],
@@ -1039,6 +1040,7 @@
       "title": "Fleet catalog reads run under the process authority",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "cef285464d04",
         "d4804307c79b"
       ],
       "verified_by": [
