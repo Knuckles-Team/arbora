@@ -86,6 +86,8 @@ def test_bad_json_never_silently_disables_feature(monkeypatch, raw):
 
 
 def test_content_digest_pin_refuses_before_process_authority(monkeypatch):
+    from epistemic_graph.decision_client import TASK_PLAN_FEATURE_SCHEMA
+
     from arbora.mcp_server import server
 
     monkeypatch.setenv(
@@ -95,7 +97,7 @@ def test_content_digest_pin_refuses_before_process_authority(monkeypatch):
                 **CONFIG,
                 "feature_schema": {
                     "component_id": "arbora.agents.plan_run.feature_schema",
-                    "definition_digest": "sha256:7a1a4e4b524072521a937e2f797f0a8eba33f3cca5fb5bd373b65f77b15184d1",
+                    "definition_digest": TASK_PLAN_FEATURE_SCHEMA["content_digest"],
                     "kind": "feature_schema",
                 },
             }

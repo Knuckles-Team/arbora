@@ -20,7 +20,7 @@ PYPROJECT_PATH = Path(__file__).resolve().parents[2] / "pyproject.toml"
 SPLIT_REPOSITORY_PACKAGES = (
     "meristem",
     "scion-sdk",
-    "epistemic-graph",
+    "medulla",
 )
 
 _DISALLOWED_PATTERNS = ("@ file://", "@ path://", "{ path", "file:///", "../")

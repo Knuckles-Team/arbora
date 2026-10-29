@@ -91,7 +91,7 @@ def generate_pin(
     if engine_version is None:
         from importlib.metadata import version
 
-        engine_version = version("epistemic-graph")
+        engine_version = version("medulla")
     found = installed_export(modules, stat)
     pin: dict[str, Any] = {
         "component_id": COMPONENT_ID,
