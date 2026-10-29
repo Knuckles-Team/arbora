@@ -56,25 +56,31 @@ def _catalog_snapshot_ttl_s() -> float:
         return DEFAULT_CATALOG_SNAPSHOT_TTL_S
 
 
-def _bind_session_graph(graph: str) -> AbstractContextManager[object]:
-    """Narrow the ambient verified session to ``graph`` for one engine read.
-
-    AU's graph views refuse a session that targets another graph, so a read of
-    ``__commons__`` (or of the tenant graph from a session elsewhere) runs under
-    the same verified authority re-targeted to that graph.
-    """
-
-    from arbora.api.contracts.session import resolve_session, use_session
-
-    return use_session(resolve_session().with_graph(graph))
-
-
 def _use_process_session(session: Any) -> AbstractContextManager[object]:
     """Bind the Arbora process session for one browser catalog read."""
 
     from arbora.api.contracts.session import use_session
 
     return use_session(session)
+
+
+def _process_graph_binder(session: Any) -> GraphBinder:
+    """Bind the Arbora process session, re-targeted to one graph, for a read.
+
+    The fleet catalog is one process-wide authority (ARBORA-FLEET-R026.2).
+    Its read context names the process, its snapshot is shared by every
+    caller, and caller admission is Arbora's scope check on each item. The
+    engine row-level policy hides process-owned ``:Server`` registrations
+    from an ordinary operator session, so a read under the caller's session
+    saw no live server and served an empty catalog.
+    """
+
+    from arbora.api.contracts.session import use_session
+
+    def bind(graph: str) -> AbstractContextManager[object]:
+        return use_session(session.with_graph(graph))
+
+    return bind
 
 
 def _read_context(session: Any) -> ReadContext:
@@ -95,7 +101,7 @@ async def compose_catalog_authorities(
     deferred_fleet: DeferredFleetCatalogReader,
     multiplexer: Any,
     catalog_ports_factory: CatalogPortsFactory = _public_au_catalog_ports,
-    bind_graph: GraphBinder = _bind_session_graph,
+    bind_graph: GraphBinder | None = None,
 ) -> FleetCatalogReader:
     """Install and prove every catalog authority before service readiness.
 
@@ -105,6 +111,7 @@ async def compose_catalog_authorities(
     ever consulted.
     """
 
+    bind_graph = bind_graph or _process_graph_binder(session)
     context = _read_context(session)
     # The tenant's data graph is the verified session's graph (AU's tenant
     # graph naming), never the bare tenant id.

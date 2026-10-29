@@ -70,6 +70,7 @@
     "ARBORA-FLEET-R029.1",
     "ARBORA-FLEET-R026",
     "ARBORA-FLEET-R026.1",
+    "ARBORA-FLEET-R026.2",
     "ARBORA-FLEET-R027",
     "ARBORA-FLEET-R028",
     "ARBORA-FLEET-R030",
@@ -1010,13 +1011,17 @@
       "landed_in": [
         "5ecdfe7fbe9a",
         "619d25ac8e69",
+        "cef285464d04",
+        "d4804307c79b",
         "d9015e6d6cda"
       ],
       "verified_by": [
+        "tests/mcp_server/test_catalog_composition.py:164",
         "tests/test_fleet_catalog_reader.py:366"
       ],
       "rollup_of": [
-        "ARBORA-FLEET-R026.1"
+        "ARBORA-FLEET-R026.1",
+        "ARBORA-FLEET-R026.2"
       ]
     },
     {
@@ -1028,6 +1033,18 @@
       ],
       "verified_by": [
         "tests/test_fleet_catalog_reader.py:366"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R026.2",
+      "title": "Fleet catalog reads run under the process authority",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "cef285464d04",
+        "d4804307c79b"
+      ],
+      "verified_by": [
+        "tests/mcp_server/test_catalog_composition.py:164"
       ]
     },
     {

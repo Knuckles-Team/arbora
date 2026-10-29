@@ -532,6 +532,15 @@ Native retirement failures remain explicit unresolved outcomes, never restored a
 The prototype grants no operations and is not wired into the application factory.
 Actual WebUI handshake and effect admission remain separate acceptance gates.
 
+### R004.6 default-off local browser transport composition
+
+The public WebUI factory may accept a distinct owner-issued local browser port.
+Only its fixed WebSocket route can reach the zero-effect owner in explicit none mode.
+Raw anonymous routes and authenticated session boundaries keep their existing gates.
+The port carries no policy, session, credential or serialized admission proof.
+Actual socket handshakes must preserve exact Origin, Host, peer and document scope.
+Bounded readiness and ping frames grant no operation or effect authority.
+
 ### R005.1 / R004.4.1 typed session refusal amendment (2026-10-26)
 
 During generated `session.resolve`, the published client's typed
