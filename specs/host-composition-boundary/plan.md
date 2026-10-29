@@ -603,3 +603,13 @@ The certification script reports only the issuer and public CA, handles SIGINT
 and SIGTERM, and owns shutdown. The fixture and tests use the real TLS endpoint
 and verify the issued token with its served JWKS. This is an ephemeral
 certification tool, not a general identity provider or persistent credential store.
+
+### Host-owned configuration paths
+
+Gateway, fleet, certification and profile consumers use `arbora.core.settings`.
+The MCP path is `mcp_config.json` in the active Arbora configuration directory.
+These callers do not gain a legacy fallback. Arbora trims leading and trailing
+whitespace from `ARBORA_CONFIG_DIR`. The old Meristem helper treated that
+whitespace as part of the path. The agent data directory
+stays outside this cut. Tests cover the explicit and XDG paths and real reads.
+This slice does not establish the R008 package-layout census or all cutovers.

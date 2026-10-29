@@ -591,7 +591,8 @@
         "a2f74cb9621d"
       ],
       "verified_by": [
-        "tests/api/test_query_ops.py:58"
+        "tests/api/test_query_federation_served.py:211",
+        "tests/api/test_query_ops.py:59"
       ]
     },
     {

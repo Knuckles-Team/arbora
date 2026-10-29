@@ -219,6 +219,42 @@ async def dispatch_eg_method(
         if "graph" in payload:
             raise OperationRefused("INVALID_ARGUMENT", {"field": "graph"})
         payload["graph"] = graph
+        # The central Medulla planner is an optional composed service.  When
+        # absent, preserve the existing direct EG NlQuery operation exactly;
+        # Arbora never guesses NL-to-UQL semantics.  When present, the
+        # federated adapter consumes only its pinned DTO and routes the
+        # resulting foreign execution through the existing source catalog and
+        # generated UQL client.
+        planner = context.services.get("nl_federation_planner")
+        if planner is not None:
+            from arbora.api.ops.query_federation import dispatch_federated_nl
+            from arbora.security.anonymous import client_scope
+
+            async def send_uql(uql_params: Mapping[str, Any]) -> Any:
+                # Foreign reads may await several connector pages.  Recheck
+                # the same session immediately before the correlated native
+                # query so an expiry/revocation during that wait cannot reuse
+                # the initial admission.
+                if await _caller_dispatch_graph(context) != graph:
+                    raise OperationRefused("UNAUTHENTICATED")
+                with client_scope(
+                    context.client, claim_values(context.caller.engine_claims)
+                ):
+                    return await send_by_id(
+                        context.client,
+                        "Uql",
+                        dict(uql_params),
+                        graph,
+                        idempotency_key=context.idempotency_key,
+                    )
+
+            return await dispatch_federated_nl(
+                planner=planner,
+                text=payload["text"],
+                graph=graph,
+                context=context,
+                send_uql=send_uql,
+            )
     return await send_by_id(
         context.client,
         method,

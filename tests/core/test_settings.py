@@ -39,6 +39,17 @@ def test_default_location_is_arbora(home) -> None:
     )
 
 
+def test_mcp_path_uses_active_directory_without_legacy_fallback(
+    home, monkeypatch
+) -> None:
+    _write(home / "agent-utilities" / "mcp_config.json")
+    assert settings.mcp_config_path() == home / "arbora" / "mcp_config.json"
+    monkeypatch.setenv("ARBORA_CONFIG_DIR", str(home / "explicit"))
+    assert settings.mcp_config_path() == home / "explicit" / "mcp_config.json"
+    monkeypatch.setenv("ARBORA_CONFIG_DIR", f"  {home / 'explicit'}  ")
+    assert settings.mcp_config_path() == home / "explicit" / "mcp_config.json"
+
+
 def test_explicit_directory_wins_even_when_legacy_exists(home, monkeypatch) -> None:
     _write(home / "agent-utilities" / "mcp_config.json")
     monkeypatch.setenv("ARBORA_CONFIG_DIR", str(home / "explicit"))

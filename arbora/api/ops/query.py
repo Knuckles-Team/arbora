@@ -5,6 +5,7 @@ from __future__ import annotations
 from pydantic import Field
 
 from arbora.api.ops._common import Params
+from arbora.api.ops.query_federation import NaturalLanguageResult
 from arbora.api.registry import EgMethod, EgSchemaRef, OpSpec, Verb
 
 
@@ -34,9 +35,11 @@ def operations() -> tuple[OpSpec, ...]:
             summary="Query the caller's graph with the engine natural-language planner",
             examples=("explain why this deployment failed",),
             params=NaturalLanguageParams,
-            result=EgSchemaRef(
-                path="contract/schemas/result.query.json#/methods/NlQuery"
-            ),
+            # R043.3: the one-door operation explicitly advertises both the
+            # stable EG rows-only response and the composed projection.  The
+            # served process selects one branch: no planner means native rows;
+            # a composed planner means the typed federated view.
+            result=NaturalLanguageResult,
             binding=EgMethod(service="NlQuery", op="NlQuery"),
             scopes=frozenset({"query:nl"}),
         ),
