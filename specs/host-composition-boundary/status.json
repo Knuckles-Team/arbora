@@ -2006,7 +2006,7 @@
         "tests/agent_host/test_log_access.py:493",
         "tests/agent_host/test_log_access.py:508",
         "tests/agent_host/test_log_access.py:535",
-        "tests/agent_host/test_log_sink.py:225"
+        "tests/agent_host/test_log_sink.py:227"
       ]
     },
     {
@@ -2045,6 +2045,7 @@
       "landed_in": [
         "28cc061c8f06",
         "71227bbdf7f4",
+        "b5a44c8a205b",
         "ceaa3da1bbcc"
       ],
       "verified_by": [

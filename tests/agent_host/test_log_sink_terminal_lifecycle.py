@@ -81,6 +81,7 @@ def assert_stopped(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("read_delay", [0, 0.6])
+@pytest.mark.usefixtures("unsynced_log_writes")
 async def test_production_sink_over_http_into_mounted_terminal(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, read_delay: float
 ) -> None:
@@ -123,6 +124,7 @@ async def test_production_sink_over_http_into_mounted_terminal(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("write_delay", [0, 0.04])
+@pytest.mark.usefixtures("unsynced_log_writes")
 async def test_restarted_source_metadata_and_rotation_gap_in_terminal(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, write_delay: float
 ) -> None:

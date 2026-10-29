@@ -106,6 +106,7 @@ def runtime_for(
     return runtime
 
 
+@pytest.mark.usefixtures("unsynced_log_writes")
 def test_real_http_request_reaches_production_sink_and_authorized_read(
     tmp_path: Path,
 ) -> None:
@@ -135,6 +136,7 @@ def test_real_http_request_reaches_production_sink_and_authorized_read(
         runtime.sink.close()
 
 
+@pytest.mark.usefixtures("unsynced_log_writes")
 def test_disabled_viewing_keeps_required_sink(tmp_path: Path) -> None:
     owners = ControlledOwners()
     runtime = runtime_for(owners, tmp_path, False)
