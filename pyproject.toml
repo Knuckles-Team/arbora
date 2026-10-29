@@ -26,7 +26,7 @@ dependencies = [
     # server/ or api/ packages. arbora owns the MCP/REST serving surface
     # (arbora/mcp_server/backing, arbora/api/contracts), so the former
     # `[mcp]` extra's requirements are declared directly below.
-    "meristem>=4.0.0,<5.0.0",
+    "meristem>=4.0.1,<5.0.0",
     "eunomia-core>=0.3.10",
     "httpx>=0.28.1",
     "pyjwt>=2.15.1",
@@ -66,7 +66,7 @@ dependencies = [
     "fastmcp>=4.1.0",
     "mcp>=2.3.0,<3.0.0",
     "opentelemetry-api>=1.45.1",
-    "pydantic-ai-slim[openai]==2.57.0",
+    "pydantic-ai-slim[openai]==2.63.0",
     # Installed so its ``agent_connector_sdk.connector`` declaration (a
     # content-only connector) resolves in THIS process through
     # ``installed_connectors()`` — see arbora/core/providers.py. The floor
@@ -81,7 +81,7 @@ email = "maintainers@knuckles.team"
 
 [project.optional-dependencies]
 # Experimental ACP wire/presenter API: qualify together before changing pins.
-acp = ["agent-client-protocol==0.11.0", "pydantic-ai-harness[acp]==0.57.0"]
+acp = ["agent-client-protocol==0.11.0", "pydantic-ai-harness[acp]==0.63.0"]
 # Test-only, real tooling versions matched to agent-utilities' floors
 # (agent-packages/agent-utilities/pyproject.toml `[project.optional-dependencies].test`)
 # so a lockstep upgrade there is easy to mirror here later.
@@ -110,7 +110,7 @@ test = [
     "setuptools>=84.0.0",
 ]
 webui = [
-    "agent-webui>=2.8.2,<3.0.0",
+    "agent-webui>=2.8.3,<3.0.0",
     "uvicorn>=0.54.0",
 ]
 # portable-deployment spec, gateway-widgets extra requirement: arbora/gateway/widgets/*.py
@@ -200,11 +200,6 @@ service = "arbora.messaging.reach:service_port"
 # A dependency's own git pin of the engine never applies here.
 override-dependencies = [
     "epistemic-graph[server]>=2.27.7,<3.0.0",
-    # meristem ships the same `agent_utilities` module as the retired
-    # agent-utilities dist; the published agent-webui (webui extra) still
-    # requires agent-utilities, which must not co-install over meristem.
-    # Drop once overstory publishes a release that depends on meristem.
-    "agent-utilities; python_version < '0'",
 ]
 # The engine installs from its published wheels only; its sdist (a Rust
 # build) is never a candidate.
