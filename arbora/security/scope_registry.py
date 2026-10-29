@@ -8,7 +8,7 @@ class rules it carries are enforced by the EG identity store.
 from __future__ import annotations
 
 EG_SCOPE_REGISTRY_SHA256 = (
-    "2413d5241c707e6717ffc97552318edbfa733ecb83381e01d0169c108c464ac5"
+    "a0ad6c422cc76eb77cf720b7273a14d0655ae513c561f73a841ed3e4cf1bf070"
 )
 
 #: scope -> class (user | domain | service-only | approver | admin).
@@ -90,12 +90,14 @@ SCOPE_CLASSES: dict[str, str] = {
     "gap:read": "user",
     "gap:write": "user",
     "governance:approve-schema-repair": "approver",
+    "governance:approve-source-authority": "approver",
     "governance:propose": "domain",
     "governance:read": "user",
     "graph:admin": "admin",
     "graph:read": "user",
     "graph:write": "user",
     "graphlearn:write": "user",
+    "host:issue-start": "service-only",
     "identity:admin": "admin",
     "identity:authenticate": "service-only",
     "identity:provision": "service-only",
@@ -217,6 +219,7 @@ APPROVER_GROUPS: dict[str, str] = {
     "approvals:read": "action-approvers",
     "finance:approve-live-order": "live-order-approvers",
     "governance:approve-schema-repair": "schema-approvers",
+    "governance:approve-source-authority": "source-authority-approvers",
     "rbac:approve-elevation": "elevation-approvers",
 }
 
