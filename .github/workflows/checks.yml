@@ -213,7 +213,7 @@ jobs:
           assert connector_pack.ConnectorPackStatusRequest
           assert source_ingestion.SourceCheckpoint
           assert storage.send_agent_component_content
-          for name in ("epistemic-graph", "epistemic-graph-server", "agent-utilities", "agent-connector-sdk", "agent-webui"):
+          for name in ("medulla", "medulla-stem", "meristem", "scion-sdk", "agent-webui"):
               direct = md.distribution(name).read_text("direct_url.json")
               assert direct is None, f"{name} is not an index install: {direct}"
               print(name, md.version(name))
@@ -409,7 +409,7 @@ jobs:
           import arbora, agent_utilities, agent_connector_sdk, agent_webui
           import epistemic_graph.numeric
           from arbora.deployment import cli
-          for name in ("epistemic-graph", "epistemic-graph-server", "agent-utilities", "agent-connector-sdk", "agent-webui"):
+          for name in ("medulla", "medulla-stem", "meristem", "scion-sdk", "agent-webui"):
               assert md.distribution(name).read_text("direct_url.json") is None, name
               print(name, md.version(name))
           print("arbora", md.version("arbora"))

@@ -432,7 +432,7 @@ def test_install_smoke_covers_every_os_and_architecture_before_publish() -> None
     required = {leg["name"] for leg in legs if not leg.get("optional")}
     assert required == _REQUIRED_SMOKE_PLATFORMS
     # A leg is optional only while the engine publishes no wheel for it.
-    for package in ("epistemic-graph", "epistemic-graph-server"):
+    for package in ("medulla", "medulla-stem"):
         assert _locked_wheel_platforms(package) == _REQUIRED_SMOKE_PLATFORMS
     assert smoke["strategy"]["fail-fast"] is False
     assert smoke["needs"] == ["build"]
@@ -458,16 +458,14 @@ def test_github_release_links_the_published_pypi_version() -> None:
 
 def test_release_eg_resolves_from_the_package_index_as_wheels() -> None:
     locked = tomllib.loads((ROOT / "uv.lock").read_text(encoding="utf-8"))
-    eg = next(
-        package for package in locked["package"] if package["name"] == "epistemic-graph"
-    )
+    eg = next(package for package in locked["package"] if package["name"] == "medulla")
     assert eg["source"] == {"registry": "https://pypi.org/simple"}
     assert eg.get("wheels")
     # EG 2.27.3 also publishes an sdist; the lock records it, but uv never
     # builds the engine from source.
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     no_build = set(project["tool"]["uv"].get("no-build-package", ()))
-    assert {"epistemic-graph", "epistemic-graph-server"} <= no_build
+    assert {"medulla", "medulla-stem"} <= no_build
 
 
 def test_installed_sdk_contains_schema_disclosure_contract() -> None:

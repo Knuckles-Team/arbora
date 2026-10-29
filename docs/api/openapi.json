@@ -5250,7 +5250,7 @@
             "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
           }
         },
-        "summary": "VIZ-1: GET expand(graph, cluster_id) -- a level-1 cluster's member nodes/edges read live off the graph",
+        "summary": "VIZ-1: GET expand(graph, cluster_id). Read the level-1 cluster members directly from the graph",
         "tags": [
           "eg"
         ]
@@ -6072,6 +6072,40 @@
         ]
       }
     },
+    "/api/v1/ops/eg.compute.FinanceAmlScreen": {
+      "post": {
+        "operationId": "eg.compute.FinanceAmlScreen",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/FinanceAmlScreen"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.compute.json#/methods/FinanceAmlScreen"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Finance Aml Screen",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.compute.FinanceAvellanedaStoikov": {
       "post": {
         "operationId": "eg.compute.FinanceAvellanedaStoikov",
@@ -6237,6 +6271,40 @@
           }
         },
         "summary": "Finance Brier Score",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.compute.FinanceCapitalRatios": {
+      "post": {
+        "operationId": "eg.compute.FinanceCapitalRatios",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/FinanceCapitalRatios"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.compute.json#/methods/FinanceCapitalRatios"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Finance Capital Ratios",
         "tags": [
           "eg"
         ]
@@ -6480,6 +6548,40 @@
         ]
       }
     },
+    "/api/v1/ops/eg.compute.FinanceDistributionShift": {
+      "post": {
+        "operationId": "eg.compute.FinanceDistributionShift",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/FinanceDistributionShift"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.compute.json#/methods/FinanceDistributionShift"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Finance Distribution Shift",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.compute.FinanceDownsideDeviation": {
       "post": {
         "operationId": "eg.compute.FinanceDownsideDeviation",
@@ -6650,6 +6752,74 @@
         ]
       }
     },
+    "/api/v1/ops/eg.compute.FinanceExecutionSchedule": {
+      "post": {
+        "operationId": "eg.compute.FinanceExecutionSchedule",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/FinanceExecutionSchedule"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.compute.json#/methods/FinanceExecutionSchedule"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Finance Execution Schedule",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.compute.FinanceExpectedLoss": {
+      "post": {
+        "operationId": "eg.compute.FinanceExpectedLoss",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/FinanceExpectedLoss"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.compute.json#/methods/FinanceExpectedLoss"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Finance Expected Loss",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.compute.FinanceExpectedPnlRate": {
       "post": {
         "operationId": "eg.compute.FinanceExpectedPnlRate",
@@ -6679,6 +6849,40 @@
           }
         },
         "summary": "Finance Expected Pnl Rate",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.compute.FinanceFactorRank": {
+      "post": {
+        "operationId": "eg.compute.FinanceFactorRank",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/FinanceFactorRank"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.compute.json#/methods/FinanceFactorRank"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Finance Factor Rank",
         "tags": [
           "eg"
         ]
@@ -7194,6 +7398,40 @@
         ]
       }
     },
+    "/api/v1/ops/eg.compute.FinanceMarketMakingQuote": {
+      "post": {
+        "operationId": "eg.compute.FinanceMarketMakingQuote",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/FinanceMarketMakingQuote"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.compute.json#/methods/FinanceMarketMakingQuote"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Finance Market Making Quote",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.compute.FinanceMarkovTransitionMatrix": {
       "post": {
         "operationId": "eg.compute.FinanceMarkovTransitionMatrix",
@@ -7602,6 +7840,40 @@
         ]
       }
     },
+    "/api/v1/ops/eg.compute.FinancePairsSignal": {
+      "post": {
+        "operationId": "eg.compute.FinancePairsSignal",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/FinancePairsSignal"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.compute.json#/methods/FinancePairsSignal"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Finance Pairs Signal",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.compute.FinancePairsTrading": {
       "post": {
         "operationId": "eg.compute.FinancePairsTrading",
@@ -7631,6 +7903,40 @@
           }
         },
         "summary": "Finance Pairs Trading",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.compute.FinancePositionSize": {
+      "post": {
+        "operationId": "eg.compute.FinancePositionSize",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/FinancePositionSize"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.compute.json#/methods/FinancePositionSize"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Finance Position Size",
         "tags": [
           "eg"
         ]
@@ -7806,6 +8112,40 @@
         ]
       }
     },
+    "/api/v1/ops/eg.compute.FinanceRegimeChain": {
+      "post": {
+        "operationId": "eg.compute.FinanceRegimeChain",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/FinanceRegimeChain"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.compute.json#/methods/FinanceRegimeChain"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Finance Regime Chain",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.compute.FinanceRiskMetrics": {
       "post": {
         "operationId": "eg.compute.FinanceRiskMetrics",
@@ -7971,6 +8311,40 @@
           }
         },
         "summary": "Finance Sabr Smile",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.compute.FinanceSettlementChain": {
+      "post": {
+        "operationId": "eg.compute.FinanceSettlementChain",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/FinanceSettlementChain"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.compute.json#/methods/FinanceSettlementChain"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Finance Settlement Chain",
         "tags": [
           "eg"
         ]
@@ -10322,6 +10696,40 @@
         ]
       }
     },
+    "/api/v1/ops/eg.coordination.GetRunCheckpoint": {
+      "post": {
+        "operationId": "eg.coordination.GetRunCheckpoint",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/GetRunCheckpoint"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.coordination.json#/methods/GetRunCheckpoint"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "private owner-bound checkpoint and same-snapshot WorkItem view",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.coordination.GetRunWorkItem": {
       "post": {
         "operationId": "eg.coordination.GetRunWorkItem",
@@ -10351,6 +10759,40 @@
           }
         },
         "summary": "owner-bound immutable run admission and current caller-safe WorkItem snapshot",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.coordination.GetSessionUsage": {
+      "post": {
+        "operationId": "eg.coordination.GetSessionUsage",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/GetSessionUsage"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.coordination.json#/methods/GetSessionUsage"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "bounded caller-context committed usage",
         "tags": [
           "eg"
         ]
@@ -10453,6 +10895,40 @@
           }
         },
         "summary": "tenant-bound immutable grant record in the WorkItem MutationBatch; an existing id is a collision, never an overwrite",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.coordination.IssueHostStartGrant": {
+      "post": {
+        "operationId": "eg.coordination.IssueHostStartGrant",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/IssueHostStartGrant"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.coordination.json#/methods/IssueHostStartGrant"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "bounded immutable host-start assertions with native issuer provenance; application session/execution admission remains with Arbora",
         "tags": [
           "eg"
         ]
@@ -10657,6 +11133,40 @@
           }
         },
         "summary": "immutable owner and live fence bind revisioned current-plan publication",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.coordination.PublishRunCheckpoint": {
+      "post": {
+        "operationId": "eg.coordination.PublishRunCheckpoint",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/PublishRunCheckpoint"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.coordination.json#/methods/PublishRunCheckpoint"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "owner and live fence atomically bind an immutable private checkpoint and WorkItem head",
         "tags": [
           "eg"
         ]
@@ -15966,6 +16476,142 @@
         ]
       }
     },
+    "/api/v1/ops/eg.query.ForeignReadAbort": {
+      "post": {
+        "operationId": "eg.query.ForeignReadAbort",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/ForeignReadAbort"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.query.json#/methods/ForeignReadAbort"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "One terminal abort",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.query.ForeignReadChunk": {
+      "post": {
+        "operationId": "eg.query.ForeignReadChunk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/ForeignReadChunk"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.query.json#/methods/ForeignReadChunk"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Monotone bounded page append",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.query.ForeignReadComplete": {
+      "post": {
+        "operationId": "eg.query.ForeignReadComplete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/ForeignReadComplete"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.query.json#/methods/ForeignReadComplete"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "One terminal completion before correlated query",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.query.ForeignReadOpen": {
+      "post": {
+        "operationId": "eg.query.ForeignReadOpen",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/ForeignReadOpen"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.query.json#/methods/ForeignReadOpen"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Host-driven bounded source execution; durable approval and current catalog are re-read before binding",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.query.GetChangeCursor": {
       "post": {
         "operationId": "eg.query.GetChangeCursor",
@@ -16233,6 +16879,40 @@
           }
         },
         "summary": "EG-FEDERATED-QUERY-R058.2.2.1: NlQuery plus the executed UQL text. It shares the planner, budget, authority and refusals of NlQuery",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.query.NlQueryPlan": {
+      "post": {
+        "operationId": "eg.query.NlQueryPlan",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/NlQueryPlan"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.query.json#/methods/NlQueryPlan"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "EG-FEDERATED-QUERY-R058.2.2.2: typed plan-only UQL candidate and pins; no graph/source data read or authority claim",
         "tags": [
           "eg"
         ]
@@ -21112,5 +21792,5 @@
       }
     }
   },
-  "x-registry-digest": "764edfc0d099ec5c09b2d8be12616a55ff2aa007b132e0749a328b8742c82cc0"
+  "x-registry-digest": "dbb0efa0dc47306b1207ab4bb490efb45265fb902e98e5480fba16122bd68a62"
 }
