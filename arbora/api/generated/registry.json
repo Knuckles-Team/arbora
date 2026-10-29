@@ -25797,10 +25797,131 @@
       "principals": "any",
       "remove_in": null,
       "result": {
-        "eg_schema": "contract/schemas/result.query.json#/methods/NlQuery",
-        "schema_sha256": "72a071dc2e237fd4216a2b01149b83a96b9b4112d0dc2c08aa6539d366bd3885",
-        "schema_snapshot": {
-          "$ref": "schemas/result.query.json#/methods/NlQuery"
+        "model": "arbora.api.ops.query_federation.NaturalLanguageResult",
+        "schema": {
+          "$defs": {
+            "FederatedAnswerView": {
+              "additionalProperties": false,
+              "description": "Typed projection returned by the composed query caller.",
+              "properties": {
+                "budget_used": {
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "title": "Budget Used",
+                  "type": "object"
+                },
+                "fetched_at": {
+                  "format": "date-time",
+                  "title": "Fetched At",
+                  "type": "string"
+                },
+                "native_count": {
+                  "minimum": 0,
+                  "title": "Native Count",
+                  "type": "integer"
+                },
+                "rows": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Rows",
+                  "type": "array"
+                },
+                "sources": {
+                  "items": {
+                    "$ref": "#/$defs/SourceProvenance"
+                  },
+                  "title": "Sources",
+                  "type": "array"
+                },
+                "virtual_count": {
+                  "minimum": 0,
+                  "title": "Virtual Count",
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "rows",
+                "sources",
+                "native_count",
+                "virtual_count",
+                "fetched_at",
+                "budget_used"
+              ],
+              "title": "FederatedAnswerView",
+              "type": "object"
+            },
+            "SourceProvenance": {
+              "additionalProperties": false,
+              "description": "The source identity attached to a federated answer.",
+              "properties": {
+                "connector": {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "title": "Connector",
+                  "type": "string"
+                },
+                "contract_iri": {
+                  "maxLength": 4096,
+                  "minLength": 1,
+                  "title": "Contract Iri",
+                  "type": "string"
+                },
+                "mapping_iri": {
+                  "maxLength": 4096,
+                  "minLength": 1,
+                  "title": "Mapping Iri",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "connector",
+                "contract_iri",
+                "mapping_iri"
+              ],
+              "title": "SourceProvenance",
+              "type": "object"
+            }
+          },
+          "anyOf": [
+            {
+              "items": {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                ],
+                "type": "array"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/FederatedAnswerView"
+            }
+          ],
+          "description": "The two truthful result shapes exposed by ``query.nl``.\n\nEG's existing ``NlQuery`` method is a stable rows-only operation.  A\nprocess without the native planner/foreign-read producer must continue to\nreturn that exact ``[(id, score | null), ...]`` body.  When the composed\nplanner is present, Arbora returns the closed federated projection instead.\nKeeping both variants in one explicit schema prevents discovery from\nadvertising only the federated object while the compatibility path still\nreturns native rows; neither branch invents source provenance or counts.",
+          "title": "NaturalLanguageResult"
         }
       },
       "scopes": [
@@ -27536,5 +27657,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "27b9f48df91b04f699c016125c221c290c42ff651cbecf5b00c44e9136f55506"
+  "registry_digest": "764edfc0d099ec5c09b2d8be12616a55ff2aa007b132e0749a328b8742c82cc0"
 }

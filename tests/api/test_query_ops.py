@@ -15,6 +15,7 @@ from arbora.api.invoke.bootstrap import dispatch_eg_method
 from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops.query import NaturalLanguageParams, operations
+from arbora.api.ops.query_federation import NaturalLanguageResult
 from arbora.api.registry import EgMethod, EgSchemaRef
 from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
 from tests._support import Actor
@@ -90,6 +91,8 @@ def test_query_bindings_match_actual_provider_authority_and_inner_schema() -> No
     assert selected["required"] == ["text"]
     assert set(selected["properties"]) == {"text", "params"}
     assert selected["additionalProperties"] is False
+    nl = next(op for op in ops if op.id == "query.nl")
+    assert nl.result is NaturalLanguageResult
 
 
 @pytest.mark.parametrize(

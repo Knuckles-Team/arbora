@@ -35,6 +35,7 @@ __all__ = [
     "write_private_mapping",
     "is_production_profile",
     "load_config",
+    "mcp_config_path",
     "platform_config_file",
     "read_config_document",
     "runtime_config",
@@ -64,6 +65,11 @@ def _env_dir(name: str) -> Path | None:
 def config_dir() -> Path:
     """``ARBORA_CONFIG_DIR`` or ``$XDG_CONFIG_HOME/arbora`` (not created)."""
     return _env_dir(CONFIG_DIR_SETTING) or _config_home() / _APP_DIR
+
+
+def mcp_config_path() -> Path:
+    """Return the MCP configuration under the active Arbora directory."""
+    return config_dir() / "mcp_config.json"
 
 
 def _legacy_config_dirs() -> tuple[Path, ...]:
