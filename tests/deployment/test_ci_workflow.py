@@ -36,12 +36,9 @@ def test_ci_triggers_and_caller_side_concurrency() -> None:
     assert workflow["concurrency"]["cancel-in-progress"] is True
 
 
-def test_no_skip_companion_and_shared_auto_merge_caller() -> None:
+def test_no_skip_companion_and_no_merge_workflow() -> None:
     assert not list(WORKFLOWS.glob("*-skip.yml"))
-    text = (WORKFLOWS / "auto_merge.yml").read_text(encoding="utf-8")
-    assert (
-        "Knuckles-Team/pipelines/.github/workflows/auto_merge_pipeline.yml@main" in text
-    )
+    assert not (WORKFLOWS / "auto_merge.yml").exists()
 
 
 def test_ci_required_aggregates_every_blocking_job() -> None:
