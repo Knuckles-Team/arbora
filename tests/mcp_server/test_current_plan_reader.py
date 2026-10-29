@@ -15,9 +15,11 @@ from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.steps import VerifiedCaller
 from arbora.api.ops.runs import read_current_plan
+from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
 from arbora.mcp_server import current_plan_reader as reader_module
 from arbora.mcp_server.current_plan_reader import NativeCurrentPlanReader
 from tests._support import Actor
+from tests.test_native_run_admission import view as admission_view
 
 pytestmark = pytest.mark.spec("ARBORA-OPS-R021.4.5.1.1")
 NOW = datetime(2026, 10, 18, tzinfo=UTC)
@@ -36,6 +38,18 @@ class Client:
         finally:
             self.claims.reset(token)
 
+    async def _send(self, method, params, graph, **kwargs):
+        assert method == "GetRunWorkItem"
+        claims = self.claims.get()
+        assert params["tenant"] == claims["tenant"]
+        assert graph == CONTROL_GRAPH
+        value = admission_view()
+        value["admission"]["run_id"] = params["run_id"]
+        value["admission"]["context"].update(
+            subject_id=claims["principal"], tenant_id=claims["tenant"], graph=graph
+        )
+        return value
+
 
 def context(principal="caller-a", tenant="tenant-a", client=None):
     claims = {
@@ -49,7 +63,7 @@ def context(principal="caller-a", tenant="tenant-a", client=None):
     session = SimpleNamespace(
         actor=actor,
         tenant=tenant,
-        graph="control",
+        graph="tenant-content",
         engine_verified_context=lambda: claims,
     )
     caller = VerifiedCaller(
@@ -100,6 +114,8 @@ async def test_concurrent_reads_bind_exact_caller_claims(monkeypatch):
         await both.wait()
         assert bound.claims.get()["tenant"] == tenant
         assert bound.claims.get()["principal"] == "caller-" + tenant[-1]
+        assert bound.claims.get()["scopes"] == ["kg:read", "work:read"]
+        assert graph == CONTROL_GRAPH
         return snapshot()
 
     monkeypatch.setattr(reader_module, "_native_read", native)
@@ -155,6 +171,7 @@ async def test_invalid_authority_never_reaches_native_read(monkeypatch, case):
         pytest.fail("invalid authority reached engine")
 
     monkeypatch.setattr(reader_module, "_native_read", forbidden)
+    monkeypatch.setattr(reader_module, "_native_owner_graph", forbidden)
     with pytest.raises(OperationRefused):
         await read_current_plan(ctx, "run-a", clock=lambda: NOW)
 
@@ -254,7 +271,7 @@ async def test_generated_adapter_maps_decoded_result(monkeypatch, outcome):
         "available" if outcome == "snapshot" else "unavailable"
     )
     assert captured[0][0] == {"run_id": "run-a", "tenant": "tenant-a"}
-    assert captured[0][1] == "control"
+    assert captured[0][1] == CONTROL_GRAPH
     assert captured[0][2]["principal"] == "caller-a"
     assert captured[0][2]["scopes"] == ["kg:read", "work:read"]
 
@@ -295,3 +312,121 @@ def test_private_executable_plan_is_not_projected():
     assert result.availability == "available"
     assert "private executable prompt" not in result.model_dump_json()
     assert "task_plan" not in result.model_dump_json()
+
+
+@pytest.mark.parametrize(
+    "field", ["missing", "malformed", "run", "tenant", "owner", "graph", "caller-id"]
+)
+async def test_unowned_admission_never_reads_plan_payload(monkeypatch, field):
+    from epistemic_graph.generated import OpaqueResult, coordination
+
+    value = admission_view()
+    value["admission"]["run_id"] = "run-a"
+    value["admission"]["context"].update(
+        subject_id="caller-a", tenant_id="tenant-a", graph=CONTROL_GRAPH
+    )
+    if field == "missing":
+        value = None
+    elif field == "malformed":
+        value = {}
+    elif field == "run":
+        value["admission"]["run_id"] = "foreign"
+    elif field == "caller-id":
+        value["admission"]["work_item_id"] = "caller-chosen"
+    else:
+        key = {"tenant": "tenant_id", "owner": "subject_id", "graph": "graph"}[field]
+        value["admission"]["context"][key] = "foreign"
+
+    async def lookup(client, params, graph):
+        assert client.claims.get()["principal"] == "caller-a"
+        assert params == {"tenant": "tenant-a", "run_id": "run-a"}
+        assert graph == CONTROL_GRAPH
+        return OpaqueResult("GetRunWorkItem", value)
+
+    async def forbidden(*args, **kwargs):
+        pytest.fail("unowned admission reached snapshot payload")
+
+    monkeypatch.setattr(coordination, "send_get_run_work_item", lookup)
+    monkeypatch.setattr(reader_module, "_native_read", forbidden)
+    ctx = context()
+    result = await read_current_plan(ctx, "run-a", clock=lambda: NOW)
+    assert result.availability == "unavailable"
+    assert ctx.client.claims.get() is None
+
+
+async def test_native_owner_refusal_preserves_code_and_restores_claims(monkeypatch):
+    from epistemic_graph import EngineResponseError
+    from epistemic_graph.generated import coordination
+
+    from arbora.api.errors import EngineRefusal
+
+    async def denied(client, params, graph):
+        raise EngineResponseError("ACCESS_DENIED", "private detail")
+
+    async def forbidden(*args, **kwargs):
+        pytest.fail("refused owner reached snapshot payload")
+
+    monkeypatch.setattr(coordination, "send_get_run_work_item", denied)
+    monkeypatch.setattr(reader_module, "_native_read", forbidden)
+    ctx = context()
+    with pytest.raises(EngineRefusal) as error:
+        await read_current_plan(ctx, "run-a", clock=lambda: NOW)
+    assert error.value.code == "ACCESS_DENIED"
+    assert ctx.client.claims.get() is None
+
+
+@pytest.mark.parametrize(
+    "field", ["graph", "owner_graph", "tenant", "principal", "scopes"]
+)
+def test_request_cannot_choose_native_owner_routing(field):
+    from agent_connector_sdk.current_plan import CurrentPlanRequest
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError):
+        CurrentPlanRequest.model_validate({"run_id": "run-a", field: "forged"})
+
+
+async def test_identity_drift_after_owner_lookup_blocks_payload(monkeypatch):
+    ctx = context()
+
+    async def owner(*args, **kwargs):
+        ctx.caller.session.actor.current = False
+        return CONTROL_GRAPH
+
+    async def forbidden(*args, **kwargs):
+        pytest.fail("expired caller reached plan payload")
+
+    monkeypatch.setattr(reader_module, "_native_owner_graph", owner)
+    monkeypatch.setattr(reader_module, "_native_read", forbidden)
+    with pytest.raises(OperationRefused, match="UNAUTHENTICATED"):
+        await read_current_plan(ctx, "run-a", clock=lambda: NOW)
+    assert ctx.client.claims.get() is None
+
+
+async def test_mutable_metadata_cannot_redirect_owner_graph(monkeypatch):
+    from epistemic_graph.generated import OpaqueResult, coordination
+
+    value = admission_view()
+    value["admission"]["run_id"] = "run-a"
+    value["admission"]["context"].update(
+        subject_id="caller-a", tenant_id="tenant-a", graph=CONTROL_GRAPH
+    )
+    value["work_item"]["metadata"] = {"owner_graph": "foreign", "principal": "service"}
+    ctx = context()
+    expected = dict(ctx.caller.session.engine_verified_context())
+
+    async def lookup(client, params, graph):
+        assert client.claims.get() == expected
+        assert graph == CONTROL_GRAPH
+        return OpaqueResult("GetRunWorkItem", value)
+
+    async def native(client, *, run_id, tenant, graph):
+        assert client.claims.get() == expected
+        assert (run_id, tenant, graph) == ("run-a", "tenant-a", CONTROL_GRAPH)
+        return snapshot()
+
+    monkeypatch.setattr(coordination, "send_get_run_work_item", lookup)
+    monkeypatch.setattr(reader_module, "_native_read", native)
+    result = await read_current_plan(ctx, "run-a", clock=lambda: NOW)
+    assert result.availability == "available"
+    assert ctx.client.claims.get() is None

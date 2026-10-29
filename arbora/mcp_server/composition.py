@@ -303,6 +303,7 @@ def start_composed_services(
     *,
     messaging_intake_enabled: bool | None = None,
     served_network: bool = False,
+    session_boundary: Any = None,
 ) -> CoServiceSupervisor:
     """Start Arbora messaging intake and the arbora-owned WebUI host."""
 
@@ -317,5 +318,12 @@ def start_composed_services(
     elif plan.messaging_configured:
         logger.info("messaging credentials are present but inbound intake is disabled")
     if plan.web_ui_enabled:
-        supervisor.start_service("agent-webui", run_web_ui, session)
+        from functools import partial
+
+        runner = (
+            partial(run_web_ui, session_boundary=session_boundary)
+            if session_boundary is not None
+            else run_web_ui
+        )
+        supervisor.start_service("agent-webui", runner, session)
     return supervisor

@@ -442,7 +442,7 @@ def test_mounted_browser_composition_uses_real_admission_and_same_owner(transiti
                     raise IdentityUnavailable("private provider detail")
                 return "fixture-local-token"
 
-        async def resolve(token):
+        async def resolve(token, credential):
             assert token == "fixture-local-token"
             return session
 

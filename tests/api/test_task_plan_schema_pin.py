@@ -9,6 +9,8 @@ own helpers and request model, so only the export itself is a fixture.
 from __future__ import annotations
 
 import asyncio
+import contextlib
+import json
 import sys
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
@@ -22,6 +24,7 @@ from epistemic_graph import decision_stat as ds  # noqa: E402
 from arbora.api import task_plan_schema as pins_module  # noqa: E402
 from arbora.api.invoke.pipeline import OperationRefused  # noqa: E402
 from arbora.api.ops import plans  # noqa: E402
+from arbora.epistemic import ClientContext, EpistemicClientPool  # noqa: E402
 
 FIXTURE_MODULE = "arbora_test_fixture_eg_task_plan"
 DEFINITION = "sha256:" + "d" * 64
@@ -63,6 +66,78 @@ def test_gen_pins_the_exported_body_and_its_digest(engine_export: ModuleType) ->
     assert pin["body"] == _body()
     assert pin["content_digest"] == ds.encode_body(_body())[0]
     assert pins_module.verify(pin, _pin(engine_version="2.27.6")) is None
+
+
+def test_released_export_survives_pin_file_roundtrip() -> None:
+    pin = _GENERATE()
+    restored = json.loads(pins_module.pin_bytes(pin))
+    assert ds.encode_body(restored["body"])[0] == pin["content_digest"]
+    assert ds.canonical_body_bytes(restored["body"]) == ds.canonical_body_bytes(
+        pin["body"]
+    )
+
+
+def test_outer_pin_metadata_order_does_not_change_serialized_bytes(
+    engine_export: ModuleType,
+) -> None:
+    pin = _pin()
+    assert pins_module.pin_bytes(pin) == pins_module.pin_bytes(
+        dict(reversed(list(pin.items())))
+    )
+
+
+@pytest.mark.parametrize("change", ["reorder", "corrupt"])
+def test_startup_rejects_body_drift_with_unchanged_declared_digest(
+    engine_export: ModuleType,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    change: str,
+) -> None:
+    pin = _pin()
+    damaged = json.loads(pins_module.pin_bytes(pin))
+    if change == "reorder":
+        damaged["body"] = dict(reversed(list(pin["body"].items())))
+    else:
+        damaged["body"]["schema_version"] += 1
+    assert damaged["content_digest"] == pin["content_digest"]
+    path = tmp_path / "task_plan_schema.json"
+    path.write_text(json.dumps(damaged))
+    monkeypatch.setattr(pins_module, "generate_pin", lambda: pin)
+    assert pins_module.startup_pins(path) is None
+    assert "body" in caplog.text and "digest" in caplog.text
+    assert "UNAVAILABLE" in caplog.text
+
+
+@pytest.mark.parametrize("change", ["missing", "non-object", "non-json", "non-finite"])
+def test_verify_returns_a_reason_for_malformed_committed_body(
+    engine_export: ModuleType, change: str
+) -> None:
+    installed = _pin()
+    damaged = dict(installed)
+    if change == "missing":
+        del damaged["body"]
+    else:
+        damaged["body"] = {
+            "non-object": [],
+            "non-json": {"feature": object()},
+            "non-finite": {"feature": float("nan")},
+        }[change]
+    reason = pins_module.verify(damaged, installed)
+    assert isinstance(reason, str) and "body" in reason
+
+
+def test_verify_does_not_mask_an_unrelated_engine_import_failure(
+    engine_export: ModuleType, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pin = _pin()
+
+    def unavailable() -> Any:
+        raise ImportError("engine codec unavailable")
+
+    monkeypatch.setattr(pins_module, "_stat", unavailable)
+    with pytest.raises(ImportError, match="engine codec unavailable"):
+        pins_module.verify(pin, pin)
 
 
 # spec: ARBORA-RELEASE-R003.4.4
@@ -157,6 +232,10 @@ def _context(tenant: str) -> dict[str, Any]:
     }
 
 
+async def _publication_context(tenant: str, _pin: Any) -> dict[str, Any]:
+    return _context(tenant)
+
+
 class _Engine:
     """The two AgentComponent calls the publisher sends, recorded."""
 
@@ -179,6 +258,88 @@ class _Engine:
         return {"component": {"definition_digest": DEFINITION}}
 
 
+class _ScopedEngine(_Engine):
+    """Raw transport that refuses generated sends without client_scope."""
+
+    authenticated = True
+
+    def __init__(self, *, fail_publish: bool = False) -> None:
+        super().__init__()
+        self.context: dict[str, Any] | None = None
+        self.seen_contexts: list[dict[str, Any]] = []
+        self.fail_publish = fail_publish
+
+    @contextlib.contextmanager
+    def use_verified_context(self, context: dict[str, Any]):
+        previous = self.context
+        self.context = context
+        try:
+            yield self
+        finally:
+            self.context = previous
+
+    async def _send(
+        self,
+        method: str,
+        params: Any,
+        graph: Any = None,
+        *,
+        idempotency_key: Any = None,
+    ) -> Any:
+        if self.context is None:
+            from arbora.api.contracts.session import SessionRequiredError
+
+            raise SessionRequiredError("a verified client context is required")
+        self.seen_contexts.append(dict(self.context))
+        if params["op"]["op"] == "publish" and self.fail_publish:
+            raise RuntimeError("schema publication transport failed")
+        return await super()._send(
+            method, params, graph, idempotency_key=idempotency_key
+        )
+
+
+def _client_context(tenant: str, principal: str) -> ClientContext:
+    return ClientContext(
+        principal=principal,
+        tenant=tenant,
+        audience="epistemic-graph",
+        agent_id=principal,
+        roles=(),
+        scopes=("agent:pack-control",),
+        policy_version="policy:test",
+    )
+
+
+def test_startup_publisher_preserves_released_export_and_returned_definition(
+    tmp_path: Path,
+) -> None:
+    pin = _GENERATE()
+    path = tmp_path / "task_plan_schema.json"
+    path.write_bytes(pins_module.pin_bytes(pin))
+    pins = pins_module.startup_pins(path)
+    assert pins is not None
+    engine = _Engine()
+
+    async def client_for(_tenant: str) -> Any:
+        return engine
+
+    publisher = pins_module.engine_publish(client_for, _publication_context)
+
+    async def scenario() -> None:
+        first = await pins.for_tenant("tenant-a", publisher)
+        assert first["definition_digest"] == DEFINITION
+        assert await pins.for_tenant("tenant-a", publisher) == first
+
+    asyncio.run(scenario())
+    ((params, _key),) = engine.sent
+    component = params["op"]["request"]["component"]
+    assert params["op"]["request"]["context"]["expected_revision"] == 0
+    assert component["content_digest"] == pin["content_digest"]
+    assert ds.canonical_body_bytes(
+        ds.decode_body(component["content_digest"], component["attributes"])
+    ) == ds.canonical_body_bytes(pin["body"])
+
+
 # spec: ARBORA-RELEASE-R003.4.4
 def test_engine_publish_sends_a_valid_request_and_reuses_a_current_entry(
     engine_export: ModuleType, monkeypatch: pytest.MonkeyPatch
@@ -190,7 +351,7 @@ def test_engine_publish_sends_a_valid_request_and_reuses_a_current_entry(
     async def client_for(_tenant: str) -> Any:
         return engine
 
-    publish = pins_module.engine_publish(client_for, _context)
+    publish = pins_module.engine_publish(client_for, _publication_context)
     assert asyncio.run(publish("tenant-a", pin)) == DEFINITION
     ((params, key),) = engine.sent
     component = params["op"]["request"]["component"]
@@ -218,8 +379,99 @@ def test_engine_publish_sends_a_valid_request_and_reuses_a_current_entry(
         return client.current
 
     monkeypatch.setattr(storage, "send_agent_component_current", current)
-    digest = asyncio.run(pins_module.engine_publish(reuse_client, _context)("t", pin))
+    digest = asyncio.run(
+        pins_module.engine_publish(reuse_client, _publication_context)("t", pin)
+    )
     assert digest == "sha256:" + "c" * 64 and reuse.sent == []
+
+    stale = _Engine(
+        current=SimpleNamespace(
+            content_digest="sha256:" + "e" * 64,
+            definition_digest="sha256:" + "f" * 64,
+            entry_revision=7,
+        )
+    )
+
+    async def stale_client(_tenant: str) -> Any:
+        return stale
+
+    digest = asyncio.run(
+        pins_module.engine_publish(stale_client, _publication_context)("t", pin)
+    )
+    assert digest == DEFINITION
+    ((stale_params, _stale_key),) = stale.sent
+    assert stale_params["op"]["request"]["context"]["expected_revision"] == 7
+
+
+@pytest.mark.spec("ARBORA-RELEASE-R003.4.4")
+def test_engine_publish_binds_concurrent_tenants_and_restores_after_failure(
+    engine_export: ModuleType,
+) -> None:
+    pin = _pin()
+    contexts = {
+        "tenant-a": _client_context("tenant-a", "service:a"),
+        "tenant-b": _client_context("tenant-b", "service:b"),
+    }
+    clients: dict[str, _ScopedEngine] = {}
+
+    async def connect(**kwargs: Any) -> Any:
+        client = _ScopedEngine()
+        clients[kwargs["graph_name"]] = client
+        return client
+
+    async def no_unbound_client(_tenant: str) -> Any:
+        raise AssertionError("publisher used the unbound client path")
+
+    pool = EpistemicClientPool(connect, auth_secret="test-secret")
+
+    def binder(graph: str):
+        @contextlib.asynccontextmanager
+        async def bind(tenant: str):
+            async with pool.bind(contexts[tenant], graph) as client:
+                yield client
+
+        return bind
+
+    publish_a = pins_module.engine_publish(
+        no_unbound_client,
+        _publication_context,
+        "tenant-a:graph",
+        bind_client=binder("tenant-a:graph"),
+    )
+    publish_b = pins_module.engine_publish(
+        no_unbound_client,
+        _publication_context,
+        "tenant-b:graph",
+        bind_client=binder("tenant-b:graph"),
+    )
+
+    async def scenario() -> None:
+        assert await asyncio.gather(
+            publish_a("tenant-a", pin), publish_b("tenant-b", pin)
+        ) == [DEFINITION, DEFINITION]
+        assert all(
+            seen["tenant"] == "tenant-a"
+            for seen in clients["tenant-a:graph"].seen_contexts
+        )
+        assert all(
+            seen["tenant"] == "tenant-b"
+            for seen in clients["tenant-b:graph"].seen_contexts
+        )
+        assert all(
+            seen["principal"] == "service:a"
+            for seen in clients["tenant-a:graph"].seen_contexts
+        )
+        assert all(
+            seen["principal"] == "service:b"
+            for seen in clients["tenant-b:graph"].seen_contexts
+        )
+        clients["tenant-a:graph"].fail_publish = True
+        with pytest.raises(RuntimeError, match="transport failed"):
+            await publish_a("tenant-a", pin)
+        assert clients["tenant-a:graph"].context is None
+        assert clients["tenant-b:graph"].context is None
+
+    asyncio.run(scenario())
 
 
 # spec: ARBORA-RELEASE-R003.4.4
@@ -249,6 +501,7 @@ def test_committed_pin_matches_the_installed_engine() -> None:
     installed = pins_module.generate_pin()
     assert pins_module.drift(committed, installed) == []
     assert committed["available"] == installed["available"]
+    assert pins_module.verify(committed, installed) is None
 
 
 @pytest.mark.spec("ARBORA-RELEASE-R003.4.4")

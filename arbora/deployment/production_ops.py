@@ -17,7 +17,9 @@ import secrets
 import shutil
 import socket
 import subprocess  # nosec B404 -- fixed-argv backup/restore binaries
+import sys
 import time
+from contextlib import redirect_stdout
 from pathlib import Path
 from typing import Any
 
@@ -416,6 +418,7 @@ async def _onboard_fleet(
     """
 
     from arbora.api.contracts.session import use_session
+    from arbora.fleet.access_contracts import bootstrap_fleet_virtual_catalog
     from arbora.fleet.onboarding import (
         FleetOnboarding,
         configured_fleet_endpoints,
@@ -433,6 +436,7 @@ async def _onboard_fleet(
             FleetOnboarding(
                 engine=engine,
                 session=session,
+                virtual_catalog=bootstrap_fleet_virtual_catalog(),
                 allow_mass_withdrawal=allow_mass_withdrawal,
             ),
             configured_fleet_endpoints(exclude=self_served_connectors()),
@@ -525,23 +529,25 @@ def main(argv: list[str] | None = None) -> int:
 
     args = _parser().parse_args(argv)
     try:
-        # The same shared config.json the served process reads.
-        load_config()
-        from arbora.core.settings import runtime_config
+        # CLI operations run synchronously; diagnostics must not corrupt the report.
+        with redirect_stdout(sys.stderr):
+            # The same shared config.json the served process reads.
+            load_config()
+            from arbora.core.settings import runtime_config
 
-        if runtime_config.arbora_auth_mode == "none":
-            from argparse import Namespace
-            from urllib.parse import urlsplit
+            if runtime_config.arbora_auth_mode == "none":
+                from argparse import Namespace
+                from urllib.parse import urlsplit
 
-            from arbora.security.anonymous import validate_startup
+                from arbora.security.anonymous import validate_startup
 
-            endpoint = urlsplit(getattr(args, "served_url", "") or "")
-            if endpoint.scheme != "http" or endpoint.username or endpoint.password:
-                raise ValueError(
-                    "Anonymous provisioning requires a local HTTP served URL"
-                )
-            validate_startup(Namespace(host=endpoint.hostname, auth_type="none"))
-        report = _run(args)
+                endpoint = urlsplit(getattr(args, "served_url", "") or "")
+                if endpoint.scheme != "http" or endpoint.username or endpoint.password:
+                    raise ValueError(
+                        "Anonymous provisioning requires a local HTTP served URL"
+                    )
+                validate_startup(Namespace(host=endpoint.hostname, auth_type="none"))
+            report = _run(args)
     except Exception as exc:  # noqa: BLE001 - CLI returns one privacy-safe failure
         report = {
             "operation": args.operation,

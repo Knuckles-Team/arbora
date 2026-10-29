@@ -15,7 +15,9 @@ from arbora.api.invoke.bootstrap import dispatch_eg_method
 from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops.query import NaturalLanguageParams, operations
+from arbora.api.ops.query_federation import NaturalLanguageResult
 from arbora.api.registry import EgMethod, EgSchemaRef
+from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
 from tests._support import Actor
 from tests.api.test_invoke_bootstrap import FakeSession, _caller
 
@@ -89,6 +91,8 @@ def test_query_bindings_match_actual_provider_authority_and_inner_schema() -> No
     assert selected["required"] == ["text"]
     assert set(selected["properties"]) == {"text", "params"}
     assert selected["additionalProperties"] is False
+    nl = next(op for op in ops if op.id == "query.nl")
+    assert nl.result is NaturalLanguageResult
 
 
 @pytest.mark.parametrize(
@@ -132,6 +136,44 @@ def test_nl_dispatch_refuses_graph_retargeting_before_send() -> None:
         )
     assert error.value.code == "INVALID_ARGUMENT"
     assert client.sent == []
+
+
+@pytest.mark.parametrize(
+    "tenant,allowed",
+    [("tenant:a", True), ("tenant:other", False), (None, False)],
+)
+def test_owner_read_dispatch_binds_wire_tenant_to_verified_caller(
+    tenant: str | None, allowed: bool
+) -> None:
+    client = RecordingClient()
+    payload = {"run_id": "run:one"}
+    if tenant is not None:
+        payload["tenant"] = tenant
+    if not allowed:
+        with pytest.raises(OperationRefused) as error:
+            asyncio.run(
+                dispatch_eg_method(
+                    EgMethod(service="GetRunWorkItem", op="GetRunWorkItem"),
+                    payload,
+                    context(client),
+                )
+            )
+        assert error.value.code == "INVALID_ARGUMENT"
+        assert error.value.details == {"field": "tenant"}
+        assert client.sent == []
+        return
+
+    assert (
+        asyncio.run(
+            dispatch_eg_method(
+                EgMethod(service="GetRunWorkItem", op="GetRunWorkItem"),
+                payload,
+                context(client),
+            )
+        )
+        == 47
+    )
+    assert client.sent[0][:3] == ("GetRunWorkItem", payload, CONTROL_GRAPH)
 
 
 def test_nl_planner_unavailable_propagates_without_uql_fallback() -> None:

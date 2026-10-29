@@ -171,6 +171,7 @@ non-test importer (or, for `agent_utilities.deployment.cli`, a direct test impor
 
 - [ ] **ARBORA-DEPLOY-R009:** Arbora owns hosting/deployment configuration settings
 - [ ] **ARBORA-DEPLOY-R009.1:** Remaining scope of ARBORA-DEPLOY-R009 (slice .1): Arbora owns hosting/deployment configuration settings
+- [x] **ARBORA-DEPLOY-R009.2.1:** Small-profile import footprint. Evidence: `tests/deployment/test_small_profile_footprint.py::test_cold_import_of_the_served_surface_loads_no_external_driver`.
 - [x] **ARBORA-DEPLOY-R009.4:** graph_config operation core in Arbora. Evidence: `tests/core/test_agent_config_admin.py`.
 
 ## ARBORA-DEPLOY-R017 engine-routed deployment placement and assembly
@@ -230,3 +231,7 @@ Order: R017.1 (placement), R017.2 to R017.5 (assembly, view, confirm, refusal), 
 - [ ] `ARBORA-DEPLOY-R009.3`: Deliver every requirement in requirements.md.
 - [ ] `ARBORA-DEPLOY-R013.7`: Deliver every requirement in requirements.md.
 - [ ] `ARBORA-DEPLOY-R010.4`: Deliver every requirement in requirements.md.
+
+## Medulla companion rows (2026-10-28)
+
+- [ ] `ARBORA-DEPLOY-R017.17`: Deliver the requirement in requirements.md.

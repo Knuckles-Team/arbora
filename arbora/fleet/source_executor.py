@@ -13,7 +13,8 @@ Rows are returned to the engine and are not stored or logged here.
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Mapping, Sequence
+import contextlib
+from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -23,6 +24,7 @@ MAX_PAGES_CAP = 20
 MAX_ROWS_CAP = 10_000
 MAX_SOURCES = 32
 MAX_CONCURRENCY = 8
+_FOREIGN_ABORT_CLEANUP_TIMEOUT_S = 1.0
 
 
 @dataclass(frozen=True)
@@ -49,6 +51,52 @@ class SourceReadResult:
     rows: tuple[Any, ...] = ()
     pages: int = 0
     truncated: bool = False
+    error_code: str | None = None
+    error_reason: str | None = None
+
+    @property
+    def ok(self) -> bool:
+        return self.error_code is None
+
+
+@dataclass(frozen=True)
+class ForeignReadSourceRequest:
+    """One approved connector source read sent through EG's four phases.
+
+    ``contract`` is the SDK ``AccessContract`` parsed from the connector pack.
+    Its predicates are the only source fields copied into EG rows.  The
+    approval and both digests are producer DTOs supplied by the caller; this
+    executor never creates an authority record or derives a replacement digest.
+    """
+
+    source_id: str
+    connector: str
+    tool: str
+    source_name: str
+    contract: Any
+    approval: Any
+    plan_digest: str
+    query_digest: str
+    limits: Any
+    arguments: Mapping[str, Any] = field(default_factory=dict)
+    rows_key: str = "items"
+    cursor_key: str = "next_cursor"
+    cursor_arg: str = "cursor"
+    max_pages: int = 5
+    max_rows: int = 1000
+    timeout_s: float = 30.0
+
+
+@dataclass(frozen=True)
+class ForeignReadResult:
+    """The bounded source lifecycle and optional correlated query result."""
+
+    source_id: str
+    execution: Any | None = None
+    rows: int = 0
+    pages: int = 0
+    truncated: bool = False
+    query_result: Any | None = None
     error_code: str | None = None
     error_reason: str | None = None
 
@@ -86,13 +134,168 @@ def _failure(
     )
 
 
+def _foreign_failure(
+    request: ForeignReadSourceRequest,
+    code: str,
+    reason: str,
+    *,
+    execution: Any | None = None,
+    rows: int = 0,
+    pages: int = 0,
+    truncated: bool = False,
+    query_result: Any | None = None,
+) -> ForeignReadResult:
+    return ForeignReadResult(
+        source_id=request.source_id,
+        execution=execution,
+        rows=rows,
+        pages=pages,
+        truncated=truncated,
+        query_result=query_result,
+        error_code=code,
+        error_reason=reason,
+    )
+
+
+def _foreign_row(row: Any, request: ForeignReadSourceRequest) -> dict[str, Any]:
+    """Map one connector row through the pack-declared source fields."""
+
+    if not isinstance(row, Mapping):
+        raise ValueError("source row is not an object")
+    key_field = getattr(request.contract, "key_field", None)
+    contract_iri = getattr(request.contract, "contract_iri", None)
+    predicates = getattr(request.contract, "predicates", ())
+    if (
+        not isinstance(key_field, str)
+        or not key_field
+        or not isinstance(contract_iri, str)
+        or not contract_iri
+    ):
+        raise ValueError("source contract has no stable key or mapping identity")
+    raw_id = row.get(key_field)
+    if raw_id is None:
+        raise ValueError("source row has no declared key")
+    columns: dict[str, Any] = {}
+    for predicate in predicates:
+        if not isinstance(predicate, Sequence) or len(predicate) != 2:
+            raise ValueError("source contract predicate is malformed")
+        _property_iri, source_field = predicate
+        if not isinstance(source_field, str) or not source_field:
+            raise ValueError("source contract field is malformed")
+        if source_field in row:
+            columns[source_field] = row[source_field]
+    score = row.get("score")
+    if isinstance(score, bool) or not isinstance(score, (int, float)):
+        score = None
+    return {
+        "id": str(raw_id),
+        "score": float(score) if score is not None else None,
+        "columns": columns,
+        "provenance": [
+            f"connector:{request.connector}",
+            f"contract:{contract_iri}",
+            f"source:{request.source_id}",
+        ],
+    }
+
+
+def _foreign_error(exc: BaseException) -> tuple[str, str]:
+    """Map connector/SDK failures to the existing four source error codes."""
+
+    if isinstance(exc, PermissionError):
+        return "SOURCE_NOT_GRANTED", "the caller has no current grant for this source"
+    if isinstance(exc, TimeoutError):
+        return "SOURCE_TIMEOUT", "the foreign source read timed out"
+    reason = getattr(exc, "reason", None)
+    if reason == "deadline":
+        return "SOURCE_TIMEOUT", "the foreign source read timed out"
+    if reason == "transport":
+        return "SOURCE_UNAVAILABLE", "the foreign-read transport was unavailable"
+    if isinstance(reason, str):
+        return "SOURCE_BAD_RESPONSE", f"the foreign-read phase was refused ({reason})"
+    if isinstance(exc, ValueError):
+        return (
+            "SOURCE_BAD_RESPONSE",
+            "the source row or foreign-read request was invalid",
+        )
+    return (
+        "SOURCE_UNAVAILABLE",
+        f"the foreign source read failed ({type(exc).__name__})",
+    )
+
+
+async def _abort_foreign(
+    client: Any,
+    abort_request: Any,
+) -> None:
+    """Best-effort bounded remote abort that preserves the original failure."""
+    task = asyncio.create_task(client.abort(abort_request))
+    try:
+        async with asyncio.timeout(_FOREIGN_ABORT_CLEANUP_TIMEOUT_S):
+            await asyncio.shield(task)
+    except BaseException:
+        # A caller cancellation must not leave the abort task detached, and an
+        # abort failure must never replace the source read's closed error.
+        if not task.done():
+            task.cancel()
+        with contextlib.suppress(BaseException):
+            await task
+
+
 class FleetSourceExecutor:
     """Run source reads for one verified caller through ``fleet.call``'s gateway."""
 
-    def __init__(self, gateway: Any, caller: Any, *, overall_timeout_s: float = 60.0):
+    def __init__(
+        self,
+        gateway: Any,
+        caller: Any,
+        *,
+        overall_timeout_s: float = 60.0,
+        foreign_client: Any | None = None,
+    ):
         self._gateway = gateway
         self._caller = caller
         self._overall = overall_timeout_s
+        self._foreign_client = foreign_client
+
+    @classmethod
+    def from_engine(
+        cls,
+        gateway: Any,
+        caller: Any,
+        engine: Any,
+        *,
+        graph: str,
+        overall_timeout_s: float = 60.0,
+    ) -> FleetSourceExecutor:
+        """Compose the SDK receiver with Arbora's already-routed EG client.
+
+        The SDK adapter resolves EG's generated senders and keeps the
+        authenticated request envelope on that side of the boundary.  Arbora
+        only chooses the existing graph-scoped client; it never calls a
+        private client transport or adds authority fields.
+        """
+
+        try:
+            from agent_connector_sdk.adapters.foreign_read import (
+                ForeignReadClient,
+                NativeRequestResponseAdapter,
+            )
+        except ImportError:
+            return cls(
+                gateway,
+                caller,
+                overall_timeout_s=overall_timeout_s,
+            )
+        engine_client = engine.graph_compute.for_graph(graph).async_client
+        return cls(
+            gateway,
+            caller,
+            overall_timeout_s=overall_timeout_s,
+            foreign_client=ForeignReadClient(
+                NativeRequestResponseAdapter(engine_client, graph=graph)
+            ),
+        )
 
     async def read(self, request: SourceReadRequest) -> SourceReadResult:
         pages = max(1, min(request.max_pages, MAX_PAGES_CAP))
@@ -158,6 +361,229 @@ class FleetSourceExecutor:
             request.source_id, tuple(rows), done, truncated=cursor is not None
         )
 
+    async def read_foreign(
+        self,
+        request: ForeignReadSourceRequest,
+        *,
+        correlate: Callable[[Any], Awaitable[Any]] | None = None,
+    ) -> ForeignReadResult:
+        """Read pages, publish them through EG and optionally run the query.
+
+        The correlation callback receives only EG's opaque execution handle
+        after ``Complete`` succeeds.  A caller can use it to invoke the
+        generated correlated query without giving this Arbora module a second
+        engine transport or a copied query DTO.
+        """
+
+        if self._foreign_client is None:
+            return _foreign_failure(
+                request,
+                "SOURCE_UNAVAILABLE",
+                "the foreign-read SDK adapter is unavailable",
+            )
+        try:
+            from agent_connector_sdk.adapters.foreign_read import (
+                AbortRequest,
+                ChunkRequest,
+                CompleteRequest,
+                ForeignReadLimits,
+                ForeignReadRow,
+                OpenRequest,
+            )
+        except ImportError:
+            return _foreign_failure(
+                request,
+                "SOURCE_UNAVAILABLE",
+                "the foreign-read SDK adapter is unavailable",
+            )
+        execution: Any | None = None
+        sequence: int | None = None
+        pages = 0
+        rows = 0
+        truncated = False
+        try:
+            limits = ForeignReadLimits.model_validate(request.limits)
+            async with asyncio.timeout(request.timeout_s):
+                opened = await self._foreign_client.open(
+                    OpenRequest(
+                        schema_version=1,
+                        source_name=request.source_name,
+                        approval=request.approval,
+                        plan_digest=request.plan_digest,
+                        query_digest=request.query_digest,
+                        limits=limits,
+                    )
+                )
+                execution = opened.execution
+                sequence = opened.next_sequence
+                cursor: str | None = None
+                page_cap = max(1, min(request.max_pages, MAX_PAGES_CAP))
+                row_cap = max(1, min(request.max_rows, limits.max_rows, MAX_ROWS_CAP))
+                while pages < page_cap and rows < row_cap:
+                    arguments = dict(request.arguments)
+                    if cursor:
+                        arguments[request.cursor_arg] = cursor
+                    payload = await self._gateway.call(
+                        self._caller,
+                        request.connector,
+                        request.tool,
+                        arguments,
+                        expected_effect=Effect.READ,
+                    )
+                    pages += 1
+                    source_rows = _page(payload, request.rows_key)
+                    next_cursor = _next_cursor(payload, request.cursor_key)
+                    remaining = row_cap - rows
+                    if len(source_rows) > remaining:
+                        source_rows = source_rows[:remaining]
+                        truncated = True
+                    elif next_cursor is not None and len(source_rows) + rows >= row_cap:
+                        truncated = True
+                    mapped = [
+                        ForeignReadRow.model_validate(_foreign_row(source_row, request))
+                        for source_row in source_rows
+                    ]
+                    for offset in range(0, len(mapped), limits.chunk_rows):
+                        chunk_rows = mapped[offset : offset + limits.chunk_rows]
+                        result = await self._foreign_client.chunk(
+                            ChunkRequest(
+                                execution=execution,
+                                sequence=sequence,
+                                source_identity=opened.source_identity,
+                                rows=chunk_rows,
+                            )
+                        )
+                        sequence = result.next_sequence
+                        rows += len(chunk_rows)
+                    cursor = next_cursor
+                    if truncated or not cursor:
+                        break
+                if cursor is not None and pages >= page_cap and rows < row_cap:
+                    truncated = True
+                if truncated:
+                    await _abort_foreign(
+                        self._foreign_client,
+                        AbortRequest(
+                            execution=execution,
+                            sequence=sequence,
+                            reason="source_failed",
+                        ),
+                    )
+                    return _foreign_failure(
+                        request,
+                        "SOURCE_BAD_RESPONSE",
+                        "the source read exceeded its configured page or row limit",
+                        execution=execution,
+                        rows=rows,
+                        pages=pages,
+                        truncated=True,
+                    )
+                await self._foreign_client.complete(
+                    CompleteRequest(execution=execution, sequence=sequence)
+                )
+                query_result = await correlate(execution) if correlate else None
+            return ForeignReadResult(
+                source_id=request.source_id,
+                execution=execution,
+                rows=rows,
+                pages=pages,
+                truncated=truncated,
+                query_result=query_result,
+            )
+        except asyncio.CancelledError:
+            if execution is not None and sequence is not None:
+                await _abort_foreign(
+                    self._foreign_client,
+                    AbortRequest(
+                        execution=execution,
+                        sequence=sequence,
+                        reason="cancelled",
+                    ),
+                )
+            raise
+        except Exception as exc:
+            code, reason = _foreign_error(exc)
+            if execution is not None and sequence is not None:
+                await _abort_foreign(
+                    self._foreign_client,
+                    AbortRequest(
+                        execution=execution,
+                        sequence=sequence,
+                        reason="source_failed",
+                    ),
+                )
+            return _foreign_failure(
+                request,
+                code,
+                reason,
+                execution=execution,
+                rows=rows,
+                pages=pages,
+                truncated=truncated,
+            )
+
+    async def read_approved(
+        self,
+        request: ForeignReadSourceRequest,
+        *,
+        mapping: Any,
+        resource_uri: str,
+        correlate: Callable[[Any], Awaitable[Any]] | None = None,
+    ) -> ForeignReadResult:
+        """Read one catalog mapping after an EG approval/owner check.
+
+        The caller supplies the mapping selected by the existing virtual
+        catalog and the exact ontology resource URI used for the EG approval
+        CAS.  This method only projects an already-approved receipt; it never
+        calls ``ConnectorPack`` or ``RegisterForeignSource``.  EG's native
+        ``ForeignReadOpen``/phase handlers remain the authority and recheck
+        the durable receipt and owner catalog.
+        """
+
+        from arbora.fleet.access_contracts import (
+            approved_source_id,
+            source_approval_decision,
+        )
+
+        if not bool(getattr(mapping, "approved", False)):
+            return _foreign_failure(
+                request,
+                "SOURCE_HELD",
+                "the catalog mapping has no current EG approval",
+            )
+        decision = source_approval_decision(
+            request.contract,
+            request.approval,
+            connector=request.connector,
+            resource_uri=resource_uri,
+        )
+        if decision.outcome != "approved":
+            return _foreign_failure(request, "SOURCE_HELD", decision.reason)
+        if request.tool != getattr(
+            request.contract, "operation", None
+        ) or request.source_id != getattr(request.contract, "source_id", None):
+            return _foreign_failure(
+                request,
+                "SOURCE_HELD",
+                "the requested operation is not the approved contract",
+            )
+        if approved_source_id(request.approval) != request.source_name:
+            return _foreign_failure(
+                request,
+                "SOURCE_HELD",
+                "the source name is not the approved owner-catalog entry",
+            )
+        if getattr(mapping, "mapping_id", None) != decision.mapping_iri or any(
+            getattr(mapping, field, None) != getattr(request.contract, field, None)
+            for field in ("source_id", "entity", "class_iri", "key_field", "predicates")
+        ):
+            return _foreign_failure(
+                request,
+                "SOURCE_HELD",
+                "the catalog mapping is not the approved contract",
+            )
+        return await self.read_foreign(request, correlate=correlate)
+
     async def read_all(
         self, requests: Sequence[SourceReadRequest]
     ) -> tuple[SourceReadResult, ...]:
@@ -173,9 +599,12 @@ class FleetSourceExecutor:
         tasks = [asyncio.ensure_future(one(r)) for r in requests]
         _, pending = await asyncio.wait(tasks, timeout=self._overall)
         out: list[SourceReadResult] = []
+        for task in pending:
+            task.cancel()
+        if pending:
+            await asyncio.gather(*pending, return_exceptions=True)
         for request, task in zip(requests, tasks, strict=True):
             if task in pending:
-                task.cancel()
                 out.append(
                     _failure(
                         request, "SOURCE_TIMEOUT", "the overall read deadline passed"
@@ -186,7 +615,100 @@ class FleetSourceExecutor:
         return tuple(out)
 
 
+@dataclass(frozen=True, slots=True)
+class FleetSourceBinding:
+    """Caller-bound reader for one approved virtual source.
+
+    The query caller supplies only the engine's plan/query digests, limits and
+    connector arguments.  Connector, operation, mapping, resource URI and
+    receipt all come from the process catalog's validated approval binding.
+    ``read_approved`` still sends the receipt to EG, so this object is a
+    selection seam rather than a second authority.
+    """
+
+    executor: FleetSourceExecutor
+    source: Any
+
+    def request(
+        self,
+        *,
+        plan_digest: str,
+        query_digest: str,
+        limits: Any,
+        arguments: Mapping[str, Any] | None = None,
+        rows_key: str = "items",
+        cursor_key: str = "next_cursor",
+        cursor_arg: str = "cursor",
+        max_pages: int = 5,
+        max_rows: int = 1000,
+        timeout_s: float = 30.0,
+    ) -> ForeignReadSourceRequest:
+        from arbora.fleet.access_contracts import approved_source_id
+
+        source_name = approved_source_id(self.source.receipt)
+        operation = getattr(self.source.contract, "operation", None)
+        if not isinstance(source_name, str) or not source_name:
+            raise LookupError("approved source has no native source identity")
+        if not isinstance(operation, str) or not operation:
+            raise LookupError("approved source has no declared read operation")
+        return ForeignReadSourceRequest(
+            source_id=self.source.mapping.source_id,
+            connector=self.source.connector,
+            tool=operation,
+            source_name=source_name,
+            contract=self.source.contract,
+            approval=self.source.receipt,
+            plan_digest=plan_digest,
+            query_digest=query_digest,
+            limits=limits,
+            arguments=dict(arguments or {}),
+            rows_key=rows_key,
+            cursor_key=cursor_key,
+            cursor_arg=cursor_arg,
+            max_pages=max_pages,
+            max_rows=max_rows,
+            timeout_s=timeout_s,
+        )
+
+    async def read(
+        self,
+        *,
+        plan_digest: str,
+        query_digest: str,
+        limits: Any,
+        arguments: Mapping[str, Any] | None = None,
+        rows_key: str = "items",
+        cursor_key: str = "next_cursor",
+        cursor_arg: str = "cursor",
+        max_pages: int = 5,
+        max_rows: int = 1000,
+        timeout_s: float = 30.0,
+        correlate: Callable[[Any], Awaitable[Any]] | None = None,
+    ) -> ForeignReadResult:
+        request = self.request(
+            plan_digest=plan_digest,
+            query_digest=query_digest,
+            limits=limits,
+            arguments=arguments,
+            rows_key=rows_key,
+            cursor_key=cursor_key,
+            cursor_arg=cursor_arg,
+            max_pages=max_pages,
+            max_rows=max_rows,
+            timeout_s=timeout_s,
+        )
+        return await self.executor.read_approved(
+            request,
+            mapping=self.source.mapping,
+            resource_uri=self.source.resource_uri,
+            correlate=correlate,
+        )
+
+
 __all__ = [
+    "FleetSourceBinding",
+    "ForeignReadResult",
+    "ForeignReadSourceRequest",
     "FleetSourceExecutor",
     "SourceReadRequest",
     "SourceReadResult",

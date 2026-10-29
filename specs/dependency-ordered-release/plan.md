@@ -65,6 +65,29 @@ them when the mapped scope is empty too. A full-suite scope stays as it was.
 `tests/deployment/test_pr_static_scope.py` fails when a source-scanning test is
 missing from the list. It also fails when the workflow stops adding the list.
 
+## Amendment 2026-10-24: preserve the engine-owned schema body digest
+
+For `ARBORA-RELEASE-R003.4.4`, pin-file serialization must preserve the engine
+export's nested key order because the released body codec hashes that order.
+Arbora sorts only outer pin metadata. Startup must recompute the deserialized
+body's digest before binding a publisher, not trust its declared digest alone.
+Regenerate the existing pin through its owning generator. Do not change the
+engine codec, invent a digest or substitute another body at serving time.
+Roundtrip and public-initializer checks qualify this bounded repair, not full
+run execution, durable usage, deployment or release acceptance.
+
+### Task-plan publication receipt boundary
+
+The bounded follow-up to `ARBORA-RELEASE-R003.4.4` must obtain a new receipt
+from Arbora's existing action-policy owner before publishing a schema. Bind
+the request to the exact pin, tenant, graph and verified session. Preserve
+read-only reuse of an existing matching component. Unknown actions still need
+approval under the unchanged default policy. A denied, held, stale or missing
+receipt must stop publication. This does not qualify the separate approval
+grant loop, native context admission, run completion or durable usage replay.
+The existing action-policy owner must not issue a new decision receipt when
+its atomic audit create returns false. An existing ID is not new evidence.
+
 ### 2026-10-24: explicit child interaction after read-only exploration
 
 `ARBORA-RELEASE-R003.4.12` and `.13` extend the served plan-run owner without

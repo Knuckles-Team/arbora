@@ -208,3 +208,7 @@ The version bump updates the package source and changelog through the configured
 ### 2026-10-18 atomic-create patch release (ARBORA-DEPLOY-R002)
 
 Publish the reviewed unique-record correction as a new patch version using the configured bump tool, preserving existing releases and dependency pins. Require exact-candidate source gates and installed-wheel qualification, including the real headless TUI test. Keep the older-store producer refusal and fleet onboarding acceptance separate from this correction.
+
+## Medulla companion rows (2026-10-28)
+
+- `ARBORA-DEPLOY-R017.17`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.

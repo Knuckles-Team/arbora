@@ -9,7 +9,9 @@ config:
 2. capture its served tools, prompts, skills and pack resources as a
    ConnectorPack through the connector SDK;
 3. attest that catalog with EG and import the pack under EG's binding;
-4. register its access contracts as unapproved virtual mappings.
+4. register its access contracts as held virtual mappings; an admitted,
+   read-only contract may then ask EG's owner-scoped approval operation for a
+   receipt before the local projection becomes selectable.
 
 Arbora observes each child catalog over MCP, as the multiplexer does.
 EG issues the binding through ``attest_self_served_catalog``; Arbora must be
@@ -26,7 +28,7 @@ import json
 import logging
 import threading
 from collections.abc import Callable, Collection, Iterator, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Literal, cast
@@ -142,7 +144,7 @@ def configured_fleet_endpoints(
 ) -> tuple[FleetEndpoint, ...]:
     """Read the deployment's MCP config; an absent file has no fleet."""
 
-    from agent_utilities.core.paths import mcp_config_path
+    from arbora.core.settings import mcp_config_path
 
     config = path or mcp_config_path()
     if not config.is_file():
@@ -322,6 +324,9 @@ class FleetOnboarding:
     seen: dict[str, tuple[str, ...]] = field(default_factory=dict)
     #: The handshake pass record per connector (state, attempts, last error).
     handshake: dict[str, dict[str, Any]] = field(default_factory=dict)
+    #: Local policy decisions and native EG receipts, keyed by connector.
+    source_decisions: dict[str, tuple[Any, ...]] = field(default_factory=dict)
+    source_receipts: dict[str, tuple[Any, ...]] = field(default_factory=dict)
 
     @property
     def tenant_client(self) -> Any:
@@ -393,8 +398,39 @@ class FleetOnboarding:
             )
         else:
             await self.renew({endpoint.name: endpoint.url})
-        self.register_contracts(endpoint, pack)
+        # Keep the hook-compatible ``None`` return accepted for lightweight
+        # callers that override the pre-approval registration step.
+        decisions = self.register_contracts(endpoint, pack) or ()
+        await self.approve_contracts(endpoint, pack, decisions)
+        await self.write_catalog(endpoint, pack)
         return changed
+
+    async def write_catalog(self, endpoint: FleetEndpoint, pack: Any) -> None:
+        """Write the pack's agent-library catalog nodes (ARBORA-FLEET-R041.17).
+
+        Runs on every pass, imported or renewed: ``AddTriples`` of the same
+        set is idempotent, and a store that predates the catalog gains it on
+        the next pass. A failed write never fails onboarding; it is reported
+        as a ``catalog`` surface gap.
+        """
+
+        from arbora.deployment.semantic_provisioning import _bind_session_graph
+        from arbora.fleet.catalog_graph import write_catalog
+
+        report = self.surfaces.setdefault(endpoint.name, {})
+        try:
+            graph = str(self.session.graph)
+            with _bind_session_graph(graph):
+                count = await write_catalog(
+                    self.tenant_client, graph, endpoint.name, pack
+                )
+        except Exception as exc:  # noqa: BLE001 - reported, never fatal
+            logger.warning("%s: catalog write failed: %s", endpoint.name, exc)
+            if isinstance(report, dict):
+                report["catalog_error"] = _failure(exc)
+            return
+        if isinstance(report, dict):
+            report["catalog_triples"] = count
 
     async def handshake_pass(
         self,
@@ -456,16 +492,256 @@ class FleetOnboarding:
         )
         return head.pack_digest == digest
 
-    def register_contracts(self, endpoint: FleetEndpoint, pack: Any) -> None:
-        """Register the pack's access contracts as unapproved mappings."""
+    def register_contracts(
+        self, endpoint: FleetEndpoint, pack: Any
+    ) -> tuple[Any, ...] | None:
+        """Register candidates and evaluate the local admission policy.
+
+        The returned decisions are policy intent only.  ``approve_contracts``
+        must obtain and validate an EG receipt before a mapping is selectable.
+        """
 
         from arbora.fleet.access_contracts import register_access_contracts
 
+        if self.virtual_catalog is None:
+            # Direct CLI/unit callers may construct FleetOnboarding without
+            # the process composition root.  Give that isolated pass its own
+            # metadata projection; only ``start_fleet_onboarding`` installs
+            # the process singleton used by the served server.
+            from arbora.fleet.virtual_catalog import VirtualCatalog
+
+            catalog = VirtualCatalog()
+            object.__setattr__(self, "virtual_catalog", catalog)
+        decisions: list[Any] = []
         added = register_access_contracts(
-            pack, connector=endpoint.name, catalog=self.virtual_catalog
+            pack,
+            connector=endpoint.name,
+            catalog=self.virtual_catalog,
+            admitted=True,
+            decisions=decisions,
         )
+        from arbora.fleet.access_contracts import pack_contract_resources
+
+        digests = {
+            str(getattr(contract, "contract_iri", "")): digest
+            for contract, _resource_uri, digest in pack_contract_resources(pack)
+        }
+        result = tuple(
+            replace(
+                decision,
+                contract_digest=digests.get(str(getattr(decision, "contract_iri", ""))),
+            )
+            if hasattr(decision, "contract_digest")
+            else decision
+            for decision in decisions
+        )
+        self.source_decisions[endpoint.name] = result
         if added:
             logger.info("%s: %d unapproved access mappings", endpoint.name, added)
+        return result
+
+    async def approve_contracts(
+        self, endpoint: FleetEndpoint, pack: Any, decisions: Sequence[Any]
+    ) -> None:
+        """Project native EG source-approval receipts onto this catalog.
+
+        The installed EG contract may predate ``ConnectorPack.approve_source``.
+        In that case the mapping remains held and the typed unavailable reason
+        is recorded; no local flag or synthetic caller can make it readable.
+        """
+
+        approved = {
+            str(getattr(decision, "contract_iri", "")): decision
+            for decision in decisions
+            if getattr(decision, "outcome", None) == "approved"
+        }
+        if not approved:
+            self._record_source_approvals(endpoint.name, decisions, ())
+            return
+        try:
+            from importlib import import_module
+
+            connector_pack = import_module("epistemic_graph.generated.connector_pack")
+            models = import_module("epistemic_graph.generated.models")
+            storage = import_module("epistemic_graph.generated.storage")
+            ConnectorPackOpApproveSource = connector_pack.__dict__[
+                "ConnectorPackOpApproveSource"
+            ]
+            ConnectorPackSourceApprovalRequest = connector_pack.__dict__[
+                "ConnectorPackSourceApprovalRequest"
+            ]
+            ConnectorPackStatusRequest = connector_pack.__dict__[
+                "ConnectorPackStatusRequest"
+            ]
+            PackHeadRef = connector_pack.__dict__["PackHeadRef"]
+            ConnectorPackSourceApprovalResult = models.__dict__[
+                "ConnectorPackSourceApprovalResult"
+            ]
+            send_connector_pack_status = storage.__dict__["send_connector_pack_status"]
+        except (ImportError, KeyError):
+            reason = "epistemic-graph does not serve ConnectorPack.approve_source yet"
+            self._record_source_approvals(
+                endpoint.name,
+                decisions,
+                (),
+                pending=reason,
+            )
+            return
+
+        from arbora.api.errors import ArboraRefusal
+        from arbora.deployment.semantic_provisioning import (
+            _bind_session_graph,
+            _shell_context,
+        )
+
+        tenant_id = str(session_context(self.session)["tenant"])
+        graph = str(self.session.graph)
+        try:
+            with _bind_session_graph(graph):
+                status = await send_connector_pack_status(
+                    self.tenant_client,
+                    ConnectorPackStatusRequest(
+                        connector=endpoint.name, tenant_id=tenant_id
+                    ),
+                    graph,
+                )
+        except Exception as exc:  # noqa: BLE001 - retry on the next pass
+            self._record_source_approvals(
+                endpoint.name, decisions, (), pending=_failure(exc)
+            )
+            return
+        head = getattr(status, "head", None)
+        if head is None:
+            self._record_source_approvals(
+                endpoint.name,
+                decisions,
+                (),
+                pending="connector pack has no current head for source approval",
+            )
+            return
+        expected_head = PackHeadRef(
+            binding_revision=int(head.binding_revision),
+            pack_digest=str(head.pack_digest),
+        )
+        receipts: list[Any] = []
+        resolved = list(decisions)
+        from arbora.fleet.access_contracts import (
+            bind_approved_mapping,
+            pack_contract_resources,
+        )
+
+        for contract, resource_uri, contract_digest in pack_contract_resources(pack):
+            decision = approved.get(str(getattr(contract, "contract_iri", "")))
+            if decision is None:
+                continue
+            key = (
+                f"arbora:source-approval:{tenant_id}:{endpoint.name}:"
+                f"{getattr(contract, 'contract_iri', '')}:"
+                f"{head.binding_revision}:{contract_digest}"
+            )
+            try:
+                context = _shell_context(tenant_id, key)
+                request = ConnectorPackSourceApprovalRequest(
+                    connector=endpoint.name,
+                    context=context,
+                    contract_digest=contract_digest,
+                    contract_iri=str(getattr(contract, "contract_iri", "")),
+                    expected_head=expected_head,
+                    resource_uri=resource_uri,
+                )
+                operation = ConnectorPackOpApproveSource(
+                    op="approve_source", request=request
+                )
+                with _bind_session_graph(graph):
+                    payload = await self.tenant_client._send(
+                        "ConnectorPack",
+                        {"op": operation.model_dump(mode="json")},
+                        graph,
+                        idempotency_key=key,
+                    )
+                receipt = ConnectorPackSourceApprovalResult.model_validate(payload)
+                receipt_head = getattr(receipt, "head", None)
+                if (
+                    str(getattr(receipt, "connector", "")) != endpoint.name
+                    or str(getattr(receipt, "tenant_id", "")) != tenant_id
+                    or str(getattr(receipt, "contract_digest", "")) != contract_digest
+                    or receipt_head is None
+                    or int(getattr(receipt_head, "binding_revision", -1))
+                    != int(expected_head.binding_revision)
+                    or str(getattr(receipt_head, "pack_digest", ""))
+                    != str(expected_head.pack_digest)
+                ):
+                    logger.warning(
+                        "%s: native source approval receipt failed identity/CAS validation",
+                        endpoint.name,
+                    )
+                    continue
+                bound = bind_approved_mapping(
+                    self.virtual_catalog,
+                    contract,
+                    receipt,
+                    connector=endpoint.name,
+                    resource_uri=resource_uri,
+                    policy_id=decision.policy_id,
+                    scope=(tenant_id, graph),
+                )
+                if bound.outcome == "approved":
+                    receipts.append(receipt)
+                    for index, decision_item in enumerate(resolved):
+                        if decision_item is decision and hasattr(
+                            decision_item, "receipt"
+                        ):
+                            resolved[index] = replace(
+                                decision_item,
+                                contract_digest=contract_digest,
+                                receipt=receipt,
+                            )
+                            break
+                else:
+                    logger.warning(
+                        "%s: native source approval did not match catalog: %s",
+                        endpoint.name,
+                        bound.reason,
+                    )
+            except ArboraRefusal as exc:
+                self.source_decisions[endpoint.name] = tuple(resolved)
+                self._record_source_approvals(
+                    endpoint.name, resolved, tuple(receipts), pending=str(exc)
+                )
+                return
+            except Exception as exc:  # noqa: BLE001 - retry the source next pass
+                logger.warning(
+                    "%s: source approval for %s is pending: %s",
+                    endpoint.name,
+                    getattr(contract, "contract_iri", ""),
+                    type(exc).__name__,
+                )
+        self.source_decisions[endpoint.name] = tuple(resolved)
+        self._record_source_approvals(endpoint.name, resolved, tuple(receipts))
+
+    def _record_source_approvals(
+        self,
+        connector: str,
+        decisions: Sequence[Any],
+        receipts: Sequence[Any],
+        *,
+        pending: str | None = None,
+    ) -> None:
+        self.source_receipts[connector] = tuple(receipts)
+        report = self.surfaces.setdefault(connector, {})
+        if not isinstance(report, dict):
+            return
+        report["source_approvals"] = {
+            "approved": sum(
+                1 for item in decisions if getattr(item, "outcome", None) == "approved"
+            ),
+            "held": sum(
+                1 for item in decisions if getattr(item, "outcome", None) == "held"
+            ),
+            "receipts": len(receipts),
+        }
+        if pending:
+            report["sources_pending"] = pending[:256]
 
     async def self_endpoints(
         self, connectors: Sequence[str], served_url: str
@@ -626,9 +902,18 @@ class FleetOnboardingService:
 
     def _run_pass_safely(self) -> None:
         try:
-            asyncio.run(self.run_pass())
+            asyncio.run(self._run_pass_scoped())
         except Exception as exc:  # serving must outlive any onboarding fault
             logger.warning("fleet onboarding pass failed: %s", exc)
+
+    async def _run_pass_scoped(self) -> OnboardingReport:
+        from arbora.epistemic import temporary_client_scope
+
+        # The pass runs on a short-lived loop in this worker thread. Its EG
+        # transports are scoped to it, so they never displace the serving
+        # loop's pool clients or outlive the loop (ARBORA-FLEET-R041.18).
+        async with temporary_client_scope():
+            return await self.run_pass()
 
     def start(self) -> threading.Thread:
         thread = threading.Thread(
@@ -660,6 +945,7 @@ def handshake_catalog_digest(
     prompts: Sequence[Any] = (),
     resources: Sequence[Any] = (),
     declaration: str = "",
+    failures: Sequence[str] = (),
 ) -> str:
     """A content digest of the served lists and the data-source declaration.
 
@@ -687,6 +973,10 @@ def handshake_catalog_digest(
             "prompts": sorted(_digest_rows(dump(p)) for p in prompts),
             "resources": sorted(_digest_rows(dump(r)) for r in resources),
             "declaration": declaration,
+            # A failed optional discovery call is distinct from an empty
+            # surface.  Keep only bounded exception type markers: the digest
+            # must never carry transport text, credentials, or endpoint data.
+            "failures": sorted(set(str(marker)[:80] for marker in failures)),
         }
     )
 
@@ -694,18 +984,25 @@ def handshake_catalog_digest(
 async def served_catalog_digest(session: Any, tools: Sequence[Any]) -> str:
     """Digest the lists and resources a live session serves (R041.8).
 
-    A list or read the server does not support counts as empty; that never
-    fails the handshake.
+    A list or read the server does not support still counts as an empty
+    surface, while its failed discovery is retained in the content digest so
+    a transient failure cannot masquerade as an unchanged empty surface.
     """
 
-    async def optional(call: Any, attr: str) -> list[Any]:
+    failures: list[str] = []
+
+    async def optional(call: Any, attr: str, surface: str) -> list[Any]:
         try:
             return list(getattr(await call(), attr))
         except Exception:
+            # Do not let a transient discovery/read error masquerade as an
+            # empty, unchanged surface.  The next handshake must produce a
+            # different digest and drive the existing recapture path.
+            failures.append(f"{surface}:discovery_failed")
             return []
 
-    prompts = await optional(session.list_prompts, "prompts")
-    resources = await optional(session.list_resources, "resources")
+    prompts = await optional(session.list_prompts, "prompts", "prompts")
+    resources = await optional(session.list_resources, "resources", "resources")
     declaration = ""
     if any(str(getattr(r, "uri", "")) == RESOURCES_URI for r in resources):
         try:
@@ -714,8 +1011,11 @@ async def served_catalog_digest(session: Any, tools: Sequence[Any]) -> str:
                 str(getattr(c, "text", "") or "") for c in result.contents
             )
         except Exception:
+            failures.append("declaration:read_failed")
             declaration = ""
-    return handshake_catalog_digest(tools, prompts, resources, declaration)
+    return handshake_catalog_digest(
+        tools, prompts, resources, declaration, failures=failures
+    )
 
 
 @dataclass(slots=True)
@@ -863,12 +1163,19 @@ class HandshakeOnboarder:
     async def _pass(
         self, endpoint: FleetEndpoint, info: _Handshake, trigger: OnboardingTrigger
     ) -> str:
-        return await self.onboarding.handshake_pass(
-            endpoint,
-            auth=_child_auth(),
-            trigger=trigger,
-            server_version=info.server_version,
-        )
+        from arbora.epistemic import temporary_client_scope
+
+        # The pass runs on a fresh ``asyncio.run`` loop in this worker thread,
+        # not the serving loop. Its EG transports are scoped to that loop, so
+        # a pack-changing handshake never displaces, or fails on, the serving
+        # loop's live pool clients (ARBORA-FLEET-R041.18).
+        async with temporary_client_scope():
+            return await self.onboarding.handshake_pass(
+                endpoint,
+                auth=_child_auth(),
+                trigger=trigger,
+                server_version=info.server_version,
+            )
 
     def _record(
         self,
@@ -906,7 +1213,12 @@ def configured_served_url() -> str:
 
 
 def start_fleet_onboarding(
-    *, engine: Any, session: Any, multiplexer: Any, served_url: str | None = None
+    *,
+    engine: Any,
+    session: Any,
+    multiplexer: Any,
+    served_url: str | None = None,
+    virtual_catalog: Any = None,
 ) -> threading.Thread | None:
     """Start the background onboarding service; never raise into boot.
 
@@ -917,8 +1229,17 @@ def start_fleet_onboarding(
     if getattr(engine, "graph_compute", None) is None or multiplexer is None:
         logger.warning("fleet onboarding disabled: no engine or multiplexer")
         return None
+    if virtual_catalog is None:
+        from arbora.fleet.access_contracts import bootstrap_fleet_virtual_catalog
+
+        virtual_catalog = bootstrap_fleet_virtual_catalog()
+    bind_scope = getattr(virtual_catalog, "bind_scope", None)
+    if callable(bind_scope):
+        bind_scope(str(session.tenant), str(session.graph))
     service = FleetOnboardingService(
-        onboarding=FleetOnboarding(engine=engine, session=session),
+        onboarding=FleetOnboarding(
+            engine=engine, session=session, virtual_catalog=virtual_catalog
+        ),
         multiplexer=multiplexer,
         served_url=configured_served_url() if served_url is None else served_url,
     )

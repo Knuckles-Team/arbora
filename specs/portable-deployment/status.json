@@ -75,7 +75,8 @@
     "ARBORA-DEPLOY-R600.3",
     "ARBORA-DEPLOY-R600.4",
     "ARBORA-DEPLOY-R600.5",
-    "ARBORA-DEPLOY-R600.6"
+    "ARBORA-DEPLOY-R600.6",
+    "ARBORA-DEPLOY-R017.17"
   ],
   "requirements": [
     {
@@ -401,7 +402,8 @@
         "ARBORA-DEPLOY-R017.13",
         "ARBORA-DEPLOY-R017.14",
         "ARBORA-DEPLOY-R017.15",
-        "ARBORA-DEPLOY-R017.16"
+        "ARBORA-DEPLOY-R017.16",
+        "ARBORA-DEPLOY-R017.17"
       ]
     },
     {
@@ -670,8 +672,10 @@
     {
       "id": "ARBORA-DEPLOY-R009.2.1",
       "title": "Small-profile import footprint",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e755549375e6"
+      ],
       "verified_by": [
         "tests/deployment/test_small_profile_footprint.py:32"
       ]
@@ -757,6 +761,13 @@
     {
       "id": "ARBORA-DEPLOY-R600.6",
       "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-DEPLOY-R017.17",
+      "title": "Capacity-adjustment actuation and applied-state receipt",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

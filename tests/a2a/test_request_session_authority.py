@@ -45,8 +45,8 @@ pytestmark = pytest.mark.spec("ARBORA-A2A-R006.2.1.1")
 
 def fixture(monkeypatch: pytest.MonkeyPatch, *, failure: str = "") -> Any:
     # Existing configuration only; AU's actual public session minter executes.
-    monkeypatch.setattr(config, "auth_jwt_audience", "arbora-fixture")
-    monkeypatch.setattr(config, "kg_policy_version", "policy:fixture")
+    monkeypatch.setitem(config._overrides, "auth_jwt_audience", "arbora-fixture")
+    monkeypatch.setitem(config._overrides, "kg_policy_version", "policy:fixture")
     verified: list[Any] = []
     requests: list[Any] = []
 
@@ -103,6 +103,21 @@ def fixture(monkeypatch: pytest.MonkeyPatch, *, failure: str = "") -> Any:
         await app(scope, receive, send)
 
     return capture, runtime, audit, journal, requests, verified
+
+
+def test_authority_fixture_restores_live_configuration(monkeypatch) -> None:
+    for name in ("auth_jwt_audience", "kg_policy_version"):
+        monkeypatch.delitem(config._overrides, name, raising=False)
+    with monkeypatch.context() as scoped:
+        fixture(scoped)
+        assert config.auth_jwt_audience == "arbora-fixture"
+        assert config.kg_policy_version == "policy:fixture"
+    for name in ("auth_jwt_audience", "kg_policy_version"):
+        assert name not in config._overrides
+    monkeypatch.setenv("AUTH_JWT_AUDIENCE", "next-test-audience")
+    monkeypatch.setenv("KG_POLICY_VERSION", "next-test-policy")
+    assert config.auth_jwt_audience == "next-test-audience"
+    assert config.kg_policy_version == "next-test-policy"
 
 
 def test_public_au_minter_reaches_pipeline_and_rechecks_every_request(

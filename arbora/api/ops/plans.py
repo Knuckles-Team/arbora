@@ -31,16 +31,20 @@ arguments and result, is recorded in ``run.fleet_calls``.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import time
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
+from importlib import import_module
+from types import SimpleNamespace
 from typing import Any
 
 from pydantic import Field
 from pydantic_ai import RunContext
 
 from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.invoke.steps import claim_values
 from arbora.api.ops._common import Params
 from arbora.api.registry import (
     AuditClass,
@@ -67,6 +71,25 @@ class WorkItemLease(Params):
     lease_epoch: int = Field(ge=0)
     fencing_token: int = Field(ge=0)
     revision: int = Field(default=0, ge=0)
+
+
+@dataclass(frozen=True)
+class _NativePlanAdmission:
+    """The engine-owned identity attached to one served plan run.
+
+    ``item_id`` is deliberately kept separate from ``run_id``.  Native EG
+    chooses the former; the latter is the stable RunEvent/current-plan identity
+    derived from the verified engine plan.  A terminal replay has no claim and
+    therefore cannot be executed a second time.
+    """
+
+    item_id: str
+    run_id: str
+    lease: WorkItemLease | None
+    claim: Mapping[str, Any] | None
+    terminal_status: str | None = None
+    context_id: str | None = None
+    owner_graph: str | None = None
 
 
 class FleetToolRef(Params):
@@ -217,6 +240,23 @@ def publish_request(
         "idempotency_key": f"task-plan:{lease.run_id}:{plan['plan_digest']}",
         "task_plan_proposal": dict(proposal),
     }
+
+
+def _validated_publish_receipt(receipt: Any, lease: WorkItemLease) -> dict[str, Any]:
+    """Validate the legacy publisher's opaque receipt before returning it."""
+    if isinstance(receipt, Mapping):
+        run_id = receipt.get("run_id")
+        revision = receipt.get("revision")
+    else:
+        run_id = getattr(receipt, "run_id", None)
+        revision = getattr(receipt, "revision", None)
+    if (
+        run_id != lease.run_id
+        or type(revision) is not int
+        or revision != lease.revision
+    ):
+        raise OperationRefused("INVALID_TASK_PLAN_RECEIPT")
+    return {"run_id": run_id, "revision": revision}
 
 
 def run_plan_for(plan: Mapping[str, Any], model: Any, toolsets: tuple = ()) -> Any:
@@ -502,11 +542,415 @@ async def _feature_schema(context: Any, tenant: str) -> Mapping[str, Any]:
         ) from exc
 
 
+def _native_plan_run_id(plan: Mapping[str, Any], caller: Any | None = None) -> str:
+    """Use the caller-bound replay identity for a native plan run.
+
+    The verified request identity is the idempotency authority.  The engine
+    plan digest remains request metadata, but two requests can legitimately
+    produce the same canonical plan and must still receive distinct runs.
+    """
+    if caller is not None:
+        return replay_record(caller)
+    digest = plan.get("plan_digest")
+    if not isinstance(digest, str) or not digest:
+        raise OperationRefused(
+            "RECEIPT_MISMATCH", {"reason": "verified task plan has no digest"}
+        )
+    run_id = digest.removeprefix("sha256:")[:32]
+    if not run_id:
+        raise OperationRefused(
+            "RECEIPT_MISMATCH", {"reason": "verified task plan has no run identity"}
+        )
+    return run_id
+
+
+def _native_plan_claim_valid(
+    claim: Mapping[str, Any],
+    *,
+    session: Any,
+    worker_id: str,
+    work_item_id: str,
+    now_ms: int | None = None,
+) -> bool:
+    """Validate the native lease before it becomes a served execution claim."""
+    now = int(time.time() * 1000) if now_ms is None else now_ms
+    expiry = claim.get("lease_expires_at_ms")
+    return (
+        claim.get("claimed") is True
+        and claim.get("tenant") == session.tenant
+        and claim.get("work_item_id") == work_item_id
+        and claim.get("lease_holder_ref") == worker_id
+        and isinstance(worker_id, str)
+        and bool(worker_id.strip())
+        and all(
+            type(claim.get(key)) is int and claim[key] >= 1
+            for key in ("lease_epoch", "fencing_token")
+        )
+        and type(expiry) is int
+        and expiry > now
+    )
+
+
+def _native_context_id(session: Any, owner_ref: str, run_id: str) -> str:
+    """Derive the canonical A2A context identity from the admitted owner."""
+    from arbora.a2a import authority as a2a_authority
+
+    return "a2a-context-" + a2a_authority._digest(  # noqa: SLF001
+        {"tenant": session.tenant, "owner": owner_ref, "context": run_id}
+    )
+
+
+def _native_plan_host(context: Any) -> Any:
+    """Return the already-authorized hosted runtime for native publication."""
+    from arbora.mcp_server.task_plan import TaskPlanConfig
+
+    services = getattr(context, "operation_services", None)
+    config = context.services.get("task_plan_config")
+    if services is None or not isinstance(config, TaskPlanConfig):
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": "native task-plan runtime is not composed"}
+        )
+    if getattr(services, "runtime", None) is None:
+        raise OperationRefused(
+            "UNAVAILABLE",
+            {"reason": "native task-plan invocation authority unavailable"},
+        )
+    return SimpleNamespace(services=services, task_plan_config=config)
+
+
+async def _admit_native_plan_run(
+    context: Any, plan: Mapping[str, Any]
+) -> _NativePlanAdmission:
+    """Submit, verify and claim a plan run through the existing native owner.
+
+    The operation is composed with ``task_plan_work_engine`` only by the real
+    served invocation.  The engine assigns the opaque WorkItem identity; this
+    function never accepts a caller-selected native id or manufactures a lease.
+    """
+    import arbora.work_items as work_items
+    from arbora.a2a import authority as a2a_authority
+    from arbora.api.contracts.session import use_session
+
+    engine = context.services.get("task_plan_work_engine")
+    if engine is None:
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": "native task-plan owner is not composed"}
+        )
+    caller = context.caller
+    session = getattr(caller, "session", None)
+    if session is None or session.tenant != caller.tenant:
+        raise OperationRefused("UNAUTHENTICATED")
+
+    run_id = _native_plan_run_id(plan, caller)
+    plan_digest = str(plan["plan_digest"])
+    try:
+        owner_ref = a2a_authority.WorkItemA2AAuthority._owner_ref(session)
+    except (AttributeError, PermissionError, TypeError, ValueError) as exc:
+        raise OperationRefused("UNAUTHENTICATED") from exc
+
+    context_id = _native_context_id(session, owner_ref, run_id)
+    # Keep the A2A owner metadata schema because the existing run reader and
+    # terminal projections already enforce this exact owner/tenant contract.
+    # The plan digest is content identity; the request digest binds it to this
+    # caller-bound replay identity and context.
+    request_digest = a2a_authority._digest(  # noqa: SLF001
+        {
+            "context_id": context_id,
+            "plan_digest": plan_digest,
+            "request_id": caller.request_id,
+        }
+    )
+    metadata = {
+        "a2a_schema": a2a_authority._A2A_METADATA_SCHEMA,
+        "a2a_owner_ref": owner_ref,
+        "a2a_run_id": run_id,
+        "a2a_context_id": context_id,
+        "a2a_request_digest": request_digest,
+        "a2a_plan_digest": plan_digest,
+    }
+    idempotency_key = run_id
+    worker_id: str | None = None
+    with use_session(session):
+        item_id, _created = await asyncio.to_thread(
+            work_items.submit_work_item_atomic,
+            engine,
+            kind="orchestrator_task",
+            queue="orchestrator_task",
+            payload_ref=run_id,
+            tenant=session.tenant,
+            work_item_id=None,
+            run_id=run_id,
+            idempotency_key=idempotency_key,
+            created_by=owner_ref,
+            description="agents.plan_run",
+            resource_class="agent_dispatch",
+            metadata=metadata,
+        )
+        if not isinstance(item_id, str) or not item_id.strip():
+            raise OperationRefused(
+                "UNAVAILABLE", {"reason": "native WorkItem returned no identity"}
+            )
+        try:
+            if a2a_authority.WorkItemA2AAuthority._work_item_id(item_id) != item_id:
+                raise ValueError("native WorkItem identity is not opaque")
+        except ValueError as exc:
+            raise OperationRefused(
+                "UNAVAILABLE", {"reason": "native WorkItem identity is invalid"}
+            ) from exc
+        item = await asyncio.to_thread(work_items.get_work_item, engine, item_id)
+        if not a2a_authority.WorkItemA2AAuthority._owned(item, owner_ref):
+            raise OperationRefused(
+                "UNAVAILABLE", {"reason": "native WorkItem owner verification failed"}
+            )
+        item_metadata = item.get("metadata") if isinstance(item, dict) else None
+        if (
+            not isinstance(item_metadata, dict)
+            or item_metadata.get("a2a_run_id") != run_id
+            or item_metadata.get("a2a_context_id") != context_id
+            or item_metadata.get("a2a_request_digest") != request_digest
+            or item_metadata.get("a2a_plan_digest") != plan_digest
+        ):
+            raise OperationRefused(
+                "UNAVAILABLE", {"reason": "native WorkItem run identity mismatch"}
+            )
+        status = str(item.get("status") or "") if isinstance(item, dict) else ""
+        if status in work_items.TERMINAL_WORK_ITEM_STATUSES:
+            return _NativePlanAdmission(
+                item_id=item_id,
+                run_id=run_id,
+                lease=None,
+                claim=None,
+                terminal_status=status,
+                context_id=context_id,
+                owner_graph=work_items.native_owner_graph(engine),
+            )
+
+        worker_id = f"arbora-a2a:{item_id}"
+        claim = await asyncio.to_thread(
+            work_items.claim_specific,
+            engine,
+            item_id,
+            token=worker_id,
+            lease_ttl_s=600.0,
+        )
+    if claim is None:
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": "native WorkItem claim was not granted"}
+        )
+    if worker_id is None or not _native_plan_claim_valid(
+        claim,
+        session=session,
+        worker_id=worker_id,
+        work_item_id=item_id,
+    ):
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": "native WorkItem claim is invalid"}
+        )
+    return _NativePlanAdmission(
+        item_id=item_id,
+        run_id=run_id,
+        lease=WorkItemLease(
+            run_id=run_id,
+            worker_id=worker_id,
+            lease_epoch=int(claim["lease_epoch"]),
+            fencing_token=int(claim["fencing_token"]),
+        ),
+        claim=claim,
+        context_id=context_id,
+        owner_graph=work_items.native_owner_graph(engine),
+    )
+
+
+async def _commit_native_plan_run(
+    context: Any,
+    admission: _NativePlanAdmission,
+    *,
+    outcome: str,
+    error: bool = False,
+) -> str:
+    """Commit exactly one native terminal outcome under the returned fence."""
+    from agent_connector_sdk.privacy import persistence_reference
+
+    import arbora.work_items as work_items
+    from arbora.api.contracts.session import use_session
+
+    if admission.claim is None:
+        raise RuntimeError("native plan terminal commit has no claim")
+    result_ref = (
+        persistence_reference("run", admission.run_id, namespace="arbora-plan")
+        if not error
+        else None
+    )
+    error_ref = (
+        persistence_reference("error", "plan-failed", namespace="arbora-plan")
+        if error
+        else None
+    )
+    completion = {"schema_version": 1, "run_id": admission.run_id}
+    session = context.caller.session
+    with use_session(session):
+        return await asyncio.to_thread(
+            work_items.commit_result,
+            context.services["task_plan_work_engine"],
+            admission.item_id,
+            admission.claim,
+            outcome=outcome,
+            result_ref=result_ref,
+            error_ref=error_ref,
+            run_completion=completion,
+        )
+
+
+async def _settle_native_plan_run(
+    context: Any,
+    admission: _NativePlanAdmission,
+    *,
+    outcome: str,
+    error: bool = False,
+) -> str:
+    """Commit a terminal result and refuse a non-applied native status.
+
+    A cancellation can interrupt the awaiting task while the WorkItem commit
+    is still required.  Shield the commit task and keep waiting through an
+    interruption; the caller receives cancellation again only after the
+    durable outcome has been attempted.
+    """
+    commit_task = asyncio.create_task(
+        _commit_native_plan_run(context, admission, outcome=outcome, error=error)
+    )
+    interrupted = False
+    while True:
+        try:
+            status = await asyncio.shield(commit_task)
+            break
+        except asyncio.CancelledError:
+            interrupted = True
+            if commit_task.done() and commit_task.cancelled():
+                raise OperationRefused(
+                    "UNAVAILABLE",
+                    {"reason": "native terminal commit was cancelled"},
+                ) from None
+            continue
+    if status != "committed":
+        raise OperationRefused(
+            "UNAVAILABLE",
+            {"reason": "native terminal commit was not applied", "status": status},
+        )
+    if interrupted:
+        raise asyncio.CancelledError
+    return status
+
+
+async def _publish_and_execute_native_plan(
+    context: Any,
+    admission: _NativePlanAdmission,
+    plan: Mapping[str, Any],
+    proposal: Mapping[str, Any],
+    parsed: PlanRunParams,
+) -> tuple[Mapping[str, Any], dict[str, Any]]:
+    """Run native plans through the existing publication/owner scopes."""
+    import arbora.work_items as work_items
+    from arbora import agent_runs
+    from arbora.api.contracts.session import use_session
+    from arbora.current_plan_publication import bind_admitted_claim
+    from arbora.mcp_server import task_plan_runtime
+
+    try:
+        eg = import_module("epistemic_graph.generated.coordination")
+    except (ImportError, AttributeError) as exc:
+        raise OperationRefused(
+            "UPGRADE_REQUIRED", {"capability": "admitted_task_plan_runtime"}
+        ) from exc
+    if admission.claim is None:
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": "native task-plan claim is unavailable"}
+        )
+    host = _native_plan_host(context)
+    owner_graph = admission.owner_graph or work_items.native_owner_graph(
+        context.services["task_plan_work_engine"]
+    )
+    context_id = admission.context_id
+    if not isinstance(context_id, str) or not context_id:
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": "native task-plan context is unavailable"}
+        )
+    owner = SimpleNamespace(
+        run_id=admission.run_id,
+        claim=admission.claim,
+        owner_graph=owner_graph,
+    )
+    session = context.caller.session
+    # ``hosted_invocation=None`` on native_run_scope intentionally preserves
+    # the ordinary AU run loop.  The task-plan publication itself uses the
+    # already-authorized hosted runtime above; AU is not given a second host
+    # or authority source.
+    with (
+        use_session(session),
+        agent_runs.native_run_scope(
+            run_id=admission.run_id,
+            task_id=admission.run_id,
+            context_id=context_id,
+            work_item_id=admission.item_id,
+            session=session,
+            claim=admission.claim,
+            owner_graph=owner_graph,
+            hosted_invocation=None,
+        ),
+        bind_admitted_claim(
+            context.services["task_plan_work_engine"],
+            session=session,
+            run_id=admission.run_id,
+            work_item_id=admission.item_id,
+            claim=admission.claim,
+            hosted_invocation=host,
+            owner_graph=owner_graph,
+        ),
+    ):
+        published_plan = await task_plan_runtime._publish(
+            host,
+            context.caller,
+            owner,
+            plan,
+            proposal,
+            eg,
+        )
+        run = await execute_task_plan(
+            plan,
+            _plan_model(context),
+            run_id=admission.run_id,
+            fleet=_fleet_step_tools(
+                context,
+                parsed.fleet_tools,
+                replay_record(context.caller) if parsed.fleet_tools else "",
+            ),
+        )
+    return published_plan, run
+
+
+def _terminal_replay(status: str) -> dict[str, Any]:
+    """Project an already terminal native WorkItem without re-running it."""
+    return {
+        "status": status,
+        "error": None,
+        "output": None,
+        "started_order": [],
+        "tasks": {},
+        "fleet_calls": [],
+    }
+
+
 async def handle_plan_run(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Decide, verify, attach and execute one task plan for the verified caller."""
     parsed = PlanRunParams.model_validate(dict(params))
+    # The shared invocation boundary freezes all nested caller arguments before
+    # dispatch.  The engine's strict TaskPlan DTO is a JSON boundary and
+    # requires fresh lists and dictionaries; thaw only this proposal at that
+    # boundary, retaining the frozen invocation arguments and caller claims.
+    proposal = claim_values(parsed.plan)
+    if not isinstance(proposal, dict):
+        raise OperationRefused("INVALID_ARGUMENT", {"field": "plan"})
     caller = context.caller
     feature_schema = await _feature_schema(context, str(caller.tenant))
     engine = context.services.get("task_plan_engine") or engine_task_plan(
@@ -514,42 +958,115 @@ async def handle_plan_run(
     )
     plan, record = await decide_task_plan(
         engine,
-        parsed.plan,
+        proposal,
         tenant=caller.tenant,
         principal=caller.principal,
         feature_schema=feature_schema,
     )
+    native: _NativePlanAdmission | None = None
+    lease = parsed.work_item
+    if lease is None and context.services.get("task_plan_work_engine") is not None:
+        native = await _admit_native_plan_run(context, plan)
+        if native.terminal_status is not None:
+            return {
+                "value": {
+                    "record_id": record.get("record_id"),
+                    "plan_digest": plan["plan_digest"],
+                    "plan": plan,
+                    "published": None,
+                    "task_id": native.item_id,
+                    "run": _terminal_replay(native.terminal_status),
+                }
+            }
+        lease = native.lease
     published = None
-    if parsed.work_item is not None:
-        request = publish_request(
-            caller.tenant,
+    if lease is not None:
+        try:
+            if native is not None:
+                published_plan, run = await _publish_and_execute_native_plan(
+                    context, native, plan, proposal, parsed
+                )
+                # _publish performs receipt and readback verification.  Do
+                # not expose its opaque transport receipt as if it were a
+                # trusted result; return only the verified run/digest.
+                published = {
+                    "run_id": native.run_id,
+                    "plan_digest": published_plan.get("plan_digest")
+                    if isinstance(published_plan, Mapping)
+                    else plan["plan_digest"],
+                    "verified": True,
+                }
+            else:
+                request = publish_request(
+                    caller.tenant,
+                    plan,
+                    proposal,
+                    lease,
+                    now_ms=int(time.time() * 1000),
+                )
+                published = _validated_publish_receipt(
+                    await engine.publish(request, request["idempotency_key"]),
+                    lease,
+                )
+                run = await execute_task_plan(
+                    plan,
+                    _plan_model(context),
+                    run_id=lease.run_id,
+                    fleet=_fleet_step_tools(
+                        context,
+                        parsed.fleet_tools,
+                        replay_record(caller) if parsed.fleet_tools else "",
+                    ),
+                )
+        except asyncio.CancelledError:
+            if native is not None:
+                await _settle_native_plan_run(
+                    context, native, outcome="cancelled", error=False
+                )
+            raise
+        except Exception:
+            if native is not None:
+                await _settle_native_plan_run(
+                    context, native, outcome="failed", error=True
+                )
+            raise
+    else:
+        # The non-native compatibility path has no WorkItem idempotency
+        # authority.  Keep its historical plan identity; native admission
+        # always uses the caller-bound replay identity above.
+        run_id = _native_plan_run_id(plan)
+        run = await execute_task_plan(
             plan,
-            parsed.plan,
-            parsed.work_item,
-            now_ms=int(time.time() * 1000),
+            _plan_model(context),
+            run_id=run_id,
+            fleet=_fleet_step_tools(
+                context,
+                parsed.fleet_tools,
+                replay_record(caller) if parsed.fleet_tools else "",
+            ),
         )
-        published = await engine.publish(request, request["idempotency_key"])
-    run_id = (
-        parsed.work_item.run_id
-        if parsed.work_item is not None
-        else plan["plan_digest"].removeprefix("sha256:")[:32]
-    )
-    run = await execute_task_plan(
-        plan,
-        _plan_model(context),
-        run_id=run_id,
-        fleet=_fleet_step_tools(
+    if native is not None:
+        status = run.get("status")
+        outcome = (
+            "succeeded"
+            if status == "completed"
+            else "cancelled"
+            if status in {"cancelled", "canceled"}
+            else "failed"
+        )
+        await _settle_native_plan_run(
             context,
-            parsed.fleet_tools,
-            replay_record(caller) if parsed.fleet_tools else "",
-        ),
-    )
+            native,
+            outcome=outcome,
+            error=outcome == "failed",
+        )
     return {
         "value": {
             "record_id": record.get("record_id"),
             "plan_digest": plan["plan_digest"],
             "plan": plan,
             "published": published,
+            **({"task_id": native.item_id} if native is not None else {}),
             "run": run,
         }
     }

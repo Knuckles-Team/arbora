@@ -21,12 +21,15 @@ from __future__ import annotations
 
 import importlib.resources
 import json
-from collections.abc import Callable, Mapping
+from collections.abc import AsyncIterator, Callable, Mapping
+from contextlib import asynccontextmanager
+from dataclasses import replace
 from functools import cache
 from pathlib import Path
 from typing import Any
 
 from arbora.api.registry import EgSchemaRef
+from arbora.identity.ports import BrowserBoundaryFactory
 
 __all__ = [
     "PoolLeases",
@@ -261,6 +264,217 @@ def _with_ingest_runner(
     return {**bindings, "ingest_runner": runner}
 
 
+def _with_fleet_source_executor(
+    bindings: Mapping[str, Any] | None,
+    pool: Any,
+    graph: str,
+) -> Mapping[str, Any] | None:
+    """Expose the governed foreign-source reader to internal query paths.
+
+    The binding is a factory because a source executor carries the verified
+    caller for its fleet gateway calls.  It does not register or approve a
+    source; those writes belong to EG's owner-scoped ConnectorPack and
+    RegisterForeignSource methods.  Query code receives the same graph-routed
+    ``ServedEngine`` and must supply the EG approval receipt and approved
+    catalog mapping before calling ``read_approved``.
+    """
+
+    if not bindings or "fleet_gateway" not in bindings:
+        return bindings
+    if "fleet_source_executor" in bindings:
+        return bindings
+    from arbora.fleet.source_executor import FleetSourceExecutor
+    from arbora.mcp_server.served_engine import ServedEngine
+
+    engine = ServedEngine(pool)
+
+    def source_executor_for(
+        caller: Any, *, overall_timeout_s: float = 60.0
+    ) -> FleetSourceExecutor:
+        return FleetSourceExecutor.from_engine(
+            bindings["fleet_gateway"],
+            caller,
+            engine,
+            graph=graph,
+            overall_timeout_s=overall_timeout_s,
+        )
+
+    def source_binding_for(
+        caller: Any,
+        source_id: str,
+        *,
+        overall_timeout_s: float = 60.0,
+    ) -> Any:
+        """Resolve one approved source in the caller's startup scope.
+
+        Resolution is deliberately lazy: fleet onboarding binds the process
+        catalog after invocation composition.  The caller's verified tenant
+        and graph are required to match that catalog before a source binding
+        is returned; no request field can select another tenant projection.
+        """
+
+        from arbora.fleet.access_contracts import fleet_virtual_catalog
+        from arbora.fleet.source_executor import FleetSourceBinding
+
+        catalog = bindings.get("fleet_virtual_catalog")
+        if catalog is None:
+            catalog = fleet_virtual_catalog()
+        tenant = getattr(caller, "tenant", None)
+        session = getattr(caller, "session", None)
+        caller_graph = getattr(session, "graph", None)
+        if not isinstance(tenant, str) or not isinstance(caller_graph, str):
+            raise LookupError("verified caller scope is unavailable")
+        source = catalog.approved_source_for(
+            source_id,
+            scope=(tenant, caller_graph),
+        )
+        return FleetSourceBinding(
+            executor=source_executor_for(caller, overall_timeout_s=overall_timeout_s),
+            source=source,
+        )
+
+    return {
+        **bindings,
+        "fleet_source_executor": source_executor_for,
+        "fleet_source_binding": source_binding_for,
+    }
+
+
+def _with_nl_federation_planner(
+    bindings: Mapping[str, Any] | None,
+) -> Mapping[str, Any] | None:
+    """Register the native, read-only NL preparation port when available.
+
+    ``NlQueryPlan`` is generated from the Medulla/EG contract.  A process
+    built without that producer artifact remains unbound and therefore cannot
+    accidentally fall back to ``NlQueryExplain`` or an Arbora-side planner.
+    The source binding is composed first so the later dispatcher can resolve
+    the exact owner-scoped catalog entry before opening a foreign read.
+    """
+
+    if not bindings or "fleet_source_binding" not in bindings:
+        return bindings
+    if "nl_federation_planner" in bindings:
+        return bindings
+    try:
+        from epistemic_graph.generated import METHOD_IDS
+        from epistemic_graph.generated import query as generated_query
+    except (ImportError, ModuleNotFoundError):
+        return bindings
+    if "NlQueryPlan" not in METHOD_IDS:
+        return bindings
+    send_plan = getattr(generated_query, "send_nl_query_plan", None)
+    decode_plan = getattr(generated_query, "decode_nl_query_plan", None)
+    if not callable(send_plan) or not callable(decode_plan):
+        return bindings
+    from arbora.api.ops.query_federation import NativeNlQueryPlanPlanner
+
+    return {
+        **bindings,
+        "nl_federation_planner": NativeNlQueryPlanPlanner(send_plan, decode_plan),
+    }
+
+
+def _schema_action(session: Any, graph: str, pin: Mapping[str, Any]) -> Any:
+    """The exact schema intent considered by the existing action-policy owner."""
+    from arbora.api.contracts import ActionRequest
+    from arbora.api.task_plan_schema import COMPONENT_VERSION, PURPOSE_ID
+
+    return ActionRequest(
+        kind=PURPOSE_ID,
+        target=pin["component_id"],
+        params={
+            "component_kind": pin["kind"],
+            "component_version": COMPONENT_VERSION,
+            "schema_version": pin["schema_version"],
+            "content_digest": pin["content_digest"],
+            "engine_version": pin["engine_version"],
+            "tenant_id": session.tenant,
+            "graph": graph,
+            "policy_revision": str(session.policy_version),
+        },
+        source="arbora",
+        reason="authorize the pinned task-plan feature schema publication",
+        actor_id=str(session.actor.actor_id),
+    )
+
+
+def _schema_session(session: Callable[[], Any], tenant: str, graph: str) -> Any:
+    from arbora.api.contracts.session import ScopeError, resolve_session
+
+    verified = resolve_session(session(), graph=graph)
+    try:
+        # EG's FeatureSchema publisher classifies this as the exact
+        # admin:decision-catalog action.  A service identity carrying that
+        # exact capability may use it directly; EG also explicitly treats
+        # kg:admin as the aggregate grant for every admin action.  Keep the
+        # aggregate fallback here rather than lowering publication to the
+        # ordinary kg:write capability (which EG deliberately refuses).
+        verified.require_scope("admin:decision-catalog")
+    except ScopeError:
+        verified.require_scope("kg:admin")
+    if verified.tenant != tenant or not str(verified.policy_version).strip():
+        raise PermissionError(
+            "schema publication needs its verified tenant and revision"
+        )
+    return verified
+
+
+async def _schema_publish_context(
+    engine: Any,
+    session: Callable[[], Any],
+    graph: str,
+    tenant: str,
+    pin: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Require a new durable receipt; default policy still holds this action."""
+    import asyncio
+
+    from arbora.api.contracts import PolicyDisposition, PolicyReceipt, get_action_policy
+    from arbora.api.contracts.provisioning import _opaque_principal
+    from arbora.api.task_plan_schema import PURPOSE_ID
+    from arbora.mcp_server.decide_wiring import _mutation_context
+
+    request = _schema_action(_schema_session(session, tenant, graph), graph, pin)
+    digest = request.digest()
+    decision = await asyncio.to_thread(get_action_policy(engine).decide, request)
+    verified = _schema_session(session, tenant, graph)
+    if _schema_action(verified, graph, pin).digest() != digest:
+        raise PermissionError(
+            "schema publication intent changed during policy decision"
+        )
+    receipt = decision.receipt
+    if not (
+        decision.allowed
+        and decision.disposition is PolicyDisposition.APPROVE
+        and isinstance(receipt, PolicyReceipt)
+        and receipt.authorizes_effect
+        and receipt.receipt_id == decision.audit_id
+        and receipt.request_digest == digest
+        and decision.request.digest() == digest
+    ):
+        raise PermissionError(
+            "schema publication has no exact effect-authorizing receipt"
+        )
+    context = _mutation_context(verified, PURPOSE_ID)
+    # AgentComponent validates the caller-shaped mutation context before EG's
+    # admitted-context binder replaces its policy and process-owner fields.
+    # Use the same canonical opaque principal derivation as connector-pack
+    # provisioning; the native binder still authenticates and replaces the
+    # authoritative carrier, tenant, and policy values.
+    opaque_principal = _opaque_principal(str(verified.actor.actor_id))
+    context.update(
+        principal=opaque_principal,
+        caller_principal=opaque_principal,
+        actor_scope=opaque_principal,
+    )
+    return {
+        **context,
+        "policy_digest": f"sha256:{receipt.request_digest}",
+        "policy_decision_id": receipt.receipt_id,
+    }
+
+
 def _with_task_plan_schema(
     bindings: Mapping[str, Any] | None,
     pool: Any,
@@ -277,8 +491,13 @@ def _with_task_plan_schema(
     """
     if bindings is None or "task_plan_schema_pins" in bindings:
         return bindings
-    from arbora.api.task_plan_schema import PURPOSE_ID, engine_publish, startup_pins
-    from arbora.mcp_server.decide_wiring import _mutation_context
+    from arbora.api.contracts.session import (
+        current_session,
+        resolve_session,
+        use_session,
+    )
+    from arbora.api.task_plan_schema import engine_publish, startup_pins
+    from arbora.mcp_server.served_engine import ServedEngine
 
     pins = startup_pins()
     if pins is None:
@@ -287,10 +506,64 @@ def _with_task_plan_schema(
     async def client_for(tenant: str) -> Any:
         return await pool.connected_client(connect_context(tenant), graph)
 
-    def context_for(tenant: str) -> dict[str, Any]:
-        return {**_mutation_context(session(), PURPOSE_ID), "tenant_id": tenant}
+    engine = ServedEngine(pool)
 
-    publish = engine_publish(client_for, context_for, graph)
+    async def context_for(tenant: str, pin: Mapping[str, Any]) -> dict[str, Any]:
+        return await _schema_publish_context(engine, session, graph, tenant, pin)
+
+    @asynccontextmanager
+    async def bind_client(tenant: str) -> AsyncIterator[Any]:
+        # AgentComponent's generated senders operate on the raw EG transport.
+        # Bind the process authority for the exact tenant/graph around both the
+        # current read and the publish so client_scope is restored per request
+        # and concurrent tenants cannot inherit one another's claims.
+        async with pool.bind(connect_context(tenant), graph) as client:
+            yield client
+
+    publisher = engine_publish(client_for, context_for, graph, bind_client=bind_client)
+
+    async def publish(tenant: str, pin: Mapping[str, Any]) -> str:
+        bound = session()
+        request = current_session()
+        if request is not None:
+            # Validate the request authority on its own before comparing it
+            # with the separately minted process authority.  A served request
+            # normally carries a fresh JWT, so its credential expiry can
+            # differ from the process token's expiry even when every identity,
+            # tenant, scope, graph, policy, and routing field is identical.
+            resolve_session(request, graph=graph)
+            request_actor = request.actor
+            bound_actor = replace(
+                bound.actor,
+                # ``credential_expires_at`` is the one per-token ActorContext
+                # field.  The process actor's lease and expiry are still
+                # validated below when the real process session is installed.
+                credential_expires_at=request_actor.credential_expires_at,
+            )
+            # HTTP/MCP admission binds the caller's verified request session,
+            # while schema publication deliberately uses the separately
+            # verified process authority.  Compare every authority field
+            # before switching context; only the request-local trace and the
+            # per-token credential expiry may differ between these two
+            # verified sessions.
+            resolve_session(
+                replace(
+                    bound,
+                    actor=bound_actor,
+                    trace_context=request.trace_context,
+                ),
+                graph=graph,
+            )
+            if request.tenant != tenant:
+                raise PermissionError(
+                    "schema publication cannot retarget its request tenant"
+                )
+        with use_session(bound):
+            verified = resolve_session(graph=graph)
+            if verified.tenant != tenant:
+                raise PermissionError("schema publication cannot retarget its tenant")
+            return await publisher(tenant, pin)
+
     _warm_task_plan_schema(pins, publish, str(session().tenant))
     return {
         **bindings,
@@ -343,6 +616,7 @@ def compose_served_invocation(
     bindings: Mapping[str, Any] | None = None,
     fleet_effect: Any = None,
     task_plan_config: Any = None,
+    browser_boundary_factory: BrowserBoundaryFactory | None = None,
 ) -> Any:
     """One admitted :class:`HostedInvocation` over the served EG pool."""
     from arbora.api.http.auth import (
@@ -378,7 +652,25 @@ def compose_served_invocation(
 
     minted = session()
     bindings = _with_ingest_runner(bindings, pool, graph, connect_context)
+    bindings = _with_fleet_source_executor(bindings, pool, graph)
+    bindings = _with_nl_federation_planner(bindings)
     bindings = _with_task_plan_schema(bindings, pool, graph, connect_context, session)
+    if (
+        bindings is not None
+        and task_plan_config is not None
+        and "task_plan_config" not in bindings
+    ):
+        # Native plan publication reuses the existing verified runtime path;
+        # the config is trusted composition data, never request metadata.
+        bindings = {**bindings, "task_plan_config": task_plan_config}
+    if bindings is not None and "task_plan_work_engine" not in bindings:
+        # ``agents.plan_run`` attaches to the same engine-owned WorkItem
+        # authority used by A2A.  The adapter assigns the opaque item id and
+        # owns submit/claim/fence transitions; plan-run never accepts a caller
+        # selected native id or synthesizes a lease.
+        from arbora.mcp_server.served_engine import ServedEngine
+
+        bindings = {**bindings, "task_plan_work_engine": ServedEngine(pool)}
     step_invoke = None
     if bindings is not None and "plan_step_invoke" not in bindings:
         from arbora.api.ops.plans import LateStepInvoke
@@ -448,13 +740,36 @@ def compose_served_invocation(
     )
     if step_invoke is not None:
         step_invoke.bind(services)
-    return HostedInvocation(
+    invocation = HostedInvocation(
         services=services,
         task_plan_config=task_plan_config,
         authenticator=AmbientHTTPAuthenticator(
             session_for_request=verified_bearer_session_for_request
         ),
     )
+
+    from dataclasses import replace
+
+    from arbora.core.settings import runtime_config
+
+    if browser_boundary_factory is None:
+        if runtime_config.enable_web_ui and runtime_config.webui_auth_mode == "eg":
+            raise RuntimeError("EG browser requires the process-root identity factory")
+        return invocation
+
+    def browser_broker_claims() -> Any:
+        current = session()
+        current.ensure_authority_current()
+        return connect_context(current.tenant).to_claims()
+
+    boundary = browser_boundary_factory(
+        invocation,
+        service_client,
+        graph=graph,
+        tenant=minted.tenant,
+        broker_claims=browser_broker_claims,
+    )
+    return replace(invocation, browser_boundary=boundary)
 
 
 class _LeaseClient:
@@ -472,6 +787,7 @@ def served_invocation_from_settings(
     process_session: Callable[[], Any],
     bindings: Mapping[str, Any],
     fleet_effect: Any,
+    browser_boundary_factory: BrowserBoundaryFactory | None = None,
 ) -> Any:
     """The served invocation from the deployment settings, or ``None``.
 
@@ -502,4 +818,5 @@ def served_invocation_from_settings(
         bindings=bindings,
         fleet_effect=fleet_effect,
         task_plan_config=task_plan_config,
+        browser_boundary_factory=browser_boundary_factory,
     )

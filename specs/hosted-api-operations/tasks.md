@@ -245,6 +245,7 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R067.7:** Hot-path proof. Add the served three-call test.
 - [ ] **ARBORA-OPS-R067.8:** Web-source contract. Call `web_extract` with `{"request": ...}` and read `WebPageResult`/`WebFetchRefusal`.
 - [ ] **ARBORA-OPS-R067.9:** Bounded page fetch. Bound each `web_extract` call and fall back on `timeout`.
+- [ ] **ARBORA-OPS-R067.10:** Bind EG web conformance evidence to the existing fleet decision and live revision before dispatch.
 
 ## Served harness component and improvement library operations (R068)
 
@@ -257,7 +258,7 @@ See [design](plan.md) and [tests](test-spec.md).
 
 
 - [ ] **ARBORA-OPS-R021.4.5.1.1:** Compose the stateless native reader and qualify source-level authority/projection checks; retain the installed-EG acceptance blocker.
-- [ ] **ARBORA-OPS-R021.4.5.1.2:** Compose native run admission, lease-bound scaffold publication and matching graph reads; qualify a real native lifecycle.
+- [ ] **ARBORA-OPS-R021.4.5.1.2:** Compose native run admission, lease-bound scaffold publication and matching graph reads. Add explicit trusted scaffold on/off configuration, default off. Qualify both modes through the actual AU callback and real native lifecycle.
 
 ## Served source operations (R848)
 
@@ -279,7 +280,7 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R854.1:** Wiring.
 - [ ] **ARBORA-OPS-R854.2:** Hot-path proof.
 - [ ] **ARBORA-OPS-R855:** Catalog and governance operations (rollup).
-- [ ] **ARBORA-OPS-R855.1:** Routing.
+- [x] **ARBORA-OPS-R855.1:** Routing. Evidence: `tests/api/test_resolve.py::test_catalog_class_ask_routes_to_the_engine_planner_ahead_of_ranking`.
 - [ ] **ARBORA-OPS-R855.2:** Hot-path proof.
 - [ ] **ARBORA-OPS-R856:** Quality and lineage operations (rollup).
 - [ ] **ARBORA-OPS-R856.1:** Wiring.
@@ -293,7 +294,7 @@ See [design](plan.md) and [tests](test-spec.md).
 
 - [ ] **ARBORA-OPS-R855.3:** Trust flag, curation review and query workspace operations.
 - [ ] **ARBORA-OPS-R855.4:** Ask answers from the graph.
-- [ ] **ARBORA-OPS-R855.5:** Find surfaces catalog assets.
+- [x] **ARBORA-OPS-R855.5:** Find surfaces catalog assets. Evidence: `tests/api/test_resolve.py::test_find_for_catalog_assets_points_at_the_graph_query_ops_first`.
 - [ ] **ARBORA-OPS-R855.6:** Governed routing only.
 
 ## Served program optimization operations (R860)
@@ -324,3 +325,13 @@ See [design](plan.md) and [tests](test-spec.md).
 
 - [ ] `ARBORA-OPS-R021.4.8` — Add cursor-bound graph projection to existing run reads; qualify the read-only flat-plan slice before nested lineage.
 - [ ] `ARBORA-OPS-R021.4.9` — Add owner-bound public node records and separate capability flags; keep unsupported interaction unavailable.
+- [ ] `ARBORA-OPS-R021.4.8.1` — Qualify the negotiated prompt-free flat snapshot with pure, served-source and generated-contract checks; native-service acceptance remains separate.
+- [ ] `ARBORA-OPS-R021.4.8.2` — Qualify producer-declared nested lineage and snapshot/update reconciliation through installed owners and both transports; retain all parent acceptance.
+
+## Medulla companion rows (2026-10-28)
+
+- [ ] `ARBORA-OPS-R069`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-OPS-R070`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-OPS-R071`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-OPS-R072`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-OPS-R073`: Deliver the requirement in requirements.md.

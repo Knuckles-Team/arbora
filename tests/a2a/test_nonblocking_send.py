@@ -26,8 +26,12 @@ def _served_app(monkeypatch: pytest.MonkeyPatch, run_seconds: float) -> Any:
     from arbora.security import request_identity
     from arbora.security.actor_context import ActorContext, ActorType
 
-    monkeypatch.setattr(runtime_config, "auth_jwt_audience", "arbora-fixture")
-    monkeypatch.setattr(runtime_config, "kg_policy_version", "policy:fixture")
+    monkeypatch.setitem(
+        runtime_config._overrides, "auth_jwt_audience", "arbora-fixture"
+    )
+    monkeypatch.setitem(
+        runtime_config._overrides, "kg_policy_version", "policy:fixture"
+    )
 
     async def credential_owner(credential: str) -> ActorContext:
         assert credential == "fixture-verified"  # sanitizer:ignore - synthetic

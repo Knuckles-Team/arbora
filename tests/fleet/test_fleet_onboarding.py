@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+import sys
 import threading
 import time
+import types
 from types import SimpleNamespace
 from typing import Any
 
@@ -226,6 +228,22 @@ def test_endpoints_keep_only_enabled_streamable_http_servers() -> None:
     )
 
 
+def test_configured_fleet_reads_the_active_arbora_directory(
+    tmp_path, monkeypatch
+) -> None:
+    active = tmp_path / "active"
+    active.mkdir()
+    (active / "mcp_config.json").write_text(
+        json.dumps({"mcpServers": {"alpha-mcp": {"url": "https://alpha/mcp"}}})
+    )
+    monkeypatch.setenv("ARBORA_CONFIG_DIR", f"  {active}  ")
+    monkeypatch.setenv("AGENT_UTILITIES_CONFIG_DIR", str(tmp_path / "legacy"))
+
+    assert onboarding.configured_fleet_endpoints() == (
+        FleetEndpoint("alpha-mcp", "https://alpha/mcp"),
+    )
+
+
 def test_renewal_reregisters_only_lapsing_or_absent_leases() -> None:
     registry = _Registry(
         leases={
@@ -252,6 +270,48 @@ def test_renewal_reregisters_only_lapsing_or_absent_leases() -> None:
         f"arbora:register-server:absent-mcp:http://absent/mcp:{window}",
     ]
     assert all(params["ttl_secs"] == 86_400 for params, _key in registry.registers)
+
+
+def test_provision_reregistration_issues_a_fresh_key_per_call() -> None:
+    """A (re)registration outside a renewal window is a fresh issue.
+
+    Reusing the idempotency key of an earlier, already committed issue is
+    refused by the engine as IDEMPOTENCY_CONFLICT (the lease is re-derived
+    server-side on every RegisterServer, so the new issue is not a byte
+    identical replay of the old receipt). A live lease is still left
+    untouched.
+    """
+    registry = _Registry(leases={})
+    endpoints = {"absent-mcp": "http://absent/mcp"}
+
+    renewed = asyncio.run(
+        ensure_server_registrations(registry, endpoints, now_ms=NOW_MS)
+    )
+    assert renewed == ("absent-mcp",)
+    first_key = registry.registers[0][1]
+    assert first_key.startswith("arbora:register-server:absent-mcp:http://absent/mcp:")
+
+    # The lease the first issue minted is live: no re-issue.
+    registry.registers.clear()
+    renewed = asyncio.run(
+        ensure_server_registrations(registry, endpoints, now_ms=NOW_MS)
+    )
+    assert renewed == ()
+    assert registry.registers == []
+
+    # After the lease lapses, the engine's reaper drops the :Server row (EG
+    # lists only live registrations) -- emulate that, then re-issue.
+    registry.registers.clear()
+    registry.leases.pop("absent-mcp", None)
+    renewed = asyncio.run(
+        ensure_server_registrations(
+            registry, endpoints, now_ms=NOW_MS + 86_400 * 1_000 + 1
+        )
+    )
+    assert renewed == ("absent-mcp",)
+    second_key = registry.registers[0][1]
+    assert second_key.startswith("arbora:register-server:absent-mcp:http://absent/mcp:")
+    assert second_key != first_key
 
 
 def test_fresh_store_pass_registers_attests_and_imports_each_server(
@@ -542,6 +602,68 @@ def test_boot_without_an_engine_starts_no_thread() -> None:
     )
 
     assert started is None
+
+
+def test_bootstrap_passes_the_process_virtual_catalog_to_onboarding(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from arbora.fleet import access_contracts
+    from arbora.fleet.virtual_catalog import VirtualCatalog
+
+    monkeypatch.setattr(access_contracts, "_CATALOG", [])
+    seen: list[object] = []
+
+    def start(self: FleetOnboardingService) -> object:
+        seen.append(self.onboarding.virtual_catalog)
+        return object()
+
+    monkeypatch.setattr(FleetOnboardingService, "start", start)
+    started = start_fleet_onboarding(
+        engine=SimpleNamespace(graph_compute=object()),
+        session=_session(),
+        multiplexer=_Mux({}),
+    )
+
+    assert started is not None
+    assert len(seen) == 1
+    assert isinstance(seen[0], VirtualCatalog)
+    assert access_contracts.fleet_virtual_catalog() is seen[0]
+    assert seen[0].scope == (TENANT, GRAPH)
+
+
+@pytest.mark.asyncio
+async def test_native_source_approval_missing_stays_pending(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for name in (
+        "epistemic_graph.generated.connector_pack",
+        "epistemic_graph.generated.models",
+        "epistemic_graph.generated.storage",
+    ):
+        monkeypatch.setitem(sys.modules, name, types.ModuleType(name))
+
+    from arbora.fleet.access_contracts import SourceApprovalDecision
+
+    onboarding = FleetOnboarding(
+        engine=None,
+        session=None,
+        surfaces={"tickets-mcp": {}},
+    )
+    decision = SourceApprovalDecision(
+        connector="tickets-mcp",
+        contract_iri="urn:ac:read",
+        mapping_iri="urn:ac:read",
+        outcome="approved",
+        policy_id="test.policy",
+        reason="test policy intent",
+    )
+
+    await onboarding.approve_contracts(
+        FleetEndpoint("tickets-mcp", "http://tickets/mcp"), object(), (decision,)
+    )
+
+    assert onboarding.source_receipts["tickets-mcp"] == ()
+    assert "approve_source" in onboarding.surfaces["tickets-mcp"]["sources_pending"]
 
 
 def test_cli_runs_one_full_pass_and_fails_on_any_server(

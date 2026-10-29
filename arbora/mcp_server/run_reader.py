@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable
+from datetime import UTC, datetime
 from typing import Any
 
 from epistemic_graph import EngineResponseError
@@ -14,6 +15,13 @@ from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.bootstrap import _caller_dispatch_graph
 from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops.run_graph import (
+    MAX_GRAPH_EVENTS,
+    ExecutionGraphParams,
+    declared_topology,
+    project_graph,
+    unavailable_graph,
+)
 from arbora.api.ops.run_replay import (
     MAX_HISTORY_EVENTS,
     MAX_PAGE_BYTES,
@@ -24,6 +32,8 @@ from arbora.api.ops.run_replay import (
     unavailable,
     validate_history,
 )
+from arbora.api.ops.runs import project_current_plan
+from arbora.mcp_server.current_plan_reader import _project, read_native_snapshot
 
 _RUN_STATUS = {
     "submitted": "pending",
@@ -96,6 +106,42 @@ class NativeRunReader:
         item = await self._owned(context, request.run_id, request.task_id)
         if item is None:
             return unavailable(request.run_id)
+        loaded = await self._page(context, request)
+        return unavailable(request.run_id) if loaded is None else loaded[1]
+
+    async def execution_graph(
+        self, *, context: ExecutionContext, request: ExecutionGraphParams
+    ) -> dict[str, Any]:
+        """One caller-bound native plan and bounded prefix, with no local store."""
+        if await self._owned(context, request.run_id, request.task_id) is None:
+            return unavailable_graph(request)
+        first = await read_native_snapshot(context, request.run_id)
+        topology = _current_topology(first, request.run_id)
+        if topology is None:
+            return unavailable_graph(request)
+        replay = RunEventsParams(
+            run_id=request.run_id, task_id=request.task_id, limit=MAX_GRAPH_EVENTS
+        )
+        loaded = await self._page(context, replay)
+        if loaded is None or loaded[1]["availability"] != "available":
+            return unavailable_graph(request)
+        # The owner and native publication can change while history is collected.
+        if await self._owned(context, request.run_id, request.task_id) is None:
+            return unavailable_graph(request)
+        last = await read_native_snapshot(context, request.run_id)
+        if (
+            _current_topology(last, request.run_id) != topology
+            or last["task_plan"] != first["task_plan"]
+        ):
+            return unavailable_graph(request)
+        try:
+            return project_graph(request, topology, *loaded)
+        except (ValueError, TypeError, KeyError, UnicodeError):
+            return unavailable_graph(request)
+
+    async def _page(
+        self, context: ExecutionContext, request: RunEventsParams
+    ) -> tuple[list[dict[str, Any]], dict[str, Any]] | None:
         with use_session(context.caller.session):
             try:
                 engine, _ = self._authority._engine()
@@ -109,13 +155,23 @@ class NativeRunReader:
                     )
                 )
                 if history is None or request.after > len(history):
-                    return unavailable(request.run_id)
+                    return None
                 rows = await _hydrate_page(engine, request, len(history))
                 if rows is None:
-                    return unavailable(request.run_id)
+                    return None
             except EngineResponseError as exc:
                 raise EngineRefusal(exc.code) from exc
-        return _reconcile_page(rows, history, request)
+        return rows, _reconcile_page(rows, history, request)
+
+
+def _current_topology(raw: Any, run_id: str) -> tuple[str, dict[str, list[str]]] | None:
+    current = project_current_plan(_project(raw), run_id=run_id, now=datetime.now(UTC))
+    if current.availability != "available":
+        return None
+    try:
+        return declared_topology(raw)
+    except (ValueError, TypeError, KeyError):
+        return None
 
 
 async def _hydrate_page(

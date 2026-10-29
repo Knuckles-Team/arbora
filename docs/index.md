@@ -14,7 +14,7 @@
 </section>
 
 <figure class="site-architecture" markdown>
-  [![Knuckles platform runtime architecture](https://raw.githubusercontent.com/Knuckles-Team/epistemic-graph/main/docs/assets/runtime-architecture.svg)](https://knuckles-team.github.io/.github/architecture/#arbora)
+  [![Knuckles platform runtime architecture](https://raw.githubusercontent.com/Knuckles-Team/medulla/main/docs/assets/runtime-architecture.svg)](https://knuckles-team.github.io/.github/architecture/#arbora)
 
   [Explore the live architecture](https://knuckles-team.github.io/.github/architecture/#arbora)
   <figcaption>One request path, five deliberately separate authorities.</figcaption>
@@ -57,7 +57,7 @@
     </div>
     <div class="site-ownership__item">
       <span class="site-ownership__label">Arbora delegates</span>
-      <span class="site-ownership__value">Agent decisions to agent-utilities, durable state and reasoning to epistemic-graph, source effects to connector services, and presentation to Agent WebUI.</span>
+      <span class="site-ownership__value">In-run execution to Meristem, durable state and reasoning to Medulla, source effects to connector services, and presentation to Overstory.</span>
     </div>
   </div>
 </div>
@@ -79,7 +79,7 @@ explicitly.
   </li>
   <li class="site-flow__step">
     <span class="site-flow__title">Route to the owner</span>
-    <span class="site-flow__body">Agent work reaches agent-utilities; graph work reaches epistemic-graph; source work reaches an admitted connector.</span>
+    <span class="site-flow__body">Agent work reaches agent-utilities; graph work reaches Medulla; source work reaches an admitted connector.</span>
   </li>
   <li class="site-flow__step">
     <span class="site-flow__title">Return evidence</span>
@@ -92,10 +92,10 @@ explicitly.
 | If the operator must… | Go to… |
 |---|---|
 | Run MCP, REST, A2A, WebUI, or fleet supervision | **Arbora** — the operator are here |
-| Build agents, workflows, evaluations, or skills | [agent-utilities](https://knuckles-team.github.io/agent-utilities/) |
-| Store, query, reason over, or prove durable knowledge | [epistemic-graph](https://knuckles-team.github.io/epistemic-graph/) |
-| Build and certify a source connector | [agent-connector-sdk](https://knuckles-team.github.io/agent-connector-sdk/) |
-| Use the platform in a browser | [Agent WebUI](https://knuckles-team.github.io/agent-webui/) |
+| Build agents, workflows, evaluations, or skills | [Meristem](https://knuckles-team.github.io/meristem/) |
+| Store, query, reason over, or prove durable knowledge | [Medulla](https://knuckles-team.github.io/medulla/) |
+| Build and certify a source connector | [Scion SDK](https://knuckles-team.github.io/scion-sdk/) |
+| Use the platform in a browser | [Overstory](https://knuckles-team.github.io/overstory/) |
 
 The [capability status](status.md) is the exact account of the surfaces shipped
 by this package.

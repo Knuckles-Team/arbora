@@ -13,7 +13,10 @@
     "ARBORA-ACP-R001.6",
     "ARBORA-ACP-R001.7",
     "ARBORA-ACP-R001.8",
-    "ARBORA-ACP-R001.9"
+    "ARBORA-ACP-R001.9",
+    "ARBORA-ACP-R001.9.1",
+    "ARBORA-ACP-R001.9.2",
+    "ARBORA-ACP-R001.9.3"
   ],
   "requirements": [
     {
@@ -109,9 +112,72 @@
     {
       "id": "ARBORA-ACP-R001.9",
       "title": "Serve bounded read and preview duplex sessions",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "1d09ef1c3109",
+        "1fa25a22c11b",
+        "22e9d05f8292",
+        "552743f1bd41",
+        "63fdf0fb0545"
+      ],
+      "verified_by": [
+        "tests/acp/test_adapter.py:12",
+        "tests/acp/test_central_runtime.py:36",
+        "tests/acp/test_http_transport.py:28",
+        "tests/acp/test_local_history.py:13",
+        "tests/acp/test_local_runtime.py:12"
+      ],
+      "rollup_of": [
+        "ARBORA-ACP-R001.9.1",
+        "ARBORA-ACP-R001.9.2",
+        "ARBORA-ACP-R001.9.3"
+      ]
+    },
+    {
+      "id": "ARBORA-ACP-R001.9.1",
+      "title": "Project admitted AU runs through the ACP SDK",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "1d09ef1c3109",
+        "1fa25a22c11b",
+        "63fdf0fb0545",
+        "6718f48d0520",
+        "6e22275807ca"
+      ],
+      "verified_by": [
+        "tests/acp/test_adapter.py:12",
+        "tests/acp/test_local_history.py:13",
+        "tests/acp/test_local_runtime.py:12",
+        "tests/acp/test_native_observer.py:13",
+        "tests/acp/test_session_policy.py:135"
+      ]
+    },
+    {
+      "id": "ARBORA-ACP-R001.9.2",
+      "title": "Mount the authenticated experimental HTTP/SSE profile",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "1d09ef1c3109",
+        "552743f1bd41"
+      ],
+      "verified_by": [
+        "tests/acp/test_http_transport.py:28"
+      ]
+    },
+    {
+      "id": "ARBORA-ACP-R001.9.3",
+      "title": "Governed central final answer",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "1d09ef1c3109",
+        "22e9d05f8292",
+        "63fdf0fb0545",
+        "acce0c4440af",
+        "df0d500bbd64"
+      ],
+      "verified_by": [
+        "tests/acp/test_central_runtime.py:36"
+      ]
     }
   ]
 }

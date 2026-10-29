@@ -564,3 +564,52 @@ They do not qualify deployed WebUI, native issuance or live identity.
 This source retains the dedicated native issuer adapter and admission checks without replacing current caller credentials or process refusals. The issuer prerequisite is EG694's exact-source host-start contract and fresh generated bindings. Older generated artifacts and controlled owner fixtures cannot qualify that dependency. Native issuer policy, installed consumer composition and actual host startup remain open. No credentials, grants or infrastructure starts are created by this source reconciliation.
 
 The separate web-only slice retains owner-attested borrowed ASGI resources and revalidates admission at lifespan startup. Its controlled application fixtures do not qualify a deployed WebUI factory or native issuer. R010.7.2.2.2.2 retains live client activation, terminal, combined interfaces and logs acceptance. No listener is started outside bounded local fixtures.
+
+## Unique action-decision audit refusal
+
+For `ARBORA-HOST-R033`, a false atomic-create result means the unique ID already
+exists. The action-policy owner must not treat that ID as a new decision receipt.
+Both a collision and a write exception leave the action without effect authority.
+This bounded refusal repair does not qualify native audit persistence or the
+separate approval-grant flow.
+
+## 2026-10-26: Native terminal acceptance migration
+
+R009.8.2.2.1 replaces the retired Python/Textual test consumer with released
+Tuig 2.3.6, released from `4f53111e53f6179312995883f4f62c8bb584d502`.
+The native executable consumes the existing authenticated HTTP contract and
+renders it in a real PTY. This supersedes the Python terminal adapter examples
+above; it does not restore another TUI implementation.
+
+Keep exact endpoint and source-generation receipt bindings. The test extra
+selects the published Linux x86_64/aarch64 wheels and a terminal-cell decoder.
+No source checkout or private consumer implementation replaces that wheel.
+The four cases retain real sink, restart, rotation, delayed reads and writes, and clearing
+checks with controlled identity/grant owners. They do not establish deployed
+grant issuance, complete host startup or Overstory acceptance (R009.8.2.2.2).
+
+The log lifecycle fixture waits for the native startup task request to finish
+before opening logs. A visible first-frame footer is not a completion signal.
+Opening logs during a pending sink write remains a separate fail-closed storage-contention
+case, not a passing lifecycle journey. Keep the busy-storage refusal tests unchanged.
+
+## Loopback skill-certification authority
+
+`ARBORA-HOST-R027` restores the lifecycle-owned certification issuer under
+`arbora.certification.oidc`. It reuses the former harness authority's bounded
+HTTPS request parser, one-run CA, client-credentials token issuer and cleanup.
+The server accepts only the loopback bind and clients verify the run-specific CA.
+The certification script reports only the issuer and public CA, handles SIGINT
+and SIGTERM, and owns shutdown. The fixture and tests use the real TLS endpoint
+and verify the issued token with its served JWKS. This is an ephemeral
+certification tool, not a general identity provider or persistent credential store.
+
+### Host-owned configuration paths
+
+Gateway, fleet, certification and profile consumers use `arbora.core.settings`.
+The MCP path is `mcp_config.json` in the active Arbora configuration directory.
+These callers do not gain a legacy fallback. Arbora trims leading and trailing
+whitespace from `ARBORA_CONFIG_DIR`. The old Meristem helper treated that
+whitespace as part of the path. The agent data directory
+stays outside this cut. Tests cover the explicit and XDG paths and real reads.
+This slice does not establish the R008 package-layout census or all cutovers.

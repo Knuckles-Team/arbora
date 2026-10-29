@@ -1,5 +1,6 @@
 """Shared host admission with controlled EG transport, not durable execution."""
 
+import hashlib
 from dataclasses import replace
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
@@ -29,6 +30,29 @@ def bridge(monkeypatch):
     services, runtime, *_ = setup_services(run)
     services = replace(services, registry=Registry((run, decide)))
     principal = caller(effective_scopes=frozenset({"kg:write", "query:decide"}))
+    from arbora.api.task_plan_schema import TaskPlanSchemaPins
+
+    runtime.schema_published = []
+    runtime.schema_digests = {}
+    schema_pin = {
+        "component_id": "rolling-schema-ace4603da44e4e99929aa926562625fc",
+        "kind": "feature_schema",
+    }
+
+    async def publish(tenant, pin):
+        runtime.schema_published.append((tenant, dict(pin)))
+        digest = (
+            "sha256:c802a728fe1059505924ebe28533cc588b5f3488c71bb7184ccad3f705b2503f"
+            if tenant == "local"
+            else "sha256:" + hashlib.sha256(tenant.encode()).hexdigest()
+        )
+        runtime.schema_digests[tenant] = digest
+        return digest
+
+    runtime.bindings = {
+        "task_plan_schema_pins": TaskPlanSchemaPins(schema_pin),
+        "task_plan_schema_publish": publish,
+    }
     monkeypatch.setattr(
         hosted_invocation, "validate_contract_admission", lambda _: None
     )
@@ -55,7 +79,7 @@ def bridge(monkeypatch):
         return SimpleNamespace(model_dump=lambda **kw: {"records": [record]})
 
     monkeypatch.setattr(task_plan, "_contract", lambda: (build, verify, send, decode))
-    config = task_plan.TaskPlanConfig({"pin": "resident"}, {"policy": "existing"}, 2, 4)
+    config = task_plan.TaskPlanConfig({}, {"policy": "existing"}, 2, 4)
     host = HostedInvocation(
         services, AmbientHTTPAuthenticator(session_for_request=AsyncMock()), config
     )
@@ -69,7 +93,13 @@ async def test_shared_host_uses_own_limits_and_direct_response(bridge):
     assert built[0][0] == principal.tenant
     assert built[0][2]["max_concurrency"] == 2
     assert built[0][2]["max_steps"] == 4
-    assert built[0][3:] == ({"pin": "resident"}, {"policy": "existing"})
+    assert built[0][3] == {
+        "component_id": "rolling-schema-ace4603da44e4e99929aa926562625fc",
+        "kind": "feature_schema",
+        "definition_digest": runtime.schema_digests[principal.tenant],
+    }
+    assert built[0][4] == {"policy": "existing"}
+    assert [tenant for tenant, _ in runtime.schema_published] == [principal.tenant]
     assert send.await_args.args[2] == "verified-graph"
     assert runtime.verifications >= 6
     assert result["plan_digest"] == "engine-digest"
@@ -120,6 +150,32 @@ async def test_response_is_bound_to_verified_principal(bridge):
     record["caller_principal"] = "other"
     with pytest.raises(OperationRefused, match="INVALID_TASK_PLAN_RECEIPT"):
         await host.evaluate_task_plan(principal, "q", PROPOSAL)
+
+
+@pytest.mark.asyncio
+async def test_nested_evaluation_uses_verified_caller_tenant_and_policy(bridge):
+    host, _, runtime, built, _, _ = bridge
+    principal = caller(
+        tenant="tenant:other",
+        effective_scopes=frozenset({"kg:write", "query:decide"}),
+    )
+
+    await host.evaluate_task_plan(principal, "q", PROPOSAL)
+
+    assert built[0][0] == "tenant:other"
+    assert built[0][3]["definition_digest"] == runtime.schema_digests["tenant:other"]
+    assert built[0][4] == {"policy": "existing"}
+    assert [tenant for tenant, _ in runtime.schema_published] == ["tenant:other"]
+
+
+@pytest.mark.asyncio
+async def test_nested_evaluation_refuses_without_verified_schema_binding(bridge):
+    host, principal, runtime, _, send, _ = bridge
+    runtime.bindings = {}
+
+    with pytest.raises(OperationRefused, match="UNAVAILABLE"):
+        await host.evaluate_task_plan(principal, "q", PROPOSAL)
+    send.assert_not_awaited()
 
 
 @pytest.mark.parametrize("concurrency,steps", [(True, 4), (9, 4), (2, 0), (2, 65)])
@@ -209,7 +265,7 @@ async def test_native_typed_receipt_preserves_premise_wire_aliases(bridge, monke
         effective_scopes=principal.effective_scopes,
     )
     config = task_plan.TaskPlanConfig(
-        wire["inputs"]["feature_schema"],
+        {},
         wire["inputs"]["policy"],
         proposal["max_concurrency"],
         proposal["max_steps"],
@@ -227,3 +283,23 @@ async def test_native_typed_receipt_preserves_premise_wire_aliases(bridge, monke
         {key: proposal[key] for key in ("tasks", "output_task_id")},
     )
     assert result["plan_digest"] == wire["task_plan"]["plan_digest"]
+    request = send.await_args.args[1]["request"]
+    assert request["tenant_id"] == "local"
+    assert request["feature_schema"] == wire["inputs"]["feature_schema"]
+    assert request["policy"] == wire["inputs"]["policy"]
+    assert [tenant for tenant, _ in host.services.runtime.schema_published] == ["local"]
+
+
+@pytest.mark.spec("ARBORA-OPS-R021.4.5.1.2")
+@pytest.mark.parametrize("value", [True, False, None, 1, "enabled", "ON", " on"])
+def test_scaffold_requires_exact_trusted_operator_option(value):
+    with pytest.raises(ValueError, match="plan_scaffold"):
+        task_plan.TaskPlanConfig({}, {}, 1, 2, plan_scaffold=value)
+
+
+@pytest.mark.spec("ARBORA-OPS-R021.4.5.1.2")
+def test_scaffold_defaults_off_and_accepts_explicit_on():
+    assert task_plan.TaskPlanConfig({}, {}, 1, 2).plan_scaffold == "off"
+    assert (
+        task_plan.TaskPlanConfig({}, {}, 1, 2, plan_scaffold="on").plan_scaffold == "on"
+    )

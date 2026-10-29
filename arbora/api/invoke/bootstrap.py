@@ -194,16 +194,67 @@ def _session_graph(session: Any) -> str:
 async def dispatch_eg_method(
     binding: EgMethod, params: Mapping[str, Any], context: ExecutionContext
 ) -> Any:
-    """Send one admitted method under its current caller's verified graph."""
+    """Send one admitted method under its verified graph authority.
+
+    Owner-bound run reads are stored on the fixed control graph.  They still
+    use the caller's verified claims, but must not follow the caller's content
+    graph or expose a graph selector in the request.
+    """
     from epistemic_graph.generated import send_by_id
 
     method = _eg_method_id(binding)
     graph = await _caller_dispatch_graph(context)
     payload = claim_values(params)
+    if method == "GetRunWorkItem":
+        # EG's stable owner-read wire contract requires ``tenant``.  Treat it
+        # as a correlation field only after the caller session has been
+        # revalidated above; a request naming another tenant must never reach
+        # the provider.
+        if payload.get("tenant") != context.caller.tenant:
+            raise OperationRefused("INVALID_ARGUMENT", {"field": "tenant"})
+        from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+
+        graph = CONTROL_GRAPH
     if method == "NlQuery":
         if "graph" in payload:
             raise OperationRefused("INVALID_ARGUMENT", {"field": "graph"})
         payload["graph"] = graph
+        # The central Medulla planner is an optional composed service.  When
+        # absent, preserve the existing direct EG NlQuery operation exactly;
+        # Arbora never guesses NL-to-UQL semantics.  When present, the
+        # federated adapter consumes only its pinned DTO and routes the
+        # resulting foreign execution through the existing source catalog and
+        # generated UQL client.
+        planner = context.services.get("nl_federation_planner")
+        if planner is not None:
+            from arbora.api.ops.query_federation import dispatch_federated_nl
+            from arbora.security.anonymous import client_scope
+
+            async def send_uql(uql_params: Mapping[str, Any]) -> Any:
+                # Foreign reads may await several connector pages.  Recheck
+                # the same session immediately before the correlated native
+                # query so an expiry/revocation during that wait cannot reuse
+                # the initial admission.
+                if await _caller_dispatch_graph(context) != graph:
+                    raise OperationRefused("UNAUTHENTICATED")
+                with client_scope(
+                    context.client, claim_values(context.caller.engine_claims)
+                ):
+                    return await send_by_id(
+                        context.client,
+                        "Uql",
+                        dict(uql_params),
+                        graph,
+                        idempotency_key=context.idempotency_key,
+                    )
+
+            return await dispatch_federated_nl(
+                planner=planner,
+                text=payload["text"],
+                graph=graph,
+                context=context,
+                send_uql=send_uql,
+            )
     return await send_by_id(
         context.client,
         method,

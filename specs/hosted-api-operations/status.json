@@ -217,6 +217,7 @@
     "ARBORA-OPS-R067.7",
     "ARBORA-OPS-R067.8",
     "ARBORA-OPS-R067.9",
+    "ARBORA-OPS-R067.10",
     "ARBORA-OPS-R068",
     "ARBORA-OPS-R068.1",
     "ARBORA-OPS-R068.2",
@@ -279,7 +280,14 @@
     "ARBORA-OPS-R861.8",
     "ARBORA-OPS-R861.9",
     "ARBORA-OPS-R021.4.8",
-    "ARBORA-OPS-R021.4.9"
+    "ARBORA-OPS-R021.4.9",
+    "ARBORA-OPS-R021.4.8.1",
+    "ARBORA-OPS-R021.4.8.2",
+    "ARBORA-OPS-R069",
+    "ARBORA-OPS-R070",
+    "ARBORA-OPS-R071",
+    "ARBORA-OPS-R072",
+    "ARBORA-OPS-R073"
   ],
   "requirements": [
     {
@@ -298,7 +306,7 @@
         "tests/deployment/test_real_boot_fixture.py:19",
         "tests/test_native_run_admission.py:12",
         "tests/test_native_run_scope.py:14",
-        "tests/test_real_boot.py:906"
+        "tests/test_real_boot.py:1297"
       ]
     },
     {
@@ -417,7 +425,7 @@
       "verified_by": [
         "tests/a2a/test_eg_dispatch.py:39",
         "tests/api/test_invoke_bootstrap.py:161",
-        "tests/api/test_invoke_contract.py:238",
+        "tests/api/test_invoke_contract.py:239",
         "tests/api/test_invoke_governance.py:193",
         "tests/api/test_invoke_governance.py:250"
       ],
@@ -583,7 +591,8 @@
         "a2f74cb9621d"
       ],
       "verified_by": [
-        "tests/api/test_query_ops.py:57"
+        "tests/api/test_query_federation_served.py:211",
+        "tests/api/test_query_ops.py:59"
       ]
     },
     {
@@ -867,7 +876,7 @@
       "verified_by": [
         "tests/fleet/test_multiplexer_dynamic_gateway.py:1164",
         "tests/mcp_server/test_arbora_015_served_fixes.py:75",
-        "tests/test_real_boot.py:843"
+        "tests/test_real_boot.py:1234"
       ]
     },
     {
@@ -1016,9 +1025,21 @@
     {
       "id": "ARBORA-OPS-R021.4.5",
       "title": "Per-run operation",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "2e9f4b8bc465",
+        "3c29d23cad88",
+        "5aed3058d14b",
+        "663cc8cad940",
+        "9f41ea82883d"
+      ],
+      "verified_by": [
+        "tests/a2a/test_native_run_publication.py:16",
+        "tests/api/test_runs_ops.py:23",
+        "tests/mcp_server/test_current_plan_reader.py:24",
+        "tests/mcp_server/test_task_plan.py:293",
+        "tests/mcp_server/test_task_plan.py:300"
+      ],
       "rollup_of": [
         "ARBORA-OPS-R021.4.5.1"
       ]
@@ -1026,13 +1047,20 @@
     {
       "id": "ARBORA-OPS-R021.4.5.1",
       "title": "Current-plan read boundary",
-      "delivery_state": "SPECIFIED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "2e9f4b8bc465",
-        "663cc8cad940"
+        "3c29d23cad88",
+        "5aed3058d14b",
+        "663cc8cad940",
+        "9f41ea82883d"
       ],
       "verified_by": [
-        "tests/api/test_runs_ops.py:23"
+        "tests/a2a/test_native_run_publication.py:16",
+        "tests/api/test_runs_ops.py:23",
+        "tests/mcp_server/test_current_plan_reader.py:24",
+        "tests/mcp_server/test_task_plan.py:293",
+        "tests/mcp_server/test_task_plan.py:300"
       ],
       "rollup_of": [
         "ARBORA-OPS-R021.4.5.1.1",
@@ -1044,18 +1072,32 @@
       "title": "Native contextual reader composition",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "a33b4ad326fb",
+        "d850655d672c",
         "f4ae1be895a1"
       ],
       "verified_by": [
-        "tests/mcp_server/test_current_plan_reader.py:22"
+        "tests/mcp_server/test_current_plan_reader.py:24"
       ]
     },
     {
       "id": "ARBORA-OPS-R021.4.5.1.2",
       "title": "Compose owner-bound A2A scaffold publication",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "3c29d23cad88",
+        "5aed3058d14b",
+        "9f41ea82883d",
+        "a104142b3725",
+        "cb510b4bf880"
+      ],
+      "verified_by": [
+        "tests/a2a/test_native_run_publication.py:16",
+        "tests/mcp_server/test_task_plan.py:293",
+        "tests/mcp_server/test_task_plan.py:300",
+        "tests/mcp_server/test_task_plan_runtime.py:626",
+        "tests/mcp_server/test_task_plan_runtime.py:705"
+      ]
     },
     {
       "id": "ARBORA-OPS-R021.4.6",
@@ -1380,6 +1422,7 @@
       "title": "API surface and compatibility drift gates",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "20ec6b79a02b",
         "4b9d181069e4"
       ],
       "verified_by": [
@@ -1414,6 +1457,7 @@
       "title": "Backward-compatibility drift gate — backward-compat slice",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "20ec6b79a02b",
         "4b9d181069e4"
       ],
       "verified_by": [
@@ -2391,7 +2435,8 @@
         "ARBORA-OPS-R067.6",
         "ARBORA-OPS-R067.7",
         "ARBORA-OPS-R067.8",
-        "ARBORA-OPS-R067.9"
+        "ARBORA-OPS-R067.9",
+        "ARBORA-OPS-R067.10"
       ]
     },
     {
@@ -2478,6 +2523,13 @@
         "tests/api/test_research_web_backends.py:190",
         "tests/api/test_research_web_backends.py:206"
       ]
+    },
+    {
+      "id": "ARBORA-OPS-R067.10",
+      "title": "Admit revision-bound web-source conformance",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R068",
@@ -2601,7 +2653,7 @@
         "fc8440890094"
       ],
       "verified_by": [
-        "tests/api/test_source_ops.py:32",
+        "tests/api/test_source_ops.py:33",
         "tests/mcp_server/test_source_reader.py:32"
       ]
     },
@@ -2748,8 +2800,11 @@
     {
       "id": "ARBORA-OPS-R855.1",
       "title": "Routing",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "c135fd8a6f4a",
+        "e755549375e6"
+      ],
       "verified_by": [
         "tests/api/test_resolve.py:191"
       ]
@@ -2771,8 +2826,10 @@
     {
       "id": "ARBORA-OPS-R855.4",
       "title": "Ask answers from the graph",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "c135fd8a6f4a"
+      ],
       "verified_by": [
         "tests/api/test_resolve.py:192"
       ]
@@ -2780,19 +2837,24 @@
     {
       "id": "ARBORA-OPS-R855.5",
       "title": "Find surfaces catalog assets",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "c135fd8a6f4a",
+        "e755549375e6"
+      ],
       "verified_by": [
-        "tests/api/test_resolve.py:218"
+        "tests/api/test_resolve.py:217"
       ]
     },
     {
       "id": "ARBORA-OPS-R855.6",
       "title": "Governed routing only",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "c135fd8a6f4a"
+      ],
       "verified_by": [
-        "tests/api/test_resolve.py:231"
+        "tests/api/test_resolve.py:230"
       ]
     },
     {
@@ -2932,10 +2994,12 @@
       "title": "Durable, public run replay",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "5aed3058d14b",
         "9bd22960a7ea"
       ],
       "verified_by": [
-        "tests/api/test_run_replay.py:12"
+        "tests/api/test_run_replay.py:12",
+        "tests/test_real_boot_read_assertions.py:7"
       ]
     },
     {
@@ -3024,11 +3088,72 @@
       "title": "Project an admitted execution graph",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R021.4.8.1",
+        "ARBORA-OPS-R021.4.8.2"
+      ]
     },
     {
       "id": "ARBORA-OPS-R021.4.9",
       "title": "Project permitted node records and capabilities",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R021.4.8.1",
+      "title": "Negotiated flat execution snapshot",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "2e09ba70eba9",
+        "5aed3058d14b",
+        "6057bc34d842",
+        "6268c79436c9",
+        "951e55158d8a"
+      ],
+      "verified_by": [
+        "tests/api/test_execution_graph.py:27"
+      ]
+    },
+    {
+      "id": "ARBORA-OPS-R021.4.8.2",
+      "title": "Nested lineage and snapshot/update reconciliation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R069",
+      "title": "No local incident authority; call the served incident methods",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R070",
+      "title": "Order-proposal confirmation operation and receipt",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R071",
+      "title": "Review-receipt producer for reviewed repository policy",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R072",
+      "title": "Paper-shortfall maintenance operation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R073",
+      "title": "Host resource-grant binding for incremental indexing",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

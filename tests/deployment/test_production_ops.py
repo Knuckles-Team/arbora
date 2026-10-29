@@ -116,3 +116,50 @@ def test_production_cli_failure_is_opaque(tmp_path, capsys, monkeypatch) -> None
     assert report["ok"] is False
     assert report["error_type"] == "ProductionOperationError"
     assert str(tmp_path) not in json.dumps(report)
+
+
+@pytest.mark.spec("ARBORA-FLEET-R027.7.1")
+@pytest.mark.parametrize("outcome", ["success", "partial", "exception"])
+def test_cli_retains_diagnostics_on_stderr_and_one_json_report(
+    outcome, capsys, monkeypatch
+) -> None:
+    import sys
+
+    from arbora.core import settings
+
+    def configure():
+        print("configuration diagnostic")
+
+    def operation(_args):
+        print("operation diagnostic")
+        if outcome == "exception":
+            raise RuntimeError("private operation failure")
+        return {"ok": outcome == "success", "operation": "onboard-fleet"}
+
+    monkeypatch.setattr(settings, "load_config", configure)
+    monkeypatch.setattr(
+        settings, "runtime_config", SimpleNamespace(arbora_auth_mode="required")
+    )
+    monkeypatch.setattr(production_ops, "_run", operation)
+    stdout = sys.stdout
+    code = production_ops.main(["onboard-fleet"])
+    assert sys.stdout is stdout
+    captured = capsys.readouterr()
+    report = json.loads(captured.out)
+    assert len(captured.out.splitlines()) == 1
+    assert report["ok"] is (outcome == "success")
+    assert code == (0 if outcome == "success" else 1)
+    assert captured.err == "configuration diagnostic\noperation diagnostic\n"
+    assert "private operation failure" not in captured.out
+
+
+def test_cli_stream_repair_keeps_remaining_fleet_acceptance_specified() -> None:
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    status = json.loads(
+        (root / "specs/fleet-catalog-and-tools/status.json").read_text()
+    )
+    rows = {row["id"]: row for row in status["requirements"]}
+    for identifier in ("ARBORA-FLEET-R027.7", "ARBORA-FLEET-R027.7.2"):
+        assert rows[identifier]["delivery_state"] == "SPECIFIED"

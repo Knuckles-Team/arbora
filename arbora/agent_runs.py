@@ -20,17 +20,18 @@ budgets, stop rules). It asks its host for every decision through
 from __future__ import annotations
 
 import hashlib
+import inspect
 import json
 import logging
 import os
 import uuid
-from collections.abc import Iterator, Mapping
+from collections.abc import Awaitable, Callable, Iterator, Mapping
 from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from arbora.api.contracts.agent_control_contracts import (
     AgentExecutionRequest,
@@ -84,6 +85,148 @@ class _NativeRunScope:
 _NATIVE_RUN: ContextVar[_NativeRunScope | None] = ContextVar(
     "arbora_native_run", default=None
 )
+
+
+@dataclass(frozen=True)
+class NativeRunAdmission:
+    """Identities returned and checked by the existing durable task owner."""
+
+    task_id: str
+    run_id: str
+    context_id: str
+    work_item_id: str
+
+
+@dataclass
+class _NativeStreamScope:
+    session: GraphSession
+    observer: Callable[[Any], Awaitable[None]] | None
+    on_admitted: Callable[[NativeRunAdmission], None] | None = None
+    admission: NativeRunAdmission | None = None
+    protocol: Literal["acp"] | None = None
+    run_id: str | None = None
+    active: bool = True
+
+
+_NATIVE_STREAM: ContextVar[_NativeStreamScope | None] = ContextVar(
+    "arbora_native_stream", default=None
+)
+
+
+@contextmanager
+def native_stream_scope(
+    session: GraphSession,
+    observer: Callable[[Any], Awaitable[None]] | None,
+    *,
+    on_admitted: Callable[[NativeRunAdmission], None] | None = None,
+    protocol: Literal["acp"] | None = None,
+) -> Iterator[None]:
+    """Observe one admitted run, never confer execution or client-tool authority.
+
+    Raw native events are trusted host plumbing, not public transcript data.
+    The protocol projection must filter thinking and tool secrets. Copied
+    contexts share revocation; this scope cannot outlive its awaiting host.
+    """
+    from arbora.api.contracts.session import resolve_session
+
+    if _NATIVE_STREAM.get() is not None:
+        raise RuntimeError("native stream scope cannot be nested")
+    if protocol not in (None, "acp"):
+        raise ValueError("unsupported native transport protocol")
+    admitted = resolve_session(session, required_scope="kg:write")
+    scope = _NativeStreamScope(admitted, observer, on_admitted, protocol=protocol)
+    token = _NATIVE_STREAM.set(scope)
+    try:
+        yield
+    finally:
+        scope.active = False
+        _NATIVE_STREAM.reset(token)
+
+
+def native_stream_protocol() -> str | None:
+    """Trusted transport provenance, never parsed from caller message metadata."""
+    scope = _NATIVE_STREAM.get()
+    return scope.protocol if scope is not None and scope.active else None
+
+
+def _validate_admission_identity(receipt: NativeRunAdmission) -> None:
+    if not all(
+        isinstance(value, str) and value
+        for value in (
+            receipt.task_id,
+            receipt.run_id,
+            receipt.context_id,
+            receipt.work_item_id,
+        )
+    ):
+        raise RuntimeError("native admission identity unavailable")
+
+
+def notify_native_admission(session: GraphSession, receipt: NativeRunAdmission) -> None:
+    """Notify the awaiting host after durable validation and before execution.
+
+    This synchronous host callback does not grant authority or derive IDs. A
+    separately admitted child cannot overwrite its parent's receipt. Callers
+    must settle cancellation through the existing task owner, not this seam.
+    """
+    scope = _NATIVE_STREAM.get()
+    if scope is None:
+        return
+    if scope.admission is not None and receipt.run_id != scope.admission.run_id:
+        return
+    if not scope.active or scope.session != session or scope.admission is not None:
+        raise RuntimeError("native admission observer binding refused")
+    _validate_admission_identity(receipt)
+    session.ensure_authority_current()
+    scope.admission = receipt
+    if scope.on_admitted is not None:
+        scope.on_admitted(receipt)
+
+
+def _separately_admitted_child(
+    scope: _NativeStreamScope, owner: NativeRunContext | None
+) -> bool:
+    if scope.admission is not None and owner is not None:
+        if owner.run_id != scope.admission.run_id:
+            return True
+    # A separately admitted child run keeps its ordinary execution authority,
+    # but never inherits the parent's observation channel. The exact same run
+    # cannot bind twice, even when called from a copied task context.
+    if scope.run_id is not None and owner is not None and owner.run_id != scope.run_id:
+        return True
+    return False
+
+
+def _bind_native_stream(
+    request: AgentExecutionRequest,
+    session: GraphSession,
+    owner: NativeRunContext | None,
+) -> Callable[[Any], Awaitable[None]] | None:
+    scope = _NATIVE_STREAM.get()
+    if scope is None:
+        return None
+    if _separately_admitted_child(scope, owner):
+        return None
+    if (
+        not scope.active
+        or scope.run_id is not None
+        or owner is None
+        or scope.session != session
+        or owner.session != session
+    ):
+        raise RuntimeError("native stream requires one matching admitted run")
+    scope.run_id = owner.run_id
+    observer = scope.observer
+    if observer is None:
+        return None
+
+    async def observe(event: Any) -> None:
+        if not scope.active or current_native_run(request) is not owner:
+            raise RuntimeError("native stream authority is closed")
+        session.ensure_authority_current()
+        await observer(event)
+
+    return observe
 
 
 def _valid_owner_graph(graph: str | None) -> bool:
@@ -448,8 +591,17 @@ class AgentRunPort:
         ownership = current_native_run(request)
         if ownership is not None and ownership.session != session:
             raise RuntimeError("native run session does not match the host scope")
+        observer = _bind_native_stream(request, session, ownership)
+        kwargs: dict[str, Any] = {"session": session}
+        if observer is not None:
+            if (
+                "stream_observer"
+                not in inspect.signature(self._executor.execute_agent).parameters
+            ):
+                raise RuntimeError("UPGRADE_REQUIRED: native run stream observer")
+            kwargs["stream_observer"] = observer
         with agent_run_origin_scope(session, request.agent_name, request.run_id):
-            result = await self._executor.execute_agent(request, session=session)
+            result = await self._executor.execute_agent(request, **kwargs)
         return AgentExecutionResult(
             run_id=result.run_id,
             output=result.output,
@@ -465,3 +617,6 @@ def bind_run_ports() -> None:
     host_ports.register_run_decision_provider(decide_run)
     host_ports.register_model_provider(resolve_model)
     host_ports.register_run_event_sink(record_run_event)
+    from arbora.current_plan_publication import publication_scope
+
+    host_ports.register_optional_scaffold_publication_factory(publication_scope)

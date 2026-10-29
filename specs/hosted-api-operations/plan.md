@@ -624,6 +624,30 @@ The consumer stays on the SDK 0.2 release line for this change. SDK 0.3 changes 
 
 `research.web` is one served operation. It composes owners; it decides nothing. The engine answers the search as a virtual source (`EG-UNIFIED-DATA-PLANE-R038.7.7`). The engine selects the pages (`EG-DECISION-ENGINE-R802`). A connector reads each page through the SDK contract (`SDK-SOURCE-INGEST-R005.40`). The engine ingests and enriches each page (`EG-UNIFIED-DATA-PLANE-R651.7`).
 
+### Web-source conformance admission (R067.10)
+
+The existing `FleetCaller` obtains an effect decision from `fleet_gateway`.
+The gateway resolves the admitted item again at call time. That decision path
+must require the EG evidence record. Its owner is
+[EG-TYPED-PACKS-R110](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/typed-packs-and-catalog/requirements.md).
+No Arbora certification store or operator pass flag grants admission.
+
+The resolved record binds tenant, connector, package revision and pack digest.
+It also binds the input/output fingerprints of `web_fetch` and `web_extract`,
+the SDK kit revision, complete obligation results, evidence digest and issuer.
+It carries issue time, expiry, revocation state and an EG record reference.
+Arbora checks it against the active connector and the current fleet decision.
+It rechecks the binding at dispatch, including the existing registry digest.
+The live catalog currently exposes only an input schema fingerprint. Its
+admitted tool value does not carry that fingerprint or a package revision.
+Those verified identity and schema producers remain missing prerequisites.
+
+The authorized evidence issuer and deployed-revision producer are unresolved.
+The SDK's local fixture report is not an authority. Until EG and the host
+bind those producers, `research.web` cannot claim this admission guarantee.
+Missing, stale, revoked, wrong-tenant or mismatched evidence refuses before any
+child call. A policy refusal never triggers fallback to another connector.
+
 Call path: served route -> `invoke` (`arbora/api/invoke/pipeline.py:863`) -> `research.web` handler (`arbora/api/ops/research.py`) -> engine query -> engine `Decide` -> engine work item of kind `WebPage` -> SDK ingest worker -> connector `web_extract` -> engine `SourceIngest`.
 
 Backends: `webarchiver` (`CONN-WEBARCHIVER-WEB-SOURCE`) is primary. `archivebox` (`CONN-ARCHIVEBOX-API-WEB-SOURCE`) is secondary and the fallback for `upstream_failed` or an unreachable primary. A policy refusal never falls back. Both backends produce the same Document; only the recorded backend differs.
@@ -739,6 +763,15 @@ last-touch revision. Its `line_level` is always `false`.
 membership edge per pair. A branch label scan that never sees a short
 page (256 x 256) refuses `UNAVAILABLE`. The answer is unknown, not
 empty.
+
+`source.blob` exposes the manifest reference in `content_digest`, as in the
+existing source projection. It also returns `content_sha256`, the lowercase
+SHA-256 of the bytes returned by the admitted read. This separate value lets
+clients detect cached-byte corruption without confusing a manifest key with
+the digest of file content. The hash does not grant authority to reuse bytes.
+The client must bind cache use to the admitted caller and source revision.
+The server writes UTF-8 text to JSON `content` when decoding succeeds. For
+other bytes, the server writes base64. `content_encoding` identifies the form.
 
 R850 delivers `GET /api/v1/source/checkout` as an NDJSON stream.
 Directories resolve recursively, then files. Every directory listing
@@ -922,7 +955,7 @@ edge, depth and byte bounds are explicit; truncation never appears complete.
 Node detail reads reuse the same owner-first access path. Public summaries are
 explicit producer-authored summaries, not hidden chain of thought. Raw tool
 arguments/results are not automatically public. A record carries source event,
-record kind and visibility; fields not allowed by the existing public projection
+record kind and visibility. Fields outside the existing public projection
 remain omitted or redacted. Transcript availability requires actual authorized
 user/assistant history, not a reconstruction from traces. Capabilities are
 computed from the current authorized lifecycle and installed producer contracts.
@@ -934,3 +967,66 @@ active-message and completed-continuation admission contracts in
 `ARBORA-RELEASE-R003.4.12` / `.13`. Installed producer and served acceptance are
 required before any client advertises an interaction. No EG changes or new native
 authority work are part of this specification change.
+
+### 2026-10-24: bounded flat read extension
+
+R021.4.8.1 is the first bounded slice, not a replacement for R021.4.8.
+`runs.execution_graph` negotiates a new projection with a required schema version
+and operation discovery. Existing `runs.get` and `runs.events` are unchanged.
+The shared NativeRunReader first resolves the canonical root WorkItem/run pair.
+It reads the native current-plan snapshot under the same verified caller, then
+uses the existing ordered event census and bounded hydration. It checks the
+native plan again before returning, refusing a changed binding or expiry.
+
+The projection contains the full declared flat topology, never prompts or
+outputs. It keeps at most 1,000 events within the existing one-MiB page bound;
+the full metadata census retains its 10,000-event cap. Lifecycle evidence names
+the original event ID and sequence and must match the run and plan digest.
+Missing task events mean unobserved state, not pending or completed. Lifecycle
+coverage remains explicitly incomplete even when there are no further observed
+events or the root is terminal. A terminal root never completes its steps.
+Expired or absent current-plan publication cannot support historical topology.
+Unsequenced tool-call records remain unsupported, never silently filtered.
+
+This slice has no spawned children, transcript, message target or continuation.
+Nested production and snapshot/update reconciliation remain required by the
+parent row. Native-service acceptance is not claimed by source fixtures.
+
+The existing ARBORA_TASK_PLAN operator object accepts `plan_scaffold: "on"`
+to enable AU scaffolds for admitted native runs. The default remains `"off"`.
+This explicit trusted option changes only the matching harness field.
+It does not infer a HarnessConfig decision or accept authority from request metadata.
+A disabled run may publish its executable TaskPlan without any scaffold updates.
+That result is not scaffold acceptance; enabled mode requires native revision evidence.
+
+R021.4.8.2 retains the parent row's nested production and snapshot/update proof.
+It remains open after the flat slice passes its source checks. The parent row
+cannot close from the flat slice alone.
+
+### 2026-10-24: boolean schemas in the compatibility gate
+
+R026.2 compares legitimate JSON Schema booleans before dictionary traversal.
+An input schema must not narrow the previously accepted values. A result schema
+must not widen the values that existing callers must handle. In comparisons
+with a boolean, an empty object schema means true. Existing dictionary-to-dictionary
+checks and provider-digest review requirements remain unchanged. Invalid schema
+types fail closed. Tests include the installed provider's unconstrained result.
+
+The flat projection permits canonical keys for the full run/step ID bounds,
+including non-BMP Unicode. It counts serialized node and edge contributions
+before whole-snapshot serialization, then checks the exact final byte size.
+
+### 2026-10-24: bounded graph validation functions
+
+R021.4.8.1 separates predecessor validation and lifecycle transition validation.
+The extraction preserves validation order, identity checks, bounds and refusal
+messages. Source tests cover every step-state and task-event pair. This does not
+expand the projection or qualify the parent requirement.
+
+## Medulla companion rows (2026-10-28)
+
+- `ARBORA-OPS-R069`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+- `ARBORA-OPS-R070`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+- `ARBORA-OPS-R071`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+- `ARBORA-OPS-R072`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+- `ARBORA-OPS-R073`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.

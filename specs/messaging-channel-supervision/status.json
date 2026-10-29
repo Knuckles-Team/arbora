@@ -395,8 +395,8 @@
         "bc26d7b669bc"
       ],
       "verified_by": [
-        "tests/messaging/test_primitives.py:67",
-        "tests/messaging/test_primitives.py:79"
+        "tests/messaging/test_primitives.py:68",
+        "tests/messaging/test_primitives.py:80"
       ]
     },
     {
@@ -414,16 +414,20 @@
         "bc26d7b669bc"
       ],
       "verified_by": [
-        "tests/messaging/test_primitives.py:57",
-        "tests/messaging/test_primitives.py:79"
+        "tests/messaging/test_primitives.py:58",
+        "tests/messaging/test_primitives.py:80"
       ]
     },
     {
       "id": "ARBORA-MESSAGING-R800.5",
       "title": "Evidence",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e755549375e6"
+      ],
+      "verified_by": [
+        "tests/messaging/test_primitives.py:49"
+      ]
     },
     {
       "id": "ARBORA-MESSAGING-R800.6",
@@ -455,9 +459,13 @@
     {
       "id": "ARBORA-MESSAGING-R800.1001",
       "title": "Behavior",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e755549375e6"
+      ],
+      "verified_by": [
+        "tests/messaging/test_lease.py:83"
+      ]
     },
     {
       "id": "ARBORA-MESSAGING-R800.1002",
@@ -467,7 +475,7 @@
         "bc26d7b669bc"
       ],
       "verified_by": [
-        "tests/messaging/test_lease.py:105"
+        "tests/messaging/test_lease.py:106"
       ]
     }
   ]

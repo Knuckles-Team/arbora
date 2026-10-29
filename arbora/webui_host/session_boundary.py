@@ -33,12 +33,14 @@ class WebUISessionBoundary:
         auth_app: Callable[..., Any],
         *,
         operations: Any = None,
+        request_dispatch: Any = None,
     ):
         if not callable(getattr(admission, "request", None)) or not callable(auth_app):
             raise IdentityUnavailable("qualified admission and auth routes required")
         self.admission = admission
         self.auth_app = auth_app
         self.operations = operations
+        self.request_dispatch = request_dispatch
 
     def __call__(self, app: Any) -> None:
         from arbora.api.http.browser_app import BrowserOperationApplication
@@ -64,6 +66,7 @@ class WebUISessionBoundary:
             CanonicalWebUIBoundaryMiddleware,
             operations=self.operations,
             auth_app=self.auth_app,
+            request_dispatch=self.request_dispatch,
         )
 
 
@@ -75,10 +78,13 @@ class CanonicalWebUIBoundaryMiddleware:
     exact-origin/CSRF admission and shared operation authorization.
     """
 
-    def __init__(self, app: Any, *, operations: Any, auth_app: Any):
+    def __init__(
+        self, app: Any, *, operations: Any, auth_app: Any, request_dispatch: Any = None
+    ):
         from starlette.routing import Mount, Router
 
         self.app, self.auth_app = app, auth_app
+        self.request_dispatch = request_dispatch
         self.operations = Router(routes=[Mount("/api/v1", app=operations)])
 
     async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
@@ -88,10 +94,10 @@ class CanonicalWebUIBoundaryMiddleware:
             return
         path = str(scope.get("path") or "")
         if path == "/auth" or path.startswith("/auth/"):
-            await self.auth_app(scope, receive, send)
+            await self._dispatch(self.auth_app, scope, receive, send)
             return
         if path == "/api/v1" or path.startswith("/api/v1/"):
-            await self.operations(scope, receive, send)
+            await self._dispatch(self.operations, scope, receive, send)
             return
         from agent_webui.public_shell import public_shell_of
 
@@ -119,6 +125,12 @@ class CanonicalWebUIBoundaryMiddleware:
             headers={"Cache-Control": "no-store"},
         )
         await response(scope, receive, send)
+
+    async def _dispatch(self, app: Any, scope: Any, receive: Any, send: Any) -> None:
+        if self.request_dispatch is None:
+            await app(scope, receive, send)
+        else:
+            await self.request_dispatch(app, scope, receive, send)
 
 
 class BrowserSessionMiddleware:

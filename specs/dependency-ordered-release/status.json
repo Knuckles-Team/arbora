@@ -43,8 +43,8 @@
         "8b0cb0d81469"
       ],
       "verified_by": [
-        "tests/deployment/test_release_workflow_sources.py:553",
-        "tests/deployment/test_release_workflow_sources.py:577"
+        "tests/deployment/test_release_workflow_sources.py:537",
+        "tests/deployment/test_release_workflow_sources.py:562"
       ],
       "rollup_of": [
         "ARBORA-RELEASE-R001.1"
@@ -62,8 +62,8 @@
         "8b0cb0d81469"
       ],
       "verified_by": [
-        "tests/deployment/test_release_workflow_sources.py:553",
-        "tests/deployment/test_release_workflow_sources.py:577"
+        "tests/deployment/test_release_workflow_sources.py:537",
+        "tests/deployment/test_release_workflow_sources.py:562"
       ]
     },
     {
@@ -158,14 +158,15 @@
       "title": "Served task-plan run (validation checks c22 and c21)",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "02140e1c7a78"
+        "02140e1c7a78",
+        "ab79b6f75be5"
       ],
       "verified_by": [
-        "tests/api/test_plan_run_ops.py:238",
-        "tests/api/test_plan_run_ops.py:258",
-        "tests/api/test_plan_run_ops.py:277",
-        "tests/api/test_plan_run_ops.py:290",
-        "tests/api/test_plan_run_ops.py:302"
+        "tests/api/test_plan_run_ops.py:241",
+        "tests/api/test_plan_run_ops.py:313",
+        "tests/api/test_plan_run_ops.py:333",
+        "tests/api/test_plan_run_ops.py:352",
+        "tests/api/test_plan_run_ops.py:365"
       ]
     },
     {
@@ -176,7 +177,7 @@
         "02140e1c7a78"
       ],
       "verified_by": [
-        "tests/api/test_plan_run_ops.py:333"
+        "tests/api/test_plan_run_ops.py:408"
       ]
     },
     {
@@ -191,16 +192,18 @@
       "title": "Published task-plan schema pin",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "46c93f5103b1",
+        "614795d10268",
         "6d39a589385a",
-        "c92fbf05fbb5",
-        "f2224467f07c"
+        "a31b9d959b3a",
+        "af8ceeb6941a"
       ],
       "verified_by": [
-        "tests/api/test_task_plan_schema_pin.py:112",
-        "tests/api/test_task_plan_schema_pin.py:182",
-        "tests/api/test_task_plan_schema_pin.py:225",
-        "tests/api/test_task_plan_schema_pin.py:246",
-        "tests/api/test_task_plan_schema_pin.py:254"
+        "tests/api/test_task_plan_schema_pin.py:143",
+        "tests/api/test_task_plan_schema_pin.py:155",
+        "tests/api/test_task_plan_schema_pin.py:171",
+        "tests/api/test_task_plan_schema_pin.py:187",
+        "tests/api/test_task_plan_schema_pin.py:343"
       ]
     },
     {
@@ -214,11 +217,11 @@
         "b0b90565cb9e"
       ],
       "verified_by": [
-        "tests/api/test_plan_run_ops.py:463",
-        "tests/api/test_plan_run_ops.py:481",
-        "tests/api/test_plan_run_ops.py:492",
-        "tests/api/test_plan_run_ops.py:500",
-        "tests/api/test_plan_run_ops.py:507"
+        "tests/api/test_plan_run_ops.py:1019",
+        "tests/api/test_plan_run_ops.py:939",
+        "tests/api/test_plan_run_ops.py:957",
+        "tests/api/test_plan_run_ops.py:968",
+        "tests/api/test_plan_run_ops.py:976"
       ]
     },
     {
@@ -258,8 +261,8 @@
         "d0f2716ab3ea"
       ],
       "verified_by": [
-        "tests/api/test_plan_run_ops.py:520",
-        "tests/api/test_plan_run_ops.py:532",
+        "tests/api/test_plan_run_ops.py:1008",
+        "tests/api/test_plan_run_ops.py:996",
         "tests/api/test_served_replay_owners.py:55",
         "tests/api/test_served_replay_owners.py:76"
       ]

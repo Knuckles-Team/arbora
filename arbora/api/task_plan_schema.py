@@ -22,6 +22,7 @@ import importlib
 import json
 import logging
 from collections.abc import Awaitable, Callable, Coroutine, Mapping, Sequence
+from contextlib import AbstractAsyncContextManager
 from pathlib import Path
 from typing import Any
 
@@ -45,6 +46,7 @@ EXPORT_MODULES = (
 VERIFIED_FIELDS = ("component_id", "kind", "schema_version", "content_digest")
 
 Publish = Callable[[str, Mapping[str, Any]], Coroutine[Any, Any, str]]
+BindClient = Callable[[str], AbstractAsyncContextManager[Any]]
 
 
 def _stat() -> Any:
@@ -113,7 +115,10 @@ def generate_pin(
 
 
 def pin_bytes(pin: Mapping[str, Any]) -> bytes:
-    return (json.dumps(dict(pin), indent=2, sort_keys=True) + "\n").encode()
+    # The engine codec hashes body insertion order. Sort only pin metadata;
+    # recursively sorting the exported body changes its content digest.
+    ordered = {key: pin[key] for key in sorted(pin)}
+    return (json.dumps(ordered, indent=2) + "\n").encode()
 
 
 def load_pin(path: Path = PIN_PATH) -> dict[str, Any]:
@@ -133,6 +138,16 @@ def verify(committed: Mapping[str, Any], installed: Mapping[str, Any]) -> str | 
         return "the committed task-plan schema pin has no engine export"
     if not installed.get("available"):
         return f"the installed engine does not export {EXPORT_NAME}"
+    body = committed.get("body")
+    if not isinstance(body, Mapping):
+        return "the committed task-plan schema body is missing or not an object"
+    stat = _stat()
+    try:
+        digest, _attributes = stat.encode_body(body)
+    except (TypeError, ValueError):
+        return "the committed task-plan schema body cannot be encoded by the engine"
+    if digest != committed.get("content_digest"):
+        return "the committed task-plan schema body does not match its digest"
     changed = drift(committed, installed)
     if changed:
         return "task-plan schema pin drift: " + ", ".join(changed)
@@ -231,23 +246,25 @@ def startup_pins(path: Path = PIN_PATH) -> TaskPlanSchemaPins | None:
 
 def engine_publish(
     client_for: Callable[[str], Awaitable[Any]],
-    context_for: Callable[[str], Mapping[str, Any]],
+    context_for: Callable[[str, Mapping[str, Any]], Awaitable[Mapping[str, Any]]],
     graph: str | None = None,
+    *,
+    bind_client: BindClient | None = None,
 ) -> Publish:
     """Publish through the engine; reuse a current entry with the same body.
 
     A restart reads the current entry first, so a re-publish never collides
     with the earlier publish under a fresh mutation context.
+    Only a new write resolves the async authority provider for this exact pin.
     """
 
-    async def publish(tenant: str, pin: Mapping[str, Any]) -> str:
+    async def _publish(client: Any, tenant: str, pin: Mapping[str, Any]) -> str:
         from epistemic_graph.generated.agent_component import AgentComponentOpCurrent
         from epistemic_graph.generated.storage import (
             send_agent_component,
             send_agent_component_current,
         )
 
-        client = await client_for(tenant)
         current = await send_agent_component_current(
             client,
             AgentComponentOpCurrent(
@@ -257,14 +274,31 @@ def engine_publish(
         )
         if current is not None and current.content_digest == pin["content_digest"]:
             return str(current.definition_digest)
+        # Agent Library publishes are compare-and-swapped by the native
+        # ``expected_revision`` in the mutation context.  The current read is
+        # authoritative for this tenant: a missing head names revision zero,
+        # while a mismatching head must be published against the exact
+        # revision we observed.  The native write then refuses a concurrent
+        # change instead of allowing this bootstrap to overwrite it.
+        expected_revision = 0 if current is None else int(current.entry_revision)
+        if expected_revision < 0:
+            raise ValueError("AgentComponent current entry revision cannot be negative")
+        context = dict(await context_for(tenant, pin))
+        context["expected_revision"] = expected_revision
         result = await send_agent_component(
             client,
-            publication(pin, tenant, context_for(tenant)),
+            publication(pin, tenant, context),
             graph,
             idempotency_key=idempotency_key(pin, tenant),
         )
         payload: Any = getattr(result, "payload", result)
         return str(payload["component"]["definition_digest"])
+
+    async def publish(tenant: str, pin: Mapping[str, Any]) -> str:
+        if bind_client is None:
+            return await _publish(await client_for(tenant), tenant, pin)
+        async with bind_client(tenant) as client:
+            return await _publish(client, tenant, pin)
 
     return publish
 

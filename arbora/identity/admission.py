@@ -23,7 +23,7 @@ class BrowserAdmission:
         self,
         issuer: LocalIssuer,
         browser: ArboraBrowserAuthority,
-        session_for_token: Callable[[str], Awaitable[Any]],
+        session_for_token: Callable[[str, str], Awaitable[Any]],
         *,
         trusted_origin: str,
     ) -> None:
@@ -64,7 +64,7 @@ class BrowserAdmission:
         token = await self._issuer.issue(credential)
         if _snapshot(scope, key) != initial:
             raise PermissionError("request changed during local issuance")
-        session = await self._session_for_token(token)
+        session = await self._session_for_token(token, credential)
         if _snapshot(scope, key) != initial:
             raise PermissionError("request changed during caller resolution")
         state = dict(scope.get("state") or {})

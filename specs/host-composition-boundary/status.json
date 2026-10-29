@@ -194,6 +194,8 @@
     "ARBORA-HOST-R009.8.2",
     "ARBORA-HOST-R009.8.2.1",
     "ARBORA-HOST-R009.8.2.2",
+    "ARBORA-HOST-R009.8.2.2.1",
+    "ARBORA-HOST-R009.8.2.2.2",
     "ARBORA-HOST-R008.1000",
     "ARBORA-HOST-R008.1001",
     "ARBORA-HOST-R008.1002",
@@ -255,7 +257,7 @@
       ],
       "verified_by": [
         "tests/a2a/test_failed_usage.py:18",
-        "tests/mcp_server/test_arbora_016_served_fixes.py:178",
+        "tests/mcp_server/test_arbora_016_served_fixes.py:179",
         "tests/mcp_server/test_harness_host.py:110",
         "tests/mcp_server/test_harness_host.py:142",
         "tests/mcp_server/test_harness_host.py:29"
@@ -280,9 +282,9 @@
       ],
       "verified_by": [
         "tests/a2a/test_failed_usage.py:18",
-        "tests/mcp_server/test_task_plan.py:16",
+        "tests/mcp_server/test_task_plan.py:17",
         "tests/mcp_server/test_task_plan_failure.py:18",
-        "tests/mcp_server/test_task_plan_runtime.py:26",
+        "tests/mcp_server/test_task_plan_runtime.py:29",
         "tests/mcp_server/test_task_plan_settings.py:12"
       ],
       "rollup_of": [
@@ -324,7 +326,7 @@
         "fe6c51770bc3"
       ],
       "verified_by": [
-        "tests/mcp_server/test_arbora_016_served_fixes.py:178"
+        "tests/mcp_server/test_arbora_016_served_fixes.py:179"
       ]
     },
     {
@@ -408,8 +410,10 @@
     {
       "id": "ARBORA-HOST-R001.9.1",
       "title": "The served surface imports no external-service driver",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e755549375e6"
+      ],
       "verified_by": [
         "tests/deployment/test_small_profile_footprint.py:34"
       ]
@@ -1508,8 +1512,8 @@
         "d5f69ae59c75"
       ],
       "verified_by": [
-        "tests/test_real_boot.py:633",
-        "tests/test_real_boot.py:663"
+        "tests/test_real_boot.py:694",
+        "tests/test_real_boot.py:724"
       ]
     },
     {
@@ -1576,9 +1580,15 @@
     {
       "id": "ARBORA-HOST-R027",
       "title": "Loopback OIDC authority for skill certification",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "ebe832a9cfb5"
+      ],
+      "verified_by": [
+        "tests/certification/test_oidc.py:18",
+        "tests/certification/test_oidc.py:36",
+        "tests/certification/test_oidc_script.py:15"
+      ],
       "rollup_of": [
         "ARBORA-HOST-R027.1",
         "ARBORA-HOST-R027.2",
@@ -1588,23 +1598,35 @@
     {
       "id": "ARBORA-HOST-R027.1",
       "title": "Add the loopback OIDC authority owner module for skill certification",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "ebe832a9cfb5"
+      ],
+      "verified_by": [
+        "tests/certification/test_oidc.py:18"
+      ]
     },
     {
       "id": "ARBORA-HOST-R027.2",
       "title": "Add the loopback OIDC authority test fixture",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "ebe832a9cfb5"
+      ],
+      "verified_by": [
+        "tests/certification/test_oidc.py:36"
+      ]
     },
     {
       "id": "ARBORA-HOST-R027.3",
       "title": "Add the loopback OIDC authority script",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "ebe832a9cfb5"
+      ],
+      "verified_by": [
+        "tests/certification/test_oidc_script.py:15"
+      ]
     },
     {
       "id": "ARBORA-HOST-R028",
@@ -1956,20 +1978,16 @@
     {
       "id": "ARBORA-HOST-R009.8",
       "title": "Production host log sink",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "191af7948d99",
         "28cc061c8f06",
         "34077185335e",
         "37f265dde58d",
-        "80f6b7b53f91"
+        "71227bbdf7f4"
       ],
       "verified_by": [
-        "tests/agent_host/test_log_access.py:442",
-        "tests/agent_host/test_log_access.py:457",
-        "tests/agent_host/test_log_access.py:484",
-        "tests/agent_host/test_log_metadata.py:2",
-        "tests/agent_host/test_log_replay.py:2"
+        "tests/agent_host/test_log_sink.py:2"
       ],
       "rollup_of": [
         "ARBORA-HOST-R009.8.1",
@@ -1985,27 +2003,24 @@
         "ee476c64b37f"
       ],
       "verified_by": [
-        "tests/agent_host/test_log_access.py:442",
-        "tests/agent_host/test_log_access.py:457",
-        "tests/agent_host/test_log_access.py:484",
+        "tests/agent_host/test_log_access.py:493",
+        "tests/agent_host/test_log_access.py:508",
+        "tests/agent_host/test_log_access.py:535",
         "tests/agent_host/test_log_sink.py:225"
       ]
     },
     {
       "id": "ARBORA-HOST-R009.8.2",
       "title": "Retain restart acceptance",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "28cc061c8f06",
+        "71227bbdf7f4",
         "80f6b7b53f91",
         "c7208d7d3822",
         "ceaa3da1bbcc"
       ],
-      "verified_by": [
-        "tests/agent_host/test_log_metadata.py:2",
-        "tests/agent_host/test_log_replay.py:2",
-        "tests/agent_host/test_log_sink_terminal.py:80"
-      ],
+      "verified_by": [],
       "rollup_of": [
         "ARBORA-HOST-R009.8.2.1",
         "ARBORA-HOST-R009.8.2.2"
@@ -2026,15 +2041,38 @@
     {
       "id": "ARBORA-HOST-R009.8.2.2",
       "title": "Complete consumer metadata presentation",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "28cc061c8f06",
+        "71227bbdf7f4",
         "ceaa3da1bbcc"
       ],
       "verified_by": [
         "tests/agent_host/test_log_metadata.py:2",
-        "tests/agent_host/test_log_sink_terminal.py:80"
+        "tests/agent_host/test_log_sink_terminal.py:10"
+      ],
+      "rollup_of": [
+        "ARBORA-HOST-R009.8.2.2.1",
+        "ARBORA-HOST-R009.8.2.2.2"
       ]
+    },
+    {
+      "id": "ARBORA-HOST-R009.8.2.2.1",
+      "title": "Qualify the released native terminal",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "c9be06d6eaf2"
+      ],
+      "verified_by": [
+        "tests/agent_host/test_log_sink_terminal_lifecycle.py:2"
+      ]
+    },
+    {
+      "id": "ARBORA-HOST-R009.8.2.2.2",
+      "title": "Retain Overstory metadata acceptance",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     },
     {
       "id": "ARBORA-HOST-R008.1000",
@@ -2074,9 +2112,13 @@
     {
       "id": "ARBORA-HOST-R008.1005",
       "title": "Evidence",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e755549375e6"
+      ],
+      "verified_by": [
+        "tests/test_host_bindings.py:68"
+      ]
     },
     {
       "id": "ARBORA-HOST-R008.1006",
@@ -2155,7 +2197,7 @@
         "9bd22960a7ea"
       ],
       "verified_by": [
-        "tests/mcp_server/test_task_plan.py:16"
+        "tests/mcp_server/test_task_plan.py:17"
       ]
     },
     {
@@ -2169,7 +2211,7 @@
       "verified_by": [
         "tests/a2a/test_failed_usage.py:18",
         "tests/mcp_server/test_task_plan_failure.py:18",
-        "tests/mcp_server/test_task_plan_runtime.py:26",
+        "tests/mcp_server/test_task_plan_runtime.py:29",
         "tests/mcp_server/test_task_plan_settings.py:12"
       ]
     }

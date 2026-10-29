@@ -32,11 +32,12 @@ import time
 import uuid
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
 from arbora.deployment.config_generator import PROCESS_IDENTITY_ROLES
+from tests._boot_diagnostics import BootDiagnostics
 
 pytestmark = [
     pytest.mark.real_boot,
@@ -108,10 +109,21 @@ def _listening(port: int) -> bool:
         return probe.connect_ex(("127.0.0.1", port)) == 0
 
 
+def _free_ports(count: int) -> tuple[int, ...]:
+    """Choose distinct fixture ports while all allocation sockets remain bound."""
+    with contextlib.ExitStack() as stack:
+        ports = []
+        for _ in range(count):
+            probe = stack.enter_context(
+                socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            )
+            probe.bind(("127.0.0.1", 0))
+            ports.append(int(probe.getsockname()[1]))
+        return tuple(ports)
+
+
 def _free_port() -> int:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
-        probe.bind(("127.0.0.1", 0))
-        return int(probe.getsockname()[1])
+    return _free_ports(1)[0]
 
 
 class _Issuer:
@@ -139,11 +151,19 @@ class _Issuer:
         self._thread = threading.Thread(target=self._server.serve_forever, daemon=True)
         self._thread.start()
 
-    def token(self, subject: str, *, ttl: int = 3600, email: bool = True) -> str:
+    def token(
+        self,
+        subject: str,
+        *,
+        ttl: int = 3600,
+        email: bool = True,
+        roles: tuple[str, ...] | None = None,
+        tenant: str = TENANT,
+    ) -> str:
         from joserfc import jwt
 
         now = int(time.time())
-        roles = list(ROLES)
+        effective_roles = tuple(ROLES if roles is None else roles)
         # A Keycloak client-credentials token carries no email: arbora mints it
         # as an automated_service (service) principal.
         identity = {"email": f"{subject}@boot.example"} if email else {}
@@ -154,9 +174,9 @@ class _Issuer:
                 "aud": AUDIENCE,
                 "sub": subject,
                 **identity,
-                "tenant_id": TENANT,
-                "roles": roles,
-                "scope": " ".join(roles),
+                "tenant_id": tenant,
+                "roles": list(effective_roles),
+                "scope": " ".join(effective_roles),
                 "iat": now,
                 "nbf": now - 5,
                 "exp": now + ttl,
@@ -239,10 +259,17 @@ def _terminate(process: subprocess.Popen[Any]) -> None:
 def _booted_stack(
     extra_config: dict[str, str] | None = None,
     extra_env: dict[str, str] | None = None,
+    extra_token_roles: tuple[str, ...] = (),
+    process_token_roles: tuple[str, ...] | None = None,
+    process_token_email: bool = True,
+    private_root: Path | None = None,
+    before_serve: Any = None,
+    boot_stage: Any = None,
 ) -> Iterator[dict[str, Any]]:
-    root = Path(tempfile.mkdtemp(prefix="gos-boot-", dir="/tmp"))
+    root = Path(tempfile.mkdtemp(prefix="gos-boot-", dir=private_root or "/tmp"))
     issuer = _Issuer()
     processes: list[subprocess.Popen[Any]] = []
+    diagnostics = BootDiagnostics(root, processes)
     secret = uuid.uuid4().hex
     signer_key = uuid.uuid4().hex
     socket_path = root / "eg.sock"
@@ -304,15 +331,18 @@ def _booted_stack(
                 )
             return socket_path.exists()
 
-        _wait(
-            eg_up,
-            timeout=60,
-            what="the epistemic-graph socket",
-            logs=lambda: (root / "eg.log").read_text(errors="replace"),
-        )
+        with diagnostics.phase("engine_socket"):
+            _wait(
+                eg_up,
+                timeout=60,
+                what="the epistemic-graph socket",
+                logs=lambda: (root / "eg.log").read_text(errors="replace"),
+            )
 
         # The operator's one provisioning step on a fresh engine: admit the
         # arbora process principal as the system identity, signing as itself.
+        if boot_stage is not None:
+            boot_stage("native_system_bootstrap")
         asyncio.run(_admit_process_identity(socket_path, secret, signer_key))
 
         model_port = _free_port()
@@ -380,8 +410,7 @@ def _booted_stack(
         }
         policy_path = config_dir / "action_policy.json"
         policy_path.write_text(json.dumps(policy))
-        port = _free_port()
-        connector_port = _free_port()
+        port, connector_port, ingest_port = _free_ports(3)
         processes.append(
             subprocess.Popen(
                 [
@@ -394,7 +423,6 @@ def _booted_stack(
                 stderr=subprocess.STDOUT,
             )
         )
-        ingest_port = _free_port()
         processes.append(
             subprocess.Popen(
                 [
@@ -424,11 +452,19 @@ def _booted_stack(
                 }
             )
         )
+        token_roles = tuple(dict.fromkeys((*ROLES, *extra_token_roles)))
+        process_token = issuer.token(
+            PROCESS_SUBJECT,
+            ttl=7200,
+            roles=process_token_roles,
+            email=process_token_email,
+        )
+        service_token = issuer.token(PROCESS_SUBJECT, ttl=7200, email=False)
         gos_env = {
             **base_env,
             "ARBORA_CONFIG_DIR": str(config_dir),
             "GRAPH_SERVICE_AUTH_SECRET": secret,
-            "ARBORA_BOOT_PROCESS_TOKEN": issuer.token(PROCESS_SUBJECT, ttl=7200),
+            "ARBORA_BOOT_PROCESS_TOKEN": process_token,
             "ARBORA_BOOT_MODEL_KEY": "boot-model-key",  # sanitizer:ignore - synthetic
             "XDG_CONFIG_HOME": str(root / "xdg-config"),
             "XDG_DATA_HOME": str(root / "xdg-data"),
@@ -441,6 +477,8 @@ def _booted_stack(
         served_url = f"http://127.0.0.1:{port}/mcp"
         # The documented operator step on a fresh store: provision Arbora's
         # semantic packs under its own process identity before first serve.
+        if boot_stage is not None:
+            boot_stage("semantic_provisioning")
         provision = subprocess.run(
             [
                 shutil.which("arbora-production-ops", path=bindir)
@@ -464,6 +502,8 @@ def _booted_stack(
             what="the connector fixture",
             logs=lambda: gos_log_path.read_text(errors="replace"),
         )
+        if boot_stage is not None:
+            boot_stage("connector_onboarding")
         onboard = subprocess.run(
             [
                 shutil.which("arbora-production-ops", path=bindir)
@@ -481,6 +521,20 @@ def _booted_stack(
         assert onboard.returncode == 0, (
             f"fleet onboarding failed\n{onboard.stdout}\n{onboard.stderr}"
         )
+        if before_serve is not None:
+            # Test-only private setup seam: no production authority override.
+            before_serve(
+                {
+                    "socket_path": str(socket_path),
+                    "secret": secret,
+                    "issuer": issuer,
+                    "process_token": process_token,
+                    "root": root,
+                    "config_dir": config_dir,
+                    "env": gos_env,
+                    "base_url": f"http://127.0.0.1:{port}",
+                }
+            )
         entry = shutil.which("arbora", path=bindir)
         command = [entry] if entry else [sys.executable, "-m", "arbora.mcp_server"]
         processes.append(
@@ -552,20 +606,26 @@ def _booted_stack(
                         return False
                     return True
 
-            _wait(
-                reopened,
-                timeout=60,
-                what="the restarted epistemic-graph socket",
-                logs=lambda: (root / "eg.log").read_text(errors="replace"),
-            )
+            with diagnostics.phase("engine_restart_socket"):
+                _wait(
+                    reopened,
+                    timeout=60,
+                    what="the restarted epistemic-graph socket",
+                    logs=lambda: (root / "eg.log").read_text(errors="replace"),
+                )
 
         yield {
+            "diagnostics": diagnostics,
             "restart_engine": restart_engine,
             "socket_path": str(socket_path),
             "secret": secret,
             "base_url": base_url,
-            "token": issuer.token(OPERATOR_SUBJECT),
-            "service_token": issuer.token(OPERATOR_SUBJECT, email=False),
+            "token": issuer.token(OPERATOR_SUBJECT, roles=token_roles),
+            "foreign_token": issuer.token(
+                OPERATOR_SUBJECT, roles=token_roles, tenant="foreign-boot"
+            ),
+            "service_token": service_token,
+            "issuer_jwks_uri": issuer.jwks_uri,
             "logs": gos_logs,
         }
     finally:
@@ -586,12 +646,13 @@ def stack() -> Iterator[dict[str, Any]]:
 def _post_op(stack: dict[str, Any], op_id: str, params: dict[str, Any]) -> Any:
     import httpx
 
-    response = httpx.post(
-        f"{stack['base_url']}/api/v1/ops/{op_id}",
-        json=params,
-        headers={"Authorization": f"Bearer {stack['token']}"},
-        timeout=30,
-    )
+    with stack["diagnostics"].phase("http_operation"):
+        response = httpx.post(
+            f"{stack['base_url']}/api/v1/ops/{op_id}",
+            json=params,
+            headers={"Authorization": f"Bearer {stack['token']}"},
+            timeout=30,
+        )
     assert response.status_code == 200, (
         f"{op_id} answered {response.status_code}: {response.text}\n{stack['logs']()}"
     )
@@ -755,6 +816,336 @@ async def test_mcp_act_calls_the_connector_tool(stack: dict[str, Any]) -> None:
     effect = await _effect_items(stack)
     assert [item["status"] for item in effect] == ["succeeded"], effect
     assert "echo:boot" in effect[0]["metadata"]["outcome"], effect
+
+
+@pytest.mark.spec(
+    "ARBORA-OPS-R021.4.5.1.2", "ARBORA-OPS-R021.4.7", "ARBORA-OPS-R021.4.8.1"
+)
+def test_native_current_plan_lifecycle_uses_installed_engine(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The released EG lifecycle carries one native submit/claim into the
+    admitted publication and reads it through the real HTTP/MCP serving root.
+    Replayed events below are controlled durable fixtures, not an AU run.
+
+    The extra work scopes belong only to this ephemeral issuer/token. The
+    production process role declaration remains the least privilege fixture
+    used by the rest of the boot suite.
+    """
+    from types import SimpleNamespace
+
+    from agent_connector_sdk.current_plan import PlanItem
+    from epistemic_graph import EpistemicGraphClient
+
+    from arbora import current_plan_publication, work_items
+    from arbora.a2a.authority import WorkItemA2AAuthority
+    from arbora.api.contracts.session import use_session
+    from arbora.api.invoke.pipeline import invoke
+    from arbora.api.invoke.steps import OpResult
+    from arbora.api.mcp.caller import caller_from_session
+    from arbora.api.registry import Surface
+    from arbora.core.settings import runtime_config
+    from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+    from arbora.epistemic import ConnectClient, EpistemicClientPool
+    from arbora.mcp_server.current_plan_reader import NativeCurrentPlanReader
+    from arbora.mcp_server.served_engine import ServedEngine
+    from arbora.mcp_server.served_invocation import (
+        compose_served_invocation,
+        refused_fleet_effect,
+    )
+    from arbora.security.request_identity import (
+        actor_from_bearer_token,
+        mint_graph_session,
+    )
+
+    with _booted_stack(
+        extra_token_roles=("work:read", "work:write"),
+    ) as stack:
+        monkeypatch.setattr(
+            runtime_config, "auth_jwt_jwks_uri", stack["issuer_jwks_uri"]
+        )
+        monkeypatch.setattr(runtime_config, "auth_jwt_issuer", ISSUER)
+        monkeypatch.setattr(runtime_config, "auth_jwt_audience", AUDIENCE)
+        monkeypatch.setattr(runtime_config, "kg_policy_version", POLICY_VERSION)
+        actor = asyncio.run(actor_from_bearer_token(stack["token"]))
+        session = mint_graph_session(actor).with_graph(CONTROL_GRAPH)
+        pool = EpistemicClientPool(
+            cast(ConnectClient, EpistemicGraphClient.connect),
+            socket_path=stack["socket_path"],
+            auth_secret=stack["secret"],
+        )
+        engine = ServedEngine(pool)
+        invocation = compose_served_invocation(
+            pool=pool,
+            graph=CONTROL_GRAPH,
+            process_session=lambda: session,
+            bindings={"current_plan_reader": NativeCurrentPlanReader()},
+            fleet_effect=refused_fleet_effect,
+        )
+        run_id = f"native-current-plan-{uuid.uuid4().hex}"
+
+        async def exercise() -> None:
+            with use_session(session):
+                item_id, created = work_items.submit_work_item_atomic(
+                    engine,
+                    kind="orchestrator_task",
+                    queue="orchestrator_task",
+                    resource_class="agent_dispatch",
+                    tenant=TENANT,
+                    run_id=run_id,
+                    idempotency_key=run_id,
+                    payload_ref=run_id,
+                    description="installed current-plan lifecycle acceptance",
+                    created_by=PROCESS_SUBJECT,
+                    metadata={
+                        "a2a_schema": "arbora-a2a-unary-v1",
+                        "a2a_owner_ref": WorkItemA2AAuthority._owner_ref(session),
+                        "a2a_run_id": run_id,
+                    },
+                )
+                assert created is True
+                claim = work_items.claim_specific(
+                    engine,
+                    item_id,
+                    token=f"native-current-plan-worker:{run_id}",
+                    lease_ttl_s=600,
+                )
+                assert claim is not None
+                request = SimpleNamespace(
+                    run_id=run_id,
+                    metadata={"session": session},
+                )
+                with current_plan_publication.bind_admitted_claim(
+                    engine,
+                    session=session,
+                    run_id=run_id,
+                    work_item_id=item_id,
+                    claim=claim,
+                    hosted_invocation=invocation,
+                    owner_graph=CONTROL_GRAPH,
+                ):
+                    async with current_plan_publication.publication_scope(
+                        request
+                    ) as publisher:
+                        assert publisher is not None
+                        await publisher.publish(0, ())
+                        await publisher.publish(
+                            1,
+                            (PlanItem(text="inspect", status="in_progress"),),
+                        )
+
+                caller = caller_from_session(
+                    session,
+                    credential_kind="session",
+                    request_id=f"current-plan-read:{run_id}",
+                )
+                result = await invoke(
+                    "runs.current_plan",
+                    {"run_id": run_id},
+                    caller,
+                    Surface.HTTP,
+                    services=invocation.services,
+                )
+                assert isinstance(result, OpResult), result
+                assert result.code == "OK", result
+                value = result.value["value"]
+                assert value["availability"] == "available"
+                assert value["snapshot"]["run_id"] == run_id
+                assert value["snapshot"]["items"] == [
+                    {"text": "inspect", "status": "in_progress"}
+                ]
+                # Replay is stored on the caller graph, as in the served run.
+                with use_session(session.with_graph(TENANT_GRAPH)):
+                    _seed_native_read_events(engine, run_id)
+                await _check_served_native_reads(stack, run_id, item_id)
+                assert (
+                    work_items.commit_result(
+                        engine,
+                        item_id,
+                        claim,
+                        outcome="succeeded",
+                        result_ref=f"run:{run_id}",
+                    )
+                    == "committed"
+                )
+                completed = await _read_native_surfaces(
+                    stack, {"runs.get": {"run_id": run_id, "task_id": item_id}}
+                )
+                assert completed["runs.get"]["status"] == "completed", completed
+            await pool.close()
+
+        try:
+            asyncio.run(exercise())
+        except Exception as exc:
+            raise AssertionError(
+                "native current-plan lifecycle failed\n" + stack["logs"]()
+            ) from exc
+
+
+def _seed_native_read_events(engine: Any, run_id: str) -> None:
+    """Controlled durable rows; no producer or executable-plan claim."""
+    for sequence, kind in enumerate(
+        ("run_started", "public_summary", "graph_complete"), 1
+    ):
+        event_id = f"{run_id}:{sequence}"
+        event = {
+            "run_id": run_id,
+            "event_id": event_id,
+            "sequence": sequence,
+            "type": kind,
+            "summary": "Checked the installed read boundary",
+            "reasoning": "PRIVATE READ FIXTURE",
+        }
+        assert engine.create_node(
+            f"runevent:{event_id}",
+            "RunEvent",
+            {
+                "run_id": run_id,
+                "sequence": sequence,
+                "event_id": event_id,
+                "event_type": kind,
+                "payload": json.dumps(event),
+            },
+        )
+
+
+async def _paced_native_read(
+    client: Any,
+    operation: str,
+    params: dict[str, Any],
+    *,
+    raise_on_error: bool = True,
+) -> Any:
+    # The installed MCP middleware allows 10 requests/s with a burst of 20,
+    # including session handshakes. Keep this read journey at <=5 calls/s
+    # without changing the production budget or retrying a refused request.
+    await asyncio.sleep(0.2)
+    return await client.call_tool(
+        "ask", {"op": operation, "params": params}, raise_on_error=raise_on_error
+    )
+
+
+async def _read_native_surfaces(
+    stack: dict[str, Any], requests: dict[str, dict[str, Any]]
+) -> dict[str, Any]:
+    """Every call enters the installed process; no injected read bindings."""
+    values = {}
+    async with await _mcp_session(stack) as client:
+        for operation, params in requests.items():
+            http = await asyncio.to_thread(_post_op, stack, operation, params)
+            mcp = _structured(await _paced_native_read(client, operation, params))
+            assert http["ok"] is True and mcp["ok"] is True, (http, mcp)
+            assert http["result"] == mcp["result"], (http, mcp)
+            values[operation] = http["result"]["value"]
+    return values
+
+
+async def _check_served_native_reads(
+    stack: dict[str, Any], run_id: str, item_id: str
+) -> None:
+    pair = {"run_id": run_id, "task_id": item_id}
+    requests: dict[str, dict[str, Any]] = {
+        "runs.current_plan": {"run_id": run_id},
+        "runs.get": pair,
+        "runs.events": {**pair, "limit": 2},
+        "runs.execution_graph": {**pair, "schema_version": "arbora-execution-graph-v1"},
+    }
+    first = await _read_native_surfaces(stack, requests)
+    assert first["runs.current_plan"]["availability"] == "available", first
+    assert first["runs.current_plan"]["snapshot"]["items"] == [
+        {"text": "inspect", "status": "in_progress"}
+    ]
+    assert first["runs.get"]["status"] == "running", first
+    assert first["runs.get"]["public_summary"] == {"availability": "unavailable"}
+    assert first["runs.get"]["task_plan"] == {"availability": "unavailable"}
+    page = first["runs.events"]
+    assert page["availability"] == "available" and page["has_more"] is True, page
+    assert [event["sequence"] for event in page["events"]] == [1, 2]
+    assert page["events"][1]["payload"] == {
+        "summary": "Checked the installed read boundary"
+    }
+    assert "PRIVATE" not in json.dumps(first)
+    assert first["runs.execution_graph"]["availability"] == "unavailable"
+    # A fresh MCP session must return the identical persisted projection.
+    assert await _read_native_surfaces(stack, requests) == first
+    resumed = await _read_native_surfaces(
+        stack, {"runs.events": {**pair, "after": page["next_after"]}}
+    )
+    tail = resumed["runs.events"]
+    assert [event["sequence"] for event in tail["events"]] == [3]
+    assert tail["terminal"] is True and tail["has_more"] is False
+    await _check_foreign_native_reads(stack, requests)
+
+
+def _assert_native_read_refusal(value: dict[str, Any]) -> None:
+    """A broken backend or unknown operation is not isolation evidence."""
+    if value.get("ok") is True:
+        assert value["result"]["value"]["availability"] == "unavailable", value
+    else:
+        assert value.get("ok") is False, value
+        assert value["error"]["code"] in {
+            "UNAUTHENTICATED",
+            "ACCESS_DENIED",
+            "SUBJECT_ACCESS_DENIED",
+            "PRINCIPAL_NOT_ALLOWED",
+            "SCOPE_REQUIRED",
+            "POLICY_DENIED",
+        }, value
+    _assert_no_native_read_payload(json.dumps(value))
+
+
+def _assert_no_native_read_payload(encoded: str) -> None:
+    assert "Checked the installed read boundary" not in encoded
+    assert '"text": "inspect"' not in encoded
+    assert "PRIVATE" not in encoded
+
+
+async def _check_foreign_native_reads(
+    stack: dict[str, Any], requests: dict[str, dict[str, Any]]
+) -> None:
+    import httpx
+
+    foreign = {**stack, "token": stack["foreign_token"]}
+    async with httpx.AsyncClient() as http:
+        for operation, params in requests.items():
+            response = await http.post(
+                f"{stack['base_url']}/api/v1/ops/{operation}",
+                json=params,
+                headers={"Authorization": f"Bearer {foreign['token']}"},
+                timeout=30,
+            )
+            assert response.status_code in (200, 401, 403), response.text
+            _assert_no_native_read_payload(response.text)
+            value = response.json()
+            # HTTP middleware may reject authentication before an op envelope.
+            if response.status_code == 200 or "ok" in value:
+                _assert_native_read_refusal(value)
+    await _check_foreign_native_mcp(foreign, requests)
+
+
+async def _check_foreign_native_mcp(
+    foreign: dict[str, Any], requests: dict[str, dict[str, Any]]
+) -> None:
+    import httpx2
+
+    async with contextlib.AsyncExitStack() as contexts:
+        try:
+            client = await contexts.enter_async_context(await _mcp_session(foreign))
+        except httpx2.HTTPStatusError as exc:
+            # Locked FastMCP 4.1 passes httpx2.HTTPStatusError through its
+            # _connection_failure boundary. Only handshake 401/403 qualifies;
+            # timeouts, connection failures and server errors must fail this test.
+            assert exc.response.status_code in (401, 403), exc.response
+            await exc.response.aread()
+            _assert_no_native_read_payload(exc.response.text)
+            return
+        for operation, params in requests.items():
+            result = _structured(
+                await _paced_native_read(
+                    client, operation, params, raise_on_error=False
+                )
+            )
+            _assert_native_read_refusal(result)
 
 
 def _post_op_keyed(stack: dict[str, Any], op_id: str, params: dict[str, Any]) -> Any:
@@ -955,8 +1346,8 @@ def test_a2a_message_send_completes_through_the_model(stack: dict[str, Any]) -> 
 @pytest.mark.spec("ARBORA-OPS-R001")
 def test_the_tui_headless_prompt_completes(stack: dict[str, Any]) -> None:
     """The installed test dependency completes its headless prompt end to end."""
-    exe = shutil.which("agent-terminal-ui", path=str(Path(sys.executable).parent))
-    assert exe is not None, "install the locked test extra for TUI acceptance"
+    exe = shutil.which("tuig", path=str(Path(sys.executable).parent))
+    assert exe is not None, "install the locked Tuig test extra for TUI acceptance"
     env = {
         **{k: v for k, v in os.environ.items() if k in _INHERITED_ENV},
         "AGENT_URL": stack["base_url"],

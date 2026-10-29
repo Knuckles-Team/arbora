@@ -546,3 +546,84 @@ def test_openapi_rewrites_nested_schema_positions_and_refuses_scoped_ids(positio
     schema[position] = {"$id": "relative-scope", "type": "string"}
     with pytest.raises(ValueError, match="cannot be hoisted"):
         gen_api._openapi(registry)
+
+
+@pytest.mark.spec("ARBORA-OPS-R026.2")
+@pytest.mark.parametrize(
+    "old,new,input_break,output_break",
+    [
+        (True, True, False, False),
+        (False, False, False, False),
+        (True, False, True, False),
+        (False, True, False, True),
+        (True, {}, False, False),
+        ({}, True, False, False),
+        (False, {}, False, True),
+        ({}, False, True, False),
+        (True, {"type": "string"}, True, False),
+        ({"type": "string"}, True, False, True),
+        (False, {"type": "string"}, False, True),
+        ({"type": "string"}, False, True, False),
+    ],
+)
+@pytest.mark.parametrize("result", [False, True])
+def test_boolean_schema_compatibility_variance(
+    old, new, input_break, output_break, result
+):
+    findings = gen_api._shape_breaks(old, new, path="value", result=result)
+    assert bool(findings) is (output_break if result else input_break)
+    if findings:
+        assert ("widened result" if result else "narrowed params") in findings[0]
+
+
+@pytest.mark.spec("ARBORA-OPS-R026.2")
+@pytest.mark.parametrize("schema", [True, False, {}])
+@pytest.mark.parametrize("result", [False, True])
+def test_shape_accepts_top_level_boolean_and_empty_schemas(schema, result):
+    assert gen_api._shape({"schema": schema}, result=result) == schema
+    wrapped = {"bodies": {"result": {"schema": schema}}}
+    assert gen_api._shape({"schema": wrapped}, result=True) == schema
+
+
+@pytest.mark.spec("ARBORA-OPS-R026.2")
+@pytest.mark.parametrize("result", [False, True])
+def test_boolean_properties_recurse_without_changing_dictionary_policy(result):
+    old = {"type": "object", "properties": {"value": True}}
+    new = {"type": "object", "properties": {"value": False}}
+    findings = gen_api._shape_breaks(old, new, path="root", result=result)
+    assert bool(findings) is (not result)
+    if findings:
+        assert "root.value" in findings[0]
+    # Preserve the existing conservative dict-to-dict type-change check.
+    assert gen_api._shape_breaks({}, {"type": "string"}, path="root", result=result)
+    assert gen_api._shape_breaks({"type": "string"}, {}, path="root", result=result)
+    assert gen_api._shape_breaks({}, {}, path="root", result=result) == []
+
+
+@pytest.mark.spec("ARBORA-OPS-R026.2")
+@pytest.mark.parametrize("invalid", [None, [], 1, "true"])
+def test_invalid_schema_types_fail_closed(invalid):
+    with pytest.raises(ValueError, match="JSON Schema"):
+        gen_api._shape_breaks(invalid, True, path="root", result=False)
+    with pytest.raises(ValueError, match="JSON Schema"):
+        gen_api._shape_breaks(False, invalid, path="root", result=True)
+
+
+@pytest.mark.spec("ARBORA-OPS-R026.2")
+def test_installed_provider_boolean_result_is_self_compatible():
+    registry = gen_api._registry("arbora.api.ops")
+    operation = next(
+        op for op in registry["ops"] if op["id"] == "eg.cluster.PlanMatViewGet"
+    )
+    provider = gen_api.importlib.resources.files("epistemic_graph").joinpath("contract")
+    baseline = gen_api._expand_registry(
+        {**registry, "ops": [operation]},
+        lambda name: provider.joinpath(name).read_bytes(),
+    )
+    assert gen_api._shape(baseline["ops"][0]["result"], result=True) is True
+    assert gen_api._breaking_changes(baseline, baseline) == []
+    changed_digest = json.loads(json.dumps(baseline))
+    changed_digest["ops"][0]["result"]["schema_sha256"] = "f" * 64
+    assert "review required" in " ".join(
+        gen_api._breaking_changes(baseline, changed_digest)
+    )

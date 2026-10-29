@@ -59,6 +59,11 @@ class ExecutionContext:
     idempotency_key: str | None = None
     fleet_decision: Any = None
     registry_digest: str = ""
+    # The complete, already-authorized invocation bundle.  Composite
+    # handlers that must reuse a verified hosted path (for example native
+    # task-plan publication) need the same services object that performed the
+    # request recheck; bindings alone are not an authority.
+    operation_services: Any = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "services", MappingProxyType(dict(self.services)))

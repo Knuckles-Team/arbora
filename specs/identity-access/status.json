@@ -238,7 +238,7 @@
         "5e42e0ab38ce"
       ],
       "verified_by": [
-        "tests/mcp_server/test_current_plan_reader.py:197",
+        "tests/mcp_server/test_current_plan_reader.py:214",
         "tests/mcp_server/test_source_reader_anonymous.py:17",
         "tests/security/test_anonymous_discovery.py:28",
         "tests/security/test_anonymous_mode.py:11",
@@ -263,6 +263,7 @@
       "title": "Consume exact persisted session facts",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "6e1cda364e4d",
         "753803845a64",
         "82a546bed3d3"
       ],
@@ -1407,14 +1408,15 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "68c58c6e80df",
+        "6e1cda364e4d",
         "d4ae6fb9949c"
       ],
       "verified_by": [
+        "tests/identity/test_browser_runtime.py:25",
         "tests/webui_host/test_session_boundary.py:110",
         "tests/webui_host/test_session_boundary.py:150",
         "tests/webui_host/test_session_boundary.py:161",
-        "tests/webui_host/test_session_boundary.py:48",
-        "tests/webui_host/test_session_boundary.py:88"
+        "tests/webui_host/test_session_boundary.py:48"
       ]
     },
     {
@@ -1422,13 +1424,16 @@
       "title": "Installed browser identity lifecycle",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/qualification/browser/test_installed_native_browser.py:11"
+      ]
     },
     {
       "id": "ARBORA-IDENTITY-R004.5.1",
       "title": "Private same-owner dispatch source contract",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "6e1cda364e4d",
         "d4ae6fb9949c"
       ],
       "verified_by": [
@@ -1444,9 +1449,14 @@
       "title": "Canonical WebUI factory safety source contract",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "6e1cda364e4d",
         "d4ae6fb9949c"
       ],
       "verified_by": [
+        "tests/identity/test_browser_broker.py:14",
+        "tests/mcp_server/test_browser_composition.py:10",
+        "tests/mcp_server/test_browser_dispatch.py:14",
+        "tests/qualification/test_browser_fixture_contract.py:17",
         "tests/webui_host/test_canonical_browser_composition.py:50"
       ]
     },
@@ -1455,7 +1465,9 @@
       "title": "Installed and native dispatch qualification",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/qualification/browser/test_installed_native_browser.py:12"
+      ]
     },
     {
       "id": "ARBORA-IDENTITY-R004.8",

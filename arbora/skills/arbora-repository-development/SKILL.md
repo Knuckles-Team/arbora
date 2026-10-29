@@ -122,7 +122,7 @@ The package publishes these operator commands:
 | `arbora-release-canary` | Check a candidate release and catalog |
 | `arbora-production-ops` | Run guarded backup, restore, and production checks |
 
-The `arbora` entrypoint is `arbora.mcp_server.server:mcp_server`.
+The `arbora` entrypoint is `arbora.console:main`.
 
 After `scripts/bootstrap.sh`, run focused development checks with:
 
@@ -137,8 +137,10 @@ uv run --no-sync mypy arbora tests
 `.pre-commit-config.yaml` is the single definition of the gates. The release
 workflow runs it directly: the commit stage over every file, the push stage
 over the pushed range, then the manual-stage `mypy-env` and `pytest` hooks
-once the pinned sibling sources and source-overlay environment are
-provisioned. Run the same locally:
+after `uv sync --frozen --extra test --extra webui` installs the locked PyPI
+dependencies. No sibling source or overlay participates in release qualification.
+Local paired-source diagnostics can investigate upstream contracts, but cannot
+replace these wheel-only gates. Run the same locally:
 
 ```bash
 uvx pre-commit run --all-files

@@ -11,7 +11,7 @@ a static catalog, process-local durable store, or fabricated success receipt.
 | MCP composition | Available | One FastMCP lifecycle with `stdio` and authenticated `streamable-http` transports |
 | REST gateway | Available | The same application services used by MCP, projected through Arbora routes |
 | Fleet gateway | Available with a checked catalog | Child lifecycle, health, OAuth admission, collision-safe naming, and per-session discovery |
-| Agent WebUI host | Available through the `webui` extra | Co-service supervision with an injected Arbora application composer |
+| Overstory host | Available through the `webui` extra | Co-service supervision with an injected Arbora application composer |
 | Unary A2A | Available | Authenticated Agent Card plus send, get, list, and cancel over durable WorkItems |
 | Browser control | Available when attended identity is configured | Catalog, lease, policy, dispatch, cancellation, and provenance orchestration |
 | Deployment operations | Available | Configuration, diagnostics, release canary, managed environments, backup, and restore validation |
@@ -24,10 +24,10 @@ same multiplexer owned by the serving loop.
 
 | Capability | Required runtime state | Behavior when absent |
 |---|---|---|
-| EG-backed fleet catalog | Generated server-registration and AgentComponent clients, plus the matching agent-utilities read ports | Startup refuses readiness; no static catalog is selected |
+| EG-backed fleet catalog | Generated server-registration and AgentComponent clients. Matching agent-utilities read ports | Startup refuses readiness; no static catalog is selected |
 | Connector runner | Generated ConnectorPack and SourceIngest clients, SDK runner, and live policy resolver | Connector execution is refused |
 | Semantic content packs | Provisioned `arbora` and `agent-utilities` packs attached through GraphSchema | Content checks report the missing or stale attachment |
-| WebUI application routes | Agent WebUI installed with its application-composer seam | Arbora runs without the optional WebUI co-service |
+| WebUI application routes | Overstory installed with its application-composer seam | Arbora runs without the optional WebUI co-service |
 | Attended browser control | WebUI identity validation, backchannel revalidation, and engine mutation authorities | Browser control remains unavailable |
 
 ## Explicitly unavailable surfaces
@@ -37,6 +37,7 @@ same multiplexer owned by the serving loop.
 | Durable four-family MCP resource/template reconciliation | `reingestion-unreconciled`; Arbora does not claim publication |
 | Context-budget-selected A2A tool subsets | Refused before admission because the signed request does not bind an enforceable subset |
 | A2A streaming, push notifications, and transition history | Not advertised by the Agent Card |
+| Agent Client Protocol (ACP) | Experimental source stdio and authenticated HTTP/SSE. Opt-in central first-turn answer; unconfigured 503. Central continuation and installed pairing pending. |
 
 Ordinary authenticated unary A2A routing to an authorized agent remains
 available.
@@ -91,3 +92,27 @@ Native publication receipt recovery remains an acceptance gate.
 Completed native admission recovery has passed a local real-engine test with simulated model responses. Identical retries preserve the completed task and reply without additional model requests. This holds before and after restarting both services against the same persistent store. Changed input returns the typed
 idempotency conflict, and public event identities survive restart. This does
 not qualify concurrent execution deduplication or active-execution resume.
+
+### Flat execution graph reads
+
+`runs.execution_graph` is an explicitly versioned, read-only projection of an
+owned run's current native dependency plan. Clients request
+`arbora-execution-graph-v1`; operation discovery and the generated schema identify
+the capability. Existing replay v1 and default run reads are unchanged.
+
+The graph includes declared step IDs and predecessor-to-dependent edges, never
+prompts or outputs. A complete declared topology does not mean a complete
+lifecycle. Status reflects only a bounded prefix of ordered task events from the
+same run and plan. Unobserved means no lifecycle evidence in that prefix, not
+that a task has not started. The snapshot reports its covered cursor and whether
+more observed events exist; lifecycle coverage remains incomplete even after a
+terminal root event. Invalid history is unavailable, not filtered into a graph.
+Expired or missing current-plan publication also makes the graph unavailable.
+
+These are flat plan steps, not spawned child conversations. Transcript, active
+messaging and completed-child continuation remain unavailable. Source-level
+HTTP/MCP tests cover this projection; installed native-service and recursive
+execution acceptance remain pending.
+
+Clients must treat task IDs as untrusted display text. Escape browser markup
+and terminal control characters without changing the opaque identity used for requests.

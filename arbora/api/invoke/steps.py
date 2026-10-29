@@ -100,6 +100,14 @@ class OpResult:
 SchemaValidate = Callable[[EgSchemaRef, Mapping[str, Any]], Mapping[str, Any]]
 
 
+def _allows_owner_read_tenant(op: Any) -> bool:
+    binding = getattr(op, "binding", None)
+    return (
+        getattr(binding, "kind", None) == "eg"
+        and getattr(binding, "service", None) == "GetRunWorkItem"
+    )
+
+
 def validate_params(
     op: Any,
     params: Mapping[str, Any],
@@ -110,11 +118,22 @@ def validate_params(
     if not isinstance(params, Mapping):
         return OpError("INVALID_ARGUMENT")
     asserted = forbidden_path(params)
-    if asserted is not None:
+    # The native owner-read contract carries the tenant as a required
+    # correlation field.  It is still caller-bound at the EG dispatch seam;
+    # accepting this one wire field here lets the provider schema validate the
+    # complete request without turning a caller-supplied tenant into authority.
+    if asserted is not None and not (
+        asserted == "tenant" and _allows_owner_read_tenant(op)
+    ):
         return OpError("INVALID_ARGUMENT", {"field": asserted})
     model = op.params
     if isinstance(model, EgSchemaRef):
-        return _validate_provider(model, params, schema_validate)
+        return _validate_provider(
+            model,
+            params,
+            schema_validate,
+            allow_owner_read_tenant=_allows_owner_read_tenant(op),
+        )
     if not isinstance(model, type) or not issubclass(model, BaseModel):
         return OpError("UNAVAILABLE", {"reason": "schema binding unavailable"})
     try:
@@ -130,6 +149,8 @@ def _validate_provider(
     model: EgSchemaRef,
     params: Mapping[str, Any],
     schema_validate: SchemaValidate | None,
+    *,
+    allow_owner_read_tenant: bool = False,
 ) -> Mapping[str, Any] | OpError:
     if schema_validate is None:
         return OpError("UNAVAILABLE", {"reason": "EG schema validator unavailable"})
@@ -152,7 +173,7 @@ def _validate_provider(
     if not isinstance(validated, Mapping):
         return OpError("INVALID_ARGUMENT")
     asserted = forbidden_path(validated)
-    if asserted is not None:
+    if asserted is not None and not (allow_owner_read_tenant and asserted == "tenant"):
         return OpError("INVALID_ARGUMENT", {"field": asserted})
     return validated
 

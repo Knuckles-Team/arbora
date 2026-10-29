@@ -166,7 +166,11 @@ class LocalIssuer:
             source_expires_at_ms=state.expires_at_ms,
             now_ms=int(self._clock() * 1000),
         )
-        token = self._sign(claims)
+        import asyncio
+
+        # Existing secret backends may perform blocking I/O. Never stall the
+        # shared serving loop while reading a configured key or signing.
+        token = await asyncio.to_thread(self._sign, claims)
         # Awaited owner work can revoke/narrow authority while signing is in flight.
         fresh = await self._authority.resolve_credential(credential)
         if not isinstance(fresh, CredentialState):

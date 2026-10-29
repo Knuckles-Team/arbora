@@ -32,9 +32,11 @@ def test_architecture_names_each_supported_ecosystem_entrypoint() -> None:
     architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
 
     for entrypoint in (
-        "Agent Web UI",
-        "Agent Terminal UI",
-        "Geniusbot",
+        "Overstory",
+        "Tuig",
+        "Axil",
+        "Meristem",
+        "Medulla",
         "Messaging channels",
         "MCP",
         "REST",

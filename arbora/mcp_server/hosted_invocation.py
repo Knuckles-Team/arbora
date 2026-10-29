@@ -22,6 +22,7 @@ class HostedInvocation:
     services: InvokeServices
     authenticator: AmbientHTTPAuthenticator
     task_plan_config: TaskPlanConfig | None = None
+    browser_boundary: Any = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.services, InvokeServices) or not isinstance(
@@ -48,6 +49,17 @@ class HostedInvocation:
         return await evaluate_task_plan(
             self.services, self.task_plan_config, caller, question_id, proposal
         )
+
+    def configure_acp(self, app: Any, *, trusted_roots: frozenset[str]) -> None:
+        """Opt in to the central ACP projection with explicit client roots.
+
+        This uses this invocation's existing authentication, operation policies
+        and task owner. It does not register a second execution runtime.
+        """
+        from arbora.acp.central_runtime import configure_central_acp
+
+        self.validate()
+        configure_central_acp(app, self, trusted_roots=trusted_roots)
 
     def http_application(self) -> Any:
         """The operation-invoke API application over these shared services."""

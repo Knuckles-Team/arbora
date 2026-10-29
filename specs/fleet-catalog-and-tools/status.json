@@ -115,6 +115,8 @@
     "ARBORA-FLEET-R019.2",
     "ARBORA-FLEET-R021.2",
     "ARBORA-FLEET-R027.7",
+    "ARBORA-FLEET-R027.7.1",
+    "ARBORA-FLEET-R027.7.2",
     "ARBORA-FLEET-R027.8",
     "ARBORA-FLEET-R003.4",
     "ARBORA-FLEET-R003.5",
@@ -171,6 +173,8 @@
     "ARBORA-FLEET-R041.14",
     "ARBORA-FLEET-R041.15",
     "ARBORA-FLEET-R041.16",
+    "ARBORA-FLEET-R041.17",
+    "ARBORA-FLEET-R041.18",
     "ARBORA-FLEET-R042",
     "ARBORA-FLEET-R042.1",
     "ARBORA-FLEET-R042.2",
@@ -191,7 +195,20 @@
     "ARBORA-FLEET-R044.2",
     "ARBORA-FLEET-R044.3",
     "ARBORA-FLEET-R044.4",
-    "ARBORA-FLEET-R044.5"
+    "ARBORA-FLEET-R044.5",
+    "ARBORA-FLEET-R052",
+    "ARBORA-FLEET-R052.1",
+    "ARBORA-FLEET-R052.2",
+    "ARBORA-FLEET-R052.3",
+    "ARBORA-FLEET-R052.4",
+    "ARBORA-FLEET-R052.4.1",
+    "ARBORA-FLEET-R052.4.2",
+    "ARBORA-FLEET-R052.4.3",
+    "ARBORA-FLEET-R052.4.4",
+    "ARBORA-FLEET-R052.4.5",
+    "ARBORA-FLEET-R052.4.6",
+    "ARBORA-FLEET-R045",
+    "ARBORA-FLEET-R034.15"
   ],
   "requirements": [
     {
@@ -634,15 +651,20 @@
     {
       "id": "ARBORA-FLEET-R014",
       "title": "Resolver ranks catalog items with partitioned feedback",
-      "delivery_state": "SPECIFIED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "3597c590c8c9",
         "43db6b7ac49b",
-        "a2f74cb9621d"
+        "96b68a9b5e5c",
+        "a2f74cb9621d",
+        "b2a301657802"
       ],
       "verified_by": [
-        "tests/api/test_resolve.py:114",
-        "tests/api/test_resolve.py:161",
-        "tests/api/test_resolve.py:170"
+        "tests/api/test_ask_routing_table.py:108",
+        "tests/api/test_ask_routing_table.py:127",
+        "tests/api/test_ask_routing_table.py:141",
+        "tests/api/test_ask_routing_table.py:96",
+        "tests/api/test_resolve.py:114"
       ],
       "rollup_of": [
         "ARBORA-FLEET-R014.1",
@@ -653,13 +675,15 @@
     {
       "id": "ARBORA-FLEET-R014.1",
       "title": "`ask` does not route a plain question to an op it cannot run",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e755549375e6"
+      ],
       "verified_by": [
-        "tests/api/test_resolve.py:259",
-        "tests/api/test_resolve.py:273",
-        "tests/api/test_resolve.py:288",
-        "tests/api/test_resolve.py:303"
+        "tests/api/test_resolve.py:258",
+        "tests/api/test_resolve.py:272",
+        "tests/api/test_resolve.py:287",
+        "tests/api/test_resolve.py:302"
       ]
     },
     {
@@ -670,8 +694,8 @@
         "3597c590c8c9"
       ],
       "verified_by": [
-        "tests/api/test_resolve.py:314",
-        "tests/api/test_resolve.py:326"
+        "tests/api/test_resolve.py:313",
+        "tests/api/test_resolve.py:325"
       ]
     },
     {
@@ -697,15 +721,15 @@
         "0248fc5f595a",
         "54834624dbb4",
         "68e31b75248a",
-        "9532a0c5f38f",
-        "c5fac0da232e"
+        "760ec8539a13",
+        "9532a0c5f38f"
       ],
       "verified_by": [
+        "tests/access/test_legacy_policy_history.py:11",
         "tests/browser_control/test_browser_control_service.py:2098",
         "tests/browser_control/test_browser_proposals.py:37",
         "tests/browser_control/test_served_browser_authority.py:10",
-        "tests/fleet/test_attended_proposal_agent_journey.py:62",
-        "tests/fleet/test_attended_proposal_effect_owner.py:36"
+        "tests/fleet/test_attended_proposal_agent_journey.py:62"
       ],
       "rollup_of": [
         "ARBORA-FLEET-R015.1",
@@ -717,6 +741,7 @@
       "title": "Arbora classifies a failed `fleet.call` by its real cause",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "d9181280937b",
         "fdd59af317ce"
       ],
       "verified_by": [
@@ -1041,13 +1066,15 @@
     {
       "id": "ARBORA-FLEET-R030",
       "title": "Fleet onboarding registers connector access contracts unapproved",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "7e0cc536c81a",
         "9095a5cefabe",
         "f2284b64b6b3"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/fleet/test_fleet_access_contracts.py:105"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R031",
@@ -1114,7 +1141,8 @@
         "ARBORA-FLEET-R034.11",
         "ARBORA-FLEET-R034.12",
         "ARBORA-FLEET-R034.13",
-        "ARBORA-FLEET-R034.14"
+        "ARBORA-FLEET-R034.14",
+        "ARBORA-FLEET-R034.15"
       ]
     },
     {
@@ -1367,6 +1395,28 @@
       "title": "Original fleet onboarding contract",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-FLEET-R027.7.1",
+        "ARBORA-FLEET-R027.7.2"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R027.7.1",
+      "title": "Production CLI report stream",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "1ac397d110e6"
+      ],
+      "verified_by": [
+        "tests/deployment/test_production_ops.py:121"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R027.7.2",
+      "title": "Remaining original onboarding acceptance",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": []
     },
     {
@@ -1377,7 +1427,7 @@
         "524b0ceaaf9c"
       ],
       "verified_by": [
-        "tests/fleet/test_fleet_access_contracts.py:252"
+        "tests/fleet/test_fleet_access_contracts.py:480"
       ]
     },
     {
@@ -1734,7 +1784,9 @@
         "ARBORA-FLEET-R041.13",
         "ARBORA-FLEET-R041.14",
         "ARBORA-FLEET-R041.15",
-        "ARBORA-FLEET-R041.16"
+        "ARBORA-FLEET-R041.16",
+        "ARBORA-FLEET-R041.17",
+        "ARBORA-FLEET-R041.18"
       ]
     },
     {
@@ -1782,11 +1834,13 @@
     {
       "id": "ARBORA-FLEET-R041.7",
       "title": "Handshake trigger",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "f832448cf411"
+      ],
       "verified_by": [
-        "tests/fleet/test_handshake_onboard.py:142",
-        "tests/fleet/test_handshake_onboard.py:318"
+        "tests/fleet/test_handshake_onboard.py:146",
+        "tests/fleet/test_handshake_onboard.py:360"
       ]
     },
     {
@@ -1794,22 +1848,28 @@
       "title": "Reconnect compare",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "dab2f894b5d6"
+        "6e797f51cc30",
+        "dab2f894b5d6",
+        "f832448cf411"
       ],
       "verified_by": [
-        "tests/fleet/test_handshake_onboard.py:162",
-        "tests/fleet/test_handshake_onboard.py:247"
+        "tests/fleet/test_handshake_onboard.py:166",
+        "tests/fleet/test_handshake_onboard.py:204",
+        "tests/fleet/test_handshake_onboard.py:289"
       ]
     },
     {
       "id": "ARBORA-FLEET-R041.9",
       "title": "Serving never blocks",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e755549375e6",
+        "f832448cf411"
+      ],
       "verified_by": [
-        "tests/fleet/test_handshake_onboard.py:264",
-        "tests/fleet/test_handshake_onboard.py:298",
-        "tests/fleet/test_handshake_onboard.py:332"
+        "tests/fleet/test_handshake_onboard.py:306",
+        "tests/fleet/test_handshake_onboard.py:340",
+        "tests/fleet/test_handshake_onboard.py:374"
       ]
     },
     {
@@ -1817,10 +1877,11 @@
       "title": "Rules unchanged",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "a31aba1d54a2"
+        "a31aba1d54a2",
+        "f832448cf411"
       ],
       "verified_by": [
-        "tests/fleet/test_handshake_onboard.py:343"
+        "tests/fleet/test_handshake_onboard.py:385"
       ]
     },
     {
@@ -1874,8 +1935,8 @@
         "fd0f5f810481"
       ],
       "verified_by": [
-        "tests/fleet/test_handshake_onboard.py:163",
-        "tests/fleet/test_handshake_onboard.py:216"
+        "tests/fleet/test_handshake_onboard.py:205",
+        "tests/fleet/test_handshake_onboard.py:258"
       ]
     },
     {
@@ -1905,6 +1966,31 @@
       "verified_by": [
         "tests/api/test_served_replay_owners.py:113",
         "tests/api/test_served_replay_owners.py:96"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R041.17",
+      "title": "Onboarding writes the agent-library catalog into EG",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "3ffdccaea68b",
+        "76c14ffa5264"
+      ],
+      "verified_by": [
+        "tests/fleet/test_catalog_graph.py:118",
+        "tests/fleet/test_catalog_graph.py:133",
+        "tests/fleet/test_catalog_graph.py:89"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R041.18",
+      "title": "Off-loop passes own temporary EG transports",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "58eace7440eb"
+      ],
+      "verified_by": [
+        "tests/fleet/test_handshake_onboard.py:417"
       ]
     },
     {
@@ -1941,7 +2027,9 @@
       "title": "Wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/fleet/test_fleet_access_contracts.py:374"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R042.4",
@@ -1983,32 +2071,50 @@
     {
       "id": "ARBORA-FLEET-R043.1",
       "title": "Model",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5704a6e6e655"
+      ],
+      "verified_by": [
+        "tests/api/test_query_federation.py:146",
+        "tests/api/test_query_federation.py:70"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R043.2",
       "title": "Behavior",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5704a6e6e655",
+        "c135fd8a6f4a"
+      ],
       "verified_by": [
-        "tests/api/test_resolve.py:193"
+        "tests/api/test_query_federation.py:146",
+        "tests/api/test_query_federation.py:93"
       ]
     },
     {
       "id": "ARBORA-FLEET-R043.3",
       "title": "Wiring",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5704a6e6e655"
+      ],
+      "verified_by": [
+        "tests/api/test_query_federation_served.py:171"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R043.4",
       "title": "Refusal",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5704a6e6e655"
+      ],
+      "verified_by": [
+        "tests/api/test_query_federation.py:219",
+        "tests/api/test_query_federation.py:270"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R043.5",
@@ -2027,10 +2133,19 @@
     {
       "id": "ARBORA-FLEET-R043.7",
       "title": "Source executor",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "18ce44dc31bd",
+        "2d2fe39a58ce",
+        "c135fd8a6f4a",
+        "e755549375e6"
+      ],
       "verified_by": [
-        "tests/fleet/test_source_executor.py:32"
+        "tests/fleet/test_source_executor.py:196",
+        "tests/fleet/test_source_executor.py:233",
+        "tests/fleet/test_source_executor.py:257",
+        "tests/fleet/test_source_executor.py:283",
+        "tests/fleet/test_source_executor.py:321"
       ]
     },
     {
@@ -2111,6 +2226,111 @@
       "verified_by": [
         "tests/test_installed_content.py:146"
       ]
+    },
+    {
+      "id": "ARBORA-FLEET-R052",
+      "title": "Medulla competency questions served through the intent tools (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-FLEET-R052.1",
+        "ARBORA-FLEET-R052.2",
+        "ARBORA-FLEET-R052.3",
+        "ARBORA-FLEET-R052.4"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R052.1",
+      "title": "Serve the supply-chain impact report through one intent operation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R052.2",
+      "title": "Connected-source list and abstentions in the live acceptance run",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R052.3",
+      "title": "Print the sources-used-and-why block in the served tool result",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R052.4",
+      "title": "Orchestration probe questions through the intent surface (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-FLEET-R052.4.1",
+        "ARBORA-FLEET-R052.4.2",
+        "ARBORA-FLEET-R052.4.3",
+        "ARBORA-FLEET-R052.4.4",
+        "ARBORA-FLEET-R052.4.5",
+        "ARBORA-FLEET-R052.4.6"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R052.4.1",
+      "title": "Probe: \"How many nodes does the graph hold, by label?\"",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R052.4.2",
+      "title": "Probe: \"How can I deploy a container with container-manager?\"",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R052.4.3",
+      "title": "Probe: \"Which agents are in the Agent Library?\"",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R052.4.4",
+      "title": "Probe: \"Why does Arbora use the intent surface?\"",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R052.4.5",
+      "title": "Probe: \"Find a tool that lists Docker containers.\"",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R052.4.6",
+      "title": "Probe: \"Delegate: list running containers.\"",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R045",
+      "title": "Host and supervise the ingest worker; surface its health",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R034.15",
+      "title": "Cross-link: DecisionEval attestation consumption proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     }
   ]
 }

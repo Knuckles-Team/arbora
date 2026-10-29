@@ -93,3 +93,94 @@ def test_check_message_touches_last_activity_on_success() -> None:
     touched = admission.check_message(session, chat_adapter_available=True, now=active)
     assert touched.last_activity_at == active
     assert touched.admitted_at == session.admitted_at
+
+
+@pytest.mark.spec("ARBORA-ACP-R001.9.1")
+@pytest.mark.parametrize(
+    "principal,reason",
+    [
+        (None, AcpRefusalReason.UNAUTHENTICATED),
+        (
+            PrincipalContext("other", "acme", PRINCIPAL.scopes),
+            AcpRefusalReason.PRINCIPAL_MISMATCH,
+        ),
+        (
+            PrincipalContext("usr:alice", "other", PRINCIPAL.scopes),
+            AcpRefusalReason.PRINCIPAL_MISMATCH,
+        ),
+        (
+            PrincipalContext("usr:alice", "acme", frozenset()),
+            AcpRefusalReason.PRINCIPAL_MISMATCH,
+        ),
+        (
+            PrincipalContext("usr:alice", "acme", PRINCIPAL.scopes | {"admin"}),
+            AcpRefusalReason.PRINCIPAL_MISMATCH,
+        ),
+    ],
+)
+def test_bound_message_refuses_changed_authority_without_touch(principal, reason):
+    admission = AcpSessionAdmission(POLICY)
+    session = admission.admit(PRINCIPAL, chat_adapter_available=True, now=T0)
+    with pytest.raises(AcpRefusal) as caught:
+        admission.check_bound_message(
+            session,
+            principal,
+            chat_adapter_available=True,
+            now=T0 + timedelta(minutes=1),
+        )
+    assert caught.value.reason is reason
+    assert session.last_activity_at == T0
+
+
+@pytest.mark.spec("ARBORA-ACP-R001.9.1")
+@pytest.mark.parametrize(
+    "available,elapsed,reason",
+    [
+        (True, timedelta(minutes=1), None),
+        (False, timedelta(minutes=1), AcpRefusalReason.CHAT_ADAPTER_UNAVAILABLE),
+        (True, POLICY.idle_limit, AcpRefusalReason.IDLE_EXPIRED),
+        (True, POLICY.absolute_limit, AcpRefusalReason.ABSOLUTE_EXPIRED),
+    ],
+)
+def test_bound_message_reuses_existing_expiry_and_availability(
+    available, elapsed, reason
+):
+    admission = AcpSessionAdmission(POLICY)
+    session = admission.admit(PRINCIPAL, chat_adapter_available=True, now=T0)
+    equivalent = PrincipalContext("usr:alice", "acme", frozenset({"chat:use"}))
+    if reason is not None:
+        with pytest.raises(AcpRefusal) as caught:
+            admission.check_bound_message(
+                session,
+                equivalent,
+                chat_adapter_available=available,
+                now=T0 + elapsed,
+            )
+        assert caught.value.reason is reason
+    else:
+        checked = admission.check_bound_message(
+            session,
+            equivalent,
+            chat_adapter_available=available,
+            now=T0 + elapsed,
+        )
+        assert checked.last_activity_at == T0 + elapsed
+        assert checked.principal is PRINCIPAL
+        assert checked.absolute_expires_at == session.absolute_expires_at
+    assert session.last_activity_at == T0
+
+
+@pytest.mark.spec("ARBORA-ACP-R001.9.1")
+@pytest.mark.parametrize("principal", [None, PRINCIPAL])
+def test_bound_message_preserves_unavailable_refusal(principal):
+    admission = AcpSessionAdmission(POLICY)
+    session = admission.admit(PRINCIPAL, chat_adapter_available=True, now=T0)
+    with pytest.raises(AcpRefusal) as caught:
+        admission.check_bound_message(
+            session,
+            principal,
+            chat_adapter_available=False,
+            now=T0 + timedelta(minutes=1),
+        )
+    assert caught.value.reason is AcpRefusalReason.CHAT_ADAPTER_UNAVAILABLE
+    assert session.last_activity_at == T0

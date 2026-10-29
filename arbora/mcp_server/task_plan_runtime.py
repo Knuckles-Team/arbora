@@ -88,11 +88,24 @@ async def _publish(
     op = await _admit(host, caller, publish)
     await _admit(host, caller, read)
     now = int(time.time() * 1000)
+    lease_expires_at_ms = owner.claim.get("lease_expires_at_ms")
+    if type(lease_expires_at_ms) is not int or lease_expires_at_ms <= now:
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": "native task-plan lease unavailable"}
+        )
+    expires_at_ms = min(
+        now + int(host.task_plan_config.timeout_seconds * 1000),
+        lease_expires_at_ms,
+    )
+    if expires_at_ms <= now:
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": "native task-plan lease unavailable"}
+        )
     snapshot = {
         "run_id": owner.run_id,
         "revision": 0,
         "observed_at_ms": now,
-        "expires_at_ms": now + int(host.task_plan_config.timeout_seconds * 1000),
+        "expires_at_ms": expires_at_ms,
         "items": [],
         "task_plan": claim_values(plan),
     }
@@ -129,7 +142,7 @@ async def _publish(
         )
         await _admit(host, caller, publish)
         await _admit(host, caller, read)
-        if receipt.run_id != owner.run_id:
+        if receipt.run_id != owner.run_id or receipt.revision != snapshot["revision"]:
             raise OperationRefused("INVALID_TASK_PLAN_RECEIPT")
         stored = eg.decode_get_current_plan(
             await eg.send_get_current_plan(
@@ -281,6 +294,7 @@ async def admitted_run_plan(request: Any, base: Any, owner: Any) -> Any:
         return replace(
             base,
             steps=(),
+            harness=replace(base.harness, plan_scaffold=config.plan_scaffold),
             budget=budget,
             initial_usage=RunUsage(
                 requests=owner.planning_usage.get("requests", 0),
