@@ -400,7 +400,7 @@ _CHILD_ENV_ALLOWLIST = frozenset(
         "XDG_STATE_HOME",
     }
 )
-_TASK_DELEGATION_CHANNEL_ENV = "AGENT_UTILITIES_MCP_TASK_CHANNEL_SECRET"
+_TASK_DELEGATION_CHANNEL_ENV = "ARBORA_MCP_TASK_CHANNEL_SECRET"
 _PROVIDER_CHILD_ENV_KEYS = frozenset({"AGENT_PROVIDER_PROFILE", "PROVIDER_CONFIGS"})
 
 
@@ -2170,7 +2170,7 @@ def _assert_tasks_signing_secret(server_name: str) -> None:
     try:
         from arbora.core.settings import setting
 
-        if not str(setting("AGENT_UTILITIES_TOKEN_SECRET", "") or "").strip():
+        if not str(setting("ARBORA_TOKEN_SECRET", "") or "").strip():
             raise RuntimeError("shared task-delegation signing secret is unavailable")
     except Exception as exc:
         logger.warning(

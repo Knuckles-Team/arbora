@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Removed
+- `AGENT_UTILITIES_TOKEN_SECRET` and `AGENT_UTILITIES_MCP_TASK_CHANNEL_SECRET` are no longer read. Set `ARBORA_TOKEN_SECRET` and `ARBORA_MCP_TASK_CHANNEL_SECRET` instead; the secret values are unchanged.
+- The Codex registration test that imported the removed `agent_connector_sdk` is deleted.
+
 ## [0.1.8.dev7] - 2026-10-30
 
 ### Removed
