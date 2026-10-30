@@ -77,7 +77,6 @@ def test_register_is_a_governed_engine_write_and_reads_pass_through() -> None:
         assert registry[op_id].effect is Effect.READ
 
 
-@pytest.mark.spec("ARBORA-OPS-R019.1")
 @pytest.mark.asyncio
 async def test_register_governed_and_probe_redacts_credentials() -> None:
     register = get_registry()["federation.sources.register"]
@@ -96,7 +95,6 @@ async def test_register_governed_and_probe_redacts_credentials() -> None:
         await _call("federation.sources.list", None, "alice")
 
 
-@pytest.mark.spec("ARBORA-OPS-R019.2")
 @pytest.mark.asyncio
 async def test_only_owner_and_grantees_see_source_and_revoke_blocks_probe() -> None:
     catalog = _Catalog()
