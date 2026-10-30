@@ -830,7 +830,7 @@ def test_engine_without_task_plan_refuses_unavailable(monkeypatch):
     with pytest.raises(OperationRefused) as refused:
         plans.engine_task_plan(object())
     assert refused.value.code == "UNAVAILABLE"
-    assert refused.value.details["spec"] == "EG-CQ-ORCH-R001"
+    assert refused.value.details["spec"] == "MEDULLA-CQ-ORCH-R001"
 
 
 class FakeGateway:

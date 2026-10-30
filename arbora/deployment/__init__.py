@@ -15,13 +15,6 @@ from __future__ import annotations
 from importlib import import_module
 from typing import TYPE_CHECKING, Any
 
-from .codex_registration import (
-    CODEX_ARBORA_COMMAND,
-    CODEX_ARBORA_SERVER,
-    CodexRegistrationError,
-    arbora_stdio_spec,
-    register_codex_arbora,
-)
 from .config_generator import (
     PROFILES,
     config_doctor,
@@ -75,9 +68,6 @@ _LAZY_SUBMODULES = {
 __all__ = [
     "CHECKS",
     "CI_TEMPLATES",
-    "CODEX_ARBORA_COMMAND",
-    "CODEX_ARBORA_SERVER",
-    "CodexRegistrationError",
     "EnvironmentProfile",
     "EnvironmentProfileError",
     "ExitCriteriaAudit",
@@ -101,7 +91,6 @@ __all__ = [
     "profile_summary",
     "provision_plan",
     "render_skeleton",
-    "register_codex_arbora",
     "execute_redeploy",
     "plan_redeploy",
     "require_green_local_gates",

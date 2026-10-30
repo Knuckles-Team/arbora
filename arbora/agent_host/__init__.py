@@ -1,4 +1,4 @@
-"""First-party connector agent host (ARBORA-HOST-R009, AU-BOUNDARY-R015).
+"""First-party connector agent host (ARBORA-HOST-R009, MERISTEM-BOUNDARY-R015).
 
 A fleet connector's ``agent_server.py`` previously called
 ``agent_utilities.create_agent_server(...)`` to start a standalone HTTP/A2A
@@ -7,7 +7,7 @@ in about 60 connectors. This module gives Arbora the same call signature so
 a connector can depend on Arbora (already downstream of agent-utilities in
 the composition order) instead of importing agent-utilities directly.
 
-Scope of this first increment (the AU-BOUNDARY-R015 pilot slice): Arbora
+Scope of this first increment (the MERISTEM-BOUNDARY-R015 pilot slice): Arbora
 owns the HTTP shell -- health, agent-card discovery, and a bounded A2A
 ``message/send`` exchange. Agent/model construction stays with
 agent-utilities' public API (``agent_utilities.create_graph_agent`` /

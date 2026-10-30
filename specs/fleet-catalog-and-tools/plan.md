@@ -211,7 +211,7 @@ Absent producer compatibility contracts return PRODUCER_UNAVAILABLE. Host parsin
 |---|---|---|
 | [EG typed packs](https://github.com/Knuckles-Team/epistemic-graph/tree/main/specs/typed-packs-and-catalog) | Attested skill/prompt identity and versioned content | R002/R027/R034 need version compatibility and certification binding |
 | [EG specs](https://github.com/Knuckles-Team/epistemic-graph/tree/main/specs) | Distribution and aggregation. | R024 requires generated operation ID/version and result receipt schema before implementation. |
-| [SDK connector control](https://github.com/Knuckles-Team/agent-connector-sdk/tree/main/specs/SDK-CONNECTOR-CONTROL) | Certified tool schema, governed effects and provider transport | R002/R024 require compatibility evidence and typed allocation/reconciliation producer contracts |
+| [SDK connector control](https://github.com/Knuckles-Team/agent-connector-sdk/tree/main/specs/SCION-CONNECTOR-CONTROL) | Certified tool schema, governed effects and provider transport | R002/R024 require compatibility evidence and typed allocation/reconciliation producer contracts |
 | [AU specs](https://github.com/Knuckles-Team/agent-utilities/tree/main/specs) | Approved orchestration, local model call and returned-result path | R024/R034 require producer wiring to certification and EG aggregation; no host replacement |
 
 These dependencies are not implementation claims. Host definitions do not close missing producer clauses.
@@ -241,8 +241,8 @@ The coverage matrix in test-spec.md maps every original clause to its residual c
 
 ### Producer and original acceptance
 
-Consume the [SDK governed write-back definition](https://github.com/Knuckles-Team/agent-connector-sdk/tree/0c6c53dd63fe2a8f9b2ac3568b6d0e8f2c602734/specs/SDK-GOVERNED-WRITEBACK).
-SDK-GOVERNED-WRITEBACK-R004.1 through R004.4 retain generic approval, replay, audit reservation and business-rule API obligations.
+Consume the [SDK governed write-back definition](https://github.com/Knuckles-Team/agent-connector-sdk/tree/0c6c53dd63fe2a8f9b2ac3568b6d0e8f2c602734/specs/SCION-GOVERNED-WRITEBACK).
+SCION-GOVERNED-WRITEBACK-R004.1 through R004.4 retain generic approval, replay, audit reservation and business-rule API obligations.
 SDK R004.5 through R004.12 define RepositorySourceEffectIntent, RepositorySourceEffectRequest, RepositorySourceEffectReceipt and the real producer journey.
 Reuse their schemas and digest functions when exported; do not copy the SDK implementation or change its approved field projection.
 Missing exported contracts or an admitted runtime producer prevents activation, despite the merged definition.
@@ -393,7 +393,7 @@ The source validation environment resolves MCP >=2.3,<3 with the landed SDK. The
 
 ## ARBORA-FLEET-R036 — connect-time contract handshake
 
-References: [EG-TYPED-PACKS-R103](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/typed-packs-and-catalog/spec.md), [EG-TYPED-PACKS-R104](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/typed-packs-and-catalog/spec.md), [SDK-CONNECTOR-CONTROL-R068](https://github.com/Knuckles-Team/agent-connector-sdk/blob/main/specs/SDK-CONNECTOR-CONTROL/spec.md)
+References: [MEDULLA-TYPED-PACKS-R103](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/typed-packs-and-catalog/spec.md), [MEDULLA-TYPED-PACKS-R104](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/typed-packs-and-catalog/spec.md), [SCION-CONNECTOR-CONTROL-R068](https://github.com/Knuckles-Team/agent-connector-sdk/blob/main/specs/SCION-CONNECTOR-CONTROL/spec.md)
 
 Call path: multiplexer client connect or `list_changed` -> `onboard` (`arbora/fleet/onboarding.py:236`) -> `capture` (line 254) -> digest compare -> engine `ImportOntology` and seed import -> existing `import_attested_pack` for the pack head.
 
@@ -403,24 +403,24 @@ Budget: one onboarding pass per connector per 2 s window; resources of 8 MiB or 
 
 ## ARBORA-FLEET-R037 — job-scoped lazy tool loading
 
-References: [EG-DECISION-ENGINE-R176](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/decision-engine/spec.md), [EG-DECISION-ENGINE-R177](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/decision-engine/spec.md)
+References: [MEDULLA-DECISION-ENGINE-R176](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/decision-engine/spec.md), [MEDULLA-DECISION-ENGINE-R177](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/decision-engine/spec.md)
 
 Call path: harness -> `find` verb (`verbs.py:18`) -> `find_tools` (`multiplexer_ops.py:150`) -> engine `Decide` load set -> `load_tools` (`multiplexer_ops.py:245`) -> `tools/list_changed` to the caller.
 
-The engine chooses. arbora applies the answer within the session cap of `ARBORA-FLEET-R018`. Skills arrive as engine queries (`EG-DECISION-ENGINE-R177`), not as static instruction text.
+The engine chooses. arbora applies the answer within the session cap of `ARBORA-FLEET-R018`. Skills arrive as engine queries (`MEDULLA-DECISION-ENGINE-R177`), not as static instruction text.
 
 ## ARBORA-FLEET-R038 — protocol roles
 
 | Protocol and role | Owner | What it does | Existing spec |
 |---|---|---|---|
 | MCP serving, platform | arbora | Harnesses call arbora as an MCP server: the intent tools and job-scoped lazy loading | `ARBORA-FLEET-R029`, `ARBORA-FLEET-R037` |
-| MCP serving, connector | SDK | Each connector is an MCP server through the SDK `[mcp]` extra, with server scaffolding and the served security profile | `SDK-CONNECTOR-CONTROL-R014.17` |
+| MCP serving, connector | SDK | Each connector is an MCP server through the SDK `[mcp]` extra, with server scaffolding and the served security profile | `SCION-CONNECTOR-CONTROL-R014.17` |
 | MCP consuming, platform | arbora | The multiplexer is an MCP client of every connector: the connect-time contract path | `ARBORA-FLEET-R036` |
-| MCP consuming, connector | SDK | A connector wraps an external MCP server as a data source | `SDK-CONNECTOR-CONTROL-R040`, `SDK-CONNECTOR-CONTROL-R069` |
+| MCP consuming, connector | SDK | A connector wraps an external MCP server as a data source | `SCION-CONNECTOR-CONTROL-R040`, `SCION-CONNECTOR-CONTROL-R069` |
 | A2A serving | arbora | Agents call the platform over A2A | `ARBORA-A2A` |
-| A2A consuming | SDK | A connector treats an external agent as a data source | `SDK-CONNECTOR-CONTROL-R041`, `SDK-CONNECTOR-CONTROL-R069` |
+| A2A consuming | SDK | A connector treats an external agent as a data source | `SCION-CONNECTOR-CONTROL-R041`, `SCION-CONNECTOR-CONTROL-R069` |
 
-The harness reaches other agents only through arbora. Engine planning over the consuming roles is `EG-FEDERATED-QUERY-R073.2`.
+The harness reaches other agents only through arbora. Engine planning over the consuming roles is `MEDULLA-FEDERATED-QUERY-R073.2`.
 
 ## WebUI bridge discovery and preload integration (R015/R029)
 
@@ -467,6 +467,7 @@ When such candidates exist for the requested action kind, accounting is unavaila
 Existing rate-limit and blast-radius checks then refuse to infer unused budget.
 No old record is promoted, rewritten or migrated by this guard.
 The refusal lasts until a separate reviewed historical-data repair removes the ambiguity.
+That repair is data migration `0001-action-decision-node-type-label` (`ARBORA-HOST-R033.2`), approved 2026-10-29. The refusal names the unlabeled row count (`ARBORA-FLEET-R015.3`).
 Kinds without such candidates retain the normal labeled ledger path.
 
 ## Production CLI diagnostic streams
@@ -488,5 +489,6 @@ R027.7.1 is the bounded CLI stream repair. R027.7.2 retains the original onboard
 - `ARBORA-FLEET-R052.4.4`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
 - `ARBORA-FLEET-R052.4.5`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
 - `ARBORA-FLEET-R052.4.6`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+- `ARBORA-FLEET-R053`: Reuse the `fleet.catalog.search` schema and annotations to pick each probe and the served `fleet.call` op to run it. The first run was a manual census of every served connector through `fleet.call`. Schedule it as a k8s CronJob beside the arbora deployment and route transitions to the existing alerting path. No new store: rows go to the existing fleet health evidence (`ARBORA-FLEET-R024.750`).
 - `ARBORA-FLEET-R045`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
 - `ARBORA-FLEET-R034.15`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.

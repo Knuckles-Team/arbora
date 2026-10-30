@@ -1732,7 +1732,7 @@
     },
     {
       "id": "ARBORA-OPS-R039",
-      "title": "Dashboard route parity (replaces AU-BOUNDARY-R001.2, commit 0eb67c99c)",
+      "title": "Dashboard route parity (replaces MERISTEM-BOUNDARY-R001.2, commit 0eb67c99c)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -1814,14 +1814,14 @@
     },
     {
       "id": "ARBORA-OPS-R039.9",
-      "title": "Replace the `agent_utilities.core.config` and `agent_utilities.security.identity` imports in `_dashboard_capabilities` in arbora/gateway/dashboard_api.py with a public `agent_utilities.api` capability resolver. Cross-repo prerequisite (owner: agent-utilities): export it under `AU-BOUNDARY-R013`",
+      "title": "Replace the `agent_utilities.core.config` and `agent_utilities.security.identity` imports in `_dashboard_capabilities` in arbora/gateway/dashboard_api.py with a public `agent_utilities.api` capability resolver. Cross-repo prerequisite (owner: agent-utilities): export it under `MERISTEM-BOUNDARY-R013`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R040",
-      "title": "Live Artifacts routes (replaces AU-BOUNDARY-R001.3, commit 902f906ca)",
+      "title": "Live Artifacts routes (replaces MERISTEM-BOUNDARY-R001.3, commit 902f906ca)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -1896,7 +1896,7 @@
     },
     {
       "id": "ARBORA-OPS-R040.9",
-      "title": "Cross-repo prerequisite (owner: agent-utilities): add the proposed `AU-BOUNDARY-R013.<n>` row of plan.md D4 to specs/au-boundary-deconstruction/requirements.md. It is the concrete form of ARBORA-OPS-R040.1",
+      "title": "Cross-repo prerequisite (owner: agent-utilities): add the proposed `MERISTEM-BOUNDARY-R013.<n>` row of plan.md D4 to specs/au-boundary-deconstruction/requirements.md. It is the concrete form of ARBORA-OPS-R040.1",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1910,7 +1910,7 @@
     },
     {
       "id": "ARBORA-OPS-R041",
-      "title": "Agent summary widget dropped (replaces AU-BOUNDARY-R001.7, commit 7717d2e62)",
+      "title": "Agent summary widget dropped (replaces MERISTEM-BOUNDARY-R001.7, commit 7717d2e62)",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "54771db54918"

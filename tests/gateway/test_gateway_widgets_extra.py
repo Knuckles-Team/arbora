@@ -6,7 +6,7 @@ Python package import (confirmed by
 ``tests/gateway/test_widget_fleet_delegation.py`` and, at the source level,
 by ``pyproject.toml``'s own ``dependencies`` comment). The ``gateway-widgets``
 extra is Arbora's side of the floor the agent-utilities extra of the same
-name pinned (retired there under AU-BOUNDARY-R001 /
+name pinned (retired there under MERISTEM-BOUNDARY-R001 /
 ARBORA-HOST-R004): a connector package transitively needs
 agent-connector-sdk's current, post-split module layout, never the
 pre-split agent-utilities-runtime shape a removed module lived in.

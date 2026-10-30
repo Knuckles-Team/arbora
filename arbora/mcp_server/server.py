@@ -370,6 +370,12 @@ def mcp_server(
             )
             logger.info("Arbora base graphs ensured: %s", base_graphs)
 
+            # Versioned data migrations of persisted records, under the process
+            # authority, before any reader (the action-policy ledger) runs.
+            from arbora.data_migrations import run_data_migrations
+
+            run_data_migrations(runtime._get_engine())
+
             from arbora.mcp_server.catalog_composition import (
                 compose_catalog_authorities,
             )

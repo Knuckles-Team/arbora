@@ -78,7 +78,7 @@ The proposed served scenarios have not been run and establish no runtime deliver
 
 ## Planned authenticated terminal log acceptance
 
-These cases extend ARBORA-HOST-R009.5, R009.6 and R010.7 with TUI-RUNTIME-R002.2 through R002.6. These cases have not been run.
+These cases extend ARBORA-HOST-R009.5, R009.6 and R010.7 with TUIG-RUNTIME-R002.2 through R002.6. These cases have not been run.
 
 - `tests/host/test_terminal_host_served.py::test_effective_log_preference_is_authenticated`: start the real host and enter run_host_terminal. Check the strict effective web_logs value and host, workspace, tenant, principal, session, generation and expiry bindings. Change each binding independently. Missing, altered or expired bindings yield zero HostLogReader.read calls and zero delivered records.
 - `tests/host/test_terminal_host_served.py::test_terminal_log_mode_preference_matrix`: use terminal, web and both with true and false preferences. Only terminal/both with true show a correlated HTTP log during agent interaction. False, absent preference, missing reader and all web cases produce zero TUI reads. Check HTTP serving, the required redacted sink and agent interaction remain available where their interfaces are selected.
@@ -95,6 +95,9 @@ Missing receipt fields or public consumer exports block positive served acceptan
 - `ARBORA-HOST-R010.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-HOST-R032`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-HOST-R033`: Unit tests drive the action policy and the served engine with recording doubles. They prove a create never reaches `AddNode`, including an add-only binding with an existing answered inbox record: capability detection refuses it and a direct create leaves the record and write count unchanged. These helper tests do not qualify older-store onboarding.
+- `ARBORA-HOST-R033.1`: `tests/test_persisted_shapes.py::test_the_one_action_decision_writer_stores_the_label` and `::test_served_engine_writes_build_their_body_from_the_label_model`.
+- `ARBORA-HOST-R033.2`: `tests/test_data_migrations.py`. The native tests need `ARBORA_NOAUTH_TEST_ENGINE_BINARY` and skip explicitly without it.
+- `ARBORA-HOST-R033.3`: `tests/test_persisted_shapes.py::test_every_covered_writer_shape_has_its_migration`, `::test_migration_ids_are_unique_and_ordered` and `::test_the_label_model_is_part_of_the_shape`.
 
 ## Unsupported interface refusal
 

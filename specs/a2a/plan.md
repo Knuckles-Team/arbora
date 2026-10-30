@@ -64,9 +64,9 @@ flowchart LR
   C --> S[message/stream]
   C --> G["tasks/get (history)"]
   S --> AU["AU task-event reader: owner contract pending"]
-  G --> EG["EG durable transition ledger (EG-DURABLE-KERNEL)"]
+  G --> EG["EG durable transition ledger (MEDULLA-DURABLE-KERNEL)"]
   AU --> PN[push-notification trigger]
-  PN --> OB["EG durable outbox (EG-DURABLE-KERNEL-R001)"]
+  PN --> OB["EG durable outbox (MEDULLA-DURABLE-KERNEL-R001)"]
 ```
 
 `A2AAgentCapabilities.from_wired_authorities` is the single seam composition calls. It is pure and has no I/O. Advertised capabilities can therefore be tested without a live AU/EG stack. The actual streaming and history projections are separate runtime paths that call the AU/EG public ports directly — the Agent Card's `true`/`false` is a property of what composition wired, and the test-spec's acceptance (A2A-H07) cross-checks the two never drift apart.
@@ -76,8 +76,8 @@ flowchart LR
 1. **`ARBORA-A2A-R009.1` (this PR):** typed capability model and protocols in `arbora/a2a/models.py`, with unit tests proving default-false, selective-true and non-conforming-object refusal. No wiring yet — `A2AAgentCard`'s default factory still produces all-false, matching current truthful behavior.
 2. Depend on `ARBORA-A2A` landing (context-budget subset) before implementing the actual streaming cursor and push-trigger wiring, since both reuse its bounded-cursor machinery rather than duplicating it.
 3. Publish the AU task-event reader contract before wiring `message/stream`. Its requirement ID and public export remain unassigned. Return typed `UNAVAILABLE` for a projection gap.
-4. Implement `tasks/get` history read-through to EG's durable kernel (`EG-DURABLE-KERNEL`); on an absent/unreachable authority, return the new `A2ATransitionHistoryUnavailable` (A2A-H04).
-5. Implement push-notification delivery over EG's durable outbox (`EG-DURABLE-KERNEL-R001`) with dead-letter reporting.
+4. Implement `tasks/get` history read-through to EG's durable kernel (`MEDULLA-DURABLE-KERNEL`); on an absent/unreachable authority, return the new `A2ATransitionHistoryUnavailable` (A2A-H04).
+5. Implement push-notification delivery over EG's durable outbox (`MEDULLA-DURABLE-KERNEL-R001`) with dead-letter reporting.
 6. Wire real authorities into composition only after each path is proven. Run the full test-spec and flip the relevant capability field to a live `true` at that revision, never earlier.
 
 ### Quality and environment
@@ -96,8 +96,8 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing [spe
 ```mermaid
 flowchart LR
   C[A2A caller: agent graph ref + contextBudgetTokens] --> D[admit_tool_subset admission door]
-  D -->|needs| EG["EG AgentAssemble (EG-DECISION-ENGINE-R036)"]
-  D -->|needs| AU["AU signed AgentTurnEnvelope allowed-tool-subset (AU-CONTROL-R035)"]
+  D -->|needs| EG["EG AgentAssemble (MEDULLA-DECISION-ENGINE-R036)"]
+  D -->|needs| AU["AU signed AgentTurnEnvelope allowed-tool-subset (MERISTEM-CONTROL-R035)"]
   D -->|refused| R["typed ToolSubsetAdmissionDecision (admitted=False; reason; provenance)"]
   D -->|admitted, once both land| A["ToolSubsetAdmissionDecision (admitted tools + provenance)"]
   A --> X[OrchestratorA2ARouter / WorkItemA2AAuthority dispatch]
@@ -109,9 +109,9 @@ flowchart LR
 
 ### Implementation sequence
 
-1. **This PR (`ARBORA-A2A-R016.1`):** add the typed `ToolSubsetAdmissionRequest`/`ToolSubsetAdmissionDecision` models and the `admit_tool_subset` function returning today's exact fail-closed result. Add the refusal unit test. Open the spec and the AU owner row (`AU-CONTROL-R035`) this door depends on.
+1. **This PR (`ARBORA-A2A-R016.1`):** add the typed `ToolSubsetAdmissionRequest`/`ToolSubsetAdmissionDecision` models and the `admit_tool_subset` function returning today's exact fail-closed result. Add the refusal unit test. Open the spec and the AU owner row (`MERISTEM-CONTROL-R035`) this door depends on.
 2. Once epistemic-graph publishes a non-stub `AgentAssemble` client, inject it into `admit_tool_subset` and add the `ENVELOPE_LACKS_ALLOWED_TOOL_SUBSET` refusal path for the still-missing AU field.
-3. Once agent-utilities lands `AU-CONTROL-R035` (the signed envelope's allowed-tool-subset field) and publishes the updated generated client, wire the admitted path: EG answer in, signed envelope out, with signature verification before any dispatch treats the subset as enforced.
+3. Once agent-utilities lands `MERISTEM-CONTROL-R035` (the signed envelope's allowed-tool-subset field) and publishes the updated generated client, wire the admitted path: EG answer in, signed envelope out, with signature verification before any dispatch treats the subset as enforced.
 4. Replace `OrchestratorA2ARouter`'s and `WorkItemA2AAuthority`'s inline `A2AAssemblyUnavailable` raises with a call to `admit_tool_subset`, so there is exactly one admission authority.
 5. Update [test-spec.md](test-spec.md) coverage for the admitted path and record exact default-branch evidence before changing delivery state.
 
@@ -143,7 +143,7 @@ The admission call attaches in `A2AService.send_message` between `router.route` 
 
 ### One engine round trip
 
-The `HarnessConfigAnswer` already carries the tool subset, because the engine decision reuses its tool-subset selection (the EG-DECISION-ENGINE row for the `HarnessConfig` question). Admission therefore makes one call and takes the subset from `action_space`. It makes no separate `AgentAssemble` call (`ARBORA-A2A-R017.2`). The engine may instead return the two answers separately. Then `ARBORA-A2A-R017` still governs the subset source, and the decider port gains one more call.
+The `HarnessConfigAnswer` already carries the tool subset, because the engine decision reuses its tool-subset selection (the MEDULLA-DECISION-ENGINE row for the `HarnessConfig` question). Admission therefore makes one call and takes the subset from `action_space`. It makes no separate `AgentAssemble` call (`ARBORA-A2A-R017.2`). The engine may instead return the two answers separately. Then `ARBORA-A2A-R017` still governs the subset source, and the decider port gains one more call.
 
 ### Failure and refusal behaviour
 
@@ -166,10 +166,10 @@ Reused: `_WireModel` and `A2AContextBudget` (`arbora/a2a/models.py`), the decisi
 
 ### Cross-repository dependencies
 
-- Depends on the EG-DECISION-ENGINE row for the `HarnessConfig` question and `HarnessConfigAnswer`.
-- Depends on the EG-TYPED-PACKS rows for `contextWindowTokens`, `shellProficiency`, `stoppingBehaviour`, and `shellCentric`.
-- Depends on the AU-CONTROL row for the signed envelope `harness_config` field next to `AU-CONTROL-R035`.
-- Unblocks the AU-HARNESS row where the run loop reads its configuration only from the envelope.
+- Depends on the MEDULLA-DECISION-ENGINE row for the `HarnessConfig` question and `HarnessConfigAnswer`.
+- Depends on the MEDULLA-TYPED-PACKS rows for `contextWindowTokens`, `shellProficiency`, `stoppingBehaviour`, and `shellCentric`.
+- Depends on the MERISTEM-CONTROL row for the signed envelope `harness_config` field next to `MERISTEM-CONTROL-R035`.
+- Unblocks the MERISTEM-HARNESS row where the run loop reads its configuration only from the envelope.
 - Unblocks the client rows that show the applied harness configuration.
 
 ### Agent Card
@@ -182,7 +182,7 @@ The source of `priority` and the field names inside the `resolve_capability` res
 
 ## A2A tool-action admission (ARBORA-A2A-R005.3 to R005.8)
 
-Consumers: AU-SEC-R012. Moves from agent-utilities: `agent_utilities/security/tool_guard.py:383`.
+Consumers: MERISTEM-SEC-R012. Moves from agent-utilities: `agent_utilities/security/tool_guard.py:383`.
 
 Existing code: `arbora/a2a/application.py:140` (fail-closed confirm stub), `arbora/a2a/models.py:104` (`A2APlanConfirmParams`), `arbora/api/invoke/pipeline.py:641` (`_confirmation_gate`). `arbora/access/service.py:54` is operator-console elevation and is not an A2A approval port. Reachable today: no. The stub is reachable and always refuses; no admission function exists. Search terms: `admission`, `approval`, `untrusted`, `taint`, `pending_call`.
 
@@ -196,11 +196,11 @@ Reuse: the method table and params model. New: the admitter and its models.
 
 Decision: arbora checks, records and serves; the engine decides, because a second policy table drifts from the engine. Rejected: keeping the content-trust decision in the harness, which the door cannot audit.
 
-Cross-repository: `EG-DECISION-ENGINE` (verdict on a tool action after untrusted content); `AU-SEC-R012` (applies the approval).
+Cross-repository: `MEDULLA-DECISION-ENGINE` (verdict on a tool action after untrusted content); `MERISTEM-SEC-R012` (applies the approval).
 
 ## A2A held-item admission (ARBORA-A2A-R006.3 to R006.8)
 
-Consumers: AU-CONTROL-R040, AU-HARNESS-R023. Moves from agent-utilities: `agent_utilities/knowledge_graph/enrichment/writeback/approval.py:47`.
+Consumers: MERISTEM-CONTROL-R040, MERISTEM-HARNESS-R023. Moves from agent-utilities: `agent_utilities/knowledge_graph/enrichment/writeback/approval.py:47`.
 
 Existing code: `arbora/a2a/application.py:140`, `arbora/a2a/models.py:104`, `arbora/access/service.py:54`, `agent_utilities/knowledge_graph/enrichment/writeback/approval.py:170` (`approve_proposal`, called from `agent_utilities/mcp/tools/ontology_tools.py:335`). Reachable today: no for arbora; yes for the harness-side function. Search terms: `admit`, `proposal`, `verdict`, `approve_proposal`, `stored program`.
 
@@ -213,7 +213,7 @@ Failure: a refusal leaves the item held. No local record exists.
 
 Decision: one admitter for both held kinds, because both wait on the same confirm door. Rejected: a separate program-admission method, which duplicates the door.
 
-Cross-repository: `EG-` rows for the held proposal, the verification record, the replay count and the retirement count; `AU-CONTROL-R040` and `AU-HARNESS-R023` apply the verdict.
+Cross-repository: `EG-` rows for the held proposal, the verification record, the replay count and the retirement count; `MERISTEM-CONTROL-R040` and `MERISTEM-HARNESS-R023` apply the verdict.
 
 ## Critique-gated output release (ARBORA-A2A-R022)
 
@@ -276,9 +276,9 @@ Keep ordinary `arbora.op/invoke` unavailable until R006.2 acceptance passes.
 Keep `arbora.plan/confirm` unavailable until R005.2 and its caller prerequisites pass.
 
 The former AU control-plane label identifies no current task-event reader requirement.
-AU-CONTROL-R035 owns the signed dispatch envelope only; it is not an event-reader replacement.
-AU-CONTROL-R040.5 records workspace proposal events and does not define durable task/tenant stream replay.
-AU-BOUNDARY-R020 assigns durable state to EG; it does not define the missing public reader either.
+MERISTEM-CONTROL-R035 owns the signed dispatch envelope only; it is not an event-reader replacement.
+MERISTEM-CONTROL-R040.5 records workspace proposal events and does not define durable task/tenant stream replay.
+MERISTEM-BOUNDARY-R020 assigns durable state to EG; it does not define the missing public reader either.
 AU must publish the exact reader contract over the durable authority before Arbora binds R001 or R010.
 Require task/tenant scope, ordered event identity, resume positions, restart recovery and explicit gaps in that producer contract.
 Do not invent a requirement ID or substitute an in-process event log.
@@ -308,7 +308,7 @@ R005.2.2 reuses `PlanBinding` and the existing closed confirmation payload. The 
 
 ### Committed terminal read preparation
 
-Implement ARBORA-A2A-R010.1 against EG-DURABLE-KERNEL-R028.2 and AU RunClient.outcome. Keep the request opt-in and existing unary behavior unchanged. This point read supplies no lifecycle stream or replay cursor. Native producer qualification and released dependency availability remain separate acceptance conditions.
+Implement ARBORA-A2A-R010.1 against MEDULLA-DURABLE-KERNEL-R028.2 and AU RunClient.outcome. Keep the request opt-in and existing unary behavior unchanged. This point read supplies no lifecycle stream or replay cursor. Native producer qualification and released dependency availability remain separate acceptance conditions.
 
 The bounded projection preserves the actual outcome/tool_call/degraded/reconciled kind and physical scope identity, including its 32-byte digest. Physical storage owner tenant and sanitized graph name are receipt identity, not caller authorization. Routing uses the trusted WorkItem engine graph binding through the existing graph transport, never the caller session graph. The projection caps identifier labels at 512 UTF-8 bytes and result references at 4096 bytes. These presentation bounds may refuse a larger otherwise valid producer record.
 
@@ -400,10 +400,10 @@ Existing owner mapping: ARBORA-A2A-R016.6 owns preference and catalog admission;
 R016.5 owns routed profile and task-class evidence; R017 and R017.1 own committed
 engine assembly/decision consumption; R019.1 owns decision provenance. EG-
 IDENTITY-R004 owns exact published scope classification, not implicit grants.
-EG-DECISION-ENGINE-R036 owns assembly and pinned components; R126.2.1 owns
+MEDULLA-DECISION-ENGINE-R036 owns assembly and pinned components; R126.2.1 owns
 visibility-filtered capability coverage. These existing rows do not yet specify
 or implement the new atomic profile-use admission operation: extend their owner
-contracts before implementing it. EG-IDENTITY-R001 owns issuer verification; R002 owns atomic identity/RBAC
+contracts before implementing it. MEDULLA-IDENTITY-R001 owns issuer verification; R002 owns atomic identity/RBAC
 writes and audit. Verified session evidence must come from the current identity
 owner, not a synthesized field in this boundary. No profile-use permission is inferred from any of these existing rows.
 
@@ -491,7 +491,7 @@ not zero. This projection is limited to the active response: task reads and
 idempotent completed replays cannot reconstruct counts. Do not add an Arbora
 counter or cache. Durable session totals and restart-safe usage remain dependent
 on the authorized durable event reader; this prerequisite does not close
-TUI-RUNTIME-R012.6. The owning `usage.read` per-turn/session operation
+TUIG-RUNTIME-R012.6. The owning `usage.read` per-turn/session operation
 acceptance is still open; this transient metadata is only a prerequisite. Costs are not supplied by the run result and stay absent.
 
 ARBORA-A2A-R001.5 remains open: the published AU run request currently carries

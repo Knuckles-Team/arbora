@@ -9,7 +9,7 @@ import pytest
 import arbora.mcp_server.backing.tools.state_tools as state_tools
 
 
-@pytest.mark.spec("AU-SEMANTIC-R019.6.3.1")
+@pytest.mark.spec("MERISTEM-SEMANTIC-R019.6.3.1")
 def test_state_tools_source_has_no_placement_control() -> None:
     source = Path(state_tools.__file__).read_text(encoding="utf-8")
     for removed in (

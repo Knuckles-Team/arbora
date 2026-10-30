@@ -62,10 +62,10 @@ promote rollups.
 The related producer rows remain with their owners and are not promoted by a
 consumer receipt:
 
-* `AU-HARNESS-R014.6` through `AU-HARNESS-R014.11` remain `SPECIFIED`. No AU
+* `MERISTEM-HARNESS-R014.6` through `MERISTEM-HARNESS-R014.11` remain `SPECIFIED`. No AU
   producer run, model-request proof, or stored-history proof occurred.
-* `EG-DURABLE-KERNEL-R028.4.1` is already `VERIFIED` in epistemic-graph.
-  `EG-DURABLE-KERNEL-R028.5` and `.5.1`–`.5.3` remain EG-owned `SPECIFIED`
+* `MEDULLA-DURABLE-KERNEL-R028.4.1` is already `VERIFIED` in epistemic-graph.
+  `MEDULLA-DURABLE-KERNEL-R028.5` and `.5.1`–`.5.3` remain EG-owned `SPECIFIED`
   rows. This is consumer evidence only. No EG source landing, restart proof,
   or `.5.4` benchmark is claimed.
 

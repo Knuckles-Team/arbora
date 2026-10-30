@@ -255,7 +255,7 @@ def start_host_daemon() -> Any:
         require_token_secret()
         # The gateway process is the authoritative daemon host.
         os.environ["KG_DAEMON_ROLE"] = "host"
-        raise not_served("knowledge_graph.core.engine", "EG-PLACEMENT-R611")
+        raise not_served("knowledge_graph.core.engine", "MEDULLA-PLACEMENT-R611")
     # CONCEPT:AU-ECO.messaging.inbound-messaging-router-runs — the inbound messaging
     # router runs in its OWN process
     # (the messaging intake co-service), NOT here,

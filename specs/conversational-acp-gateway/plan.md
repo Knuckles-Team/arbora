@@ -40,7 +40,7 @@ Reachable today: no. No production caller constructs `AcpSessionAdmission`. No A
 
 Reused: session policy, expiry and the adapter-unavailable refusal from R001.1. New: workspace root, grants, capability forwarding and the route.
 
-Cross-repository: `AU-CONTROL` (`ClientCapabilityToolset`) issues the capability calls through this session; `TUI-RUNTIME` (`CodingSessionView`) implements the client side.
+Cross-repository: `MERISTEM-CONTROL` (`ClientCapabilityToolset`) issues the capability calls through this session; `TUIG-RUNTIME` (`CodingSessionView`) implements the client side.
 
 Decision: the client performs file and terminal actions as ACP client capabilities.
 Rejected: a Arbora service that mounts the host checkout. It copies data and needs host credentials on the cluster.
@@ -72,9 +72,9 @@ R001.8. No local file/process execution or alternative transport is introduced.
 Extend R001.5 and R001.9, not a second terminal agent. The default native
 `tuig` client connects to central Arbora. An optional local runtime uses the
 same Arbora admission and AU harness composition over ACP stdio; it must not
-start an AU listener or copy an agent loop into the UI. AU-BOUNDARY-R015 owns
+start an AU listener or copy an agent loop into the UI. MERISTEM-BOUNDARY-R015 owns
 the host boundary, R043.11 owns client tools, and R043.9.1/R043.9.2 own
-completed-history composition. The former AU-CONTROL links above are historical
+completed-history composition. The former MERISTEM-CONTROL links above are historical
 routing references, not proof that a served adapter exists.
 
 The audited producer baseline is Pydantic AI 2.57.0 and harness 0.57.0.

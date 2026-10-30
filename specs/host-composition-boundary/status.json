@@ -187,6 +187,9 @@
     "ARBORA-HOST-R010.8",
     "ARBORA-HOST-R032",
     "ARBORA-HOST-R033",
+    "ARBORA-HOST-R033.1",
+    "ARBORA-HOST-R033.2",
+    "ARBORA-HOST-R033.3",
     "ARBORA-HOST-R010.9",
     "ARBORA-HOST-R009.7",
     "ARBORA-HOST-R009.8",
@@ -1937,7 +1940,7 @@
     {
       "id": "ARBORA-HOST-R033",
       "title": "Unique records are created, not upserted",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "3d0f79273e9d",
         "f3580eb0f5d0"
@@ -1948,6 +1951,42 @@
         "tests/test_unique_records.py:133",
         "tests/test_unique_records.py:37",
         "tests/test_unique_records.py:67"
+      ],
+      "rollup_of": [
+        "ARBORA-HOST-R033.1",
+        "ARBORA-HOST-R033.2",
+        "ARBORA-HOST-R033.3"
+      ]
+    },
+    {
+      "id": "ARBORA-HOST-R033.1",
+      "title": "One label model and one writer per persisted record type",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/test_persisted_shapes.py:54",
+        "tests/test_persisted_shapes.py:75"
+      ]
+    },
+    {
+      "id": "ARBORA-HOST-R033.2",
+      "title": "Versioned, idempotent data migrations run at serving start and are recorded",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "e27376e52ab7",
+        "f3179c2af813"
+      ],
+      "verified_by": [
+        "tests/test_data_migrations.py:30"
+      ]
+    },
+    {
+      "id": "ARBORA-HOST-R033.3",
+      "title": "A persisted shape changes only with a migration",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/test_persisted_shapes.py:27"
       ]
     },
     {

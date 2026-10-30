@@ -14,7 +14,6 @@ import json
 import sys
 from collections.abc import Callable
 
-from .codex_registration import CodexRegistrationError, register_codex_arbora
 from .config_generator import (
     PROFILES,
     config_doctor,
@@ -61,16 +60,6 @@ def _run_doctor(args: argparse.Namespace) -> int:
 
 def _run_reference(_: argparse.Namespace) -> int:
     print(json.dumps(config_reference(), indent=2, default=str))
-    return 0
-
-
-def _run_codex(_: argparse.Namespace) -> int:
-    try:
-        result = register_codex_arbora()
-    except CodexRegistrationError as exc:
-        print(json.dumps({"status": "error", "message": str(exc)}))
-        return 1
-    print(json.dumps(result, indent=2))
     return 0
 
 
@@ -131,7 +120,6 @@ _COMMAND_HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
     "generate": _run_generate,
     "doctor": _run_doctor,
     "reference": _run_reference,
-    "codex": _run_codex,
     "environments": _run_environments,
 }
 
@@ -172,11 +160,6 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     sub.add_parser("reference", help="Print every option grouped by subsystem (JSON).")
-
-    sub.add_parser(
-        "codex",
-        help="Register the portable Arbora stdio launcher through `codex mcp`.",
-    )
 
     hf = sub.add_parser(
         "harness-fence",

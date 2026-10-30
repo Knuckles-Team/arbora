@@ -1,4 +1,4 @@
-"""AU-CONTROL-R031: ``ensure_tools_registered()``'s headless build attaches
+"""MERISTEM-CONTROL-R031: ``ensure_tools_registered()``'s headless build attaches
 AU's own fleet loader, or records a precise, surfaced refusal when it cannot.
 
 Before this fix, any process whose *only* build path was

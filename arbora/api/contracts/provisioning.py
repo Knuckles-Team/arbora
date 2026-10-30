@@ -135,11 +135,15 @@ def _require_receipt(policy: _Policy, request: ActionRequest) -> tuple[Any, str]
         decision = policy.decide(request)
         receipt = decision.receipt
         allowed = bool(decision.allowed)
+        reason = str(getattr(decision, "reason", "") or "")[:200]
     except Exception as exc:  # noqa: BLE001 - policy errors deny authority
         raise ProvisioningAuthorityError("provisioning policy is unavailable") from exc
     if not allowed or receipt is None or not receipt.authorizes_effect:
+        # The policy's own reason (e.g. "ledger unreadable: N rows lack label
+        # ActionDecision"): a refusal that hides its cause hides the fault.
         raise ProvisioningAuthorityError(
             "connector-pack provisioning is not authorized by policy"
+            + (f": {reason}" if reason else "")
         )
     if receipt.request_digest != request.digest():
         raise ProvisioningAuthorityError(

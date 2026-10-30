@@ -2,7 +2,7 @@
 
 ``stdio_fleet_authority`` binds the verified local-process actor context that
 ``_require_fleet_capability`` now requires for stdio callers as much as any
-other transport (GRAPHOS-FLEET-R021): a test that drives
+other transport (ARBORA-FLEET-R021): a test that drives
 ``MCPMultiplexer``'s meta-tools or proxied dispatch directly, with no HTTP
 request mocked, needs a concrete, authenticated capability set bound or the
 check fails closed. Opt in explicitly per test

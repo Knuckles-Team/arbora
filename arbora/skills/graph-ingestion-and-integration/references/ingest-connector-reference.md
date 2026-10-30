@@ -167,19 +167,19 @@ attachment blobs); file/media packages are document+blob heavy:
 When ingesting the workspace, also ingest infrastructure state so the KG is
 hydrated with the physical and virtual topology:
 
-- **Inventory file** — `$XDG_CONFIG_HOME/agent-utilities/inventory.yaml`
-  (default `$HOME/.config/agent-utilities/inventory.yaml`) → a `HardwareNode`
+- **Inventory file** — `$XDG_CONFIG_HOME/arbora/inventory.yaml`
+  (default `$HOME/.config/arbora/inventory.yaml`) → a `HardwareNode`
   per host (`hostname`, `ip_address`, `group`, `status`, ssh fields, extended
   metadata) + `HAS_INTERFACE`/`CONNECTS_VIA` edges.
-- **Runtime configuration** — `$XDG_CONFIG_HOME/agent-utilities/mcp_config.json`
-  and `$XDG_CONFIG_HOME/agent-utilities/config.json` describe MCP servers and
+- **Runtime configuration** — `$XDG_CONFIG_HOME/arbora/mcp_config.json`
+  and `$XDG_CONFIG_HOME/arbora/config.json` describe MCP servers and
   their deployment configuration.
 - **Ontology authority** — EG committed GraphSchema sources and
   `ontology_infrastructure.ttl` as ingestion targets, providing the formal
   BFO-aligned class hierarchy for infrastructure nodes.
 - **Workflow catalog** — `agent_utilities/workflows/catalog.yaml` →
   `WorkflowDefinition` nodes with `HAS_STEP`/`REQUIRES_TOOL` edges.
-- **Topology snapshots** — `$XDG_DATA_HOME/agent-utilities/topology/{topology,
+- **Topology snapshots** — `$XDG_DATA_HOME/meristem/topology/{topology,
   service_map,network_map}.json` (the XDG data directory, per the XDG Base
   Directory spec) → `Container`/`ContainerStack`/`NetworkSubnet`/`DNSRewrite`/
   `ReverseProxy`/`ObservabilityStack` nodes.
