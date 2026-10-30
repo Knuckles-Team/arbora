@@ -78,9 +78,7 @@ def require_token_secret() -> None:
     """
     from arbora.security.delegation import DelegationMode, delegation_mode
 
-    if delegation_mode() is DelegationMode.ON and not setting(
-        "ARBORA_TOKEN_SECRET"
-    ):
+    if delegation_mode() is DelegationMode.ON and not setting("ARBORA_TOKEN_SECRET"):
         raise RunTokenSecretUnavailable(
             "ENABLE_DELEGATED_IDENTITY=on requires ARBORA_TOKEN_SECRET to resolve "
             "from the secrets backend before startup (no PID-derived fallback exists)."
