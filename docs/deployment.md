@@ -185,13 +185,7 @@ Use `stdio` when an MCP client launches Arbora as a child process:
 arbora --transport stdio
 ```
 
-The helper can register that portable launcher with Codex:
-
-```bash
-setup-config codex
-```
-
-For other clients, configure `arbora --transport stdio` using the client's
+Configure `arbora --transport stdio` using the client's
 standard MCP server configuration format.
 
 ## Network transport

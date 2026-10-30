@@ -97,20 +97,17 @@ domain.
 ## Quick Start
 
 Requires Python 3.12–3.14 and [`uv`](https://docs.astral.sh/uv/). Install the
-bundled runtime, generate the local profile, and register its `stdio` launcher
-with Codex:
+bundled runtime and generate the local profile:
 
 ```bash
 uv tool install "arbora[webui]"
 setup-config generate --profile tiny
 setup-config doctor --profile tiny
-setup-config codex
 ```
 
 The doctor command is the first observable result: it reports whether the local
-profile and required authorities are ready before a listener starts. Arbora
-then appears as the `arbora` MCP server in Codex. Other MCP clients can
-start the same local transport directly:
+profile and required authorities are ready before a listener starts. MCP
+clients can start the local transport directly:
 
 ```bash
 arbora --transport stdio

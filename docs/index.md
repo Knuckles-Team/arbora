@@ -24,8 +24,7 @@
   <article class="site-card" markdown>
     <p class="site-card__title">Try it</p>
     <p class="site-card__body">
-      Install the bundled runtime, generate a local profile, validate it, and
-      register the MCP launcher with Codex.
+      Install the bundled runtime, generate a local profile, and validate it.
     </p>
     <a href="get-started/">Open the quick start →</a>
   </article>
