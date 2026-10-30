@@ -35,12 +35,10 @@ def test_every_analyze_action_resolves_in_the_registry() -> None:
     _resolves(CODE_GRAPH_QUERY_ACTIONS + ("explain", "process_writeback"))
 
 
-@pytest.mark.spec("ARBORA-HOST-R005.2.3.2")
 def test_ingest_submission_actions_resolve_in_the_registry() -> None:
     _resolves(INGEST_SUBMISSION_ACTIONS)
 
 
-@pytest.mark.spec("ARBORA-HOST-R005.2.3.4")
 def test_job_actions_resolve_in_the_registry() -> None:
     _resolves(("jobs", "job_status", "cancel", "prioritize"))
 
@@ -104,8 +102,6 @@ def lifecycle(monkeypatch: pytest.MonkeyPatch) -> Any:
     return SimpleNamespace(engine=engine, context=context)
 
 
-@pytest.mark.spec("ARBORA-HOST-R005.2.3.2")
-@pytest.mark.spec("ARBORA-HOST-R005.2.3.4")
 async def test_submit_list_prioritize_cancel_round_trip(lifecycle: Any) -> None:
     ctx, items = lifecycle.context, lifecycle.engine.work_items
     params = {"kind": "ingest_url", "target": "https://example.test/a", "options": {}}
