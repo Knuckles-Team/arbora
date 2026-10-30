@@ -135,3 +135,44 @@ async def test_offers_create_handler_records_a_bound_offer() -> None:
         }
     }
     assert runner.offers == [result["value"]]
+
+
+@pytest.mark.spec("ARBORA-OPS-R022.1")
+@pytest.mark.asyncio
+async def test_offer_write_needs_declared_scope_and_offers_stay_with_their_tenant() -> (
+    None
+):
+    from arbora.api.invoke.steps import require_scopes
+    from tests.api._support import make_verified_caller
+
+    offer_op = work.operations()[2]
+    writer = make_verified_caller("work:write")
+    reader = make_verified_caller("work:read")
+    assert require_scopes(offer_op, writer()) is None
+    refusal = require_scopes(offer_op, reader())
+    assert refusal is not None and refusal.code == "SCOPE_REQUIRED"
+
+    class _TenantRunner(_FakeRunner):
+        async def get_item(self, item_id, *, tenant):
+            offers = [o for o in self.offers if o["tenant"] == tenant]
+            return {"item_id": item_id, "offers": offers} if offers else None
+
+    runner = _TenantRunner()
+    await work.handle_work(
+        service_context(tenant="tenant:one", work_runner=runner),
+        {"item_id": "item-1", "terms": {}},
+        offer_op,
+    )
+    get_op = work.operations()[1]
+    own = await work.handle_work(
+        service_context(tenant="tenant:one", work_runner=runner),
+        {"item_id": "item-1"},
+        get_op,
+    )
+    assert len(own["value"]["offers"]) == 1
+    with pytest.raises(LookupError):
+        await work.handle_work(
+            service_context(tenant="tenant:two", work_runner=runner),
+            {"item_id": "item-1"},
+            get_op,
+        )

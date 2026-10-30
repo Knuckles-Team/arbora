@@ -140,6 +140,7 @@ def _projection(
     )
 
 
+@pytest.mark.spec("ARBORA-OPS-R002")
 def test_find_merges_only_authorized_registry_and_filtered_fleet_entries() -> None:
     registry = Registry(
         _op("things.read", Verb.ASK, "read"), _op("things.admin", Verb.MANAGE, "admin")

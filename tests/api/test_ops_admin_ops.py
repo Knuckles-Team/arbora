@@ -197,3 +197,62 @@ def test_ops_admin_operations_declare_distinct_read_and_admin_scopes() -> None:
     assert restore_op.scopes == frozenset({"ops:admin"})
     assert restore_op.effect.value == "admin"
     assert restore_op.idempotency.value == "key_required"
+
+
+@pytest.mark.spec("ARBORA-OPS-R024.5")
+def test_backup_and_restore_need_console_step_up_and_write_audit() -> None:
+    import time
+
+    from test_invoke_contract import caller, run, setup_services
+
+    from arbora.api.registry import Surface
+
+    for op_id in ("ops.backup", "ops.restore"):
+        op = _OPS[op_id]
+        params = (
+            {"backup_id": "backup-1"}
+            if op_id == "ops.restore"
+            else {"label": "nightly"}
+        )
+        services, runtime, audit, _, _ = setup_services(op)
+
+        async def _effect():
+            return {"value": {"tenant": "tenant:one"}}
+
+        runtime.on_dispatch = _effect
+        scope = frozenset({"ops:admin"})
+        fresh = caller(effective_scopes=scope, mfa_at_ms=int(time.time() * 1000))
+        plain = caller(effective_scopes=scope)
+        preview = run(
+            services,
+            op_id=op_id,
+            params=params,
+            supplied=plain,
+            idempotency_key="k1",
+        )
+        reference = preview.details["plan_ref"]
+        # A plain confirmation (no fresh MFA) cannot complete the admin effect.
+        refused = run(
+            services,
+            op_id=op_id,
+            params=params,
+            supplied=plain,
+            surface=Surface.CONSOLE,
+            plan_ref=reference,
+            idempotency_key="k1",
+        )
+        assert refused.code == "PRINCIPAL_NOT_ALLOWED"
+        assert not runtime.calls and not audit.events
+        done = run(
+            services,
+            op_id=op_id,
+            params=params,
+            supplied=fresh,
+            surface=Surface.CONSOLE,
+            plan_ref=reference,
+            idempotency_key="k1",
+        )
+        assert done.code == "OK", done
+        assert len(runtime.calls) == 1
+        assert [e["result_status"] for e in audit.events][0] == "PENDING"
+        assert len(audit.events) == 2
