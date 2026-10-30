@@ -150,6 +150,15 @@ jobs:
           # Every gate below uses the shared gate source frozen for this run.
           echo "PINNED_PRECOMMIT=$(bash scripts/pin_gate_source.sh "$PIPELINES_REF" "$RUNNER_TEMP/pre-commit-pinned.yaml")" >> "$GITHUB_ENV"
 
+      # Without this every gates run spent about three minutes initialising
+      # and installing the hook environments from scratch. The pinned config
+      # names the frozen pipelines revision, so its hash is a stable key.
+      - name: Cache pre-commit hook environments
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: arbora-pre-commit-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.pre-commit-config.yaml') }}-${{ env.PIPELINES_REF }}
+
       # The prohibited-identity catalog is operator-owned and never committed;
       # a missing catalog makes the tracked-privacy hook fail closed.
       - name: Commit- and push-stage hooks (.pre-commit-config.yaml)

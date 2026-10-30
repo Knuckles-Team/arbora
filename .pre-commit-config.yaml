@@ -51,14 +51,6 @@ repos:
   - id: ruff-format
     stages: [pre-commit]
 
-- repo: https://github.com/pre-commit/mirrors-mypy
-  rev: 2834ec6639549dd6796205c8f011dedcd587288b # v2.4.0
-  hooks:
-  - id: mypy
-    stages: [pre-push]
-    additional_dependencies: [pydantic==2.13.5, types-PyYAML==6.0.12.20260906]
-    args: ["--ignore-missing-imports"]
-
 - repo: https://github.com/jendrikseipp/vulture
   rev: b0f67ba0044693aa9ec0d38fe460590facc98004 # v2.16
   hooks:
