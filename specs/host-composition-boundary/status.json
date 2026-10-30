@@ -1383,42 +1383,55 @@
     {
       "id": "ARBORA-HOST-R012",
       "title": "Component registry carries Arbora and SDK boundary entries",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "0ce784a3692d",
         "9760bef27075",
         "d75db1ea42e8",
         "e278fafd4073"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_component_registry_boundary_seeds.py:17"
+      ]
     },
     {
       "id": "ARBORA-HOST-R013",
       "title": "Front ends import only public Arbora/agent-runtime surfaces",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "0ce784a3692d",
         "4ca77fbff9e3"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/architecture/test_host_import_boundaries.py:65",
+        "tests/architecture/test_host_import_boundaries.py:71"
+      ]
     },
     {
       "id": "ARBORA-HOST-R014",
       "title": "Agent runtime split into connector SDK, Arbora and engine",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "0062797e3c37",
+        "0ce784a3692d",
         "91c0d96adb17",
         "f8d31551067c"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/architecture/test_dependency_manifest_pins_published_packages.py:20"
+      ]
     },
     {
       "id": "ARBORA-HOST-R015",
       "title": "Layered agent capability model with a harness abstraction",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "0ce784a3692d",
         "1f575184e8da"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/architecture/test_capability_layers.py:13"
+      ]
     },
     {
       "id": "ARBORA-HOST-R016",
@@ -1432,12 +1445,15 @@
     {
       "id": "ARBORA-HOST-R017",
       "title": "Browser inventory lists native Arbora tools",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "0ce784a3692d",
         "3b2c6ac9d864",
         "a4928a7047e1"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/webui_host/test_native_mcp_delegation.py:18"
+      ]
     },
     {
       "id": "ARBORA-HOST-R018",
