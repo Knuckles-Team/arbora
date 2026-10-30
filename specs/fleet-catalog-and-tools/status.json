@@ -209,6 +209,7 @@
     "ARBORA-FLEET-R052.4.4",
     "ARBORA-FLEET-R052.4.5",
     "ARBORA-FLEET-R052.4.6",
+    "ARBORA-FLEET-R053",
     "ARBORA-FLEET-R045",
     "ARBORA-FLEET-R034.15"
   ],
@@ -2344,6 +2345,13 @@
     {
       "id": "ARBORA-FLEET-R052.4.6",
       "title": "Probe: \"Delegate: list running containers.\"",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R053",
+      "title": "Scheduled fleet smoke sweep",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
