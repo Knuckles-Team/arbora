@@ -149,6 +149,34 @@ class IngestRunner(Protocol):
 
     async def get_job_status(self, *, tenant: str, job_id: str) -> IngestJobRecord: ...
 
+    # ARBORA-OPS-R020.4: drift listing and repair-with-approval.
+    async def list_drift(
+        self, *, tenant: str, source_id: str | None = None
+    ) -> Mapping[str, Any]: ...
+
+    async def get_drift(self, *, tenant: str, drift_id: str) -> Mapping[str, Any]: ...
+
+    async def propose_repair(
+        self, *, tenant: str, drift_id: str, idempotency_key: str
+    ) -> Mapping[str, Any]: ...
+
+    async def get_repair(
+        self, *, tenant: str, repair_id: str
+    ) -> Mapping[str, Any] | None: ...
+
+    async def apply_repair(
+        self, *, tenant: str, repair_id: str, approval_ref: str, idempotency_key: str
+    ) -> Mapping[str, Any]: ...
+
+    # ARBORA-OPS-R020.5: embedding admission and re-embedding.
+    async def admit_embedding(
+        self, *, tenant: str, model: str, dimensions: int, idempotency_key: str
+    ) -> Mapping[str, Any]: ...
+
+    async def reembed(
+        self, *, tenant: str, source_id: str, model: str, idempotency_key: str
+    ) -> Mapping[str, Any]: ...
+
 
 def _bound_runner(context: Any) -> IngestRunner:
     runner = context.services.get("ingest_runner")
@@ -224,3 +252,87 @@ async def get_job_status(context: Any, params: Mapping[str, Any], op: Any) -> An
         tenant=context.caller.tenant, job_id=params["job_id"]
     )
     return {"value": record.model_dump(mode="json", exclude_none=True)}
+
+
+def _require_key(context: Any) -> str:
+    if not context.idempotency_key:
+        raise ValueError("Idempotency-Key is required")
+    return str(context.idempotency_key)
+
+
+async def list_drift(context: Any, params: Mapping[str, Any], op: Any) -> Any:
+    """List this tenant's detected source drift through the composed runner."""
+    runner = _bound_runner(context)
+    found = await runner.list_drift(
+        tenant=context.caller.tenant, source_id=params.get("source_id")
+    )
+    return {"value": dict(found)}
+
+
+async def get_drift(context: Any, params: Mapping[str, Any], op: Any) -> Any:
+    """Show one drift record through the composed runner."""
+    runner = _bound_runner(context)
+    found = await runner.get_drift(
+        tenant=context.caller.tenant, drift_id=params["drift_id"]
+    )
+    return {"value": dict(found)}
+
+
+async def propose_repair(context: Any, params: Mapping[str, Any], op: Any) -> Any:
+    """Record a repair proposal with its preview; nothing is applied."""
+    key = _require_key(context)
+    runner = _bound_runner(context)
+    proposal = await runner.propose_repair(
+        tenant=context.caller.tenant,
+        drift_id=params["drift_id"],
+        idempotency_key=key,
+    )
+    return {"value": dict(proposal)}
+
+
+async def approve_repair(context: Any, params: Mapping[str, Any], op: Any) -> Any:
+    """Apply a previewed repair, but only against an approval reference."""
+    key = _require_key(context)
+    runner = _bound_runner(context)
+    proposal = await runner.get_repair(
+        tenant=context.caller.tenant, repair_id=params["repair_id"]
+    )
+    if proposal is None:
+        raise LookupError("repair proposal not found")
+    if not proposal.get("preview"):
+        raise OperationRefused(
+            "PRECONDITION_FAILED", {"reason": "repair has no recorded preview"}
+        )
+    applied = await runner.apply_repair(
+        tenant=context.caller.tenant,
+        repair_id=params["repair_id"],
+        approval_ref=params["approval_ref"],
+        idempotency_key=key,
+    )
+    return {"value": dict(applied)}
+
+
+async def admit_embedding(context: Any, params: Mapping[str, Any], op: Any) -> Any:
+    """Admit an embedding model/dimension through the composed runner."""
+    key = _require_key(context)
+    runner = _bound_runner(context)
+    receipt = await runner.admit_embedding(
+        tenant=context.caller.tenant,
+        model=params["model"],
+        dimensions=params["dimensions"],
+        idempotency_key=key,
+    )
+    return {"value": dict(receipt)}
+
+
+async def reembed(context: Any, params: Mapping[str, Any], op: Any) -> Any:
+    """Request a durable re-embedding job through the composed runner."""
+    key = _require_key(context)
+    runner = _bound_runner(context)
+    receipt = await runner.reembed(
+        tenant=context.caller.tenant,
+        source_id=params["source_id"],
+        model=params["model"],
+        idempotency_key=key,
+    )
+    return {"value": dict(receipt)}
