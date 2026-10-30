@@ -37,7 +37,7 @@ def governed_retired_configuration_catalog(
             }
         )
     )
-    monkeypatch.setenv("AGENT_UTILITIES_CONFIG_DIR", str(config_dir))
+    monkeypatch.setenv("ARBORA_CONFIG_DIR", str(config_dir))
     return policy
 
 
