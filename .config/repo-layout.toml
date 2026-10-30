@@ -18,7 +18,7 @@
 ".specify" = "tracked Spec Kit constitution; generated tooling files remain ignored"
 architecture = "boundary seed manifest (component-registry-boundary-seeds.yml) published from the host-composition-boundary work, mirroring agent-utilities' own root architecture/ path so both sides of the boundary registry resolve the same relative path"
 specs = "tracked repository-owned specifications and contribution templates"
-scripts = "contributor bootstrap, pinned scanner installer shared with CI, the sibling-aware local hook runner, the orphan-module wiring gate, and the public-spec validator"
+scripts = "contributor bootstrap, the sibling-aware local hook runner, the orphan-module wiring gate, and the public-spec validator"
 arbora = "the Arbora Python package: MCP/REST composition, fleet, gateway, control plane, WebUI host, A2A, browser control, deployment, and console entry points"
 tests = "the pytest suite: wiring tests proving the console entry point and every package under arbora/ are live, imported members of the package"
 deploy = "arbora deployment profile inputs (dev/test/prod) consumed by arbora.deployment.genesis_environments"
@@ -26,7 +26,7 @@ docker = "container delivery design and ownership notes; this repository does no
 docs = "MkDocs source for the public GitHub Pages documentation site"
 ".github" = "GitHub Actions workflow definitions (release.yml, pages.yml)"
 ".claude" = "Claude Code project settings: the SessionStart hook that runs scripts/bootstrap.sh in cloud sessions"
-".config" = "explicit tool configuration files: this manifest, KISS thresholds (--config), and the reviewed dupehound-distinct register; .kiss/ is a regenerated analysis cache and stays gitignored"
+".config" = "explicit tool configuration files: this manifest, codespell ignores, spec aliases and docs overrides"
 
 [files]
 "AGENTS.md" = "agent-facing repository architecture, commands, quality gates, and safe-development contract"
