@@ -6,6 +6,10 @@
 - `AGENT_UTILITIES_TOKEN_SECRET` and `AGENT_UTILITIES_MCP_TASK_CHANNEL_SECRET` are no longer read. Set `ARBORA_TOKEN_SECRET` and `ARBORA_MCP_TASK_CHANNEL_SECRET` instead; the secret values are unchanged.
 - The Codex registration test that imported the removed `agent_connector_sdk` is deleted.
 
+### Changed
+- Genesis environments and fleet child processes set `ARBORA_DATA_DIR` and `ARBORA_CACHE_DIR` in place of `AGENT_UTILITIES_DATA_DIR` and `AGENT_UTILITIES_CACHE_DIR`, matching meristem's `ARBORA_*_DIR` directory overrides.
+- Requires meristem 4.2.0, the first release that reads `ARBORA_*_DIR` and defaults its data, cache and log directories to `arbora`.
+
 ## [0.1.8.dev7] - 2026-10-30
 
 ### Removed
