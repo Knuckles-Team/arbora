@@ -150,16 +150,17 @@
     },
     {
       "id": "ARBORA-DEPLOY-R006",
-      "title": "gateway-widgets extra pins a compatible connector floor",
+      "title": "The base dependency pins a compatible connector-SDK floor",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "45283d0137b9",
+        "847ea6608cbe",
         "d58ee3e25028",
         "d6f16cd447e2",
         "f42856691f97"
       ],
       "verified_by": [
-        "tests/gateway/test_gateway_widgets_extra.py:57"
+        "tests/architecture/test_single_gateway_implementation.py:53"
       ]
     },
     {
@@ -167,6 +168,7 @@
       "title": "Arbora hosts deployment doctor and skill certification",
       "delivery_state": "LANDED",
       "landed_in": [
+        "847ea6608cbe",
         "9e7f6499d96f",
         "d6f16cd447e2",
         "fd761d59a171"
@@ -207,12 +209,15 @@
     },
     {
       "id": "ARBORA-DEPLOY-R007.3",
-      "title": "`arbora-daemon` console-script collision resolved",
-      "delivery_state": "LANDED",
+      "title": "`arbora-daemon` console script retired",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "847ea6608cbe",
         "fd761d59a171"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/architecture/test_single_gateway_implementation.py:69"
+      ]
     },
     {
       "id": "ARBORA-DEPLOY-R007.4",
@@ -371,14 +376,17 @@
     },
     {
       "id": "ARBORA-DEPLOY-R016",
-      "title": "One host daemon process shares the in-pod engine",
-      "delivery_state": "LANDED",
+      "title": "The serving container is the one in-pod host process",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "847ea6608cbe",
         "8b20c11b5dc5",
         "eb31b7757681",
         "f3bcee6dfbcf"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/deployment/test_helm_daemon_sidecar.py:46"
+      ]
     },
     {
       "id": "ARBORA-DEPLOY-R017",
