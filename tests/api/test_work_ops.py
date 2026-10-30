@@ -147,7 +147,6 @@ async def test_offers_create_handler_records_a_bound_offer() -> None:
     assert runner.offers == [result["value"]]
 
 
-@pytest.mark.spec("ARBORA-OPS-R022.1")
 @pytest.mark.asyncio
 async def test_offer_write_needs_declared_scope_and_offers_stay_with_their_tenant() -> (
     None

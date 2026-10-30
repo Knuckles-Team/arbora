@@ -32,7 +32,6 @@ def test_decide_commit_allows_a_service_principal() -> None:
     assert principal_rule(op, service) is None
 
 
-@pytest.mark.spec("ARBORA-OPS-R021.1")
 def test_decide_commit_result_carries_provenance_and_is_service_only() -> None:
     op = _op()
     assert principal_rule(op, _caller(principal_kind="human")) is not None
