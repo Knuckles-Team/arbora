@@ -612,11 +612,15 @@
     {
       "id": "ARBORA-OPS-R019",
       "title": "Federation source registration and sharing operations",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "1846c599f68c",
         "64a0c091b354"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/mcp_server/test_federation_sources_bootstrap.py:108",
+        "tests/mcp_server/test_federation_sources_bootstrap.py:143"
+      ],
       "rollup_of": [
         "ARBORA-OPS-R019.1",
         "ARBORA-OPS-R019.2"
@@ -625,20 +629,26 @@
     {
       "id": "ARBORA-OPS-R019.1",
       "title": "Federation source register, list, get, and probe",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "1846c599f68c",
         "64a0c091b354"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/mcp_server/test_federation_sources_bootstrap.py:108"
+      ]
     },
     {
       "id": "ARBORA-OPS-R019.2",
       "title": "Federation source share and unshare",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "1846c599f68c",
         "64a0c091b354"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/mcp_server/test_federation_sources_bootstrap.py:143"
+      ]
     },
     {
       "id": "ARBORA-OPS-R020",
@@ -1136,11 +1146,14 @@
     {
       "id": "ARBORA-OPS-R022.1",
       "title": "Work-item and offer operations — work slice",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "0beda4445463",
         "c4cc3e21b439"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/mcp_server/test_ops_runners_bootstrap.py:132"
+      ]
     },
     {
       "id": "ARBORA-OPS-R022.2",
@@ -1384,12 +1397,15 @@
     {
       "id": "ARBORA-OPS-R024.5",
       "title": "Operational admin operations — admin slice",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "4016e049e45e",
-        "8d1bc46ecbdb"
+        "8d1bc46ecbdb",
+        "d0b6017e7461"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/mcp_server/test_ops_admin_store_bootstrap.py:80"
+      ]
     },
     {
       "id": "ARBORA-OPS-R025",
