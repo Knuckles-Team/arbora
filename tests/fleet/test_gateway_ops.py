@@ -499,3 +499,13 @@ async def test_service_tool_subject_and_executor_scopes_are_eg_derived() -> None
     server.component.component_id = ""
     with pytest.raises(ValueError, match="verified EG subject_id"):
         await CombinedFleetSource(verified=verified, live=live, sdk=sdk)()
+
+
+@pytest.mark.spec("ARBORA-FLEET-R018")
+def test_session_loads_default_cap_is_64_with_hard_cap_256_and_one_hour_idle() -> None:
+    sessions = SessionLoads()
+    assert sessions.cap == 64
+    assert sessions.idle_ttl_seconds == 3600
+    assert SessionLoads(cap=256).cap == 256
+    with pytest.raises(ValueError):
+        SessionLoads(cap=257)
