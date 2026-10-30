@@ -272,7 +272,7 @@ def _resolved_external_mapping_policy(
     _validate_external_mapping_policy_identity(policy)
 
     raise not_served(
-        "knowledge_graph.ingestion.external_graph_schema", "EG-REPO-INGEST-R651"
+        "knowledge_graph.ingestion.external_graph_schema", "MEDULLA-REPO-INGEST-R651"
     )
 
 
@@ -690,7 +690,7 @@ async def _analysis_inspect_props(engine, ident):
         if labels and "node_type" not in props:
             props["node_type"] = labels[0]
     if not props:
-        raise not_served("knowledge_graph.core.bounded_read", "EG-IDENTITY-R610")
+        raise not_served("knowledge_graph.core.bounded_read", "MEDULLA-IDENTITY-R610")
     return props
 
 
@@ -746,7 +746,7 @@ async def _analysis_action_enrichment_coverage(
 ):
     # action(s): 'enrichment_coverage'
 
-    raise not_served("knowledge_graph.enrichment.query", "EG-REPO-INGEST-R600")
+    raise not_served("knowledge_graph.enrichment.query", "MEDULLA-REPO-INGEST-R600")
 
 
 async def _analysis_action_process_writeback(
@@ -756,7 +756,7 @@ async def _analysis_action_process_writeback(
 
     raise not_served(
         "knowledge_graph.enrichment.writeback",
-        "SDK-SOURCE-INGEST-R600",
+        "SCION-SOURCE-INGEST-R600",
         owner="agent-connector-sdk",
     )
 
@@ -765,7 +765,7 @@ async def _analysis_action_context(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'context'
-    e = not_served("knowledge_graph.memory", "EG-DECISION-ENGINE-R651")
+    e = not_served("knowledge_graph.memory", "MEDULLA-DECISION-ENGINE-R651")
     return public_error_text(e)
 
 
@@ -832,7 +832,7 @@ async def _analysis_action_placement_plan(
 ):
     # action(s): 'placement_plan'
 
-    raise not_served("knowledge_graph.infra", "EG-PLACEMENT-R700")
+    raise not_served("knowledge_graph.infra", "MEDULLA-PLACEMENT-R700")
 
 
 async def _analysis_action_infra_sweep(
@@ -840,14 +840,14 @@ async def _analysis_action_infra_sweep(
 ):
     # action(s): 'infra_sweep'
 
-    raise not_served("knowledge_graph.infra", "EG-PLACEMENT-R700")
+    raise not_served("knowledge_graph.infra", "MEDULLA-PLACEMENT-R700")
 
 
 async def _analysis_action_world_model_rollout(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'world_model_rollout'
-    raise not_served("knowledge_graph.core.world_model", "EG-DECISION-ENGINE")
+    raise not_served("knowledge_graph.core.world_model", "MEDULLA-DECISION-ENGINE")
 
 
 async def _analysis_action_research_ingest(
@@ -856,7 +856,7 @@ async def _analysis_action_research_ingest(
     # action(s): 'research_ingest'
     raise not_served(
         "knowledge_graph.research.research_intelligence_engine",
-        "EG-DECISION-ENGINE-R652",
+        "MEDULLA-DECISION-ENGINE-R652",
     )
 
 
@@ -898,7 +898,7 @@ async def _analysis_action_extract_claims(
 ):
     # action(s): 'extract_claims'
     raise not_served(
-        "knowledge_graph.kb.entity_claim_extractor", "EG-INGEST-WORKER-R003.700"
+        "knowledge_graph.kb.entity_claim_extractor", "MEDULLA-INGEST-WORKER-R003.700"
     )
 
 
@@ -951,7 +951,7 @@ async def _analysis_action_contradictions(
 ):
     # action(s): 'contradictions'
     raise not_served(
-        "knowledge_graph.adaptation.contradiction_detector", "EG-DECISION-ENGINE-R700"
+        "knowledge_graph.adaptation.contradiction_detector", "MEDULLA-DECISION-ENGINE-R700"
     )
 
 
@@ -959,7 +959,7 @@ async def _analysis_action_night_shift(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'night_shift'
-    raise not_served("knowledge_graph.research.night_shift", "EG-DECISION-ENGINE-R653")
+    raise not_served("knowledge_graph.research.night_shift", "MEDULLA-DECISION-ENGINE-R653")
 
 
 def _analysis_recommend_candidate_items(engine, query, top_k):
@@ -1007,7 +1007,7 @@ async def _analysis_action_recommend(
 ):
     # action(s): 'recommend'
     raise not_served(
-        "knowledge_graph.retrieval.generative_recommender", "EG-FEDERATED-QUERY-R652"
+        "knowledge_graph.retrieval.generative_recommender", "MEDULLA-FEDERATED-QUERY-R652"
     )
 
 
@@ -1040,7 +1040,7 @@ async def _analysis_action_x_workflow(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'x_workflow'
-    raise not_served("knowledge_graph.kb.x_workflows", "EG-DECISION-ENGINE-R166")
+    raise not_served("knowledge_graph.kb.x_workflows", "MEDULLA-DECISION-ENGINE-R166")
 
 
 async def _analysis_action_cleanup_documents(
@@ -1048,7 +1048,7 @@ async def _analysis_action_cleanup_documents(
 ):
     # action(s): 'cleanup_documents'
     raise not_served(
-        "knowledge_graph.maintenance.document_cleanup", "EG-DURABLE-KERNEL-R700"
+        "knowledge_graph.maintenance.document_cleanup", "MEDULLA-DURABLE-KERNEL-R700"
     )
 
 
@@ -1061,7 +1061,7 @@ async def _analysis_action_epistemic_sync(
     # federation is now owned by the epistemic-graph engine. The action name
     # stays reachable/discoverable and answers with a typed, unambiguous
     # refusal instead of an import error.
-    raise not_served("knowledge_graph.backends", "EG-PLACEMENT-R611")
+    raise not_served("knowledge_graph.backends", "MEDULLA-PLACEMENT-R611")
 
 
 async def _analysis_action_quant_banking(
@@ -1075,7 +1075,7 @@ async def _analysis_action_quant_arb(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'quant_arb'
-    raise not_served("domains.finance.cross_market_arb", "EG-FINANCE-PRIMITIVES-R750")
+    raise not_served("domains.finance.cross_market_arb", "MEDULLA-FINANCE-PRIMITIVES-R750")
 
 
 async def _analysis_action_quant_crypto(
@@ -1091,7 +1091,7 @@ async def _analysis_action_quant_microstructure(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'quant_microstructure'
-    raise not_served("domains.finance.microstructure", "EG-FINANCE-PRIMITIVES-R750")
+    raise not_served("domains.finance.microstructure", "MEDULLA-FINANCE-PRIMITIVES-R750")
 
 
 async def _analysis_action_quant_insider(
@@ -1100,7 +1100,7 @@ async def _analysis_action_quant_insider(
     # action(s): 'quant_insider'
 
     raise not_served(
-        "domains.finance.insider_equilibrium", "EG-FINANCE-PRIMITIVES-R751"
+        "domains.finance.insider_equilibrium", "MEDULLA-FINANCE-PRIMITIVES-R751"
     )
 
 
@@ -1247,7 +1247,7 @@ async def _analysis_action_change_coupling(
 ):
     # action(s): 'change_coupling'
 
-    raise not_served("knowledge_graph.enrichment.git_coupling", "EG-REPO-INGEST-R601")
+    raise not_served("knowledge_graph.enrichment.git_coupling", "MEDULLA-REPO-INGEST-R601")
 
 
 async def _analysis_action_code_evolution(
@@ -1255,7 +1255,7 @@ async def _analysis_action_code_evolution(
 ):
     # action(s): 'code_evolution'
 
-    raise not_served("knowledge_graph.enrichment.git_history", "EG-REPO-INGEST-R601")
+    raise not_served("knowledge_graph.enrichment.git_history", "MEDULLA-REPO-INGEST-R601")
 
 
 async def _analysis_action_adr(engine, action, query, top_k, node_id, depth, target):
@@ -1316,7 +1316,7 @@ async def _analysis_action_code_context(
     # a no-op local rebind of an already-imported module has zero runtime
     # effect. See BUGS FOUND in the lane report.
     raise not_served(
-        "knowledge_graph.retrieval.code_context", "EG-FEDERATED-QUERY-R654"
+        "knowledge_graph.retrieval.code_context", "MEDULLA-FEDERATED-QUERY-R654"
     )
 
 
@@ -1326,7 +1326,7 @@ async def _analysis_action_executable_rag(
     # action(s): 'executable_rag'
 
     raise not_served(
-        "knowledge_graph.retrieval.hybrid_retriever", "EG-FEDERATED-QUERY-R008"
+        "knowledge_graph.retrieval.hybrid_retriever", "MEDULLA-FEDERATED-QUERY-R008"
     )
 
 
@@ -1336,7 +1336,7 @@ async def _analysis_action_cross_repo_usages(
     # action(s): 'cross_repo_usages'
 
     raise not_served(
-        "knowledge_graph.retrieval.code_context", "EG-FEDERATED-QUERY-R654"
+        "knowledge_graph.retrieval.code_context", "MEDULLA-FEDERATED-QUERY-R654"
     )
 
 
@@ -1346,7 +1346,7 @@ async def _analysis_action_code_metrics(
     # action(s): 'code_metrics'
 
     raise not_served(
-        "knowledge_graph.retrieval.code_metrics", "EG-FEDERATED-QUERY-R654"
+        "knowledge_graph.retrieval.code_metrics", "MEDULLA-FEDERATED-QUERY-R654"
     )
 
 
@@ -1356,7 +1356,7 @@ async def _analysis_action_arch_report(
     # action(s): 'arch_report'
 
     raise not_served(
-        "knowledge_graph.retrieval.code_metrics", "EG-FEDERATED-QUERY-R654"
+        "knowledge_graph.retrieval.code_metrics", "MEDULLA-FEDERATED-QUERY-R654"
     )
 
 
@@ -1366,7 +1366,7 @@ async def _analysis_action_explain(
     # action(s): 'explain'
 
     raise not_served(
-        "knowledge_graph.retrieval.context_plane", "EG-FEDERATED-QUERY-R650"
+        "knowledge_graph.retrieval.context_plane", "MEDULLA-FEDERATED-QUERY-R650"
     )
 
 
@@ -1376,7 +1376,7 @@ async def _analysis_action_distill_memory(
     # action(s): 'distill_memory'
 
     raise not_served(
-        "knowledge_graph.memory.weights_distillation", "EG-DECISION-ENGINE-R651"
+        "knowledge_graph.memory.weights_distillation", "MEDULLA-DECISION-ENGINE-R651"
     )
 
 
@@ -1558,7 +1558,7 @@ def _configure_add_connection_spec(action, config_key, config_value, registry):
             }
         )
     exc = not_served(
-        "knowledge_graph.core.connection_registry", "EG-UNIFIED-DATA-PLANE-R612"
+        "knowledge_graph.core.connection_registry", "MEDULLA-UNIFIED-DATA-PLANE-R612"
     )
     return json.dumps(
         {
@@ -1606,7 +1606,7 @@ def _configure_action_add_connection(action, config_key, config_value):
 def _configure_mapping_status_lookup(config_key, config_value, registry, store):
     # action(s): 'connection_mapping_status'
     raise not_served(
-        "knowledge_graph.ingestion.external_graph_schema", "EG-REPO-INGEST-R651"
+        "knowledge_graph.ingestion.external_graph_schema", "MEDULLA-REPO-INGEST-R651"
     )
 
 
@@ -1623,7 +1623,7 @@ def _configure_approval_actor():
 def _configure_mapping_approve(config_key, config_value, store):
     # action(s): 'approve_connection_mapping'
     raise not_served(
-        "knowledge_graph.ingestion.external_graph_schema", "EG-REPO-INGEST-R651"
+        "knowledge_graph.ingestion.external_graph_schema", "MEDULLA-REPO-INGEST-R651"
     )
 
 
@@ -1719,7 +1719,7 @@ def _configure_ingest_graphql(config_key, options, registry, declared):
     try:
         registry.get_engine(config_key)
         raise not_served(
-            "knowledge_graph.ingestion.graphql_connection", "EG-REPO-INGEST-R651"
+            "knowledge_graph.ingestion.graphql_connection", "MEDULLA-REPO-INGEST-R651"
         )
     except Exception as exc:  # noqa: BLE001 — safe type only
         return json.dumps(
@@ -1797,7 +1797,7 @@ def _configure_ingest_default(config_key, options, declared, registry):
                 )
             }
         )
-    raise not_served("knowledge_graph.ingestion.external_graph", "EG-REPO-INGEST-R651")
+    raise not_served("knowledge_graph.ingestion.external_graph", "MEDULLA-REPO-INGEST-R651")
 
 
 def _configure_mapping_ingest(action, config_key, config_value, registry):
@@ -1818,7 +1818,7 @@ def _configure_mapping_ingest(action, config_key, config_value, registry):
             }
         )
     refusal = not_served(
-        "knowledge_graph.ingestion.external_graph_schema", "EG-REPO-INGEST-R651"
+        "knowledge_graph.ingestion.external_graph_schema", "MEDULLA-REPO-INGEST-R651"
     )
     return json.dumps(
         {
@@ -1906,7 +1906,7 @@ def _configure_profile_setup(config_key, config_value, registry):
         )
     registry.backend_kind(config_key)
     exc = not_served(
-        "knowledge_graph.ingestion.external_graph_schema", "EG-REPO-INGEST-R651"
+        "knowledge_graph.ingestion.external_graph_schema", "MEDULLA-REPO-INGEST-R651"
     )
     return (
         None,
@@ -1972,7 +1972,7 @@ def _configure_profile_discover(
 ):
     # action(s): 'discover_connection_schema', 'profile_connection'
     raise not_served(
-        "knowledge_graph.ingestion.external_graph_schema", "EG-REPO-INGEST-R651"
+        "knowledge_graph.ingestion.external_graph_schema", "MEDULLA-REPO-INGEST-R651"
     )
 
 
@@ -2013,7 +2013,7 @@ def _configure_profile_doctor(
 ):
     # action(s): 'external_graph_doctor'
     raise not_served(
-        "knowledge_graph.ingestion.external_graph_schema", "EG-REPO-INGEST-R651"
+        "knowledge_graph.ingestion.external_graph_schema", "MEDULLA-REPO-INGEST-R651"
     )
 
 
@@ -2031,7 +2031,7 @@ def _configure_profile_propose_graphql(
             }
         )
     exc = not_served(
-        "knowledge_graph.ingestion.graphql_connection", "EG-REPO-INGEST-R651"
+        "knowledge_graph.ingestion.graphql_connection", "MEDULLA-REPO-INGEST-R651"
     )
     return json.dumps(
         {
@@ -2128,7 +2128,7 @@ def _configure_profile_propose_default(
 ):
     # action(s): 'propose_connection_mapping' (non-GraphQL backend)
     raise not_served(
-        "knowledge_graph.ingestion.external_graph_schema", "EG-REPO-INGEST-R651"
+        "knowledge_graph.ingestion.external_graph_schema", "MEDULLA-REPO-INGEST-R651"
     )
 
 
@@ -2213,7 +2213,7 @@ def _configure_action_approve_connection_mapping(action, config_key, config_valu
 
 def _configure_action_mirror_status(action, config_key, config_value):
     # action(s): 'mirror_status', 'reconcile'
-    raise not_served("knowledge_graph.backends", "EG-PLACEMENT-R611")
+    raise not_served("knowledge_graph.backends", "MEDULLA-PLACEMENT-R611")
 
 
 def _configure_action_legacy_backend_removed(action, config_key, config_value):
@@ -2224,7 +2224,7 @@ def _configure_action_legacy_backend_removed(action, config_key, config_value):
     # The action names stay reachable/discoverable on this surface and answer
     # with a typed, unambiguous refusal rather than an import error or a
     # silently vanished action.
-    raise not_served("knowledge_graph.backends", "EG-PLACEMENT-R611")
+    raise not_served("knowledge_graph.backends", "MEDULLA-PLACEMENT-R611")
 
 
 def _configure_parse_json_opts(config_value):

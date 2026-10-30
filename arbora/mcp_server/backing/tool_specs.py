@@ -129,7 +129,7 @@ TOOL_VERBS: Mapping[str, tuple[str, ...]] = MappingProxyType(
         "graph_feedback": ("why", "write"),
         "ontology_function": ("act", "write"),
         # ── act / orchestrate / execute / schedule ──
-        # AU-CONTROL-R024: the Agent Library. ``find`` ranks it, ``ask`` reaches
+        # MERISTEM-CONTROL-R024: the Agent Library. ``find`` ranks it, ``ask`` reaches
         # only the reviewed read actions below, and ``manage`` saves records.
         "graph_governance": ("act", "manage"),
         "graph_domain_ops": ("act",),

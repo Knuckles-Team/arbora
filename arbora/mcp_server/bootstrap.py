@@ -858,7 +858,7 @@ def _start_engine_bootstrap(session: Any) -> None:
     """Prove the engine answers under the process authority before serving.
 
     EG owns its workers, materialization and durable state
-    (EG-INGEST-WORKER-R604); arbora starts none of them. Startup only
+    (MEDULLA-INGEST-WORKER-R604); arbora starts none of them. Startup only
     connects the shared pool and reads EG's health document under the minted
     process session, retrying until the endpoint answers or the bounded
     deadline passes, so an unreachable engine stops startup with its cause.

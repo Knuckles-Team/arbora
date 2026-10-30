@@ -36,15 +36,15 @@ The serving container stays at the client role. A second container in the same p
 
 ## ARBORA-DEPLOY-R017 plan: engine-routed deployment placement and assembly
 
-The agent-utilities planner (deleted by commit `db29b2da6`, AU-BOUNDARY-R002.2) is not re-created. Arbora holds no plan type, no backend-selection logic and no renderer.
+The agent-utilities planner (deleted by commit `db29b2da6`, MERISTEM-BOUNDARY-R002.2) is not re-created. Arbora holds no plan type, no backend-selection logic and no renderer.
 
 ### Why this is not a separate planner
 
-The engine decision-engine spec makes `graph.assemble()` the sole authority for composing an agent graph from typed tasks and capabilities (`EG-DECISION-ENGINE-R036`), routes tasks through the decision ladder (`EG-DECISION-ENGINE-R044`), and exposes topology and placement selection as one typed Decide question (`EG-DECISION-ENGINE-R046`, `R111`). A arbora planner would be a second path to the same decisions. Arbora only maps a request to the engine, presents the answer and gets human confirmation.
+The engine decision-engine spec makes `graph.assemble()` the sole authority for composing an agent graph from typed tasks and capabilities (`MEDULLA-DECISION-ENGINE-R036`), routes tasks through the decision ladder (`MEDULLA-DECISION-ENGINE-R044`), and exposes topology and placement selection as one typed Decide question (`MEDULLA-DECISION-ENGINE-R046`, `R111`). A arbora planner would be a second path to the same decisions. Arbora only maps a request to the engine, presents the answer and gets human confirmation.
 
 ### Design
 
-1. **Placement.** One typed Decide request/response mapping (R017.1). Engine prerequisite: a deployment-placement question kind under `EG-DECISION-ENGINE-R046`/`R111` (ID to be assigned by the engine spec; not invented here).
+1. **Placement.** One typed Decide request/response mapping (R017.1). Engine prerequisite: a deployment-placement question kind under `MEDULLA-DECISION-ENGINE-R046`/`R111` (ID to be assigned by the engine spec; not invented here).
 2. **Sequencing.** Ordered fleet-tool steps are an `AgentAssemble` graph (R017.2). Present it read-only (R017.3), confirm through `arbora.plan/confirm` (R017.4, rows `ARBORA-A2A-R005.1`/`R006.1`, with `decide.commit`). Typed refusal while unavailable (R017.5). Engine prerequisite: the `AgentAssemble` handler in `arbora/a2a/routing.py` and `admission.py` is a refusal stub and must be replaced. The confirm surface is also a fail-closed stub.
 3. **Artifacts.** Existing files only (R017.6): `deploy/compose/compose.yaml`, `deploy/helm/arbora`, `deploy/swarm/stack.yml`, selected by `deploy/environments/{dev,test,prod}.yaml`. No systemd artifact exists in `deploy/`; systemd is explicitly unsupported (decision D5 below).
 4. **In-process.** Unchanged `start_composed_services`, composition from `arbora.mcp_server.composition` (R017.7).
@@ -54,7 +54,7 @@ The engine decision-engine spec makes `graph.assemble()` the sole authority for 
 
 | Old entry point | Now | Status |
 |---|---|---|
-| `DeploymentPlan`, `DeploymentStep`, `FleetToolCall`, `rendered_summary` | engine assembly (`AgentAssemble`, `EG-DECISION-ENGINE-R036`) | dropped as parallel |
+| `DeploymentPlan`, `DeploymentStep`, `FleetToolCall`, `rendered_summary` | engine assembly (`AgentAssemble`, `MEDULLA-DECISION-ENGINE-R036`) | dropped as parallel |
 | `DeploymentBackend`, `get_backend`, `PlanOnlyBackendError` | engine decision (placement Decide, `R046`/`R111`) | dropped as parallel |
 | `detect_composition` / `CompositionPlan` | `arbora.mcp_server.composition` | exists |
 | `InProcessBackend` | `start_composed_services` | exists (R017.7 verifies) |

@@ -217,7 +217,7 @@ def _bulk_ingest_change_envelope(
     """The heavy path — only ApplyChangeEnvelope(s) carries evidence/lineage/
     policy and a genuinely durable per-call idempotency key; BatchUpdate has
     neither at the wire level. One atomic transaction either way."""
-    raise not_served("knowledge_graph.ingestion.envelope_ingest", "EG-REPO-INGEST-R002")
+    raise not_served("knowledge_graph.ingestion.envelope_ingest", "MEDULLA-REPO-INGEST-R002")
 
 
 def _bulk_ingest_batch_update(
@@ -469,7 +469,7 @@ async def _ingest_action_ingest(engine, request: IngestRequest) -> str:
         request.graph,
     )
     # action(s): 'ingest'
-    raise not_served("knowledge_graph.ingestion.engine", "EG-REPO-INGEST-R651")
+    raise not_served("knowledge_graph.ingestion.engine", "MEDULLA-REPO-INGEST-R651")
 
 
 async def _ingest_action_ingest_url(engine, request: IngestRequest) -> str:
@@ -513,7 +513,7 @@ async def _ingest_action_ingest_url(engine, request: IngestRequest) -> str:
 
 def _sync_named_source(engine, request: IngestRequest, source: str) -> str:
     """Sync one named source: ``corpus_name`` is the mode, ``base_path`` an id list."""
-    raise not_served("knowledge_graph.core.source_sync", "EG-INGEST-WORKER-R605")
+    raise not_served("knowledge_graph.core.source_sync", "MEDULLA-INGEST-WORKER-R605")
 
 
 async def _ingest_action_archivebox_sync(engine, request: IngestRequest) -> str:
@@ -529,7 +529,7 @@ async def _ingest_action_gitlab_sync(engine, request: IngestRequest) -> str:
 async def _ingest_action_cdc_catchup(engine, request: IngestRequest) -> str:
     # action(s): 'cdc_catchup'
     raise not_served(
-        "knowledge_graph.ingestion.debezium_envelope", "EG-REPO-INGEST-R651"
+        "knowledge_graph.ingestion.debezium_envelope", "MEDULLA-REPO-INGEST-R651"
     )
 
 
@@ -540,12 +540,12 @@ async def _ingest_action_opensearch_reindex(engine, request: IngestRequest) -> s
         request.base_path,
     )
     # action(s): 'opensearch_reindex'
-    raise not_served("knowledge_graph.search.rebuild", "EG-FEDERATED-QUERY-R008")
+    raise not_served("knowledge_graph.search.rebuild", "MEDULLA-FEDERATED-QUERY-R008")
 
 
 async def _ingest_action_gitlab_webhook(engine, request: IngestRequest) -> str:
     # action(s): 'gitlab_webhook'
-    raise not_served("knowledge_graph.core.gitlab_indexer", "EG-REPO-INGEST-R600")
+    raise not_served("knowledge_graph.core.gitlab_indexer", "MEDULLA-REPO-INGEST-R600")
 
 
 async def _ingest_action_corpus(engine, request: IngestRequest) -> str:
@@ -677,14 +677,14 @@ async def _ingest_action_cohort_create(engine, request: IngestRequest) -> str:
     )
     # action(s): 'cohort_create'
 
-    raise not_served("knowledge_graph.research.cohort", "EG-DECISION-ENGINE-R652")
+    raise not_served("knowledge_graph.research.cohort", "MEDULLA-DECISION-ENGINE-R652")
 
 
 async def _ingest_action_cohort_status(engine, request: IngestRequest) -> str:
     _target_path, _job_id = request.target_path, request.job_id
     # action(s): 'cohort_status'
 
-    raise not_served("knowledge_graph.research.cohort", "EG-DECISION-ENGINE-R652")
+    raise not_served("knowledge_graph.research.cohort", "MEDULLA-DECISION-ENGINE-R652")
 
 
 async def _ingest_action_profile(engine, request: IngestRequest) -> str:
@@ -704,7 +704,7 @@ async def _ingest_action_fleet_relevance(engine, request: IngestRequest) -> str:
     # action(s): 'fleet_relevance'
 
     raise not_served(
-        "knowledge_graph.research.fleet_relevance", "EG-DECISION-ENGINE-R652"
+        "knowledge_graph.research.fleet_relevance", "MEDULLA-DECISION-ENGINE-R652"
     )
 
 
@@ -717,32 +717,32 @@ async def _ingest_action_rebuild_indexes(engine, request: IngestRequest) -> str:
 async def _ingest_action_observe(engine, request: IngestRequest) -> str:
     _target_path, _agent_id = request.target_path, request.agent_id
     # action(s): 'observe'
-    e = not_served("knowledge_graph.memory.observer", "EG-DECISION-ENGINE-R651")
+    e = not_served("knowledge_graph.memory.observer", "MEDULLA-DECISION-ENGINE-R651")
     return public_error_text(e)
 
 
 async def _ingest_action_materialize(engine, request: IngestRequest) -> str:
     # action(s): 'materialize'
-    e = not_served("knowledge_graph.memory", "EG-DECISION-ENGINE-R651")
+    e = not_served("knowledge_graph.memory", "MEDULLA-DECISION-ENGINE-R651")
     return public_error_text(e)
 
 
 async def _ingest_action_sync(engine, request: IngestRequest) -> str:
     # action(s): 'sync'
-    e = not_served("knowledge_graph.memory", "EG-DECISION-ENGINE-R651")
+    e = not_served("knowledge_graph.memory", "MEDULLA-DECISION-ENGINE-R651")
     return public_error_text(e)
 
 
 async def _ingest_action_reflect(engine, request: IngestRequest) -> str:
     # action(s): 'reflect'
-    e = not_served("knowledge_graph.memory", "EG-DECISION-ENGINE-R651")
+    e = not_served("knowledge_graph.memory", "MEDULLA-DECISION-ENGINE-R651")
     return public_error_text(e)
 
 
 async def _ingest_action_materialize_source(engine, request: IngestRequest) -> str:
     _corpus_name, _description = request.corpus_name, request.description
     # action(s): 'materialize_source'
-    e = not_served("knowledge_graph.enrichment.materialize", "EG-INGEST-WORKER-R606")
+    e = not_served("knowledge_graph.enrichment.materialize", "MEDULLA-INGEST-WORKER-R606")
     return public_error_text(e)
 
 
@@ -775,7 +775,7 @@ async def _ingest_action_skill_workflows(engine, request: IngestRequest) -> str:
 
 async def _ingest_action_curate_wiki(engine, request: IngestRequest) -> str:
     # action(s): 'curate_wiki'
-    e = not_served("knowledge_graph.ingestion.wiki_curator", "EG-REPO-INGEST-R650")
+    e = not_served("knowledge_graph.ingestion.wiki_curator", "MEDULLA-REPO-INGEST-R650")
     return public_error_text(e)
 
 
@@ -788,7 +788,7 @@ async def _ingest_action_distill(engine, request: IngestRequest) -> str:
         request.content_type,
     )
     # action(s): 'distill'
-    e = not_served("knowledge_graph.distillation", "EG-INGEST-WORKER-R702")
+    e = not_served("knowledge_graph.distillation", "MEDULLA-INGEST-WORKER-R702")
     return public_error_text(e)
 
 
@@ -802,7 +802,7 @@ async def _ingest_action_build_skill_graph(engine, request: IngestRequest) -> st
     )
     # action(s): 'build_skill_graph', 'skill_graph_status', 'rebuild_skill_graph'
 
-    raise not_served("knowledge_graph.distillation", "EG-INGEST-WORKER-R702")
+    raise not_served("knowledge_graph.distillation", "MEDULLA-INGEST-WORKER-R702")
 
 
 async def _ingest_action_agent_toolkit(engine, request: IngestRequest) -> str:
@@ -818,7 +818,7 @@ async def _ingest_action_agent_toolkit(engine, request: IngestRequest) -> str:
 async def _ingest_action_import_pack(engine, request: IngestRequest) -> str:
     _target_path, _corpus_name = request.target_path, request.corpus_name
     # action(s): 'import_pack'
-    raise not_served("knowledge_graph.distillation", "EG-INGEST-WORKER-R702")
+    raise not_served("knowledge_graph.distillation", "MEDULLA-INGEST-WORKER-R702")
 
 
 async def _ingest_fact_extract_text(description, target_path, path_cls):
@@ -843,7 +843,7 @@ async def _ingest_action_fact_extract(engine, request: IngestRequest) -> str:
     _target_path, _description = request.target_path, request.description
     # action(s): 'fact_extract'
 
-    raise not_served("knowledge_graph.extraction", "EG-INGEST-WORKER-R701")
+    raise not_served("knowledge_graph.extraction", "MEDULLA-INGEST-WORKER-R701")
 
 
 async def _ingest_action_sync_second_brain(engine, request: IngestRequest) -> str:
@@ -854,7 +854,7 @@ async def _ingest_action_sync_second_brain(engine, request: IngestRequest) -> st
     )
     # action(s): 'sync_second_brain'
 
-    raise not_served("knowledge_graph.extraction", "EG-INGEST-WORKER-R701")
+    raise not_served("knowledge_graph.extraction", "MEDULLA-INGEST-WORKER-R701")
 
 
 async def _ingest_action_enrich_pending_documents(
@@ -1508,7 +1508,7 @@ def register_write_ingest_tools(mcp):
 
         def _execute() -> str:
             e = not_served(
-                "knowledge_graph.adaptation.feedback", "EG-DECISION-ENGINE-R702"
+                "knowledge_graph.adaptation.feedback", "MEDULLA-DECISION-ENGINE-R702"
             )
             return public_error_text(e)
 
@@ -1543,7 +1543,7 @@ def register_write_ingest_tools(mcp):
         def _execute() -> str:
             e = not_served(
                 "knowledge_graph.ingestion.skill_classification",
-                "EG-REPO-INGEST-R651",
+                "MEDULLA-REPO-INGEST-R651",
             )
             return public_error_text(e)
 

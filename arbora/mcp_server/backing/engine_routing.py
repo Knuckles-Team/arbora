@@ -637,7 +637,7 @@ def get_tabular_query_service() -> Any:
     """
 
     raise not_served(
-        "knowledge_graph.backends.trino_backend", "EG-FEDERATED-QUERY-R053.700"
+        "knowledge_graph.backends.trino_backend", "MEDULLA-FEDERATED-QUERY-R053.700"
     )
 
 
@@ -649,7 +649,7 @@ def _get_extraction_manager(engine: Any) -> Any:
     global _EXTRACTION_MANAGER
     if _EXTRACTION_MANAGER is None:
         raise not_served(
-            "knowledge_graph.extraction.job_manager", "EG-DURABLE-KERNEL-R071"
+            "knowledge_graph.extraction.job_manager", "MEDULLA-DURABLE-KERNEL-R071"
         )
     return _EXTRACTION_MANAGER
 
@@ -674,7 +674,7 @@ def get_connection_registry():
         if _CONNECTION_REGISTRY is not None:
             return _CONNECTION_REGISTRY
         raise not_served(
-            "knowledge_graph.core.connection_registry", "EG-UNIFIED-DATA-PLANE-R612"
+            "knowledge_graph.core.connection_registry", "MEDULLA-UNIFIED-DATA-PLANE-R612"
         )
 
 
@@ -776,7 +776,7 @@ def _resolve_read_engines(
     connection, ``"all"``, a list) defers to the standard connection resolver
     unchanged, and with routing off this is byte-for-byte ``_resolve_target_engines``.
     """
-    raise not_served("knowledge_graph.core.ingest_routing", "EG-INGEST-WORKER-R605")
+    raise not_served("knowledge_graph.core.ingest_routing", "MEDULLA-INGEST-WORKER-R605")
 
 
 class GraphSelectionError(ValueError):
@@ -1038,7 +1038,7 @@ def _ontology_system():
     Module-level so the ontology/object tool group registers from
     mcp/tools/ontology_tools.py instead of a _build_server closure.
     """
-    raise not_served("knowledge_graph.facade", "EG-CONTRACT-R005")
+    raise not_served("knowledge_graph.facade", "MEDULLA-CONTRACT-R005")
 
     # Fleet tool schemas stay lazy.  Startup has already materialized each MCP
     # server declaration above; probing every child here would launch the whole

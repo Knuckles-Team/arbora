@@ -11,7 +11,7 @@ permission policies, and usage statistics from the KG.
 Ported from the agent runtime's
 ``arbora.ecosystem.agent_manager_dashboard`` (moved wholesale, no
 behavior change) per the ARBORA-HOST-R008 boundary move: the
-AU-BOUNDARY-R014 seed names this module as owned by arbora.
+MERISTEM-BOUNDARY-R014 seed names this module as owned by arbora.
 """
 
 from __future__ import annotations

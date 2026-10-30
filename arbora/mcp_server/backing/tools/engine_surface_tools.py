@@ -210,7 +210,7 @@ def _kv_backend() -> Any:
     Isolated behind this indirection so unit tests can inject a fake backend
     (CONCEPT:AU-KG.coordination.engine-message-broker).
     """
-    raise not_served("kvcache", "EG-DURABLE-KERNEL-R800")
+    raise not_served("kvcache", "MEDULLA-DURABLE-KERNEL-R800")
 
 
 class _EngineComputeAdapter:
@@ -258,7 +258,7 @@ def _checkpoint_error_code(exc: Exception) -> str:
     its own (still generic) ``permission_denied`` code, everything else falls to
     the default ``operation_failed``.
     """
-    raise not_served("kvcache", "EG-DURABLE-KERNEL-R800")
+    raise not_served("kvcache", "MEDULLA-DURABLE-KERNEL-R800")
 
 
 def _checkpoint_store(graph: str) -> Any:
@@ -268,7 +268,7 @@ def _checkpoint_store(graph: str) -> Any:
     Isolated behind this indirection so unit tests can inject a fake compute
     object, matching every other resolver in this module.
     """
-    raise not_served("kvcache.checkpoint", "EG-DURABLE-KERNEL-R800")
+    raise not_served("kvcache.checkpoint", "MEDULLA-DURABLE-KERNEL-R800")
 
 
 #: Process-lifetime RAM tier shared by every ``graph_kv_checkpoint`` call
@@ -287,7 +287,7 @@ def _checkpoint_manager(graph: str) -> Any:
     degrade for a checkpoint layer whose default tier is RAM anyway.
     """
     global _RAM_CHECKPOINT_STORE
-    raise not_served("kvcache.tiering", "EG-DURABLE-KERNEL-R800")
+    raise not_served("kvcache.tiering", "MEDULLA-DURABLE-KERNEL-R800")
 
 
 def _bundle_object(raw: str) -> dict[str, Any]:
@@ -343,7 +343,7 @@ def _declared_source_entries(sources_json: str) -> tuple[list[Any], list[str]]:
     A bare ref string is left for the :class:`SourceLabelResolver`; a labelled
     object is taken as given. Anything else is a caller error.
     """
-    raise not_served("kvcache.eligibility", "EG-DURABLE-KERNEL-R800")
+    raise not_served("kvcache.eligibility", "MEDULLA-DURABLE-KERNEL-R800")
 
 
 def _citation_refs(citation: Any) -> list[str]:
@@ -392,7 +392,7 @@ def _contributing_sources(
     (and therefore denies, naming itself). This function never returns fewer entries
     than it was given refs.
     """
-    raise not_served("kvcache.eligibility", "EG-DURABLE-KERNEL-R800")
+    raise not_served("kvcache.eligibility", "MEDULLA-DURABLE-KERNEL-R800")
 
 
 def _checkpoint_observation(bundles: dict[str, str]) -> Any:
@@ -404,7 +404,7 @@ def _checkpoint_observation(bundles: dict[str, str]) -> Any:
     ``observation_json`` fields always win over anything derived from a bundle —
     the caller's direct measurement is more authoritative than an inference.
     """
-    raise not_served("kvcache.worthiness", "EG-DURABLE-KERNEL-R800")
+    raise not_served("kvcache.worthiness", "MEDULLA-DURABLE-KERNEL-R800")
 
 
 def _kv_ram_stats_response(action: str, manager: Any) -> str:
@@ -455,7 +455,7 @@ def _kv_explain_response(
     action: str, manager: Any, checkpoint_id: str, requesting_tenant: str
 ) -> str:
     """``action='explain'`` — why this checkpoint exists and why it is where it is."""
-    raise not_served("kvcache.checkpoint", "EG-DURABLE-KERNEL-R800")
+    raise not_served("kvcache.checkpoint", "MEDULLA-DURABLE-KERNEL-R800")
 
 
 def _kv_promote_response(
@@ -466,7 +466,7 @@ def _kv_promote_response(
     trigger: str,
 ) -> str:
     """``action='promote'`` — the gated RAM→disk promotion."""
-    raise not_served("kvcache.checkpoint", "EG-DURABLE-KERNEL-R800")
+    raise not_served("kvcache.checkpoint", "MEDULLA-DURABLE-KERNEL-R800")
 
 
 def _kv_checkpoint_now(
@@ -477,7 +477,7 @@ def _kv_checkpoint_now(
     Durable persistence always passes the authority-derived eligibility gate; the
     tenant it is authorized under comes from the verified session, never the payload.
     """
-    raise not_served("kvcache.checkpoint", "EG-DURABLE-KERNEL-R800")
+    raise not_served("kvcache.checkpoint", "MEDULLA-DURABLE-KERNEL-R800")
 
 
 def _kv_checkpoint_intelligence(
@@ -698,7 +698,7 @@ def _require_process_perspective(params: dict[str, Any]) -> Any:
     invalid-request handling) when any is missing.
     """
     raise not_served(
-        "knowledge_graph.ingestion.semantic_event_model", "EG-REPO-INGEST-R002"
+        "knowledge_graph.ingestion.semantic_event_model", "MEDULLA-REPO-INGEST-R002"
     )
 
 
@@ -1638,7 +1638,7 @@ def _record_process_signal_evidence(
     lazily *inside* the guard when the caller has none yet, so a failing
     engine resolution degrades exactly like a failing record.
     """
-    exc = not_served("knowledge_graph.research.evidence", "EG-DECISION-ENGINE-R652")
+    exc = not_served("knowledge_graph.research.evidence", "MEDULLA-DECISION-ENGINE-R652")
     logger.debug(
         "OCEL process_signal evidence record failed for %s: %s",
         evidence.get("idempotency_key"),
@@ -1653,7 +1653,7 @@ def _ocel_replay_deriver(slice_: Any) -> Any:
     construction; commits nothing.
     """
     raise not_served(
-        "knowledge_graph.ingestion.object_centric_derivation", "EG-REPO-INGEST-R002"
+        "knowledge_graph.ingestion.object_centric_derivation", "MEDULLA-REPO-INGEST-R002"
     )
 
 
@@ -1716,7 +1716,7 @@ def _ocel_mine(
     real, versioned ``ProcessPerspective`` node, never a silent side channel.
     """
     del exported
-    raise not_served("knowledge_graph.ingestion.envelope_ingest", "EG-REPO-INGEST-R002")
+    raise not_served("knowledge_graph.ingestion.envelope_ingest", "MEDULLA-REPO-INGEST-R002")
 
 
 def _popped_str(params: dict, key: str, *, strip: bool = True) -> str:
@@ -1735,7 +1735,7 @@ def _conformance_commit(
 ) -> dict[str, Any]:
     """Commit one ``ConformanceRun`` (+ its Deviations) as a tenant-scoped slice."""
     del deviations
-    raise not_served("knowledge_graph.ingestion.envelope_ingest", "EG-REPO-INGEST-R002")
+    raise not_served("knowledge_graph.ingestion.envelope_ingest", "MEDULLA-REPO-INGEST-R002")
 
 
 def _mining_request_error(exc: Exception, action: str) -> str:
@@ -1795,7 +1795,7 @@ def _graph_mine_process_events(action: str, params: dict, graph: str) -> str | N
             }
         )
     raise not_served(
-        "knowledge_graph.ingestion.event_log_adapter", "EG-REPO-INGEST-R651"
+        "knowledge_graph.ingestion.event_log_adapter", "MEDULLA-REPO-INGEST-R651"
     )
 
 
@@ -1878,7 +1878,7 @@ def _kvcache_close(backend: Any) -> None:
 
 def _kv_create_checkpoint(action: str, store: Any, req: dict[str, Any]) -> str:
     """``graph_kv_checkpoint`` ``create`` — the full key plus the blob bytes."""
-    raise not_served("kvcache", "EG-DURABLE-KERNEL-R800")
+    raise not_served("kvcache", "MEDULLA-DURABLE-KERNEL-R800")
 
 
 def _kv_instantiate_agent(
@@ -1890,7 +1890,7 @@ def _kv_instantiate_agent(
     current_policy_version: str,
 ) -> str:
     """``graph_kv_checkpoint`` ``instantiate_agent`` — fail-closed load + lineage."""
-    raise not_served("kvcache", "EG-DURABLE-KERNEL-R800")
+    raise not_served("kvcache", "MEDULLA-DURABLE-KERNEL-R800")
 
 
 def _kv_restore_conversation(
@@ -1903,7 +1903,7 @@ def _kv_restore_conversation(
     allow_cold_start: bool,
 ) -> str:
     """``graph_kv_checkpoint`` ``restore_conversation`` — fail-closed load + lineage."""
-    raise not_served("kvcache", "EG-DURABLE-KERNEL-R800")
+    raise not_served("kvcache", "MEDULLA-DURABLE-KERNEL-R800")
 
 
 def _decode_json_object(
