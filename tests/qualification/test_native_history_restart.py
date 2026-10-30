@@ -147,9 +147,21 @@ def test_completed_turn_survives_both_process_restarts(
         private_root=tmp_path,
         extra_config={
             "ARBORA_COMPLETED_TEXT_HISTORY": "true",
-            "ARBORA_TASK_PLAN": json.dumps({"max_concurrency": 1, "max_steps": 8}),
+            "ARBORA_TASK_PLAN": json.dumps(
+                {
+                    "policy": {"policy": "default"},
+                    "max_concurrency": 1,
+                    "max_steps": 8,
+                }
+            ),
         },
-        extra_token_roles=("work:read", "work:write", "work:submit", "work:claim"),
+        extra_token_roles=(
+            "work:read",
+            "work:write",
+            "work:submit",
+            "work:claim",
+            "query:decide",
+        ),
         model_fixture_env={
             "BOOT_HISTORY_ACCEPTANCE": "1",
             "BOOT_MODEL_RECEIPTS": str(model_log),
