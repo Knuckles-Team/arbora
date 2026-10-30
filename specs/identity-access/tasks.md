@@ -176,3 +176,12 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] `ARBORA-IDENTITY-R004.8.1`: Implement and test the served read contract with synthetic native evidence.
 - [ ] `ARBORA-IDENTITY-R004.8.2`: Reconcile native anonymous ownership and qualify installed reads before activation.
 - [ ] `ARBORA-IDENTITY-R004.8.3`: Qualify the existing public native client adapter with synthetic transport tests.
+
+
+- [ ] `ARBORA-IDENTITY-R004.9`: Complete the local anonymous text execution children.
+- [ ] `ARBORA-IDENTITY-R004.9.1`: Compose native admission and the received text-only harness in source tests.
+- [ ] `ARBORA-IDENTITY-R004.9.2`: Qualify installed local sends and cancellation before activation.
+- [ ] `ARBORA-IDENTITY-R004.9.3`: Qualify owner-bound durable answer recovery.
+
+- [ ] `ARBORA-IDENTITY-R004.9.3.1`: Test bounded native event storage and committed-reference recovery in source composition.
+- [ ] `ARBORA-IDENTITY-R004.9.3.2`: Qualify installed host and native restart recovery.
