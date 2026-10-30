@@ -2308,6 +2308,13 @@
         "schema": {
           "additionalProperties": false,
           "properties": {
+            "provenance": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "title": "Provenance",
+              "type": "object"
+            },
             "value": {
               "additionalProperties": true,
               "title": "Value",
@@ -2315,7 +2322,8 @@
             }
           },
           "required": [
-            "value"
+            "value",
+            "provenance"
           ],
           "title": "DecideCommitResult",
           "type": "object"
@@ -25346,6 +25354,228 @@
       "verb": "write"
     },
     {
+      "audit": "event",
+      "binding": {
+        "handler": "arbora.api.ops.ingest.cancel_job",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "write",
+      "examples": [
+        "cancel this ingestion job"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "ingest.jobs.cancel",
+      "idempotency": "natural",
+      "params": {
+        "model": "arbora.api.ops.ingest.IngestJobCancelParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "job_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "job_id"
+          ],
+          "title": "IngestJobCancelParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.ingest.IngestJobControlResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "IngestJobControlResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "ingest:write"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Cancel one pending ingestion job",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "act"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "handler": "arbora.api.ops.ingest.list_jobs",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "list my ingestion jobs"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "ingest.jobs.list",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.ingest.IngestJobsListParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "cursor": {
+              "anyOf": [
+                {
+                  "maxLength": 512,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Cursor"
+            },
+            "limit": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          "title": "IngestJobsListParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.ingest.IngestJobsListResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "IngestJobsListResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "ingest:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "List this tenant's durable ingestion jobs",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "find"
+    },
+    {
+      "audit": "event",
+      "binding": {
+        "handler": "arbora.api.ops.ingest.prioritize_job",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "write",
+      "examples": [
+        "prioritize this ingestion job"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "ingest.jobs.prioritize",
+      "idempotency": "natural",
+      "params": {
+        "model": "arbora.api.ops.ingest.IngestJobPrioritizeParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "bucket": {
+              "maximum": 9,
+              "minimum": 0,
+              "title": "Bucket",
+              "type": "integer"
+            },
+            "job_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "job_id",
+            "bucket"
+          ],
+          "title": "IngestJobPrioritizeParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.ingest.IngestJobControlResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "IngestJobControlResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "ingest:write"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Set the priority bucket of one ingestion job",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "act"
+    },
+    {
       "audit": "none",
       "binding": {
         "handler": "arbora.api.ops.ingest.get_job_status",
@@ -25738,6 +25968,97 @@
       "stability": "stable",
       "subject": null,
       "summary": "Request a durable sync of one ingestion source",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "act"
+    },
+    {
+      "audit": "event",
+      "binding": {
+        "handler": "arbora.api.ops.ingest.submit_ingest",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "write",
+      "examples": [
+        "ingest this url",
+        "distill this document"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "ingest.submissions.create",
+      "idempotency": "key_required",
+      "params": {
+        "model": "arbora.api.ops.ingest.IngestSubmitParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "ingest",
+                "ingest_url",
+                "ingest_knowledge_pack",
+                "fact_extract",
+                "distill"
+              ],
+              "title": "Kind",
+              "type": "string"
+            },
+            "options": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "maxProperties": 8,
+              "title": "Options",
+              "type": "object"
+            },
+            "target": {
+              "maxLength": 2048,
+              "minLength": 1,
+              "title": "Target",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "target"
+          ],
+          "title": "IngestSubmitParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.ingest.IngestSubmitResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "IngestSubmitResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "ingest:write"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Queue a durable ingest, URL, pack, fact-extract or distill job",
       "surfaces": [
         "a2a",
         "http",
@@ -26416,7 +26737,7 @@
           "type": "object"
         }
       },
-      "principals": "any",
+      "principals": "human_undelegated",
       "remove_in": null,
       "result": {
         "model": "arbora.api.ops.ops.OpsBackupResult",
@@ -26469,6 +26790,7 @@
       "summary": "Reserve a durable backup scoped to the caller's own tenant",
       "surfaces": [
         "a2a",
+        "console",
         "http",
         "mcp"
       ],
@@ -26670,7 +26992,7 @@
           "type": "object"
         }
       },
-      "principals": "any",
+      "principals": "human_undelegated",
       "remove_in": null,
       "result": {
         "model": "arbora.api.ops.ops.OpsRestoreResult",
@@ -26723,6 +27045,7 @@
       "summary": "Restore a durable backup scoped to the caller's own tenant",
       "surfaces": [
         "a2a",
+        "console",
         "http",
         "mcp"
       ],
@@ -28791,5 +29114,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "505b9d7809501be35f8b9562edfc4e8817b4d6f4182d4b59c48637e0817edb0f"
+  "registry_digest": "38a9ef46516f44f9c9e4d36176c4238cd84dbd317a12243d2602b6c39d1d9723"
 }
