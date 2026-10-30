@@ -282,5 +282,6 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] `ARBORA-FLEET-R052.4.4`: Deliver the requirement in requirements.md.
 - [ ] `ARBORA-FLEET-R052.4.5`: Deliver the requirement in requirements.md.
 - [ ] `ARBORA-FLEET-R052.4.6`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-FLEET-R053`: Deliver the requirement in requirements.md.
 - [ ] `ARBORA-FLEET-R045`: Deliver the requirement in requirements.md.
 - [ ] `ARBORA-FLEET-R034.15`: Deliver the requirement in requirements.md.

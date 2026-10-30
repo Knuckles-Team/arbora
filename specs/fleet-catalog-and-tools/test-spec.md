@@ -372,5 +372,6 @@ ARBORA-FLEET-R027.7.2 remains planned: qualify the complete original onboarding 
 - `ARBORA-FLEET-R052.4.4`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-FLEET-R052.4.5`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-FLEET-R052.4.6`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-FLEET-R053`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-FLEET-R045`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-FLEET-R034.15`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.

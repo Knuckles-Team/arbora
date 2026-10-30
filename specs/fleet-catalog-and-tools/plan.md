@@ -488,5 +488,6 @@ R027.7.1 is the bounded CLI stream repair. R027.7.2 retains the original onboard
 - `ARBORA-FLEET-R052.4.4`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
 - `ARBORA-FLEET-R052.4.5`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
 - `ARBORA-FLEET-R052.4.6`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+- `ARBORA-FLEET-R053`: Reuse the `fleet.catalog.search` schema and annotations to pick each probe and the served `fleet.call` op to run it. The first run is the manual census recorded in `plans/spec-audit/FLEET-HEALTH-20261029.md`. Schedule it as a k8s CronJob beside the arbora deployment and route transitions to the existing alerting path. No new store: rows go to the existing fleet health evidence (`ARBORA-FLEET-R024.750`).
 - `ARBORA-FLEET-R045`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
 - `ARBORA-FLEET-R034.15`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
