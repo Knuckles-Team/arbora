@@ -314,6 +314,54 @@ def _with_ops_admin_store(
     return {**bindings, "ops_admin_store": ArboraOpsAdminStore(client, graph=graph)}
 
 
+def _with_write_back(
+    bindings: Mapping[str, Any] | None,
+    pool: Any,
+    connect_context: Callable[[str], Any],
+    session: Callable[[], Any],
+) -> Mapping[str, Any] | None:
+    """Bind ``write_back_ledger`` and ``write_back_effect`` (ARBORA-FLEET-R003.2).
+
+    The ledger keeps the preview gate and commit receipts in Medulla through
+    an ``EgEffectJournal`` on the control graph.  The effect is one governed
+    write through the fleet gateway under the verified caller.
+    """
+    if not bindings or "fleet_gateway" not in bindings:
+        return bindings
+    if "write_back_ledger" in bindings:
+        return bindings
+    from arbora.api.ops.write_back import WriteBackLedger
+    from arbora.api.registry import Effect
+    from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+    from arbora.mcp_server.effect_journal import EgEffectJournal
+
+    gateway = bindings["fleet_gateway"]
+
+    async def control_client() -> Any:
+        return await pool.connected_client(
+            connect_context(session().tenant), CONTROL_GRAPH
+        )
+
+    journal = EgEffectJournal(
+        control_client,
+        claims=lambda: connect_context(session().tenant).to_claims(),
+    )
+
+    async def effect(
+        caller: Any, connector: str, target: str, change: dict[str, Any]
+    ) -> Mapping[str, Any]:
+        result = await gateway.call(
+            caller, connector, target, change, expected_effect=Effect.WRITE
+        )
+        return result if isinstance(result, Mapping) else {"result": result}
+
+    return {
+        **bindings,
+        "write_back_ledger": WriteBackLedger(journal),
+        "write_back_effect": effect,
+    }
+
+
 def _with_fleet_source_executor(
     bindings: Mapping[str, Any] | None,
     pool: Any,
@@ -647,6 +695,7 @@ def compose_served_invocation(
     bindings = _with_ops_runners(bindings, pool, graph, connect_context)
     bindings = _with_ops_admin_store(bindings, pool, graph, connect_context)
     bindings = _with_fleet_source_executor(bindings, pool, graph)
+    bindings = _with_write_back(bindings, pool, connect_context, session)
     bindings = _with_nl_federation_planner(bindings)
     bindings, process_startup = _with_task_plan_schema(
         bindings, pool, graph, connect_context, session

@@ -1,19 +1,21 @@
 """D18 write-back: a typed, idempotent, previewed registry operation.
 
-ARBORA-FLEET-R003 (.1 slice): the typed preview model and its refusal rule —
-D18 write-back must never execute without a prior preview and an idempotency
-key, so it can never be reached as an unguarded native child tool. Wiring a
-live handler/binding into the operation registry is a further slice.
+ARBORA-FLEET-R003: the typed preview model and its refusal rule (.1), and
+the registered preview/commit operations (.2) whose gate and receipts
+Medulla holds through the effect journal.  D18 write-back never executes
+without a matching prior preview and an idempotency key.
 """
 
 from __future__ import annotations
 
-import threading
-from collections.abc import Callable, Mapping
+import json
+from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.invoke.steps import OpError, OpResult
 from arbora.api.registry import (
     AuditClass,
     Composite,
@@ -91,66 +93,131 @@ class WriteBackCommitResult(BaseModel):
     applied: bool = True
 
 
-#: The commit effect owner: given (connector, target, change) it performs the
-#: write and returns its receipt. Bound as service ``write_back_effect``.
-WriteBackEffect = Callable[[str, str, dict[str, Any]], dict[str, Any]]
+#: The commit effect owner: given the verified caller and (connector, target,
+#: change) it performs the governed connector write and returns its receipt.
+#: The served bootstrap binds it over the governed fleet gateway.
+WriteBackEffect = Callable[
+    [Any, str, str, dict[str, Any]], Awaitable[Mapping[str, Any]]
+]
+
+
+def _binding(request: WriteBackPreviewRequest) -> str:
+    """The canonical previewed change a commit must match exactly."""
+    return json.dumps(
+        {
+            "connector": request.connector,
+            "target": request.target,
+            "change": request.change,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
 
 
 class WriteBackLedger:
-    """Replay ledger: previews and committed receipts keyed by idempotency key."""
+    """Preview gate and commit replay held in Medulla through the effect journal.
 
-    def __init__(self) -> None:
-        self._lock = threading.RLock()
-        self._previews: dict[str, WriteBackPreviewResult] = {}
-        self._receipts: dict[str, WriteBackCommitResult] = {}
+    ARBORA-FLEET-R003.2: a preview is one journaled effect whose binding is
+    the canonical change; a commit first re-reserves that preview key with
+    its own change, so a missing or different preview is refused.  The commit
+    is a second journaled effect: Medulla reserves it at most once, and a
+    replay returns the stored receipt without calling the connector again.
+    Keys are scoped to the caller's tenant and principal.  Arbora keeps no
+    local copy, so the gate and replay survive a restart.
+    """
 
-    def record_preview(self, result: WriteBackPreviewResult) -> None:
-        with self._lock:
-            self._previews[result.idempotency_key] = result
+    def __init__(self, journal: Any) -> None:
+        self._journal = journal
 
-    def commit(
-        self, request: WriteBackPreviewRequest, effect: WriteBackEffect
+    @staticmethod
+    def _key(scope: str, phase: str, key: str) -> str:
+        return f"write-back:{scope}:{phase}:{key}"
+
+    async def record_preview(
+        self, scope: str, request: WriteBackPreviewRequest
+    ) -> WriteBackPreviewResult:
+        result = preview_write_back(request)
+        held = await self._journal.reserve(
+            self._key(scope, "preview", request.idempotency_key), _binding(request)
+        )
+        if held.state == "acquired":
+            await self._journal.complete(
+                held.reference, OpResult(result.model_dump(mode="json"))
+            )
+            return result
+        if held.state == "completed" and isinstance(held.outcome, OpResult):
+            return WriteBackPreviewResult(**held.outcome.value)
+        if held.state == "conflict":
+            raise WriteBackRefused("idempotency key was previewed for another change")
+        raise WriteBackRefused("idempotency key is not available for a preview")
+
+    async def commit(
+        self,
+        scope: str,
+        caller: Any,
+        request: WriteBackPreviewRequest,
+        effect: WriteBackEffect,
     ) -> WriteBackCommitResult:
         key = request.idempotency_key
-        with self._lock:
-            preview = self._previews.get(key)
-            if preview is None:
-                raise WriteBackRefused("write-back commit has no matching preview")
-            if (
-                preview.connector != request.connector
-                or preview.target != request.target
-                or preview.would_apply != request.change
-            ):
-                raise WriteBackRefused(
-                    "write-back commit does not match its previewed change"
-                )
-            prior = self._receipts.get(key)
-            if prior is not None:
-                return prior
-            receipt = effect(request.connector, request.target, dict(request.change))
-            result = WriteBackCommitResult(
-                connector=request.connector,
-                target=request.target,
-                idempotency_key=key,
-                receipt=receipt,
+        binding = _binding(request)
+        preview = await self._journal.reserve(self._key(scope, "preview", key), binding)
+        if preview.state == "acquired":
+            # No preview existed: close the reservation so the key stays spent.
+            await self._journal.complete(
+                preview.reference, OpError("WRITE_BACK_NO_PREVIEW")
             )
-            self._receipts[key] = result
-            return result
+            raise WriteBackRefused("write-back commit has no matching preview")
+        if preview.state == "conflict":
+            raise WriteBackRefused(
+                "write-back commit does not match its previewed change"
+            )
+        if preview.state != "completed" or not isinstance(preview.outcome, OpResult):
+            raise WriteBackRefused("write-back commit has no matching preview")
+        held = await self._journal.reserve(self._key(scope, "commit", key), binding)
+        if held.state == "completed" and isinstance(held.outcome, OpResult):
+            return WriteBackCommitResult(**held.outcome.value)
+        if held.state != "acquired":
+            raise WriteBackRefused("write-back commit is pending or was refused")
+        try:
+            receipt = await effect(
+                caller, request.connector, request.target, dict(request.change)
+            )
+        except Exception as exc:
+            await self._journal.complete(
+                held.reference,
+                OpError("WRITE_BACK_FAILED", {"error": type(exc).__name__}, "fleet"),
+            )
+            raise
+        result = WriteBackCommitResult(
+            connector=request.connector,
+            target=request.target,
+            idempotency_key=key,
+            receipt=dict(receipt),
+        )
+        await self._journal.complete(
+            held.reference, OpResult(result.model_dump(mode="json"))
+        )
+        return result
 
 
 def _bound(context: Any, name: str) -> Any:
     value = context.services.get(name)
     if value is None:
-        raise RuntimeError(f"write-back {name} is not bound")
+        raise OperationRefused("UNAVAILABLE", {"reason": f"{name} is not bound"})
     return value
+
+
+def _scope(context: Any) -> str:
+    return f"{context.caller.tenant}:{context.caller.principal}"
 
 
 async def handle_write_back_preview(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     request = WriteBackPreviewRequest(**dict(params))
-    result = preview_write_back(request)
-    _bound(context, "write_back_ledger").record_preview(result)
+    result = await _bound(context, "write_back_ledger").record_preview(
+        _scope(context), request
+    )
     return {"value": result.model_dump()}
 
 
@@ -158,8 +225,11 @@ async def handle_write_back_commit(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     request = WriteBackPreviewRequest(**dict(params))
-    result = _bound(context, "write_back_ledger").commit(
-        request, _bound(context, "write_back_effect")
+    result = await _bound(context, "write_back_ledger").commit(
+        _scope(context),
+        context.caller,
+        request,
+        _bound(context, "write_back_effect"),
     )
     return {"value": result.model_dump()}
 
