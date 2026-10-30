@@ -378,7 +378,7 @@
         "97061e59c412"
       ],
       "verified_by": [
-        "tests/api/test_api_registry.py:110",
+        "tests/api/test_api_registry.py:111",
         "tests/api/test_api_registry.py:63",
         "tests/api/test_http_session_scope.py:31",
         "tests/api/test_http_session_scope.py:68"
@@ -1260,7 +1260,7 @@
         "94724be32c28"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:342"
+        "tests/api/test_registry_factory.py:344"
       ],
       "rollup_of": [
         "ARBORA-OPS-R024.4.1",
@@ -1355,7 +1355,7 @@
         "5f79be652726"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:342"
+        "tests/api/test_registry_factory.py:344"
       ]
     },
     {
@@ -1476,8 +1476,8 @@
         "4b9d181069e4"
       ],
       "verified_by": [
-        "tests/api/test_authority_parity.py:114",
-        "tests/api/test_authority_parity.py:120"
+        "tests/api/test_authority_parity.py:115",
+        "tests/api/test_authority_parity.py:121"
       ]
     },
     {
@@ -2582,7 +2582,7 @@
         "d673cd573c77"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:351"
+        "tests/api/test_registry_factory.py:353"
       ]
     },
     {
