@@ -470,7 +470,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "45283d0137b9",
-        "83d47dd6fd2d",
+        "4d1f17345cbb",
         "f37f67d33d37"
       ],
       "verified_by": [
@@ -541,7 +541,7 @@
       "title": "Add arbora operation for code navigation actions",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "23f2884b39ba"
+        "e1f67d6033f1"
       ],
       "verified_by": [
         "tests/mcp_server/test_legacy_analyze_intent_mapping.py:31"
@@ -552,7 +552,7 @@
       "title": "Add arbora operation for impact actions",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "23f2884b39ba"
+        "e1f67d6033f1"
       ],
       "verified_by": [
         "tests/mcp_server/test_legacy_analyze_intent_mapping.py:36"

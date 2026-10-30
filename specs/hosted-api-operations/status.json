@@ -1135,11 +1135,14 @@
     {
       "id": "ARBORA-OPS-R022.1",
       "title": "Work-item and offer operations — work slice",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "7746a2d25503",
         "c4cc3e21b439"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/mcp_server/test_ops_runners_bootstrap.py:130"
+      ]
     },
     {
       "id": "ARBORA-OPS-R022.2",
