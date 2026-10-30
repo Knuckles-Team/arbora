@@ -354,8 +354,35 @@ def cancel_work_item(engine: Any, item_id: str, *, reason: str | None = None) ->
     return result.get("status") == "cancelled"
 
 
+def list_work_items(
+    engine: Any, *, kind: str, cursor: str | None = None, limit: int = 100
+) -> dict[str, Any]:
+    """List one bounded page of the caller's WorkItems of one kind."""
+    return _work_items(engine).list(
+        tenant=_tenant(), kind=kind, cursor=cursor, limit=limit
+    )
+
+
+def set_priority_bucket(engine: Any, item_id: str, *, bucket: int) -> bool:
+    """Set a not-yet-terminal WorkItem's priority bucket (``CasWorkItemMetadata``)."""
+    item = get_work_item(engine, item_id)
+    if item is None:
+        return False
+    result = _work_items(engine).cas_metadata(
+        tenant=_tenant(),
+        work_item_id=item_id,
+        expected_status=[str(item.get("status"))],
+        now_ms=_now_ms(),
+        set_prio_bucket=int(bucket),
+        idempotency_key=_key("prioritize", item_id, bucket),
+    )
+    return bool(result.get("applied", result.get("swapped", True)))
+
+
 __all__ = [
     "SPEC_ROW",
+    "list_work_items",
+    "set_priority_bucket",
     "TERMINAL_WORK_ITEM_STATUSES",
     "NativeWorkItemRequired",
     "WorkItemBackendUnavailable",
