@@ -161,8 +161,25 @@ class _OpenAuth:
 
 @pytest.mark.spec("ARBORA-OPS-R038")
 def test_swagger_ui_renders_the_mounted_caller_filtered_openapi_document() -> None:
+    model = SimpleNamespace(model_json_schema=lambda: {"type": "object"})
+    op = SimpleNamespace(
+        id="query.uql",
+        summary="Run UQL",
+        surfaces={"http"},
+        http=None,
+        params=model,
+        result=model,
+    )
+
+    class _OneOpRegistry(_EmptyRegistry):
+        def __iter__(self):
+            return iter((op,))
+
+        def find(self, caller, *, surface, policy):
+            return (op,)
+
     child = create_api_application(
-        services=SimpleNamespace(registry=_EmptyRegistry()),
+        services=SimpleNamespace(registry=_OneOpRegistry()),
         visibility=_empty_visibility,
         authenticator=_OpenAuth(),
         invoke=_unused_invoke,
@@ -177,6 +194,7 @@ def test_swagger_ui_renders_the_mounted_caller_filtered_openapi_document() -> No
         spec = client.get("/api/v1/openapi.json")
         assert spec.status_code == 200
         assert spec.json()["x-registry-digest"] == _EmptyRegistry.digest
+        assert list(spec.json()["paths"]) == ["/api/v1/ops/query.uql"]
 
 
 def test_resource_path_rejects_other_api_versions() -> None:
