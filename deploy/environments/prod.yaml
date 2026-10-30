@@ -94,8 +94,8 @@ filesystem:
     - env_var: XDG_STATE_HOME
       path: /tmp/.local/state
       writable_path_ref: /tmp
-    - env_var: AGENT_UTILITIES_DATA_DIR
-      path: /tmp/.local/share/meristem
+    - env_var: ARBORA_DATA_DIR
+      path: /tmp/.local/share/arbora
       writable_path_ref: /tmp
 
 configuration:
