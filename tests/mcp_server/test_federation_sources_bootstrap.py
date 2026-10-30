@@ -84,8 +84,9 @@ def engine(monkeypatch: pytest.MonkeyPatch) -> _Engine:
 
 def _served() -> dict[str, Any]:
     bound = _with_federation_sources({}, _Pool(), "tenant-graph", lambda t: t)
+    assert bound is not None
     assert isinstance(bound["federation_sources"], EngineFederationSources)
-    return bound
+    return dict(bound)
 
 
 _KEYS = iter(f"key-{n}" for n in range(1000))

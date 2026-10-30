@@ -9,7 +9,7 @@ import pytest
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import federation, query_engine
 from arbora.api.ops.registry_factory import get_registry
-from arbora.api.registry import Effect, EgMethod
+from arbora.api.registry import Composite, Effect, EgMethod
 from tests.api._ops_support import service_context
 
 
@@ -64,6 +64,7 @@ async def _call(op_id: str, catalog: _Catalog | None, who: str, **params: Any):
 def test_register_is_a_governed_engine_write_and_reads_pass_through() -> None:
     registry = get_registry()
     register = registry["federation.sources.register"]
+    assert isinstance(register.binding, Composite)
     assert register.binding.handler == "arbora.api.ops.federation.handle_federation"
     assert register.effect is Effect.ADMIN and register.scopes == {"federation:admin"}
     for op in query_engine.operations():
