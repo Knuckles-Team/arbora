@@ -402,3 +402,44 @@ def test_definition_side_objects_do_not_claim_or_complete_work() -> None:
     assert not hasattr(admission, "renew_work_item_lease")
     assert not hasattr(admission, "commit_work_item_result")
     assert not hasattr(approval, "result")
+
+
+@pytest.mark.spec("ARBORA-FLEET-R009.3")
+def test_admission_publishes_through_capacity_with_one_redecision_and_stop_release() -> (
+    None
+):
+    from arbora.control_plane.runs.admission import (
+        CapacityAcquisition,
+        CapacityDeniedError,
+        CapacityRedecisionRequired,
+    )
+
+    policy = _policy()
+    request_digest = _digest("q")
+    approval = _approval(policy, request_digest=request_digest)
+    authority = _authority(policy, approval)
+    resolution = _resolution(authority, request_digest=request_digest)
+    request = _admission_request(resolution)
+    run_id = resolution.run_id
+    capacity = CapacityAcquisition(capacity={"runs": 0})
+    admission = InMemoryNativeAdmission(
+        audit=AuditChain(max_events=8),
+        clock=lambda: 100,
+        authorization_verifier=cast(ResolvedAuthorizationVerifier, authority),
+        capacity=capacity,
+    )
+
+    with pytest.raises(CapacityRedecisionRequired):
+        admission.admit_once(request)
+    assert admission.read(run_id) is None  # nothing published on denial
+    with pytest.raises(CapacityDeniedError):
+        admission.admit_once(request)
+    assert admission.read(run_id) is None
+
+    capacity2 = CapacityAcquisition(capacity={"runs": 1})
+    admission.capacity = capacity2
+    receipt = admission.admit_once(request)
+    assert receipt.created is True
+    assert capacity2.held(run_id) == {"runs": 1}
+    admission.stop(run_id)
+    assert capacity2.held(run_id) == {}

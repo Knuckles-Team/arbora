@@ -18,6 +18,7 @@ from .models import (
 __all__ = [
     "CapacityAcquisition",
     "CapacityDeniedError",
+    "CapacityRedecisionRequired",
     "InMemoryNativeAdmission",
     "NativeAdmissionError",
     "NativeWorkItemAdmissionProtocol",
@@ -43,6 +44,13 @@ class CapacityDeniedError(NativeAdmissionError):
 
     def __init__(self, run_id: str) -> None:
         super().__init__("capacity_denied_after_redecision", run_id)
+
+
+class CapacityRedecisionRequired(NativeAdmissionError):
+    """Capacity was denied once; the caller gets exactly one re-decision."""
+
+    def __init__(self, run_id: str) -> None:
+        super().__init__("capacity_redecision_required", run_id)
 
 
 class CapacityAcquisition:
@@ -130,7 +138,11 @@ class InMemoryNativeAdmission:
         audit: AuditChain | None = None,
         clock: Callable[[], int] | None = None,
         authorization_verifier: ResolvedAuthorizationVerifier | None = None,
+        capacity: CapacityAcquisition | None = None,
+        resources_for: Callable[[NativeAdmissionRequest], dict[str, int]] | None = None,
     ) -> None:
+        self.capacity = capacity
+        self._resources_for = resources_for or (lambda _request: {"runs": 1})
         self.audit = audit
         self.clock = clock or (lambda: 0)
         self.authorization_verifier = authorization_verifier
@@ -150,7 +162,12 @@ class InMemoryNativeAdmission:
             self._verify_authorization(request)
             self._ensure_audit_capacity()
             now = self.clock()
-            audit_ids = self._append_audit(request, now=now)
+            self._acquire_capacity(request)
+            try:
+                audit_ids = self._append_audit(request, now=now)
+            except BaseException:
+                self._release_capacity(run_id)
+                raise
 
             record = RunRecord(
                 resolution=request.resolution,
@@ -160,6 +177,25 @@ class InMemoryNativeAdmission:
             self._records[run_id] = record
             self._work_items[work_item_id] = run_id
             return self._receipt(record, created=True)
+
+    def _acquire_capacity(self, request: NativeAdmissionRequest) -> None:
+        """Hold every requested unit before publishing, or publish nothing."""
+
+        if self.capacity is None:
+            return
+        run_id = request.resolution.run_id
+        if not self.capacity.acquire(run_id, self._resources_for(request)):
+            raise CapacityRedecisionRequired(run_id)
+
+    def _release_capacity(self, run_id: str) -> None:
+        if self.capacity is not None:
+            self.capacity.release(run_id)
+
+    def stop(self, run_id: str) -> None:
+        """Stop a run: release the capacity it holds (idempotent)."""
+
+        with self._lock:
+            self._release_capacity(run_id)
 
     def _replay_receipt(
         self, run_id: str, request: NativeAdmissionRequest
