@@ -10,16 +10,18 @@ service-bound runner facade ``arbora.api.ops.decide`` already uses for
 ``decide.commit``; ``work.status`` and the ``evolution.*`` family are
 tracked as ARBORA-OPS-R022.2.
 
-Each handler scopes its call to ``context.caller.tenant`` -- the verified
-caller identity the shared invoke pipeline already resolved -- so a work
-item or offer is only ever visible to its bound principal within that tenant; the
-runner facade, not this module, holds the durable record.
+Reads run through the bound ``work_runner`` scoped to
+``context.caller.tenant``.  ``work.offers.create`` prices an offer on a Gap
+(``gap_id``, ``expected_offer_version``, typed offer) under the caller's own
+engine identity: the runner proves the caller holds the Gap's live WorkItem
+lease (``MintWorkItemClaimCapability``) before ``WorkOfferPut``, so an offer
+is bound to the principal holding the lease.  Medulla holds every record.
 """
 
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import Field
 
@@ -36,9 +38,26 @@ class WorkItemRefParams(Params):
     item_id: str = Field(min_length=1, max_length=80)
 
 
+class WorkOfferTerms(Params):
+    """The engine ``WorkOffer``: a priced, evidence-cited offer on one Gap."""
+
+    blast_radius: Literal["local", "repository", "fleet"]
+    cooldown_until_ms: int | None = Field(default=None, ge=0)
+    cost_uncertainty_ppm: int = Field(ge=0)
+    depends_on_gap_ids: list[str] = Field(default_factory=list, max_length=64)
+    evidence_digests: list[str] = Field(min_length=1, max_length=64)
+    expected_cost_microunits: int = Field(ge=0)
+    expected_utility_micros: int = Field(ge=0)
+    probability_of_closure_ppm: int = Field(ge=0, le=1_000_000)
+    repository_scope: list[str] = Field(default_factory=list, max_length=64)
+    required_capabilities: list[str] = Field(default_factory=list, max_length=64)
+    reversible: bool
+
+
 class WorkOfferCreateParams(Params):
-    item_id: str = Field(min_length=1, max_length=80)
-    terms: dict[str, Any] = Field(default_factory=dict)
+    gap_id: str = Field(min_length=1, max_length=200)
+    expected_offer_version: int = Field(ge=0)
+    offer: WorkOfferTerms
 
 
 class WorkResult(Params):
@@ -75,11 +94,15 @@ async def handle_work(
     elif op.id == "work.offers.create":
         if not context.idempotency_key:
             raise ValueError("Idempotency-Key is required")
+        # Caller-bound: the lease proof and the offer write both run under
+        # the caller's own engine identity (``context.client``), never
+        # Arbora's process identity, so only the live lease holder can offer.
         result = await runner.create_offer(
-            params["item_id"],
-            terms=dict(params["terms"]),
+            context.client,
+            gap_id=params["gap_id"],
+            expected_offer_version=params["expected_offer_version"],
+            offer=dict(params["offer"]),
             tenant=context.caller.tenant,
-            principal=context.caller.principal,
             idempotency_key=context.idempotency_key,
         )
     else:
@@ -111,12 +134,12 @@ def operations() -> tuple[OpSpec, ...]:
         ),
         build_write_op(
             op_id="work.offers.create",
-            summary="Create an offer against an owned work item",
+            summary="Price an offer on a Gap whose WorkItem lease the caller holds",
             examples=("offer to take this work item",),
             params=WorkOfferCreateParams,
             result=WorkResult,
             handler=handler,
-            scope="work:write",
+            scope="work:offer-write",
         ),
     )
 
@@ -127,6 +150,7 @@ __all__ = [
     "WorkItemRefParams",
     "WorkItemsListParams",
     "WorkOfferCreateParams",
+    "WorkOfferTerms",
     "WorkResult",
     "handle_work",
     "operations",

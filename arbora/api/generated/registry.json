@@ -25903,228 +25903,6 @@
       "verb": "act"
     },
     {
-      "audit": "event",
-      "binding": {
-        "handler": "arbora.api.ops.ingest.cancel_job",
-        "kind": "composite"
-      },
-      "confirm": "none",
-      "effect": "write",
-      "examples": [
-        "cancel this ingestion job"
-      ],
-      "executor": "caller",
-      "executor_scopes": [],
-      "http": null,
-      "id": "ingest.jobs.cancel",
-      "idempotency": "natural",
-      "params": {
-        "model": "arbora.api.ops.ingest.IngestJobCancelParams",
-        "schema": {
-          "additionalProperties": false,
-          "properties": {
-            "job_id": {
-              "maxLength": 256,
-              "minLength": 1,
-              "title": "Job Id",
-              "type": "string"
-            }
-          },
-          "required": [
-            "job_id"
-          ],
-          "title": "IngestJobCancelParams",
-          "type": "object"
-        }
-      },
-      "principals": "any",
-      "remove_in": null,
-      "result": {
-        "model": "arbora.api.ops.ingest.IngestJobControlResult",
-        "schema": {
-          "additionalProperties": false,
-          "properties": {
-            "value": {
-              "additionalProperties": true,
-              "title": "Value",
-              "type": "object"
-            }
-          },
-          "required": [
-            "value"
-          ],
-          "title": "IngestJobControlResult",
-          "type": "object"
-        }
-      },
-      "scopes": [
-        "ingest:write"
-      ],
-      "stability": "stable",
-      "subject": null,
-      "summary": "Cancel one pending ingestion job",
-      "surfaces": [
-        "a2a",
-        "http",
-        "mcp"
-      ],
-      "verb": "act"
-    },
-    {
-      "audit": "none",
-      "binding": {
-        "handler": "arbora.api.ops.ingest.list_jobs",
-        "kind": "composite"
-      },
-      "confirm": "none",
-      "effect": "read",
-      "examples": [
-        "list my ingestion jobs"
-      ],
-      "executor": "caller",
-      "executor_scopes": [],
-      "http": null,
-      "id": "ingest.jobs.list",
-      "idempotency": "none",
-      "params": {
-        "model": "arbora.api.ops.ingest.IngestJobsListParams",
-        "schema": {
-          "additionalProperties": false,
-          "properties": {
-            "cursor": {
-              "anyOf": [
-                {
-                  "maxLength": 512,
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null,
-              "title": "Cursor"
-            },
-            "limit": {
-              "default": 50,
-              "maximum": 100,
-              "minimum": 1,
-              "title": "Limit",
-              "type": "integer"
-            }
-          },
-          "title": "IngestJobsListParams",
-          "type": "object"
-        }
-      },
-      "principals": "any",
-      "remove_in": null,
-      "result": {
-        "model": "arbora.api.ops.ingest.IngestJobsListResult",
-        "schema": {
-          "additionalProperties": false,
-          "properties": {
-            "value": {
-              "additionalProperties": true,
-              "title": "Value",
-              "type": "object"
-            }
-          },
-          "required": [
-            "value"
-          ],
-          "title": "IngestJobsListResult",
-          "type": "object"
-        }
-      },
-      "scopes": [
-        "ingest:read"
-      ],
-      "stability": "stable",
-      "subject": null,
-      "summary": "List this tenant's durable ingestion jobs",
-      "surfaces": [
-        "a2a",
-        "http",
-        "mcp"
-      ],
-      "verb": "find"
-    },
-    {
-      "audit": "event",
-      "binding": {
-        "handler": "arbora.api.ops.ingest.prioritize_job",
-        "kind": "composite"
-      },
-      "confirm": "none",
-      "effect": "write",
-      "examples": [
-        "prioritize this ingestion job"
-      ],
-      "executor": "caller",
-      "executor_scopes": [],
-      "http": null,
-      "id": "ingest.jobs.prioritize",
-      "idempotency": "natural",
-      "params": {
-        "model": "arbora.api.ops.ingest.IngestJobPrioritizeParams",
-        "schema": {
-          "additionalProperties": false,
-          "properties": {
-            "bucket": {
-              "maximum": 9,
-              "minimum": 0,
-              "title": "Bucket",
-              "type": "integer"
-            },
-            "job_id": {
-              "maxLength": 256,
-              "minLength": 1,
-              "title": "Job Id",
-              "type": "string"
-            }
-          },
-          "required": [
-            "job_id",
-            "bucket"
-          ],
-          "title": "IngestJobPrioritizeParams",
-          "type": "object"
-        }
-      },
-      "principals": "any",
-      "remove_in": null,
-      "result": {
-        "model": "arbora.api.ops.ingest.IngestJobControlResult",
-        "schema": {
-          "additionalProperties": false,
-          "properties": {
-            "value": {
-              "additionalProperties": true,
-              "title": "Value",
-              "type": "object"
-            }
-          },
-          "required": [
-            "value"
-          ],
-          "title": "IngestJobControlResult",
-          "type": "object"
-        }
-      },
-      "scopes": [
-        "ingest:write"
-      ],
-      "stability": "stable",
-      "subject": null,
-      "summary": "Set the priority bucket of one ingestion job",
-      "surfaces": [
-        "a2a",
-        "http",
-        "mcp"
-      ],
-      "verb": "act"
-    },
-    {
       "audit": "none",
       "binding": {
         "handler": "arbora.api.ops.ingest.get_job_status",
@@ -26517,97 +26295,6 @@
       "stability": "stable",
       "subject": null,
       "summary": "Request a durable sync of one ingestion source",
-      "surfaces": [
-        "a2a",
-        "http",
-        "mcp"
-      ],
-      "verb": "act"
-    },
-    {
-      "audit": "event",
-      "binding": {
-        "handler": "arbora.api.ops.ingest.submit_ingest",
-        "kind": "composite"
-      },
-      "confirm": "none",
-      "effect": "write",
-      "examples": [
-        "ingest this url",
-        "distill this document"
-      ],
-      "executor": "caller",
-      "executor_scopes": [],
-      "http": null,
-      "id": "ingest.submissions.create",
-      "idempotency": "key_required",
-      "params": {
-        "model": "arbora.api.ops.ingest.IngestSubmitParams",
-        "schema": {
-          "additionalProperties": false,
-          "properties": {
-            "kind": {
-              "enum": [
-                "ingest",
-                "ingest_url",
-                "ingest_knowledge_pack",
-                "fact_extract",
-                "distill"
-              ],
-              "title": "Kind",
-              "type": "string"
-            },
-            "options": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "maxProperties": 8,
-              "title": "Options",
-              "type": "object"
-            },
-            "target": {
-              "maxLength": 2048,
-              "minLength": 1,
-              "title": "Target",
-              "type": "string"
-            }
-          },
-          "required": [
-            "kind",
-            "target"
-          ],
-          "title": "IngestSubmitParams",
-          "type": "object"
-        }
-      },
-      "principals": "any",
-      "remove_in": null,
-      "result": {
-        "model": "arbora.api.ops.ingest.IngestSubmitResult",
-        "schema": {
-          "additionalProperties": false,
-          "properties": {
-            "value": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "title": "Value",
-              "type": "object"
-            }
-          },
-          "required": [
-            "value"
-          ],
-          "title": "IngestSubmitResult",
-          "type": "object"
-        }
-      },
-      "scopes": [
-        "ingest:write"
-      ],
-      "stability": "stable",
-      "subject": null,
-      "summary": "Queue a durable ingest, URL, pack, fact-extract or distill job",
       "surfaces": [
         "a2a",
         "http",
@@ -29870,22 +29557,126 @@
       "params": {
         "model": "arbora.api.ops.work.WorkOfferCreateParams",
         "schema": {
-          "additionalProperties": false,
-          "properties": {
-            "item_id": {
-              "maxLength": 80,
-              "minLength": 1,
-              "title": "Item Id",
-              "type": "string"
-            },
-            "terms": {
-              "additionalProperties": true,
-              "title": "Terms",
+          "$defs": {
+            "WorkOfferTerms": {
+              "additionalProperties": false,
+              "description": "The engine ``WorkOffer``: a priced, evidence-cited offer on one Gap.",
+              "properties": {
+                "blast_radius": {
+                  "enum": [
+                    "local",
+                    "repository",
+                    "fleet"
+                  ],
+                  "title": "Blast Radius",
+                  "type": "string"
+                },
+                "cooldown_until_ms": {
+                  "anyOf": [
+                    {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Cooldown Until Ms"
+                },
+                "cost_uncertainty_ppm": {
+                  "minimum": 0,
+                  "title": "Cost Uncertainty Ppm",
+                  "type": "integer"
+                },
+                "depends_on_gap_ids": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 64,
+                  "title": "Depends On Gap Ids",
+                  "type": "array"
+                },
+                "evidence_digests": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 64,
+                  "minItems": 1,
+                  "title": "Evidence Digests",
+                  "type": "array"
+                },
+                "expected_cost_microunits": {
+                  "minimum": 0,
+                  "title": "Expected Cost Microunits",
+                  "type": "integer"
+                },
+                "expected_utility_micros": {
+                  "minimum": 0,
+                  "title": "Expected Utility Micros",
+                  "type": "integer"
+                },
+                "probability_of_closure_ppm": {
+                  "maximum": 1000000,
+                  "minimum": 0,
+                  "title": "Probability Of Closure Ppm",
+                  "type": "integer"
+                },
+                "repository_scope": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 64,
+                  "title": "Repository Scope",
+                  "type": "array"
+                },
+                "required_capabilities": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 64,
+                  "title": "Required Capabilities",
+                  "type": "array"
+                },
+                "reversible": {
+                  "title": "Reversible",
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "blast_radius",
+                "cost_uncertainty_ppm",
+                "evidence_digests",
+                "expected_cost_microunits",
+                "expected_utility_micros",
+                "probability_of_closure_ppm",
+                "reversible"
+              ],
+              "title": "WorkOfferTerms",
               "type": "object"
             }
           },
+          "additionalProperties": false,
+          "properties": {
+            "expected_offer_version": {
+              "minimum": 0,
+              "title": "Expected Offer Version",
+              "type": "integer"
+            },
+            "gap_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Gap Id",
+              "type": "string"
+            },
+            "offer": {
+              "$ref": "#/$defs/WorkOfferTerms"
+            }
+          },
           "required": [
-            "item_id"
+            "gap_id",
+            "expected_offer_version",
+            "offer"
           ],
           "title": "WorkOfferCreateParams",
           "type": "object"
@@ -29912,11 +29703,11 @@
         }
       },
       "scopes": [
-        "work:write"
+        "work:offer-write"
       ],
       "stability": "stable",
       "subject": null,
-      "summary": "Create an offer against an owned work item",
+      "summary": "Price an offer on a Gap whose WorkItem lease the caller holds",
       "surfaces": [
         "a2a",
         "http",
@@ -29925,5 +29716,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "ef0bc8fc466ebcf7bb3bd6d92b49553acf492d2f330cde2a606e790792674e7c"
+  "registry_digest": "255766c3d4d60603c273877de05d4a09de1e716f2c553c568fc20dfd6068ef41"
 }

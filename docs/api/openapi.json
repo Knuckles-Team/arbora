@@ -200,16 +200,6 @@
           }
         },
         "description": "Operation result"
-      },
-      "Sharedf6bc34ea32a522bd95e19dc3f465ffd10ad203bfc1a41e856ef4a37e4b53faca": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Schemab2cfdbaa45beacb98302dd56ec7ecba25af5383c368de5fbc5e726a76e974fc4"
-            }
-          }
-        },
-        "description": "Operation result"
       }
     },
     "schemas": {
@@ -266,6 +256,9 @@
       },
       "Definitione982db1a4ac1ee125b8c4845433b9320ec7006fcf4d88eb1b2a7aa660eeda15a": {
         "$ref": "#/components/schemas/Schemaf2068454c968a5ebcf29a2a06fe750f45c81a91941482c68c42d77a5c7de771e"
+      },
+      "Definitionedf81f8cbd1dec0550c9c578df3c7d0afcd5dadf46f4f6e8d72047e380a1aa49": {
+        "$ref": "#/components/schemas/Schema4082f275b6a0faed9a88e55f800dfb9172bddff9a2eac00dda5e869c49c9394c"
       },
       "Definitionef8fa95fba2b352598e31dd727c48a07a647d2ffce6be281d8a2604a191af467": {
         "$ref": "#/components/schemas/Schema2e65d2b791a10e66fea0bfd9eb1bdac66ec939cdd6b85f063685d49f4f3939ca"
@@ -520,35 +513,10 @@
         "title": "UsageReadResult",
         "type": "object"
       },
-      "Schema0d4ecbd4c4810303fec166d7080e355e7b49ee42f03eeb15def2af2a432d40a0": {
-        "anyOf": [
-          {
-            "$ref": "#/components/schemas/Schema3cdb2ff0de9162783534b259d476e06c70ae53dfc1601e1142e194ac1ea15598"
-          },
-          {
-            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
-          }
-        ],
-        "default": null,
-        "title": "Cursor"
-      },
       "Schema0d597b9e947f06c3eea71bc63bd3f2d86f4f091c6f5039d1c94e3eab79430dd5": {
         "const": "arbora-execution-graph-v1",
         "title": "Schema Version",
         "type": "string"
-      },
-      "Schema0da43ab78b0f7615b615a265651482f8f2d69a1ca9a27bc828cacbd587fed811": {
-        "additionalProperties": false,
-        "properties": {
-          "cursor": {
-            "$ref": "#/components/schemas/Schema0d4ecbd4c4810303fec166d7080e355e7b49ee42f03eeb15def2af2a432d40a0"
-          },
-          "limit": {
-            "$ref": "#/components/schemas/Schema76952d8e68e95459f7f755aff3c03b8aca5fd6f35ca6a7d995fa700520f5926d"
-          }
-        },
-        "title": "IngestJobsListParams",
-        "type": "object"
       },
       "Schema0df999ba07ffbcfd6469c0b4f5c32815bb99563ee4f66ff9409c9707354430c9": {
         "additionalProperties": false,
@@ -837,6 +805,15 @@
         "default": null,
         "title": "Commonannotations"
       },
+      "Schema217fc754ba8815da83e0fd160262bcdea5c4181d8576de1a27c43c5f43f98c96": {
+        "items": {
+          "$ref": "#/components/schemas/Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7"
+        },
+        "maxItems": 64,
+        "minItems": 1,
+        "title": "Evidence Digests",
+        "type": "array"
+      },
       "Schema22703ed1c23373f95abce83763af8991820a9026570c1a5aea274e4cf253c2f4": {
         "const": false,
         "default": false,
@@ -946,22 +923,6 @@
         ],
         "type": "array"
       },
-      "Schema2a9b6e96a0ade414d0e89ee3647b6b5313127a252e46b4d76d4d20e6d8187818": {
-        "additionalProperties": false,
-        "properties": {
-          "item_id": {
-            "$ref": "#/components/schemas/Schemadf0f341916bf89c6538e7a0f6d7dcd1666c2fa7ef784bb6e320d61a918ac6af0"
-          },
-          "terms": {
-            "$ref": "#/components/schemas/Schema55746ebd3b5fbbe228891c0325cb54816ecc326b729acb1faa876af186dd4396"
-          }
-        },
-        "required": [
-          "item_id"
-        ],
-        "title": "WorkOfferCreateParams",
-        "type": "object"
-      },
       "Schema2b5a8eb8274ac5979e46417be1018eb512e9f30a4604845b59f7d010f5248f96": {
         "additionalProperties": false,
         "description": "List the refs of one repository that carry one path.",
@@ -978,19 +939,6 @@
           "path"
         ],
         "title": "SourceHistoryParams",
-        "type": "object"
-      },
-      "Schema2c726dca5463d0c63019250fcfdcdc2950392d3a6c8b01219609029bfce2812e": {
-        "additionalProperties": false,
-        "properties": {
-          "value": {
-            "$ref": "#/components/schemas/Schemacf39ffc76907695a68d495a9c1e411fd37da742cfa5f8b9f90231effff240e3c"
-          }
-        },
-        "required": [
-          "value"
-        ],
-        "title": "IngestSubmitResult",
         "type": "object"
       },
       "Schema2db1e0b735a231257bc16ca3f2a2f7b503acca69ba97dc893290c4555197f853": {
@@ -1265,9 +1213,13 @@
         "title": "Query",
         "type": "string"
       },
-      "Schema3cdb2ff0de9162783534b259d476e06c70ae53dfc1601e1142e194ac1ea15598": {
-        "maxLength": 512,
-        "type": "string"
+      "Schema3d4a4e2922a593986182adcaa6ce52bb44149b4ea41ad07f4c9374dab952805a": {
+        "items": {
+          "$ref": "#/components/schemas/Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7"
+        },
+        "maxItems": 64,
+        "title": "Required Capabilities",
+        "type": "array"
       },
       "Schema3d707d2656317bd106cd45297754733e58e9cace5a039104cd95583004a3f58d": {
         "anyOf": [
@@ -1301,6 +1253,64 @@
       "Schema3fe6bbcbfa375d9b8081dc59f036f6ef5762d6ea7da9f1a259ff573cfdb35f73": {
         "title": "Request Digest",
         "type": "string"
+      },
+      "Schema406e213884b1e8b20667fe00e6c2e697d05cfbb6870f564d2db3c567aa66a8b1": {
+        "items": {
+          "$ref": "#/components/schemas/Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7"
+        },
+        "maxItems": 64,
+        "title": "Depends On Gap Ids",
+        "type": "array"
+      },
+      "Schema4082f275b6a0faed9a88e55f800dfb9172bddff9a2eac00dda5e869c49c9394c": {
+        "additionalProperties": false,
+        "description": "The engine ``WorkOffer``: a priced, evidence-cited offer on one Gap.",
+        "properties": {
+          "blast_radius": {
+            "$ref": "#/components/schemas/Schema6adf9ccfce7e67690f747dac0434f69dcac2f6540f0a286ce822ff1bef49ce12"
+          },
+          "cooldown_until_ms": {
+            "$ref": "#/components/schemas/Schema506cee535bc26cf0a7174da6c68a23f8bc80030c47bbf0c432b6eb098bbb1018"
+          },
+          "cost_uncertainty_ppm": {
+            "$ref": "#/components/schemas/Schema840a0daf51ce861a7a019d178c82a030fe0935d70931620c590adfff7aa6f8ec"
+          },
+          "depends_on_gap_ids": {
+            "$ref": "#/components/schemas/Schema406e213884b1e8b20667fe00e6c2e697d05cfbb6870f564d2db3c567aa66a8b1"
+          },
+          "evidence_digests": {
+            "$ref": "#/components/schemas/Schema217fc754ba8815da83e0fd160262bcdea5c4181d8576de1a27c43c5f43f98c96"
+          },
+          "expected_cost_microunits": {
+            "$ref": "#/components/schemas/Schemaf8c52e633d1aa5bf9e5d13b7e0046ac133337232c0f726779bedf69d4e1150e3"
+          },
+          "expected_utility_micros": {
+            "$ref": "#/components/schemas/Schema5a385e69235ae32c477080f7a641333f96fd9d38f54ce9dd1f9a5fffa5050c8c"
+          },
+          "probability_of_closure_ppm": {
+            "$ref": "#/components/schemas/Schemab91bc6de8edf800385ec745eec5b9fe6d5be6b23d3d2f7375a2eda1c27b078f4"
+          },
+          "repository_scope": {
+            "$ref": "#/components/schemas/Schemafbde6ba974f514ce8006c7ec1f8bf1bc50f0afe0b0f151806ae564e819bd0cc4"
+          },
+          "required_capabilities": {
+            "$ref": "#/components/schemas/Schema3d4a4e2922a593986182adcaa6ce52bb44149b4ea41ad07f4c9374dab952805a"
+          },
+          "reversible": {
+            "$ref": "#/components/schemas/Schema717d8c6560d0386dbe6873641e34c41b4dcb2140cd35d16631394db36aad09c9"
+          }
+        },
+        "required": [
+          "blast_radius",
+          "cost_uncertainty_ppm",
+          "evidence_digests",
+          "expected_cost_microunits",
+          "expected_utility_micros",
+          "probability_of_closure_ppm",
+          "reversible"
+        ],
+        "title": "WorkOfferTerms",
+        "type": "object"
       },
       "Schema410526b4fca6fab93fd3fbfcc09e1cc30c7fe89eeae7b54d003c234288fb01cf": {
         "additionalProperties": false,
@@ -1434,16 +1444,17 @@
         "title": "Action",
         "type": "string"
       },
-      "Schema4fa428a7bc7e9750272fa0eeefda418ee278966bb9a3215500dcdd5cf6b55def": {
-        "enum": [
-          "ingest",
-          "ingest_url",
-          "ingest_knowledge_pack",
-          "fact_extract",
-          "distill"
+      "Schema506cee535bc26cf0a7174da6c68a23f8bc80030c47bbf0c432b6eb098bbb1018": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema6fa303fdbf080b52d9a1cdb8d6078fd9708fd34676ceb919344043b3971e1790"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
         ],
-        "title": "Kind",
-        "type": "string"
+        "default": null,
+        "title": "Cooldown Until Ms"
       },
       "Schema514d94bc4da230c9dc22e57272fc7b5ac4c76bc00ccce58c3d17e9d208e26d49": {
         "additionalProperties": true,
@@ -1484,11 +1495,6 @@
         "title": "IngestPacksListParams",
         "type": "object"
       },
-      "Schema55746ebd3b5fbbe228891c0325cb54816ecc326b729acb1faa876af186dd4396": {
-        "additionalProperties": true,
-        "title": "Terms",
-        "type": "object"
-      },
       "Schema58f3dda18398ba66749ae4fa50093087f8ff8d2faa1d3c738b5287f7761e56ce": {
         "additionalProperties": false,
         "properties": {
@@ -1507,6 +1513,11 @@
         ],
         "title": "MemoryKeyParams",
         "type": "object"
+      },
+      "Schema5a385e69235ae32c477080f7a641333f96fd9d38f54ce9dd1f9a5fffa5050c8c": {
+        "minimum": 0,
+        "title": "Expected Utility Micros",
+        "type": "integer"
       },
       "Schema5a3d01f9dc340cb3bd8bfd629cf42e9886d4c325a0767ead7800503ffd539c0f": {
         "additionalProperties": true,
@@ -1739,6 +1750,15 @@
         "title": "RunsCurrentPlanResult",
         "type": "object"
       },
+      "Schema6adf9ccfce7e67690f747dac0434f69dcac2f6540f0a286ce822ff1bef49ce12": {
+        "enum": [
+          "local",
+          "repository",
+          "fleet"
+        ],
+        "title": "Blast Radius",
+        "type": "string"
+      },
       "Schema6c9475299abab9f831e399e603faa837395297aa5dadcbcb1324616899b1a201": {
         "maxLength": 256,
         "minLength": 1,
@@ -1794,6 +1814,10 @@
         "minLength": 1,
         "title": "Key",
         "type": "string"
+      },
+      "Schema717d8c6560d0386dbe6873641e34c41b4dcb2140cd35d16631394db36aad09c9": {
+        "title": "Reversible",
+        "type": "boolean"
       },
       "Schema7238448713591e961a58655fb9896ebcbaedb142aa3a7a94a0f86497b61b611a": {
         "title": "Channel Id",
@@ -1947,19 +1971,6 @@
         "title": "ElevationAsk",
         "type": "object"
       },
-      "Schema77c704f5198eb62dcec9d985d8809a2f450c7a16e032304a35698a711717fefd": {
-        "additionalProperties": false,
-        "properties": {
-          "job_id": {
-            "$ref": "#/components/schemas/Schemaf2c1064c292fcac6d09d4990528216f1245ef286458d7f8833db49e01d4177a7"
-          }
-        },
-        "required": [
-          "job_id"
-        ],
-        "title": "IngestJobCancelParams",
-        "type": "object"
-      },
       "Schema787a0c3560d38a50dc8470f5e7b807a8b061fa8ebe37bdd6509f96f3cc8a7e7e": {
         "maxLength": 256,
         "minLength": 1,
@@ -2026,6 +2037,27 @@
           "ref"
         ],
         "title": "SourceTreeParams",
+        "type": "object"
+      },
+      "Schema7d8952701377ffc042435cdfc3754c9b639b66cdbb83fd47f2916d52d7d51444": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_offer_version": {
+            "$ref": "#/components/schemas/Schema95d9fdf68ed9494a8e1951343301927b19f53184b06a8ece541bb48cbd575420"
+          },
+          "gap_id": {
+            "$ref": "#/components/schemas/Schema912b8fa499b32dabcfffa3d3f8bc6bfec2f73a31b99f0863060999965d96f30a"
+          },
+          "offer": {
+            "$ref": "#/components/schemas/Definitionedf81f8cbd1dec0550c9c578df3c7d0afcd5dadf46f4f6e8d72047e380a1aa49"
+          }
+        },
+        "required": [
+          "gap_id",
+          "expected_offer_version",
+          "offer"
+        ],
+        "title": "WorkOfferCreateParams",
         "type": "object"
       },
       "Schema7e13d1e6690e8acde339835a80f914be0206a0014068a7cd47f3fc63a5b50897": {
@@ -2146,6 +2178,11 @@
         ],
         "title": "ExecutionDependency",
         "type": "object"
+      },
+      "Schema840a0daf51ce861a7a019d178c82a030fe0935d70931620c590adfff7aa6f8ec": {
+        "minimum": 0,
+        "title": "Cost Uncertainty Ppm",
+        "type": "integer"
       },
       "Schema841a72c12e87a0fc9b3446ca1dc75070ff8ea3adde3de043d40b051f5ae28d8f": {
         "maxLength": 80,
@@ -2329,6 +2366,12 @@
         "title": "BrowserDocumentCatalog",
         "type": "object"
       },
+      "Schema912b8fa499b32dabcfffa3d3f8bc6bfec2f73a31b99f0863060999965d96f30a": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Gap Id",
+        "type": "string"
+      },
       "Schema9170d54be70d2cc7125168f0e82859a66a10119882e0623c4b05560dd6113fef": {
         "additionalProperties": false,
         "properties": {
@@ -2468,22 +2511,10 @@
         "default": null,
         "title": "Expected Version"
       },
-      "Schema953c4f01a65a007aebf81f31e08ab2b31cc9e4cbe59ab3b9767aa1b983fe1584": {
-        "additionalProperties": false,
-        "properties": {
-          "bucket": {
-            "$ref": "#/components/schemas/Schemaf98c23f3e1426042123c4e427de8421eb6e83fbc12f21c2144a4205e05b4f61e"
-          },
-          "job_id": {
-            "$ref": "#/components/schemas/Schemaf2c1064c292fcac6d09d4990528216f1245ef286458d7f8833db49e01d4177a7"
-          }
-        },
-        "required": [
-          "job_id",
-          "bucket"
-        ],
-        "title": "IngestJobPrioritizeParams",
-        "type": "object"
+      "Schema95d9fdf68ed9494a8e1951343301927b19f53184b06a8ece541bb48cbd575420": {
+        "minimum": 0,
+        "title": "Expected Offer Version",
+        "type": "integer"
       },
       "Schema9651beb0cda06d2616ad93118c2b167a41ca32c607fa07700b0579b6e42ce4d9": {
         "title": "Allowed",
@@ -2568,19 +2599,6 @@
         "minLength": 1,
         "title": "Drift Id",
         "type": "string"
-      },
-      "Schema9b6ecf3f1107d98ead48bd9ab0edfe062b3fb111e049a2d9b617918b80318f48": {
-        "additionalProperties": false,
-        "properties": {
-          "value": {
-            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
-          }
-        },
-        "required": [
-          "value"
-        ],
-        "title": "IngestJobsListResult",
-        "type": "object"
       },
       "Schema9bcea083f793fe0e0e7aa0102b67e0532633be7a5761dfa87ba866a676e0e5aa": {
         "additionalProperties": true,
@@ -2949,19 +2967,6 @@
         "title": "Sources",
         "type": "array"
       },
-      "Schemab2cfdbaa45beacb98302dd56ec7ecba25af5383c368de5fbc5e726a76e974fc4": {
-        "additionalProperties": false,
-        "properties": {
-          "value": {
-            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
-          }
-        },
-        "required": [
-          "value"
-        ],
-        "title": "IngestJobControlResult",
-        "type": "object"
-      },
       "Schemab2e631b4636bd6bbe796db78f5f0efafe42402deb58b8bc7828ce6ee8e61274a": {
         "additionalProperties": false,
         "properties": {
@@ -3105,6 +3110,12 @@
         ],
         "title": "SourceRefParams",
         "type": "object"
+      },
+      "Schemab91bc6de8edf800385ec745eec5b9fe6d5be6b23d3d2f7375a2eda1c27b078f4": {
+        "maximum": 1000000,
+        "minimum": 0,
+        "title": "Probability Of Closure Ppm",
+        "type": "integer"
       },
       "Schemab995e29237d5571ae28320149c6163c88c44fd56cba14dba91cc32a9985b4c0e": {
         "maxLength": 4000,
@@ -3271,12 +3282,6 @@
         },
         "type": "object"
       },
-      "Schemac77c32ae1fe2fa1e69153ebcef53e215f6dc2dca280f30c1bfd126063b74ae2d": {
-        "maxLength": 2048,
-        "minLength": 1,
-        "title": "Target",
-        "type": "string"
-      },
       "Schemac8988ac0c133eee1d37a57c7873fc8e2d0d2270106728130e931394b807f0e53": {
         "anyOf": [
           {
@@ -3303,14 +3308,6 @@
       "Schemacac9b06c3ec93a7fc8bde8feaeb94be496804f70091072f05fe0a117f04fb850": {
         "title": "Mode",
         "type": "string"
-      },
-      "Schemacc6fe20bda57203f610589d58c58fddb2597099c49ad747ce54b0d45eb7109ea": {
-        "additionalProperties": {
-          "$ref": "#/components/schemas/Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7"
-        },
-        "maxProperties": 8,
-        "title": "Options",
-        "type": "object"
       },
       "Schemaccaf437a4d2f3796fc8df7087e95f0521813d43a9f29cea0f760bc425fc1e9aa": {
         "description": "Where the alert went; never the channel credentials.",
@@ -3923,26 +3920,6 @@
         "title": "Job Id",
         "type": "string"
       },
-      "Schemaf35a6e00b6bea508892e856710104af70ad3e30ef17ef9e96c145f6409d756c5": {
-        "additionalProperties": false,
-        "properties": {
-          "kind": {
-            "$ref": "#/components/schemas/Schema4fa428a7bc7e9750272fa0eeefda418ee278966bb9a3215500dcdd5cf6b55def"
-          },
-          "options": {
-            "$ref": "#/components/schemas/Schemacc6fe20bda57203f610589d58c58fddb2597099c49ad747ce54b0d45eb7109ea"
-          },
-          "target": {
-            "$ref": "#/components/schemas/Schemac77c32ae1fe2fa1e69153ebcef53e215f6dc2dca280f30c1bfd126063b74ae2d"
-          }
-        },
-        "required": [
-          "kind",
-          "target"
-        ],
-        "title": "IngestSubmitParams",
-        "type": "object"
-      },
       "Schemaf4304c500b7b9581c3b477077102e76b64359987bcd3faf2d51c25603695929e": {
         "maxLength": 2048,
         "minLength": 1,
@@ -3997,10 +3974,9 @@
         "title": "Kind",
         "type": "string"
       },
-      "Schemaf98c23f3e1426042123c4e427de8421eb6e83fbc12f21c2144a4205e05b4f61e": {
-        "maximum": 9,
+      "Schemaf8c52e633d1aa5bf9e5d13b7e0046ac133337232c0f726779bedf69d4e1150e3": {
         "minimum": 0,
-        "title": "Bucket",
+        "title": "Expected Cost Microunits",
         "type": "integer"
       },
       "Schemaf9dc517ae1de981c6ec75b9eeef87a8f7750cc487c591961e000cc918273c329": {
@@ -4023,6 +3999,14 @@
         "properties": {},
         "title": "IngestSourcesListParams",
         "type": "object"
+      },
+      "Schemafbde6ba974f514ce8006c7ec1f8bf1bc50f0afe0b0f151806ae564e819bd0cc4": {
+        "items": {
+          "$ref": "#/components/schemas/Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7"
+        },
+        "maxItems": 64,
+        "title": "Repository Scope",
+        "type": "array"
       },
       "Schemafce2783ecc2a48d78f0e329182a776eac325ab4398d0773bd8ec0d367d6e4d7d": {
         "maxLength": 16384,
@@ -21305,94 +21289,6 @@
         ]
       }
     },
-    "/api/v1/ops/ingest.jobs.cancel": {
-      "post": {
-        "operationId": "ingest.jobs.cancel",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Schema77c704f5198eb62dcec9d985d8809a2f450c7a16e032304a35698a711717fefd"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Sharedf6bc34ea32a522bd95e19dc3f465ffd10ad203bfc1a41e856ef4a37e4b53faca"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
-          }
-        },
-        "summary": "Cancel one pending ingestion job",
-        "tags": [
-          "ingest"
-        ]
-      }
-    },
-    "/api/v1/ops/ingest.jobs.list": {
-      "post": {
-        "operationId": "ingest.jobs.list",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Schema0da43ab78b0f7615b615a265651482f8f2d69a1ca9a27bc828cacbd587fed811"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Schema9b6ecf3f1107d98ead48bd9ab0edfe062b3fb111e049a2d9b617918b80318f48"
-                }
-              }
-            },
-            "description": "Operation result"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
-          }
-        },
-        "summary": "List this tenant's durable ingestion jobs",
-        "tags": [
-          "ingest"
-        ]
-      }
-    },
-    "/api/v1/ops/ingest.jobs.prioritize": {
-      "post": {
-        "operationId": "ingest.jobs.prioritize",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Schema953c4f01a65a007aebf81f31e08ab2b31cc9e4cbe59ab3b9767aa1b983fe1584"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Sharedf6bc34ea32a522bd95e19dc3f465ffd10ad203bfc1a41e856ef4a37e4b53faca"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
-          }
-        },
-        "summary": "Set the priority bucket of one ingestion job",
-        "tags": [
-          "ingest"
-        ]
-      }
-    },
     "/api/v1/ops/ingest.jobs.status": {
       "post": {
         "operationId": "ingest.jobs.status",
@@ -21592,40 +21488,6 @@
           }
         },
         "summary": "Request a durable sync of one ingestion source",
-        "tags": [
-          "ingest"
-        ]
-      }
-    },
-    "/api/v1/ops/ingest.submissions.create": {
-      "post": {
-        "operationId": "ingest.submissions.create",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Schemaf35a6e00b6bea508892e856710104af70ad3e30ef17ef9e96c145f6409d756c5"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Schema2c726dca5463d0c63019250fcfdcdc2950392d3a6c8b01219609029bfce2812e"
-                }
-              }
-            },
-            "description": "Operation result"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
-          }
-        },
-        "summary": "Queue a durable ingest, URL, pack, fact-extract or distill job",
         "tags": [
           "ingest"
         ]
@@ -22794,7 +22656,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Schema2a9b6e96a0ade414d0e89ee3647b6b5313127a252e46b4d76d4d20e6d8187818"
+                "$defs": {
+                  "WorkOfferTerms": {
+                    "$ref": "#/components/schemas/Definitionedf81f8cbd1dec0550c9c578df3c7d0afcd5dadf46f4f6e8d72047e380a1aa49"
+                  }
+                },
+                "$ref": "#/components/schemas/Schema7d8952701377ffc042435cdfc3754c9b639b66cdbb83fd47f2916d52d7d51444"
               }
             }
           },
@@ -22808,12 +22675,12 @@
             "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
           }
         },
-        "summary": "Create an offer against an owned work item",
+        "summary": "Price an offer on a Gap whose WorkItem lease the caller holds",
         "tags": [
           "work"
         ]
       }
     }
   },
-  "x-registry-digest": "ef0bc8fc466ebcf7bb3bd6d92b49553acf492d2f330cde2a606e790792674e7c"
+  "x-registry-digest": "255766c3d4d60603c273877de05d4a09de1e716f2c553c568fc20dfd6068ef41"
 }
