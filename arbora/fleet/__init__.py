@@ -27,6 +27,7 @@ from .catalog_reader import (
     ServerPage,
     ServerRegistration,
 )
+from .catalog_replay import CatalogReplayLedger, DeltaOutOfOrderError, DeltaReceipt
 from .error_budget import (
     AimdConfig,
     BudgetWindow,
@@ -52,6 +53,9 @@ from .multiplexer import (
 )
 
 __all__ = [
+    "CatalogReplayLedger",
+    "DeltaOutOfOrderError",
+    "DeltaReceipt",
     "FLEET_COMPONENT_KINDS",
     "MCP_RESOURCE_FAMILIES",
     "AimdConfig",
