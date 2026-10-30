@@ -315,7 +315,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "20f773df9ddd",
-        "4016e049e45e"
+        "fdb84774eb3a"
       ],
       "verified_by": [
         "tests/api/test_agent_browser_ops.py:38",
@@ -382,7 +382,7 @@
         "97061e59c412"
       ],
       "verified_by": [
-        "tests/api/test_api_registry.py:111",
+        "tests/api/test_api_registry.py:110",
         "tests/api/test_api_registry.py:63",
         "tests/api/test_http_session_scope.py:31",
         "tests/api/test_http_session_scope.py:68"
@@ -457,7 +457,7 @@
       "title": "Six resident MCP verbs with typed discovery",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "67987a735927",
+        "21ce14fb84cc",
         "6b63aeb7ba03",
         "ea736715b7fb"
       ],
@@ -931,7 +931,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "1ded59edd1a6",
-        "4016e049e45e"
+        "fdb84774eb3a"
       ],
       "verified_by": [
         "tests/api/test_decide_ops.py:35"
@@ -982,7 +982,7 @@
       "title": "Policy and swarm read operations — policy slice",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "67987a735927",
+        "21ce14fb84cc",
         "cc90ee37583f"
       ],
       "verified_by": [
@@ -1135,11 +1135,14 @@
     {
       "id": "ARBORA-OPS-R022.1",
       "title": "Work-item and offer operations — work slice",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "c4cc3e21b439"
+        "c4cc3e21b439",
+        "fdb84774eb3a"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_work_ops.py:140"
+      ]
     },
     {
       "id": "ARBORA-OPS-R022.2",
@@ -1195,14 +1198,14 @@
       "title": "Agent, browser, RLM, and fleet call operations",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "4016e049e45e",
-        "e1d37ca10ef7"
+        "e1d37ca10ef7",
+        "fdb84774eb3a"
       ],
       "verified_by": [
         "tests/api/test_agent_browser_ops.py:38",
         "tests/api/test_agent_browser_ops.py:71",
         "tests/api/test_fleet_effect.py:174",
-        "tests/fleet/test_gateway_ops.py:59"
+        "tests/fleet/test_gateway_ops.py:58"
       ]
     },
     {
@@ -1236,8 +1239,8 @@
       "title": "Security operations — security slice",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "4b69b27f1d76",
-        "67987a735927"
+        "21ce14fb84cc",
+        "4b69b27f1d76"
       ],
       "verified_by": [
         "tests/api/test_telemetry_security_usage_ops.py:84"
@@ -1385,8 +1388,8 @@
       "title": "Operational admin operations — admin slice",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "4016e049e45e",
-        "8d1bc46ecbdb"
+        "8d1bc46ecbdb",
+        "fdb84774eb3a"
       ],
       "verified_by": [
         "tests/api/test_ops_admin_ops.py:202"
@@ -1501,8 +1504,8 @@
         "4b9d181069e4"
       ],
       "verified_by": [
-        "tests/api/test_authority_parity.py:115",
-        "tests/api/test_authority_parity.py:121"
+        "tests/api/test_authority_parity.py:114",
+        "tests/api/test_authority_parity.py:120"
       ]
     },
     {
@@ -1510,8 +1513,8 @@
       "title": "Exported domain scope classes",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "21ce14fb84cc",
         "4b83c69e2b41",
-        "67987a735927",
         "b47b39eac0ae"
       ],
       "verified_by": [
@@ -1682,11 +1685,11 @@
       "title": "Dynamic multiplexer discovery, load, and call",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "4016e049e45e",
-        "b9141334e1ba"
+        "b9141334e1ba",
+        "fdb84774eb3a"
       ],
       "verified_by": [
-        "tests/fleet/test_gateway_ops.py:59",
+        "tests/fleet/test_gateway_ops.py:58",
         "tests/fleet/test_governed_forwarders.py:28"
       ]
     },
@@ -1695,8 +1698,8 @@
       "title": "Eunomia narrowing-only policy enforcement",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "4016e049e45e",
-        "4b83c69e2b41"
+        "4b83c69e2b41",
+        "fdb84774eb3a"
       ],
       "verified_by": [
         "tests/api/test_policy_eunomia.py:137",
@@ -1740,11 +1743,11 @@
       "title": "Pre-dispatch audit reservation for governed effects",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "4016e049e45e",
-        "a9025191159e"
+        "a9025191159e",
+        "fdb84774eb3a"
       ],
       "verified_by": [
-        "tests/api/test_api_registry.py:170",
+        "tests/api/test_api_registry.py:168",
         "tests/api/test_invoke_contract.py:239",
         "tests/api/test_invoke_contract.py:473",
         "tests/api/test_invoke_governance.py:443"
@@ -1769,8 +1772,8 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "1fb96633563e",
-        "67987a735927",
-        "df02d933ffd9",
+        "21ce14fb84cc",
+        "3e67ac0a2237",
         "ea736715b7fb",
         "f13ce20b05dc"
       ],
