@@ -96,7 +96,6 @@ _CLAUDE_HOOKS = {
 }
 
 
-
 def _session_hooks(agent: str) -> dict[str, Any]:
     """Return on_session_start/on_session_end hooks tagged with ``agent``."""
     return {
