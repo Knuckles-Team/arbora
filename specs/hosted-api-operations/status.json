@@ -612,11 +612,15 @@
     {
       "id": "ARBORA-OPS-R019",
       "title": "Federation source registration and sharing operations",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "64a0c091b354"
+        "64a0c091b354",
+        "ebeb15d32399"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/api/test_federation_ops.py:80",
+        "tests/api/test_federation_ops.py:99"
+      ],
       "rollup_of": [
         "ARBORA-OPS-R019.1",
         "ARBORA-OPS-R019.2"
@@ -625,25 +629,31 @@
     {
       "id": "ARBORA-OPS-R019.1",
       "title": "Federation source register, list, get, and probe",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "64a0c091b354"
+        "64a0c091b354",
+        "ebeb15d32399"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_federation_ops.py:80"
+      ]
     },
     {
       "id": "ARBORA-OPS-R019.2",
       "title": "Federation source share and unshare",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "64a0c091b354"
+        "64a0c091b354",
+        "ebeb15d32399"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_federation_ops.py:99"
+      ]
     },
     {
       "id": "ARBORA-OPS-R020",
       "title": "Ingest operations through a typed SDK runner facade",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "06d8baf844a1",
         "07d7b3ce0fe8",
@@ -651,7 +661,13 @@
         "16c9b2bddda3",
         "23be3a8e9dd6"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/api/test_ingest_drift_embedding_ops.py:73",
+        "tests/api/test_ingest_drift_embedding_ops.py:98",
+        "tests/api/test_ingest_ops.py:107",
+        "tests/api/test_ingest_ops.py:126",
+        "tests/api/test_ingest_ops.py:148"
+      ],
       "rollup_of": [
         "ARBORA-OPS-R020.1",
         "ARBORA-OPS-R020.2",
@@ -765,20 +781,26 @@
     {
       "id": "ARBORA-OPS-R020.4",
       "title": "Drift listing and repair-with-approval operations",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "822f55d5835d"
+        "822f55d5835d",
+        "ebeb15d32399"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_ingest_drift_embedding_ops.py:73"
+      ]
     },
     {
       "id": "ARBORA-OPS-R020.5",
       "title": "Embedding admission and re-embedding operations",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "822f55d5835d"
+        "822f55d5835d",
+        "ebeb15d32399"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_ingest_drift_embedding_ops.py:98"
+      ]
     },
     {
       "id": "ARBORA-OPS-R020.6",
@@ -1138,10 +1160,11 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "c4cc3e21b439",
+        "ebeb15d32399",
         "fdb84774eb3a"
       ],
       "verified_by": [
-        "tests/api/test_work_ops.py:140"
+        "tests/api/test_work_ops.py:150"
       ]
     },
     {
@@ -1285,7 +1308,7 @@
         "94724be32c28"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:342"
+        "tests/api/test_registry_factory.py:378"
       ],
       "rollup_of": [
         "ARBORA-OPS-R024.4.1",
@@ -1380,7 +1403,7 @@
         "5f79be652726"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:342"
+        "tests/api/test_registry_factory.py:378"
       ]
     },
     {
@@ -1518,7 +1541,7 @@
         "ca7c3067b9c8"
       ],
       "verified_by": [
-        "tests/api/test_registry_scopes.py:17"
+        "tests/api/test_registry_scopes.py:16"
       ]
     },
     {
@@ -2632,7 +2655,7 @@
         "d673cd573c77"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:351"
+        "tests/api/test_registry_factory.py:387"
       ]
     },
     {
