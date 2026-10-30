@@ -263,6 +263,36 @@ def _with_ingest_runner(
     return {**bindings, "ingest_runner": runner}
 
 
+def _with_ops_runners(
+    bindings: Mapping[str, Any] | None,
+    pool: Any,
+    graph: str,
+    connect_context: Callable[[str], Any],
+) -> Mapping[str, Any] | None:
+    """Bind the engine-backed ``decide_runner`` and ``work_runner``.
+
+    ARBORA-OPS-R021.1 / R022.1: both reach Medulla through the served pool.
+    WorkItems live on the control graph; decisions on the tenant graph.
+    """
+    if bindings is None:
+        return bindings
+    from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+    from arbora.mcp_server.ops_runners import EngineDecideRunner, EngineWorkRunner
+
+    async def data_client(tenant: str) -> Any:
+        return await pool.connected_client(connect_context(tenant), graph)
+
+    async def control_client(tenant: str) -> Any:
+        return await pool.connected_client(connect_context(tenant), CONTROL_GRAPH)
+
+    added: dict[str, Any] = {}
+    if "decide_runner" not in bindings:
+        added["decide_runner"] = EngineDecideRunner(data_client, graph=graph)
+    if "work_runner" not in bindings:
+        added["work_runner"] = EngineWorkRunner(control_client, graph=CONTROL_GRAPH)
+    return {**bindings, **added}
+
+
 def _with_fleet_source_executor(
     bindings: Mapping[str, Any] | None,
     pool: Any,
@@ -593,6 +623,7 @@ def compose_served_invocation(
 
     minted = session()
     bindings = _with_ingest_runner(bindings, pool, graph, connect_context)
+    bindings = _with_ops_runners(bindings, pool, graph, connect_context)
     bindings = _with_fleet_source_executor(bindings, pool, graph)
     bindings = _with_nl_federation_planner(bindings)
     bindings, process_startup = _with_task_plan_schema(
