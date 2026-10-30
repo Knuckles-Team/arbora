@@ -9,7 +9,7 @@ from arbora.security.run_token import TokenError, mint_token, validate_token
 
 @pytest.fixture(autouse=True)
 def _secret(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("AGENT_UTILITIES_TOKEN_SECRET", "s" * 48)
+    monkeypatch.setenv("ARBORA_TOKEN_SECRET", "s" * 48)
 
 
 def test_round_trip_keeps_scope() -> None:
@@ -34,3 +34,11 @@ def test_refusals(mutate, kwargs) -> None:
     )
     with pytest.raises(TokenError):
         validate_token(mutate(token), **kwargs)
+
+
+def test_retired_secret_names_are_not_read(monkeypatch: pytest.MonkeyPatch) -> None:
+    from arbora.security.run_token import _secret as _resolve_secret  # noqa: PLC0415
+
+    monkeypatch.delenv("ARBORA_TOKEN_SECRET", raising=False)
+    monkeypatch.setenv("AGENT_UTILITIES_TOKEN_SECRET", "old" * 16)
+    assert b"old" * 16 != _resolve_secret()
