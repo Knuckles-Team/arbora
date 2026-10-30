@@ -3407,6 +3407,52 @@
       "audit": "event",
       "binding": {
         "kind": "eg",
+        "op": "RegisterForeignSource",
+        "service": "RegisterForeignSource"
+      },
+      "confirm": "console",
+      "effect": "admin",
+      "examples": [
+        "RegisterForeignSource cluster"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "eg.cluster.RegisterForeignSource",
+      "idempotency": "key_required",
+      "params": {
+        "eg_schema": "contract/schemas/method.request.json#/methods/RegisterForeignSource",
+        "schema_sha256": "1a07cc25fb1217de8c6af0c320e7d39315e977fd103627fe06e229a3aa4081f8",
+        "schema_snapshot": {
+          "$ref": "schemas/method.request.json#/methods/RegisterForeignSource"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "eg_schema": "contract/schemas/result.cluster.json#/methods/RegisterForeignSource",
+        "schema_sha256": "7d75e3a07ab6066bfa18f65db62e9f11628684510b2517fb45cf1c44763b45af",
+        "schema_snapshot": {
+          "$ref": "schemas/result.cluster.json#/methods/RegisterForeignSource"
+        }
+      },
+      "scopes": [
+        "federation:admin"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "opaque prepared/committed control receipt; endpoint configuration is not duplicated in the ledger",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "manage"
+    },
+    {
+      "audit": "event",
+      "binding": {
+        "kind": "eg",
         "op": "RegisterServer",
         "service": "RegisterServer"
       },
@@ -24116,9 +24162,8 @@
     {
       "audit": "event",
       "binding": {
-        "kind": "eg",
-        "op": "RegisterForeignSource",
-        "service": "RegisterForeignSource"
+        "handler": "arbora.api.ops.federation.handle_federation",
+        "kind": "composite"
       },
       "confirm": "console",
       "effect": "admin",
@@ -24131,19 +24176,48 @@
       "id": "federation.sources.register",
       "idempotency": "key_required",
       "params": {
-        "eg_schema": "contract/schemas/method.request.json#/methods/RegisterForeignSource/properties/params",
-        "schema_sha256": "1a07cc25fb1217de8c6af0c320e7d39315e977fd103627fe06e229a3aa4081f8",
-        "schema_snapshot": {
-          "$ref": "schemas/method.request.json#/methods/RegisterForeignSource/properties/params"
+        "model": "arbora.api.ops.federation.SourceRegisterParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "source": {
+              "additionalProperties": true,
+              "title": "Source",
+              "type": "object"
+            },
+            "source_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Source Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "source_id",
+            "source"
+          ],
+          "title": "SourceRegisterParams",
+          "type": "object"
         }
       },
       "principals": "human_undelegated",
       "remove_in": null,
       "result": {
-        "eg_schema": "contract/schemas/result.cluster.json#/methods/RegisterForeignSource",
-        "schema_sha256": "7d75e3a07ab6066bfa18f65db62e9f11628684510b2517fb45cf1c44763b45af",
-        "schema_snapshot": {
-          "$ref": "schemas/result.cluster.json#/methods/RegisterForeignSource"
+        "model": "arbora.api.ops.federation.SourceResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "SourceResult",
+          "type": "object"
         }
       },
       "scopes": [
@@ -24151,7 +24225,7 @@
       ],
       "stability": "stable",
       "subject": null,
-      "summary": "Register a foreign source with the engine (governed write)",
+      "summary": "Register a foreign source owned by the caller (governed write)",
       "surfaces": [
         "a2a",
         "console",
@@ -25903,6 +25977,228 @@
       "verb": "act"
     },
     {
+      "audit": "event",
+      "binding": {
+        "handler": "arbora.api.ops.ingest.cancel_job",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "write",
+      "examples": [
+        "cancel this ingestion job"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "ingest.jobs.cancel",
+      "idempotency": "natural",
+      "params": {
+        "model": "arbora.api.ops.ingest.IngestJobCancelParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "job_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "job_id"
+          ],
+          "title": "IngestJobCancelParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.ingest.IngestJobControlResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "IngestJobControlResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "ingest:write"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Cancel one pending ingestion job",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "act"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "handler": "arbora.api.ops.ingest.list_jobs",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "list my ingestion jobs"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "ingest.jobs.list",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.ingest.IngestJobsListParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "cursor": {
+              "anyOf": [
+                {
+                  "maxLength": 512,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Cursor"
+            },
+            "limit": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          "title": "IngestJobsListParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.ingest.IngestJobsListResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "IngestJobsListResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "ingest:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "List this tenant's durable ingestion jobs",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "find"
+    },
+    {
+      "audit": "event",
+      "binding": {
+        "handler": "arbora.api.ops.ingest.prioritize_job",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "write",
+      "examples": [
+        "prioritize this ingestion job"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "ingest.jobs.prioritize",
+      "idempotency": "natural",
+      "params": {
+        "model": "arbora.api.ops.ingest.IngestJobPrioritizeParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "bucket": {
+              "maximum": 9,
+              "minimum": 0,
+              "title": "Bucket",
+              "type": "integer"
+            },
+            "job_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "job_id",
+            "bucket"
+          ],
+          "title": "IngestJobPrioritizeParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.ingest.IngestJobControlResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "IngestJobControlResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "ingest:write"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Set the priority bucket of one ingestion job",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "act"
+    },
+    {
       "audit": "none",
       "binding": {
         "handler": "arbora.api.ops.ingest.get_job_status",
@@ -26295,6 +26591,97 @@
       "stability": "stable",
       "subject": null,
       "summary": "Request a durable sync of one ingestion source",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "act"
+    },
+    {
+      "audit": "event",
+      "binding": {
+        "handler": "arbora.api.ops.ingest.submit_ingest",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "write",
+      "examples": [
+        "ingest this url",
+        "distill this document"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "ingest.submissions.create",
+      "idempotency": "key_required",
+      "params": {
+        "model": "arbora.api.ops.ingest.IngestSubmitParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "ingest",
+                "ingest_url",
+                "ingest_knowledge_pack",
+                "fact_extract",
+                "distill"
+              ],
+              "title": "Kind",
+              "type": "string"
+            },
+            "options": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "maxProperties": 8,
+              "title": "Options",
+              "type": "object"
+            },
+            "target": {
+              "maxLength": 2048,
+              "minLength": 1,
+              "title": "Target",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "target"
+          ],
+          "title": "IngestSubmitParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.ingest.IngestSubmitResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "IngestSubmitResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "ingest:write"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Queue a durable ingest, URL, pack, fact-extract or distill job",
       "surfaces": [
         "a2a",
         "http",
@@ -29716,5 +30103,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "255766c3d4d60603c273877de05d4a09de1e716f2c553c568fc20dfd6068ef41"
+  "registry_digest": "3a644cd73072b323c4bad60475b027bf61cc276d9abc1fe537f5182b4859aa08"
 }

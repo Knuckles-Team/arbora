@@ -556,6 +556,18 @@
     {
       "domain": "eg",
       "examples": [
+        "RegisterForeignSource cluster"
+      ],
+      "id": "eg.cluster.RegisterForeignSource",
+      "summary": "opaque prepared/committed control receipt; endpoint configuration is not duplicated in the ledger",
+      "tags": [
+        "eg"
+      ],
+      "verb": "manage"
+    },
+    {
+      "domain": "eg",
+      "examples": [
         "RegisterServer cluster"
       ],
       "id": "eg.cluster.RegisterServer",
@@ -5947,7 +5959,7 @@
         "register a federated source"
       ],
       "id": "federation.sources.register",
-      "summary": "Register a foreign source with the engine (governed write)",
+      "summary": "Register a foreign source owned by the caller (governed write)",
       "tags": [
         "federation"
       ],
@@ -6208,6 +6220,42 @@
     {
       "domain": "ingest",
       "examples": [
+        "cancel this ingestion job"
+      ],
+      "id": "ingest.jobs.cancel",
+      "summary": "Cancel one pending ingestion job",
+      "tags": [
+        "ingest"
+      ],
+      "verb": "act"
+    },
+    {
+      "domain": "ingest",
+      "examples": [
+        "list my ingestion jobs"
+      ],
+      "id": "ingest.jobs.list",
+      "summary": "List this tenant's durable ingestion jobs",
+      "tags": [
+        "ingest"
+      ],
+      "verb": "find"
+    },
+    {
+      "domain": "ingest",
+      "examples": [
+        "prioritize this ingestion job"
+      ],
+      "id": "ingest.jobs.prioritize",
+      "summary": "Set the priority bucket of one ingestion job",
+      "tags": [
+        "ingest"
+      ],
+      "verb": "act"
+    },
+    {
+      "domain": "ingest",
+      "examples": [
         "show the status of this ingestion job"
       ],
       "id": "ingest.jobs.status",
@@ -6272,6 +6320,19 @@
       ],
       "id": "ingest.sources.sync",
       "summary": "Request a durable sync of one ingestion source",
+      "tags": [
+        "ingest"
+      ],
+      "verb": "act"
+    },
+    {
+      "domain": "ingest",
+      "examples": [
+        "ingest this url",
+        "distill this document"
+      ],
+      "id": "ingest.submissions.create",
+      "summary": "Queue a durable ingest, URL, pack, fact-extract or distill job",
       "tags": [
         "ingest"
       ],
@@ -6726,5 +6787,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "255766c3d4d60603c273877de05d4a09de1e716f2c553c568fc20dfd6068ef41"
+  "registry_digest": "3a644cd73072b323c4bad60475b027bf61cc276d9abc1fe537f5182b4859aa08"
 }

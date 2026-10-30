@@ -200,6 +200,16 @@
           }
         },
         "description": "Operation result"
+      },
+      "Sharedf6bc34ea32a522bd95e19dc3f465ffd10ad203bfc1a41e856ef4a37e4b53faca": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Schemab2cfdbaa45beacb98302dd56ec7ecba25af5383c368de5fbc5e726a76e974fc4"
+            }
+          }
+        },
+        "description": "Operation result"
       }
     },
     "schemas": {
@@ -513,10 +523,35 @@
         "title": "UsageReadResult",
         "type": "object"
       },
+      "Schema0d4ecbd4c4810303fec166d7080e355e7b49ee42f03eeb15def2af2a432d40a0": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema3cdb2ff0de9162783534b259d476e06c70ae53dfc1601e1142e194ac1ea15598"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Cursor"
+      },
       "Schema0d597b9e947f06c3eea71bc63bd3f2d86f4f091c6f5039d1c94e3eab79430dd5": {
         "const": "arbora-execution-graph-v1",
         "title": "Schema Version",
         "type": "string"
+      },
+      "Schema0da43ab78b0f7615b615a265651482f8f2d69a1ca9a27bc828cacbd587fed811": {
+        "additionalProperties": false,
+        "properties": {
+          "cursor": {
+            "$ref": "#/components/schemas/Schema0d4ecbd4c4810303fec166d7080e355e7b49ee42f03eeb15def2af2a432d40a0"
+          },
+          "limit": {
+            "$ref": "#/components/schemas/Schema76952d8e68e95459f7f755aff3c03b8aca5fd6f35ca6a7d995fa700520f5926d"
+          }
+        },
+        "title": "IngestJobsListParams",
+        "type": "object"
       },
       "Schema0df999ba07ffbcfd6469c0b4f5c32815bb99563ee4f66ff9409c9707354430c9": {
         "additionalProperties": false,
@@ -941,6 +976,19 @@
         "title": "SourceHistoryParams",
         "type": "object"
       },
+      "Schema2c726dca5463d0c63019250fcfdcdc2950392d3a6c8b01219609029bfce2812e": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Schemacf39ffc76907695a68d495a9c1e411fd37da742cfa5f8b9f90231effff240e3c"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "IngestSubmitResult",
+        "type": "object"
+      },
       "Schema2db1e0b735a231257bc16ca3f2a2f7b503acca69ba97dc893290c4555197f853": {
         "anyOf": [
           {
@@ -1207,10 +1255,19 @@
         "title": "CapacityPartitionParams",
         "type": "object"
       },
+      "Schema3bbacdba35bc8fb99a846c45110592813937321364f0a6e51f828e026f46334f": {
+        "additionalProperties": true,
+        "title": "Source",
+        "type": "object"
+      },
       "Schema3bc73bc3a3e344d912f152a5ba206404c8f3e23b244b14cc5004391affddb847": {
         "default": "",
         "maxLength": 4096,
         "title": "Query",
+        "type": "string"
+      },
+      "Schema3cdb2ff0de9162783534b259d476e06c70ae53dfc1601e1142e194ac1ea15598": {
+        "maxLength": 512,
         "type": "string"
       },
       "Schema3d4a4e2922a593986182adcaa6ce52bb44149b4ea41ad07f4c9374dab952805a": {
@@ -1442,6 +1499,17 @@
           "write"
         ],
         "title": "Action",
+        "type": "string"
+      },
+      "Schema4fa428a7bc7e9750272fa0eeefda418ee278966bb9a3215500dcdd5cf6b55def": {
+        "enum": [
+          "ingest",
+          "ingest_url",
+          "ingest_knowledge_pack",
+          "fact_extract",
+          "distill"
+        ],
+        "title": "Kind",
         "type": "string"
       },
       "Schema506cee535bc26cf0a7174da6c68a23f8bc80030c47bbf0c432b6eb098bbb1018": {
@@ -1969,6 +2037,19 @@
           "justification"
         ],
         "title": "ElevationAsk",
+        "type": "object"
+      },
+      "Schema77c704f5198eb62dcec9d985d8809a2f450c7a16e032304a35698a711717fefd": {
+        "additionalProperties": false,
+        "properties": {
+          "job_id": {
+            "$ref": "#/components/schemas/Schemaf2c1064c292fcac6d09d4990528216f1245ef286458d7f8833db49e01d4177a7"
+          }
+        },
+        "required": [
+          "job_id"
+        ],
+        "title": "IngestJobCancelParams",
         "type": "object"
       },
       "Schema787a0c3560d38a50dc8470f5e7b807a8b061fa8ebe37bdd6509f96f3cc8a7e7e": {
@@ -2511,6 +2592,23 @@
         "default": null,
         "title": "Expected Version"
       },
+      "Schema953c4f01a65a007aebf81f31e08ab2b31cc9e4cbe59ab3b9767aa1b983fe1584": {
+        "additionalProperties": false,
+        "properties": {
+          "bucket": {
+            "$ref": "#/components/schemas/Schemaf98c23f3e1426042123c4e427de8421eb6e83fbc12f21c2144a4205e05b4f61e"
+          },
+          "job_id": {
+            "$ref": "#/components/schemas/Schemaf2c1064c292fcac6d09d4990528216f1245ef286458d7f8833db49e01d4177a7"
+          }
+        },
+        "required": [
+          "job_id",
+          "bucket"
+        ],
+        "title": "IngestJobPrioritizeParams",
+        "type": "object"
+      },
       "Schema95d9fdf68ed9494a8e1951343301927b19f53184b06a8ece541bb48cbd575420": {
         "minimum": 0,
         "title": "Expected Offer Version",
@@ -2599,6 +2697,19 @@
         "minLength": 1,
         "title": "Drift Id",
         "type": "string"
+      },
+      "Schema9b6ecf3f1107d98ead48bd9ab0edfe062b3fb111e049a2d9b617918b80318f48": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "IngestJobsListResult",
+        "type": "object"
       },
       "Schema9bcea083f793fe0e0e7aa0102b67e0532633be7a5761dfa87ba866a676e0e5aa": {
         "additionalProperties": true,
@@ -2850,6 +2961,23 @@
         "title": "FleetSurfaceListParams",
         "type": "object"
       },
+      "Schemaab105a88b69d4fa4fa67e05dea461c6f670fa2b3ce3608440f37727c635b4c9a": {
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/Schema3bbacdba35bc8fb99a846c45110592813937321364f0a6e51f828e026f46334f"
+          },
+          "source_id": {
+            "$ref": "#/components/schemas/Schemab572adfb7ef8fe3f42d44eba8d08ff913bef1b0d7df962dfc76c20f19e80c183"
+          }
+        },
+        "required": [
+          "source_id",
+          "source"
+        ],
+        "title": "SourceRegisterParams",
+        "type": "object"
+      },
       "Schemaab9c6f751289751cd467757ba716178f3bdac6ac4ea4f500fb3e7060bd045639": {
         "default": [],
         "items": {
@@ -2966,6 +3094,19 @@
         },
         "title": "Sources",
         "type": "array"
+      },
+      "Schemab2cfdbaa45beacb98302dd56ec7ecba25af5383c368de5fbc5e726a76e974fc4": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "IngestJobControlResult",
+        "type": "object"
       },
       "Schemab2e631b4636bd6bbe796db78f5f0efafe42402deb58b8bc7828ce6ee8e61274a": {
         "additionalProperties": false,
@@ -3282,6 +3423,12 @@
         },
         "type": "object"
       },
+      "Schemac77c32ae1fe2fa1e69153ebcef53e215f6dc2dca280f30c1bfd126063b74ae2d": {
+        "maxLength": 2048,
+        "minLength": 1,
+        "title": "Target",
+        "type": "string"
+      },
       "Schemac8988ac0c133eee1d37a57c7873fc8e2d0d2270106728130e931394b807f0e53": {
         "anyOf": [
           {
@@ -3308,6 +3455,14 @@
       "Schemacac9b06c3ec93a7fc8bde8feaeb94be496804f70091072f05fe0a117f04fb850": {
         "title": "Mode",
         "type": "string"
+      },
+      "Schemacc6fe20bda57203f610589d58c58fddb2597099c49ad747ce54b0d45eb7109ea": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7"
+        },
+        "maxProperties": 8,
+        "title": "Options",
+        "type": "object"
       },
       "Schemaccaf437a4d2f3796fc8df7087e95f0521813d43a9f29cea0f760bc425fc1e9aa": {
         "description": "Where the alert went; never the channel credentials.",
@@ -3920,6 +4075,26 @@
         "title": "Job Id",
         "type": "string"
       },
+      "Schemaf35a6e00b6bea508892e856710104af70ad3e30ef17ef9e96c145f6409d756c5": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/Schema4fa428a7bc7e9750272fa0eeefda418ee278966bb9a3215500dcdd5cf6b55def"
+          },
+          "options": {
+            "$ref": "#/components/schemas/Schemacc6fe20bda57203f610589d58c58fddb2597099c49ad747ce54b0d45eb7109ea"
+          },
+          "target": {
+            "$ref": "#/components/schemas/Schemac77c32ae1fe2fa1e69153ebcef53e215f6dc2dca280f30c1bfd126063b74ae2d"
+          }
+        },
+        "required": [
+          "kind",
+          "target"
+        ],
+        "title": "IngestSubmitParams",
+        "type": "object"
+      },
       "Schemaf4304c500b7b9581c3b477077102e76b64359987bcd3faf2d51c25603695929e": {
         "maxLength": 2048,
         "minLength": 1,
@@ -3977,6 +4152,12 @@
       "Schemaf8c52e633d1aa5bf9e5d13b7e0046ac133337232c0f726779bedf69d4e1150e3": {
         "minimum": 0,
         "title": "Expected Cost Microunits",
+        "type": "integer"
+      },
+      "Schemaf98c23f3e1426042123c4e427de8421eb6e83fbc12f21c2144a4205e05b4f61e": {
+        "maximum": 9,
+        "minimum": 0,
+        "title": "Bucket",
         "type": "integer"
       },
       "Schemaf9dc517ae1de981c6ec75b9eeef87a8f7750cc487c591961e000cc918273c329": {
@@ -5555,6 +5736,40 @@
           }
         },
         "summary": "Rebalance Plan",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.cluster.RegisterForeignSource": {
+      "post": {
+        "operationId": "eg.cluster.RegisterForeignSource",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/RegisterForeignSource"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.cluster.json#/methods/RegisterForeignSource"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "opaque prepared/committed control receipt; endpoint configuration is not duplicated in the ledger",
         "tags": [
           "eg"
         ]
@@ -20798,7 +21013,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "schemas/method.request.json#/methods/RegisterForeignSource/properties/params"
+                "$ref": "#/components/schemas/Schemaab105a88b69d4fa4fa67e05dea461c6f670fa2b3ce3608440f37727c635b4c9a"
               }
             }
           },
@@ -20806,20 +21021,13 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "schemas/result.cluster.json#/methods/RegisterForeignSource"
-                }
-              }
-            },
-            "description": "Operation result"
+            "$ref": "#/components/responses/Shared01de2e1f0ba85b2d075606bc5b5184ec02b2ccb5e1e25960932bec78407a24e4"
           },
           "default": {
             "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
           }
         },
-        "summary": "Register a foreign source with the engine (governed write)",
+        "summary": "Register a foreign source owned by the caller (governed write)",
         "tags": [
           "federation"
         ]
@@ -21289,6 +21497,94 @@
         ]
       }
     },
+    "/api/v1/ops/ingest.jobs.cancel": {
+      "post": {
+        "operationId": "ingest.jobs.cancel",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema77c704f5198eb62dcec9d985d8809a2f450c7a16e032304a35698a711717fefd"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Sharedf6bc34ea32a522bd95e19dc3f465ffd10ad203bfc1a41e856ef4a37e4b53faca"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Cancel one pending ingestion job",
+        "tags": [
+          "ingest"
+        ]
+      }
+    },
+    "/api/v1/ops/ingest.jobs.list": {
+      "post": {
+        "operationId": "ingest.jobs.list",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema0da43ab78b0f7615b615a265651482f8f2d69a1ca9a27bc828cacbd587fed811"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schema9b6ecf3f1107d98ead48bd9ab0edfe062b3fb111e049a2d9b617918b80318f48"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "List this tenant's durable ingestion jobs",
+        "tags": [
+          "ingest"
+        ]
+      }
+    },
+    "/api/v1/ops/ingest.jobs.prioritize": {
+      "post": {
+        "operationId": "ingest.jobs.prioritize",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema953c4f01a65a007aebf81f31e08ab2b31cc9e4cbe59ab3b9767aa1b983fe1584"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Sharedf6bc34ea32a522bd95e19dc3f465ffd10ad203bfc1a41e856ef4a37e4b53faca"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Set the priority bucket of one ingestion job",
+        "tags": [
+          "ingest"
+        ]
+      }
+    },
     "/api/v1/ops/ingest.jobs.status": {
       "post": {
         "operationId": "ingest.jobs.status",
@@ -21488,6 +21784,40 @@
           }
         },
         "summary": "Request a durable sync of one ingestion source",
+        "tags": [
+          "ingest"
+        ]
+      }
+    },
+    "/api/v1/ops/ingest.submissions.create": {
+      "post": {
+        "operationId": "ingest.submissions.create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schemaf35a6e00b6bea508892e856710104af70ad3e30ef17ef9e96c145f6409d756c5"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schema2c726dca5463d0c63019250fcfdcdc2950392d3a6c8b01219609029bfce2812e"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Queue a durable ingest, URL, pack, fact-extract or distill job",
         "tags": [
           "ingest"
         ]
@@ -22682,5 +23012,5 @@
       }
     }
   },
-  "x-registry-digest": "255766c3d4d60603c273877de05d4a09de1e716f2c553c568fc20dfd6068ef41"
+  "x-registry-digest": "3a644cd73072b323c4bad60475b027bf61cc276d9abc1fe537f5182b4859aa08"
 }
