@@ -16,7 +16,15 @@ export PYTHONNOUSERSITE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
 python3 -I "$HERE/qualification_guards.py" preflight \
  "$BINDINGS" "$WHEELHOUSE" "$RESTART_BUNDLE" "$TUIG_BIN" \
  "$HERE/restart-bundle-manifest.json" "$QUALIFICATION_ROOT"
-uv --no-config pip compile --python-version 3.12 --generate-hashes "$QUALIFICATION_ROOT/requirements.in" -o "$QUALIFICATION_ROOT/evidence/requirements.lock"
+# Every dependency other than the reviewed candidate wheels resolves from
+# Arbora's own uv.lock; a fresh resolve could pull an unreviewed release.
+uv --no-config export --frozen --project "$HERE/../.." --all-extras --no-hashes \
+ --no-emit-project --no-emit-package medulla --no-emit-package medulla-stem \
+ --no-emit-package scion-sdk --no-emit-package meristem \
+ -o "$QUALIFICATION_ROOT/evidence/arbora-lock-constraints.txt"
+uv --no-config pip compile --python-version 3.12 --generate-hashes \
+ -c "$QUALIFICATION_ROOT/evidence/arbora-lock-constraints.txt" \
+ "$QUALIFICATION_ROOT/requirements.in" -o "$QUALIFICATION_ROOT/evidence/requirements.lock"
 uv --no-config venv --python 3.12 "$QUALIFICATION_ROOT/env"
 uv --no-config pip install --python "$QUALIFICATION_ROOT/env/bin/python" --require-hashes -r "$QUALIFICATION_ROOT/evidence/requirements.lock"
 uv --no-config pip check --python "$QUALIFICATION_ROOT/env/bin/python" | tee "$QUALIFICATION_ROOT/evidence/dependency-check.txt"
