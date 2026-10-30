@@ -620,11 +620,15 @@
     {
       "id": "ARBORA-FLEET-R011",
       "title": "Registry core computes a canonical digest and authorized find",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "4b83c69e2b41"
+        "4b83c69e2b41",
+        "eb3902bc4517"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_api_registry.py:112",
+        "tests/api/test_api_registry.py:64"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R012",
@@ -644,12 +648,17 @@
     {
       "id": "ARBORA-FLEET-R013",
       "title": "MCP projection exposes the six verbs with typed schemas",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "6b63aeb7ba03",
-        "ea736715b7fb"
+        "ea736715b7fb",
+        "eb3902bc4517"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_mcp_verbs.py:141",
+        "tests/api/test_mcp_verbs.py:260",
+        "tests/api/test_mcp_verbs.py:308"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R014",
@@ -796,18 +805,23 @@
       "title": "Authority-parity oracle validates principal, operation and surface",
       "delivery_state": "LANDED",
       "landed_in": [
-        "ba0aa6a11b4a"
+        "ba0aa6a11b4a",
+        "eb3902bc4517"
       ],
       "verified_by": []
     },
     {
       "id": "ARBORA-FLEET-R018",
       "title": "Multiplexer exposes four resident fleet tools over one catalog",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "e1d37ca10ef7"
+        "e1d37ca10ef7",
+        "eb3902bc4517"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/fleet/test_gateway_ops.py:17",
+        "tests/fleet/test_gateway_ops.py:60"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R019",
@@ -874,11 +888,14 @@
     {
       "id": "ARBORA-FLEET-R023",
       "title": "Connector count pins stay consistent across the fleet",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "667a206c800e"
+        "667a206c800e",
+        "eb3902bc4517"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/test_check_connector_count_pins.py:25"
+      ],
       "rollup_of": [
         "ARBORA-FLEET-R023.1"
       ]
@@ -886,11 +903,14 @@
     {
       "id": "ARBORA-FLEET-R023.1",
       "title": "Pure connector count-pin comparison (producer)",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "667a206c800e"
+        "667a206c800e",
+        "eb3902bc4517"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_check_connector_count_pins.py:25"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R024",
@@ -942,11 +962,14 @@
     {
       "id": "ARBORA-FLEET-R024.1",
       "title": "Deploy-watch verdict is a typed Arbora operation",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "c2d8c8ce46b8"
+        "c2d8c8ce46b8",
+        "eb3902bc4517"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_fleet_deploy_watch_ops.py:18"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R024.2",
@@ -1087,12 +1110,17 @@
     {
       "id": "ARBORA-FLEET-R028",
       "title": "Arbora renews every registration before its lease lapses",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "619d25ac8e69",
-        "d9015e6d6cda"
+        "d9015e6d6cda",
+        "eb3902bc4517"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/fleet/test_fleet_onboarding.py:247",
+        "tests/fleet/test_fleet_onboarding.py:276",
+        "tests/fleet/test_fleet_onboarding.py:574"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R030",
@@ -1110,11 +1138,14 @@
     {
       "id": "ARBORA-FLEET-R031",
       "title": "`find` ranks catalog-admitted tools when a live probe cannot answer",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "d43ff2da921f"
+        "d43ff2da921f",
+        "eb3902bc4517"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/fleet/test_catalog_tool_fallback.py:29"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R032",
