@@ -470,7 +470,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "45283d0137b9",
-        "847ea6608cbe",
+        "83d47dd6fd2d",
         "f37f67d33d37"
       ],
       "verified_by": [
@@ -541,7 +541,7 @@
       "title": "Add arbora operation for code navigation actions",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "54119f435f15"
+        "23f2884b39ba"
       ],
       "verified_by": [
         "tests/mcp_server/test_legacy_analyze_intent_mapping.py:31"
@@ -552,7 +552,7 @@
       "title": "Add arbora operation for impact actions",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "54119f435f15"
+        "23f2884b39ba"
       ],
       "verified_by": [
         "tests/mcp_server/test_legacy_analyze_intent_mapping.py:36"
@@ -561,13 +561,9 @@
     {
       "id": "ARBORA-HOST-R005.2.1.3",
       "title": "Add arbora operation for `similar_code` and the remaining `graph_analyze` actions",
-      "delivery_state": "VERIFIED",
-      "landed_in": [
-        "54119f435f15"
-      ],
-      "verified_by": [
-        "tests/mcp_server/test_legacy_analyze_intent_mapping.py:41"
-      ]
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     },
     {
       "id": "ARBORA-HOST-R005.2.1.4",
