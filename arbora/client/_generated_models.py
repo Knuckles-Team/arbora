@@ -9,7 +9,7 @@ from typing import Literal
 
 from arbora.client._schema import _expanded_spec
 
-REGISTRY_DIGEST = "4214511d703c721e010c215faebad403bdaab482a9f522194383fc0bb3c66509"
+REGISTRY_DIGEST = "ef0bc8fc466ebcf7bb3bd6d92b49553acf492d2f330cde2a606e790792674e7c"
 API_VERSION = "1"
 type OperationId = Literal[
     "access.check",
@@ -529,12 +529,16 @@ type OperationId = Literal[
     "ingest.drift.repair_propose",
     "ingest.embedding.admit",
     "ingest.embedding.reembed",
+    "ingest.jobs.cancel",
+    "ingest.jobs.list",
+    "ingest.jobs.prioritize",
     "ingest.jobs.status",
     "ingest.packs.list",
     "ingest.repositories.index",
     "ingest.sources.list",
     "ingest.sources.status",
     "ingest.sources.sync",
+    "ingest.submissions.create",
     "memory.delete",
     "memory.list",
     "memory.read",
