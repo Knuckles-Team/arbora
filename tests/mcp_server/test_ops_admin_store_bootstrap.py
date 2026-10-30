@@ -63,8 +63,9 @@ def config_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 def _served() -> dict[str, Any]:
     bound = _with_ops_admin_store({}, _Pool(), "tenant-graph", lambda t: t)
+    assert bound is not None
     assert isinstance(bound["ops_admin_store"], ArboraOpsAdminStore)
-    return bound
+    return dict(bound)
 
 
 def _ctx(services: Any, tenant: str = "t1") -> Any:
