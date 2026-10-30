@@ -315,7 +315,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "20f773df9ddd",
-        "4016e049e45e"
+        "36f183ae299f"
       ],
       "verified_by": [
         "tests/api/test_agent_browser_ops.py:38",
@@ -930,8 +930,7 @@
       "title": "Decide operations (service-executed) — decide slice",
       "delivery_state": "LANDED",
       "landed_in": [
-        "1ded59edd1a6",
-        "4016e049e45e"
+        "1ded59edd1a6"
       ],
       "verified_by": []
     },
@@ -1193,7 +1192,7 @@
       "title": "Agent, browser, RLM, and fleet call operations",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "4016e049e45e",
+        "36f183ae299f",
         "e1d37ca10ef7"
       ],
       "verified_by": [
@@ -1383,7 +1382,6 @@
       "title": "Operational admin operations — admin slice",
       "delivery_state": "LANDED",
       "landed_in": [
-        "4016e049e45e",
         "8d1bc46ecbdb"
       ],
       "verified_by": []
@@ -1678,7 +1676,7 @@
       "title": "Dynamic multiplexer discovery, load, and call",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "4016e049e45e",
+        "36f183ae299f",
         "b9141334e1ba"
       ],
       "verified_by": [
@@ -1691,7 +1689,7 @@
       "title": "Eunomia narrowing-only policy enforcement",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "4016e049e45e",
+        "36f183ae299f",
         "4b83c69e2b41"
       ],
       "verified_by": [
@@ -1736,7 +1734,7 @@
       "title": "Pre-dispatch audit reservation for governed effects",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "4016e049e45e",
+        "36f183ae299f",
         "a9025191159e"
       ],
       "verified_by": [
