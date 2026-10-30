@@ -33,8 +33,8 @@
   },
   "meristem": {
     "distribution": "meristem",
-    "version": "4.0.0",
-    "wheel_sha256": "9b5996ebef27c304d6e643c4509827c7d29cc09c589be4838a85e4fb466d8c12"
+    "version": "4.0.1",
+    "wheel_sha256": "56a081afe976b126aa6a007cea8bee83d2584e34fc3f20007355d465517aa6b1"
   },
   "tuig": {
     "repository": "Knuckles-Team/tuig",

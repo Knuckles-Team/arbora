@@ -101,10 +101,11 @@ def verify_producer(
     return client, server, provenance
 
 
-def fetch_meristem(wheels: Path, expected: str) -> None:
+def fetch_meristem(wheels: Path, expected: str, version: str) -> None:
     """Fetch only the reviewed released wheel; hash-check before use."""
+    require(bool(re.fullmatch(r"[0-9]+(\.[0-9]+)*", version)), "meristem version")
     with urllib.request.urlopen(
-        "https://pypi.org/pypi/meristem/4.0.0/json", timeout=30
+        f"https://pypi.org/pypi/meristem/{version}/json", timeout=30
     ) as response:
         metadata = json.load(response)
     chosen = [
@@ -197,7 +198,9 @@ def prepare(root: Path) -> None:
     )
     for wheel in (client, server):
         shutil.copy2(wheel, wheels / wheel.name)
-    fetch_meristem(wheels, bindings["meristem"]["wheel_sha256"])
+    fetch_meristem(
+        wheels, bindings["meristem"]["wheel_sha256"], bindings["meristem"]["version"]
+    )
     bind_producer(bindings, receipts["medulla"], client, server, provenance)
     bind_consumers(bindings, receipts, wheels, sources)
     prepare_bundle(root, sources, here)

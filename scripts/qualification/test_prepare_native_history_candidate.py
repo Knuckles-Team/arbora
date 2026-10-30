@@ -148,7 +148,7 @@ class PrepareTests(unittest.TestCase):
             return_value=io.BytesIO(json.dumps(payload).encode()),
         ):
             with self.assertRaises(SystemExit):
-                prepare.fetch_meristem(self.root, "d" * 64)
+                prepare.fetch_meristem(self.root, "d" * 64, "4.0.1")
 
 
 if __name__ == "__main__":
