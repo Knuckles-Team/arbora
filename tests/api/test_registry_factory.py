@@ -33,6 +33,7 @@ from arbora.api.ops import (
     telemetry,
     usage,
     work,
+    write_back,
 )
 from arbora.api.registry import (
     Composite,
@@ -146,6 +147,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *source.operations(),
         *swarm.operations(),
         *work.operations(),
+        *write_back.operations(),
         *ops.operations(),
         *plans.operations(),
     )

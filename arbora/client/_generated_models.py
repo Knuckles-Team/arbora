@@ -9,7 +9,7 @@ from typing import Literal
 
 from arbora.client._schema import _expanded_spec
 
-REGISTRY_DIGEST = "dbb0efa0dc47306b1207ab4bb490efb45265fb902e98e5480fba16122bd68a62"
+REGISTRY_DIGEST = "505b9d7809501be35f8b9562edfc4e8817b4d6f4182d4b59c48637e0817edb0f"
 API_VERSION = "1"
 type OperationId = Literal[
     "access.check",
@@ -521,6 +521,8 @@ type OperationId = Literal[
     "fleet.status",
     "fleet.tools.load",
     "fleet.tools.unload",
+    "fleet.write_back.commit",
+    "fleet.write_back.preview",
     "ingest.jobs.status",
     "ingest.packs.list",
     "ingest.repositories.index",

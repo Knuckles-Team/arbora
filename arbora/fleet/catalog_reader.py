@@ -13,6 +13,7 @@ composition-root adapter.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import threading
 import time
@@ -183,6 +184,78 @@ class FleetCatalog:
     context: ReadContext
     servers: tuple[CatalogServer, ...]
     unadmitted: tuple[str, ...] = ()
+    generation: int = 0
+    digest: str = ""
+
+
+def catalog_digest(servers: Sequence[CatalogServer]) -> str:
+    """Order-independent digest of every admitted component identity."""
+    parts: list[str] = []
+    for server in servers:
+        for entry in (server.component, *(item.entry for item in server.provides)):
+            parts.append(
+                f"{entry.component_id}|{entry.entry_revision}|"
+                f"{entry.definition_digest}|{entry.content_digest}"
+            )
+    return hashlib.sha256("\n".join(sorted(parts)).encode()).hexdigest()
+
+
+@dataclass(frozen=True, slots=True)
+class ReplicaStatus:
+    """One replica's convergence verdict against the active generation."""
+
+    replica_id: str
+    generation: int
+    digest: str
+    converged: bool
+
+
+class ReplicaDegradedError(RuntimeError):
+    """A replica has not reached the active generation+digest."""
+
+
+class ReplicaConvergence:
+    """Observe replicas by (generation, digest); degraded replicas never serve.
+
+    The active (generation, digest) is the highest generation reported by any
+    replica. A replica reporting a lower generation, or the same generation
+    with a different digest, is degraded and ``require_serving`` refuses it
+    rather than letting it serve a mixed catalog (ARBORA-FLEET-R051.2).
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._reports: dict[str, tuple[int, str]] = {}
+
+    def observe(self, replica_id: str, catalog: FleetCatalog) -> None:
+        with self._lock:
+            self._reports[replica_id] = (catalog.generation, catalog.digest)
+
+    def _active(self) -> tuple[int, str]:
+        return max(self._reports.values(), default=(0, ""))
+
+    def status(self) -> tuple[ReplicaStatus, ...]:
+        with self._lock:
+            active = self._active()
+            return tuple(
+                ReplicaStatus(rid, gen, dig, (gen, dig) == active)
+                for rid, (gen, dig) in sorted(self._reports.items())
+            )
+
+    @property
+    def degraded(self) -> tuple[str, ...]:
+        return tuple(s.replica_id for s in self.status() if not s.converged)
+
+    def require_serving(self, replica_id: str) -> None:
+        for item in self.status():
+            if item.replica_id == replica_id:
+                if not item.converged:
+                    raise ReplicaDegradedError(
+                        f"replica {replica_id} at generation {item.generation} "
+                        "has not reached the active generation and digest"
+                    )
+                return
+        raise ReplicaDegradedError(f"replica {replica_id} has reported no catalog")
 
 
 class FleetCatalogReadPort(Protocol):
@@ -254,6 +327,7 @@ class FleetCatalogReader:
         self._cache_lock = threading.Lock()
         self._snapshots: dict[tuple[Any, ...], tuple[float, FleetCatalog]] = {}
         self._contents: dict[tuple[Any, ...], ComponentContent] = {}
+        self._generations: dict[ReadContext, tuple[int, str]] = {}
 
     async def read(
         self,
@@ -473,8 +547,18 @@ class FleetCatalogReader:
                 )
             )
         joined.sort(key=lambda item: item.component.server_name)
+        digest = catalog_digest(joined)
+        with self._cache_lock:
+            previous = self._generations.get(context)
+            if previous is None or previous[1] != digest:
+                previous = ((previous[0] if previous else 0) + 1, digest)
+                self._generations[context] = previous
         return FleetCatalog(
-            context=context, servers=tuple(joined), unadmitted=unadmitted
+            context=context,
+            servers=tuple(joined),
+            unadmitted=unadmitted,
+            generation=previous[0],
+            digest=digest,
         )
 
     async def _read_content(

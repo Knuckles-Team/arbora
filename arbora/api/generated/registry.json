@@ -25132,6 +25132,220 @@
       "verb": "manage"
     },
     {
+      "audit": "event",
+      "binding": {
+        "handler": "arbora.api.ops.write_back.handle_write_back_commit",
+        "kind": "composite"
+      },
+      "confirm": "plan",
+      "effect": "write",
+      "examples": [
+        "commit this previewed connector write-back"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "fleet.write_back.commit",
+      "idempotency": "key_required",
+      "params": {
+        "model": "arbora.api.ops.write_back.WriteBackPreviewRequest",
+        "schema": {
+          "additionalProperties": false,
+          "description": "A connector write-back candidate, always evaluated as a preview.",
+          "properties": {
+            "change": {
+              "additionalProperties": true,
+              "title": "Change",
+              "type": "object"
+            },
+            "connector": {
+              "minLength": 1,
+              "title": "Connector",
+              "type": "string"
+            },
+            "idempotency_key": {
+              "minLength": 1,
+              "title": "Idempotency Key",
+              "type": "string"
+            },
+            "target": {
+              "minLength": 1,
+              "title": "Target",
+              "type": "string"
+            }
+          },
+          "required": [
+            "connector",
+            "target",
+            "change",
+            "idempotency_key"
+          ],
+          "title": "WriteBackPreviewRequest",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.write_back.WriteBackCommitResult",
+        "schema": {
+          "additionalProperties": false,
+          "description": "The receipt of one committed write-back; replays return it verbatim.",
+          "properties": {
+            "applied": {
+              "default": true,
+              "title": "Applied",
+              "type": "boolean"
+            },
+            "connector": {
+              "title": "Connector",
+              "type": "string"
+            },
+            "idempotency_key": {
+              "title": "Idempotency Key",
+              "type": "string"
+            },
+            "receipt": {
+              "additionalProperties": true,
+              "title": "Receipt",
+              "type": "object"
+            },
+            "target": {
+              "title": "Target",
+              "type": "string"
+            }
+          },
+          "required": [
+            "connector",
+            "target",
+            "idempotency_key",
+            "receipt"
+          ],
+          "title": "WriteBackCommitResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "mcp:delegate"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Commit a previously previewed connector write-back",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "write"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "handler": "arbora.api.ops.write_back.handle_write_back_preview",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "preview this connector write-back"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "fleet.write_back.preview",
+      "idempotency": "key_required",
+      "params": {
+        "model": "arbora.api.ops.write_back.WriteBackPreviewRequest",
+        "schema": {
+          "additionalProperties": false,
+          "description": "A connector write-back candidate, always evaluated as a preview.",
+          "properties": {
+            "change": {
+              "additionalProperties": true,
+              "title": "Change",
+              "type": "object"
+            },
+            "connector": {
+              "minLength": 1,
+              "title": "Connector",
+              "type": "string"
+            },
+            "idempotency_key": {
+              "minLength": 1,
+              "title": "Idempotency Key",
+              "type": "string"
+            },
+            "target": {
+              "minLength": 1,
+              "title": "Target",
+              "type": "string"
+            }
+          },
+          "required": [
+            "connector",
+            "target",
+            "change",
+            "idempotency_key"
+          ],
+          "title": "WriteBackPreviewRequest",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.write_back.WriteBackPreviewResult",
+        "schema": {
+          "additionalProperties": false,
+          "description": "What a D18 write-back preview returns: a plan, never an applied write.",
+          "properties": {
+            "applied": {
+              "default": false,
+              "title": "Applied",
+              "type": "boolean"
+            },
+            "connector": {
+              "title": "Connector",
+              "type": "string"
+            },
+            "idempotency_key": {
+              "title": "Idempotency Key",
+              "type": "string"
+            },
+            "target": {
+              "title": "Target",
+              "type": "string"
+            },
+            "would_apply": {
+              "additionalProperties": true,
+              "title": "Would Apply",
+              "type": "object"
+            }
+          },
+          "required": [
+            "connector",
+            "target",
+            "idempotency_key",
+            "would_apply"
+          ],
+          "title": "WriteBackPreviewResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "mcp:delegate"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Preview a connector write-back without applying it",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "write"
+    },
+    {
       "audit": "none",
       "binding": {
         "handler": "arbora.api.ops.ingest.get_job_status",
@@ -28577,5 +28791,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "dbb0efa0dc47306b1207ab4bb490efb45265fb902e98e5480fba16122bd68a62"
+  "registry_digest": "505b9d7809501be35f8b9562edfc4e8817b4d6f4182d4b59c48637e0817edb0f"
 }

@@ -44,6 +44,7 @@ def get_registry() -> Registry:
         telemetry,
         usage,
         work,
+        write_back,
     )
 
     curated: list[OpSpec] = []
@@ -70,6 +71,7 @@ def get_registry() -> Registry:
         telemetry,
         usage,
         work,
+        write_back,
     ):
         for op in module.operations():
             if isinstance(op.binding, Composite):
