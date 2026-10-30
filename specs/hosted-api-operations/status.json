@@ -315,7 +315,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "20f773df9ddd",
-        "841b414706ae"
+        "4016e049e45e"
       ],
       "verified_by": [
         "tests/api/test_agent_browser_ops.py:38",
@@ -457,7 +457,7 @@
       "title": "Six resident MCP verbs with typed discovery",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "21ce14fb84cc",
+        "67987a735927",
         "6b63aeb7ba03",
         "ea736715b7fb"
       ],
@@ -930,7 +930,8 @@
       "title": "Decide operations (service-executed) — decide slice",
       "delivery_state": "LANDED",
       "landed_in": [
-        "1ded59edd1a6"
+        "1ded59edd1a6",
+        "4016e049e45e"
       ],
       "verified_by": []
     },
@@ -979,7 +980,7 @@
       "title": "Policy and swarm read operations — policy slice",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "21ce14fb84cc",
+        "67987a735927",
         "cc90ee37583f"
       ],
       "verified_by": [
@@ -1192,7 +1193,7 @@
       "title": "Agent, browser, RLM, and fleet call operations",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "841b414706ae",
+        "4016e049e45e",
         "e1d37ca10ef7"
       ],
       "verified_by": [
@@ -1233,8 +1234,8 @@
       "title": "Security operations — security slice",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "21ce14fb84cc",
-        "4b69b27f1d76"
+        "4b69b27f1d76",
+        "67987a735927"
       ],
       "verified_by": [
         "tests/api/test_telemetry_security_usage_ops.py:84"
@@ -1279,7 +1280,7 @@
         "94724be32c28"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:378"
+        "tests/api/test_registry_factory.py:375"
       ],
       "rollup_of": [
         "ARBORA-OPS-R024.4.1",
@@ -1374,7 +1375,7 @@
         "5f79be652726"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:378"
+        "tests/api/test_registry_factory.py:375"
       ]
     },
     {
@@ -1382,6 +1383,7 @@
       "title": "Operational admin operations — admin slice",
       "delivery_state": "LANDED",
       "landed_in": [
+        "4016e049e45e",
         "8d1bc46ecbdb"
       ],
       "verified_by": []
@@ -1504,12 +1506,12 @@
       "title": "Exported domain scope classes",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "21ce14fb84cc",
         "4b83c69e2b41",
+        "67987a735927",
         "b47b39eac0ae"
       ],
       "verified_by": [
-        "tests/api/test_registry_scopes.py:16"
+        "tests/api/test_registry_scopes.py:17"
       ]
     },
     {
@@ -1676,7 +1678,7 @@
       "title": "Dynamic multiplexer discovery, load, and call",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "841b414706ae",
+        "4016e049e45e",
         "b9141334e1ba"
       ],
       "verified_by": [
@@ -1689,8 +1691,8 @@
       "title": "Eunomia narrowing-only policy enforcement",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "4b83c69e2b41",
-        "841b414706ae"
+        "4016e049e45e",
+        "4b83c69e2b41"
       ],
       "verified_by": [
         "tests/api/test_policy_eunomia.py:137",
@@ -1734,7 +1736,7 @@
       "title": "Pre-dispatch audit reservation for governed effects",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "841b414706ae",
+        "4016e049e45e",
         "a9025191159e"
       ],
       "verified_by": [
@@ -1763,8 +1765,8 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "1fb96633563e",
-        "21ce14fb84cc",
-        "3e67ac0a2237",
+        "67987a735927",
+        "df02d933ffd9",
         "ea736715b7fb",
         "f13ce20b05dc"
       ],
@@ -2624,7 +2626,7 @@
         "d673cd573c77"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:387"
+        "tests/api/test_registry_factory.py:384"
       ]
     },
     {
