@@ -130,12 +130,16 @@ def fixture(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> Any:
     action_policy.reset_action_policy_cache_for_tests()
     audit, pool = _Audit(), _Pool()
     sessions = [_session()]
+    reads: list[GraphSession] = []
+
+    def process_session() -> GraphSession:
+        reads.append(sessions[0])
+        return sessions[0]
+
     monkeypatch.setattr(served_engine, "ServedEngine", lambda _pool: audit)
-    bindings = served_invocation._with_task_plan_schema(
-        {},
-        pool,
-        "tenant-a",
-        lambda tenant: ClientContext(
+
+    def connect_context(tenant: str) -> ClientContext:
+        return ClientContext(
             principal=str(sessions[0].actor.actor_id),
             tenant=tenant,
             audience=str(sessions[0].audience),
@@ -143,13 +147,22 @@ def fixture(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> Any:
             roles=tuple(str(role) for role in sessions[0].actor.roles),
             scopes=tuple(str(scope) for scope in sessions[0].scopes),
             policy_version=str(sessions[0].policy_version),
-        ),
-        lambda: sessions[0],
+        )
+
+    bindings, startup = served_invocation._with_task_plan_schema(
+        {}, pool, "tenant-a", connect_context, process_session
     )
-    assert bindings is not None
+    assert bindings is not None and startup is not None
+    pins = bindings["task_plan_schema_pins"]
     yield SimpleNamespace(
-        publish=bindings["task_plan_schema_publish"],
-        pin=bindings["task_plan_schema_pins"].pin,
+        publish=served_invocation._task_plan_schema_publisher(
+            pool, "tenant-a", connect_context, process_session
+        ),
+        startup=startup,
+        bindings=bindings,
+        pins=pins,
+        pin=pins.pin,
+        reads=reads,
         audit=audit,
         pool=pool,
         sessions=sessions,
@@ -236,86 +249,6 @@ def test_schema_publication_rejects_coarse_writer_without_admin(fixture: Any) ->
     assert fixture.pool.sent == fixture.audit.records == []
 
 
-def test_schema_publication_separates_request_trace_from_process_authority(
-    fixture: Any,
-) -> None:
-    """A served request may publish through the verified process session.
-
-    HTTP/MCP admission gives the request its own trace context.  The schema
-    publisher is intentionally process-owned, so comparing the two complete
-    ``GraphSession`` values would reject a valid first request before the
-    engine sees it.  The request authority must remain ambient after the
-    process-owned publication scope exits.
-    """
-    process = fixture.sessions[0]
-    request = replace(process, trace_context="request-trace")
-
-    with use_session(request):
-        assert _publish(fixture) == "sha256:" + "d" * 64
-        assert current_session() is request
-
-    assert current_session() is None
-    assert fixture.pool.sessions == [process]
-
-
-def test_schema_publication_accepts_rotated_request_credential_expiry(
-    fixture: Any,
-) -> None:
-    """Separate verified JWTs may have different expiry claims.
-
-    The process authority and request authority still need matching actor,
-    tenant, scopes, graph, policy, audience, and routing fields.  Only the
-    per-token expiry and request trace differ, and both leases are validated
-    at their respective ambient boundaries.
-    """
-    process_expiry = int(time.time()) + 600
-    request_expiry = process_expiry + 300
-    process_actor = replace(
-        fixture.sessions[0].actor,
-        credential_expires_at=process_expiry,
-        credential_lease=CredentialLease(process_expiry),
-    )
-    process = replace(fixture.sessions[0], actor=process_actor)
-    fixture.sessions[0] = process
-    request_actor = replace(
-        process.actor,
-        credential_expires_at=request_expiry,
-        credential_lease=CredentialLease(request_expiry),
-    )
-    request = replace(
-        process,
-        actor=request_actor,
-        trace_context="request-rotated-credential",
-    )
-
-    with use_session(request):
-        assert _publish(fixture) == "sha256:" + "d" * 64
-        assert current_session() is request
-    assert current_session() is None
-    assert fixture.pool.sessions == [process]
-
-
-def test_schema_publication_rejects_expired_request_authority(fixture: Any) -> None:
-    process = fixture.sessions[0]
-    expired = int(time.time()) - 1
-    request_actor = replace(
-        process.actor,
-        credential_expires_at=expired,
-        credential_lease=CredentialLease(expired),
-    )
-    request = replace(
-        process,
-        actor=request_actor,
-        trace_context="request-expired",
-    )
-
-    with pytest.raises(SessionExpiredError):
-        with use_session(request):
-            _publish(fixture)
-    assert fixture.pool.sent == []
-    assert fixture.audit.records == []
-
-
 def test_schema_publication_rejects_expired_process_authority(fixture: Any) -> None:
     process = fixture.sessions[0]
     expired = int(time.time()) - 1
@@ -335,83 +268,6 @@ def test_schema_publication_rejects_expired_process_authority(fixture: Any) -> N
             _publish(fixture)
     assert fixture.pool.sent == []
     assert fixture.audit.records == []
-
-
-@pytest.mark.parametrize(
-    "defect", ["actor", "tenant", "roles", "scope", "graph", "policy"]
-)
-def test_schema_publication_rejects_mismatched_request_authority(
-    fixture: Any, defect: str
-) -> None:
-    process = fixture.sessions[0]
-    request = replace(process, trace_context=f"request-{defect}")
-    if defect == "actor":
-        request = replace(
-            request, actor=replace(request.actor, actor_id="service:other")
-        )
-    elif defect == "tenant":
-        request = replace(
-            request,
-            tenant="tenant-other",
-            graph="tenant-other",
-            actor=replace(request.actor, tenant_id="tenant-other"),
-        )
-    elif defect == "roles":
-        request = replace(request, actor=replace(request.actor, roles=("role:other",)))
-    elif defect == "scope":
-        request = replace(request, scopes=frozenset({"agent:component-read"}))
-    elif defect == "graph":
-        request = replace(request, graph="other-graph")
-    else:
-        request = replace(request, policy_version="policy-other")
-
-    with use_session(request):
-        with pytest.raises(PermissionError):
-            _publish(fixture)
-    assert fixture.pool.sent == []
-    assert fixture.audit.records == []
-
-
-def test_schema_publication_keeps_concurrent_request_sessions_isolated(
-    fixture: Any,
-) -> None:
-    process = fixture.sessions[0]
-    requests = [
-        replace(process, trace_context=f"request-{index}") for index in range(2)
-    ]
-
-    async def publish_from(request: GraphSession) -> str:
-        with use_session(request):
-            result = await fixture.publish("tenant-a", fixture.pin)
-            assert current_session() is request
-            return result
-
-    async def scenario() -> list[str]:
-        return await asyncio.gather(*(publish_from(request) for request in requests))
-
-    assert asyncio.run(scenario()) == ["sha256:" + "d" * 64] * 2
-    assert current_session() is None
-    assert fixture.pool.sessions == [process, process]
-
-
-def test_schema_publication_restores_request_session_after_engine_failure(
-    fixture: Any, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    process = fixture.sessions[0]
-    request = replace(process, trace_context="request-failure")
-    original_send = fixture.pool._send
-
-    async def fail_publish(method: str, params: Any, *args: Any, **kwargs: Any) -> Any:
-        if params["op"]["op"] == "publish":
-            raise RuntimeError("fixture engine publication failed")
-        return await original_send(method, params, *args, **kwargs)
-
-    monkeypatch.setattr(fixture.pool, "_send", fail_publish)
-    with use_session(request):
-        with pytest.raises(RuntimeError, match="engine publication failed"):
-            _publish(fixture)
-        assert current_session() is request
-    assert current_session() is None
 
 
 @pytest.mark.parametrize("defect", ["digest", "action", "missing", "empty_id"])
@@ -509,21 +365,16 @@ def test_schema_revalidates_exact_intent_after_policy(
     assert fixture.pool.sent == []
 
 
-@pytest.mark.parametrize("defect", ["tenant", "graph", "scope", "ambient"])
+@pytest.mark.parametrize("defect", ["tenant", "graph", "scope"])
 def test_schema_refuses_wrong_bound_authority(fixture: Any, defect: str) -> None:
     bound = fixture.sessions[0]
     if defect == "graph":
         fixture.sessions[0] = replace(bound, graph="other-graph")
     elif defect == "scope":
         fixture.sessions[0] = replace(bound, scopes=frozenset({"agent:component-read"}))
-    if defect == "ambient":
-        with use_session(replace(bound, actor=replace(bound.actor, actor_id="other"))):
-            with pytest.raises(PermissionError):
-                _publish(fixture)
-    else:
-        tenant = "tenant-other" if defect == "tenant" else "tenant-a"
-        with pytest.raises(PermissionError):
-            asyncio.run(fixture.publish(tenant, fixture.pin))
+    tenant = "tenant-other" if defect == "tenant" else "tenant-a"
+    with pytest.raises(PermissionError):
+        asyncio.run(fixture.publish(tenant, fixture.pin))
     assert fixture.pool.sent == []
     assert fixture.audit.records == []
 
@@ -593,3 +444,96 @@ def test_matching_component_reuse_needs_no_new_write_receipt(
     fixture.audit.fail = True
     assert _publish(fixture) == "sha256:" + "c" * 64
     assert fixture.pool.sent == fixture.audit.records == []
+
+
+def _request(fixture: Any) -> GraphSession:
+    """A caller whose verified session differs from the process authority."""
+    process = fixture.sessions[0]
+    return replace(
+        process,
+        actor=replace(process.actor, actor_id="user:caller"),
+        scopes=frozenset({"kg:write", "query:decide", "work:submit"}),
+        trace_context="request-trace",
+    )
+
+
+def _plan_context(fixture: Any, tenant: str = "tenant-a") -> Any:
+    return SimpleNamespace(
+        services=dict(fixture.bindings), caller=SimpleNamespace(tenant=tenant)
+    )
+
+
+@pytest.mark.spec("ARBORA-RELEASE-R003.4.4")
+def test_startup_publishes_the_served_tenant_under_the_process_authority(
+    fixture: Any,
+) -> None:
+    assert current_session() is None
+    assert asyncio.run(fixture.startup()) == {"tenant-a": True}
+    assert current_session() is None
+    assert fixture.pool.sessions == [fixture.sessions[0]]
+    assert len(fixture.pool.sent) == 1
+    assert fixture.pins.pin_for("tenant-a")["definition_digest"] == (
+        "sha256:" + "d" * 64
+    )
+
+
+@pytest.mark.spec("ARBORA-RELEASE-R003.4.4")
+def test_caller_with_other_scopes_plans_once_the_pin_is_published(
+    fixture: Any,
+) -> None:
+    from arbora.api.ops import plans
+
+    asyncio.run(fixture.startup())
+    sent, reads = len(fixture.pool.sent), len(fixture.reads)
+    request = _request(fixture)
+    with use_session(request):
+        pin = asyncio.run(plans._feature_schema(_plan_context(fixture), "tenant-a"))
+        assert current_session() is request
+    assert pin == fixture.pins.pin_for("tenant-a")
+    assert (len(fixture.pool.sent), len(fixture.reads)) == (sent, reads)
+
+
+@pytest.mark.spec("ARBORA-RELEASE-R003.4.4")
+def test_unpublished_request_refuses_unavailable_and_does_not_publish(
+    fixture: Any,
+) -> None:
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.api.ops import plans
+
+    request = _request(fixture)
+    with use_session(request), pytest.raises(OperationRefused) as refused:
+        asyncio.run(plans._feature_schema(_plan_context(fixture), "tenant-a"))
+    assert refused.value.code == "UNAVAILABLE"
+    assert fixture.pool.sent == fixture.pool.sessions == fixture.audit.records == []
+    assert fixture.reads == [] and fixture.pins.pin_for("tenant-a") is None
+
+
+@pytest.mark.spec("ARBORA-RELEASE-R003.4.4")
+def test_no_request_path_can_install_the_process_session(fixture: Any) -> None:
+    """Request bindings hold only the read-only pins; only the lifespan publishes."""
+    import ast
+    from pathlib import Path
+
+    import arbora
+
+    assert set(fixture.bindings) == {"task_plan_schema_pins"}
+    assert not any(callable(value) for value in fixture.bindings.values())
+    package = Path(arbora.__file__).parent
+    readers = sorted(
+        str(path.relative_to(package))
+        for path in package.rglob("*.py")
+        if any(
+            isinstance(node, ast.Attribute)
+            and node.attr == "process_startup"
+            and isinstance(node.ctx, ast.Load)
+            for node in ast.walk(ast.parse(path.read_text()))
+        )
+    )
+    assert readers == ["mcp_server/server.py"]
+    publishers = sorted(
+        str(path.relative_to(package))
+        for path in package.rglob("*.py")
+        if "_task_plan_schema_publisher(" in path.read_text()
+        or ".publish_for(" in path.read_text()
+    )
+    assert publishers == ["api/task_plan_schema.py", "mcp_server/served_invocation.py"]

@@ -25,7 +25,7 @@ Governing [spec](spec.md). Evidence remains PENDING.
 
 For each command and served probe, record exact source commit, candidate manifest digest, artifact digest, environment class, timestamp, CI URL and pass/fail. Run focused manifest/order/rollback tests, full applicable Python checks, cccc/KISS/Dupehound/jscpd gates, build/wheel smoke, and release-only hosted probes. A missing fixture or unavailable hosted environment leaves acceptance open; it does not create a pass.
 
-`ARBORA-RELEASE-R003.4.4`: Warmup without a running loop records the cause. Publication waits for the first served request.
+`ARBORA-RELEASE-R003.4.4`: Start-up publishes every served tenant under the process authority. A request for an unpublished tenant refuses `UNAVAILABLE` and publishes nothing. A caller whose scopes differ from the process reads the published pin.
 
 The pin serialization regression uses the released engine codec on the actual
 export after generation, file serialization and parsing. Its digest must stay

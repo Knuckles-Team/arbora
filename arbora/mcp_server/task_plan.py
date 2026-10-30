@@ -109,29 +109,17 @@ async def _admit(services: InvokeServices, caller: RequestCaller) -> Any:
 async def _published_feature_schema(
     services: InvokeServices, caller: RequestCaller
 ) -> Mapping[str, Any]:
-    """Resolve the caller's tenant-bound schema through the served publisher.
+    """Read the caller tenant's published schema pin; never publish it.
 
     ``TaskPlanConfig.feature_schema`` is operator configuration, not a durable
     AgentComponent revision.  The engine mints the definition digest when the
-    schema body is published for a tenant, so nested planning must use the same
-    verified publisher binding as ``agents.plan_run``.
+    server lifespan publishes the body for a tenant, so nested planning reads
+    the same published pin as ``agents.plan_run``.
     """
+    from arbora.api.task_plan_schema import published_pin
+
     bindings = getattr(services.runtime, "bindings", {})
-    pins = bindings.get("task_plan_schema_pins")
-    publish = bindings.get("task_plan_schema_publish")
-    if pins is None or publish is None:
-        raise OperationRefused(
-            "UNAVAILABLE", {"reason": "no verified task-plan schema pin"}
-        )
-    try:
-        return await pins.for_tenant(str(caller.tenant), publish)
-    except OperationRefused:
-        raise
-    except Exception as exc:
-        raise OperationRefused(
-            "UNAVAILABLE",
-            {"reason": f"task-plan schema publish failed: {type(exc).__name__}"},
-        ) from exc
+    return published_pin(bindings.get("task_plan_schema_pins"), str(caller.tenant))
 
 
 async def evaluate_task_plan(

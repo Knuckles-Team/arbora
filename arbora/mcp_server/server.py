@@ -413,6 +413,11 @@ def mcp_server(
             )
             logger.info("Decide consumers installed: %s", installed)
 
+            # Process-owned publications run here, under the process
+            # authority, before any request is served (ARBORA-RELEASE-R003.4.4).
+            if invocation is not None and invocation.process_startup is not None:
+                asyncio.run(invocation.process_startup())
+
             from arbora.mcp_server.backing.arbora_surface import backing_server
 
             # An ``act`` operation on the backing server, not a listed tool.

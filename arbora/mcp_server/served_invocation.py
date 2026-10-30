@@ -21,9 +21,8 @@ from __future__ import annotations
 
 import importlib.resources
 import json
-from collections.abc import AsyncIterator, Callable, Mapping
+from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
 from contextlib import asynccontextmanager
-from dataclasses import replace
 from functools import cache
 from pathlib import Path
 from typing import Any
@@ -475,33 +474,16 @@ async def _schema_publish_context(
     }
 
 
-def _with_task_plan_schema(
-    bindings: Mapping[str, Any] | None,
+def _task_plan_schema_publisher(
     pool: Any,
     graph: str,
     connect_context: Callable[[str], Any],
     session: Callable[[], Any],
-) -> Mapping[str, Any] | None:
-    """Bind the verified task-plan schema pin (ARBORA-RELEASE-R003.4.4).
-
-    The committed body binds only when its digest matches the installed
-    engine's export. It is then published to the Agent Library once per
-    tenant under the process authority, starting with the process tenant.
-    Otherwise ``agents.plan_run`` keeps refusing with ``UNAVAILABLE``.
-    """
-    if bindings is None or "task_plan_schema_pins" in bindings:
-        return bindings
-    from arbora.api.contracts.session import (
-        current_session,
-        resolve_session,
-        use_session,
-    )
-    from arbora.api.task_plan_schema import engine_publish, startup_pins
+) -> Callable[[str, Mapping[str, Any]], Awaitable[str]]:
+    """The process-lifecycle publisher; it installs the process authority."""
+    from arbora.api.contracts.session import resolve_session, use_session
+    from arbora.api.task_plan_schema import engine_publish
     from arbora.mcp_server.served_engine import ServedEngine
-
-    pins = startup_pins()
-    if pins is None:
-        return bindings
 
     async def client_for(tenant: str) -> Any:
         return await pool.connected_client(connect_context(tenant), graph)
@@ -515,7 +497,7 @@ def _with_task_plan_schema(
     async def bind_client(tenant: str) -> AsyncIterator[Any]:
         # AgentComponent's generated senders operate on the raw EG transport.
         # Bind the process authority for the exact tenant/graph around both the
-        # current read and the publish so client_scope is restored per request
+        # current read and the publish so client_scope is restored per call
         # and concurrent tenants cannot inherit one another's claims.
         async with pool.bind(connect_context(tenant), graph) as client:
             yield client
@@ -523,87 +505,46 @@ def _with_task_plan_schema(
     publisher = engine_publish(client_for, context_for, graph, bind_client=bind_client)
 
     async def publish(tenant: str, pin: Mapping[str, Any]) -> str:
-        bound = session()
-        request = current_session()
-        if request is not None:
-            # Validate the request authority on its own before comparing it
-            # with the separately minted process authority.  A served request
-            # normally carries a fresh JWT, so its credential expiry can
-            # differ from the process token's expiry even when every identity,
-            # tenant, scope, graph, policy, and routing field is identical.
-            resolve_session(request, graph=graph)
-            request_actor = request.actor
-            bound_actor = replace(
-                bound.actor,
-                # ``credential_expires_at`` is the one per-token ActorContext
-                # field.  The process actor's lease and expiry are still
-                # validated below when the real process session is installed.
-                credential_expires_at=request_actor.credential_expires_at,
-            )
-            # HTTP/MCP admission binds the caller's verified request session,
-            # while schema publication deliberately uses the separately
-            # verified process authority.  Compare every authority field
-            # before switching context; only the request-local trace and the
-            # per-token credential expiry may differ between these two
-            # verified sessions.
-            resolve_session(
-                replace(
-                    bound,
-                    actor=bound_actor,
-                    trace_context=request.trace_context,
-                ),
-                graph=graph,
-            )
-            if request.tenant != tenant:
-                raise PermissionError(
-                    "schema publication cannot retarget its request tenant"
-                )
-        with use_session(bound):
+        with use_session(session()):
             verified = resolve_session(graph=graph)
             if verified.tenant != tenant:
                 raise PermissionError("schema publication cannot retarget its tenant")
             return await publisher(tenant, pin)
 
-    _warm_task_plan_schema(pins, publish, str(session().tenant))
-    return {
-        **bindings,
-        "task_plan_schema_pins": pins,
-        "task_plan_schema_publish": publish,
-    }
+    return publish
 
 
-def _warm_task_plan_schema(pins: Any, publish: Any, tenant: str) -> None:
-    """Publish the process tenant's pin at start-up when a loop is running.
+def _with_task_plan_schema(
+    bindings: Mapping[str, Any] | None,
+    pool: Any,
+    graph: str,
+    connect_context: Callable[[str], Any],
+    session: Callable[[], Any],
+) -> tuple[Mapping[str, Any] | None, Callable[[], Awaitable[Any]] | None]:
+    """Bind the verified task-plan schema pin (ARBORA-RELEASE-R003.4.4).
 
-    Without a running loop the first ``agents.plan_run`` publishes it.
+    The committed body binds only when its digest matches the installed
+    engine's export. The request bindings get the read-only pins. The returned
+    start-up callable is the process-lifecycle publisher: the server lifespan
+    awaits it under the process authority for every served tenant. No request
+    binding can reach it, so a request never borrows the process authority.
+    Until a tenant is published, ``agents.plan_run`` refuses ``UNAVAILABLE``.
     """
-    import asyncio
-    import logging
+    if bindings is None or "task_plan_schema_pins" in bindings:
+        return bindings, None
+    from arbora.api.task_plan_schema import publish_at_startup, startup_pins
 
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError as exc:
-        logging.getLogger(__name__).warning(
-            "task-plan schema warmup deferred to first use: %s", exc
-        )
-        return
+    pins = startup_pins()
+    if pins is None:
+        return bindings, None
+    publish = _task_plan_schema_publisher(pool, graph, connect_context, session)
 
-    async def warm() -> None:
-        try:
-            await pins.for_tenant(tenant, publish)
-        except Exception as exc:
-            logging.getLogger(__name__).warning(
-                "task-plan schema publish for %s deferred to first use: %s",
-                tenant,
-                exc,
-            )
+    async def publish_served_tenants() -> dict[str, bool]:
+        # Arbora serves the process tenant's graph only: the engine pool binds
+        # each graph to one tenant.
+        return await publish_at_startup(pins, publish, (str(session().tenant),))
 
-    task = loop.create_task(warm())
-    _WARM_TASKS.add(task)
-    task.add_done_callback(_WARM_TASKS.discard)
-
-
-_WARM_TASKS: set[Any] = set()
+    return {**bindings, "task_plan_schema_pins": pins}, publish_served_tenants
 
 
 def compose_served_invocation(
@@ -654,7 +595,9 @@ def compose_served_invocation(
     bindings = _with_ingest_runner(bindings, pool, graph, connect_context)
     bindings = _with_fleet_source_executor(bindings, pool, graph)
     bindings = _with_nl_federation_planner(bindings)
-    bindings = _with_task_plan_schema(bindings, pool, graph, connect_context, session)
+    bindings, process_startup = _with_task_plan_schema(
+        bindings, pool, graph, connect_context, session
+    )
     if (
         bindings is not None
         and task_plan_config is not None
@@ -743,6 +686,7 @@ def compose_served_invocation(
     invocation = HostedInvocation(
         services=services,
         task_plan_config=task_plan_config,
+        process_startup=process_startup,
         authenticator=AmbientHTTPAuthenticator(
             session_for_request=verified_bearer_session_for_request
         ),
