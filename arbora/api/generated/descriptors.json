@@ -6110,6 +6110,30 @@
       "verb": "manage"
     },
     {
+      "domain": "fleet",
+      "examples": [
+        "commit this previewed connector write-back"
+      ],
+      "id": "fleet.write_back.commit",
+      "summary": "Commit a previously previewed connector write-back",
+      "tags": [
+        "fleet"
+      ],
+      "verb": "write"
+    },
+    {
+      "domain": "fleet",
+      "examples": [
+        "preview this connector write-back"
+      ],
+      "id": "fleet.write_back.preview",
+      "summary": "Preview a connector write-back without applying it",
+      "tags": [
+        "fleet"
+      ],
+      "verb": "write"
+    },
+    {
       "domain": "ingest",
       "examples": [
         "show this drift"
@@ -6702,5 +6726,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "66403b30f5f8dd91c56ba03e05027d5041d1844a14c3276f5ecfab9f468ec713"
+  "registry_digest": "43990ae0f41a6dbc0d626607544676bb96063d630ea63fc06cbec2031969fcf4"
 }

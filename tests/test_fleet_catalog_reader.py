@@ -386,3 +386,36 @@ def test_default_bound_reads_a_fleet_above_8192_components() -> None:
         return len([page async for page in reader._component_pages(CONTEXT, ())])
 
     assert asyncio.run(drain()) == pages
+
+
+@pytest.mark.spec("ARBORA-FLEET-R051.2")
+def test_replicas_report_convergence_by_generation_and_digest() -> None:
+    from arbora.fleet.catalog_reader import ReplicaConvergence, ReplicaDegradedError
+
+    # Two replicas reading identical engine state share generation and digest.
+    one = asyncio.run(FleetCatalogReader(FakeFleetCatalogPort()).read())
+    two = asyncio.run(FleetCatalogReader(FakeFleetCatalogPort()).read())
+    assert one.generation == 1 and one.digest and one.digest == two.digest
+
+    monitor = ReplicaConvergence()
+    monitor.observe("r1", one)
+    monitor.observe("r2", two)
+    assert monitor.degraded == ()
+    monitor.require_serving("r2")
+
+    # r1 reaches a newer generation; r2 lags and must not serve a mixed catalog.
+    newer = replace(one, generation=2, digest="f" * 64)
+    monitor.observe("r1", newer)
+    assert monitor.degraded == ("r2",)
+    monitor.require_serving("r1")
+    with pytest.raises(ReplicaDegradedError):
+        monitor.require_serving("r2")
+
+    # Same generation, different digest is also degraded.
+    monitor.observe("r2", replace(newer, digest="e" * 64))
+    assert len(monitor.degraded) == 1
+
+    monitor.observe("r2", newer)
+    assert monitor.degraded == ()
+    with pytest.raises(ReplicaDegradedError):
+        monitor.require_serving("unknown")
