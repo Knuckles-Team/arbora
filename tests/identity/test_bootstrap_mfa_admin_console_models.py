@@ -31,25 +31,30 @@ def test_bootstrap_refuses_empty_host() -> None:
         LoopbackBootstrapPrincipal(bind_host="")
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R006.1")
 def test_mfa_enrollment_accepts_known_methods() -> None:
     enrollment = MfaEnrollment(principal_id="p1", methods=frozenset({"totp"}))
     assert "totp" in enrollment.methods
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R006.1")
 def test_mfa_enrollment_refuses_unknown_method() -> None:
     with pytest.raises(IdentityUnavailable):
         MfaEnrollment(principal_id="p1", methods=frozenset({"sms"}))
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R006.1")
 def test_mfa_enrollment_refuses_required_group_with_no_methods() -> None:
     with pytest.raises(IdentityUnavailable):
         MfaEnrollment(principal_id="p1", required_group="admins")
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R007.1")
 def test_admin_console_tab_accepts_known_name() -> None:
     assert AdminConsoleTab(name="policy").name == "policy"
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R007.1")
 def test_admin_console_tab_refuses_unknown_name() -> None:
     with pytest.raises(IdentityUnavailable):
         AdminConsoleTab(name="billing")

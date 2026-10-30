@@ -13,6 +13,7 @@ from arbora.identity.mail_capability import (
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R016")
+@pytest.mark.spec("ARBORA-IDENTITY-R016.1")
 def test_email_affordances_hidden_without_adapter() -> None:
     affordances = email_affordances(None)
 
@@ -28,6 +29,7 @@ def test_email_affordances_hidden_without_adapter() -> None:
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R016")
+@pytest.mark.spec("ARBORA-IDENTITY-R016.1")
 def test_email_affordances_shown_once_an_adapter_is_configured() -> None:
     settings = SmtpAdapterSettings(
         host="smtp.example.org", port=587, mail_from="noreply@example.org"
@@ -43,6 +45,7 @@ def test_email_affordances_shown_once_an_adapter_is_configured() -> None:
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R016")
+@pytest.mark.spec("ARBORA-IDENTITY-R016.1")
 @pytest.mark.parametrize(
     "kwargs",
     [
