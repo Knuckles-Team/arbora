@@ -10,6 +10,8 @@ from arbora.architecture.capability_layers import (
     UnsupportedCapabilityLayerError,
 )
 
+pytestmark = pytest.mark.spec("ARBORA-HOST-R015")
+
 
 def test_layers_are_ordered_lowest_to_highest() -> None:
     ordered = sorted(CapabilityLayer)
@@ -53,3 +55,24 @@ def test_supported_layers_reflects_declared_handlers_only() -> None:
     assert harness.supported_layers == frozenset(
         {CapabilityLayer.SINGLE_TOOL_CALL, CapabilityLayer.SINGLE_AGENT_TASK}
     )
+
+
+@pytest.mark.parametrize("layer", list(CapabilityLayer))
+@pytest.mark.parametrize("environment", ["local", "sandbox"])
+def test_every_layer_runs_through_any_harness_environment(
+    layer: CapabilityLayer, environment: str
+) -> None:
+    """Each defined layer runs through the harness abstraction in more than
+    one execution environment, and stays inside its own behaviour boundary."""
+    harness = InProcessHarness(
+        name=environment,
+        handlers={layer: lambda: (environment, layer)},
+    )
+    run = harness.run(layer)
+    assert run.result == (environment, layer)
+    assert run.layer is layer
+    assert run.harness_name == environment
+    for other in CapabilityLayer:
+        if other is not layer:
+            with pytest.raises(UnsupportedCapabilityLayerError):
+                harness.run(other)
