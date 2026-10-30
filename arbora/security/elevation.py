@@ -1,6 +1,6 @@
-"""Just-in-time RBAC elevation: the one client every surface shares (AU-SEC-R006).
+"""Just-in-time RBAC elevation: the one client every surface shares (MERISTEM-SEC-R006).
 
-epistemic-graph owns the authority (AU-SEC-R006): an elevation is a time-boxed
+epistemic-graph owns the authority (MERISTEM-SEC-R006): an elevation is a time-boxed
 ``rbac.elevation`` lease the graph-access chokepoint consults, approved by a
 second identity, hard-expiring, never extended and audited on every use. This
 module is the typed client over EG's ``RbacElevation`` method that the served

@@ -20722,7 +20722,7 @@
             "type": "string",
             "required": false,
             "default": "compute",
-            "description": "'list' declarations, 'compute' one property, or 'compute_all'. (Schema-discovery/standalone-generation proposals moved behind EG pack compilation, AU-SEMANTIC-R021.2 — no longer served from this tool.)"
+            "description": "'list' declarations, 'compute' one property, or 'compute_all'. (Schema-discovery/standalone-generation proposals moved behind EG pack compilation, MERISTEM-SEMANTIC-R021.2 — no longer served from this tool.)"
           },
           {
             "name": "object_json",
@@ -20751,7 +20751,7 @@
           "properties": {
             "action": {
               "default": "compute",
-              "description": "'list' declarations, 'compute' one property, or 'compute_all'. (Schema-discovery/standalone-generation proposals moved behind EG pack compilation, AU-SEMANTIC-R021.2 — no longer served from this tool.)",
+              "description": "'list' declarations, 'compute' one property, or 'compute_all'. (Schema-discovery/standalone-generation proposals moved behind EG pack compilation, MERISTEM-SEMANTIC-R021.2 — no longer served from this tool.)",
               "type": "string"
             },
             "object_json": {

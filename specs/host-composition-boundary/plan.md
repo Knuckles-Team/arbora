@@ -142,7 +142,7 @@ Return an explicit gap when requested history was rotated. Shutdown drains logs 
 
 Reasons are `invalid_launch`, `client_unavailable`, `workspace_denied`, `log_unavailable`, `log_gap`, `bind_failed` and `shutdown_incomplete`.
 Preserve R009.1's original A2A, task-lifecycle and ACP acceptance; logs establish none of those independently.
-The terminal consumer is specified by TUI-RUNTIME-R002.2 through R002.6.
+The terminal consumer is specified by TUIG-RUNTIME-R002.2 through R002.6.
 Bind R009.5, R009.6 and R010.7 to the public adapters in the amendment below.
 Consumer definitions are available; their runtime exports and the authenticated host handoff remain implementation prerequisites.
 
@@ -165,7 +165,7 @@ The new transport acceptance must use real wire clients, including unauthorized 
 ## Amendment: authenticated terminal log preference
 
 Extend ARBORA-HOST-R009.5, ARBORA-HOST-R009.6 and ARBORA-HOST-R010.7.
-The consumer contract is [TUI-RUNTIME-R002.2 through R002.6](https://github.com/Knuckles-Team/agent-terminal-ui/blob/5ac5e3fec4d590f167d2c6bd694683dbd8950c26/specs/terminal-runtime/plan.md#tui-runtime-r002-consumer-boundary).
+The consumer contract is [TUIG-RUNTIME-R002.2 through R002.6](https://github.com/Knuckles-Team/agent-terminal-ui/blob/5ac5e3fec4d590f167d2c6bd694683dbd8950c26/specs/terminal-runtime/plan.md#tui-runtime-r002-consumer-boundary).
 This amendment provides definitions only. Keep these host rows SPECIFIED with empty acceptance receipts.
 
 The proposed HostLaunchReceipt version 1 must include required `web_logs: bool`.
@@ -191,7 +191,7 @@ False or absent preference, web mode, unavailable reader or invalid scope yields
 Agent interaction remains available when log viewing is disabled or unavailable.
 The required redacted host sink stays enabled in every case; the preference controls only the TUI subscription.
 Retain all existing tenant isolation, bounded delivery, rotation gaps, shutdown and single-authority requirements.
-R009.6 proves this through the real host and public adapter together with TUI-RUNTIME-R002.6.
+R009.6 proves this through the real host and public adapter together with TUIG-RUNTIME-R002.6.
 A controlled adapter can prove only the host handoff, not unified terminal rendering.
 
 ## Additional owner requirements
@@ -613,3 +613,9 @@ whitespace from `ARBORA_CONFIG_DIR`. The old Meristem helper treated that
 whitespace as part of the path. The agent data directory
 stays outside this cut. Tests cover the explicit and XDG paths and real reads.
 This slice does not establish the R008 package-layout census or all cutovers.
+
+## Amendments
+
+### 2026-10-29 — R033.1–R033.3 persisted record shapes and data migrations
+
+Root cause of the unreadable action-policy ledger: from `a3967b23` (0.1.0) the served engine wrote labelled nodes with `type` only. The released engine files a Cypher label from `node_type`. `ccce23e3` (0.1.8.dev5) added `node_type` to new writes. Rows written before it stayed type-only. `760ec853` then made accounting fail closed while such rows exist, as `ARBORA-FLEET-R015` requires. It shipped no repair, so production refused every rate-limited `connector_pack_import` while reporting "rate limit exceeded". The label change shipped without a data migration, which is the gap these rows close. `record_body` is the one label model. Migrations are recorded and run at start. The shape gate ties a writer change to its migration.

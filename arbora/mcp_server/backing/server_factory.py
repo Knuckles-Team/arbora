@@ -301,7 +301,7 @@ def _semantic_kg_matches(query_filter: str, name: str) -> list[str] | None:
     Returns the matched tool names (possibly empty, meaning "no match"), or
     ``None`` if the engine/orchestrator import or resolution itself failed.
     """
-    exc = not_served("knowledge_graph.core.engine", "EG-PLACEMENT-R611")
+    exc = not_served("knowledge_graph.core.engine", "MEDULLA-PLACEMENT-R611")
     logger.debug(
         "Failed to filter components using Knowledge Graph (exception_type=%s)",
         type(exc).__name__,
@@ -2129,7 +2129,7 @@ async def _register_and_heartbeat_forever(name: str, url: str, ttl_secs: int) ->
         "pid": os.getpid(),
     }
     while True:
-        exc = not_served("knowledge_graph.core.graph_compute", "EG-PLACEMENT-R611")
+        exc = not_served("knowledge_graph.core.graph_compute", "MEDULLA-PLACEMENT-R611")
         logger.debug(
             "Fleet self-registration attempt failed, will retry: %s",
             type(exc).__name__,
@@ -2177,7 +2177,7 @@ async def _shutdown_fleet_engine(manage_engine_shutdown: bool) -> None:
 
     if not manage_engine_shutdown:
         return
-    exc = not_served("knowledge_graph.core.graph_compute", "EG-PLACEMENT-R611")
+    exc = not_served("knowledge_graph.core.graph_compute", "MEDULLA-PLACEMENT-R611")
     logger.error(
         "Arbora transport drain failed; continuity is not claimed (%s)",
         type(exc).__name__,

@@ -39,7 +39,7 @@ def _get_sparql_bridge() -> Any:
     global _SPARQL_BRIDGE
     if _SPARQL_BRIDGE is not None:
         return _SPARQL_BRIDGE
-    exc = not_served("knowledge_graph.backends.owl", "EG-PLACEMENT-R611")
+    exc = not_served("knowledge_graph.backends.owl", "MEDULLA-PLACEMENT-R611")
     logger.warning("Local SPARQL bridge unavailable (%s)", exc)
     return None
 

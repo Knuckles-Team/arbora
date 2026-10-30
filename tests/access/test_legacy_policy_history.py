@@ -4,7 +4,7 @@ import asyncio
 
 import pytest
 
-from arbora.access.action_policy import ActionPolicy, ActionRequest
+from arbora.access.action_policy import ActionPolicy, ActionRequest, LedgerUnreadable
 from tests.security.test_anonymous_mode import local_mode as local_mode
 from tests.test_served_engine_native_labels import native_engine as native_engine
 
@@ -29,7 +29,7 @@ def test_native_type_only_history_refuses_rate_and_blast_accounting(native_engin
     request = ActionRequest(
         kind="observe", target="legacy-target", source="qualification"
     )
-    assert policy._recent_decisions("observe") is None
+    assert isinstance(policy._recent_decisions("observe"), LedgerUnreadable)
     assert policy._rate_exceeded(request, {"max": 1, "window_s": 3600})
     assert policy._blast_exceeded(request, {"max_targets": 1, "window_s": 3600})
     assert engine.query_cypher(

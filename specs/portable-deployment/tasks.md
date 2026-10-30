@@ -176,7 +176,7 @@ non-test importer (or, for `agent_utilities.deployment.cli`, a direct test impor
 
 ## ARBORA-DEPLOY-R017 engine-routed deployment placement and assembly
 
-Order: R017.1 (placement), R017.2 to R017.5 (assembly, view, confirm, refusal), R017.6 and R017.7 (existing artifacts, in-process), R017.8 (command). Engine prerequisites: a deployment-placement question kind for `EG-DECISION-ENGINE-R046`/`R111` (name to be assigned by the engine spec) and a real `AgentAssemble` handler replacing the refusal stub. Until then R017.1 to R017.5 land only as typed refusals.
+Order: R017.1 (placement), R017.2 to R017.5 (assembly, view, confirm, refusal), R017.6 and R017.7 (existing artifacts, in-process), R017.8 (command). Engine prerequisites: a deployment-placement question kind for `MEDULLA-DECISION-ENGINE-R046`/`R111` (name to be assigned by the engine spec) and a real `AgentAssemble` handler replacing the refusal stub. Until then R017.1 to R017.5 land only as typed refusals.
 
 - [ ] **ARBORA-DEPLOY-R017:** Deployment placement and sequencing go through the engine
 - [ ] **ARBORA-DEPLOY-R017.1:** Placement Decide mapping

@@ -162,7 +162,7 @@ UNAUTHENTICATED_PATHS: frozenset[str] = HEALTH_PATHS
 SERVED_TRANSPORTS: frozenset[str] = frozenset({"streamable-http", "sse"})
 
 # The only graph authorization scopes a served identity may project into a
-# GraphSession: exactly the scopes epistemic-graph registers (AU-SEC-R008),
+# GraphSession: exactly the scopes epistemic-graph registers (MERISTEM-SEC-R008),
 # GENERATED from EG's scope registry into ``scope_registry.py`` -- never a
 # hand-maintained list. They come from validated JWT capabilities
 # (``ActorContext.roles``), never from request JSON/headers; EG re-checks

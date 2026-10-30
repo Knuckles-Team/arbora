@@ -649,9 +649,9 @@ class InterimEnrich:
     """arbora-side stand-ins until the engine serves these methods.
 
     TODO(R067.1): replace ``select`` with the engine page-selection decision
-    (EG-DECISION-ENGINE-R802) and honour ``freshness_window_s`` there.
+    (MEDULLA-DECISION-ENGINE-R802) and honour ``freshness_window_s`` there.
     TODO(R651.7): replace ``chunk`` with the engine enrichment pipeline
-    (EG-UNIFIED-DATA-PLANE-R651.7) once epistemic-graph 2.27.4 serves it.
+    (MEDULLA-UNIFIED-DATA-PLANE-R651.7) once epistemic-graph 2.27.4 serves it.
     """
 
     async def select(

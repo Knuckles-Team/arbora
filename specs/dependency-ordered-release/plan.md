@@ -49,7 +49,7 @@ conditions and the existing build command.
 
 `agents.plan_run` runs a caller-supplied DAG. A task may now be a typed tool step (`ARBORA-RELEASE-R003.4.6`). Its arguments bind to prerequisite outputs by path. Cross-connector data then flows by resolution, not by a model copying a value.
 
-Call path: `handle_plan_run` (`arbora/api/ops/plans.py:298`) asks the engine for the `TaskPlan` decision. The engine validates and digests calls and bindings (`EG-DECISION-ENGINE-R134.111.8` to `.13`). The harness runs a `DependencyPlan` with tool steps. It resolves bindings and calls an injected caller (`AU-BOUNDARY-R043.6.1` to `.7`). That caller is the governed fleet caller (`ARBORA-RELEASE-R003.4.5`). It uses the invoke pipeline (`ARBORA-OPS-R009`) to reach the connector.
+Call path: `handle_plan_run` (`arbora/api/ops/plans.py:298`) asks the engine for the `TaskPlan` decision. The engine validates and digests calls and bindings (`MEDULLA-DECISION-ENGINE-R134.111.8` to `.13`). The harness runs a `DependencyPlan` with tool steps. It resolves bindings and calls an injected caller (`MERISTEM-BOUNDARY-R043.6.1` to `.7`). That caller is the governed fleet caller (`ARBORA-RELEASE-R003.4.5`). It uses the invoke pipeline (`ARBORA-OPS-R009`) to reach the connector.
 
 Arbora validates no binding and holds no planner. It supplies the one authority path. The idempotency key `plan-call:<record>:<task_id>:<call_digest>` makes a replay return the recorded result. The reply returns the harness record per step (`ARBORA-RELEASE-R003.4.8`).
 
@@ -114,8 +114,8 @@ model consumption. Existing shared budgets and drain-before-terminal rules apply
 Continuation is a new execution from an explicitly completed child's permitted
 history, not resumption of a running or uncertain checkpoint. Its receipt names
 both predecessor and new execution/conversation bindings. AU
-`AU-BOUNDARY-R043.16` consumes only host-selected history; existing
-`AU-BOUNDARY-R043.8` and `.9.2.2` remain required for genuine checkpoint support.
+`MERISTEM-BOUNDARY-R043.16` consumes only host-selected history; existing
+`MERISTEM-BOUNDARY-R043.8` and `.9.2.2` remain required for genuine checkpoint support.
 Fresh turn limits never reset enclosing session/parent ceilings. Unsupported
 history refuses; a new blank root is never substituted.
 

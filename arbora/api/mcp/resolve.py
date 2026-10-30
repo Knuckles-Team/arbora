@@ -31,7 +31,7 @@ _READ_VERBS = frozenset({"ask", "why", "find"})
 _VERBS = _READ_VERBS | {"write", "act", "manage"}
 #: Catalog, glossary, stewardship, lineage, prompt-candidate and virtual-graph
 #: source questions. The engine models these as graph entities
-#: (EG-TYPED-PACKS-R106/R108, EG-DECISION-ENGINE-R814, EG-FEDERATED-QUERY-R722)
+#: (MEDULLA-TYPED-PACKS-R106/R108, MEDULLA-DECISION-ENGINE-R814, MEDULLA-FEDERATED-QUERY-R722)
 #: and answers them through its query planner (ARBORA-OPS-R855.4).
 _GRAPH_QUESTION = re.compile(
     r"\b(catalog|glossary|steward\w*|lineage|upstream|downstream|virtual[ -]graph"

@@ -66,7 +66,7 @@ async def _transcribe_voice(*, content: bytes, content_type: str) -> dict[str, s
     genuine 500, never inventing text. Never returns a canned/placeholder
     string.
     """
-    raise not_served("media.sidecar_delegate", "EG-REPO-INGEST-R800")
+    raise not_served("media.sidecar_delegate", "MEDULLA-REPO-INGEST-R800")
 
 
 def webui_voice_delegation_helpers() -> WebUiVoiceDelegation:

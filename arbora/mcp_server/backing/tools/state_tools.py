@@ -155,7 +155,7 @@ def _feeds_sync_action(engine: Any, url: str, mode: str) -> str:
             }
         )
     # Fallback: no queue (embedded engine) → run inline.
-    raise not_served("knowledge_graph.core.source_sync", "EG-INGEST-WORKER-R605")
+    raise not_served("knowledge_graph.core.source_sync", "MEDULLA-INGEST-WORKER-R605")
 
 
 def register_state_tools(mcp):
