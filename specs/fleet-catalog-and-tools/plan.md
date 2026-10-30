@@ -467,6 +467,7 @@ When such candidates exist for the requested action kind, accounting is unavaila
 Existing rate-limit and blast-radius checks then refuse to infer unused budget.
 No old record is promoted, rewritten or migrated by this guard.
 The refusal lasts until a separate reviewed historical-data repair removes the ambiguity.
+That repair is data migration `0001-action-decision-node-type-label` (`ARBORA-HOST-R033.2`), approved 2026-10-29. The refusal names the unlabeled row count (`ARBORA-FLEET-R015.3`).
 Kinds without such candidates retain the normal labeled ledger path.
 
 ## Production CLI diagnostic streams
