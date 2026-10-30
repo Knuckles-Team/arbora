@@ -1,17 +1,11 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.15'",
     "python_full_version == '3.14.*'",
     "python_full_version == '3.13.*'",
     "python_full_version < '3.13'",
-]
-
-[manifest]
-overrides = [
-    { name = "agent-utilities", marker = "python_version < '0'" },
-    { name = "epistemic-graph", extras = ["server"], specifier = ">=2.27.7,<3.0.0", index = "https://pypi.org/simple" },
 ]
 
 [[package]]
@@ -36,46 +30,28 @@ wheels = [
 ]
 
 [[package]]
-name = "agent-connector-sdk"
-version = "0.5.5"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "anyio" },
-    { name = "cryptography" },
-    { name = "epistemic-graph", extra = ["server"] },
-    { name = "httpx" },
-    { name = "httpx2" },
-    { name = "mcp-types" },
-    { name = "pydantic" },
-    { name = "pyyaml" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/2d/a0/882c0b0f681f4b56f9243e88ff44ae25725de2da0ccd4f43ecd6095afdd0/agent_connector_sdk-0.5.5.tar.gz", hash = "sha256:5990f2468ce0d293a94b069160b97faf5dcaad267b7354f94189fb50747ebe0c", size = 797176, upload-time = "2026-10-24T15:32:54.234Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/0b/47/b1c5b60927f76dd28143fd21af5092d1fe02e633ef3e68209d414315c9dd/agent_connector_sdk-0.5.5-py3-none-any.whl", hash = "sha256:061c6615b00a4694ee91a60b3fc7911ca41e95c69755de42faf41477d45d6acc", size = 784912, upload-time = "2026-10-24T15:32:55.459Z" },
-]
-
-[[package]]
 name = "agent-webui"
-version = "2.8.2"
+version = "2.8.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "agent-connector-sdk" },
     { name = "fastapi" },
     { name = "httpx" },
     { name = "joserfc" },
     { name = "langfuse" },
     { name = "logfire", extra = ["fastapi", "starlette"] },
+    { name = "meristem" },
     { name = "msgpack" },
     { name = "pydantic-ai-slim", extra = ["ui"] },
     { name = "python-multipart" },
+    { name = "scion-sdk" },
     { name = "sse-starlette" },
     { name = "starlette" },
     { name = "uvicorn" },
     { name = "watchfiles" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ea/da/e475e3320ca80f1df8431c73487c5af3fc84a6174b1847b5c44691cbcd4c/agent_webui-2.8.2.tar.gz", hash = "sha256:b51c9f31e077baf3f8185f49f798653e996e74ca9f36c5692562be79fa0484bf", size = 2281004, upload-time = "2026-10-24T04:09:14.874Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/32/2a/9625364e49c56c544f08a1833379162ba8fb510348ecc447dc1fe012d3d8/agent_webui-2.8.3.tar.gz", hash = "sha256:14fd25c7130d2d91ca9455cd5563d123cc1dedac7dfb243d6a56596d5f5305ab", size = 2929578, upload-time = "2026-10-29T16:26:41.189Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/03/ef/66ee200c4da6161842b1cb84fd38b0be0dec7151a4af651ee386eb3542f9/agent_webui-2.8.2-py3-none-any.whl", hash = "sha256:af14b49fe42e607e09f3c501cbd68e7fc7aa452c2e7e8db49827e6055309542e", size = 2357105, upload-time = "2026-10-24T04:09:09.637Z" },
+    { url = "https://files.pythonhosted.org/packages/1d/2b/f9c07dae91a4b343c65c0ec5da334deac3c864e6cd4fafd4ff33e09e6fe4/agent_webui-2.8.3-py3-none-any.whl", hash = "sha256:76f85b9db37f51ebe3719d8f60283209923e307dd9f74c0c7bdce4a9cdb9d502", size = 3018925, upload-time = "2026-10-29T16:26:37.789Z" },
 ]
 
 [[package]]
@@ -325,7 +301,7 @@ source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
     { name = "anyio" },
-    { name = "epistemic-graph", extra = ["server"] },
+    { name = "cryptography" },
     { name = "eunomia-core" },
     { name = "fastapi" },
     { name = "fastmcp" },
@@ -333,6 +309,8 @@ dependencies = [
     { name = "httpx" },
     { name = "joserfc" },
     { name = "mcp" },
+    { name = "medulla" },
+    { name = "medulla-stem" },
     { name = "meristem" },
     { name = "msgpack" },
     { name = "opentelemetry-api" },
@@ -446,13 +424,13 @@ webui = [
 requires-dist = [
     { name = "agent-client-protocol", marker = "extra == 'acp'", specifier = "==0.11.0" },
     { name = "agent-client-protocol", marker = "extra == 'test'", specifier = "==0.11.0" },
-    { name = "agent-webui", marker = "extra == 'webui'", specifier = ">=2.8.2,<3.0.0" },
+    { name = "agent-webui", marker = "extra == 'webui'", specifier = ">=2.8.3,<3.0.0" },
     { name = "aiohttp", specifier = ">=3.14.5" },
     { name = "anyio", specifier = ">=4.15.1" },
     { name = "arbora", extras = ["messaging-discord", "messaging-googlechat", "messaging-googlemeet", "messaging-irc", "messaging-line", "messaging-matrix", "messaging-mattermost", "messaging-nextcloud", "messaging-signal", "messaging-slack", "messaging-synology", "messaging-teams", "messaging-telegram", "messaging-twitch", "messaging-voicecall", "messaging-whatsapp"], marker = "extra == 'messaging'" },
     { name = "botbuilder-core", marker = "extra == 'messaging-teams'", specifier = ">=4.17.1" },
+    { name = "cryptography", specifier = ">=50.0.2" },
     { name = "discord-py", marker = "extra == 'messaging-discord'", specifier = ">=2.7.1" },
-    { name = "epistemic-graph", extras = ["server"], specifier = ">=2.27.7,<3.0.0", index = "https://pypi.org/simple" },
     { name = "eunomia-core", specifier = ">=0.3.10" },
     { name = "fastapi", specifier = ">=0.143.3" },
     { name = "fastmcp", specifier = ">=4.1.0" },
@@ -472,15 +450,17 @@ requires-dist = [
     { name = "matrix-nio", marker = "extra == 'messaging-matrix'", specifier = ">=0.26.0" },
     { name = "mattermostdriver", marker = "extra == 'messaging-mattermost'", specifier = ">=7.3.2" },
     { name = "mcp", specifier = ">=2.3.0,<3.0.0" },
-    { name = "meristem", specifier = ">=4.0.0,<5.0.0" },
+    { name = "medulla", specifier = ">=2.27.10,<3.0.0", index = "https://pypi.org/simple" },
+    { name = "medulla-stem", specifier = ">=2.27.10,<3.0.0", index = "https://pypi.org/simple" },
+    { name = "meristem", specifier = ">=4.0.1,<5.0.0" },
     { name = "msgpack", specifier = ">=1.2.1" },
     { name = "mypy", marker = "extra == 'test'", specifier = ">=2.4.0" },
     { name = "neonize", marker = "extra == 'messaging-whatsapp'", specifier = ">=0.5.2" },
     { name = "opentelemetry-api", specifier = ">=1.45.1" },
     { name = "prometheus-client", specifier = ">=0.26.0" },
     { name = "pydantic", specifier = ">=2.14.1,<3.0.0" },
-    { name = "pydantic-ai-harness", extras = ["acp"], marker = "extra == 'acp'", specifier = "==0.57.0" },
-    { name = "pydantic-ai-slim", extras = ["openai"], specifier = "==2.57.0" },
+    { name = "pydantic-ai-harness", extras = ["acp"], marker = "extra == 'acp'", specifier = "==0.63.0" },
+    { name = "pydantic-ai-slim", extras = ["openai"], specifier = "==2.63.0" },
     { name = "pyjwt", specifier = ">=2.15.1" },
     { name = "pyte", marker = "extra == 'test'", specifier = "==0.8.2" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=9.1.1" },
@@ -493,8 +473,8 @@ requires-dist = [
     { name = "python-telegram-bot", marker = "extra == 'test'", specifier = ">=22.8" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "ruff", marker = "extra == 'test'", specifier = "==0.17.1" },
-    { name = "scion-sdk", extras = ["a2a", "mcp"], specifier = ">=0.5.6,<0.6.0" },
-    { name = "scion-sdk", extras = ["a2a", "mcp"], marker = "extra == 'gateway-widgets'", specifier = ">=0.5.6,<0.6.0" },
+    { name = "scion-sdk", extras = ["a2a", "mcp"], specifier = ">=0.5.9,<0.6.0" },
+    { name = "scion-sdk", extras = ["a2a", "mcp"], marker = "extra == 'gateway-widgets'", specifier = ">=0.5.9,<0.6.0" },
     { name = "setuptools", marker = "extra == 'test'", specifier = ">=84.0.0" },
     { name = "slack-bolt", marker = "extra == 'messaging-slack'", specifier = ">=1.30.0" },
     { name = "starlette", specifier = ">=1.8.0" },
@@ -1224,6 +1204,15 @@ wheels = [
 ]
 
 [[package]]
+name = "defusedxml"
+version = "0.7.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/0f/d5/c66da9b79e5bdb124974bfe172b4daf3c984ebd9c2a06e2b8a4dc7331c72/defusedxml-0.7.1.tar.gz", hash = "sha256:1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69", size = 75520, upload-time = "2021-03-08T10:59:26.269Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl", hash = "sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61", size = 25604, upload-time = "2021-03-08T10:59:24.45Z" },
+]
+
+[[package]]
 name = "deprecated"
 version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1277,41 +1266,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/f5/22/900cb125c76b7aaa450ce02fd727f452243f2e91a61af068b40adba60ea9/email_validator-2.3.0.tar.gz", hash = "sha256:9fc05c37f2f6cf439ff414f8fc46d917929974a82244c20eb10231ba60c54426", size = 51238, upload-time = "2025-08-26T13:09:06.831Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/de/15/545e2b6cf2e3be84bc1ed85613edd75b8aea69807a71c26f4ca6a9258e82/email_validator-2.3.0-py3-none-any.whl", hash = "sha256:80f13f623413e6b197ae73bb10bf4eb0908faf509ad8362c5edeb0be7fd450b4", size = 35604, upload-time = "2025-08-26T13:09:05.858Z" },
-]
-
-[[package]]
-name = "epistemic-graph"
-version = "2.27.7"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "httpx" },
-    { name = "msgpack" },
-    { name = "pydantic" },
-    { name = "pyoxigraph" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/7c/be/beb16018cb5243f8711a23843ceb55e6a9d59ba04debe92f6cd5ed10d526/epistemic_graph-2.27.7.tar.gz", hash = "sha256:a97b1022a2c1081d45671fd21c21dcf3b1ce3eec81c1b95becd4a0fdbf42d7f0", size = 7617716, upload-time = "2026-10-24T20:31:48.086Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/14/6b/02d0f7b621212dc2201e7b277de5ea0c50c0147ab6394bad4c4fdc4fde65/epistemic_graph-2.27.7-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:aa9cc21757be066a0bae6802cce19af266f5d4afdad91af9f6fcb66139d73569", size = 7918549, upload-time = "2026-10-24T20:52:35.051Z" },
-    { url = "https://files.pythonhosted.org/packages/8f/62/8f1ef8cd3eeb8ce74bb592683118259602cb67293ca14e7cb4ed87a9c964/epistemic_graph-2.27.7-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:bb05fe3cdfec27f329bfff528da6e5bbd2c91b09b22cb1239c1a6aeaf6c1cdff", size = 8110727, upload-time = "2026-10-24T20:59:43.431Z" },
-    { url = "https://files.pythonhosted.org/packages/b1/dd/29a8272c86e5b0d704703ba74981ed30e0d0df33577cfb435ebe7709c425/epistemic_graph-2.27.7-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:d3e217c83ab80295f019ab44d861ea19a21de879cc804835f27e86bfa74cb78f", size = 8764065, upload-time = "2026-10-24T20:48:57.753Z" },
-    { url = "https://files.pythonhosted.org/packages/1f/97/c5f8354f4ba35d2f15fbbc4657bf732ede763c013b5a44f52c428b3eaf13/epistemic_graph-2.27.7-cp39-abi3-win_amd64.whl", hash = "sha256:e6c761d69fe17d90c185542880050634f5569358bbec3ca58f3ca788ab641fca", size = 9572735, upload-time = "2026-10-24T21:02:57.596Z" },
-]
-
-[package.optional-dependencies]
-server = [
-    { name = "epistemic-graph-server" },
-]
-
-[[package]]
-name = "epistemic-graph-server"
-version = "2.27.7"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b6/da/28bbf1f40ea2a19bf1b1cac0f72a466ade250a3bd0aab4d4e6a49e801b9d/epistemic_graph_server-2.27.7.tar.gz", hash = "sha256:ac7fa9028e3365c4f5123792fc1756a07cc92dd24b7ceecf348131cec3e54210", size = 22336523, upload-time = "2026-10-24T21:43:32.825Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/88/52/e10788fbcacfc92784d9da35702b44f09208b06a238b2bc0158c3a006f66/epistemic_graph_server-2.27.7-py3-none-macosx_11_0_arm64.whl", hash = "sha256:18b325a90a847d44d0b219f5c5e2a90a5f0b911b5a90f134cb4ec904e084a0f2", size = 71637227, upload-time = "2026-10-24T21:22:36.553Z" },
-    { url = "https://files.pythonhosted.org/packages/79/a4/e04afff5a6d5ea698bb9cd5ceef8e08b0f86a0552d276fdb38eb52ac08a9/epistemic_graph_server-2.27.7-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:1a3275d973d525aba81784b455058f9b4f8c7f5cacd4244288052d7ec8fc0880", size = 66067272, upload-time = "2026-10-24T21:41:21.039Z" },
-    { url = "https://files.pythonhosted.org/packages/42/6b/bbc8f38196ede3ad92455060ea011e0495eee0b5cfa4deeacb816d7be46f/epistemic_graph_server-2.27.7-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:7e9853b9c4582e4523564b5aecbc21b4ff370c7591a00f7774b748ff0c6f74b8", size = 63003534, upload-time = "2026-10-24T21:12:14.594Z" },
-    { url = "https://files.pythonhosted.org/packages/39/7a/07d3b1a4988856b92580879b08926401b44fff1ec897c3f150ff8a3c97c1/epistemic_graph_server-2.27.7-py3-none-win_amd64.whl", hash = "sha256:7e487d587dde063d7fc894da532132f00dac1a288d90a425205ee22ffe425e08", size = 66596011, upload-time = "2026-10-24T22:13:49.822Z" },
 ]
 
 [[package]]
@@ -2404,8 +2358,38 @@ wheels = [
 ]
 
 [[package]]
+name = "medulla"
+version = "2.27.10"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+    { name = "msgpack" },
+    { name = "pydantic" },
+    { name = "pyoxigraph" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9b/85/c0970a7dbbcf4decbe5f4f5e423e585879d795459b06a72eb44c3c286156/medulla-2.27.10.tar.gz", hash = "sha256:f2aa04d9368c519434a985bb1de7906cc32de2746867db024efdab6b67f4e484", size = 8218986, upload-time = "2026-10-29T14:02:59.299Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/66/ca/9de892de59063ba17d100a429b7aed900b1a51cb0406df2136fdafb9a557/medulla-2.27.10-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:6a2464440aa022b096f4c5e2cff529f6bca32853d933b87d18e4902b943f88c1", size = 8248210, upload-time = "2026-10-29T14:49:57.797Z" },
+    { url = "https://files.pythonhosted.org/packages/46/22/8791361946604899c2b2af09771ab3912586f7e8f6c352bf3290dae37ad3/medulla-2.27.10-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:4ae475226934aa1f5449c82cf1983d99a9ea7943f8fa2d2e22c6ef364e2e1391", size = 8441428, upload-time = "2026-10-29T14:31:51.914Z" },
+    { url = "https://files.pythonhosted.org/packages/f1/12/38d3ee0babbc94cdd18b90db6a7f6fc0e54b360317fb3bbf14f2bde8b4dd/medulla-2.27.10-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:d6b82ad4d94a4813d24c34cb312408a1587d484fafc35e5665f36c26a5d82090", size = 9107200, upload-time = "2026-10-29T14:52:48.323Z" },
+    { url = "https://files.pythonhosted.org/packages/0e/d5/edfa00325c0efaae3d711e42785205fc8a004d1cdcaf1b0d923383a4d7bd/medulla-2.27.10-cp39-abi3-win_amd64.whl", hash = "sha256:01200899b0ab872fb7ccb9b1cab7035de851a5dc961ad17b38842769482a9e43", size = 9945068, upload-time = "2026-10-29T14:30:57.179Z" },
+]
+
+[[package]]
+name = "medulla-stem"
+version = "2.27.10"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/1e/0b/413e6d19ca34eeaf853a01b2a161ab85f88549387452599f2932b23f9af7/medulla_stem-2.27.10.tar.gz", hash = "sha256:54f7cfbc40dbffc6c37d9eb59c133c1d3b39bd75d8c885e10c1f3af2db6ca51c", size = 25770919, upload-time = "2026-10-29T15:15:22.384Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e4/46/75feefb757f147b44198d608db9fb7978f20ed192047b939e843e9096b07/medulla_stem-2.27.10-py3-none-macosx_11_0_arm64.whl", hash = "sha256:cf8d842b3b7a83b63595e88fe48e0054432d7e5c2dab0ea856989a7cbd0ee0cc", size = 72664853, upload-time = "2026-10-29T14:59:45.568Z" },
+    { url = "https://files.pythonhosted.org/packages/1c/54/532b45cf19b839ec37eabeb88efd6f6edda635a9f45376ee3383a5c42736/medulla_stem-2.27.10-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:a51a1c26ebc9ab5af3cd26df14c20413b3c555768934120009f9ae362c9f0179", size = 66889527, upload-time = "2026-10-29T15:13:57.228Z" },
+    { url = "https://files.pythonhosted.org/packages/1f/87/9eb674e3a8b7044a107fe25e4a06ec49b951c1ff02ceb054f7cc58e77289/medulla_stem-2.27.10-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:4abaf0f3351606becffba4b88f98e2cf931ce94619d35249dc4b1f35c297ed71", size = 63997926, upload-time = "2026-10-29T14:44:04.882Z" },
+    { url = "https://files.pythonhosted.org/packages/e2/1b/1b286bfe180d8317e94a2993684f9fb122c47617f94dc3754d8682539f5a/medulla_stem-2.27.10-py3-none-win_amd64.whl", hash = "sha256:12151dd1e01de27bdf9eaaa69a15c444589c6a136148e5e39086a27c547d300b", size = 67484875, upload-time = "2026-10-29T16:05:23.692Z" },
+]
+
+[[package]]
 name = "meristem"
-version = "4.0.0"
+version = "4.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "platformdirs" },
@@ -2414,9 +2398,9 @@ dependencies = [
     { name = "pydantic-ai-slim" },
     { name = "pydantic-graph" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0e/86/e8606ea4949fa5bd174899e914a2c15848801447867d30a7c1bab4dfac5f/meristem-4.0.0.tar.gz", hash = "sha256:fdfa2dea19f4a370667198260e378616192f249fd21461694468c97f75fb6899", size = 130753, upload-time = "2026-10-25T20:44:54.319Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/27/8d/08f1b528ff52d13487d6a2069f266fdea2914057653cffb86c87aadec2e5/meristem-4.0.1.tar.gz", hash = "sha256:4fad6d9afb2f523d667fad27b7ce4dad0dfdf7519ca9e905c2aca65abcc8b9f0", size = 168929, upload-time = "2026-10-29T15:37:26.895Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5f/30/3029674f77a01f8fba1359d373f165fbb6e45e50f95bab84f134c659ad1b/meristem-4.0.0-py3-none-any.whl", hash = "sha256:9b5996ebef27c304d6e643c4509827c7d29cc09c589be4838a85e4fb466d8c12", size = 94597, upload-time = "2026-10-25T20:44:52.79Z" },
+    { url = "https://files.pythonhosted.org/packages/d8/14/81e3886e0ca13692ad2affef2cc890e23390c0055e956964cf398cc99caf/meristem-4.0.1-py3-none-any.whl", hash = "sha256:56a081afe976b126aa6a007cea8bee83d2584e34fc3f20007355d465517aa6b1", size = 117995, upload-time = "2026-10-29T15:37:25.769Z" },
 ]
 
 [[package]]
@@ -3366,7 +3350,7 @@ email = [
 
 [[package]]
 name = "pydantic-ai-harness"
-version = "0.57.0"
+version = "0.63.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "genai-prices" },
@@ -3374,9 +3358,9 @@ dependencies = [
     { name = "json-repair" },
     { name = "pydantic-ai-slim" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4b/5a/a62d50d750b29e678d8e9ad1445e3b4157b8e67648a8894154351c05583b/pydantic_ai_harness-0.57.0.tar.gz", hash = "sha256:c2f62ea4b531c418021deb534ec3ed1cbde796c6a93a716823828554f16ddc5f", size = 1085536, upload-time = "2026-10-16T03:51:11.538Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/28/59/2ac6c7f654603007e3f2d5648ba53e89ade1a76da1410bfe2ad0fb59081e/pydantic_ai_harness-0.63.0.tar.gz", hash = "sha256:ee8af8b2b4e1f11dc34f21f689f48ff921528bd92ba9f1099871c9412632df13", size = 1383561, upload-time = "2026-10-28T02:03:32.454Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c4/54/7b28a10b6cfa28b13c3f98205aaf800d8f3bf5606530e840a706f0213219/pydantic_ai_harness-0.57.0-py3-none-any.whl", hash = "sha256:88f32fdedf2377b9187f364c10f7cdb9f00f9e076c3fb0492d6b7bcf2d6dcc38", size = 1348115, upload-time = "2026-10-16T03:50:57.818Z" },
+    { url = "https://files.pythonhosted.org/packages/e0/06/9b3e0376d31fddfe05a3b6a9848548c65fa7716d8286b52d739e14575903/pydantic_ai_harness-0.63.0-py3-none-any.whl", hash = "sha256:cf2442d134e38e5cec12522889c8d617d7f8503f3ea7232cb1e9e3edf0313055", size = 1693405, upload-time = "2026-10-28T02:03:19.631Z" },
 ]
 
 [package.optional-dependencies]
@@ -3386,7 +3370,7 @@ acp = [
 
 [[package]]
 name = "pydantic-ai-slim"
-version = "2.57.0"
+version = "2.63.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -3398,9 +3382,9 @@ dependencies = [
     { name = "pydantic-graph" },
     { name = "typing-inspection" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a1/dd/f92904e5719bb7de25eaa9eb9f0fb9746a8b43b02775249d2516b9583f5b/pydantic_ai_slim-2.57.0.tar.gz", hash = "sha256:2c5c150bcd097e6a1e267ea13e7f279a0b504d46b346a4e00b61e1996ad05372", size = 1907558, upload-time = "2026-10-16T03:51:13.084Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/73/c3/7c9c8d071249f8ff3225531c7decec7b35149741cc4330db2dc56b2a3393/pydantic_ai_slim-2.63.0.tar.gz", hash = "sha256:dd8bde21754001a9d9be4ae79bada4dcbea5142e3d9fce4c13efaf972674a764", size = 2320687, upload-time = "2026-10-28T02:03:33.909Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cc/4f/ee187f80f9f9232fc6915da47d84305dfa62d4f879efbb1e6ff262172437/pydantic_ai_slim-2.57.0-py3-none-any.whl", hash = "sha256:a07d732e09df8d51f22bd3be2ad45ab644721a904809a2481146bf5d7bb47c67", size = 2229864, upload-time = "2026-10-16T03:50:59.882Z" },
+    { url = "https://files.pythonhosted.org/packages/b2/70/93c22c81829c7739fc24241eedc0bdadb4294859014d3a9ae667db0cf5c5/pydantic_ai_slim-2.63.0-py3-none-any.whl", hash = "sha256:0694051caa2357ddac4e98ec69e1ae509e20cffc2f4a658217fbd35e83b96339", size = 2682890, upload-time = "2026-10-28T02:03:21.635Z" },
 ]
 
 [package.optional-dependencies]
@@ -3520,7 +3504,7 @@ wheels = [
 
 [[package]]
 name = "pydantic-graph"
-version = "2.57.0"
+version = "2.63.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -3528,9 +3512,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "typing-inspection" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b5/09/f02d836a27cf943b30c0bd3a3d2a3818e98ca5d554acc35be414e694984d/pydantic_graph-2.57.0.tar.gz", hash = "sha256:f848857baab4030c44b30de0c3ba650749d60f2295a0723645fb325f92191cf1", size = 45831, upload-time = "2026-10-16T03:51:16.98Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9b/b5/ad651d8c39cf2c537307ad68d4d1e7d75fd34566a405abc5370e1467c4fe/pydantic_graph-2.63.0.tar.gz", hash = "sha256:ffd687a20b7c6b2914c95e19f4b1501c9768763289b482eea82dd72b2488366e", size = 46461, upload-time = "2026-10-28T02:03:37.688Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/00/d9/55a8f09b6180e10a19d1d41b2f1b157b23d8a998d442cf28465c5a86bea2/pydantic_graph-2.57.0-py3-none-any.whl", hash = "sha256:4c65193a1d8b58e3c6f29a15cbe7b96e1e255a1670a5bcb9a323b8600fc1686a", size = 53274, upload-time = "2026-10-16T03:51:06.285Z" },
+    { url = "https://files.pythonhosted.org/packages/98/da/4e35663fc8c174b583c908975e9cb2a24c3ee55b714adbff8974b0472f61/pydantic_graph-2.63.0-py3-none-any.whl", hash = "sha256:803eef2c9b24798d0d13372f7e9d1600920abb96e114368c7add7a57436cb7b2", size = 53642, upload-time = "2026-10-28T02:03:27.55Z" },
 ]
 
 [[package]]
@@ -4160,21 +4144,22 @@ wheels = [
 
 [[package]]
 name = "scion-sdk"
-version = "0.5.8"
+version = "0.5.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
     { name = "cryptography" },
-    { name = "epistemic-graph", extra = ["server"] },
+    { name = "defusedxml" },
     { name = "httpx" },
     { name = "httpx2" },
     { name = "mcp-types" },
+    { name = "medulla" },
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b0/a5/15948c5e51f6a5d9a8efe8c9112cd140c778032de7bc375ebb453d52b735/scion_sdk-0.5.8.tar.gz", hash = "sha256:c8cf8a8bd36983db68afc78915720a511052cf9be4198ce1eed5f717e8717fd9", size = 807075, upload-time = "2026-10-27T00:33:18.895Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/da/33/974f6fd4df64f31008739f5c964d9588b01e06717df9bdd9a1614c690db5/scion_sdk-0.5.9.tar.gz", hash = "sha256:ba040fcc0f1320abffbf752ec8e52937c56004335fea3c0e8e87347c099d76ac", size = 1084120, upload-time = "2026-10-29T19:25:52.763Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4a/79/8107af19a35b9d95365805cd52f851c82bd4daef6d4e8d893dcc1011fd4a/scion_sdk-0.5.8-py3-none-any.whl", hash = "sha256:a129100a8f609aeeb5c97c934e1f8afd4da93022af507333cabf3733be5c40d1", size = 789504, upload-time = "2026-10-27T00:33:17.355Z" },
+    { url = "https://files.pythonhosted.org/packages/dd/b0/c0b0ca2390fe8843e22b09baafb623934abca3030b948f3d68b0dcc64ba1/scion_sdk-0.5.9-py3-none-any.whl", hash = "sha256:6b5548b1cc499eba3cb6560d30abce70e761491a12b61b578c7c78dc05a0d898", size = 988008, upload-time = "2026-10-29T19:25:54.334Z" },
 ]
 
 [package.optional-dependencies]

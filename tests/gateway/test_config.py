@@ -121,6 +121,30 @@ def test_auto_discover(tmp_path, monkeypatch):
     assert layout.groups[0].services[0].url == "http://portainer.local"
 
 
+def test_dashboard_discovers_from_active_arbora_config(tmp_path, monkeypatch):
+    active = tmp_path / "active"
+    active.mkdir()
+    (active / "mcp_config.json").write_text(
+        json.dumps(
+            {
+                "mcpServers": {
+                    "portainer-agent": {
+                        "command": "uv",
+                        "env": {"PORTAINER_URL": "https://portainer.example.test"},
+                    }
+                }
+            }
+        )
+    )
+    monkeypatch.setenv("ARBORA_CONFIG_DIR", str(active))
+    monkeypatch.setenv("AGENT_UTILITIES_CONFIG_DIR", str(tmp_path / "legacy"))
+
+    layout = ConfigManager().load()
+
+    assert layout.groups[0].services[0].id == "portainer-agent"
+    assert layout.groups[0].services[0].url == "https://portainer.example.test"
+
+
 def test_inline_credentials_are_never_serialized(tmp_path):
     config_file = tmp_path / "services.yaml"
     manager = ConfigManager(config_path=config_file)

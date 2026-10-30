@@ -592,3 +592,24 @@ The log lifecycle fixture waits for the native startup task request to finish
 before opening logs. A visible first-frame footer is not a completion signal.
 Opening logs during a pending sink write remains a separate fail-closed storage-contention
 case, not a passing lifecycle journey. Keep the busy-storage refusal tests unchanged.
+
+## Loopback skill-certification authority
+
+`ARBORA-HOST-R027` restores the lifecycle-owned certification issuer under
+`arbora.certification.oidc`. It reuses the former harness authority's bounded
+HTTPS request parser, one-run CA, client-credentials token issuer and cleanup.
+The server accepts only the loopback bind and clients verify the run-specific CA.
+The certification script reports only the issuer and public CA, handles SIGINT
+and SIGTERM, and owns shutdown. The fixture and tests use the real TLS endpoint
+and verify the issued token with its served JWKS. This is an ephemeral
+certification tool, not a general identity provider or persistent credential store.
+
+### Host-owned configuration paths
+
+Gateway, fleet, certification and profile consumers use `arbora.core.settings`.
+The MCP path is `mcp_config.json` in the active Arbora configuration directory.
+These callers do not gain a legacy fallback. Arbora trims leading and trailing
+whitespace from `ARBORA_CONFIG_DIR`. The old Meristem helper treated that
+whitespace as part of the path. The agent data directory
+stays outside this cut. Tests cover the explicit and XDG paths and real reads.
+This slice does not establish the R008 package-layout census or all cutovers.

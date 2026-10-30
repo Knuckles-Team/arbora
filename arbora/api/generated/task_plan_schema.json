@@ -12,11 +12,31 @@
         "missing": {
           "missing": "abstain"
         }
+      },
+      {
+        "name": "task_call",
+        "kind": {
+          "feature": "number",
+          "key": "task_call"
+        },
+        "missing": {
+          "missing": "abstain"
+        }
+      },
+      {
+        "name": "task_call_bindings",
+        "kind": {
+          "feature": "number",
+          "key": "task_call_bindings"
+        },
+        "missing": {
+          "missing": "abstain"
+        }
       }
     ]
   },
   "component_id": "arbora.agents.plan_run.feature_schema",
-  "content_digest": "sha256:7a1a4e4b524072521a937e2f797f0a8eba33f3cca5fb5bd373b65f77b15184d1",
+  "content_digest": "sha256:9aa5491fecdb3ae13c7fc88194968f78fa9051cf1c44680348bef4661e649e04",
   "engine_version": "2.27.10",
   "export": "epistemic_graph.decision_client.TASK_PLAN_FEATURE_SCHEMA",
   "kind": "feature_schema",

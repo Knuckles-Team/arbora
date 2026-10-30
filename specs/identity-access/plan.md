@@ -29,7 +29,7 @@ Define small protocols in `arbora.identity.ports`:
 - `NotificationPort` and `Clock`.
  DTOs carry only redacted public fields and typed error/reason codes. `arbora.access.service` depends on an `AccessAuthority` protocol with request/approve/deny/revoke/check/explain/lease methods. The `mcp_server` serving composition creates the concrete adapters once and injects them into gateway, web host, CLI command factory, and MCP registry. Keep `webui_host` and MCP packages importing ports, not each other. Dependency inversion must clear the configured KISS indirect dependency threshold without increasing that threshold.
 
-When a required engine method is absent, the adapter returns `UNAVAILABLE`, omits the operation from advertised capability discovery where safe, and emits a readiness reason. It never emulates RBAC, lease, or approval locally. The CLI can use the same factory with a local engine fixture. Mock ports support all ordinary PR tests.
+The adapter returns `UNAVAILABLE` when an engine method is absent. Where safe, it omits the operation from advertised capability discovery. It also emits a readiness reason. It never emulates RBAC, lease, or approval locally. The CLI can use the same factory with a local engine fixture. Mock ports support all ordinary PR tests.
 
 The authentication cutover is ordered: construct a signed local-issuer token at the serving root. Carry it through every engine client path, including bootstrap, REST, MCP, A2A, CLI and background service calls. Prove authorized and denied behavior with the engine verifier. Then remove the engine's unauthenticated opt-out. Arbora must never retry an unsigned envelope after a token error or denial. During rolling deployment, an old client that cannot supply a token fails closed and reports a readiness error. It does not silently switch transport or bypass verification.
 
@@ -133,8 +133,8 @@ verification likewise ends its awaited owner calls with live session
 resolution; request snapshot, token lifetime, current caller facts and rotation
 are then checked synchronously before return. A refusal removes the private
 binding immediately, before the request context exits. The qualified EG
-adapter must uphold its live-resolution consistency contract; this ordering is
-not a distributed transaction or a substitute for final engine authorization.
+adapter must uphold its live-resolution consistency contract.
+This ordering is not a distributed transaction. Final engine authorization remains required.
 
 ## ARBORA-IDENTITY-R026 client attribution and segmentation
 
@@ -476,6 +476,12 @@ Message send, cancellation, tools, global budgets, provider enforcement and brow
 
 The concrete source adapter uses the public generated GetRunWorkItem sender and decoder. It supplies the trusted graph before the read, even if the client default differs. The engine binds that method to its server-created anonymous principal and immutable run owner. Context subject, agent and scopes remain provenance, not client authority. Full ingress-to-client tests use synthetic native responses; they are not live engine tests.
 
+## Local anonymous text send
+
+The host composes explicit local admission with `AU-BOUNDARY-R043.13.1`, the received text-only execution constraint. EG owns run admission, idempotency, the exact lease and terminal state. The source slice stores a bounded terminal event with existing native node methods. It checks readback, then commits its opaque content reference. Replay reads that committed reference only after owner-bound run lookup. A usage receipt alone never becomes answer text. Installed proof and durable answer recovery remain separate open children. Native in-flight limits and finite per-run bounds do not claim a cumulative spending quota. No live security setting changes are part of this source work.
+
+Cancellation currently covers the run deadline and explicit policy withdrawal, with native terminal cleanup after the provider drains. Browser disconnect alone does not promise immediate cancellation; the finite deadline still applies. Failed or uncertain submit, claim or cleanup requires native reconciliation, never automatic model re-execution. A native deadline is not a promise of automatic capacity reclamation.
+
 The general none-mode middleware rejects Origin headers. These browser-specific
 factories require an exact configured Origin. Host composition must reconcile
 those policies before serving them together; standalone tests do not prove that
@@ -525,6 +531,15 @@ Cancellation invalidates membership immediately while unfinished file work retai
 Native retirement failures remain explicit unresolved outcomes, never restored authority.
 The prototype grants no operations and is not wired into the application factory.
 Actual WebUI handshake and effect admission remain separate acceptance gates.
+
+### R004.6 default-off local browser transport composition
+
+The public WebUI factory may accept a distinct owner-issued local browser port.
+Only its fixed WebSocket route can reach the zero-effect owner in explicit none mode.
+Raw anonymous routes and authenticated session boundaries keep their existing gates.
+The port carries no policy, session, credential or serialized admission proof.
+Actual socket handshakes must preserve exact Origin, Host, peer and document scope.
+Bounded readiness and ping frames grant no operation or effect authority.
 
 ### R005.1 / R004.4.1 typed session refusal amendment (2026-10-26)
 

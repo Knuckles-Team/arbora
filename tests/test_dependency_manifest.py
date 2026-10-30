@@ -27,7 +27,7 @@ PYPROJECT = Path(__file__).resolve().parents[1] / "pyproject.toml"
 SPLIT_PACKAGES = (
     "meristem",
     "scion-sdk",
-    "epistemic-graph",
+    "medulla",
     "agent-webui",
 )
 

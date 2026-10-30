@@ -46,10 +46,10 @@ def require_installed() -> dict[str, str]:
     versions = {}
     for package, module, expected in (
         ("arbora", "arbora", None),
-        ("epistemic-graph", "epistemic_graph", "2.27.7"),
-        ("epistemic-graph-server", "epistemic_graph_server", "2.27.7"),
-        ("agent-utilities", "agent_utilities", "3.2.0"),
-        ("agent-connector-sdk", "agent_connector_sdk", "0.5.5"),
+        ("medulla", "epistemic_graph", "2.27.10"),
+        ("medulla-stem", "epistemic_graph_server", "2.27.10"),
+        ("meristem", "agent_utilities", "4.0.1"),
+        ("scion-sdk", "agent_connector_sdk", "0.5.9"),
         ("agent-webui", "agent_webui", None),
     ):
         loaded = importlib.import_module(module)
@@ -70,10 +70,10 @@ def require_installed() -> dict[str, str]:
     binary = Path(resolve_server_binary()).resolve()
     if prefix not in binary.parents:
         raise RuntimeError("Native server must come from the installed environment")
-    # EG 2.27.7 does not implement --version. Verify the actual executable
+    # The engine does not implement --version. Verify the actual executable
     # against the exact installed wheel's RECORD, not an unsupported CLI flag.
     versions["native-server-sha256"] = verify_server_record(
-        binary, importlib.metadata.distribution("epistemic-graph-server")
+        binary, importlib.metadata.distribution("medulla-stem")
     )
     return versions
 
@@ -82,7 +82,7 @@ async def require_native_version(client: Any) -> str:
     """Attest the running executable before creating fixture identities."""
     async with asyncio.timeout(15):
         health = await client.health()
-    if not isinstance(health, dict) or health.get("version") != "2.27.7":
+    if not isinstance(health, dict) or health.get("version") != "2.27.10":
         raise RuntimeError("Native runtime version verification failed")
     return health["version"]
 

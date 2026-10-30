@@ -20,7 +20,7 @@ pytestmark = pytest.mark.spec("ARBORA-OPS-R001")
 
 
 def test_wheel_boot_bundle_starts_the_model_and_serves_completions(tmp_path: Path):
-    workflow = yaml.safe_load((ROOT / ".github/workflows/release.yml").read_text())
+    workflow = yaml.safe_load((ROOT / ".github/workflows/checks.yml").read_text())
     step = next(
         step
         for step in workflow["jobs"]["install-smoke"]["steps"]
@@ -99,7 +99,7 @@ def test_missing_model_helper_reports_startup_failure(tmp_path: Path):
 @pytest.mark.parametrize(
     ("workflow_name", "job", "destination"),
     [
-        ("release.yml", "install-smoke", "real-boot"),
+        ("checks.yml", "install-smoke", "real-boot"),
         ("installed-browser.yml", "installed-browser", "browser-code"),
     ],
 )

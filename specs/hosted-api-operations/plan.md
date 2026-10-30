@@ -764,6 +764,15 @@ membership edge per pair. A branch label scan that never sees a short
 page (256 x 256) refuses `UNAVAILABLE`. The answer is unknown, not
 empty.
 
+`source.blob` exposes the manifest reference in `content_digest`, as in the
+existing source projection. It also returns `content_sha256`, the lowercase
+SHA-256 of the bytes returned by the admitted read. This separate value lets
+clients detect cached-byte corruption without confusing a manifest key with
+the digest of file content. The hash does not grant authority to reuse bytes.
+The client must bind cache use to the admitted caller and source revision.
+The server writes UTF-8 text to JSON `content` when decoding succeeds. For
+other bytes, the server writes base64. `content_encoding` identifies the form.
+
 R850 delivers `GET /api/v1/source/checkout` as an NDJSON stream.
 Directories resolve recursively, then files. Every directory listing
 admits through the single `invoke` chokepoint as the `source.tree`

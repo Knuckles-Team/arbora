@@ -940,6 +940,18 @@
     {
       "domain": "eg",
       "examples": [
+        "FinanceAmlScreen compute"
+      ],
+      "id": "eg.compute.FinanceAmlScreen",
+      "summary": "Finance Aml Screen",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
         "FinanceAvellanedaStoikov compute"
       ],
       "id": "eg.compute.FinanceAvellanedaStoikov",
@@ -992,6 +1004,18 @@
       ],
       "id": "eg.compute.FinanceBrierScore",
       "summary": "Finance Brier Score",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "FinanceCapitalRatios compute"
+      ],
+      "id": "eg.compute.FinanceCapitalRatios",
+      "summary": "Finance Capital Ratios",
       "tags": [
         "eg"
       ],
@@ -1084,6 +1108,18 @@
     {
       "domain": "eg",
       "examples": [
+        "FinanceDistributionShift compute"
+      ],
+      "id": "eg.compute.FinanceDistributionShift",
+      "summary": "Finance Distribution Shift",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
         "FinanceDownsideDeviation compute"
       ],
       "id": "eg.compute.FinanceDownsideDeviation",
@@ -1144,10 +1180,46 @@
     {
       "domain": "eg",
       "examples": [
+        "FinanceExecutionSchedule compute"
+      ],
+      "id": "eg.compute.FinanceExecutionSchedule",
+      "summary": "Finance Execution Schedule",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "FinanceExpectedLoss compute"
+      ],
+      "id": "eg.compute.FinanceExpectedLoss",
+      "summary": "Finance Expected Loss",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
         "FinanceExpectedPnlRate compute"
       ],
       "id": "eg.compute.FinanceExpectedPnlRate",
       "summary": "Finance Expected Pnl Rate",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "FinanceFactorRank compute"
+      ],
+      "id": "eg.compute.FinanceFactorRank",
+      "summary": "Finance Factor Rank",
       "tags": [
         "eg"
       ],
@@ -1336,6 +1408,18 @@
     {
       "domain": "eg",
       "examples": [
+        "FinanceMarketMakingQuote compute"
+      ],
+      "id": "eg.compute.FinanceMarketMakingQuote",
+      "summary": "Finance Market Making Quote",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
         "FinanceMarkovTransitionMatrix compute"
       ],
       "id": "eg.compute.FinanceMarkovTransitionMatrix",
@@ -1480,10 +1564,34 @@
     {
       "domain": "eg",
       "examples": [
+        "FinancePairsSignal compute"
+      ],
+      "id": "eg.compute.FinancePairsSignal",
+      "summary": "Finance Pairs Signal",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
         "FinancePairsTrading compute"
       ],
       "id": "eg.compute.FinancePairsTrading",
       "summary": "Finance Pairs Trading",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "FinancePositionSize compute"
+      ],
+      "id": "eg.compute.FinancePositionSize",
+      "summary": "Finance Position Size",
       "tags": [
         "eg"
       ],
@@ -1552,6 +1660,18 @@
     {
       "domain": "eg",
       "examples": [
+        "FinanceRegimeChain compute"
+      ],
+      "id": "eg.compute.FinanceRegimeChain",
+      "summary": "Finance Regime Chain",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
         "FinanceRiskMetrics compute"
       ],
       "id": "eg.compute.FinanceRiskMetrics",
@@ -1604,6 +1724,18 @@
       ],
       "id": "eg.compute.FinanceSabrSmile",
       "summary": "Finance Sabr Smile",
+      "tags": [
+        "eg"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "eg",
+      "examples": [
+        "FinanceSettlementChain compute"
+      ],
+      "id": "eg.compute.FinanceSettlementChain",
+      "summary": "Finance Settlement Chain",
       "tags": [
         "eg"
       ],
@@ -2420,18 +2552,6 @@
       ],
       "id": "eg.coordination.GetControlLease",
       "summary": "tenant-bound native control-lease view",
-      "tags": [
-        "eg"
-      ],
-      "verb": "ask"
-    },
-    {
-      "domain": "eg",
-      "examples": [
-        "GetConversationHead coordination"
-      ],
-      "id": "eg.coordination.GetConversationHead",
-      "summary": "owner-bound ordered conversation head snapshot",
       "tags": [
         "eg"
       ],
@@ -6450,5 +6570,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "c4afa6b9f547e34cb1be24aea0ef68fa3f739aadb8ed00fdedca352ffae1b6dc"
+  "registry_digest": "dbb0efa0dc47306b1207ab4bb490efb45265fb902e98e5480fba16122bd68a62"
 }

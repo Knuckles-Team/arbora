@@ -176,6 +176,9 @@
       "Definitiona50f88e2dc179775a9bc68e8f0f6160b3e2622272696626b220f08abb6242d76": {
         "$ref": "#/components/schemas/Schema01780fddb8b8e2051161fa957167280dc27d5e79e023439a1114651c354eec5c"
       },
+      "Definitionad1a1dc89cf3fd6e52e2668813a723c630202f82d4f1d2b4ae81cc20ff4579da": {
+        "$ref": "#/components/schemas/Schema950fef2bc0ae3cbd86ab9b327770eafda06c65a8ec3014c2cad9bda8901b05a4"
+      },
       "Definitionae1b8a29e07c26df95489a53fc7d896f999a99829ed2d84b52491ed5cfaffa4e": {
         "$ref": "#/components/schemas/Schema4cc5fb01b4eff0f49b5d0349071f1346bbd6ce26f9df8cfdc51a65772486fbdf"
       },
@@ -193,6 +196,9 @@
       },
       "Definitione982db1a4ac1ee125b8c4845433b9320ec7006fcf4d88eb1b2a7aa660eeda15a": {
         "$ref": "#/components/schemas/Schemaf2068454c968a5ebcf29a2a06fe750f45c81a91941482c68c42d77a5c7de771e"
+      },
+      "Definitionef8fa95fba2b352598e31dd727c48a07a647d2ffce6be281d8a2604a191af467": {
+        "$ref": "#/components/schemas/Schema2e65d2b791a10e66fea0bfd9eb1bdac66ec939cdd6b85f063685d49f4f3939ca"
       },
       "Schema0004c1dad1dbe418005c6b4ecdf0e2002238aa1aa13515bc44f3204ffecf2ee9": {
         "properties": {
@@ -602,6 +608,11 @@
         "title": "Worker Id",
         "type": "string"
       },
+      "Schema201ec02a7304298cd2a462a1a384693fc5bd7e383ec5815e302c08eafd05a715": {
+        "minimum": 0,
+        "title": "Native Count",
+        "type": "integer"
+      },
       "Schema2035a3bece3f75f1a84b2ec1aa9401dab8f9b633c8f2e2d62c4d70344f6fdc60": {
         "anyOf": [
           {
@@ -693,6 +704,19 @@
         "title": "PlanRunResult",
         "type": "object"
       },
+      "Schema2a6d164ab31ca9b54c574d9129baaae9503511a280b25be7f3ca8008ef24c149": {
+        "maxItems": 2,
+        "minItems": 2,
+        "prefixItems": [
+          {
+            "$ref": "#/components/schemas/Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7"
+          },
+          {
+            "$ref": "#/components/schemas/Schema61b7b31355d516242b7411c57046914cafa5c54d3414b2652d2697db4e71b3d1"
+          }
+        ],
+        "type": "array"
+      },
       "Schema2a9b6e96a0ade414d0e89ee3647b6b5313127a252e46b4d76d4d20e6d8187818": {
         "additionalProperties": false,
         "properties": {
@@ -743,6 +767,40 @@
         "default": false,
         "title": "Own",
         "type": "boolean"
+      },
+      "Schema2e65d2b791a10e66fea0bfd9eb1bdac66ec939cdd6b85f063685d49f4f3939ca": {
+        "additionalProperties": false,
+        "description": "Typed projection returned by the composed query caller.",
+        "properties": {
+          "budget_used": {
+            "$ref": "#/components/schemas/Schema5b8f2dfe6f95fc089b4723bf9178548a24dcdd842bbdfcdad0946a2f788ace71"
+          },
+          "fetched_at": {
+            "$ref": "#/components/schemas/Schemae98fc74d103702aec5e618d5866fe0e2a1873113740f4080b5d30ec798a0b4d6"
+          },
+          "native_count": {
+            "$ref": "#/components/schemas/Schema201ec02a7304298cd2a462a1a384693fc5bd7e383ec5815e302c08eafd05a715"
+          },
+          "rows": {
+            "$ref": "#/components/schemas/Schema7e13d1e6690e8acde339835a80f914be0206a0014068a7cd47f3fc63a5b50897"
+          },
+          "sources": {
+            "$ref": "#/components/schemas/Schemab1f904f9c93886fde05491f63400c5b911adb70392574e44e036830b98c78597"
+          },
+          "virtual_count": {
+            "$ref": "#/components/schemas/Schemaedbe51c22d1e84c9d826d7ec124da6a83bea1374204fdf0bc9039f02edafa6cc"
+          }
+        },
+        "required": [
+          "rows",
+          "sources",
+          "native_count",
+          "virtual_count",
+          "fetched_at",
+          "budget_used"
+        ],
+        "title": "FederatedAnswerView",
+        "type": "object"
       },
       "Schema2fa69d63e25c0de023f6fea9dccc30607afabee2f15ef4554fb8cc6cb47c964a": {
         "additionalProperties": false,
@@ -975,6 +1033,12 @@
         ],
         "title": "ExecutionGraphParams",
         "type": "object"
+      },
+      "Schema4181a0994318a9577e99a3ea30cfba735ab32fe710abc870e77d3724a8751002": {
+        "maxLength": 4096,
+        "minLength": 1,
+        "title": "Contract Iri",
+        "type": "string"
       },
       "Schema419baaf5641802ec2a772ec2e7bd19064dff5602ad7da82164cfd75e0c674f85": {
         "title": "Backup Id",
@@ -1209,6 +1273,13 @@
         "title": "ExecutionGraphSnapshot",
         "type": "object"
       },
+      "Schema5b8f2dfe6f95fc089b4723bf9178548a24dcdd842bbdfcdad0946a2f788ace71": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/Schemafb59c824552a17dd1ced500fcc7c8e45d7738779d7299d4742ab8212f1fb4042"
+        },
+        "title": "Budget Used",
+        "type": "object"
+      },
       "Schema5dd481c31e0652dfe7bc363300272c5454449f40ba75432cc6e2d6b4e9975387": {
         "items": {
           "$ref": "#/components/schemas/Definitione6adbae83b1ca820b7889d1e573716a265f0056909c7fc2ce9ee3aaeafa68f1c"
@@ -1254,6 +1325,16 @@
         ],
         "title": "AccessCheck",
         "type": "object"
+      },
+      "Schema61b7b31355d516242b7411c57046914cafa5c54d3414b2652d2697db4e71b3d1": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema80c415b6e27c6ebdf8c60f1b60917cec9ac60695c634197de2c32b96a71b34d9"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ]
       },
       "Schema65cad14bbb3646c08579cdfbe008061f7d5f15ea916f92eb0e89a7d22f2fb13a": {
         "default": 0,
@@ -1617,6 +1698,13 @@
         "title": "SourceTreeParams",
         "type": "object"
       },
+      "Schema7e13d1e6690e8acde339835a80f914be0206a0014068a7cd47f3fc63a5b50897": {
+        "items": {
+          "$ref": "#/components/schemas/Schemab697b1595c2d8f9677b6d14572d7a100ee9694279919359d64f493f6cadc3541"
+        },
+        "title": "Rows",
+        "type": "array"
+      },
       "Schema7ef30d916ee9fd6b941cedb3b0fddf2ccfbea017ab0abde66af49536c454b6ce": {
         "additionalProperties": false,
         "properties": {
@@ -1664,6 +1752,9 @@
         "minLength": 1,
         "title": "Server",
         "type": "string"
+      },
+      "Schema80c415b6e27c6ebdf8c60f1b60917cec9ac60695c634197de2c32b96a71b34d9": {
+        "type": "number"
       },
       "Schema81f9750e985e816e87e369ad37b44d32321db6379bec57de0c850f0de074643f": {
         "additionalProperties": true,
@@ -1995,6 +2086,28 @@
         "title": "OpsDoctorParams",
         "type": "object"
       },
+      "Schema950fef2bc0ae3cbd86ab9b327770eafda06c65a8ec3014c2cad9bda8901b05a4": {
+        "additionalProperties": false,
+        "description": "The source identity attached to a federated answer.",
+        "properties": {
+          "connector": {
+            "$ref": "#/components/schemas/Schemaa71b8d29fbe15a323ed2a37b180006bc5f8754e70850c410326aaac2e99a4642"
+          },
+          "contract_iri": {
+            "$ref": "#/components/schemas/Schema4181a0994318a9577e99a3ea30cfba735ab32fe710abc870e77d3724a8751002"
+          },
+          "mapping_iri": {
+            "$ref": "#/components/schemas/Schemab9f76150d85c0c0cf1f5309566eb3fc2860377ab8ca0e9f9b7843bbaac7c0414"
+          }
+        },
+        "required": [
+          "connector",
+          "contract_iri",
+          "mapping_iri"
+        ],
+        "title": "SourceProvenance",
+        "type": "object"
+      },
       "Schema9538d8e934707a69219dbe15aca8cee9f396a4723576b34813109cec55190d6a": {
         "anyOf": [
           {
@@ -2257,6 +2370,12 @@
         "maxLength": 2048,
         "type": "string"
       },
+      "Schemaa71b8d29fbe15a323ed2a37b180006bc5f8754e70850c410326aaac2e99a4642": {
+        "maxLength": 256,
+        "minLength": 1,
+        "title": "Connector",
+        "type": "string"
+      },
       "Schemaa77e0e91946b253a1aa77a1d10470e0bde5e90820d3c269e987219bf80525367": {
         "default": "",
         "maxLength": 128,
@@ -2283,6 +2402,12 @@
         "minimum": 0,
         "title": "Revision",
         "type": "integer"
+      },
+      "Schemaa886e3151f3838075eb0a83fcf6999c98583c75cff63ff7192acd28890f041d1": {
+        "items": {
+          "$ref": "#/components/schemas/Schema2a6d164ab31ca9b54c574d9129baaae9503511a280b25be7f3ca8008ef24c149"
+        },
+        "type": "array"
       },
       "Schemaaaa072f559df071defa233e77b46cf4af427a0fd5801ed9ca1d1561e73cbf5a7": {
         "additionalProperties": false,
@@ -2396,6 +2521,13 @@
         "title": "FleetUnloadParams",
         "type": "object"
       },
+      "Schemab1f904f9c93886fde05491f63400c5b911adb70392574e44e036830b98c78597": {
+        "items": {
+          "$ref": "#/components/schemas/Definitionad1a1dc89cf3fd6e52e2668813a723c630202f82d4f1d2b4ae81cc20ff4579da"
+        },
+        "title": "Sources",
+        "type": "array"
+      },
       "Schemab2e631b4636bd6bbe796db78f5f0efafe42402deb58b8bc7828ce6ee8e61274a": {
         "additionalProperties": false,
         "properties": {
@@ -2479,6 +2611,12 @@
       },
       "Schemab995e29237d5571ae28320149c6163c88c44fd56cba14dba91cc32a9985b4c0e": {
         "maxLength": 4000,
+        "type": "string"
+      },
+      "Schemab9f76150d85c0c0cf1f5309566eb3fc2860377ab8ca0e9f9b7843bbaac7c0414": {
+        "maxLength": 4096,
+        "minLength": 1,
+        "title": "Mapping Iri",
         "type": "string"
       },
       "Schemabb7b708c381367f473bd187d93bfb2edbb54bf25f59130dde9c898716df88876": {
@@ -3002,6 +3140,11 @@
         "title": "All Items",
         "type": "boolean"
       },
+      "Schemae98fc74d103702aec5e618d5866fe0e2a1873113740f4080b5d30ec798a0b4d6": {
+        "format": "date-time",
+        "title": "Fetched At",
+        "type": "string"
+      },
       "Schemae9c0a1ff011012f42ed940c9ca7de5d6424df124522e94a9e73cda655a4a67eb": {
         "additionalProperties": false,
         "properties": {
@@ -3052,6 +3195,18 @@
         ],
         "title": "ExecutionStep",
         "type": "object"
+      },
+      "Schemaeaf0ef9b46b92bd6c685ea388e236393c5bc29b6c17d29159260631a5278416a": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schemaa886e3151f3838075eb0a83fcf6999c98583c75cff63ff7192acd28890f041d1"
+          },
+          {
+            "$ref": "#/components/schemas/Definitionef8fa95fba2b352598e31dd727c48a07a647d2ffce6be281d8a2604a191af467"
+          }
+        ],
+        "description": "The two truthful result shapes exposed by ``query.nl``.\n\nEG's existing ``NlQuery`` method is a stable rows-only operation.  A\nprocess without the native planner/foreign-read producer must continue to\nreturn that exact ``[(id, score | null), ...]`` body.  When the composed\nplanner is present, Arbora returns the closed federated projection instead.\nKeeping both variants in one explicit schema prevents discovery from\nadvertising only the federated object while the compatibility path still\nreturns native rows; neither branch invents source provenance or counts.",
+        "title": "NaturalLanguageResult"
       },
       "Schemaeb1f11cc6fde0c4462c9b4658efce96448e24082c8e128b7c4e24d9c2c4511f3": {
         "anyOf": [
@@ -3109,6 +3264,11 @@
         ],
         "title": "RestoreReceipt",
         "type": "object"
+      },
+      "Schemaedbe51c22d1e84c9d826d7ec124da6a83bea1374204fdf0bc9039f02edafa6cc": {
+        "minimum": 0,
+        "title": "Virtual Count",
+        "type": "integer"
       },
       "Schemaee507b3bb31b1097aa6056c28981714587e45601468f838f753a132ae0882d89": {
         "additionalProperties": false,
@@ -3256,6 +3416,16 @@
         "title": "Remaining Ms",
         "type": "integer"
       },
+      "Schemafb59c824552a17dd1ced500fcc7c8e45d7738779d7299d4742ab8212f1fb4042": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema1e0b1cbf54c5771a7d13d62d42a58b76f82bc92b1d95baaa6a4154858b5a43da"
+          },
+          {
+            "$ref": "#/components/schemas/Schemafeeb8bb50144d96d6db7bdbd4888cf1fd75788b5e045ac4d3af4dbdf72349ae5"
+          }
+        ]
+      },
       "Schemafb70ac9c18287ce18db50a0553196c7f7ce8dd2b66ee9b8e7c03287b1b44ff59": {
         "additionalProperties": false,
         "properties": {},
@@ -3298,6 +3468,9 @@
         ],
         "title": "AccessDecision",
         "type": "object"
+      },
+      "Schemafeeb8bb50144d96d6db7bdbd4888cf1fd75788b5e045ac4d3af4dbdf72349ae5": {
+        "type": "boolean"
       }
     }
   },
@@ -5899,6 +6072,40 @@
         ]
       }
     },
+    "/api/v1/ops/eg.compute.FinanceAmlScreen": {
+      "post": {
+        "operationId": "eg.compute.FinanceAmlScreen",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/FinanceAmlScreen"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.compute.json#/methods/FinanceAmlScreen"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Finance Aml Screen",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.compute.FinanceAvellanedaStoikov": {
       "post": {
         "operationId": "eg.compute.FinanceAvellanedaStoikov",
@@ -6064,6 +6271,40 @@
           }
         },
         "summary": "Finance Brier Score",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.compute.FinanceCapitalRatios": {
+      "post": {
+        "operationId": "eg.compute.FinanceCapitalRatios",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/FinanceCapitalRatios"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.compute.json#/methods/FinanceCapitalRatios"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Finance Capital Ratios",
         "tags": [
           "eg"
         ]
@@ -6307,6 +6548,40 @@
         ]
       }
     },
+    "/api/v1/ops/eg.compute.FinanceDistributionShift": {
+      "post": {
+        "operationId": "eg.compute.FinanceDistributionShift",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/FinanceDistributionShift"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.compute.json#/methods/FinanceDistributionShift"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Finance Distribution Shift",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.compute.FinanceDownsideDeviation": {
       "post": {
         "operationId": "eg.compute.FinanceDownsideDeviation",
@@ -6477,6 +6752,74 @@
         ]
       }
     },
+    "/api/v1/ops/eg.compute.FinanceExecutionSchedule": {
+      "post": {
+        "operationId": "eg.compute.FinanceExecutionSchedule",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/FinanceExecutionSchedule"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.compute.json#/methods/FinanceExecutionSchedule"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Finance Execution Schedule",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.compute.FinanceExpectedLoss": {
+      "post": {
+        "operationId": "eg.compute.FinanceExpectedLoss",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/FinanceExpectedLoss"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.compute.json#/methods/FinanceExpectedLoss"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Finance Expected Loss",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.compute.FinanceExpectedPnlRate": {
       "post": {
         "operationId": "eg.compute.FinanceExpectedPnlRate",
@@ -6506,6 +6849,40 @@
           }
         },
         "summary": "Finance Expected Pnl Rate",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.compute.FinanceFactorRank": {
+      "post": {
+        "operationId": "eg.compute.FinanceFactorRank",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/FinanceFactorRank"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.compute.json#/methods/FinanceFactorRank"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Finance Factor Rank",
         "tags": [
           "eg"
         ]
@@ -7021,6 +7398,40 @@
         ]
       }
     },
+    "/api/v1/ops/eg.compute.FinanceMarketMakingQuote": {
+      "post": {
+        "operationId": "eg.compute.FinanceMarketMakingQuote",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/FinanceMarketMakingQuote"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.compute.json#/methods/FinanceMarketMakingQuote"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Finance Market Making Quote",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.compute.FinanceMarkovTransitionMatrix": {
       "post": {
         "operationId": "eg.compute.FinanceMarkovTransitionMatrix",
@@ -7429,6 +7840,40 @@
         ]
       }
     },
+    "/api/v1/ops/eg.compute.FinancePairsSignal": {
+      "post": {
+        "operationId": "eg.compute.FinancePairsSignal",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/FinancePairsSignal"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.compute.json#/methods/FinancePairsSignal"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Finance Pairs Signal",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.compute.FinancePairsTrading": {
       "post": {
         "operationId": "eg.compute.FinancePairsTrading",
@@ -7458,6 +7903,40 @@
           }
         },
         "summary": "Finance Pairs Trading",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.compute.FinancePositionSize": {
+      "post": {
+        "operationId": "eg.compute.FinancePositionSize",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/FinancePositionSize"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.compute.json#/methods/FinancePositionSize"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Finance Position Size",
         "tags": [
           "eg"
         ]
@@ -7633,6 +8112,40 @@
         ]
       }
     },
+    "/api/v1/ops/eg.compute.FinanceRegimeChain": {
+      "post": {
+        "operationId": "eg.compute.FinanceRegimeChain",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/FinanceRegimeChain"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.compute.json#/methods/FinanceRegimeChain"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Finance Regime Chain",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.compute.FinanceRiskMetrics": {
       "post": {
         "operationId": "eg.compute.FinanceRiskMetrics",
@@ -7798,6 +8311,40 @@
           }
         },
         "summary": "Finance Sabr Smile",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
+    "/api/v1/ops/eg.compute.FinanceSettlementChain": {
+      "post": {
+        "operationId": "eg.compute.FinanceSettlementChain",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/FinanceSettlementChain"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.compute.json#/methods/FinanceSettlementChain"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Finance Settlement Chain",
         "tags": [
           "eg"
         ]
@@ -10110,40 +10657,6 @@
           }
         },
         "summary": "tenant-bound native control-lease view",
-        "tags": [
-          "eg"
-        ]
-      }
-    },
-    "/api/v1/ops/eg.coordination.GetConversationHead": {
-      "post": {
-        "operationId": "eg.coordination.GetConversationHead",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "schemas/method.request.json#/methods/GetConversationHead"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "schemas/result.coordination.json#/methods/GetConversationHead"
-                }
-              }
-            },
-            "description": "Operation result"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
-          }
-        },
-        "summary": "owner-bound ordered conversation head snapshot",
         "tags": [
           "eg"
         ]
@@ -20606,7 +21119,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "schemas/result.query.json#/methods/NlQuery"
+                  "$defs": {
+                    "FederatedAnswerView": {
+                      "$ref": "#/components/schemas/Definitionef8fa95fba2b352598e31dd727c48a07a647d2ffce6be281d8a2604a191af467"
+                    },
+                    "SourceProvenance": {
+                      "$ref": "#/components/schemas/Definitionad1a1dc89cf3fd6e52e2668813a723c630202f82d4f1d2b4ae81cc20ff4579da"
+                    }
+                  },
+                  "$ref": "#/components/schemas/Schemaeaf0ef9b46b92bd6c685ea388e236393c5bc29b6c17d29159260631a5278416a"
                 }
               }
             },
@@ -21271,5 +21792,5 @@
       }
     }
   },
-  "x-registry-digest": "c4afa6b9f547e34cb1be24aea0ef68fa3f739aadb8ed00fdedca352ffae1b6dc"
+  "x-registry-digest": "dbb0efa0dc47306b1207ab4bb490efb45265fb902e98e5480fba16122bd68a62"
 }

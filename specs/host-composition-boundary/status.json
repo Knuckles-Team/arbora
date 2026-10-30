@@ -1580,9 +1580,15 @@
     {
       "id": "ARBORA-HOST-R027",
       "title": "Loopback OIDC authority for skill certification",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "ebe832a9cfb5"
+      ],
+      "verified_by": [
+        "tests/certification/test_oidc.py:18",
+        "tests/certification/test_oidc.py:36",
+        "tests/certification/test_oidc_script.py:15"
+      ],
       "rollup_of": [
         "ARBORA-HOST-R027.1",
         "ARBORA-HOST-R027.2",
@@ -1592,23 +1598,35 @@
     {
       "id": "ARBORA-HOST-R027.1",
       "title": "Add the loopback OIDC authority owner module for skill certification",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "ebe832a9cfb5"
+      ],
+      "verified_by": [
+        "tests/certification/test_oidc.py:18"
+      ]
     },
     {
       "id": "ARBORA-HOST-R027.2",
       "title": "Add the loopback OIDC authority test fixture",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "ebe832a9cfb5"
+      ],
+      "verified_by": [
+        "tests/certification/test_oidc.py:36"
+      ]
     },
     {
       "id": "ARBORA-HOST-R027.3",
       "title": "Add the loopback OIDC authority script",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "ebe832a9cfb5"
+      ],
+      "verified_by": [
+        "tests/certification/test_oidc_script.py:15"
+      ]
     },
     {
       "id": "ARBORA-HOST-R028",
@@ -1988,7 +2006,7 @@
         "tests/agent_host/test_log_access.py:493",
         "tests/agent_host/test_log_access.py:508",
         "tests/agent_host/test_log_access.py:535",
-        "tests/agent_host/test_log_sink.py:225"
+        "tests/agent_host/test_log_sink.py:227"
       ]
     },
     {
@@ -2027,6 +2045,7 @@
       "landed_in": [
         "28cc061c8f06",
         "71227bbdf7f4",
+        "b5a44c8a205b",
         "ceaa3da1bbcc"
       ],
       "verified_by": [

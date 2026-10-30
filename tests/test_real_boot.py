@@ -336,7 +336,7 @@ def _booted_stack(
         with diagnostics.phase("engine_socket"):
             _wait(
                 eg_up,
-                timeout=60,
+                timeout=BOOT_TIMEOUT_S,
                 what="the epistemic-graph socket",
                 logs=lambda: (root / "eg.log").read_text(errors="replace"),
             )

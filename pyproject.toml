@@ -26,7 +26,7 @@ dependencies = [
     # server/ or api/ packages. arbora owns the MCP/REST serving surface
     # (arbora/mcp_server/backing, arbora/api/contracts), so the former
     # `[mcp]` extra's requirements are declared directly below.
-    "meristem>=4.0.0,<5.0.0",
+    "meristem>=4.0.1,<5.0.0",
     "eunomia-core>=0.3.10",
     "httpx>=0.28.1",
     "pyjwt>=2.15.1",
@@ -37,7 +37,7 @@ dependencies = [
     # SDK owns source transport and runner construction; Arbora supplies its
     # authenticated epistemic-graph client through the SDK's public injection
     # seam and never imports connector implementations.
-    "scion-sdk[a2a,mcp]>=0.5.6,<0.6.0",
+    "scion-sdk[a2a,mcp]>=0.5.9,<0.6.0",
     # The messaging channel layer's HTTP alert intake (arbora/messaging/alert_intake.py)
     # imports aiohttp.web directly for its small webhook listener; platform-agnostic,
     # so unlike the chat-platform SDKs below this is not conditioned on a messaging extra.
@@ -50,7 +50,8 @@ dependencies = [
     # surface directly; AU's transitive requirement is not enough for this
     # package's own imports. The root source override below aligns AU and SDK
     # on the Arbora-compatible revision without changing the published floor.
-    "medulla[server]>=2.27.10,<3.0.0",
+    "medulla>=2.27.10,<3.0.0",
+    "medulla-stem>=2.27.10,<3.0.0",
     "fastapi>=0.143.3",
     "filelock>=4.2.0",
     # The served source reads (arbora.mcp_server.source_reader) decode the
@@ -66,12 +67,13 @@ dependencies = [
     "fastmcp>=4.1.0",
     "mcp>=2.3.0,<3.0.0",
     "opentelemetry-api>=1.45.1",
-    "pydantic-ai-slim[openai]==2.57.0",
+    "pydantic-ai-slim[openai]==2.63.0",
     # Installed so its ``agent_connector_sdk.connector`` declaration (a
     # content-only connector) resolves in THIS process through
     # ``installed_connectors()`` — see arbora/core/providers.py. The floor
     # moves to the first release that declares it once that release ships.
     "universal-skills>=1.3.11,<2.0.0",
+    "cryptography>=50.0.2",
 ]
 
 [[project.authors]]
@@ -80,7 +82,7 @@ email = "maintainers@knuckles.team"
 
 [project.optional-dependencies]
 # Experimental ACP wire/presenter API: qualify together before changing pins.
-acp = ["agent-client-protocol==0.11.0", "pydantic-ai-harness[acp]==0.57.0"]
+acp = ["agent-client-protocol==0.11.0", "pydantic-ai-harness[acp]==0.63.0"]
 # Test-only, real tooling versions matched to agent-utilities' floors
 # (agent-packages/agent-utilities/pyproject.toml `[project.optional-dependencies].test`)
 # so a lockstep upgrade there is easy to mirror here later.
@@ -109,7 +111,7 @@ test = [
     "setuptools>=84.0.0",
 ]
 webui = [
-    "agent-webui>=2.8.2,<3.0.0",
+    "agent-webui>=2.8.3,<3.0.0",
     "uvicorn>=0.54.0",
 ]
 # portable-deployment spec, gateway-widgets extra requirement: arbora/gateway/widgets/*.py
@@ -126,7 +128,7 @@ webui = [
 # IDs: specs/portable-deployment/requirements.md,
 # specs/host-composition-boundary/requirements.md.
 gateway-widgets = [
-    "scion-sdk[a2a,mcp]>=0.5.6,<0.6.0",
+    "scion-sdk[a2a,mcp]>=0.5.9,<0.6.0",
 ]
 # Messaging channel adapters (CONCEPT:AU-ECO.messaging.native-backend-abstraction):
 # each chat platform SDK is its own extra so importing arbora.messaging never
@@ -196,15 +198,6 @@ notify_sync = "arbora.messaging.reach:notify_sync"
 service = "arbora.messaging.reach:service_port"
 
 [tool.uv]
-# A dependency's own git pin of the engine never applies here.
-override-dependencies = [
-    "medulla[server]>=2.27.10,<3.0.0",
-    # meristem ships the same `agent_utilities` module as the retired
-    # agent-utilities dist; the published agent-webui (webui extra) still
-    # requires agent-utilities, which must not co-install over meristem.
-    # Drop once overstory publishes a release that depends on meristem.
-    "agent-utilities; python_version < '0'",
-]
 # The engine installs from its published wheels only; its sdist (a Rust
 # build) is never a candidate.
 no-build-package = ["medulla", "medulla-stem"]
@@ -213,6 +206,7 @@ no-build-package = ["medulla", "medulla-stem"]
 # The engine always resolves from the package index, never from a git or
 # path source declared by a dependency.
 medulla = { index = "pypi" }
+medulla-stem = { index = "pypi" }
 
 [[tool.uv.index]]
 name = "pypi"
@@ -266,6 +260,9 @@ warn_unused_ignores = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+# A hung test fails with its name and stack instead of stalling the gate to
+# the job cap (the full suite stalled at 8% for 24 minutes, no test failing).
+timeout = 300
 asyncio_mode = "auto"
 markers = [
     "spec: binds a test to a spec requirement ID",

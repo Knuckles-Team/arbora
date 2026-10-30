@@ -317,6 +317,7 @@ def _read_native_output(
     return seen_screen
 
 
+@pytest.mark.usefixtures("unsynced_log_writes")
 def test_native_tuig_binds_reads_and_refuses_stale_or_spoofed_receipts(
     tmp_path: Path,
 ) -> None:

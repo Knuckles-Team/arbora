@@ -15,6 +15,7 @@ from arbora.api.invoke.bootstrap import dispatch_eg_method
 from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops.query import NaturalLanguageParams, operations
+from arbora.api.ops.query_federation import NaturalLanguageResult
 from arbora.api.registry import EgMethod, EgSchemaRef
 from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
 from tests._support import Actor
@@ -88,8 +89,16 @@ def test_query_bindings_match_actual_provider_authority_and_inner_schema() -> No
     for key in ref.path.split("#/")[1].split("/"):
         selected = selected[key]
     assert selected["required"] == ["text"]
-    assert set(selected["properties"]) == {"text", "params"}
+    # Engine 2.27.10 adds prepare and foreign_execution to the request.
+    assert set(selected["properties"]) == {
+        "text",
+        "params",
+        "prepare",
+        "foreign_execution",
+    }
     assert selected["additionalProperties"] is False
+    nl = next(op for op in ops if op.id == "query.nl")
+    assert nl.result is NaturalLanguageResult
 
 
 @pytest.mark.parametrize(

@@ -1,0 +1,286 @@
+name: CI
+
+# The fleet fast-PR standard (pipelines reference/ci-standard.md). A pull request
+# runs the diff-scoped `gates` job (Python 3.14, affected tests) and a real wheel
+# `build`; docs and spec-only diffs skip both. The caller aggregate `CI required`
+# is the one required status check. A push to main and the nightly schedule call
+# the read-only checks.yml for the full gates, wheel build, six-platform install
+# smoke, the Python 3.12 backward leg and the advisory scanners. This workflow
+# never calls release.yml and holds no write permission: only a v* tag publishes.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}', github.workflow, github.event.pull_request.number) || format('main-{0}-{1}', github.workflow, github.ref) }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.scope.outputs.code }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      # docs-only-paths: every changed file matches one of these bash patterns
+      # (`*` crosses `/`), so the code jobs are skipped and report as passed.
+      - id: scope
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          DOCS_ONLY_PATHS: 'specs/* docs/* *.md plans/* LICENSE'
+        run: |
+          set -euo pipefail
+          code=false
+          while IFS= read -r file; do
+            matched=false
+            for pattern in $DOCS_ONLY_PATHS; do
+              # shellcheck disable=SC2254
+              case "$file" in $pattern) matched=true; break;; esac
+            done
+            [ "$matched" = true ] || { code=true; break; }
+          done < <(git diff --name-only "$BASE_SHA...HEAD")
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
+  freeze-gate-source:
+    name: freeze-gate-source
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      sha: ${{ steps.ref.outputs.sha }}
+    steps:
+      - name: Resolve pipelines main (first attempt only)
+        if: github.run_attempt == 1
+        run: |
+          set -euo pipefail
+          sha="$(git ls-remote https://github.com/Knuckles-Team/pipelines refs/heads/main | cut -f1)"
+          [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo "could not resolve pipelines main" >&2; exit 1; }
+          printf '%s\n' "$sha" > "$RUNNER_TEMP/pipelines-ref"
+      - name: Record the commit for re-runs
+        if: github.run_attempt == 1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: pipelines-ref
+          path: ${{ runner.temp }}/pipelines-ref
+      - name: Read the commit recorded by attempt 1
+        if: github.run_attempt > 1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: pipelines-ref
+          path: ${{ runner.temp }}/recorded
+      - id: ref
+        run: |
+          set -euo pipefail
+          f="$RUNNER_TEMP/pipelines-ref"
+          [ -f "$f" ] || f="$RUNNER_TEMP/recorded/pipelines-ref"
+          sha="$(tr -d '[:space:]' < "$f")"
+          [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo "recorded gate source is not a commit: $sha" >&2; exit 1; }
+          echo "Shared gate source for this run: pipelines@$sha"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+  gates:
+    # Kept as `gates` so the required check keeps reporting until the ruleset
+    # requires `CI required`. Diff-scoped: commit and push stages over the diff,
+    # the locked type check and the affected-test subset.
+    name: gates
+    needs: [freeze-gate-source]
+    timeout-minutes: 20
+    # Homelab self-hosted runner for same-repo PRs; a fork PR lands on a hosted runner.
+    runs-on: ${{ github.event.pull_request.head.repo.full_name == github.repository && fromJSON('["self-hosted", "homelab"]') || 'ubuntu-latest' }}
+    env:
+      PIPELINES_REF: ${{ needs.freeze-gate-source.outputs.sha }}
+      # The homelab runner is an RKE2 pod; this is a CI checkout, not a deployed
+      # arbora instance, so the live-mount guard is a false positive here.
+      AGENT_UTILITIES_SKIP_LIVE_MOUNT_CHECK: "true"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: '0.13.1'
+          python-version: '3.14'
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+          # A pull request restores the cache but never saves it.
+          save-cache: false
+
+      - name: Provision pinned Helm for deployment render tests
+        env:
+          HELM_VERSION: v4.3.1
+          HELM_SHA256: 0403a88ae20913d11b10a2467b50087721fea7581736da6b9d3992f5357fe54b
+        run: |
+          set -euo pipefail
+          tool_dir="$(mktemp -d "$RUNNER_TEMP/helm.XXXXXX")"
+          archive="$tool_dir/helm.tar.gz"
+          curl --fail --silent --show-error --location --retry 3 \
+            --proto '=https' --tlsv1.2 \
+            "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz" \
+            --output "$archive"
+          printf '%s  %s\n' "$HELM_SHA256" "$archive" | sha256sum --check --strict
+          tar -xzf "$archive" -C "$tool_dir" linux-amd64/helm
+          test "$("$tool_dir/linux-amd64/helm" version --template '{{.Version}}')" = "$HELM_VERSION"
+          printf '%s\n' "$tool_dir/linux-amd64" >> "$GITHUB_PATH"
+
+      - name: Resolve the published base
+        run: |
+          set -euo pipefail
+          BASE="${{ github.event.pull_request.base.sha }}"
+          if [ -z "${BASE:-}" ] || ! git cat-file -e "$BASE" 2>/dev/null; then
+            BASE="$(git rev-list --max-parents=0 HEAD)"
+          fi
+          echo "PRE_COMMIT_FROM_REF=$BASE" >> "$GITHUB_ENV"
+          # Every gate below uses the shared gate source frozen for this run.
+          echo "PINNED_PRECOMMIT=$(bash scripts/pin_gate_source.sh "$PIPELINES_REF" "$RUNNER_TEMP/pre-commit-pinned.yaml")" >> "$GITHUB_ENV"
+
+      # The prohibited-identity catalog is operator-owned and never committed;
+      # a missing catalog makes the tracked-privacy hook fail closed.
+      - name: Commit- and push-stage hooks (.pre-commit-config.yaml)
+        env:
+          PROHIBITED_IDENTITY_CATALOG: ${{ vars.PROHIBITED_IDENTITY_CATALOG }}
+        run: |
+          set -euo pipefail
+          if [ -n "${PROHIBITED_IDENTITY_CATALOG:-}" ]; then
+            mkdir -p "$HOME/.config/agent-utilities/governance"
+            printf '%s' "$PROHIBITED_IDENTITY_CATALOG" > "$HOME/.config/agent-utilities/governance/prohibited-identities.json"
+          fi
+          # ste-staged (prose lint) is advisory: the report-only step below runs it.
+          SKIP="${SKIP:+$SKIP,}ste-staged"
+          export SKIP
+          range="--from-ref $PRE_COMMIT_FROM_REF --to-ref HEAD"
+          uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" $range --show-diff-on-failure
+          uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" $range --hook-stage pre-push --show-diff-on-failure
+
+      - name: Prose lint (ste-staged, advisory, report-only)
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" ste-staged --from-ref "$PRE_COMMIT_FROM_REF" --to-ref HEAD
+
+      - name: Sync test environment
+        run: |
+          set -euo pipefail
+          uv sync --frozen --extra test --extra webui
+
+      - name: Locked-environment type check (manual-stage hook, always full)
+        run: uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" mypy-env --hook-stage manual --all-files
+
+      - name: Required released-native host log journeys
+        env:
+          HOST_LOG_RESULTS: ${{ runner.temp }}/native-host-log-results.xml
+        run: |
+          set -euo pipefail
+          uv run --frozen --no-sync python -m pytest tests/agent_host/test_log_sink_terminal.py tests/agent_host/test_log_sink_terminal_lifecycle.py -q -rP --junitxml="$HOST_LOG_RESULTS"
+          uv run --frozen --no-sync python -c 'import os, xml.etree.ElementTree as ET; cases = ET.parse(os.environ["HOST_LOG_RESULTS"]).findall(".//testcase"); assert len(cases) == 5 and all(case.find(tag) is None for case in cases for tag in ("skipped", "failure", "error")), "All five released-native host log cases must pass without skips"; print("Five released-native host log cases passed without skips")'
+
+      # Operator decision (2026-10-09): PR gates run a fast subset so a PR
+      # auto-merges within minutes. Main, nightly and tags run the full suite
+      # through checks.yml.
+      - name: Resolve pull-request test scope
+        id: pr-test-scope
+        run: |
+          set -euo pipefail
+          uvx --from "git+https://github.com/Knuckles-Team/pipelines@${PIPELINES_REF}" \
+            pipelines-hook pr-test-scope --base-ref "$PRE_COMMIT_FROM_REF" \
+            --src-root arbora --tests-root tests > "$RUNNER_TEMP/pr-test-scope.txt"
+          cat "$RUNNER_TEMP/pr-test-scope.txt"
+          {
+            echo "scope<<PR_TEST_SCOPE_EOF"
+            cat "$RUNNER_TEMP/pr-test-scope.txt"
+            echo "PR_TEST_SCOPE_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Test suite -- pull request fast subset
+        env:
+          SCOPE: ${{ steps.pr-test-scope.outputs.scope }}
+        run: |
+          set -euo pipefail
+          # The static architecture and import-scan tests run on every pull
+          # request whatever the diff touches (scripts/pr_static_scope.py);
+          # the mapped subset only narrows the rest.
+          python3 scripts/pr_static_scope.py > "$RUNNER_TEMP/pr-static-tests.txt"
+          mapfile -t static_tests < "$RUNNER_TEMP/pr-static-tests.txt"
+          if [ "$SCOPE" = "FULL" ]; then
+            echo "pr-test-scope: unmapped source change (or an unreadable diff); running the full suite"
+            scripts/local_hook.sh pytest
+          else
+            if [ "$SCOPE" = "NONE" ]; then
+              echo "pr-test-scope: no arbora/tests change in this diff; running only the static architecture tests"
+              SCOPE=""
+            else
+              echo "pr-test-scope: running only the tests this diff affects, plus the static architecture tests:"
+              echo "$SCOPE"
+            fi
+            # pytest 9 drops a conftest.py's fixtures for a directory whose
+            # files are interleaved with another directory's in the argument
+            # list; group each directory's files.
+            mapfile -t affected_tests < <({ printf '%s\n' "$SCOPE"; printf '%s\n' "${static_tests[@]}"; } | sed '/^$/d' | sort -u | awk -F/ '{d=$0; sub(/\/[^\/]*$/, "", d); print d "\t" $0}' | sort | cut -f2)
+            scripts/local_hook.sh pytest "${affected_tests[@]}"
+          fi
+
+  build:
+    # A real wheel build and data-file check; the six-platform install smoke
+    # runs on main and nightly through checks.yml.
+    name: build
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true'
+    timeout-minutes: 10
+    runs-on: ${{ github.event.pull_request.head.repo.full_name == github.repository && fromJSON('["self-hosted", "homelab"]') || 'ubuntu-latest' }}
+    env:
+      SOURCE_DATE_EPOCH: "0"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: '0.13.1'
+          python-version: '3.14'
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+          save-cache: false
+      - name: Build wheel and sdist
+        run: uv build --out-dir dist
+      - name: Wheel carries every data file
+        run: uv run --no-project python -I scripts/wheel_boot_check.py contents dist/arbora-*.whl
+
+  # Push to main and nightly: the full read-only checks, no publication.
+  main-checks:
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/checks.yml
+
+  ci-required:
+    name: CI required
+    if: always()
+    needs: [changes, freeze-gate-source, gates, build, main-checks]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fail on any failed or cancelled job (skipped is fine)
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "needed job results: $RESULTS"
+          for r in $RESULTS; do
+            case "$r" in failure|cancelled) echo "::error::a required job ended $r"; exit 1;; esac
+          done

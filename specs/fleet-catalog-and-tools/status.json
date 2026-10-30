@@ -70,6 +70,7 @@
     "ARBORA-FLEET-R029.1",
     "ARBORA-FLEET-R026",
     "ARBORA-FLEET-R026.1",
+    "ARBORA-FLEET-R026.2",
     "ARBORA-FLEET-R027",
     "ARBORA-FLEET-R028",
     "ARBORA-FLEET-R030",
@@ -1010,13 +1011,17 @@
       "landed_in": [
         "5ecdfe7fbe9a",
         "619d25ac8e69",
+        "cef285464d04",
+        "d4804307c79b",
         "d9015e6d6cda"
       ],
       "verified_by": [
+        "tests/mcp_server/test_catalog_composition.py:164",
         "tests/test_fleet_catalog_reader.py:366"
       ],
       "rollup_of": [
-        "ARBORA-FLEET-R026.1"
+        "ARBORA-FLEET-R026.1",
+        "ARBORA-FLEET-R026.2"
       ]
     },
     {
@@ -1028,6 +1033,18 @@
       ],
       "verified_by": [
         "tests/test_fleet_catalog_reader.py:366"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R026.2",
+      "title": "Fleet catalog reads run under the process authority",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "cef285464d04",
+        "d4804307c79b"
+      ],
+      "verified_by": [
+        "tests/mcp_server/test_catalog_composition.py:164"
       ]
     },
     {
@@ -1921,7 +1938,7 @@
         "95234018d50f"
       ],
       "verified_by": [
-        "tests/fleet/test_declarations.py:94",
+        "tests/fleet/test_declarations.py:99",
         "tests/ingest/test_connector_sources.py:306"
       ]
     },
@@ -1950,9 +1967,9 @@
         "96b68a9b5e5c"
       ],
       "verified_by": [
-        "tests/fleet/test_declarations.py:108",
-        "tests/fleet/test_declarations.py:66",
-        "tests/fleet/test_declarations.py:83"
+        "tests/fleet/test_declarations.py:113",
+        "tests/fleet/test_declarations.py:71",
+        "tests/fleet/test_declarations.py:88"
       ]
     },
     {
@@ -2071,32 +2088,50 @@
     {
       "id": "ARBORA-FLEET-R043.1",
       "title": "Model",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5704a6e6e655"
+      ],
+      "verified_by": [
+        "tests/api/test_query_federation.py:146",
+        "tests/api/test_query_federation.py:70"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R043.2",
       "title": "Behavior",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "5704a6e6e655",
         "c135fd8a6f4a"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_query_federation.py:146",
+        "tests/api/test_query_federation.py:93"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R043.3",
       "title": "Wiring",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5704a6e6e655"
+      ],
+      "verified_by": [
+        "tests/api/test_query_federation_served.py:171"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R043.4",
       "title": "Refusal",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "5704a6e6e655"
+      ],
+      "verified_by": [
+        "tests/api/test_query_federation.py:219",
+        "tests/api/test_query_federation.py:270"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R043.5",
@@ -2117,6 +2152,8 @@
       "title": "Source executor",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "18ce44dc31bd",
+        "2d2fe39a58ce",
         "c135fd8a6f4a",
         "e755549375e6"
       ],

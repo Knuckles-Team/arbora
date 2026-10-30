@@ -460,6 +460,24 @@ class FleetSourceExecutor:
                         break
                 if cursor is not None and pages >= page_cap and rows < row_cap:
                     truncated = True
+                if truncated:
+                    await _abort_foreign(
+                        self._foreign_client,
+                        AbortRequest(
+                            execution=execution,
+                            sequence=sequence,
+                            reason="source_failed",
+                        ),
+                    )
+                    return _foreign_failure(
+                        request,
+                        "SOURCE_BAD_RESPONSE",
+                        "the source read exceeded its configured page or row limit",
+                        execution=execution,
+                        rows=rows,
+                        pages=pages,
+                        truncated=True,
+                    )
                 await self._foreign_client.complete(
                     CompleteRequest(execution=execution, sequence=sequence)
                 )
@@ -541,6 +559,14 @@ class FleetSourceExecutor:
         )
         if decision.outcome != "approved":
             return _foreign_failure(request, "SOURCE_HELD", decision.reason)
+        if request.tool != getattr(
+            request.contract, "operation", None
+        ) or request.source_id != getattr(request.contract, "source_id", None):
+            return _foreign_failure(
+                request,
+                "SOURCE_HELD",
+                "the requested operation is not the approved contract",
+            )
         if approved_source_id(request.approval) != request.source_name:
             return _foreign_failure(
                 request,

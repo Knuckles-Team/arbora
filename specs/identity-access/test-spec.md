@@ -245,3 +245,14 @@ They check scope/task substitution, cancellation, source changes and native revo
 Retained file work must preserve all occupied capacity slots through cancellation.
 Repeated same-loop owner checks must not reproduce pending-reader warnings.
 No fixture or native lease JSON establishes factory or operation authority.
+
+
+## Local anonymous text execution
+
+- `ARBORA-IDENTITY-R004.9`: Verify all source, installed and recovery children.
+- `ARBORA-IDENTITY-R004.9.1`: Use the public native client and actual constrained harness with simulated transports. Assert one model request for duplicate sends and conflict on changed input. Check no tools, no inherited session and exact graph and lease binding. Require native completion proof before success.
+- `ARBORA-IDENTITY-R004.9.2`: Run the served local transport against the installed native engine. Exercise concurrent sends, restart, cancellation, policy withdrawal and authenticated regression.
+- `ARBORA-IDENTITY-R004.9.3`: Recover the exact answer from supported owner-bound storage after restart. A usage receipt and a digest alone must not become answer text.
+
+- `ARBORA-IDENTITY-R004.9.3.1`: Recreate the service over stored native fixtures. Return the same committed answer without a second model request. Refuse altered content and malformed references. Exercise encoded and map property results.
+- `ARBORA-IDENTITY-R004.9.3.2`: Repeat restart recovery with installed native processes and the constrained sender. Source fixtures are not installed proof.
