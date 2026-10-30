@@ -1,6 +1,6 @@
 """Explicit shared invocation dependencies for the native serving lifecycle."""
 
-from collections.abc import Mapping
+from collections.abc import Callable, Coroutine, Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -23,6 +23,10 @@ class HostedInvocation:
     authenticator: AmbientHTTPAuthenticator
     task_plan_config: TaskPlanConfig | None = None
     browser_boundary: Any = None
+    #: Process-lifecycle work the server lifespan awaits under the process
+    #: authority before serving (the task-plan schema publication). No request
+    #: path reaches it.
+    process_startup: Callable[[], Coroutine[Any, Any, Any]] | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.services, InvokeServices) or not isinstance(

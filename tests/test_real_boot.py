@@ -272,7 +272,11 @@ def _booted_stack(
     diagnostics = BootDiagnostics(root, processes)
     secret = uuid.uuid4().hex
     signer_key = uuid.uuid4().hex
-    socket_path = root / "eg.sock"
+    # AF_UNIX paths are capped at 107 bytes; a deep private root (a pytest
+    # basetemp under a CI runner) overflows it, so the socket gets its own
+    # short private directory.
+    socket_dir = Path(tempfile.mkdtemp(prefix="eg-", dir="/tmp"))
+    socket_path = socket_dir / "eg.sock"
     store = root / "store"
     store.mkdir()
     eg_log = (root / "eg.log").open("wb")
@@ -393,10 +397,14 @@ def _booted_stack(
         # The operator admits the fleet connector's pack import by policy; the
         # shipped default holds an unknown connector's import for approval.
         from arbora.access.action_policy import DEFAULT_POLICY, TIER_AUTO_NOTIFY
+        from arbora.api.task_plan_schema import COMPONENT_ID, PURPOSE_ID
 
         policy = {
             **DEFAULT_POLICY,
             "rules": [
+                # It also admits the one digest-bound task-plan schema
+                # publication that start-up runs under the process authority.
+                {"kind": PURPOSE_ID, "target": COMPONENT_ID, "tier": TIER_AUTO_NOTIFY},
                 *(
                     {
                         "kind": "connector_pack_import",
@@ -635,6 +643,7 @@ def _booted_stack(
         gos_log.close()
         issuer.close()
         shutil.rmtree(root, ignore_errors=True)
+        shutil.rmtree(socket_dir, ignore_errors=True)
 
 
 @pytest.fixture(scope="module")

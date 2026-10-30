@@ -306,7 +306,7 @@
         "tests/deployment/test_real_boot_fixture.py:19",
         "tests/test_native_run_admission.py:12",
         "tests/test_native_run_scope.py:14",
-        "tests/test_real_boot.py:1297"
+        "tests/test_real_boot.py:1306"
       ]
     },
     {
@@ -883,7 +883,7 @@
       "verified_by": [
         "tests/fleet/test_multiplexer_dynamic_gateway.py:1164",
         "tests/mcp_server/test_arbora_015_served_fixes.py:75",
-        "tests/test_real_boot.py:1234"
+        "tests/test_real_boot.py:1243"
       ]
     },
     {
@@ -1047,8 +1047,8 @@
         "tests/a2a/test_native_run_publication.py:16",
         "tests/api/test_runs_ops.py:23",
         "tests/mcp_server/test_current_plan_reader.py:24",
-        "tests/mcp_server/test_task_plan.py:293",
-        "tests/mcp_server/test_task_plan.py:300"
+        "tests/mcp_server/test_task_plan.py:314",
+        "tests/mcp_server/test_task_plan.py:321"
       ],
       "rollup_of": [
         "ARBORA-OPS-R021.4.5.1"
@@ -1069,8 +1069,8 @@
         "tests/a2a/test_native_run_publication.py:16",
         "tests/api/test_runs_ops.py:23",
         "tests/mcp_server/test_current_plan_reader.py:24",
-        "tests/mcp_server/test_task_plan.py:293",
-        "tests/mcp_server/test_task_plan.py:300"
+        "tests/mcp_server/test_task_plan.py:314",
+        "tests/mcp_server/test_task_plan.py:321"
       ],
       "rollup_of": [
         "ARBORA-OPS-R021.4.5.1.1",
@@ -1103,8 +1103,8 @@
       ],
       "verified_by": [
         "tests/a2a/test_native_run_publication.py:16",
-        "tests/mcp_server/test_task_plan.py:293",
-        "tests/mcp_server/test_task_plan.py:300",
+        "tests/mcp_server/test_task_plan.py:314",
+        "tests/mcp_server/test_task_plan.py:321",
         "tests/mcp_server/test_task_plan_runtime.py:626",
         "tests/mcp_server/test_task_plan_runtime.py:705"
       ]

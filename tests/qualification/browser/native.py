@@ -48,7 +48,7 @@ def require_installed() -> dict[str, str]:
         ("arbora", "arbora", None),
         ("medulla", "epistemic_graph", "2.27.10"),
         ("medulla-stem", "epistemic_graph_server", "2.27.10"),
-        ("meristem", "agent_utilities", "4.0.1"),
+        ("meristem", "agent_utilities", "4.2.0"),
         ("scion-sdk", "agent_connector_sdk", "0.5.9"),
         ("agent-webui", "agent_webui", None),
     ):

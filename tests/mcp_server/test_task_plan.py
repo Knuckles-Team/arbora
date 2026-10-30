@@ -1,5 +1,6 @@
 """Shared host admission with controlled EG transport, not durable execution."""
 
+import asyncio
 import hashlib
 from dataclasses import replace
 from types import SimpleNamespace
@@ -49,10 +50,13 @@ def bridge(monkeypatch):
         runtime.schema_digests[tenant] = digest
         return digest
 
-    runtime.bindings = {
-        "task_plan_schema_pins": TaskPlanSchemaPins(schema_pin),
-        "task_plan_schema_publish": publish,
-    }
+    # The server lifespan publishes every served tenant before requests run;
+    # a request only reads the pin and never publishes.
+    pins = TaskPlanSchemaPins(schema_pin)
+    for tenant in ("tenant:one", "tenant:other", "local"):
+        asyncio.run(pins.publish_for(tenant, publish))
+    runtime.schema_published = []
+    runtime.bindings = {"task_plan_schema_pins": pins}
     monkeypatch.setattr(
         hosted_invocation, "validate_contract_admission", lambda _: None
     )
@@ -99,7 +103,7 @@ async def test_shared_host_uses_own_limits_and_direct_response(bridge):
         "definition_digest": runtime.schema_digests[principal.tenant],
     }
     assert built[0][4] == {"policy": "existing"}
-    assert [tenant for tenant, _ in runtime.schema_published] == [principal.tenant]
+    assert runtime.schema_published == []  # the request never publishes
     assert send.await_args.args[2] == "verified-graph"
     assert runtime.verifications >= 6
     assert result["plan_digest"] == "engine-digest"
@@ -165,7 +169,24 @@ async def test_nested_evaluation_uses_verified_caller_tenant_and_policy(bridge):
     assert built[0][0] == "tenant:other"
     assert built[0][3]["definition_digest"] == runtime.schema_digests["tenant:other"]
     assert built[0][4] == {"policy": "existing"}
-    assert [tenant for tenant, _ in runtime.schema_published] == ["tenant:other"]
+    assert runtime.schema_published == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.spec("ARBORA-RELEASE-R003.4.4")
+async def test_nested_evaluation_refuses_unpublished_tenant_without_publishing(
+    bridge,
+):
+    host, _, runtime, _, send, _ = bridge
+    principal = caller(
+        tenant="tenant:unpublished",
+        effective_scopes=frozenset({"kg:write", "query:decide"}),
+    )
+
+    with pytest.raises(OperationRefused, match="UNAVAILABLE"):
+        await host.evaluate_task_plan(principal, "q", PROPOSAL)
+    assert runtime.schema_published == []
+    send.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -287,7 +308,7 @@ async def test_native_typed_receipt_preserves_premise_wire_aliases(bridge, monke
     assert request["tenant_id"] == "local"
     assert request["feature_schema"] == wire["inputs"]["feature_schema"]
     assert request["policy"] == wire["inputs"]["policy"]
-    assert [tenant for tenant, _ in host.services.runtime.schema_published] == ["local"]
+    assert host.services.runtime.schema_published == []
 
 
 @pytest.mark.spec("ARBORA-OPS-R021.4.5.1.2")
