@@ -27,21 +27,21 @@ from arbora.api.registry import (
     Verb,
 )
 from arbora.ingest.service import (
-    cancel_job,
     admit_embedding,
     approve_repair,
+    cancel_job,
     get_drift,
     get_job_status,
     get_source_status,
     index_repository,
+    list_drift,
     list_jobs,
     list_packs,
-    list_drift,
     list_sources,
     prioritize_job,
-    submit_ingest,
     propose_repair,
     reembed,
+    submit_ingest,
     sync_source,
 )
 
@@ -165,6 +165,8 @@ class IngestJobPrioritizeParams(_Params):
 
 class IngestJobControlResult(_Params):
     value: dict[str, object]
+
+
 class IngestDriftListParams(_Params):
     source_id: str | None = Field(default=None, min_length=1, max_length=256)
 
@@ -220,36 +222,58 @@ def _ingest_op(
 def _drift_embedding_operations() -> tuple[OpSpec, ...]:
     return (
         _ingest_op(
-            "ingest.drift.list", "List detected source drift", "list source drift",
-            IngestDriftListParams, "list_drift", write=False, verb=Verb.FIND,
+            "ingest.drift.list",
+            "List detected source drift",
+            "list source drift",
+            IngestDriftListParams,
+            "list_drift",
+            write=False,
+            verb=Verb.FIND,
         ),
         _ingest_op(
-            "ingest.drift.get", "Show one drift record", "show this drift",
-            IngestDriftRefParams, "get_drift", write=False, verb=Verb.ASK,
+            "ingest.drift.get",
+            "Show one drift record",
+            "show this drift",
+            IngestDriftRefParams,
+            "get_drift",
+            write=False,
+            verb=Verb.ASK,
         ),
         _ingest_op(
             "ingest.drift.repair_propose",
             "Propose a drift repair and record its preview without applying it",
             "propose a repair for this drift",
-            IngestDriftRefParams, "propose_repair", write=True, verb=Verb.ACT,
+            IngestDriftRefParams,
+            "propose_repair",
+            write=True,
+            verb=Verb.ACT,
         ),
         _ingest_op(
             "ingest.drift.repair_approve",
             "Apply a previewed drift repair against an approval reference",
             "approve this drift repair",
-            IngestRepairApproveParams, "approve_repair", write=True, verb=Verb.ACT,
+            IngestRepairApproveParams,
+            "approve_repair",
+            write=True,
+            verb=Verb.ACT,
         ),
         _ingest_op(
             "ingest.embedding.admit",
             "Admit an embedding model for this tenant",
             "admit this embedding model",
-            IngestEmbeddingAdmitParams, "admit_embedding", write=True, verb=Verb.ACT,
+            IngestEmbeddingAdmitParams,
+            "admit_embedding",
+            write=True,
+            verb=Verb.ACT,
         ),
         _ingest_op(
             "ingest.embedding.reembed",
             "Request a durable re-embedding of one source",
             "re-embed this source",
-            IngestReembedParams, "reembed", write=True, verb=Verb.ACT,
+            IngestReembedParams,
+            "reembed",
+            write=True,
+            verb=Verb.ACT,
         ),
     )
 

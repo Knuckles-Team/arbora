@@ -364,6 +364,8 @@ async def prioritize_job(context: Any, params: Mapping[str, Any], op: Any) -> An
         caller=context.caller,
     )
     return {"value": receipt.model_dump(mode="json")}
+
+
 def _require_key(context: Any) -> str:
     if not context.idempotency_key:
         raise ValueError("Idempotency-Key is required")

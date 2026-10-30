@@ -6184,6 +6184,42 @@
     {
       "domain": "ingest",
       "examples": [
+        "cancel this ingestion job"
+      ],
+      "id": "ingest.jobs.cancel",
+      "summary": "Cancel one pending ingestion job",
+      "tags": [
+        "ingest"
+      ],
+      "verb": "act"
+    },
+    {
+      "domain": "ingest",
+      "examples": [
+        "list my ingestion jobs"
+      ],
+      "id": "ingest.jobs.list",
+      "summary": "List this tenant's durable ingestion jobs",
+      "tags": [
+        "ingest"
+      ],
+      "verb": "find"
+    },
+    {
+      "domain": "ingest",
+      "examples": [
+        "prioritize this ingestion job"
+      ],
+      "id": "ingest.jobs.prioritize",
+      "summary": "Set the priority bucket of one ingestion job",
+      "tags": [
+        "ingest"
+      ],
+      "verb": "act"
+    },
+    {
+      "domain": "ingest",
+      "examples": [
         "show the status of this ingestion job"
       ],
       "id": "ingest.jobs.status",
@@ -6248,6 +6284,19 @@
       ],
       "id": "ingest.sources.sync",
       "summary": "Request a durable sync of one ingestion source",
+      "tags": [
+        "ingest"
+      ],
+      "verb": "act"
+    },
+    {
+      "domain": "ingest",
+      "examples": [
+        "ingest this url",
+        "distill this document"
+      ],
+      "id": "ingest.submissions.create",
+      "summary": "Queue a durable ingest, URL, pack, fact-extract or distill job",
       "tags": [
         "ingest"
       ],
@@ -6702,5 +6751,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "66403b30f5f8dd91c56ba03e05027d5041d1844a14c3276f5ecfab9f468ec713"
+  "registry_digest": "6cda071f7f3bb609c198d367afd6a9fbccaae2e14a0077b29bf0f593ae1a04b7"
 }
