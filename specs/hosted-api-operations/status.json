@@ -1279,7 +1279,7 @@
         "94724be32c28"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:378"
+        "tests/api/test_registry_factory.py:375"
       ],
       "rollup_of": [
         "ARBORA-OPS-R024.4.1",
@@ -1374,7 +1374,7 @@
         "5f79be652726"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:378"
+        "tests/api/test_registry_factory.py:375"
       ]
     },
     {
@@ -1509,7 +1509,7 @@
         "ca7c3067b9c8"
       ],
       "verified_by": [
-        "tests/api/test_registry_scopes.py:16"
+        "tests/api/test_registry_scopes.py:17"
       ]
     },
     {
@@ -2623,7 +2623,7 @@
         "d673cd573c77"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:387"
+        "tests/api/test_registry_factory.py:384"
       ]
     },
     {
