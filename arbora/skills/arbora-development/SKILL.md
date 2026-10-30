@@ -59,9 +59,8 @@ Specs are already designed. The work is implementation, delivered in very small,
 **Specs update themselves (land VERIFIED, not just LANDED)**
 - Every commit that delivers a requirement ends with the trailer "Spec: <ID>[, <ID>...]". A commit that touches code without delivering one says "Spec: none (ci|deps|refactor|fix-forward)".
 - Every delivered ID gets at least one test bound to it in the same PR. Python: "@pytest.mark.spec("<ID>")". Rust/TypeScript: a `// spec: <ID>` line directly above the test.
-- Never hand-edit `status.json`; it is generated (`spec-status`). Never write placeholder SHAs. If the work is only part of a requirement, decompose it into `<ID>.<n>` children first and deliver whole children.
+- `status.json` is computed at read time and never committed (`pipelines-hook spec-status --write` writes an ignored local copy). Never write placeholder SHAs. If the work is only part of a requirement, decompose it into `<ID>.<n>` children first and deliver whole children.
 - Write the marker with the literal ID, never a variable. Put `Spec:` and `Co-Authored-By:` on consecutive lines in the last paragraph of the commit message, or `Spec:` is not read as a trailer.
-- Generated status depends on the commit: run "pipelines-hook spec-status --write" again after committing and commit the result.
 - The generator applies the rules. Run "pipelines-hook spec-status" to see each row's state.
 
 **Delivered means the row's acceptance is met**
@@ -79,7 +78,7 @@ Specs are already designed. The work is implementation, delivered in very small,
 - Run the targeted tests only, never a full suite. Run the type checker on every changed file, and keep each function at cyclomatic complexity 10 or less.
 
 **Landing**
-- Every PR lands within minutes of going green; no PR sits idle. Mechanical conflicts (generated files, Markdown, `status.json`) are resolved automatically by the merge-train tool. Real conflicts are additive in most cases and are resolved, not deferred.
+- Every PR lands within minutes of going green; no PR sits idle. Mechanical conflicts (generated files, Markdown) are resolved automatically by the merge-train tool. Real conflicts are additive in most cases and are resolved, not deferred.
 - Many open PRs land together as a merge train: one integration branch and one CI run.
 - Full CI on main catches what the fast subset missed; regressions are fixed forward immediately.
 - Landing in this repo: `gh pr merge --auto --merge` when the PR opens. The required checks are the fast PR subset. If the PR goes DIRTY, merge `origin/main` into it and push.
@@ -124,7 +123,7 @@ an agent harness worktree action in a multi-worktree repository.
 Install [universal-skills](https://github.com/Knuckles-Team/universal-skills)
 and use `spec-generator`, `task-planner`, `sdd-implementer`, `spec-verifier`,
 and `sdd-full-lifecycle` as needed. Read all six owner files: `spec.md`,
-`plan.md`, `test-spec.md`, `tasks.md`, `requirements.md`, and `status.json`
+`plan.md`, `test-spec.md`, `tasks.md`, and `requirements.md` (status is computed, never committed)
 (see `specs/README.md`'s own "Structure" section). A complete public
 spec supplies its own design, tests, fixtures, and acceptance criteria; never
 ask a contributor to retrieve private drafts or local operator inventory.
