@@ -1787,8 +1787,8 @@ def _provider_child_sandbox_environment(
         "XDG_CACHE_HOME": str(roots["cache"]),
         "XDG_RUNTIME_DIR": str(roots["runtime"]),
         "AGENT_UTILITIES_CONFIG_DIR": str(roots["config"]),
-        "MERISTEM_DATA_DIR": str(roots["data"]),
-        "MERISTEM_CACHE_DIR": str(roots["cache"]),
+        "ARBORA_DATA_DIR": str(roots["data"]),
+        "ARBORA_CACHE_DIR": str(roots["cache"]),
         "TEMP": str(roots["temp"]),
         "TMP": str(roots["temp"]),
     }

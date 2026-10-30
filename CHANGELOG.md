@@ -2,8 +2,8 @@
 
 ## [Unreleased]
 
-- Genesis environments and fleet child processes set `MERISTEM_DATA_DIR` and `MERISTEM_CACHE_DIR` in place of `AGENT_UTILITIES_DATA_DIR` and `AGENT_UTILITIES_CACHE_DIR`, matching meristem's renamed directory overrides.
-- Requires meristem 4.1.0, the first release that reads `MERISTEM_*_DIR` and defaults its data, cache and log directories to `meristem`.
+- Genesis environments and fleet child processes set `ARBORA_DATA_DIR` and `ARBORA_CACHE_DIR` in place of `AGENT_UTILITIES_DATA_DIR` and `AGENT_UTILITIES_CACHE_DIR`, matching meristem's `ARBORA_*_DIR` directory overrides.
+- Requires meristem 4.2.0, the first release that reads `ARBORA_*_DIR` and defaults its data, cache and log directories to `arbora`.
 
 ## [0.1.8.dev6] - 2026-10-29
 
