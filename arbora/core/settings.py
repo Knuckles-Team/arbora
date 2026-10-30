@@ -41,6 +41,7 @@ __all__ = [
 CONFIG_DIR_SETTING = "ARBORA_CONFIG_DIR"
 _APP_DIR = "arbora"
 
+
 def _config_home() -> Path:
     return Path(setting("XDG_CONFIG_HOME", "") or Path.home() / ".config")
 
