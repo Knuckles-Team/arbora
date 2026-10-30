@@ -211,7 +211,7 @@ def test_release_dependency_readiness_reports_on_tag_builds_only() -> None:
     # Advisory (operator gate cut): it reports and never blocks the build.
     assert checkout["continue-on-error"] is True
     assert readiness["continue-on-error"] is True
-    assert "dependency-readiness --hook-stage manual" in readiness["run"]
+    assert "scripts/local_hook.sh dependency-readiness" in readiness["run"]
     assert "ln -s" not in readiness["run"]
     hook = (ROOT / "scripts" / "local_hook.sh").read_text(encoding="utf-8")
     assert "uv run --no-project --no-sources" in hook
