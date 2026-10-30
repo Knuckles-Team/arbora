@@ -185,7 +185,7 @@
     },
     {
       "id": "ARBORA-DEPLOY-R007.1",
-      "title": "`agent-utilities-doctor` console-script collision resolved",
+      "title": "`arbora-doctor` console-script collision resolved",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "d6f16cd447e2",
@@ -221,7 +221,7 @@
     },
     {
       "id": "ARBORA-DEPLOY-R007.4",
-      "title": "`agent-utilities-venv` console-script collision resolved",
+      "title": "`arbora-venv` console-script collision resolved",
       "delivery_state": "LANDED",
       "landed_in": [
         "fd761d59a171"

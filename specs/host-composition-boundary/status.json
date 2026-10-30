@@ -238,7 +238,7 @@
     },
     {
       "id": "ARBORA-HOST-R001.1",
-      "title": "Arbora owns the MCP, REST and API serving code that agent-utilities 3.0.0 drops",
+      "title": "Arbora owns the MCP, REST and API serving code that meristem 3.0.0 drops",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "4eb2b408bd93"
@@ -1668,7 +1668,7 @@
     },
     {
       "id": "ARBORA-HOST-R028",
-      "title": "Bump the pinned agent-utilities source for the new `agent_utilities.api.*` export modules",
+      "title": "Bump the pinned meristem source for the new `agent_utilities.api.*` export modules",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

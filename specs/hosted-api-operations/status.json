@@ -1862,7 +1862,7 @@
     },
     {
       "id": "ARBORA-OPS-R039.9",
-      "title": "Replace the `agent_utilities.core.config` and `agent_utilities.security.identity` imports in `_dashboard_capabilities` in arbora/gateway/dashboard_api.py with a public `agent_utilities.api` capability resolver. Cross-repo prerequisite (owner: agent-utilities): export it under `MERISTEM-BOUNDARY-R013`",
+      "title": "Replace the `agent_utilities.core.config` and `agent_utilities.security.identity` imports in `_dashboard_capabilities` in arbora/gateway/dashboard_api.py with a public `agent_utilities.api` capability resolver. Cross-repo prerequisite (owner: meristem): export it under `MERISTEM-BOUNDARY-R013`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1888,7 +1888,7 @@
     },
     {
       "id": "ARBORA-OPS-R040.1",
-      "title": "Cross-repo prerequisite (owner: agent-utilities)",
+      "title": "Cross-repo prerequisite (owner: meristem)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1944,7 +1944,7 @@
     },
     {
       "id": "ARBORA-OPS-R040.9",
-      "title": "Cross-repo prerequisite (owner: agent-utilities): add the proposed `MERISTEM-BOUNDARY-R013.<n>` row of plan.md D4 to specs/au-boundary-deconstruction/requirements.md. It is the concrete form of ARBORA-OPS-R040.1",
+      "title": "Cross-repo prerequisite (owner: meristem): add the proposed `MERISTEM-BOUNDARY-R013.<n>` row of plan.md D4 to specs/au-boundary-deconstruction/requirements.md. It is the concrete form of ARBORA-OPS-R040.1",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -2650,7 +2650,7 @@
     },
     {
       "id": "ARBORA-OPS-R843",
-      "title": "Served engine operations replace the in-run agent-utilities tool wrappers",
+      "title": "Served engine operations replace the in-run meristem tool wrappers",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],

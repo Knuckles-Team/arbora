@@ -55,13 +55,13 @@
     },
     {
       "id": "ARBORA-ACP-R001.2",
-      "title": "RETIRED: tracked by agent-utilities AU-CONTROL-001",
+      "title": "RETIRED: tracked by meristem AU-CONTROL-001",
       "delivery_state": "RETIRED",
       "landed_in": [
         "c2a6ab839fd3"
       ],
       "verified_by": [],
-      "retired_reason": "tracked by agent-utilities AU-CONTROL-001"
+      "retired_reason": "tracked by meristem AU-CONTROL-001"
     },
     {
       "id": "ARBORA-ACP-R001.3",

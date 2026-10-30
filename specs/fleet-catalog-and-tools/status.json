@@ -605,7 +605,7 @@
     },
     {
       "id": "ARBORA-FLEET-R007.2",
-      "title": "agent-utilities' arbora bridge surface gains native prompt/resource/template registration (cross-repo, owner: agent-utilities)",
+      "title": "meristem's arbora bridge surface gains native prompt/resource/template registration (cross-repo, owner: meristem)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -623,7 +623,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "4b83c69e2b41",
-        "907fee1976a5"
+        "a7c25b4e76aa"
       ],
       "verified_by": [
         "tests/api/test_api_registry.py:112",
@@ -651,7 +651,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "6b63aeb7ba03",
-        "907fee1976a5",
+        "a7c25b4e76aa",
         "ea736715b7fb"
       ],
       "verified_by": [
@@ -805,7 +805,7 @@
       "title": "Authority-parity oracle validates principal, operation and surface",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "907fee1976a5",
+        "a7c25b4e76aa",
         "ba0aa6a11b4a"
       ],
       "verified_by": [
@@ -817,9 +817,9 @@
       "title": "Multiplexer exposes four resident fleet tools over one catalog",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "531b2f30db55",
-        "907fee1976a5",
-        "e1d37ca10ef7"
+        "a7c25b4e76aa",
+        "e1d37ca10ef7",
+        "e241347ae841"
       ],
       "verified_by": [
         "tests/fleet/test_gateway_ops.py:17",
@@ -895,7 +895,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "667a206c800e",
-        "907fee1976a5"
+        "a7c25b4e76aa"
       ],
       "verified_by": [
         "tests/test_check_connector_count_pins.py:25"
@@ -910,7 +910,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "667a206c800e",
-        "907fee1976a5"
+        "a7c25b4e76aa"
       ],
       "verified_by": [
         "tests/test_check_connector_count_pins.py:25"
@@ -968,9 +968,9 @@
       "title": "Deploy-watch verdict is a typed Arbora operation",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "531b2f30db55",
-        "907fee1976a5",
-        "c2d8c8ce46b8"
+        "a7c25b4e76aa",
+        "c2d8c8ce46b8",
+        "e241347ae841"
       ],
       "verified_by": [
         "tests/api/test_fleet_deploy_watch_ops.py:17"
@@ -1118,7 +1118,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "619d25ac8e69",
-        "907fee1976a5",
+        "a7c25b4e76aa",
         "d9015e6d6cda"
       ],
       "verified_by": [
@@ -1145,7 +1145,7 @@
       "title": "`find` ranks catalog-admitted tools when a live probe cannot answer",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "907fee1976a5",
+        "a7c25b4e76aa",
         "d43ff2da921f"
       ],
       "verified_by": [
