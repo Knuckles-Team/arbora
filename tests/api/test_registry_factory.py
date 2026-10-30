@@ -15,6 +15,7 @@ from arbora.api.ops import (
     browser,
     capacity,
     decide,
+    federation,
     fleet,
     get_registry,
     ingest,
@@ -24,6 +25,7 @@ from arbora.api.ops import (
     plans,
     policy,
     query,
+    query_engine,
     research,
     retrieval,
     runs,
@@ -43,6 +45,19 @@ from arbora.api.registry import (
 )
 from arbora.api.registry.eg_binding import EgContractError
 from tests.api.test_eg_binding import _curated, _fixture
+
+
+_ENGINE_METHODS = {
+    "Uql",
+    "NlQuery",
+    "Sparql",
+    "Sql",
+    "OntologyInspect",
+    "GraphSchemaClasses",
+    "ShaclValidate",
+    "QueryForeignColumns",
+    "RegisterForeignSource",
+}
 
 
 @pytest.fixture
@@ -73,6 +88,12 @@ def provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Pat
             "capacity:read",
             "capacity:admin",
             "ingest:write",
+            "federation:read",
+            "sparql:read",
+            "query:sql",
+            "validation:read",
+            "owl:read",
+            "federation:admin",
             "kv:read",
             "kv:write",
             "ingest:read",
@@ -99,15 +120,26 @@ def provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Pat
     methods = json.loads(methods_path.read_text())
     actual = json.loads(source.joinpath("methods.json").read_text())
     methods["methods"].extend(
-        row for row in actual["methods"] if row["id"] in {"Uql", "NlQuery"}
+        row for row in actual["methods"] if row["id"] in _ENGINE_METHODS
     )
     methods_path.write_text(json.dumps(methods))
-    for filename in ("method.request.json", "result.query.json"):
+    for filename in (
+        "method.request.json",
+        "result.query.json",
+        "result.reasoning.json",
+        "result.cluster.json",
+    ):
         path = contract / "schemas" / filename
-        synthetic = json.loads(path.read_text())
+        synthetic = (
+            json.loads(path.read_text()) if path.exists() else {"methods": {}}
+        )
         actual_schema = json.loads(source.joinpath("schemas", filename).read_text())
         synthetic["methods"].update(
-            {key: actual_schema["methods"][key] for key in ("Uql", "NlQuery")}
+            {
+                key: value
+                for key, value in actual_schema["methods"].items()
+                if key in _ENGINE_METHODS
+            }
         )
         synthetic["$defs"] = actual_schema.get("$defs", {})
         path.write_text(json.dumps(synthetic))
@@ -131,6 +163,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *browser.operations(),
         *capacity.operations(),
         *decide.operations(),
+        *federation.operations(),
         *fleet.operations(),
         *ingest.operations(),
         *memory.operations(),
@@ -140,6 +173,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *usage.operations(),
         *policy.operations(),
         *query.operations(),
+        *query_engine.operations(),
         *research.operations(),
         *retrieval.operations(),
         *runs.operations(),
@@ -165,7 +199,9 @@ def test_only_exact_curated_method_is_suppressed(
     bindings = [
         op.binding.service for op in registry if isinstance(op.binding, EgMethod)
     ]
-    assert sorted(bindings) == ["Admin", "NlQuery", "Read", "Service", "Uql"]
+    assert sorted(bindings) == sorted(
+        ["Admin", "Read", "Service", *sorted(_ENGINE_METHODS)]
+    )
     assert registry.get("eg.query.Read") is None
     curated = registry["query.read"].binding
     assert isinstance(curated, EgMethod)

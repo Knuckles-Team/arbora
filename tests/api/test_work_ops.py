@@ -22,23 +22,32 @@ class _FakeRunner:
         self.offers: list[dict[str, Any]] = []
 
     async def list_items(
-        self, *, tenant: str, cursor: str | None, limit: int
+        self, *, tenant: str, principal: str, cursor: str | None, limit: int
     ) -> dict[str, Any]:
         return {"tenant": tenant, "items": list(self.items.values())[:limit]}
 
-    async def get_item(self, item_id: str, *, tenant: str) -> dict[str, Any] | None:
+    async def get_item(
+        self, item_id: str, *, tenant: str, principal: str
+    ) -> dict[str, Any] | None:
         item = self.items.get(item_id)
         if item is None:
             return None
         return {**item, "tenant": tenant}
 
     async def create_offer(
-        self, item_id: str, *, terms: dict[str, Any], tenant: str, idempotency_key: str
+        self,
+        item_id: str,
+        *,
+        terms: dict[str, Any],
+        tenant: str,
+        principal: str,
+        idempotency_key: str,
     ) -> dict[str, Any]:
         offer = {
             "item_id": item_id,
             "terms": terms,
             "tenant": tenant,
+            "principal": principal,
             "idempotency_key": idempotency_key,
         }
         self.offers.append(offer)
@@ -46,7 +55,7 @@ class _FakeRunner:
 
 
 def _context(**services: object):
-    return service_context(tenant="tenant:one", **services)
+    return service_context(tenant="tenant:one", principal="p:one", **services)
 
 
 def test_work_ops_declare_exact_scopes_and_effects() -> None:
@@ -131,6 +140,7 @@ async def test_offers_create_handler_records_a_bound_offer() -> None:
             "item_id": "item-1",
             "terms": {"rate": "standard"},
             "tenant": "tenant:one",
+            "principal": "p:one",
             "idempotency_key": "key-1",
         }
     }
@@ -153,27 +163,43 @@ async def test_offer_write_needs_declared_scope_and_offers_stay_with_their_tenan
     refusal = require_scopes(offer_op, reader())
     assert refusal is not None and refusal.code == "SCOPE_REQUIRED"
 
-    class _TenantRunner(_FakeRunner):
-        async def get_item(self, item_id, *, tenant):
-            offers = [o for o in self.offers if o["tenant"] == tenant]
+    class _BoundRunner(_FakeRunner):
+        async def get_item(self, item_id, *, tenant, principal):
+            offers = [
+                o
+                for o in self.offers
+                if o["tenant"] == tenant and o["principal"] == principal
+            ]
             return {"item_id": item_id, "offers": offers} if offers else None
 
-    runner = _TenantRunner()
+    runner = _BoundRunner()
     await work.handle_work(
-        service_context(tenant="tenant:one", work_runner=runner),
+        service_context(tenant="tenant:one", principal="p:one", work_runner=runner),
         {"item_id": "item-1", "terms": {}},
         offer_op,
     )
     get_op = work.operations()[1]
     own = await work.handle_work(
-        service_context(tenant="tenant:one", work_runner=runner),
+        service_context(tenant="tenant:one", principal="p:one", work_runner=runner),
         {"item_id": "item-1"},
         get_op,
     )
     assert len(own["value"]["offers"]) == 1
+    # Same tenant, different principal: the offer is not visible.
     with pytest.raises(LookupError):
         await work.handle_work(
-            service_context(tenant="tenant:two", work_runner=runner),
+            service_context(
+                tenant="tenant:one", principal="p:two", work_runner=runner
+            ),
+            {"item_id": "item-1"},
+            get_op,
+        )
+    # Different tenant, same principal id: not visible either.
+    with pytest.raises(LookupError):
+        await work.handle_work(
+            service_context(
+                tenant="tenant:two", principal="p:one", work_runner=runner
+            ),
             {"item_id": "item-1"},
             get_op,
         )
