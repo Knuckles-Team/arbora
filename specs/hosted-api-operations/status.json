@@ -306,7 +306,7 @@
         "tests/deployment/test_real_boot_fixture.py:19",
         "tests/test_native_run_admission.py:12",
         "tests/test_native_run_scope.py:14",
-        "tests/test_real_boot.py:1297"
+        "tests/test_real_boot.py:1329"
       ]
     },
     {
@@ -876,7 +876,7 @@
       "verified_by": [
         "tests/fleet/test_multiplexer_dynamic_gateway.py:1164",
         "tests/mcp_server/test_arbora_015_served_fixes.py:75",
-        "tests/test_real_boot.py:1234"
+        "tests/test_real_boot.py:1266"
       ]
     },
     {
@@ -1037,8 +1037,8 @@
         "tests/a2a/test_native_run_publication.py:16",
         "tests/api/test_runs_ops.py:23",
         "tests/mcp_server/test_current_plan_reader.py:24",
-        "tests/mcp_server/test_task_plan.py:293",
-        "tests/mcp_server/test_task_plan.py:300"
+        "tests/mcp_server/test_task_plan.py:314",
+        "tests/mcp_server/test_task_plan.py:321"
       ],
       "rollup_of": [
         "ARBORA-OPS-R021.4.5.1"
@@ -1059,8 +1059,8 @@
         "tests/a2a/test_native_run_publication.py:16",
         "tests/api/test_runs_ops.py:23",
         "tests/mcp_server/test_current_plan_reader.py:24",
-        "tests/mcp_server/test_task_plan.py:293",
-        "tests/mcp_server/test_task_plan.py:300"
+        "tests/mcp_server/test_task_plan.py:314",
+        "tests/mcp_server/test_task_plan.py:321"
       ],
       "rollup_of": [
         "ARBORA-OPS-R021.4.5.1.1",
@@ -1093,8 +1093,8 @@
       ],
       "verified_by": [
         "tests/a2a/test_native_run_publication.py:16",
-        "tests/mcp_server/test_task_plan.py:293",
-        "tests/mcp_server/test_task_plan.py:300",
+        "tests/mcp_server/test_task_plan.py:314",
+        "tests/mcp_server/test_task_plan.py:321",
         "tests/mcp_server/test_task_plan_runtime.py:626",
         "tests/mcp_server/test_task_plan_runtime.py:705"
       ]
@@ -1382,7 +1382,7 @@
         "tests/api/test_gen_api.py:288",
         "tests/api/test_gen_api.py:303",
         "tests/api/test_gen_api.py:320",
-        "tests/api/test_gen_api.py:470"
+        "tests/api/test_gen_api.py:472"
       ],
       "rollup_of": [
         "ARBORA-OPS-R025.1",
@@ -1412,7 +1412,7 @@
       ],
       "verified_by": [
         "tests/api/test_gen_api.py:320",
-        "tests/api/test_gen_api.py:470",
+        "tests/api/test_gen_api.py:472",
         "tests/deployment/test_generated_client_wheel.py:15",
         "tests/deployment/test_generated_client_wheel.py:27"
       ]
@@ -1423,7 +1423,8 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "20ec6b79a02b",
-        "4b9d181069e4"
+        "4b9d181069e4",
+        "779fca4bf266"
       ],
       "verified_by": [
         "tests/api/test_backward_compat_drift_gate.py:42",
@@ -1442,7 +1443,8 @@
       "title": "API-surface drift gate — api-surface slice",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "4b9d181069e4"
+        "4b9d181069e4",
+        "779fca4bf266"
       ],
       "verified_by": [
         "tests/api/test_surface_drift_gate.py:22",
@@ -1458,7 +1460,8 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "20ec6b79a02b",
-        "4b9d181069e4"
+        "4b9d181069e4",
+        "779fca4bf266"
       ],
       "verified_by": [
         "tests/api/test_backward_compat_drift_gate.py:42",

@@ -1025,9 +1025,10 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "542a8bac1071",
+        "5f2e9e720a06",
+        "725fb0ec081e",
         "779fca4bf266",
-        "a2d662ec0e33",
-        "d4937e42ad1d"
+        "7b1e6ccf65be"
       ],
       "verified_by": [
         "tests/a2a/test_history_capability.py:18",
