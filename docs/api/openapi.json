@@ -10662,6 +10662,40 @@
         ]
       }
     },
+    "/api/v1/ops/eg.coordination.GetConversationHead": {
+      "post": {
+        "operationId": "eg.coordination.GetConversationHead",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/GetConversationHead"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.coordination.json#/methods/GetConversationHead"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "owner-bound ordered conversation head snapshot",
+        "tags": [
+          "eg"
+        ]
+      }
+    },
     "/api/v1/ops/eg.coordination.GetCurrentPlan": {
       "post": {
         "operationId": "eg.coordination.GetCurrentPlan",
@@ -21792,5 +21826,5 @@
       }
     }
   },
-  "x-registry-digest": "dbb0efa0dc47306b1207ab4bb490efb45265fb902e98e5480fba16122bd68a62"
+  "x-registry-digest": "e048ebd0833d29223c1043dcd66e1eb3e66259aaf5706b2ce881efa141eef7eb"
 }
