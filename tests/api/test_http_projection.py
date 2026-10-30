@@ -159,6 +159,7 @@ class _OpenAuth:
         return False
 
 
+@pytest.mark.spec("ARBORA-OPS-R038")
 def test_swagger_ui_renders_the_mounted_caller_filtered_openapi_document() -> None:
     child = create_api_application(
         services=SimpleNamespace(registry=_EmptyRegistry()),
