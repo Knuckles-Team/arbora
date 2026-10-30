@@ -527,7 +527,7 @@
       "title": "Approved mapping for the analyze action family",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "230e0abd5fe1",
+        "128144f67fbc",
         "54119f435f15"
       ],
       "verified_by": [
@@ -579,7 +579,7 @@
       "title": "Add arbora operation for `process_writeback`",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "230e0abd5fe1"
+        "128144f67fbc"
       ],
       "verified_by": [
         "tests/mcp_server/test_legacy_ingest_writeback_mapping.py:27"
@@ -590,7 +590,7 @@
       "title": "Approve the analyze mappings",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "230e0abd5fe1"
+        "128144f67fbc"
       ],
       "verified_by": [
         "tests/mcp_server/test_legacy_ingest_writeback_mapping.py:33"
@@ -634,14 +634,9 @@
     {
       "id": "ARBORA-HOST-R005.2.3.2",
       "title": "Add arbora operation for ingest submission actions",
-      "delivery_state": "VERIFIED",
-      "landed_in": [
-        "230e0abd5fe1"
-      ],
-      "verified_by": [
-        "tests/mcp_server/test_legacy_ingest_writeback_mapping.py:107",
-        "tests/mcp_server/test_legacy_ingest_writeback_mapping.py:38"
-      ]
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     },
     {
       "id": "ARBORA-HOST-R005.2.3.3",
@@ -653,14 +648,9 @@
     {
       "id": "ARBORA-HOST-R005.2.3.4",
       "title": "Add arbora operation for job lifecycle actions",
-      "delivery_state": "VERIFIED",
-      "landed_in": [
-        "230e0abd5fe1"
-      ],
-      "verified_by": [
-        "tests/mcp_server/test_legacy_ingest_writeback_mapping.py:108",
-        "tests/mcp_server/test_legacy_ingest_writeback_mapping.py:43"
-      ]
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     },
     {
       "id": "ARBORA-HOST-R005.2.3.5",
