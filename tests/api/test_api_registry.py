@@ -61,6 +61,7 @@ def allow_all(_op: OpSpec, _caller: Caller) -> bool:
 
 
 @pytest.mark.spec("ARBORA-OPS-R007")
+@pytest.mark.spec("ARBORA-FLEET-R011")
 def test_registry_digest_is_order_independent_and_covers_contract() -> None:
     first = make_op()
     second = make_op("identity.users.list", effect=Effect.READ)
@@ -108,6 +109,7 @@ def test_eg_generated_method_id_preserves_contract_case() -> None:
 
 
 @pytest.mark.spec("ARBORA-OPS-R007")
+@pytest.mark.spec("ARBORA-FLEET-R011")
 def test_discovery_requires_principal_scopes_policy_and_surface() -> None:
     op = make_op()
     registry = Registry([op])

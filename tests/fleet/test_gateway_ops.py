@@ -14,6 +14,7 @@ from arbora.fleet.session_loads import LoadCapExceeded, SessionLoads
 
 
 @pytest.mark.asyncio
+@pytest.mark.spec("ARBORA-FLEET-R018")
 async def test_catalog_is_one_filtered_view_across_kinds() -> None:
     rows = (
         CatalogItem(
@@ -56,6 +57,7 @@ async def test_catalog_is_one_filtered_view_across_kinds() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.spec("ARBORA-FLEET-R018")
 async def test_load_cap_lru_and_forwarder_invokes_governed_fleet_call() -> None:
     clock = [10.0]
     sessions = SessionLoads(cap=1, idle_ttl_seconds=60, clock=lambda: clock[0])

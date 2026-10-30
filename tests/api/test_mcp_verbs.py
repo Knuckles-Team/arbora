@@ -138,6 +138,7 @@ def _projection(
     )
 
 
+@pytest.mark.spec("ARBORA-FLEET-R013")
 def test_find_merges_only_authorized_registry_and_filtered_fleet_entries() -> None:
     registry = Registry(
         _op("things.read", Verb.ASK, "read"), _op("things.admin", Verb.MANAGE, "admin")
@@ -256,6 +257,7 @@ def test_exact_find_uses_governed_invoke_and_preview_stays_discovery() -> None:
     assert calls == [("query.sql_schema", {"value": "users"})]
 
 
+@pytest.mark.spec("ARBORA-FLEET-R013")
 def test_resources_filter_operation_schemas_by_caller_authority() -> None:
     from arbora.api.registry import Composite, OpSpec
 
@@ -303,6 +305,7 @@ def test_unavailable_policy_refuses_discovery_and_nl_resolution() -> None:
         asyncio.run(registry_index(registry, Caller(), UnavailableGate()))
 
 
+@pytest.mark.spec("ARBORA-FLEET-R013")
 def test_six_tools_share_one_schema_and_digest_in_instructions() -> None:
     from arbora.api.mcp.verbs import mcp_instructions
 
