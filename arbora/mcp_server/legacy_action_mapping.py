@@ -65,13 +65,28 @@ def validate_served_actions(
         )
 
 
+#: Legacy ``graph_analyze`` actions answered by a deterministic graph query.
+CODE_NAVIGATION_ACTIONS = ("code_context", "call_graph", "routes")
+IMPACT_ACTIONS = ("blast_radius", "change_coupling")
+SIMILARITY_ACTIONS = ("similar_code",)
+CODE_GRAPH_QUERY_ACTIONS = CODE_NAVIGATION_ACTIONS + IMPACT_ACTIONS + SIMILARITY_ACTIONS
+
+
 #: The approved mapping for a representative slice of actions
 #: ``arbora.mcp_server.runtime`` serves, each traced to the legacy MCP
 #: host action it replaces. Extending this to full parity is a later slice.
 APPROVED_ACTION_MAPPING = build_approved_action_mapping(
     (
-        ActionOperationMapping("code_context", "graph_code.code_context"),
-        ActionOperationMapping("explain", "graph_code.explain"),
+        # Code navigation, impact and similarity are graph questions, not
+        # bespoke read operations: they are served by the intent path to the
+        # engine (``query.uql`` binds medulla's ``Uql`` method; ``explain``
+        # goes through the engine natural-language planner, ``query.nl``).
+        # ARBORA-HOST-R005.2.1.1 / .2.1.2 / .2.1.3.
+        *(
+            ActionOperationMapping(action, "query.uql")
+            for action in CODE_GRAPH_QUERY_ACTIONS
+        ),
+        ActionOperationMapping("explain", "query.nl"),
         ActionOperationMapping("recall_memory", "graph_query.recall_memory"),
         ActionOperationMapping("submit_sdd", "graph_orchestrate.submit_sdd"),
         ActionOperationMapping(

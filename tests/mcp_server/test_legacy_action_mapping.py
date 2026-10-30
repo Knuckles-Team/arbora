@@ -17,7 +17,9 @@ from arbora.mcp_server.legacy_action_mapping import (
 @pytest.mark.spec("ARBORA-HOST-R005.1")
 def test_approved_mapping_is_non_empty_and_unique() -> None:
     assert APPROVED_ACTION_MAPPING
-    assert len(set(APPROVED_ACTION_MAPPING.values())) == len(APPROVED_ACTION_MAPPING)
+    # Several legacy actions may share one operation (intent path); action
+    # uniqueness is enforced at construction (see the duplicate test below).
+    assert all(op for op in APPROVED_ACTION_MAPPING.values())
 
 
 def test_served_actions_within_the_approved_table_pass() -> None:
