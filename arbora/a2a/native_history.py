@@ -185,8 +185,25 @@ def _scope_matches(scope: Any, owner: Any) -> bool:
         and scope.get("scope") == {"kind": "graph", "graph": owner.owner_graph}
         and isinstance(scope.get("incarnation_id"), str)
         and bool(scope["incarnation_id"])
-        and _digest_valid(scope.get("identity_digest"))
+        and _scope_identity_valid(scope)
     )
+
+
+def _scope_identity_valid(scope: dict[str, Any]) -> bool:
+    """Validate the native scope with the producer's generated contract.
+
+    The engine serializes ``MutationScopeDigest`` as 32 octets, so the shape
+    is the generated ``MutationScopeIdentity`` model's, not a hex string.
+    """
+    from pydantic import ValidationError
+
+    from epistemic_graph.generated.models import MutationScopeIdentity
+
+    try:
+        MutationScopeIdentity.model_validate(scope)
+    except ValidationError:
+        return False
+    return True
 
 
 def _digest_valid(value: Any) -> bool:
