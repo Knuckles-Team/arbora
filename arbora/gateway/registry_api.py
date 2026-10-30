@@ -456,7 +456,9 @@ async def _offload_catalog_call(
 def _resolve_current_discovery_grants(actor: Any) -> tuple[str, ...]:
     """Resolve current grant fingerprints from the process-owned broker set."""
 
-    raise not_served("knowledge_graph.core.discovery_authority", "MEDULLA-PLACEMENT-R611")
+    raise not_served(
+        "knowledge_graph.core.discovery_authority", "MEDULLA-PLACEMENT-R611"
+    )
 
 
 def _require_catalog_authority(

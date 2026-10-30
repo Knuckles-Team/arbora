@@ -951,7 +951,8 @@ async def _analysis_action_contradictions(
 ):
     # action(s): 'contradictions'
     raise not_served(
-        "knowledge_graph.adaptation.contradiction_detector", "MEDULLA-DECISION-ENGINE-R700"
+        "knowledge_graph.adaptation.contradiction_detector",
+        "MEDULLA-DECISION-ENGINE-R700",
     )
 
 
@@ -959,7 +960,9 @@ async def _analysis_action_night_shift(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'night_shift'
-    raise not_served("knowledge_graph.research.night_shift", "MEDULLA-DECISION-ENGINE-R653")
+    raise not_served(
+        "knowledge_graph.research.night_shift", "MEDULLA-DECISION-ENGINE-R653"
+    )
 
 
 def _analysis_recommend_candidate_items(engine, query, top_k):
@@ -1007,7 +1010,8 @@ async def _analysis_action_recommend(
 ):
     # action(s): 'recommend'
     raise not_served(
-        "knowledge_graph.retrieval.generative_recommender", "MEDULLA-FEDERATED-QUERY-R652"
+        "knowledge_graph.retrieval.generative_recommender",
+        "MEDULLA-FEDERATED-QUERY-R652",
     )
 
 
@@ -1075,7 +1079,9 @@ async def _analysis_action_quant_arb(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'quant_arb'
-    raise not_served("domains.finance.cross_market_arb", "MEDULLA-FINANCE-PRIMITIVES-R750")
+    raise not_served(
+        "domains.finance.cross_market_arb", "MEDULLA-FINANCE-PRIMITIVES-R750"
+    )
 
 
 async def _analysis_action_quant_crypto(
@@ -1091,7 +1097,9 @@ async def _analysis_action_quant_microstructure(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'quant_microstructure'
-    raise not_served("domains.finance.microstructure", "MEDULLA-FINANCE-PRIMITIVES-R750")
+    raise not_served(
+        "domains.finance.microstructure", "MEDULLA-FINANCE-PRIMITIVES-R750"
+    )
 
 
 async def _analysis_action_quant_insider(
@@ -1247,7 +1255,9 @@ async def _analysis_action_change_coupling(
 ):
     # action(s): 'change_coupling'
 
-    raise not_served("knowledge_graph.enrichment.git_coupling", "MEDULLA-REPO-INGEST-R601")
+    raise not_served(
+        "knowledge_graph.enrichment.git_coupling", "MEDULLA-REPO-INGEST-R601"
+    )
 
 
 async def _analysis_action_code_evolution(
@@ -1255,7 +1265,9 @@ async def _analysis_action_code_evolution(
 ):
     # action(s): 'code_evolution'
 
-    raise not_served("knowledge_graph.enrichment.git_history", "MEDULLA-REPO-INGEST-R601")
+    raise not_served(
+        "knowledge_graph.enrichment.git_history", "MEDULLA-REPO-INGEST-R601"
+    )
 
 
 async def _analysis_action_adr(engine, action, query, top_k, node_id, depth, target):
@@ -1797,7 +1809,9 @@ def _configure_ingest_default(config_key, options, declared, registry):
                 )
             }
         )
-    raise not_served("knowledge_graph.ingestion.external_graph", "MEDULLA-REPO-INGEST-R651")
+    raise not_served(
+        "knowledge_graph.ingestion.external_graph", "MEDULLA-REPO-INGEST-R651"
+    )
 
 
 def _configure_mapping_ingest(action, config_key, config_value, registry):

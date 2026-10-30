@@ -674,7 +674,8 @@ def get_connection_registry():
         if _CONNECTION_REGISTRY is not None:
             return _CONNECTION_REGISTRY
         raise not_served(
-            "knowledge_graph.core.connection_registry", "MEDULLA-UNIFIED-DATA-PLANE-R612"
+            "knowledge_graph.core.connection_registry",
+            "MEDULLA-UNIFIED-DATA-PLANE-R612",
         )
 
 
@@ -776,7 +777,9 @@ def _resolve_read_engines(
     connection, ``"all"``, a list) defers to the standard connection resolver
     unchanged, and with routing off this is byte-for-byte ``_resolve_target_engines``.
     """
-    raise not_served("knowledge_graph.core.ingest_routing", "MEDULLA-INGEST-WORKER-R605")
+    raise not_served(
+        "knowledge_graph.core.ingest_routing", "MEDULLA-INGEST-WORKER-R605"
+    )
 
 
 class GraphSelectionError(ValueError):

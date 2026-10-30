@@ -217,7 +217,9 @@ def _bulk_ingest_change_envelope(
     """The heavy path — only ApplyChangeEnvelope(s) carries evidence/lineage/
     policy and a genuinely durable per-call idempotency key; BatchUpdate has
     neither at the wire level. One atomic transaction either way."""
-    raise not_served("knowledge_graph.ingestion.envelope_ingest", "MEDULLA-REPO-INGEST-R002")
+    raise not_served(
+        "knowledge_graph.ingestion.envelope_ingest", "MEDULLA-REPO-INGEST-R002"
+    )
 
 
 def _bulk_ingest_batch_update(
@@ -742,7 +744,9 @@ async def _ingest_action_reflect(engine, request: IngestRequest) -> str:
 async def _ingest_action_materialize_source(engine, request: IngestRequest) -> str:
     _corpus_name, _description = request.corpus_name, request.description
     # action(s): 'materialize_source'
-    e = not_served("knowledge_graph.enrichment.materialize", "MEDULLA-INGEST-WORKER-R606")
+    e = not_served(
+        "knowledge_graph.enrichment.materialize", "MEDULLA-INGEST-WORKER-R606"
+    )
     return public_error_text(e)
 
 

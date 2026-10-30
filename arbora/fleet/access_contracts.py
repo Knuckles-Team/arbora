@@ -324,7 +324,9 @@ def fleet_virtual_catalog() -> Any:
     """The process virtual catalog that fleet onboarding registers into."""
 
     if not _CATALOG:
-        raise not_served("arbora.fleet.virtual_catalog", "MEDULLA-UNIFIED-DATA-PLANE-R037")
+        raise not_served(
+            "arbora.fleet.virtual_catalog", "MEDULLA-UNIFIED-DATA-PLANE-R037"
+        )
     return _CATALOG[0]
 
 

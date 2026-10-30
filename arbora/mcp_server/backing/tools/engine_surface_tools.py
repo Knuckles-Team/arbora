@@ -1638,7 +1638,9 @@ def _record_process_signal_evidence(
     lazily *inside* the guard when the caller has none yet, so a failing
     engine resolution degrades exactly like a failing record.
     """
-    exc = not_served("knowledge_graph.research.evidence", "MEDULLA-DECISION-ENGINE-R652")
+    exc = not_served(
+        "knowledge_graph.research.evidence", "MEDULLA-DECISION-ENGINE-R652"
+    )
     logger.debug(
         "OCEL process_signal evidence record failed for %s: %s",
         evidence.get("idempotency_key"),
@@ -1653,7 +1655,8 @@ def _ocel_replay_deriver(slice_: Any) -> Any:
     construction; commits nothing.
     """
     raise not_served(
-        "knowledge_graph.ingestion.object_centric_derivation", "MEDULLA-REPO-INGEST-R002"
+        "knowledge_graph.ingestion.object_centric_derivation",
+        "MEDULLA-REPO-INGEST-R002",
     )
 
 
@@ -1716,7 +1719,9 @@ def _ocel_mine(
     real, versioned ``ProcessPerspective`` node, never a silent side channel.
     """
     del exported
-    raise not_served("knowledge_graph.ingestion.envelope_ingest", "MEDULLA-REPO-INGEST-R002")
+    raise not_served(
+        "knowledge_graph.ingestion.envelope_ingest", "MEDULLA-REPO-INGEST-R002"
+    )
 
 
 def _popped_str(params: dict, key: str, *, strip: bool = True) -> str:
@@ -1735,7 +1740,9 @@ def _conformance_commit(
 ) -> dict[str, Any]:
     """Commit one ``ConformanceRun`` (+ its Deviations) as a tenant-scoped slice."""
     del deviations
-    raise not_served("knowledge_graph.ingestion.envelope_ingest", "MEDULLA-REPO-INGEST-R002")
+    raise not_served(
+        "knowledge_graph.ingestion.envelope_ingest", "MEDULLA-REPO-INGEST-R002"
+    )
 
 
 def _mining_request_error(exc: Exception, action: str) -> str:

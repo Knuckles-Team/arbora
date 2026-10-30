@@ -1396,7 +1396,8 @@ _GRAPH_SEARCH_RESULTS_MODES = frozenset(
 def _graph_search_rerank(engine: Any, session: Any, *, query: str, top_k: int) -> Any:
     # Semantic-retrieval hybrid re-scoring of a candidate set.
     raise not_served(
-        "knowledge_graph.retrieval.semantic_retrieval_engine", "MEDULLA-FEDERATED-QUERY-R652"
+        "knowledge_graph.retrieval.semantic_retrieval_engine",
+        "MEDULLA-FEDERATED-QUERY-R652",
     )
 
 
@@ -1419,7 +1420,8 @@ def _graph_search_produce_results_extended(
     if mode == "latent":
         # KG-2.3 — route through the latent topology hierarchy.
         raise not_served(
-            "knowledge_graph.retrieval.latent_topology_rag", "MEDULLA-FEDERATED-QUERY-R652"
+            "knowledge_graph.retrieval.latent_topology_rag",
+            "MEDULLA-FEDERATED-QUERY-R652",
         )
     if mode == "sira":
         # Single-shot SIRA: hybrid-retrieve, then sparsity-align the set.
@@ -2574,7 +2576,8 @@ def register_query_tools(mcp):
         sql: str = Field(description="A non-empty read-only SQL statement."),
     ) -> EvidenceBundle:
         raise not_served(
-            "knowledge_graph.core.tabular_query_service", "MEDULLA-UNIFIED-DATA-PLANE-R612"
+            "knowledge_graph.core.tabular_query_service",
+            "MEDULLA-UNIFIED-DATA-PLANE-R612",
         )
 
     runtime.REGISTERED_TOOLS["tabular_query"] = tabular_query
@@ -2802,7 +2805,9 @@ def register_query_tools(mcp):
             default=False, description="Drop+recreate the table first (ingest/rows)."
         ),
     ) -> str:
-        raise not_served("knowledge_graph.core.table_ingest", "MEDULLA-INGEST-WORKER-R606")
+        raise not_served(
+            "knowledge_graph.core.table_ingest", "MEDULLA-INGEST-WORKER-R606"
+        )
 
     runtime.REGISTERED_TOOLS["graph_table"] = graph_table
 

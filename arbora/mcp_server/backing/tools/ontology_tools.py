@@ -308,7 +308,9 @@ def _source_sync_run(
 
 
 def _graph_etl_list() -> str:
-    raise not_served("knowledge_graph.enrichment.registry", "MEDULLA-INGEST-WORKER-R606")
+    raise not_served(
+        "knowledge_graph.enrichment.registry", "MEDULLA-INGEST-WORKER-R606"
+    )
 
 
 def _graph_etl_lineage(engine: Any, source: str, sink: str, limit: int) -> str:
@@ -497,7 +499,9 @@ def _repo_provenance_change_event(
 
 
 def _repo_provenance_ingest(engine: Any, obj: Any, node_id: str, repo_id: str) -> str:
-    raise not_served("knowledge_graph.ingestion.envelope_ingest", "MEDULLA-REPO-INGEST-R002")
+    raise not_served(
+        "knowledge_graph.ingestion.envelope_ingest", "MEDULLA-REPO-INGEST-R002"
+    )
 
 
 def _ontology_derive_list() -> str:
@@ -713,7 +717,9 @@ def register_ontology_tools(mcp):
         ),
     ) -> str:
         """List/describe value types and validate or coerce a value through one."""
-        raise not_served("knowledge_graph.ontology.value_types", "MEDULLA-TYPED-PACKS-R650")
+        raise not_served(
+            "knowledge_graph.ontology.value_types", "MEDULLA-TYPED-PACKS-R650"
+        )
 
     runtime.REGISTERED_TOOLS["ontology_value_types"] = ontology_value_types
 
@@ -766,7 +772,9 @@ def register_ontology_tools(mcp):
     ) -> str:
         """Resolve interface targeting, check conformance, emit interface OWL/SHACL, or explain
         WHY a candidate is routing-eligible (X-4)."""
-        raise not_served("knowledge_graph.ontology.interfaces", "MEDULLA-TYPED-PACKS-R650")
+        raise not_served(
+            "knowledge_graph.ontology.interfaces", "MEDULLA-TYPED-PACKS-R650"
+        )
 
     runtime.REGISTERED_TOOLS["ontology_interface"] = ontology_interface
 
@@ -823,7 +831,9 @@ def register_ontology_tools(mcp):
         ),
     ) -> str:
         """Attach, inspect, replace, or detach EG GraphSchema sources."""
-        raise not_served("knowledge_graph.ontology.lifecycle", "MEDULLA-TYPED-PACKS-R651")
+        raise not_served(
+            "knowledge_graph.ontology.lifecycle", "MEDULLA-TYPED-PACKS-R651"
+        )
 
     runtime.REGISTERED_TOOLS["graph_ontology"] = graph_ontology
 
@@ -1058,7 +1068,9 @@ def register_ontology_tools(mcp):
         ),
     ) -> str:
         """Report progress of a chunked drain or list chunked-drain-capable sources."""
-        raise not_served("knowledge_graph.core.chunked_drain", "MEDULLA-INGEST-WORKER-R605")
+        raise not_served(
+            "knowledge_graph.core.chunked_drain", "MEDULLA-INGEST-WORKER-R605"
+        )
 
     runtime.REGISTERED_TOOLS["source_drain"] = source_drain
 
@@ -1381,7 +1393,9 @@ def register_ontology_tools(mcp):
         ),
     ) -> str:
         """List registered ontology functions or invoke one with typed params."""
-        raise not_served("knowledge_graph.ontology.functions", "MEDULLA-TYPED-PACKS-R650")
+        raise not_served(
+            "knowledge_graph.ontology.functions", "MEDULLA-TYPED-PACKS-R650"
+        )
 
     runtime.REGISTERED_TOOLS["ontology_function"] = ontology_function
 
