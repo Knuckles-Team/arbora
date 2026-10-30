@@ -192,11 +192,11 @@
       "title": "Published task-plan schema pin",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "0aea30d734a0",
         "46c93f5103b1",
+        "5df74bf2370f",
         "614795d10268",
-        "6d39a589385a",
-        "a31b9d959b3a",
-        "af8ceeb6941a"
+        "6d39a589385a"
       ],
       "verified_by": [
         "tests/api/test_task_plan_schema_pin.py:143",
