@@ -28,14 +28,20 @@ from arbora.api.registry import (
 )
 from arbora.ingest.service import (
     cancel_job,
+    admit_embedding,
+    approve_repair,
+    get_drift,
     get_job_status,
     get_source_status,
     index_repository,
     list_jobs,
     list_packs,
+    list_drift,
     list_sources,
     prioritize_job,
     submit_ingest,
+    propose_repair,
+    reembed,
     sync_source,
 )
 
@@ -46,6 +52,12 @@ from arbora.ingest.service import (
 #: (``arbora.ingest.service``).
 __all__ = [
     "NATIVE_IDEMPOTENCY",
+    "admit_embedding",
+    "approve_repair",
+    "get_drift",
+    "list_drift",
+    "propose_repair",
+    "reembed",
     "operations",
     "cancel_job",
     "get_job_status",
@@ -153,6 +165,93 @@ class IngestJobPrioritizeParams(_Params):
 
 class IngestJobControlResult(_Params):
     value: dict[str, object]
+class IngestDriftListParams(_Params):
+    source_id: str | None = Field(default=None, min_length=1, max_length=256)
+
+
+class IngestDriftRefParams(_Params):
+    drift_id: str = Field(min_length=1, max_length=256)
+
+
+class IngestRepairApproveParams(_Params):
+    repair_id: str = Field(min_length=1, max_length=256)
+    approval_ref: str = Field(min_length=1, max_length=256)
+
+
+class IngestEmbeddingAdmitParams(_Params):
+    model: str = Field(min_length=1, max_length=256)
+    dimensions: int = Field(ge=1, le=65536)
+
+
+class IngestReembedParams(_Params):
+    source_id: str = Field(min_length=1, max_length=256)
+    model: str = Field(min_length=1, max_length=256)
+
+
+class IngestValueResult(_Params):
+    value: dict[str, object]
+
+
+def _ingest_op(
+    op_id: str,
+    summary: str,
+    example: str,
+    params: type[_Params],
+    handler: str,
+    *,
+    write: bool,
+    verb: Verb,
+) -> OpSpec:
+    return OpSpec(
+        id=op_id,
+        verb=verb,
+        summary=summary,
+        examples=(example,),
+        params=params,
+        result=IngestValueResult,
+        binding=Composite(handler=f"arbora.api.ops.ingest.{handler}"),
+        scopes=frozenset({"ingest:write" if write else "ingest:read"}),
+        effect=Effect.WRITE if write else Effect.READ,
+        idempotency=Idempotency.KEY_REQUIRED if write else Idempotency.NATURAL,
+        audit=AuditClass.EVENT if write else AuditClass.NONE,
+    )
+
+
+def _drift_embedding_operations() -> tuple[OpSpec, ...]:
+    return (
+        _ingest_op(
+            "ingest.drift.list", "List detected source drift", "list source drift",
+            IngestDriftListParams, "list_drift", write=False, verb=Verb.FIND,
+        ),
+        _ingest_op(
+            "ingest.drift.get", "Show one drift record", "show this drift",
+            IngestDriftRefParams, "get_drift", write=False, verb=Verb.ASK,
+        ),
+        _ingest_op(
+            "ingest.drift.repair_propose",
+            "Propose a drift repair and record its preview without applying it",
+            "propose a repair for this drift",
+            IngestDriftRefParams, "propose_repair", write=True, verb=Verb.ACT,
+        ),
+        _ingest_op(
+            "ingest.drift.repair_approve",
+            "Apply a previewed drift repair against an approval reference",
+            "approve this drift repair",
+            IngestRepairApproveParams, "approve_repair", write=True, verb=Verb.ACT,
+        ),
+        _ingest_op(
+            "ingest.embedding.admit",
+            "Admit an embedding model for this tenant",
+            "admit this embedding model",
+            IngestEmbeddingAdmitParams, "admit_embedding", write=True, verb=Verb.ACT,
+        ),
+        _ingest_op(
+            "ingest.embedding.reembed",
+            "Request a durable re-embedding of one source",
+            "re-embed this source",
+            IngestReembedParams, "reembed", write=True, verb=Verb.ACT,
+        ),
+    )
 
 
 def operations() -> tuple[OpSpec, ...]:
@@ -277,4 +376,5 @@ def operations() -> tuple[OpSpec, ...]:
             idempotency=Idempotency.NATURAL,
             audit=AuditClass.EVENT,
         ),
+        *_drift_embedding_operations(),
     )
