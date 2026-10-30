@@ -291,7 +291,7 @@
       "delivery_state": "LANDED",
       "landed_in": [
         "4a3410afa6de",
-        "c279c4bbe785",
+        "a78ebe49afc9",
         "cd652df8f6c8"
       ],
       "verified_by": [],
@@ -305,7 +305,7 @@
       "title": "Typed MFA enrollment model",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "c279c4bbe785",
+        "a78ebe49afc9",
         "cd652df8f6c8"
       ],
       "verified_by": [
@@ -329,7 +329,7 @@
       "delivery_state": "LANDED",
       "landed_in": [
         "4a3410afa6de",
-        "c279c4bbe785",
+        "a78ebe49afc9",
         "cd652df8f6c8"
       ],
       "verified_by": [],
@@ -343,7 +343,7 @@
       "title": "Typed admin-console tab model",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "c279c4bbe785",
+        "a78ebe49afc9",
         "cd652df8f6c8"
       ],
       "verified_by": [
@@ -845,8 +845,8 @@
       "title": "Arbora-side mail capability model",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "adf48206cdff",
-        "c279c4bbe785"
+        "a78ebe49afc9",
+        "adf48206cdff"
       ],
       "verified_by": [
         "tests/identity/test_mail_capability.py:16",
@@ -888,8 +888,8 @@
       "title": "Client entry-point token audit registry",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "adf48206cdff",
-        "c279c4bbe785"
+        "a78ebe49afc9",
+        "adf48206cdff"
       ],
       "verified_by": [
         "tests/identity/test_client_entry_points.py:15",

@@ -623,7 +623,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "4b83c69e2b41",
-        "eb3902bc4517"
+        "907fee1976a5"
       ],
       "verified_by": [
         "tests/api/test_api_registry.py:112",
@@ -651,13 +651,13 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "6b63aeb7ba03",
-        "ea736715b7fb",
-        "eb3902bc4517"
+        "907fee1976a5",
+        "ea736715b7fb"
       ],
       "verified_by": [
-        "tests/api/test_mcp_verbs.py:141",
-        "tests/api/test_mcp_verbs.py:260",
-        "tests/api/test_mcp_verbs.py:308"
+        "tests/api/test_mcp_verbs.py:144",
+        "tests/api/test_mcp_verbs.py:263",
+        "tests/api/test_mcp_verbs.py:311"
       ]
     },
     {
@@ -803,26 +803,28 @@
     {
       "id": "ARBORA-FLEET-R017",
       "title": "Authority-parity oracle validates principal, operation and surface",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "ba0aa6a11b4a",
-        "eb3902bc4517"
+        "907fee1976a5",
+        "ba0aa6a11b4a"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_authority_parity.py:84"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R018",
       "title": "Multiplexer exposes four resident fleet tools over one catalog",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "0ac7a86daf02",
-        "e1d37ca10ef7",
-        "eb3902bc4517"
+        "531b2f30db55",
+        "907fee1976a5",
+        "e1d37ca10ef7"
       ],
       "verified_by": [
         "tests/fleet/test_gateway_ops.py:17",
-        "tests/fleet/test_gateway_ops.py:503",
-        "tests/fleet/test_gateway_ops.py:60"
+        "tests/fleet/test_gateway_ops.py:504",
+        "tests/fleet/test_gateway_ops.py:61"
       ]
     },
     {
@@ -893,7 +895,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "667a206c800e",
-        "eb3902bc4517"
+        "907fee1976a5"
       ],
       "verified_by": [
         "tests/test_check_connector_count_pins.py:25"
@@ -908,7 +910,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "667a206c800e",
-        "eb3902bc4517"
+        "907fee1976a5"
       ],
       "verified_by": [
         "tests/test_check_connector_count_pins.py:25"
@@ -966,12 +968,12 @@
       "title": "Deploy-watch verdict is a typed Arbora operation",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "0ac7a86daf02",
-        "c2d8c8ce46b8",
-        "eb3902bc4517"
+        "531b2f30db55",
+        "907fee1976a5",
+        "c2d8c8ce46b8"
       ],
       "verified_by": [
-        "tests/api/test_fleet_deploy_watch_ops.py:18"
+        "tests/api/test_fleet_deploy_watch_ops.py:17"
       ]
     },
     {
@@ -1116,8 +1118,8 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "619d25ac8e69",
-        "d9015e6d6cda",
-        "eb3902bc4517"
+        "907fee1976a5",
+        "d9015e6d6cda"
       ],
       "verified_by": [
         "tests/fleet/test_fleet_onboarding.py:247",
@@ -1143,11 +1145,11 @@
       "title": "`find` ranks catalog-admitted tools when a live probe cannot answer",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "d43ff2da921f",
-        "eb3902bc4517"
+        "907fee1976a5",
+        "d43ff2da921f"
       ],
       "verified_by": [
-        "tests/fleet/test_catalog_tool_fallback.py:29"
+        "tests/fleet/test_catalog_tool_fallback.py:28"
       ]
     },
     {

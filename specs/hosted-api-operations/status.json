@@ -315,7 +315,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "20f773df9ddd",
-        "d388adb1d446"
+        "4016e049e45e"
       ],
       "verified_by": [
         "tests/api/test_agent_browser_ops.py:38",
@@ -931,7 +931,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "1ded59edd1a6",
-        "d388adb1d446"
+        "4016e049e45e"
       ],
       "verified_by": [
         "tests/api/test_decide_ops.py:35"
@@ -1195,14 +1195,14 @@
       "title": "Agent, browser, RLM, and fleet call operations",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "d388adb1d446",
+        "4016e049e45e",
         "e1d37ca10ef7"
       ],
       "verified_by": [
         "tests/api/test_agent_browser_ops.py:38",
         "tests/api/test_agent_browser_ops.py:71",
         "tests/api/test_fleet_effect.py:174",
-        "tests/fleet/test_gateway_ops.py:58"
+        "tests/fleet/test_gateway_ops.py:59"
       ]
     },
     {
@@ -1385,8 +1385,8 @@
       "title": "Operational admin operations — admin slice",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "8d1bc46ecbdb",
-        "d388adb1d446"
+        "4016e049e45e",
+        "8d1bc46ecbdb"
       ],
       "verified_by": [
         "tests/api/test_ops_admin_ops.py:202"
@@ -1682,11 +1682,11 @@
       "title": "Dynamic multiplexer discovery, load, and call",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "b9141334e1ba",
-        "d388adb1d446"
+        "4016e049e45e",
+        "b9141334e1ba"
       ],
       "verified_by": [
-        "tests/fleet/test_gateway_ops.py:58",
+        "tests/fleet/test_gateway_ops.py:59",
         "tests/fleet/test_governed_forwarders.py:28"
       ]
     },
@@ -1695,8 +1695,8 @@
       "title": "Eunomia narrowing-only policy enforcement",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "4b83c69e2b41",
-        "d388adb1d446"
+        "4016e049e45e",
+        "4b83c69e2b41"
       ],
       "verified_by": [
         "tests/api/test_policy_eunomia.py:137",
@@ -1740,11 +1740,11 @@
       "title": "Pre-dispatch audit reservation for governed effects",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "a9025191159e",
-        "d388adb1d446"
+        "4016e049e45e",
+        "a9025191159e"
       ],
       "verified_by": [
-        "tests/api/test_api_registry.py:168",
+        "tests/api/test_api_registry.py:170",
         "tests/api/test_invoke_contract.py:239",
         "tests/api/test_invoke_contract.py:473",
         "tests/api/test_invoke_governance.py:443"

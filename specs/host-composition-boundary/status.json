@@ -570,7 +570,7 @@
       "title": "Add arbora operation for `process_writeback`",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "0e3849ffb48c"
+        "22db6b4614c7"
       ],
       "verified_by": [
         "tests/mcp_server/test_legacy_ingest_writeback_mapping.py:27"
@@ -581,7 +581,7 @@
       "title": "Approve the analyze mappings",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "0e3849ffb48c"
+        "22db6b4614c7"
       ],
       "verified_by": [
         "tests/mcp_server/test_legacy_ingest_writeback_mapping.py:33"
@@ -1393,7 +1393,7 @@
       "title": "Component registry carries Arbora and SDK boundary entries",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "0ce784a3692d",
+        "0e76eb8e9714",
         "9760bef27075",
         "d75db1ea42e8",
         "e278fafd4073"
@@ -1407,7 +1407,7 @@
       "title": "Front ends import only public Arbora/agent-runtime surfaces",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "0ce784a3692d",
+        "0e76eb8e9714",
         "4ca77fbff9e3"
       ],
       "verified_by": [
@@ -1421,7 +1421,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "0062797e3c37",
-        "0ce784a3692d",
+        "0e76eb8e9714",
         "91c0d96adb17",
         "f8d31551067c"
       ],
@@ -1434,7 +1434,7 @@
       "title": "Layered agent capability model with a harness abstraction",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "0ce784a3692d",
+        "0e76eb8e9714",
         "1f575184e8da"
       ],
       "verified_by": [
@@ -1455,7 +1455,7 @@
       "title": "Browser inventory lists native Arbora tools",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "0ce784a3692d",
+        "0e76eb8e9714",
         "3b2c6ac9d864",
         "a4928a7047e1"
       ],
